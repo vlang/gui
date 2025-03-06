@@ -63,22 +63,28 @@ fn set_positions(mut node ShapeTree, offset_x int, offset_y int) {
 		match direction {
 			.none {}
 			.left_to_right {
-				w := child.shape.width + spacing
-				x += w
-				width += w
-				height = int_max(height, child.shape.height + padding.top)
+				x += child.shape.width + spacing
+				width += child.shape.width
+				height = int_max(height, child.shape.height)
 			}
 			.top_to_bottom {
-				h := child.shape.height + spacing
-				y += h
-				height += h
-				width = int_max(width, child.shape.width + padding.left)
+				y += child.shape.height + spacing
+				height += child.shape.height
+				width = int_max(width, child.shape.width)
 			}
 		}
 	}
 
-	node.shape.width = width + padding.right
-	node.shape.height = height + padding.bottom
+	node.shape.width = width + padding.left + padding.right
+	node.shape.height = height + padding.top + padding.bottom
+	total_spacing := spacing * (node.children.len - 1)
+
+	if node.shape.direction == .left_to_right {
+		node.shape.width += total_spacing
+	}
+	if node.shape.direction == .top_to_bottom {
+		node.shape.height += total_spacing
+	}
 }
 
 pub fn (shape Shape) draw(ctx gg.Context) {
