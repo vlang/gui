@@ -20,10 +20,8 @@ fn main_view() gui.UI_Tree {
 	return gui.Column{
 		x:        10
 		y:        10
-		width:    400
-		height:   300
 		spacing:  10
-		padding:  gui.Padding{10, 0, 0, 10}
+		padding:  gui.Padding{10, 10, 10, 10}
 		color:    gx.blue
 		children: [
 			gui.Rectangle{

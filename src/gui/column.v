@@ -14,19 +14,17 @@ pub mut:
 	children []UI_Tree
 }
 
-fn (c Column) generate() []Shape {
-	return [
-		Shape{
-			type:      .rectangle
-			direction: .top_to_bottom
-			x:         c.x
-			y:         c.y
-			width:     c.width
-			height:    c.height
-			spacing:   c.spacing
-			padding:   c.padding
-			color:     c.color
-			filled:    true
-		},
-	]
+fn (c Column) generate() Shape {
+	return Shape{
+		type:      .rectangle
+		direction: .top_to_bottom
+		x:         c.x
+		y:         c.y
+		width:     c.width
+		height:    c.height
+		spacing:   c.spacing
+		padding:   c.padding
+		color:     c.color
+		filled:    true
+	}
 }

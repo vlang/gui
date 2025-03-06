@@ -31,7 +31,7 @@ pub enum ShapeDirection {
 
 pub struct ShapeTree {
 pub mut:
-	shapes   []Shape
+	shape    Shape
 	children []ShapeTree
 }
 
@@ -45,48 +45,40 @@ pub mut:
 	left   int
 }
 
-fn shape_width(shapes []Shape) int {
-	mut width := 0
-	for shape in shapes {
-		if shape.width > width {
-			width = shape.width
-		}
-	}
-	return width
-}
-
-fn shape_height(shapes []Shape) int {
-	mut height := 0
-	for shape in shapes {
-		if shape.height > height {
-			height = shape.height
-		}
-	}
-	return height
-}
-
 fn set_positions(mut node ShapeTree, offset_x int, offset_y int) {
-	for mut shape in node.shapes {
-		shape.x += offset_x
-		shape.y += offset_y
-	}
+	node.shape.x += offset_x
+	node.shape.y += offset_y
 
-	first_shape := node.shapes.first()
-	padding := first_shape.padding
-	spacing := first_shape.spacing
-	direction := first_shape.direction
+	padding := node.shape.padding
+	spacing := node.shape.spacing
+	direction := node.shape.direction
 
-	mut x := first_shape.x + padding.left
-	mut y := first_shape.y + padding.top
+	mut x := node.shape.x + padding.left
+	mut y := node.shape.y + padding.top
+	mut width := node.shape.width
+	mut height := node.shape.height
 
 	for mut child in node.children {
 		set_positions(mut child, x, y)
 		match direction {
 			.none {}
-			.left_to_right { x += shape_width(child.shapes) + spacing }
-			.top_to_bottom { y += shape_height(child.shapes) + spacing }
+			.left_to_right {
+				w := child.shape.width + spacing
+				x += w
+				width += w
+				height = int_max(height, child.shape.height + padding.top)
+			}
+			.top_to_bottom {
+				h := child.shape.height + spacing
+				y += h
+				height += h
+				width = int_max(width, child.shape.width + padding.left)
+			}
 		}
 	}
+
+	node.shape.width = width + padding.right
+	node.shape.height = height + padding.bottom
 }
 
 pub fn (shape Shape) draw(ctx gg.Context) {

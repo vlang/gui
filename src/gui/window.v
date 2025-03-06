@@ -49,9 +49,7 @@ fn frame(mut window Window) {
 }
 
 fn draw_shapes(shapes ShapeTree, mut window Window) {
-	for shape in shapes.shapes {
-		shape.draw(window.ui)
-	}
+	shapes.shape.draw(window.ui)
 	for child in shapes.children {
 		draw_shapes(child, mut window)
 	}
