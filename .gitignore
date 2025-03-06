@@ -1,6 +1,6 @@
 # Binaries for programs and plugins
 main
-gui
+./gui
 *.exe
 *.exe~
 *.so

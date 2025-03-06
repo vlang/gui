@@ -10,24 +10,35 @@ fn main() {
 		height:   400
 		bg_color: gx.rgb(0x30, 0x30, 0x30)
 		on_init:  fn (mut w gui.Window) {
-			view := gui.Column{
-				width:    400
-				height:   300
-				children: [
-					gui.Rectangle{
-						width:  100
-						height: 100
-						color:  gx.green
-					},
-					gui.Rectangle{
-						width:  100
-						height: 100
-						color:  gx.orange
-					},
-				]
-			}
-			w.set_view(view)
+			w.set_view(main_view())
 		}
 	)
 	window.ui.run()
+}
+
+fn main_view() gui.UI_Tree {
+	return gui.Column{
+		x:        10
+		y:        10
+		width:    400
+		height:   300
+		spacing:  10
+		padding:  gui.Padding{10, 0, 0, 10}
+		color:    gx.blue
+		children: [
+			gui.Rectangle{
+				width:  100
+				height: 100
+				radius: 5
+				color:  gx.green
+			},
+			gui.Rectangle{
+				width:  100
+				height: 100
+				filled: true
+				radius: 5
+				color:  gx.orange
+			},
+		]
+	}
 }
