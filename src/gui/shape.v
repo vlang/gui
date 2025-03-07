@@ -56,8 +56,8 @@ fn fit_sizing(mut node ShapeTree) {
 	spacing := node.shape.spacing
 	direction := node.shape.direction
 
-	mut width := node.shape.width
-	mut height := node.shape.height
+	mut width := if sizing.across == .fixed { node.shape.width } else { 0 }
+	mut height := if sizing.down == .fixed { node.shape.height } else { 0 }
 
 	for mut child in node.children {
 		fit_sizing(mut child)
@@ -74,15 +74,20 @@ fn fit_sizing(mut node ShapeTree) {
 		}
 	}
 
-	node.shape.width = width + padding.left + padding.right
-	node.shape.height = height + padding.top + padding.bottom
 	total_spacing := spacing * (node.children.len - 1)
 
-	if node.shape.direction == .left_to_right {
-		node.shape.width += total_spacing
+	if sizing.across == .dynamic {
+		node.shape.width = width + padding.left + padding.right
+		if node.shape.direction == .left_to_right {
+			node.shape.width += total_spacing
+		}
 	}
-	if node.shape.direction == .top_to_bottom {
-		node.shape.height += total_spacing
+
+	if sizing.down == .dynamic {
+		node.shape.height = height + padding.top + padding.bottom
+		if node.shape.direction == .top_to_bottom {
+			node.shape.height += total_spacing
+		}
 	}
 }
 
@@ -99,7 +104,7 @@ fn grow_sizing(mut node ShapeTree) {
 	remaining_width -= (node.children.len - 1) * node.shape.spacing
 
 	for mut child in node.children {
-		if child.shape.sizing.across == .grow {
+		if child.shape.sizing.across == .dynamic {
 			child.shape.width += remaining_width
 		}
 	}

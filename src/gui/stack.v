@@ -42,8 +42,9 @@ fn (c Stack) generate() Shape {
 		y:         c.y
 		width:     c.width
 		height:    c.height
-		spacing:   c.spacing
+		sizing:    c.sizing
 		padding:   c.padding
+		spacing:   c.spacing
 		color:     c.color
 		fill:      c.fill
 		radius:    c.radius

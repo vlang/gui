@@ -9,11 +9,12 @@ mut:
 }
 
 pub enum SizingType {
-	grow
+	dynamic
 	fixed
 }
 
 pub struct Sizing {
+pub:
 	across SizingType
 	down   SizingType
 }

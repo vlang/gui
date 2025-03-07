@@ -23,6 +23,7 @@ fn main_view() gui.UI_Tree {
 		y:         10
 		width:     500
 		height:    300
+		sizing:    gui.Sizing{.fixed, .fixed}
 		spacing:   10
 		radius:    5
 		padding:   gui.Padding{10, 10, 10, 10}
@@ -31,6 +32,7 @@ fn main_view() gui.UI_Tree {
 			gui.Rectangle{
 				width:  75
 				height: 50
+				sizing: gui.Sizing{.fixed, .fixed}
 				fill:   true
 				radius: 5
 				color:  gx.purple
@@ -38,6 +40,7 @@ fn main_view() gui.UI_Tree {
 			gui.Rectangle{
 				width:  75
 				height: 50
+				sizing: gui.Sizing{.dynamic, .fixed}
 				fill:   true
 				radius: 5
 				color:  gx.pink
@@ -45,6 +48,7 @@ fn main_view() gui.UI_Tree {
 			gui.Rectangle{
 				width:  75
 				height: 50
+				sizing: gui.Sizing{.fixed, .fixed}
 				fill:   true
 				radius: 5
 				color:  gx.red
@@ -52,6 +56,7 @@ fn main_view() gui.UI_Tree {
 			gui.Rectangle{
 				width:  75
 				height: 50
+				sizing: gui.Sizing{.fixed, .fixed}
 				fill:   true
 				radius: 5
 				color:  gx.indigo
