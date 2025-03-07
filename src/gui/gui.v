@@ -8,6 +8,24 @@ mut:
 	children []UI_Tree
 }
 
+pub enum SizingType {
+	grow
+	fixed
+}
+
+pub struct Sizing {
+	across SizingType
+	down   SizingType
+}
+
+pub struct Padding {
+pub mut:
+	top    int
+	right  int
+	bottom int
+	left   int
+}
+
 struct EmptyTree implements UI_Tree {
 mut:
 	children []UI_Tree

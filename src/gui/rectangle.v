@@ -16,6 +16,7 @@ pub:
 	y      int
 	width  int
 	height int
+	sizing Sizing
 	fill   bool
 	radius int
 	color  gx.Color
@@ -31,6 +32,7 @@ pub fn (rectangle &Rectangle) generate() Shape {
 		y:         rectangle.y
 		width:     rectangle.width
 		height:    rectangle.height
+		sizing:    rectangle.sizing
 		fill:      rectangle.fill
 		radius:    rectangle.radius
 		color:     rectangle.color

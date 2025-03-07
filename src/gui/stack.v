@@ -26,10 +26,11 @@ pub mut:
 	width    int
 	height   int
 	spacing  int
+	sizing   Sizing
 	padding  Padding
 	fill     bool = true
 	radius   int
-	color    gx.Color = gx.black
+	color    gx.Color = gx.rgba(0, 0, 0, 0)
 	children []UI_Tree
 }
 

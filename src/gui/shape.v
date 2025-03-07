@@ -11,10 +11,11 @@ mut:
 	y       int
 	width   int
 	height  int
+	sizing  Sizing
+	padding Padding
 	fill    bool
 	radius  int
 	spacing int
-	padding Padding
 	color   gg.Color
 }
 
@@ -37,14 +38,6 @@ pub mut:
 
 const empty_shape_tree = ShapeTree{}
 
-pub struct Padding {
-pub mut:
-	top    int
-	right  int
-	bottom int
-	left   int
-}
-
 fn (node ShapeTree) clone() ShapeTree {
 	mut clone := ShapeTree{
 		shape: Shape{
@@ -58,6 +51,7 @@ fn (node ShapeTree) clone() ShapeTree {
 }
 
 fn fit_sizing(mut node ShapeTree) {
+	sizing := node.shape.sizing
 	padding := node.shape.padding
 	spacing := node.shape.spacing
 	direction := node.shape.direction
@@ -93,6 +87,22 @@ fn fit_sizing(mut node ShapeTree) {
 }
 
 fn grow_sizing(mut node ShapeTree) {
+	padding := node.shape.padding
+	spacing := node.shape.spacing
+	direction := node.shape.direction
+
+	mut remaining_width := node.shape.width
+	remaining_width -= padding.left + padding.right
+	for child in node.children {
+		remaining_width -= child.shape.width
+	}
+	remaining_width -= (node.children.len - 1) * node.shape.spacing
+
+	for mut child in node.children {
+		if child.shape.sizing.across == .grow {
+			child.shape.width += remaining_width
+		}
+	}
 }
 
 fn set_positions(mut node ShapeTree, offset_x int, offset_y int) {
