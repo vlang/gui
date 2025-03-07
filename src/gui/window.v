@@ -7,8 +7,8 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	shapes ShapeTree     = empty_shape_tree
-	mutex  &sync.RwMutex = unsafe { nil }
+	shapes ShapeTree   = empty_shape_tree
+	mutex  &sync.Mutex = unsafe { nil }
 pub mut:
 	ui &gg.Context = unsafe { nil }
 }
@@ -33,21 +33,21 @@ pub fn window(cfg WindowCfg) &Window {
 			init_fn:      cfg.on_init
 			frame_fn:     frame
 		)
-		mutex: sync.new_rwmutex()
+		mutex: sync.new_mutex()
 	}
 	window.ui.user_data = window
 	return window
 }
 
 fn frame(mut window Window) {
-	window.ui.begin()
-
-	window.mutex.rlock()
+	window.mutex.lock()
 	shapes := window.shapes
-	window.mutex.runlock()
 
+	window.ui.begin()
 	draw_shapes(shapes, mut window)
 	window.ui.end()
+
+	window.mutex.unlock()
 }
 
 fn draw_shapes(shapes ShapeTree, mut window Window) {
@@ -58,22 +58,21 @@ fn draw_shapes(shapes ShapeTree, mut window Window) {
 }
 
 pub fn (mut window Window) set_view(view UI_Tree) {
+	mut shapes := generate_shapes(view)
 	window.mutex.lock()
-	window.shapes = generate_shapes(view)
+	window.shapes = shapes
+	window.do_layout()
 	window.mutex.unlock()
-
-	window.update_layout()
 	window.ui.refresh_ui()
 }
 
-fn (mut window Window) update_layout() {
-	window.mutex.rlock()
-	mut shapes := window.shapes
-	window.mutex.runlock()
-
-	set_positions(mut shapes, 0, 0)
-
+pub fn (mut window Window) update_layout() {
 	window.mutex.lock()
-	window.shapes = shapes
+	window.do_layout()
 	window.mutex.unlock()
+	window.ui.refresh_ui()
+}
+
+fn (mut window Window) do_layout() {
+	set_positions(mut window.shapes, 0, 0)
 }
