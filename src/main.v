@@ -17,12 +17,13 @@ fn main() {
 }
 
 fn main_view() gui.UI_Tree {
-	return gui.Column{
+	return gui.Stack{
 		x:        10
 		y:        10
 		spacing:  10
+		radius:   5
 		padding:  gui.Padding{10, 10, 10, 10}
-		color:    gx.blue
+		color:    gx.rgb(0x50, 0x50, 0x50)
 		children: [
 			gui.Rectangle{
 				width:  100
@@ -33,9 +34,47 @@ fn main_view() gui.UI_Tree {
 			gui.Rectangle{
 				width:  100
 				height: 100
-				filled: true
+				fill:   true
 				radius: 5
 				color:  gx.orange
+			},
+			gui.Stack{
+				direction: gui.ShapeDirection.left_to_right
+				spacing:   10
+				radius:    5
+				fill:      false
+				color:     gx.black
+				padding:   gui.Padding{10, 10, 10, 10}
+				children:  [
+					gui.Rectangle{
+						width:  75
+						height: 50
+						fill:   true
+						radius: 5
+						color:  gx.purple
+					},
+					gui.Rectangle{
+						width:  75
+						height: 50
+						fill:   true
+						radius: 5
+						color:  gx.pink
+					},
+					gui.Rectangle{
+						width:  75
+						height: 50
+						fill:   true
+						radius: 5
+						color:  gx.red
+					},
+					gui.Rectangle{
+						width:  75
+						height: 50
+						fill:   true
+						radius: 5
+						color:  gx.indigo
+					},
+				]
 			},
 		]
 	}

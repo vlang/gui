@@ -7,7 +7,6 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	view   UI_Tree       = empty_tree
 	shapes ShapeTree     = empty_shape_tree
 	mutex  &sync.RwMutex = unsafe { nil }
 pub mut:
@@ -42,9 +41,12 @@ pub fn window(cfg WindowCfg) &Window {
 
 fn frame(mut window Window) {
 	window.ui.begin()
+
 	window.mutex.rlock()
-	draw_shapes(window.shapes, mut window)
+	shapes := window.shapes
 	window.mutex.runlock()
+
+	draw_shapes(shapes, mut window)
 	window.ui.end()
 }
 
@@ -57,7 +59,7 @@ fn draw_shapes(shapes ShapeTree, mut window Window) {
 
 pub fn (mut window Window) set_view(view UI_Tree) {
 	window.mutex.lock()
-	window.view = view
+	window.shapes = generate_shapes(view)
 	window.mutex.unlock()
 
 	window.update_layout()
@@ -66,10 +68,9 @@ pub fn (mut window Window) set_view(view UI_Tree) {
 
 fn (mut window Window) update_layout() {
 	window.mutex.rlock()
-	view := window.view
+	mut shapes := window.shapes
 	window.mutex.runlock()
 
-	mut shapes := generate_shapes(view)
 	set_positions(mut shapes, 0, 0)
 
 	window.mutex.lock()

@@ -8,7 +8,7 @@ pub:
 	y      int
 	width  int
 	height int
-	filled bool
+	fill   bool
 	radius int
 	color  gx.Color
 pub mut:
@@ -23,7 +23,7 @@ pub fn (rectangle &Rectangle) generate() Shape {
 		y:         rectangle.y
 		width:     rectangle.width
 		height:    rectangle.height
-		filled:    rectangle.filled
+		fill:      rectangle.fill
 		radius:    rectangle.radius
 		color:     rectangle.color
 	}

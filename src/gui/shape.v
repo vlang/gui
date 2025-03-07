@@ -11,7 +11,7 @@ mut:
 	y       int
 	width   int
 	height  int
-	filled  bool
+	fill    bool
 	radius  int
 	spacing int
 	padding Padding
@@ -101,7 +101,7 @@ pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
 		w:          shape.width
 		h:          shape.height
 		color:      shape.color
-		style:      if shape.filled { .fill } else { .stroke }
+		style:      if shape.fill { .fill } else { .stroke }
 		is_rounded: shape.radius > 0
 		radius:     shape.radius
 	)
