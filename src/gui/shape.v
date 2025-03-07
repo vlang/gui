@@ -45,6 +45,18 @@ pub mut:
 	left   int
 }
 
+fn (shape_tree ShapeTree) clone() ShapeTree {
+	mut clone := ShapeTree{
+		shape: Shape{
+			...shape_tree.shape
+		}
+	}
+	for child in shape_tree.children {
+		clone.children << child.clone()
+	}
+	return clone
+}
+
 fn set_sizes(mut node ShapeTree) {
 	padding := node.shape.padding
 	spacing := node.shape.spacing

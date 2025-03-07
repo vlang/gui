@@ -25,7 +25,7 @@ pub:
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
 		ui:    gg.new_context(
-			ui_mode:      true
+			ui_mode:      true // only draw on events
 			bg_color:     cfg.bg_color
 			width:        cfg.width
 			height:       cfg.height
@@ -41,39 +41,31 @@ pub fn window(cfg WindowCfg) &Window {
 
 fn frame(mut window Window) {
 	window.mutex.lock()
-	shapes := window.shapes
+	mut shapes := window.shapes.clone()
+	window.mutex.unlock()
 
 	window.ui.begin()
-	draw_shapes(shapes, mut window)
+	window.do_layout(mut shapes)
+	window.draw_shapes(shapes)
 	window.ui.end()
-
-	window.mutex.unlock()
 }
 
-fn draw_shapes(shapes ShapeTree, mut window Window) {
+fn (mut window Window) do_layout(mut shapes ShapeTree) {
+	set_sizes(mut shapes)
+	set_positions(mut shapes, 0, 0)
+}
+
+fn (mut window Window) draw_shapes(shapes ShapeTree) {
 	shapes.shape.draw(window.ui)
 	for child in shapes.children {
-		draw_shapes(child, mut window)
+		window.draw_shapes(child)
 	}
 }
 
-pub fn (mut window Window) set_view(view UI_Tree) {
+pub fn (mut window Window) update_view(view UI_Tree) {
 	mut shapes := generate_shapes(view)
 	window.mutex.lock()
 	window.shapes = shapes
-	window.do_layout()
 	window.mutex.unlock()
 	window.ui.refresh_ui()
-}
-
-pub fn (mut window Window) update_layout() {
-	window.mutex.lock()
-	window.do_layout()
-	window.mutex.unlock()
-	window.ui.refresh_ui()
-}
-
-fn (mut window Window) do_layout() {
-	set_sizes(mut window.shapes)
-	set_positions(mut window.shapes, 0, 0)
 }
