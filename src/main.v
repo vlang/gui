@@ -23,7 +23,7 @@ fn main_view() gui.UI_Tree {
 		spacing:  10
 		radius:   5
 		padding:  gui.Padding{10, 10, 10, 10}
-		color:    gx.rgb(0x50, 0x50, 0x50)
+		color:    gx.dark_blue
 		children: [
 			gui.Rectangle{
 				width:  100
@@ -43,7 +43,7 @@ fn main_view() gui.UI_Tree {
 				spacing:   10
 				radius:    5
 				fill:      false
-				color:     gx.black
+				color:     gx.light_gray
 				padding:   gui.Padding{10, 10, 10, 10}
 				children:  [
 					gui.Rectangle{

@@ -45,30 +45,23 @@ pub mut:
 	left   int
 }
 
-fn set_positions(mut node ShapeTree, offset_x int, offset_y int) {
-	node.shape.x += offset_x
-	node.shape.y += offset_y
-
+fn set_sizes(mut node ShapeTree) {
 	padding := node.shape.padding
 	spacing := node.shape.spacing
 	direction := node.shape.direction
 
-	mut x := node.shape.x + padding.left
-	mut y := node.shape.y + padding.top
 	mut width := node.shape.width
 	mut height := node.shape.height
 
 	for mut child in node.children {
-		set_positions(mut child, x, y)
+		set_sizes(mut child)
 		match direction {
 			.none {}
 			.left_to_right {
-				x += child.shape.width + spacing
 				width += child.shape.width
 				height = int_max(height, child.shape.height)
 			}
 			.top_to_bottom {
-				y += child.shape.height + spacing
 				height += child.shape.height
 				width = int_max(width, child.shape.width)
 			}
@@ -84,6 +77,27 @@ fn set_positions(mut node ShapeTree, offset_x int, offset_y int) {
 	}
 	if node.shape.direction == .top_to_bottom {
 		node.shape.height += total_spacing
+	}
+}
+
+fn set_positions(mut node ShapeTree, offset_x int, offset_y int) {
+	node.shape.x += offset_x
+	node.shape.y += offset_y
+
+	padding := node.shape.padding
+	spacing := node.shape.spacing
+	direction := node.shape.direction
+
+	mut x := node.shape.x + padding.left
+	mut y := node.shape.y + padding.top
+
+	for mut child in node.children {
+		set_positions(mut child, x, y)
+		match direction {
+			.none {}
+			.left_to_right { x += child.shape.width + spacing }
+			.top_to_bottom { y += child.shape.height + spacing }
+		}
 	}
 }
 

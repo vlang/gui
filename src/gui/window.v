@@ -74,5 +74,6 @@ pub fn (mut window Window) update_layout() {
 }
 
 fn (mut window Window) do_layout() {
+	set_sizes(mut window.shapes)
 	set_positions(mut window.shapes, 0, 0)
 }
