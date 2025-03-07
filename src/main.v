@@ -39,7 +39,7 @@ fn main_view() gui.UI_Tree {
 				color:  gx.orange
 			},
 			gui.Stack{
-				direction: gui.ShapeDirection.left_to_right
+				direction: .left_to_right
 				spacing:   10
 				radius:    5
 				fill:      false

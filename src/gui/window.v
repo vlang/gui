@@ -51,7 +51,8 @@ fn frame(mut window Window) {
 }
 
 fn (mut window Window) do_layout(mut shapes ShapeTree) {
-	set_sizes(mut shapes)
+	fit_sizing(mut shapes)
+	grow_sizing(mut shapes)
 	set_positions(mut shapes, 0, 0)
 }
 

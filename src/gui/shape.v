@@ -45,19 +45,19 @@ pub mut:
 	left   int
 }
 
-fn (shape_tree ShapeTree) clone() ShapeTree {
+fn (node ShapeTree) clone() ShapeTree {
 	mut clone := ShapeTree{
 		shape: Shape{
-			...shape_tree.shape
+			...node.shape
 		}
 	}
-	for child in shape_tree.children {
+	for child in node.children {
 		clone.children << child.clone()
 	}
 	return clone
 }
 
-fn set_sizes(mut node ShapeTree) {
+fn fit_sizing(mut node ShapeTree) {
 	padding := node.shape.padding
 	spacing := node.shape.spacing
 	direction := node.shape.direction
@@ -66,7 +66,7 @@ fn set_sizes(mut node ShapeTree) {
 	mut height := node.shape.height
 
 	for mut child in node.children {
-		set_sizes(mut child)
+		fit_sizing(mut child)
 		match direction {
 			.none {}
 			.left_to_right {
@@ -92,6 +92,9 @@ fn set_sizes(mut node ShapeTree) {
 	}
 }
 
+fn grow_sizing(mut node ShapeTree) {
+}
+
 fn set_positions(mut node ShapeTree, offset_x int, offset_y int) {
 	node.shape.x += offset_x
 	node.shape.y += offset_y
@@ -113,6 +116,12 @@ fn set_positions(mut node ShapeTree, offset_x int, offset_y int) {
 	}
 }
 
+// draw
+// Drawing a shape it just that. No decisions about UI state are considered.
+// If the UI state of your view changes, Generate and update the window with
+// the new view. New shapes are generated based on the view (UI_Tree).
+// Data flows one way from view -> shapes or in terms of data structures
+// from UI_Tree -> ShapeTree
 pub fn (shape Shape) draw(ctx gg.Context) {
 	match shape.type {
 		.rectangle { shape.draw_rectangle(ctx) }

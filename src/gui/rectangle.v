@@ -2,6 +2,14 @@ module gui
 
 import gx
 
+// `Rectangle` can express empty, filled and rounded rectangles
+// x      int
+// y      int
+// width  int
+// height int
+// fill   bool
+// radius int
+// color  gx.Color
 pub struct Rectangle implements UI_Tree {
 pub:
 	x      int
@@ -11,7 +19,7 @@ pub:
 	fill   bool
 	radius int
 	color  gx.Color
-pub mut:
+mut:
 	children []UI_Tree
 }
 
