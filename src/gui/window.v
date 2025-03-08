@@ -16,11 +16,12 @@ pub mut:
 
 pub struct WindowCfg {
 pub:
-	title    string
-	width    int
-	height   int
-	bg_color gx.Color
-	on_init  fn (&Window) = unsafe { nil }
+	title     string
+	width     int
+	height    int
+	bg_color  gx.Color
+	on_init   fn (&Window)            = unsafe { nil }
+	on_resize fn (&gg.Event, &Window) = unsafe { nil }
 }
 
 pub fn window(cfg WindowCfg) &Window {
@@ -34,8 +35,8 @@ pub fn window(cfg WindowCfg) &Window {
 		height:       cfg.height
 		window_title: cfg.title
 		init_fn:      cfg.on_init
+		resized_fn:   cfg.on_resize
 		frame_fn:     frame
-		resized_fn:   resized
 		user_data:    window
 	)
 	return window
@@ -49,16 +50,9 @@ fn frame(mut window Window) {
 	window.mutex.unlock()
 }
 
-fn resized(e &gg.Event, mut window Window) {
-	window.mutex.lock()
-	window.layout = window.layout_shapes(window.shapes)
-	window.mutex.unlock()
-}
-
 fn (mut window Window) layout_shapes(shapes ShapeTree) ShapeTree {
 	mut layout := shapes.clone()
-	size := window.ui.window_size()
-	do_layout(mut layout, size.width, size.height)
+	do_layout(mut layout)
 	return layout
 }
 
@@ -77,5 +71,4 @@ pub fn (mut window Window) update_view(view UI_Tree) {
 	window.shapes = shapes
 	window.layout = layout
 	window.mutex.unlock()
-	window.ui.refresh_ui()
 }

@@ -1,23 +1,12 @@
 module gui
 
-pub fn do_layout(mut layout ShapeTree, width int, height int) {
-	layout_size(mut layout, width, height)
+pub fn do_layout(mut layout ShapeTree) {
 	layout_widths(mut layout)
 	layout_dynamic_widths(mut layout)
 	layout_wrap_text(mut layout)
 	layout_heights(mut layout)
 	layout_dynamic_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
-}
-
-fn layout_size(mut node ShapeTree, width int, height int) {
-	mut shape := node.shape
-	if shape.sizing.across == .dynamic {
-		shape.width = width
-	}
-	if shape.sizing.down == .dynamic {
-		shape.height = height
-	}
 }
 
 fn layout_widths(mut node ShapeTree) {

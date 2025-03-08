@@ -39,8 +39,15 @@ pub fn (c &Container) generate() Shape {
 }
 
 pub struct ContainerConfig {
-	RectangleConfig
 pub:
+	x        int
+	y        int
+	width    int
+	height   int
+	sizing   Sizing = Sizing{.fixed, .fixed}
+	fill     bool
+	radius   int
+	color    gx.Color = gx.rgba(0, 0, 0, 0)
 	spacing  int
 	padding  Padding
 	children []UI_Tree

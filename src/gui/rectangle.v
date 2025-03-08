@@ -8,7 +8,7 @@ pub:
 	y      int
 	width  int
 	height int
-	sizing Sizing
+	sizing Sizing = Sizing{.fixed, .fixed}
 	fill   bool
 	radius int
 	color  gx.Color = gx.rgba(0, 0, 0, 0)

@@ -23,6 +23,7 @@ pub mut:
 pub enum ShapeType {
 	none
 	rectangle
+	text
 }
 
 pub enum ShapeDirection {
@@ -60,6 +61,7 @@ fn (node ShapeTree) clone() ShapeTree {
 pub fn (shape Shape) draw(ctx gg.Context) {
 	match shape.type {
 		.rectangle { shape.draw_rectangle(ctx) }
+		.text {}
 		.none {}
 	}
 }
