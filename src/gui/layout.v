@@ -3,9 +3,10 @@ module gui
 pub fn do_layout(mut layout ShapeTree, width int, height int) {
 	layout_size(mut layout, width, height)
 	layout_widths(mut layout)
+	layout_dynamic_widths(mut layout)
 	layout_wrap_text(mut layout)
 	layout_heights(mut layout)
-	layout_dynamic(mut layout)
+	layout_dynamic_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
 }
 
@@ -75,7 +76,7 @@ fn layout_heights(mut node ShapeTree) {
 	}
 }
 
-fn layout_dynamic(mut node ShapeTree) {
+fn layout_dynamic_widths(mut node ShapeTree) {
 	padding := node.shape.padding
 	// spacing := node.shape.spacing
 	// direction := node.shape.direction
@@ -95,6 +96,9 @@ fn layout_dynamic(mut node ShapeTree) {
 }
 
 fn layout_wrap_text(mut node ShapeTree) {
+}
+
+fn layout_dynamic_heights(mut node ShapeTree) {
 }
 
 fn layout_positions(mut node ShapeTree, offset_x int, offset_y int) {
