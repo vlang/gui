@@ -5,14 +5,14 @@ import gx
 
 fn main() {
 	mut window := gui.window(
-		title:     'test layout'
-		width:     600
-		height:    400
-		bg_color:  gx.rgb(0x30, 0x30, 0x30)
-		on_init:   fn (mut w gui.Window) {
+		title:      'test layout'
+		width:      600
+		height:     400
+		bg_color:   gx.rgb(0x30, 0x30, 0x30)
+		on_init:    fn (mut w gui.Window) {
 			w.update_view(main_view(w))
 		}
-		on_resize: fn (mut w gui.Window) {
+		on_resized: fn (mut w gui.Window) {
 			w.update_view(main_view(w))
 		}
 	)

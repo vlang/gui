@@ -7,26 +7,26 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	layout    ShapeTree    = empty_shape_tree
-	mutex     &sync.Mutex  = unsafe { nil }
-	ui        &gg.Context  = unsafe { nil }
-	on_resize fn (&Window) = unsafe { nil }
+	layout     ShapeTree    = empty_shape_tree
+	mutex      &sync.Mutex  = unsafe { nil }
+	ui         &gg.Context  = unsafe { nil }
+	on_resized fn (&Window) = unsafe { nil }
 }
 
 pub struct WindowCfg {
 pub:
-	title     string
-	width     int
-	height    int
-	bg_color  gx.Color
-	on_init   fn (&Window) = unsafe { nil }
-	on_resize fn (&Window) = unsafe { nil }
+	title      string
+	width      int
+	height     int
+	bg_color   gx.Color
+	on_init    fn (&Window) = unsafe { nil }
+	on_resized fn (&Window) = unsafe { nil }
 }
 
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
-		mutex:     sync.new_mutex()
-		on_resize: cfg.on_resize
+		mutex:      sync.new_mutex()
+		on_resized: cfg.on_resized
 	}
 	window.ui = gg.new_context(
 		ui_mode:      true // only draw on events
@@ -51,8 +51,8 @@ fn frame(mut window Window) {
 }
 
 fn resized(e &gg.Event, mut w Window) {
-	if w.on_resize != unsafe { nil } {
-		w.on_resize(w)
+	if w.on_resized != unsafe { nil } {
+		w.on_resized(w)
 	}
 }
 
