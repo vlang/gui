@@ -9,8 +9,8 @@ pub enum SizingType {
 
 pub struct Sizing {
 pub:
-	across SizingType
-	down   SizingType
+	width  SizingType
+	height SizingType
 }
 
 pub struct Padding {

@@ -17,7 +17,7 @@ fn layout_widths(mut node ShapeTree) {
 
 	mut width := 0
 
-	if sizing.across == .fixed {
+	if sizing.width == .fixed {
 		node.shape.width
 	}
 
@@ -30,7 +30,7 @@ fn layout_widths(mut node ShapeTree) {
 		}
 	}
 
-	if sizing.across == .dynamic && node.shape.direction == .left_to_right {
+	if sizing.width == .dynamic && node.shape.direction == .left_to_right {
 		total_spacing := spacing * (node.children.len - 1)
 		node.shape.width = width + padding.left + padding.right
 		node.shape.width += total_spacing
@@ -45,7 +45,7 @@ fn layout_heights(mut node ShapeTree) {
 
 	mut height := 0
 
-	if sizing.down == .fixed {
+	if sizing.height == .fixed {
 		node.shape.height
 	}
 
@@ -58,7 +58,7 @@ fn layout_heights(mut node ShapeTree) {
 		}
 	}
 
-	if sizing.down == .dynamic && node.shape.direction == .top_to_bottom {
+	if sizing.height == .dynamic && node.shape.direction == .top_to_bottom {
 		total_spacing := spacing * (node.children.len - 1)
 		node.shape.height = height + padding.top + padding.bottom
 		node.shape.height += total_spacing
@@ -67,18 +67,20 @@ fn layout_heights(mut node ShapeTree) {
 
 fn layout_dynamic_widths(mut node ShapeTree) {
 	padding := node.shape.padding
-	// spacing := node.shape.spacing
-	// direction := node.shape.direction
 
 	mut remaining_width := node.shape.width
 	remaining_width -= padding.left + padding.right
-	for child in node.children {
-		remaining_width -= child.shape.width
+
+	if node.shape.direction == .left_to_right {
+		for child in node.children {
+			remaining_width -= child.shape.width
+		}
+		// fence post spacing
+		remaining_width -= (node.children.len - 1) * node.shape.spacing
 	}
-	remaining_width -= (node.children.len - 1) * node.shape.spacing
 
 	for mut child in node.children {
-		if child.shape.sizing.across == .dynamic {
+		if child.shape.sizing.width == .dynamic {
 			child.shape.width += remaining_width
 		}
 	}
@@ -88,6 +90,23 @@ fn layout_wrap_text(mut node ShapeTree) {
 }
 
 fn layout_dynamic_heights(mut node ShapeTree) {
+	mut remaining_height := node.shape.height
+	padding := node.shape.padding
+	remaining_height -= padding.top + padding.bottom
+
+	if node.shape.direction == .top_to_bottom {
+		for child in node.children {
+			remaining_height -= child.shape.height
+		}
+		// fence post spacing
+		remaining_height -= (node.children.len - 1) * node.shape.spacing
+	}
+
+	for mut child in node.children {
+		if child.shape.sizing.height == .dynamic {
+			child.shape.height += (remaining_height - child.shape.height)
+		}
+	}
 }
 
 fn layout_positions(mut node ShapeTree, offset_x int, offset_y int) {
