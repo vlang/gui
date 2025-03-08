@@ -1,5 +1,7 @@
 module gui
 
+import arrays
+
 pub fn do_layout(mut layout ShapeTree) {
 	layout_widths(mut layout)
 	layout_dynamic_widths(mut layout)
@@ -72,16 +74,58 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 	remaining_width -= padding.left + padding.right
 
 	if node.shape.direction == .left_to_right {
-		for child in node.children {
+		for mut child in node.children {
+			layout_dynamic_widths(mut child)
 			remaining_width -= child.shape.width
 		}
 		// fence post spacing
 		remaining_width -= (node.children.len - 1) * node.shape.spacing
 	}
 
-	for mut child in node.children {
-		if child.shape.sizing.width == .dynamic {
-			child.shape.width += remaining_width
+	// divide up the remaining dynamic widths by first growing
+	// all the all the dynamics to the same size (if possible)
+	// and then distributing the remaining width to evenly to
+	// each dynamic.
+	for i := 0; remaining_width > 0 && i < 5; i++ {
+		first := arrays.find_first(node.children, fn (n ShapeTree) bool {
+			return n.shape.sizing.width == .dynamic
+		}) or { return }
+		length := node.children.filter(it.shape.sizing.width == .dynamic).len
+
+		mut smallest := first.shape.width
+		mut second_smallest := max_int
+		mut width_to_add := remaining_width
+
+		for child in node.children {
+			if child.shape.sizing.width == .dynamic {
+				if child.shape.width < smallest {
+					second_smallest = smallest
+					smallest = child.shape.width
+				}
+				if child.shape.width > smallest {
+					second_smallest = int_min(second_smallest, child.shape.width)
+					width_to_add = second_smallest - smallest
+				}
+			}
+		}
+
+		width_to_add = int_min(width_to_add, remaining_width / length)
+
+		for mut child in node.children {
+			if child.shape.sizing.width == .dynamic {
+				if child.shape.width == smallest {
+					child.shape.width += width_to_add
+					remaining_width -= width_to_add
+				}
+			}
+
+			mut remainder := remaining_width % length
+			if remainder > 0 {
+				mut last := arrays.find_last(node.children, fn (n ShapeTree) bool {
+					return n.shape.sizing.width == .dynamic
+				}) or { return }
+				last.shape.width += remainder
+			}
 		}
 	}
 }
@@ -95,7 +139,8 @@ fn layout_dynamic_heights(mut node ShapeTree) {
 	remaining_height -= padding.top + padding.bottom
 
 	if node.shape.direction == .top_to_bottom {
-		for child in node.children {
+		for mut child in node.children {
+			layout_dynamic_heights(mut child)
 			remaining_height -= child.shape.height
 		}
 		// fence post spacing

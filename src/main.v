@@ -38,7 +38,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				color:  gx.purple
 			),
 			gui.rectangle(
-				width:  75
+				width:  125
 				height: 50
 				sizing: gui.Sizing{.dynamic, .dynamic}
 				fill:   true
@@ -48,6 +48,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 			gui.rectangle(
 				width:  75
 				height: 50
+				sizing: gui.Sizing{.dynamic, .fixed}
 				fill:   true
 				radius: 5
 				color:  gx.red
@@ -55,6 +56,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 			gui.rectangle(
 				width:  75
 				height: 50
+				sizing: gui.Sizing{.dynamic, .fixed}
 				fill:   true
 				radius: 5
 				color:  gx.indigo
