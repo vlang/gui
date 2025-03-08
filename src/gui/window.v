@@ -7,11 +7,10 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	shapes ShapeTree   = empty_shape_tree
-	layout ShapeTree   = empty_shape_tree
-	mutex  &sync.Mutex = unsafe { nil }
-pub mut:
-	ui &gg.Context = unsafe { nil }
+	layout    ShapeTree    = empty_shape_tree
+	mutex     &sync.Mutex  = unsafe { nil }
+	ui        &gg.Context  = unsafe { nil }
+	on_resize fn (&Window) = unsafe { nil }
 }
 
 pub struct WindowCfg {
@@ -20,13 +19,14 @@ pub:
 	width     int
 	height    int
 	bg_color  gx.Color
-	on_init   fn (&Window)            = unsafe { nil }
-	on_resize fn (&gg.Event, &Window) = unsafe { nil }
+	on_init   fn (&Window) = unsafe { nil }
+	on_resize fn (&Window) = unsafe { nil }
 }
 
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
-		mutex: sync.new_mutex()
+		mutex:     sync.new_mutex()
+		on_resize: cfg.on_resize
 	}
 	window.ui = gg.new_context(
 		ui_mode:      true // only draw on events
@@ -35,7 +35,7 @@ pub fn window(cfg WindowCfg) &Window {
 		height:       cfg.height
 		window_title: cfg.title
 		init_fn:      cfg.on_init
-		resized_fn:   cfg.on_resize
+		resized_fn:   resized
 		frame_fn:     frame
 		user_data:    window
 	)
@@ -50,10 +50,10 @@ fn frame(mut window Window) {
 	window.mutex.unlock()
 }
 
-fn (mut window Window) layout_shapes(shapes ShapeTree) ShapeTree {
-	mut layout := shapes.clone()
-	do_layout(mut layout)
-	return layout
+fn resized(e &gg.Event, mut w Window) {
+	if w.on_resize != unsafe { nil } {
+		w.on_resize(w)
+	}
 }
 
 fn (mut window Window) draw_shapes(shapes ShapeTree) {
@@ -65,10 +65,18 @@ fn (mut window Window) draw_shapes(shapes ShapeTree) {
 
 pub fn (mut window Window) update_view(view UI_Tree) {
 	mut shapes := generate_shapes(view)
-	mut layout := window.layout_shapes(shapes)
+	do_layout(mut shapes)
 
 	window.mutex.lock()
-	window.shapes = shapes
-	window.layout = layout
+	window.layout = shapes
 	window.mutex.unlock()
+}
+
+pub fn (window &Window) window_size() (int, int) {
+	size := window.ui.window_size()
+	return size.width, size.height
+}
+
+pub fn (mut window Window) run() {
+	window.ui.run()
 }

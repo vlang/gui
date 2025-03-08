@@ -1,7 +1,6 @@
 module main
 
 import gui
-import gg
 import gx
 
 fn main() {
@@ -13,21 +12,20 @@ fn main() {
 		on_init:   fn (mut w gui.Window) {
 			w.update_view(main_view(w))
 		}
-		on_resize: fn (_ &gg.Event, mut w gui.Window) {
+		on_resize: fn (mut w gui.Window) {
 			w.update_view(main_view(w))
 		}
 	)
-	window.ui.run()
+	window.run()
 }
 
 fn main_view(w &gui.Window) gui.UI_Tree {
-	size := w.ui.window_size()
+	width, height := w.window_size()
 	return gui.row(
-		width:    size.width
-		height:   size.height
+		width:    width
+		height:   height
 		sizing:   gui.Sizing{.fixed, .fixed}
 		spacing:  10
-		radius:   5
 		padding:  gui.Padding{10, 10, 10, 10}
 		fill:     true
 		color:    gx.dark_blue
