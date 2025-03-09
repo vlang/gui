@@ -15,8 +15,8 @@ pub:
 
 pub struct Padding {
 pub mut:
-	top    int
-	right  int
-	bottom int
-	left   int
+	top    f32
+	right  f32
+	bottom f32
+	left   f32
 }

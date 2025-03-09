@@ -17,7 +17,7 @@ fn layout_widths(mut node ShapeTree) {
 	spacing := node.shape.spacing
 	direction := node.shape.direction
 
-	mut width := 0
+	mut width := f32(0)
 
 	if sizing.width == .fixed {
 		node.shape.width
@@ -28,7 +28,7 @@ fn layout_widths(mut node ShapeTree) {
 		match direction {
 			.none {}
 			.left_to_right { width += child.shape.width }
-			.top_to_bottom { width = int_max(width, child.shape.width) }
+			.top_to_bottom { width = f32_max(width, child.shape.width) }
 		}
 	}
 
@@ -45,7 +45,7 @@ fn layout_heights(mut node ShapeTree) {
 	spacing := node.shape.spacing
 	direction := node.shape.direction
 
-	mut height := 0
+	mut height := f32(0)
 
 	if sizing.height == .fixed {
 		node.shape.height
@@ -55,7 +55,7 @@ fn layout_heights(mut node ShapeTree) {
 		layout_heights(mut child)
 		match direction {
 			.none {}
-			.left_to_right { height = int_max(height, child.shape.height) }
+			.left_to_right { height = f32_max(height, child.shape.height) }
 			.top_to_bottom { height += child.shape.height }
 		}
 	}
@@ -86,14 +86,14 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 	// all the all the dynamics to the same size (if possible)
 	// and then distributing the remaining width to evenly to
 	// each dynamic.
-	for i := 0; remaining_width > 0 && i < 5; i++ {
+	for i := 0; remaining_width > 0.1 && i < 9000; i++ {
 		first := arrays.find_first(node.children, fn (n ShapeTree) bool {
 			return n.shape.sizing.width == .dynamic
 		}) or { return }
 		length := node.children.filter(it.shape.sizing.width == .dynamic).len
 
 		mut smallest := first.shape.width
-		mut second_smallest := max_int
+		mut second_smallest := f32(1000 * 1000)
 		mut width_to_add := remaining_width
 
 		for child in node.children {
@@ -103,13 +103,13 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 					smallest = child.shape.width
 				}
 				if child.shape.width > smallest {
-					second_smallest = int_min(second_smallest, child.shape.width)
+					second_smallest = f32_min(second_smallest, child.shape.width)
 					width_to_add = second_smallest - smallest
 				}
 			}
 		}
 
-		width_to_add = int_min(width_to_add, remaining_width / length)
+		width_to_add = f32_min(width_to_add, remaining_width / length)
 
 		for mut child in node.children {
 			if child.shape.sizing.width == .dynamic {
@@ -117,14 +117,6 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 					child.shape.width += width_to_add
 					remaining_width -= width_to_add
 				}
-			}
-
-			mut remainder := remaining_width % length
-			if remainder > 0 {
-				mut last := arrays.find_last(node.children, fn (n ShapeTree) bool {
-					return n.shape.sizing.width == .dynamic
-				}) or { return }
-				last.shape.width += remainder
 			}
 		}
 	}
@@ -154,7 +146,7 @@ fn layout_dynamic_heights(mut node ShapeTree) {
 	}
 }
 
-fn layout_positions(mut node ShapeTree, offset_x int, offset_y int) {
+fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	node.shape.x += offset_x
 	node.shape.y += offset_y
 

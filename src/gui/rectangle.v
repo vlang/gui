@@ -4,10 +4,10 @@ import gx
 
 pub struct RectangleConfig {
 pub:
-	x      int
-	y      int
-	width  int
-	height int
+	x      f32
+	y      f32
+	width  f32
+	height f32
 	sizing Sizing = Sizing{.fixed, .fixed}
 	fill   bool
 	radius int

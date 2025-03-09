@@ -6,7 +6,7 @@ import gx
 fn main() {
 	mut window := gui.window(
 		title:      'test layout'
-		width:      600
+		width:      1000
 		height:     400
 		bg_color:   gx.rgb(0x30, 0x30, 0x30)
 		on_init:    fn (mut w gui.Window) {

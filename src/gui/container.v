@@ -8,11 +8,11 @@ import gx
 pub struct Container implements UI_Tree {
 pub mut:
 	direction ShapeDirection = .top_to_bottom
-	x         int
-	y         int
-	width     int
-	height    int
-	spacing   int
+	x         f32
+	y         f32
+	width     f32
+	height    f32
+	spacing   f32
 	sizing    Sizing
 	padding   Padding
 	fill      bool = true
@@ -40,15 +40,15 @@ pub fn (c &Container) generate() Shape {
 
 pub struct ContainerConfig {
 pub:
-	x        int
-	y        int
-	width    int
-	height   int
+	x        f32
+	y        f32
+	width    f32
+	height   f32
+	spacing  f32
 	sizing   Sizing = Sizing{.fixed, .fixed}
 	fill     bool
 	radius   int
 	color    gx.Color = gx.rgba(0, 0, 0, 0)
-	spacing  int
 	padding  Padding
 	children []UI_Tree
 }

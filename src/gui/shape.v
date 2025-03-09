@@ -7,17 +7,17 @@ pub:
 	type      ShapeType
 	direction ShapeDirection
 mut:
-	x       int
-	y       int
+	x       f32
+	y       f32
+	spacing f32
 	sizing  Sizing
 	padding Padding
 	fill    bool
 	radius  int
-	spacing int
 	color   gg.Color
 pub mut:
-	width  int
-	height int
+	width  f32
+	height f32
 }
 
 pub enum ShapeType {
