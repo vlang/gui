@@ -76,7 +76,6 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 	mut remaining_width := node.shape.width
 	remaining_width -= padding.left + padding.right
 
-	// Shrink the remaining_width along the direction axis
 	if node.shape.direction == .left_to_right {
 		for mut child in node.children {
 			remaining_width -= child.shape.width
@@ -149,7 +148,6 @@ fn layout_dynamic_heights(mut node ShapeTree) {
 	padding := node.shape.padding
 	remaining_height -= padding.top + padding.bottom
 
-	// Shrink the remaining_height along the direction axis
 	if node.shape.direction == .top_to_bottom {
 		for mut child in node.children {
 			layout_dynamic_heights(mut child)
@@ -202,9 +200,7 @@ fn layout_dynamic_heights(mut node ShapeTree) {
 				}
 			}
 		}
-	}
-	// Grow the remaining_height across the direction axis
-	else {
+	} else {
 		for mut child in node.children {
 			if child.shape.sizing.height == .dynamic {
 				child.shape.height += (remaining_height - child.shape.height)

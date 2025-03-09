@@ -22,21 +22,23 @@ pub mut:
 	children  []UI_Tree
 }
 
-pub fn (c &Container) generate() Shape {
-	return Shape{
-		id:        c.id
-		type:      .rectangle
-		direction: c.direction
-		x:         c.x
-		y:         c.y
-		width:     c.width
-		height:    c.height
-		spacing:   c.spacing
-		sizing:    c.sizing
-		padding:   c.padding
-		fill:      c.fill
-		radius:    c.radius
-		color:     c.color
+pub fn (c &Container) generate() ShapeTree {
+	return ShapeTree{
+		shape: Shape{
+			id:        c.id
+			type:      .rectangle
+			direction: c.direction
+			x:         c.x
+			y:         c.y
+			width:     c.width
+			height:    c.height
+			spacing:   c.spacing
+			sizing:    c.sizing
+			padding:   c.padding
+			fill:      c.fill
+			radius:    c.radius
+			color:     c.color
+		}
 	}
 }
 
