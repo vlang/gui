@@ -4,6 +4,7 @@ import gx
 
 pub struct RectangleConfig {
 pub:
+	id     string
 	x      f32
 	y      f32
 	width  f32
@@ -16,6 +17,7 @@ pub:
 
 pub fn rectangle(c RectangleConfig) &Container {
 	cfg := ContainerConfig{
+		id:     c.id
 		x:      c.x
 		y:      c.y
 		width:  c.width

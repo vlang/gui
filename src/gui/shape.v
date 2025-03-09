@@ -4,6 +4,7 @@ import gg
 
 pub struct Shape {
 pub:
+	id        string
 	type      ShapeType
 	direction ShapeDirection
 mut:

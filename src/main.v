@@ -37,18 +37,35 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				radius: 5
 				color:  gx.purple
 			),
-			gui.rectangle(
-				width:  125
-				height: 50
-				sizing: gui.Sizing{.dynamic, .dynamic}
-				fill:   true
-				radius: 5
-				color:  gx.pink
+			gui.row(
+				id:       'inner-row'
+				spacing:  10
+				padding:  gui.Padding{10, 10, 10, 10}
+				radius:   5
+				color:    gx.orange
+				children: [
+					gui.rectangle(
+						width:  25
+						height: 25
+						sizing: gui.Sizing{.dynamic, .dynamic}
+						fill:   true
+						radius: 5
+						color:  gx.green
+					),
+					gui.rectangle(
+						width:  25
+						height: 25
+						sizing: gui.Sizing{.fixed, .dynamic}
+						fill:   true
+						radius: 5
+						color:  gx.violet
+					),
+				]
 			),
 			gui.rectangle(
 				width:  75
 				height: 50
-				sizing: gui.Sizing{.dynamic, .fixed}
+				sizing: gui.Sizing{.dynamic, .dynamic}
 				fill:   true
 				radius: 5
 				color:  gx.red
@@ -56,10 +73,9 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 			gui.rectangle(
 				width:  75
 				height: 50
-				sizing: gui.Sizing{.dynamic, .fixed}
 				fill:   true
 				radius: 5
-				color:  gx.indigo
+				color:  gx.orange
 			),
 		]
 	)

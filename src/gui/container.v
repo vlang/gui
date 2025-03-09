@@ -7,6 +7,7 @@ import gx
 // A `.none` direction allows coontainer to behave as a canvas with no additional layout.
 pub struct Container implements UI_Tree {
 pub mut:
+	id        string
 	direction ShapeDirection = .top_to_bottom
 	x         f32
 	y         f32
@@ -23,6 +24,7 @@ pub mut:
 
 pub fn (c &Container) generate() Shape {
 	return Shape{
+		id:        c.id
 		type:      .rectangle
 		direction: c.direction
 		x:         c.x
@@ -40,12 +42,13 @@ pub fn (c &Container) generate() Shape {
 
 pub struct ContainerConfig {
 pub:
+	id       string
 	x        f32
 	y        f32
 	width    f32
 	height   f32
 	spacing  f32
-	sizing   Sizing = Sizing{.fixed, .fixed}
+	sizing   Sizing
 	fill     bool
 	radius   int
 	color    gx.Color = gx.rgba(0, 0, 0, 0)
@@ -55,6 +58,7 @@ pub:
 
 fn container(c ContainerConfig) &Container {
 	return &Container{
+		id:       c.id
 		x:        c.x
 		y:        c.y
 		width:    c.width
