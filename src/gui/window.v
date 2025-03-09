@@ -63,9 +63,18 @@ fn (mut window Window) draw_shapes(shapes ShapeTree) {
 	}
 }
 
+fn (mut window Window) do_layout(mut layout ShapeTree) {
+	layout_widths(mut layout, window)
+	layout_dynamic_widths(mut layout)
+	layout_wrap_text(mut layout, window)
+	layout_heights(mut layout, window)
+	layout_dynamic_heights(mut layout)
+	layout_positions(mut layout, 0, 0)
+}
+
 pub fn (mut window Window) update_view(view UI_Tree) {
 	mut shapes := generate_shapes(view)
-	do_layout(mut shapes)
+	window.do_layout(mut shapes)
 
 	window.mutex.lock()
 	window.layout = shapes

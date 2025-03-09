@@ -5,7 +5,7 @@ import gx
 // Container is the fundamental layout container in gui.
 // It can be used to layout its children top-to-bottom or left_to_right.
 // A `.none` direction allows coontainer to behave as a canvas with no additional layout.
-pub struct Container implements UI_Tree {
+struct Container implements UI_Tree {
 pub mut:
 	id        string
 	direction ShapeDirection = .top_to_bottom
@@ -22,7 +22,7 @@ pub mut:
 	children  []UI_Tree
 }
 
-pub fn (c &Container) generate() ShapeTree {
+fn (c &Container) generate() ShapeTree {
 	return ShapeTree{
 		shape: Shape{
 			id:        c.id

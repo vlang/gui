@@ -38,19 +38,24 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				color:  gx.purple
 			),
 			gui.row(
-				id:       'inner-row'
 				spacing:  10
 				padding:  gui.Padding{10, 10, 10, 10}
 				radius:   5
 				color:    gx.orange
 				children: [
-					gui.rectangle(
-						width:  25
-						height: 25
-						sizing: gui.Sizing{.dynamic, .dynamic}
-						fill:   true
-						radius: 5
-						color:  gx.green
+					gui.column(
+						width:    25
+						height:   25
+						spacing:  20
+						padding:  gui.Padding{10, 10, 10, 10}
+						fill:     true
+						radius:   5
+						color:    gx.black
+						children: [
+							gui.label(text: 'Hello world!'),
+							gui.label(text: 'This is text'),
+							gui.label(text: 'Embedded in a column'),
+						]
 					),
 					gui.rectangle(
 						width:  25

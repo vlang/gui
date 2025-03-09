@@ -1,18 +1,26 @@
 module gui
 
-pub struct Label implements UI_Tree {
+struct Label {
 pub:
-	id string
-mut:
-	children []UI_Tree
+	id      string
+	padding Padding
+	sizing  Sizing
+	text    string
 }
 
 pub struct LabelConfig {
 pub:
-	x int
-	y int
+	id      string
+	padding Padding
+	sizing  Sizing = Sizing{.fixed, .fixed}
+	text    string
 }
 
-fn (l Label) generate() ShapeTree {
-	return ShapeTree{}
+pub fn label(c LabelConfig) &UI_Tree {
+	return &Text{
+		id:      c.id
+		padding: c.padding
+		sizing:  c.sizing
+		text:    c.text
+	}
 }

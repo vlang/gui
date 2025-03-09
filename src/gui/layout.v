@@ -5,16 +5,7 @@ module gui
 //
 import arrays
 
-pub fn do_layout(mut layout ShapeTree) {
-	layout_widths(mut layout)
-	layout_dynamic_widths(mut layout)
-	layout_wrap_text(mut layout)
-	layout_heights(mut layout)
-	layout_dynamic_heights(mut layout)
-	layout_positions(mut layout, 0, 0)
-}
-
-fn layout_widths(mut node ShapeTree) {
+fn layout_widths(mut node ShapeTree, window Window) {
 	sizing := node.shape.sizing
 	padding := node.shape.padding
 	spacing := node.shape.spacing
@@ -26,8 +17,12 @@ fn layout_widths(mut node ShapeTree) {
 		node.shape.width
 	}
 
+	if node.shape.type == .text {
+		node.shape.width = text_width(node.shape.text, window)
+	}
+
 	for mut child in node.children {
-		layout_widths(mut child)
+		layout_widths(mut child, window)
 		match direction {
 			.none {}
 			.left_to_right { width += child.shape.width }
@@ -42,7 +37,7 @@ fn layout_widths(mut node ShapeTree) {
 	}
 }
 
-fn layout_heights(mut node ShapeTree) {
+fn layout_heights(mut node ShapeTree, window Window) {
 	sizing := node.shape.sizing
 	padding := node.shape.padding
 	spacing := node.shape.spacing
@@ -54,8 +49,12 @@ fn layout_heights(mut node ShapeTree) {
 		node.shape.height
 	}
 
+	if node.shape.type == .text {
+		node.shape.height = text_height(node.shape.text, window)
+	}
+
 	for mut child in node.children {
-		layout_heights(mut child)
+		layout_heights(mut child, window)
 		match direction {
 			.none {}
 			.left_to_right { height = f32_max(height, child.shape.height) }
@@ -140,7 +139,7 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 	}
 }
 
-fn layout_wrap_text(mut node ShapeTree) {
+fn layout_wrap_text(mut node ShapeTree, window &Window) {
 }
 
 fn layout_dynamic_heights(mut node ShapeTree) {

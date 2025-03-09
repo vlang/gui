@@ -1,6 +1,7 @@
 module gui
 
 import gg
+import gx
 
 pub struct Shape {
 pub:
@@ -10,15 +11,15 @@ pub:
 mut:
 	x       f32
 	y       f32
+	width   f32
+	height  f32
 	spacing f32
 	sizing  Sizing
 	padding Padding
 	fill    bool
 	radius  int
 	color   gg.Color
-pub mut:
-	width  f32
-	height f32
+	text    string
 }
 
 pub enum ShapeType {
@@ -62,7 +63,7 @@ fn (node ShapeTree) clone() ShapeTree {
 pub fn (shape Shape) draw(ctx gg.Context) {
 	match shape.type {
 		.rectangle { shape.draw_rectangle(ctx) }
-		.text {}
+		.text { shape.draw_text(ctx) }
 		.none {}
 	}
 }
@@ -78,4 +79,8 @@ pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
 		is_rounded: shape.radius > 0
 		radius:     shape.radius
 	)
+}
+
+pub fn (shape Shape) draw_text(ctx gg.Context) {
+	ctx.draw_text(int(shape.x), int(shape.y), shape.text, color: gx.white)
 }
