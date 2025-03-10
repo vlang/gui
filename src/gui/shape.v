@@ -9,17 +9,20 @@ pub:
 	type      ShapeType
 	direction ShapeDirection
 mut:
-	x       f32
-	y       f32
-	width   f32
-	height  f32
-	spacing f32
-	sizing  Sizing
-	padding Padding
-	fill    bool
-	radius  int
-	color   gg.Color
-	text    string
+	x        f32
+	y        f32
+	width    f32
+	height   f32
+	spacing  f32
+	sizing   Sizing
+	padding  Padding
+	fill     bool
+	radius   int
+	color    gg.Color
+	text     string
+	lines    []string
+	text_cfg gx.TextCfg
+	wrap     bool
 }
 
 pub enum ShapeType {
@@ -82,7 +85,10 @@ pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
 }
 
 pub fn (shape Shape) draw_text(ctx gg.Context) {
-	ctx.draw_text(int(shape.x), int(shape.y), shape.text,
-		color: gx.white
-	)
+	lh := line_height(shape, ctx)
+	mut y := int(shape.y + f32(0.49999))
+	for line in shape.lines {
+		ctx.draw_text(int(shape.x), y, line, shape.text_cfg)
+		y += lh
+	}
 }

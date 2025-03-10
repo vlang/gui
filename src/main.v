@@ -20,8 +20,11 @@ fn main() {
 }
 
 fn main_view(w &gui.Window) gui.UI_Tree {
-	width, height := w.window_size()
+	radius := 5
+	spacing := 10
 	padding := gui.Padding{10, 10, 10, 10}
+	width, height := w.window_size()
+
 	return gui.row(
 		width:    width
 		height:   height
@@ -35,29 +38,28 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				width:  75
 				height: 50
 				fill:   true
-				radius: 5
+				radius: radius
 				color:  gx.purple
 			),
 			gui.row(
-				id:       'col'
-				spacing:  10
+				spacing:  spacing
 				padding:  padding
-				radius:   5
+				radius:   radius
 				color:    gx.orange
 				sizing:   gui.Sizing{.grow, .grow}
 				children: [
 					gui.column(
-						spacing:  10
+						spacing:  spacing
 						padding:  padding
-						fill:     true
-						radius:   5
+						radius:   radius
 						sizing:   gui.Sizing{.fit, .grow}
+						fill:     true
 						color:    gx.black
 						children: [
 							gui.rectangle(
 								width:  25
 								height: 25
-								radius: 5
+								radius: radius
 								color:  gx.orange
 							),
 							gui.column(
@@ -68,17 +70,14 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 							),
 							gui.label(text: 'This is text'),
 							gui.label(text: 'Embedded in a column'),
-							gui.button(
-								id:   'button'
-								text: 'Button Text'
-							),
+							gui.button(text: 'Button Text'),
 						]
 					),
 					gui.rectangle(
 						width:  25
 						height: 25
 						fill:   true
-						radius: 5
+						radius: radius
 						sizing: gui.Sizing{.grow, .grow}
 						color:  gx.dark_green
 					),
@@ -88,7 +87,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				width:  75
 				height: 50
 				fill:   true
-				radius: 5
+				radius: radius
 				sizing: gui.Sizing{.grow, .grow}
 				color:  gx.red
 			),
@@ -96,7 +95,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				width:  75
 				height: 50
 				fill:   true
-				radius: 5
+				radius: radius
 				color:  gx.orange
 			),
 		]

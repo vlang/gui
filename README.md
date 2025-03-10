@@ -36,13 +36,17 @@ fn main() {
 }
 
 fn main_view(w &gui.Window) gui.UI_Tree {
+	radius := 5
+	spacing := 10
+	padding := gui.Padding{10, 10, 10, 10}
 	width, height := w.window_size()
+
 	return gui.row(
 		width:    width
 		height:   height
 		sizing:   gui.Sizing{.fixed, .fixed}
 		spacing:  10
-		padding:  gui.Padding{10, 10, 10, 10}
+		padding:  padding
 		fill:     true
 		color:    gx.dark_blue
 		children: [
@@ -50,52 +54,64 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				width:  75
 				height: 50
 				fill:   true
-				radius: 5
+				radius: radius
 				color:  gx.purple
 			),
 			gui.row(
-				spacing:  10
-				padding:  gui.Padding{10, 10, 10, 10}
-				radius:   5
+				spacing:  spacing
+				padding:  padding
+				radius:   radius
 				color:    gx.orange
+				sizing:   gui.Sizing{.grow, .grow}
 				children: [
 					gui.column(
-						width:    25
-						height:   25
-						spacing:  20
-						padding:  gui.Padding{10, 10, 10, 10}
+						spacing:  spacing
+						padding:  padding
+						radius:   radius
+						sizing:   gui.Sizing{.fit, .grow}
 						fill:     true
-						radius:   5
 						color:    gx.black
 						children: [
-							gui.label(text: 'Hello world!'),
+							gui.rectangle(
+								width:  25
+								height: 25
+								radius: radius
+								color:  gx.orange
+							),
+							gui.column(
+								color:    gx.white
+								children: [
+									gui.label(text: 'Hello world!'),
+								]
+							),
 							gui.label(text: 'This is text'),
 							gui.label(text: 'Embedded in a column'),
+							gui.button(text: 'Button Text'),
 						]
 					),
 					gui.rectangle(
 						width:  25
 						height: 25
-						sizing: gui.Sizing{.fixed, .dynamic}
 						fill:   true
-						radius: 5
-						color:  gx.violet
+						radius: radius
+						sizing: gui.Sizing{.grow, .grow}
+						color:  gx.dark_green
 					),
 				]
 			),
 			gui.rectangle(
 				width:  75
 				height: 50
-				sizing: gui.Sizing{.dynamic, .dynamic}
 				fill:   true
-				radius: 5
+				radius: radius
+				sizing: gui.Sizing{.grow, .grow}
 				color:  gx.red
 			),
 			gui.rectangle(
 				width:  75
 				height: 50
 				fill:   true
-				radius: 5
+				radius: radius
 				color:  gx.orange
 			),
 		]

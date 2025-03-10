@@ -16,7 +16,7 @@ fn layout_do(mut layout ShapeTree, window Window) {
 
 fn layout_widths(mut node ShapeTree, window Window) {
 	if node.shape.type == .text {
-		node.shape.width = text_width(node.shape.text, window)
+		node.shape.width = text_width(node.shape, window)
 	}
 
 	mut width := node.shape.width
@@ -41,7 +41,7 @@ fn layout_widths(mut node ShapeTree, window Window) {
 
 fn layout_heights(mut node ShapeTree, window Window) {
 	if node.shape.type == .text {
-		node.shape.height = text_height(node.shape.text, window)
+		node.shape.height = text_height(node.shape, window)
 	}
 
 	mut height := node.shape.height

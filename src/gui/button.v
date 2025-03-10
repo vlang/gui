@@ -17,8 +17,9 @@ pub:
 	id      string
 	width   f32
 	height  f32
-	padding Padding
+	padding Padding = Padding{5, 10, 7, 11}
 	text    string
+	color   gx.Color
 }
 
 pub fn button(c ButtonConfig) &UI_Tree {
@@ -26,10 +27,12 @@ pub fn button(c ButtonConfig) &UI_Tree {
 		id:       c.id
 		width:    c.width
 		height:   c.height
-		padding:  Padding{5, 10, 5, 10}
+		padding:  c.padding
 		radius:   5
 		fill:     true
 		color:    gx.blue
-		children: [label(text: c.text)]
+		children: [
+			label(text: c.text),
+		]
 	)
 }
