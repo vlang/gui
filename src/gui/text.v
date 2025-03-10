@@ -26,7 +26,7 @@ struct TextConfig {
 pub:
 	id      string
 	padding Padding
-	sizing  Sizing = Sizing{.fixed, .fixed}
+	sizing  Sizing
 	text    string
 }
 
@@ -48,5 +48,5 @@ fn text_width(text string, window Window) int {
 fn text_height(text string, window Window) int {
 	ctx := window.ui
 	ctx.set_text_cfg(gx.TextCfg{})
-	return ctx.text_height(text)
+	return ctx.text_height('Q|W') + 4
 }

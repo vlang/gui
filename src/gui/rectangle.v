@@ -9,7 +9,7 @@ pub:
 	y      f32
 	width  f32
 	height f32
-	sizing Sizing = Sizing{.fixed, .fixed}
+	sizing Sizing
 	fill   bool
 	radius int
 	color  gx.Color = gx.rgba(0, 0, 0, 0)

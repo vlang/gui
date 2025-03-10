@@ -12,7 +12,7 @@ pub struct LabelConfig {
 pub:
 	id      string
 	padding Padding
-	sizing  Sizing = Sizing{.fixed, .fixed}
+	sizing  Sizing
 	text    string
 }
 

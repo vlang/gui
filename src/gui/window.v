@@ -63,13 +63,8 @@ fn (mut window Window) draw_shapes(shapes ShapeTree) {
 	}
 }
 
-fn (mut window Window) do_layout(mut layout ShapeTree) {
-	layout_widths(mut layout, window)
-	layout_dynamic_widths(mut layout)
-	layout_wrap_text(mut layout, window)
-	layout_heights(mut layout, window)
-	layout_dynamic_heights(mut layout)
-	layout_positions(mut layout, 0, 0)
+fn (window &Window) do_layout(mut layout ShapeTree) {
+	layout_do(mut layout, window)
 }
 
 pub fn (mut window Window) update_view(view UI_Tree) {

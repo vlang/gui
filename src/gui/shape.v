@@ -82,5 +82,7 @@ pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
 }
 
 pub fn (shape Shape) draw_text(ctx gg.Context) {
-	ctx.draw_text(int(shape.x), int(shape.y), shape.text, color: gx.white)
+	ctx.draw_text(int(shape.x), int(shape.y), shape.text,
+		color: gx.white
+	)
 }

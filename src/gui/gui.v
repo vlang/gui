@@ -3,8 +3,9 @@ module gui
 pub const version = '0.1.0'
 
 pub enum SizingType {
-	dynamic
+	fit
 	fixed
+	grow
 }
 
 pub struct Sizing {
