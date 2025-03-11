@@ -20,16 +20,17 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 	sizing_width_type := if t.wrap { SizingType.grow } else { SizingType.fixed }
 	mut shape_tree := ShapeTree{
 		shape: Shape{
-			id:       t.id
-			uid:      rand.uuid_v4()
-			type:     .text
-			padding:  t.padding
-			spacing:  t.spacing
-			text:     t.text
-			text_cfg: t.text_cfg
-			lines:    [t.text]
-			wrap:     t.wrap
-			sizing:   Sizing{sizing_width_type, .fit}
+			id:        t.id
+			uid:       rand.uuid_v4()
+			type:      .text
+			padding:   t.padding
+			spacing:   t.spacing
+			text:      t.text
+			text_cfg:  t.text_cfg
+			lines:     [t.text]
+			wrap:      t.wrap
+			min_width: 40
+			sizing:    Sizing{sizing_width_type, .fit}
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
