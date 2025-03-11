@@ -73,8 +73,7 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 		// all the all the dynamics to the same size (if possible)
 		// and then distributing the remaining width to evenly to
 		// each dynamic.
-		for i := 0; remaining_width > 0 && i < clamp; i++ {
-			// mut smallest := node.children[idx].shape.width
+		for i := 0; remaining_width > 0.1 && i < clamp; i++ {
 			mut smallest := node.children[idx].shape.width
 			mut second_smallest := f32(1000 * 1000)
 			mut width_to_add := remaining_width
@@ -106,10 +105,8 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 
 		// Shrink if needed
 		mut excluded := []string{}
-
-		for i := 0; remaining_width < 0 && i < clamp; i++ {
-			shrinkable := node.children.filter(it.shape.sizing.width == .grow
-				&& it.shape.uid !in excluded)
+		for i := 0; remaining_width < -0.1 && i < clamp; i++ {
+			shrinkable := node.children.filter(it.shape.uid !in excluded)
 
 			if shrinkable.len == 0 {
 				return
@@ -120,15 +117,13 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 			mut width_to_add := remaining_width
 
 			for child in shrinkable {
-				if child.shape.sizing.width == .grow && child.shape.uid !in excluded {
-					if child.shape.width > largest {
-						second_largest = largest
-						largest = child.shape.width
-					}
-					if child.shape.width < largest {
-						second_largest = f32_max(second_largest, child.shape.width)
-						width_to_add = second_largest - largest
-					}
+				if child.shape.width > largest {
+					second_largest = largest
+					largest = child.shape.width
+				}
+				if child.shape.width < largest {
+					second_largest = f32_max(second_largest, child.shape.width)
+					width_to_add = second_largest - largest
 				}
 			}
 
@@ -143,19 +138,12 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 							child.shape.width = child.shape.min_width
 							excluded << child.shape.uid
 						}
+						remaining_width -= (child.shape.width - previous_width)
 					}
-					remaining_width -= (width_to_add - previous_width)
 				}
 			}
 		}
 	}
-	// else {
-	// 	for mut child in node.children {
-	// 		if child.shape.sizing.width == .grow {
-	// 			child.shape.width += (remaining_width - child.shape.width)
-	// 		}
-	// 	}
-	// }
 
 	for mut child in node.children {
 		layout_dynamic_widths(mut child)

@@ -29,8 +29,8 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 			text_cfg:  t.text_cfg
 			lines:     [t.text]
 			wrap:      t.wrap
-			min_width: 40
 			sizing:    Sizing{sizing_width_type, .fit}
+			min_width: 20
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -88,6 +88,8 @@ fn text_wrap(mut shape Shape, ctx gg.Context) {
 		ctx.set_text_cfg(shape.text_cfg)
 		shape.lines = text_wrap_text(shape.text, shape.width, ctx)
 		shape.width = text_width(shape, ctx)
+		lh := line_height(shape, ctx)
+		shape.height = shape.lines.len * lh
 	}
 }
 

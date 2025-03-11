@@ -6,6 +6,7 @@ main
 *.so
 *.dylib
 *.dll
+*.dSym
 
 # Ignore binary output folders
 bin/
