@@ -49,41 +49,42 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				color:    gx.orange
 				sizing:   gui.Sizing{.grow, .grow}
 				children: [
-					gui.column(
-						id:       'black'
-						spacing:  spacing
-						padding:  padding
-						radius:   radius
-						sizing:   gui.Sizing{.grow, .grow}
-						fill:     true
-						color:    gx.black
-						children: [
-							gui.rectangle(
-								width:  25
-								height: 25
-								radius: radius
-								color:  gx.orange
-							),
-							// gui.column(
-							// 	color:    gx.white
-							// 	children: [
-							// 		gui.label(text: 'Hello world!'),
-							// 	]
-							// ),
-							gui.label(text: 'This is text'),
-							gui.label(text: 'Embedded in a column', id: 'x'),
-							gui.button(id: 'button', text: 'Button Text'),
-						]
-					),
-					gui.rectangle(
-						id:     'green'
-						width:  25
-						height: 25
-						fill:   true
-						radius: radius
-						sizing: gui.Sizing{.grow, .grow}
-						color:  gx.dark_green
-					),
+					gui.label(text: 'Embedded in a column with wrapping', wrap: true),
+					// gui.column(
+					// 	id:       'black'
+					// 	spacing:  spacing
+					// 	padding:  padding
+					// 	radius:   radius
+					// 	sizing:   gui.Sizing{.grow, .grow}
+					// 	fill:     true
+					// 	color:    gx.black
+					// 	children: [
+					// 		gui.rectangle(
+					// 			width:  25
+					// 			height: 25
+					// 			radius: radius
+					// 			color:  gx.orange
+					// 		),
+					// 		// gui.column(
+					// 		// 	color:    gx.white
+					// 		// 	children: [
+					// 		// 		gui.label(text: 'Hello world!'),
+					// 		// 	]
+					// 		// ),
+					// 		gui.label(text: 'This is text'),
+					// 		gui.label(text: 'Embedded in a column with wrapping', wrap: true),
+					// 		gui.button(id: 'button', text: 'Button Text'),
+					// 	]
+					// ),
+					// gui.rectangle(
+					// 	id:     'green'
+					// 	width:  25
+					// 	height: 25
+					// 	fill:   true
+					// 	radius: radius
+					// 	sizing: gui.Sizing{.grow, .grow}
+					// 	color:  gx.dark_green
+					// ),
 				]
 			),
 			gui.rectangle(

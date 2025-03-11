@@ -4,11 +4,12 @@ module gui
 // https://www.youtube.com/watch?v=by9lQvpvMIc&t=1272s
 //
 import arrays
+import gg
 
 fn layout_do(mut layout ShapeTree, window Window) {
 	layout_widths(mut layout)
-	layout_dynamic_widths(mut layout, window)
-	layout_wrap_text(mut layout, window)
+	layout_dynamic_widths(mut layout)
+	layout_wrap_text(mut layout, window.ui)
 	layout_heights(mut layout)
 	layout_dynamic_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
@@ -18,15 +19,15 @@ fn layout_widths(mut node ShapeTree) {
 	for mut child in node.children {
 		layout_widths(mut child)
 		if node.shape.sizing.width != .fixed {
-			if node.shape.direction == .left_to_right {
-				node.shape.width += node.shape.spacing * (node.children.len - 1)
-			}
 			match node.shape.direction {
 				.left_to_right { node.shape.width += child.shape.width }
 				.top_to_bottom { node.shape.width = f32_max(node.shape.width, child.shape.width) }
 				.none {}
 			}
 			node.shape.width += node.shape.padding.left + node.shape.padding.right
+			if node.shape.direction == .left_to_right {
+				node.shape.width += node.shape.spacing * (node.children.len - 1)
+			}
 		}
 	}
 }
@@ -35,20 +36,20 @@ fn layout_heights(mut node ShapeTree) {
 	for mut child in node.children {
 		layout_heights(mut child)
 		if node.shape.sizing.height != .fixed {
-			if node.shape.direction == .top_to_bottom {
-				node.shape.height += node.shape.spacing * (node.children.len - 1)
-			}
 			match node.shape.direction {
-				.left_to_right { node.shape.height = f32_max(node.shape.height, child.shape.height) }
 				.top_to_bottom { node.shape.height += child.shape.height }
+				.left_to_right { node.shape.height = f32_max(node.shape.height, child.shape.height) }
 				.none {}
 			}
 			node.shape.height += node.shape.padding.top + node.shape.padding.bottom
+			if node.shape.direction == .top_to_bottom {
+				node.shape.height += node.shape.spacing * (node.children.len - 1)
+			}
 		}
 	}
 }
 
-fn layout_dynamic_widths(mut node ShapeTree, window Window) {
+fn layout_dynamic_widths(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
 	mut remaining_width := node.shape.width - node.shape.padding.left - node.shape.padding.right
 
@@ -147,16 +148,17 @@ fn layout_dynamic_widths(mut node ShapeTree, window Window) {
 				}
 			}
 		}
-	} else {
-		for mut child in node.children {
-			if child.shape.sizing.width == .grow {
-				child.shape.width += (remaining_width - child.shape.width)
-			}
-		}
 	}
+	// else {
+	// 	for mut child in node.children {
+	// 		if child.shape.sizing.width == .grow {
+	// 			child.shape.width += (remaining_width - child.shape.width)
+	// 		}
+	// 	}
+	// }
 
 	for mut child in node.children {
-		layout_dynamic_widths(mut child, window)
+		layout_dynamic_widths(mut child)
 	}
 }
 
@@ -228,8 +230,11 @@ fn layout_dynamic_heights(mut node ShapeTree) {
 	}
 }
 
-fn layout_wrap_text(mut node ShapeTree, window &Window) {
-	// this space for rent
+fn layout_wrap_text(mut node ShapeTree, ctx gg.Context) {
+	text_wrap(mut node.shape, ctx)
+	for mut child in node.children {
+		layout_wrap_text(mut child, ctx)
+	}
 }
 
 fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {

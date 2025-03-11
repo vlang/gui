@@ -81,3 +81,32 @@ fn line_height(shape Shape, ctx gg.Context) int {
 	ctx.set_text_cfg(shape.text_cfg)
 	return ctx.text_height('Q|W') + int(shape.spacing + f32(0.4999)) + 2
 }
+
+fn text_wrap(mut shape Shape, ctx gg.Context) {
+	if shape.type == .text && shape.wrap {
+		ctx.set_text_cfg(shape.text_cfg)
+		shape.lines = text_wrap_text(shape.text, shape.width, ctx)
+		shape.width = text_width(shape, ctx)
+	}
+}
+
+pub fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
+	mut line := ''
+	mut wrap := []string{cap: 5}
+	for field in s.fields() {
+		if line == '' {
+			line = field
+			continue
+		}
+		nline := line + ' ' + field
+		t_width := ctx.text_width(nline)
+		if t_width > width {
+			wrap << line
+			line = field
+		} else {
+			line = nline
+		}
+	}
+	wrap << line
+	return wrap
+}
