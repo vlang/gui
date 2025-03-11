@@ -52,7 +52,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 						spacing:  spacing
 						padding:  padding
 						radius:   radius
-						sizing:   gui.Sizing{.fit, .grow}
+						sizing:   gui.Sizing{.grow, .fit}
 						fill:     true
 						color:    gx.black
 						children: [
@@ -69,7 +69,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 								]
 							),
 							gui.label(text: 'This is text'),
-							gui.label(text: 'Embedded in a column'),
+							gui.label(text: 'Embedded in a column', id: 'x'),
 							gui.button(text: 'Button Text'),
 						]
 					),

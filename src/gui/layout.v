@@ -7,7 +7,7 @@ import arrays
 
 fn layout_do(mut layout ShapeTree, window Window) {
 	layout_widths(mut layout, window)
-	layout_dynamic_widths(mut layout)
+	layout_dynamic_widths(mut layout, window)
 	layout_wrap_text(mut layout, window)
 	layout_heights(mut layout, window)
 	layout_dynamic_heights(mut layout)
@@ -63,14 +63,14 @@ fn layout_heights(mut node ShapeTree, window Window) {
 	}
 }
 
-fn layout_dynamic_widths(mut node ShapeTree) {
+fn layout_dynamic_widths(mut node ShapeTree, window Window) {
+	clamp := 100 // avoid infinite loop
 	mut remaining_width := node.shape.width - node.shape.padding.left - node.shape.padding.right
 
 	if node.shape.direction == .left_to_right {
 		for mut child in node.children {
 			remaining_width -= child.shape.width
 		}
-
 		// fence post spacing
 		remaining_width -= (node.children.len - 1) * node.shape.spacing
 
@@ -81,14 +81,14 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 		if idx < 0 {
 			return
 		}
-		clamp := 100 // avoid infinite loop
 		length := node.children.filter(it.shape.sizing.width == .grow).len
 
 		// divide up the remaining dynamic widths by first growing
 		// all the all the dynamics to the same size (if possible)
 		// and then distributing the remaining width to evenly to
 		// each dynamic.
-		for i := 0; remaining_width > 0.1 && i < clamp; i++ {
+		for i := 0; remaining_width > 0 && i < clamp; i++ {
+			// mut smallest := node.children[idx].shape.width
 			mut smallest := node.children[idx].shape.width
 			mut second_smallest := f32(1000 * 1000)
 			mut width_to_add := remaining_width
@@ -117,6 +117,51 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 				}
 			}
 		}
+
+		// Shrink if needed
+		mut excluded := []string{}
+
+		for i := 0; remaining_width < 0 && i < clamp; i++ {
+			shrinkable := node.children.filter(it.shape.sizing.width == .grow
+				&& it.shape.uid !in excluded)
+
+			if shrinkable.len == 0 {
+				return
+			}
+
+			mut largest := shrinkable[0].shape.width
+			mut second_largest := f32(0)
+			mut width_to_add := remaining_width
+
+			for child in shrinkable {
+				if child.shape.sizing.width == .grow && child.shape.uid !in excluded {
+					if child.shape.width > largest {
+						second_largest = largest
+						largest = child.shape.width
+					}
+					if child.shape.width < largest {
+						second_largest = f32_max(second_largest, child.shape.width)
+						width_to_add = second_largest - largest
+					}
+				}
+			}
+
+			width_to_add = f32_max(width_to_add, remaining_width / shrinkable.len)
+
+			for mut child in node.children {
+				if child.shape.sizing.width == .grow {
+					previous_width := child.shape.width
+					if child.shape.width == largest {
+						child.shape.width += width_to_add
+						if child.shape.width <= child.shape.min_width {
+							child.shape.width = child.shape.min_width
+							excluded << child.shape.uid
+						}
+					}
+					remaining_width -= (width_to_add - previous_width)
+				}
+			}
+		}
 	} else {
 		for mut child in node.children {
 			if child.shape.sizing.width == .grow {
@@ -126,7 +171,7 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 	}
 
 	for mut child in node.children {
-		layout_dynamic_widths(mut child)
+		layout_dynamic_widths(mut child, window)
 	}
 }
 

@@ -5,24 +5,27 @@ import gx
 
 pub struct Shape {
 pub:
-	id        string
+	id        string // asigned by user
+	uid       string
 	type      ShapeType
 	direction ShapeDirection
 mut:
-	x        f32
-	y        f32
-	width    f32
-	height   f32
-	spacing  f32
-	sizing   Sizing
-	padding  Padding
-	fill     bool
-	radius   int
-	color    gg.Color
-	text     string
-	lines    []string
-	text_cfg gx.TextCfg
-	wrap     bool
+	x          f32
+	y          f32
+	width      f32
+	height     f32
+	spacing    f32
+	sizing     Sizing
+	padding    Padding
+	fill       bool
+	radius     int
+	color      gg.Color
+	text       string
+	lines      []string
+	text_cfg   gx.TextCfg
+	wrap       bool
+	min_width  f32
+	min_height f32
 }
 
 pub enum ShapeType {

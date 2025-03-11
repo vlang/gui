@@ -21,3 +21,8 @@ pub mut:
 	bottom f32
 	left   f32
 }
+
+// Some useful padding and spacing consts
+pub const radius_normal = 5
+pub const spacing_normal = 10
+pub const padding_normal = Padding{10, 10, 10, 10}

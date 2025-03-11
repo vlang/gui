@@ -1,6 +1,7 @@
 module gui
 
 import gx
+import rand
 
 // Container is the fundamental layout container in gui.
 // It can be used to layout its children top-to-bottom or left_to_right.
@@ -25,19 +26,22 @@ pub mut:
 fn (c &Container) generate() ShapeTree {
 	return ShapeTree{
 		shape: Shape{
-			id:        c.id
-			type:      .rectangle
-			direction: c.direction
-			x:         c.x
-			y:         c.y
-			width:     c.width
-			height:    c.height
-			spacing:   c.spacing
-			sizing:    c.sizing
-			padding:   c.padding
-			fill:      c.fill
-			radius:    c.radius
-			color:     c.color
+			id:         c.id
+			uid:        rand.uuid_v4()
+			type:       .rectangle
+			direction:  c.direction
+			x:          c.x
+			y:          c.y
+			width:      c.width
+			height:     c.height
+			spacing:    c.spacing
+			sizing:     c.sizing
+			padding:    c.padding
+			fill:       c.fill
+			radius:     c.radius
+			color:      c.color
+			min_width:  c.width
+			min_height: c.height
 		}
 	}
 }
