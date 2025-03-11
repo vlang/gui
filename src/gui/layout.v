@@ -6,59 +6,44 @@ module gui
 import arrays
 
 fn layout_do(mut layout ShapeTree, window Window) {
-	layout_widths(mut layout, window)
+	layout_widths(mut layout)
 	layout_dynamic_widths(mut layout, window)
 	layout_wrap_text(mut layout, window)
-	layout_heights(mut layout, window)
+	layout_heights(mut layout)
 	layout_dynamic_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
 }
 
-fn layout_widths(mut node ShapeTree, window Window) {
-	if node.shape.type == .text {
-		node.shape.width = text_width(node.shape, window)
-	}
-
-	mut width := node.shape.width
-
+fn layout_widths(mut node ShapeTree) {
 	for mut child in node.children {
-		layout_widths(mut child, window)
-
-		match node.shape.direction {
-			.left_to_right { width += child.shape.width }
-			.top_to_bottom { width = f32_max(width, child.shape.width) }
-			.none {}
-		}
-	}
-
-	if node.shape.sizing.width != .fixed {
-		node.shape.width = width + node.shape.padding.left + node.shape.padding.right
-		if node.shape.direction == .left_to_right {
-			node.shape.width += node.shape.spacing * (node.children.len - 1)
+		layout_widths(mut child)
+		if node.shape.sizing.width != .fixed {
+			if node.shape.direction == .left_to_right {
+				node.shape.width += node.shape.spacing * (node.children.len - 1)
+			}
+			match node.shape.direction {
+				.left_to_right { node.shape.width += child.shape.width }
+				.top_to_bottom { node.shape.width = f32_max(node.shape.width, child.shape.width) }
+				.none {}
+			}
+			node.shape.width += node.shape.padding.left + node.shape.padding.right
 		}
 	}
 }
 
-fn layout_heights(mut node ShapeTree, window Window) {
-	if node.shape.type == .text {
-		node.shape.height = text_height(node.shape, window)
-	}
-
-	mut height := node.shape.height
-
+fn layout_heights(mut node ShapeTree) {
 	for mut child in node.children {
-		layout_heights(mut child, window)
-		match node.shape.direction {
-			.left_to_right { height = f32_max(height, child.shape.height) }
-			.top_to_bottom { height += child.shape.height }
-			.none {}
-		}
-	}
-
-	if node.shape.sizing.height != .fixed {
-		node.shape.height = height + node.shape.padding.top + node.shape.padding.bottom
-		if node.shape.direction == .top_to_bottom {
-			node.shape.height += node.shape.spacing * (node.children.len - 1)
+		layout_heights(mut child)
+		if node.shape.sizing.height != .fixed {
+			if node.shape.direction == .top_to_bottom {
+				node.shape.height += node.shape.spacing * (node.children.len - 1)
+			}
+			match node.shape.direction {
+				.left_to_right { node.shape.height = f32_max(node.shape.height, child.shape.height) }
+				.top_to_bottom { node.shape.height += child.shape.height }
+				.none {}
+			}
+			node.shape.height += node.shape.padding.top + node.shape.padding.bottom
 		}
 	}
 }

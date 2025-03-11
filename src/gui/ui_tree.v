@@ -1,8 +1,10 @@
 module gui
 
+import gg
+
 pub interface UI_Tree {
 	id string
-	generate() ShapeTree
+	generate(ctx gg.Context) ShapeTree
 mut:
 	children []UI_Tree
 }
@@ -13,7 +15,7 @@ mut:
 	children []UI_Tree
 }
 
-fn (et EmptyTree) generate() ShapeTree {
+fn (et EmptyTree) generate(_ gg.Context) ShapeTree {
 	return ShapeTree{}
 }
 
@@ -21,10 +23,10 @@ const empty_tree = EmptyTree{
 	id: 'empty_ui_tree'
 }
 
-fn generate_shapes(node UI_Tree) ShapeTree {
-	mut shape_tree := node.generate()
+fn generate_shapes(node UI_Tree, window Window) ShapeTree {
+	mut shape_tree := node.generate(window.ui)
 	for child_node in node.children {
-		shape_tree.children << generate_shapes(child_node)
+		shape_tree.children << generate_shapes(child_node, window)
 	}
 	return shape_tree
 }

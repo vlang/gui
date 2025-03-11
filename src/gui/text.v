@@ -16,23 +16,25 @@ mut:
 	children  []UI_Tree
 }
 
-fn (t &Text) generate() ShapeTree {
-	return ShapeTree{
+fn (t &Text) generate(ctx gg.Context) ShapeTree {
+	sizing_width_type := if t.wrap { SizingType.grow } else { SizingType.fixed }
+	mut shape_tree := ShapeTree{
 		shape: Shape{
-			id:        t.id
-			uid:       rand.uuid_v4()
-			type:      .text
-			padding:   t.padding
-			spacing:   t.spacing
-			text:      t.text
-			text_cfg:  t.text_cfg
-			lines:     [t.text]
-			wrap:      t.wrap
-			min_width: 40
-			sizing:    Sizing{.grow, .fit}
-			direction: .left_to_right
+			id:       t.id
+			uid:      rand.uuid_v4()
+			type:     .text
+			padding:  t.padding
+			spacing:  t.spacing
+			text:     t.text
+			text_cfg: t.text_cfg
+			lines:    [t.text]
+			wrap:     t.wrap
+			sizing:   Sizing{sizing_width_type, .fit}
 		}
 	}
+	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
+	shape_tree.shape.height = text_height(shape_tree.shape, ctx)
+	return shape_tree
 }
 
 struct TextConfig {
@@ -58,11 +60,9 @@ fn text(c TextConfig) &Text {
 	}
 }
 
-fn text_width(shape Shape, window Window) int {
-	assert shape.type == .text
-	mut max_width := 0
-	ctx := window.ui
+fn text_width(shape Shape, ctx gg.Context) int {
 	ctx.set_text_cfg(gx.TextCfg{})
+	mut max_width := 0
 	for line in shape.lines {
 		width := ctx.text_width(line)
 		max_width = int_max(width, max_width)
@@ -70,9 +70,8 @@ fn text_width(shape Shape, window Window) int {
 	return max_width
 }
 
-fn text_height(shape Shape, window Window) int {
+fn text_height(shape Shape, ctx gg.Context) int {
 	assert shape.type == .text
-	ctx := window.ui
 	lh := line_height(shape, ctx)
 	return lh * shape.lines.len
 }

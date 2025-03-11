@@ -6,7 +6,7 @@ import gx
 fn main() {
 	mut window := gui.window(
 		title:      'test layout'
-		width:      1000
+		width:      600
 		height:     400
 		bg_color:   gx.rgb(0x30, 0x30, 0x30)
 		on_init:    fn (mut w gui.Window) {
@@ -42,6 +42,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				color:  gx.purple
 			),
 			gui.row(
+				id:       'orange'
 				spacing:  spacing
 				padding:  padding
 				radius:   radius
@@ -49,10 +50,11 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				sizing:   gui.Sizing{.grow, .grow}
 				children: [
 					gui.column(
+						id:       'black'
 						spacing:  spacing
 						padding:  padding
 						radius:   radius
-						sizing:   gui.Sizing{.grow, .fit}
+						sizing:   gui.Sizing{.grow, .grow}
 						fill:     true
 						color:    gx.black
 						children: [
@@ -62,18 +64,19 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 								radius: radius
 								color:  gx.orange
 							),
-							gui.column(
-								color:    gx.white
-								children: [
-									gui.label(text: 'Hello world!'),
-								]
-							),
+							// gui.column(
+							// 	color:    gx.white
+							// 	children: [
+							// 		gui.label(text: 'Hello world!'),
+							// 	]
+							// ),
 							gui.label(text: 'This is text'),
 							gui.label(text: 'Embedded in a column', id: 'x'),
-							gui.button(text: 'Button Text'),
+							gui.button(id: 'button', text: 'Button Text'),
 						]
 					),
 					gui.rectangle(
+						id:     'green'
 						width:  25
 						height: 25
 						fill:   true

@@ -1,5 +1,6 @@
 module gui
 
+import gg
 import gx
 import rand
 
@@ -23,7 +24,7 @@ pub mut:
 	children  []UI_Tree
 }
 
-fn (c &Container) generate() ShapeTree {
+fn (c &Container) generate(_ gg.Context) ShapeTree {
 	return ShapeTree{
 		shape: Shape{
 			id:         c.id

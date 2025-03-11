@@ -68,7 +68,7 @@ fn (window &Window) do_layout(mut layout ShapeTree) {
 }
 
 pub fn (mut window Window) update_view(view UI_Tree) {
-	mut shapes := generate_shapes(view)
+	mut shapes := generate_shapes(view, window)
 	window.do_layout(mut shapes)
 
 	window.mutex.lock()

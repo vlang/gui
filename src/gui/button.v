@@ -17,7 +17,7 @@ pub:
 	id      string
 	width   f32
 	height  f32
-	padding Padding = Padding{5, 10, 7, 11}
+	padding Padding = Padding{5, 10, 7, 10}
 	text    string
 	color   gx.Color
 }
