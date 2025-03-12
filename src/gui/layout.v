@@ -50,10 +50,10 @@ fn layout_heights(mut node ShapeTree) {
 }
 
 fn layout_dynamic_widths(mut node ShapeTree) {
-	clamp := 100 // avoid infinite loop
-	mut remaining_width := node.shape.width - node.shape.padding.left - node.shape.padding.right
-
 	if node.shape.direction == .left_to_right {
+		clamp := 100 // avoid infinite loop
+		mut remaining_width := node.shape.width - node.shape.padding.left - node.shape.padding.right
+
 		for mut child in node.children {
 			remaining_width -= child.shape.width
 		}
@@ -138,9 +138,19 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 							child.shape.width = child.shape.min_width
 							excluded << child.shape.uid
 						}
+						if node.shape.id == 'black' {
+							println(excluded.len)
+						}
 						remaining_width -= (child.shape.width - previous_width)
 					}
 				}
+			}
+		}
+	} else if node.shape.direction == .top_to_bottom {
+		padding := node.shape.padding.left + node.shape.padding.right
+		for mut child in node.children {
+			if child.shape.sizing.width == .grow {
+				child.shape.width = node.shape.width - padding
 			}
 		}
 	}
@@ -205,7 +215,7 @@ fn layout_dynamic_heights(mut node ShapeTree) {
 				}
 			}
 		}
-	} else {
+	} else if node.shape.direction == .left_to_right {
 		for mut child in node.children {
 			if child.shape.sizing.height == .grow {
 				child.shape.height += (remaining_height - child.shape.height)
