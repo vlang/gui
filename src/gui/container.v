@@ -29,7 +29,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 		shape: Shape{
 			id:         c.id
 			uid:        rand.uuid_v4()
-			type:       .rectangle
+			type:       .container
 			direction:  c.direction
 			x:          c.x
 			y:          c.y

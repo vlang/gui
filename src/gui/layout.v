@@ -13,6 +13,9 @@ fn layout_do(mut layout ShapeTree, window Window) {
 	layout_heights(mut layout)
 	layout_flex_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
+
+	width, height := window.window_size()
+	layout_clipping_bounds(mut layout, width: width, height: height)
 }
 
 fn layout_widths(mut node ShapeTree) {
@@ -70,9 +73,8 @@ fn layout_flex_widths(mut node ShapeTree) {
 		length := node.children.filter(it.shape.sizing.width == .flex).len
 
 		// divide up the remaining flex widths by first growing
-		// all the all the flexs to the same size (if possible)
-		// and then distributing the remaining width to evenly to
-		// each flex.
+		// all the all the flex shapes to the same size (if possible)
+		// and then distributing the remaining width to evenly.
 		for i := 0; remaining_width > 0.1 && i < clamp; i++ {
 			mut smallest := node.children[idx].shape.width
 			mut second_smallest := f32(1000 * 1000)
@@ -179,9 +181,9 @@ fn layout_flex_heights(mut node ShapeTree) {
 		length := node.children.filter(it.shape.sizing.height == .flex).len
 
 		// divide up the remaining flex hieghts by first growing
-		// all the all the flexs to the same size (if possible)
+		// all the all the flex shape to the same size (if possible)
 		// and then distributing the remaining height to evenly to
-		// each flex.
+		// each
 		for i := 0; remaining_height > 0.1 && i < clamp; i++ {
 			mut smallest := node.children[idx].shape.height
 			mut second_smallest := f32(1000 * 1000)
@@ -248,5 +250,30 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 			.top_to_bottom { y += child.shape.height + spacing }
 			.none {}
 		}
+	}
+}
+
+fn layout_clipping_bounds(mut node ShapeTree, bounds gg.Rect) {
+	nb := match node.shape.type == .container {
+		true {
+			bw := bounds.x + bounds.width
+			nw := node.shape.x + node.shape.width
+			bh := bounds.y + bounds.height
+			nh := node.shape.y + node.shape.height
+
+			gg.Rect{
+				x:      if bw < nw { bounds.x } else { node.shape.x }
+				y:      if bh < nh { bounds.y } else { node.shape.y }
+				width:  if bw < nw { bounds.width } else { node.shape.width }
+				height: if bh < nh { bounds.height } else { node.shape.height }
+			}
+		}
+		else {
+			bounds
+		}
+	}
+	for mut child in node.children {
+		child.shape.bounds = nb
+		layout_clipping_bounds(mut child, nb)
 	}
 }

@@ -26,12 +26,16 @@ mut:
 	wrap       bool
 	min_width  f32
 	min_height f32
+	bounds     gg.Rect
 }
 
 pub enum ShapeType {
 	none
+	container
 	rectangle
 	text
+	line
+	image
 }
 
 pub enum ShapeDirection {
@@ -68,13 +72,19 @@ fn (node ShapeTree) clone() ShapeTree {
 // from UI_Tree -> ShapeTree
 pub fn (shape Shape) draw(ctx gg.Context) {
 	match shape.type {
+		.container { shape.draw_rectangle(ctx) }
 		.rectangle { shape.draw_rectangle(ctx) }
 		.text { shape.draw_text(ctx) }
+		.image {}
+		.line {}
 		.none {}
 	}
 }
 
 pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
+	shape_clip(shape, ctx)
+	defer { unclip(shape, ctx) }
+
 	ctx.draw_rect(
 		x:          shape.x
 		y:          shape.y
@@ -88,10 +98,31 @@ pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
 }
 
 pub fn (shape Shape) draw_text(ctx gg.Context) {
+	shape_clip(shape, ctx)
+	defer { unclip(shape, ctx) }
+
 	lh := line_height(shape, ctx)
 	mut y := int(shape.y + f32(0.49999))
 	for line in shape.lines {
 		ctx.draw_text(int(shape.x), y, line, shape.text_cfg)
 		y += lh
 	}
+}
+
+pub fn is_empty_rect(rect gg.Rect) bool {
+	return (rect.x + rect.width) == 0 && (rect.y + rect.height) == 0
+}
+
+pub fn shape_clip(shape Shape, ctx gg.Context) {
+	if !is_empty_rect(shape.bounds) {
+		x := int(shape.bounds.x - 1)
+		y := int(shape.bounds.y - 1)
+		w := int(shape.bounds.width + 1)
+		h := int(shape.bounds.height + 1)
+		ctx.scissor_rect(x, y, w, h)
+	}
+}
+
+pub fn unclip(shape Shape, ctx gg.Context) {
+	ctx.scissor_rect(0, 0, max_int, max_int)
 }
