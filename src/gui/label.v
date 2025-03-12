@@ -18,10 +18,10 @@ pub:
 	padding  Padding
 	spacing  f32
 	text     string
+	wrap     bool
 	text_cfg gx.TextCfg = gx.TextCfg{
 		color: gx.white
 	}
-	wrap     bool
 }
 
 pub fn label(c LabelConfig) &UI_Tree {

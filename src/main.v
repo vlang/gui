@@ -56,7 +56,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 						radius:   radius
 						sizing:   gui.Sizing{.grow, .grow}
 						fill:     true
-						color:    gx.black
+						color:    gx.rgb(0x30, 0x30, 0x30)
 						children: [
 							gui.rectangle(
 								width:  25
@@ -72,9 +72,13 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 							),
 							gui.label(text: 'This is text'),
 							gui.label(
-								id:   'label'
-								wrap: true
-								text: 'Embedded in a column with wrapping'
+								id:       'label'
+								wrap:     true
+								text_cfg: gx.TextCfg{
+									size:  18
+									color: gx.white
+								}
+								text:     'Embedded in a column with wrapping'
 							),
 							gui.button(id: 'button', text: 'Button Text'),
 							// gui.button(id: 'button', text: 'Button Text'),

@@ -62,7 +62,7 @@ fn text(c TextConfig) &Text {
 }
 
 fn text_width(shape Shape, ctx gg.Context) int {
-	ctx.set_text_cfg(gx.TextCfg{})
+	ctx.set_text_cfg(shape.text_cfg)
 	mut max_width := 0
 	for line in shape.lines {
 		width := ctx.text_width(line)
