@@ -4,10 +4,10 @@ import gg
 import gx
 import rand
 
+// Text is an internal structure used to describe a text block
 struct Text implements UI_Tree {
 	id string
 mut:
-	padding   Padding
 	spacing   f32
 	text      string
 	text_cfg  gx.TextCfg
@@ -23,7 +23,6 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 			id:        t.id
 			uid:       rand.uuid_v4()
 			type:      .text
-			padding:   t.padding
 			spacing:   t.spacing
 			text:      t.text
 			text_cfg:  t.text_cfg
@@ -41,7 +40,6 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 struct TextConfig {
 pub:
 	id        string
-	padding   Padding
 	spacing   f32
 	text      string
 	text_cfg  gx.TextCfg
@@ -52,7 +50,6 @@ pub:
 fn text(c TextConfig) &Text {
 	return &Text{
 		id:        c.id
-		padding:   c.padding
 		spacing:   c.spacing
 		text:      c.text
 		text_cfg:  c.text_cfg

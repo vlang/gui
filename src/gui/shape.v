@@ -3,6 +3,7 @@ module gui
 import gg
 import gx
 
+// Shape is the only data structure in GUI used to draw to the screen.
 pub struct Shape {
 pub:
 	id        string // asigned by user
@@ -29,6 +30,8 @@ mut:
 	bounds     gg.Rect
 }
 
+// ShapeType describes the only shapes a Shape can be. All
+// screen rendering is comprised of these ShapeTypes.
 pub enum ShapeType {
 	none
 	container
@@ -38,12 +41,15 @@ pub enum ShapeType {
 	image
 }
 
+// ShapeDirection determines if a Shape arranges its child
+// shapes horizontally, vertically or not at all.
 pub enum ShapeDirection {
 	none
 	top_to_bottom
 	left_to_right
 }
 
+// ShapeTree describes a tree of Shapes. UI_Trees generate ShapeTrees
 pub struct ShapeTree {
 pub mut:
 	shape    Shape
@@ -66,8 +72,8 @@ fn (node ShapeTree) clone() ShapeTree {
 
 // draw
 // Drawing a shape it just that. No decisions about UI state are considered.
-// If the UI state of your view changes, Generate and update the window with
-// the new view. New shapes are generated based on the view (UI_Tree).
+// If the UI state of your view changes, Generate an new view and update the window
+// with the new view. New shapes are generated based on the view (UI_Tree).
 // Data flows one way from view -> shapes or in terms of data structures
 // from UI_Tree -> ShapeTree
 pub fn (shape Shape) draw(ctx gg.Context) {
@@ -81,9 +87,11 @@ pub fn (shape Shape) draw(ctx gg.Context) {
 	}
 }
 
+// draw_rectangle draws a shape as a rectangle.
 pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
+	assert shape.type in [.container, .rectangle]
 	shape_clip(shape, ctx)
-	defer { unclip(shape, ctx) }
+	defer { shape_unclip(shape, ctx) }
 
 	ctx.draw_rect(
 		x:          shape.x
@@ -97,9 +105,11 @@ pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
 	)
 }
 
+// draw_text draws a shape as text
 pub fn (shape Shape) draw_text(ctx gg.Context) {
+	assert shape.type == .text
 	shape_clip(shape, ctx)
-	defer { unclip(shape, ctx) }
+	defer { shape_unclip(shape, ctx) }
 
 	lh := line_height(shape, ctx)
 	mut y := int(shape.y + f32(0.49999))
@@ -109,10 +119,13 @@ pub fn (shape Shape) draw_text(ctx gg.Context) {
 	}
 }
 
+// is_empty_rect returns true if the rectangle has no area, positive
+// or negative.
 pub fn is_empty_rect(rect gg.Rect) bool {
 	return (rect.x + rect.width) == 0 && (rect.y + rect.height) == 0
 }
 
+// shape_clip sets up a clipping region based on the shapes's bounds property.'
 pub fn shape_clip(shape Shape, ctx gg.Context) {
 	if !is_empty_rect(shape.bounds) {
 		x := int(shape.bounds.x - 1)
@@ -123,6 +136,7 @@ pub fn shape_clip(shape Shape, ctx gg.Context) {
 	}
 }
 
-pub fn unclip(shape Shape, ctx gg.Context) {
+// shape_unclip resets the clipping region.
+pub fn shape_unclip(shape Shape, ctx gg.Context) {
 	ctx.scissor_rect(0, 0, max_int, max_int)
 }

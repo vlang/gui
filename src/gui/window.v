@@ -67,6 +67,14 @@ fn (window &Window) do_layout(mut layout ShapeTree) {
 	layout_do(mut layout, window)
 }
 
+// update_view sets the Window's view. A window can have
+// only one view. Giving a Window  a new view replaces the
+// current view. update_view() does not hold a reference to
+// the given view. Instead, it generates a ShapeTree from
+// the given view. You're free to hold on to the view, change
+// it, etc. without fear of colliding with the UI thread.
+// A key concept here is that a view is only processed once.
+// There are no data bindings or other observation mechanisms.
 pub fn (mut window Window) update_view(view UI_Tree) {
 	mut shapes := generate_shapes(view, window)
 	window.do_layout(mut shapes)
@@ -76,11 +84,13 @@ pub fn (mut window Window) update_view(view UI_Tree) {
 	window.mutex.unlock()
 }
 
+// window_size returns the size of the window in logical units.
 pub fn (window &Window) window_size() (int, int) {
 	size := window.ui.window_size()
 	return size.width, size.height
 }
 
+// run starts the UI and handles events
 pub fn (mut window Window) run() {
 	window.ui.run()
 }

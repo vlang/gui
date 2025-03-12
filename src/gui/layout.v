@@ -6,6 +6,8 @@ module gui
 import arrays
 import gg
 
+// layout_do executes a pipeline of functions to layout
+// and position the Shapes of a ShapeTree
 fn layout_do(mut layout ShapeTree, window Window) {
 	layout_widths(mut layout)
 	layout_flex_widths(mut layout)
@@ -18,6 +20,8 @@ fn layout_do(mut layout ShapeTree, window Window) {
 	layout_clipping_bounds(mut layout, width: width, height: height)
 }
 
+// layout_widths arranges a node's children Shapes horizontally. Only container
+// nodes with a shape direction are arranged.
 fn layout_widths(mut node ShapeTree) {
 	for mut child in node.children {
 		layout_widths(mut child)
@@ -35,6 +39,8 @@ fn layout_widths(mut node ShapeTree) {
 	}
 }
 
+// layout_heights arranges a node's children Shapes vertically. Only container
+// Shapes with a direction are arranged.
 fn layout_heights(mut node ShapeTree) {
 	for mut child in node.children {
 		layout_heights(mut child)
@@ -52,6 +58,8 @@ fn layout_heights(mut node ShapeTree) {
 	}
 }
 
+// layout_flex_widths manages the growing and shrinking of Shapes horizontally to satisfy
+// a layout constraint
 fn layout_flex_widths(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
 	mut remaining_width := node.shape.width - node.shape.padding.left - node.shape.padding.right
@@ -158,6 +166,8 @@ fn layout_flex_widths(mut node ShapeTree) {
 	}
 }
 
+// layout_flex_heights manages the growing and shrinking of Shapes vertically to satisfy
+// a layout constraint
 fn layout_flex_heights(mut node ShapeTree) {
 	mut remaining_height := node.shape.height - node.shape.padding.top - node.shape.padding.bottom
 
@@ -226,6 +236,9 @@ fn layout_flex_heights(mut node ShapeTree) {
 	}
 }
 
+// layout_wrap_text is called after all widths in a ShapeTree are determined.
+// Wrapping text can change the height of an Shape, which is why this is called
+// before computing Shape heights
 fn layout_wrap_text(mut node ShapeTree, ctx gg.Context) {
 	text_wrap(mut node.shape, ctx)
 	for mut child in node.children {
@@ -233,6 +246,8 @@ fn layout_wrap_text(mut node ShapeTree, ctx gg.Context) {
 	}
 }
 
+// layout_positions sets the positions of all Shapes in the ShapeTreee.
+// It also handles alignment (soon)
 fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	node.shape.x += offset_x
 	node.shape.y += offset_y
@@ -253,6 +268,8 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	}
 }
 
+// layout_clipping_bounds ensures that Shapes do not draw outside the parent
+// Shape container.
 fn layout_clipping_bounds(mut node ShapeTree, bounds gg.Rect) {
 	nb := match node.shape.type == .container {
 		true {

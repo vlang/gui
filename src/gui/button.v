@@ -12,6 +12,10 @@ pub:
 	text    string
 }
 
+// ButtonConfig
+// A UI without buttons is not very useful. GUI keeps it
+// simple. Buttons can have a size and color and text
+// and not much else.
 pub struct ButtonConfig {
 pub:
 	id      string
@@ -22,6 +26,7 @@ pub:
 	color   gx.Color
 }
 
+// button is a factory function for a button.
 pub fn button(c ButtonConfig) &UI_Tree {
 	return row(
 		id:       c.id
