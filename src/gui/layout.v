@@ -8,10 +8,10 @@ import gg
 
 fn layout_do(mut layout ShapeTree, window Window) {
 	layout_widths(mut layout)
-	layout_dynamic_widths(mut layout)
+	layout_flex_widths(mut layout)
 	layout_wrap_text(mut layout, window.ui)
 	layout_heights(mut layout)
-	layout_dynamic_heights(mut layout)
+	layout_flex_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
 }
 
@@ -49,7 +49,7 @@ fn layout_heights(mut node ShapeTree) {
 	}
 }
 
-fn layout_dynamic_widths(mut node ShapeTree) {
+fn layout_flex_widths(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
 	mut remaining_width := node.shape.width - node.shape.padding.left - node.shape.padding.right
 
@@ -62,24 +62,24 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 
 		// Grow child elements
 		idx := arrays.index_of_first(node.children, fn (_ int, n ShapeTree) bool {
-			return n.shape.sizing.width == .grow
+			return n.shape.sizing.width == .flex
 		})
 		if idx < 0 {
 			return
 		}
-		length := node.children.filter(it.shape.sizing.width == .grow).len
+		length := node.children.filter(it.shape.sizing.width == .flex).len
 
-		// divide up the remaining dynamic widths by first growing
-		// all the all the dynamics to the same size (if possible)
+		// divide up the remaining flex widths by first growing
+		// all the all the flexs to the same size (if possible)
 		// and then distributing the remaining width to evenly to
-		// each dynamic.
+		// each flex.
 		for i := 0; remaining_width > 0.1 && i < clamp; i++ {
 			mut smallest := node.children[idx].shape.width
 			mut second_smallest := f32(1000 * 1000)
 			mut width_to_add := remaining_width
 
 			for child in node.children {
-				if child.shape.sizing.width == .grow {
+				if child.shape.sizing.width == .flex {
 					if child.shape.width < smallest {
 						second_smallest = smallest
 						smallest = child.shape.width
@@ -94,7 +94,7 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 			width_to_add = f32_min(width_to_add, remaining_width / length)
 
 			for mut child in node.children {
-				if child.shape.sizing.width == .grow {
+				if child.shape.sizing.width == .flex {
 					if child.shape.width == smallest {
 						child.shape.width += width_to_add
 						remaining_width -= width_to_add
@@ -130,7 +130,7 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 			width_to_add = f32_max(width_to_add, remaining_width / shrinkable.len)
 
 			for mut child in node.children {
-				if child.shape.sizing.width == .grow {
+				if child.shape.sizing.width == .flex {
 					previous_width := child.shape.width
 					if child.shape.width == largest {
 						child.shape.width += width_to_add
@@ -145,23 +145,23 @@ fn layout_dynamic_widths(mut node ShapeTree) {
 		}
 	} else if node.shape.direction == .top_to_bottom {
 		for mut child in node.children {
-			if child.shape.sizing.width == .grow {
+			if child.shape.sizing.width == .flex {
 				child.shape.width += (remaining_width - child.shape.width)
 			}
 		}
 	}
 
 	for mut child in node.children {
-		layout_dynamic_widths(mut child)
+		layout_flex_widths(mut child)
 	}
 }
 
-fn layout_dynamic_heights(mut node ShapeTree) {
+fn layout_flex_heights(mut node ShapeTree) {
 	mut remaining_height := node.shape.height - node.shape.padding.top - node.shape.padding.bottom
 
 	if node.shape.direction == .top_to_bottom {
 		for mut child in node.children {
-			layout_dynamic_heights(mut child)
+			layout_flex_heights(mut child)
 			remaining_height -= child.shape.height
 		}
 
@@ -170,25 +170,25 @@ fn layout_dynamic_heights(mut node ShapeTree) {
 
 		// Grow child elements
 		idx := arrays.index_of_first(node.children, fn (_ int, n ShapeTree) bool {
-			return n.shape.sizing.height == .grow
+			return n.shape.sizing.height == .flex
 		})
 		if idx < 0 {
 			return
 		}
 		clamp := 100 // avoid infinite loop
-		length := node.children.filter(it.shape.sizing.height == .grow).len
+		length := node.children.filter(it.shape.sizing.height == .flex).len
 
-		// divide up the remaining dynamic hieghts by first growing
-		// all the all the dynamics to the same size (if possible)
+		// divide up the remaining flex hieghts by first growing
+		// all the all the flexs to the same size (if possible)
 		// and then distributing the remaining height to evenly to
-		// each dynamic.
+		// each flex.
 		for i := 0; remaining_height > 0.1 && i < clamp; i++ {
 			mut smallest := node.children[idx].shape.height
 			mut second_smallest := f32(1000 * 1000)
 			mut height_to_add := remaining_height
 
 			for child in node.children {
-				if child.shape.sizing.height == .grow {
+				if child.shape.sizing.height == .flex {
 					if child.shape.height < smallest {
 						second_smallest = smallest
 						smallest = child.shape.height
@@ -203,7 +203,7 @@ fn layout_dynamic_heights(mut node ShapeTree) {
 			height_to_add = f32_min(height_to_add, remaining_height / length)
 
 			for mut child in node.children {
-				if child.shape.sizing.height == .grow {
+				if child.shape.sizing.height == .flex {
 					if child.shape.height == smallest {
 						child.shape.height += height_to_add
 						remaining_height -= height_to_add
@@ -213,14 +213,14 @@ fn layout_dynamic_heights(mut node ShapeTree) {
 		}
 	} else if node.shape.direction == .left_to_right {
 		for mut child in node.children {
-			if child.shape.sizing.height == .grow {
+			if child.shape.sizing.height == .flex {
 				child.shape.height += (remaining_height - child.shape.height)
 			}
 		}
 	}
 
 	for mut child in node.children {
-		layout_dynamic_heights(mut child)
+		layout_flex_heights(mut child)
 	}
 }
 

@@ -4,8 +4,8 @@ pub const version = '0.1.0'
 
 pub enum SizingType {
 	fit
+	flex
 	fixed
-	grow
 }
 
 pub struct Sizing {

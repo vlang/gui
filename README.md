@@ -62,13 +62,13 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				padding:  padding
 				radius:   radius
 				color:    gx.orange
-				sizing:   gui.Sizing{.grow, .grow}
+				sizing:   gui.Sizing{.flex, .flex}
 				children: [
 					gui.column(
 						spacing:  spacing
 						padding:  padding
 						radius:   radius
-						sizing:   gui.Sizing{.fit, .grow}
+						sizing:   gui.Sizing{.fit, .flex}
 						fill:     true
 						color:    gx.black
 						children: [
@@ -94,7 +94,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 						height: 25
 						fill:   true
 						radius: radius
-						sizing: gui.Sizing{.grow, .grow}
+						sizing: gui.Sizing{.flex, .flex}
 						color:  gx.dark_green
 					),
 				]
@@ -104,7 +104,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				height: 50
 				fill:   true
 				radius: radius
-				sizing: gui.Sizing{.grow, .grow}
+				sizing: gui.Sizing{.flex, .flex}
 				color:  gx.red
 			),
 			gui.rectangle(
