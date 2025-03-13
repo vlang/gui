@@ -3,10 +3,9 @@ module gui
 import gx
 
 // RectangleConfig
-// Rectangles are one of the mose useful and used UI controls.
-// Rectangles can be filled or outlined, colored and have radius
-// corners. For the technially inclined rectangles are containers
-// but don't have children and as such function as plain drawings.
+// Rectangles are one of the most useful and used UI controls.
+// Rectangles can be filled, outlined and colored and can have radius
+// corners.
 pub struct RectangleConfig {
 pub:
 	id     string

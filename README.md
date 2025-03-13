@@ -20,12 +20,19 @@ module main
 import gui
 import gx
 
+@[heap]
+struct AppState {
+pub mut:
+	click_count int
+}
+
 fn main() {
 	mut window := gui.window(
 		title:      'test layout'
-		width:      1000
+		width:      600
 		height:     400
 		bg_color:   gx.rgb(0x30, 0x30, 0x30)
+		state:      &AppState{}
 		on_init:    fn (mut w gui.Window) {
 			w.update_view(main_view(w))
 		}
@@ -37,47 +44,54 @@ fn main() {
 }
 
 fn main_view(w &gui.Window) gui.UI_Tree {
-	radius := 5
-	spacing := 10
-	padding := gui.Padding{10, 10, 10, 10}
 	width, height := w.window_size()
+	mut state := w.get_state[AppState]()
 
 	return gui.row(
 		width:    width
 		height:   height
-		sizing:   gui.Sizing{.fixed, .fixed}
-		spacing:  10
-		padding:  padding
+		sizing:   gui.fixed_fixed
 		fill:     true
-		color:    gx.dark_blue
+		color:    gui.dark_blue
 		children: [
-			gui.rectangle(
-				width:  75
-				height: 50
-				fill:   true
-				radius: radius
-				color:  gx.purple
+			gui.column(
+				padding:  gui.padding_none
+				sizing:   gui.fit_flex
+				children: [
+					gui.rectangle(
+						width:  75
+						height: 50
+						fill:   true
+						color:  gui.purple
+					),
+					gui.rectangle(
+						width:  75
+						height: 50
+						sizing: gui.fit_flex
+						color:  gui.transparent
+					),
+					gui.rectangle(
+						width:  75
+						height: 50
+						fill:   true
+						color:  gui.green
+					),
+				]
 			),
 			gui.row(
-				spacing:  spacing
-				padding:  padding
-				radius:   radius
-				color:    gx.orange
+				id:       'orange'
+				color:    gui.orange
 				sizing:   gui.Sizing{.flex, .flex}
 				children: [
 					gui.column(
-						spacing:  spacing
-						padding:  padding
-						radius:   radius
-						sizing:   gui.Sizing{.fit, .flex}
+						sizing:   gui.Sizing{.flex, .flex}
 						fill:     true
-						color:    gx.black
+						color:    gui.rgb(0x30, 0x30, 0x30)
 						children: [
 							gui.rectangle(
 								width:  25
 								height: 25
-								radius: radius
-								color:  gx.orange
+								color:  gui.orange
 							),
 							gui.column(
 								color:    gx.white
@@ -86,17 +100,32 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 								]
 							),
 							gui.label(text: 'This is text'),
-							gui.label(text: 'Embedded in a column'),
-							gui.button(text: 'Button Text'),
+							gui.label(
+								id:       'label'
+								wrap:     true
+								text_cfg: gx.TextCfg{
+									size:  18
+									color: gui.white
+								}
+								text:     'Embedded in a column with wrapping'
+							),
+							gui.button(
+								text:     'Button Text ${state.click_count}'
+								on_click: fn (id string, me gui.MouseEvent, mut w gui.Window) {
+									mut state := w.get_state[AppState]()
+									state.click_count += 1
+									w.update_view(main_view(w))
+								}
+							),
 						]
 					),
 					gui.rectangle(
+						id:     'green'
 						width:  25
 						height: 25
 						fill:   true
-						radius: radius
-						sizing: gui.Sizing{.flex, .flex}
-						color:  gx.dark_green
+						sizing: gui.flex_flex
+						color:  gui.dark_green
 					),
 				]
 			),
@@ -104,16 +133,32 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				width:  75
 				height: 50
 				fill:   true
-				radius: radius
-				sizing: gui.Sizing{.flex, .flex}
+				sizing: gui.flex_flex
 				color:  gx.red
 			),
-			gui.rectangle(
-				width:  75
-				height: 50
-				fill:   true
-				radius: radius
-				color:  gx.orange
+			gui.column(
+				padding:  gui.Padding{0, 0, 0, 0}
+				sizing:   gui.fit_flex
+				children: [
+					gui.rectangle(
+						width:  75
+						height: 50
+						fill:   true
+						color:  gui.orange
+					),
+					gui.rectangle(
+						width:  75
+						height: 50
+						sizing: gui.fit_flex
+						color:  gui.transparent
+					),
+					gui.rectangle(
+						width:  75
+						height: 50
+						fill:   true
+						color:  gui.yellow
+					),
+				]
 			),
 		]
 	)

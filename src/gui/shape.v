@@ -80,7 +80,7 @@ fn (node ShapeTree) clone() ShapeTree {
 // Drawing a shape it just that. No decisions about UI state are considered.
 // If the UI state of your view changes, Generate an new view and update the window
 // with the new view. New shapes are generated based on the view (UI_Tree).
-// Data flows one way from view -> shapes or in terms of data structures
+// Data flows one way from view -> shapes, or in terms of data structures,
 // from UI_Tree -> ShapeTree
 pub fn (shape Shape) draw(ctx gg.Context) {
 	match shape.type {
@@ -131,7 +131,7 @@ pub fn is_empty_rect(rect gg.Rect) bool {
 	return (rect.x + rect.width) == 0 && (rect.y + rect.height) == 0
 }
 
-// shape_clip sets up a clipping region based on the shapes's bounds property.'
+// shape_clip creates a clipping region based on the shapes's bounds property.
 pub fn (shape Shape) shape_clip(ctx gg.Context) {
 	if !is_empty_rect(shape.bounds) {
 		x := int(shape.bounds.x - 1)

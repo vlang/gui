@@ -16,7 +16,7 @@ pub:
 	height SizingType
 }
 
-// Padding is the anount of space surrounding a Shape.
+// Padding is the amount of space surrounding a Shape.
 // The size of a Shape always includes its padding.
 pub struct Padding {
 pub mut:
