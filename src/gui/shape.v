@@ -28,10 +28,10 @@ mut:
 	min_width  f32
 	min_height f32
 	bounds     gg.Rect
+	on_click   fn (string, MouseEvent, &Window) = unsafe { nil }
 }
 
-// ShapeType describes the only shapes a Shape can be. All
-// screen rendering is comprised of these ShapeTypes.
+// ShapeType defines the kind of Shape.
 pub enum ShapeType {
 	none
 	container
@@ -41,7 +41,7 @@ pub enum ShapeType {
 	image
 }
 
-// ShapeDirection determines if a Shape arranges its child
+// ShapeDirection defines if a Shape arranges its child
 // shapes horizontally, vertically or not at all.
 pub enum ShapeDirection {
 	none
@@ -49,14 +49,20 @@ pub enum ShapeDirection {
 	left_to_right
 }
 
-// ShapeTree describes a tree of Shapes. UI_Trees generate ShapeTrees
+// ShapeTree defines a tree of Shapes. UI_Trees generate ShapeTrees
 pub struct ShapeTree {
 pub mut:
 	shape    Shape
 	children []ShapeTree
 }
 
-const empty_shape_tree = ShapeTree{}
+const empty_shape_id = '__empty_shape__'
+const empty_shape = Shape{
+	id: empty_shape_id
+}
+const empty_shape_tree = ShapeTree{
+	shape: empty_shape
+}
 
 fn (node ShapeTree) clone() ShapeTree {
 	mut clone := ShapeTree{
@@ -90,8 +96,8 @@ pub fn (shape Shape) draw(ctx gg.Context) {
 // draw_rectangle draws a shape as a rectangle.
 pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
 	assert shape.type in [.container, .rectangle]
-	shape_clip(shape, ctx)
-	defer { shape_unclip(shape, ctx) }
+	shape.shape_clip(ctx)
+	defer { shape.shape_unclip(ctx) }
 
 	ctx.draw_rect(
 		x:          shape.x
@@ -108,8 +114,8 @@ pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
 // draw_text draws a shape as text
 pub fn (shape Shape) draw_text(ctx gg.Context) {
 	assert shape.type == .text
-	shape_clip(shape, ctx)
-	defer { shape_unclip(shape, ctx) }
+	shape.shape_clip(ctx)
+	defer { shape.shape_unclip(ctx) }
 
 	lh := line_height(shape, ctx)
 	mut y := int(shape.y + f32(0.49999))
@@ -126,7 +132,7 @@ pub fn is_empty_rect(rect gg.Rect) bool {
 }
 
 // shape_clip sets up a clipping region based on the shapes's bounds property.'
-pub fn shape_clip(shape Shape, ctx gg.Context) {
+pub fn (shape Shape) shape_clip(ctx gg.Context) {
 	if !is_empty_rect(shape.bounds) {
 		x := int(shape.bounds.x - 1)
 		y := int(shape.bounds.y - 1)
@@ -137,6 +143,29 @@ pub fn shape_clip(shape Shape, ctx gg.Context) {
 }
 
 // shape_unclip resets the clipping region.
-pub fn shape_unclip(shape Shape, ctx gg.Context) {
+pub fn (shape Shape) shape_unclip(ctx gg.Context) {
 	ctx.scissor_rect(0, 0, max_int, max_int)
+}
+
+// point_in_shape determines if the given point is within the shape's layout rectangle
+pub fn (shape Shape) point_in_shape(x f32, y f32) bool {
+	return x >= shape.x && x < (shape.x + shape.width) && y >= shape.y
+		&& y < (shape.y + shape.height)
+}
+
+// shape_from_point_on_click walks the ShapeTree and returns the first
+// shape where the sahpe region contains the point and the shape has
+// a click handler. Search is in reverse order
+pub fn shape_from_point_on_click(node ShapeTree, x f32, y f32) Shape {
+	mut shape := empty_shape
+	for child in node.children {
+		shape = shape_from_point_on_click(child, x, y)
+		if shape.id != empty_shape_id {
+			return shape
+		}
+	}
+	if node.shape.point_in_shape(x, y) && node.shape.on_click != unsafe { nil } {
+		return node.shape
+	}
+	return shape
 }

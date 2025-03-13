@@ -90,6 +90,8 @@ fn text_wrap(mut shape Shape, ctx gg.Context) {
 	}
 }
 
+// text_wrap_text wraps lines to given width (logical units, not chars)
+// Extra white space is removed because that's the way it is.
 pub fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}

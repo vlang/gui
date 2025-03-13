@@ -7,6 +7,7 @@ import sync
 @[heap]
 pub struct Window {
 mut:
+	state      voidptr      = unsafe { nil } // a custom pointer to the application data/instance
 	layout     ShapeTree    = empty_shape_tree
 	mutex      &sync.Mutex  = unsafe { nil }
 	ui         &gg.Context  = unsafe { nil }
@@ -19,6 +20,7 @@ pub:
 	width      int
 	height     int
 	bg_color   gx.Color
+	state      voidptr      = unsafe { nil }
 	on_init    fn (&Window) = unsafe { nil }
 	on_resized fn (&Window) = unsafe { nil }
 }
@@ -27,6 +29,7 @@ pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
 		mutex:      sync.new_mutex()
 		on_resized: cfg.on_resized
+		state:      cfg.state
 	}
 	window.ui = gg.new_context(
 		ui_mode:      true // only draw on events
@@ -36,6 +39,7 @@ pub fn window(cfg WindowCfg) &Window {
 		window_title: cfg.title
 		init_fn:      cfg.on_init
 		resized_fn:   resized
+		click_fn:     clicked
 		frame_fn:     frame
 		user_data:    window
 	)
@@ -48,12 +52,6 @@ fn frame(mut window Window) {
 	window.draw_shapes(window.layout)
 	window.ui.end()
 	window.mutex.unlock()
-}
-
-fn resized(e &gg.Event, mut w Window) {
-	if w.on_resized != unsafe { nil } {
-		w.on_resized(w)
-	}
 }
 
 fn (mut window Window) draw_shapes(shapes ShapeTree) {
@@ -88,4 +86,33 @@ pub fn (window &Window) window_size() (int, int) {
 // run starts the UI and handles events
 pub fn (mut window Window) run() {
 	window.ui.run()
+}
+
+// get_state returns a reference to user supplied data
+pub fn (window &Window) get_state[T]() &T {
+	assert window.state != unsafe { nil }
+	return unsafe { &T(window.state) }
+}
+
+fn resized(e &gg.Event, mut w Window) {
+	if w.on_resized != unsafe { nil } {
+		w.on_resized(w)
+	}
+}
+
+fn clicked(x f32, y f32, button gg.MouseButton, mut w Window) {
+	w.mutex.lock()
+	layout := w.layout
+	w.mutex.unlock()
+
+	shape := shape_from_point_on_click(layout, x, y)
+
+	if shape.on_click != unsafe { nil } {
+		me := MouseEvent{
+			mouse_x:      x
+			mouse_y:      y
+			mouse_button: MouseButton(button)
+		}
+		shape.on_click(shape.id, me, w)
+	}
 }

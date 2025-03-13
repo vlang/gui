@@ -3,12 +3,19 @@ module main
 import gui
 import gx
 
+@[heap]
+struct AppState {
+pub mut:
+	click_count int
+}
+
 fn main() {
 	mut window := gui.window(
 		title:      'test layout'
 		width:      600
 		height:     400
 		bg_color:   gx.rgb(0x30, 0x30, 0x30)
+		state:      &AppState{}
 		on_init:    fn (mut w gui.Window) {
 			w.update_view(main_view(w))
 		}
@@ -21,6 +28,7 @@ fn main() {
 
 fn main_view(w &gui.Window) gui.UI_Tree {
 	width, height := w.window_size()
+	mut state := w.get_state[AppState]()
 
 	return gui.row(
 		width:    width
@@ -59,7 +67,6 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				sizing:   gui.Sizing{.flex, .flex}
 				children: [
 					gui.column(
-						id:       'black'
 						sizing:   gui.Sizing{.flex, .flex}
 						fill:     true
 						color:    gui.rgb(0x30, 0x30, 0x30)
@@ -85,7 +92,14 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 								}
 								text:     'Embedded in a column with wrapping'
 							),
-							gui.button(id: 'button-id', text: 'Button Text'),
+							gui.button(
+								text:     'Button Text ${state.click_count}'
+								on_click: fn (id string, me gui.MouseEvent, mut w gui.Window) {
+									mut state := w.get_state[AppState]()
+									state.click_count += 1
+									w.update_view(main_view(w))
+								}
+							),
 						]
 					),
 					gui.rectangle(

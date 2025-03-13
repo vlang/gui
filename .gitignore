@@ -23,3 +23,5 @@ bin/
 # vweb and database
 *.db
 
+# gui
+doc/html/

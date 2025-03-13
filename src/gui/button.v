@@ -18,12 +18,13 @@ pub:
 // and not much else.
 pub struct ButtonConfig {
 pub:
-	id      string
-	width   f32
-	height  f32
-	padding Padding = Padding{5, 10, 7, 10}
-	text    string
-	color   gx.Color
+	id       string
+	width    f32
+	height   f32
+	padding  Padding = Padding{5, 10, 7, 10}
+	text     string
+	color    gx.Color
+	on_click fn (string, MouseEvent, &Window) = unsafe { nil }
 }
 
 // button is a factory function for a button.
@@ -36,6 +37,7 @@ pub fn button(c ButtonConfig) &UI_Tree {
 		radius:   5
 		fill:     true
 		color:    gx.blue
+		on_click: c.on_click
 		children: [
 			label(text: c.text),
 		]
