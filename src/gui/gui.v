@@ -26,7 +26,19 @@ pub mut:
 	left   f32
 }
 
-// Some useful padding and spacing consts
 pub const radius_default = 5
 pub const spacing_default = 10
 pub const padding_default = Padding{10, 10, 10, 10}
+pub const padding_none = Padding{0, 0, 0, 0}
+
+pub const fit_fit = Sizing{.fit, .fit}
+pub const fit_flex = Sizing{.fit, .flex}
+pub const fit_fixed = Sizing{.fit, .fixed}
+
+pub const flex_fit = Sizing{.flex, .fit}
+pub const flex_flex = Sizing{.flex, .flex}
+pub const flex_fixed = Sizing{.flex, .fixed}
+
+pub const fixed_fixed = Sizing{.fixed, .fixed}
+pub const fixed_flex = Sizing{.fixed, .flex}
+pub const fixed_fit = Sizing{.fixed, .fit}

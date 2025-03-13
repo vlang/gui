@@ -16,7 +16,7 @@ pub:
 	height f32
 	sizing Sizing
 	fill   bool
-	radius int
+	radius int      = radius_default
 	color  gx.Color = gx.rgba(0, 0, 0, 0)
 }
 

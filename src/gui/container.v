@@ -18,9 +18,9 @@ pub mut:
 	spacing   f32
 	sizing    Sizing
 	padding   Padding
-	fill      bool = true
+	fill      bool
 	radius    int
-	color     gx.Color = gx.rgba(0, 0, 0, 0)
+	color     gx.Color
 	children  []UI_Tree
 }
 
@@ -56,12 +56,12 @@ pub:
 	y        f32
 	width    f32
 	height   f32
-	spacing  f32
+	spacing  f32 = spacing_default
 	sizing   Sizing
 	fill     bool
-	radius   int
+	radius   int      = radius_default
 	color    gx.Color = gx.rgba(0, 0, 0, 0)
-	padding  Padding
+	padding  Padding  = padding_default
 	children []UI_Tree
 }
 

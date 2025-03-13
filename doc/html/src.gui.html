@@ -1,0 +1,2136 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="x-ua-compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>src.gui | vdoc</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<link
+			href="https://fonts.googleapis.com/css2?family=JetBrains+Mono&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+		<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png" />
+		<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png" />
+		<link rel="manifest" href="site.webmanifest" />
+		<link rel="mask-icon" href="safari-pinned-tab.svg" color="#5bbad5" />
+		<meta name="msapplication-TileColor" content="#da532c" />
+		<meta name="theme-color" content="#ffffff" />
+		<style>:root {
+	--background-color: #fff;
+	--link-color: #2779bd;
+	--text-color: #000;
+	--ref-symbol-color: #dae1e7;
+	--ref-symbol-hover-color: #b8c2cc;
+	--title-bottom-line-color: #f1f5f8;
+	--footer-top-line-color: #f1f5f8;
+	--footer-text-color: #616161;
+	--code-signature-border-color: #a0aec0;
+	--menu-background-color: #4b6c88;
+	--menu-text-color: #fff;
+	--menu-indent-line-color: #3b3b3b66;
+	--menu-indent-line-active-color: #00000066;
+	--menu-scrollbar-color: #a0aec0;
+	--menu-toggle-icon-color: #fff;
+	--menu-toggle-icon-hover-color: #00000044;
+	--menu-search-background-color: #00000044;
+	--menu-search-font-color: #fff;
+	--menu-search-result-background-hover-color: #00000021;
+	--menu-search-separator-color: #00000044;
+	--menu-search-title-text-color: #d5efff;
+	--menu-search-badge-background-color: #00000044;
+	--menu-search-badge-background-hover-color: #0000004d;
+	--toc-text-color: #2779bd;
+	--toc-indicator-color: #4299e1;
+	--code-default-text-color: #2c3e64;
+	--code-background-color: #edf2f7;
+	--code-keyword-text-color: #2b6cb0;
+	--code-builtin-text-color: #219321;
+	--code-function-text-color: #288341;
+	--code-comment-text-color: #93a1a1;
+	--code-punctuation-text-color: #696969;
+	--code-symbol-text-color: #702459;
+	--code-operator-text-color: #864f29;
+	--attribute-deprecated-background-color: #f59f0b48;
+	--attribute-deprecated-text-color: #92400e;
+	--attribute-text-color: #000000cf;
+	--table-header-line-color: #2c3e64;
+	--table-background-color: #edf2f7;
+}
+html.dark {
+	--background-color: #1a202c;
+	--text-color: #fff;
+	--link-color: #90cdf4;
+	--ref-symbol-color: #2d3748;
+	--ref-symbol-hover-color: #4a5568;
+	--title-bottom-line-color: #2d3748;
+	--footer-top-line-color: #2d3748;
+	--footer-text-color: #bbd3e1;
+	--code-signature-border-color: #4a5568;
+	--menu-background-color: #2d3748;
+	--menu-text-color: #fff;
+	--menu-indent-line-color: #4a5568;
+	--menu-indent-line-active-color: #90cdf4; /*#4a5568*/
+	--menu-scrollbar-color: #4a5568;
+	--menu-toggle-icon-color: #fff;
+	--menu-search-background-color: #4a5568;
+	--menu-search-font-color: #fff;
+	--menu-search-separator-color: #4a5568;
+	--menu-search-title-text-color: #90cdf4;
+	--menu-search-badge-background-color: #4a5568;
+	--menu-search-badge-background-hover-color: #4a5568;
+	--toc-text-color: #90cdf4;
+	--toc-indicator-color: #4299e1;
+	--code-default-text-color: #cbd5e0;
+	--code-background-color: #2d3748;
+	--code-builtin-text-color: #68d391;
+	--code-keyword-text-color: #63b3ed;
+	--code-function-text-color: #4fd1c5;
+	--code-comment-text-color: #a0aec0;
+	--code-punctuation-text-color: #a0aec0;
+	--code-symbol-text-color: #ed64a6;
+	--code-operator-text-color: #a67f59;
+	--attribute-background-color: #ffffff20;
+	--attribute-text-color: #ffffffaf;
+	--attribute-deprecated-text-color: #fef3c7;
+	--table-header-line-color: #cbd5e0;
+	--table-background-color: #2d3748;
+}
+html.dark .dark-icon {
+	display: none;
+}
+html:not(.dark) .light-icon {
+	display: none;
+}
+html {
+	height: 100%;
+}
+body {
+	margin: 0;
+	font-family:
+		Jost,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Helvetica,
+		Arial,
+		sans-serif,
+		'Apple Color Emoji',
+		'Segoe UI Emoji',
+		'Segoe UI Symbol';
+	background-color: #fff;
+	background-color: var(--background-color);
+	color: #000;
+	color: var(--text-color);
+	height: 100%;
+}
+hr {
+	height: 0.25rem;
+	background-color: var(--title-bottom-line-color);
+	border: 0;
+	padding: 0;
+	margin: 1.2rem 0;
+}
+#page {
+	height: 100%;
+	padding-top: 56px;
+	box-sizing: border-box;
+}
+
+/** Reset for menus */
+.doc-nav ul,
+.doc-toc ul {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+/* Left nav */
+.doc-nav {
+	position: fixed;
+	width: 100%;
+	left: 0;
+	right: 0;
+	top: 0;
+	display: flex;
+	background-color: #4b6c88;
+	background-color: var(--menu-background-color);
+	color: #fff;
+	color: var(--menu-text-color);
+	flex-direction: column;
+	overflow-y: auto;
+	height: 100vh;
+	z-index: 10;
+	scrollbar-width: thin;
+	scrollbar-color: #a0aec0 transparent;
+	scrollbar-color: var(--menu-scrollbar-color) transparent;
+	font-family: Jost, sans-serif;
+}
+*::-webkit-scrollbar {
+	width: 4px;
+	height: 4px;
+}
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+	background-color: #a0aec0;
+	background-color: var(--menu-scrollbar-color);
+	border: 3px solid transparent;
+}
+.doc-nav .content li {
+	line-height: 1.8;
+}
+.doc-nav .content.show {
+	display: flex;
+}
+.doc-nav .content.hidden {
+	display: none;
+}
+.doc-nav #toggle-menu {
+	cursor: pointer;
+	padding: 0.3rem;
+	fill: #fff;
+	fill: var(--menu-toggle-icon-color);
+}
+.doc-nav > .heading-container {
+	position: sticky;
+	position: -webkit-sticky;
+	top: 0;
+	background-color: #4b6c88;
+	background-color: var(--menu-background-color);
+	z-index: 10;
+}
+.doc-nav > .heading-container > .heading {
+	display: flex;
+	flex-direction: column;
+}
+.doc-nav > .heading-container > .heading > .info {
+	display: flex;
+	padding: 0 1rem;
+	height: 56px;
+}
+.doc-nav > .heading-container > .heading > .info > .module {
+	font-size: 1.6rem;
+	font-weight: 500;
+	margin: 0;
+}
+.doc-nav > .heading-container > .heading > .info > .toggle-version-container {
+	display: flex;
+	align-items: center;
+}
+.doc-nav > .heading-container > .heading > .info > .toggle-version-container > #dark-mode-toggle {
+	cursor: pointer;
+	fill: #fff;
+	display: flex;
+}
+.doc-nav
+	> .heading-container
+	> .heading
+	> .info
+	> .toggle-version-container
+	> #dark-mode-toggle
+	> svg {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+.doc-nav #search {
+	position: relative;
+	margin: 0.6rem 1.2rem 1rem 1.2rem;
+	display: flex;
+}
+.doc-nav #search input {
+	border: none;
+	width: 100%;
+	border-radius: 0.2rem;
+	padding: 0.5rem 1rem;
+	outline: none;
+	background-color: #00000044;
+	background-color: var(--menu-search-background-color);
+	color: #fff;
+	color: var(--menu-search-text-color);
+}
+.doc-nav #search input::placeholder {
+	color: #edf2f7;
+	text-transform: uppercase;
+	font-size: 12px;
+	font-weight: 600;
+}
+.doc-nav #search-keys {
+	position: absolute;
+	height: 100%;
+	align-items: center;
+	display: flex;
+	top: 0;
+	right: 0.75rem;
+	opacity: 0.33;
+	transition: opacity 0.1s;
+}
+.doc-nav #search-keys.hide {
+	opacity: 0;
+}
+.doc-nav #search-keys kbd {
+	padding: 2.5px 4px;
+	margin-left: 1px;
+	font-size: 11px;
+	background-color: var(--menu-background-color);
+	border: 1px solid #ffffff44;
+	border-radius: 3px;
+}
+.doc-nav > .content {
+	padding: 0 2rem 2rem 2rem;
+	display: flex;
+	flex-direction: column;
+}
+.doc-nav > .content > ul > li.active {
+	font-weight: 600;
+}
+.doc-nav > .content > ul > li.open ul {
+	display: initial;
+}
+.doc-nav > .content > ul > li.open > .menu-row > .dropdown-arrow {
+	transform: initial;
+}
+.doc-nav > .content > ul > li > .menu-row {
+	display: flex;
+	align-items: center;
+}
+.doc-nav > .content > ul > li > .menu-row > .dropdown-arrow {
+	transform: rotate(-90deg);
+	height: 18px;
+	width: 18px;
+	margin-left: calc(-18px - 0.3rem);
+	margin-right: 0.3rem;
+	cursor: pointer;
+	fill: #fff;
+	pointer-events: all;
+}
+.doc-nav > .content > ul > li > ul {
+	margin: 0.4rem 0;
+	display: none;
+}
+.doc-nav > .content > ul > li > ul > li {
+	border-color: #ffffff66;
+	border-color: var(--menu-indent-line-color);
+	border-left-width: 1.7px;
+	border-left-style: solid;
+	padding-left: 0.7rem;
+}
+.doc-nav > .content > ul > li > ul > li.active {
+	border-color: #00000066;
+	border-color: var(--menu-indent-line-active-color);
+}
+.doc-nav > .content a {
+	color: #fff;
+	color: var(--menu-text-color);
+	text-decoration: none;
+	user-select: none;
+}
+.doc-nav > .content a:hover {
+	text-decoration: underline;
+}
+.doc-nav .search {
+	overflow-y: auto;
+}
+.doc-nav .search.hidden {
+	display: none;
+}
+.doc-nav .search li {
+	line-height: 1.5;
+}
+.doc-nav > .search .result:hover,
+.doc-nav > .search .result.selected {
+	background-color: #00000021;
+	background-color: var(--menu-search-result-background-hover-color);
+}
+.doc-nav > .search .result:hover > .link > .definition > .badge {
+	background-color: #0000004d;
+	background-color: var(--menu-search-badge-background-hover-color);
+}
+.doc-nav > .search .result > .link {
+	padding: 0.5rem 1.4rem;
+	text-decoration: none;
+	color: #fff;
+	color: var(--menu-text-color);
+	display: block;
+}
+.doc-nav > .search .result > .link > .definition {
+	display: flex;
+}
+.doc-nav > .search .result > .link > .definition > .title {
+	color: #90cdf4;
+	color: var(--menu-search-title-text-color);
+	font-size: 0.875rem;
+	font-weight: 500;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+.doc-nav > .search .result > .link > .definition > .badge {
+	font-size: 0.75rem;
+	display: inline-flex;
+	padding: 0 0.5rem;
+	background-color: #00000044;
+	background-color: var(--menu-search-badge-background-color);
+	margin-left: auto;
+	align-items: center;
+	border-radius: 9999px;
+	font-weight: 500;
+}
+.doc-nav > .search .result > .link > .description {
+	font-family:
+		Jost,
+		-apple-system,
+		BlinkMacSystemFont,
+		'Segoe UI',
+		Helvetica,
+		Arial,
+		sans-serif,
+		'Apple Color Emoji',
+		'Segoe UI Emoji',
+		'Segoe UI Symbol';
+	font-size: 0.75rem;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	margin-top: 0.25rem;
+}
+.doc-nav > .search > hr.separator {
+	margin: 0.5rem 0;
+	border-color: #00000044;
+	border-color: var(--menu-search-separator-color);
+	box-sizing: content-box;
+	height: 0;
+	border-width: 0;
+	border-top-width: 1px;
+	border-style: solid;
+	overflow: visible;
+}
+
+/* Main content */
+#main-content {
+	outline: none;
+}
+.doc-scrollview {
+	height: 100%;
+	overflow-y: scroll;
+}
+.doc-container {
+	display: flex;
+	flex-direction: column-reverse;
+}
+.doc-content {
+	display: flex;
+	flex-direction: column;
+	padding: 1rem;
+	overflow: hidden;
+}
+.doc-content img {
+	width: auto;
+	max-width: 100%;
+}
+.doc-content p {
+	font-size: 1rem;
+	line-height: 1.6;
+	letter-spacing: 0.025em;
+	max-width: 100ch;
+	word-wrap: break-word;
+}
+.doc-content a {
+	color: #2779bd;
+	color: var(--link-color);
+}
+.doc-content p code {
+	font-size: 0.85rem;
+}
+.doc-content > .doc-node {
+	padding: 5rem 0 2rem 0;
+	margin-top: -4rem;
+	overflow: hidden;
+	word-break: break-word;
+}
+.doc-content > .doc-node.const:nth-child(2) {
+	padding-bottom: 0 !important;
+}
+.doc-content > .doc-node.const:not(:first-child) {
+	padding-top: 4rem;
+}
+.doc-content > .doc-node.const:not(:last-child) {
+	padding-bottom: 2rem;
+}
+.doc-content > .timestamp {
+	font-size: 0.8rem;
+	color: #b8c2cc;
+	color: var(--timestamp-color);
+}
+.doc-content > .doc-node > .title {
+	display: flex;
+	font-family: Jost, sans-serif;
+	font-weight: 500;
+	padding: 0.3rem;
+	align-items: center;
+	margin-bottom: 1rem;
+	border-bottom: 1px solid #f1f5f8;
+	border-bottom: 1px solid var(--title-bottom-line-color);
+}
+.doc-content > .doc-node > .attributes {
+	margin-bottom: 0.6rem;
+}
+.doc-content > .doc-node > .attributes > .attribute {
+	display: inline-block;
+	border-radius: 100px;
+	padding: 0.3rem 0.6rem;
+	background-color: var(--code-background-color);
+	color: var(--attribute-text-color);
+	margin-right: 0.8rem;
+	font-family: 'Jetbrains Mono', monospace;
+	font-size: 0.9rem;
+}
+.doc-content > .doc-node > .attributes > .attribute-deprecated {
+	background-color: var(--attribute-deprecated-background-color);
+	color: var(--attribute-deprecated-text-color);
+}
+.doc-content > .doc-node > .title > .link {
+	display: flex;
+	margin-left: auto;
+	fill: #dae1e7;
+	fill: var(--ref-symbol-color);
+}
+.doc-content > .doc-node > .title > .link:hover {
+	fill: #b8c2cc;
+	fill: var(--ref-symbol-hover-color);
+}
+.doc-content > .doc-node h1 {
+	font-size: 2rem;
+}
+.doc-content > .doc-node h2 {
+	font-size: 1.3rem;
+}
+.doc-content > .doc-node .signature {
+	border-color: #a0aec0;
+	border-color: var(--code-signature-border-color);
+	border-left-width: 3px;
+	border-left-style: solid;
+}
+.doc-content > .doc-node > ul > li .task-list-item-checkbox {
+	margin-right: 0.5rem;
+}
+.doc-content > .doc-node > .title h1,
+.doc-content > .doc-node > .title h2,
+.doc-content > .doc-node > .title h3,
+.doc-content > .doc-node > .title h4,
+.doc-content > .doc-node > .title h5,
+.doc-content > .doc-node > .title h6 {
+	font-weight: 500;
+	margin: 0;
+}
+.doc-content > .doc-node > .title h1 a,
+.doc-content > .doc-node > .title h2 a,
+.doc-content > .doc-node > .title h3 a,
+.doc-content > .doc-node > .title h4 a,
+.doc-content > .doc-node > .title h5 a,
+.doc-content > .doc-node > .title h6 a {
+	text-decoration: none;
+	color: #dae1e7;
+	color: var(--ref-symbol-color);
+}
+.doc-content > .doc-node > .title h1 a:hover,
+.doc-content > .doc-node > .title h2 a:hover,
+.doc-content > .doc-node > .title h3 a:hover,
+.doc-content > .doc-node > .title h4 a:hover,
+.doc-content > .doc-node > .title h5 a:hover,
+.doc-content > .doc-node > .title h6 a:hover {
+	color: #b8c2cc;
+	color: var(--ref-symbol-hover-color);
+}
+.doc-content > .footer {
+	padding-top: 1rem;
+	margin-top: auto;
+	bottom: 1rem;
+	color: 616161;
+	color: var(--footer-text-color);
+	border-color: #f1f5f8;
+	border-color: var(--footer-top-line-color);
+	border-top-style: solid;
+	border-top-width: 1px;
+	font-size: 0.8rem;
+	font-weight: 500;
+}
+
+/* Right menu */
+.doc-toc {
+	right: 0;
+	top: 0;
+	height: 100%;
+	overflow-y: auto;
+	padding: 1rem 1rem 0 1rem;
+	width: 100%;
+	box-sizing: border-box;
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+	font-family: Jost, sans-serif;
+}
+.doc-toc::-webkit-scrollbar {
+	display: none;
+}
+.doc-toc li {
+	line-height: 1.5;
+}
+.doc-toc a {
+	color: #2779bd;
+	color: var(--toc-text-color);
+	font-size: 0.9rem;
+	font-weight: 600;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: block;
+	text-decoration: none;
+	border-left-width: 2px;
+	border-left-style: solid;
+	border-color: transparent;
+	padding-left: 0.4rem;
+}
+.doc-toc a:hover {
+	text-decoration: underline;
+}
+.doc-toc a.active {
+	border-color: #4299e1;
+	border-color: var(--toc-indicator-color);
+}
+.doc-toc li ul {
+	margin: 0.2rem 0 0.2rem;
+	font-size: 0.7rem;
+	list-style: none;
+}
+.doc-toc li ul a {
+	font-weight: 400;
+	padding-left: 0.8rem;
+}
+
+/* Code highlight */
+pre,
+code,
+pre code {
+	color: #5c6e74;
+	color: var(--code-default-text-color);
+	font-size: 0.948em;
+	text-shadow: none;
+	font-family: 'Jetbrains Mono', monospace;
+	background-color: #edf2f7;
+	background-color: var(--code-background-color);
+	border-radius: 0.25rem;
+}
+pre code {
+	direction: ltr;
+	text-align: left;
+	white-space: pre;
+	word-spacing: normal;
+	word-break: normal;
+	line-height: 1.5;
+	-moz-tab-size: 4;
+	-o-tab-size: 4;
+	tab-size: 4;
+	-webkit-hyphens: none;
+	-moz-hyphens: none;
+	-ms-hyphens: none;
+	hyphens: none;
+	display: block;
+	overflow-x: auto;
+	padding: 1rem;
+}
+code {
+	padding: 0 0.2rem;
+}
+pre {
+	overflow: auto;
+	margin: 0;
+	position: relative;
+}
+.namespace {
+	opacity: 0.7;
+}
+.token.comment {
+	color: #93a1a1;
+	color: var(--code-comment-text-color);
+}
+.token.punctuation {
+	color: #999999;
+	color: var(--code-punctuation-text-color);
+}
+.token.number,
+.token.symbol {
+	color: #702459;
+	color: var(--code-symbol-text-color);
+}
+.token.string,
+.token.char,
+.token.builtin {
+	color: #38a169;
+	color: var(--code-builtin-text-color);
+}
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+	color: #a67f59;
+	color: var(--code-operator-text-color);
+	background: transparent;
+}
+.token.boolean,
+.token.keyword {
+	color: #2b6cb0;
+	color: var(--code-keyword-text-color);
+	font-weight: bold;
+}
+.token.function {
+	color: #319795;
+	color: var(--code-function-text-color);
+}
+.examples > h4 {
+	margin: 0 0 0.4rem 0;
+}
+
+table {
+	border: 1px solid var(--table-background-color);
+	border-collapse: collapse;
+}
+table tr td,
+table tr th {
+	padding: 4px 8px;
+}
+table tr th {
+	background-color: var(--table-background-color);
+}
+tr:nth-child(even) {
+	background-color: var(--table-background-color);
+}
+
+button.copy {
+	border: none;
+	background-color: transparent;
+	position: absolute;
+	font-size: 12px;
+	top: 5px;
+	right: 5px;
+	color: var(--ref-symbol-hover-color);
+}
+
+/* Medium screen and up */
+@media (min-width: 768px) {
+	*::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+	*::-webkit-scrollbar-thumb {
+		border: 3px solid transparent;
+	}
+	.doc-container {
+		flex-direction: row;
+	}
+	.doc-content {
+		font-size: 0.95rem;
+		flex: 1;
+		padding: 0rem 2rem 1rem 2rem;
+	}
+	.doc-toc {
+		position: sticky;
+		height: 100vh;
+		position: -webkit-sticky;
+		align-self: flex-start;
+		min-width: 200px;
+		width: auto;
+		max-width: 300px;
+	}
+	.doc-toc > ul {
+		padding-bottom: 1rem;
+	}
+}
+
+@media (max-width: 1023px) {
+	.doc-nav.hidden {
+		height: auto;
+	}
+	.doc-nav.hidden #search {
+		display: none;
+	}
+	.doc-nav .search.mobile-hidden {
+		display: none;
+	}
+	.doc-nav > .heading-container > .heading > .info {
+		align-items: center;
+	}
+	.doc-nav > .heading-container > .heading > .info > .toggle-version-container {
+		flex-grow: 1;
+		padding: 0 1rem;
+		justify-content: space-between;
+	}
+}
+
+@media (min-width: 1024px) {
+	#page {
+		padding-top: 0;
+	}
+	.doc-nav {
+		width: 300px;
+	}
+	.doc-nav #toggle-menu {
+		display: none;
+	}
+	.doc-nav > .heading-container > .heading > .info {
+		height: auto;
+		padding: 1rem 2rem 0 2rem;
+		flex-direction: column-reverse;
+		justify-content: center;
+	}
+	.doc-nav > .heading-container > .heading > .info > .toggle-version-container {
+		align-items: center;
+		margin-bottom: 0.2rem;
+		display: flex;
+		flex-direction: row-reverse;
+	}
+	.doc-nav > .heading-container > .heading > .info > .toggle-version-container > #dark-mode-toggle {
+		margin-right: auto;
+	}
+	.doc-nav .content.show,
+	.doc-nav .content.hidden {
+		display: flex;
+	}
+	.doc-content > .doc-node.const:nth-child(2) {
+		padding-bottom: 0 !important;
+	}
+	.doc-content > .doc-node.const:not(:first-child) {
+		padding-top: 0;
+	}
+	.doc-content > .doc-node.const:not(:last-child) {
+		padding-bottom: 1rem;
+	}
+	.doc-container {
+		margin-left: 300px;
+	}
+	.doc-node {
+		padding-top: 1rem !important;
+		margin-top: 0 !important;
+	}
+}
+
+#skip-to-content-link {
+	height: 30px;
+	left: 50%;
+	padding: 8px;
+	position: absolute;
+	transform: translateY(-100%);
+	transition: transform 0.3s;
+	background: var(--links);
+	color: var(--warn-text);
+	border-radius: 1px;
+}
+#skip-to-content-link:focus {
+	transform: translateY(0%);
+	z-index: 1000;
+}
+</style>
+		<style>/*! normalize.css v8.0.1 | MIT License | github.com/necolas/normalize.css */
+html {
+	line-height: 1.15;
+	-webkit-text-size-adjust: 100%;
+}
+
+main {
+	display: block;
+}
+
+h1 {
+	font-size: 2em;
+	margin: 0.67em 0;
+}
+
+pre {
+	font-family: monospace, monospace;
+	font-size: 1em;
+}
+
+a {
+	background-color: transparent;
+}
+
+abbr[title] {
+	border-bottom: none;
+	text-decoration: underline;
+	text-decoration: underline dotted;
+}
+
+b,
+strong {
+	font-weight: bolder;
+}
+
+kbd,
+samp {
+	font-family: monospace, monospace;
+	font-size: 1em;
+}
+
+small {
+	font-size: 80%;
+}
+
+sub,
+sup {
+	font-size: 75%;
+	line-height: 0;
+	position: relative;
+	vertical-align: baseline;
+}
+
+sub {
+	bottom: -0.25em;
+}
+
+sup {
+	top: -0.5em;
+}
+
+img {
+	border-style: none;
+}
+
+button,
+input,
+optgroup,
+select,
+textarea {
+	font-family: inherit;
+	font-size: 100%;
+	line-height: 1.15;
+	margin: 0;
+}
+
+button,
+input {
+	overflow: visible;
+}
+
+button,
+select {
+	text-transform: none;
+}
+
+button,
+[type='button'],
+[type='reset'],
+[type='submit'] {
+	-webkit-appearance: button;
+}
+
+button::-moz-focus-inner,
+[type='button']::-moz-focus-inner,
+[type='reset']::-moz-focus-inner,
+[type='submit']::-moz-focus-inner {
+	border-style: none;
+	padding: 0;
+}
+
+button:-moz-focusring,
+[type='button']:-moz-focusring,
+[type='reset']:-moz-focusring,
+[type='submit']:-moz-focusring {
+	outline: 1px dotted ButtonText;
+}
+
+fieldset {
+	padding: 0.35em 0.75em 0.625em;
+}
+
+legend {
+	box-sizing: border-box;
+	color: inherit;
+	display: table;
+	max-width: 100%;
+	padding: 0;
+	white-space: normal;
+}
+
+progress {
+	vertical-align: baseline;
+}
+
+textarea {
+	overflow: auto;
+}
+
+[type='checkbox'],
+[type='radio'] {
+	box-sizing: border-box;
+	padding: 0;
+}
+
+[type='number']::-webkit-inner-spin-button,
+[type='number']::-webkit-outer-spin-button {
+	height: auto;
+}
+
+[type='search'] {
+	-webkit-appearance: textfield;
+	outline-offset: -2px;
+}
+
+[type='search']::-webkit-search-decoration {
+	-webkit-appearance: none;
+}
+
+::-webkit-file-upload-button {
+	-webkit-appearance: button;
+	font: inherit;
+}
+
+summary {
+	display: list-item;
+}
+
+template {
+	display: none;
+}
+
+[hidden] {
+	display: none;
+}
+</style>
+		<script>(function () {
+	if (localStorage.getItem('dark-mode') === 'true') {
+		document.querySelector('html').classList.add('dark');
+	}
+})();
+</script>
+	</head>
+
+	<body>
+		<div><a id="skip-to-content-link" href="#main-content">Skip to content</a></div>
+		<div id="page">
+			<header class="doc-nav hidden">
+				<div class="heading-container">
+					<div class="heading">
+						<div class="info">
+							<div class="module">gui</div>
+							<div class="toggle-version-container">
+								<span>0.0.0 1769580</span>
+								<div
+									id="dark-mode-toggle"
+									role="switch"
+									aria-checked="false"
+									aria-label="Toggle dark mode"
+								>
+									<svg xmlns="http://www.w3.org/2000/svg" class="light-icon" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M6.76 4.84l-1.8-1.79-1.41 1.41 1.79 1.79 1.42-1.41zM4 10.5H1v2h3v-2zm9-9.95h-2V3.5h2V.55zm7.45 3.91l-1.41-1.41-1.79 1.79 1.41 1.41 1.79-1.79zm-3.21 13.7l1.79 1.8 1.41-1.41-1.8-1.79-1.4 1.4zM20 10.5v2h3v-2h-3zm-8-5c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm-1 16.95h2V19.5h-2v2.95zm-7.45-3.91l1.41 1.41 1.79-1.8-1.41-1.41-1.79 1.8z"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" class="dark-icon" enable-background="new 0 0 24 24" height="24" viewBox="0 0 24 24" width="24"><g><rect fill="none" height="24" width="24"/></g><g><g><g><path d="M11.1,12.08C8.77,7.57,10.6,3.6,11.63,2.01C6.27,2.2,1.98,6.59,1.98,12c0,0.14,0.02,0.28,0.02,0.42 C2.62,12.15,3.29,12,4,12c1.66,0,3.18,0.83,4.1,2.15C9.77,14.63,11,16.17,11,18c0,1.52-0.87,2.83-2.12,3.51 c0.98,0.32,2.03,0.5,3.11,0.5c3.5,0,6.58-1.8,8.37-4.52C18,17.72,13.38,16.52,11.1,12.08z"/></g><path d="M7,16l-0.18,0C6.4,14.84,5.3,14,4,14c-1.66,0-3,1.34-3,3s1.34,3,3,3c0.62,0,2.49,0,3,0c1.1,0,2-0.9,2-2 C9,16.9,8.1,16,7,16z"/></g></g></svg>
+
+								</div>
+							</div>
+							<svg xmlns="http://www.w3.org/2000/svg" id="toggle-menu" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+
+						</div>
+						<div id="search">
+							<input type="text" placeholder="Search... (beta)" autocomplete="off" />
+						</div>
+					</div>
+				</div>
+				<nav class="search hidden"></nav>
+				<nav class="content hidden">
+					<ul>
+						<li class="open">
+<div class="menu-row"><a href="./index.html">README</a></div>
+</li>
+<li class="open active">
+<div class="menu-row"><svg xmlns="http://www.w3.org/2000/svg" class="dropdown-arrow" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M7 10l5 5 5-5z"/></svg><a href="#">src</a></div>
+<ul>
+<li class="active"><a href="./src.gui.html">gui</a></li>
+</ul>
+</li>
+
+					</ul>
+				</nav>
+			</header>
+			<div class="doc-scrollview" tabindex="-1" id="main-content">
+				<div class="doc-container">
+					<div class="doc-content">
+								<section id="readme_src.gui" class="doc-node">
+			<div class="title"><h1> src.gui <a href="#readme_src.gui">#</a></h1></div>
+
+
+</section>
+
+		<section id="Constants" class="doc-node const">
+			<div class="title"><h2>Constants <a href="#Constants">#</a></h2></div>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> dark_blue <span class="token operator">=</span> gx<span class="token punctuation">.</span>dark_blue</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> purple <span class="token operator">=</span> gx<span class="token punctuation">.</span>purple</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> red <span class="token operator">=</span> gx<span class="token punctuation">.</span>red</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> dark_red <span class="token operator">=</span> gx<span class="token punctuation">.</span>dark_red</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> gray <span class="token operator">=</span> gx<span class="token punctuation">.</span>gray</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> green <span class="token operator">=</span> gx<span class="token punctuation">.</span>green</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> white <span class="token operator">=</span> gx<span class="token punctuation">.</span>white</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> violet <span class="token operator">=</span> gx<span class="token punctuation">.</span>violet</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> yellow <span class="token operator">=</span> gx<span class="token punctuation">.</span>yellow</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> indigo <span class="token operator">=</span> gx<span class="token punctuation">.</span>indigo</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> pink <span class="token operator">=</span> gx<span class="token punctuation">.</span>pink</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> flex_fixed <span class="token operator">=</span> <span class="token symbol">Sizing</span><span class="token punctuation">{</span><span class="token punctuation">.</span>flex<span class="token punctuation">,</span> <span class="token punctuation">.</span>fixed<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> version <span class="token operator">=</span> <span class="token string">'0.1.0'</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> fit_flex <span class="token operator">=</span> <span class="token symbol">Sizing</span><span class="token punctuation">{</span><span class="token punctuation">.</span>fit<span class="token punctuation">,</span> <span class="token punctuation">.</span>flex<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> dark_green <span class="token operator">=</span> gx<span class="token punctuation">.</span>dark_green</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> light_gray <span class="token operator">=</span> gx<span class="token punctuation">.</span>light_gray</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> black <span class="token operator">=</span> gx<span class="token punctuation">.</span>black</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> padding_none <span class="token operator">=</span> <span class="token symbol">Padding</span><span class="token punctuation">{</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> dark_gray <span class="token operator">=</span> gx<span class="token punctuation">.</span>dark_gray</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> flex_fit <span class="token operator">=</span> <span class="token symbol">Sizing</span><span class="token punctuation">{</span><span class="token punctuation">.</span>flex<span class="token punctuation">,</span> <span class="token punctuation">.</span>fit<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> magenta <span class="token operator">=</span> gx<span class="token punctuation">.</span>magenta</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> fixed_flex <span class="token operator">=</span> <span class="token symbol">Sizing</span><span class="token punctuation">{</span><span class="token punctuation">.</span>fixed<span class="token punctuation">,</span> <span class="token punctuation">.</span>flex<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> orange <span class="token operator">=</span> gx<span class="token punctuation">.</span>orange</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> radius_default <span class="token operator">=</span> <span class="token number">5</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> light_green <span class="token operator">=</span> gx<span class="token punctuation">.</span>light_green</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> padding_default <span class="token operator">=</span> <span class="token symbol">Padding</span><span class="token punctuation">{</span><span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> transparent <span class="token operator">=</span> gx<span class="token punctuation">.</span><span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> fit_fit <span class="token operator">=</span> <span class="token symbol">Sizing</span><span class="token punctuation">{</span><span class="token punctuation">.</span>fit<span class="token punctuation">,</span> <span class="token punctuation">.</span>fit<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> light_red <span class="token operator">=</span> gx<span class="token punctuation">.</span>light_red</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> fit_fixed <span class="token operator">=</span> <span class="token symbol">Sizing</span><span class="token punctuation">{</span><span class="token punctuation">.</span>fit<span class="token punctuation">,</span> <span class="token punctuation">.</span>fixed<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> cyan <span class="token operator">=</span> gx<span class="token punctuation">.</span>cyan</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> flex_flex <span class="token operator">=</span> <span class="token symbol">Sizing</span><span class="token punctuation">{</span><span class="token punctuation">.</span>flex<span class="token punctuation">,</span> <span class="token punctuation">.</span>flex<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> blue <span class="token operator">=</span> gx<span class="token punctuation">.</span>blue</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> fixed_fixed <span class="token operator">=</span> <span class="token symbol">Sizing</span><span class="token punctuation">{</span><span class="token punctuation">.</span>fixed<span class="token punctuation">,</span> <span class="token punctuation">.</span>fixed<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> light_blue <span class="token operator">=</span> gx<span class="token punctuation">.</span>light_blue</code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> fixed_fit <span class="token operator">=</span> <span class="token symbol">Sizing</span><span class="token punctuation">{</span><span class="token punctuation">.</span>fixed<span class="token punctuation">,</span> <span class="token punctuation">.</span>fit<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="" class="doc-node const">
+<pre class="signature">
+<code><span class="token keyword">const</span> spacing_default <span class="token operator">=</span> <span class="token number">10</span></code></pre>
+
+
+</section>
+
+		<section id="button" class="doc-node">
+			<div class="title"><h2>fn button <a href="#button">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">button</span><span class="token punctuation">(</span>c ButtonConfig<span class="token punctuation">)</span> <span class="token operator">&</span>UI_Tree</code></pre>
+<p>button is a factory function for a button.</p>
+
+</section>
+
+		<section id="canvas" class="doc-node">
+			<div class="title"><h2>fn canvas <a href="#canvas">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">canvas</span><span class="token punctuation">(</span>c ContainerConfig<span class="token punctuation">)</span> <span class="token operator">&</span>Container</code></pre>
+<p>canvas does not arrange or otherwise layout its children.</p>
+
+</section>
+
+		<section id="column" class="doc-node">
+			<div class="title"><h2>fn column <a href="#column">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">column</span><span class="token punctuation">(</span>c ContainerConfig<span class="token punctuation">)</span> <span class="token operator">&</span>Container</code></pre>
+<p>column arranges its children top to bottom. The gap between child items is determined by the spacing parameter</p>
+
+</section>
+
+		<section id="is_empty_rect" class="doc-node">
+			<div class="title"><h2>fn is_empty_rect <a href="#is_empty_rect">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">is_empty_rect</span><span class="token punctuation">(</span>rect gg<span class="token punctuation">.</span>Rect<span class="token punctuation">)</span> <span class="token builtin">bool</span></code></pre>
+<p>is_empty_rect returns true if the rectangle has no area, positive or negative.</p>
+
+</section>
+
+		<section id="label" class="doc-node">
+			<div class="title"><h2>fn label <a href="#label">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">label</span><span class="token punctuation">(</span>c LabelConfig<span class="token punctuation">)</span> <span class="token operator">&</span>UI_Tree</code></pre>
+<p>label is the primary way to display text in GUI. It can wrap text if desired. Gui spaces wrapped lines by the height of the font + 2 logical units. Spacing can be expanded further using the spacing parameter.</p>
+
+</section>
+
+		<section id="rectangle" class="doc-node">
+			<div class="title"><h2>fn rectangle <a href="#rectangle">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">rectangle</span><span class="token punctuation">(</span>c RectangleConfig<span class="token punctuation">)</span> <span class="token operator">&</span>Container</code></pre>
+<p>rectangle is a factory function for a rectangle</p>
+
+</section>
+
+		<section id="rgb" class="doc-node">
+			<div class="title"><h2>fn rgb <a href="#rgb">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">rgb</span><span class="token punctuation">(</span>r <span class="token builtin">u8</span><span class="token punctuation">,</span> g <span class="token builtin">u8</span><span class="token punctuation">,</span> b <span class="token builtin">u8</span><span class="token punctuation">)</span> gx<span class="token punctuation">.</span>Color</code></pre>
+
+
+</section>
+
+		<section id="rgba" class="doc-node">
+			<div class="title"><h2>fn rgba <a href="#rgba">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">rgba</span><span class="token punctuation">(</span>r <span class="token builtin">u8</span><span class="token punctuation">,</span> g <span class="token builtin">u8</span><span class="token punctuation">,</span> b <span class="token builtin">u8</span><span class="token punctuation">,</span> a <span class="token builtin">u8</span><span class="token punctuation">)</span> gx<span class="token punctuation">.</span>Color</code></pre>
+
+
+</section>
+
+		<section id="row" class="doc-node">
+			<div class="title"><h2>fn row <a href="#row">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">row</span><span class="token punctuation">(</span>c ContainerConfig<span class="token punctuation">)</span> <span class="token operator">&</span>Container</code></pre>
+<p>row arranges its children left to right. The gap between child items is determined by the spacing parameter</p>
+
+</section>
+
+		<section id="shape_clip" class="doc-node">
+			<div class="title"><h2>fn shape_clip <a href="#shape_clip">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">shape_clip</span><span class="token punctuation">(</span>shape Shape<span class="token punctuation">,</span> ctx gg<span class="token punctuation">.</span>Context<span class="token punctuation">)</span></code></pre>
+<p>shape_clip sets up a clipping region based on the shapes's bounds property.'</p>
+
+</section>
+
+		<section id="shape_unclip" class="doc-node">
+			<div class="title"><h2>fn shape_unclip <a href="#shape_unclip">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">shape_unclip</span><span class="token punctuation">(</span>shape Shape<span class="token punctuation">,</span> ctx gg<span class="token punctuation">.</span>Context<span class="token punctuation">)</span></code></pre>
+<p>shape_unclip resets the clipping region.</p>
+
+</section>
+
+		<section id="text_wrap_text" class="doc-node">
+			<div class="title"><h2>fn text_wrap_text <a href="#text_wrap_text">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">text_wrap_text</span><span class="token punctuation">(</span>s <span class="token builtin">string</span><span class="token punctuation">,</span> width <span class="token builtin">f32</span><span class="token punctuation">,</span> ctx gg<span class="token punctuation">.</span>Context<span class="token punctuation">)</span> <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span></code></pre>
+
+
+</section>
+
+		<section id="window" class="doc-node">
+			<div class="title"><h2>fn window <a href="#window">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token function">window</span><span class="token punctuation">(</span>cfg WindowCfg<span class="token punctuation">)</span> <span class="token operator">&</span>Window</code></pre>
+
+
+</section>
+
+		<section id="UI_Tree" class="doc-node">
+			<div class="title"><h2>interface UI_Tree <a href="#UI_Tree">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">interface</span> <span class="token symbol">UI_Tree</span> <span class="token punctuation">{</span>
+	id <span class="token builtin">string</span>
+	<span class="token function">generate</span><span class="token punctuation">(</span>ctx gg<span class="token punctuation">.</span>Context<span class="token punctuation">)</span> ShapeTree
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	children <span class="token punctuation">[</span><span class="token punctuation">]</span>UI_Tree
+<span class="token punctuation">}</span></code></pre>
+<p>UI_Tree is a user defined view. UI_Trees are never displayed directly. Instead a ShapeTree is generated from the UI_Tree. It is the ShapeTree that is used to render the UI.</p>
+
+</section>
+
+		<section id="ShapeDirection" class="doc-node">
+			<div class="title"><h2>enum ShapeDirection <a href="#ShapeDirection">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">enum</span> <span class="token symbol">ShapeDirection</span> <span class="token punctuation">{</span>
+	<span class="token keyword">none</span>
+	top_to_bottom
+	left_to_right
+<span class="token punctuation">}</span></code></pre>
+<p>ShapeDirection determines if a Shape arranges its child shapes horizontally, vertically or not at all.</p>
+
+</section>
+
+		<section id="ShapeType" class="doc-node">
+			<div class="title"><h2>enum ShapeType <a href="#ShapeType">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">enum</span> <span class="token symbol">ShapeType</span> <span class="token punctuation">{</span>
+	<span class="token keyword">none</span>
+	container
+	rectangle
+	text
+	line
+	image
+<span class="token punctuation">}</span></code></pre>
+<p>ShapeType describes the only shapes a Shape can be. All screen rendering is comprised of these ShapeTypes.</p>
+
+</section>
+
+		<section id="SizingType" class="doc-node">
+			<div class="title"><h2>enum SizingType <a href="#SizingType">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">enum</span> <span class="token symbol">SizingType</span> <span class="token punctuation">{</span>
+	fit   <span class="token comment">// Shape is fitted to child shapes</span>
+	flex  <span class="token comment">// Shape can grow or shrink as needed</span>
+	fixed <span class="token comment">// Shape is only the given size.</span>
+<span class="token punctuation">}</span></code></pre>
+<p>SizingType describes the three sizing modes of GUI</p>
+
+</section>
+
+		<section id="ButtonConfig" class="doc-node">
+			<div class="title"><h2>struct ButtonConfig <a href="#ButtonConfig">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">ButtonConfig</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	id      <span class="token builtin">string</span>
+	width   <span class="token builtin">f32</span>
+	height  <span class="token builtin">f32</span>
+	padding Padding <span class="token operator">=</span> <span class="token symbol">Padding</span><span class="token punctuation">{</span><span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">7</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">}</span>
+	text    <span class="token builtin">string</span>
+	color   gx<span class="token punctuation">.</span>Color
+<span class="token punctuation">}</span></code></pre>
+<p>ButtonConfig A UI without buttons is not very useful. GUI keeps it simple. Buttons can have a size and color and text and not much else.</p>
+
+</section>
+
+		<section id="ContainerConfig" class="doc-node">
+			<div class="title"><h2>struct ContainerConfig <a href="#ContainerConfig">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">ContainerConfig</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	id       <span class="token builtin">string</span>
+	x        <span class="token builtin">f32</span>
+	y        <span class="token builtin">f32</span>
+	width    <span class="token builtin">f32</span>
+	height   <span class="token builtin">f32</span>
+	spacing  <span class="token builtin">f32</span> <span class="token operator">=</span> spacing_default
+	sizing   Sizing
+	fill     <span class="token builtin">bool</span>
+	radius   <span class="token builtin">int</span>      <span class="token operator">=</span> radius_default
+	color    gx<span class="token punctuation">.</span>Color <span class="token operator">=</span> gx<span class="token punctuation">.</span><span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+	padding  Padding  <span class="token operator">=</span> padding_default
+	children <span class="token punctuation">[</span><span class="token punctuation">]</span>UI_Tree
+<span class="token punctuation">}</span></code></pre>
+<p>ConatinerConfig is a common configuration struct used in several the row, column and canvas containers</p>
+
+</section>
+
+		<section id="LabelConfig" class="doc-node">
+			<div class="title"><h2>struct LabelConfig <a href="#LabelConfig">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">LabelConfig</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	id       <span class="token builtin">string</span> <span class="token comment">// user defined id</span>
+	spacing  <span class="token builtin">f32</span>    <span class="token comment">// add addtional space to wrapped lines</span>
+	text     <span class="token builtin">string</span> <span class="token comment">// the text to display</span>
+	wrap     <span class="token builtin">bool</span>   <span class="token comment">// wrap lines if true</span>
+	text_cfg gx<span class="token punctuation">.</span>TextCfg <span class="token operator">=</span> gx<span class="token punctuation">.</span><span class="token symbol">TextCfg</span><span class="token punctuation">{</span>
+		color<span class="token punctuation">:</span> gx<span class="token punctuation">.</span>white
+	<span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+<p>LabelConfig configures a label control</p>
+
+</section>
+
+		<section id="Padding" class="doc-node">
+			<div class="title"><h2>struct Padding <a href="#Padding">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Padding</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span> <span class="token keyword">mut</span><span class="token punctuation">:</span>
+	top    <span class="token builtin">f32</span>
+	right  <span class="token builtin">f32</span>
+	bottom <span class="token builtin">f32</span>
+	left   <span class="token builtin">f32</span>
+<span class="token punctuation">}</span></code></pre>
+<p>Padding is the anount of space surrounding a Shape. The size of a Shape always includes its padding.</p>
+
+</section>
+
+		<section id="RectangleConfig" class="doc-node">
+			<div class="title"><h2>struct RectangleConfig <a href="#RectangleConfig">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">RectangleConfig</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	id     <span class="token builtin">string</span>
+	x      <span class="token builtin">f32</span>
+	y      <span class="token builtin">f32</span>
+	width  <span class="token builtin">f32</span>
+	height <span class="token builtin">f32</span>
+	sizing Sizing
+	fill   <span class="token builtin">bool</span>
+	radius <span class="token builtin">int</span>      <span class="token operator">=</span> radius_default
+	color  gx<span class="token punctuation">.</span>Color <span class="token operator">=</span> gx<span class="token punctuation">.</span><span class="token function">rgba</span><span class="token punctuation">(</span><span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">,</span> <span class="token number">0</span><span class="token punctuation">)</span>
+<span class="token punctuation">}</span></code></pre>
+<p>RectangleConfig Rectangles are one of the mose useful and used UI controls. Rectangles can be filled or outlined, colored and have radius corners. For the technially inclined rectangles are containers but don't have children and as such function as plain drawings.</p>
+
+</section>
+
+		<section id="Shape" class="doc-node">
+			<div class="title"><h2>struct Shape <a href="#Shape">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Shape</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	id        <span class="token builtin">string</span> <span class="token comment">// asigned by user</span>
+	uid       <span class="token builtin">string</span>
+	<span class="token keyword">type</span>      ShapeType
+	direction ShapeDirection
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	x          <span class="token builtin">f32</span>
+	y          <span class="token builtin">f32</span>
+	width      <span class="token builtin">f32</span>
+	height     <span class="token builtin">f32</span>
+	spacing    <span class="token builtin">f32</span>
+	sizing     Sizing
+	padding    Padding
+	fill       <span class="token builtin">bool</span>
+	radius     <span class="token builtin">int</span>
+	color      gg<span class="token punctuation">.</span>Color
+	text       <span class="token builtin">string</span>
+	lines      <span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token builtin">string</span>
+	text_cfg   gx<span class="token punctuation">.</span>TextCfg
+	wrap       <span class="token builtin">bool</span>
+	min_width  <span class="token builtin">f32</span>
+	min_height <span class="token builtin">f32</span>
+	bounds     gg<span class="token punctuation">.</span>Rect
+<span class="token punctuation">}</span></code></pre>
+<p>Shape is the only data structure in GUI used to draw to the screen.</p>
+
+</section>
+
+		<section id="Shape.draw" class="doc-node">
+			<div class="title"><h2>fn (Shape) draw <a href="#Shape.draw">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>shape Shape<span class="token punctuation">)</span> <span class="token function">draw</span><span class="token punctuation">(</span>ctx gg<span class="token punctuation">.</span>Context<span class="token punctuation">)</span></code></pre>
+<p>draw Drawing a shape it just that. No decisions about UI state are considered. If the UI state of your view changes, Generate an new view and update the window with the new view. New shapes are generated based on the view (UI_Tree). Data flows one way from view -&gt; shapes or in terms of data structures from UI_Tree -&gt; ShapeTree</p>
+
+</section>
+
+		<section id="Shape.draw_rectangle" class="doc-node">
+			<div class="title"><h2>fn (Shape) draw_rectangle <a href="#Shape.draw_rectangle">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>shape Shape<span class="token punctuation">)</span> <span class="token function">draw_rectangle</span><span class="token punctuation">(</span>ctx gg<span class="token punctuation">.</span>Context<span class="token punctuation">)</span></code></pre>
+<p>draw_rectangle draws a shape as a rectangle.</p>
+
+</section>
+
+		<section id="Shape.draw_text" class="doc-node">
+			<div class="title"><h2>fn (Shape) draw_text <a href="#Shape.draw_text">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>shape Shape<span class="token punctuation">)</span> <span class="token function">draw_text</span><span class="token punctuation">(</span>ctx gg<span class="token punctuation">.</span>Context<span class="token punctuation">)</span></code></pre>
+<p>draw_text draws a shape as text</p>
+
+</section>
+
+		<section id="ShapeTree" class="doc-node">
+			<div class="title"><h2>struct ShapeTree <a href="#ShapeTree">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">ShapeTree</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span> <span class="token keyword">mut</span><span class="token punctuation">:</span>
+	shape    Shape
+	children <span class="token punctuation">[</span><span class="token punctuation">]</span>ShapeTree
+<span class="token punctuation">}</span></code></pre>
+<p>ShapeTree describes a tree of Shapes. UI_Trees generate ShapeTrees</p>
+
+</section>
+
+		<section id="Sizing" class="doc-node">
+			<div class="title"><h2>struct Sizing <a href="#Sizing">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Sizing</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	width  SizingType
+	height SizingType
+<span class="token punctuation">}</span></code></pre>
+<p>Sizing is describes how the shape is sized horizontally and vertically.</p>
+
+</section>
+
+		<section id="Window" class="doc-node">
+			<div class="title"><h2>struct Window <a href="#Window">#</a></h2></div>
+<div class="attributes"><div class="attribute">@[heap]</div></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">Window</span> <span class="token punctuation">{</span>
+<span class="token keyword">mut</span><span class="token punctuation">:</span>
+	layout     ShapeTree    <span class="token operator">=</span> empty_shape_tree
+	mutex      <span class="token operator">&</span>sync<span class="token punctuation">.</span>Mutex  <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">{</span> <span class="token keyword">nil</span> <span class="token punctuation">}</span>
+	ui         <span class="token operator">&</span>gg<span class="token punctuation">.</span>Context  <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">{</span> <span class="token keyword">nil</span> <span class="token punctuation">}</span>
+	on_resized <span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token operator">&</span>Window<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">{</span> <span class="token keyword">nil</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+		<section id="Window.update_view" class="doc-node">
+			<div class="title"><h2>fn (Window) update_view <a href="#Window.update_view">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> window Window<span class="token punctuation">)</span> <span class="token function">update_view</span><span class="token punctuation">(</span>view UI_Tree<span class="token punctuation">)</span></code></pre>
+<p>update_view sets the Window's view. A window can have only one view. Giving a Window a new view replaces the current view.</p>
+
+</section>
+
+		<section id="Window.window_size" class="doc-node">
+			<div class="title"><h2>fn (Window) window_size <a href="#Window.window_size">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span>window <span class="token operator">&</span>Window<span class="token punctuation">)</span> <span class="token function">window_size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">(</span><span class="token builtin">int</span><span class="token punctuation">,</span> <span class="token builtin">int</span><span class="token punctuation">)</span></code></pre>
+<p>window_size returns the size of the window in logical units.</p>
+
+</section>
+
+		<section id="Window.run" class="doc-node">
+			<div class="title"><h2>fn (Window) run <a href="#Window.run">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token keyword">mut</span> window Window<span class="token punctuation">)</span> <span class="token function">run</span><span class="token punctuation">(</span><span class="token punctuation">)</span></code></pre>
+<p>run starts the UI and handles events</p>
+
+</section>
+
+		<section id="WindowCfg" class="doc-node">
+			<div class="title"><h2>struct WindowCfg <a href="#WindowCfg">#</a></h2></div>
+<pre class="signature">
+<code><span class="token keyword">struct</span> <span class="token symbol">WindowCfg</span> <span class="token punctuation">{</span>
+<span class="token keyword">pub</span><span class="token punctuation">:</span>
+	title      <span class="token builtin">string</span>
+	width      <span class="token builtin">int</span>
+	height     <span class="token builtin">int</span>
+	bg_color   gx<span class="token punctuation">.</span>Color
+	on_init    <span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token operator">&</span>Window<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">{</span> <span class="token keyword">nil</span> <span class="token punctuation">}</span>
+	on_resized <span class="token keyword">fn</span> <span class="token punctuation">(</span><span class="token operator">&</span>Window<span class="token punctuation">)</span> <span class="token operator">=</span> <span class="token keyword">unsafe</span> <span class="token punctuation">{</span> <span class="token keyword">nil</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span></code></pre>
+
+
+</section>
+
+
+						<div class="footer">Powered by vdoc. Generated on: 13 Mar 2025 09:47:09</div>
+					</div>
+					<div class="doc-toc"><ul><li class="open"><a href="#Constants">Constants</a></li>
+<li class="open"><a href="#button">fn button</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#canvas">fn canvas</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#column">fn column</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#is_empty_rect">fn is_empty_rect</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#label">fn label</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#rectangle">fn rectangle</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#rgb">fn rgb</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#rgba">fn rgba</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#row">fn row</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#shape_clip">fn shape_clip</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#shape_unclip">fn shape_unclip</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#text_wrap_text">fn text_wrap_text</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#window">fn window</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#UI_Tree">interface UI_Tree</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#ShapeDirection">enum ShapeDirection</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#ShapeType">enum ShapeType</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#SizingType">enum SizingType</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#ButtonConfig">struct ButtonConfig</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#ContainerConfig">struct ContainerConfig</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#LabelConfig">struct LabelConfig</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Padding">struct Padding</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#RectangleConfig">struct RectangleConfig</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Shape">struct Shape</a>        <ul>
+<li><a href="#Shape.draw">fn draw</a></li>
+<li><a href="#Shape.draw_rectangle">fn draw_rectangle</a></li>
+<li><a href="#Shape.draw_text">fn draw_text</a></li>
+</ul>
+</li>
+<li class="open"><a href="#ShapeTree">struct ShapeTree</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Sizing">struct Sizing</a>        <ul>
+</ul>
+</li>
+<li class="open"><a href="#Window">struct Window</a>        <ul>
+<li><a href="#Window.update_view">fn update_view</a></li>
+<li><a href="#Window.window_size">fn window_size</a></li>
+<li><a href="#Window.run">fn run</a></li>
+</ul>
+</li>
+<li class="open"><a href="#WindowCfg">struct WindowCfg</a>        <ul>
+</ul>
+</li>
+</ul></div>
+				</div>
+			</div>
+		</div>
+		<script>(function () {
+	const docnav = document.querySelector('header.doc-nav');
+	const active = docnav.querySelector('li.active');
+	active?.scrollIntoView({ block: 'center', inline: 'nearest' });
+	setupMobileToggle();
+	setupDarkMode();
+	setupScrollSpy();
+	setupSearch();
+	setupCollapse();
+	setupCodeCopy();
+})();
+
+function setupScrollSpy() {
+	const mainContent = document.querySelector('#main-content');
+	const toc = mainContent.querySelector('.doc-toc');
+	if (!toc) {
+		return;
+	}
+	const sections = mainContent.querySelectorAll('section');
+	const sectionPositions = Array.from(sections).map((section) => section.offsetTop);
+	let lastActive = null;
+	let clickedScroll = false;
+	const handleScroll = debounce(() => {
+		if (clickedScroll) {
+			clickedScroll = false;
+			return;
+		}
+		if (lastActive) {
+			lastActive.classList.remove('active');
+		}
+		for (const [i, position] of sectionPositions.entries()) {
+			if (position >= mainContent.scrollTop) {
+				const link = toc.querySelector('a[href="#' + sections[i].id + '"]');
+				if (link) {
+					// Set current menu link as active
+					link.classList.add('active');
+					const tocStart = toc.getBoundingClientRect().top + window.scrollY;
+					if (link.offsetTop > toc.scrollTop + toc.clientHeight - tocStart - 16) {
+						// Scroll the toc down if the active links position is below the bottom of the toc
+						toc.scrollTop = link.clientHeight + link.offsetTop - toc.clientHeight + tocStart + 10;
+					} else if (toc.scrollTop < 32 + tocStart) {
+						// Scroll to the top of the toc if having scrolled up into the last bit
+						toc.scrollTop = 0;
+					} else if (link.offsetTop < toc.scrollTop) {
+						// Scroll the toc up if the active links position is above the top of the toc
+						toc.scrollTop = link.offsetTop - 10;
+					}
+				}
+				lastActive = link;
+				break;
+			}
+		}
+	}, 10);
+	mainContent.addEventListener('scroll', handleScroll);
+	toc.querySelectorAll('a').forEach((a) =>
+		a.addEventListener('click', () => {
+			if (lastActive) {
+				lastActive.classList.remove('active');
+			}
+			a.classList.add('active');
+			lastActive = a;
+			clickedScroll = true;
+		}),
+	);
+}
+
+function setupMobileToggle() {
+	document.getElementById('toggle-menu').addEventListener('click', () => {
+		const docNav = document.querySelector('header.doc-nav');
+		const isHidden = docNav.classList.contains('hidden');
+		docNav.classList.toggle('hidden');
+		const search = docNav.querySelector('.search');
+		const searchHasResults = search.classList.contains('has-results');
+		if (isHidden && searchHasResults) {
+			search.classList.remove('mobile-hidden');
+		} else {
+			search.classList.add('mobile-hidden');
+		}
+		const content = docNav.querySelector('.content');
+		content.classList.toggle('hidden');
+		content.classList.toggle('show');
+	});
+}
+
+function setupDarkMode() {
+	const html = document.querySelector('html');
+	const darkModeToggle = document.getElementById('dark-mode-toggle');
+	darkModeToggle.addEventListener('click', () => {
+		html.classList.toggle('dark');
+		const isDarkModeEnabled = html.classList.contains('dark');
+		localStorage.setItem('dark-mode', isDarkModeEnabled);
+		darkModeToggle.setAttribute('aria-checked', isDarkModeEnabled);
+	});
+}
+
+function setupSearch() {
+	const onInputChange = debounce((e) => {
+		const searchValue = e.target.value.toLowerCase();
+		const docNav = document.querySelector('header.doc-nav');
+		const menu = docNav.querySelector('.content');
+		const search = docNav.querySelector('.search');
+		if (searchValue === '') {
+			// reset to default
+			menu.style.display = '';
+			if (!search.classList.contains('hidden')) {
+				search.classList.add('hidden');
+				search.classList.remove('has-results');
+			}
+		} else if (searchValue.length >= 2) {
+			// search for less than 2 characters can display too much results
+			search.innerHTML = '';
+			menu.style.display = 'none';
+			if (search.classList.contains('hidden')) {
+				search.classList.remove('hidden');
+				search.classList.remove('mobile-hidden');
+				search.classList.add('has-results');
+			}
+			// cache length for performance
+			let foundModule = false;
+			const ul = document.createElement('ul');
+			search.appendChild(ul);
+			for (const [i, title] of searchModuleIndex.entries()) {
+				// no toLowerCase needed because modules are always lowercase
+				if (title.indexOf(searchValue) === -1) {
+					continue;
+				}
+				foundModule = true;
+				// [description, link]
+				const data = searchModuleData[i];
+				const el = createSearchResult({
+					badge: 'module',
+					description: data[0],
+					link: data[1],
+					title: title,
+				});
+				ul.appendChild(el);
+			}
+			if (foundModule) {
+				const hr = document.createElement('hr');
+				hr.classList.add('separator');
+				search.appendChild(hr);
+			}
+			let results = [];
+			for (const [i, title] of searchIndex.entries()) {
+				if (title.toLowerCase().indexOf(searchValue) === -1) {
+					continue;
+				}
+				// [badge, description, link]
+				const data = searchData[i];
+				results.push({
+					badge: data[0],
+					description: data[1],
+					link: data[2],
+					title: data[3] + ' ' + title,
+				});
+			}
+			results.sort((a, b) => (a.title < b.title ? -1 : a.title > b.title ? 1 : 0));
+			const ul_ = document.createElement('ul');
+			search.appendChild(ul_);
+			results.forEach((result) => {
+				const el = createSearchResult(result);
+				ul_.appendChild(el);
+			});
+		}
+	});
+	const searchInput = document.querySelector('#search input');
+	const url = document.location.toString();
+	if (url.includes('?')) {
+		const query =
+			url
+				.split('?')
+				.slice(1)
+				.filter((p) => p.startsWith('q='))
+				.map((p) => p.replace(/^q=/, ''))[0] || '';
+		if (query) {
+			searchInput.value = query;
+			searchInput.focus();
+			onInputChange({ target: { value: query } });
+		}
+	}
+	const searchInputDiv = document.getElementById('search');
+	searchInputDiv.addEventListener('input', onInputChange);
+	setupSearchKeymaps();
+}
+
+function setupSearchKeymaps() {
+	const searchInput = document.querySelector('#search input');
+	const mainContent = document.querySelector('#main-content');
+	const docnav = document.querySelector('header.doc-nav');
+	// Keyboard shortcut indicator
+	const searchKeys = document.createElement('div');
+	const modifierKeyPrefix = navigator.platform.includes('Mac') ? '⌘' : 'Ctrl';
+	searchKeys.setAttribute('id', 'search-keys');
+	searchKeys.innerHTML = '<kbd>' + modifierKeyPrefix + '</kbd><kbd>k</kbd>';
+	searchInput.parentElement?.appendChild(searchKeys);
+	searchInput.addEventListener('focus', () => searchKeys.classList.add('hide'));
+	searchInput.addEventListener('blur', () => searchKeys.classList.remove('hide'));
+	// Global shortcuts to focus searchInput
+	document.addEventListener('keydown', (ev) => {
+		if (ev.key === '/' || ((ev.ctrlKey || ev.metaKey) && ev.key === 'k')) {
+			ev.preventDefault();
+			searchInput.focus();
+		}
+	});
+	// Shortcuts while searchInput is focused
+	let selectedIdx = -1;
+	function selectResult(results, newIdx) {
+		if (selectedIdx !== -1) {
+			results[selectedIdx].classList.remove('selected');
+		}
+		results[newIdx].classList.add('selected');
+		results[newIdx].scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'nearest' });
+		selectedIdx = newIdx;
+	}
+	searchInput.addEventListener('keydown', (ev) => {
+		const searchResults = document.querySelectorAll('.search .result');
+		switch (ev.key) {
+			case 'Escape':
+				searchInput.blur();
+				mainContent.focus();
+				break;
+			case 'Enter':
+				if (!searchResults.length || selectedIdx === -1) break;
+				searchResults[selectedIdx].querySelector('a').click();
+				break;
+			case 'ArrowDown':
+				ev.preventDefault();
+				if (!searchResults.length) break;
+				if (selectedIdx >= searchResults.length - 1) {
+					// Cycle to first if last is selected
+					selectResult(searchResults, 0);
+				} else {
+					// Select next
+					selectResult(searchResults, selectedIdx + 1);
+				}
+				break;
+			case 'ArrowUp':
+				ev.preventDefault();
+				if (!searchResults.length) break;
+				if (selectedIdx <= 0) {
+					// Cycle to last if first is selected (or select it if none is selected yet)
+					selectResult(searchResults, searchResults.length - 1);
+				} else {
+					// Select previous
+					selectResult(searchResults, selectedIdx - 1);
+				}
+				break;
+			default:
+				docnav.scroll(0, 0);
+				selectedIdx = -1;
+		}
+	});
+	// Ensure initial keyboard navigability
+	mainContent.focus();
+}
+
+function createSearchResult(data) {
+	const li = document.createElement('li');
+	li.classList.add('result');
+	const a = document.createElement('a');
+	a.href = data.link;
+	a.classList.add('link');
+	li.appendChild(a);
+	const definition = document.createElement('div');
+	definition.classList.add('definition');
+	a.appendChild(definition);
+	if (data.description) {
+		const description = document.createElement('div');
+		description.classList.add('description');
+		description.textContent = data.description;
+		a.appendChild(description);
+	}
+	const title = document.createElement('span');
+	title.classList.add('title');
+	title.textContent = data.title;
+	definition.appendChild(title);
+	const badge = document.createElement('badge');
+	badge.classList.add('badge');
+	badge.textContent = data.badge;
+	definition.appendChild(badge);
+	return li;
+}
+
+function setupCollapse() {
+	const dropdownArrows = document.querySelectorAll('.dropdown-arrow');
+	dropdownArrows.forEach((arrow) => {
+		arrow.addEventListener('click', (e) => {
+			const parent = e.target.parentElement.parentElement.parentElement;
+			parent.classList.toggle('open');
+		});
+	});
+}
+
+function debounce(func, timeout) {
+	let timer;
+	return (...args) => {
+		const next = () => func(...args);
+		if (timer) {
+			clearTimeout(timer);
+		}
+		timer = setTimeout(next, timeout > 0 ? timeout : 300);
+	};
+}
+
+function setupCodeCopy() {
+	const pres = document.querySelectorAll('pre:not(.signature)');
+	pres.forEach((pre) => {
+		const tempDiv = document.createElement('button');
+		tempDiv.className = 'copy';
+		tempDiv.innerHTML =
+			'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="rgba(173,184,194,1)"><path d="M6.9998 6V3C6.9998 2.44772 7.44752 2 7.9998 2H19.9998C20.5521 2 20.9998 2.44772 20.9998 3V17C20.9998 17.5523 20.5521 18 19.9998 18H16.9998V20.9991C16.9998 21.5519 16.5499 22 15.993 22H4.00666C3.45059 22 3 21.5554 3 20.9991L3.0026 7.00087C3.0027 6.44811 3.45264 6 4.00942 6H6.9998ZM5.00242 8L5.00019 20H14.9998V8H5.00242ZM8.9998 6H16.9998V16H18.9998V4H8.9998V6Z"></path></svg>';
+		tempDiv.addEventListener('click', (e) => {
+			const parent = e.target;
+			var code = tempDiv.parentElement.querySelector('code');
+			let i = Array.from(code.childNodes)
+				.map((r) => r.textContent)
+				.join('');
+			navigator.clipboard.writeText(i);
+			var tmp = tempDiv.innerHTML;
+			tempDiv.innerHTML = 'Copied';
+			window.setTimeout(function () {
+				tempDiv.innerHTML = tmp;
+			}, 1000);
+		});
+		pre.insertAdjacentElement('afterbegin', tempDiv);
+	});
+}
+</script>
+		<script async src="search_index.js"></script>
+	</body>
+</html>

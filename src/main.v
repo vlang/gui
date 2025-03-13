@@ -20,49 +20,54 @@ fn main() {
 }
 
 fn main_view(w &gui.Window) gui.UI_Tree {
-	radius := 5
-	spacing := 10
-	padding := gui.Padding{10, 10, 10, 10}
 	width, height := w.window_size()
 
 	return gui.row(
 		width:    width
 		height:   height
-		sizing:   gui.Sizing{.fixed, .fixed}
-		spacing:  10
-		padding:  padding
+		sizing:   gui.fixed_fixed
 		fill:     true
-		color:    gx.dark_blue
+		color:    gui.dark_blue
 		children: [
-			gui.rectangle(
-				width:  75
-				height: 50
-				fill:   true
-				radius: radius
-				color:  gx.purple
+			gui.column(
+				padding:  gui.padding_none
+				sizing:   gui.fit_flex
+				children: [
+					gui.rectangle(
+						width:  75
+						height: 50
+						fill:   true
+						color:  gui.purple
+					),
+					gui.rectangle(
+						width:  75
+						height: 50
+						sizing: gui.fit_flex
+						color:  gui.transparent
+					),
+					gui.rectangle(
+						width:  75
+						height: 50
+						fill:   true
+						color:  gui.green
+					),
+				]
 			),
 			gui.row(
 				id:       'orange'
-				spacing:  spacing
-				padding:  padding
-				radius:   radius
-				color:    gx.orange
+				color:    gui.orange
 				sizing:   gui.Sizing{.flex, .flex}
 				children: [
 					gui.column(
 						id:       'black'
-						spacing:  spacing
-						padding:  padding
-						radius:   radius
 						sizing:   gui.Sizing{.flex, .flex}
 						fill:     true
-						color:    gx.rgb(0x30, 0x30, 0x30)
+						color:    gui.rgb(0x30, 0x30, 0x30)
 						children: [
 							gui.rectangle(
 								width:  25
 								height: 25
-								radius: radius
-								color:  gx.orange
+								color:  gui.orange
 							),
 							gui.column(
 								color:    gx.white
@@ -76,12 +81,11 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 								wrap:     true
 								text_cfg: gx.TextCfg{
 									size:  18
-									color: gx.white
+									color: gui.white
 								}
 								text:     'Embedded in a column with wrapping'
 							),
-							gui.button(id: 'button', text: 'Button Text'),
-							// gui.button(id: 'button', text: 'Button Text'),
+							gui.button(id: 'button-id', text: 'Button Text'),
 						]
 					),
 					gui.rectangle(
@@ -89,9 +93,8 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 						width:  25
 						height: 25
 						fill:   true
-						radius: radius
-						sizing: gui.Sizing{.flex, .flex}
-						color:  gx.dark_green
+						sizing: gui.flex_flex
+						color:  gui.dark_green
 					),
 				]
 			),
@@ -99,16 +102,32 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				width:  75
 				height: 50
 				fill:   true
-				radius: radius
-				sizing: gui.Sizing{.flex, .flex}
+				sizing: gui.flex_flex
 				color:  gx.red
 			),
-			gui.rectangle(
-				width:  75
-				height: 50
-				fill:   true
-				radius: radius
-				color:  gx.orange
+			gui.column(
+				padding:  gui.Padding{0, 0, 0, 0}
+				sizing:   gui.fit_flex
+				children: [
+					gui.rectangle(
+						width:  75
+						height: 50
+						fill:   true
+						color:  gui.orange
+					),
+					gui.rectangle(
+						width:  75
+						height: 50
+						sizing: gui.fit_flex
+						color:  gui.transparent
+					),
+					gui.rectangle(
+						width:  75
+						height: 50
+						fill:   true
+						color:  gui.yellow
+					),
+				]
 			),
 		]
 	)

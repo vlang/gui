@@ -124,17 +124,7 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 ## Description
 
 GUI is a fast, nimble UI framework for the V programming language. It aspires to be
-a useful framework without requiring a long learning curve. A key difference between
-GUI and other UI frameworks is that views are not owned by the hosting window. A view
-is read, a ShapeTree is generated and that ShapeTree is the only thing GUI retains.
-This means your view can be modified without fear of running afoul of the UI rendering.
-A common problem in many other UI frameworks.
-
-So then how does one update a view in GUI? Simple. Modify the your view or generate a
-new oneand and give it to the window via `update_view()`. But wait, won't that be slow?
-No. It takes microseconds to generate a ShapeTree and the drawing primitives are simple
-rectangles, lines and text. It's a bit like a game engine. Generate a frame, render,
-generate the next frame, render...
+a useful framework without requiring a long learning curve.
 
 ## Roadmap
 

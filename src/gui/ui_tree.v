@@ -22,8 +22,8 @@ fn (et EmptyTree) generate(_ gg.Context) ShapeTree {
 	return ShapeTree{}
 }
 
-const empty_tree = EmptyTree{
-	id: 'empty_ui_tree'
+const empty_ui_tree = EmptyTree{
+	id: '_empty_ui_tree_'
 }
 
 // generate_shapes generates a ShapeTree from a UI_Tree.
