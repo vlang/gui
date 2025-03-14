@@ -15,9 +15,10 @@ pub:
 	color  gx.Color = gx.rgba(0, 0, 0, 0)
 }
 
-// rectangles is one of the most useful and used UI controls.
+// rectangle is one of the most useful and used UI controls.
 // Rectangles can be filled, outlined and colored and can have radius
-// corners.pub fn rectangle(cfg RectangleCfg) &Container {
+// corners.
+pub fn rectangle(cfg RectangleCfg) &Container {
 	container_cfg := ContainerCfg{
 		id:     cfg.id
 		x:      cfg.x
