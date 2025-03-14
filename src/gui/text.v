@@ -10,7 +10,7 @@ struct Text implements View {
 mut:
 	spacing   f32
 	text      string
-	text_cfg  gx.TextCfg
+	style     gx.TextCfg
 	wrap      bool
 	min_width f32
 	children  []View
@@ -25,7 +25,7 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 			type:      .text
 			spacing:   t.spacing
 			text:      t.text
-			text_cfg:  t.text_cfg
+			text_cfg:  t.style
 			lines:     [t.text]
 			wrap:      t.wrap
 			sizing:    Sizing{sizing_width_type, .fit}
@@ -42,7 +42,7 @@ pub:
 	id        string
 	spacing   f32
 	text      string
-	text_cfg  gx.TextCfg
+	style     gx.TextCfg
 	wrap      bool
 	min_width f32
 }
@@ -57,7 +57,7 @@ pub fn text(cfg TextCfg) &Text {
 		id:        cfg.id
 		spacing:   cfg.spacing
 		text:      cfg.text
-		text_cfg:  cfg.text_cfg
+		style:     cfg.style
 		wrap:      cfg.wrap
 		min_width: cfg.min_width
 	}

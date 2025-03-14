@@ -61,7 +61,7 @@ pub:
 	sizing   Sizing
 	fill     bool
 	radius   int                              = radius_default
-	color    gx.Color                         = gx.rgba(0, 0, 0, 0)
+	color    gx.Color                         = transparent
 	padding  Padding                          = padding_default
 	on_click fn (string, MouseEvent, &Window) = unsafe { nil }
 	on_char  fn (u32, &Window)                = unsafe { nil }

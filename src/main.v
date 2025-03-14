@@ -30,11 +30,11 @@ fn main() {
 fn main_view(w &gui.Window) gui.View {
 	width, height := w.window_size()
 	mut state := w.get_state[AppState]()
-	text_cfg := gx.TextCfg{
+	text_style := gx.TextCfg{
 		color: gui.white
 	}
-	text_cfg_large := gx.TextCfg{
-		...text_cfg
+	text_style_large := gx.TextCfg{
+		...text_style
 		size: 20
 	}
 
@@ -95,24 +95,24 @@ fn main_view(w &gui.Window) gui.View {
 								color:    gx.white
 								children: [
 									gui.text(
-										text:     'Hello world!'
-										text_cfg: text_cfg_large
+										text:  'Hello world!'
+										style: text_style_large
 									),
 								]
 							),
 							gui.text(
-								text:     'This is text'
-								text_cfg: text_cfg
+								text:  'This is text'
+								style: text_style
 							),
 							gui.text(
-								wrap:     true
-								text_cfg: text_cfg
-								text:     'Embedded in a column with wrapping'
+								wrap:  true
+								style: text_style
+								text:  'Embedded in a column with wrapping'
 							),
 							gui.button(
-								text:     'Button Text ${state.click_count}'
-								text_cfg: text_cfg
-								on_click: fn (id string, me gui.MouseEvent, mut w gui.Window) {
+								text:       'Button Text ${state.click_count}'
+								text_style: text_style
+								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) {
 									mut state := w.get_state[AppState]()
 									state.click_count += 1
 									w.update_view(main_view(w))
@@ -120,11 +120,11 @@ fn main_view(w &gui.Window) gui.View {
 							),
 							gui.row(
 								children: [
-									gui.text(text: 'Name:', text_cfg: text_cfg),
+									gui.text(text: 'Name:', style: text_style),
 									gui.input(
 										width:           100
 										text:            state.name
-										text_cfg:        text_cfg
+										text_style:      text_style
 										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 											mut state := w.get_state[AppState]()
 											state.name = s

@@ -26,10 +26,12 @@ pub const violet = gx.violet
 pub const white = gx.white
 pub const yellow = gx.yellow
 
+// rgb builds a Color instance from given r, g, b values
 pub fn rgb(r u8, g u8, b u8) gx.Color {
 	return rgba(r, g, b, 0xff)
 }
 
+// rgba builds a Color instance from given r, g, b, a values
 pub fn rgba(r u8, g u8, b u8, a u8) gx.Color {
 	return gx.rgba(r, g, b, a)
 }

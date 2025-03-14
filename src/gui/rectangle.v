@@ -11,14 +11,18 @@ pub:
 	height f32
 	sizing Sizing
 	fill   bool
-	radius int      = radius_default
-	color  gx.Color = gx.rgba(0, 0, 0, 0)
+	radius int = radius_default
+	color  gx.Color
 }
 
 // rectangle is one of the most useful and used UI controls.
 // Rectangles can be filled, outlined and colored and can have radius
 // corners.
 pub fn rectangle(cfg RectangleCfg) &Container {
+	// Technically, rectangle is a container but
+	// it has no children, layout direction or
+	// padding. Easier than defining a new View
+	// component.
 	container_cfg := ContainerCfg{
 		id:      cfg.id
 		x:       cfg.x

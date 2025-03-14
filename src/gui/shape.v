@@ -64,12 +64,7 @@ const empty_shape_tree = ShapeTree{
 	shape: empty_shape
 }
 
-// draw
-// Drawing a shape it just that. No decisions about UI state are considered.
-// If the UI state of your view changes, Generate an new view and update the window
-// with the new view. New shapes are generated based on the view (View).
-// Data flows one way from view -> shapes, or in terms of data structures,
-// from View -> ShapeTree
+// draw draws the shape as defined by shape.type
 pub fn (shape Shape) draw(ctx gg.Context) {
 	match shape.type {
 		.container { shape.draw_rectangle(ctx) }
@@ -119,6 +114,7 @@ pub fn is_empty_rect(rect gg.Rect) bool {
 }
 
 // shape_clip creates a clipping region based on the shapes's bounds property.
+// Internal use mostly, but useful if designing a new Shape
 pub fn (shape Shape) shape_clip(ctx gg.Context) {
 	if !is_empty_rect(shape.bounds) {
 		x := int(shape.bounds.x - 1)
@@ -130,11 +126,13 @@ pub fn (shape Shape) shape_clip(ctx gg.Context) {
 }
 
 // shape_unclip resets the clipping region.
+// Internal use mostly, but useful if designing a new Shape
 pub fn (shape Shape) shape_unclip(ctx gg.Context) {
 	ctx.scissor_rect(0, 0, max_int, max_int)
 }
 
 // point_in_shape determines if the given point is within the shape's layout rectangle
+// Internal use mostly, but useful if designing a new Shape
 pub fn (shape Shape) point_in_shape(x f32, y f32) bool {
 	return x >= shape.x && x < (shape.x + shape.width) && y >= shape.y
 		&& y < (shape.y + shape.height)
@@ -143,6 +141,7 @@ pub fn (shape Shape) point_in_shape(x f32, y f32) bool {
 // shape_from_point_on_click walks the ShapeTree and returns the first
 // shape where the sahpe region contains the point and the shape has
 // a click handler. Search is in reverse order
+// Internal use mostly, but useful if designing a new Shape
 pub fn shape_from_point_on_click(node ShapeTree, x f32, y f32) Shape {
 	mut shape := empty_shape
 	for child in node.children {
@@ -157,6 +156,8 @@ pub fn shape_from_point_on_click(node ShapeTree, x f32, y f32) Shape {
 	return shape
 }
 
+// shape_from_on_char
+// Internal use mostly, but useful if designing a new Shape
 pub fn shape_from_on_char(node ShapeTree) Shape {
 	mut shape := empty_shape
 	for child in node.children {

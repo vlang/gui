@@ -9,7 +9,7 @@ pub:
 	sizing          Sizing
 	spacing         f32
 	wrap            bool
-	text_cfg        gx.TextCfg
+	text_style      gx.TextCfg
 	width           f32 = 50
 	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil }
 }
@@ -26,8 +26,8 @@ pub fn input(cfg InputCfg) &View {
 		}
 		children: [
 			text(
-				text:     cfg.text
-				text_cfg: cfg.text_cfg
+				text:  cfg.text
+				style: cfg.text_style
 			),
 		]
 	)
