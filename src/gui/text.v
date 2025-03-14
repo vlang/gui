@@ -17,7 +17,7 @@ mut:
 }
 
 fn (t &Text) generate(ctx gg.Context) ShapeTree {
-	sizing_width_type := if t.wrap { SizingType.flex } else { SizingType.fixed }
+	sizing_width_type := if t.wrap { SizingType.flex } else { SizingType.fit }
 	mut shape_tree := ShapeTree{
 		shape: Shape{
 			id:        t.id

@@ -75,10 +75,17 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 				sizing:   gui.flex_flex
 				children: [
 					gui.column(
-						sizing:   gui.flex_flex
+						id:       'problem'
+						sizing:   gui.flex_fit
 						fill:     true
 						color:    gui.rgb(0x30, 0x30, 0x30)
 						children: [
+							gui.rectangle(
+								id:     'rect'
+								width:  25
+								height: 25
+								color:  gui.orange
+							),
 							gui.rectangle(
 								width:  25
 								height: 25
@@ -93,7 +100,10 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 									),
 								]
 							),
-							gui.text(text: 'This is text', text_cfg: text_cfg),
+							gui.text(
+								text:     'This is text'
+								text_cfg: text_cfg
+							),
 							gui.text(
 								wrap:     true
 								text_cfg: text_cfg

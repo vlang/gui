@@ -20,15 +20,17 @@ pub:
 // corners.
 pub fn rectangle(cfg RectangleCfg) &Container {
 	container_cfg := ContainerCfg{
-		id:     cfg.id
-		x:      cfg.x
-		y:      cfg.y
-		width:  cfg.width
-		height: cfg.height
-		sizing: cfg.sizing
-		fill:   cfg.fill
-		radius: cfg.radius
-		color:  cfg.color
+		id:      cfg.id
+		x:       cfg.x
+		y:       cfg.y
+		width:   cfg.width
+		height:  cfg.height
+		sizing:  cfg.sizing
+		fill:    cfg.fill
+		radius:  cfg.radius
+		color:   cfg.color
+		padding: Padding{0, 0, 0, 0}
+		spacing: 0
 	}
 	return container(container_cfg)
 }

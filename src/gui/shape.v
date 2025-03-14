@@ -36,7 +36,6 @@ mut:
 pub enum ShapeType {
 	none
 	container
-	rectangle
 	text
 	line
 	image
@@ -65,18 +64,6 @@ const empty_shape_tree = ShapeTree{
 	shape: empty_shape
 }
 
-fn (node ShapeTree) clone() ShapeTree {
-	mut clone := ShapeTree{
-		shape: Shape{
-			...node.shape
-		}
-	}
-	for child in node.children {
-		clone.children << child.clone()
-	}
-	return clone
-}
-
 // draw
 // Drawing a shape it just that. No decisions about UI state are considered.
 // If the UI state of your view changes, Generate an new view and update the window
@@ -86,7 +73,6 @@ fn (node ShapeTree) clone() ShapeTree {
 pub fn (shape Shape) draw(ctx gg.Context) {
 	match shape.type {
 		.container { shape.draw_rectangle(ctx) }
-		.rectangle { shape.draw_rectangle(ctx) }
 		.text { shape.draw_text(ctx) }
 		.image {}
 		.line {}
@@ -96,7 +82,7 @@ pub fn (shape Shape) draw(ctx gg.Context) {
 
 // draw_rectangle draws a shape as a rectangle.
 pub fn (shape Shape) draw_rectangle(ctx gg.Context) {
-	assert shape.type in [.container, .rectangle]
+	assert shape.type == .container
 	shape.shape_clip(ctx)
 	defer { shape.shape_unclip(ctx) }
 
