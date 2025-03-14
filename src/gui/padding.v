@@ -1,0 +1,42 @@
+module gui
+
+// Padding is the amount of space surrounding a Shape.
+// The size of a Shape always includes its padding.
+// Parameter order is the same as CSS.
+pub struct Padding {
+pub mut:
+	top    f32
+	right  f32
+	bottom f32
+	left   f32
+}
+
+pub const padding_none = pad_4(0)
+pub const padding_default = pad_4(10)
+
+// padding is creates a padding with the given arguments.
+pub fn padding(top f32, right f32, bottom f32, left f32) Padding {
+	return Padding{
+		top:    top
+		right:  right
+		bottom: bottom
+		left:   left
+	}
+}
+
+// pad_4 creates a padding with all 4 sides set to the p parameter
+pub fn pad_4(p f32) Padding {
+	return Padding{p, p, p, p}
+}
+
+// pad_2 creates a padding with the top and bottome set to
+// the first parameter and the left and right set to the
+// second parameter.
+pub fn pad_2(tb f32, lr f32) Padding {
+	return Padding{
+		top:    tb
+		right:  lr
+		bottom: tb
+		left:   lr
+	}
+}

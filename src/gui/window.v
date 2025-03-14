@@ -21,11 +21,11 @@ mut:
 // view and assign to `on_resize`
 pub struct WindowCfg {
 pub:
+	state      voidptr = unsafe { nil }
 	title      string
 	width      int
 	height     int
 	bg_color   gx.Color
-	state      voidptr      = unsafe { nil }
 	on_init    fn (&Window) = unsafe { nil }
 	on_resized fn (&Window) = unsafe { nil }
 }
@@ -34,27 +34,27 @@ pub:
 // See WindowCfg on how to configure it
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
+		state:      cfg.state
 		mutex:      sync.new_mutex()
 		on_resized: cfg.on_resized
-		state:      cfg.state
 	}
 	window.ui = gg.new_context(
-		ui_mode:      true // only draw on events
 		bg_color:     cfg.bg_color
-		width:        cfg.width
 		height:       cfg.height
-		window_title: cfg.title
 		init_fn:      cfg.on_init
-		resized_fn:   resized
-		click_fn:     clicked
-		char_fn:      char_in
-		frame_fn:     frame
+		ui_mode:      true // only draw on events
 		user_data:    window
+		width:        cfg.width
+		window_title: cfg.title
+		char_fn:      char_fn
+		click_fn:     click_fn
+		frame_fn:     frame_fn
+		resized_fn:   resized_fn
 	)
 	return window
 }
 
-fn frame(mut window Window) {
+fn frame_fn(mut window Window) {
 	window.mutex.lock()
 	window.ui.begin()
 	window.draw_shapes(window.layout)
@@ -66,6 +66,44 @@ fn (mut window Window) draw_shapes(shapes ShapeTree) {
 	shapes.shape.draw(window.ui)
 	for child in shapes.children {
 		window.draw_shapes(child)
+	}
+}
+
+fn char_fn(c u32, mut w Window) {
+	w.mutex.lock()
+	layout := w.layout
+	w.mutex.unlock()
+
+	shape := shape_from_on_char(layout)
+
+	if shape.on_char != unsafe { nil } {
+		shape.on_char(c, w)
+	}
+}
+
+// clicked delegates to the first Shape that has a click
+// handler within its rectanguler area. The search for
+// the Shape is in reverse order.
+fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
+	w.mutex.lock()
+	layout := w.layout
+	w.mutex.unlock()
+
+	shape := shape_from_point_on_click(layout, x, y)
+
+	if shape.on_click != unsafe { nil } {
+		me := MouseEvent{
+			mouse_x:      x
+			mouse_y:      y
+			mouse_button: MouseButton(button)
+		}
+		shape.on_click(shape.id, me, w)
+	}
+}
+
+fn resized_fn(e &gg.Event, mut w Window) {
+	if w.on_resized != unsafe { nil } {
+		w.on_resized(w)
 	}
 }
 
@@ -96,42 +134,4 @@ pub fn (mut window Window) run() {
 pub fn (window &Window) get_state[T]() &T {
 	assert window.state != unsafe { nil }
 	return unsafe { &T(window.state) }
-}
-
-fn resized(e &gg.Event, mut w Window) {
-	if w.on_resized != unsafe { nil } {
-		w.on_resized(w)
-	}
-}
-
-// clicked delegates to the first Shape that has a click
-// handler within its rectanguler area. The search for
-// the Shape is in reverse order.
-fn clicked(x f32, y f32, button gg.MouseButton, mut w Window) {
-	w.mutex.lock()
-	layout := w.layout
-	w.mutex.unlock()
-
-	shape := shape_from_point_on_click(layout, x, y)
-
-	if shape.on_click != unsafe { nil } {
-		me := MouseEvent{
-			mouse_x:      x
-			mouse_y:      y
-			mouse_button: MouseButton(button)
-		}
-		shape.on_click(shape.id, me, w)
-	}
-}
-
-fn char_in(c u32, mut w Window) {
-	w.mutex.lock()
-	layout := w.layout
-	w.mutex.unlock()
-
-	shape := shape_from_on_char(layout)
-
-	if shape.on_char != unsafe { nil } {
-		shape.on_char(c, w)
-	}
 }

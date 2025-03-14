@@ -9,10 +9,10 @@ pub:
 	y      f32
 	width  f32
 	height f32
-	sizing Sizing
+	color  gx.Color
 	fill   bool
 	radius int = radius_default
-	color  gx.Color
+	sizing Sizing
 }
 
 // rectangle is one of the most useful and used UI controls.
@@ -29,11 +29,11 @@ pub fn rectangle(cfg RectangleCfg) &Container {
 		y:       cfg.y
 		width:   cfg.width
 		height:  cfg.height
-		sizing:  cfg.sizing
-		fill:    cfg.fill
-		radius:  cfg.radius
 		color:   cfg.color
+		fill:    cfg.fill
 		padding: Padding{0, 0, 0, 0}
+		radius:  cfg.radius
+		sizing:  cfg.sizing
 		spacing: 0
 	}
 	return container(container_cfg)

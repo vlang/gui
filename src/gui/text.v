@@ -8,11 +8,11 @@ import rand
 struct Text implements View {
 	id string
 mut:
-	spacing   f32
-	text      string
-	style     gx.TextCfg
-	wrap      bool
 	min_width f32
+	spacing   f32
+	style     gx.TextCfg
+	text      string
+	wrap      bool
 	children  []View
 }
 
@@ -40,11 +40,11 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 pub struct TextCfg {
 pub:
 	id        string
-	spacing   f32
-	text      string
-	style     gx.TextCfg
-	wrap      bool
 	min_width f32
+	spacing   f32
+	style     gx.TextCfg
+	text      string
+	wrap      bool
 }
 
 // text renders text according to the TextCfg.
@@ -55,11 +55,11 @@ pub:
 pub fn text(cfg TextCfg) &Text {
 	return &Text{
 		id:        cfg.id
-		spacing:   cfg.spacing
-		text:      cfg.text
-		style:     cfg.style
-		wrap:      cfg.wrap
 		min_width: cfg.min_width
+		spacing:   cfg.spacing
+		style:     cfg.style
+		text:      cfg.text
+		wrap:      cfg.wrap
 	}
 }
 

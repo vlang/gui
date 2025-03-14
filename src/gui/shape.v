@@ -15,19 +15,19 @@ mut:
 	y          f32
 	width      f32
 	height     f32
-	spacing    f32
-	sizing     Sizing
-	padding    Padding
-	fill       bool
-	radius     int
+	bounds     gg.Rect
 	color      gg.Color
-	text       string
+	fill       bool
 	lines      []string
+	min_height f32
+	min_width  f32
+	padding    Padding
+	radius     int
+	sizing     Sizing
+	spacing    f32
+	text       string
 	text_cfg   gx.TextCfg
 	wrap       bool
-	min_width  f32
-	min_height f32
-	bounds     gg.Rect
 	on_click   fn (string, MouseEvent, &Window) = unsafe { nil }
 	on_char    fn (u32, &Window)                = unsafe { nil }
 }

@@ -78,12 +78,12 @@ fn container(c ContainerCfg) &Container {
 		y:        c.y
 		width:    c.width
 		height:   c.height
-		spacing:  c.spacing
-		sizing:   c.sizing
-		padding:  c.padding
-		fill:     c.fill
-		radius:   c.radius
 		color:    c.color
+		fill:     c.fill
+		padding:  c.padding
+		radius:   c.radius
+		sizing:   c.sizing
+		spacing:  c.spacing
 		on_click: c.on_click
 		on_char:  c.on_char
 		children: c.children

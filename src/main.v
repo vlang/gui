@@ -30,6 +30,7 @@ fn main() {
 fn main_view(w &gui.Window) gui.View {
 	width, height := w.window_size()
 	mut state := w.get_state[AppState]()
+
 	text_style := gx.TextCfg{
 		color: gui.white
 	}
@@ -75,8 +76,7 @@ fn main_view(w &gui.Window) gui.View {
 				sizing:   gui.flex_flex
 				children: [
 					gui.column(
-						id:       'problem'
-						sizing:   gui.flex_fit
+						sizing:   gui.flex_flex
 						fill:     true
 						color:    gui.rgb(0x30, 0x30, 0x30)
 						children: [
