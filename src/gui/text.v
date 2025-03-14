@@ -37,7 +37,7 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 	return shape_tree
 }
 
-struct TextConfig {
+pub struct TextConfig {
 pub:
 	id        string
 	spacing   f32
@@ -47,7 +47,7 @@ pub:
 	min_width f32
 }
 
-fn text(c TextConfig) &Text {
+pub fn text(c TextConfig) &Text {
 	return &Text{
 		id:        c.id
 		spacing:   c.spacing

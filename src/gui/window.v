@@ -40,6 +40,7 @@ pub fn window(cfg WindowCfg) &Window {
 		init_fn:      cfg.on_init
 		resized_fn:   resized
 		click_fn:     clicked
+		char_fn:      char_in
 		frame_fn:     frame
 		user_data:    window
 	)
@@ -114,5 +115,17 @@ fn clicked(x f32, y f32, button gg.MouseButton, mut w Window) {
 			mouse_button: MouseButton(button)
 		}
 		shape.on_click(shape.id, me, w)
+	}
+}
+
+fn char_in(c u32, mut w Window) {
+	w.mutex.lock()
+	layout := w.layout
+	w.mutex.unlock()
+
+	shape := shape_from_on_char(layout)
+
+	if shape.on_char != unsafe { nil } {
+		shape.on_char(c, w)
 	}
 }

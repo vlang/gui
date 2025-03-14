@@ -22,6 +22,7 @@ pub mut:
 	radius    int
 	color     gx.Color
 	on_click  fn (string, MouseEvent, &Window) = unsafe { nil }
+	on_char   fn (u32, &Window)                = unsafe { nil }
 	children  []UI_Tree
 }
 
@@ -45,6 +46,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 			min_width:  c.width
 			min_height: c.height
 			on_click:   c.on_click
+			on_char:    c.on_char
 		}
 	}
 }
@@ -65,6 +67,7 @@ pub:
 	color    gx.Color                         = gx.rgba(0, 0, 0, 0)
 	padding  Padding                          = padding_default
 	on_click fn (string, MouseEvent, &Window) = unsafe { nil }
+	on_char  fn (u32, &Window)                = unsafe { nil }
 	children []UI_Tree
 }
 
@@ -83,6 +86,7 @@ fn container(c ContainerConfig) &Container {
 		radius:   c.radius
 		color:    c.color
 		on_click: c.on_click
+		on_char:  c.on_char
 		children: c.children
 	}
 }

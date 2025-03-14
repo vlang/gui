@@ -6,6 +6,7 @@ import gx
 @[heap]
 struct AppState {
 pub mut:
+	name        string
 	click_count int
 }
 
@@ -29,6 +30,13 @@ fn main() {
 fn main_view(w &gui.Window) gui.UI_Tree {
 	width, height := w.window_size()
 	mut state := w.get_state[AppState]()
+	text_cfg := gx.TextCfg{
+		color: gui.white
+	}
+	text_cfg_large := gx.TextCfg{
+		...text_cfg
+		size: 20
+	}
 
 	return gui.row(
 		width:    width
@@ -79,26 +87,41 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 							gui.column(
 								color:    gx.white
 								children: [
-									gui.label(text: 'Hello world!'),
+									gui.text(
+										text:     'Hello world!'
+										text_cfg: text_cfg_large
+									),
 								]
 							),
-							gui.label(text: 'This is text'),
-							gui.label(
-								id:       'label'
+							gui.text(text: 'This is text', text_cfg: text_cfg),
+							gui.text(
 								wrap:     true
-								text_cfg: gx.TextCfg{
-									size:  18
-									color: gui.white
-								}
+								text_cfg: text_cfg
 								text:     'Embedded in a column with wrapping'
 							),
 							gui.button(
 								text:     'Button Text ${state.click_count}'
+								text_cfg: text_cfg
 								on_click: fn (id string, me gui.MouseEvent, mut w gui.Window) {
 									mut state := w.get_state[AppState]()
 									state.click_count += 1
 									w.update_view(main_view(w))
 								}
+							),
+							gui.row(
+								children: [
+									gui.text(text: 'Name:', text_cfg: text_cfg),
+									gui.input(
+										width:           100
+										text:            state.name
+										text_cfg:        text_cfg
+										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+											mut state := w.get_state[AppState]()
+											state.name = s
+											w.update_view(main_view(w))
+										}
+									),
+								]
 							),
 						]
 					),

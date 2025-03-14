@@ -29,6 +29,7 @@ mut:
 	min_height f32
 	bounds     gg.Rect
 	on_click   fn (string, MouseEvent, &Window) = unsafe { nil }
+	on_char    fn (u32, &Window)                = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.
@@ -166,6 +167,23 @@ pub fn shape_from_point_on_click(node ShapeTree, x f32, y f32) Shape {
 	}
 	if node.shape.point_in_shape(x, y) && node.shape.on_click != unsafe { nil } {
 		return node.shape
+	}
+	return shape
+}
+
+pub fn shape_from_on_char(node ShapeTree) Shape {
+	mut shape := empty_shape
+	for child in node.children {
+		shape = shape_from_on_char(child)
+		{
+			if shape.id != empty_shape_id {
+				return shape
+			}
+		}
+
+		if node.shape.on_char != unsafe { nil } {
+			return node.shape
+		}
 	}
 	return shape
 }
