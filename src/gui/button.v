@@ -6,7 +6,7 @@ import gx
 // A UI without buttons is not very useful. GUI keeps it
 // simple. Buttons can have a size and color and text
 // and not much else.
-pub struct ButtonConfig {
+pub struct ButtonCfg {
 pub:
 	id       string
 	width    f32
@@ -19,7 +19,7 @@ pub:
 }
 
 // button is a factory function for a button.
-pub fn button(c ButtonConfig) &UI_Tree {
+pub fn button(c ButtonCfg) &UI_Tree {
 	return canvas(
 		id:       c.id
 		width:    c.width

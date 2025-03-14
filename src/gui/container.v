@@ -4,9 +4,6 @@ import gg
 import gx
 import rand
 
-// Container is the fundamental layout container in gui.
-// It can be used to layout its children top-to-bottom or left_to_right.
-// A `.none` direction allows coontainer to behave as a canvas with no additional layout.
 struct Container implements UI_Tree {
 pub mut:
 	id        string
@@ -51,9 +48,9 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 	}
 }
 
-// ConatinerConfig is a common configuration struct used in
+// ConatinerCfg is a common configuration struct used in
 // several the row, column and canvas containers
-pub struct ContainerConfig {
+pub struct ContainerCfg {
 pub:
 	id       string
 	x        f32
@@ -71,8 +68,10 @@ pub:
 	children []UI_Tree
 }
 
-// container is factory function used internally by row, column and canvas
-fn container(c ContainerConfig) &Container {
+// container is the fundamental layout container in gui.
+// It can be used to layout its children top-to-bottom or left_to_right.
+// A `.none` direction allows coontainer to behave as a canvas with no additional layout.
+fn container(c ContainerCfg) &Container {
 	return &Container{
 		id:       c.id
 		x:        c.x
@@ -95,21 +94,21 @@ fn container(c ContainerConfig) &Container {
 
 // column arranges its children top to bottom. The gap
 // between child items is determined by the spacing parameter
-pub fn column(c ContainerConfig) &Container {
-	mut col := container(c)
+pub fn column(cfg ContainerCfg) &Container {
+	mut col := container(cfg)
 	col.direction = .top_to_bottom
 	return col
 }
 
 // row arranges its children left to right. The gap
 // between child items is determined by the spacing parameter
-pub fn row(c ContainerConfig) &Container {
-	mut row := container(c)
+pub fn row(cfg ContainerCfg) &Container {
+	mut row := container(cfg)
 	row.direction = .left_to_right
 	return row
 }
 
 // canvas does not arrange or otherwise layout its children.
-pub fn canvas(c ContainerConfig) &Container {
-	return container(c)
+pub fn canvas(cfg ContainerCfg) &Container {
+	return container(cfg)
 }

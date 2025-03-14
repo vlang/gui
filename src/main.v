@@ -72,10 +72,10 @@ fn main_view(w &gui.Window) gui.UI_Tree {
 			gui.row(
 				id:       'orange'
 				color:    gui.orange
-				sizing:   gui.Sizing{.flex, .flex}
+				sizing:   gui.Sizing{.flex, .fit}
 				children: [
 					gui.column(
-						sizing:   gui.Sizing{.flex, .flex}
+						sizing:   gui.flex_flex
 						fill:     true
 						color:    gui.rgb(0x30, 0x30, 0x30)
 						children: [

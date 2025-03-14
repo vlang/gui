@@ -2,11 +2,7 @@ module gui
 
 import gx
 
-// RectangleConfig
-// Rectangles are one of the most useful and used UI controls.
-// Rectangles can be filled, outlined and colored and can have radius
-// corners.
-pub struct RectangleConfig {
+pub struct RectangleCfg {
 pub:
 	id     string
 	x      f32
@@ -19,18 +15,19 @@ pub:
 	color  gx.Color = gx.rgba(0, 0, 0, 0)
 }
 
-// rectangle is a factory function for a rectangle
-pub fn rectangle(c RectangleConfig) &Container {
-	cfg := ContainerConfig{
-		id:     c.id
-		x:      c.x
-		y:      c.y
-		width:  c.width
-		height: c.height
-		sizing: c.sizing
-		fill:   c.fill
-		radius: c.radius
-		color:  c.color
+// rectangles is one of the most useful and used UI controls.
+// Rectangles can be filled, outlined and colored and can have radius
+// corners.pub fn rectangle(cfg RectangleCfg) &Container {
+	container_cfg := ContainerCfg{
+		id:     cfg.id
+		x:      cfg.x
+		y:      cfg.y
+		width:  cfg.width
+		height: cfg.height
+		sizing: cfg.sizing
+		fill:   cfg.fill
+		radius: cfg.radius
+		color:  cfg.color
 	}
-	return container(cfg)
+	return container(container_cfg)
 }

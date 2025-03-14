@@ -37,7 +37,7 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 	return shape_tree
 }
 
-pub struct TextConfig {
+pub struct TextCfg {
 pub:
 	id        string
 	spacing   f32
@@ -47,14 +47,19 @@ pub:
 	min_width f32
 }
 
-pub fn text(c TextConfig) &Text {
+// text renders text according to the TextCfg.
+// Text wrapping is support fo multiple lines.
+// Newlines are considered white-space are converted to spaces.
+// Multple spaces are compressed to one space.
+// The `spacing` parameter can be used to increase the space between lines.
+pub fn text(cfg TextCfg) &Text {
 	return &Text{
-		id:        c.id
-		spacing:   c.spacing
-		text:      c.text
-		text_cfg:  c.text_cfg
-		wrap:      c.wrap
-		min_width: c.min_width
+		id:        cfg.id
+		spacing:   cfg.spacing
+		text:      cfg.text
+		text_cfg:  cfg.text_cfg
+		wrap:      cfg.wrap
+		min_width: cfg.min_width
 	}
 }
 
@@ -91,7 +96,7 @@ fn text_wrap(mut shape Shape, ctx gg.Context) {
 }
 
 // text_wrap_text wraps lines to given width (logical units, not chars)
-// Extra white space is removed because that's the way it is.
+// Extra white space is compressed to on space including tabs and newlines.
 pub fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
