@@ -19,7 +19,7 @@ pub:
 }
 
 // button is a factory function for a button.
-pub fn button(c ButtonCfg) &UI_Tree {
+pub fn button(c ButtonCfg) &View {
 	return canvas(
 		id:       c.id
 		width:    c.width

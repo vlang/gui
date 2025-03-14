@@ -5,7 +5,7 @@ import gx
 import rand
 
 // Text is an internal structure used to describe a text block
-struct Text implements UI_Tree {
+struct Text implements View {
 	id string
 mut:
 	spacing   f32
@@ -13,7 +13,7 @@ mut:
 	text_cfg  gx.TextCfg
 	wrap      bool
 	min_width f32
-	children  []UI_Tree
+	children  []View
 }
 
 fn (t &Text) generate(ctx gg.Context) ShapeTree {

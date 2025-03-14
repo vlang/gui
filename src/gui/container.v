@@ -4,7 +4,7 @@ import gg
 import gx
 import rand
 
-struct Container implements UI_Tree {
+struct Container implements View {
 pub mut:
 	id        string
 	direction ShapeDirection = .top_to_bottom
@@ -20,7 +20,7 @@ pub mut:
 	color     gx.Color
 	on_click  fn (string, MouseEvent, &Window) = unsafe { nil }
 	on_char   fn (u32, &Window)                = unsafe { nil }
-	children  []UI_Tree
+	children  []View
 }
 
 fn (c &Container) generate(_ gg.Context) ShapeTree {
@@ -65,7 +65,7 @@ pub:
 	padding  Padding                          = padding_default
 	on_click fn (string, MouseEvent, &Window) = unsafe { nil }
 	on_char  fn (u32, &Window)                = unsafe { nil }
-	children []UI_Tree
+	children []View
 }
 
 // container is the fundamental layout container in gui.

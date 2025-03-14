@@ -43,7 +43,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(w &gui.Window) gui.UI_Tree {
+fn main_view(w &gui.Window) gui.View {
 	width, height := w.window_size()
 	mut state := w.get_state[AppState]()
 

@@ -49,7 +49,7 @@ pub enum ShapeDirection {
 	left_to_right
 }
 
-// ShapeTree defines a tree of Shapes. UI_Trees generate ShapeTrees
+// ShapeTree defines a tree of Shapes. Views generate ShapeTrees
 pub struct ShapeTree {
 pub mut:
 	shape    Shape
@@ -67,9 +67,9 @@ const empty_shape_tree = ShapeTree{
 // draw
 // Drawing a shape it just that. No decisions about UI state are considered.
 // If the UI state of your view changes, Generate an new view and update the window
-// with the new view. New shapes are generated based on the view (UI_Tree).
+// with the new view. New shapes are generated based on the view (View).
 // Data flows one way from view -> shapes, or in terms of data structures,
-// from UI_Tree -> ShapeTree
+// from View -> ShapeTree
 pub fn (shape Shape) draw(ctx gg.Context) {
 	match shape.type {
 		.container { shape.draw_rectangle(ctx) }

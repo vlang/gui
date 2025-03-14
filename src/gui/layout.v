@@ -273,16 +273,17 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 fn layout_clipping_bounds(mut node ShapeTree, bounds gg.Rect) {
 	nb := match node.shape.type == .container {
 		true {
+			padding := node.shape.padding
 			bw := bounds.x + bounds.width
-			nw := node.shape.x + node.shape.width
+			nw := node.shape.x + node.shape.width - padding.right
 			bh := bounds.y + bounds.height
-			nh := node.shape.y + node.shape.height
+			nh := node.shape.y + node.shape.height - padding.bottom
 
 			gg.Rect{
 				x:      if bw < nw { bounds.x } else { node.shape.x }
 				y:      if bh < nh { bounds.y } else { node.shape.y }
-				width:  if bw < nw { bounds.width } else { node.shape.width }
-				height: if bh < nh { bounds.height } else { node.shape.height }
+				width:  if bw < nw { bounds.width } else { node.shape.width - padding.right }
+				height: if bh < nh { bounds.height } else { node.shape.height - padding.bottom }
 			}
 		}
 		else {

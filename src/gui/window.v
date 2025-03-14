@@ -7,13 +7,18 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	state      voidptr      = unsafe { nil } // a custom pointer to the application data/instance
+	state      voidptr      = unsafe { nil }
 	layout     ShapeTree    = empty_shape_tree
 	mutex      &sync.Mutex  = unsafe { nil }
 	ui         &gg.Context  = unsafe { nil }
 	on_resized fn (&Window) = unsafe { nil }
 }
 
+// Window is the application window. The state parameter is
+// a reference to where your application state is stored.
+// `on_init` is where you should set the applications first view.
+// If resizing is desired, define a function that updates the
+// view and assign to `on_resize`
 pub struct WindowCfg {
 pub:
 	title      string
@@ -25,6 +30,8 @@ pub:
 	on_resized fn (&Window) = unsafe { nil }
 }
 
+// window creates the application window.
+// See WindowCfg on how to configure it
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
 		mutex:      sync.new_mutex()
@@ -62,16 +69,12 @@ fn (mut window Window) draw_shapes(shapes ShapeTree) {
 	}
 }
 
-fn (window &Window) do_layout(mut layout ShapeTree) {
-	layout_do(mut layout, window)
-}
-
 // update_view sets the Window's view. A window can have
 // only one view. Giving a Window a new view replaces the
 // current view.
-pub fn (mut window Window) update_view(view UI_Tree) {
+pub fn (mut window Window) update_view(view View) {
 	mut shapes := generate_shapes(view, window)
-	window.do_layout(mut shapes)
+	layout_do(mut shapes, window)
 
 	window.mutex.lock()
 	window.layout = shapes
@@ -101,6 +104,9 @@ fn resized(e &gg.Event, mut w Window) {
 	}
 }
 
+// clicked delegates to the first Shape that has a click
+// handler within its rectanguler area. The search for
+// the Shape is in reverse order.
 fn clicked(x f32, y f32, button gg.MouseButton, mut w Window) {
 	w.mutex.lock()
 	layout := w.layout

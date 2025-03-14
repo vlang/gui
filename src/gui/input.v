@@ -14,7 +14,7 @@ pub:
 	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil }
 }
 
-pub fn input(cfg InputCfg) &UI_Tree {
+pub fn input(cfg InputCfg) &View {
 	mut input := canvas(
 		id:       cfg.id
 		width:    cfg.width
