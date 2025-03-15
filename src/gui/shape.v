@@ -149,35 +149,29 @@ pub fn (shape Shape) point_in_shape(x f32, y f32) bool {
 // shape where the sahpe region contains the point and the shape has
 // a click handler. Search is in reverse order
 // Internal use mostly, but useful if designing a new Shape
-pub fn shape_from_point_on_click(node ShapeTree, x f32, y f32) Shape {
-	mut shape := empty_shape
+pub fn shape_from_point_on_click(node ShapeTree, x f32, y f32) ?Shape {
 	for child in node.children {
-		shape = shape_from_point_on_click(child, x, y)
-		if shape.id != empty_shape_id {
+		if shape := shape_from_point_on_click(child, x, y) {
 			return shape
 		}
 	}
 	if node.shape.point_in_shape(x, y) && node.shape.on_click != unsafe { nil } {
 		return node.shape
 	}
-	return shape
+	return none
 }
 
 // shape_from_on_char
 // Internal use mostly, but useful if designing a new Shape
-pub fn shape_from_on_char(node ShapeTree) Shape {
-	mut shape := empty_shape
+pub fn shape_from_on_char(node ShapeTree) ?Shape {
 	for child in node.children {
-		shape = shape_from_on_char(child)
-		{
-			if shape.id != empty_shape_id {
-				return shape
-			}
+		if shape := shape_from_on_char(child) {
+			return shape
 		}
 
 		if node.shape.on_char != unsafe { nil } {
 			return node.shape
 		}
 	}
-	return shape
+	return none
 }

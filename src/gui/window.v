@@ -77,10 +77,10 @@ fn char_fn(c u32, mut w Window) {
 	layout := w.layout
 	w.mutex.unlock()
 
-	shape := shape_from_on_char(layout)
-
-	if shape.on_char != unsafe { nil } {
-		shape.on_char(c, w)
+	if shape := shape_from_on_char(layout) {
+		if shape.on_char != unsafe { nil } {
+			shape.on_char(c, w)
+		}
 	}
 }
 
@@ -92,15 +92,15 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 	layout := w.layout
 	w.mutex.unlock()
 
-	shape := shape_from_point_on_click(layout, x, y)
-
-	if shape.on_click != unsafe { nil } {
-		me := MouseEvent{
-			mouse_x:      x
-			mouse_y:      y
-			mouse_button: MouseButton(button)
+	if shape := shape_from_point_on_click(layout, x, y) {
+		if shape.on_click != unsafe { nil } {
+			me := MouseEvent{
+				mouse_x:      x
+				mouse_y:      y
+				mouse_button: MouseButton(button)
+			}
+			shape.on_click(shape.id, me, w)
 		}
-		shape.on_click(shape.id, me, w)
 	}
 }
 
