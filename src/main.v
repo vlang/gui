@@ -18,6 +18,7 @@ fn main() {
 		bg_color:   gx.rgb(0x30, 0x30, 0x30)
 		state:      &AppState{}
 		on_init:    fn (mut w gui.Window) {
+			w.set_focus_id(1)
 			w.update_view(main_view(w))
 		}
 		on_resized: fn (mut w gui.Window) {
@@ -32,7 +33,7 @@ fn main_view(w &gui.Window) gui.View {
 	mut state := w.get_state[AppState]()
 
 	text_style := gx.TextCfg{
-		color: gui.white
+		color: gx.white
 	}
 	text_style_large := gx.TextCfg{
 		...text_style
@@ -44,7 +45,7 @@ fn main_view(w &gui.Window) gui.View {
 		height:   height
 		sizing:   gui.fixed_fixed
 		fill:     true
-		color:    gui.dark_blue
+		color:    gx.dark_blue
 		children: [
 			gui.column(
 				padding:  gui.padding_none
@@ -54,7 +55,7 @@ fn main_view(w &gui.Window) gui.View {
 						width:  75
 						height: 50
 						fill:   true
-						color:  gui.purple
+						color:  gx.purple
 					),
 					gui.rectangle(
 						width:  75
@@ -66,32 +67,32 @@ fn main_view(w &gui.Window) gui.View {
 						width:  75
 						height: 50
 						fill:   true
-						color:  gui.green
+						color:  gx.green
 					),
 				]
 			),
 			gui.row(
 				id:       'orange'
-				color:    gui.orange
+				color:    gx.orange
 				sizing:   gui.flex_flex
 				children: [
 					gui.column(
 						sizing:   gui.flex_flex
 						fill:     true
-						color:    gui.rgb(0x30, 0x30, 0x30)
+						color:    gx.rgb(0x30, 0x30, 0x30)
 						children: [
 							gui.rectangle(
 								id:     'rect'
 								width:  25
 								height: 25
-								color:  gui.orange
+								color:  gx.orange
 							),
 							gui.rectangle(
 								width:  25
 								height: 25
-								color:  gui.orange
+								color:  gx.orange
 							),
-							gui.column(
+							gui.canvas(
 								color:    gx.white
 								children: [
 									gui.text(
@@ -119,9 +120,11 @@ fn main_view(w &gui.Window) gui.View {
 								}
 							),
 							gui.row(
+								padding:  gui.padding_none
 								children: [
 									gui.text(text: 'Name:', style: text_style),
 									gui.input(
+										focus_id:        1
 										width:           100
 										text:            state.name
 										text_style:      text_style
@@ -133,6 +136,7 @@ fn main_view(w &gui.Window) gui.View {
 									),
 								]
 							),
+							gui.text(text: 'Your name is ${state.name}', style: text_style),
 						]
 					),
 					gui.rectangle(
@@ -141,7 +145,7 @@ fn main_view(w &gui.Window) gui.View {
 						height: 25
 						fill:   true
 						sizing: gui.flex_flex
-						color:  gui.dark_green
+						color:  gx.dark_green
 					),
 				]
 			),
@@ -153,14 +157,14 @@ fn main_view(w &gui.Window) gui.View {
 				color:  gx.red
 			),
 			gui.column(
-				padding:  gui.Padding{0, 0, 0, 0}
+				padding:  gui.padding_none
 				sizing:   gui.fit_flex
 				children: [
 					gui.rectangle(
 						width:  75
 						height: 50
 						fill:   true
-						color:  gui.orange
+						color:  gx.orange
 					),
 					gui.rectangle(
 						width:  75
@@ -172,7 +176,7 @@ fn main_view(w &gui.Window) gui.View {
 						width:  75
 						height: 50
 						fill:   true
-						color:  gui.yellow
+						color:  gx.yellow
 					),
 				]
 			),

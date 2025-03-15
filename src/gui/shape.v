@@ -8,8 +8,9 @@ pub struct Shape {
 pub:
 	id        string // asigned by user
 	uid       string
-	type      ShapeType
+	focus_id  int // >0 indicates text is focusable. Value indiciates tabbing order
 	direction ShapeDirection
+	type      ShapeType
 mut:
 	x          f32
 	y          f32
@@ -104,6 +105,12 @@ pub fn (shape Shape) draw_text(ctx gg.Context) {
 	for line in shape.lines {
 		ctx.draw_text(int(shape.x), y, line, shape.text_cfg)
 		y += lh
+	}
+
+	window := unsafe { &Window(ctx.user_data) }
+	if window.focus_id != 0 && window.focus_id == shape.focus_id {
+		l := text_width(shape, ctx) + shape.x
+		ctx.draw_line(l, shape.y, l, shape.y + lh, shape.text_cfg.color)
 	}
 }
 

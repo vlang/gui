@@ -6,7 +6,8 @@ import rand
 
 // Text is an internal structure used to describe a text block
 struct Text implements View {
-	id string
+	id       string
+	focus_id int // >0 indicates text is focusable. Value indiciates tabbing order
 mut:
 	min_width f32
 	spacing   f32
@@ -22,6 +23,7 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 		shape: Shape{
 			id:        t.id
 			uid:       rand.uuid_v4()
+			focus_id:  t.focus_id
 			type:      .text
 			spacing:   t.spacing
 			text:      t.text
@@ -40,6 +42,7 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 pub struct TextCfg {
 pub:
 	id        string
+	focus_id  int
 	min_width f32
 	spacing   f32
 	style     gx.TextCfg
@@ -55,6 +58,7 @@ pub:
 pub fn text(cfg TextCfg) &Text {
 	return &Text{
 		id:        cfg.id
+		focus_id:  cfg.focus_id
 		min_width: cfg.min_width
 		spacing:   cfg.spacing
 		style:     cfg.style

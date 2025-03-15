@@ -31,7 +31,7 @@ pub fn rectangle(cfg RectangleCfg) &Container {
 		height:  cfg.height
 		color:   cfg.color
 		fill:    cfg.fill
-		padding: Padding{0, 0, 0, 0}
+		padding: padding_none
 		radius:  cfg.radius
 		sizing:  cfg.sizing
 		spacing: 0

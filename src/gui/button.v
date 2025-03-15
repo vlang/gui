@@ -9,10 +9,10 @@ import gx
 pub struct ButtonCfg {
 pub:
 	id         string
-	color      gx.Color = blue
+	color      gx.Color = gx.blue
 	fill       bool     = true
 	height     f32
-	padding    Padding = Padding{5, 10, 7, 10}
+	padding    Padding = padding(5, 10, 7, 10)
 	radius     int     = 5
 	text       string
 	text_style gx.TextCfg

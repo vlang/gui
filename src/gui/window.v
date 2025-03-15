@@ -7,8 +7,11 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	state      voidptr      = unsafe { nil }
-	layout     ShapeTree    = empty_shape_tree
+	state      voidptr   = unsafe { nil }
+	layout     ShapeTree = empty_shape_tree
+	focus_id   int
+	cursor_x   int // char position of cursor in focused text
+	cursor_y   int // line position of cursor in focuses text
 	mutex      &sync.Mutex  = unsafe { nil }
 	ui         &gg.Context  = unsafe { nil }
 	on_resized fn (&Window) = unsafe { nil }
@@ -107,6 +110,22 @@ fn resized_fn(e &gg.Event, mut w Window) {
 	}
 }
 
+// get_state returns a reference to user supplied data
+pub fn (window &Window) get_state[T]() &T {
+	assert window.state != unsafe { nil }
+	return unsafe { &T(window.state) }
+}
+
+// run starts the UI and handles events
+pub fn (mut window Window) run() {
+	window.ui.run()
+}
+
+// set_focus_id sets the window's focus id.
+pub fn (mut window Window) set_focus_id(id int) {
+	window.focus_id = id
+}
+
 // update_view sets the Window's view. A window can have
 // only one view. Giving a Window a new view replaces the
 // current view.
@@ -123,15 +142,4 @@ pub fn (mut window Window) update_view(view View) {
 pub fn (window &Window) window_size() (int, int) {
 	size := window.ui.window_size()
 	return size.width, size.height
-}
-
-// run starts the UI and handles events
-pub fn (mut window Window) run() {
-	window.ui.run()
-}
-
-// get_state returns a reference to user supplied data
-pub fn (window &Window) get_state[T]() &T {
-	assert window.state != unsafe { nil }
-	return unsafe { &T(window.state) }
 }
