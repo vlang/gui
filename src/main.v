@@ -119,24 +119,6 @@ fn main_view(w &gui.Window) gui.View {
 									w.update_view(main_view(w))
 								}
 							),
-							gui.row(
-								padding:  gui.padding_none
-								children: [
-									gui.text(text: 'Name:', style: text_style),
-									gui.input(
-										focus_id:        1
-										width:           100
-										text:            state.name
-										text_style:      text_style
-										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-											mut state := w.get_state[AppState]()
-											state.name = s
-											w.update_view(main_view(w))
-										}
-									),
-								]
-							),
-							gui.text(text: 'Your name is ${state.name}', style: text_style),
 						]
 					),
 					gui.rectangle(
@@ -149,12 +131,37 @@ fn main_view(w &gui.Window) gui.View {
 					),
 				]
 			),
-			gui.rectangle(
-				width:  75
-				height: 50
-				fill:   true
-				sizing: gui.flex_flex
-				color:  gx.red
+			gui.column(
+				width:    75
+				height:   50
+				fill:     true
+				sizing:   gui.flex_flex
+				color:    gx.rgb(0x30, 0x30, 0x30)
+				children: [
+					gui.input(
+						focus_id:        1
+						width:           150
+						text:            state.name
+						text_style:      text_style
+						wrap:            true
+						sizing:          gui.fixed_fit
+						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+							mut state := w.get_state[AppState]()
+							state.name = s
+							w.update_view(main_view(w))
+						}
+					),
+					gui.text(
+						text:  'You typed:'
+						style: text_style
+						wrap:  true
+					),
+					gui.text(
+						text:  state.name
+						style: text_style
+						wrap:  true
+					),
+				]
 			),
 			gui.column(
 				padding:  gui.padding_none

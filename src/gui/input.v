@@ -24,6 +24,7 @@ pub fn input(cfg InputCfg) &View {
 		color:    cfg.color
 		fill:     true
 		padding:  padding(5, 6, 6, 6)
+		sizing:   cfg.sizing
 		on_char:  fn [cfg] (c u32, mut w Window) {
 			on_char(cfg, c, mut w)
 		}
@@ -32,6 +33,7 @@ pub fn input(cfg InputCfg) &View {
 				text:     cfg.text
 				style:    cfg.text_style
 				focus_id: cfg.focus_id
+				wrap:     cfg.wrap
 			),
 		]
 	)
@@ -50,8 +52,15 @@ fn on_char(cfg &InputCfg, c u32, mut window Window) {
 		}
 
 		t := match c {
-			bsp, del { cfg.text#[0..-1].clone() }
-			else { cfg.text + rune(c).str() }
+			bsp, del {
+				cfg.text#[0..-1].clone()
+			}
+			else {
+				match true {
+					window.cursor_offset < 0 { cfg.text + rune(c).str() }
+					else { return }
+				}
+			}
 		}
 		cfg.on_text_changed(cfg, t, window)
 	}

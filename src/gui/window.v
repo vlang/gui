@@ -7,14 +7,13 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	state      voidptr   = unsafe { nil }
-	layout     ShapeTree = empty_shape_tree
-	focus_id   int
-	cursor_x   int // char position of cursor in focused text
-	cursor_y   int // line position of cursor in focuses text
-	mutex      &sync.Mutex  = unsafe { nil }
-	ui         &gg.Context  = unsafe { nil }
-	on_resized fn (&Window) = unsafe { nil }
+	state         voidptr   = unsafe { nil }
+	layout        ShapeTree = empty_shape_tree
+	focus_id      int
+	cursor_offset int          = -1 // char position of cursor in text, -1 == last char
+	mutex         &sync.Mutex  = unsafe { nil }
+	ui            &gg.Context  = unsafe { nil }
+	on_resized    fn (&Window) = unsafe { nil }
 }
 
 // Window is the application window. The state parameter is

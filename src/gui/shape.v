@@ -109,8 +109,9 @@ pub fn (shape Shape) draw_text(ctx gg.Context) {
 
 	window := unsafe { &Window(ctx.user_data) }
 	if window.focus_id != 0 && window.focus_id == shape.focus_id {
-		l := text_width(shape, ctx) + shape.x
-		ctx.draw_line(l, shape.y, l, shape.y + lh, shape.text_cfg.color)
+		cx := ctx.text_width(shape.lines.last()) + shape.x
+		cy := shape.y + (lh * (shape.lines.len - 1))
+		ctx.draw_line(cx, cy, cx, cy + lh, shape.text_cfg.color)
 	}
 }
 
@@ -168,10 +169,9 @@ pub fn shape_from_on_char(node ShapeTree) ?Shape {
 		if shape := shape_from_on_char(child) {
 			return shape
 		}
-
-		if node.shape.on_char != unsafe { nil } {
-			return node.shape
-		}
+	}
+	if node.shape.on_char != unsafe { nil } {
+		return node.shape
 	}
 	return none
 }
