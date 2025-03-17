@@ -11,9 +11,13 @@ mut:
 	layout        ShapeTree = ShapeTree{}
 	focus_id      int
 	cursor_offset int // char position of cursor in text, -1 == last char
-	mutex         &sync.Mutex  = unsafe { nil }
-	ui            &gg.Context  = unsafe { nil }
-	on_resized    fn (&Window) = unsafe { nil }
+	mutex         &sync.Mutex       = sync.new_mutex()
+	ui            &gg.Context       = &gg.Context{}
+	gen_view      fn (&Window) View = fn (_ &Window) View {
+		return canvas(id: 'dummy_view')
+	}
+	no_resize     bool
+	on_resized    fn (&Window) = fn (_ &Window) {}
 }
 
 // Window is the application window. The state parameter is
@@ -28,8 +32,9 @@ pub:
 	width      int
 	height     int
 	bg_color   gx.Color
-	on_init    fn (&Window) = unsafe { nil }
-	on_resized fn (&Window) = unsafe { nil }
+	no_resize  bool
+	on_init    fn (&Window) = fn (_ &Window) {}
+	on_resized fn (&Window) = fn (_ &Window) {}
 }
 
 // window creates the application window.
@@ -37,7 +42,7 @@ pub:
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
 		state:      cfg.state
-		mutex:      sync.new_mutex()
+		no_resize:  cfg.no_resize
 		on_resized: cfg.on_resized
 	}
 	window.ui = gg.new_context(
@@ -110,9 +115,10 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 }
 
 fn resized_fn(e &gg.Event, mut w Window) {
-	if w.on_resized != unsafe { nil } {
-		w.on_resized(w)
+	if !w.no_resize {
+		w.update_view(w.gen_view)
 	}
+	w.on_resized(w)
 }
 
 // get_state returns a reference to user supplied data
@@ -144,11 +150,13 @@ pub fn (mut window Window) set_focus_id(id int) {
 // update_view sets the Window's view. A window can have
 // only one view. Giving a Window a new view replaces the
 // current view.
-pub fn (mut window Window) update_view(view View) {
+pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
+	view := gen_view(window)
 	mut shapes := generate_shapes(view, window)
 	layout_do(mut shapes, window)
 
 	window.mutex.lock()
+	window.gen_view = gen_view
 	window.layout = shapes
 	window.mutex.unlock()
 }

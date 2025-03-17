@@ -12,26 +12,19 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
-		title:      'test layout'
-		width:      600
-		height:     400
-		bg_color:   gx.rgb(0x30, 0x30, 0x30)
-		state:      &AppState{}
-		on_init:    fn (mut w gui.Window) {
-			w.set_focus_id(1)
-			w.update_view(main_view(w))
-		}
-		on_resized: fn (mut w gui.Window) {
-			w.update_view(main_view(w))
+		state:    &AppState{}
+		title:    'test layout'
+		width:    600
+		height:   400
+		bg_color: gx.rgb(0x30, 0x30, 0x30)
+		on_init:  fn (mut w gui.Window) {
+			w.update_view(main_view)
 		}
 	)
 	window.run()
 }
 
 fn main_view(w &gui.Window) gui.View {
-	width, height := w.window_size()
-	mut state := w.get_state[AppState]()
-
 	text_style := gx.TextCfg{
 		color: gx.white
 	}
@@ -39,6 +32,9 @@ fn main_view(w &gui.Window) gui.View {
 		...text_style
 		size: 20
 	}
+
+	mut state := w.get_state[AppState]()
+	width, height := w.window_size()
 
 	return gui.row(
 		width:    width
@@ -116,7 +112,7 @@ fn main_view(w &gui.Window) gui.View {
 								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) {
 									mut state := w.get_state[AppState]()
 									state.click_count += 1
-									w.update_view(main_view(w))
+									w.update_view(main_view)
 								}
 							),
 						]
@@ -148,7 +144,7 @@ fn main_view(w &gui.Window) gui.View {
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 							mut state := w.get_state[AppState]()
 							state.name = s
-							w.update_view(main_view(w))
+							w.update_view(main_view)
 						}
 					),
 					gui.text(
