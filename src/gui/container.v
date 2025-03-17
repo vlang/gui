@@ -7,7 +7,7 @@ import rand
 struct Container implements View {
 pub mut:
 	id         string
-	direction  ShapeDirection = .top_to_bottom
+	axis       Axis = .top_to_bottom
 	x          f32
 	y          f32
 	width      f32
@@ -30,7 +30,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 			id:         c.id
 			uid:        rand.uuid_v4()
 			type:       .container
-			direction:  c.direction
+			axis:       c.axis
 			x:          c.x
 			y:          c.y
 			width:      c.width
@@ -73,7 +73,7 @@ pub:
 
 // container is the fundamental layout container in gui.
 // It can be used to layout its children top-to-bottom or left_to_right.
-// A `.none` direction allows coontainer to behave as a canvas with no additional layout.
+// A `.none` axis allows coontainer to behave as a canvas with no additional layout.
 fn container(c ContainerCfg) &Container {
 	return &Container{
 		id:         c.id
@@ -100,7 +100,7 @@ fn container(c ContainerCfg) &Container {
 // between child items is determined by the spacing parameter
 pub fn column(cfg ContainerCfg) &Container {
 	mut col := container(cfg)
-	col.direction = .top_to_bottom
+	col.axis = .top_to_bottom
 	return col
 }
 
@@ -108,7 +108,7 @@ pub fn column(cfg ContainerCfg) &Container {
 // between child items is determined by the spacing parameter
 pub fn row(cfg ContainerCfg) &Container {
 	mut row := container(cfg)
-	row.direction = .left_to_right
+	row.axis = .left_to_right
 	return row
 }
 

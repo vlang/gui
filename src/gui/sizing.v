@@ -2,9 +2,9 @@ module gui
 
 // SizingType describes the three sizing modes of GUI
 pub enum SizingType {
-	fit   // Shape is fitted to child shapes
-	flex  // Shape can grow or shrink as needed
-	fixed // Shape is only the given size.
+	fit   // fitted to child shapes
+	flex  // can grow or shrink as needed
+	fixed // is fixed size
 }
 
 // Sizing is describes how the shape is sized horizontally and vertically.

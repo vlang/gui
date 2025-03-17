@@ -133,6 +133,15 @@ pub fn (mut window Window) run() {
 	window.ui.run()
 }
 
+// set_cursor sets the cursor pos in chars
+pub fn (mut window Window) set_cursor_offset(offset int) {
+	window.cursor_offset = offset
+}
+
+pub fn (mut window Window) get_cursor_offset() int {
+	return window.cursor_offset
+}
+
 // set_focus_id sets the window's focus id.
 pub fn (mut window Window) set_focus_id(id int) {
 	window.focus_id = id

@@ -21,16 +21,16 @@ fn layout_do(mut layout ShapeTree, window Window) {
 }
 
 // layout_widths arranges a node's children Shapes horizontally. Only container
-// nodes with a shape direction are arranged.
+// nodes with a shape axis are arranged.
 fn layout_widths(mut node ShapeTree) {
-	if node.shape.direction == .left_to_right && node.shape.sizing.width != .fixed {
+	if node.shape.axis == .left_to_right && node.shape.sizing.width != .fixed {
 		node.shape.width += node.shape.spacing * (node.children.len - 1)
 	}
 	for mut child in node.children {
 		layout_widths(mut child)
 		child.shape.width += child.shape.padding.left + child.shape.padding.right
 		if node.shape.sizing.width != .fixed {
-			match node.shape.direction {
+			match node.shape.axis {
 				.left_to_right { node.shape.width += child.shape.width }
 				.top_to_bottom { node.shape.width = f32_max(node.shape.width, child.shape.width) }
 				.none {}
@@ -40,16 +40,16 @@ fn layout_widths(mut node ShapeTree) {
 }
 
 // layout_heights arranges a node's children Shapes vertically. Only container
-// Shapes with a direction are arranged.
+// Shapes with a axis are arranged.
 fn layout_heights(mut node ShapeTree) {
-	if node.shape.direction == .top_to_bottom && node.shape.sizing.height != .fixed {
+	if node.shape.axis == .top_to_bottom && node.shape.sizing.height != .fixed {
 		node.shape.height += node.shape.spacing * (node.children.len - 1)
 	}
 	for mut child in node.children {
 		layout_heights(mut child)
 		child.shape.height += child.shape.padding.top + child.shape.padding.bottom
 		if node.shape.sizing.height != .fixed {
-			match node.shape.direction {
+			match node.shape.axis {
 				.top_to_bottom { node.shape.height += child.shape.height }
 				.left_to_right { node.shape.height = f32_max(node.shape.height, child.shape.height) }
 				.none {}
@@ -64,7 +64,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
 	mut remaining_width := node.shape.width - node.shape.padding.left - node.shape.padding.right
 
-	if node.shape.direction == .left_to_right {
+	if node.shape.axis == .left_to_right {
 		for mut child in node.children {
 			remaining_width -= child.shape.width
 		}
@@ -153,7 +153,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 				}
 			}
 		}
-	} else if node.shape.direction == .top_to_bottom {
+	} else if node.shape.axis == .top_to_bottom {
 		for mut child in node.children {
 			if child.shape.sizing.width == .flex {
 				child.shape.width += (remaining_width - child.shape.width)
@@ -171,7 +171,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 fn layout_flex_heights(mut node ShapeTree) {
 	mut remaining_height := node.shape.height - node.shape.padding.top - node.shape.padding.bottom
 
-	if node.shape.direction == .top_to_bottom {
+	if node.shape.axis == .top_to_bottom {
 		for mut child in node.children {
 			layout_flex_heights(mut child)
 			remaining_height -= child.shape.height
@@ -223,7 +223,7 @@ fn layout_flex_heights(mut node ShapeTree) {
 				}
 			}
 		}
-	} else if node.shape.direction == .left_to_right {
+	} else if node.shape.axis == .left_to_right {
 		for mut child in node.children {
 			if child.shape.sizing.height == .flex {
 				child.shape.height += (remaining_height - child.shape.height)
@@ -253,14 +253,14 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	node.shape.y += offset_y
 
 	spacing := node.shape.spacing
-	direction := node.shape.direction
+	axis := node.shape.axis
 
 	mut x := node.shape.x + node.shape.padding.left
 	mut y := node.shape.y + node.shape.padding.top
 
 	for mut child in node.children {
 		layout_positions(mut child, x, y)
-		match direction {
+		match axis {
 			.left_to_right { x += child.shape.width + spacing }
 			.top_to_bottom { y += child.shape.height + spacing }
 			.none {}

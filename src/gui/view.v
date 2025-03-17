@@ -4,7 +4,8 @@ import gg
 
 // View is a user defined view. Views are never displayed
 // directly. Instead a ShapeTree is generated from the View.
-// It is the ShapeTree that is used to render the UI.
+// Window does not hold a reference to a View. Views should
+// be stateless for this reason.
 pub interface View {
 	id string
 	generate(ctx gg.Context) ShapeTree

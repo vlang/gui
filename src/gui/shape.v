@@ -6,11 +6,11 @@ import gx
 // Shape is the only data structure in GUI used to draw to the screen.
 pub struct Shape {
 pub:
-	id        string // asigned by user
-	uid       string
-	focus_id  int // >0 indicates text is focusable. Value indiciates tabbing order
-	direction ShapeDirection
-	type      ShapeType
+	id       string // asigned by user
+	uid      string
+	focus_id int // >0 indicates text is focusable. Value indiciates tabbing order
+	axis     Axis
+	type     ShapeType
 mut:
 	x          f32
 	y          f32
@@ -43,9 +43,9 @@ pub enum ShapeType {
 	image
 }
 
-// ShapeDirection defines if a Shape arranges its child
+// Axis defines if a Shape arranges its child
 // shapes horizontally, vertically or not at all.
-pub enum ShapeDirection {
+pub enum Axis {
 	none
 	top_to_bottom
 	left_to_right

@@ -105,7 +105,7 @@ pub fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in s.fields() {
-		if line == '' {
+		if line.len == 0 {
 			line = field
 			continue
 		}
@@ -118,7 +118,7 @@ pub fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 			line = nline
 		}
 	}
-	if s.len > 0 && s[s.len - 1] == u8(0x20) {
+	if s.len > 0 && s[s.len - 1] == space_c {
 		line += ' '
 	}
 	wrap << line

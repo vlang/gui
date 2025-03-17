@@ -20,9 +20,8 @@ pub:
 // corners.
 pub fn rectangle(cfg RectangleCfg) &Container {
 	// Technically, rectangle is a container but
-	// it has no children, layout direction or
-	// padding. Easier than defining a new View
-	// component.
+	// it has no children, axis or paddin and as
+	// such, behaves as a plain rectangle.
 	container_cfg := ContainerCfg{
 		id:      cfg.id
 		x:       cfg.x

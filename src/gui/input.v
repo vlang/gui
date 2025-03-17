@@ -47,39 +47,40 @@ pub fn input(cfg InputCfg) &View {
 	return input
 }
 
-const bsp = 0x08
-const del = 0x7F
-const ret = 0x0D
+const bsp_c = 0x08
+const del_c = 0x7F
+const ret_c = 0x0D
+const space_c = 0x20
 
-fn on_char(cfg &InputCfg, c u32, mut window Window) {
+fn on_char(cfg &InputCfg, c u32, mut w Window) {
 	if cfg.on_text_changed != unsafe { nil } {
 		match c {
-			ret { return }
+			ret_c { return }
 			else {}
 		}
 
 		mut t := ''
 		match c {
-			bsp, del {
-				if window.cursor_offset < 0 {
-					window.cursor_offset = cfg.text.len
-				} else if window.cursor_offset > 0 {
-					t = cfg.text[..window.cursor_offset - 1] + cfg.text[window.cursor_offset..]
-					window.cursor_offset -= 1
+			bsp_c, del_c {
+				if w.get_cursor_offset() < 0 {
+					w.set_cursor_offset(cfg.text.len)
+				} else if w.get_cursor_offset() > 0 {
+					t = cfg.text[..w.get_cursor_offset() - 1] + cfg.text[w.get_cursor_offset()..]
+					w.set_cursor_offset(w.get_cursor_offset() - 1)
 				}
 			}
 			else {
-				if window.cursor_offset < 0 {
+				if w.get_cursor_offset() < 0 {
 					t = cfg.text + rune(c).str()
-					window.cursor_offset = t.len
+					w.set_cursor_offset(t.len)
 				} else {
-					t = cfg.text[..window.cursor_offset] + rune(c).str() +
-						cfg.text[window.cursor_offset..]
-					window.cursor_offset += 1
+					t = cfg.text[..w.get_cursor_offset()] + rune(c).str() +
+						cfg.text[w.get_cursor_offset()..]
+					w.set_cursor_offset(w.get_cursor_offset() + 1)
 				}
 			}
 		}
-		cfg.on_text_changed(cfg, t, window)
+		cfg.on_text_changed(cfg, t, w)
 	}
 }
 
@@ -89,10 +90,10 @@ fn on_click(cfg &InputCfg, id string, me MouseEvent, mut w Window) {
 
 fn on_keydown(cfg &InputCfg, c gg.KeyCode, m gg.Modifier, mut w Window) {
 	match c {
-		.left { w.cursor_offset = int_max(0, w.cursor_offset - 1) }
-		.right { w.cursor_offset = int_min(cfg.text.len, w.cursor_offset + 1) }
-		.home { w.cursor_offset = 0 }
-		.end { w.cursor_offset = -1 }
+		.left { w.set_cursor_offset(int_max(0, w.cursor_offset - 1)) }
+		.right { w.set_cursor_offset(int_min(cfg.text.len, w.cursor_offset + 1)) }
+		.home { w.set_cursor_offset(0) }
+		.end { w.set_cursor_offset(-1) }
 		else { return }
 	}
 	w.ui.refresh_ui()
