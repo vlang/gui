@@ -8,7 +8,7 @@ import sync
 pub struct Window {
 mut:
 	state         voidptr   = unsafe { nil }
-	layout        ShapeTree = empty_shape_tree
+	layout        ShapeTree = ShapeTree{}
 	focus_id      int
 	cursor_offset int // char position of cursor in text, -1 == last char
 	mutex         &sync.Mutex  = unsafe { nil }
@@ -60,16 +60,9 @@ pub fn window(cfg WindowCfg) &Window {
 fn frame_fn(mut window Window) {
 	window.mutex.lock()
 	window.ui.begin()
-	window.draw_shapes(window.layout)
+	render(window.layout, window.ui)
 	window.ui.end()
 	window.mutex.unlock()
-}
-
-fn (mut window Window) draw_shapes(shapes ShapeTree) {
-	shapes.shape.draw(window.ui)
-	for child in shapes.children {
-		window.draw_shapes(child)
-	}
 }
 
 fn char_fn(c u32, mut w Window) {
