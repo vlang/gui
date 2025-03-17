@@ -19,7 +19,6 @@ mut:
 	bounds     gg.Rect
 	color      gg.Color
 	fill       bool
-	lines      []string
 	min_height f32
 	min_width  f32
 	padding    Padding
@@ -27,7 +26,10 @@ mut:
 	sizing     Sizing
 	spacing    f32
 	text       string
+	lines      []string
 	text_cfg   gx.TextCfg
+	cursor_x   int = -1
+	cursor_y   int = -1
 	wrap       bool
 	on_click   fn (string, MouseEvent, &Window)      = unsafe { nil }
 	on_char    fn (u32, &Window)                     = unsafe { nil }

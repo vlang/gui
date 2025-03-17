@@ -96,5 +96,5 @@ fn on_keydown(cfg &InputCfg, c gg.KeyCode, m gg.Modifier, mut w Window) {
 		.end { w.set_cursor_offset(-1) }
 		else { return }
 	}
-	w.ui.refresh_ui()
+	cfg.on_text_changed(cfg, cfg.text, w)
 }

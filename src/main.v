@@ -18,6 +18,7 @@ fn main() {
 		height:   400
 		bg_color: gx.rgb(0x30, 0x30, 0x30)
 		on_init:  fn (mut w gui.Window) {
+			w.set_focus_id(1)
 			w.update_view(main_view)
 		}
 	)

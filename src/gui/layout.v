@@ -11,7 +11,7 @@ import gg
 fn layout_do(mut layout ShapeTree, window Window) {
 	layout_widths(mut layout)
 	layout_flex_widths(mut layout)
-	layout_wrap_text(mut layout, window.ui)
+	layout_wrap_text(mut layout, window)
 	layout_heights(mut layout)
 	layout_flex_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
@@ -239,10 +239,37 @@ fn layout_flex_heights(mut node ShapeTree) {
 // layout_wrap_text is called after all widths in a ShapeTree are determined.
 // Wrapping text can change the height of an Shape, which is why this is called
 // before computing Shape heights
-fn layout_wrap_text(mut node ShapeTree, ctx gg.Context) {
-	text_wrap(mut node.shape, ctx)
+fn layout_wrap_text(mut node ShapeTree, w &Window) {
+	if w.focus_id == node.shape.focus_id && node.shape.type == .text {
+		node.shape.cursor_x = 0
+		node.shape.cursor_y = 0
+		if w.cursor_offset >= 0 {
+			// place a zero-space char in the string at the cursor pos as
+			// a marker to where the cursor should go after wrapping.
+			zero_space := '\xe2\x80\x8b'
+			text := node.shape.text[..w.cursor_offset] + zero_space +
+				node.shape.text[w.cursor_offset..]
+			w.ui.set_text_cfg(node.shape.text_cfg)
+			wrapped := match node.shape.wrap {
+				true { text_wrap_text(text, node.shape.width, w.ui) }
+				else { [text] }
+			}
+			zero_space_rune := zero_space.runes()[0]
+			for idx, ln in wrapped {
+				pos := arrays.index_of_first(ln.runes(), fn [zero_space_rune] (idx int, elem rune) bool {
+					return elem == zero_space_rune
+				})
+				if pos >= 0 {
+					node.shape.cursor_x = int_min(pos, ln.len - 1)
+					node.shape.cursor_y = idx
+					break
+				}
+			}
+		}
+	}
+	text_wrap(mut node.shape, w.ui)
 	for mut child in node.children {
-		layout_wrap_text(mut child, ctx)
+		layout_wrap_text(mut child, w)
 	}
 }
 

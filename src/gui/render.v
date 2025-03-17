@@ -47,22 +47,12 @@ fn render_text(shape Shape, ctx &gg.Context) {
 		y += lh
 	}
 
-	window := unsafe { &Window(ctx.user_data) }
-	if window.focus_id != 0 && window.focus_id == shape.focus_id {
-		if window.cursor_offset < 0 {
-			text := shape.lines.last()
-			cx := shape.x + ctx.text_width(text)
-			cy := shape.y + (lh * (shape.lines.len - 1))
-			ctx.draw_line(cx, cy, cx, cy + lh, shape.text_cfg.color)
-		} else {
-			mut len := 0
-			for idx, ln in shape.lines {
-				if len + ln.len < window.cursor_offset {
-					len += ln.len
-					continue
-				}
-				cx := shape.x + ctx.text_width(ln[..window.cursor_offset])
-				cy := shape.y + (lh * idx)
+	if shape.cursor_x >= 0 && shape.cursor_y >= 0 {
+		if shape.cursor_y < shape.lines.len {
+			ln := shape.lines[shape.cursor_y]
+			if shape.cursor_x <= ln.len {
+				cx := shape.x + ctx.text_width(ln[..shape.cursor_x])
+				cy := shape.y + (lh * shape.cursor_y)
 				ctx.draw_line(cx, cy, cx, cy + lh, shape.text_cfg.color)
 			}
 		}
