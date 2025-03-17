@@ -39,9 +39,9 @@ fn main_view(w &gui.Window) gui.View {
 	return gui.row(
 		width:    width
 		height:   height
-		sizing:   gui.fixed_fixed
 		fill:     true
 		color:    gx.dark_blue
+		sizing:   gui.fixed_fixed
 		children: [
 			gui.column(
 				padding:  gui.padding_none

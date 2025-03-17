@@ -7,17 +7,17 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	state         voidptr   = unsafe { nil }
-	layout        ShapeTree = ShapeTree{}
-	focus_id      int
-	cursor_offset int // char position of cursor in text, -1 == last char
-	mutex         &sync.Mutex       = sync.new_mutex()
-	ui            &gg.Context       = &gg.Context{}
-	gen_view      fn (&Window) View = fn (_ &Window) View {
+	state            voidptr   = unsafe { nil }
+	layout           ShapeTree = ShapeTree{}
+	focus_id         int
+	cursor_offset    int // char position of cursor in text, -1 == last char
+	mutex            &sync.Mutex       = sync.new_mutex()
+	ui               &gg.Context       = &gg.Context{}
+	gen_view         fn (&Window) View = fn (_ &Window) View {
 		return canvas(id: 'dummy_view')
 	}
-	no_resize     bool
-	on_resized    fn (&Window) = fn (_ &Window) {}
+	update_on_resize bool
+	on_resized       fn (&Window) = fn (_ &Window) {}
 }
 
 // Window is the application window. The state parameter is
@@ -27,23 +27,23 @@ mut:
 // view and assign to `on_resize`
 pub struct WindowCfg {
 pub:
-	state      voidptr = unsafe { nil }
-	title      string
-	width      int
-	height     int
-	bg_color   gx.Color
-	no_resize  bool
-	on_init    fn (&Window) = fn (_ &Window) {}
-	on_resized fn (&Window) = fn (_ &Window) {}
+	state            voidptr = unsafe { nil }
+	title            string
+	width            int
+	height           int
+	bg_color         gx.Color
+	update_on_resize bool         = true
+	on_init          fn (&Window) = fn (_ &Window) {}
+	on_resized       fn (&Window) = fn (_ &Window) {}
 }
 
 // window creates the application window.
 // See WindowCfg on how to configure it
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
-		state:      cfg.state
-		no_resize:  cfg.no_resize
-		on_resized: cfg.on_resized
+		state:            cfg.state
+		update_on_resize: cfg.update_on_resize
+		on_resized:       cfg.on_resized
 	}
 	window.ui = gg.new_context(
 		bg_color:     cfg.bg_color
@@ -115,7 +115,7 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 }
 
 fn resized_fn(e &gg.Event, mut w Window) {
-	if !w.no_resize {
+	if w.update_on_resize {
 		w.update_view(w.gen_view)
 	}
 	w.on_resized(w)
