@@ -10,7 +10,7 @@ mut:
 	state         voidptr   = unsafe { nil }
 	layout        ShapeTree = empty_shape_tree
 	focus_id      int
-	cursor_offset int          = -1 // char position of cursor in text, -1 == last char
+	cursor_offset int // char position of cursor in text, -1 == last char
 	mutex         &sync.Mutex  = unsafe { nil }
 	ui            &gg.Context  = unsafe { nil }
 	on_resized    fn (&Window) = unsafe { nil }
@@ -51,6 +51,7 @@ pub fn window(cfg WindowCfg) &Window {
 		char_fn:      char_fn
 		click_fn:     click_fn
 		frame_fn:     frame_fn
+		keydown_fn:   keydown_fn
 		resized_fn:   resized_fn
 	)
 	return window
@@ -79,6 +80,18 @@ fn char_fn(c u32, mut w Window) {
 	if shape := shape_from_on_char(layout) {
 		if shape.on_char != unsafe { nil } {
 			shape.on_char(c, w)
+		}
+	}
+}
+
+fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
+	w.mutex.lock()
+	layout := w.layout
+	w.mutex.unlock()
+
+	if shape := shape_from_on_key_down(layout) {
+		if shape.on_keydown != unsafe { nil } {
+			shape.on_keydown(c, m, w)
 		}
 	}
 }
@@ -123,6 +136,7 @@ pub fn (mut window Window) run() {
 // set_focus_id sets the window's focus id.
 pub fn (mut window Window) set_focus_id(id int) {
 	window.focus_id = id
+	window.cursor_offset = -1
 }
 
 // update_view sets the Window's view. A window can have

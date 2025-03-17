@@ -118,6 +118,9 @@ pub fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 			line = nline
 		}
 	}
+	if s.len > 0 && s[s.len - 1] == u8(0x20) {
+		line += ' '
+	}
 	wrap << line
 	return wrap
 }
