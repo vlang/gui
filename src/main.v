@@ -111,6 +111,7 @@ fn main_view(w &gui.Window) gui.View {
 								text:  'Embedded in a column with wrapping'
 							),
 							gui.button(
+								focus_id:   2
 								text:       'Button Text ${state.click_count}'
 								text_style: text_style
 								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) {
@@ -157,7 +158,7 @@ fn main_view(w &gui.Window) gui.View {
 						sizing:   gui.flex_fit
 						children: [
 							gui.text(
-								text:  'keep_spaces == false'
+								text:  'keep_spaces = false'
 								style: text_style_blue
 							),
 							gui.text(
@@ -173,7 +174,7 @@ fn main_view(w &gui.Window) gui.View {
 						sizing:   gui.flex_fit
 						children: [
 							gui.text(
-								text:  'keep_spaces == true'
+								text:  'keep_spaces = true'
 								style: text_style_blue
 							),
 							gui.text(

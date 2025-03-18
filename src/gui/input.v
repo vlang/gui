@@ -20,6 +20,7 @@ pub:
 pub fn input(cfg InputCfg) &View {
 	mut input := canvas(
 		id:         cfg.id
+		focus_id:   cfg.focus_id
 		width:      cfg.width
 		spacing:    cfg.spacing
 		color:      cfg.color
@@ -86,7 +87,7 @@ fn on_char(cfg &InputCfg, c u32, mut w Window) {
 }
 
 fn on_click(cfg &InputCfg, id string, me MouseEvent, mut w Window) {
-	println(cfg.focus_id)
+	w.set_cursor_offset(cfg.text.len)
 }
 
 fn on_keydown(cfg &InputCfg, c gg.KeyCode, m gg.Modifier, mut w Window) {

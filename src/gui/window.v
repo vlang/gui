@@ -78,7 +78,7 @@ fn char_fn(c u32, mut w Window) {
 	layout := w.layout
 	w.mutex.unlock()
 
-	if shape := shape_from_on_char(layout) {
+	if shape := shape_from_on_char(layout, w.focus_id) {
 		if shape.on_char != unsafe { nil } {
 			shape.on_char(c, w)
 		}
@@ -107,8 +107,12 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 	layout := w.layout
 	w.mutex.unlock()
 
-	if shape := shape_from_point_on_click(layout, x, y) {
+	w.set_focus_id(0)
+	if shape := shape_from_on_click(layout, x, y) {
 		if shape.on_click != unsafe { nil } {
+			if shape.focus_id > 0 {
+				w.set_focus_id(shape.focus_id)
+			}
 			me := MouseEvent{
 				mouse_x:      x
 				mouse_y:      y

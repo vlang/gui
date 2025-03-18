@@ -9,6 +9,7 @@ import gx
 pub struct ButtonCfg {
 pub:
 	id         string
+	focus_id   int @[required]
 	color      gx.Color = gx.blue
 	fill       bool     = true
 	height     f32
@@ -24,6 +25,7 @@ pub:
 pub fn button(cfg ButtonCfg) &View {
 	return canvas(
 		id:       cfg.id
+		focus_id: cfg.focus_id
 		width:    cfg.width
 		height:   cfg.height
 		padding:  cfg.padding
@@ -31,6 +33,7 @@ pub fn button(cfg ButtonCfg) &View {
 		fill:     cfg.fill
 		color:    cfg.color
 		on_click: cfg.on_click
+		on_char:  cfg.on_char
 		children: [
 			text(
 				text:  cfg.text
@@ -38,4 +41,10 @@ pub fn button(cfg ButtonCfg) &View {
 			),
 		]
 	)
+}
+
+fn (cfg ButtonCfg) on_char(c u32, mut w Window) {
+	if c == ` ` {
+		cfg.on_click(cfg.id, MouseEvent{}, w)
+	}
 }

@@ -3,6 +3,7 @@ module gui
 import gg
 import gx
 import sokol.sgl
+
 // A Renderer is the final computed drawing command. The window keeps
 // an array of Renderer and only uses this array to paint the window.
 // The window can be rapainted many times before the view state changes.
@@ -21,32 +22,33 @@ struct DrawLineCfg {
 	y   f32
 	x1  f32
 	y1  f32
-	cfg gx.Color
+	cfg gg.PenConfig
 }
 
 struct DrawNoneCfg {}
 
 type DrawRect = gg.DrawRectParams
 type DrawText = DrawTextCfg
-type DrawClip = gg.Rect
 type DrawLine = DrawLineCfg
+type DrawClip = gg.Rect
 type DrawNone = DrawNoneCfg
 type Renderer = DrawRect | DrawText | DrawClip | DrawLine | DrawNone
 
-fn render_draw(draw Renderer, ctx &gg.Context) {
-	match draw {
+fn render_draw(renderer Renderer, ctx &gg.Context) {
+	match renderer {
 		DrawRect {
-			ctx.draw_rect(draw)
+			ctx.draw_rect(renderer)
 		}
 		DrawText {
-			ctx.draw_text(int(draw.x), int(draw.y), draw.text, draw.cfg)
-		}
-		DrawClip {
-			sgl.scissor_rectf(ctx.scale * draw.x, ctx.scale * draw.y, ctx.scale * draw.width,
-				ctx.scale * draw.height, true)
+			ctx.draw_text(int(renderer.x), int(renderer.y), renderer.text, renderer.cfg)
 		}
 		DrawLine {
-			ctx.draw_line(draw.x, draw.y, draw.x1, draw.y1, draw.cfg)
+			ctx.draw_line_with_config(renderer.x, renderer.y, renderer.x1, renderer.y1,
+				renderer.cfg)
+		}
+		DrawClip {
+			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
+				ctx.scale * renderer.height, true)
 		}
 		DrawNone {}
 	}
@@ -116,7 +118,9 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 					y:   cy
 					x1:  cx
 					y1:  cy + lh
-					cfg: shape.text_cfg.color
+					cfg: gg.PenConfig{
+						color: shape.text_cfg.color
+					}
 				}
 			}
 		}

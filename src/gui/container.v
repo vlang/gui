@@ -7,6 +7,7 @@ import rand
 struct Container implements View {
 pub mut:
 	id         string
+	focus_id   int
 	axis       Axis = .top_to_bottom
 	x          f32
 	y          f32
@@ -28,6 +29,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 	return ShapeTree{
 		shape: Shape{
 			id:         c.id
+			focus_id:   c.focus_id
 			uid:        rand.uuid_v4()
 			type:       .container
 			axis:       c.axis
@@ -54,6 +56,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 pub struct ContainerCfg {
 pub:
 	id         string
+	focus_id   int
 	x          f32
 	y          f32
 	width      f32
@@ -76,6 +79,7 @@ pub:
 fn container(c ContainerCfg) &Container {
 	return &Container{
 		id:         c.id
+		focus_id:   c.focus_id
 		x:          c.x
 		y:          c.y
 		width:      c.width
