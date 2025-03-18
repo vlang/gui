@@ -50,7 +50,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 	}
 }
 
-// ConatinerCfg is a common configuration struct used in
+// ContainerCfg is a common configuration struct used in
 // several the row, column and canvas containers
 pub struct ContainerCfg {
 pub:

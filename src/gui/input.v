@@ -37,10 +37,11 @@ pub fn input(cfg InputCfg) &View {
 		}
 		children:   [
 			text(
-				text:     cfg.text
-				style:    cfg.text_style
-				focus_id: cfg.focus_id
-				wrap:     cfg.wrap
+				text:        cfg.text
+				style:       cfg.text_style
+				focus_id:    cfg.focus_id
+				wrap:        cfg.wrap
+				keep_spaces: true
 			),
 		]
 	)

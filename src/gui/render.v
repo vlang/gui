@@ -2,9 +2,14 @@ module gui
 
 import gg
 import gx
+import sokol.sgl
+// A Renderer is the final computed drawing command. The window keeps
+// an array of Renderer and only uses this array to paint the window.
+// The window can be rapainted many times before the view state changes.
+// Storing the final draw commands vs. calling render_shape() is faster
+// because there is no computation to build the draw command.
 
 struct DrawTextCfg {
-pub:
 	x    f32
 	y    f32
 	text string
@@ -21,11 +26,6 @@ struct DrawLineCfg {
 
 struct DrawNoneCfg {}
 
-// A Renderer is the final computed drawing command. The window keeps
-// an array of Renderer and only uses this array to paint the window.
-// The window can be rapainted many times before the view state changes.
-// Storing the final draw commands vs. calling render_shape() is faster
-// because there is no computation to build the draw command.
 type DrawRect = gg.DrawRectParams
 type DrawText = DrawTextCfg
 type DrawClip = gg.Rect
@@ -35,10 +35,19 @@ type Renderer = DrawRect | DrawText | DrawClip | DrawLine | DrawNone
 
 fn render_draw(draw Renderer, ctx &gg.Context) {
 	match draw {
-		DrawRect { ctx.draw_rect(draw) }
-		DrawText { ctx.draw_text(int(draw.x), int(draw.y), draw.text, draw.cfg) }
-		DrawClip { ctx.scissor_rect(int(draw.x), int(draw.y), int(draw.width), int(draw.height)) }
-		DrawLine { ctx.draw_line(draw.x, draw.y, draw.x1, draw.y1, draw.cfg) }
+		DrawRect {
+			ctx.draw_rect(draw)
+		}
+		DrawText {
+			ctx.draw_text(int(draw.x), int(draw.y), draw.text, draw.cfg)
+		}
+		DrawClip {
+			sgl.scissor_rectf(ctx.scale * draw.x, ctx.scale * draw.y, ctx.scale * draw.width,
+				ctx.scale * draw.height, true)
+		}
+		DrawLine {
+			ctx.draw_line(draw.x, draw.y, draw.x1, draw.y1, draw.cfg)
+		}
 		DrawNone {}
 	}
 }
@@ -120,10 +129,10 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 // Internal use mostly, but useful if designing a new Shape
 pub fn shape_clip(shape Shape, ctx &gg.Context) Renderer {
 	if !is_empty_rect(shape.bounds) {
-		x := int(shape.bounds.x - 1)
-		y := int(shape.bounds.y - 1)
-		w := int(shape.bounds.width + 1)
-		h := int(shape.bounds.height + 1)
+		x := shape.bounds.x - 1
+		y := shape.bounds.y - 1
+		w := shape.bounds.width + 2
+		h := shape.bounds.height + 2
 		return DrawClip{
 			x:      x
 			y:      y

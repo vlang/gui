@@ -251,8 +251,15 @@ fn layout_wrap_text(mut node ShapeTree, w &Window) {
 				node.shape.text[w.cursor_offset..]
 			w.ui.set_text_cfg(node.shape.text_cfg)
 			wrapped := match node.shape.wrap {
-				true { text_wrap_text(text, node.shape.width, w.ui) }
-				else { [text] }
+				true {
+					match node.shape.keep_spaces {
+						true { text_wrap_text_keep_spaces(text, node.shape.width, w.ui) }
+						else { text_wrap_text(text, node.shape.width, w.ui) }
+					}
+				}
+				else {
+					[text]
+				}
 			}
 			zero_space_rune := zero_space.runes()[0]
 			for idx, ln in wrapped {

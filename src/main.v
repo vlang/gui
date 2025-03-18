@@ -14,7 +14,7 @@ fn main() {
 	mut window := gui.window(
 		state:    &AppState{}
 		title:    'test layout'
-		width:    600
+		width:    700
 		height:   400
 		bg_color: gx.rgb(0x30, 0x30, 0x30)
 		on_init:  fn (mut w gui.Window) {
@@ -28,6 +28,9 @@ fn main() {
 fn main_view(w &gui.Window) gui.View {
 	text_style := gx.TextCfg{
 		color: gx.white
+	}
+	text_style_blue := gx.TextCfg{
+		color: gx.light_blue
 	}
 	text_style_large := gx.TextCfg{
 		...text_style
@@ -148,15 +151,38 @@ fn main_view(w &gui.Window) gui.View {
 							w.update_view(main_view)
 						}
 					),
-					gui.text(
-						text:  'You typed:'
-						style: text_style
-						wrap:  true
+					gui.column(
+						color:    gx.rgb(0x40, 0x40, 0x40)
+						fill:     true
+						sizing:   gui.flex_fit
+						children: [
+							gui.text(
+								text:  'keep_spaces == false'
+								style: text_style_blue
+							),
+							gui.text(
+								text:  state.name
+								style: text_style
+								wrap:  true
+							),
+						]
 					),
-					gui.text(
-						text:  state.name
-						style: text_style
-						wrap:  true
+					gui.column(
+						color:    gx.rgb(0x40, 0x40, 0x40)
+						fill:     true
+						sizing:   gui.flex_fit
+						children: [
+							gui.text(
+								text:  'keep_spaces == true'
+								style: text_style_blue
+							),
+							gui.text(
+								text:        state.name
+								style:       text_style
+								wrap:        true
+								keep_spaces: true
+							),
+						]
 					),
 				]
 			),

@@ -12,28 +12,29 @@ pub:
 	axis     Axis
 	type     ShapeType
 mut:
-	x          f32
-	y          f32
-	width      f32
-	height     f32
-	bounds     gg.Rect
-	color      gg.Color
-	fill       bool
-	min_height f32
-	min_width  f32
-	padding    Padding
-	radius     int
-	sizing     Sizing
-	spacing    f32
-	text       string
-	lines      []string
-	text_cfg   gx.TextCfg
-	cursor_x   int = -1
-	cursor_y   int = -1
-	wrap       bool
-	on_click   fn (string, MouseEvent, &Window)      = unsafe { nil }
-	on_char    fn (u32, &Window)                     = unsafe { nil }
-	on_keydown fn (gg.KeyCode, gg.Modifier, &Window) = unsafe { nil }
+	x           f32
+	y           f32
+	width       f32
+	height      f32
+	bounds      gg.Rect
+	color       gg.Color
+	fill        bool
+	min_height  f32
+	min_width   f32
+	padding     Padding
+	radius      int
+	sizing      Sizing
+	spacing     f32
+	text        string
+	lines       []string
+	text_cfg    gx.TextCfg
+	cursor_x    int = -1
+	cursor_y    int = -1
+	wrap        bool
+	keep_spaces bool
+	on_click    fn (string, MouseEvent, &Window)      = unsafe { nil }
+	on_char     fn (u32, &Window)                     = unsafe { nil }
+	on_keydown  fn (gg.KeyCode, gg.Modifier, &Window) = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.
