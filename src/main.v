@@ -113,7 +113,7 @@ fn main_view(w &gui.Window) gui.View {
 								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) {
 									mut state := w.get_state[AppState]()
 									state.click_count += 1
-									w.update_view(main_view)
+									w.update_window()
 								}
 							),
 						]

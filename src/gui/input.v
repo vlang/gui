@@ -14,7 +14,7 @@ pub:
 	text_style      gx.TextCfg
 	width           f32 = 50
 	wrap            bool
-	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil }
+	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
 }
 
 pub fn input(cfg InputCfg) &View {
@@ -60,23 +60,23 @@ fn on_char(cfg &InputCfg, c u32, mut w Window) {
 		}
 
 		mut t := ''
+		cursor_offset := w.get_cursor_offset()
 		match c {
 			bsp_c, del_c {
-				if w.get_cursor_offset() < 0 {
+				if cursor_offset < 0 {
 					w.set_cursor_offset(cfg.text.len)
-				} else if w.get_cursor_offset() > 0 {
-					t = cfg.text[..w.get_cursor_offset() - 1] + cfg.text[w.get_cursor_offset()..]
-					w.set_cursor_offset(w.get_cursor_offset() - 1)
+				} else if cursor_offset > 0 {
+					t = cfg.text[..cursor_offset - 1] + cfg.text[cursor_offset..]
+					w.set_cursor_offset(cursor_offset - 1)
 				}
 			}
 			else {
-				if w.get_cursor_offset() < 0 {
+				if cursor_offset < 0 {
 					t = cfg.text + rune(c).str()
 					w.set_cursor_offset(t.len)
 				} else {
-					t = cfg.text[..w.get_cursor_offset()] + rune(c).str() +
-						cfg.text[w.get_cursor_offset()..]
-					w.set_cursor_offset(w.get_cursor_offset() + 1)
+					t = cfg.text[..cursor_offset] + rune(c).str() + cfg.text[cursor_offset..]
+					w.set_cursor_offset(cursor_offset + 1)
 				}
 			}
 		}
@@ -89,12 +89,12 @@ fn on_click(cfg &InputCfg, id string, me MouseEvent, mut w Window) {
 }
 
 fn on_keydown(cfg &InputCfg, c gg.KeyCode, m gg.Modifier, mut w Window) {
+	cursor_offset := w.get_cursor_offset()
 	match c {
-		.left { w.set_cursor_offset(int_max(0, w.cursor_offset - 1)) }
-		.right { w.set_cursor_offset(int_min(cfg.text.len, w.cursor_offset + 1)) }
+		.left { w.set_cursor_offset(int_max(0, cursor_offset - 1)) }
+		.right { w.set_cursor_offset(int_min(cfg.text.len, cursor_offset + 1)) }
 		.home { w.set_cursor_offset(0) }
 		.end { w.set_cursor_offset(-1) }
 		else { return }
 	}
-	cfg.on_text_changed(cfg, cfg.text, w)
 }

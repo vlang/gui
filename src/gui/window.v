@@ -7,8 +7,9 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	state            voidptr   = unsafe { nil }
-	layout           ShapeTree = ShapeTree{}
+	state            voidptr    = unsafe { nil }
+	layout           ShapeTree  = ShapeTree{}
+	renderers        []Renderer = []
 	focus_id         int
 	cursor_offset    int // char position of cursor in text, -1 == last char
 	mutex            &sync.Mutex       = sync.new_mutex()
@@ -65,7 +66,9 @@ pub fn window(cfg WindowCfg) &Window {
 fn frame_fn(mut window Window) {
 	window.mutex.lock()
 	window.ui.begin()
-	render(window.layout, window.ui)
+	for renderer in window.renderers {
+		render_draw(renderer, window.ui)
+	}
 	window.ui.end()
 	window.mutex.unlock()
 }
@@ -80,6 +83,7 @@ fn char_fn(c u32, mut w Window) {
 			shape.on_char(c, w)
 		}
 	}
+	w.update_window()
 }
 
 fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
@@ -92,6 +96,7 @@ fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
 			shape.on_keydown(c, m, w)
 		}
 	}
+	w.update_window()
 }
 
 // clicked delegates to the first Shape that has a click
@@ -112,13 +117,14 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 			shape.on_click(shape.id, me, w)
 		}
 	}
+	w.update_window()
 }
 
 fn resized_fn(e &gg.Event, mut w Window) {
-	if w.update_on_resize {
-		w.update_view(w.gen_view)
-	}
 	w.on_resized(w)
+	if w.update_on_resize {
+		w.update_window()
+	}
 }
 
 // get_state returns a reference to user supplied data
@@ -154,11 +160,28 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut shapes := generate_shapes(view, window)
 	layout_do(mut shapes, window)
+	renderers := render(shapes, window.ui)
 
 	window.mutex.lock()
+	defer { window.mutex.unlock() }
+
 	window.gen_view = gen_view
 	window.layout = shapes
-	window.mutex.unlock()
+	window.renderers = renderers
+}
+
+// update_window generates a new layout from the windows view.
+pub fn (mut window Window) update_window() {
+	window.mutex.lock()
+	defer { window.mutex.unlock() }
+
+	view := window.gen_view(window)
+	mut shapes := generate_shapes(view, window)
+	layout_do(mut shapes, window)
+	renderers := render(shapes, window.ui)
+
+	window.layout = shapes
+	window.renderers = renderers
 }
 
 // window_size returns the size of the window in logical units.
