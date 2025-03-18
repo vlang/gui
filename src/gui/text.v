@@ -53,11 +53,10 @@ pub:
 	keep_spaces bool
 }
 
-// text renders text according to the TextCfg.
-// Text wrapping is support fo multiple lines.
-// Newlines are considered white-space are converted to spaces.
-// Multple spaces are compressed to one space.
-// The `spacing` parameter can be used to increase the space between lines.
+// text renders text.
+// Text wrapping is available.
+// Multiple spaces are compressed to one space unless `keep_spaces` is true.
+// The `spacing` parameter is used to increase the space between lines.
 pub fn text(cfg TextCfg) &Text {
 	return &Text{
 		id:          cfg.id
@@ -109,7 +108,7 @@ fn text_wrap(mut shape Shape, ctx gg.Context) {
 
 // text_wrap_text wraps lines to given width (logical units, not chars)
 // Extra white space is compressed to on space including tabs and newlines.
-pub fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
+fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in s.fields() {
@@ -132,7 +131,7 @@ pub fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 
 // text_wrap_text_keep_spaces wraps lines to given width (logical units, not chars)
 // White space is preserved
-pub fn text_wrap_text_keep_spaces(s string, width f32, ctx gg.Context) []string {
+fn text_wrap_text_keep_spaces(s string, width f32, ctx gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in split_text(s) {
@@ -153,34 +152,38 @@ pub fn text_wrap_text_keep_spaces(s string, width f32, ctx gg.Context) []string 
 	return wrap
 }
 
-// split_text splits a string by spaces but also includes
-// the spaces and separate strings
-pub fn split_text(s string) []string {
-	sr := s.runes()
-	mut state := 0 // 1=space, 2=char
+// split_text splits a string by spaces and also includes
+// the spaces as separate strings
+fn split_text(s string) []string {
+	space := ' '
+	state_un := 0
+	state_sp := 1
+	state_ch := 2
+
+	mut state := state_un
 	mut fields := []string{}
 	mut field := ''
 
-	for r in sr {
-		ss := r.str()
-		if state == 0 {
-			field += ss
-			state = if ss == ' ' { 1 } else { 2 }
-		} else if state == 1 { // space
-			if ss[0].is_space() {
-				field += ss
+	for r in s.runes() {
+		ch := r.str()
+		if state == state_un {
+			field += ch
+			state = if ch == space { state_sp } else { state_ch }
+		} else if state == state_sp {
+			if ch == space {
+				field += ch
 			} else {
-				state = 2
+				state = state_ch
 				fields << field
-				field = ss
+				field = ch
 			}
-		} else if state == 2 { // char
-			if ss[0].is_space() {
-				state = 1
+		} else if state == state_ch {
+			if ch == space {
+				state = state_sp
 				fields << field
-				field = ss
+				field = ch
 			} else {
-				field += ss
+				field += ch
 			}
 		}
 	}

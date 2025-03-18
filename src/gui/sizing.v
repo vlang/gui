@@ -18,9 +18,9 @@ pub const fit_fit = Sizing{.fit, .fit}
 pub const fit_flex = Sizing{.fit, .flex}
 pub const fit_fixed = Sizing{.fit, .fixed}
 
-pub const fixed_fixed = Sizing{.fixed, .fixed}
-pub const fixed_flex = Sizing{.fixed, .flex}
 pub const fixed_fit = Sizing{.fixed, .fit}
+pub const fixed_flex = Sizing{.fixed, .flex}
+pub const fixed_fixed = Sizing{.fixed, .fixed}
 
 pub const flex_fit = Sizing{.flex, .fit}
 pub const flex_flex = Sizing{.flex, .flex}

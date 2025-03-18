@@ -127,7 +127,7 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 
 // shape_clip creates a clipping region based on the shapes's bounds property.
 // Internal use mostly, but useful if designing a new Shape
-pub fn shape_clip(shape Shape, ctx &gg.Context) Renderer {
+fn shape_clip(shape Shape, ctx &gg.Context) Renderer {
 	if !is_empty_rect(shape.bounds) {
 		x := shape.bounds.x - 1
 		y := shape.bounds.y - 1
@@ -145,7 +145,7 @@ pub fn shape_clip(shape Shape, ctx &gg.Context) Renderer {
 
 // shape_unclip resets the clipping region.
 // Internal use mostly, but useful if designing a new Shape
-pub fn shape_unclip(ctx &gg.Context) DrawClip {
+fn shape_unclip(ctx &gg.Context) DrawClip {
 	return DrawClip{
 		x:      0
 		y:      0
@@ -156,6 +156,6 @@ pub fn shape_unclip(ctx &gg.Context) DrawClip {
 
 // is_empty_rect returns true if the rectangle has no area, positive
 // or negative.
-pub fn is_empty_rect(rect gg.Rect) bool {
+fn is_empty_rect(rect gg.Rect) bool {
 	return (rect.x + rect.width) == 0 && (rect.y + rect.height) == 0
 }

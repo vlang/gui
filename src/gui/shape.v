@@ -4,7 +4,7 @@ import gg
 import gx
 
 // Shape is the only data structure in GUI used to draw to the screen.
-pub struct Shape {
+struct Shape {
 pub:
 	id       string // asigned by user
 	uid      string
@@ -38,7 +38,7 @@ mut:
 }
 
 // ShapeType defines the kind of Shape.
-pub enum ShapeType {
+enum ShapeType {
 	none
 	container
 	text
@@ -46,14 +46,14 @@ pub enum ShapeType {
 
 // Axis defines if a Shape arranges its child
 // shapes horizontally, vertically or not at all.
-pub enum Axis {
+enum Axis {
 	none
 	top_to_bottom
 	left_to_right
 }
 
 // ShapeTree defines a tree of Shapes. Views generate ShapeTrees
-pub struct ShapeTree {
+struct ShapeTree {
 pub mut:
 	shape    Shape
 	children []ShapeTree
@@ -61,7 +61,7 @@ pub mut:
 
 // point_in_shape determines if the given point is within the shape's layout rectangle
 // Internal use mostly, but useful if designing a new Shape
-pub fn (shape Shape) point_in_shape(x f32, y f32) bool {
+fn (shape Shape) point_in_shape(x f32, y f32) bool {
 	return x >= shape.x && x < (shape.x + shape.width) && y >= shape.y
 		&& y < (shape.y + shape.height)
 }
@@ -70,7 +70,7 @@ pub fn (shape Shape) point_in_shape(x f32, y f32) bool {
 // shape where the sahpe region contains the point and the shape has
 // a click handler. Search is in reverse order
 // Internal use mostly, but useful if designing a new Shape
-pub fn shape_from_point_on_click(node ShapeTree, x f32, y f32) ?Shape {
+fn shape_from_point_on_click(node ShapeTree, x f32, y f32) ?Shape {
 	for child in node.children {
 		if shape := shape_from_point_on_click(child, x, y) {
 			return shape
@@ -84,7 +84,7 @@ pub fn shape_from_point_on_click(node ShapeTree, x f32, y f32) ?Shape {
 
 // shape_from_on_char
 // Internal use mostly, but useful if designing a new Shape
-pub fn shape_from_on_char(node ShapeTree) ?Shape {
+fn shape_from_on_char(node ShapeTree) ?Shape {
 	for child in node.children {
 		if shape := shape_from_on_char(child) {
 			return shape
@@ -98,7 +98,7 @@ pub fn shape_from_on_char(node ShapeTree) ?Shape {
 
 // shape_from_on_char
 // Internal use mostly, but useful if designing a new Shape
-pub fn shape_from_on_key_down(node ShapeTree) ?Shape {
+fn shape_from_on_key_down(node ShapeTree) ?Shape {
 	for child in node.children {
 		if shape := shape_from_on_key_down(child) {
 			return shape

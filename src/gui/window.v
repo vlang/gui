@@ -112,7 +112,7 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 			me := MouseEvent{
 				mouse_x:      x
 				mouse_y:      y
-				mouse_button: MouseButton(button)
+				mouse_button: button
 			}
 			shape.on_click(shape.id, me, w)
 		}
@@ -184,7 +184,7 @@ pub fn (mut window Window) update_window() {
 	window.renderers = renderers
 }
 
-// window_size returns the size of the window in logical units.
+// window_size gets the size of the window in logical units.
 pub fn (window &Window) window_size() (int, int) {
 	size := window.ui.window_size()
 	return size.width, size.height

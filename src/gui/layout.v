@@ -237,18 +237,20 @@ fn layout_flex_heights(mut node ShapeTree) {
 }
 
 // layout_wrap_text is called after all widths in a ShapeTree are determined.
-// Wrapping text can change the height of an Shape, which is why this is called
+// Wrapping text can change the height of an Shape, which is why it is called
 // before computing Shape heights
 fn layout_wrap_text(mut node ShapeTree, w &Window) {
 	if w.focus_id == node.shape.focus_id && node.shape.type == .text {
+		// figure out where the dang cursor goes
 		node.shape.cursor_x = 0
 		node.shape.cursor_y = 0
 		if w.cursor_offset >= 0 {
 			// place a zero-space char in the string at the cursor pos as
-			// a marker to where the cursor should go after wrapping.
+			// a marker to where the cursor should go.
 			zero_space := '\xe2\x80\x8b'
 			text := node.shape.text[..w.cursor_offset] + zero_space +
 				node.shape.text[w.cursor_offset..]
+
 			w.ui.set_text_cfg(node.shape.text_cfg)
 			wrapped := match node.shape.wrap {
 				true {
@@ -261,6 +263,10 @@ fn layout_wrap_text(mut node ShapeTree, w &Window) {
 					[text]
 				}
 			}
+
+			// After wrapping, find the zero-space
+			// cursor_y is the index into the shape.lines array
+			// cursor_x is character index of that indexed line
 			zero_space_rune := zero_space.runes()[0]
 			for idx, ln in wrapped {
 				pos := arrays.index_of_first(ln.runes(), fn [zero_space_rune] (idx int, elem rune) bool {
@@ -274,7 +280,10 @@ fn layout_wrap_text(mut node ShapeTree, w &Window) {
 			}
 		}
 	}
+
+	// wrap the text for-real
 	text_wrap(mut node.shape, w.ui)
+
 	for mut child in node.children {
 		layout_wrap_text(mut child, w)
 	}
@@ -302,7 +311,7 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	}
 }
 
-// layout_clipping_bounds ensures that Shapes do not draw outside the node
+// layout_clipping_bounds ensures that Shapes do not draw outside the parent
 // Shape container.
 fn layout_clipping_bounds(mut node ShapeTree, bounds gg.Rect) {
 	nb := match node.shape.type == .container {

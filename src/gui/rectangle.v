@@ -15,12 +15,11 @@ pub:
 	sizing Sizing
 }
 
-// rectangle is one of the most useful and used UI controls.
-// Rectangles can be filled, outlined and colored and can have radius
-// corners.
+// rectangle draws a rectangle (shocking!). Rectangles can be filled,
+// outlined, colored and have radius corners.
 pub fn rectangle(cfg RectangleCfg) &Container {
 	// Technically, rectangle is a container but
-	// it has no children, axis or paddin and as
+	// it has no children, axis or padding and as
 	// such, behaves as a plain rectangle.
 	container_cfg := ContainerCfg{
 		id:      cfg.id

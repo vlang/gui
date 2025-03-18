@@ -24,14 +24,14 @@ pub fn padding(top f32, right f32, bottom f32, left f32) Padding {
 	}
 }
 
-// pad_4 creates a padding with all 4 sides set to the p parameter
+// pad_4 creates a padding with all 4 sides set to the `p` parameter
 pub fn pad_4(p f32) Padding {
 	return Padding{p, p, p, p}
 }
 
 // pad_2 creates a padding with the top and bottome set to
-// the first parameter and the left and right set to the
-// second parameter.
+// the `tb` parameter and the left and right set to the
+// `lr` parameter.
 pub fn pad_2(tb f32, lr f32) Padding {
 	return Padding{
 		top:    tb

@@ -50,8 +50,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 	}
 }
 
-// ContainerCfg is a common configuration struct used in
-// several the row, column and canvas containers
+// ContainerCfg is the common configuration struct for row, column and canvas containers
 pub struct ContainerCfg {
 pub:
 	id         string
@@ -72,8 +71,8 @@ pub:
 }
 
 // container is the fundamental layout container in gui.
-// It can be used to layout its children top-to-bottom or left_to_right.
-// A `.none` axis allows coontainer to behave as a canvas with no additional layout.
+// It is used to layout its children top-to-bottom or left_to_right.
+// A `.none` axis allows a container to behave as a canvas with no additional layout.
 fn container(c ContainerCfg) &Container {
 	return &Container{
 		id:         c.id
@@ -97,7 +96,7 @@ fn container(c ContainerCfg) &Container {
 // --- Common layout containers ---
 
 // column arranges its children top to bottom. The gap
-// between child items is determined by the spacing parameter
+// between child items is determined by the spacing parameter.
 pub fn column(cfg ContainerCfg) &Container {
 	mut col := container(cfg)
 	col.axis = .top_to_bottom
@@ -105,7 +104,7 @@ pub fn column(cfg ContainerCfg) &Container {
 }
 
 // row arranges its children left to right. The gap
-// between child items is determined by the spacing parameter
+// between child items is determined by the spacing parameter.
 pub fn row(cfg ContainerCfg) &Container {
 	mut row := container(cfg)
 	row.axis = .left_to_right
