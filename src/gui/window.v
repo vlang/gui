@@ -91,9 +91,16 @@ fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
 	layout := w.layout
 	w.mutex.unlock()
 
+	mut handled := false
 	if shape := shape_from_on_key_down(layout) {
 		if shape.on_keydown != unsafe { nil } {
-			shape.on_keydown(c, m, w)
+			handled = shape.on_keydown(c, m, w)
+		}
+	}
+
+	if !handled && c == .tab {
+		if shape := shape_next_focusable(layout, mut w) {
+			w.focus_id = shape.focus_id
 		}
 	}
 	w.update_window()
@@ -131,8 +138,18 @@ fn resized_fn(e &gg.Event, mut w Window) {
 	}
 }
 
+// cursor_offset gets the window's cursor offset
+pub fn (mut window Window) cursor_offset() int {
+	return window.cursor_offset
+}
+
+// focus_id gets the window's focus id
+pub fn (window &Window) focus_id() int {
+	return window.focus_id
+}
+
 // get_state returns a reference to user supplied data
-pub fn (window &Window) get_state[T]() &T {
+pub fn (window &Window) state[T]() &T {
 	assert window.state != unsafe { nil }
 	return unsafe { &T(window.state) }
 }
@@ -145,10 +162,6 @@ pub fn (mut window Window) run() {
 // set_cursor sets the cursor pos in chars
 pub fn (mut window Window) set_cursor_offset(offset int) {
 	window.cursor_offset = offset
-}
-
-pub fn (mut window Window) get_cursor_offset() int {
-	return window.cursor_offset
 }
 
 // set_focus_id sets the window's focus id.

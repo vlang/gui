@@ -37,7 +37,7 @@ fn main_view(w &gui.Window) gui.View {
 		size: 20
 	}
 
-	mut state := w.get_state[AppState]()
+	mut state := w.state[AppState]()
 	width, height := w.window_size()
 
 	return gui.row(
@@ -92,12 +92,14 @@ fn main_view(w &gui.Window) gui.View {
 								height: 25
 								color:  gx.orange
 							),
-							gui.canvas(
+							gui.row(
+								sizing:   gui.flex_fit
 								color:    gx.white
 								children: [
 									gui.text(
 										text:  'Hello world!'
 										style: text_style_large
+										wrap:  true
 									),
 								]
 							),
@@ -112,12 +114,14 @@ fn main_view(w &gui.Window) gui.View {
 							),
 							gui.button(
 								focus_id:   2
+								color:      if w.focus_id() == 2 { gx.dark_blue } else { gx.blue }
 								text:       'Button Text ${state.click_count}'
 								text_style: text_style
-								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) {
-									mut state := w.get_state[AppState]()
+								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) bool {
+									mut state := w.state[AppState]()
 									state.click_count += 1
 									w.update_window()
+									return true // true stops event propagation
 								}
 							),
 						]
@@ -147,14 +151,13 @@ fn main_view(w &gui.Window) gui.View {
 						wrap:            true
 						sizing:          gui.fixed_fit
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-							mut state := w.get_state[AppState]()
+							mut state := w.state[AppState]()
 							state.name = s
 							w.update_view(main_view)
 						}
 					),
 					gui.column(
-						color:    gx.rgb(0x40, 0x40, 0x40)
-						fill:     true
+						color:    gx.gray
 						sizing:   gui.flex_fit
 						children: [
 							gui.text(
@@ -169,8 +172,7 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.column(
-						color:    gx.rgb(0x40, 0x40, 0x40)
-						fill:     true
+						color:    gx.gray
 						sizing:   gui.flex_fit
 						children: [
 							gui.text(

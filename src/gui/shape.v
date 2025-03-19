@@ -1,5 +1,6 @@
 module gui
 
+import arrays
 import gg
 import gx
 
@@ -7,8 +8,8 @@ import gx
 struct Shape {
 pub:
 	id       string // asigned by user
-	uid      string
-	focus_id int // >0 indicates text is focusable. Value indiciates tabbing order
+	uid      string // internal use only
+	focus_id int    // >0 indicates text is focusable. Value indiciates tabbing order
 	axis     Axis
 	type     ShapeType
 mut:
@@ -32,9 +33,9 @@ mut:
 	cursor_y    int = -1
 	wrap        bool
 	keep_spaces bool
-	on_click    fn (string, MouseEvent, &Window)      = unsafe { nil }
-	on_char     fn (u32, &Window)                     = unsafe { nil }
-	on_keydown  fn (gg.KeyCode, gg.Modifier, &Window) = unsafe { nil }
+	on_char     fn (u32, &Window) bool                     = unsafe { nil }
+	on_click    fn (string, MouseEvent, &Window) bool      = unsafe { nil }
+	on_keydown  fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.
@@ -66,46 +67,65 @@ fn (shape Shape) point_in_shape(x f32, y f32) bool {
 		&& y < (shape.y + shape.height)
 }
 
+fn (node ShapeTree) find_shape(predicate fn (n ShapeTree) bool) ?Shape {
+	for child in node.children {
+		if found := child.find_shape(predicate) {
+			return found
+		}
+	}
+	return if predicate(node) { node.shape } else { none }
+}
+
 // shape_from_point_on_click walks the ShapeTree and returns the first
 // shape where the sahpe region contains the point and the shape has
 // a click handler. Search is in reverse order
 // Internal use mostly, but useful if designing a new Shape
 fn shape_from_on_click(node ShapeTree, x f32, y f32) ?Shape {
-	for child in node.children {
-		if shape := shape_from_on_click(child, x, y) {
-			return shape
-		}
-	}
-	if node.shape.point_in_shape(x, y) && node.shape.on_click != unsafe { nil } {
-		return node.shape
-	}
-	return none
+	return node.find_shape(fn [x, y] (n ShapeTree) bool {
+		return n.shape.point_in_shape(x, y) && n.shape.on_click != unsafe { nil }
+	})
 }
 
 // shape_from_on_char finds the first control with an on_char handler
 // and has focus
 fn shape_from_on_char(node ShapeTree, focus_id int) ?Shape {
-	for child in node.children {
-		if shape := shape_from_on_char(child, focus_id) {
-			return shape
-		}
-	}
-	if focus_id > 0 && node.shape.focus_id == focus_id && node.shape.on_char != unsafe { nil } {
-		return node.shape
-	}
-	return none
+	return node.find_shape(fn [focus_id] (n ShapeTree) bool {
+		return focus_id > 0 && n.shape.focus_id == focus_id && n.shape.on_char != unsafe { nil }
+	})
 }
 
 // shape_from_on_char
 // Internal use mostly, but useful if designing a new Shape
 fn shape_from_on_key_down(node ShapeTree) ?Shape {
-	for child in node.children {
-		if shape := shape_from_on_key_down(child) {
-			return shape
+	return node.find_shape(fn (n ShapeTree) bool {
+		return n.shape.on_keydown != unsafe { nil }
+	})
+}
+
+fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
+	ids := get_focus_ids(node)
+	if ids.len == 0 {
+		return none
+	}
+	mut next_id := ids[0]
+	if w.focus_id > 0 {
+		idx := ids.index(w.focus_id)
+		if idx >= 0 && idx < ids.len - 1 {
+			next_id = ids[idx + 1]
 		}
 	}
-	if node.shape.on_keydown != unsafe { nil } {
-		return node.shape
+	return node.find_shape(fn [next_id] (n ShapeTree) bool {
+		return n.shape.focus_id == next_id
+	})
+}
+
+fn get_focus_ids(node ShapeTree) []int {
+	mut focus_ids := []int{}
+	if node.shape.focus_id > 0 {
+		focus_ids << node.shape.focus_id
 	}
-	return none
+	for child in node.children {
+		focus_ids << get_focus_ids(child)
+	}
+	return arrays.distinct(focus_ids).sorted()
 }

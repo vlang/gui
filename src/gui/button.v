@@ -18,12 +18,12 @@ pub:
 	text       string
 	text_style gx.TextCfg
 	width      f32
-	on_click   fn (string, MouseEvent, &Window) = unsafe { nil }
+	on_click   fn (string, MouseEvent, &Window) bool = unsafe { nil }
 }
 
 // button creates a button. Imagine that.
 pub fn button(cfg ButtonCfg) &View {
-	return canvas(
+	return row(
 		id:       cfg.id
 		focus_id: cfg.focus_id
 		width:    cfg.width
@@ -43,8 +43,10 @@ pub fn button(cfg ButtonCfg) &View {
 	)
 }
 
-fn (cfg ButtonCfg) on_char(c u32, mut w Window) {
+fn (cfg ButtonCfg) on_char(c u32, mut w Window) bool {
 	if c == ` ` {
 		cfg.on_click(cfg.id, MouseEvent{}, w)
+		return true
 	}
+	return false
 }

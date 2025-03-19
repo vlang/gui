@@ -132,11 +132,14 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 // shape_clip creates a clipping region based on the shapes's bounds property.
 // Internal use mostly, but useful if designing a new Shape
 fn shape_clip(shape Shape, ctx &gg.Context) Renderer {
+	// Perhaps this is a round off error some where (maybe sokol),
+	// but need to expand width and height by 0.5 to keep the
+	// right/bottom edges unclipped.
 	if !is_empty_rect(shape.bounds) {
-		x := shape.bounds.x - 1
-		y := shape.bounds.y - 1
-		w := shape.bounds.width + 2
-		h := shape.bounds.height + 2
+		x := shape.bounds.x
+		y := shape.bounds.y
+		w := shape.bounds.width + 0.5
+		h := shape.bounds.height + 0.5
 		return DrawClip{
 			x:      x
 			y:      y

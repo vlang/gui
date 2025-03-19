@@ -8,7 +8,7 @@ struct Container implements View {
 pub mut:
 	id         string
 	focus_id   int
-	axis       Axis = .top_to_bottom
+	axis       Axis
 	x          f32
 	y          f32
 	width      f32
@@ -19,9 +19,9 @@ pub mut:
 	fill       bool
 	radius     int
 	color      gx.Color
-	on_click   fn (string, MouseEvent, &Window)      = unsafe { nil }
-	on_char    fn (u32, &Window)                     = unsafe { nil }
-	on_keydown fn (gg.KeyCode, gg.Modifier, &Window) = unsafe { nil }
+	on_click   fn (string, MouseEvent, &Window) bool      = unsafe { nil }
+	on_char    fn (u32, &Window) bool                     = unsafe { nil }
+	on_keydown fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
 	children   []View
 }
 
@@ -64,12 +64,12 @@ pub:
 	spacing    f32 = spacing_default
 	sizing     Sizing
 	fill       bool
-	radius     int                                   = radius_default
-	color      gx.Color                              = transparent
-	padding    Padding                               = padding_default
-	on_click   fn (string, MouseEvent, &Window)      = unsafe { nil }
-	on_char    fn (u32, &Window)                     = unsafe { nil }
-	on_keydown fn (gg.KeyCode, gg.Modifier, &Window) = unsafe { nil }
+	radius     int      = radius_default
+	color      gx.Color = transparent
+	padding    Padding  = padding_default
+	on_click   fn (string, MouseEvent, &Window) bool      = unsafe { nil }
+	on_char    fn (u32, &Window) bool                     = unsafe { nil }
+	on_keydown fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
 	children   []View
 }
 
