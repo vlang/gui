@@ -10,8 +10,9 @@ It's early days so very little is working. Try it and send me feedback.
 - Immediate mode rendering
 - Thread safe view updates
 - Declarative layout syntax
-- Dynamic layout (rows, columns, etc.)
+- flex-box style layout (rows, columns, etc.)
 - Automatic clipping. Controls won't draw outside their containers.
+- Microsecond performance
 
 ## Example
 ```v
