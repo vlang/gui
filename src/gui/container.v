@@ -2,12 +2,11 @@ module gui
 
 import gg
 import gx
-import rand
 
 struct Container implements View {
 pub mut:
 	id         string
-	focus_id   int
+	focus_id   FocusId
 	axis       Axis
 	x          f32
 	y          f32
@@ -30,7 +29,6 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 		shape: Shape{
 			id:         c.id
 			focus_id:   c.focus_id
-			uid:        rand.uuid_v4()
 			type:       .container
 			axis:       c.axis
 			x:          c.x

@@ -2,7 +2,6 @@ module gui
 
 import gg
 import gx
-import rand
 
 // Text is an internal structure used to describe a text block
 struct Text implements View {
@@ -23,7 +22,6 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 	mut shape_tree := ShapeTree{
 		shape: Shape{
 			id:          t.id
-			uid:         rand.uuid_v4()
 			focus_id:    t.focus_id
 			type:        .text
 			spacing:     t.spacing

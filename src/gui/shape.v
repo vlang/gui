@@ -3,13 +3,14 @@ module gui
 import arrays
 import gg
 import gx
+import rand
 
 // Shape is the only data structure in GUI used to draw to the screen.
 struct Shape {
 pub:
 	id       string // asigned by user
-	uid      string // internal use only
-	focus_id int    // >0 indicates text is focusable. Value indiciates tabbing order
+	uid      u64 = rand.u64() // internal use only
+	focus_id FocusId // >0 indicates text is focusable. Value indiciates tabbing order
 	axis     Axis
 	type     ShapeType
 mut:
@@ -88,14 +89,13 @@ fn shape_from_on_click(node ShapeTree, x f32, y f32) ?Shape {
 
 // shape_from_on_char finds the first control with an on_char handler
 // and has focus
-fn shape_from_on_char(node ShapeTree, focus_id int) ?Shape {
+fn shape_from_on_char(node ShapeTree, focus_id FocusId) ?Shape {
 	return node.find_shape(fn [focus_id] (n ShapeTree) bool {
 		return focus_id > 0 && n.shape.focus_id == focus_id && n.shape.on_char != unsafe { nil }
 	})
 }
 
-// shape_from_on_char
-// Internal use mostly, but useful if designing a new Shape
+// shape_from_on_char finds first control with on_keydown handler
 fn shape_from_on_key_down(node ShapeTree) ?Shape {
 	return node.find_shape(fn (n ShapeTree) bool {
 		return n.shape.on_keydown != unsafe { nil }
@@ -109,7 +109,7 @@ fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
 	}
 	mut next_id := ids[0]
 	if w.focus_id > 0 {
-		idx := ids.index(w.focus_id)
+		idx := ids.index(int(w.focus_id))
 		if idx >= 0 && idx < ids.len - 1 {
 			next_id = ids[idx + 1]
 		}

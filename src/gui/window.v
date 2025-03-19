@@ -10,12 +10,12 @@ mut:
 	state            voidptr    = unsafe { nil }
 	layout           ShapeTree  = ShapeTree{}
 	renderers        []Renderer = []
-	focus_id         int
-	cursor_offset    int // char position of cursor in text, -1 == last char
+	focus_id         FocusId
+	cursor_offset    int // char position of cursor in text
 	mutex            &sync.Mutex       = sync.new_mutex()
 	ui               &gg.Context       = &gg.Context{}
 	gen_view         fn (&Window) View = fn (_ &Window) View {
-		return canvas(id: 'dummy_view')
+		return canvas(id: 'empty-view')
 	}
 	update_on_resize bool
 	on_resized       fn (&Window) = fn (_ &Window) {}
@@ -165,7 +165,7 @@ pub fn (mut window Window) set_cursor_offset(offset int) {
 }
 
 // set_focus_id sets the window's focus id.
-pub fn (mut window Window) set_focus_id(id int) {
+pub fn (mut window Window) set_focus_id(id FocusId) {
 	window.focus_id = id
 	window.cursor_offset = -1
 }
