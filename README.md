@@ -2,16 +2,15 @@
 
 A UI frame work for the V language based on the rendering algorithm of Clay.
 
-It's early days so very little is working. Try it and send me feedback.
+It's early days so little is working. Try it and send feedback.
 
 ## Features
 
-- Pure V (so far...)
+- Pure V
 - Immediate mode rendering
 - Thread safe view updates
-- Declarative layout syntax
-- flex-box style layout (rows, columns, etc.)
-- Automatic clipping. Controls won't draw outside their containers.
+- Declarative, flex-box style layout syntax
+- Automatic clipping. Controls won't draw outside their containers
 - Microsecond performance
 
 ## Example
@@ -35,10 +34,7 @@ fn main() {
 		bg_color:   gx.rgb(0x30, 0x30, 0x30)
 		state:      &AppState{}
 		on_init:    fn (mut w gui.Window) {
-			w.update_view(main_view(w))
-		}
-		on_resized: fn (mut w gui.Window) {
-			w.update_view(main_view(w))
+			w.update_view(main_view)
 		}
 	)
 	window.run()
@@ -169,11 +165,13 @@ fn main_view(w &gui.Window) gui.View {
 
 ## Description
 
-GUI is a fast, nimble UI framework for the V programming language. It aspires to be
-a useful framework without requiring a long learning curve.
+GUI is a flex-box style UI auto UI framework written in
+[V](https://vlang.io), with declarative syntax and microsecond
+performance. It aspires to be a useful framework with a short
+a learning curve.
 
 ## Roadmap
 
 I plan to create a capable, robust and fairly complete UI framework. As to timelines,
-who knows. I'm making this up as I go along. Currently, this is really the only project
-I'm working on so you should expect frequent updates.
+who knows. I'm making this up as I go along. Currently, this is the only project
+I'm working on, so expect frequent updates.
