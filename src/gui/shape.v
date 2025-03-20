@@ -46,8 +46,8 @@ enum ShapeType {
 	text
 }
 
-// Axis defines if a Shape arranges its child
-// shapes horizontally, vertically or not at all.
+// Axis defines if a Shape arranges its child shapes horizontally, vertically or
+// not at all.
 enum Axis {
 	none
 	top_to_bottom
@@ -61,16 +61,16 @@ pub mut:
 	children []ShapeTree
 }
 
-// point_in_shape determines if the given point is within the shape's layout rectangle
-// Internal use mostly, but useful if designing a new Shape
+// point_in_shape determines if the given point is within the shape's layout
+// rectangle Internal use mostly, but useful if designing a new Shape
 fn (shape Shape) point_in_shape(x f32, y f32) bool {
 	return x >= shape.x && x < (shape.x + shape.width) && y >= shape.y
 		&& y < (shape.y + shape.height)
 }
 
 // find_shape walks the ShapeGTree in reverse until predicate is satisfied.
-// shape_uid limits the depth of the search into tree. Used in event bubbling.
-// 0 is not a valid shape_uid and is used to search the entire tree
+// shape_uid limits the depth of the search into tree. Used in event bubbling. 0
+// is not a valid shape_uid and is used to search the entire tree
 fn (node ShapeTree) find_shape(predicate fn (n ShapeTree) bool, shape_uid u64) ?Shape {
 	for child in node.children {
 		if found := child.find_shape(predicate, shape_uid) {
@@ -83,18 +83,18 @@ fn (node ShapeTree) find_shape(predicate fn (n ShapeTree) bool, shape_uid u64) ?
 	return if predicate(node) { node.shape } else { none }
 }
 
-// shape_from_point_on_click walks the ShapeTree and returns the first
-// shape where the sahpe region contains the point and the shape has
-// a click handler. Search is in reverse order
-// Internal use mostly, but useful if designing a new Shape
+// shape_from_point_on_click walks the ShapeTree and returns the first shape
+// where the sahpe region contains the point and the shape has a click handler.
+// Search is in reverse order Internal use mostly, but useful if designing a new
+// Shape
 fn shape_from_on_click(node ShapeTree, x f32, y f32, shape_uid u64) ?Shape {
 	return node.find_shape(fn [x, y] (n ShapeTree) bool {
 		return n.shape.point_in_shape(x, y) && n.shape.on_click != unsafe { nil }
 	}, shape_uid)
 }
 
-// shape_from_on_char finds the first control with an on_char handler
-// and has focus
+// shape_from_on_char finds the first control with an on_char handler and has
+// focus
 fn shape_from_on_char(node ShapeTree, focus_id FocusId, shape_uid u64) ?Shape {
 	return node.find_shape(fn [focus_id] (n ShapeTree) bool {
 		return focus_id > 0 && n.shape.focus_id == focus_id && n.shape.on_char != unsafe { nil }

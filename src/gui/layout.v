@@ -7,8 +7,8 @@ import arrays
 import gg
 // import time
 
-// layout_do executes a pipeline of functions to layout
-// and position the Shapes of a ShapeTree
+// layout_do executes a pipeline of functions to layout and position the Shapes
+// of a ShapeTree
 fn layout_do(mut layout ShapeTree, window Window) {
 	// mut stop_watch := time.StopWatch{}
 	// stop_watch.start()
@@ -65,9 +65,9 @@ fn layout_heights(mut node ShapeTree) {
 	}
 }
 
-// find_first_idx_and_len gets the index of the first element to satisfy
-// the predicate and the length of all elements that satisfy the predicate.
-// Iterates the array once with no allocations.
+// find_first_idx_and_len gets the index of the first element to satisfy the
+// predicate and the length of all elements that satisfy the predicate. Iterates
+// the array once with no allocations.
 fn find_first_idx_and_len(node ShapeTree, predicate fn (n ShapeTree) bool) (int, int) {
 	mut idx := 0
 	mut len := 0
@@ -84,8 +84,8 @@ fn find_first_idx_and_len(node ShapeTree, predicate fn (n ShapeTree) bool) (int,
 	return idx, len
 }
 
-// layout_flex_widths manages the growing and shrinking of Shapes horizontally to satisfy
-// a layout constraint
+// layout_flex_widths manages the growing and shrinking of Shapes horizontally
+// to satisfy a layout constraint
 fn layout_flex_widths(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
 	mut remaining_width := node.shape.width - node.shape.padding.left - node.shape.padding.right
@@ -105,9 +105,9 @@ fn layout_flex_widths(mut node ShapeTree) {
 			return
 		}
 
-		// divide up the remaining flex widths by first growing
-		// all the all the flex shapes to the same size (if possible)
-		// and then distributing the remaining width to evenly.
+		// divide up the remaining flex widths by first growing all the
+		// all the flex shapes to the same size (if possible) and then
+		// distributing the remaining width to evenly.
 		for i := 0; remaining_width > 0.1 && i < clamp; i++ {
 			mut smallest := node.children[idx].shape.width
 			mut second_smallest := f32(1000 * 1000)
@@ -190,8 +190,8 @@ fn layout_flex_widths(mut node ShapeTree) {
 	}
 }
 
-// layout_flex_heights manages the growing and shrinking of Shapes vertically to satisfy
-// a layout constraint
+// layout_flex_heights manages the growing and shrinking of Shapes vertically to
+// satisfy a layout constraint
 fn layout_flex_heights(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
 	mut remaining_height := node.shape.height - node.shape.padding.top - node.shape.padding.bottom
@@ -290,9 +290,9 @@ fn layout_wrap_text(mut node ShapeTree, w &Window) {
 				}
 			}
 
-			// After wrapping, find the zero-space
-			// cursor_y is the index into the shape.lines array
-			// cursor_x is character index of that indexed line
+			// After wrapping, find the zero-space cursor_y is the
+			// index into the shape.lines array cursor_x is
+			// character index of that indexed line
 			zero_space_rune := zero_space.runes()[0]
 			for idx, ln in wrapped {
 				pos := arrays.index_of_first(ln.runes(), fn [zero_space_rune] (idx int, elem rune) bool {
@@ -315,8 +315,8 @@ fn layout_wrap_text(mut node ShapeTree, w &Window) {
 	}
 }
 
-// layout_positions sets the positions of all Shapes in the ShapeTreee.
-// It also handles alignment (soon)
+// layout_positions sets the positions of all Shapes in the ShapeTreee. It also
+// handles alignment (soon)
 fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	node.shape.x += offset_x
 	node.shape.y += offset_y

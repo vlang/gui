@@ -5,11 +5,11 @@ import gx
 import sokol.sgl
 // import time
 
-// A Renderer is the final computed drawing command. The window keeps
-// an array of Renderer and only uses this array to paint the window.
-// The window can be rapainted many times before the view state changes.
-// Storing the final draw commands vs. calling render_shape() is faster
-// because there is no computation to build the draw command.
+// A Renderer is the final computed drawing command. The window keeps an array
+// of Renderer and only uses this array to paint the window. The window can be
+// rapainted many times before the view state changes. Storing the final draw
+// commands vs. calling render_shape() is faster because there is no computation
+// to build the draw command.
 
 struct DrawTextCfg {
 	x    f32
@@ -139,9 +139,9 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 // shape_clip creates a clipping region based on the shapes's bounds property.
 // Internal use mostly, but useful if designing a new Shape
 fn shape_clip(shape Shape, ctx &gg.Context) Renderer {
-	// Perhaps this is a round off error some where (maybe sokol),
-	// but need to expand width and height by 0.5 to keep the
-	// right/bottom edges unclipped.
+	// Perhaps this is a round off error some where (maybe sokol), but need
+	// to expand width and height by 0.5 to keep the right/bottom edges
+	// unclipped.
 	if !is_empty_rect(shape.bounds) {
 		x := shape.bounds.x
 		y := shape.bounds.y
@@ -157,8 +157,8 @@ fn shape_clip(shape Shape, ctx &gg.Context) Renderer {
 	return DrawNone{}
 }
 
-// shape_unclip resets the clipping region.
-// Internal use mostly, but useful if designing a new Shape
+// shape_unclip resets the clipping region. Internal use mostly, but useful if
+// designing a new Shape
 fn shape_unclip(ctx &gg.Context) DrawClip {
 	return DrawClip{
 		x:      0
@@ -168,8 +168,8 @@ fn shape_unclip(ctx &gg.Context) DrawClip {
 	}
 }
 
-// is_empty_rect returns true if the rectangle has no area, positive
-// or negative.
+// is_empty_rect returns true if the rectangle has no area, positive or
+// negative.
 fn is_empty_rect(rect gg.Rect) bool {
 	return (rect.x + rect.width) == 0 && (rect.y + rect.height) == 0
 }

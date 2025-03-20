@@ -1,11 +1,10 @@
 # Introduction
 
-GUI is a flex-box style UI auto UI framework written in
-[V](https://vlang.io), with declarative syntax and microsecond
-performance. If that sounds like the Clay layout library, you're not
-mistaken. GUI is based on the same concepts and algorithms. Many thanks
-to Nic Barker for his
-[video on how Clay works](https://www.youtube.com/watch?v=by9lQvpvMIc&t=2371s&pp=ygUNY2xheSBsYXlvdXQgYw%3D%3D).
+GUI is a flex-box style UI framework written in [V](https://vlang.io),
+with declarative syntax and microsecond performance. If that sounds like
+the Clay layout library, you're not mistaken. GUI is based on the same
+concepts and algorithms. Many thanks to Nic Barker for his [video on how
+Clay works](https://www.youtube.com/watch?v=by9lQvpvMIc&t=2371s&pp=ygUNY2xheSBsYXlvdXQgYw%3D%3D).
 
 GUI's rendering mechanism is immediate mode. That means that any change
 in the UI requires a complete recalculation of the layout and redrawing

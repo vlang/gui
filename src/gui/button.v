@@ -2,10 +2,9 @@ module gui
 
 import gx
 
-// ButtonConfig configures a clickable button.
-// It won't respond mouse interactions if an
-// on_click handler is missing. In that mode,
-// it functions as bubble text.
+// ButtonConfig configures a clickable button. It won't respond mouse
+// interactions if an on_click handler is missing. In that mode, it functions as
+// bubble text.
 pub struct ButtonCfg {
 pub:
 	id         string

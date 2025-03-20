@@ -21,11 +21,9 @@ mut:
 	on_resized       fn (&Window) = fn (_ &Window) {}
 }
 
-// Window is the application window. The state parameter is
-// a reference to where your application state is stored.
-// `on_init` is where you should set the applications first view.
-// If resizing is desired, define a function that updates the
-// view and assign to `on_resize`
+// Window is the application window. The state parameter is a reference to where
+// the application state is stored. `on_init` is where to set the application's
+// first view.
 pub struct WindowCfg {
 pub:
 	state            voidptr = unsafe { nil }
@@ -38,8 +36,7 @@ pub:
 	on_resized       fn (&Window) = fn (_ &Window) {}
 }
 
-// window creates the application window.
-// See WindowCfg on how to configure it
+// window creates the application window. See WindowCfg on how to configure it
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
 		state:            cfg.state
@@ -109,9 +106,8 @@ fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
 	w.update_window()
 }
 
-// clicked delegates to the first Shape that has a click
-// handler within its rectanguler area. The search for
-// the Shape is in reverse order.
+// clicked delegates to the first Shape that has a click handler within its
+// rectanguler area. The search for the Shape is in reverse order.
 fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 	w.mutex.lock()
 	layout := w.layout
@@ -163,9 +159,8 @@ pub fn (mut window Window) set_focus_id(id FocusId) {
 	window.update_window()
 }
 
-// update_view sets the Window's view. A window can have
-// only one view. Giving a Window a new view replaces the
-// current view. Clears the input states.
+// update_view sets the Window's view. A window can have only one view. Giving a
+// Window a new view replaces the current view. Clears the input states.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut shapes := generate_shapes(view, window)
@@ -182,8 +177,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.renderers = renderers
 }
 
-// update_window generates a new layout from the windows view.
-// Does not clear the input states
+// update_window generates a new layout from the windows view. Does not clear
+// the input states
 pub fn (mut window Window) update_window() {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }

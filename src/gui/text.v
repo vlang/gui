@@ -51,10 +51,9 @@ pub:
 	keep_spaces bool
 }
 
-// text renders text.
-// Text wrapping is available.
-// Multiple spaces are compressed to one space unless `keep_spaces` is true.
-// The `spacing` parameter is used to increase the space between lines.
+// text renders text. Text wrapping is available. Multiple spaces are compressed
+// to one space unless `keep_spaces` is true. The `spacing` parameter is used to
+// increase the space between lines.
 pub fn text(cfg TextCfg) &Text {
 	return &Text{
 		id:          cfg.id
@@ -127,8 +126,8 @@ fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 	return wrap
 }
 
-// text_wrap_text_keep_spaces wraps lines to given width (logical units, not chars)
-// White space is preserved
+// text_wrap_text_keep_spaces wraps lines to given width (logical units, not
+// chars) White space is preserved
 fn text_wrap_text_keep_spaces(s string, width f32, ctx gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
@@ -150,8 +149,8 @@ fn text_wrap_text_keep_spaces(s string, width f32, ctx gg.Context) []string {
 	return wrap
 }
 
-// split_text splits a string by spaces and also includes
-// the spaces as separate strings
+// split_text splits a string by spaces and also includes the spaces as separate
+// strings
 fn split_text(s string) []string {
 	space := ' '
 	state_un := 0

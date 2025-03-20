@@ -1,8 +1,7 @@
 module gui
 
-// Padding is the gap inside the edges of a Shape.
-// The size of a Shape always includes its padding.
-// Parameter order is the same as CSS.
+// Padding is the gap inside the edges of a Shape. The size of a Shape always
+// includes its padding. Parameter order is the same as CSS.
 pub struct Padding {
 pub mut:
 	top    f32
@@ -29,9 +28,8 @@ pub fn pad_4(p f32) Padding {
 	return Padding{p, p, p, p}
 }
 
-// pad_2 creates a padding with the top and bottome set to
-// the `tb` parameter and the left and right set to the
-// `lr` parameter.
+// pad_2 creates a padding with the top and bottome set to the `tb` parameter
+// and the left and right set to the `lr` parameter.
 pub fn pad_2(tb f32, lr f32) Padding {
 	return Padding{
 		top:    tb
