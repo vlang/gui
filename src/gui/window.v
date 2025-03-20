@@ -7,16 +7,16 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	state            voidptr    = unsafe { nil }
-	layout           ShapeTree  = ShapeTree{}
-	renderers        []Renderer = []
-	focus_id         FocusId
-	cursor_offset    int // char position of cursor in text
-	mutex            &sync.Mutex       = sync.new_mutex()
 	ui               &gg.Context       = &gg.Context{}
+	state            voidptr           = unsafe { nil }
+	layout           ShapeTree         = ShapeTree{}
+	renderers        []Renderer        = []
+	mutex            &sync.Mutex       = sync.new_mutex()
 	gen_view         fn (&Window) View = fn (_ &Window) View {
 		return canvas(id: 'empty-view')
 	}
+	focus_id         FocusId
+	input_state      map[FocusId]InputState
 	update_on_resize bool
 	on_resized       fn (&Window) = fn (_ &Window) {}
 }
@@ -78,7 +78,7 @@ fn char_fn(c u32, mut w Window) {
 	layout := w.layout
 	w.mutex.unlock()
 
-	if shape := shape_from_on_char(layout, w.focus_id) {
+	if shape := shape_from_on_char(layout, w.focus_id, 0) {
 		if shape.on_char != unsafe { nil } {
 			shape.on_char(c, w)
 		}
@@ -92,9 +92,12 @@ fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
 	w.mutex.unlock()
 
 	mut handled := false
-	if shape := shape_from_on_key_down(layout) {
+	mut shape_uid := u64(0)
+	for !handled {
+		shape := shape_from_on_key_down(layout, shape_uid) or { break }
 		if shape.on_keydown != unsafe { nil } {
 			handled = shape.on_keydown(c, m, w)
+			shape_uid = shape.uid
 		}
 	}
 
@@ -115,7 +118,7 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 	w.mutex.unlock()
 
 	w.set_focus_id(0)
-	if shape := shape_from_on_click(layout, x, y) {
+	if shape := shape_from_on_click(layout, x, y, 0) {
 		if shape.on_click != unsafe { nil } {
 			if shape.focus_id > 0 {
 				w.set_focus_id(shape.focus_id)
@@ -138,11 +141,6 @@ fn resized_fn(e &gg.Event, mut w Window) {
 	}
 }
 
-// cursor_offset gets the window's cursor offset
-pub fn (mut window Window) cursor_offset() int {
-	return window.cursor_offset
-}
-
 // focus_id gets the window's focus id
 pub fn (window &Window) focus_id() int {
 	return window.focus_id
@@ -159,20 +157,15 @@ pub fn (mut window Window) run() {
 	window.ui.run()
 }
 
-// set_cursor sets the cursor pos in chars
-pub fn (mut window Window) set_cursor_offset(offset int) {
-	window.cursor_offset = offset
-}
-
 // set_focus_id sets the window's focus id.
 pub fn (mut window Window) set_focus_id(id FocusId) {
 	window.focus_id = id
-	window.cursor_offset = -1
+	window.update_window()
 }
 
 // update_view sets the Window's view. A window can have
 // only one view. Giving a Window a new view replaces the
-// current view.
+// current view. Clears the input states.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut shapes := generate_shapes(view, window)
@@ -182,12 +175,15 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
 
+	window.focus_id = 0
+	window.input_state.clear()
 	window.gen_view = gen_view
 	window.layout = shapes
 	window.renderers = renderers
 }
 
 // update_window generates a new layout from the windows view.
+// Does not clear the input states
 pub fn (mut window Window) update_window() {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }

@@ -58,26 +58,26 @@ const space_c = 0x20
 fn on_char(cfg &InputCfg, c u32, mut w Window) bool {
 	if cfg.on_text_changed != unsafe { nil } {
 		mut t := cfg.text
-		cursor_offset := w.cursor_offset()
+		cursor_pos := w.input_state[w.focus_id].cursor_pos
 		match c {
 			ret_c, tab_c {
 				return false
 			}
 			bsp_c, del_c {
-				if cursor_offset < 0 {
-					w.set_cursor_offset(cfg.text.len)
-				} else if cursor_offset > 0 {
-					t = cfg.text[..cursor_offset - 1] + cfg.text[cursor_offset..]
-					w.set_cursor_offset(cursor_offset - 1)
+				if cursor_pos < 0 {
+					w.input_state[w.focus_id].cursor_pos = cfg.text.len
+				} else if cursor_pos > 0 {
+					t = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
+					w.input_state[w.focus_id].cursor_pos = cursor_pos - 1
 				}
 			}
 			else {
-				if cursor_offset < 0 {
+				if cursor_pos < 0 {
 					t = cfg.text + rune(c).str()
-					w.set_cursor_offset(t.len)
+					w.input_state[w.focus_id].cursor_pos = t.len
 				} else {
-					t = cfg.text[..cursor_offset] + rune(c).str() + cfg.text[cursor_offset..]
-					w.set_cursor_offset(cursor_offset + 1)
+					t = cfg.text[..cursor_pos] + rune(c).str() + cfg.text[cursor_pos..]
+					w.input_state[w.focus_id].cursor_pos = cursor_pos + 1
 				}
 			}
 		}
@@ -89,20 +89,21 @@ fn on_char(cfg &InputCfg, c u32, mut w Window) bool {
 
 fn on_click(cfg &InputCfg, id string, me MouseEvent, mut w Window) bool {
 	if me.mouse_button == gg.MouseButton.left {
-		w.set_cursor_offset(cfg.text.len)
+		w.input_state[w.focus_id].cursor_pos = cfg.text.len
 		return true
 	}
 	return false
 }
 
 fn on_keydown(cfg &InputCfg, c gg.KeyCode, m gg.Modifier, mut w Window) bool {
-	cursor_offset := w.cursor_offset()
+	mut cursor_pos := w.input_state[w.focus_id].cursor_pos
 	match c {
-		.left { w.set_cursor_offset(int_max(0, cursor_offset - 1)) }
-		.right { w.set_cursor_offset(int_min(cfg.text.len, cursor_offset + 1)) }
-		.home { w.set_cursor_offset(0) }
-		.end { w.set_cursor_offset(cfg.text.len) }
+		.left { cursor_pos = int_max(0, cursor_pos - 1) }
+		.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
+		.home { cursor_pos = 0 }
+		.end { cursor_pos = cfg.text.len }
 		else { return false }
 	}
+	w.input_state[w.focus_id].cursor_pos = cursor_pos
 	return true
 }

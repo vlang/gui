@@ -18,8 +18,8 @@ fn main() {
 		height:   400
 		bg_color: gx.rgb(0x30, 0x30, 0x30)
 		on_init:  fn (mut w gui.Window) {
-			w.set_focus_id(1)
 			w.update_view(main_view)
+			w.set_focus_id(1)
 		}
 	)
 	window.run()
@@ -153,7 +153,7 @@ fn main_view(w &gui.Window) gui.View {
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 							mut state := w.state[AppState]()
 							state.name = s
-							w.update_view(main_view)
+							w.update_window()
 						}
 					),
 					gui.column(

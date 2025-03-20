@@ -67,7 +67,7 @@ fn layout_heights(mut node ShapeTree) {
 
 // find_first_idx_and_len gets the index of the first element to satisfy
 // the predicate and the length of all elements that satisfy the predicate.
-// Only iterates the array once with no allocations
+// Iterates the array once with no allocations.
 fn find_first_idx_and_len(node ShapeTree, predicate fn (n ShapeTree) bool) (int, int) {
 	mut idx := 0
 	mut len := 0
@@ -267,12 +267,15 @@ fn layout_wrap_text(mut node ShapeTree, w &Window) {
 		// figure out where the dang cursor goes
 		node.shape.cursor_x = 0
 		node.shape.cursor_y = 0
-		if w.cursor_offset >= 0 {
+
+		input_state := w.input_state[w.focus_id]
+		cursor_pos := input_state.cursor_pos
+
+		if cursor_pos >= 0 {
 			// place a zero-space char in the string at the cursor pos as
 			// a marker to where the cursor should go.
 			zero_space := '\xe2\x80\x8b'
-			text := node.shape.text[..w.cursor_offset] + zero_space +
-				node.shape.text[w.cursor_offset..]
+			text := node.shape.text[..cursor_pos] + zero_space + node.shape.text[cursor_pos..]
 
 			w.ui.set_text_cfg(node.shape.text_cfg)
 			wrapped := match node.shape.wrap {
