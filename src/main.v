@@ -7,6 +7,7 @@ import gx
 struct AppState {
 pub mut:
 	name        string
+	other_input string
 	click_count int
 }
 
@@ -113,8 +114,8 @@ fn main_view(w &gui.Window) gui.View {
 								text:  'Embedded in a column with wrapping'
 							),
 							gui.button(
-								focus_id:   2
-								color:      if w.focus_id() == 2 { gx.dark_blue } else { gx.blue }
+								focus_id:   1
+								color:      if w.focus_id() == 1 { gx.dark_blue } else { gx.blue }
 								text:       'Button Text ${state.click_count}'
 								text_style: text_style
 								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) bool {
@@ -122,6 +123,19 @@ fn main_view(w &gui.Window) gui.View {
 									state.click_count += 1
 									w.update_window()
 									return true // true stops event propagation
+								}
+							),
+							gui.input(
+								focus_id:        2
+								width:           150
+								text:            state.other_input
+								text_style:      text_style
+								wrap:            true
+								sizing:          gui.fixed_fit
+								on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+									mut state := w.state[AppState]()
+									state.other_input = s
+									w.update_window()
 								}
 							),
 						]
@@ -144,7 +158,7 @@ fn main_view(w &gui.Window) gui.View {
 				color:    gx.rgb(0x30, 0x30, 0x30)
 				children: [
 					gui.input(
-						focus_id:        1
+						focus_id:        3
 						width:           150
 						text:            state.name
 						text_style:      text_style

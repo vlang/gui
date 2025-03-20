@@ -75,7 +75,7 @@ fn char_fn(c u32, mut w Window) {
 	layout := w.layout
 	w.mutex.unlock()
 
-	if shape := shape_from_on_char(layout, w.focus_id, 0) {
+	if shape := shape_from_on_char(layout, w.focus_id) {
 		if shape.on_char != unsafe { nil } {
 			shape.on_char(c, w)
 		}
@@ -89,12 +89,9 @@ fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
 	w.mutex.unlock()
 
 	mut handled := false
-	mut shape_uid := u64(0)
-	for !handled {
-		shape := shape_from_on_key_down(layout, shape_uid) or { break }
+	if shape := shape_from_on_key_down(layout) {
 		if shape.on_keydown != unsafe { nil } {
 			handled = shape.on_keydown(c, m, w)
-			shape_uid = shape.uid
 		}
 	}
 
@@ -114,7 +111,7 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 	w.mutex.unlock()
 
 	w.set_focus_id(0)
-	if shape := shape_from_on_click(layout, x, y, 0) {
+	if shape := shape_from_on_click(layout, x, y) {
 		if shape.on_click != unsafe { nil } {
 			if shape.focus_id > 0 {
 				w.set_focus_id(shape.focus_id)
