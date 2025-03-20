@@ -18,6 +18,12 @@ mut:
 	focus_id         FocusId
 	input_state      map[FocusId]InputState
 	update_on_resize bool
+	mouse_x          f32
+	mouse_y          f32
+	on_char          fn (u32, &Window)                      = fn (c u32, _ &Window) {}
+	on_click         fn (f32, f32, gg.MouseButton, &Window) = fn (x f32, y f32, _ gg.MouseButton, _ &Window) {}
+	on_keydown       fn (gg.KeyCode, gg.Modifier, &Window)  = fn (k gg.KeyCode, _ gg.Modifier, _ &Window) {}
+	on_mouseover     fn (f32, f32, &Window)                 = fn (x f32, y f32, _ &Window) {}
 	on_resized       fn (&Window) = fn (_ &Window) {}
 }
 
@@ -55,6 +61,7 @@ pub fn window(cfg WindowCfg) &Window {
 		click_fn:     click_fn
 		frame_fn:     frame_fn
 		keydown_fn:   keydown_fn
+		move_fn:      move_fn
 		resized_fn:   resized_fn
 	)
 	return window
@@ -81,6 +88,7 @@ fn char_fn(c u32, mut w Window) {
 		}
 	}
 	w.update_window()
+	w.on_char(c, w)
 }
 
 fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
@@ -101,9 +109,10 @@ fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
 		}
 	}
 	w.update_window()
+	w.on_keydown(c, m, w)
 }
 
-// clicked delegates to the first Shape that has a click handler within its
+// clicked_fn delegates to the first Shape that has a click handler within its
 // rectanguler area. The search for the Shape is in reverse order.
 fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 	w.mutex.lock()
@@ -125,6 +134,18 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 		}
 	}
 	w.update_window()
+	w.on_click(x, y, button, w)
+}
+
+// x and y are logical units relative to the top, left corner of window
+fn move_fn(x f32, y f32, mut w Window) {
+	w.mouse_x = x
+	w.mouse_y = y
+	width, height := w.window_size()
+	if x >= 0 && x < width && y >= 0 && y < height {
+		w.update_window()
+		w.on_mouseover(x, y, w)
+	}
 }
 
 fn resized_fn(e &gg.Event, mut w Window) {

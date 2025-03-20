@@ -115,14 +115,13 @@ fn main_view(w &gui.Window) gui.View {
 							),
 							gui.button(
 								focus_id:   1
-								color:      if w.focus_id() == 1 { gx.dark_blue } else { gx.blue }
 								text:       'Button Text ${state.click_count}'
 								text_style: text_style
 								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) bool {
 									mut state := w.state[AppState]()
 									state.click_count += 1
 									w.update_window()
-									return true // true stops event propagation
+									return true
 								}
 							),
 							gui.input(

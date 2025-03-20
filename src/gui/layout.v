@@ -9,7 +9,7 @@ import gg
 
 // layout_do executes a pipeline of functions to layout and position the Shapes
 // of a ShapeTree
-fn layout_do(mut layout ShapeTree, window Window) {
+fn layout_do(mut layout ShapeTree, window &Window) {
 	// mut stop_watch := time.StopWatch{}
 	// stop_watch.start()
 
@@ -19,6 +19,7 @@ fn layout_do(mut layout ShapeTree, window Window) {
 	layout_heights(mut layout)
 	layout_flex_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
+	layout_focus(mut layout, window)
 
 	width, height := window.window_size()
 	layout_clipping_bounds(mut layout, width: width, height: height)
@@ -335,6 +336,27 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 			.none {}
 		}
 	}
+}
+
+fn layout_focus(mut node ShapeTree, w &Window) bool {
+	if w.focus_id == 0 {
+		return false
+	}
+
+	if node.shape.focus_id == w.focus_id {
+		if node.shape.render_focus != unsafe { nil } {
+			node.shape.render_focus(mut node, w)
+		}
+		return true
+	}
+
+	for mut child in node.children {
+		if layout_focus(mut child, w) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // layout_clipping_bounds ensures that Shapes do not draw outside the parent

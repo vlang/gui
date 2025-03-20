@@ -14,29 +14,30 @@ pub:
 	focus_id FocusId // >0 indicates shape is focusable. Value determines tabbing order
 	axis     Axis
 mut:
-	x           f32
-	y           f32
-	width       f32
-	height      f32
-	bounds      gg.Rect
-	color       gg.Color
-	fill        bool
-	min_height  f32
-	min_width   f32
-	padding     Padding
-	radius      int
-	sizing      Sizing
-	spacing     f32
-	text        string
-	lines       []string
-	text_cfg    gx.TextCfg
-	cursor_x    int = -1
-	cursor_y    int = -1
-	wrap        bool
-	keep_spaces bool
-	on_char     fn (u32, &Window) bool                     = unsafe { nil }
-	on_click    fn (string, MouseEvent, &Window) bool      = unsafe { nil }
-	on_keydown  fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
+	x            f32
+	y            f32
+	width        f32
+	height       f32
+	bounds       gg.Rect
+	color        gg.Color
+	fill         bool
+	min_height   f32
+	min_width    f32
+	padding      Padding
+	radius       int
+	sizing       Sizing
+	spacing      f32
+	text         string
+	lines        []string
+	text_cfg     gx.TextCfg
+	cursor_x     int = -1
+	cursor_y     int = -1
+	wrap         bool
+	keep_spaces  bool
+	on_char      fn (u32, &Window) bool                     = unsafe { nil }
+	on_click     fn (string, MouseEvent, &Window) bool      = unsafe { nil }
+	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
+	render_focus fn (mut ShapeTree, &Window)                = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.

@@ -6,7 +6,7 @@ import gx
 pub struct InputCfg {
 pub:
 	id              string
-	focus_id        int @[required] // >0 indicates input is focusable. Value indiciates tabbing order
+	focus_id        int @[required] // !0 indicates input is focusable. Value indiciates tabbing order
 	color           gx.Color = gx.rgb(0x40, 0x40, 0x40)
 	sizing          Sizing
 	spacing         f32
@@ -18,6 +18,7 @@ pub:
 }
 
 pub fn input(cfg InputCfg) &View {
+	assert cfg.focus_id != 0
 	mut input := row(
 		id:         cfg.id
 		focus_id:   cfg.focus_id
@@ -27,15 +28,9 @@ pub fn input(cfg InputCfg) &View {
 		fill:       true
 		padding:    padding(5, 6, 6, 6)
 		sizing:     cfg.sizing
-		on_char:    fn [cfg] (c u32, mut w Window) bool {
-			return on_char(cfg, c, mut w)
-		}
-		on_click:   fn [cfg] (id string, me MouseEvent, mut w Window) bool {
-			return on_click(cfg, id, me, mut w)
-		}
-		on_keydown: fn [cfg] (c gg.KeyCode, m gg.Modifier, mut w Window) bool {
-			return on_keydown(cfg, c, m, mut w)
-		}
+		on_char:    cfg.on_char
+		on_click:   cfg.on_click
+		on_keydown: cfg.on_keydown
 		children:   [
 			text(
 				text:        cfg.text
@@ -55,7 +50,7 @@ const ret_c = 0x0D
 const tab_c = 0x09
 const space_c = 0x20
 
-fn on_char(cfg &InputCfg, c u32, mut w Window) bool {
+fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
 	if cfg.on_text_changed != unsafe { nil } {
 		mut t := cfg.text
 		cursor_pos := w.input_state[w.focus_id].cursor_pos
@@ -87,7 +82,7 @@ fn on_char(cfg &InputCfg, c u32, mut w Window) bool {
 	return false
 }
 
-fn on_click(cfg &InputCfg, id string, me MouseEvent, mut w Window) bool {
+fn (cfg InputCfg) on_click(id string, me MouseEvent, mut w Window) bool {
 	if me.mouse_button == gg.MouseButton.left {
 		w.input_state[w.focus_id].cursor_pos = cfg.text.len
 		return true
@@ -95,7 +90,7 @@ fn on_click(cfg &InputCfg, id string, me MouseEvent, mut w Window) bool {
 	return false
 }
 
-fn on_keydown(cfg &InputCfg, c gg.KeyCode, m gg.Modifier, mut w Window) bool {
+fn (cfg InputCfg) on_keydown(c gg.KeyCode, m gg.Modifier, mut w Window) bool {
 	mut cursor_pos := w.input_state[w.focus_id].cursor_pos
 	match c {
 		.left { cursor_pos = int_max(0, cursor_pos - 1) }
