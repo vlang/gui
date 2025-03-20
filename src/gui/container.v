@@ -6,7 +6,7 @@ import gx
 struct Container implements View {
 pub mut:
 	id           string
-	focus_id     FocusId
+	id_focus     FocusId
 	axis         Axis
 	x            f32
 	y            f32
@@ -30,7 +30,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 	return ShapeTree{
 		shape: Shape{
 			id:           c.id
-			focus_id:     c.focus_id
+			id_focus:     c.id_focus
 			type:         .container
 			axis:         c.axis
 			x:            c.x
@@ -57,7 +57,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 pub struct ContainerCfg {
 pub:
 	id           string
-	focus_id     int
+	id_focus     int
 	x            f32
 	y            f32
 	width        f32
@@ -82,7 +82,7 @@ pub:
 fn container(c ContainerCfg) &Container {
 	return &Container{
 		id:           c.id
-		focus_id:     c.focus_id
+		id_focus:     c.id_focus
 		x:            c.x
 		y:            c.y
 		width:        c.width

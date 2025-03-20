@@ -15,7 +15,7 @@ mut:
 	gen_view         fn (&Window) View = fn (_ &Window) View {
 		return canvas(id: 'empty-view')
 	}
-	focus_id         FocusId
+	id_focus         FocusId
 	input_state      map[FocusId]InputState
 	update_on_resize bool
 	mouse_x          f32
@@ -82,7 +82,7 @@ fn char_fn(c u32, mut w Window) {
 	layout := w.layout
 	w.mutex.unlock()
 
-	if shape := shape_from_on_char(layout, w.focus_id) {
+	if shape := shape_from_on_char(layout, w.id_focus) {
 		if shape.on_char != unsafe { nil } {
 			shape.on_char(c, w)
 		}
@@ -105,7 +105,7 @@ fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
 
 	if !handled && c == .tab {
 		if shape := shape_next_focusable(layout, mut w) {
-			w.focus_id = shape.focus_id
+			w.id_focus = shape.id_focus
 		}
 	}
 	w.update_window()
@@ -119,11 +119,11 @@ fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
 	layout := w.layout
 	w.mutex.unlock()
 
-	w.set_focus_id(0)
+	w.set_id_focus(0)
 	if shape := shape_from_on_click(layout, x, y) {
 		if shape.on_click != unsafe { nil } {
-			if shape.focus_id > 0 {
-				w.set_focus_id(shape.focus_id)
+			if shape.id_focus > 0 {
+				w.set_id_focus(shape.id_focus)
 			}
 			me := MouseEvent{
 				mouse_x:      x
@@ -155,9 +155,9 @@ fn resized_fn(e &gg.Event, mut w Window) {
 	}
 }
 
-// focus_id gets the window's focus id
-pub fn (window &Window) focus_id() int {
-	return window.focus_id
+// id_focus gets the window's focus id
+pub fn (window &Window) id_focus() int {
+	return window.id_focus
 }
 
 // get_state returns a reference to user supplied data
@@ -171,9 +171,9 @@ pub fn (mut window Window) run() {
 	window.ui.run()
 }
 
-// set_focus_id sets the window's focus id.
-pub fn (mut window Window) set_focus_id(id FocusId) {
-	window.focus_id = id
+// set_id_focus sets the window's focus id.
+pub fn (mut window Window) set_id_focus(id FocusId) {
+	window.id_focus = id
 	window.update_window()
 }
 
@@ -188,7 +188,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
 
-	window.focus_id = 0
+	window.id_focus = 0
 	window.input_state.clear()
 	window.gen_view = gen_view
 	window.layout = shapes

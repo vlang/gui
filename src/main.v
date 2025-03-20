@@ -20,7 +20,7 @@ fn main() {
 		bg_color: gx.rgb(0x30, 0x30, 0x30)
 		on_init:  fn (mut w gui.Window) {
 			w.update_view(main_view)
-			w.set_focus_id(1)
+			w.set_id_focus(1)
 		}
 	)
 	window.run()
@@ -114,7 +114,7 @@ fn main_view(w &gui.Window) gui.View {
 								text:  'Embedded in a column with wrapping'
 							),
 							gui.button(
-								focus_id:   1
+								id_focus:   1
 								text:       'Button Text ${state.click_count}'
 								text_style: text_style
 								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) bool {
@@ -125,7 +125,7 @@ fn main_view(w &gui.Window) gui.View {
 								}
 							),
 							gui.input(
-								focus_id:        2
+								id_focus:        2
 								width:           150
 								text:            state.other_input
 								text_style:      text_style
@@ -157,7 +157,7 @@ fn main_view(w &gui.Window) gui.View {
 				color:    gx.rgb(0x30, 0x30, 0x30)
 				children: [
 					gui.input(
-						focus_id:        3
+						id_focus:        3
 						width:           150
 						text:            state.name
 						text_style:      text_style

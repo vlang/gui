@@ -6,7 +6,7 @@ import gx
 // Text is an internal structure used to describe a text block
 struct Text implements View {
 	id       string
-	focus_id int // >0 indicates text is focusable. Value indiciates tabbing order
+	id_focus int // >0 indicates text is focusable. Value indiciates tabbing order
 mut:
 	min_width   f32
 	spacing     f32
@@ -22,7 +22,7 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 	mut shape_tree := ShapeTree{
 		shape: Shape{
 			id:          t.id
-			focus_id:    t.focus_id
+			id_focus:    t.id_focus
 			type:        .text
 			spacing:     t.spacing
 			text:        t.text
@@ -42,7 +42,7 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 pub struct TextCfg {
 pub:
 	id          string
-	focus_id    int
+	id_focus    int
 	min_width   f32
 	spacing     f32
 	style       gx.TextCfg
@@ -57,7 +57,7 @@ pub:
 pub fn text(cfg TextCfg) &Text {
 	return &Text{
 		id:          cfg.id
-		focus_id:    cfg.focus_id
+		id_focus:    cfg.id_focus
 		min_width:   cfg.min_width
 		spacing:     cfg.spacing
 		style:       cfg.style

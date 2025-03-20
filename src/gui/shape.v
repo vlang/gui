@@ -10,8 +10,8 @@ struct Shape {
 pub:
 	id       string // asigned by user
 	type     ShapeType
-	uid      u64 = rand.u64_in_range(1, max_u64) or { 1 } // internal use only
-	focus_id FocusId // >0 indicates shape is focusable. Value determines tabbing order
+	uid      u64 = rand.u64() // internal use only
+	id_focus FocusId // >0 indicates shape is focusable. Value determines tabbing order
 	axis     Axis
 mut:
 	x            f32
@@ -93,9 +93,9 @@ fn shape_from_on_click(node ShapeTree, x f32, y f32) ?Shape {
 
 // shape_from_on_char finds the first control with an on_char handler and has
 // focus
-fn shape_from_on_char(node ShapeTree, focus_id FocusId) ?Shape {
-	return node.find_shape(fn [focus_id] (n ShapeTree) bool {
-		return focus_id > 0 && n.shape.focus_id == focus_id && n.shape.on_char != unsafe { nil }
+fn shape_from_on_char(node ShapeTree, id_focus FocusId) ?Shape {
+	return node.find_shape(fn [id_focus] (n ShapeTree) bool {
+		return id_focus > 0 && n.shape.id_focus == id_focus && n.shape.on_char != unsafe { nil }
 	})
 }
 
@@ -107,29 +107,29 @@ fn shape_from_on_key_down(node ShapeTree) ?Shape {
 }
 
 fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
-	ids := get_focus_ids(node)
+	ids := get_id_focuss(node)
 	if ids.len == 0 {
 		return none
 	}
 	mut next_id := ids[0]
-	if w.focus_id > 0 {
-		idx := ids.index(int(w.focus_id))
+	if w.id_focus > 0 {
+		idx := ids.index(int(w.id_focus))
 		if idx >= 0 && idx < ids.len - 1 {
 			next_id = ids[idx + 1]
 		}
 	}
 	return node.find_shape(fn [next_id] (n ShapeTree) bool {
-		return n.shape.focus_id == next_id
+		return n.shape.id_focus == next_id
 	})
 }
 
-fn get_focus_ids(node ShapeTree) []int {
-	mut focus_ids := []int{}
-	if node.shape.focus_id > 0 {
-		focus_ids << node.shape.focus_id
+fn get_id_focuss(node ShapeTree) []int {
+	mut id_focuss := []int{}
+	if node.shape.id_focus > 0 {
+		id_focuss << node.shape.id_focus
 	}
 	for child in node.children {
-		focus_ids << get_focus_ids(child)
+		id_focuss << get_id_focuss(child)
 	}
-	return arrays.distinct(focus_ids).sorted()
+	return arrays.distinct(id_focuss).sorted()
 }

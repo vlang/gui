@@ -264,12 +264,12 @@ fn layout_flex_heights(mut node ShapeTree) {
 // Wrapping text can change the height of an Shape, which is why it is called
 // before computing Shape heights
 fn layout_wrap_text(mut node ShapeTree, w &Window) {
-	if w.focus_id > 0 && w.focus_id == node.shape.focus_id && node.shape.type == .text {
+	if w.id_focus > 0 && w.id_focus == node.shape.id_focus && node.shape.type == .text {
 		// figure out where the dang cursor goes
 		node.shape.cursor_x = 0
 		node.shape.cursor_y = 0
 
-		input_state := w.input_state[w.focus_id]
+		input_state := w.input_state[w.id_focus]
 		cursor_pos := input_state.cursor_pos
 
 		if cursor_pos >= 0 {
@@ -338,12 +338,13 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	}
 }
 
+// This should be made more generic, layout_adjust()?
 fn layout_focus(mut node ShapeTree, w &Window) bool {
-	if w.focus_id == 0 {
+	if w.id_focus == 0 {
 		return false
 	}
 
-	if node.shape.focus_id == w.focus_id {
+	if node.shape.id_focus == w.id_focus {
 		if node.shape.render_focus != unsafe { nil } {
 			node.shape.render_focus(mut node, w)
 		}

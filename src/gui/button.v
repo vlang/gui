@@ -8,16 +8,16 @@ import gx
 pub struct ButtonCfg {
 pub:
 	id          string
-	focus_id    int @[required] // !0 indicates input is focusable. Value indiciates tabbing order
+	id_focus    int @[required] // !0 indicates input is focusable. Value indiciates tabbing order
+	width       f32
+	height      f32
 	color       gx.Color = gx.blue
 	color_focus gx.Color = gx.dark_blue
 	fill        bool     = true
-	height      f32
-	padding     Padding = padding(5, 10, 7, 10)
-	radius      int     = 5
+	padding     Padding  = padding(5, 10, 7, 10)
+	radius      int      = 5
 	text        string
 	text_style  gx.TextCfg
-	width       f32
 	on_click    fn (string, MouseEvent, &Window) bool = unsafe { nil }
 }
 
@@ -25,7 +25,7 @@ pub:
 pub fn button(cfg ButtonCfg) &View {
 	return row(
 		id:           cfg.id
-		focus_id:     cfg.focus_id
+		id_focus:     cfg.id_focus
 		width:        cfg.width
 		height:       cfg.height
 		padding:      cfg.padding

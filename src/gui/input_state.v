@@ -2,7 +2,7 @@ module gui
 
 // The management of focus and input states poses a problem in stateless views
 // because...they're stateless. Instead, the window maintains this state in a
-// map where the key is the w.focus_id. This state map is cleared when a new
+// map where the key is the w.id_focus. This state map is cleared when a new
 // view is introduced.
 pub struct InputState {
 pub mut:

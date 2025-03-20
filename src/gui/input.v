@@ -6,7 +6,7 @@ import gx
 pub struct InputCfg {
 pub:
 	id              string
-	focus_id        int @[required] // !0 indicates input is focusable. Value indiciates tabbing order
+	id_focus        int @[required] // !0 indicates input is focusable. Value indiciates tabbing order
 	color           gx.Color = gx.rgb(0x40, 0x40, 0x40)
 	sizing          Sizing
 	spacing         f32
@@ -18,10 +18,10 @@ pub:
 }
 
 pub fn input(cfg InputCfg) &View {
-	assert cfg.focus_id != 0
+	assert cfg.id_focus != 0
 	mut input := row(
 		id:         cfg.id
-		focus_id:   cfg.focus_id
+		id_focus:   cfg.id_focus
 		width:      cfg.width
 		spacing:    cfg.spacing
 		color:      cfg.color
@@ -35,7 +35,7 @@ pub fn input(cfg InputCfg) &View {
 			text(
 				text:        cfg.text
 				style:       cfg.text_style
-				focus_id:    cfg.focus_id
+				id_focus:    cfg.id_focus
 				wrap:        cfg.wrap
 				keep_spaces: true
 			),
@@ -53,26 +53,26 @@ const space_c = 0x20
 fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
 	if cfg.on_text_changed != unsafe { nil } {
 		mut t := cfg.text
-		cursor_pos := w.input_state[w.focus_id].cursor_pos
+		cursor_pos := w.input_state[w.id_focus].cursor_pos
 		match c {
 			ret_c, tab_c {
 				return false
 			}
 			bsp_c, del_c {
 				if cursor_pos < 0 {
-					w.input_state[w.focus_id].cursor_pos = cfg.text.len
+					w.input_state[w.id_focus].cursor_pos = cfg.text.len
 				} else if cursor_pos > 0 {
 					t = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
-					w.input_state[w.focus_id].cursor_pos = cursor_pos - 1
+					w.input_state[w.id_focus].cursor_pos = cursor_pos - 1
 				}
 			}
 			else {
 				if cursor_pos < 0 {
 					t = cfg.text + rune(c).str()
-					w.input_state[w.focus_id].cursor_pos = t.len
+					w.input_state[w.id_focus].cursor_pos = t.len
 				} else {
 					t = cfg.text[..cursor_pos] + rune(c).str() + cfg.text[cursor_pos..]
-					w.input_state[w.focus_id].cursor_pos = cursor_pos + 1
+					w.input_state[w.id_focus].cursor_pos = cursor_pos + 1
 				}
 			}
 		}
@@ -84,14 +84,14 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
 
 fn (cfg InputCfg) on_click(id string, me MouseEvent, mut w Window) bool {
 	if me.mouse_button == gg.MouseButton.left {
-		w.input_state[w.focus_id].cursor_pos = cfg.text.len
+		w.input_state[w.id_focus].cursor_pos = cfg.text.len
 		return true
 	}
 	return false
 }
 
 fn (cfg InputCfg) on_keydown(c gg.KeyCode, m gg.Modifier, mut w Window) bool {
-	mut cursor_pos := w.input_state[w.focus_id].cursor_pos
+	mut cursor_pos := w.input_state[w.id_focus].cursor_pos
 	match c {
 		.left { cursor_pos = int_max(0, cursor_pos - 1) }
 		.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
@@ -99,6 +99,6 @@ fn (cfg InputCfg) on_keydown(c gg.KeyCode, m gg.Modifier, mut w Window) bool {
 		.end { cursor_pos = cfg.text.len }
 		else { return false }
 	}
-	w.input_state[w.focus_id].cursor_pos = cursor_pos
+	w.input_state[w.id_focus].cursor_pos = cursor_pos
 	return true
 }
