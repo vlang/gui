@@ -46,9 +46,6 @@ pub fn input(cfg InputCfg) &View {
 
 const bsp_c = 0x08
 const del_c = 0x7F
-const ret_c = 0x0D
-const tab_c = 0x09
-const eom_c = 0x19
 const space_c = 0x20
 
 fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
@@ -56,9 +53,6 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
 		mut t := cfg.text
 		cursor_pos := w.input_state[w.id_focus].cursor_pos
 		match c {
-			ret_c, tab_c, eom_c {
-				return false
-			}
 			bsp_c, del_c {
 				if cursor_pos < 0 {
 					w.input_state[w.id_focus].cursor_pos = cfg.text.len
@@ -66,6 +60,9 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
 					t = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
 					w.input_state[w.id_focus].cursor_pos = cursor_pos - 1
 				}
+			}
+			0...0x1F {
+				return false
 			}
 			else {
 				if cursor_pos < 0 {
