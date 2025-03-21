@@ -37,7 +37,7 @@ mut:
 	on_char      fn (u32, &Window) bool                     = unsafe { nil }
 	on_click     fn (string, MouseEvent, &Window) bool      = unsafe { nil }
 	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
-	render_focus fn (mut ShapeTree, &Window)                = unsafe { nil }
+	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.
@@ -106,12 +106,29 @@ fn shape_from_on_key_down(node ShapeTree) ?Shape {
 	})
 }
 
-fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
-	ids := get_id_focuss(node)
+fn shape_previous_focusable(node ShapeTree, mut w Window) ?Shape {
+	ids := get_focus_ids(node)
 	if ids.len == 0 {
 		return none
 	}
-	mut next_id := ids[0]
+	mut next_id := ids.last()
+	if w.id_focus > 0 {
+		idx := ids.index(int(w.id_focus))
+		if idx >= 1 && idx < ids.len {
+			next_id = ids[idx - 1]
+		}
+	}
+	return node.find_shape(fn [next_id] (n ShapeTree) bool {
+		return n.shape.id_focus == next_id
+	})
+}
+
+fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
+	ids := get_focus_ids(node)
+	if ids.len == 0 {
+		return none
+	}
+	mut next_id := ids.first()
 	if w.id_focus > 0 {
 		idx := ids.index(int(w.id_focus))
 		if idx >= 0 && idx < ids.len - 1 {
@@ -123,13 +140,13 @@ fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
 	})
 }
 
-fn get_id_focuss(node ShapeTree) []int {
-	mut id_focuss := []int{}
+fn get_focus_ids(node ShapeTree) []int {
+	mut focus_ids := []int{}
 	if node.shape.id_focus > 0 {
-		id_focuss << node.shape.id_focus
+		focus_ids << node.shape.id_focus
 	}
 	for child in node.children {
-		id_focuss << get_id_focuss(child)
+		focus_ids << get_focus_ids(child)
 	}
-	return arrays.distinct(id_focuss).sorted()
+	return arrays.distinct(focus_ids).sorted()
 }

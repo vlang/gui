@@ -22,7 +22,7 @@ pub mut:
 	on_char      fn (u32, &Window) bool                     = unsafe { nil }
 	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
 	on_mouseover fn (f32, f32, &Window) bool                = unsafe { nil }
-	render_focus fn (mut ShapeTree, &Window)                = unsafe { nil }
+	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
 	children     []View
 }
 
@@ -48,7 +48,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 			on_click:     c.on_click
 			on_char:      c.on_char
 			on_keydown:   c.on_keydown
-			render_focus: c.render_focus
+			amend_layout: c.amend_layout
 		}
 	}
 }
@@ -72,7 +72,7 @@ pub:
 	on_char      fn (u32, &Window) bool                     = unsafe { nil }
 	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
 	on_mouseover fn (f32, f32, &Window) bool                = unsafe { nil }
-	render_focus fn (mut ShapeTree, &Window)                = unsafe { nil }
+	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
 	children     []View
 }
 
@@ -97,7 +97,7 @@ fn container(c ContainerCfg) &Container {
 		on_char:      c.on_char
 		on_keydown:   c.on_keydown
 		on_mouseover: c.on_mouseover
-		render_focus: c.render_focus
+		amend_layout: c.amend_layout
 		children:     c.children
 	}
 }

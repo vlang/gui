@@ -48,6 +48,7 @@ const bsp_c = 0x08
 const del_c = 0x7F
 const ret_c = 0x0D
 const tab_c = 0x09
+const eom_c = 0x19
 const space_c = 0x20
 
 fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
@@ -55,7 +56,7 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
 		mut t := cfg.text
 		cursor_pos := w.input_state[w.id_focus].cursor_pos
 		match c {
-			ret_c, tab_c {
+			ret_c, tab_c, eom_c {
 				return false
 			}
 			bsp_c, del_c {

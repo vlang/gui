@@ -103,7 +103,11 @@ fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
 		}
 	}
 
-	if !handled && c == .tab {
+	if !handled && c == .tab && m == gg.Modifier.shift {
+		if shape := shape_previous_focusable(layout, mut w) {
+			w.id_focus = shape.id_focus
+		}
+	} else if !handled && c == .tab {
 		if shape := shape_next_focusable(layout, mut w) {
 			w.id_focus = shape.id_focus
 		}

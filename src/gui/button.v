@@ -13,6 +13,7 @@ pub:
 	height      f32
 	color       gx.Color = gx.blue
 	color_focus gx.Color = gx.dark_blue
+	color_hover gx.Color = gx.indigo
 	fill        bool     = true
 	padding     Padding  = padding(5, 10, 7, 10)
 	radius      int      = 5
@@ -34,7 +35,7 @@ pub fn button(cfg ButtonCfg) &View {
 		color:        cfg.color
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char
-		render_focus: cfg.render_focus
+		amend_layout: cfg.amend_layout
 		children:     [
 			text(
 				text:  cfg.text
@@ -52,6 +53,10 @@ fn (cfg ButtonCfg) on_char(c u32, mut w Window) bool {
 	return false
 }
 
-fn (cfg ButtonCfg) render_focus(mut node ShapeTree, w &Window) {
-	node.shape.color = cfg.color_focus
+fn (cfg ButtonCfg) amend_layout(mut node ShapeTree, w &Window) {
+	if node.shape.point_in_shape(w.mouse_x, w.mouse_y) {
+		node.shape.color = cfg.color_hover
+	} else if node.shape.id_focus == w.id_focus {
+		node.shape.color = cfg.color_focus
+	}
 }

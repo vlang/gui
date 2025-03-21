@@ -3,7 +3,6 @@ module gui
 import gg
 import gx
 import sokol.sgl
-// import time
 
 // A Renderer is the final computed drawing command. The window keeps an array
 // of Renderer and only uses this array to paint the window. The window can be
@@ -56,17 +55,11 @@ fn render_draw(renderer Renderer, ctx &gg.Context) {
 }
 
 fn render(shapes ShapeTree, ctx &gg.Context) []Renderer {
-	// mut stop_watch := time.StopWatch{}
-	// stop_watch.start()
-
 	mut renderers := []Renderer{}
 	renderers << render_shape(shapes.shape, ctx)
 	for child in shapes.children {
 		renderers << render(child, ctx)
 	}
-
-	// stop_watch.stop()
-	// println(stop_watch.elapsed())
 	return renderers
 }
 

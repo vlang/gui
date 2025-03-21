@@ -5,27 +5,20 @@ module gui
 //
 import arrays
 import gg
-// import time
 
 // layout_do executes a pipeline of functions to layout and position the Shapes
 // of a ShapeTree
 fn layout_do(mut layout ShapeTree, window &Window) {
-	// mut stop_watch := time.StopWatch{}
-	// stop_watch.start()
-
 	layout_widths(mut layout)
 	layout_flex_widths(mut layout)
 	layout_wrap_text(mut layout, window)
 	layout_heights(mut layout)
 	layout_flex_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
-	layout_focus(mut layout, window)
+	layout_amend(mut layout, window)
 
 	width, height := window.window_size()
 	layout_clipping_bounds(mut layout, width: width, height: height)
-
-	// stop_watch.stop()
-	// println(stop_watch.elapsed())
 }
 
 // layout_widths arranges a node's children Shapes horizontally. Only container
@@ -338,26 +331,14 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	}
 }
 
-// This should be made more generic, layout_adjust()?
-fn layout_focus(mut node ShapeTree, w &Window) bool {
-	if w.id_focus == 0 {
-		return false
-	}
-
-	if node.shape.id_focus == w.id_focus {
-		if node.shape.render_focus != unsafe { nil } {
-			node.shape.render_focus(mut node, w)
-		}
-		return true
-	}
-
+// Handle focus, hover stuff here.
+fn layout_amend(mut node ShapeTree, w &Window) {
 	for mut child in node.children {
-		if layout_focus(mut child, w) {
-			return true
-		}
+		layout_amend(mut child, w)
 	}
-
-	return false
+	if node.shape.amend_layout != unsafe { nil } {
+		node.shape.amend_layout(mut node, w)
+	}
 }
 
 // layout_clipping_bounds ensures that Shapes do not draw outside the parent
