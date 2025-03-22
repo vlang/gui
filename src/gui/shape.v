@@ -34,8 +34,8 @@ mut:
 	cursor_y     int = -1
 	wrap         bool
 	keep_spaces  bool
-	on_char      fn (u32, &Window) bool                     = unsafe { nil }
-	on_click     fn (string, MouseEvent, &Window) bool      = unsafe { nil }
+	on_char      fn (u32, &Window)                          = unsafe { nil }
+	on_click     fn (string, MouseEvent, &Window)           = unsafe { nil }
 	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
 	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
 }

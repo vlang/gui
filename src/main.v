@@ -114,14 +114,12 @@ fn main_view(w &gui.Window) gui.View {
 								text:  'Embedded in a column with wrapping'
 							),
 							gui.button(
-								id_focus:   1
-								text:       'Button Text ${state.click_count}'
-								text_style: text_style
-								on_click:   fn (id string, me gui.MouseEvent, mut w gui.Window) bool {
+								id_focus: 1
+								text:     'Button Text ${state.click_count}'
+								on_click: fn (id string, me gui.MouseEvent, mut w gui.Window) {
 									mut state := w.state[AppState]()
 									state.click_count += 1
 									w.update_window()
-									return true
 								}
 							),
 							gui.input(

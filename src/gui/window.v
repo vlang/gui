@@ -7,24 +7,16 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	ui               &gg.Context       = &gg.Context{}
-	state            voidptr           = unsafe { nil }
-	layout           ShapeTree         = ShapeTree{}
-	renderers        []Renderer        = []
-	mutex            &sync.Mutex       = sync.new_mutex()
-	gen_view         fn (&Window) View = fn (_ &Window) View {
-		return canvas(id: 'empty-view')
-	}
-	id_focus         FocusId
-	input_state      map[FocusId]InputState
-	update_on_resize bool
-	mouse_x          f32
-	mouse_y          f32
-	on_char          fn (u32, &Window)                      = fn (c u32, _ &Window) {}
-	on_click         fn (f32, f32, gg.MouseButton, &Window) = fn (x f32, y f32, _ gg.MouseButton, _ &Window) {}
-	on_keydown       fn (gg.KeyCode, gg.Modifier, &Window)  = fn (k gg.KeyCode, _ gg.Modifier, _ &Window) {}
-	on_mouseover     fn (f32, f32, &Window)                 = fn (x f32, y f32, _ &Window) {}
-	on_resized       fn (&Window) = fn (_ &Window) {}
+	ui          &gg.Context       = &gg.Context{}
+	state       voidptr           = unsafe { nil }
+	layout      ShapeTree         = ShapeTree{}
+	renderers   []Renderer        = []
+	mutex       &sync.Mutex       = sync.new_mutex()
+	gen_view    fn (&Window) View = empty_view
+	id_focus    FocusId
+	focused     bool = true
+	input_state map[FocusId]InputState
+	on_event    fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -32,37 +24,31 @@ mut:
 // first view.
 pub struct WindowCfg {
 pub:
-	state            voidptr = unsafe { nil }
-	title            string
-	width            int
-	height           int
-	bg_color         gx.Color
-	update_on_resize bool         = true
-	on_init          fn (&Window) = fn (_ &Window) {}
-	on_resized       fn (&Window) = fn (_ &Window) {}
+	state    voidptr = unsafe { nil }
+	title    string
+	width    int
+	height   int
+	bg_color gx.Color
+	on_init  fn (&Window)                   = fn (_ &Window) {}
+	on_event fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
 
 // window creates the application window. See WindowCfg on how to configure it
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
-		state:            cfg.state
-		update_on_resize: cfg.update_on_resize
-		on_resized:       cfg.on_resized
+		state:    cfg.state
+		on_event: cfg.on_event
 	}
 	window.ui = gg.new_context(
 		bg_color:     cfg.bg_color
+		width:        cfg.width
 		height:       cfg.height
+		window_title: cfg.title
+		event_fn:     event_fn
+		frame_fn:     frame_fn
 		init_fn:      cfg.on_init
 		ui_mode:      true // only draw on events
 		user_data:    window
-		width:        cfg.width
-		window_title: cfg.title
-		char_fn:      char_fn
-		click_fn:     click_fn
-		frame_fn:     frame_fn
-		keydown_fn:   keydown_fn
-		move_fn:      move_fn
-		resized_fn:   resized_fn
 	)
 	return window
 }
@@ -77,86 +63,95 @@ fn frame_fn(mut window Window) {
 	window.mutex.unlock()
 }
 
-fn char_fn(c u32, mut w Window) {
-	w.mutex.lock()
-	layout := w.layout
-	w.mutex.unlock()
-
-	if shape := shape_from_on_char(layout, w.id_focus) {
-		if shape.on_char != unsafe { nil } {
-			shape.on_char(c, w)
-		}
-	}
-	w.update_window()
-	w.on_char(c, w)
-}
-
-fn keydown_fn(c gg.KeyCode, m gg.Modifier, mut w Window) {
-	w.mutex.lock()
-	layout := w.layout
-	w.mutex.unlock()
-
-	mut handled := false
-	if shape := shape_from_on_key_down(layout) {
-		if shape.on_keydown != unsafe { nil } {
-			handled = shape.on_keydown(c, m, w)
-		}
-	}
-
-	if !handled && c == .tab && m == gg.Modifier.shift {
-		if shape := shape_previous_focusable(layout, mut w) {
-			w.id_focus = shape.id_focus
-		}
-	} else if !handled && c == .tab {
-		if shape := shape_next_focusable(layout, mut w) {
-			w.id_focus = shape.id_focus
-		}
-	}
-	w.update_window()
-	w.on_keydown(c, m, w)
-}
-
-// clicked_fn delegates to the first Shape that has a click handler within its
-// rectanguler area. The search for the Shape is in reverse order.
-fn click_fn(x f32, y f32, button gg.MouseButton, mut w Window) {
-	w.mutex.lock()
-	layout := w.layout
-	w.mutex.unlock()
-
-	w.set_id_focus(0)
-	if shape := shape_from_on_click(layout, x, y) {
-		if shape.on_click != unsafe { nil } {
-			if shape.id_focus > 0 {
-				w.set_id_focus(shape.id_focus)
+fn event_fn(e &gg.Event, mut w Window) {
+	match e.typ {
+		.char {
+			if !w.focused {
+				return
 			}
-			me := MouseEvent{
-				mouse_x:      x
-				mouse_y:      y
-				mouse_button: button
+			w.mutex.lock()
+			layout := w.layout
+			w.mutex.unlock()
+
+			if shape := shape_from_on_char(layout, w.id_focus) {
+				if shape.on_char != unsafe { nil } {
+					shape.on_char(e.char_code, w)
+				}
 			}
-			shape.on_click(shape.id, me, w)
+		}
+		.focused {
+			w.focused = true
+		}
+		.unfocused {
+			w.focused = false
+		}
+		.key_down {
+			if !w.focused {
+				return
+			}
+			w.mutex.lock()
+			layout := w.layout
+			w.mutex.unlock()
+
+			k := e.key_code
+			m := unsafe { gg.Modifier(e.modifiers) }
+
+			mut handled := false
+			if shape := shape_from_on_key_down(layout) {
+				if shape.on_keydown != unsafe { nil } {
+					handled = shape.on_keydown(k, m, w)
+				}
+			}
+
+			if !handled && k == .tab && m == gg.Modifier.shift {
+				if shape := shape_previous_focusable(layout, mut w) {
+					w.id_focus = shape.id_focus
+				}
+			} else if !handled && k == .tab {
+				if shape := shape_next_focusable(layout, mut w) {
+					w.id_focus = shape.id_focus
+				}
+			}
+		}
+		.mouse_down {
+			if !w.focused {
+				return
+			}
+			w.mutex.lock()
+			layout := w.layout
+			w.mutex.unlock()
+
+			w.set_id_focus(0)
+			if shape := shape_from_on_click(layout, e.mouse_x, e.mouse_y) {
+				if shape.on_click != unsafe { nil } {
+					if shape.id_focus > 0 {
+						w.set_id_focus(shape.id_focus)
+					}
+					me := MouseEvent{
+						mouse_x:      e.mouse_x
+						mouse_y:      e.mouse_y
+						mouse_button: e.mouse_button
+					}
+					shape.on_click(shape.id, me, w)
+				}
+			}
+		}
+		.mouse_move {
+			width, height := w.window_size()
+			if e.mouse_x < 0 || e.mouse_y < 0 || e.mouse_x > width || e.mouse_y > height {
+				return
+			}
+		}
+		else {
+			// dump(e)
 		}
 	}
+	w.on_event(e, mut w)
 	w.update_window()
-	w.on_click(x, y, button, w)
 }
 
-// x and y are logical units relative to the top, left corner of window
-fn move_fn(x f32, y f32, mut w Window) {
-	w.mouse_x = x
-	w.mouse_y = y
-	width, height := w.window_size()
-	if x >= 0 && x < width && y >= 0 && y < height {
-		w.update_window()
-		w.on_mouseover(x, y, w)
-	}
-}
-
-fn resized_fn(e &gg.Event, mut w Window) {
-	w.on_resized(w)
-	if w.update_on_resize {
-		w.update_window()
-	}
+fn empty_view(_ &Window) View {
+	return row(id: 'empty-view')
 }
 
 // id_focus gets the window's focus id

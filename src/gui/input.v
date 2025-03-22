@@ -48,7 +48,7 @@ const bsp_c = 0x08
 const del_c = 0x7F
 const space_c = 0x20
 
-fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
+fn (cfg InputCfg) on_char(c u32, mut w Window) {
 	if cfg.on_text_changed != unsafe { nil } {
 		mut t := cfg.text
 		cursor_pos := w.input_state[w.id_focus].cursor_pos
@@ -62,7 +62,7 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
 				}
 			}
 			0...0x1F {
-				return false
+				return
 			}
 			else {
 				if cursor_pos < 0 {
@@ -75,17 +75,13 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) bool {
 			}
 		}
 		cfg.on_text_changed(cfg, t, w)
-		return true
 	}
-	return false
 }
 
-fn (cfg InputCfg) on_click(id string, me MouseEvent, mut w Window) bool {
+fn (cfg InputCfg) on_click(id string, me MouseEvent, mut w Window) {
 	if me.mouse_button == gg.MouseButton.left {
 		w.input_state[w.id_focus].cursor_pos = cfg.text.len
-		return true
 	}
-	return false
 }
 
 fn (cfg InputCfg) on_keydown(c gg.KeyCode, m gg.Modifier, mut w Window) bool {

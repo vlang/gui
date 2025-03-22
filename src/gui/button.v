@@ -7,19 +7,19 @@ import gx
 // bubble text.
 pub struct ButtonCfg {
 pub:
-	id          string
-	id_focus    int @[required] // !0 indicates input is focusable. Value indiciates tabbing order
-	width       f32
-	height      f32
-	color       gx.Color = gx.blue
-	color_focus gx.Color = gx.dark_blue
-	color_hover gx.Color = gx.indigo
-	fill        bool     = true
-	padding     Padding  = padding(5, 10, 7, 10)
-	radius      int      = 5
-	text        string
-	text_style  gx.TextCfg
-	on_click    fn (string, MouseEvent, &Window) bool = unsafe { nil }
+	id         string
+	id_focus   int @[required] // !0 indicates input is focusable. Value indiciates tabbing order
+	width      f32
+	height     f32
+	color      gx.Color = gx.blue
+	fill       bool     = true
+	padding    Padding  = padding(5, 10, 7, 10)
+	radius     int      = 5
+	text       string
+	text_style gx.TextCfg = gx.TextCfg{
+		color: gx.white
+	}
+	on_click   fn (string, MouseEvent, &Window) = unsafe { nil }
 }
 
 // button creates a button. Imagine that.
@@ -45,18 +45,19 @@ pub fn button(cfg ButtonCfg) &View {
 	)
 }
 
-fn (cfg ButtonCfg) on_char(c u32, mut w Window) bool {
+fn (cfg ButtonCfg) on_char(c u32, mut w Window) {
 	if c == ` ` {
 		cfg.on_click(cfg.id, MouseEvent{}, w)
-		return true
 	}
-	return false
 }
 
 fn (cfg ButtonCfg) amend_layout(mut node ShapeTree, w &Window) {
-	if node.shape.point_in_shape(w.mouse_x, w.mouse_y) {
-		node.shape.color = cfg.color_hover
-	} else if node.shape.id_focus == w.id_focus {
-		node.shape.color = cfg.color_focus
+	if node.shape.id_focus == w.id_focus {
+		node.shape.color = shade_color(node.shape.color, -20)
+	}
+	if w.ui.mouse_buttons == .left {
+		if node.shape.point_in_shape(f32(w.ui.mouse_pos_x), f32(w.ui.mouse_pos_y)) {
+			node.shape.color = shade_color(node.shape.color, -10)
+		}
 	}
 }

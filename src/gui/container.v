@@ -18,10 +18,10 @@ pub mut:
 	fill         bool
 	radius       int
 	color        gx.Color
-	on_click     fn (string, MouseEvent, &Window) bool      = unsafe { nil }
-	on_char      fn (u32, &Window) bool                     = unsafe { nil }
+	on_char      fn (u32, &Window)                          = unsafe { nil }
+	on_click     fn (string, MouseEvent, &Window)           = unsafe { nil }
 	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
-	on_mouseover fn (f32, f32, &Window) bool                = unsafe { nil }
+	on_mouseover fn (f32, f32, &Window)                     = unsafe { nil }
 	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
 	children     []View
 }
@@ -65,13 +65,13 @@ pub:
 	spacing      f32 = spacing_default
 	sizing       Sizing
 	fill         bool
-	radius       int      = radius_default
-	color        gx.Color = transparent
-	padding      Padding  = padding_default
-	on_click     fn (string, MouseEvent, &Window) bool      = unsafe { nil }
-	on_char      fn (u32, &Window) bool                     = unsafe { nil }
+	radius       int                                        = radius_default
+	color        gx.Color                                   = transparent
+	padding      Padding                                    = padding_default
+	on_char      fn (u32, &Window)                          = unsafe { nil }
+	on_click     fn (string, MouseEvent, &Window)           = unsafe { nil }
 	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
-	on_mouseover fn (f32, f32, &Window) bool                = unsafe { nil }
+	on_mouseover fn (f32, f32, &Window)                     = unsafe { nil }
 	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
 	children     []View
 }
