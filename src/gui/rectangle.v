@@ -21,17 +21,19 @@ pub fn rectangle(cfg RectangleCfg) &Container {
 	// Technically, rectangle is a container but it has no children, axis or
 	// padding and as such, behaves as a plain rectangle.
 	container_cfg := ContainerCfg{
-		id:      cfg.id
-		x:       cfg.x
-		y:       cfg.y
-		width:   cfg.width
-		height:  cfg.height
-		color:   cfg.color
-		fill:    cfg.fill
-		padding: padding_none
-		radius:  cfg.radius
-		sizing:  cfg.sizing
-		spacing: 0
+		id:         cfg.id
+		x:          cfg.x
+		y:          cfg.y
+		width:      cfg.width
+		height:     cfg.height
+		min_width:  cfg.width
+		min_height: cfg.height
+		color:      cfg.color
+		fill:       cfg.fill
+		padding:    padding_none
+		radius:     cfg.radius
+		sizing:     cfg.sizing
+		spacing:    0
 	}
 	return container(container_cfg)
 }

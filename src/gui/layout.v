@@ -4,7 +4,6 @@ module gui
 // https://www.youtube.com/watch?v=by9lQvpvMIc&t=1272s
 //
 import arrays
-import gg
 
 // layout_do executes a pipeline of functions to layout and position the Shapes
 // of a ShapeTree
@@ -16,9 +15,6 @@ fn layout_do(mut layout ShapeTree, window &Window) {
 	layout_flex_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
 	layout_amend(mut layout, window)
-
-	width, height := window.window_size()
-	layout_clipping_bounds(mut layout, width: width, height: height)
 }
 
 // layout_widths arranges a node's children Shapes horizontally. Only container
@@ -26,14 +22,22 @@ fn layout_do(mut layout ShapeTree, window &Window) {
 fn layout_widths(mut node ShapeTree) {
 	if node.shape.axis == .left_to_right && node.shape.sizing.width != .fixed {
 		node.shape.width += node.shape.spacing * (node.children.len - 1)
+		node.shape.min_width += node.shape.spacing * (node.children.len - 1)
 	}
 	for mut child in node.children {
 		layout_widths(mut child)
 		child.shape.width += child.shape.padding.left + child.shape.padding.right
+		child.shape.min_width += child.shape.padding.left + child.shape.padding.right
 		if node.shape.sizing.width != .fixed {
 			match node.shape.axis {
-				.left_to_right { node.shape.width += child.shape.width }
-				.top_to_bottom { node.shape.width = f32_max(node.shape.width, child.shape.width) }
+				.left_to_right {
+					node.shape.width += child.shape.width
+					node.shape.min_width += child.shape.min_width
+				}
+				.top_to_bottom {
+					node.shape.width = f32_max(node.shape.width, child.shape.width)
+					node.shape.min_width = f32_max(node.shape.min_width, child.shape.min_width)
+				}
 				.none {}
 			}
 		}
@@ -45,14 +49,22 @@ fn layout_widths(mut node ShapeTree) {
 fn layout_heights(mut node ShapeTree) {
 	if node.shape.axis == .top_to_bottom && node.shape.sizing.height != .fixed {
 		node.shape.height += node.shape.spacing * (node.children.len - 1)
+		node.shape.min_height += node.shape.spacing * (node.children.len - 1)
 	}
 	for mut child in node.children {
 		layout_heights(mut child)
 		child.shape.height += child.shape.padding.top + child.shape.padding.bottom
+		child.shape.min_height += child.shape.padding.top + child.shape.padding.bottom
 		if node.shape.sizing.height != .fixed {
 			match node.shape.axis {
-				.top_to_bottom { node.shape.height += child.shape.height }
-				.left_to_right { node.shape.height = f32_max(node.shape.height, child.shape.height) }
+				.top_to_bottom {
+					node.shape.height += child.shape.height
+					node.shape.min_height += child.shape.min_height
+				}
+				.left_to_right {
+					node.shape.height = f32_max(node.shape.height, child.shape.height)
+					node.shape.min_height = f32_max(node.shape.min_height, child.shape.min_height)
+				}
 				.none {}
 			}
 		}
@@ -174,7 +186,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 	} else if node.shape.axis == .top_to_bottom {
 		for mut child in node.children {
 			if child.shape.sizing.width == .flex {
-				child.shape.width += (remaining_width - child.shape.width)
+				child.shape.width += (remaining_width - f32_max(child.shape.width, child.shape.min_width))
 			}
 		}
 	}
@@ -192,10 +204,8 @@ fn layout_flex_heights(mut node ShapeTree) {
 
 	if node.shape.axis == .top_to_bottom {
 		for mut child in node.children {
-			layout_flex_heights(mut child)
 			remaining_height -= child.shape.height
 		}
-
 		// fence post spacing
 		remaining_height -= (node.children.len - 1) * node.shape.spacing
 
@@ -207,10 +217,9 @@ fn layout_flex_heights(mut node ShapeTree) {
 			return
 		}
 
-		// divide up the remaining flex hieghts by first growing
-		// all the all the flex shape to the same size (if possible)
-		// and then distributing the remaining height to evenly to
-		// each
+		// divide up the remaining flex heights by first growing all the
+		// all the flex shapes to the same size (if possible) and then
+		// distributing the remaining height to evenly.
 		for i := 0; remaining_height > 0.1 && i < clamp; i++ {
 			mut smallest := node.children[idx].shape.height
 			mut second_smallest := f32(1000 * 1000)
@@ -240,10 +249,51 @@ fn layout_flex_heights(mut node ShapeTree) {
 				}
 			}
 		}
+
+		// Shrink if needed
+		mut excluded := []u64{cap: 50}
+		for i := 0; remaining_height < -0.1 && i < clamp; i++ {
+			shrinkable := node.children.filter(it.shape.uid !in excluded)
+			if shrinkable.len == 0 {
+				return
+			}
+
+			mut largest := shrinkable[0].shape.height
+			mut second_largest := f32(0)
+			mut height_to_add := remaining_height
+
+			for child in shrinkable {
+				if child.shape.height > largest {
+					second_largest = largest
+					largest = child.shape.height
+				}
+				if child.shape.height < largest {
+					second_largest = f32_max(second_largest, child.shape.height)
+					height_to_add = second_largest - largest
+				}
+			}
+
+			height_to_add = f32_max(height_to_add, remaining_height / shrinkable.len)
+
+			for mut child in node.children {
+				if child.shape.sizing.height == .flex {
+					previous_height := child.shape.height
+					if child.shape.height == largest {
+						child.shape.height += height_to_add
+						if child.shape.height <= child.shape.min_height {
+							child.shape.height = child.shape.min_height
+							excluded << child.shape.uid
+						}
+						remaining_height -= (child.shape.height - previous_height)
+					}
+				}
+			}
+		}
 	} else if node.shape.axis == .left_to_right {
 		for mut child in node.children {
 			if child.shape.sizing.height == .flex {
-				child.shape.height += (remaining_height - child.shape.height)
+				child.shape.height += (remaining_height - f32_max(child.shape.height,
+					child.shape.min_height))
 			}
 		}
 	}
@@ -338,33 +388,5 @@ fn layout_amend(mut node ShapeTree, w &Window) {
 	}
 	if node.shape.amend_layout != unsafe { nil } {
 		node.shape.amend_layout(mut node, w)
-	}
-}
-
-// layout_clipping_bounds ensures that Shapes do not draw outside the parent
-// Shape container.
-fn layout_clipping_bounds(mut node ShapeTree, bounds gg.Rect) {
-	nb := match node.shape.type == .container {
-		true {
-			padding := node.shape.padding
-			bw := bounds.x + bounds.width
-			nw := node.shape.x + node.shape.width - padding.right
-			bh := bounds.y + bounds.height
-			nh := node.shape.y + node.shape.height - padding.bottom
-
-			gg.Rect{
-				x:      if bw < nw { bounds.x } else { node.shape.x }
-				y:      if bh < nh { bounds.y } else { node.shape.y }
-				width:  if bw < nw { bounds.width } else { node.shape.width - padding.right }
-				height: if bh < nh { bounds.height } else { node.shape.height - padding.bottom }
-			}
-		}
-		else {
-			bounds
-		}
-	}
-	for mut child in node.children {
-		child.shape.bounds = nb
-		layout_clipping_bounds(mut child, nb)
 	}
 }

@@ -1,5 +1,6 @@
 module gui
 
+import gg
 import gx
 
 // ButtonConfig configures a clickable button. It won't respond mouse
@@ -8,13 +9,14 @@ import gx
 pub struct ButtonCfg {
 pub:
 	id         string
-	id_focus   int @[required] // !0 indicates input is focusable. Value indiciates tabbing order
+	id_focus   int
 	width      f32
 	height     f32
 	color      gx.Color = gx.blue
 	fill       bool     = true
 	padding    Padding  = padding(5, 10, 7, 10)
-	radius     int      = 5
+	sizing     Sizing
+	radius     int = 5
 	text       string
 	text_style gx.TextCfg = gx.TextCfg{
 		color: gx.white
@@ -30,6 +32,7 @@ pub fn button(cfg ButtonCfg) &View {
 		width:        cfg.width
 		height:       cfg.height
 		padding:      cfg.padding
+		sizing:       cfg.sizing
 		radius:       cfg.radius
 		fill:         cfg.fill
 		color:        cfg.color
@@ -52,11 +55,13 @@ fn (cfg ButtonCfg) on_char(c u32, mut w Window) {
 }
 
 fn (cfg ButtonCfg) amend_layout(mut node ShapeTree, w &Window) {
-	if node.shape.id_focus == w.id_focus {
+	if node.shape.id_focus == w.id_focus() {
 		node.shape.color = shade_color(node.shape.color, -20)
 	}
-	if w.ui.mouse_buttons == .left {
-		if node.shape.point_in_shape(f32(w.ui.mouse_pos_x), f32(w.ui.mouse_pos_y)) {
+
+	ctx := w.context()
+	if ctx.mouse_buttons == gg.MouseButtons.left {
+		if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
 			node.shape.color = shade_color(node.shape.color, -10)
 		}
 	}

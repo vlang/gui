@@ -6,14 +6,13 @@ import gx
 import rand
 
 // Shape is the only data structure in GUI used to draw to the screen.
-struct Shape {
-pub:
-	id       string // asigned by user
-	type     ShapeType
-	uid      u64 = rand.u64() // internal use only
-	id_focus FocusId // >0 indicates shape is focusable. Value determines tabbing order
-	axis     Axis
-mut:
+pub struct Shape {
+pub mut:
+	id           string // asigned by user
+	type         ShapeType
+	uid          u64 = rand.u64() // internal use only
+	id_focus     FocusId // >0 indicates shape is focusable. Value determines tabbing order
+	axis         Axis
 	x            f32
 	y            f32
 	width        f32
@@ -41,7 +40,7 @@ mut:
 }
 
 // ShapeType defines the kind of Shape.
-enum ShapeType {
+pub enum ShapeType {
 	none
 	container
 	text
@@ -49,14 +48,14 @@ enum ShapeType {
 
 // Axis defines if a Shape arranges its child shapes horizontally, vertically or
 // not at all.
-enum Axis {
+pub enum Axis {
 	none
 	top_to_bottom
 	left_to_right
 }
 
 // ShapeTree defines a tree of Shapes. Views generate ShapeTrees
-struct ShapeTree {
+pub struct ShapeTree {
 pub mut:
 	shape    Shape
 	children []ShapeTree
@@ -64,7 +63,7 @@ pub mut:
 
 // point_in_shape determines if the given point is within the shape's layout
 // rectangle Internal use mostly, but useful if designing a new Shape
-fn (shape Shape) point_in_shape(x f32, y f32) bool {
+pub fn (shape Shape) point_in_shape(x f32, y f32) bool {
 	return x >= shape.x && x < (shape.x + shape.width) && y >= shape.y
 		&& y < (shape.y + shape.height)
 }

@@ -18,7 +18,7 @@ mut:
 }
 
 fn (t &Text) generate(ctx gg.Context) ShapeTree {
-	sizing_width_type := if t.wrap { SizingType.flex } else { SizingType.fit }
+	sizing_width_type := if t.wrap { SizingType.flex } else { SizingType.fixed }
 	mut shape_tree := ShapeTree{
 		shape: Shape{
 			id:          t.id
@@ -36,6 +36,10 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
 	shape_tree.shape.height = text_height(shape_tree.shape, ctx)
+	if !t.wrap {
+		shape_tree.shape.min_width = shape_tree.shape.width
+		shape_tree.shape.min_height = shape_tree.shape.height
+	}
 	return shape_tree
 }
 

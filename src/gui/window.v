@@ -15,6 +15,7 @@ mut:
 	gen_view    fn (&Window) View = empty_view
 	id_focus    FocusId
 	focused     bool = true
+	fit_content bool
 	input_state map[FocusId]InputState
 	on_event    fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
@@ -154,6 +155,11 @@ fn empty_view(_ &Window) View {
 	return row(id: 'empty-view')
 }
 
+// context gets the windows gg.Context
+pub fn (window &Window) context() &gg.Context {
+	return window.ui
+}
+
 // id_focus gets the window's focus id
 pub fn (window &Window) id_focus() int {
 	return window.id_focus
@@ -204,7 +210,6 @@ pub fn (mut window Window) update_window() {
 	mut shapes := generate_shapes(view, window)
 	layout_do(mut shapes, window)
 	renderers := render(shapes, window.ui)
-
 	window.layout = shapes
 	window.renderers = renderers
 }
@@ -213,4 +218,13 @@ pub fn (mut window Window) update_window() {
 pub fn (window &Window) window_size() (int, int) {
 	size := window.ui.window_size()
 	return size.width, size.height
+}
+
+pub fn (mut window Window) resize_to_content() {
+	window.mutex.lock()
+	defer { window.mutex.unlock() }
+	println(window.layout.shape.width)
+	println(window.layout.shape.height)
+	window.ui.resize(int(window.layout.shape.width), int(window.layout.shape.height))
+	println(window.ui.width)
 }
