@@ -94,7 +94,6 @@ fn main_view(w &gui.Window) gui.View {
 								color:  gx.orange
 							),
 							gui.row(
-								sizing:   gui.flex_fit
 								color:    gx.white
 								children: [
 									gui.text(
@@ -122,19 +121,19 @@ fn main_view(w &gui.Window) gui.View {
 									w.update_window()
 								}
 							),
-							// gui.input(
-							// 	id_focus:        2
-							// 	width:           150
-							// 	text:            state.other_input
-							// 	text_style:      text_style
-							// 	wrap:            true
-							// 	sizing:          gui.fixed_fit
-							// 	on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-							// 		mut state := w.state[AppState]()
-							// 		state.other_input = s
-							// 		w.update_window()
-							// 	}
-							// ),
+							gui.input(
+								id:              'bla'
+								id_focus:        2
+								text:            state.other_input
+								text_style:      text_style
+								wrap:            true
+								sizing:          gui.flex_fit
+								on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+									mut state := w.state[AppState]()
+									state.other_input = s
+									w.update_window()
+								}
+							),
 						]
 					),
 					gui.rectangle(

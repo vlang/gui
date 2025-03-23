@@ -1,3 +1,11 @@
+# ignore all
+*
+# unignore files with extensions
+!*.*
+# unignore all dirs
+!*/
+### Above combination will ignore all files without extension
+
 # Binaries for programs and plugins
 main
 /gui

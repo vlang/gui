@@ -35,12 +35,17 @@ fn main_view(mut w gui.Window) gui.View {
 	mut rows := []gui.View{}
 	for ops in row_ops {
 		rows << gui.row(
+			spacing:  5
 			padding:  gui.padding_none
 			children: get_row(ops)
 		)
 	}
 
 	return gui.column(
+		spacing:  5
+		color:    gx.orange
+		fill:     true
+		padding:  gui.pad_4(10)
 		children: rows
 	)
 }
@@ -49,15 +54,12 @@ fn get_row(ops []string) []gui.View {
 	mut children := []gui.View{}
 
 	for op in ops {
-		if op == ' ' {
-			continue
-		}
-
 		children << gui.button(
-			text:   op
-			sizing: gui.fixed_fixed
-			width:  bwidth
-			height: bheight
+			text:    op
+			width:   bwidth
+			height:  bheight
+			sizing:  gui.fixed_fixed
+			padding: gui.padding_none
 		)
 	}
 	return children
