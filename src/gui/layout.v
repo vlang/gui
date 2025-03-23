@@ -21,15 +21,19 @@ fn layout_do(mut layout ShapeTree, window &Window) {
 // nodes with a shape axis are arranged.
 fn layout_widths(mut node ShapeTree) {
 	padding := node.shape.padding.left + node.shape.padding.right
-	spacing := (node.children.len - 1) * node.shape.spacing
 	if node.shape.axis == .left_to_right {
-		node.shape.width += padding
-		node.shape.min_width += padding
-		node.shape.width += spacing
-		node.shape.min_width += spacing
-		for mut child in node.children {
-			layout_widths(mut child)
-			if node.shape.sizing.width != .fixed {
+		if node.shape.sizing.width == .fixed {
+			for mut child in node.children {
+				layout_widths(mut child)
+			}
+		} else {
+			node.shape.width += padding
+			node.shape.min_width += padding
+			spacing := (node.children.len - 1) * node.shape.spacing
+			node.shape.width += spacing
+			node.shape.min_width += spacing
+			for mut child in node.children {
+				layout_widths(mut child)
 				node.shape.width += child.shape.width
 				node.shape.min_width += child.shape.min_width
 			}
@@ -49,15 +53,19 @@ fn layout_widths(mut node ShapeTree) {
 // Shapes with a axis are arranged.
 fn layout_heights(mut node ShapeTree) {
 	padding := node.shape.padding.top + node.shape.padding.bottom
-	spacing := (node.children.len - 1) * node.shape.spacing
 	if node.shape.axis == .top_to_bottom {
-		node.shape.height += padding
-		node.shape.min_height += padding
-		node.shape.height += spacing
-		node.shape.min_height += spacing
-		for mut child in node.children {
-			layout_heights(mut child)
-			if node.shape.sizing.height != .fixed {
+		if node.shape.sizing.height == .fixed {
+			for mut child in node.children {
+				layout_heights(mut child)
+			}
+		} else {
+			node.shape.height += padding
+			node.shape.min_height += padding
+			spacing := (node.children.len - 1) * node.shape.spacing
+			node.shape.height += spacing
+			node.shape.min_height += spacing
+			for mut child in node.children {
+				layout_heights(mut child)
 				node.shape.height += child.shape.height
 				node.shape.min_height += child.shape.min_height
 			}

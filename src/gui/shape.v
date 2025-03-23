@@ -17,7 +17,6 @@ pub mut:
 	y            f32
 	width        f32
 	height       f32
-	bounds       gg.Rect
 	color        gg.Color
 	fill         bool
 	min_height   f32
