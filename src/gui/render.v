@@ -159,5 +159,5 @@ fn render_unclip(ctx &gg.Context, mut clip_stack ClipStack) DrawClip {
 		height: max_int
 	}
 	clip_stack.pop() or { return reset }
-	return clip_stack.pop() or { reset }
+	return clip_stack.peek() or { reset }
 }
