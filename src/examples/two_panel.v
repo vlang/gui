@@ -3,11 +3,10 @@ import gx
 
 fn main() {
 	mut window := gui.window(
-		width:    300
-		height:   350
-		title:    'test layout'
-		bg_color: gx.rgb(0x30, 0x30, 0x30)
-		on_init:  fn (mut w gui.Window) {
+		width:   300
+		height:  350
+		title:   'test layout'
+		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 			// w.resize_to_content()
 		}

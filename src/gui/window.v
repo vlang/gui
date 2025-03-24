@@ -15,7 +15,6 @@ mut:
 	gen_view    fn (&Window) View = empty_view
 	id_focus    FocusId
 	focused     bool = true
-	fit_content bool
 	input_state map[FocusId]InputState
 	on_event    fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
@@ -26,10 +25,10 @@ mut:
 pub struct WindowCfg {
 pub:
 	state    voidptr = unsafe { nil }
-	title    string
+	title    string  = app_title_default
 	width    int
 	height   int
-	bg_color gx.Color
+	bg_color gx.Color                       = app_background
 	on_init  fn (&Window)                   = fn (_ &Window) {}
 	on_event fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }

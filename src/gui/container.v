@@ -66,9 +66,9 @@ pub:
 	min_width    f32
 	height       f32
 	min_height   f32
-	spacing      f32 = spacing_default
 	sizing       Sizing
 	fill         bool
+	spacing      f32                                        = spacing_default
 	radius       int                                        = radius_default
 	color        gx.Color                                   = transparent
 	padding      Padding                                    = padding_default

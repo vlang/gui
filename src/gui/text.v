@@ -48,7 +48,7 @@ pub:
 	id          string
 	id_focus    int
 	min_width   f32
-	spacing     f32
+	spacing     f32 = text_spacing_default
 	style       gx.TextCfg
 	text        string
 	wrap        bool

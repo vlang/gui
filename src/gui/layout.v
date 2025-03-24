@@ -211,7 +211,8 @@ fn layout_flex_widths(mut node ShapeTree) {
 // satisfy a layout constraint
 fn layout_flex_heights(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
-	mut remaining_height := node.shape.height - node.shape.padding.top - node.shape.padding.bottom
+	padding := node.shape.padding.top + node.shape.padding.bottom
+	mut remaining_height := node.shape.height - padding
 
 	if node.shape.axis == .top_to_bottom {
 		for mut child in node.children {

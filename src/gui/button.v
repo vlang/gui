@@ -12,14 +12,15 @@ pub:
 	id_focus   int
 	width      f32
 	height     f32
-	color      gx.Color = gx.blue
+	color      gx.Color = button_background
 	fill       bool     = true
-	padding    Padding  = padding(5, 10, 7, 10)
+	padding    Padding  = button_padding_default
+	radius     int      = radius_default
 	sizing     Sizing
-	radius     int = 5
 	text       string
 	text_style gx.TextCfg = gx.TextCfg{
-		color: gx.white
+		color: text_color_default
+		size:  text_size_default
 	}
 	on_click   fn (string, MouseEvent, &Window) = unsafe { nil }
 }
