@@ -14,6 +14,7 @@ pub mut:
 	min_width    f32
 	height       f32
 	min_height   f32
+	clip         bool
 	spacing      f32
 	sizing       Sizing
 	padding      Padding
@@ -39,6 +40,7 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 			y:            c.y
 			width:        c.width
 			height:       c.height
+			clip:         c.clip
 			spacing:      c.spacing
 			sizing:       c.sizing
 			padding:      c.padding
@@ -66,6 +68,7 @@ pub:
 	min_width    f32
 	height       f32
 	min_height   f32
+	clip         bool
 	sizing       Sizing
 	fill         bool
 	spacing      f32                                        = spacing_default
@@ -93,6 +96,7 @@ fn container(c ContainerCfg) &Container {
 		min_width:    c.min_width
 		height:       c.height
 		min_height:   c.min_height
+		clip:         c.clip
 		color:        c.color
 		fill:         c.fill
 		padding:      c.padding

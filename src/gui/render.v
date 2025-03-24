@@ -56,9 +56,15 @@ fn render_draw(renderer Renderer, ctx &gg.Context) {
 
 fn render(shapes ShapeTree, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
+	if shapes.shape.clip {
+		renderers << render_clip(shapes.shape, ctx)
+	}
 	renderers << render_shape(shapes.shape, ctx)
 	for child in shapes.children {
 		renderers << render(child, ctx)
+	}
+	if shapes.shape.clip {
+		renderers << render_unclip(ctx)
 	}
 	return renderers
 }
@@ -91,7 +97,6 @@ fn render_rectangle(shape Shape, ctx &gg.Context) []Renderer {
 fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 	assert shape.type == .text
 	mut renderers := []Renderer{}
-
 	lh := line_height(shape, ctx)
 	mut y := int(shape.y + f32(0.49999))
 	for line in shape.lines {
@@ -127,38 +132,22 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 
 // shape_clip creates a clipping region based on the shapes's bounds property.
 // Internal use mostly, but useful if designing a new Shape
-fn shape_clip(shape Shape, ctx &gg.Context) Renderer {
-	// Perhaps this is a round off error some where (maybe sokol), but need
-	// to expand width and height by 0.5 to keep the right/bottom edges
-	// unclipped.
-	// if !is_empty_rect(shape.bounds) {
-	// 	x := shape.bounds.x
-	// 	y := shape.bounds.y
-	// 	w := shape.bounds.width + 0.5
-	// 	h := shape.bounds.height + 0.5
-	// 	return DrawClip{
-	// 		x:      x
-	// 		y:      y
-	// 		width:  w
-	// 		height: h
-	// 	}
-	// }
-	return DrawNone{}
+fn render_clip(shape Shape, ctx &gg.Context) Renderer {
+	return DrawClip{
+		x:      shape.x
+		y:      shape.y
+		width:  shape.width
+		height: shape.height
+	}
 }
 
 // shape_unclip resets the clipping region. Internal use mostly, but useful if
 // designing a new Shape
-fn shape_unclip(ctx &gg.Context) DrawClip {
+fn render_unclip(ctx &gg.Context) DrawClip {
 	return DrawClip{
 		x:      0
 		y:      0
 		width:  max_int
 		height: max_int
 	}
-}
-
-// is_empty_rect returns true if the rectangle has no area, positive or
-// negative.
-fn is_empty_rect(rect gg.Rect) bool {
-	return (rect.x + rect.width) == 0 && (rect.y + rect.height) == 0
 }

@@ -21,6 +21,7 @@ pub mut:
 	fill         bool
 	min_height   f32
 	min_width    f32
+	clip         bool
 	padding      Padding
 	radius       int
 	sizing       Sizing

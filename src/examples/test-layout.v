@@ -80,6 +80,7 @@ fn main_view(w &gui.Window) gui.View {
 						sizing:   gui.flex_flex
 						fill:     true
 						color:    gx.rgb(0x30, 0x30, 0x30)
+						clip:     true
 						children: [
 							gui.rectangle(
 								id:     'rect'
