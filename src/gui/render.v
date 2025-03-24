@@ -124,3 +124,41 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 	}
 	return renderers
 }
+
+// shape_clip creates a clipping region based on the shapes's bounds property.
+// Internal use mostly, but useful if designing a new Shape
+fn shape_clip(shape Shape, ctx &gg.Context) Renderer {
+	// Perhaps this is a round off error some where (maybe sokol), but need
+	// to expand width and height by 0.5 to keep the right/bottom edges
+	// unclipped.
+	// if !is_empty_rect(shape.bounds) {
+	// 	x := shape.bounds.x
+	// 	y := shape.bounds.y
+	// 	w := shape.bounds.width + 0.5
+	// 	h := shape.bounds.height + 0.5
+	// 	return DrawClip{
+	// 		x:      x
+	// 		y:      y
+	// 		width:  w
+	// 		height: h
+	// 	}
+	// }
+	return DrawNone{}
+}
+
+// shape_unclip resets the clipping region. Internal use mostly, but useful if
+// designing a new Shape
+fn shape_unclip(ctx &gg.Context) DrawClip {
+	return DrawClip{
+		x:      0
+		y:      0
+		width:  max_int
+		height: max_int
+	}
+}
+
+// is_empty_rect returns true if the rectangle has no area, positive or
+// negative.
+fn is_empty_rect(rect gg.Rect) bool {
+	return (rect.x + rect.width) == 0 && (rect.y + rect.height) == 0
+}

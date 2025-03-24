@@ -386,12 +386,8 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	for mut child in node.children {
 		layout_positions(mut child, x, y)
 		match axis {
-			.left_to_right {
-				x += child.shape.width + spacing
-			}
-			.top_to_bottom {
-				y += child.shape.height + spacing
-			}
+			.left_to_right { x += child.shape.width + spacing }
+			.top_to_bottom { y += child.shape.height + spacing }
 			.none {}
 		}
 	}

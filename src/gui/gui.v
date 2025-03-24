@@ -7,7 +7,7 @@ type FocusId = u32 // >0 = focusable. tabbing focus by ascending order
 pub const app_background = gx.rgb(48, 48, 48)
 pub const app_title_default = 'GUI'
 pub const button_background = gx.rgb(0, 0, 226)
-pub const button_padding_default = padding(5, 10, 7, 10)
+pub const button_padding_default = pad_2(8, 10)
 pub const input_color_default = gx.rgb(0x40, 0x40, 0x40)
 pub const radius_default = 5
 pub const spacing_default = 10

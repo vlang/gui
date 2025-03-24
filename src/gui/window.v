@@ -2,21 +2,23 @@ module gui
 
 import gg
 import gx
+import sokol.sapp
 import sync
 
 @[heap]
 pub struct Window {
 mut:
-	ui          &gg.Context       = &gg.Context{}
-	state       voidptr           = unsafe { nil }
-	layout      ShapeTree         = ShapeTree{}
-	renderers   []Renderer        = []
-	mutex       &sync.Mutex       = sync.new_mutex()
-	gen_view    fn (&Window) View = empty_view
-	id_focus    FocusId
-	focused     bool = true
-	input_state map[FocusId]InputState
-	on_event    fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
+	ui           &gg.Context       = &gg.Context{}
+	state        voidptr           = unsafe { nil }
+	layout       ShapeTree         = ShapeTree{}
+	renderers    []Renderer        = []
+	mutex        &sync.Mutex       = sync.new_mutex()
+	gen_view     fn (&Window) View = empty_view
+	id_focus     FocusId
+	focused      bool = true
+	input_state  map[FocusId]InputState
+	mouse_cursor sapp.MouseCursor
+	on_event     fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -61,6 +63,7 @@ fn frame_fn(mut window Window) {
 	}
 	window.ui.end()
 	window.mutex.unlock()
+	sapp.set_mouse_cursor(window.mouse_cursor)
 }
 
 fn event_fn(e &gg.Event, mut w Window) {
@@ -137,10 +140,10 @@ fn event_fn(e &gg.Event, mut w Window) {
 			}
 		}
 		.mouse_move {
-			width, height := w.window_size()
-			if e.mouse_x < 0 || e.mouse_y < 0 || e.mouse_x > width || e.mouse_y > height {
+			if !w.pointer_over_app(e) {
 				return
 			}
+			w.set_mouse_cursor_arrow()
 		}
 		else {
 			// dump(e)
@@ -164,7 +167,19 @@ pub fn (window &Window) id_focus() int {
 	return window.id_focus
 }
 
-// get_state returns a reference to user supplied data
+// pointer_over_app returns true if the mouse pointer is over the app
+pub fn (window &Window) pointer_over_app(e &gg.Event) bool {
+	if e.mouse_x < 0 || e.mouse_y < 0 {
+		return false
+	}
+	size := window.ui.window_size()
+	if e.mouse_x > size.width || e.mouse_y > size.height {
+		return false
+	}
+	return true
+}
+
+// state returns a reference to user supplied data
 pub fn (window &Window) state[T]() &T {
 	assert window.state != unsafe { nil }
 	return unsafe { &T(window.state) }
@@ -221,9 +236,14 @@ pub fn (window &Window) window_size() (int, int) {
 
 pub fn (mut window Window) resize_to_content() {
 	window.mutex.lock()
-	defer { window.mutex.unlock() }
-	println(window.layout.shape.width)
-	println(window.layout.shape.height)
 	window.ui.resize(int(window.layout.shape.width), int(window.layout.shape.height))
-	println(window.ui.width)
+	window.mutex.unlock()
+}
+
+pub fn (mut window Window) set_mouse_cursor_arrow() {
+	window.mouse_cursor = .arrow
+}
+
+pub fn (mut window Window) set_mouse_cursor_pointing_hand() {
+	window.mouse_cursor = .pointing_hand
 }

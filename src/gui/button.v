@@ -55,14 +55,17 @@ fn (cfg ButtonCfg) on_char(c u32, mut w Window) {
 	}
 }
 
-fn (cfg ButtonCfg) amend_layout(mut node ShapeTree, w &Window) {
+fn (cfg ButtonCfg) amend_layout(mut node ShapeTree, mut w Window) {
 	if node.shape.id_focus == w.id_focus() {
 		node.shape.color = shade_color(node.shape.color, -20)
 	}
 
 	ctx := w.context()
-	if ctx.mouse_buttons == gg.MouseButtons.left {
-		if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+	mouse_over := node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y))
+
+	if mouse_over {
+		w.set_mouse_cursor_pointing_hand()
+		if ctx.mouse_buttons == gg.MouseButtons.left {
 			node.shape.color = shade_color(node.shape.color, -10)
 		}
 	}
