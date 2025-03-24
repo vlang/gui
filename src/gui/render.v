@@ -1,5 +1,6 @@
 module gui
 
+import datatypes
 import gg
 import gx
 import sokol.sgl
@@ -34,6 +35,8 @@ type DrawClip = gg.Rect
 type DrawNone = DrawNoneCfg
 type Renderer = DrawRect | DrawText | DrawClip | DrawLine | DrawNone
 
+type ClipStack = datatypes.Stack[DrawClip]
+
 fn render_draw(renderer Renderer, ctx &gg.Context) {
 	match renderer {
 		DrawRect {
@@ -56,15 +59,19 @@ fn render_draw(renderer Renderer, ctx &gg.Context) {
 
 fn render(shapes ShapeTree, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
+	mut clip_stack := ClipStack{}
+
 	if shapes.shape.clip {
-		renderers << render_clip(shapes.shape, ctx)
+		renderers << render_clip(shapes.shape, ctx, mut clip_stack)
 	}
+
 	renderers << render_shape(shapes.shape, ctx)
 	for child in shapes.children {
 		renderers << render(child, ctx)
 	}
+
 	if shapes.shape.clip {
-		renderers << render_unclip(ctx)
+		renderers << render_unclip(ctx, mut clip_stack)
 	}
 	return renderers
 }
@@ -132,22 +139,25 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 
 // shape_clip creates a clipping region based on the shapes's bounds property.
 // Internal use mostly, but useful if designing a new Shape
-fn render_clip(shape Shape, ctx &gg.Context) Renderer {
-	return DrawClip{
+fn render_clip(shape Shape, ctx &gg.Context, mut clip_stack ClipStack) Renderer {
+	clip := DrawClip{
 		x:      shape.x
 		y:      shape.y
 		width:  shape.width
 		height: shape.height
 	}
+	clip_stack.push(clip)
+	return clip
 }
 
-// shape_unclip resets the clipping region. Internal use mostly, but useful if
-// designing a new Shape
-fn render_unclip(ctx &gg.Context) DrawClip {
-	return DrawClip{
+// shape_unclip sets the clip region to the previous clip region
+fn render_unclip(ctx &gg.Context, mut clip_stack ClipStack) DrawClip {
+	reset := DrawClip{
 		x:      0
 		y:      0
 		width:  max_int
 		height: max_int
 	}
+	clip_stack.pop() or { return reset }
+	return clip_stack.pop() or { reset }
 }
