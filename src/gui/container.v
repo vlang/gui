@@ -23,40 +23,42 @@ pub mut:
 	v_align      VerticalAlign
 	radius       int
 	color        gx.Color
+	cfg          voidptr
 	on_char      fn (u32, &Window)                          = unsafe { nil }
-	on_click     fn (string, MouseEvent, &Window)           = unsafe { nil }
+	on_click     fn (voidptr, MouseEvent, &Window)          = unsafe { nil }
 	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
 	on_mouseover fn (f32, f32, &Window)                     = unsafe { nil }
 	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
 	children     []View
 }
 
-fn (c &Container) generate(_ gg.Context) ShapeTree {
+fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 	return ShapeTree{
 		shape: Shape{
-			id:           c.id
-			id_focus:     c.id_focus
+			id:           cfg.id
+			id_focus:     cfg.id_focus
 			type:         .container
-			axis:         c.axis
-			x:            c.x
-			y:            c.y
-			width:        c.width
-			height:       c.height
-			clip:         c.clip
-			spacing:      c.spacing
-			sizing:       c.sizing
-			padding:      c.padding
-			fill:         c.fill
-			h_align:      c.h_align
-			v_align:      c.v_align
-			radius:       c.radius
-			color:        c.color
-			min_width:    c.min_width
-			min_height:   c.min_height
-			on_click:     c.on_click
-			on_char:      c.on_char
-			on_keydown:   c.on_keydown
-			amend_layout: c.amend_layout
+			axis:         cfg.axis
+			x:            cfg.x
+			y:            cfg.y
+			width:        cfg.width
+			height:       cfg.height
+			clip:         cfg.clip
+			spacing:      cfg.spacing
+			sizing:       cfg.sizing
+			padding:      cfg.padding
+			fill:         cfg.fill
+			h_align:      cfg.h_align
+			v_align:      cfg.v_align
+			radius:       cfg.radius
+			color:        cfg.color
+			min_width:    cfg.min_width
+			min_height:   cfg.min_height
+			cfg:          cfg.cfg
+			on_click:     cfg.on_click
+			on_char:      cfg.on_char
+			on_keydown:   cfg.on_keydown
+			amend_layout: cfg.amend_layout
 		}
 	}
 }
@@ -77,12 +79,13 @@ pub:
 	fill         bool
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
+	cfg          voidptr
 	spacing      f32                                        = spacing_default
 	radius       int                                        = radius_default
 	color        gx.Color                                   = transparent
 	padding      Padding                                    = padding_default
 	on_char      fn (u32, &Window)                          = unsafe { nil }
-	on_click     fn (string, MouseEvent, &Window)           = unsafe { nil }
+	on_click     fn (voidptr, MouseEvent, &Window)          = unsafe { nil }
 	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
 	on_mouseover fn (f32, f32, &Window)                     = unsafe { nil }
 	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
@@ -92,31 +95,32 @@ pub:
 // container is the fundamental layout container in gui. It is used to layout
 // its children top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
-fn container(c ContainerCfg) &Container {
+fn container(cfg ContainerCfg) &Container {
 	return &Container{
-		id:           c.id
-		id_focus:     c.id_focus
-		x:            c.x
-		y:            c.y
-		width:        c.width
-		min_width:    c.min_width
-		height:       c.height
-		min_height:   c.min_height
-		clip:         c.clip
-		color:        c.color
-		fill:         c.fill
-		h_align:      c.h_align
-		v_align:      c.v_align
-		padding:      c.padding
-		radius:       c.radius
-		sizing:       c.sizing
-		spacing:      c.spacing
-		on_click:     c.on_click
-		on_char:      c.on_char
-		on_keydown:   c.on_keydown
-		on_mouseover: c.on_mouseover
-		amend_layout: c.amend_layout
-		children:     c.children
+		id:           cfg.id
+		id_focus:     cfg.id_focus
+		x:            cfg.x
+		y:            cfg.y
+		width:        cfg.width
+		min_width:    cfg.min_width
+		height:       cfg.height
+		min_height:   cfg.min_height
+		clip:         cfg.clip
+		color:        cfg.color
+		fill:         cfg.fill
+		h_align:      cfg.h_align
+		v_align:      cfg.v_align
+		padding:      cfg.padding
+		radius:       cfg.radius
+		sizing:       cfg.sizing
+		spacing:      cfg.spacing
+		cfg:          cfg.cfg
+		on_click:     cfg.on_click
+		on_char:      cfg.on_char
+		on_keydown:   cfg.on_keydown
+		on_mouseover: cfg.on_mouseover
+		amend_layout: cfg.amend_layout
+		children:     cfg.children
 	}
 }
 

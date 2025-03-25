@@ -135,7 +135,7 @@ fn event_fn(e &gg.Event, mut w Window) {
 						mouse_y:      e.mouse_y
 						mouse_button: e.mouse_button
 					}
-					shape.on_click(shape.id, me, w)
+					shape.on_click(shape.cfg, me, w)
 				}
 			}
 		}

@@ -14,6 +14,7 @@ mut:
 	text        string
 	wrap        bool
 	keep_spaces bool
+	cfg         &TextCfg
 	children    []View
 }
 
@@ -67,6 +68,7 @@ pub fn text(cfg TextCfg) &Text {
 		style:       cfg.style
 		text:        cfg.text
 		wrap:        cfg.wrap
+		cfg:         &cfg
 		keep_spaces: cfg.keep_spaces
 	}
 }

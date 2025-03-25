@@ -6,6 +6,7 @@ import gx
 // ButtonConfig configures a clickable button. It won't respond mouse
 // interactions if an on_click handler is missing. In that mode, it functions as
 // bubble text.
+//
 pub struct ButtonCfg {
 pub:
 	id         string
@@ -24,7 +25,7 @@ pub:
 		color: text_color_default
 		size:  text_size_default
 	}
-	on_click   fn (string, MouseEvent, &Window) = unsafe { nil }
+	on_click   fn (&ButtonCfg, MouseEvent, &Window) = unsafe { nil }
 }
 
 // button creates a button. Imagine that.
@@ -41,6 +42,9 @@ pub fn button(cfg ButtonCfg) &View {
 		v_align:      cfg.v_align
 		h_align:      cfg.h_align
 		color:        cfg.color
+		cfg:          &ButtonCfg{ // allocate on heap
+			...cfg
+		}
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char
 		amend_layout: cfg.amend_layout
@@ -55,7 +59,7 @@ pub fn button(cfg ButtonCfg) &View {
 
 fn (cfg ButtonCfg) on_char(c u32, mut w Window) {
 	if c == ` ` {
-		cfg.on_click(cfg.id, MouseEvent{}, w)
+		cfg.on_click(&cfg, MouseEvent{}, w)
 	}
 }
 

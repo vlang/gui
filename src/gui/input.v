@@ -61,7 +61,7 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) {
 					w.input_state[w.id_focus].cursor_pos = cursor_pos - 1
 				}
 			}
-			0...0x1F {
+			0...0x1F { // non-printables
 				return
 			}
 			else {
@@ -78,7 +78,7 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) {
 	}
 }
 
-fn (cfg InputCfg) on_click(id string, me MouseEvent, mut w Window) {
+fn (cfg InputCfg) on_click(_ voidptr, me MouseEvent, mut w Window) {
 	if me.mouse_button == gg.MouseButton.left {
 		w.input_state[w.id_focus].cursor_pos = cfg.text.len
 	}
