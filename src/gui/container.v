@@ -19,6 +19,8 @@ pub mut:
 	sizing       Sizing
 	padding      Padding
 	fill         bool
+	h_align      HorizontalAlign
+	v_align      VerticalAlign
 	radius       int
 	color        gx.Color
 	on_char      fn (u32, &Window)                          = unsafe { nil }
@@ -45,6 +47,8 @@ fn (c &Container) generate(_ gg.Context) ShapeTree {
 			sizing:       c.sizing
 			padding:      c.padding
 			fill:         c.fill
+			h_align:      c.h_align
+			v_align:      c.v_align
 			radius:       c.radius
 			color:        c.color
 			min_width:    c.min_width
@@ -71,6 +75,8 @@ pub:
 	clip         bool
 	sizing       Sizing
 	fill         bool
+	h_align      HorizontalAlign
+	v_align      VerticalAlign
 	spacing      f32                                        = spacing_default
 	radius       int                                        = radius_default
 	color        gx.Color                                   = transparent
@@ -99,6 +105,8 @@ fn container(c ContainerCfg) &Container {
 		clip:         c.clip
 		color:        c.color
 		fill:         c.fill
+		h_align:      c.h_align
+		v_align:      c.v_align
 		padding:      c.padding
 		radius:       c.radius
 		sizing:       c.sizing

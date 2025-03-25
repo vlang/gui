@@ -150,14 +150,15 @@ fn render_clip(shape Shape, ctx &gg.Context, mut clip_stack ClipStack) Renderer 
 	return clip
 }
 
+const clip_reset = DrawClip{
+	x:      0
+	y:      0
+	width:  max_int
+	height: max_int
+}
+
 // shape_unclip sets the clip region to the previous clip region
 fn render_unclip(ctx &gg.Context, mut clip_stack ClipStack) DrawClip {
-	reset := DrawClip{
-		x:      0
-		y:      0
-		width:  max_int
-		height: max_int
-	}
-	clip_stack.pop() or { return reset }
-	return clip_stack.peek() or { reset }
+	clip_stack.pop() or { return clip_reset }
+	return clip_stack.peek() or { clip_reset }
 }

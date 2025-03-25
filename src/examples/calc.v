@@ -6,14 +6,16 @@ const bheight = 30
 const bpadding = 5
 
 struct AppState {
+pub mut:
+	total f64
 }
 
 fn main() {
 	mut window := gui.window(
 		state:    &AppState{}
-		width:    255
-		height:   350
-		title:    'test layout'
+		width:    156
+		height:   224
+		title:    'Calculator'
 		bg_color: gx.rgb(0x30, 0x30, 0x30)
 		on_init:  fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -24,6 +26,8 @@ fn main() {
 }
 
 fn main_view(mut w gui.Window) gui.View {
+	app_state := w.state[AppState]()
+
 	row_ops := [
 		['C', '%', '^', '÷'],
 		['7', '8', '9', '*'],
@@ -32,9 +36,25 @@ fn main_view(mut w gui.Window) gui.View {
 		['0', '.', '±', '='],
 	]
 
-	mut rows := []gui.View{}
+	mut panel := []gui.View{}
+
+	panel << gui.row(
+		color:    gx.black
+		h_align:  .right
+		padding:  gui.pad_4(5)
+		sizing:   gui.flex_fit
+		children: [
+			gui.text(
+				text:  app_state.total.str()
+				style: gx.TextCfg{
+					size: 20
+				}
+			),
+		]
+	)
+
 	for ops in row_ops {
-		rows << gui.row(
+		panel << gui.row(
 			spacing:  5
 			padding:  gui.padding_none
 			children: get_row(ops)
@@ -42,11 +62,12 @@ fn main_view(mut w gui.Window) gui.View {
 	}
 
 	return gui.column(
+		radius:   0
 		spacing:  5
-		color:    gx.orange
+		color:    gx.rgb(215, 125, 0)
 		fill:     true
 		padding:  gui.pad_4(10)
-		children: rows
+		children: panel
 	)
 }
 
@@ -58,6 +79,8 @@ fn get_row(ops []string) []gui.View {
 			text:    op
 			width:   bwidth
 			height:  bheight
+			h_align: .center
+			v_align: .middle
 			sizing:  gui.fixed_fixed
 			padding: gui.padding_none
 		)

@@ -14,8 +14,10 @@ pub:
 	height     f32
 	color      gx.Color = button_background
 	fill       bool     = true
-	padding    Padding  = button_padding_default
-	radius     int      = radius_default
+	h_align    HorizontalAlign
+	v_align    VerticalAlign
+	padding    Padding = button_padding_default
+	radius     int     = radius_default
 	sizing     Sizing
 	text       string
 	text_style gx.TextCfg = gx.TextCfg{
@@ -36,6 +38,8 @@ pub fn button(cfg ButtonCfg) &View {
 		sizing:       cfg.sizing
 		radius:       cfg.radius
 		fill:         cfg.fill
+		v_align:      cfg.v_align
+		h_align:      cfg.h_align
 		color:        cfg.color
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char
@@ -66,7 +70,8 @@ fn (cfg ButtonCfg) amend_layout(mut node ShapeTree, mut w Window) {
 	if mouse_over {
 		w.set_mouse_cursor_pointing_hand()
 		if ctx.mouse_buttons == gg.MouseButtons.left {
-			node.shape.color = shade_color(node.shape.color, -10)
+			node.shape.color = shade_color(node.shape.color, -20)
+			node.children[0].shape.color = shade_color(node.children[0].shape.color, -20)
 		}
 	}
 }

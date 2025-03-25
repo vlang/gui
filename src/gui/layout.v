@@ -18,10 +18,10 @@ fn layout_do(mut layout ShapeTree, window &Window) {
 }
 
 // layout_widths arranges a node's children Shapes horizontally. Only container
-// nodes with a shape axis are arranged.
+// shapes with an axis are arranged.
 fn layout_widths(mut node ShapeTree) {
 	padding := node.shape.padding.left + node.shape.padding.right
-	if node.shape.axis == .left_to_right {
+	if node.shape.axis == .left_to_right { // along the axis
 		if node.shape.sizing.width == .fixed {
 			for mut child in node.children {
 				layout_widths(mut child)
@@ -38,7 +38,7 @@ fn layout_widths(mut node ShapeTree) {
 				node.shape.min_width += child.shape.min_width
 			}
 		}
-	} else if node.shape.axis == .top_to_bottom {
+	} else if node.shape.axis == .top_to_bottom { // across the axis
 		for mut child in node.children {
 			layout_widths(mut child)
 			if node.shape.sizing.width != .fixed {
@@ -50,10 +50,10 @@ fn layout_widths(mut node ShapeTree) {
 }
 
 // layout_heights arranges a node's children Shapes vertically. Only container
-// Shapes with a axis are arranged.
+// shapes with an axis are arranged.
 fn layout_heights(mut node ShapeTree) {
 	padding := node.shape.padding.top + node.shape.padding.bottom
-	if node.shape.axis == .top_to_bottom {
+	if node.shape.axis == .top_to_bottom { // along the axis
 		if node.shape.sizing.height == .fixed {
 			for mut child in node.children {
 				layout_heights(mut child)
@@ -70,7 +70,7 @@ fn layout_heights(mut node ShapeTree) {
 				node.shape.min_height += child.shape.min_height
 			}
 		}
-	} else if node.shape.axis == .left_to_right {
+	} else if node.shape.axis == .left_to_right { // across the axis
 		for mut child in node.children {
 			layout_heights(mut child)
 			if node.shape.sizing.height != .fixed {
@@ -377,14 +377,74 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	node.shape.x += offset_x
 	node.shape.y += offset_y
 
-	spacing := node.shape.spacing
 	axis := node.shape.axis
+	padding := node.shape.padding
+	spacing := node.shape.spacing
 
-	mut x := node.shape.x + node.shape.padding.left
-	mut y := node.shape.y + node.shape.padding.top
+	mut x := node.shape.x + padding.left
+	mut y := node.shape.y + padding.top
+
+	// alignment along the axis
+	match axis {
+		.left_to_right {
+			if node.shape.h_align != .left {
+				mut remaining := node.shape.width - padding.left - padding.right
+				remaining -= (node.children.len - 1) * node.shape.spacing
+				for child in node.children {
+					remaining -= child.shape.width
+				}
+				if node.shape.h_align == .center {
+					remaining /= (node.children.len + 1)
+				}
+				x += remaining
+			}
+		}
+		.top_to_bottom {
+			if node.shape.v_align != .top {
+				mut remaining := node.shape.width - padding.top - padding.bottom
+				remaining -= (node.children.len - 1) * node.shape.spacing
+				for child in node.children {
+					remaining -= child.shape.height
+				}
+				if node.shape.v_align == .middle {
+					remaining /= (node.children.len + 1)
+				}
+				y += remaining
+			}
+		}
+		.none {}
+	}
 
 	for mut child in node.children {
+		// alignment across the axis
+		match axis {
+			.left_to_right {
+				if node.shape.v_align != .top {
+					remaining := node.shape.height - child.shape.height - padding.top - padding.bottom
+					if remaining > 0 {
+						match node.shape.v_align {
+							.middle { y += remaining / 2 }
+							else { y += remaining }
+						}
+					}
+				}
+			}
+			.top_to_bottom {
+				if node.shape.h_align != .left {
+					remaining := node.shape.width - child.shape.width - padding.left - padding.right
+					if remaining > 0 {
+						match node.shape.h_align {
+							.center { y += remaining / 2 }
+							else { y += remaining }
+						}
+					}
+				}
+			}
+			.none {}
+		}
+
 		layout_positions(mut child, x, y)
+
 		match axis {
 			.left_to_right { x += child.shape.width + spacing }
 			.top_to_bottom { y += child.shape.height + spacing }

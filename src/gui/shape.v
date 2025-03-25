@@ -19,6 +19,8 @@ pub mut:
 	height       f32
 	color        gg.Color
 	fill         bool
+	h_align      HorizontalAlign
+	v_align      VerticalAlign
 	min_height   f32
 	min_width    f32
 	clip         bool
@@ -44,14 +46,6 @@ pub enum ShapeType {
 	none
 	container
 	text
-}
-
-// Axis defines if a Shape arranges its child shapes horizontally, vertically or
-// not at all.
-pub enum Axis {
-	none
-	top_to_bottom
-	left_to_right
 }
 
 // ShapeTree defines a tree of Shapes. Views generate ShapeTrees
