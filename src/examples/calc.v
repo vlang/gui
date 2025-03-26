@@ -20,8 +20,8 @@ mut:
 fn main() {
 	mut window := gui.window(
 		state:    &App{}
-		width:    156
-		height:   224
+		width:    155
+		height:   225
 		title:    'Calculator'
 		bg_color: gx.rgb(0x30, 0x30, 0x30)
 		on_init:  fn (mut w gui.Window) {
@@ -69,12 +69,13 @@ fn main_view(mut w gui.Window) gui.View {
 	}
 
 	return gui.column(
-		radius:   0
-		spacing:  5
-		color:    gx.rgb(215, 125, 0)
-		fill:     true
-		padding:  gui.pad_4(10)
-		children: panel
+		radius:    0
+		spacing:   5
+		max_width: 155
+		color:     gx.rgb(215, 125, 0)
+		fill:      true
+		padding:   gui.pad_4(10)
+		children:  panel
 	)
 }
 
