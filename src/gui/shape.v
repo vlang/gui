@@ -16,13 +16,15 @@ pub mut:
 	x            f32
 	y            f32
 	width        f32
+	min_width    f32
+	max_width    f32 = f32(max_u64)
 	height       f32
+	min_height   f32
+	max_height   f32 = f32(max_u64)
 	color        gg.Color
 	fill         bool
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
-	min_height   f32
-	min_width    f32
 	clip         bool
 	padding      Padding
 	radius       int

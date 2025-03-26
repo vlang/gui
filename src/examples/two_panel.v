@@ -21,13 +21,14 @@ fn main_view(mut w gui.Window) gui.View {
 		width:    width
 		height:   height
 		sizing:   gui.fixed_fixed
-		spacing:  10
 		children: [
 			gui.column(
-				width:  150
-				color:  gx.dark_gray
-				fill:   true
-				sizing: gui.fixed_flex
+				min_width:  100
+				max_width:  150
+				max_height: 330
+				color:      gx.dark_gray
+				fill:       true
+				sizing:     gui.flex_flex
 			),
 			gui.column(
 				id:     'green'

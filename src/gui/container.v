@@ -12,8 +12,10 @@ pub mut:
 	y            f32
 	width        f32
 	min_width    f32
+	max_width    f32 = f32(max_u64)
 	height       f32
 	min_height   f32
+	max_height   f32 = f32(max_u64)
 	clip         bool
 	spacing      f32
 	sizing       Sizing
@@ -42,7 +44,11 @@ fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 			x:            cfg.x
 			y:            cfg.y
 			width:        cfg.width
+			min_width:    cfg.min_width
+			max_width:    cfg.max_width
 			height:       cfg.height
+			min_height:   cfg.min_height
+			max_height:   cfg.max_height
 			clip:         cfg.clip
 			spacing:      cfg.spacing
 			sizing:       cfg.sizing
@@ -52,8 +58,6 @@ fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 			v_align:      cfg.v_align
 			radius:       cfg.radius
 			color:        cfg.color
-			min_width:    cfg.min_width
-			min_height:   cfg.min_height
 			cfg:          cfg.cfg
 			on_click:     cfg.on_click
 			on_char:      cfg.on_char
@@ -72,8 +76,10 @@ pub:
 	y            f32
 	width        f32
 	min_width    f32
+	max_width    f32 = f32(max_u64)
 	height       f32
 	min_height   f32
+	max_height   f32 = f32(max_u64)
 	clip         bool
 	sizing       Sizing
 	fill         bool
@@ -103,8 +109,10 @@ fn container(cfg ContainerCfg) &Container {
 		y:            cfg.y
 		width:        cfg.width
 		min_width:    cfg.min_width
+		max_width:    cfg.max_width
 		height:       cfg.height
 		min_height:   cfg.min_height
+		max_height:   cfg.max_height
 		clip:         cfg.clip
 		color:        cfg.color
 		fill:         cfg.fill
