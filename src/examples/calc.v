@@ -120,7 +120,9 @@ fn (mut app App) btn_click(btn &gui.ButtonCfg, me gui.MouseEvent, mut w gui.Wind
 			app.is_float = false
 		} else {
 			// Append a new digit
-			app.text = number + btn.text
+			if app.text.len < 12 {
+				app.text = number + btn.text
+			}
 		}
 		return
 	}
@@ -142,7 +144,7 @@ fn (mut app App) update_result() {
 	// Format and print the result
 	mut text := ''
 	if !math.trunc(app.result).eq_epsilon(app.result) {
-		text = '${app.result:-15.10f}'
+		text = '${app.result:-9.3f}'
 	} else {
 		text = int(app.result).str()
 	}

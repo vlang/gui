@@ -17,7 +17,8 @@ fn main() {
 fn main_view(mut w gui.Window) gui.View {
 	width, height := w.window_size()
 	return gui.row(
-		id:       'row'
+		id: 'row'
+
 		width:    width
 		height:   height
 		sizing:   gui.fixed_fixed
@@ -26,15 +27,21 @@ fn main_view(mut w gui.Window) gui.View {
 				min_width:  100
 				max_width:  150
 				max_height: 330
+				h_align:    .center
+				v_align:    .middle
 				color:      gx.dark_gray
 				fill:       true
 				sizing:     gui.flex_flex
+				children:   [gui.text(text: 'Hello')]
 			),
 			gui.column(
-				id:     'green'
-				color:  gx.dark_green
-				fill:   true
-				sizing: gui.flex_flex
+				id:       'green'
+				color:    gx.dark_green
+				h_align:  .right
+				v_align:  .bottom
+				fill:     true
+				sizing:   gui.flex_flex
+				children: [gui.text(text: 'There!')]
 			),
 		]
 	)

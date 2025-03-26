@@ -121,18 +121,27 @@ fn main_view(w &gui.Window) gui.View {
 									w.update_window()
 								}
 							),
-							gui.input(
-								id:              'bla'
-								id_focus:        2
-								text:            state.other_input
-								text_style:      text_style
-								wrap:            true
-								sizing:          gui.flex_fit
-								on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-									mut state := w.state[AppState]()
-									state.other_input = s
-									w.update_window()
-								}
+							gui.row(
+								v_align:  .middle
+								padding:  gui.padding_none
+								children: [
+									gui.text(
+										text:  'Label'
+										style: text_style
+									),
+									gui.input(
+										id_focus:        2
+										text:            state.other_input
+										text_style:      text_style
+										wrap:            false
+										sizing:          gui.flex_fit
+										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+											mut state := w.state[AppState]()
+											state.other_input = s
+											w.update_window()
+										}
+									),
+								]
 							),
 						]
 					),
@@ -150,6 +159,7 @@ fn main_view(w &gui.Window) gui.View {
 				width:    75
 				height:   50
 				fill:     true
+				clip:     true
 				sizing:   gui.flex_flex
 				color:    gx.rgb(0x30, 0x30, 0x30)
 				children: [
@@ -175,9 +185,10 @@ fn main_view(w &gui.Window) gui.View {
 								style: text_style_blue
 							),
 							gui.text(
-								text:  state.name
-								style: text_style
-								wrap:  true
+								text:        state.name
+								style:       text_style
+								wrap:        true
+								keep_spaces: false
 							),
 						]
 					),

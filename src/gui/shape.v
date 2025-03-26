@@ -17,10 +17,10 @@ pub mut:
 	y            f32
 	width        f32
 	min_width    f32
-	max_width    f32 = f32(max_u64)
+	max_width    f32
 	height       f32
 	min_height   f32
-	max_height   f32 = f32(max_u64)
+	max_height   f32
 	color        gg.Color
 	fill         bool
 	h_align      HorizontalAlign

@@ -12,10 +12,10 @@ pub mut:
 	y            f32
 	width        f32
 	min_width    f32
-	max_width    f32 = f32(max_u64)
+	max_width    f32
 	height       f32
 	min_height   f32
-	max_height   f32 = f32(max_u64)
+	max_height   f32
 	clip         bool
 	spacing      f32
 	sizing       Sizing
@@ -76,10 +76,10 @@ pub:
 	y            f32
 	width        f32
 	min_width    f32
-	max_width    f32 = f32(max_u64)
+	max_width    f32
 	height       f32
 	min_height   f32
-	max_height   f32 = f32(max_u64)
+	max_height   f32
 	clip         bool
 	sizing       Sizing
 	fill         bool
