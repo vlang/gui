@@ -57,7 +57,7 @@ fn render_draw(renderer Renderer, ctx &gg.Context) {
 	}
 }
 
-fn render(shapes ShapeTree, ctx &gg.Context) []Renderer {
+fn render(shapes ShapeTree, bg_color gx.Color, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
 
@@ -65,9 +65,10 @@ fn render(shapes ShapeTree, ctx &gg.Context) []Renderer {
 		renderers << render_clip(shapes.shape, ctx, mut clip_stack)
 	}
 
-	renderers << render_shape(shapes.shape, ctx)
+	renderers << render_shape(shapes.shape, bg_color, ctx)
 	for child in shapes.children {
-		renderers << render(child, ctx)
+		parent_color := if shapes.shape.color != transparent { shapes.shape.color } else { bg_color }
+		renderers << render(child, parent_color, ctx)
 	}
 
 	if shapes.shape.clip {
@@ -76,11 +77,39 @@ fn render(shapes ShapeTree, ctx &gg.Context) []Renderer {
 	return renderers
 }
 
-fn render_shape(shape Shape, ctx &gg.Context) []Renderer {
+fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer {
 	return match shape.type {
-		.container { render_rectangle(shape, ctx) }
-		.text { render_text(shape, ctx) }
-		.none { [Renderer(DrawNone{})] }
+		.container {
+			mut renderers := []Renderer{}
+			renderers << render_rectangle(shape, ctx)
+			if shape.text.len != 0 {
+				ctx.set_text_cfg(shape.text_cfg)
+				w, h := ctx.text_size(shape.text)
+				x := shape.x + 20
+				// erase portion of rectangle where text goes.
+				renderers << DrawRect{
+					x:     x
+					y:     shape.y - h / 2
+					w:     w
+					h:     h
+					style: .fill
+					color: parent_color
+				}
+				renderers << DrawText{
+					x:    x
+					y:    shape.y - h + 1
+					text: shape.text
+					cfg:  shape.text_cfg
+				}
+			}
+			renderers
+		}
+		.text {
+			render_text(shape, ctx)
+		}
+		.none {
+			[Renderer(DrawNone{})]
+		}
 	}
 }
 

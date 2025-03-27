@@ -8,11 +8,12 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	ui           &gg.Context       = &gg.Context{}
-	state        voidptr           = unsafe { nil }
-	layout       ShapeTree         = ShapeTree{}
-	renderers    []Renderer        = []
-	mutex        &sync.Mutex       = sync.new_mutex()
+	ui           &gg.Context = &gg.Context{}
+	state        voidptr     = unsafe { nil }
+	layout       ShapeTree   = ShapeTree{}
+	renderers    []Renderer  = []
+	mutex        &sync.Mutex = sync.new_mutex()
+	bg_color     gx.Color
 	gen_view     fn (&Window) View = empty_view
 	id_focus     FocusId
 	focused      bool = true
@@ -39,6 +40,7 @@ pub:
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
 		state:    cfg.state
+		bg_color: cfg.bg_color
 		on_event: cfg.on_event
 	}
 	window.ui = gg.new_context(
@@ -202,7 +204,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut shapes := generate_shapes(view, window)
 	layout_do(mut shapes, window)
-	renderers := render(shapes, window.ui)
+	renderers := render(shapes, window.bg_color, window.ui)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -223,7 +225,7 @@ pub fn (mut window Window) update_window() {
 	view := window.gen_view(window)
 	mut shapes := generate_shapes(view, window)
 	layout_do(mut shapes, window)
-	renderers := render(shapes, window.ui)
+	renderers := render(shapes, window.bg_color, window.ui)
 	window.layout = shapes
 	window.renderers = renderers
 }

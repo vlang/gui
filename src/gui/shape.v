@@ -44,18 +44,18 @@ pub mut:
 	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
 }
 
-// ShapeType defines the kind of Shape.
-pub enum ShapeType {
-	none
-	container
-	text
-}
-
 // ShapeTree defines a tree of Shapes. Views generate ShapeTrees
 pub struct ShapeTree {
 pub mut:
 	shape    Shape
 	children []ShapeTree
+}
+
+// ShapeType defines the kind of Shape.
+pub enum ShapeType {
+	none
+	container
+	text
 }
 
 // point_in_shape determines if the given point is within the shape's layout

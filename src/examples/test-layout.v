@@ -73,6 +73,7 @@ fn main_view(w &gui.Window) gui.View {
 			),
 			gui.row(
 				id:       'orange'
+				text:     ' orange  '
 				color:    gx.orange
 				sizing:   gui.flex_flex
 				children: [

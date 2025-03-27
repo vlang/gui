@@ -25,6 +25,7 @@ pub mut:
 	v_align      VerticalAlign
 	radius       int
 	color        gx.Color
+	text         string
 	cfg          voidptr
 	on_char      fn (u32, &Window)                          = unsafe { nil }
 	on_click     fn (voidptr, MouseEvent, &Window)          = unsafe { nil }
@@ -58,6 +59,10 @@ fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 			v_align:      cfg.v_align
 			radius:       cfg.radius
 			color:        cfg.color
+			text:         cfg.text
+			text_cfg:     gx.TextCfg{
+				color: cfg.color
+			}
 			cfg:          cfg.cfg
 			on_click:     cfg.on_click
 			on_char:      cfg.on_char
@@ -85,6 +90,7 @@ pub:
 	fill         bool
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
+	text         string
 	cfg          voidptr
 	spacing      f32                                        = spacing_default
 	radius       int                                        = radius_default
@@ -122,6 +128,7 @@ fn container(cfg ContainerCfg) &Container {
 		radius:       cfg.radius
 		sizing:       cfg.sizing
 		spacing:      cfg.spacing
+		text:         cfg.text
 		cfg:          cfg.cfg
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char
