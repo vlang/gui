@@ -80,6 +80,7 @@ fn main_view(w &gui.Window) gui.View {
 						id:        'check'
 						sizing:    gui.flex_flex
 						max_width: 300
+						clip:      true
 						fill:      true
 						color:     gx.rgb(0x30, 0x30, 0x30)
 						children:  [
@@ -158,8 +159,6 @@ fn main_view(w &gui.Window) gui.View {
 				]
 			),
 			gui.column(
-				width:    75
-				height:   50
 				fill:     true
 				clip:     true
 				sizing:   gui.flex_flex

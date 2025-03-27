@@ -226,8 +226,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 		}
 	} else if node.shape.axis == .top_to_bottom {
 		if node.shape.max_width != 0 {
-			padding := node.shape.padding.left + node.shape.padding.right
-			max_width := node.shape.max_width - padding
+			max_width := node.shape.max_width
 			if node.shape.width > max_width {
 				node.shape.width = max_width
 			}
@@ -359,6 +358,12 @@ fn layout_flex_heights(mut node ShapeTree) {
 			}
 		}
 	} else if node.shape.axis == .left_to_right {
+		if node.shape.max_height != 0 {
+			max_height := node.shape.max_height
+			if node.shape.height > max_height {
+				node.shape.height = max_height
+			}
+		}
 		for mut child in node.children {
 			if child.shape.sizing.height == .flex {
 				child.shape.height += (remaining_height - f32_max(child.shape.height,
