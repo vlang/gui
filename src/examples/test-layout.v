@@ -77,11 +77,12 @@ fn main_view(w &gui.Window) gui.View {
 				sizing:   gui.flex_flex
 				children: [
 					gui.column(
-						sizing:   gui.flex_flex
-						fill:     true
-						color:    gx.rgb(0x30, 0x30, 0x30)
-						clip:     true
-						children: [
+						id:        'check'
+						sizing:    gui.flex_flex
+						max_width: 300
+						fill:      true
+						color:     gx.rgb(0x30, 0x30, 0x30)
+						children:  [
 							gui.rectangle(
 								id:     'rect'
 								width:  25
@@ -131,10 +132,11 @@ fn main_view(w &gui.Window) gui.View {
 									),
 									gui.input(
 										id_focus:        2
+										min_width:       50
+										max_width:       100
 										text:            state.other_input
 										text_style:      text_style
 										wrap:            false
-										sizing:          gui.flex_fit
 										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
 											state.other_input = s

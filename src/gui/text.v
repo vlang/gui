@@ -30,9 +30,9 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 			text_cfg:    t.style
 			lines:       [t.text]
 			wrap:        t.wrap
+			min_width:   t.min_width
 			keep_spaces: t.keep_spaces
 			sizing:      Sizing{sizing_width_type, .fit}
-			min_width:   0
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)

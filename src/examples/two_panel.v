@@ -16,6 +16,11 @@ fn main() {
 
 fn main_view(mut w gui.Window) gui.View {
 	width, height := w.window_size()
+	text_style := gx.TextCfg{
+		color: gx.dark_blue
+		bold:  true
+	}
+
 	return gui.row(
 		id: 'row'
 
@@ -32,7 +37,7 @@ fn main_view(mut w gui.Window) gui.View {
 				color:      gx.dark_gray
 				fill:       true
 				sizing:     gui.flex_flex
-				children:   [gui.text(text: 'Hello')]
+				children:   [gui.text(text: 'Hello', style: text_style)]
 			),
 			gui.column(
 				id:       'green'
@@ -41,7 +46,7 @@ fn main_view(mut w gui.Window) gui.View {
 				v_align:  .bottom
 				fill:     true
 				sizing:   gui.flex_flex
-				children: [gui.text(text: 'There!')]
+				children: [gui.text(text: 'There!', style: text_style)]
 			),
 		]
 	)

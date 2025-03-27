@@ -27,16 +27,18 @@ fn layout_widths(mut node ShapeTree) {
 				layout_widths(mut child)
 			}
 		} else {
-			node.shape.width += padding
-			node.shape.min_width += padding
-			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
-			node.shape.width += spacing
-			node.shape.min_width += spacing
 			for mut child in node.children {
 				layout_widths(mut child)
 				node.shape.width += child.shape.width
 				node.shape.min_width += child.shape.min_width
 				node.shape.max_width += child.shape.max_width
+			}
+			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
+			node.shape.width += padding + spacing
+			node.shape.min_width += padding + spacing
+			node.shape.width = f32_max(node.shape.width, node.shape.min_width)
+			if node.shape.max_width != 0 {
+				node.shape.width = f32_min(node.shape.max_width + padding + spacing, node.shape.width)
 			}
 		}
 	} else if node.shape.axis == .top_to_bottom { // across the axis
@@ -45,15 +47,11 @@ fn layout_widths(mut node ShapeTree) {
 			if node.shape.sizing.width != .fixed {
 				node.shape.width = f32_max(node.shape.width, child.shape.width + padding)
 				node.shape.min_width = f32_max(node.shape.min_width, child.shape.min_width + padding)
-				if node.shape.max_width != 0 && child.shape.max_width != 0 {
-					node.shape.max_width = f32_min(node.shape.max_width, child.shape.max_width +
-						padding)
-				}
-				node.shape.width = f32_max(node.shape.width, node.shape.min_width)
-				// if node.shape.max_width != 0 {
-				// 	node.shape.width = f32_min(node.shape.width, node.shape.max_width)
-				// }
 			}
+		}
+		node.shape.width = f32_max(node.shape.width, node.shape.min_width)
+		if node.shape.max_width != 0 {
+			node.shape.width = f32_min(node.shape.max_width + padding, node.shape.width)
 		}
 	}
 }
@@ -68,16 +66,19 @@ fn layout_heights(mut node ShapeTree) {
 				layout_heights(mut child)
 			}
 		} else {
-			node.shape.height += padding
-			node.shape.min_height += padding
-			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
-			node.shape.height += spacing
-			node.shape.min_height += spacing
 			for mut child in node.children {
 				layout_heights(mut child)
 				node.shape.height += child.shape.height
 				node.shape.min_height += child.shape.min_height
 				node.shape.max_height += child.shape.max_height
+			}
+			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
+			node.shape.height += padding + spacing
+			node.shape.min_height += padding + spacing
+			node.shape.height = f32_max(node.shape.height, node.shape.min_height)
+			if node.shape.max_height != 0 {
+				node.shape.height = f32_min(node.shape.max_height + padding + spacing,
+					node.shape.height)
 			}
 		}
 	} else if node.shape.axis == .left_to_right { // across the axis
@@ -87,15 +88,11 @@ fn layout_heights(mut node ShapeTree) {
 				node.shape.height = f32_max(node.shape.height, child.shape.height + padding)
 				node.shape.min_height = f32_max(node.shape.min_height, child.shape.min_height +
 					padding)
-				if node.shape.max_height != 0 && child.shape.max_height != 0 {
-					node.shape.max_height = f32_min(node.shape.max_height, child.shape.max_height +
-						padding)
-				}
-				node.shape.height = f32_max(node.shape.height, node.shape.min_height)
-				// if node.shape.max_height != 0 {
-				// 	node.shape.height = f32_min(node.shape.height, node.shape.max_height)
-				// }
 			}
+		}
+		node.shape.height = f32_max(node.shape.height, node.shape.min_height)
+		if node.shape.max_height != 0 {
+			node.shape.height = f32_min(node.shape.max_height + padding, node.shape.height)
 		}
 	}
 }
@@ -143,7 +140,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 				return n.shape.sizing.width == .flex && n.shape.uid !in excluded
 			})
 			if len == 0 {
-				return
+				break
 			}
 
 			mut smallest := node.children[idx].shape.width
@@ -189,7 +186,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 		for i := 0; remaining_width < -0.1 && i < clamp; i++ {
 			shrinkable := node.children.filter(it.shape.uid !in excluded)
 			if shrinkable.len == 0 {
-				return
+				break
 			}
 
 			mut largest := shrinkable[0].shape.width
@@ -228,11 +225,20 @@ fn layout_flex_widths(mut node ShapeTree) {
 			}
 		}
 	} else if node.shape.axis == .top_to_bottom {
+		if node.shape.max_width != 0 {
+			padding := node.shape.padding.left + node.shape.padding.right
+			max_width := node.shape.max_width - padding
+			if node.shape.width > max_width {
+				node.shape.width = max_width
+			}
+		}
 		for mut child in node.children {
 			if child.shape.sizing.width == .flex {
 				child.shape.width += (remaining_width - f32_max(child.shape.width, child.shape.min_width))
-				if child.shape.max_width != 0 && child.shape.width > child.shape.max_width {
-					child.shape.width = child.shape.max_width
+				child_padding := child.shape.padding.left + child.shape.padding.right
+				if child.shape.max_width != 0
+					&& child.shape.width > (child.shape.max_width - child_padding) {
+					child.shape.width = child.shape.max_width - child_padding
 				}
 			}
 		}

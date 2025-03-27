@@ -69,13 +69,12 @@ fn main_view(mut w gui.Window) gui.View {
 	}
 
 	return gui.column(
-		radius:    0
-		spacing:   5
-		max_width: 155
-		color:     gx.rgb(215, 125, 0)
-		fill:      true
-		padding:   gui.pad_4(10)
-		children:  panel
+		radius:   0
+		spacing:  5
+		color:    gx.rgb(215, 125, 0)
+		fill:     true
+		padding:  gui.pad_4(10)
+		children: panel
 	)
 }
 

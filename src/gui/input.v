@@ -10,9 +10,12 @@ pub:
 	color           gx.Color = input_color_default
 	sizing          Sizing
 	spacing         f32
+	padding         Padding
 	text            string
 	text_style      gx.TextCfg
-	width           f32 = 50
+	width           f32
+	min_width       f32
+	max_width       f32
 	wrap            bool
 	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
 }
@@ -23,6 +26,8 @@ pub fn input(cfg InputCfg) &View {
 		id:         cfg.id
 		id_focus:   cfg.id_focus
 		width:      cfg.width
+		min_width:  cfg.min_width
+		max_width:  cfg.max_width
 		spacing:    cfg.spacing
 		color:      cfg.color
 		fill:       true
@@ -37,6 +42,7 @@ pub fn input(cfg InputCfg) &View {
 				style:       cfg.text_style
 				id_focus:    cfg.id_focus
 				wrap:        cfg.wrap
+				min_width:   f32_max(0, cfg.min_width - cfg.padding.left - cfg.padding.right)
 				keep_spaces: true
 			),
 		]
