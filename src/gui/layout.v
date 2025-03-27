@@ -273,7 +273,7 @@ fn layout_flex_heights(mut node ShapeTree) {
 				return n.shape.sizing.height == .flex && n.shape.uid !in excluded
 			})
 			if len == 0 {
-				return
+				break
 			}
 
 			mut smallest := node.children[idx].shape.height
@@ -319,7 +319,7 @@ fn layout_flex_heights(mut node ShapeTree) {
 		for i := 0; remaining_height < -0.1 && i < clamp; i++ {
 			shrinkable := node.children.filter(it.shape.uid !in excluded)
 			if shrinkable.len == 0 {
-				return
+				break
 			}
 
 			mut largest := shrinkable[0].shape.height
