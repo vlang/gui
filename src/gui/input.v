@@ -10,7 +10,7 @@ pub:
 	color           gx.Color = input_color_default
 	sizing          Sizing
 	spacing         f32
-	padding         Padding
+	padding         Padding = padding(5, 6, 6, 6)
 	text            string
 	text_style      gx.TextCfg
 	width           f32
@@ -22,6 +22,14 @@ pub:
 
 pub fn input(cfg InputCfg) &View {
 	assert cfg.id_focus != 0
+	mut text_view := text(
+		text:        cfg.text
+		style:       cfg.text_style
+		id_focus:    cfg.id_focus
+		wrap:        cfg.wrap
+		keep_spaces: true
+	)
+
 	mut input := row(
 		id:         cfg.id
 		id_focus:   cfg.id_focus
@@ -31,21 +39,12 @@ pub fn input(cfg InputCfg) &View {
 		spacing:    cfg.spacing
 		color:      cfg.color
 		fill:       true
-		padding:    padding(5, 6, 6, 6)
+		padding:    cfg.padding
 		sizing:     cfg.sizing
 		on_char:    cfg.on_char
 		on_click:   cfg.on_click
 		on_keydown: cfg.on_keydown
-		children:   [
-			text(
-				text:        cfg.text
-				style:       cfg.text_style
-				id_focus:    cfg.id_focus
-				wrap:        cfg.wrap
-				min_width:   f32_max(0, cfg.min_width - cfg.padding.left - cfg.padding.right)
-				keep_spaces: true
-			),
-		]
+		children:   [text_view]
 	)
 	return input
 }
@@ -71,6 +70,14 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) {
 				return
 			}
 			else {
+				if !cfg.wrap && cfg.sizing.width == .fixed { // clamp max chars to width of box when single line.
+					ctx := w.ui
+					ctx.set_text_cfg(cfg.text_style)
+					width := ctx.text_width(cfg.text + rune(c).str())
+					if width > (cfg.width - cfg.padding.left - cfg.padding.right) {
+						return
+					}
+				}
 				if cursor_pos < 0 {
 					t = cfg.text + rune(c).str()
 					w.input_state[w.id_focus].cursor_pos = t.len

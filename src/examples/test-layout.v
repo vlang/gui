@@ -133,8 +133,8 @@ fn main_view(w &gui.Window) gui.View {
 									),
 									gui.input(
 										id_focus:        2
-										min_width:       50
-										max_width:       100
+										width:           100
+										sizing:          gui.fixed_fit
 										text:            state.other_input
 										text_style:      text_style
 										wrap:            false

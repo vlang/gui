@@ -9,17 +9,18 @@ struct Text implements View {
 	id_focus int // >0 indicates text is focusable. Value indiciates tabbing order
 mut:
 	min_width   f32
+	max_width   f32
 	spacing     f32
 	style       gx.TextCfg
 	text        string
 	wrap        bool
 	keep_spaces bool
+	sizing      Sizing
 	cfg         &TextCfg
 	children    []View
 }
 
 fn (t &Text) generate(ctx gg.Context) ShapeTree {
-	sizing_width_type := if t.wrap { SizingType.flex } else { SizingType.fixed }
 	mut shape_tree := ShapeTree{
 		shape: Shape{
 			id:          t.id
@@ -32,7 +33,7 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 			wrap:        t.wrap
 			min_width:   t.min_width
 			keep_spaces: t.keep_spaces
-			sizing:      Sizing{sizing_width_type, .fit}
+			sizing:      t.sizing
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -70,6 +71,7 @@ pub fn text(cfg TextCfg) &Text {
 		wrap:        cfg.wrap
 		cfg:         &cfg
 		keep_spaces: cfg.keep_spaces
+		sizing:      if cfg.wrap { flex_fit } else { fit_fit }
 	}
 }
 
