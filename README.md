@@ -11,12 +11,11 @@ It's early days so little is working. Try it and send feedback.
 - Immediate mode rendering
 - Thread safe view updates
 - Declarative, flex-box style layout syntax
-- Automatic clipping. Controls won't draw outside their containers
 - Microsecond performance
 
 ## Example
 
-``` v
+```v
 module main
 
 import gui
