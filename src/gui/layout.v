@@ -126,7 +126,8 @@ fn find_first_idx_and_len(node ShapeTree, predicate fn (n ShapeTree) bool) (int,
 // to satisfy a layout constraint
 fn layout_flex_widths(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
-	mut remaining_width := node.shape.width - node.shape.padding.left - node.shape.padding.right
+	padding := node.shape.padding.left + node.shape.padding.right
+	mut remaining_width := node.shape.width - padding
 
 	if node.shape.axis == .left_to_right {
 		for mut child in node.children {
@@ -240,6 +241,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 		for mut child in node.children {
 			if child.shape.sizing.width == .flex {
 				child.shape.width += (remaining_width - f32_max(child.shape.width, child.shape.min_width))
+				child.shape.width = f32_max(child.shape.width, child.shape.min_width)
 				child_padding := child.shape.padding.left + child.shape.padding.right
 				if child.shape.max_width != 0
 					&& child.shape.width > (child.shape.max_width - child_padding) {
@@ -302,10 +304,11 @@ fn layout_flex_heights(mut node ShapeTree) {
 			height_to_add = f32_min(height_to_add, remaining_height / len)
 
 			for mut child in node.children {
-				if child.shape.sizing.height == .flex {
+				if child.shape.sizing.height == .flex && child.shape.uid !in excluded {
 					if child.shape.height == smallest {
 						previous_height := child.shape.height
 						child.shape.height += height_to_add
+
 						if child.shape.height <= child.shape.min_height {
 							child.shape.height = child.shape.min_height
 							excluded << child.shape.uid
@@ -374,8 +377,11 @@ fn layout_flex_heights(mut node ShapeTree) {
 			if child.shape.sizing.height == .flex {
 				child.shape.height += (remaining_height - f32_max(child.shape.height,
 					child.shape.min_height))
-				if child.shape.max_height != 0 && child.shape.height > child.shape.max_height {
-					child.shape.height = child.shape.max_height
+				child.shape.height = f32_max(child.shape.height, child.shape.min_height)
+				child_padding := child.shape.padding.top + child.shape.padding.bottom
+				if child.shape.max_height != 0
+					&& child.shape.height > (child.shape.max_height - child_padding) {
+					child.shape.height = child.shape.max_height - child_padding
 				}
 			}
 		}

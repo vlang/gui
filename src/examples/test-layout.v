@@ -59,7 +59,6 @@ fn main_view(w &gui.Window) gui.View {
 					),
 					gui.rectangle(
 						width:  75
-						height: 50
 						sizing: gui.fit_flex
 						color:  gui.transparent
 					),
@@ -78,6 +77,7 @@ fn main_view(w &gui.Window) gui.View {
 				sizing:   gui.flex_flex
 				children: [
 					gui.column(
+						id:       '123'
 						sizing:   gui.flex_flex
 						clip:     true
 						fill:     true
@@ -98,6 +98,7 @@ fn main_view(w &gui.Window) gui.View {
 								color:    gx.white
 								children: [
 									gui.text(
+										id:    'hello'
 										text:  'Hello world!'
 										style: text_style_large
 										wrap:  true
@@ -222,7 +223,6 @@ fn main_view(w &gui.Window) gui.View {
 					),
 					gui.rectangle(
 						width:  75
-						height: 50
 						sizing: gui.fit_flex
 						color:  gui.transparent
 					),

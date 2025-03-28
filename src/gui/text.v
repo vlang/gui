@@ -40,6 +40,8 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 	shape_tree.shape.height = text_height(shape_tree.shape, ctx)
 	if !t.wrap || shape_tree.shape.sizing.width == .fixed {
 		shape_tree.shape.min_width = shape_tree.shape.width
+	}
+	if !t.wrap || shape_tree.shape.sizing.height == .fixed {
 		shape_tree.shape.min_height = shape_tree.shape.height
 	}
 	return shape_tree
@@ -108,6 +110,7 @@ fn text_wrap(mut shape Shape, ctx gg.Context) {
 		shape.width = text_width(shape, ctx)
 		lh := line_height(shape, ctx)
 		shape.height = shape.lines.len * lh
+		shape.min_height = shape.height
 	}
 }
 
