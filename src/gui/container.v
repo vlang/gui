@@ -114,11 +114,11 @@ fn container(cfg ContainerCfg) &Container {
 		x:            cfg.x
 		y:            cfg.y
 		width:        cfg.width
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
+		min_width:    if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
+		max_width:    if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
 		height:       cfg.height
-		min_height:   cfg.min_height
-		max_height:   cfg.max_height
+		min_height:   if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
+		max_height:   if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
 		clip:         cfg.clip
 		color:        cfg.color
 		fill:         cfg.fill

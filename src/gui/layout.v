@@ -30,7 +30,10 @@ fn layout_widths(mut node ShapeTree) {
 			for mut child in node.children {
 				layout_widths(mut child)
 				node.shape.width += child.shape.width
-				node.shape.min_width += child.shape.min_width
+				node.shape.min_width += match child.shape.min_width > 0 {
+					true { child.shape.min_width }
+					else { child.shape.width }
+				}
 				node.shape.max_width += child.shape.max_width
 			}
 			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
@@ -69,7 +72,10 @@ fn layout_heights(mut node ShapeTree) {
 			for mut child in node.children {
 				layout_heights(mut child)
 				node.shape.height += child.shape.height
-				node.shape.min_height += child.shape.min_height
+				node.shape.min_height += match child.shape.min_height > 0 {
+					true { child.shape.min_height }
+					else { child.shape.height }
+				}
 				node.shape.max_height += child.shape.max_height
 			}
 			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
@@ -486,24 +492,22 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 		mut y_extra := f32(0)
 		match axis {
 			.left_to_right {
-				if node.shape.v_align != .top {
-					remaining := node.shape.height - child.shape.height - padding.top - padding.bottom
-					if remaining > 0 {
-						match node.shape.v_align {
-							.middle { y_extra = remaining / 2 }
-							else { y_extra = remaining }
-						}
+				remaining := node.shape.height - child.shape.height - padding.top - padding.bottom
+				if remaining > 0 {
+					match node.shape.v_align {
+						.top {}
+						.middle { y_extra = remaining / 2 }
+						else { y_extra = remaining }
 					}
 				}
 			}
 			.top_to_bottom {
-				if node.shape.h_align != .left {
-					remaining := node.shape.width - child.shape.width - padding.left - padding.right
-					if remaining > 0 {
-						match node.shape.h_align {
-							.center { x_extra = remaining / 2 }
-							else { x_extra = remaining }
-						}
+				remaining := node.shape.width - child.shape.width - padding.left - padding.right
+				if remaining > 0 {
+					match node.shape.h_align {
+						.left {}
+						.center { x_extra = remaining / 2 }
+						else { x_extra = remaining }
 					}
 				}
 			}

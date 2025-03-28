@@ -25,7 +25,7 @@ fn main_view(mut w gui.Window) gui.View {
 		sizing:   gui.fixed_fixed
 		children: [
 			gui.column(
-				min_width:  100
+				// min_width:  100
 				max_width:  150
 				max_height: 330
 				h_align:    .center
