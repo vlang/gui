@@ -16,6 +16,7 @@ pub:
 	width           f32
 	min_width       f32
 	max_width       f32
+	fill            bool = true
 	wrap            bool
 	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
 }
@@ -38,12 +39,12 @@ pub fn input(cfg InputCfg) &View {
 		max_width:  cfg.max_width
 		spacing:    cfg.spacing
 		color:      cfg.color
-		fill:       true
 		padding:    cfg.padding
 		sizing:     cfg.sizing
 		on_char:    cfg.on_char
 		on_click:   cfg.on_click
 		on_keydown: cfg.on_keydown
+		fill:       cfg.fill
 		children:   [text_view]
 	)
 	return input

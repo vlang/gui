@@ -61,19 +61,19 @@ fn render(shapes ShapeTree, bg_color gx.Color, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
 
+	renderers << render_shape(shapes.shape, bg_color, ctx)
+
 	if shapes.shape.clip {
 		renderers << render_clip(shapes.shape, ctx, mut clip_stack)
 	}
-
-	renderers << render_shape(shapes.shape, bg_color, ctx)
 	for child in shapes.children {
 		parent_color := if shapes.shape.color != transparent { shapes.shape.color } else { bg_color }
 		renderers << render(child, parent_color, ctx)
 	}
-
 	if shapes.shape.clip {
 		renderers << render_unclip(ctx, mut clip_stack)
 	}
+
 	return renderers
 }
 
@@ -169,11 +169,14 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 // shape_clip creates a clipping region based on the shapes's bounds property.
 // Internal use mostly, but useful if designing a new Shape
 fn render_clip(shape Shape, ctx &gg.Context, mut clip_stack ClipStack) Renderer {
+	// Appears to be some round-off issues in sokol's clipping that cause
+	// off by one errors. Not a big deal. Bump the region out by one in
+	// either direction to compensate.
 	clip := DrawClip{
-		x:      shape.x
-		y:      shape.y
-		width:  shape.width
-		height: shape.height
+		x:      shape.x + shape.padding.left - 1
+		y:      shape.y + shape.padding.top - 1
+		width:  shape.width - shape.padding.left - shape.padding.right + 2
+		height: shape.height - shape.padding.top - shape.padding.bottom + 2
 	}
 	clip_stack.push(clip)
 	return clip

@@ -38,10 +38,6 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
 	shape_tree.shape.height = text_height(shape_tree.shape, ctx)
-	if !t.wrap {
-		shape_tree.shape.min_width = shape_tree.shape.width
-		shape_tree.shape.min_height = shape_tree.shape.height
-	}
 	return shape_tree
 }
 
