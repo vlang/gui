@@ -92,10 +92,10 @@ pub:
 	v_align      VerticalAlign
 	text         string
 	cfg          voidptr
-	spacing      f32                                        = spacing_default
-	radius       int                                        = radius_default
-	color        gx.Color                                   = transparent
-	padding      Padding                                    = padding_default
+	spacing      f32                                        = spacing_medium
+	radius       int                                        = radius_medium
+	color        gx.Color                                   = color_transparent
+	padding      Padding                                    = padding_medium
 	on_char      fn (u32, &Window)                          = unsafe { nil }
 	on_click     fn (voidptr, MouseEvent, &Window)          = unsafe { nil }
 	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }

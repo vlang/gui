@@ -28,10 +28,10 @@ mut:
 pub struct WindowCfg {
 pub:
 	state    voidptr = unsafe { nil }
-	title    string  = app_title_default
+	title    string  = app_title
 	width    int
 	height   int
-	bg_color gx.Color                       = app_background
+	bg_color gx.Color                       = color_background
 	on_init  fn (&Window)                   = fn (_ &Window) {}
 	on_event fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }

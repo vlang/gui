@@ -11,7 +11,7 @@ pub:
 	height f32
 	color  gx.Color
 	fill   bool
-	radius int = radius_default
+	radius int = radius_medium
 	sizing Sizing
 }
 

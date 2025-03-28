@@ -34,7 +34,9 @@ fn layout_widths(mut node ShapeTree) {
 					true { child.shape.min_width }
 					else { child.shape.width }
 				}
-				node.shape.max_width += child.shape.max_width
+				if node.shape.max_width > 0 {
+					node.shape.max_width += child.shape.max_width
+				}
 			}
 			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
 			node.shape.width += padding + spacing
@@ -76,7 +78,9 @@ fn layout_heights(mut node ShapeTree) {
 					true { child.shape.min_height }
 					else { child.shape.height }
 				}
-				node.shape.max_height += child.shape.max_height
+				if node.shape.max_height > 0 {
+					node.shape.max_height += child.shape.max_height
+				}
 			}
 			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
 			node.shape.height += padding + spacing

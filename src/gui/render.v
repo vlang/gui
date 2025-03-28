@@ -67,7 +67,11 @@ fn render(shapes ShapeTree, bg_color gx.Color, ctx &gg.Context) []Renderer {
 		renderers << render_clip(shapes.shape, ctx, mut clip_stack)
 	}
 	for child in shapes.children {
-		parent_color := if shapes.shape.color != transparent { shapes.shape.color } else { bg_color }
+		parent_color := if shapes.shape.color != color_transparent {
+			shapes.shape.color
+		} else {
+			bg_color
+		}
 		renderers << render(child, parent_color, ctx)
 	}
 	if shapes.shape.clip {

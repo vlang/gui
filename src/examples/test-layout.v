@@ -31,11 +31,10 @@ fn main() {
 }
 
 fn main_view(w &gui.Window) gui.View {
-	text_style := gx.TextCfg{
-		color: gx.white
-	}
+	text_style := gui.text_cfg
 	text_style_blue := gx.TextCfg{
-		color: gx.light_blue
+		...text_style
+		color: gui.color_link
 	}
 	text_style_large := gx.TextCfg{
 		...text_style
@@ -65,7 +64,7 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  75
 						sizing: gui.fit_flex
-						color:  gui.transparent
+						color:  gui.color_transparent
 					),
 					gui.rectangle(
 						width:  75
@@ -87,17 +86,6 @@ fn main_view(w &gui.Window) gui.View {
 						fill:     true
 						color:    gx.rgb(0x30, 0x30, 0x30)
 						children: [
-							gui.rectangle(
-								id:     'rect'
-								width:  25
-								height: 25
-								color:  gx.orange
-							),
-							gui.rectangle(
-								width:  25
-								height: 25
-								color:  gx.orange
-							),
 							gui.row(
 								color:    gx.white
 								children: [
@@ -108,10 +96,6 @@ fn main_view(w &gui.Window) gui.View {
 										wrap:  true
 									),
 								]
-							),
-							gui.text(
-								text:  'This is text'
-								style: text_style
 							),
 							gui.text(
 								wrap:  true
@@ -227,7 +211,7 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  75
 						sizing: gui.fit_flex
-						color:  gui.transparent
+						color:  gui.color_transparent
 					),
 					gui.rectangle(
 						width:  75

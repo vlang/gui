@@ -66,7 +66,7 @@ fn main_view(w &gui.Window) gui.View {
                         width:  75
                         height: 50
                         sizing: gui.fit_flex
-                        color:  gui.transparent
+                        color:  gui.color_transparent
                     ),
                     gui.rectangle(
                         width:  75
@@ -148,7 +148,7 @@ fn main_view(w &gui.Window) gui.View {
                         width:  75
                         height: 50
                         sizing: gui.fit_flex
-                        color:  gui.transparent
+                        color:  gui.color_transparent
                     ),
                     gui.rectangle(
                         width:  75

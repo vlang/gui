@@ -52,8 +52,10 @@ pub:
 	id          string
 	id_focus    int
 	min_width   f32
-	spacing     f32 = text_spacing_default
-	style       gx.TextCfg
+	spacing     f32        = spacing_text
+	style       gx.TextCfg = gx.TextCfg{
+		color: color_text
+	}
 	text        string
 	wrap        bool
 	keep_spaces bool

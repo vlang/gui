@@ -10,9 +10,6 @@ pub mut:
 	left   f32
 }
 
-pub const padding_none = pad_4(0)
-pub const padding_default = pad_4(10)
-
 // padding is creates a padding with the given parameters.
 pub fn padding(top f32, right f32, bottom f32, left f32) Padding {
 	return Padding{

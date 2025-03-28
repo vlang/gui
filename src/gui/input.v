@@ -7,12 +7,12 @@ pub struct InputCfg {
 pub:
 	id              string
 	id_focus        int @[required] // !0 indicates input is focusable. Value indiciates tabbing order
-	color           gx.Color = input_color_default
+	color           gx.Color = color_input
 	sizing          Sizing
 	spacing         f32
 	padding         Padding = padding(5, 6, 6, 6)
 	text            string
-	text_style      gx.TextCfg
+	text_style      gx.TextCfg = text_cfg
 	width           f32
 	min_width       f32
 	max_width       f32
