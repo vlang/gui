@@ -6,6 +6,7 @@ import math
 const bwidth = 30
 const bheight = 30
 const bpadding = 5
+const max_digits = 12
 
 @[heap]
 struct App {
@@ -24,14 +25,7 @@ fn main() {
 		width:    200
 		height:   300
 		title:    'Calculator'
-		bg_color: gx.rgb(0x30, 0x30, 0x30)
-		on_event: fn (e &gg.Event, mut w gui.Window) {
-			if e.typ == .char {
-				mut app := w.state[App]()
-				c := rune(e.char_code).str().to_upper()
-				app.do_op(c, mut w)
-			}
-		}
+		on_event: on_event
 		on_init:  fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -71,7 +65,7 @@ fn main_view(mut w gui.Window) gui.View {
 		panel << gui.row(
 			spacing:  5
 			padding:  gui.padding_none
-			children: get_row(ops, app)
+			children: get_row(ops)
 		)
 	}
 
@@ -85,7 +79,7 @@ fn main_view(mut w gui.Window) gui.View {
 		children: [
 			gui.column(
 				spacing:  5
-				color:    gx.rgb(215, 125, 0)
+				color:    gx.rgb(195, 105, 0)
 				fill:     true
 				padding:  gui.pad_4(10)
 				children: panel
@@ -94,7 +88,7 @@ fn main_view(mut w gui.Window) gui.View {
 	)
 }
 
-fn get_row(ops []string, app &App) []gui.View {
+fn get_row(ops []string) []gui.View {
 	mut children := []gui.View{}
 
 	for op in ops {
@@ -106,18 +100,26 @@ fn get_row(ops []string, app &App) []gui.View {
 			v_align:  .middle
 			sizing:   gui.fixed_fixed
 			padding:  gui.padding_none
-			on_click: app.btn_click
+			on_click: btn_click
 		)
 	}
 	return children
 }
 
-fn (mut app App) btn_click(btn &gui.ButtonCfg, e &gg.Event, mut w gui.Window) {
-	op := btn.text
-	app.do_op(op, mut w)
+fn btn_click(btn &gui.ButtonCfg, e &gg.Event, mut w gui.Window) {
+	mut app := w.state[App]()
+	app.do_op(btn.text)
 }
 
-fn (mut app App) do_op(op string, mut w gui.Window) {
+fn on_event(e &gg.Event, mut w gui.Window) {
+	if e.typ == .char {
+		c := rune(e.char_code).str().to_upper()
+		mut app := w.state[App]()
+		app.do_op(c)
+	}
+}
+
+fn (mut app App) do_op(op string) {
 	number := app.text
 	if op == 'C' {
 		app.result = 0
@@ -139,7 +141,7 @@ fn (mut app App) do_op(op string, mut w gui.Window) {
 			app.is_float = false
 		} else {
 			// Append a new digit
-			if app.text.len < 12 {
+			if app.text.len < max_digits {
 				app.text = number + op
 			}
 		}
@@ -167,8 +169,8 @@ fn (mut app App) update_result() {
 	} else {
 		text = int(app.result).str()
 	}
-	if text.len > 12 {
-		text = text[0..12]
+	if text.len > max_digits {
+		text = text[0..max_digits]
 	}
 	app.text = text
 }

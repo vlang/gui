@@ -14,7 +14,7 @@ mut:
 	renderers    []Renderer  = []
 	mutex        &sync.Mutex = sync.new_mutex()
 	bg_color     gx.Color
-	gen_view     fn (&Window) View = empty_view
+	gen_view     fn (&Window) View = default_view
 	id_focus     FocusId
 	focused      bool = true
 	input_state  map[FocusId]InputState
@@ -31,8 +31,10 @@ pub:
 	title    string  = app_title
 	width    int
 	height   int
-	bg_color gx.Color                       = color_background
-	on_init  fn (&Window)                   = fn (_ &Window) {}
+	bg_color gx.Color     = color_background
+	on_init  fn (&Window) = fn (mut w Window) {
+		w.update_view(default_view)
+	}
 	on_event fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
 
@@ -148,8 +150,24 @@ fn event_fn(e &gg.Event, mut w Window) {
 	w.update_window()
 }
 
-fn empty_view(_ &Window) View {
-	return row(id: 'empty-view')
+fn default_view(window &Window) View {
+	w, h := window.window_size()
+	return column(
+		width:    w
+		height:   h
+		h_align:  .center
+		v_align:  .middle
+		sizing:   fixed_fixed
+		children: [
+			text(
+				text:  'Welcome to GUI'
+				style: gx.TextCfg{
+					...text_cfg
+					size: 25
+				}
+			),
+		]
+	)
 }
 
 // context gets the windows gg.Context
