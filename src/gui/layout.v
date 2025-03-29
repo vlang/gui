@@ -475,7 +475,7 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 					remaining -= child.shape.width
 				}
 				if node.shape.h_align == .center {
-					remaining /= (node.children.len + 1)
+					remaining /= 2
 				}
 				x += remaining
 			}
@@ -488,7 +488,7 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 					remaining -= child.shape.height
 				}
 				if node.shape.v_align == .middle {
-					remaining /= (node.children.len + 1)
+					remaining /= 2
 				}
 				y += remaining
 			}
