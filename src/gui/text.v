@@ -54,6 +54,7 @@ pub:
 	min_width   f32
 	spacing     f32        = spacing_text
 	style       gx.TextCfg = gx.TextCfg{
+		...text_cfg
 		color: color_text
 	}
 	text        string

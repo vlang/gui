@@ -1,4 +1,5 @@
 import gui
+import gg
 import gx
 import math
 
@@ -24,9 +25,15 @@ fn main() {
 		height:   300
 		title:    'Calculator'
 		bg_color: gx.rgb(0x30, 0x30, 0x30)
+		on_event: fn (e &gg.Event, mut w gui.Window) {
+			if e.typ == .char {
+				mut app := w.state[App]()
+				c := rune(e.char_code).str().to_upper()
+				app.do_op(c, mut w)
+			}
+		}
 		on_init:  fn (mut w gui.Window) {
 			w.update_view(main_view)
-			// w.resize_to_content()
 		}
 	)
 	window.run()
@@ -105,8 +112,12 @@ fn get_row(ops []string, app &App) []gui.View {
 	return children
 }
 
-fn (mut app App) btn_click(btn &gui.ButtonCfg, me gui.MouseEvent, mut w gui.Window) {
+fn (mut app App) btn_click(btn &gui.ButtonCfg, e &gg.Event, mut w gui.Window) {
 	op := btn.text
+	app.do_op(op, mut w)
+}
+
+fn (mut app App) do_op(op string, mut w gui.Window) {
 	number := app.text
 	if op == 'C' {
 		app.result = 0
@@ -123,13 +134,13 @@ fn (mut app App) btn_click(btn &gui.ButtonCfg, me gui.MouseEvent, mut w gui.Wind
 			return
 		}
 		if app.new_number {
-			app.text = btn.text
+			app.text = op
 			app.new_number = false
 			app.is_float = false
 		} else {
 			// Append a new digit
 			if app.text.len < 12 {
-				app.text = number + btn.text
+				app.text = number + op
 			}
 		}
 		return

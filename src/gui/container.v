@@ -4,35 +4,34 @@ import gg
 import gx
 
 struct Container implements View {
+	on_char      fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
+	on_click     fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
+	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
 pub mut:
-	id           string
-	id_focus     FocusId
-	axis         Axis
-	x            f32
-	y            f32
-	width        f32
-	min_width    f32
-	max_width    f32
-	height       f32
-	min_height   f32
-	max_height   f32
-	clip         bool
-	spacing      f32
-	sizing       Sizing
-	padding      Padding
-	fill         bool
-	h_align      HorizontalAlign
-	v_align      VerticalAlign
-	radius       int
-	color        gx.Color
-	text         string
-	cfg          voidptr
-	on_char      fn (u32, &Window)                          = unsafe { nil }
-	on_click     fn (voidptr, MouseEvent, &Window)          = unsafe { nil }
-	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
-	on_mouseover fn (f32, f32, &Window)                     = unsafe { nil }
-	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
-	children     []View
+	id         string
+	id_focus   FocusId
+	axis       Axis
+	x          f32
+	y          f32
+	width      f32
+	min_width  f32
+	max_width  f32
+	height     f32
+	min_height f32
+	max_height f32
+	clip       bool
+	spacing    f32
+	sizing     Sizing
+	padding    Padding
+	fill       bool
+	h_align    HorizontalAlign
+	v_align    VerticalAlign
+	radius     int
+	color      gx.Color
+	text       string
+	cfg        voidptr
+	children   []View
 }
 
 fn (cfg &Container) generate(_ gg.Context) ShapeTree {
@@ -61,6 +60,7 @@ fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 			color:        cfg.color
 			text:         cfg.text
 			text_cfg:     gx.TextCfg{
+				...text_cfg
 				color: cfg.color
 			}
 			cfg:          cfg.cfg
@@ -74,6 +74,7 @@ fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers
 pub struct ContainerCfg {
+	cfg voidptr
 pub:
 	id           string
 	id_focus     int
@@ -91,16 +92,14 @@ pub:
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
 	text         string
-	cfg          voidptr
-	spacing      f32                                        = spacing_medium
-	radius       int                                        = radius_medium
-	color        gx.Color                                   = color_transparent
-	padding      Padding                                    = padding_medium
-	on_char      fn (u32, &Window)                          = unsafe { nil }
-	on_click     fn (voidptr, MouseEvent, &Window)          = unsafe { nil }
-	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
-	on_mouseover fn (f32, f32, &Window)                     = unsafe { nil }
-	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
+	spacing      f32                                   = spacing_medium
+	radius       int                                   = radius_medium
+	color        gx.Color                              = color_transparent
+	padding      Padding                               = padding_medium
+	on_char      fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
+	on_click     fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
+	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
 	children     []View
 }
 
@@ -133,7 +132,6 @@ fn container(cfg ContainerCfg) &Container {
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char
 		on_keydown:   cfg.on_keydown
-		on_mouseover: cfg.on_mouseover
 		amend_layout: cfg.amend_layout
 		children:     cfg.children
 	}
@@ -146,6 +144,11 @@ fn container(cfg ContainerCfg) &Container {
 pub fn column(cfg ContainerCfg) &Container {
 	mut col := container(cfg)
 	col.axis = .top_to_bottom
+	if col.cfg == unsafe { nil } {
+		col.cfg = &ContainerCfg{
+			...cfg
+		}
+	}
 	return col
 }
 
@@ -154,10 +157,21 @@ pub fn column(cfg ContainerCfg) &Container {
 pub fn row(cfg ContainerCfg) &Container {
 	mut row := container(cfg)
 	row.axis = .left_to_right
+	if row.cfg == unsafe { nil } {
+		row.cfg = &ContainerCfg{
+			...cfg
+		}
+	}
 	return row
 }
 
 // canvas does not arrange or otherwise layout its children.
 pub fn canvas(cfg ContainerCfg) &Container {
-	return container(cfg)
+	mut canvas := container(cfg)
+	if canvas.cfg == unsafe { nil } {
+		canvas.cfg = &ContainerCfg{
+			...cfg
+		}
+	}
+	return canvas
 }

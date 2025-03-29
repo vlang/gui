@@ -38,10 +38,10 @@ pub mut:
 	wrap         bool
 	keep_spaces  bool
 	cfg          voidptr
-	on_char      fn (u32, &Window)                          = unsafe { nil }
-	on_click     fn (voidptr, MouseEvent, &Window)          = unsafe { nil }
-	on_keydown   fn (gg.KeyCode, gg.Modifier, &Window) bool = unsafe { nil }
-	amend_layout fn (mut ShapeTree, &Window)                = unsafe { nil }
+	on_char      fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
+	on_click     fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
+	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
 }
 
 // ShapeTree defines a tree of Shapes. Views generate ShapeTrees

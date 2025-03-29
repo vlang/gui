@@ -80,7 +80,7 @@ fn event_fn(e &gg.Event, mut w Window) {
 
 			if shape := shape_from_on_char(layout, w.id_focus) {
 				if shape.on_char != unsafe { nil } {
-					shape.on_char(e.char_code, w)
+					shape.on_char(shape.cfg, e, w)
 				}
 			}
 		}
@@ -98,21 +98,19 @@ fn event_fn(e &gg.Event, mut w Window) {
 			layout := w.layout
 			w.mutex.unlock()
 
-			k := e.key_code
-			m := unsafe { gg.Modifier(e.modifiers) }
-
 			mut handled := false
 			if shape := shape_from_on_key_down(layout) {
 				if shape.on_keydown != unsafe { nil } {
-					handled = shape.on_keydown(k, m, w)
+					handled = shape.on_keydown(shape.cfg, e, w)
 				}
 			}
 
-			if !handled && k == .tab && m == gg.Modifier.shift {
+			m := unsafe { gg.Modifier(e.modifiers) }
+			if !handled && e.key_code == .tab && m == gg.Modifier.shift {
 				if shape := shape_previous_focusable(layout, mut w) {
 					w.id_focus = shape.id_focus
 				}
-			} else if !handled && k == .tab {
+			} else if !handled && e.key_code == .tab {
 				if shape := shape_next_focusable(layout, mut w) {
 					w.id_focus = shape.id_focus
 				}
@@ -132,12 +130,7 @@ fn event_fn(e &gg.Event, mut w Window) {
 					if shape.id_focus > 0 {
 						w.set_id_focus(shape.id_focus)
 					}
-					me := MouseEvent{
-						mouse_x:      e.mouse_x
-						mouse_y:      e.mouse_y
-						mouse_button: e.mouse_button
-					}
-					shape.on_click(shape.cfg, me, w)
+					shape.on_click(shape.cfg, e, w)
 				}
 			}
 		}

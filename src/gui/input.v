@@ -41,9 +41,12 @@ pub fn input(cfg InputCfg) &View {
 		color:      cfg.color
 		padding:    cfg.padding
 		sizing:     cfg.sizing
-		on_char:    cfg.on_char
-		on_click:   cfg.on_click
-		on_keydown: cfg.on_keydown
+		cfg:        &InputCfg{
+			...cfg
+		}
+		on_char:    on_char_input
+		on_click:   on_click_input
+		on_keydown: on_keydown_input
 		fill:       cfg.fill
 		children:   [text_view]
 	)
@@ -54,7 +57,8 @@ const bsp_c = 0x08
 const del_c = 0x7F
 const space_c = 0x20
 
-fn (cfg InputCfg) on_char(c u32, mut w Window) {
+fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) {
+	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut t := cfg.text
 		cursor_pos := w.input_state[w.id_focus].cursor_pos
@@ -92,15 +96,15 @@ fn (cfg InputCfg) on_char(c u32, mut w Window) {
 	}
 }
 
-fn (cfg InputCfg) on_click(_ voidptr, me MouseEvent, mut w Window) {
-	if me.mouse_button == gg.MouseButton.left {
+fn on_click_input(cfg &InputCfg, e &gg.Event, mut w Window) {
+	if e.mouse_button == .left {
 		w.input_state[w.id_focus].cursor_pos = cfg.text.len
 	}
 }
 
-fn (cfg InputCfg) on_keydown(c gg.KeyCode, m gg.Modifier, mut w Window) bool {
+fn on_keydown_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {
 	mut cursor_pos := w.input_state[w.id_focus].cursor_pos
-	match c {
+	match e.key_code {
 		.left { cursor_pos = int_max(0, cursor_pos - 1) }
 		.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
 		.home { cursor_pos = 0 }

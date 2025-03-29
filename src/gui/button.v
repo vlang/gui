@@ -25,7 +25,7 @@ pub:
 	sizing      Sizing
 	text        string
 	text_style  gx.TextCfg = text_cfg
-	on_click    fn (&ButtonCfg, MouseEvent, &Window) = unsafe { nil }
+	on_click    fn (&ButtonCfg, &gg.Event, &Window) = unsafe { nil }
 }
 
 // button creates a button. Imagine that.
@@ -46,7 +46,7 @@ pub fn button(cfg ButtonCfg) &View {
 			...cfg
 		}
 		on_click:     cfg.on_click
-		on_char:      cfg.on_char
+		on_char:      on_char_button
 		amend_layout: cfg.amend_layout
 		children:     [
 			text(
@@ -57,9 +57,9 @@ pub fn button(cfg ButtonCfg) &View {
 	)
 }
 
-fn (cfg ButtonCfg) on_char(c u32, mut w Window) {
-	if c == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(&cfg, MouseEvent{}, w)
+fn on_char_button(cfg &ButtonCfg, e &gg.Event, mut w Window) {
+	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
+		cfg.on_click(&cfg, e, w)
 	}
 }
 
