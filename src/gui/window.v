@@ -209,8 +209,9 @@ pub fn (mut window Window) set_id_focus(id FocusId) {
 	window.update_window()
 }
 
-// update_view sets the Window's view. A window can have only one view. Giving a
-// Window a new view replaces the current view. Clears the input states.
+// update_view sets the Window's view generator. A window can have only one
+// view generator. Giving a Window a new view generator replaces the current
+// view generator and clears the input states.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut shapes := generate_shapes(view, window)
@@ -227,18 +228,22 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.renderers = renderers
 }
 
-// update_window generates a new layout from the windows view. Does not clear
-// the input states
+// update_window generates a new layout from the windows currnet
+// view generator. Does not clear the input states.
 pub fn (mut window Window) update_window() {
 	window.mutex.lock()
-	defer { window.mutex.unlock() }
+	gen_view := window.gen_view
+	window.mutex.unlock()
 
-	view := window.gen_view(window)
+	view := gen_view(window)
 	mut shapes := generate_shapes(view, window)
 	layout_do(mut shapes, window)
 	renderers := render(shapes, window.bg_color, window.ui)
+
+	window.mutex.lock()
 	window.layout = shapes
 	window.renderers = renderers
+	window.mutex.unlock()
 }
 
 // window_size gets the size of the window in logical units.

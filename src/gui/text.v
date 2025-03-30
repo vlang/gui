@@ -65,8 +65,8 @@ pub:
 // text renders text. Text wrapping is available. Multiple spaces are compressed
 // to one space unless `keep_spaces` is true. The `spacing` parameter is used to
 // increase the space between lines.
-pub fn text(cfg TextCfg) &Text {
-	return &Text{
+pub fn text(cfg TextCfg) Text {
+	return Text{
 		id:          cfg.id
 		id_focus:    cfg.id_focus
 		min_width:   cfg.min_width

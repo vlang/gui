@@ -106,8 +106,8 @@ pub:
 // container is the fundamental layout container in gui. It is used to layout
 // its children top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
-fn container(cfg ContainerCfg) &Container {
-	return &Container{
+fn container(cfg ContainerCfg) Container {
+	return Container{
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		x:            cfg.x
@@ -141,7 +141,7 @@ fn container(cfg ContainerCfg) &Container {
 
 // column arranges its children top to bottom. The gap between child items is
 // determined by the spacing parameter.
-pub fn column(cfg ContainerCfg) &Container {
+pub fn column(cfg ContainerCfg) Container {
 	mut col := container(cfg)
 	col.axis = .top_to_bottom
 	if col.cfg == unsafe { nil } {
@@ -154,7 +154,7 @@ pub fn column(cfg ContainerCfg) &Container {
 
 // row arranges its children left to right. The gap between child items is
 // determined by the spacing parameter.
-pub fn row(cfg ContainerCfg) &Container {
+pub fn row(cfg ContainerCfg) Container {
 	mut row := container(cfg)
 	row.axis = .left_to_right
 	if row.cfg == unsafe { nil } {
@@ -166,7 +166,7 @@ pub fn row(cfg ContainerCfg) &Container {
 }
 
 // canvas does not arrange or otherwise layout its children.
-pub fn canvas(cfg ContainerCfg) &Container {
+pub fn canvas(cfg ContainerCfg) Container {
 	mut canvas := container(cfg)
 	if canvas.cfg == unsafe { nil } {
 		canvas.cfg = &ContainerCfg{

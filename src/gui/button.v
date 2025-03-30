@@ -29,7 +29,7 @@ pub:
 }
 
 // button creates a button. Imagine that.
-pub fn button(cfg ButtonCfg) &View {
+pub fn button(cfg ButtonCfg) View {
 	return row(
 		id:           cfg.id
 		id_focus:     cfg.id_focus

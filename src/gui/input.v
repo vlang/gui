@@ -21,17 +21,9 @@ pub:
 	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
 }
 
-pub fn input(cfg InputCfg) &View {
+pub fn input(cfg InputCfg) View {
 	assert cfg.id_focus != 0
-	mut text_view := text(
-		text:        cfg.text
-		style:       cfg.text_style
-		id_focus:    cfg.id_focus
-		wrap:        cfg.wrap
-		keep_spaces: true
-	)
-
-	mut input := row(
+	return row(
 		id:         cfg.id
 		id_focus:   cfg.id_focus
 		width:      cfg.width
@@ -48,9 +40,16 @@ pub fn input(cfg InputCfg) &View {
 		on_click:   on_click_input
 		on_keydown: on_keydown_input
 		fill:       cfg.fill
-		children:   [text_view]
+		children:   [
+			text(
+				text:        cfg.text
+				style:       cfg.text_style
+				id_focus:    cfg.id_focus
+				wrap:        cfg.wrap
+				keep_spaces: true
+			),
+		]
 	)
-	return input
 }
 
 const bsp_c = 0x08
