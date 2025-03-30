@@ -16,150 +16,65 @@ It's early days so little is working. Try it and send feedback.
 ## Example
 
 ```v
-module main
-
 import gui
-import gx
+import gg
 
-@[heap]
-struct AppState {
+// GUI uses a view generator (a function that returns a View) to
+// render the contents of the Window. As the state of the app
+// changes, either through user actions or business logic, GUI
+// calls the view generator to build a new view. The new view is
+// used to render the contents of the window.
+//
+// There are several advantages to this approach.
+// - The view is simply a function of the model (state).
+// - No data binding or other observation mechanisms required.
+// - No worries about synchronizing with the UI thread.
+// - No need to remember to undo previous UI states.
+// - Microsecond performance.
+
+struct App {
 pub mut:
-    click_count int
+	clicks int
 }
 
 fn main() {
-    mut window := gui.window(
-        title:      'test layout'
-        width:      600
-        height:     400
-        bg_color:   gx.rgb(0x30, 0x30, 0x30)
-        state:      &AppState{}
-        on_init:    fn (mut w gui.Window) {
-            w.update_view(main_view)
-        }
-    )
-    window.run()
+	mut window := gui.window(
+		state:   &App{}
+		width:   300
+		height:  300
+		on_init: fn (mut w gui.Window) {
+			// Call update_view() any where in your
+			// business logic to change views.
+			w.update_view(main_view)
+		}
+	)
+	window.run()
 }
 
-fn main_view(w &gui.Window) gui.View {
-    width, height := w.window_size()
-    mut state := w.get_state[AppState]()
+// The view generator set in update_view() is called on
+// every user event (mouse move, click, resize, etc.).
+fn main_view(window &gui.Window) gui.View {
+	w, h := window.window_size()
+	app := window.state[App]()
 
-    return gui.row(
-        width:    width
-        height:   height
-        sizing:   gui.fixed_fixed
-        fill:     true
-        color:    gui.dark_blue
-        children: [
-            gui.column(
-                padding:  gui.padding_none
-                sizing:   gui.fit_flex
-                children: [
-                    gui.rectangle(
-                        width:  75
-                        height: 50
-                        fill:   true
-                        color:  gui.purple
-                    ),
-                    gui.rectangle(
-                        width:  75
-                        height: 50
-                        sizing: gui.fit_flex
-                        color:  gui.color_transparent
-                    ),
-                    gui.rectangle(
-                        width:  75
-                        height: 50
-                        fill:   true
-                        color:  gui.green
-                    ),
-                ]
-            ),
-            gui.row(
-                id:       'orange'
-                color:    gui.orange
-                sizing:   gui.Sizing{.flex, .flex}
-                children: [
-                    gui.column(
-                        sizing:   gui.Sizing{.flex, .flex}
-                        fill:     true
-                        color:    gui.rgb(0x30, 0x30, 0x30)
-                        children: [
-                            gui.rectangle(
-                                width:  25
-                                height: 25
-                                color:  gui.orange
-                            ),
-                            gui.column(
-                                color:    gx.white
-                                children: [
-                                    gui.label(text: 'Hello world!'),
-                                ]
-                            ),
-                            gui.label(text: 'This is text'),
-                            gui.label(
-                                id:       'label'
-                                wrap:     true
-                                text_cfg: gx.TextCfg{
-                                    size:  18
-                                    color: gui.white
-                                }
-                                text:     'Embedded in a column with wrapping'
-                            ),
-                            gui.button(
-                                text:     'Button Text ${state.click_count}'
-                                on_click: fn (id string, me gui.MouseEvent, mut w gui.Window) {
-                                    mut state := w.get_state[AppState]()
-                                    state.click_count += 1
-                                    w.update_view(main_view(w))
-                                }
-                            ),
-                        ]
-                    ),
-                    gui.rectangle(
-                        id:     'green'
-                        width:  25
-                        height: 25
-                        fill:   true
-                        sizing: gui.flex_flex
-                        color:  gui.dark_green
-                    ),
-                ]
-            ),
-            gui.rectangle(
-                width:  75
-                height: 50
-                fill:   true
-                sizing: gui.flex_flex
-                color:  gx.red
-            ),
-            gui.column(
-                padding:  gui.Padding{0, 0, 0, 0}
-                sizing:   gui.fit_flex
-                children: [
-                    gui.rectangle(
-                        width:  75
-                        height: 50
-                        fill:   true
-                        color:  gui.orange
-                    ),
-                    gui.rectangle(
-                        width:  75
-                        height: 50
-                        sizing: gui.fit_flex
-                        color:  gui.color_transparent
-                    ),
-                    gui.rectangle(
-                        width:  75
-                        height: 50
-                        fill:   true
-                        color:  gui.yellow
-                    ),
-                ]
-            ),
-        ]
-    )
+	return gui.column(
+		width:    w
+		height:   h
+		h_align:  .center
+		v_align:  .middle
+		sizing:   gui.fixed_fixed
+		children: [
+			gui.text(text: 'Welcome to GUI'),
+			gui.button(
+				text:     '${app.clicks} Clicks'
+				on_click: fn (_ &gui.ButtonCfg, e &gg.Event, mut w gui.Window) bool {
+					mut app := w.state[App]()
+					app.clicks += 1
+					return true // true says click was handled
+				}
+			),
+		]
+	)
 }
 ```
 

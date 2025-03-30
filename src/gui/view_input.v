@@ -56,7 +56,7 @@ const bsp_c = 0x08
 const del_c = 0x7F
 const space_c = 0x20
 
-fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) {
+fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) bool {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut t := cfg.text
@@ -71,7 +71,7 @@ fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) {
 				}
 			}
 			0...0x1F { // non-printables
-				return
+				return false
 			}
 			else {
 				if !cfg.wrap && cfg.sizing.width == .fixed { // clamp max chars to width of box when single line.
@@ -79,7 +79,7 @@ fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) {
 					ctx.set_text_cfg(cfg.text_style)
 					width := ctx.text_width(cfg.text + rune(c).str())
 					if width > (cfg.width - cfg.padding.left - cfg.padding.right) {
-						return
+						return true
 					}
 				}
 				if cursor_pos < 0 {
@@ -92,13 +92,17 @@ fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) {
 			}
 		}
 		cfg.on_text_changed(cfg, t, w)
+		return true
 	}
+	return false
 }
 
-fn on_click_input(cfg &InputCfg, e &gg.Event, mut w Window) {
+fn on_click_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {
 	if e.mouse_button == .left {
 		w.input_state[w.id_focus].cursor_pos = cfg.text.len
+		return true
 	}
+	return false
 }
 
 fn on_keydown_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {

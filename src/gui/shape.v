@@ -38,8 +38,8 @@ pub mut:
 	wrap         bool
 	keep_spaces  bool
 	cfg          voidptr
-	on_char      fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
-	on_click     fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
+	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
 }
@@ -75,31 +75,6 @@ fn (node ShapeTree) find_shape(predicate fn (n ShapeTree) bool) ?Shape {
 		}
 	}
 	return if predicate(node) { node.shape } else { none }
-}
-
-// shape_from_point_on_click walks the ShapeTree and returns the first shape
-// where the sahpe region contains the point and the shape has a click handler.
-// Search is in reverse order Internal use mostly, but useful if designing a new
-// Shape
-fn shape_from_on_click(node ShapeTree, x f32, y f32) ?Shape {
-	return node.find_shape(fn [x, y] (n ShapeTree) bool {
-		return n.shape.point_in_shape(x, y) && n.shape.on_click != unsafe { nil }
-	})
-}
-
-// shape_from_on_char finds the first control with an on_char handler and has
-// focus
-fn shape_from_on_char(node ShapeTree, id_focus FocusId) ?Shape {
-	return node.find_shape(fn [id_focus] (n ShapeTree) bool {
-		return id_focus > 0 && n.shape.id_focus == id_focus && n.shape.on_char != unsafe { nil }
-	})
-}
-
-// shape_from_on_char finds first control with on_keydown handler
-fn shape_from_on_key_down(node ShapeTree) ?Shape {
-	return node.find_shape(fn (n ShapeTree) bool {
-		return n.shape.on_keydown != unsafe { nil }
-	})
 }
 
 fn shape_previous_focusable(node ShapeTree, mut w Window) ?Shape {
@@ -145,4 +120,51 @@ fn get_focus_ids(node ShapeTree) []int {
 		focus_ids << get_focus_ids(child)
 	}
 	return arrays.distinct(focus_ids).sorted()
+}
+
+fn char_handler(node ShapeTree, e &gg.Event, w &Window) bool {
+	for child in node.children {
+		if char_handler(child, e, w) {
+			return true
+		}
+	}
+	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus {
+		if node.shape.on_char != unsafe { nil } && node.shape.on_char(node.shape.cfg, e, w) {
+			return true
+		}
+	}
+	return false
+}
+
+fn click_handler(node ShapeTree, e &gg.Event, mut w Window) bool {
+	for child in node.children {
+		if click_handler(child, e, mut w) {
+			return true
+		}
+	}
+	if node.shape.on_click != unsafe { nil } {
+		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+			if node.shape.id_focus > 0 {
+				w.set_id_focus(node.shape.id_focus)
+			}
+			if node.shape.on_click(node.shape.cfg, e, w) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+fn keydown_handler(node ShapeTree, e &gg.Event, w &Window) bool {
+	for child in node.children {
+		if keydown_handler(child, e, w) {
+			return true
+		}
+	}
+	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus {
+		if node.shape.on_keydown != unsafe { nil } && node.shape.on_keydown(node.shape.cfg, e, w) {
+			return true
+		}
+	}
+	return false
 }

@@ -1,4 +1,5 @@
 import gui
+import arrays
 import gg
 import gx
 import math
@@ -17,6 +18,13 @@ mut:
 	new_number bool
 	operands   []f64
 	operations []string
+	row_ops    [][]string = [
+	['C', '%', '^', '÷'],
+	['7', '8', '9', '*'],
+	['4', '5', '6', '-'],
+	['1', '2', '3', '+'],
+	['0', '.', '±', '='],
+]
 }
 
 fn main() {
@@ -36,14 +44,6 @@ fn main() {
 fn main_view(mut w gui.Window) gui.View {
 	app := w.state[App]()
 
-	row_ops := [
-		['C', '%', '^', '÷'],
-		['7', '8', '9', '*'],
-		['4', '5', '6', '-'],
-		['1', '2', '3', '+'],
-		['0', '.', '±', '='],
-	]
-
 	mut panel := []gui.View{}
 
 	panel << gui.row(
@@ -61,7 +61,7 @@ fn main_view(mut w gui.Window) gui.View {
 		]
 	)
 
-	for ops in row_ops {
+	for ops in app.row_ops {
 		panel << gui.row(
 			spacing:  5
 			padding:  gui.padding_none
@@ -106,9 +106,10 @@ fn get_row(ops []string) []gui.View {
 	return children
 }
 
-fn btn_click(btn &gui.ButtonCfg, e &gg.Event, mut w gui.Window) {
+fn btn_click(btn &gui.ButtonCfg, e &gg.Event, mut w gui.Window) bool {
 	mut app := w.state[App]()
 	app.do_op(btn.text)
+	return true
 }
 
 fn on_event(e &gg.Event, mut w gui.Window) {
@@ -120,6 +121,9 @@ fn on_event(e &gg.Event, mut w gui.Window) {
 }
 
 fn (mut app App) do_op(op string) {
+	if op !in arrays.flatten(app.row_ops) {
+		return
+	}
 	number := app.text
 	if op == 'C' {
 		app.result = 0

@@ -106,9 +106,10 @@ fn main_view(w &gui.Window) gui.View {
 							gui.button(
 								id_focus: 1
 								text:     'Button Text ${state.click_count}'
-								on_click: fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) {
+								on_click: fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
 									mut state := w.state[AppState]()
 									state.click_count += 1
+									return true
 								}
 							),
 							gui.row(

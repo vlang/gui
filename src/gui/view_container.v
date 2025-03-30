@@ -4,8 +4,8 @@ import gg
 import gx
 
 struct Container implements View {
-	on_char      fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
-	on_click     fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
+	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
 pub mut:
@@ -92,12 +92,12 @@ pub:
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
 	text         string
-	spacing      f32                                   = spacing_medium
-	radius       int                                   = radius_medium
-	color        gx.Color                              = color_transparent
-	padding      Padding                               = padding_medium
-	on_char      fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
-	on_click     fn (voidptr, &gg.Event, &Window)      = unsafe { nil }
+	spacing      f32      = spacing_medium
+	radius       int      = radius_medium
+	color        gx.Color = color_transparent
+	padding      Padding  = padding_medium
+	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
 	children     []View
