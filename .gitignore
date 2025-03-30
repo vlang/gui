@@ -6,6 +6,9 @@
 !*/
 ### Above combination will ignore all files without extension
 
+!Makefile
+!LICENSE
+
 # Binaries for programs and plugins
 main
 /gui

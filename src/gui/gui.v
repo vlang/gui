@@ -11,6 +11,8 @@ pub const color_background = gx.rgb(48, 48, 48)
 pub const color_button = gx.rgb(54, 64, 64)
 pub const color_input = gx.rgb(64, 64, 64)
 pub const color_link = gx.rgb(100, 149, 237)
+pub const color_progress = gx.rgb(64, 64, 64)
+pub const color_progress_bar = gx.rgb(112, 112, 112)
 pub const color_text = gx.rgb(225, 225, 225)
 pub const color_transparent = gx.rgba(0, 0, 0, 0)
 
@@ -30,6 +32,7 @@ pub const spacing_medium = 10
 pub const spacing_large = 15
 pub const spacing_text = 2 // additional line spacing in text.
 
+pub const size_progress_bar = 10
 pub const size_text_small = 15
 pub const size_text_medium = 17
 pub const size_text_large = 20

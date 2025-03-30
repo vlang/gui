@@ -18,8 +18,8 @@ Tip:
 Set the `VFLAGS` environment variable to save yourself some typing.
 
 Example:
-```
-VFLAGS=-path /Users/mike/gui/src|@vlib|@vmodules
+```bash
+export VFLAGS=-path /Users/mike/gui/src|@vlib|@vmodules
 ```
 
 ## Getting Started
