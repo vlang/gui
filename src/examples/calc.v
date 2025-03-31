@@ -43,7 +43,6 @@ fn main() {
 
 fn main_view(mut w gui.Window) gui.View {
 	app := w.state[App]()
-
 	mut panel := []gui.View{}
 
 	panel << gui.row(

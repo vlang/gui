@@ -34,8 +34,8 @@ fn main_view(mut w gui.Window) gui.View {
 					gui.text(
 						text:  'Hello'
 						style: gx.TextCfg{
-							...gui.text_cfg
-							size:  gui.size_text_large
+							...gui.theme().text_cfg
+							size:  gui.theme().size_text_large
 							color: gx.black
 						}
 					),
@@ -53,8 +53,8 @@ fn main_view(mut w gui.Window) gui.View {
 					gui.text(
 						text:  'There!'
 						style: gx.TextCfg{
-							...gui.text_cfg
-							size: gui.size_text_large
+							...gui.theme().text_cfg
+							size: gui.theme().size_text_large
 						}
 					),
 				]

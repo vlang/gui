@@ -10,7 +10,7 @@ struct Container implements View {
 	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
 pub mut:
 	id         string
-	id_focus   FocusId
+	id_focus   u32
 	axis       Axis
 	x          f32
 	y          f32
@@ -60,7 +60,7 @@ fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 			color:        cfg.color
 			text:         cfg.text
 			text_cfg:     gx.TextCfg{
-				...text_cfg
+				...gui_theme.text_cfg
 				color: cfg.color
 			}
 			cfg:          cfg.cfg
@@ -77,7 +77,7 @@ pub struct ContainerCfg {
 	cfg voidptr
 pub:
 	id           string
-	id_focus     int
+	id_focus     u32
 	x            f32
 	y            f32
 	width        f32
@@ -92,10 +92,10 @@ pub:
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
 	text         string
-	spacing      f32      = spacing_medium
-	radius       int      = radius_medium
+	spacing      f32      = gui_theme.spacing_medium
+	radius       int      = gui_theme.radius_medium
 	color        gx.Color = color_transparent
-	padding      Padding  = padding_medium
+	padding      Padding  = gui_theme.padding_medium
 	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }

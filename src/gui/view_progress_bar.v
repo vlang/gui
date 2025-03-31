@@ -10,19 +10,19 @@ pub:
 	indefinite bool
 	vertical   bool
 	percent    f32
-	color      gx.Color = color_progress
-	color_bar  gx.Color = color_progress_bar
-	radius     int      = radius_small
+	color      gx.Color = gui_theme.color_progress
+	color_bar  gx.Color = gui_theme.color_progress_bar
+	radius     int      = gui_theme.radius_small
 	sizing     Sizing
 	text       string
-	text_style gx.TextCfg = text_cfg
+	text_style gx.TextCfg = gui_theme.text_cfg
 }
 
 pub fn progress_bar(cfg ProgressBarCfg) View {
 	container_cfg := ContainerCfg{
 		id:           cfg.id
-		width:        if cfg.width == 0 { size_progress_bar } else { cfg.width }
-		height:       if cfg.height == 0 { size_progress_bar } else { cfg.height }
+		width:        if cfg.width == 0 { f32(gui_theme.size_progress_bar) } else { cfg.width }
+		height:       if cfg.height == 0 { f32(gui_theme.size_progress_bar) } else { cfg.height }
 		color:        cfg.color
 		radius:       cfg.radius
 		sizing:       cfg.sizing

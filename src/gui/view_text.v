@@ -6,7 +6,7 @@ import gx
 // Text is an internal structure used to describe a text block
 struct Text implements View {
 	id       string
-	id_focus int // >0 indicates text is focusable. Value indiciates tabbing order
+	id_focus u32 // >0 indicates text is focusable. Value indiciates tabbing order
 mut:
 	min_width   f32
 	max_width   f32
@@ -50,13 +50,10 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 pub struct TextCfg {
 pub:
 	id          string
-	id_focus    int
+	id_focus    u32
 	min_width   f32
-	spacing     f32        = spacing_text
-	style       gx.TextCfg = gx.TextCfg{
-		...text_cfg
-		color: color_text
-	}
+	spacing     f32        = gui_theme.spacing_text
+	style       gx.TextCfg = gui_theme.text_cfg
 	text        string
 	wrap        bool
 	keep_spaces bool

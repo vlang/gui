@@ -11,7 +11,7 @@ pub mut:
 	id           string // asigned by user
 	type         ShapeType
 	uid          u64 = rand.u64() // internal use only
-	id_focus     FocusId // >0 indicates shape is focusable. Value determines tabbing order
+	id_focus     u32 // >0 indicates shape is focusable. Value determines tabbing order
 	axis         Axis
 	x            f32
 	y            f32
@@ -84,7 +84,7 @@ fn shape_previous_focusable(node ShapeTree, mut w Window) ?Shape {
 	}
 	mut next_id := ids.last()
 	if w.id_focus > 0 {
-		idx := ids.index(int(w.id_focus))
+		idx := ids.index(u32(w.id_focus))
 		if idx >= 1 && idx < ids.len {
 			next_id = ids[idx - 1]
 		}
@@ -101,7 +101,7 @@ fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
 	}
 	mut next_id := ids.first()
 	if w.id_focus > 0 {
-		idx := ids.index(int(w.id_focus))
+		idx := ids.index(w.id_focus)
 		if idx >= 0 && idx < ids.len - 1 {
 			next_id = ids[idx + 1]
 		}
@@ -111,8 +111,8 @@ fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
 	})
 }
 
-fn get_focus_ids(node ShapeTree) []int {
-	mut focus_ids := []int{}
+fn get_focus_ids(node ShapeTree) []u32 {
+	mut focus_ids := []u32{}
 	if node.shape.id_focus > 0 {
 		focus_ids << node.shape.id_focus
 	}

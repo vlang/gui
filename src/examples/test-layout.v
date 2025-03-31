@@ -25,17 +25,17 @@ fn main() {
 		height:  550
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
-			w.set_id_focus(1)
+			w.set_id_focus(2)
 		}
 	)
 	window.run()
 }
 
 fn main_view(w &gui.Window) gui.View {
-	text_style := gui.text_cfg
+	text_style := gui_theme.text_cfg
 	text_style_blue := gx.TextCfg{
 		...text_style
-		color: gui.color_link
+		color: gui_theme.color_link
 	}
 	text_style_large := gx.TextCfg{
 		...text_style
@@ -91,7 +91,6 @@ fn main_view(w &gui.Window) gui.View {
 								color:    gx.white
 								children: [
 									gui.text(
-										id:    'hello'
 										text:  'Hello world!'
 										style: text_style_large
 										wrap:  true
@@ -117,7 +116,7 @@ fn main_view(w &gui.Window) gui.View {
 								padding:  gui.padding_none
 								children: [
 									gui.text(
-										text:  'Label'
+										text:  'label'
 										style: text_style
 									),
 									gui.input(
@@ -134,10 +133,14 @@ fn main_view(w &gui.Window) gui.View {
 									),
 								]
 							),
+							gui.text(text: 'progress bar'),
+							gui.progress_bar(
+								percent: 0.35
+								sizing:  gui.flex_fit
+							),
 						]
 					),
 					gui.rectangle(
-						id:     'green'
 						width:  25
 						height: 25
 						fill:   true

@@ -3,28 +3,28 @@ module gui
 import gg
 import gx
 
-// ButtonConfig configures a clickable button. It won't respond mouse
+// ButtonCfgconfigures a clickable button. It won't respond mouse
 // interactions if an on_click handler is missing. In that mode, it functions as
 // bubble text.
 //
 pub struct ButtonCfg {
 pub:
 	id          string
-	id_focus    int
+	id_focus    u32
 	width       f32
 	height      f32
-	color       gx.Color = color_button
-	color_focus gx.Color = shade_color(color_button, 10)
-	color_hover gx.Color = shade_color(color_button, 20)
-	color_click gx.Color = shade_color(color_button, 30)
+	color       gx.Color = gui_theme.color_button
+	color_focus gx.Color = shade_color(gui_theme.color_button, 10)
+	color_hover gx.Color = shade_color(gui_theme.color_button, 20)
+	color_click gx.Color = shade_color(gui_theme.color_button, 30)
 	fill        bool     = true
 	h_align     HorizontalAlign
 	v_align     VerticalAlign
-	padding     Padding = padding_button
-	radius      int     = radius_medium
+	padding     Padding = gui_theme.padding_button
+	radius      int     = gui_theme.radius_medium
 	sizing      Sizing
 	text        string
-	text_style  gx.TextCfg = text_cfg
+	text_style  gx.TextCfg = gui_theme.text_cfg
 	on_click    fn (&ButtonCfg, &gg.Event, &Window) bool = unsafe { nil }
 }
 

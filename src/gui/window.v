@@ -15,9 +15,9 @@ mut:
 	mutex        &sync.Mutex = sync.new_mutex()
 	bg_color     gx.Color
 	gen_view     fn (&Window) View = default_view
-	id_focus     FocusId
+	id_focus     u32
 	focused      bool = true
-	input_state  map[FocusId]InputState
+	input_state  map[u32]InputState
 	mouse_cursor sapp.MouseCursor
 	on_event     fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
@@ -31,7 +31,7 @@ pub:
 	title    string  = app_title
 	width    int
 	height   int
-	bg_color gx.Color     = color_background
+	bg_color gx.Color     = gui_theme.color_background
 	on_init  fn (&Window) = fn (mut w Window) {
 		w.update_view(default_view)
 	}
@@ -143,7 +143,7 @@ fn default_view(window &Window) View {
 			text(
 				text:  'Welcome to GUI'
 				style: gx.TextCfg{
-					...text_cfg
+					...gui_theme.text_cfg
 					size: 25
 				}
 			),
@@ -157,7 +157,7 @@ pub fn (window &Window) context() &gg.Context {
 }
 
 // id_focus gets the window's focus id
-pub fn (window &Window) id_focus() int {
+pub fn (window &Window) id_focus() u32 {
 	return window.id_focus
 }
 
@@ -185,7 +185,7 @@ pub fn (mut window Window) run() {
 }
 
 // set_id_focus sets the window's focus id.
-pub fn (mut window Window) set_id_focus(id FocusId) {
+pub fn (mut window Window) set_id_focus(id u32) {
 	window.id_focus = id
 	window.update_window()
 }
