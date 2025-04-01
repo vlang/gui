@@ -13,6 +13,10 @@ pub const radius_small = f32(3)
 pub const radius_medium = f32(5)
 pub const radius_large = f32(7)
 
+pub const padding_small = Padding{5, 5, 5, 5}
+pub const padding_medium = Padding{10, 10, 10, 10}
+pub const padding_large = Padding{15, 15, 15, 15}
+
 const color_1_dark = gx.rgb(64, 64, 64)
 const color_2_dark = gx.rgb(74, 74, 74)
 const color_3_dark = gx.rgb(84, 84, 84)
@@ -24,11 +28,11 @@ const color_border_dark = gx.rgb(255, 255, 255)
 
 // Theme default is dark.
 pub struct Theme {
-pub mut:
+pub:
 	color_background gx.Color = gx.rgb(48, 48, 48)
 
 	color_button            gx.Color = color_1_dark
-	color_button_border     gx.Color = color_1_dark
+	color_button_border     gx.Color = color_border_dark
 	color_button_click      gx.Color = color_4_dark
 	color_button_focus      gx.Color = color_2_dark
 	color_button_hover      gx.Color = color_3_dark
@@ -38,6 +42,9 @@ pub mut:
 	color_link         gx.Color = color_link_dark
 	color_progress     gx.Color = color_1_dark
 	color_progress_bar gx.Color = color_5_dark
+
+	fill_button        bool = true
+	fill_button_border bool = true
 
 	radius_button    f32 = radius_medium
 	radius_container f32 = radius_medium

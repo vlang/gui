@@ -7,9 +7,9 @@ pub:
 	id         string
 	width      f32
 	height     f32
-	indefinite bool
-	vertical   bool
-	percent    f32
+	indefinite bool // TODO: not implemented
+	vertical   bool // orientation
+	percent    f32  // 0.0 <= percent <= 1.0
 	color      gx.Color = gui_theme.color_progress
 	color_bar  gx.Color = gui_theme.color_progress_bar
 	radius     f32      = gui_theme.radius_progress
@@ -34,7 +34,7 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 				fill:   true
 				radius: cfg.radius
 				color:  cfg.color_bar
-				sizing: flex_flex
+				sizing: fixed_fixed
 			),
 		]
 	}
@@ -45,15 +45,16 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 }
 
 fn (cfg ProgressBarCfg) amend_layout(mut node ShapeTree, mut w Window) {
-	if node.children.len == 0 {
-		return
-	}
-	percent := f32_min(f32_max(cfg.percent, f32(0)), f32(1))
-	if cfg.vertical {
-		height := f32_min(node.shape.height * percent, node.shape.height)
-		node.children[0].shape.height = height
-	} else {
-		width := f32_min(node.shape.width * percent, node.shape.width)
-		node.children[0].shape.width = width
+	if node.children.len >= 0 {
+		percent := f32_min(f32_max(cfg.percent, f32(0)), f32(1))
+		if cfg.vertical {
+			height := f32_min(node.shape.height * percent, node.shape.height)
+			node.children[0].shape.height = height
+			node.children[0].shape.width = node.shape.width
+		} else {
+			width := f32_min(node.shape.width * percent, node.shape.width)
+			node.children[0].shape.width = width
+			node.children[0].shape.height = node.shape.height
+		}
 	}
 }

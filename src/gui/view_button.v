@@ -21,7 +21,9 @@ pub:
 	v_align          VerticalAlign
 	sizing           Sizing
 	text             string
-	fill             bool       = true
+	content          []View
+	fill             bool       = gui_theme.fill_button
+	fill_border      bool       = gui_theme.fill_button_border
 	color            gx.Color   = gui_theme.color_button
 	color_focus      gx.Color   = gui_theme.color_button_focus
 	color_hover      gx.Color   = gui_theme.color_button_hover
@@ -37,9 +39,20 @@ pub:
 
 // button creates a button. Imagine that.
 pub fn button(cfg ButtonCfg) View {
+	mut content := []View{}
+	if cfg.content.len > 0 {
+		content = cfg.content.clone()
+	} else {
+		content = [text(
+			text:  cfg.text
+			style: cfg.text_style
+		)]
+	}
+
 	return row(
 		color:    cfg.color_border
 		padding:  cfg.padding_border
+		fill:     cfg.fill_border
 		children: [
 			row(
 				id:           cfg.id
@@ -63,12 +76,7 @@ pub fn button(cfg ButtonCfg) View {
 				on_click:     cfg.on_click
 				on_char:      on_char_button
 				amend_layout: cfg.amend_layout
-				children:     [
-					text(
-						text:  cfg.text
-						style: cfg.text_style
-					),
-				]
+				children:     content
 			),
 		]
 	)
@@ -86,7 +94,7 @@ fn (cfg ButtonCfg) amend_layout(mut node ShapeTree, mut w Window) {
 	if cfg.on_click == unsafe { nil } {
 		return
 	}
-	if node.shape.id_focus == w.id_focus() {
+	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {
 		node.shape.color = cfg.color_focus
 	}
 	ctx := w.context()
