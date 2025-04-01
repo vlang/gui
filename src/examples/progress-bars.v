@@ -21,7 +21,7 @@ fn main_view(window &gui.Window) gui.View {
 		sizing:   gui.fixed_fixed
 		children: [
 			gui.progress_bar(
-				height:  1
+				height:  2
 				sizing:  gui.flex_fixed
 				percent: 0.20
 			),
@@ -40,7 +40,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.progress_bar(
 						vertical: true
 						sizing:   gui.fixed_flex
-						width:    1
+						width:    2
 						percent:  0.40
 					),
 					gui.progress_bar(

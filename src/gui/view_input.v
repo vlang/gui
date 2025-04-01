@@ -18,6 +18,7 @@ pub:
 	max_width       f32
 	fill            bool = true
 	wrap            bool
+	radius          f32 = gui_theme.radius_input
 	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
 }
 

@@ -12,7 +12,7 @@ pub:
 	percent    f32
 	color      gx.Color = gui_theme.color_progress
 	color_bar  gx.Color = gui_theme.color_progress_bar
-	radius     int      = gui_theme.radius_small
+	radius     f32      = gui_theme.radius_progress
 	sizing     Sizing
 	text       string
 	text_style gx.TextCfg = gui_theme.text_cfg

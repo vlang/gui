@@ -246,3 +246,7 @@ pub fn (mut window Window) set_mouse_cursor_arrow() {
 pub fn (mut window Window) set_mouse_cursor_pointing_hand() {
 	window.mouse_cursor = .pointing_hand
 }
+
+pub fn (mut window Window) set_color_background(color gx.Color) {
+	window.bg_color = color
+}

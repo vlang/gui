@@ -27,7 +27,7 @@ pub mut:
 	v_align      VerticalAlign
 	clip         bool
 	padding      Padding
-	radius       int
+	radius       f32
 	sizing       Sizing
 	spacing      f32
 	text         string

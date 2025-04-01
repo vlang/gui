@@ -101,7 +101,7 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 				}
 				renderers << DrawText{
 					x:    x
-					y:    shape.y - h + 1
+					y:    shape.y - h + 1.5
 					text: shape.text
 					cfg:  shape.text_cfg
 				}

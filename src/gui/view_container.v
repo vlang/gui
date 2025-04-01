@@ -27,7 +27,7 @@ pub mut:
 	fill       bool
 	h_align    HorizontalAlign
 	v_align    VerticalAlign
-	radius     int
+	radius     f32
 	color      gx.Color
 	text       string
 	cfg        voidptr
@@ -93,9 +93,9 @@ pub:
 	v_align      VerticalAlign
 	text         string
 	spacing      f32      = gui_theme.spacing_medium
-	radius       int      = gui_theme.radius_medium
-	color        gx.Color = color_transparent
+	radius       f32      = gui_theme.radius_container
 	padding      Padding  = gui_theme.padding_medium
+	color        gx.Color = color_transparent
 	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
