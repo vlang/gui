@@ -4,8 +4,7 @@ import gg
 import gx
 import math
 
-const bwidth = 30
-const bheight = 30
+const bsize = 30
 const bpadding = 5
 const max_digits = 12
 
@@ -92,14 +91,20 @@ fn get_row(ops []string) []gui.View {
 
 	for op in ops {
 		children << gui.button(
-			text:     op
-			width:    bwidth
-			height:   bheight
-			h_align:  .center
-			v_align:  .middle
-			sizing:   gui.fixed_fixed
-			padding:  gui.padding_none
-			on_click: btn_click
+			id:      op
+			content: [gui.text(text: op)]
+			width:   bsize
+			height:  bsize
+			sizing:  gui.fixed_fixed
+			// min_width:      bsize
+			// min_height:     bsize
+			// max_width:      bsize
+			// max_height:     bsize
+			h_align:        .center
+			v_align:        .middle
+			padding_border: gui.padding_none
+			padding:        gui.padding_none
+			on_click:       btn_click
 		)
 	}
 	return children
@@ -107,7 +112,7 @@ fn get_row(ops []string) []gui.View {
 
 fn btn_click(btn &gui.ButtonCfg, e &gg.Event, mut w gui.Window) bool {
 	mut app := w.state[App]()
-	app.do_op(btn.text)
+	app.do_op(btn.id)
 	return true
 }
 

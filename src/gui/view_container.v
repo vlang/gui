@@ -3,7 +3,7 @@ module gui
 import gg
 import gx
 
-struct Container implements View {
+pub struct Container implements View {
 	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }

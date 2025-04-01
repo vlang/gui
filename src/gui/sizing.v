@@ -10,8 +10,8 @@ pub enum SizingType {
 // Sizing is describes how the shape is sized horizontally and vertically.
 pub struct Sizing {
 pub:
-	width  SizingType
-	height SizingType
+	width  SizingType = .fit
+	height SizingType = .fit
 }
 
 pub const fit_fit = Sizing{.fit, .fit}

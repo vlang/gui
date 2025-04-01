@@ -46,6 +46,7 @@ pub fn window(cfg WindowCfg) &Window {
 		on_event: cfg.on_event
 	}
 	window.ui = gg.new_context(
+		sample_count: 2 // smoother rounded corners
 		bg_color:     cfg.bg_color
 		width:        cfg.width
 		height:       cfg.height

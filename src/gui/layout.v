@@ -22,9 +22,14 @@ fn layout_do(mut layout ShapeTree, window &Window) {
 fn layout_widths(mut node ShapeTree) {
 	padding := node.shape.padding.left + node.shape.padding.right
 	if node.shape.axis == .left_to_right { // along the axis
+		spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
 		if node.shape.sizing.width == .fixed {
 			for mut child in node.children {
 				layout_widths(mut child)
+				width := node.shape.width - padding - spacing
+				child.shape.min_width = f32_min(width, child.shape.min_width)
+				child.shape.max_width = f32_min(width, child.shape.max_width)
+				child.shape.clip = true
 			}
 		} else {
 			for mut child in node.children {
@@ -38,7 +43,6 @@ fn layout_widths(mut node ShapeTree) {
 					node.shape.max_width += child.shape.max_width
 				}
 			}
-			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
 			node.shape.width += padding + spacing
 			node.shape.min_width += padding + spacing
 			node.shape.width = f32_max(node.shape.width, node.shape.min_width)
@@ -66,9 +70,14 @@ fn layout_widths(mut node ShapeTree) {
 fn layout_heights(mut node ShapeTree) {
 	padding := node.shape.padding.top + node.shape.padding.bottom
 	if node.shape.axis == .top_to_bottom { // along the axis
+		spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
 		if node.shape.sizing.height == .fixed {
 			for mut child in node.children {
 				layout_heights(mut child)
+				height := node.shape.height - padding - spacing
+				child.shape.min_height = f32_min(height, child.shape.min_height)
+				child.shape.max_height = f32_min(height, child.shape.max_height)
+				child.shape.clip = true
 			}
 		} else {
 			for mut child in node.children {
@@ -82,7 +91,6 @@ fn layout_heights(mut node ShapeTree) {
 					node.shape.max_height += child.shape.max_height
 				}
 			}
-			spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
 			node.shape.height += padding + spacing
 			node.shape.min_height += padding + spacing
 			node.shape.height = f32_max(node.shape.height, node.shape.min_height)
