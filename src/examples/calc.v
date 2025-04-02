@@ -61,6 +61,7 @@ fn main_view(mut w gui.Window) gui.View {
 
 	for ops in app.row_ops {
 		panel << gui.row(
+			id:       'row'
 			spacing:  5
 			padding:  gui.padding_none
 			children: get_row(ops)
@@ -76,6 +77,7 @@ fn main_view(mut w gui.Window) gui.View {
 		v_align:  .middle
 		children: [
 			gui.column(
+				id:       'top'
 				spacing:  5
 				color:    gx.rgb(195, 105, 0)
 				fill:     true
@@ -91,15 +93,11 @@ fn get_row(ops []string) []gui.View {
 
 	for op in ops {
 		children << gui.button(
-			id:      op
-			content: [gui.text(text: op)]
-			width:   bsize
-			height:  bsize
-			sizing:  gui.fixed_fixed
-			// min_width:      bsize
-			// min_height:     bsize
-			// max_width:      bsize
-			// max_height:     bsize
+			id:             op
+			content:        [gui.text(text: op)]
+			width:          bsize
+			height:         bsize
+			sizing:         gui.fixed_fixed
 			h_align:        .center
 			v_align:        .middle
 			padding_border: gui.padding_none

@@ -18,8 +18,8 @@ pub:
 	min_height     f32
 	max_width      f32
 	max_height     f32
-	h_align        HorizontalAlign
-	v_align        VerticalAlign
+	h_align        HorizontalAlign = .center
+	v_align        VerticalAlign   = .middle
 	sizing         Sizing
 	content        []View
 	fill           bool     = gui_theme.button_style.fill_button
@@ -38,6 +38,7 @@ pub:
 // button creates a button. Imagine that.
 pub fn button(cfg ButtonCfg) View {
 	return row(
+		id:         cfg.id
 		color:      cfg.color_border
 		padding:    cfg.padding_border
 		fill:       cfg.fill_border
@@ -50,11 +51,10 @@ pub fn button(cfg ButtonCfg) View {
 		sizing:     cfg.sizing
 		children:   [
 			row(
-				id:           cfg.id
 				id_focus:     cfg.id_focus
 				sizing:       flex_flex
-				h_align:      .center
-				v_align:      .middle
+				h_align:      cfg.h_align
+				v_align:      cfg.v_align
 				padding:      cfg.padding
 				radius:       cfg.radius
 				fill:         cfg.fill

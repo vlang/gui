@@ -78,6 +78,7 @@ fn main_view(window &gui.Window) gui.View {
 				}
 			)),
 			button_row('With progress bar', gui.button(
+				id:             'With progress bar'
 				min_width:      button_width
 				max_width:      button_width
 				color:          gx.rgb(195, 105, 0)
