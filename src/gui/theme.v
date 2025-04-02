@@ -17,20 +17,32 @@ pub const padding_small = Padding{5, 5, 5, 5}
 pub const padding_medium = Padding{10, 10, 10, 10}
 pub const padding_large = Padding{15, 15, 15, 15}
 
+pub const size_text_small = 15
+pub const size_text_medium = 17
+pub const size_text_large = 20
+
+pub const spacing_small = 5
+pub const spacing_medium = 10
+pub const spacing_large = 15
+pub const spacing_text = 2 // additional line height
+
+const color_0_dark = gx.rgb(48, 48, 48)
 const color_1_dark = gx.rgb(64, 64, 64)
 const color_2_dark = gx.rgb(74, 74, 74)
 const color_3_dark = gx.rgb(84, 84, 84)
 const color_4_dark = gx.rgb(94, 94, 94)
 const color_5_dark = gx.rgb(104, 104, 104)
 const color_link_dark = gx.rgb(100, 149, 237)
-const color_text_dark = gx.rgb(255, 255, 255)
-const color_border_dark = gx.rgb(255, 255, 255)
+const color_text_dark = gx.rgb(225, 225, 225)
+const color_border_dark = gx.rgb(225, 225, 225)
 
 // Theme default is dark.
+pub const theme_dark = Theme{}
+
 pub struct Theme {
 pub:
 	name             string   = 'dark'
-	color_background gx.Color = gx.rgb(48, 48, 48)
+	color_background gx.Color = color_0_dark
 
 	button_style ButtonStyle
 
@@ -44,28 +56,26 @@ pub:
 	radius_progress  f32 = radius_small
 	radius_rectangle f32 = radius_medium
 
-	padding_small  Padding = Padding{5, 5, 5, 5}
-	padding_medium Padding = Padding{10, 10, 10, 10}
-	padding_large  Padding = Padding{15, 15, 15, 15}
-	padding_none   Padding = Padding{0, 0, 0, 0}
+	padding_small  Padding = padding_small
+	padding_medium Padding = padding_medium
+	padding_large  Padding = padding_large
 
-	spacing_small  int = 5
-	spacing_medium int = 10
-	spacing_large  int = 15
-	spacing_text   int = 2 // additional line spacing in text.
+	spacing_small  int = spacing_small
+	spacing_medium int = spacing_medium
+	spacing_large  int = spacing_large
+	spacing_text   int = spacing_text
 
 	size_progress_bar int = 10
-	size_text_small   int = 15
-	size_text_medium  int = 17
-	size_text_large   int = 20
+
+	size_text_small  int = size_text_small
+	size_text_medium int = size_text_medium
+	size_text_large  int = size_text_large
 
 	text_cfg gx.TextCfg = gx.TextCfg{
 		color: color_text_dark
-		size:  17
+		size:  size_text_medium
 	}
 }
-
-pub const theme_dark = Theme{}
 
 const color_1_light = gx.rgb(150, 150, 255)
 const color_2_light = gx.rgb(140, 140, 255)

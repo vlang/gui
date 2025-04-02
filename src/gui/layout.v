@@ -56,9 +56,8 @@ fn layout_widths(mut node ShapeTree) {
 		}
 		node.shape.width = f32_max(node.shape.width, node.shape.min_width)
 		if node.shape.max_width > 0 {
-			max_width := node.shape.max_width
-			node.shape.width = f32_min(max_width, node.shape.width)
-			node.shape.min_width = f32_min(max_width, node.shape.min_width)
+			node.shape.width = f32_min(node.shape.max_width, node.shape.width)
+			node.shape.min_width = f32_min(node.shape.max_width, node.shape.min_width)
 		}
 	}
 }
@@ -103,9 +102,8 @@ fn layout_heights(mut node ShapeTree) {
 		}
 		node.shape.height = f32_max(node.shape.height, node.shape.min_height)
 		if node.shape.max_height > 0 {
-			max_height := node.shape.max_height
-			node.shape.height = f32_min(max_height, node.shape.height)
-			node.shape.min_height = f32_min(max_height, node.shape.min_height)
+			node.shape.height = f32_min(node.shape.max_height, node.shape.height)
+			node.shape.min_height = f32_min(node.shape.max_height, node.shape.min_height)
 		}
 	}
 }
