@@ -48,8 +48,11 @@ fn main_view(window &gui.Window) gui.View {
 		children: [
 			gui.text(text: 'Welcome to GUI'),
 			gui.button(
-				content:  [gui.text(text: '${app.clicks} Clicks')]
-				on_click: fn (_ &gui.ButtonCfg, e &gg.Event, mut w gui.Window) bool {
+				min_width:      90
+				max_width:      90
+				padding_border: gui.pad_4(1)
+				content:        [gui.text(text: '${app.clicks} Clicks')]
+				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.clicks += 1
 					return true // true says click was handled

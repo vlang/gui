@@ -29,8 +29,8 @@ pub:
 	color_hover    gx.Color = gui_theme.button_style.color_button_hover
 	color_click    gx.Color = gui_theme.button_style.color_button_click
 	color_border   gx.Color = gui_theme.button_style.color_button_border
-	padding_border Padding  = gui_theme.button_style.padding_button_border
 	padding        Padding  = gui_theme.button_style.padding_button
+	padding_border Padding  = gui_theme.button_style.padding_button_border
 	radius         f32      = gui_theme.button_style.radius_button
 	on_click       fn (&ButtonCfg, &gg.Event, &Window) bool = unsafe { nil }
 }
@@ -44,15 +44,20 @@ pub fn button(cfg ButtonCfg) View {
 		fill:       cfg.fill_border
 		width:      cfg.width
 		height:     cfg.height
-		min_width:  cfg.min_width - cfg.padding_border.left - cfg.padding_border.right
-		min_height: cfg.min_height - cfg.padding_border.top - cfg.padding_border.bottom
-		max_width:  cfg.max_width - cfg.padding_border.left - cfg.padding_border.right
-		max_height: cfg.max_height - cfg.padding_border.top - cfg.padding_border.bottom
+		min_width:  cfg.min_width
+		max_width:  cfg.max_width
+		min_height: cfg.min_height
+		max_height: cfg.max_height
 		sizing:     cfg.sizing
 		children:   [
 			row(
 				id_focus:     cfg.id_focus
+				clip:         true
 				sizing:       flex_flex
+				min_width:    cfg.min_width - cfg.padding_border.left - cfg.padding_border.right
+				max_width:    cfg.max_width - cfg.padding_border.left - cfg.padding_border.right
+				min_height:   cfg.min_height - cfg.padding_border.top - cfg.padding_border.bottom
+				max_height:   cfg.max_height - cfg.padding_border.top - cfg.padding_border.bottom
 				h_align:      cfg.h_align
 				v_align:      cfg.v_align
 				padding:      cfg.padding
