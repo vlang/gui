@@ -28,16 +28,14 @@ fn layout_widths(mut node ShapeTree) {
 				layout_widths(mut child)
 			}
 		} else {
-			mut widths := f32(0)
+			mut widths := padding + spacing
 			for mut child in node.children {
 				layout_widths(mut child)
 				node.shape.width += child.shape.width
 				widths += child.shape.min_width
 			}
 			node.shape.width += padding + spacing
-			node.shape.min_width = f32_max(widths + padding + spacing, node.shape.min_width +
-				padding + spacing)
-
+			node.shape.min_width = f32_max(widths, node.shape.min_width + padding + spacing)
 			if node.shape.max_width > 0 {
 				max_width := node.shape.max_width + padding + spacing
 				node.shape.width = f32_min(max_width, node.shape.width)
@@ -75,16 +73,14 @@ fn layout_heights(mut node ShapeTree) {
 				layout_heights(mut child)
 			}
 		} else {
-			mut heights := f32(0)
+			mut heights := padding + spacing
 			for mut child in node.children {
 				layout_heights(mut child)
 				node.shape.height += child.shape.height
 				heights += child.shape.min_height
 			}
 			node.shape.height += padding + spacing
-			node.shape.min_height = f32_max(heights + padding + spacing, node.shape.min_height +
-				padding + spacing)
-
+			node.shape.min_height = f32_max(heights, node.shape.min_height + padding + spacing)
 			if node.shape.max_height > 0 {
 				max_height := node.shape.max_height + padding + spacing
 				node.shape.height = f32_min(max_height, node.shape.height)
