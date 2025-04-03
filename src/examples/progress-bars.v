@@ -14,12 +14,12 @@ fn main() {
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 	return gui.column(
-		width:    w
-		height:   h
-		h_align:  .center
-		v_align:  .middle
-		sizing:   gui.fixed_fixed
-		children: [
+		width:   w
+		height:  h
+		h_align: .center
+		v_align: .middle
+		sizing:  gui.fixed_fixed
+		content: [
 			gui.progress_bar(
 				height:  2
 				sizing:  gui.flex_fixed
@@ -35,8 +35,8 @@ fn main_view(window &gui.Window) gui.View {
 				percent: 0.60
 			),
 			gui.row(
-				sizing:   gui.fit_flex
-				children: [
+				sizing:  gui.fit_flex
+				content: [
 					gui.progress_bar(
 						vertical: true
 						sizing:   gui.fixed_flex

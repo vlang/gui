@@ -17,7 +17,7 @@ mut:
 	keep_spaces bool
 	sizing      Sizing
 	cfg         &TextCfg
-	children    []View
+	content     []View
 }
 
 fn (t &Text) generate(ctx gg.Context) ShapeTree {

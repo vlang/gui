@@ -29,7 +29,7 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 		padding:      padding_none
 		fill:         true
 		amend_layout: cfg.amend_layout
-		children:     [
+		content:      [
 			rectangle(
 				fill:   true
 				radius: cfg.radius

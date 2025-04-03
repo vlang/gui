@@ -51,7 +51,7 @@ pub fn button(cfg ButtonCfg) View {
 		min_height: cfg.min_height
 		max_height: cfg.max_height
 		sizing:     cfg.sizing
-		children:   [
+		content:    [
 			row(
 				id_focus:     cfg.id_focus
 				clip:         true
@@ -70,7 +70,7 @@ pub fn button(cfg ButtonCfg) View {
 				on_click:     cfg.on_click
 				on_char:      on_char_button
 				amend_layout: cfg.amend_layout
-				children:     cfg.content
+				content:      cfg.content
 			),
 		]
 	)

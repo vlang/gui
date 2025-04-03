@@ -31,7 +31,7 @@ pub mut:
 	color      gx.Color
 	text       string
 	cfg        voidptr
-	children   []View
+	content    []View
 }
 
 fn (cfg &Container) generate(_ gg.Context) ShapeTree {
@@ -100,11 +100,11 @@ pub:
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
-	children     []View
+	content      []View
 }
 
 // container is the fundamental layout container in gui. It is used to layout
-// its children top-to-bottom or left_to_right. A `.none` axis allows a
+// its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
 fn container(cfg ContainerCfg) Container {
 	return Container{
@@ -133,13 +133,13 @@ fn container(cfg ContainerCfg) Container {
 		on_char:      cfg.on_char
 		on_keydown:   cfg.on_keydown
 		amend_layout: cfg.amend_layout
-		children:     cfg.children
+		content:      cfg.content
 	}
 }
 
 // --- Common layout containers ---
 
-// column arranges its children top to bottom. The gap between child items is
+// column arranges its content top to bottom. The gap between child items is
 // determined by the spacing parameter.
 pub fn column(cfg ContainerCfg) Container {
 	mut col := container(cfg)
@@ -152,7 +152,7 @@ pub fn column(cfg ContainerCfg) Container {
 	return col
 }
 
-// row arranges its children left to right. The gap between child items is
+// row arranges its content left to right. The gap between child items is
 // determined by the spacing parameter.
 pub fn row(cfg ContainerCfg) Container {
 	mut row := container(cfg)
@@ -165,7 +165,7 @@ pub fn row(cfg ContainerCfg) Container {
 	return row
 }
 
-// canvas does not arrange or otherwise layout its children.
+// canvas does not arrange or otherwise layout its content.
 pub fn canvas(cfg ContainerCfg) Container {
 	mut canvas := container(cfg)
 	if canvas.cfg == unsafe { nil } {

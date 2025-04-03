@@ -28,11 +28,11 @@ fn main_view(window &gui.Window) gui.View {
 	button_width := 125
 
 	return gui.column(
-		width:    w
-		height:   h
-		spacing:  gui.spacing_medium
-		sizing:   gui.fixed_fixed
-		children: [
+		width:   w
+		height:  h
+		spacing: gui.spacing_medium
+		sizing:  gui.fixed_fixed
+		content: [
 			button_row('Plain ole button', gui.button(
 				min_width: button_width
 				max_width: button_width
@@ -106,9 +106,9 @@ fn main_view(window &gui.Window) gui.View {
 
 fn button_row(label string, button gui.View) gui.View {
 	return gui.row(
-		padding:  gui.padding_none
-		v_align:  .middle
-		children: [
+		padding: gui.padding_none
+		v_align: .middle
+		content: [
 			gui.text(text: label, min_width: 150),
 			button,
 		]

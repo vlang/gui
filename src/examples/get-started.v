@@ -40,12 +40,12 @@ fn main_view(window &gui.Window) gui.View {
 	app := window.state[App]()
 
 	return gui.column(
-		width:    w
-		height:   h
-		h_align:  .center
-		v_align:  .middle
-		sizing:   gui.fixed_fixed
-		children: [
+		width:   w
+		height:  h
+		h_align: .center
+		v_align: .middle
+		sizing:  gui.fixed_fixed
+		content: [
 			gui.text(text: 'Welcome to GUI'),
 			gui.button(
 				min_width:      90

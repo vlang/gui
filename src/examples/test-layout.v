@@ -46,16 +46,16 @@ fn main_view(w &gui.Window) gui.View {
 	width, height := w.window_size()
 
 	return gui.row(
-		width:    width
-		height:   height
-		fill:     true
-		color:    gx.dark_blue
-		sizing:   gui.fixed_fixed
-		children: [
+		width:   width
+		height:  height
+		fill:    true
+		color:   gx.dark_blue
+		sizing:  gui.fixed_fixed
+		content: [
 			gui.column(
-				padding:  gui.padding_none
-				sizing:   gui.fit_flex
-				children: [
+				padding: gui.padding_none
+				sizing:  gui.fit_flex
+				content: [
 					gui.rectangle(
 						width:  75
 						height: 50
@@ -76,20 +76,20 @@ fn main_view(w &gui.Window) gui.View {
 				]
 			),
 			gui.row(
-				id:       'orange'
-				text:     ' orange  '
-				color:    gx.orange
-				sizing:   gui.flex_flex
-				children: [
+				id:      'orange'
+				text:    ' orange  '
+				color:   gx.orange
+				sizing:  gui.flex_flex
+				content: [
 					gui.column(
-						id:       '123'
-						sizing:   gui.flex_flex
-						fill:     true
-						color:    gx.rgb(0x30, 0x30, 0x30)
-						children: [
+						id:      '123'
+						sizing:  gui.flex_flex
+						fill:    true
+						color:   gx.rgb(0x30, 0x30, 0x30)
+						content: [
 							gui.row(
-								color:    gx.white
-								children: [
+								color:   gx.white
+								content: [
 									gui.text(
 										text:  'Hello world!'
 										style: text_style_large
@@ -114,9 +114,9 @@ fn main_view(w &gui.Window) gui.View {
 								}
 							),
 							gui.row(
-								v_align:  .middle
-								padding:  gui.padding_none
-								children: [
+								v_align: .middle
+								padding: gui.padding_none
+								content: [
 									gui.text(
 										text:  'label'
 										style: text_style
@@ -152,10 +152,10 @@ fn main_view(w &gui.Window) gui.View {
 				]
 			),
 			gui.column(
-				fill:     true
-				sizing:   gui.flex_flex
-				color:    gx.rgb(0x30, 0x30, 0x30)
-				children: [
+				fill:    true
+				sizing:  gui.flex_flex
+				color:   gx.rgb(0x30, 0x30, 0x30)
+				content: [
 					gui.input(
 						id_focus:        3
 						width:           250
@@ -170,9 +170,9 @@ fn main_view(w &gui.Window) gui.View {
 						}
 					),
 					gui.column(
-						color:    gx.gray
-						sizing:   gui.flex_fit
-						children: [
+						color:   gx.gray
+						sizing:  gui.flex_fit
+						content: [
 							gui.text(
 								text:  'keep_spaces = false'
 								style: text_style_blue
@@ -186,9 +186,9 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.column(
-						color:    gx.gray
-						sizing:   gui.flex_fit
-						children: [
+						color:   gx.gray
+						sizing:  gui.flex_fit
+						content: [
 							gui.text(
 								text:  'keep_spaces = true'
 								style: text_style_blue
@@ -204,9 +204,9 @@ fn main_view(w &gui.Window) gui.View {
 				]
 			),
 			gui.column(
-				padding:  gui.padding_none
-				sizing:   gui.fit_flex
-				children: [
+				padding: gui.padding_none
+				sizing:  gui.fit_flex
+				content: [
 					gui.rectangle(
 						width:  75
 						height: 50

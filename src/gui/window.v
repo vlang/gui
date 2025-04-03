@@ -135,12 +135,12 @@ fn event_fn(e &gg.Event, mut w Window) {
 fn default_view(window &Window) View {
 	w, h := window.window_size()
 	return column(
-		width:    w
-		height:   h
-		h_align:  .center
-		v_align:  .middle
-		sizing:   fixed_fixed
-		children: [
+		width:   w
+		height:  h
+		h_align: .center
+		v_align: .middle
+		sizing:  fixed_fixed
+		content: [
 			text(
 				text:  'Welcome to GUI'
 				style: gx.TextCfg{

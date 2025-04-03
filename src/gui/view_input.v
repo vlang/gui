@@ -50,7 +50,7 @@ pub fn input(cfg InputCfg) View {
 		on_click:   on_click_input
 		on_keydown: on_keydown_input
 		cfg:        &cfg
-		children:   [
+		content:    [
 			row(
 				color:      cfg.color
 				padding:    cfg.padding
@@ -62,7 +62,7 @@ pub fn input(cfg InputCfg) View {
 				max_width:  cfg.max_width - cfg.padding_border.left - cfg.padding_border.right
 				min_height: cfg.min_height - cfg.padding_border.top - cfg.padding_border.bottom
 				max_height: cfg.max_height - cfg.padding_border.top - cfg.padding_border.bottom
-				children:   [
+				content:    [
 					text(
 						id_focus:    cfg.id_focus
 						text:        cfg.text

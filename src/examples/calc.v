@@ -45,11 +45,11 @@ fn main_view(mut w gui.Window) gui.View {
 	mut panel := []gui.View{}
 
 	panel << gui.row(
-		color:    gx.black
-		h_align:  .right
-		padding:  gui.pad_4(5)
-		sizing:   gui.flex_fit
-		children: [
+		color:   gx.black
+		h_align: .right
+		padding: gui.pad_4(5)
+		sizing:  gui.flex_fit
+		content: [
 			gui.text(
 				text:  app.text
 				style: gx.TextCfg{
@@ -61,38 +61,38 @@ fn main_view(mut w gui.Window) gui.View {
 
 	for ops in app.row_ops {
 		panel << gui.row(
-			id:       'row'
-			spacing:  5
-			padding:  gui.padding_none
-			children: get_row(ops)
+			id:      'row'
+			spacing: 5
+			padding: gui.padding_none
+			content: get_row(ops)
 		)
 	}
 
 	width, height := w.window_size()
 	return gui.row(
-		width:    width
-		height:   height
-		sizing:   gui.fixed_fixed
-		h_align:  .center
-		v_align:  .middle
-		children: [
+		width:   width
+		height:  height
+		sizing:  gui.fixed_fixed
+		h_align: .center
+		v_align: .middle
+		content: [
 			gui.column(
-				id:       'top'
-				spacing:  5
-				color:    gx.rgb(195, 105, 0)
-				fill:     true
-				padding:  gui.pad_4(10)
-				children: panel
+				id:      'top'
+				spacing: 5
+				color:   gx.rgb(195, 105, 0)
+				fill:    true
+				padding: gui.pad_4(10)
+				content: panel
 			),
 		]
 	)
 }
 
 fn get_row(ops []string) []gui.View {
-	mut children := []gui.View{}
+	mut content := []gui.View{}
 
 	for op in ops {
-		children << gui.button(
+		content << gui.button(
 			id:             op
 			content:        [gui.text(text: op)]
 			width:          bsize
@@ -105,7 +105,7 @@ fn get_row(ops []string) []gui.View {
 			on_click:       btn_click
 		)
 	}
-	return children
+	return content
 }
 
 fn btn_click(btn &gui.ButtonCfg, e &gg.Event, mut w gui.Window) bool {

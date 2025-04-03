@@ -25,13 +25,13 @@ fn main_view(window &gui.Window) gui.View {
 	input_width := 125
 
 	return gui.column(
-		width:    w
-		height:   h
-		spacing:  10
-		h_align:  .center
-		v_align:  .middle
-		sizing:   gui.fixed_fixed
-		children: [
+		width:   w
+		height:  h
+		spacing: 10
+		h_align: .center
+		v_align: .middle
+		sizing:  gui.fixed_fixed
+		content: [
 			gui.input(
 				id_focus:        1
 				text:            app.input_a
