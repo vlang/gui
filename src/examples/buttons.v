@@ -47,18 +47,7 @@ fn main_view(window &gui.Window) gui.View {
 				min_width:      button_width
 				max_width:      button_width
 				content:        [gui.text(text: button_text)]
-				padding_border: gui.pad_4(1)
-				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
-					mut app := w.state[App]()
-					app.clicks += 1
-					return true
-				}
-			)),
-			button_row('With thick border', gui.button(
-				min_width:      button_width
-				max_width:      button_width
-				content:        [gui.text(text: button_text)]
-				padding_border: gui.pad_4(3)
+				padding_border: gui.pad_4(2)
 				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.clicks += 1

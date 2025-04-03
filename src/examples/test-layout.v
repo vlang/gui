@@ -32,10 +32,19 @@ fn main() {
 }
 
 fn main_view(w &gui.Window) gui.View {
-	text_style := gui_theme.text_cfg
+	txt_color := if gui.theme().name == 'light' {
+		gx.rgb(255, 255, 255)
+	} else {
+		gui.theme().text_style.text_cfg.color
+	}
+
+	text_style := gx.TextCfg{
+		...gui.theme().text_style.text_cfg
+		color: txt_color
+	}
 	text_style_blue := gx.TextCfg{
 		...text_style
-		color: gui_theme.color_link
+		color: gui.theme().color_link
 	}
 	text_style_large := gx.TextCfg{
 		...text_style
@@ -91,16 +100,16 @@ fn main_view(w &gui.Window) gui.View {
 								color:   gx.white
 								content: [
 									gui.text(
-										text:  'Hello world!'
-										style: text_style_large
-										wrap:  true
+										text:     'Hello world!'
+										text_cfg: text_style_large
+										wrap:     true
 									),
 								]
 							),
 							gui.text(
-								wrap:  true
-								style: text_style
-								text:  'Embedded in a column with wrapping'
+								wrap:     true
+								text_cfg: text_style
+								text:     'Embedded in a column with wrapping'
 							),
 							gui.button(
 								id_focus: 1
@@ -118,15 +127,14 @@ fn main_view(w &gui.Window) gui.View {
 								padding: gui.padding_none
 								content: [
 									gui.text(
-										text:  'label'
-										style: text_style
+										text:     'label'
+										text_cfg: text_style
 									),
 									gui.input(
 										id_focus:        2
 										width:           100
 										sizing:          gui.fixed_fit
 										text:            state.other_input
-										text_cfg:        text_style
 										wrap:            false
 										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
@@ -135,7 +143,10 @@ fn main_view(w &gui.Window) gui.View {
 									),
 								]
 							),
-							gui.text(text: 'progress bar'),
+							gui.text(
+								text:     'progress bar'
+								text_cfg: text_style
+							),
 							gui.progress_bar(
 								percent: 0.35
 								sizing:  gui.flex_fit
@@ -160,7 +171,6 @@ fn main_view(w &gui.Window) gui.View {
 						id_focus:        3
 						width:           250
 						text:            state.name
-						text_cfg:        text_style
 						wrap:            true
 						sizing:          gui.fixed_fit
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
@@ -174,12 +184,12 @@ fn main_view(w &gui.Window) gui.View {
 						sizing:  gui.flex_fit
 						content: [
 							gui.text(
-								text:  'keep_spaces = false'
-								style: text_style_blue
+								text:     'keep_spaces = false'
+								text_cfg: text_style_blue
 							),
 							gui.text(
 								text:        state.name
-								style:       text_style
+								text_cfg:    text_style
 								wrap:        true
 								keep_spaces: false
 							),
@@ -190,12 +200,12 @@ fn main_view(w &gui.Window) gui.View {
 						sizing:  gui.flex_fit
 						content: [
 							gui.text(
-								text:  'keep_spaces = true'
-								style: text_style_blue
+								text:     'keep_spaces = true'
+								text_cfg: text_style_blue
 							),
 							gui.text(
 								text:        state.name
-								style:       text_style
+								text_cfg:    text_style
 								wrap:        true
 								keep_spaces: true
 							),

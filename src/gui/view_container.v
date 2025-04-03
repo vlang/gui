@@ -60,7 +60,7 @@ fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 			color:        cfg.color
 			text:         cfg.text
 			text_cfg:     gx.TextCfg{
-				...gui_theme.text_cfg
+				...gui_theme.text_style.text_cfg
 				color: cfg.color
 			}
 			cfg:          cfg.cfg

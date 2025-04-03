@@ -93,9 +93,9 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 				// erase portion of rectangle where text goes.
 				renderers << DrawRect{
 					x:     x
-					y:     shape.y - h / 2
+					y:     shape.y - 2 - h / 2
 					w:     w
-					h:     h
+					h:     h + 1
 					style: .fill
 					color: parent_color
 				}

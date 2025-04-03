@@ -4,6 +4,7 @@ import gg
 import gx
 
 // Text is an internal structure used to describe a text block
+@[heap]
 struct Text implements View {
 	id       string
 	id_focus u32 // >0 indicates text is focusable. Value indiciates tabbing order
@@ -11,16 +12,16 @@ mut:
 	min_width   f32
 	max_width   f32
 	spacing     f32
-	style       gx.TextCfg
+	text_cfg    gx.TextCfg
 	text        string
 	wrap        bool
 	keep_spaces bool
 	sizing      Sizing
-	cfg         &TextCfg
+	cfg         TextCfg
 	content     []View
 }
 
-fn (t &Text) generate(ctx gg.Context) ShapeTree {
+fn (t Text) generate(ctx gg.Context) ShapeTree {
 	mut shape_tree := ShapeTree{
 		shape: Shape{
 			id:          t.id
@@ -28,7 +29,7 @@ fn (t &Text) generate(ctx gg.Context) ShapeTree {
 			type:        .text
 			spacing:     t.spacing
 			text:        t.text
-			text_cfg:    t.style
+			text_cfg:    t.text_cfg
 			lines:       [t.text]
 			wrap:        t.wrap
 			keep_spaces: t.keep_spaces
@@ -54,8 +55,8 @@ pub:
 	id          string
 	id_focus    u32
 	min_width   f32
-	spacing     f32        = gui_theme.spacing_text
-	style       gx.TextCfg = gui_theme.text_cfg
+	spacing     f32        = gui_theme.text_style.spacing
+	text_cfg    gx.TextCfg = gui_theme.text_style.text_cfg
 	text        string
 	wrap        bool
 	keep_spaces bool
@@ -70,7 +71,7 @@ pub fn text(cfg TextCfg) Text {
 		id_focus:    cfg.id_focus
 		min_width:   cfg.min_width
 		spacing:     cfg.spacing
-		style:       cfg.style
+		text_cfg:    cfg.text_cfg
 		text:        cfg.text
 		wrap:        cfg.wrap
 		cfg:         &cfg

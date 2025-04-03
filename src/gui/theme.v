@@ -41,6 +41,7 @@ pub:
 	container_style    ContainerStyle
 	input_style        InputStyle
 	progress_bar_style ProgressBarStyle
+	text_style         TextStyle
 
 	// temp until styling finished...
 	color_progress     gx.Color = color_1_dark
@@ -48,11 +49,6 @@ pub:
 	radius_progress    f32      = radius_small
 	radius_rectangle   f32      = radius_medium
 	size_progress_bar  int      = 10
-
-	text_cfg gx.TextCfg = gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_medium
-	}
 
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
@@ -148,7 +144,6 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 		name:             cfg.name
 		color_background: cfg.color_0
 		color_link:       cfg.color_link
-		text_cfg:         cfg.text_cfg
 
 		button_style:       ButtonStyle{
 			color:          cfg.color_1
@@ -164,12 +159,11 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 			radius_border:  cfg.radius_border
 		}
 		container_style:    ContainerStyle{
-			color:    color_transparent
-			fill:     false
-			padding:  cfg.padding
-			radius:   cfg.radius
-			spacing:  cfg.spacing_medium
-			text_cfg: cfg.text_cfg
+			color:   color_transparent
+			fill:    false
+			padding: cfg.padding
+			radius:  cfg.radius
+			spacing: cfg.spacing_medium
 		}
 		input_style:        InputStyle{
 			color:          cfg.color_1
@@ -189,6 +183,10 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 			fill:      true
 			padding:   cfg.padding
 			radius:    cfg.radius
+		}
+		text_style:         TextStyle{
+			spacing:  2
+			text_cfg: cfg.text_cfg
 		}
 
 		// Usually don't change across styles

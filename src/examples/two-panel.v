@@ -8,7 +8,6 @@ fn main() {
 		title:   'two panel'
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
-			// w.resize_to_content()
 		}
 	)
 	window.run()
@@ -32,9 +31,8 @@ fn main_view(mut w gui.Window) gui.View {
 				color:      gx.rgb(215, 125, 0)
 				content:    [
 					gui.text(
-						text:  'Hello'
-						style: gx.TextCfg{
-							...gui.theme().text_cfg
+						text:     'Hello'
+						text_cfg: gx.TextCfg{
 							size:  gui.theme().size_text_large
 							color: gx.black
 						}
@@ -42,18 +40,17 @@ fn main_view(mut w gui.Window) gui.View {
 				]
 			),
 			gui.column(
-				id:        'orange'
 				text:      ' Container Title  '
-				color:     gui.theme().text_cfg.color
 				sizing:    gui.flex_flex
 				h_align:   .right
 				v_align:   .bottom
 				min_width: 150
+				color:     gui.theme().text_style.text_cfg.color
 				content:   [
 					gui.text(
-						text:  'There!'
-						style: gx.TextCfg{
-							...gui.theme().text_cfg
+						text:     'There!'
+						text_cfg: gx.TextCfg{
+							...gui.theme().text_style.text_cfg
 							size: gui.theme().size_text_large
 						}
 					),

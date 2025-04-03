@@ -80,7 +80,7 @@ pub fn input(cfg InputCfg) View {
 					text(
 						id_focus:    cfg.id_focus
 						text:        cfg.text
-						style:       cfg.text_cfg
+						text_cfg:    cfg.text_cfg
 						wrap:        cfg.wrap
 						keep_spaces: true
 					),

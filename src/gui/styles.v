@@ -27,12 +27,11 @@ pub:
 
 pub struct ContainerStyle {
 pub:
-	color    gx.Color = color_transparent
-	fill     bool
-	padding  Padding    = padding_medium
-	radius   f32        = radius_medium
-	spacing  f32        = spacing_medium
-	text_cfg gx.TextCfg = text_cfg_dark()
+	color   gx.Color = color_transparent
+	fill    bool
+	padding Padding = padding_medium
+	radius  f32     = radius_medium
+	spacing f32     = spacing_medium
 }
 
 pub struct InputStyle {
@@ -56,4 +55,10 @@ pub:
 	fill      bool     = true
 	padding   Padding  = padding_medium
 	radius    f32      = radius_medium
+}
+
+pub struct TextStyle {
+pub:
+	spacing  int        = 2
+	text_cfg gx.TextCfg = text_cfg_dark()
 }

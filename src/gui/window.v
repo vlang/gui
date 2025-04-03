@@ -142,9 +142,9 @@ fn default_view(window &Window) View {
 		sizing:  fixed_fixed
 		content: [
 			text(
-				text:  'Welcome to GUI'
-				style: gx.TextCfg{
-					...gui_theme.text_cfg
+				text:     'Welcome to GUI'
+				text_cfg: gx.TextCfg{
+					...gui_theme.text_style.text_cfg
 					size: 25
 				}
 			),
