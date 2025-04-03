@@ -30,6 +30,20 @@ pub:
 	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
 }
 
+// input is a text input field.
+// Example:
+// ```v
+// gui.input(
+// 	id_focus:        1
+// 	text:            app.input_a
+// 	min_width:       100
+// 	max_width:       100
+// 	on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+// 		mut state := w.state[App]()
+// 		state.input_a = s
+// 	}
+// )
+// ```
 pub fn input(cfg InputCfg) View {
 	assert cfg.id_focus != 0
 	return row(

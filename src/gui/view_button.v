@@ -6,7 +6,6 @@ import gx
 // ButtonCfgconfigures a clickable button. It won't respond mouse
 // interactions if an on_click handler is not provided. In that mode,
 // it functions as bubble text.
-//
 @[heap]
 pub struct ButtonCfg {
 pub:
@@ -36,7 +35,21 @@ pub:
 	on_click       fn (&ButtonCfg, &gg.Event, &Window) bool = unsafe { nil }
 }
 
-// button creates a button. Imagine that.
+// button creates a button.
+// Example:
+// ```v
+// gui.button(
+// 	min_width:      90
+// 	max_width:      90
+// 	padding_border: gui.pad_4(1)
+// 	content:        [gui.text(text: '${app.clicks} Clicks')]
+// 	on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+// 		mut app := w.state[App]()
+// 		app.clicks += 1
+// 		return true
+// 	}
+// )
+// ```
 pub fn button(cfg ButtonCfg) View {
 	return row(
 		id:         cfg.id

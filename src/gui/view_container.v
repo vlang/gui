@@ -88,14 +88,14 @@ pub:
 	max_height   f32
 	clip         bool
 	sizing       Sizing
-	fill         bool
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
 	text         string
-	spacing      f32      = gui_theme.spacing_medium
-	radius       f32      = gui_theme.radius_container
-	padding      Padding  = gui_theme.padding_medium
-	color        gx.Color = color_transparent
+	spacing      f32      = gui_theme.container_style.spacing
+	radius       f32      = gui_theme.container_style.radius
+	padding      Padding  = gui_theme.container_style.padding
+	color        gx.Color = gui_theme.container_style.color
+	fill         bool     = gui_theme.container_style.fill
 	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }

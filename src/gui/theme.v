@@ -6,7 +6,6 @@ import gx
 __global gui_theme = theme_dark
 
 pub const color_transparent = gx.rgba(0, 0, 0, 0)
-pub const padding_none = pad_4(0)
 pub const radius_none = 0
 
 pub const radius_small = f32(3)
@@ -36,18 +35,24 @@ pub struct Theme {
 pub:
 	name             string   = 'default'
 	color_background gx.Color = color_0_dark
+	color_link       gx.Color = color_link_dark
 
-	button_style ButtonStyle
-	input_style  InputStyle
+	button_style       ButtonStyle
+	container_style    ContainerStyle
+	input_style        InputStyle
+	progress_bar_style ProgressBarStyle
 
 	// temp until styling finished...
-	color_link         gx.Color = color_link_dark
 	color_progress     gx.Color = color_1_dark
 	color_progress_bar gx.Color = color_5_dark
+	radius_progress    f32      = radius_small
+	radius_rectangle   f32      = radius_medium
+	size_progress_bar  int      = 10
 
-	radius_container f32 = radius_medium
-	radius_progress  f32 = radius_small
-	radius_rectangle f32 = radius_medium
+	text_cfg gx.TextCfg = gx.TextCfg{
+		color: color_text_dark
+		size:  size_text_medium
+	}
 
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
@@ -56,18 +61,11 @@ pub:
 	spacing_small  int = spacing_small
 	spacing_medium int = spacing_medium
 	spacing_large  int = spacing_large
-	spacing_text   int = spacing_text
-
-	size_progress_bar int = 10
+	spacing_text   int = spacing_text // additional line height
 
 	size_text_small  int = size_text_small
 	size_text_medium int = size_text_medium
 	size_text_large  int = size_text_large
-
-	text_cfg gx.TextCfg = gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_medium
-	}
 }
 
 pub struct ThemeCfg {
@@ -80,7 +78,6 @@ pub struct ThemeCfg {
 	color_5        gx.Color   = color_5_dark
 	color_border   gx.Color   = color_border_dark
 	color_link     gx.Color   = color_link_dark
-	color_text     gx.Color   = color_text_dark
 	fill           bool       = true
 	fill_border    bool       = true
 	padding        Padding    = padding_medium
@@ -91,6 +88,19 @@ pub struct ThemeCfg {
 		color: color_text_dark
 		size:  size_text_medium
 	}
+	// Usually don't change across styles
+	padding_small  Padding = padding_small
+	padding_medium Padding = padding_medium
+	padding_large  Padding = padding_large
+
+	spacing_small  int = spacing_small
+	spacing_medium int = spacing_medium
+	spacing_large  int = spacing_large
+	spacing_text   int = spacing_text // additional line height
+
+	size_text_small  int = size_text_small
+	size_text_medium int = size_text_medium
+	size_text_large  int = size_text_large
 }
 
 pub const theme_dark = theme_maker(
@@ -128,30 +138,40 @@ pub const theme_light = theme_maker(
 // theme_maker sets all styles to a common set of values (ThemeCfg)
 // GUI allows each view type (button, input, etc) to be styled
 // independent of the other view styles. However, in practice this
-// is not usually required. theme_maker makes it easier to write
+// is not usually required. theme_maker makes it easy to write
 // new themes without having to specify styles for every view type.
 // Individual styles can be modified after using theme_maker.
+// Note: `theme_maker` containers are always transparent and not
+// filled.
 pub fn theme_maker(cfg ThemeCfg) Theme {
 	return Theme{
 		name:             cfg.name
 		color_background: cfg.color_0
+		color_link:       cfg.color_link
 		text_cfg:         cfg.text_cfg
 
-		button_style: ButtonStyle{
-			color:            cfg.color_1
-			color_border:     cfg.color_border
-			color_click:      cfg.color_4
-			color_focus:      cfg.color_2
-			color_hover:      cfg.color_3
-			color_click_text: cfg.color_text
-			fill:             cfg.fill
-			fill_border:      cfg.fill_border
-			padding:          cfg.padding
-			padding_border:   cfg.padding_border
-			radius:           cfg.radius
-			radius_border:    cfg.radius_border
+		button_style:       ButtonStyle{
+			color:          cfg.color_1
+			color_border:   cfg.color_border
+			color_click:    cfg.color_4
+			color_focus:    cfg.color_2
+			color_hover:    cfg.color_3
+			fill:           cfg.fill
+			fill_border:    cfg.fill_border
+			padding:        cfg.padding
+			padding_border: cfg.padding_border
+			radius:         cfg.radius
+			radius_border:  cfg.radius_border
 		}
-		input_style:  InputStyle{
+		container_style:    ContainerStyle{
+			color:    color_transparent
+			fill:     false
+			padding:  cfg.padding
+			radius:   cfg.radius
+			spacing:  cfg.spacing_medium
+			text_cfg: cfg.text_cfg
+		}
+		input_style:        InputStyle{
 			color:          cfg.color_1
 			color_border:   cfg.color_border
 			color_focus:    cfg.color_2
@@ -163,6 +183,27 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 			radius_border:  cfg.radius_border
 			text_cfg:       cfg.text_cfg
 		}
+		progress_bar_style: ProgressBarStyle{
+			color:     cfg.color_1
+			color_bar: cfg.color_5
+			fill:      true
+			padding:   cfg.padding
+			radius:    cfg.radius
+		}
+
+		// Usually don't change across styles
+		padding_small:  cfg.padding_small
+		padding_medium: cfg.padding_medium
+		padding_large:  cfg.padding_large
+
+		spacing_small:  cfg.spacing_small
+		spacing_medium: cfg.spacing_medium
+		spacing_large:  cfg.spacing_large
+		spacing_text:   cfg.spacing_text
+
+		size_text_small:  cfg.size_text_small
+		size_text_medium: cfg.size_text_medium
+		size_text_large:  cfg.size_text_large
 	}
 }
 

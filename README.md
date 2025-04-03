@@ -63,7 +63,7 @@ fn main_view(window &gui.Window) gui.View {
 		h_align:  .center
 		v_align:  .middle
 		sizing:   gui.fixed_fixed
-		children: [
+		content: [
 			gui.text(text: 'Welcome to GUI'),
 			gui.button(
 				text:     '${app.clicks} Clicks'

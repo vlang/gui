@@ -1,5 +1,6 @@
 module gui
 
+pub const padding_none = Padding{}
 pub const padding_one = Padding{1, 1, 1, 1}
 pub const padding_small = Padding{5, 5, 5, 5}
 pub const padding_medium = Padding{10, 10, 10, 10}
@@ -8,7 +9,7 @@ pub const padding_large = Padding{15, 15, 15, 15}
 // Padding is the gap inside the edges of a Shape. The size of a Shape always
 // includes its padding. Parameter order is the same as CSS.
 pub struct Padding {
-pub mut:
+pub:
 	top    f32
 	right  f32
 	bottom f32

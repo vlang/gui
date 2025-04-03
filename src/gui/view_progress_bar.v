@@ -10,12 +10,11 @@ pub:
 	indefinite bool // TODO: not implemented
 	vertical   bool // orientation
 	percent    f32  // 0.0 <= percent <= 1.0
-	color      gx.Color = gui_theme.color_progress
-	color_bar  gx.Color = gui_theme.color_progress_bar
-	radius     f32      = gui_theme.radius_progress
+	color      gx.Color = gui_theme.progress_bar_style.color
+	color_bar  gx.Color = gui_theme.progress_bar_style.color_bar
+	radius     f32      = gui_theme.progress_bar_style.radius
 	sizing     Sizing
 	text       string
-	text_style gx.TextCfg = gui_theme.text_cfg
 }
 
 pub fn progress_bar(cfg ProgressBarCfg) View {
