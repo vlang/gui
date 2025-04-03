@@ -3,7 +3,7 @@ module gui
 
 import gx
 
-__global gui_theme = theme_light
+__global gui_theme = theme_dark
 
 pub const color_transparent = gx.rgba(0, 0, 0, 0)
 pub const padding_none = pad_4(0)
