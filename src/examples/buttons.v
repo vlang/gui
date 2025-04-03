@@ -30,7 +30,7 @@ fn main_view(window &gui.Window) gui.View {
 	return gui.column(
 		width:    w
 		height:   h
-		spacing:  10
+		spacing:  gui.spacing_medium
 		sizing:   gui.fixed_fixed
 		children: [
 			button_row('Plain ole button', gui.button(

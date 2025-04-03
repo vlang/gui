@@ -22,16 +22,17 @@ pub:
 	v_align        VerticalAlign   = .middle
 	sizing         Sizing
 	content        []View
-	fill           bool     = gui_theme.button_style.fill_button
-	fill_border    bool     = gui_theme.button_style.fill_button_border
-	color          gx.Color = gui_theme.button_style.color_button
-	color_focus    gx.Color = gui_theme.button_style.color_button_focus
-	color_hover    gx.Color = gui_theme.button_style.color_button_hover
-	color_click    gx.Color = gui_theme.button_style.color_button_click
-	color_border   gx.Color = gui_theme.button_style.color_button_border
-	padding        Padding  = gui_theme.button_style.padding_button
-	padding_border Padding  = gui_theme.button_style.padding_button_border
-	radius         f32      = gui_theme.button_style.radius_button
+	fill           bool     = gui_theme.button_style.fill
+	fill_border    bool     = gui_theme.button_style.fill_border
+	color          gx.Color = gui_theme.button_style.color
+	color_focus    gx.Color = gui_theme.button_style.color_focus
+	color_hover    gx.Color = gui_theme.button_style.color_hover
+	color_click    gx.Color = gui_theme.button_style.color_click
+	color_border   gx.Color = gui_theme.button_style.color_border
+	padding        Padding  = gui_theme.button_style.padding
+	padding_border Padding  = gui_theme.button_style.padding_border
+	radius         f32      = gui_theme.button_style.radius
+	radius_border  f32      = gui_theme.button_style.radius_border
 	on_click       fn (&ButtonCfg, &gg.Event, &Window) bool = unsafe { nil }
 }
 
@@ -42,6 +43,7 @@ pub fn button(cfg ButtonCfg) View {
 		color:      cfg.color_border
 		padding:    cfg.padding_border
 		fill:       cfg.fill_border
+		radius:     cfg.radius_border
 		width:      cfg.width
 		height:     cfg.height
 		min_width:  cfg.min_width

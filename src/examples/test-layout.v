@@ -126,7 +126,7 @@ fn main_view(w &gui.Window) gui.View {
 										width:           100
 										sizing:          gui.fixed_fit
 										text:            state.other_input
-										text_style:      text_style
+										text_cfg:        text_style
 										wrap:            false
 										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
@@ -160,7 +160,7 @@ fn main_view(w &gui.Window) gui.View {
 						id_focus:        3
 						width:           250
 						text:            state.name
-						text_style:      text_style
+						text_cfg:        text_style
 						wrap:            true
 						sizing:          gui.fixed_fit
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
