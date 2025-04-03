@@ -23,13 +23,13 @@ fn main_view(mut w gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		content: [
 			gui.column(
+				fill:       true
+				sizing:     gui.flex_flex
 				max_width:  150
 				max_height: 330
 				h_align:    .center
 				v_align:    .middle
 				color:      gx.rgb(215, 125, 0)
-				fill:       true
-				sizing:     gui.flex_flex
 				content:    [
 					gui.text(
 						text:  'Hello'
@@ -45,10 +45,10 @@ fn main_view(mut w gui.Window) gui.View {
 				id:        'orange'
 				text:      ' Container Title  '
 				color:     gui.theme().text_cfg.color
+				sizing:    gui.flex_flex
 				h_align:   .right
 				v_align:   .bottom
 				min_width: 150
-				sizing:    gui.flex_flex
 				content:   [
 					gui.text(
 						text:  'There!'

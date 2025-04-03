@@ -27,10 +27,10 @@ fn main_view(window &gui.Window) gui.View {
 	return gui.column(
 		width:   w
 		height:  h
-		spacing: 10
+		sizing:  gui.fixed_fixed
+		spacing: gui.spacing_medium
 		h_align: .center
 		v_align: .middle
-		sizing:  gui.fixed_fixed
 		content: [
 			gui.input(
 				id_focus:        1
@@ -75,6 +75,17 @@ fn main_view(window &gui.Window) gui.View {
 				fill_border:     false
 				radius:          0
 				radius_border:   0
+				on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+					mut state := w.state[App]()
+					state.input_a = s
+				}
+			),
+			gui.input(
+				id_focus:        5
+				text:            app.input_a
+				min_width:       input_width
+				max_width:       input_width
+				wrap:            true
 				on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 					mut state := w.state[App]()
 					state.input_a = s

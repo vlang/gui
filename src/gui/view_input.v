@@ -8,15 +8,15 @@ pub struct InputCfg {
 pub:
 	id              string
 	id_focus        u32 @[required] // !0 indicates input is focusable. Value indiciates tabbing order
-	sizing          Sizing
-	spacing         f32
 	text            string
+	spacing         f32
 	width           f32
 	min_width       f32
 	max_width       f32
 	height          f32
 	min_height      f32
 	max_height      f32
+	sizing          Sizing
 	wrap            bool
 	padding         Padding                         = padding(5, 6, 6, 6)
 	color           gx.Color                        = gui_theme.input_style.color

@@ -42,9 +42,9 @@ fn main_view(window &gui.Window) gui.View {
 	return gui.column(
 		width:   w
 		height:  h
+		sizing:  gui.fixed_fixed
 		h_align: .center
 		v_align: .middle
-		sizing:  gui.fixed_fixed
 		content: [
 			gui.text(text: 'Welcome to GUI'),
 			gui.button(

@@ -46,14 +46,14 @@ fn main_view(mut w gui.Window) gui.View {
 
 	panel << gui.row(
 		color:   gx.black
+		sizing:  gui.flex_fit
 		h_align: .right
 		padding: gui.pad_4(5)
-		sizing:  gui.flex_fit
 		content: [
 			gui.text(
 				text:  app.text
 				style: gx.TextCfg{
-					size: 20
+					size: gui.size_text_large
 				}
 			),
 		]
@@ -62,7 +62,7 @@ fn main_view(mut w gui.Window) gui.View {
 	for ops in app.row_ops {
 		panel << gui.row(
 			id:      'row'
-			spacing: 5
+			spacing: bpadding
 			padding: gui.padding_none
 			content: get_row(ops)
 		)
@@ -77,11 +77,10 @@ fn main_view(mut w gui.Window) gui.View {
 		v_align: .middle
 		content: [
 			gui.column(
-				id:      'top'
-				spacing: 5
-				color:   gx.rgb(195, 105, 0)
 				fill:    true
-				padding: gui.pad_4(10)
+				spacing: bpadding
+				color:   gx.rgb(195, 105, 0)
+				padding: gui.padding_medium
 				content: panel
 			),
 		]
