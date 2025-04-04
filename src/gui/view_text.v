@@ -17,6 +17,7 @@ mut:
 	wrap        bool
 	keep_spaces bool
 	sizing      Sizing
+	disabled    bool
 	cfg         TextCfg
 	content     []View
 }
@@ -34,6 +35,7 @@ fn (t Text) generate(ctx gg.Context) ShapeTree {
 			wrap:        t.wrap
 			keep_spaces: t.keep_spaces
 			sizing:      t.sizing
+			disabled:    t.disabled
 			min_width:   t.min_width
 		}
 	}
@@ -60,6 +62,7 @@ pub:
 	text        string
 	wrap        bool
 	keep_spaces bool
+	disabled    bool
 }
 
 // text renders text. Text wrapping is available. Multiple spaces are compressed
@@ -77,6 +80,7 @@ pub fn text(cfg TextCfg) Text {
 		cfg:         &cfg
 		keep_spaces: cfg.keep_spaces
 		sizing:      if cfg.wrap { fill_fit } else { fit_fit }
+		disabled:    cfg.disabled
 	}
 }
 

@@ -17,6 +17,7 @@ pub:
 	min_height     f32
 	max_width      f32
 	max_height     f32
+	disabled       bool
 	h_align        HorizontalAlign = .center
 	v_align        VerticalAlign   = .middle
 	sizing         Sizing
@@ -59,6 +60,7 @@ pub fn button(cfg ButtonCfg) View {
 		radius:     cfg.radius_border
 		width:      cfg.width
 		height:     cfg.height
+		disabled:   cfg.disabled
 		min_width:  cfg.min_width
 		max_width:  cfg.max_width
 		min_height: cfg.min_height
@@ -98,7 +100,7 @@ fn on_char_button(cfg &ButtonCfg, e &gg.Event, mut w Window) bool {
 }
 
 fn (cfg ButtonCfg) amend_layout(mut node ShapeTree, mut w Window) {
-	if cfg.on_click == unsafe { nil } {
+	if node.shape.disabled || cfg.on_click == unsafe { nil } {
 		return
 	}
 	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {

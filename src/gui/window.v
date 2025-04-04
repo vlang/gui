@@ -81,7 +81,6 @@ fn event_fn(e &gg.Event, mut w Window) {
 			w.mutex.lock()
 			layout := w.layout
 			w.mutex.unlock()
-
 			handled = char_handler(layout, e, w)
 		}
 		.focused {
@@ -112,7 +111,6 @@ fn event_fn(e &gg.Event, mut w Window) {
 			w.mutex.lock()
 			layout := w.layout
 			w.mutex.unlock()
-
 			w.set_id_focus(0)
 			handled = click_handler(layout, e, mut w)
 		}

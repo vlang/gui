@@ -14,6 +14,7 @@ fn layout_do(mut layout ShapeTree, window &Window) {
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
+	layout_set_disables(mut layout, false)
 	layout_amend(mut layout, window)
 }
 
@@ -237,11 +238,8 @@ fn layout_fill_widths(mut node ShapeTree) {
 			}
 		}
 	} else if node.shape.axis == .top_to_bottom {
-		if node.shape.max_width > 0 {
-			max_width := node.shape.max_width
-			if node.shape.width > max_width {
-				node.shape.width = max_width
-			}
+		if node.shape.max_width > 0 && node.shape.width > node.shape.max_width {
+			node.shape.width = node.shape.max_width
 		}
 		for mut child in node.children {
 			if child.shape.sizing.width == .fill {
@@ -372,11 +370,8 @@ fn layout_fill_heights(mut node ShapeTree) {
 			}
 		}
 	} else if node.shape.axis == .left_to_right {
-		if node.shape.max_height > 0 {
-			max_height := node.shape.max_height
-			if node.shape.height > max_height {
-				node.shape.height = max_height
-			}
+		if node.shape.max_height > 0 && node.shape.height > node.shape.max_height {
+			node.shape.height = node.shape.max_height
 		}
 		for mut child in node.children {
 			if child.shape.sizing.height == .fill {
@@ -532,6 +527,16 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 			.top_to_bottom { y += child.shape.height + spacing }
 			.none {}
 		}
+	}
+}
+
+// layout_set_disables walks the ShapeTree and disables any children
+// that have a diabled ancestor
+fn layout_set_disables(mut node ShapeTree, disabled bool) {
+	mut is_disabled := disabled || node.shape.disabled
+	node.shape.disabled = is_disabled
+	for mut child in node.children {
+		layout_set_disables(mut child, is_disabled)
 	}
 }
 

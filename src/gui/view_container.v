@@ -4,14 +4,8 @@ import gg
 import gx
 
 pub struct Container implements View {
-	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
-pub mut:
 	id         string
 	id_focus   u32
-	axis       Axis
 	x          f32
 	y          f32
 	width      f32
@@ -29,9 +23,17 @@ pub mut:
 	v_align    VerticalAlign
 	radius     f32
 	color      gx.Color
+	disabled   bool
 	text       string
-	cfg        voidptr
-	content    []View
+
+	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
+mut:
+	axis    Axis
+	cfg     voidptr
+	content []View
 }
 
 fn (cfg &Container) generate(_ gg.Context) ShapeTree {
@@ -58,6 +60,7 @@ fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 			v_align:      cfg.v_align
 			radius:       cfg.radius
 			color:        cfg.color
+			disabled:     cfg.disabled
 			text:         cfg.text
 			text_cfg:     gx.TextCfg{
 				...gui_theme.text_style.text_cfg
@@ -90,6 +93,7 @@ pub:
 	sizing       Sizing
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
+	disabled     bool
 	text         string
 	spacing      f32      = gui_theme.container_style.spacing
 	radius       f32      = gui_theme.container_style.radius
@@ -127,6 +131,7 @@ fn container(cfg ContainerCfg) Container {
 		radius:       cfg.radius
 		sizing:       cfg.sizing
 		spacing:      cfg.spacing
+		disabled:     cfg.disabled
 		text:         cfg.text
 		cfg:          cfg.cfg
 		on_click:     cfg.on_click

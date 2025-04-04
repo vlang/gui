@@ -15,6 +15,7 @@ pub:
 	radius     f32      = gui_theme.progress_bar_style.radius
 	sizing     Sizing
 	text       string
+	disabled   bool
 }
 
 pub fn progress_bar(cfg ProgressBarCfg) View {
@@ -27,6 +28,7 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 		sizing:       cfg.sizing
 		padding:      padding_none
 		fill:         true
+		disabled:     cfg.disabled
 		amend_layout: cfg.amend_layout
 		content:      [
 			rectangle(

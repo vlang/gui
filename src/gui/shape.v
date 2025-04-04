@@ -32,6 +32,7 @@ pub mut:
 	spacing      f32
 	text         string
 	lines        []string
+	disabled     bool
 	text_cfg     gx.TextCfg
 	cursor_x     int = -1
 	cursor_y     int = -1
@@ -78,39 +79,48 @@ fn (node ShapeTree) find_shape(predicate fn (n ShapeTree) bool) ?Shape {
 }
 
 fn shape_previous_focusable(node ShapeTree, mut w Window) ?Shape {
-	ids := get_focus_ids(node)
-	if ids.len == 0 {
-		return none
-	}
-	mut next_id := ids.last()
-	if w.id_focus > 0 {
-		idx := ids.index(u32(w.id_focus))
-		if idx >= 1 && idx < ids.len {
-			next_id = ids[idx - 1]
-		}
-	}
-	return node.find_shape(fn [next_id] (n ShapeTree) bool {
-		return n.shape.id_focus == next_id
-	})
+	ids := get_focus_ids(node).reverse()
+	return next_focusable(node, ids, mut w)
 }
 
 fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
 	ids := get_focus_ids(node)
-	if ids.len == 0 {
-		return none
-	}
-	mut next_id := ids.first()
-	if w.id_focus > 0 {
-		idx := ids.index(w.id_focus)
-		if idx >= 0 && idx < ids.len - 1 {
-			next_id = ids[idx + 1]
-		}
-	}
-	return node.find_shape(fn [next_id] (n ShapeTree) bool {
-		return n.shape.id_focus == next_id
-	})
+	return next_focusable(node, ids, mut w)
 }
 
+// next_focusable finds the next focusable that is not disabled.
+// If none are found it tries to find the first focusable that
+// is not disabled.
+fn next_focusable(node ShapeTree, ids []u32, mut w Window) ?Shape {
+	// ids are sorted either ascending or descending.
+	if w.id_focus > 0 {
+		mut found := false
+		for id in ids {
+			if id == w.id_focus {
+				found = true
+				continue
+			}
+			if !found {
+				continue
+			}
+			shape := node.find_shape(fn [id] (n ShapeTree) bool {
+				return n.shape.id_focus == id && !n.shape.disabled
+			}) or { continue }
+			return shape
+		}
+	}
+	// did not find anything. Try to return the first non disabled.
+	mut first := ?Shape(none)
+	for id in ids {
+		first = node.find_shape(fn [id] (n ShapeTree) bool {
+			return n.shape.id_focus == id && !n.shape.disabled
+		}) or { continue }
+		break
+	}
+	return first
+}
+
+// get_focus_ids returns an ordered list of focus ids
 fn get_focus_ids(node ShapeTree) []u32 {
 	mut focus_ids := []u32{}
 	if node.shape.id_focus > 0 {
@@ -128,7 +138,7 @@ fn char_handler(node ShapeTree, e &gg.Event, w &Window) bool {
 			return true
 		}
 	}
-	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus {
+	if node.shape.id_focus > 0 && !node.shape.disabled && node.shape.id_focus == w.id_focus {
 		if node.shape.on_char != unsafe { nil } && node.shape.on_char(node.shape.cfg, e, w) {
 			return true
 		}
@@ -142,7 +152,7 @@ fn click_handler(node ShapeTree, e &gg.Event, mut w Window) bool {
 			return true
 		}
 	}
-	if node.shape.on_click != unsafe { nil } {
+	if !node.shape.disabled && node.shape.on_click != unsafe { nil } {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			if node.shape.id_focus > 0 {
 				w.set_id_focus(node.shape.id_focus)
@@ -161,7 +171,7 @@ fn keydown_handler(node ShapeTree, e &gg.Event, w &Window) bool {
 			return true
 		}
 	}
-	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus {
+	if node.shape.id_focus > 0 && !node.shape.disabled && node.shape.id_focus == w.id_focus {
 		if node.shape.on_keydown != unsafe { nil } && node.shape.on_keydown(node.shape.cfg, e, w) {
 			return true
 		}

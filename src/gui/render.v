@@ -91,19 +91,32 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 				w, h := ctx.text_size(shape.text)
 				x := shape.x + 20
 				// erase portion of rectangle where text goes.
+				p_color := if shape.disabled {
+					dim_alpha(parent_color)
+				} else {
+					parent_color
+				}
 				renderers << DrawRect{
 					x:     x
 					y:     shape.y - 2 - h / 2
 					w:     w
 					h:     h + 1
 					style: .fill
-					color: parent_color
+					color: p_color
+				}
+				color := if shape.disabled {
+					dim_alpha(shape.text_cfg.color)
+				} else {
+					shape.text_cfg.color
 				}
 				renderers << DrawText{
 					x:    x
 					y:    shape.y - h + 1.5
 					text: shape.text
-					cfg:  shape.text_cfg
+					cfg:  gx.TextCfg{
+						...shape.text_cfg
+						color: color
+					}
 				}
 			}
 			renderers
@@ -126,7 +139,7 @@ fn render_rectangle(shape Shape, ctx &gg.Context) []Renderer {
 		y:          shape.y
 		w:          shape.width
 		h:          shape.height
-		color:      shape.color
+		color:      if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 		style:      if shape.fill { .fill } else { .stroke }
 		is_rounded: shape.radius > 0
 		radius:     shape.radius
@@ -139,12 +152,17 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	lh := line_height(shape, ctx)
 	mut y := int(shape.y + f32(0.49999))
+	color := if shape.disabled { dim_alpha(shape.text_cfg.color) } else { shape.text_cfg.color }
+	text_cfg := gx.TextCfg{
+		...shape.text_cfg
+		color: color
+	}
 	for line in shape.lines {
 		renderers << DrawText{
 			x:    shape.x
 			y:    y
 			text: line
-			cfg:  shape.text_cfg
+			cfg:  text_cfg
 		}
 		y += lh
 	}
@@ -197,4 +215,12 @@ const clip_reset = DrawClip{
 fn render_unclip(ctx &gg.Context, mut clip_stack ClipStack) DrawClip {
 	clip_stack.pop() or { return clip_reset }
 	return clip_stack.peek() or { clip_reset }
+}
+
+// dim_alpha is used for visually indicating disabled
+fn dim_alpha(color gx.Color) gx.Color {
+	return gx.Color{
+		...color
+		a: color.a / u8(2)
+	}
 }

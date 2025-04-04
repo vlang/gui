@@ -43,6 +43,17 @@ fn main_view(window &gui.Window) gui.View {
 					return true
 				}
 			)),
+			button_row('Disabled button', gui.button(
+				min_width: button_width
+				max_width: button_width
+				disabled:  true
+				content:   [gui.text(text: button_text)]
+				on_click:  fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+					mut app := w.state[App]()
+					app.clicks += 1
+					return true
+				}
+			)),
 			button_row('With border', gui.button(
 				min_width:      button_width
 				max_width:      button_width

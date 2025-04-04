@@ -2,8 +2,8 @@ module gui
 
 // SizingType describes the three sizing modes of GUI
 pub enum SizingType {
-	fit   // element fitted to content
-	fill  // content fills to element (grow or shrinks)
+	fit   // element fits to content
+	fill  // elememnt fills to parent (grows or shrinks)
 	fixed // element unchanged
 }
 

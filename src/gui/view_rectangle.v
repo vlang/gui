@@ -4,15 +4,16 @@ import gx
 
 pub struct RectangleCfg {
 pub:
-	id     string
-	x      f32
-	y      f32
-	width  f32
-	height f32
-	color  gx.Color
-	fill   bool
-	radius f32 = gui_theme.radius_rectangle
-	sizing Sizing
+	id       string
+	x        f32
+	y        f32
+	width    f32
+	height   f32
+	color    gx.Color
+	fill     bool
+	radius   f32 = gui_theme.radius_rectangle
+	sizing   Sizing
+	disabled bool
 }
 
 // rectangle draws a rectangle (shocking!). Rectangles can be filled, outlined,
@@ -33,6 +34,7 @@ pub fn rectangle(cfg RectangleCfg) Container {
 		padding:    padding_none
 		radius:     cfg.radius
 		sizing:     cfg.sizing
+		disabled:   cfg.disabled
 		spacing:    0
 	}
 	return container(container_cfg)

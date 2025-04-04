@@ -18,6 +18,7 @@ pub:
 	max_height      f32
 	sizing          Sizing
 	wrap            bool
+	disabled        bool
 	padding         Padding                         = padding(5, 6, 6, 6)
 	color           gx.Color                        = gui_theme.input_style.color
 	color_border    gx.Color                        = gui_theme.input_style.color_border
@@ -60,6 +61,7 @@ pub fn input(cfg InputCfg) View {
 		fill:       cfg.fill_border
 		sizing:     cfg.sizing
 		radius:     cfg.radius_border
+		disabled:   cfg.disabled
 		on_char:    on_char_input
 		on_click:   on_click_input
 		on_keydown: on_keydown_input
