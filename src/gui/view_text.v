@@ -76,7 +76,7 @@ pub fn text(cfg TextCfg) Text {
 		wrap:        cfg.wrap
 		cfg:         &cfg
 		keep_spaces: cfg.keep_spaces
-		sizing:      if cfg.wrap { flex_fit } else { fit_fit }
+		sizing:      if cfg.wrap { fill_fit } else { fit_fit }
 	}
 }
 

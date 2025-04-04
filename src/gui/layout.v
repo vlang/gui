@@ -9,10 +9,10 @@ import arrays
 // of a ShapeTree
 fn layout_do(mut layout ShapeTree, window &Window) {
 	layout_widths(mut layout)
-	layout_flex_widths(mut layout)
+	layout_fill_widths(mut layout)
 	layout_wrap_text(mut layout, window)
 	layout_heights(mut layout)
-	layout_flex_heights(mut layout)
+	layout_fill_heights(mut layout)
 	layout_positions(mut layout, 0, 0)
 	layout_amend(mut layout, window)
 }
@@ -127,9 +127,9 @@ fn find_first_idx_and_len(node ShapeTree, predicate fn (n ShapeTree) bool) (int,
 	return idx, len
 }
 
-// layout_flex_widths manages the growing and shrinking of Shapes horizontally
+// layout_fill_widths manages the growing and shrinking of Shapes horizontally
 // to satisfy a layout constraint
-fn layout_flex_widths(mut node ShapeTree) {
+fn layout_fill_widths(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
 	padding := node.shape.padding.left + node.shape.padding.right
 	mut remaining_width := node.shape.width - padding
@@ -141,15 +141,15 @@ fn layout_flex_widths(mut node ShapeTree) {
 		// fence post spacing
 		remaining_width -= int_max(0, (node.children.len - 1)) * node.shape.spacing
 
-		// divide up the remaining flex widths by first growing all the
-		// all the flex shapes to the same size (if possible) and then
+		// divide up the remaining fill widths by first growing all the
+		// all the fill shapes to the same size (if possible) and then
 		// distributing the remaining width to evenly.
 		//
 		mut excluded := []u64{cap: 25}
 		for i := 0; remaining_width > 0.1 && i < clamp; i++ {
 			// Grow child elements
 			idx, len := find_first_idx_and_len(node, fn [excluded] (n ShapeTree) bool {
-				return n.shape.sizing.width == .flex && n.shape.uid !in excluded
+				return n.shape.sizing.width == .fill && n.shape.uid !in excluded
 			})
 			if len == 0 {
 				break
@@ -160,7 +160,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 			mut width_to_add := remaining_width
 
 			for child in node.children {
-				if child.shape.sizing.width == .flex && child.shape.uid !in excluded {
+				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
 					if child.shape.width < smallest {
 						second_smallest = smallest
 						smallest = child.shape.width
@@ -175,7 +175,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 			width_to_add = f32_min(width_to_add, remaining_width / len)
 
 			for mut child in node.children {
-				if child.shape.sizing.width == .flex && child.shape.uid !in excluded {
+				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
 					if child.shape.width == smallest {
 						previous_width := child.shape.width
 						child.shape.width += width_to_add
@@ -219,7 +219,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 			width_to_add = f32_max(width_to_add, remaining_width / shrinkable.len)
 
 			for mut child in node.children {
-				if child.shape.sizing.width == .flex && child.shape.uid !in excluded {
+				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
 					if child.shape.width == largest {
 						previous_width := child.shape.width
 						child.shape.width += width_to_add
@@ -244,7 +244,7 @@ fn layout_flex_widths(mut node ShapeTree) {
 			}
 		}
 		for mut child in node.children {
-			if child.shape.sizing.width == .flex {
+			if child.shape.sizing.width == .fill {
 				child.shape.width += (remaining_width - f32_max(child.shape.width, child.shape.min_width))
 				child.shape.width = f32_max(child.shape.width, child.shape.min_width)
 				child_padding := child.shape.padding.left + child.shape.padding.right
@@ -257,13 +257,13 @@ fn layout_flex_widths(mut node ShapeTree) {
 	}
 
 	for mut child in node.children {
-		layout_flex_widths(mut child)
+		layout_fill_widths(mut child)
 	}
 }
 
-// layout_flex_heights manages the growing and shrinking of Shapes vertically to
+// layout_fill_heights manages the growing and shrinking of Shapes vertically to
 // satisfy a layout constraint
-fn layout_flex_heights(mut node ShapeTree) {
+fn layout_fill_heights(mut node ShapeTree) {
 	clamp := 100 // avoid infinite loop
 	padding := node.shape.padding.top + node.shape.padding.bottom
 	mut remaining_height := node.shape.height - padding
@@ -275,15 +275,15 @@ fn layout_flex_heights(mut node ShapeTree) {
 		// fence post spacing
 		remaining_height -= int_max(0, (node.children.len - 1)) * node.shape.spacing
 
-		// divide up the remaining flex heights by first growing all the
-		// all the flex shapes to the same size (if possible) and then
+		// divide up the remaining fill heights by first growing all the
+		// all the fill shapes to the same size (if possible) and then
 		// distributing the remaining height to evenly.
 		//
 		mut excluded := []u64{cap: 25}
 		for i := 0; remaining_height > 0.1 && i < clamp; i++ {
 			// Grow child elements
 			idx, len := find_first_idx_and_len(node, fn [excluded] (n ShapeTree) bool {
-				return n.shape.sizing.height == .flex && n.shape.uid !in excluded
+				return n.shape.sizing.height == .fill && n.shape.uid !in excluded
 			})
 			if len == 0 {
 				break
@@ -294,7 +294,7 @@ fn layout_flex_heights(mut node ShapeTree) {
 			mut height_to_add := remaining_height
 
 			for child in node.children {
-				if child.shape.sizing.height == .flex && child.shape.uid !in excluded {
+				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
 					if child.shape.height < smallest {
 						second_smallest = smallest
 						smallest = child.shape.height
@@ -309,7 +309,7 @@ fn layout_flex_heights(mut node ShapeTree) {
 			height_to_add = f32_min(height_to_add, remaining_height / len)
 
 			for mut child in node.children {
-				if child.shape.sizing.height == .flex && child.shape.uid !in excluded {
+				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
 					if child.shape.height == smallest {
 						previous_height := child.shape.height
 						child.shape.height += height_to_add
@@ -354,7 +354,7 @@ fn layout_flex_heights(mut node ShapeTree) {
 			height_to_add = f32_max(height_to_add, remaining_height / shrinkable.len)
 
 			for mut child in node.children {
-				if child.shape.sizing.height == .flex && child.shape.uid !in excluded {
+				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
 					if child.shape.height == largest {
 						previous_height := child.shape.height
 						child.shape.height += height_to_add
@@ -379,7 +379,7 @@ fn layout_flex_heights(mut node ShapeTree) {
 			}
 		}
 		for mut child in node.children {
-			if child.shape.sizing.height == .flex {
+			if child.shape.sizing.height == .fill {
 				child.shape.height += (remaining_height - f32_max(child.shape.height,
 					child.shape.min_height))
 				child.shape.height = f32_max(child.shape.height, child.shape.min_height)
@@ -393,7 +393,7 @@ fn layout_flex_heights(mut node ShapeTree) {
 	}
 
 	for mut child in node.children {
-		layout_flex_heights(mut child)
+		layout_fill_heights(mut child)
 	}
 }
 

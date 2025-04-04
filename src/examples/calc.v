@@ -46,7 +46,7 @@ fn main_view(mut w gui.Window) gui.View {
 
 	panel << gui.row(
 		color:   gx.black
-		sizing:  gui.flex_fit
+		sizing:  gui.fill_fit
 		h_align: .right
 		padding: gui.pad_4(5)
 		content: [

@@ -23,7 +23,7 @@ fn main_view(mut w gui.Window) gui.View {
 		content: [
 			gui.column(
 				fill:       true
-				sizing:     gui.flex_flex
+				sizing:     gui.fill_fill
 				max_width:  150
 				max_height: 330
 				h_align:    .center
@@ -41,7 +41,7 @@ fn main_view(mut w gui.Window) gui.View {
 			),
 			gui.column(
 				text:      ' Container Title  '
-				sizing:    gui.flex_flex
+				sizing:    gui.fill_fill
 				h_align:   .right
 				v_align:   .bottom
 				min_width: 150

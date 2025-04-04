@@ -68,7 +68,7 @@ pub fn button(cfg ButtonCfg) View {
 			row(
 				id_focus:     cfg.id_focus
 				clip:         true
-				sizing:       flex_flex
+				sizing:       fill_fill
 				min_width:    cfg.min_width - cfg.padding_border.left - cfg.padding_border.right
 				max_width:    cfg.max_width - cfg.padding_border.left - cfg.padding_border.right
 				min_height:   cfg.min_height - cfg.padding_border.top - cfg.padding_border.bottom

@@ -63,7 +63,7 @@ fn main_view(w &gui.Window) gui.View {
 		content: [
 			gui.column(
 				padding: gui.padding_none
-				sizing:  gui.fit_flex
+				sizing:  gui.fit_fill
 				content: [
 					gui.rectangle(
 						width:  75
@@ -73,7 +73,7 @@ fn main_view(w &gui.Window) gui.View {
 					),
 					gui.rectangle(
 						width:  75
-						sizing: gui.fit_flex
+						sizing: gui.fit_fill
 						color:  gui.color_transparent
 					),
 					gui.rectangle(
@@ -88,11 +88,11 @@ fn main_view(w &gui.Window) gui.View {
 				id:      'orange'
 				text:    ' orange  '
 				color:   gx.orange
-				sizing:  gui.flex_flex
+				sizing:  gui.fill_fill
 				content: [
 					gui.column(
 						id:      '123'
-						sizing:  gui.flex_flex
+						sizing:  gui.fill_fill
 						fill:    true
 						color:   gx.rgb(0x30, 0x30, 0x30)
 						content: [
@@ -149,7 +149,7 @@ fn main_view(w &gui.Window) gui.View {
 							),
 							gui.progress_bar(
 								percent: 0.35
-								sizing:  gui.flex_fit
+								sizing:  gui.fill_fit
 							),
 						]
 					),
@@ -157,14 +157,14 @@ fn main_view(w &gui.Window) gui.View {
 						width:  25
 						height: 25
 						fill:   true
-						sizing: gui.flex_flex
+						sizing: gui.fill_fill
 						color:  gx.dark_green
 					),
 				]
 			),
 			gui.column(
 				fill:    true
-				sizing:  gui.flex_flex
+				sizing:  gui.fill_fill
 				color:   gx.rgb(0x30, 0x30, 0x30)
 				content: [
 					gui.input(
@@ -181,7 +181,7 @@ fn main_view(w &gui.Window) gui.View {
 					),
 					gui.column(
 						color:   gx.gray
-						sizing:  gui.flex_fit
+						sizing:  gui.fill_fit
 						content: [
 							gui.text(
 								text:     'keep_spaces = false'
@@ -197,7 +197,7 @@ fn main_view(w &gui.Window) gui.View {
 					),
 					gui.column(
 						color:   gx.gray
-						sizing:  gui.flex_fit
+						sizing:  gui.fill_fit
 						content: [
 							gui.text(
 								text:     'keep_spaces = true'
@@ -215,7 +215,7 @@ fn main_view(w &gui.Window) gui.View {
 			),
 			gui.column(
 				padding: gui.padding_none
-				sizing:  gui.fit_flex
+				sizing:  gui.fit_fill
 				content: [
 					gui.rectangle(
 						width:  75
@@ -225,7 +225,7 @@ fn main_view(w &gui.Window) gui.View {
 					),
 					gui.rectangle(
 						width:  75
-						sizing: gui.fit_flex
+						sizing: gui.fit_fill
 						color:  gui.color_transparent
 					),
 					gui.rectangle(

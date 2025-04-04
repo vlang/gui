@@ -22,35 +22,35 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			gui.progress_bar(
 				height:  2
-				sizing:  gui.flex_fixed
+				sizing:  gui.fill_fixed
 				percent: 0.20
 			),
 			gui.progress_bar(
-				sizing:  gui.flex_fixed
+				sizing:  gui.fill_fixed
 				percent: 0.40
 			),
 			gui.progress_bar(
 				height:  20
-				sizing:  gui.flex_fixed
+				sizing:  gui.fill_fixed
 				percent: 0.60
 			),
 			gui.row(
-				sizing:  gui.fit_flex
+				sizing:  gui.fit_fill
 				content: [
 					gui.progress_bar(
 						vertical: true
-						sizing:   gui.fixed_flex
+						sizing:   gui.fixed_fill
 						width:    2
 						percent:  0.40
 					),
 					gui.progress_bar(
 						vertical: true
-						sizing:   gui.fixed_flex
+						sizing:   gui.fixed_fill
 						percent:  0.60
 					),
 					gui.progress_bar(
 						vertical: true
-						sizing:   gui.fixed_flex
+						sizing:   gui.fixed_fill
 						width:    20
 						percent:  0.80
 					),

@@ -70,7 +70,7 @@ pub fn input(cfg InputCfg) View {
 				padding:    cfg.padding
 				spacing:    cfg.spacing
 				fill:       cfg.fill
-				sizing:     flex_flex
+				sizing:     fill_fill
 				radius:     cfg.radius
 				min_width:  cfg.min_width - cfg.padding_border.left - cfg.padding_border.right
 				max_width:  cfg.max_width - cfg.padding_border.left - cfg.padding_border.right
