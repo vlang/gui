@@ -35,7 +35,7 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 				fill:   true
 				radius: cfg.radius
 				color:  cfg.color_bar
-				sizing: fixed_fixed
+				sizing: fill_fill
 			),
 		]
 	}
@@ -51,11 +51,9 @@ fn (cfg ProgressBarCfg) amend_layout(mut node ShapeTree, mut w Window) {
 		if cfg.vertical {
 			height := f32_min(node.shape.height * percent, node.shape.height)
 			node.children[0].shape.height = height
-			node.children[0].shape.width = node.shape.width
 		} else {
 			width := f32_min(node.shape.width * percent, node.shape.width)
 			node.children[0].shape.width = width
-			node.children[0].shape.height = node.shape.height
 		}
 	}
 }

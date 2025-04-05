@@ -181,7 +181,6 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 			color:     cfg.color_1
 			color_bar: cfg.color_5
 			fill:      true
-			padding:   cfg.padding
 			radius:    cfg.radius
 		}
 		text_style:         TextStyle{

@@ -15,14 +15,15 @@ pub mut:
 fn main() {
 	mut window := gui.window(
 		state:   &AppState{
-			name: 'Lorem Ipsum is simply dummy text of the printing and typesetting industry. ' +
-				"Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, " +
-				'when an unknown printer took a galley of type and scrambled it to make a type ' +
+			name:
+				'Lorem Ipsum is simply        dummy text of the printing and typesetting industry. ' +
+				"Lorem Ipsum has been       the industry's standard dummy text ever since the 1500s, " +
+				'when an unknown printer    took a galley of type and scrambled it to make a type ' +
 				'specimen book.'
 		}
 		title:   'test layout'
 		width:   700
-		height:  550
+		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 			w.set_id_focus(2)
@@ -175,7 +176,6 @@ fn main_view(w &gui.Window) gui.View {
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 							mut state := w.state[AppState]()
 							state.name = s
-							w.update_window()
 						}
 					),
 					gui.column(

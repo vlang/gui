@@ -68,17 +68,13 @@ pub fn input(cfg InputCfg) View {
 		cfg:        &cfg
 		content:    [
 			row(
-				color:      cfg.color
-				padding:    cfg.padding
-				spacing:    cfg.spacing
-				fill:       cfg.fill
-				sizing:     fill_fill
-				radius:     cfg.radius
-				min_width:  cfg.min_width - cfg.padding_border.left - cfg.padding_border.right
-				max_width:  cfg.max_width - cfg.padding_border.left - cfg.padding_border.right
-				min_height: cfg.min_height - cfg.padding_border.top - cfg.padding_border.bottom
-				max_height: cfg.max_height - cfg.padding_border.top - cfg.padding_border.bottom
-				content:    [
+				color:   cfg.color
+				padding: cfg.padding
+				spacing: cfg.spacing
+				fill:    cfg.fill
+				sizing:  fill_fill
+				radius:  cfg.radius
+				content: [
 					text(
 						id_focus:    cfg.id_focus
 						text:        cfg.text
