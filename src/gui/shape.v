@@ -174,19 +174,21 @@ fn keydown_handler(node Layout, e &gg.Event, w &Window) bool {
 	return false
 }
 
-fn mouse_scroll_handler(node Layout, e &gg.Event, mut w Window) bool {
+fn mouse_scroll_handler(node Layout, e &gg.Event, mut w Window, parent Shape) {
 	for child in node.children {
-		if mouse_scroll_handler(child, e, mut w) {
-			return true
-		}
+		mouse_scroll_handler(child, e, mut w, node.shape)
 	}
+
 	if !node.shape.disabled && node.shape.v_scroll_id > 0 {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			v_id := node.shape.v_scroll_id
-			v_offset := w.scroll_state[v_id].v_offset + e.scroll_y * 10
-			w.scroll_state[v_id].v_offset = f32_min(0, v_offset)
-			return true
+			if v_id > 0 {
+				mut v_offset := w.scroll_state[v_id].v_offset + e.scroll_y * 10
+				max_offset := parent.height - parent.padding.top - parent.padding.bottom
+				v_offset = f32_max(max_offset - node.shape.height, v_offset)
+				v_offset = f32_min(0, v_offset)
+				w.scroll_state[v_id].v_offset = v_offset
+			}
 		}
 	}
-	return false
 }

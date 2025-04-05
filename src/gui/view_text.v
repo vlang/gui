@@ -18,6 +18,7 @@ mut:
 	keep_spaces bool
 	sizing      Sizing
 	disabled    bool
+	clip        bool
 	cfg         TextCfg
 	v_scroll_id u32
 	content     []View
@@ -39,6 +40,7 @@ fn (t Text) generate(ctx gg.Context) Layout {
 			disabled:    t.disabled
 			min_width:   t.min_width
 			v_scroll_id: t.v_scroll_id
+			clip:        t.clip || t.v_scroll_id > 0
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -65,6 +67,7 @@ pub:
 	wrap        bool
 	keep_spaces bool
 	disabled    bool
+	clip        bool
 	v_scroll_id u32
 }
 

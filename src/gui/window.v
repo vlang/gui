@@ -117,7 +117,7 @@ fn event_fn(e &gg.Event, mut w Window) {
 			w.set_mouse_cursor_arrow()
 		}
 		.mouse_scroll {
-			mouse_scroll_handler(layout, e, mut w)
+			mouse_scroll_handler(layout, e, mut w, layout.shape)
 		}
 		else {
 			// dump(e)
