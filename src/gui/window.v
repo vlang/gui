@@ -8,18 +8,20 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	ui           &gg.Context = &gg.Context{}
-	state        voidptr     = unsafe { nil }
-	layout       ShapeTree   = ShapeTree{}
-	renderers    []Renderer  = []
-	mutex        &sync.Mutex = sync.new_mutex()
-	bg_color     gx.Color
-	gen_view     fn (&Window) View = default_view
-	id_focus     u32
-	focused      bool = true
-	input_state  map[u32]InputState
-	mouse_cursor sapp.MouseCursor
-	on_event     fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
+	ui              &gg.Context = &gg.Context{}
+	state           voidptr     = unsafe { nil }
+	layout          ShapeTree   = ShapeTree{}
+	renderers       []Renderer  = []
+	mutex           &sync.Mutex = sync.new_mutex()
+	bg_color        gx.Color
+	gen_view        fn (&Window) View = default_view
+	id_focus        u32
+	focused         bool = true
+	input_state     map[u32]InputState
+	scroll_state    map[u32]ScrollState
+	v_scroll_offset f32
+	mouse_cursor    sapp.MouseCursor
+	on_event        fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -76,11 +78,12 @@ fn event_fn(e &gg.Event, mut w Window) {
 		return
 	}
 	mut handled := false
+	w.mutex.lock()
+	layout := w.layout
+	w.mutex.unlock()
+
 	match e.typ {
 		.char {
-			w.mutex.lock()
-			layout := w.layout
-			w.mutex.unlock()
 			handled = char_handler(layout, e, w)
 		}
 		.focused {
@@ -90,10 +93,6 @@ fn event_fn(e &gg.Event, mut w Window) {
 			w.focused = false
 		}
 		.key_down {
-			w.mutex.lock()
-			layout := w.layout
-			w.mutex.unlock()
-
 			handled = keydown_handler(layout, e, w)
 
 			m := unsafe { gg.Modifier(e.modifiers) }
@@ -108,9 +107,6 @@ fn event_fn(e &gg.Event, mut w Window) {
 			}
 		}
 		.mouse_down {
-			w.mutex.lock()
-			layout := w.layout
-			w.mutex.unlock()
 			w.set_id_focus(0)
 			handled = click_handler(layout, e, mut w)
 		}
@@ -119,6 +115,9 @@ fn event_fn(e &gg.Event, mut w Window) {
 				return
 			}
 			w.set_mouse_cursor_arrow()
+		}
+		.mouse_scroll {
+			mouse_scroll_handler(layout, e, mut w)
 		}
 		else {
 			// dump(e)
@@ -203,6 +202,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 
 	window.id_focus = 0
 	window.input_state.clear()
+	window.scroll_state.clear()
 	window.gen_view = gen_view
 	window.layout = shapes
 	window.renderers = renderers

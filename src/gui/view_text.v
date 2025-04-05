@@ -19,6 +19,7 @@ mut:
 	sizing      Sizing
 	disabled    bool
 	cfg         TextCfg
+	v_scroll_id u32
 	content     []View
 }
 
@@ -37,6 +38,7 @@ fn (t Text) generate(ctx gg.Context) ShapeTree {
 			sizing:      t.sizing
 			disabled:    t.disabled
 			min_width:   t.min_width
+			v_scroll_id: t.v_scroll_id
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -63,6 +65,7 @@ pub:
 	wrap        bool
 	keep_spaces bool
 	disabled    bool
+	v_scroll_id u32
 }
 
 // text renders text. Text wrapping is available. Multiple spaces are compressed
@@ -81,6 +84,7 @@ pub fn text(cfg TextCfg) Text {
 		keep_spaces: cfg.keep_spaces
 		sizing:      if cfg.wrap { fill_fit } else { fit_fit }
 		disabled:    cfg.disabled
+		v_scroll_id: cfg.v_scroll_id
 	}
 }
 
@@ -135,7 +139,7 @@ fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 		t_width := ctx.text_width(nline)
 		if t_width > width {
 			wrap << line
-			line = field
+			line = field.trim_space()
 		} else {
 			line = nline
 		}
@@ -145,20 +149,26 @@ fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 }
 
 // text_wrap_text_keep_spaces wraps lines to given width (logical units, not
-// chars) White space is preserved
+// chars) White space is preserved except leading spaces at the start of a
+// wrapped line.
 fn text_wrap_text_keep_spaces(s string, width f32, ctx gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in split_text(s) {
+		if field == '\n' {
+			wrap << line
+			line = ''
+			continue
+		}
 		if line.len == 0 {
-			line = field
+			line = field.trim_space()
 			continue
 		}
 		nline := line + field
 		t_width := ctx.text_width(nline)
 		if t_width > width {
 			wrap << line
-			line = field
+			line = field.trim_space()
 		} else {
 			line = nline
 		}
@@ -197,6 +207,12 @@ fn split_text(s string) []string {
 				state = state_sp
 				fields << field
 				field = ch
+			} else if ch == '\n' {
+				fields << field
+				fields << '\n'
+				field = ''
+			} else if ch.is_blank() {
+				// eat it
 			} else {
 				field += ch
 			}

@@ -13,6 +13,7 @@ fn layout_do(mut layout ShapeTree, window &Window) {
 	layout_wrap_text(mut layout, window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
+	layout_set_scroll_offsets(mut layout, window)
 	layout_positions(mut layout, 0, 0)
 	layout_set_disables(mut layout, false)
 	layout_amend(mut layout, window)
@@ -448,11 +449,20 @@ fn layout_wrap_text(mut node ShapeTree, w &Window) {
 	}
 }
 
+fn layout_set_scroll_offsets(mut node ShapeTree, w &Window) {
+	for mut child in node.children {
+		layout_set_scroll_offsets(mut child, w)
+	}
+	if node.shape.v_scroll_id > 0 {
+		node.shape.v_scroll_offset = w.scroll_state[node.shape.v_scroll_id].v_offset
+	}
+}
+
 // layout_positions sets the positions of all Shapes in the ShapeTreee. It also
 // handles alignment (soon)
 fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	node.shape.x += offset_x
-	node.shape.y += offset_y
+	node.shape.y += offset_y + node.shape.v_scroll_offset
 
 	axis := node.shape.axis
 	padding := node.shape.padding

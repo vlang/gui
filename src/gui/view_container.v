@@ -4,28 +4,28 @@ import gg
 import gx
 
 pub struct Container implements View {
-	id         string
-	id_focus   u32
-	x          f32
-	y          f32
-	width      f32
-	min_width  f32
-	max_width  f32
-	height     f32
-	min_height f32
-	max_height f32
-	clip       bool
-	spacing    f32
-	sizing     Sizing
-	padding    Padding
-	fill       bool
-	h_align    HorizontalAlign
-	v_align    VerticalAlign
-	radius     f32
-	color      gx.Color
-	disabled   bool
-	text       string
-
+	id           string
+	id_focus     u32
+	x            f32
+	y            f32
+	width        f32
+	min_width    f32
+	max_width    f32
+	height       f32
+	min_height   f32
+	max_height   f32
+	clip         bool
+	spacing      f32
+	sizing       Sizing
+	padding      Padding
+	fill         bool
+	h_align      HorizontalAlign
+	v_align      VerticalAlign
+	radius       f32
+	color        gx.Color
+	disabled     bool
+	text         string
+	v_scroll_id  u32
 	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
@@ -67,6 +67,7 @@ fn (cfg &Container) generate(_ gg.Context) ShapeTree {
 				color: cfg.color
 			}
 			cfg:          cfg.cfg
+			v_scroll_id:  cfg.v_scroll_id
 			on_click:     cfg.on_click
 			on_char:      cfg.on_char
 			on_keydown:   cfg.on_keydown
@@ -95,6 +96,7 @@ pub:
 	v_align      VerticalAlign
 	disabled     bool
 	text         string
+	v_scroll_id  u32
 	spacing      f32      = gui_theme.container_style.spacing
 	radius       f32      = gui_theme.container_style.radius
 	padding      Padding  = gui_theme.container_style.padding
@@ -133,6 +135,7 @@ fn container(cfg ContainerCfg) Container {
 		spacing:      cfg.spacing
 		disabled:     cfg.disabled
 		text:         cfg.text
+		v_scroll_id:  cfg.v_scroll_id
 		cfg:          cfg.cfg
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char

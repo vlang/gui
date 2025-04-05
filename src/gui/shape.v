@@ -8,41 +8,43 @@ import rand
 // Shape is the only data structure in GUI used to draw to the screen.
 pub struct Shape {
 pub mut:
-	id           string // asigned by user
-	type         ShapeType
-	uid          u64 = rand.u64() // internal use only
-	id_focus     u32 // >0 indicates shape is focusable. Value determines tabbing order
-	axis         Axis
-	x            f32
-	y            f32
-	width        f32
-	min_width    f32
-	max_width    f32
-	height       f32
-	min_height   f32
-	max_height   f32
-	color        gg.Color
-	fill         bool
-	h_align      HorizontalAlign
-	v_align      VerticalAlign
-	clip         bool
-	padding      Padding
-	radius       f32
-	sizing       Sizing
-	spacing      f32
-	text         string
-	lines        []string
-	disabled     bool
-	text_cfg     gx.TextCfg
-	cursor_x     int = -1
-	cursor_y     int = -1
-	wrap         bool
-	keep_spaces  bool
-	cfg          voidptr
-	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
+	id              string // asigned by user
+	type            ShapeType
+	uid             u64 = rand.u64() // internal use only
+	id_focus        u32 // >0 indicates shape is focusable. Value determines tabbing order
+	axis            Axis
+	x               f32
+	y               f32
+	width           f32
+	min_width       f32
+	max_width       f32
+	height          f32
+	min_height      f32
+	max_height      f32
+	color           gg.Color
+	fill            bool
+	h_align         HorizontalAlign
+	v_align         VerticalAlign
+	clip            bool
+	padding         Padding
+	radius          f32
+	sizing          Sizing
+	spacing         f32
+	text            string
+	lines           []string
+	disabled        bool
+	text_cfg        gx.TextCfg
+	cursor_x        int = -1
+	cursor_y        int = -1
+	wrap            bool
+	keep_spaces     bool
+	v_scroll_id     u32 // >0 indicates shape is scrollable
+	v_scroll_offset f32
+	cfg             voidptr
+	on_char         fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	on_click        fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	on_keydown      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
+	amend_layout    fn (mut ShapeTree, &Window)           = unsafe { nil }
 }
 
 // ShapeTree defines a tree of Shapes. Views generate ShapeTrees
@@ -173,6 +175,23 @@ fn keydown_handler(node ShapeTree, e &gg.Event, w &Window) bool {
 	}
 	if node.shape.id_focus > 0 && !node.shape.disabled && node.shape.id_focus == w.id_focus {
 		if node.shape.on_keydown != unsafe { nil } && node.shape.on_keydown(node.shape.cfg, e, w) {
+			return true
+		}
+	}
+	return false
+}
+
+fn mouse_scroll_handler(node ShapeTree, e &gg.Event, mut w Window) bool {
+	for child in node.children {
+		if mouse_scroll_handler(child, e, mut w) {
+			return true
+		}
+	}
+	if !node.shape.disabled && node.shape.v_scroll_id > 0 {
+		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+			v_id := node.shape.v_scroll_id
+			v_offset := w.scroll_state[v_id].v_offset + e.scroll_y * 10
+			w.scroll_state[v_id].v_offset = f32_min(0, v_offset)
 			return true
 		}
 	}
