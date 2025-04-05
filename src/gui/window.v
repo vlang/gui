@@ -193,7 +193,7 @@ pub fn (mut window Window) set_id_focus(id u32) {
 // view generator and clears the input states.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
-	mut layout := generate_shapes(view, window)
+	mut layout := generate_layout(view, window)
 	layout_do(mut layout, window)
 	renderers := render(layout, window.bg_color, window.ui)
 
@@ -216,7 +216,7 @@ pub fn (mut window Window) update_window() {
 	window.mutex.unlock()
 
 	view := gen_view(window)
-	mut layout := generate_shapes(view, window)
+	mut layout := generate_layout(view, window)
 	layout_do(mut layout, window)
 	renderers := render(layout, window.bg_color, window.ui)
 
