@@ -85,7 +85,11 @@ pub fn text(cfg TextCfg) Text {
 		wrap:        cfg.wrap
 		cfg:         &cfg
 		keep_spaces: cfg.keep_spaces
-		sizing:      if cfg.wrap { fill_fit } else { fit_fit }
+		sizing:      if cfg.wrap {
+			if cfg.v_scroll_id > 0 { fill_fill } else { fill_fit }
+		} else {
+			fit_fit
+		}
 		disabled:    cfg.disabled
 		v_scroll_id: cfg.v_scroll_id
 	}
@@ -123,8 +127,11 @@ fn text_wrap(mut shape Shape, ctx gg.Context) {
 
 		shape.width = text_width(shape, ctx)
 		lh := line_height(shape, ctx)
-		shape.height = shape.lines.len * lh
-		shape.min_height = shape.height
+		shape.max_height = shape.lines.len * lh
+		if shape.v_scroll_id == 0 {
+			shape.height = shape.lines.len * lh
+			shape.min_height = shape.height
+		}
 	}
 }
 

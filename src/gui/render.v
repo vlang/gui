@@ -61,11 +61,10 @@ fn render(layout Layout, bg_color gx.Color, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
 
-	renderers << render_shape(layout.shape, bg_color, ctx)
-
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, ctx, mut clip_stack)
 	}
+	renderers << render_shape(layout.shape, bg_color, ctx)
 	for child in layout.children {
 		parent_color := if layout.shape.color != color_transparent {
 			layout.shape.color
@@ -90,6 +89,7 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 				ctx.set_text_cfg(shape.text_cfg)
 				w, h := ctx.text_size(shape.text)
 				x := shape.x + 20
+				y := shape.y + shape.v_scroll_offset
 				// erase portion of rectangle where text goes.
 				p_color := if shape.disabled {
 					dim_alpha(parent_color)
@@ -98,7 +98,7 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 				}
 				renderers << DrawRect{
 					x:     x
-					y:     shape.y - 2 - h / 2
+					y:     y - 2 - h / 2
 					w:     w
 					h:     h + 1
 					style: .fill
@@ -111,7 +111,7 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 				}
 				renderers << DrawText{
 					x:    x
-					y:    shape.y - h + 1.5
+					y:    y - h + 1.5
 					text: shape.text
 					cfg:  gx.TextCfg{
 						...shape.text_cfg
@@ -136,7 +136,7 @@ fn render_rectangle(shape Shape, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	renderers << DrawRect{
 		x:          shape.x
-		y:          shape.y
+		y:          shape.y + shape.v_scroll_offset
 		w:          shape.width
 		h:          shape.height
 		color:      if shape.disabled { dim_alpha(shape.color) } else { shape.color }
@@ -151,7 +151,7 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 	assert shape.type == .text
 	mut renderers := []Renderer{}
 	lh := line_height(shape, ctx)
-	mut y := int(shape.y + f32(0.49999))
+	mut y := int(shape.y + shape.v_scroll_offset + f32(0.49999))
 	color := if shape.disabled { dim_alpha(shape.text_cfg.color) } else { shape.text_cfg.color }
 	text_cfg := gx.TextCfg{
 		...shape.text_cfg

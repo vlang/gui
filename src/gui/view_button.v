@@ -69,7 +69,6 @@ pub fn button(cfg ButtonCfg) View {
 		content:    [
 			row(
 				id_focus:     cfg.id_focus
-				clip:         true
 				sizing:       fill_fill
 				h_align:      cfg.h_align
 				v_align:      cfg.v_align

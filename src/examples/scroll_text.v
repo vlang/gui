@@ -38,22 +38,35 @@ fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[App]()
 
-	return gui.row(
+	return gui.column(
 		width:   w
 		height:  h
 		sizing:  gui.fixed_fixed
+		h_align: .center
 		content: [
 			gui.text(
-				text:        app.text
-				keep_spaces: true
-				wrap:        true
-				v_scroll_id: 1
+				text: 'Let the scrolling begin'
+			),
+			gui.row(
+				sizing:  gui.fill_fill
+				padding: gui.padding_none
+				content: [
+					gui.text(
+						text:        app.text
+						keep_spaces: true
+						wrap:        true
+						v_scroll_id: 1
+					),
+					gui.text(
+						text:        app.text
+						keep_spaces: true
+						wrap:        true
+						v_scroll_id: 2
+					),
+				]
 			),
 			gui.text(
-				text:        app.text
-				keep_spaces: true
-				wrap:        true
-				v_scroll_id: 2
+				text: 'Let the scrolling end'
 			),
 		]
 	)

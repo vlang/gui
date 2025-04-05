@@ -469,7 +469,7 @@ fn layout_set_scroll_offsets(mut node Layout, w &Window) {
 // handles alignment (soon)
 fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 	node.shape.x += offset_x
-	node.shape.y += offset_y + node.shape.v_scroll_offset
+	node.shape.y += offset_y
 
 	axis := node.shape.axis
 	padding := node.shape.padding
