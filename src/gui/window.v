@@ -10,7 +10,7 @@ pub struct Window {
 mut:
 	ui              &gg.Context = &gg.Context{}
 	state           voidptr     = unsafe { nil }
-	layout          ShapeTree   = ShapeTree{}
+	layout          Layout      = Layout{}
 	renderers       []Renderer  = []
 	mutex           &sync.Mutex = sync.new_mutex()
 	bg_color        gx.Color
@@ -193,9 +193,9 @@ pub fn (mut window Window) set_id_focus(id u32) {
 // view generator and clears the input states.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
-	mut shapes := generate_shapes(view, window)
-	layout_do(mut shapes, window)
-	renderers := render(shapes, window.bg_color, window.ui)
+	mut layout := generate_shapes(view, window)
+	layout_do(mut layout, window)
+	renderers := render(layout, window.bg_color, window.ui)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -204,7 +204,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.input_state.clear()
 	window.scroll_state.clear()
 	window.gen_view = gen_view
-	window.layout = shapes
+	window.layout = layout
 	window.renderers = renderers
 }
 
@@ -216,12 +216,12 @@ pub fn (mut window Window) update_window() {
 	window.mutex.unlock()
 
 	view := gen_view(window)
-	mut shapes := generate_shapes(view, window)
-	layout_do(mut shapes, window)
-	renderers := render(shapes, window.bg_color, window.ui)
+	mut layout := generate_shapes(view, window)
+	layout_do(mut layout, window)
+	renderers := render(layout, window.bg_color, window.ui)
 
 	window.mutex.lock()
-	window.layout = shapes
+	window.layout = layout
 	window.renderers = renderers
 	window.mutex.unlock()
 }

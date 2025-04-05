@@ -1,6 +1,6 @@
 module gui
 
-// Axis defines if a Shape arranges its child shapes horizontally, vertically or
+// Axis defines if a Shape arranges its child layout horizontally, vertically or
 // not at all.
 pub enum Axis {
 	none

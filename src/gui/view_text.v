@@ -23,8 +23,8 @@ mut:
 	content     []View
 }
 
-fn (t Text) generate(ctx gg.Context) ShapeTree {
-	mut shape_tree := ShapeTree{
+fn (t Text) generate(ctx gg.Context) Layout {
+	mut shape_tree := Layout{
 		shape: Shape{
 			id:          t.id
 			id_focus:    t.id_focus

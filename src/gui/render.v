@@ -57,24 +57,24 @@ fn render_draw(renderer Renderer, ctx &gg.Context) {
 	}
 }
 
-fn render(shapes ShapeTree, bg_color gx.Color, ctx &gg.Context) []Renderer {
+fn render(layout Layout, bg_color gx.Color, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
 
-	renderers << render_shape(shapes.shape, bg_color, ctx)
+	renderers << render_shape(layout.shape, bg_color, ctx)
 
-	if shapes.shape.clip {
-		renderers << render_clip(shapes.shape, ctx, mut clip_stack)
+	if layout.shape.clip {
+		renderers << render_clip(layout.shape, ctx, mut clip_stack)
 	}
-	for child in shapes.children {
-		parent_color := if shapes.shape.color != color_transparent {
-			shapes.shape.color
+	for child in layout.children {
+		parent_color := if layout.shape.color != color_transparent {
+			layout.shape.color
 		} else {
 			bg_color
 		}
 		renderers << render(child, parent_color, ctx)
 	}
-	if shapes.shape.clip {
+	if layout.shape.clip {
 		renderers << render_unclip(ctx, mut clip_stack)
 	}
 
@@ -188,7 +188,7 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 	return renderers
 }
 
-// shape_clip creates a clipping region based on the shapes's bounds property.
+// shape_clip creates a clipping region based on the layout's bounds property.
 // Internal use mostly, but useful if designing a new Shape
 fn render_clip(shape Shape, ctx &gg.Context, mut clip_stack ClipStack) Renderer {
 	// Appears to be some round-off issues in sokol's clipping that cause

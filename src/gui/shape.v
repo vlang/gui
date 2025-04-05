@@ -44,14 +44,7 @@ pub mut:
 	on_char         fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click        fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	amend_layout    fn (mut ShapeTree, &Window)           = unsafe { nil }
-}
-
-// ShapeTree defines a tree of Shapes. Views generate ShapeTrees
-pub struct ShapeTree {
-pub mut:
-	shape    Shape
-	children []ShapeTree
+	amend_layout    fn (mut Layout, &Window)              = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.
@@ -71,7 +64,7 @@ pub fn (shape Shape) point_in_shape(x f32, y f32) bool {
 // find_shape walks the ShapeGTree in reverse until predicate is satisfied.
 // shape_uid limits the depth of the search into tree. Used in event bubbling. 0
 // is not a valid shape_uid and is used to search the entire tree
-fn (node ShapeTree) find_shape(predicate fn (n ShapeTree) bool) ?Shape {
+fn (node Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
 	for child in node.children {
 		if found := child.find_shape(predicate) {
 			return found
@@ -80,12 +73,12 @@ fn (node ShapeTree) find_shape(predicate fn (n ShapeTree) bool) ?Shape {
 	return if predicate(node) { node.shape } else { none }
 }
 
-fn shape_previous_focusable(node ShapeTree, mut w Window) ?Shape {
+fn shape_previous_focusable(node Layout, mut w Window) ?Shape {
 	ids := get_focus_ids(node).reverse()
 	return next_focusable(node, ids, mut w)
 }
 
-fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
+fn shape_next_focusable(node Layout, mut w Window) ?Shape {
 	ids := get_focus_ids(node)
 	return next_focusable(node, ids, mut w)
 }
@@ -93,7 +86,7 @@ fn shape_next_focusable(node ShapeTree, mut w Window) ?Shape {
 // next_focusable finds the next focusable that is not disabled.
 // If none are found it tries to find the first focusable that
 // is not disabled.
-fn next_focusable(node ShapeTree, ids []u32, mut w Window) ?Shape {
+fn next_focusable(node Layout, ids []u32, mut w Window) ?Shape {
 	// ids are sorted either ascending or descending.
 	if w.id_focus > 0 {
 		mut found := false
@@ -105,7 +98,7 @@ fn next_focusable(node ShapeTree, ids []u32, mut w Window) ?Shape {
 			if !found {
 				continue
 			}
-			shape := node.find_shape(fn [id] (n ShapeTree) bool {
+			shape := node.find_shape(fn [id] (n Layout) bool {
 				return n.shape.id_focus == id && !n.shape.disabled
 			}) or { continue }
 			return shape
@@ -114,7 +107,7 @@ fn next_focusable(node ShapeTree, ids []u32, mut w Window) ?Shape {
 	// did not find anything. Try to return the first non disabled.
 	mut first := ?Shape(none)
 	for id in ids {
-		first = node.find_shape(fn [id] (n ShapeTree) bool {
+		first = node.find_shape(fn [id] (n Layout) bool {
 			return n.shape.id_focus == id && !n.shape.disabled
 		}) or { continue }
 		break
@@ -123,7 +116,7 @@ fn next_focusable(node ShapeTree, ids []u32, mut w Window) ?Shape {
 }
 
 // get_focus_ids returns an ordered list of focus ids
-fn get_focus_ids(node ShapeTree) []u32 {
+fn get_focus_ids(node Layout) []u32 {
 	mut focus_ids := []u32{}
 	if node.shape.id_focus > 0 {
 		focus_ids << node.shape.id_focus
@@ -134,7 +127,7 @@ fn get_focus_ids(node ShapeTree) []u32 {
 	return arrays.distinct(focus_ids).sorted()
 }
 
-fn char_handler(node ShapeTree, e &gg.Event, w &Window) bool {
+fn char_handler(node Layout, e &gg.Event, w &Window) bool {
 	for child in node.children {
 		if char_handler(child, e, w) {
 			return true
@@ -148,7 +141,7 @@ fn char_handler(node ShapeTree, e &gg.Event, w &Window) bool {
 	return false
 }
 
-fn click_handler(node ShapeTree, e &gg.Event, mut w Window) bool {
+fn click_handler(node Layout, e &gg.Event, mut w Window) bool {
 	for child in node.children {
 		if click_handler(child, e, mut w) {
 			return true
@@ -167,7 +160,7 @@ fn click_handler(node ShapeTree, e &gg.Event, mut w Window) bool {
 	return false
 }
 
-fn keydown_handler(node ShapeTree, e &gg.Event, w &Window) bool {
+fn keydown_handler(node Layout, e &gg.Event, w &Window) bool {
 	for child in node.children {
 		if keydown_handler(child, e, w) {
 			return true
@@ -181,7 +174,7 @@ fn keydown_handler(node ShapeTree, e &gg.Event, w &Window) bool {
 	return false
 }
 
-fn mouse_scroll_handler(node ShapeTree, e &gg.Event, mut w Window) bool {
+fn mouse_scroll_handler(node Layout, e &gg.Event, mut w Window) bool {
 	for child in node.children {
 		if mouse_scroll_handler(child, e, mut w) {
 			return true

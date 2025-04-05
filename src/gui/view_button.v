@@ -95,7 +95,7 @@ fn on_char_button(cfg &ButtonCfg, e &gg.Event, mut w Window) bool {
 	return false
 }
 
-fn (cfg ButtonCfg) amend_layout(mut node ShapeTree, mut w Window) {
+fn (cfg ButtonCfg) amend_layout(mut node Layout, mut w Window) {
 	if node.shape.disabled || cfg.on_click == unsafe { nil } {
 		return
 	}

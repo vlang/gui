@@ -45,7 +45,7 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 	}
 }
 
-fn (cfg ProgressBarCfg) amend_layout(mut node ShapeTree, mut w Window) {
+fn (cfg ProgressBarCfg) amend_layout(mut node Layout, mut w Window) {
 	if node.children.len >= 0 {
 		percent := f32_min(f32_max(cfg.percent, f32(0)), f32(1))
 		if cfg.vertical {

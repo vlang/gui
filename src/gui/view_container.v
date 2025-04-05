@@ -29,15 +29,15 @@ pub struct Container implements View {
 	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
+	amend_layout fn (mut Layout, &Window)              = unsafe { nil }
 mut:
 	axis    Axis
 	cfg     voidptr
 	content []View
 }
 
-fn (cfg &Container) generate(_ gg.Context) ShapeTree {
-	return ShapeTree{
+fn (cfg &Container) generate(_ gg.Context) Layout {
+	return Layout{
 		shape: Shape{
 			id:           cfg.id
 			id_focus:     cfg.id_focus
@@ -105,7 +105,7 @@ pub:
 	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	amend_layout fn (mut ShapeTree, &Window)           = unsafe { nil }
+	amend_layout fn (mut Layout, &Window)              = unsafe { nil }
 	content      []View
 }
 

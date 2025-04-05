@@ -5,9 +5,16 @@ module gui
 //
 import arrays
 
-// layout_do executes a pipeline of functions to layout and position the Shapes
-// of a ShapeTree
-fn layout_do(mut layout ShapeTree, window &Window) {
+// Layout defines a tree of layout. Views generate Layouts
+pub struct Layout {
+pub mut:
+	shape    Shape
+	children []Layout
+}
+
+// layout_do executes a pipeline of functions to layout and position the layout
+// of a Layout
+fn layout_do(mut layout Layout, window &Window) {
 	layout_widths(mut layout)
 	layout_fill_widths(mut layout)
 	layout_wrap_text(mut layout, window)
@@ -19,9 +26,9 @@ fn layout_do(mut layout ShapeTree, window &Window) {
 	layout_amend(mut layout, window)
 }
 
-// layout_widths arranges a node's children Shapes horizontally. Only container
-// shapes with an axis are arranged.
-fn layout_widths(mut node ShapeTree) {
+// layout_widths arranges a node's children layout horizontally. Only container
+// layout with an axis are arranged.
+fn layout_widths(mut node Layout) {
 	padding := node.shape.padding.left + node.shape.padding.right
 	if node.shape.axis == .left_to_right { // along the axis
 		spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
@@ -64,9 +71,9 @@ fn layout_widths(mut node ShapeTree) {
 	}
 }
 
-// layout_heights arranges a node's children Shapes vertically. Only container
-// shapes with an axis are arranged.
-fn layout_heights(mut node ShapeTree) {
+// layout_heights arranges a node's children layout vertically. Only container
+// layout with an axis are arranged.
+fn layout_heights(mut node Layout) {
 	padding := node.shape.padding.top + node.shape.padding.bottom
 	if node.shape.axis == .top_to_bottom { // along the axis
 		spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
@@ -113,7 +120,7 @@ fn layout_heights(mut node ShapeTree) {
 // find_first_idx_and_len gets the index of the first element to satisfy the
 // predicate and the length of all elements that satisfy the predicate. Iterates
 // the array once with no allocations.
-fn find_first_idx_and_len(node ShapeTree, predicate fn (n ShapeTree) bool) (int, int) {
+fn find_first_idx_and_len(node Layout, predicate fn (n Layout) bool) (int, int) {
 	mut idx := 0
 	mut len := 0
 	mut set_idx := false
@@ -129,9 +136,9 @@ fn find_first_idx_and_len(node ShapeTree, predicate fn (n ShapeTree) bool) (int,
 	return idx, len
 }
 
-// layout_fill_widths manages the growing and shrinking of Shapes horizontally
+// layout_fill_widths manages the growing and shrinking of layout horizontally
 // to satisfy a layout constraint
-fn layout_fill_widths(mut node ShapeTree) {
+fn layout_fill_widths(mut node Layout) {
 	clamp := 100 // avoid infinite loop
 	padding := node.shape.padding.left + node.shape.padding.right
 	mut remaining_width := node.shape.width - padding
@@ -144,13 +151,13 @@ fn layout_fill_widths(mut node ShapeTree) {
 		remaining_width -= int_max(0, (node.children.len - 1)) * node.shape.spacing
 
 		// divide up the remaining fill widths by first growing all the
-		// all the fill shapes to the same size (if possible) and then
+		// all the fill layout to the same size (if possible) and then
 		// distributing the remaining width to evenly.
 		//
 		mut excluded := []u64{cap: 25}
 		for i := 0; remaining_width > 0.1 && i < clamp; i++ {
 			// Grow child elements
-			idx, len := find_first_idx_and_len(node, fn [excluded] (n ShapeTree) bool {
+			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
 				return n.shape.sizing.width == .fill && n.shape.uid !in excluded
 			})
 			if len == 0 {
@@ -260,9 +267,9 @@ fn layout_fill_widths(mut node ShapeTree) {
 	}
 }
 
-// layout_fill_heights manages the growing and shrinking of Shapes vertically to
+// layout_fill_heights manages the growing and shrinking of layout vertically to
 // satisfy a layout constraint
-fn layout_fill_heights(mut node ShapeTree) {
+fn layout_fill_heights(mut node Layout) {
 	clamp := 100 // avoid infinite loop
 	padding := node.shape.padding.top + node.shape.padding.bottom
 	mut remaining_height := node.shape.height - padding
@@ -275,13 +282,13 @@ fn layout_fill_heights(mut node ShapeTree) {
 		remaining_height -= int_max(0, (node.children.len - 1)) * node.shape.spacing
 
 		// divide up the remaining fill heights by first growing all the
-		// all the fill shapes to the same size (if possible) and then
+		// all the fill layout to the same size (if possible) and then
 		// distributing the remaining height to evenly.
 		//
 		mut excluded := []u64{cap: 25}
 		for i := 0; remaining_height > 0.1 && i < clamp; i++ {
 			// Grow child elements
-			idx, len := find_first_idx_and_len(node, fn [excluded] (n ShapeTree) bool {
+			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
 				return n.shape.sizing.height == .fill && n.shape.uid !in excluded
 			})
 			if len == 0 {
@@ -393,10 +400,10 @@ fn layout_fill_heights(mut node ShapeTree) {
 	}
 }
 
-// layout_wrap_text is called after all widths in a ShapeTree are determined.
+// layout_wrap_text is called after all widths in a Layout are determined.
 // Wrapping text can change the height of an Shape, which is why it is called
 // before computing Shape heights
-fn layout_wrap_text(mut node ShapeTree, w &Window) {
+fn layout_wrap_text(mut node Layout, w &Window) {
 	if w.id_focus > 0 && w.id_focus == node.shape.id_focus && node.shape.type == .text {
 		// figure out where the dang cursor goes
 		node.shape.cursor_x = 0
@@ -449,7 +456,7 @@ fn layout_wrap_text(mut node ShapeTree, w &Window) {
 	}
 }
 
-fn layout_set_scroll_offsets(mut node ShapeTree, w &Window) {
+fn layout_set_scroll_offsets(mut node Layout, w &Window) {
 	for mut child in node.children {
 		layout_set_scroll_offsets(mut child, w)
 	}
@@ -458,9 +465,9 @@ fn layout_set_scroll_offsets(mut node ShapeTree, w &Window) {
 	}
 }
 
-// layout_positions sets the positions of all Shapes in the ShapeTreee. It also
+// layout_positions sets the positions of all layout in the Layoute. It also
 // handles alignment (soon)
-fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
+fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 	node.shape.x += offset_x
 	node.shape.y += offset_y + node.shape.v_scroll_offset
 
@@ -540,9 +547,9 @@ fn layout_positions(mut node ShapeTree, offset_x f32, offset_y f32) {
 	}
 }
 
-// layout_set_disables walks the ShapeTree and disables any children
+// layout_set_disables walks the Layout and disables any children
 // that have a diabled ancestor
-fn layout_set_disables(mut node ShapeTree, disabled bool) {
+fn layout_set_disables(mut node Layout, disabled bool) {
 	mut is_disabled := disabled || node.shape.disabled
 	node.shape.disabled = is_disabled
 	for mut child in node.children {
@@ -551,7 +558,7 @@ fn layout_set_disables(mut node ShapeTree, disabled bool) {
 }
 
 // Handle focus, hover stuff here.
-fn layout_amend(mut node ShapeTree, w &Window) {
+fn layout_amend(mut node Layout, w &Window) {
 	for mut child in node.children {
 		layout_amend(mut child, w)
 	}
