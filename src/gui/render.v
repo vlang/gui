@@ -37,7 +37,17 @@ type Renderer = DrawRect | DrawText | DrawClip | DrawLine | DrawNone
 
 type ClipStack = datatypes.Stack[DrawClip]
 
-fn render_draw(renderer Renderer, ctx &gg.Context) {
+// renderers_draw walks the array of renderers and draws them.
+// This function and renderer_draw constitute then entire
+// draw logic of GUI
+fn renderers_draw(renderers []Renderer, ctx &gg.Context) {
+	for renderer in renderers {
+		renderer_draw(renderer, ctx)
+	}
+}
+
+// renderer_draw draws a single renderer
+fn renderer_draw(renderer Renderer, ctx &gg.Context) {
 	match renderer {
 		DrawRect {
 			ctx.draw_rect(renderer)
@@ -57,6 +67,10 @@ fn render_draw(renderer Renderer, ctx &gg.Context) {
 	}
 }
 
+// render walks the layout and generates renderers. If a shape is clipped,
+// then a clip rectangle is added to the context. Clip rectangles are
+// pushed/poped onto an internal stack allowing nested, none overlapping
+// clip rectangles (I think I said that right)
 fn render(layout Layout, bg_color gx.Color, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
@@ -64,7 +78,9 @@ fn render(layout Layout, bg_color gx.Color, ctx &gg.Context) []Renderer {
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, ctx, mut clip_stack)
 	}
+
 	renderers << render_shape(layout.shape, bg_color, ctx)
+
 	for child in layout.children {
 		parent_color := if layout.shape.color != color_transparent {
 			layout.shape.color
@@ -73,6 +89,7 @@ fn render(layout Layout, bg_color gx.Color, ctx &gg.Context) []Renderer {
 		}
 		renderers << render(child, parent_color, ctx)
 	}
+
 	if layout.shape.clip {
 		renderers << render_unclip(ctx, mut clip_stack)
 	}
@@ -80,6 +97,7 @@ fn render(layout Layout, bg_color gx.Color, ctx &gg.Context) []Renderer {
 	return renderers
 }
 
+// render_shape examines the Shape.type and calls the appropriate renderer.
 fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer {
 	return match shape.type {
 		.container {
@@ -136,14 +154,14 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 fn render_rectangle(shape Shape, ctx &gg.Context) []Renderer {
 	assert shape.type == .container
 	mut renderers := []Renderer{}
-	cull_rect := create_cull_rect(shape, ctx)
+	renderer_rect := make_renderer_rect(shape, ctx)
 	draw_rect := gg.Rect{
 		x:      shape.x
 		y:      shape.y + shape.v_scroll_offset
 		width:  shape.width
 		height: shape.height
 	}
-	if rects_overlap(draw_rect, cull_rect) {
+	if rects_overlap(draw_rect, renderer_rect) {
 		renderers << DrawRect{
 			x:          draw_rect.x
 			y:          draw_rect.y
@@ -158,6 +176,8 @@ fn render_rectangle(shape Shape, ctx &gg.Context) []Renderer {
 	return renderers
 }
 
+// render_text renders text including multiline text.
+// If cursor coordinates are present, it draws the input cursor.
 fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 	assert shape.type == .text
 	mut renderers := []Renderer{}
@@ -168,7 +188,7 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 		...shape.text_cfg
 		color: color
 	}
-	cull_rect := create_cull_rect(shape, ctx)
+	renderer_rect := make_renderer_rect(shape, ctx)
 
 	for line in shape.lines {
 		draw_rect := gg.Rect{
@@ -178,7 +198,7 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 			height: lh
 		}
 		// Cull any renderers outside of clip/conteext region.
-		if rects_overlap(cull_rect, draw_rect) {
+		if rects_overlap(renderer_rect, draw_rect) {
 			renderers << DrawText{
 				x:    shape.x
 				y:    y
@@ -210,8 +230,8 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 	return renderers
 }
 
-// shape_clip creates a clipping region based on the layout's bounds property.
-// Internal use mostly, but useful if designing a new Shape
+// render_clip creates a clipping region based on the layout's dimensions
+// minus padding and some adjustments for round off.
 fn render_clip(shape Shape, ctx &gg.Context, mut clip_stack ClipStack) Renderer {
 	// Appears to be some round-off issues in sokol's clipping that cause
 	// off by one errors. Not a big deal. Bump the region out by one in
@@ -247,7 +267,10 @@ fn dim_alpha(color gx.Color) gx.Color {
 	}
 }
 
-fn create_cull_rect(shape Shape, ctx gg.Context) gg.Rect {
+// make_renderer_rect creates a rectangle that represents the renderable region.
+// If the shape is clipped, then use the shape dimensions otherwise used
+// the window size.
+fn make_renderer_rect(shape Shape, ctx gg.Context) gg.Rect {
 	return match shape.clip {
 		true {
 			gg.Rect{
@@ -269,8 +292,8 @@ fn create_cull_rect(shape Shape, ctx gg.Context) gg.Rect {
 	}
 }
 
+// rects_overlap check for non-overlapping conditions. If none are met, they overlap.
 fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
-	// Check for non-overlapping conditions. If none are met, they overlap.
 	return !(r1.x + r1.width <= r2.x || r1.y + r1.height <= r2.y || r1.x >= r2.x + r2.width
 		|| r1.y >= r2.y + r2.height)
 }

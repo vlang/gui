@@ -89,13 +89,11 @@ pub fn window(cfg WindowCfg) &Window {
 	return window
 }
 
-// frame_fn is the only place where the window's view is rendered.
+// frame_fn is the only place where the window's layout is rendered.
 fn frame_fn(mut window Window) {
 	window.mutex.lock()
 	window.ui.begin()
-	for renderer in window.renderers {
-		render_draw(renderer, window.ui)
-	}
+	renderers_draw(window.renderers, window.ui)
 	window.ui.end()
 	window.mutex.unlock()
 	sapp.set_mouse_cursor(window.mouse_cursor)
