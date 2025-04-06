@@ -236,11 +236,12 @@ fn render_clip(shape Shape, ctx &gg.Context, mut clip_stack ClipStack) Renderer 
 	// Appears to be some round-off issues in sokol's clipping that cause
 	// off by one errors. Not a big deal. Bump the region out by one in
 	// either direction to compensate.
+	clip_rect := shape_clip_rect(shape)
 	clip := DrawClip{
-		x:      shape.x + shape.padding.left - 1
-		y:      shape.y + shape.padding.top - 1
-		width:  shape.width - shape.padding.left - shape.padding.right + 2
-		height: shape.height - shape.padding.top - shape.padding.bottom + 2
+		x:      clip_rect.x
+		y:      clip_rect.y
+		width:  clip_rect.width
+		height: clip_rect.height
 	}
 	clip_stack.push(clip)
 	return clip
@@ -267,18 +268,24 @@ fn dim_alpha(color gx.Color) gx.Color {
 	}
 }
 
+// shape_clip_rect constructs a clip rectangle based on the shape's
+// diemensions plus some adjustments for round off
+fn shape_clip_rect(shape Shape) gg.Rect {
+	return gg.Rect{
+		x:      shape.x + shape.padding.left - 1
+		y:      shape.y + shape.padding.top - 1
+		width:  shape.width - shape.padding.left - shape.padding.right + 2
+		height: shape.height - shape.padding.top - shape.padding.bottom + 2
+	}
+}
+
 // make_renderer_rect creates a rectangle that represents the renderable region.
 // If the shape is clipped, then use the shape dimensions otherwise used
 // the window size.
 fn make_renderer_rect(shape Shape, ctx gg.Context) gg.Rect {
 	return match shape.clip {
 		true {
-			gg.Rect{
-				x:      shape.x + shape.padding.left - 1
-				y:      shape.y + shape.padding.top - 1
-				width:  shape.width - shape.padding.left - shape.padding.right + 2
-				height: shape.height - shape.padding.top - shape.padding.bottom + 2
-			}
+			shape_clip_rect(shape)
 		}
 		else {
 			size := gg.window_size()
