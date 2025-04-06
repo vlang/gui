@@ -84,8 +84,8 @@ fn main_view(window &gui.Window) gui.View {
 				color:          gx.rgb(195, 105, 0)
 				color_hover:    gx.rgb(195, 105, 0)
 				color_click:    gx.rgb(205, 115, 0)
-				color_border:   gx.white
-				padding_border: gui.pad_4(1)
+				padding_border: gui.pad_4(2)
+				color_border:   gx.rgb(160, 160, 160)
 				padding:        gui.padding_medium
 				v_align:        .middle
 				content:        [gui.text(text: '${app.clicks}'),

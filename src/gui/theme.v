@@ -27,7 +27,7 @@ const color_2_dark = gx.rgb(74, 74, 74)
 const color_3_dark = gx.rgb(84, 84, 84)
 const color_4_dark = gx.rgb(94, 94, 94)
 const color_5_dark = gx.rgb(104, 104, 104)
-const color_border_dark = gx.rgb(225, 225, 225)
+const color_border_dark = gx.rgb(100, 100, 100)
 const color_link_dark = gx.rgb(100, 149, 237)
 const color_text_dark = gx.rgb(225, 225, 225)
 
@@ -123,7 +123,7 @@ pub const theme_light = theme_maker(
 	color_3:      gx.rgb(130, 130, 255)
 	color_4:      gx.rgb(120, 120, 255)
 	color_5:      gx.rgb(91, 91, 255)
-	color_border: gx.rgb(32, 32, 32)
+	color_border: gx.rgb(75, 75, 75)
 	color_link:   gx.rgb(100, 149, 237)
 	text_cfg:     gx.TextCfg{
 		color: gx.rgb(32, 32, 32)
