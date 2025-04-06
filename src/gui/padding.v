@@ -2,6 +2,8 @@ module gui
 
 pub const padding_none = Padding{}
 pub const padding_one = Padding{1, 1, 1, 1}
+pub const padding_two = Padding{2, 2, 2, 2}
+pub const padding_three = Padding{3, 3, 3, 3}
 pub const padding_small = Padding{5, 5, 5, 5}
 pub const padding_medium = Padding{10, 10, 10, 10}
 pub const padding_large = Padding{15, 15, 15, 15}

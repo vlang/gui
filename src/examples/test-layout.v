@@ -112,11 +112,16 @@ fn main_view(w &gui.Window) gui.View {
 								text:     'Embedded in a column with wrapping'
 							),
 							gui.button(
-								id_focus: 1
-								content:  [
+								id_focus:       1
+								padding_border: gui.padding_two
+								color_border:   match w.is_focus(1) {
+									true { gx.rgb(100, 149, 237) }
+									else { gui.theme().button_style.color_border }
+								}
+								content:        [
 									gui.text(text: 'Button Text ${state.click_count}'),
 								]
-								on_click: fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+								on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
 									mut state := w.state[AppState]()
 									state.click_count += 1
 									return true
