@@ -13,9 +13,10 @@ fn main() {
 		title:   'Buttons'
 		state:   &App{}
 		width:   325
-		height:  300
+		height:  350
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
+			w.set_id_focus(1)
 		}
 	)
 	window.run()
@@ -58,7 +59,19 @@ fn main_view(window &gui.Window) gui.View {
 				min_width:      button_width
 				max_width:      button_width
 				content:        [gui.text(text: button_text)]
-				padding_border: gui.pad_4(2)
+				padding_border: gui.padding_two
+				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+					mut app := w.state[App]()
+					app.clicks += 1
+					return true
+				}
+			)),
+			button_row('With focus border', gui.button(
+				id_focus:       1
+				min_width:      button_width
+				max_width:      button_width
+				content:        [gui.text(text: button_text)]
+				padding_border: gui.padding_two
 				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.clicks += 1
@@ -70,7 +83,7 @@ fn main_view(window &gui.Window) gui.View {
 				max_width:      button_width
 				content:        [gui.text(text: button_text)]
 				fill_border:    false
-				padding_border: gui.pad_4(5)
+				padding_border: gui.padding_small
 				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.clicks += 1

@@ -6,29 +6,30 @@ import gx
 @[heap]
 pub struct InputCfg {
 pub:
-	id              string
-	id_focus        u32 @[required] // !0 indicates input is focusable. Value indiciates tabbing order
-	text            string
-	spacing         f32
-	width           f32
-	min_width       f32
-	max_width       f32
-	height          f32
-	min_height      f32
-	max_height      f32
-	sizing          Sizing
-	wrap            bool
-	disabled        bool
-	padding         Padding                         = padding(5, 6, 6, 6)
-	color           gx.Color                        = gui_theme.input_style.color
-	color_border    gx.Color                        = gui_theme.input_style.color_border
-	fill            bool                            = gui_theme.input_style.fill
-	fill_border     bool                            = gui_theme.input_style.fill_border
-	padding_border  Padding                         = gui_theme.input_style.padding_border
-	radius          f32                             = gui_theme.input_style.radius
-	radius_border   f32                             = gui_theme.input_style.radius_border
-	text_cfg        gx.TextCfg                      = gui_theme.input_style.text_cfg
-	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
+	id                 string
+	id_focus           u32 @[required] // !0 indicates input is focusable. Value indiciates tabbing order
+	text               string
+	spacing            f32
+	width              f32
+	min_width          f32
+	max_width          f32
+	height             f32
+	min_height         f32
+	max_height         f32
+	sizing             Sizing
+	wrap               bool
+	disabled           bool
+	padding            Padding                         = gui_theme.input_style.padding
+	padding_border     Padding                         = gui_theme.input_style.padding_border
+	color              gx.Color                        = gui_theme.input_style.color
+	color_border       gx.Color                        = gui_theme.input_style.color_border
+	color_border_focus gx.Color                        = gui_theme.input_style.color_border_focus
+	fill               bool                            = gui_theme.input_style.fill
+	fill_border        bool                            = gui_theme.input_style.fill_border
+	radius             f32                             = gui_theme.input_style.radius
+	radius_border      f32                             = gui_theme.input_style.radius_border
+	text_cfg           gx.TextCfg                      = gui_theme.input_style.text_cfg
+	on_text_changed    fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
 }
 
 // input is a text input field.
@@ -48,25 +49,26 @@ pub:
 pub fn input(cfg InputCfg) View {
 	assert cfg.id_focus != 0
 	return row(
-		id:         cfg.id
-		id_focus:   cfg.id_focus
-		width:      cfg.width
-		height:     cfg.height
-		min_width:  cfg.min_width
-		max_width:  cfg.max_width
-		min_height: cfg.min_height
-		max_height: cfg.max_height
-		padding:    cfg.padding_border
-		color:      cfg.color_border
-		fill:       cfg.fill_border
-		sizing:     cfg.sizing
-		radius:     cfg.radius_border
-		disabled:   cfg.disabled
-		on_char:    on_char_input
-		on_click:   on_click_input
-		on_keydown: on_keydown_input
-		cfg:        &cfg
-		content:    [
+		id:           cfg.id
+		id_focus:     cfg.id_focus
+		width:        cfg.width
+		height:       cfg.height
+		min_width:    cfg.min_width
+		max_width:    cfg.max_width
+		min_height:   cfg.min_height
+		max_height:   cfg.max_height
+		padding:      cfg.padding_border
+		color:        cfg.color_border
+		fill:         cfg.fill_border
+		sizing:       cfg.sizing
+		radius:       cfg.radius_border
+		disabled:     cfg.disabled
+		on_char:      on_char_input
+		on_click:     on_click_input
+		on_keydown:   on_keydown_input
+		amend_layout: cfg.amend_layout
+		cfg:          &cfg
+		content:      [
 			row(
 				color:   cfg.color
 				padding: cfg.padding
@@ -155,4 +157,13 @@ fn on_keydown_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {
 	}
 	w.input_state[w.id_focus].cursor_pos = cursor_pos
 	return true
+}
+
+fn (cfg InputCfg) amend_layout(mut node Layout, mut w Window) {
+	if node.shape.disabled {
+		return
+	}
+	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {
+		node.shape.color = cfg.color_border_focus
+	}
 }

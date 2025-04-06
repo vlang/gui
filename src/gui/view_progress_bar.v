@@ -19,10 +19,11 @@ pub:
 }
 
 pub fn progress_bar(cfg ProgressBarCfg) View {
+	size := f32(gui_theme.progress_bar_style.size)
 	container_cfg := ContainerCfg{
 		id:           cfg.id
-		width:        if cfg.width == 0 { f32(gui_theme.size_progress_bar) } else { cfg.width }
-		height:       if cfg.height == 0 { f32(gui_theme.size_progress_bar) } else { cfg.height }
+		width:        if cfg.width == 0 { size } else { cfg.width }
+		height:       if cfg.height == 0 { size } else { cfg.height }
 		color:        cfg.color
 		radius:       cfg.radius
 		sizing:       cfg.sizing

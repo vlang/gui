@@ -9,12 +9,14 @@ import arrays
 pub struct Layout {
 pub mut:
 	shape    Shape
+	parent   &Shape = &Shape{}
 	children []Layout
 }
 
 // layout_do executes a pipeline of functions to layout and position the layout
 // of a Layout
 fn layout_do(mut layout Layout, window &Window) {
+	layout_parents(mut layout, layout.shape)
 	layout_widths(mut layout)
 	layout_fill_widths(mut layout)
 	layout_wrap_text(mut layout, window)
@@ -24,6 +26,14 @@ fn layout_do(mut layout Layout, window &Window) {
 	layout_positions(mut layout, 0, 0)
 	layout_set_disables(mut layout, false)
 	layout_amend(mut layout, window)
+}
+
+// layout_parents sets the parent property of layout
+fn layout_parents(mut layout Layout, parent &Shape) {
+	layout.parent = unsafe { parent }
+	for mut child in layout.children {
+		layout_parents(mut child, layout.shape)
+	}
 }
 
 // layout_widths arranges a node's children layout horizontally. Only container

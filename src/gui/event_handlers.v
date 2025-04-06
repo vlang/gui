@@ -44,7 +44,8 @@ fn mouse_scroll_handler(node Layout, e &gg.Event, mut w Window, parent Shape) {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			v_id := node.shape.v_scroll_id
 			if v_id > 0 {
-				mut v_offset := w.scroll_state[v_id].v_offset + e.scroll_y * 10
+				mut v_offset := w.scroll_state[v_id].v_offset +
+					e.scroll_y * theme().scroll_multiplier
 				max_offset := node.shape.height - node.shape.max_height - size_text_medium
 				v_offset = f32_max(v_offset, max_offset)
 				v_offset = f32_min(0, v_offset)

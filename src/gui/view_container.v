@@ -5,7 +5,7 @@ import gx
 
 pub struct Container implements View {
 	id           string
-	id_focus     u32
+	id_focus     u32 // not sure this should be here
 	x            f32
 	y            f32
 	width        f32

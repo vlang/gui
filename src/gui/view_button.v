@@ -9,31 +9,32 @@ import gx
 @[heap]
 pub struct ButtonCfg {
 pub:
-	id             string
-	id_focus       u32
-	width          f32
-	height         f32
-	min_width      f32
-	min_height     f32
-	max_width      f32
-	max_height     f32
-	disabled       bool
-	h_align        HorizontalAlign = .center
-	v_align        VerticalAlign   = .middle
-	sizing         Sizing
-	content        []View
-	fill           bool     = gui_theme.button_style.fill
-	fill_border    bool     = gui_theme.button_style.fill_border
-	color          gx.Color = gui_theme.button_style.color
-	color_focus    gx.Color = gui_theme.button_style.color_focus
-	color_hover    gx.Color = gui_theme.button_style.color_hover
-	color_click    gx.Color = gui_theme.button_style.color_click
-	color_border   gx.Color = gui_theme.button_style.color_border
-	padding        Padding  = gui_theme.button_style.padding
-	padding_border Padding  = gui_theme.button_style.padding_border
-	radius         f32      = gui_theme.button_style.radius
-	radius_border  f32      = gui_theme.button_style.radius_border
-	on_click       fn (&ButtonCfg, &gg.Event, &Window) bool = unsafe { nil }
+	id                 string
+	id_focus           u32
+	width              f32
+	height             f32
+	min_width          f32
+	min_height         f32
+	max_width          f32
+	max_height         f32
+	disabled           bool
+	h_align            HorizontalAlign = .center
+	v_align            VerticalAlign   = .middle
+	sizing             Sizing
+	content            []View
+	fill               bool     = gui_theme.button_style.fill
+	fill_border        bool     = gui_theme.button_style.fill_border
+	color              gx.Color = gui_theme.button_style.color
+	color_focus        gx.Color = gui_theme.button_style.color_focus
+	color_hover        gx.Color = gui_theme.button_style.color_hover
+	color_click        gx.Color = gui_theme.button_style.color_click
+	color_border       gx.Color = gui_theme.button_style.color_border
+	color_border_focus gx.Color = gui_theme.button_style.color_border_focus
+	padding            Padding  = gui_theme.button_style.padding
+	padding_border     Padding  = gui_theme.button_style.padding_border
+	radius             f32      = gui_theme.button_style.radius
+	radius_border      f32      = gui_theme.button_style.radius_border
+	on_click           fn (&ButtonCfg, &gg.Event, &Window) bool = unsafe { nil }
 }
 
 // button creates a button.
@@ -42,7 +43,7 @@ pub:
 // gui.button(
 // 	min_width:      90
 // 	max_width:      90
-// 	padding_border: gui.pad_4(1)
+// 	padding_border: gui.padding_one
 // 	content:        [gui.text(text: '${app.clicks} Clicks')]
 // 	on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
 // 		mut app := w.state[App]()
@@ -99,7 +100,7 @@ fn (cfg ButtonCfg) amend_layout(mut node Layout, mut w Window) {
 		return
 	}
 	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {
-		node.shape.color = cfg.color_focus
+		node.parent.color = cfg.color_border_focus
 	}
 	ctx := w.context()
 	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {

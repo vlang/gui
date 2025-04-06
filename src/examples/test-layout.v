@@ -114,10 +114,6 @@ fn main_view(w &gui.Window) gui.View {
 							gui.button(
 								id_focus:       1
 								padding_border: gui.padding_two
-								color_border:   match w.is_focus(1) {
-									true { gx.rgb(100, 149, 237) }
-									else { gui.theme().button_style.color_border }
-								}
 								content:        [
 									gui.text(text: 'Button Text ${state.click_count}'),
 								]
@@ -141,6 +137,7 @@ fn main_view(w &gui.Window) gui.View {
 										sizing:          gui.fixed_fit
 										text:            state.other_input
 										wrap:            false
+										padding_border:  gui.padding_two
 										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
 											state.other_input = s
@@ -178,6 +175,7 @@ fn main_view(w &gui.Window) gui.View {
 						text:            state.name
 						wrap:            true
 						sizing:          gui.fixed_fit
+						padding_border:  gui.padding_two
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 							mut state := w.state[AppState]()
 							state.name = s

@@ -48,9 +48,10 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			gui.text(text: 'Welcome to GUI'),
 			gui.button(
+				id_focus:       1
+				padding_border: gui.padding_two
 				min_width:      90
 				max_width:      90
-				padding_border: gui.pad_4(1)
 				content:        [gui.text(text: '${app.clicks} Clicks')]
 				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()

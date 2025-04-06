@@ -11,7 +11,7 @@ pub:
 	height   f32
 	color    gx.Color
 	fill     bool
-	radius   f32 = gui_theme.radius_rectangle
+	radius   f32 = radius_medium
 	sizing   Sizing
 	disabled bool
 }
