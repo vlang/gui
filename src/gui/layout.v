@@ -5,7 +5,7 @@ module gui
 //
 import arrays
 
-// Layout defines a tree of layout. Views generate Layouts
+// Layout defines a tree of Layouts. Views generate Layouts
 pub struct Layout {
 pub mut:
 	shape    Shape

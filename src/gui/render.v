@@ -85,6 +85,8 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 		.container {
 			mut renderers := []Renderer{}
 			renderers << render_rectangle(shape, ctx)
+			// This group box stuff is likely temporary
+			// Examine after floating containers implemented
 			if shape.text.len != 0 {
 				ctx.set_text_cfg(shape.text_cfg)
 				w, h := ctx.text_size(shape.text)
@@ -134,15 +136,24 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 fn render_rectangle(shape Shape, ctx &gg.Context) []Renderer {
 	assert shape.type == .container
 	mut renderers := []Renderer{}
-	renderers << DrawRect{
-		x:          shape.x
-		y:          shape.y + shape.v_scroll_offset
-		w:          shape.width
-		h:          shape.height
-		color:      if shape.disabled { dim_alpha(shape.color) } else { shape.color }
-		style:      if shape.fill { .fill } else { .stroke }
-		is_rounded: shape.radius > 0
-		radius:     shape.radius
+	cull_rect := create_cull_rect(shape, ctx)
+	draw_rect := gg.Rect{
+		x:      shape.x
+		y:      shape.y + shape.v_scroll_offset
+		width:  shape.width
+		height: shape.height
+	}
+	if rects_overlap(draw_rect, cull_rect) {
+		renderers << DrawRect{
+			x:          draw_rect.x
+			y:          draw_rect.y
+			w:          draw_rect.width
+			h:          draw_rect.height
+			color:      if shape.disabled { dim_alpha(shape.color) } else { shape.color }
+			style:      if shape.fill { .fill } else { .stroke }
+			is_rounded: shape.radius > 0
+			radius:     shape.radius
+		}
 	}
 	return renderers
 }
@@ -157,12 +168,23 @@ fn render_text(shape Shape, ctx &gg.Context) []Renderer {
 		...shape.text_cfg
 		color: color
 	}
+	cull_rect := create_cull_rect(shape, ctx)
+
 	for line in shape.lines {
-		renderers << DrawText{
-			x:    shape.x
-			y:    y
-			text: line
-			cfg:  text_cfg
+		draw_rect := gg.Rect{
+			x:      shape.x
+			y:      y
+			width:  shape.width
+			height: lh
+		}
+		// Cull any renderers outside of clip/conteext region.
+		if rects_overlap(cull_rect, draw_rect) {
+			renderers << DrawText{
+				x:    shape.x
+				y:    y
+				text: line
+				cfg:  text_cfg
+			}
 		}
 		y += lh
 	}
@@ -223,4 +245,32 @@ fn dim_alpha(color gx.Color) gx.Color {
 		...color
 		a: color.a / u8(2)
 	}
+}
+
+fn create_cull_rect(shape Shape, ctx gg.Context) gg.Rect {
+	return match shape.clip {
+		true {
+			gg.Rect{
+				x:      shape.x + shape.padding.left - 1
+				y:      shape.y + shape.padding.top - 1
+				width:  shape.width - shape.padding.left - shape.padding.right + 2
+				height: shape.height - shape.padding.top - shape.padding.bottom + 2
+			}
+		}
+		else {
+			size := gg.window_size()
+			gg.Rect{
+				x:      0
+				y:      0
+				width:  size.width
+				height: size.height
+			}
+		}
+	}
+}
+
+fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
+	// Check for non-overlapping conditions. If none are met, they overlap.
+	return !(r1.x + r1.width <= r2.x || r1.y + r1.height <= r2.y || r1.x >= r2.x + r2.width
+		|| r1.y >= r2.y + r2.height)
 }

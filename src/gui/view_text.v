@@ -85,6 +85,7 @@ pub fn text(cfg TextCfg) Text {
 		wrap:        cfg.wrap
 		cfg:         &cfg
 		keep_spaces: cfg.keep_spaces
+		// Is there a better way than this sizing hack?
 		sizing:      if cfg.wrap {
 			if cfg.v_scroll_id > 0 { fill_fill } else { fill_fit }
 		} else {
@@ -188,7 +189,7 @@ fn text_wrap_text_keep_spaces(s string, width f32, ctx gg.Context) []string {
 }
 
 // split_text splits a string by spaces and also includes the spaces as separate
-// strings
+// strings. Newlines are separated from other white-space.
 fn split_text(s string) []string {
 	space := ' '
 	state_un := 0
