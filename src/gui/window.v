@@ -75,7 +75,7 @@ pub fn window(cfg WindowCfg) &Window {
 		on_event: cfg.on_event
 	}
 	window.ui = gg.new_context(
-		sample_count: 2 // smoother rounded corners
+		sample_count: 2 // smoother rounded corners, maybe
 		bg_color:     cfg.bg_color
 		width:        cfg.width
 		height:       cfg.height
@@ -213,8 +213,8 @@ pub fn (window &Window) pointer_over_app(e &gg.Event) bool {
 // resize_to_content is currently not working. Need to implement gg.resize()
 pub fn (mut window Window) resize_to_content() {
 	window.mutex.lock()
+	defer { window.mutex.unlock() }
 	window.ui.resize(int(window.layout.shape.width), int(window.layout.shape.height))
-	window.mutex.unlock()
 }
 
 // run starts the UI and handles events
@@ -227,6 +227,7 @@ pub fn (mut window Window) set_color_background(color gx.Color) {
 	window.bg_color = color
 }
 
+// set_id_focus sets the window's focus id.
 pub fn (mut window Window) set_id_focus(id u32) {
 	window.id_focus = id
 	window.update_window()
@@ -248,10 +249,9 @@ pub fn (window &Window) state[T]() &T {
 	return unsafe { &T(window.state) }
 }
 
-// set_id_focus sets the window's focus id.
 // update_view sets the Window's view generator. A window can have only one
 // view generator. Giving a Window a new view generator replaces the current
-// view generator and clears the input states.
+// view generator and clears the input states and scroll states.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
@@ -282,9 +282,10 @@ pub fn (mut window Window) update_window() {
 	renderers := render(layout, window.bg_color, window.ui)
 
 	window.mutex.lock()
+	defer { window.mutex.unlock() }
+
 	window.layout = layout
 	window.renderers = renderers
-	window.mutex.unlock()
 }
 
 // window_size gets the size of the window in logical units.

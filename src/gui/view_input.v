@@ -98,14 +98,15 @@ fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) bool {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut t := cfg.text
-		cursor_pos := w.input_state[w.id_focus].cursor_pos
+		input_state := w.input_state[w.id_focus]
+		mut cursor_pos := input_state.cursor_pos
 		match c {
 			bsp_c, del_c {
 				if cursor_pos < 0 {
-					w.input_state[w.id_focus].cursor_pos = cfg.text.len
+					cursor_pos = cfg.text.len
 				} else if cursor_pos > 0 {
 					t = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
-					w.input_state[w.id_focus].cursor_pos = cursor_pos - 1
+					cursor_pos -= 1
 				}
 			}
 			0...0x1F { // non-printables
@@ -122,15 +123,22 @@ fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) bool {
 				}
 				if cursor_pos < 0 {
 					t = cfg.text + rune(c).str()
-					w.input_state[w.id_focus].cursor_pos = t.len
+					cursor_pos = t.len
 				} else {
 					t = cfg.text[..cursor_pos] + rune(c).str() + cfg.text[cursor_pos..] or {
-						w.input_state[w.id_focus].cursor_pos = cfg.text.len - 1
+						w.input_state[w.id_focus] = InputState{
+							...input_state
+							cursor_pos: cfg.text.len - 1
+						}
 						return true
 					}
-					w.input_state[w.id_focus].cursor_pos = int_min(cursor_pos + 1, t.len)
+					cursor_pos = int_min(cursor_pos + 1, t.len)
 				}
 			}
+		}
+		w.input_state[w.id_focus] = InputState{
+			...input_state
+			cursor_pos: cursor_pos
 		}
 		cfg.on_text_changed(cfg, t, w)
 		return true
@@ -140,14 +148,18 @@ fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) bool {
 
 fn on_click_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {
 	if e.mouse_button == .left {
-		w.input_state[w.id_focus].cursor_pos = cfg.text.len
+		w.input_state[w.id_focus] = InputState{
+			...w.input_state[w.id_focus]
+			cursor_pos: cfg.text.len
+		}
 		return true
 	}
 	return false
 }
 
 fn on_keydown_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {
-	mut cursor_pos := w.input_state[w.id_focus].cursor_pos
+	input_state := w.input_state[w.id_focus]
+	mut cursor_pos := input_state.cursor_pos
 	match e.key_code {
 		.left { cursor_pos = int_max(0, cursor_pos - 1) }
 		.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
@@ -155,7 +167,10 @@ fn on_keydown_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {
 		.end { cursor_pos = cfg.text.len }
 		else { return false }
 	}
-	w.input_state[w.id_focus].cursor_pos = cursor_pos
+	w.input_state[w.id_focus] = InputState{
+		...input_state
+		cursor_pos: cursor_pos
+	}
 	return true
 }
 

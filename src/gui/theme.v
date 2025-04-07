@@ -2,9 +2,7 @@ module gui
 
 import gx
 
-pub const color_transparent = gx.rgba(0, 0, 0, 0)
 pub const radius_none = 0
-
 pub const radius_small = f32(3)
 pub const radius_medium = f32(5)
 pub const radius_large = f32(7)
@@ -17,6 +15,8 @@ pub const spacing_small = 5
 pub const spacing_medium = 10
 pub const spacing_large = 15
 pub const spacing_text = 2 // additional line height
+
+pub const color_transparent = gx.rgba(0, 0, 0, 0)
 
 const color_0_dark = gx.rgb(48, 48, 48)
 const color_1_dark = gx.rgb(64, 64, 64)
@@ -122,8 +122,8 @@ pub const theme_light = theme_maker(
 	color_3:            gx.rgb(130, 130, 255)
 	color_4:            gx.rgb(120, 120, 255)
 	color_5:            gx.rgb(91, 91, 255)
-	color_border:       gx.rgb(75, 75, 75)
-	color_link:         color_link_dark
+	color_border:       gx.rgb(64, 64, 64)
+	color_link:         gx.rgb(0, 71, 171)
 	color_border_focus: gx.rgb(0, 71, 171)
 	text_cfg:           gx.TextCfg{
 		color: gx.rgb(32, 32, 32)

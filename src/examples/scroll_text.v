@@ -25,7 +25,7 @@ Pityful a rethoric question ran over her cheek, then'
 fn main() {
 	mut window := gui.window(
 		state:   &App{}
-		width:   300
+		width:   400
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)

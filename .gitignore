@@ -27,6 +27,7 @@ bin/
 .idea/
 .vscode/
 *.iml
+*.json.gz
 
 # ENV
 .env

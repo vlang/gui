@@ -5,7 +5,7 @@ module gui
 // map where the key is the w.id_focus. This state map is cleared when a new
 // view is introduced.
 pub struct InputState {
-pub mut:
+pub:
 	// positions are number of runes relative to start of input text
 	cursor_pos int
 	beg_pos    int
