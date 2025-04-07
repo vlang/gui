@@ -8,20 +8,18 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	ui              &gg.Context = &gg.Context{}
-	state           voidptr     = unsafe { nil }
-	layout          Layout      = Layout{}
-	renderers       []Renderer  = []
-	mutex           &sync.Mutex = sync.new_mutex()
-	bg_color        gx.Color
-	gen_view        fn (&Window) View = default_view
-	id_focus        u32
-	focused         bool = true
-	input_state     map[u32]InputState
-	scroll_state    map[u32]ScrollState
-	v_scroll_offset f32
-	mouse_cursor    sapp.MouseCursor
-	on_event        fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
+	ui           &gg.Context       = &gg.Context{}
+	state        voidptr           = unsafe { nil }
+	mutex        &sync.Mutex       = sync.new_mutex()
+	layout       Layout            = Layout{}
+	renderers    []Renderer        = []
+	gen_view     fn (&Window) View = default_view
+	id_focus     u32
+	focused      bool = true
+	mouse_cursor sapp.MouseCursor
+	input_state  map[u32]InputState
+	scroll_state map[u32]ScrollState
+	on_event     fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -71,7 +69,6 @@ pub:
 pub fn window(cfg WindowCfg) &Window {
 	mut window := &Window{
 		state:    cfg.state
-		bg_color: cfg.bg_color
 		on_event: cfg.on_event
 	}
 	window.ui = gg.new_context(
@@ -100,8 +97,8 @@ fn frame_fn(mut window Window) {
 }
 
 // background_color returns the window background color
-pub fn (window &Window) background_color() gx.Color {
-	return window.bg_color
+pub fn (window &Window) color_background() gx.Color {
+	return window.ui.config.bg_color
 }
 
 // context gets the windows gg.Context
@@ -224,7 +221,7 @@ pub fn (mut window Window) run() {
 
 // set_color_background changes the windows background color
 pub fn (mut window Window) set_color_background(color gx.Color) {
-	window.bg_color = color
+	window.ui.set_bg_color(color)
 }
 
 // set_id_focus sets the window's focus id.
@@ -243,6 +240,13 @@ pub fn (mut window Window) set_mouse_cursor_pointing_hand() {
 	window.mouse_cursor = .pointing_hand
 }
 
+// set_theme sets the current theme to the given theme.
+// GUI has two builtin themes. theme_dark, theme_light
+pub fn (mut window Window) set_theme(theme Theme) {
+	gui_theme = theme
+	window.set_color_background(theme.color_background)
+}
+
 // state returns a reference to user supplied data
 pub fn (window &Window) state[T]() &T {
 	assert window.state != unsafe { nil }
@@ -256,7 +260,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
 	layout_do(mut layout, window)
-	renderers := render(layout, window.bg_color, window.ui)
+	renderers := render(layout, window.color_background(), window.ui)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -279,7 +283,7 @@ pub fn (mut window Window) update_window() {
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
 	layout_do(mut layout, window)
-	renderers := render(layout, window.bg_color, window.ui)
+	renderers := render(layout, window.color_background(), window.ui)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }

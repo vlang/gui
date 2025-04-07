@@ -1,7 +1,14 @@
 import gui
+import gg
+
+struct App {
+pub mut:
+	light bool
+}
 
 fn main() {
 	mut window := gui.window(
+		state:   &App{}
 		width:   300
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -12,6 +19,7 @@ fn main() {
 }
 
 fn main_view(window &gui.Window) gui.View {
+	app := window.state[App]()
 	w, h := window.window_size()
 	return gui.column(
 		width:   w
@@ -20,6 +28,7 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
+			button_change_theme(app),
 			gui.progress_bar(
 				height:  2
 				sizing:  gui.fill_fixed
@@ -55,6 +64,36 @@ fn main_view(window &gui.Window) gui.View {
 						percent:  0.80
 					),
 				]
+			),
+		]
+	)
+}
+
+fn button_change_theme(app &App) gui.View {
+	return gui.row(
+		h_align: .right
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.button(
+				padding:  gui.padding(1, 5, 1, 5)
+				content:  [
+					gui.text(
+						text: if app.light { '●' } else { '○' }
+					),
+				]
+				on_click: fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+					mut app := w.state[App]()
+					app.light = !app.light
+					theme := if app.light {
+						gui.theme_light
+					} else {
+						gui.theme_dark
+					}
+					w.set_theme(theme)
+					w.set_id_focus(1)
+					return true
+				}
 			),
 		]
 	)

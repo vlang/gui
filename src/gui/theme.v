@@ -212,9 +212,3 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 pub fn theme() Theme {
 	return gui_theme
 }
-
-// set_theme sets the current theme to the given theme.
-// GUI has two builtin themes. theme_dark, theme_light
-pub fn set_theme(theme Theme) {
-	gui_theme = theme
-}

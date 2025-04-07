@@ -1,8 +1,10 @@
 import gui
+import gg
 
 struct App {
 pub mut:
 	input_a string = 'hello'
+	light   bool
 }
 
 fn main() {
@@ -32,63 +34,98 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			gui.input(
-				id_focus:        1
-				text:            app.input_a
-				min_width:       input_width
-				max_width:       input_width
-				on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-					mut state := w.state[App]()
-					state.input_a = s
-				}
+			gui.column(
+				content: [
+					button_change_theme(app),
+					gui.input(
+						id_focus:        1
+						text:            app.input_a
+						min_width:       input_width
+						max_width:       input_width
+						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+							mut state := w.state[App]()
+							state.input_a = s
+						}
+					),
+					gui.input(
+						id_focus:        2
+						text:            app.input_a
+						min_width:       input_width
+						max_width:       input_width
+						padding_border:  gui.pad_4(1)
+						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+							mut state := w.state[App]()
+							state.input_a = s
+						}
+					),
+					gui.input(
+						id_focus:        3
+						text:            app.input_a
+						min_width:       input_width
+						max_width:       input_width
+						padding_border:  gui.padding_one
+						radius:          0
+						radius_border:   0
+						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+							mut state := w.state[App]()
+							state.input_a = s
+						}
+					),
+					gui.input(
+						id_focus:        4
+						text:            app.input_a
+						min_width:       input_width
+						max_width:       input_width
+						padding_border:  gui.padding_small
+						fill_border:     false
+						radius:          0
+						radius_border:   0
+						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+							mut state := w.state[App]()
+							state.input_a = s
+						}
+					),
+					gui.input(
+						id_focus:        5
+						text:            app.input_a
+						min_width:       input_width
+						max_width:       input_width
+						wrap:            true
+						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+							mut state := w.state[App]()
+							state.input_a = s
+						}
+					),
+				]
 			),
-			gui.input(
-				id_focus:        2
-				text:            app.input_a
-				min_width:       input_width
-				max_width:       input_width
-				padding_border:  gui.pad_4(1)
-				on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-					mut state := w.state[App]()
-					state.input_a = s
-				}
-			),
-			gui.input(
-				id_focus:        3
-				text:            app.input_a
-				min_width:       input_width
-				max_width:       input_width
-				padding_border:  gui.padding_one
-				radius:          0
-				radius_border:   0
-				on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-					mut state := w.state[App]()
-					state.input_a = s
-				}
-			),
-			gui.input(
-				id_focus:        4
-				text:            app.input_a
-				min_width:       input_width
-				max_width:       input_width
-				padding_border:  gui.padding_small
-				fill_border:     false
-				radius:          0
-				radius_border:   0
-				on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-					mut state := w.state[App]()
-					state.input_a = s
-				}
-			),
-			gui.input(
-				id_focus:        5
-				text:            app.input_a
-				min_width:       input_width
-				max_width:       input_width
-				wrap:            true
-				on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-					mut state := w.state[App]()
-					state.input_a = s
+		]
+	)
+}
+
+fn button_change_theme(app &App) gui.View {
+	return gui.row(
+		h_align: .right
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.button(
+				padding:  gui.padding(1, 5, 1, 5)
+				content:  [
+					gui.text(
+						text: if app.light { '●' } else { '○' }
+					),
+				]
+				on_click: fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+					mut app := w.state[App]()
+					app.light = !app.light
+					theme := if app.light {
+						gui.theme_light
+					} else {
+						gui.theme_dark
+					}
+					w.set_theme(theme)
+					w.set_id_focus(1)
+					return true
 				}
 			),
 		]

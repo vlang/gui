@@ -1,8 +1,10 @@
 import gui
+import gg
 
 struct App {
 pub mut:
-	text string = '
+	light bool
+	text  string = '
 Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.
 
 Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.
@@ -44,6 +46,7 @@ fn main_view(window &gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		h_align: .center
 		content: [
+			button_change_theme(app),
 			gui.text(
 				text: 'Let the scrolling begin'
 			),
@@ -67,6 +70,36 @@ fn main_view(window &gui.Window) gui.View {
 			),
 			gui.text(
 				text: 'Let the scrolling end'
+			),
+		]
+	)
+}
+
+fn button_change_theme(app &App) gui.View {
+	return gui.row(
+		h_align: .right
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.button(
+				padding:  gui.padding(1, 5, 1, 5)
+				content:  [
+					gui.text(
+						text: if app.light { '●' } else { '○' }
+					),
+				]
+				on_click: fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+					mut app := w.state[App]()
+					app.light = !app.light
+					theme := if app.light {
+						gui.theme_light
+					} else {
+						gui.theme_dark
+					}
+					w.set_theme(theme)
+					w.set_id_focus(1)
+					return true
+				}
 			),
 		]
 	)
