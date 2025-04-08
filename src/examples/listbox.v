@@ -38,7 +38,7 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			gui.text(text: 'top'),
 			gui.column(
-				v_scroll_id: 1
+				id_scroll_v: 1
 				sizing:      gui.fit_fill
 				padding:     gui.padding_none
 				spacing:     gui.spacing_small

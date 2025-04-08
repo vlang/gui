@@ -50,18 +50,18 @@ fn mouse_scroll_handler(node Layout, e &gg.Event, mut w Window, parent Shape) {
 		mouse_scroll_handler(child, e, mut w, node.shape)
 	}
 
-	if !node.shape.disabled && node.shape.v_scroll_id > 0 {
+	if !node.shape.disabled && node.shape.id_scroll_v > 0 {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-			v_id := node.shape.v_scroll_id
+			v_id := node.shape.id_scroll_v
 			if v_id > 0 {
 				max_offset := node.shape.height - node.shape.max_height - size_text_medium
 				scroll_state := w.scroll_state[v_id]
-				mut v_offset := scroll_state.v_offset + e.scroll_y * gui_theme.scroll_multiplier
-				v_offset = f32_max(v_offset, max_offset)
-				v_offset = f32_min(0, v_offset)
+				mut offset_v := scroll_state.offset_v + e.scroll_y * gui_theme.scroll_multiplier
+				offset_v = f32_max(offset_v, max_offset)
+				offset_v = f32_min(0, offset_v)
 				w.scroll_state[v_id] = ScrollState{
 					...scroll_state
-					v_offset: v_offset
+					offset_v: offset_v
 				}
 			}
 		}

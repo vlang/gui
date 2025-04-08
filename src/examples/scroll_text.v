@@ -41,23 +41,19 @@ fn main_view(window &gui.Window) gui.View {
 	app := window.state[App]()
 
 	return gui.column(
-		width:      w
-		height:     h
-		max_width:  w
-		max_height: h
-		sizing:     gui.fixed_fixed
-		h_align:    .center
-		content:    [
+		width:   w
+		height:  h
+		sizing:  gui.fixed_fixed
+		content: [
 			button_change_theme(app),
-			gui.text(
-				text: 'Let the scrolling begin'
-			),
+			gui.rectangle(height: .1, sizing: gui.fill_fixed),
 			gui.row(
 				padding: gui.padding_none
 				sizing:  gui.fill_fill
 				content: [
 					gui.column(
-						v_scroll_id: 1
+						id_scroll_v: 1
+						padding:     gui.padding_small
 						sizing:      gui.fill_fill
 						content:     [
 							gui.text(
@@ -68,7 +64,8 @@ fn main_view(window &gui.Window) gui.View {
 						]
 					),
 					gui.column(
-						v_scroll_id: 2
+						id_scroll_v: 2
+						padding:     gui.padding_small
 						sizing:      gui.fill_fill
 						content:     [
 							gui.text(
@@ -79,9 +76,6 @@ fn main_view(window &gui.Window) gui.View {
 						]
 					),
 				]
-			),
-			gui.text(
-				text: 'Let the scrolling end'
 			),
 		]
 	)

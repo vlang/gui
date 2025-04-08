@@ -109,7 +109,7 @@ fn layout_heights(mut node Layout) {
 			if node.shape.min_height > 0 {
 				node.shape.height = f32_max(node.shape.min_height, node.shape.height)
 			}
-			if node.shape.sizing.height == .fill && node.shape.v_scroll_id > 0 {
+			if node.shape.sizing.height == .fill && node.shape.id_scroll_v > 0 {
 				node.shape.max_height = node.shape.height
 				node.shape.min_height = spacing_small
 			}
@@ -474,8 +474,8 @@ fn layout_set_scroll_offsets(mut node Layout, w &Window) {
 	for mut child in node.children {
 		layout_set_scroll_offsets(mut child, w)
 	}
-	if node.shape.v_scroll_id > 0 {
-		node.shape.v_scroll_offset = w.scroll_state[node.shape.v_scroll_id].v_offset
+	if node.shape.id_scroll_v > 0 {
+		node.shape.scroll_v = w.scroll_state[node.shape.id_scroll_v].offset_v
 	}
 }
 

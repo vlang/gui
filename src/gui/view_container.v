@@ -25,7 +25,7 @@ pub struct Container implements View {
 	color        gx.Color
 	disabled     bool
 	text         string
-	v_scroll_id  u32
+	id_scroll_v  u32
 	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
@@ -51,7 +51,7 @@ fn (cfg &Container) generate(_ gg.Context) Layout {
 			height:       cfg.height
 			min_height:   cfg.min_height
 			max_height:   cfg.max_height
-			clip:         cfg.clip || cfg.v_scroll_id > 0
+			clip:         cfg.clip || cfg.id_scroll_v > 0
 			spacing:      cfg.spacing
 			sizing:       cfg.sizing
 			padding:      cfg.padding
@@ -67,7 +67,7 @@ fn (cfg &Container) generate(_ gg.Context) Layout {
 				color: cfg.color
 			}
 			cfg:          cfg.cfg
-			v_scroll_id:  cfg.v_scroll_id
+			id_scroll_v:  cfg.id_scroll_v
 			on_click:     cfg.on_click
 			on_char:      cfg.on_char
 			on_keydown:   cfg.on_keydown
@@ -96,7 +96,7 @@ pub:
 	v_align      VerticalAlign
 	disabled     bool
 	text         string
-	v_scroll_id  u32
+	id_scroll_v  u32
 	spacing      f32      = gui_theme.container_style.spacing
 	radius       f32      = gui_theme.container_style.radius
 	padding      Padding  = gui_theme.container_style.padding
@@ -135,7 +135,7 @@ fn container(cfg ContainerCfg) Container {
 		spacing:      cfg.spacing
 		disabled:     cfg.disabled
 		text:         cfg.text
-		v_scroll_id:  cfg.v_scroll_id
+		id_scroll_v:  cfg.id_scroll_v
 		cfg:          cfg.cfg
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char
