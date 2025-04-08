@@ -8,6 +8,6 @@ pub struct InputState {
 pub:
 	// positions are number of runes relative to start of input text
 	cursor_pos int
-	beg_pos    int
-	end_pos    int
+	select_beg int
+	select_end int
 }

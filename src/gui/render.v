@@ -71,23 +71,25 @@ fn renderer_draw(renderer Renderer, ctx &gg.Context) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render(layout Layout, bg_color gx.Color, ctx &gg.Context) []Renderer {
+fn render(layout Layout, bg_color gx.Color, offset_v f32, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
+
+	parent_color := if layout.shape.color != color_transparent {
+		layout.shape.color
+	} else {
+		bg_color
+	}
 
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, ctx, mut clip_stack)
 	}
 
-	renderers << render_shape(layout.shape, bg_color, ctx)
+	renderers << render_shape(layout.shape, bg_color, offset_v, ctx)
 
 	for child in layout.children {
-		parent_color := if layout.shape.color != color_transparent {
-			layout.shape.color
-		} else {
-			bg_color
-		}
-		renderers << render(child, parent_color, ctx)
+		v_offset := layout.shape.v_scroll_offset + child.shape.v_scroll_offset
+		renderers << render(child, parent_color, v_offset, ctx)
 	}
 
 	if layout.shape.clip {
@@ -98,18 +100,21 @@ fn render(layout Layout, bg_color gx.Color, ctx &gg.Context) []Renderer {
 }
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
-fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer {
+fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Context) []Renderer {
+	if shape.color == color_transparent {
+		return []
+	}
 	return match shape.type {
 		.container {
 			mut renderers := []Renderer{}
-			renderers << render_rectangle(shape, ctx)
+			renderers << render_rectangle(shape, offset_v, ctx)
 			// This group box stuff is likely temporary
 			// Examine after floating containers implemented
 			if shape.text.len != 0 {
 				ctx.set_text_cfg(shape.text_cfg)
 				w, h := ctx.text_size(shape.text)
 				x := shape.x + 20
-				y := shape.y + shape.v_scroll_offset
+				y := shape.y + offset_v
 				// erase portion of rectangle where text goes.
 				p_color := if shape.disabled {
 					dim_alpha(parent_color)
@@ -142,22 +147,22 @@ fn render_shape(shape Shape, parent_color gx.Color, ctx &gg.Context) []Renderer 
 			renderers
 		}
 		.text {
-			render_text(shape, ctx)
+			render_text(shape, offset_v, ctx)
 		}
 		.none {
-			[Renderer(DrawNone{})]
+			[]
 		}
 	}
 }
 
 // draw_rectangle draws a shape as a rectangle.
-fn render_rectangle(shape Shape, ctx &gg.Context) []Renderer {
+fn render_rectangle(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	assert shape.type == .container
 	mut renderers := []Renderer{}
 	renderer_rect := make_renderer_rect(shape, ctx)
 	draw_rect := gg.Rect{
 		x:      shape.x
-		y:      shape.y + shape.v_scroll_offset
+		y:      shape.y + offset_v
 		width:  shape.width
 		height: shape.height
 	}
@@ -178,11 +183,11 @@ fn render_rectangle(shape Shape, ctx &gg.Context) []Renderer {
 
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
-fn render_text(shape Shape, ctx &gg.Context) []Renderer {
+fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	assert shape.type == .text
 	mut renderers := []Renderer{}
 	lh := line_height(shape, ctx)
-	mut y := int(shape.y + shape.v_scroll_offset + f32(0.49999))
+	mut y := int(shape.y + offset_v + f32(0.49999))
 	color := if shape.disabled { dim_alpha(shape.text_cfg.color) } else { shape.text_cfg.color }
 	text_cfg := gx.TextCfg{
 		...shape.text_cfg

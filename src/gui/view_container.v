@@ -51,7 +51,7 @@ fn (cfg &Container) generate(_ gg.Context) Layout {
 			height:       cfg.height
 			min_height:   cfg.min_height
 			max_height:   cfg.max_height
-			clip:         cfg.clip
+			clip:         cfg.clip || cfg.v_scroll_id > 0
 			spacing:      cfg.spacing
 			sizing:       cfg.sizing
 			padding:      cfg.padding

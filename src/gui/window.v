@@ -260,7 +260,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
 	layout_do(mut layout, window)
-	renderers := render(layout, window.color_background(), window.ui)
+	renderers := render(layout, window.color_background(), layout.shape.v_scroll_offset,
+		window.ui)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -283,7 +284,8 @@ pub fn (mut window Window) update_window() {
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
 	layout_do(mut layout, window)
-	renderers := render(layout, window.color_background(), window.ui)
+	renderers := render(layout, window.color_background(), layout.shape.v_scroll_offset,
+		window.ui)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }

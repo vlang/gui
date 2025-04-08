@@ -20,8 +20,8 @@ mut:
 	disabled    bool
 	clip        bool
 	cfg         TextCfg
-	v_scroll_id u32
 	content     []View
+	on_click    fn (&TextCfg, &gg.Event, &Window) bool = text_click_handler
 }
 
 fn (t Text) generate(ctx gg.Context) Layout {
@@ -39,8 +39,8 @@ fn (t Text) generate(ctx gg.Context) Layout {
 			sizing:      t.sizing
 			disabled:    t.disabled
 			min_width:   t.min_width
-			v_scroll_id: t.v_scroll_id
-			clip:        t.clip || t.v_scroll_id > 0
+			clip:        t.clip
+			on_click:    t.on_click
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -68,12 +68,11 @@ pub:
 	keep_spaces bool
 	disabled    bool
 	clip        bool
-	v_scroll_id u32
 }
 
 // text renders text. Text wrapping is available. Multiple spaces are compressed
 // to one space unless `keep_spaces` is true. The `spacing` parameter is used to
-// increase the space between lines.
+// increase the space between lines. Scrolling is supported.
 pub fn text(cfg TextCfg) Text {
 	return Text{
 		id:          cfg.id
@@ -85,13 +84,17 @@ pub fn text(cfg TextCfg) Text {
 		wrap:        cfg.wrap
 		cfg:         &cfg
 		keep_spaces: cfg.keep_spaces
-		// Is there a better way than this sizing hack?
 		sizing:      if cfg.wrap {
-			if cfg.v_scroll_id > 0 { fill_fill } else { fill_fit }
+			fill_fit
 		} else {
 			fit_fit
 		}
 		disabled:    cfg.disabled
-		v_scroll_id: cfg.v_scroll_id
 	}
+}
+
+// should be mouse down handler.
+fn text_click_handler(cfg &TextCfg, e &gg.Event, w &Window) bool {
+	println('${e.mouse_x}, ${e.mouse_y}')
+	return false
 }

@@ -13,7 +13,17 @@ fn click_handler(node Layout, e &gg.Event, mut w Window) bool {
 			if node.shape.id_focus > 0 {
 				w.set_id_focus(node.shape.id_focus)
 			}
-			if node.shape.on_click(node.shape.cfg, e, w) {
+			// give click handler mouse coordinates
+			// relative to node.shape
+			mouse_x := e.mouse_x - node.shape.x
+			mouse_y := e.mouse_y - node.shape.y
+			ev := &gg.Event{
+				...e
+				touches: e.touches // runtime mem error otherwise
+				mouse_x: mouse_x
+				mouse_y: mouse_y
+			}
+			if node.shape.on_click(node.shape.cfg, ev, w) {
 				return true
 			}
 		}

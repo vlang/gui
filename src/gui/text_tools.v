@@ -35,10 +35,8 @@ fn text_wrap(mut shape Shape, ctx gg.Context) {
 		shape.width = text_width(shape, ctx)
 		lh := line_height(shape, ctx)
 		shape.max_height = shape.lines.len * lh
-		if shape.v_scroll_id == 0 {
-			shape.height = shape.lines.len * lh
-			shape.min_height = shape.height
-		}
+		shape.height = shape.lines.len * lh
+		shape.min_height = shape.height
 	}
 }
 

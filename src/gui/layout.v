@@ -109,6 +109,10 @@ fn layout_heights(mut node Layout) {
 			if node.shape.min_height > 0 {
 				node.shape.height = f32_max(node.shape.min_height, node.shape.height)
 			}
+			if node.shape.sizing.height == .fill && node.shape.v_scroll_id > 0 {
+				node.shape.max_height = node.shape.height
+				node.shape.min_height = spacing_small
+			}
 		}
 	} else if node.shape.axis == .left_to_right { // across the axis
 		for mut child in node.children {
