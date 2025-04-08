@@ -22,7 +22,7 @@ fn layout_do(mut layout Layout, window &Window) {
 	layout_wrap_text(mut layout, window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
-	layout_set_scroll_offsets(mut layout, window)
+	layout_set_scroll_offsets(mut layout, layout.shape.scroll_v, window)
 	layout_positions(mut layout, 0, 0)
 	layout_set_disables(mut layout, false)
 	layout_amend(mut layout, window)
@@ -468,12 +468,14 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 	}
 }
 
-fn layout_set_scroll_offsets(mut node Layout, w &Window) {
-	for mut child in node.children {
-		layout_set_scroll_offsets(mut child, w)
-	}
+fn layout_set_scroll_offsets(mut node Layout, offset_v f32, w &Window) {
+	mut offset := offset_v
 	if node.shape.id_scroll_v > 0 {
-		node.shape.scroll_v = w.scroll_state[node.shape.id_scroll_v].offset_v
+		offset += w.scroll_state[node.shape.id_scroll_v].offset_v
+	}
+	for mut child in node.children {
+		child.shape.scroll_v = offset
+		layout_set_scroll_offsets(mut child, offset, w)
 	}
 }
 

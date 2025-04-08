@@ -28,18 +28,25 @@ const color_border_dark = gx.rgb(100, 100, 100)
 const color_link_dark = gx.rgb(100, 149, 237)
 const color_text_dark = gx.rgb(225, 225, 225)
 
-const scroll_multiplier = 10
+const scroll_multiplier = 20
 const size_progress_bar = 10
 
 pub struct Theme {
 pub:
-	name             string   = 'default'
+	name             string   = 'default' @[required]
 	color_background gx.Color = color_0_dark
 	color_link       gx.Color = color_link_dark
+	color_0          gx.Color = color_0_dark
+	color_1          gx.Color = color_1_dark
+	color_2          gx.Color = color_2_dark
+	color_3          gx.Color = color_3_dark
+	color_4          gx.Color = color_4_dark
+	color_5          gx.Color = color_5_dark
 
 	button_style       ButtonStyle
 	container_style    ContainerStyle
 	input_style        InputStyle
+	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
 	text_style         TextStyle
 
@@ -70,6 +77,7 @@ pub struct ThemeCfg {
 	color_border       gx.Color   = color_border_dark
 	color_border_focus gx.Color   = color_link_dark
 	color_link         gx.Color   = color_link_dark
+	color_text         gx.Color   = color_text_dark
 	fill               bool       = true
 	fill_border        bool       = true
 	padding            Padding    = padding_medium
@@ -144,6 +152,12 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 		name:             cfg.name
 		color_background: cfg.color_0
 		color_link:       cfg.color_link
+		color_0:          cfg.color_0
+		color_1:          cfg.color_1
+		color_2:          cfg.color_2
+		color_3:          cfg.color_3
+		color_4:          cfg.color_4
+		color_5:          cfg.color_5
 
 		button_style:       ButtonStyle{
 			color:              cfg.color_1
@@ -184,6 +198,11 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 			color_bar: cfg.color_5
 			fill:      true
 			radius:    cfg.radius
+		}
+		rectangle_style:    RectangleStyle{
+			color:  cfg.color_border
+			radius: cfg.radius
+			fill:   cfg.fill
 		}
 		text_style:         TextStyle{
 			spacing:  2

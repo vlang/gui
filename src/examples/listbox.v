@@ -1,14 +1,7 @@
 import gui
-import gg
-
-struct App {
-pub mut:
-	clicks int
-}
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
 		width:   300
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -22,11 +15,10 @@ fn main() {
 // every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
 
 	mut items := []gui.View{}
 	for i in 1 .. 100 {
-		items << gui.text(text: '${i} item')
+		items << gui.text(text: '${i} text list item')
 	}
 
 	return gui.column(
@@ -37,11 +29,14 @@ fn main_view(window &gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		content: [
 			gui.text(text: 'top'),
+			// Columns can function as list boxes
 			gui.column(
 				id_scroll_v: 1
+				fill:        true
+				color:       gui.theme().color_2
 				sizing:      gui.fit_fill
-				padding:     gui.padding_none
 				spacing:     gui.spacing_small
+				padding:     gui.padding(3, 20, 3, 20)
 				content:     items
 			),
 			gui.text(text: 'bottom'),

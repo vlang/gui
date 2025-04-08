@@ -60,6 +60,13 @@ pub:
 	size      f32      = size_progress_bar
 }
 
+pub struct RectangleStyle {
+pub:
+	color  gx.Color = color_border_dark
+	radius f32      = radius_medium
+	fill   bool
+}
+
 pub struct TextStyle {
 pub:
 	spacing  int        = 2

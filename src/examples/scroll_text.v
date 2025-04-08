@@ -46,7 +46,7 @@ fn main_view(window &gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		content: [
 			button_change_theme(app),
-			gui.rectangle(height: .1, sizing: gui.fill_fixed),
+			gui.rectangle(height: 0.5, sizing: gui.fill_fixed),
 			gui.row(
 				padding: gui.padding_none
 				sizing:  gui.fill_fill

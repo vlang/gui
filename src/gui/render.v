@@ -81,11 +81,11 @@ fn render(layout Layout, bg_color gx.Color, offset_v f32, ctx &gg.Context) []Ren
 		bg_color
 	}
 
+	renderers << render_shape(layout.shape, bg_color, offset_v, ctx)
+
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, ctx, mut clip_stack)
 	}
-
-	renderers << render_shape(layout.shape, bg_color, offset_v, ctx)
 
 	for child in layout.children {
 		v_offset := layout.shape.scroll_v + child.shape.scroll_v
@@ -277,10 +277,10 @@ fn dim_alpha(color gx.Color) gx.Color {
 // diemensions plus some adjustments for round off
 fn shape_clip_rect(shape Shape) gg.Rect {
 	return gg.Rect{
-		x:      shape.x + shape.padding.left - 1
-		y:      shape.y + shape.padding.top - 1
-		width:  shape.width - shape.padding.width() + 2
-		height: shape.height - shape.padding.height() + 2
+		x:      shape.x + shape.padding.left
+		y:      shape.y + shape.padding.top
+		width:  shape.width - shape.padding.width()
+		height: shape.height - shape.padding.height()
 	}
 }
 
