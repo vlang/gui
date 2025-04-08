@@ -5,6 +5,9 @@ module gui
 //
 import arrays
 
+// Comparing remaining values considered equal if within this limit
+const tolerance = f32(0.1)
+
 // Layout defines a tree of Layouts. Views generate Layouts
 pub struct Layout {
 pub mut:
@@ -154,6 +157,7 @@ fn find_first_idx_and_len(node Layout, predicate fn (n Layout) bool) (int, int) 
 // to satisfy a layout constraint
 fn layout_fill_widths(mut node Layout) {
 	clamp := 100 // avoid infinite loop
+	mut previous_remaining_width := f32(0)
 	mut remaining_width := node.shape.width - node.shape.padding.width()
 
 	if node.shape.axis == .left_to_right {
@@ -168,7 +172,11 @@ fn layout_fill_widths(mut node Layout) {
 		// distributing the remaining width to evenly.
 		//
 		mut excluded := []u64{cap: 25}
-		for i := 0; remaining_width > 0.1 && i < clamp; i++ {
+		for i := 0; remaining_width > tolerance && i < clamp; i++ {
+			if with_in(remaining_width, previous_remaining_width, tolerance) {
+				break
+			}
+			previous_remaining_width = remaining_width
 			// Grow child elements
 			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
 				return n.shape.sizing.width == .fill && n.shape.uid !in excluded
@@ -217,7 +225,12 @@ fn layout_fill_widths(mut node Layout) {
 
 		// Shrink if needed
 		excluded.clear()
-		for i := 0; remaining_width < -0.1 && i < clamp; i++ {
+		previous_remaining_width = 0
+		for i := 0; remaining_width < -tolerance && i < clamp; i++ {
+			if with_in(remaining_width, previous_remaining_width, tolerance) {
+				break
+			}
+			previous_remaining_width = remaining_width
 			shrinkable := node.children.filter(it.shape.uid !in excluded)
 			if shrinkable.len == 0 {
 				break
@@ -284,6 +297,7 @@ fn layout_fill_widths(mut node Layout) {
 // satisfy a layout constraint
 fn layout_fill_heights(mut node Layout) {
 	clamp := 100 // avoid infinite loop
+	mut previous_remaining_height := f32(0)
 	mut remaining_height := node.shape.height - node.shape.padding.height()
 
 	if node.shape.axis == .top_to_bottom {
@@ -298,7 +312,11 @@ fn layout_fill_heights(mut node Layout) {
 		// distributing the remaining height to evenly.
 		//
 		mut excluded := []u64{cap: 25}
-		for i := 0; remaining_height > 0.1 && i < clamp; i++ {
+		for i := 0; remaining_height > tolerance && i < clamp; i++ {
+			if with_in(remaining_height, previous_remaining_height, tolerance) {
+				break
+			}
+			previous_remaining_height = remaining_height
 			// Grow child elements
 			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
 				return n.shape.sizing.height == .fill && n.shape.uid !in excluded
@@ -348,7 +366,12 @@ fn layout_fill_heights(mut node Layout) {
 
 		// Shrink if needed
 		excluded.clear()
-		for i := 0; remaining_height < -0.1 && i < clamp; i++ {
+		previous_remaining_height = 0
+		for i := 0; remaining_height < -tolerance && i < clamp; i++ {
+			if with_in(remaining_height, previous_remaining_height, tolerance) {
+				break
+			}
+			previous_remaining_height = remaining_height
 			shrinkable := node.children.filter(it.shape.uid !in excluded)
 			if shrinkable.len == 0 {
 				break
@@ -579,4 +602,17 @@ fn layout_amend(mut node Layout, w &Window) {
 	if node.shape.amend_layout != unsafe { nil } {
 		node.shape.amend_layout(mut node, w)
 	}
+}
+
+// with_in tests if a and b are with tol
+fn with_in(a f32, b f32, diff f32) bool {
+	assert diff > 0
+	if a == b {
+		return true
+	}
+	mut d := a - b
+	if d < 0 {
+		d = -d
+	}
+	return d <= diff
 }

@@ -11,13 +11,11 @@ fn main() {
 	window.run()
 }
 
-// The view generator set in update_view() is called on
-// every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 
 	mut items := []gui.View{}
-	for i in 1 .. 100 {
+	for i in 1 .. 1000 {
 		items << gui.text(text: '${i} text list item')
 	}
 
@@ -28,8 +26,8 @@ fn main_view(window &gui.Window) gui.View {
 		spacing: gui.spacing_small
 		sizing:  gui.fixed_fixed
 		content: [
-			gui.text(text: 'top'),
-			// Columns can function as list boxes
+			// Columns can function as list boxes.
+			// TODO: add selection logic
 			gui.column(
 				id_scroll_v: 1
 				fill:        true
@@ -39,7 +37,6 @@ fn main_view(window &gui.Window) gui.View {
 				padding:     gui.padding(3, 20, 3, 20)
 				content:     items
 			),
-			gui.text(text: 'bottom'),
 		]
 	)
 }
