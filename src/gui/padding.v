@@ -18,7 +18,7 @@ pub:
 	left   f32
 }
 
-// padding is creates a padding with the given parameters.
+// padding creates a padding with the given parameters.
 pub fn padding(top f32, right f32, bottom f32, left f32) Padding {
 	return Padding{
 		top:    top
@@ -26,6 +26,16 @@ pub fn padding(top f32, right f32, bottom f32, left f32) Padding {
 		bottom: bottom
 		left:   left
 	}
+}
+
+// width computes the padding's width
+pub fn (p Padding) width() f32 {
+	return p.left + p.right
+}
+
+// height computes the padding's height
+pub fn (p Padding) height() f32 {
+	return p.top + p.bottom
 }
 
 // pad_4 creates a padding with all 4 sides set to the `p` parameter

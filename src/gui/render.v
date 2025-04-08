@@ -279,8 +279,8 @@ fn shape_clip_rect(shape Shape) gg.Rect {
 	return gg.Rect{
 		x:      shape.x + shape.padding.left - 1
 		y:      shape.y + shape.padding.top - 1
-		width:  shape.width - shape.padding.left - shape.padding.right + 2
-		height: shape.height - shape.padding.top - shape.padding.bottom + 2
+		width:  shape.width - shape.padding.width() + 2
+		height: shape.height - shape.padding.height() + 2
 	}
 }
 
