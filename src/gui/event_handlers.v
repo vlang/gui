@@ -2,6 +2,20 @@ module gui
 
 import gg
 
+fn char_handler(node Layout, e &gg.Event, w &Window) bool {
+	for child in node.children {
+		if char_handler(child, e, w) {
+			return true
+		}
+	}
+	if node.shape.id_focus > 0 && !node.shape.disabled && node.shape.id_focus == w.id_focus {
+		if node.shape.on_char != unsafe { nil } && node.shape.on_char(node.shape.cfg, e, w) {
+			return true
+		}
+	}
+	return false
+}
+
 fn click_handler(node Layout, e &gg.Event, mut w Window) bool {
 	for child in node.children {
 		if click_handler(child, e, mut w) {

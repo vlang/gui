@@ -88,7 +88,7 @@ pub fn window(cfg WindowCfg) &Window {
 	return window
 }
 
-// frame_fn is the only place where the window's layout is rendered.
+// frame_fn is the only place where the window is rendered.
 fn frame_fn(mut window Window) {
 	window.mutex.lock()
 	window.ui.begin()
@@ -134,11 +134,11 @@ fn event_fn(e &gg.Event, mut w Window) {
 
 			m := unsafe { gg.Modifier(e.modifiers) }
 			if !handled && e.key_code == .tab && m == gg.Modifier.shift {
-				if shape := shape_previous_focusable(layout, mut w) {
+				if shape := layout.previous_focusable(mut w) {
 					w.id_focus = shape.id_focus
 				}
 			} else if !handled && e.key_code == .tab {
-				if shape := shape_next_focusable(layout, mut w) {
+				if shape := layout.next_focusable(mut w) {
 					w.id_focus = shape.id_focus
 				}
 			}

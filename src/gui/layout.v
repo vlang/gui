@@ -601,13 +601,3 @@ fn layout_amend(mut node Layout, w &Window) {
 		node.shape.amend_layout(mut node, w)
 	}
 }
-
-// are_equal tests if a and b are with tol
-fn are_equal(a f32, b f32, diff f32) bool {
-	assert diff > 0
-	mut d := a - b
-	if d < 0 {
-		d = -d
-	}
-	return d <= diff
-}
