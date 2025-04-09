@@ -456,25 +456,19 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 			// a marker to where the cursor should go.
 			zero_space := '\xe2\x80\x8b'
 			text := node.shape.text[..cursor_pos] + zero_space + node.shape.text[cursor_pos..]
-
-			w.ui.set_text_cfg(node.shape.text_cfg)
-			wrapped := match node.shape.wrap {
-				true {
-					match node.shape.keep_spaces {
-						true { wrap_text_keep_spaces(text, node.shape.width, w.ui) }
-						else { wrap_text_shrink_spaces(text, node.shape.width, w.ui) }
-					}
-				}
-				else {
-					[text]
-				}
+			mut shape := Shape{
+				text:     text
+				lines:    [text]
+				text_cfg: node.shape.text_cfg
+				wrap:     node.shape.wrap
 			}
+			text_wrap(mut shape, w.ui)
 
 			// After wrapping, find the zero-space cursor_y is the
 			// index into the shape.lines array cursor_x is
 			// character index of that indexed line
 			zero_space_rune := zero_space.runes()[0]
-			for idx, ln in wrapped {
+			for idx, ln in shape.lines {
 				pos := arrays.index_of_first(ln.runes(), fn [zero_space_rune] (idx int, elem rune) bool {
 					return elem == zero_space_rune
 				})
@@ -608,12 +602,9 @@ fn layout_amend(mut node Layout, w &Window) {
 	}
 }
 
-// with_in tests if a and b are with tol
+// are_equal tests if a and b are with tol
 fn are_equal(a f32, b f32, diff f32) bool {
 	assert diff > 0
-	if a == b {
-		return true
-	}
 	mut d := a - b
 	if d < 0 {
 		d = -d
