@@ -111,7 +111,7 @@ pub fn (window &Window) context() &gg.Context {
 // event_fn is where all user events are handled. Mostly it delegates
 // to child views.
 fn event_fn(e &gg.Event, mut w Window) {
-	if !w.focused && e.typ != .focused {
+	if !w.focused && e.typ !in [.focused, .mouse_scroll] {
 		return
 	}
 	mut handled := false
@@ -124,11 +124,9 @@ fn event_fn(e &gg.Event, mut w Window) {
 			handled = char_handler(layout, e, w)
 		}
 		.focused {
-			println('focus')
 			w.focused = true
 		}
 		.unfocused {
-			println('unfocus')
 			w.focused = false
 		}
 		.key_down {
