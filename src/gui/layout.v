@@ -25,9 +25,9 @@ fn layout_do(mut layout Layout, window &Window) {
 	layout_wrap_text(mut layout, window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
-	layout_set_scroll_offsets(mut layout, layout.shape.scroll_v, window)
+	layout_scroll_offsets(mut layout, layout.shape.scroll_v, window)
 	layout_positions(mut layout, 0, 0)
-	layout_set_disables(mut layout, false)
+	layout_disables(mut layout, false)
 	layout_amend(mut layout, window)
 }
 
@@ -489,14 +489,14 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 	}
 }
 
-fn layout_set_scroll_offsets(mut node Layout, offset_v f32, w &Window) {
+fn layout_scroll_offsets(mut node Layout, offset_v f32, w &Window) {
 	mut offset := offset_v
 	if node.shape.id_scroll_v > 0 {
 		offset += w.scroll_state[node.shape.id_scroll_v].offset_v
 	}
 	for mut child in node.children {
 		child.shape.scroll_v = offset
-		layout_set_scroll_offsets(mut child, offset, w)
+		layout_scroll_offsets(mut child, offset, w)
 	}
 }
 
@@ -584,11 +584,11 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 
 // layout_set_disables walks the Layout and disables any children
 // that have a diabled ancestor
-fn layout_set_disables(mut node Layout, disabled bool) {
+fn layout_disables(mut node Layout, disabled bool) {
 	mut is_disabled := disabled || node.shape.disabled
 	node.shape.disabled = is_disabled
 	for mut child in node.children {
-		layout_set_disables(mut child, is_disabled)
+		layout_disables(mut child, is_disabled)
 	}
 }
 
