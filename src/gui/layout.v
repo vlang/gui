@@ -6,7 +6,7 @@ module gui
 import arrays
 
 // Comparing remaining values considered equal if within this limit
-const tolerance = f32(0.1)
+const tolerance = f32(0.01)
 
 // Layout defines a tree of Layouts. Views generate Layouts
 pub struct Layout {
