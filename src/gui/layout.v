@@ -5,7 +5,7 @@ module gui
 //
 import arrays
 
-// Comparing remaining values considered equal if within this limit
+// f32 values equal if within tolerance
 const tolerance = f32(0.01)
 
 // Layout defines a tree of Layouts. Views generate Layouts
@@ -33,6 +33,7 @@ fn layout_do(mut layout Layout, window &Window) {
 
 // layout_parents sets the parent property of layout
 fn layout_parents(mut layout Layout, parent &Shape) {
+	// Reference is to same tree so it should be safe
 	layout.parent = unsafe { parent }
 	for mut child in layout.children {
 		layout_parents(mut child, layout.shape)
@@ -173,7 +174,7 @@ fn layout_fill_widths(mut node Layout) {
 		//
 		mut excluded := []u64{cap: 25}
 		for i := 0; remaining_width > tolerance && i < clamp; i++ {
-			if with_in(remaining_width, previous_remaining_width, tolerance) {
+			if are_equal(remaining_width, previous_remaining_width, tolerance) {
 				break
 			}
 			previous_remaining_width = remaining_width
@@ -227,7 +228,7 @@ fn layout_fill_widths(mut node Layout) {
 		excluded.clear()
 		previous_remaining_width = 0
 		for i := 0; remaining_width < -tolerance && i < clamp; i++ {
-			if with_in(remaining_width, previous_remaining_width, tolerance) {
+			if are_equal(remaining_width, previous_remaining_width, tolerance) {
 				break
 			}
 			previous_remaining_width = remaining_width
@@ -313,7 +314,7 @@ fn layout_fill_heights(mut node Layout) {
 		//
 		mut excluded := []u64{cap: 25}
 		for i := 0; remaining_height > tolerance && i < clamp; i++ {
-			if with_in(remaining_height, previous_remaining_height, tolerance) {
+			if are_equal(remaining_height, previous_remaining_height, tolerance) {
 				break
 			}
 			previous_remaining_height = remaining_height
@@ -368,7 +369,7 @@ fn layout_fill_heights(mut node Layout) {
 		excluded.clear()
 		previous_remaining_height = 0
 		for i := 0; remaining_height < -tolerance && i < clamp; i++ {
-			if with_in(remaining_height, previous_remaining_height, tolerance) {
+			if are_equal(remaining_height, previous_remaining_height, tolerance) {
 				break
 			}
 			previous_remaining_height = remaining_height
@@ -437,7 +438,10 @@ fn layout_fill_heights(mut node Layout) {
 
 // layout_wrap_text is called after all widths in a Layout are determined.
 // Wrapping text can change the height of an Shape, which is why it is called
-// before computing Shape heights
+// before computing Shape heights. Wrapping text can also alter the cursor
+// position. The first part of this function wraps the text with a zero-space
+// character inserted at the cursor position. After wrapping it recovers
+// the cursor position by looking for the zero-space character.
 fn layout_wrap_text(mut node Layout, w &Window) {
 	if w.id_focus > 0 && w.id_focus == node.shape.id_focus && node.shape.type == .text {
 		// figure out where the dang cursor goes
@@ -457,8 +461,8 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 			wrapped := match node.shape.wrap {
 				true {
 					match node.shape.keep_spaces {
-						true { text_wrap_text_keep_spaces(text, node.shape.width, w.ui) }
-						else { text_wrap_text(text, node.shape.width, w.ui) }
+						true { wrap_text_keep_spaces(text, node.shape.width, w.ui) }
+						else { wrap_text_shrink_spaces(text, node.shape.width, w.ui) }
 					}
 				}
 				else {
@@ -548,16 +552,16 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 
 	for mut child in node.children {
 		// alignment across the axis
-		mut x_extra := f32(0)
-		mut y_extra := f32(0)
+		mut x_align := f32(0)
+		mut y_align := f32(0)
 		match axis {
 			.left_to_right {
 				remaining := node.shape.height - child.shape.height - padding.height()
 				if remaining > 0 {
 					match node.shape.v_align {
 						.top {}
-						.middle { y_extra = remaining / 2 }
-						else { y_extra = remaining }
+						.middle { y_align = remaining / 2 }
+						else { y_align = remaining }
 					}
 				}
 			}
@@ -566,15 +570,15 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 				if remaining > 0 {
 					match node.shape.h_align {
 						.left {}
-						.center { x_extra = remaining / 2 }
-						else { x_extra = remaining }
+						.center { x_align = remaining / 2 }
+						else { x_align = remaining }
 					}
 				}
 			}
 			.none {}
 		}
 
-		layout_positions(mut child, x + x_extra, y + y_extra)
+		layout_positions(mut child, x + x_align, y + y_align)
 
 		match axis {
 			.left_to_right { x += child.shape.width + spacing }
@@ -605,7 +609,7 @@ fn layout_amend(mut node Layout, w &Window) {
 }
 
 // with_in tests if a and b are with tol
-fn with_in(a f32, b f32, diff f32) bool {
+fn are_equal(a f32, b f32, diff f32) bool {
 	assert diff > 0
 	if a == b {
 		return true

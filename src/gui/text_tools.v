@@ -40,8 +40,8 @@ fn text_wrap(mut shape Shape, ctx &gg.Context) {
 	if shape.wrap && shape.type == .text {
 		ctx.set_text_cfg(shape.text_cfg)
 		shape.lines = match shape.keep_spaces {
-			true { text_wrap_text_keep_spaces(shape.text, shape.width, ctx) }
-			else { text_wrap_text(shape.text, shape.width, ctx) }
+			true { wrap_text_keep_spaces(shape.text, shape.width, ctx) }
+			else { wrap_text_shrink_spaces(shape.text, shape.width, ctx) }
 		}
 
 		shape.width = text_width(shape, ctx)
@@ -52,9 +52,9 @@ fn text_wrap(mut shape Shape, ctx &gg.Context) {
 	}
 }
 
-// text_wrap_text wraps lines to given width (logical units, not chars)
+// wrap_text_shrink_spaces wraps lines to given width (logical units, not chars)
 // Extra white space is compressed to on space including tabs and newlines.
-fn text_wrap_text(s string, width f32, ctx &gg.Context) []string {
+fn wrap_text_shrink_spaces(s string, width f32, ctx &gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in s.fields() {
@@ -75,10 +75,10 @@ fn text_wrap_text(s string, width f32, ctx &gg.Context) []string {
 	return wrap
 }
 
-// text_wrap_text_keep_spaces wraps lines to given width (logical units, not
+// wrap_text_keep_spaces wraps lines to given width (logical units, not
 // chars) White space is preserved except leading spaces at the start of a
 // wrapped line.
-fn text_wrap_text_keep_spaces(s string, width f32, ctx &gg.Context) []string {
+fn wrap_text_keep_spaces(s string, width f32, ctx &gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in split_text(s) {
