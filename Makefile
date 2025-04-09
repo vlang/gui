@@ -1,7 +1,7 @@
 .PHONY: run doc read
 
 doc:
-	cd src/gui && v doc -m -f html -inline-assets -readme -o ../../doc/html . gui
+	v doc -f html -inline-assets -readme -o ../../../doc/html ./src/gui gui
 
 read:
 	open doc/html/index.html

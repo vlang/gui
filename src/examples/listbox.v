@@ -15,7 +15,7 @@ fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 
 	mut items := []gui.View{}
-	for i in 1 .. 10000 {
+	for i in 1 .. 1000 {
 		items << gui.text(text: '${i} text list item')
 	}
 
