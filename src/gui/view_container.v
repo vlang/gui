@@ -36,7 +36,7 @@ mut:
 	content []View
 }
 
-fn (cfg &Container) generate(_ gg.Context) Layout {
+fn (cfg &Container) generate(_ &gg.Context) Layout {
 	return Layout{
 		shape: Shape{
 			id:           cfg.id

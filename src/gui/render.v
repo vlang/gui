@@ -71,7 +71,7 @@ fn renderer_draw(renderer Renderer, ctx &gg.Context) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render(layout Layout, bg_color gx.Color, offset_v f32, window &Window) []Renderer {
+fn render(layout Layout, bg_color gx.Color, offset_v f32, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
 
@@ -81,7 +81,7 @@ fn render(layout Layout, bg_color gx.Color, offset_v f32, window &Window) []Rend
 		bg_color
 	}
 
-	renderers << render_shape(layout.shape, bg_color, offset_v, window)
+	renderers << render_shape(layout.shape, bg_color, offset_v, ctx)
 
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, mut clip_stack)
@@ -89,7 +89,7 @@ fn render(layout Layout, bg_color gx.Color, offset_v f32, window &Window) []Rend
 
 	for child in layout.children {
 		v_offset := layout.shape.scroll_v + child.shape.scroll_v
-		renderers << render(child, parent_color, v_offset, window)
+		renderers << render(child, parent_color, v_offset, ctx)
 	}
 
 	if layout.shape.clip {
@@ -100,11 +100,10 @@ fn render(layout Layout, bg_color gx.Color, offset_v f32, window &Window) []Rend
 }
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
-fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, window &Window) []Renderer {
+fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Context) []Renderer {
 	if shape.color == color_transparent {
 		return []
 	}
-	ctx := window.ui
 	return match shape.type {
 		.container {
 			mut renderers := []Renderer{}
@@ -148,7 +147,7 @@ fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, window &Window
 			renderers
 		}
 		.text {
-			render_text(shape, offset_v, window)
+			render_text(shape, offset_v, ctx)
 		}
 		.none {
 			[]
@@ -184,9 +183,8 @@ fn render_rectangle(shape Shape, offset_v f32) []Renderer {
 
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
-fn render_text(shape Shape, offset_v f32, window &Window) []Renderer {
+fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	assert shape.type == .text
-	ctx := window.ui
 	mut renderers := []Renderer{}
 	lh := line_height(shape, ctx)
 	mut y := int(shape.y + offset_v + f32(0.49999))

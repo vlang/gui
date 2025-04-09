@@ -24,7 +24,7 @@ mut:
 	on_click    fn (&TextCfg, &gg.Event, &Window) bool = text_click_handler
 }
 
-fn (t Text) generate(ctx gg.Context) Layout {
+fn (t Text) generate(ctx &gg.Context) Layout {
 	mut shape_tree := Layout{
 		shape: Shape{
 			id:          t.id

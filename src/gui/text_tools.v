@@ -1,28 +1,42 @@
 module gui
 
 import gg
+import hash.fnv1a
 
-fn text_width(shape Shape, ctx gg.Context) int {
-	ctx.set_text_cfg(shape.text_cfg)
+fn text_width(shape Shape, ctx &gg.Context) int {
 	mut max_width := 0
+	mut window := unsafe { &Window(ctx.user_data) }
+	htx := fnv1a.sum32_struct(shape.text_cfg).str()
 	for line in shape.lines {
-		width := ctx.text_width(line)
+		key := line + htx
+		width := window.text_widths[key] or {
+			ctx.set_text_cfg(shape.text_cfg)
+			w := ctx.text_width(line)
+			window.text_widths[key] = w
+			w
+		}
 		max_width = int_max(width, max_width)
 	}
 	return max_width
 }
 
-fn text_height(shape Shape, ctx gg.Context) int {
+fn text_height(shape Shape, ctx &gg.Context) int {
 	lh := line_height(shape, ctx)
 	return lh * shape.lines.len
 }
 
 fn line_height(shape Shape, ctx gg.Context) int {
-	ctx.set_text_cfg(shape.text_cfg)
-	return ctx.text_height('Q|W') + int(shape.spacing + f32(0.4999)) + 2
+	mut window := unsafe { &Window(ctx.user_data) }
+	key := fnv1a.sum32_struct(shape.text_cfg)
+	return window.text_heights[key] or {
+		ctx.set_text_cfg(shape.text_cfg)
+		h := ctx.text_height('Q|W') + int(shape.spacing + f32(0.4999)) + 2
+		window.text_heights[key] = h
+		h
+	}
 }
 
-fn text_wrap(mut shape Shape, ctx gg.Context) {
+fn text_wrap(mut shape Shape, ctx &gg.Context) {
 	if shape.wrap && shape.type == .text {
 		ctx.set_text_cfg(shape.text_cfg)
 		shape.lines = match shape.keep_spaces {
@@ -40,7 +54,7 @@ fn text_wrap(mut shape Shape, ctx gg.Context) {
 
 // text_wrap_text wraps lines to given width (logical units, not chars)
 // Extra white space is compressed to on space including tabs and newlines.
-fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
+fn text_wrap_text(s string, width f32, ctx &gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in s.fields() {
@@ -64,7 +78,7 @@ fn text_wrap_text(s string, width f32, ctx gg.Context) []string {
 // text_wrap_text_keep_spaces wraps lines to given width (logical units, not
 // chars) White space is preserved except leading spaces at the start of a
 // wrapped line.
-fn text_wrap_text_keep_spaces(s string, width f32, ctx gg.Context) []string {
+fn text_wrap_text_keep_spaces(s string, width f32, ctx &gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in split_text(s) {

@@ -11,7 +11,7 @@ import gg
 // Renderers are used to draw to the window.
 pub interface View {
 	id string
-	generate(ctx gg.Context) Layout
+	generate(ctx &gg.Context) Layout
 mut:
 	content []View
 }
