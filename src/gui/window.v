@@ -19,6 +19,8 @@ mut:
 	mouse_cursor sapp.MouseCursor
 	input_state  map[u32]InputState
 	scroll_state map[u32]ScrollState
+	text_widths  map[string]f32
+	text_heights map[string]f32
 	on_event     fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
 }
 
@@ -260,7 +262,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
 	layout_do(mut layout, window)
-	renderers := render(layout, window.color_background(), layout.shape.scroll_v, window.ui)
+	renderers := render(layout, window.color_background(), layout.shape.scroll_v, window)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -268,6 +270,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.id_focus = 0
 	window.input_state.clear()
 	window.scroll_state.clear()
+	window.text_widths.clear()
+	window.text_heights.clear()
 	window.gen_view = gen_view
 	window.layout = layout
 	window.renderers = renderers
@@ -283,7 +287,7 @@ pub fn (mut window Window) update_window() {
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
 	layout_do(mut layout, window)
-	renderers := render(layout, window.color_background(), layout.shape.scroll_v, window.ui)
+	renderers := render(layout, window.color_background(), layout.shape.scroll_v, window)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }

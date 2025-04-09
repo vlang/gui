@@ -71,7 +71,7 @@ fn renderer_draw(renderer Renderer, ctx &gg.Context) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render(layout Layout, bg_color gx.Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render(layout Layout, bg_color gx.Color, offset_v f32, window &Window) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
 
@@ -81,33 +81,34 @@ fn render(layout Layout, bg_color gx.Color, offset_v f32, ctx &gg.Context) []Ren
 		bg_color
 	}
 
-	renderers << render_shape(layout.shape, bg_color, offset_v, ctx)
+	renderers << render_shape(layout.shape, bg_color, offset_v, window)
 
 	if layout.shape.clip {
-		renderers << render_clip(layout.shape, ctx, mut clip_stack)
+		renderers << render_clip(layout.shape, mut clip_stack)
 	}
 
 	for child in layout.children {
 		v_offset := layout.shape.scroll_v + child.shape.scroll_v
-		renderers << render(child, parent_color, v_offset, ctx)
+		renderers << render(child, parent_color, v_offset, window)
 	}
 
 	if layout.shape.clip {
-		renderers << render_unclip(ctx, mut clip_stack)
+		renderers << render_unclip(mut clip_stack)
 	}
 
 	return renderers
 }
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
-fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, window &Window) []Renderer {
 	if shape.color == color_transparent {
 		return []
 	}
+	ctx := window.ui
 	return match shape.type {
 		.container {
 			mut renderers := []Renderer{}
-			renderers << render_rectangle(shape, offset_v, ctx)
+			renderers << render_rectangle(shape, offset_v)
 			// This group box stuff is likely temporary
 			// Examine after floating containers implemented
 			if shape.text.len != 0 {
@@ -147,7 +148,7 @@ fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Contex
 			renderers
 		}
 		.text {
-			render_text(shape, offset_v, ctx)
+			render_text(shape, offset_v, window)
 		}
 		.none {
 			[]
@@ -156,10 +157,10 @@ fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Contex
 }
 
 // draw_rectangle draws a shape as a rectangle.
-fn render_rectangle(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_rectangle(shape Shape, offset_v f32) []Renderer {
 	assert shape.type == .container
 	mut renderers := []Renderer{}
-	renderer_rect := make_renderer_rect(shape, ctx)
+	renderer_rect := make_renderer_rect(shape)
 	draw_rect := gg.Rect{
 		x:      shape.x
 		y:      shape.y + offset_v
@@ -183,8 +184,9 @@ fn render_rectangle(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
-fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_text(shape Shape, offset_v f32, window &Window) []Renderer {
 	assert shape.type == .text
+	ctx := window.ui
 	mut renderers := []Renderer{}
 	lh := line_height(shape, ctx)
 	mut y := int(shape.y + offset_v + f32(0.49999))
@@ -193,7 +195,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 		...shape.text_cfg
 		color: color
 	}
-	renderer_rect := make_renderer_rect(shape, ctx)
+	renderer_rect := make_renderer_rect(shape)
 
 	for line in shape.lines {
 		draw_rect := gg.Rect{
@@ -237,7 +239,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 
 // render_clip creates a clipping region based on the layout's dimensions
 // minus padding and some adjustments for round off.
-fn render_clip(shape Shape, ctx &gg.Context, mut clip_stack ClipStack) Renderer {
+fn render_clip(shape Shape, mut clip_stack ClipStack) Renderer {
 	// Appears to be some round-off issues in sokol's clipping that cause
 	// off by one errors. Not a big deal. Bump the region out by one in
 	// either direction to compensate.
@@ -260,7 +262,7 @@ const clip_reset = DrawClip{
 }
 
 // shape_unclip sets the clip region to the previous clip region
-fn render_unclip(ctx &gg.Context, mut clip_stack ClipStack) DrawClip {
+fn render_unclip(mut clip_stack ClipStack) DrawClip {
 	clip_stack.pop() or { return clip_reset }
 	return clip_stack.peek() or { clip_reset }
 }
@@ -287,7 +289,7 @@ fn shape_clip_rect(shape Shape) gg.Rect {
 // make_renderer_rect creates a rectangle that represents the renderable region.
 // If the shape is clipped, then use the shape dimensions otherwise used
 // the window size.
-fn make_renderer_rect(shape Shape, ctx gg.Context) gg.Rect {
+fn make_renderer_rect(shape Shape) gg.Rect {
 	return match shape.clip {
 		true {
 			shape_clip_rect(shape)

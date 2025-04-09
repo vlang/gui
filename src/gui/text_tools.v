@@ -13,19 +13,17 @@ fn text_width(shape Shape, ctx gg.Context) int {
 }
 
 fn text_height(shape Shape, ctx gg.Context) int {
-	assert shape.type == .text
 	lh := line_height(shape, ctx)
 	return lh * shape.lines.len
 }
 
 fn line_height(shape Shape, ctx gg.Context) int {
-	assert shape.type == .text
 	ctx.set_text_cfg(shape.text_cfg)
 	return ctx.text_height('Q|W') + int(shape.spacing + f32(0.4999)) + 2
 }
 
 fn text_wrap(mut shape Shape, ctx gg.Context) {
-	if shape.type == .text && shape.wrap {
+	if shape.wrap && shape.type == .text {
 		ctx.set_text_cfg(shape.text_cfg)
 		shape.lines = match shape.keep_spaces {
 			true { text_wrap_text_keep_spaces(shape.text, shape.width, ctx) }
