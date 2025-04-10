@@ -38,6 +38,12 @@ pub fn (p Padding) height() f32 {
 	return p.top + p.bottom
 }
 
+// is_none tests if padding is equal to padding_none (i.e no padding)
+pub fn (p Padding) is_none() bool {
+	test := p.left != 0 || p.right != 0 || p.top != 0 || p.bottom != 0
+	return !test
+}
+
 // pad_4 creates a padding with all 4 sides set to the `p` parameter
 pub fn pad_4(p f32) Padding {
 	return Padding{p, p, p, p}

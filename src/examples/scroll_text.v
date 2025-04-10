@@ -1,6 +1,7 @@
 import gui
 import gg
 
+@[heap]
 struct App {
 pub mut:
 	light bool
@@ -31,6 +32,7 @@ fn main() {
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
+			w.set_id_focus(1)
 		}
 	)
 	window.run()
@@ -51,31 +53,29 @@ fn main_view(window &gui.Window) gui.View {
 				padding: gui.padding_none
 				sizing:  gui.fill_fill
 				content: [
-					gui.column(
-						id_scroll_v: 1
-						padding:     gui.padding_small
-						sizing:      gui.fill_fill
-						content:     [
-							gui.text(
-								text:        app.text
-								keep_spaces: true
-								wrap:        true
-							),
-						]
-					),
-					gui.column(
-						id_scroll_v: 2
-						padding:     gui.padding_small
-						sizing:      gui.fill_fill
-						content:     [
-							gui.text(
-								text:        app.text
-								keep_spaces: true
-								wrap:        true
-							),
-						]
-					),
+					scroll_column(1, app.text, window),
+					scroll_column(2, app.text, window),
 				]
+			),
+		]
+	)
+}
+
+fn scroll_column(id u32, text string, window &gui.Window) gui.View {
+	return gui.column(
+		id_focus:    id // enables keyboard scrolling
+		id_scroll_v: id
+		color:       match window.is_focus(id) {
+			true { gui.theme().button_style.color_border_focus }
+			else { gui.theme().container_style.color }
+		}
+		padding:     gui.padding_small
+		sizing:      gui.fill_fill
+		content:     [
+			gui.text(
+				text:        text
+				keep_spaces: true
+				wrap:        true
 			),
 		]
 	)
@@ -88,13 +88,15 @@ fn button_change_theme(app &App) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.button(
-				padding:  gui.padding(1, 5, 1, 5)
-				content:  [
+				id_focus:       3
+				padding:        gui.padding(1, 5, 1, 5)
+				padding_border: gui.padding_two
+				content:        [
 					gui.text(
 						text: if app.light { '●' } else { '○' }
 					),
 				]
-				on_click: fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.light = !app.light
 					theme := if app.light {
@@ -103,7 +105,6 @@ fn button_change_theme(app &App) gui.View {
 						gui.theme_dark
 					}
 					w.set_theme(theme)
-					w.set_id_focus(1)
 					return true
 				}
 			),

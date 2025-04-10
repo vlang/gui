@@ -74,7 +74,6 @@ pub fn window(cfg WindowCfg) &Window {
 		on_event: cfg.on_event
 	}
 	window.ui = gg.new_context(
-		sample_count: 2 // smoother rounded corners, maybe
 		bg_color:     cfg.bg_color
 		width:        cfg.width
 		height:       cfg.height
@@ -130,8 +129,7 @@ fn event_fn(e &gg.Event, mut w Window) {
 			w.focused = false
 		}
 		.key_down {
-			handled = keydown_handler(layout, e, w)
-
+			handled = keydown_handler(layout, e, mut w)
 			m := unsafe { gg.Modifier(e.modifiers) }
 			if !handled && e.key_code == .tab && m == gg.Modifier.shift {
 				if shape := layout.previous_focusable(mut w) {

@@ -99,8 +99,9 @@ fn (cfg ButtonCfg) amend_layout(mut node Layout, mut w Window) {
 	if node.shape.disabled || cfg.on_click == unsafe { nil } {
 		return
 	}
-	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {
-		node.parent.color = cfg.color_border_focus
+	if w.is_focus(node.shape.id_focus) && node.parent != unsafe { nil } {
+		node.shape.color = cfg.color_focus
+		node.parent.shape.color = cfg.color_border_focus
 	}
 	ctx := w.context()
 	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {

@@ -29,6 +29,8 @@ const color_link_dark = gx.rgb(100, 149, 237)
 const color_text_dark = gx.rgb(225, 225, 225)
 
 const scroll_multiplier = 20
+const scroll_delta_line = 1
+const scroll_delta_page = 10
 const size_progress_bar = 10
 
 pub struct Theme {
@@ -64,6 +66,8 @@ pub:
 	size_text_large  int = size_text_large
 
 	scroll_multiplier f32 = scroll_multiplier
+	scroll_delta_line f32 = scroll_delta_line
+	scroll_delta_page f32 = scroll_delta_page
 }
 
 pub struct ThemeCfg {
@@ -103,6 +107,8 @@ pub struct ThemeCfg {
 	size_text_large  int = size_text_large
 
 	scroll_multiplier f32 = scroll_multiplier
+	scroll_delta_line f32 = scroll_delta_line
+	scroll_delta_page f32 = scroll_delta_page
 }
 
 pub const theme_dark = theme_maker(
@@ -132,7 +138,7 @@ pub const theme_light = theme_maker(
 	color_5:            gx.rgb(91, 91, 255)
 	color_border:       gx.rgb(64, 64, 64)
 	color_link:         gx.rgb(0, 71, 171)
-	color_border_focus: gx.rgb(0, 71, 171)
+	color_border_focus: gx.rgb(0, 0, 255)
 	text_cfg:           gx.TextCfg{
 		color: gx.rgb(32, 32, 32)
 		size:  size_text_medium
@@ -224,6 +230,8 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 		size_text_large:  cfg.size_text_large
 
 		scroll_multiplier: cfg.scroll_multiplier
+		scroll_delta_line: cfg.scroll_delta_line
+		scroll_delta_page: cfg.scroll_delta_page
 	}
 }
 

@@ -58,15 +58,15 @@ fn main_view(window &gui.Window) gui.View {
 	app := window.state[App]()
 
 	return gui.column(
-		width:    w
-		height:   h
-		h_align:  .center
-		v_align:  .middle
-		sizing:   gui.fixed_fixed
+		width:   w
+		height:  h
+		h_align: .center
+		v_align: .middle
+		sizing:  gui.fixed_fixed
 		content: [
 			gui.text(text: 'Welcome to GUI'),
 			gui.button(
-				text:     '${app.clicks} Clicks'
+				content:  [gui.text(text: '${app.clicks} Clicks')]
 				on_click: fn (_ &gui.ButtonCfg, e &gg.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.clicks += 1
