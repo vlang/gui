@@ -2,14 +2,6 @@ module gui
 
 import gx
 
-// gets around an chicken/egg issue with TextCfg
-fn text_cfg_dark() gx.TextCfg {
-	return gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_medium
-	}
-}
-
 pub struct ButtonStyle {
 pub:
 	color              gx.Color = color_1_dark
@@ -47,7 +39,7 @@ pub:
 	padding_border     Padding    = padding_none
 	radius             f32        = radius_medium
 	radius_border      f32        = radius_medium
-	text_cfg           gx.TextCfg = text_cfg_dark()
+	text_cfg           gx.TextCfg = text_cfg_dark
 }
 
 pub struct ProgressBarStyle {
@@ -70,5 +62,5 @@ pub:
 pub struct TextStyle {
 pub:
 	spacing  int        = 2
-	text_cfg gx.TextCfg = text_cfg_dark()
+	text_cfg gx.TextCfg = text_cfg_dark
 }

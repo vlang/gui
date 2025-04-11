@@ -36,6 +36,11 @@ const scroll_delta_line = 1
 const scroll_delta_page = 10
 const size_progress_bar = 10
 
+const text_cfg_dark = gx.TextCfg{
+	color: color_text_dark
+	size:  size_text_medium
+}
+
 pub struct Theme {
 pub:
 	name             string   = 'default' @[required]
@@ -54,29 +59,62 @@ pub:
 	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
 	text_style         TextStyle
-	h1                 gx.TextCfg = gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_x_large
+
+	// T's and H's are convienence configs for sizing
+	// similar to H1-H6 in html markup. T3 is the
+	// same as normal size font used by default in
+	// text views
+	t1 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_x_large
 	}
-	h2                 gx.TextCfg = gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_large
+	t2 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_large
 	}
-	h3                 gx.TextCfg = gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_medium
+	t3 gx.TextCfg = text_cfg_dark
+	t4 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_small
 	}
-	h4                 gx.TextCfg = gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_small
+	t5 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_x_small
 	}
-	h5                 gx.TextCfg = gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_x_small
+	t6 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_tiny
 	}
-	h6                 gx.TextCfg = gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_tiny
+
+	h1 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_x_large
+		bold: true
+	}
+	h2 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_large
+		bold: true
+	}
+	h3 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_medium
+		bold: true
+	}
+	h4 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_small
+		bold: true
+	}
+	h5 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_x_small
+		bold: true
+	}
+	h6 gx.TextCfg = gx.TextCfg{
+		...text_cfg_dark
+		size: size_text_tiny
+		bold: true
 	}
 
 	padding_small  Padding = padding_small
@@ -101,6 +139,7 @@ pub:
 }
 
 pub struct ThemeCfg {
+pub:
 	name               string @[required]
 	color_0            gx.Color   = color_0_dark
 	color_1            gx.Color   = color_1_dark
@@ -118,10 +157,8 @@ pub struct ThemeCfg {
 	padding_border     Padding    = padding_none
 	radius             f32        = radius_medium
 	radius_border      f32        = radius_medium + 2
-	text_cfg           gx.TextCfg = gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_medium
-	}
+	text_cfg           gx.TextCfg = text_cfg_dark
+
 	// Usually don't change across styles
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
@@ -155,10 +192,7 @@ pub const theme_dark = theme_maker(
 	color_border:       color_border_dark
 	color_border_focus: color_link_dark
 	color_link:         color_link_dark
-	text_cfg:           gx.TextCfg{
-		color: color_text_dark
-		size:  size_text_medium
-	}
+	text_cfg:           text_cfg_dark
 )
 
 pub const theme_light = theme_maker(
@@ -173,8 +207,8 @@ pub const theme_light = theme_maker(
 	color_link:         gx.rgb(0, 71, 171)
 	color_border_focus: gx.rgb(0, 0, 255)
 	text_cfg:           gx.TextCfg{
+		...text_cfg_dark
 		color: gx.rgb(32, 32, 32)
-		size:  size_text_medium
 	}
 )
 
@@ -272,35 +306,56 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 
 	return Theme{
 		...theme
+		t1: gx.TextCfg{
+			...theme.text_style.text_cfg
+			size: theme.size_text_x_large
+		}
+		t2: gx.TextCfg{
+			...theme.text_style.text_cfg
+			size: theme.size_text_large
+		}
+		t3: theme.text_style.text_cfg
+		t4: gx.TextCfg{
+			...theme.text_style.text_cfg
+			size: theme.size_text_small
+		}
+		t5: gx.TextCfg{
+			...theme.text_style.text_cfg
+			size: theme.size_text_x_small
+		}
+		t6: gx.TextCfg{
+			...theme.text_style.text_cfg
+			size: theme.size_text_tiny
+		}
 		h1: gx.TextCfg{
-			...theme.h1
-			color: theme.text_style.text_cfg.color
-			size:  theme.size_text_x_large
+			...theme.text_style.text_cfg
+			size: theme.size_text_x_large
+			bold: true
 		}
 		h2: gx.TextCfg{
-			...theme.h2
-			color: theme.text_style.text_cfg.color
-			size:  theme.size_text_large
+			...theme.text_style.text_cfg
+			size: theme.size_text_large
+			bold: true
 		}
 		h3: gx.TextCfg{
-			...theme.h3
-			color: theme.text_style.text_cfg.color
-			size:  theme.size_text_medium
+			...theme.text_style.text_cfg
+			size: theme.size_text_medium
+			bold: true
 		}
 		h4: gx.TextCfg{
-			...theme.h4
-			color: theme.text_style.text_cfg.color
-			size:  theme.size_text_small
+			...theme.text_style.text_cfg
+			size: theme.size_text_small
+			bold: true
 		}
 		h5: gx.TextCfg{
-			...theme.h5
-			color: theme.text_style.text_cfg.color
-			size:  theme.size_text_x_small
+			...theme.text_style.text_cfg
+			size: theme.size_text_x_small
+			bold: true
 		}
 		h6: gx.TextCfg{
-			...theme.h6
-			color: theme.text_style.text_cfg.color
-			size:  theme.size_text_tiny
+			...theme.text_style.text_cfg
+			size: theme.size_text_tiny
+			bold: true
 		}
 	}
 }

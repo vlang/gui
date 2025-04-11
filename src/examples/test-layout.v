@@ -33,27 +33,13 @@ fn main() {
 }
 
 fn main_view(w &gui.Window) gui.View {
-	txt_color := if gui.theme().name == 'light' {
-		gx.rgb(255, 255, 255)
-	} else {
-		gui.theme().text_style.text_cfg.color
-	}
-
-	text_style := gx.TextCfg{
-		...gui.theme().text_style.text_cfg
-		color: txt_color
-	}
-	text_style_blue := gx.TextCfg{
-		...text_style
-		color: gui.theme().color_link
-	}
-	text_style_large := gx.TextCfg{
-		...text_style
-		size: 20
-	}
-
 	mut state := w.state[AppState]()
 	width, height := w.window_size()
+
+	text_cfg_blue := gx.TextCfg{
+		...gui.theme().h4
+		color: gx.rgb(100, 149, 237)
+	}
 
 	return gui.row(
 		width:   width
@@ -95,21 +81,21 @@ fn main_view(w &gui.Window) gui.View {
 						sizing:  gui.fill_fill
 						fill:    true
 						color:   gx.rgb(0x30, 0x30, 0x30)
+						spacing: gui.theme().spacing_large
 						content: [
 							gui.row(
 								color:   gx.white
 								content: [
 									gui.text(
 										text:     'Hello world!'
-										text_cfg: text_style_large
+										text_cfg: gui.theme().h2
 										wrap:     true
 									),
 								]
 							),
 							gui.text(
-								wrap:     true
-								text_cfg: text_style
-								text:     'Embedded in a column with wrapping'
+								text: 'Embedded in a column with wrapping'
+								wrap: true
 							),
 							gui.button(
 								id_focus:       1
@@ -128,8 +114,7 @@ fn main_view(w &gui.Window) gui.View {
 								padding: gui.padding_none
 								content: [
 									gui.text(
-										text:     'label'
-										text_cfg: text_style
+										text: 'label'
 									),
 									gui.input(
 										id_focus:        2
@@ -146,8 +131,7 @@ fn main_view(w &gui.Window) gui.View {
 								]
 							),
 							gui.text(
-								text:     'progress bar'
-								text_cfg: text_style
+								text: 'progress bar'
 							),
 							gui.progress_bar(
 								percent: 0.35
@@ -187,11 +171,10 @@ fn main_view(w &gui.Window) gui.View {
 						content: [
 							gui.text(
 								text:     'keep_spaces = false'
-								text_cfg: text_style_blue
+								text_cfg: text_cfg_blue
 							),
 							gui.text(
 								text:        state.name
-								text_cfg:    text_style
 								wrap:        true
 								keep_spaces: false
 							),
@@ -203,11 +186,10 @@ fn main_view(w &gui.Window) gui.View {
 						content: [
 							gui.text(
 								text:     'keep_spaces = true'
-								text_cfg: text_style_blue
+								text_cfg: text_cfg_blue
 							),
 							gui.text(
 								text:        state.name
-								text_cfg:    text_style
 								wrap:        true
 								keep_spaces: true
 							),
