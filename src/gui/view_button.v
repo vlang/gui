@@ -33,7 +33,7 @@ pub:
 	padding_border     Padding = gui_theme.button_style.padding_border
 	radius             f32     = gui_theme.button_style.radius
 	radius_border      f32     = gui_theme.button_style.radius_border
-	on_click           fn (&ButtonCfg, &gg.Event, &Window) bool = unsafe { nil }
+	on_click           fn (&ButtonCfg, &Event, &Window) bool = unsafe { nil }
 }
 
 // button creates a button.
@@ -44,7 +44,7 @@ pub:
 // 	max_width:      90
 // 	padding_border: gui.padding_one
 // 	content:        [gui.text(text: '${app.clicks} Clicks')]
-// 	on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+// 	on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
 // 		mut app := w.state[App]()
 // 		app.clicks += 1
 // 		return true
@@ -86,7 +86,7 @@ pub fn button(cfg ButtonCfg) View {
 	)
 }
 
-fn on_char_button(cfg &ButtonCfg, e &gg.Event, mut w Window) bool {
+fn on_char_button(cfg &ButtonCfg, e &Event, mut w Window) bool {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
 		cfg.on_click(&cfg, e, w)
 		return true

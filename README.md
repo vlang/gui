@@ -67,7 +67,7 @@ fn main_view(window &gui.Window) gui.View {
 			gui.text(text: 'Welcome to GUI'),
 			gui.button(
 				content:  [gui.text(text: '${app.clicks} Clicks')]
-				on_click: fn (_ &gui.ButtonCfg, e &gg.Event, mut w gui.Window) bool {
+				on_click: fn (_ &gui.ButtonCfg, e &gui.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.clicks += 1
 					return true // true says click was handled

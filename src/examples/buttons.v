@@ -1,5 +1,4 @@
 import gui
-import gg
 import math
 
 struct App {
@@ -130,7 +129,7 @@ fn button_row(label string, button gui.View) gui.View {
 	)
 }
 
-fn click_handler(_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+fn click_handler(_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
 	mut app := w.state[App]()
 	app.clicks += 1
 	w.set_id_focus(1)
@@ -150,7 +149,7 @@ fn button_change_theme(app &App) gui.View {
 						text: if app.light { '●' } else { '○' }
 					),
 				]
-				on_click: fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+				on_click: fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.light = !app.light
 					theme := if app.light {

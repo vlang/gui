@@ -25,10 +25,10 @@ pub struct Container implements View {
 	disabled     bool
 	text         string
 	id_scroll_v  u32
-	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	amend_layout fn (mut Layout, &Window)              = unsafe { nil }
+	on_char      fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_click     fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_keydown   fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	amend_layout fn (mut Layout, &Window)           = unsafe { nil }
 mut:
 	axis    Axis
 	cfg     voidptr
@@ -101,10 +101,10 @@ pub:
 	padding      Padding = gui_theme.container_style.padding
 	color        Color   = gui_theme.container_style.color
 	fill         bool    = gui_theme.container_style.fill
-	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	amend_layout fn (mut Layout, &Window)              = unsafe { nil }
+	on_char      fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_click     fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_keydown   fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	amend_layout fn (mut Layout, &Window)           = unsafe { nil }
 	content      []View
 }
 

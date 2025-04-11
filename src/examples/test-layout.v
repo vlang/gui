@@ -1,7 +1,6 @@
 module main
 
 import gui
-import gg
 
 @[heap]
 struct AppState {
@@ -102,7 +101,7 @@ fn main_view(w &gui.Window) gui.View {
 								content:        [
 									gui.text(text: 'Button Text ${state.click_count}'),
 								]
-								on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+								on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
 									mut state := w.state[AppState]()
 									state.click_count += 1
 									return true

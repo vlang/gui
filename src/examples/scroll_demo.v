@@ -1,5 +1,4 @@
 import gui
-import gg
 
 @[heap]
 struct App {
@@ -110,7 +109,7 @@ fn theme_button(app &App) gui.View {
 				text: if app.light { '●' } else { '○' }
 			),
 		]
-		on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+		on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
 			mut app := w.state[App]()
 			app.light = !app.light
 			theme := if app.light {

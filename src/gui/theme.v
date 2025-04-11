@@ -26,7 +26,7 @@ const color_3_dark = rgb(84, 84, 84)
 const color_4_dark = rgb(94, 94, 94)
 const color_5_dark = rgb(104, 104, 104)
 const color_border_dark = rgb(100, 100, 100)
-const color_link_dark = rgb(100, 149, 237)
+const color_link_dark = cornflower_blue
 const color_text_dark = rgb(225, 225, 225)
 
 const scroll_multiplier = 20

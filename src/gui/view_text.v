@@ -19,7 +19,7 @@ mut:
 	clip        bool
 	cfg         TextCfg
 	content     []View
-	on_click    fn (&TextCfg, &gg.Event, &Window) bool = text_click_handler
+	on_click    fn (&TextCfg, &Event, &Window) bool = text_click_handler
 }
 
 fn (t Text) generate(ctx &gg.Context) Layout {
@@ -92,7 +92,7 @@ pub fn text(cfg TextCfg) Text {
 }
 
 // should be mouse down handler.
-fn text_click_handler(cfg &TextCfg, e &gg.Event, w &Window) bool {
+fn text_click_handler(cfg &TextCfg, e &Event, w &Window) bool {
 	println('${e.mouse_x}, ${e.mouse_y}')
 	return false
 }

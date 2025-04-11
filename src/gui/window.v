@@ -20,7 +20,7 @@ mut:
 	scroll_state map[u32]ScrollState
 	text_widths  map[string]int
 	text_heights map[u32]int
-	on_event     fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
+	on_event     fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -63,7 +63,7 @@ pub:
 	on_init  fn (&Window) = fn (mut w Window) {
 		w.update_view(default_view)
 	}
-	on_event fn (e &gg.Event, mut w Window) = fn (_ &gg.Event, mut _ Window) {}
+	on_event fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
 // window creates the application window. See WindowCfg on how to configure it
@@ -108,7 +108,8 @@ pub fn (window &Window) context() &gg.Context {
 
 // event_fn is where all user events are handled. Mostly it delegates
 // to child views.
-fn event_fn(e &gg.Event, mut w Window) {
+fn event_fn(ev &gg.Event, mut w Window) {
+	e := from_gg_event(ev)
 	if !w.focused && e.typ !in [.focused, .mouse_scroll] {
 		return
 	}
@@ -195,7 +196,7 @@ pub fn (window &Window) is_focus(id_focus u32) bool {
 }
 
 // pointer_over_app returns true if the mouse pointer is over the app
-pub fn (window &Window) pointer_over_app(e &gg.Event) bool {
+pub fn (window &Window) pointer_over_app(e &Event) bool {
 	if e.mouse_x < 0 || e.mouse_y < 0 {
 		return false
 	}

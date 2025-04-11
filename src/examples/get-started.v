@@ -1,5 +1,4 @@
 import gui
-import gg
 
 // GUI uses a view generator (a function that returns a View) to
 // render the contents of the Window. As the state of the app
@@ -54,7 +53,7 @@ fn main_view(window &gui.Window) gui.View {
 				id_focus:       1
 				padding_border: gui.padding_two
 				content:        [gui.text(text: '${app.clicks} Clicks')]
-				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+				on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.clicks += 1
 					return true // true says click was handled

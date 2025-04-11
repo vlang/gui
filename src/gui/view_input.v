@@ -1,7 +1,5 @@
 module gui
 
-import gg
-
 @[heap]
 pub struct InputCfg {
 pub:
@@ -93,7 +91,7 @@ const bsp_c = 0x08
 const del_c = 0x7F
 const space_c = 0x20
 
-fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) bool {
+fn on_char_input(cfg &InputCfg, event &Event, mut w Window) bool {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut t := cfg.text
@@ -145,7 +143,7 @@ fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) bool {
 	return false
 }
 
-fn on_click_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {
+fn on_click_input(cfg &InputCfg, e &Event, mut w Window) bool {
 	if e.mouse_button == .left {
 		w.input_state[w.id_focus] = InputState{
 			...w.input_state[w.id_focus]
@@ -156,7 +154,7 @@ fn on_click_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {
 	return false
 }
 
-fn on_keydown_input(cfg &InputCfg, e &gg.Event, mut w Window) bool {
+fn on_keydown_input(cfg &InputCfg, e &Event, mut w Window) bool {
 	input_state := w.input_state[w.id_focus]
 	mut cursor_pos := input_state.cursor_pos
 	match e.key_code {

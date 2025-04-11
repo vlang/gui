@@ -1,8 +1,6 @@
 module gui
 
-import gg
-
-fn char_handler(node Layout, e &gg.Event, w &Window) bool {
+fn char_handler(node Layout, e &Event, w &Window) bool {
 	for child in node.children {
 		if char_handler(child, e, w) {
 			return true
@@ -16,7 +14,7 @@ fn char_handler(node Layout, e &gg.Event, w &Window) bool {
 	return false
 }
 
-fn click_handler(node Layout, e &gg.Event, mut w Window) bool {
+fn click_handler(node Layout, e &Event, mut w Window) bool {
 	for child in node.children {
 		if click_handler(child, e, mut w) {
 			return true
@@ -31,7 +29,7 @@ fn click_handler(node Layout, e &gg.Event, mut w Window) bool {
 			// relative to node.shape
 			mouse_x := e.mouse_x - node.shape.x
 			mouse_y := e.mouse_y - node.shape.y
-			ev := &gg.Event{
+			ev := &Event{
 				...e
 				touches: e.touches // runtime mem error otherwise
 				mouse_x: mouse_x
@@ -47,7 +45,7 @@ fn click_handler(node Layout, e &gg.Event, mut w Window) bool {
 	return false
 }
 
-fn keydown_handler(node Layout, e &gg.Event, mut w Window) bool {
+fn keydown_handler(node Layout, e &Event, mut w Window) bool {
 	for child in node.children {
 		if keydown_handler(child, e, mut w) {
 			return true
@@ -66,7 +64,7 @@ fn keydown_handler(node Layout, e &gg.Event, mut w Window) bool {
 	return false
 }
 
-fn key_down_scroll_handler(node Layout, e &gg.Event, mut w Window) bool {
+fn key_down_scroll_handler(node Layout, e &Event, mut w Window) bool {
 	delta_line := gui_theme.scroll_delta_line
 	delta_page := gui_theme.scroll_delta_page
 	delta_home := 10000000 // any really big number works
@@ -81,7 +79,7 @@ fn key_down_scroll_handler(node Layout, e &gg.Event, mut w Window) bool {
 	}
 }
 
-fn mouse_scroll_handler(node Layout, e &gg.Event, mut w Window, parent Shape) {
+fn mouse_scroll_handler(node Layout, e &Event, mut w Window, parent Shape) {
 	for child in node.children {
 		mouse_scroll_handler(child, e, mut w, node.shape)
 	}

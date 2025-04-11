@@ -1,6 +1,5 @@
 import gui
 import arrays
-import gg
 import math
 
 const bsize = 30
@@ -36,6 +35,7 @@ fn main() {
 			w.update_view(main_view)
 		}
 	)
+	println(gui.theme().t2)
 	window.run()
 }
 
@@ -51,7 +51,10 @@ fn main_view(mut w gui.Window) gui.View {
 		content: [
 			gui.text(
 				text:       app.text
-				text_style: gui.theme().h2
+				text_style: gui.TextStyle{
+					...gui.theme().t2
+					color: gui.black
+				}
 			),
 		]
 	)
@@ -104,13 +107,13 @@ fn get_row(ops []string) []gui.View {
 	return content
 }
 
-fn btn_click(btn &gui.ButtonCfg, e &gg.Event, mut w gui.Window) bool {
+fn btn_click(btn &gui.ButtonCfg, e &gui.Event, mut w gui.Window) bool {
 	mut app := w.state[App]()
 	app.do_op(btn.id)
 	return true
 }
 
-fn on_event(e &gg.Event, mut w gui.Window) {
+fn on_event(e &gui.Event, mut w gui.Window) {
 	if e.typ == .char {
 		c := rune(e.char_code).str().to_upper()
 		mut app := w.state[App]()

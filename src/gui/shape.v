@@ -1,6 +1,5 @@
 module gui
 
-import gg
 import rand
 
 // Shape is the only data structure in GUI used to draw to the screen.
@@ -39,10 +38,10 @@ pub mut:
 	id_scroll_v  u32 // >0 indicates shape is scrollable
 	scroll_v     f32
 	cfg          voidptr
-	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
-	amend_layout fn (mut Layout, &Window)              = unsafe { nil }
+	on_char      fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_click     fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_keydown   fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	amend_layout fn (mut Layout, &Window)           = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.
