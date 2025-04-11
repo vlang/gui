@@ -1,7 +1,22 @@
 module gui
 
 import gg
+import gx
 import hash.fnv1a
+import os
+
+pub fn get_text_width(text string, text_cfg gx.TextCfg, mut window Window) int {
+	ctx := window.ui
+	htx := fnv1a.sum32_struct(text_cfg).str()
+	ctx.set_text_cfg(text_cfg)
+	key := text + htx
+	return window.text_widths[key] or {
+		ctx.set_text_cfg(text_cfg)
+		w := ctx.text_width(text)
+		window.text_widths[key] = w
+		w
+	}
+}
 
 fn text_width(shape Shape, ctx &gg.Context) int {
 	mut max_width := 0
@@ -147,4 +162,22 @@ fn split_text(s string) []string {
 	}
 	fields << field
 	return fields
+}
+
+pub fn font_path_list() []string {
+	mut font_root_path := ''
+	$if windows {
+		font_root_path = 'C:/windows/fonts'
+	}
+	$if macos {
+		font_root_path = '/System/Library/Fonts/*'
+	}
+	$if linux {
+		font_root_path = '/usr/share/fonts/truetype/*'
+	}
+	$if android {
+		font_root_path = '/system/fonts/*'
+	}
+	font_paths := os.glob('${font_root_path}/*.ttf') or { panic(err) }
+	return font_paths
 }

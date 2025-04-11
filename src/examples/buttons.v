@@ -23,11 +23,12 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[App]()
 	button_text := '${app.clicks} Clicks Given'
-	button_width := 125
+	button_width := window.get_text_width('XXX Clicks Given', gui.theme().t3) +
+		gui.theme().button_style.padding.width() + gui.theme().padding_small.width()
 
 	return gui.column(
 		width:   w
@@ -84,7 +85,7 @@ fn main_view(window &gui.Window) gui.View {
 							gui.text(text: button_text),
 						]
 						fill_border:    false
-						padding_border: gui.padding_small
+						padding_border: gui.theme().padding_small
 						on_click:       click_handler
 					)),
 					button_row('With other content', gui.button(
@@ -119,7 +120,12 @@ fn button_row(label string, button gui.View) gui.View {
 		padding: gui.padding_none
 		v_align: .middle
 		content: [
-			gui.text(text: label, min_width: 150),
+			gui.row(
+				min_width: 150
+				max_width: 150
+				padding:   gui.padding_none
+				content:   [gui.text(text: label, wrap: true)]
+			),
 			button,
 		]
 	)

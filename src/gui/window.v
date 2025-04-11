@@ -299,3 +299,7 @@ pub fn (window &Window) window_size() (int, int) {
 	size := window.ui.window_size()
 	return size.width, size.height
 }
+
+pub fn (mut window Window) get_text_width(text string, text_cfg gx.TextCfg) int {
+	return get_text_width(text, text_cfg, mut window)
+}

@@ -47,7 +47,7 @@ fn main_view(window &gui.Window) gui.View {
 		height:  h
 		sizing:  gui.fixed_fixed
 		content: [
-			button_change_theme(app),
+			top_row(app),
 			gui.rectangle(height: 0.5, sizing: gui.fill_fixed),
 			gui.row(
 				padding: gui.padding_none
@@ -81,7 +81,7 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 	)
 }
 
-fn button_change_theme(app &App) gui.View {
+fn top_row(app &App) gui.View {
 	return gui.row(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -92,31 +92,34 @@ fn button_change_theme(app &App) gui.View {
 				text_cfg: gui.theme().h1
 			),
 			gui.rectangle(
-				width:  10
 				sizing: gui.fill_fit
 				color:  gui.color_transparent
 			),
-			gui.button(
-				id_focus:       3
-				padding:        gui.padding(1, 5, 1, 5)
-				padding_border: gui.padding_two
-				content:        [
-					gui.text(
-						text: if app.light { '●' } else { '○' }
-					),
-				]
-				on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
-					mut app := w.state[App]()
-					app.light = !app.light
-					theme := if app.light {
-						gui.theme_light
-					} else {
-						gui.theme_dark
-					}
-					w.set_theme(theme)
-					return true
-				}
+			theme_button(app),
+		]
+	)
+}
+
+fn theme_button(app &App) gui.View {
+	return gui.button(
+		id_focus:       3
+		padding:        gui.padding(1, 5, 1, 5)
+		padding_border: gui.padding_two
+		content:        [
+			gui.text(
+				text: if app.light { '●' } else { '○' }
 			),
 		]
+		on_click:       fn (_ &gui.ButtonCfg, _ &gg.Event, mut w gui.Window) bool {
+			mut app := w.state[App]()
+			app.light = !app.light
+			theme := if app.light {
+				gui.theme_light
+			} else {
+				gui.theme_dark
+			}
+			w.set_theme(theme)
+			return true
+		}
 	)
 }

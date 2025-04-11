@@ -10,7 +10,6 @@ struct Text implements View {
 	id_focus u32 // >0 indicates text is focusable. Value indiciates tabbing order
 mut:
 	min_width   f32
-	max_width   f32
 	spacing     f32
 	text_cfg    gx.TextCfg
 	text        string
