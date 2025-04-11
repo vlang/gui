@@ -88,8 +88,8 @@ fn top_row(app &App) gui.View {
 		v_align: .middle
 		content: [
 			gui.text(
-				text:     'Scroll Demo'
-				text_cfg: gui.theme().h1
+				text:       'Scroll Demo'
+				text_style: gui.theme().h1
 			),
 			gui.rectangle(
 				sizing: gui.fill_fit

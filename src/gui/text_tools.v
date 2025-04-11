@@ -5,13 +5,12 @@ import gx
 import hash.fnv1a
 import os
 
-pub fn get_text_width(text string, text_cfg gx.TextCfg, mut window Window) int {
+pub fn get_text_width(text string, text_style TextStyle, mut window Window) int {
 	ctx := window.ui
-	htx := fnv1a.sum32_struct(text_cfg).str()
-	ctx.set_text_cfg(text_cfg)
+	htx := fnv1a.sum32_struct(text_style).str()
 	key := text + htx
 	return window.text_widths[key] or {
-		ctx.set_text_cfg(text_cfg)
+		ctx.set_text_cfg(text_style.to_gx_text_cfg())
 		w := ctx.text_width(text)
 		window.text_widths[key] = w
 		w
@@ -21,11 +20,12 @@ pub fn get_text_width(text string, text_cfg gx.TextCfg, mut window Window) int {
 fn text_width(shape Shape, ctx &gg.Context) int {
 	mut max_width := 0
 	mut window := unsafe { &Window(ctx.user_data) }
-	htx := fnv1a.sum32_struct(shape.text_cfg).str()
+	htx := fnv1a.sum32_struct(shape.text_style).str()
+	text_cfg := shape.text_style.to_gx_text_cfg()
 	for line in shape.lines {
 		key := line + htx
 		width := window.text_widths[key] or {
-			ctx.set_text_cfg(shape.text_cfg)
+			ctx.set_text_cfg(text_cfg)
 			w := ctx.text_width(line)
 			window.text_widths[key] = w
 			w
@@ -42,9 +42,10 @@ fn text_height(shape Shape, ctx &gg.Context) int {
 
 fn line_height(shape Shape, ctx gg.Context) int {
 	mut window := unsafe { &Window(ctx.user_data) }
-	key := fnv1a.sum32_struct(shape.text_cfg)
+	key := fnv1a.sum32_struct(shape.text_style)
+	text_cfg := shape.text_style.to_gx_text_cfg()
 	return window.text_heights[key] or {
-		ctx.set_text_cfg(shape.text_cfg)
+		ctx.set_text_cfg(text_cfg)
 		h := ctx.text_height('Q|W') + int(shape.spacing + f32(0.4999)) + 2
 		window.text_heights[key] = h
 		h
@@ -53,7 +54,7 @@ fn line_height(shape Shape, ctx gg.Context) int {
 
 fn text_wrap(mut shape Shape, ctx &gg.Context) {
 	if shape.wrap && shape.type == .text {
-		ctx.set_text_cfg(shape.text_cfg)
+		ctx.set_text_cfg(shape.text_style.to_gx_text_cfg())
 		shape.lines = match shape.keep_spaces {
 			true { wrap_text_keep_spaces(shape.text, shape.width, ctx) }
 			else { wrap_text_shrink_spaces(shape.text, shape.width, ctx) }
@@ -180,4 +181,12 @@ pub fn font_path_list() []string {
 	}
 	font_paths := os.glob('${font_root_path}/*.ttf') or { panic(err) }
 	return font_paths
+}
+
+fn (tc TextStyle) to_gx_text_cfg() gx.TextCfg {
+	return gx.TextCfg{
+		color:  tc.color
+		size:   tc.size
+		family: tc.family
+	}
 }

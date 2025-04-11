@@ -29,17 +29,17 @@ pub:
 
 pub struct InputStyle {
 pub:
-	color              gx.Color   = color_1_dark
-	color_border       gx.Color   = color_border_dark
-	color_border_focus gx.Color   = color_link_dark
-	color_focus        gx.Color   = color_2_dark
-	fill               bool       = true
-	fill_border        bool       = true
-	padding            Padding    = padding_small
-	padding_border     Padding    = padding_none
-	radius             f32        = radius_medium
-	radius_border      f32        = radius_medium
-	text_cfg           gx.TextCfg = text_cfg_dark
+	color              gx.Color  = color_1_dark
+	color_border       gx.Color  = color_border_dark
+	color_border_focus gx.Color  = color_link_dark
+	color_focus        gx.Color  = color_2_dark
+	fill               bool      = true
+	fill_border        bool      = true
+	padding            Padding   = padding_small
+	padding_border     Padding   = padding_none
+	radius             f32       = radius_medium
+	radius_border      f32       = radius_medium
+	text_style         TextStyle = text_style_dark
 }
 
 pub struct ProgressBarStyle {
@@ -61,6 +61,8 @@ pub:
 
 pub struct TextStyle {
 pub:
-	spacing  int        = 2
-	text_cfg gx.TextCfg = text_cfg_dark
+	color   gx.Color
+	size    int
+	family  string
+	spacing int
 }

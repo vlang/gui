@@ -62,8 +62,8 @@ fn (cfg &Container) generate(_ &gg.Context) Layout {
 			color:        cfg.color
 			disabled:     cfg.disabled
 			text:         cfg.text
-			text_cfg:     gx.TextCfg{
-				...gui_theme.text_style.text_cfg
+			text_style:   TextStyle{
+				...gui_theme.text_style
 				color: cfg.color
 			}
 			cfg:          cfg.cfg

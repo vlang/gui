@@ -111,7 +111,7 @@ fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Contex
 			// This group box stuff is likely temporary
 			// Examine after floating containers implemented
 			if shape.text.len != 0 {
-				ctx.set_text_cfg(shape.text_cfg)
+				ctx.set_text_cfg(shape.text_style.to_gx_text_cfg())
 				w, h := ctx.text_size(shape.text)
 				x := shape.x + 20
 				y := shape.y + offset_v
@@ -130,18 +130,18 @@ fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Contex
 					color: p_color
 				}
 				color := if shape.disabled {
-					dim_alpha(shape.text_cfg.color)
+					dim_alpha(shape.text_style.color)
 				} else {
-					shape.text_cfg.color
+					shape.text_style.color
 				}
 				renderers << DrawText{
 					x:    x
 					y:    y - h + 1.5
 					text: shape.text
-					cfg:  gx.TextCfg{
-						...shape.text_cfg
+					cfg:  TextStyle{
+						...shape.text_style
 						color: color
-					}
+					}.to_gx_text_cfg()
 				}
 			}
 			renderers
@@ -188,11 +188,11 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	lh := line_height(shape, ctx)
 	mut y := int(shape.y + offset_v + f32(0.49999))
-	color := if shape.disabled { dim_alpha(shape.text_cfg.color) } else { shape.text_cfg.color }
-	text_cfg := gx.TextCfg{
-		...shape.text_cfg
+	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
+	text_cfg := TextStyle{
+		...shape.text_style
 		color: color
-	}
+	}.to_gx_text_cfg()
 	renderer_rect := make_renderer_rect(shape)
 
 	for line in shape.lines {
@@ -226,7 +226,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 					x1:  cx
 					y1:  cy + lh
 					cfg: gg.PenConfig{
-						color: shape.text_cfg.color
+						color: shape.text_style.color
 					}
 				}
 			}

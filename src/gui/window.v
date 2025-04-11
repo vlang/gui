@@ -175,9 +175,9 @@ fn default_view(window &Window) View {
 		sizing:  fixed_fixed
 		content: [
 			text(
-				text:     'Welcome to GUI'
-				text_cfg: gx.TextCfg{
-					...gui_theme.text_style.text_cfg
+				text:       'Welcome to GUI'
+				text_style: TextStyle{
+					...gui_theme.text_style
 					size: 25
 				}
 			),
@@ -300,6 +300,6 @@ pub fn (window &Window) window_size() (int, int) {
 	return size.width, size.height
 }
 
-pub fn (mut window Window) get_text_width(text string, text_cfg gx.TextCfg) int {
-	return get_text_width(text, text_cfg, mut window)
+pub fn (mut window Window) get_text_width(text string, text_style TextStyle) int {
+	return get_text_width(text, text_style, mut window)
 }

@@ -31,8 +31,8 @@ fn main_view(mut w gui.Window) gui.View {
 				color:      gx.rgb(215, 125, 0)
 				content:    [
 					gui.text(
-						text:     'Hello'
-						text_cfg: gx.TextCfg{
+						text:       'Hello'
+						text_style: gui.TextStyle{
 							...gui.theme().h2
 							color: gx.black
 						}
@@ -45,11 +45,11 @@ fn main_view(mut w gui.Window) gui.View {
 				h_align:   .right
 				v_align:   .bottom
 				min_width: 150
-				color:     gui.theme().text_style.text_cfg.color
+				color:     gui.theme().text_style.color
 				content:   [
 					gui.text(
-						text:     'There!'
-						text_cfg: gx.TextCfg{
+						text:       'There!'
+						text_style: gui.TextStyle{
 							...gui.theme().h1
 							size: gui.theme().size_text_large
 						}

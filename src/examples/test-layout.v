@@ -36,7 +36,7 @@ fn main_view(w &gui.Window) gui.View {
 	mut state := w.state[AppState]()
 	width, height := w.window_size()
 
-	text_cfg_blue := gx.TextCfg{
+	text_style_blue := gui.TextStyle{
 		...gui.theme().h4
 		color: gx.rgb(100, 149, 237)
 	}
@@ -87,9 +87,9 @@ fn main_view(w &gui.Window) gui.View {
 								color:   gx.white
 								content: [
 									gui.text(
-										text:     'Hello world!'
-										text_cfg: gui.theme().h2
-										wrap:     true
+										text:       'Hello world!'
+										text_style: gui.theme().h2
+										wrap:       true
 									),
 								]
 							),
@@ -170,8 +170,8 @@ fn main_view(w &gui.Window) gui.View {
 						sizing:  gui.fill_fit
 						content: [
 							gui.text(
-								text:     'keep_spaces = false'
-								text_cfg: text_cfg_blue
+								text:       'keep_spaces = false'
+								text_style: text_style_blue
 							),
 							gui.text(
 								text:        state.name
@@ -185,8 +185,8 @@ fn main_view(w &gui.Window) gui.View {
 						sizing:  gui.fill_fit
 						content: [
 							gui.text(
-								text:     'keep_spaces = true'
-								text_cfg: text_cfg_blue
+								text:       'keep_spaces = true'
+								text_style: text_style_blue
 							),
 							gui.text(
 								text:        state.name

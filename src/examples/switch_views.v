@@ -33,7 +33,7 @@ fn page(content []gui.View, window &gui.Window) gui.View {
 
 fn page_one(window &gui.Window) gui.View {
 	return page([
-		gui.text(text: 'Page One', text_cfg: gui.theme().h1),
+		gui.text(text: 'Page One', text_style: gui.theme().h1),
 		gui.button(
 			id_focus:       1
 			padding_border: gui.padding_two
@@ -49,7 +49,7 @@ fn page_one(window &gui.Window) gui.View {
 
 fn page_two(window &gui.Window) gui.View {
 	return page([
-		gui.text(text: 'Page Two', text_cfg: gui.theme().h1),
+		gui.text(text: 'Page Two', text_style: gui.theme().h1),
 		gui.button(
 			id_focus:       1
 			padding_border: gui.padding_two

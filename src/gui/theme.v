@@ -36,7 +36,7 @@ const scroll_delta_line = 1
 const scroll_delta_page = 10
 const size_progress_bar = 10
 
-const text_cfg_dark = gx.TextCfg{
+const text_style_dark = TextStyle{
 	color: color_text_dark
 	size:  size_text_medium
 }
@@ -64,57 +64,51 @@ pub:
 	// similar to H1-H6 in html markup. T3 is the
 	// same as normal size font used by default in
 	// text views
-	t1 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	t1 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_x_large
 	}
-	t2 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	t2 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_large
 	}
-	t3 gx.TextCfg = text_cfg_dark
-	t4 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	t3 TextStyle = text_style_dark
+	t4 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_small
 	}
-	t5 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	t5 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_x_small
 	}
-	t6 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	t6 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_tiny
 	}
 
-	h1 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	h1 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_x_large
-		bold: true
 	}
-	h2 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	h2 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_large
-		bold: true
 	}
-	h3 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	h3 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_medium
-		bold: true
 	}
-	h4 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	h4 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_small
-		bold: true
 	}
-	h5 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	h5 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_x_small
-		bold: true
 	}
-	h6 gx.TextCfg = gx.TextCfg{
-		...text_cfg_dark
+	h6 TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_tiny
-		bold: true
 	}
 
 	padding_small  Padding = padding_small
@@ -141,23 +135,23 @@ pub:
 pub struct ThemeCfg {
 pub:
 	name               string @[required]
-	color_0            gx.Color   = color_0_dark
-	color_1            gx.Color   = color_1_dark
-	color_2            gx.Color   = color_2_dark
-	color_3            gx.Color   = color_3_dark
-	color_4            gx.Color   = color_4_dark
-	color_5            gx.Color   = color_5_dark
-	color_border       gx.Color   = color_border_dark
-	color_border_focus gx.Color   = color_link_dark
-	color_link         gx.Color   = color_link_dark
-	color_text         gx.Color   = color_text_dark
-	fill               bool       = true
-	fill_border        bool       = true
-	padding            Padding    = padding_medium
-	padding_border     Padding    = padding_none
-	radius             f32        = radius_medium
-	radius_border      f32        = radius_medium + 2
-	text_cfg           gx.TextCfg = text_cfg_dark
+	color_0            gx.Color  = color_0_dark
+	color_1            gx.Color  = color_1_dark
+	color_2            gx.Color  = color_2_dark
+	color_3            gx.Color  = color_3_dark
+	color_4            gx.Color  = color_4_dark
+	color_5            gx.Color  = color_5_dark
+	color_border       gx.Color  = color_border_dark
+	color_border_focus gx.Color  = color_link_dark
+	color_link         gx.Color  = color_link_dark
+	color_text         gx.Color  = color_text_dark
+	fill               bool      = true
+	fill_border        bool      = true
+	padding            Padding   = padding_medium
+	padding_border     Padding   = padding_none
+	radius             f32       = radius_medium
+	radius_border      f32       = radius_medium + 2
+	text_style         TextStyle = text_style_dark
 
 	// Usually don't change across styles
 	padding_small  Padding = padding_small
@@ -192,7 +186,7 @@ pub const theme_dark = theme_maker(
 	color_border:       color_border_dark
 	color_border_focus: color_link_dark
 	color_link:         color_link_dark
-	text_cfg:           text_cfg_dark
+	text_style:         text_style_dark
 )
 
 pub const theme_light = theme_maker(
@@ -206,8 +200,8 @@ pub const theme_light = theme_maker(
 	color_border:       gx.rgb(64, 64, 64)
 	color_link:         gx.rgb(0, 71, 171)
 	color_border_focus: gx.rgb(0, 0, 255)
-	text_cfg:           gx.TextCfg{
-		...text_cfg_dark
+	text_style:         TextStyle{
+		...text_style_dark
 		color: gx.rgb(32, 32, 32)
 	}
 )
@@ -264,7 +258,7 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 			padding_border:     cfg.padding_border
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
-			text_cfg:           cfg.text_cfg
+			text_style:         cfg.text_style
 		}
 		progress_bar_style: ProgressBarStyle{
 			color:     cfg.color_1
@@ -277,10 +271,7 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 			radius: cfg.radius
 			fill:   cfg.fill
 		}
-		text_style:         TextStyle{
-			spacing:  2
-			text_cfg: cfg.text_cfg
-		}
+		text_style:         cfg.text_style
 
 		// Usually don't change
 		padding_small:  cfg.padding_small
@@ -306,56 +297,50 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 
 	return Theme{
 		...theme
-		t1: gx.TextCfg{
-			...theme.text_style.text_cfg
+		t1: TextStyle{
+			...theme.text_style
 			size: theme.size_text_x_large
 		}
-		t2: gx.TextCfg{
-			...theme.text_style.text_cfg
+		t2: TextStyle{
+			...theme.text_style
 			size: theme.size_text_large
 		}
-		t3: theme.text_style.text_cfg
-		t4: gx.TextCfg{
-			...theme.text_style.text_cfg
+		t3: theme.text_style
+		t4: TextStyle{
+			...theme.text_style
 			size: theme.size_text_small
 		}
-		t5: gx.TextCfg{
-			...theme.text_style.text_cfg
+		t5: TextStyle{
+			...theme.text_style
 			size: theme.size_text_x_small
 		}
-		t6: gx.TextCfg{
-			...theme.text_style.text_cfg
+		t6: TextStyle{
+			...theme.text_style
 			size: theme.size_text_tiny
 		}
-		h1: gx.TextCfg{
-			...theme.text_style.text_cfg
+		h1: TextStyle{
+			...theme.text_style
 			size: theme.size_text_x_large
-			bold: true
 		}
-		h2: gx.TextCfg{
-			...theme.text_style.text_cfg
+		h2: TextStyle{
+			...theme.text_style
 			size: theme.size_text_large
-			bold: true
 		}
-		h3: gx.TextCfg{
-			...theme.text_style.text_cfg
+		h3: TextStyle{
+			...theme.text_style
 			size: theme.size_text_medium
-			bold: true
 		}
-		h4: gx.TextCfg{
-			...theme.text_style.text_cfg
+		h4: TextStyle{
+			...theme.text_style
 			size: theme.size_text_small
-			bold: true
 		}
-		h5: gx.TextCfg{
-			...theme.text_style.text_cfg
+		h5: TextStyle{
+			...theme.text_style
 			size: theme.size_text_x_small
-			bold: true
 		}
-		h6: gx.TextCfg{
-			...theme.text_style.text_cfg
+		h6: TextStyle{
+			...theme.text_style
 			size: theme.size_text_tiny
-			bold: true
 		}
 	}
 }

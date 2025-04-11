@@ -1,7 +1,6 @@
 module gui
 
 import gg
-import gx
 
 // Text is an internal structure used to describe a text block
 @[heap]
@@ -11,7 +10,7 @@ struct Text implements View {
 mut:
 	min_width   f32
 	spacing     f32
-	text_cfg    gx.TextCfg
+	text_style  TextStyle
 	text        string
 	wrap        bool
 	keep_spaces bool
@@ -31,7 +30,7 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 			type:        .text
 			spacing:     t.spacing
 			text:        t.text
-			text_cfg:    t.text_cfg
+			text_style:  t.text_style
 			lines:       [t.text]
 			wrap:        t.wrap
 			keep_spaces: t.keep_spaces
@@ -60,8 +59,8 @@ pub:
 	id          string
 	id_focus    u32
 	min_width   f32
-	spacing     f32        = gui_theme.text_style.spacing
-	text_cfg    gx.TextCfg = gui_theme.text_style.text_cfg
+	spacing     f32       = gui_theme.text_style.spacing
+	text_style  TextStyle = gui_theme.text_style
 	text        string
 	wrap        bool
 	keep_spaces bool
@@ -78,7 +77,7 @@ pub fn text(cfg TextCfg) Text {
 		id_focus:    cfg.id_focus
 		min_width:   cfg.min_width
 		spacing:     cfg.spacing
-		text_cfg:    cfg.text_cfg
+		text_style:  cfg.text_style
 		text:        cfg.text
 		wrap:        cfg.wrap
 		cfg:         &cfg

@@ -1,7 +1,6 @@
 module gui
 
 import gg
-import gx
 import rand
 
 // Shape is the only data structure in GUI used to draw to the screen.
@@ -32,7 +31,7 @@ pub mut:
 	text         string
 	lines        []string
 	disabled     bool
-	text_cfg     gx.TextCfg
+	text_style   TextStyle
 	cursor_x     int = -1
 	cursor_y     int = -1
 	wrap         bool

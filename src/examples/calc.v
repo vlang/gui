@@ -51,10 +51,8 @@ fn main_view(mut w gui.Window) gui.View {
 		padding: gui.pad_4(5)
 		content: [
 			gui.text(
-				text:     app.text
-				text_cfg: gx.TextCfg{
-					size: gui.size_text_large
-				}
+				text:       app.text
+				text_style: gui.theme().h2
 			),
 		]
 	)

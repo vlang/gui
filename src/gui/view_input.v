@@ -28,7 +28,7 @@ pub:
 	fill_border        bool                            = gui_theme.input_style.fill_border
 	radius             f32                             = gui_theme.input_style.radius
 	radius_border      f32                             = gui_theme.input_style.radius_border
-	text_cfg           gx.TextCfg                      = gui_theme.input_style.text_cfg
+	text_style         TextStyle                       = gui_theme.input_style.text_style
 	on_text_changed    fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
 }
 
@@ -80,7 +80,7 @@ pub fn input(cfg InputCfg) View {
 					text(
 						id_focus:    cfg.id_focus
 						text:        cfg.text
-						text_cfg:    cfg.text_cfg
+						text_style:  cfg.text_style
 						wrap:        cfg.wrap
 						keep_spaces: true
 					),
@@ -115,7 +115,7 @@ fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) bool {
 			else {
 				if !cfg.wrap && cfg.sizing.width == .fixed { // clamp max chars to width of box when single line.
 					ctx := w.ui
-					ctx.set_text_cfg(cfg.text_cfg)
+					ctx.set_text_cfg(cfg.text_style.to_gx_text_cfg())
 					width := ctx.text_width(cfg.text + rune(c).str())
 					if width > (cfg.width - cfg.padding.left - cfg.padding.right) {
 						return true
