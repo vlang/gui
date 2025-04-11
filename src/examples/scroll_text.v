@@ -83,10 +83,19 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 
 fn button_change_theme(app &App) gui.View {
 	return gui.row(
-		h_align: .right
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
+		v_align: .middle
 		content: [
+			gui.text(
+				text:     'Scroll Demo'
+				text_cfg: gui.theme().h1
+			),
+			gui.rectangle(
+				width:  10
+				sizing: gui.fill_fit
+				color:  gui.color_transparent
+			),
 			gui.button(
 				id_focus:       3
 				padding:        gui.padding(1, 5, 1, 5)

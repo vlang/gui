@@ -7,9 +7,12 @@ pub const radius_small = f32(3)
 pub const radius_medium = f32(5)
 pub const radius_large = f32(7)
 
+pub const size_text_tiny = 11
+pub const size_text_x_small = 13
 pub const size_text_small = 15
 pub const size_text_medium = 17
 pub const size_text_large = 20
+pub const size_text_x_large = 24
 
 pub const spacing_small = 5
 pub const spacing_medium = 10
@@ -51,6 +54,30 @@ pub:
 	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
 	text_style         TextStyle
+	h1                 gx.TextCfg = gx.TextCfg{
+		color: color_text_dark
+		size:  size_text_x_large
+	}
+	h2                 gx.TextCfg = gx.TextCfg{
+		color: color_text_dark
+		size:  size_text_large
+	}
+	h3                 gx.TextCfg = gx.TextCfg{
+		color: color_text_dark
+		size:  size_text_medium
+	}
+	h4                 gx.TextCfg = gx.TextCfg{
+		color: color_text_dark
+		size:  size_text_small
+	}
+	h5                 gx.TextCfg = gx.TextCfg{
+		color: color_text_dark
+		size:  size_text_x_small
+	}
+	h6                 gx.TextCfg = gx.TextCfg{
+		color: color_text_dark
+		size:  size_text_tiny
+	}
 
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
@@ -61,9 +88,12 @@ pub:
 	spacing_large  int = spacing_large
 	spacing_text   int = spacing_text // additional line height
 
-	size_text_small  int = size_text_small
-	size_text_medium int = size_text_medium
-	size_text_large  int = size_text_large
+	size_text_tiny    int = size_text_tiny
+	size_text_x_small int = size_text_x_small
+	size_text_small   int = size_text_small
+	size_text_medium  int = size_text_medium
+	size_text_large   int = size_text_large
+	size_text_x_large int = size_text_x_large
 
 	scroll_multiplier f32 = scroll_multiplier
 	scroll_delta_line f32 = scroll_delta_line
@@ -102,9 +132,12 @@ pub struct ThemeCfg {
 	spacing_large  int = spacing_large
 	spacing_text   int = spacing_text // additional line height
 
-	size_text_small  int = size_text_small
-	size_text_medium int = size_text_medium
-	size_text_large  int = size_text_large
+	size_text_tiny    int = size_text_tiny
+	size_text_x_small int = size_text_x_small
+	size_text_small   int = size_text_small
+	size_text_medium  int = size_text_medium
+	size_text_large   int = size_text_large
+	size_text_x_large int = size_text_x_large
 
 	scroll_multiplier f32 = scroll_multiplier
 	scroll_delta_line f32 = scroll_delta_line
@@ -154,7 +187,7 @@ pub const theme_light = theme_maker(
 // Note: `theme_maker` containers are always transparent and not
 // filled.
 pub fn theme_maker(cfg ThemeCfg) Theme {
-	return Theme{
+	theme := Theme{
 		name:             cfg.name
 		color_background: cfg.color_0
 		color_link:       cfg.color_link
@@ -225,13 +258,50 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 		spacing_large:  cfg.spacing_large
 		spacing_text:   cfg.spacing_text
 
-		size_text_small:  cfg.size_text_small
-		size_text_medium: cfg.size_text_medium
-		size_text_large:  cfg.size_text_large
+		size_text_tiny:    cfg.size_text_tiny
+		size_text_x_small: cfg.size_text_x_small
+		size_text_small:   cfg.size_text_small
+		size_text_medium:  cfg.size_text_medium
+		size_text_large:   cfg.size_text_large
+		size_text_x_large: cfg.size_text_x_large
 
 		scroll_multiplier: cfg.scroll_multiplier
 		scroll_delta_line: cfg.scroll_delta_line
 		scroll_delta_page: cfg.scroll_delta_page
+	}
+
+	return Theme{
+		...theme
+		h1: gx.TextCfg{
+			...theme.h1
+			color: theme.text_style.text_cfg.color
+			size:  theme.size_text_x_large
+		}
+		h2: gx.TextCfg{
+			...theme.h2
+			color: theme.text_style.text_cfg.color
+			size:  theme.size_text_large
+		}
+		h3: gx.TextCfg{
+			...theme.h3
+			color: theme.text_style.text_cfg.color
+			size:  theme.size_text_medium
+		}
+		h4: gx.TextCfg{
+			...theme.h4
+			color: theme.text_style.text_cfg.color
+			size:  theme.size_text_small
+		}
+		h5: gx.TextCfg{
+			...theme.h5
+			color: theme.text_style.text_cfg.color
+			size:  theme.size_text_x_small
+		}
+		h6: gx.TextCfg{
+			...theme.h6
+			color: theme.text_style.text_cfg.color
+			size:  theme.size_text_tiny
+		}
 	}
 }
 

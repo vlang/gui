@@ -46,7 +46,10 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			gui.text(text: 'Welcome to GUI'),
+			gui.text(
+				text:     'Welcome to GUI'
+				text_cfg: gui.theme().h1
+			),
 			gui.button(
 				id_focus:       1
 				padding_border: gui.padding_two
