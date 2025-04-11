@@ -1,6 +1,5 @@
 import gui
 import gg
-import gx
 import math
 
 struct App {
@@ -92,11 +91,11 @@ fn main_view(mut window gui.Window) gui.View {
 						id:             'With progress bar'
 						min_width:      button_width
 						max_width:      button_width
-						color:          gx.rgb(195, 105, 0)
-						color_hover:    gx.rgb(195, 105, 0)
-						color_click:    gx.rgb(205, 115, 0)
+						color:          gui.rgb(195, 105, 0)
+						color_hover:    gui.rgb(195, 105, 0)
+						color_click:    gui.rgb(205, 115, 0)
 						padding_border: gui.pad_4(2)
-						color_border:   gx.rgb(160, 160, 160)
+						color_border:   gui.rgb(160, 160, 160)
 						padding:        gui.padding_medium
 						v_align:        .middle
 						content:        [

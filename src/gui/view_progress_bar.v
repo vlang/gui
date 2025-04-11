@@ -1,7 +1,5 @@
 module gui
 
-import gx
-
 pub struct ProgressBarCfg {
 pub:
 	id         string
@@ -10,9 +8,9 @@ pub:
 	indefinite bool // TODO: not implemented
 	vertical   bool // orientation
 	percent    f32  // 0.0 <= percent <= 1.0
-	color      gx.Color = gui_theme.progress_bar_style.color
-	color_bar  gx.Color = gui_theme.progress_bar_style.color_bar
-	radius     f32      = gui_theme.progress_bar_style.radius
+	color      Color = gui_theme.progress_bar_style.color
+	color_bar  Color = gui_theme.progress_bar_style.color_bar
+	radius     f32   = gui_theme.progress_bar_style.radius
 	sizing     Sizing
 	text       string
 	disabled   bool

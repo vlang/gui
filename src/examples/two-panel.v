@@ -1,5 +1,4 @@
 import gui
-import gx
 
 fn main() {
 	mut window := gui.window(
@@ -28,13 +27,13 @@ fn main_view(mut w gui.Window) gui.View {
 				max_height: 330
 				h_align:    .center
 				v_align:    .middle
-				color:      gx.rgb(215, 125, 0)
+				color:      gui.rgb(215, 125, 0)
 				content:    [
 					gui.text(
 						text:       'Hello'
 						text_style: gui.TextStyle{
 							...gui.theme().h2
-							color: gx.black
+							color: gui.black
 						}
 					),
 				]

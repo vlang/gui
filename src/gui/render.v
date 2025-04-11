@@ -71,7 +71,7 @@ fn renderer_draw(renderer Renderer, ctx &gg.Context) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render(layout Layout, bg_color gx.Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render(layout Layout, bg_color Color, offset_v f32, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
 
@@ -100,7 +100,7 @@ fn render(layout Layout, bg_color gx.Color, offset_v f32, ctx &gg.Context) []Ren
 }
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
-fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_shape(shape Shape, parent_color Color, offset_v f32, ctx &gg.Context) []Renderer {
 	if shape.color == color_transparent {
 		return []
 	}
@@ -111,7 +111,7 @@ fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Contex
 			// This group box stuff is likely temporary
 			// Examine after floating containers implemented
 			if shape.text.len != 0 {
-				ctx.set_text_cfg(shape.text_style.to_gx_text_cfg())
+				ctx.set_text_cfg(shape.text_style.to_text_cfg())
 				w, h := ctx.text_size(shape.text)
 				x := shape.x + 20
 				y := shape.y + offset_v
@@ -127,7 +127,7 @@ fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Contex
 					w:     w
 					h:     h + 1
 					style: .fill
-					color: p_color
+					color: p_color.to_gx_color()
 				}
 				color := if shape.disabled {
 					dim_alpha(shape.text_style.color)
@@ -141,7 +141,7 @@ fn render_shape(shape Shape, parent_color gx.Color, offset_v f32, ctx &gg.Contex
 					cfg:  TextStyle{
 						...shape.text_style
 						color: color
-					}.to_gx_text_cfg()
+					}.to_text_cfg()
 				}
 			}
 			renderers
@@ -166,13 +166,15 @@ fn render_rectangle(shape Shape, offset_v f32) []Renderer {
 		width:  shape.width
 		height: shape.height
 	}
+	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
+	gx_color := color.to_gx_color()
 	if rects_overlap(draw_rect, renderer_rect) {
 		renderers << DrawRect{
 			x:          draw_rect.x
 			y:          draw_rect.y
 			w:          draw_rect.width
 			h:          draw_rect.height
-			color:      if shape.disabled { dim_alpha(shape.color) } else { shape.color }
+			color:      gx_color
 			style:      if shape.fill { .fill } else { .stroke }
 			is_rounded: shape.radius > 0
 			radius:     shape.radius
@@ -192,7 +194,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	text_cfg := TextStyle{
 		...shape.text_style
 		color: color
-	}.to_gx_text_cfg()
+	}.to_text_cfg()
 	renderer_rect := make_renderer_rect(shape)
 
 	for line in shape.lines {
@@ -226,7 +228,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 					x1:  cx
 					y1:  cy + lh
 					cfg: gg.PenConfig{
-						color: shape.text_style.color
+						color: shape.text_style.color.to_gx_color()
 					}
 				}
 			}
@@ -266,8 +268,8 @@ fn render_unclip(mut clip_stack ClipStack) DrawClip {
 }
 
 // dim_alpha is used for visually indicating disabled
-fn dim_alpha(color gx.Color) gx.Color {
-	return gx.Color{
+fn dim_alpha(color Color) Color {
+	return Color{
 		...color
 		a: color.a / u8(2)
 	}

@@ -2,7 +2,6 @@ module main
 
 import gui
 import gg
-import gx
 
 @[heap]
 struct AppState {
@@ -38,14 +37,14 @@ fn main_view(w &gui.Window) gui.View {
 
 	text_style_blue := gui.TextStyle{
 		...gui.theme().h4
-		color: gx.rgb(100, 149, 237)
+		color: gui.rgb(100, 149, 237)
 	}
 
 	return gui.row(
 		width:   width
 		height:  height
 		sizing:  gui.fixed_fixed
-		color:   gx.dark_blue
+		color:   gui.dark_blue
 		fill:    true
 		content: [
 			gui.column(
@@ -56,7 +55,7 @@ fn main_view(w &gui.Window) gui.View {
 						width:  75
 						height: 50
 						fill:   true
-						color:  gx.purple
+						color:  gui.purple
 					),
 					gui.rectangle(
 						width:  75
@@ -67,24 +66,24 @@ fn main_view(w &gui.Window) gui.View {
 						width:  75
 						height: 50
 						fill:   true
-						color:  gx.green
+						color:  gui.green
 					),
 				]
 			),
 			gui.row(
 				id:      'orange'
 				text:    ' orange  '
-				color:   gx.orange
+				color:   gui.orange
 				sizing:  gui.fill_fill
 				content: [
 					gui.column(
 						sizing:  gui.fill_fill
 						fill:    true
-						color:   gx.rgb(0x30, 0x30, 0x30)
+						color:   gui.rgb(0x30, 0x30, 0x30)
 						spacing: gui.theme().spacing_large
 						content: [
 							gui.row(
-								color:   gx.white
+								color:   gui.white
 								content: [
 									gui.text(
 										text:       'Hello world!'
@@ -144,14 +143,14 @@ fn main_view(w &gui.Window) gui.View {
 						height: 25
 						fill:   true
 						sizing: gui.fill_fill
-						color:  gx.dark_green
+						color:  gui.dark_green
 					),
 				]
 			),
 			gui.column(
 				fill:    true
 				sizing:  gui.fill_fill
-				color:   gx.rgb(0x30, 0x30, 0x30)
+				color:   gui.rgb(0x30, 0x30, 0x30)
 				content: [
 					gui.input(
 						id_focus:        3
@@ -166,7 +165,7 @@ fn main_view(w &gui.Window) gui.View {
 						}
 					),
 					gui.column(
-						color:   gx.gray
+						color:   gui.gray
 						sizing:  gui.fill_fit
 						content: [
 							gui.text(
@@ -181,7 +180,7 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.column(
-						color:   gx.gray
+						color:   gui.gray
 						sizing:  gui.fill_fit
 						content: [
 							gui.text(
@@ -205,7 +204,7 @@ fn main_view(w &gui.Window) gui.View {
 						width:  75
 						height: 50
 						fill:   true
-						color:  gx.orange
+						color:  gui.orange
 					),
 					gui.rectangle(
 						width:  75
@@ -216,7 +215,7 @@ fn main_view(w &gui.Window) gui.View {
 						width:  75
 						height: 50
 						fill:   true
-						color:  gx.yellow
+						color:  gui.yellow
 					),
 				]
 			),

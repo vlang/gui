@@ -1,7 +1,6 @@
 module gui
 
 import gg
-import gx
 import sokol.sapp
 import sync
 
@@ -60,7 +59,7 @@ pub:
 	title    string  = app_title
 	width    int
 	height   int
-	bg_color gx.Color     = gui_theme.color_background
+	bg_color Color        = gui_theme.color_background
 	on_init  fn (&Window) = fn (mut w Window) {
 		w.update_view(default_view)
 	}
@@ -74,7 +73,7 @@ pub fn window(cfg WindowCfg) &Window {
 		on_event: cfg.on_event
 	}
 	window.ui = gg.new_context(
-		bg_color:     cfg.bg_color
+		bg_color:     cfg.bg_color.to_gx_color()
 		width:        cfg.width
 		height:       cfg.height
 		window_title: cfg.title
@@ -98,8 +97,8 @@ fn frame_fn(mut window Window) {
 }
 
 // background_color returns the window background color
-pub fn (window &Window) color_background() gx.Color {
-	return window.ui.config.bg_color
+pub fn (window &Window) color_background() Color {
+	return from_gx_color(window.ui.config.bg_color)
 }
 
 // context gets the windows gg.Context
@@ -220,8 +219,8 @@ pub fn (mut window Window) run() {
 }
 
 // set_color_background changes the windows background color
-pub fn (mut window Window) set_color_background(color gx.Color) {
-	window.ui.set_bg_color(color)
+pub fn (mut window Window) set_color_background(color Color) {
+	window.ui.set_bg_color(color.to_gx_color())
 }
 
 // set_id_focus sets the window's focus id.

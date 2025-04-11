@@ -1,7 +1,6 @@
 module gui
 
 import gg
-import gx
 
 pub struct Container implements View {
 	id           string
@@ -22,7 +21,7 @@ pub struct Container implements View {
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
 	radius       f32
-	color        gx.Color
+	color        Color
 	disabled     bool
 	text         string
 	id_scroll_v  u32
@@ -97,11 +96,11 @@ pub:
 	disabled     bool
 	text         string
 	id_scroll_v  u32
-	spacing      f32      = gui_theme.container_style.spacing
-	radius       f32      = gui_theme.container_style.radius
-	padding      Padding  = gui_theme.container_style.padding
-	color        gx.Color = gui_theme.container_style.color
-	fill         bool     = gui_theme.container_style.fill
+	spacing      f32     = gui_theme.container_style.spacing
+	radius       f32     = gui_theme.container_style.radius
+	padding      Padding = gui_theme.container_style.padding
+	color        Color   = gui_theme.container_style.color
+	fill         bool    = gui_theme.container_style.fill
 	on_char      fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &gg.Event, &Window) bool = unsafe { nil }

@@ -19,7 +19,7 @@ pub mut:
 	height       f32
 	min_height   f32
 	max_height   f32
-	color        gg.Color
+	color        Color
 	fill         bool
 	h_align      HorizontalAlign
 	v_align      VerticalAlign

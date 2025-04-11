@@ -1,7 +1,6 @@
 import gui
 import arrays
 import gg
-import gx
 import math
 
 const bsize = 30
@@ -45,7 +44,7 @@ fn main_view(mut w gui.Window) gui.View {
 	mut panel := []gui.View{}
 
 	panel << gui.row(
-		color:   gx.black
+		color:   gui.black
 		sizing:  gui.fill_fit
 		h_align: .right
 		padding: gui.pad_4(5)
@@ -77,7 +76,7 @@ fn main_view(mut w gui.Window) gui.View {
 			gui.column(
 				fill:    true
 				spacing: bpadding
-				color:   gx.rgb(195, 105, 0)
+				color:   gui.rgb(195, 105, 0)
 				padding: gui.padding_medium
 				content: panel
 			),

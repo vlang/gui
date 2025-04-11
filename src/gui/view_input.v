@@ -1,7 +1,6 @@
 module gui
 
 import gg
-import gx
 
 @[heap]
 pub struct InputCfg {
@@ -21,9 +20,9 @@ pub:
 	disabled           bool
 	padding            Padding                         = gui_theme.input_style.padding
 	padding_border     Padding                         = gui_theme.input_style.padding_border
-	color              gx.Color                        = gui_theme.input_style.color
-	color_border       gx.Color                        = gui_theme.input_style.color_border
-	color_border_focus gx.Color                        = gui_theme.input_style.color_border_focus
+	color              Color                           = gui_theme.input_style.color
+	color_border       Color                           = gui_theme.input_style.color_border
+	color_border_focus Color                           = gui_theme.input_style.color_border_focus
 	fill               bool                            = gui_theme.input_style.fill
 	fill_border        bool                            = gui_theme.input_style.fill_border
 	radius             f32                             = gui_theme.input_style.radius
@@ -115,7 +114,7 @@ fn on_char_input(cfg &InputCfg, event &gg.Event, mut w Window) bool {
 			else {
 				if !cfg.wrap && cfg.sizing.width == .fixed { // clamp max chars to width of box when single line.
 					ctx := w.ui
-					ctx.set_text_cfg(cfg.text_style.to_gx_text_cfg())
+					ctx.set_text_cfg(cfg.text_style.to_text_cfg())
 					width := ctx.text_width(cfg.text + rune(c).str())
 					if width > (cfg.width - cfg.padding.left - cfg.padding.right) {
 						return true

@@ -1,7 +1,5 @@
 module gui
 
-import gx
-
 pub const radius_none = 0
 pub const radius_small = f32(3)
 pub const radius_medium = f32(5)
@@ -19,17 +17,17 @@ pub const spacing_medium = 10
 pub const spacing_large = 15
 pub const spacing_text = 2 // additional line height
 
-pub const color_transparent = gx.rgba(0, 0, 0, 0)
+pub const color_transparent = rgba(0, 0, 0, 0)
 
-const color_0_dark = gx.rgb(48, 48, 48)
-const color_1_dark = gx.rgb(64, 64, 64)
-const color_2_dark = gx.rgb(74, 74, 74)
-const color_3_dark = gx.rgb(84, 84, 84)
-const color_4_dark = gx.rgb(94, 94, 94)
-const color_5_dark = gx.rgb(104, 104, 104)
-const color_border_dark = gx.rgb(100, 100, 100)
-const color_link_dark = gx.rgb(100, 149, 237)
-const color_text_dark = gx.rgb(225, 225, 225)
+const color_0_dark = rgb(48, 48, 48)
+const color_1_dark = rgb(64, 64, 64)
+const color_2_dark = rgb(74, 74, 74)
+const color_3_dark = rgb(84, 84, 84)
+const color_4_dark = rgb(94, 94, 94)
+const color_5_dark = rgb(104, 104, 104)
+const color_border_dark = rgb(100, 100, 100)
+const color_link_dark = rgb(100, 149, 237)
+const color_text_dark = rgb(225, 225, 225)
 
 const scroll_multiplier = 20
 const scroll_delta_line = 1
@@ -43,15 +41,15 @@ const text_style_dark = TextStyle{
 
 pub struct Theme {
 pub:
-	name             string   = 'default' @[required]
-	color_background gx.Color = color_0_dark
-	color_link       gx.Color = color_link_dark
-	color_0          gx.Color = color_0_dark
-	color_1          gx.Color = color_1_dark
-	color_2          gx.Color = color_2_dark
-	color_3          gx.Color = color_3_dark
-	color_4          gx.Color = color_4_dark
-	color_5          gx.Color = color_5_dark
+	name             string = 'default' @[required]
+	color_background Color  = color_0_dark
+	color_link       Color  = color_link_dark
+	color_0          Color  = color_0_dark
+	color_1          Color  = color_1_dark
+	color_2          Color  = color_2_dark
+	color_3          Color  = color_3_dark
+	color_4          Color  = color_4_dark
+	color_5          Color  = color_5_dark
 
 	button_style       ButtonStyle
 	container_style    ContainerStyle
@@ -135,16 +133,16 @@ pub:
 pub struct ThemeCfg {
 pub:
 	name               string @[required]
-	color_0            gx.Color  = color_0_dark
-	color_1            gx.Color  = color_1_dark
-	color_2            gx.Color  = color_2_dark
-	color_3            gx.Color  = color_3_dark
-	color_4            gx.Color  = color_4_dark
-	color_5            gx.Color  = color_5_dark
-	color_border       gx.Color  = color_border_dark
-	color_border_focus gx.Color  = color_link_dark
-	color_link         gx.Color  = color_link_dark
-	color_text         gx.Color  = color_text_dark
+	color_0            Color     = color_0_dark
+	color_1            Color     = color_1_dark
+	color_2            Color     = color_2_dark
+	color_3            Color     = color_3_dark
+	color_4            Color     = color_4_dark
+	color_5            Color     = color_5_dark
+	color_border       Color     = color_border_dark
+	color_border_focus Color     = color_link_dark
+	color_link         Color     = color_link_dark
+	color_text         Color     = color_text_dark
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_medium
@@ -191,18 +189,18 @@ pub const theme_dark = theme_maker(
 
 pub const theme_light = theme_maker(
 	name:               'light'
-	color_0:            gx.rgb(225, 225, 225)
-	color_1:            gx.rgb(150, 150, 255)
-	color_2:            gx.rgb(140, 140, 255)
-	color_3:            gx.rgb(130, 130, 255)
-	color_4:            gx.rgb(120, 120, 255)
-	color_5:            gx.rgb(91, 91, 255)
-	color_border:       gx.rgb(64, 64, 64)
-	color_link:         gx.rgb(0, 71, 171)
-	color_border_focus: gx.rgb(0, 0, 255)
+	color_0:            rgb(225, 225, 225)
+	color_1:            rgb(150, 150, 255)
+	color_2:            rgb(140, 140, 255)
+	color_3:            rgb(130, 130, 255)
+	color_4:            rgb(120, 120, 255)
+	color_5:            rgb(91, 91, 255)
+	color_border:       rgb(64, 64, 64)
+	color_link:         rgb(0, 71, 171)
+	color_border_focus: rgb(0, 0, 255)
 	text_style:         TextStyle{
 		...text_style_dark
-		color: gx.rgb(32, 32, 32)
+		color: rgb(32, 32, 32)
 	}
 )
 

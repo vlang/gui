@@ -1,7 +1,5 @@
 module gui
 
-import gx
-
 pub struct RectangleCfg {
 pub:
 	id       string
@@ -9,9 +7,9 @@ pub:
 	y        f32
 	width    f32
 	height   f32
-	color    gx.Color = gui_theme.rectangle_style.color
-	fill     bool     = gui_theme.rectangle_style.fill
-	radius   f32      = gui_theme.rectangle_style.radius
+	color    Color = gui_theme.rectangle_style.color
+	fill     bool  = gui_theme.rectangle_style.fill
+	radius   f32   = gui_theme.rectangle_style.radius
 	sizing   Sizing
 	disabled bool
 }
