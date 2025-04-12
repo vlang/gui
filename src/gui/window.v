@@ -7,19 +7,19 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	ui           &gg.Context       = &gg.Context{}
-	state        voidptr           = unsafe { nil }
-	mutex        &sync.Mutex       = sync.new_mutex()
-	layout       Layout            = Layout{}
-	renderers    []Renderer        = []
-	gen_view     fn (&Window) View = default_view
-	id_focus     u32
-	focused      bool = true
-	mouse_cursor sapp.MouseCursor
-	input_state  map[u32]InputState
-	scroll_state map[u32]ScrollState
-	text_widths  map[string]int
-	on_event     fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	ui                    &gg.Context       = &gg.Context{}
+	state                 voidptr           = unsafe { nil }
+	mutex                 &sync.Mutex       = sync.new_mutex()
+	layout                Layout            = Layout{}
+	renderers             []Renderer        = []
+	gen_view              fn (&Window) View = default_view
+	id_focus              u32
+	focused               bool = true
+	mouse_cursor          sapp.MouseCursor
+	input_state           map[u32]InputState
+	scroll_state_vertical map[u32]f32
+	text_widths           map[string]int
+	on_event              fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -184,6 +184,11 @@ fn default_view(window &Window) View {
 	)
 }
 
+// get_text_width gets the width of the text in logical units
+pub fn (mut window Window) get_text_width(text string, text_style TextStyle) int {
+	return get_text_width(text, text_style, mut window)
+}
+
 // id_focus gets the window's focus id
 pub fn (window &Window) id_focus() u32 {
 	return window.id_focus
@@ -221,6 +226,18 @@ pub fn (mut window Window) run() {
 // set_color_background changes the windows background color
 pub fn (mut window Window) set_color_background(color Color) {
 	window.ui.set_bg_color(color.to_gx_color())
+}
+
+// scroll_vertical_by scrolls the given scrollable by delta.
+// Use update_window() if not called from event handler
+pub fn (mut window Window) scroll_vertical_by(id_scroll u32, delta f32) {
+	window.scroll_state_vertical[id_scroll] += delta
+}
+
+// scroll_vertical_by scrolls the given scrollable to the offset. offset is negative.
+// Use update_window() if not called from event handler
+pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
+	window.scroll_state_vertical[id_scroll] = offset
 }
 
 // set_id_focus sets the window's focus id.
@@ -266,7 +283,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 
 	window.id_focus = 0
 	window.input_state.clear()
-	window.scroll_state.clear()
+	window.scroll_state_vertical.clear()
 	window.text_widths.clear()
 	window.gen_view = gen_view
 	window.layout = layout
@@ -296,8 +313,4 @@ pub fn (mut window Window) update_window() {
 pub fn (window &Window) window_size() (int, int) {
 	size := window.ui.window_size()
 	return size.width, size.height
-}
-
-pub fn (mut window Window) get_text_width(text string, text_style TextStyle) int {
-	return get_text_width(text, text_style, mut window)
 }

@@ -1,11 +1,7 @@
 import gui
 import os.font
 
-@[heap]
-struct App {
-pub mut:
-	light bool
-	text  string = '
+const text = '
 Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.
 
 Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.
@@ -23,6 +19,11 @@ She packed her seven versalia, put her initial into the belt and made herself on
 When she reached the first hills of the Italic Mountains, she had a last view back on the skyline of her hometown Bookmarksgrove, the headline of Alphabet Village and the subline of her own road, the Line Lane.
 
 Pityful a rethoric question ran over her cheek, then'
+
+@[heap]
+struct App {
+pub mut:
+	light bool
 }
 
 fn main() {
@@ -54,8 +55,8 @@ fn main_view(window &gui.Window) gui.View {
 				padding: gui.padding_none
 				sizing:  gui.fill_fill
 				content: [
-					scroll_column(1, app.text, window),
-					scroll_column(2, app.text, window),
+					scroll_column(1, text, window),
+					scroll_column(2, text, window),
 				]
 			),
 		]
@@ -90,7 +91,7 @@ fn top_row(app &App) gui.View {
 		content: [
 			gui.text(
 				text:       'Scroll Demo'
-				text_style: gui.theme().i1
+				text_style: gui.theme().b1
 			),
 			gui.rectangle(
 				sizing: gui.fill_fit

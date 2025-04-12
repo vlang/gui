@@ -15,7 +15,7 @@ pub const size_text_x_large = 26
 pub const spacing_small = 5
 pub const spacing_medium = 10
 pub const spacing_large = 15
-pub const spacing_text = 2 // additional line height
+pub const spacing_text = 0 // additional line height
 
 pub const color_transparent = rgba(0, 0, 0, 0)
 

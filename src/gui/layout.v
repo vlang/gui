@@ -493,7 +493,7 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 fn layout_scroll_offsets(mut node Layout, offset_v f32, w &Window) {
 	mut offset := offset_v
 	if node.shape.id_scroll_v > 0 {
-		offset += w.scroll_state[node.shape.id_scroll_v].offset_v
+		offset += w.scroll_state_vertical[node.shape.id_scroll_v]
 	}
 	for mut child in node.children {
 		child.shape.scroll_v = offset
