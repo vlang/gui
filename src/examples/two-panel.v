@@ -32,7 +32,7 @@ fn main_view(mut w gui.Window) gui.View {
 					gui.text(
 						text:       'Hello'
 						text_style: gui.TextStyle{
-							...gui.theme().h2
+							...gui.theme().b2
 							color: gui.black
 						}
 					),
@@ -49,7 +49,7 @@ fn main_view(mut w gui.Window) gui.View {
 					gui.text(
 						text:       'There!'
 						text_style: gui.TextStyle{
-							...gui.theme().h1
+							...gui.theme().b1
 							size: gui.theme().size_text_large
 						}
 					),

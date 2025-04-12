@@ -39,16 +39,8 @@ fn text_height(shape Shape, ctx &gg.Context) int {
 	return lh * shape.lines.len
 }
 
-fn line_height(shape Shape, ctx gg.Context) int {
-	mut window := unsafe { &Window(ctx.user_data) }
-	key := fnv1a.sum32_struct(shape.text_style)
-	text_cfg := shape.text_style.to_text_cfg()
-	return window.text_heights[key] or {
-		ctx.set_text_cfg(text_cfg)
-		h := ctx.text_height('Q|W') + int(shape.spacing + f32(0.4999)) + 2
-		window.text_heights[key] = h
-		h
-	}
+fn line_height(shape Shape, _ gg.Context) int {
+	return int(shape.text_style.size + shape.spacing)
 }
 
 fn text_wrap(mut shape Shape, ctx &gg.Context) {

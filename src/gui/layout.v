@@ -174,7 +174,7 @@ fn layout_fill_widths(mut node Layout) {
 		//
 		mut excluded := []u64{cap: 25}
 		for i := 0; remaining_width > tolerance && i < clamp; i++ {
-			if are_equal(remaining_width, previous_remaining_width, tolerance) {
+			if f32_are_equal(remaining_width, previous_remaining_width, tolerance) {
 				break
 			}
 			previous_remaining_width = remaining_width
@@ -228,7 +228,7 @@ fn layout_fill_widths(mut node Layout) {
 		excluded.clear()
 		previous_remaining_width = 0
 		for i := 0; remaining_width < -tolerance && i < clamp; i++ {
-			if are_equal(remaining_width, previous_remaining_width, tolerance) {
+			if f32_are_equal(remaining_width, previous_remaining_width, tolerance) {
 				break
 			}
 			previous_remaining_width = remaining_width
@@ -314,7 +314,7 @@ fn layout_fill_heights(mut node Layout) {
 		//
 		mut excluded := []u64{cap: 25}
 		for i := 0; remaining_height > tolerance && i < clamp; i++ {
-			if are_equal(remaining_height, previous_remaining_height, tolerance) {
+			if f32_are_equal(remaining_height, previous_remaining_height, tolerance) {
 				break
 			}
 			previous_remaining_height = remaining_height
@@ -369,7 +369,7 @@ fn layout_fill_heights(mut node Layout) {
 		excluded.clear()
 		previous_remaining_height = 0
 		for i := 0; remaining_height < -tolerance && i < clamp; i++ {
-			if are_equal(remaining_height, previous_remaining_height, tolerance) {
+			if f32_are_equal(remaining_height, previous_remaining_height, tolerance) {
 				break
 			}
 			previous_remaining_height = remaining_height

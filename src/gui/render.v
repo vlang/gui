@@ -188,13 +188,17 @@ fn render_rectangle(shape Shape, offset_v f32) []Renderer {
 fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	assert shape.type == .text
 	mut renderers := []Renderer{}
-	lh := line_height(shape, ctx)
-	mut y := int(shape.y + offset_v + f32(0.49999))
-	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
-	text_cfg := TextStyle{
+	mut y := shape.y + offset_v
+	color := if shape.disabled {
+		dim_alpha(shape.text_style.color)
+	} else {
+		shape.text_style.color
+	}
+	mut text_cfg := TextStyle{
 		...shape.text_style
 		color: color
 	}.to_text_cfg()
+	lh := line_height(shape, ctx)
 	renderer_rect := make_renderer_rect(shape)
 
 	for line in shape.lines {
@@ -234,6 +238,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 			}
 		}
 	}
+
 	return renderers
 }
 

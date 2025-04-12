@@ -47,7 +47,7 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			gui.text(
 				text:       'Welcome to GUI'
-				text_style: gui.theme().h1
+				text_style: gui.theme().b1
 			),
 			gui.button(
 				id_focus:       1

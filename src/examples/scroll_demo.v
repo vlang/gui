@@ -1,4 +1,5 @@
 import gui
+import os.font
 
 @[heap]
 struct App {
@@ -34,6 +35,7 @@ fn main() {
 			w.set_id_focus(1)
 		}
 	)
+	println(font.default())
 	window.run()
 }
 
@@ -88,7 +90,7 @@ fn top_row(app &App) gui.View {
 		content: [
 			gui.text(
 				text:       'Scroll Demo'
-				text_style: gui.theme().h1
+				text_style: gui.theme().i1
 			),
 			gui.rectangle(
 				sizing: gui.fill_fit
@@ -102,7 +104,7 @@ fn top_row(app &App) gui.View {
 fn theme_button(app &App) gui.View {
 	return gui.button(
 		id_focus:       3
-		padding:        gui.padding(1, 5, 1, 5)
+		padding:        gui.padding(3, 4, 1, 4)
 		padding_border: gui.padding_two
 		content:        [
 			gui.text(

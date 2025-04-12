@@ -68,12 +68,9 @@ fn (node Layout) get_focus_ids() []u32 {
 	return arrays.distinct(focus_ids).sorted()
 }
 
-// are_equal tests if a and b are with tol
-fn are_equal(a f32, b f32, diff f32) bool {
+// f32_are_equal tests if a and b are with tol
+fn f32_are_equal(a f32, b f32, diff f32) bool {
 	assert diff > 0
-	mut d := a - b
-	if d < 0 {
-		d = -d
-	}
-	return d <= diff
+	d := a - b
+	return if d < 0 { -d <= diff } else { d <= diff }
 }

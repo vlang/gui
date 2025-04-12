@@ -35,7 +35,7 @@ fn main_view(w &gui.Window) gui.View {
 	width, height := w.window_size()
 
 	text_style_blue := gui.TextStyle{
-		...gui.theme().h4
+		...gui.theme().b4
 		color: gui.rgb(100, 149, 237)
 	}
 
@@ -86,7 +86,7 @@ fn main_view(w &gui.Window) gui.View {
 								content: [
 									gui.text(
 										text:       'Hello world!'
-										text_style: gui.theme().h2
+										text_style: gui.theme().b2
 										wrap:       true
 									),
 								]

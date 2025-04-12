@@ -10,7 +10,7 @@ pub const size_text_x_small = 13
 pub const size_text_small = 15
 pub const size_text_medium = 17
 pub const size_text_large = 20
-pub const size_text_x_large = 24
+pub const size_text_x_large = 26
 
 pub const spacing_small = 5
 pub const spacing_medium = 10
@@ -35,8 +35,9 @@ const scroll_delta_page = 10
 const size_progress_bar = 10
 
 const text_style_dark = TextStyle{
-	color: color_text_dark
-	size:  size_text_medium
+	color:   color_text_dark
+	size:    size_text_medium
+	spacing: spacing_text
 }
 
 pub struct Theme {
@@ -44,6 +45,7 @@ pub:
 	name             string = 'default' @[required]
 	color_background Color  = color_0_dark
 	color_link       Color  = color_link_dark
+	color_border     Color  = color_border_dark
 	color_0          Color  = color_0_dark
 	color_1          Color  = color_1_dark
 	color_2          Color  = color_2_dark
@@ -57,54 +59,105 @@ pub:
 	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
 	text_style         TextStyle
+	text_style_bold    TextStyle
 
-	// T's and H's are convienence configs for sizing
-	// similar to H1-H6 in html markup. T3 is the
+	// n's and b's are convienence configs for sizing
+	// similar to H1-H6 in html markup. n3 is the
 	// same as normal size font used by default in
 	// text views
-	t1 TextStyle = TextStyle{
+	n1 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_x_large
 	}
-	t2 TextStyle = TextStyle{
+	n2 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_large
 	}
-	t3 TextStyle = text_style_dark
-	t4 TextStyle = TextStyle{
+	n3 TextStyle = text_style_dark
+	n4 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_small
 	}
-	t5 TextStyle = TextStyle{
+	n5 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_x_small
 	}
-	t6 TextStyle = TextStyle{
+	n6 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_tiny
 	}
-
-	h1 TextStyle = TextStyle{
+	// Bold
+	b1 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_x_large
 	}
-	h2 TextStyle = TextStyle{
+	b2 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_large
 	}
-	h3 TextStyle = TextStyle{
+	b3 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_medium
 	}
-	h4 TextStyle = TextStyle{
+	b4 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_small
 	}
-	h5 TextStyle = TextStyle{
+	b5 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_x_small
 	}
-	h6 TextStyle = TextStyle{
+	b6 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_tiny
+	}
+	// italic
+	i1 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_x_large
+	}
+	i2 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_large
+	}
+	i3 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_medium
+	}
+	i4 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_small
+	}
+	i5 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_x_small
+	}
+	i6 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_tiny
+	}
+	// Mono
+	m1 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_x_large
+	}
+	m2 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_large
+	}
+	m3 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_medium
+	}
+	m4 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_small
+	}
+	m5 TextStyle = TextStyle{
+		...text_style_dark
+		size: size_text_x_small
+	}
+	m6 TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_tiny
 	}
@@ -187,20 +240,31 @@ pub const theme_dark = theme_maker(
 	text_style:         text_style_dark
 )
 
+const color_text_light = rgb(32, 32, 32)
+const color_0_light = rgb(225, 225, 225)
+const color_1_light = rgb(150, 150, 255)
+const color_2_light = rgb(140, 140, 255)
+const color_3_light = rgb(130, 130, 255)
+const color_4_light = rgb(120, 120, 255)
+const color_5_light = rgb(91, 91, 255)
+const color_border_light = rgb(64, 64, 64)
+const color_link_light = rgb(0, 71, 171)
+const color_border_focus_light = rgb(0, 0, 255)
+
 pub const theme_light = theme_maker(
 	name:               'light'
-	color_0:            rgb(225, 225, 225)
-	color_1:            rgb(150, 150, 255)
-	color_2:            rgb(140, 140, 255)
-	color_3:            rgb(130, 130, 255)
-	color_4:            rgb(120, 120, 255)
-	color_5:            rgb(91, 91, 255)
-	color_border:       rgb(64, 64, 64)
-	color_link:         rgb(0, 71, 171)
-	color_border_focus: rgb(0, 0, 255)
+	color_0:            color_0_light
+	color_1:            color_1_light
+	color_2:            color_2_light
+	color_3:            color_3_light
+	color_4:            color_4_light
+	color_5:            color_5_light
+	color_border:       color_border_light
+	color_link:         color_link_light
+	color_border_focus: color_border_focus_light
 	text_style:         TextStyle{
 		...text_style_dark
-		color: rgb(32, 32, 32)
+		color: color_text_light
 	}
 )
 
@@ -217,6 +281,7 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 		name:             cfg.name
 		color_background: cfg.color_0
 		color_link:       cfg.color_link
+		color_border:     cfg.color_border
 		color_0:          cfg.color_0
 		color_1:          cfg.color_1
 		color_2:          cfg.color_2
@@ -293,51 +358,120 @@ pub fn theme_maker(cfg ThemeCfg) Theme {
 		scroll_delta_page: cfg.scroll_delta_page
 	}
 
+	variants := font_variants(theme.text_style)
+	normal := TextStyle{
+		...theme.text_style
+		family: variants.normal
+	}
+	bold := TextStyle{
+		...theme.text_style
+		family: variants.bold
+	}
+	italic := TextStyle{
+		...theme.text_style
+		family: variants.italic
+	}
+	mono := TextStyle{
+		...theme.text_style
+		family: variants.mono
+	}
+
 	return Theme{
 		...theme
-		t1: TextStyle{
-			...theme.text_style
+		n1: TextStyle{
+			...normal
 			size: theme.size_text_x_large
 		}
-		t2: TextStyle{
-			...theme.text_style
+		n2: TextStyle{
+			...normal
 			size: theme.size_text_large
 		}
-		t3: theme.text_style
-		t4: TextStyle{
-			...theme.text_style
+		n3: theme.text_style
+		n4: TextStyle{
+			...normal
 			size: theme.size_text_small
 		}
-		t5: TextStyle{
-			...theme.text_style
+		n5: TextStyle{
+			...normal
 			size: theme.size_text_x_small
 		}
-		t6: TextStyle{
-			...theme.text_style
+		n6: TextStyle{
+			...normal
 			size: theme.size_text_tiny
 		}
-		h1: TextStyle{
-			...theme.text_style
+		// Bold
+		b1: TextStyle{
+			...bold
 			size: theme.size_text_x_large
 		}
-		h2: TextStyle{
-			...theme.text_style
+		b2: TextStyle{
+			...bold
 			size: theme.size_text_large
 		}
-		h3: TextStyle{
-			...theme.text_style
+		b3: TextStyle{
+			...bold
 			size: theme.size_text_medium
 		}
-		h4: TextStyle{
-			...theme.text_style
+		b4: TextStyle{
+			...bold
 			size: theme.size_text_small
 		}
-		h5: TextStyle{
-			...theme.text_style
+		b5: TextStyle{
+			...bold
 			size: theme.size_text_x_small
 		}
-		h6: TextStyle{
-			...theme.text_style
+		b6: TextStyle{
+			...bold
+			size: theme.size_text_tiny
+		}
+		// Italic
+		i1: TextStyle{
+			...italic
+			size: theme.size_text_x_large
+		}
+		i2: TextStyle{
+			...italic
+			size: theme.size_text_large
+		}
+		i3: TextStyle{
+			...italic
+			size: theme.size_text_medium
+		}
+		i4: TextStyle{
+			...italic
+			size: theme.size_text_small
+		}
+		i5: TextStyle{
+			...italic
+			size: theme.size_text_x_small
+		}
+		i6: TextStyle{
+			...italic
+			size: theme.size_text_tiny
+		}
+		// Mono
+		m1: TextStyle{
+			...mono
+			size: theme.size_text_x_large
+		}
+		m2: TextStyle{
+			...mono
+			size: theme.size_text_large
+		}
+		m3: TextStyle{
+			...mono
+			size: theme.size_text_medium
+		}
+		m4: TextStyle{
+			...mono
+			size: theme.size_text_small
+		}
+		m5: TextStyle{
+			...mono
+			size: theme.size_text_x_small
+		}
+		m6: TextStyle{
+			...mono
 			size: theme.size_text_tiny
 		}
 	}

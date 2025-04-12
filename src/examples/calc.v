@@ -35,7 +35,7 @@ fn main() {
 			w.update_view(main_view)
 		}
 	)
-	println(gui.theme().t2)
+	println(gui.theme().n2)
 	window.run()
 }
 
@@ -52,7 +52,7 @@ fn main_view(mut w gui.Window) gui.View {
 			gui.text(
 				text:       app.text
 				text_style: gui.TextStyle{
-					...gui.theme().t2
+					...gui.theme().n2
 					color: gui.black
 				}
 			),

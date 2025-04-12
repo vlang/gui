@@ -19,7 +19,6 @@ mut:
 	input_state  map[u32]InputState
 	scroll_state map[u32]ScrollState
 	text_widths  map[string]int
-	text_heights map[u32]int
 	on_event     fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
@@ -269,7 +268,6 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.input_state.clear()
 	window.scroll_state.clear()
 	window.text_widths.clear()
-	window.text_heights.clear()
 	window.gen_view = gen_view
 	window.layout = layout
 	window.renderers = renderers

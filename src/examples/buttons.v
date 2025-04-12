@@ -25,7 +25,7 @@ fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[App]()
 	button_text := '${app.clicks} Clicks Given'
-	button_width := window.get_text_width('XXX Clicks Given', gui.theme().t3) +
+	button_width := window.get_text_width('XXX Clicks Given', gui.theme().n3) +
 		gui.theme().button_style.padding.width() + gui.theme().padding_small.width()
 
 	return gui.column(
