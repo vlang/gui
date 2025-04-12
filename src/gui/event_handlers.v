@@ -94,8 +94,9 @@ fn mouse_scroll_handler(node Layout, e &Event, mut w Window, parent Shape) {
 fn scroll_vertical(node Layout, delta f32, mut w Window) bool {
 	v_id := node.shape.id_scroll_v
 	if v_id > 0 {
+		ch := content_height(node)
+		mut max_offset := node.shape.height - node.shape.padding.height() - ch
 		scroll_state := w.scroll_state[v_id]
-		max_offset := node.shape.height - node.shape.max_height - size_text_medium
 		mut offset_v := scroll_state.offset_v + delta * gui_theme.scroll_multiplier
 		offset_v = f32_max(offset_v, max_offset)
 		offset_v = f32_min(0, offset_v)
@@ -106,4 +107,19 @@ fn scroll_vertical(node Layout, delta f32, mut w Window) bool {
 		return true
 	}
 	return false
+}
+
+fn content_height(node Layout) f32 {
+	mut height := f32(0)
+	if node.shape.axis == .top_to_bottom {
+		height += node.spacing()
+		for child in node.children {
+			height += child.shape.height + child.shape.padding.height()
+		}
+	} else {
+		for child in node.children {
+			height = f32_max(height, child.shape.height + child.shape.padding.height())
+		}
+	}
+	return height
 }

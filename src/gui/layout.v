@@ -57,9 +57,10 @@ fn layout_widths(mut node Layout) {
 				node.shape.width += child.shape.width
 				min_widths += child.shape.min_width
 			}
-			node.shape.min_width = f32_max(min_widths, node.shape.min_width + padding + spacing)
 
+			node.shape.min_width = f32_max(min_widths, node.shape.min_width + padding + spacing)
 			node.shape.width += padding + spacing
+
 			if node.shape.max_width > 0 {
 				node.shape.max_width = node.shape.max_width
 				node.shape.width = f32_min(node.shape.max_width, node.shape.width)
@@ -102,9 +103,10 @@ fn layout_heights(mut node Layout) {
 				node.shape.height += child.shape.height
 				min_heights += child.shape.min_height
 			}
-			node.shape.min_height = f32_max(min_heights, node.shape.min_height + padding + spacing)
 
+			node.shape.min_height = f32_max(min_heights, node.shape.min_height + padding + spacing)
 			node.shape.height += padding + spacing
+
 			if node.shape.max_height > 0 {
 				node.shape.max_height = node.shape.max_height
 				node.shape.height = f32_min(node.shape.max_height, node.shape.height)
@@ -114,7 +116,6 @@ fn layout_heights(mut node Layout) {
 				node.shape.height = f32_max(node.shape.min_height, node.shape.height)
 			}
 			if node.shape.sizing.height == .fill && node.shape.id_scroll_v > 0 {
-				node.shape.max_height = node.shape.height
 				node.shape.min_height = spacing_small
 			}
 		}
@@ -496,6 +497,9 @@ fn layout_scroll_offsets(mut node Layout, offset_v f32, w &Window) {
 	}
 	for mut child in node.children {
 		child.shape.scroll_v = offset
+		if child.shape.id_scroll_v > 0 {
+			child.shape.clip = true
+		}
 		layout_scroll_offsets(mut child, offset, w)
 	}
 }
@@ -600,4 +604,8 @@ fn layout_amend(mut node Layout, w &Window) {
 	if node.shape.amend_layout != unsafe { nil } {
 		node.shape.amend_layout(mut node, w)
 	}
+}
+
+fn (node &Layout) spacing() f32 {
+	return int_max(0, (node.children.len - 1)) * node.shape.spacing
 }
