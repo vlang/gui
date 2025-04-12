@@ -45,7 +45,7 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 fn layout_widths(mut node Layout) {
 	padding := node.shape.padding.width()
 	if node.shape.axis == .left_to_right { // along the axis
-		spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
+		spacing := node.spacing()
 		if node.shape.sizing.width == .fixed {
 			for mut child in node.children {
 				layout_widths(mut child)
@@ -91,7 +91,7 @@ fn layout_widths(mut node Layout) {
 fn layout_heights(mut node Layout) {
 	padding := node.shape.padding.height()
 	if node.shape.axis == .top_to_bottom { // along the axis
-		spacing := int_max(0, (node.children.len - 1)) * node.shape.spacing
+		spacing := node.spacing()
 		if node.shape.sizing.height == .fixed {
 			for mut child in node.children {
 				layout_heights(mut child)
@@ -167,7 +167,7 @@ fn layout_fill_widths(mut node Layout) {
 			remaining_width -= child.shape.width
 		}
 		// fence post spacing
-		remaining_width -= int_max(0, (node.children.len - 1)) * node.shape.spacing
+		remaining_width -= node.spacing()
 
 		// divide up the remaining fill widths by first growing all the
 		// all the fill layout to the same size (if possible) and then
@@ -307,7 +307,7 @@ fn layout_fill_heights(mut node Layout) {
 			remaining_height -= child.shape.height
 		}
 		// fence post spacing
-		remaining_height -= int_max(0, (node.children.len - 1)) * node.shape.spacing
+		remaining_height -= node.spacing()
 
 		// divide up the remaining fill heights by first growing all the
 		// all the fill layout to the same size (if possible) and then
@@ -522,7 +522,7 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 		.left_to_right {
 			if node.shape.h_align != .left {
 				mut remaining := node.shape.width - padding.width()
-				remaining -= int_max(0, (node.children.len - 1)) * node.shape.spacing
+				remaining -= node.spacing()
 				for child in node.children {
 					remaining -= child.shape.width
 				}
@@ -535,7 +535,7 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 		.top_to_bottom {
 			if node.shape.v_align != .top {
 				mut remaining := node.shape.height - padding.height()
-				remaining -= int_max(0, (node.children.len - 1)) * node.shape.spacing
+				remaining -= node.spacing()
 				for child in node.children {
 					remaining -= child.shape.height
 				}
@@ -604,8 +604,4 @@ fn layout_amend(mut node Layout, w &Window) {
 	if node.shape.amend_layout != unsafe { nil } {
 		node.shape.amend_layout(mut node, w)
 	}
-}
-
-fn (node &Layout) spacing() f32 {
-	return int_max(0, (node.children.len - 1)) * node.shape.spacing
 }
