@@ -150,7 +150,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			}
 		}
 		.mouse_scroll {
-			mouse_scroll_handler(layout, e, mut w, layout.shape)
+			mouse_scroll_handler(layout, e, mut w)
 		}
 		else {
 			// dump(e)
@@ -275,8 +275,17 @@ pub fn (window &Window) state[T]() &T {
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
-	layout_do(mut layout, window)
-	renderers := render(layout, window.color_background(), layout.shape.scroll_v, window.ui)
+	layouts := layout_do(mut layout, window)
+
+	mut renderers := []Renderer{}
+	for lyo in layouts {
+		renderers << render(lyo, window.color_background(), layout.shape.scroll_v, window.ui)
+	}
+	// Combine the layouts into one layout to rule them all
+	// and bind them in the darkness
+	layout = Layout{
+		children: layouts
+	}
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -299,8 +308,17 @@ pub fn (mut window Window) update_window() {
 
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
-	layout_do(mut layout, window)
-	renderers := render(layout, window.color_background(), layout.shape.scroll_v, window.ui)
+	layouts := layout_do(mut layout, window)
+
+	mut renderers := []Renderer{}
+	for lyo in layouts {
+		renderers << render(lyo, window.color_background(), layout.shape.scroll_v, window.ui)
+	}
+	// Combine the layouts into one layout to rule them all
+	// and bind them in the darkness
+	layout = Layout{
+		children: layouts
+	}
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }

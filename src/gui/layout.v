@@ -18,15 +18,34 @@ pub mut:
 
 // layout_do executes a pipeline of functions to layout and position the layout
 // of a Layout
-fn layout_do(mut layout Layout, window &Window) {
+fn layout_do(mut layout Layout, window &Window) []Layout {
+	mut layouts := [layout]
 	layout_parents(mut layout, unsafe { nil })
+	mut floating_layouts := layout_remove_floating_layouts(mut layout)
+
+	layout_pipeline(mut layout, window)
+
+	for mut floating_layout in floating_layouts {
+		layout_pipeline(mut floating_layout, window)
+		layouts << floating_layout
+	}
+	return layouts
+}
+
+fn layout_pipeline(mut layout Layout, window &Window) {
 	layout_widths(mut layout)
 	layout_fill_widths(mut layout)
 	layout_wrap_text(mut layout, window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
 	layout_scroll_offsets(mut layout, layout.shape.scroll_v, window)
-	layout_positions(mut layout, 0, 0)
+
+	x, y := match layout.parent != unsafe { nil } {
+		true { layout.parent.shape.x, layout.parent.shape.y }
+		else { f32(0), f32(0) }
+	}
+
+	layout_positions(mut layout, x, y)
 	layout_disables(mut layout, false)
 	layout_amend(mut layout, window)
 }
@@ -38,6 +57,23 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 	for mut child in layout.children {
 		layout_parents(mut child, layout)
 	}
+}
+
+//
+fn layout_remove_floating_layouts(mut layout Layout) []Layout {
+	mut floating_layouts := []Layout{}
+	for i, mut child in layout.children {
+		if child.shape.float {
+			floating_layouts << child
+			layout.children[i] = Layout{
+				// need parent to get x,y in layout_pipeline
+				parent: unsafe { layout }
+			}
+		} else {
+			floating_layouts << layout_remove_floating_layouts(mut child)
+		}
+	}
+	return floating_layouts
 }
 
 // layout_widths arranges a node's children layout horizontally. Only container

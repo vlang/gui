@@ -79,9 +79,9 @@ fn key_down_scroll_handler(node Layout, e &Event, mut w Window) bool {
 	}
 }
 
-fn mouse_scroll_handler(node Layout, e &Event, mut w Window, parent Shape) {
+fn mouse_scroll_handler(node Layout, e &Event, mut w Window) {
 	for child in node.children {
-		mouse_scroll_handler(child, e, mut w, node.shape)
+		mouse_scroll_handler(child, e, mut w)
 	}
 
 	if !node.shape.disabled && node.shape.id_scroll_v > 0 {

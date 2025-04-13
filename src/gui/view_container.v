@@ -25,6 +25,7 @@ pub struct Container implements View {
 	disabled     bool
 	text         string
 	id_scroll_v  u32
+	float        bool
 	on_char      fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &Event, &Window) bool = unsafe { nil }
@@ -60,6 +61,7 @@ fn (cfg &Container) generate(_ &gg.Context) Layout {
 			radius:       cfg.radius
 			color:        cfg.color
 			disabled:     cfg.disabled
+			float:        cfg.float
 			text:         cfg.text
 			text_style:   TextStyle{
 				...gui_theme.text_style
@@ -96,6 +98,7 @@ pub:
 	disabled     bool
 	text         string
 	id_scroll_v  u32
+	float        bool
 	spacing      f32     = gui_theme.container_style.spacing
 	radius       f32     = gui_theme.container_style.radius
 	padding      Padding = gui_theme.container_style.padding
@@ -135,6 +138,7 @@ fn container(cfg ContainerCfg) Container {
 		disabled:     cfg.disabled
 		text:         cfg.text
 		id_scroll_v:  cfg.id_scroll_v
+		float:        cfg.float
 		cfg:          cfg.cfg
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char

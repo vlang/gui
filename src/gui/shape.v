@@ -5,39 +5,44 @@ import rand
 // Shape is the only data structure in GUI used to draw to the screen.
 pub struct Shape {
 pub mut:
-	id           string // asigned by user
-	type         ShapeType
-	uid          u64 = rand.u64() // internal use only
-	id_focus     u32 // >0 indicates shape is focusable. Value determines tabbing order
-	axis         Axis
-	x            f32
-	y            f32
-	width        f32
-	min_width    f32
-	max_width    f32
-	height       f32
-	min_height   f32
-	max_height   f32
-	color        Color
-	fill         bool
-	h_align      HorizontalAlign
-	v_align      VerticalAlign
-	clip         bool
-	padding      Padding
-	radius       f32
-	sizing       Sizing
-	spacing      f32
-	text         string
-	lines        []string
-	disabled     bool
-	text_style   TextStyle
-	cursor_x     int = -1
-	cursor_y     int = -1
-	wrap         bool
-	keep_spaces  bool
-	id_scroll_v  u32 // >0 indicates shape is scrollable
-	scroll_v     f32
-	cfg          voidptr
+	id       string // user assigned
+	type     ShapeType
+	uid      u64 = rand.u64() // internal use only
+	axis     Axis
+	cfg      voidptr
+	clip     bool
+	color    Color
+	disabled bool
+	id_focus u32 // >0 indicates shape is focusable. Value determines tabbing order
+	float    bool
+	// sizes, positions
+	x          f32
+	y          f32
+	width      f32
+	min_width  f32
+	max_width  f32
+	height     f32
+	min_height f32
+	max_height f32
+	fill       bool
+	h_align    HorizontalAlign
+	v_align    VerticalAlign
+	padding    Padding
+	radius     f32
+	sizing     Sizing
+	// text
+	text        string
+	lines       []string
+	text_style  TextStyle
+	wrap        bool
+	keep_spaces bool
+	spacing     f32 // addtional vertical space added to lines of text
+	cursor_x    int = -1
+	cursor_y    int = -1
+	// scroll
+	id_scroll_v u32 // >0 indicates shape is scrollable
+	scroll_v    f32
+	/// callbacks
 	on_char      fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &Event, &Window) bool = unsafe { nil }
