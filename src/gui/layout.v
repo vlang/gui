@@ -39,12 +39,7 @@ fn layout_pipeline(mut layout Layout, window &Window) {
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
 	layout_scroll_offsets(mut layout, layout.shape.scroll_v, window)
-
-	x, y := match layout.parent != unsafe { nil } {
-		true { layout.parent.shape.x, layout.parent.shape.y }
-		else { f32(0), f32(0) }
-	}
-
+	x, y := layout_float_attach(layout)
 	layout_positions(mut layout, x, y)
 	layout_disables(mut layout, false)
 	layout_amend(mut layout, window)
@@ -66,7 +61,7 @@ fn layout_remove_floating_layouts(mut layout Layout) []Layout {
 		if child.shape.float {
 			floating_layouts << child
 			layout.children[i] = Layout{
-				// need parent to get x,y in layout_pipeline
+				// Probably not needed
 				parent: unsafe { layout }
 			}
 		} else {

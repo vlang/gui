@@ -76,6 +76,7 @@ fn main_view(w &gui.Window) gui.View {
 				sizing:  gui.fill_fill
 				content: [
 					gui.column(
+						id:      'col'
 						sizing:  gui.fill_fill
 						fill:    true
 						color:   gui.rgb(0x30, 0x30, 0x30)

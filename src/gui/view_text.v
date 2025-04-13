@@ -8,15 +8,15 @@ struct Text implements View {
 	id       string
 	id_focus u32 // >0 indicates text is focusable. Value indiciates tabbing order
 mut:
-	min_width   f32
-	spacing     f32
-	text_style  TextStyle
-	text        string
-	wrap        bool
-	keep_spaces bool
-	sizing      Sizing
-	disabled    bool
 	clip        bool
+	disabled    bool
+	keep_spaces bool
+	min_width   f32
+	text        string
+	text_style  TextStyle
+	sizing      Sizing
+	spacing     f32
+	wrap        bool
 	cfg         TextCfg
 	content     []View
 	on_click    fn (&TextCfg, &Event, &Window) bool = text_click_handler
@@ -25,19 +25,19 @@ mut:
 fn (t Text) generate(ctx &gg.Context) Layout {
 	mut shape_tree := Layout{
 		shape: Shape{
+			type:        .text
 			id:          t.id
 			id_focus:    t.id_focus
-			type:        .text
-			spacing:     t.spacing
+			clip:        t.clip
+			disabled:    t.disabled
+			keep_spaces: t.keep_spaces
+			min_width:   t.min_width
 			text:        t.text
 			text_style:  t.text_style
 			lines:       [t.text]
-			wrap:        t.wrap
-			keep_spaces: t.keep_spaces
 			sizing:      t.sizing
-			disabled:    t.disabled
-			min_width:   t.min_width
-			clip:        t.clip
+			spacing:     t.spacing
+			wrap:        t.wrap
 			on_click:    t.on_click
 		}
 	}
@@ -58,14 +58,14 @@ pub struct TextCfg {
 pub:
 	id          string
 	id_focus    u32
-	min_width   f32
-	spacing     f32       = gui_theme.text_style.spacing
-	text_style  TextStyle = gui_theme.text_style
-	text        string
-	wrap        bool
-	keep_spaces bool
-	disabled    bool
 	clip        bool
+	disabled    bool
+	keep_spaces bool
+	min_width   f32
+	spacing     f32 = gui_theme.text_style.spacing
+	text        string
+	text_style  TextStyle = gui_theme.text_style
+	wrap        bool
 }
 
 // text renders text. Text wrapping is available. Multiple spaces are compressed
@@ -75,13 +75,14 @@ pub fn text(cfg TextCfg) Text {
 	return Text{
 		id:          cfg.id
 		id_focus:    cfg.id_focus
+		clip:        cfg.clip
+		keep_spaces: cfg.keep_spaces
 		min_width:   cfg.min_width
 		spacing:     cfg.spacing
-		text_style:  cfg.text_style
 		text:        cfg.text
+		text_style:  cfg.text_style
 		wrap:        cfg.wrap
 		cfg:         &cfg
-		keep_spaces: cfg.keep_spaces
 		sizing:      if cfg.wrap {
 			fill_fit
 		} else {

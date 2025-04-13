@@ -16,6 +16,19 @@ mut:
 	content []View
 }
 
+pub struct CommonCfg {
+pub:
+	id         string
+	width      f32
+	height     f32
+	min_width  f32
+	min_height f32
+	max_width  f32
+	max_height f32
+	disabled   bool
+	sizing     Sizing
+}
+
 // generate_layout builds a Layout from a View.
 fn generate_layout(node View, window Window) Layout {
 	mut layout := node.generate(window.ui)

@@ -32,6 +32,7 @@ fn main_view(window &gui.Window) gui.View {
 			// TODO: add selection logic
 			gui.column(
 				id_scroll_v: 1
+				id_focus:    1
 				fill:        true
 				color:       gui.theme().color_2
 				sizing:      gui.fit_fill

@@ -1,10 +1,8 @@
 module gui
 
 pub struct ProgressBarCfg {
+	CommonCfg
 pub:
-	id         string
-	width      f32
-	height     f32
 	indefinite bool // TODO: not implemented
 	vertical   bool // orientation
 	percent    f32  // 0.0 <= percent <= 1.0
@@ -13,7 +11,6 @@ pub:
 	radius     f32   = gui_theme.progress_bar_style.radius
 	sizing     Sizing
 	text       string
-	disabled   bool
 }
 
 pub fn progress_bar(cfg ProgressBarCfg) View {
@@ -22,12 +19,16 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 		id:           cfg.id
 		width:        if cfg.width == 0 { size } else { cfg.width }
 		height:       if cfg.height == 0 { size } else { cfg.height }
+		min_width:    cfg.min_width
+		max_width:    cfg.max_width
+		min_height:   cfg.min_height
+		max_height:   cfg.max_height
+		disabled:     cfg.disabled
 		color:        cfg.color
 		radius:       cfg.radius
 		sizing:       cfg.sizing
 		padding:      padding_none
 		fill:         true
-		disabled:     cfg.disabled
 		amend_layout: cfg.amend_layout
 		content:      [
 			rectangle(

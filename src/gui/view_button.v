@@ -7,20 +7,13 @@ import gg
 // it functions as bubble text.
 @[heap]
 pub struct ButtonCfg {
+	CommonCfg
 pub:
-	id                 string
 	id_focus           u32
-	width              f32
-	height             f32
-	min_width          f32
-	min_height         f32
-	max_width          f32
-	max_height         f32
-	disabled           bool
+	float              bool
+	float_attach       FloatAttach
 	h_align            HorizontalAlign = .center
 	v_align            VerticalAlign   = .middle
-	sizing             Sizing
-	float              bool
 	content            []View
 	fill               bool    = gui_theme.button_style.fill
 	fill_border        bool    = gui_theme.button_style.fill_border
@@ -69,6 +62,7 @@ pub fn button(cfg ButtonCfg) View {
 		max_height:   cfg.max_height
 		sizing:       cfg.sizing
 		float:        cfg.float
+		float_attach: cfg.float_attach
 		cfg:          &cfg
 		on_click:     cfg.on_click
 		on_char:      on_char_button

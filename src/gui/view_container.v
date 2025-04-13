@@ -26,6 +26,7 @@ pub struct Container implements View {
 	text         string
 	id_scroll_v  u32
 	float        bool
+	float_attach FloatAttach
 	on_char      fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &Event, &Window) bool = unsafe { nil }
@@ -62,6 +63,7 @@ fn (cfg &Container) generate(_ &gg.Context) Layout {
 			color:        cfg.color
 			disabled:     cfg.disabled
 			float:        cfg.float
+			float_attach: cfg.float_attach
 			text:         cfg.text
 			text_style:   TextStyle{
 				...gui_theme.text_style
@@ -79,26 +81,19 @@ fn (cfg &Container) generate(_ &gg.Context) Layout {
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers
 pub struct ContainerCfg {
+	CommonCfg
 	cfg voidptr
 pub:
-	id           string
 	id_focus     u32
+	id_scroll_v  u32
 	x            f32
 	y            f32
-	width        f32
-	min_width    f32
-	max_width    f32
-	height       f32
-	min_height   f32
-	max_height   f32
 	clip         bool
-	sizing       Sizing
+	float        bool
+	float_attach FloatAttach
 	h_align      HorizontalAlign
 	v_align      VerticalAlign
-	disabled     bool
 	text         string
-	id_scroll_v  u32
-	float        bool
 	spacing      f32     = gui_theme.container_style.spacing
 	radius       f32     = gui_theme.container_style.radius
 	padding      Padding = gui_theme.container_style.padding
@@ -139,6 +134,7 @@ fn container(cfg ContainerCfg) Container {
 		text:         cfg.text
 		id_scroll_v:  cfg.id_scroll_v
 		float:        cfg.float
+		float_attach: cfg.float_attach
 		cfg:          cfg.cfg
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char
