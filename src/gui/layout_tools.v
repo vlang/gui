@@ -70,7 +70,8 @@ fn (node Layout) get_focus_ids() []u32 {
 
 // spacing does the fence-post calculation for spacings
 fn (node &Layout) spacing() f32 {
-	return int_max(0, (node.children.len - 1)) * node.shape.spacing
+	children := node.children.filter(it.shape.type != .none)
+	return int_max(0, (children.len - 1)) * node.shape.spacing
 }
 
 // f32_are_equal tests if a and b are with tol

@@ -152,12 +152,7 @@ fn button_change_theme(app &App) gui.View {
 				on_click: fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
 					mut app := w.state[App]()
 					app.light = !app.light
-					theme := if app.light {
-						gui.theme_light
-					} else {
-						gui.theme_dark
-					}
-					w.set_theme(theme)
+					w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })
 					w.set_id_focus(1)
 					return true
 				}

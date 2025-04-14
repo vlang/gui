@@ -20,11 +20,20 @@ pub mut:
 // of a Layout
 fn layout_do(mut layout Layout, window &Window) []Layout {
 	mut layouts := [layout]
+	// Set the parents of all the nodes. This is used to
+	// compute relative floating layout coordinates
 	layout_parents(mut layout, unsafe { nil })
-	mut floating_layouts := layout_remove_floating_layouts(mut layout)
 
+	// floating layouts do not affect their parent or sibling elements
+	// They also complicate the fuck out of things.
+	mut floating_layouts := layout_remove_floating_layouts(mut layout)
+	float_layouts_fix_neseted_floats(mut floating_layouts)
+
+	// Compute the layout minus the floating elements.
 	layout_pipeline(mut layout, window)
 
+	// Compute the floating layouts. Because they are appended to
+	// the layout array, they get rendered after the main layout.
 	for mut floating_layout in floating_layouts {
 		layout_pipeline(mut floating_layout, window)
 		layouts << floating_layout
@@ -32,6 +41,12 @@ fn layout_do(mut layout Layout, window &Window) []Layout {
 	return layouts
 }
 
+// layout_pipeline makes multple passes over the layout.
+// Multple passes actually simply many of the layout
+// calculationsv by only dealing with one axis of
+// expansion/contraction at a time. Same for scroll offsets
+// and text wrapping. This logic mimics the logic presented
+// in Nic Barter's video referenced above.
 fn layout_pipeline(mut layout Layout, window &Window) {
 	layout_widths(mut layout)
 	layout_fill_widths(mut layout)
@@ -39,7 +54,7 @@ fn layout_pipeline(mut layout Layout, window &Window) {
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
 	layout_scroll_offsets(mut layout, layout.shape.scroll_v, window)
-	x, y := layout_float_attach(layout)
+	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y)
 	layout_disables(mut layout, false)
 	layout_amend(mut layout, window)
@@ -54,14 +69,17 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 	}
 }
 
-//
+// layout_remove_floating_layouts removes the layouts marked as floating
+// and puts an empty Layout node with no axis in its place. The empty
+// layout has no axis, height or width so it is effectively ignored by
+// the layout logic.
 fn layout_remove_floating_layouts(mut layout Layout) []Layout {
 	mut floating_layouts := []Layout{}
 	for i, mut child in layout.children {
 		if child.shape.float {
 			floating_layouts << child
+			floating_layouts << layout_remove_floating_layouts(mut child)
 			layout.children[i] = Layout{
-				// Probably not needed
 				parent: unsafe { layout }
 			}
 		} else {
@@ -471,9 +489,9 @@ fn layout_fill_heights(mut node Layout) {
 // layout_wrap_text is called after all widths in a Layout are determined.
 // Wrapping text can change the height of an Shape, which is why it is called
 // before computing Shape heights. Wrapping text can also alter the cursor
-// position. The first part of this function wraps the text with a zero-space
-// character inserted at the cursor position. After wrapping it recovers
-// the cursor position by looking for the zero-space character.
+// position of input views. The first part of this function wraps the text with
+// a zero-space character inserted at the cursor position. After wrapping it
+// recovers the cursor position by looking for the zero-space character.
 fn layout_wrap_text(mut node Layout, w &Window) {
 	if w.id_focus > 0 && w.id_focus == node.shape.id_focus && node.shape.type == .text {
 		// figure out where the dang cursor goes
@@ -521,6 +539,13 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 	}
 }
 
+// layout_scroll_offsets sets the scroll offsets of any scrollable
+// layouts and their children. It also sets the clipping rect for
+// those scrollable layouts. The rendering logic removes all items
+// outside the clipping rectangle but there is still the issue of
+// a layout shape that is partially overlapping the visible area
+// of the scrollable layout. For clipping rectangle is for these
+// partially overlapping layouts.
 fn layout_scroll_offsets(mut node Layout, offset_v f32, w &Window) {
 	mut offset := offset_v
 	if node.shape.id_scroll_v > 0 {
@@ -627,7 +652,8 @@ fn layout_disables(mut node Layout, disabled bool) {
 	}
 }
 
-// Handle focus, hover stuff here.
+// Handle focus, hover stuff here. Some things can not be known
+// until all the positions in the layout are computed.
 fn layout_amend(mut node Layout, w &Window) {
 	for mut child in node.children {
 		layout_amend(mut child, w)
