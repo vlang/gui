@@ -36,7 +36,6 @@ fn main() {
 			w.set_id_focus(1)
 		}
 	)
-	println(font.default())
 	window.run()
 }
 

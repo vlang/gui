@@ -1,6 +1,6 @@
 module gui
 
-pub const radius_none = 0
+pub const radius_none = f32(0)
 pub const radius_small = f32(3)
 pub const radius_medium = f32(5)
 pub const radius_large = f32(7)
@@ -240,6 +240,24 @@ pub const theme_dark = theme_maker(
 	text_style:         text_style_dark
 )
 
+pub const theme_dark_no_padding = theme_maker(
+	name:               'dark'
+	color_0:            color_0_dark
+	color_1:            color_1_dark
+	color_2:            color_2_dark
+	color_3:            color_3_dark
+	color_4:            color_4_dark
+	color_5:            color_5_dark
+	color_border:       color_border_dark
+	color_border_focus: color_link_dark
+	color_link:         color_link_dark
+	text_style:         text_style_dark
+	padding:            padding_none
+	padding_border:     padding_none
+	radius:             radius_none
+	radius_border:      radius_none
+)
+
 const color_text_light = rgb(32, 32, 32)
 const color_0_light = rgb(225, 225, 225)
 const color_1_light = rgb(150, 150, 255)
@@ -266,6 +284,27 @@ pub const theme_light = theme_maker(
 		...text_style_dark
 		color: color_text_light
 	}
+)
+
+pub const theme_light_no_padding = theme_maker(
+	name:               'light'
+	color_0:            color_0_light
+	color_1:            color_1_light
+	color_2:            color_2_light
+	color_3:            color_3_light
+	color_4:            color_4_light
+	color_5:            color_5_light
+	color_border:       color_border_light
+	color_link:         color_link_light
+	color_border_focus: color_border_focus_light
+	text_style:         TextStyle{
+		...text_style_dark
+		color: color_text_light
+	}
+	padding:            padding_none
+	padding_border:     padding_none
+	radius:             radius_none
+	radius_border:      radius_none
 )
 
 // theme_maker sets all styles to a common set of values (ThemeCfg)
