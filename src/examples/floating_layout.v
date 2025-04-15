@@ -35,52 +35,7 @@ fn main_view(window &gui.Window) gui.View {
 				v_align: .middle
 				content: [
 					gui.text(text: 'File'),
-					gui.column(
-						id:      '0'
-						spacing: 0
-						padding: gui.padding_none
-						content: [
-							gui.text(text: 'Edit'),
-							gui.column(
-								id:           '1'
-								float:        true
-								float_attach: .bottom_left
-								min_width:    75
-								max_width:    100
-								color:        gui.Color{
-									...gui.theme().color_4
-									a: 210
-								}
-								fill:         true
-								content:      [
-									gui.text(text: 'Cut'),
-									gui.text(text: 'Copy'),
-									gui.row(
-										sizing:  gui.fill_fit
-										padding: gui.padding_none
-										content: [
-											gui.text(text: 'Paste >'),
-											gui.column(
-												float:        true
-												float_attach: .middle_right
-												min_width:    75
-												max_width:    100
-												fill:         true
-												color:        gui.Color{
-													...gui.theme().color_4
-													a: 210
-												}
-												content:      [
-													gui.text(text: 'Clean'),
-													gui.text(text: 'Selection'),
-												]
-											),
-										]
-									),
-								]
-							),
-						]
-					),
+					edit_menu(app),
 					gui.rectangle(sizing: gui.fill_fit),
 					theme_button(app),
 				]
@@ -101,6 +56,54 @@ fn main_view(window &gui.Window) gui.View {
 						fill:      true
 						sizing:    gui.fill_fill
 						min_width: 100
+					),
+				]
+			),
+		]
+	)
+}
+
+fn edit_menu(app &App) gui.View {
+	return gui.column(
+		spacing: 0
+		padding: gui.padding_none
+		content: [
+			gui.text(text: 'Edit'),
+			gui.column(
+				float:        true
+				float_attach: .bottom_left
+				min_width:    75
+				max_width:    100
+				color:        gui.Color{
+					...gui.theme().color_4
+					a: 210
+				}
+				fill:         true
+				content:      [
+					gui.text(text: 'Cut'),
+					gui.text(text: 'Copy'),
+					gui.row(
+						sizing:  gui.fill_fit
+						padding: gui.padding_none
+						content: [
+							gui.text(text: 'Paste >'),
+							gui.column(
+								float:          true
+								float_attach:   .middle_right
+								float_offset_x: 5
+								min_width:      75
+								max_width:      100
+								fill:           true
+								color:          gui.Color{
+									...gui.theme().color_4
+									a: 210
+								}
+								content:        [
+									gui.text(text: 'Clean'),
+									gui.text(text: 'Selection'),
+								]
+							),
+						]
 					),
 				]
 			),

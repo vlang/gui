@@ -12,6 +12,8 @@ pub:
 	id_focus           u32
 	float              bool
 	float_attach       FloatAttach
+	float_offset_x     f32
+	float_offset_y     f32
 	h_align            HorizontalAlign = .center
 	v_align            VerticalAlign   = .middle
 	content            []View
@@ -47,27 +49,29 @@ pub:
 // ```
 pub fn button(cfg ButtonCfg) View {
 	return row(
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		color:        cfg.color_border
-		padding:      cfg.padding_border
-		fill:         cfg.fill_border
-		radius:       cfg.radius_border
-		width:        cfg.width
-		height:       cfg.height
-		disabled:     cfg.disabled
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
-		min_height:   cfg.min_height
-		max_height:   cfg.max_height
-		sizing:       cfg.sizing
-		float:        cfg.float
-		float_attach: cfg.float_attach
-		cfg:          &cfg
-		on_click:     cfg.on_click
-		on_char:      on_char_button
-		amend_layout: cfg.amend_layout
-		content:      [
+		id:             cfg.id
+		id_focus:       cfg.id_focus
+		color:          cfg.color_border
+		padding:        cfg.padding_border
+		fill:           cfg.fill_border
+		radius:         cfg.radius_border
+		width:          cfg.width
+		height:         cfg.height
+		disabled:       cfg.disabled
+		min_width:      cfg.min_width
+		max_width:      cfg.max_width
+		min_height:     cfg.min_height
+		max_height:     cfg.max_height
+		sizing:         cfg.sizing
+		float:          cfg.float
+		float_attach:   cfg.float_attach
+		float_offset_x: cfg.float_offset_x
+		float_offset_y: cfg.float_offset_y
+		cfg:            &cfg
+		on_click:       cfg.on_click
+		on_char:        on_char_button
+		amend_layout:   cfg.amend_layout
+		content:        [
 			row(
 				sizing:  fill_fill
 				h_align: cfg.h_align

@@ -5,17 +5,15 @@ import rand
 // Shape is the only data structure in GUI used to draw to the screen.
 pub struct Shape {
 pub mut:
-	id           string // user assigned
-	type         ShapeType
-	uid          u64 = rand.u64() // internal use only
-	axis         Axis
-	cfg          voidptr
-	clip         bool
-	color        Color
-	disabled     bool
-	id_focus     u32 // >0 indicates shape is focusable. Value determines tabbing order
-	float        bool
-	float_attach FloatAttach
+	id       string // user assigned
+	type     ShapeType
+	uid      u64 = rand.u64() // internal use only
+	axis     Axis
+	cfg      voidptr
+	clip     bool
+	color    Color
+	disabled bool
+	id_focus u32 // >0 indicates shape is focusable. Value determines tabbing order
 	// sizes, positions
 	x          f32
 	y          f32
@@ -43,7 +41,12 @@ pub mut:
 	// scroll
 	id_scroll_v u32 // >0 indicates shape is scrollable
 	scroll_v    f32
-	/// callbacks
+	// float
+	float          bool
+	float_attach   FloatAttach
+	float_offset_x f32
+	float_offset_y f32
+	// callbacks
 	on_char      fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_click     fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_keydown   fn (voidptr, &Event, &Window) bool = unsafe { nil }

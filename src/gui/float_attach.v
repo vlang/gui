@@ -31,6 +31,8 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 		.bottom_center { x + parent.width / 2, y + parent.height }
 		.bottom_right { x + parent.width, y + parent.height }
 	}
+	x += layout.shape.float_offset_x
+	y += layout.shape.float_offset_y
 	return x, y
 }
 
