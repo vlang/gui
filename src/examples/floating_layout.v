@@ -35,7 +35,7 @@ fn main_view(window &gui.Window) gui.View {
 				v_align: .middle
 				content: [
 					gui.text(text: 'File'),
-					edit_menu(app),
+					faux_edit_menu(app),
 					gui.rectangle(sizing: gui.fill_fit),
 					theme_button(app),
 				]
@@ -59,11 +59,23 @@ fn main_view(window &gui.Window) gui.View {
 					),
 				]
 			),
+			gui.column(
+				float:         true
+				h_align:       .center
+				float_anchor:  .middle_center
+				float_tie_off: .middle_center
+				color:         gui.theme().color_5
+				fill:          true
+				content:       [
+					gui.text(text: 'Floating column with content', text_style: gui.theme().b1),
+					gui.button(content: [gui.text(text: 'OK')]),
+				]
+			),
 		]
 	)
 }
 
-fn edit_menu(app &App) gui.View {
+fn faux_edit_menu(app &App) gui.View {
 	return gui.column(
 		spacing: 0
 		padding: gui.padding_none
@@ -71,7 +83,7 @@ fn edit_menu(app &App) gui.View {
 			gui.text(text: 'Edit'),
 			gui.column(
 				float:        true
-				float_attach: .bottom_left
+				float_anchor: .bottom_left
 				min_width:    75
 				max_width:    100
 				color:        gui.Color{
@@ -89,7 +101,7 @@ fn edit_menu(app &App) gui.View {
 							gui.text(text: 'Paste >'),
 							gui.column(
 								float:          true
-								float_attach:   .middle_right
+								float_anchor:   .middle_right
 								float_offset_x: 5
 								min_width:      75
 								max_width:      100

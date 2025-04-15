@@ -43,7 +43,8 @@ pub mut:
 	scroll_v    f32
 	// float
 	float          bool
-	float_attach   FloatAttach
+	float_anchor   FloatAttach
+	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
 	// callbacks

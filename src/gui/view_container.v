@@ -26,7 +26,8 @@ pub struct Container implements View {
 	text           string
 	id_scroll_v    u32
 	float          bool
-	float_attach   FloatAttach
+	float_anchor   FloatAttach
+	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
 	on_char        fn (voidptr, &Event, &Window) bool = unsafe { nil }
@@ -65,7 +66,8 @@ fn (cfg &Container) generate(_ &gg.Context) Layout {
 			color:          cfg.color
 			disabled:       cfg.disabled
 			float:          cfg.float
-			float_attach:   cfg.float_attach
+			float_anchor:   cfg.float_anchor
+			float_tie_off:  cfg.float_tie_off
 			float_offset_x: cfg.float_offset_x
 			float_offset_y: cfg.float_offset_y
 			text:           cfg.text
@@ -102,7 +104,8 @@ pub:
 	color          Color   = gui_theme.container_style.color
 	fill           bool    = gui_theme.container_style.fill
 	float          bool
-	float_attach   FloatAttach
+	float_anchor   FloatAttach
+	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
 	on_char        fn (voidptr, &Event, &Window) bool = unsafe { nil }
@@ -140,7 +143,8 @@ fn container(cfg ContainerCfg) Container {
 		text:           cfg.text
 		id_scroll_v:    cfg.id_scroll_v
 		float:          cfg.float
-		float_attach:   cfg.float_attach
+		float_anchor:   cfg.float_anchor
+		float_tie_off:  cfg.float_tie_off
 		float_offset_x: cfg.float_offset_x
 		float_offset_y: cfg.float_offset_y
 		cfg:            cfg.cfg

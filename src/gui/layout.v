@@ -634,10 +634,12 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 
 		layout_positions(mut child, x + x_align, y + y_align)
 
-		match axis {
-			.left_to_right { x += child.shape.width + spacing }
-			.top_to_bottom { y += child.shape.height + spacing }
-			.none {}
+		if child.shape.type != .none {
+			match axis {
+				.left_to_right { x += child.shape.width + spacing }
+				.top_to_bottom { y += child.shape.height + spacing }
+				.none {}
+			}
 		}
 	}
 }
