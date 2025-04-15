@@ -54,6 +54,7 @@ pub fn button(cfg ButtonCfg) View {
 		width:        cfg.width
 		height:       cfg.height
 		disabled:     cfg.disabled
+		invisible:    cfg.invisible
 		min_width:    cfg.min_width
 		max_width:    cfg.max_width
 		min_height:   cfg.min_height

@@ -23,6 +23,7 @@ pub struct Container implements View {
 	radius         f32
 	color          Color
 	disabled       bool
+	invisible      bool
 	text           string
 	id_scroll_v    u32
 	float          bool
@@ -41,6 +42,9 @@ mut:
 }
 
 fn (cfg &Container) generate(_ &gg.Context) Layout {
+	if cfg.invisible {
+		return Layout{}
+	}
 	return Layout{
 		shape: Shape{
 			id:             cfg.id
@@ -140,6 +144,7 @@ fn container(cfg ContainerCfg) Container {
 		sizing:         cfg.sizing
 		spacing:        cfg.spacing
 		disabled:       cfg.disabled
+		invisible:      cfg.invisible
 		text:           cfg.text
 		id_scroll_v:    cfg.id_scroll_v
 		float:          cfg.float

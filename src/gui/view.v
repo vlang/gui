@@ -26,6 +26,7 @@ pub:
 	max_width  f32
 	max_height f32
 	disabled   bool
+	invisible  bool
 	sizing     Sizing
 }
 

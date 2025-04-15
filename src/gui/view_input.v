@@ -52,6 +52,7 @@ pub fn input(cfg InputCfg) View {
 		sizing:       cfg.sizing
 		radius:       cfg.radius_border
 		disabled:     cfg.disabled
+		invisible:    cfg.invisible
 		on_char:      on_char_input
 		on_click:     on_click_input
 		on_keydown:   on_keydown_input

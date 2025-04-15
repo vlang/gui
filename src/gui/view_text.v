@@ -9,6 +9,7 @@ struct Text implements View {
 	id_focus u32 // >0 indicates text is focusable. Value indiciates tabbing order
 mut:
 	clip        bool
+	invisible   bool
 	disabled    bool
 	keep_spaces bool
 	min_width   f32
@@ -23,6 +24,9 @@ mut:
 }
 
 fn (t Text) generate(ctx &gg.Context) Layout {
+	if t.invisible {
+		return Layout{}
+	}
 	mut shape_tree := Layout{
 		shape: Shape{
 			type:        .text
@@ -60,6 +64,7 @@ pub:
 	id_focus    u32
 	clip        bool
 	disabled    bool
+	invisible   bool
 	keep_spaces bool
 	min_width   f32
 	spacing     f32 = gui_theme.text_style.spacing
@@ -76,6 +81,7 @@ pub fn text(cfg TextCfg) Text {
 		id:          cfg.id
 		id_focus:    cfg.id_focus
 		clip:        cfg.clip
+		invisible:   cfg.invisible
 		keep_spaces: cfg.keep_spaces
 		min_width:   cfg.min_width
 		spacing:     cfg.spacing

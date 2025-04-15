@@ -24,6 +24,7 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 		min_height:   cfg.min_height
 		max_height:   cfg.max_height
 		disabled:     cfg.disabled
+		invisible:    cfg.invisible
 		color:        cfg.color
 		radius:       cfg.radius
 		sizing:       cfg.sizing

@@ -61,13 +61,13 @@ fn main_view(window &gui.Window) gui.View {
 			),
 			gui.column(
 				float:         true
-				h_align:       .center
 				float_anchor:  .middle_center
 				float_tie_off: .middle_center
+				h_align:       .center
 				color:         gui.theme().color_5
 				fill:          true
 				content:       [
-					gui.text(text: 'Floating column with content', text_style: gui.theme().b1),
+					gui.text(text: 'Floating column with content', text_style: gui.theme().b2),
 					gui.button(content: [gui.text(text: 'OK')]),
 				]
 			),

@@ -21,6 +21,7 @@ pub fn rectangle(cfg RectangleCfg) Container {
 		min_height: cfg.height
 		sizing:     cfg.sizing
 		disabled:   cfg.disabled
+		invisible:  cfg.invisible
 		color:      cfg.color
 		fill:       cfg.fill
 		padding:    padding_none
