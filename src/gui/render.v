@@ -184,22 +184,25 @@ fn render_rectangle(shape Shape, offset_v f32) []Renderer {
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
 fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
-	assert shape.type == .text
-	mut renderers := []Renderer{}
-	mut y := shape.y + offset_v
-	color := if shape.disabled {
-		dim_alpha(shape.text_style.color)
-	} else {
-		shape.text_style.color
-	}
+	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
 	mut text_cfg := TextStyle{
 		...shape.text_style
 		color: color
 	}.to_text_cfg()
+
+	ctx.set_text_cfg(text_cfg)
 	lh := line_height(shape, ctx)
 	renderer_rect := make_renderer_rect(shape)
 
+	mut char_count := 0
+	mut y := shape.y + offset_v
+	mut renderers := []Renderer{}
+	beg := int(shape.text_sel_beg)
+	end := int(shape.text_sel_end)
+
 	for line in shape.text_lines {
+		lnr := line.runes()
+		len := lnr.len
 		draw_rect := gg.Rect{
 			x:      shape.x
 			y:      y
@@ -214,10 +217,32 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 				text: line
 				cfg:  text_cfg
 			}
+
+			// Draw text selection
+			if beg < char_count + len && end > beg {
+				s := if beg >= char_count && beg < char_count + len { beg - char_count } else { 0 }
+				e := if end > char_count + len { len } else { end - char_count }
+				if s < e {
+					sb := ctx.text_width(lnr[..s].string())
+					se := ctx.text_width(lnr[s..e].string())
+					renderers << DrawRect{
+						x:     draw_rect.x + sb
+						y:     draw_rect.y
+						w:     se
+						h:     draw_rect.height
+						color: gx.Color{
+							...text_cfg.color
+							a: 60
+						}
+					}
+				}
+			}
 		}
 		y += lh
+		char_count += len
 	}
 
+	// Draw text cursor
 	if shape.text_cursor_x >= 0 && shape.text_cursor_y >= 0 {
 		if shape.text_cursor_y < shape.text_lines.len {
 			ln := shape.text_lines[shape.text_cursor_y]
@@ -243,9 +268,6 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 // render_clip creates a clipping region based on the layout's dimensions
 // minus padding and some adjustments for round off.
 fn render_clip(shape Shape, mut clip_stack ClipStack) Renderer {
-	// Appears to be some round-off issues in sokol's clipping that cause
-	// off by one errors. Not a big deal. Bump the region out by one in
-	// either direction to compensate.
 	clip_rect := shape_clip_rect(shape)
 	clip := DrawClip{
 		x:      clip_rect.x

@@ -6,6 +6,7 @@ import rand
 pub struct Shape {
 pub mut:
 	id       string // user assigned
+	id_focus u32    // >0 indicates shape is focusable. Value determines tabbing order
 	type     ShapeType
 	uid      u64 = rand.u64() // internal use only
 	axis     Axis
@@ -13,7 +14,6 @@ pub mut:
 	clip     bool
 	color    Color
 	disabled bool
-	id_focus u32 // >0 indicates shape is focusable. Value determines tabbing order
 	// --- sizes, positions ---
 	x          f32
 	y          f32
@@ -35,7 +35,7 @@ pub mut:
 	text_lines        []string
 	text_style        TextStyle
 	text_wrap         bool
-	text_line_spacing f32
+	text_line_spacing f32 // additional to normal line spacing
 	text_keep_spaces  bool
 	text_cursor_x     int = -1
 	text_cursor_y     int = -1
@@ -50,7 +50,7 @@ pub mut:
 	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
-	// callbacks
+	// --- callbacks ---
 	on_char         fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_click        fn (voidptr, &Event, &Window) bool = unsafe { nil }
 	on_keydown      fn (voidptr, &Event, &Window) bool = unsafe { nil }
