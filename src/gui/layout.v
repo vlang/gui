@@ -507,10 +507,8 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 			zero_space := '\xe2\x80\x8b'
 			text := node.shape.text[..cursor_pos] + zero_space + node.shape.text[cursor_pos..]
 			mut shape := Shape{
-				text:       text
-				lines:      [text]
-				text_style: node.shape.text_style
-				wrap:       node.shape.wrap
+				...node.shape
+				text: text
 			}
 			text_wrap(mut shape, w.ui)
 
