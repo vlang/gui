@@ -493,7 +493,7 @@ fn layout_fill_heights(mut node Layout) {
 // a zero-space character inserted at the cursor position. After wrapping it
 // recovers the cursor position by looking for the zero-space character.
 fn layout_wrap_text(mut node Layout, w &Window) {
-	if w.id_focus > 0 && w.id_focus == node.shape.id_focus && node.shape.type == .text {
+	if w.is_focus(node.shape.id_focus) && node.shape.type == .text {
 		// figure out where the dang cursor goes
 		node.shape.cursor_x = 0
 		node.shape.cursor_y = 0
@@ -508,11 +508,12 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 			text := node.shape.text[..cursor_pos] + zero_space + node.shape.text[cursor_pos..]
 			mut shape := Shape{
 				...node.shape
-				text: text
+				text:  text
+				lines: [text]
 			}
 			text_wrap(mut shape, w.ui)
 
-			// After wrapping, find the zero-space cursor_y is the
+			// After wrapping, find the zero-space. cursor_y is the
 			// index into the shape.lines array cursor_x is
 			// character index of that indexed line
 			zero_space_rune := zero_space.runes()[0]

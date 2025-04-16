@@ -20,7 +20,6 @@ mut:
 	wrap        bool
 	cfg         TextCfg
 	content     []View
-	on_click    fn (&TextCfg, &Event, &Window) bool = text_click_handler
 }
 
 fn (t Text) generate(ctx &gg.Context) Layout {
@@ -42,7 +41,6 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 			sizing:      t.sizing
 			spacing:     t.spacing
 			wrap:        t.wrap
-			on_click:    t.on_click
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -96,10 +94,4 @@ pub fn text(cfg TextCfg) Text {
 		}
 		disabled:    cfg.disabled
 	}
-}
-
-// should be mouse down handler.
-fn text_click_handler(cfg &TextCfg, e &Event, w &Window) bool {
-	println('${e.mouse_x}, ${e.mouse_y}')
-	return false
 }

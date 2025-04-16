@@ -48,10 +48,12 @@ pub mut:
 	float_offset_x f32
 	float_offset_y f32
 	// callbacks
-	on_char      fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_click     fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_keydown   fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	amend_layout fn (mut Layout, &Window)           = unsafe { nil }
+	on_char         fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_click        fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_keydown      fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_click_layout fn (&Layout, &Event, &Window) bool = unsafe { nil }
+
+	amend_layout fn (mut Layout, &Window) = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.

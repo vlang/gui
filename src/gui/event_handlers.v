@@ -25,15 +25,17 @@ fn click_handler(node Layout, e &Event, mut w Window) bool {
 			if node.shape.id_focus > 0 {
 				w.set_id_focus(node.shape.id_focus)
 			}
-			// make click handler mouse coordinates
-			// relative to node.shape
-			mouse_x := e.mouse_x - node.shape.x
-			mouse_y := e.mouse_y - node.shape.y
+			// make click handler mouse coordinates relative to node.shape
 			ev := &Event{
 				...e
 				touches: e.touches // runtime mem error otherwise
-				mouse_x: mouse_x
-				mouse_y: mouse_y
+				mouse_x: e.mouse_x - node.shape.x
+				mouse_y: e.mouse_y - node.shape.y
+			}
+			if node.shape.on_click_layout != unsafe { nil } {
+				if node.shape.on_click_layout(node, ev, w) {
+					return true
+				}
 			}
 			if node.shape.on_click != unsafe { nil } {
 				if node.shape.on_click(node.shape.cfg, ev, w) {

@@ -38,27 +38,27 @@ pub:
 pub fn input(cfg InputCfg) View {
 	assert cfg.id_focus != 0
 	return row(
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		width:        cfg.width
-		height:       cfg.height
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
-		min_height:   cfg.min_height
-		max_height:   cfg.max_height
-		padding:      cfg.padding_border
-		color:        cfg.color_border
-		fill:         cfg.fill_border
-		sizing:       cfg.sizing
-		radius:       cfg.radius_border
-		disabled:     cfg.disabled
-		invisible:    cfg.invisible
-		on_char:      on_char_input
-		on_click:     on_click_input
-		on_keydown:   on_keydown_input
-		amend_layout: cfg.amend_layout
-		cfg:          &cfg
-		content:      [
+		id:              cfg.id
+		id_focus:        cfg.id_focus
+		width:           cfg.width
+		height:          cfg.height
+		min_width:       cfg.min_width
+		max_width:       cfg.max_width
+		min_height:      cfg.min_height
+		max_height:      cfg.max_height
+		padding:         cfg.padding_border
+		color:           cfg.color_border
+		fill:            cfg.fill_border
+		sizing:          cfg.sizing
+		radius:          cfg.radius_border
+		disabled:        cfg.disabled
+		invisible:       cfg.invisible
+		on_char:         on_char_input
+		on_click_layout: on_click_input
+		on_keydown:      on_keydown_input
+		amend_layout:    cfg.amend_layout
+		cfg:             &cfg
+		content:         [
 			row(
 				color:   cfg.color
 				padding: cfg.padding
@@ -136,15 +136,48 @@ fn on_char_input(cfg &InputCfg, event &Event, mut w Window) bool {
 	return false
 }
 
-fn on_click_input(cfg &InputCfg, e &Event, mut w Window) bool {
+fn on_click_input(layout &Layout, e &Event, mut w Window) bool {
 	if e.mouse_button == .left {
+		// adjust mouse coordinates relative to inner text view
+		ev := &Event{
+			...e
+			touches: e.touches // avoid mem crash
+			mouse_x: e.mouse_x - layout.children[0].shape.padding.left +
+				layout.children[0].children[0].shape.padding.left
+			mouse_y: e.mouse_y - layout.children[0].shape.padding.top +
+				layout.children[0].children[0].shape.padding.top
+		}
+		// compute cursor_pos from mouse coordinates
+		cursor_pos := mouse_cursor_pos(layout.children[0].children[0].shape, ev, mut w)
 		w.input_state[w.id_focus] = InputState{
 			...w.input_state[w.id_focus]
-			cursor_pos: cfg.text.len
+			cursor_pos: cursor_pos
 		}
 		return true
 	}
 	return false
+}
+
+// mouse_cursor_pos determines where in the input control's text
+// field the click occured. Works with multiple line text fields.
+fn mouse_cursor_pos(shape Shape, e &Event, mut w Window) int {
+	lh := shape.text_style.size + shape.text_style.spacing
+	y := int(e.mouse_y / lh)
+	if y >= 0 && y < shape.lines.len {
+		mut ln := ''
+		for i, r in shape.lines[y].runes() {
+			ln += r.str()
+			tw := get_text_width(ln, shape.text_style, mut w)
+			if tw >= e.mouse_x {
+				mut count := 0
+				for line in shape.lines[..y] {
+					count += line.len
+				}
+				return count + i
+			}
+		}
+	}
+	return shape.text.len
 }
 
 fn on_keydown_input(cfg &InputCfg, e &Event, mut w Window) bool {
