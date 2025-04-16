@@ -15,7 +15,7 @@ pub const size_text_x_large = 26
 pub const spacing_small = 5
 pub const spacing_medium = 10
 pub const spacing_large = 15
-pub const spacing_text = 0 // additional line height
+pub const text_line_spacing = f32(0) // additional line height
 
 pub const color_transparent = rgba(0, 0, 0, 0)
 
@@ -35,9 +35,9 @@ const scroll_delta_page = 10
 const size_progress_bar = 10
 
 const text_style_dark = TextStyle{
-	color:   color_text_dark
-	size:    size_text_medium
-	spacing: spacing_text
+	color:        color_text_dark
+	size:         size_text_medium
+	line_spacing: text_line_spacing
 }
 
 pub struct Theme {
@@ -169,7 +169,7 @@ pub:
 	spacing_small  int = spacing_small
 	spacing_medium int = spacing_medium
 	spacing_large  int = spacing_large
-	spacing_text   int = spacing_text // additional line height
+	spacing_text   f32 = text_line_spacing // additional line height
 
 	size_text_tiny    int = size_text_tiny
 	size_text_x_small int = size_text_x_small
@@ -212,7 +212,7 @@ pub:
 	spacing_small  int = spacing_small
 	spacing_medium int = spacing_medium
 	spacing_large  int = spacing_large
-	spacing_text   int = spacing_text // additional line height
+	spacing_text   f32 = text_line_spacing // additional line height
 
 	size_text_tiny    int = size_text_tiny
 	size_text_x_small int = size_text_x_small

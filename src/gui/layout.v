@@ -495,8 +495,8 @@ fn layout_fill_heights(mut node Layout) {
 fn layout_wrap_text(mut node Layout, w &Window) {
 	if w.is_focus(node.shape.id_focus) && node.shape.type == .text {
 		// figure out where the dang cursor goes
-		node.shape.cursor_x = 0
-		node.shape.cursor_y = 0
+		node.shape.text_cursor_x = 0
+		node.shape.text_cursor_y = 0
 
 		input_state := w.input_state[w.id_focus]
 		cursor_pos := input_state.cursor_pos
@@ -508,22 +508,22 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 			text := node.shape.text[..cursor_pos] + zero_space + node.shape.text[cursor_pos..]
 			mut shape := Shape{
 				...node.shape
-				text:  text
-				lines: [text]
+				text:       text
+				text_lines: [text]
 			}
 			text_wrap(mut shape, w.ui)
 
 			// After wrapping, find the zero-space. cursor_y is the
-			// index into the shape.lines array cursor_x is
+			// index into the shape.text_lines array cursor_x is
 			// character index of that indexed line
 			zero_space_rune := zero_space.runes()[0]
-			for idx, ln in shape.lines {
+			for idx, ln in shape.text_lines {
 				pos := arrays.index_of_first(ln.runes(), fn [zero_space_rune] (idx int, elem rune) bool {
 					return elem == zero_space_rune
 				})
 				if pos >= 0 {
-					node.shape.cursor_x = int_min(pos, ln.len - 1)
-					node.shape.cursor_y = idx
+					node.shape.text_cursor_x = int_min(pos, ln.len - 1)
+					node.shape.text_cursor_y = idx
 					break
 				}
 			}

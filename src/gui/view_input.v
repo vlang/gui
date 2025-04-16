@@ -4,9 +4,9 @@ module gui
 pub struct InputCfg {
 	CommonCfg
 pub:
-	id_focus           u32 @[required] // !0 indicates input is focusable. Value indiciates tabbing order
-	text               string
-	spacing            f32
+	id_focus u32 @[required] // !0 indicates input is focusable. Value indiciates tabbing order
+	text     string
+	// spacing            f32
 	wrap               bool
 	padding            Padding                         = gui_theme.input_style.padding
 	padding_border     Padding                         = gui_theme.input_style.padding_border
@@ -62,7 +62,7 @@ pub fn input(cfg InputCfg) View {
 			row(
 				color:   cfg.color
 				padding: cfg.padding
-				spacing: cfg.spacing
+				// spacing: cfg.spacing
 				fill:    cfg.fill
 				sizing:  fill_fill
 				radius:  cfg.radius
@@ -161,16 +161,16 @@ fn on_click_input(layout &Layout, e &Event, mut w Window) bool {
 // mouse_cursor_pos determines where in the input control's text
 // field the click occured. Works with multiple line text fields.
 fn mouse_cursor_pos(shape Shape, e &Event, mut w Window) int {
-	lh := shape.text_style.size + shape.text_style.spacing
+	lh := shape.text_style.size + shape.text_style.line_spacing
 	y := int(e.mouse_y / lh)
-	if y >= 0 && y < shape.lines.len {
+	if y >= 0 && y < shape.text_lines.len {
 		mut ln := ''
-		for i, r in shape.lines[y].runes() {
+		for i, r in shape.text_lines[y].runes() {
 			ln += r.str()
 			tw := get_text_width(ln, shape.text_style, mut w)
 			if tw >= e.mouse_x {
 				mut count := 0
-				for line in shape.lines[..y] {
+				for line in shape.text_lines[..y] {
 					count += line.len
 				}
 				return count + i

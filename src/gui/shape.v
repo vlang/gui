@@ -14,7 +14,7 @@ pub mut:
 	color    Color
 	disabled bool
 	id_focus u32 // >0 indicates shape is focusable. Value determines tabbing order
-	// sizes, positions
+	// --- sizes, positions ---
 	x          f32
 	y          f32
 	width      f32
@@ -29,19 +29,22 @@ pub mut:
 	padding    Padding
 	radius     f32
 	sizing     Sizing
-	// text
-	text        string
-	lines       []string
-	text_style  TextStyle
-	wrap        bool
-	keep_spaces bool
-	spacing     f32 // addtional vertical space added to lines of text
-	cursor_x    int = -1
-	cursor_y    int = -1
-	// scroll
+	spacing    f32
+	// -- text ---
+	text              string
+	text_lines        []string
+	text_style        TextStyle
+	text_wrap         bool
+	text_line_spacing f32
+	text_keep_spaces  bool
+	text_cursor_x     int = -1
+	text_cursor_y     int = -1
+	text_sel_beg      u32
+	text_sel_end      u32
+	// --- scroll ---
 	id_scroll_v u32 // >0 indicates shape is scrollable
 	scroll_v    f32
-	// float
+	// --- float ---
 	float          bool
 	float_anchor   FloatAttach
 	float_tie_off  FloatAttach

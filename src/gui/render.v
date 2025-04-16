@@ -105,54 +105,52 @@ fn render_shape(shape Shape, parent_color Color, offset_v f32, ctx &gg.Context) 
 		return []
 	}
 	return match shape.type {
-		.container {
-			mut renderers := []Renderer{}
-			renderers << render_rectangle(shape, offset_v)
-			// This group box stuff is likely temporary
-			// Examine after floating containers implemented
-			if shape.text.len != 0 {
-				ctx.set_text_cfg(shape.text_style.to_text_cfg())
-				w, h := ctx.text_size(shape.text)
-				x := shape.x + 20
-				y := shape.y + offset_v
-				// erase portion of rectangle where text goes.
-				p_color := if shape.disabled {
-					dim_alpha(parent_color)
-				} else {
-					parent_color
-				}
-				renderers << DrawRect{
-					x:     x
-					y:     y - 2 - h / 2
-					w:     w
-					h:     h + 1
-					style: .fill
-					color: p_color.to_gx_color()
-				}
-				color := if shape.disabled {
-					dim_alpha(shape.text_style.color)
-				} else {
-					shape.text_style.color
-				}
-				renderers << DrawText{
-					x:    x
-					y:    y - h + 1.5
-					text: shape.text
-					cfg:  TextStyle{
-						...shape.text_style
-						color: color
-					}.to_text_cfg()
-				}
-			}
-			renderers
+		.container { render_container(shape, parent_color, offset_v, ctx) }
+		.text { render_text(shape, offset_v, ctx) }
+		.none { [] }
+	}
+}
+
+fn render_container(shape Shape, parent_color Color, offset_v f32, ctx &gg.Context) []Renderer {
+	mut renderers := []Renderer{}
+	renderers << render_rectangle(shape, offset_v)
+	// This group box stuff is likely temporary
+	// Examine after floating containers implemented
+	if shape.text.len != 0 {
+		ctx.set_text_cfg(shape.text_style.to_text_cfg())
+		w, h := ctx.text_size(shape.text)
+		x := shape.x + 20
+		y := shape.y + offset_v
+		// erase portion of rectangle where text goes.
+		p_color := if shape.disabled {
+			dim_alpha(parent_color)
+		} else {
+			parent_color
 		}
-		.text {
-			render_text(shape, offset_v, ctx)
+		renderers << DrawRect{
+			x:     x
+			y:     y - 2 - h / 2
+			w:     w
+			h:     h + 1
+			style: .fill
+			color: p_color.to_gx_color()
 		}
-		.none {
-			[]
+		color := if shape.disabled {
+			dim_alpha(shape.text_style.color)
+		} else {
+			shape.text_style.color
+		}
+		renderers << DrawText{
+			x:    x
+			y:    y - h + 1.5
+			text: shape.text
+			cfg:  TextStyle{
+				...shape.text_style
+				color: color
+			}.to_text_cfg()
 		}
 	}
+	return renderers
 }
 
 // draw_rectangle draws a shape as a rectangle.
@@ -201,7 +199,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	lh := line_height(shape, ctx)
 	renderer_rect := make_renderer_rect(shape)
 
-	for line in shape.lines {
+	for line in shape.text_lines {
 		draw_rect := gg.Rect{
 			x:      shape.x
 			y:      y
@@ -220,12 +218,12 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 		y += lh
 	}
 
-	if shape.cursor_x >= 0 && shape.cursor_y >= 0 {
-		if shape.cursor_y < shape.lines.len {
-			ln := shape.lines[shape.cursor_y]
-			if shape.cursor_x <= ln.len {
-				cx := shape.x + ctx.text_width(ln[..shape.cursor_x])
-				cy := shape.y + (lh * shape.cursor_y)
+	if shape.text_cursor_x >= 0 && shape.text_cursor_y >= 0 {
+		if shape.text_cursor_y < shape.text_lines.len {
+			ln := shape.text_lines[shape.text_cursor_y]
+			if shape.text_cursor_x <= ln.len {
+				cx := shape.x + ctx.text_width(ln[..shape.text_cursor_x])
+				cy := shape.y + (lh * shape.text_cursor_y)
 				renderers << DrawLine{
 					x:   cx
 					y:   cy

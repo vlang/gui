@@ -61,10 +61,10 @@ pub:
 
 pub struct TextStyle {
 pub:
-	color   Color
-	size    int
-	family  string
-	spacing int
+	color        Color
+	size         int
+	family       string
+	line_spacing f32
 }
 
 fn (tc TextStyle) to_text_cfg() gx.TextCfg {
