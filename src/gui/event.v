@@ -29,6 +29,15 @@ fn from_gg_event(e &gg.Event) &Event {
 	}
 }
 
+fn event_relative_to(shape Shape, e &Event) &Event {
+	return &Event{
+		...e
+		touches: e.touches // runtime mem error otherwise
+		mouse_x: e.mouse_x - shape.x
+		mouse_y: e.mouse_y - shape.y
+	}
+}
+
 pub struct Event {
 pub mut:
 	frame_count        u64

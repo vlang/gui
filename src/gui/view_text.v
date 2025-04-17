@@ -28,19 +28,24 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 	}
 	mut shape_tree := Layout{
 		shape: Shape{
-			type:              .text
-			id:                t.id
-			id_focus:          t.id_focus
-			clip:              t.clip
-			disabled:          t.disabled
-			min_width:         t.min_width
-			sizing:            t.sizing
-			text:              t.text
-			text_keep_spaces:  t.keep_spaces
-			text_lines:        [t.text]
-			text_line_spacing: t.line_spacing
-			text_style:        t.text_style
-			text_wrap:         t.wrap
+			type:                .text
+			id:                  t.id
+			id_focus:            t.id_focus
+			cfg:                 &TextCfg{
+				...t.cfg
+			}
+			clip:                t.clip
+			disabled:            t.disabled
+			min_width:           t.min_width
+			sizing:              t.sizing
+			text:                t.text
+			text_keep_spaces:    t.keep_spaces
+			text_lines:          [t.text]
+			text_line_spacing:   t.line_spacing
+			text_style:          t.text_style
+			text_wrap:           t.wrap
+			on_keydown_shape:    text_keydown_shape
+			on_mouse_down_shape: text_mouse_down_shape
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -87,11 +92,66 @@ pub fn text(cfg TextCfg) Text {
 		text_style:   cfg.text_style
 		wrap:         cfg.wrap
 		cfg:          &cfg
-		sizing:       if cfg.wrap {
-			fill_fit
-		} else {
-			fit_fit
-		}
+		sizing:       if cfg.wrap { fill_fit } else { fit_fit }
 		disabled:     cfg.disabled
 	}
+}
+
+fn text_mouse_down_shape(shape &Shape, e &Event, mut w Window) bool {
+	if e.mouse_button == .left {
+		ev := event_relative_to(shape, e)
+		cursor_pos := text_mouse_cursor_pos(shape, ev, mut w)
+		if w.is_focus(shape.id_focus) {
+			w.input_state[w.id_focus] = InputState{
+				...w.input_state[w.id_focus]
+				cursor_pos: cursor_pos
+			}
+			return true
+		}
+		// text selection goes here?
+	}
+	return false
+}
+
+// mouse_cursor_pos determines where in the input control's text
+// field the click occured. Works with multiple line text fields.
+fn text_mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
+	lh := shape.text_style.size + shape.text_style.line_spacing
+	y := int(e.mouse_y / lh)
+	if y >= 0 && y < shape.text_lines.len {
+		mut ln := ''
+		for i, r in shape.text_lines[y].runes() {
+			ln += r.str()
+			tw := get_text_width(ln, shape.text_style, mut w)
+			if tw >= e.mouse_x {
+				mut count := 0
+				for line in shape.text_lines[..y] {
+					count += line.len
+				}
+				return count + i
+			}
+		}
+	}
+	return shape.text.len
+}
+
+fn text_keydown_shape(shape &Shape, e &Event, mut w Window) bool {
+	if w.is_focus(shape.id_focus) {
+		cfg := unsafe { &TextCfg(shape.cfg) }
+		input_state := w.input_state[w.id_focus]
+		mut cursor_pos := input_state.cursor_pos
+		match e.key_code {
+			.left { cursor_pos = int_max(0, cursor_pos - 1) }
+			.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
+			.home { cursor_pos = 0 }
+			.end { cursor_pos = cfg.text.len }
+			else { return false }
+		}
+		w.input_state[w.id_focus] = InputState{
+			...input_state
+			cursor_pos: cursor_pos
+		}
+		return true
+	}
+	return false
 }

@@ -14,39 +14,6 @@ fn char_handler(node Layout, e &Event, w &Window) bool {
 	return false
 }
 
-fn click_handler(node Layout, e &Event, mut w Window) bool {
-	for child in node.children {
-		if click_handler(child, e, mut w) {
-			return true
-		}
-	}
-	if !node.shape.disabled {
-		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-			if node.shape.id_focus > 0 {
-				w.set_id_focus(node.shape.id_focus)
-			}
-			// make click handler mouse coordinates relative to node.shape
-			ev := &Event{
-				...e
-				touches: e.touches // runtime mem error otherwise
-				mouse_x: e.mouse_x - node.shape.x
-				mouse_y: e.mouse_y - node.shape.y
-			}
-			if node.shape.on_click_layout != unsafe { nil } {
-				if node.shape.on_click_layout(node, ev, w) {
-					return true
-				}
-			}
-			if node.shape.on_click != unsafe { nil } {
-				if node.shape.on_click(node.shape.cfg, ev, w) {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
 fn keydown_handler(node Layout, e &Event, mut w Window) bool {
 	for child in node.children {
 		if keydown_handler(child, e, mut w) {
@@ -54,13 +21,18 @@ fn keydown_handler(node Layout, e &Event, mut w Window) bool {
 		}
 	}
 	if !node.shape.disabled && w.is_focus(node.shape.id_focus) {
-		if node.shape.on_keydown != unsafe { nil } {
-			if node.shape.on_keydown(node.shape.cfg, e, w) {
+		if node.shape.on_keydown_shape != unsafe { nil } {
+			if node.shape.on_keydown_shape(node.shape, e, w) {
 				return true
 			}
 		}
 		if node.shape.id_scroll_v > 0 {
 			return key_down_scroll_handler(node, e, mut w)
+		}
+		if node.shape.on_keydown != unsafe { nil } {
+			if node.shape.on_keydown(node.shape.cfg, e, w) {
+				return true
+			}
 		}
 	}
 	return false
@@ -79,6 +51,34 @@ fn key_down_scroll_handler(node Layout, e &Event, mut w Window) bool {
 		.page_down { scroll_vertical(node, -delta_page, mut w) }
 		else { false }
 	}
+}
+
+fn mouse_down_handler(node Layout, e &Event, mut w Window) bool {
+	for child in node.children {
+		if mouse_down_handler(child, e, mut w) {
+			return true
+		}
+	}
+	if !node.shape.disabled {
+		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+			if node.shape.id_focus > 0 {
+				w.set_id_focus(node.shape.id_focus)
+			}
+			if node.shape.on_mouse_down_shape != unsafe { nil } {
+				if node.shape.on_mouse_down_shape(node.shape, e, w) {
+					return true
+				}
+			}
+			// make click handler mouse coordinates relative to node.shape
+			ev := event_relative_to(node.shape, e)
+			if node.shape.on_click != unsafe { nil } {
+				if node.shape.on_click(node.shape.cfg, ev, w) {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }
 
 fn mouse_scroll_handler(node Layout, e &Event, mut w Window) {

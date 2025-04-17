@@ -220,11 +220,11 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 
 			// Draw text selection
 			if beg < char_count + len && end > beg {
-				s := if beg >= char_count && beg < char_count + len { beg - char_count } else { 0 }
+				b := if beg >= char_count && beg < char_count + len { beg - char_count } else { 0 }
 				e := if end > char_count + len { len } else { end - char_count }
-				if s < e {
-					sb := ctx.text_width(lnr[..s].string())
-					se := ctx.text_width(lnr[s..e].string())
+				if b < e {
+					sb := ctx.text_width(lnr[..b].string())
+					se := ctx.text_width(lnr[b..e].string())
 					renderers << DrawRect{
 						x:     draw_rect.x + sb
 						y:     draw_rect.y
@@ -232,7 +232,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 						h:     draw_rect.height
 						color: gx.Color{
 							...text_cfg.color
-							a: 60
+							a: 60 // make themeable?
 						}
 					}
 				}

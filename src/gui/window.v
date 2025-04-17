@@ -142,7 +142,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		}
 		.mouse_down {
 			w.set_id_focus(0)
-			handled = click_handler(layout, e, mut w)
+			handled = mouse_down_handler(layout, e, mut w)
 		}
 		.mouse_move {
 			if w.pointer_over_app(e) {

@@ -3,39 +3,38 @@ module gui
 import gg
 
 pub struct Container implements View {
-	id              string
-	id_focus        u32 // not sure this should be here
-	x               f32
-	y               f32
-	width           f32
-	min_width       f32
-	max_width       f32
-	height          f32
-	min_height      f32
-	max_height      f32
-	clip            bool
-	spacing         f32
-	sizing          Sizing
-	padding         Padding
-	fill            bool
-	h_align         HorizontalAlign
-	v_align         VerticalAlign
-	radius          f32
-	color           Color
-	disabled        bool
-	invisible       bool
-	text            string
-	id_scroll_v     u32
-	float           bool
-	float_anchor    FloatAttach
-	float_tie_off   FloatAttach
-	float_offset_x  f32
-	float_offset_y  f32
-	on_char         fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_click        fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_keydown      fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_click_layout fn (&Layout, &Event, &Window) bool = unsafe { nil }
-	amend_layout    fn (mut Layout, &Window)           = unsafe { nil }
+	id             string
+	id_focus       u32 // not sure this should be here
+	x              f32
+	y              f32
+	width          f32
+	min_width      f32
+	max_width      f32
+	height         f32
+	min_height     f32
+	max_height     f32
+	clip           bool
+	spacing        f32
+	sizing         Sizing
+	padding        Padding
+	fill           bool
+	h_align        HorizontalAlign
+	v_align        VerticalAlign
+	radius         f32
+	color          Color
+	disabled       bool
+	invisible      bool
+	text           string
+	id_scroll_v    u32
+	float          bool
+	float_anchor   FloatAttach
+	float_tie_off  FloatAttach
+	float_offset_x f32
+	float_offset_y f32
+	on_char        fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_click       fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_keydown     fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	amend_layout   fn (mut Layout, &Window)           = unsafe { nil }
 mut:
 	axis    Axis
 	cfg     voidptr
@@ -48,45 +47,44 @@ fn (cfg &Container) generate(_ &gg.Context) Layout {
 	}
 	return Layout{
 		shape: Shape{
-			id:              cfg.id
-			id_focus:        cfg.id_focus
-			type:            .container
-			axis:            cfg.axis
-			x:               cfg.x
-			y:               cfg.y
-			width:           cfg.width
-			min_width:       cfg.min_width
-			max_width:       cfg.max_width
-			height:          cfg.height
-			min_height:      cfg.min_height
-			max_height:      cfg.max_height
-			clip:            cfg.clip
-			spacing:         cfg.spacing
-			sizing:          cfg.sizing
-			padding:         cfg.padding
-			fill:            cfg.fill
-			h_align:         cfg.h_align
-			v_align:         cfg.v_align
-			radius:          cfg.radius
-			color:           cfg.color
-			disabled:        cfg.disabled
-			float:           cfg.float
-			float_anchor:    cfg.float_anchor
-			float_tie_off:   cfg.float_tie_off
-			float_offset_x:  cfg.float_offset_x
-			float_offset_y:  cfg.float_offset_y
-			text:            cfg.text
-			text_style:      TextStyle{
+			id:             cfg.id
+			id_focus:       cfg.id_focus
+			type:           .container
+			axis:           cfg.axis
+			x:              cfg.x
+			y:              cfg.y
+			width:          cfg.width
+			min_width:      cfg.min_width
+			max_width:      cfg.max_width
+			height:         cfg.height
+			min_height:     cfg.min_height
+			max_height:     cfg.max_height
+			clip:           cfg.clip
+			spacing:        cfg.spacing
+			sizing:         cfg.sizing
+			padding:        cfg.padding
+			fill:           cfg.fill
+			h_align:        cfg.h_align
+			v_align:        cfg.v_align
+			radius:         cfg.radius
+			color:          cfg.color
+			disabled:       cfg.disabled
+			float:          cfg.float
+			float_anchor:   cfg.float_anchor
+			float_tie_off:  cfg.float_tie_off
+			float_offset_x: cfg.float_offset_x
+			float_offset_y: cfg.float_offset_y
+			text:           cfg.text
+			text_style:     TextStyle{
 				...gui_theme.text_style
 				color: cfg.color
 			}
-			cfg:             cfg.cfg
-			id_scroll_v:     cfg.id_scroll_v
-			on_click:        cfg.on_click
-			on_char:         cfg.on_char
-			on_keydown:      cfg.on_keydown
-			on_click_layout: cfg.on_click_layout
-			amend_layout:    cfg.amend_layout
+			cfg:            cfg.cfg
+			id_scroll_v:    cfg.id_scroll_v
+			on_click:       cfg.on_click
+			on_char:        cfg.on_char
+			on_keydown:     cfg.on_keydown
+			amend_layout:   cfg.amend_layout
 		}
 	}
 }
@@ -127,41 +125,40 @@ pub:
 // container to behave as a canvas with no additional layout.
 fn container(cfg ContainerCfg) Container {
 	return Container{
-		id:              cfg.id
-		id_focus:        cfg.id_focus
-		x:               cfg.x
-		y:               cfg.y
-		width:           cfg.width
-		min_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
-		max_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
-		height:          cfg.height
-		min_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
-		max_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
-		clip:            cfg.clip
-		color:           cfg.color
-		fill:            cfg.fill
-		h_align:         cfg.h_align
-		v_align:         cfg.v_align
-		padding:         cfg.padding
-		radius:          cfg.radius
-		sizing:          cfg.sizing
-		spacing:         cfg.spacing
-		disabled:        cfg.disabled
-		invisible:       cfg.invisible
-		text:            cfg.text
-		id_scroll_v:     cfg.id_scroll_v
-		float:           cfg.float
-		float_anchor:    cfg.float_anchor
-		float_tie_off:   cfg.float_tie_off
-		float_offset_x:  cfg.float_offset_x
-		float_offset_y:  cfg.float_offset_y
-		cfg:             cfg.cfg
-		on_click:        cfg.on_click
-		on_char:         cfg.on_char
-		on_keydown:      cfg.on_keydown
-		on_click_layout: cfg.on_click_layout
-		amend_layout:    cfg.amend_layout
-		content:         cfg.content
+		id:             cfg.id
+		id_focus:       cfg.id_focus
+		x:              cfg.x
+		y:              cfg.y
+		width:          cfg.width
+		min_width:      if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
+		max_width:      if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
+		height:         cfg.height
+		min_height:     if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
+		max_height:     if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
+		clip:           cfg.clip
+		color:          cfg.color
+		fill:           cfg.fill
+		h_align:        cfg.h_align
+		v_align:        cfg.v_align
+		padding:        cfg.padding
+		radius:         cfg.radius
+		sizing:         cfg.sizing
+		spacing:        cfg.spacing
+		disabled:       cfg.disabled
+		invisible:      cfg.invisible
+		text:           cfg.text
+		id_scroll_v:    cfg.id_scroll_v
+		float:          cfg.float
+		float_anchor:   cfg.float_anchor
+		float_tie_off:  cfg.float_tie_off
+		float_offset_x: cfg.float_offset_x
+		float_offset_y: cfg.float_offset_y
+		cfg:            cfg.cfg
+		on_click:       cfg.on_click
+		on_char:        cfg.on_char
+		on_keydown:     cfg.on_keydown
+		amend_layout:   cfg.amend_layout
+		content:        cfg.content
 	}
 }
 
