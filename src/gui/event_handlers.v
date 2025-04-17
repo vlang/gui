@@ -81,6 +81,28 @@ fn mouse_down_handler(node Layout, e &Event, mut w Window) bool {
 	return false
 }
 
+fn mouse_move_handler(node Layout, e &Event, mut w Window) bool {
+	if !w.pointer_over_app(e) {
+		return false
+	}
+	w.set_mouse_cursor_arrow()
+	for child in node.children {
+		if mouse_move_handler(child, e, mut w) {
+			return true
+		}
+	}
+	if !node.shape.disabled {
+		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+			if node.shape.on_mouse_move_shape != unsafe { nil } {
+				if node.shape.on_mouse_move_shape(node.shape, e, w) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 fn mouse_scroll_handler(node Layout, e &Event, mut w Window) {
 	for child in node.children {
 		mouse_scroll_handler(child, e, mut w)

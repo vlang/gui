@@ -141,13 +141,12 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			}
 		}
 		.mouse_down {
+			w.set_mouse_cursor_arrow()
 			w.set_id_focus(0)
 			handled = mouse_down_handler(layout, e, mut w)
 		}
 		.mouse_move {
-			if w.pointer_over_app(e) {
-				w.set_mouse_cursor_arrow()
-			}
+			mouse_move_handler(layout, e, mut w)
 		}
 		.mouse_scroll {
 			mouse_scroll_handler(layout, e, mut w)

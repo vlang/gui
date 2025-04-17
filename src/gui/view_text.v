@@ -26,6 +26,11 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 	if t.invisible {
 		return Layout{}
 	}
+	window := unsafe { &Window(ctx.user_data) }
+	input_state := match window.is_focus(t.id_focus) {
+		true { window.input_state[window.id_focus] }
+		else { InputState{} }
+	}
 	mut shape_tree := Layout{
 		shape: Shape{
 			type:                .text
@@ -44,8 +49,11 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 			text_line_spacing:   t.line_spacing
 			text_style:          t.text_style
 			text_wrap:           t.wrap
+			text_sel_beg:        input_state.select_beg
+			text_sel_end:        input_state.select_end
 			on_keydown_shape:    text_keydown_shape
 			on_mouse_down_shape: text_mouse_down_shape
+			on_mouse_move_shape: text_mouse_move_shape
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -98,19 +106,36 @@ pub fn text(cfg TextCfg) Text {
 }
 
 fn text_mouse_down_shape(shape &Shape, e &Event, mut w Window) bool {
-	if e.mouse_button == .left {
+	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
 		ev := event_relative_to(shape, e)
 		cursor_pos := text_mouse_cursor_pos(shape, ev, mut w)
-		if w.is_focus(shape.id_focus) {
-			w.input_state[w.id_focus] = InputState{
-				...w.input_state[w.id_focus]
-				cursor_pos: cursor_pos
-			}
-			return true
+		input_state := w.input_state[w.id_focus]
+		w.input_state[w.id_focus] = InputState{
+			...input_state
+			cursor_pos: cursor_pos
+			select_beg: 0
+			select_end: 0
 		}
-		// text selection goes here?
+		return true
 	}
 	return false
+}
+
+fn text_mouse_move_shape(shape &Shape, e &Event, mut w Window) bool {
+	// mouse move events don't have mouse button info. Use context.
+	if w.ui.mouse_buttons == .left && w.is_focus(shape.id_focus) {
+		ev := event_relative_to(shape, e)
+		end := u32(text_mouse_cursor_pos(shape, ev, mut w))
+		input_state := w.input_state[w.id_focus]
+		cursor_pos := u32(input_state.cursor_pos)
+		w.input_state[w.id_focus] = InputState{
+			...input_state
+			select_beg: if cursor_pos < end { cursor_pos } else { end }
+			select_end: if cursor_pos < end { end } else { cursor_pos }
+		}
+		return true
+	}
+	return true
 }
 
 // mouse_cursor_pos determines where in the input control's text

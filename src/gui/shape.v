@@ -57,6 +57,7 @@ pub mut:
 	// --- for internal use ---
 	on_keydown_shape    fn (&Shape, &Event, &Window) bool = unsafe { nil }
 	on_mouse_down_shape fn (&Shape, &Event, &Window) bool = unsafe { nil }
+	on_mouse_move_shape fn (&Shape, &Event, &Window) bool = unsafe { nil }
 	// mostly for hover and focus highlighting
 	amend_layout fn (mut Layout, &Window) = unsafe { nil }
 }
