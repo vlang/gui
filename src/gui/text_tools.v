@@ -10,9 +10,9 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) int 
 	key := text + htx
 	return window.text_widths[key] or {
 		ctx.set_text_cfg(text_style.to_text_cfg())
-		w := ctx.text_width(text)
-		window.text_widths[key] = w
-		w
+		t_width := ctx.text_width(text)
+		window.text_widths[key] = t_width
+		t_width
 	}
 }
 
@@ -25,21 +25,21 @@ fn text_width(shape Shape, ctx &gg.Context) int {
 		key := line + htx
 		width := window.text_widths[key] or {
 			ctx.set_text_cfg(text_cfg)
-			w := ctx.text_width(line)
-			window.text_widths[key] = w
-			w
+			t_width := ctx.text_width(line)
+			window.text_widths[key] = t_width
+			t_width
 		}
 		max_width = int_max(width, max_width)
 	}
 	return max_width
 }
 
-fn text_height(shape Shape, ctx &gg.Context) int {
-	lh := line_height(shape, ctx)
+fn text_height(shape Shape) int {
+	lh := line_height(shape)
 	return lh * shape.text_lines.len
 }
 
-fn line_height(shape Shape, _ gg.Context) int {
+fn line_height(shape Shape) int {
 	return int(shape.text_style.size + shape.text_line_spacing)
 }
 
@@ -52,7 +52,7 @@ fn text_wrap(mut shape Shape, ctx &gg.Context) {
 		}
 
 		shape.width = text_width(shape, ctx)
-		lh := line_height(shape, ctx)
+		lh := line_height(shape)
 		shape.max_height = shape.text_lines.len * lh
 		shape.height = shape.text_lines.len * lh
 		shape.min_height = shape.height

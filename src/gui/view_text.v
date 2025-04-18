@@ -57,7 +57,7 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
-	shape_tree.shape.height = text_height(shape_tree.shape, ctx)
+	shape_tree.shape.height = text_height(shape_tree.shape)
 	if !t.wrap || shape_tree.shape.sizing.width == .fixed {
 		shape_tree.shape.min_width = f32_max(shape_tree.shape.width, shape_tree.shape.min_width)
 		shape_tree.shape.width = shape_tree.shape.min_width
@@ -175,8 +175,33 @@ fn text_keydown_shape(shape &Shape, e &Event, mut w Window) bool {
 		w.input_state[w.id_focus] = InputState{
 			...input_state
 			cursor_pos: cursor_pos
+			select_beg: 0
+			select_end: 0
 		}
-		return true
+		// Extend/shrink selection
+		if e.modifiers == u32(gg.Modifier.shift) {
+			old_pos := u32(input_state.cursor_pos)
+			mut beg := input_state.select_beg
+			mut end := input_state.select_end
+			if beg == old_pos {
+				beg = u32(cursor_pos)
+			} else if end == old_pos {
+				end = u32(cursor_pos)
+			} else if cursor_pos > old_pos {
+				beg = old_pos
+				end = u32(cursor_pos)
+			} else if cursor_pos < old_pos {
+				beg = u32(cursor_pos)
+				end = old_pos
+			}
+			w.input_state[w.id_focus] = InputState{
+				...input_state
+				cursor_pos: cursor_pos
+				select_beg: beg
+				select_end: end
+			}
+			return true
+		}
 	}
 	return false
 }

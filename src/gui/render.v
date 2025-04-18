@@ -191,7 +191,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	}.to_text_cfg()
 
 	ctx.set_text_cfg(text_cfg)
-	lh := line_height(shape, ctx)
+	lh := line_height(shape)
 	renderer_rect := make_renderer_rect(shape)
 
 	mut char_count := 0

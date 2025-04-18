@@ -4,21 +4,21 @@ module gui
 pub struct InputCfg {
 	CommonCfg
 pub:
-	id_focus u32 @[required] // !0 indicates input is focusable. Value indiciates tabbing order
-	text     string
-	// spacing            f32
+	id_focus           u32 // 0 = readonly, >0 = focusable and tabbing order
+	text               string
 	wrap               bool
-	padding            Padding                         = gui_theme.input_style.padding
-	padding_border     Padding                         = gui_theme.input_style.padding_border
-	color              Color                           = gui_theme.input_style.color
-	color_border       Color                           = gui_theme.input_style.color_border
-	color_border_focus Color                           = gui_theme.input_style.color_border_focus
-	fill               bool                            = gui_theme.input_style.fill
-	fill_border        bool                            = gui_theme.input_style.fill_border
-	radius             f32                             = gui_theme.input_style.radius
-	radius_border      f32                             = gui_theme.input_style.radius_border
-	text_style         TextStyle                       = gui_theme.input_style.text_style
-	on_text_changed    fn (&InputCfg, string, &Window) = unsafe { nil } @[required]
+	padding            Padding   = gui_theme.input_style.padding
+	padding_border     Padding   = gui_theme.input_style.padding_border
+	color              Color     = gui_theme.input_style.color
+	color_border       Color     = gui_theme.input_style.color_border
+	color_border_focus Color     = gui_theme.input_style.color_border_focus
+	fill               bool      = gui_theme.input_style.fill
+	fill_border        bool      = gui_theme.input_style.fill_border
+	radius             f32       = gui_theme.input_style.radius
+	radius_border      f32       = gui_theme.input_style.radius_border
+	text_style         TextStyle = gui_theme.input_style.text_style
+	// update your app model here
+	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil }
 }
 
 // input is a text input field.
