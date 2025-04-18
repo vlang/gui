@@ -78,6 +78,7 @@ pub fn input(cfg InputCfg) View {
 	)
 }
 
+const z_c = 0x1A
 const bsp_c = 0x08
 const del_c = 0x7F
 const space_c = 0x20
@@ -85,53 +86,103 @@ const space_c = 0x20
 fn on_char_input(cfg &InputCfg, event &Event, mut w Window) bool {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
-		mut t := cfg.text
-		input_state := w.input_state[w.id_focus]
-		mut cursor_pos := input_state.cursor_pos
-		match c {
-			bsp_c, del_c {
-				if cursor_pos < 0 {
-					cursor_pos = cfg.text.len
-				} else if cursor_pos > 0 {
-					t = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
-					cursor_pos -= 1
-				}
+		mut t := ''
+		if c == z_c && event.modifiers == u32(Modifier.ctrl) {
+			input_state := w.input_state[cfg.id_focus]
+			mut undo := input_state.undo
+			memento := undo.pop() or { return false }
+			t = memento.text
+			w.input_state[cfg.id_focus] = InputState{
+				cursor_pos: memento.cursor_pos
+				select_beg: memento.select_beg
+				select_end: memento.select_end
+				undo:       undo
 			}
-			0...0x1F { // non-printables
-				return false
-			}
-			else {
-				if !cfg.wrap && cfg.sizing.width == .fixed { // clamp max chars to width of box when single line.
-					ctx := w.ui
-					ctx.set_text_cfg(cfg.text_style.to_text_cfg())
-					width := ctx.text_width(cfg.text + rune(c).str())
-					if width > (cfg.width - cfg.padding.left - cfg.padding.right) {
+		} else {
+			match c {
+				bsp_c, del_c {
+					t = cfg.remove(mut w) or {
+						eprintln(err)
 						return true
 					}
 				}
-				if cursor_pos < 0 {
-					t = cfg.text + rune(c).str()
-					cursor_pos = t.len
-				} else {
-					t = cfg.text[..cursor_pos] + rune(c).str() + cfg.text[cursor_pos..] or {
-						w.input_state[w.id_focus] = InputState{
-							...input_state
-							cursor_pos: cfg.text.len - 1
-						}
+				0...0x1F { // non-printables
+					return false
+				}
+				else {
+					t = cfg.insert(rune(c).str(), mut w) or {
+						eprintln(err)
 						return true
 					}
-					cursor_pos = int_min(cursor_pos + 1, t.len)
 				}
 			}
-		}
-		w.input_state[w.id_focus] = InputState{
-			...input_state
-			cursor_pos: cursor_pos
 		}
 		cfg.on_text_changed(cfg, t, w)
 		return true
 	}
 	return false
+}
+
+fn (cfg InputCfg) remove(mut w Window) !string {
+	input_state := w.input_state[cfg.id_focus]
+	mut cursor_pos := input_state.cursor_pos
+	mut t := cfg.text
+	if cursor_pos < 0 {
+		cursor_pos = cfg.text.len
+	} else if cursor_pos > 0 {
+		if input_state.select_beg != input_state.select_end {
+			t = t[..input_state.select_beg] + t[input_state.select_end..]
+			cursor_pos = int_min(int(input_state.select_beg + 1), t.len)
+		} else {
+			t = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
+			cursor_pos -= 1
+		}
+	}
+	w.input_state[w.id_focus] = InputState{
+		cursor_pos: cursor_pos
+		select_beg: 0
+		select_end: 0
+	}
+	return t
+}
+
+fn (cfg InputCfg) insert(s string, mut w Window) !string {
+	// clamp max chars to width of box when single line.
+	if !cfg.wrap && cfg.sizing.width == .fixed {
+		ctx := w.ui
+		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
+		width := ctx.text_width(cfg.text + s)
+		if width > cfg.width - cfg.padding.width() {
+			return s
+		}
+	}
+	input_state := w.input_state[cfg.id_focus]
+	mut cursor_pos := input_state.cursor_pos
+	mut t := cfg.text
+	if cursor_pos < 0 {
+		t = cfg.text + s
+		cursor_pos = t.len
+	} else if input_state.select_beg != input_state.select_end {
+		t = t[..input_state.select_beg] + s + t[input_state.select_end..]
+		cursor_pos = int_min(int(input_state.select_beg + 1), t.len)
+	} else {
+		t = t[..input_state.cursor_pos] + s + t[input_state.cursor_pos..]
+		cursor_pos = int_min(cursor_pos + s.len, t.len)
+	}
+	mut undo := input_state.undo
+	undo.push(InputMemento{
+		text:       cfg.text
+		cursor_pos: input_state.cursor_pos
+		select_beg: input_state.select_beg
+		select_end: input_state.select_end
+	})
+	w.input_state[w.id_focus] = InputState{
+		cursor_pos: cursor_pos
+		select_beg: 0
+		select_end: 0
+		undo:       undo
+	}
+	return t
 }
 
 fn (cfg InputCfg) amend_layout(mut node Layout, mut w Window) {

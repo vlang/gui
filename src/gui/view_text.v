@@ -179,7 +179,7 @@ fn text_keydown_shape(shape &Shape, e &Event, mut w Window) bool {
 			select_end: 0
 		}
 		// Extend/shrink selection
-		if e.modifiers == u32(gg.Modifier.shift) {
+		if e.modifiers == u32(Modifier.shift) {
 			old_pos := u32(input_state.cursor_pos)
 			mut beg := input_state.select_beg
 			mut end := input_state.select_end
