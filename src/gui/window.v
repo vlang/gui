@@ -145,6 +145,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			mouse_down_handler(layout, mut e, mut w)
 		}
 		.mouse_move {
+			w.set_mouse_cursor_arrow()
 			mouse_move_handler(layout, mut e, mut w)
 		}
 		.mouse_scroll {
@@ -247,6 +248,12 @@ pub fn (mut window Window) set_id_focus(id u32) {
 // set_mouse_cursor_arrow sets the window's mouse cursor to an arrow
 pub fn (mut window Window) set_mouse_cursor_arrow() {
 	window.mouse_cursor = .arrow
+}
+
+// set_mouse_cursor_ibeam sets the window's mouse cursor to an I-Beam
+// typically indicating text handling.
+pub fn (mut window Window) set_mouse_cursor_ibeam() {
+	window.mouse_cursor = .ibeam
 }
 
 // set_mouse_cursor_pointing_hand sets the window's mouse cursor to a pointy finger

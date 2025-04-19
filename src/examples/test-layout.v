@@ -187,6 +187,7 @@ fn main_view(w &gui.Window) gui.View {
 								text_style: text_style_blue
 							),
 							gui.text(
+								id_focus:    7
 								text:        state.name
 								wrap:        true
 								keep_spaces: true

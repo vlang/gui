@@ -8,6 +8,12 @@ fn char_handler(node Layout, mut e Event, w &Window) {
 		}
 	}
 	if node.shape.id_focus > 0 && !node.shape.disabled && node.shape.id_focus == w.id_focus {
+		if node.shape.on_char_shape != unsafe { nil } {
+			node.shape.on_char_shape(node.shape, mut e, w)
+			if e.is_handled {
+				return
+			}
+		}
 		if node.shape.on_char != unsafe { nil } {
 			node.shape.on_char(node.shape.cfg, mut e, w)
 			if e.is_handled {
@@ -96,7 +102,6 @@ fn mouse_move_handler(node Layout, mut e Event, mut w Window) {
 	if !w.pointer_over_app(e) {
 		return
 	}
-	w.set_mouse_cursor_arrow()
 	for child in node.children {
 		mouse_move_handler(child, mut e, mut w)
 		if e.is_handled {

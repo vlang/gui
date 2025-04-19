@@ -1,6 +1,7 @@
 module gui
 
 import gg
+import math
 
 // Text is an internal structure used to describe a text block
 @[heap]
@@ -28,7 +29,7 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 	}
 	window := unsafe { &Window(ctx.user_data) }
 	input_state := match window.is_focus(t.id_focus) {
-		true { window.input_state[window.id_focus] }
+		true { window.input_state[t.id_focus] }
 		else { InputState{} }
 	}
 	mut shape_tree := Layout{
@@ -51,9 +52,10 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 			text_wrap:           t.wrap
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
-			on_keydown_shape:    text_keydown_shape
-			on_mouse_down_shape: text_mouse_down_shape
-			on_mouse_move_shape: text_mouse_move_shape
+			on_char_shape:       t.char_shape
+			on_keydown_shape:    t.keydown_shape
+			on_mouse_down_shape: t.mouse_down_shape
+			on_mouse_move_shape: t.mouse_move_shape
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -105,12 +107,15 @@ pub fn text(cfg TextCfg) Text {
 	}
 }
 
-fn text_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
+fn (text Text) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
+	if w.is_focus(shape.id_focus) {
+		w.set_mouse_cursor_ibeam()
+	}
 	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
 		ev := event_relative_to(shape, e)
-		cursor_pos := text_mouse_cursor_pos(shape, ev, mut w)
-		input_state := w.input_state[w.id_focus]
-		w.input_state[w.id_focus] = InputState{
+		cursor_pos := text.mouse_cursor_pos(shape, ev, mut w)
+		input_state := w.input_state[shape.id_focus]
+		w.input_state[shape.id_focus] = InputState{
 			...input_state
 			cursor_pos: cursor_pos
 			select_beg: 0
@@ -120,14 +125,17 @@ fn text_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn text_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
+fn (text Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
+	if w.is_focus(shape.id_focus) {
+		w.set_mouse_cursor_ibeam()
+	}
 	// mouse move events don't have mouse button info. Use context.
 	if w.ui.mouse_buttons == .left && w.is_focus(shape.id_focus) {
 		ev := event_relative_to(shape, e)
-		end := u32(text_mouse_cursor_pos(shape, ev, mut w))
-		input_state := w.input_state[w.id_focus]
+		end := u32(text.mouse_cursor_pos(shape, ev, mut w))
+		input_state := w.input_state[shape.id_focus]
 		cursor_pos := u32(input_state.cursor_pos)
-		w.input_state[w.id_focus] = InputState{
+		w.input_state[shape.id_focus] = InputState{
 			...input_state
 			select_beg: if cursor_pos < end { cursor_pos } else { end }
 			select_end: if cursor_pos < end { end } else { cursor_pos }
@@ -138,7 +146,7 @@ fn text_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 
 // mouse_cursor_pos determines where in the input control's text
 // field the click occured. Works with multiple line text fields.
-fn text_mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
+fn (text Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	lh := shape.text_style.size + shape.text_style.line_spacing
 	y := int(e.mouse_y / lh)
 	if y >= 0 && y < shape.text_lines.len {
@@ -158,10 +166,10 @@ fn text_mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	return shape.text.len
 }
 
-fn text_keydown_shape(shape &Shape, mut e Event, mut w Window) {
+fn (text Text) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		cfg := unsafe { &TextCfg(shape.cfg) }
-		input_state := w.input_state[w.id_focus]
+		input_state := w.input_state[shape.id_focus]
 		mut cursor_pos := input_state.cursor_pos
 		match e.key_code {
 			.left { cursor_pos = int_max(0, cursor_pos - 1) }
@@ -171,7 +179,7 @@ fn text_keydown_shape(shape &Shape, mut e Event, mut w Window) {
 			else { return }
 		}
 		e.is_handled = true
-		w.input_state[w.id_focus] = InputState{
+		w.input_state[shape.id_focus] = InputState{
 			...input_state
 			cursor_pos: cursor_pos
 			select_beg: 0
@@ -179,21 +187,28 @@ fn text_keydown_shape(shape &Shape, mut e Event, mut w Window) {
 		}
 		// Extend/shrink selection
 		if e.modifiers == u32(Modifier.shift) {
-			old_pos := u32(input_state.cursor_pos)
+			old_pos := input_state.cursor_pos
 			mut beg := input_state.select_beg
 			mut end := input_state.select_end
-			if beg == old_pos {
+			b_diff := math.abs(cursor_pos - int(beg))
+			e_diff := math.abs(cursor_pos - int(end))
+			if beg == end {
+				if old_pos < cursor_pos {
+					beg = u32(old_pos)
+					end = u32(cursor_pos)
+				} else {
+					beg = u32(cursor_pos)
+					end = u32(old_pos)
+				}
+			} else if b_diff < e_diff {
 				beg = u32(cursor_pos)
-			} else if end == old_pos {
+			} else {
 				end = u32(cursor_pos)
-			} else if cursor_pos > old_pos {
-				beg = old_pos
-				end = u32(cursor_pos)
-			} else if cursor_pos < old_pos {
-				beg = u32(cursor_pos)
-				end = old_pos
 			}
-			w.input_state[w.id_focus] = InputState{
+			if beg > end {
+				beg, end = end, beg
+			}
+			w.input_state[shape.id_focus] = InputState{
 				...input_state
 				cursor_pos: cursor_pos
 				select_beg: beg
@@ -201,5 +216,58 @@ fn text_keydown_shape(shape &Shape, mut e Event, mut w Window) {
 			}
 			e.is_handled = true
 		}
+	}
+}
+
+fn (text Text) char_shape(shape &Shape, mut event Event, mut w Window) {
+	if w.is_focus(shape.id_focus) {
+		c := event.char_code
+		if event.modifiers & u32(Modifier.ctrl) > 0 {
+			match c {
+				ctrl_a { text.select_all(mut w) }
+				ctrl_c { text.copy(w) }
+				else {}
+			}
+		} else if event.modifiers & u32(Modifier.super) > 0 {
+			match c {
+				cmd_a { text.select_all(mut w) }
+				cmd_c { text.copy(w) }
+				else {}
+			}
+		} else {
+			match c {
+				escape_char { text.unselect_all(mut w) }
+				else {}
+			}
+		}
+	}
+}
+
+fn (text Text) copy(w &Window) ?string {
+	input_state := w.input_state[text.id_focus]
+	if input_state.select_beg != input_state.select_end {
+		cpy := text.text[input_state.select_beg..input_state.select_end] or { '' }
+		to_clipboard(cpy)
+	}
+	return none
+}
+
+pub fn (text Text) select_all(mut w Window) {
+	input_state := w.input_state[text.id_focus]
+	w.input_state[text.id_focus] = InputState{
+		...input_state
+		cursor_pos: text.text.len
+		select_beg: 0
+		select_end: u32(text.text.len)
+	}
+}
+
+pub fn (text Text) unselect_all(mut w Window) {
+	input_state := w.input_state[text.id_focus]
+	w.input_state[text.id_focus] = InputState{
+		...input_state
+		cursor_pos: 0
+		select_beg: 0
+		select_end: 0
 	}
 }

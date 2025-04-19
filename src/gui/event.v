@@ -3,6 +3,21 @@ module gui
 import gg
 import sokol.sapp
 
+const bsp_char = 0x08
+const del_char = 0x7F
+const space_char = 0x20
+const escape_char = 0x1B
+const cmd_a = 0x61
+const cmd_c = 0x63
+const cmd_v = 0x76
+const cmd_x = 0x78
+const cmd_z = 0x7A
+const ctrl_a = 0x01
+const ctrl_c = 0x03
+const ctrl_v = 0x17
+const ctrl_x = 0x19
+const ctrl_z = 0x1A
+
 fn from_gg_event(e &gg.Event) &Event {
 	return &Event{
 		frame_count:        e.frame_count

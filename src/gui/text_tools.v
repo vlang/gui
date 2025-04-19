@@ -1,5 +1,6 @@
 module gui
 
+import clipboard
 import gg
 import hash.fnv1a
 import os
@@ -83,8 +84,7 @@ fn wrap_text_shrink_spaces(s string, width f32, ctx &gg.Context) []string {
 }
 
 // wrap_text_keep_spaces wraps lines to given width (logical units, not
-// chars) White space is preserved except leading spaces at the start of a
-// wrapped line.
+// chars) White space is preserved
 fn wrap_text_keep_spaces(s string, width f32, ctx &gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
@@ -94,15 +94,11 @@ fn wrap_text_keep_spaces(s string, width f32, ctx &gg.Context) []string {
 			line = ''
 			continue
 		}
-		if line.len == 0 {
-			line = field.trim_space()
-			continue
-		}
 		nline := line + field
 		t_width := ctx.text_width(nline)
 		if t_width > width {
 			wrap << line
-			line = field.trim_space()
+			line = field
 		} else {
 			line = nline
 		}
@@ -172,4 +168,19 @@ pub fn font_path_list() []string {
 	}
 	font_paths := os.glob('${font_root_path}/*.ttf') or { panic(err) }
 	return font_paths
+}
+
+pub fn from_clipboard() string {
+	mut cb := clipboard.new()
+	defer { cb.free() }
+	return cb.paste()
+}
+
+pub fn to_clipboard(s ?string) bool {
+	if s != none {
+		mut cb := clipboard.new()
+		defer { cb.free() }
+		return cb.copy(s)
+	}
+	return false
 }

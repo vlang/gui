@@ -1,7 +1,5 @@
 module gui
 
-import clipboard
-
 @[heap]
 pub struct InputCfg {
 	CommonCfg
@@ -55,7 +53,6 @@ pub fn input(cfg InputCfg) View {
 		radius:       cfg.radius_border
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
-		on_char:      on_char_input
 		amend_layout: cfg.amend_layout
 		cfg:          &cfg
 		content:      [
@@ -80,19 +77,7 @@ pub fn input(cfg InputCfg) View {
 	)
 }
 
-const bsp_char = 0x08
-const del_char = 0x7F
-const space_char = 0x20
-const cmd_c = 0x63
-const cmd_v = 0x76
-const cmd_x = 0x78
-const cmd_z = 0x7A
-const ctrl_c = 0x03
-const ctrl_v = 0x17
-const ctrl_x = 0x19
-const ctrl_z = 0x1A
-
-fn on_char_input(cfg &InputCfg, mut event Event, mut w Window) {
+fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut text := cfg.text
@@ -109,16 +94,14 @@ fn on_char_input(cfg &InputCfg, mut event Event, mut w Window) {
 			}
 		} else if event.modifiers & u32(Modifier.ctrl) > 0 {
 			match c {
-				ctrl_c { cfg.copy(w) }
-				ctrl_v { text = cfg.paste(cfg.from_clipboard(), mut w) or { '' } }
+				ctrl_v { text = cfg.paste(from_clipboard(), mut w) or { '' } }
 				ctrl_x { text = cfg.cut(mut w) or { '' } }
 				ctrl_z { text = cfg.undo(mut w) }
 				else {}
 			}
 		} else if event.modifiers & u32(Modifier.super) > 0 {
 			match c {
-				cmd_c { cfg.copy(w) }
-				cmd_v { text = cfg.paste(cfg.from_clipboard(), mut w) or { '' } }
+				cmd_v { text = cfg.paste(from_clipboard(), mut w) or { '' } }
 				cmd_x { text = cfg.cut(mut w) or { '' } }
 				cmd_z { text = cfg.undo(mut w) }
 				else {}
@@ -226,7 +209,7 @@ pub fn (cfg InputCfg) copy(w &Window) ?string {
 	input_state := w.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		cpy := cfg.text[input_state.select_beg..input_state.select_end] or { '' }
-		cfg.to_clipboard(cpy)
+		to_clipboard(cpy)
 	}
 	return none
 }
@@ -277,25 +260,16 @@ pub fn (cfg InputCfg) redo(mut w Window) string {
 	return memento.text
 }
 
-pub fn (cfg InputCfg) from_clipboard() string {
-	mut cb := clipboard.new()
-	defer { cb.free() }
-	return cb.paste()
-}
-
-pub fn (cfg InputCfg) to_clipboard(s ?string) bool {
-	if s != none {
-		mut cb := clipboard.new()
-		defer { cb.free() }
-		return cb.copy(s)
-	}
-	return false
-}
-
 fn (cfg InputCfg) amend_layout(mut node Layout, mut w Window) {
 	if node.shape.disabled {
 		return
 	}
+
+	// Composite views don't have a generate method.
+	// To add internal envet handlers requires that
+	// the function is assigned here.
+	node.shape.on_char_shape = cfg.on_char_shape
+
 	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {
 		node.shape.color = cfg.color_border_focus
 	}
