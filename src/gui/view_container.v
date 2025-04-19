@@ -31,10 +31,10 @@ pub struct Container implements View {
 	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
-	on_char        fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_click       fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_keydown     fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	amend_layout   fn (mut Layout, &Window)           = unsafe { nil }
+	on_char        fn (voidptr, mut Event, &Window) = unsafe { nil }
+	on_click       fn (voidptr, mut Event, &Window) = unsafe { nil }
+	on_keydown     fn (voidptr, mut Event, &Window) = unsafe { nil }
+	amend_layout   fn (mut Layout, &Window)         = unsafe { nil }
 mut:
 	axis    Axis
 	cfg     voidptr
@@ -113,10 +113,10 @@ pub:
 	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
-	on_char        fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_click       fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_keydown     fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	amend_layout   fn (mut Layout, &Window)           = unsafe { nil }
+	on_char        fn (voidptr, mut Event, &Window) = unsafe { nil }
+	on_click       fn (voidptr, mut Event, &Window) = unsafe { nil }
+	on_keydown     fn (voidptr, mut Event, &Window) = unsafe { nil }
+	amend_layout   fn (mut Layout, &Window)         = unsafe { nil }
 	content        []View
 }
 

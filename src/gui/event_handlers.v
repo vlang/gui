@@ -1,62 +1,71 @@
 module gui
 
-fn char_handler(node Layout, e &Event, w &Window) bool {
+fn char_handler(node Layout, mut e Event, w &Window) {
 	for child in node.children {
-		if char_handler(child, e, w) {
-			return true
+		char_handler(child, mut e, w)
+		if e.is_handled {
+			return
 		}
 	}
 	if node.shape.id_focus > 0 && !node.shape.disabled && node.shape.id_focus == w.id_focus {
-		if node.shape.on_char != unsafe { nil } && node.shape.on_char(node.shape.cfg, e, w) {
-			return true
+		if node.shape.on_char != unsafe { nil } {
+			node.shape.on_char(node.shape.cfg, mut e, w)
+			if e.is_handled {
+				return
+			}
 		}
 	}
-	return false
 }
 
-fn keydown_handler(node Layout, e &Event, mut w Window) bool {
+fn keydown_handler(node Layout, mut e Event, mut w Window) {
 	for child in node.children {
-		if keydown_handler(child, e, mut w) {
-			return true
+		keydown_handler(child, mut e, mut w)
+		if e.is_handled {
+			return
 		}
 	}
 	if !node.shape.disabled && w.is_focus(node.shape.id_focus) {
 		if node.shape.on_keydown_shape != unsafe { nil } {
-			if node.shape.on_keydown_shape(node.shape, e, w) {
-				return true
+			node.shape.on_keydown_shape(node.shape, mut e, w)
+			if e.is_handled {
+				return
 			}
 		}
 		if node.shape.id_scroll_v > 0 {
-			return key_down_scroll_handler(node, e, mut w)
+			key_down_scroll_handler(node, mut e, mut w)
+			if e.is_handled {
+				return
+			}
 		}
 		if node.shape.on_keydown != unsafe { nil } {
-			if node.shape.on_keydown(node.shape.cfg, e, w) {
-				return true
+			node.shape.on_keydown(node.shape.cfg, mut e, w)
+			if e.is_handled {
+				return
 			}
 		}
 	}
-	return false
 }
 
-fn key_down_scroll_handler(node Layout, e &Event, mut w Window) bool {
+fn key_down_scroll_handler(node Layout, mut e Event, mut w Window) {
 	delta_line := gui_theme.scroll_delta_line
 	delta_page := gui_theme.scroll_delta_page
 	delta_home := 10000000 // any really big number works
-	return match e.key_code {
-		.up { scroll_vertical(node, delta_line, mut w) }
-		.down { scroll_vertical(node, -delta_line, mut w) }
-		.home { scroll_vertical(node, delta_home, mut w) }
-		.end { scroll_vertical(node, -delta_home, mut w) }
-		.page_up { scroll_vertical(node, delta_page, mut w) }
-		.page_down { scroll_vertical(node, -delta_page, mut w) }
-		else { false }
+	match e.key_code {
+		.up { e.is_handled = scroll_vertical(node, delta_line, mut w) }
+		.down { e.is_handled = scroll_vertical(node, -delta_line, mut w) }
+		.home { e.is_handled = scroll_vertical(node, delta_home, mut w) }
+		.end { e.is_handled = scroll_vertical(node, -delta_home, mut w) }
+		.page_up { e.is_handled = scroll_vertical(node, delta_page, mut w) }
+		.page_down { e.is_handled = scroll_vertical(node, -delta_page, mut w) }
+		else {}
 	}
 }
 
-fn mouse_down_handler(node Layout, e &Event, mut w Window) bool {
+fn mouse_down_handler(node Layout, mut e Event, mut w Window) {
 	for child in node.children {
-		if mouse_down_handler(child, e, mut w) {
-			return true
+		mouse_down_handler(child, mut e, mut w)
+		if e.is_handled {
+			return
 		}
 	}
 	if !node.shape.disabled {
@@ -65,52 +74,58 @@ fn mouse_down_handler(node Layout, e &Event, mut w Window) bool {
 				w.set_id_focus(node.shape.id_focus)
 			}
 			if node.shape.on_mouse_down_shape != unsafe { nil } {
-				if node.shape.on_mouse_down_shape(node.shape, e, w) {
-					return true
+				node.shape.on_mouse_down_shape(node.shape, mut e, w)
+				if e.is_handled {
+					return
 				}
 			}
 			// make click handler mouse coordinates relative to node.shape
-			ev := event_relative_to(node.shape, e)
+			mut ev := event_relative_to(node.shape, e)
 			if node.shape.on_click != unsafe { nil } {
-				if node.shape.on_click(node.shape.cfg, ev, w) {
-					return true
+				node.shape.on_click(node.shape.cfg, mut ev, w)
+				if ev.is_handled {
+					e.is_handled = true
+					return
 				}
 			}
 		}
 	}
-	return false
 }
 
-fn mouse_move_handler(node Layout, e &Event, mut w Window) bool {
+fn mouse_move_handler(node Layout, mut e Event, mut w Window) {
 	if !w.pointer_over_app(e) {
-		return false
+		return
 	}
 	w.set_mouse_cursor_arrow()
 	for child in node.children {
-		if mouse_move_handler(child, e, mut w) {
-			return true
+		mouse_move_handler(child, mut e, mut w)
+		if e.is_handled {
+			return
 		}
 	}
 	if !node.shape.disabled {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			if node.shape.on_mouse_move_shape != unsafe { nil } {
-				if node.shape.on_mouse_move_shape(node.shape, e, w) {
-					return true
+				node.shape.on_mouse_move_shape(node.shape, mut e, w)
+				if e.is_handled {
+					return
 				}
 			}
 		}
 	}
-	return false
 }
 
-fn mouse_scroll_handler(node Layout, e &Event, mut w Window) {
+fn mouse_scroll_handler(node Layout, mut e Event, mut w Window) {
 	for child in node.children {
-		mouse_scroll_handler(child, e, mut w)
+		mouse_scroll_handler(child, mut e, mut w)
+		if e.is_handled {
+			return
+		}
 	}
 
 	if !node.shape.disabled && node.shape.id_scroll_v > 0 {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-			scroll_vertical(node, e.scroll_y, mut w)
+			e.is_handled = scroll_vertical(node, e.scroll_y, mut w)
 		}
 	}
 }

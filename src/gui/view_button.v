@@ -25,7 +25,7 @@ pub:
 	padding_border     Padding = gui_theme.button_style.padding_border
 	radius             f32     = gui_theme.button_style.radius
 	radius_border      f32     = gui_theme.button_style.radius_border
-	on_click           fn (&ButtonCfg, &Event, &Window) bool = unsafe { nil }
+	on_click           fn (&ButtonCfg, mut Event, &Window) = unsafe { nil }
 }
 
 // button creates a button.
@@ -79,12 +79,11 @@ pub fn button(cfg ButtonCfg) View {
 	)
 }
 
-fn on_char_button(cfg &ButtonCfg, e &Event, mut w Window) bool {
+fn on_char_button(cfg &ButtonCfg, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(&cfg, e, w)
-		return true
+		cfg.on_click(&cfg, mut e, w)
+		e.is_handled = true
 	}
-	return false
 }
 
 fn (cfg ButtonCfg) amend_layout(mut node Layout, mut w Window) {

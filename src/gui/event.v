@@ -59,6 +59,7 @@ pub mut:
 	window_height      int
 	framebuffer_width  int
 	framebuffer_height int
+	is_handled         bool
 }
 
 pub enum EventType {

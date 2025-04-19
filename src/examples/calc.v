@@ -107,10 +107,10 @@ fn get_row(ops []string) []gui.View {
 	return content
 }
 
-fn btn_click(btn &gui.ButtonCfg, e &gui.Event, mut w gui.Window) bool {
+fn btn_click(btn &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 	mut app := w.state[App]()
 	app.do_op(btn.id)
-	return true
+	e.is_handled = true
 }
 
 fn on_event(e &gui.Event, mut w gui.Window) {

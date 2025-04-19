@@ -51,13 +51,13 @@ pub mut:
 	float_offset_x f32
 	float_offset_y f32
 	// --- user callbacks ---
-	on_char    fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_click   fn (voidptr, &Event, &Window) bool = unsafe { nil }
-	on_keydown fn (voidptr, &Event, &Window) bool = unsafe { nil }
+	on_char    fn (voidptr, mut Event, &Window) = unsafe { nil }
+	on_click   fn (voidptr, mut Event, &Window) = unsafe { nil }
+	on_keydown fn (voidptr, mut Event, &Window) = unsafe { nil }
 	// --- for internal use ---
-	on_keydown_shape    fn (&Shape, &Event, &Window) bool = unsafe { nil }
-	on_mouse_down_shape fn (&Shape, &Event, &Window) bool = unsafe { nil }
-	on_mouse_move_shape fn (&Shape, &Event, &Window) bool = unsafe { nil }
+	on_keydown_shape    fn (&Shape, mut Event, &Window) = unsafe { nil }
+	on_mouse_down_shape fn (&Shape, mut Event, &Window) = unsafe { nil }
+	on_mouse_move_shape fn (&Shape, mut Event, &Window) = unsafe { nil }
 	// mostly for hover and focus highlighting
 	amend_layout fn (mut Layout, &Window) = unsafe { nil }
 }

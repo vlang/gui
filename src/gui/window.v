@@ -108,18 +108,17 @@ pub fn (window &Window) context() &gg.Context {
 // event_fn is where all user events are handled. Mostly it delegates
 // to child views.
 fn event_fn(ev &gg.Event, mut w Window) {
-	e := from_gg_event(ev)
+	mut e := from_gg_event(ev)
 	if !w.focused && e.typ !in [.focused, .mouse_scroll] {
 		return
 	}
-	mut handled := false
 	w.mutex.lock()
 	layout := w.layout
 	w.mutex.unlock()
 
 	match e.typ {
 		.char {
-			handled = char_handler(layout, e, w)
+			char_handler(layout, mut e, w)
 		}
 		.focused {
 			w.focused = true
@@ -128,13 +127,13 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			w.focused = false
 		}
 		.key_down {
-			handled = keydown_handler(layout, e, mut w)
+			keydown_handler(layout, mut e, mut w)
 			m := unsafe { gg.Modifier(e.modifiers) }
-			if !handled && e.key_code == .tab && m == gg.Modifier.shift {
+			if !e.is_handled && e.key_code == .tab && m == gg.Modifier.shift {
 				if shape := layout.previous_focusable(mut w) {
 					w.id_focus = shape.id_focus
 				}
-			} else if !handled && e.key_code == .tab {
+			} else if !e.is_handled && e.key_code == .tab {
 				if shape := layout.next_focusable(mut w) {
 					w.id_focus = shape.id_focus
 				}
@@ -143,19 +142,19 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		.mouse_down {
 			w.set_mouse_cursor_arrow()
 			w.set_id_focus(0)
-			handled = mouse_down_handler(layout, e, mut w)
+			mouse_down_handler(layout, mut e, mut w)
 		}
 		.mouse_move {
-			mouse_move_handler(layout, e, mut w)
+			mouse_move_handler(layout, mut e, mut w)
 		}
 		.mouse_scroll {
-			mouse_scroll_handler(layout, e, mut w)
+			mouse_scroll_handler(layout, mut e, mut w)
 		}
 		else {
 			// dump(e)
 		}
 	}
-	if !handled {
+	if !e.is_handled {
 		w.on_event(e, mut w)
 	}
 	w.update_window()
@@ -270,7 +269,8 @@ pub fn (window &Window) state[T]() &T {
 
 // update_view sets the Window's view generator. A window can have only one
 // view generator. Giving a Window a new view generator replaces the current
-// view generator and clears the input states and scroll states.
+// view generator and clears the input states, scroll states and other
+// internal management states.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut layout := generate_layout(view, window)
@@ -289,17 +289,21 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
 
+	// Clear internal state management buffers.
+	// This is the only place these are cleared.
 	window.id_focus = 0
 	window.input_state.clear()
 	window.scroll_state_vertical.clear()
 	window.text_widths.clear()
+	// Needed to regen views, event callbacks, drawing
 	window.gen_view = gen_view
 	window.layout = layout
 	window.renderers = renderers
 }
 
 // update_window generates a new layout from the windows currnet
-// view generator. Does not clear the input states.
+// view generator. Does not clear the input states. This should
+// rarely be needed since events trigger new layouts/rendereres.
 pub fn (mut window Window) update_window() {
 	window.mutex.lock()
 	gen_view := window.gen_view

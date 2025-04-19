@@ -53,10 +53,9 @@ fn main_view(window &gui.Window) gui.View {
 				id_focus:       1
 				padding_border: gui.padding_two
 				content:        [gui.text(text: '${app.clicks} Clicks')]
-				on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
+				on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[App]()
 					app.clicks += 1
-					return true // true says click was handled
 				}
 			),
 		]

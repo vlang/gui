@@ -81,7 +81,7 @@ fn button_change_theme(app &App) gui.View {
 						text: if app.light { '●' } else { '○' }
 					),
 				]
-				on_click: fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
+				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[App]()
 					app.light = !app.light
 					theme := if app.light {
@@ -91,7 +91,6 @@ fn button_change_theme(app &App) gui.View {
 					}
 					w.set_theme(theme)
 					w.set_id_focus(1)
-					return true
 				}
 			),
 		]

@@ -13,6 +13,7 @@ pub:
 	select_beg u32
 	select_end u32
 	undo       datatypes.Stack[InputMemento]
+	redo       datatypes.Stack[InputMemento]
 }
 
 struct InputMemento {

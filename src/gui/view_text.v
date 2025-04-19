@@ -105,7 +105,7 @@ pub fn text(cfg TextCfg) Text {
 	}
 }
 
-fn text_mouse_down_shape(shape &Shape, e &Event, mut w Window) bool {
+fn text_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
 		ev := event_relative_to(shape, e)
 		cursor_pos := text_mouse_cursor_pos(shape, ev, mut w)
@@ -116,12 +116,11 @@ fn text_mouse_down_shape(shape &Shape, e &Event, mut w Window) bool {
 			select_beg: 0
 			select_end: 0
 		}
-		return true
+		e.is_handled = true
 	}
-	return false
 }
 
-fn text_mouse_move_shape(shape &Shape, e &Event, mut w Window) bool {
+fn text_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 	// mouse move events don't have mouse button info. Use context.
 	if w.ui.mouse_buttons == .left && w.is_focus(shape.id_focus) {
 		ev := event_relative_to(shape, e)
@@ -133,9 +132,8 @@ fn text_mouse_move_shape(shape &Shape, e &Event, mut w Window) bool {
 			select_beg: if cursor_pos < end { cursor_pos } else { end }
 			select_end: if cursor_pos < end { end } else { cursor_pos }
 		}
-		return true
+		e.is_handled = true
 	}
-	return true
 }
 
 // mouse_cursor_pos determines where in the input control's text
@@ -160,7 +158,7 @@ fn text_mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	return shape.text.len
 }
 
-fn text_keydown_shape(shape &Shape, e &Event, mut w Window) bool {
+fn text_keydown_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		cfg := unsafe { &TextCfg(shape.cfg) }
 		input_state := w.input_state[w.id_focus]
@@ -170,8 +168,9 @@ fn text_keydown_shape(shape &Shape, e &Event, mut w Window) bool {
 			.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
 			.home { cursor_pos = 0 }
 			.end { cursor_pos = cfg.text.len }
-			else { return false }
+			else { return }
 		}
+		e.is_handled = true
 		w.input_state[w.id_focus] = InputState{
 			...input_state
 			cursor_pos: cursor_pos
@@ -200,8 +199,7 @@ fn text_keydown_shape(shape &Shape, e &Event, mut w Window) bool {
 				select_beg: beg
 				select_end: end
 			}
-			return true
+			e.is_handled = true
 		}
 	}
-	return false
 }

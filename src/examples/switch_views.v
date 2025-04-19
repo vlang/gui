@@ -37,10 +37,9 @@ fn page_one(window &gui.Window) gui.View {
 			id_focus:       1
 			padding_border: gui.padding_two
 			content:        [gui.text(text: 'next >>')]
-			on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
+			on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 				w.update_view(page_two)
 				w.set_id_focus(1)
-				return true // true says click was handled
 			}
 		),
 	], window)
@@ -53,10 +52,9 @@ fn page_two(window &gui.Window) gui.View {
 			id_focus:       1
 			padding_border: gui.padding_two
 			content:        [gui.text(text: '<< previous')]
-			on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
+			on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 				w.update_view(page_one)
 				w.set_id_focus(1)
-				return true // true says click was handled
 			}
 		),
 	], window)
