@@ -504,7 +504,6 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 		if cursor_pos >= 0 {
 			// place a zero-space char in the string at the cursor pos as
 			// a marker to where the cursor should go.
-			zero_space := '\xe2\x80\x8b'
 			text := node.shape.text[..cursor_pos] + zero_space + node.shape.text[cursor_pos..]
 			mut shape := Shape{
 				...node.shape

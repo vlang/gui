@@ -114,6 +114,7 @@ fn (text Text) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
 		ev := event_relative_to(shape, e)
 		cursor_pos := text.mouse_cursor_pos(shape, ev, mut w)
+		// println('${cursor_pos}, ${shape.text_cursor_x}, ${shape.text_cursor_y}')
 		input_state := w.input_state[shape.id_focus]
 		w.input_state[shape.id_focus] = InputState{
 			...input_state
@@ -149,21 +150,26 @@ fn (text Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 fn (text Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	lh := shape.text_style.size + shape.text_style.line_spacing
 	y := int(e.mouse_y / lh)
-	if y >= 0 && y < shape.text_lines.len {
-		mut ln := ''
-		for i, r in shape.text_lines[y].runes() {
-			ln += r.str()
-			tw := get_text_width(ln, shape.text_style, mut w)
-			if tw >= e.mouse_x {
-				mut count := 0
-				for line in shape.text_lines[..y] {
-					count += line.len
-				}
-				return count + i
-			}
+	line := shape.text_lines[y]
+	mut ln := ''
+	mut count := -1
+	for i, r in line.runes() {
+		ln += r.str()
+		tw := get_text_width(ln, shape.text_style, mut w)
+		if tw >= e.mouse_x {
+			count = i
+			break
 		}
 	}
-	return shape.text.len
+	if count == -1 {
+		count = int_max(0, line.runes().len - 1)
+	}
+	for i, l in shape.text_lines {
+		if i < y {
+			count += l.runes().len
+		}
+	}
+	return count
 }
 
 fn (text Text) keydown_shape(shape &Shape, mut e Event, mut w Window) {

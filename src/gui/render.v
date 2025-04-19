@@ -246,17 +246,16 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	if shape.text_cursor_x >= 0 && shape.text_cursor_y >= 0 {
 		if shape.text_cursor_y < shape.text_lines.len {
 			ln := shape.text_lines[shape.text_cursor_y]
-			if shape.text_cursor_x <= ln.len {
-				cx := shape.x + ctx.text_width(ln[..shape.text_cursor_x])
-				cy := shape.y + (lh * shape.text_cursor_y)
-				renderers << DrawLine{
-					x:   cx
-					y:   cy
-					x1:  cx
-					y1:  cy + lh
-					cfg: gg.PenConfig{
-						color: shape.text_style.color.to_gx_color()
-					}
+			x := int_min(shape.text_cursor_x, ln.len)
+			cx := shape.x + ctx.text_width(ln[..x])
+			cy := shape.y + (lh * shape.text_cursor_y)
+			renderers << DrawLine{
+				x:   cx
+				y:   cy
+				x1:  cx
+				y1:  cy + lh
+				cfg: gg.PenConfig{
+					color: shape.text_style.color.to_gx_color()
 				}
 			}
 		}

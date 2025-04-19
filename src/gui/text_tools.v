@@ -51,11 +51,10 @@ fn text_wrap(mut shape Shape, ctx &gg.Context) {
 			true { wrap_text_keep_spaces(shape.text, shape.width, ctx) }
 			else { wrap_text_shrink_spaces(shape.text, shape.width, ctx) }
 		}
-
 		shape.width = text_width(shape, ctx)
 		lh := line_height(shape)
-		shape.max_height = shape.text_lines.len * lh
 		shape.height = shape.text_lines.len * lh
+		shape.max_height = shape.height
 		shape.min_height = shape.height
 	}
 }
@@ -110,7 +109,6 @@ fn wrap_text_keep_spaces(s string, width f32, ctx &gg.Context) []string {
 // split_text splits a string by spaces and also includes the spaces as separate
 // strings. Newlines are separated from other white-space.
 fn split_text(s string) []string {
-	space := ' '
 	state_un := 0
 	state_sp := 1
 	state_ch := 2
@@ -123,9 +121,9 @@ fn split_text(s string) []string {
 		ch := r.str()
 		if state == state_un {
 			field += ch
-			state = if ch == space { state_sp } else { state_ch }
+			state = if is_split_space(ch) { state_sp } else { state_ch }
 		} else if state == state_sp {
-			if ch == space {
+			if is_split_space(ch) {
 				field += ch
 			} else {
 				state = state_ch
@@ -133,7 +131,7 @@ fn split_text(s string) []string {
 				field = ch
 			}
 		} else if state == state_ch {
-			if ch == space {
+			if is_split_space(ch) {
 				state = state_sp
 				fields << field
 				field = ch
@@ -150,6 +148,14 @@ fn split_text(s string) []string {
 	}
 	fields << field
 	return fields
+}
+
+const space = ' '
+const zero_space = '\xe2\x80\x8b'
+
+@[inline]
+fn is_split_space(ch string) bool {
+	return ch == space || ch == zero_space
 }
 
 pub fn font_path_list() []string {
