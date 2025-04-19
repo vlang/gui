@@ -96,7 +96,18 @@ fn on_char_input(cfg &InputCfg, mut event Event, mut w Window) {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut text := cfg.text
-		if event.modifiers & u32(Modifier.ctrl) > 0 {
+		if event.modifiers & u32(Modifier.ctrl) > 0 && event.modifiers & u32(Modifier.shift) > 0 {
+			match c {
+				ctrl_z { text = cfg.redo(mut w) }
+				else {}
+			}
+		} else if event.modifiers & u32(Modifier.super) > 0
+			&& event.modifiers & u32(Modifier.shift) > 0 {
+			match c {
+				cmd_z { text = cfg.redo(mut w) }
+				else {}
+			}
+		} else if event.modifiers & u32(Modifier.ctrl) > 0 {
 			match c {
 				ctrl_c { cfg.copy(w) }
 				ctrl_v { text = cfg.paste(cfg.from_clipboard(), mut w) or { '' } }
@@ -228,11 +239,40 @@ pub fn (cfg InputCfg) undo(mut w Window) string {
 	input_state := w.input_state[cfg.id_focus]
 	mut undo := input_state.undo
 	memento := undo.pop() or { return cfg.text }
+	mut redo := input_state.redo
+	redo.push(InputMemento{
+		text:       cfg.text
+		cursor_pos: input_state.cursor_pos
+		select_beg: input_state.select_beg
+		select_end: input_state.select_end
+	})
 	w.input_state[cfg.id_focus] = InputState{
 		cursor_pos: memento.cursor_pos
 		select_beg: memento.select_beg
 		select_end: memento.select_end
 		undo:       undo
+		redo:       redo
+	}
+	return memento.text
+}
+
+pub fn (cfg InputCfg) redo(mut w Window) string {
+	input_state := w.input_state[cfg.id_focus]
+	mut redo := input_state.redo
+	memento := redo.pop() or { return cfg.text }
+	mut undo := input_state.undo
+	undo.push(InputMemento{
+		text:       cfg.text
+		cursor_pos: input_state.cursor_pos
+		select_beg: input_state.select_beg
+		select_end: input_state.select_end
+	})
+	w.input_state[cfg.id_focus] = InputState{
+		cursor_pos: memento.cursor_pos
+		select_beg: memento.select_beg
+		select_end: memento.select_end
+		undo:       undo
+		redo:       redo
 	}
 	return memento.text
 }
