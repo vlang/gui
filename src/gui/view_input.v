@@ -1,5 +1,7 @@
 module gui
 
+import clipboard
+
 @[heap]
 pub struct InputCfg {
 	CommonCfg
@@ -78,30 +80,42 @@ pub fn input(cfg InputCfg) View {
 	)
 }
 
-const z_c = 0x1A
-const bsp_c = 0x08
-const del_c = 0x7F
-const space_c = 0x20
+const bsp_char = 0x08
+const del_char = 0x7F
+const space_char = 0x20
+const cmd_c = 0x63
+const cmd_v = 0x76
+const cmd_x = 0x78
+const cmd_z = 0x7A
+const ctrl_c = 0x03
+const ctrl_v = 0x17
+const ctrl_x = 0x19
+const ctrl_z = 0x1A
 
 fn on_char_input(cfg &InputCfg, event &Event, mut w Window) bool {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
-		mut t := ''
-		if c == z_c && event.modifiers == u32(Modifier.ctrl) {
-			input_state := w.input_state[cfg.id_focus]
-			mut undo := input_state.undo
-			memento := undo.pop() or { return false }
-			t = memento.text
-			w.input_state[cfg.id_focus] = InputState{
-				cursor_pos: memento.cursor_pos
-				select_beg: memento.select_beg
-				select_end: memento.select_end
-				undo:       undo
+		mut text := cfg.text
+		if event.modifiers & u32(Modifier.ctrl) > 0 {
+			match c {
+				ctrl_c { cfg.copy(w) }
+				ctrl_v { text = cfg.paste(cfg.from_clipboard(), mut w) or { '' } }
+				ctrl_x { text = cfg.cut(mut w) or { '' } }
+				ctrl_z { text = cfg.undo(mut w) }
+				else {}
+			}
+		} else if event.modifiers & u32(Modifier.super) > 0 {
+			match c {
+				cmd_c { cfg.copy(w) }
+				cmd_v { text = cfg.paste(cfg.from_clipboard(), mut w) or { '' } }
+				cmd_x { text = cfg.cut(mut w) or { '' } }
+				cmd_z { text = cfg.undo(mut w) }
+				else {}
 			}
 		} else {
 			match c {
-				bsp_c, del_c {
-					t = cfg.remove(mut w) or {
+				bsp_char, del_char {
+					text = cfg.delete(mut w) or {
 						eprintln(err)
 						return true
 					}
@@ -110,64 +124,33 @@ fn on_char_input(cfg &InputCfg, event &Event, mut w Window) bool {
 					return false
 				}
 				else {
-					t = cfg.insert(rune(c).str(), mut w) or {
+					text = cfg.paste(rune(c).str(), mut w) or {
 						eprintln(err)
 						return true
 					}
 				}
 			}
 		}
-		cfg.on_text_changed(cfg, t, w)
+		cfg.on_text_changed(cfg, text, w)
 		return true
 	}
 	return false
 }
 
-fn (cfg InputCfg) remove(mut w Window) !string {
+pub fn (cfg InputCfg) delete(mut w Window) ?string {
+	mut text := cfg.text
 	input_state := w.input_state[cfg.id_focus]
 	mut cursor_pos := input_state.cursor_pos
-	mut t := cfg.text
 	if cursor_pos < 0 {
 		cursor_pos = cfg.text.len
 	} else if cursor_pos > 0 {
 		if input_state.select_beg != input_state.select_end {
-			t = t[..input_state.select_beg] + t[input_state.select_end..]
-			cursor_pos = int_min(int(input_state.select_beg + 1), t.len)
+			text = text[..input_state.select_beg] + text[input_state.select_end..]
+			cursor_pos = int_min(int(input_state.select_beg + 1), text.len)
 		} else {
-			t = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
+			text = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
 			cursor_pos -= 1
 		}
-	}
-	w.input_state[w.id_focus] = InputState{
-		cursor_pos: cursor_pos
-		select_beg: 0
-		select_end: 0
-	}
-	return t
-}
-
-fn (cfg InputCfg) insert(s string, mut w Window) !string {
-	// clamp max chars to width of box when single line.
-	if !cfg.wrap && cfg.sizing.width == .fixed {
-		ctx := w.ui
-		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
-		width := ctx.text_width(cfg.text + s)
-		if width > cfg.width - cfg.padding.width() {
-			return s
-		}
-	}
-	input_state := w.input_state[cfg.id_focus]
-	mut cursor_pos := input_state.cursor_pos
-	mut t := cfg.text
-	if cursor_pos < 0 {
-		t = cfg.text + s
-		cursor_pos = t.len
-	} else if input_state.select_beg != input_state.select_end {
-		t = t[..input_state.select_beg] + s + t[input_state.select_end..]
-		cursor_pos = int_min(int(input_state.select_beg + 1), t.len)
-	} else {
-		t = t[..input_state.cursor_pos] + s + t[input_state.cursor_pos..]
-		cursor_pos = int_min(cursor_pos + s.len, t.len)
 	}
 	mut undo := input_state.undo
 	undo.push(InputMemento{
@@ -176,13 +159,94 @@ fn (cfg InputCfg) insert(s string, mut w Window) !string {
 		select_beg: input_state.select_beg
 		select_end: input_state.select_end
 	})
-	w.input_state[w.id_focus] = InputState{
+	w.input_state[cfg.id_focus] = InputState{
 		cursor_pos: cursor_pos
 		select_beg: 0
 		select_end: 0
 		undo:       undo
 	}
-	return t
+	return text
+}
+
+pub fn (cfg InputCfg) cut(mut w Window) ?string {
+	cfg.copy(w)
+	return cfg.delete(mut w)
+}
+
+pub fn (cfg InputCfg) copy(w &Window) ?string {
+	input_state := w.input_state[cfg.id_focus]
+	if input_state.select_beg != input_state.select_end {
+		cpy := cfg.text[input_state.select_beg..input_state.select_end] or { '' }
+		cfg.to_clipboard(cpy)
+	}
+	return none
+}
+
+pub fn (cfg InputCfg) paste(s string, mut w Window) !string {
+	// clamp max chars to width of box when single line fixed.
+	if !cfg.wrap && cfg.sizing.width == .fixed {
+		ctx := w.ui
+		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
+		width := ctx.text_width(cfg.text + s)
+		if width > cfg.width - cfg.padding.width() {
+			return s
+		}
+	}
+	mut text := cfg.text
+	input_state := w.input_state[cfg.id_focus]
+	mut cursor_pos := input_state.cursor_pos
+	if cursor_pos < 0 {
+		text = cfg.text + s
+		cursor_pos = text.len
+	} else if input_state.select_beg != input_state.select_end {
+		text = text[..input_state.select_beg] + s + text[input_state.select_end..]
+		cursor_pos = int_min(int(input_state.select_beg + 1), text.len)
+	} else {
+		text = text[..input_state.cursor_pos] + s + text[input_state.cursor_pos..]
+		cursor_pos = int_min(cursor_pos + s.len, text.len)
+	}
+	mut undo := input_state.undo
+	undo.push(InputMemento{
+		text:       cfg.text
+		cursor_pos: input_state.cursor_pos
+		select_beg: input_state.select_beg
+		select_end: input_state.select_end
+	})
+	w.input_state[cfg.id_focus] = InputState{
+		cursor_pos: cursor_pos
+		select_beg: 0
+		select_end: 0
+		undo:       undo
+	}
+	return text
+}
+
+pub fn (cfg InputCfg) undo(mut w Window) string {
+	input_state := w.input_state[cfg.id_focus]
+	mut undo := input_state.undo
+	memento := undo.pop() or { return cfg.text }
+	w.input_state[cfg.id_focus] = InputState{
+		cursor_pos: memento.cursor_pos
+		select_beg: memento.select_beg
+		select_end: memento.select_end
+		undo:       undo
+	}
+	return memento.text
+}
+
+pub fn (cfg InputCfg) from_clipboard() string {
+	mut cb := clipboard.new()
+	defer { cb.free() }
+	return cb.paste()
+}
+
+pub fn (cfg InputCfg) to_clipboard(s ?string) bool {
+	if s != none {
+		mut cb := clipboard.new()
+		defer { cb.free() }
+		return cb.copy(s)
+	}
+	return false
 }
 
 fn (cfg InputCfg) amend_layout(mut node Layout, mut w Window) {
