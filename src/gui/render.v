@@ -1,5 +1,6 @@
 module gui
 
+import arrays
 import datatypes
 import gg
 import gx
@@ -242,13 +243,49 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 		char_count += len
 	}
 
+	// figure out where the dang cursor goes
+	w := unsafe { &Window(ctx.user_data) }
+	mut cursor_x := -1
+	mut cursor_y := -1
+
+	if w.is_focus(shape.id_focus) && shape.type == .text {
+		input_state := w.input_state[shape.id_focus]
+		cursor_pos := input_state.cursor_pos
+		if cursor_pos >= 0 {
+			// place a zero-space char in the string at the cursor pos as
+			// a marker to where the cursor should go.
+			text := shape.text[..cursor_pos] + zero_space + shape.text[cursor_pos..]
+			mut shpe := Shape{
+				...shape
+				text:       text
+				text_lines: [text]
+			}
+			text_wrap(mut shpe, ctx)
+
+			// After wrapping, find the zero-space. cursor_y is the
+			// index into the shape.text_lines array cursor_x is
+			// character index of that indexed line
+			zero_space_rune := zero_space.runes()[0]
+			for idx, ln in shpe.text_lines {
+				pos := arrays.index_of_first(ln.runes(), fn [zero_space_rune] (idx int, elem rune) bool {
+					return elem == zero_space_rune
+				})
+				if pos >= 0 {
+					cursor_x = int_min(pos, ln.len - 1)
+					cursor_y = idx
+					break
+				}
+			}
+		}
+	}
+
 	// Draw text cursor
-	if shape.text_cursor_x >= 0 && shape.text_cursor_y >= 0 {
-		if shape.text_cursor_y < shape.text_lines.len {
-			ln := shape.text_lines[shape.text_cursor_y]
-			x := int_min(shape.text_cursor_x, ln.len)
+	if cursor_x >= 0 && cursor_y >= 0 {
+		if cursor_y < shape.text_lines.len {
+			ln := shape.text_lines[cursor_y]
+			x := int_min(cursor_x, ln.len)
 			cx := shape.x + ctx.text_width(ln[..x])
-			cy := shape.y + (lh * shape.text_cursor_y)
+			cy := shape.y + (lh * cursor_y)
 			renderers << DrawLine{
 				x:   cx
 				y:   cy

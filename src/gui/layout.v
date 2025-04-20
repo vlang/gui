@@ -3,7 +3,6 @@ module gui
 // Based on Nic Barter's video of how Clay's UI algorithm works.
 // https://www.youtube.com/watch?v=by9lQvpvMIc&t=1272s
 //
-import arrays
 
 // f32 values equal if within tolerance
 const tolerance = f32(0.01)
@@ -493,45 +492,7 @@ fn layout_fill_heights(mut node Layout) {
 // a zero-space character inserted at the cursor position. After wrapping it
 // recovers the cursor position by looking for the zero-space character.
 fn layout_wrap_text(mut node Layout, w &Window) {
-	if w.is_focus(node.shape.id_focus) && node.shape.type == .text {
-		// figure out where the dang cursor goes
-		node.shape.text_cursor_x = 0
-		node.shape.text_cursor_y = 0
-
-		input_state := w.input_state[w.id_focus]
-		cursor_pos := input_state.cursor_pos
-
-		if cursor_pos >= 0 {
-			// place a zero-space char in the string at the cursor pos as
-			// a marker to where the cursor should go.
-			text := node.shape.text[..cursor_pos] + zero_space + node.shape.text[cursor_pos..]
-			mut shape := Shape{
-				...node.shape
-				text:       text
-				text_lines: [text]
-			}
-			text_wrap(mut shape, w.ui)
-
-			// After wrapping, find the zero-space. cursor_y is the
-			// index into the shape.text_lines array cursor_x is
-			// character index of that indexed line
-			zero_space_rune := zero_space.runes()[0]
-			for idx, ln in shape.text_lines {
-				pos := arrays.index_of_first(ln.runes(), fn [zero_space_rune] (idx int, elem rune) bool {
-					return elem == zero_space_rune
-				})
-				if pos >= 0 {
-					node.shape.text_cursor_x = int_min(pos, ln.len - 1)
-					node.shape.text_cursor_y = idx
-					break
-				}
-			}
-		}
-	}
-
-	// wrap the text for-real
 	text_wrap(mut node.shape, w.ui)
-
 	for mut child in node.children {
 		layout_wrap_text(mut child, w)
 	}

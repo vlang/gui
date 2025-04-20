@@ -37,8 +37,6 @@ pub mut:
 	text_wrap         bool
 	text_line_spacing f32 // additional to normal line spacing
 	text_keep_spaces  bool
-	text_cursor_x     int = -1
-	text_cursor_y     int = -1
 	text_sel_beg      u32
 	text_sel_end      u32
 	// --- scroll ---
