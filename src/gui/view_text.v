@@ -156,14 +156,17 @@ fn (text Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	for i, r in line.runes() {
 		ln += r.str()
 		tw := get_text_width(ln, shape.text_style, mut w)
-		if tw >= e.mouse_x {
-			count = i
+		if tw > e.mouse_x {
+			// One past to position just cursor after char
+			// Appears to be how others do it (e.g. browsers)
+			count = if e.mouse_x < 5 { 0 } else { i + 1 }
 			break
 		}
 	}
 	if count == -1 {
-		count = int_max(0, line.runes().len - 1)
+		count = int_max(0, line.runes().len)
 	}
+	count = int_min(count, line.runes().len)
 	for i, l in shape.text_lines {
 		if i < y {
 			count += l.runes().len
@@ -231,13 +234,13 @@ fn (text Text) char_shape(shape &Shape, mut event Event, mut w Window) {
 		if event.modifiers & u32(Modifier.ctrl) > 0 {
 			match c {
 				ctrl_a { text.select_all(mut w) }
-				ctrl_c { text.copy(w) }
+				ctrl_c { text.copy(shape, w) }
 				else {}
 			}
 		} else if event.modifiers & u32(Modifier.super) > 0 {
 			match c {
 				cmd_a { text.select_all(mut w) }
-				cmd_c { text.copy(w) }
+				cmd_c { text.copy(shape, w) }
 				else {}
 			}
 		} else {
@@ -249,11 +252,39 @@ fn (text Text) char_shape(shape &Shape, mut event Event, mut w Window) {
 	}
 }
 
-fn (text Text) copy(w &Window) ?string {
+fn (text Text) copy(shape &Shape, w &Window) ?string {
 	input_state := w.input_state[text.id_focus]
 	if input_state.select_beg != input_state.select_end {
-		cpy := text.text[input_state.select_beg..input_state.select_end] or { '' }
-		to_clipboard(cpy)
+		cpy := match shape.text_keep_spaces {
+			true {
+				shape.text.runes()[input_state.select_beg..input_state.select_end]
+			}
+			else {
+				mut count := 0
+				mut buffer := []rune{cap: 100}
+				beg := int(input_state.select_beg)
+				end := int(input_state.select_end)
+				for line in shape.text_lines {
+					if count >= end {
+						break
+					}
+					if count > beg {
+						buffer << ` `
+					}
+					for r in line.runes() {
+						if count >= end {
+							break
+						}
+						if count >= beg {
+							buffer << r
+						}
+						count += 1
+					}
+				}
+				buffer
+			}
+		}
+		to_clipboard(cpy.string())
 	}
 	return none
 }

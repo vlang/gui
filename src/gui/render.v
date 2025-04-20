@@ -267,7 +267,7 @@ fn render_cursor(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 			mut length := 0
 			for idx, line in shape.text_lines {
 				ln := line.runes()
-				if length + ln.len > cursor_pos {
+				if length + ln.len >= cursor_pos {
 					cursor_x = cursor_pos - length
 					cursor_y = idx
 					break

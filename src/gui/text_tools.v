@@ -60,11 +60,19 @@ fn text_wrap(mut shape Shape, ctx &gg.Context) {
 }
 
 // wrap_text_shrink_spaces wraps lines to given width (logical units, not chars)
-// Extra white space is compressed to on space including tabs and newlines.
+// Extra white space is compressed.
 fn wrap_text_shrink_spaces(s string, width f32, ctx &gg.Context) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
-	for field in s.fields() {
+	for field in split_text(s) {
+		if field == '\n' {
+			wrap << line
+			line = ''
+			continue
+		}
+		if field.trim_space().len == 0 {
+			continue
+		}
 		if line.len == 0 {
 			line = field
 			continue
@@ -106,6 +114,8 @@ fn wrap_text_keep_spaces(s string, width f32, ctx &gg.Context) []string {
 	return wrap
 }
 
+const space = ' '
+
 // split_text splits a string by spaces and also includes the spaces as separate
 // strings. Newlines are separated from other white-space.
 fn split_text(s string) []string {
@@ -121,9 +131,9 @@ fn split_text(s string) []string {
 		ch := r.str()
 		if state == state_un {
 			field += ch
-			state = if is_split_space(ch) { state_sp } else { state_ch }
+			state = if ch == space { state_sp } else { state_ch }
 		} else if state == state_sp {
-			if is_split_space(ch) {
+			if ch == space {
 				field += ch
 			} else {
 				state = state_ch
@@ -131,7 +141,7 @@ fn split_text(s string) []string {
 				field = ch
 			}
 		} else if state == state_ch {
-			if is_split_space(ch) {
+			if ch == space {
 				state = state_sp
 				fields << field
 				field = ch
@@ -150,13 +160,12 @@ fn split_text(s string) []string {
 	return fields
 }
 
-const space = ' '
-const zero_space = '\xe2\x80\x8b'
+// const zero_space = '\xe2\x80\x8b'
 
-@[inline]
-fn is_split_space(ch string) bool {
-	return ch == space || ch == zero_space
-}
+// @[inline]
+// fn is_split_space(ch string) bool {
+// 	return ch == space || ch == zero_space
+// }
 
 pub fn font_path_list() []string {
 	mut font_root_path := ''

@@ -72,9 +72,8 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 		sizing:      gui.fill_fill
 		content:     [
 			gui.text(
-				text:        text
-				keep_spaces: true
-				wrap:        true
+				text: text
+				wrap: true
 			),
 		]
 	)
