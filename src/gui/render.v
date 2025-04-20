@@ -1,6 +1,5 @@
 module gui
 
-import arrays
 import datatypes
 import gg
 import gx
@@ -141,9 +140,12 @@ fn render_container(shape Shape, parent_color Color, offset_v f32, ctx &gg.Conte
 		} else {
 			shape.text_style.color
 		}
+		// The height of a lowercase char usually splits
+		// the text just right.
+		eh := ctx.text_height('e')
 		renderers << DrawText{
 			x:    x
-			y:    y - h + 1.5
+			y:    y - eh
 			text: shape.text
 			cfg:  TextStyle{
 				...shape.text_style
@@ -243,61 +245,54 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 		char_count += len
 	}
 
-	// figure out where the dang cursor goes
+	// No need to render the cursor if no text was rendered
+	if renderers.len > 0 {
+		renderers << render_cursor(shape, offset_v, ctx)
+	}
+	return renderers
+}
+
+// render_cursor figures out where the cursor goes
+fn render_cursor(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	w := unsafe { &Window(ctx.user_data) }
-	mut cursor_x := -1
-	mut cursor_y := -1
+	mut renderers := []Renderer{}
 
 	if w.is_focus(shape.id_focus) && shape.type == .text {
+		lh := line_height(shape)
+		mut cursor_x := -1
+		mut cursor_y := -1
 		input_state := w.input_state[shape.id_focus]
 		cursor_pos := input_state.cursor_pos
 		if cursor_pos >= 0 {
-			// place a zero-space char in the string at the cursor pos as
-			// a marker to where the cursor should go.
-			text := shape.text[..cursor_pos] + zero_space + shape.text[cursor_pos..]
-			mut shpe := Shape{
-				...shape
-				text:       text
-				text_lines: [text]
-			}
-			text_wrap(mut shpe, ctx)
-
-			// After wrapping, find the zero-space. cursor_y is the
-			// index into the shape.text_lines array cursor_x is
-			// character index of that indexed line
-			zero_space_rune := zero_space.runes()[0]
-			for idx, ln in shpe.text_lines {
-				pos := arrays.index_of_first(ln.runes(), fn [zero_space_rune] (idx int, elem rune) bool {
-					return elem == zero_space_rune
-				})
-				if pos >= 0 {
-					cursor_x = int_min(pos, ln.len - 1)
+			mut length := 0
+			for idx, line in shape.text_lines {
+				ln := line.runes()
+				if length + ln.len > cursor_pos {
+					cursor_x = cursor_pos - length
 					cursor_y = idx
 					break
 				}
+				length += ln.len
 			}
 		}
-	}
-
-	// Draw text cursor
-	if cursor_x >= 0 && cursor_y >= 0 {
-		if cursor_y < shape.text_lines.len {
-			ln := shape.text_lines[cursor_y]
-			x := int_min(cursor_x, ln.len)
-			cx := shape.x + ctx.text_width(ln[..x])
-			cy := shape.y + (lh * cursor_y)
-			renderers << DrawLine{
-				x:   cx
-				y:   cy
-				x1:  cx
-				y1:  cy + lh
-				cfg: gg.PenConfig{
-					color: shape.text_style.color.to_gx_color()
+		if cursor_x >= 0 && cursor_y >= 0 {
+			if cursor_y < shape.text_lines.len {
+				ln := shape.text_lines[cursor_y]
+				x := int_min(cursor_x, ln.len)
+				cx := shape.x + ctx.text_width(ln[..x])
+				cy := shape.y + (lh * cursor_y)
+				renderers << DrawLine{
+					x:   cx
+					y:   cy
+					x1:  cx
+					y1:  cy + lh + offset_v
+					cfg: gg.PenConfig{
+						color: shape.text_style.color.to_gx_color()
+					}
 				}
 			}
 		}
 	}
-
 	return renderers
 }
 

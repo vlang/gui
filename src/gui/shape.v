@@ -14,6 +14,7 @@ pub mut:
 	clip     bool
 	color    Color
 	disabled bool
+	fill     bool
 	// --- sizes, positions ---
 	x          f32
 	y          f32
@@ -23,7 +24,6 @@ pub mut:
 	height     f32
 	min_height f32
 	max_height f32
-	fill       bool
 	h_align    HorizontalAlign
 	v_align    VerticalAlign
 	padding    Padding
@@ -35,7 +35,7 @@ pub mut:
 	text_lines        []string
 	text_style        TextStyle
 	text_wrap         bool
-	text_line_spacing f32 // additional to normal line spacing
+	text_line_spacing f32 // addition to normal line spacing
 	text_keep_spaces  bool
 	text_sel_beg      u32
 	text_sel_end      u32
@@ -52,9 +52,9 @@ pub mut:
 	on_char    fn (voidptr, mut Event, &Window) = unsafe { nil }
 	on_click   fn (voidptr, mut Event, &Window) = unsafe { nil }
 	on_keydown fn (voidptr, mut Event, &Window) = unsafe { nil }
-	// --- for internal use and not intended for end users ---
-	// --- however, composite views can set these in the   ---
-	// --- layout amend callback. See input view on how to ---
+	// --- for internal use and not intended for end users   ---
+	// --- however, composite views can set these in the     ---
+	// --- layout amend callback. See input view for example ---
 	on_char_shape       fn (&Shape, mut Event, &Window) = unsafe { nil }
 	on_keydown_shape    fn (&Shape, mut Event, &Window) = unsafe { nil }
 	on_mouse_down_shape fn (&Shape, mut Event, &Window) = unsafe { nil }

@@ -34,11 +34,6 @@ fn main_view(w &gui.Window) gui.View {
 	mut state := w.state[AppState]()
 	width, height := w.window_size()
 
-	text_style_blue := gui.TextStyle{
-		...gui.theme().b4
-		color: gui.rgb(100, 149, 237)
-	}
-
 	return gui.row(
 		width:   width
 		height:  height
@@ -150,6 +145,7 @@ fn main_view(w &gui.Window) gui.View {
 				fill:    true
 				sizing:  gui.fill_fill
 				color:   gui.rgb(0x30, 0x30, 0x30)
+				spacing: gui.spacing_large
 				content: [
 					gui.input(
 						id_focus:        3
@@ -166,11 +162,8 @@ fn main_view(w &gui.Window) gui.View {
 					gui.column(
 						color:   gui.gray
 						sizing:  gui.fill_fit
+						text:    '  keep_spaces = false  '
 						content: [
-							gui.text(
-								text:       'keep_spaces = false'
-								text_style: text_style_blue
-							),
 							gui.text(
 								id_focus:    6
 								text:        state.name
@@ -182,11 +175,8 @@ fn main_view(w &gui.Window) gui.View {
 					gui.column(
 						color:   gui.gray
 						sizing:  gui.fill_fit
+						text:    '  keep_spaces = true  '
 						content: [
-							gui.text(
-								text:       'keep_spaces = true'
-								text_style: text_style_blue
-							),
 							gui.text(
 								id_focus:    7
 								text:        state.name
