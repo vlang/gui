@@ -5,7 +5,7 @@ import arrays
 // find_shape walks the ShapeGTree in reverse until predicate is satisfied.
 // shape_uid limits the depth of the search into tree. Used in event bubbling. 0
 // is not a valid shape_uid and is used to search the entire tree
-fn (node Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
+fn (node &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
 	for child in node.children {
 		if found := child.find_shape(predicate) {
 			return found
@@ -14,12 +14,12 @@ fn (node Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
 	return if predicate(node) { node.shape } else { none }
 }
 
-fn (node Layout) previous_focusable(mut w Window) ?Shape {
+fn (node &Layout) previous_focusable(mut w Window) ?Shape {
 	ids := node.get_focus_ids().reverse()
 	return node.find_next_focusable(ids, mut w)
 }
 
-fn (node Layout) next_focusable(mut w Window) ?Shape {
+fn (node &Layout) next_focusable(mut w Window) ?Shape {
 	ids := node.get_focus_ids()
 	return node.find_next_focusable(ids, mut w)
 }
@@ -27,7 +27,7 @@ fn (node Layout) next_focusable(mut w Window) ?Shape {
 // next_focusable finds the next focusable that is not disabled.
 // If none are found it tries to find the first focusable that
 // is not disabled.
-fn (node Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
+fn (node &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
 	// ids are sorted either ascending or descending.
 	if w.id_focus > 0 {
 		mut found := false
@@ -57,7 +57,7 @@ fn (node Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
 }
 
 // get_focus_ids returns an ordered list of focus ids
-fn (node Layout) get_focus_ids() []u32 {
+fn (node &Layout) get_focus_ids() []u32 {
 	mut focus_ids := []u32{}
 	if node.shape.id_focus > 0 {
 		focus_ids << node.shape.id_focus

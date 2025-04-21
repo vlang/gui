@@ -13,7 +13,7 @@ pub:
 	text       string
 }
 
-pub fn progress_bar(cfg ProgressBarCfg) View {
+pub fn progress_bar(cfg &ProgressBarCfg) View {
 	size := f32(gui_theme.progress_bar_style.size)
 	container_cfg := ContainerCfg{
 		id:           cfg.id

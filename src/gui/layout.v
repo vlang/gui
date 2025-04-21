@@ -187,7 +187,7 @@ fn layout_heights(mut node Layout) {
 // find_first_idx_and_len gets the index of the first element to satisfy the
 // predicate and the length of all elements that satisfy the predicate. Iterates
 // the array once with no allocations.
-fn find_first_idx_and_len(node Layout, predicate fn (n Layout) bool) (int, int) {
+fn find_first_idx_and_len(node &Layout, predicate fn (n Layout) bool) (int, int) {
 	mut idx := 0
 	mut len := 0
 	mut set_idx := false

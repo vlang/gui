@@ -71,7 +71,7 @@ fn renderer_draw(renderer Renderer, ctx &gg.Context) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render(layout Layout, bg_color Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render(layout &Layout, bg_color Color, offset_v f32, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
 
@@ -100,7 +100,7 @@ fn render(layout Layout, bg_color Color, offset_v f32, ctx &gg.Context) []Render
 }
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
-fn render_shape(shape Shape, parent_color Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_shape(shape &Shape, parent_color Color, offset_v f32, ctx &gg.Context) []Renderer {
 	if shape.color == color_transparent {
 		return []
 	}
@@ -111,7 +111,7 @@ fn render_shape(shape Shape, parent_color Color, offset_v f32, ctx &gg.Context) 
 	}
 }
 
-fn render_container(shape Shape, parent_color Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_container(shape &Shape, parent_color Color, offset_v f32, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
 	renderers << render_rectangle(shape, offset_v)
 	// This group box stuff is likely temporary
@@ -157,7 +157,7 @@ fn render_container(shape Shape, parent_color Color, offset_v f32, ctx &gg.Conte
 }
 
 // draw_rectangle draws a shape as a rectangle.
-fn render_rectangle(shape Shape, offset_v f32) []Renderer {
+fn render_rectangle(shape &Shape, offset_v f32) []Renderer {
 	assert shape.type == .container
 	mut renderers := []Renderer{}
 	renderer_rect := make_renderer_rect(shape)
@@ -186,7 +186,7 @@ fn render_rectangle(shape Shape, offset_v f32) []Renderer {
 
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
-fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_text(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
 	mut text_cfg := TextStyle{
 		...shape.text_style
@@ -253,7 +253,7 @@ fn render_text(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 }
 
 // render_cursor figures out where the cursor goes
-fn render_cursor(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_cursor(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	w := unsafe { &Window(ctx.user_data) }
 	mut renderers := []Renderer{}
 
@@ -298,7 +298,7 @@ fn render_cursor(shape Shape, offset_v f32, ctx &gg.Context) []Renderer {
 
 // render_clip creates a clipping region based on the layout's dimensions
 // minus padding and some adjustments for round off.
-fn render_clip(shape Shape, mut clip_stack ClipStack) Renderer {
+fn render_clip(shape &Shape, mut clip_stack ClipStack) Renderer {
 	clip_rect := shape_clip_rect(shape)
 	clip := DrawClip{
 		x:      clip_rect.x
@@ -333,7 +333,7 @@ fn dim_alpha(color Color) Color {
 
 // shape_clip_rect constructs a clip rectangle based on the shape's
 // diemensions plus some adjustments for round off
-fn shape_clip_rect(shape Shape) gg.Rect {
+fn shape_clip_rect(shape &Shape) gg.Rect {
 	return gg.Rect{
 		x:      shape.x + shape.padding.left
 		y:      shape.y + shape.padding.top
@@ -345,7 +345,7 @@ fn shape_clip_rect(shape Shape) gg.Rect {
 // make_renderer_rect creates a rectangle that represents the renderable region.
 // If the shape is clipped, then use the shape dimensions otherwise used
 // the window size.
-fn make_renderer_rect(shape Shape) gg.Rect {
+fn make_renderer_rect(shape &Shape) gg.Rect {
 	return match shape.clip {
 		true {
 			shape_clip_rect(shape)

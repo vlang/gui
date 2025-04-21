@@ -89,7 +89,7 @@ pub:
 // text renders text. Text wrapping is available. Multiple spaces are compressed
 // to one space unless `keep_spaces` is true. The `spacing` parameter is used to
 // increase the space between lines. Scrolling is supported.
-pub fn text(cfg TextCfg) Text {
+pub fn text(cfg &TextCfg) Text {
 	return Text{
 		id:           cfg.id
 		id_focus:     cfg.id_focus
@@ -101,20 +101,19 @@ pub fn text(cfg TextCfg) Text {
 		text:         cfg.text
 		text_style:   cfg.text_style
 		wrap:         cfg.wrap
-		cfg:          &cfg
+		cfg:          cfg
 		sizing:       if cfg.wrap { fill_fit } else { fit_fit }
 		disabled:     cfg.disabled
 	}
 }
 
-fn (text Text) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
+fn (text &Text) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
 	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
 		ev := event_relative_to(shape, e)
 		cursor_pos := text.mouse_cursor_pos(shape, ev, mut w)
-		// println('${cursor_pos}, ${shape.text_cursor_x}, ${shape.text_cursor_y}')
 		input_state := w.input_state[shape.id_focus]
 		w.input_state[shape.id_focus] = InputState{
 			...input_state
@@ -126,7 +125,7 @@ fn (text Text) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn (text Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
+fn (text &Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
@@ -147,7 +146,7 @@ fn (text Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 
 // mouse_cursor_pos determines where in the input control's text
 // field the click occured. Works with multiple line text fields.
-fn (text Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
+fn (text &Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	lh := shape.text_style.size + shape.text_style.line_spacing
 	y := int(e.mouse_y / lh)
 	line := shape.text_lines[y]
@@ -175,7 +174,7 @@ fn (text Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	return count
 }
 
-fn (text Text) keydown_shape(shape &Shape, mut e Event, mut w Window) {
+fn (text &Text) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		cfg := unsafe { &TextCfg(shape.cfg) }
 		input_state := w.input_state[shape.id_focus]
@@ -228,7 +227,7 @@ fn (text Text) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn (text Text) char_shape(shape &Shape, mut event Event, mut w Window) {
+fn (text &Text) char_shape(shape &Shape, mut event Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		c := event.char_code
 		if event.modifiers & u32(Modifier.ctrl) > 0 {
@@ -252,7 +251,7 @@ fn (text Text) char_shape(shape &Shape, mut event Event, mut w Window) {
 	}
 }
 
-fn (text Text) copy(shape &Shape, w &Window) ?string {
+fn (text &Text) copy(shape &Shape, w &Window) ?string {
 	input_state := w.input_state[text.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		cpy := match shape.text_keep_spaces {
@@ -289,7 +288,7 @@ fn (text Text) copy(shape &Shape, w &Window) ?string {
 	return none
 }
 
-pub fn (text Text) select_all(mut w Window) {
+pub fn (text &Text) select_all(mut w Window) {
 	input_state := w.input_state[text.id_focus]
 	w.input_state[text.id_focus] = InputState{
 		...input_state
@@ -299,7 +298,7 @@ pub fn (text Text) select_all(mut w Window) {
 	}
 }
 
-pub fn (text Text) unselect_all(mut w Window) {
+pub fn (text &Text) unselect_all(mut w Window) {
 	input_state := w.input_state[text.id_focus]
 	w.input_state[text.id_focus] = InputState{
 		...input_state

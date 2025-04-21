@@ -130,7 +130,7 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 	}
 }
 
-fn (cfg InputCfg) delete(mut w Window) ?string {
+fn (cfg &InputCfg) delete(mut w Window) ?string {
 	mut text := cfg.text
 	input_state := w.input_state[cfg.id_focus]
 	mut cursor_pos := input_state.cursor_pos
@@ -161,7 +161,7 @@ fn (cfg InputCfg) delete(mut w Window) ?string {
 	return text
 }
 
-fn (cfg InputCfg) insert(s string, mut w Window) !string {
+fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	// clamp max chars to width of box when single line fixed.
 	if !cfg.wrap && cfg.sizing.width == .fixed {
 		ctx := w.ui
@@ -181,7 +181,6 @@ fn (cfg InputCfg) insert(s string, mut w Window) !string {
 		text = text[..input_state.select_beg] + s + text[input_state.select_end..]
 		cursor_pos = int_min(int(input_state.select_beg) - 1, text.len)
 	} else {
-		println(text[..cursor_pos])
 		text = text[..cursor_pos] + s + text[cursor_pos..]
 		cursor_pos = int_min(cursor_pos + s.len, text.len)
 	}
@@ -201,12 +200,12 @@ fn (cfg InputCfg) insert(s string, mut w Window) !string {
 	return text
 }
 
-pub fn (cfg InputCfg) cut(mut w Window) ?string {
+pub fn (cfg &InputCfg) cut(mut w Window) ?string {
 	cfg.copy(w)
 	return cfg.delete(mut w)
 }
 
-pub fn (cfg InputCfg) copy(w &Window) ?string {
+pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	input_state := w.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		cpy := cfg.text[input_state.select_beg..input_state.select_end] or { '' }
@@ -215,11 +214,11 @@ pub fn (cfg InputCfg) copy(w &Window) ?string {
 	return none
 }
 
-pub fn (cfg InputCfg) paste(s string, mut w Window) !string {
+pub fn (cfg &InputCfg) paste(s string, mut w Window) !string {
 	return cfg.insert(s, mut w)
 }
 
-pub fn (cfg InputCfg) undo(mut w Window) string {
+pub fn (cfg &InputCfg) undo(mut w Window) string {
 	input_state := w.input_state[cfg.id_focus]
 	mut undo := input_state.undo
 	memento := undo.pop() or { return cfg.text }
@@ -240,7 +239,7 @@ pub fn (cfg InputCfg) undo(mut w Window) string {
 	return memento.text
 }
 
-pub fn (cfg InputCfg) redo(mut w Window) string {
+pub fn (cfg &InputCfg) redo(mut w Window) string {
 	input_state := w.input_state[cfg.id_focus]
 	mut redo := input_state.redo
 	memento := redo.pop() or { return cfg.text }
@@ -261,7 +260,7 @@ pub fn (cfg InputCfg) redo(mut w Window) string {
 	return memento.text
 }
 
-fn (cfg InputCfg) amend_layout(mut node Layout, mut w Window) {
+fn (cfg &InputCfg) amend_layout(mut node Layout, mut w Window) {
 	if node.shape.disabled {
 		return
 	}
