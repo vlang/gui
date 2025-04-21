@@ -31,7 +31,7 @@ pub:
 }
 
 // generate_layout builds a Layout from a View.
-fn generate_layout(node View, window Window) Layout {
+fn generate_layout(node &View, window &Window) Layout {
 	mut layout := node.generate(window.ui)
 	for child_node in node.content {
 		layout.children << generate_layout(child_node, window)

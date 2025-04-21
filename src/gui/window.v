@@ -66,7 +66,7 @@ pub:
 }
 
 // window creates the application window. See WindowCfg on how to configure it
-pub fn window(cfg WindowCfg) &Window {
+pub fn window(cfg &WindowCfg) &Window {
 	mut window := &Window{
 		state:    cfg.state
 		on_event: cfg.on_event

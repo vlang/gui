@@ -315,7 +315,7 @@ pub const theme_light_no_padding = theme_maker(
 // Individual styles can be modified after using theme_maker.
 // Note: `theme_maker` containers are always transparent and not
 // filled.
-pub fn theme_maker(cfg ThemeCfg) Theme {
+pub fn theme_maker(cfg &ThemeCfg) Theme {
 	theme := Theme{
 		name:             cfg.name
 		color_background: cfg.color_0
