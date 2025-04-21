@@ -167,8 +167,8 @@ fn (cfg InputCfg) insert(s string, mut w Window) !string {
 		ctx := w.ui
 		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
 		width := ctx.text_width(cfg.text + s)
-		if width > cfg.width - cfg.padding.width() {
-			return s
+		if width > cfg.width - cfg.padding.width() - cfg.padding_border.width() {
+			return cfg.text
 		}
 	}
 	mut text := cfg.text
@@ -181,7 +181,8 @@ fn (cfg InputCfg) insert(s string, mut w Window) !string {
 		text = text[..input_state.select_beg] + s + text[input_state.select_end..]
 		cursor_pos = int_min(int(input_state.select_beg) - 1, text.len)
 	} else {
-		text = text[..input_state.cursor_pos] + s + text[input_state.cursor_pos..]
+		println(text[..cursor_pos])
+		text = text[..cursor_pos] + s + text[cursor_pos..]
 		cursor_pos = int_min(cursor_pos + s.len, text.len)
 	}
 	mut undo := input_state.undo
