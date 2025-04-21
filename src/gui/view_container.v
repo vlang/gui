@@ -26,6 +26,7 @@ pub struct Container implements View {
 	invisible      bool
 	text           string
 	id_scroll_v    u32
+	id_scroll_h    u32
 	float          bool
 	float_anchor   FloatAttach
 	float_tie_off  FloatAttach
@@ -81,6 +82,7 @@ fn (cfg &Container) generate(_ &gg.Context) Layout {
 			}
 			cfg:            cfg.cfg
 			id_scroll_v:    cfg.id_scroll_v
+			id_scroll_h:    cfg.id_scroll_h
 			on_click:       cfg.on_click
 			on_char:        cfg.on_char
 			on_keydown:     cfg.on_keydown
@@ -97,6 +99,7 @@ pub struct ContainerCfg {
 pub:
 	id_focus       u32
 	id_scroll_v    u32
+	id_scroll_h    u32
 	x              f32
 	y              f32
 	clip           bool
@@ -148,6 +151,7 @@ fn container(cfg ContainerCfg) Container {
 		invisible:      cfg.invisible
 		text:           cfg.text
 		id_scroll_v:    cfg.id_scroll_v
+		id_scroll_h:    cfg.id_scroll_h
 		float:          cfg.float
 		float_anchor:   cfg.float_anchor
 		float_tie_off:  cfg.float_tie_off

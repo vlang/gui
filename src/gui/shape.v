@@ -42,6 +42,8 @@ pub mut:
 	// --- scroll ---
 	id_scroll_v u32 // >0 indicates shape is scrollable
 	scroll_v    f32
+	id_scroll_h f32
+	scroll_h    f32
 	// --- float ---
 	float          bool
 	float_anchor   FloatAttach
