@@ -19,6 +19,7 @@ mut:
 	input_state           map[u32]InputState
 	scroll_state_vertical map[u32]f32
 	text_widths           map[string]int
+	window_size           gg.Size
 	on_event              fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
@@ -78,9 +79,12 @@ pub fn window(cfg &WindowCfg) &Window {
 		window_title: cfg.title
 		event_fn:     event_fn
 		frame_fn:     frame_fn
-		init_fn:      cfg.on_init
 		ui_mode:      true // only draw on events
 		user_data:    window
+		init_fn:      fn [cfg] (mut w Window) {
+			w.window_size = w.ui.window_size()
+			cfg.on_init(w)
+		}
 	)
 	return window
 }
@@ -151,6 +155,9 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		.mouse_scroll {
 			mouse_scroll_handler(layout, mut e, mut w)
 		}
+		.resized {
+			w.window_size = w.ui.window_size()
+		}
 		else {
 			// dump(e)
 		}
@@ -203,8 +210,8 @@ pub fn (window &Window) pointer_over_app(e &Event) bool {
 	if e.mouse_x < 0 || e.mouse_y < 0 {
 		return false
 	}
-	size := window.ui.window_size()
-	if e.mouse_x > size.width || e.mouse_y > size.height {
+	width, height := window.window_size()
+	if e.mouse_x > width || e.mouse_y > height {
 		return false
 	}
 	return true
@@ -339,6 +346,5 @@ pub fn (mut window Window) update_window() {
 
 // window_size gets the size of the window in logical units.
 pub fn (window &Window) window_size() (int, int) {
-	size := window.ui.window_size()
-	return size.width, size.height
+	return window.window_size.width, window.window_size.height
 }

@@ -72,7 +72,7 @@ fn renderer_draw(renderer Renderer, ctx &gg.Context) {
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
 fn render(layout &Layout, bg_color Color, offset_v f32, ctx &gg.Context) []Renderer {
-	mut renderers := []Renderer{}
+	mut renderers := []Renderer{cap: 10}
 	mut clip_stack := ClipStack{}
 
 	parent_color := if layout.shape.color != color_transparent {

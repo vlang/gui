@@ -1,5 +1,10 @@
 import gui
 
+// Demonstrates column scrolling with 10,000 different text items.
+// No virtualization, just pure layout calculated 10's of thousands
+// of times. While not buttery smooth, it is quite usable.
+// Gui layout/rendering is fast!
+
 fn main() {
 	mut window := gui.window(
 		width:   300
@@ -15,7 +20,7 @@ fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 
 	mut items := []gui.View{}
-	for i in 1 .. 10_000 {
+	for i in 1 .. 10_000 { // 10K!
 		items << gui.text(text: '${i} text list item')
 	}
 

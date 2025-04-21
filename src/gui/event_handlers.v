@@ -1,6 +1,6 @@
 module gui
 
-fn char_handler(node Layout, mut e Event, w &Window) {
+fn char_handler(node &Layout, mut e Event, w &Window) {
 	for child in node.children {
 		char_handler(child, mut e, w)
 		if e.is_handled {
@@ -23,7 +23,7 @@ fn char_handler(node Layout, mut e Event, w &Window) {
 	}
 }
 
-fn keydown_handler(node Layout, mut e Event, mut w Window) {
+fn keydown_handler(node &Layout, mut e Event, mut w Window) {
 	for child in node.children {
 		keydown_handler(child, mut e, mut w)
 		if e.is_handled {
@@ -52,7 +52,7 @@ fn keydown_handler(node Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn key_down_scroll_handler(node Layout, mut e Event, mut w Window) {
+fn key_down_scroll_handler(node &Layout, mut e Event, mut w Window) {
 	delta_line := gui_theme.scroll_delta_line
 	delta_page := gui_theme.scroll_delta_page
 	delta_home := 10000000 // any really big number works
@@ -67,7 +67,7 @@ fn key_down_scroll_handler(node Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn mouse_down_handler(node Layout, mut e Event, mut w Window) {
+fn mouse_down_handler(node &Layout, mut e Event, mut w Window) {
 	for child in node.children {
 		mouse_down_handler(child, mut e, mut w)
 		if e.is_handled {
@@ -98,7 +98,7 @@ fn mouse_down_handler(node Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn mouse_move_handler(node Layout, mut e Event, mut w Window) {
+fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
 	if !w.pointer_over_app(e) {
 		return
 	}
@@ -120,7 +120,7 @@ fn mouse_move_handler(node Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn mouse_scroll_handler(node Layout, mut e Event, mut w Window) {
+fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
 	for child in node.children {
 		mouse_scroll_handler(child, mut e, mut w)
 		if e.is_handled {
@@ -135,7 +135,7 @@ fn mouse_scroll_handler(node Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn scroll_vertical(node Layout, delta f32, mut w Window) bool {
+fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {
 	v_id := node.shape.id_scroll_v
 	if v_id > 0 {
 		ch := content_height(node)
@@ -150,7 +150,7 @@ fn scroll_vertical(node Layout, delta f32, mut w Window) bool {
 	return false
 }
 
-fn content_height(node Layout) f32 {
+fn content_height(node &Layout) f32 {
 	mut height := f32(0)
 	if node.shape.axis == .top_to_bottom {
 		height += node.spacing()
