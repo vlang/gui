@@ -3,7 +3,6 @@ module gui
 import clipboard
 import gg
 import hash.fnv1a
-import os
 
 pub fn get_text_width(text string, text_style TextStyle, mut window Window) int {
 	ctx := window.ui
@@ -158,31 +157,6 @@ fn split_text(s string) []string {
 	}
 	fields << field
 	return fields
-}
-
-// const zero_space = '\xe2\x80\x8b'
-
-// @[inline]
-// fn is_split_space(ch string) bool {
-// 	return ch == space || ch == zero_space
-// }
-
-pub fn font_path_list() []string {
-	mut font_root_path := ''
-	$if windows {
-		font_root_path = 'C:/windows/fonts'
-	}
-	$if macos {
-		font_root_path = '/System/Library/Fonts/*'
-	}
-	$if linux {
-		font_root_path = '/usr/share/fonts/truetype/*'
-	}
-	$if android {
-		font_root_path = '/system/fonts/*'
-	}
-	font_paths := os.glob('${font_root_path}/*.ttf') or { panic(err) }
-	return font_paths
 }
 
 pub fn from_clipboard() string {

@@ -34,3 +34,21 @@ fn path_variant(path string, variant font.Variant) string {
 	// TODO: add other os systems
 	return path
 }
+
+pub fn font_path_list() []string {
+	mut font_root_path := ''
+	$if windows {
+		font_root_path = 'C:/windows/fonts'
+	}
+	$if macos {
+		font_root_path = '/System/Library/Fonts/*'
+	}
+	$if linux {
+		font_root_path = '/usr/share/fonts/truetype/*'
+	}
+	$if android {
+		font_root_path = '/system/fonts/*'
+	}
+	font_paths := os.glob('${font_root_path}/*.ttf') or { panic(err) }
+	return font_paths
+}

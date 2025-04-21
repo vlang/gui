@@ -23,7 +23,7 @@ mut:
 	content      []View
 }
 
-fn (t Text) generate(ctx &gg.Context) Layout {
+fn (t &Text) generate(ctx &gg.Context) Layout {
 	if t.invisible {
 		return Layout{}
 	}
@@ -37,9 +37,7 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 			type:                .text
 			id:                  t.id
 			id_focus:            t.id_focus
-			cfg:                 &TextCfg{
-				...t.cfg
-			}
+			cfg:                 &t.cfg
 			clip:                t.clip
 			disabled:            t.disabled
 			min_width:           t.min_width
@@ -58,19 +56,20 @@ fn (t Text) generate(ctx &gg.Context) Layout {
 			on_mouse_move_shape: t.mouse_move_shape
 		}
 	}
-	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
-	shape_tree.shape.height = text_height(shape_tree.shape)
 	if !t.wrap || shape_tree.shape.sizing.width == .fixed {
+		shape_tree.shape.width = text_width(shape_tree.shape, ctx)
 		shape_tree.shape.min_width = f32_max(shape_tree.shape.width, shape_tree.shape.min_width)
 		shape_tree.shape.width = shape_tree.shape.min_width
 	}
 	if !t.wrap || shape_tree.shape.sizing.height == .fixed {
+		shape_tree.shape.height = text_height(shape_tree.shape)
 		shape_tree.shape.min_height = f32_max(shape_tree.shape.height, shape_tree.shape.min_height)
 		shape_tree.shape.height = shape_tree.shape.height
 	}
 	return shape_tree
 }
 
+@[heap]
 pub struct TextCfg {
 pub:
 	id           string

@@ -113,7 +113,7 @@ fn render_shape(shape &Shape, parent_color Color, offset_v f32, ctx &gg.Context)
 
 fn render_container(shape &Shape, parent_color Color, offset_v f32, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{}
-	renderers << render_rectangle(shape, offset_v)
+	renderers << render_rectangle(shape, offset_v, ctx)
 	// This group box stuff is likely temporary
 	// Examine after floating containers implemented
 	if shape.text.len != 0 {
@@ -157,10 +157,10 @@ fn render_container(shape &Shape, parent_color Color, offset_v f32, ctx &gg.Cont
 }
 
 // draw_rectangle draws a shape as a rectangle.
-fn render_rectangle(shape &Shape, offset_v f32) []Renderer {
+fn render_rectangle(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 	assert shape.type == .container
 	mut renderers := []Renderer{}
-	renderer_rect := make_renderer_rect(shape)
+	renderer_rect := make_renderer_rect(shape, ctx)
 	draw_rect := gg.Rect{
 		x:      shape.x
 		y:      shape.y + offset_v
@@ -195,7 +195,7 @@ fn render_text(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 
 	ctx.set_text_cfg(text_cfg)
 	lh := line_height(shape)
-	renderer_rect := make_renderer_rect(shape)
+	renderer_rect := make_renderer_rect(shape, ctx)
 
 	mut char_count := 0
 	mut y := shape.y + offset_v
@@ -345,18 +345,19 @@ fn shape_clip_rect(shape &Shape) gg.Rect {
 // make_renderer_rect creates a rectangle that represents the renderable region.
 // If the shape is clipped, then use the shape dimensions otherwise used
 // the window size.
-fn make_renderer_rect(shape &Shape) gg.Rect {
+fn make_renderer_rect(shape &Shape, ctx &gg.Context) gg.Rect {
 	return match shape.clip {
 		true {
 			shape_clip_rect(shape)
 		}
 		else {
-			size := gg.window_size()
+			window := unsafe { &Window(ctx.user_data) }
+			width, height := window.window_size()
 			gg.Rect{
 				x:      0
 				y:      0
-				width:  size.width
-				height: size.height
+				width:  width
+				height: height
 			}
 		}
 	}

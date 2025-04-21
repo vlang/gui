@@ -73,8 +73,8 @@ pub enum ShapeType {
 }
 
 // point_in_shape determines if the given point is within the shape's layout
-// rectangle Internal use mostly, but useful if designing a new Shape
+// rectangle. Internal use mostly, but useful if designing a new Shape
 pub fn (shape &Shape) point_in_shape(x f32, y f32) bool {
-	return x >= shape.x && x < (shape.x + shape.width) && y >= shape.y
+	return x >= shape.x && y >= shape.y && x < (shape.x + shape.width)
 		&& y < (shape.y + shape.height)
 }
