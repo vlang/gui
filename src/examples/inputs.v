@@ -39,6 +39,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.input(
 						id_focus:        1
 						text:            app.input_a
+						placeholder:     'type here...'
 						min_width:       input_width
 						max_width:       input_width
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {

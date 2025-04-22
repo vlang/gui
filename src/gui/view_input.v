@@ -6,6 +6,7 @@ pub struct InputCfg {
 pub:
 	id_focus           u32 // 0 = readonly, >0 = focusable and tabbing order
 	text               string
+	placeholder        string
 	wrap               bool
 	padding            Padding   = gui_theme.input_style.padding
 	padding_border     Padding   = gui_theme.input_style.padding_border
@@ -17,6 +18,7 @@ pub:
 	radius             f32       = gui_theme.input_style.radius
 	radius_border      f32       = gui_theme.input_style.radius_border
 	text_style         TextStyle = gui_theme.input_style.text_style
+	placeholder_style  TextStyle = gui_theme.input_style.placeholder_style
 	// update your app model here
 	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil }
 }
@@ -37,6 +39,10 @@ pub:
 // ```
 pub fn input(cfg InputCfg) View {
 	assert cfg.id_focus != 0
+	placeholder_active := cfg.text.len == 0
+	txt := if placeholder_active { cfg.placeholder } else { cfg.text }
+	txt_style := if placeholder_active { cfg.placeholder_style } else { cfg.text_style }
+
 	return row(
 		id:           cfg.id
 		id_focus:     cfg.id_focus
@@ -65,11 +71,12 @@ pub fn input(cfg InputCfg) View {
 				radius:  cfg.radius
 				content: [
 					text(
-						id_focus:    cfg.id_focus
-						text:        cfg.text
-						text_style:  cfg.text_style
-						wrap:        cfg.wrap
-						keep_spaces: true
+						id_focus:           cfg.id_focus
+						text:               txt
+						text_style:         txt_style
+						wrap:               cfg.wrap
+						keep_spaces:        true
+						placeholder_active: placeholder_active
 					),
 				]
 			),

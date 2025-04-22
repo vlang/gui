@@ -361,6 +361,15 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
+			placeholder_style:  TextStyle{
+				...cfg.text_style
+				color: Color{
+					r: cfg.text_style.color.a
+					g: cfg.text_style.color.g
+					b: cfg.text_style.color.b
+					a: 100
+				}
+			}
 		}
 		progress_bar_style: ProgressBarStyle{
 			color:     cfg.color_1

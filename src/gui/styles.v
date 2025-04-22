@@ -40,6 +40,15 @@ pub:
 	radius             f32       = radius_medium
 	radius_border      f32       = radius_medium
 	text_style         TextStyle = text_style_dark
+	placeholder_style  TextStyle = TextStyle{
+		...text_style_dark
+		color: Color{
+			r: text_style_dark.color.a
+			g: text_style_dark.color.g
+			b: text_style_dark.color.b
+			a: 100
+		}
+	}
 }
 
 pub struct ProgressBarStyle {

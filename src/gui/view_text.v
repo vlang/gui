@@ -6,8 +6,9 @@ import math
 // Text is an internal structure used to describe a text block
 @[heap]
 struct Text implements View {
-	id       string
-	id_focus u32 // >0 indicates text is focusable. Value indiciates tabbing order
+	id                 string
+	id_focus           u32 // >0 indicates text is focusable. Value indiciates tabbing order
+	placeholder_active bool
 mut:
 	clip         bool
 	invisible    bool
@@ -71,6 +72,7 @@ fn (t &Text) generate(ctx &gg.Context) Layout {
 
 @[heap]
 pub struct TextCfg {
+	placeholder_active bool
 pub:
 	id           string
 	id_focus     u32
@@ -90,19 +92,20 @@ pub:
 // increase the space between lines. Scrolling is supported.
 pub fn text(cfg &TextCfg) Text {
 	return Text{
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		clip:         cfg.clip
-		invisible:    cfg.invisible
-		keep_spaces:  cfg.keep_spaces
-		min_width:    cfg.min_width
-		line_spacing: cfg.line_spacing
-		text:         cfg.text
-		text_style:   cfg.text_style
-		wrap:         cfg.wrap
-		cfg:          cfg
-		sizing:       if cfg.wrap { fill_fit } else { fit_fit }
-		disabled:     cfg.disabled
+		id:                 cfg.id
+		id_focus:           cfg.id_focus
+		clip:               cfg.clip
+		invisible:          cfg.invisible
+		keep_spaces:        cfg.keep_spaces
+		min_width:          cfg.min_width
+		line_spacing:       cfg.line_spacing
+		text:               cfg.text
+		text_style:         cfg.text_style
+		wrap:               cfg.wrap
+		cfg:                cfg
+		sizing:             if cfg.wrap { fill_fit } else { fit_fit }
+		disabled:           cfg.disabled
+		placeholder_active: cfg.placeholder_active
 	}
 }
 
@@ -130,6 +133,9 @@ fn (text &Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 	// mouse move events don't have mouse button info. Use context.
 	if w.ui.mouse_buttons == .left && w.is_focus(shape.id_focus) {
+		if text.placeholder_active {
+			return
+		}
 		ev := event_relative_to(shape, e)
 		end := u32(text.mouse_cursor_pos(shape, ev, mut w))
 		input_state := w.input_state[shape.id_focus]
@@ -146,6 +152,9 @@ fn (text &Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 // mouse_cursor_pos determines where in the input control's text
 // field the click occured. Works with multiple line text fields.
 fn (text &Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
+	if text.placeholder_active {
+		return 0
+	}
 	lh := shape.text_style.size + shape.text_style.line_spacing
 	y := int(e.mouse_y / lh)
 	line := shape.text_lines[y]
@@ -175,6 +184,9 @@ fn (text &Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 
 fn (text &Text) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
+		if text.placeholder_active {
+			return
+		}
 		cfg := unsafe { &TextCfg(shape.cfg) }
 		input_state := w.input_state[shape.id_focus]
 		mut cursor_pos := input_state.cursor_pos
@@ -231,13 +243,13 @@ fn (text &Text) char_shape(shape &Shape, mut event Event, mut w Window) {
 		c := event.char_code
 		if event.modifiers & u32(Modifier.ctrl) > 0 {
 			match c {
-				ctrl_a { text.select_all(mut w) }
+				ctrl_a { text.select_all(shape, mut w) }
 				ctrl_c { text.copy(shape, w) }
 				else {}
 			}
 		} else if event.modifiers & u32(Modifier.super) > 0 {
 			match c {
-				cmd_a { text.select_all(mut w) }
+				cmd_a { text.select_all(shape, mut w) }
 				cmd_c { text.copy(shape, w) }
 				else {}
 			}
@@ -251,6 +263,9 @@ fn (text &Text) char_shape(shape &Shape, mut event Event, mut w Window) {
 }
 
 fn (text &Text) copy(shape &Shape, w &Window) ?string {
+	if text.placeholder_active {
+		return none
+	}
 	input_state := w.input_state[text.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		cpy := match shape.text_keep_spaces {
@@ -287,7 +302,10 @@ fn (text &Text) copy(shape &Shape, w &Window) ?string {
 	return none
 }
 
-pub fn (text &Text) select_all(mut w Window) {
+pub fn (text &Text) select_all(shape &Shape, mut w Window) {
+	if text.placeholder_active {
+		return
+	}
 	input_state := w.input_state[text.id_focus]
 	w.input_state[text.id_focus] = InputState{
 		...input_state

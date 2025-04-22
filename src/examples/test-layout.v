@@ -114,6 +114,7 @@ fn main_view(w &gui.Window) gui.View {
 										width:           100
 										sizing:          gui.fixed_fit
 										text:            state.other_input
+										placeholder:     'Type here...'
 										wrap:            false
 										padding_border:  gui.padding_two
 										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
