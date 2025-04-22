@@ -88,7 +88,7 @@ fn render(layout &Layout, bg_color Color, offset_v f32, ctx &gg.Context) []Rende
 	}
 
 	for child in layout.children {
-		v_offset := layout.shape.scroll_v + child.shape.scroll_v
+		v_offset := layout.shape.scroll_offset + child.shape.scroll_offset
 		renderers << render(child, parent_color, v_offset, ctx)
 	}
 

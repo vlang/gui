@@ -52,7 +52,7 @@ fn layout_pipeline(mut layout Layout, window &Window) {
 	layout_wrap_text(mut layout, window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
-	layout_scroll_offsets(mut layout, layout.shape.scroll_v, window)
+	layout_scroll_offsets(mut layout, layout.shape.scroll_offset, window)
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y)
 	layout_disables(mut layout, false)
@@ -163,7 +163,7 @@ fn layout_heights(mut node Layout) {
 			if node.shape.min_height > 0 {
 				node.shape.height = f32_max(node.shape.min_height, node.shape.height)
 			}
-			if node.shape.sizing.height == .fill && node.shape.id_scroll_v > 0 {
+			if node.shape.sizing.height == .fill && node.shape.id_scroll > 0 {
 				node.shape.min_height = spacing_small
 			}
 		}
@@ -507,12 +507,12 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 // partially overlapping layouts.
 fn layout_scroll_offsets(mut node Layout, offset_v f32, w &Window) {
 	mut offset := offset_v
-	if node.shape.id_scroll_v > 0 {
-		offset += w.scroll_state_vertical[node.shape.id_scroll_v]
+	if node.shape.id_scroll > 0 {
+		offset += w.scroll_state_vertical[node.shape.id_scroll]
 	}
 	for mut child in node.children {
-		child.shape.scroll_v = offset
-		if child.shape.id_scroll_v > 0 {
+		child.shape.scroll_offset = offset
+		if child.shape.id_scroll > 0 {
 			child.shape.clip = true
 		}
 		layout_scroll_offsets(mut child, offset, w)

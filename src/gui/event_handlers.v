@@ -37,7 +37,7 @@ fn keydown_handler(node &Layout, mut e Event, mut w Window) {
 				return
 			}
 		}
-		if node.shape.id_scroll_v > 0 {
+		if node.shape.id_scroll > 0 {
 			key_down_scroll_handler(node, mut e, mut w)
 			if e.is_handled {
 				return
@@ -128,7 +128,7 @@ fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
 		}
 	}
 
-	if !node.shape.disabled && node.shape.id_scroll_v > 0 {
+	if !node.shape.disabled && node.shape.id_scroll > 0 {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			e.is_handled = scroll_vertical(node, e.scroll_y, mut w)
 		}
@@ -136,7 +136,7 @@ fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
 }
 
 fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {
-	v_id := node.shape.id_scroll_v
+	v_id := node.shape.id_scroll
 	if v_id > 0 {
 		ch := content_height(node)
 		mut max_offset := node.shape.height - node.shape.padding.height() - ch

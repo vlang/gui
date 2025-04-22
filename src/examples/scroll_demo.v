@@ -62,15 +62,15 @@ fn main_view(window &gui.Window) gui.View {
 
 fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 	return gui.column(
-		id_focus:    id // enables keyboard scrolling
-		id_scroll_v: id
-		color:       match window.is_focus(id) {
+		id_focus:  id // enables keyboard scrolling
+		id_scroll: id
+		color:     match window.is_focus(id) {
 			true { gui.theme().button_style.color_border_focus }
 			else { gui.theme().container_style.color }
 		}
-		padding:     gui.padding_small
-		sizing:      gui.fill_fill
-		content:     [
+		padding:   gui.padding_small
+		sizing:    gui.fill_fill
+		content:   [
 			gui.text(
 				text: text
 				wrap: true

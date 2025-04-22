@@ -292,7 +292,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 
 	mut renderers := []Renderer{}
 	for lyo in layouts {
-		renderers << render(lyo, window.color_background(), layout.shape.scroll_v, window.ui)
+		renderers << render(lyo, window.color_background(), layout.shape.scroll_offset,
+			window.ui)
 	}
 	// Combine the layouts into one layout to rule them all
 	// and bind them in the darkness
@@ -329,7 +330,8 @@ pub fn (mut window Window) update_window() {
 
 	mut renderers := []Renderer{}
 	for lyo in layouts {
-		renderers << render(lyo, window.color_background(), layout.shape.scroll_v, window.ui)
+		renderers << render(lyo, window.color_background(), layout.shape.scroll_offset,
+			window.ui)
 	}
 	// Combine the layouts into one layout to rule them all
 	// and bind them in the darkness

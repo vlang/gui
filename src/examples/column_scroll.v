@@ -34,14 +34,14 @@ fn main_view(window &gui.Window) gui.View {
 			// Columns can function as list boxes.
 			// TODO: add selection logic
 			gui.column(
-				id_scroll_v: 1
-				id_focus:    1
-				fill:        true
-				color:       gui.theme().color_2
-				sizing:      gui.fit_fill
-				spacing:     gui.spacing_small
-				padding:     gui.padding(3, 20, 3, 20)
-				content:     items
+				id_scroll: 1
+				id_focus:  1
+				fill:      true
+				color:     gui.theme().color_2
+				sizing:    gui.fit_fill
+				spacing:   gui.spacing_small
+				padding:   gui.padding(3, 20, 3, 20)
+				content:   items
 			),
 		]
 	)

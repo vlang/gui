@@ -40,10 +40,8 @@ pub mut:
 	text_sel_beg      u32
 	text_sel_end      u32
 	// --- scroll ---
-	id_scroll_v u32 // >0 indicates shape is scrollable
-	scroll_v    f32
-	id_scroll_h f32
-	scroll_h    f32
+	id_scroll     u32 // >0 indicates shape is scrollable
+	scroll_offset f32
 	// --- float ---
 	float          bool
 	float_anchor   FloatAttach
