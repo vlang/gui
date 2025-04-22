@@ -25,6 +25,10 @@ pub:
 }
 
 // input is a text input field.
+// - Input fields without an `on_text_changed` callback are readonly.
+// - is_password flag causes the input view to display '*'s. The copy operation is disabled string for security.
+// - wrap allows the input fields to be multiline.
+//
 // Example:
 // ```v
 // gui.input(

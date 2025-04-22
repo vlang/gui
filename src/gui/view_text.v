@@ -74,25 +74,28 @@ fn (t &Text) generate(ctx &gg.Context) Layout {
 
 @[heap]
 pub struct TextCfg {
+	is_password        bool
 	placeholder_active bool
 pub:
 	id           string
 	id_focus     u32
 	clip         bool
 	disabled     bool
-	is_password  bool
 	invisible    bool
 	keep_spaces  bool
 	min_width    f32
 	line_spacing f32 = gui_theme.text_style.line_spacing
 	text         string
 	text_style   TextStyle = gui_theme.text_style
-	wrap         bool // enable multiline
+	wrap         bool
 }
 
-// text renders text. Text wrapping is available. Multiple spaces are compressed
-// to one space unless `keep_spaces` is true. The `spacing` parameter is used to
-// increase the space between lines. Scrolling is supported.
+// text is a general purpose text renderer. Use it for labels or larger
+// blocks of multiline text. Giving it an id_focus allows mark and copy
+// operations.
+// - wrap enables wrapping and multiline operations.
+// - Multiple spaces are compressed to one space unless `keep_spaces` is true.
+// - `spacing` parameter is used to increase the space between lines.
 pub fn text(cfg &TextCfg) Text {
 	return Text{
 		id:                 cfg.id

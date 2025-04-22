@@ -28,7 +28,7 @@ pub:
 	on_click           fn (&ButtonCfg, mut Event, &Window) = unsafe { nil }
 }
 
-// button creates a button.
+// button creates a clickable button. Buttons can contain content other than text.
 // Example:
 // ```v
 // gui.button(
