@@ -4,10 +4,11 @@ module gui
 pub struct InputCfg {
 	CommonCfg
 pub:
-	id_focus           u32 // 0 = readonly, >0 = focusable and tabbing order
-	text               string
-	placeholder        string
-	wrap               bool
+	id_focus           u32    // 0 = readonly, >0 = focusable and tabbing order
+	text               string // text to display/edit
+	placeholder        string // text to show when empty
+	wrap               bool   // enable multiline
+	is_password        bool   // mask input characters
 	padding            Padding   = gui_theme.input_style.padding
 	padding_border     Padding   = gui_theme.input_style.padding_border
 	color              Color     = gui_theme.input_style.color
@@ -75,6 +76,7 @@ pub fn input(cfg InputCfg) View {
 						text:               txt
 						text_style:         txt_style
 						wrap:               cfg.wrap
+						is_password:        cfg.is_password
 						keep_spaces:        true
 						placeholder_active: placeholder_active
 					),

@@ -37,6 +37,7 @@ pub mut:
 	text_wrap         bool
 	text_line_spacing f32 // addition to normal line spacing
 	text_keep_spaces  bool
+	text_is_password  bool
 	text_sel_beg      u32
 	text_sel_end      u32
 	// --- scroll ---

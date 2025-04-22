@@ -8,20 +8,21 @@ import math
 struct Text implements View {
 	id                 string
 	id_focus           u32 // >0 indicates text is focusable. Value indiciates tabbing order
+	is_password        bool
 	placeholder_active bool
+	clip               bool
+	invisible          bool
+	disabled           bool
+	keep_spaces        bool
+	min_width          f32
+	text               string
+	text_style         TextStyle
+	sizing             Sizing
+	line_spacing       f32
+	wrap               bool
+	cfg                TextCfg
 mut:
-	clip         bool
-	invisible    bool
-	disabled     bool
-	keep_spaces  bool
-	min_width    f32
-	text         string
-	text_style   TextStyle
-	sizing       Sizing
-	line_spacing f32
-	wrap         bool
-	cfg          TextCfg
-	content      []View
+	content []View
 }
 
 fn (t &Text) generate(ctx &gg.Context) Layout {
@@ -45,6 +46,7 @@ fn (t &Text) generate(ctx &gg.Context) Layout {
 			sizing:              t.sizing
 			text:                t.text
 			text_keep_spaces:    t.keep_spaces
+			text_is_password:    t.is_password
 			text_lines:          [t.text]
 			text_line_spacing:   t.line_spacing
 			text_style:          t.text_style
@@ -78,13 +80,14 @@ pub:
 	id_focus     u32
 	clip         bool
 	disabled     bool
+	is_password  bool
 	invisible    bool
 	keep_spaces  bool
 	min_width    f32
 	line_spacing f32 = gui_theme.text_style.line_spacing
 	text         string
 	text_style   TextStyle = gui_theme.text_style
-	wrap         bool
+	wrap         bool // enable multiline
 }
 
 // text renders text. Text wrapping is available. Multiple spaces are compressed
@@ -106,6 +109,7 @@ pub fn text(cfg &TextCfg) Text {
 		sizing:             if cfg.wrap { fill_fit } else { fit_fit }
 		disabled:           cfg.disabled
 		placeholder_active: cfg.placeholder_active
+		is_password:        cfg.is_password
 	}
 }
 
@@ -263,7 +267,7 @@ fn (text &Text) char_shape(shape &Shape, mut event Event, mut w Window) {
 }
 
 fn (text &Text) copy(shape &Shape, w &Window) ?string {
-	if text.placeholder_active {
+	if text.placeholder_active || text.is_password {
 		return none
 	}
 	input_state := w.input_state[text.id_focus]
