@@ -39,6 +39,7 @@ fn text_height(shape Shape) int {
 	return lh * shape.text_lines.len
 }
 
+@[inline]
 fn line_height(shape Shape) int {
 	return int(shape.text_style.size + shape.text_line_spacing)
 }

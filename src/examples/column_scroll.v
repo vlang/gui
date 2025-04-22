@@ -2,13 +2,27 @@ import gui
 
 // Demonstrates column scrolling with 10,000 different text items.
 // No virtualization, just pure layout calculated 10's of thousands
-// of times. While not buttery smooth, it is quite usable.
+// of times. Build with the -prod flag for buttery smooth performance.
 // Gui layout/rendering is fast!
 
+@[heap]
+struct App {
+	items []gui.View
+}
+
 fn main() {
+	size := 10_000 // 10K!
+	mut items := []gui.View{cap: size}
+	for i in 1 .. size + 1 {
+		items << gui.text(text: '${i:05} text list item')
+	}
+
 	mut window := gui.window(
 		width:   300
 		height:  300
+		state:   &App{
+			items: items
+		}
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -17,12 +31,8 @@ fn main() {
 }
 
 fn main_view(window &gui.Window) gui.View {
+	app := window.state[App]()
 	w, h := window.window_size()
-
-	mut items := []gui.View{}
-	for i in 1 .. 10_000 { // 10K!
-		items << gui.text(text: '${i} text list item')
-	}
 
 	return gui.column(
 		width:   w
@@ -41,7 +51,7 @@ fn main_view(window &gui.Window) gui.View {
 				sizing:    gui.fit_fill
 				spacing:   gui.spacing_small
 				padding:   gui.padding(3, 20, 3, 20)
-				content:   items
+				content:   app.items
 			),
 		]
 	)

@@ -216,11 +216,8 @@ fn render_text(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 		if rects_overlap(renderer_rect, draw_rect) {
 			mut lnl := line.replace('\n', '')
 			if shape.text_is_password {
-				mut mask := ''
-				for _ in 0 .. lnl.len { // strings.repeat buggy
-					mask += '*'
-				}
-				lnl = mask
+				// replace with '*'s
+				lnl = []u8{len: lnl.runes().len, init: u8(42)}.bytestr()
 			}
 			renderers << DrawText{
 				x:    shape.x
