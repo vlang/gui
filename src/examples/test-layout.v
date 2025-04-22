@@ -14,8 +14,8 @@ fn main() {
 	mut window := gui.window(
 		state:   &AppState{
 			name:
-				'Lorem Ipsum is simply        dummy text of the printing and typesetting industry. ' +
-				"Lorem Ipsum has been       the industry's standard dummy text ever since the 1500s, " +
+				'Lorem Ipsum is simply        dummy text of the printing and typesetting industry.' +
+				"Lorem Ipsum has been       the industry's \nstandard in dummy text ever since the 1500s, " +
 				'when an unknown printer    took a galley of type and scrambled it to make a type ' +
 				'specimen book.'
 		}

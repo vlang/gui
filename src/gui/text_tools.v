@@ -65,7 +65,7 @@ fn wrap_text_shrink_spaces(s string, width f32, ctx &gg.Context) []string {
 	mut wrap := []string{cap: 5}
 	for field in split_text(s) {
 		if field == '\n' {
-			wrap << line
+			wrap << line + '\n'
 			line = ''
 			continue
 		}
@@ -96,7 +96,7 @@ fn wrap_text_keep_spaces(s string, width f32, ctx &gg.Context) []string {
 	mut wrap := []string{cap: 5}
 	for field in split_text(s) {
 		if field == '\n' {
-			wrap << line
+			wrap << line + '\n'
 			line = ''
 			continue
 		}
@@ -134,6 +134,12 @@ fn split_text(s string) []string {
 		} else if state == state_sp {
 			if ch == space {
 				field += ch
+			} else if ch == '\n' {
+				if field.len > 0 {
+					fields << field
+				}
+				fields << '\n'
+				field = ''
 			} else {
 				state = state_ch
 				fields << field
@@ -142,10 +148,14 @@ fn split_text(s string) []string {
 		} else if state == state_ch {
 			if ch == space {
 				state = state_sp
-				fields << field
+				if field.len > 0 {
+					fields << field
+				}
 				field = ch
 			} else if ch == '\n' {
-				fields << field
+				if field.len > 0 {
+					fields << field
+				}
 				fields << '\n'
 				field = ''
 			} else if ch.is_blank() {

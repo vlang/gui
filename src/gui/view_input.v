@@ -114,6 +114,12 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 						return
 					}
 				}
+				cr_char, lf_char {
+					text = cfg.insert('\n', mut w) or {
+						eprintln(err)
+						return
+					}
+				}
 				0...0x1F { // non-printables
 					return
 				}

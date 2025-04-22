@@ -214,10 +214,11 @@ fn render_text(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 		}
 		// Cull any renderers outside of clip/conteext region.
 		if rects_overlap(renderer_rect, draw_rect) {
+			lnl := line.replace('\n', '')
 			renderers << DrawText{
 				x:    shape.x
 				y:    y
-				text: line
+				text: lnl
 				cfg:  text_cfg
 			}
 
@@ -262,17 +263,23 @@ fn render_cursor(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 		mut cursor_x := -1
 		mut cursor_y := -1
 		input_state := w.input_state[shape.id_focus]
-		cursor_pos := input_state.cursor_pos
+		mut cursor_pos := input_state.cursor_pos
 		if cursor_pos >= 0 {
 			mut length := 0
 			for idx, line in shape.text_lines {
 				ln := line.runes()
-				if length + ln.len >= cursor_pos {
+				if length + ln.len > cursor_pos {
 					cursor_x = cursor_pos - length
 					cursor_y = idx
 					break
 				}
 				length += ln.len
+			}
+			// edge condition. Algorithm misses the
+			// last character of the last line.
+			if cursor_x == -1 {
+				cursor_x = shape.text_lines.last().len
+				cursor_y = shape.text_lines.len - 1
 			}
 		}
 		if cursor_x >= 0 && cursor_y >= 0 {
