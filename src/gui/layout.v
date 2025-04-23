@@ -2,10 +2,6 @@ module gui
 
 // Based on Nic Barter's video of how Clay's UI algorithm works.
 // https://www.youtube.com/watch?v=by9lQvpvMIc&t=1272s
-//
-
-// f32 values equal if within tolerance
-const tolerance = f32(0.01)
 
 // Layout defines a tree of Layouts. Views generate Layouts
 pub struct Layout {
@@ -15,9 +11,9 @@ pub mut:
 	children []Layout
 }
 
-// layout_do executes a pipeline of functions to layout and position the layout
-// of a Layout
-fn layout_do(mut layout Layout, window &Window) []Layout {
+// layout_arrange executes a pipeline of functions to arrange and position the layout.
+// Multiple layouts are returned, each used to draw a layer of the final renderering.
+fn layout_arrange(mut layout Layout, window &Window) []Layout {
 	mut layouts := [layout]
 	// Set the parents of all the nodes. This is used to
 	// compute relative floating layout coordinates
@@ -508,7 +504,7 @@ fn layout_wrap_text(mut node Layout, w &Window) {
 fn layout_scroll_offsets(mut node Layout, offset_v f32, w &Window) {
 	mut offset := offset_v
 	if node.shape.id_scroll > 0 {
-		offset += w.scroll_state_vertical[node.shape.id_scroll]
+		offset += w.scroll_state[node.shape.id_scroll]
 	}
 	for mut child in node.children {
 		child.shape.scroll_offset = offset

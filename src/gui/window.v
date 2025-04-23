@@ -7,20 +7,20 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	ui                    &gg.Context       = &gg.Context{}
-	state                 voidptr           = unsafe { nil }
-	mutex                 &sync.Mutex       = sync.new_mutex()
-	layout                Layout            = Layout{}
-	renderers             []Renderer        = []
-	gen_view              fn (&Window) View = default_view
-	id_focus              u32
-	focused               bool = true
-	mouse_cursor          sapp.MouseCursor
-	input_state           map[u32]InputState
-	scroll_state_vertical map[u32]f32
-	text_widths           map[string]int
-	window_size           gg.Size
-	on_event              fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	ui            &gg.Context       = &gg.Context{}
+	state         voidptr           = unsafe { nil }
+	mutex         &sync.Mutex       = sync.new_mutex()
+	layout        Layout            = Layout{}
+	renderers     []Renderer        = []
+	generate_view fn (&Window) View = empty_view
+	id_focus      u32
+	focused       bool = true
+	mouse_cursor  sapp.MouseCursor
+	input_state   map[u32]InputState
+	scroll_state  map[u32]f32
+	text_widths   map[string]int
+	window_size   gg.Size
+	on_event      fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -61,7 +61,8 @@ pub:
 	height   int
 	bg_color Color        = gui_theme.color_background
 	on_init  fn (&Window) = fn (mut w Window) {
-		w.update_view(default_view)
+		w.update_window_size()
+		w.update_view(empty_view)
 	}
 	on_event fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
@@ -82,7 +83,7 @@ pub fn window(cfg &WindowCfg) &Window {
 		ui_mode:      true // only draw on events
 		user_data:    window
 		init_fn:      fn [cfg] (mut w Window) {
-			w.window_size = w.ui.window_size()
+			w.update_window_size()
 			cfg.on_init(w)
 		}
 	)
@@ -156,7 +157,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			mouse_scroll_handler(layout, mut e, mut w)
 		}
 		.resized {
-			w.window_size = w.ui.window_size()
+			w.update_window_size()
 		}
 		else {
 			// dump(e)
@@ -168,25 +169,12 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	w.update_window()
 }
 
-// default_view creates a simple welcome to gui view. GUI initializes the
-// windows view to this view.
-fn default_view(window &Window) View {
+// default_view creates an empty view
+fn empty_view(window &Window) View {
 	w, h := window.window_size()
 	return column(
-		width:   w
-		height:  h
-		h_align: .center
-		v_align: .middle
-		sizing:  fixed_fixed
-		content: [
-			text(
-				text:       'Welcome to GUI'
-				text_style: TextStyle{
-					...gui_theme.text_style
-					size: 25
-				}
-			),
-		]
+		width:  w
+		height: h
 	)
 }
 
@@ -221,7 +209,7 @@ pub fn (window &Window) pointer_over_app(e &Event) bool {
 pub fn (mut window Window) resize_to_content() {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
-	window.ui.resize(int(window.layout.shape.width), int(window.layout.shape.height))
+	window.ui.resize(window.window_size.width, window.window_size.height)
 }
 
 // run starts the UI and handles events
@@ -234,16 +222,22 @@ pub fn (mut window Window) set_color_background(color Color) {
 	window.ui.set_bg_color(color.to_gx_color())
 }
 
+// update_window_size caches `window.ui.window_size()` because profiler
+// showed it to be a hot spot.
+fn (mut window Window) update_window_size() {
+	window.window_size = window.ui.window_size()
+}
+
 // scroll_vertical_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_by(id_scroll u32, delta f32) {
-	window.scroll_state_vertical[id_scroll] += delta
+	window.scroll_state[id_scroll] += delta
 }
 
 // scroll_vertical_by scrolls the given scrollable to the offset. offset is negative.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
-	window.scroll_state_vertical[id_scroll] = offset
+	window.scroll_state[id_scroll] = offset
 }
 
 // set_id_focus sets the window's focus id.
@@ -286,67 +280,53 @@ pub fn (window &Window) state[T]() &T {
 // view generator and clears the input states, scroll states and other
 // internal management states.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
-	view := gen_view(window)
-	mut layout := generate_layout(view, window)
-	layouts := layout_do(mut layout, window)
-
-	mut renderers := []Renderer{}
-	for lyo in layouts {
-		renderers << render(lyo, window.color_background(), layout.shape.scroll_offset,
-			window.ui)
-	}
-	// Combine the layouts into one layout to rule them all
-	// and bind them in the darkness
-	layout = Layout{
-		children: layouts
-	}
-
-	window.mutex.lock()
-	defer { window.mutex.unlock() }
-
 	// Clear internal state management buffers.
 	// This is the only place these are cleared.
 	window.id_focus = 0
 	window.input_state.clear()
-	window.scroll_state_vertical.clear()
+	window.scroll_state.clear()
 	window.text_widths.clear()
-	// Needed to regen views, event callbacks, drawing
-	window.gen_view = gen_view
+
+	view := gen_view(window)
+	layout := window.compose_layout(view)
+	renderers := render_layout(layout, window.color_background(), 0, window.ui)
+
+	window.mutex.lock()
+	defer { window.mutex.unlock() }
+
+	window.generate_view = gen_view
 	window.layout = layout
 	window.renderers = renderers
 }
 
 // update_window generates a new layout from the windows currnet
 // view generator. Does not clear the input states. This should
-// rarely be needed since events trigger new layouts/rendereres.
+// rarely be needed since event handling calls this regularly.
 pub fn (mut window Window) update_window() {
 	window.mutex.lock()
-	gen_view := window.gen_view
-	window.mutex.unlock()
-
-	view := gen_view(window)
-	mut layout := generate_layout(view, window)
-	layouts := layout_do(mut layout, window)
-
-	mut renderers := []Renderer{}
-	for lyo in layouts {
-		renderers << render(lyo, window.color_background(), layout.shape.scroll_offset,
-			window.ui)
-	}
-	// Combine the layouts into one layout to rule them all
-	// and bind them in the darkness
-	layout = Layout{
-		children: layouts
-	}
-
-	window.mutex.lock()
 	defer { window.mutex.unlock() }
+
+	view := window.generate_view(window)
+	layout := window.compose_layout(view)
+	renderers := render_layout(layout, window.color_background(), 0, window.ui)
 
 	window.layout = layout
 	window.renderers = renderers
 }
 
-// window_size gets the size of the window in logical units.
+// compose_layout takes a view generator and produces a layout.
+// Layout is the translated view that GUI arranges and positions.
+fn (window &Window) compose_layout(view &View) Layout {
+	mut layout := generate_layout(view, window)
+	layouts := layout_arrange(mut layout, window)
+	// Combine the layouts into one layout to rule them all
+	// and bind them in the darkness
+	return Layout{
+		children: layouts
+	}
+}
+
+// window_size gets the cached size of the window in logical units.
 pub fn (window &Window) window_size() (int, int) {
 	return window.window_size.width, window.window_size.height
 }

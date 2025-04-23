@@ -67,11 +67,11 @@ fn renderer_draw(renderer Renderer, ctx &gg.Context) {
 	}
 }
 
-// render walks the layout and generates renderers. If a shape is clipped,
+// render_layout walks the layout and generates renderers. If a shape is clipped,
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render(layout &Layout, bg_color Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_layout(layout &Layout, bg_color Color, scroll_offset f32, ctx &gg.Context) []Renderer {
 	mut renderers := []Renderer{cap: 10}
 	mut clip_stack := ClipStack{}
 
@@ -81,15 +81,15 @@ fn render(layout &Layout, bg_color Color, offset_v f32, ctx &gg.Context) []Rende
 		bg_color
 	}
 
-	renderers << render_shape(layout.shape, bg_color, offset_v, ctx)
+	renderers << render_shape(layout.shape, bg_color, scroll_offset, ctx)
 
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, mut clip_stack)
 	}
 
 	for child in layout.children {
-		v_offset := layout.shape.scroll_offset + child.shape.scroll_offset
-		renderers << render(child, parent_color, v_offset, ctx)
+		scr_offset := layout.shape.scroll_offset + child.shape.scroll_offset
+		renderers << render_layout(child, parent_color, scr_offset, ctx)
 	}
 
 	if layout.shape.clip {

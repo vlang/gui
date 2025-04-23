@@ -30,11 +30,11 @@ pub:
 	sizing     Sizing
 }
 
-// generate_layout builds a Layout from a View.
-fn generate_layout(node &View, window &Window) Layout {
-	mut layout := node.generate(window.ui)
-	for child_node in node.content {
-		layout.children << generate_layout(child_node, window)
+// view_to_layout builds a Layout from a View.
+fn generate_layout(view &View, window &Window) Layout {
+	mut layout := view.generate(window.ui)
+	for child_view in view.content {
+		layout.children << generate_layout(child_view, window)
 	}
 	return layout
 }

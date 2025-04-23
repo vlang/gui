@@ -1,5 +1,3 @@
-module main
-
 import gui
 
 @[heap]
