@@ -7,20 +7,21 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	ui            &gg.Context       = &gg.Context{}
-	state         voidptr           = unsafe { nil }
-	mutex         &sync.Mutex       = sync.new_mutex()
-	layout        Layout            = Layout{}
-	renderers     []Renderer        = []
-	generate_view fn (&Window) View = empty_view
-	id_focus      u32
-	focused       bool = true
-	mouse_cursor  sapp.MouseCursor
-	input_state   map[u32]InputState
-	scroll_state  map[u32]f32
-	text_widths   map[string]int
-	window_size   gg.Size
-	on_event      fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	ui             &gg.Context       = &gg.Context{}
+	state          voidptr           = unsafe { nil }
+	mutex          &sync.Mutex       = sync.new_mutex()
+	generate_view  fn (&Window) View = empty_view
+	layout         Layout
+	renderers      []Renderer
+	gen_modal_view fn (&Window) View = unsafe { nil }
+	id_focus       u32
+	focused        bool = true
+	mouse_cursor   sapp.MouseCursor
+	input_state    map[u32]InputState
+	scroll_state   map[u32]f32
+	text_widths    map[string]int
+	window_size    gg.Size
+	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -318,7 +319,11 @@ pub fn (mut window Window) update_window() {
 // fully arranged and ready for generating renderers.
 fn (window &Window) compose_layout(view &View) Layout {
 	mut layout := generate_layout(view, window)
-	layouts := layout_arrange(mut layout, window)
+	mut layouts := layout_arrange(mut layout, window)
+	if window.gen_modal_view != unsafe { nil } {
+		modal_view := window.gen_modal_view(window)
+		layouts << window.compose_layout(modal_view)
+	}
 	// Combine the layouts into one layout to rule them all
 	// and bind them in the darkness
 	return Layout{

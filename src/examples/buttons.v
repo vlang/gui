@@ -105,7 +105,7 @@ fn main_view(mut window gui.Window) gui.View {
 								percent: f32(math.fmod(f64(app.clicks) / 25.0, 1.0))
 							),
 						]
-						on_click:       click_handler
+						on_click:       msg_box
 					)),
 				]
 			),
@@ -133,6 +133,14 @@ fn click_handler(_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 	mut app := w.state[App]()
 	app.clicks += 1
 	w.set_id_focus(1)
+}
+
+fn msg_box(_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+	// comment all this call and program successfully builds
+	w.message_box(
+		title: 'title'
+		body:  'body'
+	)
 }
 
 fn button_change_theme(app &App) gui.View {
