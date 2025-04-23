@@ -299,9 +299,9 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.renderers = renderers
 }
 
-// update_window generates a new layout from the windows currnet
-// view generator. Does not clear the input states. This should
-// rarely be needed since event handling calls this regularly.
+// update_window generates a new layout from the window's currnet
+// view generator. It does not clear the input states. It should
+// rarely be needed since event handling calls it regularly.
 pub fn (mut window Window) update_window() {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -314,8 +314,8 @@ pub fn (mut window Window) update_window() {
 	window.renderers = renderers
 }
 
-// compose_layout takes a view generator and produces a layout.
-// Layout is the translated view that GUI arranges and positions.
+// compose_layout produces a layout from the given view that is
+// fully arranged and ready for generating renderers.
 fn (window &Window) compose_layout(view &View) Layout {
 	mut layout := generate_layout(view, window)
 	layouts := layout_arrange(mut layout, window)

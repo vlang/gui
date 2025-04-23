@@ -1,5 +1,6 @@
 import gui
 
+@[heap]
 struct App {
 pub mut:
 	input_a string = 'hello'

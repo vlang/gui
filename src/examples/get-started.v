@@ -13,6 +13,7 @@ import gui
 // - No need to remember to undo previous UI states.
 // - Microsecond performance.
 
+@[heap]
 struct App {
 pub mut:
 	clicks int
