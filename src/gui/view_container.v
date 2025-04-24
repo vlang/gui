@@ -3,6 +3,7 @@ module gui
 import gg
 
 pub struct Container implements View {
+pub:
 	id             string
 	id_focus       u32 // not sure this should be here
 	x              f32
@@ -91,10 +92,19 @@ fn (cfg &Container) generate(_ &gg.Context) Layout {
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers
 pub struct ContainerCfg {
-	CommonCfg
 	cfg             voidptr
 	on_click_layout fn (&Layout, &Event, &Window) bool = unsafe { nil }
 pub:
+	id             string
+	width          f32
+	height         f32
+	min_width      f32
+	min_height     f32
+	max_width      f32
+	max_height     f32
+	disabled       bool
+	invisible      bool
+	sizing         Sizing
 	id_focus       u32
 	id_scroll      u32
 	x              f32
@@ -165,7 +175,7 @@ fn container(cfg ContainerCfg) Container {
 // --- Common layout containers ---
 
 // column arranges its content top to bottom. The gap between child items is
-// determined by the spacing parameter.
+// determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn column(cfg ContainerCfg) Container {
 	mut col := container(cfg)
 	col.axis = .top_to_bottom
@@ -178,7 +188,7 @@ pub fn column(cfg ContainerCfg) Container {
 }
 
 // row arranges its content left to right. The gap between child items is
-// determined by the spacing parameter.
+// determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn row(cfg ContainerCfg) Container {
 	mut row := container(cfg)
 	row.axis = .left_to_right
@@ -190,7 +200,7 @@ pub fn row(cfg ContainerCfg) Container {
 	return row
 }
 
-// canvas does not arrange or otherwise layout its content.
+// canvas does not arrange or otherwise layout its content. See [ContainerCfg](#ContainerCfg)
 pub fn canvas(cfg ContainerCfg) Container {
 	mut canvas := container(cfg)
 	if canvas.cfg == unsafe { nil } {

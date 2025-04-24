@@ -1,18 +1,28 @@
 module gui
 
+// ProgressBarCfg configures a [progress_bar](#progress_bar)
 pub struct ProgressBarCfg {
-	CommonCfg
 pub:
+	id         string
+	width      f32
+	height     f32
+	min_width  f32
+	min_height f32
+	max_width  f32
+	max_height f32
+	disabled   bool
+	invisible  bool
+	sizing     Sizing
 	indefinite bool // TODO: not implemented
 	vertical   bool // orientation
 	percent    f32  // 0.0 <= percent <= 1.0
 	color      Color = gui_theme.progress_bar_style.color
 	color_bar  Color = gui_theme.progress_bar_style.color_bar
 	radius     f32   = gui_theme.progress_bar_style.radius
-	sizing     Sizing
 	text       string
 }
 
+// progress_bar creates a progress bar from the given [ProgressBarCfg](#ProgressBarCfg)
 pub fn progress_bar(cfg &ProgressBarCfg) View {
 	size := f32(gui_theme.progress_bar_style.size)
 	container_cfg := ContainerCfg{

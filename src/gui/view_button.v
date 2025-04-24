@@ -2,13 +2,22 @@ module gui
 
 import gg
 
-// ButtonCfgconfigures a clickable button. It won't respond mouse
+// ButtonCfgconfigures a clickable [button](#button). It won't respond mouse
 // interactions if an on_click handler is not provided. In that mode,
 // it functions as bubble text.
 @[heap]
 pub struct ButtonCfg {
-	CommonCfg
 pub:
+	id                 string
+	width              f32
+	height             f32
+	min_width          f32
+	min_height         f32
+	max_width          f32
+	max_height         f32
+	disabled           bool
+	invisible          bool
+	sizing             Sizing
 	id_focus           u32
 	h_align            HorizontalAlign = .center
 	v_align            VerticalAlign   = .middle
@@ -29,6 +38,7 @@ pub:
 }
 
 // button creates a clickable button. Buttons can contain content other than text.
+// See [ButtonCfg](#ButtonCfg)
 // Example:
 // ```v
 // gui.button(

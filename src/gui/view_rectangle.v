@@ -1,11 +1,20 @@
 module gui
 
 pub struct RectangleCfg {
-	CommonCfg
 pub:
-	color  Color = gui_theme.rectangle_style.color
-	fill   bool  = gui_theme.rectangle_style.fill
-	radius f32   = gui_theme.rectangle_style.radius
+	id         string
+	width      f32
+	height     f32
+	min_width  f32
+	min_height f32
+	max_width  f32
+	max_height f32
+	disabled   bool
+	invisible  bool
+	sizing     Sizing
+	color      Color = gui_theme.rectangle_style.color
+	fill       bool  = gui_theme.rectangle_style.fill
+	radius     f32   = gui_theme.rectangle_style.radius
 }
 
 // rectangle draws a rectangle (shocking!). Rectangles can be filled, outlined,

@@ -42,7 +42,7 @@ fn main_view(window &gui.Window) gui.View {
 				id_focus: 1
 				content:  [gui.text(text: 'Click Me')]
 				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-					w.msg_box(
+					w.alert(
 						title: 'Title Here'
 						body:  '
 Content goes here...

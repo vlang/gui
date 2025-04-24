@@ -72,6 +72,10 @@ fn (t &Text) generate(ctx &gg.Context) Layout {
 	return shape_tree
 }
 
+// TextCfg confgigures a [text](#text) view
+// - wrap enables wrapping and multiline operations.
+// - Multiple spaces are compressed to one space unless `keep_spaces` is true.
+// - `spacing` parameter is used to increase the space between lines.
 @[heap]
 pub struct TextCfg {
 	is_password        bool
@@ -92,10 +96,7 @@ pub:
 
 // text is a general purpose text renderer. Use it for labels or larger
 // blocks of multiline text. Giving it an id_focus allows mark and copy
-// operations.
-// - wrap enables wrapping and multiline operations.
-// - Multiple spaces are compressed to one space unless `keep_spaces` is true.
-// - `spacing` parameter is used to increase the space between lines.
+// operations. See [TextCfg](#TextCfg)
 pub fn text(cfg &TextCfg) Text {
 	return Text{
 		id:                 cfg.id

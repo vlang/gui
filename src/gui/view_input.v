@@ -1,9 +1,19 @@
 module gui
 
+// InputCfg configures an input view. See [input](#input),
 @[heap]
 pub struct InputCfg {
-	CommonCfg
 pub:
+	id                 string
+	width              f32
+	height             f32
+	min_width          f32
+	min_height         f32
+	max_width          f32
+	max_height         f32
+	disabled           bool
+	invisible          bool
+	sizing             Sizing
 	id_focus           u32    // 0 = readonly, >0 = focusable and tabbing order
 	text               string // text to display/edit
 	placeholder        string // text to show when empty
@@ -27,7 +37,7 @@ pub:
 // input is a text input field.
 // - Input fields without an `on_text_changed` callback are readonly.
 // - is_password flag causes the input view to display '*'s. The copy operation is disabled string for security.
-// - wrap allows the input fields to be multiline.
+// - wrap allows the input fields to be multiline. See [InputCfg](#InputCfg)
 //
 // Example:
 // ```v

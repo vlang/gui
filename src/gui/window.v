@@ -13,7 +13,7 @@ mut:
 	generate_view fn (&Window) View = empty_view
 	layout        Layout
 	renderers     []Renderer
-	msg_box_cfg   MsgBoxCfg
+	alert_cfg     AlertCfg
 	id_focus      u32
 	focused       bool = true
 	mouse_cursor  sapp.MouseCursor
@@ -173,6 +173,18 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	w.update_window()
 }
 
+// alert creates a alert box centered on the window.
+// Alerts (sometimes called message box, confirmations, etc.)
+// are the general purpose way of presenting a dialog with a
+// message and buttons. Several differnt types are supported
+// like OK, and YES_NO. Icons, styles, text wrapping and
+// multi-line are available. See [AlertCfg](#AlertCfg) for options.
+pub fn (mut window Window) alert(cfg AlertCfg) {
+	window.alert_cfg = cfg
+	window.alert_cfg.visible = true
+	window.alert_cfg.old_id_focus = window.id_focus
+}
+
 // default_view creates an empty view
 fn empty_view(window &Window) View {
 	w, h := window.window_size()
@@ -195,13 +207,6 @@ pub fn (window &Window) id_focus() u32 {
 // is_focus tests if the given id_focus is equal to the windows's id_focus
 pub fn (window &Window) is_focus(id_focus u32) bool {
 	return window.id_focus > 0 && window.id_focus == id_focus
-}
-
-// msg_box creates a message box centered on the window.
-pub fn (mut window Window) msg_box(cfg MsgBoxCfg) {
-	window.msg_box_cfg = cfg
-	window.msg_box_cfg.visible = true
-	window.msg_box_cfg.old_id_focus = window.id_focus
 }
 
 // pointer_over_app returns true if the mouse pointer is over the app
@@ -328,8 +333,8 @@ pub fn (mut window Window) update_window() {
 // fully arranged and ready for generating renderers.
 fn (window &Window) compose_layout(view &View) Layout {
 	mut layout := generate_layout(view, window)
-	if window.msg_box_cfg.visible {
-		mb := msgbox_view_generator(window.msg_box_cfg)
+	if window.alert_cfg.visible {
+		mb := alert_view_generator(window.alert_cfg)
 		ly := generate_layout(mb, window)
 		layout.children << ly
 	}

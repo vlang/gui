@@ -35,7 +35,6 @@ fn main() {
 			w.update_view(main_view)
 		}
 	)
-	println(gui.theme().n2)
 	window.run()
 }
 
