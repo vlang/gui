@@ -23,7 +23,6 @@ import gui
 // A boating analogy can help with picturing how this works. A boat
 // cna be anchored in a harbor but the anchor line can be tied-off
 // to the bow or stern.
-}
 
 @[heap]
 struct App {

@@ -34,7 +34,7 @@ pub:
 	padding_border     Padding = gui_theme.button_style.padding_border
 	radius             f32     = gui_theme.button_style.radius
 	radius_border      f32     = gui_theme.button_style.radius_border
-	on_click           fn (&ButtonCfg, mut Event, &Window) = unsafe { nil }
+	on_click           fn (&ButtonCfg, mut Event, mut Window) = unsafe { nil }
 }
 
 // button creates a clickable button. Buttons can contain content other than text.
@@ -91,7 +91,7 @@ pub fn button(cfg ButtonCfg) View {
 
 fn on_char_button(cfg &ButtonCfg, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(&cfg, mut e, w)
+		cfg.on_click(&cfg, mut e, mut w)
 		e.is_handled = true
 	}
 }
