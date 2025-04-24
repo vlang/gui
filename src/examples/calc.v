@@ -2,6 +2,10 @@ import gui
 import arrays
 import math
 
+// Simple Calculator
+// =============================
+// It just takes a few rows and columns to make an old school calculator
+
 const bsize = 30
 const bpadding = 5
 const max_digits = 12

@@ -1,5 +1,10 @@
 import gui
 
+// test layout
+// =================================
+// This is an odd ball collection of layouts I used while developing GUI.
+// It's meant to torture-test the layout engine to expose bugs.
+
 @[heap]
 struct AppState {
 pub mut:

@@ -34,10 +34,9 @@ fn page_one(window &gui.Window) gui.View {
 	return page([
 		gui.text(text: 'Page One', text_style: gui.theme().b1),
 		gui.button(
-			id_focus:       1
-			padding_border: gui.padding_two
-			content:        [gui.text(text: 'next >>')]
-			on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+			id_focus: 1
+			content:  [gui.text(text: 'next >>')]
+			on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 				w.update_view(page_two)
 				w.set_id_focus(1)
 			}
@@ -49,10 +48,9 @@ fn page_two(window &gui.Window) gui.View {
 	return page([
 		gui.text(text: 'Page Two', text_style: gui.theme().b1),
 		gui.button(
-			id_focus:       1
-			padding_border: gui.padding_two
-			content:        [gui.text(text: '<< previous')]
-			on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+			id_focus: 1
+			content:  [gui.text(text: '<< previous')]
+			on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 				w.update_view(page_one)
 				w.set_id_focus(1)
 			}

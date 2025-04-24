@@ -1,29 +1,45 @@
 # Examples
 
-Sometimes the best way to learn is to read example code.
+Sometimes the best way to learn is to read example code. Many of the
+examples were used to verify the behavior of GUI.
 
 ## How to build
-V needs to locate the GUI package. Since it is not an offical V package it can
-not be installed via `v install`. Instead, give the path to this installation.
+
+V needs to locate the GUI package. Since it is not an offical V package
+it can not be installed via `v install`. Instead, give the path to this
+installation.
 
 Example:
-```bash
+
+``` bash
 v -path "/Users/mike/gui/src|@vlib|@vmodules" run calc.v
 ```
-Important:
-- quotes around the paths are required
-- @vlib|@vmodules required
 
-Tip:
-Set the `VFLAGS` environment variable to save yourself some typing.
+Important: - quotes around the paths are required - @vlib\|@vmodules
+required
+
+Tip: Set the `VFLAGS` environment variable to save yourself some typing.
 
 Example:
-```bash
+
+``` bash
 export VFLAGS=-path /Users/mike/gui/src|@vlib|@vmodules
 ```
 
 ## Getting Started
-If you're new to GUI, start with the `get-started.v` example. It explains the
-basics of view generators, state models and event handling. Some of the other
-examples like `two-panel.v` and `test-layout.v` were used to test the layout
-engine during development and are not meant as examples of how to write an app.
+
+If you're new to GUI, start with the `get-started.v` example. It
+explains the basics of view generators, state models and event handling.
+Some of the other examples like `two-panel.v` and `test-layout.v` were
+used to test the layout engine during development and are not meant as
+examples of how to write an app.
+
+## Documentation
+
+The `Makefile` at the root of the project build documentation from the
+source code. Type `make doc` to produce the documention and `make read`
+to open the documention in the browser.
+
+There is also some hand written documentation in the `/doc` folder
+labled `01 Introduction.md`, `02 Getting Started.md`, etc. It's a work
+in progress.

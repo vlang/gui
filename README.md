@@ -15,7 +15,7 @@ It's early days so little is working. Try it and send feedback.
 
 ## Example
 
-```v
+``` v
 import gui
 import gg
 
@@ -34,47 +34,47 @@ import gg
 
 struct App {
 pub mut:
-	clicks int
+    clicks int
 }
 
 fn main() {
-	mut window := gui.window(
-		state:   &App{}
-		width:   300
-		height:  300
-		on_init: fn (mut w gui.Window) {
-			// Call update_view() any where in your
-			// business logic to change views.
-			w.update_view(main_view)
-		}
-	)
-	window.run()
+    mut window := gui.window(
+        state:   &App{}
+        width:   300
+        height:  300
+        on_init: fn (mut w gui.Window) {
+            // Call update_view() any where in your
+            // business logic to change views.
+            w.update_view(main_view)
+        }
+    )
+    window.run()
 }
 
 // The view generator set in update_view() is called on
 // every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
-	w, h := window.window_size()
-	app := window.state[App]()
+    w, h := window.window_size()
+    app := window.state[App]()
 
-	return gui.column(
-		width:   w
-		height:  h
-		h_align: .center
-		v_align: .middle
-		sizing:  gui.fixed_fixed
-		content: [
-			gui.text(text: 'Welcome to GUI'),
-			gui.button(
-				content:  [gui.text(text: '${app.clicks} Clicks')]
-				on_click: fn (_ &gui.ButtonCfg, e &gui.Event, mut w gui.Window) bool {
-					mut app := w.state[App]()
-					app.clicks += 1
-					return true // true says click was handled
-				}
-			),
-		]
-	)
+    return gui.column(
+        width:   w
+        height:  h
+        h_align: .center
+        v_align: .middle
+        sizing:  gui.fixed_fixed
+        content: [
+            gui.text(text: 'Welcome to GUI'),
+            gui.button(
+                content:  [gui.text(text: '${app.clicks} Clicks')]
+                on_click: fn (_ &gui.ButtonCfg, e &gui.Event, mut w gui.Window) bool {
+                    mut app := w.state[App]()
+                    app.clicks += 1
+                    return true // true says click was handled
+                }
+            ),
+        ]
+    )
 }
 ```
 
@@ -85,6 +85,29 @@ fn main_view(window &gui.Window) gui.View {
 GUI is a flex-box style UI framework written in [V](https://vlang.io),
 with declarative syntax and microsecond performance. It aspires to be a
 useful framework with a short a learning curve.
+
+## Building Examples
+
+The [README.md](src/examples/README.md) describes how to build GUI
+programs. Don't fret, it's a one liner.
+
+## Getting Started
+
+If you're new to GUI, start with the `get-started.v` example. It
+explains the basics of view generators, state models and event handling.
+Some of the other examples like `two-panel.v` and `test-layout.v` were
+used to test the layout engine during development and are not meant as
+examples of how to write an app.
+
+## Documentation
+
+The `Makefile` at the root of the project builds documentation from the
+source code. Type `make doc` to produce the documention and `make read`
+to open the documention in the browser.
+
+There is also some hand written documentation in the `/doc` folder
+labled `01 Introduction.md`, `02 Getting Started.md`, etc. It's a work
+in progress.
 
 ## Roadmap
 

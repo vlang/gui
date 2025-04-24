@@ -1,7 +1,9 @@
 import gui
 
-// Demonstrates how to invoke a message box.
-// As an aside, it also shows how to modify theme.
+// Alert Boxes
+// =============================
+// Demonstrates how to invoke two different styles of alert boxes.
+// As an aside, it shows how easy it is to make a theme.
 
 fn main() {
 	mut window := gui.window(
@@ -13,7 +15,7 @@ fn main() {
 			w.update_view(main_view)
 		}
 	)
-	// Add some borders views that support them
+	// Add some borders to views that support them
 	theme := gui.theme_maker(gui.ThemeCfg{
 		...gui.theme_dark_cfg
 		padding_border: gui.padding_two
@@ -43,12 +45,19 @@ fn main_view(window &gui.Window) gui.View {
 				content:  [gui.text(text: 'Click Me')]
 				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 					w.alert(
-						title: 'Title Here'
-						body:  '
+						alert_type:   .confirm
+						title:        'Title Here'
+						body:         '
 Content goes here...
 
 Multi-line and text wrapping supported.
 See MsgBoxCfg for other parameters'
+						on_ok_yes:    fn (mut w gui.Window) {
+							w.alert(title: 'Clicked Yes')
+						}
+						on_cancel_no: fn (mut w gui.Window) {
+							w.alert(title: 'Clicked No')
+						}
 					)
 				}
 			),

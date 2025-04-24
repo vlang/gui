@@ -1,5 +1,7 @@
 import gui
 
+// Column Scrolling
+// =============================
 // Demonstrates column scrolling with 10,000 different text items.
 // No virtualization, just pure layout calculated 10's of thousands
 // of times. Build with the -prod flag for buttery smooth performance.

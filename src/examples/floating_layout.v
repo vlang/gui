@@ -1,5 +1,30 @@
 import gui
 
+// Floating Layouts
+// =============================
+// Many UI designs need to draw content over other content.
+// Menus and Alert Boxes for instance. GUI calls these
+// floats. Floats can be nested for z axis stacking often
+// required in drop down menus.
+//
+// Floats can be anchored to their parent container at six points.
+// - top_left
+// - top_center
+// - top_right
+// - middle_left
+// - middle_center
+// - middle_right
+// - bottom_left
+// - bottom_center
+// - bottom_right
+//
+// The float itself has similar attchement points called, "tie-offs".
+//
+// A boating analogy can help with picturing how this works. A boat
+// cna be anchored in a harbor but the anchor line can be tied-off
+// to the bow or stern.
+}
+
 @[heap]
 struct App {
 pub mut:

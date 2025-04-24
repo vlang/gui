@@ -1,5 +1,7 @@
 import gui
 
+// Getting Started
+// =============================
 // GUI uses a view generator (a function that returns a View) to
 // render the contents of the Window. As the state of the app
 // changes, either through user actions or business logic, GUI

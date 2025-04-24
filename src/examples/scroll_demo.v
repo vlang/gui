@@ -1,5 +1,13 @@
 import gui
 
+// Scroll Demo
+// =============================
+// To make a column or row scrollable, Add a `id_scroll` to its configurtion
+// Like `id_focus` the id should be unique to the window view. GUI uses id's
+// to store state information about scrolling and focus. If two columns have
+// the same `id_scroll` they scroll in unison. Not my intention when designing
+// it but a happy accident.
+
 const text = 'Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts.
 
 Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.

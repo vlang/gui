@@ -1,5 +1,11 @@
 import gui
 
+// Two Panel
+// =================================
+// One of the first programs I wrote to test layouts in GUI.
+// Simple but it helped pave the way for more complex layouts
+// like test-layout.v.
+
 fn main() {
 	mut window := gui.window(
 		width:   300

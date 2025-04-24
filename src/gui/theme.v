@@ -165,6 +165,7 @@ pub:
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
 	padding_large  Padding = padding_large
+	padding_border Padding = padding_none
 
 	spacing_small  int = spacing_small
 	spacing_medium int = spacing_medium
@@ -394,6 +395,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		padding_small:  cfg.padding_small
 		padding_medium: cfg.padding_medium
 		padding_large:  cfg.padding_large
+		padding_border: cfg.padding_border
 
 		spacing_small:  cfg.spacing_small
 		spacing_medium: cfg.spacing_medium

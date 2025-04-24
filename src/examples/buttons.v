@@ -1,6 +1,17 @@
 import gui
 import math
 
+// Buttons
+// =============================
+// Not so different than what you'll find in other frameworks with
+// exception. Buttons are containers meaning you're not limited to
+// only text.
+//
+// The theme button shows how easy it is to switch themes in GUI.
+// GUI comes with a handful of themes, and an Icon set. Themes in
+// GUI are powerful and granular. See the theme_designer.v program
+// for more about themes.
+
 struct App {
 pub mut:
 	clicks int

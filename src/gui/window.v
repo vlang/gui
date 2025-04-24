@@ -183,6 +183,7 @@ pub fn (mut window Window) alert(cfg AlertCfg) {
 	window.alert_cfg = cfg
 	window.alert_cfg.visible = true
 	window.alert_cfg.old_id_focus = window.id_focus
+	window.set_id_focus(cfg.id_focus)
 }
 
 // default_view creates an empty view
@@ -333,11 +334,6 @@ pub fn (mut window Window) update_window() {
 // fully arranged and ready for generating renderers.
 fn (window &Window) compose_layout(view &View) Layout {
 	mut layout := generate_layout(view, window)
-	if window.alert_cfg.visible {
-		mb := alert_view_generator(window.alert_cfg)
-		ly := generate_layout(mb, window)
-		layout.children << ly
-	}
 	layouts := layout_arrange(mut layout, window)
 	// Combine the layouts into one layout to rule them all
 	// and bind them in the darkness

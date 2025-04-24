@@ -1,5 +1,10 @@
 import gui
 
+// Progress Bars
+// =============================
+// Not much to say here. They're progress bars, similar to what
+// you'll find in other frameworks.
+
 @[heap]
 struct App {
 pub mut:

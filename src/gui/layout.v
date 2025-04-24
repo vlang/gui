@@ -24,7 +24,16 @@ fn layout_arrange(mut layout Layout, window &Window) []Layout {
 	mut floating_layouts := layout_remove_floating_layouts(mut layout)
 	float_layouts_fix_neseted_floats(mut floating_layouts)
 
-	// Compute the layout minus the floating elements.
+	// Alert is a pop-up dialog.
+	// Add last to ensure it is always on top.
+	if window.alert_cfg.visible {
+		alert_view := alert_view_generator(window.alert_cfg)
+		mut alert_layout := generate_layout(alert_view, window)
+		alert_layout.parent = layout
+		floating_layouts << alert_layout
+	}
+
+	// Compute the layout without the floating elements.
 	layout_pipeline(mut layout, window)
 
 	// Compute the floating layouts. Because they are appended to

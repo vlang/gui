@@ -1,5 +1,10 @@
 import gui
 
+// Inputs
+// =============================
+// There is only one input view in GUI. It can function as
+// single and multiline and can accept newlines.
+
 @[heap]
 struct App {
 pub mut:
