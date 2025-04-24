@@ -15,7 +15,7 @@ ratios (circles appear as circles and not ellipes for instance).
 Starting simple, the following example displays a window with centered
 text and a button that counts clicks.
 
-``` v
+```v
 import gui
 
 // GUI uses a view generator (a function that returns a View) to
@@ -33,52 +33,51 @@ import gui
 
 struct App {
 pub mut:
-    clicks int
+	clicks int
 }
 
 fn main() {
-    mut window := gui.window(
-        state:   &App{}
-        width:   300
-        height:  300
-        on_init: fn (mut w gui.Window) {
-            // Call update_view() any where in your
-            // business logic to change views.
-            w.update_view(main_view)
-        }
-    )
-    window.run()
+	mut window := gui.window(
+		state:   &App{}
+		width:   300
+		height:  300
+		on_init: fn (mut w gui.Window) {
+			// Call update_view() any where in your
+			// business logic to change views.
+			w.update_view(main_view)
+		}
+	)
+	window.run()
 }
 
 // The view generator set in update_view() is called on
 // every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
-    w, h := window.window_size()
-    app := window.state[App]()
+	w, h := window.window_size()
+	app := window.state[App]()
 
-    return gui.column(
-        width:   w
-        height:  h
-        sizing:  gui.fixed_fixed
-        h_align: .center
-        v_align: .middle
-        content: [
-            gui.text(
-                text:       'Welcome to GUI'
-                text_style: gui.theme().b1
-            ),
-            gui.button(
-                id_focus:       1
-                padding_border: gui.padding_two
-                content:        [gui.text(text: '${app.clicks} Clicks')]
-                on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
-                    mut app := w.state[App]()
-                    app.clicks += 1
-                    return true // true says click was handled
-                }
-            ),
-        ]
-    )
+	return gui.column(
+		width:   w
+		height:  h
+		sizing:  gui.fixed_fixed
+		h_align: .center
+		v_align: .middle
+		content: [
+			gui.text(
+				text:       'Welcome to GUI'
+				text_style: gui.theme().b1
+			),
+			gui.button(
+				id_focus:       1
+				padding_border: gui.padding_two
+				content:        [gui.text(text: '${app.clicks} Clicks')]
+				on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[App]()
+					app.clicks += 1
+				}
+			),
+		]
+	)
 }
 ```
 
@@ -181,10 +180,9 @@ and buttons.
                 id_focus:       1
                 padding_border: gui.padding_two
                 content:        [gui.text(text: '${app.clicks} Clicks')]
-                on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
+                on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
                     mut app := w.state[App]()
                     app.clicks += 1
-                    return true // true says click was handled
                 }
             ),
         ]
@@ -199,14 +197,14 @@ size, and weight of the text. Gui has a theming system like other UI
 frameworks. For convienence, Gui defines several predefined selections.
 They are:
 
-- `t1,t2,t3,t4,t5,t6`, plain text_style
+- `n1,n2,n3,n4,n5,b6`, normal text_style
 - `b1,b2,b3,b4,b5,b6`, bold text_style
 - `i1,i2,i3,i4,i5,i6`, italic text_style
 - `m1,m2,m3,m4,m5,m6`, monospace text_style
 
 The numbers indicate the size with 1 being the largest and 6 being the
 smallest. The 3 size can be thought of as the medium or default size. If
-no text_style is given to the text view, it defaults to `t3`.
+no text_style is given to the text view, it defaults to `n3`.
 
 `gui.button` not suprisingly, creates a button. When a button is
 clicked, the `on_click` callback is called. The application's state is
