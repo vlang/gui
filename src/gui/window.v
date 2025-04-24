@@ -10,9 +10,10 @@ mut:
 	ui            &gg.Context       = &gg.Context{}
 	state         voidptr           = unsafe { nil }
 	mutex         &sync.Mutex       = sync.new_mutex()
-	layout        Layout            = Layout{}
-	renderers     []Renderer        = []
 	generate_view fn (&Window) View = empty_view
+	layout        Layout
+	renderers     []Renderer
+	msg_box_cfg   MsgBoxCfg
 	id_focus      u32
 	focused       bool = true
 	mouse_cursor  sapp.MouseCursor
@@ -150,6 +151,9 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			mouse_down_handler(layout, mut e, mut w)
 		}
 		.mouse_move {
+			if !w.pointer_over_app(e) {
+				return
+			}
 			w.set_mouse_cursor_arrow()
 			mouse_move_handler(layout, mut e, mut w)
 		}
@@ -191,6 +195,13 @@ pub fn (window &Window) id_focus() u32 {
 // is_focus tests if the given id_focus is equal to the windows's id_focus
 pub fn (window &Window) is_focus(id_focus u32) bool {
 	return window.id_focus > 0 && window.id_focus == id_focus
+}
+
+// msg_box creates a message box centered on the window.
+pub fn (mut window Window) msg_box(cfg MsgBoxCfg) {
+	window.msg_box_cfg = cfg
+	window.msg_box_cfg.visible = true
+	window.msg_box_cfg.old_id_focus = window.id_focus
 }
 
 // pointer_over_app returns true if the mouse pointer is over the app
@@ -243,7 +254,6 @@ pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
 // set_id_focus sets the window's focus id.
 pub fn (mut window Window) set_id_focus(id u32) {
 	window.id_focus = id
-	window.update_window()
 }
 
 // set_mouse_cursor_arrow sets the window's mouse cursor to an arrow
@@ -318,6 +328,11 @@ pub fn (mut window Window) update_window() {
 // fully arranged and ready for generating renderers.
 fn (window &Window) compose_layout(view &View) Layout {
 	mut layout := generate_layout(view, window)
+	if window.msg_box_cfg.visible {
+		mb := msgbox_view_generator(window.msg_box_cfg)
+		ly := generate_layout(mb, window)
+		layout.children << ly
+	}
 	layouts := layout_arrange(mut layout, window)
 	// Combine the layouts into one layout to rule them all
 	// and bind them in the darkness

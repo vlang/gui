@@ -99,9 +99,6 @@ fn mouse_down_handler(node &Layout, mut e Event, mut w Window) {
 }
 
 fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
-	if !w.pointer_over_app(e) {
-		return
-	}
 	for child in node.children {
 		mouse_move_handler(child, mut e, mut w)
 		if e.is_handled {

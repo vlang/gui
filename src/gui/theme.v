@@ -226,7 +226,9 @@ pub:
 	scroll_delta_page f32 = scroll_delta_page
 }
 
-pub const theme_dark = theme_maker(
+// Good practice to expose theme configs to users.
+// Makes modifying themes less tedious
+pub const theme_dark_cfg = ThemeCfg{
 	name:               'dark'
 	color_0:            color_0_dark
 	color_1:            color_1_dark
@@ -238,9 +240,10 @@ pub const theme_dark = theme_maker(
 	color_border_focus: color_link_dark
 	color_link:         color_link_dark
 	text_style:         text_style_dark
-)
+}
+pub const theme_dark = theme_maker(theme_dark_cfg)
 
-pub const theme_dark_no_padding = theme_maker(
+pub const theme_dark_no_padding_cfg = ThemeCfg{
 	name:               'dark'
 	color_0:            color_0_dark
 	color_1:            color_1_dark
@@ -256,7 +259,8 @@ pub const theme_dark_no_padding = theme_maker(
 	padding_border:     padding_none
 	radius:             radius_none
 	radius_border:      radius_none
-)
+}
+pub const theme_dark_no_padding = theme_maker(theme_dark_no_padding_cfg)
 
 const color_text_light = rgb(32, 32, 32)
 const color_0_light = rgb(225, 225, 225)
@@ -269,7 +273,7 @@ const color_border_light = rgb(64, 64, 64)
 const color_link_light = rgb(0, 71, 171)
 const color_border_focus_light = rgb(0, 0, 255)
 
-pub const theme_light = theme_maker(
+pub const theme_light_cfg = ThemeCfg{
 	name:               'light'
 	color_0:            color_0_light
 	color_1:            color_1_light
@@ -284,9 +288,10 @@ pub const theme_light = theme_maker(
 		...text_style_dark
 		color: color_text_light
 	}
-)
+}
+pub const theme_light = theme_maker(theme_light_cfg)
 
-pub const theme_light_no_padding = theme_maker(
+pub const theme_light_no_padding_cfg = ThemeCfg{
 	name:               'light'
 	color_0:            color_0_light
 	color_1:            color_1_light
@@ -305,7 +310,8 @@ pub const theme_light_no_padding = theme_maker(
 	padding_border:     padding_none
 	radius:             radius_none
 	radius_border:      radius_none
-)
+}
+pub const theme_light_no_padding = theme_maker(theme_light_no_padding_cfg)
 
 // theme_maker sets all styles to a common set of values (ThemeCfg)
 // GUI allows each view type (button, input, etc) to be styled
