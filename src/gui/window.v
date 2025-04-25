@@ -62,13 +62,12 @@ pub:
 	height   int
 	bg_color Color        = gui_theme.color_background
 	on_init  fn (&Window) = fn (mut w Window) {
-		w.update_window_size()
 		w.update_view(empty_view)
 	}
 	on_event fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
-// window creates the application window. See WindowCfg on how to configure it
+// window creates the application window. See [WindowCfg](#WindowCfg) on how to configure it
 pub fn window(cfg &WindowCfg) &Window {
 	mut window := &Window{
 		state:    cfg.state
@@ -86,6 +85,7 @@ pub fn window(cfg &WindowCfg) &Window {
 		init_fn:      fn [cfg] (mut w Window) {
 			w.update_window_size()
 			cfg.on_init(w)
+			w.update_window()
 		}
 	)
 	return window
