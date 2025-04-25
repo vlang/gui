@@ -15,12 +15,12 @@ mut:
 	renderers     []Renderer
 	alert_cfg     AlertCfg
 	focused       bool = true
-	mouse_cursor  sapp.MouseCursor
-	input_state   map[u32]InputState
-	scroll_state  map[u32]f32
-	id_focus      u32            // id of view that has focus
-	text_widths   map[string]int // string: hash(text + text_style)
-	window_size   gg.Size        // cached, gg.window_size() is costly
+	id_focus      u32                // id of view that has focus
+	input_state   map[u32]InputState // [id_focus] -> input state
+	scroll_state  map[u32]f32        // [id_scroll] -> scroll offset
+	text_widths   map[string]int     // [text + hash(text_style)] -> text width
+	mouse_cursor  sapp.MouseCursor   // arrow, finger, ibeam, etc.
+	window_size   gg.Size            // cached, gg.window_size() relatively slow
 	on_event      fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
