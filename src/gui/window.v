@@ -7,21 +7,21 @@ import sync
 @[heap]
 pub struct Window {
 mut:
-	ui            &gg.Context       = &gg.Context{}
-	state         voidptr           = unsafe { nil }
-	mutex         &sync.Mutex       = sync.new_mutex()
-	generate_view fn (&Window) View = empty_view
-	layout        Layout
-	renderers     []Renderer
-	alert_cfg     AlertCfg
-	focused       bool = true
-	id_focus      u32                // id of view that has focus
-	input_state   map[u32]InputState // [id_focus] -> input state
-	scroll_state  map[u32]f32        // [id_scroll] -> scroll offset
-	text_widths   map[string]int     // [text + hash(text_style)] -> text width
-	mouse_cursor  sapp.MouseCursor   // arrow, finger, ibeam, etc.
-	window_size   gg.Size            // cached, gg.window_size() relatively slow
-	on_event      fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	ui             &gg.Context       = &gg.Context{}
+	state          voidptr           = unsafe { nil }
+	mutex          &sync.Mutex       = sync.new_mutex()
+	view_generator fn (&Window) View = empty_view
+	layout         Layout
+	renderers      []Renderer
+	alert_cfg      AlertCfg
+	focused        bool = true
+	id_focus       u32                // id of view that has focus
+	input_state    map[u32]InputState // [id_focus] -> input state
+	scroll_state   map[u32]f32        // [id_scroll] -> scroll offset
+	text_widths    map[string]int     // [text + hash(text_style)] -> text width
+	mouse_cursor   sapp.MouseCursor   // arrow, finger, ibeam, etc.
+	window_size    gg.Size            // cached, gg.window_size() relatively slow
+	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -208,7 +208,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
 
-	window.generate_view = gen_view
+	window.view_generator = gen_view
 	window.layout = layout
 	window.renderers = renderers
 }
@@ -220,7 +220,7 @@ pub fn (mut window Window) update_window() {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
 
-	view := window.generate_view(window)
+	view := window.view_generator(window)
 	layout := window.compose_layout(view)
 	renderers := render_layout(layout, window.color_background(), 0, window.ui)
 
