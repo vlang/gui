@@ -23,56 +23,23 @@ pub:
 	max_height     f32
 	title          string
 	body           string
-	id_focus       u32               = 7568971
-	padding        Padding           = theme().padding_large
-	padding_border Padding           = theme().padding_border
-	on_ok_yes      fn (mut w Window) = fn (mut _ Window) {}
-	on_cancel_no   fn (mut w Window) = fn (mut _ Window) {}
+	reply          string
+	id_focus       u32                     = 7568971
+	padding        Padding                 = theme().padding_large
+	padding_border Padding                 = theme().padding_border
+	on_ok_yes      fn (mut w Window)       = fn (mut _ Window) {}
+	on_cancel_no   fn (mut w Window)       = fn (mut _ Window) {}
+	on_reply       fn (string, mut Window) = fn (_ string, mut _ Window) {}
 }
 
 fn alert_view_generator(cfg AlertCfg) View {
 	mut content := []View{}
 	content << text(text: cfg.title, text_style: theme().b2)
 	content << text(text: cfg.body, wrap: true)
-	if cfg.alert_type == .alert {
-		content << button(
-			id_focus: cfg.id_focus
-			content:  [text(text: 'OK')]
-			on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-				w.set_id_focus(w.alert_cfg.old_id_focus)
-				on_ok_yes := w.alert_cfg.on_ok_yes
-				w.alert_cfg = AlertCfg{}
-				on_ok_yes(mut w)
-				e.is_handled = true
-			}
-		)
-	} else if cfg.alert_type == .confirm {
-		content << row(
-			content: [
-				button(
-					id_focus: cfg.id_focus + 1
-					content:  [text(text: 'Yes')]
-					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-						w.set_id_focus(w.alert_cfg.old_id_focus)
-						on_ok_yes := w.alert_cfg.on_ok_yes
-						w.alert_cfg = AlertCfg{}
-						on_ok_yes(mut w)
-						e.is_handled = true
-					}
-				),
-				button(
-					id_focus: cfg.id_focus
-					content:  [text(text: 'No')]
-					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-						w.set_id_focus(w.alert_cfg.old_id_focus)
-						on_cancel_no := w.alert_cfg.on_cancel_no
-						w.alert_cfg = AlertCfg{}
-						on_cancel_no(mut w)
-						e.is_handled = true
-					}
-				),
-			]
-		)
+	content << match cfg.alert_type {
+		.alert { content_alert(cfg) }
+		.confirm { content_confirm(cfg) }
+		.prompt { content_prompt(cfg) }
 	}
 	return column(
 		float:         true
@@ -98,4 +65,95 @@ fn alert_view_generator(cfg AlertCfg) View {
 			),
 		]
 	)
+}
+
+fn content_alert(cfg AlertCfg) []View {
+	return [
+		button(
+			id_focus: cfg.id_focus
+			content:  [text(text: 'OK')]
+			on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+				w.set_id_focus(w.alert_cfg.old_id_focus)
+				on_ok_yes := w.alert_cfg.on_ok_yes
+				w.alert_cfg = AlertCfg{}
+				on_ok_yes(mut w)
+				e.is_handled = true
+			}
+		),
+	]
+}
+
+fn content_confirm(cfg AlertCfg) []View {
+	return [
+		row(
+			content: [
+				button(
+					id_focus: cfg.id_focus + 1
+					content:  [text(text: 'Yes')]
+					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+						w.set_id_focus(w.alert_cfg.old_id_focus)
+						on_ok_yes := w.alert_cfg.on_ok_yes
+						w.alert_cfg = AlertCfg{}
+						on_ok_yes(mut w)
+						e.is_handled = true
+					}
+				),
+				button(
+					id_focus: cfg.id_focus
+					content:  [text(text: 'No')]
+					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+						w.set_id_focus(w.alert_cfg.old_id_focus)
+						on_cancel_no := w.alert_cfg.on_cancel_no
+						w.alert_cfg = AlertCfg{}
+						on_cancel_no(mut w)
+						e.is_handled = true
+					}
+				),
+			]
+		),
+	]
+}
+
+fn content_prompt(cfg AlertCfg) []View {
+	return [
+		input(
+			id_focus:        cfg.id_focus
+			text:            cfg.reply
+			sizing:          fill_fit
+			on_text_changed: fn (_ &InputCfg, s string, mut w Window) {
+				w.alert_cfg = AlertCfg{
+					...w.alert_cfg
+					reply: s
+				}
+			}
+		),
+		row(
+			content: [
+				button(
+					id_focus: cfg.id_focus + 1
+					disabled: cfg.reply.len == 0
+					content:  [text(text: 'OK')]
+					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+						w.set_id_focus(w.alert_cfg.old_id_focus)
+						on_reply := w.alert_cfg.on_reply
+						reply := w.alert_cfg.reply
+						w.alert_cfg = AlertCfg{}
+						on_reply(reply, mut w)
+						e.is_handled = true
+					}
+				),
+				button(
+					id_focus: cfg.id_focus + 2
+					content:  [text(text: 'Cancel')]
+					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+						w.set_id_focus(w.alert_cfg.old_id_focus)
+						on_cancel_no := w.alert_cfg.on_cancel_no
+						w.alert_cfg = AlertCfg{}
+						on_cancel_no(mut w)
+						e.is_handled = true
+					}
+				),
+			]
+		),
+	]
 }

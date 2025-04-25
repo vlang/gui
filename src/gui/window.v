@@ -133,7 +133,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		w.layout.children.last()
 	} else {
 		Layout{
-			shape:    w.layout.shape
+			...w.layout
 			children: w.layout.children.reverse()
 		}
 	}

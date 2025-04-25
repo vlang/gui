@@ -10,8 +10,6 @@ fn main() {
 		width:   500
 		height:  300
 		on_init: fn (mut w gui.Window) {
-			// Call update_view() any where in your
-			// business logic to change views.
 			w.update_view(main_view)
 		}
 	)
@@ -24,8 +22,6 @@ fn main() {
 	window.run()
 }
 
-// The view generator set in update_view() is called on
-// every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 
@@ -36,31 +32,74 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			gui.text(
-				text:       'Click Button for Message'
-				text_style: gui.theme().m2
-			),
-			gui.button(
-				id_focus: 1
-				content:  [gui.text(text: 'Click Me')]
-				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-					w.alert(
-						alert_type:   .confirm
-						title:        'Title Here'
-						body:         '
-Content goes here...
-
-Multi-line and text wrapping supported.
-See MsgBoxCfg for other parameters'
-						on_ok_yes:    fn (mut w gui.Window) {
-							w.alert(title: 'Clicked Yes')
-						}
-						on_cancel_no: fn (mut w gui.Window) {
-							w.alert(title: 'Clicked No')
-						}
-					)
-				}
+			gui.column(
+				content: [
+					alert_type(),
+					confirm_type(),
+					prompt_type(),
+				]
 			),
 		]
+	)
+}
+
+fn alert_type() gui.View {
+	return gui.button(
+		id_focus: 1
+		sizing:   gui.fill_fit
+		content:  [gui.text(text: '.alert_type == .alert')]
+		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+			w.alert(
+				alert_type: .alert
+				title:      'Title Displays Here'
+				body:       '
+body text displayes here...
+
+Multi-line and text wrapping supported.
+See AlertCfg for other parameters'
+			)
+		}
+	)
+}
+
+fn confirm_type() gui.View {
+	return gui.button(
+		id_focus: 2
+		sizing:   gui.fill_fit
+		content:  [gui.text(text: '.alert_type == .confirm')]
+		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+			w.alert(
+				alert_type:   .confirm
+				title:        'Example Confirm'
+				body:         'Are you sure?'
+				on_ok_yes:    fn (mut w gui.Window) {
+					w.alert(title: 'Clicked Yes')
+				}
+				on_cancel_no: fn (mut w gui.Window) {
+					w.alert(title: 'Clicked No')
+				}
+			)
+		}
+	)
+}
+
+fn prompt_type() gui.View {
+	return gui.button(
+		id_focus: 3
+		sizing:   gui.fill_fit
+		content:  [gui.text(text: '.alert_type == .prompt')]
+		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+			w.alert(
+				alert_type:   .prompt
+				title:        'Prompt Dialog'
+				body:         'What is your quest?'
+				on_reply:     fn (reply string, mut w gui.Window) {
+					w.alert(title: 'Replied', body: reply)
+				}
+				on_cancel_no: fn (mut w gui.Window) {
+					w.alert(title: 'Canceled')
+				}
+			)
+		}
 	)
 }
