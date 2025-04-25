@@ -36,6 +36,7 @@ fn main() {
 fn main_view(w &gui.Window) gui.View {
 	mut state := w.state[AppState]()
 	width, height := w.window_size()
+	app := w.state[AppState]()
 
 	return gui.row(
 		width:   width
@@ -98,16 +99,23 @@ fn main_view(w &gui.Window) gui.View {
 								id_focus:       1
 								padding_border: gui.padding_two
 								content:        [
-									gui.text(text: 'Button Text ${state.click_count}'),
+									gui.text(text: 'Click Count ${state.click_count}'),
 								]
 								on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 									mut state := w.state[AppState]()
 									state.click_count += 1
 								}
 							),
+							gui.text(
+								text: 'progress bar'
+							),
+							gui.progress_bar(
+								percent: (app.click_count * 4) / f32(100)
+								sizing:  gui.fill_fit
+							),
 							gui.row(
 								v_align: .middle
-								padding: gui.padding_none
+								padding: gui.padding(0, 0, 10, 0)
 								content: [
 									gui.text(
 										text: 'label'
@@ -126,13 +134,6 @@ fn main_view(w &gui.Window) gui.View {
 										}
 									),
 								]
-							),
-							gui.text(
-								text: 'progress bar'
-							),
-							gui.progress_bar(
-								percent: 0.35
-								sizing:  gui.fill_fit
 							),
 						]
 					),
