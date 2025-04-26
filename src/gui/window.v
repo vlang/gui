@@ -236,6 +236,9 @@ fn (window &Window) compose_layout(view &View) Layout {
 	// Combine the layouts into one layout to rule them all
 	// and bind them in the darkness
 	return Layout{
+		shape:    Shape{
+			color: color_transparent
+		}
 		children: layouts
 	}
 }
