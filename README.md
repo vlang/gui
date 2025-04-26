@@ -86,8 +86,8 @@ useful framework with a short a learning curve.
 
 ## Building Examples
 
-The [README.md](src/examples/README.md) describes how to build GUI
-programs. Don't fret, it's a one liner.
+The `README.md` in the examples folder describes how to build GUI
+programs. Don't fret, it's a one-liner.
 
 ## Getting Started
 
@@ -95,7 +95,7 @@ If you're new to GUI, start with the `get-started.v` example. It
 explains the basics of view generators, state models and event handling.
 Some of the other examples like `two-panel.v` and `test-layout.v` were
 used to test the layout engine during development and are not meant as
-examples of how to write an app.
+examples of how to write an app (they're fun to run however).
 
 ## Documentation
 
