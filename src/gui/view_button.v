@@ -2,7 +2,7 @@ module gui
 
 import gg
 
-// ButtonCfgconfigures a clickable [button](#button). It won't respond mouse
+// ButtonCfg configures a clickable [button](#button). It won't respond mouse
 // interactions if an on_click handler is not provided. In that mode,
 // it functions as bubble text.
 @[heap]
@@ -106,6 +106,9 @@ fn (cfg ButtonCfg) amend_layout(mut node Layout, mut w Window) {
 	}
 	ctx := w.context()
 	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+		if w.dialog_cfg.visible && !point_in_dialog_layout(node) {
+			return
+		}
 		w.set_mouse_cursor_pointing_hand()
 		node.children[0].shape.color = cfg.color_hover
 		if ctx.mouse_buttons == gg.MouseButtons.left {

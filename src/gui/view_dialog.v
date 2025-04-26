@@ -16,11 +16,13 @@ pub enum DialogType {
 	custom
 }
 
+const reserved_dialog_id = '__dialog_reserved_do_not_use__'
+
 // DialogCfg configures GUI's dialog dialog. [dialogType](#dialogType)
 // determines the type of dialog. dialogType.message is the default.
 // dialogs are asychronous. Keyboard/Mouse input is restricted
-// to the dialog dialog when visible. Invoke dialogs by calling
-// [(Window) dialog](#Window.dialog)
+// to the dialog dialog when visible. **Dialogs do not support floating
+// elements**. Invoke dialogs by calling [(Window) dialog](#Window.dialog)
 pub struct DialogCfg {
 mut:
 	visible      bool
@@ -59,6 +61,7 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		.custom { cfg.custom_content }
 	}
 	return column(
+		id:            reserved_dialog_id
 		float:         true
 		float_anchor:  .middle_center
 		float_tie_off: .middle_center
@@ -173,4 +176,21 @@ fn prompt_view(cfg DialogCfg) []View {
 			]
 		),
 	]
+}
+
+// point_in_dialog_layout is used in views like button watch mouse_moves
+fn point_in_dialog_layout(node &Layout) bool {
+	mut in_dialog := false
+	mut parent := node.parent
+	for {
+		if parent == unsafe { nil } {
+			break
+		}
+		if parent.shape.id == reserved_dialog_id {
+			in_dialog = true
+			break
+		}
+		parent = parent.parent
+	}
+	return in_dialog
 }
