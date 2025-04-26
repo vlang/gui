@@ -1,13 +1,26 @@
 module gui
 
+// AlertType configures the type of alert dialog.
 //
+// - **message** has a title, body and OK button
+// - **confirm** is similar to alert but with yes, no buttons
+// - **prompt** adds an input field with OK, Cancel buttons
+// - **custom** displays the given content. The given content
+// is simply displayed. Custom content provides any needed
+// callbacks as the standard ones work only for
+// the predfined types. See [AlertCfg](#AlertCfg)
 pub enum AlertType {
-	alert
+	message
 	confirm
 	prompt
+	custom
 }
 
-// AlertCfg
+// AlertCfg configures GUI's alert dialog. [AlertType](#AlertType)
+// determines the type of alert. AlertType.message is the default.
+// Alerts are asychronous. Keyboard/Mouse input is restricted
+// to the alert dialog when visible. Invoke alerts by calling
+// [(Window) alert](#Window.alert)
 pub struct AlertCfg {
 mut:
 	visible      bool
@@ -22,7 +35,8 @@ pub:
 	max_width      f32 = 300
 	max_height     f32
 	title          string
-	body           string
+	body           string // body text wraps as needed. Newlines supported
+	custom_content []View // custom content
 	reply          string
 	id_focus       u32                     = 7568971
 	padding        Padding                 = theme().padding_large
@@ -37,9 +51,10 @@ fn alert_view_generator(cfg AlertCfg) View {
 	content << text(text: cfg.title, text_style: theme().b2)
 	content << text(text: cfg.body, wrap: true)
 	content << match cfg.alert_type {
-		.alert { content_alert(cfg) }
-		.confirm { content_confirm(cfg) }
-		.prompt { content_prompt(cfg) }
+		.message { message_view(cfg) }
+		.confirm { confirm_view(cfg) }
+		.prompt { prompt_view(cfg) }
+		.custom { cfg.custom_content }
 	}
 	return column(
 		float:         true
@@ -67,7 +82,7 @@ fn alert_view_generator(cfg AlertCfg) View {
 	)
 }
 
-fn content_alert(cfg AlertCfg) []View {
+fn message_view(cfg AlertCfg) []View {
 	return [
 		button(
 			id_focus: cfg.id_focus
@@ -83,7 +98,7 @@ fn content_alert(cfg AlertCfg) []View {
 	]
 }
 
-fn content_confirm(cfg AlertCfg) []View {
+fn confirm_view(cfg AlertCfg) []View {
 	return [
 		row(
 			content: [
@@ -114,7 +129,7 @@ fn content_confirm(cfg AlertCfg) []View {
 	]
 }
 
-fn content_prompt(cfg AlertCfg) []View {
+fn prompt_view(cfg AlertCfg) []View {
 	return [
 		input(
 			id_focus:        cfg.id_focus

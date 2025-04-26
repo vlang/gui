@@ -47,10 +47,10 @@ fn alert_type() gui.View {
 	return gui.button(
 		id_focus: 1
 		sizing:   gui.fill_fit
-		content:  [gui.text(text: '.alert_type == .alert')]
+		content:  [gui.text(text: '.alert_type == .message')]
 		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 			w.alert(
-				alert_type: .alert
+				alert_type: .message
 				title:      'Title Displays Here'
 				body:       '
 body text displayes here...
@@ -70,7 +70,7 @@ fn confirm_type() gui.View {
 		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 			w.alert(
 				alert_type:   .confirm
-				title:        'Example Confirm'
+				title:        'Destory All Data?'
 				body:         'Are you sure?'
 				on_ok_yes:    fn (mut w gui.Window) {
 					w.alert(title: 'Clicked Yes')
@@ -91,7 +91,7 @@ fn prompt_type() gui.View {
 		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 			w.alert(
 				alert_type:   .prompt
-				title:        'Prompt Dialog'
+				title:        'Monty Python Quiz'
 				body:         'What is your quest?'
 				on_reply:     fn (reply string, mut w gui.Window) {
 					w.alert(title: 'Replied', body: reply)

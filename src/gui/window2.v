@@ -2,6 +2,28 @@ module gui
 
 import gg
 
+// alert creates an alert dialog centered on the window.
+// Alert (sometimes called a message box) presents a
+// dialog with a message and buttons. Predefined types
+// include: **message**, **confirm** and **prompt**.
+// See [AlertType](#AlertType)
+//
+// The custom type displays the given content. Custom content
+// provides any needed callbacks as the standard ones work
+// only for the predfined types.
+//
+// Body text wraps as needed. Newlines in body text display
+// appropriately.
+//
+// Ctrl-C copies the title and body portions to the clipboard
+// (predefined types only). See [AlertCfg](#AlertCfg).
+pub fn (mut window Window) alert(cfg AlertCfg) {
+	window.alert_cfg = cfg
+	window.alert_cfg.visible = true
+	window.alert_cfg.old_id_focus = window.id_focus
+	window.set_id_focus(cfg.id_focus)
+}
+
 // background_color returns the window background color
 pub fn (window &Window) color_background() Color {
 	return from_gx_color(window.ui.config.bg_color)
@@ -10,19 +32,6 @@ pub fn (window &Window) color_background() Color {
 // context gets the windows gg.Context
 pub fn (window &Window) context() &gg.Context {
 	return window.ui
-}
-
-// alert creates a alert box centered on the window.
-// Alerts (sometimes called message box, confirmations, etc.)
-// are the general purpose way of presenting a dialog with a
-// message and buttons. Several differnt types are supported
-// like OK, and YES_NO. Icons, styles, text wrapping and
-// multi-line are available. See [AlertCfg](#AlertCfg) for options.
-pub fn (mut window Window) alert(cfg AlertCfg) {
-	window.alert_cfg = cfg
-	window.alert_cfg.visible = true
-	window.alert_cfg.old_id_focus = window.id_focus
-	window.set_id_focus(cfg.id_focus)
 }
 
 // default_view creates an empty view
