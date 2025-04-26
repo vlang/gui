@@ -55,6 +55,7 @@ pub:
 
 	button_style       ButtonStyle
 	container_style    ContainerStyle
+	dialog_style       DialogStyle
 	input_style        InputStyle
 	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
@@ -355,6 +356,21 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			padding: cfg.padding
 			radius:  cfg.radius
 			spacing: cfg.spacing_medium
+		}
+		dialog_style:       DialogStyle{
+			color:            cfg.color_2
+			color_border:     cfg.color_border
+			fill:             cfg.fill
+			fill_border:      cfg.fill_border
+			padding:          cfg.padding
+			padding_border:   cfg.padding_border
+			radius:           cfg.radius
+			radius_border:    cfg.radius_border
+			title_text_style: TextStyle{
+				...cfg.text_style
+				size: cfg.size_text_large
+			}
+			text_style:       cfg.text_style
 		}
 		input_style:        InputStyle{
 			color:              cfg.color_1

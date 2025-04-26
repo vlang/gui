@@ -51,13 +51,16 @@ fn dialog_type() gui.View {
 		content:  [gui.text(text: '.dialog_type == .message')]
 		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
-				dialog_type: .message
-				title:       'Title Displays Here'
-				body:        '
+				align_buttons: .right
+				dialog_type:   .message
+				title:         'Title Displays Here'
+				body:          '
 body text displayes here...
 
 Multi-line and text wrapping supported.
-See DialogCfg for other parameters'
+See DialogCfg for other parameters
+
+Demonstrates right aligned button option'
 			)
 		}
 	)

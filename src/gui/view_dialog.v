@@ -28,34 +28,43 @@ mut:
 	visible      bool
 	old_id_focus u32
 pub:
-	dialog_type    DialogType
-	id             string
-	width          f32
-	height         f32
-	min_width      f32 = 200
-	min_height     f32
-	max_width      f32 = 300
-	max_height     f32
-	title          string
-	body           string // body text wraps as needed. Newlines supported
-	custom_content []View // custom content
-	reply          string
-	id_focus       u32                     = 7568971
-	padding        Padding                 = theme().padding_large
-	padding_border Padding                 = theme().padding_border
-	on_ok_yes      fn (mut w Window)       = fn (mut _ Window) {}
-	on_cancel_no   fn (mut w Window)       = fn (mut _ Window) {}
-	on_reply       fn (string, mut Window) = fn (_ string, mut _ Window) {}
+	dialog_type      DialogType
+	id               string
+	width            f32
+	height           f32
+	min_width        f32 = 200
+	min_height       f32
+	max_width        f32 = 300
+	max_height       f32
+	title            string
+	body             string // body text wraps as needed. Newlines supported
+	custom_content   []View // custom content
+	reply            string
+	id_focus         u32                     = 7568971
+	align_buttons    HorizontalAlign         = gui_theme.dialog_style.align_buttons
+	color            Color                   = gui_theme.dialog_style.color
+	color_border     Color                   = gui_theme.dialog_style.color_border
+	fill             bool                    = gui_theme.dialog_style.fill
+	fill_border      bool                    = gui_theme.dialog_style.fill_border
+	padding          Padding                 = gui_theme.dialog_style.padding
+	padding_border   Padding                 = gui_theme.dialog_style.padding_border
+	radius           f32                     = gui_theme.dialog_style.radius
+	radius_border    f32                     = gui_theme.dialog_style.radius_border
+	title_text_style TextStyle               = gui_theme.dialog_style.title_text_style
+	text_style       TextStyle               = gui_theme.dialog_style.text_style
+	on_ok_yes        fn (mut w Window)       = fn (mut _ Window) {}
+	on_cancel_no     fn (mut w Window)       = fn (mut _ Window) {}
+	on_reply         fn (string, mut Window) = fn (_ string, mut _ Window) {}
 }
 
 fn dialog_view_generator(cfg DialogCfg) View {
 	mut content := []View{}
 	if cfg.dialog_type != .custom {
 		if cfg.title.len > 0 {
-			content << text(text: cfg.title, text_style: theme().b2)
+			content << text(text: cfg.title, text_style: cfg.title_text_style)
 		}
 		if cfg.body.len > 0 {
-			content << text(text: cfg.body, wrap: true)
+			content << text(text: cfg.body, text_style: cfg.text_style, wrap: true)
 		}
 	}
 	content << match cfg.dialog_type {
@@ -69,8 +78,8 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		float:         true
 		float_anchor:  .middle_center
 		float_tie_off: .middle_center
-		color:         theme().color_border
-		fill:          true
+		color:         cfg.color_border
+		fill:          cfg.fill_border
 		padding:       cfg.padding_border
 		width:         cfg.width
 		height:        cfg.height
@@ -81,11 +90,11 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		on_keydown:    dialog_key_down
 		content:       [
 			column(
+				h_align: .center
 				sizing:  fill_fill
 				padding: cfg.padding
-				h_align: .center
-				fill:    true
-				color:   theme().color_2
+				fill:    cfg.fill
+				color:   cfg.color
 				content: content
 			),
 		]
@@ -94,16 +103,22 @@ fn dialog_view_generator(cfg DialogCfg) View {
 
 fn message_view(cfg DialogCfg) []View {
 	return [
-		button(
-			id_focus: cfg.id_focus
-			content:  [text(text: 'OK')]
-			on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-				w.set_id_focus(w.dialog_cfg.old_id_focus)
-				on_ok_yes := w.dialog_cfg.on_ok_yes
-				w.dialog_cfg = DialogCfg{}
-				on_ok_yes(mut w)
-				e.is_handled = true
-			}
+		row(
+			sizing:  fill_fit
+			h_align: cfg.align_buttons
+			content: [
+				button(
+					id_focus: cfg.id_focus
+					content:  [text(text: 'OK', text_style: cfg.text_style)]
+					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+						w.set_id_focus(w.dialog_cfg.old_id_focus)
+						on_ok_yes := w.dialog_cfg.on_ok_yes
+						w.dialog_cfg = DialogCfg{}
+						on_ok_yes(mut w)
+						e.is_handled = true
+					}
+				),
+			]
 		),
 	]
 }
@@ -111,10 +126,12 @@ fn message_view(cfg DialogCfg) []View {
 fn confirm_view(cfg DialogCfg) []View {
 	return [
 		row(
+			sizing:  fill_fit
+			h_align: cfg.align_buttons
 			content: [
 				button(
 					id_focus: cfg.id_focus + 1
-					content:  [text(text: 'Yes')]
+					content:  [text(text: 'Yes', text_style: cfg.text_style)]
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_ok_yes := w.dialog_cfg.on_ok_yes
@@ -125,7 +142,7 @@ fn confirm_view(cfg DialogCfg) []View {
 				),
 				button(
 					id_focus: cfg.id_focus
-					content:  [text(text: 'No')]
+					content:  [text(text: 'No', text_style: cfg.text_style)]
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_cancel_no := w.dialog_cfg.on_cancel_no
@@ -144,6 +161,7 @@ fn prompt_view(cfg DialogCfg) []View {
 		input(
 			id_focus:        cfg.id_focus
 			text:            cfg.reply
+			text_style:      cfg.text_style
 			sizing:          fill_fit
 			on_text_changed: fn (_ &InputCfg, s string, mut w Window) {
 				w.dialog_cfg = DialogCfg{
@@ -153,11 +171,13 @@ fn prompt_view(cfg DialogCfg) []View {
 			}
 		),
 		row(
+			sizing:  fill_fit
+			h_align: cfg.align_buttons
 			content: [
 				button(
 					id_focus: cfg.id_focus + 1
 					disabled: cfg.reply.len == 0
-					content:  [text(text: 'OK')]
+					content:  [text(text: 'OK', text_style: cfg.text_style)]
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_reply := w.dialog_cfg.on_reply
@@ -169,7 +189,7 @@ fn prompt_view(cfg DialogCfg) []View {
 				),
 				button(
 					id_focus: cfg.id_focus + 2
-					content:  [text(text: 'Cancel')]
+					content:  [text(text: 'Cancel', text_style: cfg.text_style)]
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_cancel_no := w.dialog_cfg.on_cancel_no

@@ -41,7 +41,7 @@ fn text_height(shape Shape) int {
 
 @[inline]
 fn line_height(shape Shape) int {
-	return int(shape.text_style.size + shape.text_line_spacing)
+	return int(shape.text_style.size + shape.text_style.line_spacing)
 }
 
 fn text_wrap(mut shape Shape, ctx &gg.Context) {

@@ -31,15 +31,14 @@ pub mut:
 	sizing     Sizing
 	spacing    f32
 	// -- text ---
-	text              string
-	text_lines        []string
-	text_style        TextStyle
-	text_wrap         bool
-	text_line_spacing f32 // addition to normal line spacing
-	text_keep_spaces  bool
-	text_is_password  bool
-	text_sel_beg      u32
-	text_sel_end      u32
+	text             string
+	text_lines       []string
+	text_style       TextStyle
+	text_wrap        bool
+	text_keep_spaces bool
+	text_is_password bool
+	text_sel_beg     u32
+	text_sel_end     u32
 	// --- scroll ---
 	id_scroll     u32 // >0 indicates shape is scrollable
 	scroll_offset f32

@@ -18,7 +18,6 @@ struct Text implements View {
 	text               string
 	text_style         TextStyle
 	sizing             Sizing
-	line_spacing       f32
 	wrap               bool
 	cfg                TextCfg
 mut:
@@ -48,7 +47,6 @@ fn (t &Text) generate(ctx &gg.Context) Layout {
 			text_keep_spaces:    t.keep_spaces
 			text_is_password:    t.is_password
 			text_lines:          [t.text]
-			text_line_spacing:   t.line_spacing
 			text_style:          t.text_style
 			text_wrap:           t.wrap
 			text_sel_beg:        input_state.select_beg
@@ -81,17 +79,16 @@ pub struct TextCfg {
 	is_password        bool
 	placeholder_active bool
 pub:
-	id           string
-	id_focus     u32
-	clip         bool
-	disabled     bool
-	invisible    bool
-	keep_spaces  bool
-	min_width    f32
-	line_spacing f32 = gui_theme.text_style.line_spacing
-	text         string
-	text_style   TextStyle = gui_theme.text_style
-	wrap         bool
+	id          string
+	id_focus    u32
+	clip        bool
+	disabled    bool
+	invisible   bool
+	keep_spaces bool
+	min_width   f32
+	text        string
+	text_style  TextStyle = gui_theme.text_style
+	wrap        bool
 }
 
 // text is a general purpose text renderer. Use it for labels or larger
@@ -105,7 +102,6 @@ pub fn text(cfg &TextCfg) Text {
 		invisible:          cfg.invisible
 		keep_spaces:        cfg.keep_spaces
 		min_width:          cfg.min_width
-		line_spacing:       cfg.line_spacing
 		text:               cfg.text
 		text_style:         cfg.text_style
 		wrap:               cfg.wrap

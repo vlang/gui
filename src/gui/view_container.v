@@ -14,15 +14,15 @@ pub:
 	height         f32
 	min_height     f32
 	max_height     f32
-	clip           bool
-	spacing        f32
-	sizing         Sizing
-	padding        Padding
-	fill           bool
+	color          Color   = gui_theme.container_style.color
+	fill           bool    = gui_theme.container_style.fill
+	padding        Padding = gui_theme.container_style.padding
+	radius         f32     = gui_theme.container_style.radius
+	spacing        f32     = gui_theme.container_style.spacing
 	h_align        HorizontalAlign
 	v_align        VerticalAlign
-	radius         f32
-	color          Color
+	clip           bool
+	sizing         Sizing
 	disabled       bool
 	invisible      bool
 	text           string

@@ -27,6 +27,24 @@ pub:
 	spacing f32     = spacing_medium
 }
 
+pub struct DialogStyle {
+pub:
+	color            Color           = color_1_dark
+	color_border     Color           = color_border_dark
+	fill             bool            = true
+	fill_border      bool            = true
+	padding          Padding         = padding_large
+	padding_border   Padding         = padding_none
+	radius           f32             = radius_medium
+	radius_border    f32             = radius_medium
+	align_buttons    HorizontalAlign = .center
+	title_text_style TextStyle       = TextStyle{
+		...text_style_dark
+		size: size_text_large
+	}
+	text_style       TextStyle = text_style_dark
+}
+
 pub struct InputStyle {
 pub:
 	color              Color     = color_1_dark
