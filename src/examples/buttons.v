@@ -22,7 +22,7 @@ fn main() {
 	mut window := gui.window(
 		title:   'Buttons'
 		state:   &App{}
-		width:   325
+		width:   350
 		height:  375
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -36,9 +36,6 @@ fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[App]()
 	button_text := '${app.clicks} Clicks Given'
-	button_width := window.get_text_width('XXX Clicks Given', gui.theme().n3) +
-		gui.theme().button_style.padding.width() + gui.theme().padding_small.width()
-
 	return gui.column(
 		width:   w
 		height:  h
@@ -52,25 +49,23 @@ fn main_view(mut window gui.Window) gui.View {
 				content: [
 					button_change_theme(app),
 					button_row('Plain ole button', gui.button(
-						min_width: button_width
-						max_width: button_width
+						sizing:    gui.fill_fit
+						min_width: 140
 						content:   [
 							gui.text(text: button_text),
 						]
 						on_click:  click_handler
 					)),
 					button_row('Disabled button', gui.button(
-						min_width: button_width
-						max_width: button_width
-						disabled:  true
-						content:   [
+						sizing:   gui.fill_fit
+						disabled: true
+						content:  [
 							gui.text(text: button_text),
 						]
-						on_click:  click_handler
+						on_click: click_handler
 					)),
 					button_row('With border', gui.button(
-						min_width:      button_width
-						max_width:      button_width
+						sizing:         gui.fill_fit
 						content:        [
 							gui.text(text: button_text),
 						]
@@ -78,9 +73,8 @@ fn main_view(mut window gui.Window) gui.View {
 						on_click:       click_handler
 					)),
 					button_row('With focus border', gui.button(
+						sizing:         gui.fill_fit
 						id_focus:       1
-						min_width:      button_width
-						max_width:      button_width
 						content:        [
 							gui.text(text: button_text),
 						]
@@ -88,8 +82,7 @@ fn main_view(mut window gui.Window) gui.View {
 						on_click:       click_handler
 					)),
 					button_row('With detached border', gui.button(
-						min_width:      button_width
-						max_width:      button_width
+						sizing:         gui.fill_fit
 						content:        [
 							gui.text(text: button_text),
 						]
@@ -99,8 +92,6 @@ fn main_view(mut window gui.Window) gui.View {
 					)),
 					button_row('With other content', gui.button(
 						id:             'With progress bar'
-						min_width:      button_width
-						max_width:      button_width
 						color:          gui.rgb(195, 105, 0)
 						color_hover:    gui.rgb(195, 105, 0)
 						color_click:    gui.rgb(205, 115, 0)
@@ -108,6 +99,7 @@ fn main_view(mut window gui.Window) gui.View {
 						color_border:   gui.rgb(160, 160, 160)
 						padding:        gui.padding_medium
 						v_align:        .middle
+						sizing:         gui.fill_fit
 						content:        [
 							gui.text(text: '${app.clicks}'),
 							gui.progress_bar(
@@ -127,6 +119,7 @@ fn main_view(mut window gui.Window) gui.View {
 fn button_row(label string, button gui.View) gui.View {
 	return gui.row(
 		padding: gui.padding_none
+		sizing:  gui.fill_fit
 		v_align: .middle
 		content: [
 			gui.row(

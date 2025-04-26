@@ -48,8 +48,10 @@ pub:
 
 fn alert_view_generator(cfg AlertCfg) View {
 	mut content := []View{}
-	content << text(text: cfg.title, text_style: theme().b2)
-	content << text(text: cfg.body, wrap: true)
+	if cfg.alert_type != .custom {
+		content << text(text: cfg.title, text_style: theme().b2)
+		content << text(text: cfg.body, wrap: true)
+	}
 	content << match cfg.alert_type {
 		.message { message_view(cfg) }
 		.confirm { confirm_view(cfg) }

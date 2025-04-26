@@ -24,6 +24,12 @@ pub fn (mut window Window) alert(cfg AlertCfg) {
 	window.set_id_focus(cfg.id_focus)
 }
 
+// alert_dismiss closes an alert box without invoking callbacks.
+// Useful for custom alert types.
+pub fn (mut window Window) alert_dismiss() {
+	window.alert_cfg = AlertCfg{}
+}
+
 // background_color returns the window background color
 pub fn (window &Window) color_background() Color {
 	return from_gx_color(window.ui.config.bg_color)

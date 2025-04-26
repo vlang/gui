@@ -37,6 +37,7 @@ fn main_view(window &gui.Window) gui.View {
 					alert_type(),
 					confirm_type(),
 					prompt_type(),
+					custom_type(),
 				]
 			),
 		]
@@ -99,6 +100,34 @@ fn prompt_type() gui.View {
 				on_cancel_no: fn (mut w gui.Window) {
 					w.alert(title: 'Canceled')
 				}
+			)
+		}
+	)
+}
+
+fn custom_type() gui.View {
+	return gui.button(
+		id_focus: 3
+		sizing:   gui.fill_fit
+		content:  [gui.text(text: '.alert_type == .custom')]
+		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+			w.alert(
+				alert_type:     .custom
+				custom_content: [
+					gui.column(
+						h_align: .center
+						v_align: .middle
+						content: [
+							gui.text(text: 'Custom Content'),
+							gui.button(
+								content:  [gui.text(text: 'Close Me')]
+								on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+									w.alert_dismiss()
+								}
+							),
+						]
+					),
+				]
 			)
 		}
 	)
