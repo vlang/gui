@@ -40,6 +40,17 @@ const text_style_dark = TextStyle{
 	line_spacing: text_line_spacing
 }
 
+// Theme describes a theme in GUI. It's large in part because GUI
+// allows every view it supports to have its own styles. Normally,
+// colors and fonts are shared across all views but you have the
+// option to change every aspect. Themes are granular.
+//
+// Defining a new theme with so many styles could quickly grow
+// tiresome. To assist in creating and modifing themes, GUI has a
+// [theme_maker](#theme_maker) function that takes a smaller
+// [ThemeCfg](#ThemeCfg) structure. `theme_maker` takes a handful
+// of colors and styles and applies them to an entire theme. This
+// is in fact how GUI defines its own default themes.
 pub struct Theme {
 pub:
 	name             string = 'default' @[required]
@@ -185,6 +196,9 @@ pub:
 	scroll_delta_page f32 = scroll_delta_page
 }
 
+// ThemeCfg along with [theme_maker](#theme_maker) makes the chore of
+// creating new themes less tiresome. All fields have default values
+// as shown so you only need to specify the ones you want to change.
 pub struct ThemeCfg {
 pub:
 	name               string @[required]
@@ -315,14 +329,14 @@ pub const theme_light_no_padding_cfg = ThemeCfg{
 }
 pub const theme_light_no_padding = theme_maker(theme_light_no_padding_cfg)
 
-// theme_maker sets all styles to a common set of values (ThemeCfg)
-// GUI allows each view type (button, input, etc) to be styled
-// independent of the other view styles. However, in practice this
-// is not usually required. theme_maker makes it easy to write
-// new themes without having to specify styles for every view type.
-// Individual styles can be modified after using theme_maker.
-// Note: `theme_maker` containers are always transparent and not
-// filled.
+// theme_maker sets all styles to a common set of values using
+// [ThemeCfg](#ThemeCfg). GUI allows each view type (button,
+// input, etc) to be styled independent of the other view styles.
+// However, in practice this is not usually required. `theme_maker`
+// makes it easy to write new themes without having to specify styles
+// for every view type. Individual styles can be modified after using
+// theme_maker. Note: `theme_maker` containers are always transparent
+// and not filled.
 pub fn theme_maker(cfg &ThemeCfg) Theme {
 	theme := Theme{
 		name:             cfg.name
