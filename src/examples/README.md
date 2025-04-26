@@ -26,6 +26,10 @@ Example:
 export VFLAGS=-path /Users/mike/gui/src|@vlib|@vmodules
 ```
 
+The `_build.sh` bash script builds all examples to a `/bin` folder
+The `_check.sh` bash script does a quick syntax/format check and does
+generate binaries.
+
 ## Getting Started
 
 If you're new to GUI, start with the `get-started.v` example. It
