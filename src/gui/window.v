@@ -13,7 +13,7 @@ mut:
 	view_generator fn (&Window) View = empty_view
 	layout         Layout
 	renderers      []Renderer
-	alert_cfg      AlertCfg
+	dialog_cfg     DialogCfg
 	focused        bool = true
 	id_focus       u32                // id of view that has focus
 	input_state    map[u32]InputState // [id_focus] -> input state
@@ -118,18 +118,18 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	//      - main layout
 	//      - floating layout
 	//      - ... floating layout
-	//      - alert layout
+	//      - dialog layout
 	//
 	// While not always present, a floating layout occurs with views like menus
-	// and drop downs. The alert layout if present is always last. Keyboard event
+	// and drop downs. The dialog layout if present is always last. Keyboard event
 	// handling is from the bottom up (leaf nodes) and the top down (last layout
-	// first). When an alert dialog is present, it is the only layer allowed to
-	// handle keyboard events. This effectively makes it modal. Otherwise, the
-	// float layers get first crack at the events and finally the main layout.
-	// Events are processed until an event handler sets the `event.is_handled`
-	// memeber set to true.
+	// first). When an dialog is present, it is the only layer allowed to handle
+	// keyboard events. This effectively makes it modal. Otherwise, the float
+	// layers get first crack at the events and finally the main layout. Events
+	// are processed until an event handler sets the `event.is_handled` memeber
+	// to true.
 	w.mutex.lock()
-	layout := if w.alert_cfg.visible {
+	layout := if w.dialog_cfg.visible {
 		w.layout.children.last()
 	} else {
 		Layout{

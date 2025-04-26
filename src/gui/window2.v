@@ -2,11 +2,20 @@ module gui
 
 import gg
 
-// alert creates an alert dialog centered on the window.
-// Alert (sometimes called a message box) presents a
-// dialog with a message and buttons. Predefined types
-// include: **message**, **confirm** and **prompt**.
-// See [AlertType](#AlertType)
+// background_color returns the window background color
+pub fn (window &Window) color_background() Color {
+	return from_gx_color(window.ui.config.bg_color)
+}
+
+// context gets the windows gg.Context
+pub fn (window &Window) context() &gg.Context {
+	return window.ui
+}
+
+// dialog creates an dialog dialog centered on the window.
+// Dialog presents a dialog with a message and buttons.
+// Predefined types include: **message**, **confirm** and
+// **prompt**. See [DialogType](#dialogType)
 //
 // The custom type displays the given content. Custom content
 // provides any needed callbacks as the standard ones work
@@ -16,28 +25,18 @@ import gg
 // appropriately.
 //
 // Ctrl-C copies the title and body portions to the clipboard
-// (predefined types only). See [AlertCfg](#AlertCfg).
-pub fn (mut window Window) alert(cfg AlertCfg) {
-	window.alert_cfg = cfg
-	window.alert_cfg.visible = true
-	window.alert_cfg.old_id_focus = window.id_focus
+// (predefined types only). See [dialogCfg](#dialogCfg).
+pub fn (mut window Window) dialog(cfg DialogCfg) {
+	window.dialog_cfg = cfg
+	window.dialog_cfg.visible = true
+	window.dialog_cfg.old_id_focus = window.id_focus
 	window.set_id_focus(cfg.id_focus)
 }
 
-// alert_dismiss closes an alert box without invoking callbacks.
-// Useful for custom alert types.
-pub fn (mut window Window) alert_dismiss() {
-	window.alert_cfg = AlertCfg{}
-}
-
-// background_color returns the window background color
-pub fn (window &Window) color_background() Color {
-	return from_gx_color(window.ui.config.bg_color)
-}
-
-// context gets the windows gg.Context
-pub fn (window &Window) context() &gg.Context {
-	return window.ui
+// dialog_dismiss closes an dialog box without invoking callbacks.
+// Useful for custom dialog types.
+pub fn (mut window Window) dialog_dismiss() {
+	window.dialog_cfg = DialogCfg{}
 }
 
 // default_view creates an empty view

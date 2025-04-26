@@ -3,7 +3,7 @@ import gui
 // Floating Layouts
 // =============================
 // Many UI designs need to draw content over other content.
-// Menus and Alert Boxes for instance. GUI calls these
+// Menus and Dialog Boxes for instance. GUI calls these
 // floats. Floats can be nested for z axis stacking often
 // required in drop down menus.
 //

@@ -1,32 +1,32 @@
 module gui
 
-// AlertType configures the type of alert dialog.
+// DialogType configures the type of dialog dialog.
 //
 // - **message** has a title, body and OK button
-// - **confirm** is similar to alert but with yes, no buttons
+// - **confirm** is similar to dialog but with yes, no buttons
 // - **prompt** adds an input field with OK, Cancel buttons
 // - **custom** displays the given content. The given content
 // is simply displayed. Custom content provides any needed
 // callbacks as the standard ones work only for
-// the predfined types. See [AlertCfg](#AlertCfg)
-pub enum AlertType {
+// the predfined types. See [DialogCfg](#DialogCfg)
+pub enum DialogType {
 	message
 	confirm
 	prompt
 	custom
 }
 
-// AlertCfg configures GUI's alert dialog. [AlertType](#AlertType)
-// determines the type of alert. AlertType.message is the default.
-// Alerts are asychronous. Keyboard/Mouse input is restricted
-// to the alert dialog when visible. Invoke alerts by calling
-// [(Window) alert](#Window.alert)
-pub struct AlertCfg {
+// DialogCfg configures GUI's dialog dialog. [dialogType](#dialogType)
+// determines the type of dialog. dialogType.message is the default.
+// dialogs are asychronous. Keyboard/Mouse input is restricted
+// to the dialog dialog when visible. Invoke dialogs by calling
+// [(Window) dialog](#Window.dialog)
+pub struct DialogCfg {
 mut:
 	visible      bool
 	old_id_focus u32
 pub:
-	alert_type     AlertType
+	dialog_type    DialogType
 	id             string
 	width          f32
 	height         f32
@@ -46,13 +46,13 @@ pub:
 	on_reply       fn (string, mut Window) = fn (_ string, mut _ Window) {}
 }
 
-fn alert_view_generator(cfg AlertCfg) View {
+fn dialog_view_generator(cfg DialogCfg) View {
 	mut content := []View{}
-	if cfg.alert_type != .custom {
+	if cfg.dialog_type != .custom {
 		content << text(text: cfg.title, text_style: theme().b2)
 		content << text(text: cfg.body, wrap: true)
 	}
-	content << match cfg.alert_type {
+	content << match cfg.dialog_type {
 		.message { message_view(cfg) }
 		.confirm { confirm_view(cfg) }
 		.prompt { prompt_view(cfg) }
@@ -84,15 +84,15 @@ fn alert_view_generator(cfg AlertCfg) View {
 	)
 }
 
-fn message_view(cfg AlertCfg) []View {
+fn message_view(cfg DialogCfg) []View {
 	return [
 		button(
 			id_focus: cfg.id_focus
 			content:  [text(text: 'OK')]
 			on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-				w.set_id_focus(w.alert_cfg.old_id_focus)
-				on_ok_yes := w.alert_cfg.on_ok_yes
-				w.alert_cfg = AlertCfg{}
+				w.set_id_focus(w.dialog_cfg.old_id_focus)
+				on_ok_yes := w.dialog_cfg.on_ok_yes
+				w.dialog_cfg = DialogCfg{}
 				on_ok_yes(mut w)
 				e.is_handled = true
 			}
@@ -100,7 +100,7 @@ fn message_view(cfg AlertCfg) []View {
 	]
 }
 
-fn confirm_view(cfg AlertCfg) []View {
+fn confirm_view(cfg DialogCfg) []View {
 	return [
 		row(
 			content: [
@@ -108,9 +108,9 @@ fn confirm_view(cfg AlertCfg) []View {
 					id_focus: cfg.id_focus + 1
 					content:  [text(text: 'Yes')]
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-						w.set_id_focus(w.alert_cfg.old_id_focus)
-						on_ok_yes := w.alert_cfg.on_ok_yes
-						w.alert_cfg = AlertCfg{}
+						w.set_id_focus(w.dialog_cfg.old_id_focus)
+						on_ok_yes := w.dialog_cfg.on_ok_yes
+						w.dialog_cfg = DialogCfg{}
 						on_ok_yes(mut w)
 						e.is_handled = true
 					}
@@ -119,9 +119,9 @@ fn confirm_view(cfg AlertCfg) []View {
 					id_focus: cfg.id_focus
 					content:  [text(text: 'No')]
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-						w.set_id_focus(w.alert_cfg.old_id_focus)
-						on_cancel_no := w.alert_cfg.on_cancel_no
-						w.alert_cfg = AlertCfg{}
+						w.set_id_focus(w.dialog_cfg.old_id_focus)
+						on_cancel_no := w.dialog_cfg.on_cancel_no
+						w.dialog_cfg = DialogCfg{}
 						on_cancel_no(mut w)
 						e.is_handled = true
 					}
@@ -131,15 +131,15 @@ fn confirm_view(cfg AlertCfg) []View {
 	]
 }
 
-fn prompt_view(cfg AlertCfg) []View {
+fn prompt_view(cfg DialogCfg) []View {
 	return [
 		input(
 			id_focus:        cfg.id_focus
 			text:            cfg.reply
 			sizing:          fill_fit
 			on_text_changed: fn (_ &InputCfg, s string, mut w Window) {
-				w.alert_cfg = AlertCfg{
-					...w.alert_cfg
+				w.dialog_cfg = DialogCfg{
+					...w.dialog_cfg
 					reply: s
 				}
 			}
@@ -151,10 +151,10 @@ fn prompt_view(cfg AlertCfg) []View {
 					disabled: cfg.reply.len == 0
 					content:  [text(text: 'OK')]
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-						w.set_id_focus(w.alert_cfg.old_id_focus)
-						on_reply := w.alert_cfg.on_reply
-						reply := w.alert_cfg.reply
-						w.alert_cfg = AlertCfg{}
+						w.set_id_focus(w.dialog_cfg.old_id_focus)
+						on_reply := w.dialog_cfg.on_reply
+						reply := w.dialog_cfg.reply
+						w.dialog_cfg = DialogCfg{}
 						on_reply(reply, mut w)
 						e.is_handled = true
 					}
@@ -163,9 +163,9 @@ fn prompt_view(cfg AlertCfg) []View {
 					id_focus: cfg.id_focus + 2
 					content:  [text(text: 'Cancel')]
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-						w.set_id_focus(w.alert_cfg.old_id_focus)
-						on_cancel_no := w.alert_cfg.on_cancel_no
-						w.alert_cfg = AlertCfg{}
+						w.set_id_focus(w.dialog_cfg.old_id_focus)
+						on_cancel_no := w.dialog_cfg.on_cancel_no
+						w.dialog_cfg = DialogCfg{}
 						on_cancel_no(mut w)
 						e.is_handled = true
 					}
