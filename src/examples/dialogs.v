@@ -107,7 +107,7 @@ fn prompt_type() gui.View {
 
 fn custom_type() gui.View {
 	return gui.button(
-		id_focus: 3
+		id_focus: 4
 		sizing:   gui.fill_fit
 		content:  [gui.text(text: '.dialog_type == .custom')]
 		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {

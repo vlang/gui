@@ -51,8 +51,12 @@ pub:
 fn dialog_view_generator(cfg DialogCfg) View {
 	mut content := []View{}
 	if cfg.dialog_type != .custom {
-		content << text(text: cfg.title, text_style: theme().b2)
-		content << text(text: cfg.body, wrap: true)
+		if cfg.title.len > 0 {
+			content << text(text: cfg.title, text_style: theme().b2)
+		}
+		if cfg.body.len > 0 {
+			content << text(text: cfg.body, wrap: true)
+		}
 	}
 	content << match cfg.dialog_type {
 		.message { message_view(cfg) }
@@ -74,6 +78,7 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		max_width:     cfg.max_width
 		min_height:    cfg.min_height
 		max_height:    cfg.max_height
+		on_keydown:    dialog_key_down
 		content:       [
 			column(
 				sizing:  fill_fill
@@ -176,6 +181,19 @@ fn prompt_view(cfg DialogCfg) []View {
 			]
 		),
 	]
+}
+
+fn dialog_key_down(_ voidptr, mut e Event, mut w Window) {
+	if e.key_code == KeyCode.c && (e.modifiers == u32(Modifier.ctrl)
+		|| e.modifiers == u32(Modifier.super)) {
+		mut cpy := w.dialog_cfg.title
+		if cpy.len > 0 && w.dialog_cfg.body.len > 0 {
+			cpy += '\n' + w.dialog_cfg.body
+		}
+		println(cpy)
+		to_clipboard(cpy)
+		e.is_handled = true
+	}
 }
 
 // point_in_dialog_layout is used in views like button watch mouse_moves

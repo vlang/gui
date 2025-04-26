@@ -113,7 +113,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	// It looks like this:
 	//
 	// layout
-	//  - shape // empty, not used
+	//  - shape // empty
 	//  - children
 	//      - main layout
 	//      - floating layout
@@ -121,17 +121,19 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	//      - dialog layout
 	//
 	// While not always present, a floating layout occurs with views like menus
-	// and drop downs. The dialog layout if present is always last. Keyboard event
-	// handling is from the bottom up (leaf nodes) and the top down (last layout
-	// first). When an dialog is present, it is the only layer allowed to handle
-	// keyboard events. This effectively makes it modal. Otherwise, the float
-	// layers get first crack at the events and finally the main layout. Events
-	// are processed until an event handler sets the `event.is_handled` memeber
-	// to true.
+	// drop downs and dialogs. The dialog layout if present is always last.
+	// Keyboard event handling is from the bottom up (leaf nodes) and the top
+	// down (last layout first). When an dialog is present, it is the only layer
+	// allowed to handle mouse/keyboard events. This effectively makes it modal.
+	// Otherwise, the float layers get first try at the events and finally the
+	// main layout. Events are processed until an event handler sets the
+	// `event.is_handled` memeber to true.
 	w.mutex.lock()
 	layout := if w.dialog_cfg.visible {
 		w.layout.children.last()
 	} else {
+		// reverse the order of the layers so the
+		// top layers get first try at the events.
 		Layout{
 			...w.layout
 			children: w.layout.children.reverse()
@@ -229,12 +231,13 @@ pub fn (mut window Window) update_window() {
 }
 
 // compose_layout produces a layout from the given view that is
-// fully arranged and ready for generating renderers.
+// arranged and ready for generating renderers.
 fn (window &Window) compose_layout(view &View) Layout {
 	mut layout := generate_layout(view, window)
 	layouts := layout_arrange(mut layout, window)
 	// Combine the layouts into one layout to rule them all
-	// and bind them in the darkness
+	// and bind them in the darkness, or transparent-ness
+	// in this case. :)
 	return Layout{
 		shape:    Shape{
 			color: color_transparent

@@ -30,7 +30,8 @@ fn keydown_handler(node &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
-	if !node.shape.disabled && w.is_focus(node.shape.id_focus) {
+	if !node.shape.disabled
+		&& (w.is_focus(node.shape.id_focus) || node.shape.id == reserved_dialog_id) {
 		if node.shape.on_keydown_shape != unsafe { nil } {
 			node.shape.on_keydown_shape(node.shape, mut e, w)
 			if e.is_handled {
