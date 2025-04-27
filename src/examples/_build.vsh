@@ -3,6 +3,9 @@
 output_dir := 'bin'
 if exists(output_dir) {
 	bin_files := ls(output_dir) or { [] }
+	if bin_files.len > 0 {
+		println('deleted:')
+	}
 	for file in bin_files {
 		file_path := join_path(output_dir, file)
 		if is_file(file_path) {
@@ -10,7 +13,7 @@ if exists(output_dir) {
 				println(err)
 				continue
 			}
-			println('Deleted: ${file_path}')
+			println('\t${file_path}')
 		}
 	}
 } else {
@@ -28,12 +31,16 @@ if files.len == 0 {
 }
 
 for file in files {
+	p := 'v -prod ${file}'
+	print('${p:-30}')
+	flush()
 	_, name, _ := split_path(file)
 	output_file := join_path(output_dir, name)
-	println('v -prod ${file} -> ${output_file}')
 	result := execute('v -prod -o ${output_file} ${file}')
 	if result.exit_code != 0 {
+		println(' ⭕')
 		println(result.output)
-		return
+	} else {
+		println(' -> ${output_file}')
 	}
 }
