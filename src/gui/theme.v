@@ -63,6 +63,7 @@ pub:
 	color_3          Color  = color_3_dark
 	color_4          Color  = color_4_dark
 	color_5          Color  = color_5_dark
+	scrollbar_cfg    ScrollbarCfg
 
 	button_style       ButtonStyle
 	container_style    ContainerStyle

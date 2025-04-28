@@ -14,7 +14,7 @@ struct App {
 
 fn main() {
 	size := 10_000 // 10K!
-	mut items := []gui.View{cap: size}
+	mut items := []gui.View{cap: size + 1}
 	for i in 1 .. size + 1 {
 		items << gui.text(text: '${i:05} text list item')
 	}
@@ -46,13 +46,14 @@ fn main_view(window &gui.Window) gui.View {
 			// Columns can function as list boxes.
 			// TODO: add selection logic
 			gui.column(
-				id_scroll: 1
 				id_focus:  1
+				id_scroll: 1
+				scrollbar: true
 				fill:      true
 				color:     gui.theme().color_2
 				sizing:    gui.fit_fill
 				spacing:   gui.spacing_small
-				padding:   gui.padding(3, 20, 3, 20)
+				padding:   gui.padding(3, 10, 3, 13)
 				content:   app.items
 			),
 		]

@@ -20,8 +20,7 @@ struct Text implements View {
 	sizing             Sizing
 	wrap               bool
 	cfg                TextCfg
-mut:
-	content []View
+	content            []View
 }
 
 fn (t &Text) generate(ctx &gg.Context) Layout {

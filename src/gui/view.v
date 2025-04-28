@@ -10,10 +10,9 @@ import gg
 //
 // Renderers are draw instructions.
 pub interface View {
-	id string
-	generate(ctx &gg.Context) Layout
-mut:
+	id      string
 	content []View
+	generate(ctx &gg.Context) Layout
 }
 
 // view_to_layout builds a Layout from a View.

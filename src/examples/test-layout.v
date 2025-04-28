@@ -92,8 +92,9 @@ fn main_view(w &gui.Window) gui.View {
 								]
 							),
 							gui.text(
-								text: 'Embedded in a column with wrapping'
-								wrap: true
+								id_focus: 8
+								text:     'Embedded in a column with wrapping'
+								wrap:     true
 							),
 							gui.button(
 								id_focus:       1

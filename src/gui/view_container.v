@@ -27,6 +27,8 @@ pub:
 	invisible      bool
 	text           string
 	id_scroll      u32
+	scrollbar      bool
+	scroll_cfg     ScrollbarCfg
 	float          bool
 	float_anchor   FloatAttach
 	float_tie_off  FloatAttach
@@ -36,17 +38,17 @@ pub:
 	on_click       fn (voidptr, mut Event, &Window) = unsafe { nil }
 	on_keydown     fn (voidptr, mut Event, &Window) = unsafe { nil }
 	amend_layout   fn (mut Layout, &Window)         = unsafe { nil }
+	content        []View
 mut:
-	axis    Axis
-	cfg     voidptr
-	content []View
+	axis Axis
+	cfg  voidptr
 }
 
-fn (cfg &Container) generate(_ &gg.Context) Layout {
+fn (cfg &Container) generate(ctx &gg.Context) Layout {
 	if cfg.invisible {
 		return Layout{}
 	}
-	return Layout{
+	mut layout := Layout{
 		shape: Shape{
 			id:             cfg.id
 			id_focus:       cfg.id_focus
@@ -88,6 +90,7 @@ fn (cfg &Container) generate(_ &gg.Context) Layout {
 			amend_layout:   cfg.amend_layout
 		}
 	}
+	return layout
 }
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers
@@ -107,6 +110,8 @@ pub:
 	sizing         Sizing
 	id_focus       u32
 	id_scroll      u32
+	scrollbar_cfg  ScrollbarCfg
+	scrollbar      bool
 	x              f32
 	y              f32
 	clip           bool
@@ -134,6 +139,19 @@ pub:
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
 fn container(cfg ContainerCfg) Container {
+	content := match cfg.scrollbar && cfg.id_scroll > 0 {
+		true {
+			mut cnt := cfg.content.clone()
+			cnt << scrollbar(ScrollbarCfg{
+				...cfg.scrollbar_cfg
+				id_track: cfg.id_scroll
+			})
+			cnt
+		}
+		else {
+			cfg.content
+		}
+	}
 	return Container{
 		id:             cfg.id
 		id_focus:       cfg.id_focus
@@ -168,7 +186,7 @@ fn container(cfg ContainerCfg) Container {
 		on_char:        cfg.on_char
 		on_keydown:     cfg.on_keydown
 		amend_layout:   cfg.amend_layout
-		content:        cfg.content
+		content:        content
 	}
 }
 
