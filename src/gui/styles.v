@@ -86,6 +86,19 @@ pub:
 	fill   bool
 }
 
+pub struct ScrollbarStyle {
+pub:
+	width            f32   = 8
+	color_thumb      Color = color_5_dark
+	color_gutter     Color = color_transparent
+	color_background Color = color_transparent
+	fill_thumb       bool  = true
+	fill_gutter      bool
+	fill_background  bool
+	padding          Padding = padding_two
+	radius           f32     = radius_small
+}
+
 pub struct TextStyle {
 pub:
 	color        Color

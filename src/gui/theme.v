@@ -71,6 +71,7 @@ pub:
 	input_style        InputStyle
 	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
+	scrollbar_style    ScrollbarStyle
 	text_style         TextStyle
 	text_style_bold    TextStyle
 
@@ -225,6 +226,10 @@ pub:
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
 	padding_large  Padding = padding_large
+
+	radius_small  f32 = radius_small
+	radius_medium f32 = radius_medium
+	radius_large  f32 = radius_large
 
 	spacing_small  int = spacing_small
 	spacing_medium int = spacing_medium
@@ -419,6 +424,10 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color:  cfg.color_border
 			radius: cfg.radius
 			fill:   cfg.fill
+		}
+		scrollbar_style:    ScrollbarStyle{
+			color_thumb: cfg.color_5
+			radius:      if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
 		}
 		text_style:         cfg.text_style
 

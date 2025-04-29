@@ -1,22 +1,34 @@
 module gui
 
-import math
-
+// ScrollbarCfg configures the style of a scrollbar. Column and Row
+// define a default ScrollbarCfg so most of the time it is only
+// need to define scrollbar: true in the Column/Row config.
+// Scrollbars are optional. Columns/Rows are scrollable without them.
+// See examples/column-scroll.v for a scrolling with a scrollbar and
+// examples/scroll-demo.v for one without out.
 @[heap]
 pub struct ScrollbarCfg {
 pub:
-	id           string
-	id_track     u32 // id_scroll to track
-	width        f32     = 8
-	color_thumb  Color   = gui_theme.color_5
-	color_gutter Color   = color_transparent
-	padding      Padding = padding_two
+	id               string
+	id_track         u32
+	width            f32     = gui_theme.scrollbar_style.width
+	color_thumb      Color   = gui_theme.scrollbar_style.color_thumb
+	color_gutter     Color   = gui_theme.scrollbar_style.color_gutter
+	color_background Color   = gui_theme.scrollbar_style.color_background
+	fill_thumb       bool    = gui_theme.scrollbar_style.fill_thumb
+	fill_gutter      bool    = gui_theme.scrollbar_style.fill_gutter
+	fill_background  bool    = gui_theme.scrollbar_style.fill_background
+	radius           f32     = gui_theme.scrollbar_style.radius
+	padding          Padding = gui_theme.scrollbar_style.padding
 }
 
+// scrollbar creates a scrollbar. Scrollbars are floating elements
+// which allows for a suprising number of styling an layout options.
 pub fn scrollbar(cfg ScrollbarCfg) View {
 	return column(
 		id:            cfg.id
 		width:         cfg.width
+		fill:          cfg.fill_background
 		float:         true
 		float_anchor:  .top_right
 		float_tie_off: .top_right
@@ -36,7 +48,7 @@ fn thumb(cfg &ScrollbarCfg, id string) View {
 	return column(
 		id:       id
 		width:    cfg.width
-		fill:     true
+		fill:     cfg.fill_thumb
 		spacing:  0
 		color:    cfg.color_thumb
 		padding:  padding_none
@@ -49,7 +61,7 @@ fn gutter(cfg &ScrollbarCfg, id string) View {
 		id:      id
 		width:   cfg.width
 		height:  0
-		fill:    false
+		fill:    cfg.fill_gutter
 		spacing: 0
 		color:   cfg.color_gutter
 		padding: padding_none
@@ -65,8 +77,9 @@ fn (cfg &ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 
 fn (cfg &ScrollbarCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
 	if n := find_node_by_id_scroll(node, cfg.id_track) {
-		if thumb := find_scrollbar_thumb(node, cfg.id_track) {
-			offset := offset_from_mouse(n, thumb, e.mouse_y, cfg.id_track)
+		// add 10 to give some cushion on the ends of the scroll range
+		if e.mouse_y >= (n.shape.y - 10) && e.mouse_y <= (n.shape.y + n.shape.height + 10) {
+			offset := offset_from_mouse_change(n, e.mouse_dy, cfg.id_track, w)
 			w.scroll_state[cfg.id_track] = offset
 		}
 	}
@@ -76,6 +89,9 @@ fn (cfg &ScrollbarCfg) mouse_up(node &Layout, mut e Event, mut w Window) {
 	w.mouse_unlock()
 }
 
+// Don't know what the sizes and positions of the scrollbar elements should
+// be until after the layout is almost done requiring manual layout here.
+// Scrollbars are hard.
 fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	mut parent := node.parent
 	for {
@@ -93,8 +109,8 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	thumb_height := f32_min(f32_max(20, t_height), parent.shape.height)
 	available_height := parent.shape.height - thumb_height - cfg.padding.height()
 	scroll_offset := -w.scroll_state[cfg.id_track]
-	offset := f32_min((scroll_offset / (total_height - parent.shape.height)) * available_height,
-		available_height)
+	offset := f32_max(0, f32_min((scroll_offset / (total_height - parent.shape.height)) * available_height,
+		available_height))
 
 	top_gutter := 0
 	mut y := node.children[top_gutter].shape.y
@@ -111,6 +127,15 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	bottom_gutter := 2
 	node.children[bottom_gutter].shape.y = y
 	node.children[bottom_gutter].shape.height = parent.shape.height - offset - thumb_height - node.shape.padding.height()
+
+	// on hover dim color of thumb
+	ctx := w.context()
+	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) || w.mouse_is_locked() {
+		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
+			return
+		}
+		node.children[thumb].shape.color = gui_theme.button_style.color_hover
+	}
 }
 
 fn find_node_by_id_scroll(node Layout, id_scroll u32) ?Layout {
@@ -125,29 +150,10 @@ fn find_node_by_id_scroll(node Layout, id_scroll u32) ?Layout {
 	return none
 }
 
-fn find_scrollbar_thumb(node Layout, id_scroll u32) ?Shape {
-	if node.shape.id == '__thumb__${id_scroll}' {
-		return node.shape
-	}
-	for child in node.children {
-		if n := find_scrollbar_thumb(child, id_scroll) {
-			return n
-		}
-	}
-	return none
-}
-
-fn offset_from_mouse(node Layout, thumb Shape, mouse_y f32, id_scroll u32) f32 {
-	available_height := node.shape.height - thumb.height
-	mut th := mouse_y - thumb.y
-	th = f32_min(math.abs(th), thumb.height)
-	mut percent := (node.shape.y - mouse_y + th) / available_height
-	if percent >= 0 {
-		percent = 0
-	}
-	if percent <= -1.0 {
-		percent = -1.0
-	}
+fn offset_from_mouse_change(node Layout, mouse_y f32, id_scroll u32, w &Window) f32 {
 	total_height := content_height(node)
-	return percent * (total_height - node.shape.height + node.shape.padding.height())
+	old_offset := w.scroll_state[id_scroll]
+	new_offset := mouse_y * (total_height / node.shape.height)
+	offset := old_offset - new_offset
+	return f32_min(0, f32_max(offset, node.shape.height - node.shape.padding.height() - total_height))
 }

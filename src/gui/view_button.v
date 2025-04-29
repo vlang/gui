@@ -72,7 +72,7 @@ pub fn button(cfg ButtonCfg) View {
 		sizing:       cfg.sizing
 		cfg:          &cfg
 		on_click:     cfg.on_click
-		on_char:      on_char_button
+		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout
 		content:      [
 			row(
@@ -89,14 +89,14 @@ pub fn button(cfg ButtonCfg) View {
 	)
 }
 
-fn on_char_button(cfg &ButtonCfg, mut e Event, mut w Window) {
+fn (cfg &ButtonCfg) on_char_button(_ &ButtonCfg, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(&cfg, mut e, mut w)
+		cfg.on_click(cfg, mut e, mut w)
 		e.is_handled = true
 	}
 }
 
-fn (cfg ButtonCfg) amend_layout(mut node Layout, mut w Window) {
+fn (cfg &ButtonCfg) amend_layout(mut node Layout, mut w Window) {
 	if node.shape.disabled || cfg.on_click == unsafe { nil } {
 		return
 	}

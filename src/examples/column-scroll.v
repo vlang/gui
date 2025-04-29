@@ -48,12 +48,11 @@ fn main_view(window &gui.Window) gui.View {
 			gui.column(
 				id_focus:  1
 				id_scroll: 1
-				scrollbar: true
 				fill:      true
 				color:     gui.theme().color_2
 				sizing:    gui.fit_fill
 				spacing:   gui.spacing_small
-				padding:   gui.padding(3, 13, 3, 13)
+				padding:   gui.padding(3, 10, 3, 10)
 				content:   app.items
 			),
 		]

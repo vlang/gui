@@ -65,11 +65,16 @@ pub fn (window &Window) is_focus(id_focus u32) bool {
 	return window.id_focus > 0 && window.id_focus == id_focus
 }
 
+pub fn (window &Window) mouse_is_locked() bool {
+	return window.mouse_lock.mouse_down != unsafe { nil }
+		|| window.mouse_lock.mouse_move != unsafe { nil }
+		|| window.mouse_lock.mouse_up != unsafe { nil }
+}
+
 // mouse_lock locks the mouse so all mouse events go to the
 // handlers in MouseLockCfg
 pub fn (mut window Window) mouse_lock(cfg MouseLockCfg) {
 	window.mouse_lock = cfg
-	// sapp.lock_mouse(true)
 }
 
 // mouse_unlock returns mouse handling events to normal behavior
