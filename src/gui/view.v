@@ -15,6 +15,10 @@ pub interface View {
 	generate(ctx &gg.Context) Layout
 }
 
+pub interface Cfg {
+	id string
+}
+
 // view_to_layout builds a Layout from a View.
 fn generate_layout(view &View, window &Window) Layout {
 	mut layout := view.generate(window.ui)

@@ -20,7 +20,8 @@ mut:
 	scroll_state   map[u32]f32        // [id_scroll] -> scroll offset
 	text_widths    map[string]int     // [text + hash(text_style)] -> text width
 	mouse_cursor   sapp.MouseCursor   // arrow, finger, ibeam, etc.
-	window_size    gg.Size            // cached, gg.window_size() relatively slow
+	mouse_lock     MouseLockCfg
+	window_size    gg.Size // cached, gg.window_size() relatively slow
 	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
 
@@ -143,7 +144,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 
 	match e.typ {
 		.char {
-			char_handler(layout, mut e, w)
+			char_handler(layout, mut e, mut w)
 		}
 		.focused {
 			w.focused = true
@@ -170,10 +171,11 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			mouse_down_handler(layout, mut e, mut w)
 		}
 		.mouse_move {
-			if w.pointer_over_app(e) {
-				w.set_mouse_cursor_arrow()
-				mouse_move_handler(layout, mut e, mut w)
-			}
+			w.set_mouse_cursor_arrow()
+			mouse_move_handler(layout, mut e, mut w)
+		}
+		.mouse_up {
+			mouse_up_handler(layout, mut e, mut w)
 		}
 		.mouse_scroll {
 			mouse_scroll_handler(layout, mut e, mut w)

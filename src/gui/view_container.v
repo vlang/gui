@@ -1,5 +1,6 @@
 module gui
 
+import arrays
 import gg
 
 pub struct Container implements View {
@@ -34,14 +35,17 @@ pub:
 	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
-	on_char        fn (voidptr, mut Event, &Window) = unsafe { nil }
-	on_click       fn (voidptr, mut Event, &Window) = unsafe { nil }
-	on_keydown     fn (voidptr, mut Event, &Window) = unsafe { nil }
-	amend_layout   fn (mut Layout, &Window)         = unsafe { nil }
+	on_char        fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_click       fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_keydown     fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_down  fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_move  fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_up    fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	amend_layout   fn (mut Layout, &Window)            = unsafe { nil }
 	content        []View
 mut:
 	axis Axis
-	cfg  voidptr
+	cfg  &Cfg
 }
 
 fn (cfg &Container) generate(ctx &gg.Context) Layout {
@@ -87,6 +91,8 @@ fn (cfg &Container) generate(ctx &gg.Context) Layout {
 			on_click:       cfg.on_click
 			on_char:        cfg.on_char
 			on_keydown:     cfg.on_keydown
+			on_mouse_move:  cfg.on_mouse_move
+			on_mouse_up:    cfg.on_mouse_up
 			amend_layout:   cfg.amend_layout
 		}
 	}
@@ -95,7 +101,7 @@ fn (cfg &Container) generate(ctx &gg.Context) Layout {
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers
 pub struct ContainerCfg {
-	cfg             voidptr
+	cfg             &Cfg = unsafe { nil }
 	on_click_layout fn (&Layout, &Event, &Window) bool = unsafe { nil }
 pub:
 	id             string
@@ -128,10 +134,12 @@ pub:
 	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
-	on_char        fn (voidptr, mut Event, &Window) = unsafe { nil }
-	on_click       fn (voidptr, mut Event, &Window) = unsafe { nil }
-	on_keydown     fn (voidptr, mut Event, &Window) = unsafe { nil }
-	amend_layout   fn (mut Layout, &Window)         = unsafe { nil }
+	on_char        fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_click       fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_keydown     fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_move  fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_up    fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	amend_layout   fn (mut Layout, &Window)            = unsafe { nil }
 	content        []View
 }
 
@@ -141,12 +149,10 @@ pub:
 fn container(cfg ContainerCfg) Container {
 	content := match cfg.scrollbar && cfg.id_scroll > 0 {
 		true {
-			mut cnt := cfg.content.clone()
-			cnt << scrollbar(ScrollbarCfg{
+			arrays.concat(cfg.content, scrollbar(ScrollbarCfg{
 				...cfg.scrollbar_cfg
 				id_track: cfg.id_scroll
-			})
-			cnt
+			}))
 		}
 		else {
 			cfg.content
@@ -185,6 +191,8 @@ fn container(cfg ContainerCfg) Container {
 		on_click:       cfg.on_click
 		on_char:        cfg.on_char
 		on_keydown:     cfg.on_keydown
+		on_mouse_move:  cfg.on_mouse_move
+		on_mouse_up:    cfg.on_mouse_up
 		amend_layout:   cfg.amend_layout
 		content:        content
 	}

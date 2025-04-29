@@ -113,7 +113,7 @@ fn message_view(cfg DialogCfg) []View {
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_ok_yes := w.dialog_cfg.on_ok_yes
-						w.dialog_cfg = DialogCfg{}
+						w.dialog_dismiss()
 						on_ok_yes(mut w)
 						e.is_handled = true
 					}
@@ -135,7 +135,7 @@ fn confirm_view(cfg DialogCfg) []View {
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_ok_yes := w.dialog_cfg.on_ok_yes
-						w.dialog_cfg = DialogCfg{}
+						w.dialog_dismiss()
 						on_ok_yes(mut w)
 						e.is_handled = true
 					}
@@ -146,7 +146,7 @@ fn confirm_view(cfg DialogCfg) []View {
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_cancel_no := w.dialog_cfg.on_cancel_no
-						w.dialog_cfg = DialogCfg{}
+						w.dialog_dismiss()
 						on_cancel_no(mut w)
 						e.is_handled = true
 					}
@@ -182,7 +182,7 @@ fn prompt_view(cfg DialogCfg) []View {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_reply := w.dialog_cfg.on_reply
 						reply := w.dialog_cfg.reply
-						w.dialog_cfg = DialogCfg{}
+						w.dialog_dismiss()
 						on_reply(reply, mut w)
 						e.is_handled = true
 					}
@@ -193,7 +193,7 @@ fn prompt_view(cfg DialogCfg) []View {
 					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_cancel_no := w.dialog_cfg.on_cancel_no
-						w.dialog_cfg = DialogCfg{}
+						w.dialog_dismiss()
 						on_cancel_no(mut w)
 						e.is_handled = true
 					}

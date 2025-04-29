@@ -1,21 +1,28 @@
 module gui
 
-fn char_handler(node &Layout, mut e Event, w &Window) {
+pub struct MouseLockCfg {
+pub:
+	mouse_down fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	mouse_move fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	mouse_up   fn (&Layout, mut Event, mut Window) = unsafe { nil }
+}
+
+fn char_handler(node &Layout, mut e Event, mut w Window) {
 	for child in node.children {
-		char_handler(child, mut e, w)
+		char_handler(child, mut e, mut w)
 		if e.is_handled {
 			return
 		}
 	}
 	if node.shape.id_focus > 0 && !node.shape.disabled && node.shape.id_focus == w.id_focus {
 		if node.shape.on_char_shape != unsafe { nil } {
-			node.shape.on_char_shape(node.shape, mut e, w)
+			node.shape.on_char_shape(node.shape, mut e, mut w)
 			if e.is_handled {
 				return
 			}
 		}
 		if node.shape.on_char != unsafe { nil } {
-			node.shape.on_char(node.shape.cfg, mut e, w)
+			node.shape.on_char(node.shape.cfg, mut e, mut w)
 			if e.is_handled {
 				return
 			}
@@ -33,7 +40,7 @@ fn keydown_handler(node &Layout, mut e Event, mut w Window) {
 	if !node.shape.disabled
 		&& (w.is_focus(node.shape.id_focus) || node.shape.id == reserved_dialog_id) {
 		if node.shape.on_keydown_shape != unsafe { nil } {
-			node.shape.on_keydown_shape(node.shape, mut e, w)
+			node.shape.on_keydown_shape(node.shape, mut e, mut w)
 			if e.is_handled {
 				return
 			}
@@ -45,7 +52,7 @@ fn keydown_handler(node &Layout, mut e Event, mut w Window) {
 			}
 		}
 		if node.shape.on_keydown != unsafe { nil } {
-			node.shape.on_keydown(node.shape.cfg, mut e, w)
+			node.shape.on_keydown(node.shape.cfg, mut e, mut w)
 			if e.is_handled {
 				return
 			}
@@ -69,6 +76,10 @@ fn key_down_scroll_handler(node &Layout, mut e Event, mut w Window) {
 }
 
 fn mouse_down_handler(node &Layout, mut e Event, mut w Window) {
+	if w.mouse_lock.mouse_down != unsafe { nil } {
+		w.mouse_lock.mouse_down(node, mut e, mut w)
+		return
+	}
 	for child in node.children {
 		mouse_down_handler(child, mut e, mut w)
 		if e.is_handled {
@@ -81,7 +92,7 @@ fn mouse_down_handler(node &Layout, mut e Event, mut w Window) {
 				w.set_id_focus(node.shape.id_focus)
 			}
 			if node.shape.on_mouse_down_shape != unsafe { nil } {
-				node.shape.on_mouse_down_shape(node.shape, mut e, w)
+				node.shape.on_mouse_down_shape(node.shape, mut e, mut w)
 				if e.is_handled {
 					return
 				}
@@ -89,7 +100,7 @@ fn mouse_down_handler(node &Layout, mut e Event, mut w Window) {
 			// make click handler mouse coordinates relative to node.shape
 			mut ev := event_relative_to(node.shape, e)
 			if node.shape.on_click != unsafe { nil } {
-				node.shape.on_click(node.shape.cfg, mut ev, w)
+				node.shape.on_click(node.shape.cfg, mut ev, mut w)
 				if ev.is_handled {
 					e.is_handled = true
 					return
@@ -100,6 +111,13 @@ fn mouse_down_handler(node &Layout, mut e Event, mut w Window) {
 }
 
 fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
+	if w.mouse_lock.mouse_move != unsafe { nil } {
+		w.mouse_lock.mouse_move(node, mut e, mut w)
+		return
+	}
+	if !w.pointer_over_app(e) {
+		return
+	}
 	for child in node.children {
 		mouse_move_handler(child, mut e, mut w)
 		if e.is_handled {
@@ -109,8 +127,43 @@ fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
 	if !node.shape.disabled {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			if node.shape.on_mouse_move_shape != unsafe { nil } {
-				node.shape.on_mouse_move_shape(node.shape, mut e, w)
+				node.shape.on_mouse_move_shape(node.shape, mut e, mut w)
 				if e.is_handled {
+					return
+				}
+			}
+		}
+	}
+}
+
+fn mouse_up_handler(node &Layout, mut e Event, mut w Window) {
+	if w.mouse_lock.mouse_up != unsafe { nil } {
+		w.mouse_lock.mouse_up(node, mut e, mut w)
+		return
+	}
+	for child in node.children {
+		mouse_up_handler(child, mut e, mut w)
+		if e.is_handled {
+			return
+		}
+	}
+	if !node.shape.disabled {
+		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+			if node.shape.id_focus > 0 {
+				w.set_id_focus(node.shape.id_focus)
+			}
+			if node.shape.on_mouse_up_shape != unsafe { nil } {
+				node.shape.on_mouse_up_shape(node.shape, mut e, mut w)
+				if e.is_handled {
+					return
+				}
+			}
+			// make up handler mouse coordinates relative to node.shape
+			mut ev := event_relative_to(node.shape, e)
+			if node.shape.on_mouse_up != unsafe { nil } {
+				node.shape.on_mouse_up(node.shape.cfg, mut ev, mut w)
+				if ev.is_handled {
+					e.is_handled = true
 					return
 				}
 			}

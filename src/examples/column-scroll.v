@@ -53,7 +53,7 @@ fn main_view(window &gui.Window) gui.View {
 				color:     gui.theme().color_2
 				sizing:    gui.fit_fill
 				spacing:   gui.spacing_small
-				padding:   gui.padding(3, 10, 3, 13)
+				padding:   gui.padding(3, 13, 3, 13)
 				content:   app.items
 			),
 		]

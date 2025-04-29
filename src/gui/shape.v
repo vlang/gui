@@ -10,7 +10,7 @@ pub mut:
 	type     ShapeType
 	uid      u64 = rand.u64() // internal use only
 	axis     Axis
-	cfg      voidptr
+	cfg      &Cfg = unsafe { nil }
 	clip     bool
 	color    Color
 	disabled bool
@@ -49,16 +49,19 @@ pub mut:
 	float_offset_x f32
 	float_offset_y f32
 	// --- user callbacks ---
-	on_char    fn (voidptr, mut Event, &Window) = unsafe { nil }
-	on_click   fn (voidptr, mut Event, &Window) = unsafe { nil }
-	on_keydown fn (voidptr, mut Event, &Window) = unsafe { nil }
+	on_char       fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_keydown    fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_click      fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_move fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_up   fn (voidptr, mut Event, mut Window) = unsafe { nil }
 	// --- for internal use and not intended for end users   ---
 	// --- however, composite views can set these in the     ---
 	// --- layout amend callback. See input view for example ---
-	on_char_shape       fn (&Shape, mut Event, &Window) = unsafe { nil }
-	on_keydown_shape    fn (&Shape, mut Event, &Window) = unsafe { nil }
-	on_mouse_down_shape fn (&Shape, mut Event, &Window) = unsafe { nil }
-	on_mouse_move_shape fn (&Shape, mut Event, &Window) = unsafe { nil }
+	on_char_shape       fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	on_keydown_shape    fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	on_mouse_down_shape fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	on_mouse_move_shape fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	on_mouse_up_shape   fn (&Shape, mut Event, mut Window) = unsafe { nil }
 	// mostly for hover and focus highlighting
 	amend_layout fn (mut Layout, &Window) = unsafe { nil }
 }

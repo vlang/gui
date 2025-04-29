@@ -2,7 +2,7 @@ module gui
 
 import arrays
 
-// find_shape walks the ShapeGTree in reverse until predicate is satisfied.
+// find_shape walks the ShapeTree in reverse until predicate is satisfied.
 // shape_uid limits the depth of the search into tree. Used in event bubbling. 0
 // is not a valid shape_uid and is used to search the entire tree
 pub fn (node &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {

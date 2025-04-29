@@ -1,6 +1,7 @@
 module gui
 
 import gg
+import sokol.sapp
 
 // background_color returns the window background color
 pub fn (window &Window) color_background() Color {
@@ -36,6 +37,7 @@ pub fn (mut window Window) dialog(cfg DialogCfg) {
 // dialog_dismiss closes an dialog box without invoking callbacks.
 // Useful for custom dialog types.
 pub fn (mut window Window) dialog_dismiss() {
+	window.input_state[window.dialog_cfg.id_focus] = InputState{}
 	window.dialog_cfg = DialogCfg{}
 }
 
@@ -61,6 +63,19 @@ pub fn (window &Window) id_focus() u32 {
 // is_focus tests if the given id_focus is equal to the windows's id_focus
 pub fn (window &Window) is_focus(id_focus u32) bool {
 	return window.id_focus > 0 && window.id_focus == id_focus
+}
+
+// mouse_lock locks the mouse so all mouse events go to the
+// handlers in MouseLockCfg
+pub fn (mut window Window) mouse_lock(cfg MouseLockCfg) {
+	window.mouse_lock = cfg
+	// sapp.lock_mouse(true)
+}
+
+// mouse_unlock returns mouse handling events to normal behavior
+pub fn (mut window Window) mouse_unlock() {
+	window.mouse_lock = MouseLockCfg{}
+	sapp.lock_mouse(false)
 }
 
 // pointer_over_app returns true if the mouse pointer is over the app
