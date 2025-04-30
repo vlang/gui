@@ -35,13 +35,13 @@ pub:
 	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
-	on_char        fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_click       fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_keydown     fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_down  fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_move  fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_up    fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	amend_layout   fn (mut Layout, &Window)            = unsafe { nil }
+	on_char        ?fn (voidptr, mut Event, mut Window)
+	on_click       ?fn (voidptr, mut Event, mut Window)
+	on_keydown     ?fn (voidptr, mut Event, mut Window)
+	on_mouse_down  ?fn (voidptr, mut Event, mut Window)
+	on_mouse_move  ?fn (voidptr, mut Event, mut Window)
+	on_mouse_up    ?fn (voidptr, mut Event, mut Window)
+	amend_layout   ?fn (mut Layout, &Window)
 	content        []View
 mut:
 	axis Axis
@@ -134,12 +134,12 @@ pub:
 	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
-	on_char        fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_click       fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_keydown     fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_move  fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_up    fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	amend_layout   fn (mut Layout, &Window)            = unsafe { nil }
+	on_char        ?fn (voidptr, mut Event, mut Window)
+	on_click       ?fn (voidptr, mut Event, mut Window)
+	on_keydown     ?fn (voidptr, mut Event, mut Window)
+	on_mouse_move  ?fn (voidptr, mut Event, mut Window)
+	on_mouse_up    ?fn (voidptr, mut Event, mut Window)
+	amend_layout   ?fn (mut Layout, &Window)
 	content        []View
 }
 

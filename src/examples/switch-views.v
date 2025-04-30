@@ -37,7 +37,6 @@ fn page_one(window &gui.Window) gui.View {
 			id_focus: 1
 			content:  [gui.text(text: 'next >>')]
 			on_click: fn (cfg &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-				println(cfg)
 				w.update_view(page_two)
 				w.set_id_focus(1)
 			}

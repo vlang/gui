@@ -625,7 +625,7 @@ fn layout_amend(mut node Layout, w &Window) {
 	for mut child in node.children {
 		layout_amend(mut child, w)
 	}
-	if node.shape.amend_layout != unsafe { nil } {
+	if node.shape.amend_layout != none {
 		node.shape.amend_layout(mut node, w)
 	}
 }
