@@ -88,15 +88,15 @@ pub:
 
 pub struct ScrollbarStyle {
 pub:
-	width            f32   = 8
+	width            f32   = 7
 	color_thumb      Color = color_5_dark
-	color_gutter     Color = color_transparent
 	color_background Color = color_transparent
 	fill_thumb       bool  = true
-	fill_gutter      bool
 	fill_background  bool
-	padding          Padding = padding_two
-	radius           f32     = radius_small
+	radius           f32 = radius_small
+	radius_thumb     f32 = radius_small
+	float_offset_x   f32 = -3
+	float_offset_y   f32
 }
 
 pub struct TextStyle {

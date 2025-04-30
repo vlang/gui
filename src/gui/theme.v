@@ -426,8 +426,9 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:   cfg.fill
 		}
 		scrollbar_style:    ScrollbarStyle{
-			color_thumb: cfg.color_5
-			radius:      if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
+			color_thumb:  cfg.color_5
+			radius:       if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
+			radius_thumb: if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
 		}
 		text_style:         cfg.text_style
 

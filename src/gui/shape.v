@@ -10,7 +10,7 @@ pub mut:
 	type     ShapeType
 	uid      u64 = rand.u64() // internal use only
 	axis     Axis
-	cfg      &Cfg = unsafe { nil }
+	cfg      voidptr
 	clip     bool
 	color    Color
 	disabled bool

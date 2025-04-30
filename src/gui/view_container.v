@@ -45,7 +45,7 @@ pub:
 	content        []View
 mut:
 	axis Axis
-	cfg  &Cfg
+	cfg  voidptr
 }
 
 fn (cfg &Container) generate(ctx &gg.Context) Layout {
@@ -101,7 +101,7 @@ fn (cfg &Container) generate(ctx &gg.Context) Layout {
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers
 pub struct ContainerCfg {
-	cfg             &Cfg = unsafe { nil }
+	cfg             voidptr
 	on_click_layout fn (&Layout, &Event, &Window) bool = unsafe { nil }
 pub:
 	id             string

@@ -168,7 +168,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		.mouse_down {
 			w.set_mouse_cursor_arrow()
 			w.set_id_focus(0)
-			mouse_down_handler(layout, mut e, mut w)
+			mouse_down_handler(layout, false, mut e, mut w)
 		}
 		.mouse_move {
 			w.set_mouse_cursor_arrow()

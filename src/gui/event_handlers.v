@@ -75,13 +75,15 @@ fn key_down_scroll_handler(node &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn mouse_down_handler(node &Layout, mut e Event, mut w Window) {
-	if w.mouse_lock.mouse_down != unsafe { nil } {
-		w.mouse_lock.mouse_down(node, mut e, mut w)
-		return
+fn mouse_down_handler(node &Layout, in_handler bool, mut e Event, mut w Window) {
+	if !in_handler { // limits checking to once per tree walk.
+		if w.mouse_lock.mouse_down != unsafe { nil } {
+			w.mouse_lock.mouse_down(node, mut e, mut w)
+			return
+		}
 	}
 	for child in node.children {
-		mouse_down_handler(child, mut e, mut w)
+		mouse_down_handler(child, true, mut e, mut w)
 		if e.is_handled {
 			return
 		}
