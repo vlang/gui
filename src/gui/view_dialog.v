@@ -16,6 +16,7 @@ pub enum DialogType {
 	custom
 }
 
+pub const dialog_base_id_focus = 7568971
 const reserved_dialog_id = '__dialog_reserved_do_not_use__'
 
 // DialogCfg configures GUI's dialog dialog. [dialogType](#dialogType)
@@ -40,7 +41,7 @@ pub:
 	body             string // body text wraps as needed. Newlines supported
 	custom_content   []View // custom content
 	reply            string
-	id_focus         u32                     = 7568971
+	id_focus         u32                     = dialog_base_id_focus
 	align_buttons    HorizontalAlign         = gui_theme.dialog_style.align_buttons
 	color            Color                   = gui_theme.dialog_style.color
 	color_border     Color                   = gui_theme.dialog_style.color_border

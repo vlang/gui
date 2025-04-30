@@ -18,8 +18,8 @@ pub:
 	fill_background  bool  = gui_theme.scrollbar_style.fill_background
 	radius           f32   = gui_theme.scrollbar_style.radius
 	radius_thumb     f32   = gui_theme.scrollbar_style.radius_thumb
-	float_offset_x   f32   = gui_theme.scrollbar_style.float_offset_x
-	float_offset_y   f32   = gui_theme.scrollbar_style.float_offset_y
+	offset_x         f32   = gui_theme.scrollbar_style.offset_x
+	offset_y         f32   = gui_theme.scrollbar_style.offset_y
 }
 
 // scrollbar creates a scrollbar. Scrollbars are floating elements
@@ -33,9 +33,8 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 		float:          true
 		float_anchor:   .top_right
 		float_tie_off:  .top_right
-		float_offset_x: cfg.float_offset_x
-		float_offset_y: cfg.float_offset_y
-		sizing:         fit_fill
+		float_offset_x: cfg.offset_x
+		float_offset_y: cfg.offset_y
 		spacing:        0
 		padding:        padding_none
 		amend_layout:   cfg.amend_layout
@@ -66,7 +65,7 @@ fn (cfg &ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 	})
 }
 
-fn (cfg &ScrollbarCfg) gutter_click(cc &ContainerCfg, mut e Event, mut w Window) {
+fn (cfg &ScrollbarCfg) gutter_click(_ &ContainerCfg, mut e Event, mut w Window) {
 	if !w.mouse_is_locked() {
 		offset_from_mouse_y(w.layout, e.mouse_y, cfg.id_track, mut w)
 	}

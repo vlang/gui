@@ -54,6 +54,7 @@ fn (t &Text) generate(ctx &gg.Context) Layout {
 			on_keydown_shape:    t.keydown_shape
 			on_mouse_down_shape: t.mouse_down_shape
 			on_mouse_move_shape: t.mouse_move_shape
+			on_mouse_up_shape:   t.mouse_up_shape
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
@@ -148,6 +149,13 @@ fn (text &Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 			select_beg: if cursor_pos < end { cursor_pos } else { end }
 			select_end: if cursor_pos < end { end } else { cursor_pos }
 		}
+		e.is_handled = true
+	}
+}
+
+fn (text &Text) mouse_up_shape(shape &Shape, mut e Event, mut w Window) {
+	if w.is_focus(shape.id_focus) {
+		w.set_mouse_cursor_ibeam()
 		e.is_handled = true
 	}
 }

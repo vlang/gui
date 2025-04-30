@@ -123,6 +123,7 @@ fn custom_type() gui.View {
 						content: [
 							gui.text(text: 'Custom Content'),
 							gui.button(
+								id_focus: gui.dialog_base_id_focus
 								content:  [gui.text(text: 'Close Me')]
 								on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 									w.dialog_dismiss()

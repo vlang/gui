@@ -95,8 +95,8 @@ pub:
 	fill_background  bool
 	radius           f32 = radius_small
 	radius_thumb     f32 = radius_small
-	float_offset_x   f32 = -3
-	float_offset_y   f32
+	offset_x         f32 = -3
+	offset_y         f32
 }
 
 pub struct TextStyle {

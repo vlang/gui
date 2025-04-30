@@ -294,7 +294,7 @@ fn render_cursor(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 				cy := shape.y + (lh * cursor_y)
 				renderers << DrawLine{
 					x:   cx
-					y:   cy
+					y:   cy + offset_v
 					x1:  cx
 					y1:  cy + lh + offset_v
 					cfg: gg.PenConfig{
