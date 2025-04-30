@@ -66,9 +66,8 @@ pub fn (window &Window) is_focus(id_focus u32) bool {
 }
 
 pub fn (window &Window) mouse_is_locked() bool {
-	return window.mouse_lock.mouse_down != unsafe { nil }
-		|| window.mouse_lock.mouse_move != unsafe { nil }
-		|| window.mouse_lock.mouse_up != unsafe { nil }
+	return window.mouse_lock.mouse_down != none || window.mouse_lock.mouse_move != none
+		|| window.mouse_lock.mouse_up != none
 }
 
 // mouse_lock locks the mouse so all mouse events go to the

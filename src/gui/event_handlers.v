@@ -2,9 +2,9 @@ module gui
 
 pub struct MouseLockCfg {
 pub:
-	mouse_down fn (&Layout, mut Event, mut Window) = unsafe { nil }
-	mouse_move fn (&Layout, mut Event, mut Window) = unsafe { nil }
-	mouse_up   fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	mouse_down ?fn (&Layout, mut Event, mut Window)
+	mouse_move ?fn (&Layout, mut Event, mut Window)
+	mouse_up   ?fn (&Layout, mut Event, mut Window)
 }
 
 fn char_handler(node &Layout, mut e Event, mut w Window) {
@@ -77,7 +77,7 @@ fn key_down_scroll_handler(node &Layout, mut e Event, mut w Window) {
 
 fn mouse_down_handler(node &Layout, in_handler bool, mut e Event, mut w Window) {
 	if !in_handler { // limits checking to once per tree walk.
-		if w.mouse_lock.mouse_down != unsafe { nil } {
+		if w.mouse_lock.mouse_down != none {
 			w.mouse_lock.mouse_down(node, mut e, mut w)
 			return
 		}
@@ -113,7 +113,7 @@ fn mouse_down_handler(node &Layout, in_handler bool, mut e Event, mut w Window) 
 }
 
 fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
-	if w.mouse_lock.mouse_move != unsafe { nil } {
+	if w.mouse_lock.mouse_move != none {
 		w.mouse_lock.mouse_move(node, mut e, mut w)
 		return
 	}
@@ -139,7 +139,7 @@ fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
 }
 
 fn mouse_up_handler(node &Layout, mut e Event, mut w Window) {
-	if w.mouse_lock.mouse_up != unsafe { nil } {
+	if w.mouse_lock.mouse_up != none {
 		w.mouse_lock.mouse_up(node, mut e, mut w)
 		return
 	}
