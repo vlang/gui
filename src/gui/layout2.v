@@ -83,3 +83,14 @@ fn f32_are_equal(a f32, b f32, diff f32) bool {
 	d := a - b
 	return if d < 0 { -d <= diff } else { d <= diff }
 }
+
+@[inline]
+fn clamp_f32(x f32, a f32, b f32) f32 {
+	if x < a {
+		return a
+	}
+	if x > b {
+		return b
+	}
+	return x
+}

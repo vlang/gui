@@ -104,7 +104,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 
 	total_height := content_height(parent)
 	t_height := node.shape.height * (node.shape.height / total_height)
-	thumb_height := f32_min(f32_max(20, t_height), node.shape.height)
+	thumb_height := clamp_f32(t_height, 20, node.shape.height)
 
 	available_height := node.shape.height - thumb_height
 	scroll_offset := -w.scroll_state[cfg.id_track]
@@ -150,7 +150,7 @@ fn offset_from_mouse_y(node Layout, mouse_y f32, id_scroll u32, mut w Window) {
 	if sb := find_node_by_id_scroll(node, id_scroll) {
 		total_height := content_height(sb)
 		mut percent := mouse_y / sb.shape.height
-		percent = f32_min(f32_max(0, percent), 1)
+		percent = clamp_f32(percent, 0, 1)
 		if percent <= 0.03 {
 			percent = 0
 		}
