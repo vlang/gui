@@ -23,6 +23,7 @@ pub:
 	h_align        HorizontalAlign
 	v_align        VerticalAlign
 	clip           bool
+	focus_skip     bool
 	sizing         Sizing
 	disabled       bool
 	invisible      bool
@@ -67,6 +68,7 @@ fn (cfg &Container) generate(ctx &gg.Context) Layout {
 			min_height:     cfg.min_height
 			max_height:     cfg.max_height
 			clip:           cfg.clip
+			focus_skip:     cfg.focus_skip
 			spacing:        cfg.spacing
 			sizing:         cfg.sizing
 			padding:        cfg.padding
@@ -121,6 +123,7 @@ pub:
 	x              f32
 	y              f32
 	clip           bool
+	focus_skip     bool
 	h_align        HorizontalAlign
 	v_align        VerticalAlign
 	text           string

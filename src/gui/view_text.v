@@ -11,6 +11,7 @@ struct Text implements View {
 	is_password        bool
 	placeholder_active bool
 	clip               bool
+	focus_skip         bool
 	invisible          bool
 	disabled           bool
 	keep_spaces        bool
@@ -39,6 +40,7 @@ fn (t &Text) generate(ctx &gg.Context) Layout {
 			id_focus:            t.id_focus
 			cfg:                 &t.cfg
 			clip:                t.clip
+			focus_skip:          t.focus_skip
 			disabled:            t.disabled
 			min_width:           t.min_width
 			sizing:              t.sizing
@@ -82,6 +84,7 @@ pub:
 	id          string
 	id_focus    u32
 	clip        bool
+	focus_skip  bool = true
 	disabled    bool
 	invisible   bool
 	keep_spaces bool
@@ -99,6 +102,7 @@ pub fn text(cfg &TextCfg) Text {
 		id:                 cfg.id
 		id_focus:           cfg.id_focus
 		clip:               cfg.clip
+		focus_skip:         cfg.focus_skip
 		invisible:          cfg.invisible
 		keep_spaces:        cfg.keep_spaces
 		min_width:          cfg.min_width
