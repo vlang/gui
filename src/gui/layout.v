@@ -227,7 +227,7 @@ fn layout_fill_widths(mut node Layout) {
 		// all the fill layout to the same size (if possible) and then
 		// distributing the remaining width to evenly.
 		//
-		mut excluded := []u64{cap: 25}
+		mut excluded := []u64{cap: node.children.len}
 		for i := 0; remaining_width > tolerance && i < clamp; i++ {
 			if f32_are_equal(remaining_width, previous_remaining_width, tolerance) {
 				break
@@ -287,27 +287,31 @@ fn layout_fill_widths(mut node Layout) {
 				break
 			}
 			previous_remaining_width = remaining_width
-			shrinkable := node.children.filter(it.shape.uid !in excluded)
-			if shrinkable.len == 0 {
+			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
+				return n.shape.uid !in excluded
+			})
+			if len == 0 {
 				break
 			}
 
-			mut largest := shrinkable[0].shape.width
+			mut largest := node.children[idx].shape.width
 			mut second_largest := f32(0)
 			mut width_to_add := remaining_width
 
-			for child in shrinkable {
-				if child.shape.width > largest {
-					second_largest = largest
-					largest = child.shape.width
-				}
-				if child.shape.width < largest {
-					second_largest = f32_max(second_largest, child.shape.width)
-					width_to_add = second_largest - largest
+			for child in node.children {
+				if child.shape.uid !in excluded {
+					if child.shape.width > largest {
+						second_largest = largest
+						largest = child.shape.width
+					}
+					if child.shape.width < largest {
+						second_largest = f32_max(second_largest, child.shape.width)
+						width_to_add = second_largest - largest
+					}
 				}
 			}
 
-			width_to_add = f32_max(width_to_add, remaining_width / shrinkable.len)
+			width_to_add = f32_max(width_to_add, remaining_width / len)
 
 			for mut child in node.children {
 				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
@@ -367,7 +371,7 @@ fn layout_fill_heights(mut node Layout) {
 		// all the fill layout to the same size (if possible) and then
 		// distributing the remaining height to evenly.
 		//
-		mut excluded := []u64{cap: 25}
+		mut excluded := []u64{cap: node.children.len}
 		for i := 0; remaining_height > tolerance && i < clamp; i++ {
 			if f32_are_equal(remaining_height, previous_remaining_height, tolerance) {
 				break
@@ -428,27 +432,31 @@ fn layout_fill_heights(mut node Layout) {
 				break
 			}
 			previous_remaining_height = remaining_height
-			shrinkable := node.children.filter(it.shape.uid !in excluded)
-			if shrinkable.len == 0 {
+			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
+				return n.shape.uid !in excluded
+			})
+			if len == 0 {
 				break
 			}
 
-			mut largest := shrinkable[0].shape.height
+			mut largest := node.children[idx].shape.height
 			mut second_largest := f32(0)
 			mut height_to_add := remaining_height
 
-			for child in shrinkable {
-				if child.shape.height > largest {
-					second_largest = largest
-					largest = child.shape.height
-				}
-				if child.shape.height < largest {
-					second_largest = f32_max(second_largest, child.shape.height)
-					height_to_add = second_largest - largest
+			for child in node.children {
+				if child.shape.uid !in excluded {
+					if child.shape.height > largest {
+						second_largest = largest
+						largest = child.shape.height
+					}
+					if child.shape.height < largest {
+						second_largest = f32_max(second_largest, child.shape.height)
+						height_to_add = second_largest - largest
+					}
 				}
 			}
 
-			height_to_add = f32_max(height_to_add, remaining_height / shrinkable.len)
+			height_to_add = f32_max(height_to_add, remaining_height / len)
 
 			for mut child in node.children {
 				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
