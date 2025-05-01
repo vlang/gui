@@ -415,10 +415,11 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		progress_bar_style: ProgressBarStyle{
-			color:     cfg.color_1
-			color_bar: cfg.color_5
-			fill:      true
-			radius:    cfg.radius
+			color:      cfg.color_1
+			color_bar:  cfg.color_5
+			fill:       true
+			radius:     cfg.radius
+			text_style: cfg.text_style
 		}
 		rectangle_style:    RectangleStyle{
 			color:  cfg.color_border

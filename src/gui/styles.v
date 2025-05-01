@@ -71,12 +71,17 @@ pub:
 
 pub struct ProgressBarStyle {
 pub:
-	color     Color   = color_1_dark
-	color_bar Color   = color_5_dark
-	fill      bool    = true
-	padding   Padding = padding_medium
-	radius    f32     = radius_medium
-	size      f32     = size_progress_bar
+	color           Color     = color_1_dark
+	color_bar       Color     = color_5_dark
+	fill            bool      = true
+	padding         Padding   = padding_medium
+	radius          f32       = radius_medium
+	size            f32       = size_progress_bar
+	text_show       bool      = true
+	text_background Color     = color_transparent
+	text_fill       bool      = true
+	text_padding    Padding   = padding(2, 5, 2, 5)
+	text_style      TextStyle = text_style_dark
 }
 
 pub struct RectangleStyle {

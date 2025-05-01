@@ -111,8 +111,9 @@ fn main_view(w &gui.Window) gui.View {
 								text: 'progress bar'
 							),
 							gui.progress_bar(
-								percent: (app.click_count * 4) / f32(100)
-								sizing:  gui.fill_fit
+								percent:    (app.click_count * 4) / f32(100)
+								sizing:     gui.fill_fit
+								min_height: 20
 							),
 							gui.row(
 								v_align: .middle
