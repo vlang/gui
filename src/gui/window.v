@@ -96,7 +96,7 @@ pub fn window(cfg &WindowCfg) &Window {
 fn frame_fn(mut window Window) {
 	window.mutex.lock()
 	window.ui.begin()
-	renderers_draw(window.renderers, window.ui)
+	renderers_draw(window.renderers, window)
 	window.ui.end()
 	window.mutex.unlock()
 	sapp.set_mouse_cursor(window.mouse_cursor)
@@ -207,7 +207,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 
 	view := gen_view(window)
 	layout := window.compose_layout(view)
-	renderers := render_layout(layout, window.color_background(), 0, window.ui)
+	renderers := render_layout(layout, window.color_background(), 0, window)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -226,7 +226,7 @@ pub fn (mut window Window) update_window() {
 
 	view := window.view_generator(window)
 	layout := window.compose_layout(view)
-	renderers := render_layout(layout, window.color_background(), 0, window.ui)
+	renderers := render_layout(layout, window.color_background(), 0, window)
 
 	window.layout = layout
 	window.renderers = renderers

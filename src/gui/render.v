@@ -40,14 +40,15 @@ type ClipStack = datatypes.Stack[DrawClip]
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
 // draw logic of GUI
-fn renderers_draw(renderers []Renderer, ctx &gg.Context) {
+fn renderers_draw(renderers []Renderer, window &Window) {
 	for renderer in renderers {
-		renderer_draw(renderer, ctx)
+		renderer_draw(renderer, window)
 	}
 }
 
 // renderer_draw draws a single renderer
-fn renderer_draw(renderer Renderer, ctx &gg.Context) {
+fn renderer_draw(renderer Renderer, window &Window) {
+	ctx := window.ui
 	match renderer {
 		DrawRect {
 			ctx.draw_rect(renderer)
@@ -71,8 +72,8 @@ fn renderer_draw(renderer Renderer, ctx &gg.Context) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render_layout(layout &Layout, bg_color Color, scroll_offset f32, ctx &gg.Context) []Renderer {
-	mut renderers := []Renderer{cap: 10}
+fn render_layout(layout &Layout, bg_color Color, scroll_offset f32, window &Window) []Renderer {
+	mut renderers := []Renderer{}
 	mut clip_stack := ClipStack{}
 
 	parent_color := if layout.shape.color != color_transparent {
@@ -81,7 +82,7 @@ fn render_layout(layout &Layout, bg_color Color, scroll_offset f32, ctx &gg.Cont
 		bg_color
 	}
 
-	renderers << render_shape(layout.shape, bg_color, scroll_offset, ctx)
+	renderers << render_shape(layout.shape, bg_color, scroll_offset, window)
 
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, mut clip_stack)
@@ -89,7 +90,7 @@ fn render_layout(layout &Layout, bg_color Color, scroll_offset f32, ctx &gg.Cont
 
 	for child in layout.children {
 		scr_offset := layout.shape.scroll_offset + child.shape.scroll_offset
-		renderers << render_layout(child, parent_color, scr_offset, ctx)
+		renderers << render_layout(child, parent_color, scr_offset, window)
 	}
 
 	if layout.shape.clip {
@@ -100,20 +101,21 @@ fn render_layout(layout &Layout, bg_color Color, scroll_offset f32, ctx &gg.Cont
 }
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
-fn render_shape(shape &Shape, parent_color Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_shape(shape &Shape, parent_color Color, offset_v f32, window &Window) []Renderer {
 	if shape.color == color_transparent {
 		return []
 	}
 	return match shape.type {
-		.container { render_container(shape, parent_color, offset_v, ctx) }
-		.text { render_text(shape, offset_v, ctx) }
+		.container { render_container(shape, parent_color, offset_v, window) }
+		.text { render_text(shape, offset_v, window) }
 		.none { [] }
 	}
 }
 
-fn render_container(shape &Shape, parent_color Color, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_container(shape &Shape, parent_color Color, offset_v f32, window &Window) []Renderer {
+	ctx := window.ui
 	mut renderers := []Renderer{}
-	renderers << render_rectangle(shape, offset_v, ctx)
+	renderers << render_rectangle(shape, offset_v, window)
 	// This group box stuff is likely temporary
 	// Examine after floating containers implemented
 	if shape.text.len != 0 {
@@ -157,10 +159,10 @@ fn render_container(shape &Shape, parent_color Color, offset_v f32, ctx &gg.Cont
 }
 
 // draw_rectangle draws a shape as a rectangle.
-fn render_rectangle(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_rectangle(shape &Shape, offset_v f32, window &Window) []Renderer {
 	assert shape.type == .container
 	mut renderers := []Renderer{}
-	renderer_rect := make_renderer_rect(shape, ctx)
+	renderer_rect := make_renderer_rect(shape, window)
 	draw_rect := gg.Rect{
 		x:      shape.x
 		y:      shape.y + offset_v
@@ -186,7 +188,8 @@ fn render_rectangle(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
-fn render_text(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
+fn render_text(shape &Shape, offset_v f32, window &Window) []Renderer {
+	ctx := window.ui
 	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
 	mut text_cfg := TextStyle{
 		...shape.text_style
@@ -195,7 +198,7 @@ fn render_text(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 
 	ctx.set_text_cfg(text_cfg)
 	lh := line_height(shape)
-	renderer_rect := make_renderer_rect(shape, ctx)
+	renderer_rect := make_renderer_rect(shape, window)
 
 	mut char_count := 0
 	mut y := shape.y + offset_v
@@ -252,21 +255,20 @@ fn render_text(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 
 	// No need to render the cursor if no text was rendered
 	if renderers.len > 0 {
-		renderers << render_cursor(shape, offset_v, ctx)
+		renderers << render_cursor(shape, offset_v, window)
 	}
 	return renderers
 }
 
 // render_cursor figures out where the cursor goes
-fn render_cursor(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
-	w := unsafe { &Window(ctx.user_data) }
+fn render_cursor(shape &Shape, offset_v f32, window &Window) []Renderer {
 	mut renderers := []Renderer{}
 
-	if w.is_focus(shape.id_focus) && shape.type == .text {
+	if window.is_focus(shape.id_focus) && shape.type == .text {
 		lh := line_height(shape)
 		mut cursor_x := -1
 		mut cursor_y := -1
-		input_state := w.input_state[shape.id_focus]
+		input_state := window.input_state[shape.id_focus]
 		mut cursor_pos := input_state.cursor_pos
 		if cursor_pos >= 0 {
 			mut length := 0
@@ -287,6 +289,7 @@ fn render_cursor(shape &Shape, offset_v f32, ctx &gg.Context) []Renderer {
 			}
 		}
 		if cursor_x >= 0 && cursor_y >= 0 {
+			ctx := window.ui
 			if cursor_y < shape.text_lines.len {
 				ln := shape.text_lines[cursor_y]
 				x := int_min(cursor_x, ln.len)
@@ -356,13 +359,12 @@ fn shape_clip_rect(shape &Shape) gg.Rect {
 // make_renderer_rect creates a rectangle that represents the renderable region.
 // If the shape is clipped, then use the shape dimensions otherwise used
 // the window size.
-fn make_renderer_rect(shape &Shape, ctx &gg.Context) gg.Rect {
+fn make_renderer_rect(shape &Shape, window &Window) gg.Rect {
 	return match shape.clip {
 		true {
 			shape_clip_rect(shape)
 		}
 		else {
-			window := unsafe { &Window(ctx.user_data) }
 			width, height := window.window_size()
 			gg.Rect{
 				x:      0
@@ -375,7 +377,9 @@ fn make_renderer_rect(shape &Shape, ctx &gg.Context) gg.Rect {
 }
 
 // rects_overlap check for non-overlapping conditions. If none are met, they overlap.
+@[inline]
 fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
-	return !(r1.x + r1.width <= r2.x || r1.y + r1.height <= r2.y || r1.x >= r2.x + r2.width
-		|| r1.y >= r2.y + r2.height)
+	xo := r1.x < r2.x + r2.width && r2.x < r1.x + r1.width
+	yo := r1.y < r2.y + r2.height && r2.y < r1.y + r1.height
+	return xo && yo
 }
