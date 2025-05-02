@@ -34,7 +34,8 @@ pub:
 	padding_border     Padding = gui_theme.button_style.padding_border
 	radius             f32     = gui_theme.button_style.radius
 	radius_border      f32     = gui_theme.button_style.radius_border
-	on_click           fn (&ButtonCfg, mut Event, mut Window) = unsafe { nil }
+	// on_click           fn (&ButtonCfg, mut Event, mut Window) = unsafe { nil }
+	on_click ?fn (&ButtonCfg, mut Event, mut Window)
 }
 
 // button creates a clickable button. Buttons can contain content other than text.
@@ -90,14 +91,16 @@ pub fn button(cfg ButtonCfg) View {
 }
 
 fn (cfg &ButtonCfg) on_char_button(_ &ButtonCfg, mut e Event, mut w Window) {
-	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
+	// if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
+	if e.char_code == ` ` && cfg.on_click != none {
 		cfg.on_click(cfg, mut e, mut w)
 		e.is_handled = true
 	}
 }
 
 fn (cfg &ButtonCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.shape.disabled || cfg.on_click == unsafe { nil } {
+	// if node.shape.disabled || cfg.on_click == unsafe { nil } {
+	if node.shape.disabled || cfg.on_click == none {
 		return
 	}
 	if w.is_focus(node.shape.id_focus) {
