@@ -6,7 +6,7 @@ if exists(output_dir) {
 	if bin_files.len > 0 {
 		println('deleted:')
 	}
-	for file in bin_files {
+	for file in bin_files.sorted() {
 		file_path := join_path(output_dir, file)
 		if is_file(file_path) {
 			rm(file_path) or {

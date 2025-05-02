@@ -30,8 +30,7 @@ pub:
 	radius_border      f32       = gui_theme.input_style.radius_border
 	text_style         TextStyle = gui_theme.input_style.text_style
 	placeholder_style  TextStyle = gui_theme.input_style.placeholder_style
-	// update your app model here
-	on_text_changed fn (&InputCfg, string, &Window) = unsafe { nil }
+	on_text_changed    ?fn (&InputCfg, string, &Window)
 }
 
 // input is a text input field.
@@ -102,7 +101,7 @@ pub fn input(cfg InputCfg) View {
 
 fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 	c := event.char_code
-	if cfg.on_text_changed != unsafe { nil } {
+	if cfg.on_text_changed != none {
 		mut text := cfg.text
 		if event.modifiers & u32(Modifier.ctrl) > 0 && event.modifiers & u32(Modifier.shift) > 0 {
 			match c {

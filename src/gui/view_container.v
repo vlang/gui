@@ -102,8 +102,7 @@ fn (cfg &Container) generate(mut _ Window) Layout {
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers
 pub struct ContainerCfg {
-	cfg             voidptr
-	on_click_layout fn (&Layout, &Event, &Window) bool = unsafe { nil }
+	cfg voidptr
 pub:
 	id             string
 	width          f32
