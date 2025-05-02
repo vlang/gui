@@ -207,7 +207,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 
 	view := gen_view(window)
 	layout := window.compose_layout(view)
-	renderers := render_layout(layout, window.color_background(), 0, window)
+	mut renderers := []Renderer{}
+	render_layout(layout, mut renderers, window.color_background(), 0, window)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -226,7 +227,8 @@ pub fn (mut window Window) update_window() {
 
 	view := window.view_generator(window)
 	layout := window.compose_layout(view)
-	renderers := render_layout(layout, window.color_background(), 0, window)
+	mut renderers := []Renderer{}
+	render_layout(layout, mut renderers, window.color_background(), 0, window)
 
 	window.layout = layout
 	window.renderers = renderers
@@ -234,9 +236,9 @@ pub fn (mut window Window) update_window() {
 
 // compose_layout produces a layout from the given view that is
 // arranged and ready for generating renderers.
-fn (window &Window) compose_layout(view &View) Layout {
-	mut layout := generate_layout(view, window)
-	layouts := layout_arrange(mut layout, window)
+fn (mut window Window) compose_layout(view &View) Layout {
+	mut layout := generate_layout(view, mut window)
+	layouts := layout_arrange(mut layout, mut window)
 	// Combine the layouts into one layout to rule them all
 	// and bind them in the darkness, or transparent-ness
 	// in this case. :)

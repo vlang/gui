@@ -1,7 +1,6 @@
 module gui
 
 import arrays
-import gg
 
 pub struct Container implements View {
 pub:
@@ -49,7 +48,7 @@ mut:
 	cfg  voidptr
 }
 
-fn (cfg &Container) generate(ctx &gg.Context) Layout {
+fn (cfg &Container) generate(mut _ Window) Layout {
 	if cfg.invisible {
 		return Layout{}
 	}

@@ -1,7 +1,5 @@
 module gui
 
-import gg
-
 // View is a user defined view. Views are never displayed directly. Instead a
 // Layout is generated from the View. Window does not hold a reference to a
 // View. Views should be stateless for this reason.
@@ -12,14 +10,14 @@ import gg
 pub interface View {
 	id      string
 	content []View
-	generate(ctx &gg.Context) Layout
+	generate(mut window Window) Layout
 }
 
 // view_to_layout builds a Layout from a View.
-fn generate_layout(view &View, window &Window) Layout {
-	mut layout := view.generate(window.ui)
+fn generate_layout(view &View, mut window Window) Layout {
+	mut layout := view.generate(mut window)
 	for child_view in view.content {
-		layout.children << generate_layout(child_view, window)
+		layout.children << generate_layout(child_view, mut window)
 	}
 	return layout
 }

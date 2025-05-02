@@ -13,7 +13,7 @@ pub mut:
 
 // layout_arrange executes a pipeline of functions to arrange and position the layout.
 // Multiple layouts are returned, each used to draw a layer of the final renderering.
-fn layout_arrange(mut layout Layout, window &Window) []Layout {
+fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	mut layouts := [layout]
 	// Set the parents of all the nodes. This is used to
 	// compute relative floating layout coordinates
@@ -29,18 +29,18 @@ fn layout_arrange(mut layout Layout, window &Window) []Layout {
 	// Dialogs do not support additional floating layouts.
 	if window.dialog_cfg.visible {
 		dialog_view := dialog_view_generator(window.dialog_cfg)
-		mut dialog_layout := generate_layout(dialog_view, window)
+		mut dialog_layout := generate_layout(dialog_view, mut window)
 		layout_parents(mut dialog_layout, layout)
 		floating_layouts << dialog_layout
 	}
 
 	// Compute the layout without the floating elements.
-	layout_pipeline(mut layout, window)
+	layout_pipeline(mut layout, mut window)
 
 	// Compute the floating layouts. Because they are appended to
 	// the layout array, they get rendered after the main layout.
 	for mut floating_layout in floating_layouts {
-		layout_pipeline(mut floating_layout, window)
+		layout_pipeline(mut floating_layout, mut window)
 		layouts << floating_layout
 	}
 	return layouts
@@ -52,10 +52,10 @@ fn layout_arrange(mut layout Layout, window &Window) []Layout {
 // expansion/contraction at a time. Same for scroll offsets
 // and text wrapping. This logic mimics the logic presented
 // in Nic Barter's video referenced above.
-fn layout_pipeline(mut layout Layout, window &Window) {
+fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_widths(mut layout)
 	layout_fill_widths(mut layout)
-	layout_wrap_text(mut layout, window)
+	layout_wrap_text(mut layout, mut window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
 	layout_scroll_offsets(mut layout, layout.shape.scroll_offset, window)
@@ -505,10 +505,10 @@ fn layout_fill_heights(mut node Layout) {
 // position of input views. The first part of this function wraps the text with
 // a zero-space character inserted at the cursor position. After wrapping it
 // recovers the cursor position by looking for the zero-space character.
-fn layout_wrap_text(mut node Layout, w &Window) {
-	text_wrap(mut node.shape, w.ui)
+fn layout_wrap_text(mut node Layout, mut w Window) {
+	text_wrap(mut node.shape, mut w)
 	for mut child in node.children {
-		layout_wrap_text(mut child, w)
+		layout_wrap_text(mut child, mut w)
 	}
 }
 

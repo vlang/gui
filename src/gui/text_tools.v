@@ -16,16 +16,15 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) int 
 	}
 }
 
-fn text_width(shape Shape, ctx &gg.Context) int {
+fn text_width(shape Shape, mut window Window) int {
 	mut max_width := 0
-	mut window := unsafe { &Window(ctx.user_data) }
 	htx := fnv1a.sum32_struct(shape.text_style).str()
 	text_cfg := shape.text_style.to_text_cfg()
 	for line in shape.text_lines {
 		key := line + htx
 		width := window.text_widths[key] or {
-			ctx.set_text_cfg(text_cfg)
-			t_width := ctx.text_width(line)
+			window.ui.set_text_cfg(text_cfg)
+			t_width := window.ui.text_width(line)
 			window.text_widths[key] = t_width
 			t_width
 		}
@@ -44,14 +43,14 @@ fn line_height(shape Shape) int {
 	return int(shape.text_style.size + shape.text_style.line_spacing)
 }
 
-fn text_wrap(mut shape Shape, ctx &gg.Context) {
+fn text_wrap(mut shape Shape, mut window Window) {
 	if shape.text_wrap && shape.type == .text {
-		ctx.set_text_cfg(shape.text_style.to_text_cfg())
+		window.ui.set_text_cfg(shape.text_style.to_text_cfg())
 		shape.text_lines = match shape.text_keep_spaces {
-			true { wrap_text_keep_spaces(shape.text, shape.width, ctx) }
-			else { wrap_text_shrink_spaces(shape.text, shape.width, ctx) }
+			true { wrap_text_keep_spaces(shape.text, shape.width, window.ui) }
+			else { wrap_text_shrink_spaces(shape.text, shape.width, window.ui) }
 		}
-		shape.width = text_width(shape, ctx)
+		shape.width = text_width(shape, mut window)
 		lh := line_height(shape)
 		shape.height = shape.text_lines.len * lh
 		shape.max_height = shape.height

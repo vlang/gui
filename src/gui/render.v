@@ -72,8 +72,7 @@ fn renderer_draw(renderer Renderer, window &Window) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render_layout(layout &Layout, bg_color Color, scroll_offset f32, window &Window) []Renderer {
-	mut renderers := []Renderer{}
+fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, scroll_offset f32, window &Window) {
 	mut clip_stack := ClipStack{}
 
 	parent_color := if layout.shape.color != color_transparent {
@@ -82,7 +81,7 @@ fn render_layout(layout &Layout, bg_color Color, scroll_offset f32, window &Wind
 		bg_color
 	}
 
-	renderers << render_shape(layout.shape, bg_color, scroll_offset, window)
+	render_shape(layout.shape, mut renderers, bg_color, scroll_offset, window)
 
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, mut clip_stack)
@@ -90,32 +89,29 @@ fn render_layout(layout &Layout, bg_color Color, scroll_offset f32, window &Wind
 
 	for child in layout.children {
 		scr_offset := layout.shape.scroll_offset + child.shape.scroll_offset
-		renderers << render_layout(child, parent_color, scr_offset, window)
+		render_layout(child, mut renderers, parent_color, scr_offset, window)
 	}
 
 	if layout.shape.clip {
 		renderers << render_unclip(mut clip_stack)
 	}
-
-	return renderers
 }
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
-fn render_shape(shape &Shape, parent_color Color, offset_v f32, window &Window) []Renderer {
+fn render_shape(shape &Shape, mut renderers []Renderer, parent_color Color, offset_v f32, window &Window) {
 	if shape.color == color_transparent {
-		return []
+		return
 	}
-	return match shape.type {
-		.container { render_container(shape, parent_color, offset_v, window) }
-		.text { render_text(shape, offset_v, window) }
-		.none { [] }
+	match shape.type {
+		.container { render_container(shape, mut renderers, parent_color, offset_v, window) }
+		.text { render_text(shape, mut renderers, offset_v, window) }
+		.none {}
 	}
 }
 
-fn render_container(shape &Shape, parent_color Color, offset_v f32, window &Window) []Renderer {
+fn render_container(shape &Shape, mut renderers []Renderer, parent_color Color, offset_v f32, window &Window) {
 	ctx := window.ui
-	mut renderers := []Renderer{}
-	renderers << render_rectangle(shape, offset_v, window)
+	render_rectangle(shape, mut renderers, offset_v, window)
 	// This group box stuff is likely temporary
 	// Examine after floating containers implemented
 	if shape.text.len != 0 {
@@ -155,13 +151,11 @@ fn render_container(shape &Shape, parent_color Color, offset_v f32, window &Wind
 			}.to_text_cfg()
 		}
 	}
-	return renderers
 }
 
 // draw_rectangle draws a shape as a rectangle.
-fn render_rectangle(shape &Shape, offset_v f32, window &Window) []Renderer {
+fn render_rectangle(shape &Shape, mut renderers []Renderer, offset_v f32, window &Window) {
 	assert shape.type == .container
-	mut renderers := []Renderer{}
 	renderer_rect := make_renderer_rect(shape, window)
 	draw_rect := gg.Rect{
 		x:      shape.x
@@ -183,12 +177,11 @@ fn render_rectangle(shape &Shape, offset_v f32, window &Window) []Renderer {
 			radius:     shape.radius
 		}
 	}
-	return renderers
 }
 
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
-fn render_text(shape &Shape, offset_v f32, window &Window) []Renderer {
+fn render_text(shape &Shape, mut renderers []Renderer, offset_v f32, window &Window) {
 	ctx := window.ui
 	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
 	mut text_cfg := TextStyle{
@@ -202,12 +195,12 @@ fn render_text(shape &Shape, offset_v f32, window &Window) []Renderer {
 
 	mut char_count := 0
 	mut y := shape.y + offset_v
-	mut renderers := []Renderer{}
 	beg := int(shape.text_sel_beg)
 	end := int(shape.text_sel_end)
 
 	for line in shape.text_lines {
-		lnr := line.runes()
+		// line.runes is expensive. Don't call it unless needed
+		lnr := if beg != end { line.runes() } else { [] }
 		len := lnr.len
 		draw_rect := gg.Rect{
 			x:      shape.x
@@ -253,17 +246,11 @@ fn render_text(shape &Shape, offset_v f32, window &Window) []Renderer {
 		char_count += len
 	}
 
-	// No need to render the cursor if no text was rendered
-	if renderers.len > 0 {
-		renderers << render_cursor(shape, offset_v, window)
-	}
-	return renderers
+	render_cursor(shape, mut renderers, offset_v, window)
 }
 
 // render_cursor figures out where the cursor goes
-fn render_cursor(shape &Shape, offset_v f32, window &Window) []Renderer {
-	mut renderers := []Renderer{}
-
+fn render_cursor(shape &Shape, mut renderers []Renderer, offset_v f32, window &Window) {
 	if window.is_focus(shape.id_focus) && shape.type == .text {
 		lh := line_height(shape)
 		mut cursor_x := -1
@@ -307,7 +294,6 @@ fn render_cursor(shape &Shape, offset_v f32, window &Window) []Renderer {
 			}
 		}
 	}
-	return renderers
 }
 
 // render_clip creates a clipping region based on the layout's dimensions

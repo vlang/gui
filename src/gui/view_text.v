@@ -1,6 +1,5 @@
 module gui
 
-import gg
 import math
 
 // Text is an internal structure used to describe a text block
@@ -24,11 +23,10 @@ struct Text implements View {
 	content            []View
 }
 
-fn (t &Text) generate(ctx &gg.Context) Layout {
+fn (t &Text) generate(mut window Window) Layout {
 	if t.invisible {
 		return Layout{}
 	}
-	window := unsafe { &Window(ctx.user_data) }
 	input_state := match window.is_focus(t.id_focus) {
 		true { window.input_state[t.id_focus] }
 		else { InputState{} }
@@ -59,7 +57,7 @@ fn (t &Text) generate(ctx &gg.Context) Layout {
 			on_mouse_up_shape:   t.mouse_up_shape
 		}
 	}
-	shape_tree.shape.width = text_width(shape_tree.shape, ctx)
+	shape_tree.shape.width = text_width(shape_tree.shape, mut window)
 	shape_tree.shape.height = text_height(shape_tree.shape)
 	if !t.wrap || shape_tree.shape.sizing.width == .fixed {
 		shape_tree.shape.min_width = f32_max(shape_tree.shape.width, shape_tree.shape.min_width)
