@@ -169,10 +169,10 @@ fn (cfg &InputCfg) delete(mut w Window) ?string {
 	} else if cursor_pos > 0 {
 		if input_state.select_beg != input_state.select_end {
 			beg, end := u32_sort(input_state.select_beg, input_state.select_end)
-			text = text[..beg] + text[end..]
+			text = text[..beg] or { return none } + text[end..] or { return none }
 			cursor_pos = int_min(int(beg), text.len)
 		} else {
-			text = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
+			text = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..] or { return none }
 			cursor_pos -= 1
 		}
 	}

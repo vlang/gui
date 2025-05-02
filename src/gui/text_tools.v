@@ -5,12 +5,11 @@ import gg
 import hash.fnv1a
 
 pub fn get_text_width(text string, text_style TextStyle, mut window Window) int {
-	ctx := window.ui
 	htx := fnv1a.sum32_struct(text_style).str()
 	key := text + htx
 	return window.text_widths[key] or {
-		ctx.set_text_cfg(text_style.to_text_cfg())
-		t_width := ctx.text_width(text)
+		window.ui.set_text_cfg(text_style.to_text_cfg())
+		t_width := window.ui.text_width(text)
 		window.text_widths[key] = t_width
 		t_width
 	}
@@ -19,10 +18,10 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) int 
 fn text_width(shape Shape, mut window Window) int {
 	mut max_width := 0
 	htx := fnv1a.sum32_struct(shape.text_style).str()
-	text_cfg := shape.text_style.to_text_cfg()
 	for line in shape.text_lines {
 		key := line + htx
 		width := window.text_widths[key] or {
+			text_cfg := shape.text_style.to_text_cfg()
 			window.ui.set_text_cfg(text_cfg)
 			t_width := window.ui.text_width(line)
 			window.text_widths[key] = t_width
@@ -69,7 +68,7 @@ fn wrap_text_shrink_spaces(s string, width f32, ctx &gg.Context) []string {
 			line = ''
 			continue
 		}
-		if field.trim_space().len == 0 {
+		if field.is_blank() {
 			continue
 		}
 		if line.len == 0 {
