@@ -168,8 +168,9 @@ fn (cfg &InputCfg) delete(mut w Window) ?string {
 		cursor_pos = cfg.text.len
 	} else if cursor_pos > 0 {
 		if input_state.select_beg != input_state.select_end {
-			text = text[..input_state.select_beg] + text[input_state.select_end..]
-			cursor_pos = int_min(int(input_state.select_beg), text.len)
+			beg, end := u32_sort(input_state.select_beg, input_state.select_end)
+			text = text[..beg] + text[end..]
+			cursor_pos = int_min(int(beg), text.len)
 		} else {
 			text = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..]
 			cursor_pos -= 1
@@ -208,8 +209,9 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		text = cfg.text + s
 		cursor_pos = text.len
 	} else if input_state.select_beg != input_state.select_end {
-		text = text[..input_state.select_beg] + s + text[input_state.select_end..]
-		cursor_pos = int_min(int(input_state.select_beg) - 1, text.len)
+		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
+		text = text[..beg] + s + text[end..]
+		cursor_pos = int_min(int(beg) + 1, text.len)
 	} else {
 		text = text[..cursor_pos] + s + text[cursor_pos..]
 		cursor_pos = int_min(cursor_pos + s.len, text.len)
@@ -238,7 +240,8 @@ pub fn (cfg &InputCfg) cut(mut w Window) ?string {
 pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	input_state := w.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
-		cpy := cfg.text[input_state.select_beg..input_state.select_end] or { '' }
+		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
+		cpy := cfg.text[beg..end] or { '' }
 		to_clipboard(cpy)
 	}
 	return none
@@ -303,4 +306,8 @@ fn (cfg &InputCfg) amend_layout(mut node Layout, mut w Window) {
 	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {
 		node.shape.color = cfg.color_border_focus
 	}
+}
+
+fn u32_sort(a u32, b u32) (u32, u32) {
+	return if b < a { b, a } else { a, b }
 }

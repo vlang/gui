@@ -184,7 +184,7 @@ fn render_rectangle(shape &Shape, mut renderers []Renderer, offset_v f32, window
 fn render_text(shape &Shape, mut renderers []Renderer, offset_v f32, window &Window) {
 	ctx := window.ui
 	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
-	mut text_cfg := TextStyle{
+	text_cfg := TextStyle{
 		...shape.text_style
 		color: color
 	}.to_text_cfg()
