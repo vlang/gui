@@ -212,7 +212,6 @@ fn find_first_idx_and_len(node &Layout, predicate fn (n Layout) bool) (int, int)
 // layout_fill_widths manages the growing and shrinking of layout horizontally
 // to satisfy a layout constraint
 fn layout_fill_widths(mut node Layout) {
-	clamp := 100 // avoid infinite loop
 	mut previous_remaining_width := f32(0)
 	mut remaining_width := node.shape.width - node.shape.padding.width()
 
@@ -228,7 +227,7 @@ fn layout_fill_widths(mut node Layout) {
 		// distributing the remaining width to evenly.
 		//
 		mut excluded := []u64{cap: node.children.len}
-		for i := 0; remaining_width > tolerance && i < clamp; i++ {
+		for remaining_width > tolerance {
 			if f32_are_close(remaining_width, previous_remaining_width, tolerance) {
 				break
 			}
@@ -242,7 +241,7 @@ fn layout_fill_widths(mut node Layout) {
 			}
 
 			mut smallest := node.children[idx].shape.width
-			mut second_smallest := f32(1000 * 1000)
+			mut second_smallest := f32(max_u32)
 			mut width_to_add := remaining_width
 
 			for child in node.children {
@@ -282,7 +281,7 @@ fn layout_fill_widths(mut node Layout) {
 		// Shrink if needed
 		excluded.clear()
 		previous_remaining_width = 0
-		for i := 0; remaining_width < -tolerance && i < clamp; i++ {
+		for remaining_width < -tolerance {
 			if f32_are_close(remaining_width, previous_remaining_width, tolerance) {
 				break
 			}
@@ -356,7 +355,6 @@ fn layout_fill_widths(mut node Layout) {
 // layout_fill_heights manages the growing and shrinking of layout vertically to
 // satisfy a layout constraint
 fn layout_fill_heights(mut node Layout) {
-	clamp := 100 // avoid infinite loop
 	mut previous_remaining_height := f32(0)
 	mut remaining_height := node.shape.height - node.shape.padding.height()
 
@@ -372,7 +370,7 @@ fn layout_fill_heights(mut node Layout) {
 		// distributing the remaining height to evenly.
 		//
 		mut excluded := []u64{cap: node.children.len}
-		for i := 0; remaining_height > tolerance && i < clamp; i++ {
+		for remaining_height > tolerance {
 			if f32_are_close(remaining_height, previous_remaining_height, tolerance) {
 				break
 			}
@@ -386,7 +384,7 @@ fn layout_fill_heights(mut node Layout) {
 			}
 
 			mut smallest := node.children[idx].shape.height
-			mut second_smallest := f32(1000 * 1000)
+			mut second_smallest := f32(max_u32)
 			mut height_to_add := remaining_height
 
 			for child in node.children {
@@ -427,7 +425,7 @@ fn layout_fill_heights(mut node Layout) {
 		// Shrink if needed
 		excluded.clear()
 		previous_remaining_height = 0
-		for i := 0; remaining_height < -tolerance && i < clamp; i++ {
+		for remaining_height < -tolerance {
 			if f32_are_close(remaining_height, previous_remaining_height, tolerance) {
 				break
 			}
