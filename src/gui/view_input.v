@@ -1,6 +1,8 @@
 module gui
 
-// InputCfg configures an input view. See [input](#input),
+// InputCfg configures an input view. See [input](#input). Use `on_text_changed` to
+// capture text updates. To capture the enter-key, provide an `on_enter` callback.
+// Placeholder text is shown when the input field is empty.
 @[heap]
 pub struct InputCfg {
 pub:
@@ -18,7 +20,7 @@ pub:
 	text               string // text to display/edit
 	placeholder        string // text to show when empty
 	wrap               bool   // enable multiline
-	is_password        bool   // mask input characters
+	is_password        bool   // mask input characters with '*'s
 	padding            Padding   = gui_theme.input_style.padding
 	padding_border     Padding   = gui_theme.input_style.padding_border
 	color              Color     = gui_theme.input_style.color
@@ -31,11 +33,12 @@ pub:
 	text_style         TextStyle = gui_theme.input_style.text_style
 	placeholder_style  TextStyle = gui_theme.input_style.placeholder_style
 	on_text_changed    ?fn (&InputCfg, string, &Window)
+	on_enter           ?fn (&InputCfg, mut Event, &Window)
 }
 
 // input is a text input field.
-// - Input fields without an `on_text_changed` callback are readonly.
-// - is_password flag causes the input view to display '*'s. The copy operation is disabled string for security.
+// - Input fields without an `on_text_changed` callback are read-only
+// - is_password flag causes the input view to display '*'s. For securitym the copy operation is disabled.
 // - wrap allows the input fields to be multiline. See [InputCfg](#InputCfg)
 //
 // Example:
@@ -137,10 +140,14 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 					}
 				}
 				cr_char, lf_char {
-					if cfg.wrap {
-						text = cfg.insert('\n', mut w) or {
-							eprintln(err)
-							return
+					if cfg.on_enter != none {
+						cfg.on_enter(cfg, mut event, w)
+					} else {
+						if cfg.wrap {
+							text = cfg.insert('\n', mut w) or {
+								eprintln(err)
+								return
+							}
 						}
 					}
 				}
