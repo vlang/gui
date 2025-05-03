@@ -77,8 +77,8 @@ fn (node &Layout) spacing() f32 {
 // f32 values equal if within tolerance
 const tolerance = f32(0.01)
 
-// f32_are_equal tests if the differnce of a and b is less than tol
-fn f32_are_equal(a f32, b f32, diff f32) bool {
+// f32_are_close tests if the differnce of a and b is less than tol
+fn f32_are_close(a f32, b f32, diff f32) bool {
 	assert diff > 0
 	d := a - b
 	return if d < 0 { -d <= diff } else { d <= diff }
