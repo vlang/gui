@@ -15,8 +15,8 @@ pub fn (window &Window) context() &gg.Context {
 
 // dialog creates an dialog dialog centered on the window.
 // Dialog presents a dialog with a message and buttons.
-// Predefined types include: **message**, **confirm** and
-// **prompt**. See [DialogType](#dialogType)
+// Predefined types include: **message**, **confirm**
+// **prompt** and others. See [DialogType](#DialogType)
 //
 // The custom type displays the given content. Custom content
 // provides any needed callbacks as the standard ones work
@@ -26,7 +26,7 @@ pub fn (window &Window) context() &gg.Context {
 // appropriately.
 //
 // Ctrl-C copies the title and body portions to the clipboard
-// (predefined types only). See [dialogCfg](#dialogCfg).
+// (predefined types only). See [DialogCfg](#DialogCfg).
 pub fn (mut window Window) dialog(cfg DialogCfg) {
 	window.dialog_cfg = cfg
 	window.dialog_cfg.visible = true
