@@ -117,7 +117,7 @@ fn main_view(w &gui.Window) gui.View {
 							),
 							gui.row(
 								v_align: .middle
-								padding: gui.padding(0, 0, 10, 0)
+								padding: gui.padding_none
 								content: [
 									gui.text(
 										text: 'label'
