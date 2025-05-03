@@ -223,12 +223,12 @@ fn layout_fill_widths(mut node Layout) {
 		remaining_width -= node.spacing()
 
 		// divide up the remaining fill widths by first growing all the
-		// all the fill layout to the same size (if possible) and then
+		// all the fill layouts to the same size (if possible) and then
 		// distributing the remaining width to evenly.
 		//
 		mut excluded := []u64{cap: node.children.len}
 		for remaining_width > tolerance {
-			if f32_are_close(remaining_width, previous_remaining_width, tolerance) {
+			if f32_are_close(remaining_width, previous_remaining_width) {
 				break
 			}
 			previous_remaining_width = remaining_width
@@ -278,11 +278,11 @@ fn layout_fill_widths(mut node Layout) {
 			}
 		}
 
-		// Shrink if needed
+		// Shrink if needed using similar algorithm
 		excluded.clear()
 		previous_remaining_width = 0
 		for remaining_width < -tolerance {
-			if f32_are_close(remaining_width, previous_remaining_width, tolerance) {
+			if f32_are_close(remaining_width, previous_remaining_width) {
 				break
 			}
 			previous_remaining_width = remaining_width
@@ -366,12 +366,12 @@ fn layout_fill_heights(mut node Layout) {
 		remaining_height -= node.spacing()
 
 		// divide up the remaining fill heights by first growing all the
-		// all the fill layout to the same size (if possible) and then
+		// all the fill layouts to the same size (if possible) and then
 		// distributing the remaining height to evenly.
 		//
 		mut excluded := []u64{cap: node.children.len}
 		for remaining_height > tolerance {
-			if f32_are_close(remaining_height, previous_remaining_height, tolerance) {
+			if f32_are_close(remaining_height, previous_remaining_height) {
 				break
 			}
 			previous_remaining_height = remaining_height
@@ -422,11 +422,11 @@ fn layout_fill_heights(mut node Layout) {
 			}
 		}
 
-		// Shrink if needed
+		// Shrink if needed using similar algorithm
 		excluded.clear()
 		previous_remaining_height = 0
 		for remaining_height < -tolerance {
-			if f32_are_close(remaining_height, previous_remaining_height, tolerance) {
+			if f32_are_close(remaining_height, previous_remaining_height) {
 				break
 			}
 			previous_remaining_height = remaining_height
