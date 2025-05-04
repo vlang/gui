@@ -58,9 +58,8 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_wrap_text(mut layout, mut window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
-	layout_scroll_offsets(mut layout, layout.shape.offset_y, window)
 	x, y := float_attach_layout(layout)
-	layout_positions(mut layout, x, y)
+	layout_positions(mut layout, x, y, window)
 	layout_disables(mut layout, false)
 	layout_amend(mut layout, window)
 }
@@ -510,30 +509,9 @@ fn layout_wrap_text(mut node Layout, mut w Window) {
 	}
 }
 
-// layout_scroll_offsets sets the scroll offsets of any scrollable
-// layouts and their children. It also sets the clipping rect for
-// those scrollable layouts. The rendering logic removes all items
-// outside the clipping rectangle but there is still the issue of
-// a layout shape that is partially overlapping the visible area
-// of the scrollable layout. For clipping rectangle is for these
-// partially overlapping layouts.
-fn layout_scroll_offsets(mut node Layout, offset_y f32, w &Window) {
-	mut oy := offset_y
-	if node.shape.id_scroll > 0 {
-		oy += w.offset_y_state[node.shape.id_scroll]
-	}
-	for mut child in node.children {
-		child.shape.offset_y = oy
-		if child.shape.id_scroll > 0 {
-			child.shape.clip = true
-		}
-		layout_scroll_offsets(mut child, oy, w)
-	}
-}
-
 // layout_positions sets the positions of all layout in the Layoute. It also
 // handles alignment (soon)
-fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
+fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 	node.shape.x += offset_x
 	node.shape.y += offset_y
 
@@ -541,8 +519,12 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 	padding := node.shape.padding
 	spacing := node.shape.spacing
 
-	mut x := node.shape.x + padding.left
-	mut y := node.shape.y + padding.top
+	if node.shape.id_scroll > 0 {
+		node.shape.clip = true
+	}
+
+	mut x := node.shape.x + padding.left + w.offset_x_state[node.shape.id_scroll]
+	mut y := node.shape.y + padding.top + w.offset_y_state[node.shape.id_scroll]
 
 	// alignment along the axis
 	match axis {
@@ -603,7 +585,7 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32) {
 			.none {}
 		}
 
-		layout_positions(mut child, x + x_align, y + y_align)
+		layout_positions(mut child, x + x_align, y + y_align, w)
 
 		if child.shape.type != .none {
 			match axis {
