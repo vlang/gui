@@ -72,7 +72,7 @@ fn renderer_draw(renderer Renderer, window &Window) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, offset_x f32, offset_y f32, window &Window) {
+fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, window &Window) {
 	mut clip_stack := ClipStack{}
 
 	parent_color := if layout.shape.color != color_transparent {
@@ -81,16 +81,14 @@ fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, offse
 		bg_color
 	}
 
-	render_shape(layout.shape, mut renderers, bg_color, offset_x, offset_y, window)
+	render_shape(layout.shape, mut renderers, bg_color, window)
 
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, mut clip_stack)
 	}
 
 	for child in layout.children {
-		ox := layout.shape.offset_x + child.shape.offset_x
-		oy := layout.shape.offset_y + child.shape.offset_y
-		render_layout(child, mut renderers, parent_color, ox, oy, window)
+		render_layout(child, mut renderers, parent_color, window)
 	}
 
 	if layout.shape.clip {
@@ -99,31 +97,31 @@ fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, offse
 }
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
-fn render_shape(shape &Shape, mut renderers []Renderer, parent_color Color, offset_x f32, offset_y f32, window &Window) {
+fn render_shape(shape &Shape, mut renderers []Renderer, parent_color Color, window &Window) {
 	if shape.color == color_transparent {
 		return
 	}
 	match shape.type {
 		.container {
-			render_container(shape, mut renderers, parent_color, offset_x, offset_y, window)
+			render_container(shape, mut renderers, parent_color, window)
 		}
 		.text {
-			render_text(shape, mut renderers, offset_x, offset_y, window)
+			render_text(shape, mut renderers, window)
 		}
 		.none {}
 	}
 }
 
-fn render_container(shape &Shape, mut renderers []Renderer, parent_color Color, offset_x f32, offset_y f32, window &Window) {
+fn render_container(shape &Shape, mut renderers []Renderer, parent_color Color, window &Window) {
 	ctx := window.ui
-	render_rectangle(shape, mut renderers, offset_x, offset_y, window)
+	render_rectangle(shape, mut renderers, window)
 	// This group box stuff is likely temporary
 	// Examine after floating containers implemented
 	if shape.text.len != 0 {
 		ctx.set_text_cfg(shape.text_style.to_text_cfg())
 		w, h := ctx.text_size(shape.text)
-		x := shape.x + offset_x + 20
-		y := shape.y + offset_y
+		x := shape.x + 20
+		y := shape.y
 		// erase portion of rectangle where text goes.
 		p_color := if shape.disabled {
 			dim_alpha(parent_color)
@@ -159,12 +157,12 @@ fn render_container(shape &Shape, mut renderers []Renderer, parent_color Color, 
 }
 
 // draw_rectangle draws a shape as a rectangle.
-fn render_rectangle(shape &Shape, mut renderers []Renderer, offset_x f32, offset_y f32, window &Window) {
+fn render_rectangle(shape &Shape, mut renderers []Renderer, window &Window) {
 	assert shape.type == .container
 	renderer_rect := make_renderer_rect(shape, window)
 	draw_rect := gg.Rect{
-		x:      shape.x + offset_x
-		y:      shape.y + offset_y
+		x:      shape.x
+		y:      shape.y
 		width:  shape.width
 		height: shape.height
 	}
@@ -186,7 +184,7 @@ fn render_rectangle(shape &Shape, mut renderers []Renderer, offset_x f32, offset
 
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
-fn render_text(shape &Shape, mut renderers []Renderer, offset_x f32, offset_y f32, window &Window) {
+fn render_text(shape &Shape, mut renderers []Renderer, window &Window) {
 	ctx := window.ui
 	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
 	text_cfg := TextStyle{
@@ -199,8 +197,8 @@ fn render_text(shape &Shape, mut renderers []Renderer, offset_x f32, offset_y f3
 	renderer_rect := make_renderer_rect(shape, window)
 
 	mut char_count := 0
-	x := shape.x + offset_x
-	mut y := shape.y + offset_y
+	x := shape.x
+	mut y := shape.y
 	beg := int(shape.text_sel_beg)
 	end := int(shape.text_sel_end)
 
@@ -252,11 +250,11 @@ fn render_text(shape &Shape, mut renderers []Renderer, offset_x f32, offset_y f3
 		char_count += len
 	}
 
-	render_cursor(shape, mut renderers, offset_x, offset_y, window)
+	render_cursor(shape, mut renderers, window)
 }
 
 // render_cursor figures out where the cursor goes
-fn render_cursor(shape &Shape, mut renderers []Renderer, offset_x f32, offset_y f32, window &Window) {
+fn render_cursor(shape &Shape, mut renderers []Renderer, window &Window) {
 	if window.is_focus(shape.id_focus) && shape.type == .text {
 		lh := line_height(shape)
 		mut cursor_x := -1
@@ -289,10 +287,10 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, offset_x f32, offset_y 
 				cx := shape.x + ctx.text_width(ln[..x])
 				cy := shape.y + (lh * cursor_y)
 				renderers << DrawLine{
-					x:   cx + offset_x
-					y:   cy + offset_y
-					x1:  cx + offset_x
-					y1:  cy + lh + offset_y
+					x:   cx
+					y:   cy
+					x1:  cx
+					y1:  cy + lh
 					cfg: gg.PenConfig{
 						color: shape.text_style.color.to_gx_color()
 					}

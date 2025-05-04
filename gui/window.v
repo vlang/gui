@@ -210,7 +210,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	layout := window.compose_layout(view)
 	mut renderers := []Renderer{}
-	render_layout(layout, mut renderers, window.color_background(), 0, 0, window)
+	render_layout(layout, mut renderers, window.color_background(), window)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -230,7 +230,7 @@ pub fn (mut window Window) update_window() {
 	view := window.view_generator(window)
 	layout := window.compose_layout(view)
 	mut renderers := []Renderer{}
-	render_layout(layout, mut renderers, window.color_background(), 0, 0, window)
+	render_layout(layout, mut renderers, window.color_background(), window)
 
 	window.layout = layout
 	window.renderers = renderers

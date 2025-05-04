@@ -7,6 +7,7 @@ pub struct Shape {
 pub mut:
 	id         string // user assigned
 	id_focus   u32    // >0 indicates shape is focusable. Value determines tabbing order
+	id_scroll  u32    // >0 indicates shape is scrollable
 	type       ShapeType
 	uid        u64 = rand.u64() // internal use only
 	axis       Axis
@@ -40,10 +41,6 @@ pub mut:
 	text_is_password bool
 	text_sel_beg     u32
 	text_sel_end     u32
-	// --- scroll ---
-	id_scroll u32 // >0 indicates shape is scrollable
-	offset_x  f32
-	offset_y  f32
 	// --- float ---
 	float          bool
 	float_anchor   FloatAttach
