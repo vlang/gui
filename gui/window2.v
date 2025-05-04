@@ -51,7 +51,7 @@ fn empty_view(window &Window) View {
 }
 
 // get_text_width gets the width of the text in logical units
-pub fn (mut window Window) get_text_width(text string, text_style TextStyle) int {
+pub fn (mut window Window) get_text_width(text string, text_style TextStyle) f32 {
 	return get_text_width(text, text_style, mut window)
 }
 

@@ -4,7 +4,7 @@ import clipboard
 import gg
 import hash.fnv1a
 
-pub fn get_text_width(text string, text_style TextStyle, mut window Window) int {
+pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 {
 	htx := fnv1a.sum32_struct(text_style).str()
 	key := text + htx
 	return window.text_widths[key] or {
@@ -15,31 +15,35 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) int 
 	}
 }
 
-fn text_width(shape Shape, mut window Window) int {
-	mut max_width := 0
+fn text_width(shape Shape, mut window Window) f32 {
+	mut max_width := f32(0)
+	mut text_cfg_set := false
 	htx := fnv1a.sum32_struct(shape.text_style).str()
 	for line in shape.text_lines {
 		key := line + htx
 		width := window.text_widths[key] or {
-			text_cfg := shape.text_style.to_text_cfg()
-			window.ui.set_text_cfg(text_cfg)
+			if !text_cfg_set {
+				text_cfg := shape.text_style.to_text_cfg()
+				window.ui.set_text_cfg(text_cfg)
+				text_cfg_set = true
+			}
 			t_width := window.ui.text_width(line)
 			window.text_widths[key] = t_width
 			t_width
 		}
-		max_width = int_max(width, max_width)
+		max_width = f32_max(width, max_width)
 	}
 	return max_width
 }
 
-fn text_height(shape Shape) int {
+fn text_height(shape Shape) f32 {
 	lh := line_height(shape)
 	return lh * shape.text_lines.len
 }
 
 @[inline]
-fn line_height(shape Shape) int {
-	return int(shape.text_style.size + shape.text_style.line_spacing)
+fn line_height(shape Shape) f32 {
+	return shape.text_style.size + shape.text_style.line_spacing
 }
 
 fn text_wrap(mut shape Shape, mut window Window) {
