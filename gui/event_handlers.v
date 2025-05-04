@@ -180,7 +180,6 @@ fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
-
 	if !node.shape.disabled && node.shape.id_scroll > 0 {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			e.is_handled = scroll_vertical(node, e.scroll_y, mut w)
@@ -191,13 +190,10 @@ fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
 fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {
 	v_id := node.shape.id_scroll
 	if v_id > 0 {
-		ch := content_height(node)
-		mut max_offset := node.shape.height - node.shape.padding.height() - ch
+		max_offset := node.shape.height - node.shape.padding.height() - content_height(node)
 		offset_y := w.offset_y_state[v_id]
-		mut oy := offset_y + delta * gui_theme.scroll_multiplier
-		oy = f32_max(oy, max_offset)
-		oy = f32_min(0, oy)
-		w.offset_y_state[v_id] = oy
+		oy := offset_y + delta * gui_theme.scroll_multiplier
+		w.offset_y_state[v_id] = clamp_f32(oy, max_offset, 0)
 		return true
 	}
 	return false
@@ -212,7 +208,7 @@ fn content_height(node &Layout) f32 {
 		}
 	} else {
 		for child in node.children {
-			height = f32_max(height, child.shape.height + child.shape.padding.height())
+			height = f32_max(height, child.shape.height)
 		}
 	}
 	return height
