@@ -76,7 +76,7 @@ fn (cfg &ScrollbarCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
 		// add 10 to give some cushion on the ends of the scroll range
 		if e.mouse_y >= (n.shape.y - 10) && e.mouse_y <= (n.shape.y + n.shape.height + 10) {
 			offset := offset_from_mouse_change(n, e.mouse_dy, cfg.id_track, w)
-			w.scroll_state[cfg.id_track] = offset
+			w.offset_y_state[cfg.id_track] = offset
 		}
 	}
 }
@@ -107,7 +107,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	thumb_height := clamp_f32(t_height, 20, node.shape.height)
 
 	available_height := node.shape.height - thumb_height
-	scroll_offset := -w.scroll_state[cfg.id_track]
+	scroll_offset := -w.offset_y_state[cfg.id_track]
 	offset := f32_max(0, f32_min((scroll_offset / (total_height - node.shape.height)) * available_height,
 		available_height))
 
@@ -141,7 +141,7 @@ fn find_node_by_id_scroll(node Layout, id_scroll u32) ?Layout {
 fn offset_from_mouse_change(node Layout, mouse_y f32, id_scroll u32, w &Window) f32 {
 	total_height := content_height(node)
 	shape_height := node.shape.height - node.shape.padding.height()
-	old_offset := w.scroll_state[id_scroll]
+	old_offset := w.offset_y_state[id_scroll]
 	new_offset := mouse_y * (total_height / shape_height)
 	offset := old_offset - new_offset
 	return f32_min(0, f32_max(offset, shape_height - total_height))
@@ -158,6 +158,6 @@ fn offset_from_mouse_y(node Layout, mouse_y f32, id_scroll u32, mut w Window) {
 		if percent >= 0.97 {
 			percent = 1
 		}
-		w.scroll_state[id_scroll] = -percent * (total_height - sb.shape.height)
+		w.offset_y_state[id_scroll] = -percent * (total_height - sb.shape.height)
 	}
 }

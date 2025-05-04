@@ -72,7 +72,7 @@ fn renderer_draw(renderer Renderer, window &Window) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, scroll_offset f32, window &Window) {
+fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, offset_y f32, window &Window) {
 	mut clip_stack := ClipStack{}
 
 	parent_color := if layout.shape.color != color_transparent {
@@ -81,14 +81,14 @@ fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, scrol
 		bg_color
 	}
 
-	render_shape(layout.shape, mut renderers, bg_color, scroll_offset, window)
+	render_shape(layout.shape, mut renderers, bg_color, offset_y, window)
 
 	if layout.shape.clip {
 		renderers << render_clip(layout.shape, mut clip_stack)
 	}
 
 	for child in layout.children {
-		scr_offset := layout.shape.scroll_offset + child.shape.scroll_offset
+		scr_offset := layout.shape.offset_y + child.shape.offset_y
 		render_layout(child, mut renderers, parent_color, scr_offset, window)
 	}
 

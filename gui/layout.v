@@ -58,7 +58,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_wrap_text(mut layout, mut window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
-	layout_scroll_offsets(mut layout, layout.shape.scroll_offset, window)
+	layout_scroll_offsets(mut layout, layout.shape.offset_y, window)
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y)
 	layout_disables(mut layout, false)
@@ -517,17 +517,17 @@ fn layout_wrap_text(mut node Layout, mut w Window) {
 // a layout shape that is partially overlapping the visible area
 // of the scrollable layout. For clipping rectangle is for these
 // partially overlapping layouts.
-fn layout_scroll_offsets(mut node Layout, offset_v f32, w &Window) {
-	mut offset := offset_v
+fn layout_scroll_offsets(mut node Layout, offset_y f32, w &Window) {
+	mut oy := offset_y
 	if node.shape.id_scroll > 0 {
-		offset += w.scroll_state[node.shape.id_scroll]
+		oy += w.offset_y_state[node.shape.id_scroll]
 	}
 	for mut child in node.children {
-		child.shape.scroll_offset = offset
+		child.shape.offset_y = oy
 		if child.shape.id_scroll > 0 {
 			child.shape.clip = true
 		}
-		layout_scroll_offsets(mut child, offset, w)
+		layout_scroll_offsets(mut child, oy, w)
 	}
 }
 

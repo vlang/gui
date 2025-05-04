@@ -193,11 +193,11 @@ fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {
 	if v_id > 0 {
 		ch := content_height(node)
 		mut max_offset := node.shape.height - node.shape.padding.height() - ch
-		scroll_offset_v := w.scroll_state[v_id]
-		mut offset_v := scroll_offset_v + delta * gui_theme.scroll_multiplier
-		offset_v = f32_max(offset_v, max_offset)
-		offset_v = f32_min(0, offset_v)
-		w.scroll_state[v_id] = offset_v
+		offset_y := w.offset_y_state[v_id]
+		mut oy := offset_y + delta * gui_theme.scroll_multiplier
+		oy = f32_max(oy, max_offset)
+		oy = f32_min(0, oy)
+		w.offset_y_state[v_id] = oy
 		return true
 	}
 	return false

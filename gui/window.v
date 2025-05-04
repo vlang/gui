@@ -17,7 +17,8 @@ mut:
 	focused        bool = true
 	id_focus       u32                // id of view that has focus
 	input_state    map[u32]InputState // [id_focus] -> input state
-	scroll_state   map[u32]f32        // [id_scroll] -> scroll offset
+	offset_x_state map[u32]f32        // [id_scroll] -> offset_x
+	offset_y_state map[u32]f32        // [id_scroll] -> offset_y
 	text_widths    map[string]int     // [text + hash(text_style)] -> text width
 	mouse_cursor   sapp.MouseCursor   // arrow, finger, ibeam, etc.
 	mouse_lock     MouseLockCfg
@@ -202,7 +203,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	// This is the only place these are cleared.
 	window.id_focus = 0
 	window.input_state.clear()
-	window.scroll_state.clear()
+	window.offset_x_state.clear()
+	window.offset_y_state.clear()
 	window.text_widths.clear()
 
 	view := gen_view(window)
