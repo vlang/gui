@@ -190,10 +190,10 @@ fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
 fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {
 	v_id := node.shape.id_scroll
 	if v_id > 0 {
+		// scrollable region does not including padding
 		max_offset := node.shape.height - node.shape.padding.height() - content_height(node)
-		offset_y := w.offset_y_state[v_id]
-		oy := offset_y + delta * gui_theme.scroll_multiplier
-		w.offset_y_state[v_id] = clamp_f32(oy, max_offset, 0)
+		offset_y := w.offset_y_state[v_id] + delta * gui_theme.scroll_multiplier
+		w.offset_y_state[v_id] = clamp_f32(offset_y, max_offset, 0)
 		return true
 	}
 	return false
@@ -202,11 +202,13 @@ fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {
 fn content_height(node &Layout) f32 {
 	mut height := f32(0)
 	if node.shape.axis == .top_to_bottom {
+		// along the axis add up all children heights plus spacing
 		height += node.spacing()
 		for child in node.children {
-			height += child.shape.height + child.shape.padding.height()
+			height += child.shape.height
 		}
 	} else {
+		// across the axis need only the height of largest child
 		for child in node.children {
 			height = f32_max(height, child.shape.height)
 		}
