@@ -1,6 +1,5 @@
 module gui
 
-import datatypes
 import gg
 import gx
 import sokol.sgl
@@ -34,8 +33,6 @@ type DrawLine = DrawLineCfg
 type DrawClip = gg.Rect
 type DrawNone = DrawNoneCfg
 type Renderer = DrawRect | DrawText | DrawClip | DrawLine | DrawNone
-
-type ClipStack = datatypes.Stack[DrawClip]
 
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
@@ -72,27 +69,22 @@ fn renderer_draw(renderer Renderer, window &Window) {
 // then a clip rectangle is added to the context. Clip rectangles are
 // pushed/poped onto an internal stack allowing nested, none overlapping
 // clip rectangles (I think I said that right)
-fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, window &Window) {
-	mut clip_stack := ClipStack{}
-
-	parent_color := if layout.shape.color != color_transparent {
-		layout.shape.color
-	} else {
-		bg_color
-	}
-
+fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, clip ?Renderer, window &Window) {
 	render_shape(layout.shape, mut renderers, bg_color, window)
 
+	mut shape_clip := clip
 	if layout.shape.clip {
-		renderers << render_clip(layout.shape, mut clip_stack)
+		shape_clip = render_clip_shape(layout.shape)
+		renderers << shape_clip or { DrawNone{} }
 	}
 
+	color := if layout.shape.color != color_transparent { layout.shape.color } else { bg_color }
 	for child in layout.children {
-		render_layout(child, mut renderers, parent_color, window)
+		render_layout(child, mut renderers, color, shape_clip, window)
 	}
 
 	if layout.shape.clip {
-		renderers << render_unclip(mut clip_stack)
+		renderers << clip or { render_rect(clip_reset) }
 	}
 }
 
@@ -102,12 +94,8 @@ fn render_shape(shape &Shape, mut renderers []Renderer, parent_color Color, wind
 		return
 	}
 	match shape.type {
-		.container {
-			render_container(shape, mut renderers, parent_color, window)
-		}
-		.text {
-			render_text(shape, mut renderers, window)
-		}
+		.container { render_container(shape, mut renderers, parent_color, window) }
+		.text { render_text(shape, mut renderers, window) }
 		.none {}
 	}
 }
@@ -300,49 +288,11 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, window &Window) {
 	}
 }
 
-// render_clip creates a clipping region based on the layout's dimensions
-// minus padding and some adjustments for round off.
-fn render_clip(shape &Shape, mut clip_stack ClipStack) Renderer {
-	clip_rect := shape_clip_rect(shape)
-	clip := DrawClip{
-		x:      clip_rect.x
-		y:      clip_rect.y
-		width:  clip_rect.width
-		height: clip_rect.height
-	}
-	clip_stack.push(clip)
-	return clip
-}
-
-const clip_reset = DrawClip{
-	x:      0
-	y:      0
-	width:  max_int
-	height: max_int
-}
-
-// shape_unclip sets the clip region to the previous clip region
-fn render_unclip(mut clip_stack ClipStack) DrawClip {
-	clip_stack.pop() or { return clip_reset }
-	return clip_stack.peek() or { clip_reset }
-}
-
 // dim_alpha is used for visually indicating disabled
 fn dim_alpha(color Color) Color {
 	return Color{
 		...color
 		a: color.a / u8(2)
-	}
-}
-
-// shape_clip_rect constructs a clip rectangle based on the shape's
-// diemensions plus some adjustments for round off
-fn shape_clip_rect(shape &Shape) gg.Rect {
-	return gg.Rect{
-		x:      shape.x + shape.padding.left
-		y:      shape.y + shape.padding.top
-		width:  shape.width - shape.padding.width()
-		height: shape.height - shape.padding.height()
 	}
 }
 
@@ -357,13 +307,43 @@ fn make_renderer_rect(shape &Shape, window &Window) gg.Rect {
 		else {
 			width, height := window.window_size()
 			gg.Rect{
-				x:      0
-				y:      0
 				width:  width
 				height: height
 			}
 		}
 	}
+}
+
+// render_clip creates a clipping region based on the layout's dimensions
+// minus padding and some adjustments for round off.
+fn render_clip_shape(shape &Shape) Renderer {
+	return render_rect(shape_clip_rect(shape))
+}
+
+// shape_clip_rect constructs a clip rectangle based on the shape's diemensions
+fn shape_clip_rect(shape &Shape) gg.Rect {
+	return gg.Rect{
+		x:      shape.x + shape.padding.left
+		y:      shape.y + shape.padding.top
+		width:  shape.width - shape.padding.width()
+		height: shape.height - shape.padding.height()
+	}
+}
+
+fn render_rect(clip_rect gg.Rect) Renderer {
+	return DrawClip{
+		x:      clip_rect.x
+		y:      clip_rect.y
+		width:  clip_rect.width
+		height: clip_rect.height
+	}
+}
+
+const clip_reset = gg.Rect{
+	x:      0
+	y:      0
+	width:  max_int
+	height: max_int
 }
 
 // rects_overlap check for non-overlapping conditions. If none are met, they overlap.
