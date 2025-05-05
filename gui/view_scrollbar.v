@@ -1,9 +1,20 @@
 module gui
 
+// ScrollbarOverflow determines how scrollbars are shown.
+//
+// - auto shows scrollbar when required (and id_scroll > 0)
+// - hidden hides the scrollbar
+// - visible always shows the scroll bar (and id_scroll > 0)
+pub enum ScrollbarOverflow {
+	auto
+	hidden
+	visible
+}
+
 // ScrollbarCfg configures the style of a scrollbar. Column and Row
 // define a default ScrollbarCfg so most of the time it is only
-// need to define scrollbar: true in the Column/Row config.
-// Scrollbars are optional. Columns/Rows are scrollable without them.
+// need to define id_scroll in the Column/Row config. Scrollbars are
+// optional. Columns/Rows are scrollable without them (id_scroll > 0).
 // See examples/column-scroll.v for a scrolling with a scrollbar and
 // examples/scroll-demo.v for one without out.
 @[heap]
@@ -11,6 +22,7 @@ pub struct ScrollbarCfg {
 pub:
 	id               string
 	id_track         u32
+	overflow         ScrollbarOverflow
 	width            f32   = gui_theme.scrollbar_style.width
 	color_thumb      Color = gui_theme.scrollbar_style.color_thumb
 	color_background Color = gui_theme.scrollbar_style.color_background
@@ -58,20 +70,23 @@ fn thumb(cfg &ScrollbarCfg, id string) View {
 	)
 }
 
-fn (cfg &ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
+// pass cfg by value more reliable here
+fn (cfg ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 	w.mouse_lock(MouseLockCfg{
 		mouse_move: cfg.mouse_move
 		mouse_up:   cfg.mouse_up
 	})
 }
 
-fn (cfg &ScrollbarCfg) gutter_click(_ &ContainerCfg, mut e Event, mut w Window) {
+// pass cfg by value more reliable here
+fn (cfg ScrollbarCfg) gutter_click(_ &ContainerCfg, mut e Event, mut w Window) {
 	if !w.mouse_is_locked() {
 		offset_from_mouse_y(w.layout, e.mouse_y, cfg.id_track, mut w)
 	}
 }
 
-fn (cfg &ScrollbarCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
+// pass cfg by value more reliable here
+fn (cfg ScrollbarCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
 	if n := find_node_by_id_scroll(node, cfg.id_track) {
 		// add 10 to give some cushion on the ends of the scroll range
 		if e.mouse_y >= (n.shape.y - 10) && e.mouse_y <= (n.shape.y + n.shape.height + 10) {
@@ -81,7 +96,8 @@ fn (cfg &ScrollbarCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &ScrollbarCfg) mouse_up(node &Layout, mut e Event, mut w Window) {
+// pass cfg by value more reliable here
+fn (cfg ScrollbarCfg) mouse_up(node &Layout, mut e Event, mut w Window) {
 	w.mouse_unlock()
 }
 
@@ -115,6 +131,9 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	y := node.shape.y + offset
 	node.children[thumb].shape.y = y
 	node.children[thumb].shape.height = thumb_height
+	if cfg.overflow == .auto && thumb_height == node.shape.height {
+		node.children[thumb].shape.color = color_transparent
+	}
 
 	// on hover dim color of thumb
 	ctx := w.context()

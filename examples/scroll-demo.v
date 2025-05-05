@@ -52,19 +52,21 @@ fn main_view(window &gui.Window) gui.View {
 
 fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 	return gui.column(
-		id_focus:  id // enables keyboard scrolling
-		id_scroll: id // id_scroll used to store scroll state in window
-		scrollbar: window.is_focus(id) // hiding/showing is easy
-		color:     match window.is_focus(id) {
+		id_focus:      id // enables keyboard scrolling
+		id_scroll:     id // id_scroll used to store scroll state in window
+		scrollbar_cfg: gui.ScrollbarCfg{
+			overflow: if window.is_focus(id) { .visible } else { .hidden }
+		}
+		color:         match window.is_focus(id) {
 			true { gui.theme().button_style.color_border_focus } // just for fun
 			else { gui.theme().container_style.color }
 		}
-		padding:   gui.Padding{
+		padding:       gui.Padding{
 			...gui.padding_small
 			right: gui.theme().scrollbar_style.width + 4
 		}
-		sizing:    gui.fill_fill
-		content:   [
+		sizing:        gui.fill_fill
+		content:       [
 			gui.text(
 				// id_focus: 10 * id
 				text: text

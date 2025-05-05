@@ -2,6 +2,7 @@ module gui
 
 import arrays
 
+@[heap]
 pub struct Container implements View {
 pub:
 	id             string
@@ -101,6 +102,7 @@ fn (cfg &Container) generate(mut _ Window) Layout {
 }
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers
+@[heap]
 pub struct ContainerCfg {
 	cfg voidptr
 pub:
@@ -117,7 +119,6 @@ pub:
 	id_focus       u32
 	id_scroll      u32
 	scrollbar_cfg  ScrollbarCfg
-	scrollbar      bool
 	x              f32
 	y              f32
 	clip           bool
@@ -147,8 +148,8 @@ pub:
 // container is the fundamental layout container in gui. It is used to layout
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
-fn container(cfg ContainerCfg) Container {
-	content := match cfg.scrollbar && cfg.id_scroll > 0 {
+fn container(cfg &ContainerCfg) Container {
+	content := match cfg.id_scroll > 0 && cfg.scrollbar_cfg.overflow != .hidden {
 		true {
 			arrays.concat(cfg.content, scrollbar(ScrollbarCfg{
 				...cfg.scrollbar_cfg
@@ -203,37 +204,31 @@ fn container(cfg ContainerCfg) Container {
 
 // column arranges its content top to bottom. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
-pub fn column(cfg ContainerCfg) Container {
+pub fn column(cfg &ContainerCfg) Container {
 	mut col := container(cfg)
 	col.axis = .top_to_bottom
 	if col.cfg == unsafe { nil } {
-		col.cfg = &ContainerCfg{
-			...cfg
-		}
+		col.cfg = cfg
 	}
 	return col
 }
 
 // row arranges its content left to right. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
-pub fn row(cfg ContainerCfg) Container {
+pub fn row(cfg &ContainerCfg) Container {
 	mut row := container(cfg)
 	row.axis = .left_to_right
 	if row.cfg == unsafe { nil } {
-		row.cfg = &ContainerCfg{
-			...cfg
-		}
+		row.cfg = cfg
 	}
 	return row
 }
 
 // canvas does not arrange or otherwise layout its content. See [ContainerCfg](#ContainerCfg)
-pub fn canvas(cfg ContainerCfg) Container {
+pub fn canvas(cfg &ContainerCfg) Container {
 	mut canvas := container(cfg)
 	if canvas.cfg == unsafe { nil } {
-		canvas.cfg = &ContainerCfg{
-			...cfg
-		}
+		canvas.cfg = cfg
 	}
 	return canvas
 }

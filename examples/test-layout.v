@@ -39,12 +39,13 @@ fn main_view(w &gui.Window) gui.View {
 	app := w.state[AppState]()
 
 	return gui.row(
-		width:   width
-		height:  height
-		sizing:  gui.fixed_fixed
-		color:   gui.dark_blue
-		fill:    true
-		content: [
+		id_scroll: 1
+		width:     width
+		height:    height
+		sizing:    gui.fixed_fixed
+		color:     gui.dark_blue
+		fill:      true
+		content:   [
 			gui.column(
 				padding: gui.padding_none
 				sizing:  gui.fit_fill

@@ -50,11 +50,11 @@ fn (t &Text) generate(mut window Window) Layout {
 			text_wrap:           t.wrap
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
-			on_char_shape:       t.char_shape
-			on_keydown_shape:    t.keydown_shape
-			on_mouse_down_shape: t.mouse_down_shape
-			on_mouse_move_shape: t.mouse_move_shape
-			on_mouse_up_shape:   t.mouse_up_shape
+			on_char_shape:       t.cfg.char_shape
+			on_keydown_shape:    t.cfg.keydown_shape
+			on_mouse_down_shape: t.cfg.mouse_down_shape
+			on_mouse_move_shape: t.cfg.mouse_move_shape
+			on_mouse_up_shape:   t.cfg.mouse_up_shape
 		}
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, mut window)
@@ -115,13 +115,13 @@ pub fn text(cfg &TextCfg) Text {
 	}
 }
 
-fn (text &Text) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
+fn (cfg &TextCfg) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
 	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
 		ev := event_relative_to(shape, e)
-		cursor_pos := text.mouse_cursor_pos(shape, ev, mut w)
+		cursor_pos := cfg.mouse_cursor_pos(shape, ev, mut w)
 		input_state := w.input_state[shape.id_focus]
 		w.input_state[shape.id_focus] = InputState{
 			...input_state
@@ -133,17 +133,17 @@ fn (text &Text) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn (text &Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
+fn (cfg &TextCfg) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
 	// mouse move events don't have mouse button info. Use context.
 	if w.ui.mouse_buttons == .left && w.is_focus(shape.id_focus) {
-		if text.placeholder_active {
+		if cfg.placeholder_active {
 			return
 		}
 		ev := event_relative_to(shape, e)
-		end := u32(text.mouse_cursor_pos(shape, ev, mut w))
+		end := u32(cfg.mouse_cursor_pos(shape, ev, mut w))
 		input_state := w.input_state[shape.id_focus]
 		cursor_pos := u32(input_state.cursor_pos)
 		w.input_state[shape.id_focus] = InputState{
@@ -155,7 +155,7 @@ fn (text &Text) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn (text &Text) mouse_up_shape(shape &Shape, mut e Event, mut w Window) {
+fn (cfg &TextCfg) mouse_up_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 		e.is_handled = true
@@ -164,8 +164,8 @@ fn (text &Text) mouse_up_shape(shape &Shape, mut e Event, mut w Window) {
 
 // mouse_cursor_pos determines where in the input control's text
 // field the click occured. Works with multiple line text fields.
-fn (text &Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
-	if text.placeholder_active {
+fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
+	if cfg.placeholder_active {
 		return 0
 	}
 	lh := shape.text_style.size + shape.text_style.line_spacing
@@ -195,12 +195,11 @@ fn (text &Text) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	return count
 }
 
-fn (text &Text) keydown_shape(shape &Shape, mut e Event, mut w Window) {
+fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
-		if text.placeholder_active {
+		if cfg.placeholder_active {
 			return
 		}
-		cfg := unsafe { &TextCfg(shape.cfg) }
 		input_state := w.input_state[shape.id_focus]
 		mut cursor_pos := input_state.cursor_pos
 		match e.key_code {
@@ -251,35 +250,35 @@ fn (text &Text) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn (text &Text) char_shape(shape &Shape, mut event Event, mut w Window) {
+fn (cfg &TextCfg) char_shape(shape &Shape, mut event Event, mut w Window) {
 	if w.is_focus(shape.id_focus) {
 		c := event.char_code
 		if event.modifiers & u32(Modifier.ctrl) > 0 {
 			match c {
-				ctrl_a { text.select_all(shape, mut w) }
-				ctrl_c { text.copy(shape, w) }
+				ctrl_a { cfg.select_all(shape, mut w) }
+				ctrl_c { cfg.copy(shape, w) }
 				else {}
 			}
 		} else if event.modifiers & u32(Modifier.super) > 0 {
 			match c {
-				cmd_a { text.select_all(shape, mut w) }
-				cmd_c { text.copy(shape, w) }
+				cmd_a { cfg.select_all(shape, mut w) }
+				cmd_c { cfg.copy(shape, w) }
 				else {}
 			}
 		} else {
 			match c {
-				escape_char { text.unselect_all(mut w) }
+				escape_char { cfg.unselect_all(mut w) }
 				else {}
 			}
 		}
 	}
 }
 
-fn (text &Text) copy(shape &Shape, w &Window) ?string {
-	if text.placeholder_active || text.is_password {
+fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
+	if cfg.placeholder_active || cfg.is_password {
 		return none
 	}
-	input_state := w.input_state[text.id_focus]
+	input_state := w.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		cpy := match shape.text_keep_spaces {
 			true {
@@ -315,22 +314,22 @@ fn (text &Text) copy(shape &Shape, w &Window) ?string {
 	return none
 }
 
-pub fn (text &Text) select_all(shape &Shape, mut w Window) {
-	if text.placeholder_active {
+pub fn (cfg &TextCfg) select_all(shape &Shape, mut w Window) {
+	if cfg.placeholder_active {
 		return
 	}
-	input_state := w.input_state[text.id_focus]
-	w.input_state[text.id_focus] = InputState{
+	input_state := w.input_state[cfg.id_focus]
+	w.input_state[cfg.id_focus] = InputState{
 		...input_state
-		cursor_pos: text.text.len
+		cursor_pos: cfg.text.len
 		select_beg: 0
-		select_end: u32(text.text.len)
+		select_end: u32(cfg.text.len)
 	}
 }
 
-pub fn (text &Text) unselect_all(mut w Window) {
-	input_state := w.input_state[text.id_focus]
-	w.input_state[text.id_focus] = InputState{
+pub fn (cfg &TextCfg) unselect_all(mut w Window) {
+	input_state := w.input_state[cfg.id_focus]
+	w.input_state[cfg.id_focus] = InputState{
 		...input_state
 		cursor_pos: 0
 		select_beg: 0
