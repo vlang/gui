@@ -191,7 +191,7 @@ fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {
 	v_id := node.shape.id_scroll
 	if v_id > 0 {
 		// scrollable region does not including padding
-		max_offset := node.shape.height - node.shape.padding.height() - content_height(node)
+		max_offset := f32_min(0, node.shape.height - node.shape.padding.height() - content_height(node))
 		offset_y := w.offset_y_state[v_id] + delta * gui_theme.scroll_multiplier
 		w.offset_y_state[v_id] = clamp_f32(offset_y, max_offset, 0)
 		return true

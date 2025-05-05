@@ -131,6 +131,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	y := node.shape.y + offset
 	node.children[thumb].shape.y = y
 	node.children[thumb].shape.height = thumb_height
+
 	if cfg.overflow == .auto && thumb_height == node.shape.height {
 		node.children[thumb].shape.color = color_transparent
 	}
