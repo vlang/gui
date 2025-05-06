@@ -151,10 +151,19 @@ pub:
 fn container(cfg &ContainerCfg) Container {
 	content := match cfg.id_scroll > 0 && cfg.scrollbar_cfg.overflow != .hidden {
 		true {
-			arrays.concat(cfg.content, scrollbar(ScrollbarCfg{
-				...cfg.scrollbar_cfg
-				id_track: cfg.id_scroll
-			}))
+			cnt := [
+				scrollbar(ScrollbarCfg{
+					...cfg.scrollbar_cfg
+					orientation: .vertical
+					id_track:    cfg.id_scroll
+				}),
+				scrollbar(ScrollbarCfg{
+					...cfg.scrollbar_cfg
+					orientation: .horizontal
+					id_track:    cfg.id_scroll
+				}),
+			]
+			arrays.append(cfg.content, cnt)
 		}
 		else {
 			cfg.content

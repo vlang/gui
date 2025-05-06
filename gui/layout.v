@@ -523,8 +523,13 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 		node.shape.clip = true
 	}
 
-	mut x := node.shape.x + padding.left + w.offset_x_state[node.shape.id_scroll]
-	mut y := node.shape.y + padding.top + w.offset_y_state[node.shape.id_scroll]
+	mut x := node.shape.x + padding.left
+	mut y := node.shape.y + padding.top
+
+	if node.shape.id_scroll > 0 {
+		x += w.offset_x_state[node.shape.id_scroll]
+		y += w.offset_y_state[node.shape.id_scroll]
+	}
 
 	// alignment along the axis
 	match axis {

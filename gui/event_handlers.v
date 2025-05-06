@@ -198,20 +198,3 @@ fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {
 	}
 	return false
 }
-
-fn content_height(node &Layout) f32 {
-	mut height := f32(0)
-	if node.shape.axis == .top_to_bottom {
-		// along the axis add up all children heights plus spacing
-		height += node.spacing()
-		for child in node.children {
-			height += child.shape.height
-		}
-	} else {
-		// across the axis need only the height of largest child
-		for child in node.children {
-			height = f32_max(height, child.shape.height)
-		}
-	}
-	return height
-}
