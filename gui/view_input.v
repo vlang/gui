@@ -21,19 +21,19 @@ pub:
 	placeholder        string // text to show when empty
 	wrap               bool   // enable multiline
 	is_password        bool   // mask input characters with '*'s
-	padding            Padding   = gui_theme.input_style.padding
-	padding_border     Padding   = gui_theme.input_style.padding_border
-	color              Color     = gui_theme.input_style.color
-	color_border       Color     = gui_theme.input_style.color_border
-	color_border_focus Color     = gui_theme.input_style.color_border_focus
-	fill               bool      = gui_theme.input_style.fill
-	fill_border        bool      = gui_theme.input_style.fill_border
-	radius             f32       = gui_theme.input_style.radius
-	radius_border      f32       = gui_theme.input_style.radius_border
-	text_style         TextStyle = gui_theme.input_style.text_style
-	placeholder_style  TextStyle = gui_theme.input_style.placeholder_style
-	on_text_changed    ?fn (&InputCfg, string, &Window)
-	on_enter           ?fn (&InputCfg, mut Event, &Window)
+	padding            Padding                            = gui_theme.input_style.padding
+	padding_border     Padding                            = gui_theme.input_style.padding_border
+	color              Color                              = gui_theme.input_style.color
+	color_border       Color                              = gui_theme.input_style.color_border
+	color_border_focus Color                              = gui_theme.input_style.color_border_focus
+	fill               bool                               = gui_theme.input_style.fill
+	fill_border        bool                               = gui_theme.input_style.fill_border
+	radius             f32                                = gui_theme.input_style.radius
+	radius_border      f32                                = gui_theme.input_style.radius_border
+	text_style         TextStyle                          = gui_theme.input_style.text_style
+	placeholder_style  TextStyle                          = gui_theme.input_style.placeholder_style
+	on_text_changed    fn (&InputCfg, string, &Window)    = unsafe { nil }
+	on_enter           fn (&InputCfg, mut Event, &Window) = unsafe { nil }
 }
 
 // input is a text input field.
@@ -104,7 +104,7 @@ pub fn input(cfg InputCfg) View {
 
 fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 	c := event.char_code
-	if cfg.on_text_changed != none {
+	if cfg.on_text_changed != unsafe { nil } {
 		mut text := cfg.text
 		if event.modifiers & u32(Modifier.ctrl) > 0 && event.modifiers & u32(Modifier.shift) > 0 {
 			match c {
@@ -140,7 +140,7 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 					}
 				}
 				cr_char, lf_char {
-					if cfg.on_enter != none {
+					if cfg.on_enter != unsafe { nil } {
 						cfg.on_enter(cfg, mut event, w)
 					} else {
 						if cfg.wrap {
