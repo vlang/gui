@@ -49,11 +49,11 @@ fn line_height(shape Shape) f32 {
 fn text_wrap(mut shape Shape, mut window Window) {
 	if shape.text_wrap && shape.type == .text {
 		window.ui.set_text_cfg(shape.text_style.to_text_cfg())
+		width := shape.width - shape.padding.width()
 		shape.text_lines = match shape.text_keep_spaces {
-			true { wrap_text_keep_spaces(shape.text, shape.width, window.ui) }
-			else { wrap_text_shrink_spaces(shape.text, shape.width, window.ui) }
+			true { wrap_text_keep_spaces(shape.text, width, window.ui) }
+			else { wrap_text_shrink_spaces(shape.text, width, window.ui) }
 		}
-		shape.width = text_width(shape, mut window)
 		lh := line_height(shape)
 		shape.height = shape.text_lines.len * lh
 		shape.max_height = shape.height
