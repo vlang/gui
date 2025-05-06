@@ -37,8 +37,10 @@ fn keydown_handler(node &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
-	if !node.shape.disabled
-		&& (w.is_focus(node.shape.id_focus) || node.shape.id == reserved_dialog_id) {
+	if node.shape.disabled {
+		return
+	}
+	if w.is_focus(node.shape.id_focus) || node.shape.id == reserved_dialog_id {
 		if node.shape.on_keydown_shape != unsafe { nil } {
 			node.shape.on_keydown_shape(node.shape, mut e, mut w)
 			if e.is_handled {
@@ -57,6 +59,13 @@ fn keydown_handler(node &Layout, mut e Event, mut w Window) {
 				return
 			}
 		}
+	} else {
+		if node.shape.id_scroll > 0 {
+			key_down_scroll_handler(node, mut e, mut w)
+			if e.is_handled {
+				return
+			}
+		}
 	}
 }
 
@@ -64,14 +73,22 @@ fn key_down_scroll_handler(node &Layout, mut e Event, mut w Window) {
 	delta_line := gui_theme.scroll_delta_line
 	delta_page := gui_theme.scroll_delta_page
 	delta_home := 10000000 // any really big number works
-	match e.key_code {
-		.up { e.is_handled = scroll_vertical(node, delta_line, mut w) }
-		.down { e.is_handled = scroll_vertical(node, -delta_line, mut w) }
-		.home { e.is_handled = scroll_vertical(node, delta_home, mut w) }
-		.end { e.is_handled = scroll_vertical(node, -delta_home, mut w) }
-		.page_up { e.is_handled = scroll_vertical(node, delta_page, mut w) }
-		.page_down { e.is_handled = scroll_vertical(node, -delta_page, mut w) }
-		else {}
+	if e.modifiers == 0 {
+		match e.key_code {
+			.up { e.is_handled = scroll_vertical(node, delta_line, mut w) }
+			.down { e.is_handled = scroll_vertical(node, -delta_line, mut w) }
+			.home { e.is_handled = scroll_vertical(node, delta_home, mut w) }
+			.end { e.is_handled = scroll_vertical(node, -delta_home, mut w) }
+			.page_up { e.is_handled = scroll_vertical(node, delta_page, mut w) }
+			.page_down { e.is_handled = scroll_vertical(node, -delta_page, mut w) }
+			else {}
+		}
+	} else if e.modifiers == u32(Modifier.shift) {
+		match e.key_code {
+			.left { e.is_handled = scroll_horizontal(node, delta_line, mut w) }
+			.right { e.is_handled = scroll_horizontal(node, -delta_line, mut w) }
+			else {}
+		}
 	}
 }
 
@@ -182,9 +199,25 @@ fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
 	}
 	if !node.shape.disabled && node.shape.id_scroll > 0 {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-			e.is_handled = scroll_vertical(node, e.scroll_y, mut w)
+			if e.modifiers == u32(Modifier.shift) {
+				e.is_handled = scroll_horizontal(node, e.scroll_x, mut w)
+			} else {
+				e.is_handled = scroll_vertical(node, e.scroll_y, mut w)
+			}
 		}
 	}
+}
+
+fn scroll_horizontal(node &Layout, delta f32, mut w Window) bool {
+	v_id := node.shape.id_scroll
+	if v_id > 0 {
+		// scrollable region does not including padding
+		max_offset := f32_min(0, node.shape.width - node.shape.padding.width() - content_width(node))
+		offset_x := w.offset_x_state[v_id] + delta * gui_theme.scroll_multiplier
+		w.offset_x_state[v_id] = clamp_f32(offset_x, max_offset, 0)
+		return true
+	}
+	return false
 }
 
 fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {

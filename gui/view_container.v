@@ -1,49 +1,47 @@
 module gui
 
-import arrays
-
 @[heap]
 pub struct Container implements View {
 pub:
-	id             string
-	id_focus       u32 // not sure this should be here
-	x              f32
-	y              f32
-	width          f32
-	min_width      f32
-	max_width      f32
-	height         f32
-	min_height     f32
-	max_height     f32
-	color          Color   = gui_theme.container_style.color
-	fill           bool    = gui_theme.container_style.fill
-	padding        Padding = gui_theme.container_style.padding
-	radius         f32     = gui_theme.container_style.radius
-	spacing        f32     = gui_theme.container_style.spacing
-	h_align        HorizontalAlign
-	v_align        VerticalAlign
-	clip           bool
-	focus_skip     bool
-	sizing         Sizing
-	disabled       bool
-	invisible      bool
-	text           string
-	id_scroll      u32
-	scrollbar      bool
-	scroll_cfg     ScrollbarCfg
-	float          bool
-	float_anchor   FloatAttach
-	float_tie_off  FloatAttach
-	float_offset_x f32
-	float_offset_y f32
-	on_char        fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_click       fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_keydown     fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_down  fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_move  fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_up    fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	amend_layout   fn (mut Layout, &Window)            = unsafe { nil }
-	content        []View
+	id              string
+	id_focus        u32 // not sure this should be here
+	x               f32
+	y               f32
+	width           f32
+	min_width       f32
+	max_width       f32
+	height          f32
+	min_height      f32
+	max_height      f32
+	color           Color   = gui_theme.container_style.color
+	fill            bool    = gui_theme.container_style.fill
+	padding         Padding = gui_theme.container_style.padding
+	radius          f32     = gui_theme.container_style.radius
+	spacing         f32     = gui_theme.container_style.spacing
+	h_align         HorizontalAlign
+	v_align         VerticalAlign
+	clip            bool
+	focus_skip      bool
+	sizing          Sizing
+	disabled        bool
+	invisible       bool
+	text            string
+	id_scroll       u32
+	scrollbar_cfg_x ScrollbarCfg
+	scrollbar_cfg_y ScrollbarCfg
+	float           bool
+	float_anchor    FloatAttach
+	float_tie_off   FloatAttach
+	float_offset_x  f32
+	float_offset_y  f32
+	on_char         fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_click        fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_keydown      fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_down   fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_move   fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_up     fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	amend_layout    fn (mut Layout, &Window)            = unsafe { nil }
+	content         []View
 mut:
 	axis Axis
 	cfg  voidptr
@@ -106,106 +104,106 @@ fn (cfg &Container) generate(mut _ Window) Layout {
 pub struct ContainerCfg {
 	cfg voidptr
 pub:
-	id             string
-	width          f32
-	height         f32
-	min_width      f32
-	min_height     f32
-	max_width      f32
-	max_height     f32
-	disabled       bool
-	invisible      bool
-	sizing         Sizing
-	id_focus       u32
-	id_scroll      u32
-	scrollbar_cfg  ScrollbarCfg
-	x              f32
-	y              f32
-	clip           bool
-	focus_skip     bool
-	h_align        HorizontalAlign
-	v_align        VerticalAlign
-	text           string
-	spacing        f32     = gui_theme.container_style.spacing
-	radius         f32     = gui_theme.container_style.radius
-	padding        Padding = gui_theme.container_style.padding
-	color          Color   = gui_theme.container_style.color
-	fill           bool    = gui_theme.container_style.fill
-	float          bool
-	float_anchor   FloatAttach
-	float_tie_off  FloatAttach
-	float_offset_x f32
-	float_offset_y f32
-	on_char        fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_click       fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_keydown     fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_move  fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_up    fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	amend_layout   fn (mut Layout, &Window)            = unsafe { nil }
-	content        []View
+	id              string
+	width           f32
+	height          f32
+	min_width       f32
+	min_height      f32
+	max_width       f32
+	max_height      f32
+	disabled        bool
+	invisible       bool
+	sizing          Sizing
+	id_focus        u32
+	id_scroll       u32
+	scrollbar_cfg_x ScrollbarCfg
+	scrollbar_cfg_y ScrollbarCfg
+	x               f32
+	y               f32
+	clip            bool
+	focus_skip      bool
+	h_align         HorizontalAlign
+	v_align         VerticalAlign
+	text            string
+	spacing         f32     = gui_theme.container_style.spacing
+	radius          f32     = gui_theme.container_style.radius
+	padding         Padding = gui_theme.container_style.padding
+	color           Color   = gui_theme.container_style.color
+	fill            bool    = gui_theme.container_style.fill
+	float           bool
+	float_anchor    FloatAttach
+	float_tie_off   FloatAttach
+	float_offset_x  f32
+	float_offset_y  f32
+	on_char         fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_click        fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_keydown      fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_move   fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	on_mouse_up     fn (voidptr, mut Event, mut Window) = unsafe { nil }
+	amend_layout    fn (mut Layout, &Window)            = unsafe { nil }
+	content         []View
 }
 
 // container is the fundamental layout container in gui. It is used to layout
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
 fn container(cfg &ContainerCfg) Container {
-	content := match cfg.id_scroll > 0 && cfg.scrollbar_cfg.overflow != .hidden {
-		true {
-			cnt := [
-				scrollbar(ScrollbarCfg{
-					...cfg.scrollbar_cfg
-					orientation: .vertical
-					id_track:    cfg.id_scroll
-				}),
-				scrollbar(ScrollbarCfg{
-					...cfg.scrollbar_cfg
-					orientation: .horizontal
-					id_track:    cfg.id_scroll
-				}),
-			]
-			arrays.append(cfg.content, cnt)
-		}
-		else {
-			cfg.content
-		}
+	mut content := []View{}
+	content << cfg.content
+	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_x.overflow != .hidden {
+		content << scrollbar(ScrollbarCfg{
+			...cfg.scrollbar_cfg_x
+			orientation: .horizontal
+			id_track:    cfg.id_scroll
+		})
 	}
+	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_y.overflow != .hidden {
+		content << scrollbar(ScrollbarCfg{
+			...cfg.scrollbar_cfg_y
+			orientation: .vertical
+			id_track:    cfg.id_scroll
+		})
+	}
+
 	return Container{
-		id:             cfg.id
-		id_focus:       cfg.id_focus
-		x:              cfg.x
-		y:              cfg.y
-		width:          cfg.width
-		min_width:      if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
-		max_width:      if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
-		height:         cfg.height
-		min_height:     if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
-		max_height:     if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
-		clip:           cfg.clip
-		color:          cfg.color
-		fill:           cfg.fill
-		h_align:        cfg.h_align
-		v_align:        cfg.v_align
-		padding:        cfg.padding
-		radius:         cfg.radius
-		sizing:         cfg.sizing
-		spacing:        cfg.spacing
-		disabled:       cfg.disabled
-		invisible:      cfg.invisible
-		text:           cfg.text
-		id_scroll:      cfg.id_scroll
-		float:          cfg.float
-		float_anchor:   cfg.float_anchor
-		float_tie_off:  cfg.float_tie_off
-		float_offset_x: cfg.float_offset_x
-		float_offset_y: cfg.float_offset_y
-		cfg:            cfg.cfg
-		on_click:       cfg.on_click
-		on_char:        cfg.on_char
-		on_keydown:     cfg.on_keydown
-		on_mouse_move:  cfg.on_mouse_move
-		on_mouse_up:    cfg.on_mouse_up
-		amend_layout:   cfg.amend_layout
-		content:        content
+		id:              cfg.id
+		id_focus:        cfg.id_focus
+		x:               cfg.x
+		y:               cfg.y
+		width:           cfg.width
+		min_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
+		max_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
+		height:          cfg.height
+		min_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
+		max_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
+		clip:            cfg.clip
+		color:           cfg.color
+		fill:            cfg.fill
+		h_align:         cfg.h_align
+		v_align:         cfg.v_align
+		padding:         cfg.padding
+		radius:          cfg.radius
+		sizing:          cfg.sizing
+		spacing:         cfg.spacing
+		disabled:        cfg.disabled
+		invisible:       cfg.invisible
+		text:            cfg.text
+		id_scroll:       cfg.id_scroll
+		scrollbar_cfg_x: cfg.scrollbar_cfg_x
+		scrollbar_cfg_y: cfg.scrollbar_cfg_y
+		float:           cfg.float
+		float_anchor:    cfg.float_anchor
+		float_tie_off:   cfg.float_tie_off
+		float_offset_x:  cfg.float_offset_x
+		float_offset_y:  cfg.float_offset_y
+		cfg:             cfg.cfg
+		on_click:        cfg.on_click
+		on_char:         cfg.on_char
+		on_keydown:      cfg.on_keydown
+		on_mouse_move:   cfg.on_mouse_move
+		on_mouse_up:     cfg.on_mouse_up
+		amend_layout:    cfg.amend_layout
+		content:         content
 	}
 }
 

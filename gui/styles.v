@@ -93,7 +93,7 @@ pub:
 
 pub struct ScrollbarStyle {
 pub:
-	width            f32   = 7
+	size             f32   = 7
 	color_thumb      Color = color_5_dark
 	color_background Color = color_transparent
 	fill_thumb       bool  = true

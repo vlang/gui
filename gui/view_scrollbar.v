@@ -1,16 +1,18 @@
 module gui
 
-import math
-
 // ScrollbarOverflow determines how scrollbars are shown.
+// Remember that to set id_scroll > 0 or these options
+// have no effect.
 //
-// - auto shows scrollbar when required (and id_scroll > 0)
+// - auto shows scrollbar when required
 // - hidden hides the scrollbar
-// - visible always shows the scroll bar (and id_scroll > 0)
+// - visible always shows the scroll bar
+// - on_hover show only when mouse is over scrollbar
 pub enum ScrollbarOverflow {
 	auto
 	hidden
 	visible
+	on_hover
 }
 
 // ScrollbarOrientation determines the scrollbar's orientation.
@@ -33,7 +35,7 @@ pub:
 	id_track         u32
 	overflow         ScrollbarOverflow
 	orientation      ScrollbarOrientation
-	width            f32   = gui_theme.scrollbar_style.width
+	size             f32   = gui_theme.scrollbar_style.size
 	color_thumb      Color = gui_theme.scrollbar_style.color_thumb
 	color_background Color = gui_theme.scrollbar_style.color_background
 	fill_thumb       bool  = gui_theme.scrollbar_style.fill_thumb
@@ -47,29 +49,10 @@ pub:
 // scrollbar creates a scrollbar. Scrollbars are floating elements
 // which allows for a suprising number of styling an layout options.
 pub fn scrollbar(cfg ScrollbarCfg) View {
-	return if cfg.orientation == .vertical {
-		column(
-			id:             cfg.id
-			width:          cfg.width
-			fill:           cfg.fill_background
-			color:          cfg.color_background
-			float:          true
-			float_anchor:   .top_right
-			float_tie_off:  .top_right
-			float_offset_x: cfg.offset_x
-			float_offset_y: cfg.offset_y
-			spacing:        0
-			padding:        padding_none
-			amend_layout:   cfg.amend_layout
-			on_click:       cfg.gutter_click
-			content:        [
-				thumb(cfg, '__thumb__${cfg.id_track}'),
-			]
-		)
-	} else {
+	return if cfg.orientation == .horizontal {
 		row(
 			id:             cfg.id
-			height:         cfg.width
+			height:         cfg.size
 			fill:           cfg.fill_background
 			color:          cfg.color_background
 			float:          true
@@ -85,13 +68,32 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 				thumb(cfg, '__thumb__${cfg.id_track}'),
 			]
 		)
+	} else {
+		column(
+			id:             cfg.id
+			width:          cfg.size
+			fill:           cfg.fill_background
+			color:          cfg.color_background
+			float:          true
+			float_anchor:   .top_right
+			float_tie_off:  .top_right
+			float_offset_x: cfg.offset_x
+			float_offset_y: cfg.offset_y
+			spacing:        0
+			padding:        padding_none
+			amend_layout:   cfg.amend_layout
+			on_click:       cfg.gutter_click
+			content:        [
+				thumb(cfg, '__thumb__${cfg.id_track}'),
+			]
+		)
 	}
 }
 
 fn thumb(cfg &ScrollbarCfg, id string) View {
 	return column(
 		id:       id
-		width:    cfg.width
+		width:    cfg.size
 		color:    cfg.color_thumb
 		fill:     cfg.fill_thumb
 		radius:   cfg.radius_thumb
@@ -150,6 +152,7 @@ fn (cfg ScrollbarCfg) mouse_up(node &Layout, mut e Event, mut w Window) {
 // Scrollbars are hard.
 fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	thumb := 0
+	min_thumb_width := 20
 	mut hidden := false
 	mut parent := node.parent
 
@@ -170,19 +173,18 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 
 			total_width := content_width(parent)
 			t_width := node.shape.width * (node.shape.width / total_width)
-			thumb_width := clamp_f32(t_width, 20, node.shape.width)
+			thumb_width := clamp_f32(t_width, min_thumb_width, node.shape.width)
 
 			available_width := node.shape.width - thumb_width
 			scroll_offset := -w.offset_x_state[cfg.id_track]
-			offset := f32_max(0, f32_min((scroll_offset / (total_width - node.shape.width)) * available_width,
-				available_width))
+			offset := clamp_f32((scroll_offset / (total_width - node.shape.width)) * available_width,
+				0, available_width)
 
-			x := node.shape.x + offset
-			node.children[thumb].shape.x = x
+			node.children[thumb].shape.x = node.shape.x + offset
 			node.children[thumb].shape.width = thumb_width
-			node.children[thumb].shape.height = cfg.width
+			node.children[thumb].shape.height = cfg.size
 
-			if cfg.overflow == .auto && math.abs(node.shape.width - thumb_width) < 0.1 {
+			if cfg.overflow == .auto && node.shape.width - thumb_width < 0.1 {
 				node.children[thumb].shape.color = color_transparent
 				hidden = true
 			}
@@ -193,19 +195,18 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 
 			total_height := content_height(parent)
 			t_height := node.shape.height * (node.shape.height / total_height)
-			thumb_height := clamp_f32(t_height, 20, node.shape.height)
+			thumb_height := clamp_f32(t_height, min_thumb_width, node.shape.height)
 
 			available_height := node.shape.height - thumb_height
 			scroll_offset := -w.offset_y_state[cfg.id_track]
-			offset := f32_max(0, f32_min((scroll_offset / (total_height - node.shape.height)) * available_height,
-				available_height))
+			offset := clamp_f32((scroll_offset / (total_height - node.shape.height)) * available_height,
+				0, available_height)
 
-			y := node.shape.y + offset
-			node.children[thumb].shape.y = y
+			node.children[thumb].shape.y = node.shape.y + offset
 			node.children[thumb].shape.height = thumb_height
-			node.children[thumb].shape.width = cfg.width
+			node.children[thumb].shape.width = cfg.size
 
-			if cfg.overflow == .auto && math.abs(node.shape.height - thumb_height) < 0.1 {
+			if cfg.overflow == .auto && node.shape.height - thumb_height < 0.1 {
 				hidden = true
 				node.children[thumb].shape.color = color_transparent
 			}
