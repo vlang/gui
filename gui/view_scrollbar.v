@@ -153,7 +153,7 @@ fn (cfg ScrollbarCfg) mouse_up(node &Layout, mut e Event, mut w Window) {
 fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	thumb := 0
 	min_thumb_width := 20
-	mut hidden := false
+	mut transparent := false
 	mut parent := node.parent
 
 	for {
@@ -184,9 +184,10 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 			node.children[thumb].shape.width = thumb_width
 			node.children[thumb].shape.height = cfg.size
 
-			if cfg.overflow == .auto && node.shape.width - thumb_width < 0.1 {
+			if (cfg.overflow != .visible && node.shape.width - thumb_width < 0.1)
+				|| cfg.overflow == .on_hover {
 				node.children[thumb].shape.color = color_transparent
-				hidden = true
+				transparent = true
 			}
 		}
 		else {
@@ -206,19 +207,22 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 			node.children[thumb].shape.height = thumb_height
 			node.children[thumb].shape.width = cfg.size
 
-			if cfg.overflow == .auto && node.shape.height - thumb_height < 0.1 {
-				hidden = true
+			if (cfg.overflow != .visible && node.shape.height - thumb_height < 0.1)
+				|| cfg.overflow == .on_hover {
 				node.children[thumb].shape.color = color_transparent
+				transparent = true
 			}
 		}
 	}
 	// on hover dim color of thumb
 	ctx := w.context()
 	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) || w.mouse_is_locked() {
-		if hidden || (w.dialog_cfg.visible && !node_in_dialog_layout(node)) {
+		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
 			return
 		}
-		node.children[thumb].shape.color = gui_theme.button_style.color_hover
+		if !transparent || cfg.overflow == .on_hover {
+			node.children[thumb].shape.color = gui_theme.button_style.color_hover
+		}
 	}
 }
 
