@@ -180,9 +180,13 @@ pub:
 	padding_large  Padding = padding_large
 	padding_border Padding = padding_none
 
-	spacing_small  int = spacing_small
-	spacing_medium int = spacing_medium
-	spacing_large  int = spacing_large
+	radius_small  f32 = radius_small
+	radius_medium f32 = radius_medium
+	radius_large  f32 = radius_large
+
+	spacing_small  f32 = spacing_small
+	spacing_medium f32 = spacing_medium
+	spacing_large  f32 = spacing_large
 	spacing_text   f32 = text_line_spacing // additional line height
 
 	size_text_tiny    int = size_text_tiny
@@ -230,9 +234,9 @@ pub:
 	radius_medium f32 = radius_medium
 	radius_large  f32 = radius_large
 
-	spacing_small  int = spacing_small
-	spacing_medium int = spacing_medium
-	spacing_large  int = spacing_large
+	spacing_small  f32 = spacing_small
+	spacing_medium f32 = spacing_medium
+	spacing_large  f32 = spacing_large
 	spacing_text   f32 = text_line_spacing // additional line height
 
 	size_text_tiny    int = size_text_tiny
@@ -437,6 +441,10 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		padding_medium: cfg.padding_medium
 		padding_large:  cfg.padding_large
 		padding_border: cfg.padding_border
+
+		radius_small:  cfg.radius_small
+		radius_medium: cfg.radius_medium
+		radius_large:  cfg.radius_large
 
 		spacing_small:  cfg.spacing_small
 		spacing_medium: cfg.spacing_medium
