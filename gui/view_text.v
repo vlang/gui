@@ -28,7 +28,7 @@ fn (t &Text) generate(mut window Window) Layout {
 		return Layout{}
 	}
 	input_state := match window.is_focus(t.id_focus) {
-		true { window.input_state[t.id_focus] }
+		true { window.view_state.input_state[t.id_focus] }
 		else { InputState{} }
 	}
 	mut shape_tree := Layout{
@@ -122,8 +122,8 @@ fn (cfg &TextCfg) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
 		ev := event_relative_to(shape, e)
 		cursor_pos := cfg.mouse_cursor_pos(shape, ev, mut w)
-		input_state := w.input_state[shape.id_focus]
-		w.input_state[shape.id_focus] = InputState{
+		input_state := w.view_state.input_state[shape.id_focus]
+		w.view_state.input_state[shape.id_focus] = InputState{
 			...input_state
 			cursor_pos: cursor_pos
 			select_beg: 0
@@ -144,9 +144,9 @@ fn (cfg &TextCfg) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 		}
 		ev := event_relative_to(shape, e)
 		end := u32(cfg.mouse_cursor_pos(shape, ev, mut w))
-		input_state := w.input_state[shape.id_focus]
+		input_state := w.view_state.input_state[shape.id_focus]
 		cursor_pos := u32(input_state.cursor_pos)
-		w.input_state[shape.id_focus] = InputState{
+		w.view_state.input_state[shape.id_focus] = InputState{
 			...input_state
 			select_beg: if cursor_pos < end { cursor_pos } else { end }
 			select_end: if cursor_pos < end { end } else { cursor_pos }
@@ -200,7 +200,7 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 		if cfg.placeholder_active {
 			return
 		}
-		input_state := w.input_state[shape.id_focus]
+		input_state := w.view_state.input_state[shape.id_focus]
 		mut cursor_pos := input_state.cursor_pos
 		match e.key_code {
 			.left { cursor_pos = int_max(0, cursor_pos - 1) }
@@ -210,7 +210,7 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 			else { return }
 		}
 		e.is_handled = true
-		w.input_state[shape.id_focus] = InputState{
+		w.view_state.input_state[shape.id_focus] = InputState{
 			...input_state
 			cursor_pos: cursor_pos
 			select_beg: 0
@@ -239,7 +239,7 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 			if beg > end {
 				beg, end = end, beg
 			}
-			w.input_state[shape.id_focus] = InputState{
+			w.view_state.input_state[shape.id_focus] = InputState{
 				...input_state
 				cursor_pos: cursor_pos
 				select_beg: beg
@@ -278,7 +278,7 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 	if cfg.placeholder_active || cfg.is_password {
 		return none
 	}
-	input_state := w.input_state[cfg.id_focus]
+	input_state := w.view_state.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		cpy := match shape.text_keep_spaces {
 			true {
@@ -318,8 +318,8 @@ pub fn (cfg &TextCfg) select_all(shape &Shape, mut w Window) {
 	if cfg.placeholder_active {
 		return
 	}
-	input_state := w.input_state[cfg.id_focus]
-	w.input_state[cfg.id_focus] = InputState{
+	input_state := w.view_state.input_state[cfg.id_focus]
+	w.view_state.input_state[cfg.id_focus] = InputState{
 		...input_state
 		cursor_pos: cfg.text.len
 		select_beg: 0
@@ -328,8 +328,8 @@ pub fn (cfg &TextCfg) select_all(shape &Shape, mut w Window) {
 }
 
 pub fn (cfg &TextCfg) unselect_all(mut w Window) {
-	input_state := w.input_state[cfg.id_focus]
-	w.input_state[cfg.id_focus] = InputState{
+	input_state := w.view_state.input_state[cfg.id_focus]
+	w.view_state.input_state[cfg.id_focus] = InputState{
 		...input_state
 		cursor_pos: 0
 		select_beg: 0

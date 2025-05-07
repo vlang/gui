@@ -247,7 +247,7 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, window &Window) {
 		lh := line_height(shape)
 		mut cursor_x := -1
 		mut cursor_y := -1
-		input_state := window.input_state[shape.id_focus]
+		input_state := window.view_state.input_state[shape.id_focus]
 		mut cursor_pos := input_state.cursor_pos
 		if cursor_pos >= 0 {
 			mut length := 0

@@ -129,13 +129,13 @@ fn (cfg ScrollbarCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
 			true {
 				if e.mouse_x >= (n.shape.x - 10) && e.mouse_x <= (n.shape.x + n.shape.width + 10) {
 					offset := offset_mouse_change_x(n, e.mouse_dx, cfg.id_track, w)
-					w.offset_x_state[cfg.id_track] = offset
+					w.view_state.offset_x_state[cfg.id_track] = offset
 				}
 			}
 			else {
 				if e.mouse_y >= (n.shape.y - 10) && e.mouse_y <= (n.shape.y + n.shape.height + 10) {
 					offset := offset_mouse_change_y(n, e.mouse_dy, cfg.id_track, w)
-					w.offset_y_state[cfg.id_track] = offset
+					w.view_state.offset_y_state[cfg.id_track] = offset
 				}
 			}
 		}
@@ -176,7 +176,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 			thumb_width := clamp_f32(t_width, min_thumb_width, node.shape.width)
 
 			available_width := node.shape.width - thumb_width
-			scroll_offset := -w.offset_x_state[cfg.id_track]
+			scroll_offset := -w.view_state.offset_x_state[cfg.id_track]
 			offset := clamp_f32((scroll_offset / (total_width - node.shape.width)) * available_width,
 				0, available_width)
 
@@ -199,7 +199,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 			thumb_height := clamp_f32(t_height, min_thumb_width, node.shape.height)
 
 			available_height := node.shape.height - thumb_height
-			scroll_offset := -w.offset_y_state[cfg.id_track]
+			scroll_offset := -w.view_state.offset_y_state[cfg.id_track]
 			offset := clamp_f32((scroll_offset / (total_height - node.shape.height)) * available_height,
 				0, available_height)
 
@@ -241,7 +241,7 @@ fn find_node_by_id_scroll(node Layout, id_scroll u32) ?Layout {
 fn offset_mouse_change_x(node Layout, mouse_x f32, id_scroll u32, w &Window) f32 {
 	total_width := content_width(node)
 	shape_width := node.shape.width - node.shape.padding.width()
-	old_offset := w.offset_x_state[id_scroll]
+	old_offset := w.view_state.offset_x_state[id_scroll]
 	new_offset := mouse_x * (total_width / shape_width)
 	offset := old_offset - new_offset
 	return f32_min(0, f32_max(offset, shape_width - total_width))
@@ -250,7 +250,7 @@ fn offset_mouse_change_x(node Layout, mouse_x f32, id_scroll u32, w &Window) f32
 fn offset_mouse_change_y(node Layout, mouse_y f32, id_scroll u32, w &Window) f32 {
 	total_height := content_height(node)
 	shape_height := node.shape.height - node.shape.padding.height()
-	old_offset := w.offset_y_state[id_scroll]
+	old_offset := w.view_state.offset_y_state[id_scroll]
 	new_offset := mouse_y * (total_height / shape_height)
 	offset := old_offset - new_offset
 	return f32_min(0, f32_max(offset, shape_height - total_height))
@@ -267,7 +267,7 @@ fn offset_from_mouse_x(node Layout, mouse_x f32, id_scroll u32, mut w Window) {
 		if percent >= 0.97 {
 			percent = 1
 		}
-		w.offset_x_state[id_scroll] = -percent * (total_width - sb.shape.width)
+		w.view_state.offset_x_state[id_scroll] = -percent * (total_width - sb.shape.width)
 	}
 }
 
@@ -282,6 +282,6 @@ fn offset_from_mouse_y(node Layout, mouse_y f32, id_scroll u32, mut w Window) {
 		if percent >= 0.97 {
 			percent = 1
 		}
-		w.offset_y_state[id_scroll] = -percent * (total_height - sb.shape.height)
+		w.view_state.offset_y_state[id_scroll] = -percent * (total_height - sb.shape.height)
 	}
 }

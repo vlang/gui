@@ -11,17 +11,11 @@ mut:
 	state          voidptr           = unsafe { nil }
 	mutex          &sync.Mutex       = sync.new_mutex()
 	view_generator fn (&Window) View = empty_view
+	view_state     ViewState
 	layout         Layout
 	renderers      []Renderer
 	dialog_cfg     DialogCfg
 	focused        bool = true
-	id_focus       u32                // id of view that has focus
-	input_state    map[u32]InputState // [id_focus] -> input state
-	offset_x_state map[u32]f32        // [id_scroll] -> offset_x
-	offset_y_state map[u32]f32        // [id_scroll] -> offset_y
-	text_widths    map[string]int     // [text + hash(text_style)] -> text width
-	mouse_cursor   sapp.MouseCursor   // arrow, finger, ibeam, etc.
-	mouse_lock     MouseLockCfg
 	window_size    gg.Size // cached, gg.window_size() relatively slow
 	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 }
@@ -100,7 +94,7 @@ fn frame_fn(mut window Window) {
 	renderers_draw(window.renderers, window)
 	window.ui.end()
 	window.mutex.unlock()
-	sapp.set_mouse_cursor(window.mouse_cursor)
+	sapp.set_mouse_cursor(window.view_state.mouse_cursor)
 }
 
 // event_fn is where all user events are handled. Mostly it delegates
@@ -158,11 +152,11 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			m := unsafe { gg.Modifier(e.modifiers) }
 			if !e.is_handled && e.key_code == .tab && m == gg.Modifier.shift {
 				if shape := layout.previous_focusable(mut w) {
-					w.id_focus = shape.id_focus
+					w.view_state.id_focus = shape.id_focus
 				}
 			} else if !e.is_handled && e.key_code == .tab {
 				if shape := layout.next_focusable(mut w) {
-					w.id_focus = shape.id_focus
+					w.view_state.id_focus = shape.id_focus
 				}
 			}
 		}
@@ -201,11 +195,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	// Clear internal state management buffers.
 	// This is the only place these are cleared.
-	window.id_focus = 0
-	window.input_state.clear()
-	window.offset_x_state.clear()
-	window.offset_y_state.clear()
-	window.text_widths.clear()
+	window.view_state.clear()
 
 	view := gen_view(window)
 	layout := window.compose_layout(view)

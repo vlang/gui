@@ -29,10 +29,10 @@ fn (node &Layout) next_focusable(mut w Window) ?Shape {
 // is not disabled.
 fn (node &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
 	// ids are sorted either ascending or descending.
-	if w.id_focus > 0 {
+	if w.view_state.id_focus > 0 {
 		mut found := false
 		for id in ids {
-			if id == w.id_focus {
+			if id == w.view_state.id_focus {
 				found = true
 				continue
 			}

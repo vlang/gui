@@ -30,14 +30,14 @@ pub fn (window &Window) context() &gg.Context {
 pub fn (mut window Window) dialog(cfg DialogCfg) {
 	window.dialog_cfg = cfg
 	window.dialog_cfg.visible = true
-	window.dialog_cfg.old_id_focus = window.id_focus
+	window.dialog_cfg.old_id_focus = window.view_state.id_focus
 	window.set_id_focus(cfg.id_focus)
 }
 
 // dialog_dismiss closes an dialog box without invoking callbacks.
 // Useful for custom dialog types.
 pub fn (mut window Window) dialog_dismiss() {
-	window.input_state[window.dialog_cfg.id_focus] = InputState{}
+	window.view_state.input_state[window.dialog_cfg.id_focus] = InputState{}
 	window.dialog_cfg = DialogCfg{}
 }
 
@@ -57,28 +57,29 @@ pub fn (mut window Window) get_text_width(text string, text_style TextStyle) f32
 
 // id_focus gets the window's focus id
 pub fn (window &Window) id_focus() u32 {
-	return window.id_focus
+	return window.view_state.id_focus
 }
 
 // is_focus tests if the given id_focus is equal to the windows's id_focus
 pub fn (window &Window) is_focus(id_focus u32) bool {
-	return window.id_focus > 0 && window.id_focus == id_focus
+	return window.view_state.id_focus > 0 && window.view_state.id_focus == id_focus
 }
 
 pub fn (window &Window) mouse_is_locked() bool {
-	return window.mouse_lock.mouse_down != none || window.mouse_lock.mouse_move != none
-		|| window.mouse_lock.mouse_up != none
+	return window.view_state.mouse_lock.mouse_down != none
+		|| window.view_state.mouse_lock.mouse_move != none
+		|| window.view_state.mouse_lock.mouse_up != none
 }
 
 // mouse_lock locks the mouse so all mouse events go to the
 // handlers in MouseLockCfg
 pub fn (mut window Window) mouse_lock(cfg MouseLockCfg) {
-	window.mouse_lock = cfg
+	window.view_state.mouse_lock = cfg
 }
 
 // mouse_unlock returns mouse handling events to normal behavior
 pub fn (mut window Window) mouse_unlock() {
-	window.mouse_lock = MouseLockCfg{}
+	window.view_state.mouse_lock = MouseLockCfg{}
 	sapp.lock_mouse(false)
 }
 
@@ -120,46 +121,46 @@ fn (mut window Window) update_window_size() {
 // scroll_horizontal_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_horizontal_by(id_scroll u32, delta f32) {
-	window.offset_x_state[id_scroll] += delta
+	window.view_state.offset_x_state[id_scroll] += delta
 }
 
 // scroll_horizontal_to scrolls the given scrollable to the offset. offset is negative.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_horizontal_to(id_scroll u32, offset f32) {
-	window.offset_x_state[id_scroll] = offset
+	window.view_state.offset_x_state[id_scroll] = offset
 }
 
 // scroll_vertical_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_by(id_scroll u32, delta f32) {
-	window.offset_y_state[id_scroll] += delta
+	window.view_state.offset_y_state[id_scroll] += delta
 }
 
 // scroll_vertical_to scrolls the given scrollable to the offset. offset is negative.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
-	window.offset_y_state[id_scroll] = offset
+	window.view_state.offset_y_state[id_scroll] = offset
 }
 
 // set_id_focus sets the window's focus id.
 pub fn (mut window Window) set_id_focus(id u32) {
-	window.id_focus = id
+	window.view_state.id_focus = id
 }
 
 // set_mouse_cursor_arrow sets the window's mouse cursor to an arrow
 pub fn (mut window Window) set_mouse_cursor_arrow() {
-	window.mouse_cursor = .arrow
+	window.view_state.mouse_cursor = .arrow
 }
 
 // set_mouse_cursor_ibeam sets the window's mouse cursor to an I-Beam
 // typically indicating text handling.
 pub fn (mut window Window) set_mouse_cursor_ibeam() {
-	window.mouse_cursor = .ibeam
+	window.view_state.mouse_cursor = .ibeam
 }
 
 // set_mouse_cursor_pointing_hand sets the window's mouse cursor to a pointy finger
 pub fn (mut window Window) set_mouse_cursor_pointing_hand() {
-	window.mouse_cursor = .pointing_hand
+	window.view_state.mouse_cursor = .pointing_hand
 }
 
 // set_theme sets the current theme to the given theme.

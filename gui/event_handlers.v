@@ -14,7 +14,8 @@ fn char_handler(node &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
-	if node.shape.id_focus > 0 && !node.shape.disabled && node.shape.id_focus == w.id_focus {
+	if node.shape.id_focus > 0 && !node.shape.disabled
+		&& node.shape.id_focus == w.view_state.id_focus {
 		if node.shape.on_char_shape != unsafe { nil } {
 			node.shape.on_char_shape(node.shape, mut e, mut w)
 			if e.is_handled {
@@ -94,8 +95,8 @@ fn key_down_scroll_handler(node &Layout, mut e Event, mut w Window) {
 
 fn mouse_down_handler(node &Layout, in_handler bool, mut e Event, mut w Window) {
 	if !in_handler { // limits checking to once per tree walk.
-		if w.mouse_lock.mouse_down != none {
-			w.mouse_lock.mouse_down(node, mut e, mut w)
+		if w.view_state.mouse_lock.mouse_down != none {
+			w.view_state.mouse_lock.mouse_down(node, mut e, mut w)
 			return
 		}
 	}
@@ -130,8 +131,8 @@ fn mouse_down_handler(node &Layout, in_handler bool, mut e Event, mut w Window) 
 }
 
 fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
-	if w.mouse_lock.mouse_move != none {
-		w.mouse_lock.mouse_move(node, mut e, mut w)
+	if w.view_state.mouse_lock.mouse_move != none {
+		w.view_state.mouse_lock.mouse_move(node, mut e, mut w)
 		return
 	}
 	if !w.pointer_over_app(e) {
@@ -156,8 +157,8 @@ fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
 }
 
 fn mouse_up_handler(node &Layout, mut e Event, mut w Window) {
-	if w.mouse_lock.mouse_up != none {
-		w.mouse_lock.mouse_up(node, mut e, mut w)
+	if w.view_state.mouse_lock.mouse_up != none {
+		w.view_state.mouse_lock.mouse_up(node, mut e, mut w)
 		return
 	}
 	for child in node.children {
@@ -213,8 +214,8 @@ fn scroll_horizontal(node &Layout, delta f32, mut w Window) bool {
 	if v_id > 0 {
 		// scrollable region does not including padding
 		max_offset := f32_min(0, node.shape.width - node.shape.padding.width() - content_width(node))
-		offset_x := w.offset_x_state[v_id] + delta * gui_theme.scroll_multiplier
-		w.offset_x_state[v_id] = clamp_f32(offset_x, max_offset, 0)
+		offset_x := w.view_state.offset_x_state[v_id] + delta * gui_theme.scroll_multiplier
+		w.view_state.offset_x_state[v_id] = clamp_f32(offset_x, max_offset, 0)
 		return true
 	}
 	return false
@@ -225,8 +226,8 @@ fn scroll_vertical(node &Layout, delta f32, mut w Window) bool {
 	if v_id > 0 {
 		// scrollable region does not including padding
 		max_offset := f32_min(0, node.shape.height - node.shape.padding.height() - content_height(node))
-		offset_y := w.offset_y_state[v_id] + delta * gui_theme.scroll_multiplier
-		w.offset_y_state[v_id] = clamp_f32(offset_y, max_offset, 0)
+		offset_y := w.view_state.offset_y_state[v_id] + delta * gui_theme.scroll_multiplier
+		w.view_state.offset_y_state[v_id] = clamp_f32(offset_y, max_offset, 0)
 		return true
 	}
 	return false
