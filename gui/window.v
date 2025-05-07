@@ -93,8 +93,8 @@ fn frame_fn(mut window Window) {
 	window.ui.begin()
 	renderers_draw(window.renderers, window)
 	window.ui.end()
-	window.mutex.unlock()
 	sapp.set_mouse_cursor(window.view_state.mouse_cursor)
+	window.mutex.unlock()
 }
 
 // event_fn is where all user events are handled. Mostly it delegates
@@ -190,28 +190,29 @@ fn event_fn(ev &gg.Event, mut w Window) {
 
 // update_view sets the Window's view generator. A window can have only one
 // view generator. Giving a Window a new view generator replaces the current
-// view generator and clears the input states, scroll states and other
-// internal management states.
+// view generator and clears the view_state.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
-	// Clear internal state management buffers.
-	// This is the only place these are cleared.
-	window.view_state.clear()
-
 	view := gen_view(window)
 	layout := window.compose_layout(view)
+	// Profiler showed that a significant amount of time was spent in
+	// array.push(). render_layout is recursive. Returning empty arrays
+	// and pushing into stack allocated render arrays added up. This was
+	// evident in the column-scroll.v example with 10K rows. Passing a
+	// reference to render array significantly reduced calls to array.push()
 	mut renderers := []Renderer{}
 	render_layout(layout, mut renderers, window.color_background(), none, window)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
 
+	window.view_state.clear()
 	window.view_generator = gen_view
 	window.layout = layout
 	window.renderers = renderers
 }
 
 // update_window generates a new layout from the window's currnet
-// view generator. It does not clear the input states. It should
+// view generator. It does not clear the view states. It should
 // rarely be needed since event handling calls it regularly.
 pub fn (mut window Window) update_window() {
 	window.mutex.lock()
