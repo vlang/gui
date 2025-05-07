@@ -41,10 +41,10 @@ pub:
 	on_mouse_move   fn (voidptr, mut Event, mut Window) = unsafe { nil }
 	on_mouse_up     fn (voidptr, mut Event, mut Window) = unsafe { nil }
 	amend_layout    fn (mut Layout, &Window)            = unsafe { nil }
-	content         []View
 mut:
-	axis Axis
-	cfg  voidptr
+	axis    Axis
+	cfg     voidptr
+	content []View
 }
 
 fn (cfg &Container) generate(mut _ Window) Layout {

@@ -12,7 +12,7 @@ pub mut:
 fn main() {
 	mut window := gui.window(
 		state:   &App{}
-		width:   300
+		width:   400
 		height:  300
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -32,46 +32,78 @@ fn main_view(window &gui.Window) gui.View {
 		spacing: 0
 		content: [
 			menu(window),
-			gui.column(
-				h_align: .center
-				padding: gui.padding_none
-				sizing:  gui.fill_fill
-				content: [
-					gui.rectangle(
-						height: 40
-						fill:   false
-						color:  gui.color_transparent
-						sizing: gui.fill_fixed
-					),
-					gui.text(
-						text:       'Welcome to GUI'
-						text_style: gui.theme().b1
-					),
-					gui.button(
-						id_focus:       1
-						padding_border: gui.padding_two
-						content:        [gui.text(text: '${app.clicks} Clicks')]
-						on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-							mut app := w.state[App]()
-							app.clicks += 1
-						}
-					),
-				]
-			),
+			body(app, window),
 		]
 	)
 }
 
 fn menu(window &gui.Window) gui.View {
-	return gui.menubar(
-		id_menu: 1
-		items:   [
-			gui.menu_item(id: 'file', text: 'File'),
-			gui.menu_item(id: 'edit', text: 'Edit', selected: true),
-			gui.menu_item(id: 'view', text: 'View'),
-			gui.menu_item(id: 'go', text: 'Go'),
-			gui.menu_item(id: 'window', text: 'Window'),
-			gui.menu_item(id: 'help', text: 'Help'),
+	return window.menubar(
+		id_menubar: 1
+		items:      [
+			gui.MenuItemCfg{
+				id:      'file'
+				text:    'File'
+				submenu: [
+					gui.MenuItemCfg{
+						id:   'new'
+						text: 'New'
+					},
+					gui.MenuItemCfg{
+						id:   'open'
+						text: 'Open'
+					},
+				]
+			},
+			gui.MenuItemCfg{
+				id:   'edit'
+				text: 'Edit'
+			},
+			gui.MenuItemCfg{
+				id:   'view'
+				text: 'View'
+			},
+			gui.MenuItemCfg{
+				id:   'go'
+				text: 'Go'
+			},
+			gui.MenuItemCfg{
+				id:   'window'
+				text: 'Window'
+			},
+			gui.MenuItemCfg{
+				id:   'help'
+				text: 'Help'
+			},
+		]
+	)
+}
+
+fn body(app &App, window &gui.Window) gui.View {
+	return gui.column(
+		h_align: .center
+		padding: gui.padding_none
+		sizing:  gui.fill_fill
+		content: [
+			gui.rectangle(
+				height: 40
+				fill:   false
+				color:  gui.color_transparent
+				sizing: gui.fill_fixed
+			),
+			gui.text(
+				text:       'Welcome to GUI'
+				text_style: gui.theme().b1
+			),
+			gui.button(
+				id_focus:       1
+				padding_border: gui.padding_two
+				content:        [gui.text(text: '${app.clicks} Clicks')]
+				on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[App]()
+					app.clicks += 1
+				}
+			),
 		]
 	)
 }

@@ -65,6 +65,14 @@ pub fn (window &Window) is_focus(id_focus u32) bool {
 	return window.view_state.id_focus > 0 && window.view_state.id_focus == id_focus
 }
 
+// pub fn (window &Window) menu_is_selected(id string) bool {
+// 	return window.view_state.menu_selected.exists(id)
+// }
+
+// pub fn (mut window Window) menu_select(id string) {
+// 	window.view_state.menu_selected.add(id)
+// }
+
 pub fn (window &Window) mouse_is_locked() bool {
 	return window.view_state.mouse_lock.mouse_down != none
 		|| window.view_state.mouse_lock.mouse_move != none

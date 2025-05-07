@@ -8,9 +8,10 @@ module gui
 //
 // Renderers are draw instructions.
 pub interface View {
-	id      string
-	content []View
+	id string
 	generate(mut window Window) Layout
+mut:
+	content []View
 }
 
 // view_to_layout builds a Layout from a View.
