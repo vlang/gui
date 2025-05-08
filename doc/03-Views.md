@@ -30,10 +30,10 @@ Spacing is the space between the container's contents. For rows, it is
 the horizontal space between the container's content items. For columns,
 it is the vertical space between content items.
 
-    Container layout
+    Container layout (row)
 
-     |--- left padding
-     V             -------------------- spacing (row is pictured here)
+     /--- left padding
+     V             /------------------- spacing
     |--------------|-------------|--------------|
     |              v             v              | <- top padding
     |  |---------|   |---------|   |---------|  |
@@ -44,7 +44,7 @@ it is the vertical space between content items.
     |                                           | <- bottom padding
     |-------------------------------------------|
                                                ^
-                              right padding ---|
+                              right padding ---/
 
 Sizing is perhaps the most challenging to understand. There are three
 types of sizing, `fit`, `fill` and `fixed`. Fit sizing sized the

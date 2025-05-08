@@ -5,19 +5,21 @@ pub struct MenubarCfg {
 pub:
 	id                     string
 	id_menubar             u32 @[required]
-	color                  Color = gui_theme.color_1
-	color_border           Color = gui_theme.button_style.color_border
 	disabled               bool
 	invisible              bool
-	sizing                 Sizing  = fill_fit
-	width_submenu_min      f32     = 50
-	width_submenu_max      f32     = 200
-	padding                Padding = padding_two_three
-	padding_border         Padding = padding_one
-	padding_submenu        Padding = padding_two_five
-	padding_submenu_border Padding = padding_one
-	spacing                f32     = gui_theme.spacing_medium
-	spacing_submenu        f32     = 1
+	color                  Color     = gui_theme.menubar_style.color
+	color_border           Color     = gui_theme.menubar_style.color_border
+	sizing                 Sizing    = fill_fit
+	width_submenu_min      f32       = gui_theme.menubar_style.width_submenu_min
+	width_submenu_max      f32       = gui_theme.menubar_style.width_submenu_max
+	padding                Padding   = gui_theme.menubar_style.padding
+	padding_menu_item      Padding   = gui_theme.menubar_style.padding_menu_item
+	padding_border         Padding   = gui_theme.menubar_style.padding_border
+	padding_submenu        Padding   = gui_theme.menubar_style.padding_submenu
+	padding_submenu_border Padding   = gui_theme.menubar_style.padding_border
+	spacing                f32       = gui_theme.menubar_style.spacing
+	spacing_submenu        f32       = gui_theme.menubar_style.spacing_submenu
+	text_style             TextStyle = gui_theme.menubar_style.text_style
 	items                  []MenuItemCfg
 }
 
@@ -51,18 +53,19 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 	for item in items {
 		item_cfg := MenuItemCfg{
 			...item
-			selected: item.id == id_selected
-			sizing:   sizing
+			selected:   item.id == id_selected
+			sizing:     sizing
+			text_style: cfg.text_style
 		}
 		mut menu := menu_item(cfg, item_cfg)
-		if item_cfg.selected || is_selected_in_tree(item_cfg.submenu, id_selected) {
-			if item.submenu.len > 0 {
+		if item.submenu.len > 0 {
+			if item_cfg.selected || is_selected_in_tree(item_cfg.submenu, id_selected) {
 				submenu := column(
 					min_width:      cfg.width_submenu_min
 					max_width:      cfg.width_submenu_max
-					fill:           true
 					color:          cfg.color_border
 					padding:        cfg.padding_submenu_border
+					fill:           true
 					float:          true
 					float_anchor:   if level == 0 { .bottom_left } else { .top_right }
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }

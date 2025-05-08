@@ -6,11 +6,12 @@ pub:
 	id             string @[required]
 	text           string
 	selected       bool
-	selected_color Color = gui_theme.color_5
+	color_selected Color = gui_theme.color_5
 	sizing         Sizing
 	radius         f32 = gui_theme.radius_small
 	submenu        []MenuItemCfg
 	separator      bool
+	text_style     TextStyle
 	on_click       fn (&MenuItemCfg, mut Event, mut Window) = unsafe { nil }
 }
 
@@ -38,16 +39,23 @@ pub fn menu_item(menubar_cfg MenubarCfg, menu_item_cfg MenuItemCfg) View {
 				id:       menu_item_cfg.id
 				cfg:      &menu_item_cfg
 				color:    if menu_item_cfg.selected {
-					menu_item_cfg.selected_color
+					menu_item_cfg.color_selected
 				} else {
 					color_transparent
 				}
 				fill:     menu_item_cfg.selected
-				padding:  menubar_cfg.padding_submenu
+				padding:  menubar_cfg.padding_menu_item
 				radius:   menu_item_cfg.radius
 				sizing:   menu_item_cfg.sizing
 				on_click: menubar_cfg.menu_item_click
-				content:  [text(text: menu_item_cfg.text)]
+				spacing:  0
+				content:  [
+					text(
+						text:       menu_item_cfg.text
+						text_style: menu_item_cfg.text_style
+						wrap:       true
+					),
+				]
 			)
 		}
 	}

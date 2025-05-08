@@ -13,12 +13,7 @@ fn main() {
 			w.update_view(main_view)
 		}
 	)
-	// Add some borders to views that support them
-	theme := gui.theme_maker(gui.ThemeCfg{
-		...gui.theme_dark_cfg
-		padding_border: gui.padding_two
-	})
-	window.set_theme(theme)
+	window.set_theme(gui.theme_dark_bordered)
 	window.run()
 }
 

@@ -32,6 +32,7 @@ fn main() {
 			w.update_view(main_view)
 		}
 	)
+	window.set_theme(gui.theme_dark_bordered)
 	window.run()
 }
 
@@ -53,10 +54,9 @@ fn main_view(window &gui.Window) gui.View {
 				text_style: gui.theme().b1
 			),
 			gui.button(
-				id_focus:       1
-				padding_border: gui.padding_two
-				content:        [gui.text(text: '${app.clicks} Clicks')]
-				on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+				id_focus: 1
+				content:  [gui.text(text: '${app.clicks} Clicks')]
+				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[App]()
 					app.clicks += 1
 				}

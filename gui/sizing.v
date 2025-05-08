@@ -3,11 +3,11 @@ module gui
 // SizingType describes the three sizing modes of GUI
 pub enum SizingType {
 	fit   // element fits to content
-	fill  // elememnt fills to parent (grows or shrinks)
+	fill  // element fills to parent (grows or shrinks)
 	fixed // element unchanged
 }
 
-// Sizing is describes how the shape is sized horizontally and vertically.
+// Sizing describes how the shape is sized horizontally and vertically.
 pub struct Sizing {
 pub:
 	width  SizingType

@@ -14,6 +14,7 @@ fn main() {
 			w.set_id_focus(1)
 		}
 	)
+	window.set_theme(gui.theme_dark_bordered)
 	window.run()
 }
 

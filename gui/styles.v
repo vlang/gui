@@ -69,6 +69,24 @@ pub:
 	}
 }
 
+pub struct MenubarStyle {
+	color                  Color     = color_1_dark
+	color_border           Color     = color_border_dark
+	color_selected         Color     = color_5_dark
+	width_submenu_min      f32       = 50
+	width_submenu_max      f32       = 200
+	padding                Padding   = padding_small
+	padding_menu_item      Padding   = padding_two_five
+	padding_border         Padding   = padding_none
+	padding_submenu        Padding   = padding_small
+	padding_submenu_border Padding   = padding_none
+	spacing                f32       = gui_theme.spacing_medium
+	spacing_submenu        f32       = 1
+	text_style             TextStyle = TextStyle{
+		size: size_text_small
+	}
+}
+
 pub struct ProgressBarStyle {
 pub:
 	color           Color     = color_1_dark

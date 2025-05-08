@@ -57,6 +57,7 @@ pub:
 	color_background Color  = color_0_dark
 	color_link       Color  = color_link_dark
 	color_border     Color  = color_border_dark
+	color_selected   Color  = color_5_dark
 	color_0          Color  = color_0_dark
 	color_1          Color  = color_1_dark
 	color_2          Color  = color_2_dark
@@ -68,6 +69,7 @@ pub:
 	container_style    ContainerStyle
 	dialog_style       DialogStyle
 	input_style        InputStyle
+	menubar_style      MenubarStyle
 	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
 	scrollbar_style    ScrollbarStyle
@@ -216,7 +218,7 @@ pub:
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
 	color_link         Color     = color_link_dark
-	color_text         Color     = color_text_dark
+	color_selected     Color     = color_5_dark
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_medium
@@ -264,12 +266,13 @@ pub const theme_dark_cfg = ThemeCfg{
 	color_border:       color_border_dark
 	color_border_focus: color_link_dark
 	color_link:         color_link_dark
+	color_selected:     color_5_dark
 	text_style:         text_style_dark
 }
 pub const theme_dark = theme_maker(theme_dark_cfg)
 
 pub const theme_dark_no_padding_cfg = ThemeCfg{
-	name:               'dark'
+	//...theme_dark_cfg
 	color_0:            color_0_dark
 	color_1:            color_1_dark
 	color_2:            color_2_dark
@@ -279,13 +282,35 @@ pub const theme_dark_no_padding_cfg = ThemeCfg{
 	color_border:       color_border_dark
 	color_border_focus: color_link_dark
 	color_link:         color_link_dark
+	color_selected:     color_5_dark
 	text_style:         text_style_dark
-	padding:            padding_none
-	padding_border:     padding_none
-	radius:             radius_none
-	radius_border:      radius_none
+
+	name:           'dark-no-padding'
+	padding:        padding_none
+	padding_border: padding_none
+	radius:         radius_none
+	radius_border:  radius_none
 }
 pub const theme_dark_no_padding = theme_maker(theme_dark_no_padding_cfg)
+
+pub const theme_dark_bordered_cfg = ThemeCfg{
+	///...theme_dark_cfg
+	color_0:            color_0_dark
+	color_1:            color_1_dark
+	color_2:            color_2_dark
+	color_3:            color_3_dark
+	color_4:            color_4_dark
+	color_5:            color_5_dark
+	color_border:       color_border_dark
+	color_border_focus: color_link_dark
+	color_link:         color_link_dark
+	color_selected:     color_5_dark
+	text_style:         text_style_dark
+
+	name:           'dark-bordered'
+	padding_border: padding_one
+}
+pub const theme_dark_bordered = theme_maker(theme_dark_bordered_cfg)
 
 const color_text_light = rgb(32, 32, 32)
 const color_0_light = rgb(225, 225, 225)
@@ -309,6 +334,7 @@ pub const theme_light_cfg = ThemeCfg{
 	color_border:       color_border_light
 	color_link:         color_link_light
 	color_border_focus: color_border_focus_light
+	color_selected:     color_5_light
 	text_style:         TextStyle{
 		...text_style_dark
 		color: color_text_light
@@ -317,7 +343,7 @@ pub const theme_light_cfg = ThemeCfg{
 pub const theme_light = theme_maker(theme_light_cfg)
 
 pub const theme_light_no_padding_cfg = ThemeCfg{
-	name:               'light'
+	//...theme_light_cfg
 	color_0:            color_0_light
 	color_1:            color_1_light
 	color_2:            color_2_light
@@ -327,16 +353,41 @@ pub const theme_light_no_padding_cfg = ThemeCfg{
 	color_border:       color_border_light
 	color_link:         color_link_light
 	color_border_focus: color_border_focus_light
+	color_selected:     color_5_light
 	text_style:         TextStyle{
 		...text_style_dark
 		color: color_text_light
 	}
-	padding:            padding_none
-	padding_border:     padding_none
-	radius:             radius_none
-	radius_border:      radius_none
+
+	name:           'light-no-padding'
+	padding:        padding_none
+	padding_border: padding_none
+	radius:         radius_none
+	radius_border:  radius_none
 }
 pub const theme_light_no_padding = theme_maker(theme_light_no_padding_cfg)
+
+pub const theme_light_bordered_cfg = ThemeCfg{
+	//...theme_light_cfg
+	color_0:            color_0_light
+	color_1:            color_1_light
+	color_2:            color_2_light
+	color_3:            color_3_light
+	color_4:            color_4_light
+	color_5:            color_5_light
+	color_border:       color_border_light
+	color_link:         color_link_light
+	color_border_focus: color_border_focus_light
+	color_selected:     color_5_light
+	text_style:         TextStyle{
+		...text_style_dark
+		color: color_text_light
+	}
+
+	name:           'light-bordered'
+	padding_border: padding_one
+}
+pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 
 // theme_maker sets all styles to a common set of values using
 // [ThemeCfg](#ThemeCfg). GUI allows each view type (button,
@@ -352,6 +403,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		color_background: cfg.color_0
 		color_link:       cfg.color_link
 		color_border:     cfg.color_border
+		color_selected:   cfg.color_selected
 		color_0:          cfg.color_0
 		color_1:          cfg.color_1
 		color_2:          cfg.color_2
@@ -415,6 +467,19 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 					b: cfg.text_style.color.b
 					a: 100
 				}
+			}
+		}
+		menubar_style:      MenubarStyle{
+			color:           cfg.color_1
+			color_border:    cfg.color_border
+			color_selected:  cfg.color_selected
+			padding:         cfg.padding_small
+			padding_border:  cfg.padding_border
+			padding_submenu: cfg.padding_small
+			spacing:         cfg.spacing_medium
+			text_style:      TextStyle{
+				...cfg.text_style
+				size: cfg.size_text_small
 			}
 		}
 		progress_bar_style: ProgressBarStyle{

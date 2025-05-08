@@ -18,6 +18,7 @@ fn main() {
 			w.update_view(main_view)
 		}
 	)
+	window.set_theme(gui.theme_dark_bordered)
 	window.run()
 }
 
@@ -107,6 +108,10 @@ fn menu(window &gui.Window) gui.View {
 						id:   'emoji'
 						text: 'Emoji & Symbols'
 					},
+					gui.MenuItemCfg{
+						id:   'too-long'
+						text: 'Long menu text item to test line wrappping in menu'
+					},
 				]
 			},
 			gui.MenuItemCfg{
@@ -146,10 +151,9 @@ fn body(app &App, window &gui.Window) gui.View {
 				text_style: gui.theme().b1
 			),
 			gui.button(
-				id_focus:       1
-				padding_border: gui.padding_one
-				content:        [gui.text(text: '${app.clicks} Clicks')]
-				on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+				id_focus: 1
+				content:  [gui.text(text: '${app.clicks} Clicks')]
+				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[App]()
 					app.clicks += 1
 				}
