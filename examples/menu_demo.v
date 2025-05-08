@@ -46,18 +46,68 @@ fn menu(window &gui.Window) gui.View {
 				text:    'File'
 				submenu: [
 					gui.MenuItemCfg{
-						id:   'new'
-						text: 'New'
+						id:      'new'
+						text:    'New'
+						submenu: [
+							gui.MenuItemCfg{
+								id:   'here'
+								text: 'Here'
+							},
+							gui.MenuItemCfg{
+								id:   'there'
+								text: 'There'
+							},
+						]
 					},
 					gui.MenuItemCfg{
-						id:   'open'
-						text: 'Open'
+						id:      'open'
+						text:    'Open'
+						submenu: [
+							gui.MenuItemCfg{
+								id:   'no_where'
+								text: 'No Where'
+							},
+							gui.MenuItemCfg{
+								id:   'some_where'
+								text: 'Some Where'
+							},
+						]
 					},
 				]
 			},
 			gui.MenuItemCfg{
-				id:   'edit'
-				text: 'Edit'
+				id:      'edit'
+				text:    'Edit'
+				submenu: [
+					gui.MenuItemCfg{
+						id:   'cut'
+						text: 'Cut'
+					},
+					gui.MenuItemCfg{
+						id:   'copy'
+						text: 'Copy'
+					},
+					gui.MenuItemCfg{
+						id:   'paste'
+						text: 'Paste'
+					},
+					gui.MenuItemCfg{
+						id:        ''
+						separator: true
+					},
+					gui.MenuItemCfg{
+						id:   'find'
+						text: 'Find'
+					},
+					gui.MenuItemCfg{
+						id:        ''
+						separator: true
+					},
+					gui.MenuItemCfg{
+						id:   'emoji'
+						text: 'Emoji & Symbols'
+					},
+				]
 			},
 			gui.MenuItemCfg{
 				id:   'view'
@@ -97,7 +147,7 @@ fn body(app &App, window &gui.Window) gui.View {
 			),
 			gui.button(
 				id_focus:       1
-				padding_border: gui.padding_two
+				padding_border: gui.padding_one
 				content:        [gui.text(text: '${app.clicks} Clicks')]
 				on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[App]()
