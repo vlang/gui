@@ -80,6 +80,10 @@ pub struct MenubarStyle {
 	padding_border         Padding   = padding_none
 	padding_submenu        Padding   = padding_small
 	padding_submenu_border Padding   = padding_none
+	radius                 f32       = radius_small
+	radius_border          f32       = radius_border
+	radius_submenu         f32       = radius_small
+	radius_menu_item       f32       = radius_small
 	spacing                f32       = gui_theme.spacing_medium
 	spacing_submenu        f32       = 1
 	text_style             TextStyle = TextStyle{

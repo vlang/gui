@@ -9,6 +9,7 @@ pub:
 	invisible              bool
 	color                  Color     = gui_theme.menubar_style.color
 	color_border           Color     = gui_theme.menubar_style.color_border
+	color_selected         Color     = gui_theme.menubar_style.color_selected
 	sizing                 Sizing    = fill_fit
 	width_submenu_min      f32       = gui_theme.menubar_style.width_submenu_min
 	width_submenu_max      f32       = gui_theme.menubar_style.width_submenu_max
@@ -17,6 +18,10 @@ pub:
 	padding_border         Padding   = gui_theme.menubar_style.padding_border
 	padding_submenu        Padding   = gui_theme.menubar_style.padding_submenu
 	padding_submenu_border Padding   = gui_theme.menubar_style.padding_border
+	radius                 f32       = gui_theme.menubar_style.radius
+	radius_border          f32       = gui_theme.menubar_style.radius_border
+	radius_submenu         f32       = gui_theme.menubar_style.radius_submenu
+	radius_menu_item       f32       = gui_theme.menubar_style.radius_menu_item
 	spacing                f32       = gui_theme.menubar_style.spacing
 	spacing_submenu        f32       = gui_theme.menubar_style.spacing_submenu
 	text_style             TextStyle = gui_theme.menubar_style.text_style
@@ -54,9 +59,13 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 		selected_in_tree := is_selected_in_tree(item.submenu, id_selected)
 		item_cfg := MenuItemCfg{
 			...item
-			selected:   item.id == id_selected || selected_in_tree
-			sizing:     sizing
-			text_style: cfg.text_style
+			color_selected: cfg.color_selected
+			padding:        cfg.padding_menu_item
+			selected:       item.id == id_selected || selected_in_tree
+			sizing:         sizing
+			radius:         cfg.radius_menu_item
+			spacing:        cfg.spacing_submenu
+			text_style:     cfg.text_style
 		}
 		mut menu := menu_item(cfg, item_cfg)
 		if item.submenu.len > 0 {

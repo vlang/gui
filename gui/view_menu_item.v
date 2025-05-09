@@ -6,13 +6,14 @@ pub:
 	id             string @[required]
 	text           string
 	selected       bool
-	color_selected Color   = gui_theme.color_5
-	radius         f32     = gui_theme.radius_small
-	padding        Padding = gui_theme.menubar_style.padding_menu_item
+	color_selected Color     = gui_theme.menubar_style.color_selected
+	radius         f32       = gui_theme.radius_small
+	padding        Padding   = gui_theme.menubar_style.padding_menu_item
+	spacing        f32       = gui_theme.menubar_style.spacing_submenu
+	text_style     TextStyle = gui_theme.menubar_style.text_style
 	sizing         Sizing
 	submenu        []MenuItemCfg
 	separator      bool
-	text_style     TextStyle
 	on_click       fn (&MenuItemCfg, mut Event, mut Window) = unsafe { nil }
 	custom_view    ?View
 }
@@ -56,7 +57,7 @@ pub fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				radius:   item_cfg.radius
 				sizing:   item_cfg.sizing
 				on_click: menubar_cfg.menu_item_click
-				spacing:  0
+				spacing:  item_cfg.spacing
 				content:  content
 			)
 		}
