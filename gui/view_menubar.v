@@ -51,15 +51,16 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 	id_selected := window.view_state.menu_state[cfg.id_menubar]
 	sizing := if level == 0 { fit_fit } else { fill_fit }
 	for item in items {
+		selected_in_tree := is_selected_in_tree(item.submenu, id_selected)
 		item_cfg := MenuItemCfg{
 			...item
-			selected:   item.id == id_selected
+			selected:   item.id == id_selected || selected_in_tree
 			sizing:     sizing
 			text_style: cfg.text_style
 		}
 		mut menu := menu_item(cfg, item_cfg)
 		if item.submenu.len > 0 {
-			if item_cfg.selected || is_selected_in_tree(item_cfg.submenu, id_selected) {
+			if item_cfg.selected || selected_in_tree {
 				submenu := column(
 					min_width:      cfg.width_submenu_min
 					max_width:      cfg.width_submenu_max

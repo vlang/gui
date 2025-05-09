@@ -1,5 +1,6 @@
 module gui
 
+@[heap]
 pub struct RectangleCfg {
 pub:
 	id         string

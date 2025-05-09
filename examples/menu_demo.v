@@ -6,7 +6,8 @@ import gui
 @[heap]
 struct App {
 pub mut:
-	clicks int
+	clicks      int
+	search_text string
 }
 
 fn main() {
@@ -39,6 +40,8 @@ fn main_view(window &gui.Window) gui.View {
 }
 
 fn menu(window &gui.Window) gui.View {
+	app := window.state[App]()
+
 	return window.menubar(
 		id_menubar: 1
 		items:      [
@@ -50,28 +53,16 @@ fn menu(window &gui.Window) gui.View {
 						id:      'new'
 						text:    'New'
 						submenu: [
-							gui.MenuItemCfg{
-								id:   'here'
-								text: 'Here'
-							},
-							gui.MenuItemCfg{
-								id:   'there'
-								text: 'There'
-							},
+							gui.menu_item_text('here', 'Here'),
+							gui.menu_item_text('there', 'There'),
 						]
 					},
 					gui.MenuItemCfg{
 						id:      'open'
 						text:    'Open'
 						submenu: [
-							gui.MenuItemCfg{
-								id:   'no_where'
-								text: 'No Where'
-							},
-							gui.MenuItemCfg{
-								id:   'some_where'
-								text: 'Some Where'
-							},
+							gui.menu_item_text('no_where', 'No Where'),
+							gui.menu_item_text('some_where', 'Some Where'),
 						]
 					},
 				]
@@ -80,38 +71,12 @@ fn menu(window &gui.Window) gui.View {
 				id:      'edit'
 				text:    'Edit'
 				submenu: [
-					gui.MenuItemCfg{
-						id:   'cut'
-						text: 'Cut'
-					},
-					gui.MenuItemCfg{
-						id:   'copy'
-						text: 'Copy'
-					},
-					gui.MenuItemCfg{
-						id:   'paste'
-						text: 'Paste'
-					},
-					gui.MenuItemCfg{
-						id:        ''
-						separator: true
-					},
-					gui.MenuItemCfg{
-						id:   'find'
-						text: 'Find'
-					},
-					gui.MenuItemCfg{
-						id:        ''
-						separator: true
-					},
-					gui.MenuItemCfg{
-						id:   'emoji'
-						text: 'Emoji & Symbols'
-					},
-					gui.MenuItemCfg{
-						id:   'too-long'
-						text: 'Long menu text item to test line wrappping in menu'
-					},
+					gui.menu_item_text('cut', 'Cut'),
+					gui.menu_item_text('copy', 'Copy'),
+					gui.menu_item_text('paste', 'Paste'),
+					gui.menu_separator(),
+					gui.menu_item_text('emoji', 'Emoji & Symbols'),
+					gui.menu_item_text('too-long', 'Long menu text item to test line wrappping in menu'),
 				]
 			},
 			gui.MenuItemCfg{
@@ -127,8 +92,32 @@ fn menu(window &gui.Window) gui.View {
 				text: 'Window'
 			},
 			gui.MenuItemCfg{
-				id:   'help'
-				text: 'Help'
+				id:      'help'
+				text:    'Help'
+				submenu: [
+					gui.MenuItemCfg{
+						id:          'search'
+						padding:     gui.padding_none
+						custom_view: gui.input(
+							text:            app.search_text
+							id_focus:        100
+							width:           100
+							min_width:       100
+							max_width:       100
+							sizing:          gui.fixed_fill
+							placeholder:     'Search'
+							padding:         gui.padding_two_five
+							radius:          0
+							radius_border:   0
+							on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+								mut app := w.state[App]()
+								app.search_text = s
+							}
+						)
+					},
+					gui.menu_separator(),
+					gui.menu_item_text('help-me', 'Help'),
+				]
 			},
 		]
 	)

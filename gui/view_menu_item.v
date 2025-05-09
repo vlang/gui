@@ -6,20 +6,22 @@ pub:
 	id             string @[required]
 	text           string
 	selected       bool
-	color_selected Color = gui_theme.color_5
+	color_selected Color   = gui_theme.color_5
+	radius         f32     = gui_theme.radius_small
+	padding        Padding = gui_theme.menubar_style.padding_menu_item
 	sizing         Sizing
-	radius         f32 = gui_theme.radius_small
 	submenu        []MenuItemCfg
 	separator      bool
 	text_style     TextStyle
 	on_click       fn (&MenuItemCfg, mut Event, mut Window) = unsafe { nil }
+	custom_view    ?View
 }
 
-pub fn menu_item(menubar_cfg MenubarCfg, menu_item_cfg MenuItemCfg) View {
-	return match menu_item_cfg.separator {
+pub fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
+	return match item_cfg.separator {
 		true {
 			column(
-				id:      menu_item_cfg.id
+				id:      item_cfg.id
 				height:  gui_theme.text_style.size / 2
 				fill:    true
 				sizing:  fill_fit
@@ -35,29 +37,43 @@ pub fn menu_item(menubar_cfg MenubarCfg, menu_item_cfg MenuItemCfg) View {
 			)
 		}
 		else {
+			mut content := []View{}
+			if item_cfg.custom_view != none {
+				content << item_cfg.custom_view
+			} else {
+				content << text(
+					text:       item_cfg.text
+					text_style: item_cfg.text_style
+					wrap:       true
+				)
+			}
 			column(
-				id:       menu_item_cfg.id
-				cfg:      &menu_item_cfg
-				color:    if menu_item_cfg.selected {
-					menu_item_cfg.color_selected
-				} else {
-					color_transparent
-				}
-				fill:     menu_item_cfg.selected
-				padding:  menubar_cfg.padding_menu_item
-				radius:   menu_item_cfg.radius
-				sizing:   menu_item_cfg.sizing
+				id:       item_cfg.id
+				cfg:      &item_cfg
+				color:    if item_cfg.selected { item_cfg.color_selected } else { color_transparent }
+				fill:     item_cfg.selected
+				padding:  item_cfg.padding
+				radius:   item_cfg.radius
+				sizing:   item_cfg.sizing
 				on_click: menubar_cfg.menu_item_click
 				spacing:  0
-				content:  [
-					text(
-						text:       menu_item_cfg.text
-						text_style: menu_item_cfg.text_style
-						wrap:       true
-					),
-				]
+				content:  content
 			)
 		}
+	}
+}
+
+pub fn menu_item_text(id string, text string) MenuItemCfg {
+	return MenuItemCfg{
+		id:   id
+		text: text
+	}
+}
+
+pub fn menu_separator() MenuItemCfg {
+	return MenuItemCfg{
+		id:        'separator'
+		separator: true
 	}
 }
 
