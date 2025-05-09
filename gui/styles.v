@@ -70,11 +70,11 @@ pub:
 }
 
 pub struct MenubarStyle {
+	width_submenu_min      f32       = 50
+	width_submenu_max      f32       = 200
 	color                  Color     = color_1_dark
 	color_border           Color     = color_border_dark
 	color_selected         Color     = color_5_dark
-	width_submenu_min      f32       = 50
-	width_submenu_max      f32       = 200
 	padding                Padding   = padding_small
 	padding_menu_item      Padding   = padding_two_five
 	padding_border         Padding   = padding_none

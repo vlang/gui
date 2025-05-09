@@ -1,5 +1,17 @@
 module gui
 
+// MenubarCfg configures a horizontal menubar, which can contain drop-down submenu,
+// which in turn can have drop-down menus. The `id_menubar` is required so GUI can
+// store which menu has been selected. Per usual, `id_menu` need only be unique to
+// any other menubar's in the same view (unusual, but allowed).
+//
+// Menubars and menu items adhere to the same theme logic as other Gui views.
+// Menu-item clicks can be processed in two places. Each [MenuItemCfg](#MenuItemCfg)
+// has an optional user action callback that is called when the menu-item is clicked.
+// There is also optional user action callback on the Menubar. This is called after
+// the optional menu-item is called. The menubar action callback allows processing
+// some or all of the menu-item clicks in a single function if desired. Both can be
+// employed used together.
 @[heap]
 pub struct MenubarCfg {
 pub:
@@ -10,7 +22,6 @@ pub:
 	color                  Color     = gui_theme.menubar_style.color
 	color_border           Color     = gui_theme.menubar_style.color_border
 	color_selected         Color     = gui_theme.menubar_style.color_selected
-	sizing                 Sizing    = fill_fit
 	width_submenu_min      f32       = gui_theme.menubar_style.width_submenu_min
 	width_submenu_max      f32       = gui_theme.menubar_style.width_submenu_max
 	padding                Padding   = gui_theme.menubar_style.padding
@@ -22,12 +33,17 @@ pub:
 	radius_border          f32       = gui_theme.menubar_style.radius_border
 	radius_submenu         f32       = gui_theme.menubar_style.radius_submenu
 	radius_menu_item       f32       = gui_theme.menubar_style.radius_menu_item
+	sizing                 Sizing    = fill_fit
 	spacing                f32       = gui_theme.menubar_style.spacing
 	spacing_submenu        f32       = gui_theme.menubar_style.spacing_submenu
 	text_style             TextStyle = gui_theme.menubar_style.text_style
+	action                 fn (string, mut Event, mut Window) = fn (id string, mut e Event, mut w Window) {
+		e.is_handled = true
+	}
 	items                  []MenuItemCfg
 }
 
+// menubar creates a menubar and its child menus from the given MenubarCfg
 pub fn (window &Window) menubar(cfg MenubarCfg) View {
 	content := menu_build(cfg, 0, cfg.items, window)
 	return row(

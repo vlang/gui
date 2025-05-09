@@ -1,24 +1,37 @@
 module gui
 
+// MenuItemCfg configures a menu-item.  Menu items are containers and are not limited
+// to text. There are three types of menu items.
+//
+// - separator, if the separator field is true, a horizontal line separating menu items is rendered.
+// - custom view, if a custom_view is supplied, it is rendered.
+// - text only, for convienence, a text field is availble for the typical text only menu items.
+//
+// If all three types are specified only one is rendereed. The priority is separator, custom view, text only.
+// Regardless of the menu type, a menu item can have a submenu.
+//
+// The optional action callback can be used to process menu clicks. There is also a catch-all
+// action callback in the [MenubarCfg](#MenubarCfg) that is called afterwards.
 @[heap]
 pub struct MenuItemCfg {
 pub:
 	id             string @[required]
-	text           string
-	selected       bool
+	text           string    = 'empty'
 	color_selected Color     = gui_theme.menubar_style.color_selected
-	radius         f32       = gui_theme.radius_small
+	radius         f32       = gui_theme.menubar_style.radius_menu_item
 	padding        Padding   = gui_theme.menubar_style.padding_menu_item
 	spacing        f32       = gui_theme.menubar_style.spacing_submenu
 	text_style     TextStyle = gui_theme.menubar_style.text_style
+	disabled       bool
+	selected       bool
 	sizing         Sizing
 	submenu        []MenuItemCfg
 	separator      bool
-	on_click       fn (&MenuItemCfg, mut Event, mut Window) = unsafe { nil }
+	action         fn (&MenuItemCfg, mut Event, mut Window) = unsafe { nil }
 	custom_view    ?View
 }
 
-pub fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
+fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 	return match item_cfg.separator {
 		true {
 			column(
@@ -51,6 +64,7 @@ pub fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 			column(
 				id:       item_cfg.id
 				cfg:      &item_cfg
+				disabled: item_cfg.disabled
 				color:    if item_cfg.selected { item_cfg.color_selected } else { color_transparent }
 				fill:     item_cfg.selected
 				padding:  item_cfg.padding
@@ -64,6 +78,7 @@ pub fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 	}
 }
 
+// menu_item_text is a convienence function for creating a simple text menu item
 pub fn menu_item_text(id string, text string) MenuItemCfg {
 	return MenuItemCfg{
 		id:   id
@@ -71,6 +86,7 @@ pub fn menu_item_text(id string, text string) MenuItemCfg {
 	}
 }
 
+// menu_separator is a convienence function for createing a menu separator
 pub fn menu_separator() MenuItemCfg {
 	return MenuItemCfg{
 		id:        'separator'
@@ -80,5 +96,11 @@ pub fn menu_separator() MenuItemCfg {
 
 fn (menubar_cfg MenubarCfg) menu_item_click(cfg &MenuItemCfg, mut e Event, mut w Window) {
 	w.view_state.menu_state[menubar_cfg.id_menubar] = cfg.id
-	e.is_handled = true
+	if cfg.action != unsafe { nil } {
+		cfg.action(cfg, mut e, mut w)
+	}
+	menubar_cfg.action(cfg.id, mut e, mut w)
+	if cfg.submenu.len == 0 {
+		w.view_state.menu_state[menubar_cfg.id_menubar] = ''
+	}
 }

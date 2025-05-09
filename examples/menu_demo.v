@@ -6,8 +6,9 @@ import gui
 @[heap]
 struct App {
 pub mut:
-	clicks      int
-	search_text string
+	clicks           int
+	search_text      string
+	selected_menu_id string
 }
 
 fn main() {
@@ -25,7 +26,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	mut app := window.state[App]()
 
 	return gui.column(
 		width:   w
@@ -34,7 +35,7 @@ fn main_view(window &gui.Window) gui.View {
 		spacing: 0
 		content: [
 			menu(window),
-			body(app, window),
+			body(mut app, window),
 		]
 	)
 }
@@ -44,6 +45,10 @@ fn menu(window &gui.Window) gui.View {
 
 	return window.menubar(
 		id_menubar: 1
+		action:     fn (id string, mut e gui.Event, mut w gui.Window) {
+			mut app := w.state[App]()
+			app.selected_menu_id = id
+		}
 		items:      [
 			gui.MenuItemCfg{
 				id:      'file'
@@ -61,10 +66,12 @@ fn menu(window &gui.Window) gui.View {
 						id:      'open'
 						text:    'Open'
 						submenu: [
-							gui.menu_item_text('no_where', 'No Where'),
-							gui.menu_item_text('some_where', 'Some Where'),
+							gui.menu_item_text('no-where', 'No Where'),
+							gui.menu_item_text('some-where', 'Some Where'),
 						]
 					},
+					gui.menu_separator(),
+					gui.menu_item_text('exit', 'Exit'),
 				]
 			},
 			gui.MenuItemCfg{
@@ -80,16 +87,42 @@ fn menu(window &gui.Window) gui.View {
 				]
 			},
 			gui.MenuItemCfg{
-				id:   'view'
-				text: 'View'
+				id:      'view'
+				text:    'View'
+				submenu: [
+					gui.menu_item_text('zoom-in', 'Zoom In'),
+					gui.menu_item_text('zoom-out', 'Zoom Out'),
+					gui.menu_item_text('zoom-reset', 'Reset Zoom'),
+					gui.menu_separator(),
+					gui.menu_item_text('project-panel', 'Project Panel'),
+					gui.menu_item_text('outline-panel', 'Outline Panel'),
+					gui.menu_item_text('terminal-panel', 'Terminal Panel'),
+					gui.menu_separator(),
+					gui.menu_item_text('full-screen', 'Enter Full Screen'),
+				]
 			},
 			gui.MenuItemCfg{
-				id:   'go'
-				text: 'Go'
+				id:      'go'
+				text:    'Go'
+				submenu: [
+					gui.menu_item_text('go-back', 'Back'),
+					gui.menu_item_text('go-forward', 'Forward'),
+					gui.menu_separator(),
+					gui.menu_item_text('go-definition', 'Go to Definition'),
+					gui.menu_item_text('go-declaration', 'Go to Declaration'),
+					gui.menu_item_text('go-to-moon-alice', 'Go to the Moon Alice'),
+				]
 			},
 			gui.MenuItemCfg{
-				id:   'window'
-				text: 'Window'
+				id:      'window'
+				text:    'Window'
+				submenu: [
+					gui.menu_item_text('window-fill', 'Fill'),
+					gui.menu_item_text('window-center', 'Center'),
+					gui.menu_separator(),
+					gui.menu_item_text('window-move', 'Move & Resize'),
+					gui.menu_item_text('window-full-screen-tile', 'Full Screen Tile'),
+				]
 			},
 			gui.MenuItemCfg{
 				id:      'help'
@@ -123,7 +156,7 @@ fn menu(window &gui.Window) gui.View {
 	)
 }
 
-fn body(app &App, window &gui.Window) gui.View {
+fn body(mut app App, window &gui.Window) gui.View {
 	return gui.column(
 		h_align: .center
 		padding: gui.padding_none
@@ -146,6 +179,15 @@ fn body(app &App, window &gui.Window) gui.View {
 					mut app := w.state[App]()
 					app.clicks += 1
 				}
+			),
+			gui.text(text: '') // spacer,,,,,,,,,,,,,,,
+			gui.text(
+				text:       if app.selected_menu_id.len > 0 {
+					'Menu "${app.selected_menu_id}" selected'
+				} else {
+					''
+				}
+				text_style: gui_theme.m3
 			),
 		]
 	)
