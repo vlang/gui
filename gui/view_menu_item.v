@@ -1,5 +1,8 @@
 module gui
 
+pub const menu_separator_id = '__separator__'
+pub const menu_subtitle_id = '__subtitle__'
+
 // MenuItemCfg configures a menu-item.  Menu items are containers and are not limited
 // to text. There are three types of menu items.
 //
@@ -12,6 +15,10 @@ module gui
 //
 // The optional action callback can be used to process menu clicks. There is also a catch-all
 // action callback in the [MenubarCfg](#MenubarCfg) that is called afterwards.
+//
+// It should go without saying, but menu-item id's need to be unique within a menubar config.
+// This is neccesary so callbacks can identify which menu-item was clicked. It also is how
+// the menubar determines which menu items are selected/highlighted.
 @[heap]
 pub struct MenuItemCfg {
 pub:
@@ -36,7 +43,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 		true {
 			column(
 				id:      item_cfg.id
-				height:  gui_theme.text_style.size / 2
+				height:  item_cfg.text_style.size / 2
 				fill:    true
 				sizing:  fill_fit
 				padding: padding_none
@@ -76,7 +83,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				sizing:       item_cfg.sizing
 				on_click:     menubar_cfg.menu_item_click
 				spacing:      item_cfg.spacing
-				amend_layout: menubar_cfg.amend_layout
+				amend_layout: menubar_cfg.amend_layout_item
 				content:      content
 			)
 		}
@@ -85,6 +92,9 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 
 // menu_item_text is a convienence function for creating a simple text menu item
 pub fn menu_item_text(id string, text string) MenuItemCfg {
+	if id.len == 0 {
+		panic("empty menu id's are invalid")
+	}
 	return MenuItemCfg{
 		id:   id
 		text: text
@@ -94,15 +104,24 @@ pub fn menu_item_text(id string, text string) MenuItemCfg {
 // menu_separator is a convienence function for createing a menu separator
 pub fn menu_separator() MenuItemCfg {
 	return MenuItemCfg{
-		id:        'separator'
+		id:        menu_separator_id
 		separator: true
 	}
 }
 
+pub fn menu_subtitle(text string) MenuItemCfg {
+	return MenuItemCfg{
+		id:       menu_subtitle_id
+		text:     text
+		disabled: true
+	}
+}
+
 // menu_item_click, for such a short method, there is alot going on here in terms
-// of state management thus the many comments.
+// of state management, thus the many comments.
 fn (menubar_cfg MenubarCfg) menu_item_click(cfg &MenuItemCfg, mut e Event, mut w Window) {
 	// setting the focus to the menubar enables mouse hover hightlighting of menu items.
+	// see amend_layout_item
 	w.set_id_focus(menubar_cfg.id_focus)
 	// Hightlight the menu item
 	w.view_state.menu_state[menubar_cfg.id_focus] = cfg.id
@@ -120,18 +139,18 @@ fn (menubar_cfg MenubarCfg) menu_item_click(cfg &MenuItemCfg, mut e Event, mut w
 	}
 }
 
-fn (cfg &MenubarCfg) amend_layout(mut node Layout, mut w Window) {
-	// Mouse hover logic is covered here. Once the menubar gains focus,
+fn (cfg &MenubarCfg) amend_layout_item(mut node Layout, mut w Window) {
+	// Mouse hover logic is covered here. Once the **menubar** gains focus,
 	// mouse-overs can change the selected menu-item. Note: Selection
-	// incidates highlighting only. Clicking is still needed to invoke
-	// the action callbacks.
+	// incicates highlighting, not focus. This is key to understanding menus.
 	ctx := w.context()
 	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
 		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
 			return
 		}
-		if w.is_focus(cfg.id_focus) && node.shape.id != '' {
-			w.view_state.menu_state[cfg.id_focus] = node.shape.id
+		if node.shape.id.len == 0 || node.shape.disabled || !w.is_focus(cfg.id_focus) {
+			return
 		}
+		w.view_state.menu_state[cfg.id_focus] = node.shape.id
 	}
 }

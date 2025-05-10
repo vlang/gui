@@ -28,6 +28,7 @@ pub:
 	padding_border         Padding   = gui_theme.menubar_style.padding_border
 	padding_submenu        Padding   = gui_theme.menubar_style.padding_submenu
 	padding_submenu_border Padding   = gui_theme.menubar_style.padding_border
+	padding_subtitle       Padding   = gui_theme.menubar_style.padding_subtitle
 	radius                 f32       = gui_theme.menubar_style.radius
 	radius_border          f32       = gui_theme.menubar_style.radius_border
 	radius_submenu         f32       = gui_theme.menubar_style.radius_submenu
@@ -36,6 +37,7 @@ pub:
 	spacing                f32       = gui_theme.menubar_style.spacing
 	spacing_submenu        f32       = gui_theme.menubar_style.spacing_submenu
 	text_style             TextStyle = gui_theme.menubar_style.text_style
+	text_style_subtitle    TextStyle = gui_theme.menubar_style.text_style_subtitle
 	action                 fn (string, mut Event, mut Window) = fn (id string, mut e Event, mut w Window) {
 		e.is_handled = true
 	}
@@ -47,6 +49,7 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 	if cfg.id_focus == 0 {
 		panic('MenubarCfg.id_focus must be non-zero')
 	}
+	// Check for duplicate menu ids here???
 	content := menu_build(cfg, 0, cfg.items, window)
 	return row(
 		id:           cfg.id
@@ -79,17 +82,26 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 		item_cfg := MenuItemCfg{
 			...item
 			color_selected: cfg.color_selected
-			padding:        cfg.padding_menu_item
+			padding:        if item.id == menu_subtitle_id {
+				cfg.padding_subtitle
+			} else {
+				cfg.padding_menu_item
+			}
 			selected:       item.id == id_selected || selected_in_tree
 			sizing:         sizing
 			radius:         cfg.radius_menu_item
 			spacing:        cfg.spacing_submenu
-			text_style:     cfg.text_style
+			text_style:     if item.id == menu_subtitle_id {
+				cfg.text_style_subtitle
+			} else {
+				cfg.text_style
+			}
 		}
 		mut menu := menu_item(cfg, item_cfg)
 		if item.submenu.len > 0 {
 			if item_cfg.selected || selected_in_tree {
 				submenu := column(
+					id:             item_cfg.id // parent id
 					min_width:      cfg.width_submenu_min
 					max_width:      cfg.width_submenu_max
 					color:          cfg.color_border
@@ -98,7 +110,8 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 					float:          true
 					float_anchor:   if level == 0 { .bottom_left } else { .top_right }
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }
-					content:        [
+					// amend_layout:   cfg.amend_layout_submenu
+					content: [
 						column(
 							color:   cfg.color
 							fill:    true
@@ -118,6 +131,8 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 }
 
 fn is_selected_in_tree(submenu []MenuItemCfg, id_selected string) bool {
+	// This is how menebar knows to highlight the interediate menu-items
+	// leading up to the open submenu.
 	for menu in submenu {
 		if menu.id.len > 0 && menu.id == id_selected {
 			return true
@@ -130,7 +145,21 @@ fn is_selected_in_tree(submenu []MenuItemCfg, id_selected string) bool {
 }
 
 fn (cfg &MenubarCfg) amend_layout_menubar(mut node Layout, mut w Window) {
+	// If the menubar does not have focus, it can't have a selected menu-item.
 	if !w.is_focus(cfg.id_focus) {
 		w.view_state.menu_state[cfg.id_focus] = ''
+		return
 	}
+}
+
+fn find_menu_item(items []MenuItemCfg, id string) ?MenuItemCfg {
+	for item in items {
+		if item.id == id {
+			return item
+		}
+		if find_menu_item(item.submenu, id) != none {
+			return item
+		}
+	}
+	return none
 }

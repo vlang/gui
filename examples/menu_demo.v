@@ -15,7 +15,7 @@ fn main() {
 	mut window := gui.window(
 		state:   &App{}
 		width:   400
-		height:  300
+		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -120,7 +120,23 @@ fn menu(window &gui.Window) gui.View {
 					gui.menu_item_text('window-fill', 'Fill'),
 					gui.menu_item_text('window-center', 'Center'),
 					gui.menu_separator(),
-					gui.menu_item_text('window-move', 'Move & Resize'),
+					gui.MenuItemCfg{
+						id:      'window-move'
+						text:    'Move & Resize'
+						submenu: [
+							gui.menu_subtitle('Halves'),
+							gui.menu_item_text('half-left', 'Left'),
+							gui.menu_item_text('half-top', 'Top'),
+							gui.menu_item_text('half-right', 'Right'),
+							gui.menu_item_text('half-bottom', 'Bottom'),
+							gui.menu_separator(),
+							gui.menu_subtitle('Quarters'),
+							gui.menu_item_text('quarter-top-left', 'Top Left'),
+							gui.menu_item_text('quarter-top-right', 'Top Right'),
+							gui.menu_item_text('quarter-bottom-left', 'Bottom Left'),
+							gui.menu_item_text('quarter-bottom-right', 'Bottom Right'),
+						]
+					},
 					gui.menu_item_text('window-full-screen-tile', 'Full Screen Tile'),
 				]
 			},
@@ -132,17 +148,19 @@ fn menu(window &gui.Window) gui.View {
 						id:          'search'
 						padding:     gui.padding_none
 						custom_view: gui.input(
-							text:            app.search_text
-							id_focus:        100
-							width:           100
-							min_width:       100
-							max_width:       100
-							sizing:          gui.fixed_fill
-							placeholder:     'Search'
-							padding:         gui.padding_two_five
-							radius:          0
-							radius_border:   0
-							on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+							text:              app.search_text
+							id_focus:          100
+							width:             100
+							min_width:         100
+							max_width:         100
+							sizing:            gui.fixed_fill
+							placeholder:       'Search'
+							padding:           gui.padding_two_five
+							radius:            0
+							radius_border:     0
+							text_style:        gui.theme().menubar_style.text_style
+							placeholder_style: gui.theme().menubar_style.text_style
+							on_text_changed:   fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 								mut app := w.state[App]()
 								app.search_text = s
 							}
@@ -180,10 +198,18 @@ fn body(mut app App, window &gui.Window) gui.View {
 					app.clicks += 1
 				}
 			),
-			gui.text(text: '') // spacer,,,,,,,,,,,,,,,,,,,,,
+			gui.text(text: '') // spacer,,,,,,,,,,,,,,
 			gui.text(
 				text:       if app.selected_menu_id.len > 0 {
 					'Menu "${app.selected_menu_id}" selected'
+				} else {
+					''
+				}
+				text_style: gui_theme.m3
+			),
+			gui.text(
+				text:       if app.selected_menu_id.len > 0 {
+					'Search text: "${app.search_text}"'
 				} else {
 					''
 				}

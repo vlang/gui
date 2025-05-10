@@ -471,20 +471,25 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		menubar_style:      MenubarStyle{
-			color:            cfg.color_1
-			color_border:     cfg.color_border
-			color_selected:   cfg.color_selected
-			padding:          cfg.padding_small
-			padding_border:   cfg.padding_border
-			padding_submenu:  cfg.padding_small
-			radius:           cfg.radius_small
-			radius_border:    cfg.radius_small
-			radius_submenu:   cfg.radius_small
-			radius_menu_item: cfg.radius_small
-			spacing:          cfg.spacing_medium
-			text_style:       TextStyle{
+			color:               cfg.color_1
+			color_border:        cfg.color_border
+			color_selected:      cfg.color_selected
+			padding:             cfg.padding_small
+			padding_border:      cfg.padding_border
+			padding_submenu:     cfg.padding_small
+			padding_subtitle:    padding(0, cfg.padding_small.right, 0, cfg.padding_small.left)
+			radius:              cfg.radius_small
+			radius_border:       cfg.radius_small
+			radius_submenu:      cfg.radius_small
+			radius_menu_item:    cfg.radius_small
+			spacing:             cfg.spacing_medium
+			text_style:          TextStyle{
 				...cfg.text_style
 				size: cfg.size_text_small
+			}
+			text_style_subtitle: TextStyle{
+				...cfg.text_style
+				size: cfg.size_text_x_small
 			}
 		}
 		progress_bar_style: ProgressBarStyle{

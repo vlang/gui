@@ -70,6 +70,7 @@ pub:
 }
 
 pub struct MenubarStyle {
+pub:
 	width_submenu_min      f32       = 50
 	width_submenu_max      f32       = 200
 	color                  Color     = color_1_dark
@@ -80,6 +81,7 @@ pub struct MenubarStyle {
 	padding_border         Padding   = padding_none
 	padding_submenu        Padding   = padding_small
 	padding_submenu_border Padding   = padding_none
+	padding_subtitle       Padding   = padding_two_five
 	radius                 f32       = radius_small
 	radius_border          f32       = radius_border
 	radius_submenu         f32       = radius_small
@@ -88,6 +90,9 @@ pub struct MenubarStyle {
 	spacing_submenu        f32       = 1
 	text_style             TextStyle = TextStyle{
 		size: size_text_small
+	}
+	text_style_subtitle    TextStyle = TextStyle{
+		size: size_text_x_small
 	}
 }
 

@@ -14,6 +14,15 @@ pub fn (node &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
 	return if predicate(node) { node.shape } else { none }
 }
 
+pub fn (node &Layout) find_node(predicate fn (n Layout) bool) ?Layout {
+	for child in node.children {
+		if found := child.find_node(predicate) {
+			return found
+		}
+	}
+	return if predicate(node) { node } else { none }
+}
+
 fn (node &Layout) previous_focusable(mut w Window) ?Shape {
 	ids := node.get_focus_ids().reverse()
 	return node.find_next_focusable(ids, mut w)
