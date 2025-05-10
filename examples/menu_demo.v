@@ -20,8 +20,8 @@ pub mut:
 fn main() {
 	mut window := gui.window(
 		state:   &App{}
-		width:   400
-		height:  600
+		width:   500
+		height:  400
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}

@@ -127,13 +127,13 @@ pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
 		custom_view: row(
 			padding: padding_none
 			sizing:  fill_fit
+			spacing: theme().spacing_large
 			content: [
 				text(text: txt, text_style: gui_theme.menubar_style.text_style),
 				row(
 					h_align: .right
 					sizing:  fill_fit
 					padding: padding_none
-					spacing: theme().spacing_large
 					content: [
 						text(
 							text:       '›'
