@@ -44,12 +44,12 @@ fn menu(window &gui.Window) gui.View {
 	app := window.state[App]()
 
 	return window.menubar(
-		id_menubar: 1
-		action:     fn (id string, mut e gui.Event, mut w gui.Window) {
+		id_focus: 100
+		action:   fn (id string, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[App]()
 			app.selected_menu_id = id
 		}
-		items:      [
+		items:    [
 			gui.MenuItemCfg{
 				id:      'file'
 				text:    'File'
@@ -180,7 +180,7 @@ fn body(mut app App, window &gui.Window) gui.View {
 					app.clicks += 1
 				}
 			),
-			gui.text(text: '') // spacer,,,,,,,,,,,,,,,
+			gui.text(text: '') // spacer,,,,,,,,,,,,,,,,,,,,,
 			gui.text(
 				text:       if app.selected_menu_id.len > 0 {
 					'Menu "${app.selected_menu_id}" selected'

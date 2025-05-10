@@ -62,17 +62,22 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				)
 			}
 			column(
-				id:       item_cfg.id
-				cfg:      &item_cfg
-				disabled: item_cfg.disabled
-				color:    if item_cfg.selected { item_cfg.color_selected } else { color_transparent }
-				fill:     item_cfg.selected
-				padding:  item_cfg.padding
-				radius:   item_cfg.radius
-				sizing:   item_cfg.sizing
-				on_click: menubar_cfg.menu_item_click
-				spacing:  item_cfg.spacing
-				content:  content
+				id:           item_cfg.id
+				cfg:          &item_cfg
+				disabled:     item_cfg.disabled
+				color:        if item_cfg.selected {
+					item_cfg.color_selected
+				} else {
+					color_transparent
+				}
+				fill:         item_cfg.selected
+				padding:      item_cfg.padding
+				radius:       item_cfg.radius
+				sizing:       item_cfg.sizing
+				on_click:     menubar_cfg.menu_item_click
+				spacing:      item_cfg.spacing
+				amend_layout: menubar_cfg.amend_layout
+				content:      content
 			)
 		}
 	}
@@ -94,13 +99,39 @@ pub fn menu_separator() MenuItemCfg {
 	}
 }
 
+// menu_item_click, for such a short method, there is alot going on here in terms
+// of state management thus the many comments.
 fn (menubar_cfg MenubarCfg) menu_item_click(cfg &MenuItemCfg, mut e Event, mut w Window) {
-	w.view_state.menu_state[menubar_cfg.id_menubar] = cfg.id
+	// setting the focus to the menubar enables mouse hover hightlighting of menu items.
+	w.set_id_focus(menubar_cfg.id_focus)
+	// Hightlight the menu item
+	w.view_state.menu_state[menubar_cfg.id_focus] = cfg.id
+	// Menu time action handler
 	if cfg.action != unsafe { nil } {
 		cfg.action(cfg, mut e, mut w)
 	}
+	// Common menubar action handler
 	menubar_cfg.action(cfg.id, mut e, mut w)
+	// if this is simple menu-item (no submenu) then clicking it
+	// also closes the menu and removes focus.
 	if cfg.submenu.len == 0 {
-		w.view_state.menu_state[menubar_cfg.id_menubar] = ''
+		w.set_id_focus(0)
+		w.view_state.menu_state[menubar_cfg.id_focus] = ''
+	}
+}
+
+fn (cfg &MenubarCfg) amend_layout(mut node Layout, mut w Window) {
+	// Mouse hover logic is covered here. Once the menubar gains focus,
+	// mouse-overs can change the selected menu-item. Note: Selection
+	// incidates highlighting only. Clicking is still needed to invoke
+	// the action callbacks.
+	ctx := w.context()
+	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
+			return
+		}
+		if w.is_focus(cfg.id_focus) && node.shape.id != '' {
+			w.view_state.menu_state[cfg.id_focus] = node.shape.id
+		}
 	}
 }

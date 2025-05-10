@@ -62,7 +62,7 @@ pub mut:
 	on_mouse_move_shape fn (&Shape, mut Event, mut Window) = unsafe { nil }
 	on_mouse_up_shape   fn (&Shape, mut Event, mut Window) = unsafe { nil }
 	// mostly for hover and focus highlighting
-	amend_layout fn (mut Layout, &Window) = unsafe { nil }
+	amend_layout fn (mut Layout, mut Window) = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.

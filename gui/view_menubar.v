@@ -1,9 +1,8 @@
 module gui
 
 // MenubarCfg configures a horizontal menubar, which can contain drop-down submenu,
-// which in turn can have drop-down menus. The `id_menubar` is required so GUI can
-// store which menu has been selected. Per usual, `id_menu` need only be unique to
-// any other menubar's in the same view (unusual, but allowed).
+// which in turn can have drop-down menus. The `id_focus` is required so GUI can
+// store which menu has been selected.
 //
 // Menubars and menu items adhere to the same theme logic as other Gui views.
 // Menu-item clicks can be processed in two places. Each [MenuItemCfg](#MenuItemCfg)
@@ -16,7 +15,7 @@ module gui
 pub struct MenubarCfg {
 pub:
 	id                     string
-	id_menubar             u32 @[required]
+	id_focus               u32 @[required]
 	disabled               bool
 	invisible              bool
 	color                  Color     = gui_theme.menubar_style.color
@@ -45,16 +44,20 @@ pub:
 
 // menubar creates a menubar and its child menus from the given MenubarCfg
 pub fn (window &Window) menubar(cfg MenubarCfg) View {
+	if cfg.id_focus == 0 {
+		panic('MenubarCfg.id_focus must be non-zero')
+	}
 	content := menu_build(cfg, 0, cfg.items, window)
 	return row(
-		id:        cfg.id
-		color:     cfg.color_border
-		fill:      true
-		disabled:  cfg.disabled
-		invisible: cfg.invisible
-		padding:   cfg.padding_border
-		sizing:    cfg.sizing
-		content:   [
+		id:           cfg.id
+		color:        cfg.color_border
+		fill:         true
+		disabled:     cfg.disabled
+		invisible:    cfg.invisible
+		padding:      cfg.padding_border
+		sizing:       cfg.sizing
+		amend_layout: cfg.amend_layout_menubar
+		content:      [
 			row(
 				color:   cfg.color
 				fill:    true
@@ -69,7 +72,7 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 
 fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
 	mut content := []View{}
-	id_selected := window.view_state.menu_state[cfg.id_menubar]
+	id_selected := window.view_state.menu_state[cfg.id_focus]
 	sizing := if level == 0 { fit_fit } else { fill_fit }
 	for item in items {
 		selected_in_tree := is_selected_in_tree(item.submenu, id_selected)
@@ -124,4 +127,10 @@ fn is_selected_in_tree(submenu []MenuItemCfg, id_selected string) bool {
 		}
 	}
 	return false
+}
+
+fn (cfg &MenubarCfg) amend_layout_menubar(mut node Layout, mut w Window) {
+	if !w.is_focus(cfg.id_focus) {
+		w.view_state.menu_state[cfg.id_focus] = ''
+	}
 }

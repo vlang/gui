@@ -40,7 +40,7 @@ pub:
 	on_mouse_down   fn (voidptr, mut Event, mut Window) = unsafe { nil }
 	on_mouse_move   fn (voidptr, mut Event, mut Window) = unsafe { nil }
 	on_mouse_up     fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	amend_layout    fn (mut Layout, &Window)            = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)         = unsafe { nil }
 mut:
 	axis    Axis
 	cfg     voidptr
@@ -140,7 +140,7 @@ pub:
 	on_keydown      fn (voidptr, mut Event, mut Window) = unsafe { nil }
 	on_mouse_move   fn (voidptr, mut Event, mut Window) = unsafe { nil }
 	on_mouse_up     fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	amend_layout    fn (mut Layout, &Window)            = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)         = unsafe { nil }
 	content         []View
 }
 

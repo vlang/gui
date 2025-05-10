@@ -61,7 +61,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y, window)
 	layout_disables(mut layout, false)
-	layout_amend(mut layout, window)
+	layout_amend(mut layout, mut window)
 }
 
 // layout_parents sets the parent property of layout
@@ -614,11 +614,11 @@ fn layout_disables(mut node Layout, disabled bool) {
 
 // Handle focus, hover stuff here. Some things can not be known
 // until all the positions in the layout are computed.
-fn layout_amend(mut node Layout, w &Window) {
+fn layout_amend(mut node Layout, mut w Window) {
 	for mut child in node.children {
-		layout_amend(mut child, w)
+		layout_amend(mut child, mut w)
 	}
 	if node.shape.amend_layout != unsafe { nil } {
-		node.shape.amend_layout(mut node, w)
+		node.shape.amend_layout(mut node, mut w)
 	}
 }
