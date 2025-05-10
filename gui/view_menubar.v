@@ -67,6 +67,7 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 				padding: cfg.padding
 				spacing: cfg.spacing
 				sizing:  cfg.sizing
+				radius:  cfg.radius
 				content: content
 			),
 		]
@@ -79,25 +80,33 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 	sizing := if level == 0 { fit_fit } else { fill_fit }
 	for item in items {
 		selected_in_tree := is_selected_in_tree(item.submenu, id_selected)
+		padding := match item.custom_view != none {
+			true {
+				item.padding
+			}
+			else {
+				match item.id == menu_subtitle_id {
+					true { cfg.padding_subtitle }
+					else { cfg.padding_menu_item }
+				}
+			}
+		}
+		text_style := if item.id == menu_subtitle_id {
+			cfg.text_style_subtitle
+		} else {
+			cfg.text_style
+		}
 		item_cfg := MenuItemCfg{
 			...item
 			color_selected: cfg.color_selected
-			padding:        if item.id == menu_subtitle_id {
-				cfg.padding_subtitle
-			} else {
-				cfg.padding_menu_item
-			}
+			padding:        padding
 			selected:       item.id == id_selected || selected_in_tree
 			sizing:         sizing
 			radius:         cfg.radius_menu_item
 			spacing:        cfg.spacing_submenu
-			text_style:     if item.id == menu_subtitle_id {
-				cfg.text_style_subtitle
-			} else {
-				cfg.text_style
-			}
+			text_style:     text_style
 		}
-		mut menu := menu_item(cfg, item_cfg)
+		mut mi := menu_item(cfg, item_cfg)
 		if item.submenu.len > 0 {
 			if item_cfg.selected || selected_in_tree {
 				submenu := column(
@@ -110,8 +119,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 					float:          true
 					float_anchor:   if level == 0 { .bottom_left } else { .top_right }
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }
-					// amend_layout:   cfg.amend_layout_submenu
-					content: [
+					content:        [
 						column(
 							color:   cfg.color
 							fill:    true
@@ -122,17 +130,17 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 						),
 					]
 				)
-				menu.content << submenu
+				mi.content << submenu
 			}
 		}
-		content << menu
+		content << mi
 	}
 	return content
 }
 
 fn is_selected_in_tree(submenu []MenuItemCfg, id_selected string) bool {
-	// This is how menebar knows to highlight the interediate menu-items
-	// leading up to the open submenu.
+	// This is how menebar knows to highlight the intermediate menu-items
+	// leading up to an open submenu.
 	for menu in submenu {
 		if menu.id.len > 0 && menu.id == id_selected {
 			return true

@@ -1,8 +1,14 @@
 import gui
 
-// Menu Demo
+// Menubar Demo
 // =============================
-
+// In this demo, a memobar is placed at the top of the view with some
+// submenus and an embedded search box (see Help). Menubar has many
+// styling options. The menubar can be styled separately from the
+// submenus and menu items as demonstrated here. Menubars are not
+// restricted to the top of the window. Menubars can go anywhere in a
+// view including floats and dialogs.
+//
 @[heap]
 struct App {
 pub mut:
@@ -31,6 +37,7 @@ fn main_view(window &gui.Window) gui.View {
 	return gui.column(
 		width:   w
 		height:  h
+		padding: gui.padding_none
 		sizing:  gui.fixed_fixed
 		spacing: 0
 		content: [
@@ -44,32 +51,29 @@ fn menu(window &gui.Window) gui.View {
 	app := window.state[App]()
 
 	return window.menubar(
-		id_focus: 100
-		action:   fn (id string, mut e gui.Event, mut w gui.Window) {
+		id_focus:       100
+		radius:         0
+		padding_border: gui.padding_none
+		action:         fn (id string, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[App]()
 			app.selected_menu_id = id
 		}
-		items:    [
+		items:          [
 			gui.MenuItemCfg{
 				id:      'file'
 				text:    'File'
 				submenu: [
-					gui.MenuItemCfg{
-						id:      'new'
-						text:    'New'
-						submenu: [
-							gui.menu_item_text('here', 'Here'),
-							gui.menu_item_text('there', 'There'),
-						]
-					},
-					gui.MenuItemCfg{
-						id:      'open'
-						text:    'Open'
-						submenu: [
-							gui.menu_item_text('no-where', 'No Where'),
-							gui.menu_item_text('some-where', 'Some Where'),
-						]
-					},
+					gui.menu_submenu('new', 'New', [
+						gui.menu_item_text('here', 'Here'),
+						gui.menu_item_text('there', 'There'),
+					]),
+					gui.menu_submenu('open', 'Open', [
+						gui.menu_item_text('no-where', 'No Where'),
+						gui.menu_item_text('some-where', 'Some Where'),
+						gui.menu_submenu('keep-going', 'Keep Going', [
+							gui.menu_item_text('maybe-not', "OK, you're done"),
+						]),
+					]),
 					gui.menu_separator(),
 					gui.menu_item_text('exit', 'Exit'),
 				]
@@ -120,23 +124,19 @@ fn menu(window &gui.Window) gui.View {
 					gui.menu_item_text('window-fill', 'Fill'),
 					gui.menu_item_text('window-center', 'Center'),
 					gui.menu_separator(),
-					gui.MenuItemCfg{
-						id:      'window-move'
-						text:    'Move & Resize'
-						submenu: [
-							gui.menu_subtitle('Halves'),
-							gui.menu_item_text('half-left', 'Left'),
-							gui.menu_item_text('half-top', 'Top'),
-							gui.menu_item_text('half-right', 'Right'),
-							gui.menu_item_text('half-bottom', 'Bottom'),
-							gui.menu_separator(),
-							gui.menu_subtitle('Quarters'),
-							gui.menu_item_text('quarter-top-left', 'Top Left'),
-							gui.menu_item_text('quarter-top-right', 'Top Right'),
-							gui.menu_item_text('quarter-bottom-left', 'Bottom Left'),
-							gui.menu_item_text('quarter-bottom-right', 'Bottom Right'),
-						]
-					},
+					gui.menu_submenu('window-move', 'Move & Resize', [
+						gui.menu_subtitle('Halves'),
+						gui.menu_item_text('half-left', 'Left'),
+						gui.menu_item_text('half-top', 'Top'),
+						gui.menu_item_text('half-right', 'Right'),
+						gui.menu_item_text('half-bottom', 'Bottom'),
+						gui.menu_separator(),
+						gui.menu_subtitle('Quarters'),
+						gui.menu_item_text('quarter-top-left', 'Top Left'),
+						gui.menu_item_text('quarter-top-right', 'Top Right'),
+						gui.menu_item_text('quarter-bottom-left', 'Bottom Left'),
+						gui.menu_item_text('quarter-bottom-right', 'Bottom Right'),
+					]),
 					gui.menu_item_text('window-full-screen-tile', 'Full Screen Tile'),
 				]
 			},
@@ -155,7 +155,11 @@ fn menu(window &gui.Window) gui.View {
 							max_width:         100
 							sizing:            gui.fixed_fill
 							placeholder:       'Search'
-							padding:           gui.padding_two_five
+							padding:           gui.Padding{
+								...gui.theme().input_style.padding
+								top:    2
+								bottom: 2
+							}
 							radius:            0
 							radius_border:     0
 							text_style:        gui.theme().menubar_style.text_style
@@ -198,7 +202,7 @@ fn body(mut app App, window &gui.Window) gui.View {
 					app.clicks += 1
 				}
 			),
-			gui.text(text: '') // spacer,,,,,,,,,,,,,,
+			gui.text(text: ''), // spacer
 			gui.text(
 				text:       if app.selected_menu_id.len > 0 {
 					'Menu "${app.selected_menu_id}" selected'

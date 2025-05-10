@@ -21,21 +21,21 @@ pub const menu_subtitle_id = '__subtitle__'
 // the menubar determines which menu items are selected/highlighted.
 @[heap]
 pub struct MenuItemCfg {
-pub:
-	id             string @[required]
-	text           string    = 'empty'
-	color_selected Color     = gui_theme.menubar_style.color_selected
+	color_selected Color = gui_theme.menubar_style.color_selected
+	sizing         Sizing
 	radius         f32       = gui_theme.menubar_style.radius_menu_item
-	padding        Padding   = gui_theme.menubar_style.padding_menu_item
 	spacing        f32       = gui_theme.menubar_style.spacing_submenu
 	text_style     TextStyle = gui_theme.menubar_style.text_style
 	disabled       bool
 	selected       bool
-	sizing         Sizing
-	submenu        []MenuItemCfg
-	separator      bool
-	action         fn (&MenuItemCfg, mut Event, mut Window) = unsafe { nil }
-	custom_view    ?View
+pub:
+	id          string @[required]
+	text        string  = 'empty'
+	padding     Padding = gui_theme.menubar_style.padding_menu_item
+	submenu     []MenuItemCfg
+	separator   bool
+	action      fn (&MenuItemCfg, mut Event, mut Window) = unsafe { nil }
+	custom_view ?View
 }
 
 fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
@@ -109,11 +109,40 @@ pub fn menu_separator() MenuItemCfg {
 	}
 }
 
+// menu_subtitlemenu_submenu subtitles
 pub fn menu_subtitle(text string) MenuItemCfg {
 	return MenuItemCfg{
 		id:       menu_subtitle_id
 		text:     text
 		disabled: true
+	}
+}
+
+// menu_submenu is a convienence function for createing a menu with an
+// arrow symbol indicating a submenu
+pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
+	return MenuItemCfg{
+		id:          id
+		submenu:     submenu
+		custom_view: row(
+			padding: padding_none
+			sizing:  fill_fit
+			content: [
+				text(text: txt, text_style: gui_theme.menubar_style.text_style),
+				row(
+					h_align: .right
+					sizing:  fill_fit
+					padding: padding_none
+					spacing: theme().spacing_large
+					content: [
+						text(
+							text:       '›'
+							text_style: gui_theme.menubar_style.text_style
+						),
+					]
+				),
+			]
+		)
 	}
 }
 
