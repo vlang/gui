@@ -123,17 +123,19 @@ fn (cfg ScrollbarCfg) gutter_click(_ &ContainerCfg, mut e Event, mut w Window) {
 
 // pass cfg by value more reliable here
 fn (cfg ScrollbarCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
+	extend := 10 // give some cushion on the ends of the scroll range
 	if n := find_node_by_id_scroll(node, cfg.id_track) {
-		// add 10 to give some cushion on the ends of the scroll range
 		match cfg.orientation == .horizontal {
 			true {
-				if e.mouse_x >= (n.shape.x - 10) && e.mouse_x <= (n.shape.x + n.shape.width + 10) {
+				if e.mouse_x >= (n.shape.x - extend)
+					&& e.mouse_x <= (n.shape.x + n.shape.width + extend) {
 					offset := offset_mouse_change_x(n, e.mouse_dx, cfg.id_track, w)
 					w.view_state.offset_x_state[cfg.id_track] = offset
 				}
 			}
 			else {
-				if e.mouse_y >= (n.shape.y - 10) && e.mouse_y <= (n.shape.y + n.shape.height + 10) {
+				if e.mouse_y >= (n.shape.y - extend)
+					&& e.mouse_y <= (n.shape.y + n.shape.height + extend) {
 					offset := offset_mouse_change_y(n, e.mouse_dy, cfg.id_track, w)
 					w.view_state.offset_y_state[cfg.id_track] = offset
 				}
@@ -152,7 +154,7 @@ fn (cfg ScrollbarCfg) mouse_up(node &Layout, mut e Event, mut w Window) {
 // Scrollbars are hard.
 fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	thumb := 0
-	min_thumb_width := 20
+	min_thumb_size := 20
 	mut transparent := false
 	mut parent := node.parent
 
@@ -173,13 +175,16 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 
 			total_width := content_width(parent)
 			t_width := node.shape.width * (node.shape.width / total_width)
-			thumb_width := clamp_f32(t_width, min_thumb_width, node.shape.width)
+			thumb_width := clamp_f32(t_width, min_thumb_size, node.shape.width)
 
 			available_width := node.shape.width - thumb_width
 			scroll_offset := -w.view_state.offset_x_state[cfg.id_track]
-			offset := clamp_f32((scroll_offset / (total_width - node.shape.width)) * available_width,
-				0, available_width)
-
+			offset := if available_width == 0 {
+				0
+			} else {
+				clamp_f32((scroll_offset / (total_width - node.shape.width)) * available_width,
+					0, available_width)
+			}
 			node.children[thumb].shape.x = node.shape.x + offset
 			node.children[thumb].shape.width = thumb_width
 			node.children[thumb].shape.height = cfg.size
@@ -196,13 +201,16 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 
 			total_height := content_height(parent)
 			t_height := node.shape.height * (node.shape.height / total_height)
-			thumb_height := clamp_f32(t_height, min_thumb_width, node.shape.height)
+			thumb_height := clamp_f32(t_height, min_thumb_size, node.shape.height)
 
 			available_height := node.shape.height - thumb_height
 			scroll_offset := -w.view_state.offset_y_state[cfg.id_track]
-			offset := clamp_f32((scroll_offset / (total_height - node.shape.height)) * available_height,
-				0, available_height)
-
+			offset := if available_height == 0 {
+				0
+			} else {
+				clamp_f32((scroll_offset / (total_height - node.shape.height)) * available_height,
+					0, available_height)
+			}
 			node.children[thumb].shape.y = node.shape.y + offset
 			node.children[thumb].shape.height = thumb_height
 			node.children[thumb].shape.width = cfg.size
