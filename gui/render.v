@@ -4,11 +4,14 @@ import gg
 import gx
 import sokol.sgl
 
-// A Renderer is the final computed drawing command. The window keeps an array
-// of Renderer and only uses this array to paint the window. The window can be
-// rapainted many times before the view state changes. Storing the final draw
-// commands vs. calling render_shape() is faster because there is no computation
-// to build the draw command.
+// A Renderer is the final computed drawing instruction. gui.Window keeps an array
+// of Renderers and only uses that array to paint the window. The window can be
+// repainted many times before the a new view state is generated. Drawing, as
+// implemented in V's gg.Context, happens in a separate thread. By only using the
+// final draw instructions (i.e. Renderers), along with the appropriate mutexes,
+// Gui isolates view generation and layout calculations from the UI thread. This
+// eliminates the need to, "dispatch to the UI thread", that many other UI
+// frameworks require.
 
 struct DrawTextCfg {
 	x    f32
@@ -66,15 +69,15 @@ fn renderer_draw(renderer Renderer, window &Window) {
 }
 
 // render_layout walks the layout and generates renderers. If a shape is clipped,
-// then a clip rectangle is added to the context. Clip rectangles are
-// pushed/poped onto an internal stack allowing nested, none overlapping
-// clip rectangles (I think I said that right)
+// then a clip rectangle is added to the context. Clip rectangles are added to the
+// draw context and the later, 'removed' by setting the clip rectangle to the
+// previous rectangle of if not present, infinity.
 fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, clip ?Renderer, window &Window) {
 	render_shape(layout.shape, mut renderers, bg_color, window)
 
 	mut shape_clip := clip
 	if layout.shape.clip {
-		shape_clip = render_clip_shape(layout.shape)
+		shape_clip = render_clip_rect(shape_clip_rect(layout.shape))
 		renderers << shape_clip or { DrawNone{} }
 	}
 
@@ -84,7 +87,7 @@ fn render_layout(layout &Layout, mut renderers []Renderer, bg_color Color, clip 
 	}
 
 	if layout.shape.clip {
-		renderers << clip or { render_rect(clip_reset) }
+		renderers << clip or { render_clip_rect(clip_reset) }
 	}
 }
 
@@ -100,11 +103,16 @@ fn render_shape(shape &Shape, mut renderers []Renderer, parent_color Color, wind
 	}
 }
 
+// render_container mostly draws a rectangle. Containers are more about layout than drawing.
+// One complication is the title text that is drawn in the upper left corner of the rectangle.
+// At some point, it should be moved to the container logic, along with some layout amend logic.
+// Honestly, it was more epedient to put it here.
 fn render_container(shape &Shape, mut renderers []Renderer, parent_color Color, window &Window) {
 	ctx := window.ui
+	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
 	render_rectangle(shape, mut renderers, window)
-	// This group box stuff is likely temporary
-	// Examine after floating containers implemented
+
+	// The group box title complicated things. Maybe move it?
 	if shape.text.len != 0 {
 		ctx.set_text_cfg(shape.text_style.to_text_cfg())
 		w, h := ctx.text_size(shape.text)
@@ -172,6 +180,7 @@ fn render_rectangle(shape &Shape, mut renderers []Renderer, window &Window) {
 
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
+// The highlighting of selected text happens here also.
 fn render_text(shape &Shape, mut renderers []Renderer, window &Window) {
 	ctx := window.ui
 	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
@@ -241,7 +250,7 @@ fn render_text(shape &Shape, mut renderers []Renderer, window &Window) {
 	render_cursor(shape, mut renderers, window)
 }
 
-// render_cursor figures out where the cursor goes
+// render_cursor figures out where the darn cursor goes.
 fn render_cursor(shape &Shape, mut renderers []Renderer, window &Window) {
 	if window.is_focus(shape.id_focus) && shape.type == .text {
 		lh := line_height(shape)
@@ -288,7 +297,7 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, window &Window) {
 	}
 }
 
-// dim_alpha is used for visually indicating disabled
+// dim_alpha is used for visually indicating disabled.
 fn dim_alpha(color Color) Color {
 	return Color{
 		...color
@@ -297,7 +306,7 @@ fn dim_alpha(color Color) Color {
 }
 
 // make_renderer_rect creates a rectangle that represents the renderable region.
-// If the shape is clipped, then use the shape dimensions otherwise used
+// If the shape is clipped, then use the shape dimensions otherwise use
 // the window size.
 fn make_renderer_rect(shape &Shape, window &Window) gg.Rect {
 	return match shape.clip {
@@ -314,13 +323,8 @@ fn make_renderer_rect(shape &Shape, window &Window) gg.Rect {
 	}
 }
 
-// render_clip creates a clipping region based on the layout's dimensions
-// minus padding and some adjustments for round off.
-fn render_clip_shape(shape &Shape) Renderer {
-	return render_rect(shape_clip_rect(shape))
-}
-
-// shape_clip_rect constructs a clip rectangle based on the shape's diemensions
+// shape_clip_rect constructs a clipping rectangle based on the shape's
+// dimensions minus its padding
 fn shape_clip_rect(shape &Shape) gg.Rect {
 	return gg.Rect{
 		x:      shape.x + shape.padding.left
@@ -330,7 +334,8 @@ fn shape_clip_rect(shape &Shape) gg.Rect {
 	}
 }
 
-fn render_rect(clip_rect gg.Rect) Renderer {
+// render_clip_rect creates a DrawClip renderer
+fn render_clip_rect(clip_rect gg.Rect) Renderer {
 	return DrawClip{
 		x:      clip_rect.x
 		y:      clip_rect.y
@@ -346,10 +351,13 @@ const clip_reset = gg.Rect{
 	height: max_int
 }
 
-// rects_overlap check for non-overlapping conditions. If none are met, they overlap.
+// rects_overlap checks if two rectangels overlap.
 @[inline]
 fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
-	xo := r1.x < r2.x + r2.width && r2.x < r1.x + r1.width
-	yo := r1.y < r2.y + r2.height && r2.y < r1.y + r1.height
-	return xo && yo
+	// vfmt off
+	return r1.x < (r2.x + r2.width)
+            && r2.x < (r1.x + r1.width)
+            && r1.y < (r2.y + r2.height)
+            && r2.y < (r1.y + r1.height)
+	// vfmt on
 }

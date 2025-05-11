@@ -5,8 +5,8 @@ module gui
 //
 // There's a fair bit of code duplication here. This is intentional.
 // I found it much easier to write and debug without generalizing
-// up/down vs. left/right. Abstractions imo would only complicate
-// an already hard to reason about problem.
+// up/down vs. left/right. Abstractions here only complicate an
+// already hard-to-reason-about problem. -imho
 
 // Layout defines a tree of Layouts. Views generate Layouts
 pub struct Layout {
@@ -17,7 +17,7 @@ pub mut:
 }
 
 // layout_arrange executes a pipeline of functions to arrange and position the layout.
-// Multiple layouts are returned, each used to draw a layer of the final renderering.
+// Multiple layouts are returned, each is used to draw a layer of the final renderering.
 fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	mut layouts := [layout]
 	// Set the parents of all the nodes. This is used to
@@ -503,11 +503,8 @@ fn layout_fill_heights(mut node Layout) {
 }
 
 // layout_wrap_text is called after all widths in a Layout are determined.
-// Wrapping text can change the height of an Shape, which is why it is called
-// before computing Shape heights. Wrapping text can also alter the cursor
-// position of input views. The first part of this function wraps the text with
-// a zero-space character inserted at the cursor position. After wrapping it
-// recovers the cursor position by looking for the zero-space character.
+// Wrapping text changes the min-height of a Shape, which is why it is called
+// before computing Shape heights.
 fn layout_wrap_text(mut node Layout, mut w Window) {
 	text_wrap(mut node.shape, mut w)
 	for mut child in node.children {
@@ -534,7 +531,8 @@ fn layout_update_scroll_offsets(mut node Layout, mut w Window) {
 }
 
 // layout_positions sets the positions of all layout in the Layoute. It also
-// handles alignment (soon)
+// handles alignment. Alignment only augments x and y positions. Alignment
+// does not effect sizes.
 fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 	node.shape.x += offset_x
 	node.shape.y += offset_y
@@ -626,8 +624,8 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 	}
 }
 
-// layout_set_disables walks the Layout and disables any children
-// that have a diabled ancestor
+// layout_disables walks the Layout and disables any children
+// that have a diabled ancestor.
 fn layout_disables(mut node Layout, disabled bool) {
 	mut is_disabled := disabled || node.shape.disabled
 	node.shape.disabled = is_disabled
@@ -636,8 +634,11 @@ fn layout_disables(mut node Layout, disabled bool) {
 	}
 }
 
-// Handle focus, hover stuff here. Some things can not be known
-// until all the positions in the layout are computed.
+// layout_amend is the secret sauce to handling layout problems
+// that can't be solved until all the positions and sizes are
+// known. In general, one should not alter sizes and positions,
+// (exception: scrollbars) it is the right place to handle
+// mouse-over events that typically change a color or opacity.
 fn layout_amend(mut node Layout, mut w Window) {
 	for mut child in node.children {
 		layout_amend(mut child, mut w)
