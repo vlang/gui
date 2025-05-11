@@ -18,6 +18,9 @@ pub:
 	id_focus               u32 @[required]
 	disabled               bool
 	invisible              bool
+	float                  bool
+	float_anchor           FloatAttach
+	float_tie_off          FloatAttach
 	color                  Color     = gui_theme.menubar_style.color
 	color_border           Color     = gui_theme.menubar_style.color_border
 	color_selected         Color     = gui_theme.menubar_style.color_selected
@@ -52,15 +55,18 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 	// Check for duplicate menu ids here???
 	content := menu_build(cfg, 0, cfg.items, window)
 	return row(
-		id:           cfg.id
-		color:        cfg.color_border
-		fill:         true
-		disabled:     cfg.disabled
-		invisible:    cfg.invisible
-		padding:      cfg.padding_border
-		sizing:       cfg.sizing
-		amend_layout: cfg.amend_layout_menubar
-		content:      [
+		id:            cfg.id
+		color:         cfg.color_border
+		fill:          true
+		float:         cfg.float
+		float_anchor:  cfg.float_anchor
+		float_tie_off: cfg.float_tie_off
+		disabled:      cfg.disabled
+		invisible:     cfg.invisible
+		padding:       cfg.padding_border
+		sizing:        cfg.sizing
+		amend_layout:  cfg.amend_layout_menubar
+		content:       [
 			row(
 				color:   cfg.color
 				fill:    true
@@ -119,6 +125,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 					float:          true
 					float_anchor:   if level == 0 { .bottom_left } else { .top_right }
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }
+					amend_layout:   cfg.amend_layout_submenu
 					content:        [
 						column(
 							color:   cfg.color
@@ -160,13 +167,50 @@ fn (cfg &MenubarCfg) amend_layout_menubar(mut node Layout, mut w Window) {
 	}
 }
 
-fn find_menu_item(items []MenuItemCfg, id string) ?MenuItemCfg {
+fn (cfg &MenubarCfg) amend_layout_submenu(mut node Layout, mut w Window) {
+	// When the mouse moves outside a submenu it should unselect the
+	// item in the submenu. This is a subtle behavior in mouse/menu
+	// interactions I never noticed until designing this. To unselect
+	// the item in the submenu you select teh subemnu's parent menu item.
+	// The parent menu-item id is the id of the submenu. In addition,
+	// the unselect logic is only triggred when the menu item is a leaf
+	// item. We know this because the selected menu item has no submenu.
+	//
+	// This is hard to follow because there are two trees invovled. The
+	// MenubarCfg tree and the Layout tree.
+	id_selected := w.view_state.menu_state[cfg.id_focus]
+	has_selected := descendant_has_id(node, id_selected)
+	if has_selected {
+		ctx := w.context()
+		if !node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+			if mi_cfg := find_menu_item_cfg(cfg.items, id_selected) {
+				if mi_cfg.submenu.len == 0 {
+					w.view_state.menu_state[cfg.id_focus] = node.shape.id
+				}
+			}
+		}
+	}
+}
+
+fn descendant_has_id(node Layout, id string) bool {
+	if node.shape.id == id {
+		return true
+	}
+	for child in node.children {
+		if descendant_has_id(child, id) {
+			return true
+		}
+	}
+	return false
+}
+
+fn find_menu_item_cfg(items []MenuItemCfg, id string) ?MenuItemCfg {
 	for item in items {
 		if item.id == id {
 			return item
 		}
-		if find_menu_item(item.submenu, id) != none {
-			return item
+		if itm := find_menu_item_cfg(item.submenu, id) {
+			return itm
 		}
 	}
 	return none

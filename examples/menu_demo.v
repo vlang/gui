@@ -9,6 +9,8 @@ import gui
 // restricted to the top of the window. Menubars can go anywhere in a
 // view including floats and dialogs.
 //
+// Menubars can even be floating elements as demonstrated below.
+//
 @[heap]
 struct App {
 pub mut:
@@ -51,6 +53,9 @@ fn menu(window &gui.Window) gui.View {
 	app := window.state[App]()
 
 	return window.menubar(
+		float:          true
+		float_anchor:   .top_center
+		float_tie_off:  .top_center
 		id_focus:       100
 		radius:         0
 		padding_border: gui.padding_none
