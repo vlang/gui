@@ -11,10 +11,10 @@ pub const menu_subtitle_id = '__subtitle__'
 // - text only, for convienence, a text field is availble for the typical text only menu items.
 //
 // If all three types are specified only one is rendereed. The priority is separator, custom view, text only.
-// Regardless of the menu type, a menu item can have a submenu.
+// Custom and text only menus can have a submenu.
 //
 // The optional action callback can be used to process menu clicks. There is also a catch-all
-// action callback in the [MenubarCfg](#MenubarCfg) that is called afterwards.
+// action callback in [MenubarCfg](#MenubarCfg) that is called afterwards.
 //
 // It should go without saying, but menu-item id's need to be unique within a menubar config.
 // This is neccesary so callbacks can identify which menu-item was clicked. It also is how

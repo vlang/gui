@@ -1,16 +1,18 @@
 module gui
 
-// MenubarCfg configures a horizontal menubar, which can contain drop-down submenu,
-// which in turn can have drop-down menus. The `id_focus` is required so GUI can
+import datatypes
+
+// MenubarCfg configures a horizontal menubar, which can contain drop-down submenus,
+// which in turn can have drop-down sugmenus. The `id_focus` is required so GUI can
 // store which menu has been selected.
 //
-// Menubars and menu items adhere to the same theme logic as other Gui views.
+// Menubars and menu-items adhere to the same theme logic as other Gui views.
 // Menu-item clicks can be processed in two places. Each [MenuItemCfg](#MenuItemCfg)
 // has an optional user action callback that is called when the menu-item is clicked.
-// There is also optional user action callback on the Menubar. This is called after
+// There is also an optional user action callback on the Menubar. This is called after
 // the optional menu-item is called. The menubar action callback allows processing
 // some or all of the menu-item clicks in a single function if desired. Both can be
-// employed used together.
+// used together.
 @[heap]
 pub struct MenubarCfg {
 pub:
@@ -47,13 +49,15 @@ pub:
 	items                  []MenuItemCfg
 }
 
-// menubar creates a menubar and its child menus from the given MenubarCfg
+// menubar creates a menubar and its child menus from the given [MenubarCfg](#MenubarCfg)
 pub fn (window &Window) menubar(cfg MenubarCfg) View {
 	if cfg.id_focus == 0 {
 		panic('MenubarCfg.id_focus must be non-zero')
 	}
-	// Check for duplicate menu ids here???
-	content := menu_build(cfg, 0, cfg.items, window)
+	mut ids := datatypes.Set[string]{}
+	if duplicate_id := check_menu_ids(cfg.items, mut ids) {
+		panic('Duplicate menu-id found menubar-id "${cfg.id}": "${duplicate_id}"')
+	}
 	return row(
 		id:            cfg.id
 		color:         cfg.color_border
@@ -74,7 +78,7 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 				spacing: cfg.spacing
 				sizing:  cfg.sizing
 				radius:  cfg.radius
-				content: content
+				content: menu_build(cfg, 0, cfg.items, window)
 			),
 		]
 	)
@@ -211,6 +215,21 @@ fn find_menu_item_cfg(items []MenuItemCfg, id string) ?MenuItemCfg {
 		}
 		if itm := find_menu_item_cfg(item.submenu, id) {
 			return itm
+		}
+	}
+	return none
+}
+
+fn check_menu_ids(items []MenuItemCfg, mut ids datatypes.Set[string]) ?string {
+	for item in items {
+		if ids.exists(item.id) {
+			return item.id
+		}
+		if item.id !in [menu_separator_id, menu_subtitle_id] {
+			ids.add(item.id)
+		}
+		if id := check_menu_ids(item.submenu, mut ids) {
+			return id
 		}
 	}
 	return none

@@ -76,7 +76,7 @@ fn menu(window &gui.Window) gui.View {
 						gui.menu_item_text('no-where', 'No Where'),
 						gui.menu_item_text('some-where', 'Some Where'),
 						gui.menu_submenu('keep-going', 'Keep Going', [
-							gui.menu_item_text('maybe-not', "OK, you're done"),
+							gui.menu_item_text('you-are-done', "OK, you're done"),
 						]),
 					]),
 					gui.menu_separator(),
