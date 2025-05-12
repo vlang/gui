@@ -24,7 +24,7 @@ fn main_view(window &gui.Window) gui.View {
 		v_align: .middle
 		content: [
 			gui.image(file_name: 'sample.jpeg'),
-			gui.text(text: 'Pretty Water Fall', text_style: gui.theme().b2),
+			gui.text(text: 'Pinard Falls, Oregon', text_style: gui.theme().b2),
 		]
 	)
 }
