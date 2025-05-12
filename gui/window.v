@@ -189,23 +189,25 @@ fn event_fn(ev &gg.Event, mut w Window) {
 }
 
 // update_view sets the Window's view generator. A window can have only one
-// view generator. Giving a Window a new view generator replaces the current
-// view generator and clears the view_state.
+// view generator. Giving a Window a new view generator clears the view_state.
+// and replaces the current view generator.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
-	view := gen_view(window)
-	layout := window.compose_layout(view)
+	// Order matters here. Clear the view state first
+	window.view_state.clear(mut window)
+
 	// Profiler showed that a significant amount of time was spent in
 	// array.push(). render_layout is recursive. Returning empty arrays
 	// and pushing into stack allocated render arrays added up. This was
 	// evident in the column-scroll.v example with 10K rows. Passing a
 	// reference to render array significantly reduced calls to array.push()
+	view := gen_view(window)
+	layout := window.compose_layout(view)
 	mut renderers := []Renderer{}
 	render_layout(layout, mut renderers, window.color_background(), none, window)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
 
-	window.view_state.clear(mut window)
 	window.view_generator = gen_view
 	window.layout = layout
 	window.renderers = renderers
