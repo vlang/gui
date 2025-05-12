@@ -20,6 +20,14 @@ struct DrawTextCfg {
 	cfg  gx.TextCfg
 }
 
+struct DrawImageCfg {
+	x   f32
+	y   f32
+	w   f32
+	h   f32
+	img &gg.Image
+}
+
 struct DrawLineCfg {
 	x   f32
 	y   f32
@@ -32,10 +40,11 @@ struct DrawNoneCfg {}
 
 type DrawRect = gg.DrawRectParams
 type DrawText = DrawTextCfg
+type DrawImage = DrawImageCfg
 type DrawLine = DrawLineCfg
 type DrawClip = gg.Rect
 type DrawNone = DrawNoneCfg
-type Renderer = DrawRect | DrawText | DrawClip | DrawLine | DrawNone
+type Renderer = DrawRect | DrawText | DrawImage | DrawClip | DrawLine | DrawNone
 
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
@@ -55,6 +64,9 @@ fn renderer_draw(renderer Renderer, window &Window) {
 		}
 		DrawText {
 			ctx.draw_text(int(renderer.x), int(renderer.y), renderer.text, renderer.cfg)
+		}
+		DrawImage {
+			ctx.draw_image(renderer.x, renderer.y, renderer.w, renderer.h, renderer.img)
 		}
 		DrawLine {
 			ctx.draw_line_with_config(renderer.x, renderer.y, renderer.x1, renderer.y1,
@@ -99,6 +111,7 @@ fn render_shape(shape &Shape, mut renderers []Renderer, parent_color Color, wind
 	match shape.type {
 		.container { render_container(shape, mut renderers, parent_color, window) }
 		.text { render_text(shape, mut renderers, window) }
+		.image { render_image(shape, mut renderers, window) }
 		.none {}
 	}
 }
@@ -294,6 +307,18 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, window &Window) {
 				}
 			}
 		}
+	}
+}
+
+fn render_image(shape &Shape, mut renderers []Renderer, window &Window) {
+	mut ctx := window.context()
+	image := ctx.get_cached_image_by_idx(window.view_state.image_map[shape.image_name])
+	renderers << DrawImage{
+		x:   shape.x
+		y:   shape.y
+		w:   shape.width
+		h:   shape.height
+		img: image
 	}
 }
 

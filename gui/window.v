@@ -205,7 +205,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
 
-	window.view_state.clear()
+	window.view_state.clear(mut window)
 	window.view_generator = gen_view
 	window.layout = layout
 	window.renderers = renderers

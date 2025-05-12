@@ -41,6 +41,8 @@ pub mut:
 	text_is_password bool
 	text_sel_beg     u32
 	text_sel_end     u32
+	// --- image ---
+	image_name string // filename of image
 	// --- float ---
 	float          bool
 	float_anchor   FloatAttach
@@ -70,6 +72,7 @@ pub enum ShapeType {
 	none
 	container
 	text
+	image
 }
 
 // point_in_shape determines if the given point is within the shape's layout

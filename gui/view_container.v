@@ -1,7 +1,7 @@
 module gui
 
 @[heap]
-pub struct Container implements View {
+pub struct ContainerView implements View {
 pub:
 	id              string
 	id_focus        u32 // not sure this should be here
@@ -47,53 +47,53 @@ mut:
 	content []View
 }
 
-fn (cfg &Container) generate(mut _ Window) Layout {
-	if cfg.invisible {
+fn (cv &ContainerView) generate(mut _ Window) Layout {
+	if cv.invisible {
 		return Layout{}
 	}
 	mut layout := Layout{
 		shape: Shape{
-			id:             cfg.id
-			id_focus:       cfg.id_focus
+			id:             cv.id
+			id_focus:       cv.id_focus
 			type:           .container
-			axis:           cfg.axis
-			x:              cfg.x
-			y:              cfg.y
-			width:          cfg.width
-			min_width:      cfg.min_width
-			max_width:      cfg.max_width
-			height:         cfg.height
-			min_height:     cfg.min_height
-			max_height:     cfg.max_height
-			clip:           cfg.clip
-			focus_skip:     cfg.focus_skip
-			spacing:        cfg.spacing
-			sizing:         cfg.sizing
-			padding:        cfg.padding
-			fill:           cfg.fill
-			h_align:        cfg.h_align
-			v_align:        cfg.v_align
-			radius:         cfg.radius
-			color:          cfg.color
-			disabled:       cfg.disabled
-			float:          cfg.float
-			float_anchor:   cfg.float_anchor
-			float_tie_off:  cfg.float_tie_off
-			float_offset_x: cfg.float_offset_x
-			float_offset_y: cfg.float_offset_y
-			text:           cfg.text
+			axis:           cv.axis
+			x:              cv.x
+			y:              cv.y
+			width:          cv.width
+			min_width:      cv.min_width
+			max_width:      cv.max_width
+			height:         cv.height
+			min_height:     cv.min_height
+			max_height:     cv.max_height
+			clip:           cv.clip
+			focus_skip:     cv.focus_skip
+			spacing:        cv.spacing
+			sizing:         cv.sizing
+			padding:        cv.padding
+			fill:           cv.fill
+			h_align:        cv.h_align
+			v_align:        cv.v_align
+			radius:         cv.radius
+			color:          cv.color
+			disabled:       cv.disabled
+			float:          cv.float
+			float_anchor:   cv.float_anchor
+			float_tie_off:  cv.float_tie_off
+			float_offset_x: cv.float_offset_x
+			float_offset_y: cv.float_offset_y
+			text:           cv.text
 			text_style:     TextStyle{
 				...gui_theme.text_style
-				color: cfg.color
+				color: cv.color
 			}
-			cfg:            cfg.cfg
-			id_scroll:      cfg.id_scroll
-			on_click:       cfg.on_click
-			on_char:        cfg.on_char
-			on_keydown:     cfg.on_keydown
-			on_mouse_move:  cfg.on_mouse_move
-			on_mouse_up:    cfg.on_mouse_up
-			amend_layout:   cfg.amend_layout
+			cfg:            cv.cfg
+			id_scroll:      cv.id_scroll
+			on_click:       cv.on_click
+			on_char:        cv.on_char
+			on_keydown:     cv.on_keydown
+			on_mouse_move:  cv.on_mouse_move
+			on_mouse_up:    cv.on_mouse_up
+			amend_layout:   cv.amend_layout
 		}
 	}
 	return layout
@@ -147,7 +147,7 @@ pub:
 // container is the fundamental layout container in gui. It is used to layout
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
-fn container(cfg &ContainerCfg) Container {
+fn container(cfg &ContainerCfg) ContainerView {
 	mut content := []View{}
 	content << cfg.content
 	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_x.overflow != .hidden {
@@ -165,7 +165,7 @@ fn container(cfg &ContainerCfg) Container {
 		})
 	}
 
-	return Container{
+	return ContainerView{
 		id:              cfg.id
 		id_focus:        cfg.id_focus
 		x:               cfg.x
@@ -211,7 +211,7 @@ fn container(cfg &ContainerCfg) Container {
 
 // column arranges its content top to bottom. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
-pub fn column(cfg &ContainerCfg) Container {
+pub fn column(cfg &ContainerCfg) ContainerView {
 	mut col := container(cfg)
 	col.axis = .top_to_bottom
 	if col.cfg == unsafe { nil } {
@@ -222,7 +222,7 @@ pub fn column(cfg &ContainerCfg) Container {
 
 // row arranges its content left to right. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
-pub fn row(cfg &ContainerCfg) Container {
+pub fn row(cfg &ContainerCfg) ContainerView {
 	mut row := container(cfg)
 	row.axis = .left_to_right
 	if row.cfg == unsafe { nil } {
@@ -232,7 +232,7 @@ pub fn row(cfg &ContainerCfg) Container {
 }
 
 // canvas does not arrange or otherwise layout its content. See [ContainerCfg](#ContainerCfg)
-pub fn canvas(cfg &ContainerCfg) Container {
+pub fn canvas(cfg &ContainerCfg) ContainerView {
 	mut canvas := container(cfg)
 	if canvas.cfg == unsafe { nil } {
 		canvas.cfg = cfg

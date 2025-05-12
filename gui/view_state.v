@@ -15,9 +15,10 @@ pub mut:
 	mouse_cursor   sapp.MouseCursor   // arrow, finger, ibeam, etc.
 	mouse_lock     MouseLockCfg       // mouse down/move/up methods to call when locked
 	menu_state     map[u32]string     // [id_menubar] -> id of menu
+	image_map      map[string]int     // [file name] -> context.cache image id
 }
 
-fn (mut vs ViewState) clear() {
+fn (mut vs ViewState) clear(mut w Window) {
 	vs.id_focus = 0
 	vs.input_state.clear()
 	vs.offset_x_state.clear()
@@ -26,6 +27,12 @@ fn (mut vs ViewState) clear() {
 	vs.mouse_cursor = .arrow
 	vs.mouse_lock = MouseLockCfg{}
 	vs.menu_state.clear()
+	// image cache
+	mut ctx := w.context()
+	for idx in vs.image_map.values() {
+		ctx.remove_cached_image_by_idx(idx)
+	}
+	vs.image_map.clear()
 }
 
 // The management of focus and input states poses a problem in stateless views

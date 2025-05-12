@@ -29,23 +29,27 @@ space around the content of the container.
 Spacing is the space between the container's contents. For rows, it is
 the horizontal space between the container's content items. For columns,
 it is the vertical space between content items.
-
-    Container layout (row)
-
-     /--- left padding
-     V             /------------------- spacing
-    |--------------|-------------|--------------|
-    |              v             v              | <- top padding
-    |  |---------|   |---------|   |---------|  |
-    |  |         |   |         |   |         |  |
-    |  |         |   |         |   |         |  |
-    |  |         |   |         |   |         |  |
-    |  |---------|   |---------|   |---------|  |
-    |                                           | <- bottom padding
-    |-------------------------------------------|
-                                               ^
-                              right padding ---/
-
+```
+  Container (row)
++---------------------------------------------+
+|                 Padding Top                 |
+|   +----------------+   +----------------+   |
+| P |                |   |                | P |
+| a |                |   |                | a |
+| d |                | S |                | d |
+| d |                | p |                | d |
+| i |                | a |                | i |
+| n |   child view   | c |   child view   | n |
+| g |                | i |                | g |
+|   |                | n |                |   |
+| L |                | g |                | R |
+| e |                |   |                | i |
+| f |                |   |                | g |
+| t |                |   |                | h |
+|   +----------------+   +----------------+ t |
+|                Padding Bottom               |
++---------------------------------------------+
+```
 Sizing is perhaps the most challenging to understand. There are three
 types of sizing, `fit`, `fill` and `fixed`. Fit sizing sized the
 container to the size of its contents. Fill sizing attempts to grow or

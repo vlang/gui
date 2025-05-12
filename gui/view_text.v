@@ -4,7 +4,7 @@ import math
 
 // Text is an internal structure used to describe a text block
 @[heap]
-struct Text implements View {
+struct TextView implements View {
 	id                 string
 	id_focus           u32 // >0 indicates text is focusable. Value indiciates tabbing order
 	is_password        bool
@@ -24,7 +24,7 @@ mut:
 	content []View
 }
 
-fn (t &Text) generate(mut window Window) Layout {
+fn (t &TextView) generate(mut window Window) Layout {
 	if t.invisible {
 		return Layout{}
 	}
@@ -96,8 +96,8 @@ pub:
 // text is a general purpose text renderer. Use it for labels or larger
 // blocks of multiline text. Giving it an id_focus allows mark and copy
 // operations. See [TextCfg](#TextCfg)
-pub fn text(cfg &TextCfg) Text {
-	return Text{
+pub fn text(cfg &TextCfg) TextView {
+	return TextView{
 		id:                 cfg.id
 		id_focus:           cfg.id_focus
 		clip:               cfg.clip
