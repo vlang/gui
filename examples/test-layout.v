@@ -135,7 +135,7 @@ fn main_view(w &gui.Window) gui.View {
 										sizing:          gui.fixed_fit
 										text:            state.other_input
 										placeholder:     'Type here...'
-										mode:            .single
+										mode:            .single_line
 										padding_border:  gui.padding_two
 										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
@@ -176,26 +176,24 @@ fn main_view(w &gui.Window) gui.View {
 					gui.column(
 						color:   gui.gray
 						sizing:  gui.fill_fit
-						text:    '  keep_spaces = false  '
+						text:    '  mode = .wrap  '
 						content: [
 							gui.text(
-								id_focus:    6
-								text:        state.name
-								mode:        .wrap
-								keep_spaces: false
+								id_focus: 6
+								text:     state.name
+								mode:     .wrap
 							),
 						]
 					),
 					gui.column(
 						color:   gui.gray
 						sizing:  gui.fill_fit
-						text:    '  keep_spaces = true  '
+						text:    '  model = .wrap_keep_spaces  '
 						content: [
 							gui.text(
-								id_focus:    7
-								text:        state.name
-								mode:        .wrap
-								keep_spaces: true
+								id_focus: 7
+								text:     state.name
+								mode:     .wrap_keep_spaces
 							),
 						]
 					),

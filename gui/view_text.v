@@ -2,13 +2,15 @@ module gui
 
 import math
 
+// TextMode controls how a text view renders text.
 pub enum TextMode {
-	single
-	multiline
-	wrap
+	single_line      // one line only. Restricts typing to visible range
+	multiline        // wraps `\n`s only
+	wrap             // wrap at word breaks and `\n`s. White space is collapsed
+	wrap_keep_spaces // wrap at works breaks and `\m`s, Keep white space
 }
 
-// Text is an internal structure used to describe a text block
+// Text is an internal structure used to describe a text view
 @[heap]
 struct TextView implements View {
 	id                 string
@@ -19,15 +21,15 @@ struct TextView implements View {
 	focus_skip         bool
 	invisible          bool
 	disabled           bool
-	keep_spaces        bool
 	min_width          f32
+	mode               TextMode
+	tab_size           u32
 	text               string
 	text_style         TextStyle
 	sizing             Sizing
-	mode               TextMode
 	cfg                TextCfg
 mut:
-	content []View
+	content []View // not used
 }
 
 fn (t &TextView) generate(mut window Window) Layout {
@@ -39,7 +41,7 @@ fn (t &TextView) generate(mut window Window) Layout {
 		else { InputState{} }
 	}
 	lines := match t.mode == .multiline {
-		true { wrap_simple(t.text) }
+		true { wrap_simple(t.text, t.tab_size) }
 		else { [t.text] } // dynamic wrapping handled in the layout pipeline
 	}
 	mut shape_tree := Layout{
@@ -54,13 +56,13 @@ fn (t &TextView) generate(mut window Window) Layout {
 			min_width:           t.min_width
 			sizing:              t.sizing
 			text:                t.text
-			text_keep_spaces:    t.keep_spaces
 			text_is_password:    t.is_password
 			text_lines:          lines
+			text_mode:           t.mode
 			text_style:          t.text_style
-			text_wrap:           t.mode == .wrap
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
+			text_tab_size:       t.tab_size
 			on_char_shape:       t.cfg.char_shape
 			on_keydown_shape:    t.cfg.keydown_shape
 			on_mouse_down_shape: t.cfg.mouse_down_shape
@@ -70,11 +72,11 @@ fn (t &TextView) generate(mut window Window) Layout {
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, mut window)
 	shape_tree.shape.height = text_height(shape_tree.shape)
-	if t.mode == .single || shape_tree.shape.sizing.width == .fixed {
+	if t.mode == .single_line || shape_tree.shape.sizing.width == .fixed {
 		shape_tree.shape.min_width = f32_max(shape_tree.shape.width, shape_tree.shape.min_width)
 		shape_tree.shape.width = shape_tree.shape.min_width
 	}
-	if t.mode == .single || shape_tree.shape.sizing.height == .fixed {
+	if t.mode == .single_line || shape_tree.shape.sizing.height == .fixed {
 		shape_tree.shape.min_height = f32_max(shape_tree.shape.height, shape_tree.shape.min_height)
 		shape_tree.shape.height = shape_tree.shape.height
 	}
@@ -82,25 +84,24 @@ fn (t &TextView) generate(mut window Window) Layout {
 }
 
 // TextCfg confgigures a [text](#text) view
-// - wrap enables wrapping and multiline operations.
-// - Multiple spaces are compressed to one space unless `keep_spaces` is true.
+// - [TextMode](#TextMode) controls how text is rendered.
 // - `spacing` parameter is used to increase the space between lines.
 @[heap]
 pub struct TextCfg {
 	is_password        bool
 	placeholder_active bool
 pub:
-	id          string
-	id_focus    u32
-	clip        bool
-	focus_skip  bool = true
-	disabled    bool
-	invisible   bool
-	keep_spaces bool
-	min_width   f32
-	text        string
-	text_style  TextStyle = gui_theme.text_style
-	mode        TextMode
+	id         string
+	id_focus   u32
+	clip       bool
+	focus_skip bool = true
+	disabled   bool
+	invisible  bool
+	min_width  f32
+	mode       TextMode
+	tab_size   u32 = 4
+	text       string
+	text_style TextStyle = gui_theme.text_style
 }
 
 // text is a general purpose text renderer. Use it for labels or larger
@@ -113,13 +114,13 @@ pub fn text(cfg &TextCfg) TextView {
 		clip:               cfg.clip
 		focus_skip:         cfg.focus_skip
 		invisible:          cfg.invisible
-		keep_spaces:        cfg.keep_spaces
 		min_width:          cfg.min_width
 		text:               cfg.text
 		text_style:         cfg.text_style
 		mode:               cfg.mode
+		tab_size:           cfg.tab_size
 		cfg:                cfg
-		sizing:             if cfg.mode == .wrap { fill_fit } else { fit_fit }
+		sizing:             if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 		disabled:           cfg.disabled
 		placeholder_active: cfg.placeholder_active
 		is_password:        cfg.is_password
@@ -291,7 +292,7 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 	}
 	input_state := w.view_state.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
-		cpy := match shape.text_keep_spaces {
+		cpy := match shape.text_mode == .wrap_keep_spaces {
 			true {
 				shape.text.runes()[input_state.select_beg..input_state.select_end]
 			}

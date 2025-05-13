@@ -82,7 +82,6 @@ pub fn input(cfg InputCfg) View {
 			row(
 				color:   cfg.color
 				padding: cfg.padding
-				// spacing: cfg.spacing
 				fill:    cfg.fill
 				sizing:  fill_fill
 				radius:  cfg.radius
@@ -93,7 +92,6 @@ pub fn input(cfg InputCfg) View {
 						text_style:         txt_style
 						mode:               cfg.mode
 						is_password:        cfg.is_password
-						keep_spaces:        true
 						placeholder_active: placeholder_active
 					),
 				]
@@ -143,7 +141,7 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 					if cfg.on_enter != unsafe { nil } {
 						cfg.on_enter(cfg, mut event, w)
 					} else {
-						if cfg.mode != .single {
+						if cfg.mode != .single_line {
 							text = cfg.insert('\n', mut w) or {
 								eprintln(err)
 								return
@@ -210,7 +208,7 @@ fn (cfg &InputCfg) delete(mut w Window) ?string {
 
 fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	// clamp max chars to width of box when single line fixed.
-	if cfg.mode == .single && cfg.sizing.width == .fixed {
+	if cfg.mode == .single_line && cfg.sizing.width == .fixed {
 		ctx := w.ui
 		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
 		width := ctx.text_width(cfg.text + s)

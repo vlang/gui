@@ -4,7 +4,10 @@ module gui
 // Layout is generated from the View. Window does not hold a reference to a
 // View. Views should be stateless for this reason.
 //
-// Views generate Layouts and Layouts generate Renderers:  `View → Layout → Renderer`
+// Views generate Layouts and Layouts generate Renderers:
+//
+// `view_generator → View → generate(View) → Layout → `
+// `layout_arrange(mut layout) → render_layout(layout) → Renderers`
 //
 // Renderers are draw instructions.
 pub interface View {

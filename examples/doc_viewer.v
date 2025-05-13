@@ -97,11 +97,10 @@ fn (mut app App) doc_panel(w &gui.Window) gui.View {
 		sizing:    gui.fill_fill
 		content:   [
 			gui.text(
-				id_focus:    1 // enables selectable text
-				text:        text
-				mode:        .multiline
-				keep_spaces: true
-				text_style:  gui.theme().m4
+				id_focus:   1 // enables selectable text
+				text:       text
+				mode:       .multiline
+				text_style: gui.theme().m4
 			),
 		]
 	)

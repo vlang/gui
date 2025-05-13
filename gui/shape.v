@@ -36,11 +36,11 @@ pub mut:
 	text             string
 	text_lines       []string
 	text_style       TextStyle
-	text_wrap        bool
-	text_keep_spaces bool
+	text_mode        TextMode
 	text_is_password bool
 	text_sel_beg     u32
 	text_sel_end     u32
+	text_tab_size    u32 = 4
 	// --- image ---
 	image_name string // filename of image
 	// --- float ---
