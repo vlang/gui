@@ -231,6 +231,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 		if !transparent || cfg.overflow == .on_hover {
 			node.children[thumb].shape.color = gui_theme.button_style.color_hover
 		}
+		w.set_mouse_cursor_arrow()
 	}
 }
 

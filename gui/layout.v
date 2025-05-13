@@ -63,7 +63,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_wrap_text(mut layout, mut window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
-	// layout_update_scroll_offsets(mut layout, mut window)
+	layout_adjust_scroll_offsets(mut layout, mut window)
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y, window)
 	layout_disables(mut layout, false)
@@ -512,21 +512,21 @@ fn layout_wrap_text(mut node Layout, mut w Window) {
 	}
 }
 
-// layout_update_scroll_offsets ensures scroll offsets are in range.
+// layout_adjust_scroll_offsets ensures scroll offsets are in range.
 // Scroll offsets can go out of range during window resizing.
-fn layout_update_scroll_offsets(mut node Layout, mut w Window) {
+fn layout_adjust_scroll_offsets(mut node Layout, mut w Window) {
 	id_scroll := node.shape.id_scroll
 	if id_scroll > 0 {
 		max_offset_x := f32_min(0, node.shape.width - node.shape.padding.width() - content_width(node))
 		offset_x := w.view_state.offset_x_state[id_scroll]
 		w.view_state.offset_x_state[id_scroll] = clamp_f32(offset_x, max_offset_x, 0)
 
-		max_offset_y := f32_min(0, node.shape.width - node.shape.padding.height() - content_height(node))
+		max_offset_y := f32_min(0, node.shape.height - node.shape.padding.height() - content_height(node))
 		offset_y := w.view_state.offset_y_state[id_scroll]
 		w.view_state.offset_y_state[id_scroll] = clamp_f32(offset_y, max_offset_y, 0)
 	}
 	for mut child in node.children {
-		layout_update_scroll_offsets(mut child, mut w)
+		layout_adjust_scroll_offsets(mut child, mut w)
 	}
 }
 

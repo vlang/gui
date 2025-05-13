@@ -87,7 +87,7 @@ fn (mut app App) nav_panel(w &gui.Window) gui.View {
 }
 
 fn (mut app App) doc_panel(w &gui.Window) gui.View {
-	text := os.read_file(os.join_path('../doc', app.doc_file)) or { 'no doc file' }
+	text := os.read_file(os.join_path('../doc', app.doc_file)) or { 'select a doc' }
 	return gui.column(
 		id:        'doc'
 		id_scroll: id_scroll_doc_view
