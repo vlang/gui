@@ -210,7 +210,7 @@ fn (cfg &InputCfg) delete(mut w Window) ?string {
 
 fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	// clamp max chars to width of box when single line fixed.
-	if cfg.mode != .single && cfg.sizing.width == .fixed {
+	if cfg.mode == .single && cfg.sizing.width == .fixed {
 		ctx := w.ui
 		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
 		width := ctx.text_width(cfg.text + s)
