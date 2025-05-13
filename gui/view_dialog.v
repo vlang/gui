@@ -73,7 +73,7 @@ fn dialog_view_generator(cfg DialogCfg) View {
 			content << text(text: cfg.title, text_style: cfg.title_text_style)
 		}
 		if cfg.body.len > 0 {
-			content << text(text: cfg.body, text_style: cfg.text_style, wrap: true)
+			content << text(text: cfg.body, text_style: cfg.text_style, mode: .multiline)
 		}
 	}
 	content << match cfg.dialog_type {
@@ -115,6 +115,7 @@ fn message_view(cfg DialogCfg) []View {
 		row(
 			sizing:  fill_fit
 			h_align: cfg.align_buttons
+			padding: padding_none
 			content: [
 				button(
 					id_focus: cfg.id_focus
@@ -137,6 +138,7 @@ fn confirm_view(cfg DialogCfg) []View {
 		row(
 			sizing:  fill_fit
 			h_align: cfg.align_buttons
+			padding: padding_none
 			content: [
 				button(
 					id_focus: cfg.id_focus + 1
@@ -190,6 +192,7 @@ fn prompt_view(cfg DialogCfg) []View {
 		row(
 			sizing:  fill_fit
 			h_align: cfg.align_buttons
+			padding: padding_none
 			content: [
 				button(
 					id_focus: cfg.id_focus + 1

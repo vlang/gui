@@ -70,7 +70,7 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 			gui.text(
 				// id_focus: 10 * id
 				text: text
-				wrap: true
+				mode: .wrap
 			),
 		]
 	)

@@ -94,14 +94,14 @@ fn main_view(w &gui.Window) gui.View {
 									gui.text(
 										text:       'Hello world!'
 										text_style: gui.theme().b2
-										wrap:       true
+										mode:       .wrap
 									),
 								]
 							),
 							gui.text(
 								id_focus: 8
 								text:     'Embedded in a column with wrapping'
-								wrap:     true
+								mode:     .wrap
 							),
 							gui.button(
 								id_focus:       1
@@ -135,7 +135,7 @@ fn main_view(w &gui.Window) gui.View {
 										sizing:          gui.fixed_fit
 										text:            state.other_input
 										placeholder:     'Type here...'
-										wrap:            false
+										mode:            .single
 										padding_border:  gui.padding_two
 										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
@@ -165,7 +165,7 @@ fn main_view(w &gui.Window) gui.View {
 						id_focus:        3
 						width:           250
 						text:            state.name
-						wrap:            true
+						mode:            .wrap
 						sizing:          gui.fixed_fit
 						padding_border:  gui.padding_two
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
@@ -181,7 +181,7 @@ fn main_view(w &gui.Window) gui.View {
 							gui.text(
 								id_focus:    6
 								text:        state.name
-								wrap:        true
+								mode:        .wrap
 								keep_spaces: false
 							),
 						]
@@ -194,7 +194,7 @@ fn main_view(w &gui.Window) gui.View {
 							gui.text(
 								id_focus:    7
 								text:        state.name
-								wrap:        true
+								mode:        .wrap
 								keep_spaces: true
 							),
 						]

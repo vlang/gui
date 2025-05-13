@@ -52,10 +52,10 @@ fn dialog_type() gui.View {
 				body:          '
 body text displayes here...
 
-Multi-line and text wrapping supported.
+Multi-line text supported.
 See DialogCfg for other parameters
 
-Demonstrates right aligned button option'
+Buttons can be left/center/right aligned'
 			)
 		}
 	)

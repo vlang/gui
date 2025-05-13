@@ -63,7 +63,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_wrap_text(mut layout, mut window)
 	layout_heights(mut layout)
 	layout_fill_heights(mut layout)
-	layout_update_scroll_offsets(mut layout, mut window)
+	// layout_update_scroll_offsets(mut layout, mut window)
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y, window)
 	layout_disables(mut layout, false)

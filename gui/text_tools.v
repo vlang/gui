@@ -3,6 +3,7 @@ module gui
 import clipboard
 import gg
 import hash.fnv1a
+import strings
 
 pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 {
 	htx := fnv1a.sum32_struct(text_style).str()
@@ -116,6 +117,23 @@ fn wrap_text_keep_spaces(s string, width f32, ctx &gg.Context) []string {
 	return wrap
 }
 
+// wrap_simple wraps only at new lines
+fn wrap_simple(s string) []string {
+	mut line := ''
+	mut lines := []string{}
+
+	for field in split_text(s) {
+		if field == '\n' {
+			lines << line + '\n'
+			line = ''
+			continue
+		}
+		line += field
+	}
+	lines << line
+	return lines
+}
+
 const space = ' '
 
 // split_text splits a string by spaces and also includes the spaces as separate
@@ -161,8 +179,8 @@ fn split_text(s string) []string {
 				}
 				fields << '\n'
 				field = ''
-			} else if ch.is_blank() {
-				// eat it
+			} else if ch == '\t' {
+				field += strings.repeat(` `, 4)
 			} else {
 				field += ch
 			}

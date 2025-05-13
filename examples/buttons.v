@@ -126,7 +126,7 @@ fn button_row(label string, button gui.View) gui.View {
 				min_width: 150
 				max_width: 150
 				padding:   gui.padding_none
-				content:   [gui.text(text: label, wrap: true)]
+				content:   [gui.text(text: label, mode: .wrap)]
 			),
 			button,
 		]

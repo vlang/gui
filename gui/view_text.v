@@ -2,6 +2,12 @@ module gui
 
 import math
 
+pub enum TextMode {
+	single
+	multiline
+	wrap
+}
+
 // Text is an internal structure used to describe a text block
 @[heap]
 struct TextView implements View {
@@ -18,7 +24,7 @@ struct TextView implements View {
 	text               string
 	text_style         TextStyle
 	sizing             Sizing
-	wrap               bool
+	mode               TextMode
 	cfg                TextCfg
 mut:
 	content []View
@@ -31,6 +37,10 @@ fn (t &TextView) generate(mut window Window) Layout {
 	input_state := match window.is_focus(t.id_focus) {
 		true { window.view_state.input_state[t.id_focus] }
 		else { InputState{} }
+	}
+	lines := match t.mode == .multiline {
+		true { wrap_simple(t.text) }
+		else { [t.text] } // dynamic wrapping handled in the layout pipeline
 	}
 	mut shape_tree := Layout{
 		shape: Shape{
@@ -46,9 +56,9 @@ fn (t &TextView) generate(mut window Window) Layout {
 			text:                t.text
 			text_keep_spaces:    t.keep_spaces
 			text_is_password:    t.is_password
-			text_lines:          [t.text]
+			text_lines:          lines
 			text_style:          t.text_style
-			text_wrap:           t.wrap
+			text_wrap:           t.mode == .wrap
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
 			on_char_shape:       t.cfg.char_shape
@@ -60,11 +70,11 @@ fn (t &TextView) generate(mut window Window) Layout {
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, mut window)
 	shape_tree.shape.height = text_height(shape_tree.shape)
-	if !t.wrap || shape_tree.shape.sizing.width == .fixed {
+	if t.mode == .single || shape_tree.shape.sizing.width == .fixed {
 		shape_tree.shape.min_width = f32_max(shape_tree.shape.width, shape_tree.shape.min_width)
 		shape_tree.shape.width = shape_tree.shape.min_width
 	}
-	if !t.wrap || shape_tree.shape.sizing.height == .fixed {
+	if t.mode == .single || shape_tree.shape.sizing.height == .fixed {
 		shape_tree.shape.min_height = f32_max(shape_tree.shape.height, shape_tree.shape.min_height)
 		shape_tree.shape.height = shape_tree.shape.height
 	}
@@ -90,7 +100,7 @@ pub:
 	min_width   f32
 	text        string
 	text_style  TextStyle = gui_theme.text_style
-	wrap        bool
+	mode        TextMode
 }
 
 // text is a general purpose text renderer. Use it for labels or larger
@@ -107,9 +117,9 @@ pub fn text(cfg &TextCfg) TextView {
 		min_width:          cfg.min_width
 		text:               cfg.text
 		text_style:         cfg.text_style
-		wrap:               cfg.wrap
+		mode:               cfg.mode
 		cfg:                cfg
-		sizing:             if cfg.wrap { fill_fit } else { fit_fit }
+		sizing:             if cfg.mode == .wrap { fill_fit } else { fit_fit }
 		disabled:           cfg.disabled
 		placeholder_active: cfg.placeholder_active
 		is_password:        cfg.is_password

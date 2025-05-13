@@ -65,7 +65,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				content << text(
 					text:       item_cfg.text
 					text_style: item_cfg.text_style
-					wrap:       true
+					mode:       .wrap
 				)
 			}
 			column(

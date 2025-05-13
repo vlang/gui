@@ -384,7 +384,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border:     cfg.color_border
 			fill:             cfg.fill
 			fill_border:      cfg.fill_border
-			padding:          cfg.padding
+			padding:          cfg.padding_large
 			padding_border:   cfg.padding_border
 			radius:           cfg.radius
 			radius_border:    cfg.radius_border

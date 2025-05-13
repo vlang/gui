@@ -16,11 +16,11 @@ pub:
 	disabled           bool
 	invisible          bool
 	sizing             Sizing
-	id_focus           u32    // 0 = readonly, >0 = focusable and tabbing order
-	text               string // text to display/edit
-	placeholder        string // text to show when empty
-	wrap               bool   // enable multiline
-	is_password        bool   // mask input characters with '*'s
+	id_focus           u32      // 0 = readonly, >0 = focusable and tabbing order
+	text               string   // text to display/edit
+	placeholder        string   // text to show when empty
+	mode               TextMode // enable multiline
+	is_password        bool     // mask input characters with '*'s
 	padding            Padding                            = gui_theme.input_style.padding
 	padding_border     Padding                            = gui_theme.input_style.padding_border
 	color              Color                              = gui_theme.input_style.color
@@ -91,7 +91,7 @@ pub fn input(cfg InputCfg) View {
 						id_focus:           cfg.id_focus
 						text:               txt
 						text_style:         txt_style
-						wrap:               cfg.wrap
+						mode:               cfg.mode
 						is_password:        cfg.is_password
 						keep_spaces:        true
 						placeholder_active: placeholder_active
@@ -143,7 +143,7 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 					if cfg.on_enter != unsafe { nil } {
 						cfg.on_enter(cfg, mut event, w)
 					} else {
-						if cfg.wrap {
+						if cfg.mode != .single {
 							text = cfg.insert('\n', mut w) or {
 								eprintln(err)
 								return
@@ -210,7 +210,7 @@ fn (cfg &InputCfg) delete(mut w Window) ?string {
 
 fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	// clamp max chars to width of box when single line fixed.
-	if !cfg.wrap && cfg.sizing.width == .fixed {
+	if cfg.mode != .single && cfg.sizing.width == .fixed {
 		ctx := w.ui
 		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
 		width := ctx.text_width(cfg.text + s)
