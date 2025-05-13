@@ -3,6 +3,17 @@ import os
 
 // Doc Viewer
 // =============================
+// A view to read the markdown doc files in the ../doc folder. Demonstrates the following:
+//
+// - multline text
+// - text selection
+// - nav selection highlighting
+//
+// Selection highlighting shows how immediate mode UI's simplify tasks like selection
+// hightlighting. Notice the code only highlights the selected item. It does not need
+// to remember to "unhighlight" previous selection.
+
+const id_scroll_doc_view = 1
 
 @[heap]
 struct App {
@@ -35,18 +46,20 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			app.nav(window),
-			app.doc(window),
+			app.nav_panel(window),
+			app.doc_panel(window),
 		]
 	)
 }
 
-fn (mut app App) nav(w &gui.Window) gui.View {
+fn (mut app App) nav_panel(w &gui.Window) gui.View {
 	files := os.ls('../doc') or { [] }
 	doc_files := files.filter(os.file_ext(it) == '.md').sorted()
 
 	mut nav_files := []gui.View{}
 	for doc_file in doc_files {
+		// Change background color of current selection. No need
+		// to remember the old selection to unhighlight.
 		color := if doc_file == app.doc_file { gui.theme().color_5 } else { gui.color_transparent }
 		nav_files << gui.row(
 			fill:     true
@@ -56,6 +69,7 @@ fn (mut app App) nav(w &gui.Window) gui.View {
 			on_click: fn [doc_file] (_ &gui.ContainerCfg, mut _ gui.Event, mut win gui.Window) {
 				mut app := win.state[App]()
 				app.doc_file = doc_file
+				win.scroll_vertical_to(id_scroll_doc_view, 0)
 			}
 			content:  [
 				gui.text(text: doc_file),
@@ -72,17 +86,18 @@ fn (mut app App) nav(w &gui.Window) gui.View {
 	)
 }
 
-fn (mut app App) doc(w &gui.Window) gui.View {
+fn (mut app App) doc_panel(w &gui.Window) gui.View {
 	text := os.read_file(os.join_path('../doc', app.doc_file)) or { 'no doc file' }
 	return gui.column(
 		id:        'doc'
-		id_scroll: 1
+		id_scroll: id_scroll_doc_view
 		min_width: 250
 		fill:      true
 		color:     gui.theme().color_1
 		sizing:    gui.fill_fill
 		content:   [
 			gui.text(
+				id_focus:    1 // enables selectable text
 				text:        text
 				mode:        .multiline
 				keep_spaces: true
