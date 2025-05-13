@@ -3,7 +3,7 @@
 A UI frame work for the V language based on the rendering algorithm of
 Clay.
 
-It's early days so little is working. Try it and send feedback.
+It’s early days so little is working. Try it and send feedback.
 
 ## Features
 
@@ -15,7 +15,7 @@ It's early days so little is working. Try it and send feedback.
 
 ## Example
 
-```v
+``` v
 import gui
 
 // GUI uses a view generator (a function that returns a View) to
@@ -33,50 +33,58 @@ import gui
 
 struct App {
 pub mut:
-	clicks int
+    clicks int
 }
 
 fn main() {
-	mut window := gui.window(
-		state:   &App{}
-		width:   300
-		height:  300
-		on_init: fn (mut w gui.Window) {
-			// Call update_view() any where in your
-			// business logic to change views.
-			w.update_view(main_view)
-		}
-	)
-	window.run()
+    mut window := gui.window(
+        state:   &App{}
+        width:   300
+        height:  300
+        on_init: fn (mut w gui.Window) {
+            // Call update_view() any where in your
+            // business logic to change views.
+            w.update_view(main_view)
+        }
+    )
+    window.run()
 }
 
 // The view generator set in update_view() is called on
 // every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
-	w, h := window.window_size()
-	app := window.state[App]()
+    w, h := window.window_size()
+    app := window.state[App]()
 
-	return gui.column(
-		width:   w
-		height:  h
-		h_align: .center
-		v_align: .middle
-		sizing:  gui.fixed_fixed
-		content: [
-			gui.text(text: 'Welcome to GUI'),
-			gui.button(
-				content:  [gui.text(text: '${app.clicks} Clicks')]
-				on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
-					app.clicks += 1
-				}
-			),
-		]
-	)
+    return gui.column(
+        width:   w
+        height:  h
+        h_align: .center
+        v_align: .middle
+        sizing:  gui.fixed_fixed
+        content: [
+            gui.text(text: 'Welcome to GUI'),
+            gui.button(
+                content:  [gui.text(text: '${app.clicks} Clicks')]
+                on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+                    mut app := w.state[App]()
+                    app.clicks += 1
+                }
+            ),
+        ]
+    )
 }
 ```
 
-![screen shot](gui.png)
+<figure>
+
+<img src="gui.png" alt="screen shot" />
+<figcaption aria-hidden="true">
+
+screen shot
+</figcaption>
+
+</figure>
 
 ## Description
 
@@ -87,15 +95,15 @@ useful framework with a short a learning curve.
 ## Building Examples
 
 The `README.md` in the examples folder describes how to build GUI
-programs. Don't fret, it's a one-liner.
+programs. Don’t fret, it’s a one-liner.
 
 ## Getting Started
 
-If you're new to GUI, start with the `get-started.v` example. It
+If you’re new to GUI, start with the `get-started.v` example. It
 explains the basics of view generators, state models and event handling.
 Some of the other examples like `two-panel.v` and `test-layout.v` were
 used to test the layout engine during development and are not meant as
-examples of how to write an app (they're fun to run however).
+examples of how to write an app (they’re fun to run however).
 
 ## Documentation
 
@@ -104,11 +112,12 @@ source code. Type `make doc` to produce the documention and `make read`
 to open the documention in the browser.
 
 There is also some hand written documentation in the `/doc` folder
-labled `01 Introduction.md`, `02 Getting Started.md`, etc. It's a work
-in progress.
+labled `01 Introduction.md`, `02 Getting Started.md`, etc. The
+`doc_viewer.v` example can be used to read them or use a browser. It’s a
+work in progress.
 
 ## Roadmap
 
 I plan to create a capable, robust and fairly complete UI framework. As
-to timelines, who knows. I'm making this up as I go along. Currently,
-this is the only project I'm working on, so expect frequent updates.
+to timelines, who knows. I’m making this up as I go along. Currently,
+this is the only project I’m working on, so expect frequent updates.
