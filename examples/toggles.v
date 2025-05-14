@@ -3,8 +3,10 @@ import gui
 // Toggles
 // =============================
 // Shows different types of toggle buttons
-// - Togggle functions as a checkbox in its default mode
-// - Toggle can also display custome text
+// - togggle functions as a checkbox in its default mode
+// - toggle can also display custom text
+// - radio is (will be) a classic round radio button
+// - switch is the slide switch
 
 @[heap]
 struct ToggleApp {
@@ -52,9 +54,8 @@ fn main_view(window &gui.Window) gui.View {
 					toggle_row('toggle custom text', gui.toggle(
 						text_selected:   'X'
 						text_unselected: '○'
-						// padding:       gui.padding(3, 3, 4, 4)
-						selected: app.selected_toggle
-						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+						selected:        app.selected_toggle
+						on_click:        fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.selected_toggle = !app.selected_toggle
 						}
