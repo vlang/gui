@@ -73,6 +73,7 @@ pub enum ShapeType {
 	container
 	text
 	image
+	circle
 }
 
 // point_in_shape determines if the given point is within the shape's layout

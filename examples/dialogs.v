@@ -4,9 +4,16 @@ import gui
 // =============================
 // Demonstrates how to invoke two different styles of dialog boxes.
 // As an aside, it shows how easy it is to make a theme.
+//
+@[heap]
+struct DialogsApp {
+pub mut:
+	light_theme bool
+}
 
 fn main() {
 	mut window := gui.window(
+		state:   &DialogsApp{}
 		width:   500
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -19,6 +26,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
+	app := window.state[DialogsApp]()
 
 	return gui.column(
 		width:   w
@@ -27,7 +35,9 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
+			toggle_theme(app),
 			gui.column(
+				sizing:  gui.fit_fill
 				content: [
 					dialog_type(),
 					confirm_type(),
@@ -129,5 +139,30 @@ fn custom_type() gui.View {
 				]
 			)
 		}
+	)
+}
+
+fn toggle_theme(app &DialogsApp) gui.View {
+	return gui.row(
+		h_align: .right
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.toggle(
+				text_selected:   '☾'
+				text_unselected: '○'
+				selected:        app.light_theme
+				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[DialogsApp]()
+					app.light_theme = !app.light_theme
+					theme := if app.light_theme {
+						gui.theme_light_bordered
+					} else {
+						gui.theme_dark_bordered
+					}
+					w.set_theme(theme)
+				}
+			),
+		]
 	)
 }

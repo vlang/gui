@@ -121,3 +121,6 @@ work in progress.
 I plan to create a capable, robust and fairly complete UI framework. As
 to timelines, who knows. I’m making this up as I go along. Currently,
 this is the only project I’m working on, so expect frequent updates.
+
+Current state of the project can be found at:
+[Progress Reports and Feedback](https://github.com/mike-ward/gui/issues/3)

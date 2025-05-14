@@ -25,14 +25,14 @@ import gui
 // to the bow or stern.
 
 @[heap]
-struct App {
+struct FloatingLayoutApp {
 pub mut:
-	light bool
+	light_theme bool
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &FloatingLayoutApp{}
 		width:   500
 		height:  500
 		on_init: fn (mut w gui.Window) {
@@ -44,7 +44,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	app := window.state[FloatingLayoutApp]()
 
 	return gui.column(
 		width:   w
@@ -62,7 +62,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.text(text: 'File'),
 					faux_edit_menu(app),
 					gui.rectangle(sizing: gui.fill_fit),
-					theme_button(app),
+					toggle_theme(app),
 				]
 			),
 			gui.row(
@@ -100,7 +100,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn faux_edit_menu(app &App) gui.View {
+fn faux_edit_menu(app &FloatingLayoutApp) gui.View {
 	return gui.column(
 		spacing: 0
 		padding: gui.padding_none
@@ -148,24 +148,27 @@ fn faux_edit_menu(app &App) gui.View {
 	)
 }
 
-fn theme_button(app &App) gui.View {
-	return gui.button(
-		id_focus: 3
-		padding:  gui.padding_small
-		content:  [
-			gui.text(
-				text: if app.light { '●' } else { '○' }
+fn toggle_theme(app &FloatingLayoutApp) gui.View {
+	return gui.row(
+		h_align: .right
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.toggle(
+				text_selected:   '☾'
+				text_unselected: '○'
+				selected:        app.light_theme
+				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[FloatingLayoutApp]()
+					app.light_theme = !app.light_theme
+					theme := if app.light_theme {
+						gui.theme_light_bordered
+					} else {
+						gui.theme_dark_bordered
+					}
+					w.set_theme(theme)
+				}
 			),
 		]
-		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
-			app.light = !app.light
-			theme := if app.light {
-				gui.theme_light
-			} else {
-				gui.theme_dark
-			}
-			w.set_theme(theme)
-		}
 	)
 }

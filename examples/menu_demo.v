@@ -12,16 +12,17 @@ import gui
 // Menubars can even be floating elements as demonstrated below.
 //
 @[heap]
-struct App {
+struct MenuApp {
 pub mut:
 	clicks           int
 	search_text      string
 	selected_menu_id string
+	light_theme      bool
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &MenuApp{}
 		width:   500
 		height:  400
 		on_init: fn (mut w gui.Window) {
@@ -34,7 +35,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	mut app := window.state[App]()
+	mut app := window.state[MenuApp]()
 
 	return gui.column(
 		width:   w
@@ -50,7 +51,7 @@ fn main_view(window &gui.Window) gui.View {
 }
 
 fn menu(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[MenuApp]()
 
 	return window.menubar(
 		float:          true
@@ -60,7 +61,7 @@ fn menu(window &gui.Window) gui.View {
 		radius:         0
 		padding_border: gui.padding_none
 		action:         fn (id string, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
+			mut app := w.state[MenuApp]()
 			app.selected_menu_id = id
 		}
 		items:          [
@@ -170,7 +171,7 @@ fn menu(window &gui.Window) gui.View {
 							text_style:        gui.theme().menubar_style.text_style
 							placeholder_style: gui.theme().menubar_style.text_style
 							on_text_changed:   fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-								mut app := w.state[App]()
+								mut app := w.state[MenuApp]()
 								app.search_text = s
 							}
 						)
@@ -179,11 +180,16 @@ fn menu(window &gui.Window) gui.View {
 					gui.menu_item_text('help-me', 'Help'),
 				]
 			},
+			gui.MenuItemCfg{
+				id:          'theme'
+				padding:     gui.padding_none
+				custom_view: toggle_theme(app)
+			},
 		]
 	)
 }
 
-fn body(mut app App, window &gui.Window) gui.View {
+fn body(mut app MenuApp, window &gui.Window) gui.View {
 	return gui.column(
 		h_align: .center
 		padding: gui.padding_none
@@ -203,7 +209,7 @@ fn body(mut app App, window &gui.Window) gui.View {
 				id_focus: 1
 				content:  [gui.text(text: '${app.clicks} Clicks')]
 				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[MenuApp]()
 					app.clicks += 1
 				}
 			),
@@ -223,6 +229,31 @@ fn body(mut app App, window &gui.Window) gui.View {
 					''
 				}
 				text_style: gui_theme.m3
+			),
+		]
+	)
+}
+
+fn toggle_theme(app &MenuApp) gui.View {
+	return gui.row(
+		h_align: .right
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.toggle(
+				text_selected:   '☾'
+				text_unselected: '○'
+				selected:        app.light_theme
+				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[MenuApp]()
+					app.light_theme = !app.light_theme
+					theme := if app.light_theme {
+						gui.theme_light_bordered
+					} else {
+						gui.theme_dark_bordered
+					}
+					w.set_theme(theme)
+				}
 			),
 		]
 	)

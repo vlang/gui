@@ -96,16 +96,14 @@ fn top_row(app &App) gui.View {
 }
 
 fn theme_button(app &App) gui.View {
-	return gui.button(
-		id_focus:       3
-		padding:        gui.padding(3, 4, 1, 4)
-		padding_border: gui.padding_two
-		content:        [
-			gui.text(
-				text: if app.light { '●' } else { '○' }
-			),
-		]
-		on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+	return gui.toggle(
+		id_focus:        3
+		text_selected:   '☾'
+		text_unselected: '○'
+		selected:        app.light
+		padding:         gui.padding(3, 4, 1, 4)
+		padding_border:  gui.padding_two
+		on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[App]()
 			app.light = !app.light
 			w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })

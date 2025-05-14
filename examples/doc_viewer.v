@@ -16,14 +16,14 @@ import os
 const id_scroll_doc_view = 1
 
 @[heap]
-struct App {
+struct DocViewerApp {
 pub mut:
 	doc_file string
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &DocViewerApp{}
 		width:   850
 		height:  850
 		title:   'Doc Viewer'
@@ -37,7 +37,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	mut app := window.state[App]()
+	mut app := window.state[DocViewerApp]()
 
 	return gui.row(
 		width:   w
@@ -52,7 +52,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn (mut app App) nav_panel(w &gui.Window) gui.View {
+fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 	files := os.ls('../doc') or { [] }
 	doc_files := files.filter(os.file_ext(it) == '.md').sorted()
 
@@ -67,7 +67,7 @@ fn (mut app App) nav_panel(w &gui.Window) gui.View {
 			padding:  gui.padding_two_five
 			sizing:   gui.fill_fit
 			on_click: fn [doc_file] (_ &gui.ContainerCfg, mut _ gui.Event, mut win gui.Window) {
-				mut app := win.state[App]()
+				mut app := win.state[DocViewerApp]()
 				app.doc_file = doc_file
 				win.scroll_vertical_to(id_scroll_doc_view, 0)
 			}
@@ -86,7 +86,7 @@ fn (mut app App) nav_panel(w &gui.Window) gui.View {
 	)
 }
 
-fn (mut app App) doc_panel(w &gui.Window) gui.View {
+fn (mut app DocViewerApp) doc_panel(w &gui.Window) gui.View {
 	text := os.read_file(os.join_path('../doc', app.doc_file)) or { 'select a doc' }
 	return gui.column(
 		id:        'doc'

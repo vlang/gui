@@ -13,14 +13,15 @@ import sokol.sgl
 // eliminates the need to, "dispatch to the UI thread", that many other UI
 // frameworks require.
 
-struct DrawTextCfg {
-	x    f32
-	y    f32
-	text string
-	cfg  gx.TextCfg
+struct DrawCircle {
+	x      f32
+	y      f32
+	radius f32
+	fill   bool
+	color  gx.Color
 }
 
-struct DrawImageCfg {
+struct DrawImage {
 	x   f32
 	y   f32
 	w   f32
@@ -28,7 +29,7 @@ struct DrawImageCfg {
 	img &gg.Image
 }
 
-struct DrawLineCfg {
+struct DrawLine {
 	x   f32
 	y   f32
 	x1  f32
@@ -36,15 +37,18 @@ struct DrawLineCfg {
 	cfg gg.PenConfig
 }
 
-struct DrawNoneCfg {}
+struct DrawNone {}
 
-type DrawRect = gg.DrawRectParams
-type DrawText = DrawTextCfg
-type DrawImage = DrawImageCfg
-type DrawLine = DrawLineCfg
+struct DrawText {
+	x    f32
+	y    f32
+	text string
+	cfg  gx.TextCfg
+}
+
 type DrawClip = gg.Rect
-type DrawNone = DrawNoneCfg
-type Renderer = DrawRect | DrawText | DrawImage | DrawClip | DrawLine | DrawNone
+type DrawRect = gg.DrawRectParams
+type Renderer = DrawCircle | DrawClip | DrawImage | DrawLine | DrawNone | DrawRect | DrawText
 
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
@@ -59,6 +63,13 @@ fn renderers_draw(renderers []Renderer, window &Window) {
 fn renderer_draw(renderer Renderer, window &Window) {
 	ctx := window.ui
 	match renderer {
+		DrawCircle {
+			if renderer.fill {
+				ctx.draw_circle_filled(renderer.x, renderer.y, renderer.radius, renderer.color)
+			} else {
+				ctx.draw_circle_empty(renderer.x, renderer.y, renderer.radius, renderer.color)
+			}
+		}
 		DrawRect {
 			ctx.draw_rect(renderer)
 		}
@@ -112,6 +123,7 @@ fn render_shape(shape &Shape, mut renderers []Renderer, parent_color Color, wind
 		.container { render_container(shape, mut renderers, parent_color, window) }
 		.text { render_text(shape, mut renderers, window) }
 		.image { render_image(shape, mut renderers, window) }
+		.circle {}
 		.none {}
 	}
 }
@@ -161,6 +173,33 @@ fn render_container(shape &Shape, mut renderers []Renderer, parent_color Color, 
 				...shape.text_style
 				color: color
 			}.to_text_cfg()
+		}
+	}
+}
+
+// render_circle draws a shape as a circle in the middle of the shape's
+// rectangular region. Radius is half of the shortest side.
+fn render_circle(shape &Shape, mut renderers []Renderer, window &Window) {
+	assert shape.type == .circle
+	renderer_rect := make_renderer_rect(shape, window)
+	draw_rect := gg.Rect{
+		x:      shape.x
+		y:      shape.y
+		width:  shape.width
+		height: shape.height
+	}
+	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
+	gx_color := color.to_gx_color()
+	if rects_overlap(draw_rect, renderer_rect) {
+		radius := f32_min(shape.width, shape.height) / 2
+		x := shape.x + shape.width / 2
+		y := shape.y + shape.height / 2
+		renderers << DrawCircle{
+			x:      x
+			y:      y
+			radius: radius
+			fill:   shape.fill
+			color:  gx_color
 		}
 	}
 }

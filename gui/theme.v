@@ -67,6 +67,7 @@ pub:
 	color_5          Color  = color_5_dark
 
 	button_style       ButtonStyle
+	checkbox_style     CheckboxStyle
 	container_style    ContainerStyle
 	dialog_style       DialogStyle
 	input_style        InputStyle
@@ -291,12 +292,12 @@ pub const theme_dark_bordered = theme_maker(theme_dark_bordered_cfg)
 
 const color_text_light = rgb(32, 32, 32)
 const color_0_light = rgb(225, 225, 225)
-const color_1_light = rgb(150, 150, 255)
-const color_2_light = rgb(140, 140, 255)
-const color_3_light = rgb(130, 130, 255)
-const color_4_light = rgb(120, 120, 255)
-const color_5_light = rgb(91, 91, 255)
-const color_border_light = rgb(64, 64, 64)
+const color_1_light = rgb(205, 205, 215)
+const color_2_light = rgb(195, 195, 215)
+const color_3_light = rgb(185, 185, 215)
+const color_4_light = rgb(175, 175, 215)
+const color_5_light = rgb(165, 165, 215)
+const color_border_light = rgb(145, 145, 215)
 const color_link_light = rgb(0, 71, 171)
 const color_border_focus_light = rgb(0, 0, 255)
 
@@ -371,6 +372,21 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			padding_border:     cfg.padding_border
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
+		}
+		checkbox_style:     CheckboxStyle{
+			color:              cfg.color_1
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			color_click:        cfg.color_2
+			color_focus:        cfg.color_2
+			color_hover:        cfg.color_3
+			color_selected:     cfg.color_1
+			fill:               cfg.fill
+			fill_border:        cfg.fill_border
+			padding:            padding_one
+			padding_border:     cfg.padding_border
+			radius:             if cfg.radius != 0 { radius_small } else { 0 }
+			radius_border:      if radius_border != 0 { radius_small } else { 0 }
 		}
 		container_style:    ContainerStyle{
 			color:   color_transparent
