@@ -297,9 +297,9 @@ const color_2_light = rgb(195, 195, 215)
 const color_3_light = rgb(185, 185, 215)
 const color_4_light = rgb(175, 175, 215)
 const color_5_light = rgb(165, 165, 215)
-const color_border_light = rgb(145, 145, 215)
+const color_border_light = rgb(135, 135, 165)
 const color_link_light = rgb(0, 71, 171)
-const color_border_focus_light = rgb(0, 0, 255)
+const color_border_focus_light = rgb(0, 0, 165)
 
 pub const theme_light_cfg = ThemeCfg{
 	name:               'light'

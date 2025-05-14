@@ -2,12 +2,16 @@ import gui
 
 // Toggles
 // =============================
+// Shows different types of toggle buttons
+// - Togggle functions as a checkbox in its default mode
+// - Toggle can also display custome text
 
 @[heap]
 struct ToggleApp {
 pub mut:
-	light    bool
-	selected bool
+	light             bool
+	selected_checkbox bool
+	selected_toggle   bool
 }
 
 fn main() {
@@ -36,13 +40,23 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			toggle_theme(app),
 			gui.column(
-				sizing:  gui.fit_fill
+				color:   gui.theme().color_2
 				content: [
 					toggle_row('checkbox', gui.toggle(
-						selected: app.selected
+						selected: app.selected_checkbox
 						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
-							app.selected = !app.selected
+							app.selected_checkbox = !app.selected_checkbox
+						}
+					)),
+					toggle_row('toggle custom text', gui.toggle(
+						text_selected:   'X'
+						text_unselected: '○'
+						// padding:       gui.padding(3, 3, 4, 4)
+						selected: app.selected_toggle
+						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[ToggleApp]()
+							app.selected_toggle = !app.selected_toggle
 						}
 					)),
 				]
@@ -55,10 +69,12 @@ fn toggle_row(label string, button gui.View) gui.View {
 	return gui.row(
 		h_align: .center
 		v_align: .middle
-		sizing:  gui.fill_fit
-		color:   gui.theme().color_2
 		content: [
-			button,
+			gui.row(
+				min_width: 25
+				padding:   gui.padding_none
+				content:   [button]
+			),
 			gui.row(
 				padding: gui.padding_none
 				content: [gui.text(text: label)]

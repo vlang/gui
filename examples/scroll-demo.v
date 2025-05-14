@@ -101,8 +101,6 @@ fn theme_button(app &App) gui.View {
 		text_selected:   '☾'
 		text_unselected: '○'
 		selected:        app.light
-		padding:         gui.padding(3, 4, 1, 4)
-		padding_border:  gui.padding_two
 		on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[App]()
 			app.light = !app.light

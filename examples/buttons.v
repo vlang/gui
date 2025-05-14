@@ -101,10 +101,10 @@ fn main_view(mut window gui.Window) gui.View {
 						v_align:        .middle
 						sizing:         gui.fill_fit
 						content:        [
-							gui.text(text: '${app.clicks}'),
+							gui.text(text: '${app.clicks}', min_width: 25),
 							gui.progress_bar(
 								width:   75
-								height:  10
+								height:  gui.theme().text_style.size
 								percent: f32(math.fmod(f64(app.clicks) / 25.0, 1.0))
 							),
 						]
@@ -145,14 +145,11 @@ fn button_change_theme(app &App) gui.View {
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [
-			gui.button(
-				padding:  gui.padding(1, 5, 1, 5)
-				content:  [
-					gui.text(
-						text: if app.light { '●' } else { '○' }
-					),
-				]
-				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+			gui.toggle(
+				text_selected:   '☾'
+				text_unselected: '○'
+				selected:        app.light
+				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[App]()
 					app.light = !app.light
 					w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })

@@ -2,6 +2,9 @@ module gui
 
 import gg
 
+// ToggleCfg a.k.a checkbox. [Toggle](#toggle) in its default mode functions and a checkbox.
+// However, you have the option of overriding the `text_selected` and `text_unselected`
+// properties.
 @[heap]
 pub struct ToggleCfg {
 pub:
@@ -28,7 +31,11 @@ pub:
 	on_click           fn (&ToggleCfg, mut Event, mut Window) = unsafe { nil }
 }
 
+// toggle creates a toggle button (a.k.a checkbox) from the given [ToggleCfg](#ToggleCfg)
 pub fn toggle(cfg ToggleCfg) View {
+	color := if cfg.selected { cfg.color_selected } else { cfg.color }
+	txt := if cfg.selected { cfg.text_selected } else { cfg.text_unselected }
+
 	return row(
 		id:           cfg.id
 		id_focus:     cfg.id_focus
@@ -45,20 +52,16 @@ pub fn toggle(cfg ToggleCfg) View {
 		amend_layout: cfg.amend_layout
 		content:      [
 			row(
+				color:   color
 				fill:    cfg.fill
 				sizing:  fill_fill
 				padding: cfg.padding
 				radius:  cfg.radius
 				h_align: .center
 				v_align: .middle
-				color:   if cfg.selected { cfg.color_selected } else { cfg.color }
 				content: [
 					text(
-						text:       if cfg.selected {
-							cfg.text_selected
-						} else {
-							cfg.text_unselected
-						}
+						text:       txt
 						text_style: gui_theme.b4
 					),
 				]
