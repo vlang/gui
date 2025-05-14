@@ -67,7 +67,6 @@ pub:
 	color_5          Color  = color_5_dark
 
 	button_style       ButtonStyle
-	checkbox_style     CheckboxStyle
 	container_style    ContainerStyle
 	dialog_style       DialogStyle
 	input_style        InputStyle
@@ -77,6 +76,7 @@ pub:
 	scrollbar_style    ScrollbarStyle
 	text_style         TextStyle
 	text_style_bold    TextStyle
+	toggle_style       ToggleStyle
 
 	// n's and b's are convienence configs for sizing
 	// similar to H1-H6 in html markup. n3 is the
@@ -373,7 +373,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 		}
-		checkbox_style:     CheckboxStyle{
+		toggle_style:       ToggleStyle{
 			color:              cfg.color_1
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus

@@ -59,6 +59,7 @@ fn main_view(window &gui.Window) gui.View {
 							app.selected_toggle = !app.selected_toggle
 						}
 					)),
+					gui.text(text: 'todo: radio, switch', text_style: gui.theme().m3),
 				]
 			),
 		]

@@ -3,8 +3,7 @@ module gui
 import gg
 
 // ToggleCfg a.k.a checkbox. [Toggle](#toggle) in its default mode functions and a checkbox.
-// However, you have the option of overriding the `text_selected` and `text_unselected`
-// properties.
+// However, there is an option of overriding the `text_selected` and `text_unselected` properties.
 @[heap]
 pub struct ToggleCfg {
 pub:
@@ -15,19 +14,19 @@ pub:
 	text_selected      string = '✓'
 	text_unselected    string = ' '
 	selected           bool
-	fill               bool    = gui_theme.checkbox_style.fill
-	fill_border        bool    = gui_theme.checkbox_style.fill_border
-	color              Color   = gui_theme.checkbox_style.color
-	color_focus        Color   = gui_theme.checkbox_style.color_focus
-	color_hover        Color   = gui_theme.checkbox_style.color_hover
-	color_click        Color   = gui_theme.checkbox_style.color_click
-	color_border       Color   = gui_theme.checkbox_style.color_border
-	color_border_focus Color   = gui_theme.checkbox_style.color_border_focus
-	color_selected     Color   = gui_theme.checkbox_style.color_selected
-	padding            Padding = gui_theme.checkbox_style.padding
-	padding_border     Padding = gui_theme.checkbox_style.padding_border
-	radius             f32     = gui_theme.checkbox_style.radius
-	radius_border      f32     = gui_theme.checkbox_style.radius_border
+	fill               bool    = gui_theme.toggle_style.fill
+	fill_border        bool    = gui_theme.toggle_style.fill_border
+	color              Color   = gui_theme.toggle_style.color
+	color_focus        Color   = gui_theme.toggle_style.color_focus
+	color_hover        Color   = gui_theme.toggle_style.color_hover
+	color_click        Color   = gui_theme.toggle_style.color_click
+	color_border       Color   = gui_theme.toggle_style.color_border
+	color_border_focus Color   = gui_theme.toggle_style.color_border_focus
+	color_selected     Color   = gui_theme.toggle_style.color_selected
+	padding            Padding = gui_theme.toggle_style.padding
+	padding_border     Padding = gui_theme.toggle_style.padding_border
+	radius             f32     = gui_theme.toggle_style.radius
+	radius_border      f32     = gui_theme.toggle_style.radius_border
 	on_click           fn (&ToggleCfg, mut Event, mut Window) = unsafe { nil }
 }
 
