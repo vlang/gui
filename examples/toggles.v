@@ -98,7 +98,7 @@ fn toggle_row(label string, button gui.View) gui.View {
 
 fn toggle_theme(app &ToggleApp) gui.View {
 	return gui.row(
-		h_align: .right
+		h_align: .end
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [

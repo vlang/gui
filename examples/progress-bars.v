@@ -90,7 +90,7 @@ fn main_view(window &gui.Window) gui.View {
 
 fn button_change_theme(app &App) gui.View {
 	return gui.row(
-		h_align: .right
+		h_align: .end
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [

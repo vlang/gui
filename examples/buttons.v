@@ -141,7 +141,7 @@ fn click_handler(_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 
 fn button_change_theme(app &App) gui.View {
 	return gui.row(
-		h_align: .right
+		h_align: .end
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [

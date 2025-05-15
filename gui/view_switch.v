@@ -59,7 +59,7 @@ pub fn switch(cfg SwitchCfg) View {
 				sizing:  fill_fill
 				padding: cfg.padding
 				radius:  cfg.radius
-				h_align: if cfg.selected { .right } else { .left }
+				h_align: if cfg.selected { .end } else { .start }
 				v_align: .middle
 				content: [
 					circle(

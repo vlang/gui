@@ -150,7 +150,7 @@ fn faux_edit_menu(app &FloatingLayoutApp) gui.View {
 
 fn toggle_theme(app &FloatingLayoutApp) gui.View {
 	return gui.row(
-		h_align: .right
+		h_align: .end
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [

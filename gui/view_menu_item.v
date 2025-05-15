@@ -131,7 +131,7 @@ pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
 			content: [
 				text(text: txt, text_style: gui_theme.menubar_style.text_style),
 				row(
-					h_align: .right
+					h_align: .end
 					sizing:  fill_fit
 					padding: padding_none
 					content: [

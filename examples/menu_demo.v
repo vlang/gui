@@ -236,7 +236,7 @@ fn body(mut app MenuApp, window &gui.Window) gui.View {
 
 fn toggle_theme(app &MenuApp) gui.View {
 	return gui.row(
-		h_align: .right
+		h_align: .end
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [

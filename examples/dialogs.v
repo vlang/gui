@@ -56,7 +56,7 @@ fn dialog_type() gui.View {
 		content:  [gui.text(text: '.dialog_type == .message')]
 		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
-				align_buttons: .right
+				align_buttons: .end
 				dialog_type:   .message
 				title:         'Title Displays Here'
 				body:          '
@@ -144,7 +144,7 @@ fn custom_type() gui.View {
 
 fn toggle_theme(app &DialogsApp) gui.View {
 	return gui.row(
-		h_align: .right
+		h_align: .end
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [

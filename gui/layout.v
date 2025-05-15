@@ -556,7 +556,7 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 	// alignment along the axis
 	match axis {
 		.left_to_right {
-			if node.shape.h_align != .left {
+			if node.shape.h_align != .start {
 				mut remaining := node.shape.width - padding.width()
 				remaining -= node.spacing()
 				for child in node.children {
@@ -603,7 +603,7 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 				remaining := node.shape.width - child.shape.width - padding.width()
 				if remaining > 0 {
 					match node.shape.h_align {
-						.left {}
+						.start {}
 						.center { x_align = remaining / 2 }
 						else { x_align = remaining }
 					}

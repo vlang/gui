@@ -41,7 +41,7 @@ fn main_view(window &gui.Window) gui.View {
 				content: [
 					gui.row(
 						sizing:  gui.fill_fit
-						h_align: .right
+						h_align: .end
 						content: [theme_button(app)]
 					),
 					gui.row(

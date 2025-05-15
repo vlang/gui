@@ -49,7 +49,7 @@ fn main_view(mut w gui.Window) gui.View {
 	panel << gui.row(
 		color:   gui.black
 		sizing:  gui.fill_fit
-		h_align: .right
+		h_align: .end
 		padding: gui.padding_small
 		content: [
 			gui.text(
