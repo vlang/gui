@@ -11,7 +11,7 @@ const bpadding = 5
 const max_digits = 12
 
 @[heap]
-struct App {
+struct CalcApp {
 mut:
 	text       string
 	result     f64
@@ -30,7 +30,7 @@ mut:
 
 fn main() {
 	mut window := gui.window(
-		state:    &App{}
+		state:    &CalcApp{}
 		width:    200
 		height:   300
 		title:    'Calculator'
@@ -43,7 +43,7 @@ fn main() {
 }
 
 fn main_view(mut w gui.Window) gui.View {
-	app := w.state[App]()
+	app := w.state[CalcApp]()
 	mut panel := []gui.View{}
 
 	panel << gui.row(
@@ -111,7 +111,7 @@ fn get_row(ops []string) []gui.View {
 }
 
 fn btn_click(btn &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
-	mut app := w.state[App]()
+	mut app := w.state[CalcApp]()
 	app.do_op(btn.id)
 	e.is_handled = true
 }
@@ -119,12 +119,12 @@ fn btn_click(btn &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 fn on_event(e &gui.Event, mut w gui.Window) {
 	if e.typ == .char {
 		c := rune(e.char_code).str().to_upper()
-		mut app := w.state[App]()
+		mut app := w.state[CalcApp]()
 		app.do_op(c)
 	}
 }
 
-fn (mut app App) do_op(op string) {
+fn (mut app CalcApp) do_op(op string) {
 	if op !in arrays.flatten(app.row_ops) {
 		return
 	}
@@ -148,7 +148,7 @@ fn (mut app App) do_op(op string) {
 			app.new_number = false
 			app.is_float = false
 		} else {
-			// Append a new digit
+			// CalcAppend a new digit
 			if app.text.len < max_digits {
 				app.text = number + op
 			}
@@ -169,7 +169,7 @@ fn (mut app App) do_op(op string) {
 	app.update_result()
 }
 
-fn (mut app App) update_result() {
+fn (mut app CalcApp) update_result() {
 	// Format and print the result
 	mut text := ''
 	if !math.trunc(app.result).eq_epsilon(app.result) {
@@ -193,7 +193,7 @@ fn pop_string(a []string) (string, []string) {
 	return res, a[0..a.len - 1]
 }
 
-fn (mut app App) calculate() {
+fn (mut app CalcApp) calculate() {
 	mut a := f64(0)
 	mut b := f64(0)
 	mut op := ''

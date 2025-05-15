@@ -6,7 +6,7 @@ import gui
 // single and multiline and can accept newlines.
 
 @[heap]
-struct App {
+struct InputsApp {
 pub mut:
 	input_a string = 'hello'
 	light   bool
@@ -15,7 +15,7 @@ pub mut:
 fn main() {
 	mut window := gui.window(
 		title:   'Inputs'
-		state:   &App{}
+		state:   &InputsApp{}
 		width:   325
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -28,7 +28,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	app := window.state[InputsApp]()
 	input_width := 125
 
 	return gui.column(
@@ -49,7 +49,7 @@ fn main_view(window &gui.Window) gui.View {
 						min_width:       input_width
 						max_width:       input_width
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-							mut state := w.state[App]()
+							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}
 					),
@@ -61,7 +61,7 @@ fn main_view(window &gui.Window) gui.View {
 						padding_border:  gui.padding_one
 						is_password:     true
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-							mut state := w.state[App]()
+							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}
 					),
@@ -74,7 +74,7 @@ fn main_view(window &gui.Window) gui.View {
 						radius:          0
 						radius_border:   0
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-							mut state := w.state[App]()
+							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}
 					),
@@ -88,7 +88,7 @@ fn main_view(window &gui.Window) gui.View {
 						radius:          0
 						radius_border:   0
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-							mut state := w.state[App]()
+							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}
 					),
@@ -99,7 +99,7 @@ fn main_view(window &gui.Window) gui.View {
 						max_width:       input_width
 						mode:            .wrap
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-							mut state := w.state[App]()
+							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}
 					),
@@ -109,21 +109,18 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn button_change_theme(app &App) gui.View {
+fn button_change_theme(app &InputsApp) gui.View {
 	return gui.row(
 		h_align: .right
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [
-			gui.button(
-				padding:  gui.padding(1, 5, 1, 5)
-				content:  [
-					gui.text(
-						text: if app.light { '●' } else { '○' }
-					),
-				]
-				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+			gui.toggle(
+				text_selected:   '☾'
+				text_unselected: '○'
+				selected:        app.light
+				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[InputsApp]()
 					app.light = !app.light
 					w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })
 					w.set_id_focus(1)

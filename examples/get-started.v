@@ -16,14 +16,14 @@ import gui
 // - Microsecond performance.
 
 @[heap]
-struct App {
+struct GetStartedApp {
 pub mut:
 	clicks int
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &GetStartedApp{}
 		width:   300
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -40,7 +40,7 @@ fn main() {
 // every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	app := window.state[GetStartedApp]()
 
 	return gui.column(
 		width:   w
@@ -57,7 +57,7 @@ fn main_view(window &gui.Window) gui.View {
 				id_focus: 1
 				content:  [gui.text(text: '${app.clicks} Clicks')]
 				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[GetStartedApp]()
 					app.clicks += 1
 				}
 			),

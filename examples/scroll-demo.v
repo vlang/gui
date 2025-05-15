@@ -9,14 +9,14 @@ import gui
 // it but a happy accident.
 
 @[heap]
-struct App {
+struct ScrollApp {
 pub mut:
 	light bool
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &ScrollApp{}
 		width:   400
 		height:  600
 		on_init: fn (mut w gui.Window) {
@@ -29,7 +29,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	app := window.state[ScrollApp]()
 
 	return gui.column(
 		width:   w
@@ -76,7 +76,7 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 	)
 }
 
-fn top_row(app &App) gui.View {
+fn top_row(app &ScrollApp) gui.View {
 	return gui.row(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -95,14 +95,14 @@ fn top_row(app &App) gui.View {
 	)
 }
 
-fn theme_button(app &App) gui.View {
+fn theme_button(app &ScrollApp) gui.View {
 	return gui.toggle(
 		id_focus:        3
 		text_selected:   '☾'
 		text_unselected: '○'
 		selected:        app.light
 		on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
+			mut app := w.state[ScrollApp]()
 			app.light = !app.light
 			w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })
 		}
@@ -119,7 +119,7 @@ Behold called let. You'll the green under void. Darkness living they're a she'd 
 
 Two creepeth all spirit behold beginning bearing also. May very first behold sea she'd bearing deep abundantly given. Lesser whales. He itself replenish cattle second called life dominion together deep. Multiply upon over. Very heaven second god Cattle multiply God dry man divide their there. Fowl, moveth cattle itself fruitful beginning seed you let open dry give, lesser subdue. Fourth had land void beast, hath good. Face. Void likeness good darkness. You'll bring they're appear good appear light moved yielding itself don't man have let.
 
-Created. Appear air fifth also is life had dry god set tree seasons, creepeth moving which to. You'll third over won't in creature. Years. Them subdue. Divided saying behold moving behold saw let. Bring. It light make life evening isn't, moved the let had meat which, were so she'd fly give beginning called, fruitful fruitful waters fish kind. Heaven.
+Created. ScrollAppear air fifth also is life had dry god set tree seasons, creepeth moving which to. You'll third over won't in creature. Years. Them subdue. Divided saying behold moving behold saw let. Bring. It light make life evening isn't, moved the let had meat which, were so she'd fly give beginning called, fruitful fruitful waters fish kind. Heaven.
 
 And. Us Creepeth days spirit tree dominion signs appear made, kind. Shall to second give. God one. Heaven moveth shall above first set creepeth moveth firmament great blessed fish waters man. Don't good, isn't sixth upon every i said form land days. They're open morning morning without one moving Divide living made. Also have it very grass.
 
