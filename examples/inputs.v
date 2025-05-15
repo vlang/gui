@@ -58,7 +58,7 @@ fn main_view(window &gui.Window) gui.View {
 						text:            app.input_a
 						min_width:       input_width
 						max_width:       input_width
-						padding_border:  gui.pad_4(1)
+						padding_border:  gui.padding_one
 						is_password:     true
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 							mut state := w.state[App]()

@@ -1,15 +1,16 @@
 module gui
 
 pub const padding_none = Padding{}
-pub const padding_one = Padding{1, 1, 1, 1}
-pub const padding_two = Padding{2, 2, 2, 2}
-pub const padding_three = Padding{3, 3, 3, 3}
-pub const padding_two_three = Padding{2, 3, 2, 3}
-pub const padding_two_four = Padding{2, 4, 2, 4}
-pub const padding_two_five = Padding{2, 5, 2, 5}
-pub const padding_small = Padding{5, 5, 5, 5}
-pub const padding_medium = Padding{10, 10, 10, 10}
-pub const padding_large = Padding{15, 15, 15, 15}
+pub const padding_one = padding(1, 1, 1, 1)
+pub const padding_two = padding(2, 2, 2, 2)
+pub const padding_three = padding(3, 3, 3, 3)
+pub const padding_two_three = padding(2, 3, 2, 3)
+pub const padding_two_four = padding(2, 4, 2, 4)
+pub const padding_two_five = padding(2, 5, 2, 5)
+pub const padding_small = padding(5, 5, 5, 5)
+pub const padding_medium = padding(10, 10, 10, 10)
+pub const padding_large = padding(15, 15, 15, 15)
+pub const padding_button = pad_tblr(7, 9)
 
 // Padding is the gap inside the edges of a Shape. The size of a Shape always
 // includes its padding. Parameter order is the same as CSS.
@@ -48,13 +49,13 @@ pub fn (p Padding) is_none() bool {
 }
 
 // pad_4 creates a padding with all 4 sides set to the `p` parameter
-pub fn pad_4(p f32) Padding {
+pub fn pad_all(p f32) Padding {
 	return Padding{p, p, p, p}
 }
 
-// pad_2 creates a padding with the top and bottome set to the `tb` parameter
+// pad_tblr creates a padding with the top and bottome set to the `tb` parameter
 // and the left and right set to the `lr` parameter.
-pub fn pad_2(tb f32, lr f32) Padding {
+pub fn pad_tblr(tb f32, lr f32) Padding {
 	return Padding{
 		top:    tb
 		right:  lr

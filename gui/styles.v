@@ -12,7 +12,7 @@ pub:
 	color_hover        Color   = color_3_dark
 	fill               bool    = true
 	fill_border        bool    = true
-	padding            Padding = Padding{8, 10, 8, 10}
+	padding            Padding = padding_button
 	padding_border     Padding = padding_none
 	radius             f32     = radius_medium
 	radius_border      f32     = radius_medium
@@ -116,7 +116,7 @@ pub struct RadioStyle {
 	color_focus    Color   = color_link_dark
 	color_border   Color   = color_5_dark
 	color_selected Color   = color_5_dark
-	padding        Padding = pad_4(4)
+	padding        Padding = pad_all(4)
 }
 
 pub struct RectangleStyle {

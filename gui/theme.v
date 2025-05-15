@@ -30,6 +30,17 @@ const color_border_dark = rgb(100, 100, 100)
 const color_link_dark = cornflower_blue
 const color_text_dark = rgb(225, 225, 225)
 
+const color_text_light = rgb(32, 32, 32)
+const color_0_light = rgb(225, 225, 225)
+const color_1_light = rgb(205, 205, 215)
+const color_2_light = rgb(195, 195, 215)
+const color_3_light = rgb(185, 185, 215)
+const color_4_light = rgb(175, 175, 215)
+const color_5_light = rgb(165, 165, 215)
+const color_border_light = rgb(135, 135, 165)
+const color_link_light = rgb(0, 71, 171)
+const color_border_focus_light = rgb(0, 0, 165)
+
 const scroll_multiplier = 20
 const scroll_delta_line = 1
 const scroll_delta_page = 10
@@ -292,17 +303,6 @@ pub const theme_dark_bordered_cfg = ThemeCfg{
 }
 pub const theme_dark_bordered = theme_maker(theme_dark_bordered_cfg)
 
-const color_text_light = rgb(32, 32, 32)
-const color_0_light = rgb(225, 225, 225)
-const color_1_light = rgb(205, 205, 215)
-const color_2_light = rgb(195, 195, 215)
-const color_3_light = rgb(185, 185, 215)
-const color_4_light = rgb(175, 175, 215)
-const color_5_light = rgb(165, 165, 215)
-const color_border_light = rgb(135, 135, 165)
-const color_link_light = rgb(0, 71, 171)
-const color_border_focus_light = rgb(0, 0, 165)
-
 pub const theme_light_cfg = ThemeCfg{
 	name:               'light'
 	color_0:            color_0_light
@@ -371,7 +371,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_hover:        cfg.color_3
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
-			padding:            cfg.padding
 			padding_border:     cfg.padding_border
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
