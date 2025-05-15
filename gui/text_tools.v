@@ -168,7 +168,8 @@ fn split_text(s string, tab_size u32) []string {
 				}
 				mut spaces := int(tab_size) - field.len % int(tab_size)
 				spaces = if spaces == 0 { int(tab_size) } else { spaces }
-				field = []rune{len: spaces, init: r_space}
+				fields << []rune{len: spaces, init: r_space}.string()
+				field.clear()
 				state = state_sp
 			} else if utf8.is_space(r) {
 				if field.len > 0 {
@@ -193,7 +194,7 @@ fn split_text(s string, tab_size u32) []string {
 			} else if r == `\t` {
 				mut spaces := int(tab_size) - field.len % int(tab_size)
 				spaces = if spaces == 0 { int(tab_size) } else { spaces }
-				field = []rune{len: spaces, init: r_space}
+				field << []rune{len: spaces, init: r_space}
 			} else if utf8.is_space(r) {
 				field << r_space
 			} else {
