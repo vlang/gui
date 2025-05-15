@@ -11,10 +11,11 @@ import gui
 @[heap]
 struct ToggleApp {
 pub mut:
-	light             bool
-	selected_checkbox bool
-	selected_toggle   bool
-	selected_radio    bool
+	light           bool
+	select_checkbox bool
+	select_toggle   bool
+	select_radio    bool
+	select_switch   bool
 }
 
 fn main() {
@@ -46,36 +47,34 @@ fn main_view(window &gui.Window) gui.View {
 				color:   gui.theme().color_2
 				content: [
 					toggle_row('toggle (default)', gui.toggle(
-						selected: app.selected_checkbox
+						selected: app.select_checkbox
 						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
-							app.selected_checkbox = !app.selected_checkbox
+							app.select_checkbox = !app.select_checkbox
 						}
 					)),
 					toggle_row('toggle (custom text)', gui.toggle(
-						text_selected:   'X'
-						text_unselected: '○'
-						selected:        app.selected_toggle
-						on_click:        fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+						selected:      app.select_toggle
+						text_selected: 'X'
+						on_click:      fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
-							app.selected_toggle = !app.selected_toggle
+							app.select_toggle = !app.select_toggle
 						}
 					)),
 					toggle_row('radio button', gui.radio(
-						id:       'radio'
-						selected: app.selected_radio
+						selected: app.select_radio
 						on_click: fn (_ &gui.RadioCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
-							app.selected_radio = !app.selected_radio
+							app.select_radio = !app.select_radio
 						}
 					)),
-					gui.row(
-						h_align: .center
-						sizing:  gui.fill_fit
-						content: [
-							gui.text(text: 'todo: switch', text_style: gui.theme().m3),
-						]
-					),
+					toggle_row('switch ', gui.switch(
+						selected: app.select_switch
+						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[ToggleApp]()
+							app.select_switch = !app.select_switch
+						}
+					)),
 				]
 			),
 		]
@@ -88,7 +87,7 @@ fn toggle_row(label string, button gui.View) gui.View {
 		v_align: .middle
 		content: [
 			gui.row(
-				min_width: 25
+				min_width: 40
 				padding:   gui.padding_none
 				content:   [button]
 			),

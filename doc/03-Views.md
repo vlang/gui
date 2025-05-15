@@ -1,14 +1,14 @@
 # Views
 
 A view is the only UI building block. Every checkbox, menu, button, etc.
-is a view. Interestingly, there are only two types of views, containers
-and text. Everything else is either a container, text, or some
-combination of containers and text.
+is a view. Interestingly, there are only three basic types of views,
+containers text and images. Everything else is either a container, text,
+image or a combination thereof.
 
 Containers, as the name implies contain content. What kind of content?
-Containers or text. If this definition sounds recursive it is because it
-is. More precisely, a container is a rectangular region that can hold
-other containers and text.
+Containers, text or images. If this definition sounds recursive it is
+because it is. More precisely, a container is a rectangular region that
+can hold other containers, text or images.
 
 Containers have an axis of `top-to-bottom` or `left-to-right` or none.
 Containers with an axis of `top-to-bottom` are called `columns`. The
@@ -29,27 +29,27 @@ space around the content of the container.
 Spacing is the space between the container's contents. For rows, it is
 the horizontal space between the container's content items. For columns,
 it is the vertical space between content items.
-```
-  Container (row)
-+---------------------------------------------+
-|                 Padding Top                 |
-|   +----------------+   +----------------+   |
-| P |                |   |                | P |
-| a |                |   |                | a |
-| d |                | S |                | d |
-| d |                | p |                | d |
-| i |                | a |                | i |
-| n |   child view   | c |   child view   | n |
-| g |                | i |                | g |
-|   |                | n |                |   |
-| L |                | g |                | R |
-| e |                |   |                | i |
-| f |                |   |                | g |
-| t |                |   |                | h |
-|   +----------------+   +----------------+ t |
-|                Padding Bottom               |
-+---------------------------------------------+
-```
+
+      Container (row)
+    +---------------------------------------------+
+    |                 Padding Top                 |
+    |   +----------------+   +----------------+   |
+    | P |                |   |                | P |
+    | a |                |   |                | a |
+    | d |                | S |                | d |
+    | d |                | p |                | d |
+    | i |                | a |                | i |
+    | n |   child view   | c |   child view   | n |
+    | g |                | i |                | g |
+    |   |                | n |                |   |
+    | L |                | g |                | R |
+    | e |                |   |                | i |
+    | f |                |   |                | g |
+    | t |                |   |                | h |
+    |   +----------------+   +----------------+ t |
+    |                Padding Bottom               |
+    +---------------------------------------------+
+
 Sizing is perhaps the most challenging to understand. There are three
 types of sizing, `fit`, `fill` and `fixed`. Fit sizing sized the
 container to the size of its contents. Fill sizing attempts to grow or
@@ -109,3 +109,16 @@ Gui does its best to keep text simple and predictable. Other UI
 frameworks may have different text components for labels, multiline
 text, and text boxes. In Gui, there is only the `text` view. It's the
 all-in-one component for displaying text.
+
+## Images
+
+Image is the simplist view. Image simply rectangular region that
+displays an image.
+
+## Other Views
+
+When you look at the list of views you'll see many more than three. As
+mentioned earlier, they are combinations of the three. For instance, a
+button is `row` (border) that contains a `row` (button body) that
+contains `text`. Button is even more interesting in that a button is
+itself a container. As such, it can other views (e.g. progress bar).

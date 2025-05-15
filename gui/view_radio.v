@@ -3,18 +3,19 @@ module gui
 @[heap]
 pub struct RadioCfg {
 pub:
-	id             string
-	id_focus       u32
-	disabled       bool
-	invisible      bool
-	selected       bool
-	size           f32     = gui_theme.n3.size
-	color          Color   = gui_theme.radio_style.color
-	color_focus    Color   = gui_theme.radio_style.color_focus
-	color_border   Color   = gui_theme.radio_style.color_border
-	color_selected Color   = gui_theme.radio_style.color_selected
-	padding        Padding = gui_theme.radio_style.padding
-	on_click       fn (&RadioCfg, mut Event, mut Window) = unsafe { nil }
+	id               string
+	id_focus         u32
+	disabled         bool
+	invisible        bool
+	selected         bool
+	size             f32     = gui_theme.n3.size
+	color            Color   = gui_theme.radio_style.color
+	color_focus      Color   = gui_theme.radio_style.color_focus
+	color_border     Color   = gui_theme.radio_style.color_border
+	color_selected   Color   = gui_theme.radio_style.color_selected
+	color_unselected Color   = gui_theme.radio_style.color_unselected
+	padding          Padding = gui_theme.radio_style.padding
+	on_click         fn (&RadioCfg, mut Event, mut Window) = unsafe { nil }
 }
 
 pub fn radio(cfg RadioCfg) View {
@@ -38,7 +39,7 @@ pub fn radio(cfg RadioCfg) View {
 		content:      [
 			circle(
 				fill:    true
-				color:   if cfg.selected { cfg.color_selected } else { cfg.color }
+				color:   if cfg.selected { cfg.color_selected } else { cfg.color_unselected }
 				padding: padding_none
 				width:   cfg.size - cfg.padding.width()
 				height:  cfg.size - cfg.padding.height()

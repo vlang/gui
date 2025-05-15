@@ -112,11 +112,12 @@ pub:
 }
 
 pub struct RadioStyle {
-	color          Color   = color_1_dark
-	color_focus    Color   = color_link_dark
-	color_border   Color   = color_5_dark
-	color_selected Color   = color_5_dark
-	padding        Padding = pad_all(4)
+	color            Color   = color_1_dark
+	color_focus      Color   = color_link_dark
+	color_border     Color   = color_5_dark
+	color_selected   Color   = color_text_dark
+	color_unselected Color   = color_5_dark
+	padding          Padding = pad_all(4)
 }
 
 pub struct RectangleStyle {
@@ -154,6 +155,24 @@ fn (tc TextStyle) to_text_cfg() gx.TextCfg {
 		family: tc.family
 		bold:   true
 	}
+}
+
+pub struct SwitchStyle {
+pub:
+	color              Color   = color_1_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_link_dark
+	color_click        Color   = color_2_dark
+	color_focus        Color   = color_2_dark
+	color_hover        Color   = color_3_dark
+	color_selected     Color   = color_text_dark
+	color_unselected   Color   = color_5_dark
+	fill               bool    = true
+	fill_border        bool    = true
+	padding            Padding = padding_three
+	padding_border     Padding = padding_none
+	radius             f32     = radius_large * 2
+	radius_border      f32     = radius_large * 2
 }
 
 pub struct ToggleStyle {
