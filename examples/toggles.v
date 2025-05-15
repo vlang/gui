@@ -14,6 +14,7 @@ pub mut:
 	light             bool
 	selected_checkbox bool
 	selected_toggle   bool
+	selected_radio    bool
 }
 
 fn main() {
@@ -44,14 +45,14 @@ fn main_view(window &gui.Window) gui.View {
 			gui.column(
 				color:   gui.theme().color_2
 				content: [
-					toggle_row('checkbox', gui.toggle(
+					toggle_row('toggle (default)', gui.toggle(
 						selected: app.selected_checkbox
 						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.selected_checkbox = !app.selected_checkbox
 						}
 					)),
-					toggle_row('toggle custom text', gui.toggle(
+					toggle_row('toggle (custom text)', gui.toggle(
 						text_selected:   'X'
 						text_unselected: '○'
 						selected:        app.selected_toggle
@@ -60,7 +61,21 @@ fn main_view(window &gui.Window) gui.View {
 							app.selected_toggle = !app.selected_toggle
 						}
 					)),
-					gui.text(text: 'todo: radio, switch', text_style: gui.theme().m3),
+					toggle_row('radio button', gui.radio(
+						id:       'radio'
+						selected: app.selected_radio
+						on_click: fn (_ &gui.RadioCfg, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[ToggleApp]()
+							app.selected_radio = !app.selected_radio
+						}
+					)),
+					gui.row(
+						h_align: .center
+						sizing:  gui.fill_fit
+						content: [
+							gui.text(text: 'todo: switch', text_style: gui.theme().m3),
+						]
+					),
 				]
 			),
 		]
@@ -77,10 +92,7 @@ fn toggle_row(label string, button gui.View) gui.View {
 				padding:   gui.padding_none
 				content:   [button]
 			),
-			gui.row(
-				padding: gui.padding_none
-				content: [gui.text(text: label)]
-			),
+			gui.text(text: label),
 		]
 	)
 }

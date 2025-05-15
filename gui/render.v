@@ -120,10 +120,10 @@ fn render_shape(shape &Shape, mut renderers []Renderer, parent_color Color, wind
 		return
 	}
 	match shape.type {
-		.container { render_container(shape, mut renderers, parent_color, window) }
+		.rectangle { render_container(shape, mut renderers, parent_color, window) }
 		.text { render_text(shape, mut renderers, window) }
 		.image { render_image(shape, mut renderers, window) }
-		.circle {}
+		.circle { render_circle(shape, mut renderers, window) }
 		.none {}
 	}
 }
@@ -206,7 +206,7 @@ fn render_circle(shape &Shape, mut renderers []Renderer, window &Window) {
 
 // draw_rectangle draws a shape as a rectangle.
 fn render_rectangle(shape &Shape, mut renderers []Renderer, window &Window) {
-	assert shape.type == .container
+	assert shape.type == .rectangle
 	renderer_rect := make_renderer_rect(shape, window)
 	draw_rect := gg.Rect{
 		x:      shape.x

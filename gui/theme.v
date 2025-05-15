@@ -55,6 +55,7 @@ const text_style_dark = TextStyle{
 pub struct Theme {
 pub:
 	name             string = 'default' @[required]
+	color_foreground Color  = color_1_dark
 	color_background Color  = color_0_dark
 	color_link       Color  = color_link_dark
 	color_border     Color  = color_border_dark
@@ -71,6 +72,7 @@ pub:
 	dialog_style       DialogStyle
 	input_style        InputStyle
 	menubar_style      MenubarStyle
+	radio_style        RadioStyle
 	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
 	scrollbar_style    ScrollbarStyle
@@ -349,6 +351,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 	theme := Theme{
 		name:             cfg.name
 		color_background: cfg.color_0
+		color_foreground: cfg.color_1
 		color_link:       cfg.color_link
 		color_border:     cfg.color_border
 		color_selected:   cfg.color_selected
@@ -460,6 +463,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:       true
 			radius:     cfg.radius
 			text_style: cfg.text_style
+		}
+		radio_style:        RadioStyle{
+			color:          cfg.color_1
+			color_focus:    cfg.color_link
+			color_border:   cfg.text_style.color
+			color_selected: cfg.text_style.color
 		}
 		rectangle_style:    RectangleStyle{
 			color:  cfg.color_border

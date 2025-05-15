@@ -44,7 +44,8 @@ pub fn toggle(cfg ToggleCfg) View {
 		radius:       cfg.radius_border
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
-		min_width:    gui_theme.text_style.size
+		min_width:    gui_theme.n3.size
+		min_height:   gui_theme.n3.size
 		cfg:          &cfg
 		on_char:      cfg.on_char_button
 		on_click:     cfg.on_click
@@ -69,7 +70,7 @@ pub fn toggle(cfg ToggleCfg) View {
 	)
 }
 
-fn (cfg &ToggleCfg) on_char_button(_ &ButtonCfg, mut e Event, mut w Window) {
+fn (cfg &ToggleCfg) on_char_button(_ &ToggleCfg, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
 		cfg.on_click(cfg, mut e, mut w)
 		e.is_handled = true

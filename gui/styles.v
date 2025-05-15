@@ -107,8 +107,16 @@ pub:
 	text_show       bool      = true
 	text_background Color     = color_transparent
 	text_fill       bool      = true
-	text_padding    Padding   = padding(2, 5, 2, 5)
+	text_padding    Padding   = padding_two_five
 	text_style      TextStyle = text_style_dark
+}
+
+pub struct RadioStyle {
+	color          Color   = color_1_dark
+	color_focus    Color   = color_link_dark
+	color_border   Color   = color_5_dark
+	color_selected Color   = color_5_dark
+	padding        Padding = pad_4(4)
 }
 
 pub struct RectangleStyle {

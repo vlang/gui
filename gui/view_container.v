@@ -42,20 +42,22 @@ pub:
 	on_mouse_up     fn (voidptr, mut Event, mut Window) = unsafe { nil }
 	amend_layout    fn (mut Layout, mut Window)         = unsafe { nil }
 mut:
-	axis    Axis
-	cfg     voidptr
-	content []View
+	shape_type ShapeType = .rectangle
+	axis       Axis
+	cfg        voidptr
+	content    []View
 }
 
 fn (cv &ContainerView) generate(mut _ Window) Layout {
 	if cv.invisible {
 		return Layout{}
 	}
+	assert cv.shape_type in [.rectangle, .circle]
 	mut layout := Layout{
 		shape: Shape{
+			type:           cv.shape_type
 			id:             cv.id
 			id_focus:       cv.id_focus
-			type:           .container
 			axis:           cv.axis
 			x:              cv.x
 			y:              cv.y
@@ -238,4 +240,13 @@ pub fn canvas(cfg &ContainerCfg) ContainerView {
 		canvas.cfg = cfg
 	}
 	return canvas
+}
+
+pub fn circle(cfg &ContainerCfg) ContainerView {
+	mut circle := container(cfg)
+	circle.shape_type = .circle
+	if circle.cfg == unsafe { nil } {
+		circle.cfg = cfg
+	}
+	return circle
 }

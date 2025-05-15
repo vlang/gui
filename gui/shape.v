@@ -70,7 +70,7 @@ pub mut:
 // ShapeType defines the kind of Shape.
 pub enum ShapeType {
 	none
-	container
+	rectangle
 	text
 	image
 	circle
