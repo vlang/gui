@@ -6,7 +6,7 @@ have instructions that specify if the item should fit or fill to the
 contents, etc. This allows layouts to be fluid and adapt to the size of
 the window while looking similar on high or low dpi displays.
 
-When dimensions are required, GUI uses, “logical pixels” instead of
+When dimensions are required, GUI uses, "logical pixels" instead of
 physical pixels. Logical pixels are small, on the order of the size of a
 physical pixel. When GUI draws to the screen it scales and translates
 logical pixels to appear on the display consistently, preserving aspect
@@ -81,10 +81,10 @@ fn main_view(window &gui.Window) gui.View {
 }
 ```
 
-If you have developed flex-box layout UI’s before, most of this should
+If you have developed flex-box layout UI's before, most of this should
 feel familiar.
 
-Let’s take it in parts.
+Let's take it in parts.
 
 ``` v
 import gui
@@ -120,11 +120,11 @@ fn main() {
 ```
 
 As shown, a window is created. Notice that the app state is stored in
-the window. This is important as we’ll see in a moment. The other
+the window. This is important as we'll see in a moment. The other
 interesting bit is the `on_init` function. Gui calls this function when
-the window is initialized. This is where the application’s view is first
+the window is initialized. This is where the application's view is first
 set. Different views can be shown but calling `update_window` anytime
-with a different view. Let’s look at the `main_view` in two sections.
+with a different view. Let's look at the `main_view` in two sections.
 Here is the top portion.
 
 ``` v
@@ -152,7 +152,7 @@ immediate mode. Immediate mode means that whenever the view is updated,
 the entire view is redrawn. This is similar to how many Web UI
 frameworks work (e.g. React). The advantage of immediate mode is that
 the programmer does not have to remember to undraw parts of the view. A
-classic example is a tab view. Most UI’s will highlight the currently
+classic example is a tab view. Most UI's will highlight the currently
 viewed tab. When a different tab is selected, the old tab is
 unhighlighted and the new tab is highlighted. Forget to unhighlight the
 tab and the UI will appear confusing to the user. In immediate mode,
@@ -161,7 +161,7 @@ previously highlighted tab.
 
 Gui interfaces can be redrawn many times per second depending on user
 interaction. For instance, clicking a button for instance will call
-`main_view` to generate a new view. Don’t worry, Gui can update a view
+`main_view` to generate a new view. Don't worry, Gui can update a view
 on the order of microseconds (not milliseconds, microseconds).
 
 Remember the app state we gave the Window? It is always available from
@@ -190,7 +190,7 @@ and buttons.
 }
 ```
 
-There’s a bit to unpack here.
+There's a bit to unpack here.
 
 `gui.text` displays text of course. The `text_style` defines the font,
 size, and weight of the text. Gui has a theming system like other UI
@@ -207,7 +207,7 @@ smallest. The 3 size can be thought of as the medium or default size. If
 no text_style is given to the text view, it defaults to `n3`.
 
 `gui.button` not suprisingly, creates a button. When a button is
-clicked, the `on_click` callback is called. The application’s state is
+clicked, the `on_click` callback is called. The application's state is
 retrieved and the click count is updated. Gui will automatically call
 `main_view` when the click event completes. The new view is created with
 the updated click count.
@@ -232,10 +232,10 @@ for borders and a padding of 5 for other views.
 
 As mentioned earlier, Gui supports themes that will be discussed in a
 later chapter. To quickly summarize, Gui has 4 default themes.
-’dark`,`light`,`dark-no-padding`and`light-no-padding\`. It is as easy as
-calling “window.set_theme(gui.light_theme)” to change to a brighter
+'dark`,`light`,`dark-no-padding`and`light-no-padding\`. It is as easy as
+calling "window.set_theme(gui.light_theme)" to change to a brighter
 theme.
 
-Finally, there’s resizing the window. What happens when the window is
+Finally, there's resizing the window. What happens when the window is
 resized? You probably guessed already, it calls `main_view` and
 generates a new view.

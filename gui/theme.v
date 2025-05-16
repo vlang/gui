@@ -362,11 +362,11 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		color_5:          cfg.color_5
 
 		button_style:       ButtonStyle{
-			color:              cfg.color_1
+			color:              cfg.color_2
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
 			color_click:        cfg.color_4
-			color_focus:        cfg.color_2
+			color_focus:        cfg.color_5
 			color_hover:        cfg.color_3
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border

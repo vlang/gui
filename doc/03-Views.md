@@ -18,7 +18,7 @@ axis are called `canvas`.
 Rows and columns are the primary building blocks. A row will stack its
 content horizontally while a column stacks its content vertically. Rows
 and columns have many properties that define how they look and respond
-to user events. For now, the only three I'll discuss are `padding`,
+to user events. For now, the only three I\'ll discuss are `padding`,
 `spacing`, and `sizing`.
 
 Padding is simply the margin of space inside the row or column. Padding
@@ -26,9 +26,9 @@ has four parts, top, right, bottom, and left. The order here is the same
 as CSS used in browsers. Another way to think about padding is as the
 space around the content of the container.
 
-Spacing is the space between the container's contents. For rows, it is
-the horizontal space between the container's content items. For columns,
-it is the vertical space between content items.
+Spacing is the space between the container\'s contents. For rows, it is
+the horizontal space between the container\'s content items. For
+columns, it is the vertical space between content items.
 
       Container (row)
     +---------------------------------------------+
@@ -93,7 +93,7 @@ For a deeper dive into containers, see the next chapter.
 ## Text
 
 Text is also a view in Gui. It does not function as a container. If
-you're wondering why plain text is a separate view type it is because
+you\'re wondering why plain text is a separate view type it is because
 text is complicated. Text can flow forward, backward, and up and down.
 It can have one or more lines and is selectable. It varies in width
 depending on the family, size, and decorations. In other words, it is a
@@ -107,7 +107,7 @@ clipping on the parent container.
 
 Gui does its best to keep text simple and predictable. Other UI
 frameworks may have different text components for labels, multiline
-text, and text boxes. In Gui, there is only the `text` view. It's the
+text, and text boxes. In Gui, there is only the `text` view. It\'s the
 all-in-one component for displaying text.
 
 ## Images
@@ -117,7 +117,7 @@ displays an image.
 
 ## Other Views
 
-When you look at the list of views you'll see many more than three. As
+When you look at the list of views you\'ll see many more than three. As
 mentioned earlier, they are combinations of the three. For instance, a
 button is `row` (border) that contains a `row` (button body) that
 contains `text`. Button is even more interesting in that a button is

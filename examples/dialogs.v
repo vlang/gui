@@ -33,11 +33,11 @@ fn main_view(window &gui.Window) gui.View {
 		height:  h
 		sizing:  gui.fixed_fixed
 		h_align: .center
-		v_align: .middle
 		content: [
 			toggle_theme(app),
 			gui.column(
-				sizing:  gui.fit_fill
+				color:   gui.theme().color_5
+				padding: gui.theme().padding_large
 				content: [
 					dialog_type(),
 					confirm_type(),
