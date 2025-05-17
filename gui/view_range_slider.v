@@ -2,12 +2,11 @@ module gui
 
 import gg
 import math
-import rand
 
 @[heap]
 pub struct RangeSliderCfg {
 pub:
-	id             string
+	id             string @[required]
 	id_focus       u32
 	min            f32
 	max            f32 = 100
@@ -62,9 +61,8 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 				padding: padding_none
 				content: [
 					circle(
-						id:            rand.u64().str() // helps mouse_move find it
 						float:         true
-						float_anchor:  .middle_left
+						float_anchor:  if cfg.vertical { .top_center } else { .middle_left }
 						float_tie_off: .middle_center
 						width:         cfg.thumb_size
 						height:        cfg.thumb_size
@@ -96,14 +94,25 @@ fn (cfg RangeSliderCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
 		})
 		{
 			shape := node_circle.parent.shape
-			width := shape.width
-			percent := clamp_f32((e.mouse_x - shape.x) / width, 0, 1)
-			val := (cfg.max - cfg.min) * percent
-			mut value := clamp_f32(val, cfg.min, cfg.max)
-			if cfg.round_value {
-				value = f32(math.round(f64(value)))
+			if cfg.vertical {
+				height := shape.height
+				percent := clamp_f32((e.mouse_y - shape.y) / height, 0, 1)
+				val := (cfg.max - cfg.min) * percent
+				mut value := clamp_f32(val, cfg.min, cfg.max)
+				if cfg.round_value {
+					value = f32(math.round(f64(value)))
+				}
+				cfg.on_change(value, mut e, mut w)
+			} else {
+				width := shape.width
+				percent := clamp_f32((e.mouse_x - shape.x) / width, 0, 1)
+				val := (cfg.max - cfg.min) * percent
+				mut value := clamp_f32(val, cfg.min, cfg.max)
+				if cfg.round_value {
+					value = f32(math.round(f64(value)))
+				}
+				cfg.on_change(value, mut e, mut w)
 			}
-			cfg.on_change(value, mut e, mut w)
 		}
 	}
 }
@@ -111,11 +120,13 @@ fn (cfg RangeSliderCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
 fn (cfg &RangeSliderCfg) on_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	if cfg.on_change != unsafe { nil } {
 		forgiveness := 10
-		width := shape.width
+		len := if cfg.vertical { shape.height } else { shape.width }
+		mouse := if cfg.vertical { e.mouse_y } else { e.mouse_x }
+		pos := if cfg.vertical { shape.y } else { shape.x }
 		percent := match true {
-			e.mouse_x <= shape.x + forgiveness { 0 }
-			e.mouse_x >= shape.x + shape.width - forgiveness { 1 }
-			else { clamp_f32((e.mouse_x - shape.x) / width, 0, 1) }
+			mouse <= pos + forgiveness { 0 }
+			mouse >= pos + len - forgiveness { 1 }
+			else { clamp_f32((mouse - pos) / len, 0, 1) }
 		}
 		val := (cfg.max - cfg.min) * percent
 		mut value := clamp_f32(val, cfg.min, cfg.max)

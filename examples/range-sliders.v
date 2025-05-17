@@ -27,16 +27,16 @@ fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 	slider_app := window.state[RangeSliderApp]()
 
-	return gui.column(
+	return gui.row(
 		width:   w
 		height:  h
 		sizing:  gui.fixed_fixed
-		h_align: .center
-		v_align: .middle
 		content: [
-			row(
-				content: [
+			gui.column(
+				min_width: 200
+				content:   [
 					gui.range_slider(
+						id:          'one'
 						value:       slider_app.range_value
 						round_value: true
 						sizing:      gui.fill_fit
@@ -48,9 +48,11 @@ fn main_view(window &gui.Window) gui.View {
 					gui.text(text: slider_app.range_value.str()),
 				]
 			),
-			row(
+			gui.column(
+				sizing:  gui.fill_fill
 				content: [
 					gui.range_slider(
+						id:          'two'
 						value:       slider_app.range_value
 						round_value: true
 						vertical:    true
@@ -60,7 +62,6 @@ fn main_view(window &gui.Window) gui.View {
 							app.range_value = value
 						}
 					),
-					gui.text(text: slider_app.range_value.str()),
 				]
 			),
 		]
