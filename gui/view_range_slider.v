@@ -117,7 +117,6 @@ fn (cfg &RangeSliderCfg) on_mouse_down_shape(shape &Shape, mut e Event, mut w Wi
 			e.mouse_x >= shape.x + shape.width - forgiveness { 1 }
 			else { clamp_f32((e.mouse_x - shape.x) / width, 0, 1) }
 		}
-
 		val := (cfg.max - cfg.min) * percent
 		mut value := clamp_f32(val, cfg.min, cfg.max)
 		if cfg.round_value {

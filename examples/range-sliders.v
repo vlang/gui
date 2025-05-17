@@ -34,16 +34,35 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			gui.range_slider(
-				value:       slider_app.range_value
-				round_value: true
-				sizing:      gui.fill_fit
-				on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[RangeSliderApp]()
-					app.range_value = value
-				}
+			row(
+				content: [
+					gui.range_slider(
+						value:       slider_app.range_value
+						round_value: true
+						sizing:      gui.fill_fit
+						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[RangeSliderApp]()
+							app.range_value = value
+						}
+					),
+					gui.text(text: slider_app.range_value.str()),
+				]
 			),
-			gui.text(text: slider_app.range_value.str()),
+			row(
+				content: [
+					gui.range_slider(
+						value:       slider_app.range_value
+						round_value: true
+						vertical:    true
+						sizing:      gui.fit_fill
+						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[RangeSliderApp]()
+							app.range_value = value
+						}
+					),
+					gui.text(text: slider_app.range_value.str()),
+				]
+			),
 		]
 	)
 }
