@@ -73,6 +73,8 @@ pub fn (window &Window) is_focus(id_focus u32) bool {
 // 	window.view_state.menu_selected.add(id)
 // }
 
+// mouse_is_locked determines if mouse is currently in a locked state
+// Locked states are used for mouse drag operations
 pub fn (window &Window) mouse_is_locked() bool {
 	return window.view_state.mouse_lock.mouse_down != none
 		|| window.view_state.mouse_lock.mouse_move != none

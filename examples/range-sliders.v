@@ -6,7 +6,7 @@ import gui
 @[heap]
 struct RangeSliderApp {
 pub mut:
-	percent f32 = f32(0.40)
+	range_value f32 = 20
 }
 
 fn main() {
@@ -35,13 +35,15 @@ fn main_view(window &gui.Window) gui.View {
 		v_align: .middle
 		content: [
 			gui.range_slider(
-				percent:         slider_app.percent
-				sizing:          gui.fill_fit
-				percent_changed: fn (percent f32, mut e gui.Event, mut w gui.Window) {
+				value:       slider_app.range_value
+				round_value: true
+				sizing:      gui.fill_fit
+				on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[RangeSliderApp]()
-					app.percent = percent
+					app.range_value = value
 				}
 			),
+			gui.text(text: slider_app.range_value.str()),
 		]
 	)
 }
