@@ -104,7 +104,8 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 // ContainerCfg is the common configuration struct for row, column and canvas containers
 @[heap]
 pub struct ContainerCfg {
-	cfg voidptr
+	cfg  voidptr
+	axis Axis
 pub:
 	id              string
 	width           f32
@@ -170,6 +171,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 	return ContainerView{
 		id:              cfg.id
 		id_focus:        cfg.id_focus
+		axis:            cfg.axis
 		x:               cfg.x
 		y:               cfg.y
 		width:           cfg.width

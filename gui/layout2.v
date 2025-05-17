@@ -22,6 +22,16 @@ pub fn (node &Layout) find_node(predicate fn (n Layout) bool) ?Layout {
 	return if predicate(node) { node } else { none }
 }
 
+// move_shape_positions moves the positions of all shapes in
+// the given layout tree
+pub fn (mut node Layout) move_shape_positions(x f32, y f32) {
+	node.shape.x += x
+	node.shape.y += y
+	for mut child in node.children {
+		child.move_shape_positions(x, y)
+	}
+}
+
 // previous_focusable gets the previous non-skippable focusable of the current focus.
 // Returns the first non-skippable focusable if focus is not set.
 pub fn (node &Layout) previous_focusable(mut w Window) ?Shape {
