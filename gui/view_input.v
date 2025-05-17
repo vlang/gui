@@ -323,7 +323,7 @@ fn (cfg &InputCfg) amend_layout(mut node Layout, mut w Window) {
 	}
 
 	// Composite views don't have a generate method.
-	// To add internal envet handlers requires that
+	// To add internal event handlers requires that
 	// the function is assigned here.
 	node.shape.on_char_shape = cfg.on_char_shape
 

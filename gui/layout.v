@@ -534,6 +534,9 @@ fn layout_adjust_scroll_offsets(mut node Layout, mut w Window) {
 // handles alignment. Alignment only augments x and y positions. Alignment
 // does not effect sizes.
 fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
+	if node.shape.id == 'slider+2' {
+		println(node.shape)
+	}
 	node.shape.x += offset_x
 	node.shape.y += offset_y
 

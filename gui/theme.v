@@ -82,6 +82,7 @@ pub:
 	dialog_style       DialogStyle
 	input_style        InputStyle
 	menubar_style      MenubarStyle
+	range_slider_style RangeSliderStyle
 	radio_style        RadioStyle
 	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
@@ -446,6 +447,21 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:       true
 			radius:     cfg.radius
 			text_style: cfg.text_style
+		}
+		range_slider_style: RangeSliderStyle{
+			color:          cfg.color_2
+			color_click:    cfg.color_4
+			color_left:     cfg.color_link
+			color_focus:    cfg.color_link
+			color_hover:    cfg.color_3
+			color_border:   cfg.color_5
+			color_thumb:    cfg.color_link
+			fill:           true
+			fill_border:    true
+			padding:        padding_none
+			padding_border: cfg.padding_border
+			radius:         cfg.radius_small
+			radius_border:  cfg.radius_small
 		}
 		radio_style:        RadioStyle{
 			color:            cfg.color_1

@@ -2,9 +2,7 @@ module gui
 
 import arrays
 
-// find_shape walks the ShapeTree in reverse until predicate is satisfied.
-// shape_uid limits the depth of the search into tree. Used in event bubbling. 0
-// is not a valid shape_uid and is used to search the entire tree
+// find_shape walks the layout in depth first until predicate is satisfied.
 pub fn (node &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
 	for child in node.children {
 		if found := child.find_shape(predicate) {
@@ -14,6 +12,7 @@ pub fn (node &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
 	return if predicate(node) { node.shape } else { none }
 }
 
+// find_node walks the layout in dept first until predicate is satisfied.
 pub fn (node &Layout) find_node(predicate fn (n Layout) bool) ?Layout {
 	for child in node.children {
 		if found := child.find_node(predicate) {
@@ -23,12 +22,16 @@ pub fn (node &Layout) find_node(predicate fn (n Layout) bool) ?Layout {
 	return if predicate(node) { node } else { none }
 }
 
-fn (node &Layout) previous_focusable(mut w Window) ?Shape {
+// previous_focusable gets the previous non-skippable focusable of the current focus.
+// Returns the first non-skippable focusable if focus is not set.
+pub fn (node &Layout) previous_focusable(mut w Window) ?Shape {
 	ids := node.get_focus_ids().reverse()
 	return node.find_next_focusable(ids, mut w)
 }
 
-fn (node &Layout) next_focusable(mut w Window) ?Shape {
+// next_focusable gets the next non-skippable focusable of the current focus.
+// Returns the first non-skippable focusable if focus is not set.
+pub fn (node &Layout) next_focusable(mut w Window) ?Shape {
 	ids := node.get_focus_ids()
 	return node.find_next_focusable(ids, mut w)
 }

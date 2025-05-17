@@ -112,12 +112,32 @@ pub:
 }
 
 pub struct RadioStyle {
+pub:
 	color            Color   = color_2_dark
 	color_focus      Color   = color_link_dark
 	color_border     Color   = color_5_dark
 	color_selected   Color   = color_text_dark
 	color_unselected Color   = color_5_dark
 	padding          Padding = pad_all(4)
+}
+
+pub struct RangeSliderStyle {
+pub:
+	size           f32     = 7
+	thumb_size     f32     = 15
+	color          Color   = color_2_dark
+	color_click    Color   = color_4_dark
+	color_left     Color   = color_link_dark
+	color_focus    Color   = color_link_dark
+	color_hover    Color   = color_3_dark
+	color_border   Color   = color_5_dark
+	color_thumb    Color   = color_link_dark
+	fill           bool    = true
+	fill_border    bool    = true
+	padding        Padding = padding_none
+	padding_border Padding = padding_none
+	radius         f32     = radius_small
+	radius_border  f32     = radius_small
 }
 
 pub struct RectangleStyle {

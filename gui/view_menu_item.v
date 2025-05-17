@@ -152,9 +152,9 @@ fn (menubar_cfg MenubarCfg) menu_item_click(cfg &MenuItemCfg, mut e Event, mut w
 	// setting the focus to the menubar enables mouse hover hightlighting of menu items.
 	// see amend_layout_item
 	w.set_id_focus(menubar_cfg.id_focus)
-	// Hightlight the menu item
+	// Highlight the menu item
 	w.view_state.menu_state[menubar_cfg.id_focus] = cfg.id
-	// Menu time action handler
+	// Menu item action handler
 	if cfg.action != unsafe { nil } {
 		cfg.action(cfg, mut e, mut w)
 	}
