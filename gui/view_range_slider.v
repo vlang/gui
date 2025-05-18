@@ -8,10 +8,11 @@ pub struct RangeSliderCfg {
 pub:
 	id             string @[required]
 	id_focus       u32
+	value          f32
 	min            f32
 	max            f32 = 100
-	value          f32
-	round_value    bool // round values to nearest int
+	step           f32 = 1
+	round_value    bool // round value to nearest int
 	vertical       bool
 	disabled       bool
 	invisible      bool
@@ -40,6 +41,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 	}
 	return container(
 		id:           cfg.id
+		id_focus:     cfg.id_focus
 		width:        cfg.size
 		height:       cfg.size
 		disabled:     cfg.disabled
@@ -53,6 +55,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		v_align:      .middle
 		axis:         if cfg.vertical { .top_to_bottom } else { .left_to_right }
 		amend_layout: cfg.amend_layout_slide
+		on_keydown:   cfg.on_keydown
 		content:      [
 			container(
 				color:   cfg.color
@@ -96,6 +99,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 
 fn (cfg &RangeSliderCfg) amend_layout_slide(mut node Layout, mut w Window) {
 	node.shape.on_mouse_down_shape = cfg.on_mouse_down_shape
+	node.shape.on_mouse_scroll_shape = cfg.on_mouse_scroll
 
 	// set positions of left/right or top/bottom rectangles
 	value := clamp_f32(cfg.value, cfg.min, cfg.max)
@@ -185,7 +189,9 @@ fn (cfg RangeSliderCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
 				if cfg.round_value {
 					value = f32(math.round(f64(value)))
 				}
-				cfg.on_change(value, mut e, mut w)
+				if value != cfg.value {
+					cfg.on_change(value, mut e, mut w)
+				}
 			}
 		}
 	}
@@ -208,5 +214,37 @@ fn (cfg &RangeSliderCfg) on_mouse_down_shape(shape &Shape, mut e Event, mut w Wi
 			value = f32(math.round(f64(value)))
 		}
 		cfg.on_change(value, mut e, mut w)
+	}
+}
+
+fn (cfg &RangeSliderCfg) on_keydown(node &Layout, mut e Event, mut w Window) {
+	if cfg.on_change != unsafe { nil } && e.modifiers == 0 {
+		mut value := cfg.value
+		match e.key_code {
+			.home { value = cfg.min }
+			.end { value = cfg.max }
+			.left, .up { value = clamp_f32(value - cfg.step, cfg.min, cfg.max) }
+			.right, .down { value = clamp_f32(value + cfg.step, cfg.min, cfg.max) }
+			else { return }
+		}
+		if cfg.round_value {
+			value = f32(math.round(f64(value)))
+		}
+		if value != cfg.value {
+			cfg.on_change(value, mut e, mut w)
+		}
+	}
+}
+
+fn (cfg &RangeSliderCfg) on_mouse_scroll(shape &Shape, mut e Event, mut w Window) {
+	e.is_handled = true
+	if cfg.on_change != unsafe { nil } && e.modifiers == 0 {
+		mut value := clamp_f32(cfg.value + e.scroll_y, cfg.min, cfg.max)
+		if cfg.round_value {
+			value = f32(math.round(f64(value)))
+		}
+		if value != cfg.value {
+			cfg.on_change(value, mut e, mut w)
+		}
 	}
 }

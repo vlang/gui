@@ -58,12 +58,13 @@ pub mut:
 	// --- for internal use and not intended for end users   ---
 	// --- however, composite views can set these in the     ---
 	// --- layout amend callback. See input view for example ---
-	on_char_shape       fn (&Shape, mut Event, mut Window) = unsafe { nil }
-	on_keydown_shape    fn (&Shape, mut Event, mut Window) = unsafe { nil }
-	on_mouse_down_shape fn (&Shape, mut Event, mut Window) = unsafe { nil }
-	on_mouse_move_shape fn (&Shape, mut Event, mut Window) = unsafe { nil }
-	on_mouse_up_shape   fn (&Shape, mut Event, mut Window) = unsafe { nil }
-	// mostly for hover and focus highlighting
+	on_char_shape         fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	on_keydown_shape      fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	on_mouse_down_shape   fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	on_mouse_move_shape   fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	on_mouse_up_shape     fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	on_mouse_scroll_shape fn (&Shape, mut Event, mut Window) = unsafe { nil }
+	// amend_layout called after all other layout operations complete
 	amend_layout fn (mut Layout, mut Window) = unsafe { nil }
 }
 

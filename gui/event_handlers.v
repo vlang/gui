@@ -198,6 +198,19 @@ fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
+	id_focus := w.id_focus()
+	if id_focus != 0 {
+		if shape := node.find_shape(fn [id_focus] (n Layout) bool {
+			return n.shape.id_focus == id_focus
+		})
+		{
+			if shape.on_mouse_scroll_shape != unsafe { nil } {
+				shape.on_mouse_scroll_shape(shape, mut e, mut w)
+				return
+			}
+		}
+	}
+
 	if !node.shape.disabled && node.shape.id_scroll > 0 {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			if e.modifiers == u32(Modifier.shift) {

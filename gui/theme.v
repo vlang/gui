@@ -452,7 +452,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color:          cfg.color_2
 			color_click:    cfg.color_4
 			color_left:     cfg.color_link
-			color_focus:    cfg.color_link
+			color_focus:    cfg.color_4
 			color_hover:    cfg.color_3
 			color_border:   cfg.color_5
 			color_thumb:    cfg.color_link

@@ -128,7 +128,7 @@ pub:
 	color          Color   = color_2_dark
 	color_click    Color   = color_4_dark
 	color_left     Color   = color_link_dark
-	color_focus    Color   = color_link_dark
+	color_focus    Color   = color_4_dark
 	color_hover    Color   = color_3_dark
 	color_border   Color   = color_5_dark
 	color_thumb    Color   = color_link_dark

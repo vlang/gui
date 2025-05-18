@@ -46,7 +46,8 @@ fn main_view(window &gui.Window) gui.View {
 						sizing:  gui.fill_fill
 						content: [
 							gui.range_slider(
-								id:          'one'
+								id:          'rs1'
+								id_focus:    1
 								value:       slider_app.range_value
 								round_value: true
 								sizing:      gui.fill_fit
@@ -62,7 +63,8 @@ fn main_view(window &gui.Window) gui.View {
 						sizing:  gui.fit_fill
 						content: [
 							gui.range_slider(
-								id:          'two'
+								id:          'rs2'
+								id_focus:    2
 								value:       slider_app.range_value
 								round_value: true
 								vertical:    true
