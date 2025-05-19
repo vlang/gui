@@ -33,15 +33,15 @@ fn main_view(window &gui.Window) gui.View {
 		spacing: 1
 		content: [
 			gui.column(
-				id:        'A'
-				width:     width
-				max_width: width
-				fill:      true
-				color:     gui.theme().color_2
-				sizing:    gui.fit_fill
-				h_align:   .center
-				v_align:   .middle
-				content:   [
+				id:      'A'
+				width:   width
+				fill:    true
+				color:   gui.theme().color_2
+				sizing:  gui.fit_fill
+				h_align: .center
+				v_align: .middle
+				clip:    true
+				content: [
 					gui.text(text: 'Panel A'),
 				]
 			),
@@ -57,6 +57,7 @@ fn main_view(window &gui.Window) gui.View {
 				sizing:  gui.fill_fill
 				h_align: .center
 				v_align: .middle
+				clip:    true
 				content: [
 					gui.text(text: 'Panel B'),
 				]
