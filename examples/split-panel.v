@@ -2,6 +2,11 @@ import gui
 
 // Split Panel Example
 // =============================
+// Gui does not hava a "splitter" view (that may change) but it
+// can be done simply by using a button (or row/column if you more
+// control over appearance) and some mouse_move logic. The only
+// width that needs to be controlled is the 'A' panel. The splitter
+// button and 'B' panel are positioned/sized by the layout engine.
 
 @[heap]
 struct SplitPanelApp {
@@ -24,7 +29,6 @@ fn main() {
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[SplitPanelApp]()
-	width := gui.clamp_f32(app.a_width, 10, w - 50)
 
 	return gui.row(
 		width:   w
@@ -34,10 +38,10 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			gui.column(
 				id:      'A'
-				width:   width
+				width:   app.a_width
 				fill:    true
 				color:   gui.theme().color_2
-				sizing:  gui.fit_fill
+				sizing:  gui.fixed_fill
 				h_align: .center
 				v_align: .middle
 				clip:    true
@@ -46,7 +50,7 @@ fn main_view(window &gui.Window) gui.View {
 				]
 			),
 			gui.button(
-				width:    10
+				width:    5
 				sizing:   gui.fit_fill
 				padding:  gui.padding_none
 				on_click: split_click
@@ -57,7 +61,6 @@ fn main_view(window &gui.Window) gui.View {
 				sizing:  gui.fill_fill
 				h_align: .center
 				v_align: .middle
-				clip:    true
 				content: [
 					gui.text(text: 'Panel B'),
 				]
@@ -69,13 +72,20 @@ fn main_view(window &gui.Window) gui.View {
 fn split_click(cfg &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 	w.mouse_lock(gui.MouseLockCfg{
 		mouse_move: fn (node &gui.Layout, mut e gui.Event, mut w gui.Window) {
+			// The node here is first node in the view. This is because
+			// the handler here has nothing to do with button per se.
+			// In this case, the button is not even needed after the
+			// initial click event. The panel that needs to be resized
+			// is the 'A' panel. The button and 'B' panel require no
+			// additional work because the layout engine will position
+			// and size them for you.
 			if a_node := node.find_node(fn (n gui.Layout) bool {
 				return n.shape.id == 'A'
 			})
 			{
 				mut app := w.state[SplitPanelApp]()
 				width, _ := w.window_size()
-				app.a_width = gui.clamp_f32(a_node.shape.width + e.mouse_dx, 10, width - 50)
+				app.a_width = gui.clamp_f32(a_node.shape.width + e.mouse_dx, 20, width - 50)
 			}
 		}
 		mouse_up:   fn (node &gui.Layout, mut e gui.Event, mut w gui.Window) {
