@@ -6,7 +6,7 @@ import gui
 @[heap]
 struct SplitPanelApp {
 pub mut:
-	a_width f32
+	a_width f32 = 125
 }
 
 fn main() {
@@ -18,15 +18,13 @@ fn main() {
 			w.update_view(main_view)
 		}
 	)
-	window.set_theme(gui.theme_dark_bordered)
 	window.run()
 }
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[SplitPanelApp]()
-
-	width := gui.clamp_f32(app.a_width, 10, w - 10)
+	width := gui.clamp_f32(app.a_width, 10, w - 50)
 
 	return gui.row(
 		width:   w
@@ -35,11 +33,17 @@ fn main_view(window &gui.Window) gui.View {
 		spacing: 1
 		content: [
 			gui.column(
-				id:     'A'
-				width:  width
-				fill:   true
-				color:  gui.theme().color_2
-				sizing: gui.fill_fill
+				id:        'A'
+				width:     width
+				max_width: width
+				fill:      true
+				color:     gui.theme().color_2
+				sizing:    gui.fit_fill
+				h_align:   .center
+				v_align:   .middle
+				content:   [
+					gui.text(text: 'Panel A'),
+				]
 			),
 			gui.button(
 				width:    10
@@ -48,9 +52,14 @@ fn main_view(window &gui.Window) gui.View {
 				on_click: split_click
 			),
 			gui.column(
-				fill:   true
-				color:  gui.theme().color_2
-				sizing: gui.fill_fill
+				fill:    true
+				color:   gui.theme().color_2
+				sizing:  gui.fill_fill
+				h_align: .center
+				v_align: .middle
+				content: [
+					gui.text(text: 'Panel B'),
+				]
 			),
 		]
 	)
@@ -58,19 +67,18 @@ fn main_view(window &gui.Window) gui.View {
 
 fn split_click(cfg &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 	w.mouse_lock(gui.MouseLockCfg{
-		mouse_move: mouse_move
-		mouse_up:   fn (node &Layout, mut e Event, mut w Window) {
+		mouse_move: fn (node &gui.Layout, mut e gui.Event, mut w gui.Window) {
+			if a_node := node.find_node(fn (n gui.Layout) bool {
+				return n.shape.id == 'A'
+			})
+			{
+				mut app := w.state[SplitPanelApp]()
+				width, _ := w.window_size()
+				app.a_width = gui.clamp_f32(a_node.shape.width + e.mouse_dx, 10, width - 50)
+			}
+		}
+		mouse_up:   fn (node &gui.Layout, mut e gui.Event, mut w gui.Window) {
 			w.mouse_unlock()
 		}
 	})
-}
-
-fn mouse_move(node &gui.Layout, mut e gui.Event, mut w gui.Window) {
-	if a_node := node.find_node(fn (n &gui.Layout) bool {
-		return n.shape.id == 'A'
-	})
-	{
-		app := w.state[SplitPanelApp]()
-		app.a_width = a_node.shape.width - e.scroll_x
-	}
 }
