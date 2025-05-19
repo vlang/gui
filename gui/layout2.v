@@ -108,7 +108,7 @@ fn f32_are_close(a f32, b f32) bool {
 
 // clamp_f32 returns x between  a and b
 @[inline]
-fn clamp_f32(x f32, a f32, b f32) f32 {
+pub fn clamp_f32(x f32, a f32, b f32) f32 {
 	if x < a {
 		return a
 	}
