@@ -1,5 +1,10 @@
 module gui
 
+pub const pad_x_small = 3
+pub const pad_small = 5
+pub const pad_medium = 10
+pub const pad_large = 15
+
 pub const padding_none = Padding{}
 pub const padding_one = padding(1, 1, 1, 1)
 pub const padding_two = padding(2, 2, 2, 2)
@@ -7,9 +12,10 @@ pub const padding_three = padding(3, 3, 3, 3)
 pub const padding_two_three = padding(2, 3, 2, 3)
 pub const padding_two_four = padding(2, 4, 2, 4)
 pub const padding_two_five = padding(2, 5, 2, 5)
-pub const padding_small = padding(5, 5, 5, 5)
-pub const padding_medium = padding(10, 10, 10, 10)
-pub const padding_large = padding(15, 15, 15, 15)
+pub const padding_x_small = pad_all(pad_x_small)
+pub const padding_small = pad_all(pad_small)
+pub const padding_medium = pad_all(pad_medium)
+pub const padding_large = pad_all(pad_large)
 pub const padding_button = pad_tblr(7, 9)
 
 // Padding is the gap inside the edges of a Shape. The size of a Shape always

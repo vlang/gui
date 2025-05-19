@@ -55,7 +55,6 @@ pub:
 // )
 // ```
 pub fn input(cfg InputCfg) View {
-	assert cfg.id_focus != 0
 	placeholder_active := cfg.text.len == 0
 	txt := if placeholder_active { cfg.placeholder } else { cfg.text }
 	txt_style := if placeholder_active { cfg.placeholder_style } else { cfg.text_style }
@@ -322,9 +321,6 @@ fn (cfg &InputCfg) amend_layout(mut node Layout, mut w Window) {
 		return
 	}
 
-	// Composite views don't have a generate method.
-	// To add internal event handlers requires that
-	// the function is assigned here.
 	node.shape.on_char_shape = cfg.on_char_shape
 
 	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {
