@@ -139,40 +139,48 @@ fn render_container(mut shape Shape, mut renderers []Renderer, parent_color Colo
 
 	// The group box title complicated things. Maybe move it?
 	if shape.text.len != 0 {
-		ctx.set_text_cfg(shape.text_style.to_text_cfg())
-		w, h := ctx.text_size(shape.text)
-		x := shape.x + 20
-		y := shape.y
-		// erase portion of rectangle where text goes.
-		p_color := if shape.disabled {
-			dim_alpha(parent_color)
-		} else {
-			parent_color
+		draw_rect := gg.Rect{
+			x:      shape.x
+			y:      shape.y
+			width:  shape.width
+			height: shape.height
 		}
-		renderers << DrawRect{
-			x:     x
-			y:     y - 2 - h / 2
-			w:     w
-			h:     h + 1
-			style: .fill
-			color: p_color.to_gx_color()
-		}
-		color := if shape.disabled {
-			dim_alpha(shape.text_style.color)
-		} else {
-			shape.text_style.color
-		}
-		// The height of a lowercase char usually splits
-		// the text just right.
-		eh := ctx.text_height('e')
-		renderers << DrawText{
-			x:    x
-			y:    y - eh
-			text: shape.text
-			cfg:  TextStyle{
-				...shape.text_style
-				color: color
-			}.to_text_cfg()
+		if rects_overlap(draw_rect, clip) {
+			ctx.set_text_cfg(shape.text_style.to_text_cfg())
+			w, h := ctx.text_size(shape.text)
+			x := shape.x + 20
+			y := shape.y
+			// erase portion of rectangle where text goes.
+			p_color := if shape.disabled {
+				dim_alpha(parent_color)
+			} else {
+				parent_color
+			}
+			renderers << DrawRect{
+				x:     x
+				y:     y - 2 - h / 2
+				w:     w
+				h:     h + 1
+				style: .fill
+				color: p_color.to_gx_color()
+			}
+			color := if shape.disabled {
+				dim_alpha(shape.text_style.color)
+			} else {
+				shape.text_style.color
+			}
+			// The height of a lowercase char usually splits
+			// the text just right.
+			eh := ctx.text_height('e')
+			renderers << DrawText{
+				x:    x
+				y:    y - eh
+				text: shape.text
+				cfg:  TextStyle{
+					...shape.text_style
+					color: color
+				}.to_text_cfg()
+			}
 		}
 	}
 }
@@ -236,6 +244,16 @@ fn render_rectangle(mut shape Shape, mut renderers []Renderer, clip DrawClip, wi
 // If cursor coordinates are present, it draws the input cursor.
 // The highlighting of selected text happens here also.
 fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
+	dr := gg.Rect{
+		x:      shape.x
+		y:      shape.y
+		width:  shape.width
+		height: shape.height
+	}
+	if !rects_overlap(dr, clip) {
+		shape.disabled = true
+		return
+	}
 	ctx := window.ui
 	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
 	text_cfg := TextStyle{
@@ -300,11 +318,11 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 		char_count += len
 	}
 
-	render_cursor(shape, mut renderers, window)
+	render_cursor(shape, mut renderers, clip, window)
 }
 
 // render_cursor figures out where the darn cursor goes.
-fn render_cursor(shape &Shape, mut renderers []Renderer, window &Window) {
+fn render_cursor(shape &Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
 	if window.is_focus(shape.id_focus) && shape.type == .text {
 		lh := line_height(shape)
 		mut cursor_x := -1
@@ -336,13 +354,21 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, window &Window) {
 				x := int_min(cursor_x, ln.len)
 				cx := shape.x + ctx.text_width(ln[..x])
 				cy := shape.y + (lh * cursor_y)
-				renderers << DrawLine{
-					x:   cx
-					y:   cy
-					x1:  cx
-					y1:  cy + lh
-					cfg: gg.PenConfig{
-						color: shape.text_style.color.to_gx_color()
+				dr := gg.Rect{
+					x:      cx
+					y:      cy
+					width:  cx
+					height: cy + lh
+				}
+				if rects_overlap(dr, clip) {
+					renderers << DrawLine{
+						x:   cx
+						y:   cy
+						x1:  cx
+						y1:  cy + lh
+						cfg: gg.PenConfig{
+							color: shape.text_style.color.to_gx_color()
+						}
 					}
 				}
 			}
@@ -351,6 +377,16 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, window &Window) {
 }
 
 fn render_image(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
+	dr := gg.Rect{
+		x:      shape.x
+		y:      shape.y
+		width:  shape.width
+		height: shape.height
+	}
+	if !rects_overlap(dr, clip) {
+		shape.disabled = true
+		return
+	}
 	mut ctx := window.context()
 	image := ctx.get_cached_image_by_idx(window.view_state.image_map[shape.image_name])
 	renderers << DrawImage{
