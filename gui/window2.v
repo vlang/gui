@@ -190,3 +190,7 @@ pub fn (window &Window) state[T]() &T {
 pub fn (window &Window) window_size() (int, int) {
 	return window.window_size.width, window.window_size.height
 }
+
+pub fn (window &Window) window_rect() gg.Rect {
+	return gg.Rect{0, 0, window.window_size.width, window.window_size.height}
+}

@@ -201,9 +201,10 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	// evident in the column-scroll.v example with 10K rows. Passing a
 	// reference to render array significantly reduced calls to array.push()
 	view := gen_view(window)
-	layout := window.compose_layout(view)
+	mut layout := window.compose_layout(view)
 	mut renderers := []Renderer{}
-	render_layout(layout, mut renderers, window.color_background(), none, window)
+	window_rect := window.window_rect()
+	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
 
 	window.mutex.lock()
 	defer { window.mutex.unlock() }
@@ -221,9 +222,10 @@ pub fn (mut window Window) update_window() {
 	defer { window.mutex.unlock() }
 
 	view := window.view_generator(window)
-	layout := window.compose_layout(view)
+	mut layout := window.compose_layout(view)
 	mut renderers := []Renderer{}
-	render_layout(layout, mut renderers, window.color_background(), none, window)
+	window_rect := window.window_rect()
+	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
 
 	window.layout = layout
 	window.renderers = renderers
