@@ -494,6 +494,10 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			padding_border:     cfg.padding_border
 			radius:             if cfg.radius != 0 { radius_small } else { 0 }
 			radius_border:      if radius_border != 0 { radius_small } else { 0 }
+			text_style:         TextStyle{
+				...cfg.text_style
+				size: cfg.size_text_small
+			}
 		}
 		switch_style:       SwitchStyle{
 			color:              cfg.color_1

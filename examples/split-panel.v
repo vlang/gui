@@ -3,8 +3,8 @@ import gui
 // Split Panel Example
 // =============================
 // Gui does not hava a "splitter" view (that may change) but it
-// can be done simply by using a button (or row/column if you more
-// control over appearance) and some mouse_move logic. The only
+// can be done simply by using a button (or row/column if you want
+// more control over appearance) and some mouse_move logic. The only
 // width that needs to be controlled is the 'A' panel. The splitter
 // button and 'B' panel are positioned/sized by the layout engine.
 

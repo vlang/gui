@@ -16,6 +16,7 @@ pub mut:
 	mouse_lock     MouseLockCfg       // mouse down/move/up methods to call when locked
 	menu_state     map[u32]string     // [id_menubar] -> id of menu
 	image_map      map[string]int     // [file name] -> context.cache image id
+	select_state   map[string]bool    // [id select] -> open/close state
 }
 
 fn (mut vs ViewState) clear(mut w Window) {
@@ -33,6 +34,7 @@ fn (mut vs ViewState) clear(mut w Window) {
 		ctx.remove_cached_image_by_idx(idx)
 	}
 	vs.image_map.clear()
+	vs.select_state.clear()
 }
 
 // The management of focus and input states poses a problem in stateless views

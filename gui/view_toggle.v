@@ -14,19 +14,20 @@ pub:
 	text_selected      string = '✓'
 	text_unselected    string = ' '
 	selected           bool
-	fill               bool    = gui_theme.toggle_style.fill
-	fill_border        bool    = gui_theme.toggle_style.fill_border
-	color              Color   = gui_theme.toggle_style.color
-	color_focus        Color   = gui_theme.toggle_style.color_focus
-	color_hover        Color   = gui_theme.toggle_style.color_hover
-	color_click        Color   = gui_theme.toggle_style.color_click
-	color_border       Color   = gui_theme.toggle_style.color_border
-	color_border_focus Color   = gui_theme.toggle_style.color_border_focus
-	color_selected     Color   = gui_theme.toggle_style.color_selected
-	padding            Padding = gui_theme.toggle_style.padding
-	padding_border     Padding = gui_theme.toggle_style.padding_border
-	radius             f32     = gui_theme.toggle_style.radius
-	radius_border      f32     = gui_theme.toggle_style.radius_border
+	fill               bool      = gui_theme.toggle_style.fill
+	fill_border        bool      = gui_theme.toggle_style.fill_border
+	color              Color     = gui_theme.toggle_style.color
+	color_focus        Color     = gui_theme.toggle_style.color_focus
+	color_hover        Color     = gui_theme.toggle_style.color_hover
+	color_click        Color     = gui_theme.toggle_style.color_click
+	color_border       Color     = gui_theme.toggle_style.color_border
+	color_border_focus Color     = gui_theme.toggle_style.color_border_focus
+	color_selected     Color     = gui_theme.toggle_style.color_selected
+	padding            Padding   = gui_theme.toggle_style.padding
+	padding_border     Padding   = gui_theme.toggle_style.padding_border
+	radius             f32       = gui_theme.toggle_style.radius
+	radius_border      f32       = gui_theme.toggle_style.radius_border
+	text_style         TextStyle = gui_theme.b4
 	on_click           fn (&ToggleCfg, mut Event, mut Window) = unsafe { nil }
 }
 
@@ -62,7 +63,7 @@ pub fn toggle(cfg ToggleCfg) View {
 				content: [
 					text(
 						text:       txt
-						text_style: gui_theme.b4
+						text_style: cfg.text_style
 					),
 				]
 			),

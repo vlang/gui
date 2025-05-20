@@ -197,17 +197,20 @@ pub:
 
 pub struct ToggleStyle {
 pub:
-	color              Color   = color_2_dark
-	color_border       Color   = color_border_dark
-	color_border_focus Color   = color_link_dark
-	color_click        Color   = color_2_dark
-	color_focus        Color   = color_5_dark
-	color_hover        Color   = color_3_dark
-	color_selected     Color   = color_1_dark
-	fill               bool    = true
-	fill_border        bool    = true
-	padding            Padding = padding_one
-	padding_border     Padding = padding_none
-	radius             f32     = radius_small
-	radius_border      f32     = radius_small
+	color              Color     = color_2_dark
+	color_border       Color     = color_border_dark
+	color_border_focus Color     = color_link_dark
+	color_click        Color     = color_2_dark
+	color_focus        Color     = color_5_dark
+	color_hover        Color     = color_3_dark
+	color_selected     Color     = color_1_dark
+	fill               bool      = true
+	fill_border        bool      = true
+	padding            Padding   = padding_one
+	padding_border     Padding   = padding_none
+	radius             f32       = radius_small
+	radius_border      f32       = radius_small
+	text_style         TextStyle = TextStyle{
+		size: size_text_small
+	}
 }
