@@ -165,7 +165,7 @@ fn main_view(w &gui.Window) gui.View {
 						id_focus:        3
 						width:           250
 						text:            state.name
-						mode:            .wrap
+						mode:            .multiline
 						sizing:          gui.fixed_fit
 						padding_border:  gui.padding_two
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {

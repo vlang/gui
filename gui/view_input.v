@@ -1,5 +1,10 @@
 module gui
 
+pub enum InputMode {
+	single_line
+	multiline
+}
+
 // InputCfg configures an input view. See [input](#input). Use `on_text_changed` to
 // capture text updates. To capture the enter-key, provide an `on_enter` callback.
 // Placeholder text is shown when the input field is empty.
@@ -16,11 +21,11 @@ pub:
 	disabled           bool
 	invisible          bool
 	sizing             Sizing
-	id_focus           u32      // 0 = readonly, >0 = focusable and tabbing order
-	text               string   // text to display/edit
-	placeholder        string   // text to show when empty
-	mode               TextMode // enable multiline
-	is_password        bool     // mask input characters with '*'s
+	id_focus           u32       // 0 = readonly, >0 = focusable and tabbing order
+	text               string    // text to display/edit
+	placeholder        string    // text to show when empty
+	mode               InputMode // enable multiline
+	is_password        bool      // mask input characters with '*'s
 	padding            Padding                            = gui_theme.input_style.padding
 	padding_border     Padding                            = gui_theme.input_style.padding_border
 	color              Color                              = gui_theme.input_style.color
@@ -58,6 +63,7 @@ pub fn input(cfg InputCfg) View {
 	placeholder_active := cfg.text.len == 0
 	txt := if placeholder_active { cfg.placeholder } else { cfg.text }
 	txt_style := if placeholder_active { cfg.placeholder_style } else { cfg.text_style }
+	mode := if cfg.mode == .single_line { TextMode.single_line } else { TextMode.wrap_keep_spaces }
 
 	return row(
 		id:           cfg.id
@@ -89,7 +95,7 @@ pub fn input(cfg InputCfg) View {
 						id_focus:           cfg.id_focus
 						text:               txt
 						text_style:         txt_style
-						mode:               cfg.mode
+						mode:               mode
 						is_password:        cfg.is_password
 						placeholder_active: placeholder_active
 					),

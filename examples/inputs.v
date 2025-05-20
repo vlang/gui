@@ -97,7 +97,7 @@ fn main_view(window &gui.Window) gui.View {
 						text:            app.input_a
 						min_width:       input_width
 						max_width:       input_width
-						mode:            .wrap
+						mode:            .multiline
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()
 							state.input_a = s
