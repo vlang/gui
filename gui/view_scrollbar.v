@@ -119,6 +119,7 @@ fn (cfg ScrollbarCfg) gutter_click(_ &ContainerCfg, mut e Event, mut w Window) {
 			true { offset_from_mouse_x(w.layout, e.mouse_x, cfg.id_track, mut w) }
 			else { offset_from_mouse_y(w.layout, e.mouse_y, cfg.id_track, mut w) }
 		}
+		e.is_handled = true
 	}
 }
 

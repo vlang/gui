@@ -22,7 +22,10 @@ pub fn select(cfg SelectCfg) View {
 	mut options := []View{}
 	if is_open {
 		for option in cfg.options {
-			options << option_view(cfg, option)
+			options << match option.starts_with('---') {
+				true { sub_header(cfg, option) }
+				else { option_view(cfg, option) }
+			}
 		}
 	}
 
@@ -33,6 +36,7 @@ pub fn select(cfg SelectCfg) View {
 		padding:  gui_theme.padding_small
 		sizing:   fill_fit
 		on_click: fn [cfg, is_open] (_ &ToggleCfg, mut e Event, mut w Window) {
+			w.view_state.select_state.clear() // close all select drop-downs.
 			w.view_state.select_state[cfg.id] = !is_open
 			e.is_handled = true
 		}
@@ -65,7 +69,7 @@ pub fn select(cfg SelectCfg) View {
 				column( // interior list
 					fill:    gui_theme.button_style.fill
 					color:   gui_theme.button_style.color
-					padding: padding_x_small
+					padding: padding(pad_small, pad_medium, pad_small, pad_small)
 					spacing: 0
 					content: options
 				),
@@ -109,8 +113,9 @@ fn option_view(cfg SelectCfg, option string) View {
 		]
 		on_click:     fn [cfg, option] (_ voidptr, mut e Event, mut w Window) {
 			if cfg.on_select != unsafe { nil } {
-				w.view_state.select_state[cfg.id] = false
+				w.view_state.select_state.clear() // close all select drop-downs.
 				cfg.on_select(option, mut e, mut w)
+				e.is_handled = true
 			}
 		}
 		amend_layout: fn [cfg] (mut node Layout, mut w Window) {
@@ -122,11 +127,53 @@ fn option_view(cfg SelectCfg, option string) View {
 				if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
 					return
 				}
+				w.set_mouse_cursor_pointing_hand()
 				node.shape.color = cfg.color_hover
 				if ctx.mouse_buttons == gg.MouseButtons.left {
 					node.shape.color = cfg.color_click
 				}
 			}
 		}
+	)
+}
+
+fn sub_header(cfg SelectCfg, option string) View {
+	return column(
+		spacing: 0
+		padding: padding_none
+		sizing:  fill_fit
+		content: [
+			row(
+				padding:  padding_none
+				sizing:   fill_fit
+				spacing:  pad_x_small
+				disabled: true
+				content:  [
+					text(
+						text:       '✓'
+						text_style: TextStyle{
+							...cfg.text_style
+							color: color_transparent
+						}
+					),
+					text(
+						text:       option[3..]
+						text_style: cfg.text_style
+					),
+				]
+			),
+			row(
+				padding: pad_tblr(0, pad_medium)
+				sizing:  fill_fit
+				content: [
+					rectangle(
+						width:  1
+						height: 1
+						sizing: fill_fit
+						color:  gui_theme.color_5
+					),
+				]
+			),
+		]
 	)
 }
