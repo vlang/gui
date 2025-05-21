@@ -160,12 +160,22 @@ pub:
 	offset_y         f32
 }
 
-pub struct TextStyle {
+pub struct SelectStyle {
 pub:
-	color        Color
-	size         int
-	family       string
-	line_spacing f32
+	color              Color     = color_2_dark
+	color_border       Color     = color_border_dark
+	color_border_focus Color     = color_link_dark
+	color_click        Color     = color_4_dark
+	color_focus        Color     = color_5_dark
+	color_hover        Color     = color_3_dark
+	color_selected     Color     = color_5_dark
+	fill               bool      = true
+	fill_border        bool      = true
+	padding            Padding   = padding_small
+	padding_border     Padding   = padding_one
+	radius             f32       = radius_medium
+	radius_border      f32       = radius_medium
+	subheading_style   TextStyle = text_style_dark
 }
 
 fn (tc TextStyle) to_text_cfg() gx.TextCfg {
@@ -193,6 +203,14 @@ pub:
 	padding_border     Padding = padding_none
 	radius             f32     = radius_large * 2
 	radius_border      f32     = radius_large * 2
+}
+
+pub struct TextStyle {
+pub:
+	color        Color
+	size         int
+	family       string
+	line_spacing f32
 }
 
 pub struct ToggleStyle {

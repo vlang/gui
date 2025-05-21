@@ -2,6 +2,8 @@ import gui
 
 // Select Demo
 // =============================
+// Select drop-downs are relatively straight-forward to use.
+// They are unusual in that an ID and Window referenece are required.
 
 @[heap]
 struct SelectDemoApp {
@@ -13,12 +15,11 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
+		title:   'Select Demo'
 		state:   &SelectDemoApp{}
 		width:   300
-		height:  300
+		height:  600
 		on_init: fn (mut w gui.Window) {
-			// Call update_view() any where in your
-			// business logic to change views.
 			w.update_view(main_view)
 		}
 	)
@@ -26,8 +27,6 @@ fn main() {
 	window.run()
 }
 
-// The view generator set in update_view() is called on
-// every user event (mouse move, click, resize, etc.).
 fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[SelectDemoApp]()
@@ -73,8 +72,7 @@ fn main_view(mut window gui.Window) gui.View {
 							'Montana',
 							'Nebraska',
 							'Nevada',
-							'New',
-							'Hampshire',
+							'New Hampshire',
 							'New Jersey',
 							'New Mexico',
 							'New York',

@@ -22,6 +22,7 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
+		title:   'Menu Demo'
 		state:   &MenuApp{}
 		width:   500
 		height:  400

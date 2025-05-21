@@ -82,14 +82,15 @@ pub:
 	dialog_style       DialogStyle
 	input_style        InputStyle
 	menubar_style      MenubarStyle
-	range_slider_style RangeSliderStyle
-	radio_style        RadioStyle
-	rectangle_style    RectangleStyle
 	progress_bar_style ProgressBarStyle
+	radio_style        RadioStyle
+	range_slider_style RangeSliderStyle
+	rectangle_style    RectangleStyle
 	scrollbar_style    ScrollbarStyle
+	select_style       SelectStyle
+	switch_style       SwitchStyle
 	text_style         TextStyle
 	text_style_bold    TextStyle
-	switch_style       SwitchStyle
 	toggle_style       ToggleStyle
 
 	// n's and b's are convienence configs for sizing
@@ -448,6 +449,13 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:     cfg.radius
 			text_style: cfg.text_style
 		}
+		radio_style:        RadioStyle{
+			color:            cfg.color_1
+			color_focus:      cfg.color_link
+			color_border:     cfg.text_style.color
+			color_selected:   cfg.text_style.color
+			color_unselected: cfg.color_5
+		}
 		range_slider_style: RangeSliderStyle{
 			color:          cfg.color_2
 			color_click:    cfg.color_4
@@ -463,13 +471,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:         cfg.radius_small
 			radius_border:  cfg.radius_small
 		}
-		radio_style:        RadioStyle{
-			color:            cfg.color_1
-			color_focus:      cfg.color_link
-			color_border:     cfg.text_style.color
-			color_selected:   cfg.text_style.color
-			color_unselected: cfg.color_5
-		}
 		rectangle_style:    RectangleStyle{
 			color:  cfg.color_border
 			radius: cfg.radius
@@ -480,6 +481,42 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:       if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
 			radius_thumb: if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
 		}
+		select_style:       SelectStyle{
+			color:              cfg.color_2
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_link
+			color_click:        cfg.color_4
+			color_focus:        cfg.color_5
+			color_hover:        cfg.color_3
+			color_selected:     cfg.color_5
+			fill:               cfg.fill
+			fill_border:        cfg.fill_border
+			padding:            cfg.padding_small
+			padding_border:     cfg.padding_border
+			radius:             cfg.radius_medium
+			radius_border:      cfg.radius_medium
+			subheading_style:   TextStyle{
+				...cfg.text_style
+				color: cfg.color_link
+			}
+		}
+		switch_style:       SwitchStyle{
+			color:              cfg.color_1
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			color_click:        cfg.color_2
+			color_focus:        cfg.color_2
+			color_hover:        cfg.color_3
+			color_selected:     cfg.text_style.color
+			color_unselected:   cfg.color_5
+			fill:               cfg.fill
+			fill_border:        cfg.fill_border
+			padding:            padding_three
+			padding_border:     cfg.padding_border
+			radius:             radius_large * 2
+			radius_border:      radius_large * 2
+		}
+		text_style:         cfg.text_style
 		toggle_style:       ToggleStyle{
 			color:              cfg.color_1
 			color_border:       cfg.color_border
@@ -499,24 +536,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				size: cfg.size_text_small
 			}
 		}
-		switch_style:       SwitchStyle{
-			color:              cfg.color_1
-			color_border:       cfg.color_border
-			color_border_focus: cfg.color_border_focus
-			color_click:        cfg.color_2
-			color_focus:        cfg.color_2
-			color_hover:        cfg.color_3
-			color_selected:     cfg.text_style.color
-			color_unselected:   cfg.color_5
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
-			padding:            padding_three
-			padding_border:     cfg.padding_border
-			radius:             radius_large * 2
-			radius_border:      radius_large * 2
-		}
-
-		text_style: cfg.text_style
 
 		// Usually don't change
 		padding_small:  cfg.padding_small

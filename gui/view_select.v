@@ -6,15 +6,25 @@ import hash.fnv1a
 @[heap]
 pub struct SelectCfg {
 pub:
-	id          string  @[required]
-	window      &Window @[required]
-	selected    string
-	size        u32
-	color_hover Color     = gui_theme.color_4
-	color_click Color     = gui_theme.color_5
-	text_style  TextStyle = gui_theme.n3
-	on_select   fn (string, mut Event, mut Window) = unsafe { nil }
-	options     []string
+	id                 string  @[required]
+	window             &Window @[required]
+	selected           string
+	color              Color     = gui_theme.select_style.color
+	color_border       Color     = gui_theme.select_style.color_border
+	color_border_focus Color     = gui_theme.select_style.color_border_focus
+	color_click        Color     = gui_theme.select_style.color_click
+	color_focus        Color     = gui_theme.select_style.color_focus
+	color_hover        Color     = gui_theme.select_style.color_hover
+	color_selected     Color     = gui_theme.select_style.color_selected
+	fill               bool      = gui_theme.select_style.fill
+	fill_border        bool      = gui_theme.select_style.fill_border
+	padding            Padding   = gui_theme.select_style.padding
+	padding_border     Padding   = gui_theme.select_style.padding_border
+	radius             f32       = gui_theme.select_style.radius
+	radius_border      f32       = gui_theme.select_style.radius_border
+	subheading_style   TextStyle = gui_theme.select_style.subheading_style
+	on_select          fn (string, mut Event, mut Window) = unsafe { nil }
+	options            []string
 }
 
 pub fn select(cfg SelectCfg) View {
@@ -31,9 +41,9 @@ pub fn select(cfg SelectCfg) View {
 
 	mut content := []View{}
 	content << row( // interior
-		fill:     gui_theme.button_style.fill
-		color:    gui_theme.button_style.color
-		padding:  gui_theme.padding_small
+		fill:     cfg.fill
+		color:    cfg.color
+		padding:  cfg.padding
 		sizing:   fill_fit
 		on_click: fn [cfg, is_open] (_ &ToggleCfg, mut e Event, mut w Window) {
 			w.view_state.select_state.clear() // close all select drop-downs.
@@ -41,11 +51,10 @@ pub fn select(cfg SelectCfg) View {
 			e.is_handled = true
 		}
 		content:  [
-			text(text: cfg.selected, text_style: cfg.text_style),
+			text(text: cfg.selected),
 			row(sizing: fill_fill, padding: padding_none),
 			text(
-				text:       if is_open { '▲' } else { '▼' }
-				text_style: cfg.text_style
+				text: if is_open { '▲' } else { '▼' }
 			),
 		]
 	)
@@ -60,15 +69,15 @@ pub fn select(cfg SelectCfg) View {
 			float:          true
 			float_anchor:   .bottom_left
 			float_tie_off:  .top_left
-			float_offset_y: -gui_theme.button_style.padding_border.bottom
-			fill:           true
-			padding:        gui_theme.padding_border
-			radius:         gui_theme.radius_small
-			color:          gui_theme.button_style.color_border
+			float_offset_y: -cfg.padding_border.top
+			fill:           cfg.fill
+			padding:        cfg.padding_border
+			radius:         cfg.radius
+			color:          cfg.color_border
 			content:        [
 				column( // interior list
-					fill:    gui_theme.button_style.fill
-					color:   gui_theme.button_style.color
+					fill:    cfg.fill
+					color:   cfg.color
 					padding: padding(pad_small, pad_medium, pad_small, pad_small)
 					spacing: 0
 					content: options
@@ -80,9 +89,9 @@ pub fn select(cfg SelectCfg) View {
 		id:        cfg.id
 		min_width: 200
 		fill:      true
-		padding:   gui_theme.padding_border
-		radius:    gui_theme.radius_small
-		color:     gui_theme.button_style.color_border
+		padding:   cfg.padding_border
+		radius:    cfg.radius
+		color:     cfg.color_border
 		sizing:    fill_fit
 		content:   content
 	)
@@ -98,18 +107,15 @@ fn option_view(cfg SelectCfg, option string) View {
 			text(
 				text:       '✓'
 				text_style: TextStyle{
-					...cfg.text_style
+					...gui_theme.text_style
 					color: if cfg.selected == option {
-						cfg.text_style.color
+						gui_theme.text_style.color
 					} else {
 						color_transparent
 					}
 				}
 			),
-			text(
-				text:       option
-				text_style: cfg.text_style
-			),
+			text(text: option),
 		]
 		on_click:     fn [cfg, option] (_ voidptr, mut e Event, mut w Window) {
 			if cfg.on_select != unsafe { nil } {
@@ -140,25 +146,24 @@ fn option_view(cfg SelectCfg, option string) View {
 fn sub_header(cfg SelectCfg, option string) View {
 	return column(
 		spacing: 0
-		padding: padding_none
+		padding: padding(gui_theme.padding_medium.top, 0, 0, 0)
 		sizing:  fill_fit
 		content: [
 			row(
-				padding:  padding_none
-				sizing:   fill_fit
-				spacing:  pad_x_small
-				disabled: true
-				content:  [
+				padding: padding_none
+				sizing:  fill_fit
+				spacing: pad_x_small
+				content: [
 					text(
 						text:       '✓'
 						text_style: TextStyle{
-							...cfg.text_style
+							...gui_theme.text_style
 							color: color_transparent
 						}
 					),
 					text(
 						text:       option[3..]
-						text_style: cfg.text_style
+						text_style: cfg.subheading_style
 					),
 				]
 			),
@@ -170,7 +175,7 @@ fn sub_header(cfg SelectCfg, option string) View {
 						width:  1
 						height: 1
 						sizing: fill_fit
-						color:  gui_theme.color_5
+						color:  cfg.subheading_style.color
 					),
 				]
 			),
