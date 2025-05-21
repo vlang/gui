@@ -92,7 +92,7 @@ fn (node &Layout) get_focus_ids() []u32 {
 
 // spacing does the fence-post calculation for spacings
 fn (node &Layout) spacing() f32 {
-	count := node.children.count(!(it.shape.float || it.shape.type == .none))
+	count := node.children.count(!it.shape.float)
 	return int_max(0, (count - 1)) * node.shape.spacing
 }
 

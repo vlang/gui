@@ -109,6 +109,7 @@ fn (cfg ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 		mouse_move: cfg.mouse_move
 		mouse_up:   cfg.mouse_up
 	})
+	e.is_handled = true
 }
 
 // pass cfg by value more reliable here
@@ -157,16 +158,6 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	min_thumb_size := 20
 	mut transparent := false
 	mut parent := node.parent
-
-	for {
-		if parent == unsafe { nil } {
-			return
-		}
-		if parent.shape.id_scroll == cfg.id_track {
-			break
-		}
-		parent = parent.parent
-	}
 
 	match cfg.orientation == .horizontal {
 		true {

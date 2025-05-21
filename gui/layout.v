@@ -9,6 +9,7 @@ module gui
 // already hard-to-reason-about problem. -imho
 
 // Layout defines a tree of Layouts. Views generate Layouts
+@[heap]
 pub struct Layout {
 pub mut:
 	shape    Shape
@@ -26,8 +27,9 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 
 	// floating layouts do not affect their parent or sibling elements
 	// They also complicate the fuck out of things.
-	mut floating_layouts := layout_remove_floating_layouts(mut layout)
-	float_layouts_fix_neseted_floats(mut floating_layouts)
+	mut floating_layouts := []Layout{}
+	layout_remove_floating_layouts(mut layout, mut floating_layouts)
+	fix_sibling_floats(mut floating_layouts)
 
 	// Dialog is a pop-up dialog.
 	// Add last to ensure it is always on top.
@@ -83,20 +85,25 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 // and puts an empty Layout node with no axis in its place. The empty
 // layout has no axis, height or width so it is effectively ignored by
 // the layout logic.
-fn layout_remove_floating_layouts(mut layout Layout) []Layout {
-	mut floating_layouts := []Layout{}
+fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 	for i, mut child in layout.children {
 		if child.shape.float {
-			floating_layouts << child
-			floating_layouts << layout_remove_floating_layouts(mut child)
+			layouts << child
+			layout_remove_floating_layouts(mut child, mut layouts)
+			// Setting the "empty" node's shape to float does two things.
+			// - allows fix_sibling_floats() to indentify this as a sibling
+			// - removes it from teh fence-post spacing calculation in layout.spacing()
+			// P.S. It feels like there should be a simplier way without resorting
+			// to a cleanup routine like fix_sibling_posts().
 			layout.children[i] = Layout{
-				parent: unsafe { layout }
+				shape: Shape{
+					float: true
+				}
 			}
 		} else {
-			floating_layouts << layout_remove_floating_layouts(mut child)
+			layout_remove_floating_layouts(mut child, mut layouts)
 		}
 	}
-	return floating_layouts
 }
 
 // layout_widths arranges a node's children layout horizontally. Only container
@@ -534,9 +541,6 @@ fn layout_adjust_scroll_offsets(mut node Layout, mut w Window) {
 // handles alignment. Alignment only augments x and y positions. Alignment
 // does not effect sizes.
 fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
-	if node.shape.id == 'slider+2' {
-		println(node.shape)
-	}
 	node.shape.x += offset_x
 	node.shape.y += offset_y
 

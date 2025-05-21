@@ -49,6 +49,7 @@ pub fn select(cfg SelectCfg) View {
 		_, h := cfg.window.window_size()
 
 		content << column( // dropdown border
+			id:             cfg.id + 'dropdown'
 			id_scroll:      fnv1a.sum32_string(cfg.id + 'dropdown')
 			min_height:     50
 			max_height:     clamp_f32(h, 50, h / 2)
@@ -72,6 +73,7 @@ pub fn select(cfg SelectCfg) View {
 		)
 	}
 	return row(
+		id:        cfg.id
 		min_width: 200
 		fill:      true
 		padding:   gui_theme.padding_border
