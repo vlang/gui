@@ -6,7 +6,8 @@ import gui
 @[heap]
 struct SelectDemoApp {
 pub mut:
-	selected string = 'pick a state'
+	selected_1 string = 'pick a state'
+	selected_2 string = 'pick a state'
 }
 
 fn main() {
@@ -40,7 +41,7 @@ fn main_view(mut window gui.Window) gui.View {
 					gui.select(
 						id:        'sel1'
 						window:    mut window
-						selected:  app.selected
+						selected:  app.selected_1
 						options:   [
 							'Alabama',
 							'Alaska',
@@ -97,7 +98,75 @@ fn main_view(mut window gui.Window) gui.View {
 						]
 						on_select: fn (s string, mut e gui.Event, mut w gui.Window) {
 							mut app_ := w.state[SelectDemoApp]()
-							app_.selected = s
+							app_.selected_1 = s
+							e.is_handled = true
+						}
+					),
+				]
+			),
+			gui.row(
+				content: [
+					gui.select(
+						id:        'sel2'
+						window:    mut window
+						selected:  app.selected_2
+						options:   [
+							'Alabama',
+							'Alaska',
+							'Arizona',
+							'Arkansas',
+							'California',
+							'Colorado',
+							'Connecticut',
+							'Delaware',
+							'Florida',
+							'Georgia',
+							'Hawaii',
+							'Idaho',
+							'Illinois',
+							'Indiana',
+							'Iowa',
+							'Kansas',
+							'Kentucky',
+							'Louisiana',
+							'Maine',
+							'Maryland',
+							'Massachusetts',
+							'Michigan',
+							'Minnesota',
+							'Mississippi',
+							'Missouri',
+							'Montana',
+							'Nebraska',
+							'Nevada',
+							'New',
+							'Hampshire',
+							'New Jersey',
+							'New Mexico',
+							'New York',
+							'North Carolina',
+							'North Dakota',
+							'Ohio',
+							'Oklahoma',
+							'Oregon',
+							'Pennsylvania',
+							'Rhode Island',
+							'South Carolina',
+							'South Dakota',
+							'Tennessee',
+							'Texas',
+							'Utah',
+							'Vermont',
+							'Virginia',
+							'Washington',
+							'West',
+							'Virginia',
+							'Wisconsin',
+							'Wyoming',
+						]
+						on_select: fn (s string, mut e gui.Event, mut w gui.Window) {
+							mut app_ := w.state[SelectDemoApp]()
+							app_.selected_2 = s
 							e.is_handled = true
 						}
 					),

@@ -29,7 +29,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// They also complicate the fuck out of things.
 	mut floating_layouts := []Layout{}
 	layout_remove_floating_layouts(mut layout, mut floating_layouts)
-	fix_sibling_floats(mut floating_layouts)
+	fix_nested_sibling_floats(mut floating_layouts)
 
 	// Dialog is a pop-up dialog.
 	// Add last to ensure it is always on top.
@@ -89,9 +89,13 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 	for i, mut child in layout.children {
 		if child.shape.float {
 			layouts << child
-			layout_remove_floating_layouts(mut child, mut layouts)
+		}
+
+		layout_remove_floating_layouts(mut child, mut layouts)
+
+		if child.shape.float {
 			// Setting the "empty" node's shape to float does two things.
-			// - allows fix_sibling_floats() to indentify this as a sibling
+			// - allows fix_nested_sibling_floats() to indentify this as a sibling
 			// - removes it from teh fence-post spacing calculation in layout.spacing()
 			// P.S. It feels like there should be a simplier way without resorting
 			// to a cleanup routine like fix_sibling_posts().
@@ -100,8 +104,6 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 					float: true
 				}
 			}
-		} else {
-			layout_remove_floating_layouts(mut child, mut layouts)
 		}
 	}
 }

@@ -48,9 +48,9 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 	return x, y
 }
 
-// fix_sibling_floats fixes an edge case when floats are siblings.
+// fix_nested_sibling_floats fixes an edge case when floats are siblings.
 // P.S. I really would like to not have to do this but can't find a better way.
-fn fix_sibling_floats(mut floating_layouts []Layout) {
+fn fix_nested_sibling_floats(mut floating_layouts []Layout) {
 	for i := 0; i < floating_layouts.len; i++ {
 		if floating_layouts[i].parent.shape.float && i > 0 {
 			mut j := i
