@@ -20,6 +20,8 @@ pub mut:
 	// menu
 	selected_menu_id string
 	search_text      string
+	// range sliders
+	range_value f32
 }
 
 fn main() {
@@ -68,6 +70,7 @@ fn gallery(w &gui.Window) gui.View {
 			dialogs(w),
 			menus(w),
 			progress_bars(w),
+			range_sliders(w),
 			text_sizes_weights(w),
 		]
 	)
@@ -725,6 +728,65 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 						sizing:   gui.fixed_fill
 						width:    20
 						percent:  0.80
+					),
+				]
+			),
+		]
+	)
+}
+
+// ==============================================================
+// Range Sliders
+// ==============================================================
+
+fn range_sliders(w &gui.Window) gui.View {
+	return gui.column(
+		sizing:  gui.fill_fit
+		content: [
+			view_title('Range Sliders'),
+			gui.row(
+				sizing:  gui.fill_fit
+				content: [range_slider_sammples(w)]
+			),
+		]
+	)
+}
+
+fn range_slider_samples(w &gui.Window) gui.View {
+	gui.row(
+		sizing:  gui.fill_fill
+		content: [
+			gui.column(
+				sizing:  gui.fill_fill
+				content: [
+					gui.range_slider(
+						id:          'rs1'
+						id_focus:    1
+						value:       slider_app.range_value
+						round_value: true
+						sizing:      gui.fill_fit
+						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[RangeSliderApp]()
+							app.range_value = value
+						}
+					),
+					gui.text(text: slider_app.range_value.str()),
+				]
+			),
+			gui.column(
+				sizing:  gui.fit_fill
+				content: [
+					gui.range_slider(
+						id:          'rs2'
+						id_focus:    2
+						value:       slider_app.range_value
+						round_value: true
+						vertical:    true
+						sizing:      gui.fit_fill
+						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[RangeSliderApp]()
+							app.range_value = value
+						}
 					),
 				]
 			),
