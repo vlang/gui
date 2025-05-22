@@ -7,6 +7,7 @@ import gui
 @[heap]
 struct GalleryApp {
 pub mut:
+	light_theme bool
 	// buttons
 	button_clicks int
 	// inputs
@@ -22,10 +23,14 @@ pub mut:
 	search_text      string
 	// range sliders
 	range_value f32
+	// select
+	selected_1 string = 'Pick a state'
+	selected_2 string = 'Pick a country'
 }
 
 fn main() {
 	mut window := gui.window(
+		title:   'Gallery'
 		state:   &GalleryApp{}
 		width:   800
 		height:  600
@@ -39,8 +44,6 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	// app := window.state[GalleryApp]()
-
 	return gui.column(
 		width:   w
 		height:  h
@@ -50,28 +53,35 @@ fn main_view(window &gui.Window) gui.View {
 			gui.row(
 				padding: gui.padding_none
 				sizing:  gui.fill_fill
-				content: [
-					gallery(window),
-				]
+				content: [gallery(window)]
 			),
 		]
 	)
 }
 
 fn gallery(w &gui.Window) gui.View {
+	mut app := w.state[GalleryApp]()
 	return gui.column(
-		id_scroll: 1
-		sizing:    gui.fill_fill
-		spacing:   gui.spacing_large * 2
-		content:   [
-			buttons(w),
-			inputs(w),
-			toggles(w),
-			dialogs(w),
-			menus(w),
-			progress_bars(w),
-			range_sliders(w),
-			text_sizes_weights(w),
+		sizing:  gui.fill_fill
+		content: [
+			toggle_theme(app),
+			gui.column(
+				id_scroll: 1
+				sizing:    gui.fill_fill
+				spacing:   gui.spacing_large * 2
+				content:   [
+					buttons(w),
+					inputs(w),
+					toggles(w),
+					menus(w),
+					dialogs(w),
+					progress_bars(w),
+					range_sliders(w),
+					select_drop_down(w),
+					image_sample(w),
+					text_sizes_weights(w),
+				]
+			),
 		]
 	)
 }
@@ -95,6 +105,31 @@ fn line() gui.View {
 		fill:    true
 		padding: gui.padding_none
 		color:   gui.theme().color_5
+	)
+}
+
+fn toggle_theme(app &GalleryApp) gui.View {
+	return gui.row(
+		h_align: .end
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.toggle(
+				text_selected:   '☾'
+				text_unselected: '○'
+				selected:        app.light_theme
+				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[GalleryApp]()
+					app.light_theme = !app.light_theme
+					theme := if app.light_theme {
+						gui.theme_light_bordered
+					} else {
+						gui.theme_dark_bordered
+					}
+					w.set_theme(theme)
+				}
+			),
+		]
 	)
 }
 
@@ -674,6 +709,9 @@ fn progress_bars(w &gui.Window) gui.View {
 }
 
 fn progress_bar_samples(w &gui.Window) gui.View {
+	tbg1 := if gui.theme().name.starts_with('light') { gui.orange } else { gui.dark_green }
+	tbg2 := if gui.theme().name.starts_with('light') { gui.cornflower_blue } else { gui.white }
+
 	return gui.row(
 		spacing: gui.theme().spacing_large
 		content: [
@@ -683,10 +721,11 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 				sizing:  gui.fit_fill
 				content: [
 					gui.progress_bar(
-						height:    2
-						sizing:    gui.fill_fixed
-						percent:   0.20
-						text_fill: true
+						height:          2
+						sizing:          gui.fill_fixed
+						percent:         0.20
+						text_background: tbg1
+						text_fill:       true
 					),
 					gui.progress_bar(
 						sizing:  gui.fill_fixed
@@ -712,11 +751,12 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 				sizing:  gui.fit_fill
 				content: [
 					gui.progress_bar(
-						vertical:  true
-						sizing:    gui.fixed_fill
-						width:     2
-						percent:   0.40
-						text_fill: false
+						vertical:        true
+						sizing:          gui.fixed_fill
+						width:           2
+						percent:         0.40
+						text_background: tbg2
+						text_fill:       false
 					),
 					gui.progress_bar(
 						vertical: true
@@ -746,48 +786,367 @@ fn range_sliders(w &gui.Window) gui.View {
 			view_title('Range Sliders'),
 			gui.row(
 				sizing:  gui.fill_fit
-				content: [range_slider_sammples(w)]
+				content: [range_slider_samples(w)]
 			),
 		]
 	)
 }
 
 fn range_slider_samples(w &gui.Window) gui.View {
-	gui.row(
+	app := w.state[GalleryApp]()
+	return gui.row(
 		sizing:  gui.fill_fill
 		content: [
 			gui.column(
-				sizing:  gui.fill_fill
+				width:   200
 				content: [
 					gui.range_slider(
 						id:          'rs1'
-						id_focus:    1
-						value:       slider_app.range_value
+						value:       app.range_value
 						round_value: true
 						sizing:      gui.fill_fit
 						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[RangeSliderApp]()
+							mut app := w.state[GalleryApp]()
 							app.range_value = value
 						}
 					),
-					gui.text(text: slider_app.range_value.str()),
+					gui.text(text: app.range_value.str()),
 				]
 			),
 			gui.column(
-				sizing:  gui.fit_fill
+				height:  50
 				content: [
 					gui.range_slider(
 						id:          'rs2'
-						id_focus:    2
-						value:       slider_app.range_value
+						value:       app.range_value
 						round_value: true
 						vertical:    true
 						sizing:      gui.fit_fill
 						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[RangeSliderApp]()
+							mut app := w.state[GalleryApp]()
 							app.range_value = value
 						}
 					),
+				]
+			),
+		]
+	)
+}
+
+// ==============================================================
+// Select
+// ==============================================================
+
+fn select_drop_down(w &gui.Window) gui.View {
+	return gui.column(
+		content: [
+			view_title('Select Drop Down'),
+			gui.row(
+				sizing:  gui.fill_fit
+				content: [select_samples(w)]
+			),
+		]
+	)
+}
+
+fn select_samples(w &gui.Window) gui.View {
+	app := w.state[GalleryApp]()
+	return gui.row(
+		content: [
+			gui.select(
+				id:        'sel1'
+				window:    mut w
+				selected:  app.selected_1
+				options:   [
+					'Alabama',
+					'Alaska',
+					'Arizona',
+					'Arkansas',
+					'California',
+					'Colorado',
+					'Connecticut',
+					'Delaware',
+					'Florida',
+					'Georgia',
+					'Hawaii',
+					'Idaho',
+					'Illinois',
+					'Indiana',
+					'Iowa',
+					'Kansas',
+					'Kentucky',
+					'Louisiana',
+					'Maine',
+					'Maryland',
+					'Massachusetts',
+					'Michigan',
+					'Minnesota',
+					'Mississippi',
+					'Missouri',
+					'Montana',
+					'Nebraska',
+					'Nevada',
+					'New Hampshire',
+					'New Jersey',
+					'New Mexico',
+					'New York',
+					'North Carolina',
+					'North Dakota',
+					'Ohio',
+					'Oklahoma',
+					'Oregon',
+					'Pennsylvania',
+					'Rhode Island',
+					'South Carolina',
+					'South Dakota',
+					'Tennessee',
+					'Texas',
+					'Utah',
+					'Vermont',
+					'Virginia',
+					'Washington',
+					'West',
+					'Virginia',
+					'Wisconsin',
+					'Wyoming',
+				]
+				on_select: fn (s string, mut e gui.Event, mut w gui.Window) {
+					mut app_ := w.state[GalleryApp]()
+					app_.selected_1 = s
+					e.is_handled = true
+				}
+			),
+			gui.select(
+				id:        'sel2'
+				window:    mut w
+				selected:  app.selected_2
+				options:   [
+					'---Africa',
+					'Algeria',
+					'Angola',
+					'Benin',
+					'Botswana',
+					'Burkina Faso',
+					'Burundi',
+					'Cabo Verde',
+					'Cameroon',
+					'Central African Republic',
+					'Chad',
+					'Comoros',
+					'Congo',
+					'Democratic Republic of the Congo',
+					'Djibouti',
+					'Egypt',
+					'Equatorial Guinea',
+					'Eritrea',
+					'Eswatini',
+					'Ethiopia',
+					'Gabon',
+					'Gambia',
+					'Ghana',
+					'Guinea',
+					'Guinea-Bissau',
+					'Ivory Coast',
+					'Kenya',
+					'Lesotho',
+					'Liberia',
+					'Libya',
+					'Madagascar',
+					'Malawi',
+					'Mali',
+					'Mauritania',
+					'Mauritius',
+					'Morocco',
+					'Mozambique',
+					'Namibia',
+					'Niger',
+					'Nigeria',
+					'Rwanda',
+					'Sao Tome and Principe',
+					'Senegal',
+					'Seychelles',
+					'Sierra Leone',
+					'Somalia',
+					'South Africa',
+					'South Sudan',
+					'Sudan',
+					'Tanzania',
+					'Togo',
+					'Tunisia',
+					'Uganda',
+					'Zambia',
+					'Zimbabwe',
+					'---Asia',
+					'Afghanistan',
+					'Armenia',
+					'Azerbaijan',
+					'Bahrain',
+					'Bangladesh',
+					'Bhutan',
+					'Brunei',
+					'Cambodia',
+					'China',
+					'Cyprus',
+					'East Timor',
+					'Georgia',
+					'India',
+					'Indonesia',
+					'Iran',
+					'Iraq',
+					'Israel',
+					'Japan',
+					'Jordan',
+					'Kazakhstan',
+					'Kuwait',
+					'Kyrgyzstan',
+					'Laos',
+					'Lebanon',
+					'Malaysia',
+					'Maldives',
+					'Mongolia',
+					'Myanmar',
+					'Nepal',
+					'North Korea',
+					'Oman',
+					'Pakistan',
+					'Palestine',
+					'Philippines',
+					'Qatar',
+					'Russia',
+					'Saudi Arabia',
+					'Singapore',
+					'South Korea',
+					'Sri Lanka',
+					'Syria',
+					'Taiwan',
+					'Tajikistan',
+					'Thailand',
+					'Turkey',
+					'Turkmenistan',
+					'United Arab Emirates',
+					'Uzbekistan',
+					'Vietnam',
+					'Yemen',
+					'---Europe',
+					'Albania',
+					'Andorra',
+					'Austria',
+					'Belarus',
+					'Belgium',
+					'Bosnia and Herzegovina',
+					'Bulgaria',
+					'Croatia',
+					'Czechia',
+					'Denmark',
+					'Estonia',
+					'Finland',
+					'France',
+					'Germany',
+					'Greece',
+					'Hungary',
+					'Iceland',
+					'Ireland',
+					'Italy',
+					'Kosovo',
+					'Latvia',
+					'Liechtenstein',
+					'Lithuania',
+					'Luxembourg',
+					'Malta',
+					'Moldova',
+					'Monaco',
+					'Montenegro',
+					'Netherlands',
+					'North Macedonia',
+					'Norway',
+					'Poland',
+					'Portugal',
+					'Romania',
+					'San Marino',
+					'Serbia',
+					'Slovakia',
+					'Slovenia',
+					'Spain',
+					'Sweden',
+					'Switzerland',
+					'Ukraine',
+					'United Kingdom',
+					'Vatican City',
+					'---North America',
+					'Antigua and Barbuda',
+					'Bahamas',
+					'Barbados',
+					'Belize',
+					'Canada',
+					'Costa Rica',
+					'Cuba',
+					'Dominica',
+					'Dominican Republic',
+					'El Salvador',
+					'Grenada',
+					'Guatemala',
+					'Haiti',
+					'Honduras',
+					'Jamaica',
+					'Mexico',
+					'Nicaragua',
+					'Panama',
+					'Saint Kitts and Nevis',
+					'Saint Lucia',
+					'Saint Vincent and the Grenadines',
+					'Trinidad and Tobago',
+					'United States',
+					'---Oceania',
+					'Australia',
+					'Fiji',
+					'Kiribati',
+					'Marshall Islands',
+					'Micronesia',
+					'Nauru',
+					'New Zealand',
+					'Palau',
+					'Papua New Guinea',
+					'Samoa',
+					'Solomon Islands',
+					'Tonga',
+					'Tuvalu',
+					'Vanuatu',
+					'---South America',
+					'Argentina',
+					'Bolivia',
+					'Brazil',
+					'Chile',
+					'Colombia',
+					'Ecuador',
+					'Guyana',
+					'Paraguay',
+					'Peru',
+					'Suriname',
+					'Uruguay',
+					'Venezuela',
+				]
+				on_select: fn (s string, mut e gui.Event, mut w gui.Window) {
+					mut app_ := w.state[GalleryApp]()
+					app_.selected_2 = s
+					e.is_handled = true
+				}
+			),
+		]
+	)
+}
+
+// ==============================================================
+// Image
+// ==============================================================
+
+fn image_sample(w &gui.Window) gui.View {
+	return gui.column(
+		content: [
+			view_title('Image'),
+			gui.column(
+				content: [
+					gui.image(file_name: 'sample.jpeg'),
+					gui.text(text: 'Pinard Falls, Oregon', text_style: gui.theme().b2),
 				]
 			),
 		]
