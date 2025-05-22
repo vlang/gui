@@ -19,13 +19,14 @@ pub:
 	indefinite      bool // TODO: not implemented
 	vertical        bool // orientation
 	percent         f32  // 0.0 <= percent <= 1.0
-	color           Color   = gui_theme.progress_bar_style.color
-	color_bar       Color   = gui_theme.progress_bar_style.color_bar
-	text_show       bool    = gui_theme.progress_bar_style.text_show
-	text_background Color   = gui_theme.progress_bar_style.text_background
-	text_fill       bool    = gui_theme.progress_bar_style.text_fill
-	text_padding    Padding = gui_theme.progress_bar_style.text_padding
-	radius          f32     = gui_theme.progress_bar_style.radius
+	color           Color     = gui_theme.progress_bar_style.color
+	color_bar       Color     = gui_theme.progress_bar_style.color_bar
+	text_show       bool      = gui_theme.progress_bar_style.text_show
+	text_background Color     = gui_theme.progress_bar_style.text_background
+	text_fill       bool      = gui_theme.progress_bar_style.text_fill
+	text_padding    Padding   = gui_theme.progress_bar_style.text_padding
+	radius          f32       = gui_theme.progress_bar_style.radius
+	text_style      TextStyle = gui_theme.text_style
 	text            string
 }
 
@@ -47,7 +48,7 @@ pub fn progress_bar(cfg &ProgressBarCfg) View {
 			float:         true
 			float_anchor:  .middle_center
 			float_tie_off: .middle_center
-			content:       [text(text: '${percent:.0}%')]
+			content:       [text(text: '${percent:.0}%', text_style: cfg.text_style)]
 		)
 	}
 	size := f32(gui_theme.progress_bar_style.size)

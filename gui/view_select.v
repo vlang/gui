@@ -3,12 +3,13 @@ module gui
 import gg
 import hash.fnv1a
 
+// SelectCfg configures a [select](#select) (a.k.a drop-down) view.
 @[heap]
 pub struct SelectCfg {
 pub:
-	id                 string  @[required]
-	window             &Window @[required]
-	selected           string
+	id                 string  @[required] // unique only to other select views
+	window             &Window @[required] // required for state managment
+	selected           string // Text of selected item
 	color              Color     = gui_theme.select_style.color
 	color_border       Color     = gui_theme.select_style.color_border
 	color_border_focus Color     = gui_theme.select_style.color_border_focus
@@ -27,6 +28,7 @@ pub:
 	options            []string
 }
 
+// select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
 pub fn select(cfg SelectCfg) View {
 	is_open := cfg.window.view_state.select_state[cfg.id]
 	mut options := []View{}
