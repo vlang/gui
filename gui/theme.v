@@ -572,6 +572,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 	bold := TextStyle{
 		...theme.text_style
 		family: variants.bold
+		bold:   true
 	}
 	italic := TextStyle{
 		...theme.text_style

@@ -183,7 +183,7 @@ fn (tc TextStyle) to_text_cfg() gx.TextCfg {
 		color:  tc.color.to_gx_color()
 		size:   tc.size
 		family: tc.family
-		bold:   true
+		bold:   tc.bold
 	}
 }
 
@@ -211,6 +211,7 @@ pub:
 	size         int
 	family       string
 	line_spacing f32
+	bold         bool
 }
 
 pub struct ToggleStyle {

@@ -39,7 +39,7 @@ fn main_view(window &gui.Window) gui.View {
 				color:   gui.theme().color_5
 				padding: gui.theme().padding_large
 				content: [
-					dialog_type(),
+					message_type(),
 					confirm_type(),
 					prompt_type(),
 					custom_type(),
@@ -49,7 +49,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn dialog_type() gui.View {
+fn message_type() gui.View {
 	return gui.button(
 		id_focus: 1
 		sizing:   gui.fill_fit
