@@ -104,8 +104,9 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 // ContainerCfg is the common configuration struct for row, column and canvas containers
 @[heap]
 pub struct ContainerCfg {
-	cfg  voidptr
 	axis Axis
+mut:
+	cfg voidptr = unsafe { nil }
 pub:
 	id              string
 	width           f32
@@ -216,39 +217,48 @@ fn container(cfg &ContainerCfg) ContainerView {
 // column arranges its content top to bottom. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn column(cfg &ContainerCfg) ContainerView {
-	mut col := container(cfg)
-	col.axis = .top_to_bottom
-	if col.cfg == unsafe { nil } {
-		col.cfg = cfg
+	mut container_cfg := &ContainerCfg{
+		...cfg
+		axis: .top_to_bottom
 	}
-	return col
+	if cfg.cfg == unsafe { nil } {
+		container_cfg.cfg = container_cfg
+	}
+	return container(container_cfg)
 }
 
 // row arranges its content left to right. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn row(cfg &ContainerCfg) ContainerView {
-	mut row := container(cfg)
-	row.axis = .left_to_right
-	if row.cfg == unsafe { nil } {
-		row.cfg = cfg
+	mut container_cfg := &ContainerCfg{
+		...cfg
+		axis: .left_to_right
 	}
-	return row
+	if cfg.cfg == unsafe { nil } {
+		container_cfg.cfg = container_cfg
+	}
+	return container(container_cfg)
 }
 
 // canvas does not arrange or otherwise layout its content. See [ContainerCfg](#ContainerCfg)
 pub fn canvas(cfg &ContainerCfg) ContainerView {
-	mut canvas := container(cfg)
-	if canvas.cfg == unsafe { nil } {
-		canvas.cfg = cfg
+	mut container_cfg := &ContainerCfg{
+		...cfg
 	}
-	return canvas
+	if cfg.cfg == unsafe { nil } {
+		container_cfg.cfg = container_cfg
+	}
+	return container(container_cfg)
 }
 
 pub fn circle(cfg &ContainerCfg) ContainerView {
-	mut circle := container(cfg)
-	circle.shape_type = .circle
-	if circle.cfg == unsafe { nil } {
-		circle.cfg = cfg
+	mut container_cfg := &ContainerCfg{
+		...cfg
 	}
+	if cfg.cfg == unsafe { nil } {
+		container_cfg.cfg = container_cfg
+	}
+	mut circle := container(container_cfg)
+	circle.shape_type = .circle
 	return circle
 }

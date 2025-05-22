@@ -16,7 +16,7 @@ pub mut:
 	// toggles
 	select_toggle   bool
 	select_checkbox bool
-	select_radio    bool
+	select_radio    string
 	select_switch   bool
 	// menu
 	selected_menu_id string
@@ -381,13 +381,20 @@ fn toggles(w &gui.Window) gui.View {
 							app.select_toggle = !app.select_toggle
 						}
 					)),
-					toggle_row('radio button', gui.radio(
-						selected: app.select_radio
-						on_click: fn (_ &gui.RadioCfg, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[GalleryApp]()
-							app.select_radio = !app.select_radio
-						}
-					)),
+					gui.column(
+						padding: gui.padding_none
+						content: [
+							toggle_row_radio('radio button A', 'radio_a', gui.radio(
+								selected: app.select_radio == 'radio_a'
+							)),
+							toggle_row_radio('radio button B', 'radio_b', gui.radio(
+								selected: app.select_radio == 'radio_b'
+							)),
+							toggle_row_radio('radio button C', 'radio_c', gui.radio(
+								selected: app.select_radio == 'radio_c'
+							)),
+						]
+					),
 					toggle_row('switch ', gui.switch(
 						selected: app.select_switch
 						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
@@ -412,6 +419,35 @@ fn toggle_row(label string, button gui.View) gui.View {
 			),
 			gui.text(text: label),
 		]
+	)
+}
+
+fn toggle_row_radio(label string, id string, button gui.View) gui.View {
+	return gui.row(
+		id:           id
+		padding:      gui.padding_none
+		h_align:      .center
+		v_align:      .middle
+		content:      [
+			gui.row(
+				padding: gui.padding_none
+				content: [button]
+			),
+			gui.text(text: label),
+		]
+		on_click:     fn (cfg &gui.ContainerCfg, mut e gui.Event, mut w gui.Window) {
+			mut app := w.state[GalleryApp]()
+			app.select_radio = cfg.id
+			e.is_handled = true
+		}
+		amend_layout: fn (mut node gui.Layout, mut w gui.Window) {
+			ctx := w.context()
+			if !node.shape.disabled
+				&& node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y))
+				&& !w.dialog_is_visible() {
+				w.set_mouse_cursor_pointing_hand()
+			}
+		}
 	)
 }
 

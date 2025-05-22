@@ -41,6 +41,11 @@ pub fn (mut window Window) dialog_dismiss() {
 	window.dialog_cfg = DialogCfg{}
 }
 
+// dialog_is_visible return true if a dialog is visible.
+pub fn (mut window Window) dialog_is_visible() bool {
+	return window.dialog_cfg.visible
+}
+
 // default_view creates an empty view
 fn empty_view(window &Window) View {
 	w, h := window.window_size()
