@@ -162,6 +162,8 @@ pub:
 
 pub struct SelectStyle {
 pub:
+	min_width          f32       = 75
+	max_width          f32       = 200
 	color              Color     = color_2_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
@@ -176,6 +178,15 @@ pub:
 	radius             f32       = radius_medium
 	radius_border      f32       = radius_medium
 	subheading_style   TextStyle = text_style_dark
+	placeholder_style  TextStyle = TextStyle{
+		...text_style_dark
+		color: Color{
+			r: text_style_dark.color.a
+			g: text_style_dark.color.g
+			b: text_style_dark.color.b
+			a: 100
+		}
+	}
 }
 
 fn (tc TextStyle) to_text_cfg() gx.TextCfg {

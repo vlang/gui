@@ -499,6 +499,15 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				...cfg.text_style
 				color: cfg.color_link
 			}
+			placeholder_style:  TextStyle{
+				...cfg.text_style
+				color: Color{
+					r: cfg.text_style.color.a
+					g: cfg.text_style.color.g
+					b: cfg.text_style.color.b
+					a: 100
+				}
+			}
 		}
 		switch_style:       SwitchStyle{
 			color:              cfg.color_1

@@ -8,8 +8,8 @@ import gui
 @[heap]
 struct SelectDemoApp {
 pub mut:
-	selected_1  string = 'Pick a state'
-	selected_2  string = 'Pick a country'
+	selected_1  []string
+	selected_2  []string
 	light_theme bool
 }
 
@@ -40,10 +40,13 @@ fn main_view(mut window gui.Window) gui.View {
 			gui.row(
 				content: [
 					gui.select(
-						id:        'sel1'
-						window:    mut window
-						selected:  app.selected_1
-						options:   [
+						id:              'sel1'
+						max_width:       200
+						window:          mut window
+						selected:        app.selected_1
+						placeholder:     'Pick one or more states'
+						select_multiple: true
+						options:         [
 							'Alabama',
 							'Alaska',
 							'Arizona',
@@ -96,9 +99,9 @@ fn main_view(mut window gui.Window) gui.View {
 							'Wisconsin',
 							'Wyoming',
 						]
-						on_select: fn (s string, mut e gui.Event, mut w gui.Window) {
-							mut app_ := w.state[SelectDemoApp]()
-							app_.selected_1 = s
+						on_select:       fn (s []string, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[SelectDemoApp]()
+							app.selected_1 = s
 							e.is_handled = true
 						}
 					),
@@ -107,10 +110,11 @@ fn main_view(mut window gui.Window) gui.View {
 			gui.row(
 				content: [
 					gui.select(
-						id:        'sel2'
-						window:    mut window
-						selected:  app.selected_2
-						options:   [
+						id:          'sel2'
+						window:      mut window
+						selected:    app.selected_2
+						placeholder: 'Pick a country'
+						options:     [
 							'---Africa',
 							'Algeria',
 							'Angola',
@@ -315,7 +319,7 @@ fn main_view(mut window gui.Window) gui.View {
 							'Uruguay',
 							'Venezuela',
 						]
-						on_select: fn (s string, mut e gui.Event, mut w gui.Window) {
+						on_select:   fn (s []string, mut e gui.Event, mut w gui.Window) {
 							mut app_ := w.state[SelectDemoApp]()
 							app_.selected_2 = s
 							e.is_handled = true

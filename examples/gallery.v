@@ -24,8 +24,8 @@ pub mut:
 	// range sliders
 	range_value f32
 	// select
-	selected_1 string = 'Pick a state'
-	selected_2 string = 'Pick a country'
+	selected_1 []string
+	selected_2 []string
 }
 
 fn main() {
@@ -876,7 +876,7 @@ fn range_slider_samples(w &gui.Window) gui.View {
 fn select_drop_down(w &gui.Window) gui.View {
 	return gui.column(
 		content: [
-			view_title('Select Drop Down'),
+			view_title('Select (Drop Down)'),
 			gui.row(
 				sizing:  gui.fill_fit
 				content: [select_samples(w)]
@@ -890,10 +890,12 @@ fn select_samples(w &gui.Window) gui.View {
 	return gui.row(
 		content: [
 			gui.select(
-				id:        'sel1'
-				window:    mut w
-				selected:  app.selected_1
-				options:   [
+				id:              'sel1'
+				window:          mut w
+				selected:        app.selected_1
+				placeholder:     'Pick one or more states'
+				select_multiple: true
+				options:         [
 					'Alabama',
 					'Alaska',
 					'Arizona',
@@ -946,17 +948,18 @@ fn select_samples(w &gui.Window) gui.View {
 					'Wisconsin',
 					'Wyoming',
 				]
-				on_select: fn (s string, mut e gui.Event, mut w gui.Window) {
+				on_select:       fn (s []string, mut e gui.Event, mut w gui.Window) {
 					mut app_ := w.state[GalleryApp]()
 					app_.selected_1 = s
 					e.is_handled = true
 				}
 			),
 			gui.select(
-				id:        'sel2'
-				window:    mut w
-				selected:  app.selected_2
-				options:   [
+				id:          'sel2'
+				window:      mut w
+				selected:    app.selected_2
+				placeholder: 'Pick a country'
+				options:     [
 					'---Africa',
 					'Algeria',
 					'Angola',
@@ -1161,7 +1164,7 @@ fn select_samples(w &gui.Window) gui.View {
 					'Uruguay',
 					'Venezuela',
 				]
-				on_select: fn (s string, mut e gui.Event, mut w gui.Window) {
+				on_select:   fn (s []string, mut e gui.Event, mut w gui.Window) {
 					mut app_ := w.state[GalleryApp]()
 					app_.selected_2 = s
 					e.is_handled = true

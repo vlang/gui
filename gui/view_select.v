@@ -9,7 +9,12 @@ pub struct SelectCfg {
 pub:
 	id                 string  @[required] // unique only to other select views
 	window             &Window @[required] // required for state managment
-	selected           string // Text of selected item
+	selected           []string // Text of selected item
+	placeholder        string
+	select_multiple    bool
+	no_wrap            bool
+	min_width          f32       = gui_theme.select_style.min_width
+	max_width          f32       = gui_theme.select_style.max_width
 	color              Color     = gui_theme.select_style.color
 	color_border       Color     = gui_theme.select_style.color_border
 	color_border_focus Color     = gui_theme.select_style.color_border_focus
@@ -24,7 +29,8 @@ pub:
 	radius             f32       = gui_theme.select_style.radius
 	radius_border      f32       = gui_theme.select_style.radius_border
 	subheading_style   TextStyle = gui_theme.select_style.subheading_style
-	on_select          fn (string, mut Event, mut Window) = unsafe { nil }
+	placeholder_style  TextStyle = gui_theme.select_style.placeholder_style
+	on_select          fn ([]string, mut Event, mut Window) = unsafe { nil }
 	options            []string
 }
 
@@ -40,6 +46,14 @@ pub fn select(cfg SelectCfg) View {
 			}
 		}
 	}
+	clip := if cfg.select_multiple && cfg.no_wrap { true } else { false }
+	txt := if cfg.selected.len == 0 { cfg.placeholder } else { cfg.selected.join(', ') }
+	txt_style := if cfg.selected.len == 0 { cfg.placeholder_style } else { gui_theme.text_style }
+	wrap_mode := if cfg.select_multiple && !cfg.no_wrap {
+		TextMode.wrap
+	} else {
+		TextMode.single_line
+	}
 
 	mut content := []View{}
 	content << row( // interior
@@ -47,18 +61,18 @@ pub fn select(cfg SelectCfg) View {
 		color:    cfg.color
 		padding:  cfg.padding
 		sizing:   fill_fit
-		on_click: fn [cfg, is_open] (_ &ToggleCfg, mut e Event, mut w Window) {
-			w.view_state.select_state.clear() // close all select drop-downs.
-			w.view_state.select_state[cfg.id] = !is_open
-			e.is_handled = true
-		}
 		content:  [
-			text(text: cfg.selected),
+			text(text: txt, text_style: txt_style, mode: wrap_mode),
 			row(sizing: fill_fill, padding: padding_none),
 			text(
 				text: if is_open { '▲' } else { '▼' }
 			),
 		]
+		on_click: fn [cfg, is_open] (_ &ToggleCfg, mut e Event, mut w Window) {
+			w.view_state.select_state.clear() // close all select drop-downs.
+			w.view_state.select_state[cfg.id] = !is_open
+			e.is_handled = true
+		}
 	)
 	if is_open {
 		_, h := cfg.window.window_size()
@@ -77,7 +91,7 @@ pub fn select(cfg SelectCfg) View {
 			radius:         cfg.radius
 			color:          cfg.color_border
 			content:        [
-				column( // interior list
+				column( // drop down list
 					fill:    cfg.fill
 					color:   cfg.color
 					padding: padding(pad_small, pad_medium, pad_small, pad_small)
@@ -87,10 +101,12 @@ pub fn select(cfg SelectCfg) View {
 			]
 		)
 	}
-	return row(
+	return row( // border
 		id:        cfg.id
-		min_width: 200
+		clip:      clip
 		fill:      true
+		min_width: cfg.min_width
+		max_width: cfg.max_width
 		padding:   cfg.padding_border
 		radius:    cfg.radius
 		color:     cfg.color_border
@@ -110,7 +126,7 @@ fn option_view(cfg SelectCfg, option string) View {
 				text:       '✓'
 				text_style: TextStyle{
 					...gui_theme.text_style
-					color: if cfg.selected == option {
+					color: if option in cfg.selected {
 						gui_theme.text_style.color
 					} else {
 						color_transparent
@@ -121,8 +137,24 @@ fn option_view(cfg SelectCfg, option string) View {
 		]
 		on_click:     fn [cfg, option] (_ voidptr, mut e Event, mut w Window) {
 			if cfg.on_select != unsafe { nil } {
-				w.view_state.select_state.clear() // close all select drop-downs.
-				cfg.on_select(option, mut e, mut w)
+				if !cfg.select_multiple {
+					w.view_state.select_state.clear()
+				}
+
+				mut s := []string{}
+				if cfg.select_multiple {
+					s = if option in cfg.selected {
+						cfg.selected.filter(it != option)
+					} else {
+						mut a := cfg.selected.clone()
+						a << option
+						a.sorted()
+					}
+				} else {
+					w.view_state.select_state.clear()
+					s = [option]
+				}
+				cfg.on_select(s, mut e, mut w)
 				e.is_handled = true
 			}
 		}
