@@ -69,6 +69,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y, window)
 	layout_disables(mut layout, false)
+	layout_amend(mut layout, mut window)
 	layout_set_draw_clips(mut layout, window.window_rect())
 	layout_amend(mut layout, mut window)
 }
