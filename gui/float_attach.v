@@ -48,16 +48,18 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 	return x, y
 }
 
-// fix_nested_sibling_floats fixes an edge case when floats are siblings.
-// P.S. I really would like to not have to do this but can't find a better way.
-fn fix_nested_sibling_floats(mut floating_layouts []Layout) {
-	for i := 0; i < floating_layouts.len; i++ {
-		if floating_layouts[i].parent.shape.float && i > 0 {
+// fix_float_parents fixes an edge case when floats are nested immediately with floats.
+// When layout_remove_floating_layouts() removes nodes from the layout it replaces them
+// with an .none node. If floats have child floats, the child float parents will often
+// times point at these .none nodes. The actual parent node is earlier in the
+// floating_layouts array. Find it and use it as the use it as the parent.
+fn fix_float_parents(mut floating_layouts []Layout) {
+	for i := floating_layouts.len - 1; i > 0; i-- {
+		if floating_layouts[i].parent.shape.type == .none && i > 0 {
 			mut j := i
 			for ; j > 0; j-- {
-				if floating_layouts[j].parent.shape.float {
-					// move past sibling floats to find parent.
-					continue
+				if floating_layouts[j].parent.shape.type != .none {
+					break
 				}
 			}
 			floating_layouts[i].parent = unsafe { &floating_layouts[j] }

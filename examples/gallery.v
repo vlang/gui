@@ -886,12 +886,15 @@ fn select_drop_down(w &gui.Window) gui.View {
 }
 
 fn select_samples(w &gui.Window) gui.View {
+	width := 300
 	app := w.state[GalleryApp]()
 	return gui.row(
 		content: [
 			gui.select(
 				id:              'sel1'
 				window:          mut w
+				min_width:       width
+				max_width:       width
 				selected:        app.selected_1
 				placeholder:     'Pick one or more states'
 				select_multiple: true
@@ -957,6 +960,8 @@ fn select_samples(w &gui.Window) gui.View {
 			gui.select(
 				id:          'sel2'
 				window:      mut w
+				min_width:   width
+				max_width:   width
 				selected:    app.selected_2
 				placeholder: 'Pick a country'
 				options:     [
