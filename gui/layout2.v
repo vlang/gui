@@ -151,3 +151,22 @@ fn content_height(node &Layout) f32 {
 	}
 	return height
 }
+
+// Returns the intersection of two rectangles as an Option<Rect>.
+// If there is no intersection, returns none.
+fn rect_intersection(a DrawClip, b DrawClip) ?DrawClip {
+	x1 := f32_max(a.x, b.x)
+	y1 := f32_max(a.y, b.y)
+	x2 := f32_min(a.x + a.width, b.x + b.width)
+	y2 := f32_min(a.y + a.height, b.y + b.height)
+
+	if x2 > x1 && y2 > y1 {
+		return DrawClip{
+			x:      x1
+			y:      y1
+			width:  x2 - x1
+			height: y2 - y1
+		}
+	}
+	return none
+}

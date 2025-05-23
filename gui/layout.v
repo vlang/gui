@@ -69,6 +69,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y, window)
 	layout_disables(mut layout, false)
+	layout_set_draw_clips(mut layout, window.window_rect())
 	layout_amend(mut layout, mut window)
 }
 
@@ -636,6 +637,20 @@ fn layout_disables(mut node Layout, disabled bool) {
 	node.shape.disabled = is_disabled
 	for mut child in node.children {
 		layout_disables(mut child, is_disabled)
+	}
+}
+
+fn layout_set_draw_clips(mut node Layout, clip DrawClip) {
+	mut node_clip := clip
+	draw_clip := shape_clip_rect(node.shape)
+	node.shape.draw_clip = rect_intersection(draw_clip, node_clip) or { DrawClip{} }
+
+	if node.shape.clip {
+		node_clip = draw_clip
+	}
+
+	for mut child in node.children {
+		layout_set_draw_clips(mut child, node_clip)
 	}
 }
 

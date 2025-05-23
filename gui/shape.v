@@ -13,6 +13,7 @@ pub mut:
 	axis       Axis
 	cfg        voidptr
 	clip       bool
+	draw_clip  DrawClip // used for hit-testing
 	color      Color
 	disabled   bool
 	fill       bool
@@ -77,9 +78,11 @@ pub enum ShapeType {
 	circle
 }
 
-// point_in_shape determines if the given point is within the shape's layout
-// rectangle. Internal use mostly, but useful if designing a new Shape
+// point_in_shape determines if the given point is within the shape's draw_clip
+// rectangle. The draw_clip rectangle is the intersection of the current drawable
+// rectangle and thd shapes rectangle. Computed in layout_set_draw_clips()
 pub fn (shape &Shape) point_in_shape(x f32, y f32) bool {
-	return x >= shape.x && y >= shape.y && x < (shape.x + shape.width)
-		&& y < (shape.y + shape.height)
+	draw_clip := shape.draw_clip
+	return x >= draw_clip.x && y >= draw_clip.y && x < (draw_clip.x + draw_clip.width)
+		&& y < (draw_clip.y + draw_clip.height)
 }
