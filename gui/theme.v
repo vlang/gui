@@ -193,6 +193,37 @@ pub:
 		...text_style_dark
 		size: size_text_tiny
 	}
+	// Icon
+	icon1 TextStyle = TextStyle{
+		...text_style_dark
+		size:   size_text_x_large
+		family: icon_font_file
+	}
+	icon2 TextStyle = TextStyle{
+		...text_style_dark
+		size:   size_text_large
+		family: icon_font_file
+	}
+	icon3 TextStyle = TextStyle{
+		...text_style_dark
+		size:   size_text_medium
+		family: icon_font_file
+	}
+	icon4 TextStyle = TextStyle{
+		...text_style_dark
+		size:   size_text_small
+		family: icon_font_file
+	}
+	icon5 TextStyle = TextStyle{
+		...text_style_dark
+		size:   size_text_x_small
+		family: icon_font_file
+	}
+	icon6 TextStyle = TextStyle{
+		...text_style_dark
+		size:   size_text_tiny
+		family: icon_font_file
+	}
 
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
@@ -689,6 +720,37 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		m6: TextStyle{
 			...mono
 			size: theme.size_text_tiny
+		}
+		// Icon Font
+		icon1: TextStyle{
+			...mono
+			size:   theme.size_text_x_large
+			family: icon_font_file
+		}
+		icon2: TextStyle{
+			...mono
+			size:   theme.size_text_large
+			family: icon_font_file
+		}
+		icon3: TextStyle{
+			...mono
+			size:   theme.size_text_medium
+			family: icon_font_file
+		}
+		icon4: TextStyle{
+			...mono
+			size:   theme.size_text_small
+			family: icon_font_file
+		}
+		icon5: TextStyle{
+			...mono
+			size:   theme.size_text_x_small
+			family: icon_font_file
+		}
+		icon6: TextStyle{
+			...mono
+			size:   theme.size_text_tiny
+			family: icon_font_file
 		}
 	}
 }
