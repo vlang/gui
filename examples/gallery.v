@@ -4,10 +4,18 @@ import gui
 // =============================
 // Catalog of most of the predefined views available.
 
+const scroll_id = 1
+const tab_stock = 1
+const tab_icons = 2
+const tab_image = 3
+const tab_menus = 4
+const tab_dialogs = 5
+
 @[heap]
 struct GalleryApp {
 pub mut:
-	light_theme bool
+	light_theme  bool
+	selected_tab int = 1
 	// buttons
 	button_clicks int
 	// inputs
@@ -36,6 +44,7 @@ fn main() {
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
+			w.set_id_focus(1)
 		}
 	)
 	window.set_theme(gui.theme_dark_bordered)
@@ -61,29 +70,69 @@ fn main_view(mut window gui.Window) gui.View {
 
 fn gallery(mut w gui.Window) gui.View {
 	mut app := w.state[GalleryApp]()
+	content := match app.selected_tab {
+		tab_stock {
+			[buttons(w), inputs(w), toggles(w), progress_bars(w),
+				range_sliders(w), select_drop_down(w), text_sizes_weights(w)]
+		}
+		tab_icons {
+			[icons(mut w)]
+		}
+		tab_image {
+			[image_sample(w)]
+		}
+		tab_menus {
+			[menus(w)]
+		}
+		tab_dialogs {
+			[dialogs(w)]
+		}
+		else {
+			[]gui.View{}
+		}
+	}
 	return gui.column(
 		sizing:  gui.fill_fill
 		content: [
-			toggle_theme(app),
+			tab_bar(mut w),
 			gui.column(
-				id_scroll: 1
+				id_scroll: scroll_id
 				sizing:    gui.fill_fill
 				spacing:   gui.spacing_large * 2
-				content:   [
-					buttons(w),
-					inputs(w),
-					toggles(w),
-					menus(w),
-					dialogs(w),
-					progress_bars(w),
-					range_sliders(w),
-					select_drop_down(w),
-					icons(mut w),
-					image_sample(w),
-					text_sizes_weights(w),
-				]
+				content:   content
 			),
 		]
+	)
+}
+
+fn tab_bar(mut w gui.Window) gui.View {
+	mut app := w.state[GalleryApp]()
+	return gui.row(
+		v_align: .middle
+		sizing:  gui.fill_fit
+		content: [
+			gui.row(sizing: gui.fill_fit),
+			tab_button('Stock', tab_stock),
+			tab_button('Icons', tab_icons),
+			tab_button('Image', tab_image),
+			tab_button('Menus', tab_menus),
+			tab_button('Dialogs', tab_dialogs),
+			gui.row(sizing: gui.fill_fit),
+			toggle_theme(app),
+		]
+	)
+}
+
+fn tab_button(label string, id_tab int) gui.View {
+	return gui.button(
+		id_focus:  u32(id_tab)
+		min_width: 100
+		content:   [gui.text(text: label)]
+		on_click:  fn [id_tab] (_ voidptr, mut e gui.Event, mut w gui.Window) {
+			mut app := w.state[GalleryApp]()
+			app.selected_tab = id_tab
+			w.scroll_vertical_to(scroll_id, 0)
+		}
 	)
 }
 
@@ -110,29 +159,22 @@ fn line() gui.View {
 }
 
 fn toggle_theme(app &GalleryApp) gui.View {
-	return gui.row(
-		h_align: .end
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			gui.toggle(
-				text_selected:   gui.icon_moon
-				text_unselected: gui.icon_sunny_o
-				text_style:      gui.theme().icon3
-				padding:         gui.padding_small
-				selected:        app.light_theme
-				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
-					mut app := w.state[GalleryApp]()
-					app.light_theme = !app.light_theme
-					theme := if app.light_theme {
-						gui.theme_light_bordered
-					} else {
-						gui.theme_dark_bordered
-					}
-					w.set_theme(theme)
-				}
-			),
-		]
+	return gui.toggle(
+		text_selected:   gui.icon_moon
+		text_unselected: gui.icon_sunny_o
+		text_style:      gui.theme().icon3
+		padding:         gui.padding_small
+		selected:        app.light_theme
+		on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+			mut app := w.state[GalleryApp]()
+			app.light_theme = !app.light_theme
+			theme := if app.light_theme {
+				gui.theme_light_bordered
+			} else {
+				gui.theme_dark_bordered
+			}
+			w.set_theme(theme)
+		}
 	)
 }
 
@@ -1267,6 +1309,7 @@ fn chunk_map[K, V](input map[K]V, chunk_size int) []map[K]V {
 
 fn image_sample(w &gui.Window) gui.View {
 	return gui.column(
+		sizing:  gui.fill_fit
 		content: [
 			view_title('Image'),
 			gui.column(

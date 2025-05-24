@@ -111,6 +111,8 @@ fn main_view(mut window gui.Window) gui.View {
 				content: [
 					gui.select(
 						id:          'sel2'
+						min_width:   260
+						max_width:   260
 						window:      mut window
 						selected:    app.selected_2
 						placeholder: 'Pick a country'

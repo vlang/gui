@@ -118,22 +118,28 @@ pub fn select(cfg SelectCfg) View {
 fn option_view(cfg SelectCfg, option string) View {
 	return row(
 		fill:         true
-		padding:      padding(pad_small, pad_small, pad_small, 1)
+		padding:      padding(0, pad_small, 0, 1)
 		sizing:       fill_fit
-		spacing:      pad_x_small
+		spacing:      0
 		content:      [
-			text(
-				text:       '✓'
-				text_style: TextStyle{
-					...gui_theme.text_style
-					color: if option in cfg.selected {
-						gui_theme.text_style.color
-					} else {
-						color_transparent
-					}
-				}
+			row(
+				spacing: 0
+				padding: pad_tblr(2, 0)
+				content: [
+					text(
+						text:       '✓'
+						text_style: TextStyle{
+							...gui_theme.text_style
+							color: if option in cfg.selected {
+								gui_theme.text_style.color
+							} else {
+								color_transparent
+							}
+						}
+					),
+					text(text: option),
+				]
 			),
-			text(text: option),
 		]
 		on_click:     fn [cfg, option] (_ voidptr, mut e Event, mut w Window) {
 			if cfg.on_select != unsafe { nil } {
