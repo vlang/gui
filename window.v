@@ -162,8 +162,8 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			}
 		}
 		.mouse_down {
-			w.set_mouse_cursor_arrow()
 			w.set_id_focus(0)
+			w.set_mouse_cursor_arrow()
 			mouse_down_handler(layout, false, mut e, mut w)
 			if !e.is_handled {
 				w.view_state.select_state.clear()

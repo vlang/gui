@@ -139,11 +139,13 @@ fn (cfg &RangeSliderCfg) amend_layout_thumb(mut node Layout, mut w Window) {
 	if cfg.vertical {
 		height := node.parent.shape.height
 		y := f32_min(height * percent, height)
-		node.move_shape_positions(0, y - cfg.padding_border.height())
+		node.shape.y = node.parent.shape.y + y - cfg.padding_border.height()
+		node.children[0].shape.y = node.shape.y + cfg.padding_border.top
 	} else {
 		width := node.parent.shape.width
 		x := f32_min(width * percent, width)
-		node.move_shape_positions(x - cfg.padding_border.width(), 0)
+		node.shape.x = node.parent.shape.x + x - cfg.padding_border.width()
+		node.children[0].shape.x = node.shape.x + cfg.padding_border.top
 	}
 	// set mouse cursor
 	ctx := w.context()
@@ -162,6 +164,7 @@ fn (cfg &RangeSliderCfg) on_mouse_down(node &Layout, mut e Event, mut w Window) 
 			w.mouse_unlock()
 		}
 	})
+	e.is_handled = true
 }
 
 // pass cfg by value more reliable here

@@ -105,6 +105,16 @@ fn thumb(cfg &ScrollbarCfg, id string) View {
 
 // pass cfg by value more reliable here
 fn (cfg ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
+	// Clicking on the scrollbar gives focus to the shape it is tracking
+	// if the tracked shape is not disabled.
+	if shape := w.layout.find_shape(fn [cfg] (n Layout) bool {
+		return n.shape.id_scroll == cfg.id_track
+	})
+	{
+		if !shape.disabled {
+			w.set_id_focus(shape.id_focus)
+		}
+	}
 	w.mouse_lock(MouseLockCfg{
 		mouse_move: cfg.mouse_move
 		mouse_up:   cfg.mouse_up
