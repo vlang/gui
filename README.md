@@ -92,6 +92,13 @@ GUI is a flex-box style UI framework written in [V](https://vlang.io),
 with declarative syntax and microsecond performance. It aspires to be a
 useful framework with a short a learning curve.
 
+## Installing
+
+Let V do it for you!
+```
+v install https://github.com/mike-ward/gui
+```
+
 ## Building Examples
 
 The `README.md` in the examples folder describes how to build GUI

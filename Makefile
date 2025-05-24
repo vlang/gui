@@ -1,7 +1,7 @@
 .PHONY: doc read
 
 doc:
-	v doc -m -f html -inline-assets -readme -o ./doc/html ./gui
+	v doc -f html -inline-assets -readme -o ./doc/html .
 
 read:
-	open doc/html/index.html
+	open doc/html/gui.html
