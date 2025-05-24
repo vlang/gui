@@ -84,6 +84,7 @@ pub fn window(cfg &WindowCfg) &Window {
 			w.update_window()
 		}
 	)
+	install_icon_font()
 	return window
 }
 

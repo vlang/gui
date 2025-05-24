@@ -189,15 +189,6 @@ pub:
 	}
 }
 
-fn (tc TextStyle) to_text_cfg() gx.TextCfg {
-	return gx.TextCfg{
-		color:  tc.color.to_gx_color()
-		size:   tc.size
-		family: tc.family
-		bold:   tc.bold
-	}
-}
-
 pub struct SwitchStyle {
 pub:
 	color              Color   = color_2_dark
@@ -223,6 +214,15 @@ pub:
 	family       string
 	line_spacing f32
 	bold         bool
+}
+
+fn (tc TextStyle) to_text_cfg() gx.TextCfg {
+	return gx.TextCfg{
+		color:  tc.color.to_gx_color()
+		size:   tc.size
+		family: tc.family
+		bold:   tc.bold
+	}
 }
 
 pub struct ToggleStyle {

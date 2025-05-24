@@ -71,6 +71,8 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_disables(mut layout, false)
 	layout_amend(mut layout, mut window)
 	layout_set_draw_clips(mut layout, window.window_rect())
+	// Mouse hovers can't be detected until layout_set_draw_clips()
+	// computes the drawable areas so call layout_amend() again
 	layout_amend(mut layout, mut window)
 }
 
