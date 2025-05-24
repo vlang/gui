@@ -338,8 +338,10 @@ fn toggle_theme(app &SelectDemoApp) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.toggle(
-				text_selected:   '☾'
-				text_unselected: '○'
+				text_selected:   gui.icon_moon
+				text_unselected: gui.icon_sunny_o
+				text_style:      gui.theme().icon3
+				padding:         gui.theme().padding_small
 				selected:        app.light_theme
 				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[SelectDemoApp]()

@@ -2,7 +2,7 @@ import gui
 
 // Gallery
 // =============================
-// WIP
+// Catalog of most of the predefined views available.
 
 @[heap]
 struct GalleryApp {
@@ -42,7 +42,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
 	return gui.column(
 		width:   w
@@ -53,13 +53,13 @@ fn main_view(window &gui.Window) gui.View {
 			gui.row(
 				padding: gui.padding_none
 				sizing:  gui.fill_fill
-				content: [gallery(window)]
+				content: [gallery(mut window)]
 			),
 		]
 	)
 }
 
-fn gallery(w &gui.Window) gui.View {
+fn gallery(mut w gui.Window) gui.View {
 	mut app := w.state[GalleryApp]()
 	return gui.column(
 		sizing:  gui.fill_fill
@@ -78,6 +78,7 @@ fn gallery(w &gui.Window) gui.View {
 					progress_bars(w),
 					range_sliders(w),
 					select_drop_down(w),
+					icons(mut w),
 					image_sample(w),
 					text_sizes_weights(w),
 				]
@@ -115,8 +116,10 @@ fn toggle_theme(app &GalleryApp) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.toggle(
-				text_selected:   '☾'
-				text_unselected: '○'
+				text_selected:   gui.icon_moon
+				text_unselected: gui.icon_sunny_o
+				text_style:      gui.theme().icon3
+				padding:         gui.padding_small
 				selected:        app.light_theme
 				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[GalleryApp]()
@@ -139,6 +142,8 @@ fn toggle_theme(app &GalleryApp) gui.View {
 
 fn buttons(w &gui.Window) gui.View {
 	app := w.state[GalleryApp]()
+	color := if app.light_theme { gui.light_gray } else { gui.dark_blue }
+	color_left := if app.light_theme { gui.dark_gray } else { gui.dark_green }
 	return gui.column(
 		sizing:  gui.fill_fit
 		content: [
@@ -190,8 +195,8 @@ fn buttons(w &gui.Window) gui.View {
 										text_style: gui.theme().n6
 									),
 									gui.progress_bar(
-										color:      gui.blue
-										color_bar:  gui.dark_green
+										color:      color
+										color_bar:  color_left
 										percent:    (app.button_clicks % 25) / f32(25)
 										sizing:     gui.fill_fit
 										text_style: gui.theme().m4
@@ -1177,6 +1182,83 @@ fn select_samples(w &gui.Window) gui.View {
 			),
 		]
 	)
+}
+
+// ==============================================================
+// Icons
+// ==============================================================
+
+fn icons(mut w gui.Window) gui.View {
+	return gui.column(
+		content: [
+			view_title('Icons (Font)'),
+			gui.row(
+				sizing:  gui.fill_fit
+				content: [icon_catalog(mut w)]
+			),
+		]
+	)
+}
+
+fn icon_catalog(mut w gui.Window) gui.View {
+	// find the longest text
+	mut longest := f32(0)
+	for s in gui.icons_map.keys() {
+		longest = f32_max(gui.get_text_width(s, gui.theme().n3, mut w), longest)
+	}
+
+	// Break the icons_maps into rows
+	chunks := chunk_map(gui.icons_map, 4)
+	mut all_icons := []gui.View{}
+
+	// create rows of icons/text
+	for chunk in chunks {
+		mut icons := []gui.View{}
+		for key, val in chunk {
+			icons << gui.column(
+				min_width: longest
+				h_align:   .center
+				padding:   gui.padding_none
+				content:   [
+					gui.text(text: val, text_style: gui.theme().icon1),
+					gui.text(text: key),
+				]
+			)
+		}
+		all_icons << gui.row(
+			spacing: 0
+			content: icons
+		)
+	}
+
+	return gui.column(
+		spacing: gui.spacing_large
+		sizing:  gui.fill_fill
+		padding: gui.padding_none
+		content: all_icons
+	)
+}
+
+// maybe this should be a standard library function?
+fn chunk_map[K, V](input map[K]V, chunk_size int) []map[K]V {
+	mut chunks := []map[K]V{}
+	mut current_chunk := map[K]V{}
+	mut count := 0
+
+	for key, value in input {
+		current_chunk[key] = value
+		count += 1
+		if count == chunk_size {
+			chunks << current_chunk
+			current_chunk = map[K]V{}
+			count = 0
+		}
+	}
+	// Add any remaining items as the last chunk
+	if current_chunk.len > 0 {
+		chunks << current_chunk
+	}
+	return chunks
 }
 
 // ==============================================================

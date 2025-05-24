@@ -6,14 +6,14 @@ import gui
 // you'll find in other frameworks.
 
 @[heap]
-struct App {
+struct ProgressBarsApp {
 pub mut:
-	light bool
+	light_theme bool
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &ProgressBarsApp{}
 		width:   300
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -24,10 +24,10 @@ fn main() {
 }
 
 fn main_view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[ProgressBarsApp]()
 	w, h := window.window_size()
-	tbg1 := if gui.theme().name == 'light' { gui.orange } else { gui.dark_green }
-	tbg2 := if gui.theme().name == 'light' { gui.cornflower_blue } else { gui.white }
+	tbg1 := if app.light_theme { gui.orange } else { gui.dark_green }
+	tbg2 := if app.light_theme { gui.cornflower_blue } else { gui.white }
 	return gui.column(
 		width:   w
 		height:  h
@@ -36,7 +36,7 @@ fn main_view(window &gui.Window) gui.View {
 		v_align: .middle
 		spacing: gui.theme().spacing_large
 		content: [
-			button_change_theme(app),
+			toggle_theme(app),
 			gui.progress_bar(
 				height:          2
 				sizing:          gui.fill_fixed
@@ -88,29 +88,27 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn button_change_theme(app &App) gui.View {
+fn toggle_theme(app &ProgressBarsApp) gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [
-			gui.button(
-				padding:  gui.padding(1, 5, 1, 5)
-				content:  [
-					gui.text(
-						text: if app.light { '●' } else { '○' }
-					),
-				]
-				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
-					app.light = !app.light
-					theme := if app.light {
+			gui.toggle(
+				text_selected:   gui.icon_moon
+				text_unselected: gui.icon_sunny_o
+				text_style:      gui.theme().icon3
+				padding:         gui.theme().padding_small
+				selected:        app.light_theme
+				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ProgressBarsApp]()
+					app.light_theme = !app.light_theme
+					theme := if app.light_theme {
 						gui.theme_light
 					} else {
 						gui.theme_dark
 					}
 					w.set_theme(theme)
-					w.set_id_focus(1)
 				}
 			),
 		]

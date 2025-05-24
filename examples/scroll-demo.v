@@ -98,8 +98,10 @@ fn top_row(app &ScrollApp) gui.View {
 fn theme_button(app &ScrollApp) gui.View {
 	return gui.toggle(
 		id_focus:        3
-		text_selected:   '☾'
-		text_unselected: '○'
+		text_selected:   gui.icon_moon
+		text_unselected: gui.icon_sunny_o
+		text_style:      gui.theme().icon3
+		padding:         gui.padding_small
 		selected:        app.light
 		on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[ScrollApp]()
