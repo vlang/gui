@@ -8,6 +8,12 @@ pub fn (window &Window) color_background() Color {
 	return from_gx_color(window.ui.config.bg_color)
 }
 
+// clear_view_states clears all cached view_states. Gui keeps a number of items
+// like scroll positions, cursor positions, etc.
+pub fn (mut window Window) clear_view_states() {
+	window.view_state.clear(mut window)
+}
+
 // context gets the windows gg.Context
 pub fn (window &Window) context() &gg.Context {
 	return window.ui
@@ -196,6 +202,7 @@ pub fn (window &Window) window_size() (int, int) {
 	return window.window_size.width, window.window_size.height
 }
 
+// window_size gets the cached size of the window in logical units as a [Rect](#Rect).
 pub fn (window &Window) window_rect() gg.Rect {
 	return gg.Rect{0, 0, window.window_size.width, window.window_size.height}
 }

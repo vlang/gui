@@ -755,7 +755,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 	}
 }
 
-// theme returns the current theme.
+// theme returns the current [Theme](#Theme).
 pub fn theme() Theme {
 	return gui_theme
 }

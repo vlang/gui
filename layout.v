@@ -47,6 +47,10 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// Compute the floating layouts. Because they are appended to
 	// the layout array, they get rendered after the main layout.
 	for mut floating_layout in floating_layouts {
+		draw_clip := floating_layout.parent.shape.draw_clip
+		if draw_clip.width == 0 && draw_clip.height == 0 {
+			continue
+		}
 		layout_pipeline(mut floating_layout, mut window)
 		layouts << floating_layout
 	}

@@ -1,7 +1,7 @@
 module gui
 
 @[heap]
-pub struct ContainerView implements View {
+struct ContainerView implements View {
 pub:
 	id              string
 	id_focus        u32 // not sure this should be here
