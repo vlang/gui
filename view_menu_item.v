@@ -172,14 +172,16 @@ fn (cfg &MenubarCfg) amend_layout_item(mut node Layout, mut w Window) {
 	// Mouse hover logic is covered here. Once the **menubar** gains focus,
 	// mouse-overs can change the selected menu-item. Note: Selection
 	// incicates highlighting, not focus. This is key to understanding menus.
-	ctx := w.context()
-	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-			return
+	if !node.shape.draw_clip.is_empty() {
+		ctx := w.context()
+		if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+			if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
+				return
+			}
+			if node.shape.id.len == 0 || node.shape.disabled || !w.is_focus(cfg.id_focus) {
+				return
+			}
+			w.view_state.menu_state[cfg.id_focus] = node.shape.id
 		}
-		if node.shape.id.len == 0 || node.shape.disabled || !w.is_focus(cfg.id_focus) {
-			return
-		}
-		w.view_state.menu_state[cfg.id_focus] = node.shape.id
 	}
 }

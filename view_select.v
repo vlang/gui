@@ -168,15 +168,17 @@ fn option_view(cfg SelectCfg, option string) View {
 			if node.shape.disabled {
 				return
 			}
-			ctx := w.context()
-			if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-				if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-					return
-				}
-				w.set_mouse_cursor_pointing_hand()
-				node.shape.color = cfg.color_hover
-				if ctx.mouse_buttons == gg.MouseButtons.left {
-					node.shape.color = cfg.color_click
+			if !node.shape.draw_clip.is_empty() {
+				ctx := w.context()
+				if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+					if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
+						return
+					}
+					w.set_mouse_cursor_pointing_hand()
+					node.shape.color = cfg.color_hover
+					if ctx.mouse_buttons == gg.MouseButtons.left {
+						node.shape.color = cfg.color_click
+					}
 				}
 			}
 		}

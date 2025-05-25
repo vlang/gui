@@ -172,24 +172,26 @@ fn (cfg &MenubarCfg) amend_layout_menubar(mut node Layout, mut w Window) {
 }
 
 fn (cfg &MenubarCfg) amend_layout_submenu(mut node Layout, mut w Window) {
-	// When the mouse moves outside a submenu it should unselect the
-	// item in the submenu. This is a subtle behavior in mouse/menu
-	// interactions I never noticed until designing this. To unselect
-	// the item in the submenu you select teh subemnu's parent menu item.
-	// The parent menu-item id is the id of the submenu. In addition,
-	// the unselect logic is only triggred when the menu item is a leaf
-	// item. We know this because the selected menu item has no submenu.
-	//
-	// This is hard to follow because there are two trees invovled. The
-	// MenubarCfg tree and the Layout tree.
-	id_selected := w.view_state.menu_state[cfg.id_focus]
-	has_selected := descendant_has_id(node, id_selected)
-	if has_selected {
-		ctx := w.context()
-		if !node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-			if mi_cfg := find_menu_item_cfg(cfg.items, id_selected) {
-				if mi_cfg.submenu.len == 0 {
-					w.view_state.menu_state[cfg.id_focus] = node.shape.id
+	if !node.shape.draw_clip.is_empty() {
+		// When the mouse moves outside a submenu it should unselect the
+		// item in the submenu. This is a subtle behavior in mouse/menu
+		// interactions I never noticed until designing this. To unselect
+		// the item in the submenu you select teh subemnu's parent menu item.
+		// The parent menu-item id is the id of the submenu. In addition,
+		// the unselect logic is only triggred when the menu item is a leaf
+		// item. We know this because the selected menu item has no submenu.
+		//
+		// This is hard to follow because there are two trees invovled. The
+		// MenubarCfg tree and the Layout tree.
+		id_selected := w.view_state.menu_state[cfg.id_focus]
+		has_selected := descendant_has_id(node, id_selected)
+		if has_selected {
+			ctx := w.context()
+			if !node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+				if mi_cfg := find_menu_item_cfg(cfg.items, id_selected) {
+					if mi_cfg.submenu.len == 0 {
+						w.view_state.menu_state[cfg.id_focus] = node.shape.id
+					}
 				}
 			}
 		}

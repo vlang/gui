@@ -160,3 +160,7 @@ fn rect_intersection(a DrawClip, b DrawClip) ?DrawClip {
 	}
 	return none
 }
+
+fn (rect DrawClip) is_empty() bool {
+	return rect.width == 0 && rect.height == 0
+}

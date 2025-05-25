@@ -63,11 +63,13 @@ fn (cfg &RadioCfg) amend_layout(mut node Layout, mut w Window) {
 		node.shape.color = cfg.color_focus
 	}
 
-	ctx := w.context()
-	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-			return
+	if !node.shape.draw_clip.is_empty() {
+		ctx := w.context()
+		if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+			if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
+				return
+			}
+			w.set_mouse_cursor_pointing_hand()
 		}
-		w.set_mouse_cursor_pointing_hand()
 	}
 }

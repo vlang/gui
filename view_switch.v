@@ -83,7 +83,7 @@ fn (cfg &SwitchCfg) on_char_button(_ &SwitchCfg, mut e Event, mut w Window) {
 }
 
 fn (cfg &SwitchCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.shape.disabled || cfg.on_click == unsafe { nil } {
+	if node.shape.disabled || cfg.on_click == unsafe { nil } || node.shape.draw_clip.is_empty() {
 		return
 	}
 	if w.is_focus(node.shape.id_focus) {

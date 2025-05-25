@@ -98,62 +98,68 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 }
 
 fn (cfg &RangeSliderCfg) amend_layout_slide(mut node Layout, mut w Window) {
-	node.shape.on_mouse_down_shape = cfg.on_mouse_down_shape
-	node.shape.on_mouse_scroll_shape = cfg.on_mouse_scroll
+	if node.shape.draw_clip.is_empty() {
+		node.shape.on_mouse_down_shape = cfg.on_mouse_down_shape
+		node.shape.on_mouse_scroll_shape = cfg.on_mouse_scroll
 
-	// set positions of left/right or top/bottom rectangles
-	value := clamp_f32(cfg.value, cfg.min, cfg.max)
-	percent := math.abs(value / (cfg.max - cfg.min))
-	if cfg.vertical {
-		height := node.children[0].shape.height
-		y := f32_min(height * percent, height)
-		node.children[0].children[0].shape.height = y
-	} else {
-		width := node.children[0].shape.width
-		x := f32_min(width * percent, width)
-		node.children[0].children[0].shape.width = x
+		// set positions of left/right or top/bottom rectangles
+		value := clamp_f32(cfg.value, cfg.min, cfg.max)
+		percent := math.abs(value / (cfg.max - cfg.min))
+		if cfg.vertical {
+			height := node.children[0].shape.height
+			y := f32_min(height * percent, height)
+			node.children[0].children[0].shape.height = y
+		} else {
+			width := node.children[0].shape.width
+			x := f32_min(width * percent, width)
+			node.children[0].children[0].shape.width = x
+		}
 	}
-
 	if node.shape.disabled {
 		return
 	}
 	if w.is_focus(node.shape.id_focus) {
 		node.children[0].shape.color = cfg.color_focus
 	}
-	ctx := w.context()
-	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) || w.mouse_is_locked() {
-		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-			return
-		}
-		node.children[0].shape.color = cfg.color_hover
-		if ctx.mouse_buttons == gg.MouseButtons.left {
-			node.children[0].shape.color = cfg.color_click
+	if !node.shape.draw_clip.is_empty() {
+		ctx := w.context()
+		if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y))
+			|| w.mouse_is_locked() {
+			if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
+				return
+			}
+			node.children[0].shape.color = cfg.color_hover
+			if ctx.mouse_buttons == gg.MouseButtons.left {
+				node.children[0].shape.color = cfg.color_click
+			}
 		}
 	}
 }
 
 fn (cfg &RangeSliderCfg) amend_layout_thumb(mut node Layout, mut w Window) {
-	// set the thumb position
-	value := clamp_f32(cfg.value, cfg.min, cfg.max)
-	percent := math.abs(value / (cfg.max - cfg.min))
-	if cfg.vertical {
-		height := node.parent.shape.height
-		y := f32_min(height * percent, height)
-		node.shape.y = node.parent.shape.y + y - cfg.padding_border.height()
-		node.children[0].shape.y = node.shape.y + cfg.padding_border.top
-	} else {
-		width := node.parent.shape.width
-		x := f32_min(width * percent, width)
-		node.shape.x = node.parent.shape.x + x - cfg.padding_border.width()
-		node.children[0].shape.x = node.shape.x + cfg.padding_border.top
-	}
-	// set mouse cursor
-	ctx := w.context()
-	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-			return
+	if node.shape.draw_clip.is_empty() { // set the thumb position
+		value := clamp_f32(cfg.value, cfg.min, cfg.max)
+		percent := math.abs(value / (cfg.max - cfg.min))
+		if cfg.vertical {
+			height := node.parent.shape.height
+			y := f32_min(height * percent, height)
+			node.shape.y = node.parent.shape.y + y - cfg.padding_border.height()
+			node.children[0].shape.y = node.shape.y + cfg.padding_border.top
+		} else {
+			width := node.parent.shape.width
+			x := f32_min(width * percent, width)
+			node.shape.x = node.parent.shape.x + x - cfg.padding_border.width()
+			node.children[0].shape.x = node.shape.x + cfg.padding_border.top
 		}
-		w.set_mouse_cursor_pointing_hand()
+	} else {
+		// set mouse cursor
+		ctx := w.context()
+		if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+			if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
+				return
+			}
+			w.set_mouse_cursor_pointing_hand()
+		}
 	}
 }
 

@@ -79,20 +79,22 @@ pub fn progress_bar(cfg &ProgressBarCfg) View {
 }
 
 fn (cfg ProgressBarCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.children.len >= 0 {
-		percent := clamp_f32(cfg.percent, 0, 1)
-		if cfg.vertical {
-			height := f32_min(node.shape.height * percent, node.shape.height)
-			node.children[0].shape.x = node.shape.x
-			node.children[0].shape.y = node.shape.y
-			node.children[0].shape.height = height
-			node.children[0].shape.width = node.shape.width
-		} else {
-			width := f32_min(node.shape.width * percent, node.shape.width)
-			node.children[0].shape.x = node.shape.x
-			node.children[0].shape.y = node.shape.y
-			node.children[0].shape.width = width
-			node.children[0].shape.height = node.shape.height
+	if node.shape.draw_clip.is_empty() {
+		if node.children.len >= 0 {
+			percent := clamp_f32(cfg.percent, 0, 1)
+			if cfg.vertical {
+				height := f32_min(node.shape.height * percent, node.shape.height)
+				node.children[0].shape.x = node.shape.x
+				node.children[0].shape.y = node.shape.y
+				node.children[0].shape.height = height
+				node.children[0].shape.width = node.shape.width
+			} else {
+				width := f32_min(node.shape.width * percent, node.shape.width)
+				node.children[0].shape.x = node.shape.x
+				node.children[0].shape.y = node.shape.y
+				node.children[0].shape.width = width
+				node.children[0].shape.height = node.shape.height
+			}
 		}
 	}
 }
