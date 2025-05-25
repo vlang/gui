@@ -65,7 +65,7 @@ body text displayes here...
 Multi-line text supported.
 See DialogCfg for other parameters
 
-Buttons can be left/center/right aligned'
+Buttons can be left/center/right aligned'.trim_indent()
 			)
 		}
 	)

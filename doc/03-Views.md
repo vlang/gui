@@ -101,7 +101,7 @@ giant pain-in-the-pants to lay it out correctly. It is also
 computationally the most expensive to calculate.
 
 Text can be wrapped. Gui uses a simple word break algorithm. If the text
-is too long, it overflows its container. One way to remember this is to
+is too long, it overflows its container. One way to remedy this is to
 enable scrolling in the parent container. Another option is to enable
 clipping on the parent container.
 

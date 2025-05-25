@@ -25,7 +25,7 @@ pub mut:
 fn main() {
 	mut window := gui.window(
 		state:   &DocViewerApp{}
-		width:   850
+		width:   950
 		height:  850
 		title:   'Doc Viewer'
 		on_init: fn (mut w gui.Window) {
@@ -63,23 +63,20 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 		// to remember the old selection to unhighlight.
 		color := if doc_file == app.doc_file { gui.theme().color_5 } else { gui.color_transparent }
 		nav_files << gui.row(
-			fill:         true
-			color:        color
-			padding:      gui.padding_two_five
-			sizing:       gui.fill_fit
-			on_click:     fn [doc_file] (_ &gui.ContainerCfg, mut _ gui.Event, mut win gui.Window) {
+			fill:     true
+			color:    color
+			padding:  gui.padding_two_five
+			sizing:   gui.fill_fit
+			on_click: fn [doc_file] (_ &gui.ContainerCfg, mut _ gui.Event, mut win gui.Window) {
 				mut app := win.state[DocViewerApp]()
 				app.doc_file = doc_file
 				win.scroll_vertical_to(id_scroll_doc_view, 0)
 			}
-			content:      [
+			content:  [
 				gui.text(text: doc_file),
 			]
-			amend_layout: fn (mut node gui.Layout, mut w gui.Window) {
-				ctx := w.context()
-				if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-					w.set_mouse_cursor_pointing_hand()
-				}
+			on_hover: fn (mut node gui.Layout, mut e gui.Event, mut w gui.Window) {
+				w.set_mouse_cursor_pointing_hand()
 			}
 		)
 	}
