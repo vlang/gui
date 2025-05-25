@@ -649,7 +649,12 @@ fn layout_disables(mut node Layout, disabled bool) {
 
 fn layout_set_draw_clips(mut node Layout, clip DrawClip) {
 	mut node_clip := clip
-	draw_clip := shape_clip_rect(node.shape)
+	draw_clip := DrawClip{
+		x:      node.shape.x
+		y:      node.shape.y
+		width:  node.shape.width
+		height: node.shape.height
+	}
 	node.shape.draw_clip = rect_intersection(draw_clip, node_clip) or { DrawClip{} }
 
 	if node.shape.clip {
