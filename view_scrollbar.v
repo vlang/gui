@@ -63,6 +63,7 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 			spacing:        0
 			padding:        padding_none
 			amend_layout:   cfg.amend_layout
+			on_hover:       cfg.on_hover
 			on_click:       cfg.gutter_click
 			content:        [
 				thumb(cfg, '__thumb__${cfg.id_track}'),
@@ -82,6 +83,7 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 			spacing:        0
 			padding:        padding_none
 			amend_layout:   cfg.amend_layout
+			on_hover:       cfg.on_hover
 			on_click:       cfg.gutter_click
 			content:        [
 				thumb(cfg, '__thumb__${cfg.id_track}'),
@@ -166,72 +168,68 @@ fn (cfg ScrollbarCfg) mouse_up(node &Layout, mut e Event, mut w Window) {
 // Scrollbars are hard.
 fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 	thumb := 0
-	if node.shape.draw_clip.is_empty() {
-		min_thumb_size := 20
-		mut parent := node.parent
+	min_thumb_size := 20
+	mut parent := node.parent
 
-		match cfg.orientation == .horizontal {
-			true {
-				node.shape.x += parent.shape.padding.left
-				node.shape.width = parent.shape.width - parent.shape.padding.width()
+	match cfg.orientation == .horizontal {
+		true {
+			node.shape.x += parent.shape.padding.left
+			node.shape.width = parent.shape.width - parent.shape.padding.width()
 
-				total_width := content_width(parent)
-				t_width := node.shape.width * (node.shape.width / total_width)
-				thumb_width := clamp_f32(t_width, min_thumb_size, node.shape.width)
+			total_width := content_width(parent)
+			t_width := node.shape.width * (node.shape.width / total_width)
+			thumb_width := clamp_f32(t_width, min_thumb_size, node.shape.width)
 
-				available_width := node.shape.width - thumb_width
-				scroll_offset := -w.view_state.offset_x_state[cfg.id_track]
-				offset := if available_width == 0 {
-					0
-				} else {
-					clamp_f32((scroll_offset / (total_width - node.shape.width)) * available_width,
-						0, available_width)
-				}
-				node.children[thumb].shape.x = node.shape.x + offset
-				node.children[thumb].shape.width = thumb_width
-				node.children[thumb].shape.height = cfg.size
-
-				if (cfg.overflow != .visible && node.shape.width - thumb_width < 0.1)
-					|| cfg.overflow == .on_hover {
-					node.children[thumb].shape.color = color_transparent
-				}
+			available_width := node.shape.width - thumb_width
+			scroll_offset := -w.view_state.offset_x_state[cfg.id_track]
+			offset := if available_width == 0 {
+				0
+			} else {
+				clamp_f32((scroll_offset / (total_width - node.shape.width)) * available_width,
+					0, available_width)
 			}
-			else {
-				node.shape.y += parent.shape.padding.top
-				node.shape.height = parent.shape.height - parent.shape.padding.height()
+			node.children[thumb].shape.x = node.shape.x + offset
+			node.children[thumb].shape.width = thumb_width
+			node.children[thumb].shape.height = cfg.size
 
-				total_height := content_height(parent)
-				t_height := node.shape.height * (node.shape.height / total_height)
-				thumb_height := clamp_f32(t_height, min_thumb_size, node.shape.height)
+			if (cfg.overflow != .visible && node.shape.width - thumb_width < 0.1)
+				|| cfg.overflow == .on_hover {
+				node.children[thumb].shape.color = color_transparent
+			}
+		}
+		else {
+			node.shape.y += parent.shape.padding.top
+			node.shape.height = parent.shape.height - parent.shape.padding.height()
 
-				available_height := node.shape.height - thumb_height
-				scroll_offset := -w.view_state.offset_y_state[cfg.id_track]
-				offset := if available_height == 0 {
-					0
-				} else {
-					clamp_f32((scroll_offset / (total_height - node.shape.height)) * available_height,
-						0, available_height)
-				}
-				node.children[thumb].shape.y = node.shape.y + offset
-				node.children[thumb].shape.height = thumb_height
-				node.children[thumb].shape.width = cfg.size
+			total_height := content_height(parent)
+			t_height := node.shape.height * (node.shape.height / total_height)
+			thumb_height := clamp_f32(t_height, min_thumb_size, node.shape.height)
 
-				if (cfg.overflow != .visible && node.shape.height - thumb_height < 0.1)
-					|| cfg.overflow == .on_hover {
-					node.children[thumb].shape.color = color_transparent
-				}
+			available_height := node.shape.height - thumb_height
+			scroll_offset := -w.view_state.offset_y_state[cfg.id_track]
+			offset := if available_height == 0 {
+				0
+			} else {
+				clamp_f32((scroll_offset / (total_height - node.shape.height)) * available_height,
+					0, available_height)
+			}
+			node.children[thumb].shape.y = node.shape.y + offset
+			node.children[thumb].shape.height = thumb_height
+			node.children[thumb].shape.width = cfg.size
+
+			if (cfg.overflow != .visible && node.shape.height - thumb_height < 0.1)
+				|| cfg.overflow == .on_hover {
+				node.children[thumb].shape.color = color_transparent
 			}
 		}
 	}
+}
+
+fn (cfg &ScrollbarCfg) on_hover(mut node Layout, mut _ Event, mut w Window) {
 	// on hover dim color of thumb
-	ctx := w.context()
-	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) || w.mouse_is_locked() {
-		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-			return
-		}
-		if node.children[thumb].shape.color != color_transparent || cfg.overflow == .on_hover {
-			node.children[thumb].shape.color = gui_theme.button_style.color_hover
-		}
+	thumb := 0
+	if node.children[thumb].shape.color != color_transparent || cfg.overflow == .on_hover {
+		node.children[thumb].shape.color = gui_theme.button_style.color_hover
 	}
 }
 

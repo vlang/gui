@@ -134,13 +134,13 @@ fn side_panel(mut w gui.Window) gui.View {
 
 fn radio_row(id string, mut app IconFontApp) gui.View {
 	return gui.row(
-		id:           id
-		content:      [
+		id:       id
+		on_click: row_click
+		on_hover: row_hover
+		content:  [
 			gui.radio(selected: app.selected_size == id),
 			gui.text(text: id),
 		]
-		on_click:     row_click
-		amend_layout: on_hover
 	)
 }
 
@@ -149,12 +149,8 @@ fn row_click(cfg &gui.ContainerCfg, mut e gui.Event, mut w gui.Window) {
 	app.selected_size = cfg.id
 }
 
-fn on_hover(mut node gui.Layout, mut w gui.Window) {
-	ctx := w.context()
-	if !node.shape.disabled && node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y))
-		&& !w.dialog_is_visible() {
-		w.set_mouse_cursor_pointing_hand()
-	}
+fn row_hover(mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
+	w.set_mouse_cursor_pointing_hand()
 }
 
 fn toggle_theme(app &IconFontApp) gui.View {

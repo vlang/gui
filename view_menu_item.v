@@ -69,22 +69,22 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				)
 			}
 			column(
-				id:           item_cfg.id
-				cfg:          &item_cfg
-				disabled:     item_cfg.disabled
-				color:        if item_cfg.selected {
+				id:       item_cfg.id
+				cfg:      &item_cfg
+				disabled: item_cfg.disabled
+				color:    if item_cfg.selected {
 					item_cfg.color_selected
 				} else {
 					color_transparent
 				}
-				fill:         item_cfg.selected
-				padding:      item_cfg.padding
-				radius:       item_cfg.radius
-				sizing:       item_cfg.sizing
-				on_click:     menubar_cfg.menu_item_click
-				spacing:      item_cfg.spacing
-				amend_layout: menubar_cfg.amend_layout_item
-				content:      content
+				fill:     item_cfg.selected
+				padding:  item_cfg.padding
+				radius:   item_cfg.radius
+				sizing:   item_cfg.sizing
+				on_click: menubar_cfg.menu_item_click
+				spacing:  item_cfg.spacing
+				on_hover: menubar_cfg.on_hover_item
+				content:  content
 			)
 		}
 	}
@@ -150,7 +150,7 @@ pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
 // of state management, thus the many comments.
 fn (menubar_cfg MenubarCfg) menu_item_click(cfg &MenuItemCfg, mut e Event, mut w Window) {
 	// setting the focus to the menubar enables mouse hover hightlighting of menu items.
-	// see amend_layout_item
+	// see on_hover_item
 	w.set_id_focus(menubar_cfg.id_focus)
 	// Highlight the menu item
 	w.view_state.menu_state[menubar_cfg.id_focus] = cfg.id
@@ -168,20 +168,12 @@ fn (menubar_cfg MenubarCfg) menu_item_click(cfg &MenuItemCfg, mut e Event, mut w
 	}
 }
 
-fn (cfg &MenubarCfg) amend_layout_item(mut node Layout, mut w Window) {
+fn (cfg &MenubarCfg) on_hover_item(mut node Layout, mut _ Event, mut w Window) {
 	// Mouse hover logic is covered here. Once the **menubar** gains focus,
 	// mouse-overs can change the selected menu-item. Note: Selection
 	// incicates highlighting, not focus. This is key to understanding menus.
-	if !node.shape.draw_clip.is_empty() {
-		ctx := w.context()
-		if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-			if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-				return
-			}
-			if node.shape.id.len == 0 || node.shape.disabled || !w.is_focus(cfg.id_focus) {
-				return
-			}
-			w.view_state.menu_state[cfg.id_focus] = node.shape.id
-		}
+	if node.shape.id.len == 0 || node.shape.disabled || !w.is_focus(cfg.id_focus) {
+		return
 	}
+	w.view_state.menu_state[cfg.id_focus] = node.shape.id
 }

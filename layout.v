@@ -75,9 +75,6 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_disables(mut layout, false)
 	layout_amend(mut layout, mut window)
 	layout_set_draw_clips(mut layout, window.window_rect())
-	// Mouse hovers can't be detected until layout_set_draw_clips()
-	// computes the drawable areas so call layout_amend() again
-	layout_amend(mut layout, mut window)
 	layout_hover(mut layout, mut window)
 }
 
@@ -699,7 +696,21 @@ fn layout_hover(mut node Layout, mut w Window) {
 		}
 		ctx := w.context()
 		if node.shape.point_in_shape(ctx.mouse_pos_x, ctx.mouse_pos_y) {
-			mut ev := Event{}
+			// fake an event to get mouse button states.
+			mut ev := Event{
+				frame_count:   ctx.frame
+				typ:           .invalid
+				modifiers:     unsafe { u32(ctx.key_modifiers) }
+				mouse_button:  unsafe { MouseButton(ctx.mbtn_mask) }
+				mouse_x:       ctx.mouse_pos_x
+				mouse_y:       ctx.mouse_pos_y
+				mouse_dx:      ctx.mouse_dx
+				mouse_dy:      ctx.mouse_dy
+				scroll_x:      ctx.scroll_x
+				scroll_y:      ctx.scroll_y
+				window_width:  ctx.width
+				window_height: ctx.height
+			}
 			node.shape.on_hover(mut node, mut ev, mut w)
 		}
 	}

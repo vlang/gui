@@ -36,6 +36,7 @@ pub fn radio(cfg RadioCfg) View {
 		on_char:      cfg.on_char_button
 		on_click:     cfg.on_click
 		amend_layout: cfg.amend_layout
+		on_hover:     cfg.on_hover
 		content:      [
 			circle(
 				fill:    true
@@ -62,14 +63,8 @@ fn (cfg &RadioCfg) amend_layout(mut node Layout, mut w Window) {
 	if w.is_focus(node.shape.id_focus) {
 		node.shape.color = cfg.color_focus
 	}
+}
 
-	if !node.shape.draw_clip.is_empty() {
-		ctx := w.context()
-		if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-			if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-				return
-			}
-			w.set_mouse_cursor_pointing_hand()
-		}
-	}
+fn (cfg &RadioCfg) on_hover(mut node Layout, mut _ Event, mut w Window) {
+	w.set_mouse_cursor_pointing_hand()
 }

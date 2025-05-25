@@ -1,6 +1,5 @@
 module gui
 
-import gg
 import hash.fnv1a
 
 // SelectCfg configures a [select](#select) (a.k.a drop-down) view.
@@ -117,11 +116,11 @@ pub fn select(cfg SelectCfg) View {
 
 fn option_view(cfg SelectCfg, option string) View {
 	return row(
-		fill:         true
-		padding:      padding(0, pad_small, 0, 1)
-		sizing:       fill_fit
-		spacing:      0
-		content:      [
+		fill:     true
+		padding:  padding(0, pad_small, 0, 1)
+		sizing:   fill_fit
+		spacing:  0
+		content:  [
 			row(
 				spacing: 0
 				padding: pad_tblr(2, 0)
@@ -141,7 +140,7 @@ fn option_view(cfg SelectCfg, option string) View {
 				]
 			),
 		]
-		on_click:     fn [cfg, option] (_ voidptr, mut e Event, mut w Window) {
+		on_click: fn [cfg, option] (_ voidptr, mut e Event, mut w Window) {
 			if cfg.on_select != unsafe { nil } {
 				if !cfg.select_multiple {
 					w.view_state.select_state.clear()
@@ -164,22 +163,14 @@ fn option_view(cfg SelectCfg, option string) View {
 				e.is_handled = true
 			}
 		}
-		amend_layout: fn [cfg] (mut node Layout, mut w Window) {
+		on_hover: fn [cfg] (mut node Layout, mut e Event, mut w Window) {
 			if node.shape.disabled {
 				return
 			}
-			if !node.shape.draw_clip.is_empty() {
-				ctx := w.context()
-				if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-					if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-						return
-					}
-					w.set_mouse_cursor_pointing_hand()
-					node.shape.color = cfg.color_hover
-					if ctx.mouse_buttons == gg.MouseButtons.left {
-						node.shape.color = cfg.color_click
-					}
-				}
+			w.set_mouse_cursor_pointing_hand()
+			node.shape.color = cfg.color_hover
+			if e.mouse_button == .left {
+				node.shape.color = cfg.color_click
 			}
 		}
 	)

@@ -1,7 +1,5 @@
 module gui
 
-import gg
-
 // SwitchCfg a.k.a checkbox. [Switch](#toggle) in its default mode functions and a checkbox.
 // However, there is an option of overriding the `text_selected` and `text_unselected` properties.
 @[heap]
@@ -52,6 +50,7 @@ pub fn switch(cfg SwitchCfg) View {
 		on_char:      cfg.on_char_button
 		on_click:     cfg.on_click
 		amend_layout: cfg.amend_layout
+		on_hover:     cfg.on_hover
 		content:      [
 			row(
 				color:   cfg.color
@@ -83,22 +82,19 @@ fn (cfg &SwitchCfg) on_char_button(_ &SwitchCfg, mut e Event, mut w Window) {
 }
 
 fn (cfg &SwitchCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.shape.disabled || cfg.on_click == unsafe { nil } || node.shape.draw_clip.is_empty() {
+	if node.shape.disabled || cfg.on_click == unsafe { nil } {
 		return
 	}
 	if w.is_focus(node.shape.id_focus) {
 		node.children[0].shape.color = cfg.color_focus
 		node.shape.color = cfg.color_border_focus
 	}
-	ctx := w.context()
-	if node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
-			return
-		}
-		w.set_mouse_cursor_pointing_hand()
-		node.children[0].shape.color = cfg.color_hover
-		if ctx.mouse_buttons == gg.MouseButtons.left {
-			node.children[0].shape.color = cfg.color_click
-		}
+}
+
+fn (cfg &SwitchCfg) on_hover(mut node Layout, mut e Event, mut w Window) {
+	w.set_mouse_cursor_pointing_hand()
+	node.children[0].shape.color = cfg.color_hover
+	if e.mouse_button == .left {
+		node.children[0].shape.color = cfg.color_click
 	}
 }

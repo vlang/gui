@@ -323,7 +323,7 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 }
 
 fn (cfg &InputCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.shape.disabled || !node.shape.draw_clip.is_empty() {
+	if node.shape.disabled {
 		return
 	}
 
