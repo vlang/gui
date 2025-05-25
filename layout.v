@@ -78,6 +78,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	// Mouse hovers can't be detected until layout_set_draw_clips()
 	// computes the drawable areas so call layout_amend() again
 	layout_amend(mut layout, mut window)
+	layout_hover(mut layout, mut window)
 }
 
 // layout_parents sets the parent property of layout
@@ -677,5 +678,29 @@ fn layout_amend(mut node Layout, mut w Window) {
 	}
 	if node.shape.amend_layout != unsafe { nil } {
 		node.shape.amend_layout(mut node, mut w)
+	}
+}
+
+// layout_hover is a convience callback for clients to do hover things.
+// Originally, it was done in layout_amend but it there's a fair bit of
+// boiler plate that this callback hides.
+//
+// Think about moving to render. Would cut down on tree walks
+fn layout_hover(mut node Layout, mut w Window) {
+	for mut child in node.children {
+		layout_hover(mut child, mut w)
+	}
+	if node.shape.on_hover != unsafe { nil } {
+		if node.shape.disabled {
+			return
+		}
+		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
+			return
+		}
+		ctx := w.context()
+		if node.shape.point_in_shape(ctx.mouse_pos_x, ctx.mouse_pos_y) {
+			mut ev := Event{}
+			node.shape.on_hover(mut node, mut ev, mut w)
+		}
 	}
 }

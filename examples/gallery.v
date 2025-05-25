@@ -40,7 +40,7 @@ fn main() {
 	mut window := gui.window(
 		title:   'Gallery'
 		state:   &GalleryApp{}
-		width:   900
+		width:   800
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -59,24 +59,24 @@ fn main_view(mut window gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		spacing: 0
 		content: [
-			tab_bar(mut window),
+			side_bar(mut window),
 			gallery(mut window),
 		]
 	)
 }
 
-fn tab_bar(mut w gui.Window) gui.View {
+fn side_bar(mut w gui.Window) gui.View {
 	mut app := w.state[GalleryApp]()
 	return gui.column(
-		color:   gui.theme().color_2
 		fill:    true
+		color:   gui.theme().color_1
 		sizing:  gui.fit_fill
 		content: [
-			tab_button('Stock', tab_stock, app),
-			tab_button('Icons', tab_icons, app),
-			tab_button('Image', tab_image, app),
-			tab_button('Menus', tab_menus, app),
-			tab_button('Dialogs', tab_dialogs, app),
+			tab_select('Stock', tab_stock, app),
+			tab_select('Icons', tab_icons, app),
+			tab_select('Image', tab_image, app),
+			tab_select('Menus', tab_menus, app),
+			tab_select('Dialogs', tab_dialogs, app),
 			gui.row(sizing: gui.fit_fill),
 			toggle_theme(app),
 		]
@@ -85,53 +85,52 @@ fn tab_bar(mut w gui.Window) gui.View {
 
 fn gallery(mut w gui.Window) gui.View {
 	mut app := w.state[GalleryApp]()
-	content := match app.selected_tab {
-		tab_stock {
-			[buttons(w), inputs(w), toggles(w), progress_bars(w),
-				range_sliders(w), select_drop_down(w), text_sizes_weights(w)]
-		}
-		tab_icons {
-			[icons(mut w)]
-		}
-		tab_image {
-			[image_sample(w)]
-		}
-		tab_menus {
-			[menus(w)]
-		}
-		tab_dialogs {
-			[dialogs(w)]
-		}
-		else {
-			[]gui.View{}
-		}
-	}
 	return gui.column(
-		sizing:  gui.fill_fill
-		padding: gui.padding_none
-		content: [
-			gui.column(
-				id_scroll: scroll_id
-				sizing:    gui.fill_fill
-				spacing:   gui.spacing_large * 2
-				content:   content
-			),
-		]
+		id_scroll: scroll_id
+		sizing:    gui.fill_fill
+		spacing:   gui.spacing_large * 2
+		content:   match app.selected_tab {
+			tab_stock {
+				[buttons(w), inputs(w), toggles(w), progress_bars(w),
+					range_sliders(w), select_drop_down(w), text_sizes_weights(w)]
+			}
+			tab_icons {
+				[icons(mut w)]
+			}
+			tab_image {
+				[image_sample(w)]
+			}
+			tab_menus {
+				[menus(w)]
+			}
+			tab_dialogs {
+				[dialogs(w)]
+			}
+			else {
+				[]gui.View{}
+			}
+		}
 	)
 }
 
-fn tab_button(label string, id_tab int, app &GalleryApp) gui.View {
+fn tab_select(label string, id_tab int, app &GalleryApp) gui.View {
 	color := if app.selected_tab == id_tab { gui.theme().color_5 } else { gui.color_transparent }
 	return gui.row(
-		id_focus:  u32(id_tab)
-		min_width: 100
-		fill:      app.selected_tab == id_tab
 		color:     color
-		content:   [gui.text(text: label)]
+		fill:      app.selected_tab == id_tab
+		min_width: 75
+		max_width: 100
+		padding:   gui.theme().padding_small
+		content:   [gui.text(text: label, mode: .wrap, text_style: gui.theme().b2)]
 		on_click:  fn [id_tab] (_ voidptr, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[GalleryApp]()
 			app.selected_tab = id_tab
 			w.scroll_vertical_to(scroll_id, 0)
+		}
+		on_hover:  fn (mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			node.shape.fill = true
+			node.shape.color = gui.theme().color_3
+			w.set_mouse_cursor_pointing_hand()
 		}
 	)
 }
@@ -415,7 +414,6 @@ fn toggles(w &gui.Window) gui.View {
 		content: [
 			view_title('Toggle, Radio and Switch'),
 			gui.row(
-				sizing:  gui.fill_fit
 				content: [
 					toggle_row('toggle (a.k.a. checkbox)', gui.toggle(
 						selected: app.select_checkbox
@@ -432,6 +430,17 @@ fn toggles(w &gui.Window) gui.View {
 							app.select_toggle = !app.select_toggle
 						}
 					)),
+					toggle_row('switch ', gui.switch(
+						selected: app.select_switch
+						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[GalleryApp]()
+							app.select_switch = !app.select_switch
+						}
+					)),
+				]
+			),
+			gui.row(
+				content: [
 					gui.column(
 						padding: gui.padding_none
 						content: [
@@ -446,13 +455,6 @@ fn toggles(w &gui.Window) gui.View {
 							)),
 						]
 					),
-					toggle_row('switch ', gui.switch(
-						selected: app.select_switch
-						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[GalleryApp]()
-							app.select_switch = !app.select_switch
-						}
-					)),
 				]
 			),
 		]
@@ -463,6 +465,7 @@ fn toggle_row(label string, button gui.View) gui.View {
 	return gui.row(
 		h_align: .center
 		v_align: .middle
+		padding: gui.padding_none
 		content: [
 			gui.row(
 				padding: gui.padding_none
@@ -475,29 +478,24 @@ fn toggle_row(label string, button gui.View) gui.View {
 
 fn toggle_row_radio(label string, id string, button gui.View) gui.View {
 	return gui.row(
-		id:           id
-		padding:      gui.padding_none
-		h_align:      .center
-		v_align:      .middle
-		content:      [
+		id:       id
+		padding:  gui.padding_none
+		h_align:  .center
+		v_align:  .middle
+		content:  [
 			gui.row(
 				padding: gui.padding_none
 				content: [button]
 			),
 			gui.text(text: label),
 		]
-		on_click:     fn (cfg &gui.ContainerCfg, mut e gui.Event, mut w gui.Window) {
+		on_click: fn (cfg &gui.ContainerCfg, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[GalleryApp]()
 			app.select_radio = cfg.id
 			e.is_handled = true
 		}
-		amend_layout: fn (mut node gui.Layout, mut w gui.Window) {
-			ctx := w.context()
-			if !node.shape.disabled
-				&& node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y))
-				&& !w.dialog_is_visible() {
-				w.set_mouse_cursor_pointing_hand()
-			}
+		on_hover: fn (mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			w.set_mouse_cursor_pointing_hand()
 		}
 	)
 }
@@ -942,7 +940,7 @@ fn select_drop_down(w &gui.Window) gui.View {
 }
 
 fn select_samples(w &gui.Window) gui.View {
-	width := 300
+	width := 250
 	app := w.state[GalleryApp]()
 	return gui.row(
 		content: [
@@ -1246,6 +1244,8 @@ fn icons(mut w gui.Window) gui.View {
 			view_title('Icons (Font)'),
 			gui.row(
 				sizing:  gui.fill_fit
+				spacing: 0
+				padding: gui.padding_none
 				content: [icon_catalog(mut w)]
 			),
 		]
@@ -1279,6 +1279,7 @@ fn icon_catalog(mut w gui.Window) gui.View {
 		}
 		all_icons << gui.row(
 			spacing: 0
+			padding: gui.padding_none
 			content: icons
 		)
 	}

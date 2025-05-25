@@ -66,7 +66,8 @@ pub mut:
 	on_mouse_up_shape     fn (&Shape, mut Event, mut Window) = unsafe { nil }
 	on_mouse_scroll_shape fn (&Shape, mut Event, mut Window) = unsafe { nil }
 	// amend_layout called after all other layout operations complete
-	amend_layout fn (mut Layout, mut Window) = unsafe { nil }
+	amend_layout fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover     fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.

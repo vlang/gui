@@ -1,7 +1,7 @@
 module gui
 
 @[heap]
-pub struct ImageView implements View {
+struct ImageView implements View {
 pub:
 	id         string
 	file_name  string
@@ -13,6 +13,8 @@ pub:
 	max_height f32
 	invisible  bool
 	cfg        &ImageCfg
+	on_click   fn (&ImageCfg, mut Event, mut Window)  = unsafe { nil }
+	on_hover   fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 mut:
 	content []View // not used
 }
@@ -29,6 +31,8 @@ pub:
 	max_width  f32
 	max_height f32
 	invisible  bool
+	on_click   fn (&ImageCfg, mut Event, mut Window)  = unsafe { nil }
+	on_hover   fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 }
 
 fn (iv &ImageView) generate(mut window Window) Layout {
@@ -53,6 +57,8 @@ fn (iv &ImageView) generate(mut window Window) Layout {
 			height:     height
 			min_height: iv.min_height
 			cfg:        iv.cfg
+			on_click:   iv.on_click
+			on_hover:   iv.on_hover
 		}
 	}
 	return layout
@@ -68,5 +74,7 @@ pub fn image(cfg ImageCfg) ImageView {
 		min_height: cfg.min_height
 		invisible:  cfg.invisible
 		cfg:        &cfg
+		on_click:   cfg.on_click
+		on_hover:   cfg.on_hover
 	}
 }

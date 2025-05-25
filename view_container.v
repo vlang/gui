@@ -34,13 +34,14 @@ pub:
 	float_tie_off   FloatAttach
 	float_offset_x  f32
 	float_offset_y  f32
-	on_char         fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_click        fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_keydown      fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_down   fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_move   fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_up     fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	amend_layout    fn (mut Layout, mut Window)         = unsafe { nil }
+	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_down   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 mut:
 	shape_type ShapeType = .rectangle
 	axis       Axis
@@ -95,6 +96,7 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 			on_keydown:     cv.on_keydown
 			on_mouse_move:  cv.on_mouse_move
 			on_mouse_up:    cv.on_mouse_up
+			on_hover:       cv.on_hover
 			amend_layout:   cv.amend_layout
 		}
 	}
@@ -139,12 +141,13 @@ pub:
 	float_tie_off   FloatAttach
 	float_offset_x  f32
 	float_offset_y  f32
-	on_char         fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_click        fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_keydown      fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_move   fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	on_mouse_up     fn (voidptr, mut Event, mut Window) = unsafe { nil }
-	amend_layout    fn (mut Layout, mut Window)         = unsafe { nil }
+	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	content         []View
 }
 
@@ -207,6 +210,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 		on_keydown:      cfg.on_keydown
 		on_mouse_move:   cfg.on_mouse_move
 		on_mouse_up:     cfg.on_mouse_up
+		on_hover:        cfg.on_hover
 		amend_layout:    cfg.amend_layout
 		content:         content
 	}
