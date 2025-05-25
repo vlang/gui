@@ -56,6 +56,7 @@ fn main_view(window &gui.Window) gui.View {
 fn radio_label(label string, id string, id_focus u32, mut app RadioButtonGroupApp) gui.View {
 	return gui.row(
 		id_focus:     id_focus
+		radius:       0
 		padding:      gui.padding_two_five
 		on_click:     fn [mut app, id] (_ voidptr, mut _e gui.Event, mut w gui.Window) {
 			app.selected_id = id
