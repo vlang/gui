@@ -2,19 +2,19 @@ import gui
 
 // Radio button group
 // =============================
-// How to do radio button group with clickable labels and keyboard navigation
 
 @[heap]
 struct RadioButtonGroupApp {
 pub mut:
-	selected_id string = 'ny'
+	selected_value string = 'ny'
 }
 
 fn main() {
 	mut window := gui.window(
+		title:   'Radio Button Groups'
 		state:   &RadioButtonGroupApp{}
-		width:   300
-		height:  300
+		width:   600
+		height:  400
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 			w.set_id_focus(1)
@@ -36,48 +36,36 @@ fn main_view(window &gui.Window) gui.View {
 		spacing: gui.theme().spacing_large
 		content: [
 			instructions(),
-			gui.column(
-				text:    ' Radio Group '
-				color:   gui.theme().color_5
-				padding: gui.theme().padding_large
-				content: [
-					radio_label('New York', 'ny', 1, mut app),
-					radio_label('Detroit', 'dtw', 2, mut app),
-					radio_label('Chicago', 'chi', 3, mut app),
-					radio_label('Los Angeles', 'la', 4, mut app),
+			gui.radio_button_group_row(
+				title:     'City Group'
+				value:     app.selected_value
+				options:   [
+					gui.radio_option('New York', 'ny', 1), // label, value, id_focus
+					gui.radio_option('Detroit', 'dtw', 2),
+					gui.radio_option('Chicago', 'chi', 3),
+					gui.radio_option('Los Angeles', 'la', 4),
 				]
+				on_select: fn [mut app] (value string) {
+					app.selected_value = value
+				}
+				window:    window
 			),
-		]
-	)
-}
-
-// Simply wrap the radio button and text in a row and add some event handlers.
-// In this way, you get total control over the look and feel.
-fn radio_label(label string, id string, id_focus u32, mut app RadioButtonGroupApp) gui.View {
-	return gui.row(
-		id_focus:     id_focus
-		radius:       0
-		padding:      gui.padding_two_five
-		on_click:     fn [mut app, id] (_ voidptr, mut _e gui.Event, mut w gui.Window) {
-			app.selected_id = id
-		}
-		on_char:      fn [mut app, id] (_ voidptr, mut e gui.Event, mut w gui.Window) {
-			if e.char_code == ` ` {
-				app.selected_id = id
-			}
-		}
-		amend_layout: fn (mut node gui.Layout, mut w gui.Window) {
-			// color the rectangle to indicate focus
-			if w.is_focus(node.shape.id_focus) {
-				node.shape.color = gui.theme().color_5
-			}
-		}
-		on_hover:     fn (mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			w.set_mouse_cursor_pointing_hand()
-		}
-		content:      [
-			gui.radio(selected: id == app.selected_id),
-			gui.text(text: label),
+			// Intentionally using the same data/focus id to show vertical
+			// and horizontal side-by-side
+			gui.radio_button_group_column(
+				title:     'City Group'
+				value:     app.selected_value
+				options:   [
+					gui.radio_option('New York', 'ny', 1),
+					gui.radio_option('Detroit', 'dtw', 2),
+					gui.radio_option('Chicago', 'chi', 3),
+					gui.radio_option('Los Angeles', 'la', 4),
+				]
+				on_select: fn [mut app] (value string) {
+					app.selected_value = value
+				}
+				window:    window
+			),
 		]
 	)
 }
