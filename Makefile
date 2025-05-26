@@ -7,6 +7,7 @@ doc:
 	v doc -f html -inline-assets -readme -o ./doc/html .
 	mv README.xx README.md
 	rm nl
+	cp gui.png doc/html
 
 read:
 	open doc/html/gui.html

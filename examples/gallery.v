@@ -422,21 +422,23 @@ fn toggles(w &gui.Window) gui.View {
 			view_title('Toggle, Switch, and Radio Button Group'),
 			gui.row(
 				content: [
-					toggle_row('toggle (a.k.a. checkbox)', gui.toggle(
+					gui.toggle(
+						label:    'toggle (a.k.a. checkbox)'
 						selected: app.select_checkbox
 						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[GalleryApp]()
 							app.select_checkbox = !app.select_checkbox
 						}
-					)),
-					toggle_row('toggle with custom text', gui.toggle(
+					),
+					gui.toggle(
+						label:         'toggle with custom text'
 						selected:      app.select_toggle
 						text_selected: 'X'
 						on_click:      fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[GalleryApp]()
 							app.select_toggle = !app.select_toggle
 						}
-					)),
+					),
 					toggle_row('switch ', gui.switch(
 						selected: app.select_switch
 						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {

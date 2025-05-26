@@ -9,6 +9,7 @@ pub:
 	id_focus           u32
 	disabled           bool
 	invisible          bool
+	label              string
 	text_selected      string = '✓'
 	text_unselected    string = ' '
 	selected           bool
@@ -34,7 +35,9 @@ pub fn toggle(cfg ToggleCfg) View {
 	color := if cfg.selected { cfg.color_selected } else { cfg.color }
 	txt := if cfg.selected { cfg.text_selected } else { cfg.text_unselected }
 
-	return row(
+	mut content := []View{}
+
+	content << row(
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		color:        cfg.color_border
@@ -46,10 +49,7 @@ pub fn toggle(cfg ToggleCfg) View {
 		min_width:    gui_theme.n3.size
 		min_height:   gui_theme.n3.size
 		cfg:          &cfg
-		on_char:      cfg.on_char_button
-		on_click:     cfg.on_click
 		amend_layout: cfg.amend_layout
-		on_hover:     cfg.on_hover
 		content:      [
 			row(
 				color:   color
@@ -67,6 +67,18 @@ pub fn toggle(cfg ToggleCfg) View {
 				]
 			),
 		]
+	)
+
+	if cfg.label.len > 0 {
+		content << text(text: cfg.label, text_style: cfg.text_style)
+	}
+
+	return row(
+		padding:  padding_none
+		on_char:  cfg.on_char_button
+		on_click: cfg.on_click
+		on_hover: cfg.on_hover
+		content:  content
 	)
 }
 
@@ -89,8 +101,8 @@ fn (cfg &ToggleCfg) amend_layout(mut node Layout, mut w Window) {
 
 fn (cfg &ToggleCfg) on_hover(mut node Layout, mut e Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
-	node.children[0].shape.color = cfg.color_hover
+	node.children[0].children[0].shape.color = cfg.color_hover
 	if e.mouse_button == .left {
-		node.children[0].shape.color = cfg.color_click
+		node.children[0].children[0].shape.color = cfg.color_click
 	}
 }
