@@ -11,6 +11,7 @@ pub:
 	height             f32 = gui_theme.n2.size
 	disabled           bool
 	invisible          bool
+	label              string
 	selected           bool
 	fill               bool    = gui_theme.switch_style.fill
 	fill_border        bool    = gui_theme.switch_style.fill_border
@@ -34,7 +35,8 @@ pub fn switch(cfg SwitchCfg) View {
 	color := if cfg.selected { cfg.color_selected } else { cfg.color_unselected }
 	circle_size := cfg.height - cfg.padding.height() - cfg.padding_border.height()
 
-	return row(
+	mut content := []View{}
+	content << row(
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		width:        cfg.width
@@ -48,9 +50,7 @@ pub fn switch(cfg SwitchCfg) View {
 		invisible:    cfg.invisible
 		cfg:          &cfg
 		on_char:      cfg.on_char_button
-		on_click:     cfg.on_click
 		amend_layout: cfg.amend_layout
-		on_hover:     cfg.on_hover
 		content:      [
 			row(
 				color:   cfg.color
@@ -71,6 +71,15 @@ pub fn switch(cfg SwitchCfg) View {
 				]
 			),
 		]
+	)
+	if cfg.label.len > 0 {
+		content << text(text: cfg.label)
+	}
+	return row(
+		padding:  padding_none
+		on_click: cfg.on_click
+		on_hover: cfg.on_hover
+		content:  content
 	)
 }
 
@@ -93,8 +102,8 @@ fn (cfg &SwitchCfg) amend_layout(mut node Layout, mut w Window) {
 
 fn (cfg &SwitchCfg) on_hover(mut node Layout, mut e Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
-	node.children[0].shape.color = cfg.color_hover
+	node.children[0].children[0].shape.color = cfg.color_hover
 	if e.mouse_button == .left {
-		node.children[0].shape.color = cfg.color_click
+		node.children[0].children[0].shape.color = cfg.color_click
 	}
 }

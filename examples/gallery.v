@@ -439,13 +439,14 @@ fn toggles(w &gui.Window) gui.View {
 							app.select_toggle = !app.select_toggle
 						}
 					),
-					toggle_row('switch ', gui.switch(
+					gui.switch(
+						label:    'switch'
 						selected: app.select_switch
 						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[GalleryApp]()
 							app.select_switch = !app.select_switch
 						}
-					)),
+					),
 				]
 			),
 			gui.row(
@@ -472,21 +473,6 @@ fn toggles(w &gui.Window) gui.View {
 					),
 				]
 			),
-		]
-	)
-}
-
-fn toggle_row(label string, button gui.View) gui.View {
-	return gui.row(
-		h_align: .center
-		v_align: .middle
-		padding: gui.padding_none
-		content: [
-			gui.row(
-				padding: gui.padding_none
-				content: [button]
-			),
-			gui.text(text: label),
 		]
 	)
 }

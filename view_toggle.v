@@ -49,6 +49,7 @@ pub fn toggle(cfg ToggleCfg) View {
 		min_width:    gui_theme.n3.size
 		min_height:   gui_theme.n3.size
 		cfg:          &cfg
+		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout
 		content:      [
 			row(
@@ -75,7 +76,6 @@ pub fn toggle(cfg ToggleCfg) View {
 
 	return row(
 		padding:  padding_none
-		on_char:  cfg.on_char_button
 		on_click: cfg.on_click
 		on_hover: cfg.on_hover
 		content:  content
