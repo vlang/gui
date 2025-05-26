@@ -24,7 +24,7 @@ pub mut:
 	// toggles
 	select_toggle   bool
 	select_checkbox bool
-	select_radio    string
+	select_city     string
 	select_switch   bool
 	// menu
 	selected_menu_id string
@@ -408,11 +408,18 @@ fn text_sizes_weights(w &gui.Window) gui.View {
 
 fn toggles(w &gui.Window) gui.View {
 	mut app := w.state[GalleryApp]()
+	options := [
+		gui.radio_option('New York', 'ny'),
+		gui.radio_option('Detroit', 'dtw'),
+		gui.radio_option('Chicago', 'chi'),
+		gui.radio_option('Los Angeles', 'la'),
+	]
+
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [
-			view_title('Toggle, Radio and Switch'),
+			view_title('Toggle, Switch, and Radio Button Group'),
 			gui.row(
 				content: [
 					toggle_row('toggle (a.k.a. checkbox)', gui.toggle(
@@ -441,19 +448,25 @@ fn toggles(w &gui.Window) gui.View {
 			),
 			gui.row(
 				content: [
-					gui.column(
-						padding: gui.padding_none
-						content: [
-							toggle_row_radio('radio button A', 'radio_a', gui.radio(
-								selected: app.select_radio == 'radio_a'
-							)),
-							toggle_row_radio('radio button B', 'radio_b', gui.radio(
-								selected: app.select_radio == 'radio_b'
-							)),
-							toggle_row_radio('radio button C', 'radio_c', gui.radio(
-								selected: app.select_radio == 'radio_c'
-							)),
-						]
+					gui.radio_button_group_column(
+						title:     'City Group'
+						value:     app.select_city
+						options:   options
+						on_select: fn [mut app] (value string) {
+							app.select_city = value
+						}
+						window:    w
+					),
+					// Intentionally using the same data/focus id to show vertical
+					// and horizontal side-by-side
+					gui.radio_button_group_row(
+						title:     'City Group'
+						value:     app.select_city
+						options:   options
+						on_select: fn [mut app] (value string) {
+							app.select_city = value
+						}
+						window:    w
 					),
 				]
 			),
@@ -473,30 +486,6 @@ fn toggle_row(label string, button gui.View) gui.View {
 			),
 			gui.text(text: label),
 		]
-	)
-}
-
-fn toggle_row_radio(label string, id string, button gui.View) gui.View {
-	return gui.row(
-		id:       id
-		padding:  gui.padding_none
-		h_align:  .center
-		v_align:  .middle
-		content:  [
-			gui.row(
-				padding: gui.padding_none
-				content: [button]
-			),
-			gui.text(text: label),
-		]
-		on_click: fn (cfg &gui.ContainerCfg, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[GalleryApp]()
-			app.select_radio = cfg.id
-			e.is_handled = true
-		}
-		on_hover: fn (mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			w.set_mouse_cursor_pointing_hand()
-		}
 	)
 }
 

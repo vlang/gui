@@ -54,7 +54,7 @@ pub fn (p Padding) is_none() bool {
 	return !test
 }
 
-// pad_4 creates a padding with all 4 sides set to the `p` parameter
+// pad_all creates a padding with all 4 sides set to the `p` parameter
 pub fn pad_all(p f32) Padding {
 	return Padding{p, p, p, p}
 }

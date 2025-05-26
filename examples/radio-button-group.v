@@ -28,6 +28,13 @@ fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 	mut app := window.state[RadioButtonGroupApp]()
 
+	options := [
+		gui.radio_option('New York', 'ny'), // label, value,
+		gui.radio_option('Detroit', 'dtw'),
+		gui.radio_option('Chicago', 'chi'),
+		gui.radio_option('Los Angeles', 'la'),
+	]
+
 	return gui.column(
 		width:   w
 		height:  h
@@ -39,12 +46,8 @@ fn main_view(window &gui.Window) gui.View {
 			gui.radio_button_group_row(
 				title:     'City Group'
 				value:     app.selected_value
-				options:   [
-					gui.radio_option('New York', 'ny', 1), // label, value, id_focus
-					gui.radio_option('Detroit', 'dtw', 2),
-					gui.radio_option('Chicago', 'chi', 3),
-					gui.radio_option('Los Angeles', 'la', 4),
-				]
+				options:   options
+				id_focus:  100
 				on_select: fn [mut app] (value string) {
 					app.selected_value = value
 				}
@@ -55,12 +58,8 @@ fn main_view(window &gui.Window) gui.View {
 			gui.radio_button_group_column(
 				title:     'City Group'
 				value:     app.selected_value
-				options:   [
-					gui.radio_option('New York', 'ny', 1),
-					gui.radio_option('Detroit', 'dtw', 2),
-					gui.radio_option('Chicago', 'chi', 3),
-					gui.radio_option('Los Angeles', 'la', 4),
-				]
+				options:   options
+				id_focus:  100
 				on_select: fn [mut app] (value string) {
 					app.selected_value = value
 				}
