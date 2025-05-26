@@ -7,6 +7,7 @@ pub:
 	id_focus         u32
 	disabled         bool
 	invisible        bool
+	label            string
 	selected         bool
 	size             f32     = gui_theme.n3.size
 	color            Color   = gui_theme.radio_style.color
@@ -19,25 +20,21 @@ pub:
 }
 
 pub fn radio(cfg RadioCfg) View {
-	return circle(
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		width:        cfg.size
-		height:       cfg.size
-		color:        cfg.color_border
-		padding:      cfg.padding
-		fill:         false
-		disabled:     cfg.disabled
-		invisible:    cfg.invisible
-		sizing:       fixed_fixed
-		h_align:      .center
-		v_align:      .middle
-		cfg:          &cfg
-		on_char:      cfg.on_char_button
-		on_click:     cfg.on_click
-		amend_layout: cfg.amend_layout
-		on_hover:     cfg.on_hover
-		content:      [
+	mut content := []View{}
+	content << circle(
+		width:     cfg.size
+		height:    cfg.size
+		color:     cfg.color_border
+		padding:   cfg.padding
+		fill:      false
+		disabled:  cfg.disabled
+		invisible: cfg.invisible
+		sizing:    fixed_fixed
+		h_align:   .center
+		v_align:   .middle
+		cfg:       &cfg
+		on_char:   cfg.on_char_button
+		content:   [
 			circle(
 				fill:    true
 				color:   if cfg.selected { cfg.color_selected } else { cfg.color_unselected }
@@ -46,6 +43,20 @@ pub fn radio(cfg RadioCfg) View {
 				height:  cfg.size - cfg.padding.height()
 			),
 		]
+	)
+
+	if cfg.label.len > 0 {
+		content << text(text: cfg.label)
+	}
+
+	return row(
+		id:           cfg.id
+		id_focus:     cfg.id_focus
+		padding:      padding_none
+		on_click:     cfg.on_click
+		amend_layout: cfg.amend_layout
+		on_hover:     cfg.on_hover
+		content:      content
 	)
 }
 
@@ -61,7 +72,7 @@ fn (cfg &RadioCfg) amend_layout(mut node Layout, mut w Window) {
 		return
 	}
 	if w.is_focus(node.shape.id_focus) {
-		node.shape.color = cfg.color_focus
+		node.children[0].shape.color = cfg.color_focus
 	}
 }
 

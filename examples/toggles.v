@@ -46,52 +46,41 @@ fn main_view(window &gui.Window) gui.View {
 			gui.column(
 				color:   gui.theme().color_2
 				content: [
-					toggle_row('toggle (default)', gui.toggle(
+					gui.toggle(
+						label:    'toggle (default)'
 						selected: app.select_checkbox
 						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_checkbox = !app.select_checkbox
 						}
-					)),
-					toggle_row('toggle (custom text)', gui.toggle(
+					),
+					gui.toggle(
+						label:         'toggle (custom text)'
 						selected:      app.select_toggle
 						text_selected: 'X'
 						on_click:      fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_toggle = !app.select_toggle
 						}
-					)),
-					toggle_row('radio button', gui.radio(
+					),
+					gui.radio(
+						label:    'radio button'
 						selected: app.select_radio
 						on_click: fn (_ &gui.RadioCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_radio = !app.select_radio
 						}
-					)),
-					toggle_row('switch ', gui.switch(
+					),
+					gui.switch(
+						label:    'switch '
 						selected: app.select_switch
 						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_switch = !app.select_switch
 						}
-					)),
+					),
 				]
 			),
-		]
-	)
-}
-
-fn toggle_row(label string, button gui.View) gui.View {
-	return gui.row(
-		h_align: .center
-		v_align: .middle
-		content: [
-			gui.row(
-				min_width: 40
-				padding:   gui.padding_none
-				content:   [button]
-			),
-			gui.text(text: label),
 		]
 	)
 }

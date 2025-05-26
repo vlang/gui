@@ -24,7 +24,7 @@ pub mut:
 	// toggles
 	select_toggle   bool
 	select_checkbox bool
-	select_city     string
+	select_city     string = 'ny'
 	select_switch   bool
 	// menu
 	selected_menu_id string
@@ -410,8 +410,8 @@ fn toggles(w &gui.Window) gui.View {
 	mut app := w.state[GalleryApp]()
 	options := [
 		gui.radio_option('New York', 'ny'),
-		gui.radio_option('Detroit', 'dtw'),
 		gui.radio_option('Chicago', 'chi'),
+		gui.radio_option('Denver', 'den'),
 		gui.radio_option('Los Angeles', 'la'),
 	]
 
@@ -452,7 +452,8 @@ fn toggles(w &gui.Window) gui.View {
 			gui.row(
 				content: [
 					gui.radio_button_group_column(
-						title:     'City Group'
+						title:     'Time Zone'
+						id_focus:  3000
 						value:     app.select_city
 						options:   options
 						on_select: fn [mut app] (value string) {
@@ -461,9 +462,10 @@ fn toggles(w &gui.Window) gui.View {
 						window:    w
 					),
 					// Intentionally using the same data/focus id to show vertical
-					// and horizontal side-by-side
+					// and horizontal differences side-by-side
 					gui.radio_button_group_row(
-						title:     'City Group'
+						title:     'Time Zone'
+						id_focus:  3000
 						value:     app.select_city
 						options:   options
 						on_select: fn [mut app] (value string) {
