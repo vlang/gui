@@ -116,7 +116,8 @@ examples of how to write an app (they’re fun to run however).
 
 The `Makefile` at the root of the project builds documentation from the
 source code. Type `make doc` to produce the documention and `make read`
-to open the documention in the browser.
+to open the documention in the browser. `make doc` incorporates the
+hand written documentation below making it a handy one-stop page.
 
 There is also some hand written documentation in the `/doc` folder
 labled `01 Introduction.md`, `02 Getting Started.md`, etc. The

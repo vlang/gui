@@ -1,4 +1,6 @@
-# Views
+----------
+# 3 Views
+----------
 
 A view is the only UI building block. Every checkbox, menu, button, etc.
 is a view. Interestingly, there are only three basic types of views,
@@ -30,6 +32,7 @@ Spacing is the space between the container\'s contents. For rows, it is
 the horizontal space between the container\'s content items. For
 columns, it is the vertical space between content items.
 
+```
       Container (row)
     +---------------------------------------------+
     |                 Padding Top                 |
@@ -49,6 +52,7 @@ columns, it is the vertical space between content items.
     |   +----------------+   +----------------+ t |
     |                Padding Bottom               |
     +---------------------------------------------+
+```
 
 Sizing is perhaps the most challenging to understand. There are three
 types of sizing, `fit`, `fill` and `fixed`. Fit sizing sized the

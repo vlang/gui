@@ -1,4 +1,6 @@
-# Introduction
+-----------------
+# 1 Introduction
+-----------------
 
 GUI is a flex-box style UI framework written in [V](https://vlang.io),
 with declarative syntax and microsecond performance. If that sounds like

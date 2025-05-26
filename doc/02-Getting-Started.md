@@ -1,4 +1,6 @@
-# Getting Started
+--------------------
+# 2 Getting Started
+--------------------
 
 GUI is a flex-box-like layout system. Instead of specifying x, y, width,
 and height coordinates, views are specified relative to each other and

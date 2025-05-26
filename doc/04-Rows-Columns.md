@@ -1,3 +1,7 @@
+---------------------
+# 4 Rows and Columns
+---------------------
+
 The two primary building blocks in Gui are `rows` and `columns`. Rows
 stack their children horizontally, left-to-right and columns stack their
 children top-to-bottom. From these two containers the entirety of the
