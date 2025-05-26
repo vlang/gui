@@ -3,6 +3,8 @@ import gui
 // Icon Font Demo
 // =============================
 
+const side_panel_width = 125
+
 @[heap]
 struct IconFontApp {
 mut:
@@ -14,7 +16,7 @@ fn main() {
 	mut window := gui.window(
 		title:   'Icon Font'
 		state:   &IconFontApp{}
-		width:   800
+		width:   825
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -33,7 +35,7 @@ fn main_view(mut window gui.Window) gui.View {
 		width:   w
 		height:  h
 		sizing:  gui.fixed_fixed
-		h_align: .center
+		spacing: 0
 		content: [
 			side_panel(mut window),
 			icon_catalog(mut window),
@@ -80,10 +82,12 @@ fn icon_catalog(mut w gui.Window) gui.View {
 			content: icons
 		)
 	}
+	ws, _ := w.window_size()
 
 	return gui.column(
 		id_focus:  1
 		id_scroll: 1
+		max_width: ws - side_panel_width
 		spacing:   gui.spacing_large
 		sizing:    gui.fill_fill
 		padding:   gui.padding_medium
@@ -118,7 +122,8 @@ fn side_panel(mut w gui.Window) gui.View {
 	return gui.column(
 		color:   gui.theme().color_2
 		fill:    true
-		sizing:  gui.fit_fill
+		sizing:  gui.fixed_fill
+		width:   side_panel_width
 		padding: gui.theme().padding_large
 		content: [
 			gui.radio_button_group_column(
