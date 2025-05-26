@@ -16,22 +16,22 @@ pub:
 	disabled       bool
 	invisible      bool
 	sizing         Sizing
-	size           f32                             = gui_theme.range_slider_style.size
-	thumb_size     f32                             = gui_theme.range_slider_style.thumb_size
-	fill           bool                            = gui_theme.range_slider_style.fill
-	fill_border    bool                            = gui_theme.range_slider_style.fill_border
-	color          Color                           = gui_theme.range_slider_style.color
-	color_border   Color                           = gui_theme.range_slider_style.color_border
-	color_thumb    Color                           = gui_theme.range_slider_style.color_thumb
-	color_focus    Color                           = gui_theme.range_slider_style.color_focus
-	color_hover    Color                           = gui_theme.range_slider_style.color_hover
-	color_left     Color                           = gui_theme.range_slider_style.color_left
-	color_click    Color                           = gui_theme.range_slider_style.color_click
-	padding        Padding                         = gui_theme.range_slider_style.padding
-	padding_border Padding                         = gui_theme.range_slider_style.padding_border
-	radius         f32                             = gui_theme.range_slider_style.radius
-	radius_border  f32                             = gui_theme.range_slider_style.radius_border
-	on_change      fn (f32, mut Event, mut Window) = unsafe { nil }
+	size           f32     = gui_theme.range_slider_style.size
+	thumb_size     f32     = gui_theme.range_slider_style.thumb_size
+	fill           bool    = gui_theme.range_slider_style.fill
+	fill_border    bool    = gui_theme.range_slider_style.fill_border
+	color          Color   = gui_theme.range_slider_style.color
+	color_border   Color   = gui_theme.range_slider_style.color_border
+	color_thumb    Color   = gui_theme.range_slider_style.color_thumb
+	color_focus    Color   = gui_theme.range_slider_style.color_focus
+	color_hover    Color   = gui_theme.range_slider_style.color_hover
+	color_left     Color   = gui_theme.range_slider_style.color_left
+	color_click    Color   = gui_theme.range_slider_style.color_click
+	padding        Padding = gui_theme.range_slider_style.padding
+	padding_border Padding = gui_theme.range_slider_style.padding_border
+	radius         f32     = gui_theme.range_slider_style.radius
+	radius_border  f32     = gui_theme.range_slider_style.radius_border
+	on_change      fn (f32, mut Event, mut Window) @[required]
 }
 
 pub fn range_slider(cfg RangeSliderCfg) View {

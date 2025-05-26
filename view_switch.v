@@ -28,7 +28,7 @@ pub:
 	radius             f32       = gui_theme.switch_style.radius
 	radius_border      f32       = gui_theme.switch_style.radius_border
 	text_style         TextStyle = gui_theme.switch_style.text_style
-	on_click           fn (&SwitchCfg, mut Event, mut Window) = unsafe { nil }
+	on_click           fn (&SwitchCfg, mut Event, mut Window) @[required]
 }
 
 // toggle creates a toggle button (a.k.a checkbox) from the given [SwitchCfg](#SwitchCfg)

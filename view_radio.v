@@ -17,7 +17,7 @@ pub:
 	color_unselected Color     = gui_theme.radio_style.color_unselected
 	padding          Padding   = gui_theme.radio_style.padding
 	text_style       TextStyle = gui_theme.radio_style.text_style
-	on_click         fn (&RadioCfg, mut Event, mut Window) = unsafe { nil }
+	on_click         fn (&RadioCfg, mut Event, mut Window) @[required]
 }
 
 pub fn radio(cfg RadioCfg) View {

@@ -29,7 +29,7 @@ pub:
 	radius_border      f32       = gui_theme.select_style.radius_border
 	subheading_style   TextStyle = gui_theme.select_style.subheading_style
 	placeholder_style  TextStyle = gui_theme.select_style.placeholder_style
-	on_select          fn ([]string, mut Event, mut Window) = unsafe { nil }
+	on_select          fn ([]string, mut Event, mut Window) @[required]
 	options            []string
 }
 

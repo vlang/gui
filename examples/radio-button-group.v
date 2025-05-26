@@ -48,7 +48,7 @@ fn main_view(window &gui.Window) gui.View {
 				value:     app.selected_value
 				options:   options
 				id_focus:  100
-				on_select: fn [mut app] (value string) {
+				on_select: fn [mut app] (value string, mut _ gui.Window) {
 					app.selected_value = value
 				}
 				window:    window
@@ -60,7 +60,7 @@ fn main_view(window &gui.Window) gui.View {
 				value:     app.selected_value
 				options:   options
 				id_focus:  100
-				on_select: fn [mut app] (value string) {
+				on_select: fn [mut app] (value string, mut _ gui.Window) {
 					app.selected_value = value
 				}
 				window:    window

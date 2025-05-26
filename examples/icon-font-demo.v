@@ -121,36 +121,24 @@ fn side_panel(mut w gui.Window) gui.View {
 		sizing:  gui.fit_fill
 		padding: gui.theme().padding_large
 		content: [
-			radio_row('tiny', mut app),
-			radio_row('small', mut app),
-			radio_row('medium', mut app),
-			radio_row('large', mut app),
-			radio_row('x-large', mut app),
+			gui.radio_button_group_column(
+				options:   [
+					gui.radio_option('tiny', 'tiny'),
+					gui.radio_option('small', 'small'),
+					gui.radio_option('medium', 'medium'),
+					gui.radio_option('large', 'large'),
+					gui.radio_option('x-large', 'x-large'),
+				]
+				value:     app.selected_size
+				on_select: fn [mut app] (value string, mut _ gui.Window) {
+					app.selected_size = value
+				}
+				window:    w
+			),
 			gui.column(sizing: gui.fill_fill),
 			toggle_theme(app),
 		]
 	)
-}
-
-fn radio_row(id string, mut app IconFontApp) gui.View {
-	return gui.row(
-		id:       id
-		on_click: row_click
-		on_hover: row_hover
-		content:  [
-			gui.radio(selected: app.selected_size == id),
-			gui.text(text: id),
-		]
-	)
-}
-
-fn row_click(cfg &gui.ContainerCfg, mut e gui.Event, mut w gui.Window) {
-	mut app := w.state[IconFontApp]()
-	app.selected_size = cfg.id
-}
-
-fn row_hover(mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
-	w.set_mouse_cursor_pointing_hand()
 }
 
 fn toggle_theme(app &IconFontApp) gui.View {

@@ -28,7 +28,7 @@ pub:
 	options   []RadioOption
 	value     string
 	id_focus  u32
-	on_select fn (string) @[required]
+	on_select fn (string, mut Window) @[required]
 	window    &Window
 }
 
@@ -78,7 +78,7 @@ fn build_options(cfg RadioButtonGroupCfg) []View {
 			id_focus: id_focus
 			selected: cfg.value == option.value
 			on_click: fn [cfg, option] (_ voidptr, mut _e Event, mut w Window) {
-				cfg.on_select(option.value)
+				cfg.on_select(option.value, mut w)
 			}
 		)
 		if cfg.id_focus != 0 {

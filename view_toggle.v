@@ -28,7 +28,7 @@ pub:
 	radius_border      f32       = gui_theme.toggle_style.radius_border
 	text_style         TextStyle = gui_theme.toggle_style.text_style
 	text_style_label   TextStyle = gui_theme.toggle_style.text_style_label
-	on_click           fn (&ToggleCfg, mut Event, mut Window) = unsafe { nil }
+	on_click           fn (&ToggleCfg, mut Event, mut Window) @[required]
 }
 
 // toggle creates a toggle button (a.k.a checkbox) from the given [ToggleCfg](#ToggleCfg)
