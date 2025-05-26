@@ -113,12 +113,13 @@ pub:
 
 pub struct RadioStyle {
 pub:
-	color            Color   = color_2_dark
-	color_focus      Color   = color_link_dark
-	color_border     Color   = color_5_dark
-	color_selected   Color   = color_text_dark
-	color_unselected Color   = color_5_dark
-	padding          Padding = pad_all(4)
+	color            Color     = color_2_dark
+	color_focus      Color     = color_link_dark
+	color_border     Color     = color_5_dark
+	color_selected   Color     = color_text_dark
+	color_unselected Color     = color_5_dark
+	padding          Padding   = pad_all(4)
+	text_style       TextStyle = text_style_dark
 }
 
 pub struct RangeSliderStyle {
@@ -191,20 +192,21 @@ pub:
 
 pub struct SwitchStyle {
 pub:
-	color              Color   = color_2_dark
-	color_border       Color   = color_border_dark
-	color_border_focus Color   = color_link_dark
-	color_click        Color   = color_2_dark
-	color_focus        Color   = color_2_dark
-	color_hover        Color   = color_5_dark
-	color_selected     Color   = color_text_dark
-	color_unselected   Color   = color_5_dark
-	fill               bool    = true
-	fill_border        bool    = true
-	padding            Padding = padding_three
-	padding_border     Padding = padding_none
-	radius             f32     = radius_large * 2
-	radius_border      f32     = radius_large * 2
+	color              Color     = color_2_dark
+	color_border       Color     = color_border_dark
+	color_border_focus Color     = color_link_dark
+	color_click        Color     = color_2_dark
+	color_focus        Color     = color_2_dark
+	color_hover        Color     = color_5_dark
+	color_selected     Color     = color_text_dark
+	color_unselected   Color     = color_5_dark
+	fill               bool      = true
+	fill_border        bool      = true
+	padding            Padding   = padding_three
+	padding_border     Padding   = padding_none
+	radius             f32       = radius_large * 2
+	radius_border      f32       = radius_large * 2
+	text_style         TextStyle = text_style_dark
 }
 
 pub struct TextStyle {
@@ -241,6 +243,8 @@ pub:
 	radius             f32       = radius_small
 	radius_border      f32       = radius_small
 	text_style         TextStyle = TextStyle{
+		...text_style_dark
 		size: size_text_small
 	}
+	text_style_label   TextStyle = text_style_dark
 }

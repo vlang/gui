@@ -72,7 +72,7 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.switch(
-						label:    'switch '
+						label:    'switch'
 						selected: app.select_switch
 						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()

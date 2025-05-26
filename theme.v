@@ -486,6 +486,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border:     cfg.text_style.color
 			color_selected:   cfg.text_style.color
 			color_unselected: cfg.color_5
+			text_style:       cfg.text_style
 		}
 		range_slider_style: RangeSliderStyle{
 			color:          cfg.color_2
@@ -555,6 +556,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			padding_border:     cfg.padding_border
 			radius:             radius_large * 2
 			radius_border:      radius_large * 2
+			text_style:         cfg.text_style
 		}
 		text_style:         cfg.text_style
 		toggle_style:       ToggleStyle{
@@ -575,6 +577,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				...cfg.text_style
 				size: cfg.size_text_small
 			}
+			text_style_label:   cfg.text_style
 		}
 
 		// Usually don't change

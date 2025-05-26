@@ -26,7 +26,8 @@ pub:
 	padding_border     Padding   = gui_theme.toggle_style.padding_border
 	radius             f32       = gui_theme.toggle_style.radius
 	radius_border      f32       = gui_theme.toggle_style.radius_border
-	text_style         TextStyle = gui_theme.b4
+	text_style         TextStyle = gui_theme.toggle_style.text_style
+	text_style_label   TextStyle = gui_theme.toggle_style.text_style_label
 	on_click           fn (&ToggleCfg, mut Event, mut Window) = unsafe { nil }
 }
 
@@ -71,7 +72,7 @@ pub fn toggle(cfg ToggleCfg) View {
 	)
 
 	if cfg.label.len > 0 {
-		content << text(text: cfg.label, text_style: cfg.text_style)
+		content << text(text: cfg.label, text_style: cfg.text_style_label)
 	}
 
 	return row(
