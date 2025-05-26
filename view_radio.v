@@ -9,13 +9,14 @@ pub:
 	invisible        bool
 	label            string
 	selected         bool
-	size             f32     = gui_theme.n3.size
-	color            Color   = gui_theme.radio_style.color
-	color_focus      Color   = gui_theme.radio_style.color_focus
-	color_border     Color   = gui_theme.radio_style.color_border
-	color_selected   Color   = gui_theme.radio_style.color_selected
-	color_unselected Color   = gui_theme.radio_style.color_unselected
-	padding          Padding = gui_theme.radio_style.padding
+	size             f32       = gui_theme.n3.size
+	color            Color     = gui_theme.radio_style.color
+	color_focus      Color     = gui_theme.radio_style.color_focus
+	color_border     Color     = gui_theme.radio_style.color_border
+	color_selected   Color     = gui_theme.radio_style.color_selected
+	color_unselected Color     = gui_theme.radio_style.color_unselected
+	padding          Padding   = gui_theme.radio_style.padding
+	text_style       TextStyle = gui_theme.radio_style.text_style
 	on_click         fn (&RadioCfg, mut Event, mut Window) = unsafe { nil }
 }
 
@@ -46,7 +47,7 @@ pub fn radio(cfg RadioCfg) View {
 	)
 
 	if cfg.label.len > 0 {
-		content << text(text: cfg.label)
+		content << text(text: cfg.label, text_style: cfg.text_style)
 	}
 
 	return row(

@@ -13,20 +13,21 @@ pub:
 	invisible          bool
 	label              string
 	selected           bool
-	fill               bool    = gui_theme.switch_style.fill
-	fill_border        bool    = gui_theme.switch_style.fill_border
-	color              Color   = gui_theme.switch_style.color
-	color_focus        Color   = gui_theme.switch_style.color_focus
-	color_hover        Color   = gui_theme.switch_style.color_hover
-	color_click        Color   = gui_theme.switch_style.color_click
-	color_border       Color   = gui_theme.switch_style.color_border
-	color_border_focus Color   = gui_theme.switch_style.color_border_focus
-	color_selected     Color   = gui_theme.switch_style.color_selected
-	color_unselected   Color   = gui_theme.switch_style.color_unselected
-	padding            Padding = gui_theme.switch_style.padding
-	padding_border     Padding = gui_theme.switch_style.padding_border
-	radius             f32     = gui_theme.switch_style.radius
-	radius_border      f32     = gui_theme.switch_style.radius_border
+	fill               bool      = gui_theme.switch_style.fill
+	fill_border        bool      = gui_theme.switch_style.fill_border
+	color              Color     = gui_theme.switch_style.color
+	color_focus        Color     = gui_theme.switch_style.color_focus
+	color_hover        Color     = gui_theme.switch_style.color_hover
+	color_click        Color     = gui_theme.switch_style.color_click
+	color_border       Color     = gui_theme.switch_style.color_border
+	color_border_focus Color     = gui_theme.switch_style.color_border_focus
+	color_selected     Color     = gui_theme.switch_style.color_selected
+	color_unselected   Color     = gui_theme.switch_style.color_unselected
+	padding            Padding   = gui_theme.switch_style.padding
+	padding_border     Padding   = gui_theme.switch_style.padding_border
+	radius             f32       = gui_theme.switch_style.radius
+	radius_border      f32       = gui_theme.switch_style.radius_border
+	text_style         TextStyle = gui_theme.switch_style.text_style
 	on_click           fn (&SwitchCfg, mut Event, mut Window) = unsafe { nil }
 }
 
@@ -73,7 +74,7 @@ pub fn switch(cfg SwitchCfg) View {
 		]
 	)
 	if cfg.label.len > 0 {
-		content << text(text: cfg.label)
+		content << text(text: cfg.label, text_style: cfg.text_style)
 	}
 	return row(
 		padding:  padding_none
