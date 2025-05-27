@@ -188,7 +188,6 @@ pub fn (mut window Window) set_mouse_cursor_pointing_hand() {
 // GUI has two builtin themes. theme_dark, theme_light
 pub fn (mut window Window) set_theme(theme Theme) {
 	gui_theme = theme
-	println(theme.color_background)
 	window.set_color_background(theme.color_background)
 }
 
