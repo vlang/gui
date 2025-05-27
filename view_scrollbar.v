@@ -16,18 +16,24 @@ pub enum ScrollbarOverflow {
 }
 
 // ScrollbarOrientation determines the scrollbar's orientation.
-// vertical is the default.
+// Default is vertical.
 pub enum ScrollbarOrientation {
 	vertical
 	horizontal
 }
 
+// ScrollMode allows scrolling in one or both directions. Default is both
+pub enum ScrollMode {
+	both
+	vertical_only
+	horizontal_only
+}
+
 // ScrollbarCfg configures the style of a scrollbar. Column and Row
-// define a default ScrollbarCfg so most of the time it is only
-// need to define id_scroll in the Column/Row config. Scrollbars are
-// optional. Columns/Rows are scrollable without them (id_scroll > 0).
-// See examples/column-scroll.v for a scrolling with a scrollbar and
-// examples/scroll-demo.v for one without out.
+// define a default ScrollbarCfgs so most of the time it is only
+// needed to define id_scroll in the Column/Row config. Scrollbars are
+// optional. Columns/Rows are scrollable without visible scrollbars.
+// [ScrollbarOverflow](#ScrollbarOverflow)
 @[heap]
 pub struct ScrollbarCfg {
 pub:

@@ -3,8 +3,6 @@ import gui
 // Icon Font Demo
 // =============================
 
-const side_panel_width = 125
-
 @[heap]
 struct IconFontApp {
 mut:
@@ -39,6 +37,38 @@ fn main_view(mut window gui.Window) gui.View {
 		content: [
 			side_panel(mut window),
 			icon_catalog(mut window),
+		]
+	)
+}
+
+fn side_panel(mut w gui.Window) gui.View {
+	mut app := w.state[IconFontApp]()
+	return gui.column(
+		id:      'side-panel'
+		color:   gui.theme().color_2
+		fill:    true
+		sizing:  gui.fit_fill
+		padding: gui.Padding{
+			...gui.theme().padding_large
+			right: gui.pad_large * 2
+		}
+		content: [
+			gui.radio_button_group_column(
+				options:   [
+					gui.radio_option('tiny', 'tiny'),
+					gui.radio_option('small', 'small'),
+					gui.radio_option('medium', 'medium'),
+					gui.radio_option('large', 'large'),
+					gui.radio_option('x-large', 'x-large'),
+				]
+				value:     app.selected_size
+				on_select: fn [mut app] (value string, mut _ gui.Window) {
+					app.selected_size = value
+				}
+				window:    w
+			),
+			gui.column(sizing: gui.fill_fill),
+			toggle_theme(app),
 		]
 	)
 }
@@ -82,12 +112,11 @@ fn icon_catalog(mut w gui.Window) gui.View {
 			content: icons
 		)
 	}
-	ws, _ := w.window_size()
 
 	return gui.column(
+		id:        'icons'
 		id_focus:  1
 		id_scroll: 1
-		max_width: ws - side_panel_width
 		spacing:   gui.spacing_large
 		sizing:    gui.fill_fill
 		padding:   gui.padding_medium
@@ -115,35 +144,6 @@ fn chunk_map[K, V](input map[K]V, chunk_size int) []map[K]V {
 		chunks << current_chunk
 	}
 	return chunks
-}
-
-fn side_panel(mut w gui.Window) gui.View {
-	mut app := w.state[IconFontApp]()
-	return gui.column(
-		color:   gui.theme().color_2
-		fill:    true
-		sizing:  gui.fixed_fill
-		width:   side_panel_width
-		padding: gui.theme().padding_large
-		content: [
-			gui.radio_button_group_column(
-				options:   [
-					gui.radio_option('tiny', 'tiny'),
-					gui.radio_option('small', 'small'),
-					gui.radio_option('medium', 'medium'),
-					gui.radio_option('large', 'large'),
-					gui.radio_option('x-large', 'x-large'),
-				]
-				value:     app.selected_size
-				on_select: fn [mut app] (value string, mut _ gui.Window) {
-					app.selected_size = value
-				}
-				window:    w
-			),
-			gui.column(sizing: gui.fill_fill),
-			toggle_theme(app),
-		]
-	)
 }
 
 fn toggle_theme(app &IconFontApp) gui.View {

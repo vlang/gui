@@ -26,14 +26,15 @@ pub:
 	disabled        bool
 	invisible       bool
 	text            string
-	id_scroll       u32
-	scrollbar_cfg_x ScrollbarCfg
-	scrollbar_cfg_y ScrollbarCfg
 	float           bool
 	float_anchor    FloatAttach
 	float_tie_off   FloatAttach
 	float_offset_x  f32
 	float_offset_y  f32
+	id_scroll       u32
+	scroll_mode     ScrollMode
+	scrollbar_cfg_x ScrollbarCfg
+	scrollbar_cfg_y ScrollbarCfg
 	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
@@ -91,6 +92,7 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 			}
 			cfg:            cv.cfg
 			id_scroll:      cv.id_scroll
+			scroll_mode:    cv.scroll_mode
 			on_click:       cv.on_click
 			on_char:        cv.on_char
 			on_keydown:     cv.on_keydown
@@ -122,6 +124,7 @@ pub:
 	sizing          Sizing
 	id_focus        u32
 	id_scroll       u32
+	scroll_mode     ScrollMode
 	scrollbar_cfg_x ScrollbarCfg
 	scrollbar_cfg_y ScrollbarCfg
 	x               f32
@@ -197,6 +200,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 		invisible:       cfg.invisible
 		text:            cfg.text
 		id_scroll:       cfg.id_scroll
+		scroll_mode:     cfg.scroll_mode
 		scrollbar_cfg_x: cfg.scrollbar_cfg_x
 		scrollbar_cfg_y: cfg.scrollbar_cfg_y
 		float:           cfg.float

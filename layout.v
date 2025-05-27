@@ -1,8 +1,8 @@
 module gui
 
+import arrays
 // Based on Nic Barter's video of how Clay's UI algorithm works.
 // https://www.youtube.com/watch?v=by9lQvpvMIc&t=1272s
-//
 // There's a fair bit of code duplication here. This is intentional.
 // I found it much easier to write and debug without generalizing
 // up/down vs. left/right. Abstractions here only complicate an
@@ -347,17 +347,25 @@ fn layout_fill_widths(mut node Layout) {
 			}
 		}
 	} else if node.shape.axis == .top_to_bottom {
+		if node.shape.id_scroll > 0 && node.shape.sizing.width == .fill
+			&& node.shape.scroll_mode != .vertical_only {
+			sibling_widths := node.parent.children.filter(it.shape.uid != node.shape.uid).map(it.shape.width)
+			node.shape.width = node.parent.shape.width - arrays.sum(sibling_widths) or { 0 }
+			node.shape.width -= node.parent.spacing()
+			node.shape.width -= node.parent.shape.padding.width()
+			node.shape.width += 1 // round-off?
+		}
 		if node.shape.max_width > 0 && node.shape.width > node.shape.max_width {
 			node.shape.width = node.shape.max_width
 		}
 		for mut child in node.children {
 			if child.shape.sizing.width == .fill {
-				child.shape.width += (remaining_width - f32_max(child.shape.width, child.shape.min_width))
-				child.shape.width = f32_max(child.shape.width, child.shape.min_width)
-				child_padding := child.shape.padding.width()
-				if child.shape.max_width > 0
-					&& child.shape.width > (child.shape.max_width - child_padding) {
-					child.shape.width = child.shape.max_width - child_padding
+				child.shape.width = remaining_width
+				if child.shape.min_width > 0 {
+					child.shape.width = f32_max(child.shape.width, child.shape.min_width)
+				}
+				if child.shape.max_width > 0 {
+					child.shape.width = f32_min(child.shape.width, child.shape.max_width)
 				}
 			}
 		}
@@ -491,18 +499,25 @@ fn layout_fill_heights(mut node Layout) {
 			}
 		}
 	} else if node.shape.axis == .left_to_right {
+		if node.shape.id_scroll > 0 && node.shape.sizing.height == .fill
+			&& node.shape.scroll_mode != .horizontal_only {
+			sibling_heights := node.parent.children.filter(it.shape.uid != node.shape.uid).map(it.shape.height)
+			node.shape.height = node.parent.shape.height - arrays.sum(sibling_heights) or { 0 }
+			node.shape.height -= node.parent.spacing()
+			node.shape.height -= node.parent.shape.padding.height()
+			node.shape.height += 1 // round-off?
+		}
 		if node.shape.max_height > 0 && node.shape.height > node.shape.max_height {
 			node.shape.height = node.shape.max_height
 		}
 		for mut child in node.children {
 			if child.shape.sizing.height == .fill {
-				child.shape.height += (remaining_height - f32_max(child.shape.height,
-					child.shape.min_height))
-				child.shape.height = f32_max(child.shape.height, child.shape.min_height)
-				child_padding := child.shape.padding.height()
-				if child.shape.max_height > 0
-					&& child.shape.height > (child.shape.max_height - child_padding) {
-					child.shape.height = child.shape.max_height - child_padding
+				child.shape.height = remaining_height
+				if child.shape.min_height > 0 {
+					child.shape.height = f32_max(child.shape.height, child.shape.min_height)
+				}
+				if child.shape.max_height > 0 {
+					child.shape.height = f32_min(child.shape.height, child.shape.max_height)
 				}
 			}
 		}

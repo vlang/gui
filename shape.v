@@ -7,7 +7,6 @@ pub struct Shape {
 pub mut:
 	id         string // user assigned
 	id_focus   u32    // >0 indicates shape is focusable. Value determines tabbing order
-	id_scroll  u32    // >0 indicates shape is scrollable
 	type       ShapeType
 	uid        u64 = rand.u64() // internal use only
 	axis       Axis
@@ -50,6 +49,9 @@ pub mut:
 	float_tie_off  FloatAttach
 	float_offset_x f32
 	float_offset_y f32
+	// -- scrolling ---
+	id_scroll   u32 // >0 indicates shape is scrollable
+	scroll_mode ScrollMode
 	// --- user callbacks ---
 	on_char       fn (voidptr, mut Event, mut Window) = unsafe { nil }
 	on_keydown    fn (voidptr, mut Event, mut Window) = unsafe { nil }
