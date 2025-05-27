@@ -89,7 +89,7 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 	return gui.column(
 		id:      'nav'
 		fill:    true
-		color:   gui.theme().color_1
+		color:   gui.theme().color_panel
 		sizing:  gui.fit_fill
 		content: content
 	)
@@ -120,7 +120,7 @@ fn (mut app DocViewerApp) doc_panel(w &gui.Window) gui.View {
 		id_scroll: id_scroll_doc_view
 		min_width: 250
 		fill:      true
-		color:     gui.theme().color_1
+		color:     gui.theme().color_panel
 		sizing:    gui.fill_fill
 		content:   [
 			gui.text(

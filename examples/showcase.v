@@ -72,7 +72,7 @@ fn side_bar(mut w gui.Window) gui.View {
 	mut app := w.state[ShowcaseApp]()
 	return gui.column(
 		fill:    true
-		color:   gui.theme().color_1
+		color:   gui.theme().color_panel
 		sizing:  gui.fit_fill
 		content: [
 			tab_select('Stock', .tab_stock, app),

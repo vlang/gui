@@ -235,7 +235,7 @@ pub:
 	color_click        Color     = color_2_dark
 	color_focus        Color     = color_5_dark
 	color_hover        Color     = color_3_dark
-	color_selected     Color     = color_1_dark
+	color_selected     Color     = color_panel_dark
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_one

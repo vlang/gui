@@ -20,8 +20,8 @@ pub const text_line_spacing = f32(0) // additional line height
 
 pub const color_transparent = rgba(0, 0, 0, 0)
 
-const color_0_dark = rgb(48, 48, 48)
-const color_1_dark = rgb(64, 64, 64)
+const color_background_dark = rgb(48, 48, 48)
+const color_panel_dark = rgb(64, 64, 64)
 const color_2_dark = rgb(74, 74, 74)
 const color_3_dark = rgb(84, 84, 84)
 const color_4_dark = rgb(94, 94, 94)
@@ -30,9 +30,8 @@ const color_border_dark = rgb(100, 100, 100)
 const color_link_dark = cornflower_blue
 const color_text_dark = rgb(225, 225, 225)
 
-const color_text_light = rgb(32, 32, 32)
-const color_0_light = rgb(225, 225, 225)
-const color_1_light = rgb(205, 205, 215)
+const color_background_light = rgb(225, 225, 225)
+const color_panel_light = rgb(205, 205, 215)
 const color_2_light = rgb(195, 195, 215)
 const color_3_light = rgb(185, 185, 215)
 const color_4_light = rgb(175, 175, 215)
@@ -40,6 +39,7 @@ const color_5_light = rgb(165, 165, 215)
 const color_border_light = rgb(135, 135, 165)
 const color_link_light = rgb(0, 71, 171)
 const color_border_focus_light = rgb(0, 0, 165)
+const color_text_light = rgb(32, 32, 32)
 
 const scroll_multiplier = 20
 const scroll_delta_line = 1
@@ -66,12 +66,11 @@ const text_style_dark = TextStyle{
 pub struct Theme {
 pub:
 	name             string = 'default' @[required]
-	color_background Color  = color_0_dark
+	color_background Color  = color_background_dark
+	color_panel      Color  = color_panel_dark
 	color_link       Color  = color_link_dark
 	color_border     Color  = color_border_dark
 	color_selected   Color  = color_5_dark
-	color_0          Color  = color_0_dark
-	color_1          Color  = color_1_dark
 	color_2          Color  = color_2_dark
 	color_3          Color  = color_3_dark
 	color_4          Color  = color_4_dark
@@ -257,8 +256,8 @@ pub:
 pub struct ThemeCfg {
 pub:
 	name               string @[required]
-	color_0            Color     = color_0_dark
-	color_1            Color     = color_1_dark
+	color_background   Color     = color_background_dark
+	color_panel        Color     = color_panel_dark
 	color_2            Color     = color_2_dark
 	color_3            Color     = color_3_dark
 	color_4            Color     = color_4_dark
@@ -305,8 +304,8 @@ pub:
 // Makes modifying themes less tedious
 pub const theme_dark_cfg = ThemeCfg{
 	name:               'dark'
-	color_0:            color_0_dark
-	color_1:            color_1_dark
+	color_background:   color_background_dark
+	color_panel:        color_panel_dark
 	color_2:            color_2_dark
 	color_3:            color_3_dark
 	color_4:            color_4_dark
@@ -338,8 +337,8 @@ pub const theme_dark_bordered = theme_maker(theme_dark_bordered_cfg)
 
 pub const theme_light_cfg = ThemeCfg{
 	name:               'light'
-	color_0:            color_0_light
-	color_1:            color_1_light
+	color_background:   color_background_light
+	color_panel:        color_panel_light
 	color_2:            color_2_light
 	color_3:            color_3_light
 	color_4:            color_4_light
@@ -383,12 +382,11 @@ pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 pub fn theme_maker(cfg &ThemeCfg) Theme {
 	theme := Theme{
 		name:             cfg.name
-		color_background: cfg.color_0
+		color_background: cfg.color_background
+		color_panel:      cfg.color_panel
 		color_link:       cfg.color_link
 		color_border:     cfg.color_border
 		color_selected:   cfg.color_selected
-		color_0:          cfg.color_0
-		color_1:          cfg.color_1
 		color_2:          cfg.color_2
 		color_3:          cfg.color_3
 		color_4:          cfg.color_4
@@ -430,7 +428,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:       cfg.text_style
 		}
 		input_style:        InputStyle{
-			color:              cfg.color_1
+			color:              cfg.color_panel
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
 			color_focus:        cfg.color_2
@@ -452,7 +450,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		menubar_style:      MenubarStyle{
-			color:               cfg.color_1
+			color:               cfg.color_panel
 			color_border:        cfg.color_border
 			color_selected:      cfg.color_selected
 			padding:             cfg.padding_small
@@ -474,14 +472,14 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		progress_bar_style: ProgressBarStyle{
-			color:      cfg.color_1
+			color:      cfg.color_panel
 			color_bar:  cfg.color_5
 			fill:       true
 			radius:     cfg.radius
 			text_style: cfg.text_style
 		}
 		radio_style:        RadioStyle{
-			color:            cfg.color_1
+			color:            cfg.color_panel
 			color_focus:      cfg.color_link
 			color_border:     cfg.text_style.color
 			color_selected:   cfg.text_style.color
@@ -542,7 +540,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		switch_style:       SwitchStyle{
-			color:              cfg.color_1
+			color:              cfg.color_panel
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
 			color_click:        cfg.color_2
@@ -560,13 +558,13 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		text_style:         cfg.text_style
 		toggle_style:       ToggleStyle{
-			color:              cfg.color_1
+			color:              cfg.color_panel
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
 			color_click:        cfg.color_2
 			color_focus:        cfg.color_2
 			color_hover:        cfg.color_3
-			color_selected:     cfg.color_1
+			color_selected:     cfg.color_panel
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            padding_one
