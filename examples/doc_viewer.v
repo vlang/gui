@@ -19,7 +19,7 @@ const id_scroll_doc_view = 1
 struct DocViewerApp {
 pub mut:
 	doc_file string
-	tab_size u32 = 4
+	tab_size string = '4'
 }
 
 fn main() {
@@ -95,35 +95,21 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 	)
 }
 
-fn tab_stops(w gui.Window) gui.View {
-	return gui.row(
-		sizing:  gui.fill_fit
-		v_align: .middle
-		spacing: 0
-		content: [
-			gui.text(text: 'Tabs:'),
-			radio_tab('2', 2, w),
-			radio_tab('4', 4, w),
-			radio_tab('8', 8, w),
-		]
-	)
-}
-
-fn radio_tab(label string, tab_size u32, w &gui.Window) gui.View {
+fn tab_stops(w &gui.Window) gui.View {
 	app := w.state[DocViewerApp]()
-	return gui.row(
-		spacing: gui.theme().spacing_small
-		content: [
-			gui.radio(
-				selected: app.tab_size == tab_size
-				on_click: fn [tab_size] (_ &gui.RadioCfg, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[DocViewerApp]()
-					app.tab_size = tab_size
-					e.is_handled = true
-				}
-			),
-			gui.text(text: label),
+	return gui.radio_button_group_row(
+		title:     'Tab Size '
+		value:     app.tab_size
+		window:    w
+		options:   [
+			gui.radio_option('2', '2'),
+			gui.radio_option('4', '4'),
+			gui.radio_option('8', '8'),
 		]
+		on_select: fn (value string, mut win gui.Window) {
+			mut app := win.state[DocViewerApp]()
+			app.tab_size = value
+		}
 	)
 }
 
@@ -141,7 +127,7 @@ fn (mut app DocViewerApp) doc_panel(w &gui.Window) gui.View {
 				id_focus:   1 // enables selectable text
 				text:       text
 				mode:       .multiline
-				tab_size:   app.tab_size
+				tab_size:   app.tab_size.u32()
 				text_style: gui.theme().m4
 			),
 		]
