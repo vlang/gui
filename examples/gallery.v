@@ -77,7 +77,7 @@ fn side_bar(mut w gui.Window) gui.View {
 			tab_select('Image', tab_image, app),
 			tab_select('Menus', tab_menus, app),
 			tab_select('Dialogs', tab_dialogs, app),
-			gui.row(sizing: gui.fit_fill),
+			gui.column(sizing: gui.fit_fill),
 			toggle_theme(app),
 		]
 	)
@@ -149,11 +149,17 @@ fn view_title(label string) gui.View {
 
 fn line() gui.View {
 	return gui.row(
-		height:  1
+		padding: gui.padding(2, 5, 0, 0)
 		sizing:  gui.fill_fit
-		fill:    true
-		padding: gui.padding_none
-		color:   gui.theme().color_5
+		content: [
+			gui.row(
+				height:  1
+				sizing:  gui.fill_fit
+				fill:    true
+				padding: gui.padding_none
+				color:   gui.theme().color_5
+			),
+		]
 	)
 }
 

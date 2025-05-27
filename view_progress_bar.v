@@ -84,12 +84,19 @@ fn (cfg ProgressBarCfg) amend_layout(mut node Layout, mut w Window) {
 			node.children[0].shape.y = node.shape.y
 			node.children[0].shape.height = height
 			node.children[0].shape.width = node.shape.width
+			// center label on bar. Label is row containing text
 			if cfg.text_show {
-				middle := node.shape.x + node.shape.width / 2
-				half := node.children[1].shape.width / 2
-				old := node.children[1].shape.x
-				node.children[1].shape.x = middle - half
-				node.children[1].children[0].shape.x -= old - node.children[1].shape.x
+				center := node.shape.x + node.shape.width / 2
+				half_width := node.children[1].shape.width / 2
+				old_x := node.children[1].shape.x
+				node.children[1].shape.x = center - half_width
+				node.children[1].children[0].shape.x -= old_x - node.children[1].shape.x
+
+				middle := node.shape.y + node.shape.height / 2
+				half_height := node.children[1].shape.height / 2
+				old_y := node.children[1].shape.y
+				node.children[1].shape.y = middle - half_height
+				node.children[1].children[0].shape.y -= old_y - node.children[1].shape.y
 			}
 		} else {
 			width := f32_min(node.shape.width * percent, node.shape.width)
@@ -97,12 +104,19 @@ fn (cfg ProgressBarCfg) amend_layout(mut node Layout, mut w Window) {
 			node.children[0].shape.y = node.shape.y
 			node.children[0].shape.width = width
 			node.children[0].shape.height = node.shape.height
+			// center label on bar. Label is row containing text
 			if cfg.text_show {
 				middle := node.shape.y + node.shape.height / 2
-				half := node.children[1].shape.height / 2
-				old := node.children[1].shape.y
-				node.children[1].shape.y = middle - half
-				node.children[1].children[0].shape.y -= old - node.children[1].shape.y
+				half_height := node.children[1].shape.height / 2
+				old_y := node.children[1].shape.y
+				node.children[1].shape.y = middle - half_height
+				node.children[1].children[0].shape.y -= old_y - node.children[1].shape.y
+
+				center := node.shape.x + node.shape.width / 2
+				half_width := node.children[1].shape.width / 2
+				old_x := node.children[1].shape.x
+				node.children[1].shape.x = center - half_width
+				node.children[1].children[0].shape.x -= old_x - node.children[1].shape.x
 			}
 		}
 	}

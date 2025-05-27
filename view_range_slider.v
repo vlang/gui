@@ -124,7 +124,7 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut node Layout, mut w Window) {
 		node.children[0].children[0].shape.width = x
 		// resize bars so the specified height and center
 		// vertically on the thumb.
-		offset := (cfg.thumb_size - cfg.size) / 2
+		offset := (cfg.thumb_size - cfg.size) / 2 + 0.5
 		// border
 		node.shape.y += offset
 		node.shape.height = cfg.size
