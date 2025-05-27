@@ -1,21 +1,24 @@
 import gui
 
-// Gallery
+// Showcase
 // =============================
-// Catalog of most of the predefined views available.
+// Oh majeuere, dim the lights...
 
 const scroll_id = 1
-const tab_stock = 1000
-const tab_icons = 1001
-const tab_image = 1002
-const tab_menus = 1003
-const tab_dialogs = 1005
+
+enum TabItem {
+	tab_stock = 1000
+	tab_icons
+	tab_image
+	tab_menus
+	tab_dialogs
+}
 
 @[heap]
-struct GalleryApp {
+struct ShowcaseApp {
 pub mut:
 	light_theme  bool
-	selected_tab int = tab_stock
+	selected_tab TabItem = .tab_stock
 	// buttons
 	button_clicks int
 	// inputs
@@ -38,8 +41,8 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
-		title:   'Gallery'
-		state:   &GalleryApp{}
+		title:   'Gui Showcase'
+		state:   &ShowcaseApp{}
 		width:   800
 		height:  600
 		on_init: fn (mut w gui.Window) {
@@ -66,17 +69,17 @@ fn main_view(mut window gui.Window) gui.View {
 }
 
 fn side_bar(mut w gui.Window) gui.View {
-	mut app := w.state[GalleryApp]()
+	mut app := w.state[ShowcaseApp]()
 	return gui.column(
 		fill:    true
 		color:   gui.theme().color_1
 		sizing:  gui.fit_fill
 		content: [
-			tab_select('Stock', tab_stock, app),
-			tab_select('Icons', tab_icons, app),
-			tab_select('Image', tab_image, app),
-			tab_select('Menus', tab_menus, app),
-			tab_select('Dialogs', tab_dialogs, app),
+			tab_select('Stock', .tab_stock, app),
+			tab_select('Icons', .tab_icons, app),
+			tab_select('Image', .tab_image, app),
+			tab_select('Menus', .tab_menus, app),
+			tab_select('Dialogs', .tab_dialogs, app),
 			gui.column(sizing: gui.fit_fill),
 			toggle_theme(app),
 		]
@@ -84,47 +87,44 @@ fn side_bar(mut w gui.Window) gui.View {
 }
 
 fn gallery(mut w gui.Window) gui.View {
-	mut app := w.state[GalleryApp]()
+	mut app := w.state[ShowcaseApp]()
 	return gui.column(
 		id_scroll: scroll_id
 		sizing:    gui.fill_fill
 		spacing:   gui.spacing_large * 2
 		content:   match app.selected_tab {
-			tab_stock {
+			.tab_stock {
 				[buttons(w), inputs(w), toggles(w), progress_bars(w),
 					range_sliders(w), select_drop_down(w), text_sizes_weights(w)]
 			}
-			tab_icons {
+			.tab_icons {
 				[icons(mut w)]
 			}
-			tab_image {
+			.tab_image {
 				[image_sample(w)]
 			}
-			tab_menus {
+			.tab_menus {
 				[menus(w)]
 			}
-			tab_dialogs {
+			.tab_dialogs {
 				[dialogs(w)]
-			}
-			else {
-				[]gui.View{}
 			}
 		}
 	)
 }
 
-fn tab_select(label string, id_tab int, app &GalleryApp) gui.View {
-	color := if app.selected_tab == id_tab { gui.theme().color_5 } else { gui.color_transparent }
+fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
+	color := if app.selected_tab == tab_item { gui.theme().color_5 } else { gui.color_transparent }
 	return gui.row(
 		color:     color
-		fill:      app.selected_tab == id_tab
+		fill:      app.selected_tab == tab_item
 		min_width: 75
 		max_width: 100
 		padding:   gui.theme().padding_small
 		content:   [gui.text(text: label, mode: .wrap, text_style: gui.theme().b2)]
-		on_click:  fn [id_tab] (_ voidptr, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[GalleryApp]()
-			app.selected_tab = id_tab
+		on_click:  fn [tab_item] (_ voidptr, mut e gui.Event, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.selected_tab = tab_item
 			w.scroll_vertical_to(scroll_id, 0)
 		}
 		on_hover:  fn (mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
@@ -163,7 +163,7 @@ fn line() gui.View {
 	)
 }
 
-fn toggle_theme(app &GalleryApp) gui.View {
+fn toggle_theme(app &ShowcaseApp) gui.View {
 	return gui.toggle(
 		text_selected:   gui.icon_moon
 		text_unselected: gui.icon_sunny_o
@@ -171,7 +171,7 @@ fn toggle_theme(app &GalleryApp) gui.View {
 		padding:         gui.padding_small
 		selected:        app.light_theme
 		on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
-			mut app := w.state[GalleryApp]()
+			mut app := w.state[ShowcaseApp]()
 			app.light_theme = !app.light_theme
 			theme := if app.light_theme {
 				gui.theme_light_bordered
@@ -188,7 +188,7 @@ fn toggle_theme(app &GalleryApp) gui.View {
 // ==============================================================
 
 fn buttons(w &gui.Window) gui.View {
-	app := w.state[GalleryApp]()
+	app := w.state[ShowcaseApp]()
 	color := if app.light_theme { gui.light_gray } else { gui.dark_blue }
 	color_left := if app.light_theme { gui.dark_gray } else { gui.dark_green }
 	return gui.column(
@@ -229,7 +229,7 @@ fn buttons(w &gui.Window) gui.View {
 						id_focus:       104
 						padding_border: gui.padding_two
 						on_click:       fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[GalleryApp]()
+							mut app := w.state[ShowcaseApp]()
 							app.button_clicks += 1
 						}
 						content:        [
@@ -269,7 +269,7 @@ fn button_click(_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 // ==============================================================
 
 fn inputs(w &gui.Window) gui.View {
-	app := w.state[GalleryApp]()
+	app := w.state[ShowcaseApp]()
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -335,7 +335,7 @@ fn inputs(w &gui.Window) gui.View {
 						placeholder:     'Multline...'
 						mode:            .multiline
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-							mut app := w.state[GalleryApp]()
+							mut app := w.state[ShowcaseApp]()
 							app.input_multiline = s
 						}
 					),
@@ -346,7 +346,7 @@ fn inputs(w &gui.Window) gui.View {
 }
 
 fn text_changed(_ &gui.InputCfg, s string, mut w gui.Window) {
-	mut app := w.state[GalleryApp]()
+	mut app := w.state[ShowcaseApp]()
 	app.input_text = s
 }
 
@@ -413,7 +413,7 @@ fn text_sizes_weights(w &gui.Window) gui.View {
 // ==============================================================
 
 fn toggles(w &gui.Window) gui.View {
-	mut app := w.state[GalleryApp]()
+	mut app := w.state[ShowcaseApp]()
 	options := [
 		gui.radio_option('New York', 'ny'),
 		gui.radio_option('Chicago', 'chi'),
@@ -432,7 +432,7 @@ fn toggles(w &gui.Window) gui.View {
 						label:    'toggle (a.k.a. checkbox)'
 						selected: app.select_checkbox
 						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[GalleryApp]()
+							mut app := w.state[ShowcaseApp]()
 							app.select_checkbox = !app.select_checkbox
 						}
 					),
@@ -441,7 +441,7 @@ fn toggles(w &gui.Window) gui.View {
 						selected:      app.select_toggle
 						text_selected: 'X'
 						on_click:      fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[GalleryApp]()
+							mut app := w.state[ShowcaseApp]()
 							app.select_toggle = !app.select_toggle
 						}
 					),
@@ -449,7 +449,7 @@ fn toggles(w &gui.Window) gui.View {
 						label:    'switch'
 						selected: app.select_switch
 						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[GalleryApp]()
+							mut app := w.state[ShowcaseApp]()
 							app.select_switch = !app.select_switch
 						}
 					),
@@ -635,12 +635,12 @@ fn menus(w &gui.Window) gui.View {
 }
 
 fn menu(window &gui.Window) gui.View {
-	app := window.state[GalleryApp]()
+	app := window.state[ShowcaseApp]()
 
 	return window.menubar(
 		id_focus: 500
 		action:   fn (id string, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[GalleryApp]()
+			mut app := w.state[ShowcaseApp]()
 			app.selected_menu_id = id
 		}
 		items:    [
@@ -750,7 +750,7 @@ fn menu(window &gui.Window) gui.View {
 							text_style:        gui.theme().menubar_style.text_style
 							placeholder_style: gui.theme().menubar_style.text_style
 							on_text_changed:   fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-								mut app := w.state[GalleryApp]()
+								mut app := w.state[ShowcaseApp]()
 								app.search_text = s
 							}
 						)
@@ -867,7 +867,7 @@ fn range_sliders(w &gui.Window) gui.View {
 }
 
 fn range_slider_samples(w &gui.Window) gui.View {
-	app := w.state[GalleryApp]()
+	app := w.state[ShowcaseApp]()
 	return gui.row(
 		sizing:  gui.fill_fill
 		content: [
@@ -880,7 +880,7 @@ fn range_slider_samples(w &gui.Window) gui.View {
 						round_value: true
 						sizing:      gui.fill_fit
 						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[GalleryApp]()
+							mut app := w.state[ShowcaseApp]()
 							app.range_value = value
 						}
 					),
@@ -897,7 +897,7 @@ fn range_slider_samples(w &gui.Window) gui.View {
 						vertical:    true
 						sizing:      gui.fit_fill
 						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[GalleryApp]()
+							mut app := w.state[ShowcaseApp]()
 							app.range_value = value
 						}
 					),
@@ -926,7 +926,7 @@ fn select_drop_down(w &gui.Window) gui.View {
 
 fn select_samples(w &gui.Window) gui.View {
 	width := 250
-	app := w.state[GalleryApp]()
+	app := w.state[ShowcaseApp]()
 	return gui.row(
 		content: [
 			gui.select(
@@ -991,7 +991,7 @@ fn select_samples(w &gui.Window) gui.View {
 					'Wyoming',
 				]
 				on_select:       fn (s []string, mut e gui.Event, mut w gui.Window) {
-					mut app_ := w.state[GalleryApp]()
+					mut app_ := w.state[ShowcaseApp]()
 					app_.selected_1 = s
 					e.is_handled = true
 				}
@@ -1209,7 +1209,7 @@ fn select_samples(w &gui.Window) gui.View {
 					'Venezuela',
 				]
 				on_select:   fn (s []string, mut e gui.Event, mut w gui.Window) {
-					mut app_ := w.state[GalleryApp]()
+					mut app_ := w.state[ShowcaseApp]()
 					app_.selected_2 = s
 					e.is_handled = true
 				}
