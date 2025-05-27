@@ -148,10 +148,11 @@ fn layout_widths(mut node Layout) {
 				node.shape.min_width = f32_max(node.shape.min_width, child.shape.min_width + padding)
 			}
 		}
-		node.shape.width = f32_max(node.shape.width, node.shape.min_width)
+		if node.shape.min_width > 0 {
+			node.shape.width = f32_max(node.shape.width, node.shape.min_width)
+		}
 		if node.shape.max_width > 0 {
-			node.shape.width = f32_min(node.shape.max_width, node.shape.width)
-			node.shape.min_width = f32_min(node.shape.max_width, node.shape.min_width)
+			node.shape.width = f32_min(node.shape.width, node.shape.max_width)
 		}
 	}
 }
@@ -198,10 +199,11 @@ fn layout_heights(mut node Layout) {
 					padding)
 			}
 		}
-		node.shape.height = f32_max(node.shape.height, node.shape.min_height)
+		if node.shape.min_height > 0 {
+			node.shape.height = f32_max(node.shape.height, node.shape.min_height)
+		}
 		if node.shape.max_height > 0 {
-			node.shape.height = f32_min(node.shape.max_height, node.shape.height)
-			node.shape.min_height = f32_min(node.shape.max_height, node.shape.min_height)
+			node.shape.height = f32_min(node.shape.height, node.shape.max_height)
 		}
 	}
 }

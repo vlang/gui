@@ -39,7 +39,6 @@ fn main_view(w &gui.Window) gui.View {
 	app := w.state[AppState]()
 
 	return gui.row(
-		id_scroll:       1
 		scrollbar_cfg_x: gui.ScrollbarCfg{
 			overflow: .on_hover
 		}
