@@ -71,18 +71,15 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 						color:  cfg.color_left
 					),
 					circle( // thumb
-						float:         true
-						float_anchor:  if cfg.vertical { .top_center } else { .middle_left }
-						float_tie_off: .middle_center
-						width:         cfg.thumb_size
-						height:        cfg.thumb_size
-						fill:          cfg.fill
-						color:         cfg.color_border
-						padding:       cfg.padding_border
-						on_click:      cfg.on_mouse_down
-						amend_layout:  cfg.amend_layout_thumb
-						on_hover:      cfg.on_hover_thumb
-						content:       [
+						width:        cfg.thumb_size
+						height:       cfg.thumb_size
+						fill:         cfg.fill
+						color:        cfg.color_border
+						padding:      cfg.padding_border
+						on_click:     cfg.on_mouse_down
+						amend_layout: cfg.amend_layout_thumb
+						on_hover:     cfg.on_hover_thumb
+						content:      [
 							circle(
 								fill:    cfg.fill
 								color:   cfg.color_thumb
@@ -109,10 +106,34 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut node Layout, mut w Window) {
 		height := node.children[0].shape.height
 		y := f32_min(height * percent, height)
 		node.children[0].children[0].shape.height = y
+		// resize bars so the specified width and center
+		// horizontally on the thumb.
+		offset := (cfg.thumb_size - cfg.size) / 2 + 0.5
+		// border
+		node.shape.x += offset
+		node.shape.width = cfg.size
+		// interior
+		node.children[0].shape.x += offset
+		node.children[0].shape.width = cfg.size - cfg.padding_border.width()
+		// left of thumb bar
+		node.children[0].children[0].shape.x += offset
+		node.children[0].children[0].shape.width = cfg.size
 	} else {
 		width := node.children[0].shape.width
 		x := f32_min(width * percent, width)
 		node.children[0].children[0].shape.width = x
+		// resize bars so the specified height and center
+		// vertically on the thumb.
+		offset := (cfg.thumb_size - cfg.size) / 2
+		// border
+		node.shape.y += offset
+		node.shape.height = cfg.size
+		// interior
+		node.children[0].shape.y += offset
+		node.children[0].shape.height = cfg.size - cfg.padding_border.height()
+		// left of thumb bar
+		node.children[0].children[0].shape.y += offset
+		node.children[0].children[0].shape.height = cfg.size
 	}
 	if node.shape.disabled {
 		return
