@@ -33,7 +33,7 @@ pub:
 // progress_bar creates a progress bar from the given [ProgressBarCfg](#ProgressBarCfg)
 pub fn progress_bar(cfg &ProgressBarCfg) View {
 	mut content := []View{cap: 2}
-	content << rectangle(
+	content << row(
 		fill:   true
 		radius: cfg.radius
 		color:  cfg.color_bar
@@ -42,13 +42,10 @@ pub fn progress_bar(cfg &ProgressBarCfg) View {
 		mut percent := f64_min(f64_max(cfg.percent, f64(0)), f64(1))
 		percent = math.round(percent * 100)
 		content << row(
-			color:         cfg.text_background
-			fill:          cfg.text_fill
-			padding:       cfg.text_padding
-			float:         true
-			float_anchor:  .middle_center
-			float_tie_off: .middle_center
-			content:       [text(text: '${percent:.0}%', text_style: cfg.text_style)]
+			color:   cfg.text_background
+			fill:    cfg.text_fill
+			padding: cfg.text_padding
+			content: [text(text: '${percent:.0}%', text_style: cfg.text_style)]
 		)
 	}
 	size := f32(gui_theme.progress_bar_style.size)
@@ -87,12 +84,26 @@ fn (cfg ProgressBarCfg) amend_layout(mut node Layout, mut w Window) {
 			node.children[0].shape.y = node.shape.y
 			node.children[0].shape.height = height
 			node.children[0].shape.width = node.shape.width
+			if cfg.text_show {
+				middle := node.shape.x + node.shape.width / 2
+				half := node.children[1].shape.width / 2
+				old := node.children[1].shape.x
+				node.children[1].shape.x = middle - half
+				node.children[1].children[0].shape.x -= old - node.children[1].shape.x
+			}
 		} else {
 			width := f32_min(node.shape.width * percent, node.shape.width)
 			node.children[0].shape.x = node.shape.x
 			node.children[0].shape.y = node.shape.y
 			node.children[0].shape.width = width
 			node.children[0].shape.height = node.shape.height
+			if cfg.text_show {
+				middle := node.shape.y + node.shape.height / 2
+				half := node.children[1].shape.height / 2
+				old := node.children[1].shape.y
+				node.children[1].shape.y = middle - half
+				node.children[1].children[0].shape.y -= old - node.children[1].shape.y
+			}
 		}
 	}
 }
