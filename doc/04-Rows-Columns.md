@@ -75,6 +75,8 @@ optionally be enabled. One or both can be shown. Scrollbars can be
 hidden when content fits entirely within the container. Scrollbars can
 be made visible only when hovering over the scrollbar region. Scrollbars
 are floating views and be placed over or beside content as desired.
+Finally, scrolling can be restricted to vertical only or horizontal only
+via the `scroll_mode` property.
 
 Floating is particularly powerful. It allows drawing over other content.
 Menus are a good example of this. The menu code in Gui is just a
