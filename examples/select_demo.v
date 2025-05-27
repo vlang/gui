@@ -41,6 +41,7 @@ fn main_view(mut window gui.Window) gui.View {
 				content: [
 					gui.select(
 						id:              'sel1'
+						min_width:       200
 						max_width:       200
 						window:          mut window
 						selected:        app.selected_1

@@ -81,6 +81,8 @@ pub fn select(cfg SelectCfg) View {
 			id_scroll:      fnv1a.sum32_string(cfg.id + 'dropdown')
 			min_height:     50
 			max_height:     clamp_f32(h, 50, h / 2)
+			min_width:      cfg.min_width
+			max_width:      cfg.max_width
 			float:          true
 			float_anchor:   .bottom_left
 			float_tie_off:  .top_left
@@ -92,6 +94,7 @@ pub fn select(cfg SelectCfg) View {
 			content:        [
 				column( // drop down list
 					fill:    cfg.fill
+					sizing:  fill_fill
 					color:   cfg.color
 					padding: padding(pad_small, pad_medium, pad_small, pad_small)
 					spacing: 0
