@@ -51,7 +51,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				content: [
 					rectangle(
 						height: 1
-						color:  gui_theme.color_5
+						color:  gui_theme.color_active
 						sizing: fill_fit
 					),
 				]

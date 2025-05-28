@@ -61,7 +61,11 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 	for doc_file in doc_files {
 		// Change background color of current selection. No need
 		// to remember the old selection to unhighlight.
-		color := if doc_file == app.doc_file { gui.theme().color_5 } else { gui.color_transparent }
+		color := if doc_file == app.doc_file {
+			gui.theme().color_active
+		} else {
+			gui.color_transparent
+		}
 		nav_files << gui.row(
 			fill:     true
 			color:    color

@@ -8,7 +8,7 @@ pub:
 	color_border       Color   = color_border_dark
 	color_border_focus Color   = color_link_dark
 	color_click        Color   = color_focus_dark
-	color_focus        Color   = color_5_dark
+	color_focus        Color   = color_active_dark
 	color_hover        Color   = color_hover_dark
 	fill               bool    = true
 	fill_border        bool    = true
@@ -50,7 +50,7 @@ pub:
 	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
-	color_focus        Color     = color_5_dark
+	color_focus        Color     = color_active_dark
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_small
@@ -75,7 +75,7 @@ pub:
 	width_submenu_max      f32       = 200
 	color                  Color     = color_interior_dark
 	color_border           Color     = color_border_dark
-	color_selected         Color     = color_5_dark
+	color_selected         Color     = color_active_dark
 	padding                Padding   = padding_small
 	padding_menu_item      Padding   = padding_two_five
 	padding_border         Padding   = padding_none
@@ -99,7 +99,7 @@ pub:
 pub struct ProgressBarStyle {
 pub:
 	color           Color     = color_interior_dark
-	color_bar       Color     = color_5_dark
+	color_bar       Color     = color_active_dark
 	fill            bool      = true
 	padding         Padding   = padding_medium
 	radius          f32       = radius_medium
@@ -115,9 +115,9 @@ pub struct RadioStyle {
 pub:
 	color            Color     = color_interior_dark
 	color_focus      Color     = color_link_dark
-	color_border     Color     = color_5_dark
+	color_border     Color     = color_active_dark
 	color_selected   Color     = color_text_dark
-	color_unselected Color     = color_5_dark
+	color_unselected Color     = color_active_dark
 	padding          Padding   = pad_all(4)
 	text_style       TextStyle = text_style_dark
 }
@@ -131,7 +131,7 @@ pub:
 	color_left     Color   = color_link_dark
 	color_focus    Color   = color_focus_dark
 	color_hover    Color   = color_hover_dark
-	color_border   Color   = color_5_dark
+	color_border   Color   = color_active_dark
 	color_thumb    Color   = color_link_dark
 	fill           bool    = true
 	fill_border    bool    = true
@@ -151,7 +151,7 @@ pub:
 pub struct ScrollbarStyle {
 pub:
 	size             f32   = 7
-	color_thumb      Color = color_5_dark
+	color_thumb      Color = color_active_dark
 	color_background Color = color_transparent
 	fill_thumb       bool  = true
 	fill_background  bool
@@ -169,9 +169,9 @@ pub:
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
 	color_click        Color     = color_focus_dark
-	color_focus        Color     = color_5_dark
+	color_focus        Color     = color_active_dark
 	color_hover        Color     = color_hover_dark
-	color_selected     Color     = color_5_dark
+	color_selected     Color     = color_active_dark
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_small
@@ -197,9 +197,9 @@ pub:
 	color_border_focus Color     = color_link_dark
 	color_click        Color     = color_interior_dark
 	color_focus        Color     = color_interior_dark
-	color_hover        Color     = color_5_dark
+	color_hover        Color     = color_active_dark
 	color_selected     Color     = color_text_dark
-	color_unselected   Color     = color_5_dark
+	color_unselected   Color     = color_active_dark
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_three
@@ -233,7 +233,7 @@ pub:
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
 	color_click        Color     = color_interior_dark
-	color_focus        Color     = color_5_dark
+	color_focus        Color     = color_active_dark
 	color_hover        Color     = color_hover_dark
 	color_selected     Color     = color_panel_dark
 	fill               bool      = true

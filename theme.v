@@ -25,7 +25,7 @@ const color_panel_dark = rgb(64, 64, 64)
 const color_interior_dark = rgb(74, 74, 74)
 const color_hover_dark = rgb(84, 84, 84)
 const color_focus_dark = rgb(94, 94, 94)
-const color_5_dark = rgb(104, 104, 104)
+const color_active_dark = rgb(104, 104, 104)
 const color_border_dark = rgb(100, 100, 100)
 const color_link_dark = cornflower_blue
 const color_text_dark = rgb(225, 225, 225)
@@ -35,7 +35,7 @@ const color_panel_light = rgb(205, 205, 215)
 const color_interior_light = rgb(195, 195, 215)
 const color_hover_light = rgb(185, 185, 215)
 const color_focus_light = rgb(175, 175, 215)
-const color_5_light = rgb(165, 165, 215)
+const color_active_light = rgb(165, 165, 215)
 const color_border_light = rgb(135, 135, 165)
 const color_link_light = rgb(0, 71, 171)
 const color_border_focus_light = rgb(0, 0, 165)
@@ -70,11 +70,11 @@ pub:
 	color_panel      Color  = color_panel_dark
 	color_link       Color  = color_link_dark
 	color_border     Color  = color_border_dark
-	color_selected   Color  = color_5_dark
+	color_selected   Color  = color_active_dark
 	color_interior   Color  = color_interior_dark
 	color_hover      Color  = color_hover_dark
 	color_focus      Color  = color_focus_dark
-	color_5          Color  = color_5_dark
+	color_active     Color  = color_active_dark
 
 	button_style       ButtonStyle
 	container_style    ContainerStyle
@@ -261,11 +261,11 @@ pub:
 	color_interior     Color     = color_interior_dark
 	color_hover        Color     = color_hover_dark
 	color_focus        Color     = color_focus_dark
-	color_5            Color     = color_5_dark
+	color_active       Color     = color_active_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
 	color_link         Color     = color_link_dark
-	color_selected     Color     = color_5_dark
+	color_selected     Color     = color_active_dark
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_medium
@@ -309,11 +309,11 @@ pub const theme_dark_cfg = ThemeCfg{
 	color_interior:     color_interior_dark
 	color_hover:        color_hover_dark
 	color_focus:        color_focus_dark
-	color_5:            color_5_dark
+	color_active:       color_active_dark
 	color_border:       color_border_dark
 	color_border_focus: color_link_dark
 	color_link:         color_link_dark
-	color_selected:     color_5_dark
+	color_selected:     color_active_dark
 	text_style:         text_style_dark
 }
 pub const theme_dark = theme_maker(theme_dark_cfg)
@@ -342,11 +342,11 @@ pub const theme_light_cfg = ThemeCfg{
 	color_interior:     color_interior_light
 	color_hover:        color_hover_light
 	color_focus:        color_focus_light
-	color_5:            color_5_light
+	color_active:       color_active_light
 	color_border:       color_border_light
 	color_link:         color_link_light
 	color_border_focus: color_border_focus_light
-	color_selected:     color_5_light
+	color_selected:     color_active_light
 	text_style:         TextStyle{
 		...text_style_dark
 		color: color_text_light
@@ -390,14 +390,14 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		color_interior:   cfg.color_interior
 		color_hover:      cfg.color_hover
 		color_focus:      cfg.color_focus
-		color_5:          cfg.color_5
+		color_active:     cfg.color_active
 
 		button_style:       ButtonStyle{
 			color:              cfg.color_interior
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
 			color_click:        cfg.color_focus
-			color_focus:        cfg.color_5
+			color_focus:        cfg.color_active
 			color_hover:        cfg.color_hover
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
@@ -473,7 +473,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		progress_bar_style: ProgressBarStyle{
 			color:      cfg.color_panel
-			color_bar:  cfg.color_5
+			color_bar:  cfg.color_active
 			fill:       true
 			radius:     cfg.radius
 			text_style: cfg.text_style
@@ -483,7 +483,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_focus:      cfg.color_link
 			color_border:     cfg.text_style.color
 			color_selected:   cfg.text_style.color
-			color_unselected: cfg.color_5
+			color_unselected: cfg.color_active
 			text_style:       cfg.text_style
 		}
 		range_slider_style: RangeSliderStyle{
@@ -492,7 +492,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_left:     cfg.color_link
 			color_focus:    cfg.color_focus
 			color_hover:    cfg.color_hover
-			color_border:   cfg.color_5
+			color_border:   cfg.color_active
 			color_thumb:    cfg.color_link
 			fill:           true
 			fill_border:    true
@@ -507,7 +507,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:   cfg.fill
 		}
 		scrollbar_style:    ScrollbarStyle{
-			color_thumb:  cfg.color_5
+			color_thumb:  cfg.color_active
 			radius:       if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
 			radius_thumb: if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
 		}
@@ -516,9 +516,9 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_link
 			color_click:        cfg.color_focus
-			color_focus:        cfg.color_5
+			color_focus:        cfg.color_active
 			color_hover:        cfg.color_hover
-			color_selected:     cfg.color_5
+			color_selected:     cfg.color_active
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
@@ -547,7 +547,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_focus:        cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_selected:     cfg.text_style.color
-			color_unselected:   cfg.color_5
+			color_unselected:   cfg.color_active
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            padding_three

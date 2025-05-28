@@ -89,7 +89,7 @@ fn main_view(window &gui.Window) gui.View {
 				float_anchor:  .middle_center
 				float_tie_off: .middle_center
 				h_align:       .center
-				color:         gui.theme().color_5
+				color:         gui.theme().color_active
 				fill:          true
 				content:       [
 					gui.text(text: 'Floating column with content', text_style: gui.theme().b2),

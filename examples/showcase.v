@@ -114,7 +114,11 @@ fn gallery(mut w gui.Window) gui.View {
 }
 
 fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
-	color := if app.selected_tab == tab_item { gui.theme().color_5 } else { gui.color_transparent }
+	color := if app.selected_tab == tab_item {
+		gui.theme().color_active
+	} else {
+		gui.color_transparent
+	}
 	return gui.row(
 		color:     color
 		fill:      app.selected_tab == tab_item
@@ -157,7 +161,7 @@ fn line() gui.View {
 				sizing:  gui.fill_fit
 				fill:    true
 				padding: gui.padding_none
-				color:   gui.theme().color_5
+				color:   gui.theme().color_active
 			),
 		]
 	)

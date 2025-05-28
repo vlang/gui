@@ -55,7 +55,7 @@ fn main_view(window &gui.Window) gui.View {
 						sizing:  gui.fill_fill
 						h_align: .center
 						v_align: .middle
-						color:   gui.theme().color_5
+						color:   gui.theme().color_active
 						content: [gui.text(text: 'Content for "${app.selected_tab}" goes here')]
 					),
 				]
@@ -69,7 +69,7 @@ fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) gui.Vie
 	color := if app.selected_tab == id {
 		gui.theme().color_link
 	} else {
-		gui.theme().color_5
+		gui.theme().color_active
 	}
 	return gui.button(
 		id:             'tab1'

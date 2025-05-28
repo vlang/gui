@@ -52,7 +52,7 @@ pub fn radio_option(label string, value string) RadioOption {
 pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 	return column(
 		text:    cfg.title
-		color:   if cfg.title.len == 0 { color_transparent } else { gui_theme.color_5 }
+		color:   if cfg.title.len == 0 { color_transparent } else { gui_theme.color_active }
 		padding: if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
 		content: build_options(cfg)
 	)
@@ -63,7 +63,7 @@ pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
 	return row(
 		text:    cfg.title
-		color:   if cfg.title.len == 0 { color_transparent } else { gui_theme.color_5 }
+		color:   if cfg.title.len == 0 { color_transparent } else { gui_theme.color_active }
 		padding: if cfg.title.len == 0 { gui_theme.padding_medium } else { gui_theme.padding_large }
 		content: build_options(cfg)
 	)
