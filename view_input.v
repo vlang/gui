@@ -29,6 +29,7 @@ pub:
 	padding            Padding                            = gui_theme.input_style.padding
 	padding_border     Padding                            = gui_theme.input_style.padding_border
 	color              Color                              = gui_theme.input_style.color
+	color_hover        Color                              = gui_theme.input_style.color_hover
 	color_border       Color                              = gui_theme.input_style.color_border
 	color_border_focus Color                              = gui_theme.input_style.color_border_focus
 	fill               bool                               = gui_theme.input_style.fill
@@ -82,6 +83,7 @@ pub fn input(cfg InputCfg) View {
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
 		amend_layout: cfg.amend_layout
+		on_hover:     cfg.hover
 		cfg:          &cfg
 		content:      [
 			row(
@@ -331,6 +333,12 @@ fn (cfg &InputCfg) amend_layout(mut node Layout, mut w Window) {
 
 	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {
 		node.shape.color = cfg.color_border_focus
+	}
+}
+
+fn (cfg &InputCfg) hover(mut node Layout, mut e Event, mut w Window) {
+	if !w.is_focus(node.shape.id_focus) {
+		node.children[0].shape.color = cfg.color_hover
 	}
 }
 

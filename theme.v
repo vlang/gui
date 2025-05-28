@@ -427,7 +427,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:       cfg.text_style
 		}
 		input_style:        InputStyle{
-			color:              cfg.color_panel
+			color:              cfg.color_interior
+			color_hover:        cfg.color_hover
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
 			color_focus:        cfg.color_interior
