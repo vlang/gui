@@ -27,7 +27,7 @@ const color_hover_dark = rgb(84, 84, 84)
 const color_focus_dark = rgb(94, 94, 94)
 const color_active_dark = rgb(104, 104, 104)
 const color_border_dark = rgb(100, 100, 100)
-const color_link_dark = cornflower_blue
+const color_select_dark = cornflower_blue
 const color_text_dark = rgb(225, 225, 225)
 
 const color_background_light = rgb(225, 225, 225)
@@ -37,7 +37,7 @@ const color_hover_light = rgb(185, 185, 215)
 const color_focus_light = rgb(175, 175, 215)
 const color_active_light = rgb(165, 165, 215)
 const color_border_light = rgb(135, 135, 165)
-const color_link_light = rgb(0, 71, 171)
+const color_select_light = rgb(0, 71, 171)
 const color_border_focus_light = rgb(0, 0, 165)
 const color_text_light = rgb(32, 32, 32)
 
@@ -66,15 +66,15 @@ const text_style_dark = TextStyle{
 pub struct Theme {
 pub:
 	name             string = 'default' @[required]
-	color_background Color  = color_background_dark
-	color_panel      Color  = color_panel_dark
-	color_link       Color  = color_link_dark
-	color_border     Color  = color_border_dark
-	color_selected   Color  = color_active_dark
-	color_interior   Color  = color_interior_dark
-	color_hover      Color  = color_hover_dark
-	color_focus      Color  = color_focus_dark
-	color_active     Color  = color_active_dark
+	color_background Color  = color_background_dark // background of the window
+	color_panel      Color  = color_panel_dark      // use for side panels, or groups of controls
+	color_interior   Color  = color_interior_dark   // use for the interior of controls like buttons
+	color_hover      Color  = color_hover_dark      // mostly mouse hovers
+	color_focus      Color  = color_focus_dark      // usually keyboard focus
+	color_active     Color  = color_active_dark     // use for clicks and other activity tasks
+	color_border     Color  = color_border_dark     // borders
+	color_select     Color  = color_select_dark     // sometimes selected state, links
+	color_text       Color  = Color_text_dark       // text color of course
 
 	button_style       ButtonStyle
 	container_style    ContainerStyle
@@ -263,8 +263,8 @@ pub:
 	color_focus        Color     = color_focus_dark
 	color_active       Color     = color_active_dark
 	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_link_dark
-	color_link         Color     = color_link_dark
+	color_border_focus Color     = color_select_dark
+	color_select       Color     = color_select_dark
 	color_selected     Color     = color_active_dark
 	fill               bool      = true
 	fill_border        bool      = true
@@ -311,8 +311,8 @@ pub const theme_dark_cfg = ThemeCfg{
 	color_focus:        color_focus_dark
 	color_active:       color_active_dark
 	color_border:       color_border_dark
-	color_border_focus: color_link_dark
-	color_link:         color_link_dark
+	color_border_focus: color_select_dark
+	color_select:       color_select_dark
 	color_selected:     color_active_dark
 	text_style:         text_style_dark
 }
@@ -344,7 +344,7 @@ pub const theme_light_cfg = ThemeCfg{
 	color_focus:        color_focus_light
 	color_active:       color_active_light
 	color_border:       color_border_light
-	color_link:         color_link_light
+	color_select:       color_select_light
 	color_border_focus: color_border_focus_light
 	color_selected:     color_active_light
 	text_style:         TextStyle{
@@ -384,7 +384,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		name:             cfg.name
 		color_background: cfg.color_background
 		color_panel:      cfg.color_panel
-		color_link:       cfg.color_link
+		color_select:     cfg.color_select
 		color_border:     cfg.color_border
 		color_selected:   cfg.color_selected
 		color_interior:   cfg.color_interior
@@ -480,7 +480,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		radio_style:        RadioStyle{
 			color:            cfg.color_panel
-			color_focus:      cfg.color_link
+			color_focus:      cfg.color_select
 			color_border:     cfg.text_style.color
 			color_selected:   cfg.text_style.color
 			color_unselected: cfg.color_active
@@ -489,11 +489,11 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		range_slider_style: RangeSliderStyle{
 			color:          cfg.color_interior
 			color_click:    cfg.color_focus
-			color_left:     cfg.color_link
+			color_left:     cfg.color_select
 			color_focus:    cfg.color_focus
 			color_hover:    cfg.color_hover
 			color_border:   cfg.color_active
-			color_thumb:    cfg.color_link
+			color_thumb:    cfg.color_select
 			fill:           true
 			fill_border:    true
 			padding:        padding_none
@@ -514,7 +514,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		select_style:       SelectStyle{
 			color:              cfg.color_interior
 			color_border:       cfg.color_border
-			color_border_focus: cfg.color_link
+			color_border_focus: cfg.color_select
 			color_click:        cfg.color_focus
 			color_focus:        cfg.color_active
 			color_hover:        cfg.color_hover
@@ -527,7 +527,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border:      cfg.radius_medium
 			subheading_style:   TextStyle{
 				...cfg.text_style
-				color: cfg.color_link
+				color: cfg.color_select
 			}
 			placeholder_style:  TextStyle{
 				...cfg.text_style
