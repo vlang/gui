@@ -114,13 +114,13 @@ pub:
 
 pub struct RadioStyle {
 pub:
-	color            Color     = color_interior_dark
-	color_focus      Color     = color_select_dark
-	color_border     Color     = color_active_dark
-	color_selected   Color     = color_text_dark
-	color_unselected Color     = color_active_dark
-	padding          Padding   = pad_all(4)
-	text_style       TextStyle = text_style_dark
+	color          Color     = color_interior_dark
+	color_focus    Color     = color_select_dark
+	color_border   Color     = color_border_dark
+	color_select   Color     = color_text_dark
+	color_unselect Color     = color_active_dark
+	padding        Padding   = pad_all(4)
+	text_style     TextStyle = text_style_dark
 }
 
 pub struct RangeSliderStyle {

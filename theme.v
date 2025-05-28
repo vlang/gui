@@ -480,12 +480,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style: cfg.text_style
 		}
 		radio_style:        RadioStyle{
-			color:            cfg.color_panel
-			color_focus:      cfg.color_select
-			color_border:     cfg.text_style.color
-			color_selected:   cfg.text_style.color
-			color_unselected: cfg.color_active
-			text_style:       cfg.text_style
+			color:          cfg.color_panel
+			color_focus:    cfg.color_select
+			color_border:   cfg.color_border
+			color_select:   cfg.text_style.color
+			color_unselect: cfg.color_active
+			text_style:     cfg.text_style
 		}
 		range_slider_style: RangeSliderStyle{
 			color:          cfg.color_interior
