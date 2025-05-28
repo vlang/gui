@@ -7,7 +7,7 @@ pub:
 	color              Color   = color_interior_dark
 	color_border       Color   = color_border_dark
 	color_border_focus Color   = color_link_dark
-	color_click        Color   = color_4_dark
+	color_click        Color   = color_focus_dark
 	color_focus        Color   = color_5_dark
 	color_hover        Color   = color_hover_dark
 	fill               bool    = true
@@ -127,9 +127,9 @@ pub:
 	size           f32     = 7
 	thumb_size     f32     = 15
 	color          Color   = color_interior_dark
-	color_click    Color   = color_4_dark
+	color_click    Color   = color_focus_dark
 	color_left     Color   = color_link_dark
-	color_focus    Color   = color_4_dark
+	color_focus    Color   = color_focus_dark
 	color_hover    Color   = color_hover_dark
 	color_border   Color   = color_5_dark
 	color_thumb    Color   = color_link_dark
@@ -168,7 +168,7 @@ pub:
 	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
-	color_click        Color     = color_4_dark
+	color_click        Color     = color_focus_dark
 	color_focus        Color     = color_5_dark
 	color_hover        Color     = color_hover_dark
 	color_selected     Color     = color_5_dark

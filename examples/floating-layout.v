@@ -112,7 +112,7 @@ fn faux_edit_menu(app &FloatingLayoutApp) gui.View {
 				min_width:    75
 				max_width:    100
 				color:        gui.Color{
-					...gui.theme().color_4
+					...gui.theme().color_focus
 					a: 210
 				}
 				fill:         true
@@ -132,7 +132,7 @@ fn faux_edit_menu(app &FloatingLayoutApp) gui.View {
 								max_width:      100
 								fill:           true
 								color:          gui.Color{
-									...gui.theme().color_4
+									...gui.theme().color_focus
 									a: 210
 								}
 								content:        [

@@ -24,7 +24,7 @@ const color_background_dark = rgb(48, 48, 48)
 const color_panel_dark = rgb(64, 64, 64)
 const color_interior_dark = rgb(74, 74, 74)
 const color_hover_dark = rgb(84, 84, 84)
-const color_4_dark = rgb(94, 94, 94)
+const color_focus_dark = rgb(94, 94, 94)
 const color_5_dark = rgb(104, 104, 104)
 const color_border_dark = rgb(100, 100, 100)
 const color_link_dark = cornflower_blue
@@ -34,7 +34,7 @@ const color_background_light = rgb(225, 225, 225)
 const color_panel_light = rgb(205, 205, 215)
 const color_interior_light = rgb(195, 195, 215)
 const color_hover_light = rgb(185, 185, 215)
-const color_4_light = rgb(175, 175, 215)
+const color_focus_light = rgb(175, 175, 215)
 const color_5_light = rgb(165, 165, 215)
 const color_border_light = rgb(135, 135, 165)
 const color_link_light = rgb(0, 71, 171)
@@ -73,7 +73,7 @@ pub:
 	color_selected   Color  = color_5_dark
 	color_interior   Color  = color_interior_dark
 	color_hover      Color  = color_hover_dark
-	color_4          Color  = color_4_dark
+	color_focus      Color  = color_focus_dark
 	color_5          Color  = color_5_dark
 
 	button_style       ButtonStyle
@@ -260,7 +260,7 @@ pub:
 	color_panel        Color     = color_panel_dark
 	color_interior     Color     = color_interior_dark
 	color_hover        Color     = color_hover_dark
-	color_4            Color     = color_4_dark
+	color_focus        Color     = color_focus_dark
 	color_5            Color     = color_5_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
@@ -308,7 +308,7 @@ pub const theme_dark_cfg = ThemeCfg{
 	color_panel:        color_panel_dark
 	color_interior:     color_interior_dark
 	color_hover:        color_hover_dark
-	color_4:            color_4_dark
+	color_focus:        color_focus_dark
 	color_5:            color_5_dark
 	color_border:       color_border_dark
 	color_border_focus: color_link_dark
@@ -341,7 +341,7 @@ pub const theme_light_cfg = ThemeCfg{
 	color_panel:        color_panel_light
 	color_interior:     color_interior_light
 	color_hover:        color_hover_light
-	color_4:            color_4_light
+	color_focus:        color_focus_light
 	color_5:            color_5_light
 	color_border:       color_border_light
 	color_link:         color_link_light
@@ -389,14 +389,14 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		color_selected:   cfg.color_selected
 		color_interior:   cfg.color_interior
 		color_hover:      cfg.color_hover
-		color_4:          cfg.color_4
+		color_focus:      cfg.color_focus
 		color_5:          cfg.color_5
 
 		button_style:       ButtonStyle{
 			color:              cfg.color_interior
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
-			color_click:        cfg.color_4
+			color_click:        cfg.color_focus
 			color_focus:        cfg.color_5
 			color_hover:        cfg.color_hover
 			fill:               cfg.fill
@@ -488,9 +488,9 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		range_slider_style: RangeSliderStyle{
 			color:          cfg.color_interior
-			color_click:    cfg.color_4
+			color_click:    cfg.color_focus
 			color_left:     cfg.color_link
-			color_focus:    cfg.color_4
+			color_focus:    cfg.color_focus
 			color_hover:    cfg.color_hover
 			color_border:   cfg.color_5
 			color_thumb:    cfg.color_link
@@ -515,7 +515,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color:              cfg.color_interior
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_link
-			color_click:        cfg.color_4
+			color_click:        cfg.color_focus
 			color_focus:        cfg.color_5
 			color_hover:        cfg.color_hover
 			color_selected:     cfg.color_5
