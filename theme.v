@@ -23,7 +23,7 @@ pub const color_transparent = rgba(0, 0, 0, 0)
 const color_background_dark = rgb(48, 48, 48)
 const color_panel_dark = rgb(64, 64, 64)
 const color_interior_dark = rgb(74, 74, 74)
-const color_3_dark = rgb(84, 84, 84)
+const color_hover_dark = rgb(84, 84, 84)
 const color_4_dark = rgb(94, 94, 94)
 const color_5_dark = rgb(104, 104, 104)
 const color_border_dark = rgb(100, 100, 100)
@@ -33,7 +33,7 @@ const color_text_dark = rgb(225, 225, 225)
 const color_background_light = rgb(225, 225, 225)
 const color_panel_light = rgb(205, 205, 215)
 const color_interior_light = rgb(195, 195, 215)
-const color_3_light = rgb(185, 185, 215)
+const color_hover_light = rgb(185, 185, 215)
 const color_4_light = rgb(175, 175, 215)
 const color_5_light = rgb(165, 165, 215)
 const color_border_light = rgb(135, 135, 165)
@@ -72,7 +72,7 @@ pub:
 	color_border     Color  = color_border_dark
 	color_selected   Color  = color_5_dark
 	color_interior   Color  = color_interior_dark
-	color_3          Color  = color_3_dark
+	color_hover      Color  = color_hover_dark
 	color_4          Color  = color_4_dark
 	color_5          Color  = color_5_dark
 
@@ -259,7 +259,7 @@ pub:
 	color_background   Color     = color_background_dark
 	color_panel        Color     = color_panel_dark
 	color_interior     Color     = color_interior_dark
-	color_3            Color     = color_3_dark
+	color_hover        Color     = color_hover_dark
 	color_4            Color     = color_4_dark
 	color_5            Color     = color_5_dark
 	color_border       Color     = color_border_dark
@@ -307,7 +307,7 @@ pub const theme_dark_cfg = ThemeCfg{
 	color_background:   color_background_dark
 	color_panel:        color_panel_dark
 	color_interior:     color_interior_dark
-	color_3:            color_3_dark
+	color_hover:        color_hover_dark
 	color_4:            color_4_dark
 	color_5:            color_5_dark
 	color_border:       color_border_dark
@@ -340,7 +340,7 @@ pub const theme_light_cfg = ThemeCfg{
 	color_background:   color_background_light
 	color_panel:        color_panel_light
 	color_interior:     color_interior_light
-	color_3:            color_3_light
+	color_hover:        color_hover_light
 	color_4:            color_4_light
 	color_5:            color_5_light
 	color_border:       color_border_light
@@ -388,7 +388,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		color_border:     cfg.color_border
 		color_selected:   cfg.color_selected
 		color_interior:   cfg.color_interior
-		color_3:          cfg.color_3
+		color_hover:      cfg.color_hover
 		color_4:          cfg.color_4
 		color_5:          cfg.color_5
 
@@ -398,7 +398,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border_focus: cfg.color_border_focus
 			color_click:        cfg.color_4
 			color_focus:        cfg.color_5
-			color_hover:        cfg.color_3
+			color_hover:        cfg.color_hover
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding_border:     cfg.padding_border
@@ -491,7 +491,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_click:    cfg.color_4
 			color_left:     cfg.color_link
 			color_focus:    cfg.color_4
-			color_hover:    cfg.color_3
+			color_hover:    cfg.color_hover
 			color_border:   cfg.color_5
 			color_thumb:    cfg.color_link
 			fill:           true
@@ -517,7 +517,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border_focus: cfg.color_link
 			color_click:        cfg.color_4
 			color_focus:        cfg.color_5
-			color_hover:        cfg.color_3
+			color_hover:        cfg.color_hover
 			color_selected:     cfg.color_5
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
@@ -545,7 +545,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border_focus: cfg.color_border_focus
 			color_click:        cfg.color_interior
 			color_focus:        cfg.color_interior
-			color_hover:        cfg.color_3
+			color_hover:        cfg.color_hover
 			color_selected:     cfg.text_style.color
 			color_unselected:   cfg.color_5
 			fill:               cfg.fill
@@ -563,7 +563,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border_focus: cfg.color_border_focus
 			color_click:        cfg.color_interior
 			color_focus:        cfg.color_interior
-			color_hover:        cfg.color_3
+			color_hover:        cfg.color_hover
 			color_selected:     cfg.color_panel
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
