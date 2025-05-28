@@ -76,7 +76,7 @@ pub:
 	width_submenu_max      f32       = 200
 	color                  Color     = color_interior_dark
 	color_border           Color     = color_border_dark
-	color_selected         Color     = color_active_dark
+	color_select           Color     = color_select_dark
 	padding                Padding   = padding_small
 	padding_menu_item      Padding   = padding_two_five
 	padding_border         Padding   = padding_none

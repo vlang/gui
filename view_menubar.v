@@ -25,7 +25,7 @@ pub:
 	float_tie_off          FloatAttach
 	color                  Color     = gui_theme.menubar_style.color
 	color_border           Color     = gui_theme.menubar_style.color_border
-	color_selected         Color     = gui_theme.menubar_style.color_selected
+	color_select           Color     = gui_theme.menubar_style.color_select
 	width_submenu_min      f32       = gui_theme.menubar_style.width_submenu_min
 	width_submenu_max      f32       = gui_theme.menubar_style.width_submenu_max
 	padding                Padding   = gui_theme.menubar_style.padding
@@ -108,13 +108,13 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 		}
 		item_cfg := MenuItemCfg{
 			...item
-			color_selected: cfg.color_selected
-			padding:        padding
-			selected:       item.id == id_selected || selected_in_tree
-			sizing:         sizing
-			radius:         cfg.radius_menu_item
-			spacing:        cfg.spacing_submenu
-			text_style:     text_style
+			color_select: cfg.color_select
+			padding:      padding
+			selected:     item.id == id_selected || selected_in_tree
+			sizing:       sizing
+			radius:       cfg.radius_menu_item
+			spacing:      cfg.spacing_submenu
+			text_style:   text_style
 		}
 		mut mi := menu_item(cfg, item_cfg)
 		if item.submenu.len > 0 {

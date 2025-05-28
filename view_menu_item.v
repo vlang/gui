@@ -21,13 +21,13 @@ pub const menu_subtitle_id = '__subtitle__'
 // the menubar determines which menu items are selected/highlighted.
 @[heap]
 pub struct MenuItemCfg {
-	color_selected Color = gui_theme.menubar_style.color_selected
-	sizing         Sizing
-	radius         f32       = gui_theme.menubar_style.radius_menu_item
-	spacing        f32       = gui_theme.menubar_style.spacing_submenu
-	text_style     TextStyle = gui_theme.menubar_style.text_style
-	disabled       bool
-	selected       bool
+	color_select Color = gui_theme.menubar_style.color_select
+	sizing       Sizing
+	radius       f32       = gui_theme.menubar_style.radius_menu_item
+	spacing      f32       = gui_theme.menubar_style.spacing_submenu
+	text_style   TextStyle = gui_theme.menubar_style.text_style
+	disabled     bool
+	selected     bool
 pub:
 	id          string @[required]
 	text        string  = 'empty'
@@ -73,7 +73,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				cfg:      &item_cfg
 				disabled: item_cfg.disabled
 				color:    if item_cfg.selected {
-					item_cfg.color_selected
+					item_cfg.color_select
 				} else {
 					color_transparent
 				}

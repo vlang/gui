@@ -450,9 +450,9 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		menubar_style:      MenubarStyle{
-			color:               cfg.color_panel
+			color:               cfg.color_interior
 			color_border:        cfg.color_border
-			color_selected:      cfg.color_selected
+			color_select:        cfg.color_select
 			padding:             cfg.padding_small
 			padding_border:      cfg.padding_border
 			padding_submenu:     cfg.padding_small
