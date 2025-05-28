@@ -522,10 +522,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			padding_border:     cfg.padding_border
 			radius:             cfg.radius_medium
 			radius_border:      cfg.radius_medium
-			subheading_style:   TextStyle{
-				...cfg.text_style
-				color: cfg.color_select
-			}
 			placeholder_style:  TextStyle{
 				...cfg.text_style
 				color: Color{
@@ -749,6 +745,15 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			...mono
 			size:   theme.size_text_tiny
 			family: icon_font_file
+		}
+
+		// sel
+		select_style: SelectStyle{
+			...theme.select_style
+			subheading_style: TextStyle{
+				...bold
+				size: theme.size_text_medium
+			}
 		}
 	}
 }

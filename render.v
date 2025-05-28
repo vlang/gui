@@ -197,7 +197,7 @@ fn render_circle(mut shape Shape, mut renderers []Renderer, clip DrawClip, windo
 	}
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 	gx_color := color.to_gx_color()
-	if rects_overlap(draw_rect, clip) {
+	if rects_overlap(draw_rect, clip) && color != color_transparent {
 		radius := f32_min(shape.width, shape.height) / 2
 		x := shape.x + shape.width / 2
 		y := shape.y + shape.height / 2
@@ -224,16 +224,18 @@ fn render_rectangle(mut shape Shape, mut renderers []Renderer, clip DrawClip, wi
 	}
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 	gx_color := color.to_gx_color()
-	if rects_overlap(draw_rect, clip) {
-		renderers << DrawRect{
-			x:          draw_rect.x
-			y:          draw_rect.y
-			w:          draw_rect.width
-			h:          draw_rect.height
-			color:      gx_color
-			style:      if shape.fill { .fill } else { .stroke }
-			is_rounded: shape.radius > 0
-			radius:     shape.radius
+	if rects_overlap(draw_rect, clip) && color != color_transparent {
+		if color != color_transparent {
+			renderers << DrawRect{
+				x:          draw_rect.x
+				y:          draw_rect.y
+				w:          draw_rect.width
+				h:          draw_rect.height
+				color:      gx_color
+				style:      if shape.fill { .fill } else { .stroke }
+				is_rounded: shape.radius > 0
+				radius:     shape.radius
+			}
 		}
 	} else {
 		shape.disabled = true
@@ -281,7 +283,7 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 			height: lh
 		}
 		// Cull any renderers outside of clip/conteext region.
-		if rects_overlap(clip, draw_rect) {
+		if rects_overlap(clip, draw_rect) && color != color_transparent {
 			mut lnl := line.replace('\n', '')
 			if shape.text_is_password {
 				// replace with '*'s
