@@ -6,7 +6,7 @@ pub struct ButtonStyle {
 pub:
 	color              Color   = color_interior_dark
 	color_border       Color   = color_border_dark
-	color_border_focus Color   = color_link_dark
+	color_border_focus Color   = color_select_dark
 	color_click        Color   = color_focus_dark
 	color_focus        Color   = color_active_dark
 	color_hover        Color   = color_hover_dark
@@ -49,7 +49,7 @@ pub struct InputStyle {
 pub:
 	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_link_dark
+	color_border_focus Color     = color_select_dark
 	color_focus        Color     = color_active_dark
 	fill               bool      = true
 	fill_border        bool      = true
@@ -114,7 +114,7 @@ pub:
 pub struct RadioStyle {
 pub:
 	color            Color     = color_interior_dark
-	color_focus      Color     = color_link_dark
+	color_focus      Color     = color_select_dark
 	color_border     Color     = color_active_dark
 	color_selected   Color     = color_text_dark
 	color_unselected Color     = color_active_dark
@@ -128,11 +128,11 @@ pub:
 	thumb_size     f32     = 15
 	color          Color   = color_interior_dark
 	color_click    Color   = color_focus_dark
-	color_left     Color   = color_link_dark
+	color_left     Color   = color_select_dark
 	color_focus    Color   = color_focus_dark
 	color_hover    Color   = color_hover_dark
 	color_border   Color   = color_active_dark
-	color_thumb    Color   = color_link_dark
+	color_thumb    Color   = color_select_dark
 	fill           bool    = true
 	fill_border    bool    = true
 	padding        Padding = padding_none
@@ -167,7 +167,7 @@ pub:
 	max_width          f32       = 200
 	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_link_dark
+	color_border_focus Color     = color_select_dark
 	color_click        Color     = color_focus_dark
 	color_focus        Color     = color_active_dark
 	color_hover        Color     = color_hover_dark
@@ -194,7 +194,7 @@ pub struct SwitchStyle {
 pub:
 	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_link_dark
+	color_border_focus Color     = color_select_dark
 	color_click        Color     = color_interior_dark
 	color_focus        Color     = color_interior_dark
 	color_hover        Color     = color_active_dark
@@ -231,7 +231,7 @@ pub struct ToggleStyle {
 pub:
 	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_link_dark
+	color_border_focus Color     = color_select_dark
 	color_click        Color     = color_interior_dark
 	color_focus        Color     = color_active_dark
 	color_hover        Color     = color_hover_dark

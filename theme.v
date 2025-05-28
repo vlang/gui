@@ -73,8 +73,8 @@ pub:
 	color_focus      Color  = color_focus_dark      // usually keyboard focus
 	color_active     Color  = color_active_dark     // use for clicks and other activity tasks
 	color_border     Color  = color_border_dark     // borders
-	color_select     Color  = color_select_dark     // sometimes selected state, links
-	color_text       Color  = Color_text_dark       // text color of course
+	color_select     Color  = color_select_dark     // links and selected
+	color_text       Color  = color_text_dark       // text color of course
 
 	button_style       ButtonStyle
 	container_style    ContainerStyle
@@ -384,13 +384,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		name:             cfg.name
 		color_background: cfg.color_background
 		color_panel:      cfg.color_panel
-		color_select:     cfg.color_select
-		color_border:     cfg.color_border
-		color_selected:   cfg.color_selected
 		color_interior:   cfg.color_interior
 		color_hover:      cfg.color_hover
 		color_focus:      cfg.color_focus
 		color_active:     cfg.color_active
+		color_border:     cfg.color_border
+		color_select:     cfg.color_select
 
 		button_style:       ButtonStyle{
 			color:              cfg.color_interior
