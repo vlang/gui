@@ -99,12 +99,12 @@ pub:
 
 pub struct ProgressBarStyle {
 pub:
-	color           Color     = color_interior_dark
-	color_bar       Color     = color_active_dark
-	fill            bool      = true
+	size            f32       = size_progress_bar
 	padding         Padding   = padding_medium
 	radius          f32       = radius_medium
-	size            f32       = size_progress_bar
+	fill            bool      = true
+	color           Color     = color_interior_dark
+	color_bar       Color     = color_active_dark
 	text_show       bool      = true
 	text_background Color     = color_transparent
 	text_fill       bool      = true
