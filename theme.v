@@ -538,7 +538,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		switch_style:       SwitchStyle{
 			color:              cfg.color_panel
 			color_click:        cfg.color_interior
-			color_focus:        cfg.color_focus
+			color_focus:        cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
@@ -560,7 +560,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_click:        cfg.color_interior
 			color_focus:        cfg.color_interior
 			color_hover:        cfg.color_hover
-			color_selected:     cfg.color_panel
+			color_select:       cfg.color_interior
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            padding_one

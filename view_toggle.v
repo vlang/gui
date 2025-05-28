@@ -1,7 +1,7 @@
 module gui
 
 // ToggleCfg a.k.a checkbox. [Toggle](#toggle) in its default mode functions and a checkbox.
-// However, there is an option of overriding the `text_selected` and `text_unselected` properties.
+// However, there is an option of overriding the `text_select` and `text_unselect` properties.
 @[heap]
 pub struct ToggleCfg {
 pub:
@@ -10,9 +10,9 @@ pub:
 	disabled           bool
 	invisible          bool
 	label              string
-	text_selected      string = '✓'
-	text_unselected    string = ' '
-	selected           bool
+	text_select        string = '✓'
+	text_unselect      string = ' '
+	select             bool
 	fill               bool      = gui_theme.toggle_style.fill
 	fill_border        bool      = gui_theme.toggle_style.fill_border
 	color              Color     = gui_theme.toggle_style.color
@@ -21,7 +21,7 @@ pub:
 	color_click        Color     = gui_theme.toggle_style.color_click
 	color_border       Color     = gui_theme.toggle_style.color_border
 	color_border_focus Color     = gui_theme.toggle_style.color_border_focus
-	color_selected     Color     = gui_theme.toggle_style.color_selected
+	color_select       Color     = gui_theme.toggle_style.color_select
 	padding            Padding   = gui_theme.toggle_style.padding
 	padding_border     Padding   = gui_theme.toggle_style.padding_border
 	radius             f32       = gui_theme.toggle_style.radius
@@ -33,8 +33,8 @@ pub:
 
 // toggle creates a toggle button (a.k.a checkbox) from the given [ToggleCfg](#ToggleCfg)
 pub fn toggle(cfg ToggleCfg) View {
-	color := if cfg.selected { cfg.color_selected } else { cfg.color }
-	txt := if cfg.selected { cfg.text_selected } else { cfg.text_unselected }
+	color := if cfg.select { cfg.color_select } else { cfg.color }
+	txt := if cfg.select { cfg.text_select } else { cfg.text_unselect }
 
 	mut content := []View{}
 

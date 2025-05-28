@@ -48,24 +48,24 @@ fn main_view(window &gui.Window) gui.View {
 				content: [
 					gui.toggle(
 						label:    'toggle (default)'
-						selected: app.select_checkbox
+						select:   app.select_checkbox
 						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_checkbox = !app.select_checkbox
 						}
 					),
 					gui.toggle(
-						label:         'toggle (custom text)'
-						selected:      app.select_toggle
-						text_selected: 'X'
-						on_click:      fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+						label:       'toggle (custom text)'
+						select:      app.select_toggle
+						text_select: 'X'
+						on_click:    fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_toggle = !app.select_toggle
 						}
 					),
 					gui.radio(
 						label:    'radio button'
-						selected: app.select_radio
+						select:   app.select_radio
 						on_click: fn (_ &gui.RadioCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_radio = !app.select_radio
@@ -92,12 +92,12 @@ fn toggle_theme(app &ToggleApp) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.toggle(
-				text_selected:   gui.icon_moon
-				text_unselected: gui.icon_sunny_o
-				text_style:      gui.theme().icon3
-				padding:         gui.theme().padding_small
-				selected:        app.light
-				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon3
+				padding:       gui.theme().padding_small
+				select:        app.light
+				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[ToggleApp]()
 					app.light = !app.light
 					theme := if app.light {

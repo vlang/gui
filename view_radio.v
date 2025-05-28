@@ -8,7 +8,7 @@ pub:
 	disabled       bool
 	invisible      bool
 	label          string
-	selected       bool
+	select         bool
 	size           f32       = gui_theme.n3.size
 	color          Color     = gui_theme.radio_style.color
 	color_focus    Color     = gui_theme.radio_style.color_focus
@@ -38,7 +38,7 @@ pub fn radio(cfg RadioCfg) View {
 		content:   [
 			circle(
 				fill:    true
-				color:   if cfg.selected { cfg.color_select } else { cfg.color_unselect }
+				color:   if cfg.select { cfg.color_select } else { cfg.color_unselect }
 				padding: padding_none
 				width:   cfg.size - cfg.padding.width()
 				height:  cfg.size - cfg.padding.height()

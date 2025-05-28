@@ -169,12 +169,12 @@ fn line() gui.View {
 
 fn toggle_theme(app &ShowcaseApp) gui.View {
 	return gui.toggle(
-		text_selected:   gui.icon_moon
-		text_unselected: gui.icon_sunny_o
-		text_style:      gui.theme().icon3
-		padding:         gui.padding_small
-		selected:        app.light_theme
-		on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+		text_select:   gui.icon_moon
+		text_unselect: gui.icon_sunny_o
+		text_style:    gui.theme().icon3
+		padding:       gui.padding_small
+		select:        app.light_theme
+		on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.light_theme = !app.light_theme
 			theme := if app.light_theme {
@@ -434,17 +434,17 @@ fn toggles(w &gui.Window) gui.View {
 				content: [
 					gui.toggle(
 						label:    'toggle (a.k.a. checkbox)'
-						selected: app.select_checkbox
+						select:   app.select_checkbox
 						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.select_checkbox = !app.select_checkbox
 						}
 					),
 					gui.toggle(
-						label:         'toggle with custom text'
-						selected:      app.select_toggle
-						text_selected: 'X'
-						on_click:      fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+						label:       'toggle with custom text'
+						select:      app.select_toggle
+						text_select: 'X'
+						on_click:    fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.select_toggle = !app.select_toggle
 						}

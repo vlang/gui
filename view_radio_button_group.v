@@ -76,7 +76,7 @@ fn build_options(cfg RadioButtonGroupCfg) []View {
 		content << radio(
 			label:    option.label
 			id_focus: id_focus
-			selected: cfg.value == option.value
+			select:   cfg.value == option.value
 			on_click: fn [cfg, option] (_ voidptr, mut _e Event, mut w Window) {
 				cfg.on_select(option.value, mut w)
 			}

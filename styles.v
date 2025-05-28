@@ -167,9 +167,9 @@ pub:
 	min_width          f32       = 75
 	max_width          f32       = 200
 	color              Color     = color_interior_dark
+	color_focus        Color     = color_interior_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_select_dark
-	color_focus        Color     = color_focus_dark
 	color_select       Color     = color_select_dark
 	fill               bool      = true
 	fill_border        bool      = true
@@ -234,7 +234,7 @@ pub:
 	color_click        Color     = color_interior_dark
 	color_focus        Color     = color_active_dark
 	color_hover        Color     = color_hover_dark
-	color_selected     Color     = color_panel_dark
+	color_select       Color     = color_interior_dark
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_one
