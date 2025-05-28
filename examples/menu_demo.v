@@ -14,10 +14,10 @@ import gui
 @[heap]
 struct MenuApp {
 pub mut:
-	clicks           int
-	search_text      string
-	selected_menu_id string
-	light_theme      bool
+	clicks         int
+	search_text    string
+	select_menu_id string
+	light_theme    bool
 }
 
 fn main() {
@@ -63,7 +63,7 @@ fn menu(window &gui.Window) gui.View {
 		padding_border: gui.padding_none
 		action:         fn (id string, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[MenuApp]()
-			app.selected_menu_id = id
+			app.select_menu_id = id
 		}
 		items:          [
 			gui.MenuItemCfg{
@@ -216,15 +216,15 @@ fn body(mut app MenuApp, window &gui.Window) gui.View {
 			),
 			gui.text(text: ''), // spacer
 			gui.text(
-				text:       if app.selected_menu_id.len > 0 {
-					'Menu "${app.selected_menu_id}" selected'
+				text:       if app.select_menu_id.len > 0 {
+					'Menu "${app.select_menu_id}" select'
 				} else {
 					''
 				}
 				text_style: gui_theme.m3
 			),
 			gui.text(
-				text:       if app.selected_menu_id.len > 0 {
+				text:       if app.select_menu_id.len > 0 {
 					'Search text: "${app.search_text}"'
 				} else {
 					''
@@ -242,11 +242,11 @@ fn toggle_theme(app &MenuApp) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.toggle(
-				text_selected:   gui.icon_moon
-				text_unselected: gui.icon_sunny_o
-				text_style:      gui.theme().icon5
-				selected:        app.light_theme
-				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon5
+				select:        app.light_theme
+				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[MenuApp]()
 					app.light_theme = !app.light_theme
 					theme := if app.light_theme {

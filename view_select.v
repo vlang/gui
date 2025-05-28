@@ -9,7 +9,7 @@ pub:
 	id                 string  @[required] // unique only to other select views
 	window             &Window @[required] // required for state managment
 	id_focus           u32
-	selected           []string // Text of selected item
+	select             []string // Text of select item
 	placeholder        string
 	select_multiple    bool
 	no_wrap            bool
@@ -45,8 +45,8 @@ pub fn select(cfg SelectCfg) View {
 		}
 	}
 	clip := if cfg.select_multiple && cfg.no_wrap { true } else { false }
-	txt := if cfg.selected.len == 0 { cfg.placeholder } else { cfg.selected.join(', ') }
-	txt_style := if cfg.selected.len == 0 { cfg.placeholder_style } else { gui_theme.text_style }
+	txt := if cfg.select.len == 0 { cfg.placeholder } else { cfg.select.join(', ') }
+	txt_style := if cfg.select.len == 0 { cfg.placeholder_style } else { gui_theme.text_style }
 	wrap_mode := if cfg.select_multiple && !cfg.no_wrap {
 		TextMode.wrap
 	} else {
@@ -133,7 +133,7 @@ fn option_view(cfg SelectCfg, option string) View {
 						text:       '✓'
 						text_style: TextStyle{
 							...gui_theme.text_style
-							color: if option in cfg.selected {
+							color: if option in cfg.select {
 								gui_theme.text_style.color
 							} else {
 								color_transparent
@@ -152,10 +152,10 @@ fn option_view(cfg SelectCfg, option string) View {
 
 				mut s := []string{}
 				if cfg.select_multiple {
-					s = if option in cfg.selected {
-						cfg.selected.filter(it != option)
+					s = if option in cfg.select {
+						cfg.select.filter(it != option)
 					} else {
-						mut a := cfg.selected.clone()
+						mut a := cfg.select.clone()
 						a << option
 						a.sorted()
 					}

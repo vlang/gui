@@ -8,8 +8,8 @@ import gui
 @[heap]
 struct TabViewApp {
 pub mut:
-	selected_tab string = 'tab1'
-	light_theme  bool
+	select_tab  string = 'tab1'
+	light_theme bool
 }
 
 fn main() {
@@ -56,7 +56,7 @@ fn main_view(window &gui.Window) gui.View {
 						h_align: .center
 						v_align: .middle
 						color:   gui.theme().color_active
-						content: [gui.text(text: 'Content for "${app.selected_tab}" goes here')]
+						content: [gui.text(text: 'Content for "${app.select_tab}" goes here')]
 					),
 				]
 			),
@@ -66,7 +66,7 @@ fn main_view(window &gui.Window) gui.View {
 
 // tab buttons can be anything you want. This one is admittedly simple.
 fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) gui.View {
-	color := if app.selected_tab == id {
+	color := if app.select_tab == id {
 		gui.theme().color_select
 	} else {
 		gui.theme().color_active
@@ -80,20 +80,20 @@ fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) gui.Vie
 		content:        [gui.text(id: id, text: text, text_style: gui.theme().b4)]
 		on_click:       fn [id] (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 			mut tvapp := w.state[TabViewApp]()
-			tvapp.selected_tab = id
+			tvapp.select_tab = id
 		}
 	)
 }
 
 fn theme_button(app &TabViewApp) gui.View {
 	return gui.toggle(
-		id_focus:        3
-		text_selected:   gui.icon_moon
-		text_unselected: gui.icon_sunny_o
-		text_style:      gui.theme().icon3
-		padding:         gui.theme().padding_small
-		selected:        app.light_theme
-		on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+		id_focus:      3
+		text_select:   gui.icon_moon
+		text_unselect: gui.icon_sunny_o
+		text_style:    gui.theme().icon3
+		padding:       gui.theme().padding_small
+		select:        app.light_theme
+		on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[TabViewApp]()
 			app.light_theme = !app.light_theme
 			w.set_theme(if app.light_theme {

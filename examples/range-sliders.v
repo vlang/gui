@@ -89,12 +89,12 @@ fn toggle_theme(app &RangeSliderApp) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.toggle(
-				text_selected:   gui.icon_moon
-				text_unselected: gui.icon_sunny_o
-				text_style:      gui.theme().icon3
-				padding:         gui.theme().padding_small
-				selected:        app.light_theme
-				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon3
+				padding:       gui.theme().padding_small
+				select:        app.light_theme
+				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[RangeSliderApp]()
 					app.light_theme = !app.light_theme
 					theme := if app.light_theme {

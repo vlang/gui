@@ -8,8 +8,8 @@ import gui
 @[heap]
 struct SelectDemoApp {
 pub mut:
-	selected_1  []string
-	selected_2  []string
+	select_1    []string
+	select_2    []string
 	light_theme bool
 }
 
@@ -45,7 +45,7 @@ fn main_view(mut window gui.Window) gui.View {
 						min_width:       200
 						max_width:       200
 						window:          mut window
-						selected:        app.selected_1
+						select:          app.select_1
 						placeholder:     'Pick one or more states'
 						select_multiple: true
 						options:         [
@@ -103,7 +103,7 @@ fn main_view(mut window gui.Window) gui.View {
 						]
 						on_select:       fn (s []string, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[SelectDemoApp]()
-							app.selected_1 = s
+							app.select_1 = s
 							e.is_handled = true
 						}
 					),
@@ -117,7 +117,7 @@ fn main_view(mut window gui.Window) gui.View {
 						min_width:   260
 						max_width:   260
 						window:      mut window
-						selected:    app.selected_2
+						select:      app.select_2
 						placeholder: 'Pick a country'
 						options:     [
 							'---Africa',
@@ -326,7 +326,7 @@ fn main_view(mut window gui.Window) gui.View {
 						]
 						on_select:   fn (s []string, mut e gui.Event, mut w gui.Window) {
 							mut app_ := w.state[SelectDemoApp]()
-							app_.selected_2 = s
+							app_.select_2 = s
 							e.is_handled = true
 						}
 					),
@@ -343,12 +343,12 @@ fn toggle_theme(app &SelectDemoApp) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.toggle(
-				text_selected:   gui.icon_moon
-				text_unselected: gui.icon_sunny_o
-				text_style:      gui.theme().icon3
-				padding:         gui.theme().padding_small
-				selected:        app.light_theme
-				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon3
+				padding:       gui.theme().padding_small
+				select:        app.light_theme
+				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[SelectDemoApp]()
 					app.light_theme = !app.light_theme
 					theme := if app.light_theme {

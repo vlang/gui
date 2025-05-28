@@ -938,7 +938,7 @@ fn select_samples(w &gui.Window) gui.View {
 				window:          mut w
 				min_width:       width
 				max_width:       width
-				selected:        app.selected_1
+				select:          app.selected_1
 				placeholder:     'Pick one or more states'
 				select_multiple: true
 				options:         [
@@ -1005,7 +1005,7 @@ fn select_samples(w &gui.Window) gui.View {
 				window:      mut w
 				min_width:   width
 				max_width:   width
-				selected:    app.selected_2
+				select:      app.selected_2
 				placeholder: 'Pick a country'
 				options:     [
 					'---Africa',

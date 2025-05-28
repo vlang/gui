@@ -6,8 +6,8 @@ import gui
 @[heap]
 struct IconFontApp {
 mut:
-	light_theme   bool
-	selected_size string = 'x-large'
+	light_theme bool
+	select_size string = 'x-large'
 }
 
 fn main() {
@@ -61,9 +61,9 @@ fn side_panel(mut w gui.Window) gui.View {
 					gui.radio_option('large', 'large'),
 					gui.radio_option('x-large', 'x-large'),
 				]
-				value:     app.selected_size
+				value:     app.select_size
 				on_select: fn [mut app] (value string, mut _ gui.Window) {
-					app.selected_size = value
+					app.select_size = value
 				}
 				window:    w
 			),
@@ -75,7 +75,7 @@ fn side_panel(mut w gui.Window) gui.View {
 
 fn icon_catalog(mut w gui.Window) gui.View {
 	mut app := w.state[IconFontApp]()
-	icon_text_style := match app.selected_size {
+	icon_text_style := match app.select_size {
 		'tiny' { gui.theme().icon6 }
 		'x-small' { gui.theme().icon5 }
 		'small' { gui.theme().icon4 }
@@ -153,12 +153,12 @@ fn toggle_theme(app &IconFontApp) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.toggle(
-				text_selected:   gui.icon_moon
-				text_unselected: gui.icon_sunny_o
-				text_style:      gui.theme().icon3
-				selected:        app.light_theme
-				padding:         gui.padding_small
-				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon3
+				select:        app.light_theme
+				padding:       gui.padding_small
+				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[IconFontApp]()
 					app.light_theme = !app.light_theme
 					theme := if app.light_theme {

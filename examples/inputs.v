@@ -116,12 +116,12 @@ fn button_change_theme(app &InputsApp) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.toggle(
-				text_selected:   gui.icon_moon
-				text_unselected: gui.icon_sunny_o
-				text_style:      gui.theme().icon3
-				padding:         gui.theme().padding_small
-				selected:        app.light
-				on_click:        fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon3
+				padding:       gui.theme().padding_small
+				select:        app.light
+				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[InputsApp]()
 					app.light = !app.light
 					w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })

@@ -6,7 +6,7 @@ import gui
 @[heap]
 struct RadioButtonGroupApp {
 pub mut:
-	selected_value string = 'ny'
+	select_value string = 'ny'
 }
 
 fn main() {
@@ -45,11 +45,11 @@ fn main_view(window &gui.Window) gui.View {
 			instructions(),
 			gui.radio_button_group_row(
 				title:     'City Group'
-				value:     app.selected_value
+				value:     app.select_value
 				options:   options
 				id_focus:  100
 				on_select: fn [mut app] (value string, mut _ gui.Window) {
-					app.selected_value = value
+					app.select_value = value
 				}
 				window:    window
 			),
@@ -57,11 +57,11 @@ fn main_view(window &gui.Window) gui.View {
 			// and horizontal side-by-side
 			gui.radio_button_group_column(
 				title:     'City Group'
-				value:     app.selected_value
+				value:     app.select_value
 				options:   options
 				id_focus:  100
 				on_select: fn [mut app] (value string, mut _ gui.Window) {
-					app.selected_value = value
+					app.select_value = value
 				}
 				window:    window
 			),
