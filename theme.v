@@ -27,7 +27,7 @@ const color_hover_dark = rgb(84, 84, 84)
 const color_focus_dark = rgb(94, 94, 94)
 const color_active_dark = rgb(104, 104, 104)
 const color_border_dark = rgb(100, 100, 100)
-const color_select_dark = cornflower_blue
+const color_select_dark = rgb(65, 105, 225)
 const color_text_dark = rgb(225, 225, 225)
 
 const color_background_light = rgb(225, 225, 225)
@@ -37,7 +37,7 @@ const color_hover_light = rgb(185, 185, 215)
 const color_focus_light = rgb(175, 175, 215)
 const color_active_light = rgb(165, 165, 215)
 const color_border_light = rgb(135, 135, 165)
-const color_select_light = rgb(0, 71, 171)
+const color_select_light = rgb(159, 174, 250)
 const color_border_focus_light = rgb(0, 0, 165)
 const color_text_light = rgb(32, 32, 32)
 
@@ -478,6 +478,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		radio_style:        RadioStyle{
 			color:          cfg.color_panel
+			color_hover:    cfg.color_hover
 			color_focus:    cfg.color_select
 			color_border:   cfg.color_border
 			color_select:   cfg.text_style.color

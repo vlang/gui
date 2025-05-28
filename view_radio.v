@@ -11,6 +11,7 @@ pub:
 	select         bool
 	size           f32       = gui_theme.n3.size
 	color          Color     = gui_theme.radio_style.color
+	color_hover    Color     = gui_theme.radio_style.color_hover
 	color_focus    Color     = gui_theme.radio_style.color_focus
 	color_border   Color     = gui_theme.radio_style.color_border
 	color_select   Color     = gui_theme.radio_style.color_select
@@ -47,7 +48,12 @@ pub fn radio(cfg RadioCfg) View {
 	)
 
 	if cfg.label.len > 0 {
-		content << text(text: cfg.label, text_style: cfg.text_style)
+		content << row(
+			// pad the label to the right so hover color is past
+			// end of text slightly.
+			padding: padding(0, pad_x_small, 0, 0)
+			content: [text(text: cfg.label, text_style: cfg.text_style)]
+		)
 	}
 
 	return row(
@@ -79,4 +85,8 @@ fn (cfg &RadioCfg) amend_layout(mut node Layout, mut w Window) {
 
 fn (cfg &RadioCfg) on_hover(mut node Layout, mut _ Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
+	if !w.is_focus(node.shape.id_focus) {
+		node.shape.color = cfg.color_hover
+		node.shape.fill = true
+	}
 }
