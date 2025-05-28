@@ -5,11 +5,11 @@ import gx
 pub struct ButtonStyle {
 pub:
 	color              Color   = color_interior_dark
+	color_hover        Color   = color_hover_dark
+	color_focus        Color   = color_active_dark
+	color_click        Color   = color_active_dark
 	color_border       Color   = color_border_dark
 	color_border_focus Color   = color_select_dark
-	color_click        Color   = color_focus_dark
-	color_focus        Color   = color_active_dark
-	color_hover        Color   = color_hover_dark
 	fill               bool    = true
 	fill_border        bool    = true
 	padding            Padding = padding_button

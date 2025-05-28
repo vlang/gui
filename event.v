@@ -108,10 +108,10 @@ pub enum EventType {
 }
 
 pub enum MouseButton {
-	invalid = -1
-	left    = 0
-	right   = 1
-	middle  = 2
+	invalid = 0
+	left    = 1
+	right   = 2
+	middle  = 3
 }
 
 pub enum MouseCursor {

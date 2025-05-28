@@ -67,7 +67,7 @@ fn main_view(window &gui.Window) gui.View {
 // tab buttons can be anything you want. This one is admittedly simple.
 fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) gui.View {
 	color := if app.selected_tab == id {
-		gui.theme().color_link
+		gui.theme().color_select
 	} else {
 		gui.theme().color_active
 	}
