@@ -8,6 +8,7 @@ pub struct SelectCfg {
 pub:
 	id                 string  @[required] // unique only to other select views
 	window             &Window @[required] // required for state managment
+	id_focus           u32
 	selected           []string // Text of selected item
 	placeholder        string
 	select_multiple    bool
@@ -17,10 +18,8 @@ pub:
 	color              Color     = gui_theme.select_style.color
 	color_border       Color     = gui_theme.select_style.color_border
 	color_border_focus Color     = gui_theme.select_style.color_border_focus
-	color_click        Color     = gui_theme.select_style.color_click
 	color_focus        Color     = gui_theme.select_style.color_focus
-	color_hover        Color     = gui_theme.select_style.color_hover
-	color_selected     Color     = gui_theme.select_style.color_selected
+	color_select       Color     = gui_theme.select_style.color_select
 	fill               bool      = gui_theme.select_style.fill
 	fill_border        bool      = gui_theme.select_style.fill_border
 	padding            Padding   = gui_theme.select_style.padding
@@ -104,16 +103,18 @@ pub fn select(cfg SelectCfg) View {
 		)
 	}
 	return row( // border
-		id:        cfg.id
-		clip:      clip
-		fill:      true
-		min_width: cfg.min_width
-		max_width: cfg.max_width
-		padding:   cfg.padding_border
-		radius:    cfg.radius
-		color:     cfg.color_border
-		sizing:    fill_fit
-		content:   content
+		id:           cfg.id
+		id_focus:     cfg.id_focus
+		clip:         clip
+		fill:         true
+		min_width:    cfg.min_width
+		max_width:    cfg.max_width
+		padding:      cfg.padding_border
+		radius:       cfg.radius
+		color:        cfg.color_border
+		sizing:       fill_fit
+		amend_layout: cfg.amend_layout
+		content:      content
 	)
 }
 
@@ -171,10 +172,7 @@ fn option_view(cfg SelectCfg, option string) View {
 				return
 			}
 			w.set_mouse_cursor_pointing_hand()
-			node.shape.color = cfg.color_hover
-			if e.mouse_button == .left {
-				node.shape.color = cfg.color_click
-			}
+			node.shape.color = cfg.color_select
 		}
 	)
 }
@@ -217,4 +215,14 @@ fn sub_header(cfg SelectCfg, option string) View {
 			),
 		]
 	)
+}
+
+fn (cfg &SelectCfg) amend_layout(mut node Layout, mut w Window) {
+	if node.shape.disabled {
+		return
+	}
+	if w.is_focus(node.shape.id_focus) {
+		node.children[0].shape.color = cfg.color_focus
+		node.shape.color = cfg.color_border_focus
+	}
 }

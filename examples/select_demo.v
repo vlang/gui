@@ -41,6 +41,7 @@ fn main_view(mut window gui.Window) gui.View {
 				content: [
 					gui.select(
 						id:              'sel1'
+						id_focus:        1
 						min_width:       200
 						max_width:       200
 						window:          mut window
@@ -112,6 +113,7 @@ fn main_view(mut window gui.Window) gui.View {
 				content: [
 					gui.select(
 						id:          'sel2'
+						id_focus:    2
 						min_width:   260
 						max_width:   260
 						window:      mut window

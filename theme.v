@@ -489,12 +489,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		range_slider_style: RangeSliderStyle{
 			color:          cfg.color_interior
-			color_click:    cfg.color_focus
 			color_left:     cfg.color_select
+			color_thumb:    cfg.color_select
 			color_focus:    cfg.color_focus
 			color_hover:    cfg.color_hover
-			color_border:   cfg.color_active
-			color_thumb:    cfg.color_select
+			color_border:   cfg.color_border
+			color_click:    cfg.color_active
 			fill:           true
 			fill_border:    true
 			padding:        padding_none
@@ -516,10 +516,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color:              cfg.color_interior
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_select
-			color_click:        cfg.color_focus
-			color_focus:        cfg.color_active
-			color_hover:        cfg.color_hover
-			color_selected:     cfg.color_active
+			color_focus:        cfg.color_focus
+			color_select:       cfg.color_select
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
