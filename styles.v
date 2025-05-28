@@ -4,7 +4,7 @@ import gx
 
 pub struct ButtonStyle {
 pub:
-	color              Color   = color_2_dark
+	color              Color   = color_interior_dark
 	color_border       Color   = color_border_dark
 	color_border_focus Color   = color_link_dark
 	color_click        Color   = color_4_dark
@@ -29,7 +29,7 @@ pub:
 
 pub struct DialogStyle {
 pub:
-	color            Color           = color_2_dark
+	color            Color           = color_interior_dark
 	color_border     Color           = color_border_dark
 	fill             bool            = true
 	fill_border      bool            = true
@@ -47,7 +47,7 @@ pub:
 
 pub struct InputStyle {
 pub:
-	color              Color     = color_2_dark
+	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
 	color_focus        Color     = color_5_dark
@@ -73,7 +73,7 @@ pub struct MenubarStyle {
 pub:
 	width_submenu_min      f32       = 50
 	width_submenu_max      f32       = 200
-	color                  Color     = color_2_dark
+	color                  Color     = color_interior_dark
 	color_border           Color     = color_border_dark
 	color_selected         Color     = color_5_dark
 	padding                Padding   = padding_small
@@ -98,7 +98,7 @@ pub:
 
 pub struct ProgressBarStyle {
 pub:
-	color           Color     = color_2_dark
+	color           Color     = color_interior_dark
 	color_bar       Color     = color_5_dark
 	fill            bool      = true
 	padding         Padding   = padding_medium
@@ -113,7 +113,7 @@ pub:
 
 pub struct RadioStyle {
 pub:
-	color            Color     = color_2_dark
+	color            Color     = color_interior_dark
 	color_focus      Color     = color_link_dark
 	color_border     Color     = color_5_dark
 	color_selected   Color     = color_text_dark
@@ -126,7 +126,7 @@ pub struct RangeSliderStyle {
 pub:
 	size           f32     = 7
 	thumb_size     f32     = 15
-	color          Color   = color_2_dark
+	color          Color   = color_interior_dark
 	color_click    Color   = color_4_dark
 	color_left     Color   = color_link_dark
 	color_focus    Color   = color_4_dark
@@ -165,7 +165,7 @@ pub struct SelectStyle {
 pub:
 	min_width          f32       = 75
 	max_width          f32       = 200
-	color              Color     = color_2_dark
+	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
 	color_click        Color     = color_4_dark
@@ -192,11 +192,11 @@ pub:
 
 pub struct SwitchStyle {
 pub:
-	color              Color     = color_2_dark
+	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
-	color_click        Color     = color_2_dark
-	color_focus        Color     = color_2_dark
+	color_click        Color     = color_interior_dark
+	color_focus        Color     = color_interior_dark
 	color_hover        Color     = color_5_dark
 	color_selected     Color     = color_text_dark
 	color_unselected   Color     = color_5_dark
@@ -229,10 +229,10 @@ fn (tc TextStyle) to_text_cfg() gx.TextCfg {
 
 pub struct ToggleStyle {
 pub:
-	color              Color     = color_2_dark
+	color              Color     = color_interior_dark
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_link_dark
-	color_click        Color     = color_2_dark
+	color_click        Color     = color_interior_dark
 	color_focus        Color     = color_5_dark
 	color_hover        Color     = color_3_dark
 	color_selected     Color     = color_panel_dark

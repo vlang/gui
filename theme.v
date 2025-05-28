@@ -22,7 +22,7 @@ pub const color_transparent = rgba(0, 0, 0, 0)
 
 const color_background_dark = rgb(48, 48, 48)
 const color_panel_dark = rgb(64, 64, 64)
-const color_2_dark = rgb(74, 74, 74)
+const color_interior_dark = rgb(74, 74, 74)
 const color_3_dark = rgb(84, 84, 84)
 const color_4_dark = rgb(94, 94, 94)
 const color_5_dark = rgb(104, 104, 104)
@@ -32,7 +32,7 @@ const color_text_dark = rgb(225, 225, 225)
 
 const color_background_light = rgb(225, 225, 225)
 const color_panel_light = rgb(205, 205, 215)
-const color_2_light = rgb(195, 195, 215)
+const color_interior_light = rgb(195, 195, 215)
 const color_3_light = rgb(185, 185, 215)
 const color_4_light = rgb(175, 175, 215)
 const color_5_light = rgb(165, 165, 215)
@@ -71,7 +71,7 @@ pub:
 	color_link       Color  = color_link_dark
 	color_border     Color  = color_border_dark
 	color_selected   Color  = color_5_dark
-	color_2          Color  = color_2_dark
+	color_interior   Color  = color_interior_dark
 	color_3          Color  = color_3_dark
 	color_4          Color  = color_4_dark
 	color_5          Color  = color_5_dark
@@ -258,7 +258,7 @@ pub:
 	name               string @[required]
 	color_background   Color     = color_background_dark
 	color_panel        Color     = color_panel_dark
-	color_2            Color     = color_2_dark
+	color_interior     Color     = color_interior_dark
 	color_3            Color     = color_3_dark
 	color_4            Color     = color_4_dark
 	color_5            Color     = color_5_dark
@@ -306,7 +306,7 @@ pub const theme_dark_cfg = ThemeCfg{
 	name:               'dark'
 	color_background:   color_background_dark
 	color_panel:        color_panel_dark
-	color_2:            color_2_dark
+	color_interior:     color_interior_dark
 	color_3:            color_3_dark
 	color_4:            color_4_dark
 	color_5:            color_5_dark
@@ -339,7 +339,7 @@ pub const theme_light_cfg = ThemeCfg{
 	name:               'light'
 	color_background:   color_background_light
 	color_panel:        color_panel_light
-	color_2:            color_2_light
+	color_interior:     color_interior_light
 	color_3:            color_3_light
 	color_4:            color_4_light
 	color_5:            color_5_light
@@ -387,13 +387,13 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		color_link:       cfg.color_link
 		color_border:     cfg.color_border
 		color_selected:   cfg.color_selected
-		color_2:          cfg.color_2
+		color_interior:   cfg.color_interior
 		color_3:          cfg.color_3
 		color_4:          cfg.color_4
 		color_5:          cfg.color_5
 
 		button_style:       ButtonStyle{
-			color:              cfg.color_2
+			color:              cfg.color_interior
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
 			color_click:        cfg.color_4
@@ -413,7 +413,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			spacing: cfg.spacing_medium
 		}
 		dialog_style:       DialogStyle{
-			color:            cfg.color_2
+			color:            cfg.color_interior
 			color_border:     cfg.color_border
 			fill:             cfg.fill
 			fill_border:      cfg.fill_border
@@ -431,7 +431,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color:              cfg.color_panel
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
-			color_focus:        cfg.color_2
+			color_focus:        cfg.color_interior
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding
@@ -487,7 +487,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:       cfg.text_style
 		}
 		range_slider_style: RangeSliderStyle{
-			color:          cfg.color_2
+			color:          cfg.color_interior
 			color_click:    cfg.color_4
 			color_left:     cfg.color_link
 			color_focus:    cfg.color_4
@@ -512,7 +512,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_thumb: if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
 		}
 		select_style:       SelectStyle{
-			color:              cfg.color_2
+			color:              cfg.color_interior
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_link
 			color_click:        cfg.color_4
@@ -543,8 +543,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color:              cfg.color_panel
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
-			color_click:        cfg.color_2
-			color_focus:        cfg.color_2
+			color_click:        cfg.color_interior
+			color_focus:        cfg.color_interior
 			color_hover:        cfg.color_3
 			color_selected:     cfg.text_style.color
 			color_unselected:   cfg.color_5
@@ -561,8 +561,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color:              cfg.color_panel
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
-			color_click:        cfg.color_2
-			color_focus:        cfg.color_2
+			color_click:        cfg.color_interior
+			color_focus:        cfg.color_interior
 			color_hover:        cfg.color_3
 			color_selected:     cfg.color_panel
 			fill:               cfg.fill
