@@ -265,7 +265,6 @@ pub:
 	color_border       Color     = color_border_dark
 	color_border_focus Color     = color_select_dark
 	color_select       Color     = color_select_dark
-	color_selected     Color     = color_active_dark
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_medium
@@ -313,7 +312,6 @@ pub const theme_dark_cfg = ThemeCfg{
 	color_border:       color_border_dark
 	color_border_focus: color_select_dark
 	color_select:       color_select_dark
-	color_selected:     color_active_dark
 	text_style:         text_style_dark
 }
 pub const theme_dark = theme_maker(theme_dark_cfg)
@@ -346,7 +344,6 @@ pub const theme_light_cfg = ThemeCfg{
 	color_border:       color_border_light
 	color_select:       color_select_light
 	color_border_focus: color_border_focus_light
-	color_selected:     color_active_light
 	text_style:         TextStyle{
 		...text_style_dark
 		color: color_text_light
@@ -540,13 +537,13 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		switch_style:       SwitchStyle{
 			color:              cfg.color_panel
+			color_click:        cfg.color_interior
+			color_focus:        cfg.color_focus
+			color_hover:        cfg.color_hover
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
-			color_click:        cfg.color_interior
-			color_focus:        cfg.color_interior
-			color_hover:        cfg.color_hover
-			color_selected:     cfg.text_style.color
-			color_unselected:   cfg.color_active
+			color_select:       cfg.color_select
+			color_unselect:     cfg.color_active
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            padding_three

@@ -1,7 +1,7 @@
 module gui
 
 // SwitchCfg a.k.a checkbox. [Switch](#toggle) in its default mode functions and a checkbox.
-// However, there is an option of overriding the `text_selected` and `text_unselected` properties.
+// However, there is an option of overriding the `text_select` and `text_unselect` properties.
 @[heap]
 pub struct SwitchCfg {
 pub:
@@ -12,7 +12,7 @@ pub:
 	disabled           bool
 	invisible          bool
 	label              string
-	selected           bool
+	select             bool
 	fill               bool      = gui_theme.switch_style.fill
 	fill_border        bool      = gui_theme.switch_style.fill_border
 	color              Color     = gui_theme.switch_style.color
@@ -21,8 +21,8 @@ pub:
 	color_click        Color     = gui_theme.switch_style.color_click
 	color_border       Color     = gui_theme.switch_style.color_border
 	color_border_focus Color     = gui_theme.switch_style.color_border_focus
-	color_selected     Color     = gui_theme.switch_style.color_selected
-	color_unselected   Color     = gui_theme.switch_style.color_unselected
+	color_select       Color     = gui_theme.switch_style.color_select
+	color_unselect     Color     = gui_theme.switch_style.color_unselect
 	padding            Padding   = gui_theme.switch_style.padding
 	padding_border     Padding   = gui_theme.switch_style.padding_border
 	radius             f32       = gui_theme.switch_style.radius
@@ -33,7 +33,7 @@ pub:
 
 // toggle creates a toggle button (a.k.a checkbox) from the given [SwitchCfg](#SwitchCfg)
 pub fn switch(cfg SwitchCfg) View {
-	color := if cfg.selected { cfg.color_selected } else { cfg.color_unselected }
+	color := if cfg.select { cfg.color_select } else { cfg.color_unselect }
 	circle_size := cfg.height - cfg.padding.height() - cfg.padding_border.height()
 
 	mut content := []View{}
@@ -59,7 +59,7 @@ pub fn switch(cfg SwitchCfg) View {
 				sizing:  fill_fill
 				padding: cfg.padding
 				radius:  cfg.radius
-				h_align: if cfg.selected { .end } else { .start }
+				h_align: if cfg.select { .end } else { .start }
 				v_align: .middle
 				content: [
 					circle(
