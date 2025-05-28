@@ -40,7 +40,7 @@ fn main_view(window &gui.Window) gui.View {
 				id:      'A'
 				width:   app.a_width
 				fill:    true
-				color:   gui.theme().color_2
+				color:   gui.theme().color_interior
 				sizing:  gui.fixed_fill
 				h_align: .center
 				v_align: .middle
@@ -57,7 +57,7 @@ fn main_view(window &gui.Window) gui.View {
 			),
 			gui.column(
 				fill:    true
-				color:   gui.theme().color_2
+				color:   gui.theme().color_interior
 				sizing:  gui.fill_fill
 				h_align: .center
 				v_align: .middle

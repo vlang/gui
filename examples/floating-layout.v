@@ -54,7 +54,7 @@ fn main_view(window &gui.Window) gui.View {
 			// Don't have a menu view yet but one can be easily be
 			// composed using only gui primitives and float layouts.
 			gui.row(
-				color:   gui.theme().color_2
+				color:   gui.theme().color_interior
 				fill:    true
 				sizing:  gui.fill_fit
 				v_align: .middle
@@ -70,14 +70,14 @@ fn main_view(window &gui.Window) gui.View {
 				sizing:  gui.fill_fill
 				content: [
 					gui.column(
-						color:     gui.theme().color_2
+						color:     gui.theme().color_interior
 						fill:      true
 						sizing:    gui.fill_fill
 						min_width: 100
 						max_width: 150
 					),
 					gui.column(
-						color:     gui.theme().color_2
+						color:     gui.theme().color_interior
 						fill:      true
 						sizing:    gui.fill_fill
 						min_width: 100

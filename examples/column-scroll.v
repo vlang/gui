@@ -49,7 +49,7 @@ fn main_view(window &gui.Window) gui.View {
 				id_focus:  1
 				id_scroll: 1
 				fill:      true
-				color:     gui.theme().color_2
+				color:     gui.theme().color_interior
 				sizing:    gui.fit_fill
 				spacing:   gui.spacing_small
 				padding:   gui.padding(3, 10, 3, 10)

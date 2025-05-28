@@ -44,7 +44,7 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			toggle_theme(app),
 			gui.column(
-				color:   gui.theme().color_2
+				color:   gui.theme().color_interior
 				content: [
 					gui.toggle(
 						label:    'toggle (default)'

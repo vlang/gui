@@ -45,7 +45,7 @@ fn side_panel(mut w gui.Window) gui.View {
 	mut app := w.state[IconFontApp]()
 	return gui.column(
 		id:      'side-panel'
-		color:   gui.theme().color_2
+		color:   gui.theme().color_interior
 		fill:    true
 		sizing:  gui.fit_fill
 		padding: gui.Padding{
