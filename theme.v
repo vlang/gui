@@ -412,7 +412,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			spacing: cfg.spacing_medium
 		}
 		dialog_style:       DialogStyle{
-			color:            cfg.color_interior
+			color:            cfg.color_panel
 			color_border:     cfg.color_border
 			fill:             cfg.fill
 			fill_border:      cfg.fill_border

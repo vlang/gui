@@ -20,7 +20,7 @@ fn main() {
 			w.update_view(main_view)
 		}
 	)
-	window.set_theme(gui.theme_dark_bordered)
+	// window.set_theme(gui.theme_dark_bordered)
 	window.run()
 }
 

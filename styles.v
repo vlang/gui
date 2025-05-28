@@ -29,7 +29,7 @@ pub:
 
 pub struct DialogStyle {
 pub:
-	color            Color           = color_interior_dark
+	color            Color           = color_panel_dark
 	color_border     Color           = color_border_dark
 	fill             bool            = true
 	fill_border      bool            = true

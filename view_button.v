@@ -107,7 +107,9 @@ fn (cfg &ButtonCfg) amend_layout(mut node Layout, mut w Window) {
 
 fn (cfg &ButtonCfg) on_hover(mut node Layout, mut e Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
-	node.children[0].shape.color = cfg.color_hover
+	if !w.is_focus(node.shape.id_focus) {
+		node.children[0].shape.color = cfg.color_hover
+	}
 	if e.mouse_button == .left {
 		node.children[0].shape.color = cfg.color_click
 	}
