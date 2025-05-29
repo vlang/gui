@@ -3,7 +3,7 @@ module gui
 @[heap]
 pub struct TreeCfg {
 pub:
-	id        string @[required]
+	id        string
 	window    Window @[required]
 	text      string
 	indent    f32                     = 10
@@ -14,7 +14,6 @@ pub:
 
 pub fn tree(cfg TreeCfg) View {
 	return column(
-		id:      cfg.id
 		padding: padding_none
 		spacing: cfg.spacing
 		content: cfg.node_content(TreeNodeCfg{
@@ -50,7 +49,8 @@ fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg) []View {
 }
 
 fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
-	is_open := cfg.window.view_state.tree_state[cfg.id][node.id]
+	id := if node.id.len == 0 { node.text } else { node.id }
+	is_open := cfg.window.view_state.tree_state[cfg.id][id]
 	arrow := match true {
 		node.nodes.len == 0 { ' ' }
 		is_open { icon_drop_down }
@@ -71,8 +71,8 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 						text_style: gui_theme.icon4
 					),
 				]
-				on_click: fn [cfg, is_open, node] (_ voidptr, mut e Event, mut w Window) {
-					w.view_state.tree_state[cfg.id][node.id] = !is_open
+				on_click: fn [cfg, is_open, node, id] (_ voidptr, mut e Event, mut w Window) {
+					w.view_state.tree_state[cfg.id][id] = !is_open
 				}
 			),
 			// text contnet
@@ -81,12 +81,12 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 				content:  [
 					text(text: node.text),
 				]
-				on_click: fn [cfg, is_open, node] (_ &ContainerCfg, mut e Event, mut w Window) {
+				on_click: fn [cfg, is_open, node, id] (_ &ContainerCfg, mut e Event, mut w Window) {
 					if node.nodes.len > 0 {
-						w.view_state.tree_state[cfg.id][node.id] = !is_open
+						w.view_state.tree_state[cfg.id][id] = !is_open
 					}
 					if cfg.on_select != unsafe { nil } {
-						cfg.on_select(node.id, mut w)
+						cfg.on_select(id, mut w)
 						e.is_handled = true
 					}
 				}

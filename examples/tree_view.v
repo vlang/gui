@@ -39,18 +39,16 @@ fn main_view(mut window gui.Window) gui.View {
 		content: [
 			gui.text(text: 'Selected:${app.tree_id}', text_style: gui.theme().b2),
 			gui.tree(
-				id:        'animals'
 				text:      'Animals'
 				window:    window
 				on_select: on_select
 				nodes:     [
 					gui.tree_node(
-						id:    'mammals'
 						text:  'Mammals'
 						nodes: [
-							gui.tree_node(id: 'lion', text: 'Lion'),
-							gui.tree_node(id: 'cat', text: 'Cat'),
-							gui.tree_node(id: 'zebra', text: 'Zebra'),
+							gui.tree_node(text: 'Lion'),
+							gui.tree_node(text: 'Cat'),
+							gui.tree_node(text: 'Zebra'),
 						]
 					),
 				]
