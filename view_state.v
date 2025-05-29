@@ -8,15 +8,16 @@ import sokol.sapp
 struct ViewState {
 pub mut:
 	id_focus       u32
-	input_state    map[u32]InputState // [id_focus] -> InputState
-	offset_x_state map[u32]f32        // [id_scroll] -> offset x
-	offset_y_state map[u32]f32        // [id_scroll] -> offset y
-	text_widths    map[string]int     // [text + hash(text_style)] -> text width
-	mouse_cursor   sapp.MouseCursor   // arrow, finger, ibeam, etc.
-	mouse_lock     MouseLockCfg       // mouse down/move/up methods to call when locked
-	menu_state     map[u32]string     // [id_menubar] -> id of menu
-	image_map      map[string]int     // [file name] -> context.cache image id
-	select_state   map[string]bool    // [id select] -> open/close state
+	input_state    map[u32]InputState         // [id_focus] -> InputState
+	offset_x_state map[u32]f32                // [id_scroll] -> offset x
+	offset_y_state map[u32]f32                // [id_scroll] -> offset y
+	text_widths    map[string]int             // [text + hash(text_style)] -> text width
+	mouse_cursor   sapp.MouseCursor           // arrow, finger, ibeam, etc.
+	mouse_lock     MouseLockCfg               // mouse down/move/up methods to call when locked
+	menu_state     map[u32]string             // [id_menubar] -> id of menu
+	image_map      map[string]int             // [file name] -> context.cache image id
+	select_state   map[string]bool            // [id select] -> open/close state
+	tree_state     map[string]map[string]bool // [tree id] -> [node id ] -> open/closed
 }
 
 fn (mut vs ViewState) clear(mut w Window) {
@@ -35,13 +36,14 @@ fn (mut vs ViewState) clear(mut w Window) {
 	}
 	vs.image_map.clear()
 	vs.select_state.clear()
+	vs.tree_state.clear()
 }
 
 // The management of focus and input states poses a problem in stateless views
 // because...they're stateless. Instead, the window maintains this state in a
 // map where the key is the w.view_state.id_focus. This state map is cleared when a new
 // view is introduced.
-pub struct InputState {
+struct InputState {
 pub:
 	// positions are number of runes relative to start of input text
 	cursor_pos int
