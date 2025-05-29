@@ -5,6 +5,11 @@ import encoding.utf8
 import gg
 import hash.fnv1a
 
+pub fn get_text_width_no_cache(text string, text_style TextStyle, window &Window) f32 {
+	window.ui.set_text_cfg(text_style.to_text_cfg())
+	return window.ui.text_width(text)
+}
+
 pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 {
 	htx := fnv1a.sum32_struct(text_style).str()
 	key := text + htx

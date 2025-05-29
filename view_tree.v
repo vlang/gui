@@ -3,24 +3,24 @@ module gui
 @[heap]
 pub struct TreeCfg {
 pub:
-	id        string
-	window    Window @[required]
-	text      string
-	indent    f32                     = 10
+	id        string @[required]
+	indent    f32                     = 25
 	spacing   f32                     = 5
 	on_select fn (string, mut Window) = unsafe { nil }
 	nodes     []TreeNodeCfg
+pub mut:
+	window Window @[required]
 }
 
 pub fn tree(cfg TreeCfg) View {
+	mut content := []View{}
+	for node in cfg.nodes {
+		content << cfg.node_content(node)
+	}
 	return column(
 		padding: padding_none
 		spacing: cfg.spacing
-		content: cfg.node_content(TreeNodeCfg{
-			id:    cfg.id
-			text:  cfg.text
-			nodes: cfg.nodes
-		})
+		content: content
 	)
 }
 
@@ -28,6 +28,7 @@ pub struct TreeNodeCfg {
 pub:
 	id    string
 	text  string
+	icon  string
 	nodes []TreeNodeCfg
 }
 
@@ -56,42 +57,46 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 		is_open { icon_drop_down }
 		else { icon_drop_right }
 	}
+	// caching requires window and cfg to be mutable.
+	min_width_icon := get_text_width_no_cache('${icon_bar} ', gui_theme.icon4, cfg.window)
 
 	mut content := []View{}
 	content << row(
-		padding: padding_none
-		content: [
+		spacing:  0
+		padding:  padding_none
+		content:  [
 			// arrow
-			row(
-				padding:  padding_none
-				content:  [
-					text(
-						text:       arrow
-						min_width:  10
-						text_style: gui_theme.icon4
-					),
-				]
-				on_click: fn [cfg, is_open, node, id] (_ voidptr, mut e Event, mut w Window) {
-					w.view_state.tree_state[cfg.id][id] = !is_open
-				}
+			text(
+				text:       '${arrow} '
+				min_width:  min_width_icon
+				text_style: gui_theme.icon4
 			),
 			// text contnet
 			row(
-				padding:  padding_none
-				content:  [
+				spacing: 0
+				padding: padding_none
+				content: [
+					text(
+						text:       '${node.icon} '
+						min_width:  min_width_icon
+						text_style: gui_theme.icon4
+					),
 					text(text: node.text),
 				]
-				on_click: fn [cfg, is_open, node, id] (_ &ContainerCfg, mut e Event, mut w Window) {
-					if node.nodes.len > 0 {
-						w.view_state.tree_state[cfg.id][id] = !is_open
-					}
-					if cfg.on_select != unsafe { nil } {
-						cfg.on_select(id, mut w)
-						e.is_handled = true
-					}
-				}
 			),
 		]
+		on_click: fn [cfg, is_open, node, id] (_ &ContainerCfg, mut e Event, mut w Window) {
+			if node.nodes.len > 0 {
+				w.view_state.tree_state[cfg.id][id] = !is_open
+			}
+			if cfg.on_select != unsafe { nil } {
+				cfg.on_select(id, mut w)
+				e.is_handled = true
+			}
+		}
+		on_hover: fn (mut node Layout, mut e Event, mut w Window) {
+			w.set_mouse_cursor_pointing_hand()
+		}
 	)
 	// child nodes
 	if is_open {

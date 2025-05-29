@@ -168,6 +168,16 @@ pub fn (mut window Window) set_id_focus(id u32) {
 	window.view_state.id_focus = id
 }
 
+// set_mouse_cursor_all sets the window's mouse cursor to cross arrows
+pub fn (mut window Window) set_mouse_cursor_all() {
+	window.view_state.mouse_cursor = .resize_all
+}
+
+// set_mouse_cursor_crosshair sets the window's mouse cursor to crosshair
+pub fn (mut window Window) set_mouse_cursor_crosshair() {
+	window.view_state.mouse_cursor = .crosshair
+}
+
 // set_mouse_cursor_arrow sets the window's mouse cursor to an arrow
 pub fn (mut window Window) set_mouse_cursor_arrow() {
 	window.view_state.mouse_cursor = .arrow
@@ -179,9 +189,34 @@ pub fn (mut window Window) set_mouse_cursor_ibeam() {
 	window.view_state.mouse_cursor = .ibeam
 }
 
+// set_mouse_cursor_not_allowed sets the window's mouse cursor not allowed symbol
+pub fn (mut window Window) set_mouse_cursor_not_allowed() {
+	window.view_state.mouse_cursor = .not_allowed
+}
+
 // set_mouse_cursor_pointing_hand sets the window's mouse cursor to a pointy finger
 pub fn (mut window Window) set_mouse_cursor_pointing_hand() {
 	window.view_state.mouse_cursor = .pointing_hand
+}
+
+// set_mouse_cursor_ns sets the window's mouse cursor to up/down arrows
+pub fn (mut window Window) set_mouse_cursor_ns() {
+	window.view_state.mouse_cursor = .resize_ns
+}
+
+// set_mouse_cursor_ew sets the window's mouse cursor to up/down arrows
+pub fn (mut window Window) set_mouse_cursor_ew() {
+	window.view_state.mouse_cursor = .resize_ew
+}
+
+// set_mouse_cursor_resize_nesw sets the window's mouse cursor to slanted arrows
+pub fn (mut window Window) set_mouse_cursor_resize_nesw() {
+	window.view_state.mouse_cursor = .resize_nesw
+}
+
+// set_mouse_cursor_resize_nwse sets the window's mouse cursor to slanted arrows
+pub fn (mut window Window) set_mouse_cursor_resize_nwse() {
+	window.view_state.mouse_cursor = .resize_nwse
 }
 
 // set_theme sets the current theme to the given theme.
