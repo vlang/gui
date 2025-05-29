@@ -63,22 +63,17 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 		content: [
 			// arrow
 			row(
-				padding: padding_none
-				content: [
-					row(
-						padding:  padding_none
-						content:  [
-							text(
-								text:       arrow
-								min_width:  10
-								text_style: gui_theme.icon4
-							),
-						]
-						on_click: fn [cfg, is_open, node] (_ voidptr, mut e Event, mut w Window) {
-							w.view_state.tree_state[cfg.id][node.id] = !is_open
-						}
+				padding:  padding_none
+				content:  [
+					text(
+						text:       arrow
+						min_width:  10
+						text_style: gui_theme.icon4
 					),
 				]
+				on_click: fn [cfg, is_open, node] (_ voidptr, mut e Event, mut w Window) {
+					w.view_state.tree_state[cfg.id][node.id] = !is_open
+				}
 			),
 			// text contnet
 			row(
