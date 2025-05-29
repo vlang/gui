@@ -12,6 +12,7 @@ enum TabItem {
 	tab_image
 	tab_menus
 	tab_dialogs
+	tab_tree_view
 }
 
 @[heap]
@@ -37,6 +38,8 @@ pub mut:
 	// select
 	selected_1 []string
 	selected_2 []string
+	// tree view
+	tree_id string
 }
 
 fn main() {
@@ -80,6 +83,7 @@ fn side_bar(mut w gui.Window) gui.View {
 			tab_select('Image', .tab_image, app),
 			tab_select('Menus', .tab_menus, app),
 			tab_select('Dialogs', .tab_dialogs, app),
+			tab_select('Tree View', .tab_tree_view, app),
 			gui.column(sizing: gui.fit_fill),
 			toggle_theme(app),
 		]
@@ -108,6 +112,9 @@ fn gallery(mut w gui.Window) gui.View {
 			}
 			.tab_dialogs {
 				[dialogs(w)]
+			}
+			.tab_tree_view {
+				[tree_view(mut w)]
 			}
 		}
 	)
@@ -1317,6 +1324,85 @@ fn image_sample(w &gui.Window) gui.View {
 				content: [
 					gui.image(file_name: 'sample.jpeg'),
 					gui.text(text: 'Pinard Falls, Oregon', text_style: gui.theme().b2),
+				]
+			),
+		]
+	)
+}
+
+// ==============================================================
+// Tree View
+// ==============================================================
+
+fn tree_view(mut w gui.Window) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		sizing:  gui.fill_fill
+		content: [
+			view_title('TreeView'),
+			gui.row(
+				sizing:  gui.fill_fit
+				spacing: 0
+				padding: gui.padding_none
+				content: [tree_view_sample(mut w)]
+			),
+		]
+	)
+}
+
+fn on_select(id string, mut w gui.Window) {
+	mut app := w.state[ShowcaseApp]()
+	app.tree_id = id
+}
+
+fn tree_view_sample(mut w gui.Window) gui.View {
+	mut app := w.state[ShowcaseApp]()
+	return gui.column(
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.text(text: '[ ${app.tree_id} ]'),
+			gui.tree(
+				id:        'animals'
+				window:    w
+				on_select: on_select
+				nodes:     [
+					gui.tree_node(
+						text:  'Mammals'
+						icon:  gui.icon_github_alt
+						nodes: [
+							gui.tree_node(text: 'Lion'),
+							gui.tree_node(text: 'Cat'),
+							gui.tree_node(text: 'Human', icon: gui.icon_user),
+						]
+					),
+					gui.tree_node(
+						text:  'Birds'
+						icon:  gui.icon_twitter
+						nodes: [
+							gui.tree_node(text: 'Condor'),
+							gui.tree_node(
+								text:  'Eagle'
+								nodes: [
+									gui.tree_node(text: 'Bald'),
+									gui.tree_node(text: 'Golden'),
+									gui.tree_node(text: 'Sea'),
+								]
+							),
+							gui.tree_node(text: 'Parrot', icon: gui.icon_cage),
+							gui.tree_node(text: 'Robin'),
+						]
+					),
+					gui.tree_node(
+						text:  'Insects'
+						icon:  gui.icon_bug
+						nodes: [
+							gui.tree_node(text: 'Butterfly'),
+							gui.tree_node(text: 'House Fly'),
+							gui.tree_node(text: 'Locust'),
+							gui.tree_node(text: 'Moth'),
+						]
+					),
 				]
 			),
 		]

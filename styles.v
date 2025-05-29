@@ -248,3 +248,15 @@ pub:
 	}
 	text_style_label   TextStyle = text_style_dark
 }
+
+pub struct TreeStyle {
+pub:
+	indent          f32       = 25
+	spacing         f32       = pad_small
+	text_style      TextStyle = text_style_dark
+	text_style_icon TextStyle = TextStyle{
+		...text_style_dark
+		family: icon_font_file
+		size:   size_text_small
+	}
+}

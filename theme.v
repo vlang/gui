@@ -91,6 +91,7 @@ pub:
 	text_style         TextStyle
 	text_style_bold    TextStyle
 	toggle_style       ToggleStyle
+	tree_style         TreeStyle
 
 	// n's and b's are convienence configs for sizing
 	// similar to H1-H6 in html markup. n3 is the
@@ -570,6 +571,14 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 			text_style_label:   cfg.text_style
 		}
+		tree_style:         TreeStyle{
+			text_style:      cfg.text_style
+			text_style_icon: TextStyle{
+				...cfg.text_style
+				family: icon_font_file
+				size:   cfg.size_text_small
+			}
+		}
 
 		// Usually don't change
 		padding_small:  cfg.padding_small
@@ -717,17 +726,17 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		// Icon Font
 		icon1: TextStyle{
-			...mono
+			...normal
 			size:   theme.size_text_x_large
 			family: icon_font_file
 		}
 		icon2: TextStyle{
-			...mono
+			...normal
 			size:   theme.size_text_large
 			family: icon_font_file
 		}
 		icon3: TextStyle{
-			...mono
+			...normal
 			size:   theme.size_text_medium
 			family: icon_font_file
 		}
@@ -737,12 +746,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			family: icon_font_file
 		}
 		icon5: TextStyle{
-			...mono
+			...normal
 			size:   theme.size_text_x_small
 			family: icon_font_file
 		}
 		icon6: TextStyle{
-			...mono
+			...normal
 			size:   theme.size_text_tiny
 			family: icon_font_file
 		}
