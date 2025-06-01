@@ -10,12 +10,12 @@ struct FontVariants {
 	mono   string
 }
 
-pub const icon_font_file = os.join_path(os.data_dir(), 'gui_feathericon.ttf')
+pub const font_file_icon = os.join_path(os.data_dir(), 'gui_feathericon.ttf')
 
 fn initialize_fonts() {
 	icon_font := $embed_file('assets/feathericon.ttf')
-	if !os.exists(icon_font_file) {
-		os.write_file(icon_font_file, icon_font.to_string()) or {}
+	if !os.exists(font_file_icon) {
+		os.write_file(font_file_icon, icon_font.to_string()) or {}
 	}
 }
 

@@ -89,11 +89,11 @@ pub:
 	radius_menu_item       f32       = radius_small
 	spacing                f32       = gui_theme.spacing_medium
 	spacing_submenu        f32       = 1
-	text_style             TextStyle = TextStyle{
-		size: size_text_small
-	}
+	text_style             TextStyle = text_style_dark
 	text_style_subtitle    TextStyle = TextStyle{
-		size: size_text_x_small
+		...text_style_dark
+		bold: true
+		size: size_text_small
 	}
 }
 
@@ -243,7 +243,7 @@ pub:
 	radius             f32       = radius_small
 	radius_border      f32       = radius_small
 	text_style         TextStyle = TextStyle{
-		...text_style_dark
+		...text_style_icon_dark
 		size: size_text_small
 	}
 	text_style_label   TextStyle = text_style_dark
@@ -256,7 +256,6 @@ pub:
 	text_style      TextStyle = text_style_dark
 	text_style_icon TextStyle = TextStyle{
 		...text_style_dark
-		family: icon_font_file
-		size:   size_text_small
+		size: size_text_small
 	}
 }

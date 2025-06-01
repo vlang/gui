@@ -52,6 +52,13 @@ const text_style_dark = TextStyle{
 	line_spacing: text_line_spacing
 }
 
+const text_style_icon_dark = TextStyle{
+	color:        color_text_dark
+	size:         size_text_medium
+	family:       font_file_icon
+	line_spacing: text_line_spacing
+}
+
 // Theme describes a theme in GUI. It's large in part because GUI
 // allows every view it supports to have its own styles. Normally,
 // colors and fonts are shared across all views but you have the
@@ -197,32 +204,32 @@ pub:
 	icon1 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_x_large
-		family: icon_font_file
+		family: font_file_icon
 	}
 	icon2 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_large
-		family: icon_font_file
+		family: font_file_icon
 	}
 	icon3 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_medium
-		family: icon_font_file
+		family: font_file_icon
 	}
 	icon4 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_small
-		family: icon_font_file
+		family: font_file_icon
 	}
 	icon5 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_x_small
-		family: icon_font_file
+		family: font_file_icon
 	}
 	icon6 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_tiny
-		family: icon_font_file
+		family: font_file_icon
 	}
 
 	padding_small  Padding = padding_small
@@ -462,11 +469,10 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			spacing:             cfg.spacing_medium
 			text_style:          TextStyle{
 				...cfg.text_style
-				size: cfg.size_text_small
 			}
 			text_style_subtitle: TextStyle{
 				...cfg.text_style
-				size: cfg.size_text_x_small
+				size: cfg.size_text_small
 			}
 		}
 		progress_bar_style: ProgressBarStyle{
@@ -575,8 +581,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:      cfg.text_style
 			text_style_icon: TextStyle{
 				...cfg.text_style
-				family: icon_font_file
-				size:   cfg.size_text_small
+				size: cfg.size_text_small
 			}
 		}
 
@@ -728,34 +733,41 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		icon1: TextStyle{
 			...normal
 			size:   theme.size_text_x_large
-			family: icon_font_file
+			family: font_file_icon
 		}
 		icon2: TextStyle{
 			...normal
 			size:   theme.size_text_large
-			family: icon_font_file
+			family: font_file_icon
 		}
 		icon3: TextStyle{
 			...normal
 			size:   theme.size_text_medium
-			family: icon_font_file
+			family: font_file_icon
 		}
 		icon4: TextStyle{
 			...mono
 			size:   theme.size_text_small
-			family: icon_font_file
+			family: font_file_icon
 		}
 		icon5: TextStyle{
 			...normal
 			size:   theme.size_text_x_small
-			family: icon_font_file
+			family: font_file_icon
 		}
 		icon6: TextStyle{
 			...normal
 			size:   theme.size_text_tiny
-			family: icon_font_file
+			family: font_file_icon
 		}
 
+		menubar_style: MenubarStyle{
+			...theme.menubar_style
+			text_style_subtitle: TextStyle{
+				...bold
+				size: theme.size_text_small
+			}
+		}
 		// sel
 		select_style: SelectStyle{
 			...theme.select_style

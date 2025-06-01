@@ -86,7 +86,7 @@ fn (cfg &RadioCfg) amend_layout(mut node Layout, mut w Window) {
 fn (cfg &RadioCfg) on_hover(mut node Layout, mut _ Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
 	if !w.is_focus(node.shape.id_focus) {
-		node.shape.color = cfg.color_hover
-		node.shape.fill = true
+		node.children[0].shape.color = cfg.color_hover
+		node.children[0].shape.fill = true
 	}
 }

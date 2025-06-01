@@ -451,6 +451,7 @@ fn toggles(w &gui.Window) gui.View {
 						label:       'toggle with custom text'
 						select:      app.select_toggle
 						text_select: 'X'
+						text_style:  gui.theme().text_style
 						on_click:    fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.select_toggle = !app.select_toggle

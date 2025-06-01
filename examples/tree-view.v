@@ -6,7 +6,7 @@ import gui
 @[heap]
 struct TreeViewApp {
 pub mut:
-	tree_id string
+	selected_id string
 }
 
 fn main() {
@@ -24,7 +24,7 @@ fn main() {
 
 fn on_select(id string, mut w gui.Window) {
 	mut app := w.state[TreeViewApp]()
-	app.tree_id = id
+	app.selected_id = id
 }
 
 fn main_view(window &gui.Window) gui.View {
@@ -36,7 +36,7 @@ fn main_view(window &gui.Window) gui.View {
 		height:  h
 		sizing:  gui.fixed_fixed
 		content: [
-			gui.text(text: '[ ${app.tree_id} ]'),
+			gui.text(text: '[ ${app.selected_id} ]'),
 			gui.tree(
 				id:        'animals'
 				window:    window
