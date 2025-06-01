@@ -581,7 +581,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:      cfg.text_style
 			text_style_icon: TextStyle{
 				...cfg.text_style
-				size: cfg.size_text_small
+				family: font_file_icon
+				size:   cfg.size_text_small
 			}
 		}
 
@@ -629,6 +630,10 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 	mono := TextStyle{
 		...theme.text_style
 		family: variants.mono
+	}
+	icon := TextStyle{
+		...theme.text_style
+		family: font_file_icon
 	}
 
 	return Theme{
@@ -731,34 +736,28 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		// Icon Font
 		icon1: TextStyle{
-			...normal
-			size:   theme.size_text_x_large
-			family: font_file_icon
+			...icon
+			size: theme.size_text_x_large
 		}
 		icon2: TextStyle{
-			...normal
-			size:   theme.size_text_large
-			family: font_file_icon
+			...icon
+			size: theme.size_text_large
 		}
 		icon3: TextStyle{
-			...normal
-			size:   theme.size_text_medium
-			family: font_file_icon
+			...icon
+			size: theme.size_text_medium
 		}
 		icon4: TextStyle{
-			...mono
-			size:   theme.size_text_small
-			family: font_file_icon
+			...icon
+			size: theme.size_text_small
 		}
 		icon5: TextStyle{
-			...normal
-			size:   theme.size_text_x_small
-			family: font_file_icon
+			...icon
+			size: theme.size_text_x_small
 		}
 		icon6: TextStyle{
-			...normal
-			size:   theme.size_text_tiny
-			family: font_file_icon
+			...icon
+			size: theme.size_text_tiny
 		}
 
 		menubar_style: MenubarStyle{

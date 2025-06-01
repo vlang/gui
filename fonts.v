@@ -3,7 +3,9 @@ module gui
 import os
 import os.font
 
-struct FontVariants {
+// FontVariants are the paths of the font files used by Gui
+pub struct FontVariants {
+pub:
 	normal string
 	bold   string
 	italic string
@@ -19,7 +21,8 @@ fn initialize_fonts() {
 	}
 }
 
-fn font_variants(text_style TextStyle) FontVariants {
+// font_variants retrieves the names of the files for the 4 font families in Gui. See [FontVariants](#FontVariants)
+pub fn font_variants(text_style TextStyle) FontVariants {
 	path := if text_style.family.len == 0 { font.default() } else { text_style.family }
 	variants := FontVariants{
 		normal: path_variant(path, .normal)
@@ -27,7 +30,6 @@ fn font_variants(text_style TextStyle) FontVariants {
 		italic: path_variant(path, .italic)
 		mono:   path_variant(path, .mono)
 	}
-	// println(variants)
 	return variants
 }
 
@@ -36,11 +38,6 @@ fn path_variant(path string, variant font.Variant) string {
 	if os.exists(vpath) {
 		return vpath
 	}
-	fallback_mac := '/System/Library/Fonts/SFNSRounded.ttf'
-	if os.exists(fallback_mac) {
-		return fallback_mac
-	}
-	// TODO: add other os systems
 	return path
 }
 

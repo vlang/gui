@@ -255,7 +255,8 @@ pub:
 	spacing         f32       = pad_small
 	text_style      TextStyle = text_style_dark
 	text_style_icon TextStyle = TextStyle{
-		...text_style_dark
-		size: size_text_small
+		...text_style_icon_dark
+		family: font_file_icon
+		size:   size_text_small
 	}
 }

@@ -366,53 +366,94 @@ fn text_changed(_ &gui.InputCfg, s string, mut w gui.Window) {
 // ==============================================================
 
 fn text_sizes_weights(w &gui.Window) gui.View {
+	text_style_file := gui.TextStyle{
+		...gui.theme().text_style
+		color: gui.theme().color_border
+	}
+	variants := gui.font_variants(gui.theme().text_style)
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [
 			view_title('Text Sizes & Weights'),
-			gui.row(
-				sizing:  gui.fill_fit
+			gui.column(
+				spacing: 0
+				padding: gui.padding_none
 				content: [
-					gui.text(text: 'Theme().n1', text_style: gui.theme().n1),
-					gui.text(text: 'Theme().n2', text_style: gui.theme().n2),
-					gui.text(text: 'Theme().n3', text_style: gui.theme().n3),
-					gui.text(text: 'Theme().n4', text_style: gui.theme().n4),
-					gui.text(text: 'Theme().n5', text_style: gui.theme().n5),
-					gui.text(text: 'Theme().n6', text_style: gui.theme().n6),
+					gui.text(text: variants.normal, text_style: text_style_file),
+					gui.row(
+						padding: gui.padding_none
+						sizing:  gui.fill_fit
+						v_align: .bottom
+						content: [
+							gui.text(text: 'Theme().n1', text_style: gui.theme().n1),
+							gui.text(text: 'Theme().n2', text_style: gui.theme().n2),
+							gui.text(text: 'Theme().n3', text_style: gui.theme().n3),
+							gui.text(text: 'Theme().n4', text_style: gui.theme().n4),
+							gui.text(text: 'Theme().n5', text_style: gui.theme().n5),
+							gui.text(text: 'Theme().n6', text_style: gui.theme().n6),
+						]
+					),
 				]
 			),
-			gui.row(
-				sizing:  gui.fill_fit
+			gui.column(
+				spacing: 0
+				padding: gui.padding_none
 				content: [
-					gui.text(text: 'Theme().b1', text_style: gui.theme().b1),
-					gui.text(text: 'Theme().b2', text_style: gui.theme().b2),
-					gui.text(text: 'Theme().b3', text_style: gui.theme().b3),
-					gui.text(text: 'Theme().b4', text_style: gui.theme().b4),
-					gui.text(text: 'Theme().b5', text_style: gui.theme().b5),
-					gui.text(text: 'Theme().b6', text_style: gui.theme().b6),
+					gui.text(text: variants.bold, text_style: text_style_file),
+					gui.row(
+						padding: gui.padding_none
+						sizing:  gui.fill_fit
+						v_align: .bottom
+						content: [
+							gui.text(text: 'Theme().b1', text_style: gui.theme().b1),
+							gui.text(text: 'Theme().b2', text_style: gui.theme().b2),
+							gui.text(text: 'Theme().b3', text_style: gui.theme().b3),
+							gui.text(text: 'Theme().b4', text_style: gui.theme().b4),
+							gui.text(text: 'Theme().b5', text_style: gui.theme().b5),
+							gui.text(text: 'Theme().b6', text_style: gui.theme().b6),
+						]
+					),
 				]
 			),
-			gui.row(
-				sizing:  gui.fill_fit
+			gui.column(
+				spacing: 0
+				padding: gui.padding_none
 				content: [
-					gui.text(text: 'Theme().i1', text_style: gui.theme().i1),
-					gui.text(text: 'Theme().i2', text_style: gui.theme().i2),
-					gui.text(text: 'Theme().i3', text_style: gui.theme().i3),
-					gui.text(text: 'Theme().i4', text_style: gui.theme().i4),
-					gui.text(text: 'Theme().i5', text_style: gui.theme().i5),
-					gui.text(text: 'Theme().i6', text_style: gui.theme().i6),
+					gui.text(text: variants.italic, text_style: text_style_file),
+					gui.row(
+						padding: gui.padding_none
+						sizing:  gui.fill_fit
+						v_align: .bottom
+						content: [
+							gui.text(text: 'Theme().i1', text_style: gui.theme().i1),
+							gui.text(text: 'Theme().i2', text_style: gui.theme().i2),
+							gui.text(text: 'Theme().i3', text_style: gui.theme().i3),
+							gui.text(text: 'Theme().i4', text_style: gui.theme().i4),
+							gui.text(text: 'Theme().i5', text_style: gui.theme().i5),
+							gui.text(text: 'Theme().i6', text_style: gui.theme().i6),
+						]
+					),
 				]
 			),
-			gui.row(
-				sizing:  gui.fill_fit
+			gui.column(
+				spacing: 0
+				padding: gui.padding_none
 				content: [
-					gui.text(text: 'Theme().m1', text_style: gui.theme().m1),
-					gui.text(text: 'Theme().m2', text_style: gui.theme().m2),
-					gui.text(text: 'Theme().m3', text_style: gui.theme().m3),
-					gui.text(text: 'Theme().m4', text_style: gui.theme().m4),
-					gui.text(text: 'Theme().m5', text_style: gui.theme().m5),
-					gui.text(text: 'Theme().m6', text_style: gui.theme().m6),
+					gui.text(text: variants.mono, text_style: text_style_file),
+					gui.row(
+						padding: gui.padding_none
+						sizing:  gui.fill_fit
+						v_align: .bottom
+						content: [
+							gui.text(text: 'Theme().m1', text_style: gui.theme().m1),
+							gui.text(text: 'Theme().m2', text_style: gui.theme().m2),
+							gui.text(text: 'Theme().m3', text_style: gui.theme().m3),
+							gui.text(text: 'Theme().m4', text_style: gui.theme().m4),
+							gui.text(text: 'Theme().m5', text_style: gui.theme().m5),
+							gui.text(text: 'Theme().m6', text_style: gui.theme().m6),
+						]
+					),
 				]
 			),
 		]
