@@ -61,6 +61,7 @@ pub:
 		w.update_view(empty_view)
 	}
 	on_event fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	samples  int                         = 2 // MSAA sample count; rounded courners of buttons with 0 and 1 look jagged on linux/windows
 }
 
 // window creates the application window. See [WindowCfg](#WindowCfg) on how to configure it
@@ -83,6 +84,7 @@ pub fn window(cfg &WindowCfg) &Window {
 			cfg.on_init(w)
 			w.update_window()
 		}
+		sample_count: cfg.samples
 	)
 	initialize_fonts()
 	return window
