@@ -1,5 +1,7 @@
 #!/usr/bin/env -S v
 
+chdir(dir(@FILE))!
+
 output_dir := 'bin'
 if exists(output_dir) {
 	bin_files := ls(output_dir) or { [] }
