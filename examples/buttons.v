@@ -22,7 +22,7 @@ fn main() {
 	mut window := gui.window(
 		title:   'Buttons'
 		state:   &App{}
-		width:   350
+		width:   400
 		height:  375
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)

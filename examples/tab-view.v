@@ -15,7 +15,7 @@ pub mut:
 fn main() {
 	mut window := gui.window(
 		state:   &TabViewApp{}
-		width:   300
+		width:   400
 		height:  300
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)

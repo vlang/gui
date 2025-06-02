@@ -1,6 +1,6 @@
+import os
 import gui
 
-@[heap]
 fn main() {
 	mut window := gui.window(
 		width:   600
@@ -15,6 +15,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
+	sample_path := os.join_path(os.dir(@FILE), 'sample.jpeg')
 
 	return gui.column(
 		width:   w
@@ -23,7 +24,7 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			gui.image(file_name: 'sample.jpeg'),
+			gui.image(file_name: sample_path),
 			gui.text(text: 'Pinard Falls, Oregon', text_style: gui.theme().b2),
 		]
 	)
