@@ -5,20 +5,23 @@ import gui
 
 @[heap]
 struct IconFontApp {
-mut:
+pub mut:
 	light_theme bool
 	select_size string = 'x-large'
+	longest     f32
+	search      string
+	icons       []gui.View
 }
 
 fn main() {
 	mut window := gui.window(
 		title:   'Icon Font'
 		state:   &IconFontApp{}
-		width:   825
+		width:   900
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
-			w.set_id_focus(1)
+			w.set_id_focus(2)
 		}
 	)
 	window.set_theme(gui.theme_dark_no_padding)
@@ -48,10 +51,7 @@ fn side_panel(mut w gui.Window) gui.View {
 		color:   gui.theme().color_interior
 		fill:    true
 		sizing:  gui.fit_fill
-		padding: gui.Padding{
-			...gui.theme().padding_large
-			right: gui.pad_large * 2
-		}
+		padding: gui.padding_large
 		content: [
 			gui.radio_button_group_column(
 				options:   [
@@ -64,12 +64,34 @@ fn side_panel(mut w gui.Window) gui.View {
 				value:     app.select_size
 				on_select: fn [mut app] (value string, mut _ gui.Window) {
 					app.select_size = value
+					app.icons.clear()
 				}
 				window:    w
 			),
+			search_box(app.search),
 			gui.column(sizing: gui.fill_fill),
 			toggle_theme(app),
 		]
+	)
+}
+
+fn search_box(text string) gui.View {
+	return gui.input(
+		text:            text
+		id_focus:        2
+		radius:          gui.radius_large
+		radius_border:   gui.radius_large
+		padding:         gui.pad_tblr(5, 10)
+		min_width:       100
+		max_width:       100
+		padding_border:  gui.padding_one
+		color_border:    gui.theme().color_border
+		placeholder:     'Search'
+		on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+			mut app := w.state[IconFontApp]()
+			app.search = s
+			app.icons.clear()
+		}
 	)
 }
 
@@ -85,32 +107,34 @@ fn icon_catalog(mut w gui.Window) gui.View {
 	}
 
 	// find the longest text
-	mut longest := f32(0)
-	for s in gui.icons_map.keys() {
-		longest = f32_max(gui.get_text_width(s, gui.theme().n3, mut w), longest)
+	if app.longest == 0 {
+		for s in gui.icons_map.keys() {
+			app.longest = f32_max(gui.get_text_width(s, gui.theme().n3, mut w), app.longest)
+		}
 	}
 
-	// Break the icons_maps into rows
-	chunks := chunk_map(gui.icons_map, 4)
-	mut all_icons := []gui.View{}
-
 	// create rows of icons/text
-	for chunk in chunks {
-		mut icons := []gui.View{}
-		for key, val in chunk {
-			icons << gui.column(
-				min_width: longest
-				h_align:   .center
-				content:   [
-					gui.text(text: val, text_style: icon_text_style),
-					gui.text(text: key),
-				]
+	if app.icons.len == 0 {
+		// Break the icons_maps into rows
+		chunks := chunk_map(gui.icons_map, app.search, 4)
+
+		for chunk in chunks {
+			mut icons := []gui.View{}
+			for key, val in chunk {
+				icons << gui.column(
+					min_width: app.longest
+					h_align:   .center
+					content:   [
+						gui.text(text: val, text_style: icon_text_style),
+						gui.text(text: key),
+					]
+				)
+			}
+			app.icons << gui.row(
+				spacing: 0
+				content: icons
 			)
 		}
-		all_icons << gui.row(
-			spacing: 0
-			content: icons
-		)
 	}
 
 	return gui.column(
@@ -120,17 +144,20 @@ fn icon_catalog(mut w gui.Window) gui.View {
 		spacing:   gui.spacing_large
 		sizing:    gui.fill_fill
 		padding:   gui.padding_medium
-		content:   all_icons
+		content:   app.icons
 	)
 }
 
 // maybe this should be a standard library function?
-fn chunk_map[K, V](input map[K]V, chunk_size int) []map[K]V {
+fn chunk_map[K, V](input map[K]V, search string, chunk_size int) []map[K]V {
 	mut chunks := []map[K]V{}
 	mut current_chunk := map[K]V{}
 	mut count := 0
 
 	for key, value in input {
+		if search.len > 0 && !key.contains(search) {
+			continue
+		}
 		current_chunk[key] = value
 		count += 1
 		if count == chunk_size {
@@ -167,6 +194,7 @@ fn toggle_theme(app &IconFontApp) gui.View {
 						gui.theme_dark_no_padding
 					}
 					w.set_theme(theme)
+					app.icons.clear()
 				}
 			),
 		]
