@@ -92,7 +92,6 @@ pub:
 	text_style             TextStyle = text_style_dark
 	text_style_subtitle    TextStyle = TextStyle{
 		...text_style_dark
-		bold: true
 		size: size_text_small
 	}
 }
@@ -215,7 +214,6 @@ pub:
 	size         int
 	family       string
 	line_spacing f32
-	bold         bool
 }
 
 fn (tc TextStyle) to_text_cfg() gx.TextCfg {
@@ -223,7 +221,6 @@ fn (tc TextStyle) to_text_cfg() gx.TextCfg {
 		color:  tc.color.to_gx_color()
 		size:   tc.size
 		family: tc.family
-		bold:   tc.bold
 	}
 }
 

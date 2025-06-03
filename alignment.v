@@ -8,7 +8,7 @@ pub enum Axis {
 	left_to_right
 }
 
-// HorizontalAlign specifies left, center, right alignment
+// HorizontalAlign specifies start, center, end alignment
 pub enum HorizontalAlign {
 	start
 	center

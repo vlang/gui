@@ -34,9 +34,10 @@ fn main_view(mut window gui.Window) gui.View {
 		content: [
 			// vfmt off
 			gui.table(
+				text_style_head: gui.theme().b2
 				window: window
 				data:   [
-					gui.tr([gui.td('First'), gui.td('Last'),     gui.td('Email')]),
+					gui.tr([gui.th('First'), gui.th('Last'),     gui.th('Email')]),
 					gui.tr([gui.td('Matt'),  gui.td('Williams'), gui.td('non.egestas.a@protonmail.org')]),
 					gui.tr([gui.td('Clara'), gui.td('Nelson'),   gui.td('mauris.sagittis@icloud.net')]),
 					gui.tr([gui.td('Frank'), gui.td('Johnson'),  gui.td('ac.libero.nec@aol.com')]),
