@@ -581,16 +581,25 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 		y += w.view_state.offset_y_state[node.shape.id_scroll]
 	}
 
+	// Eventually start/end with be culture dependent
+	h_align := match node.shape.h_align {
+		.start { HorizontalAlign.left }
+		.left { HorizontalAlign.left }
+		.center { HorizontalAlign.center }
+		.end { HorizontalAlign.right }
+		.right { HorizontalAlign.right }
+	}
+
 	// alignment along the axis
 	match axis {
 		.left_to_right {
-			if node.shape.h_align != .start {
+			if h_align != .left {
 				mut remaining := node.shape.width - padding.width()
 				remaining -= node.spacing()
 				for child in node.children {
 					remaining -= child.shape.width
 				}
-				if node.shape.h_align == .center {
+				if h_align == .center {
 					remaining /= 2
 				}
 				x += remaining
@@ -630,8 +639,8 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 			.top_to_bottom {
 				remaining := node.shape.width - child.shape.width - padding.width()
 				if remaining > 0 {
-					match node.shape.h_align {
-						.start {}
+					match h_align {
+						.left {}
 						.center { x_align = remaining / 2 }
 						else { x_align = remaining }
 					}

@@ -10,9 +10,11 @@ pub enum Axis {
 
 // HorizontalAlign specifies start, center, end alignment
 pub enum HorizontalAlign {
-	start
+	start // can be left or right depending on culture
+	end   // can be left or right depending on culture
 	center
-	end
+	left  // always left
+	right // always right
 }
 
 // VerticalAlign specifies top, middle, bottom alignment
