@@ -44,9 +44,10 @@ pub fn select(cfg SelectCfg) View {
 			}
 		}
 	}
+	empty := cfg.select.len == 0 || cfg.select[0].len == 0
 	clip := if cfg.select_multiple && cfg.no_wrap { true } else { false }
-	txt := if cfg.select.len == 0 { cfg.placeholder } else { cfg.select.join(', ') }
-	txt_style := if cfg.select.len == 0 { cfg.placeholder_style } else { gui_theme.text_style }
+	txt := if empty { cfg.placeholder } else { cfg.select.join(', ') }
+	txt_style := if empty { cfg.placeholder_style } else { gui_theme.text_style }
 	wrap_mode := if cfg.select_multiple && !cfg.no_wrap {
 		TextMode.wrap
 	} else {
