@@ -3,10 +3,9 @@ module gui
 @[heap]
 pub struct TableCfg {
 pub:
-	id   string
-	data []TableRowCfg
-pub mut:
-	window Window @[required]
+	id     string
+	window &Window @[required]
+	data   []TableRowCfg
 }
 
 pub struct TableRowCfg {
@@ -75,10 +74,12 @@ pub fn td(value string) TableCellCfg {
 }
 
 fn compute_longest_column(cfg &TableCfg) []f32 {
+	if cfg.data.len == 0 || cfg.data[0].columns.len == 0 {
+		return []
+	}
 	mut window := cfg.window
 	mut columns_longest := []f32{}
-	col_count := cfg.data[0].columns.len
-	for idx in 0 .. col_count {
+	for idx in 0 .. cfg.data[0].columns.len {
 		mut longest := f32(0)
 		for row in cfg.data {
 			l := get_text_width(row.columns[idx].value, gui_theme.text_style, mut window)
