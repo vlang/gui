@@ -11,7 +11,7 @@ pub mut:
 	input_state    map[u32]InputState         // [id_focus] -> InputState
 	offset_x_state map[u32]f32                // [id_scroll] -> offset x
 	offset_y_state map[u32]f32                // [id_scroll] -> offset y
-	text_widths    map[string]int             // [text + hash(text_style)] -> text width
+	text_widths    map[f32]int                // [text + hash(text_style)] -> text width
 	mouse_cursor   sapp.MouseCursor           // arrow, finger, ibeam, etc.
 	mouse_lock     MouseLockCfg               // mouse down/move/up methods to call when locked
 	menu_state     map[u32]string             // [id_menubar] -> id of menu

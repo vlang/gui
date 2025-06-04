@@ -12,7 +12,7 @@ pub fn get_text_width_no_cache(text string, text_style TextStyle, window &Window
 
 pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 {
 	htx := fnv1a.sum32_struct(text_style).str()
-	key := text + htx
+	key := fnv1a.sum32_string(text + htx)
 	return window.view_state.text_widths[key] or {
 		window.ui.set_text_cfg(text_style.to_text_cfg())
 		t_width := window.ui.text_width(text)
@@ -26,7 +26,7 @@ fn text_width(shape Shape, mut window Window) f32 {
 	mut text_cfg_set := false
 	htx := fnv1a.sum32_struct(shape.text_style).str()
 	for line in shape.text_lines {
-		key := line + htx
+		key := fnv1a.sum32_string(line + htx)
 		width := window.view_state.text_widths[key] or {
 			if !text_cfg_set {
 				text_cfg := shape.text_style.to_text_cfg()

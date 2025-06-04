@@ -13,7 +13,7 @@ pub:
 	on_select fn (string, mut Window) = unsafe { nil }
 	nodes     []TreeNodeCfg
 pub mut:
-	window Window @[required]
+	window &Window @[required]
 }
 
 // tree creates a tree view from the given [TreeCfg](#TreeCfg)
@@ -70,8 +70,8 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 		is_open { icon_drop_down }
 		else { icon_drop_right }
 	}
-	// caching requires window and cfg to be mutable.
-	min_width_icon := get_text_width_no_cache('${icon_bar} ', node.text_style_icon, cfg.window)
+	mut window := cfg.window
+	min_width_icon := get_text_width('${icon_bar} ', node.text_style_icon, mut window)
 
 	mut content := []View{}
 	content << row(
