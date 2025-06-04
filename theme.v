@@ -6,12 +6,12 @@ pub const radius_medium = f32(5)
 pub const radius_large = f32(7)
 pub const radius_border = radius_medium + 2
 
-pub const size_text_tiny = 11
-pub const size_text_x_small = 13
-pub const size_text_small = 15
-pub const size_text_medium = 17
-pub const size_text_large = 20
-pub const size_text_x_large = 26
+pub const size_text_tiny = 10
+pub const size_text_x_small = 12
+pub const size_text_small = 14
+pub const size_text_medium = 16
+pub const size_text_large = 18
+pub const size_text_x_large = 20
 
 pub const spacing_small = 5
 pub const spacing_medium = 10
@@ -49,6 +49,7 @@ const size_progress_bar = 10
 const text_style_dark = TextStyle{
 	color:        color_text_dark
 	size:         size_text_medium
+	family:       font_file_regular
 	line_spacing: text_line_spacing
 }
 
@@ -567,14 +568,11 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_select:       cfg.color_interior
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
-			padding:            padding_one
+			padding:            padding(1, 1, 1, 2)
 			padding_border:     cfg.padding_border
 			radius:             if cfg.radius != 0 { radius_small } else { 0 }
 			radius_border:      if radius_border != 0 { radius_small } else { 0 }
-			text_style:         TextStyle{
-				...cfg.text_style
-				size: cfg.size_text_small
-			}
+			text_style:         text_style_icon_dark
 			text_style_label:   cfg.text_style
 		}
 		tree_style:         TreeStyle{

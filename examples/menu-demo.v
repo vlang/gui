@@ -24,7 +24,7 @@ fn main() {
 	mut window := gui.window(
 		title:   'Menu Demo'
 		state:   &MenuApp{}
-		width:   500
+		width:   600
 		height:  400
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)

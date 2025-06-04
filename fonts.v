@@ -12,12 +12,27 @@ pub:
 	mono   string
 }
 
+pub const font_file_regular = os.join_path(os.data_dir(), 'gui_deja-vu-sans-regular.ttf')
+pub const font_file_bold = os.join_path(os.data_dir(), 'gui_deja-vu-sans-bold.ttf')
+pub const font_file_italic = os.join_path(os.data_dir(), 'gui_deja-vu-sans-italic.ttf')
+pub const font_file_mono = os.join_path(os.data_dir(), 'gui_deja-vu-sans-mono.ttf')
 pub const font_file_icon = os.join_path(os.data_dir(), 'gui_feathericon.ttf')
 
 fn initialize_fonts() {
-	icon_font := $embed_file('assets/feathericon.ttf')
+	if !os.exists(font_file_regular) {
+		os.write_file(font_file_regular, $embed_file('assets/DejaVuSans-Regular.ttf').to_string()) or {}
+	}
+	if !os.exists(font_file_bold) {
+		os.write_file(font_file_bold, $embed_file('assets/DejaVuSans-Bold.ttf').to_string()) or {}
+	}
+	if !os.exists(font_file_italic) {
+		os.write_file(font_file_italic, $embed_file('assets/DejaVuSans-Italic.ttf').to_string()) or {}
+	}
+	if !os.exists(font_file_mono) {
+		os.write_file(font_file_mono, $embed_file('assets/DejaVuSans-Mono.ttf').to_string()) or {}
+	}
 	if !os.exists(font_file_icon) {
-		os.write_file(font_file_icon, icon_font.to_string()) or {}
+		os.write_file(font_file_icon, $embed_file('assets/feathericon.ttf').to_string()) or {}
 	}
 }
 
@@ -25,7 +40,7 @@ fn initialize_fonts() {
 pub fn font_variants(text_style TextStyle) FontVariants {
 	path := if text_style.family.len == 0 { font.default() } else { text_style.family }
 	variants := FontVariants{
-		normal: path_variant(path, .normal)
+		normal: path
 		bold:   path_variant(path, .bold)
 		italic: path_variant(path, .italic)
 		mono:   path_variant(path, .mono)
@@ -34,11 +49,19 @@ pub fn font_variants(text_style TextStyle) FontVariants {
 }
 
 fn path_variant(path string, variant font.Variant) string {
-	vpath := font.get_path_variant(path, variant)
-	if os.exists(vpath) {
-		return vpath
+	mut vpath := match variant {
+		.normal { path }
+		.bold { path.replace('-regular', '-bold') }
+		.italic { path.replace('-regular', '-italic') }
+		.mono { path.replace('-regular', '-mone') }
 	}
-	return path
+	if !os.exists(vpath) {
+		vpath = font.get_path_variant(path, variant)
+	}
+	if !os.exists(vpath) {
+		vpath = font.get_path_variant(font.default(), variant)
+	}
+	return if os.exists(vpath) { vpath } else { path }
 }
 
 pub const icons_map = {

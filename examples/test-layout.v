@@ -23,13 +23,14 @@ fn main() {
 				'specimen book.'
 		}
 		title:   'test layout'
-		width:   700
+		width:   800
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 			w.set_id_focus(2)
 		}
 	)
+	window.set_theme(gui.theme_dark_bordered)
 	window.run()
 }
 
@@ -130,7 +131,7 @@ fn main_view(w &gui.Window) gui.View {
 									),
 									gui.input(
 										id_focus:        2
-										width:           100
+										width:           120
 										sizing:          gui.fixed_fit
 										text:            state.other_input
 										placeholder:     'Type here...'

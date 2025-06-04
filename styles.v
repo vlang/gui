@@ -235,14 +235,11 @@ pub:
 	color_select       Color     = color_interior_dark
 	fill               bool      = true
 	fill_border        bool      = true
-	padding            Padding   = padding_one
+	padding            Padding   = padding(1, 1, 1, 2)
 	padding_border     Padding   = padding_none
 	radius             f32       = radius_small
 	radius_border      f32       = radius_small
-	text_style         TextStyle = TextStyle{
-		...text_style_icon_dark
-		size: size_text_small
-	}
+	text_style         TextStyle = text_style_icon_dark
 	text_style_label   TextStyle = text_style_dark
 }
 

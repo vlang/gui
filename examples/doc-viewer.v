@@ -81,6 +81,7 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 			]
 			on_hover: fn (mut node gui.Layout, mut e gui.Event, mut w gui.Window) {
 				w.set_mouse_cursor_pointing_hand()
+				node.shape.color = gui.theme().color_hover
 			}
 		)
 	}

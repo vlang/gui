@@ -10,7 +10,7 @@ pub:
 	disabled           bool
 	invisible          bool
 	label              string
-	text_select        string = '✓'
+	text_select        string = icon_check
 	text_unselect      string = ' '
 	select             bool
 	fill               bool      = gui_theme.toggle_style.fill
@@ -47,8 +47,8 @@ pub fn toggle(cfg ToggleCfg) View {
 		radius:       cfg.radius_border
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
-		min_width:    gui_theme.n3.size
-		min_height:   gui_theme.n3.size
+		min_width:    gui_theme.n3.size + 2
+		min_height:   gui_theme.n3.size + 2
 		cfg:          &cfg
 		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout

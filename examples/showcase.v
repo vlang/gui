@@ -132,7 +132,7 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 		min_width: 75
 		max_width: 100
 		padding:   gui.theme().padding_small
-		content:   [gui.text(text: label, mode: .wrap, text_style: gui.theme().b2)]
+		content:   [gui.text(text: label, mode: .wrap, text_style: gui.theme().n2)]
 		on_click:  fn [tab_item] (_ voidptr, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.selected_tab = tab_item

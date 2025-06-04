@@ -23,6 +23,7 @@ fn main() {
 			w.set_id_focus(1)
 		}
 	)
+	window.set_theme(gui.theme_dark_bordered)
 	window.run()
 }
 
@@ -46,8 +47,8 @@ fn main_view(window &gui.Window) gui.View {
 						id_focus:        1
 						text:            app.input_a
 						placeholder:     'type here...'
-						min_width:       input_width
-						max_width:       input_width
+						width:           input_width
+						sizing:          gui.fixed_fit
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()
 							state.input_a = s
@@ -56,8 +57,8 @@ fn main_view(window &gui.Window) gui.View {
 					gui.input(
 						id_focus:        2
 						text:            app.input_a
-						min_width:       input_width
-						max_width:       input_width
+						width:           input_width
+						sizing:          gui.fixed_fit
 						padding_border:  gui.padding_one
 						is_password:     true
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
@@ -68,8 +69,8 @@ fn main_view(window &gui.Window) gui.View {
 					gui.input(
 						id_focus:        3
 						text:            app.input_a
-						min_width:       input_width
-						max_width:       input_width
+						width:           input_width
+						sizing:          gui.fixed_fit
 						padding_border:  gui.padding_one
 						radius:          0
 						radius_border:   0
@@ -81,8 +82,8 @@ fn main_view(window &gui.Window) gui.View {
 					gui.input(
 						id_focus:        4
 						text:            app.input_a
-						min_width:       input_width
-						max_width:       input_width
+						width:           input_width
+						sizing:          gui.fixed_fit
 						padding_border:  gui.padding_small
 						fill_border:     false
 						radius:          0
@@ -95,8 +96,8 @@ fn main_view(window &gui.Window) gui.View {
 					gui.input(
 						id_focus:        5
 						text:            app.input_a
-						min_width:       input_width
-						max_width:       input_width
+						width:           input_width
+						sizing:          gui.fixed_fit
 						mode:            .multiline
 						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()

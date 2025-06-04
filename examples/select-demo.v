@@ -42,8 +42,8 @@ fn main_view(mut window gui.Window) gui.View {
 					gui.select(
 						id:              'sel1'
 						id_focus:        1
-						min_width:       200
-						max_width:       200
+						min_width:       260
+						max_width:       260
 						window:          mut window
 						select:          app.select_1
 						placeholder:     'Pick one or more states'
