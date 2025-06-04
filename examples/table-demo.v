@@ -30,29 +30,34 @@ fn main_view(mut window gui.Window) gui.View {
 	app := window.state[TableDemoApp]()
 
 	return gui.column(
-		id_focus:  1 // activates arrow keys
-		id_scroll: 1
-		width:     w
-		height:    h
-		sizing:    gui.fixed_fixed
-		h_align:   .center
-		content:   [
-			// vfmt off
-			gui.table(
-				text_style_head: gui.theme().b2
-				window: window
-				data:   [
-					gui.tr([gui.th('First'), gui.th('Last'),     gui.th('Email')]),
-					gui.tr([gui.td('Matt'),  gui.td('Williams'), gui.td('non.egestas.a@protonmail.org')]),
-					gui.tr([gui.td('Clara'), gui.td('Nelson'),   gui.td('mauris.sagittis@icloud.net')]),
-					gui.tr([gui.td('Frank'), gui.td('Johnson'),  gui.td('ac.libero.nec@aol.com')]),
-					gui.tr([gui.td('Elmer'), gui.td('Fudd'),     gui.td('mus@aol.couk')]),
-					gui.tr([gui.td('Roy'),   gui.td('Rogers'),   gui.td('amet.ultricies@yahoo.com')]),
+		width:   w
+		height:  h
+		sizing:  gui.fixed_fixed
+		padding: gui.padding_none
+		content: [
+			gui.column(
+				id_scroll: 1
+				sizing:    gui.fill_fill
+				content:   [
+					gui.text(text: 'Declarative Layout', text_style: gui.theme().m2),
+					// vfmt off
+					gui.table(
+						text_style_head: gui.theme().b2
+						window: window
+						data:   [
+							gui.tr([gui.th('First'), gui.th('Last'),     gui.th('Email')]),
+							gui.tr([gui.td('Matt'),  gui.td('Williams'), gui.td('non.egestas.a@protonmail.org')]),
+							gui.tr([gui.td('Clara'), gui.td('Nelson'),   gui.td('mauris.sagittis@icloud.net')]),
+							gui.tr([gui.td('Frank'), gui.td('Johnson'),  gui.td('ac.libero.nec@aol.com')]),
+							gui.tr([gui.td('Elmer'), gui.td('Fudd'),     gui.td('mus@aol.couk')]),
+							gui.tr([gui.td('Roy'),   gui.td('Rogers'),   gui.td('amet.ultricies@yahoo.com')]),
+						]
+					),
+					gui.text(text: 'Using CSV Data', text_style: gui.theme().m2)
+					gui.table_from_csv_string(csv_data, mut window) or {gui.View(gui.text(text: err.msg()))}
+					// vfmt on
 				]
 			),
-			gui.text(text: 'From CSV Data', text_style: gui.theme().m2)
-			gui.table_from_csv_string(csv_data, mut window) or {gui.View(gui.text(text: err.msg()))}
-			// vfmt on
 		]
 	)
 }
