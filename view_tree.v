@@ -75,6 +75,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 
 	mut content := []View{}
 	content << row(
+		fill:     true
 		spacing:  0
 		padding:  padding_none
 		content:  [
@@ -86,8 +87,9 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 			),
 			// text content
 			row(
+				fill:    true
 				spacing: 0
-				padding: padding_none
+				padding: pad_tblr(1, 5)
 				content: [
 					text(
 						text:       '${node.icon} '
@@ -109,6 +111,9 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 		}
 		on_hover: fn (mut node Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
+			for mut child in node.children {
+				child.shape.color = theme().color_hover
+			}
 		}
 	)
 	// child nodes

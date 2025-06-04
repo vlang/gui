@@ -27,7 +27,7 @@ fn main() {
 
 fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[TableDemoApp]()
+	// app := window.state[TableDemoApp]()
 
 	return gui.column(
 		width:   w
