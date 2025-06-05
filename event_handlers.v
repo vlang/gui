@@ -117,9 +117,9 @@ fn mouse_down_handler(node &Layout, in_handler bool, mut e Event, mut w Window) 
 					return
 				}
 			}
-			// make click handler mouse coordinates relative to node.shape
-			mut ev := event_relative_to(node.shape, e)
 			if node.shape.on_click != unsafe { nil } {
+				// make click handler mouse coordinates relative to node.shape
+				mut ev := event_relative_to(node.shape, e)
 				node.shape.on_click(node.shape.cfg, mut ev, mut w)
 				if ev.is_handled {
 					e.is_handled = true
@@ -145,8 +145,8 @@ fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
 		}
 	}
 	if !node.shape.disabled {
-		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-			if node.shape.on_mouse_move_shape != unsafe { nil } {
+		if node.shape.on_mouse_move_shape != unsafe { nil } {
+			if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 				node.shape.on_mouse_move_shape(node.shape, mut e, mut w)
 				if e.is_handled {
 					return
@@ -178,9 +178,9 @@ fn mouse_up_handler(node &Layout, mut e Event, mut w Window) {
 					return
 				}
 			}
-			// make up handler mouse coordinates relative to node.shape
-			mut ev := event_relative_to(node.shape, e)
 			if node.shape.on_mouse_up != unsafe { nil } {
+				// make up handler mouse coordinates relative to node.shape
+				mut ev := event_relative_to(node.shape, e)
 				node.shape.on_mouse_up(node.shape.cfg, mut ev, mut w)
 				if ev.is_handled {
 					e.is_handled = true
