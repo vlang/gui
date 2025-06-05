@@ -36,8 +36,8 @@ pub:
 	column_width_default f32       = 50
 	text_style           TextStyle = gui_theme.n3
 	text_style_head      TextStyle = gui_theme.b3
-	on_click             fn (&TableCellCfg, mut Event, mut Window) = unsafe { nil }
-	data                 []TableRowCfg
+pub mut:
+	data []TableRowCfg
 }
 
 // TableRowCfg configures a table row from the given cells
@@ -54,6 +54,7 @@ pub:
 	value      string
 	head_cell  bool
 	text_style ?TextStyle
+	on_click   fn (&TableCellCfg, mut Event, mut Window) = unsafe { nil }
 }
 
 // table generates a table from the given [TableCfg](#TableCfg)
@@ -61,10 +62,10 @@ pub fn table(cfg &TableCfg) View {
 	mut rows := []View{}
 	column_widths := table_column_widths(cfg)
 	for r in cfg.data {
-		mut cols := []View{}
-		for idx, col in r.cells {
-			cell_text_style := col.text_style or {
-				if col.head_cell { cfg.text_style_head } else { cfg.text_style }
+		mut cells := []View{}
+		for idx, cell in r.cells {
+			cell_text_style := cell.text_style or {
+				if cell.head_cell { cfg.text_style_head } else { cfg.text_style }
 			}
 
 			column_width := match idx < column_widths.len {
@@ -72,27 +73,44 @@ pub fn table(cfg &TableCfg) View {
 				else { cfg.column_width_default }
 			}
 
-			h_align := match col.head_cell {
+			h_align := match cell.head_cell {
 				true { HorizontalAlign.center }
 				else { HorizontalAlign.start }
 			}
 
-			cols << column(
-				color:   cfg.color_border
-				h_align: h_align
-				padding: cfg.cell_padding
-				radius:  0
-				spacing: 0
-				sizing:  fixed_fill
-				width:   column_width + cfg.cell_padding.width()
-				content: [text(text: col.value, text_style: cell_text_style)]
+			cells << column(
+				color:    cfg.color_border
+				padding:  cfg.cell_padding
+				radius:   0
+				spacing:  0
+				sizing:   fixed_fill
+				width:    column_width + cfg.cell_padding.width()
+				on_click: cell.on_click
+				content:  [
+					column(
+						fill:     true
+						h_align:  h_align
+						color:    color_transparent
+						padding:  padding_none
+						sizing:   fill_fill
+						content:  [
+							text(text: cell.value, text_style: cell_text_style),
+						]
+						on_hover: fn [cell] (mut node Layout, mut e Event, mut w Window) {
+							if cell.on_click != unsafe { nil } {
+								w.set_mouse_cursor_pointing_hand()
+								node.shape.color = gui_theme.color_hover
+							}
+						}
+					),
+				]
 			)
 		}
 		rows << row(
 			spacing: 0
 			radius:  0
 			padding: padding_none
-			content: cols
+			content: cells
 		)
 	}
 	return column(
@@ -105,9 +123,9 @@ pub fn table(cfg &TableCfg) View {
 	)
 }
 
-// table from data takes `[][]string` and creates a table. The first row
-// is treated as a header row.
-pub fn table_from_data(data [][]string, mut window Window) View {
+// table from data takes `[][]string` and creates a table.
+// First row is treated as a header row.
+pub fn table_cfg_from_data(data [][]string, mut window Window) TableCfg {
 	mut row_cfg := []TableRowCfg{}
 	for i, r in data {
 		mut cells := []TableCellCfg{}
@@ -121,22 +139,38 @@ pub fn table_from_data(data [][]string, mut window Window) View {
 			cells: cells
 		}
 	}
-	table_cfg := TableCfg{
+	return TableCfg{
 		window: window
 		data:   row_cfg
 	}
-	return table(table_cfg)
 }
 
-// table_from_csv converts a string representing a csv format to a table.
+// table_from_csv converts a string representing a csv format to a TableCfg.
 // First row is treated as a header row.
-pub fn table_from_csv_string(data string, mut window Window) !View {
+pub fn table_cfg_from_csv_string(data string, mut window Window) !TableCfg {
 	mut parser := csv.csv_reader_from_string(data)!
 	mut rows := [][]string{}
 	for y in 0 .. int(parser.rows_count()!) {
 		rows << parser.get_row(y)!
 	}
-	return table_from_data(rows, mut window)
+	return table_cfg_from_data(rows, mut window)
+}
+
+// table_from_csv_string is a heper function that returns a table from the csv string.
+// If there is a parser error, it returns a table with the error message.
+pub fn table_from_csv_string(data string, mut window Window) View {
+	csv_table_cfg := table_cfg_from_csv_string(data, mut window) or {
+		table_cfg_error(err.msg(), mut window)
+	}
+	return table(csv_table_cfg)
+}
+
+// table_cfg_error is a helper method to procduce a [TableCfg](#TableCfg) with an error message
+pub fn table_cfg_error(message string, mut window Window) TableCfg {
+	return TableCfg{
+		window: window
+		data:   [tr([td(message)])]
+	}
 }
 
 // tr is a helper method to configure a table row from the given array of [TableCellCfg](#TableCellCfg)
@@ -168,11 +202,15 @@ fn table_column_widths(cfg &TableCfg) []f32 {
 	}
 	mut window := cfg.window
 	mut column_widths := []f32{}
-	for idx in 0 .. cfg.data[0].cells.len {
+	for idx, cell in cfg.data[0].cells {
 		mut longest := f32(0)
 		for row in cfg.data {
-			l := get_text_width(row.cells[idx].value, gui_theme.text_style, mut window)
-			longest = f32_max(l, longest)
+			text_style := cell.text_style or {
+				if cell.head_cell { cfg.text_style_head } else { cfg.text_style }
+			}
+
+			width := get_text_width(row.cells[idx].value, text_style, mut window)
+			longest = f32_max(width, longest)
 		}
 		column_widths << longest
 	}

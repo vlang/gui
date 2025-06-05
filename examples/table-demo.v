@@ -1,4 +1,6 @@
 import gui
+import encoding.csv
+import math
 
 // Table Demo
 // =============================
@@ -7,7 +9,9 @@ import gui
 @[heap]
 struct TableDemoApp {
 pub mut:
-	clicks int
+	sort_by           int // 1's based index sort column. -index = descending order, 0 == unsorted
+	csv_data          [][]string
+	unsorted_csv_data [][]string
 }
 
 fn main() {
@@ -59,9 +63,71 @@ fn tables(mut window gui.Window) []gui.View {
 				gui.tr([gui.td('Roy'), gui.td('Rogers'), gui.td('amet.ultricies@yahoo.com')]),
 			]
 		),
-		// The quick lazy way gui.text(text: 'Using CSV Data', text_style: gui.theme().m2),
 		gui.text(text: 'CSV Data', text_style: gui.theme().b2),
-		gui.table_from_csv_string(csv_data, mut window) or { gui.View(gui.text(text: err.msg())) }]
+		table_with_sortable_columns(mut window) or {
+			gui.table(gui.table_cfg_error(err.msg(), mut window))
+		}]
+}
+
+fn table_with_sortable_columns(mut window gui.Window) !gui.View {
+	mut app := window.state[TableDemoApp]()
+	// Parse data from string
+	if app.unsorted_csv_data.len == 0 {
+		mut parser := csv.csv_reader_from_string(csv_data)!
+		for y in 0 .. int(parser.rows_count()!) {
+			app.unsorted_csv_data << parser.get_row(y)!
+		}
+		app.csv_data = app.unsorted_csv_data
+	}
+	// Build TableCfg from data
+	mut table_cfg := gui.table_cfg_from_data(app.csv_data, mut window)
+	// Replace with first row with clickable column headers
+	mut tds := []gui.TableCellCfg{}
+	for idx, cell in table_cfg.data[0].cells {
+		tds << gui.TableCellCfg{
+			...cell
+			value:    match true {
+				idx + 1 == app.sort_by { cell.value + '  ↓' }
+				-(idx + 1) == app.sort_by { cell.value + ' ↑' }
+				else { cell.value }
+			}
+			on_click: fn [idx] (_ &gui.TableCellCfg, mut e gui.Event, mut w gui.Window) {
+				mut app := w.state[TableDemoApp]()
+				app.sort_by = match true {
+					app.sort_by == (idx + 1) { -(idx + 1) }
+					app.sort_by == -(idx + 1) { 0 }
+					else { idx + 1 }
+				}
+				sort(mut app)
+				e.is_handled = true
+			}
+		}
+	}
+
+	table_cfg.data.delete(0)
+	table_cfg.data.insert(0, gui.tr(tds))
+	return gui.table(table_cfg)
+}
+
+fn sort(mut app TableDemoApp) {
+	if app.sort_by == 0 {
+		app.csv_data = app.unsorted_csv_data
+		return
+	}
+	direction := app.sort_by > 0
+	idx := math.abs(app.sort_by) - 1
+	first_row := app.csv_data[0]
+	app.csv_data.delete(0)
+	app.csv_data.sort_with_compare(fn [direction, idx] (mut a []string, mut b []string) int {
+		return match true {
+			direction && a[idx] < b[idx] { -1 }
+			!direction && a[idx] > b[idx] { -1 }
+			direction && a[idx] > b[idx] { 1 }
+			!direction && a[idx] < b[idx] { 1 }
+			else { 0 }
+		}
+	})
+	app.csv_data.insert(0, first_row)
 }
 
 const csv_data = 'name,phone,email,address,postalZip,region
