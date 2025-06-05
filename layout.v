@@ -1,6 +1,8 @@
 module gui
 
 import arrays
+// import time
+
 // Based on Nic Barter's video of how Clay's UI algorithm works.
 // https://www.youtube.com/watch?v=by9lQvpvMIc&t=1272s
 // There's a fair bit of code duplication here. This is intentional.
@@ -20,6 +22,9 @@ pub mut:
 // layout_arrange executes a pipeline of functions to arrange and position the layout.
 // Multiple layouts are returned, each is used to draw a layer of the final renderering.
 fn layout_arrange(mut layout Layout, mut window Window) []Layout {
+	// stopwatch := time.new_stopwatch()
+	// defer { println(stopwatch.elapsed()) }
+
 	mut layouts := [layout]
 	// Set the parents of all the nodes. This is used to
 	// compute relative floating layout coordinates

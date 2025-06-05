@@ -9,9 +9,15 @@ import math
 @[heap]
 struct TableDemoApp {
 pub mut:
-	sort_by           int // 1's based sort column index. -sort_by = descending order, 0 == unsorted
-	csv_data          [][]string
-	unsorted_csv_data [][]string
+	csv_table TableData
+}
+
+@[heap]
+struct TableData {
+pub mut:
+	sort_by  int // 1's based sort column index. -sort_by = descending order, 0 == unsorted
+	sorted   [][]string
+	unsorted [][]string
 }
 
 fn main() {
@@ -21,6 +27,8 @@ fn main() {
 		width:   800
 		height:  600
 		on_init: fn (mut w gui.Window) {
+			mut app := w.state[TableDemoApp]()
+			app.csv_table = get_table_data() or { panic(err.msg()) }
 			w.update_view(main_view)
 			w.set_id_focus(1)
 		}
@@ -31,8 +39,6 @@ fn main() {
 
 fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
-	// app := window.state[TableDemoApp]()
-
 	return gui.column(
 		width:   w
 		height:  h
@@ -50,7 +56,9 @@ fn main_view(mut window gui.Window) gui.View {
 }
 
 fn tables(mut window gui.Window) []gui.View {
-	return [gui.text(text: 'Declarative Layout', text_style: gui.theme().b2),
+	mut app := window.state[TableDemoApp]()
+	return [
+		gui.text(text: 'Declarative Layout', text_style: gui.theme().b2),
 		gui.table(
 			text_style_head: gui.theme().b3
 			window:          window
@@ -64,41 +72,30 @@ fn tables(mut window gui.Window) []gui.View {
 			]
 		),
 		gui.text(text: 'CSV Data', text_style: gui.theme().b2),
-		table_with_sortable_columns(mut window) or {
-			gui.table(gui.table_cfg_error(err.msg(), mut window))
-		}]
+		table_with_sortable_columns(mut app.csv_table, mut window),
+		gui.text(text: ''),
+	]
 }
 
-fn table_with_sortable_columns(mut window gui.Window) !gui.View {
-	mut app := window.state[TableDemoApp]()
-	// Parse data from string
-	if app.unsorted_csv_data.len == 0 {
-		mut parser := csv.csv_reader_from_string(csv_data)!
-		for y in 0 .. int(parser.rows_count()!) {
-			app.unsorted_csv_data << parser.get_row(y)!
-		}
-		app.csv_data = app.unsorted_csv_data
-	}
-	// Build TableCfg from data
-	mut table_cfg := gui.table_cfg_from_data(app.csv_data, mut window)
+fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) gui.View {
+	mut table_cfg := gui.table_cfg_from_data(table_data.sorted, mut window)
 	// Replace with first row with clickable column headers
 	mut tds := []gui.TableCellCfg{}
 	for idx, cell in table_cfg.data[0].cells {
 		tds << gui.TableCellCfg{
 			...cell
 			value:    match true {
-				idx + 1 == app.sort_by { cell.value + '  ↓' }
-				-(idx + 1) == app.sort_by { cell.value + ' ↑' }
+				idx + 1 == table_data.sort_by { cell.value + '  ↓' }
+				-(idx + 1) == table_data.sort_by { cell.value + ' ↑' }
 				else { cell.value }
 			}
-			on_click: fn [idx] (_ &gui.TableCellCfg, mut e gui.Event, mut w gui.Window) {
-				mut app := w.state[TableDemoApp]()
-				app.sort_by = match true {
-					app.sort_by == (idx + 1) { -(idx + 1) }
-					app.sort_by == -(idx + 1) { 0 }
+			on_click: fn [idx, mut table_data] (_ &gui.TableCellCfg, mut e gui.Event, mut w gui.Window) {
+				table_data.sort_by = match true {
+					table_data.sort_by == (idx + 1) { -(idx + 1) }
+					table_data.sort_by == -(idx + 1) { 0 }
 					else { idx + 1 }
 				}
-				sort(mut app)
+				sort(mut table_data)
 				e.is_handled = true
 			}
 		}
@@ -109,16 +106,16 @@ fn table_with_sortable_columns(mut window gui.Window) !gui.View {
 	return gui.table(table_cfg)
 }
 
-fn sort(mut app TableDemoApp) {
-	if app.sort_by == 0 {
-		app.csv_data = app.unsorted_csv_data
+fn sort(mut table_data TableData) {
+	if table_data.sort_by == 0 {
+		table_data.sorted = table_data.unsorted
 		return
 	}
-	direction := app.sort_by > 0
-	idx := math.abs(app.sort_by) - 1
-	head_row := app.csv_data[0]
-	app.csv_data.delete(0) // duplicates the array so no clone needed above
-	app.csv_data.sort_with_compare(fn [direction, idx] (mut a []string, mut b []string) int {
+	direction := table_data.sort_by > 0
+	idx := math.abs(table_data.sort_by) - 1
+	head_row := table_data.sorted[0]
+	table_data.sorted.delete(0) // duplicates the array so no clone needed above
+	table_data.sorted.sort_with_compare(fn [direction, idx] (mut a []string, mut b []string) int {
 		return match true {
 			a[idx] < b[idx] && direction { -1 }
 			a[idx] > b[idx] && !direction { -1 }
@@ -127,10 +124,20 @@ fn sort(mut app TableDemoApp) {
 			else { 0 }
 		}
 	})
-	app.csv_data.insert(0, head_row)
+	table_data.sorted.insert(0, head_row)
 }
 
-const csv_data = 'Name,Phone,Email,Address,Postal Zip,Region
+fn get_table_data() !TableData {
+	mut table_data := TableData{}
+	mut parser := csv.csv_reader_from_string(csv_data_source)!
+	for y in 0 .. int(parser.rows_count()!) {
+		table_data.unsorted << parser.get_row(y)!
+	}
+	table_data.sorted = table_data.unsorted
+	return table_data
+}
+
+const csv_data_source = 'Name,Phone,Email,Address,Postal Zip,Region
 Keelie Snow,1-164-548-3178,erat.vivamus@icloud.net,Ap #414-702 Libero Avenue,698863,Chernivtsi oblast
 Anthony Keith,1-918-510-5824,pulvinar.arcu@google.ca,Ap #358-7921 Placerat. Street,S4V 2M4,Leinster
 Carissa Larson,1-646-772-7793,enim.gravida@aol.couk,"667-994 Mi, St.",1231,Sardegna
