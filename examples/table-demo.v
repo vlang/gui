@@ -4,19 +4,19 @@ import math
 
 // Table Demo
 // =============================
-// Demonstrates buiding a table using declarative layout CSV.
+// Demonstrates buiding a table using declarative layout, CSV, and column sorting.
 
 @[heap]
 struct TableDemoApp {
 pub mut:
-	sort_by           int // 1's based index sort column. -index = descending order, 0 == unsorted
+	sort_by           int // 1's based sort column index. -sort_by = descending order, 0 == unsorted
 	csv_data          [][]string
 	unsorted_csv_data [][]string
 }
 
 fn main() {
 	mut window := gui.window(
-		title:   'Table Demo (WIP)'
+		title:   'Table Demo'
 		state:   &TableDemoApp{}
 		width:   800
 		height:  600
@@ -116,21 +116,21 @@ fn sort(mut app TableDemoApp) {
 	}
 	direction := app.sort_by > 0
 	idx := math.abs(app.sort_by) - 1
-	first_row := app.csv_data[0]
-	app.csv_data.delete(0)
+	head_row := app.csv_data[0]
+	app.csv_data.delete(0) // duplicates the array so no clone needed above
 	app.csv_data.sort_with_compare(fn [direction, idx] (mut a []string, mut b []string) int {
 		return match true {
-			direction && a[idx] < b[idx] { -1 }
-			!direction && a[idx] > b[idx] { -1 }
-			direction && a[idx] > b[idx] { 1 }
-			!direction && a[idx] < b[idx] { 1 }
+			a[idx] < b[idx] && direction { -1 }
+			a[idx] > b[idx] && !direction { -1 }
+			a[idx] > b[idx] && direction { 1 }
+			a[idx] < b[idx] && !direction { 1 }
 			else { 0 }
 		}
 	})
-	app.csv_data.insert(0, first_row)
+	app.csv_data.insert(0, head_row)
 }
 
-const csv_data = 'name,phone,email,address,postalZip,region
+const csv_data = 'Name,Phone,Email,Address,Postal Zip,Region
 Keelie Snow,1-164-548-3178,erat.vivamus@icloud.net,Ap #414-702 Libero Avenue,698863,Chernivtsi oblast
 Anthony Keith,1-918-510-5824,pulvinar.arcu@google.ca,Ap #358-7921 Placerat. Street,S4V 2M4,Leinster
 Carissa Larson,1-646-772-7793,enim.gravida@aol.couk,"667-994 Mi, St.",1231,Sardegna
