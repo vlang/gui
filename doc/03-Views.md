@@ -80,17 +80,19 @@ pub:
 There are nine different combinations possible. For convenience, Gui
 provides constants:
 
-    pub const fit_fit = Sizing{.fit, .fit}
-    pub const fit_fill = Sizing{.fit, .fill}
-    pub const fit_fixed = Sizing{.fit, .fixed}
+```v
+pub const fit_fit = Sizing{.fit, .fit}
+pub const fit_fill = Sizing{.fit, .fill}
+pub const fit_fixed = Sizing{.fit, .fixed}
 
-    pub const fixed_fit = Sizing{.fixed, .fit}
-    pub const fixed_fill = Sizing{.fixed, .fill}
-    pub const fixed_fixed = Sizing{.fixed, .fixed}
+pub const fixed_fit = Sizing{.fixed, .fit}
+pub const fixed_fill = Sizing{.fixed, .fill}
+pub const fixed_fixed = Sizing{.fixed, .fixed}
 
-    pub const fill_fit = Sizing{.fill, .fit}
-    pub const fill_fill = Sizing{.fill, .fill}
-    pub const fill_fixed = Sizing{.fill, .fixed}
+pub const fill_fit = Sizing{.fill, .fit}
+pub const fill_fill = Sizing{.fill, .fill}
+pub const fill_fixed = Sizing{.fill, .fixed}
+```
 
 For a deeper dive into containers, see the next chapter.
 
