@@ -34,7 +34,7 @@ pub mut:
 	selected_menu_id string
 	search_text      string
 	// range sliders
-	range_value f32
+	range_value f32 = 50
 	// select
 	selected_1 []string
 	selected_2 []string
@@ -822,6 +822,7 @@ fn menu(window &gui.Window) gui.View {
 
 fn progress_bars(w &gui.Window) gui.View {
 	return gui.column(
+		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [
 			view_title('Progress Bars'),
@@ -838,6 +839,9 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 	tbg1 := if gui.theme().name.starts_with('light') { gui.orange } else { gui.dark_green }
 	tbg2 := if gui.theme().name.starts_with('light') { gui.cornflower_blue } else { gui.white }
 
+	app := w.state[ShowcaseApp]()
+	percent := app.range_value / f32(100)
+
 	return gui.row(
 		spacing: gui.theme().spacing_large
 		content: [
@@ -849,23 +853,23 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 					gui.progress_bar(
 						height:          2
 						sizing:          gui.fill_fixed
-						percent:         0.20
+						percent:         percent
 						text_background: tbg1
 						text_fill:       true
 					),
 					gui.progress_bar(
 						sizing:  gui.fill_fixed
-						percent: 0.40
+						percent: percent
 					),
 					gui.progress_bar(
 						height:  20
 						sizing:  gui.fill_fixed
-						percent: 0.60
+						percent: percent
 					),
 					gui.progress_bar(
 						height:    20
 						sizing:    gui.fill_fixed
-						percent:   0.80
+						percent:   percent
 						text_show: false
 					),
 				]
@@ -880,20 +884,20 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 						vertical:        true
 						sizing:          gui.fixed_fill
 						width:           2
-						percent:         0.40
+						percent:         percent
 						text_background: tbg2
 						text_fill:       false
 					),
 					gui.progress_bar(
 						vertical: true
 						sizing:   gui.fixed_fill
-						percent:  0.60
+						percent:  percent
 					),
 					gui.progress_bar(
 						vertical: true
 						sizing:   gui.fixed_fill
 						width:    20
-						percent:  0.80
+						percent:  percent
 					),
 				]
 			),
@@ -966,6 +970,7 @@ fn range_slider_samples(w &gui.Window) gui.View {
 
 fn select_drop_down(w &gui.Window) gui.View {
 	return gui.column(
+		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [
 			view_title('Select (Drop Down)'),
@@ -978,17 +983,16 @@ fn select_drop_down(w &gui.Window) gui.View {
 }
 
 fn select_samples(w &gui.Window) gui.View {
-	width := 250
 	app := w.state[ShowcaseApp]()
 	return gui.row(
 		content: [
 			gui.select(
 				id:              'sel1'
 				window:          mut w
-				min_width:       width
-				max_width:       width
+				min_width:       200
+				max_width:       200
 				select:          app.selected_1
-				placeholder:     'Pick one or more states'
+				placeholder:     'Pick one or more'
 				select_multiple: true
 				options:         [
 					'Alabama',
@@ -1052,8 +1056,8 @@ fn select_samples(w &gui.Window) gui.View {
 			gui.select(
 				id:          'sel2'
 				window:      mut w
-				min_width:   width
-				max_width:   width
+				min_width:   300
+				max_width:   300
 				select:      app.selected_2
 				placeholder: 'Pick a country'
 				options:     [
