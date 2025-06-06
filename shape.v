@@ -50,7 +50,8 @@ pub mut:
 	float_offset_x f32
 	float_offset_y f32
 	// -- scrolling ---
-	id_scroll   u32 // >0 indicates shape is scrollable
+	id_scroll   u32  // >0 indicates shape is scrollable
+	over_draw   bool // allows scrollbars to draw in padding area
 	scroll_mode ScrollMode
 	// --- user callbacks ---
 	on_char       fn (voidptr, mut Event, mut Window) = unsafe { nil }

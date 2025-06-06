@@ -3,7 +3,7 @@
 -----------------
 
 GUI is a flex-box style UI framework written in [V](https://vlang.io),
-with declarative syntax and microsecond performance. If that sounds like
+with declarative syntax and performance. If that sounds like
 the Clay layout library, you\'re not mistaken. GUI is based on the same
 concepts and algorithms. Many thanks to Nic Barker for his [video on how
 Clay

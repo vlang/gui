@@ -34,9 +34,10 @@ pub:
 pub fn progress_bar(cfg &ProgressBarCfg) View {
 	mut content := []View{cap: 2}
 	content << row(
-		fill:   true
-		radius: cfg.radius
-		color:  cfg.color_bar
+		fill:    true
+		padding: padding_none
+		radius:  cfg.radius
+		color:   cfg.color_bar
 	)
 	if cfg.text_show {
 		mut percent := f64_min(f64_max(cfg.percent, f64(0)), f64(1))

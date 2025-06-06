@@ -98,8 +98,8 @@ fn gallery(mut w gui.Window) gui.View {
 		spacing:   gui.spacing_large * 2
 		content:   match app.selected_tab {
 			.tab_stock {
-				[buttons(w), inputs(w), toggles(w), progress_bars(w),
-					range_sliders(w), select_drop_down(w), text_sizes_weights(w)]
+				[buttons(w), inputs(w), toggles(w), select_drop_down(w),
+					progress_bars(w), range_sliders(w), text_sizes_weights(w)]
 			}
 			.tab_icons {
 				[icons(mut w)]

@@ -13,7 +13,6 @@ import gui
 // - No data binding or other observation mechanisms required.
 // - No worries about synchronizing with the UI thread.
 // - No need to remember to undo previous UI states.
-// - Microsecond performance.
 
 @[heap]
 struct GetStartedApp {

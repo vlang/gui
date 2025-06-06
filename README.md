@@ -11,7 +11,6 @@ It’s early days so little is working. Try it and send feedback.
 - Immediate mode rendering
 - Thread safe view updates
 - Declarative, flex-box style layout syntax
-- Microsecond performance
 
 ## Example
 
@@ -29,7 +28,6 @@ import gui
 // - No data binding or other observation mechanisms required.
 // - No worries about synchronizing with the UI thread.
 // - No need to remember to undo previous UI states.
-// - Microsecond performance.
 
 struct App {
 pub mut:
@@ -89,7 +87,7 @@ screen shot
 ## Description
 
 GUI is a flex-box style UI framework written in [V](https://vlang.io),
-with declarative syntax and microsecond performance. It aspires to be a
+with declarative syntax and performance. It aspires to be a
 useful framework with a short a learning curve.
 
 ## Installing

@@ -82,7 +82,7 @@ fn (node &Layout) get_focus_ids() []u32 {
 
 // spacing does the fence-post calculation for spacings
 fn (node &Layout) spacing() f32 {
-	count := node.children.count(!it.shape.float && it.shape.type != .none)
+	count := node.children.count(!it.shape.float && it.shape.type != .none && !it.shape.over_draw)
 	return int_max(0, (count - 1)) * node.shape.spacing
 }
 
@@ -114,11 +114,17 @@ fn content_width(node &Layout) f32 {
 		// along the axis add up all children heights plus spacing
 		width += node.spacing()
 		for child in node.children {
+			if child.shape.over_draw {
+				continue
+			}
 			width += child.shape.width
 		}
 	} else {
 		// across the axis need only the height of largest child
 		for child in node.children {
+			if child.shape.over_draw {
+				continue
+			}
 			width = f32_max(width, child.shape.width)
 		}
 	}
@@ -131,11 +137,17 @@ fn content_height(node &Layout) f32 {
 		// along the axis add up all children heights plus spacing
 		height += node.spacing()
 		for child in node.children {
+			if child.shape.over_draw {
+				continue
+			}
 			height += child.shape.height
 		}
 	} else {
 		// across the axis need only the height of largest child
 		for child in node.children {
+			if child.shape.over_draw {
+				continue
+			}
 			height = f32_max(height, child.shape.height)
 		}
 	}

@@ -159,7 +159,7 @@ pub:
 	radius           f32 = radius_small
 	radius_thumb     f32 = radius_small
 	offset_x         f32 = -3
-	offset_y         f32
+	offset_y         f32 = -3
 }
 
 pub struct SelectStyle {

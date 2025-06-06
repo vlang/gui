@@ -52,46 +52,35 @@ pub:
 	offset_y         f32   = gui_theme.scrollbar_style.offset_y // horizontal orientation
 }
 
-// scrollbar creates a scrollbar. Scrollbars are floating elements
-// which allows for a suprising number of styling an layout options.
+// scrollbar creates a scrollbar.
 pub fn scrollbar(cfg ScrollbarCfg) View {
 	return if cfg.orientation == .horizontal {
 		row(
-			id:             cfg.id
-			height:         cfg.size
-			fill:           cfg.fill_background
-			color:          cfg.color_background
-			float:          true
-			float_anchor:   .bottom_left
-			float_tie_off:  .bottom_left
-			float_offset_x: cfg.offset_y
-			float_offset_y: cfg.offset_x
-			spacing:        0
-			padding:        padding_none
-			amend_layout:   cfg.amend_layout
-			on_hover:       cfg.on_hover
-			on_click:       cfg.gutter_click
-			content:        [
+			id:           cfg.id
+			fill:         cfg.fill_background
+			color:        cfg.color_background
+			over_draw:    true
+			spacing:      0
+			padding:      padding_none
+			amend_layout: cfg.amend_layout
+			on_hover:     cfg.on_hover
+			on_click:     cfg.gutter_click
+			content:      [
 				thumb(cfg, '__thumb__${cfg.id_track}'),
 			]
 		)
 	} else {
 		column(
-			id:             cfg.id
-			width:          cfg.size
-			fill:           cfg.fill_background
-			color:          cfg.color_background
-			float:          true
-			float_anchor:   .top_right
-			float_tie_off:  .top_right
-			float_offset_x: cfg.offset_x
-			float_offset_y: cfg.offset_y
-			spacing:        0
-			padding:        padding_none
-			amend_layout:   cfg.amend_layout
-			on_hover:       cfg.on_hover
-			on_click:       cfg.gutter_click
-			content:        [
+			id:           cfg.id
+			fill:         cfg.fill_background
+			color:        cfg.color_background
+			over_draw:    true
+			spacing:      0
+			padding:      padding_none
+			amend_layout: cfg.amend_layout
+			on_hover:     cfg.on_hover
+			on_click:     cfg.gutter_click
+			content:      [
 				thumb(cfg, '__thumb__${cfg.id_track}'),
 			]
 		)
@@ -101,7 +90,6 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 fn thumb(cfg &ScrollbarCfg, id string) View {
 	return column(
 		id:       id
-		width:    cfg.size
 		color:    cfg.color_thumb
 		fill:     cfg.fill_thumb
 		radius:   cfg.radius_thumb
@@ -179,8 +167,10 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 
 	match cfg.orientation == .horizontal {
 		true {
-			node.shape.x += parent.shape.padding.left
+			node.shape.x = parent.shape.x + parent.shape.padding.left
+			node.shape.y = parent.shape.y + parent.shape.height - cfg.size + cfg.offset_y
 			node.shape.width = parent.shape.width - parent.shape.padding.width()
+			node.shape.height = cfg.size
 
 			total_width := content_width(parent)
 			t_width := node.shape.width * (node.shape.width / total_width)
@@ -195,6 +185,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 					0, available_width)
 			}
 			node.children[thumb].shape.x = node.shape.x + offset
+			node.children[thumb].shape.y = node.shape.y
 			node.children[thumb].shape.width = thumb_width
 			node.children[thumb].shape.height = cfg.size
 
@@ -204,7 +195,9 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 			}
 		}
 		else {
-			node.shape.y += parent.shape.padding.top
+			node.shape.x = parent.shape.x + parent.shape.width - cfg.size + cfg.offset_x
+			node.shape.y = parent.shape.y + parent.shape.padding.top
+			node.shape.width = cfg.size
 			node.shape.height = parent.shape.height - parent.shape.padding.height()
 
 			total_height := content_height(parent)
@@ -219,6 +212,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
 				clamp_f32((scroll_offset / (total_height - node.shape.height)) * available_height,
 					0, available_height)
 			}
+			node.children[thumb].shape.x = node.shape.x
 			node.children[thumb].shape.y = node.shape.y + offset
 			node.children[thumb].shape.height = thumb_height
 			node.children[thumb].shape.width = cfg.size

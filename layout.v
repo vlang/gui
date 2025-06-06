@@ -100,6 +100,9 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 	for i, mut child in layout.children {
 		if child.shape.float {
 			layouts << child
+			for mut grand_child in child.children {
+				grand_child.parent = child
+			}
 		}
 
 		layout_remove_floating_layouts(mut child, mut layouts)
@@ -676,6 +679,7 @@ fn layout_disables(mut node Layout, disabled bool) {
 	}
 }
 
+// draw_clips are used for hit testing.
 fn layout_set_draw_clips(mut node Layout, clip DrawClip) {
 	mut node_clip := clip
 	draw_clip := DrawClip{

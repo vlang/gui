@@ -99,7 +99,10 @@ fn render_layout(mut layout Layout, mut renderers []Renderer, bg_color Color, cl
 	render_shape(mut layout.shape, mut renderers, bg_color, clip, window)
 
 	mut shape_clip := clip
-	if layout.shape.clip {
+	if layout.shape.over_draw { // allow drawing in the padded area of shape
+		shape_clip = layout.shape.draw_clip
+		renderers << shape_clip
+	} else if layout.shape.clip {
 		shape_clip = render_clip_rect(shape_clip_rect(layout.shape))
 		renderers << shape_clip
 	}
@@ -109,7 +112,7 @@ fn render_layout(mut layout Layout, mut renderers []Renderer, bg_color Color, cl
 		render_layout(mut child, mut renderers, color, shape_clip, window)
 	}
 
-	if layout.shape.clip {
+	if layout.shape.clip || layout.shape.over_draw {
 		renderers << clip
 	}
 }
