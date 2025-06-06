@@ -17,7 +17,7 @@ fn main() {
 	mut window := gui.window(
 		title:   'Icon Font'
 		state:   &IconFontApp{}
-		width:   900
+		width:   800
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -109,7 +109,7 @@ fn icon_catalog(mut w gui.Window) gui.View {
 	// find the longest text
 	if app.longest == 0 {
 		for s in gui.icons_map.keys() {
-			app.longest = f32_max(gui.get_text_width(s, gui.theme().n3, mut w), app.longest)
+			app.longest = f32_max(gui.get_text_width(s, gui.theme().n4, mut w), app.longest)
 		}
 	}
 
@@ -126,7 +126,7 @@ fn icon_catalog(mut w gui.Window) gui.View {
 					h_align:   .center
 					content:   [
 						gui.text(text: val, text_style: icon_text_style),
-						gui.text(text: key),
+						gui.text(text: key, text_style: gui.theme().n4),
 					]
 				)
 			}
