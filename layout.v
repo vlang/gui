@@ -52,8 +52,8 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// Compute the floating layouts. Because they are appended to
 	// the layout array, they get rendered after the main layout.
 	for mut floating_layout in floating_layouts {
-		draw_clip := floating_layout.parent.shape.draw_clip
-		if draw_clip.width == 0 && draw_clip.height == 0 {
+		shape_clip := floating_layout.parent.shape.shape_clip
+		if shape_clip.width == 0 && shape_clip.height == 0 {
 			continue
 		}
 		layout_pipeline(mut floating_layout, mut window)
@@ -79,7 +79,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_positions(mut layout, x, y, window)
 	layout_disables(mut layout, false)
 	layout_amend(mut layout, mut window)
-	layout_set_draw_clips(mut layout, window.window_rect())
+	layout_set_shape_clips(mut layout, window.window_rect())
 	layout_hover(mut layout, mut window)
 }
 
@@ -679,23 +679,23 @@ fn layout_disables(mut node Layout, disabled bool) {
 	}
 }
 
-// draw_clips are used for hit testing.
-fn layout_set_draw_clips(mut node Layout, clip DrawClip) {
+// shape_clips are used for hit testing.
+fn layout_set_shape_clips(mut node Layout, clip DrawClip) {
 	mut node_clip := clip
-	draw_clip := DrawClip{
+	shape_clip := DrawClip{
 		x:      node.shape.x
 		y:      node.shape.y
 		width:  node.shape.width
 		height: node.shape.height
 	}
-	node.shape.draw_clip = rect_intersection(draw_clip, node_clip) or { DrawClip{} }
+	node.shape.shape_clip = rect_intersection(shape_clip, node_clip) or { DrawClip{} }
 
 	if node.shape.clip {
-		node_clip = draw_clip
+		node_clip = shape_clip
 	}
 
 	for mut child in node.children {
-		layout_set_draw_clips(mut child, node_clip)
+		layout_set_shape_clips(mut child, node_clip)
 	}
 }
 
