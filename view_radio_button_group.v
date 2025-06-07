@@ -24,12 +24,15 @@ module gui
 // ```
 pub struct RadioButtonGroupCfg {
 pub:
-	title     string
-	options   []RadioOption
-	value     string
-	id_focus  u32
-	on_select fn (string, mut Window) @[required]
-	window    &Window
+	title      string
+	options    []RadioOption
+	value      string
+	id_focus   u32
+	min_width  f32
+	min_height f32
+	sizing     Sizing
+	on_select  fn (string, mut Window) @[required]
+	window     &Window
 }
 
 // RadioOption defines a radio button for a [RadioButtonGroupCfg](#RadioButtonGroupCfg)
@@ -51,10 +54,13 @@ pub fn radio_option(label string, value string) RadioOption {
 // the given [RadioButtonGroupCfg](#RadioButtonGroupCfg)
 pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 	return column(
-		text:    cfg.title
-		color:   if cfg.title.len == 0 { color_transparent } else { gui_theme.color_active }
-		padding: if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
-		content: build_options(cfg)
+		text:       cfg.title
+		color:      if cfg.title.len == 0 { color_transparent } else { gui_theme.color_active }
+		padding:    if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
+		min_width:  cfg.min_width
+		min_height: cfg.min_height
+		sizing:     cfg.sizing
+		content:    build_options(cfg)
 	)
 }
 
@@ -62,10 +68,17 @@ pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 // the given [RadioButtonGroupCfg](#RadioButtonGroupCfg)
 pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
 	return row(
-		text:    cfg.title
-		color:   if cfg.title.len == 0 { color_transparent } else { gui_theme.color_active }
-		padding: if cfg.title.len == 0 { gui_theme.padding_medium } else { gui_theme.padding_large }
-		content: build_options(cfg)
+		text:       cfg.title
+		color:      if cfg.title.len == 0 { color_transparent } else { gui_theme.color_active }
+		padding:    if cfg.title.len == 0 {
+			gui_theme.padding_medium
+		} else {
+			gui_theme.padding_large
+		}
+		min_width:  cfg.min_width
+		min_height: cfg.min_height
+		sizing:     cfg.sizing
+		content:    build_options(cfg)
 	)
 }
 
