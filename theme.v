@@ -448,7 +448,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			placeholder_style:  TextStyle{
 				...cfg.text_style
 				color: Color{
-					r: cfg.text_style.color.a
+					r: cfg.text_style.color.r
 					g: cfg.text_style.color.g
 					b: cfg.text_style.color.b
 					a: 100
@@ -533,7 +533,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			placeholder_style:  TextStyle{
 				...cfg.text_style
 				color: Color{
-					r: cfg.text_style.color.a
+					r: cfg.text_style.color.r
 					g: cfg.text_style.color.g
 					b: cfg.text_style.color.b
 					a: 100
