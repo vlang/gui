@@ -48,7 +48,7 @@ fn side_panel(mut window gui.Window) gui.View {
 		else { 'n' }
 	}
 	return gui.column(
-		sizing:  gui.fill_fill
+		sizing:  gui.fit_fill
 		spacing: gui.theme().spacing_large * 2
 		content: [
 			gui.text(text: 'Glyphs: ${code_points.len.str()}'),
