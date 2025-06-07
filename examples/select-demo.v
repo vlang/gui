@@ -17,7 +17,7 @@ fn main() {
 	mut window := gui.window(
 		title:   'Select Demo'
 		state:   &SelectDemoApp{}
-		width:   300
+		width:   400
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -42,11 +42,11 @@ fn main_view(mut window gui.Window) gui.View {
 					gui.select(
 						id:              'sel1'
 						id_focus:        1
-						min_width:       260
-						max_width:       260
+						min_width:       200
+						max_width:       200
 						window:          mut window
 						select:          app.select_1
-						placeholder:     'Pick one or more states'
+						placeholder:     'Pick one or more'
 						select_multiple: true
 						options:         [
 							'Alabama',
@@ -114,8 +114,8 @@ fn main_view(mut window gui.Window) gui.View {
 					gui.select(
 						id:          'sel2'
 						id_focus:    2
-						min_width:   260
-						max_width:   260
+						min_width:   300
+						max_width:   300
 						window:      mut window
 						select:      app.select_2
 						placeholder: 'Pick a country'
