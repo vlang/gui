@@ -457,16 +457,18 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		list_box_style:     ListBoxStyle{
-			color:          cfg.color_interior
-			color_hover:    cfg.color_hover
-			color_border:   cfg.color_border
-			color_select:   cfg.color_select
-			fill:           cfg.fill
-			fill_border:    cfg.fill_border
-			padding:        cfg.padding
-			padding_border: cfg.padding_border
-			radius:         cfg.radius
-			radius_border:  cfg.radius_border
+			color:            cfg.color_interior
+			color_hover:      cfg.color_hover
+			color_border:     cfg.color_border
+			color_select:     cfg.color_select
+			fill:             cfg.fill
+			fill_border:      cfg.fill_border
+			padding:          cfg.padding
+			padding_border:   cfg.padding_border
+			radius:           cfg.radius
+			radius_border:    cfg.radius_border
+			text_style:       cfg.text_style
+			subheading_style: cfg.text_style
 		}
 		menubar_style:      MenubarStyle{
 			color:               cfg.color_interior
