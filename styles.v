@@ -70,6 +70,20 @@ pub:
 	}
 }
 
+pub struct ListBoxStyle {
+pub:
+	color          Color   = color_interior_dark
+	color_hover    Color   = color_hover_dark
+	color_border   Color   = color_border_dark
+	color_select   Color   = color_select_dark
+	fill           bool    = true
+	fill_border    bool    = true
+	padding        Padding = padding_button
+	padding_border Padding = padding_none
+	radius         f32     = radius_medium
+	radius_border  f32     = radius_medium
+}
+
 pub struct MenubarStyle {
 pub:
 	width_submenu_min      f32       = 50

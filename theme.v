@@ -78,7 +78,7 @@ pub:
 	color_panel      Color  = color_panel_dark      // use for side panels, or groups of controls
 	color_interior   Color  = color_interior_dark   // use for the interior of controls like buttons
 	color_hover      Color  = color_hover_dark      // mostly mouse hovers
-	color_focus      Color  = color_focus_dark      // usually keyboard focus
+	color_focus      Color  = color_focus_dark      // usually keyboard focus (active/focus swapped if it looks bettter, e.g. button)
 	color_active     Color  = color_active_dark     // use for clicks and other activity tasks
 	color_border     Color  = color_border_dark     // borders
 	color_select     Color  = color_select_dark     // links and selected
@@ -88,6 +88,7 @@ pub:
 	container_style    ContainerStyle
 	dialog_style       DialogStyle
 	input_style        InputStyle
+	list_box_style     ListBoxStyle
 	menubar_style      MenubarStyle
 	progress_bar_style ProgressBarStyle
 	radio_style        RadioStyle
@@ -454,6 +455,18 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 					a: 100
 				}
 			}
+		}
+		list_box_style:     ListBoxStyle{
+			color:          cfg.color_interior
+			color_hover:    cfg.color_hover
+			color_border:   cfg.color_border
+			color_select:   cfg.color_select
+			fill:           cfg.fill
+			fill_border:    cfg.fill_border
+			padding:        cfg.padding
+			padding_border: cfg.padding_border
+			radius:         cfg.radius
+			radius_border:  cfg.radius_border
 		}
 		menubar_style:      MenubarStyle{
 			color:               cfg.color_interior

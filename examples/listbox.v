@@ -2,6 +2,9 @@ import gui
 
 // List Box Demo
 // =============================
+// List box is a convienence view for simple cases.
+// The same functionality can be done with a column and rows.
+// In fact, the implementation is not much more than that.
 
 @[heap]
 struct ListBoxApp {
@@ -12,6 +15,7 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
+		title:   'List Box Demo'
 		state:   &ListBoxApp{}
 		width:   300
 		height:  300
