@@ -4,7 +4,8 @@ import gui
 // =============================
 // Oh majeuere, dim the lights...
 
-const scroll_id = 1
+const id_scroll_gallery = 1
+const id_scroll_list_box = 2
 
 enum TabItem {
 	tab_stock = 1000
@@ -40,6 +41,9 @@ pub mut:
 	selected_2 []string
 	// tree view
 	tree_id string
+	// list Box
+	list_box_multiple_select bool
+	list_box_selected_values []string
 }
 
 fn main() {
@@ -93,13 +97,14 @@ fn side_bar(mut w gui.Window) gui.View {
 fn gallery(mut w gui.Window) gui.View {
 	mut app := w.state[ShowcaseApp]()
 	return gui.column(
-		id_scroll: scroll_id
+		id_scroll: id_scroll_gallery
 		sizing:    gui.fill_fill
 		spacing:   gui.spacing_large * 2
 		content:   match app.selected_tab {
 			.tab_stock {
 				[buttons(w), inputs(w), toggles(w), select_drop_down(w),
-					progress_bars(w), range_sliders(w), text_sizes_weights(w)]
+					list_box(w), progress_bars(w), range_sliders(w),
+					text_sizes_weights(w)]
 			}
 			.tab_icons {
 				[icons(mut w)]
@@ -136,7 +141,7 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 		on_click:  fn [tab_item] (_ voidptr, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.selected_tab = tab_item
-			w.scroll_vertical_to(scroll_id, 0)
+			w.scroll_vertical_to(id_scroll_gallery, 0)
 		}
 		on_hover:  fn (mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			node.shape.fill = true
@@ -900,6 +905,106 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 						percent:  percent
 					),
 				]
+			),
+		]
+	)
+}
+
+// ==============================================================
+// List Box
+// ==============================================================
+
+fn list_box(w &gui.Window) gui.View {
+	return gui.column(
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			view_title('List Box'),
+			gui.row(
+				sizing:  gui.fill_fit
+				content: [list_box_sample(w)]
+			),
+		]
+	)
+}
+
+fn list_box_sample(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.row(
+		height:  250
+		sizing:  gui.fit_fixed
+		content: [
+			gui.list_box(
+				id_scroll: id_scroll_list_box
+				multiple:  app.list_box_multiple_select
+				selected:  app.list_box_selected_values
+				sizing:    gui.fit_fill
+				data:      [
+					gui.list_box_option('Alabama', 'AL'),
+					gui.list_box_option('Alaska', 'AK'),
+					gui.list_box_option('Arizona', 'AZ'),
+					gui.list_box_option('Arkansas', 'AR'),
+					gui.list_box_option('California', 'CA'),
+					gui.list_box_option('Colorado', 'CO'),
+					gui.list_box_option('Connecticut', 'CT'),
+					gui.list_box_option('Delaware', 'DE'),
+					gui.list_box_option('Florida', 'FL'),
+					gui.list_box_option('Georgia', 'GA'),
+					gui.list_box_option('Hawaii', 'HI'),
+					gui.list_box_option('Idaho', 'ID'),
+					gui.list_box_option('Illinois', 'IL'),
+					gui.list_box_option('Indiana', 'IN'),
+					gui.list_box_option('Iowa', 'IA'),
+					gui.list_box_option('Kansas', 'KS'),
+					gui.list_box_option('Kentucky', 'KY'),
+					gui.list_box_option('Louisiana', 'LA'),
+					gui.list_box_option('Maine', 'ME'),
+					gui.list_box_option('Maryland', 'MD'),
+					gui.list_box_option('Massachusetts', 'MA'),
+					gui.list_box_option('Michigan', 'MI'),
+					gui.list_box_option('Minnesota', 'MN'),
+					gui.list_box_option('Mississippi', 'MS'),
+					gui.list_box_option('Missouri', 'MO'),
+					gui.list_box_option('Montana', 'MT'),
+					gui.list_box_option('Nebraska', 'NE'),
+					gui.list_box_option('Nevada', 'NV'),
+					gui.list_box_option('New Hampshire', 'NH'),
+					gui.list_box_option('New Jersey', 'NJ'),
+					gui.list_box_option('New Mexico', 'NM'),
+					gui.list_box_option('New York', 'NY'),
+					gui.list_box_option('North Carolina', 'NC'),
+					gui.list_box_option('North Dakota', 'ND'),
+					gui.list_box_option('Ohio', 'OH'),
+					gui.list_box_option('Oklahoma', 'OK'),
+					gui.list_box_option('Oregon', 'OR'),
+					gui.list_box_option('Pennsylvania', 'PA'),
+					gui.list_box_option('Rhode Island', 'RI'),
+					gui.list_box_option('South Carolina', 'SC'),
+					gui.list_box_option('South Dakota', 'SD'),
+					gui.list_box_option('Tennessee', 'TN'),
+					gui.list_box_option('Texas', 'TX'),
+					gui.list_box_option('Utah', 'UT'),
+					gui.list_box_option('Vermont', 'VT'),
+					gui.list_box_option('Virginia', 'VA'),
+					gui.list_box_option('Washington', 'WA'),
+					gui.list_box_option('West Virginia', 'WV'),
+					gui.list_box_option('Wisconsin', 'WI'),
+					gui.list_box_option('Wyoming', 'WY'),
+				]
+				on_select: fn (values []string, mut e gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.list_box_selected_values = values
+					e.is_handled = true
+				}
+			),
+			gui.toggle(
+				label:    'Multi-Select'
+				select:   app.list_box_multiple_select
+				on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.list_box_multiple_select = !app.list_box_multiple_select
+					app.list_box_selected_values.clear()
+				}
 			),
 		]
 	)
