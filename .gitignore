@@ -25,6 +25,7 @@ bin/
 .DS_Store
 .idea/
 .vscode/
+.ropeproject
 *.iml
 *.json.gz
 

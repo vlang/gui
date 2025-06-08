@@ -176,9 +176,6 @@ fn option_view(cfg SelectCfg, option string) View {
 			}
 		}
 		on_hover: fn [cfg] (mut node Layout, mut e Event, mut w Window) {
-			if node.shape.disabled {
-				return
-			}
 			w.set_mouse_cursor_pointing_hand()
 			node.shape.color = cfg.color_select
 		}

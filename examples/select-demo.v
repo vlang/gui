@@ -96,8 +96,7 @@ fn main_view(mut window gui.Window) gui.View {
 							'Vermont',
 							'Virginia',
 							'Washington',
-							'West',
-							'Virginia',
+							'West Virginia',
 							'Wisconsin',
 							'Wyoming',
 						]
