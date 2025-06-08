@@ -940,6 +940,7 @@ fn list_box_sample(w &gui.Window) gui.View {
 				selected:  app.list_box_selected_values
 				sizing:    gui.fit_fill
 				data:      [
+					gui.list_box_option('---States', ''),
 					gui.list_box_option('Alabama', 'AL'),
 					gui.list_box_option('Alaska', 'AK'),
 					gui.list_box_option('Arizona', 'AZ'),
@@ -948,6 +949,7 @@ fn list_box_sample(w &gui.Window) gui.View {
 					gui.list_box_option('Colorado', 'CO'),
 					gui.list_box_option('Connecticut', 'CT'),
 					gui.list_box_option('Delaware', 'DE'),
+					gui.list_box_option('District of Columbia', 'DC'),
 					gui.list_box_option('Florida', 'FL'),
 					gui.list_box_option('Georgia', 'GA'),
 					gui.list_box_option('Hawaii', 'HI'),
@@ -990,6 +992,12 @@ fn list_box_sample(w &gui.Window) gui.View {
 					gui.list_box_option('West Virginia', 'WV'),
 					gui.list_box_option('Wisconsin', 'WI'),
 					gui.list_box_option('Wyoming', 'WY'),
+					gui.list_box_option('---Territories', ''),
+					gui.list_box_option('American Somoa', 'AS'),
+					gui.list_box_option('Guam', 'GU'),
+					gui.list_box_option('Northern Mariana Islands', 'MP'),
+					gui.list_box_option('Puerto Rico', 'PR'),
+					gui.list_box_option('U.S. Virgin Islands', 'VI'),
 				]
 				on_select: fn (values []string, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[ShowcaseApp]()

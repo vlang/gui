@@ -49,6 +49,8 @@ pub fn toggle(cfg ToggleCfg) View {
 		invisible:    cfg.invisible
 		min_width:    gui_theme.n3.size + 2
 		min_height:   gui_theme.n3.size + 2
+		h_align:      .center
+		v_align:      .middle
 		cfg:          &cfg
 		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout
@@ -79,6 +81,8 @@ pub fn toggle(cfg ToggleCfg) View {
 		padding:  padding_none
 		on_click: cfg.on_click
 		on_hover: cfg.on_hover
+		h_align:  .center
+		v_align:  .middle
 		content:  content
 	)
 }

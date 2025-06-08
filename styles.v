@@ -72,16 +72,18 @@ pub:
 
 pub struct ListBoxStyle {
 pub:
-	color          Color   = color_interior_dark
-	color_hover    Color   = color_hover_dark
-	color_border   Color   = color_border_dark
-	color_select   Color   = color_select_dark
-	fill           bool    = true
-	fill_border    bool    = true
-	padding        Padding = padding_button
-	padding_border Padding = padding_none
-	radius         f32     = radius_medium
-	radius_border  f32     = radius_medium
+	color            Color     = color_interior_dark
+	color_hover      Color     = color_hover_dark
+	color_border     Color     = color_border_dark
+	color_select     Color     = color_select_dark
+	fill             bool      = true
+	fill_border      bool      = true
+	padding          Padding   = padding_button
+	padding_border   Padding   = padding_none
+	radius           f32       = radius_medium
+	radius_border    f32       = radius_medium
+	text_style       TextStyle = text_style_dark
+	subheading_style TextStyle = text_style_dark
 }
 
 pub struct MenubarStyle {
@@ -191,6 +193,7 @@ pub:
 	padding_border     Padding   = padding_one
 	radius             f32       = radius_medium
 	radius_border      f32       = radius_medium
+	text_style         TextStyle = text_style_dark
 	subheading_style   TextStyle = text_style_dark
 	placeholder_style  TextStyle = TextStyle{
 		...text_style_dark

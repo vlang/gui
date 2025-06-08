@@ -26,6 +26,7 @@ pub:
 	padding_border     Padding   = gui_theme.select_style.padding_border
 	radius             f32       = gui_theme.select_style.radius
 	radius_border      f32       = gui_theme.select_style.radius_border
+	text_style         TextStyle = gui_theme.select_style.text_style
 	subheading_style   TextStyle = gui_theme.select_style.subheading_style
 	placeholder_style  TextStyle = gui_theme.select_style.placeholder_style
 	on_select          fn ([]string, mut Event, mut Window) @[required]
@@ -47,7 +48,7 @@ pub fn select(cfg SelectCfg) View {
 	empty := cfg.select.len == 0 || cfg.select[0].len == 0
 	clip := if cfg.select_multiple && cfg.no_wrap { true } else { false }
 	txt := if empty { cfg.placeholder } else { cfg.select.join(', ') }
-	txt_style := if empty { cfg.placeholder_style } else { gui_theme.text_style }
+	txt_style := if empty { cfg.placeholder_style } else { cfg.text_style }
 	wrap_mode := if cfg.select_multiple && !cfg.no_wrap {
 		TextMode.wrap
 	} else {
@@ -61,10 +62,15 @@ pub fn select(cfg SelectCfg) View {
 		padding:  cfg.padding
 		sizing:   fill_fit
 		content:  [
-			text(text: txt, text_style: txt_style, mode: wrap_mode),
+			text(
+				text:       txt
+				text_style: txt_style
+				mode:       wrap_mode
+			),
 			row(sizing: fill_fill, padding: padding_none),
 			text(
-				text: if is_open { '▲' } else { '▼' }
+				text:       if is_open { '▲' } else { '▼' }
+				text_style: cfg.text_style
 			),
 		]
 		on_click: fn [cfg, is_open] (_ &ToggleCfg, mut e Event, mut w Window) {
@@ -74,12 +80,10 @@ pub fn select(cfg SelectCfg) View {
 		}
 	)
 	if is_open {
-		_, h := cfg.window.window_size()
-
 		content << column( // dropdown border
 			id:             cfg.id + 'dropdown'
 			min_height:     50
-			max_height:     clamp_f32(h, 50, h / 2)
+			max_height:     200
 			min_width:      cfg.min_width
 			max_width:      cfg.max_width
 			float:          true
@@ -140,7 +144,7 @@ fn option_view(cfg SelectCfg, option string) View {
 					text(
 						text:       '✓'
 						text_style: TextStyle{
-							...gui_theme.text_style
+							...cfg.text_style
 							color: if option in cfg.select {
 								gui_theme.text_style.color
 							} else {
@@ -148,7 +152,10 @@ fn option_view(cfg SelectCfg, option string) View {
 							}
 						}
 					),
-					text(text: option),
+					text(
+						text:       option
+						text_style: cfg.text_style
+					),
 				]
 			),
 		]
@@ -196,7 +203,7 @@ fn sub_header(cfg SelectCfg, option string) View {
 					text(
 						text:       '✓'
 						text_style: TextStyle{
-							...gui_theme.text_style
+							...cfg.subheading_style
 							color: color_transparent
 						}
 					),

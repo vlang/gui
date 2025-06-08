@@ -481,9 +481,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_submenu:      cfg.radius_small
 			radius_menu_item:    cfg.radius_small
 			spacing:             cfg.spacing_medium
-			text_style:          TextStyle{
-				...cfg.text_style
-			}
+			text_style:          cfg.text_style
 			text_style_subtitle: TextStyle{
 				...cfg.text_style
 				size: cfg.size_text_small
@@ -543,6 +541,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			padding_border:     cfg.padding_border
 			radius:             cfg.radius_medium
 			radius_border:      cfg.radius_medium
+			text_style:         cfg.text_style
+			subheading_style:   cfg.text_style
 			placeholder_style:  TextStyle{
 				...cfg.text_style
 				color: Color{
@@ -782,7 +782,13 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			...theme.select_style
 			subheading_style: TextStyle{
 				...bold
-				size: theme.size_text_medium
+			}
+		}
+		// listbox
+		list_box_style: ListBoxStyle{
+			...theme.list_box_style
+			subheading_style: TextStyle{
+				...bold
 			}
 		}
 	}
