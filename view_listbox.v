@@ -145,6 +145,11 @@ pub fn list_box(cfg ListBoxCfg) View {
 // list_box_option is a helper method to construct [ListBoxOption](#ListBoxOption).
 // It can allow specifying a option on a single line whereas the struct version
 // is always formatted to multiple lines.
+//
+// If an option name starts with `---` it is treated as is_subheader
+// The three leading hypens are dropped and the the rest of the name
+// is displayed using the subheader style. A horizontal bar is drawn
+// below the subheader.
 pub fn list_box_option(name string, value string) ListBoxOption {
 	return ListBoxOption{
 		name:  name
