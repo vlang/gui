@@ -306,7 +306,7 @@ fn inputs(w &gui.Window) gui.View {
 					),
 					gui.input(
 						id_focus:        201
-						width:           130
+						width:           150
 						sizing:          gui.fixed_fit
 						text:            app.input_text
 						padding_border:  gui.padding_one
@@ -316,7 +316,7 @@ fn inputs(w &gui.Window) gui.View {
 					),
 					gui.input(
 						id_focus:        202
-						width:           130
+						width:           150
 						sizing:          gui.fixed_fit
 						text:            app.input_text
 						padding_border:  gui.padding_two
@@ -326,7 +326,7 @@ fn inputs(w &gui.Window) gui.View {
 					),
 					gui.input(
 						id_focus:        203
-						width:           130
+						width:           150
 						sizing:          gui.fixed_fit
 						text:            app.input_text
 						padding_border:  gui.padding_one
