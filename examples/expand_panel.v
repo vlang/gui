@@ -62,7 +62,7 @@ fn main_view(window &gui.Window) gui.View {
 								fn [mut app] () {
 								app.equador_open = !app.equador_open
 							}),
-							expander('Guyana', 'South America', guyana_text, app.guyana_open,
+							expander('GUYANA', 'South America', guyana_text, app.guyana_open,
 								fn [mut app] () {
 								app.guyana_open = !app.guyana_open
 							}),
