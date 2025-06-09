@@ -1,24 +1,26 @@
 module gui
 
+// ExpandPanelCfg configures an [expand_panel](#expand_panel)
 @[heap]
 pub struct ExpandPanelCfg {
 pub:
 	id             string
 	open           bool
-	color          Color   = gui_theme.color_interior
-	color_border   Color   = gui_theme.color_border
-	fill           bool    = true
-	fill_border    bool    = true
-	padding        Padding = gui_theme.padding_medium
-	padding_border Padding = padding_one
-	radius         f32     = gui_theme.radius_medium
-	radius_border  f32     = gui_theme.radius_medium
+	color          Color   = gui_theme.expand_panel_style.color
+	color_border   Color   = gui_theme.expand_panel_style.color_border
+	fill           bool    = gui_theme.expand_panel_style.fill
+	fill_border    bool    = gui_theme.expand_panel_style.fill_border
+	padding        Padding = gui_theme.expand_panel_style.padding
+	padding_border Padding = gui_theme.expand_panel_style.padding_border
+	radius         f32     = gui_theme.expand_panel_style.radius
+	radius_border  f32     = gui_theme.expand_panel_style.radius_border
 	sizing         Sizing
 	head           View
 	content        View
 	on_toggle      fn (mut w Window) = unsafe { nil }
 }
 
+// expand_pannl creates a expand view from the given [ExpandPanelCfg](#ExpandPanelCfg)
 pub fn expand_panel(cfg ExpandPanelCfg) View {
 	return column( // border
 		id:      cfg.id
@@ -51,10 +53,12 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 						on_click: fn [cfg] (_ voidptr, mut e Event, mut w Window) {
 							if cfg.on_toggle != unsafe { nil } {
 								cfg.on_toggle(mut w)
+								e.is_handled = true
 							}
 						}
-						on_hover: fn (mut _ Layout, mut _ Event, mut w Window) {
+						on_hover: fn (mut _ Layout, mut e Event, mut w Window) {
 							w.set_mouse_cursor_pointing_hand()
+							e.is_handled = true
 						}
 					),
 					column( // expand panel

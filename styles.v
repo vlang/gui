@@ -45,6 +45,17 @@ pub:
 	text_style       TextStyle = text_style_dark
 }
 
+pub struct ExpandPanelStyle {
+	color          Color   = color_panel_dark
+	color_border   Color   = color_border_dark
+	fill           bool    = true
+	fill_border    bool    = true
+	padding        Padding = padding_large
+	padding_border Padding = padding_none
+	radius         f32     = radius_medium
+	radius_border  f32     = radius_medium
+}
+
 pub struct InputStyle {
 pub:
 	color              Color     = color_interior_dark

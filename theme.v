@@ -87,6 +87,7 @@ pub:
 	button_style       ButtonStyle
 	container_style    ContainerStyle
 	dialog_style       DialogStyle
+	expand_panel_style ExpandPanelStyle
 	input_style        InputStyle
 	list_box_style     ListBoxStyle
 	menubar_style      MenubarStyle
@@ -432,6 +433,16 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				size: cfg.size_text_large
 			}
 			text_style:       cfg.text_style
+		}
+		expand_panel_style: ExpandPanelStyle{
+			color:          cfg.color_panel
+			color_border:   cfg.color_border
+			fill:           cfg.fill
+			fill_border:    cfg.fill_border
+			padding:        cfg.padding_large
+			padding_border: cfg.padding_border
+			radius:         cfg.radius
+			radius_border:  cfg.radius_border
 		}
 		input_style:        InputStyle{
 			color:              cfg.color_interior

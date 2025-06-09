@@ -6,6 +6,7 @@ import gui
 @[heap]
 struct ExpandPanelApp {
 pub mut:
+	light_theme   bool
 	brazil_open   bool
 	chile_open    bool
 	colombia_open bool
@@ -36,29 +37,37 @@ fn main_view(window &gui.Window) gui.View {
 		height:  h
 		sizing:  gui.fixed_fixed
 		content: [
+			toggle_theme(app),
 			gui.column(
-				id_scroll: 1
-				sizing:    gui.fill_fill
-				content:   [
-					expander('BRAZIL', 'South America', brazil_text, app.brazil_open,
-						fn [mut app] () {
-						app.brazil_open = !app.brazil_open
-					}),
-					expander('CHILE', 'South America', chile_text, app.chile_open, fn [mut app] () {
-						app.chile_open = !app.chile_open
-					}),
-					expander('COLUMBIA', 'South America', columbia_text, app.colombia_open,
-						fn [mut app] () {
-						app.colombia_open = !app.colombia_open
-					}),
-					expander('EQUADOR', 'South America', equador_text, app.equador_open,
-						fn [mut app] () {
-						app.equador_open = !app.equador_open
-					}),
-					expander('Guyana', 'South America', guyana_text, app.guyana_open,
-						fn [mut app] () {
-						app.guyana_open = !app.guyana_open
-					}),
+				padding: gui.padding_none
+				sizing:  gui.fill_fill
+				content: [
+					gui.column(
+						id_scroll: 1
+						sizing:    gui.fill_fill
+						content:   [
+							expander('BRAZIL', 'South America', brazil_text, app.brazil_open,
+								fn [mut app] () {
+								app.brazil_open = !app.brazil_open
+							}),
+							expander('CHILE', 'South America', chile_text, app.chile_open,
+								fn [mut app] () {
+								app.chile_open = !app.chile_open
+							}),
+							expander('COLUMBIA', 'South America', columbia_text, app.colombia_open,
+								fn [mut app] () {
+								app.colombia_open = !app.colombia_open
+							}),
+							expander('EQUADOR', 'South America', equador_text, app.equador_open,
+								fn [mut app] () {
+								app.equador_open = !app.equador_open
+							}),
+							expander('Guyana', 'South America', guyana_text, app.guyana_open,
+								fn [mut app] () {
+								app.guyana_open = !app.guyana_open
+							}),
+						]
+					),
 				]
 			),
 		]
@@ -68,7 +77,6 @@ fn main_view(window &gui.Window) gui.View {
 fn expander(title string, continent string, description string, open bool, toggle fn ()) gui.View {
 	b_text_style := gui.TextStyle{
 		...gui.theme().n3
-		color: gui.cornflower_blue
 	}
 	return gui.expand_panel(
 		open:      open
@@ -108,3 +116,29 @@ const columbia_text = 'The name "Colombia" is derived from the last name of the 
 const equador_text = 'The origin of the name of Ecuador is from Spain. When the Spaniards colonized the land they called it "el ecuador" which translated means "the equator".'
 
 const guyana_text = 'The name "Guyana" derives from Guiana, the original name for the region that formerly included Guyana (British Guiana), Suriname (Dutch Guiana), French Guiana, and parts of Colombia, Venezuela and Brazil. According to the Oxford English Dictionary, "Guyana" comes from an indigenous Amerindian language and means "land of many waters".'
+
+fn toggle_theme(app &ExpandPanelApp) gui.View {
+	return gui.row(
+		h_align: .end
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.toggle(
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon5
+				select:        app.light_theme
+				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ExpandPanelApp]()
+					app.light_theme = !app.light_theme
+					theme := if app.light_theme {
+						gui.theme_light_bordered
+					} else {
+						gui.theme_dark_bordered
+					}
+					w.set_theme(theme)
+				}
+			),
+		]
+	)
+}
