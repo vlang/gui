@@ -52,9 +52,6 @@ mut:
 }
 
 fn (cv &ContainerView) generate(mut _ Window) Layout {
-	if cv.invisible {
-		return Layout{}
-	}
 	assert cv.shape_type in [.rectangle, .circle]
 	mut layout := Layout{
 		shape: Shape{
@@ -207,6 +204,12 @@ pub:
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
 fn container(cfg &ContainerCfg) ContainerView {
+	if cfg.invisible {
+		return ContainerView{
+			over_draw: true // removes it from spacing calculations
+			padding:   padding_none
+		}
+	}
 	mut content := []View{}
 	content << cfg.content
 	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_x.overflow != .hidden {
