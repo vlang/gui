@@ -44,6 +44,8 @@ pub mut:
 	// list Box
 	list_box_multiple_select bool
 	list_box_selected_values []string
+	// expand_pand
+	open_expand_panel bool
 }
 
 fn main() {
@@ -103,8 +105,8 @@ fn gallery(mut w gui.Window) gui.View {
 		content:   match app.selected_tab {
 			.tab_stock {
 				[buttons(w), inputs(w), toggles(w), select_drop_down(w),
-					list_box(w), progress_bars(w), range_sliders(w),
-					text_sizes_weights(w)]
+					list_box(w), expand_panel(w), progress_bars(w),
+					range_sliders(w), text_sizes_weights(w)]
 			}
 			.tab_icons {
 				[icons(mut w)]
@@ -1567,3 +1569,59 @@ fn tree_view_sample(mut w gui.Window) gui.View {
 		]
 	)
 }
+
+// ==============================================================
+// Expand Panel
+// ==============================================================
+
+fn expand_panel(w &gui.Window) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		sizing:  gui.fill_fill
+		content: [
+			view_title('Expand Panel'),
+			gui.row(
+				padding: gui.padding_none
+				sizing:  gui.fill_fit
+				spacing: 0
+				content: [expand_panel_sample(w)]
+			),
+		]
+	)
+}
+
+fn expand_panel_sample(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.expand_panel(
+		open:      app.open_expand_panel
+		max_width: 500
+		sizing:    gui.fill_fit
+		head:      gui.row(
+			padding: gui.theme().padding_small
+			sizing:  gui.fill_fit
+			v_align: .middle
+			content: [
+				gui.text(text: 'Brazil'),
+				gui.row(sizing: gui.fill_fit),
+				gui.text(text: 'South America', text_style: gui.theme().n4),
+			]
+		)
+		content:   gui.column(
+			sizing:  gui.fill_fit
+			padding: gui.padding_small
+			content: [
+				gui.text(
+					text:       brazil_text
+					text_style: gui.theme().n4
+					mode:       .wrap
+				),
+			]
+		)
+		on_toggle: fn (mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.open_expand_panel = !app.open_expand_panel
+		}
+	)
+}
+
+const brazil_text = 'The word "Brazil" likely comes from the Portuguese word for brazilwood, a tree that once grew plentifully along the Brazilian coast. In Portuguese, brazilwood is called pau-brasil, with the word brasil commonly given the etymology "red like an ember", formed from brasa ("ember") and the suffix -il (from -iculum or -ilium). As brazilwood produces a deep red dye, it was highly valued by the European textile industry and was the earliest commercially exploited product from Brazil. Throughout the 16th century, massive amounts of brazilwood were harvested by indigenous peoples (mostly Tupi) along the Brazilian coast, who sold the timber to European traders (mostly Portuguese, but also French) in return for assorted European consumer goods.'

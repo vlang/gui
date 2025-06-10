@@ -14,6 +14,10 @@ pub:
 	padding_border Padding = gui_theme.expand_panel_style.padding_border
 	radius         f32     = gui_theme.expand_panel_style.radius
 	radius_border  f32     = gui_theme.expand_panel_style.radius_border
+	min_width      f32
+	max_width      f32
+	min_height     f32
+	max_height     f32
 	sizing         Sizing
 	head           View
 	content        View
@@ -23,14 +27,18 @@ pub:
 // expand_pannl creates a expand view from the given [ExpandPanelCfg](#ExpandPanelCfg)
 pub fn expand_panel(cfg ExpandPanelCfg) View {
 	return column( // border
-		id:      cfg.id
-		cfg:     &cfg
-		color:   cfg.color_border
-		fill:    cfg.fill_border
-		padding: cfg.padding_border
-		radius:  cfg.radius_border
-		sizing:  cfg.sizing
-		content: [
+		id:         cfg.id
+		cfg:        &cfg
+		color:      cfg.color_border
+		fill:       cfg.fill_border
+		padding:    cfg.padding_border
+		radius:     cfg.radius_border
+		sizing:     cfg.sizing
+		min_width:  cfg.min_width
+		max_width:  cfg.max_width
+		min_height: cfg.min_height
+		max_height: cfg.max_height
+		content:    [
 			column( // interior
 				color:   cfg.color
 				fill:    cfg.fill
