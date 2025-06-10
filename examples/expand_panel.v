@@ -6,12 +6,9 @@ import gui
 @[heap]
 struct ExpandPanelApp {
 pub mut:
-	light_theme   bool
-	brazil_open   bool
-	chile_open    bool
-	colombia_open bool
-	equador_open  bool
-	guyana_open   bool
+	light_theme bool
+	auto_close  bool
+	open_titles []string
 }
 
 fn main() {
@@ -46,26 +43,11 @@ fn main_view(window &gui.Window) gui.View {
 						id_scroll: 1
 						sizing:    gui.fill_fill
 						content:   [
-							expander('BRAZIL', 'South America', brazil_text, app.brazil_open,
-								fn [mut app] () {
-								app.brazil_open = !app.brazil_open
-							}),
-							expander('CHILE', 'South America', chile_text, app.chile_open,
-								fn [mut app] () {
-								app.chile_open = !app.chile_open
-							}),
-							expander('COLUMBIA', 'South America', columbia_text, app.colombia_open,
-								fn [mut app] () {
-								app.colombia_open = !app.colombia_open
-							}),
-							expander('EQUADOR', 'South America', equador_text, app.equador_open,
-								fn [mut app] () {
-								app.equador_open = !app.equador_open
-							}),
-							expander('GUYANA', 'South America', guyana_text, app.guyana_open,
-								fn [mut app] () {
-								app.guyana_open = !app.guyana_open
-							}),
+							expander('BRAZIL', brazil_text, mut app),
+							expander('CHILE', chile_text, mut app),
+							expander('COLUMBIA', columbia_text, mut app),
+							expander('EQUADOR', equador_text, mut app),
+							expander('GUYANA', guyana_text, mut app),
 						]
 					),
 				]
@@ -74,21 +56,21 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn expander(title string, continent string, description string, open bool, toggle fn ()) gui.View {
+fn expander(title string, description string, mut app ExpandPanelApp) gui.View {
 	b_text_style := gui.TextStyle{
 		...gui.theme().n3
 	}
 	return gui.expand_panel(
-		open:      open
+		open:      title in app.open_titles
 		sizing:    gui.fill_fit
 		head:      gui.row(
-			padding: gui.padding_none
+			padding: gui.theme().padding_medium
 			sizing:  gui.fill_fit
 			v_align: .middle
 			content: [
 				gui.text(text: title, text_style: b_text_style),
 				gui.row(sizing: gui.fill_fit),
-				gui.text(text: continent, text_style: gui.theme().n4),
+				gui.text(text: 'South America', text_style: gui.theme().n4),
 			]
 		)
 		content:   gui.column(
@@ -101,8 +83,19 @@ fn expander(title string, continent string, description string, open bool, toggl
 				),
 			]
 		)
-		on_toggle: fn [toggle] (mut w gui.Window) {
-			toggle()
+		on_toggle: fn [title] (mut w gui.Window) {
+			mut app := w.state[ExpandPanelApp]()
+			if app.auto_close {
+				match title in app.open_titles {
+					true { app.open_titles.clear() }
+					else { app.open_titles = [title] }
+				}
+			} else {
+				match title in app.open_titles {
+					true { app.open_titles = app.open_titles.filter(it != title) }
+					else { app.open_titles << title }
+				}
+			}
 		}
 	)
 }
@@ -119,10 +112,22 @@ const guyana_text = 'The name "Guyana" derives from Guiana, the original name fo
 
 fn toggle_theme(app &ExpandPanelApp) gui.View {
 	return gui.row(
-		h_align: .end
+		h_align: .right
 		sizing:  gui.fill_fit
-		padding: gui.padding_none
+		padding: gui.pad_tblr(0, gui.pad_medium)
 		content: [
+			gui.toggle(
+				label:    'auto close'
+				select:   app.auto_close
+				on_click: fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ExpandPanelApp]()
+					app.auto_close = !app.auto_close
+					if app.auto_close {
+						app.open_titles.clear()
+					}
+				}
+			),
+			gui.row(sizing: gui.fill_fit),
 			gui.toggle(
 				text_select:   gui.icon_moon
 				text_unselect: gui.icon_sunny_o

@@ -50,7 +50,7 @@ pub struct ExpandPanelStyle {
 	color_border   Color   = color_border_dark
 	fill           bool    = true
 	fill_border    bool    = true
-	padding        Padding = padding_large
+	padding        Padding = padding_one
 	padding_border Padding = padding_none
 	radius         f32     = radius_medium
 	radius_border  f32     = radius_medium

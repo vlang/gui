@@ -45,9 +45,18 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 						v_align:  .middle
 						content:  [
 							cfg.head,
-							text(
-								text:       if cfg.open { icon_arrow_up } else { icon_arrow_down }
-								text_style: gui_theme.icon3
+							row(
+								padding: padding(0, pad_medium, 0, 0)
+								content: [
+									text(
+										text:       if cfg.open {
+											icon_arrow_up
+										} else {
+											icon_arrow_down
+										}
+										text_style: gui_theme.icon3
+									),
+								]
 							),
 						]
 						on_click: fn [cfg] (_ voidptr, mut e Event, mut w Window) {
@@ -56,8 +65,10 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 								e.is_handled = true
 							}
 						}
-						on_hover: fn (mut _ Layout, mut e Event, mut w Window) {
+						on_hover: fn (mut node Layout, mut e Event, mut w Window) {
 							w.set_mouse_cursor_pointing_hand()
+							node.shape.fill = true
+							node.shape.color = gui_theme.color_hover
 							e.is_handled = true
 						}
 					),
