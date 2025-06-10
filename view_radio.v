@@ -24,6 +24,7 @@ pub:
 pub fn radio(cfg RadioCfg) View {
 	mut content := []View{}
 	content << circle(
+		name:      'radio border'
 		width:     cfg.size
 		height:    cfg.size
 		color:     cfg.color_border
@@ -38,6 +39,7 @@ pub fn radio(cfg RadioCfg) View {
 		on_char:   cfg.on_char_button
 		content:   [
 			circle(
+				name:    'radio interior'
 				fill:    true
 				color:   if cfg.select { cfg.color_select } else { cfg.color_unselect }
 				padding: padding_none
@@ -49,6 +51,7 @@ pub fn radio(cfg RadioCfg) View {
 
 	if cfg.label.len > 0 {
 		content << row(
+			name: 'radio label'
 			// pad the label to the right so hover color is past
 			// end of text slightly.
 			padding: padding(0, pad_x_small, 0, 0)
@@ -57,6 +60,7 @@ pub fn radio(cfg RadioCfg) View {
 	}
 
 	return row(
+		name:         'radio'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		padding:      padding_none

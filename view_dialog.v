@@ -83,6 +83,7 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		.custom { cfg.custom_content }
 	}
 	return column(
+		name:          'dialog border: ${cfg.dialog_type}'
 		id:            reserved_dialog_id
 		float:         true
 		float_anchor:  .middle_center
@@ -99,6 +100,7 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		on_keydown:    dialog_key_down
 		content:       [
 			column(
+				name:    'dialog: ${cfg.dialog_type}'
 				h_align: .center
 				sizing:  fill_fill
 				padding: cfg.padding
@@ -113,6 +115,7 @@ fn dialog_view_generator(cfg DialogCfg) View {
 fn message_view(cfg DialogCfg) []View {
 	return [
 		row(
+			name:    'message view'
 			sizing:  fill_fit
 			h_align: cfg.align_buttons
 			padding: padding_none
@@ -136,6 +139,7 @@ fn message_view(cfg DialogCfg) []View {
 fn confirm_view(cfg DialogCfg) []View {
 	return [
 		row(
+			name:    'confirm view'
 			sizing:  fill_fit
 			h_align: cfg.align_buttons
 			padding: padding_none
@@ -190,6 +194,7 @@ fn prompt_view(cfg DialogCfg) []View {
 			}
 		),
 		row(
+			name:    'prompt view'
 			sizing:  fill_fit
 			h_align: cfg.align_buttons
 			padding: padding_none

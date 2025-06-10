@@ -23,6 +23,7 @@ pub fn tree(cfg TreeCfg) View {
 		content << cfg.node_content(node)
 	}
 	return column(
+		name:    'tree'
 		padding: padding_none
 		spacing: cfg.spacing
 		content: content
@@ -53,6 +54,7 @@ fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg) []View {
 	mut tnodes := []View{}
 	for node in nodes {
 		tnodes << column(
+			name:    'tree node'
 			id:      node.id
 			padding: padding_none
 			spacing: cfg.spacing
@@ -75,6 +77,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 
 	mut content := []View{}
 	content << row(
+		name:     'tree node content'
 		fill:     true
 		spacing:  0
 		padding:  padding_none
@@ -87,6 +90,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 			),
 			// text content
 			row(
+				name:    'tree node text'
 				fill:    true
 				spacing: 0
 				padding: pad_tblr(1, 5)

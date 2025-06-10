@@ -46,6 +46,7 @@ fn (t &TextView) generate(mut window Window) Layout {
 	}
 	mut shape_tree := Layout{
 		shape: Shape{
+			name:                'text'
 			type:                .text
 			id:                  t.id
 			id_focus:            t.id_focus

@@ -3,6 +3,7 @@ module gui
 @[heap]
 pub struct RectangleCfg {
 pub:
+	name       string = 'rectangle'
 	id         string
 	width      f32
 	height     f32

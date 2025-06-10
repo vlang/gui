@@ -34,6 +34,7 @@ pub:
 pub fn progress_bar(cfg &ProgressBarCfg) View {
 	mut content := []View{cap: 2}
 	content << row(
+		name:    'progress_bar left-bar'
 		fill:    true
 		padding: padding_none
 		radius:  cfg.radius
@@ -43,6 +44,7 @@ pub fn progress_bar(cfg &ProgressBarCfg) View {
 		mut percent := f64_min(f64_max(cfg.percent, f64(0)), f64(1))
 		percent = math.round(percent * 100)
 		content << row(
+			name:    'progress_bar percent'
 			color:   cfg.text_background
 			fill:    cfg.text_fill
 			padding: cfg.text_padding
@@ -51,6 +53,7 @@ pub fn progress_bar(cfg &ProgressBarCfg) View {
 	}
 	size := f32(gui_theme.progress_bar_style.size)
 	container_cfg := ContainerCfg{
+		name:         'progress_bar'
 		id:           cfg.id
 		width:        if cfg.width == 0 { size } else { cfg.width }
 		height:       if cfg.height == 0 { size } else { cfg.height }

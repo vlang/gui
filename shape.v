@@ -4,13 +4,15 @@ import rand
 
 // Shape is the only data structure in GUI used to draw to the screen.
 pub struct Shape {
+pub:
+	id       string // user assigned
+	id_focus u32    // >0 indicates shape is focusable. Value determines tabbing order
+	name     string // internal shape name, useful for debugging
+	type     ShapeType
+	uid      u64 = rand.u64() // internal use only
+	axis     Axis
+	cfg      voidptr
 pub mut:
-	id         string // user assigned
-	id_focus   u32    // >0 indicates shape is focusable. Value determines tabbing order
-	type       ShapeType
-	uid        u64 = rand.u64() // internal use only
-	axis       Axis
-	cfg        voidptr
 	clip       bool
 	shape_clip DrawClip // used for hit-testing
 	color      Color

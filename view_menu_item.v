@@ -8,7 +8,7 @@ pub const menu_subtitle_id = '__subtitle__'
 //
 // - separator, if the separator field is true, a horizontal line separating menu items is rendered.
 // - custom view, if a custom_view is supplied, it is rendered.
-// - text only, for convienence, a text field is availble for the typical text only menu items.
+// - text only, for convenience, a text field is availble for the typical text only menu items.
 //
 // If all three types are specified only one is rendereed. The priority is separator, custom view, text only.
 // Custom and text only menus can have a submenu.
@@ -42,6 +42,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 	return match item_cfg.separator {
 		true {
 			column(
+				name:    'menu_item separator'
 				id:      item_cfg.id
 				height:  item_cfg.text_style.size / 2
 				fill:    true
@@ -69,6 +70,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				)
 			}
 			column(
+				name:     'menu_item'
 				id:       item_cfg.id
 				cfg:      &item_cfg
 				disabled: item_cfg.disabled
@@ -90,7 +92,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 	}
 }
 
-// menu_item_text is a convienence function for creating a simple text menu item
+// menu_item_text is a convenience function for creating a simple text menu item
 pub fn menu_item_text(id string, text string) MenuItemCfg {
 	if id.len == 0 {
 		panic("empty menu id's are invalid")
@@ -101,7 +103,7 @@ pub fn menu_item_text(id string, text string) MenuItemCfg {
 	}
 }
 
-// menu_separator is a convienence function for createing a menu separator
+// menu_separator is a convenience function for createing a menu separator
 pub fn menu_separator() MenuItemCfg {
 	return MenuItemCfg{
 		id:        menu_separator_id
@@ -118,7 +120,7 @@ pub fn menu_subtitle(text string) MenuItemCfg {
 	}
 }
 
-// menu_submenu is a convienence function for createing a menu with an
+// menu_submenu is a convenience function for creating a menu with an
 // arrow symbol indicating a submenu
 pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
 	return MenuItemCfg{
@@ -131,6 +133,7 @@ pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
 			content: [
 				text(text: txt, text_style: gui_theme.menubar_style.text_style),
 				row(
+					name:    'menu_submenu'
 					h_align: .end
 					sizing:  fill_fit
 					padding: padding_none

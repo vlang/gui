@@ -57,6 +57,7 @@ pub fn select(cfg SelectCfg) View {
 
 	mut content := []View{}
 	content << row( // interior
+		name:     'select interior'
 		fill:     cfg.fill
 		color:    cfg.color
 		padding:  cfg.padding
@@ -67,7 +68,7 @@ pub fn select(cfg SelectCfg) View {
 				text_style: txt_style
 				mode:       wrap_mode
 			),
-			row(sizing: fill_fill, padding: padding_none),
+			row(name: 'select spacer', sizing: fill_fill, padding: padding_none),
 			text(
 				text:       if is_open { '▲' } else { '▼' }
 				text_style: cfg.text_style
@@ -81,6 +82,7 @@ pub fn select(cfg SelectCfg) View {
 	)
 	if is_open {
 		content << column( // dropdown border
+			name:           'select dropdown border'
 			id:             cfg.id + 'dropdown'
 			min_height:     50
 			max_height:     200
@@ -96,10 +98,12 @@ pub fn select(cfg SelectCfg) View {
 			color:          cfg.color_border
 			content:        [
 				column(
+					name:    'select dropdown scroll container'
 					padding: padding_none
 					sizing:  fill_fill
 					content: [
 						column( // drop down list
+							name:      'select dropdown list'
 							id:        cfg.id + 'dropdown_list'
 							id_scroll: fnv1a.sum32_string(cfg.id + 'dropdown')
 							fill:      cfg.fill
@@ -115,6 +119,7 @@ pub fn select(cfg SelectCfg) View {
 		)
 	}
 	return row( // border
+		name:         'select border'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		clip:         clip
@@ -138,6 +143,7 @@ fn option_view(cfg SelectCfg, option string) View {
 		spacing:  0
 		content:  [
 			row(
+				name:    'select option'
 				spacing: 0
 				padding: pad_tblr(2, 0)
 				content: [
@@ -196,6 +202,7 @@ fn sub_header(cfg SelectCfg, option string) View {
 		sizing:  fill_fit
 		content: [
 			row(
+				name:    'select sub_header'
 				padding: padding_none
 				sizing:  fill_fit
 				spacing: pad_x_small
@@ -214,6 +221,7 @@ fn sub_header(cfg SelectCfg, option string) View {
 				]
 			),
 			row(
+				name:    'select sub_header underline'
 				padding: pad_tblr(0, pad_medium)
 				sizing:  fill_fit
 				content: [

@@ -83,6 +83,7 @@ pub fn list_box(cfg ListBoxCfg) View {
 		}
 
 		list << row(
+			name:     'list_box option'
 			color:    color
 			fill:     true
 			padding:  padding_two_five
@@ -113,7 +114,8 @@ pub fn list_box(cfg ListBoxCfg) View {
 		)
 	}
 
-	return column( // border
+	return column(
+		name:       'list_box border'
 		width:      cfg.max_width
 		height:     cfg.height
 		min_width:  cfg.min_width
@@ -126,7 +128,8 @@ pub fn list_box(cfg ListBoxCfg) View {
 		sizing:     cfg.sizing
 		cfg:        &cfg
 		content:    [
-			column( // interior
+			column(
+				name:            'list_box interior'
 				id_scroll:       cfg.id_scroll
 				scrollbar_cfg_y: ScrollbarCfg{
 					offset_x: -1

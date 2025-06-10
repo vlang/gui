@@ -53,6 +53,7 @@ pub:
 // ```
 pub fn button(cfg ButtonCfg) View {
 	return row(
+		name:         'button border'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		color:        cfg.color_border
@@ -75,6 +76,7 @@ pub fn button(cfg ButtonCfg) View {
 		on_hover:     cfg.on_hover
 		content:      [
 			row(
+				name:    'button interior'
 				sizing:  fill_fill
 				h_align: cfg.h_align
 				v_align: cfg.v_align

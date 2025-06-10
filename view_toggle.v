@@ -39,6 +39,7 @@ pub fn toggle(cfg ToggleCfg) View {
 	mut content := []View{}
 
 	content << row(
+		name:         'toggle border'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		color:        cfg.color_border
@@ -56,6 +57,7 @@ pub fn toggle(cfg ToggleCfg) View {
 		amend_layout: cfg.amend_layout
 		content:      [
 			row(
+				name:    'toggle interior'
 				color:   color
 				fill:    cfg.fill
 				sizing:  fill_fill
@@ -78,6 +80,7 @@ pub fn toggle(cfg ToggleCfg) View {
 	}
 
 	return row(
+		name:     'toggle'
 		padding:  padding_none
 		on_click: cfg.on_click
 		on_hover: cfg.on_hover

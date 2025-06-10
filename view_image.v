@@ -49,6 +49,7 @@ fn (iv &ImageView) generate(mut window Window) Layout {
 
 	layout := Layout{
 		shape: Shape{
+			name:       'image'
 			type:       .image
 			id:         iv.id
 			image_name: iv.file_name

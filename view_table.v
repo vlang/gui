@@ -79,6 +79,7 @@ pub fn table(cfg &TableCfg) View {
 			}
 
 			cells << column(
+				name:     'table cell border'
 				color:    cfg.color_border
 				padding:  cfg.cell_padding
 				radius:   0
@@ -88,6 +89,7 @@ pub fn table(cfg &TableCfg) View {
 				on_click: cell.on_click
 				content:  [
 					column(
+						name:     'table cell interior'
 						fill:     true
 						h_align:  h_align
 						color:    color_transparent
@@ -107,6 +109,7 @@ pub fn table(cfg &TableCfg) View {
 			)
 		}
 		rows << row(
+			name:    'table row'
 			spacing: 0
 			radius:  0
 			padding: padding_none
@@ -114,6 +117,7 @@ pub fn table(cfg &TableCfg) View {
 		)
 	}
 	return column(
+		name:    'table'
 		id:      cfg.id
 		color:   cfg.color_border
 		padding: padding_none

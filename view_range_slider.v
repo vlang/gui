@@ -39,6 +39,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		panic('range_slider.min must be less thand range_slider.max')
 	}
 	return container(
+		name:         'range_slider border'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		width:        cfg.size
@@ -58,6 +59,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		on_keydown:   cfg.on_keydown
 		content:      [
 			container(
+				name:    'range_slider interior'
 				color:   cfg.color
 				fill:    true
 				radius:  cfg.radius
@@ -65,12 +67,14 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 				padding: padding_none
 				axis:    if cfg.vertical { .top_to_bottom } else { .left_to_right }
 				content: [
-					rectangle( // left bar
+					rectangle(
+						name:   'range_slider left-bar'
 						fill:   cfg.fill
 						sizing: fill_fill
 						color:  cfg.color_left
 					),
-					circle( // thumb
+					circle(
+						name:         'range_slider thumb border'
 						width:        cfg.thumb_size
 						height:       cfg.thumb_size
 						fill:         cfg.fill
@@ -81,6 +85,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 						on_hover:     cfg.on_hover_thumb
 						content:      [
 							circle(
+								name:    'range_slider thumb'
 								fill:    cfg.fill
 								color:   cfg.color_thumb
 								padding: padding_none

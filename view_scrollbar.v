@@ -56,6 +56,7 @@ pub:
 pub fn scrollbar(cfg ScrollbarCfg) View {
 	return if cfg.orientation == .horizontal {
 		row(
+			name:         'scrollbar horizontal'
 			id:           cfg.id
 			fill:         cfg.fill_background
 			color:        cfg.color_background
@@ -71,6 +72,7 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 		)
 	} else {
 		column(
+			name:         'scrollbar vertical'
 			id:           cfg.id
 			fill:         cfg.fill_background
 			color:        cfg.color_background
@@ -89,6 +91,7 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 
 fn thumb(cfg &ScrollbarCfg, id string) View {
 	return column(
+		name:     'scrollbar thumb'
 		id:       id
 		color:    cfg.color_thumb
 		fill:     cfg.fill_thumb

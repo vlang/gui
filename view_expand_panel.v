@@ -26,7 +26,8 @@ pub:
 
 // expand_pannl creates a expand view from the given [ExpandPanelCfg](#ExpandPanelCfg)
 pub fn expand_panel(cfg ExpandPanelCfg) View {
-	return column( // border
+	return column(
+		name:       'expand_panel border'
 		id:         cfg.id
 		cfg:        &cfg
 		color:      cfg.color_border
@@ -39,7 +40,8 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 		min_height: cfg.min_height
 		max_height: cfg.max_height
 		content:    [
-			column( // interior
+			column(
+				name:    'expand_panel interior'
 				color:   cfg.color
 				fill:    cfg.fill
 				padding: cfg.padding
@@ -47,13 +49,15 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 				sizing:  fill_fit
 				spacing: 0
 				content: [
-					row( // top panel
+					row(
+						name:     'expand_panel head'
 						padding:  padding_none
 						sizing:   fill_fit
 						v_align:  .middle
 						content:  [
 							cfg.head,
 							row(
+								name:    'expand_panel head row'
 								padding: padding(0, pad_medium, 0, 0)
 								content: [
 									text(
@@ -80,7 +84,8 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 							e.is_handled = true
 						}
 					),
-					column( // expand panel
+					column(
+						name:      'expand_panel content'
 						invisible: !cfg.open
 						padding:   padding_none
 						sizing:    fill_fit

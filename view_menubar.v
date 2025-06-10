@@ -59,6 +59,7 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 		panic('Duplicate menu-id found menubar-id "${cfg.id}": "${duplicate_id}"')
 	}
 	return row(
+		name:          'menubar border'
 		id:            cfg.id
 		color:         cfg.color_border
 		fill:          true
@@ -72,6 +73,7 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 		amend_layout:  cfg.amend_layout_menubar
 		content:       [
 			row(
+				name:    'menubar interior'
 				color:   cfg.color
 				fill:    true
 				padding: cfg.padding
@@ -120,6 +122,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 		if item.submenu.len > 0 {
 			if item_cfg.selected || selected_in_tree {
 				submenu := column(
+					name:           'menubar submenu border'
 					id:             item_cfg.id // parent id
 					min_width:      cfg.width_submenu_min
 					max_width:      cfg.width_submenu_max
@@ -132,6 +135,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 					on_hover:       cfg.on_hover_submenu
 					content:        [
 						column(
+							name:    'menubar submenu interior'
 							color:   cfg.color
 							fill:    true
 							padding: cfg.padding_submenu

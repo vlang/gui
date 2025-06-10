@@ -38,6 +38,7 @@ pub fn switch(cfg SwitchCfg) View {
 
 	mut content := []View{}
 	content << row(
+		name:         'switch border'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		width:        cfg.width
@@ -54,6 +55,7 @@ pub fn switch(cfg SwitchCfg) View {
 		amend_layout: cfg.amend_layout
 		content:      [
 			row(
+				name:    'switch interior'
 				color:   cfg.color
 				fill:    cfg.fill
 				sizing:  fill_fill
@@ -63,6 +65,7 @@ pub fn switch(cfg SwitchCfg) View {
 				v_align: .middle
 				content: [
 					circle(
+						name:   'select thumb'
 						color:  color
 						fill:   true
 						width:  circle_size

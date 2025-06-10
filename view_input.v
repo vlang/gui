@@ -67,6 +67,7 @@ pub fn input(cfg InputCfg) View {
 	mode := if cfg.mode == .single_line { TextMode.single_line } else { TextMode.wrap_keep_spaces }
 
 	return row(
+		name:         'input border'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		width:        cfg.width
@@ -87,6 +88,7 @@ pub fn input(cfg InputCfg) View {
 		cfg:          &cfg
 		content:      [
 			row(
+				name:    'input interior'
 				color:   cfg.color
 				padding: cfg.padding
 				fill:    cfg.fill

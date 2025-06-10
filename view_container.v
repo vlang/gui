@@ -4,7 +4,8 @@ module gui
 struct ContainerView implements View {
 pub:
 	id              string
-	id_focus        u32 // not sure this should be here
+	id_focus        u32    // not sure this should be here
+	name            string // used internally, read-only
 	x               f32
 	y               f32
 	width           f32
@@ -59,6 +60,7 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 			id:             cv.id
 			id_focus:       cv.id_focus
 			axis:           cv.axis
+			name:           cv.name
 			x:              cv.x
 			y:              cv.y
 			width:          cv.width
@@ -154,6 +156,7 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 @[heap]
 pub struct ContainerCfg {
 	axis Axis
+	name string // internally set. read-only.
 mut:
 	cfg voidptr = unsafe { nil }
 pub:
@@ -231,6 +234,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 		id:              cfg.id
 		id_focus:        cfg.id_focus
 		axis:            cfg.axis
+		name:            cfg.name
 		x:               cfg.x
 		y:               cfg.y
 		width:           cfg.width
@@ -278,9 +282,11 @@ fn container(cfg &ContainerCfg) ContainerView {
 // column arranges its content top to bottom. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn column(cfg &ContainerCfg) ContainerView {
+	name := if cfg.name.len == 0 { 'column' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
 		axis: .top_to_bottom
+		name: name
 	}
 	if cfg.cfg == unsafe { nil } {
 		container_cfg.cfg = container_cfg
@@ -291,9 +297,11 @@ pub fn column(cfg &ContainerCfg) ContainerView {
 // row arranges its content left to right. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn row(cfg &ContainerCfg) ContainerView {
+	name := if cfg.name.len == 0 { 'row' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
 		axis: .left_to_right
+		name: name
 	}
 	if cfg.cfg == unsafe { nil } {
 		container_cfg.cfg = container_cfg
@@ -303,8 +311,10 @@ pub fn row(cfg &ContainerCfg) ContainerView {
 
 // canvas does not arrange or otherwise layout its content. See [ContainerCfg](#ContainerCfg)
 pub fn canvas(cfg &ContainerCfg) ContainerView {
+	name := if cfg.name.len == 0 { 'canvas' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
+		name: name
 	}
 	if cfg.cfg == unsafe { nil } {
 		container_cfg.cfg = container_cfg
@@ -313,8 +323,10 @@ pub fn canvas(cfg &ContainerCfg) ContainerView {
 }
 
 pub fn circle(cfg &ContainerCfg) ContainerView {
+	name := if cfg.name.len == 0 { 'circle' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
+		name: name
 	}
 	if cfg.cfg == unsafe { nil } {
 		container_cfg.cfg = container_cfg
