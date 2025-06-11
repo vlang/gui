@@ -101,9 +101,30 @@ fn render_layout(mut layout Layout, mut renderers []Renderer, bg_color Color, cl
 	mut shape_clip := clip
 	if layout.shape.over_draw { // allow drawing in the padded area of shape
 		shape_clip = layout.shape.shape_clip
+		if layout.shape.name == scrollbar_vertical_name {
+			shape_clip = DrawClip{
+				...shape_clip
+				y:      clip.y
+				height: clip.height
+			}
+		}
+		if layout.shape.name == scrollbar_horizontal_name {
+			shape_clip = DrawClip{
+				...shape_clip
+				x:     clip.x
+				width: clip.width
+			}
+		}
 		renderers << shape_clip
 	} else if layout.shape.clip {
-		shape_clip = render_clip_rect(shape_clip_rect(layout.shape))
+		sc := layout.shape.shape_clip
+		padding := layout.shape.padding
+		shape_clip = DrawClip{
+			x:      sc.x + padding.left
+			y:      sc.y + padding.top
+			width:  sc.width - padding.width()
+			height: sc.height - padding.height()
+		}
 		renderers << shape_clip
 	}
 
@@ -408,27 +429,6 @@ fn dim_alpha(color Color) Color {
 	return Color{
 		...color
 		a: color.a / u8(2)
-	}
-}
-
-// shape_clip_rect constructs a clipping rectangle based on the shape's
-// dimensions minus its padding
-fn shape_clip_rect(shape &Shape) gg.Rect {
-	return gg.Rect{
-		x:      shape.x + shape.padding.left
-		y:      shape.y + shape.padding.top
-		width:  shape.width - shape.padding.width()
-		height: shape.height - shape.padding.height()
-	}
-}
-
-// render_clip_rect creates a DrawClip renderer
-fn render_clip_rect(clip_rect gg.Rect) DrawClip {
-	return DrawClip{
-		x:      clip_rect.x
-		y:      clip_rect.y
-		width:  clip_rect.width
-		height: clip_rect.height
 	}
 }
 

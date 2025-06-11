@@ -52,11 +52,14 @@ pub:
 	offset_y         f32   = gui_theme.scrollbar_style.offset_y // horizontal orientation
 }
 
+const scrollbar_vertical_name = 'scrollbar vertical'
+const scrollbar_horizontal_name = 'scrollbar horizontal'
+
 // scrollbar creates a scrollbar.
 pub fn scrollbar(cfg ScrollbarCfg) View {
 	return if cfg.orientation == .horizontal {
 		row(
-			name:         'scrollbar horizontal'
+			name:         scrollbar_horizontal_name
 			id:           cfg.id
 			fill:         cfg.fill_background
 			color:        cfg.color_background
@@ -72,7 +75,7 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 		)
 	} else {
 		column(
-			name:         'scrollbar vertical'
+			name:         scrollbar_vertical_name
 			id:           cfg.id
 			fill:         cfg.fill_background
 			color:        cfg.color_background
