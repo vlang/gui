@@ -92,12 +92,12 @@ pub fn window(cfg &WindowCfg) &Window {
 
 // frame_fn is the only place where the window is rendered.
 fn frame_fn(mut window Window) {
-	window.mutex.lock()
+	window.lock()
 	window.ui.begin()
 	renderers_draw(window.renderers, window)
 	window.ui.end()
 	sapp.set_mouse_cursor(window.view_state.mouse_cursor)
-	window.mutex.unlock()
+	window.unlock()
 }
 
 // event_fn is where all user events are handled. Mostly it delegates
@@ -127,7 +127,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	// Otherwise, the float layers get first try at the events and finally the
 	// main layout. Events are processed until an event handler sets the
 	// `event.is_handled` memeber to true.
-	w.mutex.lock()
+	w.lock()
 	layout := if w.dialog_cfg.visible {
 		w.layout.children.last()
 	} else {
@@ -138,7 +138,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			children: w.layout.children.reverse()
 		}
 	}
-	w.mutex.unlock()
+	w.unlock()
 
 	match e.typ {
 		.char {
@@ -212,8 +212,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window_rect := window.window_rect()
 	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
 
-	window.mutex.lock()
-	defer { window.mutex.unlock() }
+	window.lock()
+	defer { window.unlock() }
 
 	window.view_generator = gen_view
 	window.layout = layout
@@ -224,8 +224,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 // view generator. It does not clear the view states. It should
 // rarely be needed since event handling calls it regularly.
 pub fn (mut window Window) update_window() {
-	window.mutex.lock()
-	defer { window.mutex.unlock() }
+	window.lock()
+	defer { window.unlock() }
 
 	view := window.view_generator(window)
 	mut layout := window.compose_layout(view)

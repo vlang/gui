@@ -116,10 +116,25 @@ pub fn (window &Window) pointer_over_app(e &Event) bool {
 	return true
 }
 
+// lock locks the window's mutex semphore. This is the same mutex used
+// to access the app model internally. There is usually no need to lock
+// when responding to events (mouse, keyboard, etc.) It is good practice
+// to lock when updating the app model from other threads. Locking twice
+// in the same thread results in a dead lock or panic. Use with caution.
+// Call [unlock](#unlock) to unlock.
+pub fn (mut window Window) lock() {
+	window.mutex.lock()
+}
+
+// unlock unlocks the locked mutex. Same precautions apply as with [lock](#lock)
+pub fn (mut window Window) unlock() {
+	window.mutex.unlock()
+}
+
 // resize_to_content is currently not working. Need to implement gg.resize()
 pub fn (mut window Window) resize_to_content() {
-	window.mutex.lock()
-	defer { window.mutex.unlock() }
+	window.lock()
+	defer { window.unlock() }
 	window.ui.resize(window.window_size.width, window.window_size.height)
 }
 

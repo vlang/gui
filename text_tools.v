@@ -2,7 +2,6 @@ module gui
 
 import clipboard
 import encoding.utf8
-import gg
 import hash.fnv1a
 
 pub fn get_text_width_no_cache(text string, text_style TextStyle, window &Window) f32 {
@@ -54,11 +53,12 @@ fn line_height(shape Shape) f32 {
 
 fn text_wrap(mut shape Shape, mut window Window) {
 	if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.type == .text {
-		window.ui.set_text_cfg(shape.text_style.to_text_cfg())
+		style := shape.text_style
 		width := shape.width - shape.padding.width()
+		tab_size := shape.text_tab_size
 		shape.text_lines = match shape.text_mode == .wrap_keep_spaces {
-			true { wrap_text_keep_spaces(shape.text, width, shape.text_tab_size, window.ui) }
-			else { wrap_text_shrink_spaces(shape.text, width, shape.text_tab_size, window.ui) }
+			true { wrap_text_keep_spaces(shape.text, style, width, tab_size, mut window) }
+			else { wrap_text_shrink_spaces(shape.text, style, width, tab_size, mut window) }
 		}
 		lh := line_height(shape)
 		shape.height = shape.text_lines.len * lh
@@ -68,8 +68,8 @@ fn text_wrap(mut shape Shape, mut window Window) {
 }
 
 // wrap_text_shrink_spaces wraps lines to given width (logical units, not chars)
-// Extra white space is compressed.
-fn wrap_text_shrink_spaces(s string, width f32, tab_size u32, ctx &gg.Context) []string {
+// Extra white space is removed.
+fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u32, mut window Window) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in split_text(s, tab_size) {
@@ -86,7 +86,7 @@ fn wrap_text_shrink_spaces(s string, width f32, tab_size u32, ctx &gg.Context) [
 			continue
 		}
 		nline := line + ' ' + field
-		t_width := ctx.text_width(nline)
+		t_width := get_text_width(nline, text_style, mut window)
 		if t_width > width {
 			wrap << line
 			line = field.trim_space()
@@ -100,7 +100,7 @@ fn wrap_text_shrink_spaces(s string, width f32, tab_size u32, ctx &gg.Context) [
 
 // wrap_text_keep_spaces wraps lines to given width (logical units, not
 // chars) White space is preserved
-fn wrap_text_keep_spaces(s string, width f32, tab_size u32, ctx &gg.Context) []string {
+fn wrap_text_keep_spaces(s string, text_style TextStyle, width f32, tab_size u32, mut window Window) []string {
 	mut line := ''
 	mut wrap := []string{cap: 5}
 	for field in split_text(s, tab_size) {
@@ -110,7 +110,7 @@ fn wrap_text_keep_spaces(s string, width f32, tab_size u32, ctx &gg.Context) []s
 			continue
 		}
 		nline := line + field
-		t_width := ctx.text_width(nline)
+		t_width := get_text_width(nline, text_style, mut window)
 		if t_width > width {
 			wrap << line
 			line = field
