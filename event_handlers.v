@@ -102,7 +102,7 @@ fn mouse_down_handler(node &Layout, in_handler bool, mut e Event, mut w Window) 
 			return
 		}
 	}
-	for child in node.children {
+	for child in node.children.reverse() {
 		mouse_down_handler(child, true, mut e, mut w)
 		if e.is_handled {
 			return
@@ -141,7 +141,7 @@ fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
 	if !w.pointer_over_app(e) {
 		return
 	}
-	for child in node.children {
+	for child in node.children.reverse() {
 		mouse_move_handler(child, mut e, mut w)
 		if e.is_handled {
 			return
@@ -165,7 +165,7 @@ fn mouse_up_handler(node &Layout, mut e Event, mut w Window) {
 		w.view_state.mouse_lock.mouse_up(node, mut e, mut w)
 		return
 	}
-	for child in node.children {
+	for child in node.children.reverse() {
 		mouse_up_handler(child, mut e, mut w)
 		if e.is_handled {
 			return
@@ -197,7 +197,7 @@ fn mouse_up_handler(node &Layout, mut e Event, mut w Window) {
 }
 
 fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
-	for child in node.children {
+	for child in node.children.reverse() {
 		mouse_scroll_handler(child, mut e, mut w)
 		if e.is_handled {
 			return

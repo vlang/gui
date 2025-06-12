@@ -715,6 +715,9 @@ fn layout_amend(mut node Layout, mut w Window) {
 //
 // Think about moving to render. Would cut down on tree walks
 fn layout_hover(mut node Layout, mut w Window) {
+	if w.mouse_is_locked() {
+		return
+	}
 	for mut child in node.children {
 		layout_hover(mut child, mut w)
 	}

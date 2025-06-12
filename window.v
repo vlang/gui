@@ -124,20 +124,10 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	// Keyboard event handling is from the bottom up (leaf nodes) and the top
 	// down (last layout first). When an dialog is present, it is the only layer
 	// allowed to handle mouse/keyboard events. This effectively makes it modal.
-	// Otherwise, the float layers get first try at the events and finally the
-	// main layout. Events are processed until an event handler sets the
-	// `event.is_handled` memeber to true.
+	// An Event is processed until an event handler sets the event.is_handled`
+	// memeber to true.
 	w.lock()
-	layout := if w.dialog_cfg.visible {
-		w.layout.children.last()
-	} else {
-		// reverse the order of the layers so the
-		// top layers get first try at the events.
-		Layout{
-			...w.layout
-			children: w.layout.children.reverse()
-		}
-	}
+	layout := if w.dialog_cfg.visible { w.layout.children.last() } else { w.layout }
 	w.unlock()
 
 	match e.typ {
