@@ -681,18 +681,14 @@ fn layout_disables(mut node Layout, disabled bool) {
 
 // shape_clips are used for hit testing.
 fn layout_set_shape_clips(mut node Layout, clip DrawClip) {
-	// mut node_clip := clip
 	shape_clip := DrawClip{
 		x:      node.shape.x
 		y:      node.shape.y
 		width:  node.shape.width
 		height: node.shape.height
 	}
-	node.shape.shape_clip = rect_intersection(shape_clip, clip) or { DrawClip{} }
 
-	// if node.shape.clip || node.shape.over_draw {
-	// 	node_clip = shape_clip
-	// }
+	node.shape.shape_clip = rect_intersection(shape_clip, clip) or { DrawClip{} }
 
 	for mut child in node.children {
 		layout_set_shape_clips(mut child, node.shape.shape_clip)

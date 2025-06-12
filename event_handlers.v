@@ -14,8 +14,10 @@ fn char_handler(node &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
-	if node.shape.id_focus > 0 && !node.shape.disabled
-		&& node.shape.id_focus == w.view_state.id_focus {
+	if e.is_handled || node.shape.disabled || node.shape.id_focus == 0 {
+		return
+	}
+	if node.shape.id_focus == w.view_state.id_focus {
 		if node.shape.on_char_shape != unsafe { nil } {
 			node.shape.on_char_shape(node.shape, mut e, mut w)
 			if e.is_handled {
@@ -38,7 +40,7 @@ fn keydown_handler(node &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
-	if node.shape.disabled {
+	if e.is_handled || node.shape.disabled {
 		return
 	}
 	if w.is_focus(node.shape.id_focus) || node.shape.id == reserved_dialog_id {
@@ -106,25 +108,26 @@ fn mouse_down_handler(node &Layout, in_handler bool, mut e Event, mut w Window) 
 			return
 		}
 	}
-	if !node.shape.disabled {
-		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-			if node.shape.id_focus > 0 {
-				w.set_id_focus(node.shape.id_focus)
+	if e.is_handled || node.shape.disabled {
+		return
+	}
+	if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+		if node.shape.id_focus > 0 {
+			w.set_id_focus(node.shape.id_focus)
+		}
+		if node.shape.on_mouse_down_shape != unsafe { nil } {
+			node.shape.on_mouse_down_shape(node.shape, mut e, mut w)
+			if e.is_handled {
+				return
 			}
-			if node.shape.on_mouse_down_shape != unsafe { nil } {
-				node.shape.on_mouse_down_shape(node.shape, mut e, mut w)
-				if e.is_handled {
-					return
-				}
-			}
-			if node.shape.on_click != unsafe { nil } {
-				// make click handler mouse coordinates relative to node.shape
-				mut ev := event_relative_to(node.shape, e)
-				node.shape.on_click(node.shape.cfg, mut ev, mut w)
-				if ev.is_handled {
-					e.is_handled = true
-					return
-				}
+		}
+		if node.shape.on_click != unsafe { nil } {
+			// make click handler mouse coordinates relative to node.shape
+			mut ev := event_relative_to(node.shape, e)
+			node.shape.on_click(node.shape.cfg, mut ev, mut w)
+			if ev.is_handled {
+				e.is_handled = true
+				return
 			}
 		}
 	}
@@ -144,13 +147,14 @@ fn mouse_move_handler(node &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
-	if !node.shape.disabled {
-		if node.shape.on_mouse_move_shape != unsafe { nil } {
-			if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-				node.shape.on_mouse_move_shape(node.shape, mut e, mut w)
-				if e.is_handled {
-					return
-				}
+	if e.is_handled || node.shape.disabled {
+		return
+	}
+	if node.shape.on_mouse_move_shape != unsafe { nil } {
+		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+			node.shape.on_mouse_move_shape(node.shape, mut e, mut w)
+			if e.is_handled {
+				return
 			}
 		}
 	}
@@ -167,25 +171,26 @@ fn mouse_up_handler(node &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
-	if !node.shape.disabled {
-		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-			if node.shape.id_focus > 0 {
-				w.set_id_focus(node.shape.id_focus)
+	if e.is_handled || node.shape.disabled {
+		return
+	}
+	if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+		if node.shape.id_focus > 0 {
+			w.set_id_focus(node.shape.id_focus)
+		}
+		if node.shape.on_mouse_up_shape != unsafe { nil } {
+			node.shape.on_mouse_up_shape(node.shape, mut e, mut w)
+			if e.is_handled {
+				return
 			}
-			if node.shape.on_mouse_up_shape != unsafe { nil } {
-				node.shape.on_mouse_up_shape(node.shape, mut e, mut w)
-				if e.is_handled {
-					return
-				}
-			}
-			if node.shape.on_mouse_up != unsafe { nil } {
-				// make up handler mouse coordinates relative to node.shape
-				mut ev := event_relative_to(node.shape, e)
-				node.shape.on_mouse_up(node.shape.cfg, mut ev, mut w)
-				if ev.is_handled {
-					e.is_handled = true
-					return
-				}
+		}
+		if node.shape.on_mouse_up != unsafe { nil } {
+			// make up handler mouse coordinates relative to node.shape
+			mut ev := event_relative_to(node.shape, e)
+			node.shape.on_mouse_up(node.shape.cfg, mut ev, mut w)
+			if ev.is_handled {
+				e.is_handled = true
+				return
 			}
 		}
 	}
@@ -210,7 +215,6 @@ fn mouse_scroll_handler(node &Layout, mut e Event, mut w Window) {
 			}
 		}
 	}
-
 	if !node.shape.disabled && node.shape.id_scroll > 0 {
 		if node.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			if e.modifiers == u32(Modifier.shift) {
