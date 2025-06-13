@@ -54,31 +54,31 @@ fn main() {
 // The view generator set in update_view() is called on
 // every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
-    w, h := window.window_size()
-    app := window.state[App]()
+	w, h := window.window_size()
+	app := window.state[App]()
 
-    return gui.column(
-        width:   w
-        height:  h
-        sizing:  gui.fixed_fixed
-        h_align: .center
-        v_align: .middle
-        content: [
-            gui.text(
-                text:       'Welcome to GUI'
-                text_style: gui.theme().b1
-            ),
-            gui.button(
-                id_focus:       1
-                padding_border: gui.padding_two
-                content:        [gui.text(text: '${app.clicks} Clicks')]
-                on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-                    mut app := w.state[App]()
-                    app.clicks += 1
-                }
-            ),
-        ]
-    )
+	return gui.column(
+		width:   w
+		height:  h
+		sizing:  gui.fixed_fixed
+		h_align: .center
+		v_align: .middle
+		content: [
+		        gui.text(
+			        text:       'Welcome to GUI'
+			        text_style: gui.theme().b1
+		        ),
+			gui.button(
+				id_focus:       1
+				padding_border: gui.padding_two
+				content:        [gui.text(text: '${app.clicks} Clicks')]
+				on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[App]()
+					app.clicks += 1
+				}
+			),
+		]
+	)
 }
 ```
 
@@ -106,17 +106,17 @@ not be stored in views.
 
 ``` v
 fn main() {
-        mut window := gui.window(
-                state:   &App{}
-                width:   300
-                height:  300
-                on_init: fn (mut w gui.Window) {
-                // Call update_view() any where in your
-                // business logic to change views.
-                w.update_view(main_view)
-    }
-    )
-    window.run()
+	mut window := gui.window(
+		state:   &App{}
+		width:   300
+		height:  300
+		on_init: fn (mut w gui.Window) {
+		// Call update_view() any where in your
+		// business logic to change views.
+		w.update_view(main_view)
+		}
+	)
+	window.run()
 }
 ```
 
@@ -130,16 +130,16 @@ Here is the top portion.
 
 ``` v
 fn main_view(window &gui.Window) gui.View {
-        w, h := window.window_size()
-        app := window.state[App]()
+	w, h := window.window_size()
+	app := window.state[App]()
 
-        return gui.column(
-                width:   w
-                height:  h
-                sizing:  gui.fixed_fixed
-                h_align: .center
-                v_align: .middle
-    ...
+	return gui.column(
+		width:   w
+		height:  h
+		sizing:  gui.fixed_fixed
+		h_align: .center
+		v_align: .middle
+	...
 ```
 
 `main_view` is a function that generates a view. Since it is the main
@@ -172,23 +172,21 @@ In the second part of `main_view`, the fun stuff happens. Drawing text
 and buttons.
 
 ``` v
-        content: [
-        gui.text(
-        text:       'Welcome to GUI'
-        text_style: gui.theme().b1
-        ),
-        gui.button(
-        id_focus:       1
-        padding_border: gui.padding_two
-        content:        [gui.text(text: '${app.clicks} Clicks')]
-        on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-            mut app := w.state[App]()
-            app.clicks += 1
-        }
-        ),
-    ]
-    )
-}
+	content: [
+		gui.text(
+			text:       'Welcome to GUI'
+			text_style: gui.theme().b1
+		),
+		gui.button(
+			id_focus:       1
+			padding_border: gui.padding_two
+			content:        [gui.text(text: '${app.clicks} Clicks')]
+			on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+				mut app := w.state[App]()
+				app.clicks += 1
+			}
+		),
+	]
 ```
 
 There's a bit to unpack here.

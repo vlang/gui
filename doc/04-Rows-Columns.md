@@ -10,39 +10,39 @@ views are compositions. Here's the layout for Button.
 
 ``` v
 pub fn button(cfg ButtonCfg) View {
-    return row(
-        id:           cfg.id
-        id_focus:     cfg.id_focus
-        color:        cfg.color_border
-        padding:      cfg.padding_border
-        fill:         cfg.fill_border
-        radius:       cfg.radius_border
-        width:        cfg.width
-        height:       cfg.height
-        disabled:     cfg.disabled
-        invisible:    cfg.invisible
-        min_width:    cfg.min_width
-        max_width:    cfg.max_width
-        min_height:   cfg.min_height
-        max_height:   cfg.max_height
-        sizing:       cfg.sizing
-        cfg:          &cfg
-        on_click:     cfg.on_click
-        on_char:      cfg.on_char_button
-        amend_layout: cfg.amend_layout
-        content:      [
-            row(
-                sizing:  fill_fill
-                h_align: cfg.h_align
-                v_align: cfg.v_align
-                padding: cfg.padding
-                radius:  cfg.radius
-                fill:    cfg.fill
-                color:   cfg.color
-                content: cfg.content
-            ),
-        ]
-    )
+	return row(
+		id:           cfg.id
+		id_focus:     cfg.id_focus
+		color:        cfg.color_border
+		padding:      cfg.padding_border
+		fill:         cfg.fill_border
+		radius:       cfg.radius_border
+		width:        cfg.width
+		height:       cfg.height
+		disabled:     cfg.disabled
+		invisible:    cfg.invisible
+		min_width:    cfg.min_width
+		max_width:    cfg.max_width
+		min_height:   cfg.min_height
+		max_height:   cfg.max_height
+		sizing:       cfg.sizing
+		cfg:          &cfg
+		on_click:     cfg.on_click
+		on_char:      cfg.on_char_button
+		amend_layout: cfg.amend_layout
+		content:      [
+			row(
+				sizing:  fill_fill
+				h_align: cfg.h_align
+				v_align: cfg.v_align
+				padding: cfg.padding
+				radius:  cfg.radius
+				fill:    cfg.fill
+				color:   cfg.color
+				content: cfg.content
+			),
+		]
+	)
 }
 ```
 
