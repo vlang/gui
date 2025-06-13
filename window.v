@@ -52,16 +52,19 @@ mut:
 // ```
 pub struct WindowCfg {
 pub:
-	state    voidptr = unsafe { nil }
-	title    string  = app_title
-	width    int
-	height   int
-	bg_color Color        = gui_theme.color_background
-	on_init  fn (&Window) = fn (mut w Window) {
+	state               voidptr = unsafe { nil }
+	title               string  = app_title
+	width               int
+	height              int
+	bg_color            Color        = gui_theme.color_background
+	dragndrop           bool         = true
+	dragndrop_files_max u32          = 10
+	dragndrop_path_max  u32          = 2048
+	on_init             fn (&Window) = fn (mut w Window) {
 		w.update_view(empty_view)
 	}
-	on_event fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
-	samples  int                         = 2 // MSAA sample count; rounded courners of buttons with 0 and 1 look jagged on linux/windows
+	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	samples             u32                         = 2 // MSAA sample count; rounded courners of buttons with 0 and 1 look jagged on linux/windows
 }
 
 // window creates the application window. See [WindowCfg](#WindowCfg) on how to configure it
@@ -71,20 +74,23 @@ pub fn window(cfg &WindowCfg) &Window {
 		on_event: cfg.on_event
 	}
 	window.ui = gg.new_context(
-		bg_color:     cfg.bg_color.to_gx_color()
-		width:        cfg.width
-		height:       cfg.height
-		window_title: cfg.title
-		event_fn:     event_fn
-		frame_fn:     frame_fn
-		ui_mode:      true // only draw on events
-		user_data:    window
-		init_fn:      fn [cfg] (mut w Window) {
+		bg_color:                     cfg.bg_color.to_gx_color()
+		width:                        cfg.width
+		height:                       cfg.height
+		window_title:                 cfg.title
+		event_fn:                     event_fn
+		enable_dragndrop:             cfg.dragndrop
+		max_dropped_files:            int(cfg.dragndrop_files_max)
+		max_dropped_file_path_length: int(cfg.dragndrop_path_max)
+		frame_fn:                     frame_fn
+		ui_mode:                      true // only draw on events
+		user_data:                    window
+		init_fn:                      fn [cfg] (mut w Window) {
 			w.update_window_size()
 			cfg.on_init(w)
 			w.update_window()
 		}
-		sample_count: cfg.samples
+		sample_count:                 int(cfg.samples)
 	)
 	initialize_fonts()
 	return window

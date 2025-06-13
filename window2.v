@@ -61,6 +61,17 @@ fn empty_view(window &Window) View {
 	)
 }
 
+// get_dropped_file_paths gets the paths names of the dropped files.
+// Use in EventType.dropped_files. See `drop_files_demo.v` in examples.
+pub fn (window &Window) get_dropped_file_paths() []string {
+	len := sapp.get_num_dropped_files()
+	mut paths := []string{len: len}
+	for i in 0 .. len {
+		paths << sapp.get_dropped_file_path(i)
+	}
+	return paths.filter(it.len > 0)
+}
+
 // get_text_width gets the width of the text in logical units
 pub fn (mut window Window) get_text_width(text string, text_style TextStyle) f32 {
 	return get_text_width(text, text_style, mut window)
@@ -75,14 +86,6 @@ pub fn (window &Window) id_focus() u32 {
 pub fn (window &Window) is_focus(id_focus u32) bool {
 	return window.view_state.id_focus > 0 && window.view_state.id_focus == id_focus
 }
-
-// pub fn (window &Window) menu_is_selected(id string) bool {
-// 	return window.view_state.menu_selected.exists(id)
-// }
-
-// pub fn (mut window Window) menu_select(id string) {
-// 	window.view_state.menu_selected.add(id)
-// }
 
 // mouse_is_locked determines if mouse is currently in a locked state
 // Locked states are used for mouse drag operations
