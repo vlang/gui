@@ -79,10 +79,12 @@ fn main_view(window &gui.Window) gui.View {
 <img src="gui.png" alt="screen shot" />
 <figcaption aria-hidden="true">
 
-screen shot
 </figcaption>
 
 </figure>
+
+<img width="312" alt="image" src="https://github.com/user-attachments/assets/fdc5e57b-fd5c-473c-af7b-d9c4c8dcb799" />
+
 
 ## Description
 
