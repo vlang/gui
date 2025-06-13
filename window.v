@@ -62,6 +62,9 @@ pub:
 	}
 	on_event fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	samples  int                         = 2 // MSAA sample count; rounded courners of buttons with 0 and 1 look jagged on linux/windows
+	enable_dragndrop bool
+	max_dropped_files             int     = 5
+	max_dropped_file_path_length  int     = 2048
 }
 
 // window creates the application window. See [WindowCfg](#WindowCfg) on how to configure it
@@ -85,6 +88,9 @@ pub fn window(cfg &WindowCfg) &Window {
 			w.update_window()
 		}
 		sample_count: cfg.samples
+		enable_dragndrop:  cfg.enable_dragndrop
+		max_dropped_files: cfg.max_dropped_files
+		max_dropped_file_path_length: cfg.max_dropped_file_path_length
 	)
 	initialize_fonts()
 	return window
@@ -244,4 +250,12 @@ fn (mut window Window) compose_layout(view &View) Layout {
 		}
 		children: layouts
 	}
+}
+
+pub fn get_num_dropped_files() int {
+	return sapp.get_num_dropped_files()
+}
+
+pub fn get_dropped_file_path(i int) string {
+	return sapp.get_dropped_file_path(i)
 }
