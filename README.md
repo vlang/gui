@@ -96,7 +96,7 @@ useful framework with a short a learning curve.
 
 Let V do it for you!
 ```
-v install https://github.com/mike-ward/gui
+v install gui
 ```
 
 ## Building Examples
