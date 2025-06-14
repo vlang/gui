@@ -4,6 +4,7 @@ import time
 
 pub struct TooltipCfg {
 pub:
+	id             string
 	text           string
 	delay          time.Duration = gui_theme.tooltip_style.delay
 	color          Color         = gui_theme.tooltip_style.color
@@ -15,6 +16,7 @@ pub:
 	padding_border Padding       = gui_theme.tooltip_style.padding_border
 	radius         f32           = gui_theme.tooltip_style.radius
 	radius_border  f32           = gui_theme.tooltip_style.radius_border
+	text_style     TextStyle     = gui_theme.tooltip_style.text_style
 	anchor         FloatAttach   = .bottom_center
 	tie_off        FloatAttach
 	offset_x       f32 = -3
@@ -41,7 +43,7 @@ pub fn tooltip(cfg TooltipCfg) View {
 				padding: cfg.padding
 				radius:  cfg.radius
 				content: [
-					text(text: cfg.text),
+					text(text: cfg.text, text_style: cfg.text_style),
 				]
 			),
 		]
@@ -52,8 +54,8 @@ fn (cfg TooltipCfg) animation_tooltip() AnimationDelay {
 	return AnimationDelay{
 		id:       '___tooltip___'
 		callback: fn [cfg] (mut w Window) {
-			if point_in_rectangle(w.ui.mouse_pos_x, w.ui.mouse_pos_y, gui_tooltip_bounds) {
-				gui_tooltip = cfg.text
+			if point_in_rectangle(w.ui.mouse_pos_x, w.ui.mouse_pos_y, gui_tooltip.bounds) {
+				gui_tooltip.id = cfg.text + cfg.id
 			}
 		}
 	}

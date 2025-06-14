@@ -286,6 +286,7 @@ pub struct TooltipStyle {
 	padding_border     Padding       = padding_none
 	radius             f32           = radius_small
 	radius_border      f32           = radius_small
+	text_style         TextStyle     = text_style_dark
 }
 
 pub struct TreeStyle {

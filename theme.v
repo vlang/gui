@@ -615,6 +615,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			padding_border:     cfg.padding_border
 			radius:             cfg.radius_small
 			radius_border:      cfg.radius_small
+			text_style:         cfg.text_style
 		}
 		tree_style:         TreeStyle{
 			text_style:      cfg.text_style

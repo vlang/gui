@@ -6,9 +6,13 @@
 module gui
 
 __global gui_theme = theme_dark_no_padding
-__global gui_tooltip = tooltip_hidden
-__global gui_tooltip_bounds = DrawClip{}
+__global gui_tooltip = TooltipState{}
 
-const tooltip_hidden = '__tooltip__hidden'
 pub const version = '0.1.0'
 pub const app_title = 'GUI'
+
+struct TooltipState {
+mut:
+	id     string
+	bounds DrawClip
+}
