@@ -101,6 +101,7 @@ pub:
 	text_style         TextStyle
 	text_style_bold    TextStyle
 	toggle_style       ToggleStyle
+	tooltip_style      TooltipStyle
 	tree_style         TreeStyle
 
 	// n's and b's are convienence configs for sizing
@@ -600,6 +601,20 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border:      if radius_border != 0 { radius_small } else { 0 }
 			text_style:         text_style_icon_dark
 			text_style_label:   cfg.text_style
+		}
+		tooltip_style:      TooltipStyle{
+			color:              cfg.color_interior
+			color_hover:        cfg.color_hover
+			color_focus:        cfg.color_focus
+			color_click:        cfg.color_active
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			fill:               cfg.fill
+			fill_border:        cfg.fill_border
+			padding:            cfg.padding_small
+			padding_border:     cfg.padding_border
+			radius:             cfg.radius_small
+			radius_border:      cfg.radius_small
 		}
 		tree_style:         TreeStyle{
 			text_style:      cfg.text_style

@@ -172,3 +172,8 @@ fn rect_intersection(a DrawClip, b DrawClip) ?DrawClip {
 	}
 	return none
 }
+
+// point_in_rectangle returns true if point is within bounds of rectangle
+pub fn point_in_rectangle(x f32, y f32, rect DrawClip) bool {
+	return x >= rect.x && y >= rect.y && x < (rect.x + rect.width) && y < (rect.y + rect.height)
+}

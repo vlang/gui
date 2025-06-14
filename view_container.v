@@ -49,6 +49,7 @@ mut:
 	shape_type ShapeType = .rectangle
 	axis       Axis
 	cfg        voidptr
+	tooltip    TooltipCfg
 	content    []View
 }
 
@@ -56,51 +57,52 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
 	mut layout := Layout{
 		shape: Shape{
-			type:           cv.shape_type
-			id:             cv.id
-			id_focus:       cv.id_focus
-			axis:           cv.axis
-			name:           cv.name
-			x:              cv.x
-			y:              cv.y
-			width:          cv.width
-			min_width:      cv.min_width
-			max_width:      cv.max_width
-			height:         cv.height
-			min_height:     cv.min_height
-			max_height:     cv.max_height
-			clip:           cv.clip
-			focus_skip:     cv.focus_skip
-			spacing:        cv.spacing
-			sizing:         cv.sizing
-			padding:        cv.padding
-			fill:           cv.fill
-			h_align:        cv.h_align
-			v_align:        cv.v_align
-			radius:         cv.radius
-			color:          cv.color
-			disabled:       cv.disabled
-			float:          cv.float
-			float_anchor:   cv.float_anchor
-			float_tie_off:  cv.float_tie_off
-			float_offset_x: cv.float_offset_x
-			float_offset_y: cv.float_offset_y
-			text:           cv.text
-			text_style:     TextStyle{
+			type:                cv.shape_type
+			id:                  cv.id
+			id_focus:            cv.id_focus
+			axis:                cv.axis
+			name:                cv.name
+			x:                   cv.x
+			y:                   cv.y
+			width:               cv.width
+			min_width:           cv.min_width
+			max_width:           cv.max_width
+			height:              cv.height
+			min_height:          cv.min_height
+			max_height:          cv.max_height
+			clip:                cv.clip
+			focus_skip:          cv.focus_skip
+			spacing:             cv.spacing
+			sizing:              cv.sizing
+			padding:             cv.padding
+			fill:                cv.fill
+			h_align:             cv.h_align
+			v_align:             cv.v_align
+			radius:              cv.radius
+			color:               cv.color
+			disabled:            cv.disabled
+			float:               cv.float
+			float_anchor:        cv.float_anchor
+			float_tie_off:       cv.float_tie_off
+			float_offset_x:      cv.float_offset_x
+			float_offset_y:      cv.float_offset_y
+			text:                cv.text
+			text_style:          TextStyle{
 				...gui_theme.text_style
 				color: cv.color
 			}
-			cfg:            cv.cfg
-			id_scroll:      cv.id_scroll
-			over_draw:      cv.over_draw
-			scroll_mode:    cv.scroll_mode
-			on_click:       cv.on_click
-			on_char:        cv.on_char
-			on_keydown:     cv.on_keydown
-			on_mouse_move:  cv.on_mouse_move
-			on_mouse_up:    cv.on_mouse_up
-			on_hover:       cv.on_hover
-			amend_layout:   cv.amend_layout
+			cfg:                 cv.cfg
+			id_scroll:           cv.id_scroll
+			over_draw:           cv.over_draw
+			scroll_mode:         cv.scroll_mode
+			on_click:            cv.on_click
+			on_char:             cv.on_char
+			on_keydown:          cv.on_keydown
+			on_mouse_move:       cv.on_mouse_move
+			on_mouse_move_shape: cv.on_mouse_move_shape
+			on_mouse_up:         cv.on_mouse_up
+			on_hover:            cv.on_hover
+			amend_layout:        cv.amend_layout
 		}
 	}
 	return layout
@@ -193,6 +195,7 @@ pub:
 	float_tie_off   FloatAttach
 	float_offset_x  f32
 	float_offset_y  f32
+	tooltip         TooltipCfg
 	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
@@ -228,6 +231,9 @@ fn container(cfg &ContainerCfg) ContainerView {
 			orientation: .vertical
 			id_track:    cfg.id_scroll
 		})
+	}
+	if cfg.tooltip.text == gui_tooltip {
+		content << tooltip(cfg.tooltip)
 	}
 
 	return ContainerView{
@@ -265,6 +271,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 		float_tie_off:   cfg.float_tie_off
 		float_offset_x:  cfg.float_offset_x
 		float_offset_y:  cfg.float_offset_y
+		tooltip:         cfg.tooltip
 		cfg:             cfg.cfg
 		on_click:        cfg.on_click
 		on_char:         cfg.on_char
@@ -334,4 +341,16 @@ pub fn circle(cfg &ContainerCfg) ContainerView {
 	mut circle := container(container_cfg)
 	circle.shape_type = .circle
 	return circle
+}
+
+fn (mut cfg ContainerView) on_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
+	if cfg.tooltip.text.len > 0 {
+		w.animation_add(mut cfg.tooltip.animation_tooltip())
+		gui_tooltip_bounds = DrawClip{
+			x:      shape.x
+			y:      shape.y
+			width:  shape.width
+			height: shape.height
+		}
+	}
 }

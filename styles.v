@@ -1,6 +1,7 @@
 module gui
 
 import gx
+import time
 
 pub struct ButtonStyle {
 pub:
@@ -269,6 +270,22 @@ pub:
 	radius_border      f32       = radius_small
 	text_style         TextStyle = text_style_icon_dark
 	text_style_label   TextStyle = text_style_dark
+}
+
+pub struct TooltipStyle {
+	delay              time.Duration = 500 * time.millisecond
+	color              Color         = color_interior_dark
+	color_hover        Color         = color_hover_dark
+	color_focus        Color         = color_active_dark
+	color_click        Color         = color_active_dark
+	color_border       Color         = color_border_dark
+	color_border_focus Color         = color_select_dark
+	fill               bool          = true
+	fill_border        bool          = true
+	padding            Padding       = padding_small
+	padding_border     Padding       = padding_none
+	radius             f32           = radius_small
+	radius_border      f32           = radius_small
 }
 
 pub struct TreeStyle {

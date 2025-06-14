@@ -14,6 +14,7 @@ mut:
 	view_state     ViewState
 	layout         Layout
 	renderers      []Renderer
+	animations     []Animation
 	dialog_cfg     DialogCfg
 	focused        bool = true
 	window_size    gg.Size // cached, gg.window_size() relatively slow
@@ -87,6 +88,7 @@ pub fn window(cfg &WindowCfg) &Window {
 		user_data:                    window
 		init_fn:                      fn [cfg] (mut w Window) {
 			w.update_window_size()
+			go w.animaton_loop()
 			cfg.on_init(w)
 			w.update_window()
 		}
@@ -187,6 +189,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	if !e.is_handled {
 		w.on_event(e, mut w)
 	}
+	gui_tooltip = tooltip_hidden
 	w.update_window()
 }
 
@@ -214,6 +217,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.view_generator = gen_view
 	window.layout = layout
 	window.renderers = renderers
+	window.ui.refresh_ui()
 }
 
 // update_window generates a new layout from the window's currnet
@@ -231,6 +235,7 @@ pub fn (mut window Window) update_window() {
 
 	window.layout = layout
 	window.renderers = renderers
+	window.ui.refresh_ui()
 }
 
 // compose_layout produces a layout from the given view that is

@@ -17,6 +17,7 @@ pub:
 	invisible          bool
 	sizing             Sizing
 	id_focus           u32
+	tooltip            TooltipCfg
 	h_align            HorizontalAlign                        = .center
 	v_align            VerticalAlign                          = .middle
 	fill               bool                                   = gui_theme.button_style.fill
@@ -69,6 +70,7 @@ pub fn button(cfg ButtonCfg) View {
 		min_height:   cfg.min_height
 		max_height:   cfg.max_height
 		sizing:       cfg.sizing
+		tooltip:      cfg.tooltip
 		cfg:          &cfg
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char_button
