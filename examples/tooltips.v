@@ -3,7 +3,7 @@ import gui
 // Tooltip Demo
 // =============================
 // Tooltips can be placed like floating views, because they're floating views.
-// Id's are only need if tooltips have the same text.
+// Id's are only need if tooltips have the same content.
 
 @[heap]
 struct TooltipApp {

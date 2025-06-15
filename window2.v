@@ -3,6 +3,16 @@ module gui
 import gg
 import sokol.sapp
 
+fn (mut window Window) blinky_cursor_animation() {
+	window.animation_add(mut AnimationDelay{
+		id:       '___blinky_cursor_animation___'
+		repeat:   true
+		callback: fn (mut w Window) {
+			w.view_state.cursor_on = !w.view_state.cursor_on
+		}
+	})
+}
+
 // background_color returns the window background color
 pub fn (window &Window) color_background() Color {
 	return gui_theme.color_background
