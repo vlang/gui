@@ -13,6 +13,6 @@ pub const app_title = 'GUI'
 
 struct TooltipState {
 mut:
-	id     string
+	id     u32
 	bounds DrawClip
 }

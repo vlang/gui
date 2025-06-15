@@ -232,7 +232,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 			id_track:    cfg.id_scroll
 		})
 	}
-	if gui_tooltip.id.len > 0 && (cfg.tooltip.text + cfg.tooltip.id) == gui_tooltip.id {
+	if cfg.tooltip.hash() == gui_tooltip.id {
 		content << tooltip(cfg.tooltip)
 	}
 
@@ -344,7 +344,7 @@ pub fn circle(cfg &ContainerCfg) ContainerView {
 }
 
 fn (mut cfg ContainerView) on_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
-	if cfg.tooltip.text.len > 0 {
+	if cfg.tooltip.content.len > 0 {
 		w.animation_add(mut cfg.tooltip.animation_tooltip())
 		gui_tooltip.bounds = DrawClip{
 			x:      shape.x

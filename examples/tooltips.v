@@ -7,13 +7,16 @@ import gui
 
 @[heap]
 struct TooltipApp {
+mut:
+	light_theme bool
 }
 
 fn main() {
 	mut window := gui.window(
+		title:   'Tooltip Demo'
 		state:   &TooltipApp{}
 		width:   500
-		height:  300
+		height:  500
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -24,7 +27,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	// app := window.state[TooltipApp]()
+	app := window.state[TooltipApp]()
 
 	return gui.column(
 		width:   w
@@ -35,20 +38,19 @@ fn main_view(window &gui.Window) gui.View {
 			gui.column(
 				h_align: .center
 				content: [
+					toggle_theme(app),
 					gui.text(text: 'Hover over buttons to see tooltips'),
 					gui.button(
 						sizing:  gui.fill_fit
 						tooltip: gui.TooltipCfg{
-							id:   '1'
-							text: 'Lorem ipsum dolor sit amet'
+							content: [gui.text(text: 'Lorem ipsum dolor sit amet')]
 						}
 						content: [gui.text(text: 'default position')]
 					),
 					gui.button(
 						sizing:  gui.fill_fit
 						tooltip: gui.TooltipCfg{
-							id:      '2'
-							text:    'Lorem ipsum dolor sit amet'
+							content: [gui.text(text: 'Lorem ipsum dolor sit amet')]
 							anchor:  .top_center
 							tie_off: .bottom_left
 						}
@@ -57,8 +59,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.button(
 						sizing:  gui.fill_fit
 						tooltip: gui.TooltipCfg{
-							id:      '3'
-							text:    'Lorem ipsum dolor sit amet'
+							content: [gui.text(text: 'Lorem ipsum dolor sit amet')]
 							anchor:  .top_left
 							tie_off: .bottom_center
 						}
@@ -67,14 +68,61 @@ fn main_view(window &gui.Window) gui.View {
 					gui.button(
 						sizing:  gui.fill_fit
 						tooltip: gui.TooltipCfg{
-							id:      '4'
-							text:    'Lorem ipsum dolor sit amet'
+							content: [gui.text(text: 'Lorem ipsum dolor sit amet')]
 							anchor:  .bottom_left
 							tie_off: .top_center
 						}
 						content: [gui.text(text: 'bottom left')]
 					),
+					gui.button(
+						sizing:  gui.fill_fit
+						tooltip: gui.TooltipCfg{
+							content: [
+								gui.column(
+									padding: gui.padding_none
+									content: [
+										gui.text(text: 'Brazil', text_style: gui.theme().b3),
+										gui.text(
+											text: 'A country in South America\n' +
+												'with rain forests and rivers.'
+											mode: .multiline
+										),
+									]
+								),
+							]
+						}
+						content: [
+							gui.text(text: 'complex content'),
+						]
+					),
 				]
+			),
+		]
+	)
+}
+
+fn toggle_theme(app &TooltipApp) gui.View {
+	return gui.row(
+		h_align: .end
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.toggle(
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon3
+				select:        app.light_theme
+				padding:       gui.padding_small
+				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[TooltipApp]()
+					app.light_theme = !app.light_theme
+					theme := if app.light_theme {
+						gui.theme_light_bordered
+					} else {
+						gui.theme_dark_bordered
+					}
+					w.set_theme(theme)
+				}
 			),
 		]
 	)

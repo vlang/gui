@@ -189,7 +189,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	if !e.is_handled {
 		w.on_event(e, mut w)
 	}
-	gui_tooltip.id = ''
+	gui_tooltip.id = 0
 	w.update_window()
 }
 
