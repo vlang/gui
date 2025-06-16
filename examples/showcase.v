@@ -106,7 +106,7 @@ fn gallery(mut w gui.Window) gui.View {
 			.tab_stock {
 				[buttons(w), inputs(w), toggles(w), select_drop_down(w),
 					list_box(w), expand_panel(w), progress_bars(w),
-					range_sliders(w), text_sizes_weights(w)]
+					range_sliders(w), throbbers(w), text_sizes_weights(w)]
 			}
 			.tab_icons {
 				[icons(mut w)]
@@ -143,7 +143,7 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 		on_click:  fn [tab_item] (_ voidptr, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.selected_tab = tab_item
-			w.scroll_vertical_to(id_scroll_gallery, 0)
+			w.update_view(main_view)
 		}
 		on_hover:  fn (mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			node.shape.fill = true
@@ -525,7 +525,6 @@ fn toggles(w &gui.Window) gui.View {
 						on_select: fn [mut app] (value string, mut _ gui.Window) {
 							app.select_city = value
 						}
-						window:    w
 					),
 					// Intentionally using the same data/focus id to show vertical
 					// and horizontal differences side-by-side
@@ -537,7 +536,6 @@ fn toggles(w &gui.Window) gui.View {
 						on_select: fn [mut app] (value string, mut _ gui.Window) {
 							app.select_city = value
 						}
-						window:    w
 					),
 				]
 			),
@@ -1101,9 +1099,8 @@ fn select_samples(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.row(
 		content: [
-			gui.select(
+			w.select(
 				id:              'sel1'
-				window:          mut w
 				min_width:       200
 				max_width:       200
 				select:          app.selected_1
@@ -1168,9 +1165,8 @@ fn select_samples(w &gui.Window) gui.View {
 					e.is_handled = true
 				}
 			),
-			gui.select(
+			w.select(
 				id:          'sel2'
-				window:      mut w
 				min_width:   300
 				max_width:   300
 				select:      app.selected_2
@@ -1523,9 +1519,8 @@ fn tree_view_sample(mut w gui.Window) gui.View {
 		padding: gui.padding_none
 		content: [
 			gui.text(text: '[ ${app.tree_id} ]'),
-			gui.tree(
+			w.tree(
 				id:        'animals'
-				window:    w
 				on_select: on_select
 				nodes:     [
 					gui.tree_node(
@@ -1625,3 +1620,35 @@ fn expand_panel_sample(w &gui.Window) gui.View {
 }
 
 const brazil_text = 'The word "Brazil" likely comes from the Portuguese word for brazilwood, a tree that once grew plentifully along the Brazilian coast. In Portuguese, brazilwood is called pau-brasil, with the word brasil commonly given the etymology "red like an ember", formed from brasa ("ember") and the suffix -il (from -iculum or -ilium). As brazilwood produces a deep red dye, it was highly valued by the European textile industry and was the earliest commercially exploited product from Brazil. Throughout the 16th century, massive amounts of brazilwood were harvested by indigenous peoples (mostly Tupi) along the Brazilian coast, who sold the timber to European traders (mostly Portuguese, but also French) in return for assorted European consumer goods.'
+
+// ==============================================================
+// Throbbers
+// ==============================================================
+
+fn throbbers(w &gui.Window) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		sizing:  gui.fill_fill
+		content: [
+			view_title('Throbbers'),
+			gui.row(
+				padding: gui.padding_none
+				sizing:  gui.fill_fit
+				spacing: 0
+				content: [throbber_sample(w)]
+			),
+		]
+	)
+}
+
+fn throbber_sample(w &gui.Window) gui.View {
+	return gui.row(
+		content: [
+			w.throbber(),
+			w.throbber(size: 20),
+			w.throbber(size: 30, color: gui.orange),
+			w.throbber(size: 30, icon1: gui.icon_heart, icon2: gui.icon_heart_o, color: gui.red),
+			w.throbber(size: 30, icon1: gui.icon_expand, icon2: gui.icon_compress, color: gui.green),
+		]
+	)
+}

@@ -66,7 +66,6 @@ fn side_panel(mut w gui.Window) gui.View {
 					app.select_size = value
 					app.icons.clear()
 				}
-				window:    w
 			),
 			search_box(app.search),
 			gui.column(sizing: gui.fill_fill),

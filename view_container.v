@@ -1,6 +1,5 @@
 module gui
 
-@[heap]
 struct ContainerView implements View {
 pub:
 	id              string

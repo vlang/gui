@@ -59,9 +59,8 @@ fn tables(mut window gui.Window) []gui.View {
 	mut app := window.state[TableDemoApp]()
 	return [
 		gui.text(text: 'Declarative Layout', text_style: gui.theme().b2),
-		gui.table(
+		window.table(
 			text_style_head: gui.theme().b3
-			window:          window
 			data:            [
 				gui.tr([gui.th('First'), gui.th('Last'), gui.th('Email')]),
 				gui.tr([gui.td('Matt'), gui.td('Williams'), gui.td('non.egestas.a@protonmail.org')]),
@@ -78,7 +77,7 @@ fn tables(mut window gui.Window) []gui.View {
 }
 
 fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) gui.View {
-	mut table_cfg := gui.table_cfg_from_data(table_data.sorted, mut window)
+	mut table_cfg := gui.table_cfg_from_data(table_data.sorted)
 	// Replace with first row with clickable column headers
 	mut tds := []gui.TableCellCfg{}
 	for idx, cell in table_cfg.data[0].cells {
@@ -103,7 +102,7 @@ fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) 
 
 	table_cfg.data.delete(0)
 	table_cfg.data.insert(0, gui.tr(tds))
-	return gui.table(table_cfg)
+	return window.table(table_cfg)
 }
 
 fn sort(mut table_data TableData) {

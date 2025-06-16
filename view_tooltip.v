@@ -49,8 +49,8 @@ pub fn tooltip(cfg TooltipCfg) View {
 	)
 }
 
-fn (cfg TooltipCfg) animation_tooltip() AnimationDelay {
-	return AnimationDelay{
+fn (cfg TooltipCfg) animation_tooltip() Animate {
+	return Animate{
 		id:       '___tooltip___'
 		callback: fn [cfg] (mut w Window) {
 			if point_in_rectangle(w.ui.mouse_pos_x, w.ui.mouse_pos_y, gui_tooltip.bounds) {

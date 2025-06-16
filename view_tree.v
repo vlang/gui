@@ -12,15 +12,13 @@ pub:
 	spacing   f32                     = gui_theme.tree_style.spacing
 	on_select fn (string, mut Window) = unsafe { nil }
 	nodes     []TreeNodeCfg
-pub mut:
-	window &Window @[required]
 }
 
 // tree creates a tree view from the given [TreeCfg](#TreeCfg)
-pub fn tree(cfg TreeCfg) View {
+pub fn (mut window Window) tree(cfg TreeCfg) View {
 	mut content := []View{}
 	for node in cfg.nodes {
-		content << cfg.node_content(node)
+		content << cfg.node_content(node, mut window)
 	}
 	return column(
 		name:    'tree'
@@ -50,7 +48,7 @@ pub fn tree_node(cfg TreeNodeCfg) TreeNodeCfg {
 	return cfg
 }
 
-fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg) []View {
+fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, mut window Window) []View {
 	mut tnodes := []View{}
 	for node in nodes {
 		tnodes << column(
@@ -58,21 +56,20 @@ fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg) []View {
 			id:      node.id
 			padding: padding_none
 			spacing: cfg.spacing
-			content: cfg.node_content(node)
+			content: cfg.node_content(node, mut window)
 		)
 	}
 	return tnodes
 }
 
-fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
+fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 	id := if node.id.len == 0 { node.text } else { node.id }
-	is_open := cfg.window.view_state.tree_state[cfg.id][id]
+	is_open := window.view_state.tree_state[cfg.id][id]
 	arrow := match true {
 		node.nodes.len == 0 { ' ' }
 		is_open { icon_drop_down }
 		else { icon_drop_right }
 	}
-	mut window := cfg.window
 	min_width_icon := get_text_width('${icon_bar} ', node.text_style_icon, mut window)
 
 	mut content := []View{}
@@ -127,7 +124,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg) []View {
 			padding: Padding{
 				left: cfg.indent
 			}
-			content: cfg.build_nodes(node.nodes)
+			content: cfg.build_nodes(node.nodes, mut window)
 		)
 	}
 	return content

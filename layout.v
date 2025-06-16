@@ -11,7 +11,6 @@ import arrays
 // already hard-to-reason-about problem. -imho
 
 // Layout defines a tree of Layouts. Views generate Layouts
-@[heap]
 pub struct Layout {
 pub mut:
 	shape    Shape
@@ -100,9 +99,6 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 	for i, mut child in layout.children {
 		if child.shape.float {
 			layouts << child
-			for mut grand_child in child.children {
-				grand_child.parent = child
-			}
 		}
 
 		layout_remove_floating_layouts(mut child, mut layouts)

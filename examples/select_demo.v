@@ -39,12 +39,11 @@ fn main_view(mut window gui.Window) gui.View {
 			toggle_theme(app),
 			gui.row(
 				content: [
-					gui.select(
+					window.select(
 						id:              'sel1'
 						id_focus:        1
 						min_width:       200
 						max_width:       200
-						window:          mut window
 						select:          app.select_1
 						placeholder:     'Pick one or more'
 						select_multiple: true
@@ -110,12 +109,11 @@ fn main_view(mut window gui.Window) gui.View {
 			),
 			gui.row(
 				content: [
-					gui.select(
+					window.select(
 						id:          'sel2'
 						id_focus:    2
 						min_width:   300
 						max_width:   300
-						window:      mut window
 						select:      app.select_2
 						placeholder: 'Pick a country'
 						options:     [

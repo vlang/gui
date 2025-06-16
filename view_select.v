@@ -6,8 +6,7 @@ import hash.fnv1a
 @[heap]
 pub struct SelectCfg {
 pub:
-	id                 string  @[required] // unique only to other select views
-	window             &Window @[required] // required for state managment
+	id                 string @[required] // unique only to other select views
 	id_focus           u32
 	select             []string // Text of select item
 	placeholder        string
@@ -34,8 +33,8 @@ pub:
 }
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
-pub fn select(cfg SelectCfg) View {
-	is_open := cfg.window.view_state.select_state[cfg.id]
+pub fn (window &Window) select(cfg SelectCfg) View {
+	is_open := window.view_state.select_state[cfg.id]
 	mut options := []View{}
 	if is_open {
 		for option in cfg.options {

@@ -105,7 +105,6 @@ fn tab_stops(w &gui.Window) gui.View {
 	return gui.radio_button_group_row(
 		title:     'Tab Size '
 		value:     app.tab_size
-		window:    w
 		options:   [
 			gui.radio_option('2', '2'),
 			gui.radio_option('4', '4'),

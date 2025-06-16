@@ -56,7 +56,6 @@ fn side_panel(mut window gui.Window) gui.View {
 				title:     ' Family '
 				sizing:    gui.fill_fill
 				value:     app.selected_family
-				window:    window
 				options:   [
 					gui.radio_option('Normal', 'Normal'),
 					gui.radio_option('Bold', 'Bold'),
@@ -71,7 +70,6 @@ fn side_panel(mut window gui.Window) gui.View {
 				title:     ' ${app.selected_family} '
 				sizing:    gui.fill_fill
 				value:     app.selected_font
-				window:    window
 				options:   [
 					gui.radio_option('${prefix}1', '1'),
 					gui.radio_option('${prefix}2', '2'),

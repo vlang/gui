@@ -2,10 +2,12 @@ module gui
 
 import gg
 import sokol.sapp
+import time
 
 fn (mut window Window) blinky_cursor_animation() {
-	window.animation_add(mut AnimationDelay{
+	window.animation_add(mut Animate{
 		id:       '___blinky_cursor_animation___'
+		delay:    600 * time.millisecond
 		repeat:   true
 		callback: fn (mut w Window) {
 			w.view_state.cursor_on = !w.view_state.cursor_on

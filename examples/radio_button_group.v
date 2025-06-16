@@ -51,7 +51,6 @@ fn main_view(window &gui.Window) gui.View {
 				on_select: fn [mut app] (value string, mut _ gui.Window) {
 					app.select_value = value
 				}
-				window:    window
 			),
 			// Intentionally using the same data/focus id to show vertical
 			// and horizontal side-by-side
@@ -63,7 +62,6 @@ fn main_view(window &gui.Window) gui.View {
 				on_select: fn [mut app] (value string, mut _ gui.Window) {
 					app.select_value = value
 				}
-				window:    window
 			),
 		]
 	)

@@ -1,6 +1,5 @@
 module gui
 
-@[heap]
 struct ImageView implements View {
 pub:
 	id         string

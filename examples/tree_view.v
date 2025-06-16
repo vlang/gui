@@ -27,7 +27,7 @@ fn on_select(id string, mut w gui.Window) {
 	app.selected_id = id
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[TreeViewApp]()
 
@@ -37,9 +37,8 @@ fn main_view(window &gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		content: [
 			gui.text(text: '[ ${app.selected_id} ]'),
-			gui.tree(
+			window.tree(
 				id:        'animals'
-				window:    window
 				on_select: on_select
 				nodes:     [
 					gui.tree_node(

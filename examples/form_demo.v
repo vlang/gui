@@ -119,12 +119,11 @@ fn label_input_row(label string, value string, id_focus u32, changed fn (string)
 
 fn select_state(state string, mut window gui.Window) gui.View {
 	field_width := 150
-	return gui.select(
+	return window.select(
 		id:          'select_state'
 		id_focus:    id_focus_state
 		min_width:   field_width
 		max_width:   field_width
-		window:      mut window
 		select:      [state]
 		placeholder: 'State'
 		options:     [

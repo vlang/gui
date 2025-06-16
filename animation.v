@@ -12,25 +12,23 @@ mut:
 	stopped bool
 }
 
-// AnimationDelay waits the specified delay duuration and then executes the callback.
+// Animate waits the specified delay duuration and then executes the callback.
 // It can be set to repeat.
-pub struct AnimationDelay implements Animation {
+pub struct Animate implements Animation {
+	repeat bool
 pub:
 	id       string          @[required]
 	callback fn (mut Window) @[required]
 	delay    time.Duration = animation_delay
-	repeat   bool
 mut:
 	start   time.Time
 	stopped bool
 }
 
 pub fn (mut w Window) animation_add(mut animation Animation) {
-	w.lock()
 	w.animations = w.animations.filter(it.id != animation.id)
 	animation.start = time.now()
 	w.animations << animation
-	w.unlock()
 }
 
 fn (mut w Window) animaton_loop() {
@@ -41,7 +39,7 @@ fn (mut w Window) animaton_loop() {
 		mut refresh := false
 		for mut animation in w.animations {
 			match mut animation {
-				AnimationDelay { refresh = refresh || update_animation_delay(mut animation, mut w) }
+				Animate { refresh = refresh || update_animate(mut animation, mut w) }
 				else {}
 			}
 		}
@@ -55,13 +53,13 @@ fn (mut w Window) animaton_loop() {
 	}
 }
 
-fn update_animation_delay(mut ad AnimationDelay, mut w Window) bool {
-	if !ad.stopped {
-		if time.since(ad.start) > ad.delay {
-			ad.callback(mut w)
-			match ad.repeat {
-				true { ad.start = time.now() }
-				else { ad.stopped = true }
+fn update_animate(mut an Animate, mut w Window) bool {
+	if !an.stopped {
+		if time.since(an.start) > an.delay {
+			an.callback(mut w)
+			match an.repeat {
+				true { an.start = time.now() }
+				else { an.stopped = true }
 			}
 			return true
 		}

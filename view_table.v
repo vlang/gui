@@ -13,9 +13,8 @@ import encoding.csv
 //
 // Example:
 // ```v
-// gui.table(
+// window.table(
 // 	text_style_head: gui.theme().b2
-// 	window: window
 // 	data:   [
 // 		gui.tr([gui.th('First'), gui.th('Last'),     gui.th('Email')]),
 // 		gui.tr([gui.td('Matt'),  gui.td('Williams'), gui.td('non.egestas.a@protonmail.org')]),
@@ -30,7 +29,6 @@ import encoding.csv
 pub struct TableCfg {
 pub:
 	id                   string
-	window               &Window @[required]
 	color_border         Color     = gui_theme.color_border
 	cell_padding         Padding   = padding_two_five
 	column_width_default f32       = 50
@@ -58,9 +56,9 @@ pub:
 }
 
 // table generates a table from the given [TableCfg](#TableCfg)
-pub fn table(cfg &TableCfg) View {
+pub fn (mut window Window) table(cfg &TableCfg) View {
 	mut rows := []View{}
-	column_widths := table_column_widths(cfg)
+	column_widths := window.table_column_widths(cfg)
 	for r in cfg.data {
 		mut cells := []View{}
 		for idx, cell in r.cells {
@@ -129,7 +127,7 @@ pub fn table(cfg &TableCfg) View {
 
 // table from data takes `[][]string` and creates a table.
 // First row is treated as a header row.
-pub fn table_cfg_from_data(data [][]string, mut window Window) TableCfg {
+pub fn table_cfg_from_data(data [][]string) TableCfg {
 	mut row_cfg := []TableRowCfg{}
 	for i, r in data {
 		mut cells := []TableCellCfg{}
@@ -144,36 +142,32 @@ pub fn table_cfg_from_data(data [][]string, mut window Window) TableCfg {
 		}
 	}
 	return TableCfg{
-		window: window
-		data:   row_cfg
+		data: row_cfg
 	}
 }
 
 // table_from_csv converts a string representing a csv format to a TableCfg.
 // First row is treated as a header row.
-pub fn table_cfg_from_csv_string(data string, mut window Window) !TableCfg {
+pub fn table_cfg_from_csv_string(data string) !TableCfg {
 	mut parser := csv.csv_reader_from_string(data)!
 	mut rows := [][]string{}
 	for y in 0 .. int(parser.rows_count()!) {
 		rows << parser.get_row(y)!
 	}
-	return table_cfg_from_data(rows, mut window)
+	return table_cfg_from_data(rows)
 }
 
 // table_from_csv_string is a heper function that returns a table from the csv string.
 // If there is a parser error, it returns a table with the error message.
-pub fn table_from_csv_string(data string, mut window Window) View {
-	csv_table_cfg := table_cfg_from_csv_string(data, mut window) or {
-		table_cfg_error(err.msg(), mut window)
-	}
-	return table(csv_table_cfg)
+pub fn (mut window Window) table_from_csv_string(data string) View {
+	csv_table_cfg := table_cfg_from_csv_string(data) or { table_cfg_error(err.msg()) }
+	return window.table(csv_table_cfg)
 }
 
 // table_cfg_error is a helper method to procduce a [TableCfg](#TableCfg) with an error message
-pub fn table_cfg_error(message string, mut window Window) TableCfg {
+pub fn table_cfg_error(message string) TableCfg {
 	return TableCfg{
-		window: window
-		data:   [tr([td(message)])]
+		data: [tr([td(message)])]
 	}
 }
 
@@ -200,11 +194,10 @@ pub fn td(value string) TableCellCfg {
 }
 
 // find the widest column for each column
-fn table_column_widths(cfg &TableCfg) []f32 {
+fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 	if cfg.data.len == 0 || cfg.data[0].cells.len == 0 {
 		return []
 	}
-	mut window := cfg.window
 	mut column_widths := []f32{}
 	for idx, cell in cfg.data[0].cells {
 		mut longest := f32(0)

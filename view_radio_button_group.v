@@ -7,7 +7,7 @@ module gui
 //
 // Example:
 // ```v
-// gui.radio_button_group_column(
+// window.radio_button_group_column(
 // 	title:     'City Group'
 // 	value:     app.select_city
 // 	options:   [
@@ -19,7 +19,6 @@ module gui
 // 	on_select: fn [mut app] (value string) {
 // 		app.select_city = value
 // 	}
-// 	window:    window
 // )
 // ```
 pub struct RadioButtonGroupCfg {
@@ -32,7 +31,6 @@ pub:
 	min_height f32
 	sizing     Sizing
 	on_select  fn (string, mut Window) @[required]
-	window     &Window
 }
 
 // RadioOption defines a radio button for a [RadioButtonGroupCfg](#RadioButtonGroupCfg)

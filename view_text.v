@@ -11,7 +11,6 @@ pub enum TextMode {
 }
 
 // Text is an internal structure used to describe a text view
-@[heap]
 struct TextView implements View {
 	id                 string
 	id_focus           u32 // >0 indicates text is focusable. Value indiciates tabbing order
