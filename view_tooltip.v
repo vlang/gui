@@ -61,6 +61,9 @@ fn (cfg TooltipCfg) animation_tooltip() Animate {
 }
 
 fn (cfg TooltipCfg) hash() u32 {
+	if cfg.content.len == 0 {
+		return 0
+	}
 	lines := cfg.str().split_into_lines()
 	clean := lines.filter(!it.contains('cfg:'))
 	return fnv1a.sum32_string(clean.join('\n'))

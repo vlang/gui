@@ -231,7 +231,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 			id_track:    cfg.id_scroll
 		})
 	}
-	if cfg.tooltip.hash() == gui_tooltip.id {
+	if gui_tooltip.id != 0 && cfg.tooltip.hash() == gui_tooltip.id {
 		content << tooltip(cfg.tooltip)
 	}
 
