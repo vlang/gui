@@ -141,16 +141,10 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 		} else {
 			match c {
 				bsp_char {
-					text = cfg.delete(mut w, false) or {
-						eprintln(err)
-						return
-					}
+					text = cfg.delete(mut w, false) or { return }
 				}
 				del_char {
-					text = cfg.delete(mut w, true) or {
-						eprintln(err)
-						return
-					}
+					text = cfg.delete(mut w, true) or { return }
 				}
 				cr_char, lf_char {
 					if cfg.on_enter != unsafe { nil } {
