@@ -1,0 +1,42 @@
+name: CI Checks
+
+on:
+  push:
+    paths:
+      - "**.v"
+      - "**.vsh"
+      - "**.md"
+      - "**/ci.yml"
+  pull_request:
+    paths:
+      - "**.v"
+      - "**.vsh"
+      - "**.md"
+      - "**/ci.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install V
+        id: install-v
+        uses: vlang/setup-v@v1.4
+        with:
+          check-latest: true
+
+      - name: Checkout v-analyzer
+        uses: actions/checkout@v4
+
+      - name: Verify formatting
+        run: v fmt -verify .
+
+      - name: Check formatting of MD files
+        run: v check-md .
+
+      - name: Check compilation of examples
+        run: v examples/_check.vsh
