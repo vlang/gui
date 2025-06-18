@@ -30,7 +30,7 @@ pub fn (mut w Window) animation_add(mut animation Animation) {
 	w.animations << animation
 }
 
-fn (mut w Window) animaton_loop() {
+fn (mut w Window) animation_loop() {
 	for {
 		time.sleep(animation_cycle)
 		w.lock()

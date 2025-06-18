@@ -88,7 +88,7 @@ pub fn window(cfg &WindowCfg) &Window {
 		user_data:                    window
 		init_fn:                      fn [cfg] (mut w Window) {
 			w.update_window_size()
-			spawn w.animaton_loop()
+			spawn w.animation_loop()
 			w.blinky_cursor_animation()
 			cfg.on_init(w)
 			w.update_window()
