@@ -36,7 +36,6 @@ fn (t &TextView) free() {
 		t.id.free()
 		t.text.free()
 		t.text_style.free()
-		t.cfg.free()
 	}
 }
 

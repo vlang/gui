@@ -4,10 +4,8 @@ import clipboard
 import encoding.utf8
 import hash.fnv1a
 
-@[manualfree]
 pub fn get_text_width_no_cache(text string, text_style TextStyle, window &Window) f32 {
 	cfg := text_style.to_text_cfg()
-	defer { unsafe{ cfg.free() } }
 	window.ui.set_text_cfg(cfg)
 	return window.ui.text_width(text)
 }
@@ -22,7 +20,6 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 
 	return window.view_state.text_widths[key] or {
 		cfg := text_style.to_text_cfg()
 		window.ui.set_text_cfg(cfg)
-		unsafe { cfg.free() }
 		t_width := window.ui.text_width(text)
 		window.view_state.text_widths[key] = t_width
 		t_width
@@ -43,7 +40,6 @@ fn text_width(shape Shape, mut window Window) f32 {
 			if !text_cfg_set {
 				text_cfg := shape.text_style.to_text_cfg()
 				window.ui.set_text_cfg(text_cfg)
-				unsafe { text_cfg.free() }
 				text_cfg_set = true
 			}
 			t_width := window.ui.text_width(line)
