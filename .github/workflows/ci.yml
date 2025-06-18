@@ -39,4 +39,4 @@ jobs:
         run: v check-md .
 
       - name: Check compilation of examples
-        run: v examples/_check.vsh
+        run: v run examples/_check.vsh
