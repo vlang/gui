@@ -13,7 +13,7 @@ pub fn get_text_width_no_cache(text string, text_style TextStyle, window &Window
 @[manualfree]
 pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 {
 	htx := fnv1a.sum32_struct(text_style).str()
-	defer { unsafe{ htx.free() } }
+	defer { unsafe { htx.free() } }
 	text_htx := text + htx
 	defer { unsafe { text_htx.free() } }
 	key := fnv1a.sum32_string(text + htx)
@@ -31,7 +31,7 @@ fn text_width(shape Shape, mut window Window) f32 {
 	mut max_width := f32(0)
 	mut text_cfg_set := false
 	htx := fnv1a.sum32_struct(shape.text_style).str()
-	defer { unsafe{ htx.free() } }
+	defer { unsafe { htx.free() } }
 	for line in shape.text_lines {
 		line_htx := line + htx
 		key := fnv1a.sum32_string(line_htx)
@@ -159,15 +159,17 @@ fn split_text(s string, tab_size u32) []string {
 
 	mut state := state_ch
 	mut fields := []string{}
+	unsafe { fields.flags.set(.noslices) }
+	defer { unsafe { fields.flags.clear(.noslices) } }
 	mut field := []rune{}
-
 	for r in s.runes() {
 		if state == state_ch {
 			if r == r_space {
 				if field.len > 0 {
 					fields << field.string()
 				}
-				field = [r]
+				field.clear()
+				field << r
 				state = state_sp
 			} else if r == `\n` {
 				if field.len > 0 {
@@ -190,7 +192,8 @@ fn split_text(s string, tab_size u32) []string {
 				if field.len > 0 {
 					fields << field.string()
 				}
-				field = [r_space]
+				field.clear()
+				field << r_space
 				state = state_sp
 			} else {
 				field << r
@@ -203,7 +206,7 @@ fn split_text(s string, tab_size u32) []string {
 					fields << field.string()
 				}
 				fields << '\n'
-				field = []
+				field.clear()
 			} else if r == `\r` {
 				// eat it
 			} else if r == `\t` {
@@ -214,7 +217,8 @@ fn split_text(s string, tab_size u32) []string {
 				field << r_space
 			} else {
 				fields << field.string()
-				field = [r]
+				field.clear()
+				field << r
 				state = state_ch
 			}
 		}

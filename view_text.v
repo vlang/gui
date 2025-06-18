@@ -212,12 +212,12 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 		}
 	}
 	if count == -1 {
-		count = int_max(0, line.runes().len)
+		count = int_max(0, utf8_str_visible_length(line))
 	}
-	count = int_min(count, line.runes().len)
+	count = int_min(count, utf8_str_visible_length(line))
 	for i, l in shape.text_lines {
 		if i < y {
-			count += l.runes().len
+			count += utf8_str_visible_length(l)
 		}
 	}
 	return count
