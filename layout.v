@@ -22,6 +22,9 @@ pub fn (layout &Layout) free() {
 	for c in layout.children {
 		unsafe { c.free() }
 	}
+	unsafe { layout.children.free() }
+	unsafe { layout.shape.text.free() }
+	unsafe { layout.shape.text_lines.free() }
 }
 
 // layout_arrange executes a pipeline of functions to arrange and position the layout.

@@ -31,6 +31,15 @@ mut:
 	content []View // not used
 }
 
+fn (t &TextView) free() {
+	unsafe {
+		t.id.free()
+		t.text.free()
+		t.text_style.free()
+		t.cfg.free()
+	}
+}
+
 fn (t &TextView) generate(mut window Window) Layout {
 	if t.invisible {
 		return Layout{}
@@ -102,6 +111,14 @@ pub:
 	tab_size   u32 = 4
 	text       string
 	text_style TextStyle = gui_theme.text_style
+}
+
+fn (t &TextCfg) free() {
+	unsafe {
+		t.id.free()
+		t.text.free()
+		t.text_style.free()
+	}
 }
 
 // text is a general purpose text renderer. Use it for labels or larger
