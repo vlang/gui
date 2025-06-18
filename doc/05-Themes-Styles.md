@@ -108,7 +108,7 @@ pub const my_theme = theme_maker(my_theme_cfg)
 
 ## Style Structs
 
-### Overview
+### Style Overview
 
 Defines the individual style structs for each GUI component. Each struct
 contains all the visual properties needed to render that component, such

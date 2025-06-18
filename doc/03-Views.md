@@ -80,7 +80,7 @@ pub:
 There are nine different combinations possible. For convenience, Gui
 provides constants:
 
-```v
+```v oksyntax
 pub const fit_fit = Sizing{.fit, .fit}
 pub const fit_fill = Sizing{.fit, .fill}
 pub const fit_fixed = Sizing{.fit, .fixed}
