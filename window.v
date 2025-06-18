@@ -134,7 +134,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	// down (last layout first). When an dialog is present, it is the only layer
 	// allowed to handle mouse/keyboard events. This effectively makes it modal.
 	// An Event is processed until an event handler sets the event.is_handled`
-	// memeber to true.
+	// member to true.
 	w.lock()
 	layout := if w.dialog_cfg.visible { w.layout.children.last() } else { w.layout }
 	w.unlock()
@@ -195,7 +195,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 }
 
 // update_view sets the Window's view generator. A window can have only one
-// view generator. Giving a Window a new view generator clears the view_state.
+// view generator. Giving a Window a new view generator clears the view_state
 // and replaces the current view generator.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	// Order matters here. Clear the view state first
@@ -221,7 +221,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.ui.refresh_ui()
 }
 
-// update_window generates a new layout from the window's currnet
+// update_window generates a new layout from the window's current
 // view generator. It does not clear the view states. It should
 // rarely be needed since event handling calls it regularly.
 pub fn (mut window Window) update_window() {

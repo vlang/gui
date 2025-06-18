@@ -12,8 +12,7 @@ mut:
 	stopped bool
 }
 
-// Animate waits the specified delay duuration and then executes the callback.
-// It can be set to repeat.
+// Animate waits the specified delay duration and then executes the callback.
 pub struct Animate implements Animation {
 	repeat bool
 pub:

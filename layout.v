@@ -62,7 +62,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 }
 
 // layout_pipeline makes multple passes over the layout.
-// Multple passes actually simply many of the layout
+// Multple passes actually simplify many of the layout
 // calculationsv by only dealing with one axis of
 // expansion/contraction at a time. Same for scroll offsets
 // and text wrapping. This logic mimics the logic presented
@@ -693,8 +693,8 @@ fn layout_set_shape_clips(mut node Layout, clip DrawClip) {
 
 // layout_amend is the secret sauce to handling layout problems
 // that can't be solved until all the positions and sizes are
-// known. In general, one should not alter sizes and positions,
-// (exception: scrollbars) it is the right place to handle
+// known. In general, one should not alter sizes and positions.
+// (exception: scrollbars) It is the right place to handle
 // mouse-over events that typically change a color or opacity.
 fn layout_amend(mut node Layout, mut w Window) {
 	for mut child in node.children {
@@ -708,8 +708,6 @@ fn layout_amend(mut node Layout, mut w Window) {
 // layout_hover is a convience callback for clients to do hover things.
 // Originally, it was done in layout_amend but it there's a fair bit of
 // boiler plate that this callback hides.
-//
-// Think about moving to render. Would cut down on tree walks
 fn layout_hover(mut node Layout, mut w Window) {
 	if w.mouse_is_locked() {
 		return

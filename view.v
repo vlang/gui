@@ -17,7 +17,7 @@ mut:
 	content []View
 }
 
-// view_to_layout builds a Layout from a View.
+// generate_layout builds a Layout from a View.
 fn generate_layout(view &View, mut window Window) Layout {
 	mut layout := view.generate(mut window)
 	for child_view in view.content {
