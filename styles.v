@@ -249,7 +249,7 @@ fn (tc TextStyle) to_text_cfg() gx.TextCfg {
 	return gx.TextCfg{
 		color:  tc.color.to_gx_color()
 		size:   tc.size
-		family: tc.family
+		family: tc.family.clone()
 	}
 }
 
