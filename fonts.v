@@ -53,7 +53,7 @@ fn path_variant(path string, variant font.Variant) string {
 		.normal { path }
 		.bold { path.replace('-regular', '-bold') }
 		.italic { path.replace('-regular', '-italic') }
-		.mono { path.replace('-regular', '-mone') }
+		.mono { path.replace('-regular', '-mono') }
 	}
 	if !os.exists(vpath) {
 		vpath = font.get_path_variant(path, variant)
