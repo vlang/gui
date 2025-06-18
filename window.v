@@ -19,6 +19,9 @@ mut:
 	focused        bool = true
 	window_size    gg.Size // cached, gg.window_size() relatively slow
 	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	//
+	update_window_calls               int
+	max_update_window_calls_per_frame int = 1
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -106,6 +109,10 @@ fn frame_fn(mut window Window) {
 	renderers_draw(window.renderers, window)
 	window.ui.end()
 	sapp.set_mouse_cursor(window.view_state.mouse_cursor)
+	$if trace_update_window_calls ? {
+		println(window.update_window_calls)
+	}
+	window.update_window_calls = 0
 	window.unlock()
 }
 
@@ -227,6 +234,11 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 // view generator. It does not clear the view states. It should
 // rarely be needed since event handling calls it regularly.
 pub fn (mut window Window) update_window() {
+	window.update_window_calls++
+	if window.update_window_calls > window.max_update_window_calls_per_frame {
+		return
+	}
+
 	window.lock()
 	defer { window.unlock() }
 
