@@ -140,11 +140,11 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 			}
 		} else {
 			match c {
-				bsp_char, del_char {
-					text = cfg.delete(mut w) or {
-						eprintln(err)
-						return
-					}
+				bsp_char {
+					text = cfg.delete(mut w, false) or { return }
+				}
+				del_char {
+					text = cfg.delete(mut w, true) or { return }
 				}
 				cr_char, lf_char {
 					if cfg.on_enter != unsafe { nil } {
@@ -174,13 +174,13 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 	}
 }
 
-fn (cfg &InputCfg) delete(mut w Window) ?string {
+fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 	mut text := cfg.text
 	input_state := w.view_state.input_state[cfg.id_focus]
 	mut cursor_pos := input_state.cursor_pos
 	if cursor_pos < 0 {
 		cursor_pos = cfg.text.len
-	} else if cursor_pos > 0 {
+	} else if cursor_pos > 0 || (cursor_pos == 0 && is_delete) {
 		if input_state.select_beg != input_state.select_end {
 			beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 			if beg >= text.len || end >= text.len {
@@ -194,9 +194,13 @@ fn (cfg &InputCfg) delete(mut w Window) ?string {
 				eprintln('cursor_pos out of range (insert)')
 				return none
 			}
-
-			text = cfg.text[..cursor_pos - 1] + cfg.text[cursor_pos..] or { return none }
-			cursor_pos -= 1
+			step := if is_delete { 1 } else { 0 }
+			text = cfg.text[..cursor_pos - 1 + step] + cfg.text[cursor_pos + step..] or {
+				return none
+			}
+			if !is_delete {
+				cursor_pos--
+			}
 		}
 	}
 	mut undo := input_state.undo
@@ -263,7 +267,7 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 
 pub fn (cfg &InputCfg) cut(mut w Window) ?string {
 	cfg.copy(w)
-	return cfg.delete(mut w)
+	return cfg.delete(mut w, false)
 }
 
 pub fn (cfg &InputCfg) copy(w &Window) ?string {
