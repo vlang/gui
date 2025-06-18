@@ -216,6 +216,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	defer { window.unlock() }
 
 	window.view_generator = gen_view
+	unsafe { window.layout.free() }
+	unsafe { window.renderers.free() }
 	window.layout = layout
 	window.renderers = renderers
 	window.ui.refresh_ui()
@@ -234,6 +236,8 @@ pub fn (mut window Window) update_window() {
 	window_rect := window.window_rect()
 	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
 
+	unsafe { window.layout.free() }
+	unsafe { window.renderers.free() }
 	window.layout = layout
 	window.renderers = renderers
 	window.ui.refresh_ui()

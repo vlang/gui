@@ -18,6 +18,12 @@ pub mut:
 	children []Layout
 }
 
+pub fn (layout &Layout) free() {
+	for c in layout.children {
+		unsafe { c.free() }
+	}
+}
+
 // layout_arrange executes a pipeline of functions to arrange and position the layout.
 // Multiple layouts are returned, each is used to draw a layer of the final rendering.
 fn layout_arrange(mut layout Layout, mut window Window) []Layout {
