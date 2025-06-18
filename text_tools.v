@@ -4,32 +4,46 @@ import clipboard
 import encoding.utf8
 import hash.fnv1a
 
+@[manualfree]
 pub fn get_text_width_no_cache(text string, text_style TextStyle, window &Window) f32 {
-	window.ui.set_text_cfg(text_style.to_text_cfg())
+	cfg := text_style.to_text_cfg()
+	defer { unsafe{ cfg.free() } }
+	window.ui.set_text_cfg(cfg)
 	return window.ui.text_width(text)
 }
 
+@[manualfree]
 pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 {
 	htx := fnv1a.sum32_struct(text_style).str()
+	defer { unsafe{ htx.free() } }
+	text_htx := text + htx
+	defer { unsafe { text_htx.free() } }
 	key := fnv1a.sum32_string(text + htx)
 	return window.view_state.text_widths[key] or {
-		window.ui.set_text_cfg(text_style.to_text_cfg())
+		cfg := text_style.to_text_cfg()
+		window.ui.set_text_cfg(cfg)
+		unsafe { cfg.free() }
 		t_width := window.ui.text_width(text)
 		window.view_state.text_widths[key] = t_width
 		t_width
 	}
 }
 
+@[manualfree]
 fn text_width(shape Shape, mut window Window) f32 {
 	mut max_width := f32(0)
 	mut text_cfg_set := false
 	htx := fnv1a.sum32_struct(shape.text_style).str()
+	defer { unsafe{ htx.free() } }
 	for line in shape.text_lines {
-		key := fnv1a.sum32_string(line + htx)
+		line_htx := line + htx
+		key := fnv1a.sum32_string(line_htx)
+		unsafe { line_htx.free() }
 		width := window.view_state.text_widths[key] or {
 			if !text_cfg_set {
 				text_cfg := shape.text_style.to_text_cfg()
 				window.ui.set_text_cfg(text_cfg)
+				unsafe { text_cfg.free() }
 				text_cfg_set = true
 			}
 			t_width := window.ui.text_width(line)
