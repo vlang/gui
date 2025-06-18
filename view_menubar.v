@@ -3,7 +3,7 @@ module gui
 import datatypes
 
 // MenubarCfg configures a horizontal menubar, which can contain drop-down submenus,
-// which in turn can have drop-down sugmenus. The `id_focus` is required so GUI can
+// which in turn can have drop-down submenus. The `id_focus` is required so GUI can
 // store which menu has been selected.
 //
 // Menubars and menu-items adhere to the same theme logic as other Gui views.

@@ -83,7 +83,7 @@ fn (t &TextView) generate(mut window Window) Layout {
 	return shape_tree
 }
 
-// TextCfg confgigures a [text](#text) view
+// TextCfg configures a [text](#text) view
 // - [TextMode](#TextMode) controls how text is rendered.
 // - `spacing` parameter is used to increase the space between lines.
 @[heap]
@@ -175,7 +175,7 @@ fn (cfg &TextCfg) mouse_up_shape(shape &Shape, mut e Event, mut w Window) {
 }
 
 // mouse_cursor_pos determines where in the input control's text
-// field the click occured. Works with multiple line text fields.
+// field the click occurred. Works with multiple line text fields.
 fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	if cfg.placeholder_active {
 		return 0

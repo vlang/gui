@@ -44,7 +44,7 @@ pub:
 
 // input is a text input field.
 // - Input fields without an `on_text_changed` callback are read-only
-// - is_password flag causes the input view to display '*'s. For securitym the copy operation is disabled.
+// - is_password flag causes the input view to display '*'s. For security the copy operation is disabled.
 // - wrap allows the input fields to be multiline. See [InputCfg](#InputCfg)
 //
 // Example:

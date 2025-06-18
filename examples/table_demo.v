@@ -4,7 +4,7 @@ import math
 
 // Table Demo
 // =============================
-// Demonstrates buiding a table using declarative layout, CSV, and column sorting.
+// Demonstrates building a table using declarative layout, CSV, and column sorting.
 
 @[heap]
 struct TableDemoApp {

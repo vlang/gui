@@ -28,7 +28,7 @@ const reserved_dialog_id = '__dialog_reserved_do_not_use__'
 
 // DialogCfg configures GUI's dialog dialog. [DialogType](#DialogType)
 // determines the type of dialog. dialogType.message is the default.
-// dialogs are asychronous. Keyboard/Mouse input is restricted
+// dialogs are asynchronous. Keyboard/Mouse input is restricted
 // to the dialog dialog when visible. **Dialogs do not support floating
 // elements**. Invoke dialogs by calling [(Window) dialog](#Window.dialog)
 @[heap]

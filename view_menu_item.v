@@ -8,16 +8,16 @@ pub const menu_subtitle_id = '__subtitle__'
 //
 // - separator, if the separator field is true, a horizontal line separating menu items is rendered.
 // - custom view, if a custom_view is supplied, it is rendered.
-// - text only, for convenience, a text field is availble for the typical text only menu items.
+// - text only, for convenience, a text field is available for the typical text only menu items.
 //
-// If all three types are specified only one is rendereed. The priority is separator, custom view, text only.
+// If all three types are specified only one is rendered. The priority is separator, custom view, text only.
 // Custom and text only menus can have a submenu.
 //
 // The optional action callback can be used to process menu clicks. There is also a catch-all
 // action callback in [MenubarCfg](#MenubarCfg) that is called afterwards.
 //
 // It should go without saying, but menu-item id's need to be unique within a menubar config.
-// This is neccesary so callbacks can identify which menu-item was clicked. It also is how
+// This is necessary so callbacks can identify which menu-item was clicked. It also is how
 // the menubar determines which menu items are selected/highlighted.
 @[heap]
 pub struct MenuItemCfg {
@@ -103,7 +103,7 @@ pub fn menu_item_text(id string, text string) MenuItemCfg {
 	}
 }
 
-// menu_separator is a convenience function for createing a menu separator
+// menu_separator is a convenience function for creating a menu separator
 pub fn menu_separator() MenuItemCfg {
 	return MenuItemCfg{
 		id:        menu_separator_id

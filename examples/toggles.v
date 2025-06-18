@@ -3,7 +3,7 @@ import gui
 // Toggles
 // =============================
 // Shows different types of toggle buttons
-// - togggle functions as a checkbox in its default mode
+// - toggle functions as a checkbox in its default mode
 // - toggle can also display custom text
 // - radio is (will be) a classic round radio button
 // - switch is the slide switch

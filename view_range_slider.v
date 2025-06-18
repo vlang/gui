@@ -36,7 +36,7 @@ pub:
 
 pub fn range_slider(cfg RangeSliderCfg) View {
 	if cfg.min >= cfg.max {
-		panic('range_slider.min must be less thand range_slider.max')
+		panic('range_slider.min must be less than range_slider.max')
 	}
 	return container(
 		name:         'range_slider border'

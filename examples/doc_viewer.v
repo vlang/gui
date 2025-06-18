@@ -5,12 +5,12 @@ import os
 // =============================
 // A view to read the markdown doc files in the ../doc folder. Demonstrates the following:
 //
-// - multline text
+// - multiline text
 // - text selection
 // - nav selection highlighting
 //
 // Selection highlighting shows how immediate mode UI's simplify tasks like selection
-// hightlighting. Notice the code only highlights the selected item. It does not need
+// highlighting. Notice the code only highlights the selected item. It does not need
 // to remember to "unhighlight" previous selection.
 
 const id_scroll_doc_view = 1

@@ -2,7 +2,7 @@ import gui
 
 // Inputs
 // =============================
-// There is only one input view in GUI. It can function as
+// There is only one input view in Gui. It can function as
 // single and multiline and can accept newlines.
 
 @[heap]

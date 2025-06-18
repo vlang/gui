@@ -59,7 +59,7 @@ pub fn pad_all(p f32) Padding {
 	return Padding{p, p, p, p}
 }
 
-// pad_tblr creates a padding with the top and bottome set to the `tb` parameter
+// pad_tblr creates a padding with the top and bottom set to the `tb` parameter
 // and the left and right set to the `lr` parameter.
 pub fn pad_tblr(tb f32, lr f32) Padding {
 	return Padding{

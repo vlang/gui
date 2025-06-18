@@ -28,7 +28,7 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 	)
 }
 
-// TreeNodeCfg confgures a [tree_node](#tree_node). Use gui.icon_xxx to specify a
+// TreeNodeCfg configures a [tree_node](#tree_node). Use gui.icon_xxx to specify a
 // font from the standard icon catalog. The `id` property is optional and defaults
 // to the text value.
 pub struct TreeNodeCfg {

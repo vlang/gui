@@ -2,7 +2,7 @@ import gui
 
 // Scroll Demo
 // =============================
-// To make a column or row scrollable, Add a `id_scroll` to its configurtion
+// To make a column or row scrollable, Add a `id_scroll` to its configuration
 // Like `id_focus` the id should be unique to the window view. GUI uses id's
 // to store state information about scrolling and focus. If two columns have
 // the same `id_scroll` they scroll in unison. Not my intention when designing

@@ -2,7 +2,7 @@ import gui
 
 // Menubar Demo
 // =============================
-// In this demo, a memobar is placed at the top of the view with some
+// In this demo, a menubar is placed at the top of the view with some
 // submenus and an embedded search box (see Help). Menubar has many
 // styling options. The menubar can be styled separately from the
 // submenus and menu items as demonstrated here. Menubars are not

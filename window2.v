@@ -38,7 +38,7 @@ pub fn (window &Window) context() &gg.Context {
 //
 // The custom type displays the given content. Custom content
 // provides any needed callbacks as the standard ones work
-// only for the predfined types.
+// only for the predefined types.
 //
 // Body text wraps as needed. Newlines in body text display
 // appropriately.
@@ -131,7 +131,7 @@ pub fn (window &Window) pointer_over_app(e &Event) bool {
 	return true
 }
 
-// lock locks the window's mutex semphore. This is the same mutex used
+// lock locks the window's mutex semaphore. This is the same mutex used
 // to access the app model internally. There is usually no need to lock
 // when responding to events (mouse, keyboard, etc.) It is good practice
 // to lock when updating the app model from other threads. Locking twice

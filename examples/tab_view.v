@@ -3,7 +3,7 @@ import gui
 // Tab View
 // =============================
 // Tab views are a staple of many UI frameworks. Gui does not have one
-// mostly becuase it is super easy to write your own.
+// mostly because it is super easy to write your own.
 
 @[heap]
 struct TabViewApp {

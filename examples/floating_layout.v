@@ -18,7 +18,7 @@ import gui
 // - bottom_center
 // - bottom_right
 //
-// The float itself has similar attchement points called, "tie-offs".
+// The float itself has similar attachment points called, "tie-offs".
 //
 // A boating analogy can help with picturing how this works. A boat
 // cna be anchored in a harbor but the anchor line can be tied-off

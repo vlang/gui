@@ -1,7 +1,7 @@
 module gui
 
 // RadioButtonGroupCfg configures a [radio_button_group](#radio_button_group_column).
-// If title is empty, the visible renctangle around the button group is invisible.
+// If title is empty, the visible rectangle around the button group is invisible.
 // If the id_focus is in the [RadioOption](#RadioOption) is zero, no focus is not rendered.
 // The `on_select` is where the app model is updated.
 //

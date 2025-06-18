@@ -3,7 +3,7 @@ import gui
 // Select Demo
 // =============================
 // Select drop-downs are relatively straight-forward to use.
-// They are unusual in that an ID and Window referenece are required.
+// They are unusual in that an ID and Window reference are required.
 
 @[heap]
 struct SelectDemoApp {

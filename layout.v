@@ -19,7 +19,7 @@ pub mut:
 }
 
 // layout_arrange executes a pipeline of functions to arrange and position the layout.
-// Multiple layouts are returned, each is used to draw a layer of the final renderering.
+// Multiple layouts are returned, each is used to draw a layer of the final rendering.
 fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// stopwatch := time.new_stopwatch()
 	// defer { println(stopwatch.elapsed()) }
@@ -62,8 +62,8 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 }
 
 // layout_pipeline makes multple passes over the layout.
-// Multple passes actually simplify many of the layout
-// calculationsv by only dealing with one axis of
+// Multiple passes actually simplify many of the layout
+// calculations by only dealing with one axis of
 // expansion/contraction at a time. Same for scroll offsets
 // and text wrapping. This logic mimics the logic presented
 // in Nic Barter's video referenced above.
@@ -562,7 +562,7 @@ fn layout_adjust_scroll_offsets(mut node Layout, mut w Window) {
 	}
 }
 
-// layout_positions sets the positions of all layout in the Layoute. It also
+// layout_positions sets the positions of all layout in the Layout. It also
 // handles alignment. Alignment only augments x and y positions. Alignment
 // does not effect sizes.
 fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
@@ -666,7 +666,7 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 }
 
 // layout_disables walks the Layout and disables any children
-// that have a diabled ancestor.
+// that have a disabled ancestor.
 fn layout_disables(mut node Layout, disabled bool) {
 	mut is_disabled := disabled || node.shape.disabled
 	node.shape.disabled = is_disabled
@@ -705,7 +705,7 @@ fn layout_amend(mut node Layout, mut w Window) {
 	}
 }
 
-// layout_hover is a convience callback for clients to do hover things.
+// layout_hover is a convenience callback for clients to do hover things.
 // Originally, it was done in layout_amend but it there's a fair bit of
 // boiler plate that this callback hides.
 fn layout_hover(mut node Layout, mut w Window) {

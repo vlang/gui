@@ -157,14 +157,14 @@ pub fn table_cfg_from_csv_string(data string) !TableCfg {
 	return table_cfg_from_data(rows)
 }
 
-// table_from_csv_string is a heper function that returns a table from the csv string.
+// table_from_csv_string is a helper function that returns a table from the csv string.
 // If there is a parser error, it returns a table with the error message.
 pub fn (mut window Window) table_from_csv_string(data string) View {
 	csv_table_cfg := table_cfg_from_csv_string(data) or { table_cfg_error(err.msg()) }
 	return window.table(csv_table_cfg)
 }
 
-// table_cfg_error is a helper method to procduce a [TableCfg](#TableCfg) with an error message
+// table_cfg_error is a helper method to produce a [TableCfg](#TableCfg) with an error message
 pub fn table_cfg_error(message string) TableCfg {
 	return TableCfg{
 		data: [tr([td(message)])]
@@ -193,7 +193,7 @@ pub fn td(value string) TableCellCfg {
 	}
 }
 
-// find the widest column for each column
+// table_column_widths find the widest column for each column
 fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 	if cfg.data.len == 0 || cfg.data[0].cells.len == 0 {
 		return []

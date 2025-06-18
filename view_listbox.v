@@ -1,6 +1,6 @@
 module gui
 
-// ListBoxCfg confgures a [list_box](#list_box) view.
+// ListBoxCfg configures a [list_box](#list_box) view.
 // `selected` is a the list of selected `values`
 pub struct ListBoxCfg {
 pub:
@@ -39,7 +39,7 @@ pub:
 	value string
 }
 
-// list_box is a convienence view for simple cases. See [ListBoxCfg](#ListBoxCfg)
+// list_box is a convenience view for simple cases. See [ListBoxCfg](#ListBoxCfg)
 // The same functionality can be done with a column and rows.
 // In fact, the implementation is not much more than that.
 pub fn list_box(cfg ListBoxCfg) View {
@@ -150,7 +150,7 @@ pub fn list_box(cfg ListBoxCfg) View {
 // is always formatted to multiple lines.
 //
 // If an option name starts with `---` it is treated as is_subheader
-// The three leading hypens are dropped and the the rest of the name
+// The three leading hyphens are dropped and the the rest of the name
 // is displayed using the subheader style. A horizontal bar is drawn
 // below the subheader.
 pub fn list_box_option(name string, value string) ListBoxOption {

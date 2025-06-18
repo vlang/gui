@@ -24,7 +24,7 @@ pub:
 	on_toggle      fn (mut w Window) = unsafe { nil }
 }
 
-// expand_pannl creates a expand view from the given [ExpandPanelCfg](#ExpandPanelCfg)
+// expand_panel creates a expand view from the given [ExpandPanelCfg](#ExpandPanelCfg)
 pub fn expand_panel(cfg ExpandPanelCfg) View {
 	return column(
 		name:       'expand_panel border'

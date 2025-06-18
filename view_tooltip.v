@@ -3,6 +3,7 @@ module gui
 import time
 import hash.fnv1a
 
+// TooltipCfg configures a [tooltip](#tooltip)
 pub struct TooltipCfg {
 pub:
 	id             string
@@ -24,6 +25,7 @@ pub:
 	content        []View
 }
 
+// tooltip creates a tooltip from the given [TooltipCfg](#TooltipCfg)
 pub fn tooltip(cfg TooltipCfg) View {
 	return row(
 		name:           'tooltip border'

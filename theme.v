@@ -66,7 +66,7 @@ const text_style_icon_dark = TextStyle{
 // option to change every aspect. Themes are granular.
 //
 // Defining a new theme with so many styles could quickly grow
-// tiresome. To assist in creating and modifing themes, GUI has a
+// tiresome. To assist in creating and modifying themes, GUI has a
 // [theme_maker](#theme_maker) function that takes a smaller
 // [ThemeCfg](#ThemeCfg) structure. `theme_maker` takes a handful
 // of colors and styles and applies them to an entire theme. This
@@ -104,7 +104,7 @@ pub:
 	tooltip_style      TooltipStyle
 	tree_style         TreeStyle
 
-	// n's and b's are convienence configs for sizing
+	// n's and b's are convenience configs for sizing
 	// similar to H1-H6 in html markup. n3 is the
 	// same as normal size font used by default in
 	// text views
@@ -381,7 +381,7 @@ pub const theme_light_bordered_cfg = ThemeCfg{
 pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 
 // theme_maker sets all styles to a common set of values using
-// [ThemeCfg](#ThemeCfg). GUI allows each view type (button,
+// [ThemeCfg](#ThemeCfg). Gui allows each view type (button,
 // input, etc) to be styled independent of the other view styles.
 // However, in practice this is not usually required. `theme_maker`
 // makes it easy to write new themes without having to specify styles

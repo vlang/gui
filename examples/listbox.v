@@ -2,7 +2,7 @@ import gui
 
 // List Box Demo
 // =============================
-// List box is a convienence view for simple cases.
+// List box is a convenience view for simple cases.
 // The same functionality can be done with a column and rows.
 // In fact, the implementation is not much more than that.
 

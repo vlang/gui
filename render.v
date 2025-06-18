@@ -155,7 +155,7 @@ fn render_shape(mut shape Shape, mut renderers []Renderer, parent_color Color, c
 // render_container mostly draws a rectangle. Containers are more about layout than drawing.
 // One complication is the title text that is drawn in the upper left corner of the rectangle.
 // At some point, it should be moved to the container logic, along with some layout amend logic.
-// Honestly, it was more epedient to put it here.
+// Honestly, it was more expedient to put it here.
 fn render_container(mut shape Shape, mut renderers []Renderer, parent_color Color, clip DrawClip, window &Window) {
 	ctx := window.ui
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
@@ -432,7 +432,7 @@ fn dim_alpha(color Color) Color {
 	}
 }
 
-// rects_overlap checks if two rectangels overlap.
+// rects_overlap checks if two rectangles overlap.
 @[inline]
 fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
 	// vfmt off
