@@ -12,7 +12,7 @@ import math
 // GUI are powerful and granular. See the theme_designer.v program
 // for more about themes.
 
-struct App {
+struct ButtonsApp {
 pub mut:
 	clicks int
 	light  bool
@@ -21,7 +21,7 @@ pub mut:
 fn main() {
 	mut window := gui.window(
 		title:   'Buttons'
-		state:   &App{}
+		state:   &ButtonsApp{}
 		width:   400
 		height:  375
 		on_init: fn (mut w gui.Window) {
@@ -35,7 +35,7 @@ fn main() {
 
 fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	app := window.state[ButtonsApp]()
 	button_text := '${app.clicks} Clicks Given'
 	b_width := f32(140)
 
@@ -129,12 +129,12 @@ fn button_row(label string, button gui.View) gui.View {
 }
 
 fn click_handler(_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-	mut app := w.state[App]()
+	mut app := w.state[ButtonsApp]()
 	app.clicks += 1
 	w.set_id_focus(1)
 }
 
-fn button_change_theme(app &App) gui.View {
+fn button_change_theme(app &ButtonsApp) gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit
@@ -147,7 +147,7 @@ fn button_change_theme(app &App) gui.View {
 				padding:       gui.theme().padding_small
 				select:        app.light
 				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[ButtonsApp]()
 					app.light = !app.light
 					w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })
 					w.set_id_focus(1)
