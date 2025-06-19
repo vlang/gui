@@ -4,4 +4,5 @@ Module {
 	version: '0.0.0'
 	license: 'MIT'
 	dependencies: []
+	repo_url: 'https://github.com/vlang/gui'
 }
