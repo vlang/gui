@@ -311,12 +311,12 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 			mut lnl := line.replace('\n', '')
 			if shape.text_is_password {
 				// replace with '*'s
-				lnl = []u8{len: lnl.runes().len, init: u8(42)}.bytestr()
+				lnl = '*'.repeat(utf8_str_visible_length(lnl))
 			}
 			renderers << DrawText{
 				x:    x
 				y:    y
-				text: lnl
+				text: lnl.clone()
 				cfg:  text_cfg
 			}
 
@@ -325,8 +325,10 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 				b := if beg >= char_count && beg < char_count + len { beg - char_count } else { 0 }
 				e := if end > char_count + len { len } else { end - char_count }
 				if b < e {
-					sb := ctx.text_width(lnr[..b].string())
-					se := ctx.text_width(lnr[b..e].string())
+					stob := lnr[..b].string()
+					sbtoe := lnr[b..e].string()
+					sb := ctx.text_width(stob)
+					se := ctx.text_width(sbtoe)
 					renderers << DrawRect{
 						x:     draw_rect.x + sb
 						y:     draw_rect.y
@@ -337,11 +339,15 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 							a: 60 // make themeable?
 						}
 					}
+					unsafe { sbtoe.free() }
+					unsafe { stob.free() }
 				}
 			}
+			unsafe { lnl.free() }
 		}
 		y += lh
 		char_count += len
+		unsafe { lnr.free() }
 	}
 
 	render_cursor(shape, mut renderers, clip, window)
@@ -358,13 +364,13 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, clip DrawClip, window &
 		if cursor_pos >= 0 {
 			mut length := 0
 			for idx, line in shape.text_lines {
-				ln := line.runes()
-				if length + ln.len > cursor_pos {
+				ln_len := utf8_str_visible_length(line)
+				if length + ln_len > cursor_pos {
 					cursor_x = cursor_pos - length
 					cursor_y = idx
 					break
 				}
-				length += ln.len
+				length += ln_len
 			}
 			// edge condition. Algorithm misses the
 			// last character of the last line.

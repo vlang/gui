@@ -31,6 +31,14 @@ mut:
 	content []View // not used
 }
 
+fn (t &TextView) free() {
+	unsafe {
+		t.id.free()
+		t.text.free()
+		t.text_style.free()
+	}
+}
+
 fn (t &TextView) generate(mut window Window) Layout {
 	if t.invisible {
 		return Layout{}
@@ -102,6 +110,14 @@ pub:
 	tab_size   u32 = 4
 	text       string
 	text_style TextStyle = gui_theme.text_style
+}
+
+fn (t &TextCfg) free() {
+	unsafe {
+		t.id.free()
+		t.text.free()
+		t.text_style.free()
+	}
 }
 
 // text is a general purpose text renderer. Use it for labels or larger
@@ -196,12 +212,12 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 		}
 	}
 	if count == -1 {
-		count = int_max(0, line.runes().len)
+		count = int_max(0, utf8_str_visible_length(line))
 	}
-	count = int_min(count, line.runes().len)
+	count = int_min(count, utf8_str_visible_length(line))
 	for i, l in shape.text_lines {
 		if i < y {
-			count += l.runes().len
+			count += utf8_str_visible_length(l)
 		}
 	}
 	return count
