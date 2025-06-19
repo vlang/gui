@@ -36,7 +36,7 @@ if files.len == 0 {
 mut errors := []string{}
 for file in files {
 	_, name, _ := split_path(file)
-	output_file := join_path(output_dir, name)	
+	output_file := join_path(output_dir, name)
 	cmd := 'v -prod -o ${output_file:-22s} ${file:-50s}'
 	print(cmd)
 	result := execute(cmd)
