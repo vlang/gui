@@ -19,26 +19,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  fmt:
+  linting:
     runs-on: ubuntu-latest
-
     steps:
       - name: Install V
         id: install-v
         uses: vlang/setup-v@v1.4
         with:
           check-latest: true
+      - name: Checkout the gui module
+        uses: actions/checkout@v4
+        with:
+          path: gui
+      - name: Verify formatting
+        run: v fmt -verify -inprocess gui/
+      - name: Check formatting of MD files
+        run: v check-md gui/
+      - name: Check compilation of examples
+        run: v gui/examples/_check.vsh
 
+  compiling-with-prod:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install V
+        id: install-v
+        uses: vlang/setup-v@v1.4
+        with:
+          check-latest: true
       - name: Checkout the gui module
         uses: actions/checkout@v4
         with:
           path: gui
 
-      - name: Verify formatting
-        run: v fmt -verify -inprocess gui/
-
-      - name: Check formatting of MD files
-        run: v check-md gui/
-
-      - name: Check compilation of examples
-        run: v gui/examples/_check.vsh
+      - name: Check compilation of examples with -prod
+        run: v gui/examples/_build.vsh
