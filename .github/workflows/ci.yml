@@ -29,14 +29,16 @@ jobs:
         with:
           check-latest: true
 
-      - name: Checkout v-analyzer
+      - name: Checkout the gui module
         uses: actions/checkout@v4
+        with:
+          path: gui
 
       - name: Verify formatting
-        run: v fmt -verify .
+        run: v fmt -verify -inprocess gui/
 
       - name: Check formatting of MD files
-        run: v check-md .
+        run: v check-md gui/
 
       - name: Check compilation of examples
-        run: v examples/_check.vsh
+        run: v gui/examples/_check.vsh
