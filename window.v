@@ -21,7 +21,7 @@ mut:
 	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	//
 	update_window_calls               int
-	max_update_window_calls_per_frame int = 1
+	max_update_window_calls_per_frame int = int($d('max_update_window_calls_per_frame', 1))
 }
 
 // Window is the application window. The state parameter is a reference to where
