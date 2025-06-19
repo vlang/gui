@@ -21,7 +21,7 @@ mut:
 	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	//
 	update_window_calls               int
-	max_update_window_calls_per_frame int = int($d('max_update_window_calls_per_frame', 1))
+	max_update_window_calls_per_frame int = int($d('max_update_window_calls_per_frame', 2)) // 2 is a compromise between perceived latency of typing in apps like form_demo.v (higher is better), and reduced latency and lower CPU usage in apps like fonts.v (lower is better, especially on slow CPUs)
 }
 
 // Window is the application window. The state parameter is a reference to where
