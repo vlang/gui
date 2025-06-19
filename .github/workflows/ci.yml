@@ -21,6 +21,7 @@ concurrency:
 jobs:
   linting:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Install V
         id: install-v
@@ -40,6 +41,7 @@ jobs:
 
   compiling-with-prod:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - name: Install V
         id: install-v
@@ -50,6 +52,5 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: gui
-
       - name: Check compilation of examples with -prod
         run: v gui/examples/_build.vsh
