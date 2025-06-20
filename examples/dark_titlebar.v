@@ -1,4 +1,5 @@
 import gui
+import gui.titlebar
 
 @[heap]
 struct DropFilesApp {
@@ -14,7 +15,7 @@ fn main() {
 		on_init:  fn (mut w gui.Window) {
 			w.update_view(main_view)
 			$if windows {
-				titlebar.prefer_dark_titlebar(nil, true)
+				titlebar.prefer_dark_titlebar(nil, true) // todo get handle from window
 			}
 		}
 		on_event: on_event_handler
