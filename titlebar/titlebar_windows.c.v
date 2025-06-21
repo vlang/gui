@@ -1,7 +1,7 @@
 module titlebar
 
 $if windows {
-	#include "@VMODROOT/titlebar/gui_window.h"
+	#include "@DIR/gui_window.h"
 	#flag windows -ldwmapi
 }
 
