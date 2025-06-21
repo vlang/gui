@@ -9,7 +9,7 @@ fn main() {
 		width:   500
 		height:  300
 		on_init: fn (mut w gui.Window) {
-			titlebar.prefer_dark_titlebar(true)
+			titlebar.set_dark_titlebar(true)
 		}
 	)
 	window.set_theme(gui.theme_dark_bordered)
