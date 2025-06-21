@@ -4,12 +4,6 @@ import gui.titlebar
 // set Windows window bar as dark color
 // =============================
 
-@[heap]
-struct DropFilesApp {
-pub mut:
-	dropped_files []string
-}
-
 fn main() {
 	mut window := gui.window(
 		state:   &DropFilesApp{}
