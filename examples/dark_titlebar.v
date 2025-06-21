@@ -1,5 +1,6 @@
 import gui
 import gui.titlebar
+import sokol.sapp
 
 // set Windows window bar as dark color
 // =============================
@@ -10,7 +11,7 @@ fn main() {
 		height:  300
 		on_init: fn (mut w gui.Window) {
 			$if windows {
-				titlebar.prefer_dark_titlebar(nil, true) // todo get handle from window
+				titlebar.prefer_dark_titlebar(sapp.win32_get_hwnd(), true)
 			}
 		}
 	)
