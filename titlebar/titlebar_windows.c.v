@@ -1,7 +1,7 @@
 module titlebar
 
 $if windows {
-	#include "@DIR/titlebar_window.h"
+	#include "@DIR/titlebar_windows.h"
 	#flag windows -ldwmapi
 }
 
