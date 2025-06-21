@@ -20,7 +20,11 @@ concurrency:
 
 jobs:
   linting:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: true
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - name: Install V
@@ -40,8 +44,11 @@ jobs:
         run: v gui/examples/_check.vsh
 
   compiling-with-prod:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+      fail-fast: true
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Install V
         id: install-v
@@ -49,6 +56,7 @@ jobs:
         with:
           check-latest: true
       - name: Install X11/GL development dependencies (headers and libs)
+        if: runner.os == 'Linux'
         run: v retry -- sudo apt install libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
       - name: Checkout the gui module
         uses: actions/checkout@v4
