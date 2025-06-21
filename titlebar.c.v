@@ -2,7 +2,13 @@ module gui
 
 import sokol.sapp
 
-#flag windows -ldwmapi
+$if windows {
+	$if tinyc {
+		$compile_error('tcc does not support linking to dwmapi for now, use `-cc msvc` or `-cc gcc` instead')
+	}
+	#include <dwmapi.h>
+	#flag -ldwmapi
+}
 
 // HRESULT DwmSetWindowAttribute(HWND handle, int attr, int* isDarkMode, int size);
 fn C.DwmSetWindowAttribute(voidptr, u32, &u8, u32)
