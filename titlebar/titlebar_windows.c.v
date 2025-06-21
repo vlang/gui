@@ -7,8 +7,6 @@ $if windows {
 
 fn C.gui_prefer_dark_titlebar(voidptr, bool)
 
-pub fn prefer_dark_titlebar(handle voidptr, dark bool) { // only windows
-	$if windows {
-		C.gui_prefer_dark_titlebar(handle, dark)
-	}
+pub fn prefer_dark_titlebar(handle voidptr, dark bool) {
+	C.gui_prefer_dark_titlebar(handle, dark)
 }
