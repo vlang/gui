@@ -48,7 +48,7 @@ jobs:
   compiling-with-prod:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
       fail-fast: true
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
@@ -63,6 +63,26 @@ jobs:
       - name: Install X11/GL development dependencies (headers and libs)
         if: runner.os == 'Linux'
         run: v retry -- sudo apt install libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
+      - name: Checkout the gui module
+        uses: actions/checkout@v4
+        with:
+          path: gui
+      - name: Check compilation of examples
+        run: v should-compile-all gui/examples/
+      - name: Check compilation of examples with -prod
+        run: v gui/examples/_build.vsh
+
+  compiling-with-prod-on-windows:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      VFLAGS: -no-parallel -cc msvc
+    steps:
+      - name: Install V
+        id: install-v
+        uses: vlang/setup-v@v1.4
+        with:
+          check-latest: true
       - name: Checkout the gui module
         uses: actions/checkout@v4
         with:
