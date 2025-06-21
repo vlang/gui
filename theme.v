@@ -83,6 +83,7 @@ pub:
 	color_border     Color  = color_border_dark     // borders
 	color_select     Color  = color_select_dark     // links and selected
 	color_text       Color  = color_text_dark       // text color of course
+	titlebar_dark    bool
 
 	button_style       ButtonStyle
 	container_style    ContainerStyle
@@ -268,15 +269,16 @@ pub:
 pub struct ThemeCfg {
 pub:
 	name               string @[required]
-	color_background   Color     = color_background_dark
-	color_panel        Color     = color_panel_dark
-	color_interior     Color     = color_interior_dark
-	color_hover        Color     = color_hover_dark
-	color_focus        Color     = color_focus_dark
-	color_active       Color     = color_active_dark
-	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_select_dark
-	color_select       Color     = color_select_dark
+	color_background   Color = color_background_dark
+	color_panel        Color = color_panel_dark
+	color_interior     Color = color_interior_dark
+	color_hover        Color = color_hover_dark
+	color_focus        Color = color_focus_dark
+	color_active       Color = color_active_dark
+	color_border       Color = color_border_dark
+	color_border_focus Color = color_select_dark
+	color_select       Color = color_select_dark
+	titlebar_dark      bool
 	fill               bool      = true
 	fill_border        bool      = true
 	padding            Padding   = padding_medium
@@ -324,6 +326,7 @@ pub const theme_dark_cfg = ThemeCfg{
 	color_border:       color_border_dark
 	color_border_focus: color_select_dark
 	color_select:       color_select_dark
+	titlebar_dark:      true
 	text_style:         text_style_dark
 }
 pub const theme_dark = theme_maker(theme_dark_cfg)
@@ -399,6 +402,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		color_active:     cfg.color_active
 		color_border:     cfg.color_border
 		color_select:     cfg.color_select
+		titlebar_dark:    cfg.titlebar_dark
 
 		button_style:       ButtonStyle{
 			color:              cfg.color_interior

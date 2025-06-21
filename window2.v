@@ -252,12 +252,8 @@ pub fn (mut window Window) set_mouse_cursor_resize_nwse() {
 // set_theme sets the current theme to the given theme.
 // GUI has two builtin themes. theme_dark, theme_light
 pub fn (mut window Window) set_theme(theme Theme) {
-	match theme.name {
-		'dark' { set_mode(true) }
-		'light' { set_mode(false) }
-		else {}
-	}
 	gui_theme = theme
+	titlebar_dark(theme.titlebar_dark)
 	window.set_color_background(theme.color_background)
 }
 
