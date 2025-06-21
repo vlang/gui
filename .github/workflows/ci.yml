@@ -22,6 +22,8 @@ jobs:
   linting:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      VFLAGS: -no-parallel
     steps:
       - name: Install V
         id: install-v
@@ -50,6 +52,8 @@ jobs:
       fail-fast: true
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
+    env:
+      VFLAGS: -no-parallel
     steps:
       - name: Install V
         id: install-v
