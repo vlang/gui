@@ -1,9 +1,7 @@
 module titlebar
 
-$if windows {
-	#include "@DIR/titlebar_windows.h"
-	#flag windows -ldwmapi
-}
+#include "@DIR/titlebar_windows.h"
+#flag windows -ldwmapi
 
 fn C.gui_prefer_dark_titlebar(voidptr, bool)
 
