@@ -3,6 +3,7 @@ module gui
 import gg
 import sokol.sapp
 import time
+import gui.titlebar
 
 fn (mut window Window) blinky_cursor_animation() {
 	window.animation_add(mut Animate{
@@ -137,7 +138,7 @@ pub fn (window &Window) pointer_over_app(e &Event) bool {
 // to lock when updating the app model from other threads. Locking twice
 // in the same thread results in a dead lock or panic. Use with caution.
 // Call [unlock](#unlock) to unlock.
-pub fn (mut window Window) lock() {
+pub fn (mut window Window) @lock() {
 	window.mutex.lock()
 }
 
@@ -252,6 +253,11 @@ pub fn (mut window Window) set_mouse_cursor_resize_nwse() {
 // set_theme sets the current theme to the given theme.
 // GUI has two builtin themes. theme_dark, theme_light
 pub fn (mut window Window) set_theme(theme Theme) {
+	match theme.name {
+		'dark' { titlebar.set_mode(true) }
+		'light' { titlebar.set_mode(false) }
+		else {}
+	}
 	gui_theme = theme
 	window.set_color_background(theme.color_background)
 }
