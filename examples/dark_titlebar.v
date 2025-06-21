@@ -1,7 +1,6 @@
 import gui
-import gui.titlebar
 
-// set Windows window bar as dark color
+// set Windows window bar as dark color with dark theme
 // =============================
 
 fn main() {
