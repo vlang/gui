@@ -3,7 +3,6 @@ module gui
 import gg
 import sokol.sapp
 import time
-import gui.titlebar
 
 fn (mut window Window) blinky_cursor_animation() {
 	window.animation_add(mut Animate{
@@ -254,8 +253,8 @@ pub fn (mut window Window) set_mouse_cursor_resize_nwse() {
 // GUI has two builtin themes. theme_dark, theme_light
 pub fn (mut window Window) set_theme(theme Theme) {
 	match theme.name {
-		'dark' { titlebar.set_mode(true) }
-		'light' { titlebar.set_mode(false) }
+		'dark' { set_mode(true) }
+		'light' { set_mode(false) }
 		else {}
 	}
 	gui_theme = theme
