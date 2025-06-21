@@ -6,7 +6,6 @@ import gui.titlebar
 
 fn main() {
 	mut window := gui.window(
-		state:   &DropFilesApp{}
 		width:   500
 		height:  300
 		on_init: fn (mut w gui.Window) {
