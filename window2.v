@@ -3,7 +3,7 @@ module gui
 import gg
 import sokol.sapp
 import time
-import titlebar
+import gui.titlebar
 
 fn (mut window Window) blinky_cursor_animation() {
 	window.animation_add(mut Animate{
@@ -138,7 +138,7 @@ pub fn (window &Window) pointer_over_app(e &Event) bool {
 // to lock when updating the app model from other threads. Locking twice
 // in the same thread results in a dead lock or panic. Use with caution.
 // Call [unlock](#unlock) to unlock.
-pub fn (mut window Window) lock() {
+pub fn (mut window Window) @lock() {
 	window.mutex.lock()
 }
 
