@@ -201,7 +201,7 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	line := shape.text_lines[y]
 	mut ln := ''
 	mut count := -1
-	for i, r in line.runes() {
+	for i, r in line.runes_iterator() {
 		ln += r.str()
 		tw := get_text_width(ln, shape.text_style, mut w)
 		if tw > e.mouse_x {
@@ -324,7 +324,7 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 					if count > beg {
 						buffer << ` `
 					}
-					for r in line.runes() {
+					for r in line.runes_iterator() {
 						if count >= end {
 							break
 						}
