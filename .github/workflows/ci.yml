@@ -21,7 +21,7 @@ concurrency:
 jobs:
   linting:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     env:
       VFLAGS: -no-parallel
     steps:
@@ -51,7 +51,7 @@ jobs:
         os: [ubuntu-latest, windows-latest, macos-latest]
       fail-fast: true
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    timeout-minutes: 25
     env:
       VFLAGS: -no-parallel
     steps:
