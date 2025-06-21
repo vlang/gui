@@ -254,8 +254,8 @@ pub fn (mut window Window) set_mouse_cursor_resize_nwse() {
 // GUI has two builtin themes. theme_dark, theme_light
 pub fn (mut window Window) set_theme(theme Theme) {
 	match theme.name {
-		'dark' { titlebar.set_dark_titlebar(true) }
-		'light' { titlebar.set_dark_titlebar(false) }
+		'dark' { titlebar.set_dark_mode(true) }
+		'light' { titlebar.set_dark_mode(false) }
 		else {}
 	}
 	gui_theme = theme

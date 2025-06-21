@@ -1,3 +1,3 @@
 module titlebar
 
-pub fn prefer_dark_titlebar(handle voidptr, dark bool) {}
+pub fn set_dark_mode(dark bool) {}
