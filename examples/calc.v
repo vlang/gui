@@ -52,6 +52,7 @@ fn main_view(mut w gui.Window) gui.View {
 		sizing:  gui.fill_fit
 		h_align: .end
 		padding: gui.padding_small
+		radius:  0
 		content: [
 			gui.text(
 				text:       app.text

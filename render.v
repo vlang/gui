@@ -63,6 +63,22 @@ fn renderers_draw(renderers []Renderer, window &Window) {
 fn renderer_draw(renderer Renderer, window &Window) {
 	ctx := window.ui
 	match renderer {
+		DrawRect {
+			if renderer.style == .fill {
+				draw_rounded_rect_filled(renderer.x, renderer.y, renderer.w, renderer.h,
+					renderer.radius, renderer.color, ctx)
+			} else {
+				draw_rounded_rect_empty(renderer.x, renderer.y, renderer.w, renderer.h,
+					renderer.radius, renderer.color, ctx)
+			}
+		}
+		DrawText {
+			ctx.draw_text(int(renderer.x), int(renderer.y), renderer.text, renderer.cfg)
+		}
+		DrawClip {
+			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
+				ctx.scale * renderer.height, true)
+		}
 		DrawCircle {
 			if renderer.fill {
 				ctx.draw_circle_filled(renderer.x, renderer.y, renderer.radius, renderer.color)
@@ -70,22 +86,12 @@ fn renderer_draw(renderer Renderer, window &Window) {
 				ctx.draw_circle_empty(renderer.x, renderer.y, renderer.radius, renderer.color)
 			}
 		}
-		DrawRect {
-			ctx.draw_rect(renderer)
-		}
-		DrawText {
-			ctx.draw_text(int(renderer.x), int(renderer.y), renderer.text, renderer.cfg)
-		}
 		DrawImage {
 			ctx.draw_image(renderer.x, renderer.y, renderer.w, renderer.h, renderer.img)
 		}
 		DrawLine {
 			ctx.draw_line_with_config(renderer.x, renderer.y, renderer.x1, renderer.y1,
 				renderer.cfg)
-		}
-		DrawClip {
-			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
-				ctx.scale * renderer.height, true)
 		}
 		DrawNone {}
 	}
@@ -237,7 +243,7 @@ fn render_circle(mut shape Shape, mut renderers []Renderer, clip DrawClip, windo
 	}
 }
 
-// draw_rectangle draws a shape as a rectangle.
+// render_rectangle draw_rectangle draws a shape as a rectangle.
 fn render_rectangle(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
 	assert shape.type == .rectangle
 	draw_rect := gg.Rect{
