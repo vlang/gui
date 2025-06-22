@@ -4,9 +4,10 @@ import sokol.sapp
 
 $if windows {
 	$if tinyc {
-		$compile_error('tcc does not support linking to dwmapi for now, use `-cc msvc` or `-cc gcc` instead')
+		#include <windows.h>
+	} $else {
+		#include <dwmapi.h>
 	}
-	#include <dwmapi.h>
 	#flag -ldwmapi
 }
 
