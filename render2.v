@@ -195,7 +195,7 @@ fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gx.Color, c
 	// Note: test on native windows, macos, and linux if you need to change the offset literal here,
 	// with `v run vlib/gg/testdata/draw_rounded_rect_empty.vv` . Using 1 here, looks good on windows,
 	// and on linux with LIBGL_ALWAYS_SOFTWARE=true, but misaligned on native macos and linux.
-	$if macos {
+	$if macos || linux {
 		sgl.v2f(lbx, lby + r)
 		sgl.v2f(rbx, rby + r)
 	} $else {
@@ -204,7 +204,7 @@ fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gx.Color, c
 	}
 
 	// left
-	$if macos {
+	$if macos || linux {
 		sgl.v2f(sx, lty)
 		sgl.v2f(sx, lby)
 	} $else {
