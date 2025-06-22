@@ -37,8 +37,8 @@ fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gx.Color, 
 	lby := rby
 
 	// calc radians
-	mut dxs := []f32{len: 32}
-	mut dys := []f32{len: 32}
+	mut dxs := [32]f32{}
+	mut dys := [32]f32{}
 	for i in 0 .. 31 {
 		rad := f32(math.radians(i * 3))
 		dxs[i] = r * math.cosf(rad)
@@ -145,8 +145,8 @@ fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gx.Color, c
 	lby := rby
 
 	// calc radians
-	mut dxs := []f32{len: 32}
-	mut dys := []f32{len: 32}
+	mut dxs := [32]f32{}
+	mut dys := [32]f32{}
 	for i in 0 .. 31 {
 		rad := f32(math.radians(i * 3))
 		dxs[i] = r * math.cosf(rad)

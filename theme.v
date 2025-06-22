@@ -82,7 +82,6 @@ pub:
 	color_active     Color  = color_active_dark     // use for clicks and other activity tasks
 	color_border     Color  = color_border_dark     // borders
 	color_select     Color  = color_select_dark     // links and selected
-	color_text       Color  = color_text_dark       // text color of course
 	titlebar_dark    bool
 
 	button_style       ButtonStyle

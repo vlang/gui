@@ -77,7 +77,7 @@ fn empty_view(window &Window) View {
 // Use in EventType.dropped_files. See `drop_files_demo.v` in examples.
 pub fn (window &Window) get_dropped_file_paths() []string {
 	len := sapp.get_num_dropped_files()
-	mut paths := []string{len: len}
+	mut paths := []string{cap: len}
 	for i in 0 .. len {
 		paths << sapp.get_dropped_file_path(i)
 	}

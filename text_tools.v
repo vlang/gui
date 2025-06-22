@@ -15,8 +15,8 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 
 	htx := fnv1a.sum32_struct(text_style).str()
 	defer { unsafe { htx.free() } }
 	text_htx := text + htx
-	defer { unsafe { text_htx.free() } }
-	key := fnv1a.sum32_string(text + htx)
+	key := fnv1a.sum32_string(text_htx)
+	unsafe { text_htx.free() }
 	return window.view_state.text_widths[key] or {
 		cfg := text_style.to_text_cfg()
 		window.ui.set_text_cfg(cfg)

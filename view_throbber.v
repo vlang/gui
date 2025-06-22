@@ -4,7 +4,7 @@ module gui
 pub struct ThrobberCfg {
 pub:
 	id    string
-	color Color  = gui_theme.color_text
+	color Color  = gui_theme.text_style.color
 	icon1 string = icon_elipsis_h // icon1 used to measure for min_width
 	icon2 string = icon_elipsis_v
 	size  u32    = u32(gui_theme.size_text_medium)

@@ -70,7 +70,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	return layouts
 }
 
-// layout_pipeline makes multple passes over the layout.
+// layout_pipeline makes multiple passes over the layout.
 // Multiple passes actually simplify many of the layout
 // calculations by only dealing with one axis of
 // expansion/contraction at a time. Same for scroll offsets
