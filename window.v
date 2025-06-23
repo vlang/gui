@@ -3,6 +3,7 @@ module gui
 import gg
 import sokol.sapp
 import sync
+import log
 
 @[heap]
 pub struct Window {
@@ -69,10 +70,14 @@ pub:
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	samples             u32                         = 2 // MSAA sample count; rounded courners of buttons with 0 and 1 look jagged on linux/windows
+	log_level           log.Level
 }
 
 // window creates the application window. See [WindowCfg](#WindowCfg) on how to configure it
 pub fn window(cfg &WindowCfg) &Window {
+	log.set_level(cfg.log_level)
+	log.set_always_flush(true)
+
 	mut window := &Window{
 		state:    cfg.state
 		on_event: cfg.on_event

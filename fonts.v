@@ -1,5 +1,6 @@
 module gui
 
+import log
 import os
 import os.font
 
@@ -21,27 +22,27 @@ pub const font_file_icon = os.join_path(os.data_dir(), 'gui_feathericon.ttf')
 fn initialize_fonts() {
 	if !os.exists(font_file_regular) {
 		os.write_file(font_file_regular, $embed_file('assets/DejaVuSans-Regular.ttf').to_string()) or {
-			log(err)
+			log.error(err.msg())
 		}
 	}
 	if !os.exists(font_file_bold) {
 		os.write_file(font_file_bold, $embed_file('assets/DejaVuSans-Bold.ttf').to_string()) or {
-			log(err)
+			log.error(err.msg())
 		}
 	}
 	if !os.exists(font_file_italic) {
 		os.write_file(font_file_italic, $embed_file('assets/DejaVuSans-Italic.ttf').to_string()) or {
-			log(err)
+			log.error(err.msg())
 		}
 	}
 	if !os.exists(font_file_mono) {
 		os.write_file(font_file_mono, $embed_file('assets/DejaVuSans-Mono.ttf').to_string()) or {
-			log(err)
+			log.error(err.msg())
 		}
 	}
 	if !os.exists(font_file_icon) {
 		os.write_file(font_file_icon, $embed_file('assets/feathericon.ttf').to_string()) or {
-			log(err)
+			log.error(err.msg())
 		}
 	}
 }
