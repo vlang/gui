@@ -33,7 +33,6 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// stopwatch := time.new_stopwatch()
 	// defer { println(stopwatch.elapsed()) }
 
-	mut layouts := [layout]
 	// Set the parents of all the nodes. This is used to
 	// compute relative floating layout coordinates
 	layout_parents(mut layout, unsafe { nil })
@@ -56,6 +55,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 
 	// Compute the layout without the floating elements.
 	layout_pipeline(mut layout, mut window)
+	mut layouts := [layout]
 
 	// Compute the floating layouts. Because they are appended to
 	// the layout array, they get rendered after the main layout.

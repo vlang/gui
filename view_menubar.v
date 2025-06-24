@@ -80,13 +80,13 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 				spacing: cfg.spacing
 				sizing:  cfg.sizing
 				radius:  cfg.radius
-				content: menu_build(cfg, 0, cfg.items, window)
+				content: menubar_build(cfg, 0, cfg.items, window)
 			),
 		]
 	)
 }
 
-fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
+fn menubar_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
 	mut content := []View{}
 	id_selected := window.view_state.menu_state[cfg.id_focus]
 	sizing := if level == 0 { fit_fit } else { fill_fit }
@@ -141,7 +141,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 							padding: cfg.padding_submenu
 							spacing: cfg.spacing_submenu
 							sizing:  fill_fill
-							content: menu_build(cfg, level + 1, item.submenu, window)
+							content: menubar_build(cfg, level + 1, item.submenu, window)
 						),
 					]
 				)
@@ -154,7 +154,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 }
 
 fn is_selected_in_tree(submenu []MenuItemCfg, id_selected string) bool {
-	// This is how menebar knows to highlight the intermediate menu-items
+	// This is how menubar knows to highlight the intermediate menu-items
 	// leading up to an open submenu.
 	for menu in submenu {
 		if menu.id.len > 0 && menu.id == id_selected {
@@ -179,12 +179,12 @@ fn (cfg &MenubarCfg) on_hover_submenu(mut node Layout, mut _ Event, mut w Window
 	// When the mouse moves outside a submenu it should unselect the
 	// item in the submenu. This is a subtle behavior in mouse/menu
 	// interactions I never noticed until designing this. To unselect
-	// the item in the submenu you select teh subemnu's parent menu item.
+	// the item in the submenu you select teh submenu's parent menu item.
 	// The parent menu-item id is the id of the submenu. In addition,
-	// the unselect logic is only triggred when the menu item is a leaf
+	// the unselect logic is only triggered when the menu item is a leaf
 	// item. We know this because the selected menu item has no submenu.
 	//
-	// This is hard to follow because there are two trees invovled. The
+	// This is hard to follow because there are two trees involved. The
 	// MenubarCfg tree and the Layout tree.
 	id_selected := w.view_state.menu_state[cfg.id_focus]
 	has_selected := descendant_has_id(node, id_selected)
