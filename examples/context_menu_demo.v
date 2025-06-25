@@ -8,6 +8,8 @@ import gui
 // the triggering and hiding events, as well as the position of the
 // context menu.
 
+const id_focus_context_menu = 100
+
 @[heap]
 struct ContextMenuApp {
 pub mut:
@@ -56,12 +58,7 @@ fn main_view(mut window gui.Window) gui.View {
 						float:         true
 						float_anchor:  .bottom_left
 						float_tie_off: .top_left
-						id_focus:      100
-						action:        fn (id string, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[ContextMenuApp]()
-							app.select_menu_id = id
-							app.show_context_menu = false
-						}
+						id_focus:      id_focus_context_menu
 						items:         [
 							gui.menu_item_text('here', 'Here'),
 							gui.menu_item_text('there', 'There'),
@@ -73,6 +70,11 @@ fn main_view(mut window gui.Window) gui.View {
 							gui.menu_separator(),
 							gui.menu_item_text('exit', 'Exit'),
 						]
+						action:        fn (id string, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[ContextMenuApp]()
+							app.select_menu_id = id
+							app.show_context_menu = false
+						}
 					),
 				]
 				// ---------------------------------------------------------
@@ -82,13 +84,14 @@ fn main_view(mut window gui.Window) gui.View {
 					mut app := w.state[ContextMenuApp]()
 					if e.mouse_button == .right {
 						app.show_context_menu = true
+						w.set_id_focus(id_focus_context_menu)
 						e.is_handled = true
 					}
 				}
 			),
 		]
 		// ------------------------------------------
-		// clicking anywhere else closes context menu
+		// Clicking anywhere else closes context menu
 		// ------------------------------------------
 		on_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[ContextMenuApp]()

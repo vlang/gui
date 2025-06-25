@@ -2,6 +2,10 @@ module gui
 
 import datatypes
 
+// menu creates a columnar menu. Originally, this was part of menubar and only
+// later was separated out. For this reason, it still uses [MenubarCfg](#MenuBarCfg).
+// See `examples/context_menu_demo.v` for an example of how to use `menu`.
+// Apologies to future me...
 pub fn (mut window Window) menu(cfg MenubarCfg) View {
 	if cfg.id_focus == 0 {
 		panic('MenubarCfg.id_focus must be non-zero')
@@ -33,18 +37,14 @@ pub fn (mut window Window) menu(cfg MenubarCfg) View {
 				spacing: cfg.spacing_submenu
 				sizing:  cfg.sizing
 				radius:  cfg.radius
-				content: menu_build(cfg, 1, cfg.items, mut window)
+				content: menu_build(cfg, 1, cfg.items, window)
 			),
 		]
 	)
 }
 
-fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, mut window Window) []View {
+fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
 	mut content := []View{}
-	if window.view_state.menu_state[cfg.id_focus] == '' {
-		window.view_state.menu_state[cfg.id_focus] = items[0].id
-		window.set_id_focus(cfg.id_focus)
-	}
 	id_selected := window.view_state.menu_state[cfg.id_focus]
 	sizing := if level == 0 { fit_fit } else { fill_fit }
 	for item in items {
@@ -98,7 +98,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, mut window Window)
 							padding: cfg.padding_submenu
 							spacing: cfg.spacing_submenu
 							sizing:  fill_fill
-							content: menu_build(cfg, level + 1, item.submenu, mut window)
+							content: menu_build(cfg, level + 1, item.submenu, window)
 						),
 					]
 				)
@@ -108,4 +108,76 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, mut window Window)
 		content << mi
 	}
 	return content
+}
+
+fn (cfg &MenubarCfg) amend_layout_menubar(mut node Layout, mut w Window) {
+	// If the menubar does not have focus, it can't have a selected menu-item.
+	if !w.is_focus(cfg.id_focus) {
+		w.view_state.menu_state[cfg.id_focus] = ''
+		return
+	}
+}
+
+fn (cfg &MenubarCfg) on_hover_submenu(mut node Layout, mut _ Event, mut w Window) {
+	// When the mouse moves outside a submenu it should unselect the
+	// item in the submenu. This is a subtle behavior in mouse/menu
+	// interactions I never noticed until designing this. To unselect
+	// the item in the submenu you select teh submenu's parent menu item.
+	// The parent menu-item id is the id of the submenu. In addition,
+	// the unselect logic is only triggered when the menu item is a leaf
+	// item. We know this because the selected menu item has no submenu.
+	//
+	// This is hard to follow because there are two trees involved. The
+	// MenubarCfg tree and the Layout tree.
+	id_selected := w.view_state.menu_state[cfg.id_focus]
+	has_selected := descendant_has_id(node, id_selected)
+	if has_selected {
+		ctx := w.context()
+		if !node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+			if mi_cfg := find_menu_item_cfg(cfg.items, id_selected) {
+				if mi_cfg.submenu.len == 0 {
+					w.view_state.menu_state[cfg.id_focus] = node.shape.id
+				}
+			}
+		}
+	}
+}
+
+fn descendant_has_id(node Layout, id string) bool {
+	if node.shape.id == id {
+		return true
+	}
+	for child in node.children {
+		if descendant_has_id(child, id) {
+			return true
+		}
+	}
+	return false
+}
+
+fn find_menu_item_cfg(items []MenuItemCfg, id string) ?MenuItemCfg {
+	for item in items {
+		if item.id == id {
+			return item
+		}
+		if itm := find_menu_item_cfg(item.submenu, id) {
+			return itm
+		}
+	}
+	return none
+}
+
+fn check_menu_ids(items []MenuItemCfg, mut ids datatypes.Set[string]) ?string {
+	for item in items {
+		if ids.exists(item.id) {
+			return item.id
+		}
+		if item.id !in [menu_separator_id, menu_subtitle_id] {
+			ids.add(item.id)
+		}
+		if id := check_menu_ids(item.submenu, mut ids) {
+			return id
+		}
+	}
+	return none
 }
