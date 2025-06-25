@@ -158,7 +158,7 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 					} else {
 						if cfg.mode != .single_line {
 							text = cfg.insert('\n', mut w) or {
-								eprintln(err)
+								log(err)
 								return
 							}
 						}
@@ -169,7 +169,7 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 				}
 				else {
 					text = cfg.insert(rune(c).str(), mut w) or {
-						eprintln(err)
+						log(err)
 						return
 					}
 				}
