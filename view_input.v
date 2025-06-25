@@ -158,18 +158,18 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 					} else {
 						if cfg.mode != .single_line {
 							text = cfg.insert('\n', mut w) or {
-								log(err)
+								log.error(err.msg())
 								return
 							}
 						}
 					}
 				}
-				0...0x1F { // non-printables
+				0...0x1F { // non-printable
 					return
 				}
 				else {
 					text = cfg.insert(rune(c).str(), mut w) or {
-						log(err)
+						log.error(err.msg())
 						return
 					}
 				}
@@ -243,7 +243,7 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		cursor_pos = text.len
 	} else if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
-		if beg >= text.len || end >= text.len {
+		if beg >= text.len || end > text.len {
 			return error('beg or end out of range (insert)')
 		}
 		text = text[..beg] + s + text[end..]
