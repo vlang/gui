@@ -146,7 +146,11 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 					text = cfg.delete(mut w, false) or { return }
 				}
 				del_char {
-					text = cfg.delete(mut w, true) or { return }
+					$if macos {
+						text = cfg.delete(mut w, false) or { return }
+					} $else {
+						text = cfg.delete(mut w, true) or { return }
+					}
 				}
 				cr_char, lf_char {
 					if cfg.on_enter != unsafe { nil } {
