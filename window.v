@@ -70,7 +70,13 @@ pub:
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	samples             u32                         = 2 // MSAA sample count; rounded courners of buttons with 0 and 1 look jagged on linux/windows
-	log_level           log.Level
+	log_level           log.Level = default_log_level()
+}
+
+fn default_log_level() log.Level {
+	tag := $d('gui_window_log_level', 'disabled')
+	res := log.level_from_tag(tag) or { log.Level.disabled }
+	return res
 }
 
 // window creates the application window. See [WindowCfg](#WindowCfg) on how to configure it
