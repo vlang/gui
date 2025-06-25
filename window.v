@@ -70,7 +70,13 @@ pub:
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	samples             u32                         = 2 // MSAA sample count; rounded courners of buttons with 0 and 1 look jagged on linux/windows
-	log_level           log.Level
+	log_level           log.Level                   = default_log_level()
+}
+
+fn default_log_level() log.Level {
+	tag := $d('gui_window_log_level', 'disabled')
+	res := log.level_from_tag(tag) or { log.Level.disabled }
+	return res
 }
 
 // window creates the application window. See [WindowCfg](#WindowCfg) on how to configure it
@@ -112,6 +118,7 @@ fn frame_fn(mut window Window) {
 	window.lock()
 	window.ui.begin()
 	renderers_draw(window.renderers, window)
+	gc_collect()
 	window.ui.end()
 	sapp.set_mouse_cursor(window.view_state.mouse_cursor)
 	$if trace_update_window_calls ? {
@@ -228,8 +235,6 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	defer { window.unlock() }
 
 	window.view_generator = gen_view
-	unsafe { window.layout.free() }
-	unsafe { window.renderers.free() }
 	window.layout = layout
 	window.renderers = renderers
 	window.ui.refresh_ui()
@@ -253,8 +258,6 @@ pub fn (mut window Window) update_window() {
 	window_rect := window.window_rect()
 	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
 
-	unsafe { window.layout.free() }
-	unsafe { window.renderers.free() }
 	window.layout = layout
 	window.renderers = renderers
 	window.ui.refresh_ui()
