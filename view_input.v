@@ -1,5 +1,7 @@
 module gui
 
+import log
+
 pub enum InputMode {
 	single_line
 	multiline
@@ -184,14 +186,14 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 		if input_state.select_beg != input_state.select_end {
 			beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 			if beg >= text.len || end >= text.len {
-				eprintln('beg or end out of range (delete)')
+				log.error('beg or end out of range (delete)')
 				return none
 			}
 			text = text[..beg] or { return none } + text[end..] or { return none }
 			cursor_pos = int_min(int(beg), text.len)
 		} else {
 			if cursor_pos > text.len {
-				eprintln('cursor_pos out of range (insert)')
+				log.error('cursor_pos out of range (insert)')
 				return none
 			}
 			step := if is_delete { 1 } else { 0 }
@@ -275,11 +277,13 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 		if beg >= cfg.text.len || end >= cfg.text.len {
-			eprintln('beg or end out of range (copy)')
+			log.error('beg or end out of range (copy)')
 			return none
 		}
 		cpy := cfg.text[beg..end] or { '' }
-		to_clipboard(cpy)
+		if !cfg.is_password {
+			to_clipboard(cpy)
+		}
 	}
 	return none
 }
