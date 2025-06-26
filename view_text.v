@@ -93,7 +93,6 @@ fn (t &TextView) generate(mut window Window) Layout {
 
 // TextCfg configures a [text](#text) view
 // - [TextMode](#TextMode) controls how text is rendered.
-// - `spacing` parameter is used to increase the space between lines.
 @[heap]
 pub struct TextCfg {
 	is_password        bool

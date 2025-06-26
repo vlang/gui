@@ -9,6 +9,7 @@ doc:
 		nl doc/03-Views.md \
 		nl doc/04-Rows-Columns.md \
 		nl doc/05-Themes-Styles.md \
+		nl doc/06-Fonts.md \
 		> README.md
 	v doc -f html -inline-assets -readme -o ./doc/html .
 	mv README.xx README.md
