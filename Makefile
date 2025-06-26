@@ -2,6 +2,8 @@
 
 doc:
 	printf '\n' > nl
+	printf '\n---' > sp
+
 	mv README.md README.xx
 	cat README.xx \
 	        nl doc/01-Introduction.md \
@@ -10,10 +12,12 @@ doc:
 		nl doc/04-Rows-Columns.md \
 		nl doc/05-Themes-Styles.md \
 		nl doc/06-Fonts.md \
+		sp \
 		> README.md
 	v doc -f html -inline-assets -readme -o ./doc/html .
 	mv README.xx README.md
 	rm nl
+	rm sp
 	cp gui.png doc/html
 
 read:

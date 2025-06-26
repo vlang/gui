@@ -363,7 +363,7 @@ fn layout_fill_widths(mut node Layout) {
 		}
 	} else if node.shape.axis == .top_to_bottom {
 		if node.shape.id_scroll > 0 && node.shape.sizing.width == .fill
-			&& node.shape.scroll_mode != .vertical_only {
+			&& node.shape.scroll_mode != .vertical_only && node.parent.shape.axis != .top_to_bottom {
 			sibling_widths := node.parent.children.filter(it.shape.uid != node.shape.uid).map(it.shape.width)
 			node.shape.width = node.parent.shape.width - arrays.sum(sibling_widths) or { 0 }
 			node.shape.width -= node.parent.spacing()
@@ -515,7 +515,8 @@ fn layout_fill_heights(mut node Layout) {
 		}
 	} else if node.shape.axis == .left_to_right {
 		if node.shape.id_scroll > 0 && node.shape.sizing.height == .fill
-			&& node.shape.scroll_mode != .horizontal_only {
+			&& node.shape.scroll_mode != .horizontal_only
+			&& node.parent.shape.axis != .left_to_right {
 			sibling_heights := node.parent.children.filter(it.shape.uid != node.shape.uid).map(it.shape.height)
 			node.shape.height = node.parent.shape.height - arrays.sum(sibling_heights) or { 0 }
 			node.shape.height -= node.parent.spacing()

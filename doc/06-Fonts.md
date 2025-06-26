@@ -1,7 +1,6 @@
 ----------
 # 6 Fonts 
 ----------
-
 Gui embeds a commercial-free, open-source font named Deja Vu Sans. This
 font is the default family with bold, italic, and monospaced variations.
 Deja Vu Sans has most of the Western Latin-1 characters one expects
@@ -18,13 +17,13 @@ The easiest way is to modify an existing `ThemeCfg`. Here’s an example.
 
 ``` v
 fn create_system_font_theme() gui.Theme {
-    return gui.theme_maker(gui.ThemeCfg{
-       ...gui.theme_dark_bordered_cfg
-       text_style: gui.TextStyle{
-          ...gui.theme_dark_bordered_cfg.text_style
-          family: '' // blank family loads default system font
-       }
-    })
+	return gui.theme_maker(gui.ThemeCfg{
+		...gui.theme_dark_bordered_cfg
+		text_style: gui.TextStyle{
+			...gui.theme_dark_bordered_cfg.text_style
+			family: ''
+		}
+	})
 }
 ```
 
