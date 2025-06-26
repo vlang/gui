@@ -39,11 +39,10 @@ fn main_view(window &gui.Window) gui.View {
 				text:       'Welcome to GUI'
 				text_style: gui.theme().b1
 			),
-			gui.column(
-				width:     w - gui.theme().padding_medium.width()
+			gui.row(
 				id_scroll: 2
 				id_focus:  2
-				sizing:    gui.fixed_fill
+				sizing:    gui.fill_fill
 				content:   [gui.text(text: story, mode: .wrap)]
 			),
 		]
