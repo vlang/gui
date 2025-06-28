@@ -196,6 +196,9 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 			text = text[..beg] or { return none } + text[end..] or { return none }
 			cursor_pos = int_min(int(beg), text.len)
 		} else {
+			if cursor_pos == 0 && !is_delete {
+				return text
+			}
 			if cursor_pos > text.len {
 				log.error('cursor_pos out of range (insert)')
 				return none
