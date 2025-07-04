@@ -154,6 +154,7 @@ fn render_shape(mut shape Shape, mut renderers []Renderer, parent_color Color, c
 		.text { render_text(mut shape, mut renderers, clip, window) }
 		.image { render_image(mut shape, mut renderers, clip, window) }
 		.circle { render_circle(mut shape, mut renderers, clip, window) }
+		.rtf {}
 		.none {}
 	}
 }
@@ -312,7 +313,7 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 			width:  shape.width
 			height: lh
 		}
-		// Cull any renderers outside of clip/conteext region.
+		// Cull any renderers outside of clip/context region.
 		if rects_overlap(clip, draw_rect) && color != color_transparent {
 			mut lnl := line.replace('\n', '')
 			if shape.text_is_password {
