@@ -1,8 +1,7 @@
 module gui
 
-import arrays
-
-pub struct RtfView implements View {
+@[heap]
+struct RtfView implements View {
 pub:
 	id         string
 	id_focus   u32
@@ -18,6 +17,9 @@ pub mut:
 	content []View // required, not uused
 }
 
+// RtfCfg configures a Rich Text View (RTF). RTF's can have
+// multiple type faces, and sizes in a view. Different type
+// faces and sizes are specified as [TextSpan](#TextSpan)s.
 pub struct RtfCfg {
 pub:
 	id         string
@@ -36,9 +38,8 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 		return Layout{}
 	}
 
-	tspans := rtf_simple(rtf.spans, 0, mut window)
-	width := arrays.sum(tspans.map(it.w)) or { 0 }
-	height := arrays.max(tspans.map(it.h)) or { 0 }
+	tspans := rtf_simple(rtf.spans, mut window)
+	width, height := spans_size(tspans)
 
 	shape := Shape{
 		name:       'rtf'
@@ -61,6 +62,7 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 	}
 }
 
+// rtf creates a view specified byte the given [RtfCfg](#RtfCfg)
 pub fn rtf(cfg RtfCfg) RtfView {
 	return RtfView{
 		id:         cfg.id
@@ -73,30 +75,4 @@ pub fn rtf(cfg RtfCfg) RtfView {
 		sizing:     if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 		spans:      cfg.spans
 	}
-}
-
-// rtf_simple wraps only at new lines
-fn rtf_simple(spans []TextSpan, tab_size u32, mut window Window) []TextSpan {
-	mut x := f32(0)
-	mut y := f32(0)
-	mut tspans := []TextSpan{}
-	for span in spans {
-		for i, line in span.text.split('\n') {
-			if i > 0 {
-				x = 0
-				y += span.style.size
-			}
-			width := get_text_width(line, span.style, mut window)
-			tspans << TextSpan{
-				...span
-				x:    x
-				y:    y
-				w:    width
-				h:    span.style.size
-				text: line
-			}
-			x += width
-		}
-	}
-	return tspans
 }
