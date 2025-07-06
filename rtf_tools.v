@@ -4,14 +4,14 @@ module gui
 fn spans_size(spans []TextSpan) (f32, f32) {
 	// A single line can have multiple spans. The start of a line
 	// is when span.x == 0
-	mut total_width := f32(0)
-	mut total_height := f32(0)
+	mut width := f32(0)
+	mut height := f32(0)
 	mut w := f32(0)
 	mut h := f32(0)
 	for span in spans {
 		if span.x == 0 {
-			total_width += w
-			total_height += h
+			width = f32_max(w, width)
+			height += h
 			w = span.w
 			h = span.h
 		} else {
@@ -19,9 +19,9 @@ fn spans_size(spans []TextSpan) (f32, f32) {
 			h = f32_max(h, span.h)
 		}
 	}
-	total_width += w
-	total_height += h
-	return total_width, total_height
+	width = f32_max(w, width)
+	height += h
+	return width, height
 }
 
 // rtf_simple wraps only at new lines. Tabs are not expanded
@@ -50,7 +50,7 @@ fn rtf_simple(spans []TextSpan, mut window Window) []TextSpan {
 	return tspans
 }
 
-fn rtf_wrap_text_shrink_spaces(spans []TextSpan, width f32, tab_size u32, mut window Window) []TextSpan {
+fn rtf_wrap_text(spans []TextSpan, width f32, tab_size u32, mut window Window) []TextSpan {
 	mut x := f32(0)
 	mut y := f32(0)
 	mut h := f32(0)
@@ -82,19 +82,18 @@ fn rtf_wrap_text_shrink_spaces(spans []TextSpan, width f32, tab_size u32, mut wi
 
 				tspan = TextSpan{
 					...span
+					y:    y
 					h:    h
 					text: ''
 				}
 				continue
 			}
-			if field.is_blank() {
-				continue
-			}
 			if tspan.text.len == 0 {
 				tspan.text = field
+				tspan.w = get_text_width(field, tspan.style, mut window)
 				continue
 			}
-			line := tspan.text + ' ' + field
+			line := tspan.text + field
 			line_width := get_text_width(line, tspan.style, mut window)
 			if x + line_width > width {
 				tspan.w = get_text_width(tspan.text, tspan.style, mut window)
@@ -105,8 +104,9 @@ fn rtf_wrap_text_shrink_spaces(spans []TextSpan, width f32, tab_size u32, mut wi
 
 				tspan = TextSpan{
 					...span
+					y:    y
 					h:    h
-					text: line.trim_space()
+					text: field.trim_space_left()
 				}
 			} else {
 				tspan.text = line
@@ -114,5 +114,6 @@ fn rtf_wrap_text_shrink_spaces(spans []TextSpan, width f32, tab_size u32, mut wi
 			}
 		}
 	}
+	tspans << tspan
 	return tspans
 }

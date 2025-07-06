@@ -11,6 +11,7 @@ pub:
 	focus_skip bool
 	disabled   bool
 	min_width  f32
+	mode       TextMode
 	sizing     Sizing
 	spans      []TextSpan
 pub mut:
@@ -38,7 +39,10 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 		return Layout{}
 	}
 
-	tspans := rtf_simple(rtf.spans, mut window)
+	tspans := match true {
+		rtf.mode in [.wrap, .wrap_keep_spaces] { rtf.spans }
+		else { rtf_simple(rtf.spans, mut window) }
+	}
 	width, height := spans_size(tspans)
 
 	shape := Shape{
@@ -53,6 +57,7 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 		focus_skip: rtf.focus_skip
 		disabled:   rtf.disabled
 		min_width:  rtf.min_width
+		text_mode:  rtf.mode
 		sizing:     rtf.sizing
 		text_spans: tspans
 	}
@@ -72,6 +77,7 @@ pub fn rtf(cfg RtfCfg) RtfView {
 		focus_skip: cfg.focus_skip
 		disabled:   cfg.disabled
 		min_width:  cfg.min_width
+		mode:       cfg.mode
 		sizing:     if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 		spans:      cfg.spans
 	}

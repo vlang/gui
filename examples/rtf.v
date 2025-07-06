@@ -24,7 +24,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[RtfApp]()
+	// app := window.state[RtfApp]()
 
 	return gui.column(
 		width:   w
@@ -34,6 +34,7 @@ fn main_view(window &gui.Window) gui.View {
 		v_align: .middle
 		content: [
 			gui.rtf(
+				mode:  .wrap
 				spans: [
 					gui.span('Hello', gui.theme().n3),
 					gui.span(' RTF ', gui.theme().b3),
