@@ -36,7 +36,7 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 		return Layout{}
 	}
 
-	tspans := rtf_wrap_simple(rtf.spans, 0, mut window)
+	tspans := rtf_simple(rtf.spans, 0, mut window)
 	width := arrays.sum(tspans.map(it.w)) or { 0 }
 	height := arrays.max(tspans.map(it.h)) or { 0 }
 
@@ -75,20 +75,28 @@ pub fn rtf(cfg RtfCfg) RtfView {
 	}
 }
 
-fn rtf_wrap_simple(spans []TextSpan, tab_size u32, mut window Window) []TextSpan {
+// rtf_simple wraps only at new lines
+fn rtf_simple(spans []TextSpan, tab_size u32, mut window Window) []TextSpan {
 	mut x := f32(0)
 	mut y := f32(0)
 	mut tspans := []TextSpan{}
 	for span in spans {
-		width := get_text_width(span.text, span.style, mut window)
-		tspans << TextSpan{
-			...span
-			x: x
-			y: y
-			w: width
-			h: span.style.size
+		for i, line in span.text.split('\n') {
+			if i > 0 {
+				x = 0
+				y += span.style.size
+			}
+			width := get_text_width(line, span.style, mut window)
+			tspans << TextSpan{
+				...span
+				x:    x
+				y:    y
+				w:    width
+				h:    span.style.size
+				text: line
+			}
+			x += width
 		}
-		x += width
 	}
 	return tspans
 }

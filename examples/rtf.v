@@ -38,6 +38,12 @@ fn main_view(window &gui.Window) gui.View {
 					gui.span('Hello', gui.theme().n3),
 					gui.span(' RTF ', gui.theme().b3),
 					gui.span('World', gui.theme().n3),
+					gui.br(),
+					gui.br(),
+					gui.span('Now is the ', gui.theme().n3),
+					gui.span('time', gui.theme().i3),
+					gui.span(' for all good men to come to the aid of their ', gui.theme().n3),
+					gui.span('country', gui.theme().b3),
 				]
 			),
 		]
