@@ -67,7 +67,7 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 	}
 }
 
-// rtf creates a view specified byte the given [RtfCfg](#RtfCfg)
+// rtf creates a view from the given [RtfCfg](#RtfCfg)
 pub fn rtf(cfg RtfCfg) RtfView {
 	return RtfView{
 		id:         cfg.id

@@ -429,16 +429,22 @@ fn render_rtf(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &
 	ctx := window.ui
 
 	for span in shape.text_spans {
-		text_cfg := TextStyle{
-			...span.style
-		}.to_text_cfg()
-		ctx.set_text_cfg(text_cfg)
+		span_rect := gg.Rect{
+			x:      shape.x + span.x
+			y:      shape.y + span.y
+			width:  span.w
+			height: span.h
+		}
+		if rects_overlap(span_rect, clip) {
+			text_cfg := span.style.to_text_cfg()
+			ctx.set_text_cfg(text_cfg)
 
-		renderers << DrawText{
-			x:    shape.x + span.x
-			y:    shape.y + span.y
-			text: span.text
-			cfg:  text_cfg
+			renderers << DrawText{
+				x:    shape.x + span.x
+				y:    shape.y + span.y
+				text: span.text
+				cfg:  text_cfg
+			}
 		}
 	}
 }
