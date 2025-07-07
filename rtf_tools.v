@@ -89,8 +89,17 @@ fn rtf_wrap_text(spans []TextSpan, width f32, tab_size u32, mut window Window) [
 				continue
 			}
 			if tspan.text.len == 0 {
+				field_width := get_text_width(field, tspan.style, mut window)
+				if x + field_width > width {
+					x = 0
+					y += h
+					h = span.style.size
+					tspan.x = x
+					tspan.y = y
+					tspan.h = h
+				}
 				tspan.text = field
-				tspan.w = get_text_width(field, tspan.style, mut window)
+				tspan.w = field_width
 				continue
 			}
 			line := tspan.text + field
