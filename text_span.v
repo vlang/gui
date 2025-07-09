@@ -9,8 +9,9 @@ mut:
 	w f32
 	h f32
 pub:
-	id    string
-	style TextStyle
+	id        string
+	style     TextStyle
+	underline bool
 pub mut:
 	text string
 }
@@ -20,6 +21,15 @@ pub fn span(text string, style TextStyle) TextSpan {
 	return TextSpan{
 		text:  text
 		style: style
+	}
+}
+
+// uspan is a helper method to create a TextSpan with an underline
+pub fn uspan(text string, style TextStyle) TextSpan {
+	return TextSpan{
+		text:      text
+		style:     style
+		underline: true
 	}
 }
 

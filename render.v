@@ -445,6 +445,16 @@ fn render_rtf(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &
 				text: span.text
 				cfg:  text_cfg
 			}
+
+			if span.underline {
+				renderers << DrawRect{
+					x:     shape.x + span.x
+					y:     shape.y + span.y + span.h - 2
+					w:     span.w
+					h:     1
+					color: span.style.color.to_gx_color()
+				}
+			}
 		}
 	}
 }
