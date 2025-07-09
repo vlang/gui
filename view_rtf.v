@@ -1,5 +1,7 @@
 module gui
 
+import datatypes
+
 @[heap]
 struct RtfView implements View {
 pub:
@@ -13,7 +15,7 @@ pub:
 	min_width  f32
 	mode       TextMode
 	sizing     Sizing
-	spans      []TextSpan
+	spans      datatypes.LinkedList[TextSpan]
 pub mut:
 	content []View // required, not uused
 }
@@ -69,6 +71,8 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 
 // rtf creates a view from the given [RtfCfg](#RtfCfg)
 pub fn rtf(cfg RtfCfg) RtfView {
+	mut ll := datatypes.LinkedList[TextSpan]{}
+	ll.push_many(cfg.spans)
 	return RtfView{
 		id:         cfg.id
 		id_focus:   cfg.id_focus
@@ -79,6 +83,6 @@ pub fn rtf(cfg RtfCfg) RtfView {
 		min_width:  cfg.min_width
 		mode:       cfg.mode
 		sizing:     if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
-		spans:      cfg.spans
+		spans:      ll
 	}
 }

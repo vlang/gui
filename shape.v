@@ -1,6 +1,7 @@
 module gui
 
 import rand
+import datatypes
 
 // Shape is the only data structure in GUI used to draw to the screen.
 pub struct Shape {
@@ -43,7 +44,7 @@ pub mut:
 	text_sel_beg     u32
 	text_sel_end     u32
 	text_tab_size    u32 = 4
-	text_spans       []TextSpan // rich text format spans
+	text_spans       datatypes.LinkedList[TextSpan] // rich text format spans
 	// --- image ---
 	image_name string // filename of image
 	// --- float ---

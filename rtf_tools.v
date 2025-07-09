@@ -1,7 +1,9 @@
 module gui
 
+import datatypes
+
 // spans_size returns the total width and height of span collection
-fn spans_size(spans []TextSpan) (f32, f32) {
+fn spans_size(spans datatypes.LinkedList[TextSpan]) (f32, f32) {
 	// A single line can have multiple spans. The start of a line
 	// is when span.x == 0
 	mut width := f32(0)
@@ -25,10 +27,10 @@ fn spans_size(spans []TextSpan) (f32, f32) {
 }
 
 // rtf_simple wraps only at new lines. Tabs are not expanded
-fn rtf_simple(spans []TextSpan, mut window Window) []TextSpan {
+fn rtf_simple(spans datatypes.LinkedList[TextSpan], mut window Window) datatypes.LinkedList[TextSpan] {
 	mut x := f32(0)
 	mut y := f32(0)
-	mut tspans := []TextSpan{}
+	mut tspans := datatypes.LinkedList[TextSpan]{}
 	for span in spans {
 		for i, line in span.text.split('\n') {
 			if i > 0 {
@@ -36,31 +38,31 @@ fn rtf_simple(spans []TextSpan, mut window Window) []TextSpan {
 				y += span.style.size + span.style.line_spacing
 			}
 			width := get_text_width(line, span.style, mut window)
-			tspans << TextSpan{
+			tspans.push(TextSpan{
 				x:     x
 				y:     y
 				w:     width
 				h:     span.style.size
 				text:  line
 				style: span.style
-			}
+			})
 			x += width
 		}
 	}
 	return tspans
 }
 
-fn rtf_wrap_text(spans []TextSpan, width f32, tab_size u32, mut window Window) []TextSpan {
+fn rtf_wrap_text(spans datatypes.LinkedList[TextSpan], width f32, tab_size u32, mut window Window) datatypes.LinkedList[TextSpan] {
 	mut x := f32(0)
 	mut y := f32(0)
 	mut h := f32(0)
-	mut tspans := []TextSpan{}
+	mut tspans := datatypes.LinkedList[TextSpan]{}
 	mut tspan := TextSpan{}
 
 	for i, span in spans {
 		if i > 0 {
 			x += tspan.w
-			tspans << tspan
+			tspans.push(tspan)
 		}
 
 		tspan = TextSpan{
@@ -75,7 +77,7 @@ fn rtf_wrap_text(spans []TextSpan, width f32, tab_size u32, mut window Window) [
 
 		for field in split_text(span.text, tab_size) {
 			if field == '\n' {
-				tspans << tspan
+				tspans.push(tspan)
 				x = 0
 				y += h
 				h = span.style.size
@@ -106,7 +108,7 @@ fn rtf_wrap_text(spans []TextSpan, width f32, tab_size u32, mut window Window) [
 			line_width := get_text_width(line, tspan.style, mut window)
 			if x + line_width > width {
 				tspan.w = get_text_width(tspan.text, tspan.style, mut window)
-				tspans << tspan
+				tspans.push(tspan)
 				x = 0
 				y += h
 				h = span.style.size
@@ -123,6 +125,6 @@ fn rtf_wrap_text(spans []TextSpan, width f32, tab_size u32, mut window Window) [
 			}
 		}
 	}
-	tspans << tspan
+	tspans.push(tspan)
 	return tspans
 }
