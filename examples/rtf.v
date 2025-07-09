@@ -46,6 +46,10 @@ fn main_view(window &gui.Window) gui.View {
 					gui.span('time', gui.theme().i3),
 					gui.span(' for all good men to come to the aid of their ', gui.theme().n3),
 					gui.uspan('country', gui.theme().b3),
+					gui.br(),
+					gui.br(),
+					gui.span('This is a ', gui.theme().n3),
+					gui.hyperlink('hyperlink', 'https://www.example.com', gui.theme().n3),
 				]
 			),
 		]

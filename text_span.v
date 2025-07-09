@@ -10,11 +10,20 @@ mut:
 	h f32
 pub:
 	id             string
+	link           string
 	style          TextStyle
 	underline      bool
 	strike_through bool
 pub mut:
 	text string
+}
+
+// br is a helper method to create a line break
+pub fn br() TextSpan {
+	return TextSpan{
+		text:  '\n'
+		style: gui_theme.n3
+	}
 }
 
 // span is a helper method to create a TextSpan
@@ -43,10 +52,15 @@ pub fn strike_span(text string, style TextStyle) TextSpan {
 	}
 }
 
-// br is a helper method to create a line break
-pub fn br() TextSpan {
+// hyperlink is a helper method to create a line break
+pub fn hyperlink(text string, link string, style TextStyle) TextSpan {
 	return TextSpan{
-		text:  '\n'
-		style: gui_theme.n3
+		text:      text
+		link:      link
+		underline: true
+		style:     TextStyle{
+			...style
+			color: gui_theme.color_select
+		}
 	}
 }
