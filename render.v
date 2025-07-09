@@ -455,6 +455,16 @@ fn render_rtf(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &
 					color: span.style.color.to_gx_color()
 				}
 			}
+
+			if span.strike_through {
+				renderers << DrawRect{
+					x:     shape.x + span.x
+					y:     shape.y + span.y + span.h / 2
+					w:     span.w
+					h:     1
+					color: span.style.color.to_gx_color()
+				}
+			}
 		}
 	}
 }
