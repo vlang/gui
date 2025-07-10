@@ -15,7 +15,7 @@ pub:
 	min_width  f32
 	mode       TextMode
 	sizing     Sizing
-	spans      datatypes.LinkedList[TextSpan]
+	spans      datatypes.DoublyLinkedList[TextSpan]
 pub mut:
 	content []View // required, not uused
 }
@@ -71,8 +71,8 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 
 // rtf creates a view from the given [RtfCfg](#RtfCfg)
 pub fn rtf(cfg RtfCfg) RtfView {
-	mut ll := datatypes.LinkedList[TextSpan]{}
-	ll.push_many(cfg.spans)
+	mut ll := datatypes.DoublyLinkedList[TextSpan]{}
+	ll.push_many(cfg.spans, .back)
 	return RtfView{
 		id:         cfg.id
 		id_focus:   cfg.id_focus
