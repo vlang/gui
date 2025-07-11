@@ -49,7 +49,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.br(),
 					gui.br(),
 					gui.span('This is a ', gui.theme().n3),
-					gui.hyperlink('hyperlink', 'https://www.example.com', gui.theme().n3),
+					gui.hyperlink('hyperlink', 'https://vlang.io', gui.theme().n3),
 				]
 			),
 		]
