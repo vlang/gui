@@ -2,16 +2,12 @@ import gui
 
 // Rich Text Format
 // =============================
+// RTF allows mixing different colors and fonts in the same text block.
+// Hyperlinks are also supported.
 
 @[heap]
-struct RtfApp {
-pub mut:
-	clicks int
-}
-
 fn main() {
 	mut window := gui.window(
-		state:   &RtfApp{}
 		width:   300
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -24,7 +20,6 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	// app := window.state[RtfApp]()
 
 	return gui.column(
 		width:   w

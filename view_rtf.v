@@ -92,7 +92,7 @@ pub fn rtf(cfg RtfCfg) RtfView {
 	}
 }
 
-pub fn rtf_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
+fn rtf_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 	for span in shape.text_spans {
 		if span.link.len != 0 {
 			if shape.point_in_span(span, e.mouse_x, e.mouse_y) {
@@ -103,7 +103,7 @@ pub fn rtf_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-pub fn rtf_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
+fn rtf_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	for span in shape.text_spans {
 		if span.link.len != 0 {
 			if shape.point_in_span(span, e.mouse_x, e.mouse_y) {
@@ -114,7 +114,7 @@ pub fn rtf_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-pub fn (shape &Shape) point_in_span(span &TextSpan, x f32, y f32) bool {
+fn (shape &Shape) point_in_span(span &TextSpan, x f32, y f32) bool {
 	rect := DrawClip{
 		x:      shape.x + span.x
 		y:      shape.y + span.y

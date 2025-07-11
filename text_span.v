@@ -1,7 +1,9 @@
 module gui
 
 // TextSpan describes a span of text. The x,y,w,h fields are private and
-// are populated by the layout engine later.
+// are populated by the layout engine later. TextSpans are used in Rich Text
+// Format (RTF) views. RTF allows mixing different colors and fonts in the
+// same text block. Hyperlinks are also supported.
 pub struct TextSpan {
 mut:
 	x f32
@@ -52,7 +54,7 @@ pub fn strike_span(text string, style TextStyle) TextSpan {
 	}
 }
 
-// hyperlink is a helper method to create a line break
+// hyperlink is a helper method to create a clickable hyperlink.
 pub fn hyperlink(text string, link string, style TextStyle) TextSpan {
 	return TextSpan{
 		text:      text
