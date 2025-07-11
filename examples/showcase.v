@@ -14,6 +14,7 @@ enum TabItem {
 	tab_menus
 	tab_dialogs
 	tab_tree_view
+	tab_text_view
 }
 
 @[heap]
@@ -90,6 +91,7 @@ fn side_bar(mut w gui.Window) gui.View {
 			tab_select('Menus', .tab_menus, app),
 			tab_select('Dialogs', .tab_dialogs, app),
 			tab_select('Tree View', .tab_tree_view, app),
+			tab_select('Text', .tab_text_view, app),
 			gui.column(sizing: gui.fit_fill),
 			toggle_theme(app),
 		]
@@ -106,7 +108,7 @@ fn gallery(mut w gui.Window) gui.View {
 			.tab_stock {
 				[buttons(w), inputs(w), toggles(w), select_drop_down(w),
 					list_box(w), expand_panel(w), progress_bars(w),
-					range_sliders(w), throbbers(w), text_sizes_weights(w)]
+					range_sliders(w), throbbers(w)]
 			}
 			.tab_icons {
 				[icons(mut w)]
@@ -122,6 +124,9 @@ fn gallery(mut w gui.Window) gui.View {
 			}
 			.tab_tree_view {
 				[tree_view(mut w)]
+			}
+			.tab_text_view {
+				[text_sizes_weights(w), rich_text_format(w)]
 			}
 		}
 	)
@@ -366,105 +371,6 @@ fn inputs(w &gui.Window) gui.View {
 fn text_changed(_ &gui.InputCfg, s string, mut w gui.Window) {
 	mut app := w.state[ShowcaseApp]()
 	app.input_text = s
-}
-
-// ==============================================================
-// Text Sizes & Weights
-// ==============================================================
-
-fn text_sizes_weights(w &gui.Window) gui.View {
-	text_style_file := gui.TextStyle{
-		...gui.theme().text_style
-		color: gui.theme().color_border
-	}
-	variants := gui.font_variants(gui.theme().text_style)
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Text Sizes & Weights'),
-			gui.column(
-				spacing: 0
-				padding: gui.padding_none
-				content: [
-					gui.text(text: variants.normal, text_style: text_style_file),
-					gui.row(
-						padding: gui.padding_none
-						sizing:  gui.fill_fit
-						v_align: .bottom
-						content: [
-							gui.text(text: 'Theme().n1', text_style: gui.theme().n1),
-							gui.text(text: 'Theme().n2', text_style: gui.theme().n2),
-							gui.text(text: 'Theme().n3', text_style: gui.theme().n3),
-							gui.text(text: 'Theme().n4', text_style: gui.theme().n4),
-							gui.text(text: 'Theme().n5', text_style: gui.theme().n5),
-							gui.text(text: 'Theme().n6', text_style: gui.theme().n6),
-						]
-					),
-				]
-			),
-			gui.column(
-				spacing: 0
-				padding: gui.padding_none
-				content: [
-					gui.text(text: variants.bold, text_style: text_style_file),
-					gui.row(
-						padding: gui.padding_none
-						sizing:  gui.fill_fit
-						v_align: .bottom
-						content: [
-							gui.text(text: 'Theme().b1', text_style: gui.theme().b1),
-							gui.text(text: 'Theme().b2', text_style: gui.theme().b2),
-							gui.text(text: 'Theme().b3', text_style: gui.theme().b3),
-							gui.text(text: 'Theme().b4', text_style: gui.theme().b4),
-							gui.text(text: 'Theme().b5', text_style: gui.theme().b5),
-							gui.text(text: 'Theme().b6', text_style: gui.theme().b6),
-						]
-					),
-				]
-			),
-			gui.column(
-				spacing: 0
-				padding: gui.padding_none
-				content: [
-					gui.text(text: variants.italic, text_style: text_style_file),
-					gui.row(
-						padding: gui.padding_none
-						sizing:  gui.fill_fit
-						v_align: .bottom
-						content: [
-							gui.text(text: 'Theme().i1', text_style: gui.theme().i1),
-							gui.text(text: 'Theme().i2', text_style: gui.theme().i2),
-							gui.text(text: 'Theme().i3', text_style: gui.theme().i3),
-							gui.text(text: 'Theme().i4', text_style: gui.theme().i4),
-							gui.text(text: 'Theme().i5', text_style: gui.theme().i5),
-							gui.text(text: 'Theme().i6', text_style: gui.theme().i6),
-						]
-					),
-				]
-			),
-			gui.column(
-				spacing: 0
-				padding: gui.padding_none
-				content: [
-					gui.text(text: variants.mono, text_style: text_style_file),
-					gui.row(
-						padding: gui.padding_none
-						sizing:  gui.fill_fit
-						v_align: .bottom
-						content: [
-							gui.text(text: 'Theme().m1', text_style: gui.theme().m1),
-							gui.text(text: 'Theme().m2', text_style: gui.theme().m2),
-							gui.text(text: 'Theme().m3', text_style: gui.theme().m3),
-							gui.text(text: 'Theme().m4', text_style: gui.theme().m4),
-							gui.text(text: 'Theme().m5', text_style: gui.theme().m5),
-							gui.text(text: 'Theme().m6', text_style: gui.theme().m6),
-						]
-					),
-				]
-			),
-		]
-	)
 }
 
 // ==============================================================
@@ -1649,6 +1555,157 @@ fn throbber_sample(w &gui.Window) gui.View {
 			w.throbber(size: 30, color: gui.orange),
 			w.throbber(size: 30, icon1: gui.icon_heart, icon2: gui.icon_heart_o, color: gui.red),
 			w.throbber(size: 30, icon1: gui.icon_expand, icon2: gui.icon_compress, color: gui.green),
+		]
+	)
+}
+
+// ==============================================================
+// Text Sizes & Weights
+// ==============================================================
+
+fn text_sizes_weights(w &gui.Window) gui.View {
+	text_style_file := gui.TextStyle{
+		...gui.theme().text_style
+		color: gui.theme().color_border
+	}
+	variants := gui.font_variants(gui.theme().text_style)
+	return gui.column(
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			view_title('Text Sizes & Weights'),
+			gui.column(
+				spacing: 0
+				padding: gui.padding_none
+				content: [
+					gui.text(text: variants.normal, text_style: text_style_file),
+					gui.row(
+						padding: gui.padding_none
+						sizing:  gui.fill_fit
+						v_align: .bottom
+						content: [
+							gui.text(text: 'Theme().n1', text_style: gui.theme().n1),
+							gui.text(text: 'Theme().n2', text_style: gui.theme().n2),
+							gui.text(text: 'Theme().n3', text_style: gui.theme().n3),
+							gui.text(text: 'Theme().n4', text_style: gui.theme().n4),
+							gui.text(text: 'Theme().n5', text_style: gui.theme().n5),
+							gui.text(text: 'Theme().n6', text_style: gui.theme().n6),
+						]
+					),
+				]
+			),
+			gui.column(
+				spacing: 0
+				padding: gui.padding_none
+				content: [
+					gui.text(text: variants.bold, text_style: text_style_file),
+					gui.row(
+						padding: gui.padding_none
+						sizing:  gui.fill_fit
+						v_align: .bottom
+						content: [
+							gui.text(text: 'Theme().b1', text_style: gui.theme().b1),
+							gui.text(text: 'Theme().b2', text_style: gui.theme().b2),
+							gui.text(text: 'Theme().b3', text_style: gui.theme().b3),
+							gui.text(text: 'Theme().b4', text_style: gui.theme().b4),
+							gui.text(text: 'Theme().b5', text_style: gui.theme().b5),
+							gui.text(text: 'Theme().b6', text_style: gui.theme().b6),
+						]
+					),
+				]
+			),
+			gui.column(
+				spacing: 0
+				padding: gui.padding_none
+				content: [
+					gui.text(text: variants.italic, text_style: text_style_file),
+					gui.row(
+						padding: gui.padding_none
+						sizing:  gui.fill_fit
+						v_align: .bottom
+						content: [
+							gui.text(text: 'Theme().i1', text_style: gui.theme().i1),
+							gui.text(text: 'Theme().i2', text_style: gui.theme().i2),
+							gui.text(text: 'Theme().i3', text_style: gui.theme().i3),
+							gui.text(text: 'Theme().i4', text_style: gui.theme().i4),
+							gui.text(text: 'Theme().i5', text_style: gui.theme().i5),
+							gui.text(text: 'Theme().i6', text_style: gui.theme().i6),
+						]
+					),
+				]
+			),
+			gui.column(
+				spacing: 0
+				padding: gui.padding_none
+				content: [
+					gui.text(text: variants.mono, text_style: text_style_file),
+					gui.row(
+						padding: gui.padding_none
+						sizing:  gui.fill_fit
+						v_align: .bottom
+						content: [
+							gui.text(text: 'Theme().m1', text_style: gui.theme().m1),
+							gui.text(text: 'Theme().m2', text_style: gui.theme().m2),
+							gui.text(text: 'Theme().m3', text_style: gui.theme().m3),
+							gui.text(text: 'Theme().m4', text_style: gui.theme().m4),
+							gui.text(text: 'Theme().m5', text_style: gui.theme().m5),
+							gui.text(text: 'Theme().m6', text_style: gui.theme().m6),
+						]
+					),
+				]
+			),
+		]
+	)
+}
+
+// ==============================================================
+// Rich Text Format
+// ==============================================================
+fn rich_text_format(w &gui.Window) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		sizing:  gui.fill_fill
+		content: [
+			view_title('Rich Text Format (RTF)'),
+			gui.row(
+				padding: gui.padding_none
+				sizing:  gui.fill_fit
+				spacing: 0
+				content: [rtf_sample(w)]
+			),
+		]
+	)
+}
+
+fn rtf_sample(w &gui.Window) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		sizing:  gui.fill_fill
+		content: [
+			gui.rtf(
+				mode:  .wrap
+				spans: [
+					gui.span('Hello', gui.theme().n3),
+					gui.span(' RTF ', gui.theme().b3),
+					gui.span('World', gui.theme().n3),
+					gui.br(),
+					gui.br(),
+					gui.strike_span('Now is the', gui.theme().n3),
+					gui.span(' ', gui.theme().n3),
+					gui.span('time', gui.theme().i3),
+					gui.span(' for all', gui.theme().n3),
+					gui.span(' good men ', gui.TextStyle{
+						...gui.theme().n3
+						color: gui.green
+					}),
+					gui.span('to come to the aid of their ', gui.theme().n3),
+					gui.uspan('country', gui.theme().b3),
+					gui.br(),
+					gui.br(),
+					gui.span('This is a ', gui.theme().n3),
+					gui.hyperlink('hyperlink', 'https://www.example.com', gui.theme().n3),
+				]
+			),
 		]
 	)
 }

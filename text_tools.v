@@ -74,6 +74,11 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		shape.height = shape.text_lines.len * lh
 		shape.max_height = shape.height
 		shape.min_height = shape.height
+	} else if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.type == .rtf {
+		width := shape.width - shape.padding.width()
+		tab_size := shape.text_tab_size
+		shape.text_spans = rtf_wrap_text(shape.text_spans, width, tab_size, mut window)
+		shape.width, shape.height = spans_size(shape.text_spans)
 	}
 }
 

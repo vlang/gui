@@ -154,6 +154,7 @@ fn render_shape(mut shape Shape, mut renderers []Renderer, parent_color Color, c
 		.text { render_text(mut shape, mut renderers, clip, window) }
 		.image { render_image(mut shape, mut renderers, clip, window) }
 		.circle { render_circle(mut shape, mut renderers, clip, window) }
+		.rtf { render_rtf(mut shape, mut renderers, clip, window) }
 		.none {}
 	}
 }
@@ -312,7 +313,7 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 			width:  shape.width
 			height: lh
 		}
-		// Cull any renderers outside of clip/conteext region.
+		// Cull any renderers outside of clip/context region.
 		if rects_overlap(clip, draw_rect) && color != color_transparent {
 			mut lnl := line.replace('\n', '')
 			if shape.text_is_password {
@@ -408,6 +409,60 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, clip DrawClip, window &
 							color: shape.text_style.color.to_gx_color()
 						}
 					}
+				}
+			}
+		}
+	}
+}
+
+fn render_rtf(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
+	dr := gg.Rect{
+		x:      shape.x
+		y:      shape.y
+		width:  shape.width
+		height: shape.height
+	}
+	if !rects_overlap(dr, clip) {
+		shape.disabled = true
+		return
+	}
+	ctx := window.ui
+
+	for span in shape.text_spans {
+		span_rect := gg.Rect{
+			x:      shape.x + span.x
+			y:      shape.y + span.y
+			width:  span.w
+			height: span.h
+		}
+		if rects_overlap(span_rect, clip) {
+			text_cfg := span.style.to_text_cfg()
+			ctx.set_text_cfg(text_cfg)
+
+			renderers << DrawText{
+				x:    shape.x + span.x
+				y:    shape.y + span.y
+				text: span.text
+				cfg:  text_cfg
+			}
+
+			if span.underline {
+				renderers << DrawRect{
+					x:     shape.x + span.x
+					y:     shape.y + span.y + span.h - 2
+					w:     span.w
+					h:     1
+					color: span.style.color.to_gx_color()
+				}
+			}
+
+			if span.strike_through {
+				renderers << DrawRect{
+					x:     shape.x + span.x
+					y:     shape.y + span.y + span.h / 2
+					w:     span.w
+					h:     1
+					color: span.style.color.to_gx_color()
 				}
 			}
 		}

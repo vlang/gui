@@ -28,6 +28,7 @@ bin/
 .ropeproject
 *.iml
 *.json.gz
+gemini_cli_config.json
 
 # ENV
 .env

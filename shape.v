@@ -1,6 +1,7 @@
 module gui
 
 import rand
+import datatypes
 
 // Shape is the only data structure in GUI used to draw to the screen.
 pub struct Shape {
@@ -43,6 +44,7 @@ pub mut:
 	text_sel_beg     u32
 	text_sel_end     u32
 	text_tab_size    u32 = 4
+	text_spans       datatypes.DoublyLinkedList[TextSpan] // rich text format spans
 	// --- image ---
 	image_name string // filename of image
 	// --- float ---
@@ -82,6 +84,7 @@ pub enum ShapeType {
 	text
 	image
 	circle
+	rtf
 }
 
 // point_in_shape determines if the given point is within the shape's shape_clip

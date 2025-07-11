@@ -118,7 +118,7 @@ fn frame_fn(mut window Window) {
 	window.lock()
 	window.ui.begin()
 	renderers_draw(window.renderers, window)
-	gc_collect()
+	gc_collect() // revisit gc_collect() once leak is found. Strikes me as a performance issue maybe - mrw
 	window.ui.end()
 	sapp.set_mouse_cursor(window.view_state.mouse_cursor)
 	$if trace_update_window_calls ? {
