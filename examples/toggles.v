@@ -32,7 +32,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[ToggleApp]()
 
@@ -85,7 +85,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn toggle_theme(app &ToggleApp) gui.View {
+fn toggle_theme(app &ToggleApp) &gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit

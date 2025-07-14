@@ -25,7 +25,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	mut app := window.state[ExpandPanelApp]()
 
@@ -56,7 +56,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn expander(title string, description string, mut app ExpandPanelApp) gui.View {
+fn expander(title string, description string, mut app ExpandPanelApp) &gui.View {
 	b_text_style := gui.TextStyle{
 		...gui.theme().n3
 	}
@@ -110,7 +110,7 @@ const equador_text = 'The origin of the name of Ecuador is from Spain. When the 
 
 const guyana_text = 'The name "Guyana" derives from Guiana, the original name for the region that formerly included Guyana (British Guiana), Suriname (Dutch Guiana), French Guiana, and parts of Colombia, Venezuela and Brazil. According to the Oxford English Dictionary, "Guyana" comes from an indigenous Amerindian language and means "land of many waters".'
 
-fn toggle_theme(app &ExpandPanelApp) gui.View {
+fn toggle_theme(app &ExpandPanelApp) &gui.View {
 	return gui.row(
 		h_align: .right
 		sizing:  gui.fill_fit

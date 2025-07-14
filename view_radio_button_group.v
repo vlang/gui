@@ -50,7 +50,7 @@ pub fn radio_option(label string, value string) RadioOption {
 
 // radio_button_group_column creates a vertically stacked radio button group from
 // the given [RadioButtonGroupCfg](#RadioButtonGroupCfg)
-pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
+pub fn radio_button_group_column(cfg RadioButtonGroupCfg) &View {
 	return column(
 		name:       'radio_button_group_column'
 		text:       cfg.title
@@ -65,7 +65,7 @@ pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 
 // radio_button_group_row creates a horizontally stacked radio button group from
 // the given [RadioButtonGroupCfg](#RadioButtonGroupCfg)
-pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
+pub fn radio_button_group_row(cfg RadioButtonGroupCfg) &View {
 	return row(
 		name:       'radio_button_group_row'
 		text:       cfg.title
@@ -82,8 +82,8 @@ pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
 	)
 }
 
-fn build_options(cfg RadioButtonGroupCfg) []View {
-	mut content := []View{}
+fn build_options(cfg RadioButtonGroupCfg) []&View {
+	mut content := []&View{}
 	mut id_focus := cfg.id_focus
 	for option in cfg.options {
 		content << radio(

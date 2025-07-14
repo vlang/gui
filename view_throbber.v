@@ -10,7 +10,7 @@ pub:
 	size  u32    = u32(gui_theme.size_text_medium)
 }
 
-pub fn (window &Window) throbber(cfg ThrobberCfg) View {
+pub fn (window &Window) throbber(cfg ThrobberCfg) &View {
 	text_style := TextStyle{
 		...gui_theme.icon3
 		size:  int(cfg.size)

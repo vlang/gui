@@ -56,7 +56,7 @@ const scrollbar_vertical_name = 'scrollbar vertical'
 const scrollbar_horizontal_name = 'scrollbar horizontal'
 
 // scrollbar creates a scrollbar.
-pub fn scrollbar(cfg ScrollbarCfg) View {
+pub fn scrollbar(cfg ScrollbarCfg) &View {
 	return if cfg.orientation == .horizontal {
 		row(
 			name:         scrollbar_horizontal_name
@@ -92,7 +92,7 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 	}
 }
 
-fn thumb(cfg &ScrollbarCfg, id string) View {
+fn thumb(cfg &ScrollbarCfg, id string) &View {
 	return column(
 		name:     'scrollbar thumb'
 		id:       id

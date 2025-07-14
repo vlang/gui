@@ -8,10 +8,10 @@ import log
 @[heap]
 pub struct Window {
 mut:
-	ui             &gg.Context       = &gg.Context{}
-	state          voidptr           = unsafe { nil }
-	mutex          &sync.Mutex       = sync.new_mutex()
-	view_generator fn (&Window) View = empty_view
+	ui             &gg.Context        = &gg.Context{}
+	state          voidptr            = unsafe { nil }
+	mutex          &sync.Mutex        = sync.new_mutex()
+	view_generator fn (&Window) &View = empty_view
 	view_state     ViewState
 	layout         Layout
 	renderers      []Renderer
@@ -216,7 +216,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 // update_view sets the Window's view generator. A window can have only one
 // view generator. Giving a Window a new view generator clears the view_state
 // and replaces the current view generator.
-pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
+pub fn (mut window Window) update_view(gen_view fn (&Window) &View) {
 	// Order matters here. Clear the view state first
 	window.view_state.clear(mut window)
 

@@ -34,7 +34,7 @@ pub:
 	on_change      fn (f32, mut Event, mut Window) @[required]
 }
 
-pub fn range_slider(cfg RangeSliderCfg) View {
+pub fn range_slider(cfg RangeSliderCfg) &View {
 	if cfg.min >= cfg.max {
 		panic('range_slider.min must be less than range_slider.max')
 	}

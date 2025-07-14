@@ -37,7 +37,7 @@ fn main() {
 
 // The view generator set in update_view() is called on
 // every user event (mouse move, click, resize, etc.).
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[GetStartedApp]()
 

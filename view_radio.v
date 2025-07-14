@@ -21,8 +21,8 @@ pub:
 	on_click       fn (&RadioCfg, mut Event, mut Window) @[required]
 }
 
-pub fn radio(cfg RadioCfg) View {
-	mut content := []View{}
+pub fn radio(cfg RadioCfg) &View {
+	mut content := []&View{}
 	content << circle(
 		name:      'radio border'
 		width:     cfg.size

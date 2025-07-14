@@ -33,9 +33,9 @@ pub:
 }
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
-pub fn (window &Window) select(cfg SelectCfg) View {
+pub fn (window &Window) select(cfg SelectCfg) &View {
 	is_open := window.view_state.select_state[cfg.id]
-	mut options := []View{}
+	mut options := []&View{}
 	if is_open {
 		for option in cfg.options {
 			options << match option.starts_with('---') {
@@ -54,7 +54,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 		TextMode.single_line
 	}
 
-	mut content := []View{}
+	mut content := []&View{}
 	content << row( // interior
 		name:     'select interior'
 		fill:     cfg.fill
@@ -134,7 +134,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	)
 }
 
-fn option_view(cfg SelectCfg, option string) View {
+fn option_view(cfg SelectCfg, option string) &View {
 	return row(
 		fill:     true
 		padding:  padding(0, pad_small, 0, 1)
@@ -194,7 +194,7 @@ fn option_view(cfg SelectCfg, option string) View {
 	)
 }
 
-fn sub_header(cfg SelectCfg, option string) View {
+fn sub_header(cfg SelectCfg, option string) &View {
 	return column(
 		spacing: 0
 		padding: padding(gui_theme.padding_medium.top, 0, 0, 0)

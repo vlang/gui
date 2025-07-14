@@ -14,7 +14,7 @@ pub interface View {
 	id string
 	generate(mut window Window) Layout
 mut:
-	content []View
+	content []&View
 }
 
 // generate_layout builds a Layout from a View.

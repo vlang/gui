@@ -52,7 +52,7 @@ pub:
 }
 
 // menubar creates a menubar and its child menus from the given [MenubarCfg](#MenubarCfg)
-pub fn (window &Window) menubar(cfg MenubarCfg) View {
+pub fn (window &Window) menubar(cfg MenubarCfg) &View {
 	if cfg.id_focus == 0 {
 		panic('MenubarCfg.id_focus must be non-zero')
 	}

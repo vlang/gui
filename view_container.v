@@ -49,7 +49,7 @@ mut:
 	axis       Axis
 	cfg        voidptr
 	tooltip    TooltipCfg
-	content    []View
+	content    []&View
 }
 
 fn (cv &ContainerView) generate(mut _ Window) Layout {
@@ -202,20 +202,20 @@ pub:
 	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
 	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	content         []View
+	content         []&View
 }
 
 // container is the fundamental layout container in gui. It is used to layout
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
-fn container(cfg &ContainerCfg) ContainerView {
+fn container(cfg &ContainerCfg) &ContainerView {
 	if cfg.invisible {
-		return ContainerView{
+		return &ContainerView{
 			over_draw: true // removes it from spacing calculations
 			padding:   padding_none
 		}
 	}
-	mut content := []View{}
+	mut content := []&View{}
 	content << cfg.content
 	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_x.overflow != .hidden {
 		content << scrollbar(ScrollbarCfg{
@@ -235,7 +235,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 		content << tooltip(cfg.tooltip)
 	}
 
-	return ContainerView{
+	return &ContainerView{
 		id:              cfg.id
 		id_focus:        cfg.id_focus
 		axis:            cfg.axis
@@ -287,7 +287,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 
 // column arranges its content top to bottom. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
-pub fn column(cfg &ContainerCfg) ContainerView {
+pub fn column(cfg &ContainerCfg) &ContainerView {
 	name := if cfg.name.len == 0 { 'column' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
@@ -302,7 +302,7 @@ pub fn column(cfg &ContainerCfg) ContainerView {
 
 // row arranges its content left to right. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
-pub fn row(cfg &ContainerCfg) ContainerView {
+pub fn row(cfg &ContainerCfg) &ContainerView {
 	name := if cfg.name.len == 0 { 'row' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
@@ -316,7 +316,7 @@ pub fn row(cfg &ContainerCfg) ContainerView {
 }
 
 // canvas does not arrange or otherwise layout its content. See [ContainerCfg](#ContainerCfg)
-pub fn canvas(cfg &ContainerCfg) ContainerView {
+pub fn canvas(cfg &ContainerCfg) &ContainerView {
 	name := if cfg.name.len == 0 { 'canvas' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
@@ -328,7 +328,7 @@ pub fn canvas(cfg &ContainerCfg) ContainerView {
 	return container(container_cfg)
 }
 
-pub fn circle(cfg &ContainerCfg) ContainerView {
+pub fn circle(cfg &ContainerCfg) &ContainerView {
 	name := if cfg.name.len == 0 { 'circle' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg

@@ -28,7 +28,7 @@ struct TextView implements View {
 	sizing             Sizing
 	cfg                TextCfg
 mut:
-	content []View // not used
+	content []&View // not used
 }
 
 fn (t &TextView) free() {
@@ -122,8 +122,8 @@ fn (t &TextCfg) free() {
 // text is a general purpose text renderer. Use it for labels or larger
 // blocks of multiline text. Giving it an id_focus allows mark and copy
 // operations. See [TextCfg](#TextCfg)
-pub fn text(cfg &TextCfg) TextView {
-	return TextView{
+pub fn text(cfg &TextCfg) &TextView {
+	return &TextView{
 		id:                 cfg.id
 		id_focus:           cfg.id_focus
 		clip:               cfg.clip

@@ -63,7 +63,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(mut window gui.Window) gui.View {
+fn main_view(mut window gui.Window) &gui.View {
 	w, h := window.window_size()
 	return gui.row(
 		width:   w
@@ -78,7 +78,7 @@ fn main_view(mut window gui.Window) gui.View {
 	)
 }
 
-fn side_bar(mut w gui.Window) gui.View {
+fn side_bar(mut w gui.Window) &gui.View {
 	mut app := w.state[ShowcaseApp]()
 	return gui.column(
 		fill:    true
@@ -98,7 +98,7 @@ fn side_bar(mut w gui.Window) gui.View {
 	)
 }
 
-fn gallery(mut w gui.Window) gui.View {
+fn gallery(mut w gui.Window) &gui.View {
 	mut app := w.state[ShowcaseApp]()
 	return gui.column(
 		id_scroll: id_scroll_gallery
@@ -132,7 +132,7 @@ fn gallery(mut w gui.Window) gui.View {
 	)
 }
 
-fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
+fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) &gui.View {
 	color := if app.selected_tab == tab_item {
 		gui.theme().color_active
 	} else {
@@ -158,7 +158,7 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 	)
 }
 
-fn view_title(label string) gui.View {
+fn view_title(label string) &gui.View {
 	return gui.column(
 		spacing: 0
 		sizing:  gui.fill_fit
@@ -170,7 +170,7 @@ fn view_title(label string) gui.View {
 	)
 }
 
-fn line() gui.View {
+fn line() &gui.View {
 	return gui.row(
 		padding: gui.padding(2, 5, 0, 0)
 		sizing:  gui.fill_fit
@@ -186,7 +186,7 @@ fn line() gui.View {
 	)
 }
 
-fn toggle_theme(app &ShowcaseApp) gui.View {
+fn toggle_theme(app &ShowcaseApp) &gui.View {
 	return gui.toggle(
 		text_select:   gui.icon_moon
 		text_unselect: gui.icon_sunny_o
@@ -210,7 +210,7 @@ fn toggle_theme(app &ShowcaseApp) gui.View {
 // Buttons
 // ==============================================================
 
-fn buttons(w &gui.Window) gui.View {
+fn buttons(w &gui.Window) &gui.View {
 	app := w.state[ShowcaseApp]()
 	color := if app.light_theme { gui.light_gray } else { gui.dark_blue }
 	color_left := if app.light_theme { gui.dark_gray } else { gui.dark_green }
@@ -291,7 +291,7 @@ fn button_click(_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 // Inputs
 // ==============================================================
 
-fn inputs(w &gui.Window) gui.View {
+fn inputs(w &gui.Window) &gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
 		sizing:  gui.fill_fit
@@ -377,7 +377,7 @@ fn text_changed(_ &gui.InputCfg, s string, mut w gui.Window) {
 // Toggles
 // ==============================================================
 
-fn toggles(w &gui.Window) gui.View {
+fn toggles(w &gui.Window) &gui.View {
 	mut app := w.state[ShowcaseApp]()
 	options := [
 		gui.radio_option('New York', 'ny'),
@@ -453,7 +453,7 @@ fn toggles(w &gui.Window) gui.View {
 // Dialogs
 // ==============================================================
 
-fn dialogs(w &gui.Window) gui.View {
+fn dialogs(w &gui.Window) &gui.View {
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -487,7 +487,7 @@ fn dialogs(w &gui.Window) gui.View {
 	)
 }
 
-fn message_type() gui.View {
+fn message_type() &gui.View {
 	return gui.button(
 		id_focus: 1
 		sizing:   gui.fill_fit
@@ -509,7 +509,7 @@ Buttons can be left/center/right aligned'.trim_indent()
 	)
 }
 
-fn confirm_type() gui.View {
+fn confirm_type() &gui.View {
 	return gui.button(
 		id_focus: 2
 		sizing:   gui.fill_fit
@@ -530,7 +530,7 @@ fn confirm_type() gui.View {
 	)
 }
 
-fn prompt_type() gui.View {
+fn prompt_type() &gui.View {
 	return gui.button(
 		id_focus: 3
 		sizing:   gui.fill_fit
@@ -551,7 +551,7 @@ fn prompt_type() gui.View {
 	)
 }
 
-fn custom_type() gui.View {
+fn custom_type() &gui.View {
 	return gui.button(
 		id_focus: 4
 		sizing:   gui.fill_fit
@@ -584,7 +584,7 @@ fn custom_type() gui.View {
 // Menu
 // ==============================================================
 
-fn menus(w &gui.Window) gui.View {
+fn menus(w &gui.Window) &gui.View {
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -598,7 +598,7 @@ fn menus(w &gui.Window) gui.View {
 	)
 }
 
-fn menu(window &gui.Window) gui.View {
+fn menu(window &gui.Window) &gui.View {
 	app := window.state[ShowcaseApp]()
 
 	return window.menubar(
@@ -731,7 +731,7 @@ fn menu(window &gui.Window) gui.View {
 // Progress Bars
 // ==============================================================
 
-fn progress_bars(w &gui.Window) gui.View {
+fn progress_bars(w &gui.Window) &gui.View {
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -746,7 +746,7 @@ fn progress_bars(w &gui.Window) gui.View {
 	)
 }
 
-fn progress_bar_samples(w &gui.Window) gui.View {
+fn progress_bar_samples(w &gui.Window) &gui.View {
 	tbg1 := if gui.theme().name.starts_with('light') { gui.orange } else { gui.dark_green }
 	tbg2 := if gui.theme().name.starts_with('light') { gui.cornflower_blue } else { gui.white }
 
@@ -820,7 +820,7 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 // List Box
 // ==============================================================
 
-fn list_box(w &gui.Window) gui.View {
+fn list_box(w &gui.Window) &gui.View {
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -834,7 +834,7 @@ fn list_box(w &gui.Window) gui.View {
 	)
 }
 
-fn list_box_sample(w &gui.Window) gui.View {
+fn list_box_sample(w &gui.Window) &gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.row(
 		height:  250
@@ -928,7 +928,7 @@ fn list_box_sample(w &gui.Window) gui.View {
 // Range Sliders
 // ==============================================================
 
-fn range_sliders(w &gui.Window) gui.View {
+fn range_sliders(w &gui.Window) &gui.View {
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -942,7 +942,7 @@ fn range_sliders(w &gui.Window) gui.View {
 	)
 }
 
-fn range_slider_samples(w &gui.Window) gui.View {
+fn range_slider_samples(w &gui.Window) &gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.row(
 		sizing:  gui.fill_fill
@@ -987,7 +987,7 @@ fn range_slider_samples(w &gui.Window) gui.View {
 // Select
 // ==============================================================
 
-fn select_drop_down(w &gui.Window) gui.View {
+fn select_drop_down(w &gui.Window) &gui.View {
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -1001,7 +1001,7 @@ fn select_drop_down(w &gui.Window) gui.View {
 	)
 }
 
-fn select_samples(w &gui.Window) gui.View {
+fn select_samples(w &gui.Window) &gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.row(
 		content: [
@@ -1296,7 +1296,7 @@ fn select_samples(w &gui.Window) gui.View {
 // Icons
 // ==============================================================
 
-fn icons(mut w gui.Window) gui.View {
+fn icons(mut w gui.Window) &gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		content: [
@@ -1311,7 +1311,7 @@ fn icons(mut w gui.Window) gui.View {
 	)
 }
 
-fn icon_catalog(mut w gui.Window) gui.View {
+fn icon_catalog(mut w gui.Window) &gui.View {
 	// find the longest text
 	mut longest := f32(0)
 	for s in gui.icons_map.keys() {
@@ -1320,11 +1320,11 @@ fn icon_catalog(mut w gui.Window) gui.View {
 
 	// Break the icons_maps into rows
 	chunks := chunk_map(gui.icons_map, 4)
-	mut all_icons := []gui.View{}
+	mut all_icons := []&gui.View{}
 
 	// create rows of icons/text
 	for chunk in chunks {
-		mut icons := []gui.View{}
+		mut icons := []&gui.View{}
 		for key, val in chunk {
 			icons << gui.column(
 				min_width: longest
@@ -1377,7 +1377,7 @@ fn chunk_map[K, V](input map[K]V, chunk_size int) []map[K]V {
 // Image
 // ==============================================================
 
-fn image_sample(w &gui.Window) gui.View {
+fn image_sample(w &gui.Window) &gui.View {
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -1397,7 +1397,7 @@ fn image_sample(w &gui.Window) gui.View {
 // Tree View
 // ==============================================================
 
-fn tree_view(mut w gui.Window) gui.View {
+fn tree_view(mut w gui.Window) &gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		sizing:  gui.fill_fill
@@ -1418,7 +1418,7 @@ fn on_select(id string, mut w gui.Window) {
 	app.tree_id = id
 }
 
-fn tree_view_sample(mut w gui.Window) gui.View {
+fn tree_view_sample(mut w gui.Window) &gui.View {
 	mut app := w.state[ShowcaseApp]()
 	return gui.column(
 		sizing:  gui.fill_fit
@@ -1475,7 +1475,7 @@ fn tree_view_sample(mut w gui.Window) gui.View {
 // Expand Panel
 // ==============================================================
 
-fn expand_panel(w &gui.Window) gui.View {
+fn expand_panel(w &gui.Window) &gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		sizing:  gui.fill_fill
@@ -1491,7 +1491,7 @@ fn expand_panel(w &gui.Window) gui.View {
 	)
 }
 
-fn expand_panel_sample(w &gui.Window) gui.View {
+fn expand_panel_sample(w &gui.Window) &gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.expand_panel(
 		open:      app.open_expand_panel
@@ -1531,7 +1531,7 @@ const brazil_text = 'The word "Brazil" likely comes from the Portuguese word for
 // Throbbers
 // ==============================================================
 
-fn throbbers(w &gui.Window) gui.View {
+fn throbbers(w &gui.Window) &gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		sizing:  gui.fill_fill
@@ -1547,7 +1547,7 @@ fn throbbers(w &gui.Window) gui.View {
 	)
 }
 
-fn throbber_sample(w &gui.Window) gui.View {
+fn throbber_sample(w &gui.Window) &gui.View {
 	return gui.row(
 		content: [
 			w.throbber(),
@@ -1563,7 +1563,7 @@ fn throbber_sample(w &gui.Window) gui.View {
 // Text Sizes & Weights
 // ==============================================================
 
-fn text_sizes_weights(w &gui.Window) gui.View {
+fn text_sizes_weights(w &gui.Window) &gui.View {
 	text_style_file := gui.TextStyle{
 		...gui.theme().text_style
 		color: gui.theme().color_border
@@ -1661,7 +1661,7 @@ fn text_sizes_weights(w &gui.Window) gui.View {
 // ==============================================================
 // Rich Text Format
 // ==============================================================
-fn rich_text_format(w &gui.Window) gui.View {
+fn rich_text_format(w &gui.Window) &gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		sizing:  gui.fill_fill
@@ -1677,7 +1677,7 @@ fn rich_text_format(w &gui.Window) gui.View {
 	)
 }
 
-fn rtf_sample(w &gui.Window) gui.View {
+fn rtf_sample(w &gui.Window) &gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		sizing:  gui.fill_fill

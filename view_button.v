@@ -33,7 +33,7 @@ pub:
 	radius             f32                                    = gui_theme.button_style.radius
 	radius_border      f32                                    = gui_theme.button_style.radius_border
 	on_click           fn (&ButtonCfg, mut Event, mut Window) = unsafe { nil }
-	content            []View
+	content            []&View
 }
 
 // button creates a clickable button. Buttons can contain content other than text.
@@ -52,7 +52,7 @@ pub:
 // 	}
 // )
 // ```
-pub fn button(cfg ButtonCfg) View {
+pub fn button(cfg ButtonCfg) &View {
 	return row(
 		name:         'button border'
 		id:           cfg.id

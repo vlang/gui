@@ -19,7 +19,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(mut w gui.Window) gui.View {
+fn main_view(mut w gui.Window) &gui.View {
 	width, height := w.window_size()
 
 	return gui.row(

@@ -18,7 +18,7 @@ pub:
 	sizing     Sizing
 	spans      datatypes.LinkedList[TextSpan]
 pub mut:
-	content []View // required, not used
+	content []&View // required, not used
 }
 
 // RtfCfg configures a Rich Text View (RTF). RTF's can have
@@ -75,10 +75,10 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 }
 
 // rtf creates a view from the given [RtfCfg](#RtfCfg)
-pub fn rtf(cfg RtfCfg) RtfView {
+pub fn rtf(cfg RtfCfg) &RtfView {
 	mut ll := datatypes.LinkedList[TextSpan]{}
 	ll.push_many(cfg.spans)
-	return RtfView{
+	return &RtfView{
 		id:         cfg.id
 		id_focus:   cfg.id_focus
 		invisible:  cfg.invisible

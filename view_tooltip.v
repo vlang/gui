@@ -22,11 +22,11 @@ pub:
 	tie_off        FloatAttach
 	offset_x       f32 = -3
 	offset_y       f32 = -3
-	content        []View
+	content        []&View
 }
 
 // tooltip creates a tooltip from the given [TooltipCfg](#TooltipCfg)
-pub fn tooltip(cfg TooltipCfg) View {
+pub fn tooltip(cfg TooltipCfg) &View {
 	return row(
 		name:           'tooltip border'
 		color:          cfg.color_border

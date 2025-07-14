@@ -56,11 +56,11 @@ pub:
 }
 
 // table generates a table from the given [TableCfg](#TableCfg)
-pub fn (mut window Window) table(cfg &TableCfg) View {
-	mut rows := []View{}
+pub fn (mut window Window) table(cfg &TableCfg) &View {
+	mut rows := []&View{}
 	column_widths := window.table_column_widths(cfg)
 	for r in cfg.data {
-		mut cells := []View{}
+		mut cells := []&View{}
 		for idx, cell in r.cells {
 			cell_text_style := cell.text_style or {
 				if cell.head_cell { cfg.text_style_head } else { cfg.text_style }
@@ -159,7 +159,7 @@ pub fn table_cfg_from_csv_string(data string) !TableCfg {
 
 // table_from_csv_string is a helper function that returns a table from the csv string.
 // If there is a parser error, it returns a table with the error message.
-pub fn (mut window Window) table_from_csv_string(data string) View {
+pub fn (mut window Window) table_from_csv_string(data string) &View {
 	csv_table_cfg := table_cfg_from_csv_string(data) or { table_cfg_error(err.msg()) }
 	return window.table(csv_table_cfg)
 }

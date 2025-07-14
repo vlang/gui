@@ -32,11 +32,11 @@ pub:
 }
 
 // toggle creates a toggle button (a.k.a checkbox) from the given [ToggleCfg](#ToggleCfg)
-pub fn toggle(cfg ToggleCfg) View {
+pub fn toggle(cfg ToggleCfg) &View {
 	color := if cfg.select { cfg.color_select } else { cfg.color }
 	txt := if cfg.select { cfg.text_select } else { cfg.text_unselect }
 
-	mut content := []View{}
+	mut content := []&View{}
 
 	content << row(
 		name:         'toggle border'

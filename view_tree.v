@@ -15,8 +15,8 @@ pub:
 }
 
 // tree creates a tree view from the given [TreeCfg](#TreeCfg)
-pub fn (mut window Window) tree(cfg TreeCfg) View {
-	mut content := []View{}
+pub fn (mut window Window) tree(cfg TreeCfg) &View {
+	mut content := []&View{}
 	for node in cfg.nodes {
 		content << cfg.node_content(node, mut window)
 	}
@@ -48,8 +48,8 @@ pub fn tree_node(cfg TreeNodeCfg) TreeNodeCfg {
 	return cfg
 }
 
-fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, mut window Window) []View {
-	mut tnodes := []View{}
+fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, mut window Window) []&View {
+	mut tnodes := []&View{}
 	for node in nodes {
 		tnodes << column(
 			name:    'tree node'
@@ -62,7 +62,7 @@ fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, mut window Window) []View {
 	return tnodes
 }
 
-fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
+fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []&View {
 	id := if node.id.len == 0 { node.text } else { node.id }
 	is_open := window.view_state.tree_state[cfg.id][id]
 	arrow := match true {
@@ -72,7 +72,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 	}
 	min_width_icon := get_text_width('${icon_bar} ', node.text_style_icon, mut window)
 
-	mut content := []View{}
+	mut content := []&View{}
 	content << row(
 		name:     'tree node content'
 		fill:     true

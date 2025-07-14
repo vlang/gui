@@ -27,7 +27,7 @@ fn on_select(id string, mut w gui.Window) {
 	app.selected_id = id
 }
 
-fn main_view(mut window gui.Window) gui.View {
+fn main_view(mut window gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[TreeViewApp]()
 

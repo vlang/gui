@@ -46,8 +46,8 @@ pub:
 	max_width        f32 = 300
 	max_height       f32
 	title            string
-	body             string // body text wraps as needed. Newlines supported
-	custom_content   []View // custom content
+	body             string  // body text wraps as needed. Newlines supported
+	custom_content   []&View // custom content
 	reply            string
 	id_focus         u32                     = dialog_base_id_focus
 	align_buttons    HorizontalAlign         = gui_theme.dialog_style.align_buttons
@@ -66,8 +66,8 @@ pub:
 	on_reply         fn (string, mut Window) = fn (_ string, mut _ Window) {}
 }
 
-fn dialog_view_generator(cfg DialogCfg) View {
-	mut content := []View{}
+fn dialog_view_generator(cfg DialogCfg) &View {
+	mut content := []&View{}
 	if cfg.dialog_type != .custom {
 		if cfg.title.len > 0 {
 			content << text(text: cfg.title, text_style: cfg.title_text_style)
@@ -112,31 +112,31 @@ fn dialog_view_generator(cfg DialogCfg) View {
 	)
 }
 
-fn message_view(cfg DialogCfg) []View {
-	return [
-		row(
-			name:    'message view'
-			sizing:  fill_fit
-			h_align: cfg.align_buttons
-			padding: padding_none
-			content: [
-				button(
-					id_focus: cfg.id_focus
-					content:  [text(text: 'OK', text_style: cfg.text_style)]
-					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
-						w.set_id_focus(w.dialog_cfg.old_id_focus)
-						on_ok_yes := w.dialog_cfg.on_ok_yes
-						w.dialog_dismiss()
-						on_ok_yes(mut w)
-						e.is_handled = true
-					}
-				),
-			]
-		),
-	]
+fn message_view(cfg DialogCfg) []&View {
+	mut content := []&View{}
+	content << row(
+		name:    'message view'
+		sizing:  fill_fit
+		h_align: cfg.align_buttons
+		padding: padding_none
+		content: [
+			button(
+				id_focus: cfg.id_focus
+				content:  [text(text: 'OK', text_style: cfg.text_style)]
+				on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+					w.set_id_focus(w.dialog_cfg.old_id_focus)
+					on_ok_yes := w.dialog_cfg.on_ok_yes
+					w.dialog_dismiss()
+					on_ok_yes(mut w)
+					e.is_handled = true
+				}
+			),
+		]
+	)
+	return content
 }
 
-fn confirm_view(cfg DialogCfg) []View {
+fn confirm_view(cfg DialogCfg) []&View {
 	return [
 		row(
 			name:    'confirm view'
@@ -171,7 +171,7 @@ fn confirm_view(cfg DialogCfg) []View {
 	]
 }
 
-fn prompt_view(cfg DialogCfg) []View {
+fn prompt_view(cfg DialogCfg) []&View {
 	return [
 		input(
 			id_focus:        cfg.id_focus

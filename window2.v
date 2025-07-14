@@ -65,7 +65,7 @@ pub fn (mut window Window) dialog_is_visible() bool {
 }
 
 // default_view creates an empty view
-fn empty_view(window &Window) View {
+fn empty_view(window &Window) &View {
 	w, h := window.window_size()
 	return column(
 		width:  w

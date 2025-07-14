@@ -15,7 +15,7 @@ pub:
 	on_click   fn (&ImageCfg, mut Event, mut Window)  = unsafe { nil }
 	on_hover   fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 mut:
-	content []View // not used
+	content []&View // not used
 }
 
 @[heap]
@@ -64,8 +64,8 @@ fn (iv &ImageView) generate(mut window Window) Layout {
 	return layout
 }
 
-pub fn image(cfg ImageCfg) ImageView {
-	return ImageView{
+pub fn image(cfg ImageCfg) &ImageView {
+	return &ImageView{
 		id:         cfg.id
 		file_name:  cfg.file_name
 		width:      cfg.width

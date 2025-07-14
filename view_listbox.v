@@ -42,13 +42,13 @@ pub:
 // list_box is a convenience view for simple cases. See [ListBoxCfg](#ListBoxCfg)
 // The same functionality can be done with a column and rows.
 // In fact, the implementation is not much more than that.
-pub fn list_box(cfg ListBoxCfg) View {
-	mut list := []View{}
+pub fn list_box(cfg ListBoxCfg) &View {
+	mut list := []&View{}
 
 	for dat in cfg.data {
 		color := if dat.value in cfg.selected { gui_theme.color_select } else { color_transparent }
 		is_subheader := dat.name.starts_with('---')
-		mut content := []View{}
+		mut content := []&View{}
 
 		if is_subheader {
 			content << column(
