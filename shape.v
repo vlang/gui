@@ -44,7 +44,7 @@ pub mut:
 	text_sel_beg     u32
 	text_sel_end     u32
 	text_tab_size    u32 = 4
-	text_spans       datatypes.DoublyLinkedList[TextSpan] // rich text format spans
+	text_spans       datatypes.LinkedList[TextSpan] // rich text format spans
 	// --- image ---
 	image_name string // filename of image
 	// --- float ---
