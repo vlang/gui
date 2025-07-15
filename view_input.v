@@ -128,15 +128,15 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 			}
 		} else if event.modifiers & u32(Modifier.ctrl) > 0 {
 			match c {
-				ctrl_v { text = cfg.paste(from_clipboard(), mut w) or { '' } }
-				ctrl_x { text = cfg.cut(mut w) or { '' } }
+				ctrl_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
+				ctrl_x { text = cfg.cut(mut w) or { return } }
 				ctrl_z { text = cfg.undo(mut w) }
 				else {}
 			}
 		} else if event.modifiers & u32(Modifier.super) > 0 {
 			match c {
-				cmd_v { text = cfg.paste(from_clipboard(), mut w) or { '' } }
-				cmd_x { text = cfg.cut(mut w) or { '' } }
+				cmd_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
+				cmd_x { text = cfg.cut(mut w) or { return } }
 				cmd_z { text = cfg.undo(mut w) }
 				else {}
 			}
@@ -275,11 +275,17 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 }
 
 pub fn (cfg &InputCfg) cut(mut w Window) ?string {
+	if cfg.is_password {
+		return none
+	}
 	cfg.copy(w)
 	return cfg.delete(mut w, false)
 }
 
 pub fn (cfg &InputCfg) copy(w &Window) ?string {
+	if cfg.is_password {
+		return none
+	}
 	input_state := w.view_state.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
@@ -288,9 +294,7 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 			return none
 		}
 		cpy := cfg.text[beg..end] or { '' }
-		if !cfg.is_password {
-			to_clipboard(cpy)
-		}
+		to_clipboard(cpy)
 	}
 	return none
 }
