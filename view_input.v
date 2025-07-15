@@ -283,7 +283,7 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	input_state := w.view_state.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
-		if beg >= cfg.text.len || end >= cfg.text.len {
+		if beg >= cfg.text.len || end > cfg.text.len {
 			log.error('beg or end out of range (copy)')
 			return none
 		}
