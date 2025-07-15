@@ -97,6 +97,7 @@ fn rtf_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 		if span.link.len != 0 {
 			if shape.point_in_span(span, e.mouse_x, e.mouse_y) {
 				w.set_mouse_cursor_pointing_hand()
+				e.is_handled = true
 				return
 			}
 		}
@@ -108,6 +109,7 @@ fn rtf_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 		if span.link.len != 0 {
 			if shape.point_in_span(span, e.mouse_x, e.mouse_y) {
 				os.open_uri(span.link) or {}
+				e.is_handled = true
 				return
 			}
 		}

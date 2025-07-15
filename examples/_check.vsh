@@ -1,5 +1,7 @@
 #!/usr/bin/env -S v
 
+import os
+
 unbuffer_stdout()
 chdir(@DIR)!
 
@@ -12,7 +14,8 @@ if files.len == 0 {
 mut errors := []string{}
 for i, file in files {
 	cmd := 'v -check -N -W ${file}'
-	print('(${i + 1:02}/${files.len:02}) ${cmd:-70}')
+	dsp := 'v -check -N -W ${os.file_name(file)}'
+	print('(${i + 1:02}/${files.len:02}) ${dsp:-40}')
 	result := execute(cmd)
 	if result.exit_code == 0 {
 		println('✅')
