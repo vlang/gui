@@ -41,9 +41,9 @@ for file in files {
 	print(cmd)
 	result := execute(cmd)
 	if result.exit_code == 0 {
-		println('✅')
+		println('\t✅')
 	} else {
-		println('⭕')
+		println('\t⭕')
 		println(result.output)
 		errors << cmd
 	}

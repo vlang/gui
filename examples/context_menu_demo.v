@@ -30,7 +30,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(mut window gui.Window) gui.View {
+fn main_view(mut window gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[ContextMenuApp]()
 

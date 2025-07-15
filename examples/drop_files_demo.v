@@ -26,11 +26,11 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[DropFilesApp]()
 
-	mut content := []gui.View{}
+	mut content := []&gui.View{}
 	content << gui.text(
 		text:       'Drop Files on this Window'
 		text_style: gui.theme().b1

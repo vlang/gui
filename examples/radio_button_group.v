@@ -24,7 +24,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	mut app := window.state[RadioButtonGroupApp]()
 
@@ -67,7 +67,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn instructions() gui.View {
+fn instructions() &gui.View {
 	return gui.row(
 		h_align: .center
 		sizing:  gui.fill_fit

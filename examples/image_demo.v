@@ -13,7 +13,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	sample_path := os.join_path(os.dir(@FILE), 'sample.jpeg')
 

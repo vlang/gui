@@ -27,7 +27,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[InputsApp]()
 	input_width := 125
@@ -110,7 +110,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn button_change_theme(app &InputsApp) gui.View {
+fn button_change_theme(app &InputsApp) &gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit

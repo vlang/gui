@@ -28,7 +28,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[ScrollApp]()
 
@@ -51,7 +51,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn scroll_column(id u32, text string, window &gui.Window) gui.View {
+fn scroll_column(id u32, text string, window &gui.Window) &gui.View {
 	return gui.column(
 		id_focus:        id // enables keyboard scrolling
 		id_scroll:       id // id_scroll used to store scroll state in window
@@ -77,7 +77,7 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 	)
 }
 
-fn top_row(app &ScrollApp) gui.View {
+fn top_row(app &ScrollApp) &gui.View {
 	return gui.row(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -96,7 +96,7 @@ fn top_row(app &ScrollApp) gui.View {
 	)
 }
 
-fn theme_button(app &ScrollApp) gui.View {
+fn theme_button(app &ScrollApp) &gui.View {
 	return gui.toggle(
 		id_focus:      3
 		text_select:   gui.icon_moon

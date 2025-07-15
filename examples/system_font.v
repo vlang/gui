@@ -24,7 +24,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[SystemFontApp]()
 
@@ -59,7 +59,7 @@ fn create_system_font_theme() gui.Theme {
 	})
 }
 
-fn theme_button(app &SystemFontApp) gui.View {
+fn theme_button(app &SystemFontApp) &gui.View {
 	return gui.toggle(
 		id_focus: 3
 		select:   app.system

@@ -43,9 +43,9 @@ fn main() {
 	window.run()
 }
 
-fn main_view(mut w gui.Window) gui.View {
+fn main_view(mut w gui.Window) &gui.View {
 	app := w.state[CalcApp]()
-	mut panel := []gui.View{}
+	mut panel := []&gui.View{}
 
 	panel << gui.row(
 		color:   gui.black
@@ -92,8 +92,8 @@ fn main_view(mut w gui.Window) gui.View {
 	)
 }
 
-fn get_row(ops []string) []gui.View {
-	mut content := []gui.View{}
+fn get_row(ops []string) []&gui.View {
+	mut content := []&gui.View{}
 
 	for op in ops {
 		content << gui.button(

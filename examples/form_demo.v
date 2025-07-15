@@ -34,7 +34,7 @@ const id_focus_city = u32(102)
 const id_focus_state = u32(103)
 const id_focus_zip = u32(104)
 
-fn main_view(mut window gui.Window) gui.View {
+fn main_view(mut window gui.Window) &gui.View {
 	w, h := window.window_size()
 	mut app := window.state[FormDemoApp]()
 
@@ -93,7 +93,7 @@ fn main_view(mut window gui.Window) gui.View {
 	)
 }
 
-fn label_input_row(label string, value string, id_focus u32, changed fn (string)) gui.View {
+fn label_input_row(label string, value string, id_focus u32, changed fn (string)) &gui.View {
 	field_width := 250
 
 	// Use fill_fit to move label and input to outer edges of form
@@ -117,7 +117,7 @@ fn label_input_row(label string, value string, id_focus u32, changed fn (string)
 	)
 }
 
-fn select_state(state string, mut window gui.Window) gui.View {
+fn select_state(state string, mut window gui.Window) &gui.View {
 	field_width := 150
 	return window.select(
 		id:          'select_state'

@@ -25,7 +25,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	mut app := window.state[TabViewApp]()
 
@@ -65,7 +65,7 @@ fn main_view(window &gui.Window) gui.View {
 }
 
 // tab buttons can be anything you want. This one is admittedly simple.
-fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) gui.View {
+fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) &gui.View {
 	color := if app.select_tab == id {
 		gui.theme().color_select
 	} else {
@@ -85,7 +85,7 @@ fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) gui.Vie
 	)
 }
 
-fn theme_button(app &TabViewApp) gui.View {
+fn theme_button(app &TabViewApp) &gui.View {
 	return gui.toggle(
 		id_focus:      3
 		text_select:   gui.icon_moon

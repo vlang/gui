@@ -36,7 +36,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	mut app := window.state[DocViewerApp]()
 
@@ -53,11 +53,11 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
+fn (mut app DocViewerApp) nav_panel(w &gui.Window) &gui.View {
 	files := os.ls('../doc') or { [] }
 	doc_files := files.filter(os.file_ext(it) == '.md').sorted()
 
-	mut nav_files := []gui.View{}
+	mut nav_files := []&gui.View{}
 	for doc_file in doc_files {
 		// Change background color of current selection. No need
 		// to remember the old selection to unhighlight.
@@ -86,7 +86,7 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 		)
 	}
 
-	mut content := []gui.View{}
+	mut content := []&gui.View{}
 	content << nav_files
 	content << gui.rectangle(sizing: gui.fill_fill, color: gui.color_transparent)
 	content << tab_stops(w)
@@ -100,7 +100,7 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 	)
 }
 
-fn tab_stops(w &gui.Window) gui.View {
+fn tab_stops(w &gui.Window) &gui.View {
 	app := w.state[DocViewerApp]()
 	return gui.radio_button_group_row(
 		title:     'Tab Size '
@@ -117,7 +117,7 @@ fn tab_stops(w &gui.Window) gui.View {
 	)
 }
 
-fn (mut app DocViewerApp) doc_panel(w &gui.Window) gui.View {
+fn (mut app DocViewerApp) doc_panel(w &gui.Window) &gui.View {
 	text := os.read_file(os.join_path('../doc', app.doc_file)) or { 'select a doc' }
 	return gui.column(
 		id:        'doc'

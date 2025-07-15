@@ -37,7 +37,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(mut window gui.Window) gui.View {
+fn main_view(mut window gui.Window) &gui.View {
 	w, h := window.window_size()
 	return gui.column(
 		width:   w
@@ -55,7 +55,7 @@ fn main_view(mut window gui.Window) gui.View {
 	)
 }
 
-fn tables(mut window gui.Window) []gui.View {
+fn tables(mut window gui.Window) []&gui.View {
 	mut app := window.state[TableDemoApp]()
 	return [
 		gui.text(text: 'Declarative Layout', text_style: gui.theme().b2),
@@ -76,7 +76,7 @@ fn tables(mut window gui.Window) []gui.View {
 	]
 }
 
-fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) gui.View {
+fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) &gui.View {
 	mut table_cfg := gui.table_cfg_from_data(table_data.sorted)
 	// Replace with first row with clickable column headers
 	mut tds := []gui.TableCellCfg{}

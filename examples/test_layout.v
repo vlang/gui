@@ -34,7 +34,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(w &gui.Window) gui.View {
+fn main_view(w &gui.Window) &gui.View {
 	mut state := w.state[AppState]()
 	width, height := w.window_size()
 	app := w.state[AppState]()

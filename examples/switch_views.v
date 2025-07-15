@@ -18,7 +18,7 @@ fn main() {
 	window.run()
 }
 
-fn page(content []gui.View, window &gui.Window) gui.View {
+fn page(content []&gui.View, window &gui.Window) &gui.View {
 	w, h := window.window_size()
 
 	return gui.column(
@@ -31,7 +31,7 @@ fn page(content []gui.View, window &gui.Window) gui.View {
 	)
 }
 
-fn page_one(window &gui.Window) gui.View {
+fn page_one(window &gui.Window) &gui.View {
 	return page([
 		gui.text(text: 'Page One', text_style: gui.theme().b1),
 		gui.button(
@@ -45,7 +45,7 @@ fn page_one(window &gui.Window) gui.View {
 	], window)
 }
 
-fn page_two(window &gui.Window) gui.View {
+fn page_two(window &gui.Window) &gui.View {
 	return page([
 		gui.text(text: 'Page Two', text_style: gui.theme().b1),
 		gui.button(

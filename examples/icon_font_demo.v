@@ -10,7 +10,7 @@ pub mut:
 	select_size string = 'x-large'
 	longest     f32
 	search      string
-	icons       []gui.View
+	icons       []&gui.View
 }
 
 fn main() {
@@ -28,7 +28,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(mut window gui.Window) gui.View {
+fn main_view(mut window gui.Window) &gui.View {
 	w, h := window.window_size()
 	// app := window.state[IconFontApp]()
 
@@ -44,7 +44,7 @@ fn main_view(mut window gui.Window) gui.View {
 	)
 }
 
-fn side_panel(mut w gui.Window) gui.View {
+fn side_panel(mut w gui.Window) &gui.View {
 	mut app := w.state[IconFontApp]()
 	return gui.column(
 		id:      'side-panel'
@@ -74,7 +74,7 @@ fn side_panel(mut w gui.Window) gui.View {
 	)
 }
 
-fn search_box(text string) gui.View {
+fn search_box(text string) &gui.View {
 	return gui.input(
 		text:            text
 		id_focus:        2
@@ -94,7 +94,7 @@ fn search_box(text string) gui.View {
 	)
 }
 
-fn icon_catalog(mut w gui.Window) gui.View {
+fn icon_catalog(mut w gui.Window) &gui.View {
 	mut app := w.state[IconFontApp]()
 	icon_text_style := match app.select_size {
 		'tiny' { gui.theme().icon6 }
@@ -118,7 +118,7 @@ fn icon_catalog(mut w gui.Window) gui.View {
 		chunks := chunk_map(gui.icons_map, app.search, 4)
 
 		for chunk in chunks {
-			mut icons := []gui.View{}
+			mut icons := []&gui.View{}
 			for key, val in chunk {
 				icons << gui.column(
 					min_width: app.longest
@@ -172,7 +172,7 @@ fn chunk_map[K, V](input map[K]V, search string, chunk_size int) []map[K]V {
 	return chunks
 }
 
-fn toggle_theme(app &IconFontApp) gui.View {
+fn toggle_theme(app &IconFontApp) &gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit

@@ -43,7 +43,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[FloatingLayoutApp]()
 
@@ -101,7 +101,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn faux_edit_menu(app &FloatingLayoutApp) gui.View {
+fn faux_edit_menu(app &FloatingLayoutApp) &gui.View {
 	return gui.column(
 		spacing: 0
 		padding: gui.padding_none
@@ -149,7 +149,7 @@ fn faux_edit_menu(app &FloatingLayoutApp) gui.View {
 	)
 }
 
-fn toggle_theme(app &FloatingLayoutApp) gui.View {
+fn toggle_theme(app &FloatingLayoutApp) &gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit

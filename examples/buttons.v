@@ -33,7 +33,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(mut window gui.Window) gui.View {
+fn main_view(mut window gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[ButtonsApp]()
 	button_text := '${app.clicks} Clicks Given'
@@ -112,7 +112,7 @@ fn main_view(mut window gui.Window) gui.View {
 	)
 }
 
-fn button_row(label string, button gui.View) gui.View {
+fn button_row(label string, button &gui.View) &gui.View {
 	return gui.row(
 		padding: gui.padding_none
 		sizing:  gui.fill_fit
@@ -134,7 +134,7 @@ fn click_handler(_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
 	w.set_id_focus(1)
 }
 
-fn button_change_theme(app &ButtonsApp) gui.View {
+fn button_change_theme(app &ButtonsApp) &gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit

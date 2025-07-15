@@ -15,9 +15,9 @@ for i, file in files {
 	print('(${i + 1:02}/${files.len:02}) ${cmd:-70}')
 	result := execute(cmd)
 	if result.exit_code == 0 {
-		println('✅')
+		println('\t✅')
 	} else {
-		println('⭕')
+		println('\t⭕')
 		println(result.output)
 		errors << cmd
 	}

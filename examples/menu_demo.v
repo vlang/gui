@@ -34,7 +34,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	mut app := window.state[MenuApp]()
 
@@ -51,7 +51,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn menu(window &gui.Window) gui.View {
+fn menu(window &gui.Window) &gui.View {
 	app := window.state[MenuApp]()
 
 	return window.menubar(
@@ -190,7 +190,7 @@ fn menu(window &gui.Window) gui.View {
 	)
 }
 
-fn body(mut app MenuApp, window &gui.Window) gui.View {
+fn body(mut app MenuApp, window &gui.Window) &gui.View {
 	return gui.column(
 		h_align: .center
 		padding: gui.padding_none
@@ -235,7 +235,7 @@ fn body(mut app MenuApp, window &gui.Window) gui.View {
 	)
 }
 
-fn toggle_theme(app &MenuApp) gui.View {
+fn toggle_theme(app &MenuApp) &gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit

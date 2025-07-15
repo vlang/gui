@@ -24,7 +24,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	w, h := window.window_size()
 	app := window.state[DialogsApp]()
 
@@ -49,7 +49,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn message_type() gui.View {
+fn message_type() &gui.View {
 	return gui.button(
 		id_focus: 1
 		sizing:   gui.fill_fit
@@ -71,7 +71,7 @@ Buttons can be left/center/right aligned'.trim_indent()
 	)
 }
 
-fn confirm_type() gui.View {
+fn confirm_type() &gui.View {
 	return gui.button(
 		id_focus: 2
 		sizing:   gui.fill_fit
@@ -92,7 +92,7 @@ fn confirm_type() gui.View {
 	)
 }
 
-fn prompt_type() gui.View {
+fn prompt_type() &gui.View {
 	return gui.button(
 		id_focus: 3
 		sizing:   gui.fill_fit
@@ -113,7 +113,7 @@ fn prompt_type() gui.View {
 	)
 }
 
-fn custom_type() gui.View {
+fn custom_type() &gui.View {
 	return gui.button(
 		id_focus: 4
 		sizing:   gui.fill_fit
@@ -142,7 +142,7 @@ fn custom_type() gui.View {
 	)
 }
 
-fn toggle_theme(app &DialogsApp) gui.View {
+fn toggle_theme(app &DialogsApp) &gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit

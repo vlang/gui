@@ -9,12 +9,12 @@ import gui
 
 @[heap]
 struct App {
-	items []gui.View
+	items []&gui.View
 }
 
 fn main() {
 	size := 10_000 // 10K!
-	mut items := []gui.View{cap: size + 1}
+	mut items := []&gui.View{cap: size + 1}
 	for i in 1 .. size + 1 {
 		items << gui.text(text: '${i:05} text list item')
 	}
@@ -33,7 +33,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(window &gui.Window) &gui.View {
 	app := window.state[App]()
 	w, h := window.window_size()
 

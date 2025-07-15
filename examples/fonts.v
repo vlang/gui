@@ -26,7 +26,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(mut window gui.Window) gui.View {
+fn main_view(mut window gui.Window) &gui.View {
 	w, h := window.window_size()
 	return gui.row(
 		width:   w
@@ -39,7 +39,7 @@ fn main_view(mut window gui.Window) gui.View {
 	)
 }
 
-fn side_panel(mut window gui.Window) gui.View {
+fn side_panel(mut window gui.Window) &gui.View {
 	mut app := window.state[FontsApp]()
 	prefix := match app.selected_family {
 		'Bold' { 'b' }
@@ -88,10 +88,10 @@ fn side_panel(mut window gui.Window) gui.View {
 	)
 }
 
-fn font_panel(window &gui.Window) gui.View {
+fn font_panel(window &gui.Window) &gui.View {
 	app := window.state[FontsApp]()
-	mut rows := []gui.View{}
-	mut cols := []gui.View{}
+	mut rows := []&gui.View{}
+	mut cols := []&gui.View{}
 	width := f32(gui.theme().n3.size) * 1.5
 
 	text_style := match app.selected_family {
@@ -154,7 +154,7 @@ fn font_panel(window &gui.Window) gui.View {
 	)
 }
 
-fn toggle_theme(app &FontsApp) gui.View {
+fn toggle_theme(app &FontsApp) &gui.View {
 	return gui.row(
 		h_align: .end
 		padding: gui.padding_none
