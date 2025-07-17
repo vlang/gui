@@ -54,7 +54,7 @@ mut:
 
 fn (cv &ContainerView) generate(mut _ Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
-	mut layout := Layout{
+	layout := Layout{
 		shape: Shape{
 			type:                cv.shape_type
 			id:                  cv.id

@@ -92,7 +92,7 @@ fn (t &TextView) generate(mut window Window) Layout {
 }
 
 // TextCfg configures a [text](#text) view
-// - [TextMode](#TextMode) controls how text is rendered.
+// - [TextMode](#TextMode) controls how text is wrapped.
 @[heap]
 pub struct TextCfg {
 	is_password        bool
