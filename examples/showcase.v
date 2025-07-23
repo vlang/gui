@@ -1,4 +1,6 @@
 import gui
+import encoding.csv
+import math
 
 // Showcase
 // =============================
@@ -15,6 +17,7 @@ enum TabItem {
 	tab_dialogs
 	tab_tree_view
 	tab_text_view
+	tab_table_view
 }
 
 @[heap]
@@ -45,8 +48,18 @@ pub mut:
 	// list Box
 	list_box_multiple_select bool
 	list_box_selected_values []string
-	// expand_pand
+	// expand_pad
 	open_expand_panel bool
+	// Tables
+	csv_table TableData
+}
+
+@[heap]
+struct TableData {
+pub mut:
+	sort_by  int // 1's based sort column index. -sort_by = descending order, 0 == unsorted
+	sorted   [][]string
+	unsorted [][]string
 }
 
 fn main() {
@@ -56,6 +69,8 @@ fn main() {
 		width:   800
 		height:  600
 		on_init: fn (mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.csv_table = get_table_data() or { panic(err.msg()) }
 			w.update_view(main_view)
 		}
 	)
@@ -92,6 +107,7 @@ fn side_bar(mut w gui.Window) gui.View {
 			tab_select('Dialogs', .tab_dialogs, app),
 			tab_select('Tree View', .tab_tree_view, app),
 			tab_select('Text', .tab_text_view, app),
+			tab_select('Tables', .tab_table_view, app),
 			gui.column(sizing: gui.fit_fill),
 			toggle_theme(app),
 		]
@@ -127,6 +143,9 @@ fn gallery(mut w gui.Window) gui.View {
 			}
 			.tab_text_view {
 				[text_sizes_weights(w), rich_text_format(w)]
+			}
+			.tab_table_view {
+				[tables(mut w)]
 			}
 		}
 	)
@@ -1709,3 +1728,137 @@ fn rtf_sample(w &gui.Window) gui.View {
 		]
 	)
 }
+
+// ==============================================================
+// Tables
+// ==============================================================
+fn tables(mut w gui.Window) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		sizing:  gui.fill_fill
+		content: [
+			view_title('Tables'),
+			gui.row(
+				padding: gui.padding_none
+				sizing:  gui.fill_fit
+				spacing: 0
+				content: [table_samples(mut w)]
+			),
+		]
+	)
+}
+
+fn table_samples(mut w gui.Window) gui.View {
+	mut app := w.state[ShowcaseApp]()
+	return gui.column(
+		content: [
+			gui.text(text: 'Declarative Layout', text_style: gui.theme().b2),
+			w.table(
+				text_style_head: gui.theme().b3
+				data:            [
+					gui.tr([gui.th('First'), gui.th('Last'), gui.th('Email')]),
+					gui.tr([gui.td('Matt'), gui.td('Williams'),
+						gui.td('non.egestas.a@protonmail.org')]),
+					gui.tr([gui.td('Clara'), gui.td('Nelson'),
+						gui.td('mauris.sagittis@icloud.net')]),
+					gui.tr([gui.td('Frank'), gui.td('Johnson'),
+						gui.td('ac.libero.nec@aol.com')]),
+					gui.tr([gui.td('Elmer'), gui.td('Fudd'), gui.td('mus@aol.couk')]),
+					gui.tr([gui.td('Roy'), gui.td('Rogers'), gui.td('amet.ultricies@yahoo.com')]),
+				]
+			),
+			gui.text(text: ''),
+			gui.text(text: 'CSV Data', text_style: gui.theme().b2),
+			table_with_sortable_columns(mut app.csv_table, mut w),
+			gui.text(text: ''),
+		]
+	)
+}
+
+fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) gui.View {
+	mut table_cfg := gui.table_cfg_from_data(table_data.sorted)
+	// Replace with first row with clickable column headers
+	mut tds := []gui.TableCellCfg{}
+	for idx, cell in table_cfg.data[0].cells {
+		tds << gui.TableCellCfg{
+			...cell
+			value:    match true {
+				idx + 1 == table_data.sort_by { cell.value + '  ↓' }
+				-(idx + 1) == table_data.sort_by { cell.value + ' ↑' }
+				else { cell.value }
+			}
+			on_click: fn [idx, mut table_data] (_ &gui.TableCellCfg, mut e gui.Event, mut w gui.Window) {
+				table_data.sort_by = match true {
+					table_data.sort_by == (idx + 1) { -(idx + 1) }
+					table_data.sort_by == -(idx + 1) { 0 }
+					else { idx + 1 }
+				}
+				table_sort(mut table_data)
+				e.is_handled = true
+			}
+		}
+	}
+
+	table_cfg.data.delete(0)
+	table_cfg.data.insert(0, gui.tr(tds))
+	return window.table(table_cfg)
+}
+
+fn table_sort(mut table_data TableData) {
+	if table_data.sort_by == 0 {
+		table_data.sorted = table_data.unsorted
+		return
+	}
+	direction := table_data.sort_by > 0
+	idx := math.abs(table_data.sort_by) - 1
+	head_row := table_data.sorted[0]
+	table_data.sorted.delete(0) // duplicates the array so no clone needed above
+	table_data.sorted.sort_with_compare(fn [direction, idx] (mut a []string, mut b []string) int {
+		return match true {
+			a[idx] < b[idx] && direction { -1 }
+			a[idx] > b[idx] && !direction { -1 }
+			a[idx] > b[idx] && direction { 1 }
+			a[idx] < b[idx] && !direction { 1 }
+			else { 0 }
+		}
+	})
+	table_data.sorted.insert(0, head_row)
+}
+
+fn get_table_data() !TableData {
+	mut table_data := TableData{}
+	mut parser := csv.csv_reader_from_string(csv_table_data_source)!
+	for y in 0 .. int(parser.rows_count()!) {
+		table_data.unsorted << parser.get_row(y)!
+	}
+	table_data.sorted = table_data.unsorted
+	return table_data
+}
+
+const csv_table_data_source = 'Name,Phone,Email,Address,Postal Zip,Region
+Keelie Snow,1-164-548-3178,erat.vivamus@icloud.net,Ap #414-702 Libero Avenue,698863,Chernivtsi oblast
+Anthony Keith,1-918-510-5824,pulvinar.arcu@google.ca,Ap #358-7921 Placerat. Street,S4V 2M4,Leinster
+Carissa Larson,1-646-772-7793,enim.gravida@aol.couk,"667-994 Mi, St.",1231,Sardegna
+Joseph Herrera,1-746-758-0438,posuere@hotmail.couk,Ap #638-5604 Adipiscing Ave,51262,Pará
+Nerea Romero,1-425-458-5525,pretium.neque@google.edu,990-4951 Mauris St.,46317,Junín
+Macey Reed,1-175-242-2264,massa.quisque@hotmail.couk,1239 Arcu. Av.,WI1 8TR,Lai Châu
+Craig Roach,1-541-688-6830,lorem.sit@hotmail.ca,385-9173 Libero. Rd.,07132,Newfoundland and Labrador
+Yardley Barlow,1-648-862-5647,sodales@hotmail.couk,893-8994 Aliquet. St.,97-286,Lambayeque
+Shad Whitfield,1-525-513-5416,augue.id.ante@protonmail.org,Ap #560-3609 Lorem Ave,70666,North Jeolla
+Eugenia Bell,1-578-560-1252,laoreet.ipsum@icloud.edu,"P.O. Box 922, 5077 Sed Ave",28133,Kon Tum
+Nash Hernandez,1-897-393-7624,convallis.convallis.dolor@google.couk,5853 Diam. Rd.,734884,Tasmania
+Rinah Woods,1-698-796-5903,dui.nec.urna@icloud.ca,252-4094 Neque. Avenue,17571,Northern Territory
+Jescie Beasley,1-264-555-2460,sapien.cursus@google.org,"873-7406 At, Rd.",44324,Gyeonggi
+Jordan Harrison,1-627-442-6681,scelerisque.scelerisque@hotmail.net,696-2283 Turpis Rd.,3709,Umbria
+Abdul Rowe,1-384-151-2787,ornare.fusce.mollis@hotmail.edu,"Ap #856-6933 Ut, St.",25878,Mississippi
+Simone Bullock,1-623-422-9718,sed.facilisis@outlook.couk,2620 Mattis St.,49275,Luxemburg
+Lillian Montgomery,1-317-854-9787,ut@outlook.couk,Ap #132-4005 Enim Ave,571928,Leinster
+Tanisha Rodriquez,1-217-655-3165,id@aol.couk,"P.O. Box 490, 1311 Et, Road",45133,Chiapas
+Alexandra Dyer,1-442-662-6576,amet.consectetuer.adipiscing@protonmail.edu,Ap #474-4869 Malesuada St.,613696,Rajasthan
+Gretchen Carr,1-465-576-3555,eu.nibh@yahoo.org,Ap #617-6465 Nascetur Rd.,872532,São Paulo
+Patience Cobb,1-833-211-2532,sed@hotmail.couk,1431 Pellentesque Street,644218,Paraná
+Jaquelyn Carlson,1-774-851-3274,amet.dapibus@aol.ca,"Ap #529-8389 Lectus, Av.",5680-5371,Central Region
+Britanney Silva,1-281-414-9085,nascetur.ridiculus.mus@google.ca,429-6408 Nec Rd.,6132,Vorarlberg
+Brennan Hooper,1-534-697-7689,nunc.pulvinar.arcu@aol.edu,Ap #425-8524 Pellentesque. Ave,8834,Morayshire
+Eliana Fry,1-822-880-5214,orci.luctus.et@protonmail.edu,351-931 Non St.,731577,Viken
+'
