@@ -155,6 +155,8 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 				cr_char, lf_char {
 					if cfg.on_enter != unsafe { nil } {
 						cfg.on_enter(cfg, mut event, w)
+						event.is_handled = true
+						return
 					} else {
 						if cfg.mode != .single_line {
 							text = cfg.insert('\n', mut w) or {
