@@ -74,6 +74,7 @@ fn (cfg DatePickerCfg) month_picker() View {
 	return button(
 		color_border: color_transparent
 		content:      [text(text: cfg.time.custom_format('MMMM YYYY'))]
+		on_click:     fn (_ &ButtonCfg, mut e Event, mut w Window) {}
 	)
 }
 
@@ -81,6 +82,7 @@ fn (cfg DatePickerCfg) year_picker() View {
 	return button(
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_down, text_style: gui_theme.icon3)]
+		on_click:     fn (_ &ButtonCfg, mut e Event, mut w Window) {}
 	)
 }
 
@@ -88,6 +90,7 @@ fn (cfg DatePickerCfg) prev_month() View {
 	return button(
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_left, text_style: gui_theme.icon3)]
+		on_click:     fn (_ &ButtonCfg, mut e Event, mut w Window) {}
 	)
 }
 
@@ -95,6 +98,7 @@ fn (cfg DatePickerCfg) next_month() View {
 	return button(
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_right, text_style: gui_theme.icon3)]
+		on_click:     fn (_ &ButtonCfg, mut e Event, mut w Window) {}
 	)
 }
 
@@ -152,6 +156,7 @@ fn (cfg DatePickerCfg) month() View {
 				h_align:      .center
 				v_align:      .middle
 				content:      [text(text: day)]
+				on_click:     fn (_ &ButtonCfg, mut e Event, mut w Window) {}
 			)
 			offset += 1
 		}
