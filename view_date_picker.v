@@ -8,10 +8,11 @@ pub:
 	id                  string
 	id_focus            u32 @[required]
 	time                time.Time = time.now()
+	title               string    = 'SELECT DATE'
 	first_day_of_week   int
 	show_adjacent_month bool
 	show_week           bool
-	cell_width          f32 = 25
+	cell_size           f32 = 35
 	cell_spacing        f32 = 3
 	width               f32
 	height              f32
@@ -50,12 +51,16 @@ pub fn date_picker(cfg DatePickerCfg) View {
 				padding: cfg.padding
 				name:    'date_picker interior'
 				content: [
-					cfg.title(),
-					cfg.current(),
 					row(
+						v_align: .middle
+						padding: padding_none
+						sizing:  fill_fit
 						content: [
 							cfg.month_picker(),
 							cfg.year_picker(),
+							rectangle(sizing: fill_fit),
+							cfg.prev_month(),
+							cfg.next_month(),
 						]
 					),
 					cfg.body(),
@@ -65,21 +70,31 @@ pub fn date_picker(cfg DatePickerCfg) View {
 	)
 }
 
-fn (cfg DatePickerCfg) title() View {
-	return text(text: 'SELECT DATE', text_style: gui_theme.m5)
-}
-
-fn (cfg DatePickerCfg) current() View {
-	return text(text: cfg.time.custom_format('ddd, MMM D'))
-}
-
 fn (cfg DatePickerCfg) month_picker() View {
-	return button(content: [text(text: 'bla')])
+	return button(
+		color_border: color_transparent
+		content:      [text(text: cfg.time.custom_format('MMMM YYYY'))]
+	)
 }
 
 fn (cfg DatePickerCfg) year_picker() View {
-	return toggle(
-		on_click: fn (_ &ToggleCfg, mut e Event, mut w Window) {}
+	return button(
+		color_border: color_transparent
+		content:      [text(text: icon_arrow_down, text_style: gui_theme.icon3)]
+	)
+}
+
+fn (cfg DatePickerCfg) prev_month() View {
+	return button(
+		color_border: color_transparent
+		content:      [text(text: icon_arrow_left, text_style: gui_theme.icon3)]
+	)
+}
+
+fn (cfg DatePickerCfg) next_month() View {
+	return button(
+		color_border: color_transparent
+		content:      [text(text: icon_arrow_right, text_style: gui_theme.icon3)]
 	)
 }
 
@@ -102,11 +117,13 @@ fn (cfg DatePickerCfg) week_days() View {
 	mut week_days := []View{}
 	week_days_short := ['S', 'M', 'T', 'W', 'T', 'F', 'S']!
 	for i in 0 .. 7 {
-		week_days << row(
-			h_align:   .center
-			min_width: cfg.cell_width
-			padding:   padding_none
-			content:   [text(text: week_days_short[i])]
+		week_days << button(
+			color:        color_transparent
+			color_border: color_transparent
+			disabled:     true
+			min_width:    cfg.cell_size
+			padding:      padding_none
+			content:      [text(text: week_days_short[i])]
 		)
 	}
 	return row(
@@ -118,20 +135,24 @@ fn (cfg DatePickerCfg) week_days() View {
 
 fn (cfg DatePickerCfg) month() View {
 	mut month := []View{}
+	today := time.now()
 	mut offset := time.day_of_week(cfg.time.year, cfg.time.month, 0) * -1
 	days_in_month := time.days_in_month(cfg.time.month, cfg.time.year) or { 0 }
 	for _ in 0 .. 5 {
 		mut week := []View{}
 		for _ in 0 .. 7 {
-			week << row(
-				h_align:   .center
-				min_width: cfg.cell_width
-				padding:   padding_none
-				content:   [
-					text(
-						text: if offset <= 0 || offset > days_in_month { '' } else { offset.str() }
-					),
-				]
+			day := if offset <= 0 || offset > days_in_month { '' } else { offset.str() }
+			is_today := cfg.time.day == offset && cfg.time.month == today.month
+				&& cfg.time.year == today.year
+			color := if is_today { blue } else { color_transparent }
+			week << button(
+				color:        color
+				color_border: color_transparent
+				min_width:    cfg.cell_size
+				min_height:   cfg.cell_size
+				h_align:      .center
+				v_align:      .middle
+				content:      [text(text: day)]
 			)
 			offset += 1
 		}
