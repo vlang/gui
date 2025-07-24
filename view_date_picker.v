@@ -120,7 +120,6 @@ fn (cfg DatePickerCfg) week_days() View {
 		week_days << button(
 			color:        color_transparent
 			color_border: color_transparent
-			disabled:     true
 			min_width:    cfg.cell_size
 			padding:      padding_none
 			content:      [text(text: week_days_short[i])]
