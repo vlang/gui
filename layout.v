@@ -717,7 +717,7 @@ fn layout_amend(mut node Layout, mut w Window) {
 
 // layout_hover is a convenience callback for clients to do hover things.
 // Originally, it was done in layout_amend but it there's a fair bit of
-// boiler plate that this callback hides.
+// boiler plate that this callback encapsulates.
 fn layout_hover(mut node Layout, mut w Window) {
 	if w.mouse_is_locked() {
 		return

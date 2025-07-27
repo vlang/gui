@@ -34,14 +34,24 @@ fn main_view(mut window gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			window.date_picker(
-				id:        'example'
-				time:      app.date_picker_time
-				on_select: fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[DatePickerApp]()
-					app.date_picker_time = times[0]
-					e.is_handled = true
-				}
+			gui.row(
+				content: [
+					window.date_picker(
+						id:        'example'
+						time:      app.date_picker_time
+						on_select: fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[DatePickerApp]()
+							app.date_picker_time = times[0]
+							e.is_handled = true
+						}
+					),
+					gui.rectangle(width: 1, height: 10, sizing: gui.fit_fill),
+					gui.column(
+						content: [
+							gui.text(text: 'controls here'),
+						]
+					),
+				]
 			),
 		]
 	)

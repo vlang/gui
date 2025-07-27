@@ -19,7 +19,7 @@ pub:
 	first_day_of_week   int
 	show_adjacent_month bool
 	show_week           bool
-	cell_size           f32 = 35
+	cell_size           f32 = 40
 	cell_spacing        f32 = 3
 	width               f32
 	height              f32
@@ -146,6 +146,7 @@ fn (cfg DatePickerCfg) body(state DatePickerState) View {
 fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
 	return column(
 		padding: padding_none
+		spacing: 0
 		content: [
 			cfg.week_days(state),
 			cfg.month(state),
@@ -161,7 +162,8 @@ fn (cfg DatePickerCfg) week_days(state DatePickerState) View {
 			color:        color_transparent
 			color_border: color_transparent
 			min_width:    cfg.cell_size
-			padding:      padding_none
+			max_width:    cfg.cell_size
+			padding:      padding_two
 			content:      [text(text: week_days_short[i])]
 		)
 	}
@@ -174,6 +176,7 @@ fn (cfg DatePickerCfg) week_days(state DatePickerState) View {
 
 fn (cfg DatePickerCfg) month(state DatePickerState) View {
 	mut month := []View{}
+
 	today := time.now()
 	v_time := view_time(state)
 	days_in_month := time.days_in_month(v_time.month, v_time.year) or { 0 }
@@ -209,10 +212,11 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 				color_border:   color_border
 				color_click:    cfg.color_select
 				color_hover:    color_hover
+				disabled:       day == ''
 				min_width:      cfg.cell_size
 				min_height:     cfg.cell_size
-				h_align:        .center
-				v_align:        .middle
+				max_width:      cfg.cell_size
+				max_height:     cfg.cell_size
 				padding_border: padding_two
 				content:        [text(text: day)]
 				on_click:       fn [cfg, count, state] (_ &ButtonCfg, mut e Event, mut w Window) {
@@ -224,8 +228,8 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 			count += 1
 		}
 		month << row(
-			spacing: cfg.cell_spacing
 			padding: padding_none
+			spacing: cfg.cell_spacing
 			content: week
 		)
 	}
