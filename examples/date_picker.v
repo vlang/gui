@@ -1,17 +1,18 @@
 import gui
+import time
 
-// Data Picker
+// Date Picker Example
 // =============================
 
 @[heap]
-struct DataPickerApp {
+struct DatePickerApp {
 pub mut:
-	clicks int
+	date_picker_time time.Time = time.now()
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &DataPickerApp{}
+		state:   &DatePickerApp{}
 		width:   800
 		height:  600
 		on_init: fn (mut w gui.Window) {
@@ -24,7 +25,7 @@ fn main() {
 
 fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[DataPickerApp]()
+	app := window.state[DatePickerApp]()
 
 	return gui.column(
 		width:   w
@@ -33,7 +34,15 @@ fn main_view(mut window gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			gui.date_picker(id_focus: 1),
+			window.date_picker(
+				id:        'example'
+				time:      app.date_picker_time
+				on_select: fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
+					mut app := w.state[DatePickerApp]()
+					app.date_picker_time = times[0]
+					e.is_handled = true
+				}
+			),
 		]
 	)
 }
