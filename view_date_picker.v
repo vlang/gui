@@ -22,7 +22,8 @@ pub:
 	show_week           bool
 	cell_size           f32 = 40
 	cell_spacing        f32 = 3
-	year_button_width   f32 = 120
+	month_button_width  f32 = 120
+	year_button_width   f32 = 70
 	width               f32
 	height              f32
 	min_width           f32
@@ -291,13 +292,13 @@ fn (cfg DatePickerCfg) select_month(state DatePickerState) View {
 	mut col2 := []View{}
 	for i in 0 .. 6 {
 		col1 << button(
-			min_width: cfg.year_button_width
-			max_width: cfg.year_button_width
+			min_width: cfg.month_button_width
+			max_width: cfg.month_button_width
 			content:   [text(text: time.long_months[i])]
 		)
 		col2 << button(
-			min_width: cfg.year_button_width
-			max_width: cfg.year_button_width
+			min_width: cfg.month_button_width
+			max_width: cfg.month_button_width
 			content:   [text(text: time.long_months[i + 6])]
 		)
 	}
@@ -322,11 +323,45 @@ fn (cfg DatePickerCfg) select_month(state DatePickerState) View {
 }
 
 fn (cfg DatePickerCfg) select_year(state DatePickerState) View {
-	return column(
+	mut rows := []View{}
+
+	mut year := state.view_year - 30
+	for _ in 0 .. 20 {
+		mut buttons := []View{}
+		for _ in 0 .. 3 {
+			buttons << button(
+				min_width: cfg.year_button_width
+				max_width: cfg.year_button_width
+				content:   [text(text: year.str())]
+			)
+			year++
+		}
+		rows << row(
+			padding: padding_none
+			content: buttons
+		)
+	}
+
+	id_scroll := u32(459342148)
+
+	return row(
+		h_align:    .center
+		v_align:    .middle
 		min_width:  state.calendar_width
 		max_width:  state.calendar_width
 		min_height: state.calendar_height
 		max_height: state.calendar_height
-		content:    [text(text: 'year select')]
+		padding:    padding_none
+		content:    [
+			column(
+				padding:   Padding{
+					...padding_none
+					right: gui_theme.padding_large.right
+				}
+				id_scroll: id_scroll
+				sizing:    fit_fill
+				content:   rows
+			),
+		]
 	)
 }
