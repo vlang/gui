@@ -2,7 +2,7 @@ module gui
 
 import time
 
-pub struct DatePickerState {
+struct DatePickerState {
 pub mut:
 	view_month             int
 	view_year              int
@@ -12,7 +12,7 @@ pub mut:
 	calendar_height        f32
 }
 
-@[params]
+// DatePickerCfg configures a [date_picker](#date_picker)
 pub struct DatePickerCfg {
 pub:
 	id                  string    @[required] // unique only to other date_pickers
@@ -84,6 +84,7 @@ pub fn (mut window Window) date_picker_reset(id string) {
 
 fn (cfg DatePickerCfg) controls(state DatePickerState) View {
 	return row(
+		name:    'date_picker controls'
 		v_align: .middle
 		padding: padding_none
 		sizing:  fill_fit
@@ -175,6 +176,7 @@ fn (cfg DatePickerCfg) body(state DatePickerState) View {
 
 fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
 	return column(
+		name:         'date_picker calendar'
 		padding:      padding_none
 		spacing:      0
 		content:      [
@@ -204,6 +206,7 @@ fn (cfg DatePickerCfg) week_days(state DatePickerState) View {
 		)
 	}
 	return row(
+		name:    'date_picker week_days'
 		spacing: cfg.cell_spacing
 		padding: padding_none
 		content: week_days
@@ -270,7 +273,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 		)
 	}
 	return column(
-		name:    'date_picker calendar'
+		name:    'date_picker month'
 		padding: padding_none
 		spacing: cfg.cell_spacing
 		content: month
@@ -314,6 +317,7 @@ fn (cfg DatePickerCfg) select_month(state DatePickerState) View {
 		)
 	}
 	return column(
+		name:       'date_picker select_month'
 		h_align:    .center
 		v_align:    .middle
 		min_width:  state.calendar_width
@@ -355,6 +359,7 @@ fn (cfg DatePickerCfg) select_year(state DatePickerState) View {
 	id_scroll := u32(459342148)
 
 	return row(
+		name:       'date_picker select_year'
 		h_align:    .center
 		v_align:    .middle
 		min_width:  state.calendar_width
