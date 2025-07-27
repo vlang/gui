@@ -49,6 +49,7 @@ fn main_view(mut window gui.Window) gui.View {
 					gui.rectangle(width: 1, height: 10, sizing: gui.fit_fill),
 					gui.column(
 						content: [
+							gui.text(text: 'Configuration', text_style: gui_theme.m4),
 							toggle_theme(app),
 							gui.button(
 								content:  [gui.text(text: 'Reset')]
