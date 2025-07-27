@@ -15,7 +15,6 @@ pub struct DatePickerCfg {
 pub:
 	id                  string    @[required] // unique only to other date_pickers
 	time                time.Time @[required]
-	title               string = 'SELECT DATE'
 	first_day_of_week   int
 	show_adjacent_month bool
 	show_week           bool
@@ -84,6 +83,10 @@ pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 			),
 		]
 	)
+}
+
+pub fn (mut window Window) date_picker_reset(id string) {
+	window.view_state.date_picker_state[id] = DatePickerState{}
 }
 
 fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {

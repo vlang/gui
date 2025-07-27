@@ -8,6 +8,7 @@ import time
 struct DatePickerApp {
 pub mut:
 	date_picker_time time.Time = time.now()
+	light_theme      bool
 }
 
 fn main() {
@@ -48,10 +49,45 @@ fn main_view(mut window gui.Window) gui.View {
 					gui.rectangle(width: 1, height: 10, sizing: gui.fit_fill),
 					gui.column(
 						content: [
-							gui.text(text: 'controls here'),
+							toggle_theme(app),
+							gui.button(
+								content:  [gui.text(text: 'Reset')]
+								on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+									w.date_picker_reset('example')
+									mut app := w.state[DatePickerApp]()
+									app.date_picker_time = time.now()
+									e.is_handled = true
+								}
+							),
 						]
 					),
 				]
+			),
+		]
+	)
+}
+
+fn toggle_theme(app &DatePickerApp) gui.View {
+	return gui.row(
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		content: [
+			gui.toggle(
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon3
+				padding:       gui.padding_small
+				select:        app.light_theme
+				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[DatePickerApp]()
+					app.light_theme = !app.light_theme
+					theme := if app.light_theme {
+						gui.theme_light_bordered
+					} else {
+						gui.theme_dark_bordered
+					}
+					w.set_theme(theme)
+				}
 			),
 		]
 	)
