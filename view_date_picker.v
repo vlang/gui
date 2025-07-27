@@ -2,14 +2,19 @@ module gui
 
 import time
 
+enum DatePickerMode {
+	calendar
+	months
+	years
+}
+
 struct DatePickerState {
 pub mut:
-	view_month             int
-	view_year              int
-	show_select_year_view  bool
-	show_select_month_view bool
-	calendar_width         f32
-	calendar_height        f32
+	view_month      int
+	view_year       int
+	mode            DatePickerMode
+	calendar_width  f32
+	calendar_height f32
 }
 
 // DatePickerCfg configures a [date_picker](#date_picker)
@@ -104,8 +109,7 @@ fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
 		content:      [text(text: view_time(state).custom_format('MMMM YYYY'))]
 		on_click:     fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
 			mut state := w.view_state.date_picker_state[cfg.id]
-			state.show_select_month_view = !state.show_select_month_view
-			state.show_select_year_view = false
+			state.mode = .months
 			w.view_state.date_picker_state[cfg.id] = state
 			e.is_handled = true
 		}
@@ -119,8 +123,7 @@ fn (cfg DatePickerCfg) year_picker(state DatePickerState) View {
 		content:      [text(text: icon, text_style: gui_theme.icon3)]
 		on_click:     fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
 			mut state := w.view_state.date_picker_state[cfg.id]
-			state.show_select_month_view = false
-			state.show_select_year_view = !state.show_select_year_view
+			state.mode = .years
 			w.view_state.date_picker_state[cfg.id] = state
 			e.is_handled = true
 		}
@@ -167,10 +170,10 @@ fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 
 // body is either a calendar, month picker or year picker
 fn (cfg DatePickerCfg) body(state DatePickerState) View {
-	return match true {
-		state.show_select_month_view { cfg.select_month(state) }
-		state.show_select_year_view { cfg.select_year(state) }
-		else { cfg.calendar(state) }
+	return match state.mode {
+		.calendar { cfg.calendar(state) }
+		.months { cfg.select_month(state) }
+		.years { cfg.select_year(state) }
 	}
 }
 
@@ -303,8 +306,7 @@ fn (cfg DatePickerCfg) select_month(state DatePickerState) View {
 				on_click:  fn [cfg, month] (_ &ButtonCfg, mut e Event, mut w Window) {
 					mut state := w.view_state.date_picker_state[cfg.id]
 					state.view_month = month + 1
-					state.show_select_year_view = false
-					state.show_select_month_view = false
+					state.mode = .calendar
 					w.view_state.date_picker_state[cfg.id] = state
 					e.is_handled = true
 				}
@@ -342,8 +344,7 @@ fn (cfg DatePickerCfg) select_year(state DatePickerState) View {
 				on_click:  fn [cfg, year] (_ &ButtonCfg, mut e Event, mut w Window) {
 					mut state := w.view_state.date_picker_state[cfg.id]
 					state.view_year = year
-					state.show_select_year_view = false
-					state.show_select_month_view = false
+					state.mode = .calendar
 					w.view_state.date_picker_state[cfg.id] = state
 					e.is_handled = true
 				}
