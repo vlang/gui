@@ -288,37 +288,39 @@ fn get_select_date(day int, state DatePickerState) time.Time {
 }
 
 fn (cfg DatePickerCfg) select_month(state DatePickerState) View {
-	mut col1 := []View{}
-	mut col2 := []View{}
-	for i in 0 .. 6 {
-		col1 << button(
-			min_width: cfg.month_button_width
-			max_width: cfg.month_button_width
-			content:   [text(text: time.long_months[i])]
-		)
-		col2 << button(
-			min_width: cfg.month_button_width
-			max_width: cfg.month_button_width
-			content:   [text(text: time.long_months[i + 6])]
+	mut month := 0
+	mut rows := []View{}
+	for _ in 0 .. 6 {
+		mut buttons := []View{}
+		for _ in 0 .. 2 {
+			buttons << button(
+				min_width: cfg.month_button_width
+				max_width: cfg.month_button_width
+				content:   [text(text: time.long_months[month])]
+				on_click:  fn [cfg, month] (_ &ButtonCfg, mut e Event, mut w Window) {
+					mut state := w.view_state.date_picker_state[cfg.id]
+					state.view_month = month + 1
+					state.show_select_year_view = false
+					state.show_select_month_view = false
+					w.view_state.date_picker_state[cfg.id] = state
+					e.is_handled = true
+				}
+			)
+			month++
+		}
+		rows << row(
+			padding: padding_none
+			content: buttons
 		)
 	}
-	return row(
+	return column(
 		h_align:    .center
 		v_align:    .middle
 		min_width:  state.calendar_width
 		max_width:  state.calendar_width
 		min_height: state.calendar_height
 		max_height: state.calendar_height
-		content:    [
-			column(
-				spacing: gui_theme.spacing_small
-				content: col1
-			),
-			column(
-				spacing: gui_theme.spacing_small
-				content: col2
-			),
-		]
+		content:    rows
 	)
 }
 
@@ -333,6 +335,14 @@ fn (cfg DatePickerCfg) select_year(state DatePickerState) View {
 				min_width: cfg.year_button_width
 				max_width: cfg.year_button_width
 				content:   [text(text: year.str())]
+				on_click:  fn [cfg, year] (_ &ButtonCfg, mut e Event, mut w Window) {
+					mut state := w.view_state.date_picker_state[cfg.id]
+					state.view_year = year
+					state.show_select_year_view = false
+					state.show_select_month_view = false
+					w.view_state.date_picker_state[cfg.id] = state
+					e.is_handled = true
+				}
 			)
 			year++
 		}
