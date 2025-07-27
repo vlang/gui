@@ -109,7 +109,11 @@ fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
 		content:      [text(text: view_time(state).custom_format('MMMM YYYY'))]
 		on_click:     fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
 			mut state := w.view_state.date_picker_state[cfg.id]
-			state.mode = .months
+			state.mode = match state.mode {
+				.calendar { .months }
+				.years { .months }
+				.months { .calendar }
+			}
 			w.view_state.date_picker_state[cfg.id] = state
 			e.is_handled = true
 		}
@@ -117,13 +121,17 @@ fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
 }
 
 fn (cfg DatePickerCfg) year_picker(state DatePickerState) View {
-	icon := if state.show_select_year_view { icon_arrow_up } else { icon_arrow_down }
+	icon := if state.mode == .years { icon_arrow_up } else { icon_arrow_down }
 	return button(
 		color_border: color_transparent
 		content:      [text(text: icon, text_style: gui_theme.icon3)]
 		on_click:     fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
 			mut state := w.view_state.date_picker_state[cfg.id]
-			state.mode = .years
+			state.mode = match state.mode {
+				.calendar { .years }
+				.months { .years }
+				.years { .calendar }
+			}
 			w.view_state.date_picker_state[cfg.id] = state
 			e.is_handled = true
 		}
@@ -132,7 +140,7 @@ fn (cfg DatePickerCfg) year_picker(state DatePickerState) View {
 
 fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
 	return button(
-		disabled:     state.show_select_month_view || state.show_select_year_view
+		disabled:     state.mode != .calendar
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_left, text_style: gui_theme.icon3)]
 		on_click:     fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
@@ -151,7 +159,7 @@ fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
 
 fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 	return button(
-		disabled:     state.show_select_month_view || state.show_select_year_view
+		disabled:     state.mode != .calendar
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_right, text_style: gui_theme.icon3)]
 		on_click:     fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
