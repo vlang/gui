@@ -22,6 +22,7 @@ pub:
 	show_week           bool
 	cell_size           f32 = 40
 	cell_spacing        f32 = 3
+	year_button_width   f32 = 120
 	width               f32
 	height              f32
 	min_width           f32
@@ -164,13 +165,11 @@ fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 
 // body is either a calendar, month picker or year picker
 fn (cfg DatePickerCfg) body(state DatePickerState) View {
-	if state.show_select_month_view {
-		return select_month(state)
+	return match true {
+		state.show_select_month_view { cfg.select_month(state) }
+		state.show_select_year_view { cfg.select_year(state) }
+		else { cfg.calendar(state) }
 	}
-	if state.show_select_year_view {
-		return select_year(state)
-	}
-	return cfg.calendar(state)
 }
 
 fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
@@ -287,17 +286,42 @@ fn get_select_date(day int, state DatePickerState) time.Time {
 	}
 }
 
-fn select_month(state DatePickerState) View {
-	return column(
+fn (cfg DatePickerCfg) select_month(state DatePickerState) View {
+	mut col1 := []View{}
+	mut col2 := []View{}
+	for i in 0 .. 6 {
+		col1 << button(
+			min_width: cfg.year_button_width
+			max_width: cfg.year_button_width
+			content:   [text(text: time.long_months[i])]
+		)
+		col2 << button(
+			min_width: cfg.year_button_width
+			max_width: cfg.year_button_width
+			content:   [text(text: time.long_months[i + 6])]
+		)
+	}
+	return row(
+		h_align:    .center
+		v_align:    .middle
 		min_width:  state.calendar_width
 		max_width:  state.calendar_width
 		min_height: state.calendar_height
 		max_height: state.calendar_height
-		content:    [text(text: 'month select')]
+		content:    [
+			column(
+				spacing: gui_theme.spacing_small
+				content: col1
+			),
+			column(
+				spacing: gui_theme.spacing_small
+				content: col2
+			),
+		]
 	)
 }
 
-fn select_year(state DatePickerState) View {
+fn (cfg DatePickerCfg) select_year(state DatePickerState) View {
 	return column(
 		min_width:  state.calendar_width
 		max_width:  state.calendar_width
