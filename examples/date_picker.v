@@ -48,17 +48,26 @@ fn main_view(mut window gui.Window) gui.View {
 					),
 					gui.rectangle(width: 1, height: 10, sizing: gui.fit_fill),
 					gui.column(
+						padding: gui.padding_none
+						sizing:  gui.fit_fill
 						content: [
-							gui.text(text: 'Configuration', text_style: gui_theme.m4),
-							toggle_theme(app),
-							gui.button(
-								content:  [gui.text(text: 'Reset')]
-								on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
-									w.date_picker_reset('example')
-									mut app := w.state[DatePickerApp]()
-									app.date_picker_time = time.now()
-									e.is_handled = true
-								}
+							gui.text(text: 'Configuration', text_style: gui_theme.m3),
+							gui.rectangle(color: gui.color_transparent, sizing: gui.fit_fill),
+							gui.row(
+								padding: gui.padding_none
+								v_align: .middle
+								content: [
+									gui.button(
+										content:  [gui.text(text: 'Reset')]
+										on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+											w.date_picker_reset('example')
+											mut app := w.state[DatePickerApp]()
+											app.date_picker_time = time.now()
+											e.is_handled = true
+										}
+									),
+									toggle_theme(app),
+								]
 							),
 						]
 					),
