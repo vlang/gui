@@ -735,11 +735,17 @@ fn layout_hover(mut node Layout, mut w Window) {
 		ctx := w.context()
 		if node.shape.point_in_shape(ctx.mouse_pos_x, ctx.mouse_pos_y) {
 			// fake an event to get mouse button states.
+			mouse_button := match true {
+				ctx.mbtn_mask & 0x01 > 0 { MouseButton.left }
+				ctx.mbtn_mask & 0x02 > 0 { MouseButton.right }
+				ctx.mbtn_mask & 0x04 > 0 { MouseButton.middle }
+				else { MouseButton.invalid }
+			}
 			mut ev := Event{
 				frame_count:   ctx.frame
 				typ:           .invalid
 				modifiers:     unsafe { u32(ctx.key_modifiers) }
-				mouse_button:  unsafe { MouseButton(ctx.mbtn_mask) }
+				mouse_button:  mouse_button
 				mouse_x:       ctx.mouse_pos_x
 				mouse_y:       ctx.mouse_pos_y
 				mouse_dx:      ctx.mouse_dx
