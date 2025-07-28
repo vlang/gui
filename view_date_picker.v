@@ -10,11 +10,11 @@ enum DatePickerMode {
 
 struct DatePickerState {
 pub mut:
+	mode            DatePickerMode
+	calendar_width  f32 // width and height needed to fix the size of the view, so showing
+	calendar_height f32 // select months/years does not cause the view to change size.
 	view_month      int
 	view_year       int
-	mode            DatePickerMode
-	calendar_width  f32
-	calendar_height f32
 }
 
 // DatePickerCfg configures a [date_picker](#date_picker)
@@ -29,15 +29,8 @@ pub:
 	cell_spacing             f32 = 3
 	month_button_width       f32 = 120
 	year_button_width        f32 = 70
-	width                    f32
-	height                   f32
-	min_width                f32
-	min_height               f32
-	max_width                f32
-	max_height               f32
 	disabled                 bool
 	invisible                bool
-	sizing                   Sizing
 	color                    Color     = gui_theme.button_style.color
 	color_hover              Color     = gui_theme.button_style.color_hover
 	color_focus              Color     = gui_theme.button_style.color_focus
@@ -233,10 +226,13 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 	mut month := []View{}
 
 	today := time.now()
-	v_time := view_time(state)
-	days_in_month := time.days_in_month(v_time.month, v_time.year) or { 0 }
+	vt := view_time(state)
+	days_in_month := time.days_in_month(vt.month, vt.year) or { 0 }
+	first_day_of_month := time.day_of_week(vt.year, vt.month, 1)
+	last_month := if vt.month == 1 { 12 } else { vt.month - 1 }
+	year := if vt.month == 12 { vt.year - 1 } else { vt.year }
+	days_prev_month := time.days_in_month(last_month, year) or { 0 }
 
-	first_day_of_month := time.day_of_week(v_time.year, v_time.month, 1)
 	mut count := match first_day_of_month {
 		1 { 0 } // Mon
 		2 { -1 } // Tue
@@ -254,15 +250,24 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 		}
 	}
 
-	for _ in 0 .. 6 {
+	for _ in 0 .. 6 { // six weeks to display a month
 		mut week := []View{}
-		for _ in 0 .. 7 {
-			day := if count <= 0 || count > days_in_month { '' } else { count.str() }
+		for _ in 0 .. 7 { // 7 days in a week
+			day := match true {
+				count <= 0 {
+					if cfg.show_adjacent_months { (days_prev_month - count).str() } else { '' }
+				}
+				count > days_in_month {
+					if cfg.show_adjacent_months { (count - days_in_month).str() } else { '' }
+				}
+				else {
+					count.str()
+				}
+			}
 
-			is_today := count == today.day && v_time.month == today.month
-				&& v_time.year == today.year
-			is_selected_day := count == cfg.time.day && cfg.time.month == v_time.month
-				&& cfg.time.year == v_time.year
+			is_today := count == today.day && vt.month == today.month && vt.year == today.year
+			is_selected_day := count == cfg.time.day && cfg.time.month == vt.month
+				&& cfg.time.year == vt.year
 
 			color := if is_selected_day { cfg.color_select } else { cfg.color }
 			color_border := if is_today { cfg.text_style.color } else { color_transparent }
@@ -273,7 +278,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 				color_border:   color_border
 				color_click:    cfg.color_select
 				color_hover:    color_hover
-				disabled:       day == ''
+				disabled:       count <= 0 || count > days_in_month
 				min_width:      cfg.cell_size
 				min_height:     cfg.cell_size
 				max_width:      cfg.cell_size

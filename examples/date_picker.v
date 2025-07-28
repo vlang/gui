@@ -7,9 +7,10 @@ import time
 @[heap]
 struct DatePickerApp {
 pub mut:
-	date_picker_time time.Time = time.now()
-	monday_first     bool
-	light_theme      bool
+	date_picker_time     time.Time = time.now()
+	monday_first         bool
+	show_adjacent_months bool
+	light_theme          bool
 }
 
 fn main() {
@@ -42,6 +43,7 @@ fn main_view(mut window gui.Window) gui.View {
 						id:                       'example'
 						time:                     app.date_picker_time
 						monday_first_day_of_week: app.monday_first
+						show_adjacent_months:     app.show_adjacent_months
 						on_select:                fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[DatePickerApp]()
 							app.date_picker_time = times[0]
@@ -62,6 +64,14 @@ fn main_view(mut window gui.Window) gui.View {
 									app.monday_first = !app.monday_first
 								}
 							),
+							gui.toggle(
+								label:    'Show adjacent months'
+								select:   app.show_adjacent_months
+								on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+									mut app := w.state[DatePickerApp]()
+									app.show_adjacent_months = !app.show_adjacent_months
+								}
+							),
 							gui.rectangle(color: gui.color_transparent, sizing: gui.fit_fill),
 							gui.row(
 								padding: gui.padding_none
@@ -74,6 +84,7 @@ fn main_view(mut window gui.Window) gui.View {
 											mut app := w.state[DatePickerApp]()
 											app.date_picker_time = time.now()
 											app.monday_first = false
+											app.show_adjacent_months = false
 											e.is_handled = true
 										}
 									),
