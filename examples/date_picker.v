@@ -8,6 +8,7 @@ import time
 struct DatePickerApp {
 pub mut:
 	date_picker_time time.Time = time.now()
+	monday_first     bool
 	light_theme      bool
 }
 
@@ -38,9 +39,10 @@ fn main_view(mut window gui.Window) gui.View {
 			gui.row(
 				content: [
 					window.date_picker(
-						id:        'example'
-						time:      app.date_picker_time
-						on_select: fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
+						id:                       'example'
+						time:                     app.date_picker_time
+						monday_first_day_of_week: app.monday_first
+						on_select:                fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[DatePickerApp]()
 							app.date_picker_time = times[0]
 							e.is_handled = true
@@ -52,6 +54,14 @@ fn main_view(mut window gui.Window) gui.View {
 						sizing:  gui.fit_fill
 						content: [
 							gui.text(text: 'Configuration', text_style: gui_theme.m3),
+							gui.toggle(
+								label:    'Monday first day of week'
+								select:   app.monday_first
+								on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+									mut app := w.state[DatePickerApp]()
+									app.monday_first = !app.monday_first
+								}
+							),
 							gui.rectangle(color: gui.color_transparent, sizing: gui.fit_fill),
 							gui.row(
 								padding: gui.padding_none
@@ -63,6 +73,7 @@ fn main_view(mut window gui.Window) gui.View {
 											w.date_picker_reset('example')
 											mut app := w.state[DatePickerApp]()
 											app.date_picker_time = time.now()
+											app.monday_first = false
 											e.is_handled = true
 										}
 									),
