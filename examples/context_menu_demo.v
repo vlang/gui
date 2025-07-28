@@ -82,7 +82,6 @@ fn main_view(mut window gui.Window) gui.View {
 				// ---------------------------------------------------------
 				on_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[ContextMenuApp]()
-					println(u8(e.mouse_button))
 					if e.mouse_button == .right {
 						app.show_context_menu = true
 						w.set_id_focus(id_focus_context_menu)
