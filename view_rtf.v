@@ -75,7 +75,7 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 }
 
 // rtf creates a view from the given [RtfCfg](#RtfCfg)
-pub fn rtf(cfg RtfCfg) RtfView {
+pub fn rtf(cfg RtfCfg) View {
 	mut ll := datatypes.LinkedList[TextSpan]{}
 	ll.push_many(cfg.spans)
 	return RtfView{

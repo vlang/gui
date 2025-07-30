@@ -197,6 +197,7 @@ pub:
 	tooltip         TooltipCfg
 	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_any_click    fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
@@ -208,7 +209,7 @@ pub:
 // container is the fundamental layout container in gui. It is used to layout
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
-fn container(cfg &ContainerCfg) ContainerView {
+fn container(cfg &ContainerCfg) View {
 	if cfg.invisible {
 		return ContainerView{
 			over_draw: true // removes it from spacing calculations
@@ -272,7 +273,11 @@ fn container(cfg &ContainerCfg) ContainerView {
 		float_offset_y:  cfg.float_offset_y
 		tooltip:         cfg.tooltip
 		cfg:             cfg.cfg
-		on_click:        cfg.on_click
+		on_click:        if cfg.on_any_click != unsafe { nil } {
+			cfg.on_any_click
+		} else {
+			cfg.left_click()
+		}
 		on_char:         cfg.on_char
 		on_keydown:      cfg.on_keydown
 		on_mouse_move:   cfg.on_mouse_move
@@ -287,7 +292,7 @@ fn container(cfg &ContainerCfg) ContainerView {
 
 // column arranges its content top to bottom. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
-pub fn column(cfg &ContainerCfg) ContainerView {
+pub fn column(cfg &ContainerCfg) View {
 	name := if cfg.name.len == 0 { 'column' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
@@ -302,7 +307,7 @@ pub fn column(cfg &ContainerCfg) ContainerView {
 
 // row arranges its content left to right. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
-pub fn row(cfg &ContainerCfg) ContainerView {
+pub fn row(cfg &ContainerCfg) View {
 	name := if cfg.name.len == 0 { 'row' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
@@ -316,7 +321,7 @@ pub fn row(cfg &ContainerCfg) ContainerView {
 }
 
 // canvas does not arrange or otherwise layout its content. See [ContainerCfg](#ContainerCfg)
-pub fn canvas(cfg &ContainerCfg) ContainerView {
+pub fn canvas(cfg &ContainerCfg) View {
 	name := if cfg.name.len == 0 { 'canvas' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
@@ -328,7 +333,7 @@ pub fn canvas(cfg &ContainerCfg) ContainerView {
 	return container(container_cfg)
 }
 
-pub fn circle(cfg &ContainerCfg) ContainerView {
+pub fn circle(cfg &ContainerCfg) View {
 	name := if cfg.name.len == 0 { 'circle' } else { cfg.name }
 	mut container_cfg := &ContainerCfg{
 		...cfg
@@ -337,7 +342,7 @@ pub fn circle(cfg &ContainerCfg) ContainerView {
 	if cfg.cfg == unsafe { nil } {
 		container_cfg.cfg = container_cfg
 	}
-	mut circle := container(container_cfg)
+	mut circle := container(container_cfg) as ContainerView
 	circle.shape_type = .circle
 	return circle
 }
@@ -350,6 +355,19 @@ fn (mut cfg ContainerView) on_mouse_move_shape(shape &Shape, mut e Event, mut w 
 			y:      shape.y
 			width:  shape.width
 			height: shape.height
+		}
+	}
+}
+
+fn (cfg &ContainerCfg) left_click() fn (&ContainerCfg, mut Event, mut Window) {
+	if cfg.on_click == unsafe { nil } {
+		return cfg.on_click
+	}
+	// _cfg is the original cfg of the calling view. It can be different than
+	// cfg &ContainerCfg. Menu items for an example.
+	return fn [cfg] (_cfg voidptr, mut e Event, mut w Window) {
+		if e.mouse_button == .left {
+			cfg.on_click(_cfg, mut e, mut w)
 		}
 	}
 }

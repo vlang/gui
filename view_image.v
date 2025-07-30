@@ -64,7 +64,7 @@ fn (iv &ImageView) generate(mut window Window) Layout {
 	return layout
 }
 
-pub fn image(cfg ImageCfg) ImageView {
+pub fn image(cfg ImageCfg) View {
 	return ImageView{
 		id:         cfg.id
 		file_name:  cfg.file_name
@@ -74,7 +74,18 @@ pub fn image(cfg ImageCfg) ImageView {
 		min_height: cfg.min_height
 		invisible:  cfg.invisible
 		cfg:        &cfg
-		on_click:   cfg.on_click
+		on_click:   cfg.left_click()
 		on_hover:   cfg.on_hover
+	}
+}
+
+fn (cfg &ImageCfg) left_click() fn (&ImageCfg, mut Event, mut Window) {
+	if cfg.on_click == unsafe { nil } {
+		return cfg.on_click
+	}
+	return fn [cfg] (_ &ImageCfg, mut e Event, mut w Window) {
+		if e.mouse_button == .left {
+			cfg.on_click(cfg, mut e, mut w)
+		}
 	}
 }

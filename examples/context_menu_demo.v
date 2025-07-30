@@ -80,7 +80,7 @@ fn main_view(mut window gui.Window) gui.View {
 				// ---------------------------------------------------------
 				// Activate the menu as required. Not limited to right-click
 				// ---------------------------------------------------------
-				on_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
+				on_any_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[ContextMenuApp]()
 					if e.mouse_button == .right {
 						app.show_context_menu = true
