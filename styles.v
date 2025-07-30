@@ -30,6 +30,7 @@ pub:
 
 pub struct DatePickerStyle {
 pub:
+	hide_today_indicator           bool
 	monday_first_day_of_week       bool
 	show_adjacent_months           bool
 	cell_size                      f32       = 40

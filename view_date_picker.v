@@ -24,6 +24,7 @@ pub:
 	time                           time.Time @[required]
 	disabled                       bool
 	invisible                      bool
+	hide_today_indicator           bool      = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week       bool      = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months           bool      = gui_theme.date_picker_style.show_adjacent_months
 	cell_size                      f32       = gui_theme.date_picker_style.cell_size
@@ -241,6 +242,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 			}
 
 			is_today := count == today.day && vt.month == today.month && vt.year == today.year
+				&& !cfg.hide_today_indicator
 			is_selected_day := count == cfg.time.day && cfg.time.month == vt.month
 				&& cfg.time.year == vt.year
 

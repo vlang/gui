@@ -8,6 +8,7 @@ import time
 struct DatePickerApp {
 pub mut:
 	date_picker_time     time.Time = time.now()
+	hide_today_indicator bool
 	monday_first         bool
 	show_adjacent_months bool
 	light_theme          bool
@@ -42,6 +43,7 @@ fn main_view(mut window gui.Window) gui.View {
 					window.date_picker(
 						id:                       'example'
 						time:                     app.date_picker_time
+						hide_today_indicator:     app.hide_today_indicator
 						monday_first_day_of_week: app.monday_first
 						show_adjacent_months:     app.show_adjacent_months
 						on_select:                fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
@@ -70,6 +72,14 @@ fn main_view(mut window gui.Window) gui.View {
 								on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 									mut app := w.state[DatePickerApp]()
 									app.show_adjacent_months = !app.show_adjacent_months
+								}
+							),
+							gui.toggle(
+								label:    'Hide today indicator'
+								select:   app.hide_today_indicator
+								on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+									mut app := w.state[DatePickerApp]()
+									app.hide_today_indicator = !app.hide_today_indicator
 								}
 							),
 							gui.rectangle(color: gui.color_transparent, sizing: gui.fit_fill),
