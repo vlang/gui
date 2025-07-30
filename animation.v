@@ -24,30 +24,30 @@ mut:
 	stopped bool
 }
 
-pub fn (mut w Window) animation_add(mut animation Animation) {
-	w.animations = w.animations.filter(it.id != animation.id)
+pub fn (mut window Window) animation_add(mut animation Animation) {
+	window.animations = window.animations.filter(it.id != animation.id)
 	animation.start = time.now()
-	w.animations << animation
+	window.animations << animation
 }
 
-fn (mut w Window) animation_loop() {
+fn (mut window Window) animation_loop() {
 	for {
 		time.sleep(animation_cycle)
-		w.lock()
+		window.lock()
 
 		mut refresh := false
-		for mut animation in w.animations {
+		for mut animation in window.animations {
 			match mut animation {
-				Animate { refresh = refresh || update_animate(mut animation, mut w) }
+				Animate { refresh = refresh || update_animate(mut animation, mut window) }
 				else {}
 			}
 		}
 
 		// remove any stopped animations
-		w.animations = w.animations.filter(!it.stopped)
-		w.unlock()
+		window.animations = window.animations.filter(!it.stopped)
+		window.unlock()
 		if refresh {
-			w.update_window()
+			window.update_window()
 		}
 	}
 }

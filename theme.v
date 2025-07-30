@@ -86,6 +86,7 @@ pub:
 
 	button_style       ButtonStyle
 	container_style    ContainerStyle
+	date_picker_style  DatePickerStyle
 	dialog_style       DialogStyle
 	expand_panel_style ExpandPanelStyle
 	input_style        InputStyle
@@ -422,6 +423,22 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			padding: cfg.padding
 			radius:  cfg.radius
 			spacing: cfg.spacing_medium
+		}
+		date_picker_style:  DatePickerStyle{
+			color:              cfg.color_interior
+			color_hover:        cfg.color_hover
+			color_focus:        cfg.color_focus
+			color_click:        cfg.color_active
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_select
+			color_select:       cfg.color_select
+			fill:               cfg.fill
+			fill_border:        cfg.fill_border
+			padding:            cfg.padding
+			padding_border:     cfg.padding_border
+			radius:             cfg.radius
+			radius_border:      cfg.radius_border
+			text_style:         cfg.text_style
 		}
 		dialog_style:       DialogStyle{
 			color:            cfg.color_panel

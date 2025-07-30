@@ -72,7 +72,7 @@ pub fn button(cfg ButtonCfg) View {
 		sizing:       cfg.sizing
 		tooltip:      cfg.tooltip
 		cfg:          &cfg
-		on_click:     cfg.on_click
+		on_click:     cfg.left_click()
 		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout
 		on_hover:     cfg.on_hover
@@ -90,6 +90,17 @@ pub fn button(cfg ButtonCfg) View {
 			),
 		]
 	)
+}
+
+fn (cfg &ButtonCfg) left_click() fn (&ButtonCfg, mut Event, mut Window) {
+	if cfg.on_click == unsafe { nil } {
+		return cfg.on_click
+	}
+	return fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
+		if e.mouse_button == .left {
+			cfg.on_click(cfg, mut e, mut w)
+		}
+	}
 }
 
 fn (cfg &ButtonCfg) on_char_button(_ &ButtonCfg, mut e Event, mut w Window) {
@@ -110,6 +121,9 @@ fn (cfg &ButtonCfg) amend_layout(mut node Layout, mut w Window) {
 }
 
 fn (cfg &ButtonCfg) on_hover(mut node Layout, mut e Event, mut w Window) {
+	if node.shape.on_click == unsafe { nil } {
+		return
+	}
 	w.set_mouse_cursor_pointing_hand()
 	if !w.is_focus(node.shape.id_focus) {
 		node.children[0].shape.color = cfg.color_hover

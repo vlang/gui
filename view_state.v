@@ -7,18 +7,19 @@ import sokol.sapp
 // store view states. This is gui's solution.
 struct ViewState {
 mut:
-	cursor_on      bool                       // used by cursor blink animation
-	id_focus       u32                        // current view that has focus
-	input_state    map[u32]InputState         // [id_focus] -> InputState
-	offset_x_state map[u32]f32                // [id_scroll] -> offset x
-	offset_y_state map[u32]f32                // [id_scroll] -> offset y
-	text_widths    map[u32]f32                // [text + hash(text_style)] -> text width
-	mouse_cursor   sapp.MouseCursor           // arrow, finger, ibeam, etc.
-	mouse_lock     MouseLockCfg               // mouse down/move/up methods to call when locked
-	menu_state     map[u32]string             // [id_menubar] -> id of menu
-	image_map      map[string]int             // [file name] -> context.cache image id
-	select_state   map[string]bool            // [id select] -> open/close state
-	tree_state     map[string]map[string]bool // [tree id] -> [node id ] -> open/closed
+	cursor_on         bool                       // used by cursor blink animation
+	id_focus          u32                        // current view that has focus
+	input_state       map[u32]InputState         // [id_focus] -> InputState
+	offset_x_state    map[u32]f32                // [id_scroll] -> offset x
+	offset_y_state    map[u32]f32                // [id_scroll] -> offset y
+	text_widths       map[u32]f32                // [text + hash(text_style)] -> text width
+	mouse_cursor      sapp.MouseCursor           // arrow, finger, ibeam, etc.
+	mouse_lock        MouseLockCfg               // mouse down/move/up methods to call when locked
+	menu_state        map[u32]string             // [id_menubar] -> id of menu
+	image_map         map[string]int             // [file name] -> context.cache image id
+	select_state      map[string]bool            // [id select] -> open/close state
+	tree_state        map[string]map[string]bool // [tree id] -> [node id ] -> open/closed
+	date_picker_state map[string]DatePickerState // [id date_pidker -> DatePickerState
 }
 
 fn (mut vs ViewState) clear(mut w Window) {
@@ -38,6 +39,7 @@ fn (mut vs ViewState) clear(mut w Window) {
 	vs.image_map.clear()
 	vs.select_state.clear()
 	vs.tree_state.clear()
+	vs.date_picker_state.clear()
 }
 
 // The management of focus and input states poses a problem in stateless views
