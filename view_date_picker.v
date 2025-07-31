@@ -20,10 +20,11 @@ pub mut:
 // DatePickerCfg configures a [date_picker](#date_picker)
 pub struct DatePickerCfg {
 pub:
-	id                             string    @[required] // unique only to other date_pickers
-	time                           time.Time @[required]
+	id                             string      @[required] // unique only to other date_pickers
+	times                          []time.Time @[required]
 	disabled                       bool
 	invisible                      bool
+	select_multiple                bool
 	hide_today_indicator           bool      = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week       bool      = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months           bool      = gui_theme.date_picker_style.show_adjacent_months
@@ -48,11 +49,13 @@ pub:
 	on_select                      fn ([]time.Time, mut Event, mut Window) = unsafe { nil }
 }
 
+// date_picker creates a date-picker view from the given [DatePickerCfg](DatePickerCfg)
 pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 	mut state := window.view_state.date_picker_state[cfg.id]
 	if state.view_year == 0 {
-		state.view_month = cfg.time.month
-		state.view_year = cfg.time.year
+		v_time := if cfg.times.len > 0 { cfg.times[0] } else { time.now() }
+		state.view_month = v_time.month
+		state.view_year = v_time.year
 		window.view_state.date_picker_state[cfg.id] = state
 	}
 
@@ -147,7 +150,7 @@ fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 	)
 }
 
-// body is either a calendar, month picker or year picker
+// body is either a calendar, year-month-picker
 fn (cfg DatePickerCfg) body(state DatePickerState) View {
 	return match state.show_year_month_picker {
 		true { cfg.year_month_picker(state) }
@@ -209,6 +212,15 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 	year := if vt.month == 12 { vt.year - 1 } else { vt.year }
 	days_prev_month := time.days_in_month(last_month, year) or { 0 }
 
+	mut selected_times := []time.Time{}
+	if cfg.select_multiple {
+		selected_times << dates(cfg.times)
+	} else if cfg.times.len > 0 {
+		selected_times << date(cfg.times[0].day, cfg.times[0].month, cfg.times[0].year)
+	} else {
+		selected_times << date(today.day, today.month, today.year)
+	}
+
 	mut count := match first_day_of_month {
 		1 { 0 } // Mon
 		2 { -1 } // Tue
@@ -243,8 +255,8 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 
 			is_today := count == today.day && vt.month == today.month && vt.year == today.year
 				&& !cfg.hide_today_indicator
-			is_selected_day := count == cfg.time.day && cfg.time.month == vt.month
-				&& cfg.time.year == vt.year
+			dt := date(count, vt.month, vt.year)
+			is_selected_day := dt in selected_times
 
 			color := if is_selected_day { cfg.color_select } else { cfg.color }
 			color_border := if is_today { cfg.text_style.color } else { color_transparent }
@@ -264,7 +276,8 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 				content:        [text(text: day)]
 				on_click:       fn [cfg, count, state] (_ &ButtonCfg, mut e Event, mut w Window) {
 					if cfg.on_select != unsafe { nil } {
-						cfg.on_select([get_select_date(count, state)], mut e, mut w)
+						selected_dates := cfg.update_selection(count, state)
+						cfg.on_select(selected_dates, mut e, mut w)
 					}
 				}
 			)
@@ -284,14 +297,37 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 	)
 }
 
-fn view_time(state DatePickerState) time.Time {
-	return time.parse_format('${state.view_month} ${state.view_year}', 'M YYYY') or { time.now() }
+fn (cfg DatePickerCfg) update_selection(day int, state DatePickerState) []time.Time {
+	selected := date(day, state.view_month, state.view_year)
+	if !cfg.select_multiple {
+		return [selected]
+	}
+
+	mut selections := []time.Time{}
+	selections << dates(cfg.times)
+	if selected in selections {
+		selections = selections.filter(it != selected)
+	} else {
+		selections << selected
+	}
+	return selections
 }
 
-fn get_select_date(day int, state DatePickerState) time.Time {
-	return time.parse_format('${day} ${state.view_month} ${state.view_year}', 'D M YYYY') or {
-		time.now()
+fn view_time(state DatePickerState) time.Time {
+	return date(1, state.view_month, state.view_year)
+}
+
+fn date(day int, month int, year int) time.Time {
+	if day < 1 {
+		return time.unix(time.absolute_zero_year)
 	}
+	return time.parse_format('${day} ${month} ${year}', 'D M YYYY') or {
+		time.unix(time.absolute_zero_year)
+	}
+}
+
+fn dates(times []time.Time) []time.Time {
+	return times.map(date(it.day, it.month, it.year))
 }
 
 fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {

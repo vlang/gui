@@ -7,10 +7,11 @@ import time
 @[heap]
 struct DatePickerApp {
 pub mut:
-	date_picker_time     time.Time = time.now()
+	date_picker_times    []time.Time
 	hide_today_indicator bool
 	monday_first         bool
 	show_adjacent_months bool
+	select_multiple      bool
 	light_theme          bool
 }
 
@@ -42,13 +43,14 @@ fn main_view(mut window gui.Window) gui.View {
 				content: [
 					window.date_picker(
 						id:                       'example'
-						time:                     app.date_picker_time
+						times:                    app.date_picker_times
 						hide_today_indicator:     app.hide_today_indicator
 						monday_first_day_of_week: app.monday_first
 						show_adjacent_months:     app.show_adjacent_months
+						select_multiple:          app.select_multiple
 						on_select:                fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[DatePickerApp]()
-							app.date_picker_time = times[0]
+							app.date_picker_times = times
 							e.is_handled = true
 						}
 					),
@@ -82,6 +84,14 @@ fn main_view(mut window gui.Window) gui.View {
 									app.hide_today_indicator = !app.hide_today_indicator
 								}
 							),
+							gui.toggle(
+								label:    'Multiple select'
+								select:   app.select_multiple
+								on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+									mut app := w.state[DatePickerApp]()
+									app.select_multiple = !app.select_multiple
+								}
+							),
 							gui.rectangle(color: gui.color_transparent, sizing: gui.fit_fill),
 							gui.row(
 								padding: gui.padding_none
@@ -92,9 +102,11 @@ fn main_view(mut window gui.Window) gui.View {
 										on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 											w.date_picker_reset('example')
 											mut app := w.state[DatePickerApp]()
-											app.date_picker_time = time.now()
+											app.date_picker_times = [
+												time.now()]
 											app.monday_first = false
 											app.show_adjacent_months = false
+											app.select_multiple = false
 											e.is_handled = true
 										}
 									),
