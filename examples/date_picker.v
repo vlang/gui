@@ -12,13 +12,14 @@ pub mut:
 	monday_first         bool
 	show_adjacent_months bool
 	select_multiple      bool
+	week_days            string = 'one'
 	light_theme          bool
 }
 
 fn main() {
 	mut window := gui.window(
 		state:   &DatePickerApp{}
-		width:   800
+		width:   1200
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -30,8 +31,19 @@ fn main() {
 
 fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[DatePickerApp]()
+	mut app := window.state[DatePickerApp]()
 
+	options := [
+		gui.radio_option('One letter', 'one'), // label, value,
+		gui.radio_option('Three letter', 'three'),
+		gui.radio_option('Full', 'full'),
+	]
+
+	week_days := match app.week_days {
+		'one' { gui.DatePickerWeekdays.one_letter }
+		'three' { gui.DatePickerWeekdays.three_letter }
+		else { gui.DatePickerWeekdays.full }
+	}
 	return gui.column(
 		width:   w
 		height:  h
@@ -48,6 +60,7 @@ fn main_view(mut window gui.Window) gui.View {
 						monday_first_day_of_week: app.monday_first
 						show_adjacent_months:     app.show_adjacent_months
 						select_multiple:          app.select_multiple
+						week_days:                week_days
 						on_select:                fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[DatePickerApp]()
 							app.date_picker_times = times
@@ -92,7 +105,17 @@ fn main_view(mut window gui.Window) gui.View {
 									app.select_multiple = !app.select_multiple
 								}
 							),
-							gui.rectangle(color: gui.color_transparent, sizing: gui.fit_fill),
+							gui.rectangle(color: gui.color_transparent),
+							gui.radio_button_group_column(
+								title:     'Weekdays'
+								value:     app.week_days
+								options:   options
+								id_focus:  100
+								on_select: fn [mut app] (value string, mut _ gui.Window) {
+									app.week_days = value
+								}
+							),
+							gui.rectangle(sizing: gui.fit_fill),
 							gui.row(
 								padding: gui.padding_none
 								v_align: .middle

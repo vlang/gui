@@ -30,27 +30,25 @@ pub:
 
 pub struct DatePickerStyle {
 pub:
-	hide_today_indicator           bool
-	monday_first_day_of_week       bool
-	show_adjacent_months           bool
-	cell_size                      f32       = 40
-	cell_spacing                   f32       = 3
-	month_button_width             f32       = 120
-	year_month_picker_button_width f32       = 50
-	color                          Color     = color_interior_dark
-	color_hover                    Color     = color_hover_dark
-	color_focus                    Color     = color_focus_dark
-	color_click                    Color     = color_active_dark
-	color_border                   Color     = color_border_dark
-	color_border_focus             Color     = color_select_dark
-	color_select                   Color     = color_select_dark
-	fill                           bool      = true
-	fill_border                    bool      = true
-	padding                        Padding   = padding_none
-	padding_border                 Padding   = padding_none
-	radius                         f32       = radius_medium
-	radius_border                  f32       = radius_medium
-	text_style                     TextStyle = text_style_dark
+	hide_today_indicator     bool
+	monday_first_day_of_week bool
+	show_adjacent_months     bool
+	cell_spacing             f32 = 3
+	week_days                DatePickerWeekdays
+	color                    Color     = color_interior_dark
+	color_hover              Color     = color_hover_dark
+	color_focus              Color     = color_focus_dark
+	color_click              Color     = color_active_dark
+	color_border             Color     = color_border_dark
+	color_border_focus       Color     = color_select_dark
+	color_select             Color     = color_select_dark
+	fill                     bool      = true
+	fill_border              bool      = true
+	padding                  Padding   = padding_none
+	padding_border           Padding   = padding_none
+	radius                   f32       = radius_medium
+	radius_border            f32       = radius_medium
+	text_style               TextStyle = text_style_dark
 }
 
 pub struct DialogStyle {
