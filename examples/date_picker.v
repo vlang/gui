@@ -7,17 +7,19 @@ import time
 @[heap]
 struct DatePickerApp {
 pub mut:
-	date_picker_times    []time.Time
+	date_picker_dates    []time.Time
 	hide_today_indicator bool
 	monday_first         bool
 	show_adjacent_months bool
 	select_multiple      bool
-	week_days            string = 'one'
+	week_days_len        string = 'one'
+	disable_weekends     bool
 	light_theme          bool
 }
 
 fn main() {
 	mut window := gui.window(
+		title:   'Date Picker Demo'
 		state:   &DatePickerApp{}
 		width:   1200
 		height:  600
@@ -39,11 +41,18 @@ fn main_view(mut window gui.Window) gui.View {
 		gui.radio_option('Full', 'full'),
 	]
 
-	week_days := match app.week_days {
-		'one' { gui.DatePickerWeekdays.one_letter }
-		'three' { gui.DatePickerWeekdays.three_letter }
-		else { gui.DatePickerWeekdays.full }
+	week_days_len := match app.week_days_len {
+		'one' { gui.DatePickerWeekdayLen.one_letter }
+		'three' { gui.DatePickerWeekdayLen.three_letter }
+		else { gui.DatePickerWeekdayLen.full }
 	}
+
+	// Enabling only weekdays disables weekends.
+	allowed_weekdays := match app.disable_weekends {
+		true { [gui.DatePickerWeekdays.monday, .tuesday, .wednesday, .thursday, .friday] }
+		else { [] }
+	}
+
 	return gui.column(
 		width:   w
 		height:  h
@@ -52,18 +61,20 @@ fn main_view(mut window gui.Window) gui.View {
 		v_align: .middle
 		content: [
 			gui.row(
+				v_align: .middle
 				content: [
 					window.date_picker(
 						id:                       'example'
-						times:                    app.date_picker_times
+						dates:                    app.date_picker_dates
 						hide_today_indicator:     app.hide_today_indicator
 						monday_first_day_of_week: app.monday_first
 						show_adjacent_months:     app.show_adjacent_months
 						select_multiple:          app.select_multiple
-						week_days:                week_days
+						week_days_len:            week_days_len
+						allowed_weekdays:         allowed_weekdays
 						on_select:                fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[DatePickerApp]()
-							app.date_picker_times = times
+							app.date_picker_dates = times
 							e.is_handled = true
 						}
 					),
@@ -105,14 +116,22 @@ fn main_view(mut window gui.Window) gui.View {
 									app.select_multiple = !app.select_multiple
 								}
 							),
+							gui.toggle(
+								label:    'Disable weekends'
+								select:   app.disable_weekends
+								on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+									mut app := w.state[DatePickerApp]()
+									app.disable_weekends = !app.disable_weekends
+								}
+							),
 							gui.rectangle(color: gui.color_transparent),
 							gui.radio_button_group_column(
 								title:     'Weekdays'
-								value:     app.week_days
+								value:     app.week_days_len
 								options:   options
 								id_focus:  100
 								on_select: fn [mut app] (value string, mut _ gui.Window) {
-									app.week_days = value
+									app.week_days_len = value
 								}
 							),
 							gui.rectangle(sizing: gui.fit_fill),
@@ -125,11 +144,12 @@ fn main_view(mut window gui.Window) gui.View {
 										on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 											w.date_picker_reset('example')
 											mut app := w.state[DatePickerApp]()
-											app.date_picker_times = [
+											app.date_picker_dates = [
 												time.now()]
 											app.monday_first = false
 											app.show_adjacent_months = false
 											app.select_multiple = false
+											app.disable_weekends = false
 											e.is_handled = true
 										}
 									),

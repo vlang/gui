@@ -34,7 +34,7 @@ pub:
 	monday_first_day_of_week bool
 	show_adjacent_months     bool
 	cell_spacing             f32 = 3
-	week_days                DatePickerWeekdays
+	week_days_len            DatePickerWeekdayLen
 	color                    Color     = color_interior_dark
 	color_hover              Color     = color_hover_dark
 	color_focus              Color     = color_focus_dark

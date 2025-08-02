@@ -2,7 +2,35 @@ module gui
 
 import time
 
+// DatePickerWeekdays is used in allowed_weekdays property of [date_picker](date_picker)
 pub enum DatePickerWeekdays {
+	monday = 1
+	tuesday
+	wednesday
+	thursday
+	friday
+	saturday
+	sunday
+}
+
+// DatePickerMonths is used in allowed_monthgs property of [date_picker](date_picker)
+pub enum DatePickerMonths {
+	january = 1
+	february
+	march
+	april
+	may
+	june
+	july
+	august
+	september
+	october
+	november
+	december
+}
+
+// DatePickerWeekdayLen is used in the week_days property of [date_picker](date_picker)
+pub enum DatePickerWeekdayLen {
 	one_letter
 	three_letter
 	full
@@ -13,8 +41,8 @@ pub mut:
 	show_year_month_picker bool
 	calendar_width         f32 // width and height needed to fix the size of the view, so showing
 	calendar_height        f32 // select months/years does not cause the view to change size.
-	view_month             int
-	view_year              int
+	view_month             int // displayed month
+	view_year              int // displayed year
 	cell_size              f32 = 40
 	month_width            f32 = 70
 }
@@ -23,12 +51,16 @@ pub mut:
 pub struct DatePickerCfg {
 pub:
 	id                       string      @[required] // unique only to other date_pickers
-	times                    []time.Time @[required]
+	dates                    []time.Time @[required]
 	id_scroll                u32 = u32(459342148) // used in year-month picker
 	disabled                 bool
 	invisible                bool
 	select_multiple          bool
-	week_days                DatePickerWeekdays                      = gui_theme.date_picker_style.week_days
+	allowed_weekdays         []DatePickerWeekdays
+	allowed_months           []DatePickerMonths
+	allowed_years            []int
+	allowed_dates            []time.Time
+	week_days_len            DatePickerWeekdayLen                    = gui_theme.date_picker_style.week_days_len
 	hide_today_indicator     bool                                    = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week bool                                    = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months     bool                                    = gui_theme.date_picker_style.show_adjacent_months
@@ -55,7 +87,7 @@ pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 	mut state := window.view_state.date_picker_state[cfg.id]
 	if state.view_year == 0 {
 		now := time.now()
-		v_time := if cfg.times.len > 0 { cfg.times[0] } else { date(now.day, now.month, now.year) }
+		v_time := if cfg.dates.len > 0 { cfg.dates[0] } else { date(now.day, now.month, now.year) }
 		state.view_month = v_time.month
 		state.view_year = v_time.year
 	}
@@ -186,7 +218,7 @@ fn (cfg DatePickerCfg) week_days(state DatePickerState) View {
 	week_days_three := ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']!
 	week_days_full := ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']!
 
-	week_days_names := match cfg.week_days {
+	week_days_names := match cfg.week_days_len {
 		.one_letter { week_days_one }
 		.three_letter { week_days_three }
 		.full { week_days_full }
@@ -196,9 +228,21 @@ fn (cfg DatePickerCfg) week_days(state DatePickerState) View {
 			true { week_days_names[(i + 1) % 7] }
 			else { week_days_names[i] }
 		}
+
+		is_disabled := if cfg.allowed_weekdays.len > 0 {
+			// Sunday is 7 and not 0. Not sure if that's standard but not
+			// what I expected. Rather than change all the other logic here,
+			// handle the edge case in an error handler. (sigh)
+			wd := DatePickerWeekdays.from(i) or { DatePickerWeekdays.sunday }
+			wd !in cfg.allowed_weekdays
+		} else {
+			false
+		}
+
 		week_days << button(
 			color:        color_transparent
 			color_border: color_transparent
+			disabled:     is_disabled
 			min_width:    state.cell_size
 			max_width:    state.cell_size
 			padding:      padding_two
@@ -226,9 +270,9 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 
 	mut selected_times := []time.Time{}
 	if cfg.select_multiple {
-		selected_times << dates(cfg.times)
-	} else if cfg.times.len > 0 {
-		selected_times << date(cfg.times[0].day, cfg.times[0].month, cfg.times[0].year)
+		selected_times << dates(cfg.dates)
+	} else if cfg.dates.len > 0 {
+		selected_times << date(cfg.dates[0].day, cfg.dates[0].month, cfg.dates[0].year)
 	} else {
 		selected_times << date(today.day, today.month, today.year)
 	}
@@ -269,6 +313,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 				&& !cfg.hide_today_indicator
 			dt := date(count, vt.month, vt.year)
 			is_selected_day := dt in selected_times
+			is_disabled := cfg.disabled(dt)
 
 			color := if is_selected_day { cfg.color_select } else { cfg.color }
 			color_border := if is_today { cfg.text_style.color } else { color_transparent }
@@ -279,7 +324,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 				color_border:   color_border
 				color_click:    cfg.color_select
 				color_hover:    color_hover
-				disabled:       count <= 0 || count > days_in_month
+				disabled:       count <= 0 || count > days_in_month || is_disabled
 				min_width:      state.cell_size
 				max_width:      state.cell_size
 				max_height:     state.cell_size
@@ -315,7 +360,7 @@ fn (cfg DatePickerCfg) update_selections(day int, state DatePickerState) []time.
 	}
 
 	mut selections := []time.Time{}
-	selections << dates(cfg.times)
+	selections << dates(cfg.dates)
 	if selected in selections {
 		selections = selections.filter(it != selected)
 	} else {
@@ -340,7 +385,7 @@ fn dates(times []time.Time) []time.Time {
 }
 
 fn (cfg DatePickerCfg) cell_size(w &Window) f32 {
-	w_size := match cfg.week_days {
+	w_size := match cfg.week_days_len {
 		.one_letter { get_text_width_no_cache('W', cfg.text_style, w) }
 		.three_letter { get_text_width_no_cache('Wed', cfg.text_style, w) }
 		.full { get_text_width_no_cache('Wednesday', cfg.text_style, w) }
@@ -352,6 +397,16 @@ fn (cfg DatePickerCfg) cell_size(w &Window) f32 {
 fn (cfg DatePickerCfg) month_picker_width(w &Window) f32 {
 	return get_text_width_no_cache('May', cfg.text_style, w) +
 		gui_theme.button_style.padding.width() + gui_theme.button_style.padding_border.width()
+}
+
+fn (cfg DatePickerCfg) disabled(date time.Time) bool {
+	if cfg.allowed_weekdays.len > 0 {
+		dow := DatePickerWeekdays.from(time.day_of_week(date.year, date.month, date.day)) or {
+			return false
+		}
+		return dow !in cfg.allowed_weekdays
+	}
+	return false
 }
 
 fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
