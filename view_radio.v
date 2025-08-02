@@ -62,6 +62,7 @@ pub fn radio(cfg RadioCfg) View {
 	return row(
 		name:         'radio'
 		id:           cfg.id
+		cfg:          &cfg
 		id_focus:     cfg.id_focus
 		padding:      padding_none
 		on_click:     cfg.on_click

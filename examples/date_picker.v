@@ -13,7 +13,13 @@ pub mut:
 	show_adjacent_months bool
 	select_multiple      bool
 	week_days_len        string = 'one'
-	disable_weekends     bool
+	allow_monday         bool
+	allow_tuesday        bool
+	allow_wednesday      bool
+	allow_thursday       bool
+	allow_friday         bool
+	allow_saturday       bool
+	allow_sunday         bool
 	light_theme          bool
 }
 
@@ -22,7 +28,7 @@ fn main() {
 		title:   'Date Picker Demo'
 		state:   &DatePickerApp{}
 		width:   1200
-		height:  600
+		height:  800
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -48,9 +54,27 @@ fn main_view(mut window gui.Window) gui.View {
 	}
 
 	// Enabling only weekdays disables weekends.
-	allowed_weekdays := match app.disable_weekends {
-		true { [gui.DatePickerWeekdays.monday, .tuesday, .wednesday, .thursday, .friday] }
-		else { [] }
+	mut allowed_weekdays := []gui.DatePickerWeekdays{}
+	if app.allow_monday {
+		allowed_weekdays << .monday
+	}
+	if app.allow_tuesday {
+		allowed_weekdays << .tuesday
+	}
+	if app.allow_wednesday {
+		allowed_weekdays << .wednesday
+	}
+	if app.allow_thursday {
+		allowed_weekdays << .thursday
+	}
+	if app.allow_friday {
+		allowed_weekdays << .friday
+	}
+	if app.allow_saturday {
+		allowed_weekdays << .saturday
+	}
+	if app.allow_sunday {
+		allowed_weekdays << .sunday
 	}
 
 	return gui.column(
@@ -62,6 +86,7 @@ fn main_view(mut window gui.Window) gui.View {
 		content: [
 			gui.row(
 				v_align: .middle
+				spacing: gui.spacing_large
 				content: [
 					window.date_picker(
 						id:                       'example'
@@ -116,17 +141,10 @@ fn main_view(mut window gui.Window) gui.View {
 									app.select_multiple = !app.select_multiple
 								}
 							),
-							gui.toggle(
-								label:    'Disable weekends'
-								select:   app.disable_weekends
-								on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
-									mut app := w.state[DatePickerApp]()
-									app.disable_weekends = !app.disable_weekends
-								}
-							),
 							gui.rectangle(color: gui.color_transparent),
 							gui.radio_button_group_column(
 								title:     'Weekdays'
+								sizing:    gui.fill_fit
 								value:     app.week_days_len
 								options:   options
 								id_focus:  100
@@ -134,7 +152,50 @@ fn main_view(mut window gui.Window) gui.View {
 									app.week_days_len = value
 								}
 							),
-							gui.rectangle(sizing: gui.fit_fill),
+							gui.rectangle(color: gui.color_transparent),
+							gui.column(
+								color:   gui.theme().color_active
+								sizing:  gui.fill_fit
+								padding: gui.theme().padding_large
+								text:    'Allowed weekdays'
+								content: [
+									gui.toggle(
+										label:    'Monday'
+										select:   app.allow_monday
+										on_click: click_weekday_toggle
+									),
+									gui.toggle(
+										label:    'Tuesday'
+										select:   app.allow_tuesday
+										on_click: click_weekday_toggle
+									),
+									gui.toggle(
+										label:    'Wednesday'
+										select:   app.allow_wednesday
+										on_click: click_weekday_toggle
+									),
+									gui.toggle(
+										label:    'Thursday'
+										select:   app.allow_thursday
+										on_click: click_weekday_toggle
+									),
+									gui.toggle(
+										label:    'Friday'
+										select:   app.allow_friday
+										on_click: click_weekday_toggle
+									),
+									gui.toggle(
+										label:    'Saturday'
+										select:   app.allow_saturday
+										on_click: click_weekday_toggle
+									),
+									gui.toggle(
+										label:    'Sunday'
+										select:   app.allow_sunday
+										on_click: click_weekday_toggle
+									),
+								]
+							),
 							gui.row(
 								padding: gui.padding_none
 								v_align: .middle
@@ -149,7 +210,13 @@ fn main_view(mut window gui.Window) gui.View {
 											app.monday_first = false
 											app.show_adjacent_months = false
 											app.select_multiple = false
-											app.disable_weekends = false
+											app.allow_monday = false
+											app.allow_tuesday = false
+											app.allow_wednesday = false
+											app.allow_thursday = false
+											app.allow_friday = false
+											app.allow_saturday = false
+											app.allow_sunday = false
 											e.is_handled = true
 										}
 									),
@@ -162,6 +229,20 @@ fn main_view(mut window gui.Window) gui.View {
 			),
 		]
 	)
+}
+
+fn click_weekday_toggle(cfg &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+	mut app := w.state[DatePickerApp]()
+	match cfg.label {
+		'Monday' { app.allow_monday = !app.allow_monday }
+		'Tuesday' { app.allow_tuesday = !app.allow_tuesday }
+		'Wednesday' { app.allow_wednesday = !app.allow_wednesday }
+		'Thursday' { app.allow_thursday = !app.allow_thursday }
+		'Friday' { app.allow_friday = !app.allow_friday }
+		'Saturday' { app.allow_saturday = !app.allow_saturday }
+		'Sunday' { app.allow_sunday = !app.allow_sunday }
+		else {}
+	}
 }
 
 fn toggle_theme(app &DatePickerApp) gui.View {

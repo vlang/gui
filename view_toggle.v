@@ -81,6 +81,7 @@ pub fn toggle(cfg ToggleCfg) View {
 
 	return row(
 		name:     'toggle'
+		cfg:      &cfg
 		padding:  padding_none
 		on_click: cfg.on_click
 		on_hover: cfg.on_hover

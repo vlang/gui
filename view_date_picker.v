@@ -1,6 +1,7 @@
 module gui
 
 import time
+import log
 
 // DatePickerWeekdays is used in allowed_weekdays property of [date_picker](date_picker)
 pub enum DatePickerWeekdays {
@@ -402,9 +403,12 @@ fn (cfg DatePickerCfg) month_picker_width(w &Window) f32 {
 fn (cfg DatePickerCfg) disabled(date time.Time) bool {
 	if cfg.allowed_weekdays.len > 0 {
 		dow := DatePickerWeekdays.from(time.day_of_week(date.year, date.month, date.day)) or {
-			return false
+			log.error(err.msg())
+			return true
 		}
-		return dow !in cfg.allowed_weekdays
+		if dow !in cfg.allowed_weekdays {
+			return true
+		}
 	}
 	return false
 }
