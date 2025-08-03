@@ -30,7 +30,7 @@ pub enum DatePickerMonths {
 	december
 }
 
-// DatePickerWeekdayLen is used in the week_days property of [date_picker](date_picker)
+// DatePickerWeekdayLen is used in the weekdays property of [date_picker](date_picker)
 pub enum DatePickerWeekdayLen {
 	one_letter
 	three_letter
@@ -61,7 +61,7 @@ pub:
 	allowed_months           []DatePickerMonths
 	allowed_years            []int
 	allowed_dates            []time.Time
-	week_days_len            DatePickerWeekdayLen                    = gui_theme.date_picker_style.week_days_len
+	weekdays_len             DatePickerWeekdayLen                    = gui_theme.date_picker_style.weekdays_len
 	hide_today_indicator     bool                                    = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week bool                                    = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months     bool                                    = gui_theme.date_picker_style.show_adjacent_months
@@ -201,7 +201,7 @@ fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
 		padding:      padding_none
 		spacing:      0
 		content:      [
-			cfg.week_days(state),
+			cfg.weekdays(state),
 			cfg.month(state),
 		]
 		amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
@@ -213,21 +213,21 @@ fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
 	)
 }
 
-fn (cfg DatePickerCfg) week_days(state DatePickerState) View {
-	mut week_days := []View{}
-	week_days_one := ['S', 'M', 'T', 'W', 'T', 'F', 'S']!
-	week_days_three := ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']!
-	week_days_full := ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']!
+fn (cfg DatePickerCfg) weekdays(state DatePickerState) View {
+	mut weekdays := []View{}
+	weekdays_one := ['S', 'M', 'T', 'W', 'T', 'F', 'S']!
+	weekdays_three := ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']!
+	weekdays_full := ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']!
 
-	week_days_names := match cfg.week_days_len {
-		.one_letter { week_days_one }
-		.three_letter { week_days_three }
-		.full { week_days_full }
+	weekdays_names := match cfg.weekdays_len {
+		.one_letter { weekdays_one }
+		.three_letter { weekdays_three }
+		.full { weekdays_full }
 	}
 	for i in 0 .. 7 {
-		mut week_day := match cfg.monday_first_day_of_week {
-			true { week_days_names[(i + 1) % 7] }
-			else { week_days_names[i] }
+		mut weekday := match cfg.monday_first_day_of_week {
+			true { weekdays_names[(i + 1) % 7] }
+			else { weekdays_names[i] }
 		}
 
 		is_disabled := if cfg.allowed_weekdays.len > 0 {
@@ -240,21 +240,21 @@ fn (cfg DatePickerCfg) week_days(state DatePickerState) View {
 			false
 		}
 
-		week_days << button(
+		weekdays << button(
 			color:        color_transparent
 			color_border: color_transparent
 			disabled:     is_disabled
 			min_width:    state.cell_size
 			max_width:    state.cell_size
 			padding:      padding_two
-			content:      [text(text: week_day)]
+			content:      [text(text: weekday)]
 		)
 	}
 	return row(
-		name:    'date_picker week_days'
+		name:    'date_picker weekdays'
 		spacing: cfg.cell_spacing
 		padding: padding_none
-		content: week_days
+		content: weekdays
 	)
 }
 
@@ -314,7 +314,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 				&& !cfg.hide_today_indicator
 			dt := date(count, vt.month, vt.year)
 			is_selected_day := dt in selected_times
-			is_disabled := cfg.disabled(dt)
+			is_disabled := cfg.disabled(dt, state)
 
 			color := if is_selected_day { cfg.color_select } else { cfg.color }
 			color_border := if is_today { cfg.text_style.color } else { color_transparent }
@@ -386,7 +386,7 @@ fn dates(times []time.Time) []time.Time {
 }
 
 fn (cfg DatePickerCfg) cell_size(w &Window) f32 {
-	w_size := match cfg.week_days_len {
+	w_size := match cfg.weekdays_len {
 		.one_letter { get_text_width_no_cache('W', cfg.text_style, w) }
 		.three_letter { get_text_width_no_cache('Wed', cfg.text_style, w) }
 		.full { get_text_width_no_cache('Wednesday', cfg.text_style, w) }
@@ -400,13 +400,22 @@ fn (cfg DatePickerCfg) month_picker_width(w &Window) f32 {
 		gui_theme.button_style.padding.width() + gui_theme.button_style.padding_border.width()
 }
 
-fn (cfg DatePickerCfg) disabled(date time.Time) bool {
+fn (cfg DatePickerCfg) disabled(date time.Time, state DatePickerState) bool {
 	if cfg.allowed_weekdays.len > 0 {
 		dow := DatePickerWeekdays.from(time.day_of_week(date.year, date.month, date.day)) or {
 			log.error(err.msg())
 			return true
 		}
 		if dow !in cfg.allowed_weekdays {
+			return true
+		}
+	}
+	if cfg.allowed_months.len > 0 {
+		month := DatePickerMonths.from(state.view_month) or {
+			log.error(err.msg())
+			return true
+		}
+		if month !in cfg.allowed_months {
 			return true
 		}
 	}
@@ -433,10 +442,10 @@ fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
 			content: [
 				text(text: year.str(), text_style: bold_style),
 				rectangle(width: 0),
-				cfg.button_month(1, year, state.month_width),
-				cfg.button_month(2, year, state.month_width),
-				cfg.button_month(3, year, state.month_width),
-				cfg.button_month(4, year, state.month_width),
+				cfg.button_month(.january, year, state.month_width),
+				cfg.button_month(.february, year, state.month_width),
+				cfg.button_month(.march, year, state.month_width),
+				cfg.button_month(.april, year, state.month_width),
 			]
 		)
 		rows << row(
@@ -449,10 +458,10 @@ fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
 					text_style: bold_invisible_style
 				),
 				rectangle(width: 0),
-				cfg.button_month(5, year, state.month_width),
-				cfg.button_month(6, year, state.month_width),
-				cfg.button_month(7, year, state.month_width),
-				cfg.button_month(8, year, state.month_width),
+				cfg.button_month(.may, year, state.month_width),
+				cfg.button_month(.june, year, state.month_width),
+				cfg.button_month(.july, year, state.month_width),
+				cfg.button_month(.august, year, state.month_width),
 			]
 		)
 		rows << row(
@@ -465,10 +474,10 @@ fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
 					text_style: bold_invisible_style
 				),
 				rectangle(width: 0),
-				cfg.button_month(9, year, state.month_width),
-				cfg.button_month(10, year, state.month_width),
-				cfg.button_month(11, year, state.month_width),
-				cfg.button_month(12, year, state.month_width),
+				cfg.button_month(.september, year, state.month_width),
+				cfg.button_month(.october, year, state.month_width),
+				cfg.button_month(.november, year, state.month_width),
+				cfg.button_month(.december, year, state.month_width),
 			]
 		)
 	}
@@ -498,14 +507,17 @@ fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
 	)
 }
 
-fn (cfg DatePickerCfg) button_month(month int, year int, width f32) View {
-	month_str := time.months_string[(month - 1) * 3..month * 3]
+fn (cfg DatePickerCfg) button_month(month DatePickerMonths, year int, width f32) View {
+	int_month := int(month)
+	month_str := time.months_string[(int_month - 1) * 3..int_month * 3]
+	mut disabled := cfg.allowed_months.len > 0 && month !in cfg.allowed_months
 	return button(
+		disabled:  disabled
 		min_width: width
 		max_width: width
-		on_click:  fn [cfg, month, year] (_ &ButtonCfg, mut e Event, mut w Window) {
+		on_click:  fn [cfg, int_month, year] (_ &ButtonCfg, mut e Event, mut w Window) {
 			mut state := w.view_state.date_picker_state[cfg.id]
-			state.view_month = month
+			state.view_month = int_month
 			state.view_year = year
 			state.show_year_month_picker = false
 			w.view_state.date_picker_state[cfg.id] = state
