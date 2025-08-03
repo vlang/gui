@@ -1,4 +1,4 @@
-`# GUI
+# GUI
 
 ## Overview
 
@@ -37,10 +37,12 @@ new view.
 
 ### State Management
 
-The framework follows a functional approach where: - The view is simply
-a function of the model (state) - No data binding or other observation
-mechanisms required - No worries about synchronizing with the UI
-thread - No need to remember to undo previous UI states
+The framework follows a functional approach where: 
+
+  - The view is simply a function of the model (state) 
+  - No data binding or other observation  mechanisms required 
+  - No worries about synchronizing with the UI thread 
+  - No need to remember to undo previous UI states
 
 ## Basic Usage
 
@@ -154,8 +156,11 @@ The event system provides:
   - Keyboard events
   - Window events (resize, etc.)
 
-Event handlers receive: - Component configuration - Event object -
-Window reference for state access
+Event handlers receive: 
+
+  - Component configuration 
+  - Event object 
+  - Window reference for state access
 
 ## State Management
 
@@ -232,8 +237,8 @@ make read  # Open documentation in browser
 
 ### Manual Documentation
 
-There is also some hand written documentation in the /doc folder labeled
-01 Introduction.md, 02 Getting Started.md, etc. The doc_viewer.v example
+There is also some hand written documentation in the `/doc folder` labeled
+`01 Introduction.md`, `02 Getting Started.md`, etc. The `doc_viewer.v` example
 can be used to read them or use a browser.
 
 ## Development Status
@@ -263,15 +268,19 @@ Since the framework is in early development:
 ## Contributing
 
 The project welcomes contributions and feedback. Visit the GitHub
-repository to: - Report issues - Submit pull requests - Provide feedback
-on the framework design - Help with documentation
+repository to:
+
+  - Report issues 
+  - Submit pull requests 
+  - Provide feedback  on the framework design 
+  - Help with documentation
 
 ## Related Projects
 
-V also provides other UI solutions: - **vlang**: A cross-platform UI
-library written in V - **gg**: Graphics library for 2D applications
-using OpenGL/Metal/DirectX 11
+V also provides other UI solutions: 
+
+- **V Programming Language**: Simple, fast, safe, compiled. For developing maintainable software. 
+- **gg**: Graphics library for 2D applications using OpenGL/Metal/DirectX 11
 
 This GUI framework focuses specifically on immediate mode rendering with
 a declarative API, making it distinct from other V UI solutions.
-`
