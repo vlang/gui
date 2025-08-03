@@ -3,7 +3,7 @@ module gui
 import time
 import log
 
-// DatePickerWeekdays is used in allowed_weekdays property of [date_picker](date_picker)
+// DatePickerWeekdays is used in allowed_weekdays property of [date_picker](#date_picker)
 pub enum DatePickerWeekdays {
 	monday = 1
 	tuesday
@@ -14,7 +14,7 @@ pub enum DatePickerWeekdays {
 	sunday
 }
 
-// DatePickerMonths is used in allowed_monthgs property of [date_picker](date_picker)
+// DatePickerMonths is used in allowed_months property of [date_picker](#date_picker)
 pub enum DatePickerMonths {
 	january = 1
 	february
@@ -30,7 +30,7 @@ pub enum DatePickerMonths {
 	december
 }
 
-// DatePickerWeekdayLen is used in the weekdays property of [date_picker](date_picker)
+// DatePickerWeekdayLen is used in the weekdays property of [date_picker](#date_picker)
 pub enum DatePickerWeekdayLen {
 	one_letter
 	three_letter
@@ -57,11 +57,11 @@ pub:
 	disabled                 bool
 	invisible                bool
 	select_multiple          bool
-	allowed_weekdays         []DatePickerWeekdays
-	allowed_months           []DatePickerMonths
+	allowed_weekdays         []DatePickerWeekdays // [link](#DatePickerWeekdays)
+	allowed_months           []DatePickerMonths   // [link](#DatePickerMonths)
 	allowed_years            []int
 	allowed_dates            []time.Time
-	weekdays_len             DatePickerWeekdayLen                    = gui_theme.date_picker_style.weekdays_len
+	weekdays_len             DatePickerWeekdayLen                    = gui_theme.date_picker_style.weekdays_len // [link](#DatePickerWeekdayLen)
 	hide_today_indicator     bool                                    = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week bool                                    = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months     bool                                    = gui_theme.date_picker_style.show_adjacent_months
@@ -83,7 +83,7 @@ pub:
 	on_select                fn ([]time.Time, mut Event, mut Window) = unsafe { nil }
 }
 
-// date_picker creates a date-picker view from the given [DatePickerCfg](DatePickerCfg)
+// date_picker creates a date-picker view from the given [DatePickerCfg](#DatePickerCfg)
 pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 	mut state := window.view_state.date_picker_state[cfg.id]
 	if state.view_year == 0 {
@@ -117,6 +117,7 @@ pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 	)
 }
 
+// date_picker_reset clears the internal view state of the given date picker
 pub fn (mut window Window) date_picker_reset(id string) {
 	window.view_state.date_picker_state[id] = DatePickerState{}
 }
