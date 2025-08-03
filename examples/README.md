@@ -12,18 +12,19 @@ cd examples
 v run calc.v
 ```
 
-The `_build.vsh` V script builds all examples to a `/bin` folder
-The `_check.vsh` V script does a quick syntax/format check and does
-generate binaries.
+The `_build.vsh` V script builds all examples to a `/bin` folder The
+`_check.vsh` V script does a quick syntax/format check and does generate
+binaries.
 
 Example:
+
 ``` bash
 v run _build.vsh
 ```
 
 ## Getting Started
 
-If you're new to GUI, start with the `get-started.v` example. It
+If you’re new to GUI, start with the `get-started.v` example. It
 explains the basics of view generators, state models and event handling.
 Some of the other examples like `two-panel.v` and `test-layout.v` were
 used to test the layout engine during development and are not meant as
@@ -36,5 +37,5 @@ source code. Type `make doc` to produce the documention and `make read`
 to open the documention in the browser.
 
 There is also some hand written documentation in the `/doc` folder
-labled `01 Introduction.md`, `02 Getting Started.md`, etc. It's a work
+labled `01 Introduction.md`, `02 Getting Started.md`, etc. It’s a work
 in progress.
