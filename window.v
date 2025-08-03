@@ -61,6 +61,7 @@ pub:
 	title               string  = app_title
 	width               int
 	height              int
+	cursor_blink        bool
 	bg_color            Color        = gui_theme.color_background
 	dragndrop           bool         = true
 	dragndrop_files_max u32          = 10
@@ -103,7 +104,9 @@ pub fn window(cfg &WindowCfg) &Window {
 		init_fn:                      fn [cfg] (mut w Window) {
 			w.update_window_size()
 			spawn w.animation_loop()
-			w.blinky_cursor_animation()
+			if cfg.cursor_blink {
+				w.blinky_cursor_animation()
+			}
 			cfg.on_init(w)
 			w.update_window()
 		}

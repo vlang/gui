@@ -7,7 +7,7 @@ import sokol.sapp
 // store view states. This is gui's solution.
 struct ViewState {
 mut:
-	cursor_on         bool                       // used by cursor blink animation
+	cursor_on         bool = true // used by cursor blink animation
 	id_focus          u32                        // current view that has focus
 	input_state       map[u32]InputState         // [id_focus] -> InputState
 	offset_x_state    map[u32]f32                // [id_scroll] -> offset x

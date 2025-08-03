@@ -13,10 +13,11 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
-		state:   &DialogsApp{}
-		width:   500
-		height:  300
-		on_init: fn (mut w gui.Window) {
+		state:        &DialogsApp{}
+		width:        500
+		height:       300
+		cursor_blink: true
+		on_init:      fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
 	)

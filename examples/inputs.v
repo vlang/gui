@@ -14,11 +14,12 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
-		title:   'Inputs'
-		state:   &InputsApp{}
-		width:   325
-		height:  300
-		on_init: fn (mut w gui.Window) {
+		title:        'Inputs'
+		state:        &InputsApp{}
+		width:        325
+		height:       300
+		cursor_blink: true
+		on_init:      fn (mut w gui.Window) {
 			w.update_view(main_view)
 			w.set_id_focus(1)
 		}

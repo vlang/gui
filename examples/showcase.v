@@ -64,11 +64,12 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
-		title:   'Gui Showcase'
-		state:   &ShowcaseApp{}
-		width:   800
-		height:  600
-		on_init: fn (mut w gui.Window) {
+		title:        'Gui Showcase'
+		state:        &ShowcaseApp{}
+		width:        800
+		height:       600
+		cursor_blink: true
+		on_init:      fn (mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.csv_table = get_table_data() or { panic(err.msg()) }
 			w.update_view(main_view)
