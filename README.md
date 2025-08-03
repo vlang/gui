@@ -279,7 +279,7 @@ repository to:
 
 V also provides other UI solutions: 
 
-- **V Programming Language**: Simple, fast, safe, compiled. For developing maintainable software. 
+- **V UI**: Cross-platform widget toolkit
 - **gg**: Graphics library for 2D applications using OpenGL/Metal/DirectX 11
 
 This GUI framework focuses specifically on immediate mode rendering with
