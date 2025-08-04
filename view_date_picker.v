@@ -420,6 +420,11 @@ fn (cfg DatePickerCfg) disabled(date time.Time, state DatePickerState) bool {
 			return true
 		}
 	}
+	if cfg.allowed_years.len > 0 {
+		if state.view_year !in cfg.allowed_years {
+			return true
+		}
+	}
 	return false
 }
 
@@ -434,14 +439,28 @@ fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
 		...bold_style
 		color: color_transparent
 	}
+	disabled_style := TextStyle{
+		...bold_style
+		color: theme().color_active
+	}
 
 	for year in (state.view_year - 20) .. (state.view_year + 20) {
+		disabled := cfg.allowed_years.len > 0 && cfg.allowed_years.len > 0
+			&& year !in cfg.allowed_years
+
 		rows << row(
 			v_align: .middle
 			padding: padding_none
 			spacing: gui_theme.spacing_small
 			content: [
-				text(text: year.str(), text_style: bold_style),
+				text(
+					text:       year.str()
+					text_style: if disabled {
+						disabled_style
+					} else {
+						bold_style
+					}
+				),
 				rectangle(width: 0),
 				cfg.button_month(.january, year, state.month_width),
 				cfg.button_month(.february, year, state.month_width),
@@ -511,7 +530,8 @@ fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
 fn (cfg DatePickerCfg) button_month(month DatePickerMonths, year int, width f32) View {
 	int_month := int(month)
 	month_str := time.months_string[(int_month - 1) * 3..int_month * 3]
-	mut disabled := cfg.allowed_months.len > 0 && month !in cfg.allowed_months
+	mut disabled := (cfg.allowed_months.len > 0 && month !in cfg.allowed_months)
+		|| (cfg.allowed_years.len > 0 && year !in cfg.allowed_years)
 	return button(
 		disabled:  disabled
 		min_width: width

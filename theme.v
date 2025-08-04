@@ -78,8 +78,8 @@ pub:
 	color_panel      Color  = color_panel_dark      // use for side panels, or groups of controls
 	color_interior   Color  = color_interior_dark   // use for the interior of controls like buttons
 	color_hover      Color  = color_hover_dark      // mostly mouse hovers
-	color_focus      Color  = color_focus_dark      // usually keyboard focus (active/focus swapped if it looks bettter, e.g. button)
-	color_active     Color  = color_active_dark     // use for clicks and other activity tasks
+	color_focus      Color  = color_focus_dark      // usually keyboard focus (active/focus swapped if it looks better, e.g. button)
+	color_active     Color  = color_active_dark     // use for clicks and inactivity
 	color_border     Color  = color_border_dark     // borders
 	color_select     Color  = color_select_dark     // links and selected
 	titlebar_dark    bool

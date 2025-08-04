@@ -32,6 +32,9 @@ pub mut:
 	allow_october        bool
 	allow_november       bool
 	allow_december       bool
+	allow_year_now       bool
+	allow_year_last      bool
+	allow_year_next      bool
 	light_theme          bool
 }
 
@@ -74,6 +77,7 @@ fn main_view(mut window gui.Window) gui.View {
 					toggles_group(app),
 					allowed_weekdays_group(app),
 					allowed_months_group(app),
+					allowed_years_group(app),
 					options_group(app),
 				]
 			),
@@ -149,6 +153,19 @@ fn example_date_picker(app DatePickerApp, mut window gui.Window) gui.View {
 		allowed_months << .december
 	}
 
+	today := time.now()
+
+	mut allowed_years := []int{}
+	if app.allow_year_now {
+		allowed_years << today.year
+	}
+	if app.allow_year_last {
+		allowed_years << today.year - 1
+	}
+	if app.allow_year_next {
+		allowed_years << today.year + 1
+	}
+
 	return window.date_picker(
 		id:                       'example'
 		dates:                    app.date_picker_dates
@@ -159,6 +176,7 @@ fn example_date_picker(app DatePickerApp, mut window gui.Window) gui.View {
 		weekdays_len:             weekdays_len
 		allowed_weekdays:         allowed_weekdays
 		allowed_months:           allowed_months
+		allowed_years:            allowed_years
 		on_select:                fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[DatePickerApp]()
 			app.date_picker_dates = times
@@ -365,6 +383,36 @@ fn allowed_months_group(app DatePickerApp) gui.View {
 	)
 }
 
+fn allowed_years_group(app DatePickerApp) gui.View {
+	return gui.column(
+		text:      ' Allowed years  '
+		color:     gui.theme().color_active
+		min_width: 200
+		padding:   gui.padding_large
+		content:   [
+			gui.text(text: 'Examples'),
+			gui.toggle(
+				id:       'year_now'
+				label:    'This year'
+				select:   app.allow_year_now
+				on_click: click_allow_years_toggles
+			),
+			gui.toggle(
+				id:       'year_last'
+				label:    'Last year'
+				select:   app.allow_year_last
+				on_click: click_allow_years_toggles
+			),
+			gui.toggle(
+				id:       'year_next'
+				label:    'Next year'
+				select:   app.allow_year_next
+				on_click: click_allow_years_toggles
+			),
+		]
+	)
+}
+
 fn options_group(app DatePickerApp) gui.View {
 	return gui.column(
 		padding: gui.padding_none
@@ -404,6 +452,9 @@ fn options_group(app DatePickerApp) gui.View {
 					app.allow_october = false
 					app.allow_november = false
 					app.allow_december = false
+					app.allow_year_now = false
+					app.allow_year_last = false
+					app.allow_year_next = false
 					e.is_handled = true
 				}
 			),
@@ -441,6 +492,17 @@ fn click_allow_month_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Wind
 		'oct' { app.allow_october = !app.allow_october }
 		'nov' { app.allow_november = !app.allow_november }
 		'dec' { app.allow_december = !app.allow_december }
+		else {}
+	}
+	e.is_handled = true
+}
+
+fn click_allow_years_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+	mut app := w.state[DatePickerApp]()
+	match cfg.id {
+		'year_now' { app.allow_year_now = !app.allow_year_now }
+		'year_last' { app.allow_year_last = !app.allow_year_last }
+		'year_next' { app.allow_year_next = !app.allow_year_next }
 		else {}
 	}
 	e.is_handled = true
