@@ -32,10 +32,16 @@ pub mut:
 	allow_october        bool
 	allow_november       bool
 	allow_december       bool
-	allow_year_now       bool
-	allow_year_last      bool
-	allow_year_next      bool
+	// example allowed years
+	allow_year_now  bool
+	allow_year_last bool
+	allow_year_next bool
+	// example allowed dates
+	allow_today          bool
+	allow_yesterday      bool
+	allow_first_of_month bool
 	light_theme          bool
+	use_system_font      bool
 }
 
 fn main() {
@@ -74,11 +80,10 @@ fn main_view(mut window gui.Window) gui.View {
 				padding: gui.padding_none
 				spacing: gui.spacing_large * 2
 				content: [
-					toggles_group(app),
-					allowed_weekdays_group(app),
-					allowed_months_group(app),
-					allowed_years_group(app),
 					options_group(app),
+					weekdays_group(app),
+					months_group(app),
+					years_dates_group(app),
 				]
 			),
 		]
@@ -154,7 +159,6 @@ fn example_date_picker(app DatePickerApp, mut window gui.Window) gui.View {
 	}
 
 	today := time.now()
-
 	mut allowed_years := []int{}
 	if app.allow_year_now {
 		allowed_years << today.year
@@ -164,6 +168,17 @@ fn example_date_picker(app DatePickerApp, mut window gui.Window) gui.View {
 	}
 	if app.allow_year_next {
 		allowed_years << today.year + 1
+	}
+
+	mut allowed_dates := []time.Time{}
+	if app.allow_today {
+		allowed_dates << today
+	}
+	if app.allow_yesterday {
+		allowed_dates << today.add_days(-1)
+	}
+	if app.allow_first_of_month {
+		allowed_dates << time.new(day: 1, month: today.month, year: today.year)
 	}
 
 	return window.date_picker(
@@ -177,6 +192,7 @@ fn example_date_picker(app DatePickerApp, mut window gui.Window) gui.View {
 		allowed_weekdays:         allowed_weekdays
 		allowed_months:           allowed_months
 		allowed_years:            allowed_years
+		allowed_dates:            allowed_dates
 		on_select:                fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[DatePickerApp]()
 			app.date_picker_dates = times
@@ -185,10 +201,33 @@ fn example_date_picker(app DatePickerApp, mut window gui.Window) gui.View {
 	)
 }
 
-fn toggles_group(app DatePickerApp) gui.View {
+fn options_group(app DatePickerApp) gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		content: [
+			toggles_group(app),
+			gui.rectangle(id: 'spacier'),
+			gui.rectangle(height: 1, sizing: gui.fill_fit),
+			gui.toggle(
+				label:    'Use system font'
+				select:   app.use_system_font
+				on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+					mut app := w.state[DatePickerApp]()
+					app.use_system_font = !app.use_system_font
+					set_theme(mut w)
+				}
+			),
+		]
+	)
+}
+
+fn toggles_group(app DatePickerApp) gui.View {
+	return gui.column(
+		color:     gui.theme().color_active
+		min_width: 200
+		padding:   gui.theme().padding_large
+		text:      ' Options  '
+		content:   [
 			gui.toggle(
 				label:    'Monday first day of week'
 				select:   app.monday_first
@@ -221,13 +260,22 @@ fn toggles_group(app DatePickerApp) gui.View {
 					app.select_multiple = !app.select_multiple
 				}
 			),
-			gui.rectangle(color: gui.color_transparent),
-			weekdays_group(app),
 		]
 	)
 }
 
 fn weekdays_group(app DatePickerApp) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		content: [
+			weekdays_len_group(app),
+			gui.rectangle(color: gui.color_transparent),
+			allowed_weekdays_group(app),
+		]
+	)
+}
+
+fn weekdays_len_group(app DatePickerApp) gui.View {
 	options := [
 		gui.radio_option('One letter', 'one'), // label, value,
 		gui.radio_option('Three letter', 'three'),
@@ -300,7 +348,22 @@ fn allowed_weekdays_group(app DatePickerApp) gui.View {
 	)
 }
 
-fn allowed_months_group(app DatePickerApp) gui.View {
+fn click_allow_weekday_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+	mut app := w.state[DatePickerApp]()
+	match cfg.id {
+		'mon' { app.allow_monday = !app.allow_monday }
+		'tue' { app.allow_tuesday = !app.allow_tuesday }
+		'wed' { app.allow_wednesday = !app.allow_wednesday }
+		'thu' { app.allow_thursday = !app.allow_thursday }
+		'fri' { app.allow_friday = !app.allow_friday }
+		'sat' { app.allow_saturday = !app.allow_saturday }
+		'sun' { app.allow_sunday = !app.allow_sunday }
+		else {}
+	}
+	e.is_handled = true
+}
+
+fn months_group(app DatePickerApp) gui.View {
 	return gui.column(
 		text:      ' Allowed months  '
 		color:     gui.theme().color_active
@@ -383,6 +446,91 @@ fn allowed_months_group(app DatePickerApp) gui.View {
 	)
 }
 
+fn click_allow_month_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+	mut app := w.state[DatePickerApp]()
+	match cfg.id {
+		'jan' { app.allow_january = !app.allow_january }
+		'feb' { app.allow_february = !app.allow_february }
+		'mar' { app.allow_march = !app.allow_march }
+		'apr' { app.allow_april = !app.allow_april }
+		'may' { app.allow_may = !app.allow_may }
+		'jun' { app.allow_june = !app.allow_june }
+		'jul' { app.allow_july = !app.allow_july }
+		'aug' { app.allow_august = !app.allow_august }
+		'sep' { app.allow_september = !app.allow_september }
+		'oct' { app.allow_october = !app.allow_october }
+		'nov' { app.allow_november = !app.allow_november }
+		'dec' { app.allow_december = !app.allow_december }
+		else {}
+	}
+	e.is_handled = true
+}
+
+fn years_dates_group(app DatePickerApp) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		sizing:  gui.fit_fill
+		content: [
+			allowed_years_group(app),
+			gui.rectangle(color: gui.color_transparent), // spacer
+			allowed_dates_group(app),
+			gui.rectangle(sizing: gui.fit_fill),
+			gui.row(
+				h_align: .right
+				v_align: .middle
+				padding: gui.padding_none
+				sizing:  gui.fill_fit
+				content: [
+					gui.button(
+						content:  [
+							gui.text(text: 'Reset'),
+						]
+						on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+							w.date_picker_reset('example')
+							mut app := w.state[DatePickerApp]()
+							app.date_picker_dates = [
+								time.now(),
+							]
+							app.weekdays_len = 'one'
+							app.monday_first = false
+							app.show_adjacent_months = false
+							app.hide_today_indicator = false
+							app.select_multiple = false
+							app.allow_monday = false
+							app.allow_tuesday = false
+							app.allow_wednesday = false
+							app.allow_thursday = false
+							app.allow_friday = false
+							app.allow_saturday = false
+							app.allow_sunday = false
+							app.allow_january = false
+							app.allow_february = false
+							app.allow_march = false
+							app.allow_april = false
+							app.allow_may = false
+							app.allow_june = false
+							app.allow_july = false
+							app.allow_august = false
+							app.allow_september = false
+							app.allow_october = false
+							app.allow_november = false
+							app.allow_december = false
+							app.allow_year_now = false
+							app.allow_year_last = false
+							app.allow_year_next = false
+							app.allow_today = false
+							app.allow_yesterday = false
+							app.allow_first_of_month = false
+							e.is_handled = true
+						}
+					),
+					toggle_theme(app),
+				]
+			),
+		]
+	)
+}
+
 fn allowed_years_group(app DatePickerApp) gui.View {
 	return gui.column(
 		text:      ' Allowed years  '
@@ -413,90 +561,6 @@ fn allowed_years_group(app DatePickerApp) gui.View {
 	)
 }
 
-fn options_group(app DatePickerApp) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		content: [
-			toggle_theme(app),
-			gui.button(
-				content:  [
-					gui.text(text: 'Reset'),
-				]
-				on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
-					w.date_picker_reset('example')
-					mut app := w.state[DatePickerApp]()
-					app.date_picker_dates = [
-						time.now(),
-					]
-					app.weekdays_len = 'one'
-					app.monday_first = false
-					app.show_adjacent_months = false
-					app.hide_today_indicator = false
-					app.select_multiple = false
-					app.allow_monday = false
-					app.allow_tuesday = false
-					app.allow_wednesday = false
-					app.allow_thursday = false
-					app.allow_friday = false
-					app.allow_saturday = false
-					app.allow_sunday = false
-					app.allow_january = false
-					app.allow_february = false
-					app.allow_march = false
-					app.allow_april = false
-					app.allow_may = false
-					app.allow_june = false
-					app.allow_july = false
-					app.allow_august = false
-					app.allow_september = false
-					app.allow_october = false
-					app.allow_november = false
-					app.allow_december = false
-					app.allow_year_now = false
-					app.allow_year_last = false
-					app.allow_year_next = false
-					e.is_handled = true
-				}
-			),
-		]
-	)
-}
-
-fn click_allow_weekday_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
-	mut app := w.state[DatePickerApp]()
-	match cfg.id {
-		'mon' { app.allow_monday = !app.allow_monday }
-		'tue' { app.allow_tuesday = !app.allow_tuesday }
-		'wed' { app.allow_wednesday = !app.allow_wednesday }
-		'thu' { app.allow_thursday = !app.allow_thursday }
-		'fri' { app.allow_friday = !app.allow_friday }
-		'sat' { app.allow_saturday = !app.allow_saturday }
-		'sun' { app.allow_sunday = !app.allow_sunday }
-		else {}
-	}
-	e.is_handled = true
-}
-
-fn click_allow_month_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
-	mut app := w.state[DatePickerApp]()
-	match cfg.id {
-		'jan' { app.allow_january = !app.allow_january }
-		'feb' { app.allow_february = !app.allow_february }
-		'mar' { app.allow_march = !app.allow_march }
-		'apr' { app.allow_april = !app.allow_april }
-		'may' { app.allow_may = !app.allow_may }
-		'jun' { app.allow_june = !app.allow_june }
-		'jul' { app.allow_july = !app.allow_july }
-		'aug' { app.allow_august = !app.allow_august }
-		'sep' { app.allow_september = !app.allow_september }
-		'oct' { app.allow_october = !app.allow_october }
-		'nov' { app.allow_november = !app.allow_november }
-		'dec' { app.allow_december = !app.allow_december }
-		else {}
-	}
-	e.is_handled = true
-}
-
 fn click_allow_years_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
 	mut app := w.state[DatePickerApp]()
 	match cfg.id {
@@ -508,28 +572,87 @@ fn click_allow_years_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Wind
 	e.is_handled = true
 }
 
-fn toggle_theme(app &DatePickerApp) gui.View {
-	return gui.row(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
+fn allowed_dates_group(app DatePickerApp) gui.View {
+	return gui.column(
+		text:      ' Allowed dates  '
+		color:     gui.theme().color_active
+		min_width: 200
+		padding:   gui.padding_large
+		content:   [
+			gui.text(text: 'Examples'),
 			gui.toggle(
-				text_select:   gui.icon_moon
-				text_unselect: gui.icon_sunny_o
-				text_style:    gui.theme().icon3
-				padding:       gui.padding_small
-				select:        app.light_theme
-				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
-					mut app := w.state[DatePickerApp]()
-					app.light_theme = !app.light_theme
-					theme := if app.light_theme {
-						gui.theme_light_bordered
-					} else {
-						gui.theme_dark_bordered
-					}
-					w.set_theme(theme)
-				}
+				id:       'tdy'
+				label:    'Today'
+				select:   app.allow_today
+				on_click: click_allow_dates_toggles
+			),
+			gui.toggle(
+				id:       'ydy'
+				label:    'Yesterday'
+				select:   app.allow_yesterday
+				on_click: click_allow_dates_toggles
+			),
+			gui.toggle(
+				id:       'fdy'
+				label:    'First of month'
+				select:   app.allow_first_of_month
+				on_click: click_allow_dates_toggles
 			),
 		]
 	)
+}
+
+fn click_allow_dates_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+	mut app := w.state[DatePickerApp]()
+	match cfg.id {
+		'tdy' { app.allow_today = !app.allow_today }
+		'ydy' { app.allow_yesterday = !app.allow_yesterday }
+		'fdy' { app.allow_first_of_month = !app.allow_first_of_month }
+		else {}
+	}
+	e.is_handled = true
+}
+
+fn toggle_theme(app &DatePickerApp) gui.View {
+	return gui.toggle(
+		text_select:   gui.icon_moon
+		text_unselect: gui.icon_sunny_o
+		text_style:    gui.theme().icon3
+		padding:       gui.padding_small
+		select:        app.light_theme
+		on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+			mut app := w.state[DatePickerApp]()
+			app.light_theme = !app.light_theme
+			set_theme(mut w)
+		}
+	)
+}
+
+fn create_system_font_theme(theme_cfg gui.ThemeCfg, text_style gui.TextStyle) gui.Theme {
+	return gui.theme_maker(gui.ThemeCfg{
+		...theme_cfg
+		text_style: gui.TextStyle{
+			...text_style
+			family: ''
+		}
+	})
+}
+
+fn set_theme(mut window gui.Window) {
+	app := window.state[DatePickerApp]()
+	theme := if app.light_theme {
+		if app.use_system_font {
+			create_system_font_theme(gui.theme_light_bordered_cfg, gui.theme_light_bordered_cfg.text_style)
+		} else {
+			gui.theme_light_bordered
+		}
+	} else {
+		println('x')
+		if app.use_system_font {
+			create_system_font_theme(gui.theme_dark_bordered_cfg, gui.theme_dark_bordered_cfg.text_style)
+		} else {
+			gui.theme_dark_bordered
+		}
+	}
+	window.set_theme(theme)
 }

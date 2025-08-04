@@ -425,6 +425,14 @@ fn (cfg DatePickerCfg) disabled(date time.Time, state DatePickerState) bool {
 			return true
 		}
 	}
+	if cfg.allowed_dates.len > 0 {
+		for allowed in cfg.allowed_dates {
+			if allowed.day == date.day && allowed.month == date.month && allowed.year == date.year {
+				return false
+			}
+		}
+		return true
+	}
 	return false
 }
 
