@@ -5,7 +5,6 @@ import sokol.sapp
 import sync
 import log
 
-@[heap]
 pub struct Window {
 mut:
 	ui             &gg.Context       = &gg.Context{}
@@ -70,7 +69,7 @@ pub:
 		w.update_view(empty_view)
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
-	samples             u32                         = 2 // MSAA sample count; rounded courners of buttons with 0 and 1 look jagged on linux/windows
+	samples             u32                         = 2 // MSAA sample count; rounded corners of buttons with 0 and 1 look jagged on linux/windows
 	log_level           log.Level                   = default_log_level()
 }
 
@@ -235,17 +234,18 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
 
 	window.lock()
-	defer { window.unlock() }
+	defer {
+		window.unlock()
+		window.ui.refresh_ui()
+	}
 
 	window.view_generator = gen_view
 	window.layout = layout
 	window.renderers = renderers
-	window.ui.refresh_ui()
 }
 
 // update_window generates a new layout from the window's current
-// view generator. It does not clear the view states. It should
-// rarely be needed since event handling calls it regularly.
+// view generator.
 pub fn (mut window Window) update_window() {
 	window.update_window_calls++
 	if window.update_window_calls > window.max_update_window_calls_per_frame {
@@ -253,7 +253,10 @@ pub fn (mut window Window) update_window() {
 	}
 
 	window.lock()
-	defer { window.unlock() }
+	defer {
+		window.unlock()
+		window.ui.refresh_ui()
+	}
 
 	view := window.view_generator(window)
 	mut layout := window.compose_layout(view)
@@ -263,7 +266,6 @@ pub fn (mut window Window) update_window() {
 
 	window.layout = layout
 	window.renderers = renderers
-	window.ui.refresh_ui()
 }
 
 // compose_layout produces a layout from the given view that is

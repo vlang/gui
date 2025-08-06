@@ -154,7 +154,6 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 // Text can be embedded in the outline of a row or column, near the
 // top-left corner. This style of container is typically called a group
 // box. Set the `text` property to enable this feature.
-@[heap]
 pub struct ContainerCfg {
 	axis Axis
 	name string // internally set. read-only.

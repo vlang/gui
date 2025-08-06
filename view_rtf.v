@@ -3,7 +3,6 @@ module gui
 import datatypes
 import os
 
-@[heap]
 struct RtfView implements View {
 pub:
 	id         string

@@ -18,7 +18,6 @@ mut:
 	content []View // not used
 }
 
-@[heap]
 pub struct ImageCfg {
 pub:
 	id         string

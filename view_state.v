@@ -1,6 +1,5 @@
 module gui
 
-import datatypes
 import sokol.sapp
 
 // Generating views and immediate mode means there is no place to
@@ -22,44 +21,6 @@ mut:
 	date_picker_state map[string]DatePickerState // [id date_pidker -> DatePickerState
 }
 
-fn (mut vs ViewState) clear(mut w Window) {
-	vs.id_focus = 0
-	vs.input_state.clear()
-	vs.offset_x_state.clear()
-	vs.offset_y_state.clear()
-	vs.text_widths.clear()
-	vs.mouse_cursor = .arrow
-	vs.mouse_lock = MouseLockCfg{}
-	vs.menu_state.clear()
-	// image cache
-	mut ctx := w.context()
-	for idx in vs.image_map.values() {
-		ctx.remove_cached_image_by_idx(idx)
-	}
-	vs.image_map.clear()
-	vs.select_state.clear()
-	vs.tree_state.clear()
-	vs.date_picker_state.clear()
-}
-
-// The management of focus and input states poses a problem in stateless views
-// because...they're stateless. Instead, the window maintains this state in a
-// map where the key is the w.view_state.id_focus. This state map is cleared when a new
-// view is introduced.
-struct InputState {
-pub:
-	// positions are number of runes relative to start of input text
-	cursor_pos int
-	select_beg u32
-	select_end u32
-	undo       datatypes.Stack[InputMemento]
-	redo       datatypes.Stack[InputMemento]
-}
-
-struct InputMemento {
-pub:
-	text       string
-	cursor_pos int
-	select_beg u32
-	select_end u32
+fn (vs ViewState) clear(mut w Window) {
+	w.view_state = ViewState{}
 }

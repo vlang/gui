@@ -1,6 +1,5 @@
 module gui
 
-@[heap]
 pub struct RectangleCfg {
 pub:
 	name       string = 'rectangle'
