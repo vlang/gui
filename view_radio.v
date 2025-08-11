@@ -23,6 +23,8 @@ pub:
 
 pub fn radio(cfg RadioCfg) View {
 	mut content := []View{}
+	unsafe { content.flags.set(.noslices) }
+	defer { unsafe { content.flags.clear(.noslices) } }
 	content << circle(
 		name:      'radio border'
 		width:     cfg.size

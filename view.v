@@ -20,6 +20,8 @@ mut:
 // generate_layout builds a Layout from a View.
 fn generate_layout(view &View, mut window Window) Layout {
 	mut layout := view.generate(mut window)
+	unsafe { layout.children.flags.set(.noslices) }
+	defer { unsafe { layout.children.flags.clear(.noslices) } }
 	layout.children.ensure_cap(view.content.len)
 	for child_view in view.content {
 		layout.children << generate_layout(child_view, mut window)

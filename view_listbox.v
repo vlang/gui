@@ -49,6 +49,8 @@ pub fn list_box(cfg ListBoxCfg) View {
 		color := if dat.value in cfg.selected { gui_theme.color_select } else { color_transparent }
 		is_subheader := dat.name.starts_with('---')
 		mut content := []View{}
+		unsafe { content.flags.set(.noslices) }
+		defer { unsafe { content.flags.clear(.noslices) } }
 
 		if is_subheader {
 			content << column(

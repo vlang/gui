@@ -37,6 +37,8 @@ pub fn switch(cfg SwitchCfg) View {
 	circle_size := cfg.height - cfg.padding.height() - cfg.padding_border.height()
 
 	mut content := []View{}
+	unsafe { content.flags.set(.noslices) }
+	defer { unsafe { content.flags.clear(.noslices) } }
 	content << row(
 		name:         'switch border'
 		id:           cfg.id

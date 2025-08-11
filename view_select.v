@@ -55,6 +55,8 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	}
 
 	mut content := []View{}
+	unsafe { content.flags.set(.noslices) }
+	defer { unsafe { content.flags.clear(.noslices) } }
 	content << row( // interior
 		name:     'select interior'
 		fill:     cfg.fill

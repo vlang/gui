@@ -230,18 +230,19 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	view := gen_view(window)
 	mut layout := window.compose_layout(view)
 	mut renderers := []Renderer{}
+	unsafe { renderers.flags.set(.noslices) }
+	defer { unsafe { renderers.flags.clear(.noslices) } }
 	window_rect := window.window_rect()
 	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
 
 	window.lock()
-	defer {
-		window.unlock()
-		window.ui.refresh_ui()
-	}
 
 	window.view_generator = gen_view
 	window.layout = layout
 	window.renderers = renderers
+
+	window.unlock()
+	window.ui.refresh_ui()
 }
 
 // update_window generates a new layout from the window's current
@@ -253,19 +254,20 @@ pub fn (mut window Window) update_window() {
 	}
 
 	window.lock()
-	defer {
-		window.unlock()
-		window.ui.refresh_ui()
-	}
 
 	view := window.view_generator(window)
 	mut layout := window.compose_layout(view)
 	mut renderers := []Renderer{}
+	unsafe { renderers.flags.set(.noslices) }
+	defer { unsafe { renderers.flags.clear(.noslices) } }
 	window_rect := window.window_rect()
 	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
 
 	window.layout = layout
 	window.renderers = renderers
+
+	window.unlock()
+	window.ui.refresh_ui()
 }
 
 // compose_layout produces a layout from the given view that is

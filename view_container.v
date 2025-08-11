@@ -216,6 +216,9 @@ fn container(cfg &ContainerCfg) View {
 		}
 	}
 	mut content := []View{}
+	unsafe { content.flags.set(.noslices) }
+	defer { unsafe { content.flags.clear(.noslices) } }
+
 	content << cfg.content
 	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_x.overflow != .hidden {
 		content << scrollbar(ScrollbarCfg{

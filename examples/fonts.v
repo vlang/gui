@@ -91,7 +91,11 @@ fn side_panel(mut window gui.Window) gui.View {
 fn font_panel(window &gui.Window) gui.View {
 	app := window.state[FontsApp]()
 	mut rows := []gui.View{}
+	unsafe { rows.flags.set(.noslices) }
+	defer { unsafe { rows.flags.clear(.noslices) } }
 	mut cols := []gui.View{}
+	unsafe { rows.flags.set(.noslices) }
+	defer { unsafe { rows.flags.clear(.noslices) } }
 	width := f32(gui.theme().n3.size) * 1.5
 
 	text_style := match app.selected_family {

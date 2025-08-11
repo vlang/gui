@@ -71,6 +71,8 @@ fn (node &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
 // get_focus_ids returns an ordered list of focus ids
 fn (node &Layout) get_focus_ids() []u32 {
 	mut focus_ids := []u32{}
+	unsafe { focus_ids.flags.set(.noslices) }
+	defer { unsafe { focus_ids.flags.clear(.noslices) } }
 	if node.shape.id_focus > 0 && !node.shape.focus_skip {
 		focus_ids << node.shape.id_focus
 	}

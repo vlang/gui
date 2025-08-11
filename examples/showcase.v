@@ -1345,6 +1345,8 @@ fn icon_catalog(mut w gui.Window) gui.View {
 	// create rows of icons/text
 	for chunk in chunks {
 		mut icons := []gui.View{}
+		unsafe { icons.flags.set(.noslices) }
+		defer { unsafe { icons.flags.clear(.noslices) } }
 		for key, val in chunk {
 			icons << gui.column(
 				min_width: longest
@@ -1374,6 +1376,8 @@ fn icon_catalog(mut w gui.Window) gui.View {
 // maybe this should be a standard library function?
 fn chunk_map[K, V](input map[K]V, chunk_size int) []map[K]V {
 	mut chunks := []map[K]V{}
+	unsafe { chunks.flags.set(.noslices) }
+	defer { unsafe { chunks.flags.clear(.noslices) } }
 	mut current_chunk := map[K]V{}
 	mut count := 0
 
@@ -1780,6 +1784,8 @@ fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) 
 	mut table_cfg := gui.table_cfg_from_data(table_data.sorted)
 	// Replace with first row with clickable column headers
 	mut tds := []gui.TableCellCfg{}
+	unsafe { tds.flags.set(.noslices) }
+	defer { unsafe { tds.flags.clear(.noslices) } }
 	for idx, cell in table_cfg.data[0].cells {
 		tds << gui.TableCellCfg{
 			...cell
