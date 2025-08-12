@@ -30,6 +30,8 @@ jobs:
         uses: vlang/setup-v@v1.4
         with:
           check-latest: true
+      - name: Update packages
+        run: v retry -- sudo apt -qq update
       - name: Install X11/GL development dependencies (headers and libs)
         run: v retry -- sudo apt install libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
       - name: Checkout the gui module
@@ -62,7 +64,7 @@ jobs:
           check-latest: true
       - name: Install X11/GL development dependencies (headers and libs)
         if: runner.os == 'Linux'
-        run: v retry -- sudo apt install libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
+        run: v retry -- sudo apt -qq update && v retry -- sudo apt install libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
       - name: Checkout the gui module
         uses: actions/checkout@v4
         with:
