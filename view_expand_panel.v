@@ -29,7 +29,10 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 	return column(
 		name:       'expand_panel border'
 		id:         cfg.id
-		cfg:        &cfg
+		cfg:        &ExpandPanelCfg{
+			...cfg
+			content: rectangle(color: color_transparent)
+		}
 		color:      cfg.color_border
 		fill:       cfg.fill_border
 		padding:    cfg.padding_border

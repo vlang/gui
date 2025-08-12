@@ -71,7 +71,10 @@ pub fn button(cfg ButtonCfg) View {
 		max_height:   cfg.max_height
 		sizing:       cfg.sizing
 		tooltip:      cfg.tooltip
-		cfg:          &cfg
+		cfg:          &ButtonCfg{
+			...cfg
+			content: []View{}
+		}
 		on_click:     cfg.on_click
 		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout
