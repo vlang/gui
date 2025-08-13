@@ -54,6 +54,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 		TextMode.single_line
 	}
 
+	id := cfg.id
 	mut content := []View{}
 	unsafe { content.flags.set(.noslices) }
 	defer { unsafe { content.flags.clear(.noslices) } }
@@ -75,9 +76,9 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 				text_style: cfg.text_style
 			),
 		]
-		on_click: fn [cfg, is_open] (_ &ToggleCfg, mut e Event, mut w Window) {
+		on_click: fn [id, is_open] (_ &ToggleCfg, mut e Event, mut w Window) {
 			w.view_state.select_state.clear() // close all select drop-downs.
-			w.view_state.select_state[cfg.id] = !is_open
+			w.view_state.select_state[id] = !is_open
 			e.is_handled = true
 		}
 	)
@@ -137,6 +138,11 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 }
 
 fn option_view(cfg SelectCfg, option string) View {
+	select_multiple := cfg.select_multiple
+	on_select := cfg.on_select
+	select_array := cfg.select
+	color_select := cfg.color_select
+
 	return row(
 		fill:     true
 		padding:  padding(0, pad_small, 0, 1)
@@ -166,18 +172,18 @@ fn option_view(cfg SelectCfg, option string) View {
 				]
 			),
 		]
-		on_click: fn [cfg, option] (_ voidptr, mut e Event, mut w Window) {
-			if cfg.on_select != unsafe { nil } {
-				if !cfg.select_multiple {
+		on_click: fn [on_select, select_multiple, select_array, option] (_ voidptr, mut e Event, mut w Window) {
+			if on_select != unsafe { nil } {
+				if !select_multiple {
 					w.view_state.select_state.clear()
 				}
 
 				mut s := []string{}
-				if cfg.select_multiple {
-					s = if option in cfg.select {
-						cfg.select.filter(it != option)
+				if select_multiple {
+					s = if option in select_array {
+						select_array.filter(it != option)
 					} else {
-						mut a := cfg.select.clone()
+						mut a := select_array.clone()
 						a << option
 						a.sorted()
 					}
@@ -185,13 +191,13 @@ fn option_view(cfg SelectCfg, option string) View {
 					w.view_state.select_state.clear()
 					s = [option]
 				}
-				cfg.on_select(s, mut e, mut w)
+				on_select(s, mut e, mut w)
 				e.is_handled = true
 			}
 		}
-		on_hover: fn [cfg] (mut node Layout, mut e Event, mut w Window) {
+		on_hover: fn [color_select] (mut node Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
-			node.shape.color = cfg.color_select
+			node.shape.color = color_select
 		}
 	)
 }

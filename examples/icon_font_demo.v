@@ -17,7 +17,7 @@ fn main() {
 	mut window := gui.window(
 		title:   'Icon Font'
 		state:   &IconFontApp{}
-		width:   800
+		width:   850
 		height:  600
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -62,7 +62,8 @@ fn side_panel(mut w gui.Window) gui.View {
 					gui.radio_option('x-large', 'x-large'),
 				]
 				value:     app.select_size
-				on_select: fn [mut app] (value string, mut _ gui.Window) {
+				on_select: fn (value string, mut w gui.Window) {
+					mut app := w.state[IconFontApp]()
 					app.select_size = value
 					app.icons.clear()
 				}

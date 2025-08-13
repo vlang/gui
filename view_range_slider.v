@@ -188,9 +188,11 @@ fn (cfg &RangeSliderCfg) on_mouse_down(node &Layout, mut e Event, mut w Window) 
 
 // pass cfg by value more reliable here
 fn (cfg RangeSliderCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
+	id := cfg.id
+
 	if cfg.on_change != unsafe { nil } {
-		if node_circle := node.find_node(fn [cfg] (n Layout) bool {
-			return n.shape.id == cfg.id
+		if node_circle := node.find_node(fn [id] (n Layout) bool {
+			return n.shape.id == id
 		})
 		{
 			shape := node_circle.parent.shape

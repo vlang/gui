@@ -374,11 +374,10 @@ fn (cfg &ContainerCfg) left_click() fn (&ContainerCfg, mut Event, mut Window) {
 	if cfg.on_click == unsafe { nil } {
 		return cfg.on_click
 	}
-	// _cfg is the original cfg of the calling view. It can be different than
-	// cfg &ContainerCfg. Menu items for an example.
-	return fn [cfg] (_cfg voidptr, mut e Event, mut w Window) {
+	on_click := cfg.on_click
+	return fn [on_click] (_cfg voidptr, mut e Event, mut w Window) {
 		if e.mouse_button == .left {
-			cfg.on_click(_cfg, mut e, mut w)
+			on_click(_cfg, mut e, mut w)
 		}
 	}
 }

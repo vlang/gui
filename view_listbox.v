@@ -84,6 +84,11 @@ pub fn list_box(cfg ListBoxCfg) View {
 			)
 		}
 
+		is_multiple := cfg.multiple
+		on_select := cfg.on_select
+		selected := cfg.selected
+		color_hover := cfg.color_hover
+
 		list << row(
 			name:     'list_box option'
 			color:    color
@@ -91,25 +96,25 @@ pub fn list_box(cfg ListBoxCfg) View {
 			padding:  padding_two_five
 			sizing:   fill_fit
 			content:  content
-			on_click: fn [cfg, dat, is_subheader] (_ voidptr, mut e Event, mut w Window) {
-				if cfg.on_select != unsafe { nil } && !is_subheader {
-					mut values := cfg.selected.clone()
-					if !cfg.multiple {
+			on_click: fn [is_multiple, on_select, selected, dat, is_subheader] (_ voidptr, mut e Event, mut w Window) {
+				if on_select != unsafe { nil } && !is_subheader {
+					mut values := selected.clone()
+					if !is_multiple {
 						values.clear()
 					}
-					match dat.value in cfg.selected {
+					match dat.value in selected {
 						true { values = values.filter(it != dat.value) }
 						else { values << dat.value }
 					}
-					cfg.on_select(values, mut e, mut w)
+					on_select(values, mut e, mut w)
 				}
 			}
-			on_hover: fn [cfg, is_subheader] (mut node Layout, mut e Event, mut w Window) {
-				if cfg.on_select != unsafe { nil } && !is_subheader {
+			on_hover: fn [on_select, color_hover, is_subheader] (mut node Layout, mut e Event, mut w Window) {
+				if on_select != unsafe { nil } && !is_subheader {
 					w.set_mouse_cursor_pointing_hand()
 					if node.shape.color == color_transparent {
 						node.shape.fill = true
-						node.shape.color = cfg.color_hover
+						node.shape.color = color_hover
 					}
 				}
 			}

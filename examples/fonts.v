@@ -62,7 +62,8 @@ fn side_panel(mut window gui.Window) gui.View {
 					gui.radio_option('Italic', 'Italic'),
 					gui.radio_option('Mono', 'Mono'),
 				]
-				on_select: fn [mut app] (value string, mut _ gui.Window) {
+				on_select: fn (value string, mut w gui.Window) {
+					mut app := w.state[FontsApp]()
 					app.selected_family = value
 				}
 			),
@@ -78,7 +79,8 @@ fn side_panel(mut window gui.Window) gui.View {
 					gui.radio_option('${prefix}5', '6'),
 					gui.radio_option('${prefix}6', '6'),
 				]
-				on_select: fn [mut app] (value string, mut _ gui.Window) {
+				on_select: fn (value string, mut w gui.Window) {
+					mut app := w.state[FontsApp]()
 					app.selected_font = value
 				}
 			),

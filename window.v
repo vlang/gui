@@ -88,6 +88,8 @@ pub fn window(cfg &WindowCfg) &Window {
 		state:    cfg.state
 		on_event: cfg.on_event
 	}
+	cursor_blink := cfg.cursor_blink
+	on_init := cfg.on_init
 	window.ui = gg.new_context(
 		bg_color:                     cfg.bg_color.to_gx_color()
 		width:                        cfg.width
@@ -100,14 +102,13 @@ pub fn window(cfg &WindowCfg) &Window {
 		frame_fn:                     frame_fn
 		ui_mode:                      true // only draw on events
 		user_data:                    window
-		init_fn:                      fn [cfg] (mut w Window) {
+		init_fn:                      fn [cursor_blink, on_init] (mut w Window) {
 			w.update_window_size()
 			spawn w.animation_loop()
-			if cfg.cursor_blink {
+			if cursor_blink {
 				w.blinky_cursor_animation()
 			}
-			cfg.on_init(w)
-			w.update_window()
+			on_init(w)
 		}
 		sample_count:                 int(cfg.samples)
 	)

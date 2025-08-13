@@ -52,11 +52,12 @@ pub fn tooltip(cfg TooltipCfg) View {
 }
 
 fn (cfg TooltipCfg) animation_tooltip() Animate {
+	hash := cfg.hash
 	return Animate{
 		id:       '___tooltip___'
-		callback: fn [cfg] (mut w Window) {
+		callback: fn [hash] (mut w Window) {
 			if point_in_rectangle(w.ui.mouse_pos_x, w.ui.mouse_pos_y, gui_tooltip.bounds) {
-				gui_tooltip.id = cfg.hash()
+				gui_tooltip.id = hash()
 			}
 		}
 	}

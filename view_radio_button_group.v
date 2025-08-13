@@ -15,8 +15,8 @@ module gui
 // 		gui.radio_option('Detroit', 'dtw'),
 // 		gui.radio_option('Chicago', 'chi'),
 // 		gui.radio_option('Los Angeles', 'la'),
-
-// 	on_select: fn [mut app] (value string) {
+// 	on_select: fn (value string, mut w Window) {
+// 	    mut app := w.state[App]()
 // 		app.select_city = value
 // 	}
 // )
@@ -85,13 +85,14 @@ pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
 fn build_options(cfg RadioButtonGroupCfg) []View {
 	mut content := []View{}
 	mut id_focus := cfg.id_focus
+	on_select := cfg.on_select
 	for option in cfg.options {
 		content << radio(
 			label:    option.label
 			id_focus: id_focus
 			select:   cfg.value == option.value
-			on_click: fn [cfg, option] (_ voidptr, mut _e Event, mut w Window) {
-				cfg.on_select(option.value, mut w)
+			on_click: fn [on_select, option] (_ voidptr, mut _e Event, mut w Window) {
+				on_select(option.value, mut w)
 			}
 		)
 		if cfg.id_focus != 0 {

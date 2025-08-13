@@ -26,6 +26,7 @@ pub:
 
 // expand_panel creates a expand view from the given [ExpandPanelCfg](#ExpandPanelCfg)
 pub fn expand_panel(cfg ExpandPanelCfg) View {
+	on_toggle := cfg.on_toggle
 	return column(
 		name:       'expand_panel border'
 		id:         cfg.id
@@ -74,9 +75,9 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 								]
 							),
 						]
-						on_click: fn [cfg] (_ voidptr, mut e Event, mut w Window) {
-							if cfg.on_toggle != unsafe { nil } {
-								cfg.on_toggle(mut w)
+						on_click: fn [on_toggle] (_ voidptr, mut e Event, mut w Window) {
+							if on_toggle != unsafe { nil } {
+								on_toggle(mut w)
 								e.is_handled = true
 							}
 						}

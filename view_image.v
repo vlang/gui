@@ -82,9 +82,9 @@ fn (cfg &ImageCfg) left_click() fn (&ImageCfg, mut Event, mut Window) {
 	if cfg.on_click == unsafe { nil } {
 		return cfg.on_click
 	}
-	return fn [cfg] (_ &ImageCfg, mut e Event, mut w Window) {
+	return fn (_cfg &ImageCfg, mut e Event, mut w Window) {
 		if e.mouse_button == .left {
-			cfg.on_click(cfg, mut e, mut w)
+			_cfg.on_click(_cfg, mut e, mut w)
 		}
 	}
 }

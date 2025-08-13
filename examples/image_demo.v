@@ -24,7 +24,17 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			gui.image(file_name: sample_path),
+			gui.image(
+				file_name: sample_path
+				on_click:  fn (_ &gui.ImageCfg, mut e gui.Event, mut w gui.Window) {
+					w.dialog(
+						align_buttons: .end
+						dialog_type:   .message
+						title:         'Image Demo'
+						body:          'Click!'
+					)
+				}
+			),
 			gui.text(text: 'Pinard Falls, Oregon', text_style: gui.theme().b2),
 		]
 	)

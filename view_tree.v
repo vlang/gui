@@ -75,6 +75,9 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 	min_width_icon := get_text_width('${icon_bar} ', node.text_style_icon, mut window)
 
 	mut content := []View{}
+	cfg_id := cfg.id
+	on_select := cfg.on_select
+
 	content << row(
 		name:     'tree node content'
 		fill:     true
@@ -103,12 +106,12 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 				]
 			),
 		]
-		on_click: fn [cfg, is_open, node, id] (_ &ContainerCfg, mut e Event, mut w Window) {
+		on_click: fn [cfg_id, on_select, is_open, node, id] (_ &ContainerCfg, mut e Event, mut w Window) {
 			if node.nodes.len > 0 {
-				w.view_state.tree_state[cfg.id][id] = !is_open
+				w.view_state.tree_state[cfg_id][id] = !is_open
 			}
-			if cfg.on_select != unsafe { nil } {
-				cfg.on_select(id, mut w)
+			if on_select != unsafe { nil } {
+				on_select(id, mut w)
 				e.is_handled = true
 			}
 		}

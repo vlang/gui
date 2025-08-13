@@ -138,25 +138,27 @@ fn (cfg DatePickerCfg) controls(state DatePickerState) View {
 }
 
 fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
+	id := cfg.id
 	return button(
 		color_border: color_transparent
 		content:      [text(text: view_time(state).custom_format('MMMM YYYY'))]
-		on_click:     fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
-			mut state := w.view_state.date_picker_state[cfg.id]
+		on_click:     fn [id] (_ &ButtonCfg, mut e Event, mut w Window) {
+			mut state := w.view_state.date_picker_state[id]
 			state.show_year_month_picker = !state.show_year_month_picker
-			w.view_state.date_picker_state[cfg.id] = state
+			w.view_state.date_picker_state[id] = state
 			e.is_handled = true
 		}
 	)
 }
 
 fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
+	id := cfg.id
 	return button(
 		disabled:     state.show_year_month_picker
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_left, text_style: gui_theme.icon3)]
-		on_click:     fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
-			mut dps := w.view_state.date_picker_state[cfg.id]
+		on_click:     fn [id] (_ &ButtonCfg, mut e Event, mut w Window) {
+			mut dps := w.view_state.date_picker_state[id]
 			dps.view_month = dps.view_month - 1
 			if dps.view_month < 1 {
 				dps.view_month = 12
@@ -164,18 +166,19 @@ fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
 			if dps.view_month == 12 {
 				dps.view_year -= 1
 			}
-			w.view_state.date_picker_state[cfg.id] = dps
+			w.view_state.date_picker_state[id] = dps
 		}
 	)
 }
 
 fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
+	id := cfg.id
 	return button(
 		disabled:     state.show_year_month_picker
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_right, text_style: gui_theme.icon3)]
-		on_click:     fn [cfg] (_ &ButtonCfg, mut e Event, mut w Window) {
-			mut dps := w.view_state.date_picker_state[cfg.id]
+		on_click:     fn [id] (_ &ButtonCfg, mut e Event, mut w Window) {
+			mut dps := w.view_state.date_picker_state[id]
 			dps.view_month = dps.view_month + 1
 			if dps.view_month > 12 {
 				dps.view_month = 1
@@ -183,7 +186,7 @@ fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 			if dps.view_month == 1 {
 				dps.view_year += 1
 			}
-			w.view_state.date_picker_state[cfg.id] = dps
+			w.view_state.date_picker_state[id] = dps
 		}
 	)
 }
@@ -197,6 +200,7 @@ fn (cfg DatePickerCfg) body(state DatePickerState) View {
 }
 
 fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
+	id := cfg.id
 	return column(
 		name:         'date_picker calendar'
 		padding:      padding_none
@@ -205,11 +209,11 @@ fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
 			cfg.weekdays(state),
 			cfg.month(state),
 		]
-		amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
-			mut state := w.view_state.date_picker_state[cfg.id]
+		amend_layout: fn [id] (mut layout Layout, mut w Window) {
+			mut state := w.view_state.date_picker_state[id]
 			state.calendar_width = layout.shape.width
 			state.calendar_height = layout.shape.height
-			w.view_state.date_picker_state[cfg.id] = state
+			w.view_state.date_picker_state[id] = state
 		}
 	)
 }
@@ -320,6 +324,8 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 			color := if is_selected_day { cfg.color_select } else { cfg.color }
 			color_border := if is_today { cfg.text_style.color } else { color_transparent }
 			color_hover := if is_selected_day { cfg.color_select } else { cfg.color_hover }
+			on_select := cfg.on_select
+			update_selections := cfg.update_selections
 
 			week << button(
 				color:          color
@@ -332,10 +338,10 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 				max_height:     state.cell_size
 				padding_border: padding_two
 				content:        [text(text: day)]
-				on_click:       fn [cfg, count, state] (_ &ButtonCfg, mut e Event, mut w Window) {
-					if cfg.on_select != unsafe { nil } {
-						selected_dates := cfg.update_selections(count, state)
-						cfg.on_select(selected_dates, mut e, mut w)
+				on_click:       fn [on_select, update_selections, count, state] (_ &ButtonCfg, mut e Event, mut w Window) {
+					if on_select != unsafe { nil } {
+						selected_dates := update_selections(count, state)
+						on_select(selected_dates, mut e, mut w)
 					}
 				}
 			)
@@ -540,16 +546,17 @@ fn (cfg DatePickerCfg) button_month(month DatePickerMonths, year int, width f32)
 	month_str := time.months_string[(int_month - 1) * 3..int_month * 3]
 	mut disabled := (cfg.allowed_months.len > 0 && month !in cfg.allowed_months)
 		|| (cfg.allowed_years.len > 0 && year !in cfg.allowed_years)
+	id := cfg.id
 	return button(
 		disabled:  disabled
 		min_width: width
 		max_width: width
-		on_click:  fn [cfg, int_month, year] (_ &ButtonCfg, mut e Event, mut w Window) {
-			mut state := w.view_state.date_picker_state[cfg.id]
+		on_click:  fn [id, int_month, year] (_ &ButtonCfg, mut e Event, mut w Window) {
+			mut state := w.view_state.date_picker_state[id]
 			state.view_month = int_month
 			state.view_year = year
 			state.show_year_month_picker = false
-			w.view_state.date_picker_state[cfg.id] = state
+			w.view_state.date_picker_state[id] = state
 			e.is_handled = true
 		}
 		content:   [

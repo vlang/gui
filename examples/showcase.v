@@ -448,7 +448,8 @@ fn toggles(w &gui.Window) gui.View {
 						id_focus:  3000
 						value:     app.select_city
 						options:   options
-						on_select: fn [mut app] (value string, mut _ gui.Window) {
+						on_select: fn (value string, mut w gui.Window) {
+							mut app := w.state[ShowcaseApp]()
 							app.select_city = value
 						}
 					),
@@ -459,7 +460,8 @@ fn toggles(w &gui.Window) gui.View {
 						id_focus:  3000
 						value:     app.select_city
 						options:   options
-						on_select: fn [mut app] (value string, mut _ gui.Window) {
+						on_select: fn (value string, mut w gui.Window) {
+							mut app := w.state[ShowcaseApp]()
 							app.select_city = value
 						}
 					),
