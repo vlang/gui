@@ -314,6 +314,8 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 			else {
 				mut count := 0
 				mut buffer := []rune{cap: 100}
+				unsafe { buffer.flags.set(.noslices) }
+				defer { unsafe { buffer.flags.clear(.noslices) } }
 				beg := int(input_state.select_beg)
 				end := int(input_state.select_end)
 				for line in shape.text_lines {

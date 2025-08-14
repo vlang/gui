@@ -230,7 +230,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	// reference to render array significantly reduced calls to array.push()
 	view := gen_view(window)
 	mut layout := window.compose_layout(view)
-	mut renderers := []Renderer{}
+	mut renderers := []Renderer{cap: 200}
 	unsafe { renderers.flags.set(.noslices) }
 	defer { unsafe { renderers.flags.clear(.noslices) } }
 	window_rect := window.window_rect()
@@ -258,7 +258,7 @@ pub fn (mut window Window) update_window() {
 
 	view := window.view_generator(window)
 	mut layout := window.compose_layout(view)
-	mut renderers := []Renderer{}
+	mut renderers := []Renderer{cap: 200}
 	unsafe { renderers.flags.set(.noslices) }
 	defer { unsafe { renderers.flags.clear(.noslices) } }
 	window_rect := window.window_rect()

@@ -215,8 +215,7 @@ fn container(cfg &ContainerCfg) View {
 			padding:   padding_none
 		}
 	}
-	mut content := []View{}
-	content.ensure_cap(cfg.content.len + 3)
+	mut content := []View{cap: cfg.content.len + 3}
 	unsafe { content.flags.set(.noslices) }
 	defer { unsafe { content.flags.clear(.noslices) } }
 

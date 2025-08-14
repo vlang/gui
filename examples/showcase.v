@@ -1342,11 +1342,13 @@ fn icon_catalog(mut w gui.Window) gui.View {
 
 	// Break the icons_maps into rows
 	chunks := chunk_map(gui.icons_map, 4)
-	mut all_icons := []gui.View{}
+	mut all_icons := []gui.View{cap: chunks.len}
+	unsafe { all_icons.flags.set(.noslices) }
+	defer { unsafe { all_icons.flags.clear(.noslices) } }
 
 	// create rows of icons/text
 	for chunk in chunks {
-		mut icons := []gui.View{}
+		mut icons := []gui.View{cap: chunk.len}
 		unsafe { icons.flags.set(.noslices) }
 		defer { unsafe { icons.flags.clear(.noslices) } }
 		for key, val in chunk {
@@ -1377,7 +1379,7 @@ fn icon_catalog(mut w gui.Window) gui.View {
 
 // maybe this should be a standard library function?
 fn chunk_map[K, V](input map[K]V, chunk_size int) []map[K]V {
-	mut chunks := []map[K]V{}
+	mut chunks := []map[K]V{cap: input.keys().len / chunk_size + 1}
 	unsafe { chunks.flags.set(.noslices) }
 	defer { unsafe { chunks.flags.clear(.noslices) } }
 	mut current_chunk := map[K]V{}

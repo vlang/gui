@@ -169,11 +169,12 @@ fn split_text(s string, tab_size u32) []string {
 	state_sp := 1
 
 	mut state := state_ch
-	mut fields := []string{}
-	fields.ensure_cap(100)
+	mut fields := []string{cap: 100}
 	unsafe { fields.flags.set(.noslices) }
 	defer { unsafe { fields.flags.clear(.noslices) } }
-	mut field := []rune{}
+	mut field := []rune{cap: 50}
+	unsafe { field.flags.set(.noslices) }
+	defer { unsafe { field.flags.clear(.noslices) } }
 	for r in s.runes_iterator() {
 		if state == state_ch {
 			if r == r_space {
