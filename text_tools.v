@@ -86,7 +86,9 @@ fn text_wrap(mut shape Shape, mut window Window) {
 // Extra white space is removed.
 fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u32, mut window Window) []string {
 	mut line := ''
-	mut wrap := []string{cap: 5}
+	mut wrap := []string{cap: 10}
+	unsafe { wrap.flags.set(.noslices) }
+	defer { unsafe { wrap.flags.clear(.noslices) } }
 	for field in split_text(s, tab_size) {
 		if field == '\n' {
 			wrap << line + '\n'
@@ -117,7 +119,9 @@ fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u
 // chars) White space is preserved
 fn wrap_text_keep_spaces(s string, text_style TextStyle, width f32, tab_size u32, mut window Window) []string {
 	mut line := ''
-	mut wrap := []string{cap: 5}
+	mut wrap := []string{cap: 10}
+	unsafe { wrap.flags.set(.noslices) }
+	defer { unsafe { wrap.flags.clear(.noslices) } }
 	for field in split_text(s, tab_size) {
 		if field == '\n' {
 			wrap << line + '\n'
@@ -140,7 +144,9 @@ fn wrap_text_keep_spaces(s string, text_style TextStyle, width f32, tab_size u32
 // wrap_simple wraps only at new lines
 fn wrap_simple(s string, tab_size u32) []string {
 	mut line := ''
-	mut lines := []string{}
+	mut lines := []string{cap: 10}
+	unsafe { lines.flags.set(.noslices) }
+	defer { unsafe { lines.flags.clear(.noslices) } }
 
 	for field in split_text(s, tab_size) {
 		if field == '\n' {
@@ -164,6 +170,7 @@ fn split_text(s string, tab_size u32) []string {
 
 	mut state := state_ch
 	mut fields := []string{}
+	fields.ensure_cap(100)
 	unsafe { fields.flags.set(.noslices) }
 	defer { unsafe { fields.flags.clear(.noslices) } }
 	mut field := []rune{}

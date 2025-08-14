@@ -1,6 +1,6 @@
 module gui
 
-import gx
+import gg
 import time
 
 pub struct ButtonStyle {
@@ -268,8 +268,8 @@ pub:
 	line_spacing f32
 }
 
-fn (tc TextStyle) to_text_cfg() gx.TextCfg {
-	return gx.TextCfg{
+fn (tc TextStyle) to_text_cfg() gg.TextCfg {
+	return gg.TextCfg{
 		color:  tc.color.to_gx_color()
 		size:   tc.size
 		family: tc.family

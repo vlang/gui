@@ -1,7 +1,6 @@
 module gui
 
 import gg
-import gx
 import sokol.sgl
 
 // A Renderer is the final computed drawing instruction. gui.Window keeps an array
@@ -18,7 +17,7 @@ struct DrawCircle {
 	y      f32
 	radius f32
 	fill   bool
-	color  gx.Color
+	color  gg.Color
 }
 
 struct DrawImage {
@@ -43,7 +42,7 @@ struct DrawText {
 	x    f32
 	y    f32
 	text string
-	cfg  gx.TextCfg
+	cfg  gg.TextCfg
 }
 
 type DrawClip = gg.Rect
@@ -341,7 +340,7 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 						y:     draw_rect.y
 						w:     se
 						h:     draw_rect.height
-						color: gx.Color{
+						color: gg.Color{
 							...text_cfg.color
 							a: 60 // make themeable?
 						}

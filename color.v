@@ -1,6 +1,6 @@
 module gui
 
-import gx
+import gg
 
 pub const black = Color{
 	r: 0
@@ -314,8 +314,8 @@ pub fn (c Color) to_css_string() string {
 	return 'rgba(${c.r},${c.g},${c.b},${c.a})'
 }
 
-fn (c Color) to_gx_color() gx.Color {
-	return gx.Color{
+fn (c Color) to_gx_color() gg.Color {
+	return gg.Color{
 		r: c.r
 		g: c.g
 		b: c.b
@@ -323,7 +323,7 @@ fn (c Color) to_gx_color() gx.Color {
 	}
 }
 
-fn from_gx_color(c gx.Color) Color {
+fn from_gx_color(c gg.Color) Color {
 	return Color{
 		r: c.r
 		g: c.g

@@ -5491,4 +5491,4 @@ const code_points = [
 	'\ufed3',
 	'\ufed4',
 	'\ufed5',
-]
+]!

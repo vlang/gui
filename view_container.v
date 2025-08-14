@@ -216,6 +216,7 @@ fn container(cfg &ContainerCfg) View {
 		}
 	}
 	mut content := []View{}
+	content.ensure_cap(cfg.content.len + 3)
 	unsafe { content.flags.set(.noslices) }
 	defer { unsafe { content.flags.clear(.noslices) } }
 
@@ -302,7 +303,10 @@ pub fn column(cfg &ContainerCfg) View {
 		name: name
 	}
 	if cfg.cfg == unsafe { nil } {
-		container_cfg.cfg = container_cfg
+		container_cfg.cfg = &ContainerCfg{
+			...container_cfg
+			content: []View{}
+		}
 	}
 	return container(container_cfg)
 }
