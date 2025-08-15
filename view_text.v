@@ -122,7 +122,7 @@ fn (t &TextCfg) free() {
 // text is a general purpose text renderer. Use it for labels or larger
 // blocks of multiline text. Giving it an id_focus allows mark and copy
 // operations. See [TextCfg](#TextCfg)
-pub fn text(cfg &TextCfg) View {
+pub fn text(cfg TextCfg) View {
 	return TextView{
 		id:                 cfg.id
 		id_focus:           cfg.id_focus

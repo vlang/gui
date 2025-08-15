@@ -56,7 +56,7 @@ pub:
 }
 
 // table generates a table from the given [TableCfg](#TableCfg)
-pub fn (mut window Window) table(cfg &TableCfg) View {
+pub fn (mut window Window) table(cfg TableCfg) View {
 	mut rows := []View{}
 	column_widths := window.table_column_widths(cfg)
 	for r in cfg.data {

@@ -6,7 +6,7 @@ import datatypes
 // later was separated out. For this reason, it still uses [MenubarCfg](#MenuBarCfg).
 // See `examples/context_menu_demo.v` for an example of how to use `menu`.
 // Apologies to future me...
-pub fn (mut window Window) menu(cfg MenubarCfg) View {
+pub fn (window &Window) menu(cfg MenubarCfg) View {
 	if cfg.id_focus == 0 {
 		panic('MenubarCfg.id_focus must be non-zero')
 	}

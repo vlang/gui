@@ -20,7 +20,7 @@ pub:
 
 // rectangle draws a rectangle (shocking!). Rectangles can be filled, outlined,
 // colored and have radius corners.
-pub fn rectangle(cfg &RectangleCfg) View {
+pub fn rectangle(cfg RectangleCfg) View {
 	// Technically, rectangle is a container but it has no children, axis or
 	// padding and as such, behaves as a plain rectangle.
 	container_cfg := ContainerCfg{
