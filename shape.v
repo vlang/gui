@@ -36,15 +36,16 @@ pub mut:
 	sizing     Sizing
 	spacing    f32
 	// -- text ---
-	text             string
-	text_lines       []string
-	text_style       TextStyle
-	text_mode        TextMode
-	text_is_password bool
-	text_sel_beg     u32
-	text_sel_end     u32
-	text_tab_size    u32 = 4
-	text_spans       datatypes.LinkedList[TextSpan] // rich text format spans
+	text                string
+	text_lines          []string
+	text_style          TextStyle
+	text_mode           TextMode
+	text_is_password    bool
+	text_is_placeholder bool
+	text_sel_beg        u32
+	text_sel_end        u32
+	text_tab_size       u32 = 4
+	text_spans          datatypes.LinkedList[TextSpan] // rich text format spans
 	// --- image ---
 	image_name string // filename of image
 	// --- float ---

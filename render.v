@@ -315,7 +315,7 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 		// Cull any renderers outside of clip/context region.
 		if rects_overlap(clip, draw_rect) && color != color_transparent {
 			mut lnl := line.replace('\n', '')
-			if shape.text_is_password {
+			if shape.text_is_password && !shape.text_is_placeholder {
 				// replace with '*'s
 				lnl = '*'.repeat(utf8_str_visible_length(lnl))
 			}
