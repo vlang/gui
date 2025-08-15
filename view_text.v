@@ -65,6 +65,7 @@ fn (t &TextView) generate(mut window Window) Layout {
 			sizing:              t.sizing
 			text:                t.text
 			text_is_password:    t.is_password
+			text_is_placeholder: t.placeholder_active
 			text_lines:          lines
 			text_mode:           t.mode
 			text_style:          t.text_style
