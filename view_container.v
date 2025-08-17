@@ -239,10 +239,9 @@ fn container(cfg ContainerCfg) View {
 			padding:   padding_none
 		}
 	}
-	mut content := []View{cap: cfg.content.len + 3}
+	mut content := cfg.content.clone()
 	unsafe { content.flags.set(.noslices) }
 
-	content << cfg.content
 	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_x.overflow != .hidden {
 		content << scrollbar(ScrollbarCfg{
 			...cfg.scrollbar_cfg_x
