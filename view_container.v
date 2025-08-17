@@ -3,55 +3,48 @@ module gui
 // ContainerView members are arranged for packing to reduce memory footprint.
 struct ContainerView implements View {
 pub:
-	// --- strings ---
-	id   string
-	name string // used internally, read-only
-	text string
-	// --- callback functions grouped together ---
-	on_char       fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_click      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_keydown    fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_down fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	amend_layout  fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover      fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	// --- larger structs ---
-	color           Color   = gui_theme.container_style.color
-	padding         Padding = gui_theme.container_style.padding
+	id              string
+	name            string // used internally, read-only
+	text            string
 	scrollbar_cfg_x ScrollbarCfg
 	scrollbar_cfg_y ScrollbarCfg
-	// --- f32 fields grouped together (4-byte alignment) ---
-	x              f32
-	y              f32
-	width          f32
-	min_width      f32
-	max_width      f32
-	height         f32
-	min_height     f32
-	max_height     f32
-	radius         f32 = gui_theme.container_style.radius
-	spacing        f32 = gui_theme.container_style.spacing
-	float_offset_x f32
-	float_offset_y f32
-	// --- u32 fields grouped together (4-byte alignment) ---
-	id_focus  u32 // not sure this should be here
-	id_scroll u32
-	// --- enums (typically 4-byte alignment) ---
-	h_align       HorizontalAlign
-	v_align       VerticalAlign
-	sizing        Sizing
-	scroll_mode   ScrollMode
-	float_anchor  FloatAttach
-	float_tie_off FloatAttach
-	// --- boolean fields grouped together (1-byte each, can be packed) ---
-	fill       bool = gui_theme.container_style.fill
-	clip       bool
-	focus_skip bool
-	disabled   bool
-	invisible  bool
-	float      bool
-	over_draw  bool
+	color           Color   = gui_theme.container_style.color
+	padding         Padding = gui_theme.container_style.padding
+	sizing          Sizing
+	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_down   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	x               f32
+	y               f32
+	width           f32
+	min_width       f32
+	max_width       f32
+	height          f32
+	min_height      f32
+	max_height      f32
+	radius          f32 = gui_theme.container_style.radius
+	spacing         f32 = gui_theme.container_style.spacing
+	float_offset_x  f32
+	float_offset_y  f32
+	id_focus        u32 // not sure this should be here
+	id_scroll       u32
+	h_align         HorizontalAlign
+	v_align         VerticalAlign
+	scroll_mode     ScrollMode
+	float_anchor    FloatAttach
+	float_tie_off   FloatAttach
+	fill            bool = gui_theme.container_style.fill
+	clip            bool
+	focus_skip      bool
+	disabled        bool
+	invisible       bool
+	float           bool
+	over_draw       bool
 mut:
 	// --- mut fields optimized by size/alignment ---
 	// --- arrays and complex types ---
@@ -177,56 +170,49 @@ mut:
 	cfg voidptr = unsafe { nil }
 pub:
 	// --- strings ---
-	id   string
-	text string
-	// --- arrays and complex types ---
-	content []View
-	// --- callback functions grouped together ---
-	on_char       fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_click      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_any_click  fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_keydown    fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	amend_layout  fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover      fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	// --- larger structs ---
+	id              string
+	text            string
 	color           Color   = gui_theme.container_style.color
 	padding         Padding = gui_theme.container_style.padding
 	scrollbar_cfg_x ScrollbarCfg
 	scrollbar_cfg_y ScrollbarCfg
 	tooltip         TooltipCfg
 	sizing          Sizing
-	// --- f32 fields grouped together (4-byte alignment) ---
-	width          f32
-	height         f32
-	min_width      f32
-	min_height     f32
-	max_width      f32
-	max_height     f32
-	x              f32
-	y              f32
-	spacing        f32 = gui_theme.container_style.spacing
-	radius         f32 = gui_theme.container_style.radius
-	float_offset_x f32
-	float_offset_y f32
-	// --- u32 fields grouped together (4-byte alignment) ---
-	id_focus  u32
-	id_scroll u32
-	// --- enums (typically 4-byte alignment) ---
-	scroll_mode   ScrollMode
-	h_align       HorizontalAlign
-	v_align       VerticalAlign
-	float_anchor  FloatAttach
-	float_tie_off FloatAttach
-	// --- boolean fields grouped at the end (1-byte each, can be packed) ---
-	disabled   bool
-	invisible  bool
-	clip       bool
-	focus_skip bool
-	over_draw  bool
-	fill       bool = gui_theme.container_style.fill
-	float      bool
+	content         []View
+	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_any_click    fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	width           f32
+	height          f32
+	min_width       f32
+	min_height      f32
+	max_width       f32
+	max_height      f32
+	x               f32
+	y               f32
+	spacing         f32 = gui_theme.container_style.spacing
+	radius          f32 = gui_theme.container_style.radius
+	float_offset_x  f32
+	float_offset_y  f32
+	id_focus        u32
+	id_scroll       u32
+	scroll_mode     ScrollMode
+	h_align         HorizontalAlign
+	v_align         VerticalAlign
+	float_anchor    FloatAttach
+	float_tie_off   FloatAttach
+	disabled        bool
+	invisible       bool
+	clip            bool
+	focus_skip      bool
+	over_draw       bool
+	fill            bool = gui_theme.container_style.fill
+	float           bool
 }
 
 // container is the fundamental layout container in gui. It is used to layout

@@ -6,16 +6,16 @@ import os
 struct RtfView implements View {
 pub:
 	id         string
-	id_focus   u32
-	invisible  bool
 	cfg        &RtfCfg = unsafe { nil }
+	sizing     Sizing
+	spans      datatypes.LinkedList[TextSpan]
+	min_width  f32
+	id_focus   u32
+	mode       TextMode
+	invisible  bool
 	clip       bool
 	focus_skip bool
 	disabled   bool
-	min_width  f32
-	mode       TextMode
-	sizing     Sizing
-	spans      datatypes.LinkedList[TextSpan]
 pub mut:
 	content []View // required, not used
 }
@@ -28,14 +28,14 @@ pub mut:
 pub struct RtfCfg {
 pub:
 	id         string
+	spans      []TextSpan
+	min_width  f32
 	id_focus   u32
+	mode       TextMode
 	invisible  bool
 	clip       bool
 	focus_skip bool
 	disabled   bool
-	min_width  f32
-	mode       TextMode
-	spans      []TextSpan
 }
 
 fn (rtf &RtfView) generate(mut window Window) Layout {

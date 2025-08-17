@@ -8,10 +8,10 @@ module gui
 pub struct TreeCfg {
 pub:
 	id        string @[required]
-	indent    f32                     = gui_theme.tree_style.indent
-	spacing   f32                     = gui_theme.tree_style.spacing
 	on_select fn (string, mut Window) = unsafe { nil }
 	nodes     []TreeNodeCfg
+	indent    f32 = gui_theme.tree_style.indent
+	spacing   f32 = gui_theme.tree_style.spacing
 }
 
 // tree creates a tree view from the given [TreeCfg](#TreeCfg)

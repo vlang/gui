@@ -7,21 +7,20 @@ import log
 
 pub struct Window {
 mut:
-	ui             &gg.Context       = &gg.Context{}
-	state          voidptr           = unsafe { nil }
-	mutex          &sync.Mutex       = sync.new_mutex()
-	view_generator fn (&Window) View = empty_view
-	view_state     ViewState
-	layout         Layout
-	renderers      []Renderer
-	animations     []Animation
-	dialog_cfg     DialogCfg
-	focused        bool = true
-	window_size    gg.Size // cached, gg.window_size() relatively slow
-	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
-	//
+	view_state                        ViewState
+	dialog_cfg                        DialogCfg
+	layout                            Layout
+	ui                                &gg.Context = &gg.Context{}
+	state                             voidptr     = unsafe { nil }
+	mutex                             &sync.Mutex = sync.new_mutex()
+	renderers                         []Renderer
+	animations                        []Animation
+	view_generator                    fn (&Window) View           = empty_view
+	on_event                          fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	window_size                       gg.Size // cached, gg.window_size() relatively slow
 	update_window_calls               int
-	max_update_window_calls_per_frame int = int($d('max_update_window_calls_per_frame', 2)) // 2 is a compromise between perceived latency of typing in apps like form_demo.v (higher is better), and reduced latency and lower CPU usage in apps like fonts.v (lower is better, especially on slow CPUs)
+	max_update_window_calls_per_frame int  = int($d('max_update_window_calls_per_frame', 2)) // 2 is a compromise between perceived latency of typing in apps like form_demo.v (higher is better), and reduced latency and lower CPU usage in apps like fonts.v (lower is better, especially on slow CPUs)
+	focused                           bool = true
 }
 
 // Window is the application window. The state parameter is a reference to where

@@ -7,22 +7,22 @@ import hash.fnv1a
 pub struct TooltipCfg {
 pub:
 	id             string
+	color          Color     = gui_theme.tooltip_style.color
+	color_hover    Color     = gui_theme.tooltip_style.color_hover
+	color_border   Color     = gui_theme.tooltip_style.color_border
+	padding        Padding   = gui_theme.tooltip_style.padding
+	padding_border Padding   = gui_theme.tooltip_style.padding_border
+	text_style     TextStyle = gui_theme.tooltip_style.text_style
+	content        []View
 	delay          time.Duration = gui_theme.tooltip_style.delay
-	color          Color         = gui_theme.tooltip_style.color
-	color_hover    Color         = gui_theme.tooltip_style.color_hover
-	color_border   Color         = gui_theme.tooltip_style.color_border
-	fill           bool          = gui_theme.tooltip_style.fill
-	fill_border    bool          = gui_theme.tooltip_style.fill_border
-	padding        Padding       = gui_theme.tooltip_style.padding
-	padding_border Padding       = gui_theme.tooltip_style.padding_border
 	radius         f32           = gui_theme.tooltip_style.radius
 	radius_border  f32           = gui_theme.tooltip_style.radius_border
-	text_style     TextStyle     = gui_theme.tooltip_style.text_style
+	offset_x       f32           = -3
+	offset_y       f32           = -3
 	anchor         FloatAttach   = .bottom_center
 	tie_off        FloatAttach
-	offset_x       f32 = -3
-	offset_y       f32 = -3
-	content        []View
+	fill           bool = gui_theme.tooltip_style.fill
+	fill_border    bool = gui_theme.tooltip_style.fill_border
 }
 
 // tooltip creates a tooltip from the given [TooltipCfg](#TooltipCfg)

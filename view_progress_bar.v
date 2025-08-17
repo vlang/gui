@@ -7,27 +7,27 @@ import math
 pub struct ProgressBarCfg {
 pub:
 	id              string
+	text            string
+	sizing          Sizing
+	text_style      TextStyle = gui_theme.text_style
+	color           Color     = gui_theme.progress_bar_style.color
+	color_bar       Color     = gui_theme.progress_bar_style.color_bar
+	text_background Color     = gui_theme.progress_bar_style.text_background
+	text_padding    Padding   = gui_theme.progress_bar_style.text_padding
 	width           f32
 	height          f32
 	min_width       f32
 	min_height      f32
 	max_width       f32
 	max_height      f32
+	percent         f32 // 0.0 <= percent <= 1.0
+	radius          f32  = gui_theme.progress_bar_style.radius
+	text_show       bool = gui_theme.progress_bar_style.text_show
+	text_fill       bool = gui_theme.progress_bar_style.text_fill
 	disabled        bool
 	invisible       bool
-	sizing          Sizing
 	indefinite      bool // TODO: not implemented
 	vertical        bool // orientation
-	percent         f32  // 0.0 <= percent <= 1.0
-	radius          f32       = gui_theme.progress_bar_style.radius
-	color           Color     = gui_theme.progress_bar_style.color
-	color_bar       Color     = gui_theme.progress_bar_style.color_bar
-	text_background Color     = gui_theme.progress_bar_style.text_background
-	text_show       bool      = gui_theme.progress_bar_style.text_show
-	text_fill       bool      = gui_theme.progress_bar_style.text_fill
-	text_padding    Padding   = gui_theme.progress_bar_style.text_padding
-	text_style      TextStyle = gui_theme.text_style
-	text            string
 }
 
 // progress_bar creates a progress bar from the given [ProgressBarCfg](#ProgressBarCfg)

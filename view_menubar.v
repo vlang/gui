@@ -19,36 +19,36 @@ import datatypes
 pub struct MenubarCfg {
 pub:
 	id                     string
-	id_focus               u32 @[required]
-	disabled               bool
-	invisible              bool
-	float                  bool
-	float_anchor           FloatAttach
-	float_tie_off          FloatAttach
+	text_style             TextStyle = gui_theme.menubar_style.text_style
+	text_style_subtitle    TextStyle = gui_theme.menubar_style.text_style_subtitle
 	color                  Color     = gui_theme.menubar_style.color
 	color_border           Color     = gui_theme.menubar_style.color_border
 	color_select           Color     = gui_theme.menubar_style.color_select
-	width_submenu_min      f32       = gui_theme.menubar_style.width_submenu_min
-	width_submenu_max      f32       = gui_theme.menubar_style.width_submenu_max
+	sizing                 Sizing    = fill_fit
 	padding                Padding   = gui_theme.menubar_style.padding
 	padding_menu_item      Padding   = gui_theme.menubar_style.padding_menu_item
 	padding_border         Padding   = gui_theme.menubar_style.padding_border
 	padding_submenu        Padding   = gui_theme.menubar_style.padding_submenu
 	padding_submenu_border Padding   = gui_theme.menubar_style.padding_border
 	padding_subtitle       Padding   = gui_theme.menubar_style.padding_subtitle
-	radius                 f32       = gui_theme.menubar_style.radius
-	radius_border          f32       = gui_theme.menubar_style.radius_border
-	radius_submenu         f32       = gui_theme.menubar_style.radius_submenu
-	radius_menu_item       f32       = gui_theme.menubar_style.radius_menu_item
-	sizing                 Sizing    = fill_fit
-	spacing                f32       = gui_theme.menubar_style.spacing
-	spacing_submenu        f32       = gui_theme.menubar_style.spacing_submenu
-	text_style             TextStyle = gui_theme.menubar_style.text_style
-	text_style_subtitle    TextStyle = gui_theme.menubar_style.text_style_subtitle
 	action                 fn (string, mut Event, mut Window) = fn (id string, mut e Event, mut w Window) {
 		e.is_handled = true
 	}
 	items                  []MenuItemCfg
+	width_submenu_min      f32 = gui_theme.menubar_style.width_submenu_min
+	width_submenu_max      f32 = gui_theme.menubar_style.width_submenu_max
+	radius                 f32 = gui_theme.menubar_style.radius
+	radius_border          f32 = gui_theme.menubar_style.radius_border
+	radius_submenu         f32 = gui_theme.menubar_style.radius_submenu
+	radius_menu_item       f32 = gui_theme.menubar_style.radius_menu_item
+	spacing                f32 = gui_theme.menubar_style.spacing
+	spacing_submenu        f32 = gui_theme.menubar_style.spacing_submenu
+	id_focus               u32 @[required]
+	float_anchor           FloatAttach
+	float_tie_off          FloatAttach
+	disabled               bool
+	invisible              bool
+	float                  bool
 }
 
 // menubar creates a menubar and its child menus from the given [MenubarCfg](#MenubarCfg)

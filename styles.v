@@ -262,10 +262,10 @@ pub:
 
 pub struct TextStyle {
 pub:
-	color        Color
-	size         int
 	family       string
+	color        Color
 	line_spacing f32
+	size         int
 }
 
 fn (tc TextStyle) to_text_cfg() gg.TextCfg {

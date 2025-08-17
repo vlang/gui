@@ -57,25 +57,25 @@ fn event_relative_to(shape Shape, e &Event) &Event {
 
 pub struct Event {
 pub mut:
+	touches            [8]TouchPoint
 	frame_count        u64
-	typ                sapp.EventType
-	key_code           KeyCode
-	char_code          u32
-	key_repeat         bool
-	modifiers          u32
-	mouse_button       MouseButton
 	mouse_x            f32
 	mouse_y            f32
 	mouse_dx           f32
 	mouse_dy           f32
 	scroll_x           f32
 	scroll_y           f32
+	modifiers          u32
+	char_code          u32
 	num_touches        int
-	touches            [8]TouchPoint
 	window_width       int
 	window_height      int
 	framebuffer_width  int
 	framebuffer_height int
+	typ                sapp.EventType
+	key_code           KeyCode
+	mouse_button       MouseButton
+	key_repeat         bool
 	is_handled         bool
 }
 

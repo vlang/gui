@@ -61,26 +61,26 @@ pub:
 	allowed_months           []DatePickerMonths   // [link](#DatePickerMonths)
 	allowed_years            []int
 	allowed_dates            []time.Time
-	weekdays_len             DatePickerWeekdayLen                    = gui_theme.date_picker_style.weekdays_len // [link](#DatePickerWeekdayLen)
-	hide_today_indicator     bool                                    = gui_theme.date_picker_style.hide_today_indicator
-	monday_first_day_of_week bool                                    = gui_theme.date_picker_style.monday_first_day_of_week
-	show_adjacent_months     bool                                    = gui_theme.date_picker_style.show_adjacent_months
-	cell_spacing             f32                                     = gui_theme.date_picker_style.cell_spacing
-	color                    Color                                   = gui_theme.date_picker_style.color
-	color_hover              Color                                   = gui_theme.date_picker_style.color_hover
-	color_focus              Color                                   = gui_theme.date_picker_style.color_focus
-	color_click              Color                                   = gui_theme.date_picker_style.color_click
-	color_border             Color                                   = gui_theme.date_picker_style.color_border
-	color_border_focus       Color                                   = gui_theme.date_picker_style.color_border_focus
-	color_select             Color                                   = gui_theme.date_picker_style.color_select
-	fill                     bool                                    = gui_theme.date_picker_style.fill
-	fill_border              bool                                    = gui_theme.date_picker_style.fill_border
-	padding                  Padding                                 = gui_theme.date_picker_style.padding
-	padding_border           Padding                                 = gui_theme.date_picker_style.padding_border
-	radius                   f32                                     = gui_theme.date_picker_style.radius
-	radius_border            f32                                     = gui_theme.date_picker_style.radius_border
-	text_style               TextStyle                               = gui_theme.date_picker_style.text_style
 	on_select                fn ([]time.Time, mut Event, mut Window) = unsafe { nil }
+	weekdays_len             DatePickerWeekdayLen                    = gui_theme.date_picker_style.weekdays_len // [link](#DatePickerWeekdayLen)
+	text_style               TextStyle = gui_theme.date_picker_style.text_style
+	color                    Color     = gui_theme.date_picker_style.color
+	color_hover              Color     = gui_theme.date_picker_style.color_hover
+	color_focus              Color     = gui_theme.date_picker_style.color_focus
+	color_click              Color     = gui_theme.date_picker_style.color_click
+	color_border             Color     = gui_theme.date_picker_style.color_border
+	color_border_focus       Color     = gui_theme.date_picker_style.color_border_focus
+	color_select             Color     = gui_theme.date_picker_style.color_select
+	padding                  Padding   = gui_theme.date_picker_style.padding
+	padding_border           Padding   = gui_theme.date_picker_style.padding_border
+	cell_spacing             f32       = gui_theme.date_picker_style.cell_spacing
+	radius                   f32       = gui_theme.date_picker_style.radius
+	radius_border            f32       = gui_theme.date_picker_style.radius_border
+	fill                     bool      = gui_theme.date_picker_style.fill
+	fill_border              bool      = gui_theme.date_picker_style.fill_border
+	hide_today_indicator     bool      = gui_theme.date_picker_style.hide_today_indicator
+	monday_first_day_of_week bool      = gui_theme.date_picker_style.monday_first_day_of_week
+	show_adjacent_months     bool      = gui_theme.date_picker_style.show_adjacent_months
 }
 
 // date_picker creates a date-picker view from the given [DatePickerCfg](#DatePickerCfg)

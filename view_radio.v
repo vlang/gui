@@ -4,12 +4,7 @@ module gui
 pub struct RadioCfg {
 pub:
 	id             string
-	id_focus       u32
-	disabled       bool
-	invisible      bool
 	label          string
-	select         bool
-	size           f32       = gui_theme.n3.size
 	color          Color     = gui_theme.radio_style.color
 	color_hover    Color     = gui_theme.radio_style.color_hover
 	color_focus    Color     = gui_theme.radio_style.color_focus
@@ -19,6 +14,11 @@ pub:
 	padding        Padding   = gui_theme.radio_style.padding
 	text_style     TextStyle = gui_theme.radio_style.text_style
 	on_click       fn (&RadioCfg, mut Event, mut Window) @[required]
+	size           f32 = gui_theme.n3.size
+	id_focus       u32
+	disabled       bool
+	select         bool
+	invisible      bool
 }
 
 pub fn radio(cfg RadioCfg) View {

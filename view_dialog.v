@@ -37,33 +37,33 @@ mut:
 	visible      bool
 	old_id_focus u32
 pub:
-	dialog_type      DialogType
+	title            string
+	body             string // body text wraps as needed. Newlines supported
+	reply            string
 	id               string
+	color            Color     = gui_theme.dialog_style.color
+	color_border     Color     = gui_theme.dialog_style.color_border
+	padding          Padding   = gui_theme.dialog_style.padding
+	padding_border   Padding   = gui_theme.dialog_style.padding_border
+	title_text_style TextStyle = gui_theme.dialog_style.title_text_style
+	text_style       TextStyle = gui_theme.dialog_style.text_style
+	custom_content   []View // custom content
+	on_ok_yes        fn (mut w Window)       = fn (mut _ Window) {}
+	on_cancel_no     fn (mut w Window)       = fn (mut _ Window) {}
+	on_reply         fn (string, mut Window) = fn (_ string, mut _ Window) {}
 	width            f32
 	height           f32
 	min_width        f32 = 200
 	min_height       f32
 	max_width        f32 = 300
 	max_height       f32
-	title            string
-	body             string // body text wraps as needed. Newlines supported
-	custom_content   []View // custom content
-	reply            string
-	id_focus         u32                     = dialog_base_id_focus
-	align_buttons    HorizontalAlign         = gui_theme.dialog_style.align_buttons
-	color            Color                   = gui_theme.dialog_style.color
-	color_border     Color                   = gui_theme.dialog_style.color_border
-	fill             bool                    = gui_theme.dialog_style.fill
-	fill_border      bool                    = gui_theme.dialog_style.fill_border
-	padding          Padding                 = gui_theme.dialog_style.padding
-	padding_border   Padding                 = gui_theme.dialog_style.padding_border
-	radius           f32                     = gui_theme.dialog_style.radius
-	radius_border    f32                     = gui_theme.dialog_style.radius_border
-	title_text_style TextStyle               = gui_theme.dialog_style.title_text_style
-	text_style       TextStyle               = gui_theme.dialog_style.text_style
-	on_ok_yes        fn (mut w Window)       = fn (mut _ Window) {}
-	on_cancel_no     fn (mut w Window)       = fn (mut _ Window) {}
-	on_reply         fn (string, mut Window) = fn (_ string, mut _ Window) {}
+	radius           f32 = gui_theme.dialog_style.radius
+	radius_border    f32 = gui_theme.dialog_style.radius_border
+	id_focus         u32 = dialog_base_id_focus
+	dialog_type      DialogType
+	align_buttons    HorizontalAlign = gui_theme.dialog_style.align_buttons
+	fill             bool            = gui_theme.dialog_style.fill
+	fill_border      bool            = gui_theme.dialog_style.fill_border
 }
 
 fn dialog_view_generator(cfg DialogCfg) View {

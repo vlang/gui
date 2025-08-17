@@ -9,19 +9,16 @@ pub struct Shape {
 pub:
 	id       string // user assigned
 	name     string // internal shape name, useful for debugging
-	type     ShapeType
+	cfg      voidptr
 	uid      u64 = rand.u64() // internal use only
 	id_focus u32 // >0 indicates shape is focusable. Value determines tabbing order
 	axis     Axis
-	cfg      voidptr
+	type     ShapeType
 pub mut:
-	// --- text spans (likely largest field, place early) ---
-	text_spans datatypes.LinkedList[TextSpan] // rich text format spans
-	// --- strings grouped together ---
-	text       string
-	image_name string // filename of image
-	text_lines []string
-	// --- callback functions grouped together ---
+	text_spans            datatypes.LinkedList[TextSpan] // rich text format spans
+	text                  string
+	image_name            string // filename of image
+	text_lines            []string
 	on_char               fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_keydown            fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_click              fn (voidptr, mut Event, mut Window)    = unsafe { nil }
@@ -35,46 +32,41 @@ pub mut:
 	on_mouse_scroll_shape fn (&Shape, mut Event, mut Window)     = unsafe { nil }
 	amend_layout          fn (mut Layout, mut Window)            = unsafe { nil }
 	on_hover              fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	// --- larger structs ---
-	shape_clip DrawClip // used for hit-testing
-	color      Color
-	padding    Padding
-	text_style TextStyle
-	sizing     Sizing
-	// --- f32 fields grouped together (4-byte alignment) ---
-	x              f32
-	y              f32
-	width          f32
-	min_width      f32
-	max_width      f32
-	height         f32
-	min_height     f32
-	max_height     f32
-	radius         f32
-	spacing        f32
-	float_offset_x f32
-	float_offset_y f32
-	// --- u32 fields grouped together (4-byte alignment) ---
-	id_scroll     u32 // >0 indicates shape is scrollable
-	text_sel_beg  u32
-	text_sel_end  u32
-	text_tab_size u32 = 4
-	// --- enums (typically 4-byte alignment) ---
-	h_align       HorizontalAlign
-	v_align       VerticalAlign
-	text_mode     TextMode
-	scroll_mode   ScrollMode
-	float_anchor  FloatAttach
-	float_tie_off FloatAttach
-	// --- boolean fields grouped at the end (1-byte each, can be packed) ---
-	clip                bool
-	disabled            bool
-	fill                bool
-	focus_skip          bool
-	text_is_password    bool
-	text_is_placeholder bool
-	float               bool
-	over_draw           bool // allows scrollbars to draw in padding area
+	shape_clip            DrawClip // used for hit-testing
+	color                 Color
+	padding               Padding
+	text_style            TextStyle
+	sizing                Sizing
+	x                     f32
+	y                     f32
+	width                 f32
+	min_width             f32
+	max_width             f32
+	height                f32
+	min_height            f32
+	max_height            f32
+	radius                f32
+	spacing               f32
+	float_offset_x        f32
+	float_offset_y        f32
+	id_scroll             u32 // >0 indicates shape is scrollable
+	text_sel_beg          u32
+	text_sel_end          u32
+	text_tab_size         u32 = 4
+	h_align               HorizontalAlign
+	v_align               VerticalAlign
+	text_mode             TextMode
+	scroll_mode           ScrollMode
+	float_anchor          FloatAttach
+	float_tie_off         FloatAttach
+	clip                  bool
+	disabled              bool
+	fill                  bool
+	focus_skip            bool
+	text_is_password      bool
+	text_is_placeholder   bool
+	float                 bool
+	over_draw             bool // allows scrollbars to draw in padding area
 }
 
 // ShapeType defines the kind of Shape.

@@ -37,34 +37,34 @@ pub enum InputMode {
 pub struct InputCfg {
 pub:
 	id                 string
+	text               string // text to display/edit
+	placeholder        string // text to show when empty
+	on_text_changed    fn (&InputCfg, string, &Window)    = unsafe { nil }
+	on_enter           fn (&InputCfg, mut Event, &Window) = unsafe { nil }
+	sizing             Sizing
+	text_style         TextStyle = gui_theme.input_style.text_style
+	placeholder_style  TextStyle = gui_theme.input_style.placeholder_style
 	width              f32
 	height             f32
 	min_width          f32
 	min_height         f32
 	max_width          f32
 	max_height         f32
+	radius             f32 = gui_theme.input_style.radius
+	radius_border      f32 = gui_theme.input_style.radius_border
+	id_focus           u32 // 0 = readonly, >0 = focusable and tabbing order
+	padding            Padding = gui_theme.input_style.padding
+	padding_border     Padding = gui_theme.input_style.padding_border
+	color              Color   = gui_theme.input_style.color
+	color_hover        Color   = gui_theme.input_style.color_hover
+	color_border       Color   = gui_theme.input_style.color_border
+	color_border_focus Color   = gui_theme.input_style.color_border_focus
+	mode               InputMode // enable multiline
 	disabled           bool
 	invisible          bool
-	sizing             Sizing
-	id_focus           u32       // 0 = readonly, >0 = focusable and tabbing order
-	text               string    // text to display/edit
-	placeholder        string    // text to show when empty
-	mode               InputMode // enable multiline
-	is_password        bool      // mask input characters with '*'s
-	padding            Padding                            = gui_theme.input_style.padding
-	padding_border     Padding                            = gui_theme.input_style.padding_border
-	color              Color                              = gui_theme.input_style.color
-	color_hover        Color                              = gui_theme.input_style.color_hover
-	color_border       Color                              = gui_theme.input_style.color_border
-	color_border_focus Color                              = gui_theme.input_style.color_border_focus
-	fill               bool                               = gui_theme.input_style.fill
-	fill_border        bool                               = gui_theme.input_style.fill_border
-	radius             f32                                = gui_theme.input_style.radius
-	radius_border      f32                                = gui_theme.input_style.radius_border
-	text_style         TextStyle                          = gui_theme.input_style.text_style
-	placeholder_style  TextStyle                          = gui_theme.input_style.placeholder_style
-	on_text_changed    fn (&InputCfg, string, &Window)    = unsafe { nil }
-	on_enter           fn (&InputCfg, mut Event, &Window) = unsafe { nil }
+	is_password        bool // mask input characters with '*'s
+	fill               bool = gui_theme.input_style.fill
+	fill_border        bool = gui_theme.input_style.fill_border
 }
 
 // input is a text input field.

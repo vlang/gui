@@ -7,29 +7,29 @@ import hash.fnv1a
 pub struct SelectCfg {
 pub:
 	id                 string @[required] // unique only to other select views
-	id_focus           u32
-	select             []string // Text of select item
 	placeholder        string
-	select_multiple    bool
-	no_wrap            bool
-	min_width          f32       = gui_theme.select_style.min_width
-	max_width          f32       = gui_theme.select_style.max_width
+	select             []string // Text of select item
+	options            []string
 	color              Color     = gui_theme.select_style.color
 	color_border       Color     = gui_theme.select_style.color_border
 	color_border_focus Color     = gui_theme.select_style.color_border_focus
 	color_focus        Color     = gui_theme.select_style.color_focus
 	color_select       Color     = gui_theme.select_style.color_select
-	fill               bool      = gui_theme.select_style.fill
-	fill_border        bool      = gui_theme.select_style.fill_border
 	padding            Padding   = gui_theme.select_style.padding
 	padding_border     Padding   = gui_theme.select_style.padding_border
-	radius             f32       = gui_theme.select_style.radius
-	radius_border      f32       = gui_theme.select_style.radius_border
 	text_style         TextStyle = gui_theme.select_style.text_style
 	subheading_style   TextStyle = gui_theme.select_style.subheading_style
 	placeholder_style  TextStyle = gui_theme.select_style.placeholder_style
 	on_select          fn ([]string, mut Event, mut Window) @[required]
-	options            []string
+	min_width          f32 = gui_theme.select_style.min_width
+	max_width          f32 = gui_theme.select_style.max_width
+	radius             f32 = gui_theme.select_style.radius
+	radius_border      f32 = gui_theme.select_style.radius_border
+	id_focus           u32
+	select_multiple    bool
+	no_wrap            bool
+	fill               bool = gui_theme.select_style.fill
+	fill_border        bool = gui_theme.select_style.fill_border
 }
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)

@@ -24,13 +24,13 @@ module gui
 pub struct RadioButtonGroupCfg {
 pub:
 	title      string
-	options    []RadioOption
 	value      string
-	id_focus   u32
-	min_width  f32
-	min_height f32
 	sizing     Sizing
 	on_select  fn (string, mut Window) @[required]
+	options    []RadioOption
+	min_width  f32
+	min_height f32
+	id_focus   u32
 }
 
 // RadioOption defines a radio button for a [RadioButtonGroupCfg](#RadioButtonGroupCfg)

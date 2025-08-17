@@ -31,9 +31,9 @@ pub:
 	id                   string
 	color_border         Color     = gui_theme.color_border
 	cell_padding         Padding   = padding_two_five
-	column_width_default f32       = 50
 	text_style           TextStyle = gui_theme.n3
 	text_style_head      TextStyle = gui_theme.b3
+	column_width_default f32       = 50
 pub mut:
 	data []TableRowCfg
 }

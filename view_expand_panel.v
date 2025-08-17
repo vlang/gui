@@ -4,12 +4,13 @@ module gui
 @[heap]
 pub struct ExpandPanelCfg {
 pub:
+	on_toggle      fn (mut w Window) = unsafe { nil }
 	id             string
-	open           bool
+	head           View
+	content        View
+	sizing         Sizing
 	color          Color   = gui_theme.expand_panel_style.color
 	color_border   Color   = gui_theme.expand_panel_style.color_border
-	fill           bool    = gui_theme.expand_panel_style.fill
-	fill_border    bool    = gui_theme.expand_panel_style.fill_border
 	padding        Padding = gui_theme.expand_panel_style.padding
 	padding_border Padding = gui_theme.expand_panel_style.padding_border
 	radius         f32     = gui_theme.expand_panel_style.radius
@@ -18,10 +19,9 @@ pub:
 	max_width      f32
 	min_height     f32
 	max_height     f32
-	sizing         Sizing
-	head           View
-	content        View
-	on_toggle      fn (mut w Window) = unsafe { nil }
+	open           bool
+	fill           bool = gui_theme.expand_panel_style.fill
+	fill_border    bool = gui_theme.expand_panel_style.fill_border
 }
 
 // expand_panel creates a expand view from the given [ExpandPanelCfg](#ExpandPanelCfg)

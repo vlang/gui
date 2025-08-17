@@ -6,15 +6,12 @@ module gui
 pub struct ToggleCfg {
 pub:
 	id                 string
-	id_focus           u32
-	disabled           bool
-	invisible          bool
 	label              string
 	text_select        string = icon_check
 	text_unselect      string = ' '
-	select             bool
-	fill               bool      = gui_theme.toggle_style.fill
-	fill_border        bool      = gui_theme.toggle_style.fill_border
+	on_click           fn (&ToggleCfg, mut Event, mut Window) @[required]
+	text_style         TextStyle = gui_theme.toggle_style.text_style
+	text_style_label   TextStyle = gui_theme.toggle_style.text_style_label
 	color              Color     = gui_theme.toggle_style.color
 	color_focus        Color     = gui_theme.toggle_style.color_focus
 	color_hover        Color     = gui_theme.toggle_style.color_hover
@@ -26,9 +23,12 @@ pub:
 	padding_border     Padding   = gui_theme.toggle_style.padding_border
 	radius             f32       = gui_theme.toggle_style.radius
 	radius_border      f32       = gui_theme.toggle_style.radius_border
-	text_style         TextStyle = gui_theme.toggle_style.text_style
-	text_style_label   TextStyle = gui_theme.toggle_style.text_style_label
-	on_click           fn (&ToggleCfg, mut Event, mut Window) @[required]
+	id_focus           u32
+	disabled           bool
+	invisible          bool
+	select             bool
+	fill               bool = gui_theme.toggle_style.fill
+	fill_border        bool = gui_theme.toggle_style.fill_border
 }
 
 // toggle creates a toggle button (a.k.a checkbox) from the given [ToggleCfg](#ToggleCfg)

@@ -6,15 +6,7 @@ module gui
 pub struct SwitchCfg {
 pub:
 	id                 string
-	id_focus           u32
-	width              f32 = gui_theme.n2.size * f32(1.65)
-	height             f32 = gui_theme.n2.size
-	disabled           bool
-	invisible          bool
 	label              string
-	select             bool
-	fill               bool      = gui_theme.switch_style.fill
-	fill_border        bool      = gui_theme.switch_style.fill_border
 	color              Color     = gui_theme.switch_style.color
 	color_focus        Color     = gui_theme.switch_style.color_focus
 	color_hover        Color     = gui_theme.switch_style.color_hover
@@ -25,10 +17,18 @@ pub:
 	color_unselect     Color     = gui_theme.switch_style.color_unselect
 	padding            Padding   = gui_theme.switch_style.padding
 	padding_border     Padding   = gui_theme.switch_style.padding_border
-	radius             f32       = gui_theme.switch_style.radius
-	radius_border      f32       = gui_theme.switch_style.radius_border
 	text_style         TextStyle = gui_theme.switch_style.text_style
 	on_click           fn (&SwitchCfg, mut Event, mut Window) @[required]
+	width              f32 = gui_theme.n2.size * f32(1.65)
+	height             f32 = gui_theme.n2.size
+	radius             f32 = gui_theme.switch_style.radius
+	radius_border      f32 = gui_theme.switch_style.radius_border
+	id_focus           u32
+	disabled           bool
+	invisible          bool
+	select             bool
+	fill               bool = gui_theme.switch_style.fill
+	fill_border        bool = gui_theme.switch_style.fill_border
 }
 
 // toggle creates a toggle button (a.k.a checkbox) from the given [SwitchCfg](#SwitchCfg)

@@ -4,18 +4,18 @@ pub struct RectangleCfg {
 pub:
 	name       string = 'rectangle'
 	id         string
+	sizing     Sizing
+	color      Color = gui_theme.rectangle_style.color
 	width      f32
 	height     f32
 	min_width  f32
 	min_height f32
 	max_width  f32
 	max_height f32
+	radius     f32 = gui_theme.rectangle_style.radius
 	disabled   bool
 	invisible  bool
-	sizing     Sizing
-	color      Color = gui_theme.rectangle_style.color
-	fill       bool  = gui_theme.rectangle_style.fill
-	radius     f32   = gui_theme.rectangle_style.radius
+	fill       bool = gui_theme.rectangle_style.fill
 }
 
 // rectangle draws a rectangle (shocking!). Rectangles can be filled, outlined,

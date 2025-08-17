@@ -13,21 +13,15 @@ pub enum TextMode {
 // Text is an internal structure used to describe a text view
 // Members are arranged for packing to reduce memory footprint.
 struct TextView implements View {
-	// --- strings ---
-	id   string
-	text string
-	// --- complex structs ---
-	text_style TextStyle
-	sizing     Sizing
-	cfg        TextCfg
-	// --- f32 fields ---
-	min_width f32
-	// --- u32 fields ---
-	id_focus u32 // >0 indicates text is focusable. Value indiciates tabbing order
-	tab_size u32
-	// --- enums ---
-	mode TextMode
-	// --- boolean fields grouped at the end ---
+	id                 string
+	text               string
+	cfg                TextCfg
+	text_style         TextStyle
+	sizing             Sizing
+	min_width          f32
+	id_focus           u32 // >0 indicates text is focusable. Value indiciates tabbing order
+	tab_size           u32
+	mode               TextMode
 	is_password        bool
 	placeholder_active bool
 	clip               bool

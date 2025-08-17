@@ -5,30 +5,30 @@ module gui
 pub struct ListBoxCfg {
 pub:
 	id               string
-	id_scroll        u32
+	sizing           Sizing
+	text_style       TextStyle = gui_theme.list_box_style.text_style
+	subheading_style TextStyle = gui_theme.list_box_style.subheading_style
+	color            Color     = gui_theme.list_box_style.color
+	color_hover      Color     = gui_theme.list_box_style.color_hover
+	color_border     Color     = gui_theme.list_box_style.color_border
+	color_select     Color     = gui_theme.list_box_style.color_select
+	padding          Padding   = gui_theme.list_box_style.padding
+	padding_border   Padding   = gui_theme.list_box_style.padding_border
 	selected         []string // list of selected values. Not names
-	multiple         bool     // allow multiple selections
+	data             []ListBoxOption
+	on_select        fn (value []string, mut e Event, mut w Window) = unsafe { nil }
 	width            f32
 	height           f32
 	min_width        f32
 	max_width        f32
 	min_height       f32
 	max_height       f32
-	color            Color   = gui_theme.list_box_style.color
-	color_hover      Color   = gui_theme.list_box_style.color_hover
-	color_border     Color   = gui_theme.list_box_style.color_border
-	color_select     Color   = gui_theme.list_box_style.color_select
-	fill             bool    = gui_theme.list_box_style.fill
-	fill_border      bool    = gui_theme.list_box_style.fill_border
-	padding          Padding = gui_theme.list_box_style.padding
-	padding_border   Padding = gui_theme.list_box_style.padding_border
-	radius           f32     = gui_theme.list_box_style.radius
-	radius_border    f32     = gui_theme.list_box_style.radius_border
-	sizing           Sizing
-	text_style       TextStyle = gui_theme.list_box_style.text_style
-	subheading_style TextStyle = gui_theme.list_box_style.subheading_style
-	data             []ListBoxOption
-	on_select        fn (value []string, mut e Event, mut w Window) = unsafe { nil }
+	radius           f32 = gui_theme.list_box_style.radius
+	radius_border    f32 = gui_theme.list_box_style.radius_border
+	id_scroll        u32
+	multiple         bool // allow multiple selections
+	fill             bool = gui_theme.list_box_style.fill
+	fill_border      bool = gui_theme.list_box_style.fill_border
 }
 
 // ListBoxOption is the data for a row in a [list_box](#list_box).

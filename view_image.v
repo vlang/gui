@@ -4,6 +4,9 @@ struct ImageView implements View {
 pub:
 	id         string
 	file_name  string
+	cfg        &ImageCfg
+	on_click   fn (&ImageCfg, mut Event, mut Window)  = unsafe { nil }
+	on_hover   fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	width      f32
 	height     f32
 	min_width  f32
@@ -11,9 +14,6 @@ pub:
 	max_width  f32
 	max_height f32
 	invisible  bool
-	cfg        &ImageCfg
-	on_click   fn (&ImageCfg, mut Event, mut Window)  = unsafe { nil }
-	on_hover   fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 mut:
 	content []View // not used
 }
@@ -22,6 +22,8 @@ pub struct ImageCfg {
 pub:
 	id         string
 	file_name  string
+	on_click   fn (&ImageCfg, mut Event, mut Window)  = unsafe { nil }
+	on_hover   fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	width      f32
 	height     f32
 	min_width  f32
@@ -29,8 +31,6 @@ pub:
 	max_width  f32
 	max_height f32
 	invisible  bool
-	on_click   fn (&ImageCfg, mut Event, mut Window)  = unsafe { nil }
-	on_hover   fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 }
 
 fn (iv &ImageView) generate(mut window Window) Layout {

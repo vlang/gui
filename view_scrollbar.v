@@ -38,18 +38,18 @@ pub enum ScrollMode {
 pub struct ScrollbarCfg {
 pub:
 	id               string
-	id_track         u32
 	overflow         ScrollbarOverflow
 	orientation      ScrollbarOrientation
-	size             f32   = gui_theme.scrollbar_style.size
 	color_thumb      Color = gui_theme.scrollbar_style.color_thumb
 	color_background Color = gui_theme.scrollbar_style.color_background
-	fill_thumb       bool  = gui_theme.scrollbar_style.fill_thumb
-	fill_background  bool  = gui_theme.scrollbar_style.fill_background
+	size             f32   = gui_theme.scrollbar_style.size
 	radius           f32   = gui_theme.scrollbar_style.radius
 	radius_thumb     f32   = gui_theme.scrollbar_style.radius_thumb
 	offset_x         f32   = gui_theme.scrollbar_style.offset_x // x and y are swapped in
 	offset_y         f32   = gui_theme.scrollbar_style.offset_y // horizontal orientation
+	id_track         u32
+	fill_thumb       bool = gui_theme.scrollbar_style.fill_thumb
+	fill_background  bool = gui_theme.scrollbar_style.fill_background
 }
 
 const scrollbar_vertical_name = 'scrollbar vertical'

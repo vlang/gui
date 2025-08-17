@@ -21,21 +21,21 @@ pub const menu_subtitle_id = '__subtitle__'
 // the menubar determines which menu items are selected/highlighted.
 @[heap]
 pub struct MenuItemCfg {
-	color_select Color = gui_theme.menubar_style.color_select
-	sizing       Sizing
-	radius       f32       = gui_theme.menubar_style.radius_menu_item
-	spacing      f32       = gui_theme.menubar_style.spacing_submenu
+	color_select Color     = gui_theme.menubar_style.color_select
 	text_style   TextStyle = gui_theme.menubar_style.text_style
+	sizing       Sizing
+	radius       f32 = gui_theme.menubar_style.radius_menu_item
+	spacing      f32 = gui_theme.menubar_style.spacing_submenu
 	disabled     bool
 	selected     bool
 pub:
 	id          string @[required]
 	text        string  = 'empty'
 	padding     Padding = gui_theme.menubar_style.padding_menu_item
-	submenu     []MenuItemCfg
-	separator   bool
 	action      fn (&MenuItemCfg, mut Event, mut Window) = unsafe { nil }
+	submenu     []MenuItemCfg
 	custom_view ?View
+	separator   bool
 }
 
 fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
