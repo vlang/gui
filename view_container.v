@@ -1,55 +1,68 @@
 module gui
 
+// ContainerView members are arranged for packing to reduce memory footprint.
 struct ContainerView implements View {
 pub:
-	id              string
-	id_focus        u32    // not sure this should be here
-	name            string // used internally, read-only
-	x               f32
-	y               f32
-	width           f32
-	min_width       f32
-	max_width       f32
-	height          f32
-	min_height      f32
-	max_height      f32
+	// --- strings ---
+	id   string
+	name string // used internally, read-only
+	text string
+	// --- callback functions grouped together ---
+	on_char       fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_click      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_keydown    fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_down fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	amend_layout  fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover      fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	// --- larger structs ---
 	color           Color   = gui_theme.container_style.color
-	fill            bool    = gui_theme.container_style.fill
 	padding         Padding = gui_theme.container_style.padding
-	radius          f32     = gui_theme.container_style.radius
-	spacing         f32     = gui_theme.container_style.spacing
-	h_align         HorizontalAlign
-	v_align         VerticalAlign
-	clip            bool
-	focus_skip      bool
-	sizing          Sizing
-	disabled        bool
-	invisible       bool
-	text            string
-	float           bool
-	float_anchor    FloatAttach
-	float_tie_off   FloatAttach
-	float_offset_x  f32
-	float_offset_y  f32
-	id_scroll       u32
-	over_draw       bool
-	scroll_mode     ScrollMode
 	scrollbar_cfg_x ScrollbarCfg
 	scrollbar_cfg_y ScrollbarCfg
-	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_down   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	// --- f32 fields grouped together (4-byte alignment) ---
+	x              f32
+	y              f32
+	width          f32
+	min_width      f32
+	max_width      f32
+	height         f32
+	min_height     f32
+	max_height     f32
+	radius         f32 = gui_theme.container_style.radius
+	spacing        f32 = gui_theme.container_style.spacing
+	float_offset_x f32
+	float_offset_y f32
+	// --- u32 fields grouped together (4-byte alignment) ---
+	id_focus  u32 // not sure this should be here
+	id_scroll u32
+	// --- enums (typically 4-byte alignment) ---
+	h_align       HorizontalAlign
+	v_align       VerticalAlign
+	sizing        Sizing
+	scroll_mode   ScrollMode
+	float_anchor  FloatAttach
+	float_tie_off FloatAttach
+	// --- boolean fields grouped together (1-byte each, can be packed) ---
+	fill       bool = gui_theme.container_style.fill
+	clip       bool
+	focus_skip bool
+	disabled   bool
+	invisible  bool
+	float      bool
+	over_draw  bool
 mut:
+	// --- mut fields optimized by size/alignment ---
+	// --- arrays and complex types ---
+	content []View
+	// --- larger structs ---
+	tooltip TooltipCfg
+	// --- voidptr ---
+	cfg voidptr
+	// --- enums ---
 	shape_type ShapeType = .rectangle
 	axis       Axis
-	cfg        voidptr
-	tooltip    TooltipCfg
-	content    []View
 }
 
 fn (cv &ContainerView) generate(mut _ Window) Layout {
@@ -155,54 +168,65 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 // top-left corner. This style of container is typically called a group
 // box. Set the `text` property to enable this feature.
 pub struct ContainerCfg {
-	axis Axis
+	// --- strings ---
 	name string // internally set. read-only.
+	// --- enums ---
+	axis Axis
 mut:
+	// --- voidptr ---
 	cfg voidptr = unsafe { nil }
 pub:
-	id              string
-	width           f32
-	height          f32
-	min_width       f32
-	min_height      f32
-	max_width       f32
-	max_height      f32
-	disabled        bool
-	invisible       bool
-	sizing          Sizing
-	id_focus        u32
-	id_scroll       u32
-	over_draw       bool
-	scroll_mode     ScrollMode
+	// --- strings ---
+	id   string
+	text string
+	// --- arrays and complex types ---
+	content []View
+	// --- callback functions grouped together ---
+	on_char       fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_click      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_any_click  fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_keydown    fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	amend_layout  fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover      fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	// --- larger structs ---
+	color           Color   = gui_theme.container_style.color
+	padding         Padding = gui_theme.container_style.padding
 	scrollbar_cfg_x ScrollbarCfg
 	scrollbar_cfg_y ScrollbarCfg
-	x               f32
-	y               f32
-	clip            bool
-	focus_skip      bool
-	h_align         HorizontalAlign
-	v_align         VerticalAlign
-	text            string
-	spacing         f32     = gui_theme.container_style.spacing
-	radius          f32     = gui_theme.container_style.radius
-	padding         Padding = gui_theme.container_style.padding
-	color           Color   = gui_theme.container_style.color
-	fill            bool    = gui_theme.container_style.fill
-	float           bool
-	float_anchor    FloatAttach
-	float_tie_off   FloatAttach
-	float_offset_x  f32
-	float_offset_y  f32
 	tooltip         TooltipCfg
-	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_any_click    fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	content         []View
+	sizing          Sizing
+	// --- f32 fields grouped together (4-byte alignment) ---
+	width          f32
+	height         f32
+	min_width      f32
+	min_height     f32
+	max_width      f32
+	max_height     f32
+	x              f32
+	y              f32
+	spacing        f32 = gui_theme.container_style.spacing
+	radius         f32 = gui_theme.container_style.radius
+	float_offset_x f32
+	float_offset_y f32
+	// --- u32 fields grouped together (4-byte alignment) ---
+	id_focus  u32
+	id_scroll u32
+	// --- enums (typically 4-byte alignment) ---
+	scroll_mode   ScrollMode
+	h_align       HorizontalAlign
+	v_align       VerticalAlign
+	float_anchor  FloatAttach
+	float_tie_off FloatAttach
+	// --- boolean fields grouped at the end (1-byte each, can be packed) ---
+	disabled   bool
+	invisible  bool
+	clip       bool
+	focus_skip bool
+	over_draw  bool
+	fill       bool = gui_theme.container_style.fill
+	float      bool
 }
 
 // container is the fundamental layout container in gui. It is used to layout
@@ -217,7 +241,6 @@ fn container(cfg ContainerCfg) View {
 	}
 	mut content := []View{cap: cfg.content.len + 3}
 	unsafe { content.flags.set(.noslices) }
-	defer { unsafe { content.flags.clear(.noslices) } }
 
 	content << cfg.content
 	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_x.overflow != .hidden {

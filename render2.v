@@ -1,8 +1,8 @@
+@[has_globals]
 module gui
 
 import sokol.sgl
 import gg
-import math
 
 fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Color, ctx &gg.Context) {
 	if w <= 0 || h <= 0 || radius < 0 {
@@ -39,9 +39,8 @@ fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Color, 
 	mut dxs := [32]f32{}
 	mut dys := [32]f32{}
 	for i in 0 .. 31 {
-		rad := f32(math.radians(i * 3))
-		dxs[i] = r * math.cosf(rad)
-		dys[i] = r * math.sinf(rad)
+		dxs[i] = r * cosf_values[i]
+		dys[i] = r * sinf_values[i]
 	}
 
 	if r != 0 {
@@ -147,9 +146,8 @@ fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gg.Color, c
 	mut dxs := [32]f32{}
 	mut dys := [32]f32{}
 	for i in 0 .. 31 {
-		rad := f32(math.radians(i * 3))
-		dxs[i] = r * math.cosf(rad)
-		dys[i] = r * math.sinf(rad)
+		dxs[i] = r * cosf_values[i]
+		dys[i] = r * sinf_values[i]
 	}
 
 	if r != 0 {

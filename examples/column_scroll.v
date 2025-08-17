@@ -16,7 +16,6 @@ fn main() {
 	size := 10_000 // 10K!
 	mut items := []gui.View{cap: size + 1}
 	unsafe { items.flags.set(.noslices) }
-	defer { unsafe { items.flags.clear(.noslices) } }
 	for i in 1 .. size + 1 {
 		items << gui.text(text: '${i:05} text list item')
 	}

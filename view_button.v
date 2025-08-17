@@ -7,33 +7,33 @@ module gui
 pub struct ButtonCfg {
 pub:
 	id                 string
+	tooltip            TooltipCfg
+	h_align            HorizontalAlign = .center
+	v_align            VerticalAlign   = .middle
+	color              Color           = gui_theme.button_style.color
+	color_hover        Color           = gui_theme.button_style.color_hover
+	color_focus        Color           = gui_theme.button_style.color_focus
+	color_click        Color           = gui_theme.button_style.color_click
+	color_border       Color           = gui_theme.button_style.color_border
+	color_border_focus Color           = gui_theme.button_style.color_border_focus
+	padding            Padding         = gui_theme.button_style.padding
+	padding_border     Padding         = gui_theme.button_style.padding_border
+	sizing             Sizing
+	id_focus           u32
 	width              f32
 	height             f32
 	min_width          f32
 	min_height         f32
 	max_width          f32
 	max_height         f32
-	disabled           bool
-	invisible          bool
-	sizing             Sizing
-	id_focus           u32
-	tooltip            TooltipCfg
-	h_align            HorizontalAlign                        = .center
-	v_align            VerticalAlign                          = .middle
-	fill               bool                                   = gui_theme.button_style.fill
-	fill_border        bool                                   = gui_theme.button_style.fill_border
-	color              Color                                  = gui_theme.button_style.color
-	color_hover        Color                                  = gui_theme.button_style.color_hover
-	color_focus        Color                                  = gui_theme.button_style.color_focus
-	color_click        Color                                  = gui_theme.button_style.color_click
-	color_border       Color                                  = gui_theme.button_style.color_border
-	color_border_focus Color                                  = gui_theme.button_style.color_border_focus
-	padding            Padding                                = gui_theme.button_style.padding
-	padding_border     Padding                                = gui_theme.button_style.padding_border
-	radius             f32                                    = gui_theme.button_style.radius
-	radius_border      f32                                    = gui_theme.button_style.radius_border
+	radius             f32 = gui_theme.button_style.radius
+	radius_border      f32 = gui_theme.button_style.radius_border
 	on_click           fn (&ButtonCfg, mut Event, mut Window) = unsafe { nil }
 	content            []View
+	fill               bool = gui_theme.button_style.fill
+	fill_border        bool = gui_theme.button_style.fill_border
+	disabled           bool
+	invisible          bool
 }
 
 // button creates a clickable button. Buttons can contain content other than text.

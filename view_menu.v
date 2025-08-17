@@ -44,9 +44,8 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 }
 
 fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
-	mut content := []View{}
+	mut content := []View{cap: items.len}
 	unsafe { content.flags.set(.noslices) }
-	defer { unsafe { content.flags.clear(.noslices) } }
 	id_selected := window.view_state.menu_state[cfg.id_focus]
 	sizing := if level == 0 { fit_fit } else { fill_fit }
 	for item in items {

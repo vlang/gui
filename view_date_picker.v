@@ -264,7 +264,7 @@ fn (cfg DatePickerCfg) weekdays(state DatePickerState) View {
 }
 
 fn (cfg DatePickerCfg) month(state DatePickerState) View {
-	mut month := []View{}
+	mut month := []View{cap: 6}
 
 	today := time.now()
 	vt := view_time(state)
@@ -301,7 +301,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 	}
 
 	for _ in 0 .. 6 { // six weeks to display a month
-		mut week := []View{}
+		mut week := []View{cap: 7}
 		for _ in 0 .. 7 { // 7 days in a week
 			day := match true {
 				count <= 0 {
@@ -443,7 +443,7 @@ fn (cfg DatePickerCfg) disabled(date time.Time, state DatePickerState) bool {
 }
 
 fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
-	mut rows := []View{}
+	mut rows := []View{cap: 300}
 	variants := font_variants(gui_theme.text_style)
 	bold_style := TextStyle{
 		...cfg.text_style

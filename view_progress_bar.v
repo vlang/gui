@@ -34,7 +34,6 @@ pub:
 pub fn progress_bar(cfg ProgressBarCfg) View {
 	mut content := []View{cap: 2}
 	unsafe { content.flags.set(.noslices) }
-	defer { unsafe { content.flags.clear(.noslices) } }
 	content << row(
 		name:    'progress_bar left-bar'
 		fill:    true

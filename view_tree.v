@@ -18,7 +18,6 @@ pub:
 pub fn (mut window Window) tree(cfg TreeCfg) View {
 	mut content := []View{}
 	unsafe { content.flags.set(.noslices) }
-	defer { unsafe { content.flags.clear(.noslices) } }
 	for node in cfg.nodes {
 		content << cfg.node_content(node, mut window)
 	}

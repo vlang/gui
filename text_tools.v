@@ -88,7 +88,6 @@ fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u
 	mut line := ''
 	mut wrap := []string{cap: 10}
 	unsafe { wrap.flags.set(.noslices) }
-	defer { unsafe { wrap.flags.clear(.noslices) } }
 	for field in split_text(s, tab_size) {
 		if field == '\n' {
 			wrap << line + '\n'
@@ -121,7 +120,6 @@ fn wrap_text_keep_spaces(s string, text_style TextStyle, width f32, tab_size u32
 	mut line := ''
 	mut wrap := []string{cap: 10}
 	unsafe { wrap.flags.set(.noslices) }
-	defer { unsafe { wrap.flags.clear(.noslices) } }
 	for field in split_text(s, tab_size) {
 		if field == '\n' {
 			wrap << line + '\n'
@@ -146,7 +144,6 @@ fn wrap_simple(s string, tab_size u32) []string {
 	mut line := ''
 	mut lines := []string{cap: 10}
 	unsafe { lines.flags.set(.noslices) }
-	defer { unsafe { lines.flags.clear(.noslices) } }
 
 	for field in split_text(s, tab_size) {
 		if field == '\n' {
@@ -171,10 +168,8 @@ fn split_text(s string, tab_size u32) []string {
 	mut state := state_ch
 	mut fields := []string{cap: 100}
 	unsafe { fields.flags.set(.noslices) }
-	defer { unsafe { fields.flags.clear(.noslices) } }
 	mut field := []rune{cap: 50}
 	unsafe { field.flags.set(.noslices) }
-	defer { unsafe { field.flags.clear(.noslices) } }
 	for r in s.runes_iterator() {
 		if state == state_ch {
 			if r == r_space {

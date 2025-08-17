@@ -50,7 +50,6 @@ pub fn list_box(cfg ListBoxCfg) View {
 		is_subheader := dat.name.starts_with('---')
 		mut content := []View{}
 		unsafe { content.flags.set(.noslices) }
-		defer { unsafe { content.flags.clear(.noslices) } }
 
 		if is_subheader {
 			content << column(

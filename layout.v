@@ -41,7 +41,6 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// They also complicate the fuck out of things.
 	mut floating_layouts := []Layout{}
 	unsafe { floating_layouts.flags.set(.noslices) }
-	defer { unsafe { floating_layouts.flags.clear(.noslices) } }
 	layout_remove_floating_layouts(mut layout, mut floating_layouts)
 	fix_float_parents(mut floating_layouts)
 
@@ -59,7 +58,6 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	layout_pipeline(mut layout, mut window)
 	mut layouts := [layout]
 	unsafe { layouts.flags.set(.noslices) }
-	defer { unsafe { layouts.flags.clear(.noslices) } }
 
 	// Compute the floating layouts. Because they are appended to
 	// the layout array, they get rendered after the main layout.
@@ -110,7 +108,6 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 // the layout logic.
 fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 	unsafe { layout.children.flags.set(.noslices) }
-	defer { unsafe { layout.children.flags.clear(.noslices) } }
 	for i, mut child in layout.children {
 		if child.shape.float {
 			layouts << child

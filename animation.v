@@ -27,7 +27,6 @@ mut:
 pub fn (mut window Window) animation_add(mut animation Animation) {
 	window.animations = window.animations.filter(it.id != animation.id)
 	unsafe { window.animations.flags.set(.noslices) }
-	defer { unsafe { window.animations.flags.clear(.noslices) } }
 	animation.start = time.now()
 	window.animations << animation
 }

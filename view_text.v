@@ -11,22 +11,29 @@ pub enum TextMode {
 }
 
 // Text is an internal structure used to describe a text view
+// Members are arranged for packing to reduce memory footprint.
 struct TextView implements View {
-	id                 string
-	id_focus           u32 // >0 indicates text is focusable. Value indiciates tabbing order
+	// --- strings ---
+	id   string
+	text string
+	// --- complex structs ---
+	text_style TextStyle
+	sizing     Sizing
+	cfg        TextCfg
+	// --- f32 fields ---
+	min_width f32
+	// --- u32 fields ---
+	id_focus u32 // >0 indicates text is focusable. Value indiciates tabbing order
+	tab_size u32
+	// --- enums ---
+	mode TextMode
+	// --- boolean fields grouped at the end ---
 	is_password        bool
 	placeholder_active bool
 	clip               bool
 	focus_skip         bool
 	invisible          bool
 	disabled           bool
-	min_width          f32
-	mode               TextMode
-	tab_size           u32
-	text               string
-	text_style         TextStyle
-	sizing             Sizing
-	cfg                TextCfg
 mut:
 	content []View // not used
 }
@@ -100,16 +107,16 @@ pub struct TextCfg {
 	placeholder_active bool
 pub:
 	id         string
+	text       string
+	text_style TextStyle = gui_theme.text_style
 	id_focus   u32
+	min_width  f32
+	tab_size   u32 = 4
+	mode       TextMode
+	invisible  bool
 	clip       bool
 	focus_skip bool = true
 	disabled   bool
-	invisible  bool
-	min_width  f32
-	mode       TextMode
-	tab_size   u32 = 4
-	text       string
-	text_style TextStyle = gui_theme.text_style
 }
 
 fn (t &TextCfg) free() {
@@ -316,7 +323,6 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 				mut count := 0
 				mut buffer := []rune{cap: 100}
 				unsafe { buffer.flags.set(.noslices) }
-				defer { unsafe { buffer.flags.clear(.noslices) } }
 				beg := int(input_state.select_beg)
 				end := int(input_state.select_end)
 				for line in shape.text_lines {

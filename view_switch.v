@@ -38,7 +38,6 @@ pub fn switch(cfg SwitchCfg) View {
 
 	mut content := []View{}
 	unsafe { content.flags.set(.noslices) }
-	defer { unsafe { content.flags.clear(.noslices) } }
 	content << row(
 		name:         'switch border'
 		id:           cfg.id

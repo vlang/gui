@@ -38,7 +38,6 @@ pub fn toggle(cfg ToggleCfg) View {
 
 	mut content := []View{}
 	unsafe { content.flags.set(.noslices) }
-	defer { unsafe { content.flags.clear(.noslices) } }
 
 	content << row(
 		name:         'toggle border'

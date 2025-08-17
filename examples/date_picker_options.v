@@ -99,7 +99,6 @@ fn example_date_picker(app DatePickerApp, mut window gui.Window) gui.View {
 
 	mut allowed_weekdays := []gui.DatePickerWeekdays{}
 	unsafe { allowed_weekdays.flags.set(.noslices) }
-	defer { unsafe { allowed_weekdays.flags.clear(.noslices) } }
 	if app.allow_monday {
 		allowed_weekdays << .monday
 	}
@@ -649,7 +648,6 @@ fn set_theme(mut window gui.Window) {
 			gui.theme_light_bordered
 		}
 	} else {
-		println('x')
 		if app.use_system_font {
 			create_system_font_theme(gui.theme_dark_bordered_cfg, gui.theme_dark_bordered_cfg.text_style)
 		} else {
