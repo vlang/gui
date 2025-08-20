@@ -1,5 +1,7 @@
 module gui
 
+import arrays
+
 // ContainerView members are arranged for packing to reduce memory footprint.
 struct ContainerView implements View {
 pub:
@@ -46,19 +48,14 @@ pub:
 	float           bool
 	over_draw       bool
 mut:
-	// --- mut fields optimized by size/alignment ---
-	// --- arrays and complex types ---
-	content []View
-	// --- larger structs ---
-	tooltip TooltipCfg
-	// --- voidptr ---
-	cfg voidptr
-	// --- enums ---
+	content    []View
+	tooltip    TooltipCfg
+	cfg        voidptr
 	shape_type ShapeType = .rectangle
 	axis       Axis
 }
 
-fn (cv &ContainerView) generate(mut _ Window) Layout {
+fn (cv ContainerView) generate(mut _ Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
 	layout := Layout{
 		shape: Shape{
@@ -161,22 +158,18 @@ fn (cv &ContainerView) generate(mut _ Window) Layout {
 // top-left corner. This style of container is typically called a group
 // box. Set the `text` property to enable this feature.
 pub struct ContainerCfg {
-	// --- strings ---
 	name string // internally set. read-only.
-	// --- enums ---
 	axis Axis
 mut:
-	// --- voidptr ---
 	cfg voidptr = unsafe { nil }
 pub:
-	// --- strings ---
 	id              string
 	text            string
-	color           Color   = gui_theme.container_style.color
-	padding         Padding = gui_theme.container_style.padding
 	scrollbar_cfg_x ScrollbarCfg
 	scrollbar_cfg_y ScrollbarCfg
 	tooltip         TooltipCfg
+	color           Color   = gui_theme.container_style.color
+	padding         Padding = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
 	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
@@ -225,25 +218,30 @@ fn container(cfg ContainerCfg) View {
 			padding:   padding_none
 		}
 	}
-	mut content := cfg.content.clone()
-	unsafe { content.flags.set(.noslices) }
+
+	mut extra_content := []View{cap: 3}
 
 	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_x.overflow != .hidden {
-		content << scrollbar(ScrollbarCfg{
+		extra_content << scrollbar(ScrollbarCfg{
 			...cfg.scrollbar_cfg_x
 			orientation: .horizontal
 			id_track:    cfg.id_scroll
 		})
 	}
 	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_y.overflow != .hidden {
-		content << scrollbar(ScrollbarCfg{
+		extra_content << scrollbar(ScrollbarCfg{
 			...cfg.scrollbar_cfg_y
 			orientation: .vertical
 			id_track:    cfg.id_scroll
 		})
 	}
 	if gui_tooltip.id != 0 && cfg.tooltip.hash() == gui_tooltip.id {
-		content << tooltip(cfg.tooltip)
+		extra_content << tooltip(cfg.tooltip)
+	}
+
+	content := match extra_content.len > 0 {
+		true { arrays.append(cfg.content, extra_content) }
+		else { cfg.content }
 	}
 
 	return ContainerView{

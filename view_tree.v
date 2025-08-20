@@ -50,7 +50,9 @@ pub fn tree_node(cfg TreeNodeCfg) TreeNodeCfg {
 }
 
 fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, mut window Window) []View {
-	mut tnodes := []View{}
+	mut tnodes := []View{cap: nodes.len}
+	unsafe { nodes.flags.set(.noslices) }
+
 	for node in nodes {
 		tnodes << column(
 			name:    'tree node'

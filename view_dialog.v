@@ -67,7 +67,7 @@ pub:
 }
 
 fn dialog_view_generator(cfg DialogCfg) View {
-	mut content := []View{}
+	mut content := []View{cap: 5}
 	unsafe { content.flags.set(.noslices) }
 	if cfg.dialog_type != .custom {
 		if cfg.title.len > 0 {

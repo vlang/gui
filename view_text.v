@@ -13,21 +13,9 @@ pub enum TextMode {
 // Text is an internal structure used to describe a text view
 // Members are arranged for packing to reduce memory footprint.
 struct TextView implements View {
-	id                 string
-	text               string
-	cfg                TextCfg
-	text_style         TextStyle
-	sizing             Sizing
-	min_width          f32
-	id_focus           u32 // >0 indicates text is focusable. Value indiciates tabbing order
-	tab_size           u32
-	mode               TextMode
-	is_password        bool
-	placeholder_active bool
-	clip               bool
-	focus_skip         bool
-	invisible          bool
-	disabled           bool
+	id     string
+	cfg    TextCfg
+	sizing Sizing
 mut:
 	content []View // not used
 }
@@ -35,44 +23,42 @@ mut:
 fn (t &TextView) free() {
 	unsafe {
 		t.id.free()
-		t.text.free()
-		t.text_style.free()
 	}
 }
 
 fn (t &TextView) generate(mut window Window) Layout {
-	if t.invisible {
+	if t.cfg.invisible {
 		return Layout{}
 	}
-	input_state := match window.is_focus(t.id_focus) {
-		true { window.view_state.input_state[t.id_focus] }
+	input_state := match window.is_focus(t.cfg.id_focus) {
+		true { window.view_state.input_state[t.cfg.id_focus] }
 		else { InputState{} }
 	}
-	lines := match t.mode == .multiline {
-		true { wrap_simple(t.text, t.tab_size) }
-		else { [t.text] } // dynamic wrapping handled in the layout pipeline
+	lines := match t.cfg.mode == .multiline {
+		true { wrap_simple(t.cfg.text, t.cfg.tab_size) }
+		else { [t.cfg.text] } // dynamic wrapping handled in the layout pipeline
 	}
 	mut shape_tree := Layout{
 		shape: Shape{
 			name:                'text'
 			type:                .text
-			id:                  t.id
-			id_focus:            t.id_focus
+			id:                  t.cfg.id
+			id_focus:            t.cfg.id_focus
 			cfg:                 &t.cfg
-			clip:                t.clip
-			focus_skip:          t.focus_skip
-			disabled:            t.disabled
-			min_width:           t.min_width
+			clip:                t.cfg.clip
+			focus_skip:          t.cfg.focus_skip
+			disabled:            t.cfg.disabled
+			min_width:           t.cfg.min_width
 			sizing:              t.sizing
-			text:                t.text
-			text_is_password:    t.is_password
-			text_is_placeholder: t.placeholder_active
+			text:                t.cfg.text
+			text_is_password:    t.cfg.is_password
+			text_is_placeholder: t.cfg.placeholder_active
 			text_lines:          lines
-			text_mode:           t.mode
-			text_style:          t.text_style
+			text_mode:           t.cfg.mode
+			text_style:          t.cfg.text_style
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
-			text_tab_size:       t.tab_size
+			text_tab_size:       t.cfg.tab_size
 			on_char_shape:       t.cfg.char_shape
 			on_keydown_shape:    t.cfg.keydown_shape
 			on_mouse_down_shape: t.cfg.mouse_down_shape
@@ -82,11 +68,11 @@ fn (t &TextView) generate(mut window Window) Layout {
 	}
 	shape_tree.shape.width = text_width(shape_tree.shape, mut window)
 	shape_tree.shape.height = text_height(shape_tree.shape)
-	if t.mode == .single_line || shape_tree.shape.sizing.width == .fixed {
+	if t.cfg.mode == .single_line || shape_tree.shape.sizing.width == .fixed {
 		shape_tree.shape.min_width = f32_max(shape_tree.shape.width, shape_tree.shape.min_width)
 		shape_tree.shape.width = shape_tree.shape.min_width
 	}
-	if t.mode == .single_line || shape_tree.shape.sizing.height == .fixed {
+	if t.cfg.mode == .single_line || shape_tree.shape.sizing.height == .fixed {
 		shape_tree.shape.min_height = f32_max(shape_tree.shape.height, shape_tree.shape.min_height)
 		shape_tree.shape.height = shape_tree.shape.height
 	}
@@ -126,21 +112,9 @@ fn (t &TextCfg) free() {
 // operations. See [TextCfg](#TextCfg)
 pub fn text(cfg TextCfg) View {
 	return TextView{
-		id:                 cfg.id
-		id_focus:           cfg.id_focus
-		clip:               cfg.clip
-		focus_skip:         cfg.focus_skip
-		invisible:          cfg.invisible
-		min_width:          cfg.min_width
-		text:               cfg.text
-		text_style:         cfg.text_style
-		mode:               cfg.mode
-		tab_size:           cfg.tab_size
-		cfg:                cfg
-		sizing:             if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
-		disabled:           cfg.disabled
-		placeholder_active: cfg.placeholder_active
-		is_password:        cfg.is_password
+		id:     cfg.id
+		cfg:    cfg
+		sizing: if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 	}
 }
 

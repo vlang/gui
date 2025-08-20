@@ -37,6 +37,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	is_open := window.view_state.select_state[cfg.id]
 	mut options := []View{}
 	if is_open {
+		options.ensure_cap(cfg.options.len)
 		for option in cfg.options {
 			options << match option.starts_with('---') {
 				true { sub_header(cfg, option) }
@@ -55,7 +56,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	}
 
 	id := cfg.id
-	mut content := []View{}
+	mut content := []View{cap: 2}
 	unsafe { content.flags.set(.noslices) }
 	content << row( // interior
 		name:     'select interior'

@@ -36,7 +36,7 @@ pub fn toggle(cfg ToggleCfg) View {
 	color := if cfg.select { cfg.color_select } else { cfg.color }
 	txt := if cfg.select { cfg.text_select } else { cfg.text_unselect }
 
-	mut content := []View{}
+	mut content := []View{cap: 2}
 	unsafe { content.flags.set(.noslices) }
 
 	content << row(
