@@ -219,7 +219,7 @@ fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
 }
 
 fn (cfg DatePickerCfg) weekdays(state DatePickerState) View {
-	mut weekdays := []View{}
+	mut weekdays := []View{cap: 7}
 	weekdays_one := ['S', 'M', 'T', 'W', 'T', 'F', 'S']!
 	weekdays_three := ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']!
 	weekdays_full := ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']!

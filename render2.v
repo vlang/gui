@@ -1,8 +1,7 @@
-@[has_globals]
 module gui
 
-import sokol.sgl
 import gg
+import sokol.sgl
 
 fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Color, ctx &gg.Context) {
 	if w <= 0 || h <= 0 || radius < 0 {

@@ -3,6 +3,12 @@ module gui
 import time
 import hash.fnv1a
 
+struct TooltipState {
+mut:
+	bounds DrawClip
+	id     u32
+}
+
 // TooltipCfg configures a [tooltip](#tooltip)
 pub struct TooltipCfg {
 pub:

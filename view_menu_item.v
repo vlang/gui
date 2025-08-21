@@ -59,7 +59,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 			)
 		}
 		else {
-			mut content := []View{}
+			mut content := []View{cap: 1}
 			unsafe { content.flags.set(.noslices) }
 			if item_cfg.custom_view != none {
 				content << item_cfg.custom_view

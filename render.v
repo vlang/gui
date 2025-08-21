@@ -13,36 +13,36 @@ import sokol.sgl
 // frameworks require.
 
 struct DrawCircle {
+	color  gg.Color
 	x      f32
 	y      f32
 	radius f32
 	fill   bool
-	color  gg.Color
 }
 
 struct DrawImage {
+	img &gg.Image
 	x   f32
 	y   f32
 	w   f32
 	h   f32
-	img &gg.Image
 }
 
 struct DrawLine {
+	cfg gg.PenConfig
 	x   f32
 	y   f32
 	x1  f32
 	y1  f32
-	cfg gg.PenConfig
 }
 
 struct DrawNone {}
 
 struct DrawText {
-	x    f32
-	y    f32
 	text string
 	cfg  gg.TextCfg
+	x    f32
+	y    f32
 }
 
 type DrawClip = gg.Rect

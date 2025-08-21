@@ -14,13 +14,13 @@ mut:
 
 // Animate waits the specified delay duration and then executes the callback.
 pub struct Animate implements Animation {
-	repeat bool
 pub:
 	id       string          @[required]
 	callback fn (mut Window) @[required]
 	delay    time.Duration = animation_delay
 mut:
 	start   time.Time
+	repeat  bool
 	stopped bool
 }
 

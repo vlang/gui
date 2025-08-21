@@ -83,20 +83,20 @@ fn (t &TextView) generate(mut window Window) Layout {
 // - [TextMode](#TextMode) controls how text is wrapped.
 @[heap]
 pub struct TextCfg {
+pub:
+	id                 string
+	text               string
+	text_style         TextStyle = gui_theme.text_style
+	id_focus           u32
+	min_width          f32
+	tab_size           u32 = 4
+	mode               TextMode
+	invisible          bool
+	clip               bool
+	focus_skip         bool = true
+	disabled           bool
 	is_password        bool
 	placeholder_active bool
-pub:
-	id         string
-	text       string
-	text_style TextStyle = gui_theme.text_style
-	id_focus   u32
-	min_width  f32
-	tab_size   u32 = 4
-	mode       TextMode
-	invisible  bool
-	clip       bool
-	focus_skip bool = true
-	disabled   bool
 }
 
 fn (t &TextCfg) free() {

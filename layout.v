@@ -107,7 +107,6 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 // layout has no axis, height or width so it is effectively ignored by
 // the layout logic.
 fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
-	unsafe { layout.children.flags.set(.noslices) }
 	for i, mut child in layout.children {
 		if child.shape.float {
 			layouts << child

@@ -15,12 +15,6 @@ __global sinf_values = [32]f32{}
 pub const version = '0.1.0'
 pub const app_title = 'GUI'
 
-struct TooltipState {
-mut:
-	id     u32
-	bounds DrawClip
-}
-
 fn init() {
 	// cosf_values, sinf_values are used in render2.v for drawing rounded
 	// corners on rectangles. Yes, there are several magic numbers here
