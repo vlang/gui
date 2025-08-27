@@ -49,7 +49,7 @@ pub:
 	over_draw       bool
 mut:
 	content    []View
-	tooltip    TooltipCfg
+	tooltip    &TooltipCfg = unsafe { nil }
 	cfg        voidptr
 	shape_type ShapeType = .rectangle
 	axis       Axis
@@ -101,7 +101,11 @@ fn (cv ContainerView) generate(mut _ Window) Layout {
 			on_char:             cv.on_char
 			on_keydown:          cv.on_keydown
 			on_mouse_move:       cv.on_mouse_move
-			on_mouse_move_shape: cv.on_mouse_move_shape
+			on_mouse_move_shape: if cv.tooltip != unsafe { nil } {
+				cv.on_mouse_move_shape
+			} else {
+				unsafe { nil }
+			}
 			on_mouse_up:         cv.on_mouse_up
 			on_hover:            cv.on_hover
 			amend_layout:        cv.amend_layout
@@ -167,9 +171,9 @@ pub:
 	text            string
 	scrollbar_cfg_x ScrollbarCfg
 	scrollbar_cfg_y ScrollbarCfg
-	tooltip         TooltipCfg
-	color           Color   = gui_theme.container_style.color
-	padding         Padding = gui_theme.container_style.padding
+	tooltip         &TooltipCfg = unsafe { nil }
+	color           Color       = gui_theme.container_style.color
+	padding         Padding     = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
 	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
@@ -235,8 +239,12 @@ fn container(cfg ContainerCfg) View {
 			id_track:    cfg.id_scroll
 		})
 	}
-	if gui_tooltip.id != 0 && cfg.tooltip.hash() == gui_tooltip.id {
-		extra_content << tooltip(cfg.tooltip)
+	if gui_tooltip.id != 0 {
+		if cfg.tooltip != unsafe { nil } {
+			if cfg.tooltip.hash() == gui_tooltip.id {
+				extra_content << tooltip(cfg.tooltip)
+			}
+		}
 	}
 
 	content := match extra_content.len > 0 {
@@ -356,13 +364,15 @@ pub fn circle(cfg ContainerCfg) View {
 }
 
 fn (mut cfg ContainerView) on_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
-	if cfg.tooltip.content.len > 0 {
-		w.animation_add(mut cfg.tooltip.animation_tooltip())
-		gui_tooltip.bounds = DrawClip{
-			x:      shape.x
-			y:      shape.y
-			width:  shape.width
-			height: shape.height
+	if cfg.tooltip != unsafe { nil } {
+		if cfg.tooltip.content.len > 0 {
+			w.animation_add(mut cfg.tooltip.animation_tooltip())
+			gui_tooltip.bounds = DrawClip{
+				x:      shape.x
+				y:      shape.y
+				width:  shape.width
+				height: shape.height
+			}
 		}
 	}
 }
