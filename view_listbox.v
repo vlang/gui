@@ -138,7 +138,7 @@ pub fn list_box(cfg ListBoxCfg) View {
 			column(
 				name:            'list_box interior'
 				id_scroll:       cfg.id_scroll
-				scrollbar_cfg_y: ScrollbarCfg{
+				scrollbar_cfg_y: &ScrollbarCfg{
 					offset_x: -1
 				}
 				color:           cfg.color

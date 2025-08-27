@@ -38,8 +38,6 @@ pub enum ScrollMode {
 pub struct ScrollbarCfg {
 pub:
 	id               string
-	overflow         ScrollbarOverflow
-	orientation      ScrollbarOrientation
 	color_thumb      Color = gui_theme.scrollbar_style.color_thumb
 	color_background Color = gui_theme.scrollbar_style.color_background
 	size             f32   = gui_theme.scrollbar_style.size
@@ -48,6 +46,8 @@ pub:
 	offset_x         f32   = gui_theme.scrollbar_style.offset_x // x and y are swapped in
 	offset_y         f32   = gui_theme.scrollbar_style.offset_y // horizontal orientation
 	id_track         u32
+	overflow         ScrollbarOverflow
+	orientation      ScrollbarOrientation
 	fill_thumb       bool = gui_theme.scrollbar_style.fill_thumb
 	fill_background  bool = gui_theme.scrollbar_style.fill_background
 }

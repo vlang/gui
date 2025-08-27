@@ -3,15 +3,17 @@ module gui
 import arrays
 
 // ContainerView members are arranged for packing to reduce memory footprint.
+
+@[heap]
 struct ContainerView implements View {
 pub:
 	id              string
 	name            string // used internally, read-only
 	text            string
-	scrollbar_cfg_x ScrollbarCfg
-	scrollbar_cfg_y ScrollbarCfg
-	color           Color   = gui_theme.container_style.color
-	padding         Padding = gui_theme.container_style.padding
+	scrollbar_cfg_x &ScrollbarCfg = unsafe { nil }
+	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
+	color           Color         = gui_theme.container_style.color
+	padding         Padding       = gui_theme.container_style.padding
 	sizing          Sizing
 	x               f32
 	y               f32
@@ -169,11 +171,11 @@ mut:
 pub:
 	id              string
 	text            string
-	scrollbar_cfg_x ScrollbarCfg
-	scrollbar_cfg_y ScrollbarCfg
-	tooltip         &TooltipCfg = unsafe { nil }
-	color           Color       = gui_theme.container_style.color
-	padding         Padding     = gui_theme.container_style.padding
+	scrollbar_cfg_x &ScrollbarCfg = unsafe { nil }
+	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
+	tooltip         &TooltipCfg   = unsafe { nil }
+	color           Color         = gui_theme.container_style.color
+	padding         Padding       = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
 	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
@@ -225,19 +227,37 @@ fn container(cfg ContainerCfg) View {
 
 	mut extra_content := []View{cap: 3}
 
-	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_x.overflow != .hidden {
-		extra_content << scrollbar(ScrollbarCfg{
-			...cfg.scrollbar_cfg_x
-			orientation: .horizontal
-			id_track:    cfg.id_scroll
-		})
+	if cfg.id_scroll > 0 {
+		if cfg.scrollbar_cfg_x != unsafe { nil } {
+			if cfg.scrollbar_cfg_x.overflow != .hidden {
+				extra_content << scrollbar(ScrollbarCfg{
+					...cfg.scrollbar_cfg_x
+					orientation: .horizontal
+					id_track:    cfg.id_scroll
+				})
+			}
+		} else {
+			extra_content << scrollbar(ScrollbarCfg{
+				orientation: .horizontal
+				id_track:    cfg.id_scroll
+			})
+		}
 	}
-	if cfg.id_scroll > 0 && cfg.scrollbar_cfg_y.overflow != .hidden {
-		extra_content << scrollbar(ScrollbarCfg{
-			...cfg.scrollbar_cfg_y
-			orientation: .vertical
-			id_track:    cfg.id_scroll
-		})
+	if cfg.id_scroll > 0 {
+		if cfg.scrollbar_cfg_y != unsafe { nil } {
+			if cfg.scrollbar_cfg_y.overflow != .hidden {
+				extra_content << scrollbar(ScrollbarCfg{
+					...cfg.scrollbar_cfg_y
+					orientation: .vertical
+					id_track:    cfg.id_scroll
+				})
+			}
+		} else {
+			extra_content << scrollbar(ScrollbarCfg{
+				orientation: .vertical
+				id_track:    cfg.id_scroll
+			})
+		}
 	}
 	if gui_tooltip.id != 0 {
 		if cfg.tooltip != unsafe { nil } {
@@ -280,8 +300,8 @@ fn container(cfg ContainerCfg) View {
 		id_scroll:       cfg.id_scroll
 		over_draw:       cfg.over_draw
 		scroll_mode:     cfg.scroll_mode
-		scrollbar_cfg_x: cfg.scrollbar_cfg_x
-		scrollbar_cfg_y: cfg.scrollbar_cfg_y
+		scrollbar_cfg_x: &cfg.scrollbar_cfg_x
+		scrollbar_cfg_y: &cfg.scrollbar_cfg_y
 		float:           cfg.float
 		float_anchor:    cfg.float_anchor
 		float_tie_off:   cfg.float_tie_off

@@ -55,7 +55,7 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 	return gui.column(
 		id_focus:        id // enables keyboard scrolling
 		id_scroll:       id // id_scroll used to store scroll state in window
-		scrollbar_cfg_y: gui.ScrollbarCfg{
+		scrollbar_cfg_y: &gui.ScrollbarCfg{
 			overflow: if window.is_focus(id) { .visible } else { .hidden }
 		}
 		color:           match window.is_focus(id) {

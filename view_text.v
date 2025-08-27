@@ -88,8 +88,8 @@ pub:
 	text               string
 	text_style         TextStyle = gui_theme.text_style
 	id_focus           u32
-	min_width          f32
 	tab_size           u32 = 4
+	min_width          f32
 	mode               TextMode
 	invisible          bool
 	clip               bool

@@ -10,6 +10,7 @@ pub mut:
 	selected_family string = 'Normal'
 	selected_font   string = '1'
 	light_theme     bool
+	rows            []gui.View
 }
 
 fn main() {
@@ -65,6 +66,7 @@ fn side_panel(mut window gui.Window) gui.View {
 				on_select: fn (value string, mut w gui.Window) {
 					mut app := w.state[FontsApp]()
 					app.selected_family = value
+					app.rows.clear()
 				}
 			),
 			gui.radio_button_group_column(
@@ -82,6 +84,7 @@ fn side_panel(mut window gui.Window) gui.View {
 				on_select: fn (value string, mut w gui.Window) {
 					mut app := w.state[FontsApp]()
 					app.selected_font = value
+					app.rows.clear()
 				}
 			),
 			gui.row(sizing: gui.fill_fill),
@@ -91,62 +94,61 @@ fn side_panel(mut window gui.Window) gui.View {
 }
 
 fn font_panel(window &gui.Window) gui.View {
-	app := window.state[FontsApp]()
-	mut rows := []gui.View{}
-	unsafe { rows.flags.set(.noslices) }
+	mut app := window.state[FontsApp]()
 	mut cols := []gui.View{}
-	unsafe { rows.flags.set(.noslices) }
 	width := f32(gui.theme().n3.size) * 1.5
 
-	text_style := match app.selected_family {
-		'Bold' {
-			match app.selected_font {
-				'2' { gui.theme().b2 }
-				'3' { gui.theme().b3 }
-				'4' { gui.theme().b4 }
-				'5' { gui.theme().b5 }
-				'6' { gui.theme().b6 }
-				else { gui.theme().b1 }
+	if app.rows.len == 0 {
+		text_style := match app.selected_family {
+			'Bold' {
+				match app.selected_font {
+					'2' { gui.theme().b2 }
+					'3' { gui.theme().b3 }
+					'4' { gui.theme().b4 }
+					'5' { gui.theme().b5 }
+					'6' { gui.theme().b6 }
+					else { gui.theme().b1 }
+				}
+			}
+			'Italic' {
+				match app.selected_font {
+					'2' { gui.theme().i2 }
+					'3' { gui.theme().i3 }
+					'4' { gui.theme().i4 }
+					'5' { gui.theme().i5 }
+					'6' { gui.theme().i6 }
+					else { gui.theme().i1 }
+				}
+			}
+			'Mono' {
+				match app.selected_font {
+					'2' { gui.theme().m2 }
+					'3' { gui.theme().m3 }
+					'4' { gui.theme().m4 }
+					'5' { gui.theme().m5 }
+					'6' { gui.theme().m6 }
+					else { gui.theme().m1 }
+				}
+			}
+			else {
+				match app.selected_font {
+					'2' { gui.theme().n2 }
+					'3' { gui.theme().n3 }
+					'4' { gui.theme().n4 }
+					'5' { gui.theme().n5 }
+					'6' { gui.theme().n6 }
+					else { gui.theme().n1 }
+				}
 			}
 		}
-		'Italic' {
-			match app.selected_font {
-				'2' { gui.theme().i2 }
-				'3' { gui.theme().i3 }
-				'4' { gui.theme().i4 }
-				'5' { gui.theme().i5 }
-				'6' { gui.theme().i6 }
-				else { gui.theme().i1 }
-			}
-		}
-		'Mono' {
-			match app.selected_font {
-				'2' { gui.theme().m2 }
-				'3' { gui.theme().m3 }
-				'4' { gui.theme().m4 }
-				'5' { gui.theme().m5 }
-				'6' { gui.theme().m6 }
-				else { gui.theme().m1 }
-			}
-		}
-		else {
-			match app.selected_font {
-				'2' { gui.theme().n2 }
-				'3' { gui.theme().n3 }
-				'4' { gui.theme().n4 }
-				'5' { gui.theme().n5 }
-				'6' { gui.theme().n6 }
-				else { gui.theme().n1 }
-			}
-		}
-	}
 
-	for i, cp in code_points {
-		if i % 18 == 0 && i != 0 {
-			rows << gui.row(padding: gui.padding_none, content: cols)
-			cols.clear()
+		for i, cp in code_points {
+			if i % 18 == 0 && i != 0 {
+				app.rows << gui.row(padding: gui.padding_none, content: cols.clone())
+				cols.clear()
+			}
+			cols << gui.text(text: cp, min_width: width, text_style: text_style)
 		}
-		cols << gui.text(text: cp, min_width: width, text_style: text_style)
 	}
 
 	return gui.column(
@@ -154,7 +156,7 @@ fn font_panel(window &gui.Window) gui.View {
 		fill:      true
 		color:     gui.theme().color_panel
 		sizing:    gui.fill_fill
-		content:   rows
+		content:   app.rows
 	)
 }
 

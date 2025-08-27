@@ -14,10 +14,11 @@ pub mut:
 }
 
 fn main() {
-	println(sizeof(gui.ContainerCfg))
-	println(sizeof(gui.ContainerView))
-	println(sizeof(gui.TextCfg))
-	println(sizeof(gui.TextStyle))
+	println('Shape:         ${sizeof(gui.Shape)}')
+	println('ContainerView: ${sizeof(gui.ContainerView)}')
+	println('ContainerCfg:  ${sizeof(gui.ContainerCfg)}')
+	println('TextCfg:       ${sizeof(gui.TextCfg)}')
+	println('TextStyle:     ${sizeof(gui.TextStyle)}')
 
 	mut window := gui.window(
 		state:   &AppState{
@@ -45,18 +46,12 @@ fn main_view(w &gui.Window) gui.View {
 	app := w.state[AppState]()
 
 	return gui.row(
-		scrollbar_cfg_x: gui.ScrollbarCfg{
-			overflow: .on_hover
-		}
-		scrollbar_cfg_y: gui.ScrollbarCfg{
-			overflow: .on_hover
-		}
-		width:           width
-		height:          height
-		sizing:          gui.fixed_fixed
-		color:           gui.dark_blue
-		fill:            true
-		content:         [
+		width:   width
+		height:  height
+		sizing:  gui.fixed_fixed
+		color:   gui.dark_blue
+		fill:    true
+		content: [
 			gui.column(
 				padding: gui.padding_none
 				sizing:  gui.fit_fill

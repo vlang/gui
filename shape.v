@@ -19,19 +19,6 @@ pub mut:
 	text                  string
 	image_name            string // filename of image
 	text_lines            []string
-	on_char               fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_keydown            fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_click              fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up           fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_char_shape         fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	on_keydown_shape      fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	on_mouse_down_shape   fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	on_mouse_move_shape   fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	on_mouse_up_shape     fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	on_mouse_scroll_shape fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	amend_layout          fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover              fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	shape_clip            DrawClip // used for hit-testing
 	color                 Color
 	padding               Padding
@@ -53,6 +40,19 @@ pub mut:
 	text_sel_beg          u32
 	text_sel_end          u32
 	text_tab_size         u32 = 4
+	on_char               fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_keydown            fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_click              fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up           fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_char_shape         fn (&Shape, mut Event, mut Window)     = unsafe { nil }
+	on_keydown_shape      fn (&Shape, mut Event, mut Window)     = unsafe { nil }
+	on_mouse_down_shape   fn (&Shape, mut Event, mut Window)     = unsafe { nil }
+	on_mouse_move_shape   fn (&Shape, mut Event, mut Window)     = unsafe { nil }
+	on_mouse_up_shape     fn (&Shape, mut Event, mut Window)     = unsafe { nil }
+	on_mouse_scroll_shape fn (&Shape, mut Event, mut Window)     = unsafe { nil }
+	amend_layout          fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover              fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	h_align               HorizontalAlign
 	v_align               VerticalAlign
 	text_mode             TextMode
