@@ -229,16 +229,14 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	// reference to render array significantly reduced calls to array.push()
 	view := gen_view(window)
 	mut layout := window.compose_layout(view)
-	mut renderers := []Renderer{cap: 200}
-	unsafe { renderers.flags.set(.noslices) }
-	window_rect := window.window_rect()
-	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
 
 	window.lock()
-
 	window.view_generator = gen_view
 	window.layout = layout
-	window.renderers = renderers
+	window.renderers.clear()
+	clip_rect := window.window_rect()
+	background := window.color_background()
+	render_layout(mut layout, background, clip_rect, mut window)
 
 	window.unlock()
 	window.ui.refresh_ui()
@@ -255,14 +253,11 @@ pub fn (mut window Window) update_window() {
 	window.lock()
 
 	view := window.view_generator(window)
-	mut layout := window.compose_layout(view)
-	mut renderers := []Renderer{cap: 200}
-	unsafe { renderers.flags.set(.noslices) }
-	window_rect := window.window_rect()
-	render_layout(mut layout, mut renderers, window.color_background(), window_rect, window)
-
-	window.layout = layout
-	window.renderers = renderers
+	window.layout = window.compose_layout(view)
+	window.renderers.clear()
+	clip_rect := window.window_rect()
+	background := window.color_background()
+	render_layout(mut window.layout, background, clip_rect, mut window)
 
 	window.unlock()
 	window.ui.refresh_ui()

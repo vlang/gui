@@ -100,8 +100,8 @@ fn renderer_draw(renderer Renderer, window &Window) {
 // then a clip rectangle is added to the context. Clip rectangles are added to the
 // draw context and the later, 'removed' by setting the clip rectangle to the
 // previous rectangle of if not present, infinity.
-fn render_layout(mut layout Layout, mut renderers []Renderer, bg_color Color, clip DrawClip, window &Window) {
-	render_shape(mut layout.shape, mut renderers, bg_color, clip, window)
+fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Window) {
+	render_shape(mut layout.shape, bg_color, clip, mut window)
 
 	mut shape_clip := clip
 	if layout.shape.over_draw { // allow drawing in the padded area of shape
@@ -120,7 +120,7 @@ fn render_layout(mut layout Layout, mut renderers []Renderer, bg_color Color, cl
 				width: clip.width
 			}
 		}
-		renderers << shape_clip
+		window.renderers << shape_clip
 	} else if layout.shape.clip {
 		sc := layout.shape.shape_clip
 		padding := layout.shape.padding
@@ -130,30 +130,30 @@ fn render_layout(mut layout Layout, mut renderers []Renderer, bg_color Color, cl
 			width:  sc.width - padding.width()
 			height: sc.height - padding.height()
 		}
-		renderers << shape_clip
+		window.renderers << shape_clip
 	}
 
 	color := if layout.shape.color != color_transparent { layout.shape.color } else { bg_color }
 	for mut child in layout.children {
-		render_layout(mut child, mut renderers, color, shape_clip, window)
+		render_layout(mut child, color, shape_clip, mut window)
 	}
 
 	if layout.shape.clip || layout.shape.over_draw {
-		renderers << clip
+		window.renderers << clip
 	}
 }
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
-fn render_shape(mut shape Shape, mut renderers []Renderer, parent_color Color, clip DrawClip, window &Window) {
+fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
 	if shape.color == color_transparent {
 		return
 	}
 	match shape.type {
-		.rectangle { render_container(mut shape, mut renderers, parent_color, clip, window) }
-		.text { render_text(mut shape, mut renderers, clip, window) }
-		.image { render_image(mut shape, mut renderers, clip, window) }
-		.circle { render_circle(mut shape, mut renderers, clip, window) }
-		.rtf { render_rtf(mut shape, mut renderers, clip, window) }
+		.rectangle { render_container(mut shape, parent_color, clip, mut window) }
+		.text { render_text(mut shape, clip, mut window) }
+		.image { render_image(mut shape, clip, mut window) }
+		.circle { render_circle(mut shape, clip, mut window) }
+		.rtf { render_rtf(mut shape, clip, mut window) }
 		.none {}
 	}
 }
@@ -162,10 +162,10 @@ fn render_shape(mut shape Shape, mut renderers []Renderer, parent_color Color, c
 // One complication is the title text that is drawn in the upper left corner of the rectangle.
 // At some point, it should be moved to the container logic, along with some layout amend logic.
 // Honestly, it was more expedient to put it here.
-fn render_container(mut shape Shape, mut renderers []Renderer, parent_color Color, clip DrawClip, window &Window) {
+fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
 	ctx := window.ui
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
-	render_rectangle(mut shape, mut renderers, clip, window)
+	render_rectangle(mut shape, clip, mut window)
 
 	// The group box title complicated things. Maybe move it?
 	if shape.text.len != 0 {
@@ -186,7 +186,7 @@ fn render_container(mut shape Shape, mut renderers []Renderer, parent_color Colo
 			} else {
 				parent_color
 			}
-			renderers << DrawRect{
+			window.renderers << DrawRect{
 				x:     x
 				y:     y - 2 - h / 2
 				w:     w
@@ -202,7 +202,7 @@ fn render_container(mut shape Shape, mut renderers []Renderer, parent_color Colo
 			// The height of a lowercase char usually splits
 			// the text just right.
 			eh := ctx.text_height('e')
-			renderers << DrawText{
+			window.renderers << DrawText{
 				x:    x
 				y:    y - eh
 				text: shape.text
@@ -217,7 +217,7 @@ fn render_container(mut shape Shape, mut renderers []Renderer, parent_color Colo
 
 // render_circle draws a shape as a circle in the middle of the shape's
 // rectangular region. Radius is half of the shortest side.
-fn render_circle(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
+fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 	assert shape.type == .circle
 	draw_rect := gg.Rect{
 		x:      shape.x
@@ -231,7 +231,7 @@ fn render_circle(mut shape Shape, mut renderers []Renderer, clip DrawClip, windo
 		radius := f32_min(shape.width, shape.height) / 2
 		x := shape.x + shape.width / 2
 		y := shape.y + shape.height / 2
-		renderers << DrawCircle{
+		window.renderers << DrawCircle{
 			x:      x
 			y:      y
 			radius: radius
@@ -244,7 +244,7 @@ fn render_circle(mut shape Shape, mut renderers []Renderer, clip DrawClip, windo
 }
 
 // render_rectangle draw_rectangle draws a shape as a rectangle.
-fn render_rectangle(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
+fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 	assert shape.type == .rectangle
 	draw_rect := gg.Rect{
 		x:      shape.x
@@ -256,7 +256,7 @@ fn render_rectangle(mut shape Shape, mut renderers []Renderer, clip DrawClip, wi
 	gx_color := color.to_gx_color()
 	if rects_overlap(draw_rect, clip) && color != color_transparent {
 		if color != color_transparent {
-			renderers << DrawRect{
+			window.renderers << DrawRect{
 				x:          draw_rect.x
 				y:          draw_rect.y
 				w:          draw_rect.width
@@ -275,7 +275,7 @@ fn render_rectangle(mut shape Shape, mut renderers []Renderer, clip DrawClip, wi
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
 // The highlighting of selected text happens here also.
-fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
+fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	dr := gg.Rect{
 		x:      shape.x
 		y:      shape.y
@@ -319,7 +319,7 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 				// replace with '*'s
 				lnl = '*'.repeat(utf8_str_visible_length(lnl))
 			}
-			renderers << DrawText{
+			window.renderers << DrawText{
 				x:    x
 				y:    y
 				text: lnl.clone()
@@ -335,7 +335,7 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 					sbtoe := lnr[b..e].string()
 					sb := ctx.text_width(stob)
 					se := ctx.text_width(sbtoe)
-					renderers << DrawRect{
+					window.renderers << DrawRect{
 						x:     draw_rect.x + sb
 						y:     draw_rect.y
 						w:     se
@@ -356,11 +356,11 @@ fn render_text(mut shape Shape, mut renderers []Renderer, clip DrawClip, window 
 		unsafe { lnr.free() }
 	}
 
-	render_cursor(shape, mut renderers, clip, window)
+	render_cursor(shape, clip, mut window)
 }
 
 // render_cursor figures out where the darn cursor goes.
-fn render_cursor(shape &Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
+fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 	if window.is_focus(shape.id_focus) && shape.type == .text && window.view_state.cursor_on {
 		lh := line_height(shape)
 		mut cursor_x := -1
@@ -399,7 +399,7 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, clip DrawClip, window &
 					height: cy + lh
 				}
 				if rects_overlap(dr, clip) {
-					renderers << DrawLine{
+					window.renderers << DrawLine{
 						x:   cx
 						y:   cy
 						x1:  cx
@@ -414,7 +414,7 @@ fn render_cursor(shape &Shape, mut renderers []Renderer, clip DrawClip, window &
 	}
 }
 
-fn render_rtf(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
+fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 	dr := gg.Rect{
 		x:      shape.x
 		y:      shape.y
@@ -438,7 +438,7 @@ fn render_rtf(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &
 			text_cfg := span.style.to_text_cfg()
 			ctx.set_text_cfg(text_cfg)
 
-			renderers << DrawText{
+			window.renderers << DrawText{
 				x:    shape.x + span.x
 				y:    shape.y + span.y
 				text: span.text
@@ -446,7 +446,7 @@ fn render_rtf(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &
 			}
 
 			if span.underline {
-				renderers << DrawRect{
+				window.renderers << DrawRect{
 					x:     shape.x + span.x
 					y:     shape.y + span.y + span.h - 2
 					w:     span.w
@@ -456,7 +456,7 @@ fn render_rtf(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &
 			}
 
 			if span.strike_through {
-				renderers << DrawRect{
+				window.renderers << DrawRect{
 					x:     shape.x + span.x
 					y:     shape.y + span.y + span.h / 2
 					w:     span.w
@@ -468,7 +468,7 @@ fn render_rtf(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &
 	}
 }
 
-fn render_image(mut shape Shape, mut renderers []Renderer, clip DrawClip, window &Window) {
+fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 	dr := gg.Rect{
 		x:      shape.x
 		y:      shape.y
@@ -481,7 +481,7 @@ fn render_image(mut shape Shape, mut renderers []Renderer, clip DrawClip, window
 	}
 	mut ctx := window.context()
 	image := ctx.get_cached_image_by_idx(window.view_state.image_map[shape.image_name])
-	renderers << DrawImage{
+	window.renderers << DrawImage{
 		x:   shape.x
 		y:   shape.y
 		w:   shape.width

@@ -14,6 +14,11 @@ pub mut:
 }
 
 fn main() {
+	println(sizeof(gui.ContainerCfg))
+	println(sizeof(gui.ContainerView))
+	println(sizeof(gui.TextCfg))
+	println(sizeof(gui.TextStyle))
+
 	mut window := gui.window(
 		state:   &AppState{
 			name:

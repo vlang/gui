@@ -13,14 +13,6 @@ pub:
 	color           Color   = gui_theme.container_style.color
 	padding         Padding = gui_theme.container_style.padding
 	sizing          Sizing
-	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_down   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	x               f32
 	y               f32
 	width           f32
@@ -35,6 +27,14 @@ pub:
 	float_offset_y  f32
 	id_focus        u32 // not sure this should be here
 	id_scroll       u32
+	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_down   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	h_align         HorizontalAlign
 	v_align         VerticalAlign
 	scroll_mode     ScrollMode
