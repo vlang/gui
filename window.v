@@ -21,6 +21,7 @@ mut:
 	update_window_calls               int
 	max_update_window_calls_per_frame int  = int($d('max_update_window_calls_per_frame', 2)) // 2 is a compromise between perceived latency of typing in apps like form_demo.v (higher is better), and reduced latency and lower CPU usage in apps like fonts.v (lower is better, especially on slow CPUs)
 	focused                           bool = true
+	layout_pool                       LayoutPool
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -112,6 +113,13 @@ pub fn window(cfg &WindowCfg) &Window {
 		sample_count:                 int(cfg.samples)
 	)
 	initialize_fonts()
+
+	$if !prod {
+		at_exit(fn () {
+			println(layout_pool_stats_str())
+		}) or {}
+	}
+
 	return window
 }
 
@@ -221,16 +229,17 @@ fn event_fn(ev &gg.Event, mut w Window) {
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	// Order matters here. Clear the view state first
 	window.view_state.clear(mut window)
+	window.lock()
 
-	// Profiler showed that a significant amount of time was spent in
-	// array.push(). render_layout is recursive. Returning empty arrays
-	// and pushing into stack allocated render arrays added up. This was
-	// evident in the column-scroll.v example with 10K rows. Passing a
-	// reference to render array significantly reduced calls to array.push()
+	// Return old layout tree to pool before creating new one
+	if window.layout.children.len > 0 {
+		mut old_layout := window.layout
+		return_layout_tree(mut old_layout)
+	}
+
 	view := gen_view(window)
 	mut layout := window.compose_layout(view)
 
-	window.lock()
 	window.view_generator = gen_view
 	window.layout = layout
 	window.renderers.clear()
@@ -251,6 +260,12 @@ pub fn (mut window Window) update_window() {
 	}
 
 	window.lock()
+
+	// Return old layout tree to pool before creating new one
+	if window.layout.children.len > 0 {
+		mut old_layout := window.layout
+		return_layout_tree(mut old_layout)
+	}
 
 	view := window.view_generator(window)
 	window.layout = window.compose_layout(view)

@@ -11,6 +11,7 @@ __global gui_theme = theme_dark_no_padding
 __global gui_tooltip = TooltipState{}
 __global cosf_values = [32]f32{}
 __global sinf_values = [32]f32{}
+__global layout_pool = LayoutPool{}
 
 pub const version = '0.1.0'
 pub const app_title = 'GUI'

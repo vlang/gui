@@ -40,7 +40,7 @@ pub:
 
 fn (rtf &RtfView) generate(mut window Window) Layout {
 	if rtf.invisible {
-		return Layout{}
+		return get_layout()
 	}
 
 	tspans := match true {
@@ -49,28 +49,25 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 	}
 	width, height := spans_size(tspans)
 
-	shape := Shape{
-		name:                'rtf'
-		type:                .rtf
-		id:                  rtf.id
-		id_focus:            rtf.id_focus
-		width:               width
-		height:              height
-		cfg:                 &rtf.cfg
-		clip:                rtf.clip
-		focus_skip:          rtf.focus_skip
-		disabled:            rtf.disabled
-		min_width:           rtf.min_width
-		text_mode:           rtf.mode
-		sizing:              rtf.sizing
-		text_spans:          tspans
-		on_mouse_move_shape: rtf_mouse_move_shape
-		on_mouse_down_shape: rtf_mouse_down_shape
-	}
+	mut layout := get_layout()
+	layout.shape.name = 'rtf'
+	layout.shape.type = .rtf
+	layout.shape.id = rtf.id
+	layout.shape.id_focus = rtf.id_focus
+	layout.shape.width = width
+	layout.shape.height = height
+	layout.shape.cfg = &rtf.cfg
+	layout.shape.clip = rtf.clip
+	layout.shape.focus_skip = rtf.focus_skip
+	layout.shape.disabled = rtf.disabled
+	layout.shape.min_width = rtf.min_width
+	layout.shape.text_mode = rtf.mode
+	layout.shape.sizing = rtf.sizing
+	layout.shape.text_spans = tspans
+	layout.shape.on_mouse_move_shape = rtf_mouse_move_shape
+	layout.shape.on_mouse_down_shape = rtf_mouse_down_shape
 
-	return Layout{
-		shape: shape
-	}
+	return layout
 }
 
 // rtf creates a view from the given [RtfCfg](#RtfCfg)

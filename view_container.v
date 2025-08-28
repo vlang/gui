@@ -57,62 +57,60 @@ mut:
 	axis       Axis
 }
 
-fn (cv ContainerView) generate(mut _ Window) Layout {
+fn (cv ContainerView) generate(mut window Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
-	layout := Layout{
-		shape: Shape{
-			type:                cv.shape_type
-			id:                  cv.id
-			id_focus:            cv.id_focus
-			axis:                cv.axis
-			name:                cv.name
-			x:                   cv.x
-			y:                   cv.y
-			width:               cv.width
-			min_width:           cv.min_width
-			max_width:           cv.max_width
-			height:              cv.height
-			min_height:          cv.min_height
-			max_height:          cv.max_height
-			clip:                cv.clip
-			focus_skip:          cv.focus_skip
-			spacing:             cv.spacing
-			sizing:              cv.sizing
-			padding:             cv.padding
-			fill:                cv.fill
-			h_align:             cv.h_align
-			v_align:             cv.v_align
-			radius:              cv.radius
-			color:               cv.color
-			disabled:            cv.disabled
-			float:               cv.float
-			float_anchor:        cv.float_anchor
-			float_tie_off:       cv.float_tie_off
-			float_offset_x:      cv.float_offset_x
-			float_offset_y:      cv.float_offset_y
-			text:                cv.text
-			text_style:          TextStyle{
-				...gui_theme.text_style
-				color: cv.color
-			}
-			cfg:                 cv.cfg
-			id_scroll:           cv.id_scroll
-			over_draw:           cv.over_draw
-			scroll_mode:         cv.scroll_mode
-			on_click:            cv.on_click
-			on_char:             cv.on_char
-			on_keydown:          cv.on_keydown
-			on_mouse_move:       cv.on_mouse_move
-			on_mouse_move_shape: if cv.tooltip != unsafe { nil } {
-				cv.on_mouse_move_shape
-			} else {
-				unsafe { nil }
-			}
-			on_mouse_up:         cv.on_mouse_up
-			on_hover:            cv.on_hover
-			amend_layout:        cv.amend_layout
-		}
+	mut layout := get_layout()
+	layout.shape.type = cv.shape_type
+	layout.shape.id = cv.id
+	layout.shape.id_focus = cv.id_focus
+	layout.shape.axis = cv.axis
+	layout.shape.name = cv.name
+	layout.shape.x = cv.x
+	layout.shape.y = cv.y
+	layout.shape.width = cv.width
+	layout.shape.min_width = cv.min_width
+	layout.shape.max_width = cv.max_width
+	layout.shape.height = cv.height
+	layout.shape.min_height = cv.min_height
+	layout.shape.max_height = cv.max_height
+	layout.shape.clip = cv.clip
+	layout.shape.focus_skip = cv.focus_skip
+	layout.shape.spacing = cv.spacing
+	layout.shape.sizing = cv.sizing
+	layout.shape.padding = cv.padding
+	layout.shape.fill = cv.fill
+	layout.shape.h_align = cv.h_align
+	layout.shape.v_align = cv.v_align
+	layout.shape.radius = cv.radius
+	layout.shape.color = cv.color
+	layout.shape.disabled = cv.disabled
+	layout.shape.float = cv.float
+	layout.shape.float_anchor = cv.float_anchor
+	layout.shape.float_tie_off = cv.float_tie_off
+	layout.shape.float_offset_x = cv.float_offset_x
+	layout.shape.float_offset_y = cv.float_offset_y
+	layout.shape.text = cv.text
+	layout.shape.text_style = TextStyle{
+		...gui_theme.text_style
+		color: cv.color
 	}
+	layout.shape.cfg = cv.cfg
+	layout.shape.id_scroll = cv.id_scroll
+	layout.shape.over_draw = cv.over_draw
+	layout.shape.scroll_mode = cv.scroll_mode
+	layout.shape.on_click = cv.on_click
+	layout.shape.on_char = cv.on_char
+	layout.shape.on_keydown = cv.on_keydown
+	layout.shape.on_mouse_move = cv.on_mouse_move
+	layout.shape.on_mouse_move_shape = if cv.tooltip != unsafe { nil } {
+		cv.on_mouse_move_shape
+	} else {
+		unsafe { nil }
+	}
+	layout.shape.on_mouse_up = cv.on_mouse_up
+	layout.shape.on_hover = cv.on_hover
+	layout.shape.amend_layout = cv.amend_layout
+
 	return layout
 }
 
