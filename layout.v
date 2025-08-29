@@ -13,27 +13,18 @@ import arrays
 // Layout defines a tree of Layouts. Views generate Layouts
 pub struct Layout {
 pub mut:
-	shape       Shape
-	children    []Layout
-	parent      &Layout = unsafe { nil }
-	source_view &View   = unsafe { nil } // Track the view that created this layout
+	shape    Shape
+	parent   &Layout = unsafe { nil }
+	children []Layout
 }
 
-// cleanup recursively cleans up a layout tree to help the garbage collector
-pub fn (mut layout Layout) cleanup() {
-	// Clean up children first (bottom-up approach)
-	for mut child in layout.children {
-		child.cleanup()
+pub fn (layout &Layout) free() {
+	for c in layout.children {
+		unsafe { c.free() }
 	}
-
-	// Clear children array to break references
-	layout.children.clear()
-
-	// Clean up shape resources
-	layout.shape.cleanup()
-
-	// Clear parent reference to break circular dependencies
-	layout.parent = unsafe { nil }
+	unsafe { layout.children.free() }
+	unsafe { layout.shape.text.free() }
+	unsafe { layout.shape.text_lines.free() }
 }
 
 // layout_arrange executes a pipeline of functions to arrange and position the layout.

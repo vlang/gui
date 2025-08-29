@@ -28,7 +28,7 @@ fn (t &TextView) free() {
 
 fn (t &TextView) generate(mut window Window) Layout {
 	if t.cfg.invisible {
-		return get_layout()
+		return Layout{}
 	}
 	input_state := match window.is_focus(t.cfg.id_focus) {
 		true { window.view_state.input_state[t.cfg.id_focus] }
@@ -38,43 +38,45 @@ fn (t &TextView) generate(mut window Window) Layout {
 		true { wrap_simple(t.cfg.text, t.cfg.tab_size) }
 		else { [t.cfg.text] } // dynamic wrapping handled in the layout pipeline
 	}
-	mut layout := get_layout()
-	layout.shape.name = 'text'
-	layout.shape.type = .text
-	layout.shape.id = t.cfg.id
-	layout.shape.id_focus = t.cfg.id_focus
-	layout.shape.cfg = &t.cfg
-	layout.shape.clip = t.cfg.clip
-	layout.shape.focus_skip = t.cfg.focus_skip
-	layout.shape.disabled = t.cfg.disabled
-	layout.shape.min_width = t.cfg.min_width
-	layout.shape.sizing = t.sizing
-	layout.shape.text = t.cfg.text
-	layout.shape.text_is_password = t.cfg.is_password
-	layout.shape.text_is_placeholder = t.cfg.placeholder_active
-	layout.shape.text_lines = lines
-	layout.shape.text_mode = t.cfg.mode
-	layout.shape.text_style = t.cfg.text_style
-	layout.shape.text_sel_beg = input_state.select_beg
-	layout.shape.text_sel_end = input_state.select_end
-	layout.shape.text_tab_size = t.cfg.tab_size
-	layout.shape.on_char_shape = t.cfg.char_shape
-	layout.shape.on_keydown_shape = t.cfg.keydown_shape
-	layout.shape.on_mouse_down_shape = t.cfg.mouse_down_shape
-	layout.shape.on_mouse_move_shape = t.cfg.mouse_move_shape
-	layout.shape.on_mouse_up_shape = t.cfg.mouse_up_shape
-	layout.shape.width = text_width(layout.shape, mut window)
-	layout.shape.height = text_height(layout.shape)
-
-	if t.cfg.mode == .single_line || layout.shape.sizing.width == .fixed {
-		layout.shape.min_width = f32_max(layout.shape.width, layout.shape.min_width)
-		layout.shape.width = layout.shape.min_width
+	mut shape_tree := Layout{
+		shape: Shape{
+			name:                'text'
+			type:                .text
+			id:                  t.cfg.id
+			id_focus:            t.cfg.id_focus
+			cfg:                 &t.cfg
+			clip:                t.cfg.clip
+			focus_skip:          t.cfg.focus_skip
+			disabled:            t.cfg.disabled
+			min_width:           t.cfg.min_width
+			sizing:              t.sizing
+			text:                t.cfg.text
+			text_is_password:    t.cfg.is_password
+			text_is_placeholder: t.cfg.placeholder_active
+			text_lines:          lines
+			text_mode:           t.cfg.mode
+			text_style:          t.cfg.text_style
+			text_sel_beg:        input_state.select_beg
+			text_sel_end:        input_state.select_end
+			text_tab_size:       t.cfg.tab_size
+			on_char_shape:       t.cfg.char_shape
+			on_keydown_shape:    t.cfg.keydown_shape
+			on_mouse_down_shape: t.cfg.mouse_down_shape
+			on_mouse_move_shape: t.cfg.mouse_move_shape
+			on_mouse_up_shape:   t.cfg.mouse_up_shape
+		}
 	}
-	if t.cfg.mode == .single_line || layout.shape.sizing.height == .fixed {
-		layout.shape.min_height = f32_max(layout.shape.height, layout.shape.min_height)
-		layout.shape.height = layout.shape.height
+	shape_tree.shape.width = text_width(shape_tree.shape, mut window)
+	shape_tree.shape.height = text_height(shape_tree.shape)
+	if t.cfg.mode == .single_line || shape_tree.shape.sizing.width == .fixed {
+		shape_tree.shape.min_width = f32_max(shape_tree.shape.width, shape_tree.shape.min_width)
+		shape_tree.shape.width = shape_tree.shape.min_width
 	}
-	return layout
+	if t.cfg.mode == .single_line || shape_tree.shape.sizing.height == .fixed {
+		shape_tree.shape.min_height = f32_max(shape_tree.shape.height, shape_tree.shape.min_height)
+		shape_tree.shape.height = shape_tree.shape.height
+	}
+	return shape_tree
 }
 
 // TextCfg configures a [text](#text) view

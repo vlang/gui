@@ -35,28 +35,31 @@ pub:
 
 fn (iv &ImageView) generate(mut window Window) Layout {
 	if iv.invisible {
-		return get_layout()
+		return Layout{}
 	}
 	image := window.load_image_from_file(iv.file_name) or {
 		eprintln(err.msg())
-		return get_layout()
+		return Layout{}
 	}
 
 	width := if iv.width > 0 { iv.width } else { image.width }
 	height := if iv.height > 0 { iv.height } else { image.height }
 
-	mut layout := get_layout()
-	layout.shape.name = 'image'
-	layout.shape.type = .image
-	layout.shape.id = iv.id
-	layout.shape.image_name = iv.file_name
-	layout.shape.width = width
-	layout.shape.min_width = iv.min_width
-	layout.shape.height = height
-	layout.shape.min_height = iv.min_height
-	layout.shape.cfg = iv.cfg
-	layout.shape.on_click = iv.on_click
-	layout.shape.on_hover = iv.on_hover
+	layout := Layout{
+		shape: Shape{
+			name:       'image'
+			type:       .image
+			id:         iv.id
+			image_name: iv.file_name
+			width:      width
+			min_width:  iv.min_width
+			height:     height
+			min_height: iv.min_height
+			cfg:        iv.cfg
+			on_click:   iv.on_click
+			on_hover:   iv.on_hover
+		}
+	}
 	return layout
 }
 
