@@ -11,7 +11,6 @@ module gui
 //
 // Renderers are draw instructions.
 pub interface View {
-	id string
 	generate(mut window Window) Layout
 mut:
 	content []View

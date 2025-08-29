@@ -22,7 +22,7 @@ pub mut:
 	shape_clip            DrawClip // used for hit-testing
 	color                 Color
 	padding               Padding
-	text_style            TextStyle
+	text_style            TextStyle = gui_theme.text_style
 	sizing                Sizing
 	x                     f32
 	y                     f32

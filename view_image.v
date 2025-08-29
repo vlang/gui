@@ -46,7 +46,7 @@ fn (iv &ImageView) generate(mut window Window) Layout {
 	height := if iv.height > 0 { iv.height } else { image.height }
 
 	layout := Layout{
-		shape: Shape{
+		shape: &Shape{
 			name:       'image'
 			type:       .image
 			id:         iv.id

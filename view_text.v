@@ -13,17 +13,10 @@ pub enum TextMode {
 // Text is an internal structure used to describe a text view
 // Members are arranged for packing to reduce memory footprint.
 struct TextView implements View {
-	id     string
-	cfg    TextCfg
+	cfg    &TextCfg
 	sizing Sizing
 mut:
 	content []View // not used
-}
-
-fn (t &TextView) free() {
-	unsafe {
-		t.id.free()
-	}
 }
 
 fn (t &TextView) generate(mut window Window) Layout {
@@ -39,10 +32,9 @@ fn (t &TextView) generate(mut window Window) Layout {
 		else { [t.cfg.text] } // dynamic wrapping handled in the layout pipeline
 	}
 	mut shape_tree := Layout{
-		shape: Shape{
+		shape: &Shape{
 			name:                'text'
 			type:                .text
-			id:                  t.cfg.id
 			id_focus:            t.cfg.id_focus
 			cfg:                 &t.cfg
 			clip:                t.cfg.clip
@@ -84,7 +76,6 @@ fn (t &TextView) generate(mut window Window) Layout {
 @[heap]
 pub struct TextCfg {
 pub:
-	id                 string
 	text               string
 	text_style         TextStyle = gui_theme.text_style
 	id_focus           u32
@@ -101,7 +92,6 @@ pub:
 
 fn (t &TextCfg) free() {
 	unsafe {
-		t.id.free()
 		t.text.free()
 		t.text_style.free()
 	}
@@ -112,8 +102,7 @@ fn (t &TextCfg) free() {
 // operations. See [TextCfg](#TextCfg)
 pub fn text(cfg TextCfg) View {
 	return TextView{
-		id:     cfg.id
-		cfg:    cfg
+		cfg:    &cfg
 		sizing: if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 	}
 }

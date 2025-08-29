@@ -19,6 +19,7 @@ fn main() {
 	println('ContainerCfg:  ${sizeof(gui.ContainerCfg)}')
 	println('TextCfg:       ${sizeof(gui.TextCfg)}')
 	println('TextStyle:     ${sizeof(gui.TextStyle)}')
+	println('TextView:      ${sizeof(gui.TextView)}')
 
 	mut window := gui.window(
 		state:   &AppState{

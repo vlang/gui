@@ -13,7 +13,7 @@ import arrays
 // Layout defines a tree of Layouts. Views generate Layouts
 pub struct Layout {
 pub mut:
-	shape    Shape
+	shape    &Shape  = unsafe { nil }
 	parent   &Layout = unsafe { nil }
 	children []Layout
 }
@@ -119,7 +119,7 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 			// - allows fix_nested_sibling_floats() to indentify this as an empty node.
 			// - removes it from the fence-post spacing calculation in layout.spacing()
 			layout.children[i] = Layout{
-				shape: Shape{}
+				shape: &Shape{}
 			}
 		}
 	}

@@ -275,7 +275,7 @@ fn (mut window Window) compose_layout(view &View) Layout {
 	// and bind them in the darkness, or transparent-ness
 	// in this case. :)
 	return Layout{
-		shape:    Shape{
+		shape:    &Shape{
 			color: color_transparent
 		}
 		children: layouts

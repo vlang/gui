@@ -49,7 +49,7 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 	}
 	width, height := spans_size(tspans)
 
-	shape := Shape{
+	shape := &Shape{
 		name:                'rtf'
 		type:                .rtf
 		id:                  rtf.id
