@@ -14,12 +14,15 @@ pub mut:
 }
 
 fn main() {
-	println('Shape:         ${sizeof(gui.Shape)}')
-	println('ContainerView: ${sizeof(gui.ContainerView)}')
-	println('ContainerCfg:  ${sizeof(gui.ContainerCfg)}')
-	println('TextCfg:       ${sizeof(gui.TextCfg)}')
-	println('TextStyle:     ${sizeof(gui.TextStyle)}')
-	println('TextView:      ${sizeof(gui.TextView)}')
+	$if !prod {
+		println('Shape:         ${sizeof(gui.Shape)}')
+		println('ContainerView: ${sizeof(gui.ContainerView)}')
+		println('ContainerCfg:  ${sizeof(gui.ContainerCfg)}')
+		println('TextCfg:       ${sizeof(gui.TextCfg)}')
+		println('TextStyle:     ${sizeof(gui.TextStyle)}')
+		println('TextView:      ${sizeof(gui.TextView)}')
+		println('[]View:        ${sizeof([]gui.View)}')
+	}
 
 	mut window := gui.window(
 		state:   &AppState{

@@ -53,10 +53,6 @@ pub struct DatePickerCfg {
 pub:
 	id                       string      @[required] // unique only to other date_pickers
 	dates                    []time.Time @[required]
-	id_scroll                u32 = u32(459342148) // used in year-month picker
-	disabled                 bool
-	invisible                bool
-	select_multiple          bool
 	allowed_weekdays         []DatePickerWeekdays // [link](#DatePickerWeekdays)
 	allowed_months           []DatePickerMonths   // [link](#DatePickerMonths)
 	allowed_years            []int
@@ -76,11 +72,15 @@ pub:
 	cell_spacing             f32       = gui_theme.date_picker_style.cell_spacing
 	radius                   f32       = gui_theme.date_picker_style.radius
 	radius_border            f32       = gui_theme.date_picker_style.radius_border
-	fill                     bool      = gui_theme.date_picker_style.fill
-	fill_border              bool      = gui_theme.date_picker_style.fill_border
-	hide_today_indicator     bool      = gui_theme.date_picker_style.hide_today_indicator
-	monday_first_day_of_week bool      = gui_theme.date_picker_style.monday_first_day_of_week
-	show_adjacent_months     bool      = gui_theme.date_picker_style.show_adjacent_months
+	id_scroll                u32       = u32(459342148) // used in year-month picker
+	disabled                 bool
+	invisible                bool
+	select_multiple          bool
+	fill                     bool = gui_theme.date_picker_style.fill
+	fill_border              bool = gui_theme.date_picker_style.fill_border
+	hide_today_indicator     bool = gui_theme.date_picker_style.hide_today_indicator
+	monday_first_day_of_week bool = gui_theme.date_picker_style.monday_first_day_of_week
+	show_adjacent_months     bool = gui_theme.date_picker_style.show_adjacent_months
 }
 
 // date_picker creates a date-picker view from the given [DatePickerCfg](#DatePickerCfg)

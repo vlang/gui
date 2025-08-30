@@ -127,98 +127,100 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 
 // layout_widths arranges a node's children layout horizontally. Only container
 // layout with an axis are arranged.
-fn layout_widths(mut node Layout) {
-	padding := node.shape.padding.width()
-	if node.shape.axis == .left_to_right { // along the axis
-		spacing := node.spacing()
-		if node.shape.sizing.width == .fixed {
-			for mut child in node.children {
+fn layout_widths(mut layout Layout) {
+	padding := layout.shape.padding.width()
+	if layout.shape.axis == .left_to_right { // along the axis
+		spacing := layout.spacing()
+		if layout.shape.sizing.width == .fixed {
+			for mut child in layout.children {
 				layout_widths(mut child)
 			}
 		} else {
 			mut min_widths := padding + spacing
-			for mut child in node.children {
+			for mut child in layout.children {
 				layout_widths(mut child)
-				node.shape.width += child.shape.width
+				layout.shape.width += child.shape.width
 				min_widths += child.shape.min_width
 			}
 
-			node.shape.min_width = f32_max(min_widths, node.shape.min_width + padding + spacing)
-			node.shape.width += padding + spacing
+			layout.shape.min_width = f32_max(min_widths, layout.shape.min_width + padding + spacing)
+			layout.shape.width += padding + spacing
 
-			if node.shape.max_width > 0 {
-				node.shape.max_width = node.shape.max_width
-				node.shape.width = f32_min(node.shape.max_width, node.shape.width)
-				node.shape.min_width = f32_min(node.shape.max_width, node.shape.min_width)
+			if layout.shape.max_width > 0 {
+				layout.shape.max_width = layout.shape.max_width
+				layout.shape.width = f32_min(layout.shape.max_width, layout.shape.width)
+				layout.shape.min_width = f32_min(layout.shape.max_width, layout.shape.min_width)
 			}
-			if node.shape.min_width > 0 {
-				node.shape.width = f32_max(node.shape.min_width, node.shape.width)
+			if layout.shape.min_width > 0 {
+				layout.shape.width = f32_max(layout.shape.min_width, layout.shape.width)
 			}
 		}
-	} else if node.shape.axis == .top_to_bottom { // across the axis
-		for mut child in node.children {
+	} else if layout.shape.axis == .top_to_bottom { // across the axis
+		for mut child in layout.children {
 			layout_widths(mut child)
-			if node.shape.sizing.width != .fixed {
-				node.shape.width = f32_max(node.shape.width, child.shape.width + padding)
-				node.shape.min_width = f32_max(node.shape.min_width, child.shape.min_width + padding)
+			if layout.shape.sizing.width != .fixed {
+				layout.shape.width = f32_max(layout.shape.width, child.shape.width + padding)
+				layout.shape.min_width = f32_max(layout.shape.min_width, child.shape.min_width +
+					padding)
 			}
 		}
-		if node.shape.min_width > 0 {
-			node.shape.width = f32_max(node.shape.width, node.shape.min_width)
+		if layout.shape.min_width > 0 {
+			layout.shape.width = f32_max(layout.shape.width, layout.shape.min_width)
 		}
-		if node.shape.max_width > 0 {
-			node.shape.width = f32_min(node.shape.width, node.shape.max_width)
+		if layout.shape.max_width > 0 {
+			layout.shape.width = f32_min(layout.shape.width, layout.shape.max_width)
 		}
 	}
 }
 
 // layout_heights arranges a node's children layout vertically. Only container
 // layout with an axis are arranged.
-fn layout_heights(mut node Layout) {
-	padding := node.shape.padding.height()
-	if node.shape.axis == .top_to_bottom { // along the axis
-		spacing := node.spacing()
-		if node.shape.sizing.height == .fixed {
-			for mut child in node.children {
+fn layout_heights(mut layout Layout) {
+	padding := layout.shape.padding.height()
+	if layout.shape.axis == .top_to_bottom { // along the axis
+		spacing := layout.spacing()
+		if layout.shape.sizing.height == .fixed {
+			for mut child in layout.children {
 				layout_heights(mut child)
 			}
 		} else {
 			mut min_heights := padding + spacing
-			for mut child in node.children {
+			for mut child in layout.children {
 				layout_heights(mut child)
-				node.shape.height += child.shape.height
+				layout.shape.height += child.shape.height
 				min_heights += child.shape.min_height
 			}
 
-			node.shape.min_height = f32_max(min_heights, node.shape.min_height + padding + spacing)
-			node.shape.height += padding + spacing
+			layout.shape.min_height = f32_max(min_heights, layout.shape.min_height + padding +
+				spacing)
+			layout.shape.height += padding + spacing
 
-			if node.shape.max_height > 0 {
-				node.shape.max_height = node.shape.max_height
-				node.shape.height = f32_min(node.shape.max_height, node.shape.height)
-				node.shape.min_height = f32_min(node.shape.max_height, node.shape.min_height)
+			if layout.shape.max_height > 0 {
+				layout.shape.max_height = layout.shape.max_height
+				layout.shape.height = f32_min(layout.shape.max_height, layout.shape.height)
+				layout.shape.min_height = f32_min(layout.shape.max_height, layout.shape.min_height)
 			}
-			if node.shape.min_height > 0 {
-				node.shape.height = f32_max(node.shape.min_height, node.shape.height)
+			if layout.shape.min_height > 0 {
+				layout.shape.height = f32_max(layout.shape.min_height, layout.shape.height)
 			}
-			if node.shape.sizing.height == .fill && node.shape.id_scroll > 0 {
-				node.shape.min_height = spacing_small
+			if layout.shape.sizing.height == .fill && layout.shape.id_scroll > 0 {
+				layout.shape.min_height = spacing_small
 			}
 		}
-	} else if node.shape.axis == .left_to_right { // across the axis
-		for mut child in node.children {
+	} else if layout.shape.axis == .left_to_right { // across the axis
+		for mut child in layout.children {
 			layout_heights(mut child)
-			if node.shape.sizing.height != .fixed {
-				node.shape.height = f32_max(node.shape.height, child.shape.height + padding)
-				node.shape.min_height = f32_max(node.shape.min_height, child.shape.min_height +
+			if layout.shape.sizing.height != .fixed {
+				layout.shape.height = f32_max(layout.shape.height, child.shape.height + padding)
+				layout.shape.min_height = f32_max(layout.shape.min_height, child.shape.min_height +
 					padding)
 			}
 		}
-		if node.shape.min_height > 0 {
-			node.shape.height = f32_max(node.shape.height, node.shape.min_height)
+		if layout.shape.min_height > 0 {
+			layout.shape.height = f32_max(layout.shape.height, layout.shape.min_height)
 		}
-		if node.shape.max_height > 0 {
-			node.shape.height = f32_min(node.shape.height, node.shape.max_height)
+		if layout.shape.max_height > 0 {
+			layout.shape.height = f32_min(layout.shape.height, layout.shape.max_height)
 		}
 	}
 }
@@ -226,11 +228,11 @@ fn layout_heights(mut node Layout) {
 // find_first_idx_and_len gets the index of the first element to satisfy the
 // predicate and the length of all elements that satisfy the predicate. Iterates
 // the array once with no allocations.
-fn find_first_idx_and_len(node &Layout, predicate fn (n Layout) bool) (int, int) {
+fn find_first_idx_and_len(layout &Layout, predicate fn (n Layout) bool) (int, int) {
 	mut idx := 0
 	mut len := 0
 	mut set_idx := false
-	for i, child in node.children {
+	for i, child in layout.children {
 		if predicate(child) {
 			len += 1
 			if !set_idx {
@@ -244,40 +246,40 @@ fn find_first_idx_and_len(node &Layout, predicate fn (n Layout) bool) (int, int)
 
 // layout_fill_widths manages the growing and shrinking of layout horizontally
 // to satisfy a layout constraint
-fn layout_fill_widths(mut node Layout) {
+fn layout_fill_widths(mut layout Layout) {
 	mut previous_remaining_width := f32(0)
-	mut remaining_width := node.shape.width - node.shape.padding.width()
+	mut remaining_width := layout.shape.width - layout.shape.padding.width()
 
-	if node.shape.axis == .left_to_right {
-		for mut child in node.children {
+	if layout.shape.axis == .left_to_right {
+		for mut child in layout.children {
 			remaining_width -= child.shape.width
 		}
 		// fence post spacing
-		remaining_width -= node.spacing()
+		remaining_width -= layout.spacing()
 
 		// divide up the remaining fill widths by first growing all the
 		// all the fill layouts to the same size (if possible) and then
 		// distributing the remaining width to evenly.
 		//
-		mut excluded := []u64{cap: node.children.len}
+		mut excluded := []u64{cap: layout.children.len}
 		for remaining_width > tolerance {
 			if f32_are_close(remaining_width, previous_remaining_width) {
 				break
 			}
 			previous_remaining_width = remaining_width
 			// Grow child elements
-			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
+			idx, len := find_first_idx_and_len(layout, fn [excluded] (n Layout) bool {
 				return n.shape.sizing.width == .fill && n.shape.uid !in excluded
 			})
 			if len == 0 {
 				break
 			}
 
-			mut smallest := node.children[idx].shape.width
+			mut smallest := layout.children[idx].shape.width
 			mut second_smallest := f32(max_u32)
 			mut width_to_add := remaining_width
 
-			for child in node.children {
+			for child in layout.children {
 				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
 					if child.shape.width < smallest {
 						second_smallest = smallest
@@ -292,7 +294,7 @@ fn layout_fill_widths(mut node Layout) {
 
 			width_to_add = f32_min(width_to_add, remaining_width / len)
 
-			for mut child in node.children {
+			for mut child in layout.children {
 				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
 					if child.shape.width == smallest {
 						previous_width := child.shape.width
@@ -319,18 +321,18 @@ fn layout_fill_widths(mut node Layout) {
 				break
 			}
 			previous_remaining_width = remaining_width
-			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
+			idx, len := find_first_idx_and_len(layout, fn [excluded] (n Layout) bool {
 				return n.shape.uid !in excluded
 			})
 			if len == 0 {
 				break
 			}
 
-			mut largest := node.children[idx].shape.width
+			mut largest := layout.children[idx].shape.width
 			mut second_largest := f32(0)
 			mut width_to_add := remaining_width
 
-			for child in node.children {
+			for child in layout.children {
 				if child.shape.uid !in excluded {
 					if child.shape.width > largest {
 						second_largest = largest
@@ -345,7 +347,7 @@ fn layout_fill_widths(mut node Layout) {
 
 			width_to_add = f32_max(width_to_add, remaining_width / len)
 
-			for mut child in node.children {
+			for mut child in layout.children {
 				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
 					if child.shape.width == largest {
 						previous_width := child.shape.width
@@ -363,19 +365,20 @@ fn layout_fill_widths(mut node Layout) {
 				}
 			}
 		}
-	} else if node.shape.axis == .top_to_bottom {
-		if node.shape.id_scroll > 0 && node.shape.sizing.width == .fill
-			&& node.shape.scroll_mode != .vertical_only && node.parent.shape.axis != .top_to_bottom {
-			sibling_widths := node.parent.children.filter(it.shape.uid != node.shape.uid).map(it.shape.width)
-			node.shape.width = node.parent.shape.width - arrays.sum(sibling_widths) or { 0 }
-			node.shape.width -= node.parent.spacing()
-			node.shape.width -= node.parent.shape.padding.width()
-			node.shape.width += 1 // round-off?
+	} else if layout.shape.axis == .top_to_bottom {
+		if layout.shape.id_scroll > 0 && layout.shape.sizing.width == .fill
+			&& layout.shape.scroll_mode != .vertical_only
+			&& layout.parent.shape.axis != .top_to_bottom {
+			sibling_widths := layout.parent.children.filter(it.shape.uid != layout.shape.uid).map(it.shape.width)
+			layout.shape.width = layout.parent.shape.width - arrays.sum(sibling_widths) or { 0 }
+			layout.shape.width -= layout.parent.spacing()
+			layout.shape.width -= layout.parent.shape.padding.width()
+			layout.shape.width += 1 // round-off?
 		}
-		if node.shape.max_width > 0 && node.shape.width > node.shape.max_width {
-			node.shape.width = node.shape.max_width
+		if layout.shape.max_width > 0 && layout.shape.width > layout.shape.max_width {
+			layout.shape.width = layout.shape.max_width
 		}
-		for mut child in node.children {
+		for mut child in layout.children {
 			if child.shape.sizing.width == .fill {
 				child.shape.width = remaining_width
 				if child.shape.min_width > 0 {
@@ -388,47 +391,47 @@ fn layout_fill_widths(mut node Layout) {
 		}
 	}
 
-	for mut child in node.children {
+	for mut child in layout.children {
 		layout_fill_widths(mut child)
 	}
 }
 
 // layout_fill_heights manages the growing and shrinking of layout vertically to
 // satisfy a layout constraint
-fn layout_fill_heights(mut node Layout) {
+fn layout_fill_heights(mut layout Layout) {
 	mut previous_remaining_height := f32(0)
-	mut remaining_height := node.shape.height - node.shape.padding.height()
+	mut remaining_height := layout.shape.height - layout.shape.padding.height()
 
-	if node.shape.axis == .top_to_bottom {
-		for mut child in node.children {
+	if layout.shape.axis == .top_to_bottom {
+		for mut child in layout.children {
 			remaining_height -= child.shape.height
 		}
 		// fence post spacing
-		remaining_height -= node.spacing()
+		remaining_height -= layout.spacing()
 
 		// divide up the remaining fill heights by first growing all the
 		// all the fill layouts to the same size (if possible) and then
 		// distributing the remaining height to evenly.
 		//
-		mut excluded := []u64{cap: node.children.len}
+		mut excluded := []u64{cap: layout.children.len}
 		for remaining_height > tolerance {
 			if f32_are_close(remaining_height, previous_remaining_height) {
 				break
 			}
 			previous_remaining_height = remaining_height
 			// Grow child elements
-			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
+			idx, len := find_first_idx_and_len(layout, fn [excluded] (n Layout) bool {
 				return n.shape.sizing.height == .fill && n.shape.uid !in excluded
 			})
 			if len == 0 {
 				break
 			}
 
-			mut smallest := node.children[idx].shape.height
+			mut smallest := layout.children[idx].shape.height
 			mut second_smallest := f32(max_u32)
 			mut height_to_add := remaining_height
 
-			for child in node.children {
+			for child in layout.children {
 				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
 					if child.shape.height < smallest {
 						second_smallest = smallest
@@ -443,7 +446,7 @@ fn layout_fill_heights(mut node Layout) {
 
 			height_to_add = f32_min(height_to_add, remaining_height / len)
 
-			for mut child in node.children {
+			for mut child in layout.children {
 				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
 					if child.shape.height == smallest {
 						previous_height := child.shape.height
@@ -471,18 +474,18 @@ fn layout_fill_heights(mut node Layout) {
 				break
 			}
 			previous_remaining_height = remaining_height
-			idx, len := find_first_idx_and_len(node, fn [excluded] (n Layout) bool {
+			idx, len := find_first_idx_and_len(layout, fn [excluded] (n Layout) bool {
 				return n.shape.uid !in excluded
 			})
 			if len == 0 {
 				break
 			}
 
-			mut largest := node.children[idx].shape.height
+			mut largest := layout.children[idx].shape.height
 			mut second_largest := f32(0)
 			mut height_to_add := remaining_height
 
-			for child in node.children {
+			for child in layout.children {
 				if child.shape.uid !in excluded {
 					if child.shape.height > largest {
 						second_largest = largest
@@ -497,7 +500,7 @@ fn layout_fill_heights(mut node Layout) {
 
 			height_to_add = f32_max(height_to_add, remaining_height / len)
 
-			for mut child in node.children {
+			for mut child in layout.children {
 				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
 					if child.shape.height == largest {
 						previous_height := child.shape.height
@@ -515,20 +518,20 @@ fn layout_fill_heights(mut node Layout) {
 				}
 			}
 		}
-	} else if node.shape.axis == .left_to_right {
-		if node.shape.id_scroll > 0 && node.shape.sizing.height == .fill
-			&& node.shape.scroll_mode != .horizontal_only
-			&& node.parent.shape.axis != .left_to_right {
-			sibling_heights := node.parent.children.filter(it.shape.uid != node.shape.uid).map(it.shape.height)
-			node.shape.height = node.parent.shape.height - arrays.sum(sibling_heights) or { 0 }
-			node.shape.height -= node.parent.spacing()
-			node.shape.height -= node.parent.shape.padding.height()
-			node.shape.height += 1 // round-off?
+	} else if layout.shape.axis == .left_to_right {
+		if layout.shape.id_scroll > 0 && layout.shape.sizing.height == .fill
+			&& layout.shape.scroll_mode != .horizontal_only
+			&& layout.parent.shape.axis != .left_to_right {
+			sibling_heights := layout.parent.children.filter(it.shape.uid != layout.shape.uid).map(it.shape.height)
+			layout.shape.height = layout.parent.shape.height - arrays.sum(sibling_heights) or { 0 }
+			layout.shape.height -= layout.parent.spacing()
+			layout.shape.height -= layout.parent.shape.padding.height()
+			layout.shape.height += 1 // round-off?
 		}
-		if node.shape.max_height > 0 && node.shape.height > node.shape.max_height {
-			node.shape.height = node.shape.max_height
+		if layout.shape.max_height > 0 && layout.shape.height > layout.shape.max_height {
+			layout.shape.height = layout.shape.max_height
 		}
-		for mut child in node.children {
+		for mut child in layout.children {
 			if child.shape.sizing.height == .fill {
 				child.shape.height = remaining_height
 				if child.shape.min_height > 0 {
@@ -541,7 +544,7 @@ fn layout_fill_heights(mut node Layout) {
 		}
 	}
 
-	for mut child in node.children {
+	for mut child in layout.children {
 		layout_fill_heights(mut child)
 	}
 }
@@ -549,27 +552,27 @@ fn layout_fill_heights(mut node Layout) {
 // layout_wrap_text is called after all widths in a Layout are determined.
 // Wrapping text changes the min-height of a Shape, which is why it is called
 // before computing Shape heights.
-fn layout_wrap_text(mut node Layout, mut w Window) {
-	text_wrap(mut node.shape, mut w)
-	for mut child in node.children {
+fn layout_wrap_text(mut layout Layout, mut w Window) {
+	text_wrap(mut layout.shape, mut w)
+	for mut child in layout.children {
 		layout_wrap_text(mut child, mut w)
 	}
 }
 
 // layout_adjust_scroll_offsets ensures scroll offsets are in range.
 // Scroll offsets can go out of range during window resizing.
-fn layout_adjust_scroll_offsets(mut node Layout, mut w Window) {
-	id_scroll := node.shape.id_scroll
+fn layout_adjust_scroll_offsets(mut layout Layout, mut w Window) {
+	id_scroll := layout.shape.id_scroll
 	if id_scroll > 0 {
-		max_offset_x := f32_min(0, node.shape.width - node.shape.padding.width() - content_width(node))
+		max_offset_x := f32_min(0, layout.shape.width - layout.shape.padding.width() - content_width(layout))
 		offset_x := w.view_state.offset_x_state[id_scroll]
 		w.view_state.offset_x_state[id_scroll] = clamp_f32(offset_x, max_offset_x, 0)
 
-		max_offset_y := f32_min(0, node.shape.height - node.shape.padding.height() - content_height(node))
+		max_offset_y := f32_min(0, layout.shape.height - layout.shape.padding.height() - content_height(layout))
 		offset_y := w.view_state.offset_y_state[id_scroll]
 		w.view_state.offset_y_state[id_scroll] = clamp_f32(offset_y, max_offset_y, 0)
 	}
-	for mut child in node.children {
+	for mut child in layout.children {
 		layout_adjust_scroll_offsets(mut child, mut w)
 	}
 }
@@ -577,28 +580,28 @@ fn layout_adjust_scroll_offsets(mut node Layout, mut w Window) {
 // layout_positions sets the positions of all layout in the Layout. It also
 // handles alignment. Alignment only augments x and y positions. Alignment
 // does not effect sizes.
-fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
-	node.shape.x += offset_x
-	node.shape.y += offset_y
+fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
+	layout.shape.x += offset_x
+	layout.shape.y += offset_y
 
-	axis := node.shape.axis
-	padding := node.shape.padding
-	spacing := node.shape.spacing
+	axis := layout.shape.axis
+	padding := layout.shape.padding
+	spacing := layout.shape.spacing
 
-	if node.shape.id_scroll > 0 {
-		node.shape.clip = true
+	if layout.shape.id_scroll > 0 {
+		layout.shape.clip = true
 	}
 
-	mut x := node.shape.x + padding.left
-	mut y := node.shape.y + padding.top
+	mut x := layout.shape.x + padding.left
+	mut y := layout.shape.y + padding.top
 
-	if node.shape.id_scroll > 0 {
-		x += w.view_state.offset_x_state[node.shape.id_scroll]
-		y += w.view_state.offset_y_state[node.shape.id_scroll]
+	if layout.shape.id_scroll > 0 {
+		x += w.view_state.offset_x_state[layout.shape.id_scroll]
+		y += w.view_state.offset_y_state[layout.shape.id_scroll]
 	}
 
 	// Eventually start/end with be culture dependent
-	h_align := match node.shape.h_align {
+	h_align := match layout.shape.h_align {
 		.start { HorizontalAlign.left }
 		.left { HorizontalAlign.left }
 		.center { HorizontalAlign.center }
@@ -610,9 +613,9 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 	match axis {
 		.left_to_right {
 			if h_align != .left {
-				mut remaining := node.shape.width - padding.width()
-				remaining -= node.spacing()
-				for child in node.children {
+				mut remaining := layout.shape.width - padding.width()
+				remaining -= layout.spacing()
+				for child in layout.children {
 					remaining -= child.shape.width
 				}
 				if h_align == .center {
@@ -622,13 +625,13 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 			}
 		}
 		.top_to_bottom {
-			if node.shape.v_align != .top {
-				mut remaining := node.shape.height - padding.height()
-				remaining -= node.spacing()
-				for child in node.children {
+			if layout.shape.v_align != .top {
+				mut remaining := layout.shape.height - padding.height()
+				remaining -= layout.spacing()
+				for child in layout.children {
 					remaining -= child.shape.height
 				}
-				if node.shape.v_align == .middle {
+				if layout.shape.v_align == .middle {
 					remaining /= 2
 				}
 				y += remaining
@@ -637,15 +640,15 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 		.none {}
 	}
 
-	for mut child in node.children {
+	for mut child in layout.children {
 		// alignment across the axis
 		mut x_align := f32(0)
 		mut y_align := f32(0)
 		match axis {
 			.left_to_right {
-				remaining := node.shape.height - child.shape.height - padding.height()
+				remaining := layout.shape.height - child.shape.height - padding.height()
 				if remaining > 0 {
-					match node.shape.v_align {
+					match layout.shape.v_align {
 						.top {}
 						.middle { y_align = remaining / 2 }
 						else { y_align = remaining }
@@ -653,7 +656,7 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 				}
 			}
 			.top_to_bottom {
-				remaining := node.shape.width - child.shape.width - padding.width()
+				remaining := layout.shape.width - child.shape.width - padding.width()
 				if remaining > 0 {
 					match h_align {
 						.left {}
@@ -679,27 +682,27 @@ fn layout_positions(mut node Layout, offset_x f32, offset_y f32, w &Window) {
 
 // layout_disables walks the Layout and disables any children
 // that have a disabled ancestor.
-fn layout_disables(mut node Layout, disabled bool) {
-	mut is_disabled := disabled || node.shape.disabled
-	node.shape.disabled = is_disabled
-	for mut child in node.children {
+fn layout_disables(mut layout Layout, disabled bool) {
+	mut is_disabled := disabled || layout.shape.disabled
+	layout.shape.disabled = is_disabled
+	for mut child in layout.children {
 		layout_disables(mut child, is_disabled)
 	}
 }
 
-// shape_clips are used for hit testing.
-fn layout_set_shape_clips(mut node Layout, clip DrawClip) {
+// layout_set_shape_clips - shape_clips are used for hit testing.
+fn layout_set_shape_clips(mut layout Layout, clip DrawClip) {
 	shape_clip := DrawClip{
-		x:      node.shape.x
-		y:      node.shape.y
-		width:  node.shape.width
-		height: node.shape.height
+		x:      layout.shape.x
+		y:      layout.shape.y
+		width:  layout.shape.width
+		height: layout.shape.height
 	}
 
-	node.shape.shape_clip = rect_intersection(shape_clip, clip) or { DrawClip{} }
+	layout.shape.shape_clip = rect_intersection(shape_clip, clip) or { DrawClip{} }
 
-	for mut child in node.children {
-		layout_set_shape_clips(mut child, node.shape.shape_clip)
+	for mut child in layout.children {
+		layout_set_shape_clips(mut child, layout.shape.shape_clip)
 	}
 }
 
@@ -708,34 +711,34 @@ fn layout_set_shape_clips(mut node Layout, clip DrawClip) {
 // known. In general, one should not alter sizes and positions.
 // (exception: scrollbars) It is the right place to handle
 // mouse-over events that typically change a color or opacity.
-fn layout_amend(mut node Layout, mut w Window) {
-	for mut child in node.children {
+fn layout_amend(mut layout Layout, mut w Window) {
+	for mut child in layout.children {
 		layout_amend(mut child, mut w)
 	}
-	if node.shape.amend_layout != unsafe { nil } {
-		node.shape.amend_layout(mut node, mut w)
+	if layout.shape.amend_layout != unsafe { nil } {
+		layout.shape.amend_layout(mut layout, mut w)
 	}
 }
 
 // layout_hover is a convenience callback for clients to do hover things.
 // Originally, it was done in layout_amend but it there's a fair bit of
 // boiler plate that this callback encapsulates.
-fn layout_hover(mut node Layout, mut w Window) {
+fn layout_hover(mut layout Layout, mut w Window) {
 	if w.mouse_is_locked() {
 		return
 	}
-	for mut child in node.children {
+	for mut child in layout.children {
 		layout_hover(mut child, mut w)
 	}
-	if node.shape.on_hover != unsafe { nil } {
-		if node.shape.disabled {
+	if layout.shape.on_hover != unsafe { nil } {
+		if layout.shape.disabled {
 			return
 		}
-		if w.dialog_cfg.visible && !node_in_dialog_layout(node) {
+		if w.dialog_cfg.visible && !node_in_dialog_layout(layout) {
 			return
 		}
 		ctx := w.context()
-		if node.shape.point_in_shape(ctx.mouse_pos_x, ctx.mouse_pos_y) {
+		if layout.shape.point_in_shape(ctx.mouse_pos_x, ctx.mouse_pos_y) {
 			// fake an event to get mouse button states.
 			mouse_button := match true {
 				ctx.mbtn_mask & 0x01 > 0 { MouseButton.left }
@@ -757,7 +760,7 @@ fn layout_hover(mut node Layout, mut w Window) {
 				window_width:  ctx.width
 				window_height: ctx.height
 			}
-			node.shape.on_hover(mut node, mut ev, mut w)
+			layout.shape.on_hover(mut layout, mut ev, mut w)
 		}
 	}
 }

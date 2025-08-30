@@ -221,12 +221,6 @@ fn event_fn(ev &gg.Event, mut w Window) {
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	// Order matters here. Clear the view state first
 	window.view_state.clear(mut window)
-
-	// Profiler showed that a significant amount of time was spent in
-	// array.push(). render_layout is recursive. Returning empty arrays
-	// and pushing into stack allocated render arrays added up. This was
-	// evident in the column-scroll.v example with 10K rows. Passing a
-	// reference to render array significantly reduced calls to array.push()
 	view := gen_view(window)
 	mut layout := window.compose_layout(view)
 

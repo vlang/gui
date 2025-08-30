@@ -3,43 +3,43 @@ module gui
 import arrays
 
 // find_shape walks the layout in depth first until predicate is satisfied.
-pub fn (node &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
-	for child in node.children {
+pub fn (layout &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
+	for child in layout.children {
 		if found := child.find_shape(predicate) {
 			return found
 		}
 	}
-	return if predicate(node) { node.shape } else { none }
+	return if predicate(layout) { layout.shape } else { none }
 }
 
 // find_node walks the layout in dept first until predicate is satisfied.
-pub fn (node &Layout) find_node(predicate fn (n Layout) bool) ?Layout {
-	for child in node.children {
+pub fn (layout &Layout) find_node(predicate fn (n Layout) bool) ?Layout {
+	for child in layout.children {
 		if found := child.find_node(predicate) {
 			return found
 		}
 	}
-	return if predicate(node) { node } else { none }
+	return if predicate(layout) { layout } else { none }
 }
 
 // previous_focusable gets the previous non-skippable focusable of the current focus.
 // Returns the first non-skippable focusable if focus is not set.
-pub fn (node &Layout) previous_focusable(mut w Window) ?Shape {
-	ids := node.get_focus_ids().reverse()
-	return node.find_next_focusable(ids, mut w)
+pub fn (layout &Layout) previous_focusable(mut w Window) ?Shape {
+	ids := layout.get_focus_ids().reverse()
+	return layout.find_next_focusable(ids, mut w)
 }
 
 // next_focusable gets the next non-skippable focusable of the current focus.
 // Returns the first non-skippable focusable if focus is not set.
-pub fn (node &Layout) next_focusable(mut w Window) ?Shape {
-	ids := node.get_focus_ids()
-	return node.find_next_focusable(ids, mut w)
+pub fn (layout &Layout) next_focusable(mut w Window) ?Shape {
+	ids := layout.get_focus_ids()
+	return layout.find_next_focusable(ids, mut w)
 }
 
 // next_focusable finds the next focusable that is not disabled.
 // If none are found it tries to find the first focusable that
 // is not disabled.
-fn (node &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
+fn (layout &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
 	// ids are sorted either ascending or descending.
 	if w.view_state.id_focus > 0 {
 		mut found := false
@@ -51,7 +51,7 @@ fn (node &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
 			if !found {
 				continue
 			}
-			shape := node.find_shape(fn [id] (n Layout) bool {
+			shape := layout.find_shape(fn [id] (n Layout) bool {
 				return n.shape.id_focus == id && !n.shape.disabled
 			}) or { continue }
 			return shape
@@ -60,7 +60,7 @@ fn (node &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
 	// did not find anything. Try to return the first non disabled.
 	mut first := ?Shape(none)
 	for id in ids {
-		first = node.find_shape(fn [id] (n Layout) bool {
+		first = layout.find_shape(fn [id] (n Layout) bool {
 			return n.shape.id_focus == id && !n.shape.disabled
 		}) or { continue }
 		break
@@ -69,22 +69,22 @@ fn (node &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
 }
 
 // get_focus_ids returns an ordered list of focus ids
-fn (node &Layout) get_focus_ids() []u32 {
+fn (layout &Layout) get_focus_ids() []u32 {
 	mut focus_ids := []u32{}
 	unsafe { focus_ids.flags.set(.noslices) }
-	if node.shape.id_focus > 0 && !node.shape.focus_skip {
-		focus_ids << node.shape.id_focus
+	if layout.shape.id_focus > 0 && !layout.shape.focus_skip {
+		focus_ids << layout.shape.id_focus
 	}
-	for child in node.children {
+	for child in layout.children {
 		focus_ids << child.get_focus_ids()
 	}
 	return arrays.distinct(focus_ids).sorted()
 }
 
 // spacing does the fence-post calculation for spacings
-fn (node &Layout) spacing() f32 {
-	count := node.children.count(!it.shape.float && it.shape.type != .none && !it.shape.over_draw)
-	return int_max(0, (count - 1)) * node.shape.spacing
+fn (layout &Layout) spacing() f32 {
+	count := layout.children.count(!it.shape.float && it.shape.type != .none && !it.shape.over_draw)
+	return int_max(0, (count - 1)) * layout.shape.spacing
 }
 
 // f32 values equal if within tolerance
