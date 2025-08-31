@@ -1,12 +1,15 @@
 module gui
 
 import arrays
+import rand
 
 // ContainerView members are arranged for packing to reduce memory footprint.
 
 @[heap]
 struct ContainerView implements View {
-pub:
+	uid       u64      = rand.u64()
+	view_type ViewType = .container
+mut:
 	id              string
 	name            string // used internally, read-only
 	text            string
@@ -49,12 +52,11 @@ pub:
 	invisible       bool
 	float           bool
 	over_draw       bool
-mut:
-	content    []View
-	tooltip    &TooltipCfg = unsafe { nil }
-	cfg        voidptr
-	shape_type ShapeType = .rectangle
-	axis       Axis
+	content         []View
+	tooltip         &TooltipCfg = unsafe { nil }
+	cfg             voidptr
+	shape_type      ShapeType = .rectangle
+	axis            Axis
 }
 
 fn (cv ContainerView) generate(mut _ Window) Layout {
@@ -272,56 +274,109 @@ fn container(cfg ContainerCfg) View {
 		else { cfg.content }
 	}
 
-	return ContainerView{
-		id:              cfg.id
-		id_focus:        cfg.id_focus
-		axis:            cfg.axis
-		name:            cfg.name
-		x:               cfg.x
-		y:               cfg.y
-		width:           cfg.width
-		min_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
-		max_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
-		height:          cfg.height
-		min_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
-		max_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
-		clip:            cfg.clip
-		color:           cfg.color
-		fill:            cfg.fill
-		h_align:         cfg.h_align
-		v_align:         cfg.v_align
-		padding:         cfg.padding
-		radius:          cfg.radius
-		sizing:          cfg.sizing
-		spacing:         cfg.spacing
-		disabled:        cfg.disabled
-		invisible:       cfg.invisible
-		text:            cfg.text
-		id_scroll:       cfg.id_scroll
-		over_draw:       cfg.over_draw
-		scroll_mode:     cfg.scroll_mode
-		scrollbar_cfg_x: &cfg.scrollbar_cfg_x
-		scrollbar_cfg_y: &cfg.scrollbar_cfg_y
-		float:           cfg.float
-		float_anchor:    cfg.float_anchor
-		float_tie_off:   cfg.float_tie_off
-		float_offset_x:  cfg.float_offset_x
-		float_offset_y:  cfg.float_offset_y
-		tooltip:         cfg.tooltip
-		cfg:             cfg.cfg
-		on_click:        if cfg.on_any_click != unsafe { nil } {
-			cfg.on_any_click
-		} else {
-			cfg.left_click()
-		}
-		on_char:         cfg.on_char
-		on_keydown:      cfg.on_keydown
-		on_mouse_move:   cfg.on_mouse_move
-		on_mouse_up:     cfg.on_mouse_up
-		on_hover:        cfg.on_hover
-		amend_layout:    cfg.amend_layout
-		content:         content
+	mut cv := view_pool.allocate_container_view()
+
+	cv.id = cfg.id
+	cv.id_focus = cfg.id_focus
+	cv.axis = cfg.axis
+	cv.name = cfg.name
+	cv.x = cfg.x
+	cv.y = cfg.y
+	cv.width = cfg.width
+	cv.min_width = if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
+	cv.max_width = if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
+	cv.height = cfg.height
+	cv.min_height = if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
+	cv.max_height = if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
+	cv.clip = cfg.clip
+	cv.color = cfg.color
+	cv.fill = cfg.fill
+	cv.h_align = cfg.h_align
+	cv.v_align = cfg.v_align
+	cv.padding = cfg.padding
+	cv.radius = cfg.radius
+	cv.sizing = cfg.sizing
+	cv.spacing = cfg.spacing
+	cv.disabled = cfg.disabled
+	cv.invisible = cfg.invisible
+	cv.text = cfg.text
+	cv.id_scroll = cfg.id_scroll
+	cv.over_draw = cfg.over_draw
+	cv.scroll_mode = cfg.scroll_mode
+	cv.scrollbar_cfg_x = &cfg.scrollbar_cfg_x
+	cv.scrollbar_cfg_y = &cfg.scrollbar_cfg_y
+	cv.float = cfg.float
+	cv.float_anchor = cfg.float_anchor
+	cv.float_tie_off = cfg.float_tie_off
+	cv.float_offset_x = cfg.float_offset_x
+	cv.float_offset_y = cfg.float_offset_y
+	cv.tooltip = cfg.tooltip
+	cv.cfg = cfg.cfg
+	cv.on_click = if cfg.on_any_click != unsafe { nil } {
+		cfg.on_any_click
+	} else {
+		cfg.left_click()
 	}
+	cv.on_char = cfg.on_char
+	cv.on_keydown = cfg.on_keydown
+	cv.on_mouse_move = cfg.on_mouse_move
+	cv.on_mouse_up = cfg.on_mouse_up
+	cv.on_hover = cfg.on_hover
+	cv.amend_layout = cfg.amend_layout
+	cv.content = content
+
+	return cv
+}
+
+pub fn (mut cv ContainerView) reset_fields() {
+	// uid and view_type are not changed or pool logic will break
+	cv.id = ''
+	cv.name = ''
+	cv.text = ''
+	cv.scrollbar_cfg_x = unsafe { nil }
+	cv.scrollbar_cfg_y = unsafe { nil }
+	cv.color = gui_theme.container_style.color
+	cv.padding = gui_theme.container_style.padding
+	cv.sizing = Sizing{}
+	cv.x = 0.0
+	cv.y = 0.0
+	cv.width = 0.0
+	cv.min_width = 0.0
+	cv.max_width = 0.0
+	cv.height = 0.0
+	cv.min_height = 0.0
+	cv.max_height = 0.0
+	cv.radius = gui_theme.container_style.radius
+	cv.spacing = gui_theme.container_style.spacing
+	cv.float_offset_x = 0.0
+	cv.float_offset_y = 0.0
+	cv.id_focus = 0
+	cv.id_scroll = 0
+	cv.on_char = unsafe { nil }
+	cv.on_click = unsafe { nil }
+	cv.on_keydown = unsafe { nil }
+	cv.on_mouse_down = unsafe { nil }
+	cv.on_mouse_move = unsafe { nil }
+	cv.on_mouse_up = unsafe { nil }
+	cv.amend_layout = unsafe { nil }
+	cv.on_hover = unsafe { nil }
+	cv.h_align = .start
+	cv.v_align = .top
+	cv.scroll_mode = .both
+	cv.float_anchor = .top_left
+	cv.float_tie_off = .top_left
+	cv.fill = gui_theme.container_style.fill
+	cv.clip = false
+	cv.focus_skip = false
+	cv.disabled = false
+	cv.invisible = false
+	cv.float = false
+	cv.over_draw = false
+	cv.content = []View{}
+	cv.tooltip = unsafe { nil }
+	cv.cfg = unsafe { nil }
+	cv.shape_type = .rectangle
+	cv.axis = .none
 }
 
 // --- Common layout containers ---

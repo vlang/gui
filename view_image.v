@@ -1,6 +1,10 @@
 module gui
 
+import rand
+
 struct ImageView implements View {
+	uid       u64      = rand.u64()
+	view_type ViewType = .image
 pub:
 	id         string
 	file_name  string

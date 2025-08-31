@@ -2,8 +2,11 @@ module gui
 
 import datatypes
 import os
+import rand
 
 struct RtfView implements View {
+	uid       u64      = rand.u64()
+	view_type ViewType = .rtf
 pub:
 	id         string
 	cfg        &RtfCfg = unsafe { nil }

@@ -112,6 +112,9 @@ pub fn window(cfg &WindowCfg) &Window {
 		sample_count:                 int(cfg.samples)
 	)
 	initialize_fonts()
+	at_exit(fn () {
+		println(view_pool.stats())
+	}) or {}
 	return window
 }
 
@@ -246,12 +249,13 @@ pub fn (mut window Window) update_window() {
 
 	window.lock()
 
-	view := window.view_generator(window)
+	mut view := window.view_generator(window)
 	window.layout = window.compose_layout(view)
 	window.renderers.clear()
 	clip_rect := window.window_rect()
 	background := window.color_background()
 	render_layout(mut window.layout, background, clip_rect, mut window)
+	view_pool.reclaim_view(mut view)
 
 	window.unlock()
 	window.ui.refresh_ui()

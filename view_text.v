@@ -1,8 +1,10 @@
 module gui
 
 import math
+import rand
 
 // TextMode controls how a text view renders text.
+
 pub enum TextMode {
 	single_line      // one line only. Restricts typing to visible range
 	multiline        // wraps `\n`s only
@@ -13,58 +15,66 @@ pub enum TextMode {
 // Text is an internal structure used to describe a text view
 // Members are arranged for packing to reduce memory footprint.
 struct TextView implements View {
-	cfg    &TextCfg
-	sizing Sizing
+	uid       u64      = rand.u64()
+	view_type ViewType = .text
 mut:
+	cfg     &TextCfg = unsafe { nil }
+	sizing  Sizing
 	content []View // not used
 }
 
-fn (t &TextView) generate(mut window Window) Layout {
-	if t.cfg.invisible {
+fn (mut tv TextView) reset_fields() {
+	tv.cfg = unsafe { nil }
+	tv.sizing = Sizing{}
+	tv.content = []View{}
+}
+
+fn (tv &TextView) generate(mut window Window) Layout {
+	if tv.cfg.invisible {
 		return Layout{}
 	}
-	input_state := match window.is_focus(t.cfg.id_focus) {
-		true { window.view_state.input_state[t.cfg.id_focus] }
+	input_state := match window.is_focus(tv.cfg.id_focus) {
+		true { window.view_state.input_state[tv.cfg.id_focus] }
 		else { InputState{} }
 	}
-	lines := match t.cfg.mode == .multiline {
-		true { wrap_simple(t.cfg.text, t.cfg.tab_size) }
-		else { [t.cfg.text] } // dynamic wrapping handled in the layout pipeline
+	lines := match tv.cfg.mode == .multiline {
+		true { wrap_simple(tv.cfg.text, tv.cfg.tab_size) }
+		else { [tv.cfg.text] } // dynamic wrapping handled in the layout pipeline
 	}
 	mut layout := Layout{
 		shape: &Shape{
 			name:                'text'
 			type:                .text
-			id_focus:            t.cfg.id_focus
-			cfg:                 &t.cfg
-			clip:                t.cfg.clip
-			focus_skip:          t.cfg.focus_skip
-			disabled:            t.cfg.disabled
-			min_width:           t.cfg.min_width
-			sizing:              t.sizing
-			text:                t.cfg.text
-			text_is_password:    t.cfg.is_password
-			text_is_placeholder: t.cfg.placeholder_active
+			id_focus:            tv.cfg.id_focus
+			cfg:                 &tv.cfg
+			clip:                tv.cfg.clip
+			focus_skip:          tv.cfg.focus_skip
+			disabled:            tv.cfg.disabled
+			min_width:           tv.cfg.min_width
+			sizing:              tv.sizing
+			text:                tv.cfg.text
+			text_is_password:    tv.cfg.is_password
+			text_is_placeholder: tv.cfg.placeholder_active
 			text_lines:          lines
-			text_mode:           t.cfg.mode
-			text_style:          t.cfg.text_style
+			text_mode:           tv.cfg.mode
+			text_style:          tv.cfg.text_style
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
-			text_tab_size:       t.cfg.tab_size
-			on_char_shape:       t.cfg.char_shape
-			on_keydown_shape:    t.cfg.keydown_shape
-			on_mouse_down_shape: t.cfg.mouse_down_shape
-			on_mouse_move_shape: t.cfg.mouse_move_shape
-			on_mouse_up_shape:   t.cfg.mouse_up_shape
+			text_tab_size:       tv.cfg.tab_size
+			on_char_shape:       tv.cfg.char_shape
+			on_keydown_shape:    tv.cfg.keydown_shape
+			on_mouse_down_shape: tv.cfg.mouse_down_shape
+			on_mouse_move_shape: tv.cfg.mouse_move_shape
+			on_mouse_up_shape:   tv.cfg.mouse_up_shape
 		}
 	}
 	layout.shape.width = text_width(layout.shape, mut window)
 	layout.shape.height = text_height(layout.shape)
-	if t.cfg.mode == .single_line || layout.shape.sizing.width == .fixed {
+	if tv.cfg.mode == .single_line || layout.shape.sizing.width == .fixed {
 		layout.shape.min_width = f32_max(layout.shape.width, layout.shape.min_width)
 		layout.shape.width = layout.shape.min_width
 	}
-	if t.cfg.mode == .single_line || layout.shape.sizing.height == .fixed {
+	if tv.cfg.mode == .single_line || layout.shape.sizing.height == .fixed {
 		layout.shape.min_height = f32_max(layout.shape.height, layout.shape.min_height)
 		layout.shape.height = layout.shape.height
 	}
@@ -72,7 +82,6 @@ fn (t &TextView) generate(mut window Window) Layout {
 }
 
 // TextCfg configures a [text](#text) view
-// - [TextMode](#TextMode) controls how text is wrapped.
 @[heap]
 pub struct TextCfg {
 pub:
@@ -90,21 +99,14 @@ pub:
 	placeholder_active bool
 }
 
-fn (t &TextCfg) free() {
-	unsafe {
-		t.text.free()
-		t.text_style.free()
-	}
-}
-
 // text is a general purpose text renderer. Use it for labels or larger
 // blocks of multiline text. Giving it an id_focus allows mark and copy
 // operations. See [TextCfg](#TextCfg)
 pub fn text(cfg TextCfg) View {
-	return TextView{
-		cfg:    &cfg
-		sizing: if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
-	}
+	mut tv := view_pool.allocate_text_view()
+	tv.cfg = &cfg
+	tv.sizing = if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
+	return tv
 }
 
 fn (cfg &TextCfg) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {

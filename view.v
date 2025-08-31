@@ -11,9 +11,18 @@ module gui
 //
 // Renderers are draw instructions.
 pub interface View {
+	uid       u64
+	view_type ViewType
 	generate(mut window Window) Layout
 mut:
 	content []View
+}
+
+enum ViewType {
+	container
+	text
+	rtf
+	image
 }
 
 // generate_layout builds a Layout from a View.
