@@ -116,9 +116,9 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 				e.is_handled = true
 			}
 		}
-		on_hover: fn (mut node Layout, mut e Event, mut w Window) {
+		on_hover: fn (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
-			for mut child in node.children {
+			for mut child in layout.children {
 				child.shape.color = theme().color_hover
 			}
 		}

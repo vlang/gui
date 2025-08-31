@@ -71,24 +71,24 @@ fn main_view(window &gui.Window) gui.View {
 
 fn split_click(cfg &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 	w.mouse_lock(gui.MouseLockCfg{
-		mouse_move: fn (node &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			// The node here is first node in the view. This is because
+		mouse_move: fn (layout &gui.Layout, mut e gui.Event, mut w gui.Window) {
+			// The layout here is first layout in the view. This is because
 			// the handler here has nothing to do with button per se.
 			// In this case, the button is not even needed after the
 			// initial click event. The panel that needs to be resized
 			// is the 'A' panel. The button and 'B' panel require no
 			// additional work because the layout engine will position
 			// and size them for you.
-			if a_node := node.find_layout(fn (n gui.Layout) bool {
+			if a_layout := layout.find_layout(fn (n gui.Layout) bool {
 				return n.shape.id == 'A'
 			})
 			{
 				mut app := w.state[SplitPanelApp]()
 				width, _ := w.window_size()
-				app.a_width = gui.clamp_f32(a_node.shape.width + e.mouse_dx, 20, width - 50)
+				app.a_width = gui.clamp_f32(a_layout.shape.width + e.mouse_dx, 20, width - 50)
 			}
 		}
-		mouse_up:   fn (node &gui.Layout, mut e gui.Event, mut w gui.Window) {
+		mouse_up:   fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 			w.mouse_unlock()
 		}
 	})

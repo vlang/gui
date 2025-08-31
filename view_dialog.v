@@ -241,11 +241,11 @@ fn dialog_key_down(_ voidptr, mut e Event, mut w Window) {
 	}
 }
 
-// node_in_dialog_layout is used in views like button watch mouse_moves
+// layout_in_dialog_layout is used in views like button watch mouse_moves
 // It tests if the given node is a child of the dialog layout.
-fn node_in_dialog_layout(node &Layout) bool {
+fn layout_in_dialog_layout(layout &Layout) bool {
 	mut in_dialog := false
-	mut parent := node.parent
+	mut parent := layout.parent
 	for {
 		if parent == unsafe { nil } {
 			break

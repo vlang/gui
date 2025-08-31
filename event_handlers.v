@@ -188,7 +188,7 @@ fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 			}
 		}
 		if layout.shape.on_mouse_up != unsafe { nil } {
-			// make up handler mouse coordinates relative to node.shape
+			// make up handler mouse coordinates relative to layout.shape
 			mut ev := event_relative_to(layout.shape, e)
 			layout.shape.on_mouse_up(layout.shape.cfg, mut ev, mut w)
 			if ev.is_handled {

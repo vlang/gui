@@ -98,10 +98,10 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 						content:  [
 							text(text: cell.value, text_style: cell_text_style),
 						]
-						on_hover: fn [cell] (mut node Layout, mut e Event, mut w Window) {
+						on_hover: fn [cell] (mut layout Layout, mut e Event, mut w Window) {
 							if cell.on_click != unsafe { nil } {
 								w.set_mouse_cursor_pointing_hand()
-								node.shape.color = gui_theme.color_hover
+								layout.shape.color = gui_theme.color_hover
 							}
 						}
 					),

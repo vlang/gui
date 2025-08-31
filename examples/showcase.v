@@ -170,9 +170,9 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 			app.selected_tab = tab_item
 			w.update_view(main_view)
 		}
-		on_hover:  fn (mut node gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			node.shape.fill = true
-			node.shape.color = gui.theme().color_hover
+		on_hover:  fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			layout.shape.fill = true
+			layout.shape.color = gui.theme().color_hover
 			w.set_mouse_cursor_pointing_hand()
 		}
 	)

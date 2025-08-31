@@ -734,7 +734,7 @@ fn layout_hover(mut layout Layout, mut w Window) {
 		if layout.shape.disabled {
 			return
 		}
-		if w.dialog_cfg.visible && !node_in_dialog_layout(layout) {
+		if w.dialog_cfg.visible && !layout_in_dialog_layout(layout) {
 			return
 		}
 		ctx := w.context()
