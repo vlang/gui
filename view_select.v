@@ -195,9 +195,9 @@ fn option_view(cfg SelectCfg, option string) View {
 				e.is_handled = true
 			}
 		}
-		on_hover: fn [color_select] (mut node Layout, mut e Event, mut w Window) {
+		on_hover: fn [color_select] (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
-			node.shape.color = color_select
+			layout.shape.color = color_select
 		}
 	)
 }
@@ -244,12 +244,12 @@ fn sub_header(cfg SelectCfg, option string) View {
 	)
 }
 
-fn (cfg &SelectCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.shape.disabled {
+fn (cfg &SelectCfg) amend_layout(mut layout Layout, mut w Window) {
+	if layout.shape.disabled {
 		return
 	}
-	if w.is_focus(node.shape.id_focus) {
-		node.children[0].shape.color = cfg.color_focus
-		node.shape.color = cfg.color_border_focus
+	if w.is_focus(layout.shape.id_focus) {
+		layout.children[0].shape.color = cfg.color_focus
+		layout.shape.color = cfg.color_border_focus
 	}
 }

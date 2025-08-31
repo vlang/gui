@@ -80,19 +80,19 @@ fn (cfg &RadioCfg) on_char_button(_ &RadioCfg, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &RadioCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.shape.disabled || cfg.on_click == unsafe { nil } {
+fn (cfg &RadioCfg) amend_layout(mut layout Layout, mut w Window) {
+	if layout.shape.disabled || cfg.on_click == unsafe { nil } {
 		return
 	}
-	if w.is_focus(node.shape.id_focus) {
-		node.children[0].shape.color = cfg.color_focus
+	if w.is_focus(layout.shape.id_focus) {
+		layout.children[0].shape.color = cfg.color_focus
 	}
 }
 
-fn (cfg &RadioCfg) on_hover(mut node Layout, mut _ Event, mut w Window) {
+fn (cfg &RadioCfg) on_hover(mut layout Layout, mut _ Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
-	if !w.is_focus(node.shape.id_focus) {
-		node.children[0].shape.color = cfg.color_hover
-		node.children[0].shape.fill = true
+	if !w.is_focus(layout.shape.id_focus) {
+		layout.children[0].shape.color = cfg.color_hover
+		layout.children[0].shape.fill = true
 	}
 }

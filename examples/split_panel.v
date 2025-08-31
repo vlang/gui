@@ -79,7 +79,7 @@ fn split_click(cfg &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 			// is the 'A' panel. The button and 'B' panel require no
 			// additional work because the layout engine will position
 			// and size them for you.
-			if a_node := node.find_node(fn (n gui.Layout) bool {
+			if a_node := node.find_layout(fn (n gui.Layout) bool {
 				return n.shape.id == 'A'
 			})
 			{

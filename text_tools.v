@@ -27,7 +27,7 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 
 }
 
 @[manualfree]
-fn text_width(shape Shape, mut window Window) f32 {
+fn text_width(shape &Shape, mut window Window) f32 {
 	mut max_width := f32(0)
 	mut text_cfg_set := false
 	htx := fnv1a.sum32_struct(shape.text_style).str()
@@ -51,13 +51,14 @@ fn text_width(shape Shape, mut window Window) f32 {
 	return max_width
 }
 
-fn text_height(shape Shape) f32 {
+@[inline]
+fn text_height(shape &Shape) f32 {
 	lh := line_height(shape)
 	return lh * shape.text_lines.len
 }
 
 @[inline]
-fn line_height(shape Shape) f32 {
+fn line_height(shape &Shape) f32 {
 	return shape.text_style.size + shape.text_style.line_spacing
 }
 

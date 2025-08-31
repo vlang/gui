@@ -81,10 +81,10 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 								e.is_handled = true
 							}
 						}
-						on_hover: fn (mut node Layout, mut e Event, mut w Window) {
+						on_hover: fn (mut layout Layout, mut e Event, mut w Window) {
 							w.set_mouse_cursor_pointing_hand()
-							node.shape.fill = true
-							node.shape.color = gui_theme.color_hover
+							layout.shape.fill = true
+							layout.shape.color = gui_theme.color_hover
 							e.is_handled = true
 						}
 					),

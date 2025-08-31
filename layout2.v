@@ -12,10 +12,10 @@ pub fn (layout &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
 	return if predicate(layout) { layout.shape } else { none }
 }
 
-// find_node walks the layout in dept first until predicate is satisfied.
-pub fn (layout &Layout) find_node(predicate fn (n Layout) bool) ?Layout {
+// find_layout walks the layout in dept first until predicate is satisfied.
+pub fn (layout &Layout) find_layout(predicate fn (n Layout) bool) ?Layout {
 	for child in layout.children {
-		if found := child.find_node(predicate) {
+		if found := child.find_layout(predicate) {
 			return found
 		}
 	}
@@ -109,12 +109,12 @@ pub fn clamp_f32(x f32, a f32, b f32) f32 {
 	return x
 }
 
-fn content_width(node &Layout) f32 {
+fn content_width(layout &Layout) f32 {
 	mut width := f32(0)
-	if node.shape.axis == .left_to_right {
+	if layout.shape.axis == .left_to_right {
 		// along the axis add up all children heights plus spacing
-		width += node.spacing()
-		for child in node.children {
+		width += layout.spacing()
+		for child in layout.children {
 			if child.shape.over_draw {
 				continue
 			}
@@ -122,7 +122,7 @@ fn content_width(node &Layout) f32 {
 		}
 	} else {
 		// across the axis need only the height of largest child
-		for child in node.children {
+		for child in layout.children {
 			if child.shape.over_draw {
 				continue
 			}
@@ -132,12 +132,12 @@ fn content_width(node &Layout) f32 {
 	return width
 }
 
-fn content_height(node &Layout) f32 {
+fn content_height(layout &Layout) f32 {
 	mut height := f32(0)
-	if node.shape.axis == .top_to_bottom {
+	if layout.shape.axis == .top_to_bottom {
 		// along the axis add up all children heights plus spacing
-		height += node.spacing()
-		for child in node.children {
+		height += layout.spacing()
+		for child in layout.children {
 			if child.shape.over_draw {
 				continue
 			}
@@ -145,7 +145,7 @@ fn content_height(node &Layout) f32 {
 		}
 	} else {
 		// across the axis need only the height of largest child
-		for child in node.children {
+		for child in layout.children {
 			if child.shape.over_draw {
 				continue
 			}

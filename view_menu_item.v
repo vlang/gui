@@ -172,12 +172,12 @@ fn (menubar_cfg MenubarCfg) menu_item_click(cfg &MenuItemCfg, mut e Event, mut w
 	}
 }
 
-fn (cfg &MenubarCfg) on_hover_item(mut node Layout, mut _ Event, mut w Window) {
+fn (cfg &MenubarCfg) on_hover_item(mut layout Layout, mut _ Event, mut w Window) {
 	// Mouse hover logic is covered here. Once the **menubar** gains focus,
 	// mouse-overs can change the selected menu-item. Note: Selection
 	// incicates highlighting, not focus. This is key to understanding menus.
-	if node.shape.id.len == 0 || node.shape.disabled || !w.is_focus(cfg.id_focus) {
+	if layout.shape.id.len == 0 || layout.shape.disabled || !w.is_focus(cfg.id_focus) {
 		return
 	}
-	w.view_state.menu_state[cfg.id_focus] = node.shape.id
+	w.view_state.menu_state[cfg.id_focus] = layout.shape.id
 }

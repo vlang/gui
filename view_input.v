@@ -370,21 +370,21 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 	return memento.text
 }
 
-fn (cfg &InputCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.shape.disabled {
+fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
+	if layout.shape.disabled {
 		return
 	}
 
-	node.shape.on_char_shape = cfg.on_char_shape
+	layout.shape.on_char_shape = cfg.on_char_shape
 
-	if node.shape.id_focus > 0 && node.shape.id_focus == w.id_focus() {
-		node.shape.color = cfg.color_border_focus
+	if layout.shape.id_focus > 0 && layout.shape.id_focus == w.id_focus() {
+		layout.shape.color = cfg.color_border_focus
 	}
 }
 
-fn (cfg &InputCfg) hover(mut node Layout, mut e Event, mut w Window) {
-	if !w.is_focus(node.shape.id_focus) {
-		node.children[0].shape.color = cfg.color_hover
+fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
+	if !w.is_focus(layout.shape.id_focus) {
+		layout.children[0].shape.color = cfg.color_hover
 	}
 }
 

@@ -111,7 +111,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 	return content
 }
 
-fn (cfg &MenubarCfg) amend_layout_menubar(mut node Layout, mut w Window) {
+fn (cfg &MenubarCfg) amend_layout_menubar(mut layout Layout, mut w Window) {
 	// If the menubar does not have focus, it can't have a selected menu-item.
 	if !w.is_focus(cfg.id_focus) {
 		w.view_state.menu_state[cfg.id_focus] = ''
@@ -119,7 +119,7 @@ fn (cfg &MenubarCfg) amend_layout_menubar(mut node Layout, mut w Window) {
 	}
 }
 
-fn (cfg &MenubarCfg) on_hover_submenu(mut node Layout, mut _ Event, mut w Window) {
+fn (cfg &MenubarCfg) on_hover_submenu(mut layout Layout, mut _ Event, mut w Window) {
 	// When the mouse moves outside a submenu it should unselect the
 	// item in the submenu. This is a subtle behavior in mouse/menu
 	// interactions I never noticed until designing this. To unselect
@@ -131,24 +131,24 @@ fn (cfg &MenubarCfg) on_hover_submenu(mut node Layout, mut _ Event, mut w Window
 	// This is hard to follow because there are two trees involved. The
 	// MenubarCfg tree and the Layout tree.
 	id_selected := w.view_state.menu_state[cfg.id_focus]
-	has_selected := descendant_has_id(node, id_selected)
+	has_selected := descendant_has_id(layout, id_selected)
 	if has_selected {
 		ctx := w.context()
-		if !node.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+		if !layout.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
 			if mi_cfg := find_menu_item_cfg(cfg.items, id_selected) {
 				if mi_cfg.submenu.len == 0 {
-					w.view_state.menu_state[cfg.id_focus] = node.shape.id
+					w.view_state.menu_state[cfg.id_focus] = layout.shape.id
 				}
 			}
 		}
 	}
 }
 
-fn descendant_has_id(node Layout, id string) bool {
-	if node.shape.id == id {
+fn descendant_has_id(layout &Layout, id string) bool {
+	if layout.shape.id == id {
 		return true
 	}
-	for child in node.children {
+	for child in layout.children {
 		if descendant_has_id(child, id) {
 			return true
 		}

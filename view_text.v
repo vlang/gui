@@ -31,7 +31,7 @@ fn (t &TextView) generate(mut window Window) Layout {
 		true { wrap_simple(t.cfg.text, t.cfg.tab_size) }
 		else { [t.cfg.text] } // dynamic wrapping handled in the layout pipeline
 	}
-	mut shape_tree := Layout{
+	mut layout := Layout{
 		shape: &Shape{
 			name:                'text'
 			type:                .text
@@ -58,17 +58,17 @@ fn (t &TextView) generate(mut window Window) Layout {
 			on_mouse_up_shape:   t.cfg.mouse_up_shape
 		}
 	}
-	shape_tree.shape.width = text_width(shape_tree.shape, mut window)
-	shape_tree.shape.height = text_height(shape_tree.shape)
-	if t.cfg.mode == .single_line || shape_tree.shape.sizing.width == .fixed {
-		shape_tree.shape.min_width = f32_max(shape_tree.shape.width, shape_tree.shape.min_width)
-		shape_tree.shape.width = shape_tree.shape.min_width
+	layout.shape.width = text_width(layout.shape, mut window)
+	layout.shape.height = text_height(layout.shape)
+	if t.cfg.mode == .single_line || layout.shape.sizing.width == .fixed {
+		layout.shape.min_width = f32_max(layout.shape.width, layout.shape.min_width)
+		layout.shape.width = layout.shape.min_width
 	}
-	if t.cfg.mode == .single_line || shape_tree.shape.sizing.height == .fixed {
-		shape_tree.shape.min_height = f32_max(shape_tree.shape.height, shape_tree.shape.min_height)
-		shape_tree.shape.height = shape_tree.shape.height
+	if t.cfg.mode == .single_line || layout.shape.sizing.height == .fixed {
+		layout.shape.min_height = f32_max(layout.shape.height, layout.shape.min_height)
+		layout.shape.height = layout.shape.height
 	}
-	return shape_tree
+	return layout
 }
 
 // TextCfg configures a [text](#text) view

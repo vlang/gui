@@ -46,7 +46,7 @@ fn from_gg_event(e &gg.Event) &Event {
 	}
 }
 
-fn event_relative_to(shape Shape, e &Event) &Event {
+fn event_relative_to(shape &Shape, e &Event) &Event {
 	return &Event{
 		...e
 		touches: e.touches // runtime mem error otherwise

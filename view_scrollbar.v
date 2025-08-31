@@ -137,9 +137,9 @@ fn (cfg ScrollbarCfg) gutter_click(_ &ContainerCfg, mut e Event, mut w Window) {
 }
 
 // pass cfg by value more reliable here
-fn (cfg ScrollbarCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
+fn (cfg ScrollbarCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	extend := 10 // give some cushion on the ends of the scroll range
-	if n := find_node_by_id_scroll(node, cfg.id_track) {
+	if n := find_layout_by_id_scroll(layout, cfg.id_track) {
 		match cfg.orientation == .horizontal {
 			true {
 				if e.mouse_x >= (n.shape.x - extend)
@@ -160,118 +160,118 @@ fn (cfg ScrollbarCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
 }
 
 // pass cfg by value more reliable here
-fn (cfg ScrollbarCfg) mouse_up(node &Layout, mut e Event, mut w Window) {
+fn (cfg ScrollbarCfg) mouse_up(_ &Layout, mut e Event, mut w Window) {
 	w.mouse_unlock()
 }
 
 // Don't know what the sizes and positions of the scrollbar elements should
 // be until after the layout is almost done requiring manual layout here.
 // Scrollbars are hard.
-fn (cfg &ScrollbarCfg) amend_layout(mut node Layout, mut w Window) {
+fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 	thumb := 0
 	min_thumb_size := 20
-	mut parent := node.parent
+	mut parent := layout.parent
 
 	match cfg.orientation == .horizontal {
 		true {
-			node.shape.x = parent.shape.x + parent.shape.padding.left
-			node.shape.y = parent.shape.y + parent.shape.height - cfg.size + cfg.offset_y
-			node.shape.width = parent.shape.width - parent.shape.padding.width()
-			node.shape.height = cfg.size
+			layout.shape.x = parent.shape.x + parent.shape.padding.left
+			layout.shape.y = parent.shape.y + parent.shape.height - cfg.size + cfg.offset_y
+			layout.shape.width = parent.shape.width - parent.shape.padding.width()
+			layout.shape.height = cfg.size
 
 			total_width := content_width(parent)
-			t_width := node.shape.width * (node.shape.width / total_width)
-			thumb_width := clamp_f32(t_width, min_thumb_size, node.shape.width)
+			t_width := layout.shape.width * (layout.shape.width / total_width)
+			thumb_width := clamp_f32(t_width, min_thumb_size, layout.shape.width)
 
-			available_width := node.shape.width - thumb_width
+			available_width := layout.shape.width - thumb_width
 			scroll_offset := -w.view_state.offset_x_state[cfg.id_track]
 			offset := if available_width == 0 {
 				0
 			} else {
-				clamp_f32((scroll_offset / (total_width - node.shape.width)) * available_width,
+				clamp_f32((scroll_offset / (total_width - layout.shape.width)) * available_width,
 					0, available_width)
 			}
-			node.children[thumb].shape.x = node.shape.x + offset
-			node.children[thumb].shape.y = node.shape.y
-			node.children[thumb].shape.width = thumb_width
-			node.children[thumb].shape.height = cfg.size
+			layout.children[thumb].shape.x = layout.shape.x + offset
+			layout.children[thumb].shape.y = layout.shape.y
+			layout.children[thumb].shape.width = thumb_width
+			layout.children[thumb].shape.height = cfg.size
 
-			if (cfg.overflow != .visible && node.shape.width - thumb_width < 0.1)
+			if (cfg.overflow != .visible && layout.shape.width - thumb_width < 0.1)
 				|| cfg.overflow == .on_hover {
-				node.children[thumb].shape.color = color_transparent
+				layout.children[thumb].shape.color = color_transparent
 			}
 		}
 		else {
-			node.shape.x = parent.shape.x + parent.shape.width - cfg.size + cfg.offset_x
-			node.shape.y = parent.shape.y + parent.shape.padding.top
-			node.shape.width = cfg.size
-			node.shape.height = parent.shape.height - parent.shape.padding.height()
+			layout.shape.x = parent.shape.x + parent.shape.width - cfg.size + cfg.offset_x
+			layout.shape.y = parent.shape.y + parent.shape.padding.top
+			layout.shape.width = cfg.size
+			layout.shape.height = parent.shape.height - parent.shape.padding.height()
 
 			total_height := content_height(parent)
-			t_height := node.shape.height * (node.shape.height / total_height)
-			thumb_height := clamp_f32(t_height, min_thumb_size, node.shape.height)
+			t_height := layout.shape.height * (layout.shape.height / total_height)
+			thumb_height := clamp_f32(t_height, min_thumb_size, layout.shape.height)
 
-			available_height := node.shape.height - thumb_height
+			available_height := layout.shape.height - thumb_height
 			scroll_offset := -w.view_state.offset_y_state[cfg.id_track]
 			offset := if available_height == 0 {
 				0
 			} else {
-				clamp_f32((scroll_offset / (total_height - node.shape.height)) * available_height,
+				clamp_f32((scroll_offset / (total_height - layout.shape.height)) * available_height,
 					0, available_height)
 			}
-			node.children[thumb].shape.x = node.shape.x
-			node.children[thumb].shape.y = node.shape.y + offset
-			node.children[thumb].shape.height = thumb_height
-			node.children[thumb].shape.width = cfg.size
+			layout.children[thumb].shape.x = layout.shape.x
+			layout.children[thumb].shape.y = layout.shape.y + offset
+			layout.children[thumb].shape.height = thumb_height
+			layout.children[thumb].shape.width = cfg.size
 
-			if (cfg.overflow != .visible && node.shape.height - thumb_height < 0.1)
+			if (cfg.overflow != .visible && layout.shape.height - thumb_height < 0.1)
 				|| cfg.overflow == .on_hover {
-				node.children[thumb].shape.color = color_transparent
+				layout.children[thumb].shape.color = color_transparent
 			}
 		}
 	}
 }
 
-fn (cfg &ScrollbarCfg) on_hover(mut node Layout, mut _ Event, mut w Window) {
+fn (cfg &ScrollbarCfg) on_hover(mut layout Layout, mut _ Event, mut w Window) {
 	// on hover dim color of thumb
 	thumb := 0
-	if node.children[thumb].shape.color != color_transparent || cfg.overflow == .on_hover {
-		node.children[thumb].shape.color = gui_theme.button_style.color_hover
+	if layout.children[thumb].shape.color != color_transparent || cfg.overflow == .on_hover {
+		layout.children[thumb].shape.color = gui_theme.button_style.color_hover
 	}
 }
 
-fn find_node_by_id_scroll(node Layout, id_scroll u32) ?Layout {
-	if node.shape.id_scroll == id_scroll {
-		return node
+fn find_layout_by_id_scroll(layout &Layout, id_scroll u32) ?Layout {
+	if layout.shape.id_scroll == id_scroll {
+		return *layout
 	}
-	for child in node.children {
-		if n := find_node_by_id_scroll(child, id_scroll) {
-			return n
+	for child in layout.children {
+		if ly := find_layout_by_id_scroll(child, id_scroll) {
+			return ly
 		}
 	}
 	return none
 }
 
-fn offset_mouse_change_x(node Layout, mouse_x f32, id_scroll u32, w &Window) f32 {
-	total_width := content_width(node)
-	shape_width := node.shape.width - node.shape.padding.width()
+fn offset_mouse_change_x(layout &Layout, mouse_x f32, id_scroll u32, w &Window) f32 {
+	total_width := content_width(layout)
+	shape_width := layout.shape.width - layout.shape.padding.width()
 	old_offset := w.view_state.offset_x_state[id_scroll]
 	new_offset := mouse_x * (total_width / shape_width)
 	offset := old_offset - new_offset
 	return f32_min(0, f32_max(offset, shape_width - total_width))
 }
 
-fn offset_mouse_change_y(node Layout, mouse_y f32, id_scroll u32, w &Window) f32 {
-	total_height := content_height(node)
-	shape_height := node.shape.height - node.shape.padding.height()
+fn offset_mouse_change_y(layout &Layout, mouse_y f32, id_scroll u32, w &Window) f32 {
+	total_height := content_height(layout)
+	shape_height := layout.shape.height - layout.shape.padding.height()
 	old_offset := w.view_state.offset_y_state[id_scroll]
 	new_offset := mouse_y * (total_height / shape_height)
 	offset := old_offset - new_offset
 	return f32_min(0, f32_max(offset, shape_height - total_height))
 }
 
-fn offset_from_mouse_x(node Layout, mouse_x f32, id_scroll u32, mut w Window) {
-	if sb := find_node_by_id_scroll(node, id_scroll) {
+fn offset_from_mouse_x(layout &Layout, mouse_x f32, id_scroll u32, mut w Window) {
+	if sb := find_layout_by_id_scroll(layout, id_scroll) {
 		total_width := content_width(sb)
 		mut percent := mouse_x / sb.shape.width
 		percent = clamp_f32(percent, 0, 1)
@@ -285,8 +285,8 @@ fn offset_from_mouse_x(node Layout, mouse_x f32, id_scroll u32, mut w Window) {
 	}
 }
 
-fn offset_from_mouse_y(node Layout, mouse_y f32, id_scroll u32, mut w Window) {
-	if sb := find_node_by_id_scroll(node, id_scroll) {
+fn offset_from_mouse_y(layout &Layout, mouse_y f32, id_scroll u32, mut w Window) {
+	if sb := find_layout_by_id_scroll(layout, id_scroll) {
 		total_height := content_height(sb)
 		mut percent := mouse_y / sb.shape.height
 		percent = clamp_f32(percent, 0, 1)

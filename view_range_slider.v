@@ -100,86 +100,87 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 	)
 }
 
-fn (cfg &RangeSliderCfg) amend_layout_slide(mut node Layout, mut w Window) {
-	node.shape.on_mouse_down_shape = cfg.on_mouse_down_shape
-	node.shape.on_mouse_scroll_shape = cfg.on_mouse_scroll
+fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
+	layout.shape.on_mouse_down_shape = cfg.on_mouse_down_shape
+	layout.shape.on_mouse_scroll_shape = cfg.on_mouse_scroll
 
 	// set positions of left/right or top/bottom rectangles
 	value := clamp_f32(cfg.value, cfg.min, cfg.max)
 	percent := math.abs(value / (cfg.max - cfg.min))
 	if cfg.vertical {
-		height := node.children[0].shape.height
+		height := layout.children[0].shape.height
 		y := f32_min(height * percent, height)
-		node.children[0].children[0].shape.height = y
+		layout.children[0].children[0].shape.height = y
 		// resize bars so the specified width and center
 		// horizontally on the thumb.
 		offset := (cfg.thumb_size - cfg.size) / 2 + 0.5
 		// border
-		node.shape.x += offset
-		node.shape.width = cfg.size
+		layout.shape.x += offset
+		layout.shape.width = cfg.size
 		// interior
-		node.children[0].shape.x += offset
-		node.children[0].shape.width = cfg.size - cfg.padding_border.width()
+		layout.children[0].shape.x += offset
+		layout.children[0].shape.width = cfg.size - cfg.padding_border.width()
 		// left of thumb bar
-		node.children[0].children[0].shape.x += offset
-		node.children[0].children[0].shape.width = cfg.size
+		layout.children[0].children[0].shape.x += offset
+		layout.children[0].children[0].shape.width = cfg.size
 	} else {
-		width := node.children[0].shape.width
+		width := layout.children[0].shape.width
 		x := f32_min(width * percent, width)
-		node.children[0].children[0].shape.width = x
+		layout.children[0].children[0].shape.width = x
 		// resize bars so the specified height and center
 		// vertically on the thumb.
 		offset := (cfg.thumb_size - cfg.size) / 2 + 0.5
 		// border
-		node.shape.y += offset
-		node.shape.height = cfg.size
+		layout.shape.y += offset
+		layout.shape.height = cfg.size
 		// interior
-		node.children[0].shape.y += offset
-		node.children[0].shape.height = cfg.size - cfg.padding_border.height()
+		layout.children[0].shape.y += offset
+		layout.children[0].shape.height = cfg.size - cfg.padding_border.height()
 		// left of thumb bar
-		node.children[0].children[0].shape.y += offset
-		node.children[0].children[0].shape.height = cfg.size
+		layout.children[0].children[0].shape.y += offset
+		layout.children[0].children[0].shape.height = cfg.size
 	}
-	if node.shape.disabled {
+	if layout.shape.disabled {
 		return
 	}
-	if w.is_focus(node.shape.id_focus) {
-		node.children[0].shape.color = cfg.color_focus
+	if w.is_focus(layout.shape.id_focus) {
+		layout.children[0].shape.color = cfg.color_focus
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_hover_slide(mut node Layout, mut e Event, mut w Window) {
-	node.children[0].shape.color = cfg.color_hover
+fn (cfg &RangeSliderCfg) on_hover_slide(mut layout Layout,
+	mut e Event, mut w Window) {
+	layout.children[0].shape.color = cfg.color_hover
 	if e.mouse_button == .left {
-		node.children[0].shape.color = cfg.color_click
+		layout.children[0].shape.color = cfg.color_click
 	}
 }
 
-fn (cfg &RangeSliderCfg) amend_layout_thumb(mut node Layout, mut w Window) {
+fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut w Window) {
 	// set the thumb position
 	value := clamp_f32(cfg.value, cfg.min, cfg.max)
 	percent := math.abs(value / (cfg.max - cfg.min))
 	if cfg.vertical {
-		height := node.parent.shape.height
+		height := layout.parent.shape.height
 		y := f32_min(height * percent, height)
-		node.shape.y = node.parent.shape.y + y - cfg.padding_border.height()
-		node.children[0].shape.y = node.shape.y + cfg.padding_border.top
+		layout.shape.y = layout.parent.shape.y + y - cfg.padding_border.height()
+		layout.children[0].shape.y = layout.shape.y + cfg.padding_border.top
 	} else {
-		width := node.parent.shape.width
+		width := layout.parent.shape.width
 		x := f32_min(width * percent, width)
-		node.shape.x = node.parent.shape.x + x - cfg.padding_border.width()
-		node.children[0].shape.x = node.shape.x + cfg.padding_border.top
+		layout.shape.x = layout.parent.shape.x + x - cfg.padding_border.width()
+		layout.children[0].shape.x = layout.shape.x + cfg.padding_border.top
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_hover_thumb(mut node Layout, mut _ Event, mut w Window) {
+fn (cfg &RangeSliderCfg) on_hover_thumb(mut layout Layout, mut _ Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
 }
 
-fn (cfg &RangeSliderCfg) on_mouse_down(node &Layout, mut e Event, mut w Window) {
+fn (cfg &RangeSliderCfg) on_mouse_down(layout &Layout, mut e Event, mut w Window) {
 	w.mouse_lock(MouseLockCfg{
 		mouse_move: cfg.mouse_move
-		mouse_up:   fn (node &Layout, mut e Event, mut w Window) {
+		mouse_up:   fn (_ &Layout, mut e Event, mut w Window) {
 			w.mouse_unlock()
 		}
 	})
@@ -187,11 +188,11 @@ fn (cfg &RangeSliderCfg) on_mouse_down(node &Layout, mut e Event, mut w Window) 
 }
 
 // pass cfg by value more reliable here
-fn (cfg RangeSliderCfg) mouse_move(node &Layout, mut e Event, mut w Window) {
+fn (cfg RangeSliderCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	id := cfg.id
 
 	if cfg.on_change != unsafe { nil } {
-		if node_circle := node.find_node(fn [id] (n Layout) bool {
+		if node_circle := layout.find_layout(fn [id] (n Layout) bool {
 			return n.shape.id == id
 		})
 		{
@@ -241,7 +242,7 @@ fn (cfg &RangeSliderCfg) on_mouse_down_shape(shape &Shape, mut e Event, mut w Wi
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_keydown(node &Layout, mut e Event, mut w Window) {
+fn (cfg &RangeSliderCfg) on_keydown(layout &Layout, mut e Event, mut w Window) {
 	if cfg.on_change != unsafe { nil } && e.modifiers == 0 {
 		mut value := cfg.value
 		match e.key_code {

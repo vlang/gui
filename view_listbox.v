@@ -109,12 +109,12 @@ pub fn list_box(cfg ListBoxCfg) View {
 					on_select(values, mut e, mut w)
 				}
 			}
-			on_hover: fn [on_select, color_hover, is_subheader] (mut node Layout, mut e Event, mut w Window) {
+			on_hover: fn [on_select, color_hover, is_subheader] (mut layout Layout, mut e Event, mut w Window) {
 				if on_select != unsafe { nil } && !is_subheader {
 					w.set_mouse_cursor_pointing_hand()
-					if node.shape.color == color_transparent {
-						node.shape.fill = true
-						node.shape.color = color_hover
+					if layout.shape.color == color_transparent {
+						layout.shape.fill = true
+						layout.shape.color = color_hover
 					}
 				}
 			}

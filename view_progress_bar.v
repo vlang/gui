@@ -80,48 +80,48 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 	}
 }
 
-fn (cfg ProgressBarCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.children.len >= 0 {
+fn (cfg ProgressBarCfg) amend_layout(mut layout Layout, mut w Window) {
+	if layout.children.len >= 0 {
 		percent := clamp_f32(cfg.percent, 0, 1)
 		if cfg.vertical {
-			height := f32_min(node.shape.height * percent, node.shape.height)
-			node.children[0].shape.x = node.shape.x
-			node.children[0].shape.y = node.shape.y
-			node.children[0].shape.height = height
-			node.children[0].shape.width = node.shape.width
+			height := f32_min(layout.shape.height * percent, layout.shape.height)
+			layout.children[0].shape.x = layout.shape.x
+			layout.children[0].shape.y = layout.shape.y
+			layout.children[0].shape.height = height
+			layout.children[0].shape.width = layout.shape.width
 			// center label on bar. Label is row containing text
 			if cfg.text_show {
-				center := node.shape.x + node.shape.width / 2
-				half_width := node.children[1].shape.width / 2
-				old_x := node.children[1].shape.x
-				node.children[1].shape.x = center - half_width
-				node.children[1].children[0].shape.x -= old_x - node.children[1].shape.x
+				center := layout.shape.x + layout.shape.width / 2
+				half_width := layout.children[1].shape.width / 2
+				old_x := layout.children[1].shape.x
+				layout.children[1].shape.x = center - half_width
+				layout.children[1].children[0].shape.x -= old_x - layout.children[1].shape.x
 
-				middle := node.shape.y + node.shape.height / 2
-				half_height := node.children[1].shape.height / 2
-				old_y := node.children[1].shape.y
-				node.children[1].shape.y = middle - half_height
-				node.children[1].children[0].shape.y -= old_y - node.children[1].shape.y
+				middle := layout.shape.y + layout.shape.height / 2
+				half_height := layout.children[1].shape.height / 2
+				old_y := layout.children[1].shape.y
+				layout.children[1].shape.y = middle - half_height
+				layout.children[1].children[0].shape.y -= old_y - layout.children[1].shape.y
 			}
 		} else {
-			width := f32_min(node.shape.width * percent, node.shape.width)
-			node.children[0].shape.x = node.shape.x
-			node.children[0].shape.y = node.shape.y
-			node.children[0].shape.width = width
-			node.children[0].shape.height = node.shape.height
+			width := f32_min(layout.shape.width * percent, layout.shape.width)
+			layout.children[0].shape.x = layout.shape.x
+			layout.children[0].shape.y = layout.shape.y
+			layout.children[0].shape.width = width
+			layout.children[0].shape.height = layout.shape.height
 			// center label on bar. Label is row containing text
 			if cfg.text_show {
-				middle := node.shape.y + node.shape.height / 2
-				half_height := node.children[1].shape.height / 2
-				old_y := node.children[1].shape.y
-				node.children[1].shape.y = middle - half_height
-				node.children[1].children[0].shape.y -= old_y - node.children[1].shape.y
+				middle := layout.shape.y + layout.shape.height / 2
+				half_height := layout.children[1].shape.height / 2
+				old_y := layout.children[1].shape.y
+				layout.children[1].shape.y = middle - half_height
+				layout.children[1].children[0].shape.y -= old_y - layout.children[1].shape.y
 
-				center := node.shape.x + node.shape.width / 2
-				half_width := node.children[1].shape.width / 2
-				old_x := node.children[1].shape.x
-				node.children[1].shape.x = center - half_width
-				node.children[1].children[0].shape.x -= old_x - node.children[1].shape.x
+				center := layout.shape.x + layout.shape.width / 2
+				half_width := layout.children[1].shape.width / 2
+				old_x := layout.children[1].shape.x
+				layout.children[1].shape.x = center - half_width
+				layout.children[1].children[0].shape.x -= old_x - layout.children[1].shape.x
 			}
 		}
 	}

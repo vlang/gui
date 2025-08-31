@@ -102,25 +102,25 @@ fn (cfg &ButtonCfg) on_char_button(_ &ButtonCfg, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &ButtonCfg) amend_layout(mut node Layout, mut w Window) {
-	if node.shape.disabled || cfg.on_click == unsafe { nil } {
+fn (cfg &ButtonCfg) amend_layout(mut layout Layout, mut w Window) {
+	if layout.shape.disabled || cfg.on_click == unsafe { nil } {
 		return
 	}
-	if w.is_focus(node.shape.id_focus) {
-		node.children[0].shape.color = cfg.color_focus
-		node.shape.color = cfg.color_border_focus
+	if w.is_focus(layout.shape.id_focus) {
+		layout.children[0].shape.color = cfg.color_focus
+		layout.shape.color = cfg.color_border_focus
 	}
 }
 
-fn (cfg &ButtonCfg) on_hover(mut node Layout, mut e Event, mut w Window) {
-	if node.shape.on_click == unsafe { nil } {
+fn (cfg &ButtonCfg) on_hover(mut layout Layout, mut e Event, mut w Window) {
+	if layout.shape.on_click == unsafe { nil } {
 		return
 	}
 	w.set_mouse_cursor_pointing_hand()
-	if !w.is_focus(node.shape.id_focus) {
-		node.children[0].shape.color = cfg.color_hover
+	if !w.is_focus(layout.shape.id_focus) {
+		layout.children[0].shape.color = cfg.color_hover
 	}
 	if e.mouse_button == .left {
-		node.children[0].shape.color = cfg.color_click
+		layout.children[0].shape.color = cfg.color_click
 	}
 }
