@@ -34,6 +34,9 @@ pub:
 }
 
 fn (iv &ImageView) generate(mut window Window) Layout {
+	$if !prod {
+		gui_stats.layouts += 1
+	}
 	if iv.invisible {
 		return Layout{}
 	}
@@ -64,6 +67,9 @@ fn (iv &ImageView) generate(mut window Window) Layout {
 }
 
 pub fn image(cfg ImageCfg) View {
+	$if !prod {
+		gui_stats.image_views += 1
+	}
 	return ImageView{
 		id:         cfg.id
 		file_name:  cfg.file_name

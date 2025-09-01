@@ -59,6 +59,12 @@ mut:
 
 fn (cv ContainerView) generate(mut _ Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
+	$if !prod {
+		gui_stats.layouts += 1
+	}
+	if cv.invisible {
+		return Layout{}
+	}
 	layout := Layout{
 		shape: &Shape{
 			type:                cv.shape_type
@@ -270,6 +276,10 @@ fn container(cfg ContainerCfg) View {
 	content := match extra_content.len > 0 {
 		true { arrays.append(cfg.content, extra_content) }
 		else { cfg.content }
+	}
+
+	$if !prod {
+		gui_stats.container_views += 1
 	}
 
 	return ContainerView{

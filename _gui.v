@@ -9,6 +9,7 @@ import math
 
 __global gui_theme = theme_dark_no_padding
 __global gui_tooltip = TooltipState{}
+__global gui_stats = Stats{}
 __global cosf_values = [32]f32{}
 __global sinf_values = [32]f32{}
 

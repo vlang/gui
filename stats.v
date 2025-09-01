@@ -5,15 +5,38 @@ import gg
 const stat_top_div = '=================================='
 const stat_sub_div = '----------------------------------'
 
+struct Stats {
+mut:
+	container_views usize
+	text_views      usize
+	image_views     usize
+	rtf_views       usize
+	layouts         usize
+}
+
 fn (window &Window) stats() string {
 	mut tx := []string{}
 	tx << ''
 	tx << 'Statistics'
 	tx << stat_top_div
-	tx << window.view_state.stats()
+	tx << window.view_state.view_state_stats()
 	tx << struct_sizes()
+	tx << window.view_stats()
 	tx << window.context_stats()
 	tx << memory_stats()
+	return tx.join('\n')
+}
+
+fn (window &Window) view_stats() string {
+	mut tx := []string{}
+	tx << ''
+	tx << 'Views'
+	tx << stat_sub_div
+	tx << 'container views ${cm(gui_stats.container_views):17}'
+	tx << 'text views      ${cm(gui_stats.text_views):17}'
+	tx << 'image views     ${cm(gui_stats.image_views):17}'
+	tx << 'rtf views       ${cm(gui_stats.rtf_views):17}'
+	tx << 'layouts         ${cm(gui_stats.layouts):17}'
 	return tx.join('\n')
 }
 
@@ -48,7 +71,7 @@ fn struct_sizes() string {
 	return tx.join('\n')
 }
 
-fn (vs ViewState) stats() string {
+fn (vs ViewState) view_state_stats() string {
 	mut tx := []string{}
 	tx << ''
 	tx << 'View State'

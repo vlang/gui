@@ -39,6 +39,10 @@ pub:
 }
 
 fn (rtf &RtfView) generate(mut window Window) Layout {
+	$if !prod {
+		gui_stats.layouts += 1
+	}
+
 	if rtf.invisible {
 		return Layout{}
 	}
@@ -77,6 +81,11 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 pub fn rtf(cfg RtfCfg) View {
 	mut ll := datatypes.LinkedList[TextSpan]{}
 	ll.push_many(cfg.spans)
+
+	$if !prod {
+		gui_stats.rtf_views += 1
+	}
+
 	return RtfView{
 		id:         cfg.id
 		id_focus:   cfg.id_focus

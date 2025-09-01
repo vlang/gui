@@ -20,6 +20,9 @@ mut:
 }
 
 fn (t &TextView) generate(mut window Window) Layout {
+	$if !prod {
+		gui_stats.text_views += 1
+	}
 	if t.cfg.invisible {
 		return Layout{}
 	}
