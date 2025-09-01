@@ -21,7 +21,7 @@ mut:
 
 fn (t &TextView) generate(mut window Window) Layout {
 	$if !prod {
-		gui_stats.text_views += 1
+		gui_stats.layouts += 1
 	}
 	if t.cfg.invisible {
 		return Layout{}
@@ -104,6 +104,9 @@ fn (t &TextCfg) free() {
 // blocks of multiline text. Giving it an id_focus allows mark and copy
 // operations. See [TextCfg](#TextCfg)
 pub fn text(cfg TextCfg) View {
+	$if !prod {
+		gui_stats.text_views += 1
+	}
 	return TextView{
 		cfg:    &cfg
 		sizing: if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
