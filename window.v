@@ -239,6 +239,12 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	background := window.color_background()
 	render_layout(mut layout, background, clip_rect, mut window)
 
+	$if !prod {
+		if window.renderers.len > gui_stats.max_renderers {
+			gui_stats.max_renderers = usize(window.renderers.len)
+		}
+	}
+
 	window.unlock()
 	window.ui.refresh_ui()
 }
@@ -259,6 +265,12 @@ pub fn (mut window Window) update_window() {
 	clip_rect := window.window_rect()
 	background := window.color_background()
 	render_layout(mut window.layout, background, clip_rect, mut window)
+
+	$if !prod {
+		if window.renderers.len > gui_stats.max_renderers {
+			gui_stats.max_renderers = usize(window.renderers.len)
+		}
+	}
 
 	window.unlock()
 	window.ui.refresh_ui()

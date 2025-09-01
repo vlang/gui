@@ -12,6 +12,7 @@ mut:
 	image_views     usize
 	rtf_views       usize
 	layouts         usize
+	max_renderers   usize
 }
 
 fn (window &Window) stats() string {
@@ -37,6 +38,7 @@ fn (window &Window) view_stats() string {
 	tx << 'image views     ${cm(gui_stats.image_views):17}'
 	tx << 'rtf views       ${cm(gui_stats.rtf_views):17}'
 	tx << 'layouts         ${cm(gui_stats.layouts):17}'
+	tx << 'max renderers   ${cm(gui_stats.max_renderers):17}'
 	return tx.join('\n')
 }
 
