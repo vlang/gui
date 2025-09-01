@@ -112,6 +112,13 @@ pub fn window(cfg &WindowCfg) &Window {
 		sample_count:                 int(cfg.samples)
 	)
 	initialize_fonts()
+
+	$if !prod {
+		at_exit(fn [window] () {
+			println(window.stats())
+		}) or {}
+	}
+
 	return window
 }
 

@@ -15,7 +15,7 @@ mut:
 	image_map         map[string]int             // [file name] -> context.cache image id
 	select_state      map[string]bool            // [id select] -> open/close state
 	tree_state        map[string]map[string]bool // [tree id] -> [node id ] -> open/closed
-	date_picker_state map[string]DatePickerState // [id date_pidker -> DatePickerState
+	date_picker_state map[string]DatePickerState // [id date_picker -> DatePickerState
 	mouse_lock        MouseLockCfg               // mouse down/move/up methods to call when locked
 	id_focus          u32                        // current view that has focus
 	cursor_on         bool = true // used by cursor blink animation
