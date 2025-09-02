@@ -25,3 +25,21 @@ fn generate_layout(view &View, mut window Window) Layout {
 	}
 	return layout
 }
+
+// clear is feeble attempt to get the GC to collect views
+fn (mut view View) clear() {
+	for mut content in view.content {
+		content.clear()
+	}
+	unsafe { view.content.reset() }
+	view.content.clear()
+}
+
+// clear is feeble attempt to get the GC to collect layouts
+fn (mut layout Layout) clear() {
+	for mut child in layout.children {
+		child.clear()
+	}
+	unsafe { layout.children.reset() }
+	layout.children.clear()
+}

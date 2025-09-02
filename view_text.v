@@ -21,7 +21,7 @@ mut:
 
 fn (t &TextView) generate(mut window Window) Layout {
 	$if !prod {
-		gui_stats.layouts += 1
+		gui_stats.increment_layouts()
 	}
 	if t.cfg.invisible {
 		return Layout{}
@@ -105,7 +105,7 @@ fn (t &TextCfg) free() {
 // operations. See [TextCfg](#TextCfg)
 pub fn text(cfg TextCfg) View {
 	$if !prod {
-		gui_stats.text_views += 1
+		gui_stats.increment_text_views()
 	}
 	return TextView{
 		cfg:    &cfg

@@ -15,6 +15,32 @@ mut:
 	max_renderers   usize
 }
 
+fn (mut stats Stats) increment_container_views() {
+	stats.container_views += 1
+}
+
+fn (mut stats Stats) increment_text_views() {
+	stats.text_views += 1
+}
+
+fn (mut stats Stats) increment_image_views() {
+	stats.image_views += 1
+}
+
+fn (mut stats Stats) increment_rtf_views() {
+	stats.rtf_views += 1
+}
+
+fn (mut stats Stats) update_max_renderers(count usize) {
+	if count > stats.max_renderers {
+		stats.max_renderers = count
+	}
+}
+
+fn (mut stats Stats) increment_layouts() {
+	stats.layouts += 1
+}
+
 fn (window &Window) stats() string {
 	mut tx := []string{}
 	tx << ''
@@ -31,7 +57,7 @@ fn (window &Window) stats() string {
 fn (window &Window) view_stats() string {
 	mut tx := []string{}
 	tx << ''
-	tx << 'Views'
+	tx << 'Views Generated'
 	tx << stat_sub_div
 	tx << 'container views ${cm(gui_stats.container_views):17}'
 	tx << 'text views      ${cm(gui_stats.text_views):17}'

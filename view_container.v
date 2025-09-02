@@ -60,7 +60,7 @@ mut:
 fn (cv ContainerView) generate(mut _ Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
 	$if !prod {
-		gui_stats.layouts += 1
+		gui_stats.increment_layouts()
 	}
 	if cv.invisible {
 		return Layout{}
@@ -224,6 +224,10 @@ pub:
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
 fn container(cfg ContainerCfg) View {
+	$if !prod {
+		gui_stats.increment_container_views()
+	}
+
 	if cfg.invisible {
 		return ContainerView{
 			over_draw: true // removes it from spacing calculations
@@ -276,10 +280,6 @@ fn container(cfg ContainerCfg) View {
 	content := match extra_content.len > 0 {
 		true { arrays.append(cfg.content, extra_content) }
 		else { cfg.content }
-	}
-
-	$if !prod {
-		gui_stats.container_views += 1
 	}
 
 	return ContainerView{

@@ -40,7 +40,7 @@ pub:
 
 fn (rtf &RtfView) generate(mut window Window) Layout {
 	$if !prod {
-		gui_stats.layouts += 1
+		gui_stats.increment_layouts()
 	}
 
 	if rtf.invisible {
@@ -79,12 +79,12 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 
 // rtf creates a view from the given [RtfCfg](#RtfCfg)
 pub fn rtf(cfg RtfCfg) View {
+	$if !prod {
+		gui_stats.increment_rtf_views()
+	}
+
 	mut ll := datatypes.LinkedList[TextSpan]{}
 	ll.push_many(cfg.spans)
-
-	$if !prod {
-		gui_stats.rtf_views += 1
-	}
 
 	return RtfView{
 		id:         cfg.id
