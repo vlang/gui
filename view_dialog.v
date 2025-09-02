@@ -12,7 +12,7 @@ module gui
 // - **date** select date dialog (TODO)
 // - **time** select tiem diaog (TODO)
 // the predfined types. See [DialogCfg](#DialogCfg)
-pub enum DialogType {
+pub enum DialogType as u8 {
 	message
 	confirm
 	prompt

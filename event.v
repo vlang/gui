@@ -79,7 +79,7 @@ pub mut:
 	is_handled         bool
 }
 
-pub enum EventType {
+pub enum EventType as u8 {
 	invalid
 	key_down
 	key_up
@@ -114,7 +114,7 @@ pub enum MouseButton {
 	invalid = 256
 }
 
-pub enum MouseCursor {
+pub enum MouseCursor as u8 {
 	default       = C.SAPP_MOUSECURSOR_DEFAULT
 	arrow         = C.SAPP_MOUSECURSOR_ARROW
 	ibeam         = C.SAPP_MOUSECURSOR_IBEAM
@@ -266,7 +266,7 @@ pub enum KeyCode {
 // This lets the application check what type of input device was used for touch events.
 // NOTE: the values must remain in sync with the corresponding Android SDK type, so don't change those.
 // See https://developer.android.com/reference/android/view/MotionEvent#TOOL_TYPE_UNKNOWN
-pub enum TouchToolType {
+pub enum TouchToolType as u8 {
 	unknown
 	finger
 	stylus

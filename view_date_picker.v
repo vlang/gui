@@ -4,7 +4,7 @@ import time
 import log
 
 // DatePickerWeekdays is used in allowed_weekdays property of [date_picker](#date_picker)
-pub enum DatePickerWeekdays {
+pub enum DatePickerWeekdays as u8 {
 	monday = 1
 	tuesday
 	wednesday
@@ -15,7 +15,7 @@ pub enum DatePickerWeekdays {
 }
 
 // DatePickerMonths is used in allowed_months property of [date_picker](#date_picker)
-pub enum DatePickerMonths {
+pub enum DatePickerMonths as u16 {
 	january = 1
 	february
 	march
@@ -31,7 +31,7 @@ pub enum DatePickerMonths {
 }
 
 // DatePickerWeekdayLen is used in the weekdays property of [date_picker](#date_picker)
-pub enum DatePickerWeekdayLen {
+pub enum DatePickerWeekdayLen as u8 {
 	one_letter
 	three_letter
 	full

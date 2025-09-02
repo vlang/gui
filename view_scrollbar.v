@@ -8,7 +8,7 @@ module gui
 // - hidden hides the scrollbar
 // - visible always shows the scroll bar
 // - on_hover show only when mouse is over scrollbar
-pub enum ScrollbarOverflow {
+pub enum ScrollbarOverflow as u8 {
 	auto
 	hidden
 	visible
@@ -17,13 +17,13 @@ pub enum ScrollbarOverflow {
 
 // ScrollbarOrientation determines the scrollbar's orientation.
 // Default is vertical.
-pub enum ScrollbarOrientation {
+pub enum ScrollbarOrientation as u8 {
 	vertical
 	horizontal
 }
 
 // ScrollMode allows scrolling in one or both directions. Default is both
-pub enum ScrollMode {
+pub enum ScrollMode as u8 {
 	both
 	vertical_only
 	horizontal_only

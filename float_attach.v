@@ -1,6 +1,6 @@
 module gui
 
-pub enum FloatAttach {
+pub enum FloatAttach as u8 {
 	top_left
 	top_center
 	top_right

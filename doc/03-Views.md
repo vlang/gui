@@ -63,7 +63,7 @@ vertically. The code for Sizing is:
 
 ``` v
 // SizingType describes the three sizing modes of GUI
-pub enum SizingType {
+pub enum SizingType as u8 {
     fit   // element fits to content
     fill  // element fills to parent (grows or shrinks)
     fixed // element unchanged

@@ -134,7 +134,7 @@ fn frame_fn(mut window Window) {
 		println(window.update_window_calls)
 	}
 	window.update_window_calls = 0
-	gc_collect() // revisit gc_collect() once leak is found. Strikes me as a performance issue maybe - mrw
+	gc_collect() // revisit this gc_collect() once leak is found. Strikes me as a performance issue maybe - mrw
 	window.unlock()
 }
 
@@ -227,15 +227,13 @@ fn event_fn(ev &gg.Event, mut w Window) {
 // view generator. Giving a Window a new view generator clears the view_state
 // and replaces the current view generator.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
-	// Order matters here. Clear the view state first
 	window.lock()
 	window.view_state.clear(mut window)
 	window.view_generator = gen_view
 	window.unlock()
 }
 
-// update_window generates a new layout from the window's current
-// view generator.
+// update_window generates a new layout from the window's current view generator.
 fn (mut window Window) update_window() {
 	window.update_window_calls++
 	if window.update_window_calls > window.max_update_window_calls_per_frame {
@@ -243,17 +241,16 @@ fn (mut window Window) update_window() {
 	}
 
 	window.lock()
-	mut view := window.view_generator(window)
-	mut old_layout := window.layout
+	view := window.view_generator(window)
+	mut layout := window.layout
 	window.layout = window.compose_layout(view)
 	window.renderers.clear()
 	clip_rect := window.window_rect()
-	background := window.color_background()
-	render_layout(mut window.layout, background, clip_rect, mut window)
+	background_color := window.color_background()
+	render_layout(mut window.layout, background_color, clip_rect, mut window)
 	window.unlock()
 
-	view.clear()
-	old_layout.clear()
+	layout.clear()
 	window.ui.refresh_ui()
 
 	$if !prod {

@@ -2,14 +2,14 @@ module gui
 
 // Axis defines if a Layout arranges its child layouts
 // horizontally, vertically or not at all.
-pub enum Axis {
+pub enum Axis as u8 {
 	none
 	top_to_bottom
 	left_to_right
 }
 
 // HorizontalAlign specifies start, center, end alignment
-pub enum HorizontalAlign {
+pub enum HorizontalAlign as u8 {
 	start // can be left or right depending on culture
 	end   // can be left or right depending on culture
 	center
@@ -18,7 +18,7 @@ pub enum HorizontalAlign {
 }
 
 // VerticalAlign specifies top, middle, bottom alignment
-pub enum VerticalAlign {
+pub enum VerticalAlign as u8 {
 	top
 	middle
 	bottom

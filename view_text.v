@@ -3,7 +3,7 @@ module gui
 import math
 
 // TextMode controls how a text view renders text.
-pub enum TextMode {
+pub enum TextMode as u8 {
 	single_line      // one line only. Restricts typing to visible range
 	multiline        // wraps `\n`s only
 	wrap             // wrap at word breaks and `\n`s. White space is collapsed

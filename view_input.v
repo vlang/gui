@@ -25,7 +25,7 @@ pub:
 	select_end u32
 }
 
-pub enum InputMode {
+pub enum InputMode as u8 {
 	single_line
 	multiline
 }

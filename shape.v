@@ -70,7 +70,7 @@ pub mut:
 }
 
 // ShapeType defines the kind of Shape.
-pub enum ShapeType {
+pub enum ShapeType as u8 {
 	none
 	rectangle
 	text
