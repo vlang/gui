@@ -21,6 +21,15 @@ mut:
 	cursor_on         bool = true // used by cursor blink animation
 }
 
-fn (vs ViewState) clear(mut w Window) {
+fn (mut vs ViewState) clear(mut w Window) {
+	vs.input_state.clear()
+	vs.offset_x_state.clear()
+	vs.offset_y_state.clear()
+	vs.text_widths.clear()
+	vs.menu_state.clear()
+	vs.image_map.clear()
+	vs.select_state.clear()
+	vs.tree_state.clear()
+	vs.date_picker_state.clear()
 	w.view_state = ViewState{}
 }

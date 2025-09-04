@@ -95,10 +95,10 @@ fn side_panel(mut window gui.Window) gui.View {
 
 fn font_panel(window &gui.Window) gui.View {
 	mut app := window.state[FontsApp]()
-	mut cols := []gui.View{}
 	width := f32(gui.theme().n3.size) * 1.5
 
 	if app.rows.len == 0 {
+		mut cols := []gui.View{cap: 18}
 		text_style := match app.selected_family {
 			'Bold' {
 				match app.selected_font {

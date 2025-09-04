@@ -107,7 +107,7 @@ pub enum EventType as u8 {
 	num
 }
 
-pub enum MouseButton {
+pub enum MouseButton as u16 {
 	left    = 0
 	right   = 1
 	middle  = 2
@@ -128,7 +128,7 @@ pub enum MouseCursor as u8 {
 	not_allowed   = C.SAPP_MOUSECURSOR_NOT_ALLOWED
 }
 
-pub enum Modifier {
+pub enum Modifier as u16 {
 	shift = 1 //(1<<0)
 	ctrl  = 2 //(1<<1)
 	alt   = 4 //(1<<2)
@@ -138,7 +138,7 @@ pub enum Modifier {
 	mmb   = 0x400
 }
 
-pub enum KeyCode {
+pub enum KeyCode as u16 {
 	invalid       = 0
 	space         = 32
 	apostrophe    = 39 //'

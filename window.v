@@ -134,7 +134,6 @@ fn frame_fn(mut window Window) {
 		println(window.update_window_calls)
 	}
 	window.update_window_calls = 0
-	gc_collect() // revisit this gc_collect() once leak is found. Strikes me as a performance issue maybe - mrw
 	window.unlock()
 }
 
@@ -252,6 +251,7 @@ fn (mut window Window) update_window() {
 
 	layout.clear()
 	window.ui.refresh_ui()
+	defer { gc_collect() }
 
 	$if !prod {
 		gui_stats.update_max_renderers(usize(window.renderers.len))

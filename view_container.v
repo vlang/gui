@@ -346,7 +346,10 @@ pub fn column(cfg ContainerCfg) View {
 		name: name
 	}
 	if cfg.cfg == unsafe { nil } {
-		container_cfg.cfg = container_cfg
+		container_cfg.cfg = &ContainerCfg{
+			...container_cfg
+			content: []View{}
+		}
 	}
 	return container(container_cfg)
 }
@@ -361,7 +364,10 @@ pub fn row(cfg ContainerCfg) View {
 		name: name
 	}
 	if cfg.cfg == unsafe { nil } {
-		container_cfg.cfg = container_cfg
+		container_cfg.cfg = &ContainerCfg{
+			...container_cfg
+			content: []View{}
+		}
 	}
 	return container(container_cfg)
 }
@@ -374,7 +380,10 @@ pub fn canvas(cfg ContainerCfg) View {
 		name: name
 	}
 	if cfg.cfg == unsafe { nil } {
-		container_cfg.cfg = container_cfg
+		container_cfg.cfg = &ContainerCfg{
+			...container_cfg
+			content: []View{}
+		}
 	}
 	return container(container_cfg)
 }
@@ -388,7 +397,10 @@ pub fn circle(cfg ContainerCfg) View {
 	mut circle := container(container_cfg) as ContainerView
 	circle.shape_type = .circle
 	if cfg.cfg == unsafe { nil } {
-		container_cfg.cfg = container_cfg
+		container_cfg.cfg = &ContainerCfg{
+			...container_cfg
+			content: []View{}
+		}
 	}
 	return circle
 }
