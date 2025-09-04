@@ -50,7 +50,7 @@ fn (t &TextView) generate(mut window Window) Layout {
 			text_is_placeholder: t.cfg.placeholder_active
 			text_lines:          lines
 			text_mode:           t.cfg.mode
-			text_style:          t.cfg.text_style
+			text_style:          &t.cfg.text_style
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
 			text_tab_size:       t.cfg.tab_size

@@ -67,7 +67,7 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 		min_width:           rtf.min_width
 		text_mode:           rtf.mode
 		sizing:              rtf.sizing
-		text_spans:          tspans
+		text_spans:          &tspans
 		on_mouse_move_shape: rtf_mouse_move_shape
 		on_mouse_down_shape: rtf_mouse_down_shape
 	}

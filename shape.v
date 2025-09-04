@@ -15,14 +15,14 @@ pub:
 	axis     Axis
 	type     ShapeType
 pub mut:
-	text_spans            datatypes.LinkedList[TextSpan] // rich text format spans
+	text_spans            &datatypes.LinkedList[TextSpan] = unsafe { nil } // rich text format spans
 	text                  string
 	image_name            string // filename of image
 	text_lines            []string
 	shape_clip            DrawClip // used for hit-testing
 	color                 Color
 	padding               Padding
-	text_style            TextStyle = gui_theme.text_style
+	text_style            &TextStyle = &gui_theme.text_style
 	sizing                Sizing
 	x                     f32
 	y                     f32

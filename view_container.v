@@ -97,7 +97,7 @@ fn (cv ContainerView) generate(mut _ Window) Layout {
 			float_offset_x:      cv.float_offset_x
 			float_offset_y:      cv.float_offset_y
 			text:                cv.text
-			text_style:          TextStyle{
+			text_style:          &TextStyle{
 				...gui_theme.text_style
 				color: cv.color
 			}

@@ -52,7 +52,7 @@ fn rtf_simple(spans datatypes.LinkedList[TextSpan], mut window Window) datatypes
 	return tspans
 }
 
-fn rtf_wrap_text(spans datatypes.LinkedList[TextSpan], width f32, tab_size u32, mut window Window) datatypes.LinkedList[TextSpan] {
+fn rtf_wrap_text(spans datatypes.LinkedList[TextSpan], width f32, tab_size u32, mut window Window) &datatypes.LinkedList[TextSpan] {
 	mut x := f32(0)
 	mut y := f32(0)
 	mut h := f32(0)
@@ -126,5 +126,5 @@ fn rtf_wrap_text(spans datatypes.LinkedList[TextSpan], width f32, tab_size u32, 
 		}
 	}
 	tspans.push(tspan)
-	return tspans
+	return &tspans
 }
