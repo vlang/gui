@@ -48,6 +48,40 @@ pub mut:
 	month_width            f32 = 70
 }
 
+// date_picker creates a date-picker view from the given [DatePickerCfg](#DatePickerCfg)
+pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
+	mut state := window.view_state.date_picker_state[cfg.id]
+	if state.view_year == 0 {
+		now := time.now()
+		v_time := if cfg.dates.len > 0 { cfg.dates[0] } else { date(now.day, now.month, now.year) }
+		state.view_month = v_time.month
+		state.view_year = v_time.year
+	}
+	state.cell_size = cfg.cell_size(window)
+	state.month_width = cfg.month_picker_width(window)
+	window.view_state.date_picker_state[cfg.id] = state
+
+	return row(
+		name:      'date_picker border'
+		fill:      cfg.fill_border
+		color:     cfg.color_border
+		invisible: cfg.invisible
+		padding:   cfg.padding_border
+		content:   [
+			column(
+				fill:    cfg.fill
+				color:   cfg.color
+				padding: cfg.padding
+				name:    'date_picker interior'
+				content: [
+					cfg.controls(state),
+					cfg.body(state),
+				]
+			),
+		]
+	)
+}
+
 // DatePickerCfg configures a [date_picker](#date_picker)
 pub struct DatePickerCfg {
 pub:
@@ -81,40 +115,6 @@ pub:
 	hide_today_indicator     bool = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week bool = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months     bool = gui_theme.date_picker_style.show_adjacent_months
-}
-
-// date_picker creates a date-picker view from the given [DatePickerCfg](#DatePickerCfg)
-pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
-	mut state := window.view_state.date_picker_state[cfg.id]
-	if state.view_year == 0 {
-		now := time.now()
-		v_time := if cfg.dates.len > 0 { cfg.dates[0] } else { date(now.day, now.month, now.year) }
-		state.view_month = v_time.month
-		state.view_year = v_time.year
-	}
-	state.cell_size = cfg.cell_size(window)
-	state.month_width = cfg.month_picker_width(window)
-	window.view_state.date_picker_state[cfg.id] = state
-
-	return row(
-		name:      'date_picker border'
-		fill:      cfg.fill_border
-		color:     cfg.color_border
-		invisible: cfg.invisible
-		padding:   cfg.padding_border
-		content:   [
-			column(
-				fill:    cfg.fill
-				color:   cfg.color
-				padding: cfg.padding
-				name:    'date_picker interior'
-				content: [
-					cfg.controls(state),
-					cfg.body(state),
-				]
-			),
-		]
-	)
 }
 
 // date_picker_reset clears the internal view state of the given date picker

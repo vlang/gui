@@ -7,6 +7,7 @@ import sokol.sapp
 struct ViewState {
 mut:
 	input_state       map[u32]InputState         // [id_focus] -> InputState
+	input_date_state  map[string]bool            // [id] -> visible
 	offset_x_state    map[u32]f32                // [id_scroll] -> offset x
 	offset_y_state    map[u32]f32                // [id_scroll] -> offset y
 	text_widths       map[u32]f32                // [text + hash(text_style)] -> text width
@@ -23,6 +24,7 @@ mut:
 
 fn (mut vs ViewState) clear(mut w Window) {
 	vs.input_state.clear()
+	vs.input_date_state.clear()
 	vs.offset_x_state.clear()
 	vs.offset_y_state.clear()
 	vs.text_widths.clear()

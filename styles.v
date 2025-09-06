@@ -103,6 +103,11 @@ pub:
 			a: 100
 		}
 	}
+	icon_style         TextStyle = TextStyle{
+		...text_style_dark
+		size:   size_text_medium
+		family: font_file_icon
+	}
 }
 
 pub struct ListBoxStyle {

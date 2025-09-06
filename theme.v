@@ -487,6 +487,11 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 					a: 100
 				}
 			}
+			icon_style:         TextStyle{
+				...cfg.text_style
+				family: font_file_icon
+				size:   cfg.size_text_medium
+			}
 		}
 		list_box_style:     ListBoxStyle{
 			color:            cfg.color_interior

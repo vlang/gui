@@ -38,12 +38,15 @@ pub struct InputCfg {
 pub:
 	id                 string
 	text               string // text to display/edit
+	icon               string // icon constant
 	placeholder        string // text to show when empty
-	on_text_changed    fn (&InputCfg, string, &Window)    = unsafe { nil }
-	on_enter           fn (&InputCfg, mut Event, &Window) = unsafe { nil }
+	on_text_changed    fn (&InputCfg, string, &Window)       = unsafe { nil }
+	on_enter           fn (&InputCfg, mut Event, &Window)    = unsafe { nil }
+	on_click_icon      fn (&InputCfg, mut Event, mut Window) = unsafe { nil }
 	sizing             Sizing
 	text_style         TextStyle = gui_theme.input_style.text_style
 	placeholder_style  TextStyle = gui_theme.input_style.placeholder_style
+	icon_style         TextStyle = gui_theme.input_style.icon_style
 	width              f32
 	height             f32
 	min_width          f32
@@ -119,6 +122,7 @@ pub fn input(cfg InputCfg) View {
 				fill:    cfg.fill
 				sizing:  fill_fill
 				radius:  cfg.radius
+				spacing: spacing_small
 				content: [
 					text(
 						id_focus:           cfg.id_focus
@@ -127,6 +131,23 @@ pub fn input(cfg InputCfg) View {
 						mode:               mode
 						is_password:        cfg.is_password
 						placeholder_active: placeholder_active
+					),
+					rectangle(
+						color:  color_transparent
+						sizing: fill_fit
+					),
+					row(
+						name:     'input icon'
+						cfg:      &cfg
+						padding:  padding_none
+						on_click: cfg.on_click_icon
+						on_hover: cfg.hover_icon
+						content:  [
+							text(
+								text:       cfg.icon
+								text_style: cfg.icon_style
+							),
+						]
 					),
 				]
 			),
@@ -385,6 +406,12 @@ fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 	if !w.is_focus(layout.shape.id_focus) {
 		layout.children[0].shape.color = cfg.color_hover
+	}
+}
+
+fn (cfg &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
+	if layout.shape.on_click != unsafe { nil } {
+		w.set_mouse_cursor_pointing_hand()
 	}
 }
 
