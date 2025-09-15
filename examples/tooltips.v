@@ -43,6 +43,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.button(
 						sizing:  gui.fill_fit
 						tooltip: &gui.TooltipCfg{
+							id:      'a'
 							content: [gui.text(text: 'Lorem ipsum dolor sit amet')]
 						}
 						content: [gui.text(text: 'default position')]
@@ -50,6 +51,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.button(
 						sizing:  gui.fill_fit
 						tooltip: &gui.TooltipCfg{
+							id:      'b'
 							content: [gui.text(text: 'Lorem ipsum dolor sit amet')]
 							anchor:  .top_center
 							tie_off: .bottom_left
@@ -59,6 +61,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.button(
 						sizing:  gui.fill_fit
 						tooltip: &gui.TooltipCfg{
+							id:      'c'
 							content: [gui.text(text: 'Lorem ipsum dolor sit amet')]
 							anchor:  .top_left
 							tie_off: .bottom_center
@@ -68,6 +71,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.button(
 						sizing:  gui.fill_fit
 						tooltip: &gui.TooltipCfg{
+							id:      'd'
 							content: [gui.text(text: 'Lorem ipsum dolor sit amet')]
 							anchor:  .bottom_left
 							tie_off: .top_center
@@ -77,6 +81,7 @@ fn main_view(window &gui.Window) gui.View {
 					gui.button(
 						sizing:  gui.fill_fit
 						tooltip: &gui.TooltipCfg{
+							id:      'e'
 							content: [
 								gui.column(
 									padding: gui.padding_none

@@ -1,18 +1,17 @@
 module gui
 
 import time
-import hash.fnv1a
 
 struct TooltipState {
 mut:
 	bounds DrawClip
-	id     u32
+	id     string
 }
 
 // TooltipCfg configures a [tooltip](#tooltip)
 pub struct TooltipCfg {
 pub:
-	id             string
+	id             string @[required] // unique id to tooltips
 	color          Color     = gui_theme.tooltip_style.color
 	color_hover    Color     = gui_theme.tooltip_style.color_hover
 	color_border   Color     = gui_theme.tooltip_style.color_border
@@ -58,22 +57,13 @@ pub fn tooltip(cfg TooltipCfg) View {
 }
 
 fn (cfg TooltipCfg) animation_tooltip() Animate {
-	hash := cfg.hash
+	id := cfg.id
 	return Animate{
 		id:       '___tooltip___'
-		callback: fn [hash] (mut w Window) {
+		callback: fn [id] (mut w Window) {
 			if point_in_rectangle(w.ui.mouse_pos_x, w.ui.mouse_pos_y, gui_tooltip.bounds) {
-				gui_tooltip.id = hash()
+				gui_tooltip.id = id
 			}
 		}
 	}
-}
-
-fn (cfg TooltipCfg) hash() u32 {
-	if cfg.content.len == 0 {
-		return 0
-	}
-	lines := cfg.str().split_into_lines()
-	clean := lines.filter(!it.contains('cfg:'))
-	return fnv1a.sum32_string(clean.join('\n'))
 }

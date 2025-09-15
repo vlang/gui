@@ -25,16 +25,3 @@ fn generate_layout(view &View, mut window Window) Layout {
 	}
 	return layout
 }
-
-// clear is a desperate attempt to get the GC to collect layouts
-fn (mut layout Layout) clear() {
-	for mut child in layout.children {
-		child.clear()
-	}
-	unsafe {
-		layout.shape = nil
-		layout.parent = nil
-		layout.children.reset()
-	}
-	layout.children.clear()
-}

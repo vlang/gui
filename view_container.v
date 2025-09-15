@@ -3,7 +3,6 @@ module gui
 import arrays
 
 // ContainerView members are arranged for packing to reduce memory footprint.
-
 @[heap]
 struct ContainerView implements View {
 pub:
@@ -65,7 +64,7 @@ fn (cv ContainerView) generate(mut _ Window) Layout {
 	if cv.invisible {
 		return Layout{}
 	}
-	layout := Layout{
+	return Layout{
 		shape: &Shape{
 			type:                cv.shape_type
 			id:                  cv.id
@@ -119,7 +118,6 @@ fn (cv ContainerView) generate(mut _ Window) Layout {
 			amend_layout:        cv.amend_layout
 		}
 	}
-	return layout
 }
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers,
@@ -269,9 +267,9 @@ fn container(cfg ContainerCfg) View {
 			})
 		}
 	}
-	if gui_tooltip.id != 0 {
+	if gui_tooltip.id != '' {
 		if cfg.tooltip != unsafe { nil } {
-			if cfg.tooltip.hash() == gui_tooltip.id {
+			if cfg.tooltip.id == gui_tooltip.id {
 				extra_content << tooltip(cfg.tooltip)
 			}
 		}

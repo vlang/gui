@@ -218,7 +218,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	if !e.is_handled {
 		w.on_event(e, mut w)
 	}
-	gui_tooltip.id = 0
+	gui_tooltip.id = ''
 	w.update_window()
 }
 
@@ -241,7 +241,6 @@ fn (mut window Window) update_window() {
 
 	window.lock()
 	view := window.view_generator(window)
-	mut layout := window.layout
 	window.layout = window.compose_layout(view)
 	window.renderers.clear()
 	clip_rect := window.window_rect()
@@ -249,7 +248,6 @@ fn (mut window Window) update_window() {
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
 	window.unlock()
 
-	layout.clear()
 	window.ui.refresh_ui()
 	defer { gc_collect() }
 
