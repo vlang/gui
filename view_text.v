@@ -93,10 +93,10 @@ pub:
 	placeholder_active bool
 }
 
-fn (t &TextCfg) free() {
+fn (cfg &TextCfg) free() {
 	unsafe {
-		t.text.free()
-		t.text_style.free()
+		cfg.text.free()
+		cfg.text_style.free()
 	}
 }
 
@@ -200,13 +200,24 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 		}
 		input_state := w.view_state.input_state[shape.id_focus]
 		mut cursor_pos := input_state.cursor_pos
-		match e.key_code {
-			.left { cursor_pos = int_max(0, cursor_pos - 1) }
-			.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
-			.home { cursor_pos = 0 }
-			.end { cursor_pos = cfg.text.len }
-			else { return }
+
+		// alt => move cursor by words
+		if e.modifiers in [u32(Modifier.alt), u32(int(Modifier.alt) | int(Modifier.shift))] {
+			match e.key_code {
+				.left { cursor_pos = find_start_of_word_pos(shape.text_lines, cursor_pos) }
+				.right { cursor_pos = find_end_of_word_pos(shape.text_lines, cursor_pos) }
+				else { return }
+			}
+		} else { // => move by character
+			match e.key_code {
+				.left { cursor_pos = int_max(0, cursor_pos - 1) }
+				.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
+				.home { cursor_pos = 0 }
+				.end { cursor_pos = cfg.text.len }
+				else { return }
+			}
 		}
+
 		e.is_handled = true
 		w.view_state.input_state[shape.id_focus] = InputState{
 			...input_state
@@ -214,8 +225,9 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 			select_beg: 0
 			select_end: 0
 		}
-		// Extend/shrink selection
-		if e.modifiers == u32(Modifier.shift) {
+
+		// shift => Extend/shrink selection
+		if int(e.modifiers) & int(Modifier.shift) > 0 {
 			old_pos := input_state.cursor_pos
 			mut beg := input_state.select_beg
 			mut end := input_state.select_end
@@ -243,7 +255,6 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 				select_beg: beg
 				select_end: end
 			}
-			e.is_handled = true
 		}
 	}
 }

@@ -250,3 +250,86 @@ pub fn to_clipboard(s ?string) bool {
 	}
 	return false
 }
+
+const runes_blanks = [` `, `\t`, `\f`, `\v`]
+
+// find_start_of_word_pos fined start of word in wrapped text, which can be challenging
+fn find_start_of_word_pos(strs []string, offset int) int {
+	if offset < 0 {
+		return 0
+	}
+
+	mut len := 0
+	mut idx := 0
+	runes := strs.map(it.runes())
+
+	// find where to start searching
+	for ; idx < runes.len; idx++ {
+		if len + runes[idx].len < offset {
+			len += runes[idx].len
+			continue
+		}
+		break
+	}
+
+	mut i := 0
+	i = offset - len - 1
+	for ; idx >= 0; idx-- {
+		for i >= 0 && runes[idx][i] in runes_blanks {
+			i--
+		}
+
+		for i >= 0 && runes[idx][i] !in runes_blanks {
+			i--
+		}
+
+		i += 1
+
+		if i > 0 {
+			break
+		}
+
+		if idx == 0 {
+			return 0
+		}
+
+		if i == 0 && runes[idx][i] !in runes_blanks {
+			break
+		}
+
+		len -= runes[idx - 1].len
+		i = runes[idx - 1].len - 1
+	}
+	return int_max(i + len, 0)
+}
+
+// find_end_of_word_pos fines end of word in wrapped text, which can be challenging
+fn find_end_of_word_pos(strs []string, offset int) int {
+	if offset < 0 {
+		return 0
+	}
+
+	mut i := 0
+	mut len := 0
+
+	for str in strs {
+		runes := str.runes()
+		if offset >= len + runes.len {
+			len += runes.len
+			continue
+		}
+
+		i = offset - len
+		for i < runes.len && runes[i] in runes_blanks {
+			i++
+		}
+
+		for i < runes.len && runes[i] !in runes_blanks {
+			i++
+		}
+
+		break
+	}
+
+	return i + len
+}

@@ -416,5 +416,8 @@ fn (cfg &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
 }
 
 fn u32_sort(a u32, b u32) (u32, u32) {
-	return if b < a { b, a } else { a, b }
+	return match b < a {
+		true { b, a }
+		else { a, b }
+	}
 }
