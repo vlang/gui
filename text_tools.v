@@ -99,19 +99,19 @@ fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u
 			continue
 		}
 		if line.len == 0 {
-			line = field
+			line = field + ' '
 			continue
 		}
-		nline := line + ' ' + field
-		t_width := get_text_width(nline, text_style, mut window)
+		n_line := line + field + ' '
+		t_width := get_text_width(n_line, text_style, mut window)
 		if t_width > width {
 			wrap << line
-			line = field.trim_space()
+			line = field + ' '
 		} else {
-			line = nline
+			line = n_line
 		}
 	}
-	wrap << line
+	wrap << line.substr(0, int_max(0, line.len - 1))
 	return wrap
 }
 
@@ -127,13 +127,13 @@ fn wrap_text_keep_spaces(s string, text_style TextStyle, width f32, tab_size u32
 			line = ''
 			continue
 		}
-		nline := line + field
-		t_width := get_text_width(nline, text_style, mut window)
+		n_line := line + field
+		t_width := get_text_width(n_line, text_style, mut window)
 		if t_width > width {
 			wrap << line
 			line = field
 		} else {
-			line = nline
+			line = n_line
 		}
 	}
 	wrap << line
@@ -253,8 +253,8 @@ pub fn to_clipboard(s ?string) bool {
 
 const runes_blanks = [` `, `\t`, `\f`, `\v`]
 
-// find_start_of_word_pos fined start of word in wrapped text, which can be challenging
-fn find_start_of_word_pos(strs []string, offset int) int {
+// start_of_word_pos fined start of word in wrapped text, which can be challenging
+fn start_of_word_pos(strs []string, offset int) int {
 	if offset < 0 {
 		return 0
 	}
@@ -303,8 +303,8 @@ fn find_start_of_word_pos(strs []string, offset int) int {
 	return int_max(i + len, 0)
 }
 
-// find_end_of_word_pos fines end of word in wrapped text, which can be challenging
-fn find_end_of_word_pos(strs []string, offset int) int {
+// end_of_word_pos fines end of word in wrapped text, which can be challenging
+fn end_of_word_pos(strs []string, offset int) int {
 	if offset < 0 {
 		return 0
 	}
@@ -332,4 +332,40 @@ fn find_end_of_word_pos(strs []string, offset int) int {
 	}
 
 	return i + len
+}
+
+fn start_of_line_pos(strs []string, offset int) int {
+	mut len := 0
+
+	for str in strs {
+		runes := str.runes()
+		if offset > len + runes.len {
+			len += runes.len
+			continue
+		}
+
+		return len + 1
+	}
+
+	return len
+}
+
+fn end_of_line_pos(strs []string, offset int) int {
+	mut len := 0
+	mut cnt := 0
+
+	for str in strs {
+		cnt += 1
+		runes := str.runes()
+		if offset >= len + runes.len - 1 {
+			len += runes.len
+			continue
+		}
+
+		is_last_line := cnt == strs.len
+		eol := if is_last_line { 1 } else { 2 }
+		return int_max(0, len + runes.len - eol)
+	}
+
+	return len
 }

@@ -201,21 +201,37 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 		input_state := w.view_state.input_state[shape.id_focus]
 		mut cursor_pos := input_state.cursor_pos
 
-		// alt => move cursor by words
-		if e.modifiers in [u32(Modifier.alt), u32(int(Modifier.alt) | int(Modifier.shift))] {
-			match e.key_code {
-				.left { cursor_pos = find_start_of_word_pos(shape.text_lines, cursor_pos) }
-				.right { cursor_pos = find_end_of_word_pos(shape.text_lines, cursor_pos) }
-				else { return }
+		$if macos {
+			if e.modifiers in [u32(Modifier.alt), u32(int(Modifier.alt) | int(Modifier.shift))] {
+				match e.key_code {
+					.left { cursor_pos = start_of_word_pos(shape.text_lines, cursor_pos) }
+					.right { cursor_pos = end_of_word_pos(shape.text_lines, cursor_pos) }
+					else { return }
+				}
 			}
-		} else { // => move by character
-			match e.key_code {
-				.left { cursor_pos = int_max(0, cursor_pos - 1) }
-				.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
-				.home { cursor_pos = 0 }
-				.end { cursor_pos = cfg.text.len }
-				else { return }
+			if e.modifiers in [u32(Modifier.ctrl), u32(int(Modifier.alt) | int(Modifier.shift))] {
+				match e.key_code {
+					.left { cursor_pos = start_of_line_pos(shape.text_lines, cursor_pos) }
+					.right { cursor_pos = end_of_line_pos(shape.text_lines, cursor_pos) }
+					else { return }
+				}
 			}
+		} $else {
+			if e.modifiers in [u32(Modifier.ctrl), u32(int(Modifier.alt) | int(Modifier.shift))] {
+				match e.key_code {
+					.left { cursor_pos = start_of_word_pos(shape.text_lines, cursor_pos) }
+					.right { cursor_pos = end_of_word_pos(shape.text_lines, cursor_pos) }
+					else { return }
+				}
+			}
+		}
+
+		match e.key_code {
+			.left { cursor_pos = int_max(0, cursor_pos - 1) }
+			.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
+			.home { cursor_pos = 0 }
+			.end { cursor_pos = cfg.text.len }
+			else { return }
 		}
 
 		e.is_handled = true
