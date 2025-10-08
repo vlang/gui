@@ -115,26 +115,104 @@ fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u
 	return wrap
 }
 
-// wrap_text_keep_spaces wraps lines to given width (logical units, not
-// chars) White space is preserved
+// wrap_text_keep_spaces wraps lines to given width (logical units, not chars) White space is preserved
+// 1. Preserves original spaces - No new spaces are added, only existing spaces from the input text are used
+// 2. Tries to leave at least one space at the end - When wrapping is needed, it attempts to include
+//    trailing spaces from the next field if they fit within the width limit
+// 3. Splits multiple spaces appropriately - If a space field contains multiple spaces, it includes
+//    as many as will fit and carries the rest to the next line
+// 4. Wraps earlier when necessary - If no trailing spaces can be added, it tries to wrap at an earlier space
+//    within the current line to ensure a space at the end
+// 5. Respects width constraints - Never exceeds the specified width limit
+// 6. Handles edge cases - Properly handles empty lines and overly long fields to avoid infinite loops
 fn wrap_text_keep_spaces(s string, text_style TextStyle, width f32, tab_size u32, mut window Window) []string {
 	mut line := ''
 	mut wrap := []string{cap: 10}
 	unsafe { wrap.flags.set(.noslices) }
-	for field in split_text(s, tab_size) {
+	mut fields := split_text(s, tab_size)
+
+	mut i := 0
+	for i < fields.len {
+		field := fields[i]
 		if field == '\n' {
 			wrap << line + '\n'
 			line = ''
+			i++
 			continue
 		}
 		n_line := line + field
 		t_width := get_text_width(n_line, text_style, mut window)
 		if t_width > width {
-			wrap << line
-			line = field
+			// Check if we can add at least one space to the current line
+			mut wrapped_line := line
+			mut can_add_space := false
+
+			if line.len > 0 && !line.ends_with(' ') && i + 1 < fields.len {
+				next_field := fields[i + 1]
+				if next_field != '\n' && next_field.is_blank() {
+					// Try to fit as many spaces as possible (at least one)
+					mut spaces_to_add := ''
+					for space in next_field {
+						test_line := line + spaces_to_add + space.str()
+						test_width := get_text_width(test_line, text_style, mut window)
+						if test_width <= width {
+							spaces_to_add += space.str()
+							can_add_space = true
+						} else {
+							break
+						}
+					}
+
+					if can_add_space {
+						wrapped_line = line + spaces_to_add
+						// Update the next field with remaining spaces
+						remaining_spaces := next_field[spaces_to_add.len..]
+						if remaining_spaces.len > 0 {
+							fields[i + 1] = remaining_spaces
+						} else {
+							// All spaces were consumed, remove this field
+							fields.delete(i + 1)
+						}
+					}
+				}
+			}
+
+			// Can't add a space and line is not empty? Need to wrap earlier
+			if !can_add_space && line.len > 0 && !line.ends_with(' ') {
+				// Look back to see if we can wrap at an earlier space
+				mut should_wrap_early := false
+				if line.contains(' ') {
+					// Find the last space in the current line
+					last_space_idx := line.last_index(' ') or { -1 }
+					if last_space_idx > 0 {
+						early_wrap := line[..last_space_idx + 1]
+						remaining := line[last_space_idx + 1..]
+						wrapped_line = early_wrap
+						line = remaining + field
+						should_wrap_early = true
+					}
+				}
+
+				if !should_wrap_early {
+					// Can't wrap early, force wrap without space
+					wrapped_line = line
+					line = field
+				}
+			} else if line.len > 0 {
+				// Added space(s) or line already ends with space
+				line = field
+			} else {
+				// Line is empty but field is too wide - add it anyway to avoid infinite loop
+				line = field
+			}
+
+			if line.len > 0 || wrapped_line.len > 0 {
+				wrap << wrapped_line
+			}
 		} else {
 			line = n_line
 		}
+		i++
 	}
 	wrap << line
 	return wrap

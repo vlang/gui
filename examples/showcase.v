@@ -159,18 +159,16 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 		gui.color_transparent
 	}
 	return gui.row(
-		color:     color
-		fill:      app.selected_tab == tab_item
-		min_width: 75
-		max_width: 100
-		padding:   gui.theme().padding_small
-		content:   [gui.text(text: label, mode: .wrap, text_style: gui.theme().n2)]
-		on_click:  fn [tab_item] (_ voidptr, mut e gui.Event, mut w gui.Window) {
+		color:    color
+		fill:     app.selected_tab == tab_item
+		padding:  gui.theme().padding_small
+		content:  [gui.text(text: label, text_style: gui.theme().n2)]
+		on_click: fn [tab_item] (_ voidptr, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.selected_tab = tab_item
 			w.update_view(main_view)
 		}
-		on_hover:  fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
+		on_hover: fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			layout.shape.fill = true
 			layout.shape.color = gui.theme().color_hover
 			w.set_mouse_cursor_pointing_hand()
