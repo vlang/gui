@@ -314,24 +314,9 @@ fn split_text(s string, tab_size u32) []string {
 	return fields
 }
 
-pub fn from_clipboard() string {
-	mut cb := clipboard.new()
-	defer { cb.free() }
-	return cb.paste()
-}
-
-pub fn to_clipboard(s ?string) bool {
-	if s != none {
-		mut cb := clipboard.new()
-		defer { cb.free() }
-		return cb.copy(s)
-	}
-	return false
-}
-
 const runes_blanks = [` `, `\t`, `\f`, `\v`]
 
-// start_of_word_pos fined start of word in wrapped text, which can be challenging
+// start_of_word_pos finds start of word in wrapped text
 fn start_of_word_pos(strs []string, offset int) int {
 	if offset < 0 {
 		return 0
@@ -375,13 +360,14 @@ fn start_of_word_pos(strs []string, offset int) int {
 			break
 		}
 
-		len -= runes[idx - 1].len
-		i = runes[idx - 1].len - 1
+		prev_len := runes[idx - 1].len
+		len -= prev_len
+		i = prev_len - 1
 	}
 	return int_max(i + len, 0)
 }
 
-// end_of_word_pos fines end of word in wrapped text, which can be challenging
+// end_of_word_pos finds end of word in wrapped text
 fn end_of_word_pos(strs []string, offset int) int {
 	if offset < 0 {
 		return 0
@@ -422,7 +408,7 @@ fn start_of_line_pos(strs []string, offset int) int {
 			continue
 		}
 
-		return len + 1
+		return len
 	}
 
 	return len
@@ -441,9 +427,62 @@ fn end_of_line_pos(strs []string, offset int) int {
 		}
 
 		is_last_line := cnt == strs.len
-		eol := if is_last_line { 1 } else { 2 }
+		eol := if is_last_line { 0 } else { 1 }
 		return int_max(0, len + runes.len - eol)
 	}
 
 	return len
+}
+
+fn start_of_paragraph(strs []string, offset int) int {
+	if offset < 0 {
+		return 0
+	}
+
+	mut len := 0
+	mut idx := 0
+	runes := strs.map(it.runes())
+
+	// find where to start searching
+	for ; idx < runes.len; idx++ {
+		if len + runes[idx].len < offset {
+			len += runes[idx].len
+			continue
+		}
+		break
+	}
+
+	mut i := 0
+	i = offset - len - 1
+	for ; idx >= 0; idx-- {
+		for i >= 0 && runes[idx][i] != `\n` {
+			i--
+		}
+		if idx == 0 {
+			return 0
+		}
+		prev_len := runes[idx - 1].len
+		len -= prev_len
+		if i >= 0 {
+			break
+		}
+		i = prev_len - 1
+	}
+
+	return int_max(i + len, 0)
+}
+
+pub fn from_clipboard() string {
+	mut cb := clipboard.new()
+	defer { cb.free() }
+	return cb.paste()
+}
+
+pub fn to_clipboard(s ?string) bool {
+	if s != none {
+		mut cb := clipboard.new()
+		defer { cb.free() }
+		return cb.copy(s)
+	}
+	return false
 }

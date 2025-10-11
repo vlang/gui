@@ -18,7 +18,7 @@ doc:
 	mv README.xx README.md
 	rm nl
 	rm sp
-	mkdir doc/html/assets
+	-mkdir doc/html/assets
 	cp assets/get-started.png doc/html/assets
 	cp assets/showcase.png doc/html/assets
 

@@ -390,7 +390,8 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 			if cursor_y < shape.text_lines.len {
 				ln := shape.text_lines[cursor_y]
 				x := int_min(cursor_x, ln.len)
-				cx := shape.x + ctx.text_width(ln[..x])
+				avoid_clip_start_of_line := if cursor_x == 0 { 1 } else { 0 }
+				cx := shape.x + ctx.text_width(ln[..x]) + avoid_clip_start_of_line
 				cy := shape.y + (lh * cursor_y)
 				dr := gg.Rect{
 					x:      cx
