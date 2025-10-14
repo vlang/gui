@@ -224,6 +224,13 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 			}
 		}
 
+		// Moving the cursor when it is animated can happen when the cursor is
+		// hidden. Sticky allows the cursor to stay on during cursor movements.
+		// See `blinky_cursor_animation()`
+		if cursor_pos != input_state.cursor_pos {
+			w.view_state.cursor_on_sticky = true
+		}
+
 		e.is_handled = true
 		w.view_state.input_state[shape.id_focus] = InputState{
 			...input_state

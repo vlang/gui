@@ -19,6 +19,7 @@ mut:
 	date_picker_state map[string]DatePickerState // [id date_picker -> DatePickerState
 	mouse_lock        MouseLockCfg               // mouse down/move/up methods to call when locked
 	id_focus          u32                        // current view that has focus
+	cursor_on_sticky  bool                       // keeps the cursor visible during cursor movement
 	cursor_on         bool = true // used by cursor blink animation
 }
 
