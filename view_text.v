@@ -214,7 +214,7 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 				.right { cursor_pos = end_of_line_pos(shape.text_lines, cursor_pos) }
 				else { return }
 			}
-		} else {
+		} else if e.modifiers in [u32(0), u32(Modifier.shift)] {
 			match e.key_code {
 				.left { cursor_pos = int_max(0, cursor_pos - 1) }
 				.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
@@ -267,6 +267,15 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 				cursor_pos: cursor_pos
 				select_beg: beg
 				select_end: end
+			}
+		} else if input_state.select_beg != input_state.select_end && e.modifiers == 0 {
+			w.view_state.input_state[shape.id_focus] = InputState{
+				...input_state
+				cursor_pos: match e.key_code {
+					.left { int(input_state.select_beg) }
+					.right { int(input_state.select_end) }
+					else { cursor_pos }
+				}
 			}
 		}
 	}
