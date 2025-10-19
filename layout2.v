@@ -178,3 +178,30 @@ fn rect_intersection(a DrawClip, b DrawClip) ?DrawClip {
 pub fn point_in_rectangle(x f32, y f32, rect DrawClip) bool {
 	return x >= rect.x && y >= rect.y && x < (rect.x + rect.width) && y < (rect.y + rect.height)
 }
+
+fn free_layout(mut layout Layout) {
+	for mut ly in layout.children {
+		free_layout(mut ly)
+		unsafe {
+			if ly.shape != nil {
+				ly.shape.cfg = nil
+				ly.shape.text_style = nil
+				ly.shape.on_char = nil
+				ly.shape.on_keydown = nil
+				ly.shape.on_click = nil
+				ly.shape.on_mouse_move = nil
+				ly.shape.on_mouse_up = nil
+				ly.shape.on_char_shape = nil
+				ly.shape.on_keydown_shape = nil
+				ly.shape.on_mouse_down_shape = nil
+				ly.shape.on_mouse_move_shape = nil
+				ly.shape.on_mouse_up_shape = nil
+				ly.shape.on_mouse_scroll_shape = nil
+				ly.shape.amend_layout = nil
+				ly.shape.on_hover = nil
+			}
+			ly.children.clear()
+			ly.parent = nil
+		}
+	}
+}

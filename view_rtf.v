@@ -6,7 +6,6 @@ import os
 struct RtfView implements View {
 pub:
 	id         string
-	cfg        &RtfCfg = unsafe { nil }
 	sizing     Sizing
 	spans      datatypes.LinkedList[TextSpan]
 	min_width  f32
@@ -17,6 +16,7 @@ pub:
 	focus_skip bool
 	disabled   bool
 pub mut:
+	cfg     &RtfCfg = unsafe { nil }
 	content []View // required, not used
 }
 
@@ -38,7 +38,7 @@ pub:
 	disabled   bool
 }
 
-fn (rtf &RtfView) generate(mut window Window) Layout {
+fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	$if !prod {
 		gui_stats.increment_layouts()
 	}
@@ -72,6 +72,7 @@ fn (rtf &RtfView) generate(mut window Window) Layout {
 		on_mouse_down_shape: rtf_mouse_down_shape
 	}
 
+	rtf.cfg = unsafe { nil }
 	return Layout{
 		shape: shape
 	}

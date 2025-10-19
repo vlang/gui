@@ -11,17 +11,24 @@ module gui
 //
 // Renderers are draw instructions.
 pub interface View {
-	generate(mut window Window) Layout
 mut:
 	content []View
+	generate_layout(mut window Window) Layout
 }
 
 // generate_layout builds a Layout from a View.
-fn generate_layout(view &View, mut window Window) Layout {
-	mut layout := view.generate(mut window)
+fn generate_layout(mut view View, mut window Window) Layout {
+	mut layout := view.generate_layout(mut window)
 	layout.children.ensure_cap(view.content.len)
-	for child_view in view.content {
-		layout.children << generate_layout(child_view, mut window)
+	for mut content in view.content {
+		layout.children << generate_layout(mut content, mut window)
 	}
 	return layout
+}
+
+fn free_view(mut view View) {
+	for mut vw in view.content {
+		free_view(mut vw)
+		vw.content.clear()
+	}
 }

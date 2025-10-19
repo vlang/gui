@@ -13,13 +13,13 @@ pub enum TextMode as u8 {
 // Text is an internal structure used to describe a text view
 // Members are arranged for packing to reduce memory footprint.
 struct TextView implements View {
-	cfg    &TextCfg
 	sizing Sizing
 mut:
+	cfg     &TextCfg
 	content []View // not used
 }
 
-fn (t &TextView) generate(mut window Window) Layout {
+fn (mut t TextView) generate_layout(mut window Window) Layout {
 	$if !prod {
 		gui_stats.increment_layouts()
 	}
@@ -71,6 +71,8 @@ fn (t &TextView) generate(mut window Window) Layout {
 		layout.shape.min_height = f32_max(layout.shape.height, layout.shape.min_height)
 		layout.shape.height = layout.shape.height
 	}
+
+	t.cfg = unsafe { nil }
 	return layout
 }
 

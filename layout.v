@@ -39,8 +39,8 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// Add last to ensure it is always on top.
 	// Dialogs do not support additional floating layouts.
 	if window.dialog_cfg.visible {
-		dialog_view := dialog_view_generator(window.dialog_cfg)
-		mut dialog_layout := generate_layout(dialog_view, mut window)
+		mut dialog_view := dialog_view_generator(window.dialog_cfg)
+		mut dialog_layout := generate_layout(mut dialog_view, mut window)
 		layout_parents(mut dialog_layout, layout)
 		floating_layouts << dialog_layout
 	}

@@ -6,28 +6,44 @@ import arrays
 @[heap]
 struct ContainerView implements View {
 pub:
-	id              string
-	name            string // used internally, read-only
-	text            string
-	scrollbar_cfg_x &ScrollbarCfg = unsafe { nil }
-	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
-	color           Color         = gui_theme.container_style.color
-	padding         Padding       = gui_theme.container_style.padding
-	sizing          Sizing
-	x               f32
-	y               f32
-	width           f32
-	min_width       f32
-	max_width       f32
-	height          f32
-	min_height      f32
-	max_height      f32
-	radius          f32 = gui_theme.container_style.radius
-	spacing         f32 = gui_theme.container_style.spacing
-	float_offset_x  f32
-	float_offset_y  f32
-	id_focus        u32 // not sure this should be here
-	id_scroll       u32
+	id             string
+	name           string // used internally, read-only
+	text           string
+	tooltip        &TooltipCfg = unsafe { nil }
+	color          Color       = gui_theme.container_style.color
+	padding        Padding     = gui_theme.container_style.padding
+	sizing         Sizing
+	x              f32
+	y              f32
+	width          f32
+	min_width      f32
+	max_width      f32
+	height         f32
+	min_height     f32
+	max_height     f32
+	radius         f32 = gui_theme.container_style.radius
+	spacing        f32 = gui_theme.container_style.spacing
+	float_offset_x f32
+	float_offset_y f32
+	id_focus       u32 // not sure this should be here
+	id_scroll      u32
+	h_align        HorizontalAlign
+	v_align        VerticalAlign
+	scroll_mode    ScrollMode
+	float_anchor   FloatAttach
+	float_tie_off  FloatAttach
+	fill           bool = gui_theme.container_style.fill
+	clip           bool
+	focus_skip     bool
+	disabled       bool
+	invisible      bool
+	float          bool
+	over_draw      bool
+mut:
+	content         []View
+	cfg             voidptr
+	scrollbar_cfg_x &ScrollbarCfg                          = unsafe { nil }
+	scrollbar_cfg_y &ScrollbarCfg                          = unsafe { nil }
 	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
@@ -36,27 +52,11 @@ pub:
 	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
 	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	h_align         HorizontalAlign
-	v_align         VerticalAlign
-	scroll_mode     ScrollMode
-	float_anchor    FloatAttach
-	float_tie_off   FloatAttach
-	fill            bool = gui_theme.container_style.fill
-	clip            bool
-	focus_skip      bool
-	disabled        bool
-	invisible       bool
-	float           bool
-	over_draw       bool
-mut:
-	content    []View
-	tooltip    &TooltipCfg = unsafe { nil }
-	cfg        voidptr
-	shape_type ShapeType = .rectangle
-	axis       Axis
+	shape_type      ShapeType = .rectangle
+	axis            Axis
 }
 
-fn (cv ContainerView) generate(mut _ Window) Layout {
+fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
 	$if !prod {
 		gui_stats.increment_layouts()
@@ -64,7 +64,7 @@ fn (cv ContainerView) generate(mut _ Window) Layout {
 	if cv.invisible {
 		return Layout{}
 	}
-	return Layout{
+	layout := Layout{
 		shape: &Shape{
 			type:                cv.shape_type
 			id:                  cv.id
@@ -118,6 +118,19 @@ fn (cv ContainerView) generate(mut _ Window) Layout {
 			amend_layout:        cv.amend_layout
 		}
 	}
+	unsafe {
+		cv.cfg = nil
+		cv.on_click = nil
+		cv.on_char = nil
+		cv.on_keydown = nil
+		cv.on_mouse_move = nil
+		cv.on_mouse_up = nil
+		cv.on_hover = nil
+		cv.amend_layout = nil
+		cv.scrollbar_cfg_x = nil
+		cv.scrollbar_cfg_y = nil
+	}
+	return layout
 }
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers,

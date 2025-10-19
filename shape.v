@@ -9,7 +9,6 @@ pub struct Shape {
 pub:
 	id       string // user assigned
 	name     string // internal shape name, useful for debugging
-	cfg      voidptr
 	uid      u64 = rand.u64() // internal use only
 	id_focus u32 // >0 indicates shape is focusable. Value determines tabbing order
 	axis     Axis
@@ -40,6 +39,7 @@ pub mut:
 	text_sel_beg          u32
 	text_sel_end          u32
 	text_tab_size         u32 = 4
+	cfg                   voidptr
 	on_char               fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_keydown            fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_click              fn (voidptr, mut Event, mut Window)    = unsafe { nil }

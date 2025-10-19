@@ -240,14 +240,17 @@ fn (mut window Window) update_window() {
 	}
 
 	window.lock()
-	view := window.view_generator(window)
-	window.layout = window.compose_layout(view)
+	mut view := window.view_generator(window)
+	mut old_layout := window.layout
+	window.layout = window.compose_layout(mut view)
 	window.renderers.clear()
 	clip_rect := window.window_rect()
 	background_color := window.color_background()
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
 	window.unlock()
 
+	free_view(mut view)
+	free_layout(mut old_layout)
 	window.ui.refresh_ui()
 	defer { gc_collect() }
 
@@ -258,11 +261,11 @@ fn (mut window Window) update_window() {
 
 // compose_layout produces a layout from the given view that is
 // arranged and ready for generating renderers.
-fn (mut window Window) compose_layout(view &View) Layout {
+fn (mut window Window) compose_layout(mut view View) Layout {
 	// stopwatch := time.new_stopwatch()
 	// defer { println(stopwatch.elapsed()) }
 
-	mut layout := generate_layout(view, mut window)
+	mut layout := generate_layout(mut view, mut window)
 	layouts := layout_arrange(mut layout, mut window)
 	// Combine the layouts into one layout to rule them all
 	// and bind them in the darkness, or transparent-ness

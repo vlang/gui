@@ -99,7 +99,10 @@ pub:
 // - **ctrl+right** moves to end of line, if at end of line moves down one line
 // - **alt+left** moves to end of previous word (option+left on Mac)
 // - **alt+right** moves to start of word (option+left on Mac)
+// - **home** move cursor to start of text
+// - **end** move cursor to end of text
 // - Add shift to above shortcuts to select text
+// ---
 // - **ctrl+a** selects all text (also **cmd+a** on Mac)
 // - **ctrl+c** copies selected text (also **cmd+c** on Mac)
 // - **ctrl+v** pastes text (also **cmd+v** on Mac)
@@ -108,8 +111,8 @@ pub:
 // - **shift+ctrl+z** redo (also **shift+cmd+z** on Mac)
 // - **delete** or **backspace** deletes previous character
 // - **escape** unselects all text
-// - **home** move cursor to start of text
-// - **end** move cursor to end of text
+// ---
+// - While selected, left/right arrow keys move cursor to beg/end of selection
 pub fn input(cfg InputCfg) View {
 	placeholder_active := cfg.text.len == 0
 	txt := if placeholder_active { cfg.placeholder } else { cfg.text }
