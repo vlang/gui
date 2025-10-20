@@ -233,7 +233,7 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 }
 
 // update_window generates a new layout from the window's current view generator.
-fn (mut window Window) update_window() {
+pub fn (mut window Window) update_window() {
 	window.update_window_calls++
 	if window.update_window_calls > window.max_update_window_calls_per_frame {
 		return
