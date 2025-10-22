@@ -341,7 +341,7 @@ config:
     EX --> WIN
     WIN --> EVT
     WIN --> GEN
-    V --> STATE
+    VIEW --> STATE
     GEN --> VIEW
     VIEW --> LAY
     LAY --> SHAPE
