@@ -284,3 +284,147 @@ V also provides other UI solutions:
 
 This GUI framework focuses specifically on immediate mode rendering with
 a declarative API, making it distinct from other V UI solutions.
+
+## Architecture Overview
+
+``` mermaid
+---
+config:
+  layout: elk
+---
+  graph TD
+    subgraph "Application"
+        APP[User Applications]
+        EX[Examples]
+    end
+    
+    subgraph "Window & Events"
+        WIN[Window]
+        CFG[WindowCfg]
+        EVT[Event System]
+    end
+    
+    subgraph "View System"
+        VIEW[View]
+        GEN[View Generator]
+        STATE[ViewState]
+    end
+    
+    subgraph "Layout Engine"
+        LAY[Layout]
+        SHAPE[Shape]
+        SIZE[Sizing & Alignment]
+    end
+    
+    subgraph "UI Components"
+        COMMON[Button<br>Text<br>Input<br>Image<br>...]
+        CONTAINERS[Column<br>Row<br>Canvas]
+    end
+    
+    subgraph "Rendering"
+        REND[Renderer]
+        ANIM[Animation]
+    end
+    
+    subgraph "Core & Theme"
+        THEME[Theme & Colors]
+        FONTS[Fonts & Styles]
+    end
+    
+    subgraph "External Deps"
+        GG[gg Graphics]
+        SOKOL[sokol.sapp]
+    end
+    
+    %% Main flow
+    APP --> WIN
+    EX --> WIN
+    WIN --> EVT
+    WIN --> GEN
+    WIN --> STATE
+    GEN --> VIEW
+    VIEW --> LAY
+    LAY --> SHAPE
+    LAY --> SIZE
+    
+    %% Components to view
+    COMMON --> VIEW
+    CONTAINERS --> VIEW
+    
+    %% Layout to rendering
+    LAY --> REND
+    ANIM --> REND
+    
+    %% Core systems
+    REND --> THEME
+    REND --> FONTS
+    VIEW --> THEME
+    
+    %% External dependencies
+    WIN --> GG
+    WIN --> SOKOL
+    REND --> GG
+    
+    classDef app fill:#e1f5fe
+    classDef window fill:#f3e5f5
+    classDef view fill:#e8f5e8
+    classDef layout fill:#fff3e0
+    classDef component fill:#fce4ec
+    classDef render fill:#f1f8e9
+    classDef core fill:#e0f2f1
+    classDef external fill:#fafafa
+    
+    class APP,EX app
+    class WIN,CFG,EVT window
+    class VIEW,GEN,STATE view
+    class LAY,SHAPE,SIZE layout
+    class COMMON,CONTAINERS component
+    class REND,ANIM render
+    class THEME,FONTS,DEBUG core
+    class GG,SOKOL,UTILS external
+   ```
+
+GUI follows a layered architecture pattern with clear separation of concerns:
+
+### **Application Layer**
+- **Application Code**: User applications that use the GUI library
+- **Examples**: Demonstration applications showing various features
+
+### **Window Management Layer**
+- **Window**: Main application window that orchestrates the entire GUI system
+- **WindowCfg**: Configuration for window creation
+- **Event System**: Handles all user input events (mouse, keyboard, etc.)
+
+### **View Layer** 
+- **View**: Abstract representation of UI components and layouts
+- **View Generator**: Functions that create views dynamically
+- **ViewState**: Manages the current state of views (focus, selection, etc.)
+
+### **Layout System**
+- **Layout**: Hierarchical arrangement of UI elements
+- **Shape**: Basic geometric representation of UI elements
+- **Sizing**: Controls how elements are sized
+- **Alignment**: Controls element positioning
+- **Padding**: Manages spacing around elements
+
+### **UI Components**
+A rich set of pre-built UI components including buttons, text fields, tables, menus, dialogs, and many more specialized widgets.
+
+### **Rendering System**
+- **Renderer**: Responsible for drawing UI elements
+- **Render Functions**: Low-level drawing operations
+- **Animation**: Handles animated UI elements
+
+### **Core Systems**
+- **Color & Theme**: Visual styling system
+- **Font System**: Text rendering capabilities
+- **Debug & Stats**: Development and performance tools
+
+### **External Dependencies**
+- **gg**: Graphics context for rendering
+- **sokol.sapp**: Cross-platform application framework
+- **sync**: Threading and synchronization
+- **log**: Logging system
+
+The architecture follows a top-down flow where the application creates a window, which generates views through view generators, arranges them in layouts, and renders them through the rendering system using the underlying graphics context.
+
