@@ -290,6 +290,8 @@ a declarative API, making it distinct from other V UI solutions.
 ``` mermaid
 ---
 config:
+  themeVariables:
+    textColor: 'black'
   layout: elk
 ---
   graph TD
@@ -313,7 +315,7 @@ config:
     subgraph "Layout Engine"
         LAY[Layout]
         SHAPE[Shape]
-        SIZE[Sizing & Alignment]
+        SIZE[Sizing<br>Alignment<br>Padding]
     end
     
     subgraph "UI Components"
