@@ -9,9 +9,8 @@ pub:
 	id             string
 	name           string // used internally, read-only
 	text           string
-	tooltip        &TooltipCfg = unsafe { nil }
-	color          Color       = gui_theme.container_style.color
-	padding        Padding     = gui_theme.container_style.padding
+	color          Color   = gui_theme.container_style.color
+	padding        Padding = gui_theme.container_style.padding
 	sizing         Sizing
 	x              f32
 	y              f32
@@ -44,6 +43,7 @@ mut:
 	cfg             voidptr
 	scrollbar_cfg_x &ScrollbarCfg                          = unsafe { nil }
 	scrollbar_cfg_y &ScrollbarCfg                          = unsafe { nil }
+	tooltip         &TooltipCfg                            = unsafe { nil }
 	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
@@ -118,18 +118,7 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 			amend_layout:        cv.amend_layout
 		}
 	}
-	unsafe {
-		cv.cfg = nil
-		cv.on_click = nil
-		cv.on_char = nil
-		cv.on_keydown = nil
-		cv.on_mouse_move = nil
-		cv.on_mouse_up = nil
-		cv.on_hover = nil
-		cv.amend_layout = nil
-		cv.scrollbar_cfg_x = nil
-		cv.scrollbar_cfg_y = nil
-	}
+
 	return layout
 }
 

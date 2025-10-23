@@ -19,60 +19,59 @@ mut:
 	content []View // not used
 }
 
-fn (mut t TextView) generate_layout(mut window Window) Layout {
+fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	$if !prod {
 		gui_stats.increment_layouts()
 	}
-	if t.cfg.invisible {
+	if tv.cfg.invisible {
 		return Layout{}
 	}
-	input_state := match window.is_focus(t.cfg.id_focus) {
-		true { window.view_state.input_state[t.cfg.id_focus] }
+	input_state := match window.is_focus(tv.cfg.id_focus) {
+		true { window.view_state.input_state[tv.cfg.id_focus] }
 		else { InputState{} }
 	}
-	lines := match t.cfg.mode == .multiline {
-		true { wrap_simple(t.cfg.text, t.cfg.tab_size) }
-		else { [t.cfg.text] } // dynamic wrapping handled in the layout pipeline
+	lines := match tv.cfg.mode == .multiline {
+		true { wrap_simple(tv.cfg.text, tv.cfg.tab_size) }
+		else { [tv.cfg.text] } // dynamic wrapping handled in the layout pipeline
 	}
 	mut layout := Layout{
 		shape: &Shape{
 			name:                'text'
 			type:                .text
-			id_focus:            t.cfg.id_focus
-			cfg:                 &t.cfg
-			clip:                t.cfg.clip
-			focus_skip:          t.cfg.focus_skip
-			disabled:            t.cfg.disabled
-			min_width:           t.cfg.min_width
-			sizing:              t.sizing
-			text:                t.cfg.text
-			text_is_password:    t.cfg.is_password
-			text_is_placeholder: t.cfg.placeholder_active
+			id_focus:            tv.cfg.id_focus
+			cfg:                 &tv.cfg
+			clip:                tv.cfg.clip
+			focus_skip:          tv.cfg.focus_skip
+			disabled:            tv.cfg.disabled
+			min_width:           tv.cfg.min_width
+			sizing:              tv.sizing
+			text:                tv.cfg.text
+			text_is_password:    tv.cfg.is_password
+			text_is_placeholder: tv.cfg.placeholder_active
 			text_lines:          lines
-			text_mode:           t.cfg.mode
-			text_style:          &t.cfg.text_style
+			text_mode:           tv.cfg.mode
+			text_style:          &tv.cfg.text_style
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
-			text_tab_size:       t.cfg.tab_size
-			on_char_shape:       t.cfg.char_shape
-			on_keydown_shape:    t.cfg.keydown_shape
-			on_mouse_down_shape: t.cfg.mouse_down_shape
-			on_mouse_move_shape: t.cfg.mouse_move_shape
-			on_mouse_up_shape:   t.cfg.mouse_up_shape
+			text_tab_size:       tv.cfg.tab_size
+			on_char_shape:       tv.cfg.char_shape
+			on_keydown_shape:    tv.cfg.keydown_shape
+			on_mouse_down_shape: tv.cfg.mouse_down_shape
+			on_mouse_move_shape: tv.cfg.mouse_move_shape
+			on_mouse_up_shape:   tv.cfg.mouse_up_shape
 		}
 	}
 	layout.shape.width = text_width(layout.shape, mut window)
 	layout.shape.height = text_height(layout.shape)
-	if t.cfg.mode == .single_line || layout.shape.sizing.width == .fixed {
+	if tv.cfg.mode == .single_line || layout.shape.sizing.width == .fixed {
 		layout.shape.min_width = f32_max(layout.shape.width, layout.shape.min_width)
 		layout.shape.width = layout.shape.min_width
 	}
-	if t.cfg.mode == .single_line || layout.shape.sizing.height == .fixed {
+	if tv.cfg.mode == .single_line || layout.shape.sizing.height == .fixed {
 		layout.shape.min_height = f32_max(layout.shape.height, layout.shape.min_height)
 		layout.shape.height = layout.shape.height
 	}
 
-	t.cfg = unsafe { nil }
 	return layout
 }
 
@@ -93,13 +92,6 @@ pub:
 	disabled           bool
 	is_password        bool
 	placeholder_active bool
-}
-
-fn (cfg &TextCfg) free() {
-	unsafe {
-		cfg.text.free()
-		cfg.text_style.free()
-	}
 }
 
 // text is a general purpose text renderer. Use it for labels or larger

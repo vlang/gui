@@ -241,7 +241,6 @@ pub fn (mut window Window) update_window() {
 
 	window.lock()
 	mut view := window.view_generator(window)
-	mut old_layout := window.layout
 	window.layout = window.compose_layout(mut view)
 	window.renderers.clear()
 	clip_rect := window.window_rect()
@@ -249,14 +248,12 @@ pub fn (mut window Window) update_window() {
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
 	window.unlock()
 
-	free_view(mut view)
-	free_layout(mut old_layout)
-	window.ui.refresh_ui()
-	defer { gc_collect() }
-
 	$if !prod {
 		gui_stats.update_max_renderers(usize(window.renderers.len))
 	}
+
+	window.ui.refresh_ui()
+	defer { gc_collect() }
 }
 
 // compose_layout produces a layout from the given view that is

@@ -63,11 +63,7 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 			on_hover:   iv.on_hover
 		}
 	}
-	unsafe {
-		iv.cfg = nil
-		iv.on_click = nil
-		iv.on_hover = nil
-	}
+
 	return layout
 }
 

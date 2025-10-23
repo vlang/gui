@@ -25,10 +25,3 @@ fn generate_layout(mut view View, mut window Window) Layout {
 	}
 	return layout
 }
-
-fn free_view(mut view View) {
-	for mut vw in view.content {
-		free_view(mut vw)
-		vw.content.clear()
-	}
-}
