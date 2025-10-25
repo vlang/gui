@@ -2,6 +2,7 @@ module gui
 
 import gg
 import sokol.sgl
+import log
 
 // A Renderer is the final computed drawing instruction. gui.Window keeps an array
 // of Renderers and only uses that array to paint the window. The window can be
@@ -480,8 +481,10 @@ fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 		shape.disabled = true
 		return
 	}
-	mut ctx := window.context()
-	image := ctx.get_cached_image_by_idx(window.view_state.image_map[shape.image_name])
+	image := window.load_image(shape.image_name) or {
+		log.error('${@FILE_LINE} > ${err.msg()}')
+		return
+	}
 	window.renderers << DrawImage{
 		x:   shape.x
 		y:   shape.y

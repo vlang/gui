@@ -61,9 +61,6 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 	$if !prod {
 		gui_stats.increment_layouts()
 	}
-	if cv.invisible {
-		return Layout{}
-	}
 	layout := Layout{
 		shape: &Shape{
 			type:                cv.shape_type

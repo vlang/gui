@@ -23,9 +23,6 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	$if !prod {
 		gui_stats.increment_layouts()
 	}
-	if tv.cfg.invisible {
-		return Layout{}
-	}
 	input_state := match window.is_focus(tv.cfg.id_focus) {
 		true { window.view_state.input_state[tv.cfg.id_focus] }
 		else { InputState{} }
@@ -100,6 +97,11 @@ pub:
 pub fn text(cfg TextCfg) View {
 	$if !prod {
 		gui_stats.increment_text_views()
+	}
+	if cfg.invisible {
+		return ContainerView{
+			invisible: true
+		}
 	}
 	return TextView{
 		cfg:    &cfg

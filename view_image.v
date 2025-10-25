@@ -1,5 +1,7 @@
 module gui
 
+import log
+
 struct ImageView implements View {
 pub:
 	id         string
@@ -37,12 +39,11 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 	$if !prod {
 		gui_stats.increment_layouts()
 	}
-	if iv.invisible {
-		return Layout{}
-	}
-	image := window.load_image_from_file(iv.file_name) or {
-		eprintln(err.msg())
-		return Layout{}
+	image := window.load_image(iv.file_name) or {
+		log.error('${@FILE_LINE} > ${err.msg()}')
+		return Layout{
+			shape: &Shape{}
+		}
 	}
 
 	width := if iv.width > 0 { iv.width } else { image.width }
@@ -70,6 +71,11 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 pub fn image(cfg ImageCfg) View {
 	$if !prod {
 		gui_stats.increment_image_views()
+	}
+	if cfg.invisible {
+		return ContainerView{
+			invisible: true
+		}
 	}
 	return ImageView{
 		id:         cfg.id

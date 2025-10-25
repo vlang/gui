@@ -43,10 +43,6 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 		gui_stats.increment_layouts()
 	}
 
-	if rtf.invisible {
-		return Layout{}
-	}
-
 	tspans := match true {
 		rtf.mode in [.wrap, .wrap_keep_spaces] { rtf.spans }
 		else { rtf_simple(rtf.spans, mut window) }
@@ -81,6 +77,12 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 pub fn rtf(cfg RtfCfg) View {
 	$if !prod {
 		gui_stats.increment_rtf_views()
+	}
+
+	if cfg.invisible {
+		return ContainerView{
+			invisible: true
+		}
 	}
 
 	mut ll := datatypes.LinkedList[TextSpan]{}
