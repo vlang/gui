@@ -13,6 +13,8 @@ import log
 // eliminates the need to, "dispatch to the UI thread", that many other UI
 // frameworks require.
 
+const password_char = '*'
+
 struct DrawCircle {
 	color  gg.Color
 	x      f32
@@ -318,7 +320,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 			mut lnl := line.replace('\n', '')
 			if shape.text_is_password && !shape.text_is_placeholder {
 				// replace with '*'s
-				lnl = '*'.repeat(utf8_str_visible_length(lnl))
+				lnl = password_char.repeat(utf8_str_visible_length(lnl))
 			}
 			window.renderers << DrawText{
 				x:    x
@@ -391,8 +393,14 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 			if cursor_y < shape.text_lines.len {
 				ln := shape.text_lines[cursor_y]
 				x := int_min(cursor_x, ln.len)
+				ln_fragment := ln[..x]
+				text_width := if shape.text_is_password {
+					ctx.text_width(password_char.repeat(utf8_str_visible_length(ln_fragment)))
+				} else {
+					ctx.text_width(ln_fragment)
+				}
 				avoid_clip_start_of_line := if cursor_x == 0 { 1 } else { 0 }
-				cx := shape.x + ctx.text_width(ln[..x]) + avoid_clip_start_of_line
+				cx := shape.x + text_width + avoid_clip_start_of_line
 				cy := shape.y + (lh * cursor_y)
 				dr := gg.Rect{
 					x:      cx
