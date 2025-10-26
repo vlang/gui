@@ -117,6 +117,11 @@ pub const cornflower_blue = Color{
 	g: 149
 	b: 237
 }
+pub const royal_blue = Color{
+	r: 65
+	g: 105
+	b: 225
+}
 
 // Color represents a 32 bit color value in sRGB format
 pub struct Color {
@@ -276,26 +281,28 @@ pub fn (c Color) abgr8() int {
 }
 
 const string_colors = {
-	'blue':        blue
-	'red':         red
-	'green':       green
-	'yellow':      yellow
-	'orange':      orange
-	'purple':      purple
-	'black':       black
-	'gray':        gray
-	'indigo':      indigo
-	'pink':        pink
-	'violet':      violet
-	'white':       white
-	'dark_blue':   dark_blue
-	'dark_gray':   dark_gray
-	'dark_green':  dark_green
-	'dark_red':    dark_red
-	'light_blue':  light_blue
-	'light_gray':  light_gray
-	'light_green': light_green
-	'light_red':   light_red
+	'blue':            blue
+	'red':             red
+	'green':           green
+	'yellow':          yellow
+	'orange':          orange
+	'purple':          purple
+	'black':           black
+	'gray':            gray
+	'indigo':          indigo
+	'pink':            pink
+	'violet':          violet
+	'white':           white
+	'cornflower_blue': cornflower_blue
+	'royal_blue':      royal_blue
+	'dark_blue':       dark_blue
+	'dark_gray':       dark_gray
+	'dark_green':      dark_green
+	'dark_red':        dark_red
+	'light_blue':      light_blue
+	'light_gray':      light_gray
+	'light_green':     light_green
+	'light_red':       light_red
 }
 
 // color_from_string returns a Color, corresponding to the given string
