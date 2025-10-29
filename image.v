@@ -11,7 +11,7 @@ pub fn (mut window Window) load_image(file_name string) !&Image {
 	mut ctx := window.context()
 
 	return ctx.get_cached_image_by_idx(window.view_state.image_map[file_name] or {
-		image := ctx.create_image(file_name)!
+		image := ctx.create_image(file_name)! // ctx.create_image caches images
 		window.view_state.image_map[file_name] = image.id
 		return &image
 	})

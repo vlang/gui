@@ -94,6 +94,11 @@ pub fn (mut window Window) get_text_width(text string, text_style TextStyle) f32
 	return get_text_width(text, text_style, mut window)
 }
 
+// has_focus returns true if window has focus
+pub fn (window &Window) has_focus() bool {
+	return window.focused
+}
+
 // id_focus gets the window's focus id
 pub fn (window &Window) id_focus() u32 {
 	return window.view_state.id_focus
