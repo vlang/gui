@@ -85,7 +85,7 @@ fn split_click(cfg &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
 			{
 				mut app := w.state[SplitPanelApp]()
 				width, _ := w.window_size()
-				app.a_width = gui.clamp_f32(a_layout.shape.width + e.mouse_dx, 20, width - 50)
+				app.a_width = gui.f32_clamp(a_layout.shape.width + e.mouse_dx, 20, width - 50)
 			}
 		}
 		mouse_up:   fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {

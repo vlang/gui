@@ -105,7 +105,7 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 	layout.shape.on_mouse_scroll_shape = cfg.on_mouse_scroll
 
 	// set positions of left/right or top/bottom rectangles
-	value := clamp_f32(cfg.value, cfg.min, cfg.max)
+	value := f32_clamp(cfg.value, cfg.min, cfg.max)
 	percent := math.abs(value / (cfg.max - cfg.min))
 	if cfg.vertical {
 		height := layout.children[0].shape.height
@@ -158,7 +158,7 @@ fn (cfg &RangeSliderCfg) on_hover_slide(mut layout Layout,
 
 fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut w Window) {
 	// set the thumb position
-	value := clamp_f32(cfg.value, cfg.min, cfg.max)
+	value := f32_clamp(cfg.value, cfg.min, cfg.max)
 	percent := math.abs(value / (cfg.max - cfg.min))
 	if cfg.vertical {
 		height := layout.parent.shape.height
@@ -199,18 +199,18 @@ fn (cfg RangeSliderCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 			shape := node_circle.parent.shape
 			if cfg.vertical {
 				height := shape.height
-				percent := clamp_f32((e.mouse_y - shape.y) / height, 0, 1)
+				percent := f32_clamp((e.mouse_y - shape.y) / height, 0, 1)
 				val := (cfg.max - cfg.min) * percent
-				mut value := clamp_f32(val, cfg.min, cfg.max)
+				mut value := f32_clamp(val, cfg.min, cfg.max)
 				if cfg.round_value {
 					value = f32(math.round(f64(value)))
 				}
 				cfg.on_change(value, mut e, mut w)
 			} else {
 				width := shape.width
-				percent := clamp_f32((e.mouse_x - shape.x) / width, 0, 1)
+				percent := f32_clamp((e.mouse_x - shape.x) / width, 0, 1)
 				val := (cfg.max - cfg.min) * percent
-				mut value := clamp_f32(val, cfg.min, cfg.max)
+				mut value := f32_clamp(val, cfg.min, cfg.max)
 				if cfg.round_value {
 					value = f32(math.round(f64(value)))
 				}
@@ -231,10 +231,10 @@ fn (cfg &RangeSliderCfg) on_mouse_down_shape(shape &Shape, mut e Event, mut w Wi
 		percent := match true {
 			mouse <= pos + forgiveness { 0 }
 			mouse >= pos + len - forgiveness { 1 }
-			else { clamp_f32((mouse - pos) / len, 0, 1) }
+			else { f32_clamp((mouse - pos) / len, 0, 1) }
 		}
 		val := (cfg.max - cfg.min) * percent
-		mut value := clamp_f32(val, cfg.min, cfg.max)
+		mut value := f32_clamp(val, cfg.min, cfg.max)
 		if cfg.round_value {
 			value = f32(math.round(f64(value)))
 		}
@@ -248,8 +248,8 @@ fn (cfg &RangeSliderCfg) on_keydown(layout &Layout, mut e Event, mut w Window) {
 		match e.key_code {
 			.home { value = cfg.min }
 			.end { value = cfg.max }
-			.left, .up { value = clamp_f32(value - cfg.step, cfg.min, cfg.max) }
-			.right, .down { value = clamp_f32(value + cfg.step, cfg.min, cfg.max) }
+			.left, .up { value = f32_clamp(value - cfg.step, cfg.min, cfg.max) }
+			.right, .down { value = f32_clamp(value + cfg.step, cfg.min, cfg.max) }
 			else { return }
 		}
 		if cfg.round_value {
@@ -264,7 +264,7 @@ fn (cfg &RangeSliderCfg) on_keydown(layout &Layout, mut e Event, mut w Window) {
 fn (cfg &RangeSliderCfg) on_mouse_scroll(shape &Shape, mut e Event, mut w Window) {
 	e.is_handled = true
 	if cfg.on_change != unsafe { nil } && e.modifiers == 0 {
-		mut value := clamp_f32(cfg.value + e.scroll_y, cfg.min, cfg.max)
+		mut value := f32_clamp(cfg.value + e.scroll_y, cfg.min, cfg.max)
 		if cfg.round_value {
 			value = f32(math.round(f64(value)))
 		}

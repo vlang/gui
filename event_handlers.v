@@ -236,7 +236,7 @@ fn scroll_horizontal(layout &Layout, delta f32, mut w Window) bool {
 		// scrollable region does not including padding
 		max_offset := f32_min(0, layout.shape.width - layout.shape.padding.width() - content_width(layout))
 		offset_x := w.view_state.offset_x_state[v_id] + delta * gui_theme.scroll_multiplier
-		w.view_state.offset_x_state[v_id] = clamp_f32(offset_x, max_offset, 0)
+		w.view_state.offset_x_state[v_id] = f32_clamp(offset_x, max_offset, 0)
 		return true
 	}
 	return false
@@ -248,7 +248,7 @@ fn scroll_vertical(layout &Layout, delta f32, mut w Window) bool {
 		// scrollable region does not including padding
 		max_offset := f32_min(0, layout.shape.height - layout.shape.padding.height() - content_height(layout))
 		offset_y := w.view_state.offset_y_state[v_id] + delta * gui_theme.scroll_multiplier
-		w.view_state.offset_y_state[v_id] = clamp_f32(offset_y, max_offset, 0)
+		w.view_state.offset_y_state[v_id] = f32_clamp(offset_y, max_offset, 0)
 		return true
 	}
 	return false

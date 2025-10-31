@@ -181,14 +181,14 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 
 			total_width := content_width(parent)
 			t_width := layout.shape.width * (layout.shape.width / total_width)
-			thumb_width := clamp_f32(t_width, min_thumb_size, layout.shape.width)
+			thumb_width := f32_clamp(t_width, min_thumb_size, layout.shape.width)
 
 			available_width := layout.shape.width - thumb_width
 			scroll_offset := -w.view_state.offset_x_state[cfg.id_track]
 			offset := if available_width == 0 {
 				0
 			} else {
-				clamp_f32((scroll_offset / (total_width - layout.shape.width)) * available_width,
+				f32_clamp((scroll_offset / (total_width - layout.shape.width)) * available_width,
 					0, available_width)
 			}
 			layout.children[thumb].shape.x = layout.shape.x + offset
@@ -209,14 +209,14 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 
 			total_height := content_height(parent)
 			t_height := layout.shape.height * (layout.shape.height / total_height)
-			thumb_height := clamp_f32(t_height, min_thumb_size, layout.shape.height)
+			thumb_height := f32_clamp(t_height, min_thumb_size, layout.shape.height)
 
 			available_height := layout.shape.height - thumb_height
 			scroll_offset := -w.view_state.offset_y_state[cfg.id_track]
 			offset := if available_height == 0 {
 				0
 			} else {
-				clamp_f32((scroll_offset / (total_height - layout.shape.height)) * available_height,
+				f32_clamp((scroll_offset / (total_height - layout.shape.height)) * available_height,
 					0, available_height)
 			}
 			layout.children[thumb].shape.x = layout.shape.x
@@ -274,7 +274,7 @@ fn offset_from_mouse_x(layout &Layout, mouse_x f32, id_scroll u32, mut w Window)
 	if sb := find_layout_by_id_scroll(layout, id_scroll) {
 		total_width := content_width(sb)
 		mut percent := mouse_x / sb.shape.width
-		percent = clamp_f32(percent, 0, 1)
+		percent = f32_clamp(percent, 0, 1)
 		if percent <= 0.03 {
 			percent = 0
 		}
@@ -289,7 +289,7 @@ fn offset_from_mouse_y(layout &Layout, mouse_y f32, id_scroll u32, mut w Window)
 	if sb := find_layout_by_id_scroll(layout, id_scroll) {
 		total_height := content_height(sb)
 		mut percent := mouse_y / sb.shape.height
-		percent = clamp_f32(percent, 0, 1)
+		percent = f32_clamp(percent, 0, 1)
 		if percent <= 0.03 {
 			percent = 0
 		}

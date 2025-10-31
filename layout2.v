@@ -87,28 +87,6 @@ fn (layout &Layout) spacing() f32 {
 	return int_max(0, (count - 1)) * layout.shape.spacing
 }
 
-// f32 values equal if within tolerance
-const tolerance = f32(0.01)
-
-// f32_are_close tests if the differnce of a and b is less than tol
-@[inline]
-fn f32_are_close(a f32, b f32) bool {
-	d := if a >= b { a - b } else { b - a }
-	return d <= tolerance
-}
-
-// clamp_f32 returns x between  a and b
-@[inline]
-pub fn clamp_f32(x f32, a f32, b f32) f32 {
-	if x < a {
-		return a
-	}
-	if x > b {
-		return b
-	}
-	return x
-}
-
 fn content_width(layout &Layout) f32 {
 	mut width := f32(0)
 	if layout.shape.axis == .left_to_right {

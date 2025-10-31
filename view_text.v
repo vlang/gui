@@ -175,7 +175,7 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	if e.mouse_y < 0 {
 		return 0
 	}
-	y := int_min(int(e.mouse_y / lh), shape.text_lines.len - 1)
+	y := int_clamp(int(e.mouse_y / lh), 0, shape.text_lines.len - 1)
 	line := shape.text_lines[y]
 	mut ln := ''
 	mut count := -1
@@ -183,7 +183,7 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 		ln += r.str()
 		tw := get_text_width(ln, shape.text_style, mut w)
 		if tw > e.mouse_x {
-			// One past to position just cursor after char
+			// One past the `to` position is just cursor after char.
 			// Appears to be how others do it (e.g. browsers)
 			count = if e.mouse_x < 5 { 0 } else { i + 1 }
 			break

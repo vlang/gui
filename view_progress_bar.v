@@ -82,7 +82,7 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 
 fn (cfg ProgressBarCfg) amend_layout(mut layout Layout, mut w Window) {
 	if layout.children.len >= 0 {
-		percent := clamp_f32(cfg.percent, 0, 1)
+		percent := f32_clamp(cfg.percent, 0, 1)
 		if cfg.vertical {
 			height := f32_min(layout.shape.height * percent, layout.shape.height)
 			layout.children[0].shape.x = layout.shape.x
