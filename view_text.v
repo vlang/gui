@@ -114,6 +114,15 @@ fn (cfg &TextCfg) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 		w.set_mouse_cursor_ibeam()
 	}
 	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
+		w.mouse_lock(
+			mouse_move: fn [cfg, shape] (_ &Layout, mut e Event, mut w Window) {
+				cfg.mouse_move_shape(shape, mut e, mut w)
+			}
+			mouse_up:   fn [cfg, shape] (_ &Layout, mut e Event, mut w Window) {
+				w.mouse_unlock()
+				cfg.mouse_up_shape(shape, mut e, mut w)
+			}
+		)
 		ev := event_relative_to(shape, e)
 		cursor_pos := cfg.mouse_cursor_pos(shape, ev, mut w)
 		input_state := w.view_state.input_state[shape.id_focus]
@@ -163,7 +172,10 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 		return 0
 	}
 	lh := shape.text_style.size + shape.text_style.line_spacing
-	y := int(e.mouse_y / lh)
+	if e.mouse_y < 0 {
+		return 0
+	}
+	y := int_min(int(e.mouse_y / lh), shape.text_lines.len - 1)
 	line := shape.text_lines[y]
 	mut ln := ''
 	mut count := -1
