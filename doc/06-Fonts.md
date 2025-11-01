@@ -80,16 +80,19 @@ gui.text(
 
 Tip: See `examples/icon_font_demo.v` for a complete walkthrough.
 
-Other text style knobs - `size` (int): font size in pixels. -
-`line_spacing` (f32): additional spacing between lines. - `color`: text
-color. These are exposed on `TextStyle` and can be tweaked globally
-(theme) or locally (per view).
+Other text style knobs 
+ 
+- `size` (int): font size in pixels. 
+- `line_spacing` (f32): additional spacing between lines. 
+- `color`: text color. These are exposed on `TextStyle` and can be tweaked 
+  globally (theme) or locally (per view).
 
-Troubleshooting - Missing glyphs: If characters don’t render (e.g.,
-Chinese), switch to a system font (`family: ''`) or a custom font with
-proper coverage. - Inconsistent layout across OSes: Prefer the embedded
-fonts for uniform metrics, or pin a specific custom font across
-platforms.
+Troubleshooting 
+
+- Missing glyphs: If characters don’t render (e.g., Chinese), switch to a system 
+  font (`family: ''`) or a custom font with proper coverage. 
+- Inconsistent layout across OSes: Prefer the embedded fonts for uniform metrics, 
+  or pin a specific custom font across platforms.
 
 Related examples - `examples/system_font.v` — toggle between embedded
 and system fonts - `examples/fonts.v` — font basics and text styling -

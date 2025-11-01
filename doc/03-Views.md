@@ -17,8 +17,10 @@ Everything else is a composition of these three.
 Containers hold other views. More precisely, a container is a
 rectangular region that can contain other containers, text, or images.
 
-Containers may have an axis: - `top-to-bottom` → a column -
-`left-to-right` → a row - no axis → a canvas (free-form positioning)
+Containers may have an axis: 
+- `top-to-bottom` → a column 
+- `left-to-right` → a row 
+- no axis → a canvas (free-form positioning)
 
 Rows and columns are the primary layout building blocks. A row stacks
 its children horizontally; a column stacks them vertically. Containers
@@ -59,8 +61,11 @@ is horizontal; for columns, spacing is vertical.
 ### Sizing
 
 Sizing controls how a view determines its width and height. There are
-three sizing modes: - `fit` — size to the content - `fill` — grow or
-shrink to fill the parent - `fixed` — do not change size
+three sizing modes: 
+
+- `fit` — size to the content 
+- `fill` — grow or shrink to fill the parent 
+- `fixed` — do not change size
 
 Sizing is specified independently for the horizontal and vertical axes.
 
@@ -109,9 +114,10 @@ size depends on font family, size, and decoration. Text layout is also
 one of the more computationally expensive parts of UI.
 
 Wrapping uses a simple word‑break algorithm. If text is too long, it
-will overflow its container. Common remedies include: - enabling
-scrolling in the parent container - enabling clipping on the parent
-container
+will overflow its container. Common remedies include: 
+
+- enabling scrolling in the parent container
+- enabling clipping on the parent container
 
 Gui aims to keep text predictable. Many UI frameworks split labels,
 multi-line text, and input labels into different widgets; in Gui there

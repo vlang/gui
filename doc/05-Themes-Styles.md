@@ -135,10 +135,13 @@ pub fn my_brand_theme() gui.Theme {
 }
 ```
 
-Notes - `theme_maker` keeps container backgrounds transparent by default
-(not filled). - All fields in `ThemeCfg` have defaults; you can specify
-just a handful and still get a complete, consistent theme. - You can
-further tweak the returned theme before applying it:
+Notes 
+ 
+- `theme_maker` keeps container backgrounds transparent by default 
+  (not filled). 
+- All fields in `ThemeCfg` have defaults; you can specify just a handful 
+  and still get a complete, consistent theme. 
+- You can further tweak the returned theme before applying it:
 
 ``` v
 mut t := my_brand_theme()
