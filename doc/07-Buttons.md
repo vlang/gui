@@ -1,23 +1,25 @@
-----------
-# 7 Buttons
-----------
+--------------
+# 7 Buttons 
+--------------
 
-Buttons are clickable containers. In Gui, a button is a `row` (the border) that
-contains another `row` (the button body) that can hold any views (commonly
-`text`, but it can be icons, images, progress bars, etc.).
+Buttons are clickable containers. In Gui, a button is a `row` (the
+border) that contains another `row` (the button body) that can hold any
+views (commonly `text`, but it can be icons, images, progress bars,
+etc.).
 
-A button will only respond to mouse/keyboard interactions when an `on_click`
-handler is provided. Without `on_click`, it renders visually but behaves like
-static "bubble text" (no interaction).
+A button will only respond to mouse/keyboard interactions when an
+`on_click` handler is provided. Without `on_click`, it renders visually
+but behaves like static “bubble text” (no interaction).
 
 See also: `examples/buttons.v` for a runnable showcase.
 
-
 ## Button configuration
 
-The `button` view is created with a `ButtonCfg` structure. Important fields:
+The `button` view is created with a `ButtonCfg` structure. Important
+fields:
 
-- `id string` — Optional identifier for the view row (useful for tooling).
+- `id string` — Optional identifier for the view row (useful for
+  tooling).
 - `tooltip &TooltipCfg` — Optional tooltip configuration.
 - Colors
   - `color` — Normal interior color
@@ -32,39 +34,47 @@ The `button` view is created with a `ButtonCfg` structure. Important fields:
   - `radius f32` — Corner radius for interior
   - `radius_border f32` — Corner radius for border
 - Sizing and layout
-  - `sizing Sizing` — Standard sizing (`fit`, `fill`, `fixed`, combinations)
-  - `width/height/min_width/min_height/max_width/max_height f32` — Bounds
-  - `h_align HorizontalAlign` — Content horizontal alignment (default `.center`)
-  - `v_align VerticalAlign` — Content vertical alignment (default `.middle`)
+  - `sizing Sizing` — Standard sizing (`fit`, `fill`, `fixed`,
+    combinations)
+  - `width/height/min_width/min_height/max_width/max_height f32` —
+    Bounds
+  - `h_align HorizontalAlign` — Content horizontal alignment (default
+    `.center`)
+  - `v_align VerticalAlign` — Content vertical alignment (default
+    `.middle`)
   - `fill bool` — Fill interior rectangle
-  - `fill_border bool` — Fill border rectangle (use `false` for a detached border)
+  - `fill_border bool` — Fill border rectangle (use `false` for a
+    detached border)
 - Interaction and state
-  - `on_click fn (&ButtonCfg, mut Event, mut Window)` — Click handler (required for interactivity)
+  - `on_click fn (&ButtonCfg, mut Event, mut Window)` — Click handler
+    (required for interactivity)
   - `id_focus u32` — Focus-group id (used by keyboard focus)
   - `disabled bool` — When `true`, button won’t accept input
   - `invisible bool` — When `true`, removes from layout/paint
 - Content
-  - `content []View` — Arbitrary child views (e.g., `text`, `image`, `progress_bar`, etc.)
-
+  - `content []View` — Arbitrary child views (e.g., `text`, `image`,
+    `progress_bar`, etc.)
 
 ## Interaction model
 
-- Hover: when the pointer is over a clickable button, the mouse cursor changes
-  to a pointing hand and the interior color switches to `color_hover`.
-- Press: while the left mouse button is down, the interior uses `color_click`.
+- Hover: when the pointer is over a clickable button, the mouse cursor
+  changes to a pointing hand and the interior color switches to
+  `color_hover`.
+- Press: while the left mouse button is down, the interior uses
+  `color_click`.
 - Focus: when focused, interior uses `color_focus`, and border uses
   `color_border_focus`.
-- Keyboard activation: Space (`' '`) triggers `on_click` when the button is
-  focusable and has a click handler.
-- Non-interactive mode: if `on_click` is `nil`, hover/focus/click visuals and
-  pointer cursor are disabled.
-
+- Keyboard activation: Space (`' '`) triggers `on_click` when the button
+  is focusable and has a click handler.
+- Non-interactive mode: if `on_click` is `nil`, hover/focus/click
+  visuals and pointer cursor are disabled.
 
 ## Basic example (counter button)
 
-A minimal clickable button that increments a counter stored in window state:
+A minimal clickable button that increments a counter stored in window
+state:
 
-```v
+``` v
 import gui
 
 struct App {
@@ -111,12 +121,11 @@ fn main_view(mut w gui.Window) gui.View {
 }
 ```
 
-
 ## Variations
 
 - Disabled button:
 
-```v
+``` v
 gui.button(
     min_width:  140
     max_width:  140
@@ -128,7 +137,7 @@ gui.button(
 
 - With border padding (shows an outer border around the interior):
 
-```v
+``` v
 gui.button(
     min_width:      140
     max_width:      140
@@ -140,7 +149,7 @@ gui.button(
 
 - With focusable border (set a focus id to see focused colors):
 
-```v
+``` v
 gui.button(
     id_focus:       1
     min_width:      140
@@ -153,7 +162,7 @@ gui.button(
 
 - Detached border (border rectangle does not fill entire parent):
 
-```v
+``` v
 gui.button(
     min_width:      140
     max_width:      140
@@ -166,7 +175,7 @@ gui.button(
 
 - Custom content (progress bar inside a button):
 
-```v
+``` v
 import math
 
 fn custom_button(app_clicks int) gui.View {
@@ -194,16 +203,15 @@ fn custom_button(app_clicks int) gui.View {
 }
 ```
 
-
 ## Tips
 
 - Buttons are containers: you can combine icons, text, and other views.
 - To make a button purely decorative (non-interactive), omit `on_click`.
-- Use `id_focus` and `w.set_id_focus(id)` to enable keyboard activation with Space.
-- `padding` controls inner spacing; `padding_border` controls spacing between the
-  outer border and the inner body.
+- Use `id_focus` and `w.set_id_focus(id)` to enable keyboard activation
+  with Space.
+- `padding` controls inner spacing; `padding_border` controls spacing
+  between the outer border and the inner body.
 - `fill_border: false` is handy to create a detached border appearance.
-
 
 ## See also
 

@@ -1,12 +1,16 @@
----------------------
+----------------
 # 5 Themes and Styles
----------------------
-
+----------------
 ### Overview
 
-Gui’s theming system lets you control colors, paddings, radii, spacing, and text styles across all views. It is highly granular (each view has its own style), but also ergonomic thanks to `theme_maker`, which generates a complete `Theme` from a compact `ThemeCfg`.
+Gui’s theming system lets you control colors, paddings, radii, spacing,
+and text styles across all views. It is highly granular (each view has
+its own style), but also ergonomic thanks to `theme_maker`, which
+generates a complete `Theme` from a compact `ThemeCfg`.
 
-If you only need a standard look, use the built‑in dark/light themes. If you need a brand look, define a small set of overrides and let `theme_maker` fill in the rest.
+If you only need a standard look, use the built‑in dark/light themes. If
+you need a brand look, define a small set of overrides and let
+`theme_maker` fill in the rest.
 
 ------------------------------------------------------------------------
 
@@ -46,29 +50,43 @@ layout.shape.color = gui.theme().color_hover
 
 - Theme (in `theme.v`)
   - A fully materialized palette + styles for every view.
-  - Includes global colors (`color_background`, `color_panel`, `color_interior`, `color_hover`, `color_focus`, `color_active`, `color_border`, `color_select`) and flags like `titlebar_dark`.
-  - Holds a style struct per view: `button_style`, `input_style`, `menubar_style`, `dialog_style`, `progress_bar_style`, `scrollbar_style`, `tree_style`, and more.
-  - Provides convenience text presets sized like H1–H6: `n1..n6` (normal), `b1..b6` (bold), `i1..i6` (italic), `m1..m6` (mono), `icon1..icon6` (icon font).
-
+  - Includes global colors (`color_background`, `color_panel`,
+    `color_interior`, `color_hover`, `color_focus`, `color_active`,
+    `color_border`, `color_select`) and flags like `titlebar_dark`.
+  - Holds a style struct per view: `button_style`, `input_style`,
+    `menubar_style`, `dialog_style`, `progress_bar_style`,
+    `scrollbar_style`, `tree_style`, and more.
+  - Provides convenience text presets sized like H1–H6: `n1..n6`
+    (normal), `b1..b6` (bold), `i1..i6` (italic), `m1..m6` (mono),
+    `icon1..icon6` (icon font).
 - ThemeCfg (in `theme.v`)
-  - A small config used to create a `Theme`. You typically set a name, a base color palette, common paddings/radii, and a default `text_style`.
+  - A small config used to create a `Theme`. You typically set a name, a
+    base color palette, common paddings/radii, and a default
+    `text_style`.
   - Most fields have sensible defaults; set only what you need.
-
 - Style structs (in `styles.v`)
-  - One struct per view (e.g., `ButtonStyle`, `InputStyle`, `DialogStyle`, `MenubarStyle`, ...).
-  - Each contains the properties that control rendering: colors, `fill`/`fill_border`, padding, radius, spacing, and text styles.
+  - One struct per view (e.g., `ButtonStyle`, `InputStyle`,
+    `DialogStyle`, `MenubarStyle`, …).
+  - Each contains the properties that control rendering: colors,
+    `fill`/`fill_border`, padding, radius, spacing, and text styles.
 
 ------------------------------------------------------------------------
 
 ### Constants you’ll use often
 
-- Radius: `radius_none`, `radius_small`, `radius_medium`, `radius_large`, `radius_border`
-- Text sizes: `size_text_tiny`, `size_text_x_small`, `size_text_small`, `size_text_medium`, `size_text_large`, `size_text_x_large`
-- Spacing: `spacing_small`, `spacing_medium`, `spacing_large`, plus `text_line_spacing` for extra line height
-- Colors: dark/light variants for backgrounds, panels, interiors, hover, focus, active, borders, selection, and text
-- Scrolling and progress bars: `scroll_multiplier`, `scroll_delta_line`, `scroll_delta_page`, `size_progress_bar`
+- Radius: `radius_none`, `radius_small`, `radius_medium`,
+  `radius_large`, `radius_border`
+- Text sizes: `size_text_tiny`, `size_text_x_small`, `size_text_small`,
+  `size_text_medium`, `size_text_large`, `size_text_x_large`
+- Spacing: `spacing_small`, `spacing_medium`, `spacing_large`, plus
+  `text_line_spacing` for extra line height
+- Colors: dark/light variants for backgrounds, panels, interiors, hover,
+  focus, active, borders, selection, and text
+- Scrolling and progress bars: `scroll_multiplier`, `scroll_delta_line`,
+  `scroll_delta_page`, `size_progress_bar`
 
-These are surfaced on `Theme` as well (e.g., `theme().spacing_medium`, `theme().size_text_large`).
+These are surfaced on `Theme` as well (e.g., `theme().spacing_medium`,
+`theme().size_text_large`).
 
 ------------------------------------------------------------------------
 
@@ -76,8 +94,12 @@ These are surfaced on `Theme` as well (e.g., `theme().spacing_medium`, `theme().
 
 Predefined configs and instances (all created via `theme_maker`):
 
-- Dark: `theme_dark_cfg`, `theme_dark`, `theme_dark_no_padding_cfg`, `theme_dark_no_padding`, `theme_dark_bordered_cfg`, `theme_dark_bordered`
-- Light: `theme_light_cfg`, `theme_light`, `theme_light_no_padding_cfg`, `theme_light_no_padding`, `theme_light_bordered_cfg`, `theme_light_bordered`
+- Dark: `theme_dark_cfg`, `theme_dark`, `theme_dark_no_padding_cfg`,
+  `theme_dark_no_padding`, `theme_dark_bordered_cfg`,
+  `theme_dark_bordered`
+- Light: `theme_light_cfg`, `theme_light`, `theme_light_no_padding_cfg`,
+  `theme_light_no_padding`, `theme_light_bordered_cfg`,
+  `theme_light_bordered`
 
 Pick one as‑is or start from a config and tweak a few fields.
 
@@ -113,10 +135,10 @@ pub fn my_brand_theme() gui.Theme {
 }
 ```
 
-Notes
-- `theme_maker` keeps container backgrounds transparent by default (not filled).
-- All fields in `ThemeCfg` have defaults; you can specify just a handful and still get a complete, consistent theme.
-- You can further tweak the returned theme before applying it:
+Notes - `theme_maker` keeps container backgrounds transparent by default
+(not filled). - All fields in `ThemeCfg` have defaults; you can specify
+just a handful and still get a complete, consistent theme. - You can
+further tweak the returned theme before applying it:
 
 ``` v
 mut t := my_brand_theme()
@@ -181,7 +203,9 @@ gui.text(
 ### Runtime access and switching
 
 - Read the active theme: `gui.theme()`.
-- Switch themes at runtime via a window: `window.set_theme(gui.theme_light)` or pick any custom theme you created.
+- Switch themes at runtime via a window:
+  `window.set_theme(gui.theme_light)` or pick any custom theme you
+  created.
 - Typical toggle:
 
 ``` v
@@ -195,25 +219,38 @@ w.set_theme(if use_light { gui.theme_light } else { gui.theme_dark })
 Commonly changed fields (see `theme.v` for the full list):
 
 - Identity: `name`
-- Palette: `color_background`, `color_panel`, `color_interior`, `color_hover`, `color_focus`, `color_active`, `color_border`, `color_border_focus`, `color_select`, `titlebar_dark`
+- Palette: `color_background`, `color_panel`, `color_interior`,
+  `color_hover`, `color_focus`, `color_active`, `color_border`,
+  `color_border_focus`, `color_select`, `titlebar_dark`
 - Sizing: `padding`, `padding_border`, `radius`, `radius_border`
-- Text: `text_style` (base style applied throughout, including `line_spacing`)
-- Shared constants exposed for convenience: `padding_small|medium|large`, `radius_small|medium|large`, `spacing_small|medium|large`, `size_text_*`, `scroll_*`
+- Text: `text_style` (base style applied throughout, including
+  `line_spacing`)
+- Shared constants exposed for convenience:
+  `padding_small|medium|large`, `radius_small|medium|large`,
+  `spacing_small|medium|large`, `size_text_*`, `scroll_*`
 
 ------------------------------------------------------------------------
 
 ### Tips and gotchas
 
-- Start from an existing `*_cfg` and change a few fields — this is the easiest path.
-- Prefer the predefined `*_no_padding` or `*_bordered` variants when you only need layout tweaks.
-- `spacing_text` on `Theme` is the extra line height added to text; use it to fine‑tune dense vs airy layouts.
-- Scrolling feel is controlled by `scroll_multiplier`, `scroll_delta_line`, `scroll_delta_page` on the theme. Tune them for your app’s UX if needed.
-- For iconography, use the icon text presets (`icon1..icon6`) or set `family: gui.font_file_icon` on a `TextStyle`.
+- Start from an existing `*_cfg` and change a few fields — this is the
+  easiest path.
+- Prefer the predefined `*_no_padding` or `*_bordered` variants when you
+  only need layout tweaks.
+- `spacing_text` on `Theme` is the extra line height added to text; use
+  it to fine‑tune dense vs airy layouts.
+- Scrolling feel is controlled by `scroll_multiplier`,
+  `scroll_delta_line`, `scroll_delta_page` on the theme. Tune them for
+  your app’s UX if needed.
+- For iconography, use the icon text presets (`icon1..icon6`) or set
+  `family: gui.font_file_icon` on a `TextStyle`.
 
 ------------------------------------------------------------------------
 
 ### How Themes and Styles work together
 
 - `Theme` aggregates all per‑view style structs from `styles.v`.
-- `theme_maker(cfg)` builds a consistent `Theme` from a compact `ThemeCfg` by applying your palette/sizing across all views.
-- Each view uses its corresponding style struct at render time. Override per‑view when needed; otherwise rely on the theme for consistency.
+- `theme_maker(cfg)` builds a consistent `Theme` from a compact
+  `ThemeCfg` by applying your palette/sizing across all views.
+- Each view uses its corresponding style struct at render time. Override
+  per‑view when needed; otherwise rely on the theme for consistency.
