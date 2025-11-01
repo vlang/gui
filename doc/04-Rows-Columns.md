@@ -2,11 +2,15 @@
 # 4 Rows and Columns
 ---------------------
 
-The two primary building blocks in Gui are `rows` and `columns`. Rows
-stack their children horizontally, left-to-right and columns stack their
-children top-to-bottom. From these two containers the entirety of the
-predefined views (commonly called widgets) are constructed. Predefined
-views are compositions. Here's the layout for Button.
+Rows and columns are the two fundamental layout containers in Gui.
+- Rows lay out their children horizontally (left-to-right in LTR locales).
+- Columns lay out their children vertically (top-to-bottom).
+
+Everything you see in the predefined views (commonly called widgets) is composed from these two containers. In other words, most widgets are just compositions of rows, columns, and a few primitives like `text` and `image`.
+
+## Example: a button is just rows
+
+Below is the essential structure of the built-in `button` view. It’s two nested rows: an outer row that draws the border/background and an inner row that holds the content.
 
 ``` v
 pub fn button(cfg ButtonCfg) View {
@@ -46,59 +50,87 @@ pub fn button(cfg ButtonCfg) View {
 }
 ```
 
-A button is two nested rows. The outer row defines a border and the
-inner row is the content interior. Granted, there are many options, but
-it is common to set only a few options and use the default values for
-the others. The takeaway here is there is nothing special about the
-`button` view that ships with Gui. Make your own if it suits your needs.
+The takeaway: there is nothing magic about `button`. If you need a different look or behavior, build your own composition out of rows and columns.
 
-Rows and columns have many options available. To list a few:
+## What rows and columns can do
 
-- Focusable
-- Scrollable
-- Floatable
-- Sizable (fill, fit and fixed)
-- Alignable
-- Can be colored, outlined, or fillable
-- Can have radius corners
-- Can have text embedded in the border (group box)
+Rows and columns have many capabilities. A quick tour:
 
-Focus is when a row or column can receive keyboard input. You can't type
-in a row or column so why is this needed? Styling. Oftentimes, the color
-of a row or column, particularly when used as a border, is modified
-based on the focus state.
+- Focusable — can receive keyboard focus so you can style them based on focus state.
+- Scrollable — content can scroll when it doesn’t fit.
+- Floatable — can render on top of other content (useful for menus, tooltips, popovers).
+- Sizing — fill, fit, and fixed sizing options (see `sizing`).
+- Alignment — horizontal and vertical alignment of child content.
+- Styling — outline color, filled backgrounds, corner radii.
+- Group text — optional text embedded in the border (group box style).
 
-Enable scrolling by setting the `id_scroll` member to a non-zero value.
-Content that extends past the boundaries of the row (or column) are
-hidden until scrolled into view. When scrolling, scrollbars can
-optionally be enabled. One or both can be shown. Scrollbars can be
-hidden when content fits entirely within the container. Scrollbars can
-be made visible only when hovering over the scrollbar region. Scrollbars
-are floating views and be placed over or beside content as desired.
-Finally, scrolling can be restricted to vertical only or horizontal only
-via the `scroll_mode` property.
+### Focus and styling
+“Focus” means the row/column can be the target of keyboard input. While you typically don’t type directly into a container, focus is valuable for styling: borders, fills, or text color can change when the container is focused. Use this to indicate selection, active panels, and keyboard navigation targets.
 
-Floating is particularly powerful. It allows drawing over other content.
-Menus are a good example of this. The menu code in Gui is just a
-composition of rows and columns (and text). The submenus are columns
-that float below or next to their parent item. The tricky part is the
-mouse handling. The drawing part is straightforward.
+### Scrolling
+Enable scrolling by setting the `id_scroll` to a non-zero value. Content that extends past the boundaries of the row (or column) is hidden until scrolled into view.
 
-Content can be aligned start, center, and end. Start and end are
-typically left and right but can change based on localization. Columns
-can align content top, middle, and bottom.
+Scrollbars are optional and configurable:
+- Show vertical and/or horizontal bars.
+- Hide them entirely when content fits.
+- Auto-show on hover over the scrollbar region.
+- Place them floating over content or beside content, as desired.
+- Restrict scrolling to vertical-only or horizontal-only via `scroll_mode`.
 
-Row and column are transparent by default. Change the color if desired.
-By default, the color is drawn as an outline. Set `fill` to true to fill
-the interior with color.
+### Floating content
+Floating is powerful because it allows a view to draw over other content. Menus are a good example: submenus are columns that float below or next to their parent item. The drawing is straightforward; the complexity is primarily in the mouse/keyboard handling.
 
-The corners of a row or container can be square or round. The roundness
-of a corner is determined by the `radius` property.
+### Alignment
+Content can be aligned start, center, and end. “Start” and “end” map to left/right in left-to-right locales and flip in right-to-left locales. Columns additionally align content top, middle, and bottom. Use `h_align` and `v_align` on the container that owns the children you want to align.
 
-Text can be embedded in the outline of a row or column, near the
-top-left corner. This style of container is typically called a group
-box. Set the `text` property to enable this feature.
+### Color, fill, and outline
+Rows and columns are transparent by default. Set `color` to draw an outline. Set `fill: true` to fill the interior with that color. Combine with `padding` to create borders, chips, and panels.
 
-If you browse the code, other than `text` and `image`, you'll find the
-predefined views are compositions of rows and columns. It's rectangles
-within rectangles all-the-way down!
+### Corner radius
+Corners can be square or rounded. Control roundness with the `radius` property.
+
+### Group boxes (embedded text)
+To draw text embedded in the container’s outline (near the top-left), set the `text` property. This is commonly used for group boxes.
+
+## Small recipes
+
+- Padded horizontal row with centered content
+``` v
+row(
+    padding: 8
+    h_align: center
+    v_align: middle
+    content: [
+        /* your views here */
+    ]
+)
+```
+
+- Scrollable column (vertical-only)
+``` v
+column(
+    id_scroll: 1         // any non-zero id enables scrolling
+    // scroll_mode: ...  // restrict direction if desired
+    content: [
+        /* many items */
+    ]
+)
+```
+
+- Floating menu panel (conceptual)
+``` v
+column(
+    // float: true       // depending on your composition
+    padding: 4
+    radius: 4
+    fill: true
+    content: [ /* menu items */ ]
+)
+```
+
+## See also
+- 03-Views.md — how views are composed
+- 05-Themes-Styles.md — colors, borders, radii, and theme variables
+- 07-Buttons.md — more on buttons built from rows
+
+Beyond `text` and `image`, the predefined views are compositions of rows and columns. It’s rectangles within rectangles all the way down!

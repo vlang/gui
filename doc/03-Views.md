@@ -1,36 +1,31 @@
-----------
+----------------
 # 3 Views
-----------
+----------------
 
-A view is the only UI building block. Every checkbox, menu, button, etc.
-is a view. Interestingly, there are only three basic types of views,
-containers text and images. Everything else is either a container, text,
-image or a combination thereof.
+A view is the fundamental UI building block in Gui. Every checkbox, menu, button, and panel you see is a view. Despite the variety, there are only three primitive view types:
 
-Containers, as the name implies contain content. What kind of content?
-Containers, text or images. If this definition sounds recursive it is
-because it is. More precisely, a container is a rectangular region that
-can hold other containers, text or images.
+- containers
+- text
+- images
 
-Containers have an axis of `top-to-bottom` or `left-to-right` or none.
-Containers with an axis of `top-to-bottom` are called `columns`. The
-`left-to-right` containers are called rows. Containers with no defined
-axis are called `canvas`.
+Everything else is a composition of these three.
 
-Rows and columns are the primary building blocks. A row will stack its
-content horizontally while a column stacks its content vertically. Rows
-and columns have many properties that define how they look and respond
-to user events. For now, the only three I\'ll discuss are `padding`,
-`spacing`, and `sizing`.
+## Containers
 
-Padding is simply the margin of space inside the row or column. Padding
-has four parts, top, right, bottom, and left. The order here is the same
-as CSS used in browsers. Another way to think about padding is as the
-space around the content of the container.
+Containers hold other views. More precisely, a container is a rectangular region that can contain other containers, text, or images.
 
-Spacing is the space between the container\'s contents. For rows, it is
-the horizontal space between the container\'s content items. For
-columns, it is the vertical space between content items.
+Containers may have an axis:
+- `top-to-bottom` → a column
+- `left-to-right` → a row
+- no axis → a canvas (free-form positioning)
+
+Rows and columns are the primary layout building blocks. A row stacks its children horizontally; a column stacks them vertically. Containers have many properties that define appearance and behavior. Three essentials to understand early are `padding`, `spacing`, and `sizing`.
+
+### Padding
+Padding is the inner margin of a container. It has four sides: top, right, bottom, and left (same order as CSS). You can think of padding as the space between the container's border and its content.
+
+### Spacing
+Spacing is the gap between the container's children. For rows, spacing is horizontal; for columns, spacing is vertical.
 
 ```
       Container (row)
@@ -54,15 +49,16 @@ columns, it is the vertical space between content items.
     +---------------------------------------------+
 ```
 
-Sizing is perhaps the most challenging to understand. There are three
-types of sizing, `fit`, `fill` and `fixed`. Fit sizing sized the
-container to the size of its contents. Fill sizing attempts to grow or
-shrink a container to fill its parent container. Fixed sizing does not
-change the size of the container. Sizing can occur horizontally and
-vertically. The code for Sizing is:
+### Sizing
+Sizing controls how a view determines its width and height. There are three sizing modes:
+- `fit` — size to the content
+- `fill` — grow or shrink to fill the parent
+- `fixed` — do not change size
+
+Sizing is specified independently for the horizontal and vertical axes.
 
 ``` v
-// SizingType describes the three sizing modes of GUI
+// SizingType describes the three sizing modes of Gui
 pub enum SizingType as u8 {
     fit   // element fits to content
     fill  // element fills to parent (grows or shrinks)
@@ -77,54 +73,43 @@ pub:
 }
 ```
 
-There are nine different combinations possible. For convenience, Gui
-provides constants:
+There are nine possible combinations of width/height sizing. For convenience, Gui provides constants:
 
-```v oksyntax
-pub const fit_fit = Sizing{.fit, .fit}
-pub const fit_fill = Sizing{.fit, .fill}
-pub const fit_fixed = Sizing{.fit, .fixed}
+``` v
+pub const fit_fit   = Sizing{ .fit,   .fit }
+pub const fit_fill  = Sizing{ .fit,   .fill }
+pub const fit_fixed = Sizing{ .fit,   .fixed }
 
-pub const fixed_fit = Sizing{.fixed, .fit}
-pub const fixed_fill = Sizing{.fixed, .fill}
-pub const fixed_fixed = Sizing{.fixed, .fixed}
+pub const fixed_fit   = Sizing{ .fixed, .fit }
+pub const fixed_fill  = Sizing{ .fixed, .fill }
+pub const fixed_fixed = Sizing{ .fixed, .fixed }
 
-pub const fill_fit = Sizing{.fill, .fit}
-pub const fill_fill = Sizing{.fill, .fill}
-pub const fill_fixed = Sizing{.fill, .fixed}
+pub const fill_fit   = Sizing{ .fill,  .fit }
+pub const fill_fill  = Sizing{ .fill,  .fill }
+pub const fill_fixed = Sizing{ .fill,  .fixed }
 ```
 
-For a deeper dive into containers, see the next chapter.
+For a deeper dive into containers (rows and columns), see the next chapter.
 
 ## Text
 
-Text is also a view in Gui. It does not function as a container. If
-you\'re wondering why plain text is a separate view type it is because
-text is complicated. Text can flow forward, backward, and up and down.
-It can have one or more lines and is selectable. It varies in width
-depending on the family, size, and decorations. In other words, it is a
-giant pain-in-the-pants to lay it out correctly. It is also
-computationally the most expensive to calculate.
+`text` is a view. It is not a container. Text is its own primitive because text layout is complex: it can run left-to-right or right-to-left, wrap to multiple lines, be selectable, and its measured size depends on font family, size, and decoration. Text layout is also one of the more computationally expensive parts of UI.
 
-Text can be wrapped. Gui uses a simple word break algorithm. If the text
-is too long, it overflows its container. One way to remedy this is to
-enable scrolling in the parent container. Another option is to enable
-clipping on the parent container.
+Wrapping uses a simple word‑break algorithm. If text is too long, it will overflow its container. Common remedies include:
+- enabling scrolling in the parent container
+- enabling clipping on the parent container
 
-Gui does its best to keep text simple and predictable. Other UI
-frameworks may have different text components for labels, multiline
-text, and text boxes. In Gui, there is only the `text` view. It\'s the
-all-in-one component for displaying text.
+Gui aims to keep text predictable. Many UI frameworks split labels, multi-line text, and input labels into different widgets; in Gui there is just the `text` view for displaying text.
 
 ## Images
 
-Image is the simplist view. Image simply rectangular region that
-displays an image.
+`image` is the simplest view. It is a rectangular region that displays a bitmap or texture.
 
-## Other Views
+## Other views (compositions)
 
-When you look at the list of views you\'ll see many more than three. As
-mentioned earlier, they are combinations of the three. For instance, a
-button is `row` (border) that contains a `row` (button body) that
-contains `text`. Button is even more interesting in that a button is
-itself a container. As such, it can other views (e.g. progress bar).
+When you look at the list of predefined views you'll see more than three names, but they are all compositions of the primitives. For example, a button is composed of rows: an outer `row` (border/background) that contains an inner `row` (button body) that contains `text`. A button is also a container, so it can hold other views (e.g., a progress bar next to the label).
+
+## See also
+- 04-Rows-Columns.md — rows and columns in detail
+- 05-Themes-Styles.md — colors, borders, radii, theme variables
+- 07-Buttons.md — how buttons are composed from rows and text
