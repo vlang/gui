@@ -79,6 +79,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y, window)
 	layout_disables(mut layout, false)
+	layout_scroll_containers(mut layout, 0)
 	layout_amend(mut layout, mut window)
 	layout_set_shape_clips(mut layout, window.window_rect())
 	layout_hover(mut layout, mut window)
@@ -678,6 +679,28 @@ fn layout_disables(mut layout Layout, disabled bool) {
 	layout.shape.disabled = is_disabled
 	for mut child in layout.children {
 		layout_disables(mut child, is_disabled)
+	}
+}
+
+// layout_scroll_containers identifies which text views are in a
+// scrollable container (row, column).
+fn layout_scroll_containers(mut layout Layout, id_scroll_container u32) {
+	for mut ly in layout.children {
+		id := match ly.shape.id_scroll > 0 {
+			true { ly.shape.id_scroll }
+			else { id_scroll_container }
+		}
+		layout_scroll_containers(mut ly, id)
+		// Motivation: `text` views are not directly scrollable but instead
+		// must live inside a scrollable container (one with a non-zero id_scroll)
+		// Selecting text in a text view can push the selection outside the visible
+		// region of the text view (e.g. mouse selection). The event handler does
+		// no have enough information to walk up the visible tree to find the
+		// scrollable container. Instead, it is bookmarked in the text shape
+		// (and maybe other shapes in the future).
+		if ly.shape.type == .text {
+			ly.shape.id_scroll_container = id_scroll_container
+		}
 	}
 }
 

@@ -36,6 +36,7 @@ pub mut:
 	float_offset_x        f32
 	float_offset_y        f32
 	id_scroll             u32 // >0 indicates shape is scrollable
+	id_scroll_container   u32
 	text_sel_beg          u32
 	text_sel_end          u32
 	text_tab_size         u32 = 4
