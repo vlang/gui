@@ -253,7 +253,6 @@ pub fn (mut window Window) update_window() {
 	}
 
 	window.ui.refresh_ui()
-	defer { gc_collect() }
 }
 
 // compose_layout produces a layout from the given view that is
