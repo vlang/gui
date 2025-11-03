@@ -1,4 +1,4 @@
-# GUI
+# GUI ![Stars](https://img.shields.io/github/stars/mike-ward/gui?style=flat-square&label=Stars&logo=github&logoColor=white) ![Forks](https://img.shields.io/github/forks/mike-ward/gui?style=flat-square&label=Forks&logo=github&logoColor=white) ![Issues](https://img.shields.io/github/issues/mike-ward/gui?style=flat-square&label=Issues&logo=github&logoColor=white) ![License](https://img.shields.io/github/license/mike-ward/gui?style=flat-square&label=License&logo=github&logoColor=white)
 
 ## Overview
 
