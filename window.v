@@ -241,7 +241,9 @@ pub fn (mut window Window) update_window() {
 
 	window.lock()
 	mut view := window.view_generator(window)
+	clear_layouts(mut window.layout)
 	window.layout = window.compose_layout(mut view)
+	clear_views(mut view)
 	window.renderers.clear()
 	clip_rect := window.window_rect()
 	background_color := window.color_background()

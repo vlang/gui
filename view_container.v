@@ -93,9 +93,13 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 			float_offset_x:      cv.float_offset_x
 			float_offset_y:      cv.float_offset_y
 			text:                cv.text
-			text_style:          &TextStyle{
-				...gui_theme.text_style
-				color: cv.color
+			text_style:          if cv.color == gui_theme.text_style.color {
+				&gui_theme.text_style
+			} else {
+				&TextStyle{
+					...gui_theme.text_style
+					color: cv.color
+				}
 			}
 			cfg:                 cv.cfg
 			id_scroll:           cv.id_scroll

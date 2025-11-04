@@ -156,3 +156,16 @@ fn rect_intersection(a DrawClip, b DrawClip) ?DrawClip {
 pub fn point_in_rectangle(x f32, y f32, rect DrawClip) bool {
 	return x >= rect.x && y >= rect.y && x < (rect.x + rect.width) && y < (rect.y + rect.height)
 }
+
+// clear_layouts recursively clears parent and shape references in a layout tree.
+// This breaks reference cycles and clears heap data so the garbage collector
+// can properly free the old layout tree.
+fn clear_layouts(mut layout Layout) {
+	for mut child in layout.children {
+		clear_layouts(mut child)
+	}
+
+	layout.parent = unsafe { nil }
+	layout.shape = unsafe { nil }
+	layout.children = []
+}

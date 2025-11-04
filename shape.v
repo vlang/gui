@@ -7,13 +7,13 @@ import datatypes
 // Members are arranged for packing to reduce memory footprint.
 pub struct Shape {
 pub:
-	id       string // user assigned
-	name     string // internal shape name, useful for debugging
 	uid      u64 = rand.u64() // internal use only
 	id_focus u32 // >0 indicates shape is focusable. Value determines tabbing order
 	axis     Axis
 	type     ShapeType
 pub mut:
+	id                    string // user assigned
+	name                  string // internal shape name, useful for debugging
 	text_spans            &datatypes.LinkedList[TextSpan] = unsafe { nil } // rich text format spans
 	text                  string
 	image_name            string // filename of image
