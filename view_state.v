@@ -24,15 +24,17 @@ mut:
 }
 
 fn (mut vs ViewState) clear(mut w Window) {
-	vs.input_state.clear()
-	vs.input_date_state.clear()
-	vs.offset_x_state.clear()
-	vs.offset_y_state.clear()
-	vs.text_widths.clear()
-	vs.menu_state.clear()
-	vs.image_map.clear()
-	vs.select_state.clear()
-	vs.tree_state.clear()
-	vs.date_picker_state.clear()
+	unsafe {
+		vs.input_state.free()
+		vs.input_date_state.free()
+		vs.offset_x_state.free()
+		vs.offset_y_state.free()
+		vs.text_widths.free()
+		vs.menu_state.free()
+		vs.image_map.free()
+		vs.select_state.free()
+		vs.tree_state.free()
+		vs.date_picker_state.free()
+	}
 	w.view_state = ViewState{}
 }

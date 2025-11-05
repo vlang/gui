@@ -241,13 +241,15 @@ pub fn (mut window Window) update_window() {
 
 	window.lock()
 	mut view := window.view_generator(window)
-	clear_layouts(mut window.layout)
+	mut old_layout := window.layout
 	window.layout = window.compose_layout(mut view)
+	unsafe { window.renderers.reset() }
 	window.renderers.clear()
 	clip_rect := window.window_rect()
 	background_color := window.color_background()
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
 	clear_views(mut view)
+	clear_layouts(mut old_layout)
 	window.unlock()
 
 	$if !prod {

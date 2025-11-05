@@ -113,13 +113,19 @@ fn (cfg &TextCfg) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 		w.set_mouse_cursor_ibeam()
 	}
 	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
+		id_focus := shape.id_focus
 		w.mouse_lock(
-			mouse_move: fn [cfg, shape] (_ &Layout, mut e Event, mut w Window) {
-				cfg.mouse_move_shape(shape, mut e, mut w)
+			mouse_move: fn [cfg, id_focus] (layout &Layout, mut e Event, mut w Window) {
+				if shape := layout.find_shape(fn [id_focus] (ly Layout) bool {
+					return ly.shape.id_focus == id_focus
+				})
+				{
+					cfg.mouse_move_shape(shape, mut e, mut w)
+				}
 			}
-			mouse_up:   fn [cfg, shape] (_ &Layout, mut e Event, mut w Window) {
+			mouse_up:   fn [cfg] (layout &Layout, mut e Event, mut w Window) {
 				w.mouse_unlock()
-				cfg.mouse_up_shape(shape, mut e, mut w)
+				cfg.mouse_up_shape(layout.shape, mut e, mut w)
 			}
 		)
 		ev := event_relative_to(shape, e)
