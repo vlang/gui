@@ -83,7 +83,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				padding:  item_cfg.padding
 				radius:   item_cfg.radius
 				sizing:   item_cfg.sizing
-				on_click: menubar_cfg.menu_item_click
+				on_click: menubar_cfg.menu_item_click(item_cfg)
 				spacing:  item_cfg.spacing
 				on_hover: menubar_cfg.on_hover_item
 				content:  content
@@ -111,7 +111,7 @@ pub fn menu_separator() MenuItemCfg {
 	}
 }
 
-// menu_subtitlemenu_submenu subtitles
+// menu_subtitle subtitles
 pub fn menu_subtitle(text string) MenuItemCfg {
 	return MenuItemCfg{
 		id:       menu_subtitle_id
@@ -149,32 +149,34 @@ pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
 	}
 }
 
-// menu_item_click, for such a short method, there is alot going on here in terms
+// menu_item_click for such a short method, there is alot going on here in terms
 // of state management, thus the many comments.
-fn (menubar_cfg MenubarCfg) menu_item_click(cfg &MenuItemCfg, mut e Event, mut w Window) {
-	// setting the focus to the menubar enables mouse hover hightlighting of menu items.
-	// see on_hover_item
-	w.set_id_focus(menubar_cfg.id_focus)
-	// Highlight the menu item
-	w.view_state.menu_state[menubar_cfg.id_focus] = cfg.id
-	// Menu item action handler
-	if cfg.action != unsafe { nil } {
-		cfg.action(cfg, mut e, mut w)
-	}
-	// Common menubar action handler
-	menubar_cfg.action(cfg.id, mut e, mut w)
-	// if this is simple menu-item (no submenu) then clicking it
-	// also closes the menu and removes focus.
-	if cfg.submenu.len == 0 {
-		w.set_id_focus(0)
-		w.view_state.menu_state[menubar_cfg.id_focus] = ''
+fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&MenuItemCfg, mut Event, mut Window) {
+	return fn [cfg, item_cfg] (_ &MenuItemCfg, mut e Event, mut w Window) {
+		// setting the focus to the menubar enables mouse hover highlighting of menu items.
+		// see on_hover_item
+		w.set_id_focus(cfg.id_focus)
+		// Highlight the menu item
+		w.view_state.menu_state[cfg.id_focus] = item_cfg.id
+		// Menu item action handler
+		if item_cfg.action != unsafe { nil } {
+			item_cfg.action(item_cfg, mut e, mut w)
+		}
+		// Common menubar action handler
+		cfg.action(item_cfg.id, mut e, mut w)
+		// if this is simple menu-item (no submenu) then clicking it
+		// also closes the menu and removes focus.
+		if item_cfg.submenu.len == 0 {
+			w.set_id_focus(0)
+			w.view_state.menu_state[cfg.id_focus] = ''
+		}
 	}
 }
 
 fn (cfg &MenubarCfg) on_hover_item(mut layout Layout, mut _ Event, mut w Window) {
 	// Mouse hover logic is covered here. Once the **menubar** gains focus,
 	// mouse-overs can change the selected menu-item. Note: Selection
-	// incicates highlighting, not focus. This is key to understanding menus.
+	// indicates highlighting, not focus. This is key to understanding menus.
 	if layout.shape.id.len == 0 || layout.shape.disabled || !w.is_focus(cfg.id_focus) {
 		return
 	}

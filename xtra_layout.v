@@ -166,8 +166,34 @@ fn clear_layouts(mut layout Layout) {
 	}
 	unsafe {
 		layout.parent = nil
-		layout.shape = nil
 		layout.children.reset()
+		if layout.shape != nil {
+			layout.shape.id = ''
+			layout.shape.name = ''
+			layout.shape.text = ''
+			layout.shape.image_name = ''
+			layout.shape.text_lines.reset()
+			layout.shape.on_char = nil
+			layout.shape.on_keydown = nil
+			layout.shape.on_click = nil
+			layout.shape.on_mouse_move = nil
+			layout.shape.on_mouse_up = nil
+			layout.shape.on_char_shape = nil
+			layout.shape.on_keydown_shape = nil
+			layout.shape.on_mouse_down_shape = nil
+			layout.shape.on_mouse_move_shape = nil
+			layout.shape.on_mouse_up_shape = nil
+			layout.shape.on_mouse_scroll_shape = nil
+			layout.shape.amend_layout = nil
+			layout.shape.on_hover = nil
+
+			if layout.shape.text_spans != nil {
+				for layout.shape.text_spans.len > 0 {
+					layout.shape.text_spans.pop() or {}
+				}
+			}
+			layout.shape = nil
+		}
 	}
 	layout.children.clear()
 }
