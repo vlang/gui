@@ -11,6 +11,7 @@ import arrays
 // already hard-to-reason-about problem. -imho
 
 // Layout defines a tree of Layouts. Views generate Layouts
+@[heap]
 pub struct Layout {
 pub mut:
 	shape    &Shape  = unsafe { nil }

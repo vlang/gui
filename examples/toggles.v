@@ -47,6 +47,7 @@ fn main_view(window &gui.Window) gui.View {
 				color:   gui.theme().color_interior
 				content: [
 					gui.toggle(
+						id_focus: 100
 						label:    'toggle (default)'
 						select:   app.select_checkbox
 						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
@@ -55,6 +56,7 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.toggle(
+						id_focus:    200
 						label:       'toggle (custom icon)'
 						select:      app.select_toggle
 						text_select: gui.icon_bug
@@ -64,6 +66,7 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.radio(
+						id_focus: 300
 						label:    'radio button'
 						select:   app.select_radio
 						on_click: fn (_ &gui.RadioCfg, mut e gui.Event, mut w gui.Window) {
@@ -72,6 +75,7 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.switch(
+						id_focus: 400
 						label:    'switch'
 						select:   app.select_switch
 						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {

@@ -56,7 +56,6 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 		id_focus:            rtf.id_focus
 		width:               width
 		height:              height
-		cfg:                 &rtf.cfg
 		clip:                rtf.clip
 		focus_skip:          rtf.focus_skip
 		disabled:            rtf.disabled

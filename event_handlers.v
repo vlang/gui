@@ -25,7 +25,7 @@ fn char_handler(layout &Layout, mut e Event, mut w Window) {
 			}
 		}
 		if layout.shape.on_char != unsafe { nil } {
-			layout.shape.on_char(layout.shape.cfg, mut e, mut w)
+			layout.shape.on_char(layout.shape, mut e, mut w)
 			if e.is_handled {
 				return
 			}
@@ -57,7 +57,7 @@ fn keydown_handler(layout &Layout, mut e Event, mut w Window) {
 			}
 		}
 		if layout.shape.on_keydown != unsafe { nil } {
-			layout.shape.on_keydown(layout.shape.cfg, mut e, mut w)
+			layout.shape.on_keydown(layout.shape, mut e, mut w)
 			if e.is_handled {
 				return
 			}
@@ -125,7 +125,7 @@ fn mouse_down_handler(layout &Layout, in_handler bool, mut e Event, mut w Window
 		if layout.shape.on_click != unsafe { nil } {
 			// make click handler mouse coordinates relative to layout.shape
 			mut ev := event_relative_to(layout.shape, e)
-			layout.shape.on_click(layout.shape.cfg, mut ev, mut w)
+			layout.shape.on_click(layout.shape, mut ev, mut w)
 			if ev.is_handled {
 				e.is_handled = true
 				return
@@ -190,7 +190,7 @@ fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 		if layout.shape.on_mouse_up != unsafe { nil } {
 			// make up handler mouse coordinates relative to layout.shape
 			mut ev := event_relative_to(layout.shape, e)
-			layout.shape.on_mouse_up(layout.shape.cfg, mut ev, mut w)
+			layout.shape.on_mouse_up(layout.shape, mut ev, mut w)
 			if ev.is_handled {
 				e.is_handled = true
 				return

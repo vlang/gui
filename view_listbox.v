@@ -133,7 +133,6 @@ pub fn list_box(cfg ListBoxCfg) View {
 		fill:       cfg.fill_border
 		padding:    cfg.padding_border
 		sizing:     cfg.sizing
-		cfg:        &cfg
 		content:    [
 			column(
 				name:            'list_box interior'

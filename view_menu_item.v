@@ -73,7 +73,6 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 			column(
 				name:     'menu_item'
 				id:       item_cfg.id
-				cfg:      &item_cfg
 				disabled: item_cfg.disabled
 				color:    if item_cfg.selected {
 					item_cfg.color_select

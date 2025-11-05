@@ -39,8 +39,8 @@ pub:
 	float          bool
 	over_draw      bool
 mut:
-	content         []View
-	cfg             voidptr
+	content []View
+	// cfg             voidptr
 	scrollbar_cfg_x &ScrollbarCfg                          = unsafe { nil }
 	scrollbar_cfg_y &ScrollbarCfg                          = unsafe { nil }
 	tooltip         &TooltipCfg                            = unsafe { nil }
@@ -94,14 +94,13 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 			float_offset_y:      cv.float_offset_y
 			text:                cv.text
 			text_style:          if cv.color == gui_theme.text_style.color {
-				&gui_theme.text_style
+				gui_theme.text_style
 			} else {
-				&TextStyle{
+				TextStyle{
 					...gui_theme.text_style
 					color: cv.color
 				}
 			}
-			cfg:                 cv.cfg
 			id_scroll:           cv.id_scroll
 			over_draw:           cv.over_draw
 			scroll_mode:         cv.scroll_mode
@@ -173,8 +172,8 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 pub struct ContainerCfg {
 	name string // internally set. read-only.
 	axis Axis
-mut:
-	cfg voidptr = unsafe { nil }
+	// mut:
+	// 	cfg voidptr = unsafe { nil }
 pub:
 	id              string
 	text            string
@@ -283,7 +282,7 @@ fn container(cfg ContainerCfg) View {
 		else { cfg.content }
 	}
 
-	return ContainerView{
+	view := ContainerView{
 		id:              cfg.id
 		id_focus:        cfg.id_focus
 		axis:            cfg.axis
@@ -319,7 +318,6 @@ fn container(cfg ContainerCfg) View {
 		float_offset_x:  cfg.float_offset_x
 		float_offset_y:  cfg.float_offset_y
 		tooltip:         cfg.tooltip
-		cfg:             cfg.cfg
 		on_click:        if cfg.on_any_click != unsafe { nil } {
 			cfg.on_any_click
 		} else {
@@ -333,6 +331,7 @@ fn container(cfg ContainerCfg) View {
 		amend_layout:    cfg.amend_layout
 		content:         content
 	}
+	return view
 }
 
 // --- Common layout containers ---
@@ -346,12 +345,6 @@ pub fn column(cfg ContainerCfg) View {
 		axis: .top_to_bottom
 		name: name
 	}
-	if cfg.cfg == unsafe { nil } {
-		container_cfg.cfg = &ContainerCfg{
-			...container_cfg
-			content: []View{}
-		}
-	}
 	return container(container_cfg)
 }
 
@@ -364,12 +357,6 @@ pub fn row(cfg ContainerCfg) View {
 		axis: .left_to_right
 		name: name
 	}
-	if cfg.cfg == unsafe { nil } {
-		container_cfg.cfg = &ContainerCfg{
-			...container_cfg
-			content: []View{}
-		}
-	}
 	return container(container_cfg)
 }
 
@@ -379,12 +366,6 @@ pub fn canvas(cfg ContainerCfg) View {
 	mut container_cfg := &ContainerCfg{
 		...cfg
 		name: name
-	}
-	if cfg.cfg == unsafe { nil } {
-		container_cfg.cfg = &ContainerCfg{
-			...container_cfg
-			content: []View{}
-		}
 	}
 	return container(container_cfg)
 }
@@ -397,12 +378,6 @@ pub fn circle(cfg ContainerCfg) View {
 	}
 	mut circle := container(container_cfg) as ContainerView
 	circle.shape_type = .circle
-	if cfg.cfg == unsafe { nil } {
-		container_cfg.cfg = &ContainerCfg{
-			...container_cfg
-			content: []View{}
-		}
-	}
 	return circle
 }
 
@@ -424,10 +399,9 @@ fn (cfg &ContainerCfg) left_click() fn (&ContainerCfg, mut Event, mut Window) {
 	if cfg.on_click == unsafe { nil } {
 		return cfg.on_click
 	}
-	on_click := cfg.on_click
-	return fn [on_click] (_cfg voidptr, mut e Event, mut w Window) {
+	return fn [cfg] (_cfg voidptr, mut e Event, mut w Window) {
 		if e.mouse_button == .left {
-			on_click(_cfg, mut e, mut w)
+			cfg.on_click(cfg, mut e, mut w)
 		}
 	}
 }

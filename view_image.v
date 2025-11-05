@@ -59,7 +59,6 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 			min_width:  iv.min_width
 			height:     height
 			min_height: iv.min_height
-			cfg:        iv.cfg
 			on_click:   iv.on_click
 			on_hover:   iv.on_hover
 		}

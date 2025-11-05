@@ -41,7 +41,6 @@ pub fn switch(cfg SwitchCfg) View {
 	content << row(
 		name:         'switch border'
 		id:           cfg.id
-		id_focus:     cfg.id_focus
 		width:        cfg.width
 		height:       cfg.height
 		sizing:       fixed_fit
@@ -51,8 +50,6 @@ pub fn switch(cfg SwitchCfg) View {
 		radius:       cfg.radius_border
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
-		cfg:          &cfg
-		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout
 		content:      [
 			row(
@@ -81,11 +78,24 @@ pub fn switch(cfg SwitchCfg) View {
 		content << text(text: cfg.label, text_style: cfg.text_style)
 	}
 	return row(
+		id_focus: cfg.id_focus
 		padding:  padding_none
-		on_click: cfg.on_click
+		on_char:  cfg.on_char_button
+		on_click: cfg.on_switch_click()
 		on_hover: cfg.on_hover
 		content:  content
 	)
+}
+
+fn (cfg &SwitchCfg) on_switch_click() fn (&SwitchCfg, mut Event, mut Window) {
+	if cfg.on_click == unsafe { nil } {
+		return cfg.on_click
+	}
+	return fn [cfg] (_ voidptr, mut e Event, mut w Window) {
+		if e.mouse_button == .left {
+			cfg.on_click(cfg, mut e, mut w)
+		}
+	}
 }
 
 fn (cfg &SwitchCfg) on_char_button(_ &SwitchCfg, mut e Event, mut w Window) {

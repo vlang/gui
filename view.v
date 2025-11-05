@@ -30,5 +30,8 @@ fn clear_views(mut view View) {
 	for mut child in view.content {
 		clear_views(mut child)
 	}
-	view.content = []
+
+	unsafe { view.content.reset() }
+	view.content.clear()
+	view = unsafe { nil }
 }

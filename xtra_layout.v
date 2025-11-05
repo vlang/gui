@@ -164,8 +164,10 @@ fn clear_layouts(mut layout Layout) {
 	for mut child in layout.children {
 		clear_layouts(mut child)
 	}
-
-	layout.parent = unsafe { nil }
-	layout.shape = unsafe { nil }
-	layout.children = []
+	unsafe {
+		layout.parent = nil
+		layout.shape = nil
+		layout.children.reset()
+	}
+	layout.children.clear()
 }

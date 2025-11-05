@@ -71,11 +71,7 @@ pub fn button(cfg ButtonCfg) View {
 		max_height:   cfg.max_height
 		sizing:       cfg.sizing
 		tooltip:      cfg.tooltip
-		cfg:          &ButtonCfg{
-			...cfg
-			content: []View{}
-		}
-		on_click:     cfg.on_click
+		on_click:     cfg.on_button_click()
 		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout
 		on_hover:     cfg.on_hover
@@ -95,7 +91,18 @@ pub fn button(cfg ButtonCfg) View {
 	)
 }
 
-fn (cfg &ButtonCfg) on_char_button(_ &ButtonCfg, mut e Event, mut w Window) {
+fn (cfg &ButtonCfg) on_button_click() fn (&ButtonCfg, mut Event, mut Window) {
+	if cfg.on_click == unsafe { nil } {
+		return cfg.on_click
+	}
+	return fn [cfg] (_ voidptr, mut e Event, mut w Window) {
+		if e.mouse_button == .left {
+			cfg.on_click(cfg, mut e, mut w)
+		}
+	}
+}
+
+fn (cfg &ButtonCfg) on_char_button(_ voidptr, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
 		cfg.on_click(cfg, mut e, mut w)
 		e.is_handled = true

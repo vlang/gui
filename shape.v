@@ -21,7 +21,7 @@ pub mut:
 	shape_clip            DrawClip // used for hit-testing
 	color                 Color
 	padding               Padding
-	text_style            &TextStyle = &gui_theme.text_style
+	text_style            TextStyle = gui_theme.text_style
 	sizing                Sizing
 	x                     f32
 	y                     f32
@@ -40,7 +40,6 @@ pub mut:
 	text_sel_beg          u32
 	text_sel_end          u32
 	text_tab_size         u32 = 4
-	cfg                   voidptr
 	on_char               fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_keydown            fn (voidptr, mut Event, mut Window)    = unsafe { nil }
 	on_click              fn (voidptr, mut Event, mut Window)    = unsafe { nil }

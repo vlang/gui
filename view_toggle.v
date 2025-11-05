@@ -40,23 +40,19 @@ pub fn toggle(cfg ToggleCfg) View {
 	unsafe { content.flags.set(.noslices) }
 
 	content << row(
-		name:         'toggle border'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		color:        cfg.color_border
-		padding:      cfg.padding_border
-		fill:         cfg.fill_border
-		radius:       cfg.radius_border
-		disabled:     cfg.disabled
-		invisible:    cfg.invisible
-		min_width:    gui_theme.n3.size + 2
-		min_height:   gui_theme.n3.size + 2
-		h_align:      .center
-		v_align:      .middle
-		cfg:          &cfg
-		on_char:      cfg.on_char_button
-		amend_layout: cfg.amend_layout
-		content:      [
+		name:       'toggle border'
+		id:         cfg.id
+		color:      cfg.color_border
+		padding:    cfg.padding_border
+		fill:       cfg.fill_border
+		radius:     cfg.radius_border
+		disabled:   cfg.disabled
+		invisible:  cfg.invisible
+		min_width:  gui_theme.n3.size + 2
+		min_height: gui_theme.n3.size + 2
+		h_align:    .center
+		v_align:    .middle
+		content:    [
 			row(
 				name:    'toggle interior'
 				color:   color
@@ -81,15 +77,28 @@ pub fn toggle(cfg ToggleCfg) View {
 	}
 
 	return row(
-		name:     'toggle'
-		cfg:      &cfg
-		padding:  padding_none
-		on_click: cfg.on_click
-		on_hover: cfg.on_hover
-		h_align:  .center
-		v_align:  .middle
-		content:  content
+		name:         'toggle'
+		id_focus:     cfg.id_focus
+		h_align:      .center
+		v_align:      .middle
+		padding:      padding_none
+		on_char:      cfg.on_char_button
+		on_click:     cfg.on_toggle_click()
+		on_hover:     cfg.on_hover
+		amend_layout: cfg.amend_layout
+		content:      content
 	)
+}
+
+fn (cfg &ToggleCfg) on_toggle_click() fn (&ToggleCfg, mut Event, mut Window) {
+	if cfg.on_click == unsafe { nil } {
+		return cfg.on_click
+	}
+	return fn [cfg] (_ voidptr, mut e Event, mut w Window) {
+		if e.mouse_button == .left {
+			cfg.on_click(cfg, mut e, mut w)
+		}
+	}
 }
 
 fn (cfg &ToggleCfg) on_char_button(_ &ToggleCfg, mut e Event, mut w Window) {
@@ -104,8 +113,8 @@ fn (cfg &ToggleCfg) amend_layout(mut layout Layout, mut w Window) {
 		return
 	}
 	if w.is_focus(layout.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_focus
-		layout.shape.color = cfg.color_border_focus
+		layout.children[0].children[0].shape.color = cfg.color_focus
+		layout.children[0].shape.color = cfg.color_border_focus
 	}
 }
 

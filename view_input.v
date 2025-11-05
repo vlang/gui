@@ -138,7 +138,6 @@ pub fn input(cfg InputCfg) View {
 		invisible:    cfg.invisible
 		amend_layout: cfg.amend_layout
 		on_hover:     cfg.hover
-		cfg:          &cfg
 		content:      [
 			row(
 				name:    'input interior'
@@ -163,7 +162,6 @@ pub fn input(cfg InputCfg) View {
 					),
 					row(
 						name:     'input icon'
-						cfg:      &cfg
 						padding:  padding_none
 						on_click: cfg.on_click_icon
 						on_hover: cfg.hover_icon

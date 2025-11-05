@@ -36,7 +36,6 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			name:                'text'
 			type:                .text
 			id_focus:            tv.cfg.id_focus
-			cfg:                 &tv.cfg
 			clip:                tv.cfg.clip
 			focus_skip:          tv.cfg.focus_skip
 			disabled:            tv.cfg.disabled

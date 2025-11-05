@@ -36,8 +36,6 @@ pub fn radio(cfg RadioCfg) View {
 		sizing:    fixed_fixed
 		h_align:   .center
 		v_align:   .middle
-		cfg:       &cfg
-		on_char:   cfg.on_char_button
 		content:   [
 			circle(
 				name:    'radio interior'
@@ -63,17 +61,28 @@ pub fn radio(cfg RadioCfg) View {
 	return row(
 		name:         'radio'
 		id:           cfg.id
-		cfg:          &cfg
 		id_focus:     cfg.id_focus
 		padding:      padding_none
-		on_click:     cfg.on_click
+		on_click:     cfg.on_radio_click()
+		on_char:      cfg.on_char_radio
 		amend_layout: cfg.amend_layout
 		on_hover:     cfg.on_hover
 		content:      content
 	)
 }
 
-fn (cfg &RadioCfg) on_char_button(_ &RadioCfg, mut e Event, mut w Window) {
+fn (cfg &RadioCfg) on_radio_click() fn (&RadioCfg, mut Event, mut Window) {
+	if cfg.on_click == unsafe { nil } {
+		return cfg.on_click
+	}
+	return fn [cfg] (_ voidptr, mut e Event, mut w Window) {
+		if e.mouse_button == .left {
+			cfg.on_click(cfg, mut e, mut w)
+		}
+	}
+}
+
+fn (cfg &RadioCfg) on_char_radio(_ &RadioCfg, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
 		cfg.on_click(cfg, mut e, mut w)
 		e.is_handled = true
