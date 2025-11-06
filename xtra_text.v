@@ -20,6 +20,7 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 
 	return window.view_state.text_widths[key] or {
 		cfg := text_style.to_text_cfg()
 		window.ui.set_text_cfg(cfg)
+		unsafe { free(cfg) }
 		t_width := window.ui.text_width(text)
 		window.view_state.text_widths[key] = t_width
 		t_width
@@ -41,6 +42,7 @@ fn text_width(shape &Shape, mut window Window) f32 {
 				text_cfg := shape.text_style.to_text_cfg()
 				window.ui.set_text_cfg(text_cfg)
 				text_cfg_set = true
+				unsafe { free(text_cfg) }
 			}
 			t_width := window.ui.text_width(line)
 			window.view_state.text_widths[key] = t_width

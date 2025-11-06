@@ -36,7 +36,7 @@ pub fn (layout &Layout) next_focusable(mut w Window) ?Shape {
 	return layout.find_next_focusable(ids, mut w)
 }
 
-// next_focusable finds the next focusable that is not disabled.
+// find_next_focusable finds the next focusable that is not disabled.
 // If none are found it tries to find the first focusable that
 // is not disabled.
 fn (layout &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {

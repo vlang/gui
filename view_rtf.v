@@ -15,7 +15,6 @@ pub:
 	focus_skip bool
 	disabled   bool
 pub mut:
-	cfg     &RtfCfg = unsafe { nil }
 	spans   datatypes.LinkedList[TextSpan]
 	content []View // required, not used
 }
@@ -79,9 +78,10 @@ pub fn rtf(cfg RtfCfg) View {
 	}
 
 	if cfg.invisible {
-		return ContainerView{
+		return container(
 			invisible: true
-		}
+			padding:   padding_none
+		)
 	}
 
 	mut ll := datatypes.LinkedList[TextSpan]{}

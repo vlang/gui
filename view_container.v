@@ -39,8 +39,7 @@ pub:
 	float          bool
 	over_draw      bool
 mut:
-	content []View
-	// cfg             voidptr
+	content         []View
 	scrollbar_cfg_x &ScrollbarCfg                          = unsafe { nil }
 	scrollbar_cfg_y &ScrollbarCfg                          = unsafe { nil }
 	tooltip         &TooltipCfg                            = unsafe { nil }
@@ -172,8 +171,6 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 pub struct ContainerCfg {
 	name string // internally set. read-only.
 	axis Axis
-	// mut:
-	// 	cfg voidptr = unsafe { nil }
 pub:
 	id              string
 	text            string
@@ -339,11 +336,10 @@ fn container(cfg ContainerCfg) View {
 // column arranges its content top to bottom. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn column(cfg ContainerCfg) View {
-	name := if cfg.name.len == 0 { 'column' } else { cfg.name }
-	mut container_cfg := &ContainerCfg{
+	container_cfg := ContainerCfg{
 		...cfg
 		axis: .top_to_bottom
-		name: name
+		name: if cfg.name.is_blank() { 'column' } else { cfg.name }
 	}
 	return container(container_cfg)
 }
@@ -351,30 +347,27 @@ pub fn column(cfg ContainerCfg) View {
 // row arranges its content left to right. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn row(cfg ContainerCfg) View {
-	name := if cfg.name.len == 0 { 'row' } else { cfg.name }
-	mut container_cfg := &ContainerCfg{
+	container_cfg := ContainerCfg{
 		...cfg
 		axis: .left_to_right
-		name: name
+		name: if cfg.name.is_blank() { 'row' } else { cfg.name }
 	}
 	return container(container_cfg)
 }
 
 // canvas does not arrange or otherwise layout its content. See [ContainerCfg](#ContainerCfg)
 pub fn canvas(cfg ContainerCfg) View {
-	name := if cfg.name.len == 0 { 'canvas' } else { cfg.name }
-	mut container_cfg := &ContainerCfg{
+	container_cfg := ContainerCfg{
 		...cfg
-		name: name
+		name: if cfg.name.is_blank() { 'canvas' } else { cfg.name }
 	}
 	return container(container_cfg)
 }
 
 pub fn circle(cfg ContainerCfg) View {
-	name := if cfg.name.len == 0 { 'circle' } else { cfg.name }
-	mut container_cfg := &ContainerCfg{
+	container_cfg := ContainerCfg{
 		...cfg
-		name: name
+		name: if cfg.name.is_blank() { 'circle' } else { cfg.name }
 	}
 	mut circle := container(container_cfg) as ContainerView
 	circle.shape_type = .circle

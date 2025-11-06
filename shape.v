@@ -97,6 +97,9 @@ fn (mut shape Shape) clear() {
 // rectangle and thd shapes rectangle. Computed in layout_set_shape_clips()
 pub fn (shape &Shape) point_in_shape(x f32, y f32) bool {
 	shape_clip := shape.shape_clip
+	if shape_clip.width <= 0 || shape_clip.height <= 0 {
+		return false
+	}
 	return x >= shape_clip.x && y >= shape_clip.y && x < (shape_clip.x + shape_clip.width)
 		&& y < (shape_clip.y + shape_clip.height)
 }
