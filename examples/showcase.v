@@ -269,7 +269,7 @@ fn buttons(w &gui.Window) gui.View {
 					gui.button(
 						id_focus:       104
 						padding_border: gui.padding_two
-						on_click:       fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+						on_click:       fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.button_clicks += 1
 						}
@@ -301,7 +301,7 @@ fn buttons(w &gui.Window) gui.View {
 	)
 }
 
-fn button_click(_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+fn button_click(_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 	e.is_handled = true
 }
 
@@ -375,7 +375,7 @@ fn inputs(w &gui.Window) gui.View {
 						padding_border:  gui.padding_one
 						placeholder:     'Multline...'
 						mode:            .multiline
-						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+						on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.input_multiline = s
 						}
@@ -386,7 +386,7 @@ fn inputs(w &gui.Window) gui.View {
 	)
 }
 
-fn text_changed(_ &gui.InputCfg, s string, mut w gui.Window) {
+fn text_changed(_ &gui.Shape, s string, mut w gui.Window) {
 	mut app := w.state[ShowcaseApp]()
 	app.input_text = s
 }
@@ -512,7 +512,7 @@ fn message_type() gui.View {
 		id_focus: 1
 		sizing:   gui.fill_fit
 		content:  [gui.text(text: '.dialog_type == .message')]
-		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
 				align_buttons: .end
 				dialog_type:   .message
@@ -534,7 +534,7 @@ fn confirm_type() gui.View {
 		id_focus: 2
 		sizing:   gui.fill_fit
 		content:  [gui.text(text: '.dialog_type == .confirm')]
-		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
 				dialog_type:  .confirm
 				title:        'Destory All Data?'
@@ -555,7 +555,7 @@ fn prompt_type() gui.View {
 		id_focus: 3
 		sizing:   gui.fill_fit
 		content:  [gui.text(text: '.dialog_type == .prompt')]
-		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
 				dialog_type:  .prompt
 				title:        'Monty Python Quiz'
@@ -576,7 +576,7 @@ fn custom_type() gui.View {
 		id_focus: 4
 		sizing:   gui.fill_fit
 		content:  [gui.text(text: '.dialog_type == .custom')]
-		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
 				dialog_type:    .custom
 				custom_content: [
@@ -588,7 +588,7 @@ fn custom_type() gui.View {
 							gui.button(
 								id_focus: gui.dialog_base_id_focus
 								content:  [gui.text(text: 'Close Me')]
-								on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 									w.dialog_dismiss()
 								}
 							),
@@ -733,7 +733,7 @@ fn menu(window &gui.Window) gui.View {
 							radius_border:     0
 							text_style:        gui.theme().menubar_style.text_style
 							placeholder_style: gui.theme().menubar_style.text_style
-							on_text_changed:   fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+							on_text_changed:   fn (_ &gui.Shape, s string, mut w gui.Window) {
 								mut app := w.state[ShowcaseApp]()
 								app.search_text = s
 							}

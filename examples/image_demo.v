@@ -26,7 +26,7 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			gui.image(
 				file_name: sample_path
-				on_click:  fn (_ &gui.ImageCfg, mut e gui.Event, mut w gui.Window) {
+				on_click:  fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 					w.dialog(
 						align_buttons: .end
 						dialog_type:   .message

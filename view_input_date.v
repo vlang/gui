@@ -13,7 +13,7 @@ pub:
 	allowed_years            []int
 	allowed_dates            []time.Time
 	on_select                fn ([]time.Time, mut Event, mut Window) = unsafe { nil }
-	on_enter                 fn (&InputCfg, mut Event, &Window)      = unsafe { nil }
+	on_enter                 fn (&Shape, mut Event, &Window)         = unsafe { nil }
 	weekdays_len             DatePickerWeekdayLen                    = gui_theme.date_picker_style.weekdays_len // [link](#DatePickerWeekdayLen)
 	text_style               TextStyle = gui_theme.date_picker_style.text_style
 	placeholder_style        TextStyle = gui_theme.input_style.placeholder_style
@@ -59,10 +59,10 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 				placeholder: cfg.placeholder
 				// on_text_changed:    cfg.on_text_changed
 				on_enter:           cfg.on_enter
-				on_click_icon:      fn (cfg &InputCfg, mut e Event, mut w Window) {
-					visible := w.view_state.input_date_state[cfg.id]
+				on_click_icon:      fn (ly &Layout, mut e Event, mut w Window) {
+					visible := w.view_state.input_date_state[ly.shape.id]
 					w.view_state.input_date_state.clear() // close all other date_pickers
-					w.view_state.input_date_state[cfg.id] = !visible
+					w.view_state.input_date_state[ly.shape.id] = !visible
 					e.is_handled = true
 				}
 				sizing:             cfg.sizing

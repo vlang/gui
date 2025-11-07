@@ -14,8 +14,7 @@ pub:
 	max_height f32
 	invisible  bool
 mut:
-	cfg      &ImageCfg
-	on_click fn (&ImageCfg, mut Event, mut Window)  = unsafe { nil }
+	on_click fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_hover fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	content  []View // not used
 }
@@ -24,7 +23,7 @@ pub struct ImageCfg {
 pub:
 	id         string
 	file_name  string
-	on_click   fn (&ImageCfg, mut Event, mut Window)  = unsafe { nil }
+	on_click   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_hover   fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	width      f32
 	height     f32
@@ -92,19 +91,19 @@ pub fn image(cfg ImageCfg) View {
 		height:     cfg.height
 		min_height: cfg.min_height
 		invisible:  cfg.invisible
-		cfg:        &cfg
 		on_click:   cfg.left_click()
 		on_hover:   cfg.on_hover
 	}
 }
 
-fn (cfg &ImageCfg) left_click() fn (&ImageCfg, mut Event, mut Window) {
+fn (cfg &ImageCfg) left_click() fn (&Layout, mut Event, mut Window) {
 	if cfg.on_click == unsafe { nil } {
 		return cfg.on_click
 	}
-	return fn (_cfg &ImageCfg, mut e Event, mut w Window) {
+	on_click := cfg.on_click
+	return fn [on_click] (layout &Layout, mut e Event, mut w Window) {
 		if e.mouse_button == .left {
-			_cfg.on_click(_cfg, mut e, mut w)
+			on_click(layout, mut e, mut w)
 		}
 	}
 }

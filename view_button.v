@@ -18,7 +18,7 @@ pub:
 	padding_border     Padding     = gui_theme.button_style.padding_border
 	sizing             Sizing
 	content            []View
-	on_click           fn (&ButtonCfg, mut Event, mut Window) = unsafe { nil }
+	on_click           fn (&Layout, mut Event, mut Window) = unsafe { nil }
 	width              f32
 	height             f32
 	min_width          f32
@@ -45,7 +45,7 @@ pub:
 // 	max_width:      90
 // 	padding_border: gui.padding_one
 // 	content:        [gui.text(text: '${app.clicks} Clicks')]
-// 	on_click:       fn (_ &gui.ButtonCfg, _ &gui.Event, mut w gui.Window) bool {
+// 	on_click:       fn (_ &gui.Layout, _ &gui.Event, mut w gui.Window) bool {
 // 		mut app := w.state[App]()
 // 		app.clicks += 1
 // 		return true
@@ -91,20 +91,21 @@ pub fn button(cfg ButtonCfg) View {
 	)
 }
 
-fn (cfg &ButtonCfg) on_button_click() fn (&ButtonCfg, mut Event, mut Window) {
+fn (cfg &ButtonCfg) on_button_click() fn (&Layout, mut Event, mut Window) {
 	if cfg.on_click == unsafe { nil } {
 		return cfg.on_click
 	}
-	return fn [cfg] (_ voidptr, mut e Event, mut w Window) {
+	on_click := cfg.on_click
+	return fn [on_click] (layout &Layout, mut e Event, mut w Window) {
 		if e.mouse_button == .left {
-			cfg.on_click(cfg, mut e, mut w)
+			on_click(layout, mut e, mut w)
 		}
 	}
 }
 
-fn (cfg &ButtonCfg) on_char_button(_ voidptr, mut e Event, mut w Window) {
+fn (cfg &ButtonCfg) on_char_button(layout &Layout, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(cfg, mut e, mut w)
+		cfg.on_click(layout, mut e, mut w)
 		e.is_handled = true
 	}
 }

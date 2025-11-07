@@ -169,6 +169,7 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 // top-left corner. This style of container is typically called a group
 // box. Set the `text` property to enable this feature.
 pub struct ContainerCfg {
+pub mut:
 	name string // internally set. read-only.
 	axis Axis
 pub:
@@ -336,40 +337,36 @@ fn container(cfg ContainerCfg) View {
 // column arranges its content top to bottom. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn column(cfg ContainerCfg) View {
-	container_cfg := ContainerCfg{
-		...cfg
-		axis: .top_to_bottom
-		name: if cfg.name.is_blank() { 'column' } else { cfg.name }
+	unsafe { // avoid allocating struct
+		cfg.axis = .top_to_bottom
+		cfg.name = if cfg.name.is_blank() { 'column' } else { cfg.name }
 	}
-	return container(container_cfg)
+	return container(cfg)
 }
 
 // row arranges its content left to right. The gap between child items is
 // determined by the spacing parameter. See [ContainerCfg](#ContainerCfg)
 pub fn row(cfg ContainerCfg) View {
-	container_cfg := ContainerCfg{
-		...cfg
-		axis: .left_to_right
-		name: if cfg.name.is_blank() { 'row' } else { cfg.name }
+	unsafe { // avoid allocating struct
+		cfg.axis = .left_to_right
+		cfg.name = if cfg.name.is_blank() { 'row' } else { cfg.name }
 	}
-	return container(container_cfg)
+	return container(cfg)
 }
 
 // canvas does not arrange or otherwise layout its content. See [ContainerCfg](#ContainerCfg)
 pub fn canvas(cfg ContainerCfg) View {
-	container_cfg := ContainerCfg{
-		...cfg
-		name: if cfg.name.is_blank() { 'canvas' } else { cfg.name }
+	unsafe { // avoid allocating struct
+		cfg.name = if cfg.name.is_blank() { 'canvas' } else { cfg.name }
 	}
-	return container(container_cfg)
+	return container(cfg)
 }
 
 pub fn circle(cfg ContainerCfg) View {
-	container_cfg := ContainerCfg{
-		...cfg
-		name: if cfg.name.is_blank() { 'circle' } else { cfg.name }
+	unsafe { // avoid allocating struct
+		cfg.name = if cfg.name.is_blank() { 'circle' } else { cfg.name }
 	}
-	mut circle := container(container_cfg) as ContainerView
+	mut circle := container(cfg) as ContainerView
 	circle.shape_type = .circle
 	return circle
 }
@@ -388,13 +385,14 @@ fn (mut cfg ContainerView) on_mouse_move_shape(shape &Shape, mut e Event, mut w 
 	}
 }
 
-fn (cfg &ContainerCfg) left_click() fn (&ContainerCfg, mut Event, mut Window) {
+fn (cfg &ContainerCfg) left_click() fn (&Layout, mut Event, mut Window) {
 	if cfg.on_click == unsafe { nil } {
 		return cfg.on_click
 	}
-	return fn [cfg] (_cfg voidptr, mut e Event, mut w Window) {
+	on_click := cfg.on_click
+	return fn [on_click] (layout &Layout, mut e Event, mut w Window) {
 		if e.mouse_button == .left {
-			cfg.on_click(cfg, mut e, mut w)
+			on_click(layout, mut e, mut w)
 		}
 	}
 }

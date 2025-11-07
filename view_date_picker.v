@@ -142,7 +142,7 @@ fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
 	return button(
 		color_border: color_transparent
 		content:      [text(text: view_time(state).custom_format('MMMM YYYY'))]
-		on_click:     fn [id] (_ &ButtonCfg, mut e Event, mut w Window) {
+		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
 			mut state := w.view_state.date_picker_state[id]
 			state.show_year_month_picker = !state.show_year_month_picker
 			w.view_state.date_picker_state[id] = state
@@ -157,7 +157,7 @@ fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
 		disabled:     state.show_year_month_picker
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_left, text_style: gui_theme.icon3)]
-		on_click:     fn [id] (_ &ButtonCfg, mut e Event, mut w Window) {
+		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
 			mut dps := w.view_state.date_picker_state[id]
 			dps.view_month = dps.view_month - 1
 			if dps.view_month < 1 {
@@ -177,7 +177,7 @@ fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 		disabled:     state.show_year_month_picker
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_right, text_style: gui_theme.icon3)]
-		on_click:     fn [id] (_ &ButtonCfg, mut e Event, mut w Window) {
+		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
 			mut dps := w.view_state.date_picker_state[id]
 			dps.view_month = dps.view_month + 1
 			if dps.view_month > 12 {
@@ -338,7 +338,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 				max_height:     state.cell_size
 				padding_border: padding_two
 				content:        [text(text: day)]
-				on_click:       fn [on_select, update_selections, count, state] (_ &ButtonCfg, mut e Event, mut w Window) {
+				on_click:       fn [on_select, update_selections, count, state] (_ &Layout, mut e Event, mut w Window) {
 					if on_select != unsafe { nil } {
 						selected_dates := update_selections(count, state)
 						on_select(selected_dates, mut e, mut w)
@@ -551,7 +551,7 @@ fn (cfg DatePickerCfg) button_month(month DatePickerMonths, year int, width f32)
 		disabled:  disabled
 		min_width: width
 		max_width: width
-		on_click:  fn [id, int_month, year] (_ &ButtonCfg, mut e Event, mut w Window) {
+		on_click:  fn [id, int_month, year] (_ &Layout, mut e Event, mut w Window) {
 			mut state := w.view_state.date_picker_state[id]
 			state.view_month = int_month
 			state.view_year = year

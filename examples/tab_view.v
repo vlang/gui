@@ -78,7 +78,7 @@ fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) gui.Vie
 		padding:        gui.pad_tblr(4, 10)
 		padding_border: gui.padding_one
 		content:        [gui.text(text: text, text_style: gui.theme().b4)]
-		on_click:       fn [id] (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+		on_click:       fn [id] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 			mut tvapp := w.state[TabViewApp]()
 			tvapp.select_tab = id
 		}

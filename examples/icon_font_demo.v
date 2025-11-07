@@ -87,7 +87,7 @@ fn search_box(text string) gui.View {
 		padding_border:  gui.padding_one
 		color_border:    gui.theme().color_border
 		placeholder:     'Search'
-		on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+		on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
 			mut app := w.state[IconFontApp]()
 			app.search = s
 			app.icons.clear()

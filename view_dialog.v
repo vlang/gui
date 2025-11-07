@@ -124,7 +124,7 @@ fn message_view(cfg DialogCfg) []View {
 				button(
 					id_focus: cfg.id_focus
 					content:  [text(text: 'OK', text_style: cfg.text_style)]
-					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_ok_yes := w.dialog_cfg.on_ok_yes
 						w.dialog_dismiss()
@@ -148,7 +148,7 @@ fn confirm_view(cfg DialogCfg) []View {
 				button(
 					id_focus: cfg.id_focus + 1
 					content:  [text(text: 'Yes', text_style: cfg.text_style)]
-					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_ok_yes := w.dialog_cfg.on_ok_yes
 						w.dialog_dismiss()
@@ -159,7 +159,7 @@ fn confirm_view(cfg DialogCfg) []View {
 				button(
 					id_focus: cfg.id_focus
 					content:  [text(text: 'No', text_style: cfg.text_style)]
-					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_cancel_no := w.dialog_cfg.on_cancel_no
 						w.dialog_dismiss()
@@ -179,13 +179,13 @@ fn prompt_view(cfg DialogCfg) []View {
 			text:            cfg.reply
 			text_style:      cfg.text_style
 			sizing:          fill_fit
-			on_text_changed: fn (_ &InputCfg, s string, mut w Window) {
+			on_text_changed: fn (_ &Shape, s string, mut w Window) {
 				w.dialog_cfg = DialogCfg{
 					...w.dialog_cfg
 					reply: s
 				}
 			}
-			on_enter:        fn (cfg &InputCfg, mut e Event, mut w Window) {
+			on_enter:        fn (_ &Shape, mut e Event, mut w Window) {
 				w.set_id_focus(w.dialog_cfg.old_id_focus)
 				on_reply := w.dialog_cfg.on_reply
 				reply := w.dialog_cfg.reply
@@ -204,7 +204,7 @@ fn prompt_view(cfg DialogCfg) []View {
 					id_focus: cfg.id_focus + 1
 					disabled: cfg.reply.len == 0
 					content:  [text(text: 'OK', text_style: cfg.text_style)]
-					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_reply := w.dialog_cfg.on_reply
 						reply := w.dialog_cfg.reply
@@ -216,7 +216,7 @@ fn prompt_view(cfg DialogCfg) []View {
 				button(
 					id_focus: cfg.id_focus + 2
 					content:  [text(text: 'Cancel', text_style: cfg.text_style)]
-					on_click: fn (_ &ButtonCfg, mut e Event, mut w Window) {
+					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_cancel_no := w.dialog_cfg.on_cancel_no
 						w.dialog_dismiss()

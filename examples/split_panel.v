@@ -69,7 +69,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn split_click(cfg &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+fn split_click(cfg &gui.Layout, mut e gui.Event, mut w gui.Window) {
 	w.mouse_lock(gui.MouseLockCfg{
 		mouse_move: fn (layout &gui.Layout, mut e gui.Event, mut w gui.Window) {
 			// The layout here is first layout in the view. This is because

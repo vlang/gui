@@ -55,7 +55,7 @@ fn message_type() gui.View {
 		id_focus: 1
 		sizing:   gui.fill_fit
 		content:  [gui.text(text: '.dialog_type == .message')]
-		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
 				align_buttons: .end
 				dialog_type:   .message
@@ -77,7 +77,7 @@ fn confirm_type() gui.View {
 		id_focus: 2
 		sizing:   gui.fill_fit
 		content:  [gui.text(text: '.dialog_type == .confirm')]
-		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
 				dialog_type:  .confirm
 				title:        'Destory All Data?'
@@ -98,7 +98,7 @@ fn prompt_type() gui.View {
 		id_focus: 3
 		sizing:   gui.fill_fit
 		content:  [gui.text(text: '.dialog_type == .prompt')]
-		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
 				dialog_type:  .prompt
 				title:        'Monty Python Quiz'
@@ -119,7 +119,7 @@ fn custom_type() gui.View {
 		id_focus: 4
 		sizing:   gui.fill_fit
 		content:  [gui.text(text: '.dialog_type == .custom')]
-		on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
 				dialog_type:    .custom
 				custom_content: [
@@ -131,7 +131,7 @@ fn custom_type() gui.View {
 							gui.button(
 								id_focus: gui.dialog_base_id_focus
 								content:  [gui.text(text: 'Close Me')]
-								on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 									w.dialog_dismiss()
 								}
 							),

@@ -105,7 +105,7 @@ fn thumb(cfg &ScrollbarCfg, id string) View {
 	)
 }
 
-// pass cfg by value more reliable here
+// on_mouse_down pass cfg by value more reliable here
 fn (cfg ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 	// Clicking on the scrollbar gives focus to the shape it is tracking
 	// if the tracked shape is not disabled.
@@ -125,7 +125,7 @@ fn (cfg ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 	e.is_handled = true
 }
 
-// pass cfg by value more reliable here
+// gutter_click pass cfg by value more reliable here
 fn (cfg ScrollbarCfg) gutter_click(_ &ContainerCfg, mut e Event, mut w Window) {
 	if !w.mouse_is_locked() {
 		match cfg.orientation == .horizontal {
@@ -136,7 +136,7 @@ fn (cfg ScrollbarCfg) gutter_click(_ &ContainerCfg, mut e Event, mut w Window) {
 	}
 }
 
-// pass cfg by value more reliable here
+// mouse_move pass cfg by value more reliable here
 fn (cfg ScrollbarCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	extend := 10 // give some cushion on the ends of the scroll range
 	if n := find_layout_by_id_scroll(layout, cfg.id_track) {
@@ -159,12 +159,12 @@ fn (cfg ScrollbarCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-// pass cfg by value more reliable here
+// mouse_up pass cfg by value more reliable here
 fn (cfg ScrollbarCfg) mouse_up(_ &Layout, mut e Event, mut w Window) {
 	w.mouse_unlock()
 }
 
-// Don't know what the sizes and positions of the scrollbar elements should
+// amend_layout Don't know what the sizes and positions of the scrollbar elements should
 // be until after the layout is almost done requiring manual layout here.
 // Scrollbars are hard.
 fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {

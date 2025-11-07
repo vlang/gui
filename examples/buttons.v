@@ -120,7 +120,7 @@ fn button_row(label string, button gui.View) gui.View {
 		content: [
 			gui.row(
 				padding: gui.padding_none
-				content: [gui.text(text: label, mode: .wrap)]
+				content: [gui.text(text: label, mode: .single_line)]
 			),
 			gui.row(sizing: gui.fill_fit),
 			button,
@@ -128,7 +128,7 @@ fn button_row(label string, button gui.View) gui.View {
 	)
 }
 
-fn click_handler(_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+fn click_handler(_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 	mut app := w.state[ButtonsApp]()
 	app.clicks += 1
 	w.set_id_focus(1)

@@ -40,11 +40,11 @@ pub mut:
 	text_sel_beg          u32
 	text_sel_end          u32
 	text_tab_size         u32 = 4
-	on_char               fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_keydown            fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_click              fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up           fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_char               fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_keydown            fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_click              fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up           fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_char_shape         fn (&Shape, mut Event, mut Window)     = unsafe { nil }
 	on_keydown_shape      fn (&Shape, mut Event, mut Window)     = unsafe { nil }
 	on_mouse_down_shape   fn (&Shape, mut Event, mut Window)     = unsafe { nil }

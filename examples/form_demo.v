@@ -73,7 +73,7 @@ fn main_view(mut window gui.Window) gui.View {
 								id_focus:        id_focus_zip
 								sizing:          gui.fixed_fit
 								width:           100
-								on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+								on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
 									mut app := w.state[FormDemoApp]()
 									app.zip = s
 								}
@@ -109,7 +109,7 @@ fn label_input_row(label string, value string, id_focus u32, changed fn (string)
 				id_focus:        id_focus
 				sizing:          gui.fixed_fit
 				width:           field_width
-				on_text_changed: fn [changed] (_ &gui.InputCfg, s string, mut w gui.Window) {
+				on_text_changed: fn [changed] (_ &gui.Shape, s string, mut w gui.Window) {
 					changed(s)
 				}
 			),

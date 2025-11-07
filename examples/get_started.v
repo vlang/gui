@@ -55,7 +55,7 @@ fn main_view(window &gui.Window) gui.View {
 			gui.button(
 				id_focus: 1
 				content:  [gui.text(text: '${app.clicks} Clicks')]
-				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[GetStartedApp]()
 					app.clicks += 1
 				}

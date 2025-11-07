@@ -92,8 +92,6 @@ Events and hooks:
 
 Tips:
 
-- Use `cfg: &cfg` in your composed views to let handlers access your
-  outer config struct.
 - To hide the container from layout spacing but keep it drawing, use
   `over_draw` on the view side (primarily internal; `invisible` also
   removes spacing by returning a minimal placeholder).

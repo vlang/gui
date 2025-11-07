@@ -486,7 +486,7 @@ fn years_dates_group(app DatePickerApp) gui.View {
 						content:  [
 							gui.text(text: 'Reset'),
 						]
-						on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							w.date_picker_reset('example')
 							mut app := w.state[DatePickerApp]()
 							app.date_picker_dates = [

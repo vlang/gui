@@ -171,7 +171,7 @@ fn menu(window &gui.Window) gui.View {
 							radius_border:     0
 							text_style:        gui.theme().menubar_style.text_style
 							placeholder_style: gui.theme().menubar_style.text_style
-							on_text_changed:   fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+							on_text_changed:   fn (_ &gui.Shape, s string, mut w gui.Window) {
 								mut app := w.state[MenuApp]()
 								app.search_text = s
 							}
@@ -209,7 +209,7 @@ fn body(mut app MenuApp, window &gui.Window) gui.View {
 			gui.button(
 				id_focus: 1
 				content:  [gui.text(text: '${app.clicks} Clicks')]
-				on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[MenuApp]()
 					app.clicks += 1
 				}

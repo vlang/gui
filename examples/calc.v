@@ -112,9 +112,9 @@ fn get_row(ops []string) []gui.View {
 	return content
 }
 
-fn btn_click(btn &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+fn btn_click(ly &gui.Layout, mut e gui.Event, mut w gui.Window) {
 	mut app := w.state[CalcApp]()
-	app.do_op(btn.id)
+	app.do_op(ly.shape.id)
 	e.is_handled = true
 }
 

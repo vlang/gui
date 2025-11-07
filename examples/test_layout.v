@@ -104,7 +104,7 @@ fn main_view(w &gui.Window) gui.View {
 								content:        [
 									gui.text(text: 'Click Count ${state.click_count}'),
 								]
-								on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+								on_click:       fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 									mut state := w.state[AppState]()
 									state.click_count += 1
 								}
@@ -132,7 +132,7 @@ fn main_view(w &gui.Window) gui.View {
 										placeholder:     'Type here...'
 										mode:            .single_line
 										padding_border:  gui.padding_two
-										on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+										on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
 											state.other_input = s
 										}
@@ -163,7 +163,7 @@ fn main_view(w &gui.Window) gui.View {
 						mode:            .multiline
 						sizing:          gui.fixed_fit
 						padding_border:  gui.padding_two
-						on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
+						on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
 							mut state := w.state[AppState]()
 							state.name = s
 						}
