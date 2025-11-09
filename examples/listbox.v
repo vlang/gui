@@ -110,7 +110,7 @@ fn main_view(window &gui.Window) gui.View {
 			gui.toggle(
 				label:    'Multi-Select'
 				select:   app.multiple_select
-				on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[ListBoxApp]()
 					app.multiple_select = !app.multiple_select
 					app.selected_values.clear()

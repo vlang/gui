@@ -2,7 +2,6 @@ module gui
 
 import arrays
 
-// ContainerView members are arranged for packing to reduce memory footprint.
 @[heap]
 struct ContainerView implements View {
 pub:
@@ -24,7 +23,7 @@ pub:
 	spacing        f32 = gui_theme.container_style.spacing
 	float_offset_x f32
 	float_offset_y f32
-	id_focus       u32 // not sure this should be here
+	id_focus       u32
 	id_scroll      u32
 	h_align        HorizontalAlign
 	v_align        VerticalAlign
@@ -43,12 +42,12 @@ mut:
 	scrollbar_cfg_x &ScrollbarCfg                          = unsafe { nil }
 	scrollbar_cfg_y &ScrollbarCfg                          = unsafe { nil }
 	tooltip         &TooltipCfg                            = unsafe { nil }
-	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_down   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_down   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
 	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	shape_type      ShapeType = .rectangle
@@ -187,12 +186,12 @@ pub:
 	padding         Padding       = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
-	on_char         fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_click        fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_any_click    fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_keydown      fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move   fn (voidptr, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up     fn (voidptr, mut Event, mut Window)    = unsafe { nil }
+	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_any_click    fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
 	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	width           f32

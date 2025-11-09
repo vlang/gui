@@ -126,7 +126,7 @@ fn (cfg ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 }
 
 // gutter_click pass cfg by value more reliable here
-fn (cfg ScrollbarCfg) gutter_click(_ &ContainerCfg, mut e Event, mut w Window) {
+fn (cfg ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 	if !w.mouse_is_locked() {
 		match cfg.orientation == .horizontal {
 			true { offset_from_mouse_x(w.layout, e.mouse_x, cfg.id_track, mut w) }

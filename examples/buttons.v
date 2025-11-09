@@ -146,7 +146,7 @@ fn button_change_theme(app &ButtonsApp) gui.View {
 				text_style:    gui.theme().icon3
 				padding:       gui.theme().padding_small
 				select:        app.light
-				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[ButtonsApp]()
 					app.light = !app.light
 					w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })

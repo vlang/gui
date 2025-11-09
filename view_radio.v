@@ -13,7 +13,7 @@ pub:
 	color_unselect Color     = gui_theme.radio_style.color_unselect
 	padding        Padding   = gui_theme.radio_style.padding
 	text_style     TextStyle = gui_theme.radio_style.text_style
-	on_click       fn (&RadioCfg, mut Event, mut Window) @[required]
+	on_click       fn (&Layout, mut Event, mut Window) @[required]
 	size           f32 = gui_theme.n3.size
 	id_focus       u32
 	disabled       bool
@@ -71,20 +71,20 @@ pub fn radio(cfg RadioCfg) View {
 	)
 }
 
-fn (cfg &RadioCfg) on_radio_click() fn (&RadioCfg, mut Event, mut Window) {
+fn (cfg &RadioCfg) on_radio_click() fn (&Layout, mut Event, mut Window) {
 	if cfg.on_click == unsafe { nil } {
 		return cfg.on_click
 	}
-	return fn [cfg] (_ voidptr, mut e Event, mut w Window) {
+	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
 		if e.mouse_button == .left {
-			cfg.on_click(cfg, mut e, mut w)
+			cfg.on_click(layout, mut e, mut w)
 		}
 	}
 }
 
-fn (cfg &RadioCfg) on_char_radio(_ &RadioCfg, mut e Event, mut w Window) {
+fn (cfg &RadioCfg) on_char_radio(layout &Layout, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(cfg, mut e, mut w)
+		cfg.on_click(layout, mut e, mut w)
 		e.is_handled = true
 	}
 }

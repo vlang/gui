@@ -71,7 +71,7 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 			color:    color
 			padding:  gui.padding_two_five
 			sizing:   gui.fill_fit
-			on_click: fn [doc_file] (_ &gui.ContainerCfg, mut _ gui.Event, mut win gui.Window) {
+			on_click: fn [doc_file] (_ &gui.Layout, mut _ gui.Event, mut win gui.Window) {
 				mut app := win.state[DocViewerApp]()
 				app.doc_file = doc_file
 				win.scroll_vertical_to(id_scroll_doc_view, 0)

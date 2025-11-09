@@ -83,8 +83,8 @@ Floating/overlay related:
 
 Events and hooks:
 
-- `on_click fn(voidptr, mut Event, mut Window)` --- mouse click
-- `on_any_click fn(voidptr, mut Event, mut Window)` --- catch any button click
+- `on_click fn(&Layout, mut Event, mut Window)` --- mouse click
+- `on_any_click fn(&Layout, mut Event, mut Window)` --- catch any button click
 - `on_mouse_move`, `on_mouse_up`, `on_keydown`, `on_char`
 - `on_hover fn(mut Layout, mut Event, mut Window)` --- hover‑time callback
 - `amend_layout fn(mut Layout, mut Window)` --- mutate the computed layout just 
@@ -171,10 +171,10 @@ Attach event handlers directly on the container. Common patterns:
 ``` v
 row(
     id: 'row-with-events'
-    on_click: fn (_ voidptr, mut e Event, mut w Window) {
+    on_click: fn (_ &Layout, mut e Event, mut w Window) {
         if e.mouse_button == .left { /* ... */ }
     }
-    on_keydown: fn (_ voidptr, mut e Event, mut w Window) { /* ... */ }
+    on_keydown: fn (_ &Layout, mut e Event, mut w Window) { /* ... */ }
     amend_layout: fn (mut l Layout, mut w Window) {
         // last‑second layout adjustments before children are laid out
         // e.g., dynamically change padding or color based on state

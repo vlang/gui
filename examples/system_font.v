@@ -64,7 +64,7 @@ fn theme_button(app &SystemFontApp) gui.View {
 		id_focus: 3
 		select:   app.system
 		label:    'System Font'
-		on_click: fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[SystemFontApp]()
 			app.system = !app.system
 			w.set_theme(if app.system { app.system_font_theme } else { gui.theme_dark_bordered })

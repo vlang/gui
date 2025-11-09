@@ -155,7 +155,7 @@ fn toggle_theme(app &DialogsApp) gui.View {
 				text_style:    gui.theme().icon3
 				padding:       gui.padding_small
 				select:        app.light_theme
-				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[DialogsApp]()
 					app.light_theme = !app.light_theme
 					theme := if app.light_theme {

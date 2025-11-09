@@ -211,7 +211,7 @@ fn toggle_theme(app &ShowcaseApp) gui.View {
 		text_style:    gui.theme().icon3
 		padding:       gui.padding_small
 		select:        app.light_theme
-		on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.light_theme = !app.light_theme
 			theme := if app.light_theme {
@@ -414,7 +414,7 @@ fn toggles(w &gui.Window) gui.View {
 					gui.toggle(
 						label:    'toggle (a.k.a. checkbox)'
 						select:   app.select_checkbox
-						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.select_checkbox = !app.select_checkbox
 						}
@@ -424,7 +424,7 @@ fn toggles(w &gui.Window) gui.View {
 						select:      app.select_toggle
 						text_select: 'X'
 						text_style:  gui.theme().text_style
-						on_click:    fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+						on_click:    fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.select_toggle = !app.select_toggle
 						}
@@ -432,7 +432,7 @@ fn toggles(w &gui.Window) gui.View {
 					gui.switch(
 						label:    'switch'
 						select:   app.select_switch
-						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
+						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.select_switch = !app.select_switch
 						}
@@ -934,7 +934,7 @@ fn list_box_sample(w &gui.Window) gui.View {
 			gui.toggle(
 				label:    'Multi-Select'
 				select:   app.list_box_multiple_select
-				on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[ShowcaseApp]()
 					app.list_box_multiple_select = !app.list_box_multiple_select
 					app.list_box_selected_values.clear()
@@ -1792,7 +1792,7 @@ fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) 
 				-(idx + 1) == table_data.sort_by { cell.value + ' ↑' }
 				else { cell.value }
 			}
-			on_click: fn [idx, mut table_data] (_ &gui.TableCellCfg, mut e gui.Event, mut w gui.Window) {
+			on_click: fn [idx, mut table_data] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 				table_data.sort_by = match true {
 					table_data.sort_by == (idx + 1) { -(idx + 1) }
 					table_data.sort_by == -(idx + 1) { 0 }

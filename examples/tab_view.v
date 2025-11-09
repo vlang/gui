@@ -93,7 +93,7 @@ fn theme_button(app &TabViewApp) gui.View {
 		text_style:    gui.theme().icon3
 		padding:       gui.theme().padding_small
 		select:        app.light_theme
-		on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[TabViewApp]()
 			app.light_theme = !app.light_theme
 			w.set_theme(if app.light_theme {

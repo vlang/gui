@@ -88,7 +88,7 @@ fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) 
 				-(idx + 1) == table_data.sort_by { cell.value + ' ↑' }
 				else { cell.value }
 			}
-			on_click: fn [idx, mut table_data] (_ &gui.TableCellCfg, mut e gui.Event, mut w gui.Window) {
+			on_click: fn [idx, mut table_data] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 				table_data.sort_by = match true {
 					table_data.sort_by == (idx + 1) { -(idx + 1) }
 					table_data.sort_by == -(idx + 1) { 0 }

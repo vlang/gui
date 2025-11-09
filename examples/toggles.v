@@ -50,7 +50,7 @@ fn main_view(window &gui.Window) gui.View {
 						id_focus: 100
 						label:    'toggle (default)'
 						select:   app.select_checkbox
-						on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_checkbox = !app.select_checkbox
 						}
@@ -60,7 +60,7 @@ fn main_view(window &gui.Window) gui.View {
 						label:       'toggle (custom icon)'
 						select:      app.select_toggle
 						text_select: gui.icon_bug
-						on_click:    fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+						on_click:    fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_toggle = !app.select_toggle
 						}
@@ -69,7 +69,7 @@ fn main_view(window &gui.Window) gui.View {
 						id_focus: 300
 						label:    'radio button'
 						select:   app.select_radio
-						on_click: fn (_ &gui.RadioCfg, mut e gui.Event, mut w gui.Window) {
+						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_radio = !app.select_radio
 						}
@@ -78,7 +78,7 @@ fn main_view(window &gui.Window) gui.View {
 						id_focus: 400
 						label:    'switch'
 						select:   app.select_switch
-						on_click: fn (_ &gui.SwitchCfg, mut e gui.Event, mut w gui.Window) {
+						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_switch = !app.select_switch
 						}
@@ -101,7 +101,7 @@ fn toggle_theme(app &ToggleApp) gui.View {
 				text_style:    gui.theme().icon3
 				padding:       gui.theme().padding_small
 				select:        app.light
-				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[ToggleApp]()
 					app.light = !app.light
 					theme := if app.light {

@@ -52,7 +52,7 @@ pub:
 	value      string
 	head_cell  bool
 	text_style ?TextStyle
-	on_click   fn (&TableCellCfg, mut Event, mut Window) = unsafe { nil }
+	on_click   fn (&Layout, mut Event, mut Window) = unsafe { nil }
 }
 
 // table generates a table from the given [TableCfg](#TableCfg)

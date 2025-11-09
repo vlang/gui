@@ -18,7 +18,7 @@ pub:
 	padding            Padding   = gui_theme.switch_style.padding
 	padding_border     Padding   = gui_theme.switch_style.padding_border
 	text_style         TextStyle = gui_theme.switch_style.text_style
-	on_click           fn (&SwitchCfg, mut Event, mut Window) @[required]
+	on_click           fn (&Layout, mut Event, mut Window) @[required]
 	width              f32 = gui_theme.n2.size * f32(1.65)
 	height             f32 = gui_theme.n2.size
 	radius             f32 = gui_theme.switch_style.radius
@@ -87,20 +87,20 @@ pub fn switch(cfg SwitchCfg) View {
 	)
 }
 
-fn (cfg &SwitchCfg) on_switch_click() fn (&SwitchCfg, mut Event, mut Window) {
+fn (cfg &SwitchCfg) on_switch_click() fn (&Layout, mut Event, mut Window) {
 	if cfg.on_click == unsafe { nil } {
 		return cfg.on_click
 	}
-	return fn [cfg] (_ voidptr, mut e Event, mut w Window) {
+	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
 		if e.mouse_button == .left {
-			cfg.on_click(cfg, mut e, mut w)
+			cfg.on_click(layout, mut e, mut w)
 		}
 	}
 }
 
-fn (cfg &SwitchCfg) on_char_button(_ &SwitchCfg, mut e Event, mut w Window) {
+fn (cfg &SwitchCfg) on_char_button(layout &Layout, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(cfg, mut e, mut w)
+		cfg.on_click(layout, mut e, mut w)
 		e.is_handled = true
 	}
 }

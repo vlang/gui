@@ -212,7 +212,7 @@ fn options_group(app DatePickerApp) gui.View {
 			gui.toggle(
 				label:    'Use system font'
 				select:   app.use_system_font
-				on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[DatePickerApp]()
 					app.use_system_font = !app.use_system_font
 					set_theme(mut w)
@@ -232,7 +232,7 @@ fn toggles_group(app DatePickerApp) gui.View {
 			gui.toggle(
 				label:    'Monday first day of week'
 				select:   app.monday_first
-				on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[DatePickerApp]()
 					app.monday_first = !app.monday_first
 				}
@@ -240,7 +240,7 @@ fn toggles_group(app DatePickerApp) gui.View {
 			gui.toggle(
 				label:    'Show adjacent months'
 				select:   app.show_adjacent_months
-				on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[DatePickerApp]()
 					app.show_adjacent_months = !app.show_adjacent_months
 				}
@@ -248,7 +248,7 @@ fn toggles_group(app DatePickerApp) gui.View {
 			gui.toggle(
 				label:    'Hide today indicator'
 				select:   app.hide_today_indicator
-				on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[DatePickerApp]()
 					app.hide_today_indicator = !app.hide_today_indicator
 				}
@@ -256,7 +256,7 @@ fn toggles_group(app DatePickerApp) gui.View {
 			gui.toggle(
 				label:    'Multiple select'
 				select:   app.select_multiple
-				on_click: fn (_ &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[DatePickerApp]()
 					app.select_multiple = !app.select_multiple
 				}
@@ -349,9 +349,9 @@ fn allowed_weekdays_group(app DatePickerApp) gui.View {
 	)
 }
 
-fn click_allow_weekday_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+fn click_allow_weekday_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Window) {
 	mut app := w.state[DatePickerApp]()
-	match cfg.id {
+	match layout.shape.id {
 		'mon' { app.allow_monday = !app.allow_monday }
 		'tue' { app.allow_tuesday = !app.allow_tuesday }
 		'wed' { app.allow_wednesday = !app.allow_wednesday }
@@ -447,9 +447,9 @@ fn months_group(app DatePickerApp) gui.View {
 	)
 }
 
-fn click_allow_month_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+fn click_allow_month_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Window) {
 	mut app := w.state[DatePickerApp]()
-	match cfg.id {
+	match layout.shape.id {
 		'jan' { app.allow_january = !app.allow_january }
 		'feb' { app.allow_february = !app.allow_february }
 		'mar' { app.allow_march = !app.allow_march }
@@ -562,9 +562,9 @@ fn allowed_years_group(app DatePickerApp) gui.View {
 	)
 }
 
-fn click_allow_years_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+fn click_allow_years_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Window) {
 	mut app := w.state[DatePickerApp]()
-	match cfg.id {
+	match layout.shape.id {
 		'year_now' { app.allow_year_now = !app.allow_year_now }
 		'year_last' { app.allow_year_last = !app.allow_year_last }
 		'year_next' { app.allow_year_next = !app.allow_year_next }
@@ -603,9 +603,9 @@ fn allowed_dates_group(app DatePickerApp) gui.View {
 	)
 }
 
-fn click_allow_dates_toggles(cfg &gui.ToggleCfg, mut e gui.Event, mut w gui.Window) {
+fn click_allow_dates_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Window) {
 	mut app := w.state[DatePickerApp]()
-	match cfg.id {
+	match layout.shape.id {
 		'tdy' { app.allow_today = !app.allow_today }
 		'ydy' { app.allow_yesterday = !app.allow_yesterday }
 		'fdy' { app.allow_first_of_month = !app.allow_first_of_month }
@@ -621,7 +621,7 @@ fn toggle_theme(app &DatePickerApp) gui.View {
 		text_style:    gui.theme().icon3
 		padding:       gui.padding_small
 		select:        app.light_theme
-		on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+		on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[DatePickerApp]()
 			app.light_theme = !app.light_theme
 			set_theme(mut w)

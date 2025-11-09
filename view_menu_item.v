@@ -151,8 +151,8 @@ pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
 
 // menu_item_click for such a short method, there is alot going on here in terms
 // of state management, thus the many comments.
-fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&MenuItemCfg, mut Event, mut Window) {
-	return fn [cfg, item_cfg] (_ &MenuItemCfg, mut e Event, mut w Window) {
+fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg, item_cfg] (_ &Layout, mut e Event, mut w Window) {
 		// setting the focus to the menubar enables mouse hover highlighting of menu items.
 		// see on_hover_item
 		w.set_id_focus(cfg.id_focus)

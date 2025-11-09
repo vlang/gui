@@ -107,7 +107,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 				]
 			),
 		]
-		on_click: fn [cfg_id, on_select, is_open, node, id] (_ &ContainerCfg, mut e Event, mut w Window) {
+		on_click: fn [cfg_id, on_select, is_open, node, id] (_ &Layout, mut e Event, mut w Window) {
 			if node.nodes.len > 0 {
 				w.view_state.tree_state[cfg_id][id] = !is_open
 			}

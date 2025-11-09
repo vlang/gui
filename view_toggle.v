@@ -9,7 +9,7 @@ pub:
 	label              string
 	text_select        string = icon_check
 	text_unselect      string = ' '
-	on_click           fn (&ToggleCfg, mut Event, mut Window) @[required]
+	on_click           fn (&Layout, mut Event, mut Window) @[required]
 	text_style         TextStyle = gui_theme.toggle_style.text_style
 	text_style_label   TextStyle = gui_theme.toggle_style.text_style_label
 	color              Color     = gui_theme.toggle_style.color
@@ -41,7 +41,6 @@ pub fn toggle(cfg ToggleCfg) View {
 
 	content << row(
 		name:       'toggle border'
-		id:         cfg.id
 		color:      cfg.color_border
 		padding:    cfg.padding_border
 		fill:       cfg.fill_border
@@ -78,6 +77,7 @@ pub fn toggle(cfg ToggleCfg) View {
 
 	return row(
 		name:         'toggle'
+		id:           cfg.id
 		id_focus:     cfg.id_focus
 		h_align:      .center
 		v_align:      .middle
@@ -90,20 +90,20 @@ pub fn toggle(cfg ToggleCfg) View {
 	)
 }
 
-fn (cfg &ToggleCfg) on_toggle_click() fn (&ToggleCfg, mut Event, mut Window) {
+fn (cfg &ToggleCfg) on_toggle_click() fn (&Layout, mut Event, mut Window) {
 	if cfg.on_click == unsafe { nil } {
 		return cfg.on_click
 	}
-	return fn [cfg] (_ voidptr, mut e Event, mut w Window) {
+	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
 		if e.mouse_button == .left {
-			cfg.on_click(cfg, mut e, mut w)
+			cfg.on_click(layout, mut e, mut w)
 		}
 	}
 }
 
-fn (cfg &ToggleCfg) on_char_button(_ &ToggleCfg, mut e Event, mut w Window) {
+fn (cfg &ToggleCfg) on_char_button(layout &Layout, mut e Event, mut w Window) {
 	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(cfg, mut e, mut w)
+		cfg.on_click(layout, mut e, mut w)
 		e.is_handled = true
 	}
 }

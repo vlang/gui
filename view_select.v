@@ -76,7 +76,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 				text_style: cfg.text_style
 			),
 		]
-		on_click: fn [id, is_open] (_ &ToggleCfg, mut e Event, mut w Window) {
+		on_click: fn [id, is_open] (_ &Layout, mut e Event, mut w Window) {
 			w.view_state.select_state.clear() // close all select drop-downs.
 			w.view_state.select_state[id] = !is_open
 			e.is_handled = true
@@ -172,7 +172,7 @@ fn option_view(cfg SelectCfg, option string) View {
 				]
 			),
 		]
-		on_click: fn [on_select, select_multiple, select_array, option] (_ voidptr, mut e Event, mut w Window) {
+		on_click: fn [on_select, select_multiple, select_array, option] (_ &Layout, mut e Event, mut w Window) {
 			if on_select != unsafe { nil } {
 				if !select_multiple {
 					w.view_state.select_state.clear()

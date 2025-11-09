@@ -246,7 +246,7 @@ fn toggle_theme(app &MenuApp) gui.View {
 				text_unselect: gui.icon_sunny_o
 				text_style:    gui.theme().icon5
 				select:        app.light_theme
-				on_click:      fn (_ &gui.ToggleCfg, mut _ gui.Event, mut w gui.Window) {
+				on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[MenuApp]()
 					app.light_theme = !app.light_theme
 					theme := if app.light_theme {
