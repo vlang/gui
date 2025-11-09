@@ -131,6 +131,17 @@ fn mouse_move_handler(layout &Layout, mut e Event, mut w Window) {
 			return
 		}
 	}
+	if layout.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+		if layout.shape.on_mouse_move != unsafe { nil } {
+			// make move handler mouse coordinates relative to layout.shape
+			mut ev := event_relative_to(layout.shape, e)
+			layout.shape.on_mouse_move(layout, mut ev, mut w)
+			if ev.is_handled {
+				e.is_handled = true
+				return
+			}
+		}
+	}
 	if e.is_handled || layout.shape.disabled {
 		return
 	}

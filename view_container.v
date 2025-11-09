@@ -106,15 +106,20 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 			on_click:       cv.on_click
 			on_char:        cv.on_char
 			on_keydown:     cv.on_keydown
-			on_mouse_move:  cv.on_mouse_move
-			// on_mouse_move_shape: if cv.tooltip != unsafe { nil } {
-			// 	cv.on_mouse_move_shape
-			// } else {
-			// 	unsafe { nil }
-			// }
-			on_mouse_up:  cv.on_mouse_up
-			on_hover:     cv.on_hover
-			amend_layout: cv.amend_layout
+			on_mouse_move:  if cv.tooltip != unsafe { nil } {
+				fn [cv] (layout &Layout, mut e Event, mut w Window) {
+					cv.on_mouse_move_tooltip(layout.shape, mut e, mut w)
+					if cv.on_mouse_move != unsafe { nil } {
+						cv.on_mouse_move(layout, mut e, mut w)
+					}
+					e.is_handled = true
+				}
+			} else {
+				cv.on_mouse_move
+			}
+			on_mouse_up:    cv.on_mouse_up
+			on_hover:       cv.on_hover
+			amend_layout:   cv.amend_layout
 		}
 	}
 
@@ -371,10 +376,10 @@ pub fn circle(cfg ContainerCfg) View {
 	return circle
 }
 
-fn (mut cfg ContainerView) on_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
-	if cfg.tooltip != unsafe { nil } {
-		if cfg.tooltip.content.len > 0 {
-			w.animation_add(mut cfg.tooltip.animation_tooltip())
+fn (cv ContainerView) on_mouse_move_tooltip(shape &Shape, mut e Event, mut w Window) {
+	if cv.tooltip != unsafe { nil } {
+		if cv.tooltip.content.len > 0 {
+			w.animation_add(mut cv.tooltip.animation_tooltip())
 			gui_tooltip.bounds = DrawClip{
 				x:      shape.x
 				y:      shape.y
