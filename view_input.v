@@ -256,7 +256,7 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 	mut cursor_pos := input_state.cursor_pos
 	if cursor_pos < 0 {
 		cursor_pos = cfg.text.len
-	} else if cursor_pos >= 0 {
+	} else {
 		if input_state.select_beg != input_state.select_end {
 			beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 			if beg >= text.len || end > text.len {
@@ -270,7 +270,7 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 				return text
 			}
 			if cursor_pos > text.len {
-				log.error('cursor_pos out of range (insert)')
+				log.error('cursor_pos out of range (delete)')
 				return none
 			}
 			step := if is_delete { 1 } else { 0 }

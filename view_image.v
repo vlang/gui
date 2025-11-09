@@ -56,8 +56,10 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 			image_name: iv.file_name
 			width:      width
 			min_width:  iv.min_width
+			max_width:  iv.max_width
 			height:     height
 			min_height: iv.min_height
+			max_height: iv.max_height
 			on_click:   iv.on_click
 			on_hover:   iv.on_hover
 		}
@@ -79,17 +81,17 @@ pub fn image(cfg ImageCfg) View {
 		gui_stats.increment_image_views()
 	}
 	if cfg.invisible {
-		return ContainerView{
-			invisible: true
-		}
+		return invisible_container_view()
 	}
 	return ImageView{
 		id:         cfg.id
 		file_name:  cfg.file_name
 		width:      cfg.width
 		min_width:  cfg.min_width
+		max_width:  cfg.max_width
 		height:     cfg.height
 		min_height: cfg.min_height
+		max_height: cfg.max_height
 		invisible:  cfg.invisible
 		on_click:   cfg.left_click()
 		on_hover:   cfg.on_hover

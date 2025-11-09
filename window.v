@@ -60,11 +60,11 @@ pub:
 	width               int
 	height              int
 	cursor_blink        bool
-	bg_color            Color        = gui_theme.color_background
-	dragndrop           bool         = true
-	dragndrop_files_max u32          = 10
-	dragndrop_path_max  u32          = 2048
-	on_init             fn (&Window) = fn (mut w Window) {
+	bg_color            Color           = gui_theme.color_background
+	dragndrop           bool            = true
+	dragndrop_files_max u32             = 10
+	dragndrop_path_max  u32             = 2048
+	on_init             fn (mut Window) = fn (mut w Window) {
 		w.update_view(empty_view)
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
@@ -107,7 +107,7 @@ pub fn window(cfg &WindowCfg) &Window {
 			if cursor_blink {
 				w.blinky_cursor_animation()
 			}
-			on_init(w)
+			on_init(mut w)
 			w.update_window()
 		}
 		sample_count:                 int(cfg.samples)

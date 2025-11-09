@@ -7,7 +7,7 @@ pub enum TextMode as u8 {
 	single_line      // one line only. Restricts typing to visible range
 	multiline        // wraps `\n`s only
 	wrap             // wrap at word breaks and `\n`s. White space is collapsed
-	wrap_keep_spaces // wrap at works breaks and `\m`s, Keep white space
+	wrap_keep_spaces // wrap at word breaks and `\n`s, Keep white space
 }
 
 // Text is an internal structure used to describe a text view
@@ -98,9 +98,7 @@ pub fn text(cfg TextCfg) View {
 		gui_stats.increment_text_views()
 	}
 	if cfg.invisible {
-		return ContainerView{
-			invisible: true
-		}
+		return invisible_container_view()
 	}
 	return TextView{
 		cfg:    &cfg

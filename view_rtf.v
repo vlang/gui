@@ -78,10 +78,7 @@ pub fn rtf(cfg RtfCfg) View {
 	}
 
 	if cfg.invisible {
-		return container(
-			invisible: true
-			padding:   padding_none
-		)
+		return invisible_container_view()
 	}
 
 	mut ll := datatypes.LinkedList[TextSpan]{}

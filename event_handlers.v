@@ -9,12 +9,15 @@ pub:
 
 fn char_handler(layout &Layout, mut e Event, mut w Window) {
 	for child in layout.children {
+		if child.shape.disabled {
+			continue
+		}
 		char_handler(child, mut e, mut w)
 		if e.is_handled {
 			return
 		}
 	}
-	if e.is_handled || layout.shape.disabled || layout.shape.id_focus == 0 {
+	if layout.shape.id_focus == 0 {
 		return
 	}
 	if layout.shape.id_focus == w.view_state.id_focus {
@@ -29,12 +32,15 @@ fn char_handler(layout &Layout, mut e Event, mut w Window) {
 
 fn keydown_handler(layout &Layout, mut e Event, mut w Window) {
 	for child in layout.children {
+		if child.shape.disabled {
+			continue
+		}
 		keydown_handler(child, mut e, mut w)
 		if e.is_handled {
 			return
 		}
 	}
-	if e.is_handled || layout.shape.disabled {
+	if layout.shape.id_focus == 0 {
 		return
 	}
 	if w.is_focus(layout.shape.id_focus) || layout.shape.id == reserved_dialog_id {
@@ -92,13 +98,13 @@ fn mouse_down_handler(layout &Layout, in_handler bool, mut e Event, mut w Window
 	}
 	for i := layout.children.len - 1; layout.children.len > 0 && i >= 0; i-- {
 		child := unsafe { &layout.children[i] }
+		if child.shape.disabled {
+			continue
+		}
 		mouse_down_handler(child, true, mut e, mut w)
 		if e.is_handled {
 			return
 		}
-	}
-	if e.is_handled || layout.shape.disabled {
-		return
 	}
 	if layout.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 		if layout.shape.id_focus > 0 {
@@ -126,6 +132,9 @@ fn mouse_move_handler(layout &Layout, mut e Event, mut w Window) {
 	}
 	for i := layout.children.len - 1; layout.children.len > 0 && i >= 0; i-- {
 		child := unsafe { &layout.children[i] }
+		if child.shape.disabled {
+			continue
+		}
 		mouse_move_handler(child, mut e, mut w)
 		if e.is_handled {
 			return
@@ -142,9 +151,6 @@ fn mouse_move_handler(layout &Layout, mut e Event, mut w Window) {
 			}
 		}
 	}
-	if e.is_handled || layout.shape.disabled {
-		return
-	}
 }
 
 fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
@@ -154,13 +160,13 @@ fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 	}
 	for i := layout.children.len - 1; layout.children.len > 0 && i >= 0; i-- {
 		child := unsafe { &layout.children[i] }
+		if child.shape.disabled {
+			continue
+		}
 		mouse_up_handler(child, mut e, mut w)
 		if e.is_handled {
 			return
 		}
-	}
-	if e.is_handled || layout.shape.disabled {
-		return
 	}
 	if layout.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 		if layout.shape.id_focus > 0 {
@@ -181,6 +187,9 @@ fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 fn mouse_scroll_handler(layout &Layout, mut e Event, mut w Window) {
 	for i := layout.children.len - 1; layout.children.len > 0 && i >= 0; i-- {
 		child := unsafe { &layout.children[i] }
+		if child.shape.disabled {
+			continue
+		}
 		mouse_scroll_handler(child, mut e, mut w)
 		if e.is_handled {
 			return

@@ -38,20 +38,17 @@ pub:
 	float          bool
 	over_draw      bool
 mut:
-	content         []View
-	scrollbar_cfg_x &ScrollbarCfg                          = unsafe { nil }
-	scrollbar_cfg_y &ScrollbarCfg                          = unsafe { nil }
-	tooltip         &TooltipCfg                            = unsafe { nil }
-	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_down   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	shape_type      ShapeType = .rectangle
-	axis            Axis
+	content       []View
+	tooltip       &TooltipCfg                            = unsafe { nil }
+	on_char       fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_click      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_keydown    fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	amend_layout  fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover      fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	shape_type    ShapeType = .rectangle
+	axis          Axis
 }
 
 fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
@@ -231,10 +228,7 @@ fn container(cfg ContainerCfg) View {
 	}
 
 	if cfg.invisible {
-		return ContainerView{
-			over_draw: true // removes it from spacing calculations
-			padding:   padding_none
-		}
+		return invisible_container_view()
 	}
 
 	mut extra_content := []View{cap: 3}
@@ -243,7 +237,7 @@ fn container(cfg ContainerCfg) View {
 		if cfg.scrollbar_cfg_x != unsafe { nil } {
 			if cfg.scrollbar_cfg_x.overflow != .hidden {
 				extra_content << scrollbar(ScrollbarCfg{
-					...cfg.scrollbar_cfg_x
+					...*cfg.scrollbar_cfg_x
 					orientation: .horizontal
 					id_track:    cfg.id_scroll
 				})
@@ -259,7 +253,7 @@ fn container(cfg ContainerCfg) View {
 		if cfg.scrollbar_cfg_y != unsafe { nil } {
 			if cfg.scrollbar_cfg_y.overflow != .hidden {
 				extra_content << scrollbar(ScrollbarCfg{
-					...cfg.scrollbar_cfg_y
+					...*cfg.scrollbar_cfg_y
 					orientation: .vertical
 					id_track:    cfg.id_scroll
 				})
@@ -285,53 +279,51 @@ fn container(cfg ContainerCfg) View {
 	}
 
 	view := ContainerView{
-		id:              cfg.id
-		id_focus:        cfg.id_focus
-		axis:            cfg.axis
-		name:            cfg.name
-		x:               cfg.x
-		y:               cfg.y
-		width:           cfg.width
-		min_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
-		max_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
-		height:          cfg.height
-		min_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
-		max_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
-		clip:            cfg.clip
-		color:           cfg.color
-		fill:            cfg.fill
-		h_align:         cfg.h_align
-		v_align:         cfg.v_align
-		padding:         cfg.padding
-		radius:          cfg.radius
-		sizing:          cfg.sizing
-		spacing:         cfg.spacing
-		disabled:        cfg.disabled
-		invisible:       cfg.invisible
-		text:            cfg.text
-		id_scroll:       cfg.id_scroll
-		over_draw:       cfg.over_draw
-		scroll_mode:     cfg.scroll_mode
-		scrollbar_cfg_x: &cfg.scrollbar_cfg_x
-		scrollbar_cfg_y: &cfg.scrollbar_cfg_y
-		float:           cfg.float
-		float_anchor:    cfg.float_anchor
-		float_tie_off:   cfg.float_tie_off
-		float_offset_x:  cfg.float_offset_x
-		float_offset_y:  cfg.float_offset_y
-		tooltip:         cfg.tooltip
-		on_click:        if cfg.on_any_click != unsafe { nil } {
+		id:             cfg.id
+		id_focus:       cfg.id_focus
+		axis:           cfg.axis
+		name:           cfg.name
+		x:              cfg.x
+		y:              cfg.y
+		width:          cfg.width
+		min_width:      if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
+		max_width:      if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
+		height:         cfg.height
+		min_height:     if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
+		max_height:     if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
+		clip:           cfg.clip
+		color:          cfg.color
+		fill:           cfg.fill
+		h_align:        cfg.h_align
+		v_align:        cfg.v_align
+		padding:        cfg.padding
+		radius:         cfg.radius
+		sizing:         cfg.sizing
+		spacing:        cfg.spacing
+		disabled:       cfg.disabled
+		invisible:      cfg.invisible
+		text:           cfg.text
+		id_scroll:      cfg.id_scroll
+		over_draw:      cfg.over_draw
+		scroll_mode:    cfg.scroll_mode
+		float:          cfg.float
+		float_anchor:   cfg.float_anchor
+		float_tie_off:  cfg.float_tie_off
+		float_offset_x: cfg.float_offset_x
+		float_offset_y: cfg.float_offset_y
+		tooltip:        cfg.tooltip
+		on_click:       if cfg.on_any_click != unsafe { nil } {
 			cfg.on_any_click
 		} else {
 			cfg.left_click()
 		}
-		on_char:         cfg.on_char
-		on_keydown:      cfg.on_keydown
-		on_mouse_move:   cfg.on_mouse_move
-		on_mouse_up:     cfg.on_mouse_up
-		on_hover:        cfg.on_hover
-		amend_layout:    cfg.amend_layout
-		content:         content
+		on_char:        cfg.on_char
+		on_keydown:     cfg.on_keydown
+		on_mouse_move:  cfg.on_mouse_move
+		on_mouse_up:    cfg.on_mouse_up
+		on_hover:       cfg.on_hover
+		amend_layout:   cfg.amend_layout
+		content:        content
 	}
 	return view
 }
@@ -398,5 +390,13 @@ fn (cfg &ContainerCfg) left_click() fn (&Layout, mut Event, mut Window) {
 		if e.mouse_button == .left {
 			on_click(layout, mut e, mut w)
 		}
+	}
+}
+
+fn invisible_container_view() ContainerView {
+	return ContainerView{
+		disabled:  true
+		over_draw: true // removes it from spacing calculations
+		padding:   padding_none
 	}
 }
