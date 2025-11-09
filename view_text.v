@@ -50,11 +50,11 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
 			text_tab_size:       tv.cfg.tab_size
-			on_char_shape:       tv.cfg.char_shape
-			on_keydown_shape:    tv.cfg.keydown_shape
-			on_mouse_down_shape: tv.cfg.mouse_down_shape
-			on_mouse_move_shape: tv.cfg.mouse_move_shape
-			on_mouse_up_shape:   tv.cfg.mouse_up_shape
+			on_char:             tv.cfg.on_char
+			on_keydown:          tv.cfg.on_key_down
+			on_click:            tv.cfg.on_click
+			on_mouse_move:       tv.cfg.mouse_move
+			on_mouse_up:         view_text_mouse_up
 		}
 	}
 	layout.shape.width = text_width(layout.shape, mut window)
@@ -108,30 +108,36 @@ pub fn text(cfg TextCfg) View {
 	}
 }
 
-fn (cfg &TextCfg) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
-	if w.is_focus(shape.id_focus) {
+fn (cfg &TextCfg) on_click(layout &Layout, mut e Event, mut w Window) {
+	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
-	if e.mouse_button == .left && w.is_focus(shape.id_focus) {
-		id_focus := shape.id_focus
+	if e.mouse_button == .left && w.is_focus(layout.shape.id_focus) {
+		id_focus := layout.shape.id_focus
 		w.mouse_lock(
 			mouse_move: fn [cfg, id_focus] (layout &Layout, mut e Event, mut w Window) {
-				if shape := layout.find_shape(fn [id_focus] (ly Layout) bool {
+				// The layout in mouse locks is always the root layout.
+				if ly := layout.find_layout(fn [id_focus] (ly Layout) bool {
 					return ly.shape.id_focus == id_focus
 				})
 				{
-					cfg.mouse_move_shape(shape, mut e, mut w)
+					cfg.mouse_move(ly, mut e, mut w)
 				}
 			}
-			mouse_up:   fn [cfg] (layout &Layout, mut e Event, mut w Window) {
+			mouse_up:   fn [id_focus] (layout &Layout, mut e Event, mut w Window) {
 				w.mouse_unlock()
-				cfg.mouse_up_shape(layout.shape, mut e, mut w)
+				// The layout in mouse locks is always the root layout.
+				if ly := layout.find_layout(fn [id_focus] (ly Layout) bool {
+					return ly.shape.id_focus == id_focus
+				})
+				{
+					view_text_mouse_up(ly, mut e, mut w)
+				}
 			}
 		)
-		ev := event_relative_to(shape, e)
-		cursor_pos := cfg.mouse_cursor_pos(shape, ev, mut w)
-		input_state := w.view_state.input_state[shape.id_focus]
-		w.view_state.input_state[shape.id_focus] = InputState{
+		cursor_pos := cfg.mouse_cursor_pos(layout.shape, e, mut w)
+		input_state := w.view_state.input_state[layout.shape.id_focus]
+		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
 			cursor_pos: cursor_pos
 			select_beg: 0
@@ -141,20 +147,20 @@ fn (cfg &TextCfg) mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &TextCfg) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
-	if w.is_focus(shape.id_focus) {
+fn (cfg &TextCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
+	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
 	// mouse move events don't have mouse button info. Use context.
-	if w.ui.mouse_buttons == .left && w.is_focus(shape.id_focus) {
+	if w.ui.mouse_buttons == .left && w.is_focus(layout.shape.id_focus) {
 		if cfg.placeholder_active {
 			return
 		}
-		ev := event_relative_to(shape, e)
-		end := u32(cfg.mouse_cursor_pos(shape, ev, mut w))
-		input_state := w.view_state.input_state[shape.id_focus]
+		ev := event_relative_to(layout.shape, e)
+		end := u32(cfg.mouse_cursor_pos(layout.shape, ev, mut w))
+		input_state := w.view_state.input_state[layout.shape.id_focus]
 		cursor_pos := u32(input_state.cursor_pos)
-		w.view_state.input_state[shape.id_focus] = InputState{
+		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
 			select_beg: if cursor_pos < end { cursor_pos } else { end }
 			select_end: if cursor_pos < end { end } else { cursor_pos }
@@ -163,8 +169,8 @@ fn (cfg &TextCfg) mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &TextCfg) mouse_up_shape(shape &Shape, mut e Event, mut w Window) {
-	if w.is_focus(shape.id_focus) {
+fn view_text_mouse_up(layout &Layout, mut e Event, mut w Window) {
+	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 		e.is_handled = true
 	}
@@ -206,25 +212,25 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	return count
 }
 
-fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
-	if w.is_focus(shape.id_focus) {
+fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
+	if w.is_focus(layout.shape.id_focus) {
 		if cfg.placeholder_active {
 			return
 		}
-		input_state := w.view_state.input_state[shape.id_focus]
+		input_state := w.view_state.input_state[layout.shape.id_focus]
 		mut cursor_pos := input_state.cursor_pos
 
 		if e.modifiers in [u32(Modifier.alt), u32(int(Modifier.alt) | int(Modifier.shift))] {
 			match e.key_code {
-				.left { cursor_pos = start_of_word_pos(shape.text_lines, cursor_pos) }
-				.right { cursor_pos = end_of_word_pos(shape.text_lines, cursor_pos) }
-				.up { cursor_pos = start_of_paragraph(shape.text_lines, cursor_pos) }
+				.left { cursor_pos = start_of_word_pos(layout.shape.text_lines, cursor_pos) }
+				.right { cursor_pos = end_of_word_pos(layout.shape.text_lines, cursor_pos) }
+				.up { cursor_pos = start_of_paragraph(layout.shape.text_lines, cursor_pos) }
 				else { return }
 			}
 		} else if e.modifiers in [u32(Modifier.ctrl), u32(int(Modifier.ctrl) | int(Modifier.shift))] {
 			match e.key_code {
-				.left { cursor_pos = start_of_line_pos(shape.text_lines, cursor_pos) }
-				.right { cursor_pos = end_of_line_pos(shape.text_lines, cursor_pos) }
+				.left { cursor_pos = start_of_line_pos(layout.shape.text_lines, cursor_pos) }
+				.right { cursor_pos = end_of_line_pos(layout.shape.text_lines, cursor_pos) }
 				else { return }
 			}
 		} else if e.modifiers in [u32(0), u32(Modifier.shift)] {
@@ -245,7 +251,7 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 		}
 
 		e.is_handled = true
-		w.view_state.input_state[shape.id_focus] = InputState{
+		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
 			cursor_pos: cursor_pos
 			select_beg: 0
@@ -275,14 +281,14 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 			if beg > end {
 				beg, end = end, beg
 			}
-			w.view_state.input_state[shape.id_focus] = InputState{
+			w.view_state.input_state[layout.shape.id_focus] = InputState{
 				...input_state
 				cursor_pos: cursor_pos
 				select_beg: beg
 				select_end: end
 			}
 		} else if input_state.select_beg != input_state.select_end && e.modifiers == 0 {
-			w.view_state.input_state[shape.id_focus] = InputState{
+			w.view_state.input_state[layout.shape.id_focus] = InputState{
 				...input_state
 				cursor_pos: match e.key_code {
 					.left { int(input_state.select_beg) }
@@ -294,19 +300,19 @@ fn (cfg &TextCfg) keydown_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &TextCfg) char_shape(shape &Shape, mut event Event, mut w Window) {
-	if w.is_focus(shape.id_focus) {
+fn (cfg &TextCfg) on_char(layout &Layout, mut event Event, mut w Window) {
+	if w.is_focus(layout.shape.id_focus) {
 		c := event.char_code
 		if event.modifiers & u32(Modifier.ctrl) > 0 {
 			match c {
-				ctrl_a { cfg.select_all(shape, mut w) }
-				ctrl_c { cfg.copy(shape, w) }
+				ctrl_a { cfg.select_all(layout.shape, mut w) }
+				ctrl_c { cfg.copy(layout.shape, w) }
 				else {}
 			}
 		} else if event.modifiers & u32(Modifier.super) > 0 {
 			match c {
-				cmd_a { cfg.select_all(shape, mut w) }
-				cmd_c { cfg.copy(shape, w) }
+				cmd_a { cfg.select_all(layout.shape, mut w) }
+				cmd_c { cfg.copy(layout.shape, w) }
 				else {}
 			}
 		} else {

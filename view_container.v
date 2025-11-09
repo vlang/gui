@@ -62,37 +62,37 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 	}
 	layout := Layout{
 		shape: &Shape{
-			type:                cv.shape_type
-			id:                  cv.id
-			id_focus:            cv.id_focus
-			axis:                cv.axis
-			name:                cv.name
-			x:                   cv.x
-			y:                   cv.y
-			width:               cv.width
-			min_width:           cv.min_width
-			max_width:           cv.max_width
-			height:              cv.height
-			min_height:          cv.min_height
-			max_height:          cv.max_height
-			clip:                cv.clip
-			focus_skip:          cv.focus_skip
-			spacing:             cv.spacing
-			sizing:              cv.sizing
-			padding:             cv.padding
-			fill:                cv.fill
-			h_align:             cv.h_align
-			v_align:             cv.v_align
-			radius:              cv.radius
-			color:               cv.color
-			disabled:            cv.disabled
-			float:               cv.float
-			float_anchor:        cv.float_anchor
-			float_tie_off:       cv.float_tie_off
-			float_offset_x:      cv.float_offset_x
-			float_offset_y:      cv.float_offset_y
-			text:                cv.text
-			text_style:          if cv.color == gui_theme.text_style.color {
+			type:           cv.shape_type
+			id:             cv.id
+			id_focus:       cv.id_focus
+			axis:           cv.axis
+			name:           cv.name
+			x:              cv.x
+			y:              cv.y
+			width:          cv.width
+			min_width:      cv.min_width
+			max_width:      cv.max_width
+			height:         cv.height
+			min_height:     cv.min_height
+			max_height:     cv.max_height
+			clip:           cv.clip
+			focus_skip:     cv.focus_skip
+			spacing:        cv.spacing
+			sizing:         cv.sizing
+			padding:        cv.padding
+			fill:           cv.fill
+			h_align:        cv.h_align
+			v_align:        cv.v_align
+			radius:         cv.radius
+			color:          cv.color
+			disabled:       cv.disabled
+			float:          cv.float
+			float_anchor:   cv.float_anchor
+			float_tie_off:  cv.float_tie_off
+			float_offset_x: cv.float_offset_x
+			float_offset_y: cv.float_offset_y
+			text:           cv.text
+			text_style:     if cv.color == gui_theme.text_style.color {
 				gui_theme.text_style
 			} else {
 				TextStyle{
@@ -100,21 +100,21 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 					color: cv.color
 				}
 			}
-			id_scroll:           cv.id_scroll
-			over_draw:           cv.over_draw
-			scroll_mode:         cv.scroll_mode
-			on_click:            cv.on_click
-			on_char:             cv.on_char
-			on_keydown:          cv.on_keydown
-			on_mouse_move:       cv.on_mouse_move
-			on_mouse_move_shape: if cv.tooltip != unsafe { nil } {
-				cv.on_mouse_move_shape
-			} else {
-				unsafe { nil }
-			}
-			on_mouse_up:         cv.on_mouse_up
-			on_hover:            cv.on_hover
-			amend_layout:        cv.amend_layout
+			id_scroll:      cv.id_scroll
+			over_draw:      cv.over_draw
+			scroll_mode:    cv.scroll_mode
+			on_click:       cv.on_click
+			on_char:        cv.on_char
+			on_keydown:     cv.on_keydown
+			on_mouse_move:  cv.on_mouse_move
+			// on_mouse_move_shape: if cv.tooltip != unsafe { nil } {
+			// 	cv.on_mouse_move_shape
+			// } else {
+			// 	unsafe { nil }
+			// }
+			on_mouse_up:  cv.on_mouse_up
+			on_hover:     cv.on_hover
+			amend_layout: cv.amend_layout
 		}
 	}
 

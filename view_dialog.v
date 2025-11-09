@@ -179,13 +179,13 @@ fn prompt_view(cfg DialogCfg) []View {
 			text:            cfg.reply
 			text_style:      cfg.text_style
 			sizing:          fill_fit
-			on_text_changed: fn (_ &Shape, s string, mut w Window) {
+			on_text_changed: fn (_ &Layout, s string, mut w Window) {
 				w.dialog_cfg = DialogCfg{
 					...w.dialog_cfg
 					reply: s
 				}
 			}
-			on_enter:        fn (_ &Shape, mut e Event, mut w Window) {
+			on_enter:        fn (_ &Layout, mut e Event, mut w Window) {
 				w.set_id_focus(w.dialog_cfg.old_id_focus)
 				on_reply := w.dialog_cfg.on_reply
 				reply := w.dialog_cfg.reply

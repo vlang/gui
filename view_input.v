@@ -40,8 +40,8 @@ pub:
 	text               string // text to display/edit
 	icon               string // icon constant
 	placeholder        string // text to show when empty
-	on_text_changed    fn (&Shape, string, &Window)        = unsafe { nil }
-	on_enter           fn (&Shape, mut Event, &Window)     = unsafe { nil }
+	on_text_changed    fn (&Layout, string, &Window)       = unsafe { nil }
+	on_enter           fn (&Layout, mut Event, &Window)    = unsafe { nil }
 	on_click_icon      fn (&Layout, mut Event, mut Window) = unsafe { nil }
 	sizing             Sizing
 	text_style         TextStyle = gui_theme.input_style.text_style
@@ -136,6 +136,7 @@ pub fn input(cfg InputCfg) View {
 		radius:       cfg.radius_border
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
+		on_char:      cfg.on_char
 		amend_layout: cfg.amend_layout
 		on_hover:     cfg.hover
 		content:      [
@@ -178,7 +179,7 @@ pub fn input(cfg InputCfg) View {
 	)
 }
 
-fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
+fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut text := cfg.text
@@ -221,7 +222,7 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 				}
 				cr_char, lf_char {
 					if cfg.on_enter != unsafe { nil } {
-						cfg.on_enter(shape, mut event, w)
+						cfg.on_enter(layout, mut event, w)
 						event.is_handled = true
 						return
 					} else {
@@ -245,7 +246,7 @@ fn (cfg &InputCfg) on_char_shape(shape &Shape, mut event Event, mut w Window) {
 			}
 		}
 		event.is_handled = true
-		cfg.on_text_changed(shape, text, w)
+		cfg.on_text_changed(layout, text, w)
 	}
 }
 
@@ -418,8 +419,6 @@ fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 	if layout.shape.disabled {
 		return
 	}
-
-	layout.shape.on_char_shape = cfg.on_char_shape
 
 	if layout.shape.id_focus > 0 && layout.shape.id_focus == w.id_focus() {
 		layout.shape.color = cfg.color_border_focus

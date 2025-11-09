@@ -132,7 +132,7 @@ fn main_view(w &gui.Window) gui.View {
 										placeholder:     'Type here...'
 										mode:            .single_line
 										padding_border:  gui.padding_two
-										on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+										on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
 											state.other_input = s
 										}
@@ -163,7 +163,7 @@ fn main_view(w &gui.Window) gui.View {
 						mode:            .multiline
 						sizing:          gui.fixed_fit
 						padding_border:  gui.padding_two
-						on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[AppState]()
 							state.name = s
 						}

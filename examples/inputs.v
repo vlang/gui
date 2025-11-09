@@ -50,7 +50,7 @@ fn main_view(window &gui.Window) gui.View {
 						placeholder:     'type here...'
 						width:           input_width
 						sizing:          gui.fixed_fit
-						on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}
@@ -62,7 +62,7 @@ fn main_view(window &gui.Window) gui.View {
 						sizing:          gui.fixed_fit
 						padding_border:  gui.padding_one
 						is_password:     true
-						on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}
@@ -75,7 +75,7 @@ fn main_view(window &gui.Window) gui.View {
 						padding_border:  gui.padding_one
 						radius:          0
 						radius_border:   0
-						on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}
@@ -89,7 +89,7 @@ fn main_view(window &gui.Window) gui.View {
 						fill_border:     false
 						radius:          0
 						radius_border:   0
-						on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}
@@ -100,7 +100,7 @@ fn main_view(window &gui.Window) gui.View {
 						width:           input_width
 						sizing:          gui.fixed_fit
 						mode:            .multiline
-						on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()
 							state.input_a = s
 						}

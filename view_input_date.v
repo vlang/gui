@@ -13,7 +13,7 @@ pub:
 	allowed_years            []int
 	allowed_dates            []time.Time
 	on_select                fn ([]time.Time, mut Event, mut Window) = unsafe { nil }
-	on_enter                 fn (&Shape, mut Event, &Window)         = unsafe { nil }
+	on_enter                 fn (&Layout, mut Event, &Window)        = unsafe { nil }
 	weekdays_len             DatePickerWeekdayLen                    = gui_theme.date_picker_style.weekdays_len // [link](#DatePickerWeekdayLen)
 	text_style               TextStyle = gui_theme.date_picker_style.text_style
 	placeholder_style        TextStyle = gui_theme.input_style.placeholder_style

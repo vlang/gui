@@ -18,12 +18,6 @@ fn char_handler(layout &Layout, mut e Event, mut w Window) {
 		return
 	}
 	if layout.shape.id_focus == w.view_state.id_focus {
-		if layout.shape.on_char_shape != unsafe { nil } {
-			layout.shape.on_char_shape(layout.shape, mut e, mut w)
-			if e.is_handled {
-				return
-			}
-		}
 		if layout.shape.on_char != unsafe { nil } {
 			layout.shape.on_char(layout, mut e, mut w)
 			if e.is_handled {
@@ -44,12 +38,6 @@ fn keydown_handler(layout &Layout, mut e Event, mut w Window) {
 		return
 	}
 	if w.is_focus(layout.shape.id_focus) || layout.shape.id == reserved_dialog_id {
-		if layout.shape.on_keydown_shape != unsafe { nil } {
-			layout.shape.on_keydown_shape(layout.shape, mut e, mut w)
-			if e.is_handled {
-				return
-			}
-		}
 		if layout.shape.id_scroll > 0 {
 			key_down_scroll_handler(layout, mut e, mut w)
 			if e.is_handled {
@@ -116,12 +104,6 @@ fn mouse_down_handler(layout &Layout, in_handler bool, mut e Event, mut w Window
 		if layout.shape.id_focus > 0 {
 			w.set_id_focus(layout.shape.id_focus)
 		}
-		if layout.shape.on_mouse_down_shape != unsafe { nil } {
-			layout.shape.on_mouse_down_shape(layout.shape, mut e, mut w)
-			if e.is_handled {
-				return
-			}
-		}
 		if layout.shape.on_click != unsafe { nil } {
 			// make click handler mouse coordinates relative to layout.shape
 			mut ev := event_relative_to(layout.shape, e)
@@ -152,14 +134,6 @@ fn mouse_move_handler(layout &Layout, mut e Event, mut w Window) {
 	if e.is_handled || layout.shape.disabled {
 		return
 	}
-	if layout.shape.on_mouse_move_shape != unsafe { nil } {
-		if layout.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-			layout.shape.on_mouse_move_shape(layout.shape, mut e, mut w)
-			if e.is_handled {
-				return
-			}
-		}
-	}
 }
 
 fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
@@ -180,12 +154,6 @@ fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 	if layout.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 		if layout.shape.id_focus > 0 {
 			w.set_id_focus(layout.shape.id_focus)
-		}
-		if layout.shape.on_mouse_up_shape != unsafe { nil } {
-			layout.shape.on_mouse_up_shape(layout.shape, mut e, mut w)
-			if e.is_handled {
-				return
-			}
 		}
 		if layout.shape.on_mouse_up != unsafe { nil } {
 			// make up handler mouse coordinates relative to layout.shape

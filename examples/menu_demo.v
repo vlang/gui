@@ -171,7 +171,7 @@ fn menu(window &gui.Window) gui.View {
 							radius_border:     0
 							text_style:        gui.theme().menubar_style.text_style
 							placeholder_style: gui.theme().menubar_style.text_style
-							on_text_changed:   fn (_ &gui.Shape, s string, mut w gui.Window) {
+							on_text_changed:   fn (_ &gui.Layout, s string, mut w gui.Window) {
 								mut app := w.state[MenuApp]()
 								app.search_text = s
 							}

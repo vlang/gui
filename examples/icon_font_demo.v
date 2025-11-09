@@ -10,7 +10,6 @@ pub mut:
 	select_size string = 'x-large'
 	longest     f32
 	search      string
-	icons       []gui.View
 }
 
 fn main() {
@@ -65,7 +64,6 @@ fn side_panel(mut w gui.Window) gui.View {
 				on_select: fn (value string, mut w gui.Window) {
 					mut app := w.state[IconFontApp]()
 					app.select_size = value
-					app.icons.clear()
 				}
 			),
 			search_box(app.search),
@@ -87,10 +85,9 @@ fn search_box(text string) gui.View {
 		padding_border:  gui.padding_one
 		color_border:    gui.theme().color_border
 		placeholder:     'Search'
-		on_text_changed: fn (_ &gui.Shape, s string, mut w gui.Window) {
+		on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 			mut app := w.state[IconFontApp]()
 			app.search = s
-			app.icons.clear()
 		}
 	)
 }
@@ -114,27 +111,26 @@ fn icon_catalog(mut w gui.Window) gui.View {
 	}
 
 	// create rows of icons/text
-	if app.icons.len == 0 {
-		// Break the icons_maps into rows
-		chunks := chunk_map(gui.icons_map, app.search, 4)
+	// Break the icons_maps into rows
+	chunks := chunk_map(gui.icons_map, app.search, 4)
+	mut rows := []gui.View{}
 
-		for chunk in chunks {
-			mut icons := []gui.View{}
-			for key, val in chunk {
-				icons << gui.column(
-					min_width: app.longest
-					h_align:   .center
-					content:   [
-						gui.text(text: val, text_style: icon_text_style),
-						gui.text(text: key, text_style: gui.theme().n4),
-					]
-				)
-			}
-			app.icons << gui.row(
-				spacing: 0
-				content: icons
+	for chunk in chunks {
+		mut icons := []gui.View{}
+		for key, val in chunk {
+			icons << gui.column(
+				min_width: app.longest
+				h_align:   .center
+				content:   [
+					gui.text(text: val, text_style: icon_text_style),
+					gui.text(text: key, text_style: gui.theme().n4),
+				]
 			)
 		}
+		rows << gui.row(
+			spacing: 0
+			content: icons
+		)
 	}
 
 	return gui.column(
@@ -144,7 +140,7 @@ fn icon_catalog(mut w gui.Window) gui.View {
 		spacing:   gui.spacing_large
 		sizing:    gui.fill_fill
 		padding:   gui.padding_medium
-		content:   app.icons
+		content:   rows
 	)
 }
 
@@ -194,7 +190,6 @@ fn toggle_theme(app &IconFontApp) gui.View {
 						gui.theme_dark_no_padding
 					}
 					w.set_theme(theme)
-					app.icons.clear()
 				}
 			),
 		]

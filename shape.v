@@ -4,7 +4,6 @@ import rand
 import datatypes
 
 // Shape is the only data structure in GUI used to draw to the screen.
-// Members are arranged for packing to reduce memory footprint.
 pub struct Shape {
 pub:
 	uid      u64 = rand.u64() // internal use only
@@ -45,11 +44,6 @@ pub mut:
 	on_click              fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_mouse_move         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_mouse_up           fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_char_shape         fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	on_keydown_shape      fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	on_mouse_down_shape   fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	on_mouse_move_shape   fn (&Shape, mut Event, mut Window)     = unsafe { nil }
-	on_mouse_up_shape     fn (&Shape, mut Event, mut Window)     = unsafe { nil }
 	on_mouse_scroll_shape fn (&Shape, mut Event, mut Window)     = unsafe { nil }
 	amend_layout          fn (mut Layout, mut Window)            = unsafe { nil }
 	on_hover              fn (mut Layout, mut Event, mut Window) = unsafe { nil }

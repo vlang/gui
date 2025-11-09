@@ -50,10 +50,14 @@ fn main_view(window &gui.Window) gui.View {
 				]
 			),
 			gui.button(
-				width:    5
-				sizing:   gui.fit_fill
-				padding:  gui.padding_none
-				on_click: split_click
+				id_focus:    1
+				width:       5
+				color:       gui.rgb(0x40, 0x40, 0x40)
+				color_click: gui.theme().button_style.color_hover
+				color_focus: gui.theme().button_style.color_hover
+				sizing:      gui.fit_fill
+				padding:     gui.padding_none
+				on_click:    split_click
 			),
 			gui.column(
 				fill:    true
@@ -69,7 +73,8 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn split_click(cfg &gui.Layout, mut e gui.Event, mut w gui.Window) {
+fn split_click(_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+	w.set_mouse_cursor_ew()
 	w.mouse_lock(gui.MouseLockCfg{
 		mouse_move: fn (layout &gui.Layout, mut e gui.Event, mut w gui.Window) {
 			// The layout here is first layout in the view. This is because
@@ -86,10 +91,12 @@ fn split_click(cfg &gui.Layout, mut e gui.Event, mut w gui.Window) {
 				mut app := w.state[SplitPanelApp]()
 				width, _ := w.window_size()
 				app.a_width = gui.f32_clamp(a_layout.shape.width + e.mouse_dx, 20, width - 50)
+				w.set_mouse_cursor_ew()
 			}
 		}
 		mouse_up:   fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 			w.mouse_unlock()
+			w.set_id_focus(0)
 		}
 	})
 }

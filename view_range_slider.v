@@ -101,7 +101,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 }
 
 fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
-	layout.shape.on_mouse_down_shape = cfg.on_mouse_down_shape
+	layout.shape.on_click = cfg.on_click
 	layout.shape.on_mouse_scroll_shape = cfg.on_mouse_scroll
 
 	// set positions of left/right or top/bottom rectangles
@@ -222,12 +222,12 @@ fn (cfg RangeSliderCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
+fn (cfg &RangeSliderCfg) on_click(layout &Layout, mut e Event, mut w Window) {
 	if cfg.on_change != unsafe { nil } {
 		forgiveness := 10
-		len := if cfg.vertical { shape.height } else { shape.width }
+		len := if cfg.vertical { layout.shape.height } else { layout.shape.width }
 		mouse := if cfg.vertical { e.mouse_y } else { e.mouse_x }
-		pos := if cfg.vertical { shape.y } else { shape.x }
+		pos := if cfg.vertical { layout.shape.y } else { layout.shape.x }
 		percent := match true {
 			mouse <= pos + forgiveness { 0 }
 			mouse >= pos + len - forgiveness { 1 }

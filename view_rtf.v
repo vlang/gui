@@ -49,21 +49,21 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	width, height := spans_size(tspans)
 
 	shape := &Shape{
-		name:                'rtf'
-		type:                .rtf
-		id:                  rtf.id
-		id_focus:            rtf.id_focus
-		width:               width
-		height:              height
-		clip:                rtf.clip
-		focus_skip:          rtf.focus_skip
-		disabled:            rtf.disabled
-		min_width:           rtf.min_width
-		text_mode:           rtf.mode
-		sizing:              rtf.sizing
-		text_spans:          &tspans
-		on_mouse_move_shape: rtf_mouse_move_shape
-		on_mouse_down_shape: rtf_mouse_down_shape
+		name:          'rtf'
+		type:          .rtf
+		id:            rtf.id
+		id_focus:      rtf.id_focus
+		width:         width
+		height:        height
+		clip:          rtf.clip
+		focus_skip:    rtf.focus_skip
+		disabled:      rtf.disabled
+		min_width:     rtf.min_width
+		text_mode:     rtf.mode
+		sizing:        rtf.sizing
+		text_spans:    &tspans
+		on_click:      rtf_on_click
+		on_mouse_move: rtf_mouse_move
 	}
 
 	return Layout{
@@ -101,10 +101,10 @@ pub fn rtf(cfg RtfCfg) View {
 	}
 }
 
-fn rtf_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
-	for span in shape.text_spans {
+fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
+	for span in layout.shape.text_spans {
 		if span.link.len != 0 {
-			if shape.point_in_span(span, e.mouse_x, e.mouse_y) {
+			if layout.shape.point_in_span(span, e.mouse_x, e.mouse_y) {
 				w.set_mouse_cursor_pointing_hand()
 				e.is_handled = true
 				return
@@ -113,10 +113,10 @@ fn rtf_mouse_move_shape(shape &Shape, mut e Event, mut w Window) {
 	}
 }
 
-fn rtf_mouse_down_shape(shape &Shape, mut e Event, mut w Window) {
-	for span in shape.text_spans {
+fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
+	for span in layout.shape.text_spans {
 		if span.link.len != 0 {
-			if shape.point_in_span(span, e.mouse_x, e.mouse_y) {
+			if layout.shape.point_in_span(span, e.mouse_x, e.mouse_y) {
 				os.open_uri(span.link) or {}
 				e.is_handled = true
 				return
