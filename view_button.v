@@ -19,6 +19,7 @@ pub:
 	sizing             Sizing
 	content            []View
 	on_click           fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	on_hover           fn (&Layout, mut Event, mut Window) = unsafe { nil }
 	width              f32
 	height             f32
 	min_width          f32
@@ -74,7 +75,14 @@ pub fn button(cfg ButtonCfg) View {
 		on_click:     cfg.on_button_click()
 		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout
-		on_hover:     cfg.on_hover
+		on_hover:     if cfg.on_hover != unsafe { nil } {
+			fn [cfg] (mut layout Layout, mut e Event, mut w Window) {
+				cfg.on_button_hover(mut layout, mut e, mut w)
+				cfg.on_hover(layout, mut e, mut w)
+			}
+		} else {
+			cfg.on_button_hover
+		}
 		content:      [
 			row(
 				name:    'button interior'
@@ -120,7 +128,7 @@ fn (cfg &ButtonCfg) amend_layout(mut layout Layout, mut w Window) {
 	}
 }
 
-fn (cfg &ButtonCfg) on_hover(mut layout Layout, mut e Event, mut w Window) {
+fn (cfg &ButtonCfg) on_button_hover(mut layout Layout, mut e Event, mut w Window) {
 	if layout.shape.on_click == unsafe { nil } {
 		return
 	}

@@ -58,6 +58,9 @@ fn main_view(window &gui.Window) gui.View {
 				sizing:      gui.fit_fill
 				padding:     gui.padding_none
 				on_click:    split_click
+				on_hover:    fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					w.set_mouse_cursor_ew()
+				}
 			),
 			gui.column(
 				fill:    true
