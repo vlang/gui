@@ -13,7 +13,6 @@ pub:
 pub mut:
 	id                  string // user assigned
 	name                string // internal shape name, useful for debugging
-	text_spans          &datatypes.LinkedList[TextSpan] = unsafe { nil } // rich text format spans
 	text                string
 	image_name          string // filename of image
 	text_lines          []string
@@ -39,6 +38,7 @@ pub mut:
 	text_sel_beg        u32
 	text_sel_end        u32
 	text_tab_size       u32 = 4
+	text_spans          &datatypes.LinkedList[TextSpan]        = unsafe { nil } // rich text format spans
 	on_char             fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_keydown          fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_click            fn (&Layout, mut Event, mut Window)    = unsafe { nil }
@@ -75,8 +75,8 @@ pub enum ShapeType as u8 {
 
 fn (mut shape Shape) clear() {
 	if shape.text_spans != unsafe { nil } {
-		for shape.text_spans.len > 0 {
-			shape.text_spans.pop() or {}
+		for !shape.text_spans.is_empty() {
+			shape.text_spans.shift() or { break }
 		}
 	}
 	unsafe {

@@ -39,7 +39,7 @@ fn (mut window Window) animation_loop() {
 		mut refresh := false
 		for mut animation in window.animations {
 			match mut animation {
-				Animate { refresh = refresh || update_animate(mut animation, mut window) }
+				Animate { refresh = update_animate(mut animation, mut window) || refresh }
 				else {}
 			}
 		}
