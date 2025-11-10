@@ -102,7 +102,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 
 fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 	layout.shape.on_click = cfg.on_click
-	layout.shape.on_mouse_scroll_shape = cfg.on_mouse_scroll
+	layout.shape.on_mouse_scroll = cfg.on_mouse_scroll
 
 	// set positions of left/right or top/bottom rectangles
 	value := f32_clamp(cfg.value, cfg.min, cfg.max)
@@ -148,15 +148,14 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_hover_slide(mut layout Layout,
-	mut e Event, mut w Window) {
+fn (cfg &RangeSliderCfg) on_hover_slide(mut layout Layout, mut e Event, mut _ Window) {
 	layout.children[0].shape.color = cfg.color_hover
 	if e.mouse_button == .left {
 		layout.children[0].shape.color = cfg.color_click
 	}
 }
 
-fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut w Window) {
+fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut _ Window) {
 	// set the thumb position
 	value := f32_clamp(cfg.value, cfg.min, cfg.max)
 	percent := math.abs(value / (cfg.max - cfg.min))
@@ -173,21 +172,21 @@ fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut w Window) {
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_hover_thumb(mut layout Layout, mut _ Event, mut w Window) {
+fn (_ &RangeSliderCfg) on_hover_thumb(mut _ Layout, mut _ Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
 }
 
-fn (cfg &RangeSliderCfg) on_mouse_down(layout &Layout, mut e Event, mut w Window) {
+fn (cfg &RangeSliderCfg) on_mouse_down(_ &Layout, mut e Event, mut w Window) {
 	w.mouse_lock(MouseLockCfg{
 		mouse_move: cfg.mouse_move
-		mouse_up:   fn (_ &Layout, mut e Event, mut w Window) {
+		mouse_up:   fn (_ &Layout, mut _ Event, mut w Window) {
 			w.mouse_unlock()
 		}
 	})
 	e.is_handled = true
 }
 
-// pass cfg by value more reliable here
+// mouse_move pass cfg by value more reliable here
 fn (cfg RangeSliderCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	id := cfg.id
 
@@ -242,7 +241,7 @@ fn (cfg &RangeSliderCfg) on_click(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_keydown(layout &Layout, mut e Event, mut w Window) {
+fn (cfg &RangeSliderCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 	if cfg.on_change != unsafe { nil } && e.modifiers == 0 {
 		mut value := cfg.value
 		match e.key_code {
@@ -261,7 +260,7 @@ fn (cfg &RangeSliderCfg) on_keydown(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_mouse_scroll(shape &Shape, mut e Event, mut w Window) {
+fn (cfg &RangeSliderCfg) on_mouse_scroll(_ &Layout, mut e Event, mut w Window) {
 	e.is_handled = true
 	if cfg.on_change != unsafe { nil } && e.modifiers == 0 {
 		mut value := f32_clamp(cfg.value + e.scroll_y, cfg.min, cfg.max)

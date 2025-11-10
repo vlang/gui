@@ -190,12 +190,12 @@ fn mouse_scroll_handler(layout &Layout, mut e Event, mut w Window) {
 	}
 	id_focus := w.id_focus()
 	if id_focus != 0 {
-		if shape := layout.find_shape(fn [id_focus] (n Layout) bool {
-			return n.shape.id_focus == id_focus
+		if ly := layout.find_layout(fn [id_focus] (l Layout) bool {
+			return l.shape.id_focus == id_focus
 		})
 		{
-			if shape.on_mouse_scroll_shape != unsafe { nil } {
-				shape.on_mouse_scroll_shape(shape, mut e, mut w)
+			if ly.shape.on_mouse_scroll != unsafe { nil } {
+				ly.shape.on_mouse_scroll(ly, mut e, mut w)
 				return
 			}
 		}
