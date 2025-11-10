@@ -30,6 +30,7 @@ pub:
 	no_wrap            bool
 	fill               bool = gui_theme.select_style.fill
 	fill_border        bool = gui_theme.select_style.fill_border
+	sizing             Sizing
 }
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
@@ -70,7 +71,11 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 				text_style: txt_style
 				mode:       wrap_mode
 			),
-			row(name: 'select spacer', sizing: fill_fill, padding: padding_none),
+			row(
+				name:    'select spacer'
+				sizing:  if wrap_mode == .single_line { fill_fill } else { fit_fill }
+				padding: padding_none
+			),
 			text(
 				text:       if is_open { '▲' } else { '▼' }
 				text_style: cfg.text_style
@@ -131,7 +136,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 		padding:      cfg.padding_border
 		radius:       cfg.radius
 		color:        cfg.color_border
-		sizing:       fill_fit
+		sizing:       cfg.sizing
 		amend_layout: cfg.amend_layout
 		content:      content
 	)
