@@ -56,11 +56,11 @@ pub mut:
 	clip                  bool
 	disabled              bool
 	fill                  bool
+	float                 bool
 	focus_skip            bool
+	over_draw             bool // allows scrollbars to draw in padding area and removes shape from spacing calculations
 	text_is_password      bool
 	text_is_placeholder   bool
-	float                 bool
-	over_draw             bool // allows scrollbars to draw in padding area
 }
 
 // ShapeType defines the kind of Shape.

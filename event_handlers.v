@@ -56,13 +56,6 @@ fn keydown_handler(layout &Layout, mut e Event, mut w Window) {
 				return
 			}
 		}
-	} else {
-		if layout.shape.id_scroll > 0 {
-			key_down_scroll_handler(layout, mut e, mut w)
-			if e.is_handled {
-				return
-			}
-		}
 	}
 }
 
