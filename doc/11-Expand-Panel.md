@@ -1,6 +1,6 @@
--------------------
-# 11 Expand Panel
--------------------
+  --------------------
+  \# 11 Expand Panel
+  --------------------
 
 An expand panel is a collapsible container that can show or hide its
 content. It consists of a clickable header (which always displays) and a
@@ -27,8 +27,8 @@ hover).
 
 ## ExpandPanelCfg
 
-The `expand_panel` view is created with an `ExpandPanelCfg` structure. The most important fields are:
-Important fields:
+The `expand_panel` view is created with an `ExpandPanelCfg` structure.
+The most important fields are: Important fields:
 
 - `id string` --- Optional identifier for the view.
 - `head View` --- The header content (required). This is a view that
@@ -67,13 +67,18 @@ Important fields:
 
 ## Interaction model
 
-- **Click**: Clicking anywhere in the header row triggers the `on_toggle` callback if it is provided.
-- **Hover**: When the pointer is over the header, the mouse cursor changes to a pointing hand, and the header background uses the theme's `color_hover`.
-- **Arrow indicator**: The header automatically shows `icon_arrow_up` when `open` is `true` and `icon_arrow_down` when `open` is `false`.
+- **Click**: Clicking anywhere in the header row triggers the
+  `on_toggle` callback if it is provided.
+- **Hover**: When the pointer is over the header, the mouse cursor
+  changes to a pointing hand, and the header background uses the theme's
+  `color_hover`.
+- **Arrow indicator**: The header automatically shows `icon_arrow_up`
+  when `open` is `true` and `icon_arrow_down` when `open` is `false`.
 
 ## `expand_panel`
 
-This function creates the expand panel view from the given `ExpandPanelCfg`.
+This function creates the expand panel view from the given
+`ExpandPanelCfg`.
 
 ## Basic example
 

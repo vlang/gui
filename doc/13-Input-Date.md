@@ -1,8 +1,8 @@
----
+------------------------------------------------------------------------
 
 \# 13 Input Date
 
----
+------------------------------------------------------------------------
 
 The `input_date` view combines an `input` field with a `date_picker` to
 create a user-friendly date entry component. It displays the selected
@@ -17,7 +17,7 @@ clicks the calendar icon.
 
 Here's how to create a simple date input field:
 
-```v
+``` v
 // inside your main view function
 window.input_date(
     id: 'appointment_date'
@@ -36,22 +36,22 @@ window.input_date(
 This function creates the date input view. It internally manages the
 visibility of the floating `date_picker`.
 
-```v
+``` v
 fn (mut window Window) input_date(cfg InputDateCfg) View
 ```
 
 The view is composed of:
 
 - An `input` view that displays the formatted date.
-- A calendar `icon` within the input. - A floating `date_picker`
-  view that appears below the input when the icon is clicked.
+- A calendar `icon` within the input. - A floating `date_picker` view
+  that appears below the input when the icon is clicked.
 
 ## `InputDateCfg`
 
 This struct configures the `input_date` view. It shares many properties
 with `DatePickerCfg` and `InputCfg`.
 
-```v
+``` v
 @[heap]
 pub struct InputDateCfg {
 pub:
@@ -108,16 +108,16 @@ pub:
 Key points:
 
 - The `date` field holds the currently selected `time.Time`.
-- The `on_select` callback is triggered when a user picks a
-  date from the calendar. This is where you should update your
-  application's state.
-- The `on_enter` callback is tied to the input
-  field, allowing actions when the user presses the Enter key.
-- Most of the date-picker-specific configurations (like `allowed_weekdays`,
-  `select_multiple`, etc.) are passed directly to the underlying
-  `date_picker` view.
-- Styling properties are inherited from the theme's
-  `input_style` and `date_picker_style`.
+- The `on_select` callback is triggered when a user picks a date from
+  the calendar. This is where you should update your application's
+  state.
+- The `on_enter` callback is tied to the input field, allowing actions
+  when the user presses the Enter key.
+- Most of the date-picker-specific configurations (like
+  `allowed_weekdays`, `select_multiple`, etc.) are passed directly to
+  the underlying `date_picker` view.
+- Styling properties are inherited from the theme's `input_style` and
+  `date_picker_style`.
 
 ## Events
 

@@ -1,10 +1,11 @@
-----------------
-# 14 List Box
-----------------
+  ----------------
+  \# 14 List Box
+  ----------------
 
-A list box is a view that displays a scrollable list of items, allowing users to select
-one or multiple options. It's a convenient composition of `column` and `row` views,
-pre-configured to handle selection, hover states, and subheadings.
+A list box is a view that displays a scrollable list of items, allowing
+users to select one or multiple options. It's a convenient composition
+of `column` and `row` views, pre-configured to handle selection, hover
+states, and subheadings.
 
 - Widget: `list_box`
 - Config: `ListBoxCfg`
@@ -15,7 +16,7 @@ pre-configured to handle selection, hover states, and subheadings.
 
 Here's how to create a simple list box with a few options:
 
-```v
+``` v
 gui.list_box(
     id: 'cities_list'
     selected: [app.selected_city]
@@ -35,21 +36,22 @@ gui.list_box(
 
 ## `list_box`
 
-This function creates the list box view. It is a specialized container that renders a list
-of `ListBoxOption` items and manages their selection state.
+This function creates the list box view. It is a specialized container
+that renders a list of `ListBoxOption` items and manages their selection
+state.
 
-```v
+``` v
 pub fn list_box(cfg ListBoxCfg) View
 ```
 
-Internally, it's a `column` with a border, containing another scrollable `column` that
-holds a `row` for each item.
+Internally, it's a `column` with a border, containing another scrollable
+`column` that holds a `row` for each item.
 
 ## `ListBoxCfg`
 
 This struct configures the `list_box` view.
 
-```v
+``` v
 pub struct ListBoxCfg {
 pub:
 	id               string
@@ -80,22 +82,21 @@ pub:
 }
 ```
 
-Key fields:
-- `data`: An array of `ListBoxOption` structs that define the items in the list.
-- `selected`: An array of strings holding the `value` of each selected item.
-- `on_select`: The callback triggered when an item is clicked. It receives an array of the
-  currently selected values.
-- `multiple`: If `true`, allows selecting more than one item.
-- `id_scroll`: A non-zero value makes the list box scrollable if its content exceeds its
-  height.
-- `subheading_style`: A separate `TextStyle` for items that are subheadings.
+Key fields: - `data`: An array of `ListBoxOption` structs that define
+the items in the list. - `selected`: An array of strings holding the
+`value` of each selected item. - `on_select`: The callback triggered
+when an item is clicked. It receives an array of the currently selected
+values. - `multiple`: If `true`, allows selecting more than one item. -
+`id_scroll`: A non-zero value makes the list box scrollable if its
+content exceeds its height. - `subheading_style`: A separate `TextStyle`
+for items that are subheadings.
 
 ## `ListBoxOption`
 
-This struct defines a single item in the list. Use the `list_box_option` helper for
-concise creation.
+This struct defines a single item in the list. Use the `list_box_option`
+helper for concise creation.
 
-```v
+``` v
 pub struct ListBoxOption {
 pub:
 	name  string
@@ -107,39 +108,44 @@ pub fn list_box_option(name string, value string) ListBoxOption
 
 ### Subheadings
 
-If an option's `name` starts with `---`, it is rendered as a non-selectable subheading.
-The three leading hyphens are removed, and the rest of the name is displayed using the
-`subheading_style`. A horizontal line is drawn below it.
+If an option's `name` starts with `---`, it is rendered as a
+non-selectable subheading. The three leading hyphens are removed, and
+the rest of the name is displayed using the `subheading_style`. A
+horizontal line is drawn below it.
 
-```v
+``` v
 gui.list_box_option('---Category 1', '') // The value is ignored
 ```
 
 ## Interaction and Events
 
-- **Click**: Clicking an item triggers the `on_select` callback. The callback receives a new
-  array of selected values. If `multiple` is `false`, the new selection replaces the old
-  one. If `true`, the clicked item is toggled in the selection.
-- **Hover**: Hovering over a selectable item changes its background to `color_hover` and
-  the cursor to a pointing hand.
-- **Selection**: Selected items are highlighted with the `color_select` background color.
+- **Click**: Clicking an item triggers the `on_select` callback. The
+  callback receives a new array of selected values. If `multiple` is
+  `false`, the new selection replaces the old one. If `true`, the
+  clicked item is toggled in the selection.
+- **Hover**: Hovering over a selectable item changes its background to
+  `color_hover` and the cursor to a pointing hand.
+- **Selection**: Selected items are highlighted with the `color_select`
+  background color.
 
 ## Styling
 
-The list box's appearance is controlled by `gui_theme.list_box_style` and can be
-overridden in `ListBoxCfg`.
+The list box's appearance is controlled by `gui_theme.list_box_style`
+and can be overridden in `ListBoxCfg`.
 
-- The outer container is styled with `color_border`, `padding_border`, and `radius_border`.
+- The outer container is styled with `color_border`, `padding_border`,
+  and `radius_border`.
 - The inner container uses `color`, `padding`, and `radius`.
 - Selected items use `color_select`.
 - Text uses `text_style`, and subheadings use `subheading_style`.
 
 ## Multiple Selections
 
-To allow users to select multiple items, set `multiple: true`. The `on_select` callback
-will receive an array containing all selected values.
+To allow users to select multiple items, set `multiple: true`. The
+`on_select` callback will receive an array containing all selected
+values.
 
-```v
+``` v
 gui.list_box(
     multiple: true
     selected: app.selected_items // e.g., ['ny', 'chi']
@@ -153,6 +159,7 @@ gui.list_box(
 
 ## See Also
 
-- `08-Container-View.md` --- Understanding the underlying `column` and `row` views.
+- `08-Container-View.md` --- Understanding the underlying `column` and
+  `row` views.
 - `05-Themes-Styles.md` --- Details on colors, padding, and styling.
 - `view_select.v` --- For a compact, drop-down selection menu.
