@@ -94,25 +94,26 @@ pub:
 // - wrap allows the input fields to be multiline. See [InputCfg](#InputCfg)
 //
 // #### Keyboard shortcuts (not final):
-// - **left/right** moves cursor left/right one character
-// - **ctrl+left** moves to start of line, if at start of line moves up one line
-// - **ctrl+right** moves to end of line, if at end of line moves down one line
-// - **alt+left** moves to end of previous word (option+left on Mac)
-// - **alt+right** moves to start of word (option+left on Mac)
-// - **home** move cursor to start of text
-// - **end** move cursor to end of text
+// - **left/right**    moves cursor left/right one character
+// - **ctrl+left**     moves to start of line, if at start of line moves up one line
+// - **ctrl+right**    moves to end of line, if at end of line moves down one line
+// - **alt+left**      moves to end of previous word (option+left on Mac)
+// - **alt+right**     moves to start of word (option+left on Mac)
+// - **home**          move cursor to start of text
+// - **end**           move cursor to end of text
 // - Add shift to above shortcuts to select text
 // ---
-// - **ctrl+a** selects all text (also **cmd+a** on Mac)
-// - **ctrl+c** copies selected text (also **cmd+c** on Mac)
-// - **ctrl+v** pastes text (also **cmd+v** on Mac)
-// - **ctrl+x** deletes text (also **cmd+x** on Mac)
-// - **ctrl+z** undo (also **cmd+z** on Mac)
-// - **shift+ctrl+z** redo (also **shift+cmd+z** on Mac)
-// - **delete** or **backspace** deletes previous character
-// - **escape** unselects all text
+// - **ctrl+a**        selects all text (also **cmd+a** on Mac)
+// - **ctrl+c**        copies selected text (also **cmd+c** on Mac)
+// - **ctrl+v**        pastes text (also **cmd+v** on Mac)
+// - **ctrl+x**        deletes text (also **cmd+x** on Mac)
+// - **ctrl+z**        undo (also **cmd+z** on Mac)
+// - **shift+ctrl+z**  redo (also **shift+cmd+z** on Mac)
+// - **escape**        unselects all text
+// - **delete**        deletes previous character
+// - **backspace**     deletes previous character
 // ---
-// - While selected, left/right arrow keys move cursor to beg/end of selection
+// - left/right arrow keys move cursor to beg/end of selection, when text is selected
 pub fn input(cfg InputCfg) View {
 	placeholder_active := cfg.text.len == 0
 	txt := if placeholder_active { cfg.placeholder } else { cfg.text }
@@ -141,14 +142,15 @@ pub fn input(cfg InputCfg) View {
 		on_hover:     cfg.hover
 		content:      [
 			row(
-				name:    'input interior'
-				color:   cfg.color
-				padding: cfg.padding
-				fill:    cfg.fill
-				sizing:  fill_fill
-				radius:  cfg.radius
-				spacing: spacing_small
-				content: [
+				name:     'input interior'
+				color:    cfg.color
+				padding:  cfg.padding
+				fill:     cfg.fill
+				sizing:   fill_fill
+				radius:   cfg.radius
+				spacing:  spacing_small
+				on_click: cfg.on_click_interior
+				content:  [
 					text(
 						id_focus:           cfg.id_focus
 						text:               txt
@@ -177,6 +179,19 @@ pub fn input(cfg InputCfg) View {
 			),
 		]
 	)
+}
+
+// on_click_interior handles clicking in the control but outside the text region
+// by forwarding it to the text view.
+fn (_ &InputCfg) on_click_interior(layout &Layout, mut e Event, mut w Window) {
+	if layout.children.len < 1 {
+		return
+	}
+	ly := layout.children[0]
+	if ly.shape.id_focus > 0 {
+		w.set_id_focus(ly.shape.id_focus)
+	}
+	ly.shape.on_click(ly, mut e, mut w)
 }
 
 fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {

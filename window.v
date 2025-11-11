@@ -270,9 +270,6 @@ pub fn (mut window Window) update_window() {
 fn (mut window Window) compose_layout(mut view View) Layout {
 	mut layout := generate_layout(mut view, mut window)
 	layouts := layout_arrange(mut layout, mut window)
-	// Combine the layouts into one layout to rule them all
-	// and bind them in the darkness, or transparent-ness
-	// in this case. :)
 	return Layout{
 		shape:    &Shape{
 			color: color_transparent
