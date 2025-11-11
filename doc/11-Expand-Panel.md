@@ -1,10 +1,10 @@
-  --------------------
-  # 11 Expand Panel
-  --------------------
+-------------------
+# 11 Expand Panel
+-------------------
 
 An expand panel is a collapsible container that can show or hide its
 content. It consists of a clickable header (which always displays) and a
-content area (which toggles visibility based on the `open` state). The
+content area that toggles visibility based on the `open` state. The
 header displays an arrow icon that indicates the current state:
 `icon_arrow_up` when open, `icon_arrow_down` when closed.
 
@@ -12,13 +12,13 @@ See also: `examples/expand_panel.v` for a runnable showcase.
 
 ## Overview
 
-`expand_panel` creates a container with two parts:
+The `expand_panel` view creates a container with two parts:
 
 - **Header** (`head`): A clickable row that contains custom content and
   an arrow indicator. Clicking the header toggles the panel's open
   state.
 - **Content** (`content`): A collapsible column that shows or hides
-  based on the `open` boolean.
+  based on the `open` state.
 
 The expand panel is built from nested containers with separate styling
 for the border and interior, similar to buttons. The header has hover
@@ -27,7 +27,7 @@ hover).
 
 ## ExpandPanelCfg
 
-The `expand_panel` view is created with an `ExpandPanelCfg` structure.
+The `expand_panel` view is created with an `ExpandPanelCfg` structure. The most important fields are:
 Important fields:
 
 - `id string` --- Optional identifier for the view.
@@ -35,10 +35,10 @@ Important fields:
   appears in the clickable header row. The arrow icon is automatically
   added to the right side.
 - `content View` --- The collapsible content (required). This view is
-  shown when `open: true` and hidden when `open: false`.
+  shown when `open` is `true` and hidden when it's `false`.
 - `open bool` --- Controls whether the panel is expanded (`true`) or
   collapsed (`false`).
-- `on_toggle fn (mut Window)` --- Callback invoked when the header is
+- `on_toggle fn (mut Window)` --- A callback invoked when the header is
   clicked. Use this to update your state (typically toggle the `open`
   field in your app state).
 - Colors
@@ -67,13 +67,13 @@ Important fields:
 
 ## Interaction model
 
-- **Click**: Clicking anywhere in the header row triggers `on_toggle` if
-  provided.
-- **Hover**: When the pointer is over the header, the mouse cursor
-  changes to a pointing hand and the header background uses
-  `gui_theme.color_hover`.
-- **Arrow indicator**: The header automatically shows `icon_arrow_up`
-  when `open: true` and `icon_arrow_down` when `open: false`.
+- **Click**: Clicking anywhere in the header row triggers the `on_toggle` callback if it is provided.
+- **Hover**: When the pointer is over the header, the mouse cursor changes to a pointing hand, and the header background uses the theme's `color_hover`.
+- **Arrow indicator**: The header automatically shows `icon_arrow_up` when `open` is `true` and `icon_arrow_down` when `open` is `false`.
+
+## `expand_panel`
+
+This function creates the expand panel view from the given `ExpandPanelCfg`.
 
 ## Basic example
 
@@ -84,14 +84,14 @@ import gui
 
 struct App {
     mut:
-        panel_open bool
+	panel_open bool
 }
 
 fn main() {
     mut window := gui.window(
         title:   'Expand Panel Demo'
         state:   &App{}
-        width:   400
+        width:   300
         height:  300
         on_init: fn (mut w gui.Window) {
             w.update_view(main_view)
@@ -102,13 +102,13 @@ fn main() {
 
 fn main_view(mut w gui.Window) gui.View {
     mut app := w.state[App]()
-    
+
     return gui.column(
         padding: gui.theme().padding_medium
         content: [
             gui.expand_panel(
                 open: app.panel_open
-                head: gui.row(
+                head: gui.column(
                     padding: gui.theme().padding_medium
                     content: [gui.text(text: 'Click to expand')]
                 )
