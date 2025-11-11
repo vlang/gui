@@ -58,7 +58,7 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 	}
 	layout := Layout{
 		shape: &Shape{
-			type:           cv.shape_type
+			shape_type:     cv.shape_type
 			id:             cv.id
 			id_focus:       cv.id_focus
 			axis:           cv.axis
@@ -248,8 +248,6 @@ fn container(cfg ContainerCfg) View {
 				id_track:    cfg.id_scroll
 			})
 		}
-	}
-	if cfg.id_scroll > 0 {
 		if cfg.scrollbar_cfg_y != unsafe { nil } {
 			if cfg.scrollbar_cfg_y.overflow != .hidden {
 				extra_content << scrollbar(ScrollbarCfg{
@@ -265,6 +263,7 @@ fn container(cfg ContainerCfg) View {
 			})
 		}
 	}
+
 	if gui_tooltip.id != '' {
 		if cfg.tooltip != unsafe { nil } {
 			if cfg.tooltip.id == gui_tooltip.id {

@@ -151,7 +151,7 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 	if shape.color == color_transparent {
 		return
 	}
-	match shape.type {
+	match shape.shape_type {
 		.rectangle { render_container(mut shape, parent_color, clip, mut window) }
 		.text { render_text(mut shape, clip, mut window) }
 		.image { render_image(mut shape, clip, mut window) }
@@ -221,7 +221,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 // render_circle draws a shape as a circle in the middle of the shape's
 // rectangular region. Radius is half of the shortest side.
 fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
-	assert shape.type == .circle
+	assert shape.shape_type == .circle
 	draw_rect := gg.Rect{
 		x:      shape.x
 		y:      shape.y
@@ -248,7 +248,7 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 
 // render_rectangle draw_rectangle draws a shape as a rectangle.
 fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
-	assert shape.type == .rectangle
+	assert shape.shape_type == .rectangle
 	draw_rect := gg.Rect{
 		x:      shape.x
 		y:      shape.y
@@ -364,7 +364,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 
 // render_cursor figures out where the darn cursor goes.
 fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
-	if window.is_focus(shape.id_focus) && shape.type == .text && window.view_state.cursor_on {
+	if window.is_focus(shape.id_focus) && shape.shape_type == .text && window.view_state.cursor_on {
 		lh := line_height(shape)
 		mut cursor_x := -1
 		mut cursor_y := -1

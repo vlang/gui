@@ -50,7 +50,7 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 
 	shape := &Shape{
 		name:          'rtf'
-		type:          .rtf
+		shape_type:    .rtf
 		id:            rtf.id
 		id_focus:      rtf.id_focus
 		width:         width

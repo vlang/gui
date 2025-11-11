@@ -65,7 +65,7 @@ fn line_height(shape &Shape) f32 {
 }
 
 fn text_wrap(mut shape Shape, mut window Window) {
-	if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.type == .text {
+	if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.shape_type == .text {
 		style := shape.text_style
 		width := shape.width - shape.padding.width()
 		tab_size := shape.text_tab_size
@@ -77,7 +77,7 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		shape.height = shape.text_lines.len * lh
 		shape.max_height = shape.height
 		shape.min_height = shape.height
-	} else if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.type == .rtf {
+	} else if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.shape_type == .rtf {
 		width := shape.width - shape.padding.width()
 		tab_size := shape.text_tab_size
 		shape.text_spans = rtf_wrap_text(shape.text_spans, width, tab_size, mut window)

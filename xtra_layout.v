@@ -83,7 +83,8 @@ fn (layout &Layout) get_focus_ids() []u32 {
 
 // spacing does the fence-post calculation for spacings
 fn (layout &Layout) spacing() f32 {
-	count := layout.children.count(!it.shape.float && it.shape.type != .none && !it.shape.over_draw)
+	count := layout.children.count(!it.shape.float && it.shape.shape_type != .none
+		&& !it.shape.over_draw)
 	return int_max(0, (count - 1)) * layout.shape.spacing
 }
 

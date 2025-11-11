@@ -34,7 +34,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	mut layout := Layout{
 		shape: &Shape{
 			name:                'text'
-			type:                .text
+			shape_type:          .text
 			id_focus:            tv.cfg.id_focus
 			clip:                tv.cfg.clip
 			focus_skip:          tv.cfg.focus_skip
@@ -186,17 +186,17 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	}
 	y := int_clamp(int(e.mouse_y / lh), 0, shape.text_lines.len - 1)
 	line := shape.text_lines[y]
-	mut ln := ''
+	mut current_width := f32(0.0)
 	mut count := -1
 	for i, r in line.runes_iterator() {
-		ln += r.str()
-		tw := get_text_width(ln, shape.text_style, mut w)
-		if tw > e.mouse_x {
+		char_width := get_text_width(r.str(), shape.text_style, mut w)
+		if current_width + (char_width / 2) > e.mouse_x {
 			// One past the `to` position is just cursor after char.
 			// Appears to be how others do it (e.g. browsers)
-			count = if e.mouse_x < 5 { 0 } else { i + 1 }
+			count = i
 			break
 		}
+		current_width += char_width
 	}
 	if count == -1 {
 		count = int_max(0, utf8_str_visible_length(line))
@@ -215,28 +215,28 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		if cfg.placeholder_active {
 			return
 		}
-		input_state := w.view_state.input_state[layout.shape.id_focus]
-		mut cursor_pos := input_state.cursor_pos
+		mut current_input_state := w.view_state.input_state[layout.shape.id_focus]
+		mut new_cursor_pos := current_input_state.cursor_pos
 
 		if e.modifiers in [u32(Modifier.alt), u32(int(Modifier.alt) | int(Modifier.shift))] {
 			match e.key_code {
-				.left { cursor_pos = start_of_word_pos(layout.shape.text_lines, cursor_pos) }
-				.right { cursor_pos = end_of_word_pos(layout.shape.text_lines, cursor_pos) }
-				.up { cursor_pos = start_of_paragraph(layout.shape.text_lines, cursor_pos) }
+				.left { new_cursor_pos = start_of_word_pos(layout.shape.text_lines, new_cursor_pos) }
+				.right { new_cursor_pos = end_of_word_pos(layout.shape.text_lines, new_cursor_pos) }
+				.up { new_cursor_pos = start_of_paragraph(layout.shape.text_lines, new_cursor_pos) }
 				else { return }
 			}
 		} else if e.modifiers in [u32(Modifier.ctrl), u32(int(Modifier.ctrl) | int(Modifier.shift))] {
 			match e.key_code {
-				.left { cursor_pos = start_of_line_pos(layout.shape.text_lines, cursor_pos) }
-				.right { cursor_pos = end_of_line_pos(layout.shape.text_lines, cursor_pos) }
+				.left { new_cursor_pos = start_of_line_pos(layout.shape.text_lines, new_cursor_pos) }
+				.right { new_cursor_pos = end_of_line_pos(layout.shape.text_lines, new_cursor_pos) }
 				else { return }
 			}
 		} else if e.modifiers in [u32(0), u32(Modifier.shift)] {
 			match e.key_code {
-				.left { cursor_pos = int_max(0, cursor_pos - 1) }
-				.right { cursor_pos = int_min(cfg.text.len, cursor_pos + 1) }
-				.home { cursor_pos = 0 }
-				.end { cursor_pos = cfg.text.len }
+				.left { new_cursor_pos = int_max(0, new_cursor_pos - 1) }
+				.right { new_cursor_pos = int_min(cfg.text.len, new_cursor_pos + 1) }
+				.home { new_cursor_pos = 0 }
+				.end { new_cursor_pos = cfg.text.len }
 				else { return }
 			}
 		}
@@ -244,56 +244,59 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		// Moving the cursor when it is animated can happen when the cursor is
 		// hidden. Sticky allows the cursor to stay on during cursor movements.
 		// See `blinky_cursor_animation()`
-		if cursor_pos != input_state.cursor_pos {
+		if new_cursor_pos != current_input_state.cursor_pos {
 			w.view_state.cursor_on_sticky = true
 		}
 
 		e.is_handled = true
-		w.view_state.input_state[layout.shape.id_focus] = InputState{
-			...input_state
-			cursor_pos: cursor_pos
-			select_beg: 0
-			select_end: 0
-		}
+		mut new_select_beg := u32(0)
+		mut new_select_end := u32(0)
 
 		// shift => Extend/shrink selection
 		if int(e.modifiers) & int(Modifier.shift) > 0 {
-			old_pos := input_state.cursor_pos
-			mut beg := input_state.select_beg
-			mut end := input_state.select_end
-			b_diff := math.abs(cursor_pos - int(beg))
-			e_diff := math.abs(cursor_pos - int(end))
-			if beg == end {
-				if old_pos < cursor_pos {
-					beg = u32(old_pos)
-					end = u32(cursor_pos)
-				} else {
-					beg = u32(cursor_pos)
-					end = u32(old_pos)
-				}
-			} else if b_diff < e_diff {
-				beg = u32(cursor_pos)
+			old_cursor_pos := current_input_state.cursor_pos
+			new_select_beg = current_input_state.select_beg
+			new_select_end = current_input_state.select_end
+
+			// If there's no selection, start one from the old cursor position.
+			if new_select_beg == new_select_end {
+				new_select_beg = u32(old_cursor_pos)
+			}
+
+			// Move the selection boundary that was at the old cursor position.
+			if old_cursor_pos == int(new_select_beg) {
+				new_select_beg = u32(new_cursor_pos)
+			} else if old_cursor_pos == int(new_select_end) {
+				new_select_end = u32(new_cursor_pos)
 			} else {
-				end = u32(cursor_pos)
-			}
-			if beg > end {
-				beg, end = end, beg
-			}
-			w.view_state.input_state[layout.shape.id_focus] = InputState{
-				...input_state
-				cursor_pos: cursor_pos
-				select_beg: beg
-				select_end: end
-			}
-		} else if input_state.select_beg != input_state.select_end && e.modifiers == 0 {
-			w.view_state.input_state[layout.shape.id_focus] = InputState{
-				...input_state
-				cursor_pos: match e.key_code {
-					.left { int(input_state.select_beg) }
-					.right { int(input_state.select_end) }
-					else { cursor_pos }
+				// If the old cursor was not at a boundary (e.g., from a click),
+				// move the boundary closest to the new cursor position.
+				if math.abs(new_cursor_pos - int(new_select_beg)) < math.abs(new_cursor_pos - int(new_select_end)) {
+					new_select_beg = u32(new_cursor_pos)
+				} else {
+					new_select_end = u32(new_cursor_pos)
 				}
 			}
+
+			if new_select_beg > new_select_end {
+				new_select_beg, new_select_end = new_select_end, new_select_beg
+			}
+		} else if current_input_state.select_beg != current_input_state.select_end
+			&& e.modifiers == 0 {
+			// If a selection exists and a non-shift movement key is pressed,
+			// collapse the selection to the beginning or end of the selection.
+			new_cursor_pos = match e.key_code {
+				.left, .home { int(current_input_state.select_beg) }
+				.right, .end { int(current_input_state.select_end) }
+				else { new_cursor_pos }
+			}
+		}
+
+		w.view_state.input_state[layout.shape.id_focus] = InputState{
+			...current_input_state
+			cursor_pos: new_cursor_pos
+			select_beg: new_select_beg
+			select_end: new_select_end
 		}
 	}
 }

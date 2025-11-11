@@ -55,10 +55,10 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 // floating_layouts array. Find it and use it as the parent.
 fn fix_float_parents(mut floating_layouts []Layout) {
 	for i := floating_layouts.len - 1; i > 0; i-- {
-		if floating_layouts[i].parent.shape.type == .none && i > 0 {
+		if floating_layouts[i].parent.shape.shape_type == .none && i > 0 {
 			mut j := i
 			for ; j > 0; j-- {
-				if floating_layouts[j].parent.shape.type != .none {
+				if floating_layouts[j].parent.shape.shape_type != .none {
 					break
 				}
 			}

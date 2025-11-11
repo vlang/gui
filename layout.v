@@ -663,7 +663,7 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 
 		layout_positions(mut child, x + x_align, y + y_align, w)
 
-		if child.shape.type != .none {
+		if child.shape.shape_type != .none {
 			match axis {
 				.left_to_right { x += child.shape.width + spacing }
 				.top_to_bottom { y += child.shape.height + spacing }
@@ -699,7 +699,7 @@ fn layout_scroll_containers(mut layout Layout, id_scroll_container u32) {
 		// no have enough information to walk up the visible tree to find the
 		// scrollable container. Instead, it is bookmarked in the text shape
 		// (and maybe other shapes in the future).
-		if ly.shape.type == .text {
+		if ly.shape.shape_type == .text {
 			ly.shape.id_scroll_container = id_scroll_container
 		}
 	}

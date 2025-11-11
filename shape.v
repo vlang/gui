@@ -6,10 +6,10 @@ import datatypes
 // Shape is the only data structure in GUI used to draw to the screen.
 pub struct Shape {
 pub:
-	uid      u64 = rand.u64() // internal use only
-	id_focus u32 // >0 indicates shape is focusable. Value determines tabbing order
-	axis     Axis
-	type     ShapeType
+	uid        u64 = rand.u64() // internal use only
+	id_focus   u32 // >0 indicates shape is focusable. Value determines tabbing order
+	axis       Axis
+	shape_type ShapeType
 pub mut:
 	id                  string // user assigned
 	name                string // internal shape name, useful for debugging

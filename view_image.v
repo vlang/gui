@@ -51,7 +51,7 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 	layout := Layout{
 		shape: &Shape{
 			name:       'image'
-			type:       .image
+			shape_type: .image
 			id:         iv.id
 			image_name: iv.file_name
 			width:      width
