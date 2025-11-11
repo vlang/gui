@@ -245,13 +245,15 @@ pub fn (mut window Window) update_window() {
 
 	window.lock()
 	mut view := window.view_generator(window)
+
 	mut old_layout := window.layout
 	window.layout = window.compose_layout(mut view)
-	unsafe { window.renderers.reset() }
+
 	window.renderers.clear()
 	clip_rect := window.window_rect()
 	background_color := window.color_background()
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
+
 	clear_views(mut view)
 	clear_layouts(mut old_layout)
 	window.unlock()
@@ -266,9 +268,6 @@ pub fn (mut window Window) update_window() {
 // compose_layout produces a layout from the given view that is
 // arranged and ready for generating renderers.
 fn (mut window Window) compose_layout(mut view View) Layout {
-	// stopwatch := time.new_stopwatch()
-	// defer { println(stopwatch.elapsed()) }
-
 	mut layout := generate_layout(mut view, mut window)
 	layouts := layout_arrange(mut layout, mut window)
 	// Combine the layouts into one layout to rule them all

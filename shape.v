@@ -80,8 +80,7 @@ fn (mut shape Shape) clear() {
 		}
 	}
 	unsafe {
-		shape.text_lines.reset()
-		shape.text_lines.clear()
+		shape.text_lines.free()
 		vmemset(shape, 0, sizeof(Shape))
 	}
 }

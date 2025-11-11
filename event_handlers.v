@@ -1,5 +1,7 @@
 module gui
 
+import arrays
+
 pub struct MouseLockCfg {
 pub:
 	mouse_down ?fn (&Layout, mut Event, mut Window)
@@ -89,8 +91,7 @@ fn mouse_down_handler(layout &Layout, in_handler bool, mut e Event, mut w Window
 			return
 		}
 	}
-	for i := layout.children.len - 1; layout.children.len > 0 && i >= 0; i-- {
-		child := unsafe { &layout.children[i] }
+	for child in arrays.reverse_iterator(layout.children) {
 		if child.shape.disabled {
 			continue
 		}
@@ -123,8 +124,7 @@ fn mouse_move_handler(layout &Layout, mut e Event, mut w Window) {
 	if !w.pointer_over_app(e) {
 		return
 	}
-	for i := layout.children.len - 1; layout.children.len > 0 && i >= 0; i-- {
-		child := unsafe { &layout.children[i] }
+	for child in arrays.reverse_iterator(layout.children) {
 		if child.shape.disabled {
 			continue
 		}
@@ -151,8 +151,7 @@ fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 		w.view_state.mouse_lock.mouse_up(layout, mut e, mut w)
 		return
 	}
-	for i := layout.children.len - 1; layout.children.len > 0 && i >= 0; i-- {
-		child := unsafe { &layout.children[i] }
+	for child in arrays.reverse_iterator(layout.children) {
 		if child.shape.disabled {
 			continue
 		}
@@ -178,8 +177,7 @@ fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 }
 
 fn mouse_scroll_handler(layout &Layout, mut e Event, mut w Window) {
-	for i := layout.children.len - 1; layout.children.len > 0 && i >= 0; i-- {
-		child := unsafe { &layout.children[i] }
+	for child in arrays.reverse_iterator(layout.children) {
 		if child.shape.disabled {
 			continue
 		}
