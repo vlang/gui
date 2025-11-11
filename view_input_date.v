@@ -59,10 +59,10 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 				placeholder: cfg.placeholder
 				// on_text_changed:    cfg.on_text_changed
 				on_enter:           cfg.on_enter
-				on_click_icon:      fn (ly &Layout, mut e Event, mut w Window) {
-					visible := w.view_state.input_date_state[ly.shape.id]
+				on_click_icon:      fn [cfg] (_ &Layout, mut e Event, mut w Window) {
+					visible := w.view_state.input_date_state[cfg.id]
 					w.view_state.input_date_state.clear() // close all other date_pickers
-					w.view_state.input_date_state[ly.shape.id] = !visible
+					w.view_state.input_date_state[cfg.id] = !visible
 					e.is_handled = true
 				}
 				sizing:             cfg.sizing
