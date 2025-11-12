@@ -1,6 +1,4 @@
-----------------------
 # 4 Rows and Columns 
-----------------------
 
 Rows and columns are the two fundamental layout containers in Gui. -
 Rows lay out their children horizontally (left-to-right in LTR
@@ -86,12 +84,12 @@ Enable scrolling by setting the `id_scroll` to a non-zero value. Content
 that extends past the boundaries of the row (or column) is hidden until
 scrolled into view.
 
-Scrollbars are optional and configurable: 
+Scrollbars are optional and configurable:
 
-- Show vertical and/or horizontal bars. 
-- Hide them entirely when content fits. 
-- Auto-show on hover over the scrollbar region. 
-- Place them floating over content or beside content, as desired. 
+- Show vertical and/or horizontal bars.
+- Hide them entirely when content fits.
+- Auto-show on hover over the scrollbar region.
+- Place them floating over content or beside content, as desired.
 - Restrict scrolling to vertical-only or horizontal-only via `scroll_mode`.
 
 ### Floating content

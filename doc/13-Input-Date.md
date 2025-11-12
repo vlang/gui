@@ -1,6 +1,4 @@
---------------
-13 Input Date
---------------
+# 13 Input Date
 
 The `input_date` view combines an `input` field with a `date_picker` to
 create a user-friendly date entry component. It displays the selected

@@ -1,6 +1,4 @@
---------------
 # 12 Inputs
---------------
 
 An input is a text input field that allows users to enter and edit text.
 It supports single-line and multiline modes, text selection, undo/redo,
@@ -25,7 +23,7 @@ The `input` view creates an editable text field with:
   shortcuts (see below).
 - **Modes**: Single-line mode (default) or multiline mode with text
   wrapping.
-- **Password mode**: Can mask input characters with '*'s (copy is disabled
+- **Password mode**: Can mask input characters with '\*'s (copy is disabled
   when `is_password: true`).
 - **Placeholder text**: Shows placeholder text when the input is empty.
 - **Icons**: Optional icon that can be clicked.
@@ -42,7 +40,7 @@ The `input` view is created with an `InputCfg` structure. Important fields:
 - `icon string` --- Optional icon constant displayed on the right side.
 - `mode InputMode` --- Either `.single_line` (default) or `.multiline`
   (enables text wrapping and newlines).
-- `is_password bool` --- When `true`, displays '*' instead of actual
+- `is_password bool` --- When `true`, displays '\*' instead of actual
   characters. Copy operation is disabled.
 - `disabled bool` --- When `true`, input won't accept input.
 - `invisible bool` --- When `true`, removes from layout/paint.
@@ -191,7 +189,7 @@ fn main() {
 
 fn main_view(mut w gui.Window) gui.View {
     mut app := w.state[App]()
-    
+
     return gui.column(
         padding: gui.theme().padding_medium
         content: [
@@ -383,4 +381,3 @@ The state is cleared when a new view tree is introduced (when
 - `08-Container-View.md` --- understanding the underlying container
   structure
 - `examples/inputs.v` --- comprehensive runnable examples
-

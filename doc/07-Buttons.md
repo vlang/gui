@@ -1,6 +1,4 @@
---------------
 # 7 Buttons 
---------------
 
 Buttons are clickable containers. In Gui, a button is a `row` (the
 border) that contains another `row` (the button body) that can hold any

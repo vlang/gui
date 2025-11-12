@@ -1,6 +1,4 @@
-  ---------------
-  # 10 Dialogs
-  ---------------
+# 10 Dialogs
 
 `view_dialog.v` implements modal dialogs in GUI. Dialogs are rendered as
 floating overlay views centered in the window and temporarily restrict

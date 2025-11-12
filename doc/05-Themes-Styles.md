@@ -1,6 +1,5 @@
-----------------
 # 5 Themes and Styles
-----------------
+
 ### Overview
 
 Gui’s theming system lets you control colors, paddings, radii, spacing,
@@ -12,7 +11,7 @@ If you only need a standard look, use the built‑in dark/light themes. If
 you need a brand look, define a small set of overrides and let
 `theme_maker` fill in the rest.
 
-------------------------------------------------------------------------
+---
 
 ### Quick start: apply a theme
 
@@ -44,7 +43,7 @@ gui.text(
 layout.shape.color = gui.theme().color_hover
 ```
 
-------------------------------------------------------------------------
+---
 
 ### Anatomy: Theme vs ThemeCfg vs Styles
 
@@ -70,7 +69,7 @@ layout.shape.color = gui.theme().color_hover
   - Each contains the properties that control rendering: colors,
     `fill`/`fill_border`, padding, radius, spacing, and text styles.
 
-------------------------------------------------------------------------
+---
 
 ### Constants you’ll use often
 
@@ -88,7 +87,7 @@ layout.shape.color = gui.theme().color_hover
 These are surfaced on `Theme` as well (e.g., `theme().spacing_medium`,
 `theme().size_text_large`).
 
-------------------------------------------------------------------------
+---
 
 ### Built‑in themes
 
@@ -103,7 +102,7 @@ Predefined configs and instances (all created via `theme_maker`):
 
 Pick one as‑is or start from a config and tweak a few fields.
 
-------------------------------------------------------------------------
+---
 
 ### Create your own theme (the recommended way)
 
@@ -135,12 +134,12 @@ pub fn my_brand_theme() gui.Theme {
 }
 ```
 
-Notes 
- 
-- `theme_maker` keeps container backgrounds transparent by default 
-  (not filled). 
-- All fields in `ThemeCfg` have defaults; you can specify just a handful 
-  and still get a complete, consistent theme. 
+Notes
+
+- `theme_maker` keeps container backgrounds transparent by default
+  (not filled).
+- All fields in `ThemeCfg` have defaults; you can specify just a handful
+  and still get a complete, consistent theme.
 - You can further tweak the returned theme before applying it:
 
 ``` v
@@ -155,7 +154,7 @@ t = gui.Theme{ ...t, button_style: bs }
 window.set_theme(t)
 ```
 
-------------------------------------------------------------------------
+---
 
 ### Per‑view overrides (without creating a new theme)
 
@@ -178,7 +177,7 @@ gui.text(
 
 See also: “6 Fonts” for system and custom fonts.
 
-------------------------------------------------------------------------
+---
 
 ### Working with text styles
 
@@ -201,7 +200,7 @@ gui.text(
 )
 ```
 
-------------------------------------------------------------------------
+---
 
 ### Runtime access and switching
 
@@ -215,7 +214,7 @@ gui.text(
 w.set_theme(if use_light { gui.theme_light } else { gui.theme_dark })
 ```
 
-------------------------------------------------------------------------
+---
 
 ### Reference: key fields on ThemeCfg
 
@@ -232,7 +231,7 @@ Commonly changed fields (see `theme.v` for the full list):
   `padding_small|medium|large`, `radius_small|medium|large`,
   `spacing_small|medium|large`, `size_text_*`, `scroll_*`
 
-------------------------------------------------------------------------
+---
 
 ### Tips and gotchas
 
@@ -248,7 +247,7 @@ Commonly changed fields (see `theme.v` for the full list):
 - For iconography, use the icon text presets (`icon1..icon6`) or set
   `family: gui.font_file_icon` on a `TextStyle`.
 
-------------------------------------------------------------------------
+---
 
 ### How Themes and Styles work together
 

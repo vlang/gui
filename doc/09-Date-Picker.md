@@ -1,6 +1,4 @@
-  ----------------
-  # 9 Date Picker
-  ----------------
+# 9 Date Picker
 
 The `date_picker` view provides a calendar-based UI for selecting one or
 more dates. It includes month navigation, an optional year/month picker,
@@ -35,10 +33,10 @@ Creates a date-picker view from the given `DatePickerCfg`.
 fn (mut window Window) date_picker(cfg DatePickerCfg) View
 ```
 
-The widget renders: 
+The widget renders:
 
-- Controls row: current month/year button (opens year/month picker), previous and 
-  next month buttons 
+- Controls row: current month/year button (opens year/month picker), previous and
+  next month buttons
 - Body: either the month grid (calendar) or the year/month picker when toggled
 
 ## `DatePickerCfg`
@@ -94,14 +92,14 @@ struct DatePickerCfg {
 }
 ```
 
-Notes: 
+Notes:
 
 - `dates` represents the active selection(s). When `select_multiple` is `false` (default),  
-  only the first element is used. 
+  only the first element is used.
 - When `show_adjacent_months` is `true`, days from previous/next months are displayed as
-  empty or grayed cells to keep a 6-row grid consistent. 
-- The current day gets a border indicator unless `hide_today_indicator` is `true`. 
-- The month/year display button toggles a year--month picker where you can jump 
+  empty or grayed cells to keep a 6-row grid consistent.
+- The current day gets a border indicator unless `hide_today_indicator` is `true`.
+- The month/year display button toggles a year--month picker where you can jump
   across years and months quickly.
 
 ## Enums

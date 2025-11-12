@@ -1,6 +1,4 @@
-  ------------------------------
-  # 8 Container View & Config
-  ------------------------------
+# 8 Container View & Config
 
 `view_container.v` defines the fundamental container type used
 throughout Gui. Most built‑in views are compositions of these
@@ -17,10 +15,10 @@ This document explains:
 - Event hooks and layout amendment
 - Practical examples
 
-See also: 
+See also:
 
-- 03-Views.md --- how views are composed 
-- 04-Rows-Columns.md --- a practical tour of rows/columns 
+- 03-Views.md --- how views are composed
+- 04-Rows-Columns.md --- a practical tour of rows/columns
 - 05-Themes-Styles.md --- color, radius, padding defaults
 
 ## Overview
@@ -87,8 +85,8 @@ Events and hooks:
 - `on_any_click fn(&Layout, mut Event, mut Window)` --- catch any button click
 - `on_mouse_move`, `on_mouse_up`, `on_keydown`, `on_char`
 - `on_hover fn(mut Layout, mut Event, mut Window)` --- hover‑time callback
-- `amend_layout fn(mut Layout, mut Window)` --- mutate the computed layout just 
-   before rendering children
+- `amend_layout fn(mut Layout, mut Window)` --- mutate the computed layout just
+  before rendering children
 
 Tips:
 
