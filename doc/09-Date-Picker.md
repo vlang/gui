@@ -1,5 +1,5 @@
   ----------------
-  \# Date Picker
+  # 9 Date Picker
   ----------------
 
 The `date_picker` view provides a calendar-based UI for selecting one or

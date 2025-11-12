@@ -1,5 +1,5 @@
   --------------------
-  \# 11 Expand Panel
+  # 11 Expand Panel
   --------------------
 
 An expand panel is a collapsible container that can show or hide its

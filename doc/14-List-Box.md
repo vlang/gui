@@ -1,5 +1,5 @@
   ----------------
-  \# 14 List Box
+  # 14 List Box
   ----------------
 
 A list box is a view that displays a scrollable list of items, allowing
@@ -83,13 +83,15 @@ pub:
 ```
 
 Key fields: - `data`: An array of `ListBoxOption` structs that define
-the items in the list. - `selected`: An array of strings holding the
-`value` of each selected item. - `on_select`: The callback triggered
-when an item is clicked. It receives an array of the currently selected
-values. - `multiple`: If `true`, allows selecting more than one item. -
-`id_scroll`: A non-zero value makes the list box scrollable if its
-content exceeds its height. - `subheading_style`: A separate `TextStyle`
-for items that are subheadings.
+the items in the list. 
+- `selected`: An array of strings holding the `value` of each selected item. 
+- `on_select`: The callback triggered
+  when an item is clicked. It receives an array of the currently selected
+  values. 
+- `multiple`: If `true`, allows selecting more than one item. 
+- `id_scroll`: A non-zero value makes the list box scrollable if its
+  content exceeds its height. 
+- `subheading_style`: A separate `TextStyle` for items that are subheadings.
 
 ## `ListBoxOption`
 
