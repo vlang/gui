@@ -241,6 +241,61 @@ There is also some hand written documentation in the `/doc folder` labeled
 `01 Introduction.md`, `02 Getting Started.md`, etc. The `doc_viewer.v` example
 can be used to read them or use a browser.
 
+## Architecture Overview
+
+![architecture](assets/gui-architecture.png)
+
+The `gui` project follows a layered architecture, ensuring a clear separation of concerns.
+Here's a breakdown of its main parts and their interactions:
+
+### **Application Layer**
+This layer represents the entry points for users and developers.
+*   **Application Code**: These are the actual user applications built using the `gui` library.
+*   **Examples**: A collection of demonstration applications showcasing various features and usage patterns of the `gui` framework.
+
+### **Window Management Layer**
+This layer handles the main application window and user interactions.
+*   **Window**: The central orchestrator of the GUI system, managing the application window.
+*   **WindowCfg**: Configuration parameters used during the creation of a window, such as dimensions, title, and initial callbacks.
+*   **Event System**: Responsible for capturing and processing all user input events, including mouse actions, keyboard presses, and window-specific events like resizing.
+
+### **View Layer**
+This layer defines the UI elements and how they are generated.
+*   **View**: An abstract representation of UI components and their layouts. Views are stateless and generate layouts.
+*   **View Generator**: Functions that dynamically create `View` instances based on the application's current state.
+*   **ViewState**: Manages the transient state of views, such as focus, selection, and scroll positions, which are not stored directly within the stateless `View` objects.
+
+### **Layout Engine**
+This is the core system for arranging and positioning UI elements.
+*   **Layout**: A hierarchical tree structure that defines the arrangement of UI elements on the screen. It's generated from `View`s.
+*   **Shape**: The fundamental geometric representation of any UI element, holding properties like position, size, and styling.
+*   **Sizing, Alignment, Padding**: These modules control how elements are dimensioned, positioned relative to each other, and how spacing is applied around them, respectively.
+
+### **UI Components**
+This layer provides a rich set of pre-built UI elements for common use cases.
+*   **Common Components**: Includes basic interactive elements like `Button`, `Text`, `Input`, `Image`, and more specialized widgets.
+*   **Containers**: Layout-specific components such as `Column`, `Row`, and `Canvas` that organize child elements.
+
+### **Rendering System**
+This layer is responsible for the actual drawing of UI elements onto the screen.
+*   **Renderer**: The component that takes the processed `Layout` information and translates it into drawing instructions.
+*   **Animation**: Handles animated UI elements, providing smooth transitions and visual feedback.
+
+### **Core Systems**
+These are foundational utilities and styling mechanisms.
+*   **Theme & Colors**: Manages the visual styling of the entire application, including color palettes and overall theme settings.
+*   **Fonts & Styles**: Provides text rendering capabilities, including font loading, variants (bold, italic, mono), and text styling options.
+
+### **External Dependencies**
+These are external libraries that the `gui` project relies on.
+*   **gg Graphics**: A graphics library used for low-level 2D rendering operations.
+*   **sokol.sapp**: A cross-platform application framework that provides windowing and event handling functionalities.
+
+The overall flow begins with user applications creating a `Window`. The `Window` then uses
+`View Generators` to produce `View`s, which are transformed into `Layout`s by the
+`Layout Engine`. Finally, the `Rendering` system draws these `Layout`s using `gg Graphics`
+and `sokol.sapp`, adhering to the defined `Theme` and `Fonts`.
+
 ## Development Status
 
 Current state of the project can be found at: [Progress Reports and
@@ -248,185 +303,40 @@ Feedback](https://github.com/mike-ward/gui/issues/3)
 
 ## Best Practices
 
-  1.  **Keep views pure**: View functions should only depend on the
-      provided state
-  2.  **Handle state changes in event handlers**: Modify state in click
-      handlers and other event callbacks
-  3.  **Use declarative layouts**: Leverage the flex-box style layout
-      system
-  4.  **Start simple**: Begin with basic examples and gradually add
-      complexity
+1.  **Keep views pure**: View functions should only depend on the
+    provided state
+2.  **Handle state changes in event handlers**: Modify state in click
+    handlers and other event callbacks
+3.  **Use declarative layouts**: Leverage the flex-box style layout
+    system
+4.  **Start simple**: Begin with basic examples and gradually add
+    complexity
 
 ## Troubleshooting
 
-Since the framework is in early development: 
-  
-  - Check the GitHub issues for known problems 
-  - Refer to working examples for proper usage patterns 
-  - Provide feedback to help improve the framework
+Since the framework is in early development:
+
+- Check the GitHub issues for known problems
+- Refer to working examples for proper usage patterns
+- Provide feedback to help improve the framework
 
 ## Contributing
 
 The project welcomes contributions and feedback. Visit the GitHub
 repository to:
 
-  - Report issues 
-  - Submit pull requests 
-  - Provide feedback  on the framework design 
-  - Help with documentation
+- Report issues
+- Submit pull requests
+- Provide feedback  on the framework design
+- Help with documentation
 
 ## Related Projects
 
-V also provides other UI solutions: 
+V also provides other UI solutions:
 
 - **V UI**: Cross-platform widget toolkit
 - **gg**: Graphics library for 2D applications using OpenGL/Metal/DirectX 11
 
 This GUI framework focuses specifically on immediate mode rendering with
 a declarative API, making it distinct from other V UI solutions.
-
-## Architecture Overview
-
-``` mermaid
----
-config:
-  themeVariables:
-    textColor: 'black'
-  layout: elk
----
-  graph TD
-    subgraph "Application"
-        APP[User Applications]
-        EX[Examples]
-    end
-    
-    subgraph "Window & Events"
-        WIN[Window]
-        CFG[WindowCfg]
-        EVT[Event System]
-    end
-    
-    subgraph "View System"
-        VIEW[View]
-        GEN[View Generator]
-        STATE[ViewState]
-    end
-    
-    subgraph "Layout Engine"
-        LAY[Layout]
-        SHAPE[Shape]
-        SIZE[Sizing<br>Alignment<br>Padding]
-    end
-    
-    subgraph "UI Components"
-        COMMON[Button<br>Text<br>Input<br>Image<br>...]
-        CONTAINERS[Column<br>Row<br>Canvas]
-    end
-    
-    subgraph "Rendering"
-        REND[Renderer]
-        ANIM[Animation]
-    end
-    
-    subgraph "Core & Theme"
-        THEME[Theme & Colors]
-        FONTS[Fonts & Styles]
-    end
-    
-    subgraph "External Deps"
-        GG[gg Graphics]
-        SOKOL[sokol.sapp]
-    end
-    
-    %% Main flow
-    APP --> WIN
-    EX --> WIN
-    WIN --> EVT
-    WIN --> GEN
-    VIEW --> STATE
-    GEN --> VIEW
-    VIEW --> LAY
-    LAY --> SHAPE
-    LAY --> SIZE
-    
-    %% Components to view
-    COMMON --> VIEW
-    CONTAINERS --> VIEW
-    
-    %% Layout to rendering
-    LAY --> REND
-    ANIM --> REND
-    
-    %% Core systems
-    REND --> THEME
-    REND --> FONTS
-    VIEW --> THEME
-    
-    %% External dependencies
-    WIN --> GG
-    WIN --> SOKOL
-    REND --> GG
-    
-    classDef app fill:#e1f5fe
-    classDef window fill:#f3e5f5
-    classDef view fill:#e8f5e8
-    classDef layout fill:#fff3e0
-    classDef component fill:#fce4ec
-    classDef render fill:#f1f8e9
-    classDef core fill:#e0f2f1
-    classDef external fill:#fafafa
-    
-    class APP,EX app
-    class WIN,CFG,EVT window
-    class VIEW,GEN,STATE view
-    class LAY,SHAPE,SIZE layout
-    class COMMON,CONTAINERS component
-    class REND,ANIM render
-    class THEME,FONTS,DEBUG core
-    class GG,SOKOL,UTILS external
-   ```
-
-GUI follows a layered architecture pattern with clear separation of concerns:
-
-### **Application Layer**
-- **Application Code**: User applications that use the GUI library
-- **Examples**: Demonstration applications showing various features
-
-### **Window Management Layer**
-- **Window**: Main application window that orchestrates the entire GUI system
-- **WindowCfg**: Configuration for window creation
-- **Event System**: Handles all user input events (mouse, keyboard, etc.)
-
-### **View Layer** 
-- **View**: Abstract representation of UI components and layouts
-- **View Generator**: Functions that create views dynamically
-- **ViewState**: Manages the current state of views (focus, selection, etc.)
-
-### **Layout System**
-- **Layout**: Hierarchical arrangement of UI elements
-- **Shape**: Basic geometric representation of UI elements
-- **Sizing**: Controls how elements are sized
-- **Alignment**: Controls element positioning
-- **Padding**: Manages spacing around elements
-
-### **UI Components**
-A rich set of pre-built UI components including buttons, text fields, tables, menus, dialogs, and many more specialized widgets.
-
-### **Rendering System**
-- **Renderer**: Responsible for drawing UI elements
-- **Render Functions**: Low-level drawing operations
-- **Animation**: Handles animated UI elements
-
-### **Core Systems**
-- **Color & Theme**: Visual styling system
-- **Font System**: Text rendering capabilities
-- **Debug & Stats**: Development and performance tools
-
-### **External Dependencies**
-- **gg**: Graphics context for rendering
-- **sokol.sapp**: Cross-platform application framework
-- **sync**: Threading and synchronization
-- **log**: Logging system
-
-The architecture follows a top-down flow where the application creates a window, which generates views through view generators, arranges them in layouts, and renders them through the rendering system using the underlying graphics context.
 
