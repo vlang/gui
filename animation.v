@@ -25,28 +25,28 @@ mut:
 }
 
 pub fn (mut window Window) animation_add(mut animation Animation) {
+	window.lock()
 	window.animations = window.animations.filter(it.id != animation.id)
-	unsafe { window.animations.flags.set(.noslices) }
-	animation.start = time.now()
 	window.animations << animation
+	animation.start = time.now()
+	window.unlock()
 }
 
 fn (mut window Window) animation_loop() {
 	for {
 		time.sleep(animation_cycle)
-		window.lock()
-
 		mut refresh := false
+		//--------------------------------------------
+		window.lock()
 		for mut animation in window.animations {
 			match mut animation {
 				Animate { refresh = update_animate(mut animation, mut window) || refresh }
 				else {}
 			}
 		}
-
-		// remove any stopped animations
 		window.animations = window.animations.filter(!it.stopped)
 		window.unlock()
+		//--------------------------------------------
 		if refresh {
 			window.update_window()
 		}

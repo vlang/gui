@@ -1,7 +1,7 @@
 module gui
 
 @[params]
-pub struct ThrobberCfg {
+pub struct PulsarCfg {
 pub:
 	id    string
 	icon1 string = icon_elipsis_h // icon1 used to measure for min_width
@@ -10,12 +10,15 @@ pub:
 	size  u32    = u32(gui_theme.size_text_medium)
 }
 
-pub fn (window &Window) throbber(cfg ThrobberCfg) View {
+// pulsar creates a blinking icon.
+// window.cursor_blink must be true to enable the animation.
+pub fn (window &Window) pulsar(cfg PulsarCfg) View {
 	text_style := TextStyle{
 		...gui_theme.icon3
 		size:  int(cfg.size)
 		color: cfg.color
 	}
+
 	width := get_text_width_no_cache(icon_elipsis_h, text_style, window)
 	txt := if window.view_state.cursor_on { cfg.icon1 } else { cfg.icon2 }
 

@@ -125,7 +125,7 @@ fn gallery(mut w gui.Window) gui.View {
 			.tab_stock {
 				[buttons(w), inputs(w), toggles(w), select_drop_down(w),
 					list_box(w), expand_panel(w), progress_bars(w),
-					range_sliders(w), throbbers(w)]
+					range_sliders(w), pulsars(w)]
 			}
 			.tab_icons {
 				[icons(mut w)]
@@ -1551,33 +1551,33 @@ fn expand_panel_sample(w &gui.Window) gui.View {
 const brazil_text = 'The word "Brazil" likely comes from the Portuguese word for brazilwood, a tree that once grew plentifully along the Brazilian coast. In Portuguese, brazilwood is called pau-brasil, with the word brasil commonly given the etymology "red like an ember", formed from brasa ("ember") and the suffix -il (from -iculum or -ilium). As brazilwood produces a deep red dye, it was highly valued by the European textile industry and was the earliest commercially exploited product from Brazil. Throughout the 16th century, massive amounts of brazilwood were harvested by indigenous peoples (mostly Tupi) along the Brazilian coast, who sold the timber to European traders (mostly Portuguese, but also French) in return for assorted European consumer goods.'
 
 // ==============================================================
-// Throbbers
+// Pulsars
 // ==============================================================
 
-fn throbbers(w &gui.Window) gui.View {
+fn pulsars(w &gui.Window) gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		sizing:  gui.fill_fill
 		content: [
-			view_title('Throbbers'),
+			view_title('Pulsars'),
 			gui.row(
 				padding: gui.padding_none
 				sizing:  gui.fill_fit
 				spacing: 0
-				content: [throbber_sample(w)]
+				content: [pulsar_samples(w)]
 			),
 		]
 	)
 }
 
-fn throbber_sample(w &gui.Window) gui.View {
+fn pulsar_samples(w &gui.Window) gui.View {
 	return gui.row(
 		content: [
-			w.throbber(),
-			w.throbber(size: 20),
-			w.throbber(size: 30, color: gui.orange),
-			w.throbber(size: 30, icon1: gui.icon_heart, icon2: gui.icon_heart_o, color: gui.red),
-			w.throbber(size: 30, icon1: gui.icon_expand, icon2: gui.icon_compress, color: gui.green),
+			w.pulsar(),
+			w.pulsar(size: 20),
+			w.pulsar(size: 30, color: gui.orange),
+			w.pulsar(size: 30, icon1: gui.icon_heart, icon2: gui.icon_heart_o, color: gui.red),
+			w.pulsar(size: 30, icon1: gui.icon_expand, icon2: gui.icon_compress, color: gui.green),
 		]
 	)
 }

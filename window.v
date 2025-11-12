@@ -164,7 +164,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	// An Event is processed until an event handler sets the event.is_handled`
 	// member to true.
 	w.lock()
-	// layout is not modified else where (or at least it should not be).
+	// layout is not modified else where at this point in the life cycle.
 	// Locks in V do not nest, which is why unlock() is called immediately after
 	// acquiring the layout. This allows event handlers to lock the window to
 	// update view state, etc.
@@ -243,6 +243,7 @@ pub fn (mut window Window) update_window() {
 		return
 	}
 
+	//--------------------------------------------
 	window.lock()
 	mut view := window.view_generator(window)
 
@@ -257,6 +258,7 @@ pub fn (mut window Window) update_window() {
 	clear_views(mut view)
 	clear_layouts(mut old_layout)
 	window.unlock()
+	//--------------------------------------------
 
 	$if !prod {
 		gui_stats.update_max_renderers(usize(window.renderers.len))
