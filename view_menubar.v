@@ -8,7 +8,7 @@ import datatypes
 //
 // For historical reasons: MenubarCfg is also used to configure [menu](#menu)
 //
-// Menubars and menu-items adhere to the same theme logic as other Gui views.
+// Menu-bars and menu-items adhere to the same theme logic as other Gui views.
 // Menu-item clicks can be processed in two places. Each [MenuItemCfg](#MenuItemCfg)
 // has an optional user action callback that is called when the menu-item is clicked.
 // There is also an optional user action callback on the Menubar. This is called after

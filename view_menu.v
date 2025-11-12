@@ -10,10 +10,7 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 	if cfg.id_focus == 0 {
 		panic('MenubarCfg.id_focus must be non-zero')
 	}
-	mut ids := datatypes.Set[string]{}
-	if duplicate_id := check_menu_ids(cfg.items, mut ids) {
-		panic('Duplicate menu-id found menubar-id "${cfg.id}": "${duplicate_id}"')
-	}
+	check_for_duplicate_ids(cfg.items)
 	return column(
 		name:          'menubar border'
 		id:            cfg.id
@@ -166,6 +163,13 @@ fn find_menu_item_cfg(items []MenuItemCfg, id string) ?MenuItemCfg {
 		}
 	}
 	return none
+}
+
+fn check_for_duplicate_ids(items []MenuItemCfg) {
+	mut ids := datatypes.Set[string]{}
+	if duplicate_id := check_menu_ids(items, mut ids) {
+		panic('Duplicate menu-id found menubar-id [${duplicate_id}]')
+	}
 }
 
 fn check_menu_ids(items []MenuItemCfg, mut ids datatypes.Set[string]) ?string {
