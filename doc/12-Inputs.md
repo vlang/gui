@@ -50,7 +50,7 @@ The `input` view is created with an `InputCfg` structure. Important fields:
 - `on_text_changed fn (&Layout, string, &mut Window)` --- Called whenever the
   text changes. **Required for editing**: input fields without this callback
   are read-only. You should update your state with the new text value.
-- `on_enter fn (&Layout, mut Event, &mut Window)` --- Called when Enter is
+- `on_enter fn (&Layout, mut Event, mut Window)` --- Called when Enter is
   pressed. If not provided and `mode: .multiline`, Enter inserts a newline
   instead.
 - `on_click_icon fn (&Layout, mut Event, mut Window)` --- Called when the
@@ -314,7 +314,7 @@ gui.input(
 		mut app := w.state[App]()
 		app.query = s
 	}
-	on_enter:        fn (_ &gui.Layout, mut e gui.Event, w &gui.Window) {
+	on_enter:        fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 		mut app := w.state[App]()
 		// Perform search with app.query
 		println('Searching for: ${app.query}')
@@ -374,7 +374,7 @@ gui.input(
 	padding_border:     gui.padding_small
 	radius:             8
 	radius_border:      10
-	on_text_changed:    fn (_ &gui.Layout, s string, w &gui.Window) {
+	on_text_changed:    fn (_ &gui.Layout, s string, mut w gui.Window) {
 		mut app := w.state[App]()
 		app.value = s
 	}

@@ -68,7 +68,7 @@ pub:
 	date        time.Time = time.now()
 	placeholder string
 	on_select   fn ([]time.Time, mut Event, mut Window) = unsafe { nil }
-	on_enter    fn (&Layout, mut Event, &Window)        = unsafe { nil }
+	on_enter    fn (&Layout, mut Event, mut Window)        = unsafe { nil }
 
 	// Date Picker Options
 	allowed_weekdays         []DatePickerWeekdays
