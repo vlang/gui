@@ -100,47 +100,59 @@ Notes:
 
 ### Message
 
-``` v
+```v
+import gui
+
+mut w := gui.Window{}
+
 w.dialog(
-    dialog_type: .message
-    title: 'Operation Complete'
-    body: 'All tasks finished successfully.'
-    align_buttons: .end
-    on_ok_yes: fn (mut w gui.Window) {
-        // optional follow-up action
-    }
+	dialog_type:   .message
+	title:         'Operation Complete'
+	body:          'All tasks finished successfully.'
+	align_buttons: .end
+	on_ok_yes:     fn (mut _ gui.Window) {
+		// optional follow-up action
+	}
 )
 ```
 
 ### Confirm
 
-``` v
+```v
+import gui
+
+mut w := gui.Window{}
+
 w.dialog(
-    dialog_type: .confirm
-    title: 'Delete File?'
-    body: 'This action cannot be undone.'
-    on_ok_yes: fn (mut w gui.Window) {
-        w.dialog(title: 'Clicked Yes')
-    }
-    on_cancel_no: fn (mut w gui.Window) {
-        w.dialog(title: 'Clicked No')
-    }
+	dialog_type:  .confirm
+	title:        'Delete File?'
+	body:         'This action cannot be undone.'
+	on_ok_yes:    fn (mut w gui.Window) {
+		w.dialog(title: 'Clicked Yes')
+	}
+	on_cancel_no: fn (mut w gui.Window) {
+		w.dialog(title: 'Clicked No')
+	}
 )
 ```
 
 ### Prompt
 
-``` v
+```v
+import gui
+
+mut w := gui.Window{}
+
 w.dialog(
-    dialog_type: .prompt
-    title: 'Monty Python Quiz'
-    body: 'What is your quest?'
-    on_reply: fn (reply string, mut w gui.Window) {
-        w.dialog(title: 'Replied', body: reply)
-    }
-    on_cancel_no: fn (mut w gui.Window) {
-        w.dialog(title: 'Canceled')
-    }
+	dialog_type:  .prompt
+	title:        'Monty Python Quiz'
+	body:         'What is your quest?'
+	on_reply:     fn (reply string, mut w gui.Window) {
+		w.dialog(title: 'Replied', body: reply)
+	}
+	on_cancel_no: fn (mut w gui.Window) {
+		w.dialog(title: 'Canceled')
+	}
 )
 ```
 
@@ -148,26 +160,30 @@ w.dialog(
 
 Provide arbitrary content and dismiss programmatically.
 
-``` v
+```v
+import gui
+
+mut w := gui.Window{}
+
 w.dialog(
-    dialog_type: .custom
-    custom_content: [
-        gui.column(
-            h_align: .center
-            v_align: .middle
-            content: [
-                gui.text(text: 'Custom Content')
-                gui.button(
-                    // Using the base dialog id focus makes Enter/Space work naturally
-                    id_focus: gui.dialog_base_id_focus
-                    content: [gui.text(text: 'Close Me')]
-                    on_click: fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
-                        w.dialog_dismiss()
-                    }
-                )
-            ]
-        ),
-    ]
+	dialog_type:    .custom
+	custom_content: [
+		gui.column(
+			h_align: .center
+			v_align: .middle
+			content: [
+				gui.text(text: 'Custom Content'),
+				gui.button(
+					// Using the base dialog id focus makes Enter/Space work naturally
+					id_focus: gui.dialog_base_id_focus
+					content:  [gui.text(text: 'Close Me')]
+					on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+						w.dialog_dismiss()
+					}
+				),
+			]
+		),
+	]
 )
 ```
 
@@ -185,8 +201,8 @@ w.dialog(
 
 Creates and shows a dialog:
 
-``` v
-pub fn (mut window Window) dialog(cfg DialogCfg)
+```oksyntax
+pub fn (mut window gui.Window) dialog(cfg gui.DialogCfg)
 ```
 
 - Sets `window.dialog_cfg = cfg`
@@ -198,16 +214,16 @@ pub fn (mut window Window) dialog(cfg DialogCfg)
 Dismisses the current dialog without invoking callbacks. Useful for
 `custom` dialogs.
 
-``` v
-pub fn (mut window Window) dialog_dismiss()
+```oksyntax
+pub fn (mut window gui.Window) dialog_dismiss()
 ```
 
 ### Window.dialog_is_visible
 
 Returns whether a dialog is currently visible.
 
-``` v
-pub fn (mut window Window) dialog_is_visible() bool
+```oksyntax
+pub fn (mut window gui.Window) dialog_is_visible() bool
 ```
 
 ## Examples

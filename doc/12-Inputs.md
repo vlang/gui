@@ -47,13 +47,13 @@ The `input` view is created with an `InputCfg` structure. Important fields:
 
 ### Callbacks
 
-- `on_text_changed fn (&InputCfg, string, &Window)` --- Called whenever the
+- `on_text_changed fn (&Layout, string, &mut Window)` --- Called whenever the
   text changes. **Required for editing**: input fields without this callback
   are read-only. You should update your state with the new text value.
-- `on_enter fn (&InputCfg, mut Event, &Window)` --- Called when Enter is
+- `on_enter fn (&Layout, mut Event, &mut Window)` --- Called when Enter is
   pressed. If not provided and `mode: .multiline`, Enter inserts a newline
   instead.
-- `on_click_icon fn (&InputCfg, mut Event, mut Window)` --- Called when the
+- `on_click_icon fn (&Layout, mut Event, mut Window)` --- Called when the
   icon is clicked (if `icon` is provided).
 
 ### Focus and interaction
@@ -165,47 +165,47 @@ The `input` view is created with an `InputCfg` structure. Important fields:
 
 A simple input field that updates state on text changes:
 
-``` v
+```v
 import gui
 
 struct App {
-    mut:
-        name string
+mut:
+	name string
 }
 
 fn main() {
-    mut window := gui.window(
-        title:   'Input Demo'
-        state:   &App{}
-        width:   400
-        height:  200
-        on_init: fn (mut w gui.Window) {
-            w.update_view(main_view)
-            w.set_id_focus(1)
-        }
-    )
-    window.run()
+	mut window := gui.window(
+		title:   'Input Demo'
+		state:   &App{}
+		width:   400
+		height:  200
+		on_init: fn (mut w gui.Window) {
+			w.update_view(main_view)
+			w.set_id_focus(1)
+		}
+	)
+	window.run()
 }
 
 fn main_view(mut w gui.Window) gui.View {
-    mut app := w.state[App]()
+	mut app := w.state[App]()
 
-    return gui.column(
-        padding: gui.theme().padding_medium
-        content: [
-            gui.input(
-                id_focus:        1
-                text:            app.name
-                placeholder:     'Enter your name...'
-                min_width:       200
-                max_width:       200
-                on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-                    mut app := w.state[App]()
-                    app.name = s
-                }
-            ),
-        ]
-    )
+	return gui.column(
+		padding: gui.theme().padding_medium
+		content: [
+			gui.input(
+				id_focus:        1
+				text:            app.name
+				placeholder:     'Enter your name...'
+				min_width:       200
+				max_width:       200
+				on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+					mut app := w.state[App]()
+					app.name = s
+				}
+			),
+		]
+	)
 }
 ```
 
@@ -213,20 +213,24 @@ fn main_view(mut w gui.Window) gui.View {
 
 Inputs without `on_text_changed` or with `id_focus: 0` are read-only:
 
-``` v
+```v
+import gui
+
 gui.input(
-    id_focus: 0  // Makes it read-only
-    text:     'This text cannot be edited'
+	id_focus: 0 // Makes it read-only
+	text:     'This text cannot be edited'
 )
 ```
 
 Or simply omit `on_text_changed`:
 
-``` v
+```v
+import gui
+
 gui.input(
-    id_focus: 1
-    text:     'This text cannot be edited'
-    // No on_text_changed callback = read-only
+	id_focus: 1
+	text:     'This text cannot be edited'
+	// No on_text_changed callback = read-only
 )
 ```
 
@@ -234,18 +238,27 @@ gui.input(
 
 Use `is_password: true` to mask the input:
 
-``` v
+```v
+import gui
+
+struct App {
+mut:
+	password string
+}
+
+mut app := App{}
+
 gui.input(
-    id_focus:        1
-    text:            app.password
-    placeholder:     'Enter password'
-    is_password:     true
-    min_width:       200
-    max_width:       200
-    on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-        mut app := w.state[App]()
-        app.password = s
-    }
+	id_focus:        1
+	text:            app.password
+	placeholder:     'Enter password'
+	is_password:     true
+	min_width:       200
+	max_width:       200
+	on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+		mut app := w.state[App]()
+		app.password = s
+	}
 )
 ```
 
@@ -255,18 +268,26 @@ Note: Copy operation is disabled when `is_password: true` for security.
 
 Set `mode: .multiline` to enable multiple lines:
 
-``` v
+```v
+import gui
+
+struct App {
+mut:
+	description string
+}
+
+mut app := App{}
 gui.input(
-    id_focus:        1
-    text:            app.description
-    placeholder:     'Enter description...'
-    mode:            .multiline
-    min_width:       300
-    min_height:      100
-    on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-        mut app := w.state[App]()
-        app.description = s
-    }
+	id_focus:        1
+	text:            app.description
+	placeholder:     'Enter description...'
+	mode:            .multiline
+	min_width:       300
+	min_height:      100
+	on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+		mut app := w.state[App]()
+		app.description = s
+	}
 )
 ```
 
@@ -276,20 +297,28 @@ In multiline mode, Enter inserts a newline unless `on_enter` is provided.
 
 Use `on_enter` to capture the Enter key:
 
-``` v
+```v
+import gui
+
+struct App {
+mut:
+	query string
+}
+
+mut app := App{}
 gui.input(
-    id_focus:        1
-    text:            app.query
-    placeholder:     'Search...'
-    on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-        mut app := w.state[App]()
-        app.query = s
-    }
-    on_enter: fn (_ &gui.InputCfg, mut e gui.Event, w gui.Window) {
-        mut app := w.state[App]()
-        // Perform search with app.query
-        println('Searching for: ${app.query}')
-    }
+	id_focus:        1
+	text:            app.query
+	placeholder:     'Search...'
+	on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+		mut app := w.state[App]()
+		app.query = s
+	}
+	on_enter:        fn (_ &gui.Layout, mut e gui.Event, w &gui.Window) {
+		mut app := w.state[App]()
+		// Perform search with app.query
+		println('Searching for: ${app.query}')
+	}
 )
 ```
 
@@ -297,20 +326,28 @@ gui.input(
 
 Add a clickable icon on the right side:
 
-``` v
+```v
+import gui
+
+struct App {
+mut:
+	search_text string
+}
+
+mut app := App{}
 gui.input(
-    id_focus:        1
-    text:            app.search_text
-    placeholder:     'Search...'
-    icon:            gui.icon_search
-    on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-        mut app := w.state[App]()
-        app.search_text = s
-    }
-    on_click_icon: fn (_ &gui.InputCfg, mut e gui.Event, mut w gui.Window) {
-        mut app := w.state[App]()
-        println('Icon clicked! Searching for: ${app.search_text}')
-    }
+	id_focus:        1
+	text:            app.search_text
+	placeholder:     'Search...'
+	icon:            gui.icon_search
+	on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+		mut app := w.state[App]()
+		app.search_text = s
+	}
+	on_click_icon:   fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+		mut app := w.state[App]()
+		println('Icon clicked! Searching for: ${app.search_text}')
+	}
 )
 ```
 
@@ -318,21 +355,29 @@ gui.input(
 
 Inputs use theme defaults, but you can override colors, padding, and radius:
 
-``` v
+```v
+import gui
+
+struct App {
+mut:
+	value string
+}
+
+mut app := App{}
 gui.input(
-    id_focus:        1
-    text:            app.value
-    color:           gui.rgb(250, 250, 250)
-    color_border:    gui.rgb(200, 200, 200)
-    color_border_focus: gui.rgb(100, 150, 255)
-    padding:         gui.padding_medium
-    padding_border:  gui.padding_small
-    radius:          8
-    radius_border:   10
-    on_text_changed: fn (_ &gui.InputCfg, s string, mut w gui.Window) {
-        mut app := w.state[App]()
-        app.value = s
-    }
+	id_focus:           1
+	text:               app.value
+	color:              gui.rgb(250, 250, 250)
+	color_border:       gui.rgb(200, 200, 200)
+	color_border_focus: gui.rgb(100, 150, 255)
+	padding:            gui.padding_medium
+	padding_border:     gui.padding_small
+	radius:             8
+	radius_border:      10
+	on_text_changed:    fn (_ &gui.Layout, s string, w &gui.Window) {
+		mut app := w.state[App]()
+		app.value = s
+	}
 )
 ```
 

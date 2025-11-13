@@ -82,53 +82,51 @@ This function creates the expand panel view from the given
 
 A simple expand panel that toggles when clicked:
 
-``` v
+```v
 import gui
 
 struct App {
-    mut:
+mut:
 	panel_open bool
 }
 
 fn main() {
-    mut window := gui.window(
-        title:   'Expand Panel Demo'
-        state:   &App{}
-        width:   300
-        height:  300
-        on_init: fn (mut w gui.Window) {
-            w.update_view(main_view)
-        }
-    )
-    window.run()
+	mut window := gui.window(
+		title:   'Expand Panel Demo'
+		state:   &App{}
+		width:   300
+		height:  300
+		on_init: fn (mut w gui.Window) {
+			w.update_view(main_view)
+		}
+	)
+	window.run()
 }
 
 fn main_view(mut w gui.Window) gui.View {
-    mut app := w.state[App]()
+	mut app := w.state[App]()
 
-    return gui.column(
-        padding: gui.theme().padding_medium
-        content: [
-            gui.expand_panel(
-                open: app.panel_open
-                head: gui.column(
-                    padding: gui.theme().padding_medium
-                    content: [gui.text(text: 'Click to expand')]
-                )
-                content: gui.column(
-                    padding: gui.theme().padding_medium
-                    content: [
-                        gui.text(text: 'This is the hidden content.'),
-                        gui.text(text: 'It appears when the panel is open.'),
-                    ]
-                )
-                on_toggle: fn (mut win gui.Window) {
-                    mut app := win.state[App]()
-                    app.panel_open = !app.panel_open
-                }
-            ),
-        ]
-    )
+	return gui.column(
+		padding: gui.theme().padding_medium
+		content: [
+			gui.expand_panel(
+				open:      app.panel_open
+				head:      gui.column(
+					padding: gui.theme().padding_medium
+					content: [gui.text(text: 'Click to expand')]
+				)
+				content:   gui.column(
+					padding: gui.theme().padding_medium
+					content: [gui.text(text: 'This is the hidden content.'),
+						gui.text(text: 'It appears when the panel is open.')]
+				)
+				on_toggle: fn (mut win gui.Window) {
+					mut app := win.state[App]()
+					app.panel_open = !app.panel_open
+				}
+			),
+		]
+	)
 }
 ```
 
@@ -137,44 +135,46 @@ fn main_view(mut w gui.Window) gui.View {
 A common pattern is to have multiple expand panels where opening one
 closes the others:
 
-``` v
+```v
+import gui
+
 struct App {
-    mut:
-        open_titles []string
-        auto_close  bool
+mut:
+	open_titles []string
+	auto_close  bool
 }
 
 fn expander(title string, description string, mut app App) gui.View {
-    return gui.expand_panel(
-        open: title in app.open_titles
-        sizing: gui.fill_fit
-        head: gui.row(
-            padding: gui.theme().padding_medium
-            content: [gui.text(text: title)]
-        )
-        content: gui.column(
-            padding: gui.theme().padding_medium
-            content: [
-                gui.text(text: description, mode: .wrap),
-            ]
-        )
-        on_toggle: fn [title] (mut w gui.Window) {
-            mut app := w.state[App]()
-            if app.auto_close {
-                // Close all others, open only this one
-                match title in app.open_titles {
-                    true { app.open_titles.clear() }
-                    else { app.open_titles = [title] }
-                }
-            } else {
-                // Toggle this one independently
-                match title in app.open_titles {
-                    true { app.open_titles = app.open_titles.filter(it != title) }
-                    else { app.open_titles << title }
-                }
-            }
-        }
-    )
+	return gui.expand_panel(
+		open:      title in app.open_titles
+		sizing:    gui.fill_fit
+		head:      gui.row(
+			padding: gui.theme().padding_medium
+			content: [gui.text(text: title)]
+		)
+		content:   gui.column(
+			padding: gui.theme().padding_medium
+			content: [
+				gui.text(text: description, mode: .wrap),
+			]
+		)
+		on_toggle: fn [title] (mut w gui.Window) {
+			mut app := w.state[App]()
+			if app.auto_close {
+				// Close all others, open only this one
+				match title in app.open_titles {
+					true { app.open_titles.clear() }
+					else { app.open_titles = [title] }
+				}
+			} else {
+				// Toggle this one independently
+				match title in app.open_titles {
+					true { app.open_titles = app.open_titles.filter(it != title) }
+					else { app.open_titles << title }
+				}
+			}
+		}
+	)
 }
 ```
 
@@ -183,23 +183,34 @@ fn expander(title string, description string, mut app App) gui.View {
 The header can contain any views. Here's an example with multiple
 elements:
 
-``` v
+```v
+import gui
+
+struct App {
+mut:
+	is_open bool
+}
+
+mut app := App{}
+
 gui.expand_panel(
-    open: app.is_open
-    head: gui.row(
-        padding: gui.theme().padding_medium
-        sizing: gui.fill_fit
-        v_align: .middle
-        content: [
-            gui.text(text: 'Section Title', text_style: gui.theme().n3),
-            gui.row(sizing: gui.fill_fit), // Spacer
-            gui.text(text: 'Subtitle', text_style: gui.theme().n4),
-        ]
-    )
-    content: gui.column(
-        content: [/* your content */]
-    )
-    on_toggle: fn (mut w gui.Window) { /* ... */ }
+	open:      app.is_open
+	head:      gui.row(
+		padding: gui.theme().padding_medium
+		sizing:  gui.fill_fit
+		v_align: .middle
+		content: [
+			gui.text(text: 'Section Title', text_style: gui.theme().n3),
+			gui.row(sizing: gui.fill_fit), // Spacer
+			gui.text(text: 'Subtitle', text_style: gui.theme().n4),
+		]
+	)
+	content:   gui.column(
+		content: [] // your content
+	)
+	on_toggle: fn (mut w gui.Window) {
+		// ...
+	}
 )
 ```
 
@@ -211,18 +222,30 @@ so you don't need to include it in your `head` view.
 Expand panels use theme defaults, but you can override colors, padding,
 and radius:
 
-``` v
+```v
+import gui
+
+struct App {
+mut:
+	open_titles []string
+	auto_close  bool
+	is_open     bool
+}
+
+mut app := App{}
 gui.expand_panel(
-    open: app.open
-    color: gui.rgb(240, 240, 240)
-    color_border: gui.rgb(200, 200, 200)
-    padding: gui.padding_medium
-    padding_border: gui.padding_small
-    radius: 8
-    radius_border: 10
-    head: gui.row(/* ... */)
-    content: gui.column(/* ... */)
-    on_toggle: fn (mut w gui.Window) { /* ... */ }
+	open:           app.is_open
+	color:          gui.rgb(240, 240, 240)
+	color_border:   gui.rgb(200, 200, 200)
+	padding:        gui.padding_medium
+	padding_border: gui.padding_small
+	radius:         8
+	radius_border:  10
+	head:           gui.row(id: '1') // etc.
+	content:        gui.column(id: '2') // etc.
+	on_toggle:      fn (mut w gui.Window) {
+		// ...
+	}
 )
 ```
 

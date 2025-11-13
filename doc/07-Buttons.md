@@ -1,4 +1,4 @@
-# 7 Buttons 
+# 7 Buttons
 
 Buttons are clickable containers. In Gui, a button is a `row` (the
 border) that contains another `row` (the button body) that can hold any
@@ -44,7 +44,7 @@ fields:
   - `fill_border bool` — Fill border rectangle (use `false` for a
     detached border)
 - Interaction and state
-  - `on_click fn (&ButtonCfg, mut Event, mut Window)` — Click handler
+  - `on_click fn (&Layoyut, mut Event, mut Window)` — Click handler
     (required for interactivity)
   - `id_focus u32` — Focus-group id (used by keyboard focus)
   - `disabled bool` — When `true`, button won’t accept input
@@ -72,50 +72,50 @@ fields:
 A minimal clickable button that increments a counter stored in window
 state:
 
-``` v
+```v
 import gui
 
 struct App {
-    mut:
-        clicks int
+mut:
+	clicks int
 }
 
 fn main() {
-    mut window := gui.window(
-        title: 'Counter Button'
-        state: &App{}
-        width:  300
-        height: 150
-        on_init: fn (mut w gui.Window) {
-            w.update_view(main_view)
-            // Optional: set initial keyboard focus
-            w.set_id_focus(1)
-        }
-    )
-    window.run()
+	mut window := gui.window(
+		title:   'Counter Button'
+		state:   &App{}
+		width:   300
+		height:  150
+		on_init: fn (mut w gui.Window) {
+			w.update_view(main_view)
+			// Optional: set initial keyboard focus
+			w.set_id_focus(1)
+		}
+	)
+	window.run()
 }
 
 fn main_view(mut w gui.Window) gui.View {
-    a := w.state[App]()
-    btn_text := '${a.clicks} Clicks'
+	a := w.state[App]()
+	btn_text := '${a.clicks} Clicks'
 
-    return gui.column(
-        padding: gui.theme().padding_medium
-        h_align: .center
-        v_align: .middle
-        content: [
-            gui.button(
-                id_focus: 1
-                min_width:  120
-                max_width:  120
-                content:   [gui.text(text: btn_text)]
-                on_click:  fn (_ &gui.ButtonCfg, _ &gui.Event, mut win gui.Window) {
-                    mut app := win.state[App]()
-                    app.clicks++
-                }
-            ),
-        ]
-    )
+	return gui.column(
+		padding: gui.theme().padding_medium
+		h_align: .center
+		v_align: .middle
+		content: [
+			gui.button(
+				id_focus:  1
+				min_width: 120
+				max_width: 120
+				content:   [gui.text(text: btn_text)]
+				on_click:  fn (_ &gui.Layout, mut _ gui.Event, mut win gui.Window) {
+					mut app := win.state[App]()
+					app.clicks++
+				}
+			),
+		]
+	)
 }
 ```
 
@@ -123,81 +123,90 @@ fn main_view(mut w gui.Window) gui.View {
 
 - Disabled button:
 
-``` v
+```v
+import gui
+
 gui.button(
-    min_width:  140
-    max_width:  140
-    disabled:   true
-    content:    [gui.text(text: 'Disabled')]
-    on_click:   fn (_ &gui.ButtonCfg, _ &gui.Event, mut _ gui.Window) {}
+	min_width: 140
+	max_width: 140
+	disabled:  true
+	content:   [gui.text(text: 'Disabled')]
+	on_click:  fn (_ &gui.Layout, mut _ gui.Event, mut _ gui.Window) {}
 )
 ```
 
 - With border padding (shows an outer border around the interior):
 
-``` v
+```v
+import gui
+
 gui.button(
-    min_width:      140
-    max_width:      140
-    padding_border: gui.padding_two
-    content:        [gui.text(text: 'With border')]
-    on_click:       some_click_handler
+	min_width:      140
+	max_width:      140
+	padding_border: gui.padding_two
+	content:        [gui.text(text: 'With border')]
+	on_click:       fn (_ &gui.Layout, mut _ gui.Event, mut _ gui.Window) {}
 )
 ```
 
 - With focusable border (set a focus id to see focused colors):
 
-``` v
+```v
+import gui
+
 gui.button(
-    id_focus:       1
-    min_width:      140
-    max_width:      140
-    padding_border: gui.padding_two
-    content:        [gui.text(text: 'Focusable')]
-    on_click:       some_click_handler
+	id_focus:       1
+	min_width:      140
+	max_width:      140
+	padding_border: gui.padding_two
+	content:        [gui.text(text: 'Focusable')]
+	on_click:       fn (_ &gui.Layout, mut _ gui.Event, mut _ gui.Window) {}
 )
 ```
 
 - Detached border (border rectangle does not fill entire parent):
 
-``` v
+```v
+import gui
+
 gui.button(
-    min_width:      140
-    max_width:      140
-    fill_border:    false
-    padding_border: gui.theme().padding_small
-    content:        [gui.text(text: 'Detached border')]
-    on_click:       some_click_handler
+	min_width:      140
+	max_width:      140
+	fill_border:    false
+	padding_border: gui.theme().padding_small
+	content:        [gui.text(text: 'Detached border')]
+	on_click:       fn (_ &gui.Layout, mut _ gui.Event, mut _ gui.Window) {}
 )
 ```
 
 - Custom content (progress bar inside a button):
 
-``` v
+```v
+import gui
 import math
 
 fn custom_button(app_clicks int) gui.View {
-    return gui.button(
-        id:             'With progress bar'
-        min_width:      200
-        max_width:      200
-        color:          gui.rgb(195, 105, 0)
-        color_hover:    gui.rgb(195, 105, 0)
-        color_click:    gui.rgb(205, 115, 0)
-        color_border:   gui.rgb(160, 160, 160)
-        padding:        gui.padding_medium
-        padding_border: gui.padding_two
-        v_align:        .middle
-        content: [
-            gui.text(text: '${app_clicks}', min_width: 25),
-            gui.progress_bar(
-                width:   75
-                height:  gui.theme().text_style.size
-                percent: f32(math.fmod(f64(app_clicks) / 25.0, 1.0))
-            ),
-        ]
-        on_click: fn (_ &gui.ButtonCfg, _ &gui.Event, mut _ gui.Window) {}
-    )
+	return gui.button(
+		id:             'With progress bar'
+		min_width:      200
+		max_width:      200
+		color:          gui.rgb(195, 105, 0)
+		color_hover:    gui.rgb(195, 105, 0)
+		color_click:    gui.rgb(205, 115, 0)
+		color_border:   gui.rgb(160, 160, 160)
+		padding:        gui.padding_medium
+		padding_border: gui.padding_two
+		v_align:        .middle
+		content:        [
+			gui.text(text: '${app_clicks}', min_width: 25),
+			gui.progress_bar(
+				width:   75
+				height:  gui.theme().text_style.size
+				percent: f32(math.fmod(f64(app_clicks) / 25.0, 1.0))
+			),
+		]
+		on_click:       fn (_ &gui.Layout, mut _ gui.Event, mut _ gui.Window) {}
+	)
 }
 ```
 

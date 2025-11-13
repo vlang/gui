@@ -15,11 +15,13 @@ you need a brand look, define a small set of overrides and let
 
 ### Quick start: apply a theme
 
-``` v
+```v
+import gui
+
 mut window := gui.window(
-    width:  800
-    height: 600
-    title:  'Theming'
+	width:  800
+	height: 600
+	title:  'Theming'
 )
 
 // Pick one of the predefined themes
@@ -33,7 +35,7 @@ window.run()
 - Access the active theme anywhere using `gui.theme()`.
 - Typical usage inside your UI code:
 
-``` v
+```oksyntax
 gui.text(
     text: 'Headline'
     text_style: gui.theme().b2 // built-in bold preset
@@ -108,19 +110,21 @@ Pick one as‑is or start from a config and tweak a few fields.
 
 Define a `ThemeCfg` with a few overrides, then generate the theme:
 
-``` v
+```v
+import gui
+
 pub fn my_brand_theme() gui.Theme {
 	return gui.theme_maker(gui.ThemeCfg{
 		name:               'my-brand'
-		color_background:   rgb(28, 28, 30)
-		color_panel:        rgb(36, 36, 38)
-		color_interior:     rgb(52, 52, 56)
-		color_hover:        rgb(70, 70, 78)
-		color_focus:        rgb(88, 88, 98)
-		color_active:       rgb(110, 110, 120)
-		color_border:       rgb(70, 70, 80)
-		color_border_focus: rgb(110, 140, 220)
-		color_select:       rgb(110, 140, 220)
+		color_background:   gui.rgb(28, 28, 30)
+		color_panel:        gui.rgb(36, 36, 38)
+		color_interior:     gui.rgb(52, 52, 56)
+		color_hover:        gui.rgb(70, 70, 78)
+		color_focus:        gui.rgb(88, 88, 98)
+		color_active:       gui.rgb(110, 110, 120)
+		color_border:       gui.rgb(70, 70, 80)
+		color_border_focus: gui.rgb(110, 140, 220)
+		color_select:       gui.rgb(110, 140, 220)
 		titlebar_dark:      true
 		padding:            gui.padding_medium
 		padding_border:     gui.padding_none
@@ -142,7 +146,7 @@ Notes
   and still get a complete, consistent theme.
 - You can further tweak the returned theme before applying it:
 
-``` v
+```oksyntax
 mut t := my_brand_theme()
 // Round buttons a bit more
 mut bs := t.button_style
@@ -160,7 +164,7 @@ window.set_theme(t)
 
 Most views let you override style or text style directly:
 
-``` v
+```oksyntax
 // Use the current theme for most things, but custom radius for this one button
 gui.button(
     text: 'Primary'
@@ -191,7 +195,7 @@ Use the presets on `Theme` to keep sizes consistent:
 
 Example:
 
-``` v
+```oksyntax
 gui.text(text: 'Section', text_style: gui.theme().b2)
 
 gui.text(
@@ -210,7 +214,7 @@ gui.text(
   created.
 - Typical toggle:
 
-``` v
+```oksyntax
 w.set_theme(if use_light { gui.theme_light } else { gui.theme_dark })
 ```
 

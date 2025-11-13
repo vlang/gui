@@ -68,26 +68,26 @@ three sizing modes:
 
 Sizing is specified independently for the horizontal and vertical axes.
 
-``` v
+```v
 // SizingType describes the three sizing modes of Gui
 pub enum SizingType as u8 {
-    fit   // element fits to content
-    fill  // element fills to parent (grows or shrinks)
-    fixed // element unchanged
+	fit   // element fits to content
+	fill  // element fills to parent (grows or shrinks)
+	fixed // element unchanged
 }
 
 // Sizing describes how the shape is sized horizontally and vertically.
 pub struct Sizing {
 pub:
-    width  SizingType
-    height SizingType
+	width  SizingType
+	height SizingType
 }
 ```
 
 There are nine possible combinations of width/height sizing. For
 convenience, Gui provides constants:
 
-``` v
+```oksyntax
 pub const fit_fit   = Sizing{ .fit,   .fit }
 pub const fit_fill  = Sizing{ .fit,   .fill }
 pub const fit_fixed = Sizing{ .fit,   .fixed }

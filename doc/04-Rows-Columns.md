@@ -1,4 +1,4 @@
-# 4 Rows and Columns 
+# 4 Rows and Columns
 
 Rows and columns are the two fundamental layout containers in Gui. -
 Rows lay out their children horizontally (left-to-right in LTR
@@ -15,8 +15,10 @@ Below is the essential structure of the built-in `button` view. It’s two
 nested rows: an outer row that draws the border/background and an inner
 row that holds the content.
 
-``` v
-pub fn button(cfg ButtonCfg) View {
+```oksyntax
+import gui
+
+pub fn button(cfg gui.ButtonCfg) View {
 	return row(
 		id:           cfg.id
 		id_focus:     cfg.id_focus
@@ -127,7 +129,7 @@ set the `text` property. This is commonly used for group boxes.
 
 - Padded horizontal row with centered content
 
-``` v
+```oksyntax
 row(
     padding: 8
     h_align: center
@@ -140,7 +142,7 @@ row(
 
 - Scrollable column (vertical-only)
 
-``` v
+```oksyntax
 column(
     id_scroll: 1         // any non-zero id enables scrolling
     // scroll_mode: ...  // restrict direction if desired
@@ -152,7 +154,7 @@ column(
 
 - Floating menu panel (conceptual)
 
-``` v
+```oksyntax
 column(
     // float: true       // depending on your composition
     padding: 4

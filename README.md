@@ -54,50 +54,50 @@ The framework follows a functional approach where:
 
 Here’s a complete example of a basic GUI application:
 
-``` v
+```v
 import gui
 
 struct App {
 pub mut:
-    clicks int
+	clicks int
 }
 
 fn main() {
-    mut window := gui.window(
-        state: &App{}
-        width: 300
-        height: 300
-        on_init: fn (mut w gui.Window) {
-            // Call update_view() anywhere in your
-            // business logic to change views.
-            w.update_view(main_view)
-        }
-    )
-    window.run()
+	mut window := gui.window(
+		state:   &App{}
+		width:   300
+		height:  300
+		on_init: fn (mut w gui.Window) {
+			// Call update_view() anywhere in your
+			// business logic to change views.
+			w.update_view(main_view)
+		}
+	)
+	window.run()
 }
 
 // The view generator set in update_view() is called on
 // every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
-    w, h := window.window_size()
-    app := window.state[App]()
-    return gui.column(
-        width: w
-        height: h
-        h_align: .center
-        v_align: .middle
-        sizing: gui.fixed_fixed
-        content: [
-            gui.text(text: 'Welcome to GUI'),
-            gui.button(
-                content: [gui.text(text: '${app.clicks} Clicks')]
-                on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
-                    mut app := w.state[App]()
-                    app.clicks += 1
-                }
-            ),
-        ]
-    )
+	w, h := window.window_size()
+	app := window.state[App]()
+	return gui.column(
+		width:   w
+		height:  h
+		h_align: .center
+		v_align: .middle
+		sizing:  gui.fixed_fixed
+		content: [
+			gui.text(text: 'Welcome to GUI'),
+			gui.button(
+				content:  [gui.text(text: '${app.clicks} Clicks')]
+				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+					mut app := w.state[App]()
+					app.clicks += 1
+				}
+			),
+		]
+	)
 }
 ```
 
@@ -119,16 +119,18 @@ following parameters:
 
 #### Column Layout
 
-``` v
+```v
+import gui
+
 gui.column(
-    width: w
-    height: h
-    h_align: .center    // Horizontal alignment
-    v_align: .middle    // Vertical alignment
-    sizing: gui.fixed_fixed
-    content: [
-        // Child components
-    ]
+	width:   300
+	height:  300
+	h_align: .center // Horizontal alignment
+	v_align: .middle // Vertical alignment
+	sizing:  gui.fixed_fixed
+	content: [
+		// Child components
+	]
 )
 ```
 
@@ -136,18 +138,22 @@ gui.column(
 
 #### Text
 
-``` v
+```v
+import gui
+
 gui.text(text: 'Your text here')
 ```
 
 #### Button
 
-``` v
+```v
+import gui
+
 gui.button(
-    content: [gui.text(text: 'Button Text')]
-    on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
-        // Handle click event
-    }
+	content:  [gui.text(text: 'Button Text')]
+	on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+		// Handle click event
+	}
 )
 ```
 

@@ -15,7 +15,7 @@ ratios (circles appear as circles and not ellipes for instance).
 Starting simple, the following example displays a window with centered
 text and a button that counts clicks.
 
-``` v
+```v
 import gui
 
 // GUI uses a view generator (a function that returns a View) to
@@ -32,21 +32,21 @@ import gui
 
 struct App {
 pub mut:
-    clicks int
+	clicks int
 }
 
 fn main() {
-    mut window := gui.window(
-        state:   &App{}
-        width:   300
-        height:  300
-        on_init: fn (mut w gui.Window) {
-            // Call update_view() any where in your
-            // business logic to change views.
-            w.update_view(main_view)
-        }
-    )
-    window.run()
+	mut window := gui.window(
+		state:   &App{}
+		width:   300
+		height:  300
+		on_init: fn (mut w gui.Window) {
+			// Call update_view() any where in your
+			// business logic to change views.
+			w.update_view(main_view)
+		}
+	)
+	window.run()
 }
 
 // The view generator set in update_view() is called on
@@ -62,15 +62,15 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-		        gui.text(
-			        text:       'Welcome to GUI'
-			        text_style: gui.theme().b1
-		        ),
+			gui.text(
+				text:       'Welcome to GUI'
+				text_style: gui.theme().b1
+			),
 			gui.button(
 				id_focus:       1
 				padding_border: gui.padding_two
 				content:        [gui.text(text: '${app.clicks} Clicks')]
-				on_click:       fn (_ &gui.ButtonCfg, mut _ gui.Event, mut w gui.Window) {
+				on_click:       fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[App]()
 					app.clicks += 1
 				}
@@ -85,16 +85,16 @@ feel familiar.
 
 Let's take it in parts.
 
-``` v
+```v
 import gui
 ```
 
 This imports the `gui` library.
 
-``` v
+```oksyntax
 struct App {
 pub mut:
-    clicks int
+	clicks int
 }
 ```
 
@@ -102,16 +102,16 @@ This is the application model. Most applications will have some type of
 data model. The state of the application is stored here. State should
 not be stored in views.
 
-``` v
+```oksyntax
 fn main() {
 	mut window := gui.window(
 		state:   &App{}
 		width:   300
 		height:  300
 		on_init: fn (mut w gui.Window) {
-		// Call update_view() any where in your
-		// business logic to change views.
-		w.update_view(main_view)
+			// Call update_view() any where in your
+			// business logic to change views.
+			w.update_view(main_view)
 		}
 	)
 	window.run()
@@ -126,7 +126,9 @@ set. Different views can be shown but calling `update_window` anytime
 with a different view. Let's look at the `main_view` in two sections.
 Here is the top portion.
 
-``` v
+```oksyntax
+import gui
+
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[App]()
@@ -169,7 +171,7 @@ the Window by calling `window.state[App]()`.
 In the second part of `main_view`, the fun stuff happens. Drawing text
 and buttons.
 
-``` v
+```
 	content: [
 		gui.text(
 			text:       'Welcome to GUI'

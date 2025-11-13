@@ -14,21 +14,30 @@ states, and subheadings.
 
 Here's how to create a simple list box with a few options:
 
-``` v
+```v
+import gui
+
+struct App {
+mut:
+	selected_city string
+}
+
+mut app := App{}
+
 gui.list_box(
-    id: 'cities_list'
-    selected: [app.selected_city]
-    data: [
-        gui.list_box_option('New York', 'ny'),
-        gui.list_box_option('Detroit', 'dtw'),
-        gui.list_box_option('Chicago', 'chi'),
-    ]
-    on_select: fn (values []string, mut _ gui.Event, mut w gui.Window) {
-        mut app := w.state[App]()
-        if values.len > 0 {
-            app.selected_city = values
-        }
-    }
+	id:        'cities_list'
+	selected:  [app.selected_city]
+	data:      [
+		gui.list_box_option('New York', 'ny'),
+		gui.list_box_option('Detroit', 'dtw'),
+		gui.list_box_option('Chicago', 'chi'),
+	]
+	on_select: fn (values []string, mut _ gui.Event, mut w gui.Window) {
+		mut app := w.state[App]()
+		if values.len > 0 {
+			app.selected_city = values[0]
+		}
+	}
 )
 ```
 
@@ -38,8 +47,8 @@ This function creates the list box view. It is a specialized container
 that renders a list of `ListBoxOption` items and manages their selection
 state.
 
-``` v
-pub fn list_box(cfg ListBoxCfg) View
+```oksyntax
+pub fn list_box(cfg gui.ListBoxCfg) gui.View
 ```
 
 Internally, it's a `column` with a border, containing another scrollable
@@ -49,7 +58,7 @@ Internally, it's a `column` with a border, containing another scrollable
 
 This struct configures the `list_box` view.
 
-``` v
+```oksyntax
 pub struct ListBoxCfg {
 pub:
 	id               string
@@ -97,7 +106,7 @@ the items in the list.
 This struct defines a single item in the list. Use the `list_box_option`
 helper for concise creation.
 
-``` v
+```v
 pub struct ListBoxOption {
 pub:
 	name  string
@@ -114,7 +123,7 @@ non-selectable subheading. The three leading hyphens are removed, and
 the rest of the name is displayed using the `subheading_style`. A
 horizontal line is drawn below it.
 
-``` v
+```oksyntax
 gui.list_box_option('---Category 1', '') // The value is ignored
 ```
 
@@ -146,15 +155,23 @@ To allow users to select multiple items, set `multiple: true`. The
 `on_select` callback will receive an array containing all selected
 values.
 
-``` v
+```v
+import gui
+
+struct App {
+mut:
+	selected_items []string
+}
+
+mut app := App{}
 gui.list_box(
-    multiple: true
-    selected: app.selected_items // e.g., ['ny', 'chi']
-    on_select: fn (values []string, mut _ gui.Event, mut w gui.Window) {
-        mut app := w.state[App]()
-        app.selected_items = values
-    }
-    // ...
+	multiple:  true
+	selected:  app.selected_items // e.g., ['ny', 'chi']
+	on_select: fn (values []string, mut _ gui.Event, mut w gui.Window) {
+		mut app := w.state[App]()
+		app.selected_items = values
+	}
+	// ...
 )
 ```
 

@@ -122,13 +122,17 @@ via the corresponding `ScrollbarCfg` with `overflow: .hidden`.
 
 Example: vertical‑only scrolling column with auto scrollbar behavior
 
-``` v
-column(
-    id:        'files'
-    id_scroll: 1
-    scroll_mode: .vertical_only
-    // scrollbar_cfg_y: &ScrollbarCfg{ overflow: .auto }
-    content: [ /* many rows */ ]
+```v
+import gui
+
+gui.column(
+	id:              'files'
+	id_scroll:       1
+	scroll_mode:     .vertical_only
+	scrollbar_cfg_y: &gui.ScrollbarCfg{
+		overflow: .auto
+	}
+	content:         [] // many rows
 )
 ```
 
@@ -142,13 +146,16 @@ Tooltips integrate with containers via `tooltip &TooltipCfg`. When
 present, the container wires an internal mouse‑move shape handler so the
 tooltip region follows the container's shape.
 
-``` v
-row(
-    text: 'Hover me'
-    tooltip: &TooltipCfg{
-        content: [ text('Helpful tip') ]
-    }
-    content: [ /* ... */ ]
+```v
+import gui
+
+gui.row(
+	text:    'Hover me'
+	tooltip: &gui.TooltipCfg{
+		id:      '1'
+		content: [gui.text(text: 'Helpful tip')]
+	}
+	content: []
 )
 ```
 
@@ -166,18 +173,24 @@ See 04-Rows-Columns.md for more alignment recipes.
 
 Attach event handlers directly on the container. Common patterns:
 
-``` v
-row(
-    id: 'row-with-events'
-    on_click: fn (_ &Layout, mut e Event, mut w Window) {
-        if e.mouse_button == .left { /* ... */ }
-    }
-    on_keydown: fn (_ &Layout, mut e Event, mut w Window) { /* ... */ }
-    amend_layout: fn (mut l Layout, mut w Window) {
-        // last‑second layout adjustments before children are laid out
-        // e.g., dynamically change padding or color based on state
-    }
-    content: [ /* ... */ ]
+```v
+import gui
+
+gui.row(
+	id:           'row-with-events'
+	on_click:     fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+		if e.mouse_button == .left {
+			//...
+		}
+	}
+	on_keydown:   fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+		//...
+	}
+	amend_layout: fn (mut l gui.Layout, mut w gui.Window) {
+		// last‑second layout adjustments before children are laid out
+		// e.g., dynamically change padding or color based on state
+	}
+	content:      []
 )
 ```
 
@@ -185,51 +198,64 @@ row(
 
 Centered row with padding and rounded fill:
 
-``` v
-row(
-    padding: 8
-    radius: 6
-    fill: true
-    color: rgb(240, 240, 240)
-    h_align: center
-    v_align: middle
-    content: [ text('Hello') ]
+```v
+import gui
+
+gui.row(
+	padding: gui.pad_all(8)
+	radius:  6
+	fill:    true
+	color:   gui.rgb(240, 240, 240)
+	h_align: .center
+	v_align: .middle
+	content: [gui.text(text: 'Hello')]
 )
 ```
 
 Two‑column layout with spacing and scroll:
 
-``` v
-row(
-    spacing: 12
-    content: [
-        column(
-            id: 'left'
-            width: 240
-            spacing: 6
-            content: [ /* nav items */ ]
-        ),
-        column(
-            id: 'right'
-            id_scroll: 42
-            scroll_mode: .vertical_only
-            content: [ /* long article */ ]
-        ),
-    ]
+```v
+import gui
+
+gui.row(
+	spacing: 12
+	content: [
+		gui.column(
+			id:      'left'
+			width:   240
+			spacing: 6
+			content: [] // nav items
+		),
+		gui.column(
+			id:          'right'
+			id_scroll:   42
+			scroll_mode: .vertical_only
+			content:     [] // long article
+		),
+	]
 )
 ```
 
 Circular badge:
 
-``` v
-circle(
-    width: 36
-    height: 36
-    fill: true
-    color: rgb(52, 120, 246)
-    content: [
-        row(h_align: center, v_align: middle, sizing: fill_fill, content: [ text('9') ])
-    ]
+```v
+import gui
+
+gui.circle(
+	width:   36
+	height:  36
+	fill:    true
+	color:   gui.rgb(52, 120, 246)
+	content: [
+		gui.row(
+			h_align: .center
+			v_align: .middle
+			sizing:  gui.fill_fill
+			content: [
+				gui.text(text: '9'),
+			]
+		),
+	]
 )
 ```
 

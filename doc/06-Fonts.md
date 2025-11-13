@@ -1,4 +1,4 @@
-# 6 Fonts 
+# 6 Fonts
 
 Gui embeds a commercial-free, open-source text font (DejaVu Sans) and
 ships an icon font. By default, Gui uses DejaVu Sans for text with bold,
@@ -22,7 +22,9 @@ Using system fonts (platform default) The easiest way is to modify a
 `ThemeCfg` and set the text style’s `family` to an empty string. This
 tells Gui to use the platform’s default font for all text.
 
-``` v
+```v
+import gui
+
 fn create_system_font_theme() gui.Theme {
 	return gui.theme_maker(gui.ThemeCfg{
 		...gui.theme_dark_bordered_cfg
@@ -37,13 +39,15 @@ fn create_system_font_theme() gui.Theme {
 Per-view overrides Most views accept a `text_style`, so you can change
 the font on a per-view basis without altering the entire theme.
 
-``` v
+```v
+import gui
+
 gui.text(
-    text: 'Hello, system font!'
-    text_style: gui.TextStyle{
-        ...gui.theme().text_style
-        family: '' // empty = use platform default for this view only
-    }
+	text:       'Hello, system font!'
+	text_style: gui.TextStyle{
+		...gui.theme().text_style
+		family: '' // empty = use platform default for this view only
+	}
 )
 ```
 
@@ -51,13 +55,15 @@ Using a specific font file You can point `family` to a path for a
 specific TTF/OTF. If you provide the “Regular” face, Gui will try to
 locate Bold/Italic/Mono variants automatically.
 
-``` v
+```v
+import gui
+
 gui.text(
-    text: 'Custom font'
-    text_style: gui.TextStyle{
-        ...gui.theme().text_style
-        family: '/path/to/MyFont-Regular.ttf'
-    }
+	text:       'Custom font'
+	text_style: gui.TextStyle{
+		...gui.theme().text_style
+		family: '/path/to/MyFont-Regular.ttf'
+	}
 )
 ```
 
@@ -65,14 +71,16 @@ Icon fonts Gui includes an icon font and a set of `icon_*` constants for
 common symbols. To render icons, use a text view with the icon font
 family and supply the desired icon glyph.
 
-``` v
+```v
+import gui
+
 gui.text(
-    text: gui.icons_map['icon_check'] // or a specific icon constant
-    text_style: gui.TextStyle{
-        ...gui.theme().text_style
-        family: gui.font_file_icon
-        size:   18
-    }
+	text:       gui.icons_map['icon_check'] // or a specific icon constant
+	text_style: gui.TextStyle{
+		...gui.theme().text_style
+		family: gui.font_file_icon
+		size:   18
+	}
 )
 ```
 

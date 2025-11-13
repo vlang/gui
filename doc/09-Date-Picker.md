@@ -13,15 +13,20 @@ disallow specific days, months, years, or exact dates.
 
 ## Quick start
 
-``` v
+```v
+import gui
+import time
+
+mut window := gui.Window{}
+
 // inside your main view function
 window.date_picker(
-    id:        'dob'
-    dates:     [time.now()] // initial selection(s)
-    on_select: fn (times []time.Time, mut _ gui.Event, mut w gui.Window) {
-        // handle selection(s)
-        // times is a list; when select_multiple is false, it has 1 item
-    }
+	id:        'dob'
+	dates:     [time.now()] // initial selection(s)
+	on_select: fn (times []time.Time, mut _ gui.Event, mut _ gui.Window) {
+		// handle selection(s)
+		// times is a list; when select_multiple is false, it has 1 item
+	}
 )
 ```
 
@@ -29,8 +34,8 @@ window.date_picker(
 
 Creates a date-picker view from the given `DatePickerCfg`.
 
-``` v
-fn (mut window Window) date_picker(cfg DatePickerCfg) View
+```oksyntax
+fn (mut window gui.Window) date_picker(cfg gui.DatePickerCfg) gui.View
 ```
 
 The widget renders:
@@ -43,52 +48,55 @@ The widget renders:
 
 Configures the `date_picker` view.
 
-``` v
+```v
+import gui
+import time
+
 struct DatePickerCfg {
-    id                       string      // required; unique among date pickers
-    dates                    []time.Time // required; initial/current selection(s)
+	id    string      // required; unique among date pickers
+	dates []time.Time // required; initial/current selection(s)
 
-    // Constraints (any that are non-empty will be enforced)
-    allowed_weekdays         []DatePickerWeekdays // allowed days of week
-    allowed_months           []DatePickerMonths   // allowed months
-    allowed_years            []int                // allowed years
-    allowed_dates            []time.Time          // allow only these exact dates
+	// Constraints (any that are non-empty will be enforced)
+	allowed_weekdays []gui.DatePickerWeekdays // allowed days of week
+	allowed_months   []gui.DatePickerMonths   // allowed months
+	allowed_years    []int                    // allowed years
+	allowed_dates    []time.Time              // allow only these exact dates
 
-    // Selection
-    select_multiple          bool                 // select multiple dates by toggling
+	// Selection
+	select_multiple bool // select multiple dates by toggling
 
-    // Appearance & behavior
-    weekdays_len             DatePickerWeekdayLen = gui_theme.date_picker_style.weekdays_len
-    text_style               TextStyle            = gui_theme.date_picker_style.text_style
-    color                    Color                = gui_theme.date_picker_style.color
-    color_hover              Color                = gui_theme.date_picker_style.color_hover
-    color_focus              Color                = gui_theme.date_picker_style.color_focus
-    color_click              Color                = gui_theme.date_picker_style.color_click
-    color_border             Color                = gui_theme.date_picker_style.color_border
-    color_border_focus       Color                = gui_theme.date_picker_style.color_border_focus
-    color_select             Color                = gui_theme.date_picker_style.color_select
-    padding                  Padding              = gui_theme.date_picker_style.padding
-    padding_border           Padding              = gui_theme.date_picker_style.padding_border
-    cell_spacing             f32                  = gui_theme.date_picker_style.cell_spacing
-    radius                   f32                  = gui_theme.date_picker_style.radius
-    radius_border            f32                  = gui_theme.date_picker_style.radius_border
-    fill                     bool                 = gui_theme.date_picker_style.fill
-    fill_border              bool                 = gui_theme.date_picker_style.fill_border
+	// Appearance & behavior
+	weekdays_len       gui.DatePickerWeekdayLen = gui_theme.date_picker_style.weekdays_len
+	text_style         gui.TextStyle            = gui_theme.date_picker_style.text_style
+	color              gui.Color                = gui_theme.date_picker_style.color
+	color_hover        gui.Color                = gui_theme.date_picker_style.color_hover
+	color_focus        gui.Color                = gui_theme.date_picker_style.color_focus
+	color_click        gui.Color                = gui_theme.date_picker_style.color_click
+	color_border       gui.Color                = gui_theme.date_picker_style.color_border
+	color_border_focus gui.Color                = gui_theme.date_picker_style.color_border_focus
+	color_select       gui.Color                = gui_theme.date_picker_style.color_select
+	padding            gui.Padding              = gui_theme.date_picker_style.padding
+	padding_border     gui.Padding              = gui_theme.date_picker_style.padding_border
+	cell_spacing       f32                      = gui_theme.date_picker_style.cell_spacing
+	radius             f32                      = gui_theme.date_picker_style.radius
+	radius_border      f32                      = gui_theme.date_picker_style.radius_border
+	fill               bool                     = gui_theme.date_picker_style.fill
+	fill_border        bool                     = gui_theme.date_picker_style.fill_border
 
-    // Calendar UI behavior
-    hide_today_indicator     bool                 = gui_theme.date_picker_style.hide_today_indicator
-    monday_first_day_of_week bool                 = gui_theme.date_picker_style.monday_first_day_of_week
-    show_adjacent_months     bool                 = gui_theme.date_picker_style.show_adjacent_months
+	// Calendar UI behavior
+	hide_today_indicator     bool = gui_theme.date_picker_style.hide_today_indicator
+	monday_first_day_of_week bool = gui_theme.date_picker_style.monday_first_day_of_week
+	show_adjacent_months     bool = gui_theme.date_picker_style.show_adjacent_months
 
-    // Scrolling id for the year-month picker
-    id_scroll                u32 = u32(459342148)
+	// Scrolling id for the year-month picker
+	id_scroll u32 = u32(459342148)
 
-    // General
-    disabled                 bool
-    invisible                bool
+	// General
+	disabled  bool
+	invisible bool
 
-    // Callback
-    on_select                fn ([]time.Time, mut Event, mut Window) = unsafe { nil }
+	// Callback
+	on_select fn ([]time.Time, mut gui.Event, mut gui.Window) = unsafe { nil }
 }
 ```
 
@@ -106,15 +114,15 @@ Notes:
 
 ### `DatePickerWeekdays`
 
-``` v
+```v
 enum DatePickerWeekdays as u8 {
-    monday = 1
-    tuesday
-    wednesday
-    thursday
-    friday
-    saturday
-    sunday
+	monday = 1
+	tuesday
+	wednesday
+	thursday
+	friday
+	saturday
+	sunday
 }
 ```
 
@@ -122,20 +130,20 @@ Used by `allowed_weekdays` to limit selectable days of week.
 
 ### `DatePickerMonths`
 
-``` v
+```v
 enum DatePickerMonths as u16 {
-    january = 1
-    february
-    march
-    april
-    may
-    june
-    july
-    august
-    september
-    october
-    november
-    december
+	january = 1
+	february
+	march
+	april
+	may
+	june
+	july
+	august
+	september
+	october
+	november
+	december
 }
 ```
 
@@ -143,11 +151,11 @@ Used by `allowed_months` and in the year--month picker.
 
 ### `DatePickerWeekdayLen`
 
-``` v
+```v
 enum DatePickerWeekdayLen as u8 {
-    one_letter   // e.g. S, M, T, W, T, F, S
-    three_letter // e.g. Sun, Mon, Tue, ...
-    full         // e.g. Sunday, Monday, ...
+	one_letter   // e.g. S, M, T, W, T, F, S
+	three_letter // e.g. Sun, Mon, Tue, ...
+	full         // e.g. Sunday, Monday, ...
 }
 ```
 
@@ -164,14 +172,19 @@ Controls how weekday labels are rendered in the header.
 
 Example:
 
-``` v
+```v
+import gui
+import time
+
+mut window := gui.Window{}
+
 window.date_picker(
-    id: 'birthday'
-    dates: [time.new(day: 1, month: 1, year: 2000)]
-    on_select: fn (times []time.Time, mut e gui.Event, mut w gui.Window) {
-        println('Selected: ${times}')
-        e.is_handled = true
-    }
+	id:        'birthday'
+	dates:     [time.new(day: 1, month: 1, year: 2000)]
+	on_select: fn (times []time.Time, mut e gui.Event, mut _ gui.Window) {
+		println('Selected: ${times}')
+		e.is_handled = true
+	}
 )
 ```
 
@@ -213,14 +226,18 @@ padding, and radii via `DatePickerCfg` fields.
 
 Common overrides:
 
-``` v
+```v
+import gui
+import time
+
+mut window := gui.Window{}
+
 window.date_picker(
-    id: 'custom'
-    dates: [time.now()]
-    text_style: gui.theme().text2
-    color_select: rgb(52, 120, 246)
-    weekdays_len: .three_letter
-    monday_first_day_of_week: true
+	id:                       'custom'
+	dates:                    [time.now()]
+	color_select:             gui.rgb(52, 120, 246)
+	weekdays_len:             .three_letter
+	monday_first_day_of_week: true
 )
 ```
 
@@ -229,14 +246,19 @@ window.date_picker(
 Enable `select_multiple: true` to allow toggling any number of dates.
 Clicking a selected date will remove it from the selection.
 
-``` v
+```v
+import gui
+import time
+
+mut window := gui.Window{}
+
 window.date_picker(
-    id: 'multi'
-    dates: [time.now()]
-    select_multiple: true
-    on_select: fn (times []time.Time, mut _ gui.Event, mut _ gui.Window) {
-        println('Selected dates: ${times}')
-    }
+	id:              'multi'
+	dates:           [time.now()]
+	select_multiple: true
+	on_select:       fn (times []time.Time, mut _ gui.Event, mut _ gui.Window) {
+		println('Selected dates: ${times}')
+	}
 )
 ```
 
@@ -244,33 +266,48 @@ window.date_picker(
 
 - Basic single-date picker:
 
-``` v
+```v
+import gui
+import time
+
+mut window := gui.Window{}
+
 window.date_picker(id: 'dp1', dates: [time.now()])
 ```
 
 - Only allow weekdays (Mon--Fri), show adjacent month day numbers, and
   start weeks on Monday:
 
-``` v
+```v
+import gui
+import time
+
+mut window := gui.Window{}
+
 window.date_picker(
-    id: 'work'
-    dates: [time.now()]
-    allowed_weekdays: [.monday, .tuesday, .wednesday, .thursday, .friday]
-    show_adjacent_months: true
-    monday_first_day_of_week: true
+	id:                       'work'
+	dates:                    [time.now()]
+	allowed_weekdays:         [.monday, .tuesday, .wednesday, .thursday, .friday]
+	show_adjacent_months:     true
+	monday_first_day_of_week: true
 )
 ```
 
 - Year/month constraints and exact allowed dates:
 
-``` v
+```v
+import gui
+import time
+
+mut window := gui.Window{}
 now := time.now()
+
 window.date_picker(
-    id: 'limited'
-    dates: [now]
-    allowed_months: [.june, .july, .august]
-    allowed_years: [now.year, now.year + 1]
-    allowed_dates: [time.new(day: 1, month: now.month, year: now.year)]
+	id:             'limited'
+	dates:          [now]
+	allowed_months: [.june, .july, .august]
+	allowed_years:  [now.year, now.year + 1]
+	allowed_dates:  [time.new(day: 1, month: now.month, year: now.year)]
 )
 ```
 
