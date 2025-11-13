@@ -40,8 +40,8 @@ pub:
 	text               string // text to display/edit
 	icon               string // icon constant
 	placeholder        string // text to show when empty
-	on_text_changed    fn (&Layout, string, &Window)       = unsafe { nil }
-	on_enter           fn (&Layout, mut Event, &Window)    = unsafe { nil }
+	on_text_changed    fn (&Layout, string, mut Window)    = unsafe { nil }
+	on_enter           fn (&Layout, mut Event, mut Window) = unsafe { nil }
 	on_click_icon      fn (&Layout, mut Event, mut Window) = unsafe { nil }
 	sizing             Sizing
 	text_style         TextStyle = gui_theme.input_style.text_style
@@ -237,7 +237,7 @@ fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 				}
 				cr_char, lf_char {
 					if cfg.on_enter != unsafe { nil } {
-						cfg.on_enter(layout, mut event, w)
+						cfg.on_enter(layout, mut event, mut w)
 						event.is_handled = true
 						return
 					} else {
@@ -261,7 +261,7 @@ fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 			}
 		}
 		event.is_handled = true
-		cfg.on_text_changed(layout, text, w)
+		cfg.on_text_changed(layout, text, mut w)
 	}
 }
 
