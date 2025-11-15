@@ -7,20 +7,19 @@ import log
 
 pub struct Window {
 mut:
-	view_state                        ViewState
-	dialog_cfg                        DialogCfg
-	layout                            Layout
-	ui                                &gg.Context = &gg.Context{}
-	state                             voidptr     = unsafe { nil }
-	mutex                             &sync.Mutex = sync.new_mutex()
-	renderers                         []Renderer
-	animations                        []Animation
-	view_generator                    fn (&Window) View           = empty_view
-	on_event                          fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
-	window_size                       gg.Size // cached, gg.window_size() relatively slow
-	update_window_calls               int
-	max_update_window_calls_per_frame int  = int($d('max_update_window_calls_per_frame', 2)) // 2 is a compromise between perceived latency of typing in apps like form_demo.v (higher is better), and reduced latency and lower CPU usage in apps like fonts.v (lower is better, especially on slow CPUs)
-	focused                           bool = true
+	view_state          ViewState
+	dialog_cfg          DialogCfg
+	layout              Layout
+	ui                  &gg.Context = &gg.Context{}
+	state               voidptr     = unsafe { nil }
+	mutex               &sync.Mutex = sync.new_mutex()
+	renderers           []Renderer
+	animations          []Animation
+	view_generator      fn (&Window) View           = empty_view
+	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	window_size         gg.Size // cached, gg.window_size() relatively slow
+	update_window_calls int
+	focused             bool = true
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -87,8 +86,8 @@ pub fn window(cfg &WindowCfg) &Window {
 		state:    cfg.state
 		on_event: cfg.on_event
 	}
-	cursor_blink := cfg.cursor_blink
 	on_init := cfg.on_init
+	cursor_blink := cfg.cursor_blink
 	window.ui = gg.new_context(
 		bg_color:                     cfg.bg_color.to_gx_color()
 		width:                        cfg.width
@@ -101,7 +100,8 @@ pub fn window(cfg &WindowCfg) &Window {
 		frame_fn:                     frame_fn
 		ui_mode:                      true // only draw on events
 		user_data:                    window
-		init_fn:                      fn [cursor_blink, on_init] (mut w Window) {
+		sample_count:                 int(cfg.samples)
+		init_fn:                      fn [on_init, cursor_blink] (mut w Window) {
 			w.update_window_size()
 			spawn w.animation_loop()
 			if cursor_blink {
@@ -110,7 +110,6 @@ pub fn window(cfg &WindowCfg) &Window {
 			on_init(mut w)
 			w.update_window()
 		}
-		sample_count:                 int(cfg.samples)
 	)
 	initialize_fonts()
 
@@ -129,12 +128,8 @@ fn frame_fn(mut window Window) {
 	window.ui.begin()
 	renderers_draw(window.renderers, window)
 	window.ui.end()
-	sapp.set_mouse_cursor(window.view_state.mouse_cursor)
-	$if trace_update_window_calls ? {
-		println(window.update_window_calls)
-	}
-	window.update_window_calls = 0
 	window.unlock()
+	sapp.set_mouse_cursor(window.view_state.mouse_cursor)
 }
 
 // event_fn is where all user events are handled. Mostly it delegates
@@ -238,25 +233,16 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 
 // update_window generates a new layout from the window's current view generator.
 pub fn (mut window Window) update_window() {
-	window.update_window_calls++
-	if window.update_window_calls > window.max_update_window_calls_per_frame {
-		return
-	}
-
 	//--------------------------------------------
 	window.lock()
-	mut view := window.view_generator(window)
-
-	mut old_layout := window.layout
-	window.layout = window.compose_layout(mut view)
-
 	window.renderers.clear()
+	mut old_layout := window.layout
 	clip_rect := window.window_rect()
 	background_color := window.color_background()
-	render_layout(mut window.layout, background_color, clip_rect, mut window)
 
-	clear_views(mut view)
-	clear_layouts(mut old_layout)
+	mut view := window.view_generator(window)
+	window.layout = window.compose_layout(mut view)
+	render_layout(mut window.layout, background_color, clip_rect, mut window)
 	window.unlock()
 	//--------------------------------------------
 
@@ -264,6 +250,8 @@ pub fn (mut window Window) update_window() {
 		gui_stats.update_max_renderers(usize(window.renderers.len))
 	}
 
+	clear_views(mut view)
+	clear_layouts(mut old_layout)
 	window.ui.refresh_ui()
 }
 

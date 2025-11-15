@@ -19,7 +19,7 @@ pub mut:
 	shape_clip          DrawClip // used for hit-testing
 	color               Color
 	padding             Padding
-	text_style          TextStyle = gui_theme.text_style
+	text_style          TextStyle
 	sizing              Sizing
 	x                   f32
 	y                   f32
@@ -76,7 +76,7 @@ pub enum ShapeType as u8 {
 fn (mut shape Shape) clear() {
 	if shape.text_spans != unsafe { nil } {
 		for !shape.text_spans.is_empty() {
-			shape.text_spans.shift() or { break }
+			_ := shape.text_spans.shift() or { break }
 		}
 	}
 	unsafe {

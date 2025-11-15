@@ -366,7 +366,7 @@ pub fn circle(cfg ContainerCfg) View {
 	return circle
 }
 
-fn (cv ContainerView) on_mouse_move_tooltip(shape &Shape, mut e Event, mut w Window) {
+fn (cv &ContainerView) on_mouse_move_tooltip(shape &Shape, mut _ Event, mut w Window) {
 	if cv.tooltip != unsafe { nil } {
 		if cv.tooltip.content.len > 0 {
 			w.animation_add(mut cv.tooltip.animation_tooltip())
