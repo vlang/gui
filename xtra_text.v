@@ -24,11 +24,20 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 
 }
 
 fn text_width(shape &Shape, mut window Window) f32 {
+	// Measure the visual width of the shape's lines, mirroring render rules:
+	// - when in password mode (and not placeholder), measure '*' repeated for visible rune count
 	mut max_width := f32(0)
 	mut text_cfg_set := false
 	htx := fnv1a.sum32_struct(shape.text_style).str()
 	for line in shape.text_lines {
-		line_htx := line + htx
+		mut effective := line
+		// Mirror password masking used in render so measurement matches drawing
+		if shape.text_is_password && !shape.text_is_placeholder {
+			// Replace content with repeated password_char for the number of visible UTF-8 runes
+			effective = password_char.repeat(utf8_str_visible_length(effective))
+		}
+
+		line_htx := effective + htx
 		key := fnv1a.sum32_string(line_htx)
 		width := window.view_state.text_widths[key] or {
 			if !text_cfg_set {
@@ -36,7 +45,7 @@ fn text_width(shape &Shape, mut window Window) f32 {
 				window.ui.set_text_cfg(text_cfg)
 				text_cfg_set = true
 			}
-			t_width := window.ui.text_width(line)
+			t_width := window.ui.text_width(effective)
 			window.view_state.text_widths[key] = t_width
 			t_width
 		}
@@ -119,97 +128,145 @@ fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u
 //    within the current line to ensure a space at the end
 // 5. Respects width constraints - Never exceeds the specified width limit
 // 6. Handles edge cases - Properly handles empty lines and overly long fields to avoid infinite loops
-fn wrap_text_keep_spaces(s string, text_style TextStyle, width f32, tab_size u32, mut window Window) []string {
-	mut line := ''
-	mut wrap := []string{cap: 10}
-	unsafe { wrap.flags.set(.noslices) }
-	mut fields := split_text(s, tab_size)
+fn wrap_text_keep_spaces(text string, text_style TextStyle, max_width f32, tab_size u32, mut window Window) []string {
+	mut current_line := ''
+	mut lines := []string{cap: 10}
+	unsafe { lines.flags.set(.noslices) }
 
-	mut i := 0
-	for i < fields.len {
-		field := fields[i]
-		if field == '\n' {
-			wrap << line + '\n'
-			line = ''
-			i++
+	mut fields := split_text(text, tab_size)
+	mut field_index := 0
+
+	for field_index < fields.len {
+		field := fields[field_index]
+		is_newline_field := field == '\n'
+
+		if is_newline_field {
+			// Explicit newline: flush current line and start a new one
+			lines << current_line + '\n'
+			current_line = ''
+			field_index++
 			continue
 		}
-		n_line := line + field
-		t_width := get_text_width(n_line, text_style, mut window)
-		if t_width > width {
-			// Check if we can add at least one space to the current line
-			mut wrapped_line := line
-			mut can_add_space := false
 
-			if line.len > 0 && !line.ends_with(' ') && i + 1 < fields.len {
-				next_field := fields[i + 1]
-				if next_field != '\n' && next_field.is_blank() {
-					// Try to fit as many spaces as possible (at least one)
-					mut spaces_to_add := ''
-					for space in next_field {
-						test_line := line + spaces_to_add + space.str()
-						test_width := get_text_width(test_line, text_style, mut window)
-						if test_width <= width {
-							spaces_to_add += space.str()
-							can_add_space = true
-						} else {
-							break
-						}
-					}
+		candidate_line := current_line + field
+		candidate_width := get_text_width(candidate_line, text_style, mut window)
 
-					if can_add_space {
-						wrapped_line = line + spaces_to_add
-						// Update the next field with remaining spaces
-						remaining_spaces := next_field[spaces_to_add.len..]
-						if remaining_spaces.len > 0 {
-							fields[i + 1] = remaining_spaces
-						} else {
-							// All spaces were consumed, remove this field
-							fields.delete(i + 1)
-						}
-					}
-				}
-			}
-
-			// Can't add a space and line is not empty? Need to wrap earlier
-			if !can_add_space && line.len > 0 && !line.ends_with(' ') {
-				// Look back to see if we can wrap at an earlier space
-				mut should_wrap_early := false
-				if line.contains(' ') {
-					// Find the last space in the current line
-					last_space_idx := line.last_index(' ') or { -1 }
-					if last_space_idx > 0 {
-						early_wrap := line[..last_space_idx + 1]
-						remaining := line[last_space_idx + 1..]
-						wrapped_line = early_wrap
-						line = remaining + field
-						should_wrap_early = true
-					}
-				}
-
-				if !should_wrap_early {
-					// Can't wrap early, force wrap without space
-					wrapped_line = line
-					line = field
-				}
-			} else if line.len > 0 {
-				// Added space(s) or line already ends with space
-				line = field
-			} else {
-				// Line is empty but field is too wide - add it anyway to avoid infinite loop
-				line = field
-			}
-
-			if line.len > 0 || wrapped_line.len > 0 {
-				wrap << wrapped_line
-			}
-		} else {
-			line = n_line
+		if candidate_width <= max_width {
+			// Field fits on current line as-is
+			current_line = candidate_line
+			field_index++
+			continue
 		}
-		i++
+
+		// Candidate is too wide, need to consider wrapping
+		mut output_line := current_line
+		mut can_add_space := false
+		is_line_non_empty := current_line.len > 0
+		line_ends_with_space := current_line.ends_with(' ')
+		has_next_field := field_index + 1 < fields.len
+
+		// 0) If the current field is a whitespace block, try to split it so that
+		//    as many spaces as possible are added to the current line without exceeding max_width.
+		if field.is_blank() {
+			mut spaces_to_add := ''
+			for sp in field {
+				test := current_line + spaces_to_add + sp.str()
+				if get_text_width(test, text_style, mut window) <= max_width {
+					spaces_to_add += sp.str()
+				} else {
+					break
+				}
+			}
+
+			output_line = current_line + spaces_to_add
+
+			// Update remaining spaces of the current field
+			remaining := field[spaces_to_add.len..]
+			if remaining.len > 0 {
+				// Keep remaining spaces as the current field for next iteration
+				fields[field_index] = remaining
+			} else {
+				// Fully consumed this space field
+				field_index++
+			}
+
+			// We must flush the decided output line even if it's empty (e.g., max_width == 0)
+			lines << output_line
+			current_line = ''
+			continue
+		}
+
+		// 1) Try to add spaces from the next field (if it is a whitespace field)
+		if is_line_non_empty && !line_ends_with_space && has_next_field {
+			next_field := fields[field_index + 1]
+			if next_field != '\n' && next_field.is_blank() {
+				mut spaces_to_add := ''
+				for space in next_field {
+					test_line := current_line + spaces_to_add + space.str()
+					test_width := get_text_width(test_line, text_style, mut window)
+					if test_width <= max_width {
+						spaces_to_add += space.str()
+						can_add_space = true
+					} else {
+						break
+					}
+				}
+				if can_add_space {
+					output_line = current_line + spaces_to_add
+
+					// Update remaining spaces in next field
+					remaining_spaces := next_field[spaces_to_add.len..]
+					if remaining_spaces.len > 0 {
+						fields[field_index + 1] = remaining_spaces
+					} else {
+						// All spaces consumed, remove the next field
+						fields.delete(field_index + 1)
+					}
+				}
+			}
+		}
+
+		// 2) If we still can't add a space and line is non-empty & not ending with space,
+		//    try to wrap earlier at a space.
+		if !can_add_space && is_line_non_empty && !line_ends_with_space {
+			mut should_wrap_early := false
+
+			if current_line.contains(' ') {
+				last_space_idx := current_line.last_index(' ') or { -1 }
+				if last_space_idx > 0 {
+					early_wrap := current_line[..last_space_idx + 1]
+					remaining := current_line[last_space_idx + 1..]
+
+					output_line = early_wrap
+					current_line = remaining + field
+					should_wrap_early = true
+				}
+			}
+
+			if !should_wrap_early {
+				// Can't wrap at a space, force wrap without adding a space
+				output_line = current_line
+				current_line = field
+			}
+		} else if is_line_non_empty {
+			// We either added spaces or the line already ended with a space
+			current_line = field
+		} else {
+			// Line is empty but field is too wide – place it anyway to avoid infinite loop
+			current_line = field
+		}
+
+		// Append the line that we decided to output (if any)
+		if output_line.len > 0 {
+			lines << output_line
+		}
+
+		field_index++
 	}
-	wrap << line
-	return wrap
+
+	// Flush the final line
+	lines << current_line
+	return lines
 }
 
 // wrap_simple wraps only at new lines
@@ -243,6 +300,8 @@ fn split_text(s string, tab_size u32) []string {
 	unsafe { fields.flags.set(.noslices) }
 	mut field := []rune{cap: 50}
 	unsafe { field.flags.set(.noslices) }
+	// Track visual column since last newline to expand tabs correctly
+	mut col := 0
 	for r in s.runes_iterator() {
 		if state == state_ch {
 			if r == r_space {
@@ -252,23 +311,27 @@ fn split_text(s string, tab_size u32) []string {
 				field.clear()
 				field << r
 				state = state_sp
+				col += 1
 			} else if r == `\n` {
 				if field.len > 0 {
 					fields << field.string()
 				}
 				fields << '\n'
 				field.clear()
+				col = 0
 			} else if r == `\r` {
 				// eat it
 			} else if r == `\t` {
 				if field.len > 0 {
 					fields << field.string()
 				}
-				mut spaces := int(tab_size) - field.len % int(tab_size)
+				field.clear()
+				// Expand tab according to current column position
+				mut spaces := int(tab_size) - (col % int(tab_size))
 				spaces = if spaces == 0 { int(tab_size) } else { spaces }
 				fields << []rune{len: spaces, init: r_space}.string()
-				field.clear()
 				state = state_sp
+				col += spaces
 			} else if utf8.is_space(r) {
 				if field.len > 0 {
 					fields << field.string()
@@ -276,31 +339,39 @@ fn split_text(s string, tab_size u32) []string {
 				field.clear()
 				field << r_space
 				state = state_sp
+				col += 1
 			} else {
 				field << r
+				col += 1
 			}
 		} else { // state == state_sp
 			if r == r_space {
 				field << r
+				col += 1
 			} else if r == `\n` {
 				if field.len > 0 {
 					fields << field.string()
 				}
 				fields << '\n'
 				field.clear()
+				col = 0
 			} else if r == `\r` {
 				// eat it
 			} else if r == `\t` {
-				mut spaces := int(tab_size) - field.len % int(tab_size)
+				// Expand tab from current column
+				mut spaces := int(tab_size) - (col % int(tab_size))
 				spaces = if spaces == 0 { int(tab_size) } else { spaces }
 				field << []rune{len: spaces, init: r_space}
+				col += spaces
 			} else if utf8.is_space(r) {
 				field << r_space
+				col += 1
 			} else {
 				fields << field.string()
 				field.clear()
 				field << r
 				state = state_ch
+				col += 1
 			}
 		}
 	}
