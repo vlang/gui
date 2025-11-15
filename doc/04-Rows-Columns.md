@@ -15,7 +15,7 @@ Below is the essential structure of the built-in `button` view. It’s two
 nested rows: an outer row that draws the border/background and an inner
 row that holds the content.
 
-```oksyntax
+``` v
 import gui
 
 pub fn button(cfg gui.ButtonCfg) View {
@@ -129,7 +129,7 @@ set the `text` property. This is commonly used for group boxes.
 
 - Padded horizontal row with centered content
 
-```oksyntax
+``` v
 row(
     padding: 8
     h_align: center
@@ -142,7 +142,7 @@ row(
 
 - Scrollable column (vertical-only)
 
-```oksyntax
+``` v
 column(
     id_scroll: 1         // any non-zero id enables scrolling
     // scroll_mode: ...  // restrict direction if desired
@@ -154,7 +154,7 @@ column(
 
 - Floating menu panel (conceptual)
 
-```oksyntax
+``` v
 column(
     // float: true       // depending on your composition
     padding: 4

@@ -47,7 +47,7 @@ This function creates the list box view. It is a specialized container
 that renders a list of `ListBoxOption` items and manages their selection
 state.
 
-```oksyntax
+``` v
 pub fn list_box(cfg gui.ListBoxCfg) gui.View
 ```
 
@@ -58,7 +58,7 @@ Internally, it's a `column` with a border, containing another scrollable
 
 This struct configures the `list_box` view.
 
-```oksyntax
+``` v
 pub struct ListBoxCfg {
 pub:
 	id               string
@@ -123,7 +123,7 @@ non-selectable subheading. The three leading hyphens are removed, and
 the rest of the name is displayed using the `subheading_style`. A
 horizontal line is drawn below it.
 
-```oksyntax
+``` v
 gui.list_box_option('---Category 1', '') // The value is ignored
 ```
 

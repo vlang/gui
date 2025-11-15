@@ -44,7 +44,7 @@ The orientation can be set to horizontal or vertical.
 
 This struct configures the `progress_bar` view.
 
-```oksyntax
+``` v
 @[heap]
 pub struct ProgressBarCfg {
 pub:

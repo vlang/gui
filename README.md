@@ -1,6 +1,7 @@
-# GUI 
+# GUI
+
 ![Stars](https://img.shields.io/github/stars/mike-ward/gui?style=flat-square&label=Stars&logo=github&logoColor=white)  
-![Forks](https://img.shields.io/github/forks/mike-ward/gui?style=flat-square&label=Forks&logo=github&logoColor=white)    
+![Forks](https://img.shields.io/github/forks/mike-ward/gui?style=flat-square&label=Forks&logo=github&logoColor=white)  
 ![Issues](https://img.shields.io/github/issues/mike-ward/gui?style=flat-square&label=Issues&logo=github&logoColor=white)  
 ![License](https://img.shields.io/github/license/mike-ward/gui?style=flat-square&label=License&logo=github&logoColor=white)
 
@@ -15,18 +16,18 @@ layout syntax and thread-safe view updates.
 
 ## Key Features
 
-  - **Pure V**: Written entirely in the V programming language
-  - **Immediate Mode Rendering**: Efficient rendering with automatic
-    updates
-  - **Thread Safe**: Safe view updates across different threads
-  - **Declarative Syntax**: Flex-box style layout with intuitive API
-  - **Performance Focused**: Optimized for speed and efficiency
+- **Pure V**: Written entirely in the V programming language
+- **Immediate Mode Rendering**: Efficient rendering with automatic
+  updates
+- **Thread Safe**: Safe view updates across different threads
+- **Declarative Syntax**: Flex-box style layout with intuitive API
+- **Performance Focused**: Optimized for speed and efficiency
 
 ## Installation
 
 Install the GUI framework using V’s package manager:
 
-``` bash
+```bash
 v install gui
 ```
 
@@ -41,12 +42,12 @@ new view.
 
 ### State Management
 
-The framework follows a functional approach where: 
+The framework follows a functional approach where:
 
-  - The view is simply a function of the model (state) 
-  - No data binding or other observation  mechanisms required 
-  - No worries about synchronizing with the UI thread 
-  - No need to remember to undo previous UI states
+- The view is simply a function of the model (state)
+- No data binding or other observation mechanisms required
+- No worries about synchronizing with the UI thread
+- No need to remember to undo previous UI states
 
 ## Basic Usage
 
@@ -110,10 +111,10 @@ fn main_view(window &gui.Window) gui.View {
 The `gui.window()` function creates the main application window with the
 following parameters:
 
-  - `state`: Application state object
-  - `width`: Window width in pixels
-  - `height`: Window height in pixels
-  - `on_init`: Initialization callback function
+- `state`: Application state object
+- `width`: Window width in pixels
+- `height`: Window height in pixels
+- `on_init`: Initialization callback function
 
 ### Layout Components
 
@@ -162,15 +163,15 @@ gui.button(
 Events are handled through callback functions passed to UI components.
 The event system provides:
 
-  - Mouse events (click, move, etc.)
-  - Keyboard events
-  - Window events (resize, etc.)
+- Mouse events (click, move, etc.)
+- Keyboard events
+- Window events (resize, etc.)
 
-Event handlers receive: 
+Event handlers receive:
 
-  - Component configuration 
-  - Event object 
-  - Window reference for state access
+- Component configuration
+- Event object
+- Window reference for state access
 
 ### Accessing State
 
@@ -184,7 +185,7 @@ fn view_function(window &gui.Window) gui.View {
 ### Updating State
 
 ``` v
-on_click: fn (_ &gui.ButtonCfg, mut e gui.Event, mut w gui.Window) {
+on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
     mut app := w.state[App]()  // Get mutable state reference
     app.clicks += 1            // Modify state
     // View automatically updates
@@ -197,13 +198,13 @@ The framework uses a flex-box inspired layout system with:
 
 ### Alignment Options
 
-  - **Horizontal alignment**: `.left`, `.center`, `.right`
-  - **Vertical alignment**: `.top`, `.middle`, `.bottom`
+- **Horizontal alignment**: `.left`, `.center`, `.right`
+- **Vertical alignment**: `.top`, `.middle`, `.bottom`
 
 ### Sizing Options
 
-  - `gui.fixed_fixed`: Fixed width and height
-  - Additional sizing modes available
+- `gui.fixed_fixed`: Fixed width and height
+- Additional sizing modes available
 
 ## Building and Running
 
@@ -212,7 +213,7 @@ programs. Don’t fret, it’s a one-liner.
 
 To build a GUI application:
 
-``` bash
+```bash
 v run your_app.v
 ```
 
@@ -225,10 +226,10 @@ the basics of view generators, state models and event handling.
 
 ### Available Examples
 
-  - `get-started.v` - Basic introduction
-  - `two-panel.v` - Two-panel layout example
-  - `test-layout.v` - Layout engine testing
-  - `doc_viewer.v` - Documentation viewer
+- `get-started.v` - Basic introduction
+- `two-panel.v` - Two-panel layout example
+- `test-layout.v` - Layout engine testing
+- `doc_viewer.v` - Documentation viewer
 
 ## Documentation
 
@@ -238,7 +239,7 @@ The Makefile at the root of the project builds documentation from the
 source code. Type make doc to produce the documentation and make read to
 open the documentation in the browser.
 
-``` bash
+```bash
 make doc   # Generate documentation
 make read  # Open documentation in browser
 ```

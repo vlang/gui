@@ -201,7 +201,7 @@ w.dialog(
 
 Creates and shows a dialog:
 
-```oksyntax
+``` v
 pub fn (mut window gui.Window) dialog(cfg gui.DialogCfg)
 ```
 
@@ -214,7 +214,7 @@ pub fn (mut window gui.Window) dialog(cfg gui.DialogCfg)
 Dismisses the current dialog without invoking callbacks. Useful for
 `custom` dialogs.
 
-```oksyntax
+``` v
 pub fn (mut window gui.Window) dialog_dismiss()
 ```
 
@@ -222,7 +222,7 @@ pub fn (mut window gui.Window) dialog_dismiss()
 
 Returns whether a dialog is currently visible.
 
-```oksyntax
+``` v
 pub fn (mut window gui.Window) dialog_is_visible() bool
 ```
 

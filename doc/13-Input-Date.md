@@ -43,7 +43,7 @@ window.input_date(
 This function creates the date input view. It internally manages the
 visibility of the floating `date_picker`.
 
-```oksyntax
+``` v
 fn (mut window gui.Window) input_date(cfg gui.InputDateCfg) gui.View
 ```
 
@@ -58,7 +58,7 @@ The view is composed of:
 This struct configures the `input_date` view. It shares many properties
 with `DatePickerCfg` and `InputCfg`.
 
-```oksyntax
+``` v
 import time
 
 @[heap]

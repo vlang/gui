@@ -87,7 +87,7 @@ pub:
 There are nine possible combinations of width/height sizing. For
 convenience, Gui provides constants:
 
-```oksyntax
+``` v
 pub const fit_fit   = Sizing{ .fit,   .fit }
 pub const fit_fill  = Sizing{ .fit,   .fill }
 pub const fit_fixed = Sizing{ .fit,   .fixed }

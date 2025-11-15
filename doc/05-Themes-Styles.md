@@ -35,7 +35,7 @@ window.run()
 - Access the active theme anywhere using `gui.theme()`.
 - Typical usage inside your UI code:
 
-```oksyntax
+``` v
 gui.text(
     text: 'Headline'
     text_style: gui.theme().b2 // built-in bold preset
@@ -146,7 +146,7 @@ Notes
   and still get a complete, consistent theme.
 - You can further tweak the returned theme before applying it:
 
-```oksyntax
+``` v
 mut t := my_brand_theme()
 // Round buttons a bit more
 mut bs := t.button_style
@@ -164,7 +164,7 @@ window.set_theme(t)
 
 Most views let you override style or text style directly:
 
-```oksyntax
+``` v
 // Use the current theme for most things, but custom radius for this one button
 gui.button(
     text: 'Primary'
@@ -195,7 +195,7 @@ Use the presets on `Theme` to keep sizes consistent:
 
 Example:
 
-```oksyntax
+``` v
 gui.text(text: 'Section', text_style: gui.theme().b2)
 
 gui.text(
@@ -214,7 +214,7 @@ gui.text(
   created.
 - Typical toggle:
 
-```oksyntax
+``` v
 w.set_theme(if use_light { gui.theme_light } else { gui.theme_dark })
 ```
 

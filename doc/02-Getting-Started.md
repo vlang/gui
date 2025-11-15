@@ -91,7 +91,7 @@ import gui
 
 This imports the `gui` library.
 
-```oksyntax
+``` v
 struct App {
 pub mut:
 	clicks int
@@ -102,7 +102,7 @@ This is the application model. Most applications will have some type of
 data model. The state of the application is stored here. State should
 not be stored in views.
 
-```oksyntax
+``` v
 fn main() {
 	mut window := gui.window(
 		state:   &App{}
@@ -126,7 +126,7 @@ set. Different views can be shown but calling `update_window` anytime
 with a different view. Let's look at the `main_view` in two sections.
 Here is the top portion.
 
-```oksyntax
+``` v
 import gui
 
 fn main_view(window &gui.Window) gui.View {

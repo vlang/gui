@@ -34,7 +34,7 @@ window.date_picker(
 
 Creates a date-picker view from the given `DatePickerCfg`.
 
-```oksyntax
+``` v
 fn (mut window gui.Window) date_picker(cfg gui.DatePickerCfg) gui.View
 ```
 
