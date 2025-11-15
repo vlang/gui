@@ -38,30 +38,38 @@ fn main_view(window &gui.Window) gui.View {
 }
 
 fn pulsar_samples(w &gui.Window) gui.View {
+	pulsar_width := f32(30)
 	return gui.row(
 		fill:    false
 		color:   gui.theme().text_style.color
 		padding: gui.padding_large
 		content: [
-			w.pulsar(),
-			w.pulsar(size: 20),
+			w.pulsar(width: pulsar_width),
 			w.pulsar(
+				width: pulsar_width
+				size:  20
+			),
+			w.pulsar(
+				width: pulsar_width
 				size:  30
 				color: gui.orange
 			),
 			w.pulsar(
+				width: pulsar_width
 				size:  30
 				icon1: gui.icon_elipsis_v
 				icon2: gui.icon_elipsis_h
 				color: gui.royal_blue
 			),
 			w.pulsar(
+				width: pulsar_width
 				size:  30
 				icon1: gui.icon_heart
 				icon2: gui.icon_heart_o
 				color: gui.red
 			),
 			w.pulsar(
+				width: pulsar_width
 				size:  30
 				icon1: gui.icon_expand
 				icon2: gui.icon_compress
