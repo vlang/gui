@@ -135,48 +135,51 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn menu_mapper(items []MenuItemCfg) MenuIdMap {
+fn menu_mapper(menu []MenuItemCfg) MenuIdMap {
 	mut menu_map := MenuIdMap{}
-	for idx, item in items {
+	for idx, item in menu {
 		if !is_valid_menu_id(item.id) {
 			continue
 		}
 		node := MenuIdNode{
-			left:  (items[idx - 1] or { item }).id
-			right: (items[idx + 1] or { item }).id
+			left:  (menu[idx - 1] or { item }).id
+			right: (menu[idx + 1] or { item }).id
 			up:    item.id
 			down:  (item.submenu[0] or { item }).id
 		}
 		menu_map[item.id] = node
-		submenu_mapper(item.submenu, items, idx, mut menu_map)
+		submenu_mapper(item.submenu, menu, idx, menu, idx, mut menu_map)
 	}
 	return menu_map
 }
 
-fn submenu_mapper(menu []MenuItemCfg, parent_menu []MenuItemCfg, parent_menu_idx int, mut menu_map MenuIdMap) {
+fn submenu_mapper(menu []MenuItemCfg, parent []MenuItemCfg, parent_idx int, root []MenuItemCfg, root_idx int, mut menu_map MenuIdMap) {
 	for idx, item in menu {
 		if !is_valid_menu_id(item.id) {
 			continue
 		}
 		node2 := MenuIdNode{
-			left:  menu_item_left(parent_menu_idx, parent_menu, menu_map)
-			right: menu_item_right(item, parent_menu, parent_menu_idx)
-			up:    menu_item_up(idx, menu, parent_menu_idx, parent_menu)
-			down:  menu_item_down(idx, menu, parent_menu_idx, parent_menu)
+			left:  menu_item_left(parent_idx, parent, root_idx, root)
+			right: menu_item_right(item, root, root_idx)
+			up:    menu_item_up(idx, menu, parent_idx, parent)
+			down:  menu_item_down(idx, menu, parent_idx, parent)
 		}
 		menu_map[item.id] = node2
-		submenu_mapper(item.submenu, menu, idx, mut menu_map)
+		submenu_mapper(item.submenu, menu, idx, root, root_idx, mut menu_map)
 	}
 }
 
-fn menu_item_left(idx int, menu []MenuItemCfg, menu_map MenuIdMap) string {
-	for i := idx - 1; i > 0; i-- {
-		id := menu[idx - 1].id
+fn menu_item_left(idx int, menu []MenuItemCfg, root_idx int, root []MenuItemCfg) string {
+	for i := idx; i > 0; i-- {
+		id := menu[i].id
 		if is_valid_menu_id(id) {
+			if id == root[root_idx].id {
+				break
+			}
 			return id
 		}
 	}
-	return menu_map[menu[idx].id].up
+	return (root[root_idx - 1] or { root[root_idx] }).id
 }
 
 fn menu_item_right(item MenuItemCfg, parent []MenuItemCfg, parent_idx int) string {
@@ -185,7 +188,7 @@ fn menu_item_right(item MenuItemCfg, parent []MenuItemCfg, parent_idx int) strin
 			return subitem.id
 		}
 	}
-	return (parent[parent_idx + 1] or { item }).id
+	return (parent[parent_idx + 1] or { return '' }).id
 }
 
 fn menu_item_up(idx int, items []MenuItemCfg, parent_idx int, parent []MenuItemCfg) string {
