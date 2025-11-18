@@ -94,8 +94,8 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 
 // menu_item_text is a convenience function for creating a simple text menu item
 pub fn menu_item_text(id string, text string) MenuItemCfg {
-	if id.len == 0 {
-		panic("empty menu id's are invalid")
+	if id.is_blank() {
+		panic("blank menu id's are invalid")
 	}
 	return MenuItemCfg{
 		id:   id
@@ -177,7 +177,8 @@ fn (cfg &MenubarCfg) on_hover_item(mut layout Layout, mut _ Event, mut w Window)
 	// Mouse hover logic is covered here. Once the **menubar** gains focus,
 	// mouse-overs can change the selected menu-item. Note: Selection
 	// indicates highlighting, not focus. This is key to understanding menus.
-	if layout.shape.id.len == 0 || layout.shape.disabled || !w.is_focus(cfg.id_focus) {
+	if layout.shape.id.len == 0 || layout.shape.disabled || !w.is_focus(cfg.id_focus)
+		|| w.view_state.menu_key_nav {
 		return
 	}
 	w.view_state.menu_state[cfg.id_focus] = layout.shape.id

@@ -10,11 +10,11 @@ fn (mut window Window) blinky_cursor_animation() {
 		delay:    600 * time.millisecond
 		repeat:   true
 		callback: fn (mut w Window) {
-			if w.view_state.cursor_on_sticky {
-				w.view_state.cursor_on = true
-				w.view_state.cursor_on_sticky = false
+			if w.view_state.input_cursor_on_sticky {
+				w.view_state.input_cursor_on = true
+				w.view_state.input_cursor_on_sticky = false
 			} else {
-				w.view_state.cursor_on = !w.view_state.cursor_on
+				w.view_state.input_cursor_on = !w.view_state.input_cursor_on
 			}
 		}
 	})

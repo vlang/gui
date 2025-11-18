@@ -201,6 +201,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		}
 		.mouse_move {
 			w.set_mouse_cursor_arrow()
+			w.view_state.menu_key_nav = false
 			mouse_move_handler(layout, mut e, mut w)
 		}
 		.mouse_up {

@@ -24,7 +24,7 @@ pub fn (window &Window) pulsar(cfg PulsarCfg) View {
 		true { cfg.width }
 		else { get_text_width_no_cache(cfg.icon1, text_style, window) }
 	}
-	txt := if window.view_state.cursor_on { cfg.icon1 } else { cfg.icon2 }
+	txt := if window.view_state.input_cursor_on { cfg.icon1 } else { cfg.icon2 }
 
 	return column(
 		min_width: width

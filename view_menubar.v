@@ -63,6 +63,7 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 	return row(
 		name:          'menubar border'
 		id:            cfg.id
+		id_focus:      cfg.id_focus
 		color:         cfg.color_border
 		fill:          true
 		float:         cfg.float
@@ -72,6 +73,7 @@ pub fn (window &Window) menubar(cfg MenubarCfg) View {
 		invisible:     cfg.invisible
 		padding:       cfg.padding_border
 		sizing:        cfg.sizing
+		on_keydown:    cfg.on_keydown
 		amend_layout:  cfg.amend_layout_menubar
 		content:       [
 			row(
@@ -100,4 +102,86 @@ fn is_selected_in_tree(submenu []MenuItemCfg, id_selected string) bool {
 		}
 	}
 	return false
+}
+
+// -----------------------------------------------------
+
+enum MenuNav {
+	left
+	right
+	up
+	down
+}
+
+struct MenuIdNode {
+	left  string
+	right string
+	up    string
+	down  string
+}
+
+type MenuIdMap = map[string]MenuIdNode
+
+fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
+	menu_id := w.view_state.menu_state[cfg.id_focus]
+	new_menu_id := match e.key_code {
+		.left { menu_mapper(cfg.items)[menu_id].left }
+		.right { menu_mapper(cfg.items)[menu_id].right }
+		.up { menu_mapper(cfg.items)[menu_id].up }
+		.down { menu_mapper(cfg.items)[menu_id].down }
+		else { menu_id }
+	}
+	if menu_id != new_menu_id {
+		w.view_state.menu_key_nav = true
+		w.view_state.menu_state[cfg.id_focus] = new_menu_id
+		e.is_handled = true
+	}
+}
+
+fn menu_mapper(items []MenuItemCfg) MenuIdMap {
+	mut menu_map := MenuIdMap{}
+	for idx, item in items {
+		node := MenuIdNode{
+			left:  (items[idx - 1] or { item }).id
+			right: (items[idx + 1] or { item }).id
+			up:    item.id
+			down:  (item.submenu[0] or { item }).id
+		}
+		menu_map[item.id] = node
+		submenu_mapper(item.submenu, items, idx, mut menu_map)
+	}
+	return menu_map
+}
+
+fn submenu_mapper(menu []MenuItemCfg, parent_menu []MenuItemCfg, parent_menu_idx int, mut menu_map MenuIdMap) {
+	for idx, item in menu {
+		node2 := MenuIdNode{
+			left:  (parent_menu[parent_menu_idx - 1] or { item }).id
+			right: (parent_menu[parent_menu_idx + 1] or { item }).id
+			up:    (previous_item(idx, menu) or { item }).id
+			down:  (next_item(idx, menu) or { item }).id
+		}
+		menu_map[item.id] = node2
+		submenu_mapper(item.submenu, menu, idx, mut menu_map)
+	}
+}
+
+fn previous_item(idx int, items []MenuItemCfg) ?MenuItemCfg {
+	for i := idx - 1; true; i-- {
+		item := items[i] or { return none }
+		if item.id !in [menu_separator_id, menu_subtitle_id] {
+			return item
+		}
+	}
+	return none
+}
+
+fn next_item(idx int, items []MenuItemCfg) ?MenuItemCfg {
+	for i := idx + 1; true; i++ {
+		item := items[i] or { return none }
+		if item.id !in [menu_separator_id, menu_subtitle_id] {
+			return item
+		}
+	}
+	return none
 }

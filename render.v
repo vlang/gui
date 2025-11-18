@@ -364,7 +364,8 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 
 // render_cursor figures out where the darn cursor goes.
 fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
-	if window.is_focus(shape.id_focus) && shape.shape_type == .text && window.view_state.cursor_on {
+	if window.is_focus(shape.id_focus) && shape.shape_type == .text
+		&& window.view_state.input_cursor_on {
 		lh := line_height(shape)
 		mut cursor_x := -1
 		mut cursor_y := -1

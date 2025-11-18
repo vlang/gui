@@ -244,7 +244,7 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		// hidden. Sticky allows the cursor to stay on during cursor movements.
 		// See `blinky_cursor_animation()`
 		if new_cursor_pos != current_input_state.cursor_pos {
-			w.view_state.cursor_on_sticky = true
+			w.view_state.input_cursor_on_sticky = true
 		}
 
 		e.is_handled = true
