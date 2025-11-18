@@ -106,13 +106,6 @@ fn is_selected_in_tree(submenu []MenuItemCfg, id_selected string) bool {
 
 // -----------------------------------------------------
 
-enum MenuNav {
-	left
-	right
-	up
-	down
-}
-
 struct MenuIdNode {
 	left  string
 	right string
@@ -120,6 +113,10 @@ struct MenuIdNode {
 	down  string
 }
 
+// MenuIdMap as a list of surrounding menu ids for the given key (menu id)
+// used for navigating the menu with the keyboard. Keyboard menu navigation
+// is hard in that moving in horizontal direction can mean the next or
+// previous menu maybe the parent menu or a submenu.
 type MenuIdMap = map[string]MenuIdNode
 
 fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
@@ -131,7 +128,7 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 		.down { menu_mapper(cfg.items)[menu_id].down }
 		else { menu_id }
 	}
-	if menu_id != new_menu_id {
+	if menu_id != new_menu_id && is_valid_menu_id(new_menu_id) {
 		w.view_state.menu_key_nav = true
 		w.view_state.menu_state[cfg.id_focus] = new_menu_id
 		e.is_handled = true
@@ -141,6 +138,9 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 fn menu_mapper(items []MenuItemCfg) MenuIdMap {
 	mut menu_map := MenuIdMap{}
 	for idx, item in items {
+		if !is_valid_menu_id(item.id) {
+			continue
+		}
 		node := MenuIdNode{
 			left:  (items[idx - 1] or { item }).id
 			right: (items[idx + 1] or { item }).id
@@ -155,33 +155,59 @@ fn menu_mapper(items []MenuItemCfg) MenuIdMap {
 
 fn submenu_mapper(menu []MenuItemCfg, parent_menu []MenuItemCfg, parent_menu_idx int, mut menu_map MenuIdMap) {
 	for idx, item in menu {
+		if !is_valid_menu_id(item.id) {
+			continue
+		}
 		node2 := MenuIdNode{
-			left:  (parent_menu[parent_menu_idx - 1] or { item }).id
-			right: (parent_menu[parent_menu_idx + 1] or { item }).id
-			up:    (previous_item(idx, menu) or { item }).id
-			down:  (next_item(idx, menu) or { item }).id
+			left:  menu_item_left(parent_menu_idx, parent_menu, menu_map)
+			right: menu_item_right(item, parent_menu, parent_menu_idx)
+			up:    menu_item_up(idx, menu, parent_menu_idx, parent_menu)
+			down:  menu_item_down(idx, menu, parent_menu_idx, parent_menu)
 		}
 		menu_map[item.id] = node2
 		submenu_mapper(item.submenu, menu, idx, mut menu_map)
 	}
 }
 
-fn previous_item(idx int, items []MenuItemCfg) ?MenuItemCfg {
-	for i := idx - 1; true; i-- {
-		item := items[i] or { return none }
-		if item.id !in [menu_separator_id, menu_subtitle_id] {
-			return item
+fn menu_item_left(idx int, menu []MenuItemCfg, menu_map MenuIdMap) string {
+	for i := idx - 1; i > 0; i-- {
+		id := menu[idx - 1].id
+		if is_valid_menu_id(id) {
+			return id
 		}
 	}
-	return none
+	return menu_map[menu[idx].id].up
 }
 
-fn next_item(idx int, items []MenuItemCfg) ?MenuItemCfg {
-	for i := idx + 1; true; i++ {
-		item := items[i] or { return none }
-		if item.id !in [menu_separator_id, menu_subtitle_id] {
-			return item
+fn menu_item_right(item MenuItemCfg, parent []MenuItemCfg, parent_idx int) string {
+	for subitem in item.submenu {
+		if is_valid_menu_id(subitem.id) {
+			return subitem.id
 		}
 	}
-	return none
+	return (parent[parent_idx + 1] or { item }).id
+}
+
+fn menu_item_up(idx int, items []MenuItemCfg, parent_idx int, parent []MenuItemCfg) string {
+	for i := idx - 1; idx > 0; i-- {
+		item := items[i] or { break }
+		if is_valid_menu_id(item.id) {
+			return item.id
+		}
+	}
+	return parent[parent_idx].id
+}
+
+fn menu_item_down(idx int, items []MenuItemCfg, parent_idx int, parent []MenuItemCfg) string {
+	for i := idx + 1; true; i++ {
+		item := items[i] or { break }
+		if is_valid_menu_id(item.id) {
+			return item.id
+		}
+	}
+	return parent[parent_idx].id
+}
+
+fn is_valid_menu_id(id string) bool {
+	return !id.is_blank() && id !in [menu_separator_id, menu_subtitle_id]
 }
