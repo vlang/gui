@@ -28,7 +28,7 @@ This function creates the menubar view. It takes a `MenubarCfg`.
 ```v
 import gui
 
-window := gui.window(width: 300, height: 300)
+mut window := gui.window(width: 300, height: 300)
 
 window.menubar(
 	id_focus: 1 // required for state tracking
