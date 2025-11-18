@@ -1,15 +1,19 @@
 import gui
 
+const id_focus_menu = 1
+const id_focus_button = 2
+const id_focus_search = 3
+
 // Menubar Demo
 // =============================
 // In this demo, a menubar is placed at the top of the view with some
 // submenus and an embedded search box (see Help). Menubar has many
 // styling options. The menubar can be styled separately from the
-// submenus and menu items as demonstrated here. Menubars are not
-// restricted to the top of the window. Menubars can go anywhere in a
-// view including floats and dialogs.
+// submenus and menu items as demonstrated here. Menu bars are not
+// restricted to the top of the window. Menu bars can go anywhere in
+// a view including floats and dialogs.
 //
-// Menubars can even be floating elements as demonstrated below.
+// Menu bars can even be floating elements as demonstrated below.
 //
 @[heap]
 struct MenuApp {
@@ -34,7 +38,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
 	mut app := window.state[MenuApp]()
 
@@ -45,20 +49,20 @@ fn main_view(window &gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		spacing: 0
 		content: [
-			menu(window),
+			menu(mut window),
 			body(mut app, window),
 		]
 	)
 }
 
-fn menu(window &gui.Window) gui.View {
+fn menu(mut window gui.Window) gui.View {
 	app := window.state[MenuApp]()
 
 	return window.menubar(
 		float:          true
 		float_anchor:   .top_center
 		float_tie_off:  .top_center
-		id_focus:       100
+		id_focus:       id_focus_menu
 		radius:         0
 		padding_border: gui.padding_none
 		action:         fn (id string, mut e gui.Event, mut w gui.Window) {
@@ -156,7 +160,7 @@ fn menu(window &gui.Window) gui.View {
 						padding:     gui.padding_none
 						custom_view: gui.input(
 							text:              app.search_text
-							id_focus:          100
+							id_focus:          id_focus_search
 							width:             100
 							min_width:         100
 							max_width:         100
@@ -207,7 +211,7 @@ fn body(mut app MenuApp, window &gui.Window) gui.View {
 				text_style: gui.theme().b1
 			),
 			gui.button(
-				id_focus: 1
+				id_focus: id_focus_button
 				content:  [gui.text(text: '${app.clicks} Clicks')]
 				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[MenuApp]()

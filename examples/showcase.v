@@ -134,7 +134,7 @@ fn gallery(mut w gui.Window) gui.View {
 				[image_sample(w)]
 			}
 			.tab_menus {
-				[menus(w)]
+				[menus(mut w)]
 			}
 			.tab_dialogs {
 				[dialogs(w)]
@@ -604,21 +604,31 @@ fn custom_type() gui.View {
 // Menu
 // ==============================================================
 
-fn menus(w &gui.Window) gui.View {
+fn menus(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [
 			view_title('Menus'),
-			gui.row(
+			gui.column(
 				sizing:  gui.fill_fit
-				content: [menu(w)]
+				content: [
+					menu(mut w),
+					gui.text(
+						text: if app.selected_menu_id !in ['', 'file', 'edit', 'view', 'go', 'window'] {
+							'Selected: "${app.selected_menu_id}"'
+						} else {
+							''
+						}
+					),
+				]
 			),
 		]
 	)
 }
 
-fn menu(window &gui.Window) gui.View {
+fn menu(mut window gui.Window) gui.View {
 	app := window.state[ShowcaseApp]()
 
 	return window.menubar(

@@ -2,15 +2,15 @@ module gui
 
 import datatypes
 
-// menu creates a columnar menu. Originally, this was part of menubar and only
-// later was separated out. For this reason, it still uses [MenubarCfg](#MenuBarCfg).
-// See `examples/context_menu_demo.v` for an example of how to use `menu`.
-// Apologies to future me...
+// menu builds the top-level columnar menu view. Historically this was part of the
+// menubar implementation, so it still uses `MenubarCfg`. It creates the outer border
+// and interior containers, and delegates actual menu item creation to `menu_build`.
+// Requires `cfg.id_focus` to be non-zero so the view state can track selected items.
 pub fn (window &Window) menu(cfg MenubarCfg) View {
 	if cfg.id_focus == 0 {
 		panic('MenubarCfg.id_focus must be non-zero')
 	}
-	check_for_duplicate_ids(cfg.items)
+	check_for_duplicate_menu_ids(cfg.items)
 	return column(
 		name:          'menubar border'
 		id:            cfg.id
@@ -40,13 +40,22 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 	)
 }
 
+// menu_buildrRecursively constructs menu items and nested submenus. It determines
+// item padding, text styles, and selection state; highlights active menu paths; and
+// when selected, attaches floating submenu panels. `level` is used to determine sizing
+// and which side submenus are anchored to.
 fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
 	mut content := []View{cap: items.len}
 	unsafe { content.flags.set(.noslices) }
+
 	id_selected := window.view_state.menu_state[cfg.id_focus]
 	sizing := if level == 0 { fit_fit } else { fill_fit }
+
 	for item in items {
-		selected_in_tree := is_selected_in_tree(item.submenu, id_selected)
+		selected_in_tree := is_menu_id_in_tree(item.submenu, id_selected)
+
+		// Choose padding depending on whether item has a custom view,
+		// is a subtitle, or is a normal item.
 		padding := match item.custom_view != none {
 			true {
 				item.padding
@@ -58,11 +67,13 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 				}
 			}
 		}
+
 		text_style := if item.id == menu_subtitle_id {
 			cfg.text_style_subtitle
 		} else {
 			cfg.text_style
 		}
+
 		item_cfg := MenuItemCfg{
 			...item
 			color_select: cfg.color_select
@@ -73,12 +84,15 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 			spacing:      cfg.spacing_submenu
 			text_style:   text_style
 		}
+
 		mut mi := menu_item(cfg, item_cfg)
+
+		// Attach floating submenu if the item is selected or part of the open menu path.
 		if item.submenu.len > 0 {
 			if item_cfg.selected || selected_in_tree {
 				submenu := column(
 					name:           'menubar submenu border'
-					id:             item_cfg.id // parent id
+					id:             item_cfg.id
 					min_width:      cfg.width_submenu_min
 					max_width:      cfg.width_submenu_max
 					color:          cfg.color_border
@@ -103,35 +117,37 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 				mi.content << submenu
 			}
 		}
+
 		content << mi
 	}
 	return content
 }
 
+// amend_layout_menubar ensures that if the menubar itself does not have focus,
+// no menu item remains selected. Without this, menu items could appear stuck
+// highlighted when the user clicks elsewhere.
 fn (cfg &MenubarCfg) amend_layout_menubar(mut layout Layout, mut w Window) {
-	// If the menubar does not have focus, it can't have a selected menu-item.
 	if !w.is_focus(cfg.id_focus) {
 		w.view_state.menu_state[cfg.id_focus] = ''
 		return
 	}
 }
 
+// on_hover_submenu handles subtle hover behavior of floating submenus. When the
+// cursor leaves a submenu panel, the leaf selected item should unselect, and visual
+// focus returns to the parent menu-item. This behavior mirrors traditional menu
+// navigation in desktop UI toolkits. Involves navigating both Layout and MenubarCfg
+// trees to determine relationships.
 fn (cfg &MenubarCfg) on_hover_submenu(mut layout Layout, mut _ Event, mut w Window) {
-	// When the mouse moves outside a submenu it should unselect the
-	// item in the submenu. This is a subtle behavior in mouse/menu
-	// interactions I never noticed until designing this. To unselect
-	// the item in the submenu you select teh submenu's parent menu item.
-	// The parent menu-item id is the id of the submenu. In addition,
-	// the unselect logic is only triggered when the menu item is a leaf
-	// item. We know this because the selected menu item has no submenu.
-	//
-	// This is hard to follow because there are two trees involved. The
-	// MenubarCfg tree and the Layout tree.
 	id_selected := w.view_state.menu_state[cfg.id_focus]
-	has_selected := descendant_has_id(layout, id_selected)
+	has_selected := descendant_has_menu_id(layout, id_selected)
+
 	if has_selected {
 		ctx := w.context()
+		// If mouse leaves the submenu panel…
 		if !layout.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+			// …and the selected item is a leaf (has no submenu),
+			// then highlight the parent menu item (id = layout.shape.id).
 			if mi_cfg := find_menu_item_cfg(cfg.items, id_selected) {
 				if mi_cfg.submenu.len == 0 {
 					w.view_state.menu_state[cfg.id_focus] = layout.shape.id
@@ -141,18 +157,23 @@ fn (cfg &MenubarCfg) on_hover_submenu(mut layout Layout, mut _ Event, mut w Wind
 	}
 }
 
-fn descendant_has_id(layout &Layout, id string) bool {
+// descendant_has_menu_id searches the layout tree to see whether a given menu-id
+// appears anywhere within this layout or its descendants. Used to detect whether
+// the currently selected menu item resides in a specific submenu panel.
+fn descendant_has_menu_id(layout &Layout, id string) bool {
 	if layout.shape.id == id {
 		return true
 	}
 	for child in layout.children {
-		if descendant_has_id(child, id) {
+		if descendant_has_menu_id(child, id) {
 			return true
 		}
 	}
 	return false
 }
 
+// find_menu_item_cfg recursively searches the MenuItemCfg tree for an item by id.
+// Returns the matched item if found, or none otherwise.
 fn find_menu_item_cfg(items []MenuItemCfg, id string) ?MenuItemCfg {
 	for item in items {
 		if item.id == id {
@@ -165,13 +186,17 @@ fn find_menu_item_cfg(items []MenuItemCfg, id string) ?MenuItemCfg {
 	return none
 }
 
-fn check_for_duplicate_ids(items []MenuItemCfg) {
+// check_for_duplicate_menu_ids ensures unique menu item ids across the entire
+// menu hierarchy (except for predefined special ids). Panics if duplicate ids exist.
+fn check_for_duplicate_menu_ids(items []MenuItemCfg) {
 	mut ids := datatypes.Set[string]{}
 	if duplicate_id := check_menu_ids(items, mut ids) {
 		panic('Duplicate menu-id found menubar-id [${duplicate_id}]')
 	}
 }
 
+// check_menu_ids is a recursive helper that inserts ids into a Set, returning the
+// first duplicate encountered, or none if all ids are unique. Ignores special ids.
 fn check_menu_ids(items []MenuItemCfg, mut ids datatypes.Set[string]) ?string {
 	for item in items {
 		if ids.exists(item.id) {
@@ -185,4 +210,18 @@ fn check_menu_ids(items []MenuItemCfg, mut ids datatypes.Set[string]) ?string {
 		}
 	}
 	return none
+}
+
+// is_menu_id_in_tree returns true if the given id is anywhere in the submenu tree.
+// Used to highlight intermediate menu-items that lead to the currently open subtree.
+fn is_menu_id_in_tree(submenu []MenuItemCfg, id string) bool {
+	for menu in submenu {
+		if menu.id.len > 0 && menu.id == id {
+			return true
+		}
+		if is_menu_id_in_tree(menu.submenu, id) {
+			return true
+		}
+	}
+	return false
 }

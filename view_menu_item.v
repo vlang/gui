@@ -3,22 +3,9 @@ module gui
 pub const menu_separator_id = '__separator__'
 pub const menu_subtitle_id = '__subtitle__'
 
-// MenuItemCfg configures a menu-item.  Menu items are containers and are not limited
-// to text. There are three types of menu items.
-//
-// - separator, if the separator field is true, a horizontal line separating menu items is rendered.
-// - custom view, if a custom_view is supplied, it is rendered.
-// - text only, for convenience, a text field is available for the typical text only menu items.
-//
-// If all three types are specified only one is rendered. The priority is separator, custom view, text only.
-// Custom and text only menus can have a submenu.
-//
-// The optional action callback can be used to process menu clicks. There is also a catch-all
-// action callback in [MenubarCfg](#MenubarCfg) that is called afterwards.
-//
-// It should go without saying, but menu-item id's need to be unique within a menubar config.
-// This is necessary so callbacks can identify which menu-item was clicked. It also is how
-// the menubar determines which menu items are selected/highlighted.
+// MenuItemCfg configures a single menu item, which may be a separator,
+// a custom view, or a simple text item. Menu items may contain a submenu.
+// Only one of separator, custom_view, or text is rendered, in that priority order.
 @[heap]
 pub struct MenuItemCfg {
 	color_select Color     = gui_theme.menubar_style.color_select
@@ -38,9 +25,12 @@ pub:
 	separator   bool
 }
 
+// menu_item builds a concrete View for a MenuItemCfg, handling
+// separators, custom views, text-only items, and submenu-capable items.
 fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 	return match item_cfg.separator {
 		true {
+			// Render a visual separator as a thin horizontal line.
 			column(
 				name:    'menu_item separator'
 				id:      item_cfg.id
@@ -59,6 +49,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 			)
 		}
 		else {
+			// Normal menu item with either a custom view or text.
 			mut content := []View{cap: 1}
 			unsafe { content.flags.set(.noslices) }
 			if item_cfg.custom_view != none {
@@ -92,7 +83,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 	}
 }
 
-// menu_item_text is a convenience function for creating a simple text menu item
+// menu_item_text creates a simple text-only menu item using an id and label
 pub fn menu_item_text(id string, text string) MenuItemCfg {
 	if id.is_blank() {
 		panic("blank menu id's are invalid")
@@ -103,7 +94,7 @@ pub fn menu_item_text(id string, text string) MenuItemCfg {
 	}
 }
 
-// menu_separator is a convenience function for creating a menu separator
+// menu_separator creates a menu separator item with a standard id
 pub fn menu_separator() MenuItemCfg {
 	return MenuItemCfg{
 		id:        menu_separator_id
@@ -111,7 +102,8 @@ pub fn menu_separator() MenuItemCfg {
 	}
 }
 
-// menu_subtitle subtitles
+// menu_subtitle creates a non-interactive subtitle item, typically
+// used as a label or grouping indicator within a menu
 pub fn menu_subtitle(text string) MenuItemCfg {
 	return MenuItemCfg{
 		id:       menu_subtitle_id
@@ -120,8 +112,8 @@ pub fn menu_subtitle(text string) MenuItemCfg {
 	}
 }
 
-// menu_submenu is a convenience function for creating a menu with an
-// arrow symbol indicating a submenu
+// menu_submenu creates a menu item that displays text plus a right arrow,
+// indicating the presence of a submenu
 pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
 	return MenuItemCfg{
 		id:          id
@@ -149,23 +141,28 @@ pub fn menu_submenu(id string, txt string, submenu []MenuItemCfg) MenuItemCfg {
 	}
 }
 
-// menu_item_click for such a short method, there is alot going on here in terms
-// of state management, thus the many comments.
+// menu_item_click transforms a MenuItemCfg into an on_click handler that
+// updates focus, selection state, invokes callbacks, and closes menus
+// for items without submenus
 fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&Layout, mut Event, mut Window) {
 	return fn [cfg, item_cfg] (_ &Layout, mut e Event, mut w Window) {
-		// setting the focus to the menubar enables mouse hover highlighting of menu items.
-		// see on_hover_item
+		// Give focus to the menubar to enable hover-driven selection.
 		w.set_id_focus(cfg.id_focus)
-		// Highlight the menu item
+
+		// Mark this item as the selected/highlighted one.
 		w.view_state.menu_state[cfg.id_focus] = item_cfg.id
-		// Menu item action handler
+
+		// Item-specific action callback.
 		if item_cfg.action != unsafe { nil } {
 			item_cfg.action(item_cfg, mut e, mut w)
 		}
-		// Common menubar action handler
-		cfg.action(item_cfg.id, mut e, mut w)
-		// if this is simple menu-item (no submenu) then clicking it
-		// also closes the menu and removes focus.
+
+		// Menubar-level action callback.
+		if cfg.action != unsafe { nil } {
+			cfg.action(item_cfg.id, mut e, mut w)
+		}
+
+		// If the item has no submenu, clicking closes the menu entirely.
 		if item_cfg.submenu.len == 0 {
 			w.set_id_focus(0)
 			w.view_state.menu_state[cfg.id_focus] = ''
@@ -173,13 +170,14 @@ fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&Layout, mut Event
 	}
 }
 
+// on_hover_item updates visual selection when the mouse hovers over a menu
+// item, provided the menubar has focus and keyboard navigation is inactive
 fn (cfg &MenubarCfg) on_hover_item(mut layout Layout, mut _ Event, mut w Window) {
-	// Mouse hover logic is covered here. Once the **menubar** gains focus,
-	// mouse-overs can change the selected menu-item. Note: Selection
-	// indicates highlighting, not focus. This is key to understanding menus.
+	// Exit if disabled, unfocused, or keyboard navigation overrides hover.
 	if layout.shape.id.len == 0 || layout.shape.disabled || !w.is_focus(cfg.id_focus)
 		|| w.view_state.menu_key_nav {
 		return
 	}
+	// Set the currently hovered menu item as selected.
 	w.view_state.menu_state[cfg.id_focus] = layout.shape.id
 }
