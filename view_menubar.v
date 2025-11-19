@@ -70,14 +70,11 @@ pub:
 	float     bool
 }
 
-// menubar creates a menubar and all nested menus from a MenubarCfg definition.
-//
-// This handles:
-// - Focus initialization
-// - Duplicate ID validation
-// - Construction of the row() containing menubar content
-//
-// The main bar includes a border container and an interior row where the menu items live.
+// menubar creates a menubar and all nested menus from a MenubarCfg definition
+// It performs focus initialization, validates duplicate IDs recursively,
+// assigns the first selectable menu when needed, and constructs the row()
+// containing the border container and interior menu bar content.
+// Returns the constructed top-level View for rendering.
 pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 	if cfg.id_focus == 0 {
 		panic('MenubarCfg.id_focus must be non-zero')
@@ -132,12 +129,10 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 	)
 }
 
-// MenuIdMap maps each menu ID to a MenuIdNode containing the four directional
-// navigational neighbors. This is used for keyboard-based menu navigation.
+// MenuIdMap maps each menu ID to a MenuIdNode containing directional neighbors.
 type MenuIdMap = map[string]MenuIdNode
 
-// MenuIdNode holds the IDs of the menu-items that should be navigated to when
-// pressing left, right, up, or down while a given menu-item is focused.
+// MenuIdNode holds IDs representing left/right/up/down navigation destinations.
 struct MenuIdNode {
 	left  string
 	right string
@@ -145,12 +140,10 @@ struct MenuIdNode {
 	down  string
 }
 
-// on_keydown handles menubar keyboard navigation.
-//
-// Supported keys:
-// - escape: close menus & clear focus
-// - space/enter: activate menu-item
-// - arrows: navigate based on precomputed menu mapper
+// on_keydown handles menubar keyboard navigation and activation
+// escape clears focus and closes all menus
+// space/enter activate the focused menu-item (item action first, then menubar action)
+// left/right/up/down use the precomputed menu_mapper graph to relocate focus
 fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 	// Currently selected menu ID for this menubar focus.
 	menu_id := w.view_state.menu_state[cfg.id_focus]
@@ -200,10 +193,10 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 	}
 }
 
-// menu_mapper builds a mapping from each menu-item ID to its directional neighbors.
-// This supports multi-level horizontal and vertical navigation.
-//
-// For each root-level item: left/right are siblings, up = itself, down = first submenu item.
+// menu_mapper builds a directional navigation map for all menu-items
+// Root-level items receive left/right sibling navigation with wrapping,
+// up=self, and down=first selectable submenu item.
+// Submenus are added recursively via submenu_mapper to produce a full navigation graph.
 fn menu_mapper(menu []MenuItemCfg) MenuIdMap {
 	mut menu_map := MenuIdMap{}
 	for idx, item in menu {
@@ -213,10 +206,10 @@ fn menu_mapper(menu []MenuItemCfg) MenuIdMap {
 
 		// Root-level navigation rules.
 		node := MenuIdNode{
-			left:  (menu[idx - 1] or { menu.last() }).id
-			right: (menu[idx + 1] or { menu.first() }).id
+			left:  (previous_selectable(idx, menu) or { last_selectable(menu) or { item } }).id
+			right: (next_selectable(idx, menu) or { first_selectable(menu) or { item } }).id
 			up:    item.id
-			down:  (item.submenu[0] or { item }).id
+			down:  (first_selectable(item.submenu) or { item }).id
 		}
 		menu_map[item.id] = node
 
@@ -226,11 +219,11 @@ fn menu_mapper(menu []MenuItemCfg) MenuIdMap {
 	return menu_map
 }
 
-// submenu_mapper recursively defines navigation for submenu items.
-//
-// left_id    = ID to go to when left is pressed from submenu root
-// node       = navigation node of immediate parent
-// root_node  = navigation node of the root-level menu item (used for right/down transitions)
+// submenu_mapper assigns directional navigation for submenu entries
+// left navigates to parent's left reference
+// right enters submenu if present, otherwise uses the root-level right
+// up/down move vertically within the submenu, with wraparound to last/first selectable items
+// Recursively processes nested submenu levels to complete the graph.
 fn submenu_mapper(menu []MenuItemCfg, left_id string, node MenuIdNode, root_node MenuIdNode, mut menu_map MenuIdMap) {
 	for idx, item in menu {
 		if !is_selectable_menu_id(item.id) {
@@ -238,9 +231,6 @@ fn submenu_mapper(menu []MenuItemCfg, left_id string, node MenuIdNode, root_node
 		}
 
 		// Submenu navigation logic:
-		// - Left jumps to parent (or parent's left)
-		// - Right enters item's submenu if available, else root's right
-		// - Up/Down move within submenu list
 		subitem_node := MenuIdNode{
 			left:  left_id
 			right: menu_item_right(item, root_node.right)
@@ -254,57 +244,49 @@ fn submenu_mapper(menu []MenuItemCfg, left_id string, node MenuIdNode, root_node
 	}
 }
 
-// menu_item_right computes the right navigation target for a submenu item.
-// Prefer the first selectable child menu-item, else fallback to root-right neighbor.
+// menu_item_right computes right navigation for submenu items
+// If a submenu exists, returns its first selectable item; otherwise falls back to root-right
 fn menu_item_right(item MenuItemCfg, id_right string) string {
-	for subitem in item.submenu {
-		if is_selectable_menu_id(subitem.id) {
-			return subitem.id
-		}
-	}
-	return id_right
+	first := first_selectable(item.submenu)
+	return if first != none { first.id } else { id_right }
 }
 
-// menu_item_up finds the nearest selectable menu-item above the current submenu index.
-// If none, wrap to bottom.
+// menu_item_up finds the nearest selectable above idx within a submenu
+// If none exist, wraps to the last selectable; if none selectable at all, returns current item
 fn menu_item_up(idx int, items []MenuItemCfg) string {
-	for i := idx - 1; idx > 0; i-- {
-		item := items[i] or { break }
-		if is_selectable_menu_id(item.id) {
-			return item.id
-		}
+	previous := previous_selectable(idx, items)
+	if previous != none {
+		return previous.id
 	}
-	for item in arrays.reverse_iterator(items) {
-		if is_selectable_menu_id(item.id) {
-			return item.id
-		}
+	last := last_selectable(items)
+	if last != none {
+		return last.id
 	}
 	return items[idx].id
 }
 
-// menu_item_down finds the nearest selectable menu-item below the current submenu index.
-// If none, wrap to top.
+// menu_item_down finds the nearest selectable below idx within a submenu
+// If none exist, wraps to the first selectable; if none selectable at all, returns current item
 fn menu_item_down(idx int, items []MenuItemCfg) string {
-	for i := idx + 1; true; i++ {
-		item := items[i] or { break }
-		if is_selectable_menu_id(item.id) {
-			return item.id
-		}
+	next := next_selectable(idx, items)
+	if next != none {
+		return next.id
 	}
-	for item in items {
-		if is_selectable_menu_id(item.id) {
-			return item.id
-		}
+	first := first_selectable(items)
+	if first != none {
+		return first.id
 	}
 	return items[idx].id
 }
 
-// is_selectable_menu_id - A selectable menu ID is one that is not a separator or subtitle.
+// is_selectable_menu_id determines whether a menu ID corresponds to a real menu-item
+// Separator and subtitle IDs are not selectable, so navigation skips them
 fn is_selectable_menu_id(id string) bool {
 	return id !in [menu_separator_id, menu_subtitle_id]
 }
 
-// find_menu_by_id recursively locate a MenuItemCfg by its ID.
+// find_menu_by_id recursively searches for a MenuItemCfg matching the given ID
+// Returns the found item or none if no match is found anywhere in nested submenus
 fn find_menu_by_id(items []MenuItemCfg, id string) ?MenuItemCfg {
 	for item in items {
 		if item.id == id {
@@ -313,6 +295,52 @@ fn find_menu_by_id(items []MenuItemCfg, id string) ?MenuItemCfg {
 		find := find_menu_by_id(item.submenu, id)
 		if find != none {
 			return find
+		}
+	}
+	return none
+}
+
+// next_selectable finds the next selectable menu-item after the given index
+// Skips separators and subtitles; returns none if no selectable item follows
+fn next_selectable(idx int, menu []MenuItemCfg) ?MenuItemCfg {
+	for i := idx + 1; true; i++ {
+		item := menu[i] or { break }
+		if is_selectable_menu_id(item.id) {
+			return item
+		}
+	}
+	return none
+}
+
+// previous_selectable finds the previous selectable menu-item before the given index
+// Skips separators and subtitles; returns none if no selectable item exists above
+fn previous_selectable(idx int, menu []MenuItemCfg) ?MenuItemCfg {
+	for i := idx - 1; true; i-- {
+		item := menu[i] or { break }
+		if is_selectable_menu_id(item.id) {
+			return item
+		}
+	}
+	return none
+}
+
+// first_selectable returns the first selectable entry from a menu slice
+// Skips non-selectable items; returns none if the menu contains no selectable entries
+fn first_selectable(menu []MenuItemCfg) ?MenuItemCfg {
+	for item in menu {
+		if is_selectable_menu_id(item.id) {
+			return item
+		}
+	}
+	return none
+}
+
+// last_selectable returns the last selectable entry from a menu slice
+// Uses reverse iteration; returns none if no selectable entry exists
+fn last_selectable(menu []MenuItemCfg) ?MenuItemCfg {
+	for item in arrays.reverse_iterator(menu) {
+		if is_selectable_menu_id(item.id) {
+			return *item
 		}
 	}
 	return none
