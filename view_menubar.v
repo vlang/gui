@@ -1,6 +1,7 @@
 module gui
 
 import datatypes
+import arrays
 
 // MenubarCfg configures a horizontal menubar that supports nested submenus.
 // A menubar holds MenuItemCfg items, each of which may contain further submenus.
@@ -212,10 +213,10 @@ fn menu_mapper(menu []MenuItemCfg) MenuIdMap {
 
 		// Root-level navigation rules.
 		node := MenuIdNode{
-			left:  (menu[idx - 1] or { item }).id   // previous root item, or itself
-			right: (menu[idx + 1] or { item }).id   // next root item, or itself
-			up:    item.id              // up stays at root
-			down:  (item.submenu[0] or { item }).id // go into first submenu item
+			left:  (menu[idx - 1] or { menu.last() }).id
+			right: (menu[idx + 1] or { menu.first() }).id
+			up:    item.id
+			down:  (item.submenu[0] or { item }).id
 		}
 		menu_map[item.id] = node
 
@@ -243,8 +244,8 @@ fn submenu_mapper(menu []MenuItemCfg, left_id string, node MenuIdNode, root_node
 		subitem_node := MenuIdNode{
 			left:  left_id
 			right: menu_item_right(item, root_node.right)
-			up:    menu_item_up(idx, menu, node.up)
-			down:  menu_item_down(idx, menu, node.down)
+			up:    menu_item_up(idx, menu)
+			down:  menu_item_down(idx, menu)
 		}
 		menu_map[item.id] = subitem_node
 
@@ -265,27 +266,37 @@ fn menu_item_right(item MenuItemCfg, id_right string) string {
 }
 
 // menu_item_up finds the nearest selectable menu-item above the current submenu index.
-// If none, go to id_up (parent or root).
-fn menu_item_up(idx int, items []MenuItemCfg, id_up string) string {
+// If none, wrap to bottom.
+fn menu_item_up(idx int, items []MenuItemCfg) string {
 	for i := idx - 1; idx > 0; i-- {
 		item := items[i] or { break }
 		if is_selectable_menu_id(item.id) {
 			return item.id
 		}
 	}
-	return id_up
+	for item in arrays.reverse_iterator(items) {
+		if is_selectable_menu_id(item.id) {
+			return item.id
+		}
+	}
+	return items[idx].id
 }
 
 // menu_item_down finds the nearest selectable menu-item below the current submenu index.
-// If none, go to id_down (parent or root).
-fn menu_item_down(idx int, items []MenuItemCfg, id_down string) string {
+// If none, wrap to top.
+fn menu_item_down(idx int, items []MenuItemCfg) string {
 	for i := idx + 1; true; i++ {
 		item := items[i] or { break }
 		if is_selectable_menu_id(item.id) {
 			return item.id
 		}
 	}
-	return id_down
+	for item in items {
+		if is_selectable_menu_id(item.id) {
+			return item.id
+		}
+	}
+	return items[idx].id
 }
 
 // is_selectable_menu_id - A selectable menu ID is one that is not a separator or subtitle.
