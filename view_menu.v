@@ -19,7 +19,6 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 		float:         cfg.float
 		float_anchor:  cfg.float_anchor
 		float_tie_off: cfg.float_tie_off
-		disabled:      cfg.disabled
 		invisible:     cfg.invisible
 		padding:       cfg.padding_border
 		radius:        cfg.radius_border
@@ -40,7 +39,7 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 	)
 }
 
-// menu_buildrRecursively constructs menu items and nested submenus. It determines
+// menu_build Recursively constructs menu items and nested submenus. It determines
 // item padding, text styles, and selection state; highlights active menu paths; and
 // when selected, attaches floating submenu panels. `level` is used to determine sizing
 // and which side submenus are anchored to.
@@ -102,6 +101,10 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 					float_anchor:   if level == 0 { .bottom_left } else { .top_right }
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }
 					on_hover:       cfg.on_hover_submenu
+					on_click:       fn [cfg] (_ &Layout, mut e Event, mut w Window) {
+						e.is_handled = true
+						w.set_id_focus(cfg.id_focus)
+					}
 					content:        [
 						column(
 							name:    'menubar submenu interior'

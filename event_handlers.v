@@ -161,9 +161,6 @@ fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 		}
 	}
 	if layout.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-		if layout.shape.id_focus > 0 {
-			w.set_id_focus(layout.shape.id_focus)
-		}
 		if layout.shape.on_mouse_up != unsafe { nil } {
 			// make up handler mouse coordinates relative to layout.shape
 			mut ev := event_relative_to(layout.shape, e)

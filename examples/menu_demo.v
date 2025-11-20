@@ -187,8 +187,14 @@ fn menu(mut window gui.Window) gui.View {
 			},
 			gui.MenuItemCfg{
 				id:          'theme'
-				padding:     gui.padding_none
-				custom_view: toggle_theme(app)
+				custom_view: gui.text(
+					text:       if app.light_theme { gui.icon_moon } else { gui.icon_sunny_o }
+					text_style: gui.theme().icon3
+				)
+				action:      fn (_ &gui.MenuItemCfg, mut e gui.Event, mut w gui.Window) {
+					toggle_theme(mut w)
+					e.is_handled = true
+				}
 			},
 		]
 	)
@@ -239,28 +245,13 @@ fn body(mut app MenuApp, window &gui.Window) gui.View {
 	)
 }
 
-fn toggle_theme(app &MenuApp) gui.View {
-	return gui.row(
-		h_align: .end
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			gui.toggle(
-				text_select:   gui.icon_moon
-				text_unselect: gui.icon_sunny_o
-				text_style:    gui.theme().icon5
-				select:        app.light_theme
-				on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-					mut app := w.state[MenuApp]()
-					app.light_theme = !app.light_theme
-					theme := if app.light_theme {
-						gui.theme_light_bordered
-					} else {
-						gui.theme_dark_bordered
-					}
-					w.set_theme(theme)
-				}
-			),
-		]
-	)
+fn toggle_theme(mut w gui.Window) {
+	mut app := w.state[MenuApp]()
+	app.light_theme = !app.light_theme
+	theme := if app.light_theme {
+		gui.theme_light_bordered
+	} else {
+		gui.theme_dark_bordered
+	}
+	w.set_theme(theme)
 }

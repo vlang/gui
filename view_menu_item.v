@@ -30,16 +30,20 @@ pub:
 fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 	return match item_cfg.separator {
 		true {
+			if item_cfg.action != unsafe { nil } {
+				panic('Menu separator action != nil')
+			}
 			// Render a visual separator as a thin horizontal line.
 			column(
-				name:    'menu_item separator'
-				id:      item_cfg.id
-				height:  item_cfg.text_style.size / 2
-				fill:    true
-				sizing:  fill_fit
-				padding: padding_none
-				v_align: .middle
-				content: [
+				name:     'menu_item separator'
+				id:       item_cfg.id
+				height:   item_cfg.text_style.size / 2
+				fill:     true
+				sizing:   fill_fit
+				padding:  padding_none
+				v_align:  .middle
+				on_click: menubar_cfg.menu_item_click(item_cfg)
+				content:  [
 					rectangle(
 						height: 1
 						color:  gui_theme.color_active
@@ -51,7 +55,6 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 		else {
 			// Normal menu item with either a custom view or text.
 			mut content := []View{cap: 1}
-			unsafe { content.flags.set(.noslices) }
 			if item_cfg.custom_view != none {
 				content << item_cfg.custom_view
 			} else {
@@ -149,6 +152,11 @@ fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&Layout, mut Event
 		// Give focus to the menubar to enable hover-driven selection.
 		w.set_id_focus(cfg.id_focus)
 
+		if !is_selectable_menu_id(item_cfg.id) {
+			e.is_handled = true
+			return
+		}
+
 		// Mark this item as the selected/highlighted one.
 		w.view_state.menu_state[cfg.id_focus] = item_cfg.id
 
@@ -158,15 +166,19 @@ fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&Layout, mut Event
 		}
 
 		// Menubar-level action callback.
-		if cfg.action != unsafe { nil } {
+		if cfg.action != unsafe { nil } && !e.is_handled {
 			cfg.action(item_cfg.id, mut e, mut w)
 		}
 
-		// If the item has no submenu, clicking closes the menu entirely.
-		if item_cfg.submenu.len == 0 {
+		// If the item has no submenu and is not top-level, clicking collapses the menu.
+		if item_cfg.submenu.len == 0 && item_cfg.id !in cfg.items.map(it.id) {
 			w.set_id_focus(0)
 			w.view_state.menu_state[cfg.id_focus] = ''
+		} else {
+			w.view_state.menu_state[cfg.id_focus] = item_cfg.id
 		}
+
+		e.is_handled = true
 	}
 }
 

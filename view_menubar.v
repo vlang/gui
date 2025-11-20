@@ -145,7 +145,6 @@ struct MenuIdNode {
 // space/enter activate the focused menu-item (item action first, then menubar action)
 // left/right/up/down use the precomputed menu_mapper graph to relocate focus
 fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
-	// Currently selected menu ID for this menubar focus.
 	menu_id := w.view_state.menu_state[cfg.id_focus]
 
 	if e.key_code == .escape {
@@ -156,17 +155,22 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 		return
 	}
 
-	// Activate the current menu-item.
 	if e.key_code in [.space, .enter] {
 		menu_cfg := find_menu_by_id(cfg.items, menu_id)
+
 		if menu_cfg != none {
+			// menus with submenus don't allow action clicks
+			if menu_cfg.submenu.len > 0 {
+				e.is_handled = true
+				return
+			}
 			// Trigger menu-item action first.
 			if menu_cfg.action != unsafe { nil } {
 				menu_cfg.action(&menu_cfg, mut e, mut w)
 			}
 		}
 		// Then trigger the menubar-level action.
-		if cfg.action != unsafe { nil } {
+		if cfg.action != unsafe { nil } && !e.is_handled {
 			cfg.action(menu_id, mut e, mut w)
 		}
 		// Close after activation.
