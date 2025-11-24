@@ -10,8 +10,13 @@ import arrays
 // up/down vs. left/right. Abstractions here only complicate an
 // already hard-to-reason-about problem. -imho
 
+// ==================================================
+// Note to me: Adding @[heap] to struct Layout causes
+// flickering in the scrollbars. Test this by running
+// v run fonts.v
+// ==================================================
+
 // Layout defines a tree of Layouts. Views generate Layouts
-@[heap]
 pub struct Layout {
 pub mut:
 	shape    &Shape  = unsafe { nil }
