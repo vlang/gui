@@ -305,7 +305,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 		for _ in 0 .. 7 { // 7 days in a week
 			day := match true {
 				count <= 0 {
-					if cfg.show_adjacent_months { (days_prev_month - count).str() } else { '' }
+					if cfg.show_adjacent_months { (days_prev_month + count).str() } else { '' }
 				}
 				count > days_in_month {
 					if cfg.show_adjacent_months { (count - days_in_month).str() } else { '' }
