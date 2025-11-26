@@ -42,6 +42,8 @@ jobs:
         run: v fmt -verify -inprocess gui/
       - name: Check formatting of MD files
         run: v check-md gui/
+      - name: Run tests
+        run: v test gui/
       - name: Check syntax of examples
         run: v gui/examples/_check.vsh
       - name: Check compilation of examples
@@ -69,6 +71,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: gui
+      - name: Run tests
+        run: v test gui/
       - name: Check compilation of examples
         run: v should-compile-all gui/examples/
       - name: Check compilation of examples with -prod
@@ -89,6 +93,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: gui
+      - name: Run tests
+        run: v test gui/
       - name: Check compilation of examples
         run: v should-compile-all gui/examples/
       - name: Check compilation of examples with -prod
