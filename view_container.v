@@ -2,7 +2,6 @@ module gui
 
 import arrays
 
-@[heap]
 struct ContainerView implements View {
 pub:
 	id             string

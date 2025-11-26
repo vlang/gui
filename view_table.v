@@ -25,7 +25,6 @@ import encoding.csv
 // 	]
 // )
 // ```
-@[heap]
 pub struct TableCfg {
 pub:
 	id                   string

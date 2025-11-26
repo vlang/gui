@@ -1,7 +1,6 @@
 module gui
 
 // ExpandPanelCfg configures an [expand_panel](#expand_panel)
-@[heap]
 pub struct ExpandPanelCfg {
 pub:
 	on_toggle      fn (mut w Window) = unsafe { nil }

@@ -101,7 +101,7 @@ pub fn rtf(cfg RtfCfg) View {
 fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 	for span in layout.shape.text_spans {
 		if span.link.len != 0 {
-			if layout.shape.point_in_span(span, e.mouse_x, e.mouse_y) {
+			if point_in_text_span(span, e.mouse_x, e.mouse_y) {
 				w.set_mouse_cursor_pointing_hand()
 				e.is_handled = true
 				return
@@ -113,7 +113,7 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 	for span in layout.shape.text_spans {
 		if span.link.len != 0 {
-			if layout.shape.point_in_span(span, e.mouse_x, e.mouse_y) {
+			if point_in_text_span(span, e.mouse_x, e.mouse_y) {
 				os.open_uri(span.link) or {}
 				e.is_handled = true
 				return
@@ -122,12 +122,6 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (shape &Shape) point_in_span(span &TextSpan, x f32, y f32) bool {
-	rect := DrawClip{
-		x:      shape.x + span.x
-		y:      shape.y + span.y
-		width:  span.w
-		height: span.h
-	}
-	return x >= rect.x && y >= rect.y && x < (rect.x + rect.width) && y < (rect.y + rect.height)
+fn point_in_text_span(span &TextSpan, x f32, y f32) bool {
+	return x >= span.x && y >= span.y && x < (span.x + span.w) && y < (span.y + span.h)
 }

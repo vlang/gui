@@ -31,7 +31,6 @@ const reserved_dialog_id = '__dialog_reserved_do_not_use__'
 // dialogs are asynchronous. Keyboard/Mouse input is restricted
 // to the dialog dialog when visible. **Dialogs do not support floating
 // elements**. Invoke dialogs by calling [(Window) dialog](#Window.dialog)
-@[heap]
 pub struct DialogCfg {
 mut:
 	visible      bool

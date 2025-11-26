@@ -2,7 +2,6 @@ module gui
 
 import time
 
-@[heap]
 pub struct InputDateCfg {
 pub:
 	id                       string @[required] // unique only to other date_pickers
