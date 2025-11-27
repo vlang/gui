@@ -1,7 +1,7 @@
 # 6 Fonts
 
-Gui embeds a commercial-free, open-source text font (DejaVu Sans) and
-ships an icon font. By default, Gui uses DejaVu Sans for text with bold,
+v-gui embeds a commercial-free, open-source text font (DejaVu Sans) and
+ships an icon font. By default, v-gui uses DejaVu Sans for text with bold,
 italic, and monospaced variants.
 
 What’s included - Text fonts (embedded and auto-installed on first
@@ -14,13 +14,13 @@ appear off on another. - Predictable glyph coverage: DejaVu Sans covers
 most Western Latin-1 characters. For broader scripts (e.g., CJK), switch
 to a system font or a custom font that includes the glyphs you need.
 
-Where are the embedded files placed? - On first use, Gui writes the
+Where are the embedded files placed? - On first use, v-gui writes the
 bundled TTFs to your platform’s data directory (`os.data_dir()`). You
 don’t need to manage these files manually.
 
 Using system fonts (platform default) The easiest way is to modify a
 `ThemeCfg` and set the text style’s `family` to an empty string. This
-tells Gui to use the platform’s default font for all text.
+tells v-gui to use the platform’s default font for all text.
 
 ```v
 import gui
@@ -52,7 +52,7 @@ gui.text(
 ```
 
 Using a specific font file You can point `family` to a path for a
-specific TTF/OTF. If you provide the “Regular” face, Gui will try to
+specific TTF/OTF. If you provide the “Regular” face, v-gui will try to
 locate Bold/Italic/Mono variants automatically.
 
 ```v
@@ -67,7 +67,7 @@ gui.text(
 )
 ```
 
-Icon fonts Gui includes an icon font and a set of `icon_*` constants for
+Icon fonts v-gui includes an icon font and a set of `icon_*` constants for
 common symbols. To render icons, use a text view with the icon font
 family and supply the desired icon glyph.
 

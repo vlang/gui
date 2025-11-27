@@ -6,9 +6,9 @@ have instructions that specify if the item should fit or fill to the
 contents, etc. This allows layouts to be fluid and adapt to the size of
 the window while looking similar on high or low dpi displays.
 
-When dimensions are required, GUI uses, "logical pixels" instead of
+When dimensions are required, v-gui uses, "logical pixels" instead of
 physical pixels. Logical pixels are small, on the order of the size of a
-physical pixel. When GUI draws to the screen it scales and translates
+physical pixel. When v-gui draws to the screen it scales and translates
 logical pixels to appear on the display consistently, preserving aspect
 ratios (circles appear as circles and not ellipes for instance).
 
@@ -18,7 +18,7 @@ text and a button that counts clicks.
 ```v
 import gui
 
-// GUI uses a view generator (a function that returns a View) to
+// v-gui uses a view generator (a function that returns a View) to
 // render the contents of the Window. As the state of the app
 // changes, either through user actions or business logic, GUI
 // calls the view generator to build a new view. The new view is
@@ -120,7 +120,7 @@ fn main() {
 
 As shown, a window is created. Notice that the app state is stored in
 the window. This is important as we'll see in a moment. The other
-interesting bit is the `on_init` function. Gui calls this function when
+interesting bit is the `on_init` function. v-gui calls this function when
 the window is initialized. This is where the application's view is first
 set. Different views can be shown but calling `update_window` anytime
 with a different view. Let's look at the `main_view` in two sections.
@@ -148,7 +148,7 @@ window size. The two fundamental layout views are `row` and `column`.
 `row` and `column` stack their content left-to-right and top-to-bottom
 accordingly.
 
-This is a good time to discuss one of the unique aspects of Gui,
+This is a good time to discuss one of the unique aspects of v-gui,
 immediate mode. Immediate mode means that whenever the view is updated,
 the entire view is redrawn. This is similar to how many Web UI
 frameworks work (e.g. React). The advantage of immediate mode is that
@@ -160,9 +160,9 @@ tab and the UI will appear confusing to the user. In immediate mode,
 since the entire view is redrawn, there is no need to undo the
 previously highlighted tab.
 
-Gui interfaces can be redrawn many times per second depending on user
+v-gui interfaces can be redrawn many times per second depending on user
 interaction. For instance, clicking a button for instance will call
-`main_view` to generate a new view. Don't worry, Gui can update a view
+`main_view` to generate a new view. Don't worry, v-gui can update a view
 on the order of microseconds (not milliseconds, microseconds).
 
 Remember the app state we gave the Window? It is always available from
@@ -192,8 +192,8 @@ and buttons.
 There's a bit to unpack here.
 
 `gui.text` displays text of course. The `text_style` defines the font,
-size, and weight of the text. Gui has a theming system like other UI
-frameworks. For convienence, Gui defines several predefined selections.
+size, and weight of the text. v-gui has a theming system like other UI
+frameworks. For convienence, v-gui defines several predefined selections.
 They are:
 
 - `n1,n2,n3,n4,n5,n6`, normal text_style
@@ -205,9 +205,9 @@ The numbers indicate the size with 1 being the largest and 6 being the
 smallest. The 3 size can be thought of as the medium or default size. If
 no text_style is given to the text view, it defaults to `n3`.
 
-`gui.button` not suprisingly, creates a button. When a button is
+`gui.button` not surprisingly, creates a button. When a button is
 clicked, the `on_click` callback is called. The application's state is
-retrieved and the click count is updated. Gui will automatically call
+retrieved and the click count is updated. v-gui will automatically call
 `main_view` when the click event completes. The new view is created with
 the updated click count.
 
@@ -229,8 +229,8 @@ padding as `Padding{2, 2, 2, 2}`. Button also has an inner padding
 setting named `padding`. The default theme defaults to a padding of 0
 for borders and a padding of 5 for other views.
 
-As mentioned earlier, Gui supports themes that will be discussed in a
-later chapter. To quickly summarize, Gui has 4 default themes.
+As mentioned earlier, v-gui supports themes that will be discussed in a
+later chapter. To quickly summarize, v-gui has 4 default themes.
 'dark`,`light`,`dark-no-padding`and`light-no-padding\`. It is as easy as
 calling "window.set_theme(gui.light_theme)" to change to a brighter
 theme.

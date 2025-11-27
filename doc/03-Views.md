@@ -85,7 +85,7 @@ pub:
 ```
 
 There are nine possible combinations of width/height sizing. For
-convenience, Gui provides constants:
+convenience, v-gui provides constants:
 
 ``` v
 pub const fit_fit   = Sizing{ .fit,   .fit }
@@ -118,8 +118,8 @@ will overflow its container. Common remedies include:
 - enabling scrolling in the parent container
 - enabling clipping on the parent container
 
-Gui aims to keep text predictable. Many UI frameworks split labels,
-multi-line text, and input labels into different widgets; in Gui there
+v-gui aims to keep text predictable. Many UI frameworks split labels,
+multi-line text, and input labels into different widgets; in v-gui there
 is just the `text` view for displaying text.
 
 ## Images

@@ -2,7 +2,7 @@
 
 ### Overview
 
-Gui’s theming system lets you control colors, paddings, radii, spacing,
+v-gui’s theming system lets you control colors, paddings, radii, spacing,
 and text styles across all views. It is highly granular (each view has
 its own style), but also ergonomic thanks to `theme_maker`, which
 generates a complete `Theme` from a compact `ThemeCfg`.

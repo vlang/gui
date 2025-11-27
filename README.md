@@ -7,7 +7,7 @@
 
 ## Overview
 
-V GUI is an immediate mode UI framework for the V programming language
+v-gui is an immediate mode UI framework for the V programming language
 based on the rendering algorithm of Clay. It provides a modern,
 declarative approach to building user interfaces with flex-box style
 layout syntax and thread-safe view updates.
@@ -25,7 +25,7 @@ layout syntax and thread-safe view updates.
 
 ## Installation
 
-Install the GUI framework using V’s package manager:
+Install the v-gui framework using V’s package manager:
 
 ```bash
 v install gui
@@ -35,9 +35,9 @@ v install gui
 
 ### View Generators
 
-GUI uses a view generator (a function that returns a View) to render the
+v-gui uses a view generator (a function that returns a View) to render the
 contents of the Window. As the state of the app changes, either through
-user actions or business logic, GUI calls the view generator to build a
+user actions or business logic, v-gui calls the view generator to build a
 new view.
 
 ### State Management
@@ -53,7 +53,7 @@ The framework follows a functional approach where:
 
 ### Creating a Simple Application
 
-Here’s a complete example of a basic GUI application:
+Here’s a complete example of a basic v-gui application:
 
 ```v
 import gui
@@ -89,7 +89,7 @@ fn main_view(window &gui.Window) gui.View {
 		v_align: .middle
 		sizing:  gui.fixed_fixed
 		content: [
-			gui.text(text: 'Welcome to GUI'),
+			gui.text(text: 'Welcome to v-gui'),
 			gui.button(
 				content:  [gui.text(text: '${app.clicks} Clicks')]
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
@@ -208,10 +208,10 @@ The framework uses a flex-box inspired layout system with:
 
 ## Building and Running
 
-The README.md in the examples folder describes how to build GUI
+The README.md in the examples folder describes how to build v-gui
 programs. Don’t fret, it’s a one-liner.
 
-To build a GUI application:
+To build a v-gui application:
 
 ```bash
 v run your_app.v
@@ -221,7 +221,7 @@ v run your_app.v
 
 ### Getting Started
 
-If you’re new to GUI, start with the get-started.v example. It explains
+If you’re new to v-gui, start with the get-started.v example. It explains
 the basics of view generators, state models and event handling.
 
 ### Available Examples
@@ -254,7 +254,7 @@ can be used to read them or use a browser.
 
 ![architecture](assets/gui-architecture.png)
 
-The `gui` project follows a layered architecture, ensuring a clear separation of
+The `v-gui` project follows a layered architecture, ensuring a clear separation of
 concerns. Here's a breakdown of its main parts and their interactions:
 
 ### **Application Layer**
@@ -262,15 +262,15 @@ concerns. Here's a breakdown of its main parts and their interactions:
 This layer represents the entry points for users and developers.
 
 - **Application Code**: These are the actual user applications built using the
-  `gui` library.
+  `v-gui` library.
 - **Examples**: A collection of demonstration applications showcasing various
-  features and usage patterns of the `gui` framework.
+  features and usage patterns of the `v-gui` framework.
 
 ### **Window Management Layer**
 
 This layer handles the main application window and user interactions.
 
-- **Window**: The central orchestrator of the GUI system, managing the
+- **Window**: The central orchestrator of the v-gui system, managing the
   application window.
 - **WindowCfg**: Configuration parameters used during the creation of a window,
   such as dimensions, title, and initial callbacks.
@@ -331,7 +331,7 @@ These are foundational utilities and styling mechanisms.
 
 ### **External Dependencies**
 
-These are external libraries that the `gui` project relies on.
+These are external libraries that the `v-gui` project relies on.
 
 - **gg Graphics**: A graphics library used for low-level 2D rendering
   operations.
@@ -378,8 +378,8 @@ The project welcomes contributions and feedback. Visit the GitHub repository to:
 
 V also provides other UI solutions:
 
-- **V UI**: Cross-platform widget toolkit
+- **v-ui**: Older cross-platform widget toolkit
 - **gg**: Graphics library for 2D applications using OpenGL/Metal/DirectX 11
 
-This GUI framework focuses specifically on immediate mode rendering with a
+This v-gui framework focuses specifically on immediate mode rendering with a
 declarative API, making it distinct from other V UI solutions.
