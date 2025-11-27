@@ -196,7 +196,7 @@ size, and weight of the text. Gui has a theming system like other UI
 frameworks. For convienence, Gui defines several predefined selections.
 They are:
 
-- `n1,n2,n3,n4,n5,b6`, normal text_style
+- `n1,n2,n3,n4,n5,n6`, normal text_style
 - `b1,b2,b3,b4,b5,b6`, bold text_style
 - `i1,i2,i3,i4,i5,i6`, italic text_style
 - `m1,m2,m3,m4,m5,m6`, monospace text_style
