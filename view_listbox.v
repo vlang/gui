@@ -2,6 +2,7 @@ module gui
 
 // ListBoxCfg configures a [list_box](#list_box) view.
 // `selected` is a the list of selected `values`
+@[minify]
 pub struct ListBoxCfg {
 pub:
 	id               string

@@ -2,6 +2,7 @@ module gui
 
 import log
 
+@[minify]
 struct ImageView implements View {
 pub:
 	id         string
@@ -19,6 +20,7 @@ mut:
 	content  []View // not used
 }
 
+@[minify]
 pub struct ImageCfg {
 pub:
 	id         string

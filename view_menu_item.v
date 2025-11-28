@@ -6,6 +6,7 @@ pub const menu_subtitle_id = '__subtitle__'
 // MenuItemCfg configures a single menu item, which may be a separator,
 // a custom view, or a simple text item. Menu items may contain a submenu.
 // Only one of separator, custom_view, or text is rendered, in that priority order.
+@[minify]
 pub struct MenuItemCfg {
 	color_select Color     = gui_theme.menubar_style.color_select
 	text_style   TextStyle = gui_theme.menubar_style.text_style

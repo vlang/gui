@@ -12,6 +12,7 @@ pub enum TextMode as u8 {
 
 // Text is an internal structure used to describe a text view
 // Members are arranged for packing to reduce memory footprint.
+@[minify]
 struct TextView implements View {
 	sizing Sizing
 mut:
@@ -72,7 +73,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 
 // TextCfg configures a [text](#text) view
 // - [TextMode](#TextMode) controls how text is wrapped.
-@[heap]
+@[heap; minify]
 pub struct TextCfg {
 pub:
 	text               string

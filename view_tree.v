@@ -4,6 +4,7 @@ module gui
 // nodes in a tree-like format.The `indent` property controls the the amount each subtree
 // is indented. The `spacing` property controls the space between nodes. The `icon` property
 // configures the font used to display icons in a [TreeNodeCfg](#TreeNodeCfg)
+@[minify]
 pub struct TreeCfg {
 pub:
 	id        string @[required]

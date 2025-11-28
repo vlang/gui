@@ -1,6 +1,6 @@
 module gui
 
-@[heap]
+@[heap; minify]
 pub struct RadioCfg {
 pub:
 	id             string

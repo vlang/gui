@@ -37,6 +37,7 @@ pub enum DatePickerWeekdayLen as u8 {
 	full
 }
 
+@[minify]
 struct DatePickerState {
 pub mut:
 	show_year_month_picker bool

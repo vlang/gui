@@ -3,6 +3,7 @@ module gui
 import math
 
 // ProgressBarCfg configures a [progress_bar](#progress_bar)
+@[minify]
 pub struct ProgressBarCfg {
 pub:
 	id              string

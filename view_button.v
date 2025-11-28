@@ -3,7 +3,7 @@ module gui
 // ButtonCfg configures a clickable [button](#button). It won't respond to
 // mouse interactions if an on_click handler is not provided. In that mode,
 // it functions as bubble text.
-@[heap]
+@[heap; minify]
 pub struct ButtonCfg {
 pub:
 	id                 string

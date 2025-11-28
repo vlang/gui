@@ -2,7 +2,7 @@ module gui
 
 import math
 
-@[heap]
+@[heap; minify]
 pub struct RangeSliderCfg {
 pub:
 	id             string @[required]

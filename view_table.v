@@ -25,6 +25,7 @@ import encoding.csv
 // 	]
 // )
 // ```
+@[minify]
 pub struct TableCfg {
 pub:
 	id                   string
@@ -45,6 +46,7 @@ pub:
 }
 
 // TableCellCfg configures a table cell
+@[minify]
 pub struct TableCellCfg {
 pub:
 	id         string

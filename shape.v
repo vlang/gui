@@ -4,6 +4,7 @@ import rand
 import datatypes
 
 // Shape is the only data structure in GUI used to draw to the screen.
+@[minify]
 pub struct Shape {
 pub:
 	uid        u64 = rand.u64() // internal use only

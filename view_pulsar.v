@@ -1,6 +1,6 @@
 module gui
 
-@[params]
+@[minify; params]
 pub struct PulsarCfg {
 pub:
 	id    string

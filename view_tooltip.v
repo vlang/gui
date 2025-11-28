@@ -9,6 +9,7 @@ mut:
 }
 
 // TooltipCfg configures a [tooltip](#tooltip)
+@[minify]
 pub struct TooltipCfg {
 pub:
 	id             string @[required] // unique id to tooltips

@@ -19,7 +19,7 @@ import arrays
 //   Both are called when a menu-item is activated (item action first, then menubar action).
 // - Keyboard navigation is handled via on_keydown below.
 //
-@[heap]
+@[heap; minify]
 pub struct MenubarCfg {
 pub:
 	id                     string

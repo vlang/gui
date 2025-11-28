@@ -2,7 +2,7 @@ module gui
 
 // SwitchCfg a.k.a checkbox. [Switch](#toggle) in its default mode functions and a checkbox.
 // However, there is an option of overriding the `text_select` and `text_unselect` properties.
-@[heap]
+@[heap; minify]
 pub struct SwitchCfg {
 pub:
 	id                 string

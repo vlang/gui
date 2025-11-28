@@ -3,7 +3,7 @@ module gui
 import hash.fnv1a
 
 // SelectCfg configures a [select](#select) (a.k.a drop-down) view.
-@[heap]
+@[heap; minify]
 pub struct SelectCfg {
 pub:
 	id                 string @[required] // unique only to other select views

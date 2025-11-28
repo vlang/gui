@@ -1,5 +1,6 @@
 module gui
 
+@[minify]
 pub struct RectangleCfg {
 pub:
 	name       string = 'rectangle'

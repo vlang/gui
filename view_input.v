@@ -34,7 +34,7 @@ pub enum InputMode as u8 {
 // InputCfg configures an input view. See [input](#input). Use `on_text_changed` to
 // capture text updates. To capture the enter-key, provide an `on_enter` callback.
 // Placeholder text is shown when the input field is empty.
-@[heap]
+@[heap; minify]
 pub struct InputCfg {
 pub:
 	id                 string

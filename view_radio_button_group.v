@@ -21,6 +21,7 @@ module gui
 // 	}
 // )
 // ```
+@[minify]
 pub struct RadioButtonGroupCfg {
 pub:
 	title      string
