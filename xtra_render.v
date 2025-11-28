@@ -146,6 +146,7 @@ fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gg.Color, c
 	sgl.end()
 }
 
+@[direct_array_access]
 fn setup_rounded_rect_draw(x f32, y f32, w f32, h f32, radius f32, c gg.Color, ctx &gg.Context) RoundedRectParams {
 	if c.a != 255 {
 		sgl.load_pipeline(ctx.pipeline.alpha)
@@ -210,6 +211,7 @@ fn setup_rounded_rect_draw(x f32, y f32, w f32, h f32, radius f32, c gg.Color, c
 // alternating edge and center vertices.
 // The arc is defined by precomputed dxs/dys, and oriented by xmul/ymul.
 // An optional offset (ox, oy) allows subtle shifts for AA-like effects where needed.
+@[direct_array_access]
 fn sgl_arc_triangle_strip_with_offset(cx f32, cy f32, dxs [num_segments]f32,
 	dys [num_segments]f32, xmul f32, ymul f32, ox f32, oy f32) {
 	sgl.begin_triangle_strip()
@@ -226,6 +228,7 @@ fn sgl_arc_triangle_strip(cx f32, cy f32, dxs [num_segments]f32, dys [num_segmen
 }
 
 // sgl_arc_line_strip Draw a quarter circle outline using a line strip.
+@[direct_array_access]
 fn sgl_arc_line_strip(cx f32, cy f32, dxs [num_segments]f32, dys [num_segments]f32, xmul f32, ymul f32) {
 	sgl.begin_line_strip()
 	for i in 0 .. num_segments {
