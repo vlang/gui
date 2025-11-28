@@ -233,11 +233,13 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		} else if e.modifiers in [u32(0), u32(Modifier.shift)] {
 			match e.key_code {
 				.left { new_cursor_pos = int_max(0, new_cursor_pos - 1) }
-				.right { new_cursor_pos = int_min(cfg.text.len, new_cursor_pos + 1) }
+				.right { new_cursor_pos = int_min(cfg.text.runes().len, new_cursor_pos + 1) }
 				.home { new_cursor_pos = 0 }
-				.end { new_cursor_pos = cfg.text.len }
+				.end { new_cursor_pos = cfg.text.runes().len }
 				else { return }
 			}
+		} else if e.modifiers == u32(Modifier.super) {
+			return
 		}
 
 		// Moving the cursor when it is animated can happen when the cursor is
@@ -303,24 +305,26 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 fn (cfg &TextCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		c := event.char_code
+		mut is_handled := true
 		if event.modifiers & u32(Modifier.ctrl) > 0 {
 			match c {
 				ctrl_a { cfg.select_all(layout.shape, mut w) }
 				ctrl_c { cfg.copy(layout.shape, w) }
-				else {}
+				else { is_handled = false }
 			}
 		} else if event.modifiers & u32(Modifier.super) > 0 {
 			match c {
 				cmd_a { cfg.select_all(layout.shape, mut w) }
 				cmd_c { cfg.copy(layout.shape, w) }
-				else {}
+				else { is_handled = false }
 			}
 		} else {
 			match c {
 				escape_char { cfg.unselect_all(mut w) }
-				else {}
+				else { is_handled = false }
 			}
 		}
+		event.is_handled = is_handled
 	}
 }
 
@@ -370,11 +374,12 @@ pub fn (cfg &TextCfg) select_all(shape &Shape, mut w Window) {
 		return
 	}
 	input_state := w.view_state.input_state[cfg.id_focus]
+	len := cfg.text.runes().len
 	w.view_state.input_state[cfg.id_focus] = InputState{
 		...input_state
-		cursor_pos: cfg.text.len
+		cursor_pos: len
 		select_beg: 0
-		select_end: u32(cfg.text.len)
+		select_end: u32(len)
 	}
 }
 

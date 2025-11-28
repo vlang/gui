@@ -514,10 +514,6 @@ fn dim_alpha(color Color) Color {
 // rects_overlap checks if two rectangles overlap.
 @[inline]
 fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
-	// vfmt off
-	return r1.x < (r2.x + r2.width)
-            && r2.x < (r1.x + r1.width)
-            && r1.y < (r2.y + r2.height)
-            && r2.y < (r1.y + r1.height)
-	// vfmt on
+	return r1.x < (r2.x + r2.width) && r2.x < (r1.x + r1.width) && r1.y < (r2.y + r2.height)
+		&& r2.y < (r1.y + r1.height)
 }

@@ -2,6 +2,7 @@ module gui
 
 import log
 import datatypes
+import arrays
 
 // The management of focus and input states poses a problem in stateless views
 // because...they're stateless. Instead, the window maintains this state in a
@@ -266,35 +267,36 @@ fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 }
 
 fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
-	mut text := cfg.text
+	mut text := cfg.text.runes()
 	input_state := w.view_state.input_state[cfg.id_focus]
 	mut cursor_pos := input_state.cursor_pos
 	if cursor_pos < 0 {
 		cursor_pos = cfg.text.len
+	} else if input_state.select_beg != input_state.select_end {
+		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
+		if beg >= text.len || end > text.len {
+			log.error('beg or end out of range (delete)')
+			return none
+		}
+		text = arrays.append(text[..beg], text[end..])
+		cursor_pos = int_min(int(beg), text.len)
 	} else {
-		if input_state.select_beg != input_state.select_end {
-			beg, end := u32_sort(input_state.select_beg, input_state.select_end)
-			if beg >= text.len || end > text.len {
-				log.error('beg or end out of range (delete)')
-				return none
-			}
-			text = text[..beg] or { return none } + text[end..] or { return none }
-			cursor_pos = int_min(int(beg), text.len)
-		} else {
-			if cursor_pos == 0 && !is_delete {
-				return text
-			}
-			if cursor_pos > text.len {
-				log.error('cursor_pos out of range (delete)')
-				return none
-			}
-			step := if is_delete { 1 } else { 0 }
-			text = cfg.text[..cursor_pos - 1 + step] + cfg.text[cursor_pos + step..] or {
-				return none
-			}
-			if !is_delete {
-				cursor_pos--
-			}
+		if cursor_pos == 0 && !is_delete {
+			return text.string()
+		}
+		if cursor_pos > text.len {
+			log.error('cursor_pos out of range (delete)')
+			return none
+		}
+		step := if is_delete { 1 } else { 0 }
+		step_beg := cursor_pos - 1 + step
+		step_end := cursor_pos + step
+		if step_beg < 0 && step_end >= text.len {
+			return none
+		}
+		text = arrays.append(text[..step_beg], text[step_end..])
+		if !is_delete {
+			cursor_pos--
 		}
 	}
 	mut undo := input_state.undo
@@ -310,7 +312,7 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 		select_end: 0
 		undo:       undo
 	}
-	return text
+	return text.string()
 }
 
 fn (cfg &InputCfg) insert(s string, mut w Window) !string {
@@ -323,25 +325,27 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 			return cfg.text
 		}
 	}
-	mut text := cfg.text
+	mut text := cfg.text.runes()
 	input_state := w.view_state.input_state[cfg.id_focus]
 	mut cursor_pos := input_state.cursor_pos
 	if cursor_pos < 0 {
-		text = cfg.text + s
+		text = arrays.append(cfg.text.runes(), s.runes())
 		cursor_pos = text.len
 	} else if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 		if beg >= text.len || end > text.len {
 			return error('beg or end out of range (insert)')
 		}
-		text = text[..beg] + s + text[end..]
-		cursor_pos = int_min(int(beg) + s.len, text.len)
+		rs := s.runes()
+		text = arrays.append(arrays.append(text[..beg], rs), text[end..])
+		cursor_pos = int_min(int(beg) + rs.len, text.len)
 	} else {
 		if cursor_pos > text.len {
 			return error('cursor_pos out of range (insert)')
 		}
-		text = text[..cursor_pos] + s + text[cursor_pos..]
-		cursor_pos = int_min(cursor_pos + s.len, text.len)
+		rs := s.runes()
+		text = arrays.append(arrays.append(text[..cursor_pos], rs), text[cursor_pos..])
+		cursor_pos = int_min(cursor_pos + rs.len, text.len)
 	}
 	mut undo := input_state.undo
 	undo.push(InputMemento{
@@ -356,7 +360,7 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		select_end: 0
 		undo:       undo
 	}
-	return text
+	return text.string()
 }
 
 pub fn (cfg &InputCfg) cut(mut w Window) ?string {
@@ -374,12 +378,17 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	input_state := w.view_state.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
-		if beg >= cfg.text.len || end > cfg.text.len {
+		len := cfg.text.runes().len
+		if beg >= len || end > len {
 			log.error('beg or end out of range (copy)')
 			return none
 		}
-		cpy := cfg.text[beg..end] or { '' }
-		to_clipboard(cpy)
+		rune_text := cfg.text.runes()
+		if beg < 0 || end >= rune_text.len {
+			return none
+		}
+		cpy := rune_text[beg..end]
+		to_clipboard(cpy.string())
 	}
 	return none
 }
