@@ -40,7 +40,7 @@ for file in files {
 	_, name, _ := split_path(file)
 	output_file := join_path(output_dir, name)
 	cmd := 'v -no-parallel -prod -o ${output_file:-22s} ${file}'
-	dsp := 'v -no-parallel -prod -o ${output_file:-22s} ${os.file_name(file):-25s}'
+	dsp := 'v -no-parallel -prod -o ${output_file:-22s} ${os.file_name(file):-26s}'
 	print(dsp)
 	result := execute(cmd)
 	if result.exit_code == 0 {

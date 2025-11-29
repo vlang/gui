@@ -109,8 +109,6 @@ pub fn window(cfg &WindowCfg) &Window {
 			}
 			on_init(mut w)
 			w.update_window()
-			// scrollbars sometimes don't show up on first pass - investigate
-			w.update_window()
 		}
 	)
 	initialize_fonts()
