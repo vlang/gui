@@ -235,13 +235,11 @@ the basics of view generators, state models and event handling.
 
 ### Generated Documentation
 
-The Makefile at the root of the project builds documentation from the
-source code. Type make doc to produce the documentation and make read to
-open the documentation in the browser.
+**\_doc.vsh** is included in the project root. Use it to generate and view the
+documentation:
 
 ```bash
-make doc   # Generate documentation
-make read  # Open documentation in browser
+v run _doc.vsh
 ```
 
 ### Manual Documentation
