@@ -136,7 +136,10 @@ fn frame_fn(mut window Window) {
 // to child views.
 fn event_fn(ev &gg.Event, mut w Window) {
 	mut e := from_gg_event(ev)
-	if !w.focused && e.typ !in [.focused, .mouse_scroll] {
+	if !w.focused && e.typ == .mouse_down && e.mouse_button == MouseButton.right {
+		// allow right clicks without focus.
+		// motivation: browsers allow this action.
+	} else if !w.focused && e.typ !in [.focused, .mouse_scroll] {
 		return
 	}
 
