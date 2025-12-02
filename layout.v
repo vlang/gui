@@ -769,7 +769,7 @@ fn layout_hover(mut layout Layout, mut w Window) {
 			mut ev := Event{
 				frame_count:   ctx.frame
 				typ:           .invalid
-				modifiers:     unsafe { u32(ctx.key_modifiers) }
+				modifiers:     unsafe { Modifier(ctx.key_modifiers) }
 				mouse_button:  mouse_button
 				mouse_x:       ctx.mouse_pos_x
 				mouse_y:       ctx.mouse_pos_y

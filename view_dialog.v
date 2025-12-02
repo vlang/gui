@@ -230,8 +230,7 @@ fn prompt_view(cfg DialogCfg) []View {
 }
 
 fn dialog_key_down(_ voidptr, mut e Event, mut w Window) {
-	if e.key_code == KeyCode.c && (e.modifiers == u32(Modifier.ctrl)
-		|| e.modifiers == u32(Modifier.super)) {
+	if e.key_code == KeyCode.c && e.modifiers.has_any(.ctrl, .super) {
 		mut cpy := w.dialog_cfg.title
 		if cpy.len > 0 && w.dialog_cfg.body.len > 0 {
 			cpy += '\n' + w.dialog_cfg.body

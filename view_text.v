@@ -163,8 +163,20 @@ fn (cfg &TextCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 			select_beg: if cursor_pos < end { cursor_pos } else { end }
 			select_end: if cursor_pos < end { end } else { cursor_pos }
 		}
+		scroll_cursor_into_view(end, layout, ev, mut w)
 		e.is_handled = true
 	}
+}
+
+fn scroll_cursor_into_view(cursor_pos u32, layout &Layout, e &Event, mut w Window) {
+	// - find the index of the line where the cursor is located.
+	lh := layout.shape.text_style.size + layout.shape.text_style.line_spacing
+	y := int_clamp(int(e.mouse_y / lh), 0, layout.shape.text_lines.len - 1)
+	println(y)
+	// - compute the min/max scroll offset required to show it
+
+	// - compare to current scroll offset and compute new scroll offset
+	// - scroll window to offset
 }
 
 fn view_text_mouse_up(layout &Layout, mut e Event, mut w Window) {
@@ -180,10 +192,10 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	if cfg.placeholder_active {
 		return 0
 	}
-	lh := shape.text_style.size + shape.text_style.line_spacing
 	if e.mouse_y < 0 {
 		return 0
 	}
+	lh := shape.text_style.size + shape.text_style.line_spacing
 	y := int_clamp(int(e.mouse_y / lh), 0, shape.text_lines.len - 1)
 	line := shape.text_lines[y]
 	mut current_width := f32(0.0)
@@ -198,10 +210,11 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 		}
 		current_width += char_width
 	}
-	if count == -1 {
-		count = int_max(0, utf8_str_visible_length(line))
+	visible_length := utf8_str_visible_length(line)
+	count = match count {
+		-1 { int_max(0, visible_length) }
+		else { int_min(count, visible_length) }
 	}
-	count = int_min(count, utf8_str_visible_length(line))
 	for i, l in shape.text_lines {
 		if i < y {
 			count += utf8_str_visible_length(l)
@@ -218,20 +231,20 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		mut current_input_state := w.view_state.input_state[layout.shape.id_focus]
 		mut new_cursor_pos := current_input_state.cursor_pos
 
-		if e.modifiers in [u32(Modifier.alt), u32(int(Modifier.alt) | int(Modifier.shift))] {
+		if e.modifiers == .alt || e.modifiers.has_all(.alt, .shift) {
 			match e.key_code {
 				.left { new_cursor_pos = start_of_word_pos(layout.shape.text_lines, new_cursor_pos) }
 				.right { new_cursor_pos = end_of_word_pos(layout.shape.text_lines, new_cursor_pos) }
 				.up { new_cursor_pos = start_of_paragraph(layout.shape.text_lines, new_cursor_pos) }
 				else { return }
 			}
-		} else if e.modifiers in [u32(Modifier.ctrl), u32(int(Modifier.ctrl) | int(Modifier.shift))] {
+		} else if e.modifiers == .ctrl || e.modifiers.has_all(.ctrl, .shift) {
 			match e.key_code {
 				.left { new_cursor_pos = start_of_line_pos(layout.shape.text_lines, new_cursor_pos) }
 				.right { new_cursor_pos = end_of_line_pos(layout.shape.text_lines, new_cursor_pos) }
 				else { return }
 			}
-		} else if e.modifiers in [u32(0), u32(Modifier.shift)] {
+		} else if e.modifiers.has_any(.none, .shift) {
 			match e.key_code {
 				.left { new_cursor_pos = int_max(0, new_cursor_pos - 1) }
 				.right { new_cursor_pos = int_min(cfg.text.runes().len, new_cursor_pos + 1) }
@@ -239,7 +252,7 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 				.end { new_cursor_pos = cfg.text.runes().len }
 				else { return }
 			}
-		} else if e.modifiers == u32(Modifier.super) {
+		} else if e.modifiers == Modifier.super {
 			return
 		}
 
@@ -255,7 +268,7 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		mut new_select_end := u32(0)
 
 		// shift => Extend/shrink selection
-		if int(e.modifiers) & int(Modifier.shift) > 0 {
+		if e.modifiers.has(.shift) {
 			old_cursor_pos := current_input_state.cursor_pos
 			new_select_beg = current_input_state.select_beg
 			new_select_end = current_input_state.select_end
@@ -284,7 +297,7 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 				new_select_beg, new_select_end = new_select_end, new_select_beg
 			}
 		} else if current_input_state.select_beg != current_input_state.select_end
-			&& e.modifiers == 0 {
+			&& e.modifiers == .none {
 			// If a selection exists and a non-shift movement key is pressed,
 			// collapse the selection to the beginning or end of the selection.
 			new_cursor_pos = match e.key_code {
@@ -307,13 +320,13 @@ fn (cfg &TextCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		c := event.char_code
 		mut is_handled := true
-		if event.modifiers & u32(Modifier.ctrl) > 0 {
+		if event.modifiers.has(.ctrl) {
 			match c {
 				ctrl_a { cfg.select_all(layout.shape, mut w) }
 				ctrl_c { cfg.copy(layout.shape, w) }
 				else { is_handled = false }
 			}
-		} else if event.modifiers & u32(Modifier.super) > 0 {
+		} else if event.modifiers.has(.super) {
 			match c {
 				cmd_a { cfg.select_all(layout.shape, mut w) }
 				cmd_c { cfg.copy(layout.shape, w) }

@@ -181,8 +181,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		}
 		.key_down {
 			keydown_handler(layout, mut e, mut w)
-			m := unsafe { gg.Modifier(e.modifiers) }
-			if !e.is_handled && e.key_code == .tab && m == gg.Modifier.shift {
+			if !e.is_handled && e.key_code == .tab && e.modifiers == .shift {
 				if shape := layout.previous_focusable(mut w) {
 					w.view_state.id_focus = shape.id_focus
 				}

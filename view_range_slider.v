@@ -242,7 +242,7 @@ fn (cfg &RangeSliderCfg) on_click(layout &Layout, mut e Event, mut w Window) {
 }
 
 fn (cfg &RangeSliderCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
-	if cfg.on_change != unsafe { nil } && e.modifiers == 0 {
+	if cfg.on_change != unsafe { nil } && e.modifiers == .none {
 		mut value := cfg.value
 		match e.key_code {
 			.home { value = cfg.min }
@@ -262,7 +262,7 @@ fn (cfg &RangeSliderCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 
 fn (cfg &RangeSliderCfg) on_mouse_scroll(_ &Layout, mut e Event, mut w Window) {
 	e.is_handled = true
-	if cfg.on_change != unsafe { nil } && e.modifiers == 0 {
+	if cfg.on_change != unsafe { nil } && e.modifiers == .none {
 		mut value := f32_clamp(cfg.value + e.scroll_y, cfg.min, cfg.max)
 		if cfg.round_value {
 			value = f32(math.round(f64(value)))

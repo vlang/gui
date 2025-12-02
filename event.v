@@ -1,7 +1,6 @@
 module gui
 
 import gg
-import sokol.sapp
 
 const bsp_char = 0x08
 const del_char = 0x7F
@@ -23,11 +22,11 @@ const ctrl_z = 0x1A
 fn from_gg_event(e &gg.Event) &Event {
 	return &Event{
 		frame_count:        e.frame_count
-		typ:                e.typ
+		typ:                EventType(e.typ)
 		key_code:           KeyCode(e.key_code)
 		char_code:          e.char_code
 		key_repeat:         e.key_repeat
-		modifiers:          e.modifiers
+		modifiers:          unsafe { Modifier(e.modifiers) }
 		mouse_button:       MouseButton(e.mouse_button)
 		mouse_x:            e.mouse_x
 		mouse_y:            e.mouse_y
@@ -65,14 +64,14 @@ pub mut:
 	mouse_dy           f32
 	scroll_x           f32
 	scroll_y           f32
-	modifiers          u32
+	modifiers          Modifier
 	char_code          u32
 	num_touches        int
 	window_width       int
 	window_height      int
 	framebuffer_width  int
 	framebuffer_height int
-	typ                sapp.EventType
+	typ                EventType
 	key_code           KeyCode
 	mouse_button       MouseButton
 	key_repeat         bool
@@ -128,7 +127,8 @@ pub enum MouseCursor as u8 {
 	not_allowed   = C.SAPP_MOUSECURSOR_NOT_ALLOWED
 }
 
-pub enum Modifier as u16 {
+pub enum Modifier as u32 {
+	none  = 0
 	shift = 1 //(1<<0)
 	ctrl  = 2 //(1<<1)
 	alt   = 4 //(1<<2)
@@ -136,6 +136,22 @@ pub enum Modifier as u16 {
 	lmb   = 0x100
 	rmb   = 0x200
 	mmb   = 0x400
+}
+
+// has checks if the current modifier bitmask contains the specified modifier.
+// (same as has_all() but reads better when testing only one modifier)
+pub fn (m Modifier) has(modifier Modifier) bool {
+	return u32(m) & u32(modifier) > 0 || m == modifier // .none case
+}
+
+// has_all checks if the current modifier bitmask contains all of the specified modifiers.
+pub fn (m Modifier) has_all(modifiers ...Modifier) bool {
+	return modifiers.all(u32(m) & u32(it) > 0 || m == it) // .none case
+}
+
+// has_any checks if the current modifier bitmask contains at least one of the specified modifiers.
+pub fn (m Modifier) has_any(modifiers ...Modifier) bool {
+	return modifiers.any(u32(m) & u32(it) > 0 || m == it) // .none case
 }
 
 pub enum KeyCode as u16 {

@@ -65,7 +65,7 @@ fn key_down_scroll_handler(layout &Layout, mut e Event, mut w Window) {
 	delta_line := gui_theme.scroll_delta_line
 	delta_page := gui_theme.scroll_delta_page
 	delta_home := 10000000 // any really big number works
-	if e.modifiers == 0 {
+	if e.modifiers == .none {
 		match e.key_code {
 			.up { e.is_handled = scroll_vertical(layout, delta_line, mut w) }
 			.down { e.is_handled = scroll_vertical(layout, -delta_line, mut w) }
@@ -75,7 +75,7 @@ fn key_down_scroll_handler(layout &Layout, mut e Event, mut w Window) {
 			.page_down { e.is_handled = scroll_vertical(layout, -delta_page, mut w) }
 			else {}
 		}
-	} else if e.modifiers == u32(Modifier.shift) {
+	} else if e.modifiers == Modifier.shift {
 		match e.key_code {
 			.left { e.is_handled = scroll_horizontal(layout, delta_line, mut w) }
 			.right { e.is_handled = scroll_horizontal(layout, -delta_line, mut w) }
@@ -197,9 +197,9 @@ fn mouse_scroll_handler(layout &Layout, mut e Event, mut w Window) {
 	}
 	if !layout.shape.disabled && layout.shape.id_scroll > 0 {
 		if layout.shape.point_in_shape(e.mouse_x, e.mouse_y) {
-			if e.modifiers == u32(Modifier.shift) {
+			if e.modifiers == Modifier.shift {
 				e.is_handled = scroll_horizontal(layout, e.scroll_x, mut w)
-			} else {
+			} else if e.modifiers == Modifier.none {
 				e.is_handled = scroll_vertical(layout, e.scroll_y, mut w)
 			}
 		}

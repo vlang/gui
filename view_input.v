@@ -199,25 +199,24 @@ fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut text := cfg.text
-		if event.modifiers & u32(Modifier.ctrl) > 0 && event.modifiers & u32(Modifier.shift) > 0 {
+		if event.modifiers.has_all(.ctrl, .shift) {
 			match c {
 				ctrl_z { text = cfg.redo(mut w) }
 				else {}
 			}
-		} else if event.modifiers & u32(Modifier.super) > 0
-			&& event.modifiers & u32(Modifier.shift) > 0 {
+		} else if event.modifiers.has_all(.super, .shift) {
 			match c {
 				cmd_z { text = cfg.redo(mut w) }
 				else {}
 			}
-		} else if event.modifiers & u32(Modifier.ctrl) > 0 {
+		} else if event.modifiers == .ctrl {
 			match c {
 				ctrl_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
 				ctrl_x { text = cfg.cut(mut w) or { return } }
 				ctrl_z { text = cfg.undo(mut w) }
 				else {}
 			}
-		} else if event.modifiers & u32(Modifier.super) > 0 {
+		} else if event.modifiers == .super {
 			match c {
 				cmd_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
 				cmd_x { text = cfg.cut(mut w) or { return } }

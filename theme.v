@@ -384,7 +384,7 @@ pub const theme_light_bordered_cfg = ThemeCfg{
 pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 
 // theme_maker sets all styles to a common set of values using
-// [ThemeCfg](#ThemeCfg). Gui allows each view type (button,
+// [ThemeCfg](#ThemeCfg). v-gui allows each view type (button,
 // input, etc) to be styled independent of the other view styles.
 // However, in practice this is not usually required. `theme_maker`
 // makes it easy to write new themes without having to specify styles
@@ -844,6 +844,157 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			subheading_style: TextStyle{
 				...bold
 			}
+		}
+	}
+}
+
+// theme_change_font_size creates a new Theme with adjusted font sizes based on the provided base size.
+// The function modifies font sizes for all text styles (normal, bold, italic, mono, icon) by using
+// base_size as the reference point for medium text (n3, b3, i3, m3, icon3).
+// Other sizes are calculated relative to base_size:
+// - X-Large (1): base_size + 4
+// - Large (2): base_size + 2
+// - Medium (3): base_size
+// - Small (4): base_size - 2
+// - X-Small (5): base_size - 4
+// - Tiny (6): base_size - 6
+//
+// Parameters:
+//   base_size - Integer between 2 and 100 that sets the medium font size
+//
+// Returns:
+//   Theme - New theme with adjusted font sizes
+//   error - If base_size is not between 2 and 100
+pub fn theme_change_font_size(base_size int) !Theme {
+	if base_size < 2 || base_size > 100 {
+		return error('base_size must be between 1 and 100')
+	}
+
+	return Theme{
+		...gui_theme
+		n1: TextStyle{
+			...gui_theme.n1
+			size: base_size + 4
+		}
+		n2: TextStyle{
+			...gui_theme.n2
+			size: base_size + 2
+		}
+		n3: TextStyle{
+			...gui_theme.n3
+			size: base_size
+		}
+		n4: TextStyle{
+			...gui_theme.n4
+			size: base_size - 2
+		}
+		n5: TextStyle{
+			...gui_theme.n5
+			size: base_size - 4
+		}
+		n6: TextStyle{
+			...gui_theme.n6
+			size: base_size - 6
+		}
+		// Bold
+		b1: TextStyle{
+			...gui_theme.b1
+			size: base_size + 4
+		}
+		b2: TextStyle{
+			...gui_theme.b2
+			size: base_size + 2
+		}
+		b3: TextStyle{
+			...gui_theme.b3
+			size: base_size
+		}
+		b4: TextStyle{
+			...gui_theme.b4
+			size: base_size - 2
+		}
+		b5: TextStyle{
+			...gui_theme.b5
+			size: base_size - 4
+		}
+		b6: TextStyle{
+			...gui_theme.b6
+			size: base_size - 6
+		}
+		// Italic
+		i1: TextStyle{
+			...gui_theme.i1
+			size: base_size + 4
+		}
+		i2: TextStyle{
+			...gui_theme.i2
+			size: base_size + 2
+		}
+		i3: TextStyle{
+			...gui_theme.i3
+			size: base_size
+		}
+		i4: TextStyle{
+			...gui_theme.i4
+			size: base_size - 2
+		}
+		i5: TextStyle{
+			...gui_theme.i5
+			size: base_size - 4
+		}
+		i6: TextStyle{
+			...gui_theme.i6
+			size: base_size - 6
+		}
+		// Mono
+		m1: TextStyle{
+			...gui_theme.m1
+			size: base_size + 4
+		}
+		m2: TextStyle{
+			...gui_theme.m2
+			size: base_size + 2
+		}
+		m3: TextStyle{
+			...gui_theme.m3
+			size: base_size
+		}
+		m4: TextStyle{
+			...gui_theme.m4
+			size: base_size - 2
+		}
+		m5: TextStyle{
+			...gui_theme.m5
+			size: base_size - 4
+		}
+		m6: TextStyle{
+			...gui_theme.m6
+			size: base_size - 6
+		}
+		// Icon Font
+		icon1: TextStyle{
+			...gui_theme.icon1
+			size: base_size + 4
+		}
+		icon2: TextStyle{
+			...gui_theme.icon2
+			size: base_size + 2
+		}
+		icon3: TextStyle{
+			...gui_theme.icon3
+			size: base_size
+		}
+		icon4: TextStyle{
+			...gui_theme.icon4
+			size: base_size - 2
+		}
+		icon5: TextStyle{
+			...gui_theme.icon5
+			size: base_size - 4
+		}
+		icon6: TextStyle{
+			...gui_theme.icon6
+			size: base_size - 6
 		}
 	}
 }

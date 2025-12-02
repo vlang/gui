@@ -456,7 +456,7 @@ fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
 	}
 	disabled_style := TextStyle{
 		...bold_style
-		color: theme().color_active
+		color: gui_theme.color_active
 	}
 
 	for year in (state.view_year - 20) .. (state.view_year + 20) {
