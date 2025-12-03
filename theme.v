@@ -1,5 +1,11 @@
 module gui
 
+// theme.v contains the GUI theme definitions and styling configuration.
+// It defines constants and structures for managing the visual appearance
+// of GUI elements including colors, sizes, spacing, padding and borders.
+// The file provides default dark and light themes as well as utilities
+// for creating and customizing themes.
+
 pub const radius_none = f32(0)
 pub const radius_small = f32(3)
 pub const radius_medium = f32(5)
@@ -73,16 +79,16 @@ const text_style_icon_dark = TextStyle{
 // is in fact how GUI defines its own default themes.
 pub struct Theme {
 pub:
-	cfg              ThemeCfg
-	name             string = 'default' @[required]
-	color_background Color  = color_background_dark // background of the window
-	color_panel      Color  = color_panel_dark      // use for side panels, or groups of controls
-	color_interior   Color  = color_interior_dark   // use for the interior of controls like buttons
-	color_hover      Color  = color_hover_dark      // mostly mouse hovers
-	color_focus      Color  = color_focus_dark      // usually keyboard focus (active/focus swapped if it looks better, e.g. button)
-	color_active     Color  = color_active_dark     // use for clicks and inactivity
-	color_border     Color  = color_border_dark     // borders
-	color_select     Color  = color_select_dark     // links and selected
+	cfg              ThemeCfg = theme_dark_cfg
+	name             string   = 'default' @[required]
+	color_background Color    = color_background_dark // background of the window
+	color_panel      Color    = color_panel_dark      // use for side panels, or groups of controls
+	color_interior   Color    = color_interior_dark   // use for the interior of controls like buttons
+	color_hover      Color    = color_hover_dark      // mostly mouse hovers
+	color_focus      Color    = color_focus_dark      // usually keyboard focus (active/focus swapped if it looks better, e.g. button)
+	color_active     Color    = color_active_dark     // use for clicks and inactivity
+	color_border     Color    = color_border_dark     // borders
+	color_select     Color    = color_select_dark     // links and selected
 	titlebar_dark    bool
 
 	button_style       ButtonStyle
@@ -850,18 +856,26 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 	}
 }
 
-// adjust_font_size creates a new theme with adjusted font sizes by applying the delta value to all text sizes.
-// The function ensures the new font size stays within the min_size and max_size bounds.
+// adjust_font_size creates a new theme with font sizes adjusted by the specified delta value.
+// All text sizes in the theme (tiny through x-large) are increased or decreased by delta.
+// The function validates that the adjusted sizes stay within the provided min_size and max_size bounds.
+//
 // Parameters:
-// - delta: Amount to increase/decrease font sizes by
-// - min_size: Minimum allowed font size
-// - max_size: Maximum allowed font size
-// Returns new Theme with updated font sizes or error if size would be out of bounds.
-pub fn adjust_font_size(delta int, min_size int, max_size int) !Theme {
+//   delta    - Amount to increase (positive) or decrease (negative) all font sizes by
+//   min_size - Minimum allowed font size (must be > 0)
+//   max_size - Maximum allowed font size (must be >= min_size)
+//
+// Returns:
+//   - On success: A new Theme with all font sizes adjusted by delta
+//   - On error: If min_size < 1 or if any adjusted size would be outside the min/max bounds
+//
+// Example:
+//   new_theme := theme.adjust_font_size(2, 8, 32)! // Increase all sizes by 2
+pub fn (theme Theme) adjust_font_size(delta int, min_size int, max_size int) !Theme {
 	if min_size < 1 {
 		return error('min_size must be > 0')
 	}
-	cfg := gui_theme.cfg
+	cfg := theme.cfg
 	new_font_size := cfg.text_style.size + delta
 	if new_font_size < min_size || new_font_size > max_size {
 		return error('new_font_size out of range')

@@ -1,5 +1,25 @@
 module gui
 
+// view_container.v is the core container view implementation for the GUI library.
+// It provides container views that can layout child elements vertically (column),
+// horizontally (row), or freely (canvas). Containers support features like:
+// - Flexible sizing and alignment
+// - Scrolling with customizable scrollbars
+// - Mouse/keyboard event handling
+// - Tooltips
+// - Floating/overlay positioning
+// - Border styling with optional text labels
+// - Clipping of child content
+//
+// The main types defined are:
+// - ContainerView: The base container view implementation
+// - ContainerCfg: Configuration struct for creating containers
+//
+// This file also provides the core container factory functions:
+// - column(): Creates a vertical container
+// - row(): Creates a horizontal container
+// - canvas(): Creates a free-form container
+// - circle(): Creates a circular container
 import arrays
 
 @[minify]

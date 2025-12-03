@@ -1,5 +1,9 @@
 module gui
 
+// styles.v contains style definitions for all GUI components used in the framework.
+// Each component has its own style struct that defines visual properties like colors,
+// padding, borders, text styles etc. The styles provide consistent theming across
+// the entire GUI framework.
 import gg
 import time
 

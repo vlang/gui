@@ -6,10 +6,11 @@ module gui
 
 fn test_adjust_font_size_increase_within_bounds() {
 	// Arrange
-	cfg := theme().cfg
+	old_theme := theme()
+	cfg := old_theme.cfg
 	base := cfg.text_style.size
 	// Act
-	if t := adjust_font_size(2, 1, 200) {
+	if t := old_theme.adjust_font_size(2, 1, 200) {
 		// Assert
 		assert t.cfg.text_style.size == base + 2
 		assert t.cfg.size_text_tiny == cfg.size_text_tiny + 2
@@ -24,10 +25,11 @@ fn test_adjust_font_size_increase_within_bounds() {
 }
 
 fn test_adjust_font_size_decrease_within_bounds() {
-	cfg := theme().cfg
+	old_theme := theme()
+	cfg := old_theme.cfg
 	base := cfg.text_style.size
 	// Ensure min bound allows decreasing by 1
-	if t := adjust_font_size(-1, 1, 200) {
+	if t := old_theme.adjust_font_size(-1, 1, 200) {
 		assert t.cfg.text_style.size == base - 1
 		assert t.cfg.size_text_small == cfg.size_text_small - 1
 	} else {
@@ -36,7 +38,7 @@ fn test_adjust_font_size_decrease_within_bounds() {
 }
 
 fn test_adjust_font_size_errors_on_invalid_min_size() {
-	if _ := adjust_font_size(0, 0, 10) {
+	if _ := theme().adjust_font_size(0, 0, 10) {
 		assert false, 'Expected error when min_size < 1'
 	} else {
 		// Check error message
@@ -50,10 +52,11 @@ fn test_adjust_font_size_errors_on_invalid_min_size() {
 }
 
 fn test_adjust_font_size_errors_on_out_of_range() {
-	cfg := theme().cfg
+	old_theme := theme()
+	cfg := old_theme.cfg
 	s := cfg.text_style.size
 	// Set min greater than current size so new size (delta 0) is out of range
-	if _ := adjust_font_size(0, s + 1, s + 10) {
+	if _ := old_theme.adjust_font_size(0, s + 1, s + 10) {
 		assert false, 'Expected out-of-range error when new size < min_size'
 	} else {
 		assert true
