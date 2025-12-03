@@ -1,5 +1,7 @@
 module gui
 
+// Optimized versions of rectangle drawing functions from `gg`
+//
 import gg
 import sokol.sgl
 import log

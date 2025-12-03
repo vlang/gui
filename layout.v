@@ -1,14 +1,19 @@
 module gui
 
-import arrays
-// import time
-
+// The layout module implements a tree-based UI layout system inspired by Clay's UI algorithm.
+// It handles arranging and positioning UI elements in both horizontal and vertical layouts,
+// with support for nested containers, scrolling, floating elements, alignment, padding and spacing.
+// The layout engine uses a multi-pass pipeline to calculate sizes and positions efficiently.
+//
 // Based on Nic Barter's video of how Clay's UI algorithm works.
 // https://www.youtube.com/watch?v=by9lQvpvMIc&t=1272s
+//
 // There's a fair bit of code duplication here. This is intentional.
 // I found it much easier to write and debug without generalizing
 // up/down vs. left/right. Abstractions here only complicate an
 // already hard-to-reason-about problem. -imho
+//
+import arrays
 
 // ==================================================
 // Note to me: Adding @[heap] to struct Layout causes

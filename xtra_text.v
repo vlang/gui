@@ -1,5 +1,12 @@
 module gui
 
+// This module provides text manipulation utilities for the GUI framework, including:
+// - Text measurement and width calculation functions
+// - Text wrapping with different modes (simple, space-preserving)
+// - Word and line position navigation
+// - Text splitting and processing functions
+// - Clipboard integration for text operations
+//
 import clipboard
 import encoding.utf8
 import hash.fnv1a

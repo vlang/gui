@@ -1,5 +1,17 @@
 module gui
 
+// view_input.v provides input field functionality for GUI applications.
+// It handles text input, cursor management, copy/paste operations, and undo/redo functionality.
+// The file implements both single-line and multiline input modes with customizable styling
+// and behavior through the InputCfg struct. Key features include:
+// - Text selection and cursor positioning
+// - Clipboard operations (copy, cut, paste)
+// - Undo/redo stack
+// - Password field masking
+// - Placeholder text
+// - Custom callbacks for text changes and enter key
+// - Themeable appearance
+//
 import log
 import datatypes
 import arrays

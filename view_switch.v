@@ -1,7 +1,6 @@
 module gui
 
-// SwitchCfg a.k.a checkbox. [Switch](#toggle) in its default mode functions and a checkbox.
-// However, there is an option of overriding the `text_select` and `text_unselect` properties.
+// SwitchCfg displays pill shaped box with a sliding toggle. [Switch](#toggle)
 @[heap; minify]
 pub struct SwitchCfg {
 pub:
@@ -31,7 +30,7 @@ pub:
 	fill_border        bool = gui_theme.switch_style.fill_border
 }
 
-// toggle creates a toggle button (a.k.a checkbox) from the given [SwitchCfg](#SwitchCfg)
+// switch creates a pill shaped box with a sliding toggle from the given [SwitchCfg](#SwitchCfg)
 pub fn switch(cfg SwitchCfg) View {
 	color := if cfg.select { cfg.color_select } else { cfg.color_unselect }
 	circle_size := cfg.height - cfg.padding.height() - cfg.padding_border.height()

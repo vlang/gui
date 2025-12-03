@@ -1,5 +1,12 @@
 module gui
 
+// module gui provides a GUI framework for creating windows and user interfaces.
+// The main components are:
+// - Window: The main application window that manages views, events and rendering
+// - View: User-defined interface elements that generate layouts
+// - Layout: Arranged interface elements ready for rendering
+// - Renderers: Draw instructions for the window
+//
 import gg
 import sokol.sapp
 import sync

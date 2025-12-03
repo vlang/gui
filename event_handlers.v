@@ -1,7 +1,14 @@
 module gui
 
+// This V code defines the event handling system for the GUI library. It is responsible
+// for traversing the widget tree (Layout tree), determining which widget should receive
+// an input event (Keyboard or Mouse), and executing the appropriate callbacks.
+//
 import arrays
 
+// MouseLockCfg stores callback functions for mouse event handling in a locked state.
+// When mouse is locked, these callbacks intercept normal mouse event processing.
+// Used for implementing drag operations and modal behaviors.
 pub struct MouseLockCfg {
 pub:
 	mouse_down ?fn (&Layout, mut Event, mut Window)

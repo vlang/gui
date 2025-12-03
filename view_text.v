@@ -1,5 +1,11 @@
 module gui
 
+// view_text.v implements text rendering and input handling for single-line
+// and multi-line text views. It provides support for text selection, cursor
+// movement, copy operations, password masking, and placeholders. The TextView
+// component can be configured to handle different text modes including single
+// line, multiline with wrapping, and preserving whitespace.
+//
 import math
 
 // TextMode controls how a text view renders text.
