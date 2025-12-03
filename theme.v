@@ -73,6 +73,7 @@ const text_style_icon_dark = TextStyle{
 // is in fact how GUI defines its own default themes.
 pub struct Theme {
 pub:
+	cfg              ThemeCfg
 	name             string = 'default' @[required]
 	color_background Color  = color_background_dark // background of the window
 	color_panel      Color  = color_panel_dark      // use for side panels, or groups of controls
@@ -393,6 +394,7 @@ pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 // and not filled.
 pub fn theme_maker(cfg &ThemeCfg) Theme {
 	theme := Theme{
+		cfg:              *cfg
 		name:             cfg.name
 		color_background: cfg.color_background
 		color_panel:      cfg.color_panel
@@ -848,155 +850,37 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 	}
 }
 
-// theme_change_font_size creates a new Theme with adjusted font sizes based on the provided base size.
-// The function modifies font sizes for all text styles (normal, bold, italic, mono, icon) by using
-// base_size as the reference point for medium text (n3, b3, i3, m3, icon3).
-// Other sizes are calculated relative to base_size:
-// - X-Large (1): base_size + 4
-// - Large (2): base_size + 2
-// - Medium (3): base_size
-// - Small (4): base_size - 2
-// - X-Small (5): base_size - 4
-// - Tiny (6): base_size - 6
-//
+// adjust_font_size creates a new theme with adjusted font sizes by applying the delta value to all text sizes.
+// The function ensures the new font size stays within the min_size and max_size bounds.
 // Parameters:
-//   base_size - Integer between 2 and 100 that sets the medium font size
-//
-// Returns:
-//   Theme - New theme with adjusted font sizes
-//   error - If base_size is not between 2 and 100
-pub fn theme_change_font_size(base_size int) !Theme {
-	if base_size < 2 || base_size > 100 {
-		return error('base_size must be between 1 and 100')
+// - delta: Amount to increase/decrease font sizes by
+// - min_size: Minimum allowed font size
+// - max_size: Maximum allowed font size
+// Returns new Theme with updated font sizes or error if size would be out of bounds.
+pub fn adjust_font_size(delta int, min_size int, max_size int) !Theme {
+	if min_size < 1 {
+		return error('min_size must be > 0')
 	}
-
-	return Theme{
-		...gui_theme
-		n1: TextStyle{
-			...gui_theme.n1
-			size: base_size + 4
-		}
-		n2: TextStyle{
-			...gui_theme.n2
-			size: base_size + 2
-		}
-		n3: TextStyle{
-			...gui_theme.n3
-			size: base_size
-		}
-		n4: TextStyle{
-			...gui_theme.n4
-			size: base_size - 2
-		}
-		n5: TextStyle{
-			...gui_theme.n5
-			size: base_size - 4
-		}
-		n6: TextStyle{
-			...gui_theme.n6
-			size: base_size - 6
-		}
-		// Bold
-		b1: TextStyle{
-			...gui_theme.b1
-			size: base_size + 4
-		}
-		b2: TextStyle{
-			...gui_theme.b2
-			size: base_size + 2
-		}
-		b3: TextStyle{
-			...gui_theme.b3
-			size: base_size
-		}
-		b4: TextStyle{
-			...gui_theme.b4
-			size: base_size - 2
-		}
-		b5: TextStyle{
-			...gui_theme.b5
-			size: base_size - 4
-		}
-		b6: TextStyle{
-			...gui_theme.b6
-			size: base_size - 6
-		}
-		// Italic
-		i1: TextStyle{
-			...gui_theme.i1
-			size: base_size + 4
-		}
-		i2: TextStyle{
-			...gui_theme.i2
-			size: base_size + 2
-		}
-		i3: TextStyle{
-			...gui_theme.i3
-			size: base_size
-		}
-		i4: TextStyle{
-			...gui_theme.i4
-			size: base_size - 2
-		}
-		i5: TextStyle{
-			...gui_theme.i5
-			size: base_size - 4
-		}
-		i6: TextStyle{
-			...gui_theme.i6
-			size: base_size - 6
-		}
-		// Mono
-		m1: TextStyle{
-			...gui_theme.m1
-			size: base_size + 4
-		}
-		m2: TextStyle{
-			...gui_theme.m2
-			size: base_size + 2
-		}
-		m3: TextStyle{
-			...gui_theme.m3
-			size: base_size
-		}
-		m4: TextStyle{
-			...gui_theme.m4
-			size: base_size - 2
-		}
-		m5: TextStyle{
-			...gui_theme.m5
-			size: base_size - 4
-		}
-		m6: TextStyle{
-			...gui_theme.m6
-			size: base_size - 6
-		}
-		// Icon Font
-		icon1: TextStyle{
-			...gui_theme.icon1
-			size: base_size + 4
-		}
-		icon2: TextStyle{
-			...gui_theme.icon2
-			size: base_size + 2
-		}
-		icon3: TextStyle{
-			...gui_theme.icon3
-			size: base_size
-		}
-		icon4: TextStyle{
-			...gui_theme.icon4
-			size: base_size - 2
-		}
-		icon5: TextStyle{
-			...gui_theme.icon5
-			size: base_size - 4
-		}
-		icon6: TextStyle{
-			...gui_theme.icon6
-			size: base_size - 6
-		}
+	cfg := gui_theme.cfg
+	new_font_size := cfg.text_style.size + delta
+	if new_font_size < min_size || new_font_size > max_size {
+		return error('new_font_size out of range')
 	}
+	theme_cfg := ThemeCfg{
+		...cfg
+		text_style:        TextStyle{
+			...cfg.text_style
+			size: new_font_size
+		}
+		size_text_tiny:    cfg.size_text_tiny + delta
+		size_text_x_small: cfg.size_text_x_small + delta
+		size_text_small:   cfg.size_text_small + delta
+		size_text_medium:  cfg.size_text_medium + delta
+		size_text_large:   cfg.size_text_large + delta
+		size_text_x_large: cfg.size_text_x_large + delta
+	}
+	new_theme := theme_maker(theme_cfg)
+	return new_theme
 }
 
 // theme returns the current [Theme](#Theme).
