@@ -108,7 +108,7 @@ fn (cfg &SwitchCfg) amend_layout(mut layout Layout, mut w Window) {
 	if layout.shape.disabled || cfg.on_click == unsafe { nil } {
 		return
 	}
-	if w.is_focus(layout.shape.id_focus) {
+	if w.is_focus(layout.parent.shape.id_focus) {
 		layout.children[0].shape.color = cfg.color_focus
 		layout.shape.color = cfg.color_border_focus
 	}
