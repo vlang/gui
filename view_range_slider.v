@@ -1,7 +1,15 @@
 module gui
 
+// view_range_slider.v implements a range slider UI component that allows users
+// to select a value from a continuous range by dragging a thumb along a track.
+// The component supports both horizontal and vertical orientations, customizable
+// styling, keyboard navigation, mouse wheel input, and configurable value ranges.
+//
 import math
 
+// RangeSliderCfg defines the configuration options for the range slider component.
+// It includes visual styling properties like colors and dimensions, behavioral
+// settings like value range and step size, and callbacks for handling user input.
 @[heap; minify]
 pub struct RangeSliderCfg {
 pub:
@@ -34,6 +42,21 @@ pub:
 	invisible      bool
 }
 
+// range_slider creates and returns a range slider View component based on the provided configuration.
+// The range slider allows users to select a numeric value within a specified range by dragging
+// a thumb along a track or using keyboard/mouse wheel input.
+//
+// Parameters:
+//   cfg RangeSliderCfg - Configuration struct containing all customization options including:
+//   - Visual styling (colors, dimensions, etc.)
+//   - Value range (min/max)
+//   - Step size
+//   - Callbacks for input handling
+//   - Layout options
+//
+// Returns:
+//   View - A fully configured range slider View component
+//
 pub fn range_slider(cfg RangeSliderCfg) View {
 	if cfg.min >= cfg.max {
 		panic('range_slider.min must be less than range_slider.max')
@@ -54,6 +77,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		h_align:      .center
 		v_align:      .middle
 		axis:         if cfg.vertical { .top_to_bottom } else { .left_to_right }
+		on_click:     cfg.on_mouse_down
 		amend_layout: cfg.amend_layout_slide
 		on_hover:     cfg.on_hover_slide
 		on_keydown:   cfg.on_keydown
@@ -80,9 +104,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 						fill:         cfg.fill
 						color:        cfg.color_border
 						padding:      cfg.padding_border
-						on_click:     cfg.on_mouse_down
 						amend_layout: cfg.amend_layout_thumb
-						on_hover:     cfg.on_hover_thumb
 						content:      [
 							circle(
 								name:    'range_slider thumb'
@@ -100,8 +122,28 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 	)
 }
 
+// amend_layout_slide adjusts the layout of the range slider components based on the
+// current value and configuration.
+//
+// The slider consists of three main visual elements:
+// 1. A border container that wraps everything
+// 2. An interior container with the main track
+// 3. A "filled" portion showing the selected value (left bar)
+//
+// For vertical sliders:
+// - Adjusts the height of the left bar based on current value percentage
+// - Centers the track horizontally relative to the thumb
+// - Applies padding and sizing to maintain proper visual alignment
+//
+// For horizontal sliders:
+// - Adjusts the width of the left bar based on current value percentage
+// - Centers the track vertically relative to the thumb
+// - Applies padding and sizing to maintain proper visual alignment
+//
+// Parameters:
+//   layout Layout - The root layout node for the range slider
+//   w Window      - Window context for focus state handling
 fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
-	layout.shape.on_click = cfg.on_click
 	layout.shape.on_mouse_scroll = cfg.on_mouse_scroll
 
 	// set positions of left/right or top/bottom rectangles
@@ -148,36 +190,72 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_hover_slide(mut layout Layout, mut e Event, mut _ Window) {
-	layout.children[0].shape.color = cfg.color_hover
+fn (cfg &RangeSliderCfg) on_hover_slide(mut layout Layout, mut e Event, mut w Window) {
+	w.set_mouse_cursor_pointing_hand()
+	layout.shape.color = cfg.color_hover
 	if e.mouse_button == .left {
 		layout.children[0].shape.color = cfg.color_click
 	}
 }
 
+// amend_layout_thumb positions the slider's thumb element based on the current value.
+// This function is called as an amend layout callback after the main layout is composed
+// because the thumb position depends on the final dimensions of the slider track.
+//
+// The thumb position is calculated as follows:
+// 1. Converts the current value to a percentage within the min/max range
+// 2. For vertical sliders:
+//    - Maps percentage to y-coordinate along the track height
+//    - Centers thumb horizontally using padding
+// 3. For horizontal sliders:
+//    - Maps percentage to x-coordinate along the track width
+//    - Centers thumb vertically using padding
+//
+// Parameters:
+//   layout Layout - The thumb element's layout node to position
+//   _ Window      - Window context (unused)
 fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut _ Window) {
 	// set the thumb position
 	value := f32_clamp(cfg.value, cfg.min, cfg.max)
 	percent := math.abs(value / (cfg.max - cfg.min))
+	radius := cfg.thumb_size / 2
 	if cfg.vertical {
 		height := layout.parent.shape.height
 		y := f32_min(height * percent, height)
-		layout.shape.y = layout.parent.shape.y + y - cfg.padding_border.height()
+		layout.shape.y = layout.parent.shape.y + y - cfg.padding_border.height() - radius
 		layout.children[0].shape.y = layout.shape.y + cfg.padding_border.top
 	} else {
 		width := layout.parent.shape.width
 		x := f32_min(width * percent, width)
-		layout.shape.x = layout.parent.shape.x + x - cfg.padding_border.width()
+		layout.shape.x = layout.parent.shape.x + x - cfg.padding_border.width() - radius
 		layout.children[0].shape.x = layout.shape.x + cfg.padding_border.top
 	}
 }
 
-fn (_ &RangeSliderCfg) on_hover_thumb(mut _ Layout, mut _ Event, mut w Window) {
-	w.set_mouse_cursor_pointing_hand()
-}
+// on_mouse_down handles the initial mouse click on the range slider.
+// When clicked, it:
+// 1. Creates a copy of the event with unadjusted coordinates since mouse_move
+//    handler expects absolute screen coordinates rather than layout-relative ones
+// 2. Calls mouse_move to immediately update slider position to click location
+// 3. Sets up mouse lock to track drag movements by registering mouse_move as the
+//    drag handler and configuring mouse release to unlock
+//
+// The coordinate adjustment is needed because regular events get layout-relative
+// coordinates while MouseLock events use absolute screen coordinates. Since the
+// same mouse_move handler is used for both initial click and dragging, we need
+// to convert to absolute coordinates.
+fn (cfg &RangeSliderCfg) on_mouse_down(layout &Layout, mut e Event, mut w Window) {
+	mut ev := &Event{
+		...e
+		touches: e.touches // runtime mem error otherwise
+		mouse_x: e.mouse_x + layout.shape.x
+		mouse_y: e.mouse_y + layout.shape.y
+	}
+	cfg.mouse_move(layout, mut ev, mut w)
 
-fn (cfg &RangeSliderCfg) on_mouse_down(_ &Layout, mut e Event, mut w Window) {
+	// Lock the mouse to the range slider until the mouse button is released
 	w.mouse_lock(MouseLockCfg{
+		// event mouse coordinates are not adjusted here
 		mouse_move: cfg.mouse_move
 		mouse_up:   fn (_ &Layout, mut _ Event, mut w Window) {
 			w.mouse_unlock()
@@ -186,16 +264,17 @@ fn (cfg &RangeSliderCfg) on_mouse_down(_ &Layout, mut e Event, mut w Window) {
 	e.is_handled = true
 }
 
-// mouse_move pass cfg by value more reliable here
-fn (cfg RangeSliderCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
+// mouse_move expects the events mouse coordinates to MOT be adjusted (see on_mouse_down)
+fn (cfg &RangeSliderCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	id := cfg.id
 
 	if cfg.on_change != unsafe { nil } {
-		if node_circle := layout.find_layout(fn [id] (n Layout) bool {
+		range_slider := layout.find_layout(fn [id] (n Layout) bool {
 			return n.shape.id == id
 		})
-		{
-			shape := node_circle.parent.shape
+		if range_slider != none {
+			w.set_mouse_cursor_pointing_hand()
+			shape := range_slider.shape
 			if cfg.vertical {
 				height := shape.height
 				percent := f32_clamp((e.mouse_y - shape.y) / height, 0, 1)
@@ -218,26 +297,6 @@ fn (cfg RangeSliderCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 				}
 			}
 		}
-	}
-}
-
-fn (cfg &RangeSliderCfg) on_click(layout &Layout, mut e Event, mut w Window) {
-	if cfg.on_change != unsafe { nil } {
-		forgiveness := 10
-		len := if cfg.vertical { layout.shape.height } else { layout.shape.width }
-		mouse := if cfg.vertical { e.mouse_y } else { e.mouse_x }
-		pos := if cfg.vertical { layout.shape.y } else { layout.shape.x }
-		percent := match true {
-			mouse <= pos + forgiveness { 0 }
-			mouse >= pos + len - forgiveness { 1 }
-			else { f32_clamp((mouse - pos) / len, 0, 1) }
-		}
-		val := (cfg.max - cfg.min) * percent
-		mut value := f32_clamp(val, cfg.min, cfg.max)
-		if cfg.round_value {
-			value = f32(math.round(f64(value)))
-		}
-		cfg.on_change(value, mut e, mut w)
 	}
 }
 
