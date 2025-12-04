@@ -1,10 +1,58 @@
 module gui
 
-// Optimized versions of rectangle drawing functions from `gg`
+// The `xtra_render.v` module provides high-performance rendering primitives for
+// rounded rectangles, bypassing higher-level abstractions to interact directly
+// with the `sokol.sgl` immediate mode API. The optimization strategy focuses on
+// minimizing per-frame trigonometric calculations and reducing draw call overhead.
 //
-import gg
+// **1. Trigonometric Look-Up Tables (LUT)**
+// Instead of invoking `math.cos()` and `math.sin()` continuously during the
+// rendering of rounded corners, the module utilizes precomputed constant arrays
+// (`cos_values` and `sin_values`). These arrays represent a quarter-circle (0 to
+// 90 degrees) divided into 31 segments. This allows the renderer to determine
+// vertex positions for corners using simple array indexing and multiplication
+// rather than expensive floating-point math operations.
+//
+// **2. Geometry Decomposition**
+// The strategy decomposes a rounded rectangle into distinct geometric primitives
+// to maximize efficiency:
+// *   **Filled Rectangles (`draw_rounded_rect_filled`):** These are constructed
+//     as four corner arcs (drawn using `sgl_arc_triangle_strip`) and three
+//     internal quads (top, middle, bottom). The middle and bottom quads fill the
+//     area between the corners, ensuring no pixel overlap or double-blending
+//     artifacts when using transparent colors.
+// *   **Empty Rectangles (`draw_rounded_rect_empty`):** These are drawn as four
+//     corner arcs (using `sgl_arc_line_strip`) connected by four straight line
+//     segments.
+//
+// **3. Pre-calculation of Draw Parameters**
+// To avoid repetitive scaling and coordinate calculation operations inside the
+// drawing loops, the `setup_rounded_rect_draw` function pre-calculates all
+// necessary screen-space coordinates. It returns a `RoundedRectParams` struct
+// containing:
+// *   **Clamped Radius:** Ensures the radius does not exceed half the width or
+//     height.
+// *   **Scaled Coordinates:** Applies the `ctx.scale` (DPI scaling) once to the
+//     boundaries and radius.
+// *   **Corner Offsets:** Pre-computes the specific `dx` and `dy` offsets for
+//     the current radius based on the LUT.
+//
+// **4. Direct Sokol Integration**
+// By bypassing standard `gg` drawing commands and using `sokol.sgl` directly,
+// the module eliminates function call overhead and allows for specific pipeline
+// state management (such as switching to the alpha pipeline only when
+// `c.a != 255`).
+//
+// **5. Platform-Specific Sub-pixel Adjustment**
+// For outline drawing, the code includes compile-time checks (`$if macos ||
+// linux`) to apply sub-pixel offsets. This ensures that line drawing remains
+// sharp and aligned with the pixel grid across different operating systems and
+// backend renderers (e.g., Metal vs. OpenGL), preventing aliasing artifacts
+// common in immediate mode line rendering.import gg
+//
 import sokol.sgl
 import log
+import gg
 
 // The cos/sin values were generated with the following code:
 //

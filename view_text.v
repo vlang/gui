@@ -225,8 +225,8 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	mut count := -1
 	for i, r in line.runes_iterator() {
 		char_width := get_text_width(r.str(), shape.text_style, mut w)
-		if current_width + (char_width / 2) > e.mouse_x {
-			// One past the `to` position is just cursor after char.
+		if current_width + (char_width / 3) > e.mouse_x {
+			// One past the `to` position is cursor after char.
 			// Appears to be how others do it (e.g. browsers)
 			count = i
 			break
