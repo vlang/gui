@@ -169,20 +169,37 @@ fn (cfg &TextCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 			select_beg: if cursor_pos < end { cursor_pos } else { end }
 			select_end: if cursor_pos < end { end } else { cursor_pos }
 		}
-		scroll_cursor_into_view(end, layout, ev, mut w)
+		scroll_cursor_into_view(int(end), layout, ev, mut w)
 		e.is_handled = true
 	}
 }
 
-fn scroll_cursor_into_view(cursor_pos u32, layout &Layout, e &Event, mut w Window) {
+fn scroll_cursor_into_view(cursor_pos int, layout &Layout, e &Event, mut w Window) {
 	// - find the index of the line where the cursor is located.
-	lh := layout.shape.text_style.size + layout.shape.text_style.line_spacing
-	y := int_clamp(int(e.mouse_y / lh), 0, layout.shape.text_lines.len - 1)
-	println(y)
-	// - compute the min/max scroll offset required to show it
+	mut line_idx := 0
+	mut total_len := 0
+	for i, line in layout.shape.text_lines {
+		line_idx = i
+		total_len += line.len
+		if total_len > cursor_pos {
+			break
+		}
+	}
+
+	// - compute the top/bottom scroll offset required to show it
+	lh := line_height(layout.shape)
+	total_height := lh * layout.shape.text_lines.len
+	shape_height := layout.shape.height - layout.shape.padding.height()
+	top_offset := (line_idx * lh) * (total_height / shape_height)
 
 	// - compare to current scroll offset and compute new scroll offset
+	y_scroll_offset := w.view_state.offset_y_state[layout.shape.id_scroll_container]
+	new_y_scroll_offset := -top_offset
+
 	// - scroll window to offset
+	if new_y_scroll_offset > y_scroll_offset && e.mouse_dy < 0 {
+		w.scroll_vertical_to(layout.shape.id_scroll_container, new_y_scroll_offset)
+	}
 }
 
 fn view_text_mouse_up(layout &Layout, mut e Event, mut w Window) {
@@ -201,7 +218,7 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	if e.mouse_y < 0 {
 		return 0
 	}
-	lh := shape.text_style.size + shape.text_style.line_spacing
+	lh := line_height(shape)
 	y := int_clamp(int(e.mouse_y / lh), 0, shape.text_lines.len - 1)
 	line := shape.text_lines[y]
 	mut current_width := f32(0.0)
@@ -319,6 +336,8 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 			select_beg: new_select_beg
 			select_end: new_select_end
 		}
+
+		scroll_cursor_into_view(new_cursor_pos, layout, e, mut w)
 	}
 }
 

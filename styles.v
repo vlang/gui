@@ -277,11 +277,11 @@ pub:
 	size         int
 }
 
-fn (tc TextStyle) to_text_cfg() gg.TextCfg {
+fn (ts TextStyle) to_text_cfg() gg.TextCfg {
 	return gg.TextCfg{
-		color:  tc.color.to_gx_color()
-		size:   tc.size
-		family: tc.family
+		color:  ts.color.to_gx_color()
+		size:   ts.size
+		family: ts.family
 	}
 }
 
