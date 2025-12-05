@@ -10,4 +10,4 @@ __global gui_tooltip = TooltipState{}
 __global gui_stats = Stats{}
 
 pub const version = '0.1.0'
-pub const app_title = 'GUI'
+pub const app_title = 'v-gui'

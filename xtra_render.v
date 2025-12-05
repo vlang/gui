@@ -105,7 +105,7 @@ fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Color, 
 		// left top quarter
 		sgl.c4b(c.r, c.g, c.b, 10)
 		// Small offset to minimize visible seams on some platforms
-		sgl_arc_triangle_strip_with_offset(p.ltx, p.lty, p.dxs, p.dys, -1, -1, -1, -1)
+		sgl_arc_triangle_strip(p.ltx, p.lty, p.dxs, p.dys, -1, -1)
 
 		sgl.c4b(c.r, c.g, c.b, c.a)
 		sgl_arc_triangle_strip(p.ltx, p.lty, p.dxs, p.dys, -1, -1)

@@ -142,7 +142,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	)
 }
 
-fn option_view(cfg SelectCfg, option string) View {
+fn option_view(cfg &SelectCfg, option string) View {
 	select_multiple := cfg.select_multiple
 	on_select := cfg.on_select
 	select_array := cfg.select
@@ -207,7 +207,7 @@ fn option_view(cfg SelectCfg, option string) View {
 	)
 }
 
-fn sub_header(cfg SelectCfg, option string) View {
+fn sub_header(cfg &SelectCfg, option string) View {
 	return column(
 		spacing: 0
 		padding: padding(gui_theme.padding_medium.top, 0, 0, 0)

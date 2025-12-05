@@ -31,7 +31,7 @@ fn main() {
 			w.set_id_focus(2)
 		}
 	)
-	window.set_theme(gui.theme_dark_bordered)
+	window.set_theme(gui.theme_blue_bordered)
 	window.run()
 }
 
@@ -44,7 +44,6 @@ fn main_view(w &gui.Window) gui.View {
 		width:   width
 		height:  height
 		sizing:  gui.fixed_fixed
-		color:   gui.dark_blue
 		fill:    true
 		content: [
 			gui.column(
@@ -78,9 +77,9 @@ fn main_view(w &gui.Window) gui.View {
 				content: [
 					gui.column(
 						id:      'col'
+						color:   gui.theme().color_panel
 						sizing:  gui.fill_fill
 						fill:    true
-						color:   gui.rgb(0x30, 0x30, 0x30)
 						spacing: gui.theme().spacing_large
 						content: [
 							gui.row(
@@ -151,9 +150,9 @@ fn main_view(w &gui.Window) gui.View {
 				]
 			),
 			gui.column(
+				color:   gui.theme().color_panel
 				fill:    true
 				sizing:  gui.fill_fill
-				color:   gui.rgb(0x30, 0x30, 0x30)
 				spacing: gui.spacing_large
 				content: [
 					gui.input(
@@ -169,7 +168,6 @@ fn main_view(w &gui.Window) gui.View {
 						}
 					),
 					gui.column(
-						color:   gui.gray
 						sizing:  gui.fill_fit
 						text:    '  mode = .wrap  '
 						content: [
@@ -181,7 +179,6 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.column(
-						color:   gui.gray
 						sizing:  gui.fill_fit
 						text:    '  model = .wrap_keep_spaces  '
 						content: [

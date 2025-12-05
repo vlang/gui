@@ -1,5 +1,8 @@
 module gui
 
+// Currently, `gg` only supports static font files like `.ttf`. If/when this
+// changes, support for variable fonts like those in Google fonts will be used.
+//
 import log
 import os
 import os.font
@@ -13,12 +16,15 @@ pub:
 	mono   string
 }
 
-pub const font_file_regular = os.join_path(os.data_dir(), 'gui_deja-vu-sans-regular.ttf')
-pub const font_file_bold = os.join_path(os.data_dir(), 'gui_deja-vu-sans-bold.ttf')
-pub const font_file_italic = os.join_path(os.data_dir(), 'gui_deja-vu-sans-italic.ttf')
-pub const font_file_mono = os.join_path(os.data_dir(), 'gui_deja-vu-sans-mono.ttf')
-pub const font_file_icon = os.join_path(os.data_dir(), 'gui_feathericon.ttf')
+pub const font_file_regular = os.join_path(os.data_dir(), 'v_gui_deja-vu-sans-regular.ttf')
+pub const font_file_bold = os.join_path(os.data_dir(), 'v_gui_deja-vu-sans-bold.ttf')
+pub const font_file_italic = os.join_path(os.data_dir(), 'v_gui_deja-vu-sans-italic.ttf')
+pub const font_file_mono = os.join_path(os.data_dir(), 'v_gui_deja-vu-sans-mono.ttf')
+pub const font_file_icon = os.join_path(os.data_dir(), 'v_gui_feathericon.ttf')
 
+// initialize_fonts ensures all required font files exist in the data directory by checking for
+// each font file and writing the embedded font data if not found. It writes regular, bold,
+// italic, mono and icon font files.
 fn initialize_fonts() {
 	if !os.exists(font_file_regular) {
 		os.write_file(font_file_regular, $embed_file('assets/DejaVuSans-Regular.ttf').to_string()) or {
@@ -75,6 +81,8 @@ fn path_variant(path string, variant font.Variant) string {
 	return if os.exists(vpath) { vpath } else { path }
 }
 
+// Map of icons names to their unicode values. Describes only
+// the icons included in `assets/feathericon.ttf`
 pub const icons_map = {
 	'icon_arrow_down':              icon_arrow_down
 	'icon_arrow_left':              icon_arrow_left

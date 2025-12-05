@@ -390,6 +390,21 @@ pub const theme_light_bordered_cfg = ThemeCfg{
 }
 pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 
+pub const theme_blue_bordered_cfg = ThemeCfg{
+	...theme_dark_cfg
+	name:               'blue-dark-bordered'
+	color_background:   color_from_string('#0c1d3a')
+	color_panel:        color_from_string('#122c58')
+	color_interior:     color_from_string('#193b75')
+	color_hover:        color_from_string('#1f4992')
+	color_active:       color_from_string('#2558b0')
+	color_focus:        color_from_string('#2c67cd')
+	color_border:       color_from_string('#467bd7')
+	color_select:       color_from_string('#427BDD')
+	color_border_focus: color_from_string('#81a5e3')
+}
+pub const theme_blue_bordered = theme_maker(theme_blue_bordered_cfg)
+
 // theme_maker sets all styles to a common set of values using
 // [ThemeCfg](#ThemeCfg). v-gui allows each view type (button,
 // input, etc) to be styled independent of the other view styles.
@@ -553,12 +568,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		range_slider_style: RangeSliderStyle{
 			color:          cfg.color_interior
-			color_left:     cfg.color_select
-			color_thumb:    cfg.color_select
-			color_focus:    cfg.color_focus
+			color_left:     cfg.color_active
+			color_thumb:    cfg.color_active
+			color_focus:    cfg.color_border_focus
 			color_hover:    cfg.color_hover
 			color_border:   cfg.color_border
-			color_click:    cfg.color_active
+			color_click:    cfg.color_select
 			fill:           true
 			fill_border:    true
 			padding:        padding_none

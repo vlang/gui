@@ -186,7 +186,7 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 		return
 	}
 	if w.is_focus(layout.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_focus
+		layout.children[0].children[1].shape.color = cfg.color_focus
 	}
 }
 
@@ -264,7 +264,7 @@ fn (cfg &RangeSliderCfg) on_mouse_down(layout &Layout, mut e Event, mut w Window
 	e.is_handled = true
 }
 
-// mouse_move expects the events mouse coordinates to MOT be adjusted (see on_mouse_down)
+// mouse_move expects the events mouse coordinates to NOT be adjusted (see on_mouse_down)
 fn (cfg &RangeSliderCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	id := cfg.id
 

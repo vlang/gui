@@ -1,5 +1,9 @@
 module gui
 
+// view_rtf.v defines the Rich Text Format (RTF) view component.
+// It allows rendering text with multiple typefaces, sizes, and styles within a single view.
+// It supports text wrapping, clickable links, and custom text spans.
+//
 import datatypes
 import os
 

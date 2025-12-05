@@ -188,9 +188,9 @@ pub:
 	size           f32     = 7
 	thumb_size     f32     = 15
 	color          Color   = color_interior_dark
-	color_click    Color   = color_active_dark
-	color_thumb    Color   = color_select_dark
-	color_left     Color   = color_select_dark
+	color_click    Color   = color_select_dark
+	color_thumb    Color   = color_active_dark
+	color_left     Color   = color_active_dark
 	color_focus    Color   = color_focus_dark
 	color_hover    Color   = color_hover_dark
 	color_border   Color   = color_border_dark

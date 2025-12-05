@@ -1,5 +1,22 @@
 module gui
 
+// This file is intended to be active only during debug builds of the application.
+// Its primary purpose is to serve as a comprehensive monitoring tool for tracking
+// and analyzing the program's resource usage and internal state in real-time.
+//
+// The functionality provided within this file allows developers to:
+// - Monitor the instantiation and rendering of various UI components, such as
+//   containers, text elements, images, and rich text fields, providing insight
+//   into the complexity and overhead of the current view hierarchy.
+// - Track memory allocation and garbage collection statistics, including heap
+//   usage, free memory, and total bytes allocated, which is crucial for identifying
+//   memory leaks and optimizing performance.
+// - Inspect the memory footprint of core data structures used within the GUI
+//   framework, helping to ensure that memory is being used efficiently.
+// - Visualize the internal state of the window and view system, including input
+//   states, scroll offsets, and other dynamic properties that affect the user
+//   experience.
+//
 import gg
 
 const stat_top_div = '=================================='
