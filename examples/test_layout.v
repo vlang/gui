@@ -168,6 +168,8 @@ fn main_view(w &gui.Window) gui.View {
 						}
 					),
 					gui.column(
+						color:   gui.theme().text_style.color
+						fill:    false
 						sizing:  gui.fill_fit
 						text:    '  mode = .wrap  '
 						content: [
@@ -179,6 +181,8 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.column(
+						color:   gui.theme().text_style.color
+						fill:    false
 						sizing:  gui.fill_fit
 						text:    '  model = .wrap_keep_spaces  '
 						content: [

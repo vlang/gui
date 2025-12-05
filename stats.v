@@ -106,12 +106,13 @@ fn struct_sizes() string {
 	tx << ''
 	tx << 'Various Struct Sizes'
 	tx << stat_sub_div
+	tx << 'Layout                   ${sizeof(Layout):8}'
 	tx << 'Shape                    ${sizeof(Shape):8}'
 	tx << 'ContainerView            ${sizeof(ContainerView):8}'
 	tx << 'ContainerCfg             ${sizeof(ContainerCfg):8}'
+	tx << 'TextView                 ${sizeof(TextView):8}'
 	tx << 'TextCfg                  ${sizeof(TextCfg):8}'
 	tx << 'TextStyle                ${sizeof(TextStyle):8}'
-	tx << 'TextView                 ${sizeof(TextView):8}'
 	tx << '[]View                   ${sizeof([]View):8}'
 	return tx.join('\n')
 }
@@ -125,8 +126,8 @@ fn (vs ViewState) view_state_stats() string {
 	tx << 'offset_x_state length    ${cm(usize(vs.offset_x_state.len)):8}'
 	tx << 'offset_y_state length    ${cm(usize(vs.offset_y_state.len)):8}'
 	tx << 'text_widths length       ${cm(usize(vs.text_widths.len)):8}'
-	tx << 'menu_state  length       ${cm(usize(vs.menu_state.len)):8}'
-	tx << 'image_map  length        ${cm(usize(vs.image_map.len)):8}'
+	tx << 'menu_state length        ${cm(usize(vs.menu_state.len)):8}'
+	tx << 'image_map length         ${cm(usize(vs.image_map.len)):8}'
 	tx << 'select_state length      ${cm(usize(vs.select_state.len)):8}'
 	tx << 'tree_state length        ${cm(usize(vs.tree_state.len)):8}'
 	tx << 'date_picker_state length ${cm(usize(vs.date_picker_state.len)):8}'

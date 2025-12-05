@@ -25,51 +25,10 @@ import arrays
 
 @[minify]
 struct ContainerView implements View {
-pub:
-	id             string
-	name           string // used internally, read-only
-	text           string
-	color          Color   = gui_theme.container_style.color
-	padding        Padding = gui_theme.container_style.padding
-	sizing         Sizing
-	x              f32
-	y              f32
-	width          f32
-	min_width      f32
-	max_width      f32
-	height         f32
-	min_height     f32
-	max_height     f32
-	radius         f32 = gui_theme.container_style.radius
-	spacing        f32 = gui_theme.container_style.spacing
-	float_offset_x f32
-	float_offset_y f32
-	id_focus       u32
-	id_scroll      u32
-	h_align        HorizontalAlign
-	v_align        VerticalAlign
-	scroll_mode    ScrollMode
-	float_anchor   FloatAttach
-	float_tie_off  FloatAttach
-	fill           bool = gui_theme.container_style.fill
-	clip           bool
-	focus_skip     bool
-	disabled       bool
-	invisible      bool
-	float          bool
-	over_draw      bool
+	ContainerCfg
 mut:
-	content       []View
-	tooltip       &TooltipCfg                            = unsafe { nil }
-	on_char       fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_click      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_keydown    fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	amend_layout  fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover      fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	shape_type    ShapeType = .rectangle
-	axis          Axis
+	content    []View
+	shape_type ShapeType = .rectangle
 }
 
 fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {

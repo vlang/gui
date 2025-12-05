@@ -20,6 +20,7 @@ import arrays
 // because...they're stateless. Instead, the window maintains this state in a
 // map where the key is the w.view_state.id_focus. This state map is cleared when a new
 // view is introduced.
+@[minify]
 struct InputState {
 pub:
 	// positions are number of runes relative to start of input text
@@ -30,6 +31,7 @@ pub:
 	redo       datatypes.Stack[InputMemento]
 }
 
+@[minify]
 struct InputMemento {
 pub:
 	text       string

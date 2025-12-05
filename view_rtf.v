@@ -9,16 +9,9 @@ import os
 
 @[minify]
 struct RtfView implements View {
+	RtfCfg
 pub:
-	id         string
-	sizing     Sizing
-	min_width  f32
-	id_focus   u32
-	mode       TextMode
-	invisible  bool
-	clip       bool
-	focus_skip bool
-	disabled   bool
+	sizing Sizing
 pub mut:
 	spans   datatypes.LinkedList[TextSpan]
 	content []View // required, not used
@@ -29,6 +22,7 @@ pub mut:
 // faces and sizes are specified as [TextSpan](#TextSpan)s.
 // Note: TextMode.wrap and TextMode.wrap_keep_spaces are the
 // same for RTF.
+@[minify]
 pub struct RtfCfg {
 pub:
 	id         string
@@ -49,7 +43,7 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 
 	tspans := match true {
 		rtf.mode in [.wrap, .wrap_keep_spaces] { rtf.spans }
-		else { rtf_simple(rtf.spans, mut window) }
+		else { rtf_simple_wrap(rtf.spans, mut window) }
 	}
 	width, height := spans_size(tspans)
 

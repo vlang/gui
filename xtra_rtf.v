@@ -26,8 +26,8 @@ fn spans_size(spans datatypes.LinkedList[TextSpan]) (f32, f32) {
 	return width, height
 }
 
-// rtf_simple wraps only at new lines. Tabs are not expanded
-fn rtf_simple(spans datatypes.LinkedList[TextSpan], mut window Window) datatypes.LinkedList[TextSpan] {
+// rtf_simple_wrap wraps only at new lines. Tabs are not expanded
+fn rtf_simple_wrap(spans datatypes.LinkedList[TextSpan], mut window Window) datatypes.LinkedList[TextSpan] {
 	mut x := f32(0)
 	mut y := f32(0)
 	mut tspans := datatypes.LinkedList[TextSpan]{}

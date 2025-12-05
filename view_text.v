@@ -19,10 +19,10 @@ pub enum TextMode as u8 {
 // Text is an internal structure used to describe a text view
 // Members are arranged for packing to reduce memory footprint.
 @[minify]
-struct TextView implements View {
+pub struct TextView implements View {
+	TextCfg
 	sizing Sizing
 mut:
-	cfg     &TextCfg
 	content []View // not used
 }
 
@@ -30,47 +30,47 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	$if !prod {
 		gui_stats.increment_layouts()
 	}
-	input_state := match window.is_focus(tv.cfg.id_focus) {
-		true { window.view_state.input_state[tv.cfg.id_focus] }
+	input_state := match window.is_focus(tv.id_focus) {
+		true { window.view_state.input_state[tv.id_focus] }
 		else { InputState{} }
 	}
-	lines := match tv.cfg.mode == .multiline {
-		true { wrap_simple(tv.cfg.text, tv.cfg.tab_size) }
-		else { [tv.cfg.text] } // dynamic wrapping handled in the layout pipeline
+	lines := match tv.mode == .multiline {
+		true { wrap_simple(tv.text, tv.tab_size) }
+		else { [tv.text] } // dynamic wrapping handled in the layout pipeline
 	}
 	mut layout := Layout{
 		shape: &Shape{
 			name:                'text'
 			shape_type:          .text
-			id_focus:            tv.cfg.id_focus
-			clip:                tv.cfg.clip
-			focus_skip:          tv.cfg.focus_skip
-			disabled:            tv.cfg.disabled
-			min_width:           tv.cfg.min_width
+			id_focus:            tv.id_focus
+			clip:                tv.clip
+			focus_skip:          tv.focus_skip
+			disabled:            tv.disabled
+			min_width:           tv.min_width
 			sizing:              tv.sizing
-			text:                tv.cfg.text
-			text_is_password:    tv.cfg.is_password
-			text_is_placeholder: tv.cfg.placeholder_active
+			text:                tv.text
+			text_is_password:    tv.is_password
+			text_is_placeholder: tv.placeholder_active
 			text_lines:          lines
-			text_mode:           tv.cfg.mode
-			text_style:          &tv.cfg.text_style
+			text_mode:           tv.mode
+			text_style:          &tv.text_style
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
-			text_tab_size:       tv.cfg.tab_size
-			on_char:             tv.cfg.on_char
-			on_keydown:          tv.cfg.on_key_down
-			on_click:            tv.cfg.on_click
-			on_mouse_move:       tv.cfg.mouse_move
+			text_tab_size:       tv.tab_size
+			on_char:             tv.on_char
+			on_keydown:          tv.on_key_down
+			on_click:            tv.on_click
+			on_mouse_move:       tv.mouse_move
 			on_mouse_up:         view_text_mouse_up
 		}
 	}
 	layout.shape.width = text_width(layout.shape, mut window)
 	layout.shape.height = text_height(layout.shape)
-	if tv.cfg.mode == .single_line || layout.shape.sizing.width == .fixed {
+	if tv.mode == .single_line || layout.shape.sizing.width == .fixed {
 		layout.shape.min_width = f32_max(layout.shape.width, layout.shape.min_width)
 		layout.shape.width = layout.shape.min_width
 	}
-	if tv.cfg.mode == .single_line || layout.shape.sizing.height == .fixed {
+	if tv.mode == .single_line || layout.shape.sizing.height == .fixed {
 		layout.shape.min_height = f32_max(layout.shape.height, layout.shape.min_height)
 		layout.shape.height = layout.shape.height
 	}
@@ -99,7 +99,7 @@ pub:
 // text is a general purpose text renderer. Use it for labels or larger
 // blocks of multiline text. Giving it an id_focus allows mark and copy
 // operations. See [TextCfg](#TextCfg)
-pub fn text(cfg TextCfg) View {
+pub fn text(cfg TextView) View {
 	$if !prod {
 		gui_stats.increment_text_views()
 	}
@@ -107,25 +107,36 @@ pub fn text(cfg TextCfg) View {
 		return invisible_container_view()
 	}
 	return TextView{
-		cfg:    &cfg
-		sizing: if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
+		text:               cfg.text
+		text_style:         cfg.text_style
+		id_focus:           cfg.id_focus
+		tab_size:           cfg.tab_size
+		min_width:          cfg.min_width
+		mode:               cfg.mode
+		invisible:          cfg.invisible
+		clip:               cfg.clip
+		focus_skip:         cfg.focus_skip
+		disabled:           cfg.disabled
+		is_password:        cfg.is_password
+		placeholder_active: cfg.placeholder_active
+		sizing:             if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 	}
 }
 
-fn (cfg &TextCfg) on_click(layout &Layout, mut e Event, mut w Window) {
+fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
 	if e.mouse_button == .left && w.is_focus(layout.shape.id_focus) {
 		id_focus := layout.shape.id_focus
 		w.mouse_lock(
-			mouse_move: fn [cfg, id_focus] (layout &Layout, mut e Event, mut w Window) {
+			mouse_move: fn [tv, id_focus] (layout &Layout, mut e Event, mut w Window) {
 				// The layout in mouse locks is always the root layout.
 				if ly := layout.find_layout(fn [id_focus] (ly Layout) bool {
 					return ly.shape.id_focus == id_focus
 				})
 				{
-					cfg.mouse_move(ly, mut e, mut w)
+					tv.mouse_move(ly, mut e, mut w)
 				}
 			}
 			mouse_up:   fn [id_focus] (layout &Layout, mut e Event, mut w Window) {
@@ -139,7 +150,7 @@ fn (cfg &TextCfg) on_click(layout &Layout, mut e Event, mut w Window) {
 				}
 			}
 		)
-		cursor_pos := cfg.mouse_cursor_pos(layout.shape, e, mut w)
+		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
 		input_state := w.view_state.input_state[layout.shape.id_focus]
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
@@ -151,17 +162,17 @@ fn (cfg &TextCfg) on_click(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &TextCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
+fn (tv &TextView) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
 	// mouse move events don't have mouse button info. Use context.
 	if w.ui.mouse_buttons == .left && w.is_focus(layout.shape.id_focus) {
-		if cfg.placeholder_active {
+		if tv.placeholder_active {
 			return
 		}
 		ev := event_relative_to(layout.shape, e)
-		end := u32(cfg.mouse_cursor_pos(layout.shape, ev, mut w))
+		end := u32(tv.mouse_cursor_pos(layout.shape, ev, mut w))
 		input_state := w.view_state.input_state[layout.shape.id_focus]
 		cursor_pos := u32(input_state.cursor_pos)
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
@@ -211,8 +222,8 @@ fn view_text_mouse_up(layout &Layout, mut e Event, mut w Window) {
 
 // mouse_cursor_pos determines where in the input control's text
 // field the click occurred. Works with multiple line text fields.
-fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
-	if cfg.placeholder_active {
+fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
+	if tv.placeholder_active {
 		return 0
 	}
 	if e.mouse_y < 0 {
@@ -246,9 +257,9 @@ fn (cfg &TextCfg) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	return count
 }
 
-fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
+fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
-		if cfg.placeholder_active {
+		if tv.placeholder_active {
 			return
 		}
 		mut current_input_state := w.view_state.input_state[layout.shape.id_focus]
@@ -270,9 +281,9 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		} else if e.modifiers.has_any(.none, .shift) {
 			match e.key_code {
 				.left { new_cursor_pos = int_max(0, new_cursor_pos - 1) }
-				.right { new_cursor_pos = int_min(cfg.text.runes().len, new_cursor_pos + 1) }
+				.right { new_cursor_pos = int_min(tv.text.runes().len, new_cursor_pos + 1) }
 				.home { new_cursor_pos = 0 }
-				.end { new_cursor_pos = cfg.text.runes().len }
+				.end { new_cursor_pos = tv.text.runes().len }
 				else { return }
 			}
 		} else if e.modifiers == Modifier.super {
@@ -341,25 +352,25 @@ fn (cfg &TextCfg) on_key_down(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &TextCfg) on_char(layout &Layout, mut event Event, mut w Window) {
+fn (tv &TextView) on_char(layout &Layout, mut event Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		c := event.char_code
 		mut is_handled := true
 		if event.modifiers.has(.ctrl) {
 			match c {
-				ctrl_a { cfg.select_all(layout.shape, mut w) }
-				ctrl_c { cfg.copy(layout.shape, w) }
+				ctrl_a { tv.select_all(layout.shape, mut w) }
+				ctrl_c { tv.copy(layout.shape, w) }
 				else { is_handled = false }
 			}
 		} else if event.modifiers.has(.super) {
 			match c {
-				cmd_a { cfg.select_all(layout.shape, mut w) }
-				cmd_c { cfg.copy(layout.shape, w) }
+				cmd_a { tv.select_all(layout.shape, mut w) }
+				cmd_c { tv.copy(layout.shape, w) }
 				else { is_handled = false }
 			}
 		} else {
 			match c {
-				escape_char { cfg.unselect_all(mut w) }
+				escape_char { tv.unselect_all(mut w) }
 				else { is_handled = false }
 			}
 		}
@@ -408,13 +419,13 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 	return none
 }
 
-pub fn (cfg &TextCfg) select_all(shape &Shape, mut w Window) {
-	if cfg.placeholder_active {
+pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
+	if tv.placeholder_active {
 		return
 	}
-	input_state := w.view_state.input_state[cfg.id_focus]
-	len := cfg.text.runes().len
-	w.view_state.input_state[cfg.id_focus] = InputState{
+	input_state := w.view_state.input_state[tv.id_focus]
+	len := tv.text.runes().len
+	w.view_state.input_state[tv.id_focus] = InputState{
 		...input_state
 		cursor_pos: len
 		select_beg: 0
@@ -422,9 +433,9 @@ pub fn (cfg &TextCfg) select_all(shape &Shape, mut w Window) {
 	}
 }
 
-pub fn (cfg &TextCfg) unselect_all(mut w Window) {
-	input_state := w.view_state.input_state[cfg.id_focus]
-	w.view_state.input_state[cfg.id_focus] = InputState{
+pub fn (tv &TextView) unselect_all(mut w Window) {
+	input_state := w.view_state.input_state[tv.id_focus]
+	w.view_state.input_state[tv.id_focus] = InputState{
 		...input_state
 		cursor_pos: 0
 		select_beg: 0

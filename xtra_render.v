@@ -104,7 +104,6 @@ fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Color, 
 	if p.r != 0 {
 		// left top quarter
 		sgl.c4b(c.r, c.g, c.b, 10)
-		// Small offset to minimize visible seams on some platforms
 		sgl_arc_triangle_strip(p.ltx, p.lty, p.dxs, p.dys, -1, -1)
 
 		sgl.c4b(c.r, c.g, c.b, c.a)
@@ -261,7 +260,7 @@ fn setup_rounded_rect_draw(x f32, y f32, w f32, h f32, radius f32, c gg.Color, c
 // alternating edge and center vertices.
 // The arc is defined by precomputed dxs/dys, and oriented by xmul/ymul.
 // An optional offset (ox, oy) allows subtle shifts for AA-like effects where needed.
-@[direct_array_access]
+@[direct_array_access; inline]
 fn sgl_arc_triangle_strip_with_offset(cx f32, cy f32, dxs [num_segments]f32,
 	dys [num_segments]f32, xmul f32, ymul f32, ox f32, oy f32) {
 	sgl.begin_triangle_strip()

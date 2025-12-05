@@ -4,20 +4,9 @@ import log
 
 @[minify]
 struct ImageView implements View {
-pub:
-	id         string
-	file_name  string
-	width      f32
-	height     f32
-	min_width  f32
-	min_height f32
-	max_width  f32
-	max_height f32
-	invisible  bool
+	ImageCfg
 mut:
-	on_click fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_hover fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	content  []View // not used
+	content []View // not used
 }
 
 @[minify]

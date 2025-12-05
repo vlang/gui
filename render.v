@@ -63,7 +63,7 @@ fn renderers_draw(renderers []Renderer, window &Window) {
 
 // renderer_draw draws a single renderer
 fn renderer_draw(renderer Renderer, window &Window) {
-	ctx := window.ui
+	mut ctx := window.ui
 	match renderer {
 		DrawRect {
 			if renderer.style == .fill {

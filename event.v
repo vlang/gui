@@ -54,6 +54,7 @@ fn event_relative_to(shape &Shape, e &Event) &Event {
 	}
 }
 
+@[minify]
 pub struct Event {
 pub mut:
 	touches            [8]TouchPoint
