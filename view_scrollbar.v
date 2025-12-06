@@ -128,10 +128,23 @@ fn (cfg ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 // gutter_click pass cfg by value more reliable here
 fn (cfg ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 	if !w.mouse_is_locked() {
+		id_track := cfg.id_track
+		shape := w.layout.find_shape(fn [id_track] (n Layout) bool {
+			return n.shape.id_scroll == id_track
+		})
+		if shape != none {
+			if !shape.disabled {
+				w.set_id_focus(shape.id_focus)
+			}
+		}
 		match cfg.orientation == .horizontal {
 			true { offset_from_mouse_x(w.layout, e.mouse_x, cfg.id_track, mut w) }
 			else { offset_from_mouse_y(w.layout, e.mouse_y, cfg.id_track, mut w) }
 		}
+		w.mouse_lock(MouseLockCfg{
+			mouse_move: cfg.mouse_move
+			mouse_up:   cfg.mouse_up
+		})
 		e.is_handled = true
 	}
 }
@@ -139,19 +152,19 @@ fn (cfg ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 // mouse_move pass cfg by value more reliable here
 fn (cfg ScrollbarCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	extend := 10 // give some cushion on the ends of the scroll range
-	if n := find_layout_by_id_scroll(layout, cfg.id_track) {
+	if ly := find_layout_by_id_scroll(layout, cfg.id_track) {
 		match cfg.orientation == .horizontal {
 			true {
-				if e.mouse_x >= (n.shape.x - extend)
-					&& e.mouse_x <= (n.shape.x + n.shape.width + extend) {
-					offset := offset_mouse_change_x(n, e.mouse_dx, cfg.id_track, w)
+				if e.mouse_x >= (ly.shape.x - extend)
+					&& e.mouse_x <= (ly.shape.x + ly.shape.width + extend) {
+					offset := offset_mouse_change_x(ly, e.mouse_dx, cfg.id_track, w)
 					w.view_state.offset_x_state[cfg.id_track] = offset
 				}
 			}
 			else {
-				if e.mouse_y >= (n.shape.y - extend)
-					&& e.mouse_y <= (n.shape.y + n.shape.height + extend) {
-					offset := offset_mouse_change_y(n, e.mouse_dy, cfg.id_track, w)
+				if e.mouse_y >= (ly.shape.y - extend)
+					&& e.mouse_y <= (ly.shape.y + ly.shape.height + extend) {
+					offset := offset_mouse_change_y(ly, e.mouse_dy, cfg.id_track, w)
 					w.view_state.offset_y_state[cfg.id_track] = offset
 				}
 			}
