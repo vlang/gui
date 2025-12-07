@@ -105,15 +105,14 @@ fn thumb(cfg &ScrollbarCfg, id string) View {
 	)
 }
 
-// on_mouse_down pass cfg by value more reliable here
-fn (cfg ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
+fn (cfg &ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 	// Clicking on the scrollbar gives focus to the shape it is tracking
 	// if the tracked shape is not disabled.
 	id_track := cfg.id_track
-	if shape := w.layout.find_shape(fn [id_track] (n Layout) bool {
+	shape := w.layout.find_shape(fn [id_track] (n Layout) bool {
 		return n.shape.id_scroll == id_track
 	})
-	{
+	if shape != none {
 		if !shape.disabled {
 			w.set_id_focus(shape.id_focus)
 		}
@@ -125,8 +124,7 @@ fn (cfg ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 	e.is_handled = true
 }
 
-// gutter_click pass cfg by value more reliable here
-fn (cfg ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
+fn (cfg &ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 	if !w.mouse_is_locked() {
 		id_track := cfg.id_track
 		shape := w.layout.find_shape(fn [id_track] (n Layout) bool {
@@ -149,8 +147,7 @@ fn (cfg ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 	}
 }
 
-// mouse_move pass cfg by value more reliable here
-fn (cfg ScrollbarCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
+fn (cfg &ScrollbarCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	extend := 10 // give some cushion on the ends of the scroll range
 	if ly := find_layout_by_id_scroll(layout, cfg.id_track) {
 		match cfg.orientation == .horizontal {
@@ -172,8 +169,7 @@ fn (cfg ScrollbarCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-// mouse_up pass cfg by value more reliable here
-fn (cfg ScrollbarCfg) mouse_up(_ &Layout, mut e Event, mut w Window) {
+fn (_ &ScrollbarCfg) mouse_up(_ &Layout, mut e Event, mut w Window) {
 	w.mouse_unlock()
 }
 

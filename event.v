@@ -15,8 +15,8 @@ const cmd_x = 0x78
 const cmd_z = 0x7A
 const ctrl_a = 0x01
 const ctrl_c = 0x03
-const ctrl_v = 0x17
-const ctrl_x = 0x19
+const ctrl_v = 0x16
+const ctrl_x = 0x18
 const ctrl_z = 0x1A
 
 fn from_gg_event(e &gg.Event) &Event {
