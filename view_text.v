@@ -60,7 +60,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			on_char:             tv.on_char
 			on_keydown:          tv.on_key_down
 			on_click:            tv.on_click
-			on_mouse_move:       tv.mouse_move
+			on_mouse_move:       tv.mouse_move_locked
 			on_mouse_up:         view_text_mouse_up
 		}
 	}
@@ -123,12 +123,16 @@ pub fn text(cfg TextView) View {
 	}
 }
 
+// on_click handles mouse click events for the TextView.
+// It sets up mouse locking for drag selection updates and positions the text cursor
+// based on the click coordinates.
 fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
 	if e.mouse_button == .left && w.is_focus(layout.shape.id_focus) {
 		id_focus := layout.shape.id_focus
+		// Init mouse lock to handle dragging selection (mouse move) and finishing selection (mouse up)
 		w.mouse_lock(
 			mouse_move: fn [tv, id_focus] (layout &Layout, mut e Event, mut w Window) {
 				// The layout in mouse locks is always the root layout.
@@ -136,7 +140,7 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 					return ly.shape.id_focus == id_focus
 				})
 				{
-					tv.mouse_move(ly, mut e, mut w)
+					tv.mouse_move_locked(ly, mut e, mut w)
 				}
 			}
 			mouse_up:   fn [id_focus] (layout &Layout, mut e Event, mut w Window) {
@@ -150,6 +154,7 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 				}
 			}
 		)
+		// Set cursor position and reset text selection
 		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
 		input_state := w.view_state.input_state[layout.shape.id_focus]
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
@@ -162,31 +167,43 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (tv &TextView) mouse_move(layout &Layout, mut e Event, mut w Window) {
+// mouse_move_locked handles mouse movement events while the mouse is locked (dragged).
+// It updates the text selection range based on the current mouse position relative to the
+// starting cursor position.
+fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	}
-	// mouse move events don't have mouse button info. Use context.
+	// mouse_move events don't have mouse button info. Use context.
 	if w.ui.mouse_buttons == .left && w.is_focus(layout.shape.id_focus) {
 		if tv.placeholder_active {
 			return
 		}
 		ev := event_relative_to(layout.shape, e)
+		// Calculate the end position of the selection based on mouse coordinates
 		end := u32(tv.mouse_cursor_pos(layout.shape, ev, mut w))
 		input_state := w.view_state.input_state[layout.shape.id_focus]
 		cursor_pos := u32(input_state.cursor_pos)
+
+		// Update selection range: start is the original cursor pos, end is the current mouse pos
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
 			select_beg: if cursor_pos < end { cursor_pos } else { end }
 			select_end: if cursor_pos < end { end } else { cursor_pos }
 		}
+
+		// Ensure the cursor being dragged to is visible
 		scroll_cursor_into_view(int(end), layout, ev, mut w)
 		e.is_handled = true
 	}
 }
 
+// scroll_cursor_into_view ensures that the text cursor is visible within the
+// scroll container. It calculates the line position of the cursor and
+// adjusts the scroll offset if the cursor is outside the current visible
+// area.
 fn scroll_cursor_into_view(cursor_pos int, layout &Layout, e &Event, mut w Window) {
-	// - find the index of the line where the cursor is located.
+	// Find the index of the line where the cursor is located.
 	mut line_idx := 0
 	mut total_len := 0
 	for i, line in layout.shape.text_lines {
@@ -197,20 +214,32 @@ fn scroll_cursor_into_view(cursor_pos int, layout &Layout, e &Event, mut w Windo
 		}
 	}
 
-	// - compute the top/bottom scroll offset required to show it
+	// Calculate the y offset of the cursor line.
+	// Since scroll offsets are often negative (content moves up), use -lh.
 	lh := line_height(layout.shape)
-	total_height := lh * layout.shape.text_lines.len
-	shape_height := layout.shape.height - layout.shape.padding.height()
-	top_offset := (line_idx * lh) * (total_height / shape_height)
+	cursor_offset_y := line_idx * -lh
 
-	// - compare to current scroll offset and compute new scroll offset
-	y_scroll_offset := w.view_state.offset_y_state[layout.shape.id_scroll_container]
-	new_y_scroll_offset := -top_offset
+	// Find the scroll container. (need to start at the root layout)
+	scroll_container := w.layout.find_layout(fn [layout] (ly Layout) bool {
+		return ly.shape.id_scroll == layout.shape.id_scroll_container
+	}) or { return }
 
-	// - scroll window to offset
-	if new_y_scroll_offset > y_scroll_offset && e.mouse_dy < 0 {
-		w.scroll_vertical_to(layout.shape.id_scroll_container, new_y_scroll_offset)
+	// Calculate the visible height of the scroll container
+	scroll_container_height := scroll_container.shape.height - scroll_container.shape.padding.height()
+
+	// Determine the bottom boundary relative to the cursor
+	scroll_offset_yb := cursor_offset_y + scroll_container_height
+
+	// Determine if we need to scroll:
+	// 1. If cursor is above the current view and trying to go up (mouse_dy < 0)
+	// 2. If cursor is below the current view and trying to go down (mouse_dy > 0)
+	current_scroll_offset_y := w.view_state.offset_y_state[layout.shape.id_scroll_container]
+	new_scroll_offset := match true {
+		cursor_offset_y > current_scroll_offset_y && e.mouse_dy < 0 { cursor_offset_y }
+		scroll_offset_yb < current_scroll_offset_y && e.mouse_dy > 0 { scroll_offset_yb }
+		else { return }
 	}
+	w.scroll_vertical_to(layout.shape.id_scroll_container, new_scroll_offset)
 }
 
 fn view_text_mouse_up(layout &Layout, mut e Event, mut w Window) {
@@ -220,8 +249,10 @@ fn view_text_mouse_up(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-// mouse_cursor_pos determines where in the input control's text
-// field the click occurred. Works with multiple line text fields.
+// mouse_cursor_pos determines the character index (cursor position) within
+// the entire text based on the mouse coordinates.
+// It handles multiline text by calculating the line index first, then
+// identifying the specific character within that line.
 fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	if tv.placeholder_active {
 		return 0
@@ -229,26 +260,33 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	if e.mouse_y < 0 {
 		return 0
 	}
+	// Calculate the line index based on mouse Y and line height, clamped to valid lines
 	lh := line_height(shape)
 	y := int_clamp(int(e.mouse_y / lh), 0, shape.text_lines.len - 1)
 	line := shape.text_lines[y]
+
+	// Find the character index within the identified line
 	mut current_width := f32(0.0)
 	mut count := -1
 	for i, r in line.runes_iterator() {
 		char_width := get_text_width(r.str(), shape.text_style, mut w)
+		// Check if mouse is close to the beginning of this character.
+		// Use a threshold (1/3 of width) to determine if cursor should be before this char.
 		if current_width + (char_width / 3) > e.mouse_x {
-			// One past the `to` position is cursor after char.
-			// Appears to be how others do it (e.g. browsers)
 			count = i
 			break
 		}
 		current_width += char_width
 	}
+
+	// Handle case where mouse is past the last character or line is empty
 	visible_length := utf8_str_visible_length(line)
 	count = match count {
 		-1 { int_max(0, visible_length) }
 		else { int_min(count, visible_length) }
 	}
+
+	// Add lengths of previous lines to get the global index
 	for i, l in shape.text_lines {
 		if i < y {
 			count += utf8_str_visible_length(l)
@@ -257,6 +295,9 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	return count
 }
 
+// on_key_down handles keyboard input for navigation and text selection.
+// It supports standard navigation keys (arrows, home, end) and modifiers
+// (Alt, Ctrl, Shift) for word/line jumping and selection extension.
 fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		if tv.placeholder_active {
@@ -265,7 +306,9 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		mut current_input_state := w.view_state.input_state[layout.shape.id_focus]
 		mut new_cursor_pos := current_input_state.cursor_pos
 
+		// Handle navigation with modifiers
 		if e.modifiers == .alt || e.modifiers.has_all(.alt, .shift) {
+			// Alt: Jump by word or paragraph
 			match e.key_code {
 				.left { new_cursor_pos = start_of_word_pos(layout.shape.text_lines, new_cursor_pos) }
 				.right { new_cursor_pos = end_of_word_pos(layout.shape.text_lines, new_cursor_pos) }
@@ -273,12 +316,14 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 				else { return }
 			}
 		} else if e.modifiers == .ctrl || e.modifiers.has_all(.ctrl, .shift) {
+			// Ctrl: Jump to start/end of line
 			match e.key_code {
 				.left { new_cursor_pos = start_of_line_pos(layout.shape.text_lines, new_cursor_pos) }
 				.right { new_cursor_pos = end_of_line_pos(layout.shape.text_lines, new_cursor_pos) }
 				else { return }
 			}
 		} else if e.modifiers.has_any(.none, .shift) {
+			// Standard navigation: char by char, or home/end of text
 			match e.key_code {
 				.left { new_cursor_pos = int_max(0, new_cursor_pos - 1) }
 				.right { new_cursor_pos = int_min(tv.text.runes().len, new_cursor_pos + 1) }
@@ -327,6 +372,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 				}
 			}
 
+			// Ensure beg is always less than or equal to end
 			if new_select_beg > new_select_end {
 				new_select_beg, new_select_end = new_select_end, new_select_beg
 			}
@@ -341,6 +387,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 			}
 		}
 
+		// Update input state with new cursor position and selection
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...current_input_state
 			cursor_pos: new_cursor_pos
@@ -348,14 +395,19 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 			select_end: new_select_end
 		}
 
+		// Ensure the new cursor position is visible
 		scroll_cursor_into_view(new_cursor_pos, layout, e, mut w)
 	}
 }
 
+// on_char handles character input events.
+// Currently primarily used for handling shortcuts like Select All, Copy, and Escape.
 fn (tv &TextView) on_char(layout &Layout, mut event Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		c := event.char_code
 		mut is_handled := true
+
+		// Handle Copy and Select All shortcuts
 		if event.modifiers.has(.ctrl) {
 			match c {
 				ctrl_a { tv.select_all(layout.shape, mut w) }
@@ -369,6 +421,7 @@ fn (tv &TextView) on_char(layout &Layout, mut event Event, mut w Window) {
 				else { is_handled = false }
 			}
 		} else {
+			// Handle non-modifier shortcuts
 			match c {
 				escape_char { tv.unselect_all(mut w) }
 				else { is_handled = false }
@@ -378,17 +431,27 @@ fn (tv &TextView) on_char(layout &Layout, mut event Event, mut w Window) {
 	}
 }
 
+// copy copies the selected text to the system clipboard.
+// It handles different text modes:
+// - `wrap_keep_spaces`: uses original text slice.
+// - other modes: reconstructs text from visual lines, joining them with spaces.
+// Returns none if copy is not allowed (e.g. password field) or no selection.
 fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
+	// Prevent copying from password fields or placeholders
 	if cfg.placeholder_active || cfg.is_password {
 		return none
 	}
 	input_state := w.view_state.input_state[cfg.id_focus]
+
+	// Only copy if there is an active selection
 	if input_state.select_beg != input_state.select_end {
 		cpy := match shape.text_mode == .wrap_keep_spaces {
 			true {
+				// In keep_spaces mode, we can directly slice the source text
 				shape.text.runes()[input_state.select_beg..input_state.select_end]
 			}
 			else {
+				// Reconstruct text from visual lines
 				mut count := 0
 				mut buffer := []rune{cap: 100}
 				unsafe { buffer.flags.set(.noslices) }
@@ -398,6 +461,7 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 					if count >= end {
 						break
 					}
+					// Add a space between lines if we are inside the selection
 					if count > beg {
 						buffer << ` `
 					}
@@ -405,6 +469,7 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 						if count >= end {
 							break
 						}
+						// Collect characters within the selection range
 						if count >= beg {
 							buffer << r
 						}
