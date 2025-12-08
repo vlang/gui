@@ -214,7 +214,7 @@ fn scroll_cursor_into_view(cursor_pos int, layout &Layout, _ &Event, mut w Windo
 	mut total_len := 0
 	for i, line in layout.shape.text_lines {
 		line_idx = i
-		total_len += line.len
+		total_len += line.runes().len
 		if total_len > cursor_pos {
 			break
 		}
