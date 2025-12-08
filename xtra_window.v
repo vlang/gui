@@ -182,25 +182,25 @@ fn (mut window Window) update_window_size() {
 // scroll_horizontal_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_horizontal_by(id_scroll u32, delta f32) {
-	window.view_state.offset_x_state[id_scroll] += delta
+	window.view_state.scroll_x[id_scroll] += delta
 }
 
 // scroll_horizontal_to scrolls the given scrollable to the offset. offset is negative.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_horizontal_to(id_scroll u32, offset f32) {
-	window.view_state.offset_x_state[id_scroll] = offset
+	window.view_state.scroll_x[id_scroll] = offset
 }
 
 // scroll_vertical_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_by(id_scroll u32, delta f32) {
-	window.view_state.offset_y_state[id_scroll] += delta
+	window.view_state.scroll_y[id_scroll] += delta
 }
 
 // scroll_vertical_to scrolls the given scrollable to the offset. offset is negative.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
-	window.view_state.offset_y_state[id_scroll] = offset
+	window.view_state.scroll_y[id_scroll] = offset
 }
 
 // set_id_focus sets the window's focus id.

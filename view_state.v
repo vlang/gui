@@ -8,8 +8,8 @@ struct ViewState {
 mut:
 	input_state            map[u32]InputState         // [id_focus] -> InputState
 	input_date_state       map[string]bool            // [id] -> visible
-	offset_x_state         map[u32]f32                // [id_scroll] -> offset x
-	offset_y_state         map[u32]f32                // [id_scroll] -> offset y
+	scroll_x               map[u32]f32                // [id_scroll] -> scroll offset x
+	scroll_y               map[u32]f32                // [id_scroll] -> scroll offset y
 	text_widths            map[u32]f32                // [text + hash(text_style)] -> text width
 	mouse_cursor           sapp.MouseCursor           // arrow, finger, ibeam, etc.
 	menu_state             map[u32]string             // [id_menubar] -> id of menu
@@ -28,8 +28,8 @@ fn (mut vs ViewState) clear(mut w Window) {
 	unsafe {
 		vs.input_state.free()
 		vs.input_date_state.free()
-		vs.offset_x_state.free()
-		vs.offset_y_state.free()
+		vs.scroll_x.free()
+		vs.scroll_y.free()
 		vs.text_widths.free()
 		vs.menu_state.free()
 		vs.image_map.free()

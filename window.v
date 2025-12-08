@@ -169,6 +169,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	// An Event is processed until an event handler sets the event.is_handled`
 	// member to true.
 	w.lock()
+
 	// layout is not modified else where at this point in the life cycle.
 	// Locks in V do not nest, which is why unlock() is called immediately after
 	// acquiring the layout. This allows event handlers to lock the window to
@@ -260,6 +261,8 @@ pub fn (mut window Window) update_window() {
 		gui_stats.update_max_renderers(usize(window.renderers.len))
 	}
 
+	// Technically, clearing views and layouts should not be needed,
+	// but it appears to help the GC in some instances.
 	clear_views(mut view)
 	clear_layouts(mut old_layout)
 	window.ui.refresh_ui()

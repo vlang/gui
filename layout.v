@@ -568,12 +568,12 @@ fn layout_adjust_scroll_offsets(mut layout Layout, mut w Window) {
 	id_scroll := layout.shape.id_scroll
 	if id_scroll > 0 {
 		max_offset_x := f32_min(0, layout.shape.width - layout.shape.padding.width() - content_width(layout))
-		offset_x := w.view_state.offset_x_state[id_scroll]
-		w.view_state.offset_x_state[id_scroll] = f32_clamp(offset_x, max_offset_x, 0)
+		offset_x := w.view_state.scroll_x[id_scroll]
+		w.view_state.scroll_x[id_scroll] = f32_clamp(offset_x, max_offset_x, 0)
 
 		max_offset_y := f32_min(0, layout.shape.height - layout.shape.padding.height() - content_height(layout))
-		offset_y := w.view_state.offset_y_state[id_scroll]
-		w.view_state.offset_y_state[id_scroll] = f32_clamp(offset_y, max_offset_y, 0)
+		offset_y := w.view_state.scroll_y[id_scroll]
+		w.view_state.scroll_y[id_scroll] = f32_clamp(offset_y, max_offset_y, 0)
 	}
 	for mut child in layout.children {
 		layout_adjust_scroll_offsets(mut child, mut w)
@@ -599,8 +599,8 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 	mut y := layout.shape.y + padding.top
 
 	if layout.shape.id_scroll > 0 {
-		x += w.view_state.offset_x_state[layout.shape.id_scroll]
-		y += w.view_state.offset_y_state[layout.shape.id_scroll]
+		x += w.view_state.scroll_x[layout.shape.id_scroll]
+		y += w.view_state.scroll_y[layout.shape.id_scroll]
 	}
 
 	// Eventually start/end will be culture dependent

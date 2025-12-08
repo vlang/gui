@@ -123,8 +123,8 @@ fn (vs ViewState) view_state_stats() string {
 	tx << 'View State'
 	tx << stat_sub_div
 	tx << 'input_state length       ${cm(usize(vs.input_state.len)):8}'
-	tx << 'offset_x_state length    ${cm(usize(vs.offset_x_state.len)):8}'
-	tx << 'offset_y_state length    ${cm(usize(vs.offset_y_state.len)):8}'
+	tx << 'scroll_x length          ${cm(usize(vs.scroll_x.len)):8}'
+	tx << 'scroll_y length          ${cm(usize(vs.scroll_y.len)):8}'
 	tx << 'text_widths length       ${cm(usize(vs.text_widths.len)):8}'
 	tx << 'menu_state length        ${cm(usize(vs.menu_state.len)):8}'
 	tx << 'image_map length         ${cm(usize(vs.image_map.len)):8}'

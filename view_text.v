@@ -96,7 +96,7 @@ pub:
 	placeholder_active bool
 }
 
-// text is a general purpose text renderer. Use it for labels or larger
+// text is a general purpose text view. Use it for labels or larger
 // blocks of multiline text. Giving it an id_focus allows mark and copy
 // operations. See [TextCfg](#TextCfg)
 pub fn text(cfg TextView) View {
@@ -202,7 +202,13 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 // scroll container. It calculates the line position of the cursor and
 // adjusts the scroll offset if the cursor is outside the current visible
 // area.
-fn scroll_cursor_into_view(cursor_pos int, layout &Layout, e &Event, mut w Window) {
+fn scroll_cursor_into_view(cursor_pos int, layout &Layout, _ &Event, mut w Window) {
+	// Find the scroll container and calculate height. (need to start at the root layout)
+	scroll_container := w.layout.find_layout(fn [layout] (ly Layout) bool {
+		return ly.shape.id_scroll == layout.shape.id_scroll_container
+	}) or { return }
+	scroll_view_height := scroll_container.shape.height - scroll_container.shape.padding.height()
+
 	// Find the index of the line where the cursor is located.
 	mut line_idx := 0
 	mut total_len := 0
@@ -217,29 +223,22 @@ fn scroll_cursor_into_view(cursor_pos int, layout &Layout, e &Event, mut w Windo
 	// Calculate the y offset of the cursor line.
 	// Since scroll offsets are often negative (content moves up), use -lh.
 	lh := line_height(layout.shape)
-	cursor_offset_y := line_idx * -lh
+	cursor_y := line_idx * -lh
+	cursor_h_y := cursor_y + scroll_view_height - lh
 
-	// Find the scroll container. (need to start at the root layout)
-	scroll_container := w.layout.find_layout(fn [layout] (ly Layout) bool {
-		return ly.shape.id_scroll == layout.shape.id_scroll_container
-	}) or { return }
-
-	// Calculate the visible height of the scroll container
-	scroll_container_height := scroll_container.shape.height - scroll_container.shape.padding.height()
-
-	// Determine the bottom boundary relative to the cursor
-	scroll_offset_yb := cursor_offset_y + scroll_container_height
+	// Calculate scroll offsets for current visible region
+	current_scroll_y := w.view_state.scroll_y[layout.shape.id_scroll_container]
+	current_scroll_h_y := current_scroll_y - scroll_view_height
 
 	// Determine if we need to scroll:
-	// 1. If cursor is above the current view and trying to go up (mouse_dy < 0)
-	// 2. If cursor is below the current view and trying to go down (mouse_dy > 0)
-	current_scroll_offset_y := w.view_state.offset_y_state[layout.shape.id_scroll_container]
-	new_scroll_offset := match true {
-		cursor_offset_y > current_scroll_offset_y && e.mouse_dy < 0 { cursor_offset_y }
-		scroll_offset_yb < current_scroll_offset_y && e.mouse_dy > 0 { scroll_offset_yb }
-		else { return }
+	// 1. If cursor is above the current view
+	// 2. If cursor is below the current view
+	new_scroll_y := match true {
+		cursor_y > current_scroll_y { cursor_y }
+		cursor_y <= current_scroll_h_y { cursor_h_y }
+		else { current_scroll_y }
 	}
-	w.scroll_vertical_to(layout.shape.id_scroll_container, new_scroll_offset)
+	w.scroll_vertical_to(layout.shape.id_scroll_container, new_scroll_y)
 }
 
 fn view_text_mouse_up(layout &Layout, mut e Event, mut w Window) {
