@@ -30,9 +30,9 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 
 	}
 }
 
+// text_width measures the visual width of the shape's lines, mirroring render rules:
+// - when in password mode (and not placeholder), measure '*' repeated for visible rune count
 fn text_width(shape &Shape, mut window Window) f32 {
-	// Measure the visual width of the shape's lines, mirroring render rules:
-	// - when in password mode (and not placeholder), measure '*' repeated for visible rune count
 	mut max_width := f32(0)
 	mut text_cfg_set := false
 	htx := fnv1a.sum32_struct(shape.text_style).str()
@@ -72,6 +72,7 @@ fn line_height(shape &Shape) f32 {
 	return shape.text_style.size + shape.text_style.line_spacing
 }
 
+// text_wrap applies text wrapping logic to a given shape based on its text mode.
 fn text_wrap(mut shape Shape, mut window Window) {
 	if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.shape_type == .text {
 		style := shape.text_style
@@ -197,7 +198,7 @@ fn wrap_text_keep_spaces(text string, text_style TextStyle, max_width f32, tab_s
 				field_index++
 			}
 
-			// We must flush the decided output line even if it's empty (e.g., max_width == 0)
+			// Flush the decided output line even if it's empty (e.g., max_width == 0)
 			lines << output_line
 			current_line = ''
 			continue
@@ -233,7 +234,7 @@ fn wrap_text_keep_spaces(text string, text_style TextStyle, max_width f32, tab_s
 			}
 		}
 
-		// 2) If we still can't add a space and line is non-empty & not ending with space,
+		// 2) If space can't be added and line is non-empty & not ending with space,
 		//    try to wrap earlier at a space.
 		if !can_add_space && is_line_non_empty && !line_ends_with_space {
 			mut should_wrap_early := false
@@ -256,7 +257,7 @@ fn wrap_text_keep_spaces(text string, text_style TextStyle, max_width f32, tab_s
 				current_line = field
 			}
 		} else if is_line_non_empty {
-			// We either added spaces or the line already ended with a space
+			// Either added spaces or the line already ended with a space
 			current_line = field
 		} else {
 			// Line is empty but field is too wide – place it anyway to avoid infinite loop

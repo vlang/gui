@@ -354,6 +354,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 			// If there's no selection, start one from the old cursor position.
 			if new_select_beg == new_select_end {
 				new_select_beg = u32(old_cursor_pos)
+				new_select_end = u32(old_cursor_pos)
 			}
 
 			// Move the selection boundary that was at the old cursor position.
@@ -370,7 +371,6 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 					new_select_end = u32(new_cursor_pos)
 				}
 			}
-
 			// Ensure beg is always less than or equal to end
 			if new_select_beg > new_select_end {
 				new_select_beg, new_select_end = new_select_end, new_select_beg

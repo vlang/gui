@@ -2,7 +2,7 @@ module gui
 
 // view_input.v provides input field functionality for GUI applications.
 // It handles text input, cursor management, copy/paste operations, and undo/redo functionality.
-// The file implements both single-line and multiline input modes with customizable styling
+// This file implements both single-line and multiline input modes with customizable styling
 // and behavior through the InputCfg struct. Key features include:
 // - Text selection and cursor positioning
 // - Clipboard operations (copy, cut, paste)
@@ -11,6 +11,8 @@ module gui
 // - Placeholder text
 // - Custom callbacks for text changes and enter key
 // - Themeable appearance
+// - Copy/paste operations
+// - Icon support
 //
 import log
 import datatypes
@@ -18,26 +20,36 @@ import arrays
 
 // The management of focus and input states poses a problem in stateless views
 // because...they're stateless. Instead, the window maintains this state in a
-// map where the key is the w.view_state.id_focus. This state map is cleared when a new
-// view is introduced.
+// map where the key is the w.view_state.id_focus. This state map is cleared
+// when a new view is introduced.
 @[minify]
 struct InputState {
 pub:
-	// positions are number of runes relative to start of input text
+	// number of runes relative to start of input text
 	cursor_pos int
 	select_beg u32
 	select_end u32
 	undo       datatypes.Stack[InputMemento]
 	redo       datatypes.Stack[InputMemento]
+	// cursor_offset is used to maintain the horizontal offset of the cursor
+	// when traversing vertically through text. It is reset when a non-vertical
+	// navigation operation occurs.
+	cursor_offset f32
 }
 
+// InputMemento is admittedly a naive implementation of undo/redo operations.
+// Storing all the text instead of the text operation and text fragment is less
+// memory efficient, but it is much easier to implement and debug. Most of the time,
+// input text fields are small so the actual savings vs. the additional complexity
+// is worth the tradeoff. It can always be refactored later if it becomes an issue.
 @[minify]
 struct InputMemento {
 pub:
-	text       string
-	cursor_pos int
-	select_beg u32
-	select_end u32
+	text          string
+	cursor_pos    int
+	select_beg    u32
+	select_end    u32
+	cursor_offset f32
 }
 
 pub enum InputMode as u8 {
