@@ -476,17 +476,14 @@ fn end_of_word_pos(strs []string, pos int) int {
 // start_of_line_pos finds start of line position in wrapped text starting from pos
 fn start_of_line_pos(strs []string, pos int) int {
 	mut len := 0
-
 	for str in strs {
-		runes := str.runes()
-		if pos > len + runes.len {
-			len += runes.len
+		str_len := utf8_str_visible_length(str)
+		if pos > len + str_len {
+			len += str_len
 			continue
 		}
-
 		return len
 	}
-
 	return len
 }
 
@@ -497,15 +494,15 @@ fn end_of_line_pos(strs []string, pos int) int {
 
 	for str in strs {
 		cnt += 1
-		runes := str.runes()
-		if pos >= len + runes.len - 1 {
-			len += runes.len
+		str_len := utf8_str_visible_length(str)
+		if pos >= len + str_len - 1 {
+			len += str_len
 			continue
 		}
 
 		is_last_line := cnt == strs.len
 		eol := if is_last_line { 0 } else { 1 }
-		return int_max(0, len + runes.len - eol)
+		return int_max(0, len + str_len - eol)
 	}
 
 	return len
@@ -553,26 +550,26 @@ fn start_of_paragraph(strs []string, pos int) int {
 fn cursor_up(strs []string, pos int) int {
 	mut idx := 0
 	mut offset := 0
-	runes := strs.map(it.runes())
+	lengths := strs.map(utf8_str_visible_length(it))
 
 	// find which line to from
-	for i, r in runes {
-		if offset + r.len > pos {
+	for i, len in lengths {
+		idx = i
+		if offset + len > pos {
 			break
 		}
-		idx = i
-		offset += r.len
+		offset += len
 	}
 
 	// move to previous line
 	if idx > 0 {
 		col := pos - offset
 		p_idx := idx - 1
-		p_len := runes[p_idx].len
+		p_len := lengths[p_idx]
 		mut p_start := 0
-		for i, r in runes {
-			if i <= p_idx {
-				p_start += r.len
+		for i, len in lengths {
+			if i < p_idx {
+				p_start += len
 			}
 		}
 		return if col >= p_len { p_start + p_len - 1 } else { p_start + col }
@@ -583,29 +580,29 @@ fn cursor_up(strs []string, pos int) int {
 fn cursor_down(strs []string, pos int) int {
 	mut idx := 0
 	mut offset := 0
-	runes := strs.map(it.runes())
+	lengths := strs.map(utf8_str_visible_length(it))
 
 	// find which line to from
-	for i, r in runes {
-		if offset + r.len > pos {
+	for i, len in lengths {
+		idx = i
+		if offset + len > pos {
 			break
 		}
-		idx = i
-		offset += r.len
+		offset += len
 	}
 
 	// move to next line
-	if idx < runes.len - 2 {
+	if idx < strs.len - 1 {
 		col := pos - offset
 		n_idx := idx + 1
-		n_len := runes[n_idx].len
+		n_len := lengths[n_idx]
 		mut n_start := 0
-		for i, r in runes {
-			if i <= n_idx {
-				n_start += r.len
+		for i, len in lengths {
+			if i < n_idx {
+				n_start += len
 			}
 		}
-		return if col >= n_len { n_start + n_len } else { n_start + col }
+		return if col >= n_len { n_start + n_len - 1 } else { n_start + col }
 	}
 	return pos
 }
@@ -623,4 +620,12 @@ pub fn to_clipboard(s ?string) bool {
 		return cb.copy(s)
 	}
 	return false
+}
+
+fn count_chars(strs []string) int {
+	mut count := 0
+	for str in strs {
+		count += utf8_str_visible_length(str)
+	}
+	return count
 }

@@ -356,7 +356,6 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		}
 		y += lh
 		char_count += len
-		unsafe { lnr.free() }
 	}
 
 	render_cursor(shape, clip, mut window)

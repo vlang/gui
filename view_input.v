@@ -403,13 +403,13 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	input_state := w.view_state.input_state[cfg.id_focus]
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
-		len := cfg.text.runes().len
+		len := utf8_str_visible_length(cfg.text)
 		if beg >= len || end > len {
 			log.error('beg or end out of range (copy)')
 			return none
 		}
 		rune_text := cfg.text.runes()
-		if beg < 0 || end >= rune_text.len {
+		if beg < 0 || end >= len {
 			return none
 		}
 		cpy := rune_text[beg..end]

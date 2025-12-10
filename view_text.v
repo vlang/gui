@@ -214,7 +214,7 @@ fn scroll_cursor_into_view(cursor_pos int, layout &Layout, _ &Event, mut w Windo
 	mut total_len := 0
 	for i, line in layout.shape.text_lines {
 		line_idx = i
-		total_len += line.runes().len
+		total_len += utf8_str_visible_length(line)
 		if total_len > cursor_pos {
 			break
 		}
@@ -326,11 +326,11 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 			// Standard navigation: char by char, prev/next line, home/end of text
 			match e.key_code {
 				.left { new_cursor_pos = int_max(0, new_cursor_pos - 1) }
-				.right { new_cursor_pos = int_min(tv.text.runes().len, new_cursor_pos + 1) }
+				.right { new_cursor_pos = int_min(count_chars(text_lines), new_cursor_pos + 1) }
 				.up { new_cursor_pos = cursor_up(text_lines, new_cursor_pos) }
 				.down { new_cursor_pos = cursor_down(text_lines, new_cursor_pos) }
 				.home { new_cursor_pos = 0 }
-				.end { new_cursor_pos = tv.text.runes().len }
+				.end { new_cursor_pos = utf8_str_visible_length(tv.text) }
 				else { return }
 			}
 		} else if e.modifiers == Modifier.super {
@@ -492,7 +492,7 @@ pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
 		return
 	}
 	input_state := w.view_state.input_state[tv.id_focus]
-	len := tv.text.runes().len
+	len := utf8_str_visible_length(tv.text)
 	w.view_state.input_state[tv.id_focus] = InputState{
 		...input_state
 		cursor_pos: len
