@@ -17,6 +17,8 @@ pub fn get_text_width_no_cache(text string, text_style TextStyle, window &Window
 	return window.ui.text_width(text)
 }
 
+// get_text_width calculates the width of a given text based on its style and window configuration,
+// leveraging a caching mechanism to optimize performance.
 pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 {
 	htx := fnv1a.sum32_struct(text_style).str()
 	text_htx := text + htx
@@ -387,11 +389,11 @@ fn split_text(s string, tab_size u32) []string {
 	return fields
 }
 
-const runes_blanks = [` `, `\t`, `\f`, `\v`]
+const runes_blanks = [` `, `\t`, `\f`, `\v`]!
 
-// start_of_word_pos finds start of word in wrapped text
-fn start_of_word_pos(strs []string, offset int) int {
-	if offset < 0 {
+// start_of_word_pos finds start of word position in wrapped text starting from pos
+fn start_of_word_pos(strs []string, pos int) int {
+	if pos < 0 {
 		return 0
 	}
 
@@ -401,7 +403,7 @@ fn start_of_word_pos(strs []string, offset int) int {
 
 	// find where to start searching
 	for ; idx < runes.len; idx++ {
-		if len + runes[idx].len < offset {
+		if len + runes[idx].len < pos {
 			len += runes[idx].len
 			continue
 		}
@@ -409,7 +411,7 @@ fn start_of_word_pos(strs []string, offset int) int {
 	}
 
 	mut i := 0
-	i = offset - len - 1
+	i = pos - len - 1
 	for ; idx >= 0; idx-- {
 		for i >= 0 && runes[idx][i] in runes_blanks {
 			i--
@@ -440,9 +442,9 @@ fn start_of_word_pos(strs []string, offset int) int {
 	return int_max(i + len, 0)
 }
 
-// end_of_word_pos finds end of word in wrapped text
-fn end_of_word_pos(strs []string, offset int) int {
-	if offset < 0 {
+// end_of_word_pos finds end of word position in wrapped text starting from pos
+fn end_of_word_pos(strs []string, pos int) int {
+	if pos < 0 {
 		return 0
 	}
 
@@ -451,12 +453,12 @@ fn end_of_word_pos(strs []string, offset int) int {
 
 	for str in strs {
 		runes := str.runes()
-		if offset >= len + runes.len {
+		if pos >= len + runes.len {
 			len += runes.len
 			continue
 		}
 
-		i = offset - len
+		i = pos - len
 		for i < runes.len && runes[i] in runes_blanks {
 			i++
 		}
@@ -471,12 +473,13 @@ fn end_of_word_pos(strs []string, offset int) int {
 	return i + len
 }
 
-fn start_of_line_pos(strs []string, offset int) int {
+// start_of_line_pos finds start of line position in wrapped text starting from pos
+fn start_of_line_pos(strs []string, pos int) int {
 	mut len := 0
 
 	for str in strs {
 		runes := str.runes()
-		if offset > len + runes.len {
+		if pos > len + runes.len {
 			len += runes.len
 			continue
 		}
@@ -487,14 +490,15 @@ fn start_of_line_pos(strs []string, offset int) int {
 	return len
 }
 
-fn end_of_line_pos(strs []string, offset int) int {
+// end_of_line_pos finds end of line position in wrapped text starting from pos
+fn end_of_line_pos(strs []string, pos int) int {
 	mut len := 0
 	mut cnt := 0
 
 	for str in strs {
 		cnt += 1
 		runes := str.runes()
-		if offset >= len + runes.len - 1 {
+		if pos >= len + runes.len - 1 {
 			len += runes.len
 			continue
 		}
@@ -507,8 +511,9 @@ fn end_of_line_pos(strs []string, offset int) int {
 	return len
 }
 
-fn start_of_paragraph(strs []string, offset int) int {
-	if offset < 0 {
+// start_of_paragraph finds start of paragraph position in wrapped text starting from pos
+fn start_of_paragraph(strs []string, pos int) int {
+	if pos < 0 {
 		return 0
 	}
 
@@ -518,7 +523,7 @@ fn start_of_paragraph(strs []string, offset int) int {
 
 	// find where to start searching
 	for ; idx < runes.len; idx++ {
-		if len + runes[idx].len < offset {
+		if len + runes[idx].len < pos {
 			len += runes[idx].len
 			continue
 		}
@@ -526,7 +531,7 @@ fn start_of_paragraph(strs []string, offset int) int {
 	}
 
 	mut i := 0
-	i = offset - len - 1
+	i = pos - len - 1
 	for ; idx >= 0; idx-- {
 		for i >= 0 && runes[idx][i] != `\n` {
 			i--
@@ -543,6 +548,66 @@ fn start_of_paragraph(strs []string, offset int) int {
 	}
 
 	return int_max(i + len, 0)
+}
+
+fn cursor_up(strs []string, pos int) int {
+	mut idx := 0
+	mut offset := 0
+	runes := strs.map(it.runes())
+
+	// find which line to from
+	for i, r in runes {
+		if offset + r.len > pos {
+			break
+		}
+		idx = i
+		offset += r.len
+	}
+
+	// move to previous line
+	if idx > 0 {
+		col := pos - offset
+		p_idx := idx - 1
+		p_len := runes[p_idx].len
+		mut p_start := 0
+		for i, r in runes {
+			if i <= p_idx {
+				p_start += r.len
+			}
+		}
+		return if col >= p_len { p_start + p_len - 1 } else { p_start + col }
+	}
+	return pos
+}
+
+fn cursor_down(strs []string, pos int) int {
+	mut idx := 0
+	mut offset := 0
+	runes := strs.map(it.runes())
+
+	// find which line to from
+	for i, r in runes {
+		if offset + r.len > pos {
+			break
+		}
+		idx = i
+		offset += r.len
+	}
+
+	// move to next line
+	if idx < runes.len - 2 {
+		col := pos - offset
+		n_idx := idx + 1
+		n_len := runes[n_idx].len
+		mut n_start := 0
+		for i, r in runes {
+			if i <= n_idx {
+				n_start += r.len
+			}
+		}
+		return if col >= n_len { n_start + n_len } else { n_start + col }
+	}
+	return pos
 }
 
 pub fn from_clipboard() string {

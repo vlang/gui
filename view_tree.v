@@ -45,6 +45,7 @@ pub:
 // tree_node is a helper method to define a [TreeNodeCfg](#TreeNodeCfg).
 // It's only advantage is it allows defining a TreeNodeCfg in a single
 // line, where as `TextNodeCfg{}` will format across multiple lines.
+@[inline]
 pub fn tree_node(cfg TreeNodeCfg) TreeNodeCfg {
 	return cfg
 }

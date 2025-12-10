@@ -141,7 +141,7 @@ pub fn (window &Window) pointer_over_app(e &Event) bool {
 	return true
 }
 
-// lock locks the window's mutex semaphore. This is the same mutex used
+// @lock locks the window's mutex semaphore. This is the same mutex used
 // to access the app model internally. There is usually no need to lock
 // when responding to events (mouse, keyboard, etc.) It is good practice
 // to lock when updating the app model from other threads. Locking twice
@@ -278,7 +278,7 @@ pub fn (window &Window) window_size() (int, int) {
 	return window.window_size.width, window.window_size.height
 }
 
-// window_size gets the cached size of the window in logical units as a [Rect](#Rect).
+// window_rect gets the cached size of the window in logical units as a [Rect](#Rect).
 pub fn (window &Window) window_rect() gg.Rect {
 	return gg.Rect{0, 0, window.window_size.width, window.window_size.height}
 }

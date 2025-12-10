@@ -304,28 +304,31 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		}
 		mut current_input_state := w.view_state.input_state[layout.shape.id_focus]
 		mut new_cursor_pos := current_input_state.cursor_pos
+		text_lines := layout.shape.text_lines
 
 		// Handle navigation with modifiers
 		if e.modifiers == .alt || e.modifiers.has_all(.alt, .shift) {
 			// Alt: Jump by word or paragraph
 			match e.key_code {
-				.left { new_cursor_pos = start_of_word_pos(layout.shape.text_lines, new_cursor_pos) }
-				.right { new_cursor_pos = end_of_word_pos(layout.shape.text_lines, new_cursor_pos) }
-				.up { new_cursor_pos = start_of_paragraph(layout.shape.text_lines, new_cursor_pos) }
+				.left { new_cursor_pos = start_of_word_pos(text_lines, new_cursor_pos) }
+				.right { new_cursor_pos = end_of_word_pos(text_lines, new_cursor_pos) }
+				.up { new_cursor_pos = start_of_paragraph(text_lines, new_cursor_pos) }
 				else { return }
 			}
 		} else if e.modifiers == .ctrl || e.modifiers.has_all(.ctrl, .shift) {
 			// Ctrl: Jump to start/end of line
 			match e.key_code {
-				.left { new_cursor_pos = start_of_line_pos(layout.shape.text_lines, new_cursor_pos) }
-				.right { new_cursor_pos = end_of_line_pos(layout.shape.text_lines, new_cursor_pos) }
+				.left { new_cursor_pos = start_of_line_pos(text_lines, new_cursor_pos) }
+				.right { new_cursor_pos = end_of_line_pos(text_lines, new_cursor_pos) }
 				else { return }
 			}
 		} else if e.modifiers.has_any(.none, .shift) {
-			// Standard navigation: char by char, or home/end of text
+			// Standard navigation: char by char, prev/next line, home/end of text
 			match e.key_code {
 				.left { new_cursor_pos = int_max(0, new_cursor_pos - 1) }
 				.right { new_cursor_pos = int_min(tv.text.runes().len, new_cursor_pos + 1) }
+				.up { new_cursor_pos = cursor_up(text_lines, new_cursor_pos) }
+				.down { new_cursor_pos = cursor_down(text_lines, new_cursor_pos) }
 				.home { new_cursor_pos = 0 }
 				.end { new_cursor_pos = tv.text.runes().len }
 				else { return }
@@ -334,8 +337,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 			return
 		}
 
-		// Moving the cursor when it is animated can happen when the cursor is
-		// hidden. Sticky allows the cursor to stay on during cursor movements.
+		// Sticky allows the cursor to stay on during cursor movements.
 		// See `blinky_cursor_animation()`
 		if new_cursor_pos != current_input_state.cursor_pos {
 			w.view_state.input_cursor_on_sticky = true
@@ -345,7 +347,9 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		mut new_select_beg := u32(0)
 		mut new_select_end := u32(0)
 
+		// ================================
 		// shift => Extend/shrink selection
+		// ================================
 		if e.modifiers.has(.shift) {
 			old_cursor_pos := current_input_state.cursor_pos
 			new_select_beg = current_input_state.select_beg
