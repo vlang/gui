@@ -225,12 +225,12 @@ fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut text := cfg.text
-		if event.modifiers.has_all(.ctrl, .shift) {
+		if event.modifiers == .ctrl_shift {
 			match c {
 				ctrl_z { text = cfg.redo(mut w) }
 				else {}
 			}
-		} else if event.modifiers.has_all(.super, .shift) {
+		} else if event.modifiers == .super_shift {
 			match c {
 				cmd_z { text = cfg.redo(mut w) }
 				else {}
@@ -466,11 +466,6 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 	return memento.text
 }
 
-// redo reapplies a previously undone operation by popping the last operation
-// from the redo stack and pushing the current state onto the undo stack.
-// Returns the text content from the restored state. If the redo stack is
-// empty, returns the current text unchanged. The function restores cursor
-// position, selection range, and text content from the saved memento.
 pub fn (cfg &InputCfg) redo(mut w Window) string {
 	input_state := w.view_state.input_state[cfg.id_focus]
 	mut redo := input_state.redo

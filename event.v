@@ -129,25 +129,26 @@ pub enum MouseCursor as u8 {
 }
 
 pub enum Modifier as u32 {
-	none  = 0
-	shift = 1 //(1<<0)
-	ctrl  = 2 //(1<<1)
-	alt   = 4 //(1<<2)
-	super = 8 //(1<<3)
-	lmb   = 0x100
-	rmb   = 0x200
-	mmb   = 0x400
+	none           = 0
+	shift          = 1 //(1<<0)
+	ctrl           = 2 //(1<<1)
+	alt            = 4 //(1<<2)
+	super          = 8 //(1<<3)
+	lmb            = 0x100
+	rmb            = 0x200
+	mmb            = 0x400
+	ctrl_shift     = 2 | 1
+	ctrl_alt       = 2 | 4
+	ctrl_alt_shift = 2 | 4 | 1
+	ctrl_super     = 2 | 8
+	alt_shift      = 4 | 1
+	alt_super      = 4 | 8
+	super_shift    = 8 | 1
 }
 
 // has checks if the current modifier bitmask contains the specified modifier.
-// (same as has_all() but reads better when testing only one modifier)
 pub fn (m Modifier) has(modifier Modifier) bool {
 	return u32(m) & u32(modifier) > 0 || m == modifier // .none case
-}
-
-// has_all checks if the current modifier bitmask contains all of the specified modifiers.
-pub fn (m Modifier) has_all(modifiers ...Modifier) bool {
-	return modifiers.all(u32(m) & u32(it) > 0 || m == it) // .none case
 }
 
 // has_any checks if the current modifier bitmask contains at least one of the specified modifiers.

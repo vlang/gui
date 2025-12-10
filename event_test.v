@@ -18,19 +18,6 @@ fn test_modifier_has() {
 	}
 }
 
-fn test_modifier_has_all() {
-	assert Modifier.none.has_all(Modifier.none)
-	assert !Modifier.none.has_all(Modifier.shift)
-	assert !Modifier.none.has_all(Modifier.ctrl, Modifier.shift)
-	assert Modifier.shift.has_all(Modifier.shift)
-	assert !Modifier.shift.has_all(Modifier.ctrl)
-
-	unsafe {
-		assert Modifier(u32(Modifier.shift) | u32(Modifier.ctrl)).has_all(.shift, .ctrl)
-		assert !Modifier(u32(Modifier.alt) | u32(Modifier.ctrl)).has_all(.shift, .ctrl)
-	}
-}
-
 fn test_modifier_has_any() {
 	assert Modifier.none.has_any(.none)
 	assert !Modifier.none.has_any(.shift)

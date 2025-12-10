@@ -24,11 +24,12 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
-		state:   &DocViewerApp{}
-		width:   950
-		height:  850
-		title:   'Doc Viewer'
-		on_init: fn (mut w gui.Window) {
+		state:        &DocViewerApp{}
+		width:        950
+		height:       850
+		title:        'Doc Viewer'
+		cursor_blink: true
+		on_init:      fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
 	)

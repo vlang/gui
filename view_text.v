@@ -307,49 +307,48 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		text_lines := layout.shape.text_lines
 
 		// Handle navigation with modifiers
-		if e.modifiers == .alt || e.modifiers.has_all(.alt, .shift) {
+		if e.modifiers == .alt || e.modifiers == .alt_shift {
 			// Alt: Jump by word or paragraph
 			match e.key_code {
-				.left { new_cursor_pos = start_of_word_pos(text_lines, new_cursor_pos) }
-				.right { new_cursor_pos = end_of_word_pos(text_lines, new_cursor_pos) }
-				.up { new_cursor_pos = start_of_paragraph(text_lines, new_cursor_pos) }
+				.left { new_cursor_pos = cursor_start_of_word(text_lines, new_cursor_pos) }
+				.right { new_cursor_pos = cursor_end_of_word(text_lines, new_cursor_pos) }
+				.up { new_cursor_pos = cursor_start_of_paragraph(text_lines, new_cursor_pos) }
 				else { return }
 			}
-		} else if e.modifiers == .ctrl || e.modifiers.has_all(.ctrl, .shift) {
+		} else if e.modifiers == .ctrl || e.modifiers == .ctrl_shift {
 			// Ctrl: Jump to start/end of line
 			match e.key_code {
-				.left { new_cursor_pos = start_of_line_pos(text_lines, new_cursor_pos) }
-				.right { new_cursor_pos = end_of_line_pos(text_lines, new_cursor_pos) }
+				.left { new_cursor_pos = cursor_start_of_line(text_lines, new_cursor_pos) }
+				.right { new_cursor_pos = cursor_end_of_line(text_lines, new_cursor_pos) }
 				else { return }
 			}
 		} else if e.modifiers.has_any(.none, .shift) {
 			// Standard navigation: char by char, prev/next line, home/end of text
 			match e.key_code {
-				.left { new_cursor_pos = int_max(0, new_cursor_pos - 1) }
-				.right { new_cursor_pos = int_min(count_chars(text_lines), new_cursor_pos + 1) }
+				.left { new_cursor_pos = cursor_left(new_cursor_pos) }
+				.right { new_cursor_pos = cursor_right(text_lines, new_cursor_pos) }
 				.up { new_cursor_pos = cursor_up(text_lines, new_cursor_pos) }
 				.down { new_cursor_pos = cursor_down(text_lines, new_cursor_pos) }
-				.home { new_cursor_pos = 0 }
-				.end { new_cursor_pos = utf8_str_visible_length(tv.text) }
+				.home { new_cursor_pos = cursor_home() }
+				.end { new_cursor_pos = cursor_end(text_lines) }
 				else { return }
 			}
 		} else if e.modifiers == Modifier.super {
 			return
 		}
 
-		// Sticky allows the cursor to stay on during cursor movements.
+		// input_cursor_on_sticky allows the cursor to stay on during cursor movements.
 		// See `blinky_cursor_animation()`
 		if new_cursor_pos != current_input_state.cursor_pos {
-			w.view_state.input_cursor_on_sticky = true
+			w.view_state.cursor_on_sticky = true
 		}
-
-		e.is_handled = true
-		mut new_select_beg := u32(0)
-		mut new_select_end := u32(0)
 
 		// ================================
 		// shift => Extend/shrink selection
 		// ================================
+		mut new_select_beg := u32(0)
+		mut new_select_end := u32(0)
+
 		if e.modifiers.has(.shift) {
 			old_cursor_pos := current_input_state.cursor_pos
 			new_select_beg = current_input_state.select_beg
@@ -400,6 +399,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 
 		// Ensure the new cursor position is visible
 		scroll_cursor_into_view(new_cursor_pos, layout, e, mut w)
+		e.is_handled = true
 	}
 }
 
@@ -498,9 +498,10 @@ pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
 	len := utf8_str_visible_length(tv.text)
 	w.view_state.input_state[tv.id_focus] = InputState{
 		...input_state
-		cursor_pos: len
-		select_beg: 0
-		select_end: u32(len)
+		cursor_pos:    len
+		select_beg:    0
+		select_end:    u32(len)
+		cursor_offset: 0
 	}
 }
 
@@ -511,8 +512,9 @@ pub fn (tv &TextView) unselect_all(mut w Window) {
 	input_state := w.view_state.input_state[tv.id_focus]
 	w.view_state.input_state[tv.id_focus] = InputState{
 		...input_state
-		cursor_pos: 0
-		select_beg: 0
-		select_end: 0
+		cursor_pos:    0
+		select_beg:    0
+		select_end:    0
+		cursor_offset: 0
 	}
 }
