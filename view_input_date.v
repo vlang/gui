@@ -48,6 +48,28 @@ pub:
 	show_adjacent_months     bool = gui_theme.date_picker_style.show_adjacent_months
 }
 
+// input_date creates an input field with an integrated date picker that allows
+// users to select a date through a calendar interface. The input displays the
+// selected date in M/D/YYYY format and shows a calendar icon. Clicking the
+// icon toggles a dropdown date picker below the input field. The date picker
+// supports various customization options including allowed dates, weekdays,
+// months, and years, as well as styling options for colors, padding, and text.
+// Multiple date selection is supported when configured.
+//
+// Parameters:
+//   cfg - InputDateCfg struct containing all configuration options including:
+//         - id: unique identifier (required)
+//         - date: initial date (defaults to current date)
+//         - placeholder: placeholder text when no date is selected
+//         - allowed_weekdays, allowed_months, allowed_years, allowed_dates:
+//           restrictions on selectable dates
+//         - on_select: callback when date is selected
+//         - on_enter: callback when Enter key is pressed
+//         - styling options: colors, padding, text styles, radius, etc.
+//         - behavior flags: disabled, invisible, select_multiple, etc.
+//
+// Returns:
+//   View - A column layout containing the input field and floating date picker
 pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 	return column(
 		padding: padding_none

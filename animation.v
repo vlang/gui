@@ -24,6 +24,10 @@ mut:
 	stopped bool
 }
 
+// animation_add registers a new animation to the window's animation queue.
+// If an animation with the same id already exists, it will be replaced.
+// The animation's start time is set to the current time and will be processed
+// in the animation loop.
 pub fn (mut window Window) animation_add(mut animation Animation) {
 	window.lock()
 	window.animations = window.animations.filter(it.id != animation.id)

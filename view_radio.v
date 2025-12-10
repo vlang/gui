@@ -21,6 +21,13 @@ pub:
 	invisible      bool
 }
 
+// radio creates a radio button UI component that allows users to select a
+// single option from a group. The component consists of a circular button that
+// can be selected or unselected, with an optional text label. The radio button
+// supports hover and focus states, keyboard interaction (Space key), and can be
+// disabled or made invisible. Visual customization includes colors for various
+// states (normal, hover, focus, selected/unselected), padding, size, and text
+// styling.
 pub fn radio(cfg RadioCfg) View {
 	mut content := []View{cap: 2}
 	unsafe { content.flags.set(.noslices) }

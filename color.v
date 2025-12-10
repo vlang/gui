@@ -132,6 +132,9 @@ pub mut:
 	a u8 = 255
 }
 
+// hex creates a Color from a hexadecimal integer value. The color parameter
+// should be in the format 0xRRGGBB, where RR, GG, and BB are the red, green,
+// and blue components respectively.
 pub fn hex(color int) Color {
 	return Color{
 		r: u8((color >> 16) & 0xFF)

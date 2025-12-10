@@ -388,6 +388,12 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	return text.string()
 }
 
+// cut copies the currently selected text to the clipboard and then
+// deletes it from the input field. Returns the modified text string after
+// the cut operation. If the input field is a password field (is_password
+// is true), the operation is disabled and returns none. The cut operation
+// combines copy and delete: first copying selected text to clipboard, then
+// removing it.
 pub fn (cfg &InputCfg) cut(mut w Window) ?string {
 	if cfg.is_password {
 		return none
@@ -396,6 +402,12 @@ pub fn (cfg &InputCfg) cut(mut w Window) ?string {
 	return cfg.delete(mut w, false)
 }
 
+// copy copies the currently selected text to the clipboard.
+// Returns none if the operation completes successfully or if the input field
+// is a password field (is_password is true), in which case the operation is
+// disabled for security reasons.
+// The function retrieves the text between select_beg and select_end positions
+// and copies it to the system clipboard.
 pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	if cfg.is_password {
 		return none
@@ -418,10 +430,21 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	return none
 }
 
+// paste inserts text from the clipboard at the current cursor position or
+// replaces the currently selected text. The operation accepts a string
+// parameter containing the text to paste and returns the modified text string
+// after the paste operation. If the cursor is positioned within the text,
+// the pasted content is inserted at that location. If text is selected, the
+// selection is replaced with the pasted content.
 pub fn (cfg &InputCfg) paste(s string, mut w Window) !string {
 	return cfg.insert(s, mut w)
 }
 
+// undo reverts the input field to its previous state by popping the last
+// operation from the undo stack and pushing the current state onto the redo
+// stack. Returns the text content from the restored state. If the undo stack
+// is empty, returns the current text unchanged. The function restores cursor		
+// position, selection range, and text content from the saved memento.
 pub fn (cfg &InputCfg) undo(mut w Window) string {
 	input_state := w.view_state.input_state[cfg.id_focus]
 	mut undo := input_state.undo
@@ -443,6 +466,11 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 	return memento.text
 }
 
+// redo reapplies a previously undone operation by popping the last operation
+// from the redo stack and pushing the current state onto the undo stack.
+// Returns the text content from the restored state. If the redo stack is
+// empty, returns the current text unchanged. The function restores cursor
+// position, selection range, and text content from the saved memento.
 pub fn (cfg &InputCfg) redo(mut w Window) string {
 	input_state := w.view_state.input_state[cfg.id_focus]
 	mut redo := input_state.redo

@@ -128,7 +128,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 	)
 }
 
-// table from data takes `[][]string` and creates a table.
+// table_cfg_from_data takes `[][]string` and creates a table.
 // First row is treated as a header row.
 pub fn table_cfg_from_data(data [][]string) TableCfg {
 	mut row_cfg := []TableRowCfg{cap: data.len}
@@ -150,7 +150,7 @@ pub fn table_cfg_from_data(data [][]string) TableCfg {
 	}
 }
 
-// table_from_csv converts a string representing a csv format to a TableCfg.
+// table_cfg_from_csv_string converts a string representing a csv format to a TableCfg.
 // First row is treated as a header row.
 pub fn table_cfg_from_csv_string(data string) !TableCfg {
 	mut parser := csv.csv_reader_from_string(data)!

@@ -487,6 +487,9 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 	return none
 }
 
+// select_all selects all text in the TextView by setting the selection range
+// from the beginning to the end of the text. The cursor position is moved to
+// the end of the text. Does nothing if the placeholder is active.
 pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
 	if tv.placeholder_active {
 		return
@@ -501,6 +504,9 @@ pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
 	}
 }
 
+// unselect_all clears any active text selection and resets the cursor
+// position to the beginning of the text. This collapses the selection range
+// to zero.
 pub fn (tv &TextView) unselect_all(mut w Window) {
 	input_state := w.view_state.input_state[tv.id_focus]
 	w.view_state.input_state[tv.id_focus] = InputState{

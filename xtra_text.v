@@ -607,12 +607,19 @@ fn cursor_down(strs []string, pos int) int {
 	return pos
 }
 
+// from_clipboard retrieves text content from the system clipboard and returns
+// it as a string. Creates a temporary clipboard instance that is automatically
+// freed after the paste operation completes.
 pub fn from_clipboard() string {
 	mut cb := clipboard.new()
 	defer { cb.free() }
 	return cb.paste()
 }
 
+// to_clipboard copies the provided string to the system clipboard if a value
+// is present. Creates a temporary clipboard instance that is automatically
+// freed after the copy operation completes. Returns true if the copy operation
+// was successful, false if the input was none.
 pub fn to_clipboard(s ?string) bool {
 	if s != none {
 		mut cb := clipboard.new()

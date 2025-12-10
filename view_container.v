@@ -338,6 +338,11 @@ pub fn canvas(cfg ContainerCfg) View {
 	return container(cfg)
 }
 
+// circle creates a circular container that can hold content. Unlike row,
+// column, and canvas which use rectangular shapes, circle renders its
+// container with a circular boundary. The container shares all the same
+// configuration options as other containers including sizing, padding,
+// alignment, scrolling, and styling. See [ContainerCfg](#ContainerCfg)
 pub fn circle(cfg ContainerCfg) View {
 	unsafe { // avoid allocating struct
 		cfg.name = if cfg.name.is_blank() { 'circle' } else { cfg.name }
