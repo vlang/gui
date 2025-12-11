@@ -31,10 +31,10 @@ pub:
 	select_end u32
 	undo       datatypes.Stack[InputMemento]
 	redo       datatypes.Stack[InputMemento]
-	// cursor_offset is used to maintain the horizontal offset of the cursor
+	// cursor_column is used to maintain the horizontal offset of the cursor
 	// when traversing vertically through text. It is reset when a non-vertical
 	// navigation operation occurs.
-	cursor_offset f32
+	cursor_column int
 }
 
 // InputMemento is admittedly a naive implementation of undo/redo operations.

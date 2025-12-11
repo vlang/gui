@@ -156,12 +156,14 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 		)
 		// Set cursor position and reset text selection
 		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
+		cursor_column := get_cursor_column(layout.shape.text_lines, cursor_pos)
 		input_state := w.view_state.input_state[layout.shape.id_focus]
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
-			cursor_pos: cursor_pos
-			select_beg: 0
-			select_end: 0
+			cursor_pos:    cursor_pos
+			select_beg:    0
+			select_end:    0
+			cursor_column: cursor_column
 		}
 		e.is_handled = true
 	}
@@ -297,13 +299,14 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 // on_key_down handles keyboard input for navigation and text selection.
 // It supports standard navigation keys (arrows, home, end) and modifiers
 // (Alt, Ctrl, Shift) for word/line jumping and selection extension.
-fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
-	if w.is_focus(layout.shape.id_focus) {
+fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
+	if window.is_focus(layout.shape.id_focus) {
 		if tv.placeholder_active {
 			return
 		}
-		mut current_input_state := w.view_state.input_state[layout.shape.id_focus]
+		mut current_input_state := window.view_state.input_state[layout.shape.id_focus]
 		mut new_cursor_pos := current_input_state.cursor_pos
+		mut new_cursor_column := current_input_state.cursor_column
 		text_lines := layout.shape.text_lines
 
 		// Handle navigation with modifiers
@@ -327,8 +330,8 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 			match e.key_code {
 				.left { new_cursor_pos = cursor_left(new_cursor_pos) }
 				.right { new_cursor_pos = cursor_right(text_lines, new_cursor_pos) }
-				.up { new_cursor_pos = cursor_up(text_lines, new_cursor_pos) }
-				.down { new_cursor_pos = cursor_down(text_lines, new_cursor_pos) }
+				.up { new_cursor_pos = cursor_up(text_lines, new_cursor_pos, new_cursor_column) }
+				.down { new_cursor_pos = cursor_down(text_lines, new_cursor_pos, new_cursor_column) }
 				.home { new_cursor_pos = cursor_home() }
 				.end { new_cursor_pos = cursor_end(text_lines) }
 				else { return }
@@ -337,10 +340,14 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 			return
 		}
 
+		if e.key_code != .up && e.key_code != .down {
+			new_cursor_column = get_cursor_column(text_lines, new_cursor_pos)
+		}
+
 		// input_cursor_on_sticky allows the cursor to stay on during cursor movements.
 		// See `blinky_cursor_animation()`
 		if new_cursor_pos != current_input_state.cursor_pos {
-			w.view_state.cursor_on_sticky = true
+			window.view_state.cursor_on_sticky = true
 		}
 
 		// ================================
@@ -390,15 +397,16 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut w Window) {
 		}
 
 		// Update input state with new cursor position and selection
-		w.view_state.input_state[layout.shape.id_focus] = InputState{
+		window.view_state.input_state[layout.shape.id_focus] = InputState{
 			...current_input_state
-			cursor_pos: new_cursor_pos
-			select_beg: new_select_beg
-			select_end: new_select_end
+			cursor_pos:    new_cursor_pos
+			select_beg:    new_select_beg
+			select_end:    new_select_end
+			cursor_column: new_cursor_column
 		}
 
 		// Ensure the new cursor position is visible
-		scroll_cursor_into_view(new_cursor_pos, layout, e, mut w)
+		scroll_cursor_into_view(new_cursor_pos, layout, e, mut window)
 		e.is_handled = true
 	}
 }
@@ -501,7 +509,7 @@ pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
 		cursor_pos:    len
 		select_beg:    0
 		select_end:    u32(len)
-		cursor_offset: 0
+		cursor_column: len
 	}
 }
 
@@ -515,6 +523,6 @@ pub fn (tv &TextView) unselect_all(mut w Window) {
 		cursor_pos:    0
 		select_beg:    0
 		select_end:    0
-		cursor_offset: 0
+		cursor_column: 0
 	}
 }
