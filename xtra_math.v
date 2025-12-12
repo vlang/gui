@@ -32,3 +32,11 @@ pub fn f32_are_close(a f32, b f32) bool {
 	d := if a >= b { a - b } else { b - a }
 	return d <= f32_tolerance
 }
+
+// u32_sort orders a and b in ascending order
+fn u32_sort(a u32, b u32) (u32, u32) {
+	return match b < a {
+		true { b, a }
+		else { a, b }
+	}
+}

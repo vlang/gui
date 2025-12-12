@@ -31,10 +31,10 @@ pub:
 	select_end u32
 	undo       datatypes.Stack[InputMemento]
 	redo       datatypes.Stack[InputMemento]
-	// cursor_column is used to maintain the horizontal offset of the cursor
+	// cursor_offset is used to maintain the horizontal offset of the cursor
 	// when traversing vertically through text. It is reset when a non-vertical
 	// navigation operation occurs.
-	cursor_column int
+	cursor_offset f32
 }
 
 // InputMemento is admittedly a naive implementation of undo/redo operations.
@@ -45,11 +45,10 @@ pub:
 @[minify]
 struct InputMemento {
 pub:
-	text          string
-	cursor_pos    int
-	select_beg    u32
-	select_end    u32
-	cursor_offset f32
+	text       string
+	cursor_pos int
+	select_beg u32
+	select_end u32
 }
 
 pub enum InputMode as u8 {
@@ -506,12 +505,5 @@ fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 fn (cfg &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
 	if layout.shape.on_click != unsafe { nil } {
 		w.set_mouse_cursor_pointing_hand()
-	}
-}
-
-fn u32_sort(a u32, b u32) (u32, u32) {
-	return match b < a {
-		true { b, a }
-		else { a, b }
 	}
 }

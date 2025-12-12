@@ -8,13 +8,10 @@ fn cursor_right(strs []string, pos int) int {
 	return int_min(count_chars(strs), pos + 1)
 }
 
-// cursor_up moves the cursor position up one line in wrapped text, attempting
-// to maintain the same column position. If the previous line is shorter than
-// the current column, the cursor moves to the end of that line.
-fn cursor_up(strs []string, cursor_pos int, cursor_column int) int {
+fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int {
 	mut idx := 0
 	mut offset := 0
-	lengths := strs.map(utf8_str_visible_length(it))
+	lengths := shape.text_lines.map(utf8_str_visible_length(it))
 
 	// find which line to from
 	for i, len in lengths {
@@ -36,6 +33,9 @@ fn cursor_up(strs []string, cursor_pos int, cursor_column int) int {
 			}
 		}
 
+		cursor_column := cursor_position_from_offset(shape.text_lines[p_idx], cursor_offset,
+			shape.text_style, window)
+
 		new_cursor_position := match true {
 			cursor_column <= p_len { p_start + cursor_column }
 			else { p_start + p_len - 1 }
@@ -46,22 +46,22 @@ fn cursor_up(strs []string, cursor_pos int, cursor_column int) int {
 	return cursor_pos
 }
 
-fn cursor_down(strs []string, cursor_position int, cursor_column int) int {
+fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int {
 	mut idx := 0
 	mut offset := 0
-	lengths := strs.map(utf8_str_visible_length(it))
+	lengths := shape.text_lines.map(utf8_str_visible_length(it))
 
 	// find which line to from
 	for i, len in lengths {
 		idx = i
-		if offset + len > cursor_position {
+		if offset + len > cursor_pos {
 			break
 		}
 		offset += len
 	}
 
 	// move to next line
-	if idx < strs.len - 1 {
+	if idx < shape.text_lines.len - 1 {
 		n_idx := idx + 1
 		n_len := lengths[n_idx]
 		mut n_start := 0
@@ -71,6 +71,9 @@ fn cursor_down(strs []string, cursor_position int, cursor_column int) int {
 			}
 		}
 
+		cursor_column := cursor_position_from_offset(shape.text_lines[n_idx], cursor_offset,
+			shape.text_style, window)
+
 		new_cursor_position := match true {
 			cursor_column <= n_len { n_start + cursor_column }
 			else { n_start + n_len - 1 }
@@ -78,7 +81,7 @@ fn cursor_down(strs []string, cursor_position int, cursor_column int) int {
 
 		return new_cursor_position
 	}
-	return cursor_position
+	return cursor_pos
 }
 
 fn cursor_home() int {
@@ -247,6 +250,10 @@ fn cursor_start_of_paragraph(strs []string, pos int) int {
 	return int_max(i + len, 0)
 }
 
+// get_cursor_column returns the zero-based column index of `cursor_pos` within
+// the current line of wrapped text. It iterates through the wrapped lines to
+// locate the line containing `cursor_pos` and subtracts the cumulative lengths
+// to compute the position within that line.
 fn get_cursor_column(strs []string, cursor_pos int) int {
 	mut len := 0
 	for str in strs {
@@ -260,4 +267,38 @@ fn get_cursor_column(strs []string, cursor_pos int) int {
 	cursor_column := cursor_pos - len
 	assert cursor_column >= 0
 	return cursor_column
+}
+
+fn cursor_position_from_offset(str string, offset f32, style TextStyle, window &Window) int {
+	rune_str := str.runes()
+	for idx in 1 .. rune_str.len {
+		width := get_text_width_no_cache(rune_str[0..idx].string(), style, window)
+		if width > offset {
+			char_width := get_text_width_no_cache(rune_str[idx].str(), style, window)
+			return if offset - char_width > width { idx } else { idx - 1 }
+		}
+	}
+	return int_max(0, rune_str.len - 1)
+}
+
+fn offset_from_cursor_position(shape Shape, cursor_position int, window &Window) f32 {
+	mut len := 0
+	mut str := ''
+	for text_line in shape.text_lines {
+		str_len := utf8_str_visible_length(text_line)
+		if len + str_len < cursor_position {
+			len += str_len
+			continue
+		}
+		str = text_line
+		break
+	}
+	rune_str := str.runes()
+	cursor_column := cursor_position - len
+	if cursor_column >= rune_str.len {
+		return len
+	}
+	rune_slice := rune_str[0..cursor_column]
+	offset := get_text_width_no_cache(rune_slice.string(), shape.text_style, window)
+	return offset
 }
