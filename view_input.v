@@ -138,8 +138,6 @@ pub:
 // - **escape**        unselects all text
 // - **delete**        deletes previous character
 // - **backspace**     deletes previous character
-// ---
-// - left/right arrow keys move cursor to beg/end of selection, when text is selected
 pub fn input(cfg InputCfg) View {
 	placeholder_active := cfg.text.len == 0
 	txt := if placeholder_active { cfg.placeholder } else { cfg.text }
@@ -378,6 +376,7 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		select_beg: input_state.select_beg
 		select_end: input_state.select_end
 	})
+	offset := offset_from_cursor_position()
 	w.view_state.input_state[cfg.id_focus] = InputState{
 		cursor_pos: cursor_pos
 		select_beg: 0

@@ -353,37 +353,37 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		// ================================
 		// shift => Extend/shrink selection
 		// ================================
-		mut new_select_beg := u32(0)
-		mut new_select_end := u32(0)
+		mut select_beg := u32(0)
+		mut select_end := u32(0)
 
 		if e.modifiers.has(.shift) {
 			old_cursor_pos := input_state.cursor_pos
-			new_select_beg = input_state.select_beg
-			new_select_end = input_state.select_end
+			select_beg = input_state.select_beg
+			select_end = input_state.select_end
 
 			// If there's no selection, start one from the old cursor position.
-			if new_select_beg == new_select_end {
-				new_select_beg = u32(old_cursor_pos)
-				new_select_end = u32(old_cursor_pos)
+			if select_beg == select_end {
+				select_beg = u32(old_cursor_pos)
+				select_end = u32(old_cursor_pos)
 			}
 
 			// Move the selection boundary that was at the old cursor position.
-			if old_cursor_pos == int(new_select_beg) {
-				new_select_beg = u32(position)
-			} else if old_cursor_pos == int(new_select_end) {
-				new_select_end = u32(position)
+			if old_cursor_pos == int(select_beg) {
+				select_beg = u32(position)
+			} else if old_cursor_pos == int(select_end) {
+				select_end = u32(position)
 			} else {
 				// If the old cursor was not at a boundary (e.g., from a click),
 				// move the boundary closest to the new cursor position.
-				if math.abs(position - int(new_select_beg)) < math.abs(position - int(new_select_end)) {
-					new_select_beg = u32(position)
+				if math.abs(position - int(select_beg)) < math.abs(position - int(select_end)) {
+					select_beg = u32(position)
 				} else {
-					new_select_end = u32(position)
+					select_end = u32(position)
 				}
 			}
 			// Ensure beg is always less than or equal to end
-			if new_select_beg > new_select_end {
-				new_select_beg, new_select_end = new_select_end, new_select_beg
+			if select_beg > select_end {
+				select_beg, select_end = select_end, select_beg
 			}
 		} else if input_state.select_beg != input_state.select_end && e.modifiers == .none {
 			// If a selection exists and a non-shift movement key is pressed,
@@ -399,8 +399,8 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		window.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
 			cursor_pos:    position
-			select_beg:    new_select_beg
-			select_end:    new_select_end
+			select_beg:    select_beg
+			select_end:    select_end
 			cursor_offset: offset
 		}
 
