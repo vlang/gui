@@ -288,6 +288,14 @@ fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 	}
 }
 
+// delete removes text from the input field based on the cursor position or
+// selected text range. If text is selected, it deletes the entire selection.
+// Otherwise, it deletes the character before the cursor (backspace) when
+// is_delete is false, or the character after the cursor (delete key) when
+// is_delete is true. The function saves the current state to the undo stack
+// before performing the deletion, updates the cursor position, and clears any
+// text selection. Returns the modified text string, or none if the operation
+// cannot be performed (e.g., cursor at start with backspace).
 fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 	mut text := cfg.text.runes()
 	input_state := w.view_state.input_state[cfg.id_focus]
@@ -329,14 +337,23 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 		select_end: input_state.select_end
 	})
 	w.view_state.input_state[cfg.id_focus] = InputState{
-		cursor_pos: cursor_pos
-		select_beg: 0
-		select_end: 0
-		undo:       undo
+		cursor_pos:    cursor_pos
+		select_beg:    0
+		select_end:    0
+		undo:          undo
+		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
 	}
 	return text.string()
 }
 
+// insert adds text to the input field at the current cursor position or
+// replaces the currently selected text. For single-line fixed-width inputs,
+// it validates that the inserted text fits within the available width. If
+// text is selected, the selection is replaced with the inserted text. The
+// function saves the current state to the undo stack before performing the
+// insertion, updates the cursor position to after the inserted text, and
+// clears any text selection. Returns the modified text string, or an error
+// if the cursor position is out of range.
 fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	// clamp max chars to width of box when single line fixed.
 	if cfg.mode == .single_line && cfg.sizing.width == .fixed {
@@ -376,12 +393,12 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		select_beg: input_state.select_beg
 		select_end: input_state.select_end
 	})
-	offset := offset_from_cursor_position()
 	w.view_state.input_state[cfg.id_focus] = InputState{
-		cursor_pos: cursor_pos
-		select_beg: 0
-		select_end: 0
-		undo:       undo
+		cursor_pos:    cursor_pos
+		select_beg:    0
+		select_end:    0
+		undo:          undo
+		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
 	}
 	return text.string()
 }
@@ -464,6 +481,12 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 	return memento.text
 }
 
+// redo re-applies a previously undone operation by popping the last state from
+// the redo stack and pushing the current state onto the undo stack. Returns
+// the text content from the restored state. If the redo stack is empty, returns
+// the current text unchanged. The function restores cursor position, selection
+// range, and text content from the saved memento, effectively reversing an undo
+// operation.
 pub fn (cfg &InputCfg) redo(mut w Window) string {
 	input_state := w.view_state.input_state[cfg.id_focus]
 	mut redo := input_state.redo

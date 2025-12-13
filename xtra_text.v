@@ -411,6 +411,8 @@ pub fn to_clipboard(s ?string) bool {
 	return false
 }
 
+// count_chars returns the total number of visible characters across all
+// strings in the array, used for cursor positioning in wrapped text.
 fn count_chars(strs []string) int {
 	mut count := 0
 	for str in strs {

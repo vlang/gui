@@ -340,7 +340,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 			return
 		}
 
-		if e.key_code != .up && e.key_code != .down {
+		if (e.key_code != .up && e.key_code != .down) || input_state.cursor_offset < 0 {
 			offset = offset_from_cursor_position(layout.shape, position, window)
 		}
 

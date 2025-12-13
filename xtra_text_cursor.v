@@ -1,19 +1,30 @@
 module gui
 
+// cursor_left moves the cursor position one character to the left in the text.
+// It decrements the position by one, but ensures the result never goes below
+// zero, effectively preventing the cursor from moving before the start of the
+// text. Returns the new cursor position.
 fn cursor_left(pos int) int {
 	return int_max(0, pos - 1)
 }
 
+// cursor_right moves the cursor position one character to the right in wrapped
+// text. It increments the position by one, but ensures the result never exceeds
+// the total character count of all text lines combined, effectively preventing
+// the cursor from moving beyond the end of the text. Returns the new cursor
+// position.
 fn cursor_right(strs []string, pos int) int {
 	return int_min(count_chars(strs), pos + 1)
 }
 
 // cursor_up moves the cursor position up one line in wrapped text, attempting
-// to maintain the same horizontal pixel offset. It locates the current line,
-// moves to the previous line, and uses the cursor_offset to find the corresponding
-// column position. If the previous line is shorter than the calculated column,
-// the cursor moves to the end of that line. Returns the original position if
-// already at the first line.
+// to maintain the same horizontal pixel offset. It locates the current line by
+// iterating through the wrapped text lines, moves to the previous line, and
+// uses the cursor_offset to find the corresponding column position. If the
+// cursor_offset is invalid (less than zero, typically -1), it is recomputed
+// from the current cursor position. If the previous line is shorter than the
+// calculated column, the cursor moves to the end of that line. Returns the
+// original position if already at the first line.
 fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int {
 	mut idx := 0
 	mut offset := 0
@@ -39,7 +50,15 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int
 			}
 		}
 
-		cursor_column := cursor_position_from_offset(shape.text_lines[p_idx], cursor_offset,
+		// An offset of less than zero (usually -1) indicates that the offset was
+		// invalidated, likely because of an edit operation like insert/delete.
+		// Compute a new offset based on the current cursor position
+		c_offset := match cursor_offset >= 0 {
+			true { cursor_offset }
+			else { offset_from_cursor_position(shape, cursor_pos, window) }
+		}
+
+		cursor_column := cursor_position_from_offset(shape.text_lines[p_idx], c_offset,
 			shape.text_style, window)
 
 		new_cursor_position := match true {
@@ -53,11 +72,14 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int
 }
 
 // cursor_down moves the cursor position down one line in wrapped text, attempting
-// to maintain the same horizontal pixel offset. It locates the current line,
-// moves to the next line, and uses the cursor_offset to find the corresponding
-// column position. If the next line is shorter than the calculated column,
-// the cursor moves to the end of that line. Returns the original position if
-// already at the last line.
+// to maintain the same horizontal pixel offset. It locates the current line by
+// iterating through the wrapped text lines, moves to the next line, and uses
+// the cursor_offset to find the corresponding column position. If the cursor_offset
+// is invalid (less than zero, typically -1), it is recomputed from the current
+// cursor position. If the next line is shorter than the calculated column, the
+// cursor position is adjusted: for lines ending with a newline, it moves to the
+// position before the newline; for the last line, it moves to the end of the line.
+// Returns the original position if already at the last line.
 fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int {
 	mut idx := 0
 	mut offset := 0
@@ -84,7 +106,15 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, window &Window) i
 			}
 		}
 
-		cursor_column := cursor_position_from_offset(n_text, cursor_offset, shape.text_style,
+		// An offset of less than zero (usually -1) indicates that the offset was
+		// invalidated, likely because of an edit operation like insert/delete.
+		// Compute a new offset based on the current cursor position
+		c_offset := match cursor_offset >= 0 {
+			true { cursor_offset }
+			else { offset_from_cursor_position(shape, cursor_pos, window) }
+		}
+
+		cursor_column := cursor_position_from_offset(n_text, c_offset, shape.text_style,
 			window)
 
 		new_cursor_position := match true {
@@ -101,10 +131,16 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, window &Window) i
 	return cursor_pos
 }
 
+// cursor_home moves the cursor to the beginning of the text by returning
+// position 0. This is equivalent to the "Home" key behavior, placing the
+// cursor at the start of the entire text content.
 fn cursor_home() int {
 	return 0
 }
 
+// cursor_end moves the cursor to the end of the text by returning the total
+// character count across all wrapped text lines. This is equivalent to the
+// "End" key behavior, placing the cursor at the end of the entire text content.
 fn cursor_end(strs []string) int {
 	return count_chars(strs)
 }
