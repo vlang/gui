@@ -118,10 +118,13 @@ fn side_bar(mut w gui.Window) gui.View {
 fn gallery(mut w gui.Window) gui.View {
 	mut app := w.state[ShowcaseApp]()
 	return gui.column(
-		id_scroll: id_scroll_gallery
-		sizing:    gui.fill_fill
-		spacing:   gui.spacing_large * 2
-		content:   match app.selected_tab {
+		id_scroll:       id_scroll_gallery
+		scrollbar_cfg_y: &gui.ScrollbarCfg{
+			gap_edge: 4
+		}
+		sizing:          gui.fill_fill
+		spacing:         gui.spacing_large * 2
+		content:         match app.selected_tab {
 			.tab_stock {
 				[buttons(w), inputs(w), toggles(w), select_drop_down(w),
 					list_box(w), expand_panel(w), progress_bars(w),

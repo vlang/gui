@@ -69,6 +69,9 @@ pub:
 	on_text_changed    fn (&Layout, string, mut Window)    = unsafe { nil }
 	on_enter           fn (&Layout, mut Event, mut Window) = unsafe { nil }
 	on_click_icon      fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	scrollbar_cfg_x    &ScrollbarCfg                       = unsafe { nil }
+	scrollbar_cfg_y    &ScrollbarCfg                       = unsafe { nil }
+	tooltip            &TooltipCfg                         = unsafe { nil }
 	sizing             Sizing
 	text_style         TextStyle = gui_theme.input_style.text_style
 	placeholder_style  TextStyle = gui_theme.input_style.placeholder_style
@@ -82,6 +85,8 @@ pub:
 	radius             f32 = gui_theme.input_style.radius
 	radius_border      f32 = gui_theme.input_style.radius_border
 	id_focus           u32 // 0 = readonly, >0 = focusable and tabbing order
+	id_scroll          u32
+	scroll_mode        ScrollMode
 	padding            Padding = gui_theme.input_style.padding
 	padding_border     Padding = gui_theme.input_style.padding_border
 	color              Color   = gui_theme.input_style.color
@@ -145,26 +150,30 @@ pub fn input(cfg InputCfg) View {
 	mode := if cfg.mode == .single_line { TextMode.single_line } else { TextMode.wrap_keep_spaces }
 
 	return row(
-		name:         'input border'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		width:        cfg.width
-		height:       cfg.height
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
-		min_height:   cfg.min_height
-		max_height:   cfg.max_height
-		padding:      cfg.padding_border
-		color:        cfg.color_border
-		fill:         cfg.fill_border
-		sizing:       cfg.sizing
-		radius:       cfg.radius_border
-		disabled:     cfg.disabled
-		invisible:    cfg.invisible
-		on_char:      cfg.on_char
-		amend_layout: cfg.amend_layout
-		on_hover:     cfg.hover
-		content:      [
+		name:            'input border'
+		id:              cfg.id
+		id_focus:        cfg.id_focus
+		id_scroll:       cfg.id_scroll
+		scrollbar_cfg_x: cfg.scrollbar_cfg_x
+		scrollbar_cfg_y: cfg.scrollbar_cfg_y
+		tooltip:         cfg.tooltip
+		width:           cfg.width
+		height:          cfg.height
+		min_width:       cfg.min_width
+		max_width:       cfg.max_width
+		min_height:      cfg.min_height
+		max_height:      cfg.max_height
+		padding:         cfg.padding_border
+		color:           cfg.color_border
+		fill:            cfg.fill_border
+		sizing:          cfg.sizing
+		radius:          cfg.radius_border
+		disabled:        cfg.disabled
+		invisible:       cfg.invisible
+		on_char:         cfg.on_char
+		amend_layout:    cfg.amend_layout
+		on_hover:        cfg.hover
+		content:         [
 			row(
 				name:     'input interior'
 				color:    cfg.color

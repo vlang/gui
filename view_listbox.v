@@ -136,17 +136,14 @@ pub fn list_box(cfg ListBoxCfg) View {
 		sizing:     cfg.sizing
 		content:    [
 			column(
-				name:            'list_box interior'
-				id_scroll:       cfg.id_scroll
-				scrollbar_cfg_y: &ScrollbarCfg{
-					offset_x: -1
-				}
-				color:           cfg.color
-				fill:            cfg.fill
-				padding:         cfg.padding
-				sizing:          cfg.sizing
-				spacing:         0
-				content:         list
+				name:      'list_box interior'
+				id_scroll: cfg.id_scroll
+				color:     cfg.color
+				fill:      cfg.fill
+				padding:   cfg.padding
+				sizing:    cfg.sizing
+				spacing:   0
+				content:   list
 			),
 		]
 	)

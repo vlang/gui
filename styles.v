@@ -218,8 +218,8 @@ pub:
 	fill_background  bool
 	radius           f32 = radius_small
 	radius_thumb     f32 = radius_small
-	offset_x         f32 = -3
-	offset_y         f32 = -3
+	gap_edge         f32 = 3
+	gap_end          f32 = 2
 }
 
 pub struct SelectStyle {

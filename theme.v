@@ -318,6 +318,8 @@ pub:
 	scroll_multiplier f32 = scroll_multiplier
 	scroll_delta_line f32 = scroll_delta_line
 	scroll_delta_page f32 = scroll_delta_page
+	scroll_gap_edge   f32 = 3 // gap between edge of scrollbar and container
+	scroll_gap_end    f32 = 2 // gap between end of scrollbar and container
 }
 
 // Good practice to expose theme configs to users.
@@ -590,6 +592,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_thumb:  cfg.color_active
 			radius:       if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
 			radius_thumb: if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
+			gap_edge:     cfg.scroll_gap_edge
+			gap_end:      cfg.scroll_gap_end
 		}
 		select_style:       SelectStyle{
 			color:              cfg.color_interior

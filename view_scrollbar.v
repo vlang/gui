@@ -43,8 +43,8 @@ pub:
 	size             f32   = gui_theme.scrollbar_style.size
 	radius           f32   = gui_theme.scrollbar_style.radius
 	radius_thumb     f32   = gui_theme.scrollbar_style.radius_thumb
-	offset_x         f32   = gui_theme.scrollbar_style.offset_x // x and y are swapped in
-	offset_y         f32   = gui_theme.scrollbar_style.offset_y // horizontal orientation
+	gap_edge         f32   = gui_theme.scrollbar_style.gap_edge
+	gap_end          f32   = gui_theme.scrollbar_style.gap_end
 	id_track         u32
 	overflow         ScrollbarOverflow
 	orientation      ScrollbarOrientation
@@ -209,12 +209,12 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 
 	match cfg.orientation == .horizontal {
 		true {
-			layout.shape.x = parent.shape.x + parent.shape.padding.left
-			layout.shape.y = parent.shape.y + parent.shape.height - cfg.size + cfg.offset_y
-			layout.shape.width = parent.shape.width - parent.shape.padding.width()
+			layout.shape.x = parent.shape.x + parent.shape.padding.left + cfg.gap_end
+			layout.shape.y = parent.shape.y + parent.shape.height - cfg.size - cfg.gap_edge
+			layout.shape.width = parent.shape.width - parent.shape.padding.width() - cfg.gap_end
 			layout.shape.height = cfg.size
 
-			total_width := content_width(parent)
+			total_width := content_width(parent) - cfg.gap_end
 			t_width := layout.shape.width * (layout.shape.width / total_width)
 			thumb_width := f32_clamp(t_width, min_thumb_size, layout.shape.width)
 
@@ -237,12 +237,12 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 			}
 		}
 		else {
-			layout.shape.x = parent.shape.x + parent.shape.width - cfg.size + cfg.offset_x
-			layout.shape.y = parent.shape.y + parent.shape.padding.top
+			layout.shape.x = parent.shape.x + parent.shape.width - cfg.size - cfg.gap_edge
+			layout.shape.y = parent.shape.y + parent.shape.padding.top + cfg.gap_end
 			layout.shape.width = cfg.size
-			layout.shape.height = parent.shape.height - parent.shape.padding.height()
+			layout.shape.height = parent.shape.height - parent.shape.padding.height() - cfg.gap_end
 
-			total_height := content_height(parent)
+			total_height := content_height(parent) - cfg.gap_end
 			t_height := layout.shape.height * (layout.shape.height / total_height)
 			thumb_height := f32_clamp(t_height, min_thumb_size, layout.shape.height)
 
