@@ -209,58 +209,64 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 
 	match cfg.orientation == .horizontal {
 		true {
-			layout.shape.x = parent.shape.x + parent.shape.padding.left + cfg.gap_end
-			layout.shape.y = parent.shape.y + parent.shape.height - cfg.size - cfg.gap_edge
-			layout.shape.width = parent.shape.width - parent.shape.padding.width() - cfg.gap_end
+			layout.shape.x = parent.shape.x + parent.shape.padding.left
+			layout.shape.y = parent.shape.y + parent.shape.height - cfg.size
+			layout.shape.width = parent.shape.width - parent.shape.padding.width()
 			layout.shape.height = cfg.size
 
-			total_width := content_width(parent) - cfg.gap_end
-			t_width := layout.shape.width * (layout.shape.width / total_width)
+			c_width := content_width(parent)
+			t_width := layout.shape.width * (layout.shape.width / c_width)
 			thumb_width := f32_clamp(t_width, min_thumb_size, layout.shape.width)
 
 			available_width := layout.shape.width - thumb_width
 			scroll_offset := -w.view_state.scroll_x[cfg.id_track]
+
+			layout.shape.x -= cfg.gap_end
+			layout.shape.y -= cfg.gap_edge
+			layout.shape.width -= cfg.gap_end + cfg.gap_end
 			offset := if available_width == 0 {
 				0
 			} else {
-				f32_clamp((scroll_offset / (total_width - layout.shape.width)) * available_width,
+				f32_clamp((scroll_offset / (c_width - layout.shape.width)) * available_width,
 					0, available_width)
 			}
 			layout.children[thumb].shape.x = layout.shape.x + offset
 			layout.children[thumb].shape.y = layout.shape.y
-			layout.children[thumb].shape.width = thumb_width
+			layout.children[thumb].shape.width = thumb_width - cfg.gap_end - cfg.gap_end
 			layout.children[thumb].shape.height = cfg.size
 
-			if (cfg.overflow != .visible && layout.shape.width - thumb_width < 0.1)
-				|| cfg.overflow == .on_hover {
+			if (cfg.overflow != .visible && available_width < 0.1) || cfg.overflow == .on_hover {
 				layout.children[thumb].shape.color = color_transparent
 			}
 		}
 		else {
-			layout.shape.x = parent.shape.x + parent.shape.width - cfg.size - cfg.gap_edge
-			layout.shape.y = parent.shape.y + parent.shape.padding.top + cfg.gap_end
+			layout.shape.x = parent.shape.x + parent.shape.width - cfg.size
+			layout.shape.y = parent.shape.y + parent.shape.padding.top
 			layout.shape.width = cfg.size
-			layout.shape.height = parent.shape.height - parent.shape.padding.height() - cfg.gap_end
+			layout.shape.height = parent.shape.height - parent.shape.padding.height()
 
-			total_height := content_height(parent) - cfg.gap_end
-			t_height := layout.shape.height * (layout.shape.height / total_height)
+			c_height := content_height(parent)
+			t_height := layout.shape.height * (layout.shape.height / c_height)
 			thumb_height := f32_clamp(t_height, min_thumb_size, layout.shape.height)
 
 			available_height := layout.shape.height - thumb_height
 			scroll_offset := -w.view_state.scroll_y[cfg.id_track]
+
+			layout.shape.x -= cfg.gap_edge
+			layout.shape.y += cfg.gap_end
+			layout.shape.height -= cfg.gap_end + cfg.gap_end
+			layout.children[thumb].shape.x = layout.shape.x
 			offset := if available_height == 0 {
 				0
 			} else {
-				f32_clamp((scroll_offset / (total_height - layout.shape.height)) * available_height,
+				f32_clamp((scroll_offset / (c_height - layout.shape.height)) * available_height,
 					0, available_height)
 			}
-			layout.children[thumb].shape.x = layout.shape.x
 			layout.children[thumb].shape.y = layout.shape.y + offset
-			layout.children[thumb].shape.height = thumb_height
+			layout.children[thumb].shape.height = thumb_height - cfg.gap_end - cfg.gap_end
 			layout.children[thumb].shape.width = cfg.size
 
-			if (cfg.overflow != .visible && layout.shape.height - thumb_height < 0.1)
-				|| cfg.overflow == .on_hover {
+			if (cfg.overflow != .visible && available_height < 0.1) || cfg.overflow == .on_hover {
 				layout.children[thumb].shape.color = color_transparent
 			}
 		}
@@ -274,7 +280,7 @@ fn (cfg &ScrollbarCfg) on_hover(mut layout Layout, mut _ Event, mut w Window) {
 	// on hover dim color of thumb
 	thumb := 0
 	if layout.children[thumb].shape.color != color_transparent || cfg.overflow == .on_hover {
-		layout.children[thumb].shape.color = gui_theme.button_style.color_hover
+		layout.children[thumb].shape.color = gui_theme.color_active
 	}
 }
 

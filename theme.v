@@ -50,6 +50,8 @@ const color_text_light = rgb(32, 32, 32)
 const scroll_multiplier = 20
 const scroll_delta_line = 1
 const scroll_delta_page = 10
+const scroll_gap_edge = 3
+const scroll_gap_end = 2
 const size_progress_bar = 10
 
 const text_style_dark = TextStyle{
@@ -318,8 +320,8 @@ pub:
 	scroll_multiplier f32 = scroll_multiplier
 	scroll_delta_line f32 = scroll_delta_line
 	scroll_delta_page f32 = scroll_delta_page
-	scroll_gap_edge   f32 = 3 // gap between edge of scrollbar and container
-	scroll_gap_end    f32 = 2 // gap between end of scrollbar and container
+	scroll_gap_edge   f32 = scroll_gap_edge // gap between edge of scrollbar and container
+	scroll_gap_end    f32 = scroll_gap_end  // gap between end of scrollbar and container
 }
 
 // Good practice to expose theme configs to users.

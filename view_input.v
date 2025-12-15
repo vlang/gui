@@ -45,10 +45,11 @@ pub:
 @[minify]
 struct InputMemento {
 pub:
-	text       string
-	cursor_pos int
-	select_beg u32
-	select_end u32
+	text          string
+	cursor_pos    int
+	select_beg    u32
+	select_end    u32
+	cursor_offset f32
 }
 
 pub enum InputMode as u8 {
@@ -340,10 +341,11 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 	}
 	mut undo := input_state.undo
 	undo.push(InputMemento{
-		text:       cfg.text
-		cursor_pos: input_state.cursor_pos
-		select_beg: input_state.select_beg
-		select_end: input_state.select_end
+		text:          cfg.text
+		cursor_pos:    input_state.cursor_pos
+		select_beg:    input_state.select_beg
+		select_end:    input_state.select_end
+		cursor_offset: input_state.cursor_offset
 	})
 	w.view_state.input_state[cfg.id_focus] = InputState{
 		cursor_pos:    cursor_pos
@@ -397,10 +399,11 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	}
 	mut undo := input_state.undo
 	undo.push(InputMemento{
-		text:       cfg.text
-		cursor_pos: input_state.cursor_pos
-		select_beg: input_state.select_beg
-		select_end: input_state.select_end
+		text:          cfg.text
+		cursor_pos:    input_state.cursor_pos
+		select_beg:    input_state.select_beg
+		select_end:    input_state.select_end
+		cursor_offset: input_state.cursor_offset
 	})
 	w.view_state.input_state[cfg.id_focus] = InputState{
 		cursor_pos:    cursor_pos
@@ -475,17 +478,19 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 	memento := undo.pop() or { return cfg.text }
 	mut redo := input_state.redo
 	redo.push(InputMemento{
-		text:       cfg.text
-		cursor_pos: input_state.cursor_pos
-		select_beg: input_state.select_beg
-		select_end: input_state.select_end
+		text:          cfg.text
+		cursor_pos:    input_state.cursor_pos
+		select_beg:    input_state.select_beg
+		select_end:    input_state.select_end
+		cursor_offset: input_state.cursor_offset
 	})
 	w.view_state.input_state[cfg.id_focus] = InputState{
-		cursor_pos: memento.cursor_pos
-		select_beg: memento.select_beg
-		select_end: memento.select_end
-		undo:       undo
-		redo:       redo
+		cursor_pos:    memento.cursor_pos
+		select_beg:    memento.select_beg
+		select_end:    memento.select_end
+		undo:          undo
+		redo:          redo
+		cursor_offset: memento.cursor_offset
 	}
 	return memento.text
 }
@@ -502,17 +507,19 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 	memento := redo.pop() or { return cfg.text }
 	mut undo := input_state.undo
 	undo.push(InputMemento{
-		text:       cfg.text
-		cursor_pos: input_state.cursor_pos
-		select_beg: input_state.select_beg
-		select_end: input_state.select_end
+		text:          cfg.text
+		cursor_pos:    input_state.cursor_pos
+		select_beg:    input_state.select_beg
+		select_end:    input_state.select_end
+		cursor_offset: input_state.cursor_offset
 	})
 	w.view_state.input_state[cfg.id_focus] = InputState{
-		cursor_pos: memento.cursor_pos
-		select_beg: memento.select_beg
-		select_end: memento.select_end
-		undo:       undo
-		redo:       redo
+		cursor_pos:    memento.cursor_pos
+		select_beg:    memento.select_beg
+		select_end:    memento.select_end
+		cursor_offset: memento.cursor_offset
+		undo:          undo
+		redo:          redo
 	}
 	return memento.text
 }
