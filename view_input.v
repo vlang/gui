@@ -229,6 +229,9 @@ fn (_ &InputCfg) on_click_interior(layout &Layout, mut e Event, mut w Window) {
 }
 
 fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
+	if w.mouse_is_locked() {
+		return
+	}
 	c := event.char_code
 	if cfg.on_text_changed != unsafe { nil } {
 		mut text := cfg.text

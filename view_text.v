@@ -205,6 +205,7 @@ fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
 		mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
 		input_state := w.view_state.input_state[layout.shape.id_focus]
 
+		// move cursor to mouse_cursor_pos
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
 			cursor_pos:    mouse_cursor_pos
@@ -309,7 +310,7 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 // (Alt, Ctrl, Shift) for word/line jumping and selection extension.
 fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 	if window.is_focus(layout.shape.id_focus) {
-		if tv.placeholder_active {
+		if tv.placeholder_active || window.mouse_is_locked() {
 			return
 		}
 		mut input_state := window.view_state.input_state[layout.shape.id_focus]
@@ -421,7 +422,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 // on_char handles character input events.
 // Currently primarily used for handling shortcuts like Select All, Copy, and Escape.
 fn (tv &TextView) on_char(layout &Layout, mut event Event, mut w Window) {
-	if w.is_focus(layout.shape.id_focus) {
+	if w.is_focus(layout.shape.id_focus) && !w.mouse_is_locked() {
 		c := event.char_code
 		mut is_handled := true
 
