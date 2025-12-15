@@ -1,5 +1,10 @@
 module gui
 
+// view_scrollbar.v provides scrollbars as floating overlay elements that sit
+// on top of their scrollable containers. It defines scrollbar configuration,
+// layout, rendering, and interaction (dragging, hovering, and scrolling) for
+// both vertical and horizontal orientations.
+
 // ScrollbarOverflow determines how scrollbars are shown.
 // Remember that to set id_scroll > 0 or these options
 // have no effect.

@@ -60,8 +60,6 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			on_char:             tv.on_char
 			on_keydown:          tv.on_key_down
 			on_click:            tv.on_click
-			on_mouse_move:       tv.mouse_move_locked
-			on_mouse_up:         view_text_mouse_up
 		}
 	}
 	layout.shape.width = text_width(layout.shape, mut window)
@@ -143,14 +141,14 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 					tv.mouse_move_locked(ly, mut e, mut w)
 				}
 			}
-			mouse_up:   fn [id_focus] (layout &Layout, mut e Event, mut w Window) {
+			mouse_up:   fn [tv, id_focus] (layout &Layout, mut e Event, mut w Window) {
 				w.mouse_unlock()
 				// The layout in mouse locks is always the root layout.
 				if ly := layout.find_layout(fn [id_focus] (ly Layout) bool {
 					return ly.shape.id_focus == id_focus
 				})
 				{
-					view_text_mouse_up(ly, mut e, mut w)
+					tv.mouse_up_locked(ly, mut e, mut w)
 				}
 			}
 		)
@@ -182,20 +180,37 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 			return
 		}
 		ev := event_relative_to(layout.shape, e)
-		// Calculate the end position of the selection based on mouse coordinates
-		end := u32(tv.mouse_cursor_pos(layout.shape, ev, mut w))
 		input_state := w.view_state.input_state[layout.shape.id_focus]
 		cursor_pos := u32(input_state.cursor_pos)
+		mouse_cursor_pos := u32(tv.mouse_cursor_pos(layout.shape, ev, mut w))
 
 		// Update selection range: start is the original cursor pos, end is the current mouse pos
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
-			select_beg: if cursor_pos < end { cursor_pos } else { end }
-			select_end: if cursor_pos < end { end } else { cursor_pos }
+			select_beg: if cursor_pos < mouse_cursor_pos { cursor_pos } else { mouse_cursor_pos }
+			select_end: if cursor_pos < mouse_cursor_pos { mouse_cursor_pos } else { cursor_pos }
 		}
 
 		// Ensure the cursor being dragged to is visible
-		scroll_cursor_into_view(int(end), layout, ev, mut w)
+		scroll_cursor_into_view(int(mouse_cursor_pos), layout, ev, mut w)
+		e.is_handled = true
+	}
+}
+
+fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
+	if w.is_focus(layout.shape.id_focus) {
+		w.set_mouse_cursor_ibeam()
+
+		ev := event_relative_to(layout.shape, e)
+		mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
+		input_state := w.view_state.input_state[layout.shape.id_focus]
+
+		w.view_state.input_state[layout.shape.id_focus] = InputState{
+			...input_state
+			cursor_pos:    mouse_cursor_pos
+			cursor_offset: -1
+		}
+
 		e.is_handled = true
 	}
 }
@@ -241,13 +256,6 @@ fn scroll_cursor_into_view(cursor_pos int, layout &Layout, _ &Event, mut w Windo
 		else { current_scroll_y }
 	}
 	w.scroll_vertical_to(layout.shape.id_scroll_container, new_scroll_y)
-}
-
-fn view_text_mouse_up(layout &Layout, mut e Event, mut w Window) {
-	if w.is_focus(layout.shape.id_focus) {
-		w.set_mouse_cursor_ibeam()
-		e.is_handled = true
-	}
 }
 
 // mouse_cursor_pos determines the character index (cursor position) within
