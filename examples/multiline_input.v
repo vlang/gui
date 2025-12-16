@@ -1,6 +1,6 @@
 import gui
 
-// Multiline Text Demo
+// Multiline Input Demo
 // =============================
 
 @[heap]
@@ -11,7 +11,7 @@ mut:
 
 fn main() {
 	mut window := gui.window(
-		title:        'Multiline Text Test'
+		title:        'Multiline Input Demo'
 		state:        &MultilineApp{}
 		width:        400
 		height:       300

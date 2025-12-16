@@ -6,16 +6,6 @@ module gui
 //
 import arrays
 
-// MouseLockCfg stores callback functions for mouse event handling in a locked state.
-// When mouse is locked, these callbacks intercept normal mouse event processing.
-// Used for implementing drag operations and modal behaviors.
-pub struct MouseLockCfg {
-pub:
-	mouse_down ?fn (&Layout, mut Event, mut Window)
-	mouse_move ?fn (&Layout, mut Event, mut Window)
-	mouse_up   ?fn (&Layout, mut Event, mut Window)
-}
-
 fn char_handler(layout &Layout, mut e Event, mut w Window) {
 	for child in layout.children {
 		if child.shape.disabled {

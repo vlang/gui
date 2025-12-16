@@ -130,8 +130,10 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 	}
 	if e.mouse_button == .left && w.is_focus(layout.shape.id_focus) {
 		id_focus := layout.shape.id_focus
+		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
 		// Init mouse lock to handle dragging selection (mouse move) and finishing selection (mouse up)
 		w.mouse_lock(
+			cursor_pos: cursor_pos
 			mouse_move: fn [tv, id_focus] (layout &Layout, mut e Event, mut w Window) {
 				// The layout in mouse locks is always the root layout.
 				if ly := layout.find_layout(fn [id_focus] (ly Layout) bool {
@@ -153,7 +155,6 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 			}
 		)
 		// Set cursor position and reset text selection
-		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
 		cursor_offset := offset_from_cursor_position(layout.shape, cursor_pos, w)
 		input_state := w.view_state.input_state[layout.shape.id_focus]
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
@@ -181,17 +182,23 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 		}
 		ev := event_relative_to(layout.shape, e)
 		input_state := w.view_state.input_state[layout.shape.id_focus]
-		cursor_pos := u32(input_state.cursor_pos)
+		start_cursor_pos := u32(w.view_state.mouse_lock.cursor_pos)
 		mouse_cursor_pos := u32(tv.mouse_cursor_pos(layout.shape, ev, mut w))
 
-		// Update selection range: start is the original cursor pos, end is the current mouse pos
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
-			select_beg: if cursor_pos < mouse_cursor_pos { cursor_pos } else { mouse_cursor_pos }
-			select_end: if cursor_pos < mouse_cursor_pos { mouse_cursor_pos } else { cursor_pos }
+			cursor_pos:    int(mouse_cursor_pos)
+			cursor_offset: -1
+			select_beg:    match start_cursor_pos < mouse_cursor_pos {
+				true { start_cursor_pos }
+				else { mouse_cursor_pos }
+			}
+			select_end:    match start_cursor_pos < mouse_cursor_pos {
+				true { mouse_cursor_pos }
+				else { start_cursor_pos }
+			}
 		}
 
-		// Ensure the cursor being dragged to is visible
 		scroll_cursor_into_view(int(mouse_cursor_pos), layout, ev, mut w)
 		e.is_handled = true
 	}

@@ -21,7 +21,7 @@ fn (mut window Window) blinky_cursor_animation() {
 }
 
 // color_background returns the window background color
-pub fn (window &Window) color_background() Color {
+pub fn (_ &Window) color_background() Color {
 	return gui_theme.color_background
 }
 
