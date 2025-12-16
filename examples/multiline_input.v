@@ -3,6 +3,9 @@ import gui
 // Multiline Input Demo
 // =============================
 
+const input_id_focus = 1
+const input_id_scroll = 1
+
 @[heap]
 struct MultilineApp {
 mut:
@@ -18,6 +21,7 @@ fn main() {
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
 			w.update_view(main_view)
+			w.set_id_focus(input_id_focus)
 		}
 	)
 	window.set_theme(gui.theme_dark_bordered)
@@ -34,8 +38,8 @@ fn main_view(window &gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		content: [
 			gui.input(
-				id_focus:        1
-				id_scroll:       1
+				id_focus:        input_id_focus
+				id_scroll:       input_id_scroll
 				scroll_mode:     .vertical_only
 				text:            app.text
 				mode:            .multiline

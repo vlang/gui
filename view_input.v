@@ -164,24 +164,25 @@ pub fn input(cfg InputCfg) View {
 		max_width:       cfg.max_width
 		min_height:      cfg.min_height
 		max_height:      cfg.max_height
-		padding:         cfg.padding_border
-		color:           cfg.color_border
-		fill:            cfg.fill_border
-		sizing:          cfg.sizing
-		radius:          cfg.radius_border
 		disabled:        cfg.disabled
+		color:           cfg.color_border
 		invisible:       cfg.invisible
+		fill:            cfg.fill_border
+		padding:         cfg.padding_border
+		radius:          cfg.radius_border
+		sizing:          cfg.sizing
 		on_char:         cfg.on_char
-		amend_layout:    cfg.amend_layout
 		on_hover:        cfg.hover
+		amend_layout:    cfg.amend_layout
 		content:         [
 			row(
 				name:     'input interior'
 				color:    cfg.color
-				padding:  cfg.padding
+				clip:     true
 				fill:     cfg.fill
-				sizing:   fill_fill
+				padding:  cfg.padding
 				radius:   cfg.radius
+				sizing:   fill_fill
 				spacing:  spacing_small
 				on_click: cfg.on_click_interior
 				content:  [

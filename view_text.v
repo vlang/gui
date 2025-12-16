@@ -228,11 +228,18 @@ fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
 // adjusts the scroll offset if the cursor is outside the current visible
 // area.
 fn scroll_cursor_into_view(cursor_pos int, layout &Layout, _ &Event, mut w Window) {
+	id_scroll_container := layout.shape.id_scroll_container
+
 	// Find the scroll container and calculate height. (need to start at the root layout)
-	scroll_container := w.layout.find_layout(fn [layout] (ly Layout) bool {
-		return ly.shape.id_scroll == layout.shape.id_scroll_container
+	scroll_container := w.layout.find_layout(fn [id_scroll_container] (ly Layout) bool {
+		return ly.shape.id_scroll == id_scroll_container
 	}) or { return }
-	scroll_view_height := scroll_container.shape.height - scroll_container.shape.padding.height()
+
+	mut padding_height := scroll_container.shape.padding.height()
+	if scroll_container.children.len > 0 {
+		padding_height += scroll_container.children[0].shape.padding.height()
+	}
+	scroll_view_height := scroll_container.shape.height - padding_height
 
 	// Find the index of the line where the cursor is located.
 	mut line_idx := 0
@@ -252,18 +259,18 @@ fn scroll_cursor_into_view(cursor_pos int, layout &Layout, _ &Event, mut w Windo
 	cursor_h_y := cursor_y + scroll_view_height - lh
 
 	// Calculate scroll offsets for current visible region
-	current_scroll_y := w.view_state.scroll_y[layout.shape.id_scroll_container]
-	current_scroll_h_y := current_scroll_y - scroll_view_height
+	current_scroll_y := w.view_state.scroll_y[id_scroll_container]
+	current_scroll_h_y := current_scroll_y - scroll_view_height + lh
 
 	// Determine if we need to scroll:
 	// 1. If cursor is above the current view
 	// 2. If cursor is below the current view
 	new_scroll_y := match true {
-		cursor_y > current_scroll_y { cursor_y }
-		cursor_y <= current_scroll_h_y { cursor_h_y }
+		cursor_y > current_scroll_y { cursor_y - 1 }
+		cursor_y < current_scroll_h_y { cursor_h_y }
 		else { current_scroll_y }
 	}
-	w.scroll_vertical_to(layout.shape.id_scroll_container, new_scroll_y)
+	w.scroll_vertical_to(id_scroll_container, new_scroll_y)
 }
 
 // mouse_cursor_pos determines the character index (cursor position) within
