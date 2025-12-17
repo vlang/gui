@@ -16,8 +16,6 @@ pub enum TextMode as u8 {
 	wrap_keep_spaces // wrap at word breaks and `\n`s, Keep white space
 }
 
-// Text is an internal structure used to describe a text view
-// Members are arranged for packing to reduce memory footprint.
 @[minify]
 pub struct TextView implements View {
 	TextCfg
@@ -75,8 +73,11 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	return layout
 }
 
-// TextCfg configures a [text](#text) view
-// - [TextMode](#TextMode) controls how text is wrapped.
+// TextCfg configures a [text](#text) view. It provides options for text content,
+// styling, rendering mode, focus handling, and display behavior. Use this struct
+// to create text views for labels, multiline text blocks, or interactive text
+// with selection and copy capabilities. The [TextMode](#TextMode) field controls
+// how text is wrapped and displayed (single line, multiline, or wrapped).
 @[heap; minify]
 pub struct TextCfg {
 pub:
@@ -204,21 +205,26 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
+// mouse_up_locked handles mouse up events while the mouse is locked (after a drag selection).
+// It finalizes the cursor position based on the mouse release location, updates the view state
+// with the new cursor position, and ensures the cursor is scrolled into view.
 fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 
+		// determine the cursor position from the mouse position
 		ev := event_relative_to(layout.shape, e)
 		mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
-		input_state := w.view_state.input_state[layout.shape.id_focus]
 
-		// move cursor to mouse_cursor_pos
+		// update the view state with the new mouse_cursor_pos
+		input_state := w.view_state.input_state[layout.shape.id_focus]
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
 			cursor_pos:    mouse_cursor_pos
 			cursor_offset: -1
 		}
 
+		scroll_cursor_into_view(int(mouse_cursor_pos), layout, ev, mut w)
 		e.is_handled = true
 	}
 }
@@ -235,6 +241,7 @@ fn scroll_cursor_into_view(cursor_pos int, layout &Layout, _ &Event, mut w Windo
 		return ly.shape.id_scroll == id_scroll_container
 	}) or { return }
 
+	// Determine the height of the scrollable region
 	mut padding_height := scroll_container.shape.padding.height()
 	if scroll_container.children.len > 0 {
 		padding_height += scroll_container.children[0].shape.padding.height()
@@ -433,8 +440,10 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 	}
 }
 
-// on_char handles character input events.
-// Currently primarily used for handling shortcuts like Select All, Copy, and Escape.
+// on_char handles character input events for keyboard shortcuts. It processes
+// modifier key combinations (Ctrl/Cmd) for Select All (Ctrl/Cmd+A) and Copy
+// (Ctrl/Cmd+C), as well as the Escape key to clear text selection. The function
+// only processes events when the view has focus and the mouse is not locked.
 fn (tv &TextView) on_char(layout &Layout, mut event Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) && !w.mouse_is_locked() {
 		c := event.char_code
@@ -542,9 +551,7 @@ pub fn (tv &TextView) unselect_all(mut w Window) {
 	input_state := w.view_state.input_state[tv.id_focus]
 	w.view_state.input_state[tv.id_focus] = InputState{
 		...input_state
-		cursor_pos:    0
-		select_beg:    0
-		select_end:    0
-		cursor_offset: 0
+		select_beg: 0
+		select_end: 0
 	}
 }
