@@ -183,24 +183,24 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 		}
 		ev := event_relative_to(layout.shape, e)
 		input_state := w.view_state.input_state[layout.shape.id_focus]
-		start_cursor_pos := u32(w.view_state.mouse_lock.cursor_pos)
-		mouse_cursor_pos := u32(tv.mouse_cursor_pos(layout.shape, ev, mut w))
+		start_cursor_pos := w.view_state.mouse_lock.cursor_pos
+		mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
 
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
-			cursor_pos:    int(mouse_cursor_pos)
+			cursor_pos:    mouse_cursor_pos
 			cursor_offset: -1
 			select_beg:    match start_cursor_pos < mouse_cursor_pos {
-				true { start_cursor_pos }
-				else { mouse_cursor_pos }
+				true { u32(start_cursor_pos) }
+				else { u32(mouse_cursor_pos) }
 			}
 			select_end:    match start_cursor_pos < mouse_cursor_pos {
-				true { mouse_cursor_pos }
-				else { start_cursor_pos }
+				true { u32(mouse_cursor_pos) }
+				else { u32(start_cursor_pos) }
 			}
 		}
 
-		scroll_cursor_into_view(int(mouse_cursor_pos), layout, ev, mut w)
+		scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
 		e.is_handled = true
 	}
 }
@@ -224,22 +224,19 @@ fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
 			cursor_offset: -1
 		}
 
-		scroll_cursor_into_view(int(mouse_cursor_pos), layout, ev, mut w)
+		scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
 		e.is_handled = true
 	}
 }
 
-// scroll_cursor_into_view ensures that the text cursor is visible within the
-// scroll container. It calculates the line position of the cursor and
-// adjusts the scroll offset if the cursor is outside the current visible
-// area.
-fn scroll_cursor_into_view(cursor_pos int, layout &Layout, _ &Event, mut w Window) {
+// scroll_container_cursor_y
+fn scroll_container_cursor_y(cursor_pos int, layout &Layout, mut w Window) f32 {
 	id_scroll_container := layout.shape.id_scroll_container
 
 	// Find the scroll container and calculate height. (need to start at the root layout)
 	scroll_container := w.layout.find_layout(fn [id_scroll_container] (ly Layout) bool {
 		return ly.shape.id_scroll == id_scroll_container
-	}) or { return }
+	}) or { return -1 }
 
 	// Determine the height of the scrollable region
 	mut padding_height := scroll_container.shape.padding.height()
@@ -277,7 +274,15 @@ fn scroll_cursor_into_view(cursor_pos int, layout &Layout, _ &Event, mut w Windo
 		cursor_y < current_scroll_h_y { cursor_h_y }
 		else { current_scroll_y }
 	}
-	w.scroll_vertical_to(id_scroll_container, new_scroll_y)
+
+	return new_scroll_y
+}
+
+// scroll_cursor_into_view ensures that the text cursor is visible within the
+// scroll container.
+fn scroll_cursor_into_view(cursor_pos int, layout &Layout, mut w Window) {
+	new_scroll_y := scroll_container_cursor_y(cursor_pos, layout, mut w)
+	w.scroll_vertical_to(layout.shape.id_scroll_container, new_scroll_y)
 }
 
 // mouse_cursor_pos determines the character index (cursor position) within
@@ -435,7 +440,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		}
 
 		// Ensure the new cursor position is visible
-		scroll_cursor_into_view(position, layout, e, mut window)
+		scroll_cursor_into_view(position, layout, mut window)
 		e.is_handled = true
 	}
 }
