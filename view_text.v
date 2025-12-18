@@ -181,13 +181,23 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 		if tv.placeholder_active {
 			return
 		}
+
 		ev := event_relative_to(layout.shape, e)
-		input_state := w.view_state.input_state[layout.shape.id_focus]
 		start_cursor_pos := w.view_state.mouse_lock.cursor_pos
 		mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
 
+		// scroll_offset_y := cursor_pos_to_scroll_offset_y(mouse_cursor_pos, layout, mut
+		// 	w)
+		// current_scroll_offset_y := w.view_state.scroll_y[layout.shape.id_scroll_container]
+		//
+		// if scroll_offset_y > current_scroll_offset_y {
+		// 	mouse_cursor_pos = cursor_up(layout.shape, mouse_cursor_pos, -1, w)
+		// } else if scroll_offset_y < current_scroll_offset_y {
+		// 	mouse_cursor_pos = cursor_down(layout.shape, mouse_cursor_pos, -1, w)
+		// }
+
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
-			...input_state
+			...w.view_state.input_state[layout.shape.id_focus]
 			cursor_pos:    mouse_cursor_pos
 			cursor_offset: -1
 			select_beg:    match start_cursor_pos < mouse_cursor_pos {
@@ -229,8 +239,8 @@ fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-// scroll_container_cursor_y
-fn scroll_container_cursor_y(cursor_pos int, layout &Layout, mut w Window) f32 {
+// cursor_pos_to_scroll_offset_y
+fn cursor_pos_to_scroll_offset_y(cursor_pos int, layout &Layout, mut w Window) f32 {
 	id_scroll_container := layout.shape.id_scroll_container
 
 	// Find the scroll container and calculate height. (need to start at the root layout)
@@ -259,29 +269,29 @@ fn scroll_container_cursor_y(cursor_pos int, layout &Layout, mut w Window) f32 {
 	// Calculate the y offset of the cursor line.
 	// Since scroll offsets are often negative (content moves up), use -lh.
 	lh := line_height(layout.shape)
-	cursor_y := line_idx * -lh
-	cursor_h_y := cursor_y + scroll_view_height - lh
+	cursor_offset_top_y := line_idx * -lh
+	cursor_offset_bottom_y := cursor_offset_top_y + scroll_view_height - lh
 
 	// Calculate scroll offsets for current visible region
-	current_scroll_y := w.view_state.scroll_y[id_scroll_container]
-	current_scroll_h_y := current_scroll_y - scroll_view_height + lh
+	scroll_offset_top_y := w.view_state.scroll_y[id_scroll_container]
+	scroll_offset_bottom_y := scroll_offset_top_y - scroll_view_height + lh
 
 	// Determine if we need to scroll:
 	// 1. If cursor is above the current view
 	// 2. If cursor is below the current view
-	new_scroll_y := match true {
-		cursor_y > current_scroll_y { cursor_y - 1 }
-		cursor_y < current_scroll_h_y { cursor_h_y }
-		else { current_scroll_y }
+	scroll_offset_y := match true {
+		cursor_offset_top_y > scroll_offset_top_y { cursor_offset_top_y - 1 }
+		cursor_offset_top_y < scroll_offset_bottom_y { cursor_offset_bottom_y }
+		else { scroll_offset_top_y }
 	}
 
-	return new_scroll_y
+	return scroll_offset_y
 }
 
 // scroll_cursor_into_view ensures that the text cursor is visible within the
 // scroll container.
 fn scroll_cursor_into_view(cursor_pos int, layout &Layout, mut w Window) {
-	new_scroll_y := scroll_container_cursor_y(cursor_pos, layout, mut w)
+	new_scroll_y := cursor_pos_to_scroll_offset_y(cursor_pos, layout, mut w)
 	w.scroll_vertical_to(layout.shape.id_scroll_container, new_scroll_y)
 }
 
