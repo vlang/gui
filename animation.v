@@ -30,10 +30,22 @@ mut:
 // in the animation loop.
 pub fn (mut window Window) animation_add(mut animation Animation) {
 	window.lock()
+	defer { window.unlock() }
 	window.animations = window.animations.filter(it.id != animation.id)
 	window.animations << animation
 	animation.start = time.now()
-	window.unlock()
+}
+
+pub fn (mut window Window) has_animation(id string) bool {
+	window.lock()
+	defer { window.unlock() }
+	return window.animations.any(it.id == id)
+}
+
+pub fn (mut window Window) remove_animation(id string) {
+	window.lock()
+	defer { window.unlock() }
+	window.animations = window.animations.filter(it.id != id)
 }
 
 fn (mut window Window) animation_loop() {
