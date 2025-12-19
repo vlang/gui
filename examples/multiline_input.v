@@ -2,14 +2,38 @@ import gui
 
 // Multiline Input Demo
 // =============================
-
+// Use this program to test cursor movement and text selections.
+//
+// #### Keyboard shortcuts (not final):
+// - **left/right**    moves cursor left/right one character
+// - **ctrl+left**     moves to start of line, if at start of line moves up one line
+// - **ctrl+right**    moves to end of line, if at end of line moves down one line
+// - **alt+left**      moves to end of previous word (option+left on Mac)
+// - **alt+right**     moves to start of word (option+left on Mac)
+// - **home**          move cursor to start of text
+// - **end**           move cursor to end of text
+// - Add shift to above shortcuts to select text
+// ---
+// - **ctrl+a**        selects all text (also **cmd+a** on Mac)
+// - **ctrl+c**        copies selected text (also **cmd+c** on Mac)
+// - **ctrl+v**        pastes text (also **cmd+v** on Mac)
+// - **ctrl+x**        deletes text (also **cmd+x** on Mac)
+// - **ctrl+z**        undo (also **cmd+z** on Mac)
+// - **shift+ctrl+z**  redo (also **shift+cmd+z** on Mac)
+// - **escape**        unselects all text
+// - **delete**        deletes previous character
+// - **backspace**     deletes previous character
+//
+// Mouse selection should work similar to other programs.
+// Auto-scroll while drag-selecting text supported
+//
 const input_id_focus = 1
 const input_id_scroll = 1
 
 @[heap]
 struct MultilineApp {
 mut:
-	text string = the_text
+	text string
 }
 
 fn main() {
@@ -20,6 +44,8 @@ fn main() {
 		height:       300
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
+			mut app := w.state[MultilineApp]()
+			app.text = gui.lorem_generate(paragraphs: 10)
 			w.update_view(main_view)
 			w.set_id_focus(input_id_focus)
 		}
@@ -52,15 +78,3 @@ fn main_view(window &gui.Window) gui.View {
 		]
 	)
 }
-
-const the_text = 'This program allows testing of various keyboard navigation features for the input view.
-
-Things to try:
-
-- left/right - cursor movement. Cursor should wrap to next line.
-
-- up/down - up/down cursor movements have subtle behaviors. For instance, moving the cursor to shorter line veritically should move the cursor to the end of line. Further vertical cursor movements should restore the cursor to column where vertical navigation started. In fixed with fonts, this is straightforward. In variable width fonts, there are no columns. Instead, the pixel offset is remembered and used to find the closest character position that corresponds to the pixel offset.
-
-Lorem Ipsum:
-
-On the other hand, we denounce with righteous indignation and dislike men who are so beguiled and demoralized by the charms of pleasure of the moment, so blinded by desire, that they cannot foresee the pain and trouble that are bound to ensue; and equal blame belongs to those who fail in their duty through weakness of will, which is the same as saying through shrinking from toil and pain. These cases are perfectly simple and easy to distinguish. In a free hour, when our power of choice is untrammelled and when nothing prevents our being able to do what we like best, every pleasure is to be welcomed and every pain avoided. But in certain circumstances and owing to the claims of duty or the obligations of business it will frequently occur that pleasures have to be repudiated and annoyances accepted. The wise man therefore always holds in these matters to this principle of selection: he rejects pleasures to secure other greater pleasures, or else he endures pains to avoid worse pains.'

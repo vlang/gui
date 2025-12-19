@@ -256,6 +256,11 @@ fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
+// auto_scroll_cursor automatically scrolls the text view when the cursor moves outside
+// the visible area during text selection. It's called repeatedly by an animation
+// callback when the user drags to select text beyond the view boundaries. The function
+// scrolls one line at a time (up or down) and updates the cursor position and selection
+// range accordingly, providing smooth auto-scrolling behavior during drag selection.
 fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut w Window) {
 	mut layout := w.layout.find_layout(fn [id_focus] (ly Layout) bool {
 		return ly.shape.id_scroll == id_focus
@@ -272,15 +277,15 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 		layout = layout.children[0]
 	}
 
+	// This is similar what is done in mouse-move
+	cursor_pos := w.view_state.input_state[id_focus].cursor_pos
+	start_cursor_pos := w.view_state.mouse_lock.cursor_pos
+
 	// synthesize an event
 	e := Event{
 		mouse_x: w.ui.mouse_pos_x
 		mouse_y: w.ui.mouse_pos_y
 	}
-
-	// This is similar what is done in mouse-move
-	cursor_pos := w.view_state.input_state[id_focus].cursor_pos
-	start_cursor_pos := w.view_state.mouse_lock.cursor_pos
 	ev := event_relative_to(layout.shape, e)
 	mut mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
 
@@ -315,7 +320,11 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 	scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
 }
 
-// cursor_pos_to_scroll_y
+// cursor_pos_to_scroll_y calculates the vertical scroll offset needed to make a cursor
+// position visible within a scroll container. It determines which line contains the
+// cursor, calculates the appropriate scroll offset based on whether the cursor is
+// above or below the current visible region, and returns the target scroll position.
+// Returns -1 if the scroll container cannot be found.
 fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 	id_scroll_container := shape.id_scroll_container
 
