@@ -8,9 +8,10 @@ import strings
 pub struct LoremCfg {
 pub:
 	paragraphs              int = 3
-	words_per_sentence      int = 12 // baseline clause length
-	sentences_per_paragraph int = 5
-	commas_per_sentence     int = 2 // baseline comma density
+	words_per_sentence      int = 12 // varies ±20%
+	sentences_per_paragraph int = 5  // varies ±20%
+	commas_per_sentence     int = 2  // varies ±20%
+	seed                    int // seed for random generator
 }
 
 // lorem_generate generates Lorem Ipsum–style text using the supplied
@@ -21,79 +22,19 @@ pub:
 // `words_per_sentence` and `sentences_per_paragraph` parameters are randomly
 // varied by ±20% to create natural variation, while `paragraphs` is used
 // exactly as specified. The `commas_per_sentence` parameter serves as a
-// baseline density that may vary in actual output.
+// baseline density that may vary in actual output. [LoremCfg](#LoremCfg)
 pub fn lorem_generate(cfg LoremCfg) string {
-	lorem_words := [
-		'lorem',
-		'ipsum',
-		'dolor',
-		'sit',
-		'amet',
-		'consectetur',
-		'adipiscing',
-		'elit',
-		'sed',
-		'do',
-		'eiusmod',
-		'tempor',
-		'incididunt',
-		'ut',
-		'labore',
-		'et',
-		'dolore',
-		'magna',
-		'aliqua',
-		'enim',
-		'ad',
-		'minim',
-		'veniam',
-		'quis',
-		'nostrud',
-		'exercitation',
-		'ullamco',
-		'laboris',
-		'nisi',
-		'aliquip',
-		'ex',
-		'ea',
-		'commodo',
-		'consequat',
-		'phasellus',
-		'faucibus',
-		'scelerisque',
-		'eleifend',
-		'vestibulum',
-		'fringilla',
-		'pellentesque',
-		'habitant',
-		'morbi',
-		'tristique',
-		'senectus',
-		'netus',
-		'malesuada',
-		'fames',
-		'turpis',
-		'egestas',
-		'sapien',
-		'sodales',
-		'vivamus',
-		'fermentum',
-		'curabitur',
-		'rhoncus',
-		'suscipit',
-		'ultrices',
-		'placerat',
-		'imperdiet',
-		'convallis',
-		'bibendum',
-		'volutpat',
-		'accumsan',
-		'iaculis',
-		'ornare',
-	]
+	lorem_words := (
+		'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor ' +
+		'incididunt ut labore et dolore magna aliqua enim ad minim veniam quis nostrud ' +
+		'exercitation ullamco laboris nisi aliquip ex ea').split(' ')
 
 	comma_marks := ['‚', ';']
 	sentence_marks := ['.', '…', '!', '?']
+
+	if cfg.seed != 0 {
+		rand.seed([u32(cfg.seed), u32(cfg.seed ^ 0x9e3779b9)])
+	}
 
 	mut out := strings.new_builder(2048)
 
