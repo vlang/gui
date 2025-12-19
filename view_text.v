@@ -200,8 +200,9 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 			if !w.has_animation(id_auto_scroll_animation) {
 				w.animation_add(mut Animate{
 					id:       id_auto_scroll_animation
-					callback: fn [tv, id_focus, id_scroll_container] (mut w Window) {
-						tv.auto_scroll_cursor(id_focus, id_scroll_container, mut w)
+					callback: fn [tv, id_focus, id_scroll_container] (mut an Animate, mut w Window) {
+						tv.auto_scroll_cursor(id_focus, id_scroll_container, mut an, mut
+							w)
 					}
 					delay:    auto_scroll_delay
 					repeat:   true
@@ -261,7 +262,7 @@ fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
 // callback when the user drags to select text beyond the view boundaries. The function
 // scrolls one line at a time (up or down) and updates the cursor position and selection
 // range accordingly, providing smooth auto-scrolling behavior during drag selection.
-fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut w Window) {
+fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut an Animate, mut w Window) {
 	mut layout := w.layout.find_layout(fn [id_focus] (ly Layout) bool {
 		return ly.shape.id_scroll == id_focus
 	}) or { return }
@@ -318,6 +319,27 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 	}
 
 	scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
+
+	// Find the scroll container
+	scroll_container := w.layout.find_layout(fn [id_scroll_container] (ly Layout) bool {
+		return ly.shape.id_scroll == id_scroll_container
+	}) or { return }
+
+	evs := event_relative_to(scroll_container.shape, e)
+
+	diff := match evs.mouse_y < 0 {
+		true { -evs.mouse_y }
+		else { evs.mouse_y - scroll_container.shape.height }
+	}
+
+	lh := line_height(layout.shape)
+	if diff > 2 * lh {
+		an.delay = 30 * time.millisecond
+	} else if diff > lh {
+		an.delay = 80 * time.millisecond
+	} else {
+		an.delay = auto_scroll_delay
+	}
 }
 
 // cursor_pos_to_scroll_y calculates the vertical scroll offset needed to make a cursor

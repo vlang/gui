@@ -8,6 +8,7 @@ const animation_delay = 500 * time.millisecond
 interface Animation {
 	id string
 mut:
+	delay   time.Duration
 	start   time.Time
 	stopped bool
 }
@@ -15,13 +16,13 @@ mut:
 // Animate waits the specified delay duration and then executes the callback.
 pub struct Animate implements Animation {
 pub:
-	id       string          @[required]
-	callback fn (mut Window) @[required]
-	delay    time.Duration = animation_delay
+	id       string                       @[required]
+	callback fn (mut Animate, mut Window) @[required]
 mut:
+	delay   time.Duration = animation_delay
 	start   time.Time
-	repeat  bool
 	stopped bool
+	repeat  bool
 }
 
 // animation_add registers a new animation to the window's animation queue.
@@ -72,7 +73,7 @@ fn (mut window Window) animation_loop() {
 fn update_animate(mut an Animate, mut w Window) bool {
 	if !an.stopped {
 		if time.since(an.start) > an.delay {
-			an.callback(mut w)
+			an.callback(mut an, mut w)
 			match an.repeat {
 				true { an.start = time.now() }
 				else { an.stopped = true }

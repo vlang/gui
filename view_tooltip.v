@@ -61,7 +61,7 @@ fn (cfg TooltipCfg) animation_tooltip() Animate {
 	id := cfg.id
 	return Animate{
 		id:       '___tooltip___'
-		callback: fn [id] (mut w Window) {
+		callback: fn [id] (mut an Animate, mut w Window) {
 			if point_in_rectangle(w.ui.mouse_pos_x, w.ui.mouse_pos_y, gui_tooltip.bounds) {
 				gui_tooltip.id = id
 			}
