@@ -10,7 +10,9 @@ import math
 import time
 
 const id_auto_scroll_animation = 'auto_scroll_animation'
-const auto_scroll_delay = 150 * time.millisecond
+const auto_scroll_slow = 150 * time.millisecond
+const auto_scroll_medium = 80 * time.millisecond
+const auto_scroll_fast = 30 * time.millisecond
 
 // TextMode controls how a text view renders text.
 pub enum TextMode as u8 {
@@ -130,9 +132,6 @@ pub fn text(cfg TextView) View {
 // It sets up mouse locking for drag selection updates and positions the text cursor
 // based on the click coordinates.
 fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
-	if w.is_focus(layout.shape.id_focus) {
-		w.set_mouse_cursor_ibeam()
-	}
 	if e.mouse_button == .left && w.is_focus(layout.shape.id_focus) {
 		id_focus := layout.shape.id_focus
 		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
@@ -177,9 +176,6 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 // It updates the text selection range based on the current mouse position relative to the
 // starting cursor position.
 fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
-	if w.is_focus(layout.shape.id_focus) {
-		w.set_mouse_cursor_ibeam()
-	}
 	// mouse_move events don't have mouse button info. Use context.
 	if w.ui.mouse_buttons == .left && w.is_focus(layout.shape.id_focus) {
 		if tv.placeholder_active {
@@ -204,7 +200,7 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 						tv.auto_scroll_cursor(id_focus, id_scroll_container, mut an, mut
 							w)
 					}
-					delay:    auto_scroll_delay
+					delay:    auto_scroll_slow
 					repeat:   true
 				})
 			}
@@ -233,26 +229,9 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 }
 
 // mouse_up_locked handles mouse up events while the mouse is locked (after a drag selection).
-// It finalizes the cursor position based on the mouse release location, updates the view state
-// with the new cursor position, and ensures the cursor is scrolled into view.
 fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
-		w.set_mouse_cursor_ibeam()
 		w.remove_animation(id_auto_scroll_animation)
-
-		// determine the cursor position from the mouse position
-		ev := event_relative_to(layout.shape, e)
-		mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
-
-		// update the view state with the new mouse_cursor_pos
-		input_state := w.view_state.input_state[layout.shape.id_focus]
-		w.view_state.input_state[layout.shape.id_focus] = InputState{
-			...input_state
-			cursor_pos:    mouse_cursor_pos
-			cursor_offset: -1
-		}
-
-		scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
 		e.is_handled = true
 	}
 }
@@ -320,6 +299,9 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 
 	scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
 
+	// Decide how fast the scroll animation should be based on the distance
+	// the mouse is outside the scroll container view.
+	//
 	// Find the scroll container
 	scroll_container := w.layout.find_layout(fn [id_scroll_container] (ly Layout) bool {
 		return ly.shape.id_scroll == id_scroll_container
@@ -327,18 +309,18 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 
 	evs := event_relative_to(scroll_container.shape, e)
 
-	diff := match evs.mouse_y < 0 {
+	distance := match evs.mouse_y < 0 {
 		true { -evs.mouse_y }
 		else { evs.mouse_y - scroll_container.shape.height }
 	}
 
 	lh := line_height(layout.shape)
-	if diff > 2 * lh {
-		an.delay = 30 * time.millisecond
-	} else if diff > lh {
-		an.delay = 80 * time.millisecond
+	if distance > 2 * lh {
+		an.delay = auto_scroll_fast
+	} else if distance > lh {
+		an.delay = auto_scroll_medium
 	} else {
-		an.delay = auto_scroll_delay
+		an.delay = auto_scroll_slow
 	}
 }
 

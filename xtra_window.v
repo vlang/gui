@@ -69,7 +69,7 @@ pub fn (mut window Window) dialog_is_visible() bool {
 	return window.dialog_cfg.visible
 }
 
-// default_view creates an empty view
+// empty_view - default_view creates an empty view
 fn empty_view(window &Window) View {
 	w, h := window.window_size()
 	return column(
@@ -80,7 +80,7 @@ fn empty_view(window &Window) View {
 
 // get_dropped_file_paths gets the paths names of the dropped files.
 // Use in EventType.dropped_files. See `drop_files_demo.v` in examples.
-pub fn (window &Window) get_dropped_file_paths() []string {
+pub fn (_ &Window) get_dropped_file_paths() []string {
 	len := sapp.get_num_dropped_files()
 	mut paths := []string{cap: len}
 	for i in 0 .. len {

@@ -532,19 +532,20 @@ fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 	if layout.shape.disabled {
 		return
 	}
-
 	if layout.shape.id_focus > 0 && layout.shape.id_focus == w.id_focus() {
 		layout.shape.color = cfg.color_border_focus
 	}
 }
 
 fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
-	if !w.is_focus(layout.shape.id_focus) {
+	if w.is_focus(layout.shape.id_focus) {
+		w.set_mouse_cursor_ibeam()
+	} else {
 		layout.children[0].shape.color = cfg.color_hover
 	}
 }
 
-fn (cfg &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
+fn (_ &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
 	if layout.shape.on_click != unsafe { nil } {
 		w.set_mouse_cursor_pointing_hand()
 	}
