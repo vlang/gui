@@ -229,6 +229,13 @@ fn (_ &InputCfg) on_click_interior(layout &Layout, mut e Event, mut w Window) {
 	ly.shape.on_click(ly, mut e, mut w)
 }
 
+// on_char handles keyboard and character input for the input field.
+// It processes modifier combinations (ctrl/super/shift), interprets special
+// control keys (backspace, delete, enter), invokes clipboard operations
+// (copy/cut/paste), and manages undo/redo. When text is changed it calls the
+// configured `on_text_changed` callback and when Enter is pressed it calls
+// `on_enter` if provided. The handler is a gatekeeper and will early-return
+// when the mouse input is locked.
 fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 	if w.mouse_is_locked() {
 		return
@@ -474,7 +481,7 @@ pub fn (cfg &InputCfg) paste(s string, mut w Window) !string {
 // undo reverts the input field to its previous state by popping the last
 // operation from the undo stack and pushing the current state onto the redo
 // stack. Returns the text content from the restored state. If the undo stack
-// is empty, returns the current text unchanged. The function restores cursor		
+// is empty, returns the current text unchanged. The function restores cursor
 // position, selection range, and text content from the saved memento.
 pub fn (cfg &InputCfg) undo(mut w Window) string {
 	input_state := w.view_state.input_state[cfg.id_focus]
@@ -528,6 +535,9 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 	return memento.text
 }
 
+// amend_layout adjusts the appearance of the input container during layout.
+// It updates visual hints like the border color based on focus/disabled state.
+// This is called during the layout pass so views can adapt their styling.
 fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 	if layout.shape.disabled {
 		return
@@ -537,6 +547,9 @@ fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 	}
 }
 
+// hover handles mouse-over events for the input view. When the input is the
+// current focus it sets the I-beam cursor to indicate text editing; otherwise
+// it applies a hover color to the interior child to provide visual feedback.
 fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
@@ -545,6 +558,9 @@ fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 	}
 }
 
+// hover_icon handles mouse-over behavior for the input's icon area. If the
+// icon has a click handler, the cursor changes to a pointing hand to indicate
+// interactivity.
 fn (_ &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
 	if layout.shape.on_click != unsafe { nil } {
 		w.set_mouse_cursor_pointing_hand()
