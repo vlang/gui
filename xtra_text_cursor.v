@@ -447,12 +447,7 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 
 	// Decide how fast the scroll animation should be based on the distance
 	// the mouse is outside the scroll container view.
-	//
-	// Find the scroll container
-	scroll_container := w.layout.find_layout(fn [id_scroll_container] (ly Layout) bool {
-		return ly.shape.id_scroll == id_scroll_container
-	}) or { return }
-
+	scroll_container := find_layout_by_id_scroll(w.layout, id_scroll_container) or { return }
 	evs := event_relative_to(scroll_container.shape, e)
 
 	distance := match evs.mouse_y < 0 {
@@ -477,18 +472,8 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 // Returns -1 if the scroll container cannot be found.
 fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 	id_scroll_container := shape.id_scroll_container
-
-	// Find the scroll container and calculate height. (need to start at the root layout)
-	scroll_container := w.layout.find_layout(fn [id_scroll_container] (ly Layout) bool {
-		return ly.shape.id_scroll == id_scroll_container
-	}) or { return -1 }
-
-	// Determine the height of the scrollable region
-	mut padding_height := scroll_container.shape.padding.height()
-	if scroll_container.children.len > 0 {
-		padding_height += scroll_container.children[0].shape.padding.height()
-	}
-	scroll_view_height := scroll_container.shape.height - padding_height
+	scroll_container := find_layout_by_id_scroll(w.layout, id_scroll_container) or { return -1 }
+	scroll_view_height := scroll_container.shape.height - scroll_container.shape.padding.height()
 
 	// Find the index of the line where the cursor is located.
 	mut line_idx := 0
@@ -522,6 +507,34 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 
 	return scroll_offset_y
 }
+
+fn cursor_pos_to_scroll_x(cursor_pos int, shape &Shape, mut w Window) f32 {
+	return 0
+}
+
+// 	id_scroll_container := shape.id_scroll_container
+// 	scroll_container := find_scroll_container(id_scroll_container, w) or { return -1 }
+//
+// 	// Determine the width of the scrollable region
+// 	mut padding_width := scroll_container.shape.padding.width()
+// 	if scroll_container.children.len > 0 {
+// 		padding_width += scroll_container.children[0].shape.padding.width()
+// 	}
+// 	// scroll_view_width := scroll_container.shape.width - padding_width
+//
+// 	// Find the index of the line where the cursor is located.
+// 	mut line_idx := 0
+// 	mut total_len := 0
+// 	for i, line in shape.text_lines {
+// 		line_idx = i
+// 		total_len += utf8_str_visible_length(line)
+// 		if total_len > cursor_pos {
+// 			break
+// 		}
+// 	}
+//
+// 	width := utf8_str_visible_length(shape.text.lines[line_idx][..total_len - cursor_pos])
+// }
 
 // mouse_cursor_pos determines the character index (cursor position) within
 // the entire text based on the mouse coordinates.

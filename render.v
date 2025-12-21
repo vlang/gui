@@ -325,7 +325,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 			window.renderers << DrawText{
 				x:    x
 				y:    y
-				text: lnl.clone()
+				text: lnl
 				cfg:  text_cfg
 			}
 

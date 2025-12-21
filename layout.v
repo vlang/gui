@@ -748,19 +748,22 @@ fn layout_amend(mut layout Layout, mut w Window) {
 // layout_hover is a convenience callback for clients to do hover things.
 // Originally, it was done in layout_amend but it's a fair bit of boiler
 // plate that this callback encapsulates.
-fn layout_hover(mut layout Layout, mut w Window) {
+fn layout_hover(mut layout Layout, mut w Window) bool {
 	if w.mouse_is_locked() {
-		return
+		return false
 	}
 	for mut child in layout.children {
-		layout_hover(mut child, mut w)
+		is_handled := layout_hover(mut child, mut w)
+		if is_handled {
+			return true
+		}
 	}
 	if layout.shape.on_hover != unsafe { nil } {
 		if layout.shape.disabled {
-			return
+			return false
 		}
 		if w.dialog_cfg.visible && !layout_in_dialog_layout(layout) {
-			return
+			return false
 		}
 		ctx := w.context()
 		if layout.shape.point_in_shape(ctx.mouse_pos_x, ctx.mouse_pos_y) {
@@ -786,6 +789,8 @@ fn layout_hover(mut layout Layout, mut w Window) {
 				window_height: ctx.height
 			}
 			layout.shape.on_hover(mut layout, mut ev, mut w)
+			return ev.is_handled
 		}
 	}
+	return false
 }

@@ -151,62 +151,68 @@ pub fn input(cfg InputCfg) View {
 	mode := if cfg.mode == .single_line { TextMode.single_line } else { TextMode.wrap_keep_spaces }
 
 	return row(
-		name:            'input border'
-		id:              cfg.id
-		id_focus:        cfg.id_focus
-		id_scroll:       cfg.id_scroll
-		scrollbar_cfg_x: cfg.scrollbar_cfg_x
-		scrollbar_cfg_y: cfg.scrollbar_cfg_y
-		tooltip:         cfg.tooltip
-		width:           cfg.width
-		height:          cfg.height
-		min_width:       cfg.min_width
-		max_width:       cfg.max_width
-		min_height:      cfg.min_height
-		max_height:      cfg.max_height
-		disabled:        cfg.disabled
-		color:           cfg.color_border
-		invisible:       cfg.invisible
-		fill:            cfg.fill_border
-		padding:         cfg.padding_border
-		radius:          cfg.radius_border
-		sizing:          cfg.sizing
-		on_char:         cfg.on_char
-		on_hover:        cfg.hover
-		amend_layout:    cfg.amend_layout
-		content:         [
-			row(
-				name:     'input interior'
-				color:    cfg.color
-				clip:     true
-				fill:     cfg.fill
-				padding:  cfg.padding
-				radius:   cfg.radius
-				sizing:   fill_fill
-				spacing:  spacing_small
-				on_click: cfg.on_click_interior
-				content:  [
-					text(
-						id_focus:           cfg.id_focus
-						text:               txt
-						text_style:         txt_style
-						mode:               mode
-						is_password:        cfg.is_password
-						placeholder_active: placeholder_active
-					),
-					rectangle(
-						color:  color_transparent
-						sizing: fill_fit
-					),
+		name:         'input border'
+		id:           cfg.id
+		id_focus:     cfg.id_focus
+		tooltip:      cfg.tooltip
+		width:        cfg.width
+		height:       cfg.height
+		min_width:    cfg.min_width
+		max_width:    cfg.max_width
+		min_height:   cfg.min_height
+		max_height:   cfg.max_height
+		disabled:     cfg.disabled
+		clip:         true
+		color:        cfg.color_border
+		invisible:    cfg.invisible
+		fill:         cfg.fill_border
+		padding:      cfg.padding_border
+		radius:       cfg.radius_border
+		sizing:       cfg.sizing
+		on_char:      cfg.on_char
+		on_hover:     cfg.hover
+		amend_layout: cfg.amend_layout
+		content:      [
+			column(
+				name:            'input interior'
+				id_scroll:       cfg.id_scroll
+				scrollbar_cfg_x: cfg.scrollbar_cfg_x
+				scrollbar_cfg_y: cfg.scrollbar_cfg_y
+				color:           cfg.color
+				fill:            cfg.fill
+				padding:         cfg.padding
+				radius:          cfg.radius
+				sizing:          fill_fill
+				spacing:         spacing_small
+				content:         [
 					row(
-						name:     'input icon'
 						padding:  padding_none
-						on_click: cfg.on_click_icon
-						on_hover: cfg.hover_icon
+						sizing:   fill_fill
+						on_click: cfg.on_click_interior
 						content:  [
 							text(
-								text:       cfg.icon
-								text_style: cfg.icon_style
+								id_focus:           cfg.id_focus
+								text:               txt
+								text_style:         txt_style
+								mode:               mode
+								is_password:        cfg.is_password
+								placeholder_active: placeholder_active
+							),
+							rectangle(
+								color:  color_transparent
+								sizing: fill_fit
+							),
+							row(
+								name:     'input icon'
+								padding:  padding_none
+								on_click: cfg.on_click_icon
+								on_hover: cfg.hover_icon
+								content:  [
+									text(
+										text:       cfg.icon
+										text_style: cfg.icon_style
+									),
+								]
 							),
 						]
 					),
@@ -226,7 +232,9 @@ fn (_ &InputCfg) on_click_interior(layout &Layout, mut e Event, mut w Window) {
 	if ly.shape.id_focus > 0 {
 		w.set_id_focus(ly.shape.id_focus)
 	}
-	ly.shape.on_click(ly, mut e, mut w)
+	if layout.shape.on_click != unsafe { nil } {
+		ly.shape.on_click(ly, mut e, mut w)
+	}
 }
 
 // on_char handles keyboard and character input for the input field.

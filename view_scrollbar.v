@@ -281,11 +281,13 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 // on_hover handles the mouse hover event on the scrollbar.
 // It changes the thumb's color to a hover state if it's not transparent
 // or if the overflow mode is set to `on_hover`.
-fn (cfg &ScrollbarCfg) on_hover(mut layout Layout, mut _ Event, mut w Window) {
+fn (cfg &ScrollbarCfg) on_hover(mut layout Layout, mut e Event, mut w Window) {
 	// on hover dim color of thumb
 	thumb := 0
 	if layout.children[thumb].shape.color != color_transparent || cfg.overflow == .on_hover {
 		layout.children[thumb].shape.color = gui_theme.color_active
+		w.set_mouse_cursor_arrow()
+		e.is_handled = true
 	}
 }
 
