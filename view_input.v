@@ -174,7 +174,7 @@ pub fn input(cfg InputCfg) View {
 		amend_layout: cfg.amend_layout
 		content:      [
 			column(
-				name:            'input interior'
+				name:            'input scroll container'
 				id_scroll:       cfg.id_scroll
 				scrollbar_cfg_x: cfg.scrollbar_cfg_x
 				scrollbar_cfg_y: cfg.scrollbar_cfg_y
@@ -183,15 +183,17 @@ pub fn input(cfg InputCfg) View {
 				padding:         cfg.padding
 				radius:          cfg.radius
 				sizing:          fill_fill
-				spacing:         spacing_small
+				spacing:         0
 				content:         [
 					row(
+						name:     'input interior'
 						padding:  padding_none
 						sizing:   fill_fill
 						on_click: cfg.on_click_interior
 						content:  [
 							text(
 								id_focus:           cfg.id_focus
+								sizing:             fill_fill
 								text:               txt
 								text_style:         txt_style
 								mode:               mode
@@ -200,7 +202,7 @@ pub fn input(cfg InputCfg) View {
 							),
 							rectangle(
 								color:  color_transparent
-								sizing: fill_fit
+								sizing: fill_fill
 							),
 							row(
 								name:     'input icon'
