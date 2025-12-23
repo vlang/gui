@@ -205,6 +205,7 @@ pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
 
 // set_id_focus sets the window's focus id.
 pub fn (mut window Window) set_id_focus(id u32) {
+	window.view_state.clear_input_selections()
 	window.view_state.id_focus = id
 }
 

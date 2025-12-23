@@ -116,27 +116,11 @@ fn thumb(cfg &ScrollbarCfg, id string) View {
 // It sets focus to the scrollable content (if applicable) and locks the mouse
 // to handle the drag operation (scrolling).
 fn (cfg &ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
-	// Clicking on the scrollbar gives focus to the shape it is tracking
-	// if the tracked shape is not disabled.
-	id_track := cfg.id_track
-
-	// Find the layout/shape being scrolled by this scrollbar
-	shape := w.layout.find_shape(fn [id_track] (n Layout) bool {
-		return n.shape.id_scroll == id_track
-	})
-
-	// Set focus to the scrolled content if found and enabled
-	if shape != none {
-		if !shape.disabled {
-			w.set_id_focus(shape.id_focus)
-		}
-	}
-
 	// Lock the mouse to this control to capture all mouse move/up events
 	// until the button is released. This ensures smooth dragging even if cursor leaves the thumb.
 	w.mouse_lock(MouseLockCfg{
-		mouse_move: cfg.mouse_move
-		mouse_up:   cfg.mouse_up
+		mouse_move: cfg.mouse_move_locked
+		mouse_up:   cfg.mouse_up_locked
 	})
 	e.is_handled = true
 }
@@ -147,18 +131,6 @@ fn (cfg &ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 fn (cfg &ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 	// Only proceed if the mouse is not already locked by another operation
 	if !w.mouse_is_locked() {
-		id_track := cfg.id_track
-
-		// Find the scrolled content to set focus
-		shape := w.layout.find_shape(fn [id_track] (n Layout) bool {
-			return n.shape.id_scroll == id_track
-		})
-		if shape != none {
-			if !shape.disabled {
-				w.set_id_focus(shape.id_focus)
-			}
-		}
-
 		// Calculate and apply the new scroll offset based on the click coordinates
 		match cfg.orientation == .horizontal {
 			true { offset_from_mouse_x(w.layout, e.mouse_x, cfg.id_track, mut w) }
@@ -167,18 +139,18 @@ fn (cfg &ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 
 		// Lock the mouse to continue scrolling if the user holds and drags
 		w.mouse_lock(MouseLockCfg{
-			mouse_move: cfg.mouse_move
-			mouse_up:   cfg.mouse_up
+			mouse_move: cfg.mouse_move_locked
+			mouse_up:   cfg.mouse_up_locked
 		})
 		e.is_handled = true
 	}
 }
 
-// mouse_move handles the mouse movement event when the scrollbar thumb is being dragged.
+// mouse_move_locked handles the mouse movement event when the scrollbar thumb is being dragged.
 // It calculates the new scroll offset based on the mouse's delta movement and updates
 // the view state for the tracked scrollable content, ensuring the scroll position
 // stays within the bounds of the scrollable area.
-fn (cfg &ScrollbarCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
+fn (cfg &ScrollbarCfg) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 	extend := 10 // give some cushion on the ends of the scroll range
 	if ly := find_layout_by_id_scroll(layout, cfg.id_track) {
 		match cfg.orientation == .horizontal {
@@ -200,7 +172,7 @@ fn (cfg &ScrollbarCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (_ &ScrollbarCfg) mouse_up(_ &Layout, mut e Event, mut w Window) {
+fn (_ &ScrollbarCfg) mouse_up_locked(_ &Layout, mut e Event, mut w Window) {
 	w.mouse_unlock()
 }
 
@@ -289,21 +261,6 @@ fn (cfg &ScrollbarCfg) on_hover(mut layout Layout, mut e Event, mut w Window) {
 		w.set_mouse_cursor_arrow()
 		e.is_handled = true
 	}
-}
-
-// find_layout_by_id_scroll recursively searches for a layout with a matching `id_scroll`
-// within the given layout and its children. It returns the found Layout if a match is made,
-// otherwise it returns `none`.
-fn find_layout_by_id_scroll(layout &Layout, id_scroll u32) ?Layout {
-	if layout.shape.id_scroll == id_scroll {
-		return *layout
-	}
-	for child in layout.children {
-		if ly := find_layout_by_id_scroll(child, id_scroll) {
-			return ly
-		}
-	}
-	return none
 }
 
 // offset_mouse_change_x calculates the new horizontal offset for a scrollable layout

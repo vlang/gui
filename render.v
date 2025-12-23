@@ -348,11 +348,8 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 							a: 60 // make themeable?
 						}
 					}
-					unsafe { sbtoe.free() }
-					unsafe { stob.free() }
 				}
 			}
-			unsafe { lnl.free() }
 		}
 		y += lh
 		char_count += len

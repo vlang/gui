@@ -52,3 +52,13 @@ fn (mut vs ViewState) clear(mut w Window) {
 	}
 	w.view_state = ViewState{}
 }
+
+fn (mut vs ViewState) clear_input_selections() {
+	for key, value in vs.input_state {
+		vs.input_state[key] = InputState{
+			...value
+			select_beg: 0
+			select_end: 0
+		}
+	}
+}

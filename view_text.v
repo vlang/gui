@@ -34,10 +34,8 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	$if !prod {
 		gui_stats.increment_layouts()
 	}
-	input_state := match window.is_focus(tv.id_focus) {
-		true { window.view_state.input_state[tv.id_focus] }
-		else { InputState{} }
-	}
+
+	input_state := window.view_state.input_state[tv.id_focus]
 	lines := match tv.mode == .multiline {
 		true { wrap_simple(tv.text, tv.tab_size) }
 		else { [tv.text] } // dynamic wrapping handled in the layout pipeline
@@ -132,7 +130,7 @@ pub fn text(cfg TextView) View {
 // It sets up mouse locking for drag selection updates and positions the text cursor
 // based on the click coordinates.
 fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
-	if e.mouse_button == .left && w.is_focus(layout.shape.id_focus) {
+	if e.mouse_button == .left && layout.shape.id_focus > 0 {
 		id_focus := layout.shape.id_focus
 		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
 		// Init mouse lock to handle dragging selection (mouse move) and finishing selection (mouse up)
@@ -177,7 +175,7 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 // starting cursor position.
 fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 	// mouse_move events don't have mouse button info. Use context.
-	if w.ui.mouse_buttons == .left && w.is_focus(layout.shape.id_focus) {
+	if w.ui.mouse_buttons == .left {
 		if tv.placeholder_active {
 			return
 		}
@@ -230,10 +228,8 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 
 // mouse_up_locked handles mouse up events while the mouse is locked (after a drag selection).
 fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
-	if w.is_focus(layout.shape.id_focus) {
-		w.remove_animation(id_auto_scroll_animation)
-		e.is_handled = true
-	}
+	w.remove_animation(id_auto_scroll_animation)
+	e.is_handled = true
 }
 
 // on_key_down handles keyboard input for navigation and text selection.

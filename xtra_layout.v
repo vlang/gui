@@ -22,6 +22,36 @@ pub fn (layout &Layout) find_layout(predicate fn (n Layout) bool) ?Layout {
 	return if predicate(layout) { layout } else { none }
 }
 
+// find_layout_by_id_focus recursively searches for a layout with a matching `id_focus`
+// within the given layout and its children. It returns the found Layout if a match is made,
+// otherwise it returns `none`.
+pub fn find_layout_by_id_focus(layout &Layout, id_focus u32) ?Layout {
+	if layout.shape.id_focus == id_focus {
+		return *layout
+	}
+	for child in layout.children {
+		if ly := find_layout_by_id_focus(child, id_focus) {
+			return ly
+		}
+	}
+	return none
+}
+
+// find_layout_by_id_scroll recursively searches for a layout with a matching `id_scroll`
+// within the given layout and its children. It returns the found Layout if a match is made,
+// otherwise it returns `none`.
+pub fn find_layout_by_id_scroll(layout &Layout, id_scroll u32) ?Layout {
+	if layout.shape.id_scroll == id_scroll {
+		return *layout
+	}
+	for child in layout.children {
+		if ly := find_layout_by_id_scroll(child, id_scroll) {
+			return ly
+		}
+	}
+	return none
+}
+
 // previous_focusable gets the previous non-skippable focusable of the current focus.
 // Returns the first non-skippable focusable if focus is not set.
 pub fn (layout &Layout) previous_focusable(mut w Window) ?Shape {

@@ -472,6 +472,9 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 // Returns -1 if the scroll container cannot be found.
 fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 	id_scroll_container := shape.id_scroll_container
+	if id_scroll_container == 0 {
+		return 0
+	}
 	scroll_container := find_layout_by_id_scroll(w.layout, id_scroll_container) or { return -1 }
 	scroll_view_height := scroll_container.shape.height - scroll_container.shape.padding.height()
 
