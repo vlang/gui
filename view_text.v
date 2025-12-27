@@ -241,7 +241,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 			return
 		}
 		mut input_state := window.view_state.input_state[layout.shape.id_focus]
-		mut position := input_state.cursor_pos
+		mut pos := input_state.cursor_pos
 		mut offset := input_state.cursor_offset
 		text_lines := layout.shape.text_lines
 
@@ -249,27 +249,35 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		if e.modifiers == .alt || e.modifiers == .alt_shift {
 			// Alt: Jump by word or paragraph
 			match e.key_code {
-				.left { position = cursor_start_of_word(text_lines, position) }
-				.right { position = cursor_end_of_word(text_lines, position) }
-				.up { position = cursor_start_of_paragraph(text_lines, position) }
+				.left { pos = cursor_start_of_word(text_lines, pos) }
+				.right { pos = cursor_end_of_word(text_lines, pos) }
+				.up { pos = cursor_start_of_paragraph(text_lines, pos) }
 				else { return }
 			}
 		} else if e.modifiers == .ctrl || e.modifiers == .ctrl_shift {
 			// Ctrl: Jump to start/end of line
 			match e.key_code {
-				.left { position = cursor_start_of_line(text_lines, position) }
-				.right { position = cursor_end_of_line(text_lines, position) }
+				.left { pos = cursor_start_of_line(text_lines, pos) }
+				.right { pos = cursor_end_of_line(text_lines, pos) }
 				else { return }
 			}
 		} else if e.modifiers.has_any(.none, .shift) {
 			// Standard navigation: char by char, prev/next line, home/end of text
+			mut lpp := 0 // lines per page
+			layout_scroll := find_layout_by_id_scroll(window.layout, layout.shape.id_scroll_container)
+			if layout_scroll != none {
+				layout_scroll_height := layout_scroll.shape.height - layout_scroll.shape.padding.height()
+				lpp = int(layout_scroll_height / line_height(layout.shape))
+			}
 			match e.key_code {
-				.left { position = cursor_left(position) }
-				.right { position = cursor_right(text_lines, position) }
-				.up { position = cursor_up(layout.shape, position, offset, window) }
-				.down { position = cursor_down(layout.shape, position, offset, window) }
-				.home { position = cursor_home() }
-				.end { position = cursor_end(text_lines) }
+				.left { pos = cursor_left(pos) }
+				.right { pos = cursor_right(text_lines, pos) }
+				.up { pos = cursor_up(layout.shape, pos, offset, 1, window) }
+				.down { pos = cursor_down(layout.shape, pos, offset, 1, window) }
+				.page_up { pos = cursor_up(layout.shape, pos, offset, lpp, window) }
+				.page_down { pos = cursor_down(layout.shape, pos, offset, lpp, window) }
+				.home { pos = cursor_home() }
+				.end { pos = cursor_end(text_lines) }
 				else { return }
 			}
 		} else if e.modifiers == Modifier.super {
@@ -277,12 +285,12 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		}
 
 		if (e.key_code != .up && e.key_code != .down) || input_state.cursor_offset < 0 {
-			offset = offset_from_cursor_position(layout.shape, position, window)
+			offset = offset_from_cursor_position(layout.shape, pos, window)
 		}
 
 		// input_cursor_on_sticky allows the cursor to stay on during cursor movements.
 		// See `blinky_cursor_animation()`
-		if position != input_state.cursor_pos {
+		if pos != input_state.cursor_pos {
 			window.view_state.cursor_on_sticky = true
 		}
 
@@ -305,16 +313,16 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 
 			// Move the selection boundary that was at the old cursor position.
 			if old_cursor_pos == int(select_beg) {
-				select_beg = u32(position)
+				select_beg = u32(pos)
 			} else if old_cursor_pos == int(select_end) {
-				select_end = u32(position)
+				select_end = u32(pos)
 			} else {
 				// If the old cursor was not at a boundary (e.g., from a click),
 				// move the boundary closest to the new cursor position.
-				if math.abs(position - int(select_beg)) < math.abs(position - int(select_end)) {
-					select_beg = u32(position)
+				if math.abs(pos - int(select_beg)) < math.abs(pos - int(select_end)) {
+					select_beg = u32(pos)
 				} else {
-					select_end = u32(position)
+					select_end = u32(pos)
 				}
 			}
 			// Ensure beg is always less than or equal to end
@@ -324,24 +332,24 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		} else if input_state.select_beg != input_state.select_end && e.modifiers == .none {
 			// If a selection exists and a non-shift movement key is pressed,
 			// collapse the selection to the beginning or end of the selection.
-			position = match e.key_code {
+			pos = match e.key_code {
 				.left, .home { int(input_state.select_beg) }
 				.right, .end { int(input_state.select_end) }
-				else { position }
+				else { pos }
 			}
 		}
 
 		// Update input state with new cursor position and selection
 		window.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
-			cursor_pos:    position
+			cursor_pos:    pos
 			select_beg:    select_beg
 			select_end:    select_end
 			cursor_offset: offset
 		}
 
 		// Ensure the new cursor position is visible
-		scroll_cursor_into_view(position, layout, mut window)
+		scroll_cursor_into_view(pos, layout, mut window)
 		e.is_handled = true
 	}
 }

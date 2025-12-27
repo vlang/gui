@@ -25,7 +25,10 @@ fn cursor_right(strs []string, pos int) int {
 // from the current cursor position. If the previous line is shorter than the
 // calculated column, the cursor moves to the end of that line. Returns the
 // original position if already at the first line.
-fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int {
+fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, window &Window) int {
+	if lines_up < 0 {
+		return cursor_pos
+	}
 	mut idx := 0
 	mut offset := 0
 	lengths := shape.text_lines.map(utf8_str_visible_length(it))
@@ -39,9 +42,9 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int
 		offset += len
 	}
 
-	// move to previous line
-	if idx > 0 {
-		p_idx := idx - 1
+	// move to previous lines_up
+	p_idx := int_max(idx - lines_up, 0)
+	if idx != p_idx {
 		p_len := lengths[p_idx]
 		mut p_start := 0
 		for i, len in lengths {
@@ -80,7 +83,10 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int
 // cursor position is adjusted: for lines ending with a newline, it moves to the
 // position before the newline; for the last line, it moves to the end of the line.
 // Returns the original position if already at the last line.
-fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, window &Window) int {
+fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, window &Window) int {
+	if lines_down < 0 {
+		return cursor_pos
+	}
 	mut idx := 0
 	mut offset := 0
 	lengths := shape.text_lines.map(utf8_str_visible_length(it))
@@ -94,9 +100,9 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, window &Window) i
 		offset += len
 	}
 
-	// move to next line
-	if idx < shape.text_lines.len - 1 {
-		n_idx := idx + 1
+	// move to next lines_down
+	n_idx := int_min(idx + lines_down, shape.text_lines.len - 1)
+	if idx != n_idx {
 		n_len := lengths[n_idx]
 		n_text := shape.text_lines[n_idx]
 		mut n_start := 0
@@ -421,9 +427,9 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 	// Here's the key difference from mouse-move. If the cursor is outside
 	// the view, scroll up or down one line, not to mouse_cursor_pos
 	if scroll_y > current_scroll_y {
-		mouse_cursor_pos = cursor_up(layout.shape, cursor_pos, -1, w)
+		mouse_cursor_pos = cursor_up(layout.shape, cursor_pos, -1, 1, w)
 	} else if scroll_y < current_scroll_y {
-		mouse_cursor_pos = cursor_down(layout.shape, cursor_pos, -1, w)
+		mouse_cursor_pos = cursor_down(layout.shape, cursor_pos, -1, 1, w)
 	} else {
 		return
 	}
