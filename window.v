@@ -14,19 +14,19 @@ import log
 
 pub struct Window {
 mut:
-	view_state          ViewState
-	dialog_cfg          DialogCfg
-	layout              Layout
-	ui                  &gg.Context = &gg.Context{}
-	state               voidptr     = unsafe { nil }
-	mutex               &sync.Mutex = sync.new_mutex()
-	renderers           []Renderer
-	animations          []Animation
-	view_generator      fn (&Window) View           = empty_view
-	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
-	window_size         gg.Size // cached, gg.window_size() relatively slow
-	update_window_calls int
-	focused             bool = true
+	ui             &gg.Context                 = &gg.Context{}
+	state          voidptr                     = unsafe { nil }
+	mutex          &sync.Mutex                 = sync.new_mutex()
+	view_generator fn (&Window) View           = empty_view
+	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	focused        bool                        = true
+	view_state     ViewState
+	dialog_cfg     DialogCfg
+	layout         Layout
+	renderers      []Renderer
+	animations     []Animation
+	window_size    gg.Size // cached, gg.window_size() relatively slow
+	refresh_window bool
 }
 
 // Window is the application window. The state parameter is a reference to where
@@ -115,7 +115,6 @@ pub fn window(cfg &WindowCfg) &Window {
 				w.blinky_cursor_animation()
 			}
 			on_init(mut w)
-			w.update_window()
 		}
 	)
 	initialize_fonts()
@@ -131,6 +130,11 @@ pub fn window(cfg &WindowCfg) &Window {
 
 // frame_fn is the only place where the window is rendered.
 fn frame_fn(mut window Window) {
+	if window.refresh_window {
+		window.do_update_window()
+		window.refresh_window = false
+	}
+
 	window.lock()
 	window.ui.begin()
 	renderers_draw(window.renderers, window)
@@ -239,10 +243,17 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.view_state.clear(mut window)
 	window.view_generator = gen_view
 	window.unlock()
+	window.update_window()
 }
 
-// update_window generates a new layout from the window's current view generator.
+// update_window marks the window as needing an update.
 pub fn (mut window Window) update_window() {
+	window.refresh_window = true
+	window.ui.refresh_ui()
+}
+
+// do_update_window generates a new layout from the window's current view generator.
+fn (mut window Window) do_update_window() {
 	//--------------------------------------------
 	window.lock()
 	window.renderers.clear()
@@ -264,7 +275,6 @@ pub fn (mut window Window) update_window() {
 	// but it appears to help the GC in some instances.
 	clear_views(mut view)
 	clear_layouts(mut old_layout)
-	window.ui.refresh_ui()
 }
 
 // compose_layout produces a layout from the given view that is
