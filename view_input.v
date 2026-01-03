@@ -1,27 +1,21 @@
 module gui
 
-// view_input.v provides input field functionality for GUI applications.
-// It handles text input, cursor management, copy/paste operations, and undo/redo functionality.
-// This file implements both single-line and multiline input modes with customizable styling
-// and behavior through the InputCfg struct. Key features include:
+// view_input.v provides input field functionality. It handles text input,
+// cursor management, copy/paste operations, and undo/redo functionality.
+// Both single-line and multiline modes are supported with customizable
+// styling and behavior via InputCfg. Notable features:
 // - Text selection and cursor positioning
 // - Clipboard operations (copy, cut, paste)
 // - Undo/redo stack
-// - Password field masking
-// - Placeholder text
+// - Password field masking and placeholder text
 // - Custom callbacks for text changes and enter key
-// - Themeable appearance
-// - Copy/paste operations
-// - Icon support
-//
 import log
 import datatypes
 import arrays
 
-// The management of focus and input states poses a problem in stateless views
-// because...they're stateless. Instead, the window maintains this state in a
-// map where the key is the w.view_state.id_focus. This state map is cleared
-// when a new view is introduced.
+// InputState manages focus and input states. The window maintains this state
+// in a map keyed by w.view_state.id_focus. This state map is cleared when a
+// new view is introduced.
 @[minify]
 struct InputState {
 pub:
@@ -37,11 +31,10 @@ pub:
 	cursor_offset f32
 }
 
-// InputMemento is admittedly a naive implementation of undo/redo operations.
-// Storing all the text instead of the text operation and text fragment is less
-// memory efficient, but it is much easier to implement and debug. Most of the time,
-// input text fields are small so the actual savings vs. the additional complexity
-// is worth the tradeoff. It can always be refactored later if it becomes an issue.
+// InputMemento stores a snapshot of the input state for undo/redo
+// operations. Storing the full text is less memory efficient than operational
+// transforms but simplifies implementation and debugging. Given typical input
+// field sizes, the tradeoff is acceptable.
 @[minify]
 struct InputMemento {
 pub:
@@ -57,9 +50,9 @@ pub enum InputMode as u8 {
 	multiline
 }
 
-// InputCfg configures an input view. See [input](#input). Use `on_text_changed` to
-// capture text updates. To capture the enter-key, provide an `on_enter` callback.
-// Placeholder text is shown when the input field is empty.
+// InputCfg configures an input view. See [input](#input). Use
+// `on_text_changed` to capture text updates. To capture the enter-key, provide
+// an `on_enter` callback. Placeholder text is shown when the field is empty.
 @[heap; minify]
 pub struct InputCfg {
 pub:
@@ -123,27 +116,27 @@ pub:
 // - Input fields without an `on_text_changed` callback are read-only.
 // - is_password flag causes the input view to display '*'s.
 // - Copy operation is disabled when is_password is true.
-// - wrap allows the input fields to be multiline. See [InputCfg](#InputCfg)
+// - wrap allows the input fields to be multiline.
 //
-// #### Keyboard shortcuts (not final):
-// - **left/right**    moves cursor left/right one character
-// - **ctrl+left**     moves to start of line, if at start of line moves up one line
-// - **ctrl+right**    moves to end of line, if at end of line moves down one line
-// - **alt+left**      moves to end of previous word (option+left on Mac)
-// - **alt+right**     moves to start of word (option+left on Mac)
-// - **home**          move cursor to start of text
-// - **end**           move cursor to end of text
+// Keyboard shortcuts:
+// - left/right: moves cursor left/right one character
+// - ctrl+left: moves to start of line; if at start, moves up one line
+// - ctrl+right: moves to end of line; if at end, moves down one line
+// - alt+left: moves to end of previous word (option+left on Mac)
+// - alt+right: moves to start of word (option+left on Mac)
+// - home: move cursor to start of text
+// - end: move cursor to end of text
 // - Add shift to above shortcuts to select text
-// ---
-// - **ctrl+a**        selects all text (also **cmd+a** on Mac)
-// - **ctrl+c**        copies selected text (also **cmd+c** on Mac)
-// - **ctrl+v**        pastes text (also **cmd+v** on Mac)
-// - **ctrl+x**        deletes text (also **cmd+x** on Mac)
-// - **ctrl+z**        undo (also **cmd+z** on Mac)
-// - **shift+ctrl+z**  redo (also **shift+cmd+z** on Mac)
-// - **escape**        unselects all text
-// - **delete**        deletes previous character
-// - **backspace**     deletes previous character
+//
+// - ctrl+a: selects all text (cmd+a on Mac)
+// - ctrl+c: copies selected text (cmd+c on Mac)
+// - ctrl+v: pastes text (cmd+v on Mac)
+// - ctrl+x: deletes text (cmd+x on Mac)
+// - ctrl+z: undo (cmd+z on Mac)
+// - shift+ctrl+z: redo (shift+cmd+z on Mac)
+// - escape: unselects all text
+// - delete: deletes previous character
+// - backspace: deletes previous character
 pub fn input(cfg InputCfg) View {
 	placeholder_active := cfg.text.len == 0
 	txt := if placeholder_active { cfg.placeholder } else { cfg.text }
@@ -224,8 +217,8 @@ pub fn input(cfg InputCfg) View {
 	)
 }
 
-// on_click_interior handles clicking in the control but outside the text region
-// by forwarding it to the text view.
+// on_click_interior handles clicking within the control but outside the text
+// region by forwarding it to the text view.
 fn (_ &InputCfg) on_click_interior(layout &Layout, mut e Event, mut w Window) {
 	if layout.children.len < 1 {
 		return
@@ -239,13 +232,11 @@ fn (_ &InputCfg) on_click_interior(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
-// on_char handles keyboard and character input for the input field.
-// It processes modifier combinations (ctrl/super/shift), interprets special
-// control keys (backspace, delete, enter), invokes clipboard operations
-// (copy/cut/paste), and manages undo/redo. When text is changed it calls the
-// configured `on_text_changed` callback and when Enter is pressed it calls
-// `on_enter` if provided. The handler is a gatekeeper and will early-return
-// when the mouse input is locked.
+// on_char handles keyboard and character input. It processes modifier
+// combinations (ctrl/super/shift), interprets special control keys, invokes
+// clipboard operations, and manages undo/redo. Text changes trigger
+// `on_text_changed` and Enter triggers `on_enter`. The handler returns early
+// if mouse input is locked.
 fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 	if w.mouse_is_locked() {
 		return
@@ -319,14 +310,10 @@ fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 	}
 }
 
-// delete removes text from the input field based on the cursor position or
-// selected text range. If text is selected, it deletes the entire selection.
-// Otherwise, it deletes the character before the cursor (backspace) when
-// is_delete is false, or the character after the cursor (delete key) when
-// is_delete is true. The function saves the current state to the undo stack
-// before performing the deletion, updates the cursor position, and clears any
-// text selection. Returns the modified text string, or none if the operation
-// cannot be performed (e.g., cursor at start with backspace).
+// delete removes text based on cursor position or selection. If text is
+// selected, the entire selection is deleted. Otherwise, it deletes the
+// character before (backspace) or after (delete) the cursor. Saves state to
+// undo stack before modification. Returns modified text or none if invalid.
 fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 	mut text := cfg.text.runes()
 	input_state := w.view_state.input_state[cfg.id_focus]
@@ -378,14 +365,9 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 	return text.string()
 }
 
-// insert adds text to the input field at the current cursor position or
-// replaces the currently selected text. For single-line fixed-width inputs,
-// it validates that the inserted text fits within the available width. If
-// text is selected, the selection is replaced with the inserted text. The
-// function saves the current state to the undo stack before performing the
-// insertion, updates the cursor position to after the inserted text, and
-// clears any text selection. Returns the modified text string, or an error
-// if the cursor position is out of range.
+// insert adds text at the cursor or replaces selection. For single-line
+// fixed-width inputs, it validates width constraints. Saves state to undo
+// stack before modification. Returns modified text or error.
 fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	// clamp max chars to width of box when single line fixed.
 	if cfg.mode == .single_line && cfg.sizing.width == .fixed {
@@ -436,12 +418,8 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	return text.string()
 }
 
-// cut copies the currently selected text to the clipboard and then
-// deletes it from the input field. Returns the modified text string after
-// the cut operation. If the input field is a password field (is_password
-// is true), the operation is disabled and returns none. The cut operation
-// combines copy and delete: first copying selected text to clipboard, then
-// removing it.
+// cut copies selected text to clipboard then deletes it. Returns modified
+// text. Disabled for password fields.
 pub fn (cfg &InputCfg) cut(mut w Window) ?string {
 	if cfg.is_password {
 		return none
@@ -450,12 +428,8 @@ pub fn (cfg &InputCfg) cut(mut w Window) ?string {
 	return cfg.delete(mut w, false)
 }
 
-// copy copies the currently selected text to the clipboard.
-// Returns none if the operation completes successfully or if the input field
-// is a password field (is_password is true), in which case the operation is
-// disabled for security reasons.
-// The function retrieves the text between select_beg and select_end positions
-// and copies it to the system clipboard.
+// copy copies selected text to clipboard. Returns none if successful or
+// disabled (password fields).
 pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	if cfg.is_password {
 		return none
@@ -478,21 +452,14 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	return none
 }
 
-// paste inserts text from the clipboard at the current cursor position or
-// replaces the currently selected text. The operation accepts a string
-// parameter containing the text to paste and returns the modified text string
-// after the paste operation. If the cursor is positioned within the text,
-// the pasted content is inserted at that location. If text is selected, the
-// selection is replaced with the pasted content.
+// paste inserts clipboard text at cursor or replaces selection. Returns
+// modified text.
 pub fn (cfg &InputCfg) paste(s string, mut w Window) !string {
 	return cfg.insert(s, mut w)
 }
 
-// undo reverts the input field to its previous state by popping the last
-// operation from the undo stack and pushing the current state onto the redo
-// stack. Returns the text content from the restored state. If the undo stack
-// is empty, returns the current text unchanged. The function restores cursor
-// position, selection range, and text content from the saved memento.
+// undo reverts to previous state from undo stack and pushes current state
+// to redo stack. Returns restored text or current text if stack empty.
 pub fn (cfg &InputCfg) undo(mut w Window) string {
 	input_state := w.view_state.input_state[cfg.id_focus]
 	mut undo := input_state.undo
@@ -516,12 +483,8 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 	return memento.text
 }
 
-// redo re-applies a previously undone operation by popping the last state from
-// the redo stack and pushing the current state onto the undo stack. Returns
-// the text content from the restored state. If the redo stack is empty, returns
-// the current text unchanged. The function restores cursor position, selection
-// range, and text content from the saved memento, effectively reversing an undo
-// operation.
+// redo reapplies a previously undone operation. Returns restored text or
+// current text if stack empty.
 pub fn (cfg &InputCfg) redo(mut w Window) string {
 	input_state := w.view_state.input_state[cfg.id_focus]
 	mut redo := input_state.redo
@@ -545,9 +508,8 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 	return memento.text
 }
 
-// amend_layout adjusts the appearance of the input container during layout.
-// It updates visual hints like the border color based on focus/disabled state.
-// This is called during the layout pass so views can adapt their styling.
+// amend_layout adjusts appearance during layout, effectively updating visual
+// hints like border color based on focus/disabled state.
 fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 	if layout.shape.disabled {
 		return
@@ -557,9 +519,8 @@ fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 	}
 }
 
-// hover handles mouse-over events for the input view. When the input is the
-// current focus it sets the I-beam cursor to indicate text editing; otherwise
-// it applies a hover color to the interior child to provide visual feedback.
+// hover handles mouse-over events. Sets I-beam cursor when focused,
+// otherwise applies hover color.
 fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
@@ -568,9 +529,7 @@ fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 	}
 }
 
-// hover_icon handles mouse-over behavior for the input's icon area. If the
-// icon has a click handler, the cursor changes to a pointing hand to indicate
-// interactivity.
+// hover_icon changes cursor to pointing hand if icon is interactive.
 fn (_ &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
 	if layout.shape.on_click != unsafe { nil } {
 		w.set_mouse_cursor_pointing_hand()

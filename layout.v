@@ -1,25 +1,19 @@
 module gui
 
-// The layout module implements a tree-based UI layout system inspired by Clay's UI algorithm.
-// It handles arranging and positioning UI elements in both horizontal and vertical layouts,
-// with support for nested containers, scrolling, floating elements, alignment, padding and spacing.
-// The layout engine uses a multi-pass pipeline to calculate sizes and positions efficiently.
+// The layout module implements a tree-based UI layout system. It handles
+// arranging and positioning UI elements in horizontal and vertical layouts,
+// supporting nested containers, scrolling, floating elements, alignment,
+// padding, and spacing. The engine uses a multi-pass pipeline for efficient
+// calculation.
 //
-// Based on Nic Barter's video of how Clay's UI algorithm works.
+// Based on Clay's UI algorithm:
 // https://www.youtube.com/watch?v=by9lQvpvMIc&t=1272s
-//
-// There's a fair bit of code duplication here. This is intentional.
-// I found it much easier to write and debug without generalizing
-// up/down vs. left/right. Abstractions here only complicate an
-// already hard-to-reason-about problem. -imho
 //
 import arrays
 
 // ==================================================
-// Note to me: Adding @[heap] to struct Layout causes
-// flickering in the scrollbars. Test this by running
-// v run fonts.v
-// ==================================================
+// Note: Adding @[heap] to struct Layout causes flickering in scrollbars.
+// Test by running `v run fonts.v`.
 
 // Layout defines a tree of Layouts. Views generate Layouts
 pub struct Layout {
@@ -29,8 +23,8 @@ pub mut:
 	children []Layout
 }
 
-// layout_arrange executes a pipeline of functions to arrange and position the layout.
-// Multiple layouts are returned, each is used to draw a layer of the final rendering.
+// layout_arrange executes a pipeline to arrange and position the layout.
+// Returns multiple layouts, each representing a layer for rendering.
 fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// stopwatch := time.new_stopwatch()
 	// defer { println(stopwatch.elapsed()) }
@@ -39,8 +33,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// compute relative floating layout coordinates
 	layout_parents(mut layout, unsafe { nil })
 
-	// floating layouts do not affect their parent or sibling elements
-	// They also complicate the fuck out of things.
+	// Floating layouts do not affect parent or sibling elements.
 	mut floating_layouts := []Layout{}
 	unsafe { floating_layouts.flags.set(.noslices) }
 	layout_remove_floating_layouts(mut layout, mut floating_layouts)
@@ -74,12 +67,9 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	return layouts
 }
 
-// layout_pipeline makes multiple passes over the layout.
-// Multiple passes actually simplify many of the layout
-// calculations by only dealing with one axis of
-// expansion/contraction at a time. Same for scroll offsets
-// and text wrapping. This logic mimics the logic presented
-// in Nic Barter's video referenced above.
+// layout_pipeline performs multiple passes over the layout. Dealing with one
+// axis of expansion/contraction at a time simplifies calculations. Matches
+// logic in the referenced Clay UI video.
 fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_widths(mut layout)
 	layout_fill_widths(mut layout)
@@ -105,10 +95,9 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 	}
 }
 
-// layout_remove_floating_layouts removes the layouts marked as floating
-// and puts an empty Layout node with no axis in its place. The empty
-// layout has no axis, height or width so it is effectively ignored by
-// the layout logic.
+// layout_remove_floating_layouts replaces floating layouts with an empty
+// Layout node (no axis/height/width) so they are effectively ignored by
+// layout logic. The removed layouts are collected in the layouts array.
 fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 	for i, mut child in layout.children {
 		if child.shape.float {
@@ -118,9 +107,8 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 		layout_remove_floating_layouts(mut child, mut layouts)
 
 		if child.shape.float {
-			// shape.type == .none does two things.
-			// - allows fix_nested_sibling_floats() to indentify this as an empty node.
-			// - removes it from the fence-post spacing calculation in layout.spacing()
+			// shape.type == .none enables identification as empty node by
+			// fix_nested_sibling_floats() and removes it from spacing calculations.
 			layout.children[i] = Layout{
 				shape: &Shape{}
 			}
@@ -128,8 +116,8 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 	}
 }
 
-// layout_widths arranges a node's children layout horizontally. Only container
-// layout with an axis are arranged.
+// layout_widths arranges children horizontally. Only containers with an axis
+// are processed.
 fn layout_widths(mut layout Layout) {
 	padding := layout.shape.padding.width()
 	if layout.shape.axis == .left_to_right { // along the axis
@@ -176,8 +164,8 @@ fn layout_widths(mut layout Layout) {
 	}
 }
 
-// layout_heights arranges a node's children layout vertically. Only container
-// layout with an axis are arranged.
+// layout_heights arranges children vertically. Only containers with an axis
+// are processed.
 fn layout_heights(mut layout Layout) {
 	padding := layout.shape.padding.height()
 	if layout.shape.axis == .top_to_bottom { // along the axis
@@ -247,8 +235,7 @@ fn find_first_idx_and_len(layout &Layout, predicate fn (n Layout) bool) (int, in
 	return idx, len
 }
 
-// layout_fill_widths manages the growing and shrinking of layout horizontally
-// to satisfy a layout constraint
+// layout_fill_widths manages horizontal growth/shrinkage to satisfy constraints.
 fn layout_fill_widths(mut layout Layout) {
 	mut previous_remaining_width := f32(0)
 	mut remaining_width := layout.shape.width - layout.shape.padding.width()
@@ -399,8 +386,7 @@ fn layout_fill_widths(mut layout Layout) {
 	}
 }
 
-// layout_fill_heights manages the growing and shrinking of layout vertically to
-// satisfy a layout constraint
+// layout_fill_heights manages vertical growth/shrinkage to satisfy constraints.
 fn layout_fill_heights(mut layout Layout) {
 	mut previous_remaining_height := f32(0)
 	mut remaining_height := layout.shape.height - layout.shape.padding.height()
@@ -552,9 +538,8 @@ fn layout_fill_heights(mut layout Layout) {
 	}
 }
 
-// layout_wrap_text is called after all widths in a Layout are determined.
-// Wrapping text changes the min-height of a Shape, which is why it is called
-// before computing Shape heights.
+// layout_wrap_text runs after widths are set. Wrapping changes min-height,
+// so this runs before height calculation.
 fn layout_wrap_text(mut layout Layout, mut w Window) {
 	text_wrap(mut layout.shape, mut w)
 	for mut child in layout.children {
@@ -580,9 +565,8 @@ fn layout_adjust_scroll_offsets(mut layout Layout, mut w Window) {
 	}
 }
 
-// layout_positions sets the positions of all layout in the Layout. It also
-// handles alignment. Alignment only augments x and y positions. Alignment
-// does not effect sizes.
+// layout_positions sets positions and handles alignment. Alignment only
+// affects x/y positions, not sizes.
 fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 	layout.shape.x += offset_x
 	layout.shape.y += offset_y
@@ -702,13 +686,9 @@ fn layout_scroll_containers(mut layout Layout, id_scroll_container u32) {
 			else { id_scroll_container }
 		}
 		layout_scroll_containers(mut ly, id)
-		// Motivation: `text` views are not directly scrollable but instead
-		// must live inside a scrollable container (one with a non-zero id_scroll)
-		// Selecting text in a text view can push the selection outside the visible
-		// region of the text view (e.g. mouse selection). The event handler does
-		// no have enough information to walk up the visible tree to find the
-		// scrollable container. Instead, it is bookmarked in the text shape
-		// (and maybe other shapes in the future).
+		// Motivation: `text` views are not directly scrollable but must live inside
+		// a scrollable container. Selecting text can push selection outside the
+		// visible region. Use `id_scroll_container` to track the parent.
 		if ly.shape.shape_type == .text {
 			ly.shape.id_scroll_container = id_scroll_container
 		}
@@ -731,11 +711,8 @@ fn layout_set_shape_clips(mut layout Layout, clip DrawClip) {
 	}
 }
 
-// layout_amend is the secret sauce to handling layout problems
-// that can't be solved until all the positions and sizes are
-// known. In general, one should not alter sizes and positions.
-// (exception: scrollbars) It is the right place to handle
-// mouse-over events that typically change a color or opacity.
+// layout_amend handles layout problems resolvable only after sizing/positioning,
+// such as mouse-over events affecting appearance. Avoid altering sizes here.
 fn layout_amend(mut layout Layout, mut w Window) {
 	for mut child in layout.children {
 		layout_amend(mut child, mut w)
@@ -745,9 +722,7 @@ fn layout_amend(mut layout Layout, mut w Window) {
 	}
 }
 
-// layout_hover is a convenience callback for clients to do hover things.
-// Originally, it was done in layout_amend but it's a fair bit of boiler
-// plate that this callback encapsulates.
+// layout_hover encapsulates hover handling logic.
 fn layout_hover(mut layout Layout, mut w Window) bool {
 	if w.mouse_is_locked() {
 		return false

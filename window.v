@@ -1,11 +1,11 @@
 module gui
 
-// module gui provides a GUI framework for creating windows and user interfaces.
-// The main components are:
-// - Window: The main application window that manages views, events and rendering
-// - View: User-defined interface elements that generate layouts
-// - Layout: Arranged interface elements ready for rendering
-// - Renderers: Draw instructions for the window
+// module gui provides a GUI framework.
+// Components:
+// - Window: Manages views, events, rendering
+// - View: Interface elements generating layouts
+// - Layout: Arranged elements ready for render
+// - Renderers: Drawing instructions
 //
 import gg
 import sokol.sapp
@@ -29,9 +29,8 @@ mut:
 	refresh_window bool
 }
 
-// Window is the application window. The state parameter is a reference to where
-// the application state is stored. `on_init` is where to set the application's
-// first view. See `examples/get-started.v` for complete example.
+// Window is the main application window. `state` holds app state.
+// `on_init` sets the initial view. See `examples/get-started.v`.
 // Example:
 // ```v
 // import gui
@@ -143,8 +142,7 @@ fn frame_fn(mut window Window) {
 	sapp.set_mouse_cursor(window.view_state.mouse_cursor)
 }
 
-// event_fn is where all user events are handled. Mostly it delegates
-// to child views.
+// event_fn handles user events, mostly delegating to child views.
 fn event_fn(ev &gg.Event, mut w Window) {
 	mut e := from_gg_event(ev)
 	if !w.focused && e.typ == .mouse_down && e.mouse_button == MouseButton.right {
@@ -154,30 +152,14 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		return
 	}
 
-	// The top level layout's children each represent layers in the z-axis
-	// It looks like this:
-	//
-	// layout
-	//  - shape // empty
-	//  - children
-	//      - main layout
-	//      - floating layout
-	//      - ... floating layout
-	//      - dialog layout
-	//
-	// While not always present, a floating layout occurs with views like menus
-	// drop downs and dialogs. The dialog layout if present is always last.
-	// Keyboard event handling is from the bottom up (leaf nodes) and the top
-	// down (last layout first). When an dialog is present, it is the only layer
-	// allowed to handle mouse/keyboard events. This effectively makes it modal.
-	// An Event is processed until an event handler sets the event.is_handled`
-	// member to true.
+	// Top-level layout children represent z-axis layers:
+	// layout -> [main layout, floating layouts..., dialog layout]
+	// Dialogs are modal if present. Events process bottom-up (leaf nodes) then
+	// top-down (layers). Processing stops when `event.is_handled` is true.
 	w.lock()
 
-	// layout is not modified else where at this point in the life cycle.
-	// Locks in V do not nest, which is why unlock() is called immediately after
-	// acquiring the layout. This allows event handlers to lock the window to
-	// update view state, etc.
+	// Layout is immutable here. Unlock immediately to allow handlers to lock
+	// window for state updates.
 	layout := if w.dialog_cfg.visible { w.layout.children.last() } else { w.layout }
 	w.unlock()
 
@@ -235,9 +217,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	w.update_window()
 }
 
-// update_view sets the Window's view generator. A window can have only one
-// view generator. Giving a Window a new view generator clears the view_state
-// and replaces the current view generator.
+// update_view replaces the current view generator and clears view state.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.lock()
 	window.view_state.clear(mut window)
@@ -246,7 +226,8 @@ pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.update_window()
 }
 
-// update_window marks the window as needing an update.
+// update_window marks the window as needing an update. Update is performed in the
+// next frame.
 pub fn (mut window Window) update_window() {
 	window.refresh_window = true
 	window.ui.refresh_ui()
@@ -271,8 +252,7 @@ fn (mut window Window) do_update_window() {
 		gui_stats.update_max_renderers(usize(window.renderers.len))
 	}
 
-	// Technically, clearing views and layouts should not be needed,
-	// but it appears to help the GC in some instances.
+	// Clearing views/layouts aids GC.
 	clear_views(mut view)
 	clear_layouts(mut old_layout)
 }
