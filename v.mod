@@ -3,7 +3,7 @@ Module {
 	description: 'UI for V programs'
 	version: '0.0.0'
 	license: 'MIT'
-	dependencies: []
+	dependencies: ["https://github.com/mike-ward/vglyph"]
 	repo_url: 'https://github.com/vlang/gui'
 	repo_branch: 'main'
 }

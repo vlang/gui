@@ -3,6 +3,8 @@ module gui
 import gg
 import sokol.sgl
 import log
+import vglyph
+import math
 
 // A Renderer is the final computed drawing instruction. gui.Window keeps an array
 // of Renderers and only uses that array to paint the window. The window can be
@@ -55,14 +57,15 @@ type Renderer = DrawCircle | DrawClip | DrawImage | DrawLine | DrawNone | DrawRe
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
 // draw logic of GUI
-fn renderers_draw(renderers []Renderer, window &Window) {
+fn renderers_draw(renderers []Renderer, mut window Window) {
 	for renderer in renderers {
-		renderer_draw(renderer, window)
+		renderer_draw(renderer, mut window)
 	}
+	window.text_system.commit()
 }
 
 // renderer_draw draws a single renderer
-fn renderer_draw(renderer Renderer, window &Window) {
+fn renderer_draw(renderer Renderer, mut window Window) {
 	mut ctx := window.ui
 	match renderer {
 		DrawRect {
@@ -75,7 +78,9 @@ fn renderer_draw(renderer Renderer, window &Window) {
 			}
 		}
 		DrawText {
-			ctx.draw_text(int(renderer.x), int(renderer.y), renderer.text, renderer.cfg)
+			// ctx.draw_text(int(renderer.x), int(renderer.y), renderer.text, renderer.cfg)
+			window.text_system.draw_text(int(renderer.x), int(renderer.y), renderer.text,
+				to_vglyph_cfg(renderer.cfg)) or {}
 		}
 		DrawClip {
 			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
@@ -512,4 +517,14 @@ fn dim_alpha(color Color) Color {
 fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
 	return r1.x < (r2.x + r2.width) && r2.x < (r1.x + r1.width) && r1.y < (r2.y + r2.height)
 		&& r2.y < (r1.y + r1.height)
+}
+
+fn to_vglyph_cfg(cfg gg.TextCfg) vglyph.TextConfig {
+	size := int(math.ceil(f64(cfg.size) * 0.75))
+	return vglyph.TextConfig{
+		font_name: 'sans ${size}px'
+		width:     -1
+		align:     .left
+		color:     cfg.color
+	}
 }
