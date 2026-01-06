@@ -29,13 +29,9 @@ fn initialize_fonts() {
 	}
 }
 
-pub fn default_font() string {
-	return base_font_name
-}
-
 // font_variants retrieves the names of the files for the 4 font families in Gui. See [FontVariants](#FontVariants)
 pub fn font_variants(text_style TextStyle) FontVariants {
-	family := if text_style.family.len == 0 { default_font() } else { text_style.family }
+	family := text_style.family
 	variants := FontVariants{
 		normal: family
 		bold:   '${family} bold'

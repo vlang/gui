@@ -12,12 +12,12 @@ pub const radius_medium = f32(5)
 pub const radius_large = f32(7)
 pub const radius_border = radius_medium + 2
 
-pub const size_text_tiny = 10
-pub const size_text_x_small = 12
-pub const size_text_small = 14
-pub const size_text_medium = 16
-pub const size_text_large = 18
-pub const size_text_x_large = 20
+pub const size_text_tiny = 8
+pub const size_text_x_small = 9
+pub const size_text_small = 10
+pub const size_text_medium = 11
+pub const size_text_large = 14
+pub const size_text_x_large = 16
 
 pub const spacing_small = 5
 pub const spacing_medium = 10
@@ -192,27 +192,27 @@ pub:
 	// Mono
 	m1 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_x_large
+		size: size_text_x_large + 1
 	}
 	m2 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_large
+		size: size_text_large + 1
 	}
 	m3 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_medium
+		size: size_text_medium + 1
 	}
 	m4 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_small
+		size: size_text_small + 1
 	}
 	m5 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_x_small
+		size: size_text_x_small + 1
 	}
 	m6 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_tiny
+		size: size_text_tiny + 1
 	}
 	// Icon
 	icon1 TextStyle = TextStyle{
