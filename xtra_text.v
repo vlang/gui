@@ -12,9 +12,8 @@ import encoding.utf8
 import hash.fnv1a
 
 pub fn get_text_width_no_cache(text string, text_style TextStyle, window &Window) f32 {
-	cfg := text_style.to_text_cfg()
-	window.ui.set_text_cfg(cfg)
-	return window.ui.text_width(text)
+	cfg := to_vglyph_cfg(text_style.to_text_cfg())
+	return unsafe { window.text_system.text_width(text, cfg) or { 0 } }
 }
 
 // get_text_width calculates the width of a given text based on its style and window configuration,
@@ -24,9 +23,8 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 
 	text_htx := text + htx
 	key := fnv1a.sum32_string(text_htx)
 	return window.view_state.text_widths[key] or {
-		cfg := text_style.to_text_cfg()
-		window.ui.set_text_cfg(cfg)
-		t_width := window.ui.text_width(text)
+		cfg := to_vglyph_cfg(text_style.to_text_cfg())
+		t_width := window.text_system.text_width(text, cfg) or { 0 }
 		window.view_state.text_widths[key] = t_width
 		t_width
 	}
@@ -36,7 +34,6 @@ pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 
 // - when in password mode (and not placeholder), measure '*' repeated for visible rune count
 fn text_width(shape &Shape, mut window Window) f32 {
 	mut max_width := f32(0)
-	mut text_cfg_set := false
 	htx := fnv1a.sum32_struct(shape.text_style).str()
 	for line in shape.text_lines {
 		mut effective := line
@@ -49,13 +46,8 @@ fn text_width(shape &Shape, mut window Window) f32 {
 		line_htx := effective + htx
 		key := fnv1a.sum32_string(line_htx)
 		width := window.view_state.text_widths[key] or {
-			if !text_cfg_set {
-				text_cfg := shape.text_style.to_text_cfg()
-				window.ui.set_text_cfg(text_cfg)
-				text_cfg_set = true
-			}
-			t_width := window.ui.text_width(effective)
-			window.view_state.text_widths[key] = t_width
+			cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
+			t_width := window.text_system.text_width(effective, cfg) or { 0 }
 			t_width
 		}
 		max_width = f32_max(width, max_width)
@@ -64,14 +56,16 @@ fn text_width(shape &Shape, mut window Window) f32 {
 }
 
 @[inline]
-fn text_height(shape &Shape) f32 {
-	lh := line_height(shape)
+fn text_height(shape &Shape, mut window Window) f32 {
+	lh := line_height(shape, mut window)
 	return lh * shape.text_lines.len
 }
 
 @[inline]
-fn line_height(shape &Shape) f32 {
-	return shape.text_style.size + shape.text_style.line_spacing
+fn line_height(shape &Shape, mut window Window) f32 {
+	cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
+	height := window.text_system.font_height(cfg)
+	return height + shape.text_style.line_spacing
 }
 
 // text_wrap applies text wrapping logic to a given shape based on its text mode.
@@ -84,7 +78,7 @@ fn text_wrap(mut shape Shape, mut window Window) {
 			true { wrap_text_keep_spaces(shape.text, style, width, tab_size, mut window) }
 			else { wrap_text_shrink_spaces(shape.text, style, width, tab_size, mut window) }
 		}
-		lh := line_height(shape)
+		lh := line_height(shape, mut window)
 		shape.height = shape.text_lines.len * lh
 		shape.max_height = shape.height
 		shape.min_height = shape.height

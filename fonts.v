@@ -5,7 +5,6 @@ module gui
 //
 import log
 import os
-import os.font
 
 // FontVariants are the paths of the font files used by Gui
 pub struct FontVariants {
@@ -16,36 +15,13 @@ pub:
 	mono   string
 }
 
-pub const font_file_regular = os.join_path(os.data_dir(), 'v_gui_deja-vu-sans-regular.ttf')
-pub const font_file_bold = os.join_path(os.data_dir(), 'v_gui_deja-vu-sans-bold.ttf')
-pub const font_file_italic = os.join_path(os.data_dir(), 'v_gui_deja-vu-sans-italic.ttf')
-pub const font_file_mono = os.join_path(os.data_dir(), 'v_gui_deja-vu-sans-mono.ttf')
+pub const base_font_name = 'sans'
 pub const font_file_icon = os.join_path(os.data_dir(), 'v_gui_feathericon.ttf')
 
 // initialize_fonts ensures all required font files exist in the data directory by checking for
 // each font file and writing the embedded font data if not found. It writes regular, bold,
 // italic, mono and icon font files.
 fn initialize_fonts() {
-	if !os.exists(font_file_regular) {
-		os.write_file(font_file_regular, $embed_file('assets/DejaVuSans-Regular.ttf').to_string()) or {
-			log.error(err.msg())
-		}
-	}
-	if !os.exists(font_file_bold) {
-		os.write_file(font_file_bold, $embed_file('assets/DejaVuSans-Bold.ttf').to_string()) or {
-			log.error(err.msg())
-		}
-	}
-	if !os.exists(font_file_italic) {
-		os.write_file(font_file_italic, $embed_file('assets/DejaVuSans-Italic.ttf').to_string()) or {
-			log.error(err.msg())
-		}
-	}
-	if !os.exists(font_file_mono) {
-		os.write_file(font_file_mono, $embed_file('assets/DejaVuSans-Mono.ttf').to_string()) or {
-			log.error(err.msg())
-		}
-	}
 	if !os.exists(font_file_icon) {
 		os.write_file(font_file_icon, $embed_file('assets/feathericon.ttf').to_string()) or {
 			log.error(err.msg())
@@ -53,32 +29,20 @@ fn initialize_fonts() {
 	}
 }
 
-// font_variants retrieves the names of the files for the 4 font families in Gui. See [FontVariants](#FontVariants)
-pub fn font_variants(text_style TextStyle) FontVariants {
-	path := if text_style.family.len == 0 { font.default() } else { text_style.family }
-	variants := FontVariants{
-		normal: path
-		bold:   path_variant(path, .bold)
-		italic: path_variant(path, .italic)
-		mono:   path_variant(path, .mono)
-	}
-	return variants
+pub fn default_font() string {
+	return base_font_name
 }
 
-fn path_variant(path string, variant font.Variant) string {
-	mut vpath := match variant {
-		.normal { path }
-		.bold { path.replace('-regular', '-bold') }
-		.italic { path.replace('-regular', '-italic') }
-		.mono { path.replace('-regular', '-mono') }
+// font_variants retrieves the names of the files for the 4 font families in Gui. See [FontVariants](#FontVariants)
+pub fn font_variants(text_style TextStyle) FontVariants {
+	family := if text_style.family.len == 0 { default_font() } else { text_style.family }
+	variants := FontVariants{
+		normal: family
+		bold:   '${family} bold'
+		italic: '${family} italic'
+		mono:   'mono'
 	}
-	if !os.exists(vpath) {
-		vpath = font.get_path_variant(path, variant)
-	}
-	if !os.exists(vpath) {
-		vpath = font.get_path_variant(font.default(), variant)
-	}
-	return if os.exists(vpath) { vpath } else { path }
+	return variants
 }
 
 // Map of icons names to their unicode values. Describes only

@@ -461,7 +461,7 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 		else { evs.mouse_y - scroll_container.shape.height }
 	}
 
-	lh := line_height(layout.shape)
+	lh := line_height(layout.shape, mut w)
 	if distance > 2 * lh {
 		an.delay = auto_scroll_fast
 	} else if distance > lh {
@@ -497,7 +497,7 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 
 	// Calculate the y offset of the cursor line.
 	// Since scroll offsets are often negative (content moves up), use -lh.
-	lh := line_height(shape)
+	lh := line_height(shape, mut w)
 	cursor_offset_top_y := line_idx * -lh
 	cursor_offset_bottom_y := cursor_offset_top_y + scroll_view_height - lh
 
@@ -557,7 +557,7 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 		return 0
 	}
 	// Calculate the line index based on mouse Y and line height, clamped to valid lines
-	lh := line_height(shape)
+	lh := line_height(shape, mut w)
 	y := int_clamp(int(e.mouse_y / lh), 0, shape.text_lines.len - 1)
 	line := shape.text_lines[y]
 

@@ -65,7 +65,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 		}
 	}
 	layout.shape.width = text_width(layout.shape, mut window)
-	layout.shape.height = text_height(layout.shape)
+	layout.shape.height = text_height(layout.shape, mut window)
 	if tv.mode == .single_line || layout.shape.sizing.width == .fixed {
 		layout.shape.min_width = f32_max(layout.shape.width, layout.shape.min_width)
 		layout.shape.width = layout.shape.min_width
@@ -267,7 +267,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 			layout_scroll := find_layout_by_id_scroll(window.layout, layout.shape.id_scroll_container)
 			if layout_scroll != none {
 				layout_scroll_height := layout_scroll.shape.height - layout_scroll.shape.padding.height()
-				lpp = int(layout_scroll_height / line_height(layout.shape))
+				lpp = int(layout_scroll_height / line_height(layout.shape, mut window))
 			}
 			match e.key_code {
 				.left { pos = cursor_left(pos) }

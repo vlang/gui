@@ -4,7 +4,6 @@ import gg
 import sokol.sgl
 import log
 import vglyph
-import math
 
 // A Renderer is the final computed drawing instruction. gui.Window keeps an array
 // of Renderers and only uses that array to paint the window. The window can be
@@ -301,7 +300,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	}.to_text_cfg()
 
 	ctx.set_text_cfg(text_cfg)
-	lh := line_height(shape)
+	lh := line_height(shape, mut window)
 
 	mut char_count := 0
 	x := shape.x
@@ -366,7 +365,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 	if window.is_focus(shape.id_focus) && shape.shape_type == .text
 		&& window.view_state.input_cursor_on {
-		lh := line_height(shape)
+		lh := line_height(shape, mut window)
 		mut cursor_x := -1
 		mut cursor_y := -1
 		input_state := window.view_state.input_state[shape.id_focus]
@@ -520,7 +519,7 @@ fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
 
 fn to_vglyph_cfg(cfg gg.TextCfg) vglyph.TextConfig {
 	return vglyph.TextConfig{
-		font_name: 'sans ${cfg.size}px'
+		font_name: '${cfg.family} ${cfg.size}'
 		width:     -1
 		align:     .left
 		color:     cfg.color

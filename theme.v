@@ -57,14 +57,14 @@ const size_progress_bar = 10
 const text_style_dark = TextStyle{
 	color:        color_text_dark
 	size:         size_text_medium
-	family:       font_file_regular
+	family:       base_font_name
 	line_spacing: text_line_spacing
 }
 
 const text_style_icon_dark = TextStyle{
 	color:        color_text_dark
 	size:         size_text_medium
-	family:       font_file_icon
+	family:       base_font_name
 	line_spacing: text_line_spacing
 }
 
