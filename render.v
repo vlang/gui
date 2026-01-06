@@ -79,8 +79,7 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 		}
 		DrawText {
 			// ctx.draw_text(int(renderer.x), int(renderer.y), renderer.text, renderer.cfg)
-			window.text_system.draw_text(int(renderer.x), int(renderer.y), renderer.text,
-				to_vglyph_cfg(renderer.cfg)) or {}
+			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, to_vglyph_cfg(renderer.cfg)) or {}
 		}
 		DrawClip {
 			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
@@ -520,9 +519,8 @@ fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
 }
 
 fn to_vglyph_cfg(cfg gg.TextCfg) vglyph.TextConfig {
-	size := int(math.ceil(f64(cfg.size) * 0.75))
 	return vglyph.TextConfig{
-		font_name: 'sans ${size}px'
+		font_name: 'sans ${cfg.size}px'
 		width:     -1
 		align:     .left
 		color:     cfg.color
