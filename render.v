@@ -289,16 +289,13 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		shape.disabled = true
 		return
 	}
-	ctx := window.ui
 	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
 	text_cfg := TextStyle{
 		...shape.text_style
 		color: color
 	}.to_text_cfg()
 
-	ctx.set_text_cfg(text_cfg)
 	lh := line_height(shape, mut window)
-
 	mut char_count := 0
 	x := shape.x
 	mut y := shape.y
@@ -336,8 +333,9 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				if b < e {
 					stob := lnr[..b].string()
 					sbtoe := lnr[b..e].string()
-					sb := ctx.text_width(stob)
-					se := ctx.text_width(sbtoe)
+					cfg := to_vglyph_cfg(text_cfg)
+					sb := window.text_system.text_width(stob, cfg) or { 0 }
+					se := window.text_system.text_width(sbtoe, cfg) or { 0 }
 					window.renderers << DrawRect{
 						x:     draw_rect.x + sb
 						y:     draw_rect.y
