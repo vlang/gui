@@ -169,7 +169,6 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 // At some point, it should be moved to the container logic, along with some layout amend logic.
 // Honestly, it was more expedient to put it here.
 fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
-	ctx := window.ui
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
 	render_rectangle(mut shape, clip, mut window)
 
@@ -182,8 +181,9 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			height: shape.height
 		}
 		if rects_overlap(draw_rect, clip) {
-			ctx.set_text_cfg(shape.text_style.to_text_cfg())
-			w, h := ctx.text_size(shape.text)
+			cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
+			w := window.text_system.text_width(shape.text, cfg) or { 0 }
+			h := window.text_system.text_height(shape.text, cfg) or { 0 }
 			x := shape.x + 20
 			y := shape.y
 			// erase portion of rectangle where text goes.
@@ -205,12 +205,9 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			} else {
 				shape.text_style.color
 			}
-			// The height of a lowercase char usually splits
-			// the text just right.
-			eh := ctx.text_height('e')
 			window.renderers << DrawText{
 				x:    x
-				y:    y - eh
+				y:    y - h / 2 - 1
 				text: shape.text
 				cfg:  TextStyle{
 					...shape.text_style
