@@ -13,11 +13,11 @@ pub const radius_large = f32(7)
 pub const radius_border = radius_medium + 2
 
 pub const size_text_tiny = 8
-pub const size_text_x_small = 9
-pub const size_text_small = 10
-pub const size_text_medium = 11
-pub const size_text_large = 14
-pub const size_text_x_large = 16
+pub const size_text_x_small = 10
+pub const size_text_small = 12
+pub const size_text_medium = 14
+pub const size_text_large = 16
+pub const size_text_x_large = 18
 
 pub const spacing_small = 5
 pub const spacing_medium = 10

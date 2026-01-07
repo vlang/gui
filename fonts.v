@@ -5,6 +5,7 @@ module gui
 //
 import log
 import os
+import vglyph
 
 // FontVariants are the paths of the font files used by Gui
 pub struct FontVariants {
@@ -15,17 +16,22 @@ pub:
 	mono   string
 }
 
-pub const base_font_name = 'sans'
+pub const base_font_name = 'helvetica neue,segoe ui,droid sans,arial,sans'
 pub const font_file_icon = os.join_path(os.data_dir(), 'v_gui_feathericon.ttf')
 
 // initialize_fonts ensures all required font files exist in the data directory by checking for
 // each font file and writing the embedded font data if not found. It writes regular, bold,
 // italic, mono and icon font files.
-fn initialize_fonts() {
+fn initialize_fonts(mut ts vglyph.TextSystem) {
 	if !os.exists(font_file_icon) {
-		os.write_file(font_file_icon, $embed_file('assets/feathericon.ttf').to_string()) or {
+		os.write_file(font_file_icon, $embed_file('assets/feathericon.ttf', .zlib).to_string()) or {
 			log.error(err.msg())
 		}
+	}
+	success := ts.add_font_file(font_file_icon)
+	match success {
+		true { log.info('${font_file_icon} successfully loaded') }
+		else { log.error('${@FILE_LINE}: failed to load ${font_file_icon}') }
 	}
 }
 

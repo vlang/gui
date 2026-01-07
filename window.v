@@ -110,9 +110,12 @@ pub fn window(cfg &WindowCfg) &Window {
 		user_data:                    window
 		sample_count:                 int(cfg.samples)
 		init_fn:                      fn [on_init, cursor_blink] (mut w Window) {
-			initialize_fonts()
 			w.update_window_size()
-			w.text_system = vglyph.new_text_system(mut w.ui) or { panic(err.str()) }
+			w.text_system = vglyph.new_text_system(mut w.ui) or {
+				log.error('${@FILE_LINE}: ${err.str()}')
+				panic(err.str())
+			}
+			initialize_fonts(mut w.text_system)
 			spawn w.animation_loop()
 			if cursor_blink {
 				w.blinky_cursor_animation()
