@@ -12,12 +12,12 @@ pub const radius_medium = f32(5)
 pub const radius_large = f32(7)
 pub const radius_border = radius_medium + 2
 
-pub const size_text_tiny = 8
-pub const size_text_x_small = 10
-pub const size_text_small = 12
-pub const size_text_medium = 14
-pub const size_text_large = 16
-pub const size_text_x_large = 18
+pub const size_text_medium = 15
+pub const size_text_tiny = size_text_medium - 6
+pub const size_text_x_small = size_text_medium - 4
+pub const size_text_small = size_text_medium - 2
+pub const size_text_large = size_text_medium + 2
+pub const size_text_x_large = size_text_medium + 4
 
 pub const spacing_small = 5
 pub const spacing_medium = 10
@@ -805,27 +805,27 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		// Mono
 		m1: TextStyle{
 			...mono
-			size: theme.size_text_x_large
+			size: theme.size_text_x_large + 1
 		}
 		m2: TextStyle{
 			...mono
-			size: theme.size_text_large
+			size: theme.size_text_large + 1
 		}
 		m3: TextStyle{
 			...mono
-			size: theme.size_text_medium
+			size: theme.size_text_medium + 1
 		}
 		m4: TextStyle{
 			...mono
-			size: theme.size_text_small
+			size: theme.size_text_small + 1
 		}
 		m5: TextStyle{
 			...mono
-			size: theme.size_text_x_small
+			size: theme.size_text_x_small + 1
 		}
 		m6: TextStyle{
 			...mono
-			size: theme.size_text_tiny
+			size: theme.size_text_tiny + 1
 		}
 		// Icon Font
 		icon1: TextStyle{
