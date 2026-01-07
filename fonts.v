@@ -18,10 +18,10 @@ pub:
 
 pub const base_font_name = 'helvetica neue,segoe ui,droid sans,arial,sans'
 pub const font_file_icon = os.join_path(os.data_dir(), 'v_gui_feathericon.ttf')
+pub const icon_font_name = 'feathericon'
 
 // initialize_fonts ensures all required font files exist in the data directory by checking for
-// each font file and writing the embedded font data if not found. It writes regular, bold,
-// italic, mono and icon font files.
+// each font file and writing the embedded font data if not found.
 fn initialize_fonts(mut ts vglyph.TextSystem) {
 	if !os.exists(font_file_icon) {
 		os.write_file(font_file_icon, $embed_file('assets/feathericon.ttf', .zlib).to_string()) or {

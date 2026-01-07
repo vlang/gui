@@ -218,32 +218,32 @@ pub:
 	icon1 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_x_large
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon2 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_large
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon3 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_medium
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon4 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_small
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon5 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_x_small
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon6 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_tiny
-		family: font_file_icon
+		family: icon_font_name
 	}
 
 	padding_small  Padding = padding_small
@@ -516,7 +516,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 			icon_style:         TextStyle{
 				...cfg.text_style
-				family: font_file_icon
+				family: icon_font_name
 				size:   cfg.size_text_medium
 			}
 		}
@@ -675,7 +675,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:      cfg.text_style
 			text_style_icon: TextStyle{
 				...cfg.text_style
-				family: font_file_icon
+				family: icon_font_name
 				size:   cfg.size_text_small
 			}
 		}
@@ -726,7 +726,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 	}
 	icon := TextStyle{
 		...theme.text_style
-		family: font_file_icon
+		family: icon_font_name
 	}
 
 	return Theme{
