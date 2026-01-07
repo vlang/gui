@@ -386,15 +386,16 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 			}
 		}
 		if cursor_x >= 0 && cursor_y >= 0 {
-			ctx := window.ui
 			if cursor_y < shape.text_lines.len {
 				ln := shape.text_lines[cursor_y]
 				x := int_min(cursor_x, ln.len)
 				ln_fragment := ln[..x]
+				cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
 				text_width := if shape.text_is_password {
-					ctx.text_width(password_char.repeat(utf8_str_visible_length(ln_fragment)))
+					pw := password_char.repeat(utf8_str_visible_length(ln_fragment))
+					window.text_system.text_width(pw, cfg) or { 0 }
 				} else {
-					ctx.text_width(ln_fragment)
+					window.text_system.text_width(ln_fragment, cfg) or { 0 }
 				}
 				avoid_clip_start_of_line := if cursor_x == 0 { 1 } else { 0 }
 				cx := shape.x + text_width + avoid_clip_start_of_line
