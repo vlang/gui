@@ -16,7 +16,7 @@ pub:
 	mono   string
 }
 
-pub const base_font_name = 'helvetica neue,segoe ui,droid sans,arial,sans'
+pub const base_font_name = 'helvetica neue, segoe ui, arial, sans'
 pub const font_file_icon = os.join_path(os.data_dir(), 'v_gui_feathericon.ttf')
 pub const icon_font_name = 'feathericon'
 
@@ -28,11 +28,16 @@ fn initialize_fonts(mut ts vglyph.TextSystem) {
 			log.error(err.msg())
 		}
 	}
-	success := ts.add_font_file(font_file_icon)
+	load_font(font_file_icon, mut ts)
+}
+
+fn load_font(path string, mut ts vglyph.TextSystem) bool {
+	success := ts.add_font_file(path)
 	match success {
-		true { log.info('${font_file_icon} successfully loaded') }
-		else { log.error('${@FILE_LINE}: failed to load ${font_file_icon}') }
+		true { log.info('${path} successfully loaded') }
+		else { log.error('${@FILE_LINE}: failed to load ${path}') }
 	}
+	return success
 }
 
 // font_variants retrieves the names of the files for the 4 font families in Gui. See [FontVariants](#FontVariants)

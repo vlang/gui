@@ -75,8 +75,8 @@ pub:
 		w.update_view(empty_view)
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
-	samples             u32                         = 2 // MSAA sample count; rounded corners of buttons with 0 and 1 look jagged on linux/windows
 	log_level           log.Level                   = default_log_level()
+	samples             u32 // MSAA sample count; rounded corners of buttons with 0 and 1 look jagged on linux/windows
 }
 
 fn default_log_level() log.Level {

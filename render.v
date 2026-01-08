@@ -77,7 +77,6 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			}
 		}
 		DrawText {
-			// ctx.draw_text(int(renderer.x), int(renderer.y), renderer.text, renderer.cfg)
 			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, to_vglyph_cfg(renderer.cfg)) or {}
 		}
 		DrawClip {
