@@ -31,7 +31,10 @@ fn initialize_fonts(mut ts vglyph.TextSystem) {
 	load_font(font_file_icon, mut ts)
 }
 
-fn load_font(path string, mut ts vglyph.TextSystem) bool {
+// load_font attempts to load a font file from the specified path into the text system.
+// It returns true if the font was successfully added, false otherwise.
+// It also logs the outcome of the operation to the standard logger.
+pub fn load_font(path string, mut ts vglyph.TextSystem) bool {
 	success := ts.add_font_file(path)
 	match success {
 		true { log.info('${path} successfully loaded') }
