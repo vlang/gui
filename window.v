@@ -13,6 +13,12 @@ import sync
 import log
 import vglyph
 
+$if macos {
+	const gg_sample_count = 1
+} $else {
+	const gg_sample_count = 2
+}
+
 pub struct Window {
 mut:
 	ui             &gg.Context                 = &gg.Context{}
@@ -76,7 +82,7 @@ pub:
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	log_level           log.Level                   = default_log_level()
-	samples             u32 // MSAA sample count; rounded corners of buttons with 0 and 1 look jagged on linux/windows
+	samples             u32                         = gg_sample_count // MSAA sample count; rounded corners of buttons with 0 and 1 look jagged on linux/windows
 }
 
 fn default_log_level() log.Level {
