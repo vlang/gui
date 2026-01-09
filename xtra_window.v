@@ -179,6 +179,27 @@ fn (mut window Window) update_window_size() {
 	window.window_size = window.ui.window_size()
 }
 
+// scroll_to_view scrolls the parent scroll container to make the view with the given id visible.
+pub fn (mut w Window) scroll_to_view(id string) {
+	target := w.layout.find_by_id(id) or { return }
+
+	mut p := target
+	for p.parent != unsafe { nil } {
+		unsafe {
+			p = *p.parent
+		}
+		if p.shape.id_scroll > 0 {
+			scroll_id := p.shape.id_scroll
+			current_scroll := w.view_state.scroll_y[scroll_id]
+			base_y := p.shape.y + p.shape.padding.top
+			new_scroll := base_y - target.shape.y + current_scroll
+			w.view_state.scroll_y[scroll_id] = new_scroll
+			w.update_window()
+			return
+		}
+	}
+}
+
 // scroll_horizontal_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_horizontal_by(id_scroll u32, delta f32) {

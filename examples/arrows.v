@@ -7,11 +7,12 @@ import gui
 @[heap]
 struct ArrowsApp {
 pub mut:
-	view_mode  string = 'grid' // 'grid' or 'list'
-	arrows     []ArrowSymbol
-	sorted     [][]string // For table view
-	sort_by    int        // For table sort
-	all_groups []string
+	view_mode      string = 'grid' // 'grid' or 'list'
+	arrows         []ArrowSymbol
+	sorted         [][]string // For table view
+	sort_by        int        // For table sort
+	all_groups     []string
+	selected_group string
 }
 
 struct ArrowSymbol {
@@ -38,6 +39,9 @@ fn main() {
 					groups_seen[arrow.group] = true
 					app.all_groups << arrow.group
 				}
+			}
+			if app.all_groups.len > 0 {
+				app.selected_group = app.all_groups[0]
 			}
 			w.update_view(main_view)
 		}
@@ -85,13 +89,7 @@ fn sidebar(mut w gui.Window) gui.View {
 	toggles << gui.text(text: 'Groups', text_style: gui.theme().b1)
 
 	for group in app.all_groups {
-		toggles << gui.button(
-			content:  [gui.text(text: group, text_style: gui.theme().b2)]
-			padding:  gui.padding(4, 8, 4, 8)
-			on_click: fn [group] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-				w.scroll_to_view('group-${group}')
-			}
-		)
+		toggles << group_select(group, app)
 	}
 
 	return gui.column(
@@ -102,6 +100,30 @@ fn sidebar(mut w gui.Window) gui.View {
 		id:        'sidebar-scroll'
 		id_scroll: 3
 		content:   toggles
+	)
+}
+
+fn group_select(group string, app &ArrowsApp) gui.View {
+	color := if app.selected_group == group {
+		gui.theme().color_active
+	} else {
+		gui.color_transparent
+	}
+	return gui.row(
+		color:    color
+		fill:     app.selected_group == group
+		padding:  gui.theme().padding_small
+		content:  [gui.text(text: group, text_style: gui.theme().n3)]
+		on_click: fn [group] (_ voidptr, mut e gui.Event, mut w gui.Window) {
+			mut app := w.state[ArrowsApp]()
+			app.selected_group = group
+			w.scroll_to_view('group-${group}')
+		}
+		on_hover: fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			layout.shape.fill = true
+			layout.shape.color = gui.theme().color_hover
+			w.set_mouse_cursor_pointing_hand()
+		}
 	)
 }
 

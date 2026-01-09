@@ -204,3 +204,16 @@ fn clear_layouts(mut layout Layout) {
 		layout.children.free()
 	}
 }
+
+// find_by_id searches the layout tree for a layout with the given ID.
+pub fn (layout &Layout) find_by_id(id string) ?Layout {
+	if layout.shape.id == id {
+		return *layout
+	}
+	for i in 0 .. layout.children.len {
+		if res := layout.children[i].find_by_id(id) {
+			return res
+		}
+	}
+	return none
+}
