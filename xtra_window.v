@@ -179,6 +179,11 @@ fn (mut window Window) update_window_size() {
 	window.window_size = window.ui.window_size()
 }
 
+// find_layout_by_id searches the layout tree for a layout with the given ID.
+pub fn (window &Window) find_layout_by_id(id string) ?Layout {
+	return window.layout.find_by_id(id)
+}
+
 // scroll_to_view scrolls the parent scroll container to make the view with the given id visible.
 pub fn (mut w Window) scroll_to_view(id string) {
 	target := w.layout.find_by_id(id) or { return }

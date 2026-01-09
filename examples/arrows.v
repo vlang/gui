@@ -24,11 +24,11 @@ struct ArrowSymbol {
 
 fn main() {
 	mut window := gui.window(
-		title:   'Arrow Symbols'
-		state:   &ArrowsApp{}
-		width:   1000
-		height:  800
-		on_init: fn (mut w gui.Window) {
+		title:    'Arrow Symbols'
+		state:    &ArrowsApp{}
+		width:    1000
+		height:   800
+		on_init:  fn (mut w gui.Window) {
 			mut app := w.state[ArrowsApp]()
 			app.arrows = get_arrows()
 			// Prepare table data and groups
@@ -202,6 +202,9 @@ fn grid_view(mut w gui.Window) gui.View {
 
 	return gui.column(
 		id:        'grid-scroll'
+		on_scroll: fn (_ &gui.Layout, mut w gui.Window) {
+			update_active_scroll_group(mut w)
+		}
 		id_scroll: 1
 		sizing:    gui.fill_fill
 		padding:   gui.padding_large
@@ -267,6 +270,9 @@ fn list_view(mut w gui.Window) gui.View {
 
 	return gui.column(
 		id:        'list-scroll'
+		on_scroll: fn (_ &gui.Layout, mut w gui.Window) {
+			update_active_scroll_group(mut w)
+		}
 		id_scroll: 1
 		sizing:    gui.fill_fill
 		padding:   gui.padding(0, 0, 15, 15)
@@ -1029,4 +1035,39 @@ fn get_arrows() []ArrowSymbol {
 	arrows << ArrowSymbol{'🡆', 'Rightwards Heavy Arrow', '1F846', 'Fedex Logo Arrow'}
 
 	return arrows
+}
+
+fn update_active_scroll_group(mut w gui.Window) {
+	mut app := w.state[ArrowsApp]()
+	// ID of the main content scrollview
+	scroll_id := if app.view_mode == 'list' { 'list-scroll' } else { 'grid-scroll' }
+
+	// We need to find the scroll container to get its Y position
+	container := w.find_layout_by_id(scroll_id) or { return }
+	container_y := container.shape.y + container.shape.padding.top
+
+	mut active_group := ''
+	// Iterate through groups in reverse order to find the first one that is above the fold?
+	// No, we want the one that is closest to the top but not too far down.
+	// Actually, standard spy logic: last header that has (y <= container_y)
+
+	for group in app.all_groups {
+		if group_layout := w.find_layout_by_id('group-${group}') {
+			// Check if the group header is at or above the top of the container
+			// We give it a little threshold (e.g. 10px) so it selects as soon as it's near top
+			if group_layout.shape.y <= container_y + 10 {
+				active_group = group
+			} else {
+				// Since groups are ordered, once we find one below the fold, we can stop
+				// The previous one (stored in active_group) is the correct one.
+				break
+			}
+		}
+	}
+
+	if active_group != '' && active_group != app.selected_group {
+		app.selected_group = active_group
+		// State changed, ensure window updates next frame
+		w.update_window()
+	}
 }

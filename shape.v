@@ -46,6 +46,7 @@ pub mut:
 	on_mouse_move       fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_mouse_up         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_mouse_scroll     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_scroll           fn (&Layout, mut Window)               = unsafe { nil }
 	amend_layout        fn (mut Layout, mut Window)            = unsafe { nil }
 	on_hover            fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	h_align             HorizontalAlign
