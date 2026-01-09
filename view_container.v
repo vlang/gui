@@ -95,6 +95,7 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 			}
 			on_mouse_up:    cv.on_mouse_up
 			on_hover:       cv.on_hover
+			on_scroll:      cv.on_scroll
 			amend_layout:   cv.amend_layout
 		}
 	}
@@ -170,6 +171,7 @@ pub:
 	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_scroll       fn (&Layout, mut Window)               = unsafe { nil }
 	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
 	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	width           f32
@@ -302,6 +304,7 @@ fn container(cfg ContainerCfg) View {
 		on_mouse_move:  cfg.on_mouse_move
 		on_mouse_up:    cfg.on_mouse_up
 		on_hover:       cfg.on_hover
+		on_scroll:      cfg.on_scroll
 		amend_layout:   cfg.amend_layout
 		content:        content
 	}

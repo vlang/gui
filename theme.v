@@ -12,12 +12,12 @@ pub const radius_medium = f32(5)
 pub const radius_large = f32(7)
 pub const radius_border = radius_medium + 2
 
-pub const size_text_tiny = 10
-pub const size_text_x_small = 12
-pub const size_text_small = 14
-pub const size_text_medium = 16
-pub const size_text_large = 18
-pub const size_text_x_large = 20
+pub const size_text_medium = 15
+pub const size_text_tiny = size_text_medium - 6
+pub const size_text_x_small = size_text_medium - 4
+pub const size_text_small = size_text_medium - 2
+pub const size_text_large = size_text_medium + 2
+pub const size_text_x_large = size_text_medium + 4
 
 pub const spacing_small = 5
 pub const spacing_medium = 10
@@ -57,14 +57,14 @@ const size_progress_bar = 10
 const text_style_dark = TextStyle{
 	color:        color_text_dark
 	size:         size_text_medium
-	family:       font_file_regular
+	family:       base_font_name
 	line_spacing: text_line_spacing
 }
 
 const text_style_icon_dark = TextStyle{
 	color:        color_text_dark
 	size:         size_text_medium
-	family:       font_file_icon
+	family:       base_font_name
 	line_spacing: text_line_spacing
 }
 
@@ -192,58 +192,58 @@ pub:
 	// Mono
 	m1 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_x_large
+		size: size_text_x_large + 1
 	}
 	m2 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_large
+		size: size_text_large + 1
 	}
 	m3 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_medium
+		size: size_text_medium + 1
 	}
 	m4 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_small
+		size: size_text_small + 1
 	}
 	m5 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_x_small
+		size: size_text_x_small + 1
 	}
 	m6 TextStyle = TextStyle{
 		...text_style_dark
-		size: size_text_tiny
+		size: size_text_tiny + 1
 	}
 	// Icon
 	icon1 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_x_large
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon2 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_large
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon3 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_medium
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon4 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_small
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon5 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_x_small
-		family: font_file_icon
+		family: icon_font_name
 	}
 	icon6 TextStyle = TextStyle{
 		...text_style_dark
 		size:   size_text_tiny
-		family: font_file_icon
+		family: icon_font_name
 	}
 
 	padding_small  Padding = padding_small
@@ -516,7 +516,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 			icon_style:         TextStyle{
 				...cfg.text_style
-				family: font_file_icon
+				family: icon_font_name
 				size:   cfg.size_text_medium
 			}
 		}
@@ -675,7 +675,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:      cfg.text_style
 			text_style_icon: TextStyle{
 				...cfg.text_style
-				family: font_file_icon
+				family: icon_font_name
 				size:   cfg.size_text_small
 			}
 		}
@@ -726,7 +726,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 	}
 	icon := TextStyle{
 		...theme.text_style
-		family: font_file_icon
+		family: icon_font_name
 	}
 
 	return Theme{
@@ -805,27 +805,27 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		// Mono
 		m1: TextStyle{
 			...mono
-			size: theme.size_text_x_large
+			size: theme.size_text_x_large + 1
 		}
 		m2: TextStyle{
 			...mono
-			size: theme.size_text_large
+			size: theme.size_text_large + 1
 		}
 		m3: TextStyle{
 			...mono
-			size: theme.size_text_medium
+			size: theme.size_text_medium + 1
 		}
 		m4: TextStyle{
 			...mono
-			size: theme.size_text_small
+			size: theme.size_text_small + 1
 		}
 		m5: TextStyle{
 			...mono
-			size: theme.size_text_x_small
+			size: theme.size_text_x_small + 1
 		}
 		m6: TextStyle{
 			...mono
-			size: theme.size_text_tiny
+			size: theme.size_text_tiny + 1
 		}
 		// Icon Font
 		icon1: TextStyle{

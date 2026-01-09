@@ -82,7 +82,7 @@ fn test_theme_maker_applies_cfg_and_invariants() {
 		text_style:      TextStyle{
 			color:        black
 			size:         17
-			family:       font_file_regular
+			family:       base_font_name
 			line_spacing: text_line_spacing
 		}
 	}
@@ -108,7 +108,7 @@ fn test_theme_maker_applies_cfg_and_invariants() {
 	assert t.container_style.padding == custom_cfg.padding
 	assert t.container_style.radius == custom_cfg.radius
 
-	// Button style picks key colors and radiuses
+	// Button style picks key colors and radius's
 	assert t.button_style.color == red
 	assert t.button_style.color_border == blue
 	assert t.button_style.color_hover == green

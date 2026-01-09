@@ -1356,6 +1356,11 @@ fn icon_catalog(mut w gui.Window) gui.View {
 	mut all_icons := []gui.View{cap: chunks.len}
 	unsafe { all_icons.flags.set(.noslices) }
 
+	cfg := gui.TextStyle{
+		...gui.theme().icon1
+		size: 24
+	}
+
 	// create rows of icons/text
 	for chunk in chunks {
 		mut icons := []gui.View{cap: chunk.len}
@@ -1366,7 +1371,7 @@ fn icon_catalog(mut w gui.Window) gui.View {
 				h_align:   .center
 				padding:   gui.padding_none
 				content:   [
-					gui.text(text: val, text_style: gui.theme().icon1),
+					gui.text(text: val, text_style: cfg),
 					gui.text(text: key, text_style: gui.theme().n4),
 				]
 			)

@@ -11,6 +11,13 @@ import gg
 import sokol.sapp
 import sync
 import log
+import vglyph
+
+$if macos {
+	const gg_sample_count = 0
+} $else {
+	const gg_sample_count = 2
+}
 
 pub struct Window {
 mut:
@@ -27,6 +34,7 @@ mut:
 	animations     []Animation
 	window_size    gg.Size // cached, gg.window_size() relatively slow
 	refresh_window bool
+	text_system    &vglyph.TextSystem = unsafe { nil }
 }
 
 // Window is the main application window. `state` holds app state.
@@ -73,8 +81,8 @@ pub:
 		w.update_view(empty_view)
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
-	samples             u32                         = 2 // MSAA sample count; rounded corners of buttons with 0 and 1 look jagged on linux/windows
 	log_level           log.Level                   = default_log_level()
+	samples             u32                         = gg_sample_count // MSAA sample count; rounded corners of buttons with 0 and 1 look jagged on linux/windows
 }
 
 fn default_log_level() log.Level {
@@ -109,6 +117,11 @@ pub fn window(cfg &WindowCfg) &Window {
 		sample_count:                 int(cfg.samples)
 		init_fn:                      fn [on_init, cursor_blink] (mut w Window) {
 			w.update_window_size()
+			w.text_system = vglyph.new_text_system(mut w.ui) or {
+				log.error('${@FILE_LINE}: ${err.str()}')
+				panic(err.str())
+			}
+			initialize_fonts(mut w.text_system)
 			spawn w.animation_loop()
 			if cursor_blink {
 				w.blinky_cursor_animation()
@@ -116,7 +129,6 @@ pub fn window(cfg &WindowCfg) &Window {
 			on_init(mut w)
 		}
 	)
-	initialize_fonts()
 
 	$if !prod {
 		at_exit(fn [window] () {
@@ -136,7 +148,7 @@ fn frame_fn(mut window Window) {
 
 	window.lock()
 	window.ui.begin()
-	renderers_draw(window.renderers, window)
+	renderers_draw(window.renderers, mut window)
 	window.ui.end()
 	window.unlock()
 	sapp.set_mouse_cursor(window.view_state.mouse_cursor)

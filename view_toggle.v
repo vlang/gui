@@ -7,7 +7,7 @@ pub struct ToggleCfg {
 pub:
 	id                 string
 	label              string
-	text_select        string = icon_check
+	text_select        string = '✓'
 	text_unselect      string = ' '
 	on_click           fn (&Layout, mut Event, mut Window) @[required]
 	text_style         TextStyle = gui_theme.toggle_style.text_style
@@ -47,8 +47,8 @@ pub fn toggle(cfg ToggleCfg) View {
 		radius:     cfg.radius_border
 		disabled:   cfg.disabled
 		invisible:  cfg.invisible
-		min_width:  gui_theme.n3.size + 2
-		min_height: gui_theme.n3.size + 2
+		min_width:  gui_theme.n1.size
+		min_height: gui_theme.n1.size
 		h_align:    .center
 		v_align:    .middle
 		content:    [

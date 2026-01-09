@@ -274,7 +274,7 @@ pub:
 	family       string
 	color        Color
 	line_spacing f32
-	size         int
+	size         int = size_text_medium
 }
 
 fn (ts TextStyle) to_text_cfg() gg.TextCfg {

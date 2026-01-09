@@ -159,6 +159,9 @@ fn (cfg &ScrollbarCfg) mouse_move_locked(layout &Layout, mut e Event, mut w Wind
 					&& e.mouse_x <= (ly.shape.x + ly.shape.width + extend) {
 					offset := offset_mouse_change_x(ly, e.mouse_dx, cfg.id_track, w)
 					w.view_state.scroll_x[cfg.id_track] = offset
+					if ly.shape.on_scroll != unsafe { nil } {
+						ly.shape.on_scroll(ly, mut w)
+					}
 				}
 			}
 			else {
@@ -166,6 +169,9 @@ fn (cfg &ScrollbarCfg) mouse_move_locked(layout &Layout, mut e Event, mut w Wind
 					&& e.mouse_y <= (ly.shape.y + ly.shape.height + extend) {
 					offset := offset_mouse_change_y(ly, e.mouse_dy, cfg.id_track, w)
 					w.view_state.scroll_y[cfg.id_track] = offset
+					if ly.shape.on_scroll != unsafe { nil } {
+						ly.shape.on_scroll(ly, mut w)
+					}
 				}
 			}
 		}
@@ -323,6 +329,9 @@ fn offset_from_mouse_x(layout &Layout, mouse_x f32, id_scroll u32, mut w Window)
 			percent = 1
 		}
 		w.view_state.scroll_x[id_scroll] = -percent * (total_width - sb.shape.width)
+		if sb.shape.on_scroll != unsafe { nil } {
+			sb.shape.on_scroll(sb, mut w)
+		}
 	}
 }
 
@@ -346,6 +355,9 @@ fn offset_from_mouse_y(layout &Layout, mouse_y f32, id_scroll u32, mut w Window)
 			percent = 1
 		}
 		w.view_state.scroll_y[id_scroll] = -percent * (total_height - sb.shape.height)
+		if sb.shape.on_scroll != unsafe { nil } {
+			sb.shape.on_scroll(sb, mut w)
+		}
 	}
 }
 
@@ -365,6 +377,9 @@ fn scroll_horizontal(layout &Layout, delta f32, mut w Window) bool {
 		max_offset := f32_min(0, layout.shape.width - layout.shape.padding.width() - content_width(layout))
 		offset_x := w.view_state.scroll_x[v_id] + delta * gui_theme.scroll_multiplier
 		w.view_state.scroll_x[v_id] = f32_clamp(offset_x, max_offset, 0)
+		if layout.shape.on_scroll != unsafe { nil } {
+			layout.shape.on_scroll(layout, mut w)
+		}
 		return true
 	}
 	return false
@@ -386,6 +401,9 @@ fn scroll_vertical(layout &Layout, delta f32, mut w Window) bool {
 		max_offset := f32_min(0, layout.shape.height - layout.shape.padding.height() - content_height(layout))
 		offset_y := w.view_state.scroll_y[v_id] + delta * gui_theme.scroll_multiplier
 		w.view_state.scroll_y[v_id] = f32_clamp(offset_y, max_offset, 0)
+		if layout.shape.on_scroll != unsafe { nil } {
+			layout.shape.on_scroll(layout, mut w)
+		}
 		return true
 	}
 	return false

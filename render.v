@@ -3,6 +3,7 @@ module gui
 import gg
 import sokol.sgl
 import log
+import vglyph
 
 // A Renderer is the final computed drawing instruction. gui.Window keeps an array
 // of Renderers and only uses that array to paint the window. The window can be
@@ -55,14 +56,15 @@ type Renderer = DrawCircle | DrawClip | DrawImage | DrawLine | DrawNone | DrawRe
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
 // draw logic of GUI
-fn renderers_draw(renderers []Renderer, window &Window) {
+fn renderers_draw(renderers []Renderer, mut window Window) {
 	for renderer in renderers {
-		renderer_draw(renderer, window)
+		renderer_draw(renderer, mut window)
 	}
+	window.text_system.commit()
 }
 
 // renderer_draw draws a single renderer
-fn renderer_draw(renderer Renderer, window &Window) {
+fn renderer_draw(renderer Renderer, mut window Window) {
 	mut ctx := window.ui
 	match renderer {
 		DrawRect {
@@ -75,7 +77,7 @@ fn renderer_draw(renderer Renderer, window &Window) {
 			}
 		}
 		DrawText {
-			ctx.draw_text(int(renderer.x), int(renderer.y), renderer.text, renderer.cfg)
+			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, to_vglyph_cfg(renderer.cfg)) or {}
 		}
 		DrawClip {
 			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
@@ -166,7 +168,6 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 // At some point, it should be moved to the container logic, along with some layout amend logic.
 // Honestly, it was more expedient to put it here.
 fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
-	ctx := window.ui
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
 	render_rectangle(mut shape, clip, mut window)
 
@@ -179,8 +180,9 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			height: shape.height
 		}
 		if rects_overlap(draw_rect, clip) {
-			ctx.set_text_cfg(shape.text_style.to_text_cfg())
-			w, h := ctx.text_size(shape.text)
+			cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
+			w := window.text_system.text_width(shape.text, cfg) or { 0 }
+			h := window.text_system.text_height(shape.text, cfg) or { 0 }
 			x := shape.x + 20
 			y := shape.y
 			// erase portion of rectangle where text goes.
@@ -202,12 +204,9 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			} else {
 				shape.text_style.color
 			}
-			// The height of a lowercase char usually splits
-			// the text just right.
-			eh := ctx.text_height('e')
 			window.renderers << DrawText{
 				x:    x
-				y:    y - eh
+				y:    y - h / 2 - 1
 				text: shape.text
 				cfg:  TextStyle{
 					...shape.text_style
@@ -289,16 +288,13 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		shape.disabled = true
 		return
 	}
-	ctx := window.ui
 	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
 	text_cfg := TextStyle{
 		...shape.text_style
 		color: color
 	}.to_text_cfg()
 
-	ctx.set_text_cfg(text_cfg)
-	lh := line_height(shape)
-
+	lh := line_height(shape, mut window)
 	mut char_count := 0
 	x := shape.x
 	mut y := shape.y
@@ -336,8 +332,9 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				if b < e {
 					stob := lnr[..b].string()
 					sbtoe := lnr[b..e].string()
-					sb := ctx.text_width(stob)
-					se := ctx.text_width(sbtoe)
+					cfg := to_vglyph_cfg(text_cfg)
+					sb := window.text_system.text_width(stob, cfg) or { 0 }
+					se := window.text_system.text_width(sbtoe, cfg) or { 0 }
 					window.renderers << DrawRect{
 						x:     draw_rect.x + sb
 						y:     draw_rect.y
@@ -362,7 +359,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 	if window.is_focus(shape.id_focus) && shape.shape_type == .text
 		&& window.view_state.input_cursor_on {
-		lh := line_height(shape)
+		lh := line_height(shape, mut window)
 		mut cursor_x := -1
 		mut cursor_y := -1
 		input_state := window.view_state.input_state[shape.id_focus]
@@ -386,15 +383,16 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 			}
 		}
 		if cursor_x >= 0 && cursor_y >= 0 {
-			ctx := window.ui
 			if cursor_y < shape.text_lines.len {
 				ln := shape.text_lines[cursor_y]
 				x := int_min(cursor_x, ln.len)
 				ln_fragment := ln[..x]
+				cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
 				text_width := if shape.text_is_password {
-					ctx.text_width(password_char.repeat(utf8_str_visible_length(ln_fragment)))
+					pw := password_char.repeat(utf8_str_visible_length(ln_fragment))
+					window.text_system.text_width(pw, cfg) or { 0 }
 				} else {
-					ctx.text_width(ln_fragment)
+					window.text_system.text_width(ln_fragment, cfg) or { 0 }
 				}
 				avoid_clip_start_of_line := if cursor_x == 0 { 1 } else { 0 }
 				cx := shape.x + text_width + avoid_clip_start_of_line
@@ -512,4 +510,13 @@ fn dim_alpha(color Color) Color {
 fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
 	return r1.x < (r2.x + r2.width) && r2.x < (r1.x + r1.width) && r1.y < (r2.y + r2.height)
 		&& r2.y < (r1.y + r1.height)
+}
+
+fn to_vglyph_cfg(cfg gg.TextCfg) vglyph.TextConfig {
+	return vglyph.TextConfig{
+		font_name: '${cfg.family} ${cfg.size}px'
+		width:     -1
+		align:     .left
+		color:     cfg.color
+	}
 }
