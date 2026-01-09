@@ -7,12 +7,11 @@ import gui
 @[heap]
 struct ArrowsApp {
 pub mut:
-	view_mode     string = 'grid' // 'grid' or 'list'
-	arrows        []ArrowSymbol
-	sorted        [][]string // For table view
-	sort_by       int        // For table sort
-	all_groups    []string
-	hidden_groups map[string]bool
+	view_mode  string = 'grid' // 'grid' or 'list'
+	arrows     []ArrowSymbol
+	sorted     [][]string // For table view
+	sort_by    int        // For table sort
+	all_groups []string
 }
 
 struct ArrowSymbol {
@@ -83,48 +82,14 @@ fn sidebar(mut w gui.Window) gui.View {
 	mut app := w.state[ArrowsApp]()
 	mut toggles := []gui.View{}
 
-	toggles << gui.row(
-		spacing: gui.spacing_small
-		content: [
-			gui.button(
-				padding:  gui.padding(4, 4, 4, 4)
-				content:  [gui.text(text: 'Check All', text_style: gui.theme().n5)]
-				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[ArrowsApp]()
-					app.hidden_groups = map[string]bool{}
-					w.update_view(main_view)
-				}
-			),
-			gui.button(
-				padding:  gui.padding(4, 4, 4, 4)
-				content:  [gui.text(text: 'Uncheck All', text_style: gui.theme().n5)]
-				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[ArrowsApp]()
-					for group in app.all_groups {
-						app.hidden_groups[group] = true
-					}
-					w.update_view(main_view)
-				}
-			),
-		]
-	)
-
 	toggles << gui.text(text: 'Groups', text_style: gui.theme().b1)
 
 	for group in app.all_groups {
-		is_checked := group !in app.hidden_groups
-		toggles << gui.toggle(
-			label:    group
-			select:   is_checked
+		toggles << gui.button(
+			content:  [gui.text(text: group, text_style: gui.theme().b2)]
+			padding:  gui.padding(4, 8, 4, 8)
 			on_click: fn [group] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-				mut app := w.state[ArrowsApp]()
-				is_visible := group !in app.hidden_groups
-				if is_visible {
-					app.hidden_groups[group] = true
-				} else {
-					app.hidden_groups.delete(group)
-				}
-				w.update_view(main_view)
+				w.scroll_to_view('group-${group}')
 			}
 		)
 	}
@@ -187,10 +152,8 @@ fn grid_view(mut w gui.Window) gui.View {
 	mut content := []gui.View{}
 
 	for group_name in group_names {
-		if group_name in app.hidden_groups {
-			continue
-		}
 		content << gui.column(
+			id:      'group-${group_name}'
 			padding: gui.padding(24, 0, 10, 8)
 			content: [gui.text(text: group_name, text_style: gui.theme().b2)]
 		)
@@ -257,10 +220,8 @@ fn list_view(mut w gui.Window) gui.View {
 	mut content := []gui.View{}
 
 	for group_name in group_names {
-		if group_name in app.hidden_groups {
-			continue
-		}
 		content << gui.column(
+			id:      'group-${group_name}'
 			padding: gui.padding(24, 0, 10, 8)
 			content: [gui.text(text: group_name, text_style: gui.theme().b2)]
 		)
@@ -286,7 +247,7 @@ fn list_view(mut w gui.Window) gui.View {
 		id:        'list-scroll'
 		id_scroll: 1
 		sizing:    gui.fill_fill
-		padding:   gui.padding(0, 0, 0, 15)
+		padding:   gui.padding(0, 0, 15, 15)
 		content:   content
 	)
 }
@@ -294,7 +255,7 @@ fn list_view(mut w gui.Window) gui.View {
 fn get_arrows() []ArrowSymbol {
 	// This function populates the huge list of arrows.
 	// I am pasting the parsed data here.
-	mut arrows := []ArrowSymbol{}
+	mut arrows := []ArrowSymbol{cap: 750}
 
 	// Right Arrows
 	arrows << ArrowSymbol{'→', 'Rightwards Arrow', '2192', 'Right Arrows'}

@@ -14,7 +14,7 @@ import log
 import vglyph
 
 $if macos {
-	const gg_sample_count = 1
+	const gg_sample_count = 0
 } $else {
 	const gg_sample_count = 2
 }
@@ -279,5 +279,34 @@ fn (mut window Window) compose_layout(mut view View) Layout {
 			color: color_transparent
 		}
 		children: layouts
+	}
+}
+
+// scroll_to_view scrolls the parent scroll container to make the view with the given id visible.
+pub fn (mut w Window) scroll_to_view(id string) {
+	target := w.layout.find_by_id(id) or { return }
+
+	mut p := target
+	for p.parent != unsafe { nil } {
+		unsafe {
+			p = *p.parent
+		}
+		if p.shape.id_scroll > 0 {
+			scroll_id := p.shape.id_scroll
+			current_scroll := w.view_state.scroll_y[scroll_id]
+			base_y := p.shape.y + p.shape.padding.top
+
+			// We want: screen_y = base_y
+			// screen_y = logical_y + new_scroll + base_y
+			// => new_scroll = -logical_y
+			// logical_y = target.shape.y - current_scroll - base_y
+			// => new_scroll = -(target.shape.y - current_scroll - base_y)
+			// => new_scroll = base_y - target.shape.y + current_scroll
+
+			new_scroll := base_y - target.shape.y + current_scroll
+			w.view_state.scroll_y[scroll_id] = new_scroll
+			w.update_window()
+			return
+		}
 	}
 }

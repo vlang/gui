@@ -769,3 +769,16 @@ fn layout_hover(mut layout Layout, mut w Window) bool {
 	}
 	return false
 }
+
+// find_by_id searches the layout tree for a layout with the given ID.
+pub fn (l &Layout) find_by_id(id string) ?Layout {
+	if l.shape.id == id {
+		return *l
+	}
+	for i in 0 .. l.children.len {
+		if res := l.children[i].find_by_id(id) {
+			return res
+		}
+	}
+	return none
+}
