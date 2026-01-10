@@ -7,12 +7,7 @@ import vglyph
 
 // A Renderer is the final computed drawing instruction. gui.Window keeps an array
 // of Renderers and only uses that array to paint the window. The window can be
-// repainted many times before the a new view state is generated. Drawing, as
-// implemented in V's gg.Context, happens in a separate thread. By only using the
-// final draw instructions (i.e. Renderers), along with the appropriate mutexes,
-// Gui isolates view generation and layout calculations from the UI thread. This
-// eliminates the need to, "dispatch to the UI thread", that many other UI
-// frameworks require.
+// repainted many times before the a new view state is generated.
 
 const password_char = '*'
 

@@ -262,9 +262,6 @@ fn (mut window Window) do_update_window() {
 	$if !prod {
 		gui_stats.update_max_renderers(usize(window.renderers.len))
 	}
-
-	// Clearing views/layouts aids GC.
-	clear_views(mut view)
 }
 
 // compose_layout produces a layout from the given view that is

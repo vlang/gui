@@ -25,13 +25,3 @@ fn generate_layout(mut view View, mut window Window) Layout {
 	}
 	return layout
 }
-
-fn clear_views(mut view View) {
-	for mut child in view.content {
-		clear_views(mut child)
-	}
-	unsafe {
-		view.content.free()
-		view.free()
-	}
-}
