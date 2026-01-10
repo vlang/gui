@@ -30,6 +30,8 @@ jobs:
         uses: vlang/setup-v@v1.4
         with:
           check-latest: true
+      - name: Install vglyph
+        run: v install vglyph 
       - name: Update packages
         run: v retry -- sudo apt -qq update
       - name: Install X11/GL development dependencies (headers and libs)
@@ -64,6 +66,8 @@ jobs:
         uses: vlang/setup-v@v1.4
         with:
           check-latest: true
+      - name: Install vglyph
+        run: v install vglyph 
       - name: Install X11/GL development dependencies (headers and libs)
         if: runner.os == 'Linux'
         run: v retry -- sudo apt -qq update && v retry -- sudo apt install libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
@@ -89,6 +93,8 @@ jobs:
         uses: vlang/setup-v@v1.4
         with:
           check-latest: true
+      - name: Install vglyph
+        run: v install vglyph 
       - name: Checkout the gui module
         uses: actions/checkout@v4
         with:
