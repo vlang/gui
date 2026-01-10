@@ -207,7 +207,7 @@ fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 				if cell.head_cell { cfg.text_style_head } else { cfg.text_style }
 			}
 
-			width := get_text_width(row.cells[idx].value, text_style, mut window)
+			width := text_width(row.cells[idx].value, text_style, mut window)
 			longest = f32_max(width, longest)
 		}
 		column_widths << longest

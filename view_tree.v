@@ -71,7 +71,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 		is_open { icon_drop_down }
 		else { icon_drop_right }
 	}
-	min_width_icon := get_text_width('${icon_bar} ', node.text_style_icon, mut window)
+	min_width_icon := text_width('${icon_bar} ', node.text_style_icon, mut window)
 
 	mut content := []View{cap: 2}
 	cfg_id := cfg.id

@@ -106,7 +106,7 @@ fn icon_catalog(mut w gui.Window) gui.View {
 	// find the longest text
 	if app.longest == 0 {
 		for s in gui.icons_map.keys() {
-			app.longest = f32_max(gui.get_text_width(s, gui.theme().n4, mut w), app.longest)
+			app.longest = f32_max(gui.text_width(s, gui.theme().n4, mut w), app.longest)
 		}
 	}
 

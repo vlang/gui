@@ -9,47 +9,32 @@ module gui
 //
 import clipboard
 import encoding.utf8
-import hash.fnv1a
 
-pub fn get_text_width_no_cache(text string, text_style TextStyle, window &Window) f32 {
+pub fn text_width_no_cache(text string, text_style TextStyle, window &Window) f32 {
 	cfg := to_vglyph_cfg(text_style.to_text_cfg())
 	return unsafe { window.text_system.text_width(text, cfg) or { 0 } }
 }
 
-// get_text_width calculates the width of a given text based on its style and window configuration,
+// text_width calculates the width of a given text based on its style and window configuration,
 // leveraging a caching mechanism to optimize performance.
-pub fn get_text_width(text string, text_style TextStyle, mut window Window) f32 {
-	htx := fnv1a.sum32_struct(text_style).str()
-	text_htx := text + htx
-	key := fnv1a.sum32_string(text_htx)
-	return window.view_state.text_widths[key] or {
-		cfg := to_vglyph_cfg(text_style.to_text_cfg())
-		t_width := window.text_system.text_width(text, cfg) or { 0 }
-		window.view_state.text_widths[key] = t_width
-		t_width
-	}
+pub fn text_width(text string, text_style TextStyle, mut window Window) f32 {
+	cfg := to_vglyph_cfg(text_style.to_text_cfg())
+	return window.text_system.text_width(text, cfg) or { 0 }
 }
 
-// text_width measures the visual width of the shape's lines, mirroring render rules:
+// text_width_shape measures the visual width of the shape's lines, mirroring render rules:
 // - when in password mode (and not placeholder), measure '*' repeated for visible rune count
-fn text_width(shape &Shape, mut window Window) f32 {
+fn text_width_shape(shape &Shape, mut window Window) f32 {
 	mut max_width := f32(0)
-	htx := fnv1a.sum32_struct(shape.text_style).str()
+	cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
 	for line in shape.text_lines {
-		mut effective := line
 		// Mirror password masking used in render so measurement matches drawing
-		if shape.text_is_password && !shape.text_is_placeholder {
-			// Replace content with repeated password_char for the number of visible UTF-8 runes
-			effective = password_char.repeat(utf8_str_visible_length(effective))
+		// Replace content with repeated password_char for the number of visible UTF-8 runes
+		effective := match shape.text_is_password && !shape.text_is_placeholder {
+			true { password_char.repeat(utf8_str_visible_length(line)) }
+			else { line }
 		}
-
-		line_htx := effective + htx
-		key := fnv1a.sum32_string(line_htx)
-		width := window.view_state.text_widths[key] or {
-			cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
-			t_width := window.text_system.text_width(effective, cfg) or { 0 }
-			t_width
-		}
+		width := window.text_system.text_width(effective, cfg) or { 0 }
 		max_width = f32_max(width, max_width)
 	}
 	return max_width
@@ -109,7 +94,7 @@ fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u
 			continue
 		}
 		n_line := line + field + ' '
-		t_width := get_text_width(n_line, text_style, mut window)
+		t_width := text_width(n_line, text_style, mut window)
 		if t_width > width {
 			wrap << line
 			line = field + ' '
@@ -151,7 +136,7 @@ fn wrap_text_keep_spaces(text string, text_style TextStyle, max_width f32, tab_s
 		}
 
 		candidate_line := current_line + field
-		candidate_width := get_text_width(candidate_line, text_style, mut window)
+		candidate_width := text_width(candidate_line, text_style, mut window)
 
 		if candidate_width <= max_width {
 			// Field fits on current line as-is
@@ -173,7 +158,7 @@ fn wrap_text_keep_spaces(text string, text_style TextStyle, max_width f32, tab_s
 			mut spaces_to_add := ''
 			for sp in field {
 				test := current_line + spaces_to_add + sp.str()
-				if get_text_width(test, text_style, mut window) <= max_width {
+				if text_width(test, text_style, mut window) <= max_width {
 					spaces_to_add += sp.str()
 				} else {
 					break
@@ -205,7 +190,7 @@ fn wrap_text_keep_spaces(text string, text_style TextStyle, max_width f32, tab_s
 				mut spaces_to_add := ''
 				for space in next_field {
 					test_line := current_line + spaces_to_add + space.str()
-					test_width := get_text_width(test_line, text_style, mut window)
+					test_width := text_width(test_line, text_style, mut window)
 					if test_width <= max_width {
 						spaces_to_add += space.str()
 						can_add_space = true

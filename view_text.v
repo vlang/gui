@@ -64,7 +64,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			on_click:            tv.on_click
 		}
 	}
-	layout.shape.width = text_width(layout.shape, mut window)
+	layout.shape.width = text_width_shape(layout.shape, mut window)
 	layout.shape.height = text_height(layout.shape, mut window)
 	if tv.mode == .single_line || layout.shape.sizing.width == .fixed {
 		layout.shape.min_width = f32_max(layout.shape.width, layout.shape.min_width)

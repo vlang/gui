@@ -10,7 +10,6 @@ mut:
 	input_date_state  map[string]bool            // [id] -> visible
 	scroll_x          map[u32]f32                // [id_scroll] -> scroll offset x
 	scroll_y          map[u32]f32                // [id_scroll] -> scroll offset y
-	text_widths       map[u32]f32                // [text + hash(text_style)] -> text width
 	mouse_cursor      sapp.MouseCursor           // arrow, finger, ibeam, etc.
 	menu_state        map[u32]string             // [id_menubar] -> id of menu
 	menu_key_nav      bool                       // true, menu navigated by keyboard

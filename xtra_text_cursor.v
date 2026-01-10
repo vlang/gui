@@ -352,9 +352,9 @@ fn get_cursor_column(strs []string, cursor_pos int) int {
 fn cursor_position_from_offset(str string, offset f32, style TextStyle, window &Window) int {
 	rune_str := str.runes()
 	for idx in 1 .. rune_str.len {
-		width := get_text_width_no_cache(rune_str[0..idx].string(), style, window)
+		width := text_width_no_cache(rune_str[0..idx].string(), style, window)
 		if width > offset {
-			char_width := get_text_width_no_cache(rune_str[idx].str(), style, window)
+			char_width := text_width_no_cache(rune_str[idx].str(), style, window)
 			return if offset - char_width > width { idx } else { idx - 1 }
 		}
 	}
@@ -381,10 +381,10 @@ fn offset_from_cursor_position(shape Shape, cursor_position int, window &Window)
 	rune_str := str.runes()
 	cursor_column := cursor_position - len
 	if cursor_column >= rune_str.len {
-		return get_text_width_no_cache(str, shape.text_style, window)
+		return text_width_no_cache(str, shape.text_style, window)
 	}
 	rune_slice := rune_str[0..cursor_column]
-	offset := get_text_width_no_cache(rune_slice.string(), shape.text_style, window)
+	offset := text_width_no_cache(rune_slice.string(), shape.text_style, window)
 	return offset
 }
 
@@ -565,7 +565,7 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	mut current_width := f32(0.0)
 	mut count := -1
 	for i, r in line.runes_iterator() {
-		char_width := get_text_width(r.str(), shape.text_style, mut w)
+		char_width := text_width(r.str(), shape.text_style, mut w)
 		// Check if mouse is close to the beginning of this character.
 		// Use a threshold (1/3 of width) to determine if cursor should be before this char.
 		if current_width + (char_width / 3) > e.mouse_x {

@@ -395,17 +395,17 @@ fn dates(times []time.Time) []time.Time {
 
 fn (cfg DatePickerCfg) cell_size(w &Window) f32 {
 	w_size := match cfg.weekdays_len {
-		.one_letter { get_text_width_no_cache('W', cfg.text_style, w) }
-		.three_letter { get_text_width_no_cache('Wed', cfg.text_style, w) }
-		.full { get_text_width_no_cache('Wednesday', cfg.text_style, w) }
+		.one_letter { text_width_no_cache('W', cfg.text_style, w) }
+		.three_letter { text_width_no_cache('Wed', cfg.text_style, w) }
+		.full { text_width_no_cache('Wednesday', cfg.text_style, w) }
 	}
-	d_size := get_text_width_no_cache('00', cfg.text_style, w)
+	d_size := text_width_no_cache('00', cfg.text_style, w)
 	return f32_max(w_size, d_size) + gui_theme.button_style.padding.width() + padding_two.width()
 }
 
 fn (cfg DatePickerCfg) month_picker_width(w &Window) f32 {
-	return get_text_width_no_cache('May', cfg.text_style, w) +
-		gui_theme.button_style.padding.width() + gui_theme.button_style.padding_border.width()
+	return text_width_no_cache('May', cfg.text_style, w) + gui_theme.button_style.padding.width() +
+		gui_theme.button_style.padding_border.width()
 }
 
 fn (cfg DatePickerCfg) disabled(date time.Time, state DatePickerState) bool {

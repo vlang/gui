@@ -1348,7 +1348,7 @@ fn icon_catalog(mut w gui.Window) gui.View {
 	// find the longest text
 	mut longest := f32(0)
 	for s in gui.icons_map.keys() {
-		longest = f32_max(gui.get_text_width(s, gui.theme().n4, mut w), longest)
+		longest = f32_max(gui.text_width(s, gui.theme().n4, mut w), longest)
 	}
 
 	// Break the icons_maps into rows

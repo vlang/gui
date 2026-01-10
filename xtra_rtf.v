@@ -37,7 +37,7 @@ fn rtf_simple_wrap(spans datatypes.LinkedList[TextSpan], mut window Window) data
 				x = 0
 				y += span.style.size + span.style.line_spacing
 			}
-			width := get_text_width(line, span.style, mut window)
+			width := text_width(line, span.style, mut window)
 			tspans.push(TextSpan{
 				x:     x
 				y:     y
@@ -91,7 +91,7 @@ fn rtf_wrap_text(spans datatypes.LinkedList[TextSpan], width f32, tab_size u32, 
 				continue
 			}
 			if tspan.text.len == 0 {
-				field_width := get_text_width(field, tspan.style, mut window)
+				field_width := text_width(field, tspan.style, mut window)
 				if x + field_width > width {
 					x = 0
 					y += h
@@ -105,9 +105,9 @@ fn rtf_wrap_text(spans datatypes.LinkedList[TextSpan], width f32, tab_size u32, 
 				continue
 			}
 			line := tspan.text + field
-			line_width := get_text_width(line, tspan.style, mut window)
+			line_width := text_width(line, tspan.style, mut window)
 			if x + line_width > width {
-				tspan.w = get_text_width(tspan.text, tspan.style, mut window)
+				tspan.w = text_width(tspan.text, tspan.style, mut window)
 				tspans.push(tspan)
 				x = 0
 				y += h
