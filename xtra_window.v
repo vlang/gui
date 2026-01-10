@@ -151,10 +151,6 @@ pub fn (mut window Window) @lock() {
 	window.mutex.lock()
 }
 
-pub fn (mut window Window) try_lock() bool {
-	return window.mutex.try_lock()
-}
-
 // unlock unlocks the locked mutex. Same precautions apply as with [lock](#lock)
 pub fn (mut window Window) unlock() {
 	window.mutex.unlock()
@@ -190,11 +186,13 @@ pub fn (window &Window) find_layout_by_id(id string) ?Layout {
 
 // scroll_to_view scrolls the parent scroll container to make the view with the given id visible.
 pub fn (mut w Window) scroll_to_view(id string) {
-	mut target := w.layout.find_by_id(id) or { return }
+	target := w.layout.find_by_id(id) or { return }
 
-	mut p := &target
+	mut p := target
 	for p.parent != unsafe { nil } {
-		p = p.parent
+		unsafe {
+			p = *p.parent
+		}
 		if p.shape.id_scroll > 0 {
 			scroll_id := p.shape.id_scroll
 			current_scroll := w.view_state.scroll_y[scroll_id]

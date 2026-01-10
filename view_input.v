@@ -137,7 +137,7 @@ pub:
 // - escape: unselects all text
 // - delete: deletes previous character
 // - backspace: deletes previous character
-pub fn input(cfg &InputCfg) View {
+pub fn input(cfg InputCfg) View {
 	placeholder_active := cfg.text.len == 0
 	txt := if placeholder_active { cfg.placeholder } else { cfg.text }
 	txt_style := if placeholder_active { cfg.placeholder_style } else { cfg.text_style }
