@@ -13,7 +13,7 @@ pub:
 
 // pulsar creates a blinking icon.
 // window.cursor_blink must be true to enable the animation.
-pub fn (window &Window) pulsar(cfg PulsarCfg) View {
+pub fn (mut window Window) pulsar(cfg PulsarCfg) View {
 	text_style := TextStyle{
 		...gui_theme.icon3
 		size:  int(cfg.size)
@@ -22,7 +22,7 @@ pub fn (window &Window) pulsar(cfg PulsarCfg) View {
 
 	width := match cfg.width > 0 {
 		true { cfg.width }
-		else { text_width_no_cache(cfg.icon1, text_style, window) }
+		else { text_width(cfg.icon1, text_style, mut window) }
 	}
 	txt := if window.view_state.input_cursor_on { cfg.icon1 } else { cfg.icon2 }
 

@@ -157,7 +157,7 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 			}
 		)
 		// Set cursor position and reset text selection
-		cursor_offset := offset_from_cursor_position(layout.shape, cursor_pos, w)
+		cursor_offset := offset_from_cursor_position(layout.shape, cursor_pos, mut w)
 		input_state := w.view_state.input_state[layout.shape.id_focus]
 		w.view_state.input_state[layout.shape.id_focus] = InputState{
 			...input_state
@@ -272,10 +272,10 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 			match e.key_code {
 				.left { pos = cursor_left(pos) }
 				.right { pos = cursor_right(text_lines, pos) }
-				.up { pos = cursor_up(layout.shape, pos, offset, 1, window) }
-				.down { pos = cursor_down(layout.shape, pos, offset, 1, window) }
-				.page_up { pos = cursor_up(layout.shape, pos, offset, lpp, window) }
-				.page_down { pos = cursor_down(layout.shape, pos, offset, lpp, window) }
+				.up { pos = cursor_up(layout.shape, pos, offset, 1, mut window) }
+				.down { pos = cursor_down(layout.shape, pos, offset, 1, mut window) }
+				.page_up { pos = cursor_up(layout.shape, pos, offset, lpp, mut window) }
+				.page_down { pos = cursor_down(layout.shape, pos, offset, lpp, mut window) }
 				.home { pos = cursor_home() }
 				.end { pos = cursor_end(text_lines) }
 				else { return }
@@ -285,7 +285,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		}
 
 		if (e.key_code != .up && e.key_code != .down) || input_state.cursor_offset < 0 {
-			offset = offset_from_cursor_position(layout.shape, pos, window)
+			offset = offset_from_cursor_position(layout.shape, pos, mut window)
 		}
 
 		// input_cursor_on_sticky allows the cursor to stay on during cursor movements.
@@ -453,7 +453,7 @@ pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
 		cursor_pos:    len
 		select_beg:    0
 		select_end:    u32(len)
-		cursor_offset: offset_from_cursor_position(shape, len, w)
+		cursor_offset: offset_from_cursor_position(shape, len, mut w)
 	}
 }
 

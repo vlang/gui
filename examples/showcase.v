@@ -128,7 +128,7 @@ fn gallery(mut w gui.Window) gui.View {
 			.tab_stock {
 				[buttons(w), inputs(w), toggles(w), select_drop_down(w),
 					list_box(w), expand_panel(w), progress_bars(w),
-					range_sliders(w), pulsars(w)]
+					range_sliders(w), pulsars(mut w)]
 			}
 			.tab_icons {
 				[icons(mut w)]
@@ -1569,7 +1569,7 @@ const brazil_text = 'The word "Brazil" likely comes from the Portuguese word for
 // Pulsars
 // ==============================================================
 
-fn pulsars(w &gui.Window) gui.View {
+fn pulsars(mut w gui.Window) gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		sizing:  gui.fill_fill
@@ -1579,13 +1579,13 @@ fn pulsars(w &gui.Window) gui.View {
 				padding: gui.padding_none
 				sizing:  gui.fill_fit
 				spacing: 0
-				content: [pulsar_samples(w)]
+				content: [pulsar_samples(mut w)]
 			),
 		]
 	)
 }
 
-fn pulsar_samples(w &gui.Window) gui.View {
+fn pulsar_samples(mut w gui.Window) gui.View {
 	return gui.row(
 		content: [
 			w.pulsar(),

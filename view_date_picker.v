@@ -58,8 +58,8 @@ pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 		state.view_month = v_time.month
 		state.view_year = v_time.year
 	}
-	state.cell_size = cfg.cell_size(window)
-	state.month_width = cfg.month_picker_width(window)
+	state.cell_size = cfg.cell_size(mut window)
+	state.month_width = cfg.month_picker_width(mut window)
 	window.view_state.date_picker_state[cfg.id] = state
 
 	return row(
@@ -393,18 +393,18 @@ fn dates(times []time.Time) []time.Time {
 	return times.map(date(it.day, it.month, it.year))
 }
 
-fn (cfg DatePickerCfg) cell_size(w &Window) f32 {
+fn (cfg DatePickerCfg) cell_size(mut w Window) f32 {
 	w_size := match cfg.weekdays_len {
-		.one_letter { text_width_no_cache('W', cfg.text_style, w) }
-		.three_letter { text_width_no_cache('Wed', cfg.text_style, w) }
-		.full { text_width_no_cache('Wednesday', cfg.text_style, w) }
+		.one_letter { text_width('W', cfg.text_style, mut w) }
+		.three_letter { text_width('Wed', cfg.text_style, mut w) }
+		.full { text_width('Wednesday', cfg.text_style, mut w) }
 	}
-	d_size := text_width_no_cache('00', cfg.text_style, w)
+	d_size := text_width('00', cfg.text_style, mut w)
 	return f32_max(w_size, d_size) + gui_theme.button_style.padding.width() + padding_two.width()
 }
 
-fn (cfg DatePickerCfg) month_picker_width(w &Window) f32 {
-	return text_width_no_cache('May', cfg.text_style, w) + gui_theme.button_style.padding.width() +
+fn (cfg DatePickerCfg) month_picker_width(mut w Window) f32 {
+	return text_width('May', cfg.text_style, mut w) + gui_theme.button_style.padding.width() +
 		gui_theme.button_style.padding_border.width()
 }
 

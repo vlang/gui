@@ -25,7 +25,7 @@ fn cursor_right(strs []string, pos int) int {
 // from the current cursor position. If the previous line is shorter than the
 // calculated column, the cursor moves to the end of that line. Returns the
 // original position if already at the first line.
-fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, window &Window) int {
+fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut window Window) int {
 	if lines_up < 0 {
 		return cursor_pos
 	}
@@ -58,11 +58,11 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, windo
 		// Compute a new offset based on the current cursor position
 		c_offset := match cursor_offset >= 0 {
 			true { cursor_offset }
-			else { offset_from_cursor_position(shape, cursor_pos, window) }
+			else { offset_from_cursor_position(shape, cursor_pos, mut window) }
 		}
 
 		cursor_column := cursor_position_from_offset(shape.text_lines[p_idx], c_offset,
-			shape.text_style, window)
+			shape.text_style, mut window)
 
 		new_cursor_position := match true {
 			cursor_column <= p_len { p_start + cursor_column }
@@ -83,7 +83,7 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, windo
 // cursor position is adjusted: for lines ending with a newline, it moves to the
 // position before the newline; for the last line, it moves to the end of the line.
 // Returns the original position if already at the last line.
-fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, window &Window) int {
+fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, mut window Window) int {
 	if lines_down < 0 {
 		return cursor_pos
 	}
@@ -117,10 +117,10 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, w
 		// Compute a new offset based on the current cursor position
 		c_offset := match cursor_offset >= 0 {
 			true { cursor_offset }
-			else { offset_from_cursor_position(shape, cursor_pos, window) }
+			else { offset_from_cursor_position(shape, cursor_pos, mut window) }
 		}
 
-		cursor_column := cursor_position_from_offset(n_text, c_offset, shape.text_style,
+		cursor_column := cursor_position_from_offset(n_text, c_offset, shape.text_style, mut
 			window)
 
 		new_cursor_position := match true {
@@ -349,12 +349,12 @@ fn get_cursor_column(strs []string, cursor_pos int) int {
 // width of text up to each character position and returns the index closest to the
 // offset. If the offset is beyond the end of the string, it returns the last valid
 // character position.
-fn cursor_position_from_offset(str string, offset f32, style TextStyle, window &Window) int {
+fn cursor_position_from_offset(str string, offset f32, style TextStyle, mut window Window) int {
 	rune_str := str.runes()
 	for idx in 1 .. rune_str.len {
-		width := text_width_no_cache(rune_str[0..idx].string(), style, window)
+		width := text_width(rune_str[0..idx].string(), style, mut window)
 		if width > offset {
-			char_width := text_width_no_cache(rune_str[idx].str(), style, window)
+			char_width := text_width(rune_str[idx].str(), style, mut window)
 			return if offset - char_width > width { idx } else { idx - 1 }
 		}
 	}
@@ -366,7 +366,7 @@ fn cursor_position_from_offset(str string, offset f32, style TextStyle, window &
 // calculates the column within that line, and measures the rendered width of text
 // up to that column using the shape's text style. If the cursor position is beyond
 // the end of a line, it returns the cumulative length of previous lines.
-fn offset_from_cursor_position(shape Shape, cursor_position int, window &Window) f32 {
+fn offset_from_cursor_position(shape Shape, cursor_position int, mut window Window) f32 {
 	mut len := 0
 	mut str := ''
 	for text_line in shape.text_lines {
@@ -381,10 +381,10 @@ fn offset_from_cursor_position(shape Shape, cursor_position int, window &Window)
 	rune_str := str.runes()
 	cursor_column := cursor_position - len
 	if cursor_column >= rune_str.len {
-		return text_width_no_cache(str, shape.text_style, window)
+		return text_width(str, shape.text_style, mut window)
 	}
 	rune_slice := rune_str[0..cursor_column]
-	offset := text_width_no_cache(rune_slice.string(), shape.text_style, window)
+	offset := text_width(rune_slice.string(), shape.text_style, mut window)
 	return offset
 }
 
@@ -427,9 +427,9 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 	// Here's the key difference from mouse-move. If the cursor is outside
 	// the view, scroll up or down one line, not to mouse_cursor_pos
 	if scroll_y > current_scroll_y {
-		mouse_cursor_pos = cursor_up(layout.shape, cursor_pos, -1, 1, w)
+		mouse_cursor_pos = cursor_up(layout.shape, cursor_pos, -1, 1, mut w)
 	} else if scroll_y < current_scroll_y {
-		mouse_cursor_pos = cursor_down(layout.shape, cursor_pos, -1, 1, w)
+		mouse_cursor_pos = cursor_down(layout.shape, cursor_pos, -1, 1, mut w)
 	} else {
 		return
 	}

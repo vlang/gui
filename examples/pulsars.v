@@ -18,7 +18,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(mut window gui.Window) gui.View {
 	w, h := window.window_size()
 
 	return gui.column(
@@ -32,12 +32,12 @@ fn main_view(window &gui.Window) gui.View {
 				text:       'Pulsars blink to get attention!'
 				text_style: gui.theme().b1
 			),
-			pulsar_samples(window),
+			pulsar_samples(mut window),
 		]
 	)
 }
 
-fn pulsar_samples(w &gui.Window) gui.View {
+fn pulsar_samples(mut w gui.Window) gui.View {
 	pulsar_width := f32(30)
 	return gui.row(
 		fill:    false

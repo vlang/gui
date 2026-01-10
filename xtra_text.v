@@ -10,11 +10,6 @@ module gui
 import clipboard
 import encoding.utf8
 
-pub fn text_width_no_cache(text string, text_style TextStyle, window &Window) f32 {
-	cfg := to_vglyph_cfg(text_style.to_text_cfg())
-	return unsafe { window.text_system.text_width(text, cfg) or { 0 } }
-}
-
 // text_width calculates the width of a given text based on its style and window configuration,
 // leveraging a caching mechanism to optimize performance.
 pub fn text_width(text string, text_style TextStyle, mut window Window) f32 {
