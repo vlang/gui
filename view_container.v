@@ -82,7 +82,7 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 			on_click:       cv.on_click
 			on_char:        cv.on_char
 			on_keydown:     cv.on_keydown
-			on_mouse_move:  if cv.tooltip != unsafe { nil } {
+			on_mouse_move:  if cv.tooltip != unsafe { nil } && cv.tooltip.content.len > 0 {
 				fn [cv] (layout &Layout, mut e Event, mut w Window) {
 					cv.on_mouse_move_tooltip(layout.shape, mut e, mut w)
 					if cv.on_mouse_move != unsafe { nil } {
