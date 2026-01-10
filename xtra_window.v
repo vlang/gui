@@ -186,13 +186,10 @@ pub fn (window &Window) find_layout_by_id(id string) ?Layout {
 
 // scroll_to_view scrolls the parent scroll container to make the view with the given id visible.
 pub fn (mut w Window) scroll_to_view(id string) {
-	target := w.layout.find_by_id(id) or { return }
-
-	mut p := target
+	mut target := w.layout.find_by_id(id) or { return }
+	mut p := &target
 	for p.parent != unsafe { nil } {
-		unsafe {
-			p = *p.parent
-		}
+		p = p.parent
 		if p.shape.id_scroll > 0 {
 			scroll_id := p.shape.id_scroll
 			current_scroll := w.view_state.scroll_y[scroll_id]

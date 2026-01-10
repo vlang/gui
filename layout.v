@@ -86,12 +86,10 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 
 // layout_parents sets the parent property of layout
 fn layout_parents(mut layout Layout, parent &Layout) {
-	// Reference is to the same tree so it should be safe.
-	layout.parent = unsafe { parent }
-
-	// Array grow to protect layout.parent reference
-	// If it does, there's a logic error.
+	// Array .nogrow to protect layout.parent reference
+	// If it grows after this, it's a logic error.
 	unsafe { layout.children.flags.set(.nogrow) }
+	layout.parent = unsafe { parent }
 
 	for mut child in layout.children {
 		layout_parents(mut child, layout)
