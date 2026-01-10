@@ -72,17 +72,10 @@ pub fn button(cfg ButtonCfg) View {
 		max_height:   cfg.max_height
 		sizing:       cfg.sizing
 		tooltip:      cfg.tooltip
-		on_click:     cfg.on_button_click()
+		on_click:     cfg.on_button_click
 		on_char:      cfg.on_char_button
 		amend_layout: cfg.amend_layout
-		on_hover:     if cfg.on_hover != unsafe { nil } {
-			fn [cfg] (mut layout Layout, mut e Event, mut w Window) {
-				cfg.on_button_hover(mut layout, mut e, mut w)
-				cfg.on_hover(layout, mut e, mut w)
-			}
-		} else {
-			cfg.on_button_hover
-		}
+		on_hover:     cfg.on_button_hover
 		content:      [
 			row(
 				name:    'button interior'
@@ -99,14 +92,10 @@ pub fn button(cfg ButtonCfg) View {
 	)
 }
 
-fn (cfg &ButtonCfg) on_button_click() fn (&Layout, mut Event, mut Window) {
-	if cfg.on_click == unsafe { nil } {
-		return cfg.on_click
-	}
-	on_click := cfg.on_click
-	return fn [on_click] (layout &Layout, mut e Event, mut w Window) {
-		if e.mouse_button == .left {
-			on_click(layout, mut e, mut w)
+fn (cfg &ButtonCfg) on_button_click(layout &Layout, mut e Event, mut w Window) {
+	if e.mouse_button == .left {
+		if cfg.on_click != unsafe { nil } {
+			cfg.on_click(layout, mut e, mut w)
 		}
 	}
 }
@@ -138,5 +127,9 @@ fn (cfg &ButtonCfg) on_button_hover(mut layout Layout, mut e Event, mut w Window
 	}
 	if e.mouse_button == .left {
 		layout.children[0].shape.color = cfg.color_click
+	}
+
+	if cfg.on_hover != unsafe { nil } {
+		cfg.on_hover(layout, mut e, mut w)
 	}
 }

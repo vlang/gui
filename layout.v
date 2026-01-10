@@ -98,6 +98,10 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 	}
 }
 
+const empty_layout = Layout{
+	shape: &Shape{}
+}
+
 // layout_remove_floating_layouts replaces floating layouts with an empty
 // Layout node (no axis/height/width) so they are effectively ignored by
 // layout logic. The removed layouts are collected in the layouts array.
@@ -112,9 +116,7 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 		if child.shape.float {
 			// shape.type == .none enables identification as empty node by
 			// fix_nested_sibling_floats() and removes it from spacing calculations.
-			layout.children[i] = Layout{
-				shape: &Shape{}
-			}
+			layout.children[i] = empty_layout
 		}
 	}
 }
