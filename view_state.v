@@ -38,18 +38,6 @@ pub:
 // clear releases all stored view state maps and resets the window's ViewState.
 // Call this when a window is destroyed or needs its GUI state fully reinitialized.
 fn (mut vs ViewState) clear(mut w Window) {
-	unsafe {
-		vs.input_state.free()
-		vs.input_date_state.free()
-		vs.scroll_x.free()
-		vs.scroll_y.free()
-		vs.text_widths.free()
-		vs.menu_state.free()
-		vs.image_map.free()
-		vs.select_state.free()
-		vs.tree_state.free()
-		vs.date_picker_state.free()
-	}
 	w.view_state = ViewState{}
 }
 

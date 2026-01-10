@@ -50,18 +50,23 @@ pub fn (mut window Window) remove_animation(id string) {
 }
 
 fn (mut window Window) animation_loop() {
-	for {
+	for !window.closed {
 		time.sleep(animation_cycle)
 		mut refresh := false
 		//--------------------------------------------
 		window.lock()
+		mut animations := window.animations.clone()
+		window.unlock()
+
 		for mut animation in window.animations {
 			match mut animation {
 				Animate { refresh = update_animate(mut animation, mut window) || refresh }
 				else {}
 			}
 		}
-		window.animations = window.animations.filter(!it.stopped)
+
+		window.lock()
+		window.animations = animations.filter(!it.stopped)
 		window.unlock()
 		//--------------------------------------------
 		if refresh {

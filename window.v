@@ -35,6 +35,7 @@ mut:
 	window_size    gg.Size // cached, gg.window_size() relatively slow
 	refresh_window bool
 	text_system    &vglyph.TextSystem = unsafe { nil }
+	closed         bool
 }
 
 // Window is the main application window. `state` holds app state.
@@ -127,6 +128,9 @@ pub fn window(cfg &WindowCfg) &Window {
 				w.blinky_cursor_animation()
 			}
 			on_init(mut w)
+		}
+		quit_fn:                      fn (_ &gg.Event, mut w Window) {
+			w.closed = true
 		}
 	)
 

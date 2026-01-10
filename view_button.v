@@ -53,7 +53,7 @@ pub:
 // 	}
 // )
 // ```
-pub fn button(cfg ButtonCfg) View {
+pub fn button(cfg &ButtonCfg) View {
 	return row(
 		name:         'button border'
 		id:           cfg.id
