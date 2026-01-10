@@ -31,7 +31,7 @@ jobs:
         with:
           check-latest: true
       - name: Install vglyph
-        run: v install vglyph 
+        run: v install vglyph
       - name: Update packages
         run: v retry -- sudo apt -qq update
       - name: Install X11/GL development dependencies (headers and libs)
@@ -67,10 +67,13 @@ jobs:
         with:
           check-latest: true
       - name: Install vglyph
-        run: v install vglyph 
+        run: v install vglyph
       - name: Install X11/GL development dependencies (headers and libs)
         if: runner.os == 'Linux'
         run: v retry -- sudo apt -qq update && v retry -- sudo apt install libpango1.0-dev libfontconfig1-dev libfribidi-dev libharfbuzz-dev libfreetype-dev libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
+      - name: Install development dependencies on macos (headers and libs)
+        if: runner.os == 'macOS'
+        run: v retry -- brew install pango harfbuzz freetype2
       - name: Checkout the gui module
         uses: actions/checkout@v4
         with:
@@ -94,7 +97,7 @@ jobs:
         with:
           check-latest: true
       - name: Install vglyph
-        run: v install vglyph 
+        run: v install vglyph
       - name: Checkout the gui module
         uses: actions/checkout@v4
         with:
