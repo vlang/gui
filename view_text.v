@@ -410,7 +410,6 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 				// Reconstruct text from visual lines
 				mut count := 0
 				mut buffer := []rune{cap: 100}
-				unsafe { buffer.flags.set(.noslices) }
 				beg := int(input_state.select_beg)
 				end := int(input_state.select_end)
 				for line in shape.text_lines {

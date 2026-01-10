@@ -95,7 +95,6 @@ fn text_wrap(mut shape Shape, mut window Window) {
 fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u32, mut window Window) []string {
 	mut line := ''
 	mut wrap := []string{cap: 10}
-	unsafe { wrap.flags.set(.noslices) }
 	for field in split_text(s, tab_size) {
 		if field == '\n' {
 			wrap << line + '\n'
@@ -135,7 +134,6 @@ fn wrap_text_shrink_spaces(s string, text_style TextStyle, width f32, tab_size u
 fn wrap_text_keep_spaces(text string, text_style TextStyle, max_width f32, tab_size u32, mut window Window) []string {
 	mut current_line := ''
 	mut lines := []string{cap: 10}
-	unsafe { lines.flags.set(.noslices) }
 
 	mut fields := split_text(text, tab_size)
 	mut field_index := 0
@@ -277,7 +275,6 @@ fn wrap_text_keep_spaces(text string, text_style TextStyle, max_width f32, tab_s
 fn wrap_simple(s string, tab_size u32) []string {
 	mut line := ''
 	mut lines := []string{cap: 10}
-	unsafe { lines.flags.set(.noslices) }
 
 	for field in split_text(s, tab_size) {
 		if field == '\n' {
@@ -301,9 +298,7 @@ fn split_text(s string, tab_size u32) []string {
 
 	mut state := state_ch
 	mut fields := []string{cap: 100}
-	unsafe { fields.flags.set(.noslices) }
 	mut field := []rune{cap: 50}
-	unsafe { field.flags.set(.noslices) }
 	// Track visual column since last newline to expand tabs correctly
 	mut col := 0
 	for r in s.runes_iterator() {

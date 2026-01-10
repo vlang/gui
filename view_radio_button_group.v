@@ -85,7 +85,6 @@ pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
 
 fn build_options(cfg RadioButtonGroupCfg) []View {
 	mut content := []View{cap: cfg.options.len}
-	unsafe { content.flags.set(.noslices) }
 	mut id_focus := cfg.id_focus
 	on_select := cfg.on_select
 	for option in cfg.options {

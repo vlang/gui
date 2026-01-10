@@ -59,11 +59,9 @@ pub:
 // table generates a table from the given [TableCfg](#TableCfg)
 pub fn (mut window Window) table(cfg TableCfg) View {
 	mut rows := []View{cap: cfg.data.len}
-	unsafe { rows.flags.set(.noslices) }
 	column_widths := window.table_column_widths(cfg)
 	for r in cfg.data {
 		mut cells := []View{cap: r.cells.len}
-		unsafe { cells.flags.set(.noslices) }
 		for idx, cell in r.cells {
 			cell_text_style := cell.text_style or {
 				if cell.head_cell { cfg.text_style_head } else { cfg.text_style }
@@ -132,7 +130,6 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 // First row is treated as a header row.
 pub fn table_cfg_from_data(data [][]string) TableCfg {
 	mut row_cfg := []TableRowCfg{cap: data.len}
-	unsafe { row_cfg.flags.set(.noslices) }
 	for i, r in data {
 		mut cells := []TableCellCfg{}
 		for cell in r {
@@ -203,7 +200,6 @@ fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 		return []
 	}
 	mut column_widths := []f32{cap: cfg.data[0].cells.len}
-	unsafe { column_widths.flags.set(.noslices) }
 	for idx, cell in cfg.data[0].cells {
 		mut longest := f32(0)
 		for row in cfg.data {

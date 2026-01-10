@@ -35,7 +35,6 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 
 	// Floating layouts do not affect parent or sibling elements.
 	mut floating_layouts := []Layout{}
-	unsafe { floating_layouts.flags.set(.noslices) }
 	layout_remove_floating_layouts(mut layout, mut floating_layouts)
 	fix_float_parents(mut floating_layouts)
 
@@ -52,7 +51,6 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// Compute the layout without the floating elements.
 	layout_pipeline(mut layout, mut window)
 	mut layouts := [layout]
-	unsafe { layouts.flags.set(.noslices) }
 
 	// Compute the floating layouts. Because they are appended to
 	// the layout array, they get rendered after the main layout.
@@ -88,8 +86,13 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 
 // layout_parents sets the parent property of layout
 fn layout_parents(mut layout Layout, parent &Layout) {
-	// Reference is to the same tree so it should be safe
+	// Reference is to the same tree so it should be safe.
 	layout.parent = unsafe { parent }
+
+	// Array grow to protect layout.parent reference
+	// If it does, there's a logic error.
+	unsafe { layout.children.flags.set(.nogrow) }
+
 	for mut child in layout.children {
 		layout_parents(mut child, layout)
 	}

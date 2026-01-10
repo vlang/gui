@@ -45,13 +45,11 @@ pub:
 // In fact, the implementation is not much more than that.
 pub fn list_box(cfg ListBoxCfg) View {
 	mut list := []View{cap: cfg.data.len}
-	unsafe { list.flags.set(.noslices) }
 
 	for dat in cfg.data {
 		color := if dat.value in cfg.selected { gui_theme.color_select } else { color_transparent }
 		is_subheader := dat.name.starts_with('---')
 		mut content := []View{cap: 1}
-		unsafe { content.flags.set(.noslices) }
 
 		if is_subheader {
 			content << column(

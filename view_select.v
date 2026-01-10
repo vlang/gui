@@ -58,7 +58,6 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 
 	id := cfg.id
 	mut content := []View{cap: 2}
-	unsafe { content.flags.set(.noslices) }
 	content << row( // interior
 		name:     'select interior'
 		fill:     cfg.fill

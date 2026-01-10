@@ -33,7 +33,6 @@ pub:
 // progress_bar creates a progress bar from the given [ProgressBarCfg](#ProgressBarCfg)
 pub fn progress_bar(cfg ProgressBarCfg) View {
 	mut content := []View{cap: 2}
-	unsafe { content.flags.set(.noslices) }
 	content << row(
 		name:    'progress_bar left-bar'
 		fill:    true

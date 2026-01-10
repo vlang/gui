@@ -250,7 +250,6 @@ fn (mut window Window) do_update_window() {
 	//--------------------------------------------
 	window.lock()
 	window.renderers.clear()
-	mut old_layout := window.layout
 	clip_rect := window.window_rect()
 	background_color := window.color_background()
 
@@ -266,7 +265,6 @@ fn (mut window Window) do_update_window() {
 
 	// Clearing views/layouts aids GC.
 	clear_views(mut view)
-	clear_layouts(mut old_layout)
 }
 
 // compose_layout produces a layout from the given view that is

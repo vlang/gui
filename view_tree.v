@@ -17,7 +17,6 @@ pub:
 // tree creates a tree view from the given [TreeCfg](#TreeCfg)
 pub fn (mut window Window) tree(cfg TreeCfg) View {
 	mut content := []View{cap: cfg.nodes.len}
-	unsafe { content.flags.set(.noslices) }
 	for node in cfg.nodes {
 		content << cfg.node_content(node, mut window)
 	}
@@ -51,7 +50,6 @@ pub fn tree_node(cfg TreeNodeCfg) TreeNodeCfg {
 
 fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, mut window Window) []View {
 	mut tnodes := []View{cap: nodes.len}
-	unsafe { nodes.flags.set(.noslices) }
 
 	for node in nodes {
 		tnodes << column(

@@ -98,7 +98,6 @@ fn example_date_picker(app DatePickerApp, mut window gui.Window) gui.View {
 	}
 
 	mut allowed_weekdays := []gui.DatePickerWeekdays{}
-	unsafe { allowed_weekdays.flags.set(.noslices) }
 	if app.allow_monday {
 		allowed_weekdays << .monday
 	}

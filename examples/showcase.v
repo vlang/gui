@@ -1354,7 +1354,6 @@ fn icon_catalog(mut w gui.Window) gui.View {
 	// Break the icons_maps into rows
 	chunks := chunk_map(gui.icons_map, 4)
 	mut all_icons := []gui.View{cap: chunks.len}
-	unsafe { all_icons.flags.set(.noslices) }
 
 	cfg := gui.TextStyle{
 		...gui.theme().icon1
@@ -1364,7 +1363,6 @@ fn icon_catalog(mut w gui.Window) gui.View {
 	// create rows of icons/text
 	for chunk in chunks {
 		mut icons := []gui.View{cap: chunk.len}
-		unsafe { icons.flags.set(.noslices) }
 		for key, val in chunk {
 			icons << gui.column(
 				min_width: longest
@@ -1394,7 +1392,6 @@ fn icon_catalog(mut w gui.Window) gui.View {
 // maybe this should be a standard library function?
 fn chunk_map[K, V](input map[K]V, chunk_size int) []map[K]V {
 	mut chunks := []map[K]V{cap: input.keys().len / chunk_size + 1}
-	unsafe { chunks.flags.set(.noslices) }
 	mut current_chunk := map[K]V{}
 	mut count := 0
 
@@ -1801,7 +1798,6 @@ fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) 
 	mut table_cfg := gui.table_cfg_from_data(table_data.sorted)
 	// Replace with first row with clickable column headers
 	mut tds := []gui.TableCellCfg{}
-	unsafe { tds.flags.set(.noslices) }
 	for idx, cell in table_cfg.data[0].cells {
 		tds << gui.TableCellCfg{
 			...cell

@@ -75,18 +75,6 @@ pub enum ShapeType as u8 {
 	rtf
 }
 
-fn (mut shape Shape) clear() {
-	if shape.text_spans != unsafe { nil } {
-		for !shape.text_spans.is_empty() {
-			_ := shape.text_spans.shift() or { break }
-		}
-	}
-	unsafe {
-		shape.text_lines.free()
-		vmemset(shape, 0, sizeof(Shape))
-	}
-}
-
 // point_in_shape determines if the given point is within the shape's shape_clip
 // rectangle. The shape_clip rectangle is the intersection of the current drawable
 // rectangle and thd shapes rectangle. Computed in layout_set_shape_clips()

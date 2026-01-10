@@ -101,7 +101,6 @@ fn (layout &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
 // get_focus_ids returns an ordered list of focus ids
 fn (layout &Layout) get_focus_ids() []u32 {
 	mut focus_ids := []u32{}
-	unsafe { focus_ids.flags.set(.noslices) }
 	if layout.shape.id_focus > 0 && !layout.shape.focus_skip {
 		focus_ids << layout.shape.id_focus
 	}
@@ -197,11 +196,9 @@ fn clear_layouts(mut layout Layout) {
 	}
 	unsafe {
 		if layout.shape != nil {
-			layout.shape.clear()
 			layout.shape = nil
 		}
 		layout.parent = nil
-		layout.children.free()
 	}
 }
 

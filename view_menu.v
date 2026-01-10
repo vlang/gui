@@ -45,7 +45,6 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 // and which side submenus are anchored to.
 fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
 	mut content := []View{cap: items.len}
-	unsafe { content.flags.set(.noslices) }
 
 	id_selected := window.view_state.menu_state[cfg.id_focus]
 	sizing := if level == 0 { fit_fit } else { fill_fit }

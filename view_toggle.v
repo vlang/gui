@@ -37,7 +37,6 @@ pub fn toggle(cfg ToggleCfg) View {
 	txt := if cfg.select { cfg.text_select } else { cfg.text_unselect }
 
 	mut content := []View{cap: 2}
-	unsafe { content.flags.set(.noslices) }
 
 	content << row(
 		name:       'toggle border'
