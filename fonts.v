@@ -16,7 +16,7 @@ pub:
 	mono   string
 }
 
-pub const base_font_name = 'Sans'
+pub const base_font_name = ''
 pub const font_file_icon = os.join_path(os.data_dir(), 'v_gui_feathericon.ttf')
 pub const icon_font_name = 'feathericon'
 
