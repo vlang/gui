@@ -16,7 +16,7 @@ pub:
 	mono   string
 }
 
-pub const base_font_name = 'helvetica neue, helvetica, segoe ui, arial, sans'
+pub const base_font_name = 'Sans'
 pub const font_file_icon = os.join_path(os.data_dir(), 'v_gui_feathericon.ttf')
 pub const icon_font_name = 'feathericon'
 
@@ -50,7 +50,7 @@ pub fn font_variants(text_style TextStyle) FontVariants {
 		normal: family
 		bold:   '${family} bold'
 		italic: '${family} italic'
-		mono:   'menlo, monaco, mono'
+		mono:   'Menlo, Monaco, Mono'
 	}
 	return variants
 }
