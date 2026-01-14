@@ -509,9 +509,10 @@ fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
 
 fn to_vglyph_cfg(cfg gg.TextCfg) vglyph.TextConfig {
 	return vglyph.TextConfig{
-		font_name: '${cfg.family} ${cfg.size}'
-		width:     -1
-		align:     .left
-		color:     cfg.color
+		style: vglyph.TextStyle{
+			font_name: cfg.family
+			color:     cfg.color
+			size:      cfg.size
+		}
 	}
 }
