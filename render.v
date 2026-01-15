@@ -39,7 +39,7 @@ struct DrawNone {}
 
 struct DrawText {
 	text string
-	cfg  gg.TextCfg
+	cfg  vglyph.TextConfig
 	x    f32
 	y    f32
 }
@@ -72,7 +72,7 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			}
 		}
 		DrawText {
-			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, to_vglyph_cfg(renderer.cfg)) or {}
+			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, renderer.cfg) or {}
 		}
 		DrawClip {
 			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
@@ -175,7 +175,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			height: shape.height
 		}
 		if rects_overlap(draw_rect, clip) {
-			cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
+			cfg := shape.text_style.to_vglyph_cfg()
 			w := window.text_system.text_width(shape.text, cfg) or { 0 }
 			h := window.text_system.text_height(shape.text, cfg) or { 0 }
 			x := shape.x + 20
@@ -206,7 +206,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 				cfg:  TextStyle{
 					...shape.text_style
 					color: color
-				}.to_text_cfg()
+				}.to_vglyph_cfg()
 			}
 		}
 	}
@@ -287,7 +287,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	text_cfg := TextStyle{
 		...shape.text_style
 		color: color
-	}.to_text_cfg()
+	}.to_vglyph_cfg()
 
 	lh := line_height(shape, mut window)
 	mut char_count := 0
@@ -327,7 +327,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				if b < e {
 					stob := lnr[..b].string()
 					sbtoe := lnr[b..e].string()
-					cfg := to_vglyph_cfg(text_cfg)
+					cfg := text_cfg
 					sb := window.text_system.text_width(stob, cfg) or { 0 }
 					se := window.text_system.text_width(sbtoe, cfg) or { 0 }
 					window.renderers << DrawRect{
@@ -336,7 +336,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 						w:     se
 						h:     draw_rect.height
 						color: gg.Color{
-							...text_cfg.color
+							...text_cfg.style.color
 							a: 60 // make themeable?
 						}
 					}
@@ -382,7 +382,7 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 				ln := shape.text_lines[cursor_y]
 				x := int_min(cursor_x, ln.len)
 				ln_fragment := ln[..x]
-				cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
+				cfg := shape.text_style.to_vglyph_cfg()
 				text_width := if shape.text_is_password {
 					pw := password_char.repeat(utf8_str_visible_length(ln_fragment))
 					window.text_system.text_width(pw, cfg) or { 0 }
@@ -435,8 +435,8 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 			height: span.h
 		}
 		if rects_overlap(span_rect, clip) {
-			text_cfg := span.style.to_text_cfg()
-			ctx.set_text_cfg(text_cfg)
+			text_cfg := span.style.to_vglyph_cfg()
+			ctx.set_text_cfg(span.style.to_text_cfg())
 
 			window.renderers << DrawText{
 				x:    shape.x + span.x
@@ -505,14 +505,4 @@ fn dim_alpha(color Color) Color {
 fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
 	return r1.x < (r2.x + r2.width) && r2.x < (r1.x + r1.width) && r1.y < (r2.y + r2.height)
 		&& r2.y < (r1.y + r1.height)
-}
-
-fn to_vglyph_cfg(cfg gg.TextCfg) vglyph.TextConfig {
-	return vglyph.TextConfig{
-		style: vglyph.TextStyle{
-			font_name: cfg.family
-			color:     cfg.color
-			size:      cfg.size
-		}
-	}
 }

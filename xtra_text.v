@@ -13,7 +13,7 @@ import encoding.utf8
 // text_width calculates the width of a given text based on its style and window configuration,
 // leveraging a caching mechanism to optimize performance.
 pub fn text_width(text string, text_style TextStyle, mut window Window) f32 {
-	cfg := to_vglyph_cfg(text_style.to_text_cfg())
+	cfg := text_style.to_vglyph_cfg()
 	return window.text_system.text_width(text, cfg) or { 0 }
 }
 
@@ -21,7 +21,7 @@ pub fn text_width(text string, text_style TextStyle, mut window Window) f32 {
 // - when in password mode (and not placeholder), measure '*' repeated for visible rune count
 fn text_width_shape(shape &Shape, mut window Window) f32 {
 	mut max_width := f32(0)
-	cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
+	cfg := shape.text_style.to_vglyph_cfg()
 	for line in shape.text_lines {
 		// Mirror password masking used in render so measurement matches drawing
 		// Replace content with repeated password_char for the number of visible UTF-8 runes
@@ -43,7 +43,7 @@ fn text_height(shape &Shape, mut window Window) f32 {
 
 @[inline]
 fn line_height(shape &Shape, mut window Window) f32 {
-	cfg := to_vglyph_cfg(shape.text_style.to_text_cfg())
+	cfg := shape.text_style.to_vglyph_cfg()
 	height := window.text_system.font_height(cfg)
 	return height + shape.text_style.line_spacing
 }

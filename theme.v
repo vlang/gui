@@ -260,12 +260,12 @@ pub:
 	spacing_large  f32 = spacing_large
 	spacing_text   f32 = text_line_spacing // additional line height
 
-	size_text_tiny    int = size_text_tiny
-	size_text_x_small int = size_text_x_small
-	size_text_small   int = size_text_small
-	size_text_medium  int = size_text_medium
-	size_text_large   int = size_text_large
-	size_text_x_large int = size_text_x_large
+	size_text_tiny f32 = size_text_tiny
+	size_text_x_small f32 = size_text_x_small
+	size_text_small f32 = size_text_small
+	size_text_medium f32 = size_text_medium
+	size_text_large f32 = size_text_large
+	size_text_x_large f32 = size_text_x_large
 
 	scroll_multiplier f32 = scroll_multiplier
 	scroll_delta_line f32 = scroll_delta_line
@@ -310,12 +310,12 @@ pub:
 	spacing_large  f32 = spacing_large
 	spacing_text   f32 = text_line_spacing // additional line height
 
-	size_text_tiny    int = size_text_tiny
-	size_text_x_small int = size_text_x_small
-	size_text_small   int = size_text_small
-	size_text_medium  int = size_text_medium
-	size_text_large   int = size_text_large
-	size_text_x_large int = size_text_x_large
+	size_text_tiny f32 = size_text_tiny
+	size_text_x_small f32 = size_text_x_small
+	size_text_small f32 = size_text_small
+	size_text_medium f32 = size_text_medium
+	size_text_large f32 = size_text_large
+	size_text_x_large f32 = size_text_x_large
 
 	scroll_multiplier f32 = scroll_multiplier
 	scroll_delta_line f32 = scroll_delta_line
@@ -892,7 +892,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 //
 // Example:
 //   new_theme := theme.adjust_font_size(2, 8, 32)! // Increase all sizes by 2
-pub fn (theme Theme) adjust_font_size(delta int, min_size int, max_size int) !Theme {
+pub fn (theme Theme) adjust_font_size(delta f32, min_size f32, max_size f32) !Theme {
 	if min_size < 1 {
 		return error('min_size must be > 0')
 	}
