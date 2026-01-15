@@ -270,6 +270,7 @@ pub:
 	text_style         TextStyle = text_style_dark
 }
 
+@[minify]
 pub struct TextStyle {
 pub:
 	family         string
@@ -277,6 +278,8 @@ pub:
 	size           f32 = size_text_medium
 	line_spacing   f32
 	letter_spacing f32
+	underline      bool
+	strikethrough  bool
 	// features is a map of OpenType feature tags to their values.
 	// For example: {'wdth': 100.0, 'wght': 400.0}
 	features map[string]f32
@@ -297,6 +300,8 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 			color:          ts.color.to_gx_color()
 			size:           ts.size
 			variation_axes: ts.features
+			underline:      ts.underline
+			strikethrough:  ts.strikethrough
 		}
 	}
 }
