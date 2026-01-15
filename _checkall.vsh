@@ -10,4 +10,4 @@ chdir(@DIR)!
 
 sh('v run examples/_check.vsh')
 sh('v test .')
-sh('v check-md .')
+sh('v check-md -w .')

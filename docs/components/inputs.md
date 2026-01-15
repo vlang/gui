@@ -11,19 +11,19 @@ Single-line or multi-line text input field.
 ```v
 import gui
 
-struct App {
+struct App_39 {
 pub mut:
 	name string
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_39]()
 	return gui.input(
 		text:            app.name
 		placeholder:     'Enter name'
-		on_text_changed: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
-			app.name = e.text
+		on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+			mut app := w.state[App_39]()
+			app.name = text
 		}
 	)
 }
@@ -150,19 +150,20 @@ Dropdown selection list.
 ```v
 import gui
 
-struct App {
+struct App_40 {
 pub mut:
 	country string
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
-	return gui.select(
+	app := window.state[App_40]()
+	return window.select(
+		id:        'country'
 		options:   ['USA', 'Canada', 'Mexico', 'UK']
-		selected:  app.country
-		on_change: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
-			app.country = e.selected
+		select:    [app.country]
+		on_select: fn (selected []string, mut e gui.Event, mut w gui.Window) {
+			mut app := w.state[App_40]()
+			app.country = selected.first()
 		}
 	)
 }
@@ -194,7 +195,7 @@ gui.select(
 ```v
 import gui
 
-struct App {
+struct App_41 {
 pub mut:
 	email string
 	valid bool
@@ -205,16 +206,16 @@ fn is_valid_email(email string) bool {
 }
 
 fn form_view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_41]()
 	return gui.column(
 		content: [
 			gui.input(
 				text:            app.email
 				placeholder:     'Email'
-				on_text_changed: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
-					app.email = e.text
-					app.valid = is_valid_email(e.text)
+				on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+					mut app := w.state[App_41]()
+					app.email = text
+					app.valid = is_valid_email(text)
 				}
 			),
 			if !app.valid {
@@ -273,7 +274,7 @@ gui.column(
 
 ### Labeled Input
 
-```v
+```oksyntax
 import gui
 
 gui.column(

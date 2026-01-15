@@ -68,12 +68,9 @@ Style focused components differently:
 import gui
 
 gui.button(
-	id_focus: 1
-	style:    gui.ButtonStyle{
-		...gui.theme().button_style
-		color_focus: gui.rgb(110, 140, 220) // Highlight when focused
-	}
-	content:  [gui.text(text: 'Focusable Button')]
+	id_focus:    1
+	color_focus: gui.rgb(110, 140, 220) // Highlight when focused
+	content:     [gui.text(text: 'Focusable Button')]
 )
 ```
 

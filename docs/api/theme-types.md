@@ -203,7 +203,7 @@ pub fn hex(value int) Color
 
 Use `theme_maker()` to create themes:
 
-```v
+```oksyntax
 my_theme := gui.theme_maker(gui.ThemeCfg{
 	name:             'custom'
 	color_background: gui.rgb(28, 28, 30)

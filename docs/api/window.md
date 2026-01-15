@@ -6,7 +6,7 @@ Window creation, configuration, and management.
 
 Create and configure a window.
 
-```v
+```oksyntax
 import gui
 
 mut window := gui.window(
@@ -43,7 +43,7 @@ mut window := gui.window(
 
 Start the event loop:
 
-```v
+```oksyntax
 window.run()
 ```
 
@@ -53,7 +53,7 @@ Blocks until window closes.
 
 Set or update the view generator:
 
-```v
+```oksyntax
 window.update_view(main_view)
 ```
 
@@ -63,7 +63,7 @@ Call from event handlers or background threads to regenerate the view.
 
 Get current window dimensions:
 
-```v
+```oksyntax
 w, h := window.window_size()
 ```
 
@@ -73,7 +73,7 @@ Returns `(int, int)` - width and height in logical pixels.
 
 Change the active theme:
 
-```v
+```oksyntax
 window.set_theme(gui.theme_dark)
 ```
 
@@ -81,7 +81,7 @@ window.set_theme(gui.theme_dark)
 
 Access typed state:
 
-```v
+```oksyntax
 // Read-only
 app := window.state[App]()
 

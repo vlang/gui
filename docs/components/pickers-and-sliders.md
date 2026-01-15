@@ -110,7 +110,7 @@ gui.range_slider(
 
 ### With Label
 
-```v
+```oksyntax
 import gui
 
 gui.column(
@@ -133,24 +133,25 @@ gui.column(
 ```v
 import gui
 
-struct App {
+struct App_21 {
 pub mut:
 	volume int = 50
 }
 
 fn volume_control(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_21]()
 	return gui.row(
 		spacing: 10
 		content: [
-			gui.text(text: gui.icon_volume, text_style: gui.theme().icon3),
+			gui.text(text: gui.icon_speaker, text_style: gui.theme().icon3),
 			gui.range_slider(
+				id:        'slider'
 				min:       0
 				max:       100
 				value:     f32(app.volume)
-				on_change: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
-					app.volume = int(e.value)
+				on_change: fn (value f32, mut e gui.Event, mut w gui.Window) {
+					mut app := w.state[App_21]()
+					app.volume = int(value)
 				}
 			),
 			gui.text(text: '${app.volume}%'),

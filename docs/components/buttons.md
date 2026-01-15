@@ -30,12 +30,12 @@ gui.button(
 
 ### Button with Icon
 
-```v
+```oksyntax
 import gui
 
 gui.button(
 	content:  [
-		gui.text(text: gui.icon_save, text_style: gui.theme().icon3),
+		gui.text(text: gui.icon_check, text_style: gui.theme().icon3),
 		gui.text(text: 'Save'),
 	]
 	on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
@@ -59,30 +59,24 @@ gui.button(
 ### Styled Buttons
 
 **Primary button:**
-```v
+```oksyntax
 import gui
 
 gui.button(
-	content: [gui.text(text: 'Save')]
-	style:   gui.ButtonStyle{
-		...gui.theme().button_style
-		color_background: gui.rgb(0, 120, 255)
-		color:            gui.rgb(255, 255, 255)
-	}
+	content:          [gui.text(text: 'Save')]
+	color_background: gui.rgb(0, 120, 255)
+	color:            gui.rgb(255, 255, 255)
 )
 ```
 
 **Danger button:**
-```v
+```	oksyntax
 import gui
 
 gui.button(
-	content: [gui.text(text: 'Delete')]
-	style:   gui.ButtonStyle{
-		...gui.theme().button_style
-		color_background: gui.rgb(255, 59, 48)
-		color:            gui.rgb(255, 255, 255)
-	}
+	content:          [gui.text(text: 'Delete')]
+	color_background: gui.rgb(255, 59, 48)
+	color:            gui.rgb(255, 255, 255)
 )
 ```
 
@@ -95,17 +89,17 @@ On/off switch control.
 ```v
 import gui
 
-struct App {
+struct App_34 {
 pub mut:
 	notifications_enabled bool
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_34]()
 	return gui.toggle(
 		select:   app.notifications_enabled
 		on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
+			mut app := w.state[App_34]()
 			app.notifications_enabled = !app.notifications_enabled
 		}
 	)
@@ -160,20 +154,20 @@ Single selection from options.
 ```v
 import gui
 
-struct App {
+struct App_35 {
 pub mut:
 	size string = 'Medium'
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_35]()
 	return gui.column(
 		content: [
 			gui.radio(
 				label:    'Small'
 				select:   app.size == 'Small'
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_35]()
 					app.size = 'Small'
 				}
 			),
@@ -181,7 +175,7 @@ fn view(window &gui.Window) gui.View {
 				label:    'Medium'
 				select:   app.size == 'Medium'
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_35]()
 					app.size = 'Medium'
 				}
 			),
@@ -189,7 +183,7 @@ fn view(window &gui.Window) gui.View {
 				label:    'Large'
 				select:   app.size == 'Large'
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_35]()
 					app.size = 'Large'
 				}
 			),
@@ -249,15 +243,27 @@ gui.row(
 
 ### Toolbar Buttons
 
-```v
+```oksyntax
 import gui
 
 gui.row(
 	spacing: 5
 	content: [
-		gui.button(content: [gui.text(text: gui.icon_save, text_style: gui.theme().icon3)]),
-		gui.button(content: [gui.text(text: gui.icon_copy, text_style: gui.theme().icon3)]),
-		gui.button(content: [gui.text(text: gui.icon_trash, text_style: gui.theme().icon3)]),
+		gui.button(
+			content: [
+				gui.text(text: gui.icon_check, text_style: gui.theme().icon3),
+			]
+		),
+		gui.button(
+			content: [
+				gui.text(text: gui.icon_copy, text_style: gui.theme().icon3),
+			]
+		),
+		gui.button(
+			content: [
+				gui.text(text: gui.icon_trash, text_style: gui.theme().icon3),
+			]
+		),
 	]
 )
 ```
@@ -267,7 +273,7 @@ gui.row(
 ```v
 import gui
 
-struct App {
+struct App_36 {
 pub mut:
 	dark_mode     bool
 	notifications bool
@@ -275,7 +281,7 @@ pub mut:
 }
 
 fn settings_view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_36]()
 	return gui.column(
 		spacing: 15
 		content: [
@@ -283,7 +289,7 @@ fn settings_view(window &gui.Window) gui.View {
 				label:    'Dark Mode'
 				select:   app.dark_mode
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_36]()
 					app.dark_mode = !app.dark_mode
 				}
 			),
@@ -291,7 +297,7 @@ fn settings_view(window &gui.Window) gui.View {
 				label:    'Notifications'
 				select:   app.notifications
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_36]()
 					app.notifications = !app.notifications
 				}
 			),
@@ -299,7 +305,7 @@ fn settings_view(window &gui.Window) gui.View {
 				label:    'Auto-save'
 				select:   app.auto_save
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_36]()
 					app.auto_save = !app.auto_save
 				}
 			),
@@ -318,8 +324,8 @@ gui.column(
 			spacing: 10
 			content: [
 				gui.button(
-					content: [gui.text(text: 'Yes')]
-					style:   primary_button_style
+					content:          [gui.text(text: 'Yes')]
+					color_background: gui.rgb(0, 120, 255)
 				),
 				gui.button(
 					content: [gui.text(text: 'No')]

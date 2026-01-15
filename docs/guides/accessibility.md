@@ -92,11 +92,8 @@ Always provide visible focus indicators:
 import gui
 
 gui.button(
-	style:   gui.ButtonStyle{
-		...gui.theme().button_style
-		color_focus: gui.rgb(0, 120, 255) // Clear focus indicator
-	}
-	content: [gui.text(text: 'Accessible Button')]
+	color_focus: gui.rgb(0, 120, 255) // Clear focus indicator
+	content:     [gui.text(text: 'Accessible Button')]
 )
 ```
 

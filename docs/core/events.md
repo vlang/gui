@@ -93,7 +93,7 @@ Get read-only state:
 
 ```oksyntax
 on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-	app := w.state[App]()  // Read-only access
+	app := w.state[App_3]()  // Read-only access
 	println('Current count: ${app.counter}')
 }
 ```
@@ -103,7 +103,7 @@ Get mutable state:
 ```oksyntax
 import gui
 
-struct App {
+struct App_3 {
 pub mut:
 	counter int
 }
@@ -111,7 +111,7 @@ pub mut:
 // ...
 
 on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-	mut app := w.state[App]()  // Mutable access
+	mut app := w.state[App_3]()  // Mutable access
 	app.counter += 1
 	// v-gui automatically regenerates view after event completes
 }
@@ -126,20 +126,20 @@ trigger a redraw.
 ```v
 import gui
 
-struct App {
+struct App_4 {
 pub mut:
 	text string
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_4]()
 	return gui.column(
 		content: [
 			gui.text(text: app.text), // Shows updated text
 			gui.button(
 				content:  [gui.text(text: 'Change Text')]
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_4]()
 					app.text = 'Updated!'
 					// View automatically regenerates here
 				}
@@ -222,17 +222,17 @@ need an `on_resize` handler unless you have custom logic.
 ```v
 import gui
 
-struct App {
+struct App_5 {
 pub mut:
 	count int
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_5]()
 	return gui.button(
 		content:  [gui.text(text: '${app.count}')]
 		on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
+			mut app := w.state[App_5]()
 			app.count += 1
 		}
 	)
@@ -244,17 +244,17 @@ fn view(window &gui.Window) gui.View {
 ```v
 import gui
 
-struct App {
+struct App_6 {
 pub mut:
 	enabled bool
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_6]()
 	return gui.toggle(
 		select:   app.enabled
 		on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
+			mut app := w.state[App_6]()
 			app.enabled = !app.enabled
 		}
 	)
@@ -266,7 +266,7 @@ fn view(window &gui.Window) gui.View {
 ```oksyntax
 import gui
 
-struct App {
+struct App_7 {
 pub mut:
 	name  string
 	email string
@@ -277,14 +277,14 @@ fn form_view(window &gui.Window) gui.View {
 		content: [
 			gui.input(
 				on_text_changed: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_7]()
 					app.name = e.text
 				}
 			),
 			gui.button(
 				content:  [gui.text(text: 'Submit')]
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					app := w.state[App]()
+					app := w.state[App_7]()
 					submit_form(app.name, app.email)
 				}
 			),
@@ -300,10 +300,15 @@ fn submit_form(name string, email string) {
 ### Escape to Close Dialog
 
 ```oksyntax
+struct App_8 {
+pub mut:
+	show_dialog bool
+}
+
 gui.dialog(
 	on_key_down: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 		if e.key == .escape {
-			mut app := w.state[App]()
+			mut app := w.state[App_8]()
 			app.show_dialog = false
 		}
 	}

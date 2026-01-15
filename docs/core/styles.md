@@ -69,12 +69,9 @@ Override specific style properties for individual views:
 import gui
 
 gui.button(
-	content: [gui.text(text: 'Custom Button')]
-	style:   gui.ButtonStyle{
-		...gui.theme().button_style // Start with theme style
-		radius:       12 // Override radius
-		color_active: gui.rgb(255, 100, 0) // Override active color
-	}
+	content:     [gui.text(text: 'Custom Button')]
+	radius:      12 // Override radius
+	color_click: gui.rgb(255, 100, 0) // Override active color
 )
 ```
 

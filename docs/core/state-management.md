@@ -11,7 +11,7 @@ Define application state in a struct:
 ```v
 import gui
 
-struct App {
+struct App_25 {
 pub mut:
 	counter int
 	text    string
@@ -28,9 +28,16 @@ Pass state to the window when creating it:
 ```v
 import gui
 
+struct App_25 {
+pub mut:
+	counter int
+	text    string
+	items   []string
+}
+
 fn main() {
 	mut window := gui.window(
-		state:   &App{
+		state:   &App_25{
 			counter: 0
 			text:    ''
 			items:   []
@@ -42,6 +49,10 @@ fn main() {
 		}
 	)
 	window.run()
+}
+
+fn main_view(window &gui.Window) gui.View {
+	return gui.text(text: 'Main View')
 }
 ```
 
@@ -55,8 +66,15 @@ Views are pure functions that read state:
 ```v
 import gui
 
+struct App_25 {
+pub mut:
+	counter int
+	text    string
+	items   []string
+}
+
 fn main_view(window &gui.Window) gui.View {
-	app := window.state[App]() // Get read-only state
+	app := window.state[App_25]() // Get read-only state
 
 	return gui.column(
 		content: [
@@ -76,10 +94,17 @@ Event handlers get mutable access to state:
 ```v
 import gui
 
+struct App_25 {
+pub mut:
+	counter int
+	text    string
+	items   []string
+}
+
 gui.button(
 	content:  [gui.text(text: 'Increment')]
 	on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-		mut app := w.state[App]() // Get mutable state
+		mut app := w.state[App_25]() // Get mutable state
 		app.counter += 1
 		// View regenerates automatically after event handler completes
 	}
@@ -129,10 +154,17 @@ state:
 ```v
 import gui
 
+struct App_25 {
+pub mut:
+	counter int
+	text    string
+	items   []string
+}
+
 gui.button(
 	content:  [gui.text(text: 'Increment')]
 	on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-		mut app := w.state[App]()
+		mut app := w.state[App_25]()
 		app.counter += 1
 		// View automatically regenerates after this function returns
 	}
@@ -149,12 +181,24 @@ automatic regeneration:
 import gui
 import time
 
-spawn fn (mut w gui.Window) {
-	time.sleep(2 * time.second)
-	mut app := w.state[App]()
-	app.status = 'Task complete'
-	w.update_view(main_view) // Required: explicit regeneration
-}(mut window)
+struct App_33 {
+pub mut:
+	status string
+}
+
+fn main_view(w &gui.Window) gui.View {
+	return gui.text(text: 'Async Done')
+}
+
+fn main() {
+	mut window := gui.window(state: &App_33{})
+	spawn fn (mut w gui.Window) {
+		time.sleep(2 * time.second)
+		mut app := w.state[App_33]()
+		app.status = 'Task complete'
+		w.update_view(main_view) // Required: explicit regeneration
+	}(mut window)
+}
 ```
 
 ### When to Call update_view()
@@ -193,17 +237,17 @@ Call `window.update_view()` from any thread. v-gui handles synchronization.
 ```v
 import gui
 
-struct App {
+struct App_26 {
 pub mut:
 	count int
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_26]()
 	return gui.button(
 		content:  [gui.text(text: '${app.count}')]
 		on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
+			mut app := w.state[App_26]()
 			app.count += 1
 		}
 	)
@@ -215,7 +259,7 @@ fn view(window &gui.Window) gui.View {
 ```v
 import gui
 
-struct App {
+struct App_27 {
 pub mut:
 	name  string
 	email string
@@ -223,23 +267,23 @@ pub mut:
 }
 
 fn form_view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_27]()
 	return gui.column(
 		content: [
 			gui.input(
-				placeholder: 'Name'
-				text:        app.name
-				on_change:   fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
-					app.name = e.text
+				placeholder:     'Name'
+				text:            app.name
+				on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+					mut app := w.state[App_27]()
+					app.name = text
 				}
 			),
 			gui.input(
-				placeholder: 'Email'
-				text:        app.email
-				on_change:   fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
-					app.email = e.text
+				placeholder:     'Email'
+				text:            app.email
+				on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+					mut app := w.state[App_27]()
+					app.email = text
 				}
 			),
 		]
@@ -251,40 +295,42 @@ fn form_view(window &gui.Window) gui.View {
 
 ```v
 import gui
+import arrays
 
-struct App {
+struct App_28 {
 pub mut:
 	items []string
 	input string
 }
 
 fn list_view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_28]()
 	return gui.column(
-		content: [
-			gui.row(content: [
-				gui.input(
-					text:      app.input
-					on_change: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-						mut app := w.state[App]()
-						app.input = e.text
-					}
-				),
-				gui.button(
-					content:  [gui.text(text: 'Add')]
-					on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-						mut app := w.state[App]()
-						if app.input != '' {
-							app.items << app.input
-							app.input = ''
+		content: arrays.append([
+			gui.row(
+				content: [
+					gui.input(
+						text:            app.input
+						on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+							mut app := w.state[App_28]()
+							app.input = text
 						}
-					}
-				),
-			]),
-			...app.items.map(fn (item string) gui.View {
-				return gui.text(text: item)
-			}),
-		]
+					),
+					gui.button(
+						content:  [gui.text(text: 'Add')]
+						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+							mut app := w.state[App_28]()
+							if app.input != '' {
+								app.items << app.input
+								app.input = ''
+							}
+						}
+					),
+				]
+			),
+		], app.items.map(fn (item string) gui.View {
+			return gui.text(text: item)
+		}))
 	)
 }
 ```
@@ -300,13 +346,13 @@ enum ViewMode {
 	about
 }
 
-struct App {
+struct App_29 {
 pub mut:
 	view_mode ViewMode
 }
 
 fn main_view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_29]()
 	return gui.column(
 		content: [
 			// Navigation
@@ -315,14 +361,14 @@ fn main_view(window &gui.Window) gui.View {
 					gui.button(
 						content:  [gui.text(text: 'Home')]
 						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[App]()
+							mut app := w.state[App_29]()
 							app.view_mode = .home
 						}
 					),
 					gui.button(
 						content:  [gui.text(text: 'Settings')]
 						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[App]()
+							mut app := w.state[App_29]()
 							app.view_mode = .settings
 						}
 					),
@@ -379,18 +425,18 @@ Use V's computed properties for derived state:
 ```v
 import gui
 
-struct App {
+struct App_30 {
 pub mut:
 	first_name string
 	last_name  string
 }
 
-pub fn (app App) full_name() string {
+pub fn (app App_30) full_name() string {
 	return '${app.first_name} ${app.last_name}'
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_30]()
 	return gui.text(text: app.full_name())
 }
 ```
@@ -400,10 +446,10 @@ fn view(window &gui.Window) gui.View {
 Validate in event handlers before updating:
 
 ```oksyntax
-on_change: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-	mut app := w.state[App]()
-	if e.text.len <= 50 {  // Validate
-		app.name = e.text
+on_change: fn (_ &gui.Layout, text string, mut w gui.Window) {
+	mut app := w.state[App_25]()
+	if text.len <= 50 {  // Validate
+		app.text = text
 	}
 }
 ```
@@ -416,12 +462,24 @@ Update state from background threads:
 import gui
 import time
 
-spawn fn (mut w gui.Window) {
-	time.sleep(2 * time.second)
-	mut app := w.state[App]()
-	app.status = 'Task complete'
-	w.update_view(main_view) // Trigger view regeneration
-}(mut window)
+struct App_33 {
+pub mut:
+	status string
+}
+
+fn main_view(w &gui.Window) gui.View {
+	return gui.text(text: 'Async')
+}
+
+fn main() {
+	mut window := gui.window(state: &App_33{})
+	spawn fn (mut w gui.Window) {
+		time.sleep(2 * time.second)
+		mut app := w.state[App_33]()
+		app.status = 'Task complete'
+		w.update_view(main_view) // Trigger view regeneration
+	}(mut window)
+}
 ```
 
 ## Performance Considerations
@@ -438,7 +496,7 @@ values.
 
 **Bad**:
 ```oksyntax
-struct App {
+struct App_31 {
 pub mut:
 	items       []Item
 	item_count  int  // Derived from items.len
@@ -449,12 +507,14 @@ pub mut:
 ```v
 import gui
 
-struct App {
+struct Item {}
+
+struct App_32 {
 pub mut:
 	items []Item
 }
 
-pub fn (app App) item_count() int {
+pub fn (app App_32) item_count() int {
 	return app.items.len
 }
 ```

@@ -167,10 +167,13 @@ Text color:
 ```v
 import gui
 
-text_style:
-gui.TextStyle{
-	...gui.theme().text_style
-	color: gui.rgb(255, 100, 0) // Orange text
+struct App {}
+
+fn main() {
+	text_style := gui.TextStyle{
+		...gui.theme().text_style
+		color: gui.rgb(255, 100, 0) // Orange text
+	}
 }
 ```
 
@@ -252,7 +255,7 @@ import gui
 gui.button(
 	content: [
 		gui.text(
-			text:       gui.icon_settings
+			text:       gui.icon_gear
 			text_style: gui.theme().icon3
 		),
 		gui.text(text: 'Settings'),

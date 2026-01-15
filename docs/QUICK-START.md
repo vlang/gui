@@ -20,14 +20,14 @@ Create a file `hello.v`:
 ```v
 import gui
 
-struct App {
+struct App_9 {
 pub mut:
 	clicks int
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &App_9{}
 		width:   300
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -39,7 +39,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	app := window.state[App_9]()
 	return gui.column(
 		width:   w
 		height:  h
@@ -51,7 +51,7 @@ fn main_view(window &gui.Window) gui.View {
 			gui.button(
 				content:  [gui.text(text: '${app.clicks} Clicks')]
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_9]()
 					app.clicks += 1
 				}
 			),
@@ -73,7 +73,7 @@ You should see a window with centered text and a button that counts clicks.
 ### The State
 
 ```oksyntax
-struct App {
+struct App_9 {
 pub mut:
 	clicks int
 }
@@ -86,7 +86,7 @@ available in views and event handlers.
 
 ```oksyntax
 mut window := gui.window(
-	state:   &App{}
+	state:   &App_9{}
 	width:   300
 	height:  300
 	on_init: fn (mut w gui.Window) {
@@ -104,7 +104,7 @@ generator function.
 ```oksyntax
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	app := window.state[App_9]()
 	return gui.column(...)
 }
 ```
@@ -139,7 +139,7 @@ center children horizontally and vertically.
 gui.button(
 	content:  [gui.text(text: '${app.clicks} Clicks')]
 	on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-		mut app := w.state[App]()
+		mut app := w.state[App_9]()
 		app.clicks += 1
 	}
 )

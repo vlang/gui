@@ -75,14 +75,14 @@ v install gui
 ```v
 import gui
 
-struct App {
+struct App_42 {
 pub mut:
 	clicks int
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &App_42{}
 		width:   300
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -94,7 +94,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	app := window.state[App_42]()
 	return gui.column(
 		width:   w
 		height:  h
@@ -106,7 +106,7 @@ fn main_view(window &gui.Window) gui.View {
 			gui.button(
 				content:  [gui.text(text: '${app.clicks} Clicks')]
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_42]()
 					app.clicks += 1
 				}
 			),

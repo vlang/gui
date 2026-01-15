@@ -28,7 +28,7 @@ The view regenerates automatically when the window resizes.
 
 Use `fill` sizing to consume available space:
 
-```v
+```oksyntax
 import gui
 
 fn responsive_layout(window &gui.Window) gui.View {
@@ -56,7 +56,7 @@ fn responsive_layout(window &gui.Window) gui.View {
 
 Adapt layout based on window width:
 
-```v
+```oksyntax
 import gui
 
 fn responsive_view(window &gui.Window) gui.View {
@@ -92,7 +92,7 @@ fn responsive_view(window &gui.Window) gui.View {
 
 Create responsive grids with `fill` sizing:
 
-```v
+```oksyntax
 import gui
 
 fn grid_view(window &gui.Window) gui.View {
@@ -159,7 +159,7 @@ Each button grows equally to fill available width.
 
 ### App Shell
 
-```v
+```oksyntax
 import gui
 
 fn app_shell(window &gui.Window) gui.View {
@@ -203,7 +203,7 @@ fn app_shell(window &gui.Window) gui.View {
 
 ### Responsive Cards
 
-```v
+```oksyntax
 import gui
 
 fn card_grid(window &gui.Window, items []string) gui.View {

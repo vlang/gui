@@ -250,20 +250,20 @@ fn main_view(window &gui.Window) gui.View {
 import gui
 
 gui.column(
-	sizing: gui.fill_fill
+	sizing:  gui.fill_fill
 	content: [
 		gui.row(
-			sizing: gui.fill_fit
+			sizing:  gui.fill_fit
 			content: [
-				gui.button(sizing: gui.fill_fit, content: [...]),
-				gui.button(sizing: gui.fill_fit, content: [...]),
+				// gui.button(sizing: gui.fill_fit, content: [...]),
+				// gui.button(sizing: gui.fill_fit, content: [...]),
 			]
 		),
 		gui.row(
-			sizing: gui.fill_fit
+			sizing:  gui.fill_fit
 			content: [
-				gui.button(sizing: gui.fill_fit, content: [...]),
-				gui.button(sizing: gui.fill_fit, content: [...]),
+				// gui.button(sizing: gui.fill_fit, content: [...]),
+				// gui.button(sizing: gui.fill_fit, content: [...]),
 			]
 		),
 	]
@@ -278,16 +278,16 @@ Creates a 2x2 grid where cells grow to fill available space.
 import gui
 
 gui.row(
-	sizing: gui.fill_fill
+	sizing:  gui.fill_fill
 	content: [
 		gui.column(
 			width:  200
-			sizing: gui.fixed_fill  // Fixed-width sidebar
-			content: [...sidebar content...]
+			sizing: gui.fixed_fill // Fixed-width sidebar
+			// content: [...sidebar content...]
 		),
 		gui.column(
-			sizing: gui.fill_fill  // Main content fills remaining space
-			content: [...main content...]
+			sizing: gui.fill_fill // Main content fills remaining space
+			// content: [...main content...]
 		),
 	]
 )
@@ -303,11 +303,11 @@ gui.column(
 	h_align: .center
 	v_align: .middle
 	content: [
-		gui.dialog(
+		gui.column(
 			width:  400
 			height: 300
 			sizing: gui.fixed_fixed
-			content: [...dialog content...]
+			// content: [...dialog content...]
 		),
 	]
 )

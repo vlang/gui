@@ -22,6 +22,8 @@ layout syntax and thread-safe view updates.
 - **Thread Safe**: Safe view updates across different threads
 - **Declarative Syntax**: Flex-box style layout with intuitive API
 - **Performance Focused**: Optimized for speed and efficiency
+- **Rich Text**: Rendering with multiple styles and mixed content
+- **Accessibility**: Automatic screen reader support (Work in Progress)
 
 ## Installation
 
@@ -58,14 +60,14 @@ Here’s a complete example of a basic v-gui application:
 ```v
 import gui
 
-struct App {
+struct App_1 {
 pub mut:
 	clicks int
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &App_1{}
 		width:   300
 		height:  300
 		on_init: fn (mut w gui.Window) {
@@ -81,7 +83,7 @@ fn main() {
 // every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	app := window.state[App]()
+	app := window.state[App_1]()
 	return gui.column(
 		width:   w
 		height:  h
@@ -93,7 +95,7 @@ fn main_view(window &gui.Window) gui.View {
 			gui.button(
 				content:  [gui.text(text: '${app.clicks} Clicks')]
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_1]()
 					app.clicks += 1
 				}
 			),
@@ -158,6 +160,15 @@ gui.button(
 )
 ```
 
+## Accessibility (Work in progress)
+
+v-gui provides automatic accessibility support through platform APIs
+(NSAccessibility on macOS, UI Automation on Windows, etc.).
+
+- **Screen Readers**: Text is automatically exposed.
+- **Navigation**: Keyboard navigation is supported for interactive elements.
+- **Contrast**: Default themes are designed with accessibility in mind.
+
 ## Event Handling
 
 Events are handled through callback functions passed to UI components.
@@ -177,7 +188,7 @@ Event handlers receive:
 
 ``` v
 fn view_function(window &gui.Window) gui.View {
-    app := window.state[App]()  // Get typed state
+    app := window.state[App_1]()  // Get typed state
     // Use app state in view
 }
 ```
@@ -186,7 +197,7 @@ fn view_function(window &gui.Window) gui.View {
 
 ``` v
 on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-    mut app := w.state[App]()  // Get mutable state reference
+    mut app := w.state[App_1]()  // Get mutable state reference
     app.clicks += 1            // Modify state
     // View automatically updates
 }

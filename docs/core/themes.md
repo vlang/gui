@@ -11,12 +11,16 @@ Apply a theme to your window:
 ```v
 import gui
 
-struct App {}
+struct App_37 {}
+
+fn main_view(w &gui.Window) gui.View {
+	return gui.text(text: 'Theme')
+}
 
 mut window := gui.window(
 	width:   800
 	height:  600
-	state:   &App{}
+	state:   &App_37{}
 	on_init: fn (mut w gui.Window) {
 		w.set_theme(gui.theme_dark_bordered)
 		w.update_view(main_view)
@@ -238,19 +242,19 @@ Implement a theme toggle:
 ```v
 import gui
 
-struct App {
+struct App_38 {
 pub mut:
 	use_dark bool = true
 }
 
 fn settings_view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_38]()
 	return gui.column(
 		content: [
 			gui.button(
 				content:  [gui.text(text: 'Toggle Theme')]
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_38]()
 					app.use_dark = !app.use_dark
 					theme := if app.use_dark {
 						gui.theme_dark

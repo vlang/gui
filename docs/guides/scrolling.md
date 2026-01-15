@@ -6,10 +6,10 @@ Create scrollable containers for content that exceeds available space.
 
 Enable scrolling with `id_scroll`:
 
-```v
+```oksyntax
 import gui
 
-gui.container(
+gui.column(
 	id_scroll: 1 // Any non-zero ID
 	width:     300
 	height:    400
@@ -29,11 +29,11 @@ When content height exceeds 400 pixels, scrolling activates automatically.
 
 v-gui remembers scroll positions by `id_scroll`. Use consistent IDs:
 
-```v
+```oksyntax
 import gui
 
 // Same id_scroll across sessions = remembered scroll position
-gui.container(
+gui.column(
 	id_scroll: 1
 	content:   [long_content()]
 )
@@ -44,7 +44,7 @@ gui.container(
 Restrict to vertical scrolling:
 
 ```oksyntax
-gui.container(
+gui.column(
 	id_scroll:   1
 	scroll_mode: .vertical_only
 	content:     [...]
@@ -56,7 +56,7 @@ gui.container(
 Restrict to horizontal scrolling:
 
 ```oksyntax
-gui.container(
+gui.column(
 	id_scroll:   1
 	scroll_mode: .horizontal_only
 	content:     [...]
@@ -68,7 +68,7 @@ gui.container(
 Control scrollbar display:
 
 ```oksyntax
-gui.container(
+gui.column(
 	id_scroll:         1
 	scrollbar_visible: true // Always show scrollbars
 	content:           [...]
@@ -84,14 +84,14 @@ Default behavior: scrollbars appear when content overflows.
 ```v
 import gui
 
-struct App {
+struct App_15 {
 pub mut:
 	items []string
 }
 
 fn list_view(window &gui.Window) gui.View {
-	app := window.state[App]()
-	return gui.container(
+	app := window.state[App_15]()
+	return gui.column(
 		id_scroll: 1
 		width:     400
 		height:    600
@@ -109,7 +109,7 @@ fn list_view(window &gui.Window) gui.View {
 
 ### Fixed Header with Scrolling Body
 
-```v
+```oksyntax
 import gui
 
 fn app_view(window &gui.Window) gui.View {
@@ -126,7 +126,7 @@ fn app_view(window &gui.Window) gui.View {
 				content: [gui.text(text: 'Header')]
 			),
 			// Scrollable body
-			gui.container(
+			gui.column(
 				id_scroll: 1
 				sizing:    gui.fill_fill
 				content:   [long_content()]
@@ -139,7 +139,7 @@ fn app_view(window &gui.Window) gui.View {
 ### Horizontal Scrolling Gallery
 
 ```oksyntax
-gui.container(
+gui.column(
 	id_scroll:   1
 	scroll_mode: .horizontal_only
 	width:       600
@@ -158,7 +158,7 @@ gui.container(
 ### Nested Scrolling
 
 ```oksyntax
-gui.container(
+gui.column(
 	id_scroll: 1 // Outer scroll
 	width:     800
 	height:    600
@@ -166,7 +166,7 @@ gui.container(
 		gui.column(
 			content: [
 				gui.text(text: 'Section 1'),
-				gui.container(
+				gui.column(
 					id_scroll: 2 // Inner scroll
 					height:    200
 					content:   [inner_content()]

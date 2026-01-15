@@ -11,15 +11,15 @@ Visual progress indicator.
 ```v
 import gui
 
-struct App {
+struct App_16 {
 pub mut:
 	progress f32 = 0.5
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_16]()
 	return gui.progress_bar(
-		progress: app.progress // 0.0 to 1.0
+		percent: app.progress // 0.0 to 1.0
 	)
 }
 ```
@@ -45,14 +45,14 @@ gui.progress_bar(
 
 ### With Label
 
-```v
+```oksyntax
 import gui
 
 gui.column(
 	spacing: 5
 	content: [
 		gui.text(text: 'Loading: ${int(progress * 100)}%'),
-		gui.progress_bar(progress: progress),
+		gui.progress_bar(percent: progress),
 	]
 )
 ```
@@ -63,10 +63,10 @@ Loading spinner animation.
 
 ### Basic Usage
 
-```v
+```oksyntax
 import gui
 
-gui.pulsar(
+window.pulsar(
 	size: 40
 )
 ```
@@ -123,19 +123,19 @@ gui.container(
 ```v
 import gui
 
-struct App {
+struct App_17 {
 pub mut:
 	upload_progress f32
 	file_name       string
 }
 
 fn upload_view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_17]()
 	return gui.column(
 		spacing: 10
 		content: [
 			gui.text(text: 'Uploading: ${app.file_name}'),
-			gui.progress_bar(progress: app.upload_progress),
+			gui.progress_bar(percent: app.upload_progress),
 			gui.text(text: '${int(app.upload_progress * 100)}%'),
 		]
 	)
@@ -172,20 +172,20 @@ if is_loading {
 ```v
 import gui
 
-struct App {
+struct App_18 {
 pub mut:
 	current_step int
 	total_steps  int = 5
 }
 
 fn wizard_view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_18]()
 	progress := f32(app.current_step) / f32(app.total_steps)
 	return gui.column(
 		spacing: 15
 		content: [
 			gui.text(text: 'Step ${app.current_step} of ${app.total_steps}'),
-			gui.progress_bar(progress: progress),
+			gui.progress_bar(percent: progress),
 		]
 	)
 }

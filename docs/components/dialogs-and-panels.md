@@ -8,34 +8,34 @@ Modal dialog overlay.
 
 ### Basic Usage
 
-```v
+```w
 import gui
 
-struct App {
+struct App_19 {
 pub mut:
 	show_dialog bool
 }
 
 fn view(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_19]()
 	return gui.column(
 		content: [
 			gui.button(
 				content:  [gui.text(text: 'Show Dialog')]
 				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App]()
+					mut app := w.state[App_19]()
 					app.show_dialog = true
 				}
 			),
 			if app.show_dialog {
-				gui.dialog(
+				window.dialog(
 					width:   400
 					height:  200
 					content: [gui.text(text: 'Dialog Content'),
 						gui.button(
 							content:  [gui.text(text: 'Close')]
 							on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-								mut app := w.state[App]()
+								mut app := w.state[App_19]()
 								app.show_dialog = false
 							}
 						)]
@@ -88,7 +88,7 @@ gui.expand_panel(
 		gui.text(text: 'Advanced setting 2'),
 	]
 	on_toggle: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-		mut app := w.state[App]()
+		mut app := w.state[App_20]()
 		app.show_advanced = !app.show_advanced
 	}
 )

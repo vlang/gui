@@ -36,7 +36,7 @@ gui.text(
 		...gui.theme().text_style
 		size:   18
 		color:  gui.rgb(255, 100, 0)
-		weight: 700 // Bold
+		family: 'Roboto' // Font family
 	}
 )
 ```
@@ -72,10 +72,14 @@ Text wraps automatically when `width` is set:
 ```v
 import gui
 
-gui.text(
-	text:  'This is a long paragraph that will wrap to multiple lines when it exceeds the specified width.'
-	width: 300
-	mode:  .multiline
+gui.column(
+	width:   300
+	content: [
+		gui.text(
+			text: 'This is a long paragraph that will wrap to multiple lines when it exceeds the specified width.'
+			mode: .wrap
+		),
+	]
 )
 ```
 
@@ -100,9 +104,9 @@ Displays images from file paths or memory.
 import gui
 
 gui.image(
-	path:   '/path/to/image.png'
-	width:  200
-	height: 200
+	file_name: '/path/to/image.png'
+	width:     200
+	height:    200
 )
 ```
 
@@ -157,7 +161,7 @@ import gui
 
 gui.button(
 	content: [
-		gui.image(path: 'icon.png', width: 16, height: 16),
+		gui.image(file_name: 'icon.png', width: 16, height: 16),
 		gui.text(text: 'Save'),
 	]
 )
@@ -255,11 +259,15 @@ gui.row(
 ```v
 import gui
 
-gui.text(
-	text:  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ' +
-		'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
-	width: 400
-	mode:  .multiline
+gui.column(
+	width:   400
+	content: [
+		gui.text(
+			text: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. ' +
+				'Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.'
+			mode: .wrap
+		),
+	]
 )
 ```
 

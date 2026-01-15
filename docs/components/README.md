@@ -170,22 +170,6 @@ gui.column(
 )
 ```
 
-### Styling Components
-
-Override component styles:
-
-```v
-import gui
-
-gui.button(
-	content: [gui.text(text: 'Primary')]
-	style:   gui.ButtonStyle{
-		...gui.theme().button_style
-		color_background: gui.rgb(0, 120, 255)
-	}
-)
-```
-
 ## Related Topics
 
 - **[Views](../core/views.md)** - View system fundamentals

@@ -56,7 +56,7 @@ pub:
 
 ### Padding constants
 
-```v
+```oksyntax
 gui.padding_none
 // {0, 0, 0, 0}
 gui.padding_one
@@ -73,7 +73,7 @@ gui.padding_large
 
 ## Sizing Constants
 
-```v
+```oksyntax
 // Width x Height sizing combinations
 gui.fit_fit
 // Fit both
@@ -97,7 +97,7 @@ gui.fill_fixed
 
 ## Radius Constants
 
-```v
+```oksyntax
 gui.radius_none
 // 0
 gui.radius_small
@@ -112,7 +112,7 @@ gui.radius_border
 
 ## Spacing Constants
 
-```v
+```oksyntax
 gui.spacing_small
 // 5
 gui.spacing_medium
@@ -125,7 +125,7 @@ gui.spacing_large
 
 Access embedded Feather Icons:
 
-```v
+```oksyntax
 gui.icon_check
 gui.icon_x
 gui.icon_chevron_right
@@ -146,7 +146,7 @@ See [Fonts guide](../core/fonts.md#icon-fonts) for complete icon list.
 
 Get current theme:
 
-```v
+```oksyntax
 current_theme := gui.theme()
 ```
 
@@ -156,7 +156,7 @@ Returns the active `Theme` struct.
 
 Create custom theme from config:
 
-```v
+```oksyntax
 import gui
 
 my_theme := gui.theme_maker(gui.ThemeCfg{

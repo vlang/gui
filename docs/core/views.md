@@ -70,11 +70,12 @@ Positions children using explicit coordinates (free-form):
 import gui
 
 gui.canvas(
-	width:   200
-	height:  200
+	width:  200
+	height: 200
+	// Canvas requires container children with x/y coordinates
 	content: [
-		gui.text(text: 'Positioned', x: 10, y: 20),
-		gui.text(text: 'Freely', x: 100, y: 100),
+		gui.column(x: 10, y: 20, content: [gui.text(text: 'Positioned')]),
+		gui.column(x: 100, y: 100, content: [gui.text(text: 'Freely')]),
 	]
 )
 ```
@@ -168,9 +169,15 @@ gui.text(
 Text wrapping:
 
 ```oksyntax
-gui.text(
-	text: 'This is a long text that will wrap to multiple lines...'
-	width: 200  // Wrap at 200 logical pixels
+```oksyntax
+gui.column(
+	width:   200
+	content: [
+		gui.text(
+			text: 'This is a long text that will wrap to multiple lines...'
+			mode: .wrap
+		),
+	]
 )
 ```
 
@@ -188,9 +195,9 @@ The simplest view. Displays a bitmap or texture:
 import gui
 
 gui.image(
-	path:   '/path/to/image.png'
-	width:  100
-	height: 100
+	file_name: '/path/to/image.png'
+	width:     100
+	height:    100
 )
 ```
 
@@ -213,7 +220,7 @@ import gui
 
 gui.button(
 	content:  [
-		gui.image(path: 'icon.png', width: 16, height: 16),
+		gui.image(file_name: 'icon.png', width: 16, height: 16),
 		gui.text(text: 'Click Me'),
 	]
 	on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {

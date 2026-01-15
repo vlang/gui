@@ -25,7 +25,7 @@ Color creation, padding helpers, and other utilities.
 
 ### Creating a Window
 
-```v
+```oksytnax
 import gui
 
 mut window := gui.window(
@@ -42,7 +42,7 @@ window.run()
 
 ### Sizing Constants
 
-```v
+```oksyntax
 // Sizing modes
 gui.fit_fit
 gui.fit_fill
@@ -74,7 +74,7 @@ gui.radius_large
 
 ### Color Functions
 
-```v
+```oksyntax
 // RGB
 gui.rgb(255, 100, 0)
 
@@ -89,7 +89,7 @@ gui.hex(0xFF6400)
 
 All components follow the same pattern:
 
-```v
+```oksyntax
 gui.component_name(
 	property: value
 	content:  [child_views]

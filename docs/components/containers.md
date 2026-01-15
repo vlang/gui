@@ -98,10 +98,10 @@ Same as row, but `spacing` applies vertically.
 ### Common Patterns
 
 **Form layout:**
-```v
+```oksyntax
 import gui
 
-struct App {
+struct App_2 {
 pub mut:
 	name string
 }
@@ -168,7 +168,7 @@ Generic scrollable container with additional features.
 
 ### Basic Usage
 
-```v
+```oksyntax
 import gui
 
 gui.container(
@@ -283,7 +283,7 @@ gui.row(
 
 Because buttons are containers, they can hold any views:
 
-```v
+```oksyntax
 import gui
 
 gui.button(

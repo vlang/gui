@@ -79,17 +79,17 @@ Components that access window state:
 ```v
 import gui
 
-struct App {
+struct App_14 {
 pub mut:
 	count int
 }
 
 fn counter_button(window &gui.Window) gui.View {
-	app := window.state[App]()
+	app := window.state[App_14]()
 	return gui.button(
 		content:  [gui.text(text: 'Count: ${app.count}')]
 		on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[App]()
+			mut app := w.state[App_14]()
 			app.count += 1
 		}
 	)
@@ -100,7 +100,7 @@ fn counter_button(window &gui.Window) gui.View {
 
 ### Icon Button
 
-```v
+```okyntax
 import gui
 
 fn icon_button(icon string, label string, on_click fn (&gui.Layout, mut gui.Event, mut gui.Window)) gui.View {
@@ -114,14 +114,14 @@ fn icon_button(icon string, label string, on_click fn (&gui.Layout, mut gui.Even
 }
 
 // Usage
-icon_button(gui.icon_save, 'Save', fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+icon_button(gui.icon_file, 'Save', fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 	save_document()
 })
 ```
 
 ### Labeled Input
 
-```v
+```
 import gui
 
 fn labeled_input(label string, value string, on_change fn (&gui.Layout, mut gui.Event, mut gui.Window)) gui.View {
@@ -211,8 +211,7 @@ fn list_item(cfg ListItemConfig) gui.View {
 
 Organize custom views in modules:
 
-```v
-// components.v
+```oksyntax
 module components
 
 import gui
@@ -220,11 +219,7 @@ import gui
 pub fn primary_button(label string, on_click fn (&gui.Layout, mut gui.Event, mut gui.Window)) gui.View {
 	return gui.button(
 		content:  [gui.text(text: label)]
-		style:    gui.ButtonStyle{
-			...gui.theme().button_style
-			color_background: gui.rgb(0, 120, 255)
-			color:            gui.rgb(255, 255, 255)
-		}
+		color:    gui.blue
 		on_click: on_click
 	)
 }
@@ -232,17 +227,13 @@ pub fn primary_button(label string, on_click fn (&gui.Layout, mut gui.Event, mut
 pub fn danger_button(label string, on_click fn (&gui.Layout, mut gui.Event, mut gui.Window)) gui.View {
 	return gui.button(
 		content:  [gui.text(text: label)]
-		style:    gui.ButtonStyle{
-			...gui.theme().button_style
-			color_background: gui.rgb(255, 59, 48)
-			color:            gui.rgb(255, 255, 255)
-		}
+		color:    gui.red
 		on_click: on_click
 	)
 }
 ```
 
-```v
+```oksyntax
 // main.v
 import gui
 import components
