@@ -72,7 +72,9 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			}
 		}
 		DrawText {
-			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, renderer.cfg) or {}
+			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, renderer.cfg) or {
+				log.error(err.msg())
+			}
 		}
 		DrawClip {
 			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
@@ -269,9 +271,6 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 }
 
-// render_text renders text including multiline text.
-// If cursor coordinates are present, it draws the input cursor.
-// The highlighting of selected text happens here also.
 // render_text renders text including multiline text using vglyph layout.
 // If cursor coordinates are present, it draws the input cursor.
 // The highlighting of selected text happens here also.

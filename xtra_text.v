@@ -145,9 +145,7 @@ fn text_wrap(mut shape Shape, mut window Window) {
 			no_hit_testing: shape.id_focus == 0
 		}
 
-		shape.text_layout = window.text_system.layout_text_cached(shape.text, cfg) or {
-			vglyph.Layout{}
-		}
+		shape.text_layout = window.text_system.layout_text(shape.text, cfg) or { vglyph.Layout{} }
 		shape.last_constraint_width = width
 
 		// Calculate height based on layout
