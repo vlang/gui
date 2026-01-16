@@ -292,11 +292,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		color: color
 	}.to_vglyph_cfg()
 
-	// lh := line_height(shape, mut window) // Not needed if we trust vglyph rects?
-	// But we might want consistent line height. Pango gives rects.
-	// For now let's assume standard line height for consistency with cursor logic.
 	lh := line_height(shape, mut window)
-
 	beg := int(shape.text_sel_beg)
 	end := int(shape.text_sel_end)
 
@@ -305,28 +301,6 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	byte_end := rune_to_byte_index(shape.text, end)
 
 	for line in shape.text_layout.lines {
-		// Calculate drawing position.
-		// vglyph line provides a rect, but it's relative to layout start (0,0).
-		// We add shape.x/y.
-		// Note: line.rect.y might vary if fonts vary, but usually consistent in block.
-		// We can use line.rect.y or calculate simplistic y += lh.
-		// Using line.rect.y is more accurate to layout engine.
-
-		// Adjust for padding? Layout was created with width - padding.
-		// But render position is shape.x + padding.
-		// Actually text_wrap subtracts padding from width constraint.
-		// The layout usually starts at 0,0.
-		// We should render at shape.x + padding, shape.y + padding.
-
-		// Wait, existing render used shape.x/y. Did it assume padding was applied to x/y?
-		// No, usually shapes have padding applied inside?
-		// Text usually renders inside padding.
-		// Let's assume shape.x/y is the top-left of the shape *box*.
-		// Text should start at shape.x + shape.padding.left, shape.y + shape.padding.top.
-
-		// The original code used `x := shape.x` and `y := shape.y`.
-		// And `text_wrap` subtracted padding from width.
-
 		draw_x := shape.x + shape.padding.left + line.rect.x
 		draw_y := shape.y + shape.padding.top + line.rect.y
 

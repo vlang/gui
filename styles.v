@@ -296,12 +296,14 @@ fn (ts TextStyle) to_text_cfg() gg.TextCfg {
 pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 	return vglyph.TextConfig{
 		style: vglyph.TextStyle{
-			font_name:      ts.family
-			color:          ts.color.to_gx_color()
-			size:           ts.size
-			variation_axes: ts.features
-			underline:      ts.underline
-			strikethrough:  ts.strikethrough
+			font_name:     ts.family
+			color:         ts.color.to_gx_color()
+			size:          ts.size
+			features:      &vglyph.FontFeatures{
+				variation_axes: ts.features
+			}
+			underline:     ts.underline
+			strikethrough: ts.strikethrough
 		}
 	}
 }
