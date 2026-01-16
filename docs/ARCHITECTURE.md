@@ -158,7 +158,7 @@ Draws the layout to screen.
 **Fonts & vglyph**: Text rendering:
 - Font loading and management
 - Text shaping and layout (via vglyph)
-- TextStyle: family, size, weight, color
+- TextStyle: family, size, color, properties
 - Built-in presets (n1-n6, b1-b6, i1-i6, m1-m6)
 
 ### External Dependencies

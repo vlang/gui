@@ -19,7 +19,7 @@ gui.text(text: 'Hello, v-gui!')
 | Property | Type | Description |
 |----------|------|-------------|
 | `text` | `string` | Text content to display |
-| `text_style` | `TextStyle` | Font, size, color, weight |
+| `text_style` | `TextStyle` | Font, size, color, properties |
 | `mode` | `TextMode` | Single-line or multi-line |
 | `width` | `f32` | Text wrapping width |
 
@@ -196,7 +196,7 @@ Rich text with multiple styles (attributed strings).
 gui.rtf(
 	text:   'Hello World'
 	styles: [
-		gui.RichTextStyle{range: [0, 5], weight: 700}, // "Hello" bold
+		gui.RichTextStyle{range: [0, 5], underline: true}, // "Hello" underlined
 		gui.RichTextStyle{range: [6, 11], color: gui.rgb(255, 0, 0)}, // "World" red
 	]
 )
@@ -216,16 +216,16 @@ Apply different styles to text ranges:
 
 ```oksyntax
 gui.rtf(
-	text:       'Normal Bold Italic'
+	text:       'Normal Underlined Strikethrough'
 	base_style: gui.theme().text_style
 	styles:     [
 		gui.RichTextStyle{
-			range:  [7, 11] // "Bold"
-			weight: 700
+			range:  [7, 11] // "Underlined"
+			underline: true
 		},
 		gui.RichTextStyle{
-			range:  [12, 18] // "Italic"
-			italic: true
+			range:  [12, 18] // "Strikethrough"
+			strikethrough: true
 		},
 	]
 )

@@ -45,7 +45,7 @@ Most style structs share similar properties:
 
 ### Text
 
-- `text_style` - Font, size, weight for text in the component
+- `text_style` - Font, size, color, etc. for text in the component
 
 ## Using Styles from Themes
 

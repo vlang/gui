@@ -96,13 +96,14 @@ Text appearance configuration:
 ```oksyntax
 pub struct TextStyle {
 pub:
-	family       string  // Font family or path
-	size         f32     // Font size in points
-	line_spacing f32     // Additional line spacing
-	color        Color   // Text color
-	weight       int     // Font weight (100-900)
-	italic       bool    // Italic style
-	monospace    bool    // Monospace variant
+	family         string               // Font family or path
+	color          Color                // Text color
+	size           f32 = 16.0           // Font size in points
+	line_spacing   f32                  // Additional line spacing
+	letter_spacing f32                  // Letter spacing
+	underline      bool                 // Underline text
+	strikethrough  bool                 // Strikethrough text
+	features       &vglyph.FontFeatures // Advanced font features
 }
 ```
 

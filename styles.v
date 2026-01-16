@@ -280,9 +280,8 @@ pub:
 	letter_spacing f32
 	underline      bool
 	strikethrough  bool
-	// features is a map of OpenType feature tags to their values.
-	// For example: {'wdth': 100.0, 'wght': 400.0}
-	features map[string]f32
+	// features is a pointer to font features (OpenType features and variation axes).
+	features &vglyph.FontFeatures = unsafe { nil }
 }
 
 fn (ts TextStyle) to_text_cfg() gg.TextCfg {
@@ -299,9 +298,7 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 			font_name:     ts.family
 			color:         ts.color.to_gx_color()
 			size:          ts.size
-			features:      &vglyph.FontFeatures{
-				variation_axes: ts.features
-			}
+			features:      ts.features
 			underline:     ts.underline
 			strikethrough: ts.strikethrough
 		}

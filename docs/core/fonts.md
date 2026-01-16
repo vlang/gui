@@ -25,13 +25,14 @@ The `TextStyle` struct defines text appearance:
 ```oksyntax
 pub struct TextStyle {
 pub:
-	family       string  // Font family or path to TTF/OTF
-	size         f32     // Font size in points
-	line_spacing f32     // Additional spacing between lines
-	color        Color   // Text color
-	weight       int     // Font weight (100-900)
-	italic       bool    // Italic style
-	monospace    bool    // Monospace variant
+	family         string               // Font family or path to TTF/OTF
+	color          Color                // Text color
+	size           f32                  // Font size in points
+	line_spacing   f32                  // Additional spacing between lines
+	letter_spacing f32                  // Letter spacing
+	underline      bool                 // Underline text
+	strikethrough  bool                 // Strikethrough text
+	features       &vglyph.FontFeatures // Advanced font features
 }
 ```
 
@@ -177,27 +178,33 @@ fn main() {
 }
 ```
 
-### Weight
+### Text Decorations
 
-Font weight (100-900):
-
-```oksyntax
-text_style: gui.TextStyle{
-	...gui.theme().text_style
-	weight: 700  // Bold
-}
-```
-
-### Italic
-
-Italic style:
+Underline and strikethrough:
 
 ```oksyntax
 text_style: gui.TextStyle{
 	...gui.theme().text_style
-	italic: true
+	underline: true
+	strikethrough: true
 }
 ```
+
+### Font Features
+
+Advanced font features (OpenType features and variation axes) can be configured via the
+`features` field.
+
+```oksyntax
+text_style: gui.TextStyle{
+	...gui.theme().text_style
+	features: &vglyph.FontFeatures{
+		// Configure axes and features here
+	}
+}
+```
+
+
 
 ## Common Patterns
 
