@@ -260,11 +260,11 @@ pub:
 	spacing_large  f32 = spacing_large
 	spacing_text   f32 = text_line_spacing // additional line height
 
-	size_text_tiny f32 = size_text_tiny
+	size_text_tiny    f32 = size_text_tiny
 	size_text_x_small f32 = size_text_x_small
-	size_text_small f32 = size_text_small
-	size_text_medium f32 = size_text_medium
-	size_text_large f32 = size_text_large
+	size_text_small   f32 = size_text_small
+	size_text_medium  f32 = size_text_medium
+	size_text_large   f32 = size_text_large
 	size_text_x_large f32 = size_text_x_large
 
 	scroll_multiplier f32 = scroll_multiplier
@@ -310,11 +310,11 @@ pub:
 	spacing_large  f32 = spacing_large
 	spacing_text   f32 = text_line_spacing // additional line height
 
-	size_text_tiny f32 = size_text_tiny
+	size_text_tiny    f32 = size_text_tiny
 	size_text_x_small f32 = size_text_x_small
-	size_text_small f32 = size_text_small
-	size_text_medium f32 = size_text_medium
-	size_text_large f32 = size_text_large
+	size_text_small   f32 = size_text_small
+	size_text_medium  f32 = size_text_medium
+	size_text_large   f32 = size_text_large
 	size_text_x_large f32 = size_text_x_large
 
 	scroll_multiplier f32 = scroll_multiplier
