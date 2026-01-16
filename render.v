@@ -272,6 +272,9 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 // render_text renders text including multiline text.
 // If cursor coordinates are present, it draws the input cursor.
 // The highlighting of selected text happens here also.
+// render_text renders text including multiline text using vglyph layout.
+// If cursor coordinates are present, it draws the input cursor.
+// The highlighting of selected text happens here also.
 fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	dr := gg.Rect{
 		x:      shape.x
@@ -289,126 +292,168 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		color: color
 	}.to_vglyph_cfg()
 
+	// lh := line_height(shape, mut window) // Not needed if we trust vglyph rects?
+	// But we might want consistent line height. Pango gives rects.
+	// For now let's assume standard line height for consistency with cursor logic.
 	lh := line_height(shape, mut window)
-	mut char_count := 0
-	x := shape.x
-	mut y := shape.y
+
 	beg := int(shape.text_sel_beg)
 	end := int(shape.text_sel_end)
 
-	for line in shape.text_lines {
-		// line.runes is expensive. Don't call it unless needed
-		lnr := if beg != end { line.runes() } else { [] }
-		len := lnr.len
+	// Convert selection range to byte indices because vglyph uses bytes
+	byte_beg := rune_to_byte_index(shape.text, beg)
+	byte_end := rune_to_byte_index(shape.text, end)
+
+	for line in shape.text_layout.lines {
+		// Calculate drawing position.
+		// vglyph line provides a rect, but it's relative to layout start (0,0).
+		// We add shape.x/y.
+		// Note: line.rect.y might vary if fonts vary, but usually consistent in block.
+		// We can use line.rect.y or calculate simplistic y += lh.
+		// Using line.rect.y is more accurate to layout engine.
+
+		// Adjust for padding? Layout was created with width - padding.
+		// But render position is shape.x + padding.
+		// Actually text_wrap subtracts padding from width constraint.
+		// The layout usually starts at 0,0.
+		// We should render at shape.x + padding, shape.y + padding.
+
+		// Wait, existing render used shape.x/y. Did it assume padding was applied to x/y?
+		// No, usually shapes have padding applied inside?
+		// Text usually renders inside padding.
+		// Let's assume shape.x/y is the top-left of the shape *box*.
+		// Text should start at shape.x + shape.padding.left, shape.y + shape.padding.top.
+
+		// The original code used `x := shape.x` and `y := shape.y`.
+		// And `text_wrap` subtracted padding from width.
+
+		draw_x := shape.x + shape.padding.left + line.rect.x
+		draw_y := shape.y + shape.padding.top + line.rect.y
+
+		// Extract text for this line
+		if line.start_index >= shape.text.len {
+			continue
+		}
+		mut line_end := line.start_index + line.length
+		if line_end > shape.text.len {
+			line_end = shape.text.len
+		}
+
+		line_text := shape.text[line.start_index..line_end]
+
+		// Drawing
 		draw_rect := gg.Rect{
-			x:      x
-			y:      y
-			width:  shape.width
+			x:      draw_x
+			y:      draw_y
+			width:  shape.width // approximate, or use line.rect.width
 			height: lh
 		}
-		// Cull any renderers outside of clip/context region.
+
+		// Cull
 		if rects_overlap(clip, draw_rect) && color != color_transparent {
-			mut lnl := line.replace('\n', '')
+			// Remove newlines for rendering (draw_text usually handles one line)
+			mut render_str := line_text.replace('\n', '')
+
 			if shape.text_is_password && !shape.text_is_placeholder {
-				// replace with '*'s
-				lnl = password_char.repeat(utf8_str_visible_length(lnl))
+				render_str = password_char.repeat(utf8_str_visible_length(render_str))
 			}
+
 			window.renderers << DrawText{
-				x:    x
-				y:    y
-				text: lnl
+				x:    draw_x
+				y:    draw_y
+				text: render_str
 				cfg:  text_cfg
 			}
 
 			// Draw text selection
-			if beg < char_count + len && end > beg {
-				b := if beg >= char_count && beg < char_count + len { beg - char_count } else { 0 }
-				e := if end > char_count + len { len } else { end - char_count }
-				if b < e {
-					stob := lnr[..b].string()
-					sbtoe := lnr[b..e].string()
+			// Check overlap with byte range
+			l_start := line.start_index
+			l_end := line_end
+
+			if byte_beg < l_end && byte_end > l_start {
+				// Intersection
+				i_start := int_max(byte_beg, l_start)
+				i_end := int_min(byte_end, l_end)
+
+				if i_start < i_end {
+					pre_text := shape.text[l_start..i_start]
+					sel_text := shape.text[i_start..i_end]
+
 					cfg := text_cfg
-					sb := window.text_system.text_width(stob, cfg) or { 0 }
-					se := window.text_system.text_width(sbtoe, cfg) or { 0 }
+
+					// If password, we need to measure the '*'s, not the text
+					start_x_offset := if shape.text_is_password {
+						pw := password_char.repeat(utf8_str_visible_length(pre_text))
+						window.text_system.text_width(pw, cfg) or { 0 }
+					} else {
+						window.text_system.text_width(pre_text, cfg) or { 0 }
+					}
+
+					sel_width := if shape.text_is_password {
+						pw := password_char.repeat(utf8_str_visible_length(sel_text))
+						window.text_system.text_width(pw, cfg) or { 0 }
+					} else {
+						window.text_system.text_width(sel_text, cfg) or { 0 }
+					}
+
 					window.renderers << DrawRect{
-						x:     draw_rect.x + sb
-						y:     draw_rect.y
-						w:     se
-						h:     draw_rect.height
+						x:     draw_x + start_x_offset
+						y:     draw_y
+						w:     sel_width        // Use measured width
+						h:     line.rect.height // Use line height
 						color: gg.Color{
 							...text_cfg.style.color
-							a: 60 // make themeable?
+							a: 60
 						}
 					}
 				}
 			}
 		}
-		y += lh
-		char_count += len
 	}
 
 	render_cursor(shape, clip, mut window)
 }
 
-// render_cursor figures out where the darn cursor goes.
+// render_cursor figures out where the darn cursor goes using vglyph.
 fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 	if window.is_focus(shape.id_focus) && shape.shape_type == .text
 		&& window.view_state.input_cursor_on {
-		lh := line_height(shape, mut window)
-		mut cursor_x := -1
-		mut cursor_y := -1
 		input_state := window.view_state.input_state[shape.id_focus]
-		mut cursor_pos := input_state.cursor_pos
+		cursor_pos := input_state.cursor_pos
+
 		if cursor_pos >= 0 {
-			mut length := 0
-			for idx, line in shape.text_lines {
-				ln_len := utf8_str_visible_length(line)
-				if length + ln_len > cursor_pos {
-					cursor_x = cursor_pos - length
-					cursor_y = idx
-					break
-				}
-				length += ln_len
-			}
-			// edge condition. Algorithm misses the
-			// last character of the last line.
-			if cursor_x == -1 {
-				cursor_x = shape.text_lines.last().len
-				cursor_y = shape.text_lines.len - 1
-			}
-		}
-		if cursor_x >= 0 && cursor_y >= 0 {
-			if cursor_y < shape.text_lines.len {
-				ln := shape.text_lines[cursor_y]
-				x := int_min(cursor_x, ln.len)
-				ln_fragment := ln[..x]
-				cfg := shape.text_style.to_vglyph_cfg()
-				text_width := if shape.text_is_password {
-					pw := password_char.repeat(utf8_str_visible_length(ln_fragment))
-					window.text_system.text_width(pw, cfg) or { 0 }
-				} else {
-					window.text_system.text_width(ln_fragment, cfg) or { 0 }
-				}
-				avoid_clip_start_of_line := if cursor_x == 0 { 1 } else { 0 }
-				cx := shape.x + text_width + avoid_clip_start_of_line
-				cy := shape.y + (lh * cursor_y)
-				dr := gg.Rect{
-					x:      cx
-					y:      cy
-					width:  cx
-					height: cy + lh
-				}
-				if rects_overlap(dr, clip) {
-					window.renderers << DrawLine{
-						x:   cx
-						y:   cy
-						x1:  cx
-						y1:  cy + lh
-						cfg: gg.PenConfig{
-							color: shape.text_style.color.to_gx_color()
-						}
+			byte_idx := rune_to_byte_index(shape.text, cursor_pos)
+
+			// Use vglyph to get the rect
+			rect := shape.text_layout.get_char_rect(byte_idx) or {
+				// If not found, check if it's at the very end
+				if byte_idx >= shape.text.len && shape.text_layout.lines.len > 0 {
+					last_line := shape.text_layout.lines.last()
+					// Correction: use layout logic relative to shape
+					gg.Rect{
+						x:      last_line.rect.x + last_line.rect.width
+						y:      last_line.rect.y
+						height: last_line.rect.height
 					}
+				} else {
+					gg.Rect{
+						height: line_height(shape, mut window)
+					} // Fallback
 				}
+			}
+
+			cx := shape.x + shape.padding.left + rect.x
+			cy := shape.y + shape.padding.top + rect.y
+			ch := rect.height
+
+			// Draw cursor line
+			window.renderers << DrawRect{
+				x:     cx
+				y:     cy
+				w:     1.5 // slightly thicker
+				h:     ch
+				color: shape.text_style.color.to_gx_color()
+				style: .fill
 			}
 		}
 	}

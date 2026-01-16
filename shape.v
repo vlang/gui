@@ -2,6 +2,7 @@ module gui
 
 import rand
 import datatypes
+import vglyph
 
 // Shape is the only data structure in GUI used to draw to the screen.
 @[minify]
@@ -12,57 +13,58 @@ pub:
 	axis       Axis
 	shape_type ShapeType
 pub mut:
-	id                  string // user assigned
-	name                string // internal shape name, useful for debugging
-	text                string
-	image_name          string // filename of image
-	text_lines          []string
-	shape_clip          DrawClip // used for hit-testing
-	color               Color
-	padding             Padding
-	text_style          TextStyle
-	sizing              Sizing
-	x                   f32
-	y                   f32
-	width               f32
-	min_width           f32
-	max_width           f32
-	height              f32
-	min_height          f32
-	max_height          f32
-	radius              f32
-	spacing             f32
-	float_offset_x      f32
-	float_offset_y      f32
-	id_scroll           u32 // >0 indicates shape is scrollable
-	id_scroll_container u32
-	text_sel_beg        u32
-	text_sel_end        u32
-	text_tab_size       u32 = 4
-	text_spans          &datatypes.LinkedList[TextSpan]        = unsafe { nil } // rich text format spans
-	on_char             fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_keydown          fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_click            fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move       fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_scroll     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_scroll           fn (&Layout, mut Window)               = unsafe { nil }
-	amend_layout        fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover            fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	h_align             HorizontalAlign
-	v_align             VerticalAlign
-	text_mode           TextMode
-	scroll_mode         ScrollMode
-	float_anchor        FloatAttach
-	float_tie_off       FloatAttach
-	clip                bool
-	disabled            bool
-	fill                bool
-	float               bool
-	focus_skip          bool
-	over_draw           bool // allows scrollbars to draw in padding area and removes shape from spacing calculations
-	text_is_password    bool
-	text_is_placeholder bool
+	text_layout           vglyph.Layout
+	id                    string // user assigned
+	name                  string // internal shape name, useful for debugging
+	text                  string
+	image_name            string   // filename of image
+	shape_clip            DrawClip // used for hit-testing
+	color                 Color
+	padding               Padding
+	text_style            TextStyle
+	sizing                Sizing
+	x                     f32
+	y                     f32
+	width                 f32
+	min_width             f32
+	max_width             f32
+	height                f32
+	min_height            f32
+	max_height            f32
+	radius                f32
+	spacing               f32
+	float_offset_x        f32
+	float_offset_y        f32
+	id_scroll             u32 // >0 indicates shape is scrollable
+	id_scroll_container   u32
+	text_sel_beg          u32
+	text_sel_end          u32
+	text_tab_size         u32 = 4
+	text_spans            &datatypes.LinkedList[TextSpan]        = unsafe { nil } // rich text format spans
+	on_char               fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_keydown            fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_click              fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up           fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_scroll       fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_scroll             fn (&Layout, mut Window)               = unsafe { nil }
+	amend_layout          fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover              fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	h_align               HorizontalAlign
+	v_align               VerticalAlign
+	text_mode             TextMode
+	scroll_mode           ScrollMode
+	float_anchor          FloatAttach
+	float_tie_off         FloatAttach
+	clip                  bool
+	disabled              bool
+	fill                  bool
+	float                 bool
+	focus_skip            bool
+	over_draw             bool // allows scrollbars to draw in padding area and removes shape from spacing calculations
+	text_is_password      bool
+	text_is_placeholder   bool
+	last_constraint_width f32 // Optimization: track the width used for the current text_layout to avoid redundant regeneration
 }
 
 // ShapeType defines the kind of Shape.

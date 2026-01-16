@@ -36,10 +36,6 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	}
 
 	input_state := window.view_state.input_state[tv.id_focus]
-	lines := match tv.mode == .multiline {
-		true { wrap_simple(tv.text, tv.tab_size) }
-		else { [tv.text] } // dynamic wrapping handled in the layout pipeline
-	}
 	mut layout := Layout{
 		shape: &Shape{
 			name:                'text'
@@ -53,7 +49,6 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			text:                tv.text
 			text_is_password:    tv.is_password
 			text_is_placeholder: tv.placeholder_active
-			text_lines:          lines
 			text_mode:           tv.mode
 			text_style:          &tv.text_style
 			text_sel_beg:        input_state.select_beg
@@ -64,8 +59,14 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			on_click:            tv.on_click
 		}
 	}
-	layout.shape.width = text_width_shape(layout.shape, mut window)
-	layout.shape.height = text_height(layout.shape, mut window)
+
+	// Optimization: Measure text width directly without layout generation.
+	// This provides the "intrinsic width" (single line) which is essential for .fit containers (like Menus).
+	// The main layout pipeline will handle wrapping constraints later if needed.
+	// We use `text_width` which enables `no_hit_testing`, ensuring this is fast.
+	layout.shape.width = text_width(tv.text, tv.text_style, mut window)
+	layout.shape.height = line_height(layout.shape, mut window)
+
 	if tv.mode == .single_line || layout.shape.sizing.width == .fixed {
 		layout.shape.min_width = f32_max(layout.shape.width, layout.shape.min_width)
 		layout.shape.width = layout.shape.min_width
@@ -243,22 +244,21 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		mut input_state := window.view_state.input_state[layout.shape.id_focus]
 		mut pos := input_state.cursor_pos
 		mut offset := input_state.cursor_offset
-		text_lines := layout.shape.text_lines
 
 		// Handle navigation with modifiers
 		if e.modifiers == .alt || e.modifiers == .alt_shift {
 			// Alt: Jump by word or paragraph
 			match e.key_code {
-				.left { pos = cursor_start_of_word(text_lines, pos) }
-				.right { pos = cursor_end_of_word(text_lines, pos) }
-				.up { pos = cursor_start_of_paragraph(text_lines, pos) }
+				.left { pos = cursor_start_of_word(layout.shape, pos) }
+				.right { pos = cursor_end_of_word(layout.shape, pos) }
+				.up { pos = cursor_start_of_paragraph(layout.shape, pos) }
 				else { return }
 			}
 		} else if e.modifiers == .ctrl || e.modifiers == .ctrl_shift {
 			// Ctrl: Jump to start/end of line
 			match e.key_code {
-				.left { pos = cursor_start_of_line(text_lines, pos) }
-				.right { pos = cursor_end_of_line(text_lines, pos) }
+				.left { pos = cursor_start_of_line(layout.shape, pos) }
+				.right { pos = cursor_end_of_line(layout.shape, pos) }
 				else { return }
 			}
 		} else if e.modifiers.has_any(.none, .shift) {
@@ -271,13 +271,13 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 			}
 			match e.key_code {
 				.left { pos = cursor_left(pos) }
-				.right { pos = cursor_right(text_lines, pos) }
+				.right { pos = cursor_right(layout.shape, pos) }
 				.up { pos = cursor_up(layout.shape, pos, offset, 1, mut window) }
 				.down { pos = cursor_down(layout.shape, pos, offset, 1, mut window) }
 				.page_up { pos = cursor_up(layout.shape, pos, offset, lpp, mut window) }
 				.page_down { pos = cursor_down(layout.shape, pos, offset, lpp, mut window) }
 				.home { pos = cursor_home() }
-				.end { pos = cursor_end(text_lines) }
+				.end { pos = cursor_end(layout.shape) }
 				else { return }
 			}
 		} else if e.modifiers == Modifier.super {
@@ -401,40 +401,23 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 
 	// Only copy if there is an active selection
 	if input_state.select_beg != input_state.select_end {
-		cpy := match shape.text_mode == .wrap_keep_spaces {
-			true {
-				// In keep_spaces mode, we can directly slice the source text
-				shape.text.runes()[input_state.select_beg..input_state.select_end]
-			}
-			else {
-				// Reconstruct text from visual lines
-				mut count := 0
-				mut buffer := []rune{cap: 100}
-				beg := int(input_state.select_beg)
-				end := int(input_state.select_end)
-				for line in shape.text_lines {
-					if count >= end {
-						break
-					}
-					// Add a space between lines if we are inside the selection
-					if count > beg {
-						buffer << ` `
-					}
-					for r in line.runes_iterator() {
-						if count >= end {
-							break
-						}
-						// Collect characters within the selection range
-						if count >= beg {
-							buffer << r
-						}
-						count += 1
-					}
-				}
-				buffer
-			}
+		// Use shape.text source of truth
+		beg := int(input_state.select_beg)
+		end := int(input_state.select_end)
+		if beg < end && end <= shape.text.len { // Check bounds just in case? visual indices are runes?
+			// input_state.select_beg/end are likely rune indices (based on usage elsewhere)
+			// Need to slice runes.
+			// shape.text.runes()[beg..end]
+			// This is expensive but safe.
+
+			// Wait, are select_beg/end byte indices or rune indices?
+			// `on_click`: cursor_pos := tv.mouse_cursor_pos(...)
+			// `mouse_cursor_pos` returns `byte_to_rune_index`. So they are Rune indices.
+
+			// So we must slice runes.
+			cpy := shape.text.runes()[beg..end].string()
+			to_clipboard(cpy)
 		}
-		to_clipboard(cpy.string())
 	}
 	return none
 }
