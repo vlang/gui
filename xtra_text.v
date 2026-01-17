@@ -14,11 +14,8 @@ import vglyph
 // text_width calculates the width of a given text based on its style and window configuration,
 // leveraging a caching mechanism to optimize performance.
 pub fn text_width(text string, text_style TextStyle, mut window Window) f32 {
-	base_cfg := text_style.to_vglyph_cfg()
-	cfg := vglyph.TextConfig{
-		...base_cfg
-		no_hit_testing: true
-	}
+	mut cfg := text_style.to_vglyph_cfg()
+	cfg.no_hit_testing = true
 	return window.text_system.text_width(text, cfg) or { 0 }
 }
 
@@ -116,17 +113,15 @@ fn line_height(shape &Shape, mut window Window) f32 {
 fn text_wrap(mut shape Shape, mut window Window) {
 	if shape.shape_type == .text {
 		// Use vglyph for layout for all text modes
-		base_cfg := shape.text_style.to_vglyph_cfg()
 		// Update config with shape-specific layout constraints.
 		// Since vglyph types are immutable, we create a new instance with updates.
-
 		// Only set width for actual wrapping modes. multiline/single_line should not wrap based on width.
 		should_wrap := shape.text_mode in [.wrap, .wrap_keep_spaces]
+
 		// Use -1.0 for unbounded width (standard Pango behavior). match default BlockStyle.
-		width := if should_wrap && shape.width > 0 {
-			shape.width - shape.padding.width()
-		} else {
-			-1.0
+		width := match should_wrap && shape.width > 0 {
+			true { shape.width - shape.padding.width() }
+			else { -1.0 }
 		}
 
 		// Optimization: If layout is already generated for this width (and text hasn't changed), skip regeneration.
@@ -136,14 +131,9 @@ fn text_wrap(mut shape Shape, mut window Window) {
 			return
 		}
 
-		cfg := vglyph.TextConfig{
-			...base_cfg
-			block:          vglyph.BlockStyle{
-				...base_cfg.block
-				width: width
-			}
-			no_hit_testing: shape.id_focus == 0
-		}
+		mut cfg := shape.text_style.to_vglyph_cfg()
+		cfg.block.width = width
+		cfg.no_hit_testing = shape.id_focus == 0
 
 		shape.text_layout = window.text_system.layout_text(shape.text, cfg) or { vglyph.Layout{} }
 		shape.last_constraint_width = width
@@ -151,10 +141,9 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		// Calculate height based on layout
 		// vglyph layout provides pixel height (visual_height or height?)
 		// standard height (logical_height) includes line spacing usually.
-		if shape.text.len == 0 {
-			shape.height = line_height(shape, mut window) + shape.padding.height()
-		} else {
-			shape.height = shape.text_layout.height + shape.padding.height()
+		shape.height = match shape.text.len == 0 {
+			true { line_height(shape, mut window) + shape.padding.height() }
+			else { shape.text_layout.height + shape.padding.height() }
 		}
 		shape.max_height = shape.height
 		shape.min_height = shape.height
