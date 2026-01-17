@@ -229,3 +229,26 @@ fn test_byte_to_rune_index() {
 	// Test case 4: Out of bounds
 	assert byte_to_rune_index(s2, 100) == 3 // length in runes
 }
+
+// ------------------------------------
+// ## 9. Test collapse_spaces
+// ------------------------------------
+fn test_collapse_spaces() {
+	// Basic case
+	assert collapse_spaces('A  B') == 'A B'
+
+	// Newlines preserved
+	assert collapse_spaces('A\n  B') == 'A\n B'
+
+	// Tabs converted to space
+	assert collapse_spaces('A\tB') == 'A B'
+
+	// Multiple spaces reduced
+	assert collapse_spaces('   ') == ' '
+
+	// Leading/Trailing spaces (single)
+	assert collapse_spaces(' A B ') == ' A B '
+
+	// Leading/Trailing multiple
+	assert collapse_spaces('  A  B  ') == ' A B '
+}

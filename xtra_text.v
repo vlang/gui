@@ -118,6 +118,10 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		// Only set width for actual wrapping modes. multiline/single_line should not wrap based on width.
 		should_wrap := shape.text_mode in [.wrap, .wrap_keep_spaces]
 
+		if shape.text_mode == .wrap {
+			shape.text = collapse_spaces(shape.text)
+		}
+
 		// Use -1.0 for unbounded width (standard Pango behavior). match default BlockStyle.
 		width := match should_wrap && shape.width > 0 {
 			true { shape.width - shape.padding.width() }
@@ -317,6 +321,33 @@ fn split_text(s string, tab_size u32) []string {
 	}
 	fields << field.string()
 	return fields
+}
+
+// collapse_spaces replaces multiple whitespace characters with a single space,
+// while preserving newlines.
+fn collapse_spaces(text string) string {
+	mut res := []rune{cap: text.len}
+	mut last_was_space := false
+
+	for r in text.runes_iterator() {
+		if r == `\n` {
+			res << r
+			last_was_space = false
+			continue
+		}
+
+		is_space := utf8.is_space(r)
+		if is_space {
+			if !last_was_space {
+				res << ` `
+				last_was_space = true
+			}
+		} else {
+			res << r
+			last_was_space = false
+		}
+	}
+	return res.string()
 }
 
 // from_clipboard retrieves text content from the system clipboard and returns
