@@ -179,7 +179,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 		if rects_overlap(draw_rect, clip) {
 			cfg := shape.text_style.to_vglyph_cfg()
 			w := window.text_system.text_width(shape.text, cfg) or { 0 }
-			h := window.text_system.text_height(shape.text, cfg) or { 0 }
+			metrics := window.text_system.font_metrics(cfg)
 			x := shape.x + 20
 			y := shape.y
 			// erase portion of rectangle where text goes.
@@ -188,11 +188,15 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			} else {
 				parent_color
 			}
+
+			offset := metrics.ascender - metrics.descender
+			padding := 5
+
 			window.renderers << DrawRect{
 				x:     x
-				y:     y - 2 - h / 2
-				w:     w
-				h:     h + 1
+				y:     y - offset
+				w:     w + padding + padding - 1
+				h:     metrics.ascender + metrics.descender
 				style: .fill
 				color: p_color.to_gx_color()
 			}
@@ -202,8 +206,8 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 				shape.text_style.color
 			}
 			window.renderers << DrawText{
-				x:    x
-				y:    y - h / 2 - 1
+				x:    x + padding
+				y:    y - offset
 				text: shape.text
 				cfg:  TextStyle{
 					...shape.text_style
