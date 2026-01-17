@@ -25,7 +25,6 @@ pub enum TextMode as u8 {
 @[minify]
 pub struct TextView implements View {
 	TextCfg
-	sizing Sizing
 mut:
 	content []View // not used
 }
@@ -85,6 +84,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 // how text is wrapped and displayed (single line, multiline, or wrapped).
 @[heap; minify]
 pub struct TextCfg {
+	sizing Sizing
 pub:
 	text               string
 	text_style         TextStyle = gui_theme.text_style
@@ -103,7 +103,7 @@ pub:
 // text is a general purpose text view. Use it for labels or larger
 // blocks of multiline text. Giving it an id_focus allows mark and copy
 // operations. See [TextCfg](#TextCfg)
-pub fn text(cfg TextView) View {
+pub fn text(cfg TextCfg) View {
 	$if !prod {
 		gui_stats.increment_text_views()
 	}
