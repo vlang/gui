@@ -15,6 +15,7 @@ mut:
 	menu_key_nav      bool                       // true, menu navigated by keyboard
 	image_map         map[string]int             // [file name] -> context.cache image id
 	select_state      map[string]bool            // [id select] -> open/close state
+	select_highlight  map[string]int             // [id select] -> highlighted index
 	tree_state        map[string]map[string]bool // [tree id] -> [node id ] -> open/closed
 	date_picker_state map[string]DatePickerState // [id date_picker -> DatePickerState
 	mouse_lock        MouseLockCfg               // mouse down/move/up/scroll/sliders, etc. use this

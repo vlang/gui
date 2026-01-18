@@ -38,11 +38,13 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	is_open := window.view_state.select_state[cfg.id]
 	mut options := []View{}
 	if is_open {
+		id_scroll := fnv1a.sum32_string(cfg.id + 'dropdown')
+		highlighted_idx := window.view_state.select_highlight[cfg.id]
 		options.ensure_cap(cfg.options.len)
-		for option in cfg.options {
+		for i, option in cfg.options {
 			options << match option.starts_with('---') {
 				true { sub_header(cfg, option) }
-				else { option_view(cfg, option) }
+				else { option_view(cfg, option, i, i == highlighted_idx, id_scroll) }
 			}
 		}
 	}
@@ -138,10 +140,123 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 		sizing:       cfg.sizing
 		amend_layout: cfg.amend_layout
 		content:      content
+		on_keydown:   cfg.select_on_keydown
 	)
 }
 
-fn option_view(cfg &SelectCfg, option string) View {
+fn (cfg &SelectCfg) select_on_keydown(mut _ Layout, mut e Event, mut w Window) {
+	if cfg.options.len == 0 {
+		return
+	}
+
+	is_open := w.view_state.select_state[cfg.id]
+
+	// Open/Close
+	if e.key_code in [.space, .enter] && !is_open {
+		w.view_state.select_state[cfg.id] = true
+
+		// Set highlight to currently selected item
+		mut initial_idx := 0
+		if cfg.select.len > 0 {
+			for i, opt in cfg.options {
+				if opt == cfg.select[0] {
+					initial_idx = i
+					break
+				}
+			}
+		}
+		w.view_state.select_highlight[cfg.id] = initial_idx
+
+		e.is_handled = true
+		return
+	}
+
+	if e.key_code == .escape && is_open {
+		w.view_state.select_state.clear()
+		e.is_handled = true
+		return
+	}
+
+	if is_open {
+		mut current_idx := w.view_state.select_highlight[cfg.id]
+		id_scroll := fnv1a.sum32_string(cfg.id + 'dropdown')
+
+		if e.key_code == .enter {
+			// Select currently highlighted
+			if current_idx >= 0 && current_idx < cfg.options.len {
+				option := cfg.options[current_idx]
+				if !option.starts_with('---') {
+					// Trigger selection logic (duplicated from option_view click)
+					if !cfg.select_multiple {
+						w.view_state.select_state.clear()
+					}
+					mut s := []string{}
+					if cfg.select_multiple {
+						s = if option in cfg.select {
+							cfg.select.filter(it != option)
+						} else {
+							mut a := cfg.select.clone()
+							a << option
+							a.sorted()
+						}
+					} else {
+						w.view_state.select_state.clear()
+						s = [option]
+					}
+					cfg.on_select(s, mut e, mut w)
+					e.is_handled = true
+				}
+			}
+			return
+		}
+
+		if e.key_code in [.up, .down] {
+			dir := if e.key_code == .up { -1 } else { 1 }
+			mut next_idx := current_idx + dir
+
+			// Skip subheaders and bounds check
+			for next_idx >= 0 && next_idx < cfg.options.len {
+				if !cfg.options[next_idx].starts_with('---') {
+					break
+				}
+				next_idx += dir
+			}
+
+			// Clamp
+			if next_idx < 0 {
+				// Find first non-header
+				next_idx = 0
+				for next_idx < cfg.options.len && cfg.options[next_idx].starts_with('---') {
+					next_idx++
+				}
+			} else if next_idx >= cfg.options.len {
+				// Find last non-header
+				next_idx = cfg.options.len - 1
+				for next_idx >= 0 && cfg.options[next_idx].starts_with('---') {
+					next_idx--
+				}
+			}
+
+			if next_idx >= 0 && next_idx < cfg.options.len
+				&& !cfg.options[next_idx].starts_with('---') {
+				w.view_state.select_highlight[cfg.id] = next_idx
+				// Scroll to view
+				// Estimate row height: text size + padding (4)
+				row_h := cfg.text_style.size + 4
+				// Simple scroll to top of item
+				// Better: ensure visible. But view_state.scroll_y is just offset.
+				// We can set it to center the item or just show it.
+				// Let's just set it to `next_idx * row_h` to keep it simple for now,
+				// which puts the item at top.
+				// To be smarter we'd need current viewport height.
+				w.view_state.scroll_y[id_scroll] = next_idx * row_h
+			}
+			e.is_handled = true
+		}
+	}
+}
+
+fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_scroll u32) View {
 	select_multiple := cfg.select_multiple
 	on_select := cfg.on_select
 	select_array := cfg.select
@@ -149,6 +264,7 @@ fn option_view(cfg &SelectCfg, option string) View {
 
 	return row(
 		fill:     true
+		color:    if highlighted { cfg.color_select } else { color_transparent }
 		padding:  padding(0, pad_small, 0, 1)
 		sizing:   fill_fit
 		spacing:  0
@@ -199,9 +315,13 @@ fn option_view(cfg &SelectCfg, option string) View {
 				e.is_handled = true
 			}
 		}
-		on_hover: fn [color_select] (mut layout Layout, mut e Event, mut w Window) {
+		on_hover: fn [color_select, cfg, index, id_scroll] (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
 			layout.shape.color = color_select
+			if w.view_state.select_highlight[cfg.id] != index {
+				w.view_state.select_highlight[cfg.id] = index
+				// w.view_state.scroll_y[id_scroll] = ... // Don't auto-scroll on mouse hover, that's annoying
+			}
 		}
 	)
 }
