@@ -342,9 +342,10 @@ Centralized styling via `Theme` struct applied to all components.
 
 ## Platform Independence
 
-v-gui runs on any platform V supports:
+v-gui runs on many of the platforms V supports:
 
 - **Graphics**: gg abstracts OpenGL/Metal/DirectX
 - **Windowing**: sokol.sapp handles platform-specific windowing
 - **Events**: Cross-platform event abstraction
-- **Text**: vglyph works on all platforms
+- **Text**: vglyph works on many platforms
+
