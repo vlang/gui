@@ -303,84 +303,86 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	byte_beg := rune_to_byte_index(shape.text, beg)
 	byte_end := rune_to_byte_index(shape.text, end)
 
-	for line in shape.text_layout.lines {
-		draw_x := shape.x + shape.padding.left + line.rect.x
-		draw_y := shape.y + shape.padding.top + line.rect.y
+	if shape.text_layout != unsafe { nil } {
+		for line in shape.text_layout.lines {
+			draw_x := shape.x + shape.padding.left + line.rect.x
+			draw_y := shape.y + shape.padding.top + line.rect.y
 
-		// Extract text for this line
-		if line.start_index >= shape.text.len {
-			continue
-		}
-		mut line_end := line.start_index + line.length
-		if line_end > shape.text.len {
-			line_end = shape.text.len
-		}
-
-		line_text := shape.text[line.start_index..line_end]
-
-		// Drawing
-		draw_rect := gg.Rect{
-			x:      draw_x
-			y:      draw_y
-			width:  shape.width // approximate, or use line.rect.width
-			height: lh
-		}
-
-		// Cull
-		if rects_overlap(clip, draw_rect) && color != color_transparent {
-			// Remove newlines for rendering (draw_text usually handles one line)
-			mut render_str := line_text.replace('\n', '')
-
-			if shape.text_is_password && !shape.text_is_placeholder {
-				render_str = password_char.repeat(utf8_str_visible_length(render_str))
+			// Extract text for this line
+			if line.start_index >= shape.text.len {
+				continue
+			}
+			mut line_end := line.start_index + line.length
+			if line_end > shape.text.len {
+				line_end = shape.text.len
 			}
 
-			window.renderers << DrawText{
-				x:    draw_x
-				y:    draw_y
-				text: render_str
-				cfg:  text_cfg
+			line_text := shape.text[line.start_index..line_end]
+
+			// Drawing
+			draw_rect := gg.Rect{
+				x:      draw_x
+				y:      draw_y
+				width:  shape.width // approximate, or use line.rect.width
+				height: lh
 			}
 
-			// Draw text selection
-			// Check overlap with byte range
-			l_start := line.start_index
-			l_end := line_end
+			// Cull
+			if rects_overlap(clip, draw_rect) && color != color_transparent {
+				// Remove newlines for rendering (draw_text usually handles one line)
+				mut render_str := line_text.replace('\n', '')
 
-			if byte_beg < l_end && byte_end > l_start {
-				// Intersection
-				i_start := int_max(byte_beg, l_start)
-				i_end := int_min(byte_end, l_end)
+				if shape.text_is_password && !shape.text_is_placeholder {
+					render_str = password_char.repeat(utf8_str_visible_length(render_str))
+				}
 
-				if i_start < i_end {
-					pre_text := shape.text[l_start..i_start]
-					sel_text := shape.text[i_start..i_end]
+				window.renderers << DrawText{
+					x:    draw_x
+					y:    draw_y
+					text: render_str
+					cfg:  text_cfg
+				}
 
-					cfg := text_cfg
+				// Draw text selection
+				// Check overlap with byte range
+				l_start := line.start_index
+				l_end := line_end
 
-					// If password, we need to measure the '*'s, not the text
-					start_x_offset := if shape.text_is_password {
-						pw := password_char.repeat(utf8_str_visible_length(pre_text))
-						window.text_system.text_width(pw, cfg) or { 0 }
-					} else {
-						window.text_system.text_width(pre_text, cfg) or { 0 }
-					}
+				if byte_beg < l_end && byte_end > l_start {
+					// Intersection
+					i_start := int_max(byte_beg, l_start)
+					i_end := int_min(byte_end, l_end)
 
-					sel_width := if shape.text_is_password {
-						pw := password_char.repeat(utf8_str_visible_length(sel_text))
-						window.text_system.text_width(pw, cfg) or { 0 }
-					} else {
-						window.text_system.text_width(sel_text, cfg) or { 0 }
-					}
+					if i_start < i_end {
+						pre_text := shape.text[l_start..i_start]
+						sel_text := shape.text[i_start..i_end]
 
-					window.renderers << DrawRect{
-						x:     draw_x + start_x_offset
-						y:     draw_y
-						w:     sel_width        // Use measured width
-						h:     line.rect.height // Use line height
-						color: gg.Color{
-							...text_cfg.style.color
-							a: 60
+						cfg := text_cfg
+
+						// If password, we need to measure the '*'s, not the text
+						start_x_offset := if shape.text_is_password {
+							pw := password_char.repeat(utf8_str_visible_length(pre_text))
+							window.text_system.text_width(pw, cfg) or { 0 }
+						} else {
+							window.text_system.text_width(pre_text, cfg) or { 0 }
+						}
+
+						sel_width := if shape.text_is_password {
+							pw := password_char.repeat(utf8_str_visible_length(sel_text))
+							window.text_system.text_width(pw, cfg) or { 0 }
+						} else {
+							window.text_system.text_width(sel_text, cfg) or { 0 }
+						}
+
+						window.renderers << DrawRect{
+							x:     draw_x + start_x_offset
+							y:     draw_y
+							w:     sel_width        // Use measured width
+							h:     line.rect.height // Use line height
+							color: gg.Color{
+								...text_cfg.style.color
+								a: 60
+							}
 						}
 					}
 				}
@@ -402,20 +404,26 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 			byte_idx := rune_to_byte_index(shape.text, cursor_pos)
 
 			// Use vglyph to get the rect
-			rect := shape.text_layout.get_char_rect(byte_idx) or {
-				// If not found, check if it's at the very end
-				if byte_idx >= shape.text.len && shape.text_layout.lines.len > 0 {
-					last_line := shape.text_layout.lines.last()
-					// Correction: use layout logic relative to shape
-					gg.Rect{
-						x:      last_line.rect.x + last_line.rect.width
-						y:      last_line.rect.y
-						height: last_line.rect.height
+			rect := if shape.text_layout != unsafe { nil } {
+				shape.text_layout.get_char_rect(byte_idx) or {
+					// If not found, check if it's at the very end
+					if byte_idx >= shape.text.len && shape.text_layout.lines.len > 0 {
+						last_line := shape.text_layout.lines.last()
+						// Correction: use layout logic relative to shape
+						gg.Rect{
+							x:      last_line.rect.x + last_line.rect.width
+							y:      last_line.rect.y
+							height: last_line.rect.height
+						}
+					} else {
+						gg.Rect{
+							height: line_height(shape, mut window)
+						} // Fallback
 					}
-				} else {
-					gg.Rect{
-						height: line_height(shape, mut window)
-					} // Fallback
+				}
+			} else {
+				gg.Rect{
+					height: line_height(shape, mut window)
 				}
 			}
 

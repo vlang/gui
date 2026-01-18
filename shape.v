@@ -8,21 +8,33 @@ import vglyph
 @[minify]
 pub struct Shape {
 pub:
-	uid        u64 = rand.u64() // internal use only
-	id_focus   u32 // >0 indicates shape is focusable. Value determines tabbing order
-	axis       Axis
-	shape_type ShapeType
+	uid u64 = rand.u64() // internal use only
 pub mut:
-	text_layout           vglyph.Layout
-	id                    string // user assigned
-	name                  string // internal shape name, useful for debugging
-	text                  string
-	image_name            string   // filename of image
-	shape_clip            DrawClip // used for hit-testing
-	color                 Color
-	padding               Padding
-	text_style            TextStyle
-	sizing                Sizing
+	// String fields (16 bytes)
+	id         string // user assigned
+	name       string // internal shape name, useful for debugging
+	text       string
+	image_name string // filename of image
+
+	// Pointer fields (8 bytes)
+	text_layout     &vglyph.Layout                         = unsafe { nil }
+	text_spans      &datatypes.LinkedList[TextSpan]        = unsafe { nil } // rich text format spans
+	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_scroll fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_scroll       fn (&Layout, mut Window)               = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+
+	// Structs (Large/Aligned)
+	text_style TextStyle
+	shape_clip DrawClip // used for hit-testing
+	padding    Padding
+
+	// 4 bytes (f32/u32/Color)
 	x                     f32
 	y                     f32
 	width                 f32
@@ -35,36 +47,35 @@ pub mut:
 	spacing               f32
 	float_offset_x        f32
 	float_offset_y        f32
+	id_focus              u32 // >0 indicates shape is focusable. Value determines tabbing order
 	id_scroll             u32 // >0 indicates shape is scrollable
 	id_scroll_container   u32
 	text_sel_beg          u32
 	text_sel_end          u32
 	text_tab_size         u32 = 4
-	text_spans            &datatypes.LinkedList[TextSpan]        = unsafe { nil } // rich text format spans
-	on_char               fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_keydown            fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_click              fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up           fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_scroll       fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_scroll             fn (&Layout, mut Window)               = unsafe { nil }
-	amend_layout          fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover              fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	h_align               HorizontalAlign
-	v_align               VerticalAlign
-	text_mode             TextMode
-	scroll_mode           ScrollMode
-	float_anchor          FloatAttach
-	float_tie_off         FloatAttach
-	clip                  bool
-	disabled              bool
-	fill                  bool
-	float                 bool
-	focus_skip            bool
-	over_draw             bool // allows scrollbars to draw in padding area and removes shape from spacing calculations
-	text_is_password      bool
-	text_is_placeholder   bool
 	last_constraint_width f32 // Optimization: track the width used for the current text_layout to avoid redundant regeneration
+	color                 Color
+
+	// 2 bytes
+	sizing Sizing
+
+	// 1 byte (Enums/Bools)
+	axis                Axis
+	shape_type          ShapeType
+	h_align             HorizontalAlign
+	v_align             VerticalAlign
+	text_mode           TextMode
+	scroll_mode         ScrollMode
+	float_anchor        FloatAttach
+	float_tie_off       FloatAttach
+	clip                bool
+	disabled            bool
+	fill                bool
+	float               bool
+	focus_skip          bool
+	over_draw           bool // allows scrollbars to draw in padding area and removes shape from spacing calculations
+	text_is_password    bool
+	text_is_placeholder bool
 }
 
 // ShapeType defines the kind of Shape.

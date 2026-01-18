@@ -48,7 +48,7 @@ fn create_mock_shape() Shape {
 	}
 
 	// Mock the layout lines
-	shape.text_layout = vglyph.Layout{
+	shape.text_layout = &vglyph.Layout{
 		lines: [
 			vglyph.Line{
 				start_index: 0

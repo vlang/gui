@@ -27,6 +27,11 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut w
 
 	byte_idx := rune_to_byte_index(shape.text, cursor_pos)
 
+	// Check for nil layout
+	if shape.text_layout == unsafe { nil } {
+		return cursor_pos
+	}
+
 	rect := shape.text_layout.get_char_rect(byte_idx) or {
 		if byte_idx >= shape.text.len && shape.text.len > 0 {
 			return cursor_pos
@@ -52,6 +57,10 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, m
 	}
 
 	byte_idx := rune_to_byte_index(shape.text, cursor_pos)
+
+	if shape.text_layout == unsafe { nil } {
+		return cursor_pos
+	}
 
 	rect := shape.text_layout.get_char_rect(byte_idx) or { return cursor_pos }
 
@@ -139,6 +148,9 @@ fn cursor_end_of_word(shape Shape, pos int) int {
 fn cursor_start_of_line(shape Shape, pos int) int {
 	byte_idx := rune_to_byte_index(shape.text, pos)
 
+	if shape.text_layout == unsafe { nil } {
+		return 0
+	}
 	// Find which line contains the index
 	for line in shape.text_layout.lines {
 		end := line.start_index + line.length
@@ -163,6 +175,10 @@ fn cursor_start_of_line(shape Shape, pos int) int {
 // vglyph layout information.
 fn cursor_end_of_line(shape Shape, pos int) int {
 	byte_idx := rune_to_byte_index(shape.text, pos)
+
+	if shape.text_layout == unsafe { nil } {
+		return shape.text.len
+	}
 
 	for i, line in shape.text_layout.lines {
 		end := line.start_index + line.length
@@ -231,6 +247,9 @@ fn cursor_position_from_offset(str string, offset f32, style TextStyle, mut wind
 // position using vglyph geometry.
 fn offset_from_cursor_position(shape Shape, cursor_position int, mut window Window) f32 {
 	byte_idx := rune_to_byte_index(shape.text, cursor_position)
+	if shape.text_layout == unsafe { nil } {
+		return 0
+	}
 	rect := shape.text_layout.get_char_rect(byte_idx) or {
 		// If at end, maybe get end of last line?
 		if shape.text_layout.lines.len > 0 {
@@ -339,6 +358,10 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 	scroll_view_height := scroll_container.shape.height - scroll_container.shape.padding.height()
 
 	byte_idx := rune_to_byte_index(shape.text, cursor_pos)
+	if shape.text_layout == unsafe { nil } {
+		return -1
+	}
+
 	rect := shape.text_layout.get_char_rect(byte_idx) or { gg.Rect{} }
 
 	cursor_top := rect.y
@@ -403,6 +426,9 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	rel_x := f32(e.mouse_x) - shape.padding.left
 	rel_y := f32(e.mouse_y) - shape.padding.top
 
+	if shape.text_layout == unsafe { nil } {
+		return 0
+	}
 	byte_idx := shape.text_layout.get_closest_offset(rel_x, rel_y)
 	return byte_to_rune_index(shape.text, byte_idx)
 }
