@@ -3,6 +3,7 @@ module gui
 import gg
 import sokol.sapp
 import time
+import log
 
 fn (mut window Window) blinky_cursor_animation() {
 	window.animation_add(mut Animate{
@@ -235,6 +236,9 @@ pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
 // set_id_focus sets the window's focus id.
 pub fn (mut window Window) set_id_focus(id u32) {
 	window.view_state.clear_input_selections()
+	if id != window.view_state.id_focus {
+		log.debug('set_id_focus: ${id}')
+	}
 	window.view_state.id_focus = id
 }
 

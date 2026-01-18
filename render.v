@@ -63,6 +63,9 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 	mut ctx := window.ui
 	match renderer {
 		DrawRect {
+			if renderer.w <= 0 || renderer.h <= 0 {
+				return
+			}
 			if renderer.style == .fill {
 				draw_rounded_rect_filled(renderer.x, renderer.y, renderer.w, renderer.h,
 					renderer.radius, renderer.color, ctx)

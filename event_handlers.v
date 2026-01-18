@@ -5,6 +5,7 @@ module gui
 // an input event (Keyboard or Mouse), and executing the appropriate callbacks.
 //
 import arrays
+import log
 
 fn char_handler(layout &Layout, mut e Event, mut w Window) {
 	for child in layout.children {
@@ -23,6 +24,7 @@ fn char_handler(layout &Layout, mut e Event, mut w Window) {
 		if layout.shape.on_char != unsafe { nil } {
 			layout.shape.on_char(layout, mut e, mut w)
 			if e.is_handled {
+				log.debug('char_handler handled by ${layout.shape.id}')
 				return
 			}
 		}
@@ -46,12 +48,14 @@ fn keydown_handler(layout &Layout, mut e Event, mut w Window) {
 		if layout.shape.id_scroll > 0 {
 			key_down_scroll_handler(layout, mut e, mut w)
 			if e.is_handled {
+				log.debug('keydown_handler scrolled by ${layout.shape.id}')
 				return
 			}
 		}
 		if layout.shape.on_keydown != unsafe { nil } {
 			layout.shape.on_keydown(layout, mut e, mut w)
 			if e.is_handled {
+				log.debug('keydown_handler handled by ${layout.shape.id}')
 				return
 			}
 		}
@@ -107,6 +111,7 @@ fn mouse_down_handler(layout &Layout, in_handler bool, mut e Event, mut w Window
 			layout.shape.on_click(layout, mut ev, mut w)
 			if ev.is_handled {
 				e.is_handled = true
+				log.debug('mouse_down_handler handled by ${layout.shape.id}')
 				return
 			}
 		}

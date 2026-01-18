@@ -225,6 +225,9 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	if !e.is_handled {
 		w.on_event(e, mut w)
 	}
+	if e.is_handled {
+		log.debug('event_fn: ${e.typ} handled: ${e}')
+	}
 	gui_tooltip.id = ''
 	w.update_window()
 }
@@ -247,6 +250,7 @@ pub fn (mut window Window) update_window() {
 
 // do_update_window generates a new layout from the window's current view generator.
 fn (mut window Window) do_update_window() {
+	log.debug('do_update_window')
 	//--------------------------------------------
 	window.lock()
 	window.renderers.clear()

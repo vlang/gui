@@ -311,3 +311,27 @@ fn from_gg_touchpoint(tp &gg.TouchPoint) TouchPoint {
 		changed:          tp.changed
 	}
 }
+
+pub fn (e &Event) str() string {
+	return 'Event{
+	frame_count: ${e.frame_count}
+	typ: ${e.typ}
+	key_code: ${e.key_code}
+	char_code: ${e.char_code}
+	key_repeat: ${e.key_repeat}
+	modifiers: ${e.modifiers}
+	mouse_button: ${e.mouse_button}
+	mouse_x: ${e.mouse_x}
+	mouse_y: ${e.mouse_y}
+	mouse_dx: ${e.mouse_dx}
+	mouse_dy: ${e.mouse_dy}
+	scroll_x: ${e.scroll_x}
+	scroll_y: ${e.scroll_y}
+	num_touches: ${e.num_touches}
+	window_width: ${e.window_width}
+	window_height: ${e.window_height}
+	framebuffer_width: ${e.framebuffer_width}
+	framebuffer_height: ${e.framebuffer_height}
+	is_handled: ${e.is_handled}
+}'
+}
