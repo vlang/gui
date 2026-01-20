@@ -9,6 +9,14 @@ module gui
 // theme_maker. Note: `theme_maker` containers are always transparent
 // and not filled.
 pub fn theme_maker(cfg &ThemeCfg) Theme {
+	// Helper to reduce boilerplate
+	make_style := fn (base TextStyle, size f32) TextStyle {
+		return TextStyle{
+			...base
+			size: size
+		}
+	}
+
 	theme := Theme{
 		cfg:              *cfg
 		name:             cfg.name
@@ -322,127 +330,40 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 
 	return Theme{
 		...theme
-		n1: TextStyle{
-			...normal
-			size: theme.size_text_x_large
-		}
-		n2: TextStyle{
-			...normal
-			size: theme.size_text_large
-		}
+		n1: make_style(normal, theme.size_text_x_large)
+		n2: make_style(normal, theme.size_text_large)
 		n3: theme.text_style
-		n4: TextStyle{
-			...normal
-			size: theme.size_text_small
-		}
-		n5: TextStyle{
-			...normal
-			size: theme.size_text_x_small
-		}
-		n6: TextStyle{
-			...normal
-			size: theme.size_text_tiny
-		}
+		n4: make_style(normal, theme.size_text_small)
+		n5: make_style(normal, theme.size_text_x_small)
+		n6: make_style(normal, theme.size_text_tiny)
 		// Bold
-		b1: TextStyle{
-			...bold
-			size: theme.size_text_x_large
-		}
-		b2: TextStyle{
-			...bold
-			size: theme.size_text_large
-		}
-		b3: TextStyle{
-			...bold
-			size: theme.size_text_medium
-		}
-		b4: TextStyle{
-			...bold
-			size: theme.size_text_small
-		}
-		b5: TextStyle{
-			...bold
-			size: theme.size_text_x_small
-		}
-		b6: TextStyle{
-			...bold
-			size: theme.size_text_tiny
-		}
+		b1: make_style(bold, theme.size_text_x_large)
+		b2: make_style(bold, theme.size_text_large)
+		b3: make_style(bold, theme.size_text_medium)
+		b4: make_style(bold, theme.size_text_small)
+		b5: make_style(bold, theme.size_text_x_small)
+		b6: make_style(bold, theme.size_text_tiny)
 		// Italic
-		i1: TextStyle{
-			...italic
-			size: theme.size_text_x_large
-		}
-		i2: TextStyle{
-			...italic
-			size: theme.size_text_large
-		}
-		i3: TextStyle{
-			...italic
-			size: theme.size_text_medium
-		}
-		i4: TextStyle{
-			...italic
-			size: theme.size_text_small
-		}
-		i5: TextStyle{
-			...italic
-			size: theme.size_text_x_small
-		}
-		i6: TextStyle{
-			...italic
-			size: theme.size_text_tiny
-		}
+		i1: make_style(italic, theme.size_text_x_large)
+		i2: make_style(italic, theme.size_text_large)
+		i3: make_style(italic, theme.size_text_medium)
+		i4: make_style(italic, theme.size_text_small)
+		i5: make_style(italic, theme.size_text_x_small)
+		i6: make_style(italic, theme.size_text_tiny)
 		// Mono
-		m1: TextStyle{
-			...mono
-			size: theme.size_text_x_large + 1
-		}
-		m2: TextStyle{
-			...mono
-			size: theme.size_text_large + 1
-		}
-		m3: TextStyle{
-			...mono
-			size: theme.size_text_medium + 1
-		}
-		m4: TextStyle{
-			...mono
-			size: theme.size_text_small + 1
-		}
-		m5: TextStyle{
-			...mono
-			size: theme.size_text_x_small + 1
-		}
-		m6: TextStyle{
-			...mono
-			size: theme.size_text_tiny + 1
-		}
+		m1: make_style(mono, theme.size_text_x_large + 1)
+		m2: make_style(mono, theme.size_text_large + 1)
+		m3: make_style(mono, theme.size_text_medium + 1)
+		m4: make_style(mono, theme.size_text_small + 1)
+		m5: make_style(mono, theme.size_text_x_small + 1)
+		m6: make_style(mono, theme.size_text_tiny + 1)
 		// Icon Font
-		icon1: TextStyle{
-			...icon
-			size: theme.size_text_x_large
-		}
-		icon2: TextStyle{
-			...icon
-			size: theme.size_text_large
-		}
-		icon3: TextStyle{
-			...icon
-			size: theme.size_text_medium
-		}
-		icon4: TextStyle{
-			...icon
-			size: theme.size_text_small
-		}
-		icon5: TextStyle{
-			...icon
-			size: theme.size_text_x_small
-		}
-		icon6: TextStyle{
-			...icon
-			size: theme.size_text_tiny
-		}
+		icon1: make_style(icon, theme.size_text_x_large)
+		icon2: make_style(icon, theme.size_text_large)
+		icon3: make_style(icon, theme.size_text_medium)
+		icon4: make_style(icon, theme.size_text_small)
+		icon5: make_style(icon, theme.size_text_x_small)
+		icon6: make_style(icon, theme.size_text_tiny)
 
 		menubar_style: MenubarStyle{
 			...theme.menubar_style
