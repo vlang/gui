@@ -2,6 +2,61 @@ module gui
 
 import arrays
 
+// DistributeMode controls whether space distribution grows or shrinks children.
+enum DistributeMode as u8 {
+	grow
+	shrink
+}
+
+// DistributeAxis selects the dimension for space distribution.
+enum DistributeAxis as u8 {
+	horizontal
+	vertical
+}
+
+// Dimension accessor functions abstract over the horizontal/vertical axis
+// to enable a single unified algorithm for both directions.
+
+@[inline]
+fn get_size(shape &Shape, axis DistributeAxis) f32 {
+	return match axis {
+		.horizontal { shape.width }
+		.vertical { shape.height }
+	}
+}
+
+@[inline]
+fn set_size(mut shape Shape, axis DistributeAxis, value f32) {
+	match axis {
+		.horizontal { shape.width = value }
+		.vertical { shape.height = value }
+	}
+}
+
+@[inline]
+fn get_min_size(shape &Shape, axis DistributeAxis) f32 {
+	return match axis {
+		.horizontal { shape.min_width }
+		.vertical { shape.min_height }
+	}
+}
+
+@[inline]
+fn get_max_size(shape &Shape, axis DistributeAxis) f32 {
+	return match axis {
+		.horizontal { shape.max_width }
+		.vertical { shape.max_height }
+	}
+}
+
+@[inline]
+fn get_sizing(shape &Shape, axis DistributeAxis) SizingType {
+	return match axis {
+		.horizontal { shape.sizing.width }
+		.vertical { shape.sizing.height }
+	}
+}
+
 // layout_widths arranges children horizontally. Only containers with an axis
 // are processed.
 fn layout_widths(mut layout Layout) {
@@ -116,6 +171,10 @@ fn layout_fill_widths(mut layout Layout) {
 	mut previous_remaining_width := f32(0)
 	mut remaining_width := layout.shape.width - layout.shape.padding.width()
 
+	// Pre-allocate work arrays to avoid allocations in hot loops
+	mut candidates := []int{cap: layout.children.len}
+	mut fixed_indices := []int{cap: layout.children.len}
+
 	if layout.shape.axis == .left_to_right {
 		for mut child in layout.children {
 			remaining_width -= child.shape.width
@@ -128,7 +187,7 @@ fn layout_fill_widths(mut layout Layout) {
 		// distributing the remaining width to evenly.
 		//
 		if remaining_width > f32_tolerance {
-			mut candidates := []int{cap: layout.children.len}
+			candidates.clear()
 			for i, child in layout.children {
 				if child.shape.sizing.width == .fill {
 					candidates << i
@@ -201,8 +260,8 @@ fn layout_fill_widths(mut layout Layout) {
 
 		// Shrink if needed using similar algorithm
 		if remaining_width < -f32_tolerance {
-			mut candidates := []int{cap: layout.children.len}
-			mut fixed_indices := []int{cap: layout.children.len}
+			candidates.clear()
+			fixed_indices.clear()
 
 			for i, child in layout.children {
 				if child.shape.sizing.width == .fill {
@@ -330,6 +389,10 @@ fn layout_fill_heights(mut layout Layout) {
 	mut previous_remaining_height := f32(0)
 	mut remaining_height := layout.shape.height - layout.shape.padding.height()
 
+	// Pre-allocate work arrays to avoid allocations in hot loops
+	mut candidates := []int{cap: layout.children.len}
+	mut fixed_indices := []int{cap: layout.children.len}
+
 	if layout.shape.axis == .top_to_bottom {
 		for mut child in layout.children {
 			remaining_height -= child.shape.height
@@ -342,7 +405,7 @@ fn layout_fill_heights(mut layout Layout) {
 		// distributing the remaining height to evenly.
 		//
 		if remaining_height > f32_tolerance {
-			mut candidates := []int{cap: layout.children.len}
+			candidates.clear()
 			for i, child in layout.children {
 				if child.shape.sizing.height == .fill {
 					candidates << i
@@ -414,8 +477,8 @@ fn layout_fill_heights(mut layout Layout) {
 
 		// Shrink if needed using similar algorithm
 		if remaining_height < -f32_tolerance {
-			mut candidates := []int{cap: layout.children.len}
-			mut fixed_indices := []int{cap: layout.children.len}
+			candidates.clear()
+			fixed_indices.clear()
 
 			for i, child in layout.children {
 				if child.shape.sizing.height == .fill {
