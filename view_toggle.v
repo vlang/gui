@@ -81,30 +81,12 @@ pub fn toggle(cfg ToggleCfg) View {
 		h_align:      .center
 		v_align:      .middle
 		padding:      padding_none
-		on_char:      cfg.on_char_button
-		on_click:     cfg.on_toggle_click()
+		on_char:      spacebar_to_click(cfg.on_click)
+		on_click:     left_click_only(cfg.on_click)
 		on_hover:     cfg.on_hover
 		amend_layout: cfg.amend_layout
 		content:      content
 	)
-}
-
-fn (cfg &ToggleCfg) on_toggle_click() fn (&Layout, mut Event, mut Window) {
-	if cfg.on_click == unsafe { nil } {
-		return cfg.on_click
-	}
-	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
-		if e.mouse_button == .left {
-			cfg.on_click(layout, mut e, mut w)
-		}
-	}
-}
-
-fn (cfg &ToggleCfg) on_char_button(layout &Layout, mut e Event, mut w Window) {
-	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(layout, mut e, mut w)
-		e.is_handled = true
-	}
 }
 
 fn (cfg &ToggleCfg) amend_layout(mut layout Layout, mut w Window) {

@@ -73,7 +73,7 @@ pub fn button(cfg ButtonCfg) View {
 		sizing:       cfg.sizing
 		tooltip:      cfg.tooltip
 		on_click:     cfg.on_click
-		on_char:      cfg.on_char_button
+		on_char:      spacebar_to_click(cfg.on_click)
 		amend_layout: cfg.amend_layout
 		on_hover:     cfg.on_button_hover
 		content:      [
@@ -90,13 +90,6 @@ pub fn button(cfg ButtonCfg) View {
 			),
 		]
 	)
-}
-
-fn (cfg &ButtonCfg) on_char_button(layout &Layout, mut e Event, mut w Window) {
-	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(layout, mut e, mut w)
-		e.is_handled = true
-	}
 }
 
 fn (cfg &ButtonCfg) amend_layout(mut layout Layout, mut w Window) {

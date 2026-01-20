@@ -69,30 +69,12 @@ pub fn radio(cfg RadioCfg) View {
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		padding:      padding_none
-		on_click:     cfg.on_radio_click()
-		on_char:      cfg.on_char_radio
+		on_click:     left_click_only(cfg.on_click)
+		on_char:      spacebar_to_click(cfg.on_click)
 		amend_layout: cfg.amend_layout
 		on_hover:     cfg.on_hover
 		content:      content
 	)
-}
-
-fn (cfg &RadioCfg) on_radio_click() fn (&Layout, mut Event, mut Window) {
-	if cfg.on_click == unsafe { nil } {
-		return cfg.on_click
-	}
-	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
-		if e.mouse_button == .left {
-			cfg.on_click(layout, mut e, mut w)
-		}
-	}
-}
-
-fn (cfg &RadioCfg) on_char_radio(layout &Layout, mut e Event, mut w Window) {
-	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(layout, mut e, mut w)
-		e.is_handled = true
-	}
 }
 
 fn (cfg &RadioCfg) amend_layout(mut layout Layout, mut w Window) {

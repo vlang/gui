@@ -78,29 +78,11 @@ pub fn switch(cfg SwitchCfg) View {
 	return row(
 		id_focus: cfg.id_focus
 		padding:  padding_none
-		on_char:  cfg.on_char_button
-		on_click: cfg.on_switch_click()
+		on_char:  spacebar_to_click(cfg.on_click)
+		on_click: left_click_only(cfg.on_click)
 		on_hover: cfg.on_hover
 		content:  content
 	)
-}
-
-fn (cfg &SwitchCfg) on_switch_click() fn (&Layout, mut Event, mut Window) {
-	if cfg.on_click == unsafe { nil } {
-		return cfg.on_click
-	}
-	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
-		if e.mouse_button == .left {
-			cfg.on_click(layout, mut e, mut w)
-		}
-	}
-}
-
-fn (cfg &SwitchCfg) on_char_button(layout &Layout, mut e Event, mut w Window) {
-	if e.char_code == ` ` && cfg.on_click != unsafe { nil } {
-		cfg.on_click(layout, mut e, mut w)
-		e.is_handled = true
-	}
 }
 
 fn (cfg &SwitchCfg) amend_layout(mut layout Layout, mut w Window) {
