@@ -46,7 +46,7 @@ fn main_view(mut w gui.Window) gui.View {
 				]
 			),
 			gui.column(
-				text:      ' Container Title  '
+				title:     ' Container Title  '
 				sizing:    gui.fill_fill
 				h_align:   .end
 				v_align:   .bottom

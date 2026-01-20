@@ -31,13 +31,68 @@ mut:
 	shape_type ShapeType = .rectangle
 }
 
-fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
+fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
 	$if !prod {
 		gui_stats.increment_layouts()
 	}
+
+	mut children := []Layout{}
+
+	// Inject Group Box title (Eraser + Text) if text is present
+	if cv.title.len > 0 {
+		text_style := if cv.color == gui_theme.text_style.color {
+			gui_theme.text_style
+		} else {
+			TextStyle{
+				...gui_theme.text_style
+				color: cv.color
+			}
+		}
+
+		cfg := text_style.to_vglyph_cfg()
+		text_width := w.text_system.text_width(cv.title, cfg) or { 0 }
+		metrics := w.text_system.font_metrics(cfg)
+
+		offset := metrics.ascender - metrics.descender
+		padding := 5
+
+		// 1. Eraser Node (hides the border)
+		parent_bg := cv.title_bg
+		eraser_color := if cv.disabled { dim_alpha(parent_bg) } else { parent_bg }
+		children << Layout{
+			shape: &Shape{
+				shape_type: .rectangle
+				width:      text_width + padding + padding - 1
+				height:     metrics.ascender + metrics.descender
+				x:          20
+				y:          -offset
+				color:      eraser_color
+				fill:       true
+				float:      true
+			}
+		}
+
+		// 2. Text Node
+		text_color := if cv.disabled { dim_alpha(text_style.color) } else { text_style.color }
+		children << Layout{
+			shape: &Shape{
+				shape_type: .text
+				text:       cv.title
+				x:          20 + padding
+				y:          -offset
+				text_style: text_style // use the one computed above which includes correct color base
+				color:      text_color
+				width:      text_width
+				height:     metrics.ascender + metrics.descender // Logical height
+				float:      true
+			}
+		}
+	}
+
 	layout := Layout{
-		shape: &Shape{
+		children: children
+		shape:    &Shape{
 			shape_type:     cv.shape_type
 			id:             cv.id
 			id_focus:       cv.id_focus
@@ -67,26 +122,19 @@ fn (mut cv ContainerView) generate_layout(mut _ Window) Layout {
 			float_tie_off:  cv.float_tie_off
 			float_offset_x: cv.float_offset_x
 			float_offset_y: cv.float_offset_y
-			text:           cv.text
-			text_style:     if cv.color == gui_theme.text_style.color {
-				gui_theme.text_style
-			} else {
-				TextStyle{
-					...gui_theme.text_style
-					color: cv.color
-				}
-			}
-			id_scroll:      cv.id_scroll
-			over_draw:      cv.over_draw
-			scroll_mode:    cv.scroll_mode
-			on_click:       cv.on_click
-			on_char:        cv.on_char
-			on_keydown:     cv.on_keydown
-			on_mouse_move:  cv.on_mouse_move_tooltip
-			on_mouse_up:    cv.on_mouse_up
-			on_hover:       cv.on_hover
-			on_scroll:      cv.on_scroll
-			amend_layout:   cv.amend_layout
+			// text:           cv.text // Handled via child nodes now
+			// text_style: ... // Handled via child nodes
+			id_scroll:     cv.id_scroll
+			over_draw:     cv.over_draw
+			scroll_mode:   cv.scroll_mode
+			on_click:      cv.on_click
+			on_char:       cv.on_char
+			on_keydown:    cv.on_keydown
+			on_mouse_move: cv.on_mouse_move_tooltip
+			on_mouse_up:   cv.on_mouse_up
+			on_hover:      cv.on_hover
+			on_scroll:     cv.on_scroll
+			amend_layout:  cv.amend_layout
 		}
 	}
 
@@ -147,7 +195,8 @@ pub mut:
 	axis Axis
 pub:
 	id              string
-	text            string
+	title           string
+	title_bg        Color         = theme().color_background
 	scrollbar_cfg_x &ScrollbarCfg = unsafe { nil }
 	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
 	tooltip         &TooltipCfg   = unsafe { nil }
@@ -274,7 +323,8 @@ fn container(cfg ContainerCfg) View {
 		spacing:        cfg.spacing
 		disabled:       cfg.disabled
 		invisible:      cfg.invisible
-		text:           cfg.text
+		title:          cfg.title
+		title_bg:       cfg.title_bg
 		id_scroll:      cfg.id_scroll
 		over_draw:      cfg.over_draw
 		scroll_mode:    cfg.scroll_mode

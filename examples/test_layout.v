@@ -71,7 +71,7 @@ fn main_view(w &gui.Window) gui.View {
 			),
 			gui.row(
 				id:      'orange'
-				text:    ' orange  '
+				title:   ' orange  '
 				color:   gui.orange
 				sizing:  gui.fill_fill
 				content: [
@@ -168,11 +168,12 @@ fn main_view(w &gui.Window) gui.View {
 						}
 					),
 					gui.column(
-						color:   gui.theme().text_style.color
-						fill:    false
-						sizing:  gui.fill_fit
-						text:    '  mode = .wrap  '
-						content: [
+						color:    gui.theme().text_style.color
+						fill:     false
+						sizing:   gui.fill_fit
+						title:    '  mode = .wrap  '
+						title_bg: gui.theme().color_panel
+						content:  [
 							gui.text(
 								id_focus: 6
 								text:     state.name
@@ -181,11 +182,12 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.column(
-						color:   gui.theme().text_style.color
-						fill:    false
-						sizing:  gui.fill_fit
-						text:    '  model = .wrap_keep_spaces  '
-						content: [
+						color:    gui.theme().text_style.color
+						fill:     false
+						sizing:   gui.fill_fit
+						title:    '  mode = .wrap_keep_spaces  '
+						title_bg: gui.theme().color_panel
+						content:  [
 							gui.text(
 								id_focus: 7
 								text:     state.name

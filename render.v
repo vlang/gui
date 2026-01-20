@@ -170,55 +170,6 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
 	render_rectangle(mut shape, clip, mut window)
-
-	// The group box title complicated things. Maybe move it?
-	if shape.text.len != 0 {
-		draw_rect := gg.Rect{
-			x:      shape.x
-			y:      shape.y
-			width:  shape.width
-			height: shape.height
-		}
-		if rects_overlap(draw_rect, clip) {
-			cfg := shape.text_style.to_vglyph_cfg()
-			w := window.text_system.text_width(shape.text, cfg) or { 0 }
-			metrics := window.text_system.font_metrics(cfg)
-			x := shape.x + 20
-			y := shape.y
-			// erase portion of rectangle where text goes.
-			p_color := if shape.disabled {
-				dim_alpha(parent_color)
-			} else {
-				parent_color
-			}
-
-			offset := metrics.ascender - metrics.descender
-			padding := 5
-
-			window.renderers << DrawRect{
-				x:     x
-				y:     y - offset
-				w:     w + padding + padding - 1
-				h:     metrics.ascender + metrics.descender
-				style: .fill
-				color: p_color.to_gx_color()
-			}
-			color := if shape.disabled {
-				dim_alpha(shape.text_style.color)
-			} else {
-				shape.text_style.color
-			}
-			window.renderers << DrawText{
-				x:    x + padding
-				y:    y - offset
-				text: shape.text
-				cfg:  TextStyle{
-					...shape.text_style
-					color: color
-				}.to_vglyph_cfg()
-			}
-		}
-	}
 }
 
 // render_circle draws a shape as a circle in the middle of the shape's

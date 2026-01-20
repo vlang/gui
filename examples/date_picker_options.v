@@ -226,7 +226,7 @@ fn toggles_group(app DatePickerApp) gui.View {
 		color:     gui.theme().color_active
 		min_width: 200
 		padding:   gui.theme().padding_large
-		text:      ' Options  '
+		title:     ' Options  '
 		content:   [
 			gui.toggle(
 				label:    'Monday first day of week'
@@ -300,7 +300,7 @@ fn allowed_weekdays_group(app DatePickerApp) gui.View {
 		color:     gui.theme().color_active
 		min_width: 200
 		padding:   gui.theme().padding_large
-		text:      ' Allowed weekdays  '
+		title:     ' Allowed weekdays  '
 		content:   [
 			gui.toggle(
 				id:       'mon'
@@ -365,7 +365,7 @@ fn click_allow_weekday_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Wi
 
 fn months_group(app DatePickerApp) gui.View {
 	return gui.column(
-		text:      ' Allowed months  '
+		title:     ' Allowed months  '
 		color:     gui.theme().color_active
 		min_width: 200
 		padding:   gui.padding_large
@@ -533,7 +533,7 @@ fn years_dates_group(app DatePickerApp) gui.View {
 
 fn allowed_years_group(app DatePickerApp) gui.View {
 	return gui.column(
-		text:      ' Allowed years  '
+		title:     ' Allowed years  '
 		color:     gui.theme().color_active
 		min_width: 200
 		padding:   gui.padding_large
@@ -574,7 +574,7 @@ fn click_allow_years_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Wind
 
 fn allowed_dates_group(app DatePickerApp) gui.View {
 	return gui.column(
-		text:      ' Allowed dates  '
+		title:     ' Allowed dates  '
 		color:     gui.theme().color_active
 		min_width: 200
 		padding:   gui.padding_large
