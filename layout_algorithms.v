@@ -57,6 +57,178 @@ fn get_sizing(shape &Shape, axis DistributeAxis) SizingType {
 	}
 }
 
+// distribute_space distributes remaining space among fill-sized children.
+// For grow mode: smallest children grow first until they match the next-smallest.
+// For shrink mode: largest children shrink first until they match the next-largest.
+//
+// The shrink algorithm also considers fixed children when finding the largest,
+// which prevents fill children from shrinking below their fixed siblings.
+//
+// Returns the remaining space after distribution (for verification).
+fn distribute_space(mut layout Layout,
+	remaining_in f32,
+	mode DistributeMode,
+	axis DistributeAxis,
+	mut candidates []int,
+	mut fixed_indices []int) f32 {
+	mut remaining := remaining_in
+	mut prev_remaining := f32(0)
+
+	// Build candidate list
+	candidates.clear()
+	if mode == .shrink {
+		fixed_indices.clear()
+	}
+
+	for i, child in layout.children {
+		if get_sizing(child.shape, axis) == .fill {
+			candidates << i
+		} else if mode == .shrink {
+			fixed_indices << i
+		}
+	}
+
+	// Iterate until space is distributed or no candidates remain
+	for {
+		// Check termination conditions based on mode
+		should_continue := match mode {
+			.grow { remaining > f32_tolerance && candidates.len > 0 }
+			.shrink { remaining < -f32_tolerance && candidates.len > 0 }
+		}
+		if !should_continue {
+			break
+		}
+
+		// Guard against infinite loops when rounding prevents progress
+		if f32_are_close(remaining, prev_remaining) {
+			break
+		}
+		prev_remaining = remaining
+
+		// Find extremum based on mode
+		mut extremum := get_size(layout.children[candidates[0]].shape, axis)
+		mut second := match mode {
+			.grow { f32(max_u32) } // sentinel: larger than any real value
+			.shrink { f32(0) } // sentinel: smaller than any real value
+		}
+
+		for idx in candidates {
+			child_size := get_size(layout.children[idx].shape, axis)
+			match mode {
+				.grow {
+					if child_size < extremum {
+						second = extremum
+						extremum = child_size
+					} else if child_size > extremum {
+						second = f32_min(second, child_size)
+					}
+				}
+				.shrink {
+					if child_size > extremum {
+						second = extremum
+						extremum = child_size
+					} else if child_size < extremum {
+						second = f32_max(second, child_size)
+					}
+				}
+			}
+		}
+
+		// For shrink mode, also consider fixed children when finding largest
+		if mode == .shrink {
+			for idx in fixed_indices {
+				child_size := get_size(layout.children[idx].shape, axis)
+				if child_size > extremum {
+					second = extremum
+					extremum = child_size
+				} else if child_size < extremum {
+					second = f32_max(second, child_size)
+				}
+			}
+		}
+
+		// Calculate delta to add/remove
+		mut delta := match mode {
+			.grow {
+				if second == max_u32 {
+					remaining
+				} else {
+					second - extremum
+				}
+			}
+			.shrink {
+				if extremum > 0 {
+					if second == 0 {
+						remaining
+					} else {
+						second - extremum
+					}
+				} else {
+					remaining
+				}
+			}
+		}
+
+		// Clamp delta based on mode and candidate count
+		match mode {
+			.grow {
+				delta = f32_min(delta, remaining / candidates.len)
+			}
+			.shrink {
+				total_len := candidates.len + fixed_indices.len
+				if total_len > 0 {
+					delta = f32_max(delta, remaining / f32(total_len))
+				}
+			}
+		}
+
+		// Apply delta to candidates at extremum
+		mut keep_idx := 0
+		for i in 0 .. candidates.len {
+			idx := candidates[i]
+			mut child := &layout.children[idx]
+			mut kept := true
+
+			child_size := get_size(child.shape, axis)
+			if child_size == extremum {
+				prev_size := child_size
+				new_size := child_size + delta
+				set_size(mut child.shape, axis, new_size)
+
+				// Apply constraints
+				mut constrained := false
+				min_size := get_min_size(child.shape, axis)
+				max_size := get_max_size(child.shape, axis)
+				current := get_size(child.shape, axis)
+
+				if current <= min_size {
+					set_size(mut child.shape, axis, min_size)
+					constrained = true
+				} else if max_size > 0 && current >= max_size {
+					set_size(mut child.shape, axis, max_size)
+					constrained = true
+				}
+
+				remaining -= (get_size(child.shape, axis) - prev_size)
+
+				if constrained {
+					kept = false
+				}
+			}
+
+			if kept {
+				if keep_idx != i {
+					candidates[keep_idx] = idx
+				}
+				keep_idx++
+			}
+		}
+		candidates.trim(keep_idx)
+	}
+
+	return remaining
+}
+
 // layout_widths arranges children horizontally. Only containers with an axis
 // are processed.
 fn layout_widths(mut layout Layout) {
@@ -168,7 +340,6 @@ fn layout_heights(mut layout Layout) {
 // - The previous_remaining check guards against infinite loops when rounding
 //   prevents progress
 fn layout_fill_widths(mut layout Layout) {
-	mut previous_remaining_width := f32(0)
 	mut remaining_width := layout.shape.width - layout.shape.padding.width()
 
 	// Pre-allocate work arrays to avoid allocations in hot loops
@@ -182,171 +353,16 @@ fn layout_fill_widths(mut layout Layout) {
 		// fence post spacing
 		remaining_width -= layout.spacing()
 
-		// divide up the remaining fill widths by first growing all the
-		// all the fill layouts to the same size (if possible) and then
-		// distributing the remaining width to evenly.
-		//
+		// Grow if needed
 		if remaining_width > f32_tolerance {
-			candidates.clear()
-			for i, child in layout.children {
-				if child.shape.sizing.width == .fill {
-					candidates << i
-				}
-			}
-
-			// Invariant: remaining_width decreases or candidates shrinks each iteration
-			for remaining_width > f32_tolerance && candidates.len > 0 {
-				if f32_are_close(remaining_width, previous_remaining_width) {
-					break
-				}
-				previous_remaining_width = remaining_width
-
-				mut smallest := layout.children[candidates[0]].shape.width
-				mut second_smallest := f32(max_u32)
-
-				for idx in candidates {
-					child_width := layout.children[idx].shape.width
-					if child_width < smallest {
-						second_smallest = smallest
-						smallest = child_width
-					} else if child_width > smallest {
-						second_smallest = f32_min(second_smallest, child_width)
-					}
-				}
-
-				mut width_to_add := f32(0)
-				if second_smallest == max_u32 {
-					width_to_add = remaining_width
-				} else {
-					width_to_add = second_smallest - smallest
-				}
-
-				width_to_add = f32_min(width_to_add, remaining_width / candidates.len)
-
-				mut keep_idx := 0
-				for i in 0 .. candidates.len {
-					idx := candidates[i]
-					mut child := &layout.children[idx]
-					mut kept := true
-					if child.shape.width == smallest {
-						previous_width := child.shape.width
-						child.shape.width += width_to_add
-
-						mut constrained := false
-						if child.shape.width <= child.shape.min_width {
-							child.shape.width = child.shape.min_width
-							constrained = true
-						} else if child.shape.max_width > 0
-							&& child.shape.width >= child.shape.max_width {
-							child.shape.width = child.shape.max_width
-							constrained = true
-						}
-						remaining_width -= (child.shape.width - previous_width)
-
-						if constrained {
-							kept = false
-						}
-					}
-					if kept {
-						if keep_idx != i {
-							candidates[keep_idx] = idx
-						}
-						keep_idx++
-					}
-				}
-				candidates.trim(keep_idx)
-			}
+			remaining_width = distribute_space(mut layout, remaining_width, .grow, .horizontal, mut
+				candidates, mut fixed_indices)
 		}
 
-		// Shrink if needed using similar algorithm
+		// Shrink if needed
 		if remaining_width < -f32_tolerance {
-			candidates.clear()
-			fixed_indices.clear()
-
-			for i, child in layout.children {
-				if child.shape.sizing.width == .fill {
-					candidates << i
-				} else {
-					fixed_indices << i
-				}
-			}
-
-			previous_remaining_width = 0
-			for remaining_width < -f32_tolerance && candidates.len > 0 {
-				if f32_are_close(remaining_width, previous_remaining_width) {
-					break
-				}
-				previous_remaining_width = remaining_width
-
-				mut largest := f32(0)
-				mut second_largest := f32(0)
-
-				for idx in candidates {
-					child_width := layout.children[idx].shape.width
-					if child_width > largest {
-						second_largest = largest
-						largest = child_width
-					} else if child_width < largest {
-						second_largest = f32_max(second_largest, child_width)
-					}
-				}
-				for idx in fixed_indices {
-					child_width := layout.children[idx].shape.width
-					if child_width > largest {
-						second_largest = largest
-						largest = child_width
-					} else if child_width < largest {
-						second_largest = f32_max(second_largest, child_width)
-					}
-				}
-
-				mut width_to_add := f32(0)
-				if largest > 0 {
-					if second_largest == 0 {
-						width_to_add = remaining_width
-					} else {
-						width_to_add = second_largest - largest
-					}
-				} else {
-					width_to_add = remaining_width
-				}
-
-				total_len := candidates.len + fixed_indices.len
-				if total_len > 0 {
-					width_to_add = f32_max(width_to_add, remaining_width / f32(total_len))
-				}
-
-				mut keep_idx := 0
-				for i in 0 .. candidates.len {
-					idx := candidates[i]
-					mut child := &layout.children[idx]
-					mut kept := true
-					if child.shape.width == largest {
-						previous_width := child.shape.width
-						child.shape.width += width_to_add
-						mut constrained := false
-						if child.shape.width <= child.shape.min_width {
-							child.shape.width = child.shape.min_width
-							constrained = true
-						} else if child.shape.max_width > 0
-							&& child.shape.width >= child.shape.max_width {
-							child.shape.width = child.shape.max_width
-							constrained = true
-						}
-						remaining_width -= (child.shape.width - previous_width)
-						if constrained {
-							kept = false
-						}
-					}
-					if kept {
-						if keep_idx != i {
-							candidates[keep_idx] = idx
-						}
-						keep_idx++
-					}
-				}
-				candidates.trim(keep_idx)
-			}
+			remaining_width = distribute_space(mut layout, remaining_width, .shrink, .horizontal, mut
+				candidates, mut fixed_indices)
 		}
 	} else if layout.shape.axis == .top_to_bottom {
 		if layout.shape.id_scroll > 0 && layout.shape.sizing.width == .fill
@@ -386,7 +402,6 @@ fn layout_fill_widths(mut layout Layout) {
 
 // layout_fill_heights manages vertical growth/shrinkage to satisfy constraints.\n// See layout_fill_widths for algorithm invariants (same logic, vertical axis).
 fn layout_fill_heights(mut layout Layout) {
-	mut previous_remaining_height := f32(0)
 	mut remaining_height := layout.shape.height - layout.shape.padding.height()
 
 	// Pre-allocate work arrays to avoid allocations in hot loops
@@ -400,170 +415,16 @@ fn layout_fill_heights(mut layout Layout) {
 		// fence post spacing
 		remaining_height -= layout.spacing()
 
-		// divide up the remaining fill heights by first growing all the
-		// all the fill layouts to the same size (if possible) and then
-		// distributing the remaining height to evenly.
-		//
+		// Grow if needed
 		if remaining_height > f32_tolerance {
-			candidates.clear()
-			for i, child in layout.children {
-				if child.shape.sizing.height == .fill {
-					candidates << i
-				}
-			}
-
-			for remaining_height > f32_tolerance && candidates.len > 0 {
-				if f32_are_close(remaining_height, previous_remaining_height) {
-					break
-				}
-				previous_remaining_height = remaining_height
-
-				mut smallest := layout.children[candidates[0]].shape.height
-				mut second_smallest := f32(max_u32)
-
-				for idx in candidates {
-					child_height := layout.children[idx].shape.height
-					if child_height < smallest {
-						second_smallest = smallest
-						smallest = child_height
-					} else if child_height > smallest {
-						second_smallest = f32_min(second_smallest, child_height)
-					}
-				}
-
-				mut height_to_add := f32(0)
-				if second_smallest == max_u32 {
-					height_to_add = remaining_height
-				} else {
-					height_to_add = second_smallest - smallest
-				}
-
-				height_to_add = f32_min(height_to_add, remaining_height / candidates.len)
-
-				mut keep_idx := 0
-				for i in 0 .. candidates.len {
-					idx := candidates[i]
-					mut child := &layout.children[idx]
-					mut kept := true
-					if child.shape.height == smallest {
-						previous_height := child.shape.height
-						child.shape.height += height_to_add
-
-						mut constrained := false
-						if child.shape.height <= child.shape.min_height {
-							child.shape.height = child.shape.min_height
-							constrained = true
-						} else if child.shape.max_height > 0
-							&& child.shape.height >= child.shape.max_height {
-							child.shape.height = child.shape.max_height
-							constrained = true
-						}
-						remaining_height -= (child.shape.height - previous_height)
-
-						if constrained {
-							kept = false
-						}
-					}
-					if kept {
-						if keep_idx != i {
-							candidates[keep_idx] = idx
-						}
-						keep_idx++
-					}
-				}
-				candidates.trim(keep_idx)
-			}
+			remaining_height = distribute_space(mut layout, remaining_height, .grow, .vertical, mut
+				candidates, mut fixed_indices)
 		}
 
-		// Shrink if needed using similar algorithm
+		// Shrink if needed
 		if remaining_height < -f32_tolerance {
-			candidates.clear()
-			fixed_indices.clear()
-
-			for i, child in layout.children {
-				if child.shape.sizing.height == .fill {
-					candidates << i
-				} else {
-					fixed_indices << i
-				}
-			}
-
-			previous_remaining_height = 0
-			for remaining_height < -f32_tolerance && candidates.len > 0 {
-				if f32_are_close(remaining_height, previous_remaining_height) {
-					break
-				}
-				previous_remaining_height = remaining_height
-
-				mut largest := f32(0)
-				mut second_largest := f32(0)
-
-				for idx in candidates {
-					child_height := layout.children[idx].shape.height
-					if child_height > largest {
-						second_largest = largest
-						largest = child_height
-					} else if child_height < largest {
-						second_largest = f32_max(second_largest, child_height)
-					}
-				}
-				for idx in fixed_indices {
-					child_height := layout.children[idx].shape.height
-					if child_height > largest {
-						second_largest = largest
-						largest = child_height
-					} else if child_height < largest {
-						second_largest = f32_max(second_largest, child_height)
-					}
-				}
-
-				mut height_to_add := f32(0)
-				if largest > 0 {
-					if second_largest == 0 {
-						height_to_add = remaining_height
-					} else {
-						height_to_add = second_largest - largest
-					}
-				} else {
-					height_to_add = remaining_height
-				}
-
-				total_len := candidates.len + fixed_indices.len
-				if total_len > 0 {
-					height_to_add = f32_max(height_to_add, remaining_height / f32(total_len))
-				}
-
-				mut keep_idx := 0
-				for i in 0 .. candidates.len {
-					idx := candidates[i]
-					mut child := &layout.children[idx]
-					mut kept := true
-					if child.shape.height == largest {
-						previous_height := child.shape.height
-						child.shape.height += height_to_add
-						mut constrained := false
-						if child.shape.height <= child.shape.min_height {
-							child.shape.height = child.shape.min_height
-							constrained = true
-						} else if child.shape.max_height > 0
-							&& child.shape.height >= child.shape.max_height {
-							child.shape.height = child.shape.max_height
-							constrained = true
-						}
-						remaining_height -= (child.shape.height - previous_height)
-						if constrained {
-							kept = false
-						}
-					}
-					if kept {
-						if keep_idx != i {
-							candidates[keep_idx] = idx
-						}
-						keep_idx++
-					}
-				}
-				candidates.trim(keep_idx)
-			}
+			remaining_height = distribute_space(mut layout, remaining_height, .shrink,
+				.vertical, mut candidates, mut fixed_indices)
 		}
 	} else if layout.shape.axis == .left_to_right {
 		if layout.shape.id_scroll > 0 && layout.shape.sizing.height == .fill
