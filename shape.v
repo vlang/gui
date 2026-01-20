@@ -99,3 +99,9 @@ pub fn (shape &Shape) point_in_shape(x f32, y f32) bool {
 	return x >= shape_clip.x && y >= shape_clip.y && x < (shape_clip.x + shape_clip.width)
 		&& y < (shape_clip.y + shape_clip.height)
 }
+
+// has_text_layout returns true if the shape has a valid vglyph text layout.
+@[inline]
+pub fn (shape &Shape) has_text_layout() bool {
+	return shape.text_layout != unsafe { nil }
+}

@@ -257,7 +257,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	byte_beg := rune_to_byte_index(shape.text, beg)
 	byte_end := rune_to_byte_index(shape.text, end)
 
-	if shape.text_layout != unsafe { nil } {
+	if shape.has_text_layout() {
 		for line in shape.text_layout.lines {
 			draw_x := shape.x + shape.padding.left + line.rect.x
 			draw_y := shape.y + shape.padding.top + line.rect.y
@@ -386,7 +386,7 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 			byte_idx := rune_to_byte_index(shape.text, cursor_pos)
 
 			// Use vglyph to get the rect
-			rect := if shape.text_layout != unsafe { nil } {
+			rect := if shape.has_text_layout() {
 				shape.text_layout.get_char_rect(byte_idx) or {
 					// If not found, check if it's at the very end
 					if byte_idx >= shape.text.len && shape.text_layout.lines.len > 0 {

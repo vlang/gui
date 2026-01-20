@@ -28,7 +28,7 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut w
 	byte_idx := rune_to_byte_index(shape.text, cursor_pos)
 
 	// Check for nil layout
-	if shape.text_layout == unsafe { nil } {
+	if !shape.has_text_layout() {
 		return cursor_pos
 	}
 
@@ -58,7 +58,7 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, m
 
 	byte_idx := rune_to_byte_index(shape.text, cursor_pos)
 
-	if shape.text_layout == unsafe { nil } {
+	if !shape.has_text_layout() {
 		return cursor_pos
 	}
 
@@ -148,7 +148,7 @@ fn cursor_end_of_word(shape Shape, pos int) int {
 fn cursor_start_of_line(shape Shape, pos int) int {
 	byte_idx := rune_to_byte_index(shape.text, pos)
 
-	if shape.text_layout == unsafe { nil } {
+	if !shape.has_text_layout() {
 		return 0
 	}
 	// Find which line contains the index
@@ -176,7 +176,7 @@ fn cursor_start_of_line(shape Shape, pos int) int {
 fn cursor_end_of_line(shape Shape, pos int) int {
 	byte_idx := rune_to_byte_index(shape.text, pos)
 
-	if shape.text_layout == unsafe { nil } {
+	if !shape.has_text_layout() {
 		return shape.text.len
 	}
 
@@ -247,7 +247,7 @@ fn cursor_position_from_offset(str string, offset f32, style TextStyle, mut wind
 // position using vglyph geometry.
 fn offset_from_cursor_position(shape Shape, cursor_position int, mut window Window) f32 {
 	byte_idx := rune_to_byte_index(shape.text, cursor_position)
-	if shape.text_layout == unsafe { nil } {
+	if !shape.has_text_layout() {
 		return 0
 	}
 	rect := shape.text_layout.get_char_rect(byte_idx) or {
@@ -358,7 +358,7 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 	scroll_view_height := scroll_container.shape.height - scroll_container.shape.padding.height()
 
 	byte_idx := rune_to_byte_index(shape.text, cursor_pos)
-	if shape.text_layout == unsafe { nil } {
+	if !shape.has_text_layout() {
 		return -1
 	}
 
@@ -426,7 +426,7 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	rel_x := f32(e.mouse_x) - shape.padding.left
 	rel_y := f32(e.mouse_y) - shape.padding.top
 
-	if shape.text_layout == unsafe { nil } {
+	if !shape.has_text_layout() {
 		return 0
 	}
 	byte_idx := shape.text_layout.get_closest_offset(rel_x, rel_y)

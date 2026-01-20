@@ -283,8 +283,13 @@ fn layout_fill_widths(mut layout Layout) {
 		if layout.shape.id_scroll > 0 && layout.shape.sizing.width == .fill
 			&& layout.shape.scroll_mode != .vertical_only
 			&& layout.parent.shape.axis == .left_to_right {
-			sibling_widths := layout.parent.children.filter(it.shape.uid != layout.shape.uid).map(it.shape.width)
-			layout.shape.width = layout.parent.shape.width - arrays.sum(sibling_widths) or { 0 }
+			mut sibling_width_sum := f32(0)
+			for sibling in layout.parent.children {
+				if sibling.shape.uid != layout.shape.uid {
+					sibling_width_sum += sibling.shape.width
+				}
+			}
+			layout.shape.width = layout.parent.shape.width - sibling_width_sum
 			layout.shape.width -= layout.parent.spacing()
 			layout.shape.width -= layout.parent.shape.padding.width()
 			layout.shape.width += 1 // round-off?
@@ -491,8 +496,13 @@ fn layout_fill_heights(mut layout Layout) {
 		if layout.shape.id_scroll > 0 && layout.shape.sizing.height == .fill
 			&& layout.shape.scroll_mode != .horizontal_only
 			&& layout.parent.shape.axis == .top_to_bottom {
-			sibling_heights := layout.parent.children.filter(it.shape.uid != layout.shape.uid).map(it.shape.height)
-			layout.shape.height = layout.parent.shape.height - arrays.sum(sibling_heights) or { 0 }
+			mut sibling_height_sum := f32(0)
+			for sibling in layout.parent.children {
+				if sibling.shape.uid != layout.shape.uid {
+					sibling_height_sum += sibling.shape.height
+				}
+			}
+			layout.shape.height = layout.parent.shape.height - sibling_height_sum
 			layout.shape.height -= layout.parent.spacing()
 			layout.shape.height -= layout.parent.shape.padding.height()
 			layout.shape.height += 1 // round-off?

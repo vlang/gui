@@ -32,8 +32,8 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 	// measure the raw text. This ensures containers don't collapse to 0 width.
 	// We measure "unwrapped" width here, essentially treating it as a single line.
 	// The layout engine will later constrain this width if wrapping is enabled.
-	if shape.text_layout == unsafe { nil } || (shape.text_layout != unsafe { nil }
-		&& shape.text_layout.lines.len == 0 && shape.text.len > 0) {
+	if !shape.has_text_layout()
+		|| (shape.has_text_layout() && shape.text_layout.lines.len == 0 && shape.text.len > 0) {
 		effective := match shape.text_is_password && !shape.text_is_placeholder {
 			true { password_char.repeat(utf8_str_visible_length(shape.text)) }
 			else { shape.text }
@@ -47,7 +47,7 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 	// For "fit content", we often want the max line width.
 	// vglyph.Layout.width is the width of the layout box (or max line width if not wrapping).
 	// Let's trust vglyph's calculation.
-	if shape.text_layout != unsafe { nil } && shape.text_layout.lines.len > 0 {
+	if shape.has_text_layout() && shape.text_layout.lines.len > 0 {
 		// Use visual width (ink) to match previous behavior of measuring visible pixels.
 		// OR use logical width if visual width is too tight?
 		// Usually visual_width matches the bounding box of the ink.
@@ -77,7 +77,7 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 	}
 
 	mut max_width := f32(0)
-	if shape.text_layout == unsafe { nil } {
+	if !shape.has_text_layout() {
 		return 0
 	}
 	for line in shape.text_layout.lines {
@@ -103,12 +103,11 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 
 @[inline]
 fn text_height(shape &Shape, mut window Window) f32 {
-	if (shape.text_layout == unsafe { nil } || shape.text_layout.lines.len == 0)
-		&& shape.text.len > 0 {
+	if (!shape.has_text_layout() || shape.text_layout.lines.len == 0) && shape.text.len > 0 {
 		cfg := shape.text_style.to_vglyph_cfg()
 		return window.text_system.font_height(cfg)
 	}
-	if shape.text_layout != unsafe { nil } {
+	if shape.has_text_layout() {
 		return shape.text_layout.height
 	}
 	return 0
@@ -143,7 +142,7 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		// Optimization: If layout is already generated for this width (and text hasn't changed), skip regeneration.
 		// Note: We assume text and style haven't changed because Shape is usually recreated per frame if those change.
 		// The main variable during layout passes is the width constraint.
-		if width == shape.last_constraint_width && shape.text_layout != unsafe { nil }
+		if width == shape.last_constraint_width && shape.has_text_layout()
 			&& shape.text_layout.lines.len > 0 {
 			return
 		}

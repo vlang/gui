@@ -1,6 +1,7 @@
 module gui
 
 // int_clamp returns x constrained between min and max
+@[inline]
 pub fn int_clamp(x int, min int, max int) int {
 	if x < min {
 		return min
