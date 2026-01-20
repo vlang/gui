@@ -102,25 +102,6 @@ fn layout_heights(mut layout Layout) {
 	}
 }
 
-// find_first_idx_and_len gets the index of the first element to satisfy the
-// predicate and the length of all elements that satisfy the predicate. Iterates
-// the array once with no allocations.
-fn find_first_idx_and_len(layout &Layout, predicate fn (n Layout) bool) (int, int) {
-	mut idx := 0
-	mut len := 0
-	mut set_idx := false
-	for i, child in layout.children {
-		if predicate(child) {
-			len += 1
-			if !set_idx {
-				idx = i
-				set_idx = true
-			}
-		}
-	}
-	return idx, len
-}
-
 // layout_fill_widths manages horizontal growth/shrinkage to satisfy constraints.
 fn layout_fill_widths(mut layout Layout) {
 	mut previous_remaining_width := f32(0)
@@ -137,108 +118,165 @@ fn layout_fill_widths(mut layout Layout) {
 		// all the fill layouts to the same size (if possible) and then
 		// distributing the remaining width to evenly.
 		//
-		mut excluded := []u64{cap: layout.children.len}
-		for remaining_width > f32_tolerance {
-			if f32_are_close(remaining_width, previous_remaining_width) {
-				break
-			}
-			previous_remaining_width = remaining_width
-			// Grow child elements
-			idx, len := find_first_idx_and_len(layout, fn [excluded] (n Layout) bool {
-				return n.shape.sizing.width == .fill && n.shape.uid !in excluded
-			})
-			if len == 0 {
-				break
-			}
-
-			mut smallest := layout.children[idx].shape.width
-			mut second_smallest := f32(max_u32)
-			mut width_to_add := remaining_width
-
-			for child in layout.children {
-				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
-					if child.shape.width < smallest {
-						second_smallest = smallest
-						smallest = child.shape.width
-					}
-					if child.shape.width > smallest {
-						second_smallest = f32_min(second_smallest, child.shape.width)
-						width_to_add = second_smallest - smallest
-					}
+		if remaining_width > f32_tolerance {
+			mut candidates := []int{cap: layout.children.len}
+			for i, child in layout.children {
+				if child.shape.sizing.width == .fill {
+					candidates << i
 				}
 			}
 
-			width_to_add = f32_min(width_to_add, remaining_width / len)
+			for remaining_width > f32_tolerance && candidates.len > 0 {
+				if f32_are_close(remaining_width, previous_remaining_width) {
+					break
+				}
+				previous_remaining_width = remaining_width
 
-			for mut child in layout.children {
-				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
+				mut smallest := layout.children[candidates[0]].shape.width
+				mut second_smallest := f32(max_u32)
+
+				for idx in candidates {
+					child_width := layout.children[idx].shape.width
+					if child_width < smallest {
+						second_smallest = smallest
+						smallest = child_width
+					} else if child_width > smallest {
+						second_smallest = f32_min(second_smallest, child_width)
+					}
+				}
+
+				mut width_to_add := f32(0)
+				if second_smallest == max_u32 {
+					width_to_add = remaining_width
+				} else {
+					width_to_add = second_smallest - smallest
+				}
+
+				width_to_add = f32_min(width_to_add, remaining_width / candidates.len)
+
+				mut keep_idx := 0
+				for i in 0 .. candidates.len {
+					idx := candidates[i]
+					mut child := &layout.children[idx]
+					mut kept := true
 					if child.shape.width == smallest {
 						previous_width := child.shape.width
 						child.shape.width += width_to_add
+
+						mut constrained := false
 						if child.shape.width <= child.shape.min_width {
 							child.shape.width = child.shape.min_width
-							excluded << child.shape.uid
+							constrained = true
 						} else if child.shape.max_width > 0
 							&& child.shape.width >= child.shape.max_width {
 							child.shape.width = child.shape.max_width
-							excluded << child.shape.uid
+							constrained = true
 						}
 						remaining_width -= (child.shape.width - previous_width)
+
+						if constrained {
+							kept = false
+						}
+					}
+					if kept {
+						if keep_idx != i {
+							candidates[keep_idx] = idx
+						}
+						keep_idx++
 					}
 				}
+				candidates.trim(keep_idx)
 			}
 		}
 
 		// Shrink if needed using similar algorithm
-		excluded.clear()
-		previous_remaining_width = 0
-		for remaining_width < -f32_tolerance {
-			if f32_are_close(remaining_width, previous_remaining_width) {
-				break
-			}
-			previous_remaining_width = remaining_width
-			idx, len := find_first_idx_and_len(layout, fn [excluded] (n Layout) bool {
-				return n.shape.uid !in excluded
-			})
-			if len == 0 {
-				break
-			}
+		if remaining_width < -f32_tolerance {
+			mut candidates := []int{cap: layout.children.len}
+			mut fixed_indices := []int{cap: layout.children.len}
 
-			mut largest := layout.children[idx].shape.width
-			mut second_largest := f32(0)
-			mut width_to_add := remaining_width
-
-			for child in layout.children {
-				if child.shape.uid !in excluded {
-					if child.shape.width > largest {
-						second_largest = largest
-						largest = child.shape.width
-					}
-					if child.shape.width < largest {
-						second_largest = f32_max(second_largest, child.shape.width)
-						width_to_add = second_largest - largest
-					}
+			for i, child in layout.children {
+				if child.shape.sizing.width == .fill {
+					candidates << i
+				} else {
+					fixed_indices << i
 				}
 			}
 
-			width_to_add = f32_max(width_to_add, remaining_width / len)
+			previous_remaining_width = 0
+			for remaining_width < -f32_tolerance && candidates.len > 0 {
+				if f32_are_close(remaining_width, previous_remaining_width) {
+					break
+				}
+				previous_remaining_width = remaining_width
 
-			for mut child in layout.children {
-				if child.shape.sizing.width == .fill && child.shape.uid !in excluded {
+				mut largest := f32(0)
+				mut second_largest := f32(0)
+
+				for idx in candidates {
+					child_width := layout.children[idx].shape.width
+					if child_width > largest {
+						second_largest = largest
+						largest = child_width
+					} else if child_width < largest {
+						second_largest = f32_max(second_largest, child_width)
+					}
+				}
+				for idx in fixed_indices {
+					child_width := layout.children[idx].shape.width
+					if child_width > largest {
+						second_largest = largest
+						largest = child_width
+					} else if child_width < largest {
+						second_largest = f32_max(second_largest, child_width)
+					}
+				}
+
+				mut width_to_add := f32(0)
+				if largest > 0 {
+					if second_largest == 0 {
+						width_to_add = remaining_width
+					} else {
+						width_to_add = second_largest - largest
+					}
+				} else {
+					width_to_add = remaining_width
+				}
+
+				total_len := candidates.len + fixed_indices.len
+				if total_len > 0 {
+					width_to_add = f32_max(width_to_add, remaining_width / f32(total_len))
+				}
+
+				mut keep_idx := 0
+				for i in 0 .. candidates.len {
+					idx := candidates[i]
+					mut child := &layout.children[idx]
+					mut kept := true
 					if child.shape.width == largest {
 						previous_width := child.shape.width
 						child.shape.width += width_to_add
+						mut constrained := false
 						if child.shape.width <= child.shape.min_width {
 							child.shape.width = child.shape.min_width
-							excluded << child.shape.uid
+							constrained = true
 						} else if child.shape.max_width > 0
 							&& child.shape.width >= child.shape.max_width {
 							child.shape.width = child.shape.max_width
-							excluded << child.shape.uid
+							constrained = true
 						}
 						remaining_width -= (child.shape.width - previous_width)
+						if constrained {
+							kept = false
+						}
+					}
+					if kept {
+						if keep_idx != i {
+							candidates[keep_idx] = idx
+						}
+						keep_idx++
 					}
 				}
+				candidates.trim(keep_idx)
 			}
 		}
 	} else if layout.shape.axis == .top_to_bottom {
@@ -288,109 +326,165 @@ fn layout_fill_heights(mut layout Layout) {
 		// all the fill layouts to the same size (if possible) and then
 		// distributing the remaining height to evenly.
 		//
-		mut excluded := []u64{cap: layout.children.len}
-		for remaining_height > f32_tolerance {
-			if f32_are_close(remaining_height, previous_remaining_height) {
-				break
-			}
-			previous_remaining_height = remaining_height
-			// Grow child elements
-			idx, len := find_first_idx_and_len(layout, fn [excluded] (n Layout) bool {
-				return n.shape.sizing.height == .fill && n.shape.uid !in excluded
-			})
-			if len == 0 {
-				break
-			}
-
-			mut smallest := layout.children[idx].shape.height
-			mut second_smallest := f32(max_u32)
-			mut height_to_add := remaining_height
-
-			for child in layout.children {
-				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
-					if child.shape.height < smallest {
-						second_smallest = smallest
-						smallest = child.shape.height
-					}
-					if child.shape.height > smallest {
-						second_smallest = f32_min(second_smallest, child.shape.height)
-						height_to_add = second_smallest - smallest
-					}
+		if remaining_height > f32_tolerance {
+			mut candidates := []int{cap: layout.children.len}
+			for i, child in layout.children {
+				if child.shape.sizing.height == .fill {
+					candidates << i
 				}
 			}
 
-			height_to_add = f32_min(height_to_add, remaining_height / len)
+			for remaining_height > f32_tolerance && candidates.len > 0 {
+				if f32_are_close(remaining_height, previous_remaining_height) {
+					break
+				}
+				previous_remaining_height = remaining_height
 
-			for mut child in layout.children {
-				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
+				mut smallest := layout.children[candidates[0]].shape.height
+				mut second_smallest := f32(max_u32)
+
+				for idx in candidates {
+					child_height := layout.children[idx].shape.height
+					if child_height < smallest {
+						second_smallest = smallest
+						smallest = child_height
+					} else if child_height > smallest {
+						second_smallest = f32_min(second_smallest, child_height)
+					}
+				}
+
+				mut height_to_add := f32(0)
+				if second_smallest == max_u32 {
+					height_to_add = remaining_height
+				} else {
+					height_to_add = second_smallest - smallest
+				}
+
+				height_to_add = f32_min(height_to_add, remaining_height / candidates.len)
+
+				mut keep_idx := 0
+				for i in 0 .. candidates.len {
+					idx := candidates[i]
+					mut child := &layout.children[idx]
+					mut kept := true
 					if child.shape.height == smallest {
 						previous_height := child.shape.height
 						child.shape.height += height_to_add
 
+						mut constrained := false
 						if child.shape.height <= child.shape.min_height {
 							child.shape.height = child.shape.min_height
-							excluded << child.shape.uid
+							constrained = true
 						} else if child.shape.max_height > 0
 							&& child.shape.height >= child.shape.max_height {
 							child.shape.height = child.shape.max_height
-							excluded << child.shape.uid
+							constrained = true
 						}
 						remaining_height -= (child.shape.height - previous_height)
+
+						if constrained {
+							kept = false
+						}
+					}
+					if kept {
+						if keep_idx != i {
+							candidates[keep_idx] = idx
+						}
+						keep_idx++
 					}
 				}
+				candidates.trim(keep_idx)
 			}
 		}
 
 		// Shrink if needed using similar algorithm
-		excluded.clear()
-		previous_remaining_height = 0
-		for remaining_height < -f32_tolerance {
-			if f32_are_close(remaining_height, previous_remaining_height) {
-				break
-			}
-			previous_remaining_height = remaining_height
-			idx, len := find_first_idx_and_len(layout, fn [excluded] (n Layout) bool {
-				return n.shape.uid !in excluded
-			})
-			if len == 0 {
-				break
-			}
+		if remaining_height < -f32_tolerance {
+			mut candidates := []int{cap: layout.children.len}
+			mut fixed_indices := []int{cap: layout.children.len}
 
-			mut largest := layout.children[idx].shape.height
-			mut second_largest := f32(0)
-			mut height_to_add := remaining_height
-
-			for child in layout.children {
-				if child.shape.uid !in excluded {
-					if child.shape.height > largest {
-						second_largest = largest
-						largest = child.shape.height
-					}
-					if child.shape.height < largest {
-						second_largest = f32_max(second_largest, child.shape.height)
-						height_to_add = second_largest - largest
-					}
+			for i, child in layout.children {
+				if child.shape.sizing.height == .fill {
+					candidates << i
+				} else {
+					fixed_indices << i
 				}
 			}
 
-			height_to_add = f32_max(height_to_add, remaining_height / len)
+			previous_remaining_height = 0
+			for remaining_height < -f32_tolerance && candidates.len > 0 {
+				if f32_are_close(remaining_height, previous_remaining_height) {
+					break
+				}
+				previous_remaining_height = remaining_height
 
-			for mut child in layout.children {
-				if child.shape.sizing.height == .fill && child.shape.uid !in excluded {
+				mut largest := f32(0)
+				mut second_largest := f32(0)
+
+				for idx in candidates {
+					child_height := layout.children[idx].shape.height
+					if child_height > largest {
+						second_largest = largest
+						largest = child_height
+					} else if child_height < largest {
+						second_largest = f32_max(second_largest, child_height)
+					}
+				}
+				for idx in fixed_indices {
+					child_height := layout.children[idx].shape.height
+					if child_height > largest {
+						second_largest = largest
+						largest = child_height
+					} else if child_height < largest {
+						second_largest = f32_max(second_largest, child_height)
+					}
+				}
+
+				mut height_to_add := f32(0)
+				if largest > 0 {
+					if second_largest == 0 {
+						height_to_add = remaining_height
+					} else {
+						height_to_add = second_largest - largest
+					}
+				} else {
+					height_to_add = remaining_height
+				}
+
+				total_len := candidates.len + fixed_indices.len
+				if total_len > 0 {
+					height_to_add = f32_max(height_to_add, remaining_height / f32(total_len))
+				}
+
+				mut keep_idx := 0
+				for i in 0 .. candidates.len {
+					idx := candidates[i]
+					mut child := &layout.children[idx]
+					mut kept := true
 					if child.shape.height == largest {
 						previous_height := child.shape.height
 						child.shape.height += height_to_add
+						mut constrained := false
 						if child.shape.height <= child.shape.min_height {
 							child.shape.height = child.shape.min_height
-							excluded << child.shape.uid
+							constrained = true
 						} else if child.shape.max_height > 0
 							&& child.shape.height >= child.shape.max_height {
 							child.shape.height = child.shape.max_height
-							excluded << child.shape.uid
+							constrained = true
 						}
 						remaining_height -= (child.shape.height - previous_height)
+						if constrained {
+							kept = false
+						}
+					}
+					if kept {
+						if keep_idx != i {
+							candidates[keep_idx] = idx
+						}
+						keep_idx++
 					}
 				}
+				candidates.trim(keep_idx)
 			}
 		}
 	} else if layout.shape.axis == .left_to_right {
