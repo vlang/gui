@@ -103,6 +103,15 @@ fn layout_heights(mut layout Layout) {
 }
 
 // layout_fill_widths manages horizontal growth/shrinkage to satisfy constraints.
+//
+// Algorithm invariants:
+// - Children with sizing.width == .fill participate in space distribution
+// - Growth: smallest children grow first until they match the next-smallest
+// - Shrink: largest children shrink first until they match the next-largest
+// - Termination guarantee: each iteration either reduces |remaining_width| by
+//   at least f32_tolerance OR removes at least one candidate from the list
+// - The previous_remaining check guards against infinite loops when rounding
+//   prevents progress
 fn layout_fill_widths(mut layout Layout) {
 	mut previous_remaining_width := f32(0)
 	mut remaining_width := layout.shape.width - layout.shape.padding.width()
@@ -126,6 +135,7 @@ fn layout_fill_widths(mut layout Layout) {
 				}
 			}
 
+			// Invariant: remaining_width decreases or candidates shrinks each iteration
 			for remaining_width > f32_tolerance && candidates.len > 0 {
 				if f32_are_close(remaining_width, previous_remaining_width) {
 					break
@@ -315,7 +325,7 @@ fn layout_fill_widths(mut layout Layout) {
 	}
 }
 
-// layout_fill_heights manages vertical growth/shrinkage to satisfy constraints.
+// layout_fill_heights manages vertical growth/shrinkage to satisfy constraints.\n// See layout_fill_widths for algorithm invariants (same logic, vertical axis).
 fn layout_fill_heights(mut layout Layout) {
 	mut previous_remaining_height := f32(0)
 	mut remaining_height := layout.shape.height - layout.shape.padding.height()
