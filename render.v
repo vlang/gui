@@ -320,8 +320,6 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				line_end = shape.text.len
 			}
 
-			line_text := shape.text[line.start_index..line_end]
-
 			// Drawing
 			draw_rect := gg.Rect{
 				x:      draw_x
@@ -333,7 +331,12 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 			// Cull
 			if rects_overlap(clip, draw_rect) && color != color_transparent {
 				// Remove newlines for rendering (draw_text usually handles one line)
-				mut render_str := line_text.replace('\n', '')
+				// Optimization: Slice instead of replace/alloc if possible
+				mut slice_end := line_end
+				if slice_end > line.start_index && shape.text[slice_end - 1] == `\n` {
+					slice_end--
+				}
+				mut render_str := shape.text[line.start_index..slice_end]
 
 				if shape.text_is_password && !shape.text_is_placeholder {
 					render_str = password_char.repeat(utf8_str_visible_length(render_str))
@@ -357,34 +360,59 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 					i_end := int_min(byte_end, l_end)
 
 					if i_start < i_end {
-						pre_text := shape.text[l_start..i_start]
-						sel_text := shape.text[i_start..i_end]
+						if shape.text_is_password {
+							// Password fields still need measurement because the rendered text (*)
+							// is different from the logical text.
+							pre_text := shape.text[l_start..i_start]
+							sel_text := shape.text[i_start..i_end]
 
-						cfg := text_cfg
+							pw_pre := password_char.repeat(utf8_str_visible_length(pre_text))
+							start_x_offset := window.text_system.text_width(pw_pre, text_cfg) or {
+								0
+							}
 
-						// If password, we need to measure the '*'s, not the text
-						start_x_offset := if shape.text_is_password {
-							pw := password_char.repeat(utf8_str_visible_length(pre_text))
-							window.text_system.text_width(pw, cfg) or { 0 }
+							pw_sel := password_char.repeat(utf8_str_visible_length(sel_text))
+							sel_width := window.text_system.text_width(pw_sel, text_cfg) or { 0 }
+
+							window.renderers << DrawRect{
+								x:     draw_x + start_x_offset
+								y:     draw_y
+								w:     sel_width
+								h:     line.rect.height
+								color: gg.Color{
+									...text_cfg.style.color
+									a: 60
+								}
+							}
 						} else {
-							window.text_system.text_width(pre_text, cfg) or { 0 }
-						}
+							// Optimization: Use cached layout geometry
+							// Get rect for start char
+							r_start := shape.text_layout.get_char_rect(i_start) or { gg.Rect{} }
 
-						sel_width := if shape.text_is_password {
-							pw := password_char.repeat(utf8_str_visible_length(sel_text))
-							window.text_system.text_width(pw, cfg) or { 0 }
-						} else {
-							window.text_system.text_width(sel_text, cfg) or { 0 }
-						}
+							// Get rect for end char (or end of line)
+							x_end := if i_end < l_end && shape.text[i_end] != `\n` {
+								r_end := shape.text_layout.get_char_rect(i_end) or {
+									gg.Rect{
+										x: line.rect.width
+									}
+								}
+								r_end.x
+							} else {
+								// End of selection is end of line (or newline)
+								line.rect.width
+							}
 
-						window.renderers << DrawRect{
-							x:     draw_x + start_x_offset
-							y:     draw_y
-							w:     sel_width        // Use measured width
-							h:     line.rect.height // Use line height
-							color: gg.Color{
-								...text_cfg.style.color
-								a: 60
+							sel_width := x_end - r_start.x
+
+							window.renderers << DrawRect{
+								x:     draw_x + r_start.x
+								y:     draw_y
+								w:     sel_width
+								h:     line.rect.height
+								color: gg.Color{
+									...text_cfg.style.color
+									a: 60
+								}
 							}
 						}
 					}
