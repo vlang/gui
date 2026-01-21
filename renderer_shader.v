@@ -47,21 +47,30 @@ const fs_glsl = '
         // Dummy sample to keep uniform active
         vec4 dummy = texture(tex, uv);
 
-        vec2 width_inv = vec2(fwidth(uv.x), fwidth(uv.y));
-        vec2 half_size = 1.0 / (width_inv + 1e-6);
-        vec2 pos = uv * half_size;
+        // Use fwidth to get pixel size in UV space, then convert UV to pixels
+        vec2 uv_to_px = 1.0 / (vec2(fwidth(uv.x), fwidth(uv.y)) + 1e-6);
+        vec2 half_size = uv_to_px;  // half size in pixels (since UV spans -1 to 1)
+        vec2 pos = uv * half_size;  // position in pixels from center
 
+        // SDF for rounded rectangle
         vec2 q = abs(pos) - half_size + vec2(radius);
         float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 
         if (thickness > 0.0) {
-            d = abs(d) - thickness * 0.5;
+            // Reduce thickness at corners to compensate for arc coverage
+            float corner = smoothstep(0.0, radius * 0.5, min(q.x, q.y));
+            float adj_thickness = mix(thickness, thickness * 0.7, corner);
+            d = abs(d) - adj_thickness * 0.5;
         }
 
+        // Normalize by gradient length for uniform anti-aliasing
+        float grad_len = length(vec2(dFdx(d), dFdy(d)));
+        d = d / max(grad_len, 0.001);
         float alpha = 1.0 - smoothstep(-0.5, 0.5, d);
         frag_color = vec4(color.rgb, color.a * alpha) + dummy * 0.00001;
     }
 '
+
 
 // Metal Shader Source (MSL)
 const vs_metal = '
@@ -120,9 +129,15 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
     float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 
     if (thickness > 0.0) {
-        d = abs(d) - thickness * 0.5;
+        // Reduce thickness at corners to compensate for arc coverage
+        float corner = smoothstep(0.0, radius * 0.5, min(q.x, q.y));
+        float adj_thickness = mix(thickness, thickness * 0.7, corner);
+        d = abs(d) - adj_thickness * 0.5;
     }
 
+    // Normalize by gradient length for uniform anti-aliasing
+    float grad_len = length(float2(dfdx(d), dfdy(d)));
+    d = d / max(grad_len, 0.001);
     float alpha = 1.0 - smoothstep(-0.5, 0.5, d);
     return float4(in.color.rgb, in.color.a * alpha) + dummy * 0.00001;
 }
@@ -334,7 +349,7 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gg.Colo
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
 	// Pack parameters: r + thickness * 10000
-	thickness := f32(1.0) * scale
+	thickness := f32(1.5) * scale
 	z_val := r + (thickness * 10000.0)
 
 	draw_quad(sx, sy, sw, sh, z_val)
@@ -343,23 +358,23 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gg.Colo
 fn draw_quad(x f32, y f32, w f32, h f32, z f32) {
 	sgl.begin_quads()
 
-	// Use UV -1.0 to 1.0 range
+	// UV -1.0 to 1.0 range for SDF. Attributes (t2f) must be set before v3f.
 
 	// Top Left
-	sgl.v3f(x, y, z)
 	sgl.t2f(-1.0, -1.0)
+	sgl.v3f(x, y, z)
 
 	// Top Right
-	sgl.v3f(x + w, y, z)
 	sgl.t2f(1.0, -1.0)
+	sgl.v3f(x + w, y, z)
 
 	// Bottom Right
-	sgl.v3f(x + w, y + h, z)
 	sgl.t2f(1.0, 1.0)
+	sgl.v3f(x + w, y + h, z)
 
 	// Bottom Left
-	sgl.v3f(x, y + h, z)
 	sgl.t2f(-1.0, 1.0)
+	sgl.v3f(x, y + h, z)
 
 	sgl.end()
 }
