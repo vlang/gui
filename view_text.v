@@ -35,46 +35,46 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	}
 
 	input_state := window.view_state.input_state[tv.id_focus]
-	mut layout := Layout{
-		shape: &Shape{
-			name:                'text'
-			shape_type:          .text
-			id_focus:            tv.id_focus
-			clip:                tv.clip
-			focus_skip:          tv.focus_skip
-			disabled:            tv.disabled
-			min_width:           tv.min_width
-			sizing:              tv.sizing
-			text:                tv.text
-			text_is_password:    tv.is_password
-			text_is_placeholder: tv.placeholder_active
-			text_mode:           tv.mode
-			text_style:          &tv.text_style
-			text_sel_beg:        input_state.select_beg
-			text_sel_end:        input_state.select_end
-			text_tab_size:       tv.tab_size
-			on_char:             tv.on_char
-			on_keydown:          tv.on_key_down
-			on_click:            tv.on_click
-		}
-	}
+	mut shape := window.alloc_shape()
+	shape.name = 'text'
+	shape.shape_type = .text
+	shape.id_focus = tv.id_focus
+	shape.clip = tv.clip
+	shape.focus_skip = tv.focus_skip
+	shape.disabled = tv.disabled
+	shape.min_width = tv.min_width
+	shape.sizing = tv.sizing
+	shape.text = tv.text
+	shape.text_is_password = tv.is_password
+	shape.text_is_placeholder = tv.placeholder_active
+	shape.text_mode = tv.mode
+	shape.text_style = &tv.text_style
+	shape.text_sel_beg = input_state.select_beg
+	shape.text_sel_end = input_state.select_end
+	shape.text_tab_size = tv.tab_size
+	shape.on_char = tv.on_char
+	shape.on_keydown = tv.on_key_down
+	shape.on_click = tv.on_click
 
 	// Optimization: Measure text width directly without layout generation.
 	// This provides the "intrinsic width" (single line) which is essential for .fit containers (like Menus).
 	// The main layout pipeline will handle wrapping constraints later if needed.
 	// We use `text_width` which enables `no_hit_testing`, ensuring this is fast.
-	layout.shape.width = text_width(tv.text, tv.text_style, mut window)
-	layout.shape.height = line_height(layout.shape, mut window)
+	shape.width = text_width(tv.text, tv.text_style, mut window)
+	shape.height = line_height(shape, mut window)
 
-	if tv.mode == .single_line || layout.shape.sizing.width == .fixed {
-		layout.shape.min_width = f32_max(layout.shape.width, layout.shape.min_width)
-		layout.shape.width = layout.shape.min_width
+	if tv.mode == .single_line || shape.sizing.width == .fixed {
+		shape.min_width = f32_max(shape.width, shape.min_width)
+		shape.width = shape.min_width
 	}
-	if tv.mode == .single_line || layout.shape.sizing.height == .fixed {
-		layout.shape.min_height = f32_max(layout.shape.height, layout.shape.min_height)
-		layout.shape.height = layout.shape.height
+	if tv.mode == .single_line || shape.sizing.height == .fixed {
+		shape.min_height = f32_max(shape.height, shape.min_height)
+		shape.height = shape.height
 	}
-	return layout
+
+	return Layout{
+		shape: shape
+	}
 }
 
 // TextCfg configures a [text](#text) view. It provides options for text content,

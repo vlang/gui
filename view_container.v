@@ -60,85 +60,82 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 		// 1. Eraser Node (hides the border)
 		parent_bg := cv.title_bg
 		eraser_color := if cv.disabled { dim_alpha(parent_bg) } else { parent_bg }
+		mut eraser_shape := w.alloc_shape()
+		eraser_shape.shape_type = .rectangle
+		eraser_shape.width = text_width + padding + padding - 1
+		eraser_shape.height = metrics.ascender + metrics.descender
+		eraser_shape.x = 20
+		eraser_shape.y = -offset
+		eraser_shape.color = eraser_color
+		eraser_shape.fill = true
+		eraser_shape.float = true
 		children << Layout{
-			shape: &Shape{
-				shape_type: .rectangle
-				width:      text_width + padding + padding - 1
-				height:     metrics.ascender + metrics.descender
-				x:          20
-				y:          -offset
-				color:      eraser_color
-				fill:       true
-				float:      true
-			}
+			shape: eraser_shape
 		}
 
 		// 2. Text Node
 		text_color := if cv.disabled { dim_alpha(text_style.color) } else { text_style.color }
+		mut text_shape := w.alloc_shape()
+		text_shape.shape_type = .text
+		text_shape.text = cv.title
+		text_shape.x = 20 + padding
+		text_shape.y = -offset
+		text_shape.text_style = text_style
+		text_shape.color = text_color
+		text_shape.width = text_width
+		text_shape.height = metrics.ascender + metrics.descender
+		text_shape.float = true
 		children << Layout{
-			shape: &Shape{
-				shape_type: .text
-				text:       cv.title
-				x:          20 + padding
-				y:          -offset
-				text_style: text_style // use the one computed above which includes correct color base
-				color:      text_color
-				width:      text_width
-				height:     metrics.ascender + metrics.descender // Logical height
-				float:      true
-			}
+			shape: text_shape
 		}
 	}
 
-	layout := Layout{
+	mut shape := w.alloc_shape()
+	shape.shape_type = cv.shape_type
+	shape.id = cv.id
+	shape.id_focus = cv.id_focus
+	shape.axis = cv.axis
+	shape.name = cv.name
+	shape.x = cv.x
+	shape.y = cv.y
+	shape.width = cv.width
+	shape.min_width = cv.min_width
+	shape.max_width = cv.max_width
+	shape.height = cv.height
+	shape.min_height = cv.min_height
+	shape.max_height = cv.max_height
+	shape.clip = cv.clip
+	shape.focus_skip = cv.focus_skip
+	shape.spacing = cv.spacing
+	shape.sizing = cv.sizing
+	shape.padding = cv.padding
+	shape.fill = cv.fill
+	shape.h_align = cv.h_align
+	shape.v_align = cv.v_align
+	shape.radius = cv.radius
+	shape.color = cv.color
+	shape.disabled = cv.disabled
+	shape.float = cv.float
+	shape.float_anchor = cv.float_anchor
+	shape.float_tie_off = cv.float_tie_off
+	shape.float_offset_x = cv.float_offset_x
+	shape.float_offset_y = cv.float_offset_y
+	shape.id_scroll = cv.id_scroll
+	shape.over_draw = cv.over_draw
+	shape.scroll_mode = cv.scroll_mode
+	shape.on_click = cv.on_click
+	shape.on_char = cv.on_char
+	shape.on_keydown = cv.on_keydown
+	shape.on_mouse_move = cv.on_mouse_move_tooltip
+	shape.on_mouse_up = cv.on_mouse_up
+	shape.on_hover = cv.on_hover
+	shape.on_scroll = cv.on_scroll
+	shape.amend_layout = cv.amend_layout
+
+	return Layout{
 		children: children
-		shape:    &Shape{
-			shape_type:     cv.shape_type
-			id:             cv.id
-			id_focus:       cv.id_focus
-			axis:           cv.axis
-			name:           cv.name
-			x:              cv.x
-			y:              cv.y
-			width:          cv.width
-			min_width:      cv.min_width
-			max_width:      cv.max_width
-			height:         cv.height
-			min_height:     cv.min_height
-			max_height:     cv.max_height
-			clip:           cv.clip
-			focus_skip:     cv.focus_skip
-			spacing:        cv.spacing
-			sizing:         cv.sizing
-			padding:        cv.padding
-			fill:           cv.fill
-			h_align:        cv.h_align
-			v_align:        cv.v_align
-			radius:         cv.radius
-			color:          cv.color
-			disabled:       cv.disabled
-			float:          cv.float
-			float_anchor:   cv.float_anchor
-			float_tie_off:  cv.float_tie_off
-			float_offset_x: cv.float_offset_x
-			float_offset_y: cv.float_offset_y
-			// text:           cv.text // Handled via child nodes now
-			// text_style: ... // Handled via child nodes
-			id_scroll:     cv.id_scroll
-			over_draw:     cv.over_draw
-			scroll_mode:   cv.scroll_mode
-			on_click:      cv.on_click
-			on_char:       cv.on_char
-			on_keydown:    cv.on_keydown
-			on_mouse_move: cv.on_mouse_move_tooltip
-			on_mouse_up:   cv.on_mouse_up
-			on_hover:      cv.on_hover
-			on_scroll:     cv.on_scroll
-			amend_layout:  cv.amend_layout
-		}
+		shape:    shape
 	}
-
-	return layout
 }
 
 // ContainerCfg is the common configuration struct for row, column and canvas containers,

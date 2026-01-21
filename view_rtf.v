@@ -47,23 +47,22 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	}
 	width, height := spans_size(tspans)
 
-	shape := &Shape{
-		name:          'rtf'
-		shape_type:    .rtf
-		id:            rtf.id
-		id_focus:      rtf.id_focus
-		width:         width
-		height:        height
-		clip:          rtf.clip
-		focus_skip:    rtf.focus_skip
-		disabled:      rtf.disabled
-		min_width:     rtf.min_width
-		text_mode:     rtf.mode
-		sizing:        rtf.sizing
-		text_spans:    &tspans
-		on_click:      rtf_on_click
-		on_mouse_move: rtf_mouse_move
-	}
+	mut shape := window.alloc_shape()
+	shape.name = 'rtf'
+	shape.shape_type = .rtf
+	shape.id = rtf.id
+	shape.id_focus = rtf.id_focus
+	shape.width = width
+	shape.height = height
+	shape.clip = rtf.clip
+	shape.focus_skip = rtf.focus_skip
+	shape.disabled = rtf.disabled
+	shape.min_width = rtf.min_width
+	shape.text_mode = rtf.mode
+	shape.sizing = rtf.sizing
+	shape.text_spans = &tspans
+	shape.on_click = rtf_on_click
+	shape.on_mouse_move = rtf_mouse_move
 
 	return Layout{
 		shape: shape
