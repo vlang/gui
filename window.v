@@ -14,11 +14,7 @@ import sync
 import log
 import vglyph
 
-$if macos {
-	const gg_sample_count = 0
-} $else {
-	const gg_sample_count = 2
-}
+const gg_sample_count = $if macos { 0 } $else { 2 }
 
 pub struct Window {
 mut:

@@ -1,6 +1,6 @@
 module gui
 
-// The `xtra_render.v` module provides high-performance rendering primitives for
+// The `render_shader.v` module provides high-performance rendering primitives for
 // rounded rectangles, using signed distance field (SDF) shaders via sokol.sgl.
 // This replaces the previous discrete triangle implementation.
 import gg
@@ -32,20 +32,16 @@ const vs_glsl = '
 
 const fs_glsl = '
     #version 330
+    uniform sampler2D tex;
     in vec2 uv;
     in vec4 color;
     in float params;
-
-    uniform sampler2D tex;
 
     out vec4 frag_color;
 
     void main() {
         float thickness = floor(params / 10000.0);
         float radius = mod(params, 10000.0);
-
-        // Dummy sample to keep uniform active
-        vec4 dummy = texture(tex, uv);
 
         // Use fwidth to get pixel size in UV space, then convert UV to pixels
         vec2 uv_to_px = 1.0 / (vec2(fwidth(uv.x), fwidth(uv.y)) + 1e-6);
@@ -67,10 +63,15 @@ const fs_glsl = '
         float grad_len = length(vec2(dFdx(d), dFdy(d)));
         d = d / max(grad_len, 0.001);
         float alpha = 1.0 - smoothstep(-0.5, 0.5, d);
-        frag_color = vec4(color.rgb, color.a * alpha) + dummy * 0.00001;
+        frag_color = vec4(color.rgb, color.a * alpha);
+        
+        // sgl workaround: dummy texture sample
+        // sgl.h always binds a texture/sampler, so we must declare them to avoid validation errors.
+        if (frag_color.a < 0.0) {
+            frag_color += texture(tex, uv);
+        }
     }
 '
-
 
 // Metal Shader Source (MSL)
 const vs_metal = '
@@ -119,8 +120,6 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
     float thickness = floor(in.params / 10000.0);
     float radius = fmod(in.params, 10000.0);
     
-    float4 dummy = tex.sample(smp, in.uv);
-
     float2 width_inv = float2(fwidth(in.uv.x), fwidth(in.uv.y));
     float2 half_size = 1.0 / (width_inv + 1e-6);
     float2 pos = in.uv * half_size;
@@ -139,7 +138,13 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
     float grad_len = length(float2(dfdx(d), dfdy(d)));
     d = d / max(grad_len, 0.001);
     float alpha = 1.0 - smoothstep(-0.5, 0.5, d);
-    return float4(in.color.rgb, in.color.a * alpha) + dummy * 0.00001;
+    float4 frag_color = float4(in.color.rgb, in.color.a * alpha);
+    
+    // sgl workaround: dummy texture sample
+    if (frag_color.a < 0.0) {
+        frag_color += tex.sample(smp, in.uv);
+    }
+    return frag_color;
 }
 '
 
@@ -192,12 +197,12 @@ fn init_rounded_rect_pipeline(mut window Window) {
 	mut ub_uniforms := [16]gfx.ShaderUniformDesc{}
 	ub_uniforms[0] = gfx.ShaderUniformDesc{
 		name:        c'mvp'
-		type:        .mat4
+		@type:       .mat4
 		array_count: 1
 	}
 	ub_uniforms[1] = gfx.ShaderUniformDesc{
 		name:        c'tm'
-		type:        .mat4
+		@type:       .mat4
 		array_count: 1
 	}
 
@@ -219,22 +224,21 @@ fn init_rounded_rect_pipeline(mut window Window) {
 		write_mask: .rgba
 	}
 
-	// Images and Samplers
-	mut images := [12]gfx.ShaderImageDesc{}
-	images[0] = gfx.ShaderImageDesc{
+	mut shader_images := [12]gfx.ShaderImageDesc{}
+	shader_images[0] = gfx.ShaderImageDesc{
 		used:        true
 		image_type:  ._2d
 		sample_type: .float
 	}
 
-	mut samplers := [8]gfx.ShaderSamplerDesc{}
-	samplers[0] = gfx.ShaderSamplerDesc{
+	mut shader_samplers := [8]gfx.ShaderSamplerDesc{}
+	shader_samplers[0] = gfx.ShaderSamplerDesc{
 		used:         true
 		sampler_type: .filtering
 	}
 
-	mut pairs := [12]gfx.ShaderImageSamplerPairDesc{}
-	pairs[0] = gfx.ShaderImageSamplerPairDesc{
+	mut shader_image_sampler_pairs := [12]gfx.ShaderImageSamplerPairDesc{}
+	shader_image_sampler_pairs[0] = gfx.ShaderImageSamplerPairDesc{
 		used:         true
 		image_slot:   0
 		sampler_slot: 0
@@ -254,9 +258,9 @@ fn init_rounded_rect_pipeline(mut window Window) {
 		shader_desc.fs = gfx.ShaderStageDesc{
 			source:              fs_metal.str
 			entry:               c'fs_main'
-			images:              images
-			samplers:            samplers
-			image_sampler_pairs: pairs
+			images:              shader_images
+			samplers:            shader_samplers
+			image_sampler_pairs: shader_image_sampler_pairs
 		}
 	} $else {
 		shader_desc.vs = gfx.ShaderStageDesc{
@@ -265,9 +269,8 @@ fn init_rounded_rect_pipeline(mut window Window) {
 		}
 		shader_desc.fs = gfx.ShaderStageDesc{
 			source:              fs_glsl.str
-			images:              images
-			samplers:            samplers
-			image_sampler_pairs: pairs
+			images:              shader_images
+			image_sampler_pairs: shader_image_sampler_pairs
 		}
 	}
 
@@ -310,13 +313,12 @@ pub fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Col
 
 	init_rounded_rect_pipeline(mut window)
 
-	// Ensure no lingering textures from gg
-	sgl.disable_texture()
 	sgl.load_pipeline(window.rounded_rect_pip)
 
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
-	z_val := r // thickness 0
+	thickness := f32(0)
+	z_val := r + (thickness * 10000.0)
 
 	draw_quad(sx, sy, sw, sh, z_val)
 }
@@ -343,8 +345,6 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gg.Colo
 
 	init_rounded_rect_pipeline(mut window)
 
-	// Ensure no lingering textures from gg
-	sgl.disable_texture()
 	sgl.load_pipeline(window.rounded_rect_pip)
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
