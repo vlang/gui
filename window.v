@@ -87,7 +87,6 @@ pub:
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	log_level           log.Level                   = default_log_level()
 	samples             u32                         = gg_sample_count // MSAA sample count; rounded corners of buttons with 0 and 1 look jagged on linux/windows
-	debug_layout        bool // enable layout performance stats
 }
 
 fn default_log_level() log.Level {
@@ -102,9 +101,8 @@ pub fn window(cfg &WindowCfg) &Window {
 	log.set_always_flush(true)
 
 	mut window := &Window{
-		state:        cfg.state
-		on_event:     cfg.on_event
-		debug_layout: cfg.debug_layout
+		state:    cfg.state
+		on_event: cfg.on_event
 	}
 	on_init := cfg.on_init
 	cursor_blink := cfg.cursor_blink
