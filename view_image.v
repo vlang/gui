@@ -32,30 +32,31 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 	image := window.load_image(iv.file_name) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
 		return Layout{
-			shape: window.alloc_shape()
+			shape: &Shape{}
 		}
 	}
 
 	width := if iv.width > 0 { iv.width } else { image.width }
 	height := if iv.height > 0 { iv.height } else { image.height }
 
-	mut shape := window.alloc_shape()
-	shape.name = 'image'
-	shape.shape_type = .image
-	shape.id = iv.id
-	shape.image_name = iv.file_name
-	shape.width = width
-	shape.min_width = iv.min_width
-	shape.max_width = iv.max_width
-	shape.height = height
-	shape.min_height = iv.min_height
-	shape.max_height = iv.max_height
-	shape.on_click = iv.on_click
-	shape.on_hover = iv.on_hover
-
-	return Layout{
-		shape: shape
+	layout := Layout{
+		shape: &Shape{
+			name:       'image'
+			shape_type: .image
+			id:         iv.id
+			image_name: iv.file_name
+			width:      width
+			min_width:  iv.min_width
+			max_width:  iv.max_width
+			height:     height
+			min_height: iv.min_height
+			max_height: iv.max_height
+			on_click:   iv.on_click
+			on_hover:   iv.on_hover
+		}
 	}
+
+	return layout
 }
 
 // image creates a new image view from the provided configuration.

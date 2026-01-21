@@ -35,7 +35,6 @@ mut:
 	window_size    gg.Size // cached, gg.window_size() relatively slow
 	refresh_window bool
 	text_system    &vglyph.TextSystem = unsafe { nil }
-	layout_arena   LayoutArena
 pub mut:
 	debug_layout bool        // enable layout performance stats
 	layout_stats LayoutStats // populated when debug_layout is true
@@ -252,18 +251,11 @@ pub fn (mut window Window) update_window() {
 	window.ui.refresh_ui()
 }
 
-// alloc_shape returns a Shape from the arena. The Shape is valid until the next
-// frame when the arena resets.
-pub fn (mut w Window) alloc_shape() &Shape {
-	return w.layout_arena.alloc_shape()
-}
-
 // do_update_window generates a new layout from the window's current view generator.
 fn (mut window Window) do_update_window() {
 	log.debug('do_update_window')
 	//--------------------------------------------
 	window.lock()
-	window.layout_arena.reset()
 	window.renderers.clear()
 	clip_rect := window.window_rect()
 	background_color := window.color_background()
@@ -286,10 +278,10 @@ fn (mut window Window) compose_layout(mut view View) Layout {
 
 	mut layout := generate_layout(mut view, mut window)
 	layouts := layout_arrange(mut layout, mut window)
-	mut root_shape := window.alloc_shape()
-	root_shape.color = color_transparent
 	result := Layout{
-		shape:    root_shape
+		shape:    &Shape{
+			color: color_transparent
+		}
 		children: layouts
 	}
 
