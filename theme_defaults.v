@@ -6,12 +6,12 @@ pub const radius_medium = f32(5)
 pub const radius_large = f32(7)
 pub const radius_border = radius_medium + 2
 
-pub const size_text_medium = 15
+pub const size_text_medium = 16
 pub const size_text_tiny = size_text_medium - 6
 pub const size_text_x_small = size_text_medium - 4
 pub const size_text_small = size_text_medium - 2
-pub const size_text_large = size_text_medium + 2
-pub const size_text_x_large = size_text_medium + 4
+pub const size_text_large = size_text_medium + 4
+pub const size_text_x_large = size_text_medium + 8
 
 pub const spacing_small = 5
 pub const spacing_medium = 10

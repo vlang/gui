@@ -68,10 +68,10 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			}
 			if renderer.style == .fill {
 				draw_rounded_rect_filled(renderer.x, renderer.y, renderer.w, renderer.h,
-					renderer.radius, renderer.color, ctx)
+					renderer.radius, renderer.color, mut window)
 			} else {
 				draw_rounded_rect_empty(renderer.x, renderer.y, renderer.w, renderer.h,
-					renderer.radius, renderer.color, ctx)
+					renderer.radius, renderer.color, mut window)
 			}
 		}
 		DrawText {

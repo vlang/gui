@@ -9,6 +9,7 @@ module gui
 //
 import gg
 import sokol.sapp
+import sokol.sgl
 import sync
 import log
 import vglyph
@@ -36,8 +37,10 @@ mut:
 	refresh_window bool
 	text_system    &vglyph.TextSystem = unsafe { nil }
 pub mut:
-	debug_layout bool        // enable layout performance stats
-	layout_stats LayoutStats // populated when debug_layout is true
+	debug_layout          bool        // enable layout performance stats
+	layout_stats          LayoutStats // populated when debug_layout is true
+	rounded_rect_pip      sgl.Pipeline
+	rounded_rect_pip_init bool
 }
 
 // Window is the main application window. `state` holds app state.
