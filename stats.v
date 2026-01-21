@@ -24,12 +24,15 @@ const stat_sub_div = '----------------------------------'
 
 struct Stats {
 mut:
-	container_views usize
-	text_views      usize
-	image_views     usize
-	rtf_views       usize
-	layouts         usize
-	max_renderers   usize
+	container_views  usize
+	text_views       usize
+	image_views      usize
+	rtf_views        usize
+	layouts          usize
+	max_renderers    usize
+	layouts_rendered usize
+	layouts_skipped  usize
+	layouts_total    usize
 }
 
 fn (mut stats Stats) increment_container_views() {
@@ -68,6 +71,7 @@ fn (window &Window) stats() string {
 	tx << window.view_stats()
 	tx << window.context_stats()
 	tx << memory_stats()
+	tx << window.layout_stats()
 	return tx.join('\n')
 }
 
@@ -130,6 +134,23 @@ fn (vs ViewState) view_state_stats() string {
 	tx << 'select_state length      ${cm(usize(vs.select_state.len)):8}'
 	tx << 'tree_state length        ${cm(usize(vs.tree_state.len)):8}'
 	tx << 'date_picker_state length ${cm(usize(vs.date_picker_state.len)):8}'
+	return tx.join('\n')
+}
+
+fn (window &Window) layout_stats() string {
+	mut tx := []string{}
+	tx << ''
+	tx << 'Layout Stats'
+	tx << stat_sub_div
+	tx << 'total time us           ${cm(usize(window.layout_stats.total_time_us)):8}'
+	tx << 'node count              ${cm(usize(window.layout_stats.node_count)):8}'
+	tx << 'floating count          ${cm(usize(window.layout_stats.floating_count)):8}'
+	tx << ''
+	tx << 'Arena Stats'
+	tx << stat_sub_div
+	tx << 'max shapes allocated    ${cm(usize(window.layout_arena.max_index)):8}'
+	tx << 'arena capacity          ${cm(usize(window.layout_arena.shapes.len)):8}'
+	tx << 'reset count             ${cm(usize(window.layout_arena.reset_count)):8}'
 	return tx.join('\n')
 }
 

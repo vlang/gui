@@ -4,14 +4,17 @@ module gui
 // Reset at the start of each frame in do_update_window().
 struct LayoutArena {
 mut:
-	shapes     []Shape // backing storage
-	next_index int     // next available slot
+	shapes      []Shape // backing storage
+	next_index  int     // next available slot
+	max_index   int     // high-water mark for allocations
+	reset_count int     // number of times arena was reset
 }
 
 // reset prepares the arena for a new frame. Does not deallocate memory,
 // allowing stable layouts to reuse capacity.
 fn (mut a LayoutArena) reset() {
 	a.next_index = 0
+	a.reset_count++
 }
 
 // alloc_shape returns a zeroed Shape from the arena. Grows backing storage
@@ -22,6 +25,9 @@ fn (mut a LayoutArena) alloc_shape() &Shape {
 	}
 	idx := a.next_index
 	a.next_index++
+	if a.next_index > a.max_index {
+		a.max_index = a.next_index
+	}
 	a.shapes[idx] = Shape{}
 	return &a.shapes[idx]
 }
