@@ -35,6 +35,9 @@ mut:
 	window_size    gg.Size // cached, gg.window_size() relatively slow
 	refresh_window bool
 	text_system    &vglyph.TextSystem = unsafe { nil }
+pub mut:
+	debug_layout bool        // enable layout performance stats
+	layout_stats LayoutStats // populated when debug_layout is true
 }
 
 // Window is the main application window. `state` holds app state.
@@ -271,12 +274,24 @@ fn (mut window Window) do_update_window() {
 // compose_layout produces a layout from the given view that is
 // arranged and ready for generating renderers.
 fn (mut window Window) compose_layout(mut view View) Layout {
+	timer := if window.debug_layout { layout_stats_timer_start() } else { LayoutStatsTimer{} }
+
 	mut layout := generate_layout(mut view, mut window)
 	layouts := layout_arrange(mut layout, mut window)
-	return Layout{
+	result := Layout{
 		shape:    &Shape{
 			color: color_transparent
 		}
 		children: layouts
 	}
+
+	if window.debug_layout {
+		window.layout_stats = LayoutStats{
+			total_time_us:  timer.elapsed_us()
+			node_count:     count_nodes(&result)
+			floating_count: layouts.len - 1
+		}
+	}
+
+	return result
 }
