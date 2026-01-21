@@ -37,7 +37,8 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 		gui_stats.increment_layouts()
 	}
 
-	mut children := []Layout{}
+	// Pre-size for group box title elements (eraser + text) if present
+	mut children := []Layout{cap: if cv.title.len > 0 { 2 } else { 0 }}
 
 	// Inject Group Box title (Eraser + Text) if text is present
 	if cv.title.len > 0 {
