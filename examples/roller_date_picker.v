@@ -7,7 +7,7 @@ import time
 // day, month, and year columns.
 
 @[heap]
-struct App {
+struct RollerPickerApp {
 pub mut:
 	date         time.Time = time.now()
 	display_mode gui.RollerDatePickerDisplayMode
@@ -17,10 +17,10 @@ pub mut:
 
 fn main() {
 	mut window := gui.window(
-		state:   &App{}
+		state:   &RollerPickerApp{}
 		title:   'Roller Date Picker'
 		width:   400
-		height:  400
+		height:  450
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -31,14 +31,13 @@ fn main() {
 
 fn main_view(mut w gui.Window) gui.View {
 	width, height := w.window_size()
-	app := w.state[App]()
+	app := w.state[RollerPickerApp]()
 
 	return gui.column(
 		width:   width
 		height:  height
 		sizing:  gui.fixed_fixed
 		h_align: .center
-		v_align: .middle
 		spacing: 20
 		content: [
 			toggle_theme(app),
@@ -49,7 +48,7 @@ fn main_view(mut w gui.Window) gui.View {
 				display_mode:  app.display_mode
 				long_months:   app.long_months
 				on_change:     fn (new_date time.Time, mut w gui.Window) {
-					mut a := w.state[App]()
+					mut a := w.state[RollerPickerApp]()
 					a.date = new_date
 				}
 			),
@@ -83,7 +82,7 @@ fn main_view(mut w gui.Window) gui.View {
 	)
 }
 
-fn toggle_theme(app &App) gui.View {
+fn toggle_theme(app &RollerPickerApp) gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit
@@ -95,7 +94,7 @@ fn toggle_theme(app &App) gui.View {
 				label:    'Long'
 				select:   app.long_months
 				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-					mut a := w.state[App]()
+					mut a := w.state[RollerPickerApp]()
 					a.long_months = !a.long_months
 				}
 			),
@@ -107,7 +106,7 @@ fn toggle_theme(app &App) gui.View {
 				select:        app.light_theme
 				padding:       gui.padding_small
 				on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-					mut a := w.state[App]()
+					mut a := w.state[RollerPickerApp]()
 					theme := match a.light_theme {
 						true { gui.theme_dark_bordered }
 						else { gui.theme_light_bordered }
@@ -120,7 +119,7 @@ fn toggle_theme(app &App) gui.View {
 	)
 }
 
-fn display_mode_selector(app &App) gui.View {
+fn display_mode_selector(app &RollerPickerApp) gui.View {
 	return gui.radio_button_group_row(
 		value:     int(app.display_mode).str()
 		options:   [
@@ -130,7 +129,7 @@ fn display_mode_selector(app &App) gui.View {
 			gui.radio_option('Y', '3'),
 		]
 		on_select: fn (value string, mut w gui.Window) {
-			mut a := w.state[App]()
+			mut a := w.state[RollerPickerApp]()
 			a.display_mode = unsafe { gui.RollerDatePickerDisplayMode(value.int()) }
 		}
 	)
