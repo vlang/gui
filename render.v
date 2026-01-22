@@ -328,8 +328,15 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 
 				// Draw text selection
 				if byte_beg < line_end && byte_end > line.start_index {
-					draw_text_selection(mut window, shape, line, draw_x, draw_y, byte_beg,
-						byte_end, text_cfg)
+					draw_text_selection(mut window, DrawTextSelectionParams{
+						shape:    shape
+						line:     line
+						draw_x:   draw_x
+						draw_y:   draw_y
+						byte_beg: byte_beg
+						byte_end: byte_end
+						text_cfg: text_cfg
+					})
 				}
 			}
 		}
@@ -338,7 +345,25 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	render_cursor(shape, clip, mut window)
 }
 
-fn draw_text_selection(mut window Window, shape &Shape, line vglyph.Line, draw_x f32, draw_y f32, byte_beg int, byte_end int, text_cfg vglyph.TextConfig) {
+struct DrawTextSelectionParams {
+	shape    &Shape
+	line     vglyph.Line
+	draw_x   f32
+	draw_y   f32
+	byte_beg int
+	byte_end int
+	text_cfg vglyph.TextConfig
+}
+
+fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
+	shape := params.shape
+	line := params.line
+	draw_x := params.draw_x
+	draw_y := params.draw_y
+	byte_beg := params.byte_beg
+	byte_end := params.byte_end
+	text_cfg := params.text_cfg
+
 	// Intersection
 	i_start := int_max(byte_beg, line.start_index)
 	i_end := int_min(byte_end, line.start_index + line.length)
