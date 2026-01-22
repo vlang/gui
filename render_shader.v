@@ -6,8 +6,9 @@ module gui
 import gg
 import sokol.sgl
 import sokol.gfx
+import math
 
-const packing_stride = 10000.0
+const packing_stride = 1000.0
 
 // pack_shader_params packs radius and thickness into a single f32 for the shader.
 // The value is stored in the z-coordinate of the vertex position.
@@ -15,7 +16,7 @@ const packing_stride = 10000.0
 // thickness: the border thickness in pixels (0 for filled).
 @[inline]
 fn pack_shader_params(radius f32, thickness f32) f32 {
-	return radius + (thickness * packing_stride)
+	return thickness + (f32(math.floor(radius)) * f32(packing_stride))
 }
 
 // --- Shader Sources ---
@@ -51,8 +52,8 @@ const fs_glsl = '
     out vec4 frag_color;
 
     void main() {
-        float thickness = floor(params / 10000.0);
-        float radius = mod(params, 10000.0);
+        float radius = floor(params / 1000.0);
+        float thickness = mod(params, 1000.0);
 
         // Use fwidth to get pixel size in UV space, then convert UV to pixels
         vec2 uv_to_px = 1.0 / (vec2(fwidth(uv.x), fwidth(uv.y)) + 1e-6);
@@ -65,7 +66,10 @@ const fs_glsl = '
 
         if (thickness > 0.0) {
             // Reduce thickness at corners to compensate for arc coverage
-            float corner = smoothstep(0.0, radius * 0.5, min(q.x, q.y));
+            float corner = 0.0;
+            if (radius > 0.0) {
+                corner = smoothstep(0.0, radius * 0.5, min(q.x, q.y));
+            }
             float adj_thickness = mix(thickness, thickness * 0.7, corner);
             d = abs(d) - adj_thickness * 0.5;
         }
@@ -130,8 +134,8 @@ struct VertexOut {
 };
 
 fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
-    float thickness = floor(in.params / 10000.0);
-    float radius = fmod(in.params, 10000.0);
+    float radius = floor(in.params / 1000.0);
+    float thickness = fmod(in.params, 1000.0);
     
     float2 width_inv = float2(fwidth(in.uv.x), fwidth(in.uv.y));
     float2 half_size = 1.0 / (width_inv + 1e-6);
@@ -142,7 +146,10 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
 
     if (thickness > 0.0) {
         // Reduce thickness at corners to compensate for arc coverage
-        float corner = smoothstep(0.0, radius * 0.5, min(q.x, q.y));
+        float corner = 0.0;
+        if (radius > 0.0) {
+             corner = smoothstep(0.0, radius * 0.5, min(q.x, q.y));
+        }
         float adj_thickness = mix(thickness, thickness * 0.7, corner);
         d = abs(d) - adj_thickness * 0.5;
     }
@@ -286,6 +293,7 @@ fn init_rounded_rect_pipeline(mut window Window) {
 		shader_desc.fs = gfx.ShaderStageDesc{
 			source:              fs_glsl.str
 			images:              shader_images
+			samplers:            shader_samplers
 			image_sampler_pairs: shader_image_sampler_pairs
 		}
 	}
