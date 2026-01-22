@@ -37,9 +37,7 @@ pub:
 }
 
 fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
-	$if !prod {
-		gui_stats.increment_layouts()
-	}
+	stats_increment_layouts()
 
 	tspans := match true {
 		rtf.mode in [.wrap, .wrap_keep_spaces] { rtf.spans }
@@ -72,9 +70,7 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 
 // rtf creates a view from the given [RtfCfg](#RtfCfg)
 pub fn rtf(cfg RtfCfg) View {
-	$if !prod {
-		gui_stats.increment_rtf_views()
-	}
+	stats_increment_rtf_views()
 
 	if cfg.invisible {
 		return invisible_container_view()

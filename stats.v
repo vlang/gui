@@ -32,57 +32,127 @@ mut:
 	max_renderers   usize
 }
 
+@[if !prod]
 fn (mut stats Stats) increment_container_views() {
-	stats.container_views += 1
-}
-
-fn (mut stats Stats) increment_text_views() {
-	stats.text_views += 1
-}
-
-fn (mut stats Stats) increment_image_views() {
-	stats.image_views += 1
-}
-
-fn (mut stats Stats) increment_rtf_views() {
-	stats.rtf_views += 1
-}
-
-fn (mut stats Stats) update_max_renderers(count usize) {
-	if count > stats.max_renderers {
-		stats.max_renderers = count
+	$if !prod {
+		stats.container_views += 1
 	}
 }
 
+@[if !prod]
+fn (mut stats Stats) increment_text_views() {
+	$if !prod {
+		stats.text_views += 1
+	}
+}
+
+@[if !prod]
+fn (mut stats Stats) increment_image_views() {
+	$if !prod {
+		stats.image_views += 1
+	}
+}
+
+@[if !prod]
+fn (mut stats Stats) increment_rtf_views() {
+	$if !prod {
+		stats.rtf_views += 1
+	}
+}
+
+@[if !prod]
+fn (mut stats Stats) update_max_renderers(count usize) {
+	$if !prod {
+		if count > stats.max_renderers {
+			stats.max_renderers = count
+		}
+	}
+}
+
+@[if !prod]
 fn (mut stats Stats) increment_layouts() {
-	stats.layouts += 1
+	$if !prod {
+		stats.layouts += 1
+	}
+}
+
+// Global helpers for centralized statistics gathering.
+// These are no-ops in production builds with zero overhead.
+@[if !prod]
+fn stats_increment_container_views() {
+	$if !prod {
+		gui_stats.increment_container_views()
+	}
+}
+
+@[if !prod]
+fn stats_increment_text_views() {
+	$if !prod {
+		gui_stats.increment_text_views()
+	}
+}
+
+@[if !prod]
+fn stats_increment_image_views() {
+	$if !prod {
+		gui_stats.increment_image_views()
+	}
+}
+
+@[if !prod]
+fn stats_increment_rtf_views() {
+	$if !prod {
+		gui_stats.increment_rtf_views()
+	}
+}
+
+@[if !prod]
+fn stats_update_max_renderers(count usize) {
+	$if !prod {
+		gui_stats.update_max_renderers(count)
+	}
+}
+
+@[if !prod]
+fn stats_increment_layouts() {
+	$if !prod {
+		gui_stats.increment_layouts()
+	}
 }
 
 fn (window &Window) stats() string {
-	mut tx := []string{}
-	tx << ''
-	tx << 'Statistics'
-	tx << stat_top_div
-	tx << window.view_state.view_state_stats()
-	tx << struct_sizes()
-	tx << window.view_stats()
-	tx << window.context_stats()
-	tx << memory_stats()
-	return tx.join('\n')
+	$if prod {
+		return ''
+	} $else {
+		mut tx := []string{}
+		tx << ''
+		tx << 'Statistics'
+		tx << stat_top_div
+		tx << window.view_state.view_state_stats()
+		tx << struct_sizes()
+		tx << window.view_stats()
+		tx << window.context_stats()
+		tx << memory_stats()
+		return tx.join('\n')
+	}
 }
 
 fn (window &Window) view_stats() string {
-	mut tx := []string{}
-	tx << ''
-	tx << 'Views Generated'
-	tx << stat_sub_div
-	tx << 'container views ${cm(gui_stats.container_views):17}'
-	tx << 'text views      ${cm(gui_stats.text_views):17}'
-	tx << 'image views     ${cm(gui_stats.image_views):17}'
-	tx << 'rtf views       ${cm(gui_stats.rtf_views):17}'
-	tx << 'layouts         ${cm(gui_stats.layouts):17}'
-	tx << 'max renderers   ${cm(gui_stats.max_renderers):17}'
-	return tx.join('\n')
+	$if prod {
+		return ''
+	} $else {
+		mut tx := []string{}
+		tx << ''
+		tx << 'Views Generated'
+		tx << stat_sub_div
+		tx << 'container views ${cm(gui_stats.container_views):17}'
+		tx << 'text views      ${cm(gui_stats.text_views):17}'
+		tx << 'image views     ${cm(gui_stats.image_views):17}'
+		tx << 'rtf views       ${cm(gui_stats.rtf_views):17}'
+		tx << 'layouts         ${cm(gui_stats.layouts):17}'
+		tx << 'max renderers   ${cm(gui_stats.max_renderers):17}'
+		return tx.join('\n')
+	}
 }
 
 fn memory_stats() string {

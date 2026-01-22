@@ -14,6 +14,12 @@ import sync
 import log
 import vglyph
 
+// gg_sample_count defines the MSAA (Multi-Sample Anti-Aliasing) level.
+// On macOS, we set this to 0 because macOS's HighDPI (Retina) scaling handles
+// anti-aliasing effectively at the compositor level, and Sokol's MSAA can
+// sometimes conflict with HighDPI framebuffers or cause unnecessary overhead.
+// On other platforms, 2 samples provide a good balance of quality and performance
+// for rounded corners and smooth lines.
 const gg_sample_count = $if macos { 0 } $else { 2 }
 
 pub struct Window {
@@ -265,9 +271,7 @@ fn (mut window Window) do_update_window() {
 	window.unlock()
 	//--------------------------------------------
 
-	$if !prod {
-		gui_stats.update_max_renderers(usize(window.renderers.len))
-	}
+	stats_update_max_renderers(usize(window.renderers.len))
 }
 
 // compose_layout produces a layout from the given view that is

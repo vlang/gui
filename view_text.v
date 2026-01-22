@@ -30,9 +30,7 @@ mut:
 }
 
 fn (mut tv TextView) generate_layout(mut window Window) Layout {
-	$if !prod {
-		gui_stats.increment_layouts()
-	}
+	stats_increment_layouts()
 
 	input_state := window.view_state.input_state[tv.id_focus]
 	mut layout := Layout{
@@ -104,9 +102,7 @@ pub:
 // blocks of multiline text. Giving it an id_focus allows mark and copy
 // operations. See [TextCfg](#TextCfg)
 pub fn text(cfg TextCfg) View {
-	$if !prod {
-		gui_stats.increment_text_views()
-	}
+	stats_increment_text_views()
 	if cfg.invisible {
 		return invisible_container_view()
 	}

@@ -26,9 +26,7 @@ pub:
 }
 
 fn (mut iv ImageView) generate_layout(mut window Window) Layout {
-	$if !prod {
-		gui_stats.increment_layouts()
-	}
+	stats_increment_layouts()
 	image := window.load_image(iv.file_name) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
 		return Layout{
@@ -68,9 +66,7 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 // Returns:
 //   - View: An ImageView instance that implements the View interface, or a ContainerView if invisible
 pub fn image(cfg ImageCfg) View {
-	$if !prod {
-		gui_stats.increment_image_views()
-	}
+	stats_increment_image_views()
 	if cfg.invisible {
 		return invisible_container_view()
 	}

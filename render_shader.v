@@ -7,6 +7,17 @@ import gg
 import sokol.sgl
 import sokol.gfx
 
+const packing_stride = 10000.0
+
+// pack_shader_params packs radius and thickness into a single f32 for the shader.
+// The value is stored in the z-coordinate of the vertex position.
+// radius: the corner radius in pixels.
+// thickness: the border thickness in pixels (0 for filled).
+@[inline]
+fn pack_shader_params(radius f32, thickness f32) f32 {
+	return radius + (thickness * packing_stride)
+}
+
 // --- Shader Sources ---
 
 // GLSL 330
@@ -319,11 +330,9 @@ pub fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Col
 	init_rounded_rect_pipeline(mut window)
 
 	sgl.load_pipeline(window.rounded_rect_pip)
-
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
-	thickness := f32(0)
-	z_val := r + (thickness * 10000.0)
+	z_val := pack_shader_params(r, 0)
 
 	draw_quad(sx, sy, sw, sh, z_val)
 }
@@ -354,8 +363,7 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gg.Colo
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
 	// Pack parameters: r + thickness * 10000
-	thickness := f32(1.5) * scale
-	z_val := r + (thickness * 10000.0)
+	z_val := pack_shader_params(r, 1.5 * scale)
 
 	draw_quad(sx, sy, sw, sh, z_val)
 }

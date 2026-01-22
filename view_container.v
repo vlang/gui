@@ -33,9 +33,7 @@ mut:
 
 fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
-	$if !prod {
-		gui_stats.increment_layouts()
-	}
+	stats_increment_layouts()
 
 	mut children := []Layout{}
 
@@ -245,9 +243,7 @@ pub:
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
 fn container(cfg ContainerCfg) View {
-	$if !prod {
-		gui_stats.increment_container_views()
-	}
+	stats_increment_container_views()
 
 	if cfg.invisible {
 		return invisible_container_view()
