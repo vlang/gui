@@ -23,3 +23,10 @@ pub enum VerticalAlign as u8 {
 	middle
 	bottom
 }
+
+// TextAlignment specifies how text should be aligned horizontally
+pub enum TextAlignment as u8 {
+	left
+	center
+	right
+}

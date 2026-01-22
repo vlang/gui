@@ -278,6 +278,7 @@ pub:
 	size           f32 = size_text_medium
 	line_spacing   f32
 	letter_spacing f32
+	align          TextAlignment = .left
 	underline      bool
 	strikethrough  bool
 	// features is a pointer to font features (OpenType features and variation axes).
@@ -301,6 +302,13 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 			features:      ts.features
 			underline:     ts.underline
 			strikethrough: ts.strikethrough
+		}
+		block: vglyph.BlockStyle{
+			align: match ts.align {
+				.left { vglyph.Alignment.left }
+				.center { vglyph.Alignment.center }
+				.right { vglyph.Alignment.right }
+			}
 		}
 	}
 }
