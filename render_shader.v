@@ -67,6 +67,8 @@ const fs_glsl = '
         
         // sgl workaround: dummy texture sample
         // sgl.h always binds a texture/sampler, so we must declare them to avoid validation errors.
+        // We use a condition that is always false (alpha < 0.0) to ensure the sample is never
+        // actually executed while preventing the compiler from optimizing away the bindings.
         if (frag_color.a < 0.0) {
             frag_color += texture(tex, uv);
         }
@@ -141,6 +143,9 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
     float4 frag_color = float4(in.color.rgb, in.color.a * alpha);
     
     // sgl workaround: dummy texture sample
+    // sgl.h always binds a texture/sampler, so we must declare them to avoid validation errors.
+    // We use a condition that is always false (alpha < 0.0) to ensure the sample is never
+    // actually executed while preventing the compiler from optimizing away the bindings.
     if (frag_color.a < 0.0) {
         frag_color += tex.sample(smp, in.uv);
     }

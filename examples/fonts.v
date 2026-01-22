@@ -8,7 +8,7 @@ import gui
 struct FontsApp {
 pub mut:
 	selected_family string = 'Normal'
-	selected_font   string = '1'
+	selected_font   string = '3'
 	light_theme     bool
 }
 
