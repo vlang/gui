@@ -123,6 +123,7 @@ pub fn (mut window Window) date_picker_reset(id string) {
 	window.view_state.date_picker_state[id] = DatePickerState{}
 }
 
+// controls creates the top row of navigation buttons (month/year picker, prev/next month)
 fn (cfg DatePickerCfg) controls(state DatePickerState) View {
 	return row(
 		name:    'date_picker controls'
@@ -138,6 +139,7 @@ fn (cfg DatePickerCfg) controls(state DatePickerState) View {
 	)
 }
 
+// month_picker creates the button that toggles the month/year selection view
 fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
 	id := cfg.id
 	return button(

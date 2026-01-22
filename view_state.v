@@ -2,8 +2,9 @@ module gui
 
 import sokol.sapp
 
-// Generating views and immediate mode means there is no place to store view
-// states. This is v-gui's  solution.
+// ViewState stores the transient state of the GUI views.
+// Since views are regenerated every frame in immediate mode, this struct
+// persists state like focus, scroll positions, and input selections across frames.
 struct ViewState {
 mut:
 	input_state       map[u32]InputState         // [id_focus] -> InputState

@@ -1,26 +1,23 @@
 module gui
 
-// DialogType configures the type of dialog dialog.
+// DialogType configures the type of dialog.
 //
 // - **message** has a title, body and OK button
 // - **confirm** is similar to message but with yes, no buttons
 // - **prompt** adds an input field with OK, Cancel buttons
-// - **custom** displays the given content. The given content is simply displayed. Custom content provides any needed callbacks as the standard ones work only for
-// - **browse** browser file dialog (TODO)
-// - **save** save file dialog (TODO)
-// - **color** color dialog (TODO)
-// - **date** select date dialog (TODO)
-// - **time** select tiem diaog (TODO)
-// the predfined types. See [DialogCfg](#DialogCfg)
+// - **custom** displays the given content.
+//
+// Future types (TODO):
+// - **browse** browser file dialog
+// - **save** save file dialog
+// - **color** color dialog
+// - **date** select date dialog
+// - **time** select time dialog
 pub enum DialogType as u8 {
 	message
 	confirm
 	prompt
 	custom
-	// browse
-	// color
-	// date
-	// time
 }
 
 pub const dialog_base_id_focus = 7568971

@@ -58,13 +58,8 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 }
 
 // image creates a new image view from the provided configuration.
-// It returns an ImageView that displays the specified image file.
+// It displays the specified image file.
 // If cfg.invisible is true, it returns an invisible ContainerView instead.
-// The function automatically wraps click handlers to only respond to left mouse button clicks.
-// Parameters:
-//   - cfg: ImageCfg containing image settings including file name, dimensions, event handlers, and visibility
-// Returns:
-//   - View: An ImageView instance that implements the View interface, or a ContainerView if invisible
 pub fn image(cfg ImageCfg) View {
 	stats_increment_image_views()
 	if cfg.invisible {

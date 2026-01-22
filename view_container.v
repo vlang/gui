@@ -38,55 +38,7 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 	mut children := []Layout{}
 
 	// Inject Group Box title (Eraser + Text) if text is present
-	if cv.title.len > 0 {
-		text_style := if cv.color == gui_theme.text_style.color {
-			gui_theme.text_style
-		} else {
-			TextStyle{
-				...gui_theme.text_style
-				color: cv.color
-			}
-		}
-
-		cfg := text_style.to_vglyph_cfg()
-		text_width := w.text_system.text_width(cv.title, cfg) or { 0 }
-		metrics := w.text_system.font_metrics(cfg)
-
-		offset := metrics.ascender - metrics.descender
-		padding := 5
-
-		// 1. Eraser Node (hides the border)
-		parent_bg := cv.title_bg
-		eraser_color := if cv.disabled { dim_alpha(parent_bg) } else { parent_bg }
-		children << Layout{
-			shape: &Shape{
-				shape_type: .rectangle
-				width:      text_width + padding + padding - 1
-				height:     metrics.ascender + metrics.descender
-				x:          20
-				y:          -offset
-				color:      eraser_color
-				fill:       true
-				float:      true
-			}
-		}
-
-		// 2. Text Node
-		text_color := if cv.disabled { dim_alpha(text_style.color) } else { text_style.color }
-		children << Layout{
-			shape: &Shape{
-				shape_type: .text
-				text:       cv.title
-				x:          20 + padding
-				y:          -offset
-				text_style: text_style // use the one computed above which includes correct color base
-				color:      text_color
-				width:      text_width
-				height:     metrics.ascender + metrics.descender // Logical height
-				float:      true
-			}
-		}
-	}
+	cv.add_group_box_title(mut w, mut children)
 
 	layout := Layout{
 		children: children
@@ -426,5 +378,59 @@ fn invisible_container_view() ContainerView {
 		disabled:  true
 		over_draw: true // removes it from spacing calculations
 		padding:   padding_none
+	}
+}
+
+fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
+	if cv.title.len == 0 {
+		return
+	}
+
+	text_style := if cv.color == gui_theme.text_style.color {
+		gui_theme.text_style
+	} else {
+		TextStyle{
+			...gui_theme.text_style
+			color: cv.color
+		}
+	}
+
+	cfg := text_style.to_vglyph_cfg()
+	text_width := w.text_system.text_width(cv.title, cfg) or { 0 }
+	metrics := w.text_system.font_metrics(cfg)
+
+	offset := metrics.ascender - metrics.descender
+	padding := 5
+
+	// 1. Eraser Node (hides the border)
+	parent_bg := cv.title_bg
+	eraser_color := if cv.disabled { dim_alpha(parent_bg) } else { parent_bg }
+	children << Layout{
+		shape: &Shape{
+			shape_type: .rectangle
+			width:      text_width + padding + padding - 1
+			height:     metrics.ascender + metrics.descender
+			x:          20
+			y:          -offset
+			color:      eraser_color
+			fill:       true
+			float:      true
+		}
+	}
+
+	// 2. Text Node
+	text_color := if cv.disabled { dim_alpha(text_style.color) } else { text_style.color }
+	children << Layout{
+		shape: &Shape{
+			shape_type: .text
+			text:       cv.title
+			x:          20 + padding
+			y:          -offset
+			text_style: text_style // use the one computed above which includes correct color base
+			color:      text_color
+			width:      text_width
+			height:     metrics.ascender + metrics.descender // Logical height
+			float:      true
+		}
 	}
 }

@@ -1,6 +1,7 @@
 module gui
 
-// ExpandPanelCfg configures an [expand_panel](#expand_panel)
+// ExpandPanelCfg configures an [expand_panel](#expand_panel).
+// It consists of a header (always visible) and content (visible when expanded).
 @[minify]
 pub struct ExpandPanelCfg {
 pub:
@@ -24,7 +25,7 @@ pub:
 	fill_border    bool = gui_theme.expand_panel_style.fill_border
 }
 
-// expand_panel creates a expand view from the given [ExpandPanelCfg](#ExpandPanelCfg)
+// expand_panel creates an expandable panel view.
 pub fn expand_panel(cfg ExpandPanelCfg) View {
 	on_toggle := cfg.on_toggle
 	return column(

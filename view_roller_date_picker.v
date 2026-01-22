@@ -2,6 +2,7 @@ module gui
 
 import time
 
+// RollerDatePickerCfg configures a [roller_date_picker](#roller_date_picker)
 pub struct RollerDatePickerCfg {
 pub:
 	id            string
@@ -15,6 +16,8 @@ pub:
 	on_change     fn (time.Time, mut Window) = unsafe { nil }
 }
 
+// roller_date_picker creates a date picker that uses a rolling/scrolling mechanism
+// to select dates, similar to iOS date pickers.
 pub fn roller_date_picker(cfg RollerDatePickerCfg) View {
 	return column(
 		id:        cfg.id

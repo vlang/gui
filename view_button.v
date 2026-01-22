@@ -92,6 +92,7 @@ pub fn button(cfg ButtonCfg) View {
 	)
 }
 
+// amend_layout updates the layout based on the button state (focus).
 fn (cfg &ButtonCfg) amend_layout(mut layout Layout, mut w Window) {
 	if layout.shape.disabled || cfg.on_click == unsafe { nil } {
 		return
@@ -102,6 +103,8 @@ fn (cfg &ButtonCfg) amend_layout(mut layout Layout, mut w Window) {
 	}
 }
 
+// on_button_hover handles mouse hover events for the button, updating the cursor
+// and color state.
 fn (cfg &ButtonCfg) on_button_hover(mut layout Layout, mut e Event, mut w Window) {
 	if layout.shape.on_click == unsafe { nil } {
 		return
