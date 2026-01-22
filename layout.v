@@ -10,8 +10,10 @@ module gui
 // https://www.youtube.com/watch?v=by9lQvpvMIc&t=1272s
 //
 
-// layout_arrange executes a pipeline to arrange and position the layout.
-// Returns multiple layouts, each representing a layer for rendering.
+// layout_arrange executes a rendering pipeline to arrange and position the layout.
+// It returns a list of layouts, where each layout represents a distinct rendering layer.
+// The main layout is the first element, followed by any floating layouts (e.g., popups, tooltips)
+// that should be rendered on top.
 fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// stopwatch := time.new_stopwatch()
 	// defer { println(stopwatch.elapsed()) }
@@ -52,22 +54,34 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	return layouts
 }
 
-// layout_pipeline performs multiple passes over the layout. Dealing with one
-// axis of expansion/contraction at a time simplifies calculations. Matches
-// logic in the referenced Clay UI video.
+// layout_pipeline performs multiple passes over the layout tree to calculate sizing and positioning.
+// Handling one axis of expansion/contraction at a time simplifies the complex constraint solving.
+// The logic follows the approach described in the Clay UI layout algorithm.
 fn layout_pipeline(mut layout Layout, mut window Window) {
+	// 1. Calculate intrinsic widths based on content constraints
 	layout_widths(mut layout)
+	// 2. Expand widths to fill available space where applicable
 	layout_fill_widths(mut layout)
+	// 3. Wrap text based on valid widths, which may affect height
 	layout_wrap_text(mut layout, mut window)
+	// 4. Calculate intrinsic heights based on content
 	layout_heights(mut layout)
+	// 5. Expand heights to fill available space
 	layout_fill_heights(mut layout)
+	// 6. Adjust scroll offsets for containers
 	layout_adjust_scroll_offsets(mut layout, mut window)
+	// 7. Calculate final X, Y positions for all elements
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y, window)
+	// 8. Handle disabled states
 	layout_disables(mut layout, false)
+	// 9. Handle scroll container logic
 	layout_scroll_containers(mut layout, 0)
+	// 10. Final layout adjustments/amendments
 	layout_amend(mut layout, mut window)
+	// 11. Calculate clipping rectangles for rendering
 	layout_set_shape_clips(mut layout, window.window_rect())
+	// 12. Update hover states
 	layout_hover(mut layout, mut window)
 }
 
@@ -83,9 +97,10 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 	}
 }
 
-// layout_remove_floating_layouts replaces floating layouts with an empty
-// Layout node (no axis/height/width) so they are effectively ignored by
-// layout logic. The removed layouts are collected in the layouts array.
+// layout_remove_floating_layouts extracts floating elements from the main layout tree.
+// It replaces them with empty placeholder nodes to preserve the tree structure indices
+// while removing them from standard flow layout calculations. The extracted layouts
+// are collected into the `layouts` array to be processed as separate layers.
 fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
 	for i, mut child in layout.children {
 		if child.shape.float {

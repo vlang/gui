@@ -10,72 +10,73 @@ pub:
 	uid u64 = rand.u64() // internal use only
 pub mut:
 	// String fields (16 bytes)
-	id         string // user assigned
-	name       string // internal shape name, useful for debugging
-	text       string
-	image_name string // filename of image
+	id         string // Unique identifier assigned by the user
+	name       string // Internal name, useful for debugging (e.g., 'Container', 'Text')
+	text       string // Text content for text-based shapes
+	image_name string // Filename or path for image shapes
 
 	// Pointer fields (8 bytes)
-	vglyph_layout &vglyph.Layout = unsafe { nil } // unified layout for text and rtf
+	vglyph_layout &vglyph.Layout = unsafe { nil } // Unified layout engine object for both plain and rich text
 
-	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_scroll fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_scroll       fn (&Layout, mut Window)               = unsafe { nil }
-	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	// Event Handlers
+	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle character input
+	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle key press
+	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse click
+	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse movement over shape
+	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse button release
+	on_mouse_scroll fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle scroll wheel events
+	on_scroll       fn (&Layout, mut Window)               = unsafe { nil } // Handle scroll container updates
+	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil } // Custom hook to modify layout during the pipeline
+	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil } // Handle hover state changes
 
 	// Structs (Large/Aligned)
-	text_style TextStyle
-	shape_clip DrawClip // used for hit-testing
-	padding    Padding
-	rich_text  RichText // source text for RTF re-layout
+	text_style TextStyle // Configuration for text rendering (font, size, color)
+	shape_clip DrawClip  // Calculated clipping rectangle for rendering and hit-testing
+	padding    Padding   // Inner spacing
+	rich_text  RichText  // Source data structure for Rich Text Format (RTF)
 
 	// 4 bytes (f32/u32/Color)
-	x                     f32
-	y                     f32
-	width                 f32
-	min_width             f32
-	max_width             f32
-	height                f32
-	min_height            f32
-	max_height            f32
-	radius                f32
-	spacing               f32
-	float_offset_x        f32
-	float_offset_y        f32
-	id_focus              u32 // >0 indicates shape is focusable. Value determines tabbing order
-	id_scroll             u32 // >0 indicates shape is scrollable
-	id_scroll_container   u32
-	text_sel_beg          u32
-	text_sel_end          u32
-	text_tab_size         u32 = 4
-	last_constraint_width f32 // Optimization: track the width used for the current text_layout to avoid redundant regeneration
-	color                 Color
+	x                     f32 // Final calculated X position (absolute)
+	y                     f32 // Final calculated Y position (absolute)
+	width                 f32 // Final calculated width
+	min_width             f32 // Minimum width constraint
+	max_width             f32 // Maximum width constraint
+	height                f32 // Final calculated height
+	min_height            f32 // Minimum height constraint
+	max_height            f32 // Maximum height constraint
+	radius                f32 // Corner radius for rounded rectangles
+	spacing               f32 // Spacing between children (loaded from style)
+	float_offset_x        f32 // X offset for floating elements relative to anchor
+	float_offset_y        f32 // Y offset for floating elements relative to anchor
+	id_focus              u32 // Focus ID. >0 means focusable. Value determines tab order.
+	id_scroll             u32 // Scroll ID. >0 means receives scroll events.
+	id_scroll_container   u32 // ID of the parent scroll container
+	text_sel_beg          u32 // Start index of text selection (runes)
+	text_sel_end          u32 // End index of text selection (runes)
+	text_tab_size         u32 = 4 // Tab width in spaces
+	last_constraint_width f32   // Optimization: cached width used for last text layout generation
+	color                 Color // Background or foreground color
 
 	// 2 bytes
-	sizing Sizing
+	sizing Sizing // Sizing logic (e.g. fixed, fit, grow)
 
 	// 1 byte (Enums/Bools)
-	axis                Axis
-	shape_type          ShapeType
-	h_align             HorizontalAlign
-	v_align             VerticalAlign
-	text_mode           TextMode
-	scroll_mode         ScrollMode
-	float_anchor        FloatAttach
-	float_tie_off       FloatAttach
-	clip                bool
-	disabled            bool
-	fill                bool
-	float               bool
-	focus_skip          bool
-	over_draw           bool // allows scrollbars to draw in padding area and removes shape from spacing calculations
-	text_is_password    bool
-	text_is_placeholder bool
+	axis                Axis            // Layout direction (row/column)
+	shape_type          ShapeType       // Discriminator for shape kind
+	h_align             HorizontalAlign // Horizontal alignment of children/content
+	v_align             VerticalAlign   // Vertical alignment of children/content
+	text_mode           TextMode        // Text wrapping/multiline mode
+	scroll_mode         ScrollMode      // Scrolling behavior (e.g. auto, always, never)
+	float_anchor        FloatAttach     // Anchor point on the parent for floating shapes
+	float_tie_off       FloatAttach     // Anchor point on the floating shape itself
+	clip                bool            // Whether to clip children/content to bounds
+	disabled            bool            // Visual and interactive disabled state
+	fill                bool            // Whether to fill or stroke the shape
+	float               bool            // Whether the shape is floating (removed from flow)
+	focus_skip          bool            // If true, skip this element in focus navigation
+	over_draw           bool            // If true, allows drawing into padding and ignores spacing impact
+	text_is_password    bool            // If true, mask text characters
+	text_is_placeholder bool            // If true, text is a placeholder (affects styling)
 }
 
 // ShapeType defines the kind of Shape.

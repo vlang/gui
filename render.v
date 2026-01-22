@@ -327,78 +327,77 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				}
 
 				// Draw text selection
-				// Check overlap with byte range
-				l_start := line.start_index
-				l_end := line_end
-
-				if byte_beg < l_end && byte_end > l_start {
-					// Intersection
-					i_start := int_max(byte_beg, l_start)
-					i_end := int_min(byte_end, l_end)
-
-					if i_start < i_end {
-						if shape.text_is_password {
-							// Password fields still need measurement because the rendered text (*)
-							// is different from the logical text.
-							pre_text := shape.text[l_start..i_start]
-							sel_text := shape.text[i_start..i_end]
-
-							pw_pre := password_char.repeat(utf8_str_visible_length(pre_text))
-							start_x_offset := window.text_system.text_width(pw_pre, text_cfg) or {
-								0
-							}
-
-							pw_sel := password_char.repeat(utf8_str_visible_length(sel_text))
-							sel_width := window.text_system.text_width(pw_sel, text_cfg) or { 0 }
-
-							window.renderers << DrawRect{
-								x:     draw_x + start_x_offset
-								y:     draw_y
-								w:     sel_width
-								h:     line.rect.height
-								color: gg.Color{
-									...text_cfg.style.color
-									a: 60
-								}
-							}
-						} else {
-							// Optimization: Use cached layout geometry
-							// Get rect for start char
-							r_start := shape.vglyph_layout.get_char_rect(i_start) or { gg.Rect{} }
-
-							// Get rect for end char (or end of line)
-							x_end := if i_end < l_end && shape.text[i_end] != `\n` {
-								r_end := shape.vglyph_layout.get_char_rect(i_end) or {
-									gg.Rect{
-										x: line.rect.width
-									}
-								}
-								r_end.x
-							} else {
-								// End of selection is end of line (or newline)
-								line.rect.width
-							}
-
-							sel_width := x_end - r_start.x
-
-							window.renderers << DrawRect{
-								x:     draw_x + r_start.x
-								y:     draw_y
-								w:     sel_width
-								h:     line.rect.height
-								color: gg.Color{
-									...text_cfg.style.color
-									a: 60
-								}
-							}
-						}
-					}
+				if byte_beg < line_end && byte_end > line.start_index {
+					draw_text_selection(mut window, shape, line, draw_x, draw_y, byte_beg,
+						byte_end, text_cfg)
 				}
 			}
 		}
 	}
 
 	render_cursor(shape, clip, mut window)
+}
+
+fn draw_text_selection(mut window Window, shape &Shape, line vglyph.Line, draw_x f32, draw_y f32, byte_beg int, byte_end int, text_cfg vglyph.TextConfig) {
+	// Intersection
+	i_start := int_max(byte_beg, line.start_index)
+	i_end := int_min(byte_end, line.start_index + line.length)
+
+	if i_start < i_end {
+		if shape.text_is_password {
+			// Password fields still need measurement because the rendered text (*)
+			// is different from the logical text.
+			pre_text := shape.text[line.start_index..i_start]
+			sel_text := shape.text[i_start..i_end]
+
+			pw_pre := password_char.repeat(utf8_str_visible_length(pre_text))
+			start_x_offset := window.text_system.text_width(pw_pre, text_cfg) or { 0 }
+
+			pw_sel := password_char.repeat(utf8_str_visible_length(sel_text))
+			sel_width := window.text_system.text_width(pw_sel, text_cfg) or { 0 }
+
+			window.renderers << DrawRect{
+				x:     draw_x + start_x_offset
+				y:     draw_y
+				w:     sel_width
+				h:     line.rect.height
+				color: gg.Color{
+					...text_cfg.style.color
+					a: 60
+				}
+			}
+		} else {
+			// Optimization: Use cached layout geometry
+			// Get rect for start char
+			r_start := shape.vglyph_layout.get_char_rect(i_start) or { gg.Rect{} }
+
+			// Get rect for end char (or end of line)
+			x_end := if i_end < (line.start_index + line.length) && shape.text[i_end] != `\n` {
+				r_end := shape.vglyph_layout.get_char_rect(i_end) or {
+					gg.Rect{
+						x: line.rect.width
+					}
+				}
+				r_end.x
+			} else {
+				// End of selection is end of line (or newline)
+				line.rect.width
+			}
+
+			sel_width := x_end - r_start.x
+
+			window.renderers << DrawRect{
+				x:     draw_x + r_start.x
+				y:     draw_y
+				w:     sel_width
+				h:     line.rect.height
+				color: gg.Color{
+					...text_cfg.style.color
+					a: 60
+				}
+			}
+		}
+	}
 }
 
 // render_cursor figures out where the darn cursor goes using vglyph.
