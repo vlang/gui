@@ -105,6 +105,7 @@ fn tab_stops(w &gui.Window) gui.View {
 	app := w.state[DocViewerApp]()
 	return gui.radio_button_group_row(
 		title:     'Tab Size '
+		title_bg:  gui.theme().color_panel
 		value:     app.tab_size
 		options:   [
 			gui.radio_option('2', '2'),

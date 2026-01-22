@@ -183,23 +183,7 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 			render_circle(mut shape, clip, mut window)
 		}
 		.rtf {
-			if shape.has_rtf_layout() {
-				dr := gg.Rect{
-					x:      shape.x
-					y:      shape.y
-					width:  shape.width
-					height: shape.height
-				}
-				if rects_overlap(dr, clip) {
-					window.renderers << DrawLayout{
-						layout: shape.vglyph_layout
-						x:      shape.x
-						y:      shape.y
-					}
-				} else {
-					shape.disabled = true
-				}
-			}
+			render_rtf(mut shape, clip, mut window)
 		}
 		.none {}
 	}
@@ -489,6 +473,26 @@ fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 		w:   shape.width
 		h:   shape.height
 		img: image
+	}
+}
+
+fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
+	if shape.has_rtf_layout() {
+		dr := gg.Rect{
+			x:      shape.x
+			y:      shape.y
+			width:  shape.width
+			height: shape.height
+		}
+		if rects_overlap(dr, clip) {
+			window.renderers << DrawLayout{
+				layout: shape.vglyph_layout
+				x:      shape.x
+				y:      shape.y
+			}
+		} else {
+			shape.disabled = true
+		}
 	}
 }
 
