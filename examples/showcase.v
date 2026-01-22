@@ -1721,28 +1721,45 @@ fn rtf_sample(w &gui.Window) gui.View {
 		sizing:  gui.fill_fill
 		content: [
 			gui.rtf(
-				mode:  .wrap
-				spans: [
-					gui.span('Hello', gui.theme().n3),
-					gui.span(' RTF ', gui.theme().b3),
-					gui.span('World', gui.theme().n3),
-					gui.br(),
-					gui.br(),
-					gui.strike_span('Now is the', gui.theme().n3),
-					gui.span(' ', gui.theme().n3),
-					gui.span('time', gui.theme().i3),
-					gui.span(' for all', gui.theme().n3),
-					gui.span(' good men ', gui.TextStyle{
-						...gui.theme().n3
-						color: gui.green
-					}),
-					gui.span('to come to the aid of their ', gui.theme().n3),
-					gui.uspan('country', gui.theme().b3),
-					gui.br(),
-					gui.br(),
-					gui.span('This is a ', gui.theme().n3),
-					gui.hyperlink('hyperlink', 'https://www.example.com', gui.theme().n3),
-				]
+				mode:      .wrap
+				rich_text: gui.RichText{
+					runs: [
+						gui.rich_run('Hello', gui.theme().n3),
+						gui.rich_run(' RTF ', gui.theme().b3),
+						gui.rich_run('World', gui.theme().n3),
+						gui.rich_br(),
+						gui.rich_br(),
+						gui.RichTextRun{
+							text:  'Now is the'
+							style: gui.TextStyle{
+								...gui.theme().n3
+								strikethrough: true
+							}
+						},
+						gui.rich_run(' ', gui.theme().n3),
+						gui.rich_run('time', gui.theme().i3),
+						gui.rich_run(' for all', gui.theme().n3),
+						gui.RichTextRun{
+							text:  ' good men '
+							style: gui.TextStyle{
+								...gui.theme().n3
+								color: gui.green
+							}
+						},
+						gui.rich_run('to come to the aid of their ', gui.theme().n3),
+						gui.RichTextRun{
+							text:  'country'
+							style: gui.TextStyle{
+								...gui.theme().b3
+								underline: true
+							}
+						},
+						gui.rich_br(),
+						gui.rich_br(),
+						gui.rich_run('This is a ', gui.theme().n3),
+						gui.rich_link('hyperlink', 'https://www.example.com', gui.theme().n3),
+					]
+				}
 			),
 		]
 	)

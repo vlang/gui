@@ -18,7 +18,8 @@ pub mut:
 
 	// Pointer fields (8 bytes)
 	text_layout     &vglyph.Layout                         = unsafe { nil }
-	text_spans      &datatypes.LinkedList[TextSpan]        = unsafe { nil } // rich text format spans
+	rtf_layout      &vglyph.Layout                         = unsafe { nil } // rich text format layout
+	text_spans      &datatypes.LinkedList[TextSpan]        = unsafe { nil } // deprecated: use rtf_layout
 	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
@@ -33,6 +34,7 @@ pub mut:
 	text_style TextStyle
 	shape_clip DrawClip // used for hit-testing
 	padding    Padding
+	rich_text  vglyph.RichText // source text for RTF re-layout
 
 	// 4 bytes (f32/u32/Color)
 	x                     f32
@@ -104,4 +106,10 @@ pub fn (shape &Shape) point_in_shape(x f32, y f32) bool {
 @[inline]
 pub fn (shape &Shape) has_text_layout() bool {
 	return shape.text_layout != unsafe { nil }
+}
+
+// has_rtf_layout returns true if the shape has a valid vglyph rich text layout.
+@[inline]
+pub fn (shape &Shape) has_rtf_layout() bool {
+	return shape.rtf_layout != unsafe { nil }
 }

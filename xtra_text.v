@@ -164,11 +164,40 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		}
 		shape.max_height = shape.height
 		shape.min_height = shape.height
-	} else if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.shape_type == .rtf {
-		width := shape.width - shape.padding.width()
-		tab_size := shape.text_tab_size
-		shape.text_spans = rtf_wrap_text(shape.text_spans, width, tab_size, mut window)
-		shape.width, shape.height = spans_size(shape.text_spans)
+	} else if shape.shape_type == .rtf {
+		// New vglyph-based RTF
+		if shape.has_rtf_layout() {
+			if shape.text_mode in [.wrap, .wrap_keep_spaces] {
+				width := shape.width - shape.padding.width()
+
+				// Optimization: Check if width changed significantly or if we haven't constrained yet
+				if width > 0 && width != shape.last_constraint_width {
+					// Re-layout with new width constraint
+					mut cfg := vglyph.TextConfig{
+						block: vglyph.BlockStyle{
+							wrap:  .word
+							width: width
+						}
+					}
+					// Use stored source text
+					layout := window.text_system.layout_rich_text(shape.rich_text, cfg) or {
+						vglyph.Layout{}
+					}
+					shape.rtf_layout = &layout
+					shape.last_constraint_width = width
+					shape.width = layout.width + shape.padding.width()
+					shape.height = layout.height + shape.padding.height()
+				}
+			}
+			return
+		}
+		// Legacy text_spans-based RTF (deprecated)
+		if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.text_spans != unsafe { nil } {
+			width := shape.width - shape.padding.width()
+			tab_size := shape.text_tab_size
+			shape.text_spans = rtf_wrap_text(shape.text_spans, width, tab_size, mut window)
+			shape.width, shape.height = spans_size(shape.text_spans)
+		}
 	}
 }
 

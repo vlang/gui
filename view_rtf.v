@@ -1,11 +1,10 @@
 module gui
 
 // view_rtf.v defines the Rich Text Format (RTF) view component.
-// It allows rendering text with multiple typefaces, sizes, and styles within a single view.
-// It supports text wrapping, clickable links, and custom text spans.
-//
-import datatypes
-import os
+// It renders text with multiple typefaces, sizes, and styles within a single view.
+// Supports text wrapping, clickable links, and custom text runs.
+import gg
+import vglyph
 
 @[minify]
 struct RtfView implements View {
@@ -13,20 +12,16 @@ struct RtfView implements View {
 pub:
 	sizing Sizing
 pub mut:
-	spans   datatypes.LinkedList[TextSpan]
 	content []View // required, not used
 }
 
-// RtfCfg configures a Rich Text View (RTF). RTF's can have
-// multiple type faces, and sizes in a view. Different type
-// faces and sizes are specified as [TextSpan](#TextSpan)s.
-// Note: TextMode.wrap and TextMode.wrap_keep_spaces are the
-// same for RTF.
+// RtfCfg configures a Rich Text View. RTF views support multiple typefaces
+// and sizes specified as RichTextRuns.
 @[minify]
 pub struct RtfCfg {
 pub:
 	id         string
-	spans      []TextSpan
+	rich_text  RichText
 	min_width  f32
 	id_focus   u32
 	mode       TextMode
@@ -39,26 +34,35 @@ pub:
 fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	stats_increment_layouts()
 
-	tspans := match true {
-		rtf.mode in [.wrap, .wrap_keep_spaces] { rtf.spans }
-		else { rtf_simple_wrap(rtf.spans, mut window) }
+	// Convert RichText to vglyph.RichText
+	vg_rich_text := rtf.rich_text.to_vglyph_rich_text()
+
+	// Create vglyph text config
+	cfg := vglyph.TextConfig{
+		block: vglyph.BlockStyle{
+			wrap:  if rtf.mode in [.wrap, .wrap_keep_spaces] { .word } else { .word }
+			width: if rtf.mode in [.wrap, .wrap_keep_spaces] { f32(-1.0) } else { f32(-1.0) }
+		}
 	}
-	width, height := spans_size(tspans)
+
+	// Layout rich text using vglyph
+	layout := window.text_system.layout_rich_text(vg_rich_text, cfg) or { vglyph.Layout{} }
 
 	shape := &Shape{
 		name:          'rtf'
 		shape_type:    .rtf
 		id:            rtf.id
 		id_focus:      rtf.id_focus
-		width:         width
-		height:        height
+		width:         layout.width
+		height:        layout.height
 		clip:          rtf.clip
 		focus_skip:    rtf.focus_skip
 		disabled:      rtf.disabled
 		min_width:     rtf.min_width
 		text_mode:     rtf.mode
 		sizing:        rtf.sizing
-		text_spans:    &tspans
+		rtf_layout:    &layout
+		rich_text:     vg_rich_text
 		on_click:      rtf_on_click
 		on_mouse_move: rtf_mouse_move
 	}
@@ -68,16 +72,13 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	}
 }
 
-// rtf creates a view from the given [RtfCfg](#RtfCfg)
+// rtf creates a view from the given RtfCfg
 pub fn rtf(cfg RtfCfg) View {
 	stats_increment_rtf_views()
 
 	if cfg.invisible {
 		return invisible_container_view()
 	}
-
-	mut ll := datatypes.LinkedList[TextSpan]{}
-	ll.push_many(cfg.spans)
 
 	return RtfView{
 		id:         cfg.id
@@ -88,15 +89,31 @@ pub fn rtf(cfg RtfCfg) View {
 		disabled:   cfg.disabled
 		min_width:  cfg.min_width
 		mode:       cfg.mode
+		rich_text:  cfg.rich_text
 		sizing:     if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
-		spans:      ll
 	}
 }
 
 fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
-	for span in layout.shape.text_spans {
-		if span.link.len != 0 {
-			if point_in_text_span(span, e.mouse_x, e.mouse_y) {
+	if !layout.shape.has_rtf_layout() {
+		return
+	}
+	// Check for links by finding which run the mouse is over
+	for run in layout.shape.rtf_layout.items {
+		if run.is_object {
+			continue
+		}
+		run_rect := gg.Rect{
+			x:      layout.shape.x + f32(run.x)
+			y:      layout.shape.y + f32(run.y) - f32(run.ascent)
+			width:  f32(run.width)
+			height: f32(run.ascent + run.descent)
+		}
+		if e.mouse_x >= run_rect.x && e.mouse_y >= run_rect.y
+			&& e.mouse_x < (run_rect.x + run_rect.width)
+			&& e.mouse_y < (run_rect.y + run_rect.height) {
+			// Links have underline style
+			if run.has_underline {
 				w.set_mouse_cursor_pointing_hand()
 				e.is_handled = true
 				return
@@ -106,17 +123,28 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 }
 
 fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
-	for span in layout.shape.text_spans {
-		if span.link.len != 0 {
-			if point_in_text_span(span, e.mouse_x, e.mouse_y) {
-				os.open_uri(span.link) or {}
-				e.is_handled = true
-				return
-			}
+	if !layout.shape.has_rtf_layout() {
+		return
+	}
+	// Find the clicked run and check if it's a link
+	for i, run in layout.shape.rtf_layout.items {
+		if run.is_object {
+			continue
+		}
+		run_rect := gg.Rect{
+			x:      layout.shape.x + f32(run.x)
+			y:      layout.shape.y + f32(run.y) - f32(run.ascent)
+			width:  f32(run.width)
+			height: f32(run.ascent + run.descent)
+		}
+		if e.mouse_x >= run_rect.x && e.mouse_y >= run_rect.y
+			&& e.mouse_x < (run_rect.x + run_rect.width)
+			&& e.mouse_y < (run_rect.y + run_rect.height) {
+			// TODO: Map back to original RichText run to get link URL
+			// Requires storing link info in Shape or using object_id
+			_ = i
+			e.is_handled = true
+			return
 		}
 	}
-}
-
-fn point_in_text_span(span &TextSpan, x f32, y f32) bool {
-	return x >= span.x && y >= span.y && x < (span.x + span.w) && y < (span.y + span.h)
 }

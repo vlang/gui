@@ -44,9 +44,22 @@ struct DrawText {
 	y    f32
 }
 
+struct DrawLayout {
+	layout &vglyph.Layout
+	x      f32
+	y      f32
+}
+
 type DrawClip = gg.Rect
 type DrawRect = gg.DrawRectParams
-type Renderer = DrawCircle | DrawClip | DrawImage | DrawLine | DrawNone | DrawRect | DrawText
+type Renderer = DrawCircle
+	| DrawClip
+	| DrawImage
+	| DrawLayout
+	| DrawLine
+	| DrawNone
+	| DrawRect
+	| DrawText
 
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
@@ -78,6 +91,9 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, renderer.cfg) or {
 				log.error(err.msg())
 			}
+		}
+		DrawLayout {
+			window.text_system.draw_layout(renderer.layout, renderer.x, renderer.y)
 		}
 		DrawClip {
 			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
@@ -437,8 +453,19 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 		shape.disabled = true
 		return
 	}
-	ctx := window.ui
 
+	// Use vglyph layout if available (new API)
+	if shape.has_rtf_layout() {
+		window.renderers << DrawLayout{
+			layout: shape.rtf_layout
+			x:      shape.x
+			y:      shape.y
+		}
+		return
+	}
+
+	// Fallback: Legacy text_spans rendering (deprecated)
+	ctx := window.ui
 	for span in shape.text_spans {
 		span_rect := gg.Rect{
 			x:      shape.x + span.x
