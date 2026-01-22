@@ -1,7 +1,6 @@
 module gui
 
 import rand
-import datatypes
 import vglyph
 
 // Shape is the only data structure in GUI used to draw to the screen.
@@ -17,8 +16,8 @@ pub mut:
 	image_name string // filename of image
 
 	// Pointer fields (8 bytes)
-	vglyph_layout   &vglyph.Layout                         = unsafe { nil } // unified layout for text and rtf
-	text_spans      &datatypes.LinkedList[TextSpan]        = unsafe { nil } // deprecated: use vglyph_layout
+	vglyph_layout &vglyph.Layout = unsafe { nil } // unified layout for text and rtf
+
 	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }

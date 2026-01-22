@@ -190,13 +190,7 @@ fn text_wrap(mut shape Shape, mut window Window) {
 			}
 			return
 		}
-		// Legacy text_spans-based RTF (deprecated)
-		if shape.text_mode in [.wrap, .wrap_keep_spaces] && shape.text_spans != unsafe { nil } {
-			width := shape.width - shape.padding.width()
-			tab_size := shape.text_tab_size
-			shape.text_spans = rtf_wrap_text(shape.text_spans, width, tab_size, mut window)
-			shape.width, shape.height = spans_size(shape.text_spans)
-		}
+		// Legacy text_spans-based RTF (deprecated) - REMOVED
 	}
 }
 

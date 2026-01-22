@@ -170,11 +170,37 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 		return
 	}
 	match shape.shape_type {
-		.rectangle { render_container(mut shape, parent_color, clip, mut window) }
-		.text { render_text(mut shape, clip, mut window) }
-		.image { render_image(mut shape, clip, mut window) }
-		.circle { render_circle(mut shape, clip, mut window) }
-		.rtf { render_rtf(mut shape, clip, mut window) }
+		.rectangle {
+			render_container(mut shape, parent_color, clip, mut window)
+		}
+		.text {
+			render_text(mut shape, clip, mut window)
+		}
+		.image {
+			render_image(mut shape, clip, mut window)
+		}
+		.circle {
+			render_circle(mut shape, clip, mut window)
+		}
+		.rtf {
+			if shape.has_rtf_layout() {
+				dr := gg.Rect{
+					x:      shape.x
+					y:      shape.y
+					width:  shape.width
+					height: shape.height
+				}
+				if rects_overlap(dr, clip) {
+					window.renderers << DrawLayout{
+						layout: shape.vglyph_layout
+						x:      shape.x
+						y:      shape.y
+					}
+				} else {
+					shape.disabled = true
+				}
+			}
+		}
 		.none {}
 	}
 }
@@ -437,71 +463,6 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 				h:     ch
 				color: shape.text_style.color.to_gx_color()
 				style: .fill
-			}
-		}
-	}
-}
-
-fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
-	dr := gg.Rect{
-		x:      shape.x
-		y:      shape.y
-		width:  shape.width
-		height: shape.height
-	}
-	if !rects_overlap(dr, clip) {
-		shape.disabled = true
-		return
-	}
-
-	// Use vglyph layout if available (new API)
-	if shape.has_rtf_layout() {
-		window.renderers << DrawLayout{
-			layout: shape.vglyph_layout
-			x:      shape.x
-			y:      shape.y
-		}
-		return
-	}
-
-	// Fallback: Legacy text_spans rendering (deprecated)
-	ctx := window.ui
-	for span in shape.text_spans {
-		span_rect := gg.Rect{
-			x:      shape.x + span.x
-			y:      shape.y + span.y
-			width:  span.w
-			height: span.h
-		}
-		if rects_overlap(span_rect, clip) {
-			text_cfg := span.style.to_vglyph_cfg()
-			ctx.set_text_cfg(span.style.to_text_cfg())
-
-			window.renderers << DrawText{
-				x:    shape.x + span.x
-				y:    shape.y + span.y
-				text: span.text
-				cfg:  text_cfg
-			}
-
-			if span.underline {
-				window.renderers << DrawRect{
-					x:     shape.x + span.x
-					y:     shape.y + span.y + span.h - 2
-					w:     span.w
-					h:     1
-					color: span.style.color.to_gx_color()
-				}
-			}
-
-			if span.strike_through {
-				window.renderers << DrawRect{
-					x:     shape.x + span.x
-					y:     shape.y + span.y + span.h / 2
-					w:     span.w
-					h:     1
-					color: span.style.color.to_gx_color()
-				}
 			}
 		}
 	}
