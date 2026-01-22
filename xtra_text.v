@@ -180,9 +180,8 @@ fn text_wrap(mut shape Shape, mut window Window) {
 						}
 					}
 					// Use stored source text
-					layout := window.text_system.layout_rich_text(shape.rich_text, cfg) or {
-						vglyph.Layout{}
-					}
+					layout := window.text_system.layout_rich_text(shape.rich_text.to_vglyph_rich_text(),
+						cfg) or { vglyph.Layout{} }
 					shape.rtf_layout = &layout
 					shape.last_constraint_width = width
 					shape.width = layout.width + shape.padding.width()

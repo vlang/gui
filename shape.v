@@ -34,7 +34,7 @@ pub mut:
 	text_style TextStyle
 	shape_clip DrawClip // used for hit-testing
 	padding    Padding
-	rich_text  vglyph.RichText // source text for RTF re-layout
+	rich_text  RichText // source text for RTF re-layout
 
 	// 4 bytes (f32/u32/Color)
 	x                     f32

@@ -4,6 +4,7 @@ module gui
 // It renders text with multiple typefaces, sizes, and styles within a single view.
 // Supports text wrapping, clickable links, and custom text runs.
 import gg
+import os
 import vglyph
 
 @[minify]
@@ -62,7 +63,7 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 		text_mode:     rtf.mode
 		sizing:        rtf.sizing
 		rtf_layout:    &layout
-		rich_text:     vg_rich_text
+		rich_text:     rtf.rich_text
 		on_click:      rtf_on_click
 		on_mouse_move: rtf_mouse_move
 	}
@@ -104,8 +105,8 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 			continue
 		}
 		run_rect := gg.Rect{
-			x:      layout.shape.x + f32(run.x)
-			y:      layout.shape.y + f32(run.y) - f32(run.ascent)
+			x:      f32(run.x)
+			y:      f32(run.y) - f32(run.ascent)
 			width:  f32(run.width)
 			height: f32(run.ascent + run.descent)
 		}
@@ -127,23 +128,42 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 		return
 	}
 	// Find the clicked run and check if it's a link
-	for i, run in layout.shape.rtf_layout.items {
+	for run in layout.shape.rtf_layout.items {
 		if run.is_object {
 			continue
 		}
 		run_rect := gg.Rect{
-			x:      layout.shape.x + f32(run.x)
-			y:      layout.shape.y + f32(run.y) - f32(run.ascent)
+			x:      f32(run.x)
+			y:      f32(run.y) - f32(run.ascent)
 			width:  f32(run.width)
 			height: f32(run.ascent + run.descent)
 		}
 		if e.mouse_x >= run_rect.x && e.mouse_y >= run_rect.y
 			&& e.mouse_x < (run_rect.x + run_rect.width)
 			&& e.mouse_y < (run_rect.y + run_rect.height) {
-			// TODO: Map back to original RichText run to get link URL
-			// Requires storing link info in Shape or using object_id
-			_ = i
-			e.is_handled = true
+			// Find corresponding run in original RichText
+			// We map via offsets because vglyph text runs might be split or reordered (bidi),
+			// and text content might be empty for some glyph runs.
+			mut current_idx := u32(0)
+			mut found_run_idx := -1
+			for i, r in layout.shape.rich_text.runs {
+				run_len := u32(r.text.len)
+				// Check if the clicked run's start index falls within this RichText run
+				if u32(run.start_index) >= current_idx
+					&& u32(run.start_index) < current_idx + run_len {
+					found_run_idx = i
+					break
+				}
+				current_idx += run_len
+			}
+
+			if found_run_idx >= 0 {
+				found_run := layout.shape.rich_text.runs[found_run_idx]
+				if found_run.link != '' {
+					os.open_uri(found_run.link) or {}
+					e.is_handled = true
+				}
+			}
 			return
 		}
 	}
