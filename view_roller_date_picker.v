@@ -2,90 +2,332 @@ module gui
 
 import time
 
+// RollerDatePickerDisplayMode controls which drums are visible in the picker.
+pub enum RollerDatePickerDisplayMode as u8 {
+	day_month_year // DD MMM YYYY (default)
+	month_day_year // MMM DD YYYY
+	month_year     // MMM YYYY
+	year_only      // YYYY
+}
+
+// RollerDatePickerState persists scroll animation offsets across frames.
+pub struct RollerDatePickerState {
+pub mut:
+	scroll_offset_day   f32
+	scroll_offset_month f32
+	scroll_offset_year  f32
+}
+
 // RollerDatePickerCfg configures a [roller_date_picker](#roller_date_picker)
+@[heap; minify]
 pub struct RollerDatePickerCfg {
 pub:
-	id            string
+	id            string @[required]
 	id_focus      u32
-	min_width     f32
 	selected_date time.Time @[required]
-	min_year      int                        = 1900
-	max_year      int                        = 2100
+	display_mode  RollerDatePickerDisplayMode
+	min_year      int = 1900
+	max_year      int = 2100
+	item_height   f32 = 32
+	visible_items int = 5 // must be odd
+	min_width     f32  // 0 = auto-calculate from font size
+	max_width     f32  // 0 = no maximum
+	long_months   bool // true = "January", false = "Jan"
 	color         Color                      = gui_theme.color_background
 	text_style    TextStyle                  = gui_theme.text_style
 	on_change     fn (time.Time, mut Window) = unsafe { nil }
 }
 
-// roller_date_picker creates a date picker that uses a rolling/scrolling mechanism
-// to select dates, similar to iOS date pickers.
+// roller_date_picker creates a date picker using a drum/roller mechanism.
+// Each drum (day, month, year) scrolls independently. Use mouse scroll over
+// individual drums or keyboard shortcuts:
+//   - Shift + Up/Down: day
+//   - Alt + Up/Down: month
+//   - Up/Down (no modifier): year
 pub fn roller_date_picker(cfg RollerDatePickerCfg) View {
-	return column(
-		id:        cfg.id
-		id_focus:  cfg.id_focus
-		min_width: cfg.min_width
-		spacing:   0
-		padding:   padding_none
-		v_align:   .middle
-		content:   cfg.make_rows()
+	mut drums := []View{cap: 3}
 
-		amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
-			layout.shape.on_mouse_scroll = fn [cfg] (layout &Layout, mut e Event, mut w Window) {
-				if cfg.on_change == unsafe { nil } {
-					return
-				}
+	// Track drum order for scroll hit detection
+	mut drum_order := []string{cap: 3}
 
-				new_date := match e.scroll_y > 0 {
-					true { cfg.selected_date.add(time.hour * -24) }
-					else { cfg.selected_date.add(time.hour * 24) }
-				}
+	// Calculate drum width based on font size.
+	// Month names are longest ("September" = 9 chars), years are 4 digits.
+	// Approximate char width as 0.6 * font_size.
+	font_size := cfg.text_style.size
+	month_drum_width := if cfg.long_months { font_size * 8.0 } else { font_size * 4.0 }
+	day_drum_width := font_size * 2.5 // 2 digits + padding
+	year_drum_width := font_size * 4.0 // 4 digits + padding
 
-				e.is_handled = true
-				cfg.on_change(new_date, mut w)
+	// Calculate total min_width if not specified
+	spacing := f32(4)
+	padding := f32(10) // padding_small
+	calculated_min_width := match cfg.display_mode {
+		.day_month_year, .month_day_year {
+			day_drum_width + month_drum_width + year_drum_width + spacing * 2 + padding * 2
+		}
+		.month_year {
+			month_drum_width + year_drum_width + spacing + padding * 2
+		}
+		.year_only {
+			year_drum_width + padding * 2
+		}
+	}
+	min_width := if cfg.min_width > 0 { cfg.min_width } else { calculated_min_width }
+	month_format := if cfg.long_months { month_format_long } else { month_format_short }
+
+	match cfg.display_mode {
+		.day_month_year {
+			drums << cfg.make_drum('day_drum', cfg.selected_date.day, 1, time.days_in_month(cfg.selected_date.month,
+				cfg.selected_date.year) or { 31 }, day_format, day_drum_width)
+			drums << cfg.make_drum('month_drum', cfg.selected_date.month, 1, 12, month_format,
+				month_drum_width)
+			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year,
+				cfg.max_year, year_format, year_drum_width)
+			drum_order = ['day_drum', 'month_drum', 'year_drum']
+		}
+		.month_day_year {
+			drums << cfg.make_drum('month_drum', cfg.selected_date.month, 1, 12, month_format,
+				month_drum_width)
+			drums << cfg.make_drum('day_drum', cfg.selected_date.day, 1, time.days_in_month(cfg.selected_date.month,
+				cfg.selected_date.year) or { 31 }, day_format, day_drum_width)
+			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year,
+				cfg.max_year, year_format, year_drum_width)
+			drum_order = ['month_drum', 'day_drum', 'year_drum']
+		}
+		.month_year {
+			drums << cfg.make_drum('month_drum', cfg.selected_date.month, 1, 12, month_format,
+				month_drum_width)
+			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year,
+				cfg.max_year, year_format, year_drum_width)
+			drum_order = ['month_drum', 'year_drum']
+		}
+		.year_only {
+			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year,
+				cfg.max_year, year_format, year_drum_width)
+			drum_order = ['year_drum']
+		}
+	}
+
+	return row(
+		name:         'roller_date_picker'
+		id:           cfg.id
+		id_focus:     cfg.id_focus
+		min_width:    min_width
+		max_width:    cfg.max_width
+		color:        cfg.color
+		fill:         true
+		padding:      padding_small
+		spacing:      4
+		h_align:      .center
+		v_align:      .middle
+		on_keydown:   cfg.on_keydown
+		content:      drums
+		amend_layout: fn [cfg, drum_order] (mut layout Layout, mut w Window) {
+			layout.shape.on_mouse_scroll = fn [cfg, drum_order] (ly &Layout, mut e Event, mut w Window) {
+				cfg.on_scroll(ly, drum_order, mut e, mut w)
 			}
 		}
 	)
 }
 
-fn (cfg &RollerDatePickerCfg) make_rows() []View {
-	mut rows := []View{}
+fn day_format(v int) string {
+	return '${v:02}'
+}
 
-	// Format dates: -1 to +1 days
-	for i in -1 .. 2 {
-		// Calculate date offset (approx adding hours)
-		t := cfg.selected_date.add(time.hour * 24 * i)
+fn month_format_short(v int) string {
+	months := ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']!
+	return months[v - 1]
+}
 
-		// Styling
+fn month_format_long(v int) string {
+	months := ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+		'October', 'November', 'December']!
+	return months[v - 1]
+}
+
+fn year_format(v int) string {
+	return v.str()
+}
+
+// on_scroll handles scroll events and dispatches to the correct drum based on mouse position
+fn (cfg &RollerDatePickerCfg) on_scroll(layout &Layout, drum_order []string, mut e Event, mut w Window) {
+	if cfg.on_change == unsafe { nil } {
+		return
+	}
+
+	// Find which drum column the mouse is over
+	for i, child in layout.children {
+		if child.shape.point_in_shape(e.mouse_x, e.mouse_y) {
+			if i < drum_order.len {
+				drum_name := drum_order[i]
+				delta := if e.scroll_y > 0 { -1 } else { 1 }
+
+				match drum_name {
+					'day_drum' { cfg.adjust_day(delta, mut w) }
+					'month_drum' { cfg.adjust_month(delta, mut w) }
+					'year_drum' { cfg.adjust_year(delta, mut w) }
+					else {}
+				}
+				e.is_handled = true
+				return
+			}
+		}
+	}
+}
+
+// make_drum creates a drum column with the given parameters.
+fn (cfg &RollerDatePickerCfg) make_drum(name string, value int, min int, max int, format fn (int) string, drum_width f32) View {
+	half := cfg.visible_items / 2
+	mut items := []View{cap: cfg.visible_items}
+
+	for i in -half .. half + 1 {
+		offset_value := value + i
+		// Wrap value for display
+		display_value := if offset_value < min {
+			max - (min - offset_value - 1)
+		} else if offset_value > max {
+			min + (offset_value - max - 1)
+		} else {
+			offset_value
+		}
+
+		// Calculate fade based on distance from center
+		distance := if i < 0 { -i } else { i }
+		alpha := match distance {
+			0 { u8(255) }
+			1 { u8(150) }
+			else { u8(80) }
+		}
+
 		mut style := cfg.text_style
 		if i == 0 {
-			// Center item: Highlight
+			// Center item: larger and fully visible
 			style = TextStyle{
 				...style
-				size: style.size + 2
+				size: style.size + 4
 			}
 		} else {
-			// Off-center: Fade
+			// Faded items
 			style = TextStyle{
 				...style
 				color: Color{
 					...style.color
-					a: 100 // Faded
+					a: alpha
 				}
 			}
 		}
 
-		rows << row(
+		items << row(
 			h_align: .center
-			padding: padding_small
-			sizing:  fill_fit
+			v_align: .middle
+			height:  cfg.item_height
+			width:   drum_width
+			sizing:  fixed_fixed
 			content: [
-				text(text: t.custom_format('D'), min_width: 20, text_style: style),
-				rectangle(sizing: fill_fit),
-				text(text: t.custom_format('MMM'), text_style: style),
-				rectangle(sizing: fill_fit),
-				text(text: t.custom_format('YYYY'), text_style: style),
+				text(text: format(display_value), text_style: style),
 			]
 		)
 	}
 
-	return rows
+	return column(
+		name:    name
+		width:   drum_width
+		sizing:  fixed_fit
+		padding: padding_none
+		spacing: 0
+		h_align: .center
+		content: items
+	)
+}
+
+// on_keydown handles keyboard navigation with modifier keys.
+fn (cfg &RollerDatePickerCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
+	if cfg.on_change == unsafe { nil } {
+		return
+	}
+
+	// Determine direction
+	delta := match e.key_code {
+		.up { -1 }
+		.down { 1 }
+		else { return }
+	}
+
+	// Determine which drum to adjust based on modifiers
+	match true {
+		e.modifiers.has(.shift) {
+			// Shift: adjust day
+			cfg.adjust_day(delta, mut w)
+			e.is_handled = true
+		}
+		e.modifiers.has(.alt) {
+			// Alt: adjust month
+			cfg.adjust_month(delta, mut w)
+			e.is_handled = true
+		}
+		e.modifiers == .none {
+			// No modifier: adjust year
+			cfg.adjust_year(delta, mut w)
+			e.is_handled = true
+		}
+		else {}
+	}
+}
+
+fn (cfg &RollerDatePickerCfg) adjust_day(delta int, mut w Window) {
+	max_days := time.days_in_month(cfg.selected_date.month, cfg.selected_date.year) or { 31 }
+	mut new_day := cfg.selected_date.day + delta
+
+	if new_day < 1 {
+		new_day = max_days
+	} else if new_day > max_days {
+		new_day = 1
+	}
+
+	new_date := time.new(
+		year:  cfg.selected_date.year
+		month: cfg.selected_date.month
+		day:   new_day
+	)
+	cfg.on_change(new_date, mut w)
+}
+
+fn (cfg &RollerDatePickerCfg) adjust_month(delta int, mut w Window) {
+	mut new_month := cfg.selected_date.month + delta
+
+	if new_month < 1 {
+		new_month = 12
+	} else if new_month > 12 {
+		new_month = 1
+	}
+
+	max_days := time.days_in_month(new_month, cfg.selected_date.year) or { 31 }
+	new_day := if cfg.selected_date.day > max_days { max_days } else { cfg.selected_date.day }
+
+	new_date := time.new(
+		year:  cfg.selected_date.year
+		month: new_month
+		day:   new_day
+	)
+	cfg.on_change(new_date, mut w)
+}
+
+fn (cfg &RollerDatePickerCfg) adjust_year(delta int, mut w Window) {
+	mut new_year := cfg.selected_date.year + delta
+
+	if new_year < cfg.min_year {
+		new_year = cfg.min_year
+	} else if new_year > cfg.max_year {
+		new_year = cfg.max_year
+	}
+
+	max_days := time.days_in_month(cfg.selected_date.month, new_year) or { 31 }
+	new_day := if cfg.selected_date.day > max_days { max_days } else { cfg.selected_date.day }
+
+	new_date := time.new(
+		year:  new_year
+		month: cfg.selected_date.month
+		day:   new_day
+	)
+	cfg.on_change(new_date, mut w)
 }
