@@ -32,7 +32,7 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut w
 		return cursor_pos
 	}
 
-	rect := shape.text_layout.get_char_rect(byte_idx) or {
+	rect := shape.vglyph_layout.get_char_rect(byte_idx) or {
 		if byte_idx >= shape.text.len && shape.text.len > 0 {
 			return cursor_pos
 		}
@@ -45,7 +45,7 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut w
 	target_x := if cursor_offset >= 0 { cursor_offset } else { current_x }
 	target_y := current_y - (rect.height * lines_up) - (shape.text_style.line_spacing * lines_up)
 
-	new_byte_idx := shape.text_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
+	new_byte_idx := shape.vglyph_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
 
 	return byte_to_rune_index(shape.text, new_byte_idx)
 }
@@ -62,7 +62,7 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, m
 		return cursor_pos
 	}
 
-	rect := shape.text_layout.get_char_rect(byte_idx) or { return cursor_pos }
+	rect := shape.vglyph_layout.get_char_rect(byte_idx) or { return cursor_pos }
 
 	current_x := rect.x
 	current_y := rect.y
@@ -71,7 +71,7 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, m
 	target_y := current_y + (rect.height * lines_down) +
 		(shape.text_style.line_spacing * lines_down)
 
-	new_byte_idx := shape.text_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
+	new_byte_idx := shape.vglyph_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
 
 	return byte_to_rune_index(shape.text, new_byte_idx)
 }
@@ -152,7 +152,7 @@ fn cursor_start_of_line(shape Shape, pos int) int {
 		return 0
 	}
 	// Find which line contains the index
-	for line in shape.text_layout.lines {
+	for line in shape.vglyph_layout.lines {
 		end := line.start_index + line.length
 		if byte_idx >= line.start_index && byte_idx < end {
 			return byte_to_rune_index(shape.text, line.start_index)
@@ -160,8 +160,8 @@ fn cursor_start_of_line(shape Shape, pos int) int {
 	}
 
 	// If not found, check if it's at the very end of the last line
-	if shape.text_layout.lines.len > 0 {
-		last := shape.text_layout.lines.last()
+	if shape.vglyph_layout.lines.len > 0 {
+		last := shape.vglyph_layout.lines.last()
 		last_end := last.start_index + last.length
 		if byte_idx == last_end {
 			return byte_to_rune_index(shape.text, last.start_index)
@@ -180,13 +180,13 @@ fn cursor_end_of_line(shape Shape, pos int) int {
 		return shape.text.len
 	}
 
-	for i, line in shape.text_layout.lines {
+	for i, line in shape.vglyph_layout.lines {
 		end := line.start_index + line.length
 		if byte_idx >= line.start_index && byte_idx <= end {
 			// Return end of this line.
 			// If it's the last line, text.len.
 			mut limit := end
-			if i < shape.text_layout.lines.len - 1 {
+			if i < shape.vglyph_layout.lines.len - 1 {
 				// Check if line ends with newline (it likely does if hard wrap)
 				if limit > 0 && shape.text[limit - 1] == `\n` {
 					limit--
@@ -250,10 +250,10 @@ fn offset_from_cursor_position(shape Shape, cursor_position int, mut window Wind
 	if !shape.has_text_layout() {
 		return 0
 	}
-	rect := shape.text_layout.get_char_rect(byte_idx) or {
+	rect := shape.vglyph_layout.get_char_rect(byte_idx) or {
 		// If at end, maybe get end of last line?
-		if shape.text_layout.lines.len > 0 {
-			for line in shape.text_layout.lines {
+		if shape.vglyph_layout.lines.len > 0 {
+			for line in shape.vglyph_layout.lines {
 				end := line.start_index + line.length
 				if byte_idx == end {
 					return line.rect.x + line.rect.width
@@ -362,7 +362,7 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 		return -1
 	}
 
-	rect := shape.text_layout.get_char_rect(byte_idx) or { gg.Rect{} }
+	rect := shape.vglyph_layout.get_char_rect(byte_idx) or { gg.Rect{} }
 
 	cursor_top := rect.y
 	cursor_bottom := rect.y + rect.height
@@ -429,7 +429,7 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	if !shape.has_text_layout() {
 		return 0
 	}
-	byte_idx := shape.text_layout.get_closest_offset(rel_x, rel_y)
+	byte_idx := shape.vglyph_layout.get_closest_offset(rel_x, rel_y)
 	return byte_to_rune_index(shape.text, byte_idx)
 }
 

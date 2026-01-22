@@ -17,9 +17,8 @@ pub mut:
 	image_name string // filename of image
 
 	// Pointer fields (8 bytes)
-	text_layout     &vglyph.Layout                         = unsafe { nil }
-	rtf_layout      &vglyph.Layout                         = unsafe { nil } // rich text format layout
-	text_spans      &datatypes.LinkedList[TextSpan]        = unsafe { nil } // deprecated: use rtf_layout
+	vglyph_layout   &vglyph.Layout                         = unsafe { nil } // unified layout for text and rtf
+	text_spans      &datatypes.LinkedList[TextSpan]        = unsafe { nil } // deprecated: use vglyph_layout
 	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
@@ -105,11 +104,11 @@ pub fn (shape &Shape) point_in_shape(x f32, y f32) bool {
 // has_text_layout returns true if the shape has a valid vglyph text layout.
 @[inline]
 pub fn (shape &Shape) has_text_layout() bool {
-	return shape.text_layout != unsafe { nil }
+	return shape.vglyph_layout != unsafe { nil } && shape.shape_type == .text
 }
 
 // has_rtf_layout returns true if the shape has a valid vglyph rich text layout.
 @[inline]
 pub fn (shape &Shape) has_rtf_layout() bool {
-	return shape.rtf_layout != unsafe { nil }
+	return shape.vglyph_layout != unsafe { nil } && shape.shape_type == .rtf
 }

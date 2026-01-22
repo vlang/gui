@@ -274,7 +274,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	byte_end := rune_to_byte_index(shape.text, end)
 
 	if shape.has_text_layout() {
-		for line in shape.text_layout.lines {
+		for line in shape.vglyph_layout.lines {
 			draw_x := shape.x + shape.padding.left + line.rect.x
 			draw_y := shape.y + shape.padding.top + line.rect.y
 
@@ -354,11 +354,11 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 						} else {
 							// Optimization: Use cached layout geometry
 							// Get rect for start char
-							r_start := shape.text_layout.get_char_rect(i_start) or { gg.Rect{} }
+							r_start := shape.vglyph_layout.get_char_rect(i_start) or { gg.Rect{} }
 
 							// Get rect for end char (or end of line)
 							x_end := if i_end < l_end && shape.text[i_end] != `\n` {
-								r_end := shape.text_layout.get_char_rect(i_end) or {
+								r_end := shape.vglyph_layout.get_char_rect(i_end) or {
 									gg.Rect{
 										x: line.rect.width
 									}
@@ -403,10 +403,10 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 
 			// Use vglyph to get the rect
 			rect := if shape.has_text_layout() {
-				shape.text_layout.get_char_rect(byte_idx) or {
+				shape.vglyph_layout.get_char_rect(byte_idx) or {
 					// If not found, check if it's at the very end
-					if byte_idx >= shape.text.len && shape.text_layout.lines.len > 0 {
-						last_line := shape.text_layout.lines.last()
+					if byte_idx >= shape.text.len && shape.vglyph_layout.lines.len > 0 {
+						last_line := shape.vglyph_layout.lines.last()
 						// Correction: use layout logic relative to shape
 						gg.Rect{
 							x:      last_line.rect.x + last_line.rect.width
@@ -457,7 +457,7 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 	// Use vglyph layout if available (new API)
 	if shape.has_rtf_layout() {
 		window.renderers << DrawLayout{
-			layout: shape.rtf_layout
+			layout: shape.vglyph_layout
 			x:      shape.x
 			y:      shape.y
 		}

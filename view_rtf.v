@@ -62,7 +62,7 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 		min_width:     rtf.min_width
 		text_mode:     rtf.mode
 		sizing:        rtf.sizing
-		rtf_layout:    &layout
+		vglyph_layout: &layout
 		rich_text:     rtf.rich_text
 		on_click:      rtf_on_click
 		on_mouse_move: rtf_mouse_move
@@ -100,7 +100,7 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 		return
 	}
 	// Check for links by finding which run the mouse is over
-	for run in layout.shape.rtf_layout.items {
+	for run in layout.shape.vglyph_layout.items {
 		if run.is_object {
 			continue
 		}
@@ -128,7 +128,7 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 		return
 	}
 	// Find the clicked run and check if it's a link
-	for run in layout.shape.rtf_layout.items {
+	for run in layout.shape.vglyph_layout.items {
 		if run.is_object {
 			continue
 		}
