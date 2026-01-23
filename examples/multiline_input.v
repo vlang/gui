@@ -1,4 +1,5 @@
 import gui
+import strings.lorem
 
 // Multiline Input Demo
 // =============================
@@ -45,7 +46,7 @@ fn main() {
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
 			mut app := w.state[MultilineApp]()
-			app.text = gui.lorem_generate(paragraphs: 10)
+			app.text = lorem.generate(paragraphs: 10)
 			w.update_view(main_view)
 			w.set_id_focus(input_id_focus)
 		}

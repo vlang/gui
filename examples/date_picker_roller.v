@@ -40,7 +40,7 @@ fn main_view(mut w gui.Window) gui.View {
 		h_align: .center
 		spacing: 20
 		content: [
-			toggle_theme(app),
+			app.toggle_theme(),
 			gui.date_picker_roller(
 				id:            'picker1'
 				id_focus:      1
@@ -82,7 +82,7 @@ fn main_view(mut w gui.Window) gui.View {
 	)
 }
 
-fn toggle_theme(app &RollerPickerApp) gui.View {
+fn (app &RollerPickerApp) toggle_theme() gui.View {
 	return gui.row(
 		h_align: .end
 		sizing:  gui.fill_fit
