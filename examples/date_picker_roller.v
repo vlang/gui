@@ -10,7 +10,7 @@ import time
 struct RollerPickerApp {
 pub mut:
 	date         time.Time = time.now()
-	display_mode gui.RollerDatePickerDisplayMode
+	display_mode gui.DatePickerRollerDisplayMode
 	light_theme  bool
 	long_months  bool
 }
@@ -41,7 +41,7 @@ fn main_view(mut w gui.Window) gui.View {
 		spacing: 20
 		content: [
 			toggle_theme(app),
-			gui.roller_date_picker(
+			gui.date_picker_roller(
 				id:            'picker1'
 				id_focus:      1
 				selected_date: app.date
@@ -130,7 +130,7 @@ fn display_mode_selector(app &RollerPickerApp) gui.View {
 		]
 		on_select: fn (value string, mut w gui.Window) {
 			mut a := w.state[RollerPickerApp]()
-			a.display_mode = unsafe { gui.RollerDatePickerDisplayMode(value.int()) }
+			a.display_mode = unsafe { gui.DatePickerRollerDisplayMode(value.int()) }
 		}
 	)
 }

@@ -19,7 +19,7 @@ mut:
 	select_highlight         map[string]int                   // [id select] -> highlighted index
 	tree_state               map[string]map[string]bool       // [tree id] -> [node id ] -> open/closed
 	date_picker_state        map[string]DatePickerState       // [id date_picker -> DatePickerState
-	roller_date_picker_state map[string]RollerDatePickerState // [id] -> RollerDatePickerState
+	date_picker_roller_state map[string]DatePickerRollerState // [id] -> DatePickerRollerState
 	mouse_lock               MouseLockCfg                     // mouse down/move/up/scroll/sliders, etc. use this
 	id_focus                 u32  // current view that has focus
 	cursor_on_sticky         bool // keeps the cursor visible during cursor movement

@@ -2,30 +2,30 @@ module gui
 
 import time
 
-// RollerDatePickerDisplayMode controls which drums are visible in the picker.
-pub enum RollerDatePickerDisplayMode as u8 {
+// DatePickerRollerDisplayMode controls which drums are visible in the picker.
+pub enum DatePickerRollerDisplayMode as u8 {
 	day_month_year // DD MMM YYYY (default)
 	month_day_year // MMM DD YYYY
 	month_year     // MMM YYYY
 	year_only      // YYYY
 }
 
-// RollerDatePickerState persists scroll animation offsets across frames.
-pub struct RollerDatePickerState {
+// DatePickerRollerState persists scroll animation offsets across frames.
+pub struct DatePickerRollerState {
 pub mut:
 	scroll_offset_day   f32
 	scroll_offset_month f32
 	scroll_offset_year  f32
 }
 
-// RollerDatePickerCfg configures a [roller_date_picker](#roller_date_picker)
+// DatePickerRollerCfg configures a [date_picker_roller](#date_picker_roller)
 @[heap; minify]
-pub struct RollerDatePickerCfg {
+pub struct DatePickerRollerCfg {
 pub:
 	id            string @[required]
 	id_focus      u32
 	selected_date time.Time @[required]
-	display_mode  RollerDatePickerDisplayMode
+	display_mode  DatePickerRollerDisplayMode
 	min_year      int = 1900
 	max_year      int = 2100
 	item_height   f32 = 32
@@ -38,13 +38,13 @@ pub:
 	on_change     fn (time.Time, mut Window) = unsafe { nil }
 }
 
-// roller_date_picker creates a date picker using a drum/roller mechanism.
+// date_picker_roller creates a date picker using a drum/roller mechanism.
 // Each drum (day, month, year) scrolls independently. Use mouse scroll over
 // individual drums or keyboard shortcuts:
 //   - Shift + Up/Down: day
 //   - Alt + Up/Down: month
 //   - Up/Down (no modifier): year
-pub fn roller_date_picker(cfg RollerDatePickerCfg) View {
+pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 	mut drums := []View{cap: 3}
 
 	// Track drum order for scroll hit detection
@@ -109,7 +109,7 @@ pub fn roller_date_picker(cfg RollerDatePickerCfg) View {
 	}
 
 	return row(
-		name:         'roller_date_picker'
+		name:         'date_picker_roller'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		min_width:    min_width
@@ -150,7 +150,7 @@ fn year_format(v int) string {
 }
 
 // on_scroll handles scroll events and dispatches to the correct drum based on mouse position
-fn (cfg &RollerDatePickerCfg) on_scroll(layout &Layout, drum_order []string, mut e Event, mut w Window) {
+fn (cfg &DatePickerRollerCfg) on_scroll(layout &Layout, drum_order []string, mut e Event, mut w Window) {
 	if cfg.on_change == unsafe { nil } {
 		return
 	}
@@ -176,7 +176,7 @@ fn (cfg &RollerDatePickerCfg) on_scroll(layout &Layout, drum_order []string, mut
 }
 
 // make_drum creates a drum column with the given parameters.
-fn (cfg &RollerDatePickerCfg) make_drum(name string, value int, min int, max int, format fn (int) string, drum_width f32) View {
+fn (cfg &DatePickerRollerCfg) make_drum(name string, value int, min int, max int, format fn (int) string, drum_width f32) View {
 	half := cfg.visible_items / 2
 	mut items := []View{cap: cfg.visible_items}
 
@@ -241,7 +241,7 @@ fn (cfg &RollerDatePickerCfg) make_drum(name string, value int, min int, max int
 }
 
 // on_keydown handles keyboard navigation with modifier keys.
-fn (cfg &RollerDatePickerCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
+fn (cfg &DatePickerRollerCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 	if cfg.on_change == unsafe { nil } {
 		return
 	}
@@ -274,7 +274,7 @@ fn (cfg &RollerDatePickerCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 	}
 }
 
-fn (cfg &RollerDatePickerCfg) adjust_day(delta int, mut w Window) {
+fn (cfg &DatePickerRollerCfg) adjust_day(delta int, mut w Window) {
 	max_days := time.days_in_month(cfg.selected_date.month, cfg.selected_date.year) or { 31 }
 	mut new_day := cfg.selected_date.day + delta
 
@@ -292,7 +292,7 @@ fn (cfg &RollerDatePickerCfg) adjust_day(delta int, mut w Window) {
 	cfg.on_change(new_date, mut w)
 }
 
-fn (cfg &RollerDatePickerCfg) adjust_month(delta int, mut w Window) {
+fn (cfg &DatePickerRollerCfg) adjust_month(delta int, mut w Window) {
 	mut new_month := cfg.selected_date.month + delta
 
 	if new_month < 1 {
@@ -312,7 +312,7 @@ fn (cfg &RollerDatePickerCfg) adjust_month(delta int, mut w Window) {
 	cfg.on_change(new_date, mut w)
 }
 
-fn (cfg &RollerDatePickerCfg) adjust_year(delta int, mut w Window) {
+fn (cfg &DatePickerRollerCfg) adjust_year(delta int, mut w Window) {
 	mut new_year := cfg.selected_date.year + delta
 
 	if new_year < cfg.min_year {
