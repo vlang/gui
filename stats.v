@@ -217,7 +217,7 @@ fn (window &Window) context_stats() string {
 	tx << 'frames drawn ${cm(usize(window.context().frame)):20}'
 	tx << 'window size  ${win_size:20}'
 	tx << 'screen size  ${scr_size:20}'
-	tx << 'high dpi     ${gg.high_dpi():20}'
+	tx << 'scale        ${window.ui.scale:20}'
 	return tx.join('\n')
 }
 
