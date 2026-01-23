@@ -1,9 +1,9 @@
 module gui
 
 pub const radius_none = f32(0)
-pub const radius_small = f32(3)
-pub const radius_medium = f32(5)
-pub const radius_large = f32(7)
+pub const radius_small = f32(3.5)
+pub const radius_medium = f32(5.5)
+pub const radius_large = f32(7.5)
 pub const radius_border = radius_medium + 2
 
 pub const size_text_medium = 16

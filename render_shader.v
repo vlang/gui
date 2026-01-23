@@ -77,7 +77,7 @@ const fs_glsl = '
         // Normalize by gradient length for uniform anti-aliasing
         float grad_len = length(vec2(dFdx(d), dFdy(d)));
         d = d / max(grad_len, 0.001);
-        float alpha = 1.0 - smoothstep(-0.5, 0.5, d);
+        float alpha = 1.0 - smoothstep(-0.59, 0.59, d);
         frag_color = vec4(color.rgb, color.a * alpha);
         
         // sgl workaround: dummy texture sample
@@ -157,7 +157,7 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
     // Normalize by gradient length for uniform anti-aliasing
     float grad_len = length(float2(dfdx(d), dfdy(d)));
     d = d / max(grad_len, 0.001);
-    float alpha = 1.0 - smoothstep(-0.5, 0.5, d);
+    float alpha = 1.0 - smoothstep(-0.59, 0.59, d);
     float4 frag_color = float4(in.color.rgb, in.color.a * alpha);
     
     // sgl workaround: dummy texture sample
