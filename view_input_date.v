@@ -37,7 +37,6 @@ pub:
 	radius                   f32 = gui_theme.date_picker_style.radius
 	radius_border            f32 = gui_theme.date_picker_style.radius_border
 	id_focus                 u32
-	id_scroll                u32 = u32(459342148) // used in year-month picker
 	disabled                 bool
 	invisible                bool
 	select_multiple          bool
@@ -139,7 +138,6 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 						cell_spacing:             cfg.cell_spacing
 						radius:                   cfg.radius
 						radius_border:            cfg.radius_border
-						id_scroll:                cfg.id_scroll
 						disabled:                 cfg.disabled
 						invisible:                cfg.invisible
 						select_multiple:          cfg.select_multiple
