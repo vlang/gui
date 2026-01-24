@@ -25,7 +25,7 @@ pub:
 	color_border_focus       Color     = gui_theme.date_picker_style.color_border_focus
 	color_select             Color     = gui_theme.date_picker_style.color_select
 	padding                  Padding   = gui_theme.date_picker_style.padding
-	padding_border           Padding   = gui_theme.date_picker_style.padding_border
+	border_width             f32       = gui_theme.date_picker_style.border_width
 	sizing                   Sizing
 	width                    f32
 	height                   f32
@@ -99,7 +99,8 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 				radius_border:      cfg.radius_border
 				id_focus:           cfg.id_focus
 				padding:            cfg.padding
-				padding_border:     cfg.padding_border
+				border_width:       cfg.border_width
+
 				color:              cfg.color
 				color_hover:        cfg.color_hover
 				color_border:       cfg.color_border
@@ -112,7 +113,8 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 			row(
 				float:          true
 				float_anchor:   .bottom_left
-				float_offset_y: -cfg.padding_border.bottom
+				float_offset_y: -cfg.border_width
+
 				invisible:      !window.view_state.input_date_state[cfg.id]
 				padding:        padding_none
 				content:        [
@@ -134,7 +136,8 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 						color_border_focus:       cfg.color_border_focus
 						color_select:             cfg.color_select
 						padding:                  cfg.padding
-						padding_border:           cfg.padding_border
+						border_width:           cfg.border_width
+
 						cell_spacing:             cfg.cell_spacing
 						radius:                   cfg.radius
 						radius_border:            cfg.radius_border

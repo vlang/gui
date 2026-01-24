@@ -104,7 +104,8 @@ fn get_row(ops []string) []gui.View {
 			sizing:         gui.fixed_fixed
 			h_align:        .center
 			v_align:        .middle
-			padding_border: gui.padding_none
+			border_width:   0
+
 			padding:        gui.padding_none
 			on_click:       btn_click
 		)

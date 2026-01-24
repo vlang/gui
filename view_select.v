@@ -16,7 +16,8 @@ pub:
 	color_focus        Color     = gui_theme.select_style.color_focus
 	color_select       Color     = gui_theme.select_style.color_select
 	padding            Padding   = gui_theme.select_style.padding
-	padding_border     Padding   = gui_theme.select_style.padding_border
+	border_width       f32       = gui_theme.select_style.border_width
+
 	text_style         TextStyle = gui_theme.select_style.text_style
 	subheading_style   TextStyle = gui_theme.select_style.subheading_style
 	placeholder_style  TextStyle = gui_theme.select_style.placeholder_style
@@ -99,9 +100,11 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 			float:          true
 			float_anchor:   .bottom_left
 			float_tie_off:  .top_left
-			float_offset_y: -cfg.padding_border.top
+			float_offset_y: -cfg.border_width
+
 			fill:           cfg.fill
-			padding:        cfg.padding_border
+			border_width:   cfg.border_width
+
 			radius:         cfg.radius
 			color:          cfg.color_border
 			content:        [
@@ -134,7 +137,8 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 		fill:         true
 		min_width:    cfg.min_width
 		max_width:    cfg.max_width
-		padding:      cfg.padding_border
+		border_width: cfg.border_width
+
 		radius:       cfg.radius
 		color:        cfg.color_border
 		sizing:       cfg.sizing

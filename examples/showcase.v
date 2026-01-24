@@ -246,32 +246,37 @@ fn buttons(w &gui.Window) gui.View {
 				content: [
 					gui.button(
 						id_focus:       100
-						padding_border: gui.padding_none
+						border_width:   0
+
 						content:        [gui.text(text: 'No Border')]
 						on_click:       button_click
 					),
 					gui.button(
 						id_focus:       101
-						padding_border: gui.padding_one
+						border_width:   1
+
 						content:        [gui.text(text: 'Thin Border')]
 						on_click:       button_click
 					),
 					gui.button(
 						id_focus:       102
-						padding_border: gui.padding_two
+						border_width:   2
+
 						content:        [gui.text(text: 'Thicker Border')]
 						on_click:       button_click
 					),
 					gui.button(
 						id_focus:       103
-						padding_border: gui.padding_three
+						border_width:   3
+
 						fill_border:    false
 						content:        [gui.text(text: 'Detached Border')]
 						on_click:       button_click
 					),
 					gui.button(
 						id_focus:       104
-						padding_border: gui.padding_two
+						border_width:   2
+
 						on_click:       fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.button_clicks += 1
@@ -327,7 +332,8 @@ fn inputs(w &gui.Window) gui.View {
 						width:           150
 						sizing:          gui.fixed_fit
 						text:            app.input_text
-						padding_border:  gui.padding_none
+						border_width:    0
+
 						placeholder:     'Plain...'
 						mode:            .single_line
 						on_text_changed: text_changed
@@ -337,7 +343,8 @@ fn inputs(w &gui.Window) gui.View {
 						width:           150
 						sizing:          gui.fixed_fit
 						text:            app.input_text
-						padding_border:  gui.padding_one
+						border_width:    1
+
 						placeholder:     'Thin Border...'
 						mode:            .single_line
 						on_text_changed: text_changed
@@ -347,7 +354,8 @@ fn inputs(w &gui.Window) gui.View {
 						width:           150
 						sizing:          gui.fixed_fit
 						text:            app.input_text
-						padding_border:  gui.padding_two
+						border_width:    2
+
 						placeholder:     'Thicker Border...'
 						mode:            .single_line
 						on_text_changed: text_changed
@@ -357,7 +365,8 @@ fn inputs(w &gui.Window) gui.View {
 						width:           150
 						sizing:          gui.fixed_fit
 						text:            app.input_text
-						padding_border:  gui.padding_one
+						border_width:    1
+
 						placeholder:     'Password...'
 						is_password:     true
 						mode:            .single_line
@@ -375,7 +384,8 @@ fn inputs(w &gui.Window) gui.View {
 						width:           300
 						sizing:          gui.fixed_fit
 						text:            app.input_multiline
-						padding_border:  gui.padding_one
+						border_width:    1
+
 						placeholder:     'Multline...'
 						mode:            .multiline
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {

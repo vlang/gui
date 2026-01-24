@@ -60,7 +60,8 @@ fn main_view(window &gui.Window) gui.View {
 						text:            app.input_a
 						width:           input_width
 						sizing:          gui.fixed_fit
-						padding_border:  gui.padding_one
+						border_width:  1
+
 						is_password:     true
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()
@@ -72,7 +73,8 @@ fn main_view(window &gui.Window) gui.View {
 						text:            app.input_a
 						width:           input_width
 						sizing:          gui.fixed_fit
-						padding_border:  gui.padding_one
+						border_width:  1
+
 						radius:          0
 						radius_border:   0
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
@@ -85,7 +87,8 @@ fn main_view(window &gui.Window) gui.View {
 						text:            app.input_a
 						width:           input_width
 						sizing:          gui.fixed_fit
-						padding_border:  gui.padding_small
+						border_width:  1
+
 						fill_border:     false
 						radius:          0
 						radius_border:   0

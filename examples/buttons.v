@@ -68,7 +68,8 @@ fn main_view(mut window gui.Window) gui.View {
 						min_width:      b_width
 						max_width:      b_width
 						content:        [gui.text(text: button_text)]
-						padding_border: gui.padding_two
+						border_width:   2
+
 						on_click:       click_handler
 					)),
 					button_row('With focus border', gui.button(
@@ -76,7 +77,8 @@ fn main_view(mut window gui.Window) gui.View {
 						min_width:      b_width
 						max_width:      b_width
 						content:        [gui.text(text: button_text)]
-						padding_border: gui.padding_two
+						border_width:   2
+
 						on_click:       click_handler
 					)),
 					button_row('With detached border', gui.button(
@@ -84,7 +86,8 @@ fn main_view(mut window gui.Window) gui.View {
 						min_width:      b_width
 						max_width:      b_width
 						fill_border:    false
-						padding_border: gui.theme().padding_small
+						border_width:   1
+
 						on_click:       click_handler
 					)),
 					button_row('With other content', gui.button(
@@ -94,7 +97,8 @@ fn main_view(mut window gui.Window) gui.View {
 						color:          gui.rgb(195, 105, 0)
 						color_hover:    gui.rgb(195, 105, 0)
 						color_click:    gui.rgb(205, 115, 0)
-						padding_border: gui.padding_two
+						border_width:   2
+
 						color_border:   gui.rgb(160, 160, 160)
 						padding:        gui.padding_medium
 						v_align:        .middle

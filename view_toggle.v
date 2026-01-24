@@ -20,7 +20,6 @@ pub:
 	color_border_focus Color     = gui_theme.toggle_style.color_border_focus
 	color_select       Color     = gui_theme.toggle_style.color_select
 	padding            Padding   = gui_theme.toggle_style.padding
-	padding_border     Padding   = gui_theme.toggle_style.padding_border
 	border_width       f32       = gui_theme.toggle_style.border_width
 	radius             f32       = gui_theme.toggle_style.radius
 	radius_border      f32       = gui_theme.toggle_style.radius_border
@@ -39,11 +38,8 @@ pub fn toggle(cfg ToggleCfg) View {
 
 	mut content := []View{cap: 2}
 
-	border_width := if cfg.border_width == 0 && !cfg.padding_border.is_none() {
-		cfg.padding_border.width() / 2
-	} else {
-		cfg.border_width
-	}
+	border_width := cfg.border_width
+
 
 	content << row(
 		name:         'toggle box'

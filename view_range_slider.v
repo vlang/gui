@@ -23,7 +23,8 @@ pub:
 	color_left     Color   = gui_theme.range_slider_style.color_left
 	color_click    Color   = gui_theme.range_slider_style.color_click
 	padding        Padding = gui_theme.range_slider_style.padding
-	padding_border Padding = gui_theme.range_slider_style.padding_border
+	border_width   f32     = gui_theme.range_slider_style.border_width
+
 	on_change      fn (f32, mut Event, mut Window) @[required]
 	value          f32
 	min            f32
@@ -71,7 +72,8 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		invisible:    cfg.invisible
 		color:        cfg.color_border
 		radius:       cfg.radius_border
-		padding:      cfg.padding_border
+		border_width: cfg.border_width
+
 		fill:         cfg.fill_border
 		sizing:       cfg.sizing
 		h_align:      .center
@@ -103,7 +105,8 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 						height:       cfg.thumb_size
 						fill:         cfg.fill
 						color:        cfg.color_border
-						padding:      cfg.padding_border
+						padding:      pad_all(cfg.border_width)
+
 						amend_layout: cfg.amend_layout_thumb
 						content:      [
 							circle(
@@ -111,8 +114,9 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 								fill:    cfg.fill
 								color:   cfg.color_thumb
 								padding: padding_none
-								width:   cfg.thumb_size - cfg.padding_border.width()
-								height:  cfg.thumb_size - cfg.padding_border.height()
+								width:   cfg.thumb_size - (cfg.border_width * 2)
+								height:  cfg.thumb_size - (cfg.border_width * 2)
+
 							),
 						]
 					),
@@ -161,7 +165,8 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 		layout.shape.width = cfg.size
 		// interior
 		layout.children[0].shape.x += offset
-		layout.children[0].shape.width = cfg.size - cfg.padding_border.width()
+		layout.children[0].shape.width = cfg.size - (cfg.border_width * 2)
+
 		// left of thumb bar
 		layout.children[0].children[0].shape.x += offset
 		layout.children[0].children[0].shape.width = cfg.size
@@ -177,7 +182,8 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 		layout.shape.height = cfg.size
 		// interior
 		layout.children[0].shape.y += offset
-		layout.children[0].shape.height = cfg.size - cfg.padding_border.height()
+		layout.children[0].shape.height = cfg.size - (cfg.border_width * 2)
+
 		// left of thumb bar
 		layout.children[0].children[0].shape.y += offset
 		layout.children[0].children[0].shape.height = cfg.size
@@ -222,13 +228,15 @@ fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut _ Window) {
 	if cfg.vertical {
 		height := layout.parent.shape.height
 		y := f32_min(height * percent, height)
-		layout.shape.y = layout.parent.shape.y + y - cfg.padding_border.height() - radius
-		layout.children[0].shape.y = layout.shape.y + cfg.padding_border.top
+		layout.shape.y = layout.parent.shape.y + y - (cfg.border_width * 2) - radius
+		layout.children[0].shape.y = layout.shape.y + cfg.border_width
+
 	} else {
 		width := layout.parent.shape.width
 		x := f32_min(width * percent, width)
-		layout.shape.x = layout.parent.shape.x + x - cfg.padding_border.width() - radius
-		layout.children[0].shape.x = layout.shape.x + cfg.padding_border.top
+		layout.shape.x = layout.parent.shape.x + x - (cfg.border_width * 2) - radius
+		layout.children[0].shape.x = layout.shape.x + cfg.border_width
+
 	}
 }
 

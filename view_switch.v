@@ -15,7 +15,7 @@ pub:
 	color_select       Color     = gui_theme.switch_style.color_select
 	color_unselect     Color     = gui_theme.switch_style.color_unselect
 	padding            Padding   = gui_theme.switch_style.padding
-	padding_border     Padding   = gui_theme.switch_style.padding_border
+	border_width       f32       = gui_theme.switch_style.border_width
 	text_style         TextStyle = gui_theme.switch_style.text_style
 	on_click           fn (&Layout, mut Event, mut Window) @[required]
 	width              f32 = gui_theme.n2.size * f32(1.65)
@@ -33,7 +33,8 @@ pub:
 // switch creates a pill shaped box with a sliding toggle from the given [SwitchCfg](#SwitchCfg)
 pub fn switch(cfg SwitchCfg) View {
 	color := if cfg.select { cfg.color_select } else { cfg.color_unselect }
-	circle_size := cfg.height - cfg.padding.height() - cfg.padding_border.height()
+	circle_size := cfg.height - cfg.padding.height() - (cfg.border_width * 2)
+
 
 	mut content := []View{cap: 2}
 	content << row(
@@ -43,7 +44,8 @@ pub fn switch(cfg SwitchCfg) View {
 		height:       cfg.height
 		sizing:       fixed_fit
 		color:        cfg.color_border
-		padding:      cfg.padding_border
+		border_width: cfg.border_width
+
 		fill:         cfg.fill_border
 		radius:       cfg.radius_border
 		disabled:     cfg.disabled

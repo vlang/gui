@@ -82,7 +82,6 @@ pub:
 	id_scroll          u32
 	scroll_mode        ScrollMode
 	padding            Padding = gui_theme.input_style.padding
-	padding_border     Padding = gui_theme.input_style.padding_border
 	border_width       f32     = gui_theme.input_style.border_width
 	color              Color   = gui_theme.input_style.color
 	color_hover        Color   = gui_theme.input_style.color_hover
@@ -144,11 +143,8 @@ pub fn input(cfg InputCfg) View {
 	txt_style := if placeholder_active { cfg.placeholder_style } else { cfg.text_style }
 	mode := if cfg.mode == .single_line { TextMode.single_line } else { TextMode.wrap_keep_spaces }
 
-	border_width := if cfg.border_width == 0 && !cfg.padding_border.is_none() {
-		cfg.padding_border.width() / 2
-	} else {
-		cfg.border_width
-	}
+	border_width := cfg.border_width
+
 
 	return column(
 		name:            'input'
@@ -373,7 +369,8 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		ctx := w.ui
 		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
 		width := ctx.text_width(cfg.text + s)
-		if width > cfg.width - cfg.padding.width() - cfg.padding_border.width() {
+		if width > cfg.width - cfg.padding.width() - (cfg.border_width * 2) {
+
 			return cfg.text
 		}
 	}

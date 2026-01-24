@@ -17,7 +17,6 @@ pub:
 	color_hover    Color     = gui_theme.tooltip_style.color_hover
 	color_border   Color     = gui_theme.tooltip_style.color_border
 	padding        Padding   = gui_theme.tooltip_style.padding
-	padding_border Padding   = gui_theme.tooltip_style.padding_border
 	text_style     TextStyle = gui_theme.tooltip_style.text_style
 	content        []View
 	delay          time.Duration = gui_theme.tooltip_style.delay
@@ -28,7 +27,9 @@ pub:
 	anchor         FloatAttach   = .bottom_center
 	tie_off        FloatAttach
 	fill           bool = gui_theme.tooltip_style.fill
-	fill_border    bool = gui_theme.tooltip_style.fill_border
+	fill_border    bool      = gui_theme.tooltip_style.fill_border
+	border_width   f32       = gui_theme.tooltip_style.border_width
+
 }
 
 // tooltip creates a tooltip from the given [TooltipCfg](#TooltipCfg)
@@ -37,7 +38,8 @@ pub fn tooltip(cfg TooltipCfg) View {
 		name:           'tooltip border'
 		color:          cfg.color_border
 		fill:           cfg.fill_border
-		padding:        cfg.padding_border
+		border_width:   cfg.border_width
+
 		radius:         cfg.radius_border
 		float:          true
 		float_anchor:   cfg.anchor

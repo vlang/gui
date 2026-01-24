@@ -14,7 +14,6 @@ pub:
 	color_border     Color     = gui_theme.list_box_style.color_border
 	color_select     Color     = gui_theme.list_box_style.color_select
 	padding          Padding   = gui_theme.list_box_style.padding
-	padding_border   Padding   = gui_theme.list_box_style.padding_border
 	selected         []string // list of selected values. Not names
 	data             []ListBoxOption
 	on_select        fn (value []string, mut e Event, mut w Window) = unsafe { nil }
@@ -30,6 +29,8 @@ pub:
 	multiple         bool // allow multiple selections
 	fill             bool = gui_theme.list_box_style.fill
 	fill_border      bool = gui_theme.list_box_style.fill_border
+	border_width     f32  = gui_theme.list_box_style.border_width
+
 }
 
 // ListBoxOption is the data for a row in a [list_box](#list_box).
@@ -130,7 +131,8 @@ pub fn list_box(cfg ListBoxCfg) View {
 		max_height: cfg.max_height
 		color:      cfg.color_border
 		fill:       cfg.fill_border
-		padding:    cfg.padding_border
+		border_width: cfg.border_width
+
 		sizing:     cfg.sizing
 		content:    [
 			column(

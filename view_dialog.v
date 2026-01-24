@@ -41,7 +41,8 @@ pub:
 	color            Color     = gui_theme.dialog_style.color
 	color_border     Color     = gui_theme.dialog_style.color_border
 	padding          Padding   = gui_theme.dialog_style.padding
-	padding_border   Padding   = gui_theme.dialog_style.padding_border
+	border_width     f32       = gui_theme.dialog_style.border_width
+
 	title_text_style TextStyle = gui_theme.dialog_style.title_text_style
 	text_style       TextStyle = gui_theme.dialog_style.text_style
 	custom_content   []View // custom content
@@ -87,7 +88,8 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		float_tie_off: .middle_center
 		color:         cfg.color_border
 		fill:          cfg.fill_border
-		padding:       cfg.padding_border
+		border_width:  cfg.border_width
+
 		width:         cfg.width
 		height:        cfg.height
 		min_width:     cfg.min_width

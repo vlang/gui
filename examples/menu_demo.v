@@ -64,7 +64,8 @@ fn menu(mut window gui.Window) gui.View {
 		float_tie_off:  .top_center
 		id_focus:       id_focus_menu
 		radius:         0
-		padding_border: gui.padding_none
+		border_width: 0
+
 		action:         fn (id string, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[MenuApp]()
 			app.select_menu_id = id

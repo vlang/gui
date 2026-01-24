@@ -15,7 +15,6 @@ pub:
 	color_border       Color       = gui_theme.button_style.color_border
 	color_border_focus Color       = gui_theme.button_style.color_border_focus
 	padding            Padding     = gui_theme.button_style.padding
-	padding_border     Padding     = gui_theme.button_style.padding_border
 	border_width       f32         = gui_theme.button_style.border_width
 	sizing             Sizing
 	content            []View
@@ -45,7 +44,7 @@ pub:
 // gui.button(
 // 	min_width:      90
 // 	max_width:      90
-// 	padding_border: gui.padding_one
+// 	border_width:   1
 // 	content:        [gui.text(text: '${app.clicks} Clicks')]
 // 	on_click:       fn (_ &gui.Layout, _ &gui.Event, mut w gui.Window) bool {
 // 		mut app := w.state[App]()
@@ -55,11 +54,8 @@ pub:
 // )
 // ```
 pub fn button(cfg ButtonCfg) View {
-	border_width := if cfg.border_width == 0 && !cfg.padding_border.is_none() {
-		cfg.padding_border.width() / 2 // Approximate conversion if padding_border used legacy style
-	} else {
-		cfg.border_width
-	}
+	border_width := cfg.border_width
+
 
 	return row(
 		name:         'button'

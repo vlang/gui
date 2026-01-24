@@ -39,7 +39,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_hover:        cfg.color_hover
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
-			padding_border:     cfg.padding_border
+	border_width:       cfg.border_width
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 		}
@@ -61,7 +61,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding
-			padding_border:     cfg.padding_border
+	border_width:       cfg.border_width
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
@@ -72,7 +72,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:             cfg.fill
 			fill_border:      cfg.fill_border
 			padding:          cfg.padding_large
-			padding_border:   cfg.padding_border
+			border_width:     cfg.border_width
+
 			radius:           cfg.radius
 			radius_border:    cfg.radius_border
 			title_text_style: TextStyle{
@@ -87,7 +88,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:           cfg.fill
 			fill_border:    cfg.fill_border
 			padding:        cfg.padding_small
-			padding_border: cfg.padding_border
+			border_width:   cfg.border_width
+
 			radius:         cfg.radius
 			radius_border:  cfg.radius_border
 		}
@@ -100,7 +102,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding
-			padding_border:     cfg.padding_border
+	border_width:       cfg.border_width
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
@@ -127,7 +129,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:             cfg.fill
 			fill_border:      cfg.fill_border
 			padding:          cfg.padding
-			padding_border:   cfg.padding_border
+			border_width:   cfg.border_width
+
 			radius:           cfg.radius
 			radius_border:    cfg.radius_border
 			text_style:       cfg.text_style
@@ -138,7 +141,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border:        cfg.color_border
 			color_select:        cfg.color_select
 			padding:             cfg.padding_small
-			padding_border:      cfg.padding_border
+			border_width:        cfg.border_width
+
 			padding_submenu:     cfg.padding_small
 			padding_subtitle:    padding(0, cfg.padding_small.right, 0, cfg.padding_small.left)
 			radius:              cfg.radius_small
@@ -180,7 +184,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:           true
 			fill_border:    true
 			padding:        padding_none
-			padding_border: cfg.padding_border
+			border_width:   cfg.border_width
+
 			radius:         cfg.radius_small
 			radius_border:  cfg.radius_small
 		}
@@ -205,7 +210,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
-			padding_border:     cfg.padding_border
+	border_width:       cfg.border_width
 			radius:             cfg.radius_medium
 			radius_border:      cfg.radius_medium
 			text_style:         cfg.text_style
@@ -232,7 +237,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            padding_three
-			padding_border:     cfg.padding_border
+	border_width:       cfg.border_width
 			radius:             radius_large * 2
 			radius_border:      radius_large * 2
 			text_style:         cfg.text_style
@@ -249,7 +254,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            padding(1, 1, 1, 2)
-			padding_border:     cfg.padding_border
+	border_width:       cfg.border_width
 			radius:             if cfg.radius != 0 { radius_small } else { 0 }
 			radius_border:      if radius_border != 0 { radius_small } else { 0 }
 			text_style:         text_style_icon_dark
@@ -265,7 +270,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
-			padding_border:     cfg.padding_border
+	border_width:       cfg.border_width
 			radius:             cfg.radius_small
 			radius_border:      cfg.radius_small
 			text_style:         cfg.text_style
@@ -283,7 +288,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		padding_small:  cfg.padding_small
 		padding_medium: cfg.padding_medium
 		padding_large:  cfg.padding_large
-		padding_border: cfg.padding_border
+		border_width: cfg.border_width
 
 		radius_small:  cfg.radius_small
 		radius_medium: cfg.radius_medium

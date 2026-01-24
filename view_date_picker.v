@@ -72,7 +72,8 @@ pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 		fill:      cfg.fill_border
 		color:     cfg.color_border
 		invisible: cfg.invisible
-		padding:   cfg.padding_border
+		border_width: cfg.border_width
+
 		content:   [
 			column(
 				fill:    cfg.fill
@@ -108,7 +109,8 @@ pub:
 	color_border_focus       Color     = gui_theme.date_picker_style.color_border_focus
 	color_select             Color     = gui_theme.date_picker_style.color_select
 	padding                  Padding   = gui_theme.date_picker_style.padding
-	padding_border           Padding   = gui_theme.date_picker_style.padding_border
+	border_width           f32       = gui_theme.date_picker_style.border_width
+
 	cell_spacing             f32       = gui_theme.date_picker_style.cell_spacing
 	radius                   f32       = gui_theme.date_picker_style.radius
 	radius_border            f32       = gui_theme.date_picker_style.radius_border
@@ -352,7 +354,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 				min_width:      state.cell_size
 				max_width:      state.cell_size
 				max_height:     state.cell_size
-				padding_border: padding_two
+				border_width:   2
 				content:        [text(text: day)]
 				on_click:       fn [on_select, update_selections, count, state] (_ &Layout, mut e Event, mut w Window) {
 					if on_select != unsafe { nil } {
@@ -420,7 +422,7 @@ fn (cfg DatePickerCfg) cell_size(mut w Window) f32 {
 
 fn (cfg DatePickerCfg) month_picker_width(mut w Window) f32 {
 	return text_width('May', cfg.text_style, mut w) + gui_theme.button_style.padding.width() +
-		gui_theme.button_style.padding_border.width()
+		(gui_theme.button_style.border_width * 2)
 }
 
 fn (cfg DatePickerCfg) disabled(date time.Time, state DatePickerState) bool {
