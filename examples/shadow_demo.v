@@ -1,43 +1,56 @@
 import gui
 
-const color_bg = gui.Color{240, 240, 245, 255}
+@[heap]
+struct ShadowDemoApp {
+pub mut:
+	light_theme bool = true
+}
 
 fn main() {
 	mut window := gui.window(
-		title:    'Drop Shadow Demo'
-		width:    800
-		height:   800
-		bg_color: color_bg
-		on_init:  fn (mut w gui.Window) {
+		state:   &ShadowDemoApp{}
+		title:   'Drop Shadow Demo'
+		width:   800
+		height:  800
+		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
 	)
+	window.set_theme(gui.theme_light_no_padding)
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(mut w gui.Window) gui.View {
+	app := w.state[ShadowDemoApp]()
+
 	return gui.column(
 		sizing:  gui.fit_fit
 		spacing: 40
-		padding: gui.pad_all(40)
+		padding: gui.Padding{10, 40, 40, 40}
 		h_align: .center
 		content: [
-			gui.text(
-				text:       'Drop Shadow Demo'
-				text_style: gui.TextStyle{
-					size: 30
-				}
+			gui.row(
+				padding: gui.padding_none
+				content: [
+					gui.text(
+						text:       'Drop Shadow Demo'
+						text_style: gui.TextStyle{
+							size: 30
+						}
+					),
+					gui.rectangle(width: 100),
+					app.toggle_theme(),
+				]
 			),
 			gui.row(
 				spacing: 40
 				content: [
 					// Card 1: Soft shadow
 					gui.column(
-						width:  200
-						height: 150
-						radius: 10
-						color:  gui.black
-
+						width:   200
+						height:  150
+						radius:  10
+						color:   gui.black
 						shadow:  gui.BoxShadow{
 							blur_radius: 10
 							offset_y:    4
@@ -57,11 +70,10 @@ fn main_view(window &gui.Window) gui.View {
 					),
 					// Card 2: Hard shadow (Material style)
 					gui.column(
-						width:  200
-						height: 150
-						radius: 10
-						color:  gui.black
-
+						width:   200
+						height:  150
+						radius:  10
+						color:   gui.black
 						shadow:  gui.BoxShadow{
 							blur_radius: 20
 							offset_y:    10
@@ -86,11 +98,10 @@ fn main_view(window &gui.Window) gui.View {
 				content: [
 					// Card 3: Colored Glow
 					gui.column(
-						width:  200
-						height: 150
-						radius: 10
-						color:  gui.black
-
+						width:   200
+						height:  150
+						radius:  10
+						color:   gui.black
 						shadow:  gui.BoxShadow{
 							blur_radius: 30
 							color:       gui.Color{100, 100, 255, 100}
@@ -109,11 +120,10 @@ fn main_view(window &gui.Window) gui.View {
 					),
 					// Card 4: Offset Shadow
 					gui.column(
-						width:  200
-						height: 150
-						radius: 10
-						color:  gui.black
-
+						width:   200
+						height:  150
+						radius:  10
+						color:   gui.black
 						shadow:  gui.BoxShadow{
 							blur_radius: 0
 							offset_x:    10
@@ -139,12 +149,11 @@ fn main_view(window &gui.Window) gui.View {
 				content: [
 					// Card 5: Blue Background
 					gui.column(
-						width:  200
-						height: 150
-						radius: 10
-						color:  gui.light_blue
-						fill:   true
-
+						width:   200
+						height:  150
+						radius:  10
+						color:   gui.light_blue
+						fill:    true
 						shadow:  gui.BoxShadow{
 							blur_radius: 15
 							offset_y:    5
@@ -164,12 +173,11 @@ fn main_view(window &gui.Window) gui.View {
 					),
 					// Card 6: Orange Background
 					gui.column(
-						width:  200
-						height: 150
-						radius: 10
-						color:  gui.orange
-						fill:   true
-
+						width:   200
+						height:  150
+						radius:  10
+						color:   gui.orange
+						fill:    true
 						shadow:  gui.BoxShadow{
 							blur_radius: 20
 							offset_y:    8
@@ -188,6 +196,34 @@ fn main_view(window &gui.Window) gui.View {
 						]
 					),
 				]
+			),
+		]
+	)
+}
+
+fn (app &ShadowDemoApp) toggle_theme() gui.View {
+	return gui.row(
+		h_align: .end
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		spacing: 10
+		v_align: .middle
+		content: [
+			gui.toggle(
+				text_select:   gui.icon_moon
+				text_unselect: gui.icon_sunny_o
+				text_style:    gui.theme().icon3
+				select:        app.light_theme
+				padding:       gui.padding_small
+				on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					mut a := w.state[ShadowDemoApp]()
+					theme := match a.light_theme {
+						true { gui.theme_dark_no_padding }
+						else { gui.theme_light_no_padding }
+					}
+					a.light_theme = !a.light_theme
+					w.set_theme(theme)
+				}
 			),
 		]
 	)
