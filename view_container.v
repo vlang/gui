@@ -66,6 +66,7 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			v_align:        cv.v_align
 			radius:         cv.radius
 			color:          cv.color
+			shadow:         cv.shadow
 			disabled:       cv.disabled
 			float:          cv.float
 			float_anchor:   cv.float_anchor
@@ -151,6 +152,7 @@ pub:
 	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
 	tooltip         &TooltipCfg   = unsafe { nil }
 	color           Color         = gui_theme.container_style.color
+	shadow          BoxShadow     = gui_theme.container_style.shadow
 	padding         Padding       = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
@@ -267,6 +269,7 @@ fn container(cfg ContainerCfg) View {
 		v_align:        cfg.v_align
 		padding:        cfg.padding
 		radius:         cfg.radius
+		shadow:         cfg.shadow
 		sizing:         cfg.sizing
 		spacing:        cfg.spacing
 		disabled:       cfg.disabled

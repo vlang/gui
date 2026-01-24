@@ -23,7 +23,10 @@ layout syntax and thread-safe view updates.
 - **Declarative Syntax**: Flex-box style layout with intuitive API
 - **Performance Focused**: Optimized for speed and efficiency
 - **Rich Text**: Rendering with multiple styles and mixed content
+- **Drop Shadows**: Fast, SDF-based shadows with adjustable blur and color
+- **Transparent Container Shadows**: Hollow shadows that respect transparent backgrounds
 - **Accessibility**: Automatic screen reader support (Work in Progress)
+
 
 ## Installation
 

@@ -54,8 +54,9 @@ pub mut:
 	text_sel_beg          u32 // Start index of text selection (runes)
 	text_sel_end          u32 // End index of text selection (runes)
 	text_tab_size         u32 = 4 // Tab width in spaces
-	last_constraint_width f32   // Optimization: cached width used for last text layout generation
-	color                 Color // Background or foreground color
+	last_constraint_width f32       // Optimization: cached width used for last text layout generation
+	color                 Color     // Background or foreground color
+	shadow                BoxShadow // Drop shadow configuration
 
 	// 2 bytes
 	sizing Sizing // Sizing logic (e.g. fixed, fit, grow)

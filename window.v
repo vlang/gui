@@ -44,6 +44,8 @@ pub mut:
 	layout_stats          LayoutStats  // populated when debug_layout is true
 	rounded_rect_pip      sgl.Pipeline // Pipeline for drawing rounded rectangles
 	rounded_rect_pip_init bool         // Initialization flag for the pipeline
+	shadow_pip            sgl.Pipeline // Pipeline for drawing drop shadows
+	shadow_pip_init       bool         // Initialization flag for shadow pipeline
 }
 
 // Window is the main application window. `state` holds app state.

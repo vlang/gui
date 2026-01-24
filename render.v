@@ -44,6 +44,20 @@ struct DrawText {
 	y    f32
 }
 
+// DrawShadow represents a deferred command to draw a drop shadow.
+// This is required to ensure shadows are drawn in the correct order during the render pass.
+struct DrawShadow {
+	x           f32
+	y           f32
+	width       f32
+	height      f32
+	radius      f32
+	blur_radius f32
+	color       gg.Color
+	offset_x    f32
+	offset_y    f32
+}
+
 struct DrawLayout {
 	layout &vglyph.Layout
 	x      f32
@@ -60,6 +74,7 @@ type Renderer = DrawCircle
 	| DrawNone
 	| DrawRect
 	| DrawText
+	| DrawShadow
 
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
@@ -112,6 +127,11 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 		DrawLine {
 			ctx.draw_line_with_config(renderer.x, renderer.y, renderer.x1, renderer.y1,
 				renderer.cfg)
+		}
+		DrawShadow {
+			draw_shadow_rect(renderer.x, renderer.y, renderer.width, renderer.height,
+				renderer.radius, renderer.blur_radius, renderer.color, renderer.offset_x,
+				renderer.offset_y, mut window)
 		}
 		DrawNone {}
 	}
@@ -194,6 +214,19 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 // At some point, it should be moved to the container logic, along with some layout amend logic.
 // Honestly, it was more expedient to put it here.
 fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
+	if shape.shadow.color.a > 0 {
+		window.renderers << DrawShadow{
+			x:           shape.x + shape.shadow.offset_x
+			y:           shape.y + shape.shadow.offset_y
+			width:       shape.width
+			height:      shape.height
+			radius:      shape.radius
+			blur_radius: shape.shadow.blur_radius
+			color:       shape.shadow.color.to_gx_color()
+			offset_x:    shape.shadow.offset_x
+			offset_y:    shape.shadow.offset_y
+		}
+	}
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
 	render_rectangle(mut shape, clip, mut window)
 }

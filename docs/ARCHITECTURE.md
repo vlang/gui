@@ -97,7 +97,9 @@ Transforms views into positioned, sized elements.
 - Padding
 - Color and fill
 - Radius (rounded corners)
+- Shadow (offset, blur, color)
 - Clipping
+
 
 **Sizing**: Three modes per axis:
 - `fit`: Size to content
@@ -140,7 +142,10 @@ Draws the layout to screen.
 **Renderer**: Translates layout tree into drawing commands:
 - Fills rectangles with colors/gradients
 - Draws borders and rounded corners
+- Renders shadows via SDF shaders (hollow/rim rendering for transparency support)
+- Uses texture matrix for precise shadow offset clipping
 - Renders text (delegates to vglyph)
+
 - Displays images
 - Applies clipping
 

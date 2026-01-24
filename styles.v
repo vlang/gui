@@ -8,6 +8,17 @@ import gg
 import time
 import vglyph
 
+// BoxShadow defines the visual properties of a drop shadow.
+// It tries to mimic the CSS box-shadow property logic where possible.
+pub struct BoxShadow {
+pub:
+	color         Color // The color of the shadow (usually with alpha < 255)
+	offset_x      f32   // Horizontal offset in pixels. Positive values move shadow right.
+	offset_y      f32   // Vertical offset in pixels. Positive values move shadow down.
+	blur_radius   f32   // The blur radius in pixels. Higher values make the shadow softer and larger.
+	spread_radius f32   // The spread radius in pixels. Positive values expand the shadow, negative contract it.
+}
+
 pub struct ButtonStyle {
 pub:
 	color              Color   = color_interior_dark
@@ -31,6 +42,7 @@ pub:
 	padding Padding = padding_medium
 	radius  f32     = radius_medium
 	spacing f32     = spacing_medium
+	shadow  BoxShadow
 }
 
 pub struct DatePickerStyle {
