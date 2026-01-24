@@ -116,7 +116,7 @@ const fs_shadow_glsl = '
         float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 
         // SDF for casting box (using offset)
-        vec2 q_c = abs(pos - offset) - half_size + vec2(radius + 1.5 * blur);
+        vec2 q_c = abs(pos + offset) - half_size + vec2(radius + 1.5 * blur);
         float d_c = length(max(q_c, 0.0)) + min(max(q_c.x, q_c.y), 0.0) - radius;
 
         // Shadow logic:
