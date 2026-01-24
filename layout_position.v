@@ -14,11 +14,11 @@ fn layout_wrap_text(mut layout Layout, mut w Window) {
 fn layout_adjust_scroll_offsets(mut layout Layout, mut w Window) {
 	id_scroll := layout.shape.id_scroll
 	if id_scroll > 0 {
-		max_offset_x := f32_min(0, layout.shape.width - layout.shape.padding.width() - content_width(layout))
+		max_offset_x := f32_min(0, layout.shape.width - layout.shape.padding_width() - content_width(layout))
 		offset_x := w.view_state.scroll_x[id_scroll]
 		w.view_state.scroll_x[id_scroll] = f32_clamp(offset_x, max_offset_x, 0)
 
-		max_offset_y := f32_min(0, layout.shape.height - layout.shape.padding.height() - content_height(layout))
+		max_offset_y := f32_min(0, layout.shape.height - layout.shape.padding_height() - content_height(layout))
 		offset_y := w.view_state.scroll_y[id_scroll]
 		w.view_state.scroll_y[id_scroll] = f32_clamp(offset_y, max_offset_y, 0)
 	}
@@ -34,15 +34,14 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 	layout.shape.y += offset_y
 
 	axis := layout.shape.axis
-	padding := layout.shape.padding
 	spacing := layout.shape.spacing
 
 	if layout.shape.id_scroll > 0 {
 		layout.shape.clip = true
 	}
 
-	mut x := layout.shape.x + padding.left
-	mut y := layout.shape.y + padding.top
+	mut x := layout.shape.x + layout.shape.padding_left()
+	mut y := layout.shape.y + layout.shape.padding_top()
 
 	if layout.shape.id_scroll > 0 {
 		x += w.view_state.scroll_x[layout.shape.id_scroll]
@@ -62,7 +61,7 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 	match axis {
 		.left_to_right {
 			if h_align != .left {
-				mut remaining := layout.shape.width - padding.width()
+				mut remaining := layout.shape.width - layout.shape.padding_width()
 				remaining -= layout.spacing()
 				for child in layout.children {
 					remaining -= child.shape.width
@@ -75,7 +74,7 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 		}
 		.top_to_bottom {
 			if layout.shape.v_align != .top {
-				mut remaining := layout.shape.height - padding.height()
+				mut remaining := layout.shape.height - layout.shape.padding_height()
 				remaining -= layout.spacing()
 				for child in layout.children {
 					remaining -= child.shape.height
@@ -95,7 +94,7 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 		mut y_align := f32(0)
 		match axis {
 			.left_to_right {
-				remaining := layout.shape.height - child.shape.height - padding.height()
+				remaining := layout.shape.height - child.shape.height - layout.shape.padding_height()
 				if remaining > 0 {
 					match layout.shape.v_align {
 						.top {}
@@ -105,7 +104,7 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 				}
 			}
 			.top_to_bottom {
-				remaining := layout.shape.width - child.shape.width - padding.width()
+				remaining := layout.shape.width - child.shape.width - layout.shape.padding_width()
 				if remaining > 0 {
 					match h_align {
 						.left {}

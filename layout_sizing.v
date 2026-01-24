@@ -230,7 +230,7 @@ fn distribute_space(mut layout Layout,
 // layout_widths arranges children horizontally. Only containers with an axis
 // are processed.
 fn layout_widths(mut layout Layout) {
-	padding := layout.shape.padding.width()
+	padding := layout.shape.padding_width()
 	if layout.shape.axis == .left_to_right { // along the axis
 		spacing := layout.spacing()
 		if layout.shape.sizing.width == .fixed {
@@ -278,7 +278,7 @@ fn layout_widths(mut layout Layout) {
 // layout_heights arranges children vertically. Only containers with an axis
 // are processed.
 fn layout_heights(mut layout Layout) {
-	padding := layout.shape.padding.height()
+	padding := layout.shape.padding_height()
 	if layout.shape.axis == .top_to_bottom { // along the axis
 		spacing := layout.spacing()
 		if layout.shape.sizing.height == .fixed {
@@ -338,7 +338,7 @@ fn layout_heights(mut layout Layout) {
 // - The previous_remaining check guards against infinite loops when rounding
 //   prevents progress
 fn layout_fill_widths(mut layout Layout) {
-	mut remaining_width := layout.shape.width - layout.shape.padding.width()
+	mut remaining_width := layout.shape.width - layout.shape.padding_width()
 
 	// Pre-allocate work arrays to avoid allocations in hot loops
 	mut candidates := []int{cap: layout.children.len}
@@ -374,7 +374,7 @@ fn layout_fill_widths(mut layout Layout) {
 			}
 			layout.shape.width = layout.parent.shape.width - sibling_width_sum
 			layout.shape.width -= layout.parent.spacing()
-			layout.shape.width -= layout.parent.shape.padding.width()
+			layout.shape.width -= layout.parent.shape.padding_width()
 			layout.shape.width += 1 // round-off?
 		}
 		if layout.shape.max_width > 0 && layout.shape.width > layout.shape.max_width {
@@ -401,7 +401,7 @@ fn layout_fill_widths(mut layout Layout) {
 // layout_fill_heights manages vertical growth/shrinkage to satisfy constraints.
 // See layout_fill_widths for algorithm invariants (same logic, vertical axis).
 fn layout_fill_heights(mut layout Layout) {
-	mut remaining_height := layout.shape.height - layout.shape.padding.height()
+	mut remaining_height := layout.shape.height - layout.shape.padding_height()
 
 	// Pre-allocate work arrays to avoid allocations in hot loops
 	mut candidates := []int{cap: layout.children.len}
@@ -437,7 +437,7 @@ fn layout_fill_heights(mut layout Layout) {
 			}
 			layout.shape.height = layout.parent.shape.height - sibling_height_sum
 			layout.shape.height -= layout.parent.spacing()
-			layout.shape.height -= layout.parent.shape.padding.height()
+			layout.shape.height -= layout.parent.shape.padding_height()
 			layout.shape.height += 1 // round-off?
 		}
 		if layout.shape.max_height > 0 && layout.shape.height > layout.shape.max_height {

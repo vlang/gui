@@ -117,3 +117,27 @@ pub fn (shape &Shape) has_text_layout() bool {
 pub fn (shape &Shape) has_rtf_layout() bool {
 	return shape.vglyph_layout != unsafe { nil } && shape.shape_type == .rtf
 }
+
+// padding_left returns the effective left padding (padding + border)
+@[inline]
+pub fn (shape &Shape) padding_left() f32 {
+	return shape.padding.left + shape.border_width
+}
+
+// padding_top returns the effective top padding (padding + border)
+@[inline]
+pub fn (shape &Shape) padding_top() f32 {
+	return shape.padding.top + shape.border_width
+}
+
+// padding_width returns the total horizontal padding (left + right + 2 * border)
+@[inline]
+pub fn (shape &Shape) padding_width() f32 {
+	return shape.padding.width() + (shape.border_width * 2)
+}
+
+// padding_height returns the total vertical padding (top + bottom + 2 * border)
+@[inline]
+pub fn (shape &Shape) padding_height() f32 {
+	return shape.padding.height() + (shape.border_width * 2)
+}

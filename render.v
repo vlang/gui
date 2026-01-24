@@ -226,12 +226,11 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 		window.renderers << shape_clip
 	} else if layout.shape.clip {
 		sc := layout.shape.shape_clip
-		padding := layout.shape.padding
 		shape_clip = DrawClip{
-			x:      sc.x + padding.left
-			y:      sc.y + padding.top
-			width:  sc.width - padding.width()
-			height: sc.height - padding.height()
+			x:      sc.x + layout.shape.padding_left()
+			y:      sc.y + layout.shape.padding_top()
+			width:  sc.width - layout.shape.padding_width()
+			height: sc.height - layout.shape.padding_height()
 		}
 		window.renderers << shape_clip
 	}
@@ -425,8 +424,8 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 
 	if shape.has_text_layout() {
 		for line in shape.vglyph_layout.lines {
-			draw_x := shape.x + shape.padding.left + line.rect.x
-			draw_y := shape.y + shape.padding.top + line.rect.y
+			draw_x := shape.x + shape.padding_left() + line.rect.x
+			draw_y := shape.y + shape.padding_top() + line.rect.y
 
 			// Extract text for this line
 			if line.start_index >= shape.text.len {
@@ -598,9 +597,8 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 					height: line_height(shape, mut window)
 				}
 			}
-
-			cx := shape.x + shape.padding.left + rect.x
-			cy := shape.y + shape.padding.top + rect.y
+			cx := shape.x + shape.padding_left() + rect.x
+			cy := shape.y + shape.padding_top() + rect.y
 			ch := rect.height
 
 			// Draw cursor line
