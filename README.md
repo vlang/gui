@@ -25,6 +25,7 @@ layout syntax and thread-safe view updates.
 - **Rich Text**: Rendering with multiple styles and mixed content
 - **Drop Shadows**: Fast, SDF-based shadows with adjustable blur and color
 - **Transparent Container Shadows**: Hollow shadows that respect transparent backgrounds
+- **Gradient Borders**: Flexible border styles with gradient colors
 - **Accessibility**: Automatic screen reader support (Work in Progress)
 
 

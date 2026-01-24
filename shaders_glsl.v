@@ -45,13 +45,7 @@ const fs_glsl = '
         float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 
         if (thickness > 0.0) {
-            // Reduce thickness at corners to compensate for arc coverage
-            float corner = 0.0;
-            if (radius > 0.0) {
-                corner = smoothstep(0.0, radius * 0.5, min(q.x, q.y));
-            }
-            float adj_thickness = mix(thickness, thickness * 0.7, corner);
-            d = abs(d) - adj_thickness * 0.5;
+            d = abs(d + thickness * 0.5) - thickness * 0.5;
         }
 
         // Normalize by gradient length for uniform anti-aliasing
@@ -125,6 +119,37 @@ const fs_shadow_glsl = '
         float alpha_clip = smoothstep(-1.0, 0.0, d_c); // Hard fade at casting edge
 
         float alpha = alpha_falloff * alpha_clip;
+
+        frag_color = vec4(color.rgb, color.a * alpha);
+
+        if (frag_color.a < 0.0) {
+            frag_color += texture(tex, uv);
+        }
+    }
+'
+
+const fs_blur_glsl = '
+    #version 330
+    uniform sampler2D tex;
+    in vec2 uv;
+    in vec4 color;
+    in float params;
+    in vec2 offset;
+
+    out vec4 frag_color;
+
+    void main() {
+        float radius = floor(params / 1000.0);
+        float blur = mod(params, 1000.0);
+
+        vec2 uv_to_px = 1.0 / (vec2(fwidth(uv.x), fwidth(uv.y)) + 1e-6);
+        vec2 half_size = uv_to_px;
+        vec2 pos = uv * half_size;
+
+        vec2 q = abs(pos) - half_size + vec2(radius + 1.5 * blur);
+        float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+
+        float alpha = 1.0 - smoothstep(-blur, blur, d);
 
         frag_color = vec4(color.rgb, color.a * alpha);
 

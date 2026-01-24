@@ -305,6 +305,144 @@ fn init_shadow_pipeline(mut window Window) {
 	window.shadow_pip_init = true
 }
 
+fn init_blur_pipeline(mut window Window) {
+	if window.blur_pip_init {
+		return
+	}
+
+	mut attrs := [16]gfx.VertexAttrDesc{}
+	attrs[0] = gfx.VertexAttrDesc{
+		format:       .float3
+		offset:       0
+		buffer_index: 0
+	}
+	attrs[1] = gfx.VertexAttrDesc{
+		format:       .float2
+		offset:       12
+		buffer_index: 0
+	}
+	attrs[2] = gfx.VertexAttrDesc{
+		format:       .ubyte4n
+		offset:       20
+		buffer_index: 0
+	}
+
+	mut buffers := [8]gfx.VertexBufferLayoutState{}
+	buffers[0] = gfx.VertexBufferLayoutState{
+		stride: 24
+	}
+
+	mut shader_attrs := [16]gfx.ShaderAttrDesc{}
+	shader_attrs[0] = gfx.ShaderAttrDesc{
+		name:      c'position'
+		sem_name:  c'POSITION'
+		sem_index: 0
+	}
+	shader_attrs[1] = gfx.ShaderAttrDesc{
+		name:      c'texcoord0'
+		sem_name:  c'TEXCOORD'
+		sem_index: 0
+	}
+	shader_attrs[2] = gfx.ShaderAttrDesc{
+		name:      c'color0'
+		sem_name:  c'COLOR'
+		sem_index: 0
+	}
+
+	mut ub_uniforms := [16]gfx.ShaderUniformDesc{}
+	ub_uniforms[0] = gfx.ShaderUniformDesc{
+		name:        c'mvp'
+		@type:       .mat4
+		array_count: 1
+	}
+	ub_uniforms[1] = gfx.ShaderUniformDesc{
+		name:        c'tm'
+		@type:       .mat4
+		array_count: 1
+	}
+
+	mut ub := [4]gfx.ShaderUniformBlockDesc{}
+	ub[0] = gfx.ShaderUniformBlockDesc{
+		size:     128
+		uniforms: ub_uniforms
+	}
+
+	mut colors := [4]gfx.ColorTargetState{}
+	colors[0] = gfx.ColorTargetState{
+		blend:      gfx.BlendState{
+			enabled:          true
+			src_factor_rgb:   .src_alpha
+			dst_factor_rgb:   .one_minus_src_alpha
+			src_factor_alpha: .one
+			dst_factor_alpha: .one_minus_src_alpha
+		}
+		write_mask: .rgba
+	}
+
+	mut shader_images := [12]gfx.ShaderImageDesc{}
+	shader_images[0] = gfx.ShaderImageDesc{
+		used:        true
+		image_type:  ._2d
+		sample_type: .float
+	}
+	mut shader_samplers := [8]gfx.ShaderSamplerDesc{}
+	shader_samplers[0] = gfx.ShaderSamplerDesc{
+		used:         true
+		sampler_type: .filtering
+	}
+	mut shader_image_sampler_pairs := [12]gfx.ShaderImageSamplerPairDesc{}
+	shader_image_sampler_pairs[0] = gfx.ShaderImageSamplerPairDesc{
+		used:         true
+		image_slot:   0
+		sampler_slot: 0
+		glsl_name:    c'tex'
+	}
+
+	mut shader_desc := gfx.ShaderDesc{
+		attrs: shader_attrs
+	}
+
+	$if macos {
+		shader_desc.vs = gfx.ShaderStageDesc{
+			// Reusing shadow vertex shader as it has params/offset
+			source:         vs_shadow_metal.str
+			entry:          c'vs_main'
+			uniform_blocks: ub
+		}
+		shader_desc.fs = gfx.ShaderStageDesc{
+			source:              fs_blur_metal.str
+			entry:               c'fs_main'
+			images:              shader_images
+			samplers:            shader_samplers
+			image_sampler_pairs: shader_image_sampler_pairs
+		}
+	} $else {
+		shader_desc.vs = gfx.ShaderStageDesc{
+			source:         vs_shadow_glsl.str
+			uniform_blocks: ub
+		}
+		shader_desc.fs = gfx.ShaderStageDesc{
+			source:              fs_blur_glsl.str
+			images:              shader_images
+			samplers:            shader_samplers
+			image_sampler_pairs: shader_image_sampler_pairs
+		}
+	}
+
+	desc := gfx.PipelineDesc{
+		label:  c'blur_pip'
+		colors: colors
+		layout: gfx.VertexLayoutState{
+			attrs:   attrs
+			buffers: buffers
+		}
+		shader: gfx.make_shader(&shader_desc)
+	}
+
+	window.blur_pip = sgl.make_pipeline(&desc)
+	window.blur_pip_init = true
+}
+
 // draw_shadow_rect draws a rounded rectangle drop shadow.
 // x, y, w, h specifies the bounding box of the *casting element* (not the shadow itself).
 // The shadow geometry is automatically expanded based on the blur radius.
@@ -398,7 +536,7 @@ pub fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Col
 	sgl.load_default_pipeline()
 }
 
-pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gg.Color, mut window Window) {
+pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, thickness f32, c gg.Color, mut window Window) {
 	if w <= 0 || h <= 0 {
 		return
 	}
@@ -424,7 +562,7 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, c gg.Colo
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
 	// Pack parameters: r + thickness * 10000
-	z_val := pack_shader_params(r, 1.5 * scale)
+	z_val := pack_shader_params(r, thickness * scale)
 
 	draw_quad(sx, sy, sw, sh, z_val)
 	sgl.load_default_pipeline()

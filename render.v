@@ -58,6 +58,44 @@ struct DrawShadow {
 	offset_y    f32
 }
 
+struct DrawStrokeRect {
+	x         f32
+	y         f32
+	w         f32
+	h         f32
+	radius    f32
+	color     gg.Color
+	thickness f32
+}
+
+struct DrawBlur {
+	x           f32
+	y           f32
+	width       f32
+	height      f32
+	radius      f32
+	blur_radius f32
+	color       gg.Color
+}
+
+struct DrawGradientBorder {
+	x        f32
+	y        f32
+	w        f32
+	h        f32
+	radius   f32
+	gradient &Gradient
+}
+
+struct DrawGradient {
+	x        f32
+	y        f32
+	w        f32
+	h        f32
+	radius   f32
+	gradient &Gradient
+}
+
 struct DrawLayout {
 	layout &vglyph.Layout
 	x      f32
@@ -73,10 +111,14 @@ type Renderer = DrawCircle
 	| DrawLine
 	| DrawNone
 	| DrawRect
+	| DrawStrokeRect
 	| DrawText
 	| DrawShadow
+	| DrawBlur
+	| DrawGradient
+	| DrawGradientBorder
 
-// renderers_draw walks the array of renderers and draws them.
+// renderers_draw walks the array of renderers and drawings them.
 // This function and renderer_draw constitute then entire
 // draw logic of GUI
 fn renderers_draw(renderers []Renderer, mut window Window) {
@@ -98,9 +140,17 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 				draw_rounded_rect_filled(renderer.x, renderer.y, renderer.w, renderer.h,
 					renderer.radius, renderer.color, mut window)
 			} else {
+				// Fallback for default thickness if DrawRect is used directly (should generally use DrawStrokeRect for strokes now)
 				draw_rounded_rect_empty(renderer.x, renderer.y, renderer.w, renderer.h,
-					renderer.radius, renderer.color, mut window)
+					renderer.radius, 1.0, renderer.color, mut window)
 			}
+		}
+		DrawStrokeRect {
+			if renderer.w <= 0 || renderer.h <= 0 {
+				return
+			}
+			draw_rounded_rect_empty(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
+				renderer.thickness, renderer.color, mut window)
 		}
 		DrawText {
 			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, renderer.cfg) or {
@@ -132,6 +182,18 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			draw_shadow_rect(renderer.x, renderer.y, renderer.width, renderer.height,
 				renderer.radius, renderer.blur_radius, renderer.color, renderer.offset_x,
 				renderer.offset_y, mut window)
+		}
+		DrawBlur {
+			draw_blur_rect(renderer.x, renderer.y, renderer.width, renderer.height, renderer.radius,
+				renderer.blur_radius, renderer.color, mut window)
+		}
+		DrawGradient {
+			draw_gradient_rect(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
+				renderer.gradient, mut window)
+		}
+		DrawGradientBorder {
+			draw_gradient_border(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
+				renderer.gradient, mut window)
 		}
 		DrawNone {}
 	}
@@ -186,7 +248,8 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
 fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
-	if shape.color == color_transparent {
+	if shape.color == color_transparent && shape.gradient == unsafe { nil }
+		&& shape.border_gradient == unsafe { nil } {
 		return
 	}
 	match shape.shape_type {
@@ -228,7 +291,41 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 		}
 	}
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
-	render_rectangle(mut shape, clip, mut window)
+	if shape.gradient != unsafe { nil } && shape.fill {
+		window.renderers << DrawGradient{
+			x:        shape.x
+			y:        shape.y
+			w:        shape.width
+			h:        shape.height
+			radius:   shape.radius
+			gradient: shape.gradient
+		}
+	} else if shape.blur_radius > 0 && shape.fill {
+		window.renderers << DrawBlur{
+			x:           shape.x
+			y:           shape.y
+			width:       shape.width
+			height:      shape.height
+			radius:      shape.radius
+			blur_radius: shape.blur_radius
+			color:       shape.color.to_gx_color()
+		}
+	} else {
+		// println('render_container: No Gradient. Fill=${shape.fill} GradientPtr=${ptr_str(shape.gradient)}')
+		// Check for Border Gradient
+		if shape.border_gradient != unsafe { nil } && !shape.fill {
+			window.renderers << DrawGradientBorder{
+				x:        shape.x
+				y:        shape.y
+				w:        shape.width
+				h:        shape.height
+				radius:   shape.radius
+				gradient: shape.border_gradient
+			}
+		} else {
+			render_rectangle(mut shape, clip, mut window)
+		}
+	}
 }
 
 // render_circle draws a shape as a circle in the middle of the shape's
@@ -271,16 +368,26 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 	gx_color := color.to_gx_color()
 	if rects_overlap(draw_rect, clip) && color != color_transparent {
-		if color != color_transparent {
+		if shape.fill {
 			window.renderers << DrawRect{
 				x:          draw_rect.x
 				y:          draw_rect.y
 				w:          draw_rect.width
 				h:          draw_rect.height
 				color:      gx_color
-				style:      if shape.fill { .fill } else { .stroke }
+				style:      .fill
 				is_rounded: shape.radius > 0
 				radius:     shape.radius
+			}
+		} else {
+			window.renderers << DrawStrokeRect{
+				x:         draw_rect.x
+				y:         draw_rect.y
+				w:         draw_rect.width
+				h:         draw_rect.height
+				color:     gx_color
+				radius:    shape.radius
+				thickness: shape.border_width
 			}
 		}
 	} else {
@@ -566,4 +673,205 @@ fn dim_alpha(color Color) Color {
 fn rects_overlap(r1 gg.Rect, r2 gg.Rect) bool {
 	return r1.x < (r2.x + r2.width) && r2.x < (r1.x + r1.width) && r1.y < (r2.y + r2.height)
 		&& r2.y < (r1.y + r1.height)
+}
+
+// draw_blur_rect draws a blurred rounded rectangle.
+// It is similar to draw_shadow_rect but the blur is "filled".
+pub fn draw_blur_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.Color, mut window Window) {
+	if c.a == 0 {
+		return
+	}
+
+	scale := window.ui.scale
+	padding := blur * 1.5
+
+	sx := (x - padding) * scale
+	sy := (y - padding) * scale
+	sw := (w + padding * 2) * scale
+	sh := (h + padding * 2) * scale
+
+	r := radius * scale
+	b := blur * scale
+
+	init_blur_pipeline(mut window)
+
+	// Since we used vs_shadow which expects 'tm' uniform (offset), we must provide it even if 0.
+	sgl.matrix_mode_texture()
+	sgl.push_matrix()
+	sgl.load_identity()
+	// No offset for generic blur
+	sgl.translate(0, 0, 0)
+
+	sgl.load_pipeline(window.blur_pip)
+	sgl.c4b(c.r, c.g, c.b, c.a)
+
+	z_val := pack_shader_params(r, b)
+
+	draw_quad(sx, sy, sw, sh, z_val)
+	sgl.load_default_pipeline()
+
+	sgl.pop_matrix()
+	sgl.matrix_mode_modelview()
+}
+
+fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient, mut window Window) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	scale := window.ui.scale
+	sx := x * scale
+	sy := y * scale
+	sw := w * scale
+	sh := h * scale
+	mut r := radius * scale
+
+	min_dim := if sw < sh { sw } else { sh }
+	if r > min_dim / 2.0 {
+		r = min_dim / 2.0
+	}
+	if r < 0 {
+		r = 0
+	}
+
+	// Use the rounded rect pipeline for clipping/shape
+	init_rounded_rect_pipeline(mut window)
+	sgl.load_pipeline(window.rounded_rect_pip)
+
+	// We need to calculate colors for vertices based on the gradient.
+	// For a simple linear gradient implementation using vertex colors:
+	// This only supports 2 stops accurately for a quad.
+	// For comprehensive support, we'd need a fragment shader or texture.
+	// HACK: For now, interpolate start and end colors for the 4 corners.
+
+	mut c_start := gradient.stops[0].color
+	mut c_end := gradient.stops.last().color
+
+	// If using sgl pipeline, the fragment shader uses the color passed in `sgl.c4b`.
+	// The current shader multiplies texture color (if any) or uses flat color.
+	// The vertex color attribute is `color0`.
+	// If I set `sgl.c4b` per vertex, it *should* interpolate.
+
+	z_val := pack_shader_params(r, 0)
+
+	draw_quad_gradient(sx, sy, sw, sh, z_val, c_start, c_end, gradient.type)
+
+	sgl.load_default_pipeline()
+}
+
+fn draw_quad_gradient(x f32, y f32, w f32, h f32, z f32, c1 Color, c2 Color, g_type GradientType) {
+	sgl.begin_quads()
+
+	// Top Left
+	sgl.t2f(-1.0, -1.0)
+	sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+	sgl.v3f(x, y, z)
+
+	// Top Right
+	sgl.t2f(1.0, -1.0)
+	if g_type == .linear {
+		sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+	} else {
+		sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+	}
+	sgl.v3f(x + w, y, z)
+
+	// Bottom Right
+	sgl.t2f(1.0, 1.0)
+	sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+	sgl.v3f(x + w, y + h, z)
+
+	// Bottom Left
+	sgl.t2f(-1.0, 1.0)
+	if g_type == .linear {
+		sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+	} else {
+		sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+	}
+	sgl.v3f(x, y + h, z)
+
+	sgl.end()
+}
+
+fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient, mut window Window) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	println('DrawGradientBorder: x=${x} y=${y} w=${w} h=${h} radius=${radius} stops=${gradient.stops.len}')
+
+	// For now, simple implementation: mapping colors to corners for a stroke.
+	// Since sgl doesn't have a simple "gradient stroke" primitive that respects rounded corners perfectly
+	// without a custom shader that knows about stroke width AND gradient, we will use the existing
+	// rounded rect pipeline but with a hack:
+	// We use `draw_quad_gradient` logic but applied to the `rounded_rect` pipeline?
+	// NO, `rounded_rect_pip` expects a single color in `color0` attribute for the whole quad usually?
+	// Wait, `vs_glsl` takes `color0` attribute per vertex.
+	// So we CAN pass different colors per vertex to `rounded_rect_pip`!
+
+	scale := window.ui.scale
+	sx := x * scale
+	sy := y * scale
+	sw := w * scale
+	sh := h * scale
+	mut r := radius * scale
+
+	min_dim := if sw < sh { sw } else { sh }
+	if r > min_dim / 2.0 {
+		r = min_dim / 2.0
+	}
+	if r < 0 {
+		r = 0
+	}
+
+	init_rounded_rect_pipeline(mut window)
+	sgl.load_pipeline(window.rounded_rect_pip)
+
+	// Determine colors based on gradient stops (simplification for 2 stops)
+	c1 := if gradient.stops.len > 0 {
+		gradient.stops[0].color.to_gx_color()
+	} else {
+		gg.Color{0, 0, 0, 255}
+	}
+	c2 := if gradient.stops.len > 1 { gradient.stops[1].color.to_gx_color() } else { c1 }
+
+	// Pack params for STROKE (thickness > 0)
+
+	// Pack params for STROKE (thickness > 0)
+	// Pack params for STROKE (thickness > 0)
+	thickness := 10.0 * scale // DEBUG: Thick border
+	z_val := pack_shader_params(r, thickness)
+
+	// Draw Quad with Per-Vertex Colors
+	sgl.begin_quads()
+
+	// Top Left
+	sgl.t2f(-1.0, -1.0)
+	sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+	sgl.v3f(sx, sy, z_val)
+
+	// Top Right
+	sgl.t2f(1.0, -1.0)
+	if gradient.type == .linear {
+		sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+	} else {
+		sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+	}
+	sgl.v3f(sx + sw, sy, z_val)
+
+	// Bottom Right
+	sgl.t2f(1.0, 1.0)
+	sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+	sgl.v3f(sx + sw, sy + sh, z_val)
+
+	// Bottom Left
+	sgl.t2f(-1.0, 1.0)
+	if gradient.type == .linear {
+		sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+	} else {
+		sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+	}
+	sgl.v3f(sx, sy + sh, z_val)
+
+	sgl.end()
+	sgl.load_default_pipeline()
 }

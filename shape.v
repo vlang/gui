@@ -45,6 +45,7 @@ pub mut:
 	min_height            f32 // Minimum height constraint
 	max_height            f32 // Maximum height constraint
 	radius                f32 // Corner radius for rounded rectangles
+	blur_radius           f32 // Gaussian blur radius
 	spacing               f32 // Spacing between children (loaded from style)
 	float_offset_x        f32 // X offset for floating elements relative to anchor
 	float_offset_y        f32 // Y offset for floating elements relative to anchor
@@ -57,6 +58,9 @@ pub mut:
 	last_constraint_width f32       // Optimization: cached width used for last text layout generation
 	color                 Color     // Background or foreground color
 	shadow                BoxShadow // Drop shadow configuration
+	gradient              &Gradient = unsafe { nil } // Gradient background configuration
+	border_gradient       &Gradient = unsafe { nil } // Gradient border configuration
+	border_width          f32       = 1.0            // Thickness of the border
 
 	// 2 bytes
 	sizing Sizing // Sizing logic (e.g. fixed, fit, grow)

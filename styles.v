@@ -19,6 +19,27 @@ pub:
 	spread_radius f32   // The spread radius in pixels. Positive values expand the shadow, negative contract it.
 }
 
+pub enum GradientType {
+	linear
+	radial
+}
+
+pub struct GradientStop {
+pub:
+	color Color
+	pos   f32 // 0.0 to 1.0 (0% to 100%)
+}
+
+pub struct Gradient {
+pub:
+	stops   []GradientStop
+	start_x f32 // 0.0 to 1.0 (relative to container width)
+	start_y f32
+	end_x   f32 // 0.0 to 1.0
+	end_y   f32
+	type    GradientType = .linear
+}
+
 pub struct ButtonStyle {
 pub:
 	color              Color   = color_interior_dark
@@ -37,12 +58,16 @@ pub:
 
 pub struct ContainerStyle {
 pub:
-	color   Color = color_transparent
-	fill    bool
-	padding Padding = padding_medium
-	radius  f32     = radius_medium
-	spacing f32     = spacing_medium
-	shadow  BoxShadow
+	color           Color = color_transparent
+	fill            bool
+	padding         Padding = padding_medium
+	radius          f32     = radius_medium
+	blur_radius     f32
+	spacing         f32 = spacing_medium
+	shadow          BoxShadow
+	gradient        &Gradient = unsafe { nil }
+	border_gradient &Gradient = unsafe { nil }
+	border_width    f32       = 1.0
 }
 
 pub struct DatePickerStyle {
@@ -217,9 +242,11 @@ pub:
 
 pub struct RectangleStyle {
 pub:
-	color  Color = color_border_dark
-	radius f32   = radius_medium
-	fill   bool
+	color        Color = color_border_dark
+	radius       f32   = radius_medium
+	fill         bool
+	gradient     &Gradient = unsafe { nil }
+	border_width f32       = 1.0
 }
 
 pub struct ScrollbarStyle {
@@ -363,8 +390,10 @@ pub struct TooltipStyle {
 
 pub struct TreeStyle {
 pub:
-	indent          f32       = 25
-	spacing         f32       = pad_small
+	indent          f32 = 25
+	spacing         f32
+	blur_radius     f32
+	shadow          BoxShadow
 	text_style      TextStyle = text_style_dark
 	text_style_icon TextStyle = TextStyle{
 		...text_style_icon_dark

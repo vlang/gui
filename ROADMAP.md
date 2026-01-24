@@ -31,7 +31,7 @@ cross-platform, immediate mode GUI toolkit.
 ### Phase 1: Core Rendering & Visual Polish
 *Focus: Matching the "premium" look of modern UI frameworks.*
 
-- [ ] **Advanced Shaders:** Implement `sgl` pipelines for:
+- [x] **Advanced Shaders:** Implement `sgl` pipelines for:
     - Drop shadows (box-shadow)
     - Gaussian blur (background blur for glass effects)
     - Gradient borders and complex fills

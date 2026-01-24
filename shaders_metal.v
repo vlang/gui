@@ -59,13 +59,7 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
     float d = length(max_q) + min(max(q.x, q.y), 0.0) - radius;
 
     if (thickness > 0.0) {
-        // Reduce thickness at corners to compensate for arc coverage
-        float corner = 0.0;
-        if (radius > 0.0) {
-             corner = smoothstep(0.0, radius * 0.5, min(q.x, q.y));
-        }
-        float adj_thickness = mix(thickness, thickness * 0.7, corner);
-        d = abs(d) - adj_thickness * 0.5;
+        d = abs(d + thickness * 0.5) - thickness * 0.5;
     }
 
     // Normalize by gradient length for uniform anti-aliasing
@@ -156,6 +150,41 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
     float alpha_clip = smoothstep(-1.0, 0.0, d_c); // Hard fade at casting edge
 
     float alpha = alpha_falloff * alpha_clip;
+
+    float4 frag_color = float4(in.color.rgb, in.color.a * alpha);
+
+    if (frag_color.a < 0.0) {
+        frag_color += tex.sample(smp, in.uv);
+    }
+    return frag_color;
+}
+'
+
+const fs_blur_metal = '
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 uv;
+    float4 color;
+    float params;
+    float2 offset;
+};
+
+fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
+    float radius = floor(in.params / 1000.0);
+    float blur = fmod(in.params, 1000.0);
+
+    float2 width_inv = float2(fwidth(in.uv.x), fwidth(in.uv.y));
+    float2 half_size = 1.0 / (width_inv + 1e-6);
+    float2 pos = in.uv * half_size;
+
+    // SDF for rounded box
+    float2 q = abs(pos) - half_size + float2(radius + 1.5 * blur);
+    float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+
+    float alpha = 1.0 - smoothstep(-blur, blur, d);
 
     float4 frag_color = float4(in.color.rgb, in.color.a * alpha);
 

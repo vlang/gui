@@ -43,36 +43,40 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 	layout := Layout{
 		children: children
 		shape:    &Shape{
-			shape_type:     cv.shape_type
-			id:             cv.id
-			id_focus:       cv.id_focus
-			axis:           cv.axis
-			name:           cv.name
-			x:              cv.x
-			y:              cv.y
-			width:          cv.width
-			min_width:      cv.min_width
-			max_width:      cv.max_width
-			height:         cv.height
-			min_height:     cv.min_height
-			max_height:     cv.max_height
-			clip:           cv.clip
-			focus_skip:     cv.focus_skip
-			spacing:        cv.spacing
-			sizing:         cv.sizing
-			padding:        cv.padding
-			fill:           cv.fill
-			h_align:        cv.h_align
-			v_align:        cv.v_align
-			radius:         cv.radius
-			color:          cv.color
-			shadow:         cv.shadow
-			disabled:       cv.disabled
-			float:          cv.float
-			float_anchor:   cv.float_anchor
-			float_tie_off:  cv.float_tie_off
-			float_offset_x: cv.float_offset_x
-			float_offset_y: cv.float_offset_y
+			shape_type:      cv.shape_type
+			id:              cv.id
+			id_focus:        cv.id_focus
+			axis:            cv.axis
+			name:            cv.name
+			x:               cv.x
+			y:               cv.y
+			width:           cv.width
+			min_width:       cv.min_width
+			max_width:       cv.max_width
+			height:          cv.height
+			min_height:      cv.min_height
+			max_height:      cv.max_height
+			clip:            cv.clip
+			focus_skip:      cv.focus_skip
+			spacing:         cv.spacing
+			sizing:          cv.sizing
+			padding:         cv.padding
+			fill:            cv.fill
+			h_align:         cv.h_align
+			v_align:         cv.v_align
+			radius:          cv.radius
+			blur_radius:     cv.blur_radius
+			color:           cv.color
+			shadow:          cv.shadow
+			gradient:        cv.gradient
+			border_gradient: cv.border_gradient
+			border_width:    cv.border_width
+			disabled:        cv.disabled
+			float:           cv.float
+			float_anchor:    cv.float_anchor
+			float_tie_off:   cv.float_tie_off
+			float_offset_x:  cv.float_offset_x
+			float_offset_y:  cv.float_offset_y
 			// text:           cv.text // Handled via child nodes now
 			// text_style: ... // Handled via child nodes
 			id_scroll:     cv.id_scroll
@@ -153,6 +157,9 @@ pub:
 	tooltip         &TooltipCfg   = unsafe { nil }
 	color           Color         = gui_theme.container_style.color
 	shadow          BoxShadow     = gui_theme.container_style.shadow
+	gradient        &Gradient     = gui_theme.container_style.gradient
+	border_gradient &Gradient     = gui_theme.container_style.border_gradient
+	border_width    f32           = gui_theme.container_style.border_width
 	padding         Padding       = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
@@ -175,6 +182,7 @@ pub:
 	y               f32
 	spacing         f32 = gui_theme.container_style.spacing
 	radius          f32 = gui_theme.container_style.radius
+	blur_radius     f32 = gui_theme.container_style.blur_radius
 	float_offset_x  f32
 	float_offset_y  f32
 	id_focus        u32
@@ -250,54 +258,58 @@ fn container(cfg ContainerCfg) View {
 	}
 
 	view := ContainerView{
-		id:             cfg.id
-		id_focus:       cfg.id_focus
-		axis:           cfg.axis
-		name:           cfg.name
-		x:              cfg.x
-		y:              cfg.y
-		width:          cfg.width
-		min_width:      if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
-		max_width:      if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
-		height:         cfg.height
-		min_height:     if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
-		max_height:     if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
-		clip:           cfg.clip
-		color:          cfg.color
-		fill:           cfg.fill
-		h_align:        cfg.h_align
-		v_align:        cfg.v_align
-		padding:        cfg.padding
-		radius:         cfg.radius
-		shadow:         cfg.shadow
-		sizing:         cfg.sizing
-		spacing:        cfg.spacing
-		disabled:       cfg.disabled
-		invisible:      cfg.invisible
-		title:          cfg.title
-		title_bg:       cfg.title_bg
-		id_scroll:      cfg.id_scroll
-		over_draw:      cfg.over_draw
-		scroll_mode:    cfg.scroll_mode
-		float:          cfg.float
-		float_anchor:   cfg.float_anchor
-		float_tie_off:  cfg.float_tie_off
-		float_offset_x: cfg.float_offset_x
-		float_offset_y: cfg.float_offset_y
-		tooltip:        cfg.tooltip
-		on_click:       if cfg.on_any_click != unsafe { nil } {
+		id:              cfg.id
+		id_focus:        cfg.id_focus
+		axis:            cfg.axis
+		name:            cfg.name
+		x:               cfg.x
+		y:               cfg.y
+		width:           cfg.width
+		min_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.min_width }
+		max_width:       if cfg.sizing.width == .fixed { cfg.width } else { cfg.max_width }
+		height:          cfg.height
+		min_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.min_height }
+		max_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
+		clip:            cfg.clip
+		color:           cfg.color
+		fill:            cfg.fill
+		h_align:         cfg.h_align
+		v_align:         cfg.v_align
+		padding:         cfg.padding
+		radius:          cfg.radius
+		blur_radius:     cfg.blur_radius
+		shadow:          cfg.shadow
+		gradient:        cfg.gradient
+		border_gradient: cfg.border_gradient
+		border_width:    cfg.border_width
+		sizing:          cfg.sizing
+		spacing:         cfg.spacing
+		disabled:        cfg.disabled
+		invisible:       cfg.invisible
+		title:           cfg.title
+		title_bg:        cfg.title_bg
+		id_scroll:       cfg.id_scroll
+		over_draw:       cfg.over_draw
+		scroll_mode:     cfg.scroll_mode
+		float:           cfg.float
+		float_anchor:    cfg.float_anchor
+		float_tie_off:   cfg.float_tie_off
+		float_offset_x:  cfg.float_offset_x
+		float_offset_y:  cfg.float_offset_y
+		tooltip:         cfg.tooltip
+		on_click:        if cfg.on_any_click != unsafe { nil } {
 			cfg.on_any_click
 		} else {
 			cfg.left_click()
 		}
-		on_char:        cfg.on_char
-		on_keydown:     cfg.on_keydown
-		on_mouse_move:  cfg.on_mouse_move
-		on_mouse_up:    cfg.on_mouse_up
-		on_hover:       cfg.on_hover
-		on_scroll:      cfg.on_scroll
-		amend_layout:   cfg.amend_layout
-		content:        content
+		on_char:         cfg.on_char
+		on_keydown:      cfg.on_keydown
+		on_mouse_move:   cfg.on_mouse_move
+		on_mouse_up:     cfg.on_mouse_up
+		on_hover:        cfg.on_hover
+		on_scroll:       cfg.on_scroll
+		amend_layout:    cfg.amend_layout
+		content:         content
 	}
 	return view
 }
