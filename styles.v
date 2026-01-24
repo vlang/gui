@@ -213,13 +213,14 @@ pub:
 
 pub struct RadioStyle {
 pub:
-	color          Color     = color_interior_dark
-	color_hover    Color     = color_hover_dark
-	color_focus    Color     = color_select_dark
-	color_border   Color     = color_border_dark
-	color_select   Color     = color_text_dark
-	color_unselect Color     = color_active_dark
-	padding        Padding   = pad_all(4)
+	color          Color   = color_interior_dark
+	color_hover    Color   = color_hover_dark
+	color_focus    Color   = color_select_dark
+	color_border   Color   = color_border_dark
+	color_select   Color   = color_text_dark
+	color_unselect Color   = color_active_dark
+	padding        Padding = pad_all(4)
+	border_width   f32
 	text_style     TextStyle = text_style_dark
 }
 
@@ -356,17 +357,18 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 
 pub struct ToggleStyle {
 pub:
-	color              Color     = color_interior_dark
-	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_select_dark
-	color_click        Color     = color_interior_dark
-	color_focus        Color     = color_active_dark
-	color_hover        Color     = color_hover_dark
-	color_select       Color     = color_interior_dark
-	fill               bool      = true
-	fill_border        bool      = true
-	padding            Padding   = padding(1, 1, 1, 2)
-	padding_border     Padding   = padding_none
+	color              Color   = color_interior_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_select_dark
+	color_click        Color   = color_interior_dark
+	color_focus        Color   = color_active_dark
+	color_hover        Color   = color_hover_dark
+	color_select       Color   = color_interior_dark
+	fill               bool    = true
+	fill_border        bool    = true
+	padding            Padding = padding(1, 1, 1, 2)
+	padding_border     Padding = padding_none
+	border_width       f32
 	radius             f32       = radius_small
 	radius_border      f32       = radius_small
 	text_style         TextStyle = text_style_icon_dark

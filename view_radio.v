@@ -20,6 +20,7 @@ pub:
 	disabled       bool
 	select         bool
 	invisible      bool
+	border_width   f32 = gui_theme.radio_style.border_width
 }
 
 // radio creates a radio button UI component that allows users to select a
@@ -31,28 +32,27 @@ pub:
 // styling.
 pub fn radio(cfg RadioCfg) View {
 	mut content := []View{cap: 2}
+	border_width := if cfg.border_width == 0 {
+		1.0 // Default if not in theme? Or use theme default from Cfg struct init
+	} else {
+		cfg.border_width
+	}
+
 	content << circle(
-		name:      'radio border'
-		width:     cfg.size
-		height:    cfg.size
-		color:     cfg.color_border
-		padding:   cfg.padding
-		fill:      false
-		disabled:  cfg.disabled
-		invisible: cfg.invisible
-		sizing:    fixed_fixed
-		h_align:   .center
-		v_align:   .middle
-		content:   [
-			circle(
-				name:    'radio interior'
-				fill:    true
-				color:   if cfg.select { cfg.color_select } else { cfg.color_unselect }
-				padding: padding_none
-				width:   cfg.size - cfg.padding.width()
-				height:  cfg.size - cfg.padding.height()
-			),
-		]
+		name:         'radio circle'
+		width:        cfg.size
+		height:       cfg.size
+		color:        if cfg.select { cfg.color_select } else { cfg.color_unselect }
+		border_color: cfg.color_border
+		border_width: border_width
+		padding:      cfg.padding
+		fill:         true
+		radius:       cfg.size / 2 // Circle radius logic is automatic in render_circle but helpful for layout?
+		disabled:     cfg.disabled
+		invisible:    cfg.invisible
+		sizing:       fixed_fixed
+		h_align:      .center
+		v_align:      .middle
 	)
 
 	if cfg.label.len > 0 {
@@ -91,6 +91,5 @@ fn (cfg &RadioCfg) on_hover(mut layout Layout, mut _ Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
 	if !w.is_focus(layout.shape.id_focus) {
 		layout.children[0].shape.color = cfg.color_hover
-		layout.children[0].shape.fill = true
 	}
 }

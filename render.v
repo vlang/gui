@@ -339,16 +339,60 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 	gx_color := color.to_gx_color()
-	if rects_overlap(draw_rect, clip) && color != color_transparent {
+	if rects_overlap(draw_rect, clip) {
 		radius := f32_min(shape.width, shape.height) / 2
 		x := shape.x + shape.width / 2
 		y := shape.y + shape.height / 2
-		window.renderers << DrawCircle{
-			x:      x
-			y:      y
-			radius: radius
-			fill:   shape.fill
-			color:  gx_color
+
+		if shape.fill {
+			if color != color_transparent {
+				window.renderers << DrawCircle{
+					x:      x
+					y:      y
+					radius: radius
+					fill:   true
+					color:  gx_color
+				}
+			}
+			// Draw border on top
+			if shape.border_width > 0 {
+				border_color := if shape.disabled {
+					dim_alpha(shape.border_color)
+				} else {
+					shape.border_color
+				}
+				if border_color != color_transparent {
+					// Use DrawStrokeRect to utilize thickness support for circles (radius = circle radius)
+					window.renderers << DrawStrokeRect{
+						x:         draw_rect.x
+						y:         draw_rect.y
+						w:         draw_rect.width
+						h:         draw_rect.height
+						color:     border_color.to_gx_color()
+						radius:    radius
+						thickness: shape.border_width
+					}
+				}
+			}
+		} else {
+			// Just border (legacy or transparent fill)
+			mut stroke_color := gx_color
+			if shape.border_color.a > 0 {
+				c := if shape.disabled { dim_alpha(shape.border_color) } else { shape.border_color }
+				stroke_color = c.to_gx_color()
+			}
+
+			if stroke_color.a > 0 {
+				window.renderers << DrawStrokeRect{
+					x:         draw_rect.x
+					y:         draw_rect.y
+					w:         draw_rect.width
+					h:         draw_rect.height
+					color:     stroke_color
+					radius:    radius
+					thickness: shape.border_width
+				}
+			}
 		}
 	} else {
 		shape.disabled = true
