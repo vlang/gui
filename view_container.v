@@ -27,8 +27,9 @@ import arrays
 struct ContainerView implements View {
 	ContainerCfg
 mut:
-	content    []View
-	shape_type ShapeType = .rectangle
+	content      []View
+	shape_type   ShapeType = .rectangle
+	border_color Color
 }
 
 fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
@@ -71,6 +72,7 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			gradient:        cv.gradient
 			border_gradient: cv.border_gradient
 			border_width:    cv.border_width
+			border_color:    cv.border_color
 			disabled:        cv.disabled
 			float:           cv.float
 			float_anchor:    cv.float_anchor
@@ -160,7 +162,8 @@ pub:
 	gradient        &Gradient     = gui_theme.container_style.gradient
 	border_gradient &Gradient     = gui_theme.container_style.border_gradient
 	border_width    f32           = gui_theme.container_style.border_width
-	padding         Padding       = gui_theme.container_style.padding
+	border_color    Color
+	padding         Padding = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
 	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
@@ -282,6 +285,7 @@ fn container(cfg ContainerCfg) View {
 		gradient:        cfg.gradient
 		border_gradient: cfg.border_gradient
 		border_width:    cfg.border_width
+		border_color:    cfg.border_color
 		sizing:          cfg.sizing
 		spacing:         cfg.spacing
 		disabled:        cfg.disabled

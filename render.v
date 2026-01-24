@@ -366,27 +366,61 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 	gx_color := color.to_gx_color()
-	if rects_overlap(draw_rect, clip) && color != color_transparent {
+
+	if rects_overlap(draw_rect, clip) {
 		if shape.fill {
-			window.renderers << DrawRect{
-				x:          draw_rect.x
-				y:          draw_rect.y
-				w:          draw_rect.width
-				h:          draw_rect.height
-				color:      gx_color
-				style:      .fill
-				is_rounded: shape.radius > 0
-				radius:     shape.radius
+			if color != color_transparent {
+				window.renderers << DrawRect{
+					x:          draw_rect.x
+					y:          draw_rect.y
+					w:          draw_rect.width
+					h:          draw_rect.height
+					color:      gx_color
+					style:      .fill
+					is_rounded: shape.radius > 0
+					radius:     shape.radius
+				}
+			}
+			// Draw border on top of fill if it exists
+			if shape.border_width > 0 {
+				border_color := if shape.disabled {
+					dim_alpha(shape.border_color)
+				} else {
+					shape.border_color
+				}
+				if border_color != color_transparent {
+					window.renderers << DrawStrokeRect{
+						x:         draw_rect.x
+						y:         draw_rect.y
+						w:         draw_rect.width
+						h:         draw_rect.height
+						color:     border_color.to_gx_color()
+						radius:    shape.radius
+						thickness: shape.border_width
+					}
+				}
 			}
 		} else {
-			window.renderers << DrawStrokeRect{
-				x:         draw_rect.x
-				y:         draw_rect.y
-				w:         draw_rect.width
-				h:         draw_rect.height
-				color:     gx_color
-				radius:    shape.radius
-				thickness: shape.border_width
+			// Just a border (legacy behavior, or transparent fill)
+			// Use generic color if border_color is not set?
+			// For backward compatibility, if fill is false, `color` usually meant the border color.
+			// Let's check if border_color is set.
+			mut stroke_color := gx_color
+			if shape.border_color.a > 0 {
+				c := if shape.disabled { dim_alpha(shape.border_color) } else { shape.border_color }
+				stroke_color = c.to_gx_color()
+			}
+
+			if stroke_color.a > 0 {
+				window.renderers << DrawStrokeRect{
+					x:         draw_rect.x
+					y:         draw_rect.y
+					w:         draw_rect.width
+					h:         draw_rect.height
+					color:     stroke_color
+					radius:    shape.radius
+					thickness: shape.border_width
+				}
 			}
 		}
 	} else {

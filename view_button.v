@@ -16,6 +16,7 @@ pub:
 	color_border_focus Color       = gui_theme.button_style.color_border_focus
 	padding            Padding     = gui_theme.button_style.padding
 	padding_border     Padding     = gui_theme.button_style.padding_border
+	border_width       f32         = gui_theme.button_style.border_width
 	sizing             Sizing
 	content            []View
 	on_click           fn (&Layout, mut Event, mut Window) = unsafe { nil }
@@ -54,41 +55,39 @@ pub:
 // )
 // ```
 pub fn button(cfg ButtonCfg) View {
+	border_width := if cfg.border_width == 0 && !cfg.padding_border.is_none() {
+		cfg.padding_border.width() / 2 // Approximate conversion if padding_border used legacy style
+	} else {
+		cfg.border_width
+	}
+
 	return row(
-		name:         'button border'
+		name:         'button'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
-		color:        cfg.color_border
-		padding:      cfg.padding_border
-		fill:         cfg.fill_border
-		radius:       cfg.radius_border
+		color:        cfg.color
+		border_color: cfg.color_border
+		border_width: border_width
+		padding:      cfg.padding
+		radius:       cfg.radius // Use radius, radius_border becomes redundant or same?
+		fill:         cfg.fill
 		width:        cfg.width
 		height:       cfg.height
-		disabled:     cfg.disabled
-		invisible:    cfg.invisible
 		min_width:    cfg.min_width
 		max_width:    cfg.max_width
 		min_height:   cfg.min_height
 		max_height:   cfg.max_height
 		sizing:       cfg.sizing
+		disabled:     cfg.disabled
+		invisible:    cfg.invisible
+		h_align:      cfg.h_align
+		v_align:      cfg.v_align
 		tooltip:      cfg.tooltip
 		on_click:     cfg.on_click
 		on_char:      spacebar_to_click(cfg.on_click)
 		amend_layout: cfg.amend_layout
 		on_hover:     cfg.on_button_hover
-		content:      [
-			row(
-				name:    'button interior'
-				sizing:  fill_fill
-				h_align: cfg.h_align
-				v_align: cfg.v_align
-				padding: cfg.padding
-				radius:  cfg.radius
-				fill:    cfg.fill
-				color:   cfg.color
-				content: cfg.content
-			),
-		]
+		content:      cfg.content
 	)
 }
 
@@ -98,8 +97,8 @@ fn (cfg &ButtonCfg) amend_layout(mut layout Layout, mut w Window) {
 		return
 	}
 	if w.is_focus(layout.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_focus
-		layout.shape.color = cfg.color_border_focus
+		layout.shape.color = cfg.color_focus
+		layout.shape.border_color = cfg.color_border_focus
 	}
 }
 
@@ -111,10 +110,10 @@ fn (cfg &ButtonCfg) on_button_hover(mut layout Layout, mut e Event, mut w Window
 	}
 	w.set_mouse_cursor_pointing_hand()
 	if !w.is_focus(layout.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_hover
+		layout.shape.color = cfg.color_hover
 	}
 	if e.mouse_button == .left {
-		layout.children[0].shape.color = cfg.color_click
+		layout.shape.color = cfg.color_click
 	}
 
 	if cfg.on_hover != unsafe { nil } {

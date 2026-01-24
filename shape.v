@@ -57,6 +57,7 @@ pub mut:
 	text_tab_size         u32 = 4 // Tab width in spaces
 	last_constraint_width f32       // Optimization: cached width used for last text layout generation
 	color                 Color     // Background or foreground color
+	border_color          Color     // Border color (if different from color)
 	shadow                BoxShadow // Drop shadow configuration
 	gradient              &Gradient = unsafe { nil } // Gradient background configuration
 	border_gradient       &Gradient = unsafe { nil } // Gradient border configuration

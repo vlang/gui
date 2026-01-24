@@ -83,6 +83,7 @@ pub:
 	scroll_mode        ScrollMode
 	padding            Padding = gui_theme.input_style.padding
 	padding_border     Padding = gui_theme.input_style.padding_border
+	border_width       f32     = gui_theme.input_style.border_width
 	color              Color   = gui_theme.input_style.color
 	color_hover        Color   = gui_theme.input_style.color_hover
 	color_border       Color   = gui_theme.input_style.color_border
@@ -143,71 +144,69 @@ pub fn input(cfg InputCfg) View {
 	txt_style := if placeholder_active { cfg.placeholder_style } else { cfg.text_style }
 	mode := if cfg.mode == .single_line { TextMode.single_line } else { TextMode.wrap_keep_spaces }
 
-	return row(
-		name:         'input border'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		tooltip:      cfg.tooltip
-		width:        cfg.width
-		height:       cfg.height
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
-		min_height:   cfg.min_height
-		max_height:   cfg.max_height
-		disabled:     cfg.disabled
-		clip:         true
-		color:        cfg.color_border
-		invisible:    cfg.invisible
-		fill:         cfg.fill_border
-		padding:      cfg.padding_border
-		radius:       cfg.radius_border
-		sizing:       cfg.sizing
-		on_char:      cfg.on_char
-		on_hover:     cfg.hover
-		amend_layout: cfg.amend_layout
-		content:      [
-			column(
-				name:            'input scroll container'
-				id_scroll:       cfg.id_scroll
-				scrollbar_cfg_x: cfg.scrollbar_cfg_x
-				scrollbar_cfg_y: cfg.scrollbar_cfg_y
-				color:           cfg.color
-				fill:            cfg.fill
-				padding:         cfg.padding
-				radius:          cfg.radius
-				sizing:          fill_fill
-				spacing:         0
-				content:         [
+	border_width := if cfg.border_width == 0 && !cfg.padding_border.is_none() {
+		cfg.padding_border.width() / 2
+	} else {
+		cfg.border_width
+	}
+
+	return column(
+		name:            'input'
+		id:              cfg.id
+		id_focus:        cfg.id_focus
+		tooltip:         cfg.tooltip
+		width:           cfg.width
+		height:          cfg.height
+		min_width:       cfg.min_width
+		max_width:       cfg.max_width
+		min_height:      cfg.min_height
+		max_height:      cfg.max_height
+		disabled:        cfg.disabled
+		clip:            true
+		color:           cfg.color
+		border_color:    cfg.color_border
+		border_width:    border_width
+		invisible:       cfg.invisible
+		fill:            cfg.fill
+		padding:         cfg.padding
+		radius:          cfg.radius
+		sizing:          cfg.sizing
+		on_char:         cfg.on_char
+		on_hover:        cfg.hover
+		amend_layout:    cfg.amend_layout
+		id_scroll:       cfg.id_scroll
+		scrollbar_cfg_x: cfg.scrollbar_cfg_x
+		scrollbar_cfg_y: cfg.scrollbar_cfg_y
+		spacing:         0
+		content:         [
+			row(
+				name:     'input interior'
+				padding:  padding_none
+				sizing:   fill_fill
+				on_click: cfg.on_click_interior
+				content:  [
+					text(
+						id_focus:           cfg.id_focus
+						sizing:             fill_fill
+						text:               txt
+						text_style:         txt_style
+						mode:               mode
+						is_password:        cfg.is_password
+						placeholder_active: placeholder_active
+					),
+					rectangle(
+						color:  color_transparent
+						sizing: fill_fill
+					),
 					row(
-						name:     'input interior'
+						name:     'input icon'
 						padding:  padding_none
-						sizing:   fill_fill
-						on_click: cfg.on_click_interior
+						on_click: cfg.on_click_icon
+						on_hover: cfg.hover_icon
 						content:  [
 							text(
-								id_focus:           cfg.id_focus
-								sizing:             fill_fill
-								text:               txt
-								text_style:         txt_style
-								mode:               mode
-								is_password:        cfg.is_password
-								placeholder_active: placeholder_active
-							),
-							rectangle(
-								color:  color_transparent
-								sizing: fill_fill
-							),
-							row(
-								name:     'input icon'
-								padding:  padding_none
-								on_click: cfg.on_click_icon
-								on_hover: cfg.hover_icon
-								content:  [
-									text(
-										text:       cfg.icon
-										text_style: cfg.icon_style
-									),
-								]
+								text:       cfg.icon
+								text_style: cfg.icon_style
 							),
 						]
 					),
@@ -228,7 +227,7 @@ fn (_ &InputCfg) on_click_interior(layout &Layout, mut e Event, mut w Window) {
 		w.set_id_focus(ly.shape.id_focus)
 	}
 	if layout.shape.on_click != unsafe { nil } {
-		ly.shape.on_click(ly, mut e, mut w)
+		layout.shape.on_click(layout, mut e, mut w)
 	}
 }
 
@@ -515,7 +514,7 @@ fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 		return
 	}
 	if layout.shape.id_focus > 0 && layout.shape.id_focus == w.id_focus() {
-		layout.shape.color = cfg.color_border_focus
+		layout.shape.border_color = cfg.color_border_focus
 	}
 }
 
@@ -525,7 +524,7 @@ fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	} else {
-		layout.children[0].shape.color = cfg.color_hover
+		layout.shape.color = cfg.color_hover
 	}
 }
 
