@@ -137,7 +137,7 @@ pub const theme_light_bordered_cfg = ThemeCfg{
 pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 
 pub const theme_blue_bordered_cfg = ThemeCfg{
-	...theme_dark_cfg
+	...theme_dark_bordered_cfg
 	name:               'blue-dark-bordered'
 	color_background:   color_from_string('#0c1d3a')
 	color_panel:        color_from_string('#122c58')

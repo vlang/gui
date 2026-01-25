@@ -24,7 +24,7 @@ fn main() {
 		}
 		title:        'test layout'
 		width:        800
-		height:       600
+		height:       700
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -143,11 +143,11 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.rectangle(
-						width:  25
-						height: 25
-						fill:   true
-						sizing: gui.fill_fill
-						color:  gui.dark_green
+						width:     25
+						height:    25
+						fill:      true
+						sizing:    gui.fill_fill
+						color:     gui.dark_green
 					),
 				]
 			),
