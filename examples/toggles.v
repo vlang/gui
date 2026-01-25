@@ -60,6 +60,7 @@ fn main_view(window &gui.Window) gui.View {
 						label:       'toggle (custom icon)'
 						select:      app.select_toggle
 						text_select: gui.icon_bug
+						text_style:  gui.theme().icon3
 						on_click:    fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ToggleApp]()
 							app.select_toggle = !app.select_toggle

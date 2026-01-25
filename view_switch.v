@@ -35,42 +35,33 @@ pub fn switch(cfg SwitchCfg) View {
 	color := if cfg.select { cfg.color_select } else { cfg.color_unselect }
 	circle_size := cfg.height - cfg.padding.height() - (cfg.border_width * 2)
 
-
 	mut content := []View{cap: 2}
 	content << row(
-		name:         'switch border'
+		name:         'switch'
 		id:           cfg.id
 		width:        cfg.width
 		height:       cfg.height
 		sizing:       fixed_fit
-		color:        cfg.color_border
+		color:        cfg.color
+		color_border: cfg.color_border
 		border_width: cfg.border_width
 
-		fill:         cfg.fill_border
-		radius:       cfg.radius_border
+		fill:         cfg.fill
+		radius:       cfg.radius
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
 		amend_layout: cfg.amend_layout
+		padding:      cfg.padding
+		h_align:      if cfg.select { .end } else { .start }
+		v_align:      .middle
 		content:      [
-			row(
-				name:    'switch interior'
-				color:   cfg.color
-				fill:    cfg.fill
-				sizing:  fill_fill
-				padding: cfg.padding
-				radius:  cfg.radius
-				h_align: if cfg.select { .end } else { .start }
-				v_align: .middle
-				content: [
-					circle(
-						name:   'select thumb'
-						color:  color
-						fill:   true
-						width:  circle_size
-						height: circle_size
-						sizing: fixed_fixed
-					),
-				]
+			circle(
+				name:   'select thumb'
+				color:  color
+				fill:   true
+				width:  circle_size
+				height: circle_size
+				sizing: fixed_fixed
 			),
 		]
 	)
@@ -92,15 +83,15 @@ fn (cfg &SwitchCfg) amend_layout(mut layout Layout, mut w Window) {
 		return
 	}
 	if w.is_focus(layout.parent.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_focus
-		layout.shape.color = cfg.color_border_focus
+		layout.shape.color = cfg.color_focus
+		layout.shape.color_border = cfg.color_border_focus
 	}
 }
 
 fn (cfg &SwitchCfg) on_hover(mut layout Layout, mut e Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
-	layout.children[0].children[0].shape.color = cfg.color_hover
+	layout.children[0].shape.color = cfg.color_hover
 	if e.mouse_button == .left {
-		layout.children[0].children[0].shape.color = cfg.color_click
+		layout.children[0].shape.color = cfg.color_click
 	}
 }
