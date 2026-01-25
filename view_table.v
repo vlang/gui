@@ -78,33 +78,25 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 			}
 
 			cells << column(
-				name:     'table cell border'
-				color:    cfg.color_border
-				padding:  cfg.cell_padding
-				radius:   0
-				spacing:  0
-				sizing:   fixed_fill
-				width:    column_width + cfg.cell_padding.width()
-				on_click: cell.on_click
-				content:  [
-					column(
-						name:     'table cell interior'
-						fill:     true
-						h_align:  h_align
-						color:    color_transparent
-						padding:  padding_none
-						sizing:   fill_fill
-						content:  [
-							text(text: cell.value, text_style: cell_text_style),
-						]
-						on_hover: fn [cell] (mut layout Layout, mut e Event, mut w Window) {
-							if cell.on_click != unsafe { nil } {
-								w.set_mouse_cursor_pointing_hand()
-								layout.shape.color = gui_theme.color_hover
-							}
-						}
-					),
+				name:         'table cell'
+				color:        cfg.color_border
+				color_border: cfg.color_border
+				padding:      cfg.cell_padding
+				radius:       0
+				spacing:      0
+				h_align:      h_align
+				sizing:       fixed_fill
+				width:        column_width + cfg.cell_padding.width()
+				on_click:     cell.on_click
+				content:      [
+					text(text: cell.value, text_style: cell_text_style),
 				]
+				on_hover:     fn [cell] (mut layout Layout, mut e Event, mut w Window) {
+					if cell.on_click != unsafe { nil } {
+						w.set_mouse_cursor_pointing_hand()
+						layout.shape.color = gui_theme.color_hover
+					}
+				}
 			)
 		}
 		rows << row(
@@ -116,13 +108,14 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 		)
 	}
 	return column(
-		name:    'table'
-		id:      cfg.id
-		color:   cfg.color_border
-		padding: padding_none
-		radius:  0
-		spacing: 0
-		content: rows
+		name:         'table'
+		id:           cfg.id
+		color:        color_transparent
+		color_border: cfg.color_border
+		padding:      padding_none
+		radius:       0
+		spacing:      0
+		content:      rows
 	)
 }
 
