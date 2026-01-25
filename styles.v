@@ -52,9 +52,9 @@ pub:
 	fill_border        bool    = true
 	padding            Padding = padding_button
 	padding_border     Padding = padding_none
-	border_width       f32
-	radius             f32 = radius_medium
-	radius_border      f32 = radius_medium
+	border_width       f32     = size_border
+	radius             f32     = radius_medium
+	radius_border      f32     = radius_medium
 }
 
 pub struct ContainerStyle {
@@ -89,7 +89,7 @@ pub:
 	fill                     bool    = true
 	fill_border              bool    = true
 	padding                  Padding = padding_none
-	border_width             f32
+	border_width             f32     = size_border
 
 	radius        f32       = radius_medium
 	radius_border f32       = radius_medium
@@ -129,16 +129,16 @@ pub struct ExpandPanelStyle {
 
 pub struct InputStyle {
 pub:
-	color              Color   = color_interior_dark
-	color_hover        Color   = color_hover_dark
-	color_border       Color   = color_border_dark
-	color_border_focus Color   = color_select_dark
-	color_focus        Color   = color_active_dark
-	fill               bool    = true
-	fill_border        bool    = true
-	padding            Padding = padding_small
-	padding_border     Padding = padding_none
-	border_width       f32
+	color              Color     = color_interior_dark
+	color_hover        Color     = color_hover_dark
+	color_border       Color     = color_border_dark
+	color_border_focus Color     = color_select_dark
+	color_focus        Color     = color_active_dark
+	fill               bool      = true
+	fill_border        bool      = true
+	padding            Padding   = padding_small
+	padding_border     Padding   = padding_none
+	border_width       f32       = size_border
 	radius             f32       = radius_medium
 	radius_border      f32       = radius_medium
 	text_style         TextStyle = text_style_dark
@@ -186,7 +186,7 @@ pub:
 	padding_menu_item Padding = padding_two_five
 	padding_submenu   Padding = padding_small
 	padding_subtitle  Padding = padding_two_five
-	border_width      f32
+	border_width      f32     = size_border
 
 	radius              f32       = radius_small
 	radius_border       f32       = radius_border
@@ -284,7 +284,7 @@ pub:
 	fill               bool    = true
 	fill_border        bool    = true
 	padding            Padding = padding_small
-	border_width       f32
+	border_width       f32     = size_border
 
 	radius            f32       = radius_medium
 	radius_border     f32       = radius_medium
@@ -314,7 +314,7 @@ pub:
 	fill               bool    = true
 	fill_border        bool    = true
 	padding            Padding = padding_three
-	border_width       f32
+	border_width       f32     = size_border
 
 	radius        f32       = radius_large * 2
 	radius_border f32       = radius_large * 2
@@ -377,7 +377,7 @@ pub:
 	fill_border        bool    = true
 	padding            Padding = padding(1, 1, 1, 2)
 
-	border_width     f32
+	border_width     f32       = size_border
 	radius           f32       = radius_small
 	radius_border    f32       = radius_small
 	text_style       TextStyle = text_style_icon_dark
@@ -395,7 +395,7 @@ pub struct TooltipStyle {
 	fill               bool          = true
 	fill_border        bool          = true
 	padding            Padding       = padding_small
-	border_width       f32
+	border_width       f32           = size_border
 
 	radius        f32       = radius_small
 	radius_border f32       = radius_small

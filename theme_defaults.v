@@ -96,7 +96,7 @@ pub const theme_dark_no_padding = theme_maker(theme_dark_no_padding_cfg)
 pub const theme_dark_bordered_cfg = ThemeCfg{
 	...theme_dark_cfg
 	name:         'dark-bordered'
-	border_width: 1
+	border_width: size_border
 }
 pub const theme_dark_bordered = theme_maker(theme_dark_bordered_cfg)
 
@@ -132,7 +132,7 @@ pub const theme_light_no_padding = theme_maker(theme_light_no_padding_cfg)
 pub const theme_light_bordered_cfg = ThemeCfg{
 	...theme_light_cfg
 	name:         'light-bordered'
-	border_width: 1
+	border_width: size_border
 }
 pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 

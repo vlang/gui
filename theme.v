@@ -44,11 +44,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border:      cfg.radius_border
 		}
 		container_style:    ContainerStyle{
-			color:   color_transparent
-			fill:    false
-			padding: cfg.padding
-			radius:  cfg.radius
-			spacing: cfg.spacing_medium
+			color:        color_transparent
+			fill:         false
+			padding:      cfg.padding
+			radius:       cfg.radius
+			spacing:      cfg.spacing_medium
+			border_width: cfg.border_width
 		}
 		date_picker_style:  DatePickerStyle{
 			color:              cfg.color_interior
@@ -157,12 +158,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		progress_bar_style: ProgressBarStyle{
-			color:      cfg.color_interior
-			color_bar:  cfg.color_active
-			fill:       true
-			padding:    cfg.padding_medium
-			radius:     cfg.radius
-			text_style: cfg.text_style
+			color:        cfg.color_interior
+			color_bar:    cfg.color_active
+			fill:         true
+			padding:      cfg.padding_medium
+			radius:       cfg.radius
+			text_style:   cfg.text_style
 		}
 		radio_style:        RadioStyle{
 			color:          cfg.color_panel
@@ -172,6 +173,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_select:   cfg.color_select
 			color_unselect: cfg.color_active
 			text_style:     cfg.text_style
+			border_width:   cfg.border_width
 		}
 		range_slider_style: RangeSliderStyle{
 			color:        cfg.color_interior
@@ -190,9 +192,10 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border: cfg.radius_small
 		}
 		rectangle_style:    RectangleStyle{
-			color:  cfg.color_border
-			radius: cfg.radius
-			fill:   cfg.fill
+			color:        cfg.color_border
+			radius:       cfg.radius
+			fill:         cfg.fill
+			border_width: cfg.border_width
 		}
 		scrollbar_style:    ScrollbarStyle{
 			color_thumb:  cfg.color_active
