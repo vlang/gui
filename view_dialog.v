@@ -81,14 +81,18 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		.custom { cfg.custom_content }
 	}
 	return column(
-		name:          'dialog border: ${cfg.dialog_type}'
+		name:          'dialog: ${cfg.dialog_type}'
 		id:            reserved_dialog_id
 		float:         true
 		float_anchor:  .middle_center
 		float_tie_off: .middle_center
-		color:         cfg.color_border
-		fill:          cfg.fill_border
+		color:         cfg.color
+		fill:          cfg.fill
+		color_border:  cfg.color_border
 		border_width:  cfg.border_width
+		radius:        cfg.radius
+		padding:       cfg.padding
+		h_align:       .center
 
 		width:      cfg.width
 		height:     cfg.height
@@ -97,17 +101,7 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		min_height: cfg.min_height
 		max_height: cfg.max_height
 		on_keydown: dialog_key_down
-		content:    [
-			column(
-				name:    'dialog: ${cfg.dialog_type}'
-				h_align: .center
-				sizing:  fill_fill
-				padding: cfg.padding
-				fill:    cfg.fill
-				color:   cfg.color
-				content: content
-			),
-		]
+		content:    content
 	)
 }
 
