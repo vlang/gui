@@ -16,7 +16,7 @@ pub const padding_x_small = pad_all(pad_x_small)
 pub const padding_small = pad_all(pad_small)
 pub const padding_medium = pad_all(pad_medium)
 pub const padding_large = pad_all(pad_large)
-pub const padding_button = pad_tblr(7, 9)
+pub const padding_button = padding(5,9,7,9)
 
 // Padding is the gap inside the edges of a Shape. The size of a Shape always
 // includes its padding. Parameter order is the same as CSS.

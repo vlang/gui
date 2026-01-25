@@ -39,7 +39,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_hover:        cfg.color_hover
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
-	border_width:       cfg.border_width
+			border_width:       cfg.border_width
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 		}
@@ -61,18 +61,18 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding
-	border_width:       cfg.border_width
+			border_width:       cfg.border_width
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
 		}
 		dialog_style:       DialogStyle{
-			color:            cfg.color_panel
-			color_border:     cfg.color_border
-			fill:             cfg.fill
-			fill_border:      cfg.fill_border
-			padding:          cfg.padding_large
-			border_width:     cfg.border_width
+			color:        cfg.color_panel
+			color_border: cfg.color_border
+			fill:         cfg.fill
+			fill_border:  cfg.fill_border
+			padding:      cfg.padding_large
+			border_width: cfg.border_width
 
 			radius:           cfg.radius
 			radius_border:    cfg.radius_border
@@ -83,15 +83,15 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:       cfg.text_style
 		}
 		expand_panel_style: ExpandPanelStyle{
-			color:          cfg.color_panel
-			color_border:   cfg.color_border
-			fill:           cfg.fill
-			fill_border:    cfg.fill_border
-			padding:        cfg.padding_small
-			border_width:   cfg.border_width
+			color:        cfg.color_panel
+			color_border: cfg.color_border
+			fill:         cfg.fill
+			fill_border:  cfg.fill_border
+			padding:      cfg.padding_small
+			border_width: cfg.border_width
 
-			radius:         cfg.radius
-			radius_border:  cfg.radius_border
+			radius:        cfg.radius
+			radius_border: cfg.radius_border
 		}
 		input_style:        InputStyle{
 			color:              cfg.color_interior
@@ -102,7 +102,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding
-	border_width:       cfg.border_width
+			border_width:       cfg.border_width
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
@@ -122,14 +122,14 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		list_box_style:     ListBoxStyle{
-			color:            cfg.color_interior
-			color_hover:      cfg.color_hover
-			color_border:     cfg.color_border
-			color_select:     cfg.color_select
-			fill:             cfg.fill
-			fill_border:      cfg.fill_border
-			padding:          cfg.padding
-			border_width:   cfg.border_width
+			color:        cfg.color_interior
+			color_hover:  cfg.color_hover
+			color_border: cfg.color_border
+			color_select: cfg.color_select
+			fill:         cfg.fill
+			fill_border:  cfg.fill_border
+			padding:      cfg.padding
+			border_width: cfg.border_width
 
 			radius:           cfg.radius
 			radius_border:    cfg.radius_border
@@ -137,11 +137,11 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			subheading_style: cfg.text_style
 		}
 		menubar_style:      MenubarStyle{
-			color:               cfg.color_interior
-			color_border:        cfg.color_border
-			color_select:        cfg.color_select
-			padding:             cfg.padding_small
-			border_width:        cfg.border_width
+			color:        cfg.color_interior
+			color_border: cfg.color_border
+			color_select: cfg.color_select
+			padding:      cfg.padding_small
+			border_width: cfg.border_width
 
 			padding_submenu:     cfg.padding_small
 			padding_subtitle:    padding(0, cfg.padding_small.right, 0, cfg.padding_small.left)
@@ -174,20 +174,20 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:     cfg.text_style
 		}
 		range_slider_style: RangeSliderStyle{
-			color:          cfg.color_interior
-			color_left:     cfg.color_active
-			color_thumb:    cfg.color_active
-			color_focus:    cfg.color_border_focus
-			color_hover:    cfg.color_hover
-			color_border:   cfg.color_border
-			color_click:    cfg.color_select
-			fill:           true
-			fill_border:    true
-			padding:        padding_none
-			border_width:   cfg.border_width
+			color:        cfg.color_interior
+			color_left:   cfg.color_active
+			color_thumb:  cfg.color_active
+			color_focus:  cfg.color_border_focus
+			color_hover:  cfg.color_hover
+			color_border: cfg.color_border
+			color_click:  cfg.color_select
+			fill:         true
+			fill_border:  true
+			padding:      padding_none
+			border_width: cfg.border_width
 
-			radius:         cfg.radius_small
-			radius_border:  cfg.radius_small
+			radius:        cfg.radius_small
+			radius_border: cfg.radius_small
 		}
 		rectangle_style:    RectangleStyle{
 			color:  cfg.color_border
@@ -210,7 +210,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
-	border_width:       cfg.border_width
+			border_width:       cfg.border_width
 			radius:             cfg.radius_medium
 			radius_border:      cfg.radius_medium
 			text_style:         cfg.text_style
@@ -237,7 +237,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            padding_three
-	border_width:       cfg.border_width
+			border_width:       cfg.border_width
 			radius:             radius_large * 2
 			radius_border:      radius_large * 2
 			text_style:         cfg.text_style
@@ -254,10 +254,10 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            padding(1, 1, 1, 2)
-	border_width:       cfg.border_width
+			border_width:       cfg.border_width
 			radius:             if cfg.radius != 0 { radius_small } else { 0 }
 			radius_border:      if radius_border != 0 { radius_small } else { 0 }
-			text_style:         text_style_icon_dark
+			text_style:         cfg.text_style
 			text_style_label:   cfg.text_style
 		}
 		tooltip_style:      TooltipStyle{
@@ -270,7 +270,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			fill:               cfg.fill
 			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
-	border_width:       cfg.border_width
+			border_width:       cfg.border_width
 			radius:             cfg.radius_small
 			radius_border:      cfg.radius_small
 			text_style:         cfg.text_style
@@ -288,7 +288,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		padding_small:  cfg.padding_small
 		padding_medium: cfg.padding_medium
 		padding_large:  cfg.padding_large
-		border_width: cfg.border_width
+		border_width:   cfg.border_width
 
 		radius_small:  cfg.radius_small
 		radius_medium: cfg.radius_medium

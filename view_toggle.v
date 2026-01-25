@@ -23,6 +23,7 @@ pub:
 	border_width       f32       = gui_theme.toggle_style.border_width
 	radius             f32       = gui_theme.toggle_style.radius
 	radius_border      f32       = gui_theme.toggle_style.radius_border
+	min_width          f32
 	id_focus           u32
 	disabled           bool
 	invisible          bool
@@ -60,6 +61,7 @@ pub fn toggle(cfg ToggleCfg) View {
 		radius:       cfg.radius
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
+		h_align:      .center
 		v_align:      .middle
 		content:      [
 			text(
@@ -85,6 +87,7 @@ pub fn toggle(cfg ToggleCfg) View {
 		on_char:      spacebar_to_click(cfg.on_click)
 		on_click:     left_click_only(cfg.on_click)
 		on_hover:     cfg.on_hover
+		min_width:    cfg.min_width
 		amend_layout: cfg.amend_layout
 		content:      content
 	)
