@@ -60,91 +60,85 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	}
 
 	id := cfg.id
-	mut content := []View{cap: 2}
-	content << row( // interior
-		name:     'select interior'
-		fill:     cfg.fill
-		color:    cfg.color
-		padding:  cfg.padding
-		sizing:   fill_fit
-		content:  [
-			text(
-				text:       txt
-				text_style: txt_style
-				mode:       wrap_mode
-			),
-			row(
-				name:    'select spacer'
-				sizing:  if wrap_mode == .single_line { fill_fill } else { fit_fill }
-				padding: padding_none
-			),
-			text(
-				text:       if is_open { '▲' } else { '▼' }
-				text_style: cfg.text_style
-			),
-		]
-		on_click: fn [id, is_open] (_ &Layout, mut e Event, mut w Window) {
-			w.view_state.select_state.clear() // close all select drop-downs.
-			w.view_state.select_state[id] = !is_open
-			e.is_handled = true
-		}
+
+	mut content := []View{cap: 4}
+
+	content << text(
+		text:       txt
+		text_style: txt_style
+		mode:       wrap_mode
 	)
+	content << row(
+		name:    'select spacer'
+		sizing:  if wrap_mode == .single_line { fill_fill } else { fit_fill }
+		padding: padding_none
+	)
+	content << text(
+		text:       if is_open { '▲' } else { '▼' }
+		text_style: cfg.text_style
+	)
+
 	if is_open {
-		content << column( // dropdown border
-			name:           'select dropdown border'
-			id:             cfg.id + 'dropdown'
-			min_height:     50
-			max_height:     200
-			min_width:      cfg.min_width
-			max_width:      cfg.max_width
+		content << column( // dropdown
+			name: 'select dropdown'
+			id:   cfg.id + 'dropdown'
+			// Border props
+			border_width: cfg.border_width
+			radius:       cfg.radius
+			color_border: cfg.color_border
+			// Background props
+			color: cfg.color
+
+			// Layout props
+			min_height: 50
+			max_height: 200
+			min_width:  cfg.min_width
+			max_width:  cfg.max_width
+
+			// Float props
 			float:          true
 			float_anchor:   .bottom_left
 			float_tie_off:  .top_left
 			float_offset_y: -cfg.border_width
 
-			fill:         cfg.fill
-			border_width: cfg.border_width
+			fill: cfg.fill
 
-			radius:  cfg.radius
-			color:   cfg.color_border
-			content: [
-				column(
-					name:    'select dropdown scroll container'
-					padding: padding_none
-					sizing:  fill_fill
-					content: [
-						column( // drop down list
-							name:      'select dropdown list'
-							id:        cfg.id + 'dropdown_list'
-							id_scroll: fnv1a.sum32_string(cfg.id + 'dropdown')
-							fill:      cfg.fill
-							sizing:    fill_fill
-							color:     cfg.color
-							padding:   padding(pad_small, pad_medium, pad_small, pad_small)
-							spacing:   0
-							content:   options
-						),
-					]
-				),
-			]
+			// List/Scroll Props merged
+			id_scroll: fnv1a.sum32_string(cfg.id + 'dropdown')
+			padding:   padding(pad_small, pad_medium, pad_small, pad_small)
+			spacing:   0
+			content:   options
 		)
 	}
-	return row( // border
-		name:         'select border'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		clip:         clip
-		fill:         true
+
+	return row(
+		name:     'select'
+		id:       cfg.id
+		id_focus: cfg.id_focus
+		clip:     clip
+
+		// Container props
+		color:        cfg.color
+		color_border: cfg.color_border
+		border_width: cfg.border_width
+		radius:       cfg.radius
+		padding:      cfg.padding
+		sizing:       cfg.sizing
 		min_width:    cfg.min_width
 		max_width:    cfg.max_width
-		border_width: cfg.border_width
 
-		radius:       cfg.radius
-		color:        cfg.color_border
-		sizing:       cfg.sizing
+		// Behavior
 		amend_layout: cfg.amend_layout
-		content:      content
 		on_keydown:   cfg.select_on_keydown
+
+		// Event Handling (moved from inner)
+		on_click: fn [id, is_open] (_ &Layout, mut e Event, mut w Window) {
+			w.view_state.select_state.clear() // close all select drop-downs.
+			w.view_state.select_state[id] = !is_open
+			e.is_handled = true
+		}
+
+		content: content
 	)
 }
 
@@ -377,7 +371,7 @@ fn (cfg &SelectCfg) amend_layout(mut layout Layout, mut w Window) {
 		return
 	}
 	if w.is_focus(layout.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_focus
-		layout.shape.color = cfg.color_border_focus
+		layout.shape.color = cfg.color_focus
+		layout.shape.color_border = cfg.color_border_focus
 	}
 }
