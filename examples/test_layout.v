@@ -143,11 +143,11 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.rectangle(
-						width:     25
-						height:    25
-						fill:      true
-						sizing:    gui.fill_fill
-						color:     gui.dark_green
+						width:  25
+						height: 25
+						fill:   true
+						sizing: gui.fill_fill
+						color:  gui.dark_green
 					),
 				]
 			),
