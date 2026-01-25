@@ -103,7 +103,7 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 		id:            cfg.id
 		id_focus:      cfg.id_focus
 		color:         cfg.color
-		border_color:  cfg.color_border
+		color_border:  cfg.color_border
 		fill:          true
 		float:         cfg.float
 		float_anchor:  cfg.float_anchor

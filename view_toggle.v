@@ -40,11 +40,10 @@ pub fn toggle(cfg ToggleCfg) View {
 
 	border_width := cfg.border_width
 
-
 	content << row(
 		name:         'toggle box'
 		color:        color
-		border_color: cfg.color_border
+		color_border: cfg.color_border
 		border_width: border_width
 		padding:      cfg.padding
 		fill:         cfg.fill
@@ -88,7 +87,7 @@ fn (cfg &ToggleCfg) amend_layout(mut layout Layout, mut w Window) {
 	}
 	if w.is_focus(layout.shape.id_focus) {
 		layout.children[0].shape.color = cfg.color_focus
-		layout.children[0].shape.border_color = cfg.color_border_focus
+		layout.children[0].shape.color_border = cfg.color_border_focus
 	}
 }
 

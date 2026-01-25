@@ -145,7 +145,6 @@ pub fn input(cfg InputCfg) View {
 
 	border_width := cfg.border_width
 
-
 	return column(
 		name:            'input'
 		id:              cfg.id
@@ -160,7 +159,7 @@ pub fn input(cfg InputCfg) View {
 		disabled:        cfg.disabled
 		clip:            true
 		color:           cfg.color
-		border_color:    cfg.color_border
+		color_border:    cfg.color_border
 		border_width:    border_width
 		invisible:       cfg.invisible
 		fill:            cfg.fill
@@ -370,7 +369,6 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
 		width := ctx.text_width(cfg.text + s)
 		if width > cfg.width - cfg.padding.width() - (cfg.border_width * 2) {
-
 			return cfg.text
 		}
 	}
@@ -511,7 +509,7 @@ fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 		return
 	}
 	if layout.shape.id_focus > 0 && layout.shape.id_focus == w.id_focus() {
-		layout.shape.border_color = cfg.color_border_focus
+		layout.shape.color_border = cfg.color_border_focus
 	}
 }
 

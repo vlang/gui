@@ -43,7 +43,7 @@ pub fn radio(cfg RadioCfg) View {
 		width:        cfg.size
 		height:       cfg.size
 		color:        if cfg.select { cfg.color_select } else { cfg.color_unselect }
-		border_color: cfg.color_border
+		color_border: cfg.color_border
 		border_width: border_width
 		padding:      cfg.padding
 		fill:         true

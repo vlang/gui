@@ -21,7 +21,7 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 		float_tie_off: cfg.float_tie_off
 		invisible:     cfg.invisible
 		border_width:  cfg.border_width
-		border_color:  cfg.color_border
+		color_border:  cfg.color_border
 
 		radius:       cfg.radius
 		sizing:       cfg.sizing
@@ -88,7 +88,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 					max_width:    cfg.width_submenu_max
 					color:        cfg.color
 					border_width: cfg.border_width
-					border_color: cfg.color_border
+					color_border: cfg.color_border
 
 					fill:           true
 					float:          true

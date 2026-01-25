@@ -27,9 +27,8 @@ import arrays
 struct ContainerView implements View {
 	ContainerCfg
 mut:
-	content      []View
-	shape_type   ShapeType = .rectangle
-	border_color Color
+	content    []View
+	shape_type ShapeType = .rectangle
 }
 
 fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
@@ -72,7 +71,7 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			gradient:        cv.gradient
 			border_gradient: cv.border_gradient
 			border_width:    cv.border_width
-			border_color:    cv.border_color
+			color_border:    cv.color_border
 			disabled:        cv.disabled
 			float:           cv.float
 			float_anchor:    cv.float_anchor
@@ -158,11 +157,11 @@ pub:
 	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
 	tooltip         &TooltipCfg   = unsafe { nil }
 	color           Color         = gui_theme.container_style.color
+	color_border    Color         = gui_theme.container_style.color_border
 	shadow          BoxShadow     = gui_theme.container_style.shadow
 	gradient        &Gradient     = gui_theme.container_style.gradient
 	border_gradient &Gradient     = gui_theme.container_style.border_gradient
 	border_width    f32           = gui_theme.container_style.border_width
-	border_color    Color         = gui_theme.container_style.color_border
 	padding         Padding       = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
@@ -285,7 +284,7 @@ fn container(cfg ContainerCfg) View {
 		gradient:        cfg.gradient
 		border_gradient: cfg.border_gradient
 		border_width:    cfg.border_width
-		border_color:    cfg.border_color
+		color_border:    cfg.color_border
 		sizing:          cfg.sizing
 		spacing:         cfg.spacing
 		disabled:        cfg.disabled
@@ -432,26 +431,24 @@ fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 			x:            20
 			y:            -offset
 			color:        eraser_color
-			border_color: eraser_color
-			fill:         true
+			color_border: eraser_color
 			float:        true
+			fill:         true
 		}
 	}
-
 	// 2. Text Node
 	text_color := if cv.disabled { dim_alpha(text_style.color) } else { text_style.color }
 	children << Layout{
 		shape: &Shape{
-			shape_type:   .text
-			text:         cv.title
-			x:            20 + padding
-			y:            -offset
-			text_style:   text_style // use the one computed above which includes correct color base
-			color:        text_color
-			border_color: text_color
-			width:        text_width
-			height:       metrics.ascender + metrics.descender // Logical height
-			float:        true
+			shape_type: .text
+			text:       cv.title
+			x:          20 + padding
+			y:          -offset
+			text_style: text_style // use the one computed above which includes correct color base
+			color:      text_color
+			width:      text_width
+			height:     metrics.ascender + metrics.descender // Logical height
+			float:      true
 		}
 	}
 }

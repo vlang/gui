@@ -56,13 +56,12 @@ pub:
 pub fn button(cfg ButtonCfg) View {
 	border_width := cfg.border_width
 
-
 	return row(
 		name:         'button'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		color:        cfg.color
-		border_color: cfg.color_border
+		color_border: cfg.color_border
 		border_width: border_width
 		padding:      cfg.padding
 		radius:       cfg.radius // Use radius, radius_border becomes redundant or same?
@@ -94,7 +93,7 @@ fn (cfg &ButtonCfg) amend_layout(mut layout Layout, mut w Window) {
 	}
 	if w.is_focus(layout.shape.id_focus) {
 		layout.shape.color = cfg.color_focus
-		layout.shape.border_color = cfg.color_border_focus
+		layout.shape.color_border = cfg.color_border_focus
 	}
 }
 

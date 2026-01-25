@@ -36,11 +36,11 @@ pub fn rectangle(cfg RectangleCfg) View {
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
 		color:        cfg.color
+		color_border: cfg.color_border
 		gradient:     cfg.gradient
 		fill:         cfg.fill
 		padding:      padding_none
 		radius:       cfg.radius
-		border_color: cfg.color
 		border_width: cfg.border_width
 		spacing:      0
 	}
