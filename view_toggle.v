@@ -34,45 +34,54 @@ pub:
 // toggle creates a toggle button (a.k.a checkbox) from the given [ToggleCfg](#ToggleCfg)
 pub fn toggle(cfg ToggleCfg) View {
 	color := if cfg.select { cfg.color_select } else { cfg.color }
-	txt := if cfg.select { cfg.text_select } else { cfg.text_unselect }
-
-	mut content := []View{cap: 2}
-
+	txt := if cfg.select || cfg.text_unselect == ' ' { cfg.text_select } else { cfg.text_unselect }
+	mut txt_style := cfg.text_style
+	if !cfg.select && cfg.text_unselect == ' ' {
+		txt_style = TextStyle{
+			...cfg.text_style
+			color: color_transparent
+		}
+	}
 	border_width := cfg.border_width
+	mut content := []View{cap: 2}
+	padding := Padding{
+		...cfg.padding
+		right:  cfg.padding.right + 3
+		bottom: cfg.padding.bottom + 2
+	}
 
 	content << row(
 		name:         'toggle box'
 		color:        color
 		color_border: cfg.color_border
 		border_width: border_width
-		padding:      cfg.padding
+		padding:      padding
 		fill:         cfg.fill
 		radius:       cfg.radius
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
-		min_width:    gui_theme.n1.size
-		min_height:   gui_theme.n1.size
-		h_align:      .center
 		v_align:      .middle
 		content:      [
 			text(
 				text:       txt
-				text_style: cfg.text_style
+				text_style: txt_style
 			),
 		]
 	)
 
 	if cfg.label.len > 0 {
-		content << text(text: cfg.label, text_style: cfg.text_style_label)
+		content << text(
+			text:       cfg.label
+			text_style: cfg.text_style_label
+		)
 	}
 
 	return row(
 		name:         'toggle'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
-		h_align:      .center
-		v_align:      .middle
 		padding:      padding_none
+		v_align:      .middle
 		on_char:      spacebar_to_click(cfg.on_click)
 		on_click:     left_click_only(cfg.on_click)
 		on_hover:     cfg.on_hover

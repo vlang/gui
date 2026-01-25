@@ -66,7 +66,7 @@ fn main() {
 	mut window := gui.window(
 		title:        'Gui Showcase'
 		state:        &ShowcaseApp{}
-		width:        800
+		width:        900
 		height:       600
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
@@ -423,6 +423,7 @@ fn toggles(w &gui.Window) gui.View {
 		content: [
 			view_title('Toggle, Switch, and Radio Button Group'),
 			gui.row(
+				v_align: .middle
 				content: [
 					gui.toggle(
 						label:    'toggle (a.k.a. checkbox)'
@@ -433,10 +434,10 @@ fn toggles(w &gui.Window) gui.View {
 						}
 					),
 					gui.toggle(
-						label:       'toggle with custom text'
+						label:       'toggle with icon'
 						select:      app.select_toggle
-						text_select: 'X'
-						text_style:  gui.theme().text_style
+						text_select: gui.icon_github_alt
+						text_style:  gui.theme().icon1
 						on_click:    fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.select_toggle = !app.select_toggle
