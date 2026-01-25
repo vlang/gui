@@ -162,8 +162,8 @@ pub:
 	gradient        &Gradient     = gui_theme.container_style.gradient
 	border_gradient &Gradient     = gui_theme.container_style.border_gradient
 	border_width    f32           = gui_theme.container_style.border_width
-	border_color    Color
-	padding         Padding = gui_theme.container_style.padding
+	border_color    Color         = gui_theme.container_style.color_border
+	padding         Padding       = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
 	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
@@ -426,14 +426,15 @@ fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 	eraser_color := if cv.disabled { dim_alpha(parent_bg) } else { parent_bg }
 	children << Layout{
 		shape: &Shape{
-			shape_type: .rectangle
-			width:      text_width + padding + padding - 1
-			height:     metrics.ascender + metrics.descender
-			x:          20
-			y:          -offset
-			color:      eraser_color
-			fill:       true
-			float:      true
+			shape_type:   .rectangle
+			width:        text_width + padding + padding - 1
+			height:       metrics.ascender + metrics.descender
+			x:            20
+			y:            -offset
+			color:        eraser_color
+			border_color: eraser_color
+			fill:         true
+			float:        true
 		}
 	}
 
@@ -441,15 +442,16 @@ fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 	text_color := if cv.disabled { dim_alpha(text_style.color) } else { text_style.color }
 	children << Layout{
 		shape: &Shape{
-			shape_type: .text
-			text:       cv.title
-			x:          20 + padding
-			y:          -offset
-			text_style: text_style // use the one computed above which includes correct color base
-			color:      text_color
-			width:      text_width
-			height:     metrics.ascender + metrics.descender // Logical height
-			float:      true
+			shape_type:   .text
+			text:         cv.title
+			x:            20 + padding
+			y:            -offset
+			text_style:   text_style // use the one computed above which includes correct color base
+			color:        text_color
+			border_color: text_color
+			width:        text_width
+			height:       metrics.ascender + metrics.descender // Logical height
+			float:        true
 		}
 	}
 }

@@ -7,6 +7,7 @@ pub:
 	id           string
 	sizing       Sizing
 	color        Color     = gui_theme.rectangle_style.color
+	color_border Color     = gui_theme.rectangle_style.color_border
 	gradient     &Gradient = gui_theme.rectangle_style.gradient
 	width        f32
 	height       f32

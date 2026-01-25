@@ -60,6 +60,7 @@ pub:
 pub struct ContainerStyle {
 pub:
 	color           Color = color_transparent
+	color_border    Color = color_transparent
 	fill            bool
 	padding         Padding = padding_medium
 	radius          f32     = radius_medium
@@ -251,6 +252,7 @@ pub:
 pub struct RectangleStyle {
 pub:
 	color        Color = color_border_dark
+	color_border Color = color_border_dark
 	radius       f32   = radius_medium
 	fill         bool
 	gradient     &Gradient = unsafe { nil }
