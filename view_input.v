@@ -221,9 +221,6 @@ fn (_ &InputCfg) on_click_interior(layout &Layout, mut e Event, mut w Window) {
 	if ly.shape.id_focus > 0 {
 		w.set_id_focus(ly.shape.id_focus)
 	}
-	if layout.shape.on_click != unsafe { nil } {
-		layout.shape.on_click(layout, mut e, mut w)
-	}
 }
 
 // on_char handles keyboard and character input. It processes modifier
