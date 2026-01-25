@@ -10,28 +10,28 @@ pub:
 	placeholder        string
 	select             []string // Text of select item
 	options            []string
-	color              Color     = gui_theme.select_style.color
-	color_border       Color     = gui_theme.select_style.color_border
-	color_border_focus Color     = gui_theme.select_style.color_border_focus
-	color_focus        Color     = gui_theme.select_style.color_focus
-	color_select       Color     = gui_theme.select_style.color_select
-	padding            Padding   = gui_theme.select_style.padding
-	border_width       f32       = gui_theme.select_style.border_width
+	color              Color   = gui_theme.select_style.color
+	color_border       Color   = gui_theme.select_style.color_border
+	color_border_focus Color   = gui_theme.select_style.color_border_focus
+	color_focus        Color   = gui_theme.select_style.color_focus
+	color_select       Color   = gui_theme.select_style.color_select
+	padding            Padding = gui_theme.select_style.padding
+	border_width       f32     = gui_theme.select_style.border_width
 
-	text_style         TextStyle = gui_theme.select_style.text_style
-	subheading_style   TextStyle = gui_theme.select_style.subheading_style
-	placeholder_style  TextStyle = gui_theme.select_style.placeholder_style
-	on_select          fn ([]string, mut Event, mut Window) @[required]
-	min_width          f32 = gui_theme.select_style.min_width
-	max_width          f32 = gui_theme.select_style.max_width
-	radius             f32 = gui_theme.select_style.radius
-	radius_border      f32 = gui_theme.select_style.radius_border
-	id_focus           u32
-	select_multiple    bool
-	no_wrap            bool
-	fill               bool = gui_theme.select_style.fill
-	fill_border        bool = gui_theme.select_style.fill_border
-	sizing             Sizing
+	text_style        TextStyle = gui_theme.select_style.text_style
+	subheading_style  TextStyle = gui_theme.select_style.subheading_style
+	placeholder_style TextStyle = gui_theme.select_style.placeholder_style
+	on_select         fn ([]string, mut Event, mut Window) @[required]
+	min_width         f32 = gui_theme.select_style.min_width
+	max_width         f32 = gui_theme.select_style.max_width
+	radius            f32 = gui_theme.select_style.radius
+	radius_border     f32 = gui_theme.select_style.radius_border
+	id_focus          u32
+	select_multiple   bool
+	no_wrap           bool
+	fill              bool = gui_theme.select_style.fill
+	fill_border       bool = gui_theme.select_style.fill_border
+	sizing            Sizing
 }
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
@@ -102,12 +102,12 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 			float_tie_off:  .top_left
 			float_offset_y: -cfg.border_width
 
-			fill:           cfg.fill
-			border_width:   cfg.border_width
+			fill:         cfg.fill
+			border_width: cfg.border_width
 
-			radius:         cfg.radius
-			color:          cfg.color_border
-			content:        [
+			radius:  cfg.radius
+			color:   cfg.color_border
+			content: [
 				column(
 					name:    'select dropdown scroll container'
 					padding: padding_none

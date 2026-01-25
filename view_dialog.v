@@ -34,14 +34,14 @@ mut:
 	visible      bool
 	old_id_focus u32
 pub:
-	title            string
-	body             string // body text wraps as needed. Newlines supported
-	reply            string
-	id               string
-	color            Color     = gui_theme.dialog_style.color
-	color_border     Color     = gui_theme.dialog_style.color_border
-	padding          Padding   = gui_theme.dialog_style.padding
-	border_width     f32       = gui_theme.dialog_style.border_width
+	title        string
+	body         string // body text wraps as needed. Newlines supported
+	reply        string
+	id           string
+	color        Color   = gui_theme.dialog_style.color
+	color_border Color   = gui_theme.dialog_style.color_border
+	padding      Padding = gui_theme.dialog_style.padding
+	border_width f32     = gui_theme.dialog_style.border_width
 
 	title_text_style TextStyle = gui_theme.dialog_style.title_text_style
 	text_style       TextStyle = gui_theme.dialog_style.text_style
@@ -90,14 +90,14 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		fill:          cfg.fill_border
 		border_width:  cfg.border_width
 
-		width:         cfg.width
-		height:        cfg.height
-		min_width:     cfg.min_width
-		max_width:     cfg.max_width
-		min_height:    cfg.min_height
-		max_height:    cfg.max_height
-		on_keydown:    dialog_key_down
-		content:       [
+		width:      cfg.width
+		height:     cfg.height
+		min_width:  cfg.min_width
+		max_width:  cfg.max_width
+		min_height: cfg.min_height
+		max_height: cfg.max_height
+		on_keydown: dialog_key_down
+		content:    [
 			column(
 				name:    'dialog: ${cfg.dialog_type}'
 				h_align: .center

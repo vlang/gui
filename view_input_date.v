@@ -79,27 +79,27 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 				icon:        icon_calendar
 				placeholder: cfg.placeholder
 				// on_text_changed:    cfg.on_text_changed
-				on_enter:           cfg.on_enter
-				on_click_icon:      fn [cfg] (_ &Layout, mut e Event, mut w Window) {
+				on_enter:          cfg.on_enter
+				on_click_icon:     fn [cfg] (_ &Layout, mut e Event, mut w Window) {
 					visible := w.view_state.input_date_state[cfg.id]
 					w.view_state.input_date_state.clear() // close all other date_pickers
 					w.view_state.input_date_state[cfg.id] = !visible
 					e.is_handled = true
 				}
-				sizing:             cfg.sizing
-				text_style:         cfg.text_style
-				placeholder_style:  cfg.placeholder_style
-				width:              cfg.width
-				height:             cfg.height
-				min_width:          cfg.min_width
-				min_height:         cfg.min_height
-				max_width:          cfg.max_width
-				max_height:         cfg.max_height
-				radius:             cfg.radius
-				radius_border:      cfg.radius_border
-				id_focus:           cfg.id_focus
-				padding:            cfg.padding
-				border_width:       cfg.border_width
+				sizing:            cfg.sizing
+				text_style:        cfg.text_style
+				placeholder_style: cfg.placeholder_style
+				width:             cfg.width
+				height:            cfg.height
+				min_width:         cfg.min_width
+				min_height:        cfg.min_height
+				max_width:         cfg.max_width
+				max_height:        cfg.max_height
+				radius:            cfg.radius
+				radius_border:     cfg.radius_border
+				id_focus:          cfg.id_focus
+				padding:           cfg.padding
+				border_width:      cfg.border_width
 
 				color:              cfg.color
 				color_hover:        cfg.color_hover
@@ -115,28 +115,28 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 				float_anchor:   .bottom_left
 				float_offset_y: -cfg.border_width
 
-				invisible:      !window.view_state.input_date_state[cfg.id]
-				padding:        padding_none
-				content:        [
+				invisible: !window.view_state.input_date_state[cfg.id]
+				padding:   padding_none
+				content:   [
 					window.date_picker(DatePickerCfg{
-						id:                       cfg.id
-						dates:                    [cfg.date]
-						allowed_weekdays:         cfg.allowed_weekdays
-						allowed_months:           cfg.allowed_months
-						allowed_years:            cfg.allowed_years
-						allowed_dates:            cfg.allowed_dates
-						on_select:                cfg.on_select
-						weekdays_len:             cfg.weekdays_len
-						text_style:               cfg.text_style
-						color:                    cfg.color
-						color_hover:              cfg.color_hover
-						color_focus:              cfg.color_focus
-						color_click:              cfg.color_click
-						color_border:             cfg.color_border
-						color_border_focus:       cfg.color_border_focus
-						color_select:             cfg.color_select
-						padding:                  cfg.padding
-						border_width:           cfg.border_width
+						id:                 cfg.id
+						dates:              [cfg.date]
+						allowed_weekdays:   cfg.allowed_weekdays
+						allowed_months:     cfg.allowed_months
+						allowed_years:      cfg.allowed_years
+						allowed_dates:      cfg.allowed_dates
+						on_select:          cfg.on_select
+						weekdays_len:       cfg.weekdays_len
+						text_style:         cfg.text_style
+						color:              cfg.color
+						color_hover:        cfg.color_hover
+						color_focus:        cfg.color_focus
+						color_click:        cfg.color_click
+						color_border:       cfg.color_border
+						color_border_focus: cfg.color_border_focus
+						color_select:       cfg.color_select
+						padding:            cfg.padding
+						border_width:       cfg.border_width
 
 						cell_spacing:             cfg.cell_spacing
 						radius:                   cfg.radius

@@ -68,13 +68,13 @@ pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 	window.view_state.date_picker_state[cfg.id] = state
 
 	return row(
-		name:      'date_picker border'
-		fill:      cfg.fill_border
-		color:     cfg.color_border
-		invisible: cfg.invisible
+		name:         'date_picker border'
+		fill:         cfg.fill_border
+		color:        cfg.color_border
+		invisible:    cfg.invisible
 		border_width: cfg.border_width
 
-		content:   [
+		content: [
 			column(
 				fill:    cfg.fill
 				color:   cfg.color
@@ -92,28 +92,28 @@ pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 // DatePickerCfg configures a [date_picker](#date_picker)
 pub struct DatePickerCfg {
 pub:
-	id                       string      @[required] // unique only to other date_pickers
-	dates                    []time.Time @[required]
-	allowed_weekdays         []DatePickerWeekdays // [link](#DatePickerWeekdays)
-	allowed_months           []DatePickerMonths   // [link](#DatePickerMonths)
-	allowed_years            []int
-	allowed_dates            []time.Time
-	on_select                fn ([]time.Time, mut Event, mut Window) = unsafe { nil }
-	weekdays_len             DatePickerWeekdayLen                    = gui_theme.date_picker_style.weekdays_len // [link](#DatePickerWeekdayLen)
-	text_style               TextStyle = gui_theme.date_picker_style.text_style
-	color                    Color     = gui_theme.date_picker_style.color
-	color_hover              Color     = gui_theme.date_picker_style.color_hover
-	color_focus              Color     = gui_theme.date_picker_style.color_focus
-	color_click              Color     = gui_theme.date_picker_style.color_click
-	color_border             Color     = gui_theme.date_picker_style.color_border
-	color_border_focus       Color     = gui_theme.date_picker_style.color_border_focus
-	color_select             Color     = gui_theme.date_picker_style.color_select
-	padding                  Padding   = gui_theme.date_picker_style.padding
-	border_width           f32       = gui_theme.date_picker_style.border_width
+	id                 string      @[required] // unique only to other date_pickers
+	dates              []time.Time @[required]
+	allowed_weekdays   []DatePickerWeekdays // [link](#DatePickerWeekdays)
+	allowed_months     []DatePickerMonths   // [link](#DatePickerMonths)
+	allowed_years      []int
+	allowed_dates      []time.Time
+	on_select          fn ([]time.Time, mut Event, mut Window) = unsafe { nil }
+	weekdays_len       DatePickerWeekdayLen                    = gui_theme.date_picker_style.weekdays_len // [link](#DatePickerWeekdayLen)
+	text_style         TextStyle = gui_theme.date_picker_style.text_style
+	color              Color     = gui_theme.date_picker_style.color
+	color_hover        Color     = gui_theme.date_picker_style.color_hover
+	color_focus        Color     = gui_theme.date_picker_style.color_focus
+	color_click        Color     = gui_theme.date_picker_style.color_click
+	color_border       Color     = gui_theme.date_picker_style.color_border
+	color_border_focus Color     = gui_theme.date_picker_style.color_border_focus
+	color_select       Color     = gui_theme.date_picker_style.color_select
+	padding            Padding   = gui_theme.date_picker_style.padding
+	border_width       f32       = gui_theme.date_picker_style.border_width
 
-	cell_spacing             f32       = gui_theme.date_picker_style.cell_spacing
-	radius                   f32       = gui_theme.date_picker_style.radius
-	radius_border            f32       = gui_theme.date_picker_style.radius_border
+	cell_spacing             f32 = gui_theme.date_picker_style.cell_spacing
+	radius                   f32 = gui_theme.date_picker_style.radius
+	radius_border            f32 = gui_theme.date_picker_style.radius_border
 	disabled                 bool
 	invisible                bool
 	select_multiple          bool
@@ -346,17 +346,17 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 			update_selections := cfg.update_selections
 
 			week << button(
-				color:          color
-				color_border:   color_border
-				color_click:    cfg.color_select
-				color_hover:    color_hover
-				disabled:       count <= 0 || count > days_in_month || is_disabled
-				min_width:      state.cell_size
-				max_width:      state.cell_size
-				max_height:     state.cell_size
-				border_width:   2
-				content:        [text(text: day)]
-				on_click:       fn [on_select, update_selections, count, state] (_ &Layout, mut e Event, mut w Window) {
+				color:        color
+				color_border: color_border
+				color_click:  cfg.color_select
+				color_hover:  color_hover
+				disabled:     count <= 0 || count > days_in_month || is_disabled
+				min_width:    state.cell_size
+				max_width:    state.cell_size
+				max_height:   state.cell_size
+				border_width: 2
+				content:      [text(text: day)]
+				on_click:     fn [on_select, update_selections, count, state] (_ &Layout, mut e Event, mut w Window) {
 					if on_select != unsafe { nil } {
 						selected_dates := update_selections(count, state)
 						on_select(selected_dates, mut e, mut w)

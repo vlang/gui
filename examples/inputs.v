@@ -56,11 +56,11 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.input(
-						id_focus:        2
-						text:            app.input_a
-						width:           input_width
-						sizing:          gui.fixed_fit
-						border_width:  1
+						id_focus:     2
+						text:         app.input_a
+						width:        input_width
+						sizing:       gui.fixed_fit
+						border_width: 1
 
 						is_password:     true
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
@@ -69,11 +69,11 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.input(
-						id_focus:        3
-						text:            app.input_a
-						width:           input_width
-						sizing:          gui.fixed_fit
-						border_width:  1
+						id_focus:     3
+						text:         app.input_a
+						width:        input_width
+						sizing:       gui.fixed_fit
+						border_width: 1
 
 						radius:          0
 						radius_border:   0
@@ -83,11 +83,11 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.input(
-						id_focus:        4
-						text:            app.input_a
-						width:           input_width
-						sizing:          gui.fixed_fit
-						border_width:  1
+						id_focus:     4
+						text:         app.input_a
+						width:        input_width
+						sizing:       gui.fixed_fit
+						border_width: 1
 
 						fill_border:     false
 						radius:          0

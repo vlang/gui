@@ -81,8 +81,7 @@ pub:
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
 	padding_large  Padding = padding_large
-	border_width f32
-
+	border_width   f32
 
 	radius_small  f32 = radius_small
 	radius_medium f32 = radius_medium
@@ -121,14 +120,14 @@ pub:
 	color_border_focus Color = color_select_dark
 	color_select       Color = color_select_dark
 	titlebar_dark      bool
-	fill               bool      = true
-	fill_border        bool      = true
-	padding            Padding   = padding_medium
+	fill               bool    = true
+	fill_border        bool    = true
+	padding            Padding = padding_medium
 	border_width       f32
 
-	radius             f32       = radius_medium
-	radius_border      f32       = radius_border
-	text_style         TextStyle = text_style_dark
+	radius        f32       = radius_medium
+	radius_border f32       = radius_border
+	text_style    TextStyle = text_style_dark
 
 	// Usually don't change across styles
 	padding_small  Padding = padding_small

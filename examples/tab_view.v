@@ -72,14 +72,14 @@ fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) gui.Vie
 		gui.theme().color_active
 	}
 	return gui.button(
-		id:             'tab1'
-		id_focus:       id_focus
-		color_border:   color
-		padding:        gui.pad_tblr(4, 10)
-		border_width:   1
+		id:           'tab1'
+		id_focus:     id_focus
+		color_border: color
+		padding:      gui.pad_tblr(4, 10)
+		border_width: 1
 
-		content:        [gui.text(text: text, text_style: gui.theme().b4)]
-		on_click:       fn [id] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+		content:  [gui.text(text: text, text_style: gui.theme().b4)]
+		on_click: fn [id] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 			mut tvapp := w.state[TabViewApp]()
 			tvapp.select_tab = id
 		}

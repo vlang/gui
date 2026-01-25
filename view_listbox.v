@@ -30,7 +30,6 @@ pub:
 	fill             bool = gui_theme.list_box_style.fill
 	fill_border      bool = gui_theme.list_box_style.fill_border
 	border_width     f32  = gui_theme.list_box_style.border_width
-
 }
 
 // ListBoxOption is the data for a row in a [list_box](#list_box).
@@ -122,19 +121,19 @@ pub fn list_box(cfg ListBoxCfg) View {
 	}
 
 	return column(
-		name:       'list_box border'
-		width:      cfg.max_width
-		height:     cfg.height
-		min_width:  cfg.min_width
-		max_width:  cfg.max_width
-		min_height: cfg.min_height
-		max_height: cfg.max_height
-		color:      cfg.color_border
-		fill:       cfg.fill_border
+		name:         'list_box border'
+		width:        cfg.max_width
+		height:       cfg.height
+		min_width:    cfg.min_width
+		max_width:    cfg.max_width
+		min_height:   cfg.min_height
+		max_height:   cfg.max_height
+		color:        cfg.color_border
+		fill:         cfg.fill_border
 		border_width: cfg.border_width
 
-		sizing:     cfg.sizing
-		content:    [
+		sizing:  cfg.sizing
+		content: [
 			column(
 				name:      'list_box interior'
 				id_scroll: cfg.id_scroll

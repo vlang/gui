@@ -13,34 +13,34 @@ import math
 @[heap; minify]
 pub struct RangeSliderCfg {
 pub:
-	id             string @[required]
-	sizing         Sizing
-	color          Color   = gui_theme.range_slider_style.color
-	color_border   Color   = gui_theme.range_slider_style.color_border
-	color_thumb    Color   = gui_theme.range_slider_style.color_thumb
-	color_focus    Color   = gui_theme.range_slider_style.color_focus
-	color_hover    Color   = gui_theme.range_slider_style.color_hover
-	color_left     Color   = gui_theme.range_slider_style.color_left
-	color_click    Color   = gui_theme.range_slider_style.color_click
-	padding        Padding = gui_theme.range_slider_style.padding
-	border_width   f32     = gui_theme.range_slider_style.border_width
+	id           string @[required]
+	sizing       Sizing
+	color        Color   = gui_theme.range_slider_style.color
+	color_border Color   = gui_theme.range_slider_style.color_border
+	color_thumb  Color   = gui_theme.range_slider_style.color_thumb
+	color_focus  Color   = gui_theme.range_slider_style.color_focus
+	color_hover  Color   = gui_theme.range_slider_style.color_hover
+	color_left   Color   = gui_theme.range_slider_style.color_left
+	color_click  Color   = gui_theme.range_slider_style.color_click
+	padding      Padding = gui_theme.range_slider_style.padding
+	border_width f32     = gui_theme.range_slider_style.border_width
 
-	on_change      fn (f32, mut Event, mut Window) @[required]
-	value          f32
-	min            f32
-	max            f32 = 100
-	step           f32 = 1
-	size           f32 = gui_theme.range_slider_style.size
-	thumb_size     f32 = gui_theme.range_slider_style.thumb_size
-	radius         f32 = gui_theme.range_slider_style.radius
-	radius_border  f32 = gui_theme.range_slider_style.radius_border
-	id_focus       u32
-	round_value    bool // round value to nearest int
-	fill           bool = gui_theme.range_slider_style.fill
-	fill_border    bool = gui_theme.range_slider_style.fill_border
-	vertical       bool
-	disabled       bool
-	invisible      bool
+	on_change     fn (f32, mut Event, mut Window) @[required]
+	value         f32
+	min           f32
+	max           f32 = 100
+	step          f32 = 1
+	size          f32 = gui_theme.range_slider_style.size
+	thumb_size    f32 = gui_theme.range_slider_style.thumb_size
+	radius        f32 = gui_theme.range_slider_style.radius
+	radius_border f32 = gui_theme.range_slider_style.radius_border
+	id_focus      u32
+	round_value   bool // round value to nearest int
+	fill          bool = gui_theme.range_slider_style.fill
+	fill_border   bool = gui_theme.range_slider_style.fill_border
+	vertical      bool
+	disabled      bool
+	invisible     bool
 }
 
 // range_slider creates and returns a range slider View component based on the provided configuration.
@@ -100,12 +100,12 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 						color:  cfg.color_left
 					),
 					circle(
-						name:         'range_slider thumb border'
-						width:        cfg.thumb_size
-						height:       cfg.thumb_size
-						fill:         cfg.fill
-						color:        cfg.color_border
-						padding:      pad_all(cfg.border_width)
+						name:    'range_slider thumb border'
+						width:   cfg.thumb_size
+						height:  cfg.thumb_size
+						fill:    cfg.fill
+						color:   cfg.color_border
+						padding: pad_all(cfg.border_width)
 
 						amend_layout: cfg.amend_layout_thumb
 						content:      [
@@ -116,7 +116,6 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 								padding: padding_none
 								width:   cfg.thumb_size - (cfg.border_width * 2)
 								height:  cfg.thumb_size - (cfg.border_width * 2)
-
 							),
 						]
 					),
@@ -230,13 +229,11 @@ fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut _ Window) {
 		y := f32_min(height * percent, height)
 		layout.shape.y = layout.parent.shape.y + y - (cfg.border_width * 2) - radius
 		layout.children[0].shape.y = layout.shape.y + cfg.border_width
-
 	} else {
 		width := layout.parent.shape.width
 		x := f32_min(width * percent, width)
 		layout.shape.x = layout.parent.shape.x + x - (cfg.border_width * 2) - radius
 		layout.children[0].shape.x = layout.shape.x + cfg.border_width
-
 	}
 }
 

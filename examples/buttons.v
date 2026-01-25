@@ -65,50 +65,50 @@ fn main_view(mut window gui.Window) gui.View {
 						on_click:  click_handler
 					)),
 					button_row('With border', gui.button(
-						min_width:      b_width
-						max_width:      b_width
-						content:        [gui.text(text: button_text)]
-						border_width:   2
+						min_width:    b_width
+						max_width:    b_width
+						content:      [gui.text(text: button_text)]
+						border_width: 2
 
-						on_click:       click_handler
+						on_click: click_handler
 					)),
 					button_row('With focus border', gui.button(
-						id_focus:       1
-						min_width:      b_width
-						max_width:      b_width
-						content:        [gui.text(text: button_text)]
-						border_width:   2
+						id_focus:     1
+						min_width:    b_width
+						max_width:    b_width
+						content:      [gui.text(text: button_text)]
+						border_width: 2
 
-						on_click:       click_handler
+						on_click: click_handler
 					)),
 					button_row('With detached border', gui.button(
-						content:        [gui.text(text: button_text)]
-						min_width:      b_width
-						max_width:      b_width
-						fill_border:    false
-						border_width:   1
+						content:      [gui.text(text: button_text)]
+						min_width:    b_width
+						max_width:    b_width
+						fill_border:  false
+						border_width: 1
 
-						on_click:       click_handler
+						on_click: click_handler
 					)),
 					button_row('With other content', gui.button(
-						id:             'With progress bar'
-						min_width:      200
-						max_width:      200
-						color:          gui.rgb(195, 105, 0)
-						color_hover:    gui.rgb(195, 105, 0)
-						color_click:    gui.rgb(205, 115, 0)
-						border_width:   2
+						id:           'With progress bar'
+						min_width:    200
+						max_width:    200
+						color:        gui.rgb(195, 105, 0)
+						color_hover:  gui.rgb(195, 105, 0)
+						color_click:  gui.rgb(205, 115, 0)
+						border_width: 2
 
-						color_border:   gui.rgb(160, 160, 160)
-						padding:        gui.padding_medium
-						v_align:        .middle
-						content:        [gui.text(text: '${app.clicks}', min_width: 25),
+						color_border: gui.rgb(160, 160, 160)
+						padding:      gui.padding_medium
+						v_align:      .middle
+						content:      [gui.text(text: '${app.clicks}', min_width: 25),
 							gui.progress_bar(
 								width:   75
 								height:  gui.theme().text_style.size
 								percent: f32(math.fmod(f64(app.clicks) / 25.0, 1.0))
 							)]
-						on_click:       click_handler
+						on_click:     click_handler
 					)),
 				]
 			),
