@@ -48,6 +48,8 @@ const scroll_gap_edge = 3
 const scroll_gap_end = 2
 const size_progress_bar = 10
 
+const size_border = f32(1.5)
+
 const text_style_dark = TextStyle{
 	color:        color_text_dark
 	size:         size_text_medium

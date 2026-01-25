@@ -169,7 +169,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_hover:    cfg.color_hover
 			color_focus:    cfg.color_select
 			color_border:   cfg.color_border
-			color_select:   cfg.text_style.color
+			color_select:   cfg.color_select
 			color_unselect: cfg.color_active
 			text_style:     cfg.text_style
 		}

@@ -33,7 +33,7 @@ pub:
 pub fn radio(cfg RadioCfg) View {
 	mut content := []View{cap: 2}
 	border_width := if cfg.border_width == 0 {
-		1.0 // Default if not in theme? Or use theme default from Cfg struct init
+		gui_theme.radio_style.border_width
 	} else {
 		cfg.border_width
 	}
@@ -45,8 +45,7 @@ pub fn radio(cfg RadioCfg) View {
 		color:        if cfg.select { cfg.color_select } else { cfg.color_unselect }
 		color_border: cfg.color_border
 		border_width: border_width
-		padding:      cfg.padding
-		fill:         true
+		fill:         cfg.select
 		radius:       cfg.size / 2 // Circle radius logic is automatic in render_circle but helpful for layout?
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
@@ -69,7 +68,8 @@ pub fn radio(cfg RadioCfg) View {
 		name:         'radio'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
-		padding:      padding_none
+		padding:      cfg.padding
+		v_align:      .middle
 		on_click:     left_click_only(cfg.on_click)
 		on_char:      spacebar_to_click(cfg.on_click)
 		amend_layout: cfg.amend_layout
@@ -83,7 +83,7 @@ fn (cfg &RadioCfg) amend_layout(mut layout Layout, mut w Window) {
 		return
 	}
 	if w.is_focus(layout.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_focus
+		layout.shape.color = cfg.color_focus
 	}
 }
 
