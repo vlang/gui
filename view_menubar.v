@@ -22,20 +22,19 @@ import arrays
 @[heap; minify]
 pub struct MenubarCfg {
 pub:
-	id                     string
-	text_style             TextStyle = gui_theme.menubar_style.text_style
-	text_style_subtitle    TextStyle = gui_theme.menubar_style.text_style_subtitle
-	color                  Color     = gui_theme.menubar_style.color
-	color_border           Color     = gui_theme.menubar_style.color_border
-	color_select           Color     = gui_theme.menubar_style.color_select
-	sizing                 Sizing    = fill_fit
-	padding                Padding   = gui_theme.menubar_style.padding
-	padding_menu_item      Padding   = gui_theme.menubar_style.padding_menu_item
-	border_width           f32       = gui_theme.menubar_style.border_width
-	padding_submenu        Padding   = gui_theme.menubar_style.padding_submenu
+	id                  string
+	text_style          TextStyle = gui_theme.menubar_style.text_style
+	text_style_subtitle TextStyle = gui_theme.menubar_style.text_style_subtitle
+	color               Color     = gui_theme.menubar_style.color
+	color_border        Color     = gui_theme.menubar_style.color_border
+	color_select        Color     = gui_theme.menubar_style.color_select
+	sizing              Sizing    = fill_fit
+	padding             Padding   = gui_theme.menubar_style.padding
+	padding_menu_item   Padding   = gui_theme.menubar_style.padding_menu_item
+	border_width        f32       = gui_theme.menubar_style.border_width
+	padding_submenu     Padding   = gui_theme.menubar_style.padding_submenu
 
-
-	padding_subtitle       Padding   = gui_theme.menubar_style.padding_subtitle
+	padding_subtitle Padding = gui_theme.menubar_style.padding_subtitle
 
 	// Default menubar-level action. Called after the menu-item action.
 	action fn (string, mut Event, mut Window) = fn (_ string, mut e Event, mut _ Window) {
@@ -100,10 +99,11 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 
 	// Construct the menubar UI tree.
 	return row(
-		name:          'menubar border'
+		name:          'menubar'
 		id:            cfg.id
 		id_focus:      cfg.id_focus
-		color:         cfg.color_border
+		color:         cfg.color
+		border_color:  cfg.color_border
 		fill:          true
 		float:         cfg.float
 		float_anchor:  cfg.float_anchor
@@ -111,23 +111,13 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 		disabled:      cfg.disabled
 		invisible:     cfg.invisible
 		border_width:  cfg.border_width
-
 		sizing:        cfg.sizing
 		on_keydown:    cfg.on_keydown
 		amend_layout:  cfg.amend_layout_menubar
-		content:       [
-			row(
-				name:    'menubar interior'
-				color:   cfg.color
-				fill:    true
-				padding: cfg.padding
-				spacing: cfg.spacing
-				sizing:  cfg.sizing
-				radius:  cfg.radius
-				// menu_build handles constructing root items and their submenus.
-				content: menu_build(cfg, 0, cfg.items, window)
-			),
-		]
+		padding:       cfg.padding
+		radius:        cfg.radius
+		// menu_build handles constructing root items and their submenus.
+		content: menu_build(cfg, 0, cfg.items, window)
 	)
 }
 

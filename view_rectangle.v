@@ -39,6 +39,7 @@ pub fn rectangle(cfg RectangleCfg) View {
 		fill:         cfg.fill
 		padding:      padding_none
 		radius:       cfg.radius
+		border_color: cfg.color
 		border_width: cfg.border_width
 		spacing:      0
 	}

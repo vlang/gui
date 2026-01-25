@@ -12,31 +12,23 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 	}
 	check_for_duplicate_menu_ids(cfg.items)
 	return column(
-		name:          'menubar border'
+		name:          'menubar'
 		id:            cfg.id
-		color:         cfg.color_border
+		color:         cfg.color
 		fill:          true
 		float:         cfg.float
 		float_anchor:  cfg.float_anchor
 		float_tie_off: cfg.float_tie_off
 		invisible:     cfg.invisible
 		border_width:  cfg.border_width
+		border_color:  cfg.color_border
 
-		radius:        cfg.radius_border
-		sizing:        cfg.sizing
-		amend_layout:  cfg.amend_layout_menubar
-		content:       [
-			column(
-				name:    'menubar interior'
-				color:   cfg.color
-				fill:    true
-				padding: cfg.padding_submenu
-				spacing: cfg.spacing_submenu
-				sizing:  cfg.sizing
-				radius:  cfg.radius
-				content: menu_build(cfg, 1, cfg.items, window)
-			),
-		]
+		radius:       cfg.radius
+		sizing:       cfg.sizing
+		amend_layout: cfg.amend_layout_menubar
+		padding:      cfg.padding_submenu
+		spacing:      cfg.spacing_submenu
+		content:      menu_build(cfg, 1, cfg.items, window)
 	)
 }
 
@@ -90,12 +82,13 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 		if item.submenu.len > 0 {
 			if item_cfg.selected || selected_in_tree {
 				submenu := column(
-					name:           'menubar submenu border'
-					id:             item_cfg.id
-					min_width:      cfg.width_submenu_min
-					max_width:      cfg.width_submenu_max
-					color:          cfg.color_border
-					border_width:   cfg.border_width
+					name:         'menubar submenu'
+					id:           item_cfg.id
+					min_width:    cfg.width_submenu_min
+					max_width:    cfg.width_submenu_max
+					color:        cfg.color
+					border_width: cfg.border_width
+					border_color: cfg.color_border
 
 					fill:           true
 					float:          true
@@ -106,17 +99,10 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 						e.is_handled = true
 						w.set_id_focus(cfg.id_focus)
 					}
-					content:        [
-						column(
-							name:    'menubar submenu interior'
-							color:   cfg.color
-							fill:    true
-							padding: cfg.padding_submenu
-							spacing: cfg.spacing_submenu
-							sizing:  fill_fill
-							content: menu_build(cfg, level + 1, item.submenu, window)
-						),
-					]
+					padding:        cfg.padding_submenu
+					spacing:        cfg.spacing_submenu
+					sizing:         fill_fill
+					content:        menu_build(cfg, level + 1, item.submenu, window)
 				)
 				mi.content << submenu
 			}
