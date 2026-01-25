@@ -33,6 +33,7 @@ pub:
 	cell_padding         Padding   = padding_two_five
 	text_style           TextStyle = gui_theme.n3
 	text_style_head      TextStyle = gui_theme.b3
+	border_width         f32       = gui_theme.border_width
 	column_width_default f32       = 50
 pub mut:
 	data []TableRowCfg
@@ -100,11 +101,12 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 			)
 		}
 		rows << row(
-			name:    'table row'
-			spacing: 0
-			radius:  0
-			padding: padding_none
-			content: cells
+			name:         'table row'
+			spacing:      -cfg.border_width
+			radius:       0
+			padding:      padding_none
+			border_width: 0
+			content:      cells
 		)
 	}
 	return column(
@@ -114,7 +116,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 		color_border: cfg.color_border
 		padding:      padding_none
 		radius:       0
-		spacing:      0
+		spacing:      -cfg.border_width
 		content:      rows
 	)
 }
