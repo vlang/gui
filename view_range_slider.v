@@ -13,18 +13,17 @@ import math
 @[heap; minify]
 pub struct RangeSliderCfg {
 pub:
-	id           string @[required]
-	sizing       Sizing
-	color        Color   = gui_theme.range_slider_style.color
-	color_border Color   = gui_theme.range_slider_style.color_border
-	color_thumb  Color   = gui_theme.range_slider_style.color_thumb
-	color_focus  Color   = gui_theme.range_slider_style.color_focus
-	color_hover  Color   = gui_theme.range_slider_style.color_hover
-	color_left   Color   = gui_theme.range_slider_style.color_left
-	color_click  Color   = gui_theme.range_slider_style.color_click
-	padding      Padding = gui_theme.range_slider_style.padding
-	border_width f32     = gui_theme.range_slider_style.border_width
-
+	id            string @[required]
+	sizing        Sizing
+	color         Color   = gui_theme.range_slider_style.color
+	color_border  Color   = gui_theme.range_slider_style.color_border
+	color_thumb   Color   = gui_theme.range_slider_style.color_thumb
+	color_focus   Color   = gui_theme.range_slider_style.color_focus
+	color_hover   Color   = gui_theme.range_slider_style.color_hover
+	color_left    Color   = gui_theme.range_slider_style.color_left
+	color_click   Color   = gui_theme.range_slider_style.color_click
+	padding       Padding = gui_theme.range_slider_style.padding
+	border_width  f32     = gui_theme.range_slider_style.border_width
 	on_change     fn (f32, mut Event, mut Window) @[required]
 	value         f32
 	min           f32
@@ -63,17 +62,18 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		panic('range_slider.min must be less than range_slider.max')
 	}
 	return container(
-		name:         'range_slider border'
+		name:         'range_slider'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		width:        cfg.size
 		height:       cfg.size
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
-		color:        cfg.color_border
-		radius:       cfg.radius_border
+		color:        cfg.color
+		color_border: cfg.color_border
 		border_width: cfg.border_width
-
+		radius:       cfg.radius_border
+		padding:      padding_none
 		fill:         cfg.fill_border
 		sizing:       cfg.sizing
 		h_align:      .center
@@ -84,42 +84,24 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		on_hover:     cfg.on_hover_slide
 		on_keydown:   cfg.on_keydown
 		content:      [
-			container(
-				name:    'range_slider interior'
-				color:   cfg.color
-				fill:    true
-				radius:  cfg.radius
-				sizing:  fill_fill
-				padding: padding_none
-				axis:    if cfg.vertical { .top_to_bottom } else { .left_to_right }
-				content: [
-					rectangle(
-						name:   'range_slider left-bar'
-						fill:   cfg.fill
-						sizing: fill_fill
-						color:  cfg.color_left
-					),
-					circle(
-						name:    'range_slider thumb border'
-						width:   cfg.thumb_size
-						height:  cfg.thumb_size
-						fill:    cfg.fill
-						color:   cfg.color_border
-						padding: pad_all(cfg.border_width)
+			rectangle(
+				name:         'range_slider left-bar'
+				fill:         cfg.fill
+				sizing:       fill_fill
+				color:        cfg.color_left
+				color_border: cfg.color_left
+			),
+			circle(
+				name:         'range_slider thumb'
+				width:        cfg.thumb_size
+				height:       cfg.thumb_size
+				fill:         cfg.fill
+				color:        cfg.color_thumb
+				color_border: cfg.color_border
+				border_width: cfg.border_width
+				padding:      padding_none
 
-						amend_layout: cfg.amend_layout_thumb
-						content:      [
-							circle(
-								name:    'range_slider thumb'
-								fill:    cfg.fill
-								color:   cfg.color_thumb
-								padding: padding_none
-								width:   cfg.thumb_size - (cfg.border_width * 2)
-								height:  cfg.thumb_size - (cfg.border_width * 2)
-							),
-						]
-					),
-				]
+				amend_layout: cfg.amend_layout_thumb
 			),
 		]
 	)
@@ -128,10 +110,10 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 // amend_layout_slide adjusts the layout of the range slider components based on the
 // current value and configuration.
 //
-// The slider consists of three main visual elements:
-// 1. A border container that wraps everything
-// 2. An interior container with the main track
-// 3. A "filled" portion showing the selected value (left bar)
+// The slider consists of two main visual elements:
+// 1. A main container (track) with native border
+// 2. A "filled" portion showing the selected value (left bar)
+// 3. A thumb
 //
 // For vertical sliders:
 // - Adjusts the height of the left bar based on current value percentage
@@ -153,53 +135,48 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 	value := f32_clamp(cfg.value, cfg.min, cfg.max)
 	percent := math.abs(value / (cfg.max - cfg.min))
 	if cfg.vertical {
-		height := layout.children[0].shape.height
+		height := layout.shape.height
 		y := f32_min(height * percent, height)
-		layout.children[0].children[0].shape.height = y
+		layout.children[0].shape.height = y
 		// resize bars so the specified width and center
 		// horizontally on the thumb.
-		offset := (cfg.thumb_size - cfg.size) / 2 + 0.5
-		// border
+		offset := (cfg.thumb_size - cfg.size) / 1.5
+		// track
 		layout.shape.x += offset
 		layout.shape.width = cfg.size
-		// interior
+
+		// left of thumb bar
 		layout.children[0].shape.x += offset
 		layout.children[0].shape.width = cfg.size - (cfg.border_width * 2)
-
-		// left of thumb bar
-		layout.children[0].children[0].shape.x += offset
-		layout.children[0].children[0].shape.width = cfg.size
 	} else {
-		width := layout.children[0].shape.width
+		width := layout.shape.width
 		x := f32_min(width * percent, width)
-		layout.children[0].children[0].shape.width = x
+		layout.children[0].shape.width = x
 		// resize bars so the specified height and center
 		// vertically on the thumb.
-		offset := (cfg.thumb_size - cfg.size) / 2 + 0.5
-		// border
+		offset := (cfg.thumb_size - cfg.size) / 1.5
+		// track
 		layout.shape.y += offset
 		layout.shape.height = cfg.size
-		// interior
-		layout.children[0].shape.y += offset
-		layout.children[0].shape.height = cfg.size - (cfg.border_width * 2)
 
 		// left of thumb bar
-		layout.children[0].children[0].shape.y += offset
-		layout.children[0].children[0].shape.height = cfg.size
+		layout.children[0].shape.y += offset
+		layout.children[0].shape.height = cfg.size - (cfg.border_width * 2)
 	}
 	if layout.shape.disabled {
 		return
 	}
 	if w.is_focus(layout.shape.id_focus) {
-		layout.children[0].children[1].shape.color = cfg.color_focus
+		layout.children[1].shape.color = cfg.color_focus // Thumb border
+		layout.children[1].shape.color_border = cfg.color_focus // Thumb border
 	}
 }
 
 fn (cfg &RangeSliderCfg) on_hover_slide(mut layout Layout, mut e Event, mut w Window) {
 	w.set_mouse_cursor_pointing_hand()
-	layout.shape.color = cfg.color_hover
+	layout.shape.color_border = cfg.color_hover
 	if e.mouse_button == .left {
-		layout.children[0].shape.color = cfg.color_click
+		layout.children[1].shape.color_border = cfg.color_click // Thumb border
 	}
 }
 
@@ -227,13 +204,14 @@ fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut _ Window) {
 	if cfg.vertical {
 		height := layout.parent.shape.height
 		y := f32_min(height * percent, height)
-		layout.shape.y = layout.parent.shape.y + y - (cfg.border_width * 2) - radius
-		layout.children[0].shape.y = layout.shape.y + cfg.border_width
+		// layout.parent.shape.y includes offset?
+		layout.shape.y = layout.parent.shape.y + y - radius
+		layout.shape.x = layout.parent.shape.x + (layout.parent.shape.width / 2) - radius
 	} else {
 		width := layout.parent.shape.width
 		x := f32_min(width * percent, width)
-		layout.shape.x = layout.parent.shape.x + x - (cfg.border_width * 2) - radius
-		layout.children[0].shape.x = layout.shape.x + cfg.border_width
+		layout.shape.x = layout.parent.shape.x + x - radius
+		layout.shape.y = layout.parent.shape.y + (layout.parent.shape.height / 2) - radius
 	}
 }
 

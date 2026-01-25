@@ -37,7 +37,7 @@ const color_hover_light = rgb(185, 185, 215)
 const color_focus_light = rgb(175, 175, 215)
 const color_active_light = rgb(165, 165, 215)
 const color_border_light = rgb(135, 135, 165)
-const color_select_light = rgb(159, 174, 250)
+const color_select_light = rgb(65, 105, 225)
 const color_border_focus_light = rgb(0, 0, 165)
 const color_text_light = rgb(32, 32, 32)
 
