@@ -121,30 +121,23 @@ pub fn list_box(cfg ListBoxCfg) View {
 	}
 
 	return column(
-		name:         'list_box border'
+		name:         'list_box'
+		id_scroll:    cfg.id_scroll
 		width:        cfg.max_width
 		height:       cfg.height
 		min_width:    cfg.min_width
 		max_width:    cfg.max_width
 		min_height:   cfg.min_height
 		max_height:   cfg.max_height
-		color:        cfg.color_border
-		fill:         cfg.fill_border
+		color:        cfg.color
+		color_border: cfg.color_border
 		border_width: cfg.border_width
-
-		sizing:  cfg.sizing
-		content: [
-			column(
-				name:      'list_box interior'
-				id_scroll: cfg.id_scroll
-				color:     cfg.color
-				fill:      cfg.fill
-				padding:   cfg.padding
-				sizing:    cfg.sizing
-				spacing:   0
-				content:   list
-			),
-		]
+		radius:       cfg.radius
+		fill:         cfg.fill
+		padding:      cfg.padding
+		sizing:       cfg.sizing
+		spacing:      0
+		content:      list
 	)
 }
 
