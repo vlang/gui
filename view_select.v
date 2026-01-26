@@ -120,6 +120,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 		// Container props
 		color:        cfg.color
 		color_border: cfg.color_border
+		fill:         cfg.fill
 		border_width: cfg.border_width
 		radius:       cfg.radius
 		padding:      cfg.padding
