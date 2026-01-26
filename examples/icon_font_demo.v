@@ -48,7 +48,6 @@ fn side_panel(mut w gui.Window) gui.View {
 	return gui.column(
 		id:      'side-panel'
 		color:   gui.theme().color_interior
-		fill:    true
 		sizing:  gui.fit_fill
 		padding: gui.padding_large
 		content: [
@@ -75,14 +74,15 @@ fn side_panel(mut w gui.Window) gui.View {
 
 fn search_box(text string) gui.View {
 	return gui.input(
-		text:            text
-		id_focus:        2
-		radius:          gui.radius_large
-		radius_border:   gui.radius_large
-		padding:         gui.pad_tblr(5, 10)
-		min_width:       100
-		max_width:       100
-		padding_border:  gui.padding_one
+		text:          text
+		id_focus:      2
+		radius:        gui.radius_large
+		radius_border: gui.radius_large
+		padding:       gui.pad_tblr(5, 10)
+		min_width:     100
+		max_width:     100
+		size_border:   1
+
 		color_border:    gui.theme().color_border
 		placeholder:     'Search'
 		on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {

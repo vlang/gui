@@ -56,11 +56,12 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.input(
-						id_focus:        2
-						text:            app.input_a
-						width:           input_width
-						sizing:          gui.fixed_fit
-						padding_border:  gui.padding_one
+						id_focus:    2
+						text:        app.input_a
+						width:       input_width
+						sizing:      gui.fixed_fit
+						size_border: 1
+
 						is_password:     true
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[InputsApp]()
@@ -68,11 +69,12 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.input(
-						id_focus:        3
-						text:            app.input_a
-						width:           input_width
-						sizing:          gui.fixed_fit
-						padding_border:  gui.padding_one
+						id_focus:    3
+						text:        app.input_a
+						width:       input_width
+						sizing:      gui.fixed_fit
+						size_border: 1
+
 						radius:          0
 						radius_border:   0
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
@@ -81,12 +83,12 @@ fn main_view(window &gui.Window) gui.View {
 						}
 					),
 					gui.input(
-						id_focus:        4
-						text:            app.input_a
-						width:           input_width
-						sizing:          gui.fixed_fit
-						padding_border:  gui.padding_small
-						fill_border:     false
+						id_focus:    4
+						text:        app.input_a
+						width:       input_width
+						sizing:      gui.fixed_fit
+						size_border: 1
+
 						radius:          0
 						radius_border:   0
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {

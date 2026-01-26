@@ -58,7 +58,7 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 		scrollbar_cfg_y: &gui.ScrollbarCfg{
 			overflow: if window.is_focus(id) { .visible } else { .hidden }
 		}
-		color:           match window.is_focus(id) {
+		color_border:    match window.is_focus(id) {
 			true { gui.theme().button_style.color_border_focus } // just for fun
 			else { gui.theme().container_style.color }
 		}
@@ -107,7 +107,7 @@ fn theme_button(app &ScrollApp) gui.View {
 		on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[ScrollApp]()
 			app.light = !app.light
-			w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })
+			w.set_theme(if app.light { gui.theme_light_bordered } else { gui.theme_dark_bordered })
 		}
 	)
 }

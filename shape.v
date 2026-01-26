@@ -57,10 +57,11 @@ pub mut:
 	text_tab_size         u32 = 4 // Tab width in spaces
 	last_constraint_width f32       // Optimization: cached width used for last text layout generation
 	color                 Color     // Background or foreground color
+	color_border          Color     // Border color (if different from color)
 	shadow                BoxShadow // Drop shadow configuration
 	gradient              &Gradient = unsafe { nil } // Gradient background configuration
 	border_gradient       &Gradient = unsafe { nil } // Gradient border configuration
-	border_width          f32       = 1.0            // Thickness of the border
+	size_border           f32       = 1.0            // Thickness of the border
 
 	// 2 bytes
 	sizing Sizing // Sizing logic (e.g. fixed, fit, grow)
@@ -76,7 +77,6 @@ pub mut:
 	float_tie_off       FloatAttach     // Anchor point on the floating shape itself
 	clip                bool            // Whether to clip children/content to bounds
 	disabled            bool            // Visual and interactive disabled state
-	fill                bool            // Whether to fill or stroke the shape
 	float               bool            // Whether the shape is floating (removed from flow)
 	focus_skip          bool            // If true, skip this element in focus navigation
 	over_draw           bool            // If true, allows drawing into padding and ignores spacing impact
@@ -116,4 +116,28 @@ pub fn (shape &Shape) has_text_layout() bool {
 @[inline]
 pub fn (shape &Shape) has_rtf_layout() bool {
 	return shape.vglyph_layout != unsafe { nil } && shape.shape_type == .rtf
+}
+
+// padding_left returns the effective left padding (padding + border)
+@[inline]
+pub fn (shape &Shape) padding_left() f32 {
+	return shape.padding.left + shape.size_border
+}
+
+// padding_top returns the effective top padding (padding + border)
+@[inline]
+pub fn (shape &Shape) padding_top() f32 {
+	return shape.padding.top + shape.size_border
+}
+
+// padding_width returns the total horizontal padding (left + right + 2 * border)
+@[inline]
+pub fn (shape &Shape) padding_width() f32 {
+	return shape.padding.width() + (shape.size_border * 2)
+}
+
+// padding_height returns the total vertical padding (top + bottom + 2 * border)
+@[inline]
+pub fn (shape &Shape) padding_height() f32 {
+	return shape.padding.height() + (shape.size_border * 2)
 }

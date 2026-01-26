@@ -30,48 +30,43 @@ fn main_view(window &gui.Window) gui.View {
 				spacing: 20
 				content: [
 					gui.rectangle(gui.RectangleCfg{
-						width:        100
-						height:       100
-						border_width: 1.0
-						fill:         false
-						color:        gui.rgba(255, 0, 0, 255)
-						radius:       10
+						width:       100
+						height:      100
+						size_border: 1.0
+						color:       gui.rgba(255, 0, 0, 255)
+						radius:      10
 					}),
 					gui.rectangle(gui.RectangleCfg{
-						width:        100
-						height:       100
-						border_width: 2.0
-						fill:         false
-						color:        gui.rgba(0, 255, 0, 255)
-						radius:       10
+						width:       100
+						height:      100
+						size_border: 2.0
+						color:       gui.rgba(0, 255, 0, 255)
+						radius:      10
 					}),
 					gui.rectangle(gui.RectangleCfg{
-						width:        100
-						height:       100
-						border_width: 5.0
-						fill:         false
-						color:        gui.rgba(0, 0, 255, 255)
-						radius:       10
+						width:       100
+						height:      100
+						size_border: 5.0
+						color:       gui.rgba(0, 0, 255, 255)
+						radius:      10
 					}),
 					gui.rectangle(gui.RectangleCfg{
-						width:        100
-						height:       100
-						border_width: 10.0
-						fill:         false
-						color:        gui.rgba(255, 255, 0, 255)
-						radius:       10
+						width:       100
+						height:      100
+						size_border: 10.0
+						color:       gui.rgba(255, 255, 0, 255)
+						radius:      10
 					}),
 				]
 			}),
 			gui.row(gui.ContainerCfg{
-				width:        460
-				height:       100
-				border_width: 4.0
-				fill:         false
-				radius:       0
-				color:        gui.rgba(255, 0, 255, 255)
-				padding:      gui.padding_medium
-				content:      [
+				width:       460
+				height:      100
+				size_border: 4.0
+				radius:      0
+				color:       gui.rgba(255, 0, 255, 255)
+				padding:     gui.padding_medium
+				content:     [
 					gui.text(gui.TextCfg{
 						text:       'Container with 4px Border'
 						text_style: gui.TextStyle{
@@ -82,14 +77,13 @@ fn main_view(window &gui.Window) gui.View {
 				]
 			}),
 			gui.row(gui.ContainerCfg{
-				width:        460
-				height:       100
-				border_width: 8.0
-				fill:         false
-				radius:       20
-				color:        gui.rgba(0, 255, 255, 255)
-				padding:      gui.padding_large
-				content:      [
+				width:       460
+				height:      100
+				size_border: 8.0
+				radius:      20
+				color:       gui.rgba(0, 255, 255, 255)
+				padding:     gui.padding_large
+				content:     [
 					gui.text(gui.TextCfg{
 						text:       'Container with 8px Border'
 						text_style: gui.TextStyle{

@@ -1,7 +1,7 @@
 # Roadmap
 
-This roadmap outlines the strategic direction for `v-gui`, focusing on enhancing its capabilities as a
-cross-platform, immediate mode GUI toolkit.
+This roadmap outlines the strategic direction for `v-gui`, focusing on enhancing its capabilities 
+as a cross-platform, immediate mode GUI toolkit.
 
 ## Toolkit Analysis
 

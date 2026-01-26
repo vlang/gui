@@ -22,19 +22,19 @@ import arrays
 @[heap; minify]
 pub struct MenubarCfg {
 pub:
-	id                     string
-	text_style             TextStyle = gui_theme.menubar_style.text_style
-	text_style_subtitle    TextStyle = gui_theme.menubar_style.text_style_subtitle
-	color                  Color     = gui_theme.menubar_style.color
-	color_border           Color     = gui_theme.menubar_style.color_border
-	color_select           Color     = gui_theme.menubar_style.color_select
-	sizing                 Sizing    = fill_fit
-	padding                Padding   = gui_theme.menubar_style.padding
-	padding_menu_item      Padding   = gui_theme.menubar_style.padding_menu_item
-	padding_border         Padding   = gui_theme.menubar_style.padding_border
-	padding_submenu        Padding   = gui_theme.menubar_style.padding_submenu
-	padding_submenu_border Padding   = gui_theme.menubar_style.padding_border
-	padding_subtitle       Padding   = gui_theme.menubar_style.padding_subtitle
+	id                  string
+	text_style          TextStyle = gui_theme.menubar_style.text_style
+	text_style_subtitle TextStyle = gui_theme.menubar_style.text_style_subtitle
+	color               Color     = gui_theme.menubar_style.color
+	color_border        Color     = gui_theme.menubar_style.color_border
+	color_select        Color     = gui_theme.menubar_style.color_select
+	sizing              Sizing    = fill_fit
+	padding             Padding   = gui_theme.menubar_style.padding
+	padding_menu_item   Padding   = gui_theme.menubar_style.padding_menu_item
+	size_border         f32       = gui_theme.menubar_style.size_border
+	padding_submenu     Padding   = gui_theme.menubar_style.padding_submenu
+
+	padding_subtitle Padding = gui_theme.menubar_style.padding_subtitle
 
 	// Default menubar-level action. Called after the menu-item action.
 	action fn (string, mut Event, mut Window) = fn (_ string, mut e Event, mut _ Window) {
@@ -99,34 +99,38 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 
 	// Construct the menubar UI tree.
 	return row(
-		name:          'menubar border'
+		name:          'menubar'
 		id:            cfg.id
 		id_focus:      cfg.id_focus
-		color:         cfg.color_border
-		fill:          true
+		color:         cfg.color
+		color_border:  cfg.color_border
 		float:         cfg.float
 		float_anchor:  cfg.float_anchor
 		float_tie_off: cfg.float_tie_off
 		disabled:      cfg.disabled
 		invisible:     cfg.invisible
-		padding:       cfg.padding_border
+		size_border:   cfg.size_border
 		sizing:        cfg.sizing
-		on_keydown:    cfg.on_keydown
-		amend_layout:  cfg.amend_layout_menubar
-		content:       [
-			row(
-				name:    'menubar interior'
-				color:   cfg.color
-				fill:    true
-				padding: cfg.padding
-				spacing: cfg.spacing
-				sizing:  cfg.sizing
-				radius:  cfg.radius
-				// menu_build handles constructing root items and their submenus.
-				content: menu_build(cfg, 0, cfg.items, window)
-			),
-		]
+		on_keydown:    make_menubar_on_keydown(cfg)
+		amend_layout:  make_menubar_amend_layout(cfg)
+		padding:       cfg.padding
+		radius:        cfg.radius
+		// menu_build handles constructing root items and their submenus.
+		content: menu_build(cfg, 0, cfg.items, window)
 	)
+}
+
+// Wrapper functions to capture MenubarCfg by value to avoid dangling reference issues.
+fn make_menubar_on_keydown(cfg MenubarCfg) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
+		cfg.on_keydown(layout, mut e, mut w)
+	}
+}
+
+fn make_menubar_amend_layout(cfg MenubarCfg) fn (mut Layout, mut Window) {
+	return fn [cfg] (mut layout Layout, mut w Window) {
+		cfg.amend_layout_menubar(mut layout, mut w)
+	}
 }
 
 // MenuIdMap maps each menu ID to a MenuIdNode containing directional neighbors.

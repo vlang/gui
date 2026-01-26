@@ -37,7 +37,7 @@ const color_hover_light = rgb(185, 185, 215)
 const color_focus_light = rgb(175, 175, 215)
 const color_active_light = rgb(165, 165, 215)
 const color_border_light = rgb(135, 135, 165)
-const color_select_light = rgb(159, 174, 250)
+const color_select_light = rgb(65, 105, 225)
 const color_border_focus_light = rgb(0, 0, 165)
 const color_text_light = rgb(32, 32, 32)
 
@@ -47,6 +47,8 @@ const scroll_delta_page = 10
 const scroll_gap_edge = 3
 const scroll_gap_end = 2
 const size_progress_bar = 10
+
+const size_border = f32(1.5)
 
 const text_style_dark = TextStyle{
 	color:        color_text_dark
@@ -82,18 +84,19 @@ pub const theme_dark = theme_maker(theme_dark_cfg)
 
 pub const theme_dark_no_padding_cfg = ThemeCfg{
 	...theme_dark_cfg
-	name:           'dark-no-padding'
-	padding:        padding_none
-	padding_border: padding_none
-	radius:         radius_none
-	radius_border:  radius_none
+	name:        'dark-no-padding'
+	padding:     padding_none
+	size_border: 0
+
+	radius:        radius_none
+	radius_border: radius_none
 }
 pub const theme_dark_no_padding = theme_maker(theme_dark_no_padding_cfg)
 
 pub const theme_dark_bordered_cfg = ThemeCfg{
 	...theme_dark_cfg
-	name:           'dark-bordered'
-	padding_border: padding_one
+	name:        'dark-bordered'
+	size_border: size_border
 }
 pub const theme_dark_bordered = theme_maker(theme_dark_bordered_cfg)
 
@@ -117,23 +120,24 @@ pub const theme_light = theme_maker(theme_light_cfg)
 
 pub const theme_light_no_padding_cfg = ThemeCfg{
 	...theme_light_cfg
-	name:           'light-no-padding'
-	padding:        padding_none
-	padding_border: padding_none
-	radius:         radius_none
-	radius_border:  radius_none
+	name:        'light-no-padding'
+	padding:     padding_none
+	size_border: 0
+
+	radius:        radius_none
+	radius_border: radius_none
 }
 pub const theme_light_no_padding = theme_maker(theme_light_no_padding_cfg)
 
 pub const theme_light_bordered_cfg = ThemeCfg{
 	...theme_light_cfg
-	name:           'light-bordered'
-	padding_border: padding_one
+	name:        'light-bordered'
+	size_border: size_border
 }
 pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 
 pub const theme_blue_bordered_cfg = ThemeCfg{
-	...theme_dark_cfg
+	...theme_dark_bordered_cfg
 	name:               'blue-dark-bordered'
 	color_background:   color_from_string('#0c1d3a')
 	color_panel:        color_from_string('#122c58')

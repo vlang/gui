@@ -45,8 +45,8 @@ fn main_view(mut window gui.Window) gui.View {
 		h_align: .center
 		content: [
 			gui.column(
-				color:   gui.theme().color_border
-				content: [
+				color_border: gui.theme().color_border
+				content:      [
 					label_input_row('Name', app.name, id_focus_name, fn [mut app] (s string) {
 						app.name = s
 					}),

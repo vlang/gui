@@ -38,7 +38,6 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				name:     'menu_item separator'
 				id:       item_cfg.id
 				height:   item_cfg.text_style.size / 2
-				fill:     true
 				sizing:   fill_fit
 				padding:  padding_none
 				v_align:  .middle
@@ -55,6 +54,11 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 		else {
 			// Normal menu item with either a custom view or text.
 			mut content := []View{cap: 1}
+			color := if item_cfg.selected {
+				item_cfg.color_select
+			} else {
+				color_transparent
+			}
 			if item_cfg.custom_view != none {
 				content << item_cfg.custom_view
 			} else {
@@ -65,22 +69,21 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				)
 			}
 			column(
-				name:     'menu_item'
-				id:       item_cfg.id
-				disabled: item_cfg.disabled
-				color:    if item_cfg.selected {
-					item_cfg.color_select
-				} else {
-					color_transparent
+				name:         'menu_item'
+				id:           item_cfg.id
+				disabled:     item_cfg.disabled
+				color:        color
+				color_border: color
+				size_border:  1
+				padding:      item_cfg.padding
+				radius:       item_cfg.radius
+				sizing:       item_cfg.sizing
+				on_click:     menubar_cfg.menu_item_click(item_cfg)
+				spacing:      item_cfg.spacing
+				on_hover:     fn [menubar_cfg] (mut layout Layout, mut e Event, mut w Window) {
+					menubar_cfg.on_hover_item(mut layout, mut e, mut w)
 				}
-				fill:     item_cfg.selected
-				padding:  item_cfg.padding
-				radius:   item_cfg.radius
-				sizing:   item_cfg.sizing
-				on_click: menubar_cfg.menu_item_click(item_cfg)
-				spacing:  item_cfg.spacing
-				on_hover: menubar_cfg.on_hover_item
-				content:  content
+				content:      content
 			)
 		}
 	}

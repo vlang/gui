@@ -96,7 +96,6 @@ fn sidebar(mut w gui.Window) gui.View {
 		sizing:    gui.fit_fill
 		padding:   gui.padding_large
 		spacing:   gui.spacing_small
-		color:     gui.theme().color_interior
 		id:        'sidebar-scroll'
 		id_scroll: 3
 		content:   toggles
@@ -111,7 +110,6 @@ fn group_select(group string, app &ArrowsApp) gui.View {
 	}
 	return gui.row(
 		color:    color
-		fill:     app.selected_group == group
 		padding:  gui.theme().padding_small
 		content:  [gui.text(text: group, text_style: gui.theme().n3)]
 		on_click: fn [group] (_ voidptr, mut e gui.Event, mut w gui.Window) {
@@ -120,7 +118,6 @@ fn group_select(group string, app &ArrowsApp) gui.View {
 			w.scroll_to_view('group-${group}')
 		}
 		on_hover: fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			layout.shape.fill = true
 			layout.shape.color = gui.theme().color_hover
 			w.set_mouse_cursor_pointing_hand()
 		}
@@ -131,7 +128,6 @@ fn header(mut w gui.Window) gui.View {
 	mut app := w.state[ArrowsApp]()
 	return gui.row(
 		id:      'header'
-		color:   gui.theme().color_interior
 		sizing:  gui.fill_fit
 		padding: gui.padding_medium
 		spacing: gui.spacing_large
@@ -263,6 +259,8 @@ fn list_view(mut w gui.Window) gui.View {
 
 		content << w.table(
 			data:            rows
+			color_border:    gui.white
+			align_head:      .left
 			text_style_head: gui.theme().b3
 			text_style:      gui.theme().n2
 		)

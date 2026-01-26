@@ -79,7 +79,6 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 
 	content << row(
 		name:     'tree node content'
-		fill:     true
 		spacing:  0
 		padding:  padding_none
 		content:  [
@@ -92,7 +91,6 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 			// text content
 			row(
 				name:    'tree node text'
-				fill:    true
 				spacing: 0
 				padding: pad_tblr(1, 5)
 				content: [

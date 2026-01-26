@@ -28,7 +28,6 @@ fn main_view(mut w gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		content: [
 			gui.column(
-				fill:       true
 				sizing:     gui.fill_fill
 				max_width:  150
 				max_height: 330
@@ -46,13 +45,14 @@ fn main_view(mut w gui.Window) gui.View {
 				]
 			),
 			gui.column(
-				title:     ' Container Title  '
-				sizing:    gui.fill_fill
-				h_align:   .end
-				v_align:   .bottom
-				min_width: 150
-				color:     gui.theme().text_style.color
-				content:   [
+				title:        ' Container Title  '
+				sizing:       gui.fill_fill
+				h_align:      .end
+				v_align:      .bottom
+				min_width:    150
+				color_border: gui.gray
+				size_border:  1
+				content:      [
 					gui.text(
 						text:       'There!'
 						text_style: gui.TextStyle{

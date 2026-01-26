@@ -61,7 +61,6 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			spacing:         cv.spacing
 			sizing:          cv.sizing
 			padding:         cv.padding
-			fill:            cv.fill
 			h_align:         cv.h_align
 			v_align:         cv.v_align
 			radius:          cv.radius
@@ -70,7 +69,8 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			shadow:          cv.shadow
 			gradient:        cv.gradient
 			border_gradient: cv.border_gradient
-			border_width:    cv.border_width
+			size_border:     cv.size_border
+			color_border:    cv.color_border
 			disabled:        cv.disabled
 			float:           cv.float
 			float_anchor:    cv.float_anchor
@@ -156,10 +156,11 @@ pub:
 	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
 	tooltip         &TooltipCfg   = unsafe { nil }
 	color           Color         = gui_theme.container_style.color
+	color_border    Color         = gui_theme.container_style.color_border
 	shadow          BoxShadow     = gui_theme.container_style.shadow
 	gradient        &Gradient     = gui_theme.container_style.gradient
 	border_gradient &Gradient     = gui_theme.container_style.border_gradient
-	border_width    f32           = gui_theme.container_style.border_width
+	size_border     f32           = gui_theme.container_style.size_border
 	padding         Padding       = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
@@ -197,7 +198,6 @@ pub:
 	clip            bool
 	focus_skip      bool
 	over_draw       bool
-	fill            bool = gui_theme.container_style.fill
 	float           bool
 }
 
@@ -272,7 +272,6 @@ fn container(cfg ContainerCfg) View {
 		max_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
 		clip:            cfg.clip
 		color:           cfg.color
-		fill:            cfg.fill
 		h_align:         cfg.h_align
 		v_align:         cfg.v_align
 		padding:         cfg.padding
@@ -281,7 +280,8 @@ fn container(cfg ContainerCfg) View {
 		shadow:          cfg.shadow
 		gradient:        cfg.gradient
 		border_gradient: cfg.border_gradient
-		border_width:    cfg.border_width
+		size_border:     cfg.size_border
+		color_border:    cfg.color_border
 		sizing:          cfg.sizing
 		spacing:         cfg.spacing
 		disabled:        cfg.disabled
@@ -401,13 +401,17 @@ fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 		return
 	}
 
-	text_style := if cv.color == gui_theme.text_style.color {
-		gui_theme.text_style
+	// Use border color for title when fill is transparent, otherwise use fill color
+	title_color := if cv.color != color_transparent {
+		cv.color
+	} else if cv.color_border != color_transparent {
+		cv.color_border
 	} else {
-		TextStyle{
-			...gui_theme.text_style
-			color: cv.color
-		}
+		gui_theme.text_style.color
+	}
+	text_style := TextStyle{
+		...gui_theme.text_style
+		color: title_color
 	}
 
 	cfg := text_style.to_vglyph_cfg()
@@ -422,17 +426,16 @@ fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 	eraser_color := if cv.disabled { dim_alpha(parent_bg) } else { parent_bg }
 	children << Layout{
 		shape: &Shape{
-			shape_type: .rectangle
-			width:      text_width + padding + padding - 1
-			height:     metrics.ascender + metrics.descender
-			x:          20
-			y:          -offset
-			color:      eraser_color
-			fill:       true
-			float:      true
+			shape_type:   .rectangle
+			width:        text_width + padding + padding - 1
+			height:       metrics.ascender + metrics.descender
+			x:            20
+			y:            -offset
+			color:        eraser_color
+			color_border: eraser_color
+			float:        true
 		}
 	}
-
 	// 2. Text Node
 	text_color := if cv.disabled { dim_alpha(text_style.color) } else { text_style.color }
 	children << Layout{

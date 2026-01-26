@@ -82,7 +82,7 @@ pub:
 	id_scroll          u32
 	scroll_mode        ScrollMode
 	padding            Padding = gui_theme.input_style.padding
-	padding_border     Padding = gui_theme.input_style.padding_border
+	size_border        f32     = gui_theme.input_style.size_border
 	color              Color   = gui_theme.input_style.color
 	color_hover        Color   = gui_theme.input_style.color_hover
 	color_border       Color   = gui_theme.input_style.color_border
@@ -91,8 +91,6 @@ pub:
 	disabled           bool
 	invisible          bool
 	is_password        bool // mask input characters with '*'s
-	fill               bool = gui_theme.input_style.fill
-	fill_border        bool = gui_theme.input_style.fill_border
 }
 
 // input
@@ -143,71 +141,94 @@ pub fn input(cfg InputCfg) View {
 	txt_style := if placeholder_active { cfg.placeholder_style } else { cfg.text_style }
 	mode := if cfg.mode == .single_line { TextMode.single_line } else { TextMode.wrap_keep_spaces }
 
-	return row(
-		name:         'input border'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		tooltip:      cfg.tooltip
-		width:        cfg.width
-		height:       cfg.height
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
-		min_height:   cfg.min_height
-		max_height:   cfg.max_height
-		disabled:     cfg.disabled
-		clip:         true
-		color:        cfg.color_border
-		invisible:    cfg.invisible
-		fill:         cfg.fill_border
-		padding:      cfg.padding_border
-		radius:       cfg.radius_border
-		sizing:       cfg.sizing
-		on_char:      cfg.on_char
-		on_hover:     cfg.hover
-		amend_layout: cfg.amend_layout
-		content:      [
-			column(
-				name:            'input scroll container'
-				id_scroll:       cfg.id_scroll
-				scrollbar_cfg_x: cfg.scrollbar_cfg_x
-				scrollbar_cfg_y: cfg.scrollbar_cfg_y
-				color:           cfg.color
-				fill:            cfg.fill
-				padding:         cfg.padding
-				radius:          cfg.radius
-				sizing:          fill_fill
-				spacing:         0
-				content:         [
+	// Capture values needed for callbacks by copy to avoid dangling reference to cfg
+	color_border_focus := cfg.color_border_focus
+	color_hover := cfg.color_hover
+	id_focus := cfg.id_focus
+	on_click_icon := cfg.on_click_icon
+
+	return column(
+		name:            'input'
+		id:              cfg.id
+		id_focus:        cfg.id_focus
+		tooltip:         cfg.tooltip
+		width:           cfg.width
+		height:          cfg.height
+		min_width:       cfg.min_width
+		max_width:       cfg.max_width
+		min_height:      cfg.min_height
+		max_height:      cfg.max_height
+		disabled:        cfg.disabled
+		clip:            true
+		color:           cfg.color
+		color_border:    cfg.color_border
+		size_border:     cfg.size_border
+		invisible:       cfg.invisible
+		padding:         cfg.padding
+		radius:          cfg.radius
+		sizing:          cfg.sizing
+		on_char:         make_input_on_char(cfg)
+		on_hover:        fn [color_hover, id_focus] (mut layout Layout, mut e Event, mut w Window) {
+			if w.is_focus(id_focus) {
+				w.set_mouse_cursor_ibeam()
+			} else {
+				layout.shape.color = color_hover
+			}
+		}
+		amend_layout:    fn [color_border_focus] (mut layout Layout, mut w Window) {
+			if layout.shape.disabled {
+				return
+			}
+			if layout.shape.id_focus > 0 && layout.shape.id_focus == w.id_focus() {
+				layout.shape.color_border = color_border_focus
+			}
+		}
+		id_scroll:       cfg.id_scroll
+		scrollbar_cfg_x: cfg.scrollbar_cfg_x
+		scrollbar_cfg_y: cfg.scrollbar_cfg_y
+		spacing:         0
+		content:         [
+			row(
+				name:     'input interior'
+				padding:  padding_none
+				sizing:   fill_fill
+				on_click: fn (layout &Layout, mut e Event, mut w Window) {
+					if layout.children.len < 1 {
+						return
+					}
+					ly := layout.children[0]
+					if ly.shape.id_focus > 0 {
+						w.set_id_focus(ly.shape.id_focus)
+					}
+				}
+				content:  [
+					text(
+						id_focus:           cfg.id_focus
+						sizing:             fill_fill
+						text:               txt
+						text_style:         txt_style
+						mode:               mode
+						is_password:        cfg.is_password
+						placeholder_active: placeholder_active
+					),
+					rectangle(
+						color:        color_transparent
+						color_border: color_transparent
+						sizing:       fill_fill
+					),
 					row(
-						name:     'input interior'
+						name:     'input icon'
 						padding:  padding_none
-						sizing:   fill_fill
-						on_click: cfg.on_click_interior
+						on_click: cfg.on_click_icon
+						on_hover: fn [on_click_icon] (mut layout Layout, mut e Event, mut w Window) {
+							if on_click_icon != unsafe { nil } {
+								w.set_mouse_cursor_pointing_hand()
+							}
+						}
 						content:  [
 							text(
-								id_focus:           cfg.id_focus
-								sizing:             fill_fill
-								text:               txt
-								text_style:         txt_style
-								mode:               mode
-								is_password:        cfg.is_password
-								placeholder_active: placeholder_active
-							),
-							rectangle(
-								color:  color_transparent
-								sizing: fill_fill
-							),
-							row(
-								name:     'input icon'
-								padding:  padding_none
-								on_click: cfg.on_click_icon
-								on_hover: cfg.hover_icon
-								content:  [
-									text(
-										text:       cfg.icon
-										text_style: cfg.icon_style
-									),
-								]
+								text:       cfg.icon
+								text_style: cfg.icon_style
 							),
 						]
 					),
@@ -215,21 +236,6 @@ pub fn input(cfg InputCfg) View {
 			),
 		]
 	)
-}
-
-// on_click_interior handles clicking within the control but outside the text
-// region by forwarding it to the text view.
-fn (_ &InputCfg) on_click_interior(layout &Layout, mut e Event, mut w Window) {
-	if layout.children.len < 1 {
-		return
-	}
-	ly := layout.children[0]
-	if ly.shape.id_focus > 0 {
-		w.set_id_focus(ly.shape.id_focus)
-	}
-	if layout.shape.on_click != unsafe { nil } {
-		ly.shape.on_click(ly, mut e, mut w)
-	}
 }
 
 // on_char handles keyboard and character input. It processes modifier
@@ -374,7 +380,7 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		ctx := w.ui
 		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
 		width := ctx.text_width(cfg.text + s)
-		if width > cfg.width - cfg.padding.width() - cfg.padding_border.width() {
+		if width > cfg.width - cfg.padding.width() - (cfg.size_border * 2) {
 			return cfg.text
 		}
 	}
@@ -515,7 +521,7 @@ fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
 		return
 	}
 	if layout.shape.id_focus > 0 && layout.shape.id_focus == w.id_focus() {
-		layout.shape.color = cfg.color_border_focus
+		layout.shape.color_border = cfg.color_border_focus
 	}
 }
 
@@ -525,7 +531,7 @@ fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 	if w.is_focus(layout.shape.id_focus) {
 		w.set_mouse_cursor_ibeam()
 	} else {
-		layout.children[0].shape.color = cfg.color_hover
+		layout.shape.color = cfg.color_hover
 	}
 }
 
@@ -533,5 +539,83 @@ fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 fn (_ &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
 	if layout.shape.on_click != unsafe { nil } {
 		w.set_mouse_cursor_pointing_hand()
+	}
+}
+
+// make_input_on_char creates an on_char handler that captures the InputCfg
+// by value to avoid dangling reference issues. The InputCfg is heap-allocated
+// due to its @[heap] attribute.
+fn make_input_on_char(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg] (layout &Layout, mut event Event, mut w Window) {
+		if w.mouse_is_locked() {
+			return
+		}
+		c := event.char_code
+		if cfg.on_text_changed != unsafe { nil } {
+			mut text := cfg.text
+			if event.modifiers == .ctrl_shift {
+				match c {
+					ctrl_z { text = cfg.redo(mut w) }
+					else {}
+				}
+			} else if event.modifiers == .super_shift {
+				match c {
+					cmd_z { text = cfg.redo(mut w) }
+					else {}
+				}
+			} else if event.modifiers == .ctrl {
+				match c {
+					ctrl_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
+					ctrl_x { text = cfg.cut(mut w) or { return } }
+					ctrl_z { text = cfg.undo(mut w) }
+					else {}
+				}
+			} else if event.modifiers == .super {
+				match c {
+					cmd_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
+					cmd_x { text = cfg.cut(mut w) or { return } }
+					cmd_z { text = cfg.undo(mut w) }
+					else {}
+				}
+			} else {
+				match c {
+					bsp_char {
+						text = cfg.delete(mut w, false) or { return }
+					}
+					del_char {
+						$if macos {
+							text = cfg.delete(mut w, false) or { return }
+						} $else {
+							text = cfg.delete(mut w, true) or { return }
+						}
+					}
+					cr_char, lf_char {
+						if cfg.on_enter != unsafe { nil } {
+							cfg.on_enter(layout, mut event, mut w)
+							event.is_handled = true
+							return
+						} else {
+							if cfg.mode != .single_line {
+								text = cfg.insert('\n', mut w) or {
+									log.error(err.msg())
+									return
+								}
+							}
+						}
+					}
+					0...0x1F { // non-printable
+						return
+					}
+					else {
+						text = cfg.insert(rune(c).str(), mut w) or {
+							log.error(err.msg())
+							return
+						}
+					}
+				}
+			}
+			event.is_handled = true
+			cfg.on_text_changed(layout, text, mut w)
+		}
 	}
 }

@@ -59,17 +59,18 @@ fn menu(mut window gui.Window) gui.View {
 	app := window.state[MenuApp]()
 
 	return window.menubar(
-		float:          true
-		float_anchor:   .top_center
-		float_tie_off:  .top_center
-		id_focus:       id_focus_menu
-		radius:         0
-		padding_border: gui.padding_none
-		action:         fn (id string, mut e gui.Event, mut w gui.Window) {
+		float:         true
+		float_anchor:  .top_center
+		float_tie_off: .top_center
+		id_focus:      id_focus_menu
+		radius:        0
+		size_border:   0
+
+		action: fn (id string, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[MenuApp]()
 			app.select_menu_id = id
 		}
-		items:          [
+		items:  [
 			gui.MenuItemCfg{
 				id:      'file'
 				text:    'File'
@@ -208,7 +209,6 @@ fn body(mut app MenuApp, window &gui.Window) gui.View {
 		content: [
 			gui.rectangle(
 				height: 40
-				fill:   false
 				color:  gui.color_transparent
 				sizing: gui.fill_fixed
 			),

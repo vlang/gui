@@ -12,31 +12,30 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 	}
 	check_for_duplicate_menu_ids(cfg.items)
 	return column(
-		name:          'menubar border'
+		name:          'menubar'
 		id:            cfg.id
-		color:         cfg.color_border
-		fill:          true
+		color:         cfg.color
 		float:         cfg.float
 		float_anchor:  cfg.float_anchor
 		float_tie_off: cfg.float_tie_off
 		invisible:     cfg.invisible
-		padding:       cfg.padding_border
-		radius:        cfg.radius_border
-		sizing:        cfg.sizing
-		amend_layout:  cfg.amend_layout_menubar
-		content:       [
-			column(
-				name:    'menubar interior'
-				color:   cfg.color
-				fill:    true
-				padding: cfg.padding_submenu
-				spacing: cfg.spacing_submenu
-				sizing:  cfg.sizing
-				radius:  cfg.radius
-				content: menu_build(cfg, 1, cfg.items, window)
-			),
-		]
+		size_border:   cfg.size_border
+		color_border:  cfg.color_border
+
+		radius:       cfg.radius
+		sizing:       cfg.sizing
+		amend_layout: make_menu_amend_layout(cfg)
+		padding:      cfg.padding_submenu
+		spacing:      cfg.spacing_submenu
+		content:      menu_build(cfg, 1, cfg.items, window)
 	)
+}
+
+// Wrapper function to capture MenubarCfg by value to avoid dangling reference issues.
+fn make_menu_amend_layout(cfg MenubarCfg) fn (mut Layout, mut Window) {
+	return fn [cfg] (mut layout Layout, mut w Window) {
+		cfg.amend_layout_menubar(mut layout, mut w)
+	}
 }
 
 // menu_build Recursively constructs menu items and nested submenus. It determines
@@ -89,32 +88,28 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 		if item.submenu.len > 0 {
 			if item_cfg.selected || selected_in_tree {
 				submenu := column(
-					name:           'menubar submenu border'
-					id:             item_cfg.id
-					min_width:      cfg.width_submenu_min
-					max_width:      cfg.width_submenu_max
-					color:          cfg.color_border
-					padding:        cfg.padding_submenu_border
-					fill:           true
+					name:         'menubar submenu'
+					id:           item_cfg.id
+					min_width:    cfg.width_submenu_min
+					max_width:    cfg.width_submenu_max
+					color:        cfg.color
+					size_border:  cfg.size_border
+					color_border: cfg.color_border
+
 					float:          true
 					float_anchor:   if level == 0 { .bottom_left } else { .top_right }
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }
-					on_hover:       cfg.on_hover_submenu
+					on_hover:       fn [cfg] (mut layout Layout, mut e Event, mut w Window) {
+						cfg.on_hover_submenu(mut layout, mut e, mut w)
+					}
 					on_click:       fn [cfg] (_ &Layout, mut e Event, mut w Window) {
 						e.is_handled = true
 						w.set_id_focus(cfg.id_focus)
 					}
-					content:        [
-						column(
-							name:    'menubar submenu interior'
-							color:   cfg.color
-							fill:    true
-							padding: cfg.padding_submenu
-							spacing: cfg.spacing_submenu
-							sizing:  fill_fill
-							content: menu_build(cfg, level + 1, item.submenu, window)
-						),
-					]
+					padding:        cfg.padding_submenu
+					spacing:        cfg.spacing_submenu
+					sizing:         fill_fill
+					content:        menu_build(cfg, level + 1, item.submenu, window)
 				)
 				mi.content << submenu
 			}

@@ -37,18 +37,16 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_click:        cfg.color_focus
 			color_focus:        cfg.color_active
 			color_hover:        cfg.color_hover
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
-			padding_border:     cfg.padding_border
+			size_border:        cfg.size_border
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 		}
 		container_style:    ContainerStyle{
-			color:   color_transparent
-			fill:    false
-			padding: cfg.padding
-			radius:  cfg.radius
-			spacing: cfg.spacing_medium
+			color:       color_transparent
+			padding:     cfg.padding
+			radius:      cfg.radius
+			spacing:     cfg.spacing_medium
+			size_border: cfg.size_border
 		}
 		date_picker_style:  DatePickerStyle{
 			color:              cfg.color_interior
@@ -58,21 +56,19 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_select
 			color_select:       cfg.color_select
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            cfg.padding
-			padding_border:     cfg.padding_border
+			size_border:        cfg.size_border
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
 		}
 		dialog_style:       DialogStyle{
-			color:            cfg.color_panel
-			color_border:     cfg.color_border
-			fill:             cfg.fill
-			fill_border:      cfg.fill_border
-			padding:          cfg.padding_large
-			padding_border:   cfg.padding_border
+			color:              cfg.color_panel
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			padding:            cfg.padding_large
+			size_border:        cfg.size_border
+
 			radius:           cfg.radius
 			radius_border:    cfg.radius_border
 			title_text_style: TextStyle{
@@ -82,25 +78,26 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:       cfg.text_style
 		}
 		expand_panel_style: ExpandPanelStyle{
-			color:          cfg.color_panel
-			color_border:   cfg.color_border
-			fill:           cfg.fill
-			fill_border:    cfg.fill_border
-			padding:        cfg.padding_small
-			padding_border: cfg.padding_border
-			radius:         cfg.radius
-			radius_border:  cfg.radius_border
+			color:              cfg.color_panel
+			color_hover:        cfg.color_hover
+			color_focus:        cfg.color_focus
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			padding:            cfg.padding_small
+			size_border:        cfg.size_border
+
+			radius:        cfg.radius
+			radius_border: cfg.radius_border
 		}
 		input_style:        InputStyle{
 			color:              cfg.color_interior
 			color_hover:        cfg.color_hover
+			color_focus:        cfg.color_interior
+			color_click:        cfg.color_active
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
-			color_focus:        cfg.color_interior
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            cfg.padding
-			padding_border:     cfg.padding_border
+			size_border:        cfg.size_border
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
@@ -120,25 +117,32 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		list_box_style:     ListBoxStyle{
-			color:            cfg.color_interior
-			color_hover:      cfg.color_hover
-			color_border:     cfg.color_border
-			color_select:     cfg.color_select
-			fill:             cfg.fill
-			fill_border:      cfg.fill_border
-			padding:          cfg.padding
-			padding_border:   cfg.padding_border
+			color:              cfg.color_interior
+			color_hover:        cfg.color_hover
+			color_focus:        cfg.color_focus
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			color_select:       cfg.color_select
+			padding:            cfg.padding
+			size_border:        cfg.size_border
+
 			radius:           cfg.radius
 			radius_border:    cfg.radius_border
 			text_style:       cfg.text_style
 			subheading_style: cfg.text_style
 		}
 		menubar_style:      MenubarStyle{
-			color:               cfg.color_interior
-			color_border:        cfg.color_border
-			color_select:        cfg.color_select
-			padding:             cfg.padding_small
-			padding_border:      cfg.padding_border
+			width_submenu_min:  cfg.width_submenu_min
+			width_submenu_max:  cfg.width_submenu_max
+			color:              cfg.color_interior
+			color_hover:        cfg.color_hover
+			color_focus:        cfg.color_focus
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			color_select:       cfg.color_select
+			padding:            cfg.padding_small
+			size_border:        cfg.size_border
+
 			padding_submenu:     cfg.padding_small
 			padding_subtitle:    padding(0, cfg.padding_small.right, 0, cfg.padding_small.left)
 			radius:              cfg.radius_small
@@ -153,59 +157,68 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		progress_bar_style: ProgressBarStyle{
-			color:      cfg.color_interior
-			color_bar:  cfg.color_active
-			fill:       true
-			padding:    cfg.padding_medium
-			radius:     cfg.radius
-			text_style: cfg.text_style
+			size:         cfg.size_progress_bar
+			color:        cfg.color_interior
+			color_bar:    cfg.color_active
+			color_border: cfg.color_border
+			padding:      cfg.padding_medium
+			size_border:  cfg.size_border
+			radius:       cfg.radius
+			text_style:   cfg.text_style
 		}
 		radio_style:        RadioStyle{
-			color:          cfg.color_panel
-			color_hover:    cfg.color_hover
-			color_focus:    cfg.color_select
-			color_border:   cfg.color_border
-			color_select:   cfg.text_style.color
-			color_unselect: cfg.color_active
-			text_style:     cfg.text_style
+			size:               cfg.size_radio
+			color:              cfg.color_panel
+			color_hover:        cfg.color_hover
+			color_focus:        cfg.color_select
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			color_select:       cfg.color_select
+			color_unselect:     cfg.color_active
+			text_style:         cfg.text_style
+			size_border:        cfg.size_border
 		}
 		range_slider_style: RangeSliderStyle{
-			color:          cfg.color_interior
-			color_left:     cfg.color_active
-			color_thumb:    cfg.color_active
-			color_focus:    cfg.color_border_focus
-			color_hover:    cfg.color_hover
-			color_border:   cfg.color_border
-			color_click:    cfg.color_select
-			fill:           true
-			fill_border:    true
-			padding:        padding_none
-			padding_border: cfg.padding_border
-			radius:         cfg.radius_small
-			radius_border:  cfg.radius_small
+			size:               cfg.size_range_slider
+			thumb_size:         cfg.size_range_slider_thumb
+			color:              cfg.color_interior
+			color_left:         cfg.color_active
+			color_thumb:        cfg.color_active
+			color_focus:        cfg.color_border_focus
+			color_hover:        cfg.color_hover
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			color_click:        cfg.color_select
+			padding:            padding_none
+			size_border:        cfg.size_border
+
+			radius:        cfg.radius_small
+			radius_border: cfg.radius_small
 		}
 		rectangle_style:    RectangleStyle{
-			color:  cfg.color_border
-			radius: cfg.radius
-			fill:   cfg.fill
+			color_border: cfg.color_border
+			radius:       cfg.radius
+			size_border:  cfg.size_border
 		}
 		scrollbar_style:    ScrollbarStyle{
-			color_thumb:  cfg.color_active
-			radius:       if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
-			radius_thumb: if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
-			gap_edge:     cfg.scroll_gap_edge
-			gap_end:      cfg.scroll_gap_end
+			size:           cfg.size_scrollbar
+			min_thumb_size: cfg.size_scrollbar_min_thumb
+			color_thumb:    cfg.color_active
+			radius:         if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
+			radius_thumb:   if cfg.radius == radius_none { radius_none } else { cfg.radius_small }
+			gap_edge:       cfg.scroll_gap_edge
+			gap_end:        cfg.scroll_gap_end
 		}
 		select_style:       SelectStyle{
 			color:              cfg.color_interior
-			color_border:       cfg.color_border
-			color_border_focus: cfg.color_select
+			color_hover:        cfg.color_hover
 			color_focus:        cfg.color_focus
+			color_click:        cfg.color_active
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
 			color_select:       cfg.color_select
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
-			padding_border:     cfg.padding_border
+			size_border:        cfg.size_border
 			radius:             cfg.radius_medium
 			radius_border:      cfg.radius_medium
 			text_style:         cfg.text_style
@@ -221,6 +234,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		switch_style:       SwitchStyle{
+			size_width:         cfg.size_switch_width
+			size_height:        cfg.size_switch_height
 			color:              cfg.color_panel
 			color_click:        cfg.color_interior
 			color_focus:        cfg.color_interior
@@ -229,10 +244,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border_focus: cfg.color_border_focus
 			color_select:       cfg.color_select
 			color_unselect:     cfg.color_active
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            padding_three
-			padding_border:     cfg.padding_border
+			size_border:        cfg.size_border
 			radius:             radius_large * 2
 			radius_border:      radius_large * 2
 			text_style:         cfg.text_style
@@ -246,13 +259,11 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_focus:        cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_select:       cfg.color_interior
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            padding(1, 1, 1, 2)
-			padding_border:     cfg.padding_border
+			size_border:        cfg.size_border
 			radius:             if cfg.radius != 0 { radius_small } else { 0 }
 			radius_border:      if radius_border != 0 { radius_small } else { 0 }
-			text_style:         text_style_icon_dark
+			text_style:         cfg.text_style
 			text_style_label:   cfg.text_style
 		}
 		tooltip_style:      TooltipStyle{
@@ -262,17 +273,23 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_click:        cfg.color_active
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
-			padding_border:     cfg.padding_border
+			size_border:        cfg.size_border
 			radius:             cfg.radius_small
 			radius_border:      cfg.radius_small
 			text_style:         cfg.text_style
 		}
 		tree_style:         TreeStyle{
-			text_style:      cfg.text_style
-			text_style_icon: TextStyle{
+			color:              color_transparent
+			color_hover:        cfg.color_hover
+			color_focus:        cfg.color_focus
+			color_border:       color_transparent
+			color_border_focus: cfg.color_border_focus
+			padding:            padding_none
+			size_border:        cfg.size_border
+			radius:             cfg.radius
+			text_style:         cfg.text_style
+			text_style_icon:    TextStyle{
 				...cfg.text_style
 				family: icon_font_name
 				size:   cfg.size_text_small
@@ -283,7 +300,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		padding_small:  cfg.padding_small
 		padding_medium: cfg.padding_medium
 		padding_large:  cfg.padding_large
-		padding_border: cfg.padding_border
+		size_border:    cfg.size_border
 
 		radius_small:  cfg.radius_small
 		radius_medium: cfg.radius_medium
@@ -433,4 +450,356 @@ pub fn (theme Theme) adjust_font_size(delta f32, min_size f32, max_size f32) !Th
 // theme returns the current [Theme](#Theme).
 pub fn theme() Theme {
 	return gui_theme
+}
+
+// -----------------------------------------------------------------------------
+// Theme modification methods
+// -----------------------------------------------------------------------------
+// These methods allow modifying an existing Theme without going through
+// ThemeCfg + theme_maker(). Each returns a new Theme with the specified
+// style replaced.
+
+// with_button_style returns a new Theme with the button style replaced.
+pub fn (t Theme) with_button_style(style ButtonStyle) Theme {
+	return Theme{
+		...t
+		button_style: style
+	}
+}
+
+// with_container_style returns a new Theme with the container style replaced.
+pub fn (t Theme) with_container_style(style ContainerStyle) Theme {
+	return Theme{
+		...t
+		container_style: style
+	}
+}
+
+// with_date_picker_style returns a new Theme with the date picker style replaced.
+pub fn (t Theme) with_date_picker_style(style DatePickerStyle) Theme {
+	return Theme{
+		...t
+		date_picker_style: style
+	}
+}
+
+// with_dialog_style returns a new Theme with the dialog style replaced.
+pub fn (t Theme) with_dialog_style(style DialogStyle) Theme {
+	return Theme{
+		...t
+		dialog_style: style
+	}
+}
+
+// with_expand_panel_style returns a new Theme with the expand panel style replaced.
+pub fn (t Theme) with_expand_panel_style(style ExpandPanelStyle) Theme {
+	return Theme{
+		...t
+		expand_panel_style: style
+	}
+}
+
+// with_input_style returns a new Theme with the input style replaced.
+pub fn (t Theme) with_input_style(style InputStyle) Theme {
+	return Theme{
+		...t
+		input_style: style
+	}
+}
+
+// with_list_box_style returns a new Theme with the list box style replaced.
+pub fn (t Theme) with_list_box_style(style ListBoxStyle) Theme {
+	return Theme{
+		...t
+		list_box_style: style
+	}
+}
+
+// with_menubar_style returns a new Theme with the menubar style replaced.
+pub fn (t Theme) with_menubar_style(style MenubarStyle) Theme {
+	return Theme{
+		...t
+		menubar_style: style
+	}
+}
+
+// with_progress_bar_style returns a new Theme with the progress bar style replaced.
+pub fn (t Theme) with_progress_bar_style(style ProgressBarStyle) Theme {
+	return Theme{
+		...t
+		progress_bar_style: style
+	}
+}
+
+// with_radio_style returns a new Theme with the radio style replaced.
+pub fn (t Theme) with_radio_style(style RadioStyle) Theme {
+	return Theme{
+		...t
+		radio_style: style
+	}
+}
+
+// with_range_slider_style returns a new Theme with the range slider style replaced.
+pub fn (t Theme) with_range_slider_style(style RangeSliderStyle) Theme {
+	return Theme{
+		...t
+		range_slider_style: style
+	}
+}
+
+// with_rectangle_style returns a new Theme with the rectangle style replaced.
+pub fn (t Theme) with_rectangle_style(style RectangleStyle) Theme {
+	return Theme{
+		...t
+		rectangle_style: style
+	}
+}
+
+// with_scrollbar_style returns a new Theme with the scrollbar style replaced.
+pub fn (t Theme) with_scrollbar_style(style ScrollbarStyle) Theme {
+	return Theme{
+		...t
+		scrollbar_style: style
+	}
+}
+
+// with_select_style returns a new Theme with the select style replaced.
+pub fn (t Theme) with_select_style(style SelectStyle) Theme {
+	return Theme{
+		...t
+		select_style: style
+	}
+}
+
+// with_switch_style returns a new Theme with the switch style replaced.
+pub fn (t Theme) with_switch_style(style SwitchStyle) Theme {
+	return Theme{
+		...t
+		switch_style: style
+	}
+}
+
+// with_text_style returns a new Theme with the text style replaced.
+pub fn (t Theme) with_text_style(style TextStyle) Theme {
+	return Theme{
+		...t
+		text_style: style
+	}
+}
+
+// with_toggle_style returns a new Theme with the toggle style replaced.
+pub fn (t Theme) with_toggle_style(style ToggleStyle) Theme {
+	return Theme{
+		...t
+		toggle_style: style
+	}
+}
+
+// with_tooltip_style returns a new Theme with the tooltip style replaced.
+pub fn (t Theme) with_tooltip_style(style TooltipStyle) Theme {
+	return Theme{
+		...t
+		tooltip_style: style
+	}
+}
+
+// with_tree_style returns a new Theme with the tree style replaced.
+pub fn (t Theme) with_tree_style(style TreeStyle) Theme {
+	return Theme{
+		...t
+		tree_style: style
+	}
+}
+
+// -----------------------------------------------------------------------------
+// Bulk color updates
+// -----------------------------------------------------------------------------
+
+// ColorOverrides specifies which semantic colors to update across all widget
+// styles. Use `none` for colors you don't want to change.
+pub struct ColorOverrides {
+pub:
+	color_background   ?Color
+	color_panel        ?Color
+	color_interior     ?Color
+	color_hover        ?Color
+	color_focus        ?Color
+	color_active       ?Color
+	color_border       ?Color
+	color_border_focus ?Color
+	color_select       ?Color
+}
+
+// with_colors returns a new Theme with the specified colors updated across
+// all widget styles. Only non-none colors are changed.
+//
+// Example:
+//   new_theme := theme_dark.with_colors(
+//       color_hover: rgb(100, 100, 120)
+//       color_select: rgb(80, 120, 200)
+//   )
+pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
+	// Resolve colors: use override if provided, otherwise keep existing
+	bg := overrides.color_background or { t.color_background }
+	panel := overrides.color_panel or { t.color_panel }
+	interior := overrides.color_interior or { t.color_interior }
+	hover := overrides.color_hover or { t.color_hover }
+	focus := overrides.color_focus or { t.color_focus }
+	active := overrides.color_active or { t.color_active }
+	border := overrides.color_border or { t.color_border }
+	border_focus := overrides.color_border_focus or { t.button_style.color_border_focus }
+	sel := overrides.color_select or { t.color_select }
+
+	return Theme{
+		...t
+		color_background: bg
+		color_panel:      panel
+		color_interior:   interior
+		color_hover:      hover
+		color_focus:      focus
+		color_active:     active
+		color_border:     border
+		color_select:     sel
+
+		button_style:       ButtonStyle{
+			...t.button_style
+			color:              interior
+			color_border:       border
+			color_border_focus: border_focus
+			color_click:        focus
+			color_focus:        active
+			color_hover:        hover
+		}
+		container_style:    ContainerStyle{
+			...t.container_style
+		}
+		date_picker_style:  DatePickerStyle{
+			...t.date_picker_style
+			color:              interior
+			color_hover:        hover
+			color_focus:        focus
+			color_click:        active
+			color_border:       border
+			color_border_focus: sel
+			color_select:       sel
+		}
+		dialog_style:       DialogStyle{
+			...t.dialog_style
+			color:              panel
+			color_border:       border
+			color_border_focus: border_focus
+		}
+		expand_panel_style: ExpandPanelStyle{
+			...t.expand_panel_style
+			color:              panel
+			color_hover:        hover
+			color_focus:        focus
+			color_border:       border
+			color_border_focus: border_focus
+		}
+		input_style:        InputStyle{
+			...t.input_style
+			color:              interior
+			color_hover:        hover
+			color_focus:        interior
+			color_click:        active
+			color_border:       border
+			color_border_focus: border_focus
+		}
+		list_box_style:     ListBoxStyle{
+			...t.list_box_style
+			color:              interior
+			color_hover:        hover
+			color_focus:        focus
+			color_border:       border
+			color_border_focus: border_focus
+			color_select:       sel
+		}
+		menubar_style:      MenubarStyle{
+			...t.menubar_style
+			color:              interior
+			color_hover:        hover
+			color_focus:        focus
+			color_border:       border
+			color_border_focus: border_focus
+			color_select:       sel
+		}
+		progress_bar_style: ProgressBarStyle{
+			...t.progress_bar_style
+			color:        interior
+			color_bar:    active
+			color_border: border
+		}
+		radio_style:        RadioStyle{
+			...t.radio_style
+			color:              panel
+			color_hover:        hover
+			color_focus:        sel
+			color_border:       border
+			color_border_focus: border_focus
+			color_select:       sel
+			color_unselect:     active
+		}
+		range_slider_style: RangeSliderStyle{
+			...t.range_slider_style
+			color:              interior
+			color_left:         active
+			color_thumb:        active
+			color_focus:        border_focus
+			color_hover:        hover
+			color_border:       border
+			color_border_focus: border_focus
+			color_click:        sel
+		}
+		rectangle_style:    RectangleStyle{
+			...t.rectangle_style
+			color_border: border
+		}
+		select_style:       SelectStyle{
+			...t.select_style
+			color:              interior
+			color_hover:        hover
+			color_focus:        focus
+			color_click:        active
+			color_border:       border
+			color_border_focus: border_focus
+			color_select:       sel
+		}
+		switch_style:       SwitchStyle{
+			...t.switch_style
+			color:              panel
+			color_click:        interior
+			color_focus:        interior
+			color_hover:        hover
+			color_border:       border
+			color_border_focus: border_focus
+			color_select:       sel
+			color_unselect:     active
+		}
+		toggle_style:       ToggleStyle{
+			...t.toggle_style
+			color:              panel
+			color_border:       border
+			color_border_focus: border_focus
+			color_click:        interior
+			color_focus:        interior
+			color_hover:        hover
+			color_select:       interior
+		}
+		tooltip_style:      TooltipStyle{
+			...t.tooltip_style
+			color:              interior
+			color_hover:        hover
+			color_focus:        focus
+			color_click:        active
+			color_border:       border
+			color_border_focus: border_focus
+		}
+		tree_style:         TreeStyle{
+			...t.tree_style
+			color_hover:        hover
+			color_focus:        focus
+			color_border_focus: border_focus
+		}
+	}
 }

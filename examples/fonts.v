@@ -153,7 +153,6 @@ fn font_panel(window &gui.Window) gui.View {
 
 	return gui.column(
 		id_scroll: 1
-		fill:      true
 		color:     gui.theme().color_panel
 		sizing:    gui.fill_fill
 		content:   rows

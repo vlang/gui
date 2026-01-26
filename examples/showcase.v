@@ -66,7 +66,7 @@ fn main() {
 	mut window := gui.window(
 		title:        'Gui Showcase'
 		state:        &ShowcaseApp{}
-		width:        800
+		width:        900
 		height:       600
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
@@ -97,7 +97,6 @@ fn main_view(mut window gui.Window) gui.View {
 fn side_bar(mut w gui.Window) gui.View {
 	mut app := w.state[ShowcaseApp]()
 	return gui.column(
-		fill:    true
 		color:   gui.theme().color_panel
 		sizing:  gui.fit_fill
 		content: [
@@ -163,7 +162,6 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 	}
 	return gui.row(
 		color:    color
-		fill:     app.selected_tab == tab_item
 		padding:  gui.theme().padding_small
 		content:  [gui.text(text: label, text_style: gui.theme().n2)]
 		on_click: fn [tab_item] (_ voidptr, mut e gui.Event, mut w gui.Window) {
@@ -172,7 +170,6 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 			w.update_view(main_view)
 		}
 		on_hover: fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			layout.shape.fill = true
 			layout.shape.color = gui.theme().color_hover
 			w.set_mouse_cursor_pointing_hand()
 		}
@@ -199,7 +196,6 @@ fn line() gui.View {
 			gui.row(
 				height:  1
 				sizing:  gui.fill_fit
-				fill:    true
 				padding: gui.padding_none
 				color:   gui.theme().color_active
 			),
@@ -213,6 +209,7 @@ fn toggle_theme(app &ShowcaseApp) gui.View {
 		text_unselect: gui.icon_sunny_o
 		text_style:    gui.theme().icon3
 		padding:       gui.padding_small
+		min_width:     16
 		select:        app.light_theme
 		on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
@@ -245,38 +242,42 @@ fn buttons(w &gui.Window) gui.View {
 				v_align: .bottom
 				content: [
 					gui.button(
-						id_focus:       100
-						padding_border: gui.padding_none
-						content:        [gui.text(text: 'No Border')]
-						on_click:       button_click
+						id_focus:    100
+						size_border: 0
+
+						content:  [gui.text(text: 'No Border')]
+						on_click: button_click
 					),
 					gui.button(
-						id_focus:       101
-						padding_border: gui.padding_one
-						content:        [gui.text(text: 'Thin Border')]
-						on_click:       button_click
+						id_focus:    101
+						size_border: 1
+
+						content:  [gui.text(text: 'Thin Border')]
+						on_click: button_click
 					),
 					gui.button(
-						id_focus:       102
-						padding_border: gui.padding_two
-						content:        [gui.text(text: 'Thicker Border')]
-						on_click:       button_click
+						id_focus:    102
+						size_border: 2
+
+						content:  [gui.text(text: 'Thicker Border')]
+						on_click: button_click
 					),
 					gui.button(
-						id_focus:       103
-						padding_border: gui.padding_three
-						fill_border:    false
-						content:        [gui.text(text: 'Detached Border')]
-						on_click:       button_click
+						id_focus:    103
+						size_border: 3
+
+						content:  [gui.text(text: 'Detached Border')]
+						on_click: button_click
 					),
 					gui.button(
-						id_focus:       104
-						padding_border: gui.padding_two
-						on_click:       fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+						id_focus:    104
+						size_border: 2
+
+						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.button_clicks += 1
 						}
-						content:        [
+						content:  [
 							gui.column(
 								spacing: gui.spacing_small
 								padding: gui.padding_none
@@ -323,41 +324,45 @@ fn inputs(w &gui.Window) gui.View {
 				sizing:  gui.fill_fit
 				content: [
 					gui.input(
-						id_focus:        200
-						width:           150
-						sizing:          gui.fixed_fit
-						text:            app.input_text
-						padding_border:  gui.padding_none
+						id_focus:    200
+						width:       150
+						sizing:      gui.fixed_fit
+						text:        app.input_text
+						size_border: 0
+
 						placeholder:     'Plain...'
 						mode:            .single_line
 						on_text_changed: text_changed
 					),
 					gui.input(
-						id_focus:        201
-						width:           150
-						sizing:          gui.fixed_fit
-						text:            app.input_text
-						padding_border:  gui.padding_one
+						id_focus:    201
+						width:       150
+						sizing:      gui.fixed_fit
+						text:        app.input_text
+						size_border: 1
+
 						placeholder:     'Thin Border...'
 						mode:            .single_line
 						on_text_changed: text_changed
 					),
 					gui.input(
-						id_focus:        202
-						width:           150
-						sizing:          gui.fixed_fit
-						text:            app.input_text
-						padding_border:  gui.padding_two
+						id_focus:    202
+						width:       150
+						sizing:      gui.fixed_fit
+						text:        app.input_text
+						size_border: 2
+
 						placeholder:     'Thicker Border...'
 						mode:            .single_line
 						on_text_changed: text_changed
 					),
 					gui.input(
-						id_focus:        203
-						width:           150
-						sizing:          gui.fixed_fit
-						text:            app.input_text
-						padding_border:  gui.padding_one
+						id_focus:    203
+						width:       150
+						sizing:      gui.fixed_fit
+						text:        app.input_text
+						size_border: 1
+
 						placeholder:     'Password...'
 						is_password:     true
 						mode:            .single_line
@@ -371,11 +376,12 @@ fn inputs(w &gui.Window) gui.View {
 				content: [
 					gui.text(text: 'Multiline Text Input:'),
 					gui.input(
-						id_focus:        204
-						width:           300
-						sizing:          gui.fixed_fit
-						text:            app.input_multiline
-						padding_border:  gui.padding_one
+						id_focus:    204
+						width:       300
+						sizing:      gui.fixed_fit
+						text:        app.input_multiline
+						size_border: 1
+
 						placeholder:     'Multline...'
 						mode:            .multiline
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
@@ -413,6 +419,7 @@ fn toggles(w &gui.Window) gui.View {
 		content: [
 			view_title('Toggle, Switch, and Radio Button Group'),
 			gui.row(
+				v_align: .middle
 				content: [
 					gui.toggle(
 						label:    'toggle (a.k.a. checkbox)'
@@ -423,10 +430,10 @@ fn toggles(w &gui.Window) gui.View {
 						}
 					),
 					gui.toggle(
-						label:       'toggle with custom text'
+						label:       'toggle with icon'
 						select:      app.select_toggle
-						text_select: 'X'
-						text_style:  gui.theme().text_style
+						text_select: gui.icon_github_alt
+						text_style:  gui.theme().icon1
 						on_click:    fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
 							app.select_toggle = !app.select_toggle
@@ -799,7 +806,6 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 						sizing:          gui.fill_fixed
 						percent:         percent
 						text_background: tbg1
-						text_fill:       true
 					),
 					gui.progress_bar(
 						sizing:  gui.fill_fixed
@@ -830,7 +836,6 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 						width:           2
 						percent:         percent
 						text_background: tbg2
-						text_fill:       false
 					),
 					gui.progress_bar(
 						vertical: true
@@ -1790,6 +1795,8 @@ fn table_samples(mut w gui.Window) gui.View {
 		content: [
 			gui.text(text: 'Declarative Layout', text_style: gui.theme().b2),
 			w.table(
+				size_border:     1.0
+				color_border:    gui.gray
 				text_style_head: gui.theme().b3
 				data:            [
 					gui.tr([gui.th('First'), gui.th('Last'), gui.th('Email')]),
@@ -1813,6 +1820,12 @@ fn table_samples(mut w gui.Window) gui.View {
 
 fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) gui.View {
 	mut table_cfg := gui.table_cfg_from_data(table_data.sorted)
+	table_cfg = gui.TableCfg{
+		...table_cfg
+		color_border: gui.gray
+		size_border:  1.0
+	}
+
 	// Replace with first row with clickable column headers
 	mut tds := []gui.TableCellCfg{}
 	for idx, cell in table_cfg.data[0].cells {

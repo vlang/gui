@@ -49,7 +49,7 @@ fn main() {
 		title:   'Date Picker Options Demo'
 		state:   &DatePickerApp{}
 		width:   1200
-		height:  800
+		height:  950
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -223,11 +223,11 @@ fn options_group(app DatePickerApp) gui.View {
 
 fn toggles_group(app DatePickerApp) gui.View {
 	return gui.column(
-		color:     gui.theme().color_active
-		min_width: 200
-		padding:   gui.theme().padding_large
-		title:     ' Options  '
-		content:   [
+		color_border: gui.theme().color_border
+		min_width:    200
+		padding:      gui.theme().padding_large
+		title:        ' Options  '
+		content:      [
 			gui.toggle(
 				label:    'Monday first day of week'
 				select:   app.monday_first
@@ -297,11 +297,11 @@ fn weekdays_len_group(app DatePickerApp) gui.View {
 
 fn allowed_weekdays_group(app DatePickerApp) gui.View {
 	return gui.column(
-		color:     gui.theme().color_active
-		min_width: 200
-		padding:   gui.theme().padding_large
-		title:     ' Allowed weekdays  '
-		content:   [
+		color_border: gui.theme().color_border
+		min_width:    200
+		padding:      gui.theme().padding_large
+		title:        ' Allowed weekdays  '
+		content:      [
 			gui.toggle(
 				id:       'mon'
 				label:    'Monday'
@@ -365,11 +365,11 @@ fn click_allow_weekday_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Wi
 
 fn months_group(app DatePickerApp) gui.View {
 	return gui.column(
-		title:     ' Allowed months  '
-		color:     gui.theme().color_active
-		min_width: 200
-		padding:   gui.padding_large
-		content:   [
+		title:        ' Allowed months  '
+		color_border: gui.theme().color_border
+		min_width:    200
+		padding:      gui.padding_large
+		content:      [
 			gui.toggle(
 				id:       'jan'
 				label:    'January'
@@ -533,11 +533,11 @@ fn years_dates_group(app DatePickerApp) gui.View {
 
 fn allowed_years_group(app DatePickerApp) gui.View {
 	return gui.column(
-		title:     ' Allowed years  '
-		color:     gui.theme().color_active
-		min_width: 200
-		padding:   gui.padding_large
-		content:   [
+		title:        ' Allowed years  '
+		color_border: gui.theme().color_border
+		min_width:    200
+		padding:      gui.padding_large
+		content:      [
 			gui.text(text: 'Examples'),
 			gui.toggle(
 				id:       'year_now'
@@ -574,11 +574,11 @@ fn click_allow_years_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Wind
 
 fn allowed_dates_group(app DatePickerApp) gui.View {
 	return gui.column(
-		title:     ' Allowed dates  '
-		color:     gui.theme().color_active
-		min_width: 200
-		padding:   gui.padding_large
-		content:   [
+		title:        ' Allowed dates  '
+		color_border: gui.theme().color_border
+		min_width:    200
+		padding:      gui.padding_large
+		content:      [
 			gui.text(text: 'Examples'),
 			gui.toggle(
 				id:       'tdy'

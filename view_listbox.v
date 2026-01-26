@@ -14,7 +14,6 @@ pub:
 	color_border     Color     = gui_theme.list_box_style.color_border
 	color_select     Color     = gui_theme.list_box_style.color_select
 	padding          Padding   = gui_theme.list_box_style.padding
-	padding_border   Padding   = gui_theme.list_box_style.padding_border
 	selected         []string // list of selected values. Not names
 	data             []ListBoxOption
 	on_select        fn (value []string, mut e Event, mut w Window) = unsafe { nil }
@@ -28,8 +27,7 @@ pub:
 	radius_border    f32 = gui_theme.list_box_style.radius_border
 	id_scroll        u32
 	multiple         bool // allow multiple selections
-	fill             bool = gui_theme.list_box_style.fill
-	fill_border      bool = gui_theme.list_box_style.fill_border
+	size_border      f32 = gui_theme.list_box_style.size_border
 }
 
 // ListBoxOption is the data for a row in a [list_box](#list_box).
@@ -91,7 +89,6 @@ pub fn list_box(cfg ListBoxCfg) View {
 		list << row(
 			name:     'list_box option'
 			color:    color
-			fill:     true
 			padding:  padding_two_five
 			sizing:   fill_fit
 			content:  content
@@ -112,7 +109,6 @@ pub fn list_box(cfg ListBoxCfg) View {
 				if on_select != unsafe { nil } && !is_subheader {
 					w.set_mouse_cursor_pointing_hand()
 					if layout.shape.color == color_transparent {
-						layout.shape.fill = true
 						layout.shape.color = color_hover
 					}
 				}
@@ -121,29 +117,22 @@ pub fn list_box(cfg ListBoxCfg) View {
 	}
 
 	return column(
-		name:       'list_box border'
-		width:      cfg.max_width
-		height:     cfg.height
-		min_width:  cfg.min_width
-		max_width:  cfg.max_width
-		min_height: cfg.min_height
-		max_height: cfg.max_height
-		color:      cfg.color_border
-		fill:       cfg.fill_border
-		padding:    cfg.padding_border
-		sizing:     cfg.sizing
-		content:    [
-			column(
-				name:      'list_box interior'
-				id_scroll: cfg.id_scroll
-				color:     cfg.color
-				fill:      cfg.fill
-				padding:   cfg.padding
-				sizing:    cfg.sizing
-				spacing:   0
-				content:   list
-			),
-		]
+		name:         'list_box'
+		id_scroll:    cfg.id_scroll
+		width:        cfg.max_width
+		height:       cfg.height
+		min_width:    cfg.min_width
+		max_width:    cfg.max_width
+		min_height:   cfg.min_height
+		max_height:   cfg.max_height
+		color:        cfg.color
+		color_border: cfg.color_border
+		size_border:  cfg.size_border
+		radius:       cfg.radius
+		padding:      cfg.padding
+		sizing:       cfg.sizing
+		spacing:      0
+		content:      list
 	)
 }
 

@@ -31,15 +31,16 @@ fn test_layout_widths_ltr() {
 	// Root is the container with axis LTR
 	mut root := Layout{
 		shape:    &Shape{
-			axis:    .left_to_right
-			padding: Padding{
+			axis:        .left_to_right
+			padding:     Padding{
 				left:   10
 				right:  10
 				top:    0
 				bottom: 0
 			}
-			spacing: 5
-			width:   0 // Will be calculated
+			spacing:     5
+			width:       0 // Will be calculated
+			size_border: 0
 		}
 		children: [
 			Layout{
@@ -70,15 +71,16 @@ fn test_layout_widths_ttb() {
 	// Root is the container with axis TTB
 	mut root := Layout{
 		shape:    &Shape{
-			axis:    .top_to_bottom
-			padding: Padding{
+			axis:        .top_to_bottom
+			padding:     Padding{
 				left:   5
 				right:  5
 				top:    0
 				bottom: 0
 			}
-			spacing: 0
-			width:   0 // Will be calculated
+			spacing:     0
+			width:       0 // Will be calculated
+			size_border: 0
 		}
 		children: [
 			Layout{
@@ -118,12 +120,13 @@ fn test_layout_fill_widths_ltr_grow() {
 	// C2 and C3 should each get 70 / 2 = 30
 	mut root := Layout{
 		shape:    &Shape{
-			axis:       .left_to_right
-			shape_type: .rectangle
-			sizing:     fixed_fixed // Fixed size of 100
-			width:      100
-			height:     100
-			spacing:    5
+			axis:        .left_to_right
+			shape_type:  .rectangle
+			sizing:      fixed_fixed // Fixed size of 100
+			width:       100
+			height:      100
+			spacing:     5
+			size_border: 0
 		}
 		children: [
 			Layout{
@@ -171,11 +174,12 @@ fn test_layout_fill_heights_ttb_grow() {
 	// Remaining fill space: 100 - 25 = 75. Divided among 2 fill children.
 	mut root := Layout{
 		shape:    &Shape{
-			axis:    .top_to_bottom
-			sizing:  fixed_fixed // Fixed size of 100
-			width:   100
-			height:  100
-			spacing: 5
+			axis:        .top_to_bottom
+			sizing:      fixed_fixed // Fixed size of 100
+			width:       100
+			height:      100
+			spacing:     5
+			size_border: 0
 		}
 		children: [
 			Layout{
@@ -228,20 +232,21 @@ fn test_layout_positions_center() {
 
 	mut root := Layout{
 		shape:    &Shape{
-			x:       0
-			y:       0
-			width:   100
-			height:  100
-			axis:    .left_to_right
-			h_align: .center
-			v_align: .middle
-			padding: Padding{
+			x:           0
+			y:           0
+			width:       100
+			height:      100
+			axis:        .left_to_right
+			h_align:     .center
+			v_align:     .middle
+			padding:     Padding{
 				left:   10
 				right:  10
 				top:    10
 				bottom: 10
 			}
-			spacing: 5 // only one child so spacing is not used in calcs
+			size_border: 0
+			spacing:     5 // only one child so spacing is not used in calcs
 		}
 		children: [
 			Layout{

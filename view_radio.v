@@ -15,11 +15,12 @@ pub:
 	padding        Padding   = gui_theme.radio_style.padding
 	text_style     TextStyle = gui_theme.radio_style.text_style
 	on_click       fn (&Layout, mut Event, mut Window) @[required]
-	size           f32 = gui_theme.n3.size
+	size           f32 = gui_theme.radio_style.size
 	id_focus       u32
 	disabled       bool
 	select         bool
 	invisible      bool
+	size_border    f32 = gui_theme.radio_style.size_border
 }
 
 // radio creates a radio button UI component that allows users to select a
@@ -31,28 +32,29 @@ pub:
 // styling.
 pub fn radio(cfg RadioCfg) View {
 	mut content := []View{cap: 2}
+	bdr_sz := if cfg.size_border == 0 {
+		gui_theme.radio_style.size_border
+	} else {
+		cfg.size_border
+	}
+
+	// Capture values needed for callbacks by copy to avoid dangling reference to cfg
+	color_focus := cfg.color_focus
+	color_hover := cfg.color_hover
+
 	content << circle(
-		name:      'radio border'
-		width:     cfg.size
-		height:    cfg.size
-		color:     cfg.color_border
-		padding:   cfg.padding
-		fill:      false
-		disabled:  cfg.disabled
-		invisible: cfg.invisible
-		sizing:    fixed_fixed
-		h_align:   .center
-		v_align:   .middle
-		content:   [
-			circle(
-				name:    'radio interior'
-				fill:    true
-				color:   if cfg.select { cfg.color_select } else { cfg.color_unselect }
-				padding: padding_none
-				width:   cfg.size - cfg.padding.width()
-				height:  cfg.size - cfg.padding.height()
-			),
-		]
+		name:         'radio circle'
+		width:        cfg.size
+		height:       cfg.size
+		color:        if cfg.select { cfg.color_select } else { cfg.color_unselect }
+		color_border: cfg.color_border
+		size_border:  bdr_sz
+		radius:       cfg.size / 2 // Circle radius logic is automatic in render_circle but helpful for layout?
+		disabled:     cfg.disabled
+		invisible:    cfg.invisible
+		sizing:       fixed_fixed
+		h_align:      .center
+		v_align:      .middle
 	)
 
 	if cfg.label.len > 0 {
@@ -69,28 +71,24 @@ pub fn radio(cfg RadioCfg) View {
 		name:         'radio'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
-		padding:      padding_none
+		padding:      cfg.padding
+		v_align:      .middle
 		on_click:     left_click_only(cfg.on_click)
 		on_char:      spacebar_to_click(cfg.on_click)
-		amend_layout: cfg.amend_layout
-		on_hover:     cfg.on_hover
+		amend_layout: fn [color_focus] (mut layout Layout, mut w Window) {
+			if layout.shape.disabled || layout.shape.on_click == unsafe { nil } {
+				return
+			}
+			if w.is_focus(layout.shape.id_focus) {
+				layout.shape.color_border = color_focus
+			}
+		}
+		on_hover:     fn [color_hover] (mut layout Layout, mut _ Event, mut w Window) {
+			w.set_mouse_cursor_pointing_hand()
+			if !w.is_focus(layout.shape.id_focus) {
+				layout.children[0].shape.color = color_hover
+			}
+		}
 		content:      content
 	)
-}
-
-fn (cfg &RadioCfg) amend_layout(mut layout Layout, mut w Window) {
-	if layout.shape.disabled || cfg.on_click == unsafe { nil } {
-		return
-	}
-	if w.is_focus(layout.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_focus
-	}
-}
-
-fn (cfg &RadioCfg) on_hover(mut layout Layout, mut _ Event, mut w Window) {
-	w.set_mouse_cursor_pointing_hand()
-	if !w.is_focus(layout.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_hover
-		layout.children[0].shape.fill = true
-	}
 }

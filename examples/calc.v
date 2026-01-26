@@ -48,12 +48,12 @@ fn main_view(mut w gui.Window) gui.View {
 	mut panel := []gui.View{}
 
 	panel << gui.row(
-		color:   gui.black
-		sizing:  gui.fill_fit
-		h_align: .end
-		padding: gui.padding_small
-		radius:  0
-		content: [
+		color_border: gui.indigo
+		sizing:       gui.fill_fit
+		h_align:      .end
+		padding:      gui.padding_small
+		radius:       0
+		content:      [
 			gui.text(
 				text:       app.text
 				text_style: gui.TextStyle{
@@ -82,7 +82,6 @@ fn main_view(mut w gui.Window) gui.View {
 		v_align: .middle
 		content: [
 			gui.column(
-				fill:    true
 				spacing: bpadding
 				color:   gui.rgb(195, 105, 0)
 				padding: gui.padding_medium
@@ -97,16 +96,17 @@ fn get_row(ops []string) []gui.View {
 
 	for op in ops {
 		content << gui.button(
-			id:             op
-			content:        [gui.text(text: op)]
-			width:          bsize
-			height:         bsize
-			sizing:         gui.fixed_fixed
-			h_align:        .center
-			v_align:        .middle
-			padding_border: gui.padding_none
-			padding:        gui.padding_none
-			on_click:       btn_click
+			id:          op
+			content:     [gui.text(text: op)]
+			width:       bsize
+			height:      bsize
+			sizing:      gui.fixed_fixed
+			h_align:     .center
+			v_align:     .middle
+			size_border: 0
+
+			padding:  gui.padding_none
+			on_click: btn_click
 		)
 	}
 	return content

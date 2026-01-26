@@ -10,27 +10,26 @@ pub:
 	placeholder        string
 	select             []string // Text of select item
 	options            []string
-	color              Color     = gui_theme.select_style.color
-	color_border       Color     = gui_theme.select_style.color_border
-	color_border_focus Color     = gui_theme.select_style.color_border_focus
-	color_focus        Color     = gui_theme.select_style.color_focus
-	color_select       Color     = gui_theme.select_style.color_select
-	padding            Padding   = gui_theme.select_style.padding
-	padding_border     Padding   = gui_theme.select_style.padding_border
-	text_style         TextStyle = gui_theme.select_style.text_style
-	subheading_style   TextStyle = gui_theme.select_style.subheading_style
-	placeholder_style  TextStyle = gui_theme.select_style.placeholder_style
-	on_select          fn ([]string, mut Event, mut Window) @[required]
-	min_width          f32 = gui_theme.select_style.min_width
-	max_width          f32 = gui_theme.select_style.max_width
-	radius             f32 = gui_theme.select_style.radius
-	radius_border      f32 = gui_theme.select_style.radius_border
-	id_focus           u32
-	select_multiple    bool
-	no_wrap            bool
-	fill               bool = gui_theme.select_style.fill
-	fill_border        bool = gui_theme.select_style.fill_border
-	sizing             Sizing
+	color              Color   = gui_theme.select_style.color
+	color_border       Color   = gui_theme.select_style.color_border
+	color_border_focus Color   = gui_theme.select_style.color_border_focus
+	color_focus        Color   = gui_theme.select_style.color_focus
+	color_select       Color   = gui_theme.select_style.color_select
+	padding            Padding = gui_theme.select_style.padding
+	size_border        f32     = gui_theme.select_style.size_border
+
+	text_style        TextStyle = gui_theme.select_style.text_style
+	subheading_style  TextStyle = gui_theme.select_style.subheading_style
+	placeholder_style TextStyle = gui_theme.select_style.placeholder_style
+	on_select         fn ([]string, mut Event, mut Window) @[required]
+	min_width         f32 = gui_theme.select_style.min_width
+	max_width         f32 = gui_theme.select_style.max_width
+	radius            f32 = gui_theme.select_style.radius
+	radius_border     f32 = gui_theme.select_style.radius_border
+	id_focus          u32
+	select_multiple   bool
+	no_wrap           bool
+	sizing            Sizing
 }
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
@@ -59,92 +58,107 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	}
 
 	id := cfg.id
-	mut content := []View{cap: 2}
-	content << row( // interior
-		name:     'select interior'
-		fill:     cfg.fill
-		color:    cfg.color
-		padding:  cfg.padding
-		sizing:   fill_fit
-		content:  [
-			text(
-				text:       txt
-				text_style: txt_style
-				mode:       wrap_mode
-			),
-			row(
-				name:    'select spacer'
-				sizing:  if wrap_mode == .single_line { fill_fill } else { fit_fill }
-				padding: padding_none
-			),
-			text(
-				text:       if is_open { '▲' } else { '▼' }
-				text_style: cfg.text_style
-			),
-		]
+
+	mut content := []View{cap: 4}
+
+	content << text(
+		text:       txt
+		text_style: txt_style
+		mode:       wrap_mode
+	)
+	content << row(
+		name:    'select spacer'
+		sizing:  if wrap_mode == .single_line { fill_fill } else { fit_fill }
+		padding: padding_none
+	)
+	content << text(
+		text:       if is_open { '▲' } else { '▼' }
+		text_style: cfg.text_style
+	)
+
+	if is_open {
+		content << column( // dropdown
+			name: 'select dropdown'
+			id:   cfg.id + 'dropdown'
+			// Border props
+			size_border:  cfg.size_border
+			radius:       cfg.radius
+			color_border: cfg.color_border
+			// Background props
+			color: cfg.color
+
+			// Layout props
+			min_height: 50
+			max_height: 200
+			min_width:  cfg.min_width
+			max_width:  cfg.max_width
+
+			// Float props
+			float:          true
+			float_anchor:   .bottom_left
+			float_tie_off:  .top_left
+			float_offset_y: -cfg.size_border
+
+			// List/Scroll Props merged
+			id_scroll: fnv1a.sum32_string(cfg.id + 'dropdown')
+			padding:   padding(pad_small, pad_medium, pad_small, pad_small)
+			spacing:   0
+			content:   options
+		)
+	}
+
+	// Capture values needed for callbacks by copy to avoid dangling reference to cfg
+	color_focus := cfg.color_focus
+	color_border_focus := cfg.color_border_focus
+
+	return row(
+		name:     'select'
+		id:       cfg.id
+		id_focus: cfg.id_focus
+		clip:     clip
+
+		// Container props
+		color:        cfg.color
+		color_border: cfg.color_border
+		size_border:  cfg.size_border
+		radius:       cfg.radius
+		padding:      cfg.padding
+		sizing:       cfg.sizing
+		min_width:    cfg.min_width
+		max_width:    cfg.max_width
+
+		// Behavior
+		amend_layout: fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
+			if layout.shape.disabled {
+				return
+			}
+			if w.is_focus(layout.shape.id_focus) {
+				layout.shape.color = color_focus
+				layout.shape.color_border = color_border_focus
+			}
+		}
+		on_keydown:   make_select_on_keydown(cfg)
+
+		// Event Handling (moved from inner)
 		on_click: fn [id, is_open] (_ &Layout, mut e Event, mut w Window) {
 			w.view_state.select_state.clear() // close all select drop-downs.
 			w.view_state.select_state[id] = !is_open
 			e.is_handled = true
 		}
-	)
-	if is_open {
-		content << column( // dropdown border
-			name:           'select dropdown border'
-			id:             cfg.id + 'dropdown'
-			min_height:     50
-			max_height:     200
-			min_width:      cfg.min_width
-			max_width:      cfg.max_width
-			float:          true
-			float_anchor:   .bottom_left
-			float_tie_off:  .top_left
-			float_offset_y: -cfg.padding_border.top
-			fill:           cfg.fill
-			padding:        cfg.padding_border
-			radius:         cfg.radius
-			color:          cfg.color_border
-			content:        [
-				column(
-					name:    'select dropdown scroll container'
-					padding: padding_none
-					sizing:  fill_fill
-					content: [
-						column( // drop down list
-							name:      'select dropdown list'
-							id:        cfg.id + 'dropdown_list'
-							id_scroll: fnv1a.sum32_string(cfg.id + 'dropdown')
-							fill:      cfg.fill
-							sizing:    fill_fill
-							color:     cfg.color
-							padding:   padding(pad_small, pad_medium, pad_small, pad_small)
-							spacing:   0
-							content:   options
-						),
-					]
-				),
-			]
-		)
-	}
-	return row( // border
-		name:         'select border'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		clip:         clip
-		fill:         true
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
-		padding:      cfg.padding_border
-		radius:       cfg.radius
-		color:        cfg.color_border
-		sizing:       cfg.sizing
-		amend_layout: cfg.amend_layout
-		content:      content
-		on_keydown:   cfg.select_on_keydown
+
+		content: content
 	)
 }
 
-fn (cfg &SelectCfg) select_on_keydown(mut _ Layout, mut e Event, mut w Window) {
+// make_select_on_keydown creates an on_keydown handler that captures the SelectCfg
+// by value to avoid dangling reference issues.
+fn make_select_on_keydown(cfg SelectCfg) fn (mut Layout, mut Event, mut Window) {
+	return fn [cfg] (mut _ Layout, mut e Event, mut w Window) {
+		cfg.select_on_keydown(mut e, mut w)
+	}
+}
+
+fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 	if cfg.options.len == 0 {
 		return
 	}
@@ -263,7 +277,6 @@ fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_sc
 	color_select := cfg.color_select
 
 	return row(
-		fill:     true
 		color:    if highlighted { cfg.color_select } else { color_transparent }
 		padding:  padding(0, pad_small, 0, 1)
 		sizing:   fill_fit
@@ -373,7 +386,7 @@ fn (cfg &SelectCfg) amend_layout(mut layout Layout, mut w Window) {
 		return
 	}
 	if w.is_focus(layout.shape.id_focus) {
-		layout.children[0].shape.color = cfg.color_focus
-		layout.shape.color = cfg.color_border_focus
+		layout.shape.color = cfg.color_focus
+		layout.shape.color_border = cfg.color_border_focus
 	}
 }

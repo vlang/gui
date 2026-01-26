@@ -60,6 +60,8 @@ fn tables(mut window gui.Window) []gui.View {
 	return [
 		gui.text(text: 'Declarative Layout', text_style: gui.theme().b2),
 		window.table(
+			color_border:    gui.gray
+			size_border:     1.0
 			text_style_head: gui.theme().b3
 			data:            [
 				gui.tr([gui.th('First'), gui.th('Last'), gui.th('Email')]),
@@ -78,6 +80,11 @@ fn tables(mut window gui.Window) []gui.View {
 
 fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) gui.View {
 	mut table_cfg := gui.table_cfg_from_data(table_data.sorted)
+	table_cfg = gui.TableCfg{
+		...table_cfg
+		color_border: gui.gray
+		size_border:  1.0
+	}
 	// Replace with first row with clickable column headers
 	mut tds := []gui.TableCellCfg{}
 	for idx, cell in table_cfg.data[0].cells {

@@ -115,7 +115,6 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 		min_width:    min_width
 		max_width:    cfg.max_width
 		color:        cfg.color
-		fill:         true
 		padding:      padding_small
 		spacing:      4
 		h_align:      .center

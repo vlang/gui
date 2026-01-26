@@ -29,11 +29,13 @@ import encoding.csv
 pub struct TableCfg {
 pub:
 	id                   string
-	color_border         Color     = gui_theme.color_border
-	cell_padding         Padding   = padding_two_five
-	text_style           TextStyle = gui_theme.n3
-	text_style_head      TextStyle = gui_theme.b3
-	column_width_default f32       = 50
+	color_border         Color           = gui_theme.color_border
+	cell_padding         Padding         = padding_two_five
+	text_style           TextStyle       = gui_theme.n3
+	text_style_head      TextStyle       = gui_theme.b3
+	align_head           HorizontalAlign = HorizontalAlign.center
+	column_width_default f32             = 50
+	size_border          f32
 pub mut:
 	data []TableRowCfg
 }
@@ -73,55 +75,49 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 			}
 
 			h_align := match cell.head_cell {
-				true { HorizontalAlign.center }
+				true { cfg.align_head }
 				else { HorizontalAlign.start }
 			}
 
 			cells << column(
-				name:     'table cell border'
-				color:    cfg.color_border
-				padding:  cfg.cell_padding
-				radius:   0
-				spacing:  0
-				sizing:   fixed_fill
-				width:    column_width + cfg.cell_padding.width()
-				on_click: cell.on_click
-				content:  [
-					column(
-						name:     'table cell interior'
-						fill:     true
-						h_align:  h_align
-						color:    color_transparent
-						padding:  padding_none
-						sizing:   fill_fill
-						content:  [
-							text(text: cell.value, text_style: cell_text_style),
-						]
-						on_hover: fn [cell] (mut layout Layout, mut e Event, mut w Window) {
-							if cell.on_click != unsafe { nil } {
-								w.set_mouse_cursor_pointing_hand()
-								layout.shape.color = gui_theme.color_hover
-							}
-						}
-					),
+				name:         'table cell'
+				color:        color_transparent
+				color_border: cfg.color_border
+				size_border:  cfg.size_border
+				padding:      cfg.cell_padding
+				radius:       0
+				spacing:      0
+				h_align:      h_align
+				sizing:       fixed_fill
+				width:        column_width + cfg.cell_padding.width()
+				on_click:     cell.on_click
+				content:      [
+					text(text: cell.value, text_style: cell_text_style),
 				]
+				on_hover:     fn [cell] (mut layout Layout, mut e Event, mut w Window) {
+					if cell.on_click != unsafe { nil } {
+						w.set_mouse_cursor_pointing_hand()
+						layout.shape.color = gui_theme.color_hover
+					}
+				}
 			)
 		}
 		rows << row(
-			name:    'table row'
-			spacing: 0
-			radius:  0
-			padding: padding_none
-			content: cells
+			name:        'table row'
+			spacing:     -cfg.size_border
+			radius:      0
+			padding:     padding_none
+			size_border: 0
+			content:     cells
 		)
 	}
 	return column(
 		name:    'table'
 		id:      cfg.id
-		color:   cfg.color_border
+		color:   color_transparent
 		padding: padding_none
 		radius:  0
-		spacing: 0
+		spacing: -cfg.size_border
 		content: rows
 	)
 }

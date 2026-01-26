@@ -46,6 +46,7 @@ pub:
 	color_thumb      Color = gui_theme.scrollbar_style.color_thumb
 	color_background Color = gui_theme.scrollbar_style.color_background
 	size             f32   = gui_theme.scrollbar_style.size
+	min_thumb_size   f32   = gui_theme.scrollbar_style.min_thumb_size
 	radius           f32   = gui_theme.scrollbar_style.radius
 	radius_thumb     f32   = gui_theme.scrollbar_style.radius_thumb
 	gap_edge         f32   = gui_theme.scrollbar_style.gap_edge
@@ -53,8 +54,6 @@ pub:
 	id_track         u32
 	overflow         ScrollbarOverflow
 	orientation      ScrollbarOrientation
-	fill_thumb       bool = gui_theme.scrollbar_style.fill_thumb
-	fill_background  bool = gui_theme.scrollbar_style.fill_background
 }
 
 const scrollbar_vertical_name = 'scrollbar vertical'
@@ -68,14 +67,13 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 		row(
 			name:         scrollbar_horizontal_name
 			id:           cfg.id
-			fill:         cfg.fill_background
 			color:        cfg.color_background
 			over_draw:    true
 			spacing:      0
 			padding:      padding_none
-			amend_layout: cfg.amend_layout
-			on_hover:     cfg.on_hover
-			on_click:     cfg.gutter_click
+			amend_layout: make_scrollbar_amend_layout(cfg)
+			on_hover:     make_scrollbar_on_hover(cfg)
+			on_click:     make_scrollbar_gutter_click(cfg)
 			content:      [
 				thumb(cfg, '__thumb__${cfg.id_track}'),
 			]
@@ -84,14 +82,13 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 		column(
 			name:         scrollbar_vertical_name
 			id:           cfg.id
-			fill:         cfg.fill_background
 			color:        cfg.color_background
 			over_draw:    true
 			spacing:      0
 			padding:      padding_none
-			amend_layout: cfg.amend_layout
-			on_hover:     cfg.on_hover
-			on_click:     cfg.gutter_click
+			amend_layout: make_scrollbar_amend_layout(cfg)
+			on_hover:     make_scrollbar_on_hover(cfg)
+			on_click:     make_scrollbar_gutter_click(cfg)
 			content:      [
 				thumb(cfg, '__thumb__${cfg.id_track}'),
 			]
@@ -99,28 +96,85 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 	}
 }
 
-fn thumb(cfg &ScrollbarCfg, id string) View {
+fn thumb(cfg ScrollbarCfg, id string) View {
 	return column(
 		name:     'scrollbar thumb'
 		id:       id
 		color:    cfg.color_thumb
-		fill:     cfg.fill_thumb
 		radius:   cfg.radius_thumb
 		padding:  padding_none
 		spacing:  0
-		on_click: cfg.on_mouse_down
+		on_click: make_scrollbar_on_mouse_down(cfg)
 	)
+}
+
+// Wrapper functions to capture ScrollbarCfg by value to avoid dangling reference issues.
+fn make_scrollbar_amend_layout(cfg ScrollbarCfg) fn (mut Layout, mut Window) {
+	return fn [cfg] (mut layout Layout, mut w Window) {
+		cfg.amend_layout(mut layout, mut w)
+	}
+}
+
+fn make_scrollbar_on_hover(cfg ScrollbarCfg) fn (mut Layout, mut Event, mut Window) {
+	return fn [cfg] (mut layout Layout, mut e Event, mut w Window) {
+		cfg.on_hover(mut layout, mut e, mut w)
+	}
+}
+
+fn make_scrollbar_gutter_click(cfg ScrollbarCfg) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
+		cfg.gutter_click(layout, mut e, mut w)
+	}
+}
+
+fn make_scrollbar_on_mouse_down(cfg ScrollbarCfg) fn (voidptr, mut Event, mut Window) {
+	return fn [cfg] (ptr voidptr, mut e Event, mut w Window) {
+		cfg.on_mouse_down(ptr, mut e, mut w)
+	}
 }
 
 // on_mouse_down handles the mouse button press event on the scrollbar thumb.
 // It sets focus to the scrollable content (if applicable) and locks the mouse
 // to handle the drag operation (scrolling).
 fn (cfg &ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
+	// Capture values needed for mouse_lock callbacks
+	orientation := cfg.orientation
+	id_track := cfg.id_track
 	// Lock the mouse to this control to capture all mouse move/up events
 	// until the button is released. This ensures smooth dragging even if cursor leaves the thumb.
 	w.mouse_lock(MouseLockCfg{
-		mouse_move: cfg.mouse_move_locked
-		mouse_up:   cfg.mouse_up_locked
+		mouse_move: fn [orientation, id_track] (layout &Layout, mut e Event, mut w Window) {
+			extend := 10 // give some cushion on the ends of the scroll range
+			if ly := find_layout_by_id_scroll(layout, id_track) {
+				match orientation == .horizontal {
+					true {
+						if e.mouse_x >= (ly.shape.x - extend)
+							&& e.mouse_x <= (ly.shape.x + ly.shape.width + extend) {
+							offset := offset_mouse_change_x(ly, e.mouse_dx, id_track,
+								w)
+							w.view_state.scroll_x[id_track] = offset
+							if ly.shape.on_scroll != unsafe { nil } {
+								ly.shape.on_scroll(ly, mut w)
+							}
+						}
+					}
+					else {
+						if e.mouse_y >= (ly.shape.y - extend)
+							&& e.mouse_y <= (ly.shape.y + ly.shape.height + extend) {
+							offset := offset_mouse_change_y(ly, e.mouse_dy, id_track,
+								w)
+							w.view_state.scroll_y[id_track] = offset
+							if ly.shape.on_scroll != unsafe { nil } {
+								ly.shape.on_scroll(ly, mut w)
+							}
+						}
+					}
+				}
+			}
+		}
+		mouse_up:   fn (_ &Layout, mut e Event, mut w Window) {
+			w.mouse_unlock()
+		}
 	})
 	e.is_handled = true
 }
@@ -137,49 +191,46 @@ fn (cfg &ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 			else { offset_from_mouse_y(w.layout, e.mouse_y, cfg.id_track, mut w) }
 		}
 
+		// Capture values needed for mouse_lock callbacks
+		orientation := cfg.orientation
+		id_track := cfg.id_track
 		// Lock the mouse to continue scrolling if the user holds and drags
 		w.mouse_lock(MouseLockCfg{
-			mouse_move: cfg.mouse_move_locked
-			mouse_up:   cfg.mouse_up_locked
+			mouse_move: fn [orientation, id_track] (layout &Layout, mut e Event, mut w Window) {
+				extend := 10 // give some cushion on the ends of the scroll range
+				if ly := find_layout_by_id_scroll(layout, id_track) {
+					match orientation == .horizontal {
+						true {
+							if e.mouse_x >= (ly.shape.x - extend)
+								&& e.mouse_x <= (ly.shape.x + ly.shape.width + extend) {
+								offset := offset_mouse_change_x(ly, e.mouse_dx, id_track,
+									w)
+								w.view_state.scroll_x[id_track] = offset
+								if ly.shape.on_scroll != unsafe { nil } {
+									ly.shape.on_scroll(ly, mut w)
+								}
+							}
+						}
+						else {
+							if e.mouse_y >= (ly.shape.y - extend)
+								&& e.mouse_y <= (ly.shape.y + ly.shape.height + extend) {
+								offset := offset_mouse_change_y(ly, e.mouse_dy, id_track,
+									w)
+								w.view_state.scroll_y[id_track] = offset
+								if ly.shape.on_scroll != unsafe { nil } {
+									ly.shape.on_scroll(ly, mut w)
+								}
+							}
+						}
+					}
+				}
+			}
+			mouse_up:   fn (_ &Layout, mut e Event, mut w Window) {
+				w.mouse_unlock()
+			}
 		})
 		e.is_handled = true
 	}
-}
-
-// mouse_move_locked handles the mouse movement event when the scrollbar thumb is being dragged.
-// It calculates the new scroll offset based on the mouse's delta movement and updates
-// the view state for the tracked scrollable content, ensuring the scroll position
-// stays within the bounds of the scrollable area.
-fn (cfg &ScrollbarCfg) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
-	extend := 10 // give some cushion on the ends of the scroll range
-	if ly := find_layout_by_id_scroll(layout, cfg.id_track) {
-		match cfg.orientation == .horizontal {
-			true {
-				if e.mouse_x >= (ly.shape.x - extend)
-					&& e.mouse_x <= (ly.shape.x + ly.shape.width + extend) {
-					offset := offset_mouse_change_x(ly, e.mouse_dx, cfg.id_track, w)
-					w.view_state.scroll_x[cfg.id_track] = offset
-					if ly.shape.on_scroll != unsafe { nil } {
-						ly.shape.on_scroll(ly, mut w)
-					}
-				}
-			}
-			else {
-				if e.mouse_y >= (ly.shape.y - extend)
-					&& e.mouse_y <= (ly.shape.y + ly.shape.height + extend) {
-					offset := offset_mouse_change_y(ly, e.mouse_dy, cfg.id_track, w)
-					w.view_state.scroll_y[cfg.id_track] = offset
-					if ly.shape.on_scroll != unsafe { nil } {
-						ly.shape.on_scroll(ly, mut w)
-					}
-				}
-			}
-		}
-	}
-}
-
-fn (_ &ScrollbarCfg) mouse_up_locked(_ &Layout, mut e Event, mut w Window) {
-	w.mouse_unlock()
 }
 
 // amend_layout Don't know what the sizes and positions of the scrollbar elements should
@@ -187,7 +238,7 @@ fn (_ &ScrollbarCfg) mouse_up_locked(_ &Layout, mut e Event, mut w Window) {
 // Scrollbars are hard.
 fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 	thumb := 0
-	min_thumb_size := 20
+	min_thumb_size := cfg.min_thumb_size
 	mut parent := layout.parent
 
 	match cfg.orientation == .horizontal {

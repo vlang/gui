@@ -48,18 +48,20 @@ pub:
 	color_click        Color   = color_active_dark
 	color_border       Color   = color_border_dark
 	color_border_focus Color   = color_select_dark
-	fill               bool    = true
-	fill_border        bool    = true
 	padding            Padding = padding_button
 	padding_border     Padding = padding_none
+	size_border        f32     = size_border
 	radius             f32     = radius_medium
 	radius_border      f32     = radius_medium
+	blur_radius        f32
+	shadow             BoxShadow
+	gradient           &Gradient = unsafe { nil }
 }
 
 pub struct ContainerStyle {
 pub:
-	color           Color = color_transparent
-	fill            bool
+	color           Color   = color_transparent
+	color_border    Color   = color_transparent
 	padding         Padding = padding_medium
 	radius          f32     = radius_medium
 	blur_radius     f32
@@ -67,7 +69,7 @@ pub:
 	shadow          BoxShadow
 	gradient        &Gradient = unsafe { nil }
 	border_gradient &Gradient = unsafe { nil }
-	border_width    f32       = 1.0
+	size_border     f32       = size_border
 }
 
 pub struct DatePickerStyle {
@@ -77,64 +79,68 @@ pub:
 	show_adjacent_months     bool
 	cell_spacing             f32 = 3
 	weekdays_len             DatePickerWeekdayLen
-	color                    Color     = color_interior_dark
-	color_hover              Color     = color_hover_dark
-	color_focus              Color     = color_focus_dark
-	color_click              Color     = color_active_dark
-	color_border             Color     = color_border_dark
-	color_border_focus       Color     = color_select_dark
-	color_select             Color     = color_select_dark
-	fill                     bool      = true
-	fill_border              bool      = true
-	padding                  Padding   = padding_none
-	padding_border           Padding   = padding_none
-	radius                   f32       = radius_medium
-	radius_border            f32       = radius_medium
+	color                    Color   = color_interior_dark
+	color_hover              Color   = color_hover_dark
+	color_focus              Color   = color_focus_dark
+	color_click              Color   = color_active_dark
+	color_border             Color   = color_border_dark
+	color_border_focus       Color   = color_select_dark
+	color_select             Color   = color_select_dark
+	padding                  Padding = padding_none
+	size_border              f32     = size_border
+	radius                   f32     = radius_medium
+	radius_border            f32     = radius_medium
+	shadow                   BoxShadow
 	text_style               TextStyle = text_style_dark
 }
 
 pub struct DialogStyle {
 pub:
-	color            Color           = color_panel_dark
-	color_border     Color           = color_border_dark
-	fill             bool            = true
-	fill_border      bool            = true
-	padding          Padding         = padding_large
-	padding_border   Padding         = padding_none
-	radius           f32             = radius_medium
-	radius_border    f32             = radius_medium
-	align_buttons    HorizontalAlign = .center
-	title_text_style TextStyle       = TextStyle{
+	color              Color   = color_panel_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_select_dark
+	padding            Padding = padding_large
+	size_border        f32     = size_border
+	radius             f32     = radius_medium
+	radius_border      f32     = radius_medium
+	blur_radius        f32
+	shadow             BoxShadow
+	align_buttons      HorizontalAlign = .center
+	title_text_style   TextStyle       = TextStyle{
 		...text_style_dark
 		size: size_text_large
 	}
-	text_style       TextStyle = text_style_dark
+	text_style         TextStyle = text_style_dark
 }
 
 pub struct ExpandPanelStyle {
-	color          Color   = color_panel_dark
-	color_border   Color   = color_border_dark
-	fill           bool    = true
-	fill_border    bool    = true
-	padding        Padding = padding_one
-	padding_border Padding = padding_none
-	radius         f32     = radius_medium
-	radius_border  f32     = radius_medium
+pub:
+	color              Color   = color_panel_dark
+	color_hover        Color   = color_hover_dark
+	color_focus        Color   = color_focus_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_select_dark
+	padding            Padding = padding_one
+	size_border        f32     = size_border
+	radius             f32     = radius_medium
+	radius_border      f32     = radius_medium
+	shadow             BoxShadow
 }
 
 pub struct InputStyle {
 pub:
-	color              Color     = color_interior_dark
-	color_hover        Color     = color_hover_dark
-	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_select_dark
-	color_focus        Color     = color_active_dark
-	fill               bool      = true
-	fill_border        bool      = true
-	padding            Padding   = padding_small
-	padding_border     Padding   = padding_none
-	radius             f32       = radius_medium
-	radius_border      f32       = radius_medium
+	color              Color   = color_interior_dark
+	color_hover        Color   = color_hover_dark
+	color_focus        Color   = color_active_dark
+	color_click        Color   = color_active_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_select_dark
+	padding            Padding = padding_small
+	padding_border     Padding = padding_none
+	size_border        f32     = size_border
+	radius             f32     = radius_medium
+	radius_border      f32     = radius_medium
+	shadow             BoxShadow
 	text_style         TextStyle = text_style_dark
 	placeholder_style  TextStyle = TextStyle{
 		...text_style_dark
@@ -154,41 +160,45 @@ pub:
 
 pub struct ListBoxStyle {
 pub:
-	color            Color     = color_interior_dark
-	color_hover      Color     = color_hover_dark
-	color_border     Color     = color_border_dark
-	color_select     Color     = color_select_dark
-	fill             bool      = true
-	fill_border      bool      = true
-	padding          Padding   = padding_button
-	padding_border   Padding   = padding_none
-	radius           f32       = radius_medium
-	radius_border    f32       = radius_medium
-	text_style       TextStyle = text_style_dark
-	subheading_style TextStyle = text_style_dark
+	color              Color   = color_interior_dark
+	color_hover        Color   = color_hover_dark
+	color_focus        Color   = color_focus_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_select_dark
+	color_select       Color   = color_select_dark
+	padding            Padding = padding_button
+	size_border        f32     = size_border
+	radius             f32     = radius_medium
+	radius_border      f32     = radius_medium
+	shadow             BoxShadow
+	text_style         TextStyle = text_style_dark
+	subheading_style   TextStyle = text_style_dark
 }
 
 pub struct MenubarStyle {
 pub:
-	width_submenu_min      f32       = 50
-	width_submenu_max      f32       = 200
-	color                  Color     = color_interior_dark
-	color_border           Color     = color_border_dark
-	color_select           Color     = color_select_dark
-	padding                Padding   = padding_small
-	padding_menu_item      Padding   = padding_two_five
-	padding_border         Padding   = padding_none
-	padding_submenu        Padding   = padding_small
-	padding_submenu_border Padding   = padding_none
-	padding_subtitle       Padding   = padding_two_five
-	radius                 f32       = radius_small
-	radius_border          f32       = radius_border
-	radius_submenu         f32       = radius_small
-	radius_menu_item       f32       = radius_small
-	spacing                f32       = gui_theme.spacing_medium
-	spacing_submenu        f32       = 1
-	text_style             TextStyle = text_style_dark
-	text_style_subtitle    TextStyle = TextStyle{
+	width_submenu_min   f32     = 50
+	width_submenu_max   f32     = 200
+	color               Color   = color_interior_dark
+	color_hover         Color   = color_hover_dark
+	color_focus         Color   = color_focus_dark
+	color_border        Color   = color_border_dark
+	color_border_focus  Color   = color_select_dark
+	color_select        Color   = color_select_dark
+	padding             Padding = padding_small
+	padding_menu_item   Padding = padding_two_five
+	padding_submenu     Padding = padding_small
+	padding_subtitle    Padding = padding_two_five
+	size_border         f32     = size_border
+	radius              f32     = radius_small
+	radius_border       f32     = radius_border
+	radius_submenu      f32     = radius_small
+	radius_menu_item    f32     = radius_small
+	shadow              BoxShadow
+	spacing             f32       = gui_theme.spacing_medium
+	spacing_submenu     f32       = 1
+	text_style          TextStyle = text_style_dark
+	text_style_subtitle TextStyle = TextStyle{
 		...text_style_dark
 		size: size_text_small
 	}
@@ -198,85 +208,91 @@ pub struct ProgressBarStyle {
 pub:
 	size            f32       = size_progress_bar
 	padding         Padding   = padding_medium
+	size_border     f32       = size_border
 	radius          f32       = radius_medium
-	fill            bool      = true
 	color           Color     = color_interior_dark
 	color_bar       Color     = color_active_dark
+	color_border    Color     = color_border_dark
 	text_show       bool      = true
 	text_background Color     = color_transparent
-	text_fill       bool      = true
 	text_padding    Padding   = padding_two_five
 	text_style      TextStyle = text_style_dark
 }
 
 pub struct RadioStyle {
 pub:
-	color          Color     = color_interior_dark
-	color_hover    Color     = color_hover_dark
-	color_focus    Color     = color_select_dark
-	color_border   Color     = color_border_dark
-	color_select   Color     = color_text_dark
-	color_unselect Color     = color_active_dark
-	padding        Padding   = pad_all(4)
-	text_style     TextStyle = text_style_dark
+	size               f32       = size_text_medium // dedicated size property
+	color              Color     = color_interior_dark
+	color_hover        Color     = color_hover_dark
+	color_focus        Color     = color_select_dark
+	color_border       Color     = color_border_dark
+	color_border_focus Color     = color_select_dark
+	color_select       Color     = color_select_dark
+	color_unselect     Color     = color_transparent
+	padding            Padding   = pad_all(4)
+	size_border        f32       = f32(2.0)
+	text_style         TextStyle = text_style_dark
 }
 
 pub struct RangeSliderStyle {
 pub:
-	size           f32     = 7
-	thumb_size     f32     = 15
-	color          Color   = color_interior_dark
-	color_click    Color   = color_select_dark
-	color_thumb    Color   = color_active_dark
-	color_left     Color   = color_active_dark
-	color_focus    Color   = color_focus_dark
-	color_hover    Color   = color_hover_dark
-	color_border   Color   = color_border_dark
-	fill           bool    = true
-	fill_border    bool    = true
-	padding        Padding = padding_none
-	padding_border Padding = padding_none
-	radius         f32     = radius_small
-	radius_border  f32     = radius_small
+	size               f32     = 7
+	thumb_size         f32     = 15
+	color              Color   = color_interior_dark
+	color_click        Color   = color_select_dark
+	color_thumb        Color   = color_active_dark
+	color_left         Color   = color_active_dark
+	color_focus        Color   = color_focus_dark
+	color_hover        Color   = color_hover_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_select_dark
+	padding            Padding = padding_none
+	size_border        f32     = size_border
+	radius             f32     = radius_small
+	radius_border      f32     = radius_small
+	shadow             BoxShadow
 }
 
 pub struct RectangleStyle {
 pub:
-	color        Color = color_border_dark
-	radius       f32   = radius_medium
-	fill         bool
-	gradient     &Gradient = unsafe { nil }
-	border_width f32       = 1.0
+	color           Color = color_transparent
+	color_border    Color = color_border_dark
+	radius          f32   = radius_medium
+	blur_radius     f32
+	shadow          BoxShadow
+	gradient        &Gradient = unsafe { nil }
+	border_gradient &Gradient = unsafe { nil }
+	size_border     f32       = size_border
 }
 
 pub struct ScrollbarStyle {
 pub:
 	size             f32   = 7
+	min_thumb_size   f32   = 20 // minimum thumb size in pixels
 	color_thumb      Color = color_active_dark
 	color_background Color = color_transparent
-	fill_thumb       bool  = true
-	fill_background  bool
-	radius           f32 = radius_small
-	radius_thumb     f32 = radius_small
-	gap_edge         f32 = 3
-	gap_end          f32 = 2
+	radius           f32   = radius_small
+	radius_thumb     f32   = radius_small
+	gap_edge         f32   = 3
+	gap_end          f32   = 2
 }
 
 pub struct SelectStyle {
 pub:
-	min_width          f32       = 75
-	max_width          f32       = 200
-	color              Color     = color_interior_dark
-	color_focus        Color     = color_interior_dark
-	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_select_dark
-	color_select       Color     = color_select_dark
-	fill               bool      = true
-	fill_border        bool      = true
-	padding            Padding   = padding_small
-	padding_border     Padding   = padding_one
-	radius             f32       = radius_medium
-	radius_border      f32       = radius_medium
+	min_width          f32     = 75
+	max_width          f32     = 200
+	color              Color   = color_interior_dark
+	color_hover        Color   = color_hover_dark
+	color_focus        Color   = color_interior_dark
+	color_click        Color   = color_active_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_select_dark
+	color_select       Color   = color_select_dark
+	padding            Padding = padding_small
+	size_border        f32     = size_border
+	radius             f32     = radius_medium
+	radius_border      f32     = radius_medium
+	shadow             BoxShadow
 	text_style         TextStyle = text_style_dark
 	subheading_style   TextStyle = text_style_dark
 	placeholder_style  TextStyle = TextStyle{
@@ -292,20 +308,21 @@ pub:
 
 pub struct SwitchStyle {
 pub:
-	color              Color     = color_interior_dark
-	color_click        Color     = color_interior_dark
-	color_focus        Color     = color_focus_dark
-	color_hover        Color     = color_hover_dark
-	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_select_dark
-	color_select       Color     = color_select_dark
-	color_unselect     Color     = color_active_dark
-	fill               bool      = true
-	fill_border        bool      = true
-	padding            Padding   = padding_three
-	padding_border     Padding   = padding_none
-	radius             f32       = radius_large * 2
-	radius_border      f32       = radius_large * 2
+	size_width         f32     = 26 // dedicated width (was: n2.size * 1.65)
+	size_height        f32     = 16 // dedicated height (was: n2.size)
+	color              Color   = color_interior_dark
+	color_click        Color   = color_interior_dark
+	color_focus        Color   = color_focus_dark
+	color_hover        Color   = color_hover_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_select_dark
+	color_select       Color   = color_select_dark
+	color_unselect     Color   = color_active_dark
+	padding            Padding = padding_three
+	size_border        f32     = size_border
+	radius             f32     = radius_large * 2
+	radius_border      f32     = radius_large * 2
+	shadow             BoxShadow
 	text_style         TextStyle = text_style_dark
 }
 
@@ -354,24 +371,24 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 
 pub struct ToggleStyle {
 pub:
-	color              Color     = color_interior_dark
-	color_border       Color     = color_border_dark
-	color_border_focus Color     = color_select_dark
-	color_click        Color     = color_interior_dark
-	color_focus        Color     = color_active_dark
-	color_hover        Color     = color_hover_dark
-	color_select       Color     = color_interior_dark
-	fill               bool      = true
-	fill_border        bool      = true
-	padding            Padding   = padding(1, 1, 1, 2)
-	padding_border     Padding   = padding_none
-	radius             f32       = radius_small
-	radius_border      f32       = radius_small
+	color              Color   = color_interior_dark
+	color_border       Color   = color_border_dark
+	color_border_focus Color   = color_select_dark
+	color_click        Color   = color_interior_dark
+	color_focus        Color   = color_active_dark
+	color_hover        Color   = color_hover_dark
+	color_select       Color   = color_interior_dark
+	padding            Padding = padding(1, 1, 1, 2)
+	size_border        f32     = size_border
+	radius             f32     = radius_small
+	radius_border      f32     = radius_small
+	shadow             BoxShadow
 	text_style         TextStyle = text_style_icon_dark
 	text_style_label   TextStyle = text_style_dark
 }
 
 pub struct TooltipStyle {
+pub:
 	delay              time.Duration = 500 * time.millisecond
 	color              Color         = color_interior_dark
 	color_hover        Color         = color_hover_dark
@@ -379,23 +396,30 @@ pub struct TooltipStyle {
 	color_click        Color         = color_active_dark
 	color_border       Color         = color_border_dark
 	color_border_focus Color         = color_select_dark
-	fill               bool          = true
-	fill_border        bool          = true
 	padding            Padding       = padding_small
-	padding_border     Padding       = padding_none
+	size_border        f32           = size_border
 	radius             f32           = radius_small
 	radius_border      f32           = radius_small
-	text_style         TextStyle     = text_style_dark
+	shadow             BoxShadow
+	text_style         TextStyle = text_style_dark
 }
 
 pub struct TreeStyle {
 pub:
-	indent          f32 = 25
-	spacing         f32
-	blur_radius     f32
-	shadow          BoxShadow
-	text_style      TextStyle = text_style_dark
-	text_style_icon TextStyle = TextStyle{
+	indent             f32 = 25
+	spacing            f32
+	color              Color   = color_transparent
+	color_hover        Color   = color_hover_dark
+	color_focus        Color   = color_focus_dark
+	color_border       Color   = color_transparent
+	color_border_focus Color   = color_select_dark
+	padding            Padding = padding_none
+	size_border        f32     = size_border
+	radius             f32     = radius_medium
+	blur_radius        f32
+	shadow             BoxShadow
+	text_style         TextStyle = text_style_dark
+	text_style_icon    TextStyle = TextStyle{
 		...text_style_icon_dark
 		family: font_file_icon
 		size:   size_text_small

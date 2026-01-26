@@ -226,12 +226,11 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 		window.renderers << shape_clip
 	} else if layout.shape.clip {
 		sc := layout.shape.shape_clip
-		padding := layout.shape.padding
 		shape_clip = DrawClip{
-			x:      sc.x + padding.left
-			y:      sc.y + padding.top
-			width:  sc.width - padding.width()
-			height: sc.height - padding.height()
+			x:      sc.x + layout.shape.padding_left()
+			y:      sc.y + layout.shape.padding_top()
+			width:  sc.width - layout.shape.padding_width()
+			height: sc.height - layout.shape.padding_height()
 		}
 		window.renderers << shape_clip
 	}
@@ -248,8 +247,10 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
 fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
+	has_visible_border := shape.size_border > 0 && shape.color_border != color_transparent
+	has_visible_text := shape.shape_type == .text && shape.text_style.color != color_transparent
 	if shape.color == color_transparent && shape.gradient == unsafe { nil }
-		&& shape.border_gradient == unsafe { nil } {
+		&& shape.border_gradient == unsafe { nil } && !has_visible_border && !has_visible_text {
 		return
 	}
 	match shape.shape_type {
@@ -291,7 +292,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 		}
 	}
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
-	if shape.gradient != unsafe { nil } && shape.fill {
+	if shape.gradient != unsafe { nil } {
 		window.renderers << DrawGradient{
 			x:        shape.x
 			y:        shape.y
@@ -300,7 +301,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			radius:   shape.radius
 			gradient: shape.gradient
 		}
-	} else if shape.blur_radius > 0 && shape.fill {
+	} else if shape.blur_radius > 0 && shape.color.a > 0 {
 		window.renderers << DrawBlur{
 			x:           shape.x
 			y:           shape.y
@@ -311,9 +312,8 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			color:       shape.color.to_gx_color()
 		}
 	} else {
-		// println('render_container: No Gradient. Fill=${shape.fill} GradientPtr=${ptr_str(shape.gradient)}')
 		// Check for Border Gradient
-		if shape.border_gradient != unsafe { nil } && !shape.fill {
+		if shape.border_gradient != unsafe { nil } {
 			window.renderers << DrawGradientBorder{
 				x:        shape.x
 				y:        shape.y
@@ -340,16 +340,40 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 	gx_color := color.to_gx_color()
-	if rects_overlap(draw_rect, clip) && color != color_transparent {
+	if rects_overlap(draw_rect, clip) {
 		radius := f32_min(shape.width, shape.height) / 2
 		x := shape.x + shape.width / 2
 		y := shape.y + shape.height / 2
-		window.renderers << DrawCircle{
-			x:      x
-			y:      y
-			radius: radius
-			fill:   shape.fill
-			color:  gx_color
+
+		// Fill
+		if color.a > 0 {
+			window.renderers << DrawCircle{
+				x:      x
+				y:      y
+				radius: radius
+				fill:   true
+				color:  gx_color
+			}
+		}
+
+		// Border
+		if shape.size_border > 0 {
+			c_border := if shape.disabled {
+				dim_alpha(shape.color_border)
+			} else {
+				shape.color_border
+			}
+			if c_border.a > 0 {
+				window.renderers << DrawStrokeRect{
+					x:         draw_rect.x
+					y:         draw_rect.y
+					w:         draw_rect.width
+					h:         draw_rect.height
+					color:     c_border.to_gx_color()
+					radius:    radius
+					thickness: shape.size_border
+				}
+			}
 		}
 	} else {
 		shape.disabled = true
@@ -367,8 +391,10 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 	gx_color := color.to_gx_color()
-	if rects_overlap(draw_rect, clip) && color != color_transparent {
-		if shape.fill {
+
+	if rects_overlap(draw_rect, clip) {
+		// Fill
+		if color.a > 0 {
 			window.renderers << DrawRect{
 				x:          draw_rect.x
 				y:          draw_rect.y
@@ -379,15 +405,26 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 				is_rounded: shape.radius > 0
 				radius:     shape.radius
 			}
-		} else {
-			window.renderers << DrawStrokeRect{
-				x:         draw_rect.x
-				y:         draw_rect.y
-				w:         draw_rect.width
-				h:         draw_rect.height
-				color:     gx_color
-				radius:    shape.radius
-				thickness: shape.border_width
+		}
+
+		// Border
+		if shape.size_border > 0 {
+			c_border := if shape.disabled {
+				dim_alpha(shape.color_border)
+			} else {
+				shape.color_border
+			}
+
+			if c_border.a > 0 {
+				window.renderers << DrawStrokeRect{
+					x:         draw_rect.x
+					y:         draw_rect.y
+					w:         draw_rect.width
+					h:         draw_rect.height
+					color:     c_border.to_gx_color()
+					radius:    shape.radius
+					thickness: shape.size_border
+				}
 			}
 		}
 	} else {
@@ -425,8 +462,8 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 
 	if shape.has_text_layout() {
 		for line in shape.vglyph_layout.lines {
-			draw_x := shape.x + shape.padding.left + line.rect.x
-			draw_y := shape.y + shape.padding.top + line.rect.y
+			draw_x := shape.x + shape.padding_left() + line.rect.x
+			draw_y := shape.y + shape.padding_top() + line.rect.y
 
 			// Extract text for this line
 			if line.start_index >= shape.text.len {
@@ -598,9 +635,8 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 					height: line_height(shape, mut window)
 				}
 			}
-
-			cx := shape.x + shape.padding.left + rect.x
-			cy := shape.y + shape.padding.top + rect.y
+			cx := shape.x + shape.padding_left() + rect.x
+			cy := shape.y + shape.padding_top() + rect.y
 			ch := rect.height
 
 			// Draw cursor line

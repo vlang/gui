@@ -37,9 +37,9 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			toggle_theme(app),
 			gui.column(
-				color:   gui.theme().color_active
-				padding: gui.theme().padding_large
-				content: [
+				color_border: gui.theme().color_active
+				padding:      gui.theme().padding_large
+				content:      [
 					message_type(),
 					confirm_type(),
 					prompt_type(),

@@ -68,7 +68,6 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 			gui.color_transparent
 		}
 		nav_files << gui.row(
-			fill:     true
 			color:    color
 			padding:  gui.padding_two_five
 			sizing:   gui.fill_fit
@@ -89,12 +88,14 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 
 	mut content := []gui.View{}
 	content << nav_files
-	content << gui.rectangle(sizing: gui.fill_fill, color: gui.color_transparent)
+	content << gui.rectangle(
+		sizing:       gui.fill_fill
+		color_border: gui.color_transparent
+	)
 	content << tab_stops(w)
 
 	return gui.column(
 		id:      'nav'
-		fill:    true
 		color:   gui.theme().color_panel
 		sizing:  gui.fit_fill
 		content: content
@@ -125,7 +126,6 @@ fn (mut app DocViewerApp) doc_panel(w &gui.Window) gui.View {
 		id:        'doc'
 		id_scroll: id_scroll_doc_view
 		min_width: 250
-		fill:      true
 		color:     gui.theme().color_panel
 		sizing:    gui.fill_fill
 		content:   [

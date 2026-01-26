@@ -34,14 +34,15 @@ mut:
 	visible      bool
 	old_id_focus u32
 pub:
-	title            string
-	body             string // body text wraps as needed. Newlines supported
-	reply            string
-	id               string
-	color            Color     = gui_theme.dialog_style.color
-	color_border     Color     = gui_theme.dialog_style.color_border
-	padding          Padding   = gui_theme.dialog_style.padding
-	padding_border   Padding   = gui_theme.dialog_style.padding_border
+	title        string
+	body         string // body text wraps as needed. Newlines supported
+	reply        string
+	id           string
+	color        Color   = gui_theme.dialog_style.color
+	color_border Color   = gui_theme.dialog_style.color_border
+	padding      Padding = gui_theme.dialog_style.padding
+	size_border  f32     = gui_theme.dialog_style.size_border
+
 	title_text_style TextStyle = gui_theme.dialog_style.title_text_style
 	text_style       TextStyle = gui_theme.dialog_style.text_style
 	custom_content   []View // custom content
@@ -59,8 +60,6 @@ pub:
 	id_focus         u32 = dialog_base_id_focus
 	dialog_type      DialogType
 	align_buttons    HorizontalAlign = gui_theme.dialog_style.align_buttons
-	fill             bool            = gui_theme.dialog_style.fill
-	fill_border      bool            = gui_theme.dialog_style.fill_border
 }
 
 fn dialog_view_generator(cfg DialogCfg) View {
@@ -80,32 +79,26 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		.custom { cfg.custom_content }
 	}
 	return column(
-		name:          'dialog border: ${cfg.dialog_type}'
+		name:          'dialog: ${cfg.dialog_type}'
 		id:            reserved_dialog_id
 		float:         true
 		float_anchor:  .middle_center
 		float_tie_off: .middle_center
-		color:         cfg.color_border
-		fill:          cfg.fill_border
-		padding:       cfg.padding_border
-		width:         cfg.width
-		height:        cfg.height
-		min_width:     cfg.min_width
-		max_width:     cfg.max_width
-		min_height:    cfg.min_height
-		max_height:    cfg.max_height
-		on_keydown:    dialog_key_down
-		content:       [
-			column(
-				name:    'dialog: ${cfg.dialog_type}'
-				h_align: .center
-				sizing:  fill_fill
-				padding: cfg.padding
-				fill:    cfg.fill
-				color:   cfg.color
-				content: content
-			),
-		]
+		color:         cfg.color
+		color_border:  cfg.color_border
+		size_border:   cfg.size_border
+		radius:        cfg.radius
+		padding:       cfg.padding
+		h_align:       .center
+
+		width:      cfg.width
+		height:     cfg.height
+		min_width:  cfg.min_width
+		max_width:  cfg.max_width
+		min_height: cfg.min_height
+		max_height: cfg.max_height
+		on_keydown: dialog_key_down
+		content:    content
 	)
 }
 

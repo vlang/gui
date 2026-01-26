@@ -101,8 +101,7 @@ fn test_theme_maker_applies_cfg_and_invariants() {
 	assert t.color_select == orange
 	assert t.titlebar_dark
 
-	// Container invariant: not filled and transparent color
-	assert !t.container_style.fill
+	// Container invariant: transparent color
 	assert t.container_style.color == color_transparent
 	// Padding/radius/spacings derived from cfg defaults
 	assert t.container_style.padding == custom_cfg.padding
@@ -134,4 +133,111 @@ fn test_theme_returns_current_theme() {
 	// Ensure some styles and colors are set sensibly
 	assert t.text_style.size > 0
 	assert t.color_interior.r >= 0 // basic access test for Color
+}
+
+// ------------------------------
+// Tests for with_* theme modification methods
+// ------------------------------
+
+fn test_with_button_style() {
+	t := theme_dark
+	new_style := ButtonStyle{
+		...t.button_style
+		color:       red
+		color_hover: green
+	}
+	modified := t.with_button_style(new_style)
+
+	// Button style should be updated
+	assert modified.button_style.color == red
+	assert modified.button_style.color_hover == green
+	// Other styles should remain unchanged
+	assert modified.input_style == t.input_style
+	assert modified.name == t.name
+}
+
+fn test_with_input_style() {
+	t := theme_dark
+	new_style := InputStyle{
+		...t.input_style
+		color:        blue
+		color_border: yellow
+	}
+	modified := t.with_input_style(new_style)
+
+	assert modified.input_style.color == blue
+	assert modified.input_style.color_border == yellow
+	// Button style unchanged
+	assert modified.button_style == t.button_style
+}
+
+fn test_with_colors_single_override() {
+	t := theme_dark
+	new_hover := rgb(200, 100, 50)
+	modified := t.with_colors(ColorOverrides{
+		color_hover: new_hover
+	})
+
+	// Top-level color should be updated
+	assert modified.color_hover == new_hover
+	// Widget styles should have new hover color
+	assert modified.button_style.color_hover == new_hover
+	assert modified.input_style.color_hover == new_hover
+	assert modified.select_style.color_hover == new_hover
+	// Non-overridden colors should remain
+	assert modified.color_background == t.color_background
+	assert modified.color_panel == t.color_panel
+}
+
+fn test_with_colors_multiple_overrides() {
+	t := theme_dark
+	new_interior := rgb(50, 50, 80)
+	new_border := rgb(100, 100, 150)
+	new_select := rgb(80, 120, 200)
+
+	modified := t.with_colors(ColorOverrides{
+		color_interior: new_interior
+		color_border:   new_border
+		color_select:   new_select
+	})
+
+	// Top-level colors updated
+	assert modified.color_interior == new_interior
+	assert modified.color_border == new_border
+	assert modified.color_select == new_select
+
+	// Widget styles updated
+	assert modified.button_style.color == new_interior
+	assert modified.button_style.color_border == new_border
+	assert modified.list_box_style.color_select == new_select
+}
+
+fn test_with_colors_no_overrides() {
+	t := theme_dark
+	modified := t.with_colors(ColorOverrides{})
+
+	// With no overrides, theme should be functionally identical
+	assert modified.color_background == t.color_background
+	assert modified.color_hover == t.color_hover
+	assert modified.button_style.color_hover == t.button_style.color_hover
+}
+
+fn test_chained_modifications() {
+	t := theme_dark
+
+	// Chain multiple with_* calls
+	modified := t
+		.with_button_style(ButtonStyle{
+			...t.button_style
+			color: red
+		})
+		.with_input_style(InputStyle{
+			...t.input_style
+			color: blue
+		})
+
+	assert modified.button_style.color == red
+	assert modified.input_style.color == blue
+	// Other styles unchanged
+	assert modified.select_style == t.select_style
 }

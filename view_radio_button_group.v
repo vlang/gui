@@ -54,15 +54,16 @@ pub fn radio_option(label string, value string) RadioOption {
 // the given [RadioButtonGroupCfg](#RadioButtonGroupCfg)
 pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 	return column(
-		name:       'radio_button_group_column'
-		title:      cfg.title
-		title_bg:   cfg.title_bg
-		color:      if cfg.title.len == 0 { color_transparent } else { gui_theme.color_active }
-		padding:    if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
-		min_width:  cfg.min_width
-		min_height: cfg.min_height
-		sizing:     cfg.sizing
-		content:    build_options(cfg)
+		name:         'radio_button_group_column'
+		title:        cfg.title
+		title_bg:     cfg.title_bg
+		color_border: gui_theme.color_border
+		size_border:  gui_theme.size_border
+		padding:      if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
+		min_width:    cfg.min_width
+		min_height:   cfg.min_height
+		sizing:       cfg.sizing
+		content:      build_options(cfg)
 	)
 }
 
@@ -70,19 +71,20 @@ pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 // the given [RadioButtonGroupCfg](#RadioButtonGroupCfg)
 pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
 	return row(
-		name:       'radio_button_group_row'
-		title:      cfg.title
-		title_bg:   cfg.title_bg
-		color:      if cfg.title.len == 0 { color_transparent } else { gui_theme.color_active }
-		padding:    if cfg.title.len == 0 {
+		name:         'radio_button_group_row'
+		title:        cfg.title
+		title_bg:     cfg.title_bg
+		color_border: gui_theme.color_border
+		size_border:  gui_theme.size_border
+		padding:      if cfg.title.len == 0 {
 			gui_theme.padding_medium
 		} else {
 			gui_theme.padding_large
 		}
-		min_width:  cfg.min_width
-		min_height: cfg.min_height
-		sizing:     cfg.sizing
-		content:    build_options(cfg)
+		min_width:    cfg.min_width
+		min_height:   cfg.min_height
+		sizing:       cfg.sizing
+		content:      build_options(cfg)
 	)
 }
 

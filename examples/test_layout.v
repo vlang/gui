@@ -24,7 +24,7 @@ fn main() {
 		}
 		title:        'test layout'
 		width:        800
-		height:       600
+		height:       700
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -44,7 +44,6 @@ fn main_view(w &gui.Window) gui.View {
 		width:   width
 		height:  height
 		sizing:  gui.fixed_fixed
-		fill:    true
 		content: [
 			gui.column(
 				padding: gui.padding_none
@@ -53,38 +52,37 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  75
 						height: 50
-						fill:   true
 						color:  gui.purple
 					),
 					gui.rectangle(
-						width:  75
-						sizing: gui.fit_fill
-						color:  gui.color_transparent
+						width:        75
+						color_border: gui.color_transparent
+						sizing:       gui.fit_fill
+						color:        gui.color_transparent
 					),
 					gui.rectangle(
 						width:  75
 						height: 50
-						fill:   true
 						color:  gui.green
 					),
 				]
 			),
 			gui.row(
-				id:      'orange'
-				title:   ' orange  '
-				color:   gui.orange
-				sizing:  gui.fill_fill
-				content: [
+				id:           'orange'
+				title:        ' orange  '
+				color:        gui.color_transparent
+				color_border: gui.orange
+				sizing:       gui.fill_fill
+				content:      [
 					gui.column(
 						id:      'col'
 						color:   gui.theme().color_panel
 						sizing:  gui.fill_fill
-						fill:    true
 						spacing: gui.theme().spacing_large
 						content: [
 							gui.row(
-								color:   gui.white
-								content: [
+								color_border: gui.white
+								content:      [
 									gui.text(
 										text:       'Hello world!'
 										text_style: gui.theme().b2
@@ -98,12 +96,13 @@ fn main_view(w &gui.Window) gui.View {
 								mode:     .wrap
 							),
 							gui.button(
-								id_focus:       1
-								padding_border: gui.padding_two
-								content:        [
+								id_focus:    1
+								size_border: 2
+
+								content:  [
 									gui.text(text: 'Click Count ${state.click_count}'),
 								]
-								on_click:       fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 									mut state := w.state[AppState]()
 									state.click_count += 1
 								}
@@ -124,13 +123,14 @@ fn main_view(w &gui.Window) gui.View {
 										text: 'label'
 									),
 									gui.input(
-										id_focus:        2
-										width:           120
-										sizing:          gui.fixed_fit
-										text:            state.other_input
-										placeholder:     'Type here...'
-										mode:            .single_line
-										padding_border:  gui.padding_two
+										id_focus:    2
+										width:       120
+										sizing:      gui.fixed_fit
+										text:        state.other_input
+										placeholder: 'Type here...'
+										mode:        .single_line
+										size_border: 2
+
 										on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
 											state.other_input = s
@@ -143,7 +143,6 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  25
 						height: 25
-						fill:   true
 						sizing: gui.fill_fill
 						color:  gui.dark_green
 					),
@@ -151,29 +150,28 @@ fn main_view(w &gui.Window) gui.View {
 			),
 			gui.column(
 				color:   gui.theme().color_panel
-				fill:    true
 				sizing:  gui.fill_fill
 				spacing: gui.spacing_large
 				content: [
 					gui.input(
-						id_focus:        3
-						width:           250
-						text:            state.name
-						mode:            .multiline
-						sizing:          gui.fixed_fit
-						padding_border:  gui.padding_two
+						id_focus:    3
+						width:       250
+						text:        state.name
+						mode:        .multiline
+						sizing:      gui.fixed_fit
+						size_border: 2
+
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[AppState]()
 							state.name = s
 						}
 					),
 					gui.column(
-						color:    gui.theme().text_style.color
-						fill:     false
-						sizing:   gui.fill_fit
-						title:    '  mode = .wrap  '
-						title_bg: gui.theme().color_panel
-						content:  [
+						color_border: gui.theme().text_style.color
+						sizing:       gui.fill_fit
+						title:        '  mode = .wrap  '
+						title_bg:     gui.theme().color_panel
+						content:      [
 							gui.text(
 								id_focus: 6
 								text:     state.name
@@ -182,12 +180,11 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.column(
-						color:    gui.theme().text_style.color
-						fill:     false
-						sizing:   gui.fill_fit
-						title:    '  mode = .wrap_keep_spaces  '
-						title_bg: gui.theme().color_panel
-						content:  [
+						color_border: gui.theme().text_style.color
+						sizing:       gui.fill_fit
+						title:        '  mode = .wrap_keep_spaces  '
+						title_bg:     gui.theme().color_panel
+						content:      [
 							gui.text(
 								id_focus: 7
 								text:     state.name
@@ -204,18 +201,17 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  75
 						height: 50
-						fill:   true
 						color:  gui.orange
 					),
 					gui.rectangle(
-						width:  75
-						sizing: gui.fit_fill
-						color:  gui.color_transparent
+						width:        75
+						color_border: gui.color_transparent
+						sizing:       gui.fit_fill
+						color:        gui.color_transparent
 					),
 					gui.rectangle(
 						width:  75
 						height: 50
-						fill:   true
 						color:  gui.yellow
 					),
 				]

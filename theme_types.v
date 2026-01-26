@@ -81,7 +81,7 @@ pub:
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
 	padding_large  Padding = padding_large
-	padding_border Padding = padding_none
+	size_border    f32
 
 	radius_small  f32 = radius_small
 	radius_medium f32 = radius_medium
@@ -120,13 +120,14 @@ pub:
 	color_border_focus Color = color_select_dark
 	color_select       Color = color_select_dark
 	titlebar_dark      bool
-	fill               bool      = true
-	fill_border        bool      = true
-	padding            Padding   = padding_medium
-	padding_border     Padding   = padding_none
-	radius             f32       = radius_medium
-	radius_border      f32       = radius_border
-	text_style         TextStyle = text_style_dark
+	fill               bool    = true
+	fill_border        bool    = true
+	padding            Padding = padding_medium
+	size_border        f32
+
+	radius        f32       = radius_medium
+	radius_border f32       = radius_border
+	text_style    TextStyle = text_style_dark
 
 	// Usually don't change across styles
 	padding_small  Padding = padding_small
@@ -154,4 +155,18 @@ pub:
 	scroll_delta_page f32 = scroll_delta_page
 	scroll_gap_edge   f32 = scroll_gap_edge // gap between edge of scrollbar and container
 	scroll_gap_end    f32 = scroll_gap_end  // gap between end of scrollbar and container
+
+	// Widget-specific sizes (configurable via ThemeCfg)
+	size_switch_width        f32 = 36 // switch toggle width
+	size_switch_height       f32 = 22 // switch toggle height
+	size_radio               f32 = 16 // radio button diameter
+	size_scrollbar           f32 = 7  // scrollbar track size
+	size_scrollbar_min_thumb f32 = 20 // minimum scrollbar thumb size
+	size_progress_bar        f32 = 10 // progress bar height
+	size_range_slider        f32 = 7  // range slider track size
+	size_range_slider_thumb  f32 = 15 // range slider thumb size
+
+	// Submenu width constraints
+	width_submenu_min f32 = 50
+	width_submenu_max f32 = 200
 }

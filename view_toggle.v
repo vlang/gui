@@ -20,89 +20,91 @@ pub:
 	color_border_focus Color     = gui_theme.toggle_style.color_border_focus
 	color_select       Color     = gui_theme.toggle_style.color_select
 	padding            Padding   = gui_theme.toggle_style.padding
-	padding_border     Padding   = gui_theme.toggle_style.padding_border
+	size_border        f32       = gui_theme.toggle_style.size_border
 	radius             f32       = gui_theme.toggle_style.radius
 	radius_border      f32       = gui_theme.toggle_style.radius_border
+	min_width          f32
 	id_focus           u32
 	disabled           bool
 	invisible          bool
 	select             bool
-	fill               bool = gui_theme.toggle_style.fill
-	fill_border        bool = gui_theme.toggle_style.fill_border
 }
 
 // toggle creates a toggle button (a.k.a checkbox) from the given [ToggleCfg](#ToggleCfg)
 pub fn toggle(cfg ToggleCfg) View {
 	color := if cfg.select { cfg.color_select } else { cfg.color }
-	txt := if cfg.select { cfg.text_select } else { cfg.text_unselect }
-
+	txt := if cfg.select || cfg.text_unselect == ' ' { cfg.text_select } else { cfg.text_unselect }
+	mut txt_style := cfg.text_style
+	if !cfg.select && cfg.text_unselect == ' ' {
+		txt_style = TextStyle{
+			...cfg.text_style
+			color: color_transparent
+		}
+	}
 	mut content := []View{cap: 2}
+	padding := Padding{
+		...cfg.padding
+		right:  cfg.padding.right + 3
+		bottom: cfg.padding.bottom + 2
+	}
+
+	// Capture values needed for callbacks by copy to avoid dangling reference to cfg
+	color_focus := cfg.color_focus
+	color_border_focus := cfg.color_border_focus
+	color_hover := cfg.color_hover
+	color_click := cfg.color_click
 
 	content << row(
-		name:       'toggle border'
-		color:      cfg.color_border
-		padding:    cfg.padding_border
-		fill:       cfg.fill_border
-		radius:     cfg.radius_border
-		disabled:   cfg.disabled
-		invisible:  cfg.invisible
-		min_width:  gui_theme.n1.size
-		min_height: gui_theme.n1.size
-		h_align:    .center
-		v_align:    .middle
-		content:    [
-			row(
-				name:    'toggle interior'
-				color:   color
-				fill:    cfg.fill
-				sizing:  fill_fill
-				padding: cfg.padding
-				radius:  cfg.radius
-				h_align: .center
-				v_align: .middle
-				content: [
-					text(
-						text:       txt
-						text_style: cfg.text_style
-					),
-				]
+		name:         'toggle box'
+		color:        color
+		color_border: cfg.color_border
+		size_border:  cfg.size_border
+		padding:      padding
+		radius:       cfg.radius
+		disabled:     cfg.disabled
+		invisible:    cfg.invisible
+		h_align:      .center
+		v_align:      .middle
+		content:      [
+			text(
+				text:       txt
+				text_style: txt_style
 			),
 		]
 	)
 
 	if cfg.label.len > 0 {
-		content << text(text: cfg.label, text_style: cfg.text_style_label)
+		content << text(
+			text:       cfg.label
+			text_style: cfg.text_style_label
+		)
 	}
 
 	return row(
 		name:         'toggle'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
-		h_align:      .center
-		v_align:      .middle
 		padding:      padding_none
+		v_align:      .middle
 		on_char:      spacebar_to_click(cfg.on_click)
 		on_click:     left_click_only(cfg.on_click)
-		on_hover:     cfg.on_hover
-		amend_layout: cfg.amend_layout
+		on_hover:     fn [color_hover, color_click] (mut layout Layout, mut e Event, mut w Window) {
+			w.set_mouse_cursor_pointing_hand()
+			layout.children[0].shape.color = color_hover
+			if e.mouse_button == .left {
+				layout.children[0].shape.color = color_click
+			}
+		}
+		min_width:    cfg.min_width
+		amend_layout: fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
+			if layout.shape.disabled || layout.shape.on_click == unsafe { nil } {
+				return
+			}
+			if w.is_focus(layout.shape.id_focus) {
+				layout.children[0].shape.color = color_focus
+				layout.children[0].shape.color_border = color_border_focus
+			}
+		}
 		content:      content
 	)
-}
-
-fn (cfg &ToggleCfg) amend_layout(mut layout Layout, mut w Window) {
-	if layout.shape.disabled || cfg.on_click == unsafe { nil } {
-		return
-	}
-	if w.is_focus(layout.shape.id_focus) {
-		layout.children[0].children[0].shape.color = cfg.color_focus
-		layout.children[0].shape.color = cfg.color_border_focus
-	}
-}
-
-fn (cfg &ToggleCfg) on_hover(mut layout Layout, mut e Event, mut w Window) {
-	w.set_mouse_cursor_pointing_hand()
-	layout.children[0].children[0].shape.color = cfg.color_hover
-	if e.mouse_button == .left {
-		layout.children[0].children[0].shape.color = cfg.color_click
-	}
 }
