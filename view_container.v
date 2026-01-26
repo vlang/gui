@@ -401,13 +401,17 @@ fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 		return
 	}
 
-	text_style := if cv.color == gui_theme.text_style.color {
-		gui_theme.text_style
+	// Use border color for title when fill is transparent, otherwise use fill color
+	title_color := if cv.color != color_transparent {
+		cv.color
+	} else if cv.color_border != color_transparent {
+		cv.color_border
 	} else {
-		TextStyle{
-			...gui_theme.text_style
-			color: cv.color
-		}
+		gui_theme.text_style.color
+	}
+	text_style := TextStyle{
+		...gui_theme.text_style
+		color: title_color
 	}
 
 	cfg := text_style.to_vglyph_cfg()

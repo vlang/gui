@@ -247,8 +247,10 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
 fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
+	has_visible_border := shape.border_width > 0 && shape.color_border != color_transparent
+	has_visible_text := shape.shape_type == .text && shape.text_style.color != color_transparent
 	if shape.color == color_transparent && shape.gradient == unsafe { nil }
-		&& shape.border_gradient == unsafe { nil } {
+		&& shape.border_gradient == unsafe { nil } && !has_visible_border && !has_visible_text {
 		return
 	}
 	match shape.shape_type {
