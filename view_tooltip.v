@@ -26,7 +26,7 @@ pub:
 	offset_y      f32           = -3
 	anchor        FloatAttach   = .bottom_center
 	tie_off       FloatAttach
-	border_width  f32 = gui_theme.tooltip_style.border_width
+	size_border   f32 = gui_theme.tooltip_style.size_border
 }
 
 // tooltip creates a tooltip from the given [TooltipCfg](#TooltipCfg)
@@ -35,7 +35,7 @@ pub fn tooltip(cfg TooltipCfg) View {
 		name:         'tooltip'
 		color:        cfg.color
 		color_border: cfg.color_border
-		border_width: cfg.border_width
+		size_border:  cfg.size_border
 		radius:       cfg.radius
 		padding:      cfg.padding
 

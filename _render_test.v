@@ -51,14 +51,14 @@ fn test_dim_alpha() {
 fn test_render_rectangle_inside_clip() {
 	mut w := make_window()
 	mut s := Shape{
-		shape_type:   .rectangle
-		x:            10
-		y:            20
-		width:        30
-		height:       40
-		color:        rgb(100, 150, 200)
-		radius:       5
-		border_width: 0
+		shape_type:  .rectangle
+		x:           10
+		y:           20
+		width:       30
+		height:      40
+		color:       rgb(100, 150, 200)
+		radius:      5
+		size_border: 0
 	}
 	clip := make_clip(0, 0, 200, 200)
 
@@ -107,13 +107,13 @@ fn test_render_rectangle_outside_clip_disables_shape() {
 fn test_render_circle_inside_clip() {
 	mut w := make_window()
 	mut s := Shape{
-		shape_type:   .circle
-		x:            0
-		y:            0
-		width:        40
-		height:       20
-		color:        rgb(1, 2, 3)
-		border_width: 0
+		shape_type:  .circle
+		x:           0
+		y:           0
+		width:       40
+		height:      20
+		color:       rgb(1, 2, 3)
+		size_border: 0
 	}
 	clip := make_clip(-10, -10, 100, 100)
 
@@ -144,16 +144,16 @@ fn test_render_layout_clip_push_pop() {
 	mut root := Layout{
 		shape:    &Shape{
 			// Keep it invisible as a container to avoid text/container drawing
-			color:        color_transparent
-			clip:         true
-			padding:      Padding{
+			color:       color_transparent
+			clip:        true
+			padding:     Padding{
 				left:   2
 				right:  3
 				top:    4
 				bottom: 5
 			}
-			border_width: 0
-			shape_clip:   make_clip(10, 20, 100, 50)
+			size_border: 0
+			shape_clip:  make_clip(10, 20, 100, 50)
 		}
 		children: []
 	}

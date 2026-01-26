@@ -15,7 +15,7 @@ pub:
 	color_border       Color       = gui_theme.button_style.color_border
 	color_border_focus Color       = gui_theme.button_style.color_border_focus
 	padding            Padding     = gui_theme.button_style.padding
-	border_width       f32         = gui_theme.button_style.border_width
+	size_border        f32         = gui_theme.button_style.size_border
 	sizing             Sizing
 	content            []View
 	on_click           fn (&Layout, mut Event, mut Window) = unsafe { nil }
@@ -42,7 +42,7 @@ pub:
 // gui.button(
 // 	min_width:      90
 // 	max_width:      90
-// 	border_width:   1
+// 	size_border:   1
 // 	content:        [gui.text(text: '${app.clicks} Clicks')]
 // 	on_click:       fn (_ &gui.Layout, _ &gui.Event, mut w gui.Window) bool {
 // 		mut app := w.state[App]()
@@ -52,15 +52,13 @@ pub:
 // )
 // ```
 pub fn button(cfg ButtonCfg) View {
-	border_width := cfg.border_width
-
 	return row(
 		name:         'button'
 		id:           cfg.id
 		id_focus:     cfg.id_focus
 		color:        cfg.color
 		color_border: cfg.color_border
-		border_width: border_width
+		size_border:  cfg.size_border
 		padding:      cfg.padding
 		radius:       cfg.radius // Use radius, radius_border becomes redundant or same?
 		width:        cfg.width

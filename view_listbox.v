@@ -27,7 +27,7 @@ pub:
 	radius_border    f32 = gui_theme.list_box_style.radius_border
 	id_scroll        u32
 	multiple         bool // allow multiple selections
-	border_width     f32 = gui_theme.list_box_style.border_width
+	size_border      f32 = gui_theme.list_box_style.size_border
 }
 
 // ListBoxOption is the data for a row in a [list_box](#list_box).
@@ -127,7 +127,7 @@ pub fn list_box(cfg ListBoxCfg) View {
 		max_height:   cfg.max_height
 		color:        cfg.color
 		color_border: cfg.color_border
-		border_width: cfg.border_width
+		size_border:  cfg.size_border
 		radius:       cfg.radius
 		padding:      cfg.padding
 		sizing:       cfg.sizing

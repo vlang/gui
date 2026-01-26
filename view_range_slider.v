@@ -23,7 +23,7 @@ pub:
 	color_left    Color   = gui_theme.range_slider_style.color_left
 	color_click   Color   = gui_theme.range_slider_style.color_click
 	padding       Padding = gui_theme.range_slider_style.padding
-	border_width  f32     = gui_theme.range_slider_style.border_width
+	size_border   f32     = gui_theme.range_slider_style.size_border
 	on_change     fn (f32, mut Event, mut Window) @[required]
 	value         f32
 	min           f32
@@ -69,7 +69,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		invisible:    cfg.invisible
 		color:        cfg.color
 		color_border: cfg.color_border
-		border_width: cfg.border_width
+		size_border:  cfg.size_border
 		radius:       cfg.radius_border
 		padding:      padding_none
 		sizing:       cfg.sizing
@@ -93,7 +93,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 				height:       cfg.thumb_size
 				color:        cfg.color_thumb
 				color_border: cfg.color_border
-				border_width: cfg.border_width
+				size_border:  cfg.size_border
 				padding:      padding_none
 
 				amend_layout: cfg.amend_layout_thumb
@@ -142,7 +142,7 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 
 		// left of thumb bar
 		layout.children[0].shape.x += offset
-		layout.children[0].shape.width = cfg.size - (cfg.border_width * 2)
+		layout.children[0].shape.width = cfg.size - (cfg.size_border * 2)
 	} else {
 		width := layout.shape.width
 		x := f32_min(width * percent, width)
@@ -156,7 +156,7 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 
 		// left of thumb bar
 		layout.children[0].shape.y += offset
-		layout.children[0].shape.height = cfg.size - (cfg.border_width * 2)
+		layout.children[0].shape.height = cfg.size - (cfg.size_border * 2)
 	}
 	if layout.shape.disabled {
 		return

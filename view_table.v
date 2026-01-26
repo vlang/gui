@@ -29,13 +29,13 @@ import encoding.csv
 pub struct TableCfg {
 pub:
 	id                   string
-	color_border         Color     = gui_theme.color_border
-	cell_padding         Padding   = padding_two_five
-	text_style           TextStyle = gui_theme.n3
-	text_style_head      TextStyle = gui_theme.b3
+	color_border         Color           = gui_theme.color_border
+	cell_padding         Padding         = padding_two_five
+	text_style           TextStyle       = gui_theme.n3
+	text_style_head      TextStyle       = gui_theme.b3
 	align_head           HorizontalAlign = HorizontalAlign.center
-	column_width_default f32       = 50
-	border_width         f32       
+	column_width_default f32             = 50
+	size_border          f32
 pub mut:
 	data []TableRowCfg
 }
@@ -83,7 +83,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 				name:         'table cell'
 				color:        color_transparent
 				color_border: cfg.color_border
-				border_width: cfg.border_width
+				size_border:  cfg.size_border
 				padding:      cfg.cell_padding
 				radius:       0
 				spacing:      0
@@ -103,12 +103,12 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 			)
 		}
 		rows << row(
-			name:         'table row'
-			spacing:      -cfg.border_width
-			radius:       0
-			padding:      padding_none
-			border_width: 0
-			content:      cells
+			name:        'table row'
+			spacing:     -cfg.size_border
+			radius:      0
+			padding:     padding_none
+			size_border: 0
+			content:     cells
 		)
 	}
 	return column(
@@ -117,7 +117,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 		color:   color_transparent
 		padding: padding_none
 		radius:  0
-		spacing: -cfg.border_width
+		spacing: -cfg.size_border
 		content: rows
 	)
 }

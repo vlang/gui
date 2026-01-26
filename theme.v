@@ -37,16 +37,16 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_click:        cfg.color_focus
 			color_focus:        cfg.color_active
 			color_hover:        cfg.color_hover
-			border_width:       cfg.border_width
+			size_border:        cfg.size_border
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 		}
 		container_style:    ContainerStyle{
-			color:        color_transparent
-			padding:      cfg.padding
-			radius:       cfg.radius
-			spacing:      cfg.spacing_medium
-			border_width: cfg.border_width
+			color:       color_transparent
+			padding:     cfg.padding
+			radius:      cfg.radius
+			spacing:     cfg.spacing_medium
+			size_border: cfg.size_border
 		}
 		date_picker_style:  DatePickerStyle{
 			color:              cfg.color_interior
@@ -57,7 +57,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border_focus: cfg.color_select
 			color_select:       cfg.color_select
 			padding:            cfg.padding
-			border_width:       cfg.border_width
+			size_border:        cfg.size_border
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
@@ -66,7 +66,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color:        cfg.color_panel
 			color_border: cfg.color_border
 			padding:      cfg.padding_large
-			border_width: cfg.border_width
+			size_border:  cfg.size_border
 
 			radius:           cfg.radius
 			radius_border:    cfg.radius_border
@@ -80,7 +80,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color:        cfg.color_panel
 			color_border: cfg.color_border
 			padding:      cfg.padding_small
-			border_width: cfg.border_width
+			size_border:  cfg.size_border
 
 			radius:        cfg.radius
 			radius_border: cfg.radius_border
@@ -92,7 +92,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border_focus: cfg.color_border_focus
 			color_focus:        cfg.color_interior
 			padding:            cfg.padding
-			border_width:       cfg.border_width
+			size_border:        cfg.size_border
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
@@ -117,7 +117,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border: cfg.color_border
 			color_select: cfg.color_select
 			padding:      cfg.padding
-			border_width: cfg.border_width
+			size_border:  cfg.size_border
 
 			radius:           cfg.radius
 			radius_border:    cfg.radius_border
@@ -129,7 +129,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border: cfg.color_border
 			color_select: cfg.color_select
 			padding:      cfg.padding_small
-			border_width: cfg.border_width
+			size_border:  cfg.size_border
 
 			padding_submenu:     cfg.padding_small
 			padding_subtitle:    padding(0, cfg.padding_small.right, 0, cfg.padding_small.left)
@@ -159,7 +159,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_select:   cfg.color_select
 			color_unselect: cfg.color_active
 			text_style:     cfg.text_style
-			border_width:   cfg.border_width
+			size_border:    cfg.size_border
 		}
 		range_slider_style: RangeSliderStyle{
 			color:        cfg.color_interior
@@ -170,7 +170,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border: cfg.color_border
 			color_click:  cfg.color_select
 			padding:      padding_none
-			border_width: cfg.border_width
+			size_border:  cfg.size_border
 
 			radius:        cfg.radius_small
 			radius_border: cfg.radius_small
@@ -178,7 +178,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		rectangle_style:    RectangleStyle{
 			color_border: cfg.color_border
 			radius:       cfg.radius
-			border_width: cfg.border_width
+			size_border:  cfg.size_border
 		}
 		scrollbar_style:    ScrollbarStyle{
 			color_thumb:  cfg.color_active
@@ -194,7 +194,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_focus:        cfg.color_focus
 			color_select:       cfg.color_select
 			padding:            cfg.padding_small
-			border_width:       cfg.border_width
+			size_border:        cfg.size_border
 			radius:             cfg.radius_medium
 			radius_border:      cfg.radius_medium
 			text_style:         cfg.text_style
@@ -219,7 +219,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_select:       cfg.color_select
 			color_unselect:     cfg.color_active
 			padding:            padding_three
-			border_width:       cfg.border_width
+			size_border:        cfg.size_border
 			radius:             radius_large * 2
 			radius_border:      radius_large * 2
 			text_style:         cfg.text_style
@@ -234,7 +234,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_hover:        cfg.color_hover
 			color_select:       cfg.color_interior
 			padding:            padding(1, 1, 1, 2)
-			border_width:       cfg.border_width
+			size_border:        cfg.size_border
 			radius:             if cfg.radius != 0 { radius_small } else { 0 }
 			radius_border:      if radius_border != 0 { radius_small } else { 0 }
 			text_style:         cfg.text_style
@@ -248,7 +248,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
 			padding:            cfg.padding_small
-			border_width:       cfg.border_width
+			size_border:        cfg.size_border
 			radius:             cfg.radius_small
 			radius_border:      cfg.radius_small
 			text_style:         cfg.text_style
@@ -266,7 +266,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		padding_small:  cfg.padding_small
 		padding_medium: cfg.padding_medium
 		padding_large:  cfg.padding_large
-		border_width:   cfg.border_width
+		size_border:    cfg.size_border
 
 		radius_small:  cfg.radius_small
 		radius_medium: cfg.radius_medium

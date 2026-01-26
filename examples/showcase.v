@@ -242,36 +242,36 @@ fn buttons(w &gui.Window) gui.View {
 				v_align: .bottom
 				content: [
 					gui.button(
-						id_focus:     100
-						border_width: 0
+						id_focus:    100
+						size_border: 0
 
 						content:  [gui.text(text: 'No Border')]
 						on_click: button_click
 					),
 					gui.button(
-						id_focus:     101
-						border_width: 1
+						id_focus:    101
+						size_border: 1
 
 						content:  [gui.text(text: 'Thin Border')]
 						on_click: button_click
 					),
 					gui.button(
-						id_focus:     102
-						border_width: 2
+						id_focus:    102
+						size_border: 2
 
 						content:  [gui.text(text: 'Thicker Border')]
 						on_click: button_click
 					),
 					gui.button(
-						id_focus:     103
-						border_width: 3
+						id_focus:    103
+						size_border: 3
 
 						content:  [gui.text(text: 'Detached Border')]
 						on_click: button_click
 					),
 					gui.button(
-						id_focus:     104
-						border_width: 2
+						id_focus:    104
+						size_border: 2
 
 						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
@@ -324,44 +324,44 @@ fn inputs(w &gui.Window) gui.View {
 				sizing:  gui.fill_fit
 				content: [
 					gui.input(
-						id_focus:     200
-						width:        150
-						sizing:       gui.fixed_fit
-						text:         app.input_text
-						border_width: 0
+						id_focus:    200
+						width:       150
+						sizing:      gui.fixed_fit
+						text:        app.input_text
+						size_border: 0
 
 						placeholder:     'Plain...'
 						mode:            .single_line
 						on_text_changed: text_changed
 					),
 					gui.input(
-						id_focus:     201
-						width:        150
-						sizing:       gui.fixed_fit
-						text:         app.input_text
-						border_width: 1
+						id_focus:    201
+						width:       150
+						sizing:      gui.fixed_fit
+						text:        app.input_text
+						size_border: 1
 
 						placeholder:     'Thin Border...'
 						mode:            .single_line
 						on_text_changed: text_changed
 					),
 					gui.input(
-						id_focus:     202
-						width:        150
-						sizing:       gui.fixed_fit
-						text:         app.input_text
-						border_width: 2
+						id_focus:    202
+						width:       150
+						sizing:      gui.fixed_fit
+						text:        app.input_text
+						size_border: 2
 
 						placeholder:     'Thicker Border...'
 						mode:            .single_line
 						on_text_changed: text_changed
 					),
 					gui.input(
-						id_focus:     203
-						width:        150
-						sizing:       gui.fixed_fit
-						text:         app.input_text
-						border_width: 1
+						id_focus:    203
+						width:       150
+						sizing:      gui.fixed_fit
+						text:        app.input_text
+						size_border: 1
 
 						placeholder:     'Password...'
 						is_password:     true
@@ -376,11 +376,11 @@ fn inputs(w &gui.Window) gui.View {
 				content: [
 					gui.text(text: 'Multiline Text Input:'),
 					gui.input(
-						id_focus:     204
-						width:        300
-						sizing:       gui.fixed_fit
-						text:         app.input_multiline
-						border_width: 1
+						id_focus:    204
+						width:       300
+						sizing:      gui.fixed_fit
+						text:        app.input_multiline
+						size_border: 1
 
 						placeholder:     'Multline...'
 						mode:            .multiline

@@ -13,7 +13,7 @@ pub:
 	color        Color   = gui_theme.expand_panel_style.color
 	color_border Color   = gui_theme.expand_panel_style.color_border
 	padding      Padding = gui_theme.expand_panel_style.padding
-	border_width f32     = gui_theme.expand_panel_style.border_width
+	size_border  f32     = gui_theme.expand_panel_style.size_border
 
 	radius        f32 = gui_theme.expand_panel_style.radius
 	radius_border f32 = gui_theme.expand_panel_style.radius_border
@@ -32,7 +32,7 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 		id:           cfg.id
 		color:        cfg.color
 		color_border: cfg.color_border
-		border_width: cfg.border_width
+		size_border:  cfg.size_border
 		padding:      cfg.padding
 		radius:       cfg.radius
 		sizing:       cfg.sizing

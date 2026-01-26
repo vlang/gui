@@ -96,14 +96,14 @@ fn get_row(ops []string) []gui.View {
 
 	for op in ops {
 		content << gui.button(
-			id:           op
-			content:      [gui.text(text: op)]
-			width:        bsize
-			height:       bsize
-			sizing:       gui.fixed_fixed
-			h_align:      .center
-			v_align:      .middle
-			border_width: 0
+			id:          op
+			content:     [gui.text(text: op)]
+			width:       bsize
+			height:      bsize
+			sizing:      gui.fixed_fixed
+			h_align:     .center
+			v_align:     .middle
+			size_border: 0
 
 			padding:  gui.padding_none
 			on_click: btn_click

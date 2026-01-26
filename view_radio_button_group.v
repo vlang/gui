@@ -58,7 +58,7 @@ pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 		title:        cfg.title
 		title_bg:     cfg.title_bg
 		color_border: gui_theme.color_border
-		border_width: gui_theme.border_width
+		size_border:  gui_theme.size_border
 		padding:      if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
 		min_width:    cfg.min_width
 		min_height:   cfg.min_height
@@ -75,7 +75,7 @@ pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
 		title:        cfg.title
 		title_bg:     cfg.title_bg
 		color_border: gui_theme.color_border
-		border_width: gui_theme.border_width
+		size_border:  gui_theme.size_border
 		padding:      if cfg.title.len == 0 {
 			gui_theme.padding_medium
 		} else {

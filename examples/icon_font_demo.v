@@ -81,7 +81,7 @@ fn search_box(text string) gui.View {
 		padding:       gui.pad_tblr(5, 10)
 		min_width:     100
 		max_width:     100
-		border_width:  1
+		size_border:   1
 
 		color_border:    gui.theme().color_border
 		placeholder:     'Search'

@@ -74,7 +74,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				disabled:     item_cfg.disabled
 				color:        color
 				color_border: color
-				border_width: 1
+				size_border:  1
 				padding:      item_cfg.padding
 				radius:       item_cfg.radius
 				sizing:       item_cfg.sizing

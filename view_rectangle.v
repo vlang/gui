@@ -15,7 +15,7 @@ pub:
 	min_height   f32
 	max_height   f32
 	radius       f32 = gui_theme.rectangle_style.radius
-	border_width f32 = gui_theme.rectangle_style.border_width
+	size_border  f32 = gui_theme.rectangle_style.size_border
 	disabled     bool
 	invisible    bool
 }
@@ -39,7 +39,7 @@ pub fn rectangle(cfg RectangleCfg) View {
 		gradient:     cfg.gradient
 		padding:      padding_none
 		radius:       cfg.radius
-		border_width: cfg.border_width
+		size_border:  cfg.size_border
 		spacing:      0
 	}
 	return container(container_cfg)

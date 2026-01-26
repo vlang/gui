@@ -50,7 +50,7 @@ pub:
 	color_border_focus Color   = color_select_dark
 	padding            Padding = padding_button
 	padding_border     Padding = padding_none
-	border_width       f32     = size_border
+	size_border        f32     = size_border
 	radius             f32     = radius_medium
 	radius_border      f32     = radius_medium
 }
@@ -66,7 +66,7 @@ pub:
 	shadow          BoxShadow
 	gradient        &Gradient = unsafe { nil }
 	border_gradient &Gradient = unsafe { nil }
-	border_width    f32       = size_border
+	size_border     f32       = size_border
 }
 
 pub struct DatePickerStyle {
@@ -84,7 +84,7 @@ pub:
 	color_border_focus       Color     = color_select_dark
 	color_select             Color     = color_select_dark
 	padding                  Padding   = padding_none
-	border_width             f32       = size_border
+	size_border              f32       = size_border
 	radius                   f32       = radius_medium
 	radius_border            f32       = radius_medium
 	text_style               TextStyle = text_style_dark
@@ -95,7 +95,7 @@ pub:
 	color            Color           = color_panel_dark
 	color_border     Color           = color_border_dark
 	padding          Padding         = padding_large
-	border_width     f32             = size_border
+	size_border      f32             = size_border
 	radius           f32             = radius_medium
 	radius_border    f32             = radius_medium
 	align_buttons    HorizontalAlign = .center
@@ -110,7 +110,7 @@ pub struct ExpandPanelStyle {
 	color         Color   = color_panel_dark
 	color_border  Color   = color_border_dark
 	padding       Padding = padding_one
-	border_width  f32     = size_border
+	size_border   f32     = size_border
 	radius        f32     = radius_medium
 	radius_border f32     = radius_medium
 }
@@ -124,7 +124,7 @@ pub:
 	color_focus        Color     = color_active_dark
 	padding            Padding   = padding_small
 	padding_border     Padding   = padding_none
-	border_width       f32       = size_border
+	size_border        f32       = size_border
 	radius             f32       = radius_medium
 	radius_border      f32       = radius_medium
 	text_style         TextStyle = text_style_dark
@@ -151,7 +151,7 @@ pub:
 	color_border     Color     = color_border_dark
 	color_select     Color     = color_select_dark
 	padding          Padding   = padding_button
-	border_width     f32       = size_border
+	size_border      f32       = size_border
 	radius           f32       = radius_medium
 	radius_border    f32       = radius_medium
 	text_style       TextStyle = text_style_dark
@@ -169,7 +169,7 @@ pub:
 	padding_menu_item   Padding   = padding_two_five
 	padding_submenu     Padding   = padding_small
 	padding_subtitle    Padding   = padding_two_five
-	border_width        f32       = size_border
+	size_border         f32       = size_border
 	radius              f32       = radius_small
 	radius_border       f32       = radius_border
 	radius_submenu      f32       = radius_small
@@ -205,7 +205,7 @@ pub:
 	color_select   Color     = color_select_dark
 	color_unselect Color     = color_transparent
 	padding        Padding   = pad_all(4)
-	border_width   f32       = f32(2.0)
+	size_border    f32       = f32(2.0)
 	text_style     TextStyle = text_style_dark
 }
 
@@ -221,7 +221,7 @@ pub:
 	color_hover   Color   = color_hover_dark
 	color_border  Color   = color_border_dark
 	padding       Padding = padding_none
-	border_width  f32     = size_border
+	size_border   f32     = size_border
 	radius        f32     = radius_small
 	radius_border f32     = radius_small
 }
@@ -232,7 +232,7 @@ pub:
 	color_border Color     = color_border_dark
 	radius       f32       = radius_medium
 	gradient     &Gradient = unsafe { nil }
-	border_width f32       = size_border
+	size_border  f32       = size_border
 }
 
 pub struct ScrollbarStyle {
@@ -256,7 +256,7 @@ pub:
 	color_border_focus Color     = color_select_dark
 	color_select       Color     = color_select_dark
 	padding            Padding   = padding_small
-	border_width       f32       = size_border
+	size_border        f32       = size_border
 	radius             f32       = radius_medium
 	radius_border      f32       = radius_medium
 	text_style         TextStyle = text_style_dark
@@ -283,7 +283,7 @@ pub:
 	color_select       Color     = color_select_dark
 	color_unselect     Color     = color_active_dark
 	padding            Padding   = padding_three
-	border_width       f32       = size_border
+	size_border        f32       = size_border
 	radius             f32       = radius_large * 2
 	radius_border      f32       = radius_large * 2
 	text_style         TextStyle = text_style_dark
@@ -342,7 +342,7 @@ pub:
 	color_hover        Color     = color_hover_dark
 	color_select       Color     = color_interior_dark
 	padding            Padding   = padding(1, 1, 1, 2)
-	border_width       f32       = size_border
+	size_border        f32       = size_border
 	radius             f32       = radius_small
 	radius_border      f32       = radius_small
 	text_style         TextStyle = text_style_icon_dark
@@ -358,7 +358,7 @@ pub struct TooltipStyle {
 	color_border       Color         = color_border_dark
 	color_border_focus Color         = color_select_dark
 	padding            Padding       = padding_small
-	border_width       f32           = size_border
+	size_border        f32           = size_border
 	radius             f32           = radius_small
 	radius_border      f32           = radius_small
 	text_style         TextStyle     = text_style_dark

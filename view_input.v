@@ -82,7 +82,7 @@ pub:
 	id_scroll          u32
 	scroll_mode        ScrollMode
 	padding            Padding = gui_theme.input_style.padding
-	border_width       f32     = gui_theme.input_style.border_width
+	size_border        f32     = gui_theme.input_style.size_border
 	color              Color   = gui_theme.input_style.color
 	color_hover        Color   = gui_theme.input_style.color_hover
 	color_border       Color   = gui_theme.input_style.color_border
@@ -141,8 +141,6 @@ pub fn input(cfg InputCfg) View {
 	txt_style := if placeholder_active { cfg.placeholder_style } else { cfg.text_style }
 	mode := if cfg.mode == .single_line { TextMode.single_line } else { TextMode.wrap_keep_spaces }
 
-	border_width := cfg.border_width
-
 	return column(
 		name:            'input'
 		id:              cfg.id
@@ -158,7 +156,7 @@ pub fn input(cfg InputCfg) View {
 		clip:            true
 		color:           cfg.color
 		color_border:    cfg.color_border
-		border_width:    border_width
+		size_border:     cfg.size_border
 		invisible:       cfg.invisible
 		padding:         cfg.padding
 		radius:          cfg.radius
@@ -362,7 +360,7 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		ctx := w.ui
 		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
 		width := ctx.text_width(cfg.text + s)
-		if width > cfg.width - cfg.padding.width() - (cfg.border_width * 2) {
+		if width > cfg.width - cfg.padding.width() - (cfg.size_border * 2) {
 			return cfg.text
 		}
 	}

@@ -4,16 +4,16 @@ fn test_layout_widths_with_border() {
 	// Root is the container with axis LTR
 	mut root := Layout{
 		shape:    &Shape{
-			axis:         .left_to_right
-			border_width: 5 // Border should add 10 to width (5 left + 5 right)
-			padding:      Padding{
+			axis:        .left_to_right
+			size_border: 5 // Border should add 10 to width (5 left + 5 right)
+			padding:     Padding{
 				left:   10
 				right:  10
 				top:    0
 				bottom: 0
 			}
-			spacing:      0
-			width:        0 // Will be calculated
+			spacing:     0
+			width:       0 // Will be calculated
 		}
 		children: [
 			Layout{
@@ -37,16 +37,16 @@ fn test_layout_heights_with_border() {
 	// Root is the container with axis TTB
 	mut root := Layout{
 		shape:    &Shape{
-			axis:         .top_to_bottom
-			border_width: 5 // Border should add 10 to height (5 top + 5 bottom)
-			padding:      Padding{
+			axis:        .top_to_bottom
+			size_border: 5 // Border should add 10 to height (5 top + 5 bottom)
+			padding:     Padding{
 				left:   0
 				right:  0
 				top:    10
 				bottom: 10
 			}
-			spacing:      0
-			height:       0 // Will be calculated
+			spacing:     0
+			height:      0 // Will be calculated
 		}
 		children: [
 			Layout{
@@ -70,19 +70,19 @@ fn test_layout_position_with_border() {
 	// Root Container
 	mut root := Layout{
 		shape:    &Shape{
-			x:            0
-			y:            0
-			width:        100
-			height:       100
-			axis:         .left_to_right
-			border_width: 5
-			padding:      Padding{
+			x:           0
+			y:           0
+			width:       100
+			height:      100
+			axis:        .left_to_right
+			size_border: 5
+			padding:     Padding{
 				left:   10
 				right:  10
 				top:    10
 				bottom: 10
 			}
-			spacing:      0
+			spacing:     0
 		}
 		children: [
 			Layout{

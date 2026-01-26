@@ -96,8 +96,8 @@ fn main_view(w &gui.Window) gui.View {
 								mode:     .wrap
 							),
 							gui.button(
-								id_focus:     1
-								border_width: 2
+								id_focus:    1
+								size_border: 2
 
 								content:  [
 									gui.text(text: 'Click Count ${state.click_count}'),
@@ -123,13 +123,13 @@ fn main_view(w &gui.Window) gui.View {
 										text: 'label'
 									),
 									gui.input(
-										id_focus:     2
-										width:        120
-										sizing:       gui.fixed_fit
-										text:         state.other_input
-										placeholder:  'Type here...'
-										mode:         .single_line
-										border_width: 2
+										id_focus:    2
+										width:       120
+										sizing:      gui.fixed_fit
+										text:        state.other_input
+										placeholder: 'Type here...'
+										mode:        .single_line
+										size_border: 2
 
 										on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 											mut state := w.state[AppState]()
@@ -154,12 +154,12 @@ fn main_view(w &gui.Window) gui.View {
 				spacing: gui.spacing_large
 				content: [
 					gui.input(
-						id_focus:     3
-						width:        250
-						text:         state.name
-						mode:         .multiline
-						sizing:       gui.fixed_fit
-						border_width: 2
+						id_focus:    3
+						width:       250
+						text:        state.name
+						mode:        .multiline
+						sizing:      gui.fixed_fit
+						size_border: 2
 
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut state := w.state[AppState]()

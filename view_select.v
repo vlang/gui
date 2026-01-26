@@ -16,7 +16,7 @@ pub:
 	color_focus        Color   = gui_theme.select_style.color_focus
 	color_select       Color   = gui_theme.select_style.color_select
 	padding            Padding = gui_theme.select_style.padding
-	border_width       f32     = gui_theme.select_style.border_width
+	size_border        f32     = gui_theme.select_style.size_border
 
 	text_style        TextStyle = gui_theme.select_style.text_style
 	subheading_style  TextStyle = gui_theme.select_style.subheading_style
@@ -81,7 +81,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 			name: 'select dropdown'
 			id:   cfg.id + 'dropdown'
 			// Border props
-			border_width: cfg.border_width
+			size_border:  cfg.size_border
 			radius:       cfg.radius
 			color_border: cfg.color_border
 			// Background props
@@ -97,7 +97,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 			float:          true
 			float_anchor:   .bottom_left
 			float_tie_off:  .top_left
-			float_offset_y: -cfg.border_width
+			float_offset_y: -cfg.size_border
 
 			// List/Scroll Props merged
 			id_scroll: fnv1a.sum32_string(cfg.id + 'dropdown')
@@ -116,7 +116,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 		// Container props
 		color:        cfg.color
 		color_border: cfg.color_border
-		border_width: cfg.border_width
+		size_border:  cfg.size_border
 		radius:       cfg.radius
 		padding:      cfg.padding
 		sizing:       cfg.sizing

@@ -20,7 +20,7 @@ pub:
 	disabled       bool
 	select         bool
 	invisible      bool
-	border_width   f32 = gui_theme.radio_style.border_width
+	size_border    f32 = gui_theme.radio_style.size_border
 }
 
 // radio creates a radio button UI component that allows users to select a
@@ -32,10 +32,10 @@ pub:
 // styling.
 pub fn radio(cfg RadioCfg) View {
 	mut content := []View{cap: 2}
-	border_width := if cfg.border_width == 0 {
-		gui_theme.radio_style.border_width
+	bdr_sz := if cfg.size_border == 0 {
+		gui_theme.radio_style.size_border
 	} else {
-		cfg.border_width
+		cfg.size_border
 	}
 
 	content << circle(
@@ -44,7 +44,7 @@ pub fn radio(cfg RadioCfg) View {
 		height:       cfg.size
 		color:        if cfg.select { cfg.color_select } else { cfg.color_unselect }
 		color_border: cfg.color_border
-		border_width: border_width
+		size_border:  bdr_sz
 		radius:       cfg.size / 2 // Circle radius logic is automatic in render_circle but helpful for layout?
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible

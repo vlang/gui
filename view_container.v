@@ -69,7 +69,7 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			shadow:          cv.shadow
 			gradient:        cv.gradient
 			border_gradient: cv.border_gradient
-			border_width:    cv.border_width
+			size_border:     cv.size_border
 			color_border:    cv.color_border
 			disabled:        cv.disabled
 			float:           cv.float
@@ -160,7 +160,7 @@ pub:
 	shadow          BoxShadow     = gui_theme.container_style.shadow
 	gradient        &Gradient     = gui_theme.container_style.gradient
 	border_gradient &Gradient     = gui_theme.container_style.border_gradient
-	border_width    f32           = gui_theme.container_style.border_width
+	size_border     f32           = gui_theme.container_style.size_border
 	padding         Padding       = gui_theme.container_style.padding
 	sizing          Sizing
 	content         []View
@@ -280,7 +280,7 @@ fn container(cfg ContainerCfg) View {
 		shadow:          cfg.shadow
 		gradient:        cfg.gradient
 		border_gradient: cfg.border_gradient
-		border_width:    cfg.border_width
+		size_border:     cfg.size_border
 		color_border:    cfg.color_border
 		sizing:          cfg.sizing
 		spacing:         cfg.spacing

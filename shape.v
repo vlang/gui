@@ -61,7 +61,7 @@ pub mut:
 	shadow                BoxShadow // Drop shadow configuration
 	gradient              &Gradient = unsafe { nil } // Gradient background configuration
 	border_gradient       &Gradient = unsafe { nil } // Gradient border configuration
-	border_width          f32       = 1.0            // Thickness of the border
+	size_border           f32       = 1.0            // Thickness of the border
 
 	// 2 bytes
 	sizing Sizing // Sizing logic (e.g. fixed, fit, grow)
@@ -121,23 +121,23 @@ pub fn (shape &Shape) has_rtf_layout() bool {
 // padding_left returns the effective left padding (padding + border)
 @[inline]
 pub fn (shape &Shape) padding_left() f32 {
-	return shape.padding.left + shape.border_width
+	return shape.padding.left + shape.size_border
 }
 
 // padding_top returns the effective top padding (padding + border)
 @[inline]
 pub fn (shape &Shape) padding_top() f32 {
-	return shape.padding.top + shape.border_width
+	return shape.padding.top + shape.size_border
 }
 
 // padding_width returns the total horizontal padding (left + right + 2 * border)
 @[inline]
 pub fn (shape &Shape) padding_width() f32 {
-	return shape.padding.width() + (shape.border_width * 2)
+	return shape.padding.width() + (shape.size_border * 2)
 }
 
 // padding_height returns the total vertical padding (top + bottom + 2 * border)
 @[inline]
 pub fn (shape &Shape) padding_height() f32 {
-	return shape.padding.height() + (shape.border_width * 2)
+	return shape.padding.height() + (shape.size_border * 2)
 }

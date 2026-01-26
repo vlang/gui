@@ -247,7 +247,7 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
 fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
-	has_visible_border := shape.border_width > 0 && shape.color_border != color_transparent
+	has_visible_border := shape.size_border > 0 && shape.color_border != color_transparent
 	has_visible_text := shape.shape_type == .text && shape.text_style.color != color_transparent
 	if shape.color == color_transparent && shape.gradient == unsafe { nil }
 		&& shape.border_gradient == unsafe { nil } && !has_visible_border && !has_visible_text {
@@ -357,7 +357,7 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 		}
 
 		// Border
-		if shape.border_width > 0 {
+		if shape.size_border > 0 {
 			c_border := if shape.disabled {
 				dim_alpha(shape.color_border)
 			} else {
@@ -371,7 +371,7 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 					h:         draw_rect.height
 					color:     c_border.to_gx_color()
 					radius:    radius
-					thickness: shape.border_width
+					thickness: shape.size_border
 				}
 			}
 		}
@@ -408,7 +408,7 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 		}
 
 		// Border
-		if shape.border_width > 0 {
+		if shape.size_border > 0 {
 			c_border := if shape.disabled {
 				dim_alpha(shape.color_border)
 			} else {
@@ -423,7 +423,7 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 					h:         draw_rect.height
 					color:     c_border.to_gx_color()
 					radius:    shape.radius
-					thickness: shape.border_width
+					thickness: shape.size_border
 				}
 			}
 		}

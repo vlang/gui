@@ -81,7 +81,7 @@ pub:
 	padding_small  Padding = padding_small
 	padding_medium Padding = padding_medium
 	padding_large  Padding = padding_large
-	border_width   f32
+	size_border    f32
 
 	radius_small  f32 = radius_small
 	radius_medium f32 = radius_medium
@@ -123,7 +123,7 @@ pub:
 	fill               bool    = true
 	fill_border        bool    = true
 	padding            Padding = padding_medium
-	border_width       f32
+	size_border        f32
 
 	radius        f32       = radius_medium
 	radius_border f32       = radius_border

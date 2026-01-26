@@ -259,8 +259,8 @@ fn list_view(mut w gui.Window) gui.View {
 
 		content << w.table(
 			data:            rows
-			color_border: gui.white
-			align_head: .left
+			color_border:    gui.white
+			align_head:      .left
 			text_style_head: gui.theme().b3
 			text_style:      gui.theme().n2
 		)

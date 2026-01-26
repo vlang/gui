@@ -31,7 +31,7 @@ pub:
 	sizing              Sizing    = fill_fit
 	padding             Padding   = gui_theme.menubar_style.padding
 	padding_menu_item   Padding   = gui_theme.menubar_style.padding_menu_item
-	border_width        f32       = gui_theme.menubar_style.border_width
+	size_border         f32       = gui_theme.menubar_style.size_border
 	padding_submenu     Padding   = gui_theme.menubar_style.padding_submenu
 
 	padding_subtitle Padding = gui_theme.menubar_style.padding_subtitle
@@ -109,7 +109,7 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 		float_tie_off: cfg.float_tie_off
 		disabled:      cfg.disabled
 		invisible:     cfg.invisible
-		border_width:  cfg.border_width
+		size_border:   cfg.size_border
 		sizing:        cfg.sizing
 		on_keydown:    cfg.on_keydown
 		amend_layout:  cfg.amend_layout_menubar
