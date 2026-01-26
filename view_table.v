@@ -80,7 +80,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 
 			cells << column(
 				name:         'table cell'
-				color:        cfg.color_border
+				color:        color_transparent
 				color_border: cfg.color_border
 				padding:      cfg.cell_padding
 				radius:       0
@@ -113,7 +113,6 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 		name:         'table'
 		id:           cfg.id
 		color:        color_transparent
-		color_border: cfg.color_border
 		padding:      padding_none
 		radius:       0
 		spacing:      -cfg.border_width
