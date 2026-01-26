@@ -55,9 +55,10 @@ fn main_view(w &gui.Window) gui.View {
 						color:  gui.purple
 					),
 					gui.rectangle(
-						width:  75
-						sizing: gui.fit_fill
-						color:  gui.color_transparent
+						width:        75
+						color_border: gui.color_transparent
+						sizing:       gui.fit_fill
+						color:        gui.color_transparent
 					),
 					gui.rectangle(
 						width:  75
@@ -67,11 +68,12 @@ fn main_view(w &gui.Window) gui.View {
 				]
 			),
 			gui.row(
-				id:      'orange'
-				title:   ' orange  '
-				color:   gui.orange
-				sizing:  gui.fill_fill
-				content: [
+				id:           'orange'
+				title:        ' orange  '
+				color:        gui.color_transparent
+				color_border: gui.orange
+				sizing:       gui.fill_fill
+				content:      [
 					gui.column(
 						id:      'col'
 						color:   gui.theme().color_panel
@@ -79,8 +81,8 @@ fn main_view(w &gui.Window) gui.View {
 						spacing: gui.theme().spacing_large
 						content: [
 							gui.row(
-								color:   gui.white
-								content: [
+								color_border: gui.white
+								content:      [
 									gui.text(
 										text:       'Hello world!'
 										text_style: gui.theme().b2
@@ -165,11 +167,11 @@ fn main_view(w &gui.Window) gui.View {
 						}
 					),
 					gui.column(
-						color:    gui.theme().text_style.color
-						sizing:   gui.fill_fit
-						title:    '  mode = .wrap  '
-						title_bg: gui.theme().color_panel
-						content:  [
+						color_border: gui.theme().text_style.color
+						sizing:       gui.fill_fit
+						title:        '  mode = .wrap  '
+						title_bg:     gui.theme().color_panel
+						content:      [
 							gui.text(
 								id_focus: 6
 								text:     state.name
@@ -178,11 +180,11 @@ fn main_view(w &gui.Window) gui.View {
 						]
 					),
 					gui.column(
-						color:    gui.theme().text_style.color
-						sizing:   gui.fill_fit
-						title:    '  mode = .wrap_keep_spaces  '
-						title_bg: gui.theme().color_panel
-						content:  [
+						color_border: gui.theme().text_style.color
+						sizing:       gui.fill_fit
+						title:        '  mode = .wrap_keep_spaces  '
+						title_bg:     gui.theme().color_panel
+						content:      [
 							gui.text(
 								id_focus: 7
 								text:     state.name
@@ -202,9 +204,10 @@ fn main_view(w &gui.Window) gui.View {
 						color:  gui.orange
 					),
 					gui.rectangle(
-						width:  75
-						sizing: gui.fit_fill
-						color:  gui.color_transparent
+						width:        75
+						color_border: gui.color_transparent
+						sizing:       gui.fit_fill
+						color:        gui.color_transparent
 					),
 					gui.rectangle(
 						width:  75

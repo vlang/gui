@@ -110,13 +110,13 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 		)
 	}
 	return column(
-		name:         'table'
-		id:           cfg.id
-		color:        color_transparent
-		padding:      padding_none
-		radius:       0
-		spacing:      -cfg.border_width
-		content:      rows
+		name:    'table'
+		id:      cfg.id
+		color:   color_transparent
+		padding: padding_none
+		radius:  0
+		spacing: -cfg.border_width
+		content: rows
 	)
 }
 
