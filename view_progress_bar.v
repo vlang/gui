@@ -23,7 +23,6 @@ pub:
 	percent         f32 // 0.0 <= percent <= 1.0
 	radius          f32  = gui_theme.progress_bar_style.radius
 	text_show       bool = gui_theme.progress_bar_style.text_show
-	text_fill       bool = gui_theme.progress_bar_style.text_fill
 	disabled        bool
 	invisible       bool
 	indefinite      bool // TODO: not implemented
@@ -35,7 +34,6 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 	mut content := []View{cap: 2}
 	content << row(
 		name:    'progress_bar left-bar'
-		fill:    true
 		padding: padding_none
 		radius:  cfg.radius
 		color:   cfg.color_bar
@@ -46,7 +44,6 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 		content << row(
 			name:    'progress_bar percent'
 			color:   cfg.text_background
-			fill:    cfg.text_fill
 			padding: cfg.text_padding
 			content: [text(text: '${percent:.0}%', text_style: cfg.text_style)]
 		)
@@ -67,7 +64,6 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 		radius:       cfg.radius
 		sizing:       cfg.sizing
 		padding:      padding_none
-		fill:         true
 		h_align:      .center
 		v_align:      .middle
 		amend_layout: cfg.amend_layout

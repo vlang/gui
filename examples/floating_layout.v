@@ -56,7 +56,6 @@ fn main_view(window &gui.Window) gui.View {
 			// composed using only gui primitives and float layouts.
 			gui.row(
 				color:   gui.theme().color_interior
-				fill:    true
 				sizing:  gui.fill_fit
 				v_align: .middle
 				content: [
@@ -72,14 +71,12 @@ fn main_view(window &gui.Window) gui.View {
 				content: [
 					gui.column(
 						color:     gui.theme().color_interior
-						fill:      true
 						sizing:    gui.fill_fill
 						min_width: 100
 						max_width: 150
 					),
 					gui.column(
 						color:     gui.theme().color_interior
-						fill:      true
 						sizing:    gui.fill_fill
 						min_width: 100
 					),
@@ -91,7 +88,6 @@ fn main_view(window &gui.Window) gui.View {
 				float_tie_off: .middle_center
 				h_align:       .center
 				color:         gui.theme().color_active
-				fill:          true
 				content:       [
 					gui.text(text: 'Floating column with content', text_style: gui.theme().b2),
 					gui.button(content: [gui.text(text: 'OK')]),
@@ -116,7 +112,6 @@ fn faux_edit_menu(app &FloatingLayoutApp) gui.View {
 					...gui.theme().color_focus
 					a: 210
 				}
-				fill:         true
 				content:      [
 					gui.text(text: 'Cut'),
 					gui.text(text: 'Copy'),
@@ -131,7 +126,6 @@ fn faux_edit_menu(app &FloatingLayoutApp) gui.View {
 								float_offset_x: 5
 								min_width:      75
 								max_width:      100
-								fill:           true
 								color:          gui.Color{
 									...gui.theme().color_focus
 									a: 210

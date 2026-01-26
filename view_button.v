@@ -31,8 +31,6 @@ pub:
 	id_focus           u32
 	h_align            HorizontalAlign = .center
 	v_align            VerticalAlign   = .middle
-	fill               bool            = gui_theme.button_style.fill
-	fill_border        bool            = gui_theme.button_style.fill_border
 	disabled           bool
 	invisible          bool
 }
@@ -65,7 +63,6 @@ pub fn button(cfg ButtonCfg) View {
 		border_width: border_width
 		padding:      cfg.padding
 		radius:       cfg.radius // Use radius, radius_border becomes redundant or same?
-		fill:         cfg.fill
 		width:        cfg.width
 		height:       cfg.height
 		min_width:    cfg.min_width

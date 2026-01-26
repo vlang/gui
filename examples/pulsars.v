@@ -40,7 +40,6 @@ fn main_view(mut window gui.Window) gui.View {
 fn pulsar_samples(mut w gui.Window) gui.View {
 	pulsar_width := f32(30)
 	return gui.row(
-		fill:    false
 		color:   gui.theme().text_style.color
 		padding: gui.padding_large
 		content: [

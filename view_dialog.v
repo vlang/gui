@@ -60,8 +60,6 @@ pub:
 	id_focus         u32 = dialog_base_id_focus
 	dialog_type      DialogType
 	align_buttons    HorizontalAlign = gui_theme.dialog_style.align_buttons
-	fill             bool            = gui_theme.dialog_style.fill
-	fill_border      bool            = gui_theme.dialog_style.fill_border
 }
 
 fn dialog_view_generator(cfg DialogCfg) View {
@@ -87,7 +85,6 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		float_anchor:  .middle_center
 		float_tie_off: .middle_center
 		color:         cfg.color
-		fill:          cfg.fill
 		color_border:  cfg.color_border
 		border_width:  cfg.border_width
 		radius:        cfg.radius

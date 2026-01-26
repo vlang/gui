@@ -44,7 +44,6 @@ fn main_view(w &gui.Window) gui.View {
 		width:   width
 		height:  height
 		sizing:  gui.fixed_fixed
-		fill:    true
 		content: [
 			gui.column(
 				padding: gui.padding_none
@@ -53,7 +52,6 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  75
 						height: 50
-						fill:   true
 						color:  gui.purple
 					),
 					gui.rectangle(
@@ -64,7 +62,6 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  75
 						height: 50
-						fill:   true
 						color:  gui.green
 					),
 				]
@@ -79,7 +76,6 @@ fn main_view(w &gui.Window) gui.View {
 						id:      'col'
 						color:   gui.theme().color_panel
 						sizing:  gui.fill_fill
-						fill:    true
 						spacing: gui.theme().spacing_large
 						content: [
 							gui.row(
@@ -145,7 +141,6 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  25
 						height: 25
-						fill:   true
 						sizing: gui.fill_fill
 						color:  gui.dark_green
 					),
@@ -153,7 +148,6 @@ fn main_view(w &gui.Window) gui.View {
 			),
 			gui.column(
 				color:   gui.theme().color_panel
-				fill:    true
 				sizing:  gui.fill_fill
 				spacing: gui.spacing_large
 				content: [
@@ -172,7 +166,6 @@ fn main_view(w &gui.Window) gui.View {
 					),
 					gui.column(
 						color:    gui.theme().text_style.color
-						fill:     false
 						sizing:   gui.fill_fit
 						title:    '  mode = .wrap  '
 						title_bg: gui.theme().color_panel
@@ -186,7 +179,6 @@ fn main_view(w &gui.Window) gui.View {
 					),
 					gui.column(
 						color:    gui.theme().text_style.color
-						fill:     false
 						sizing:   gui.fill_fit
 						title:    '  mode = .wrap_keep_spaces  '
 						title_bg: gui.theme().color_panel
@@ -207,7 +199,6 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  75
 						height: 50
-						fill:   true
 						color:  gui.orange
 					),
 					gui.rectangle(
@@ -218,7 +209,6 @@ fn main_view(w &gui.Window) gui.View {
 					gui.rectangle(
 						width:  75
 						height: 50
-						fill:   true
 						color:  gui.yellow
 					),
 				]

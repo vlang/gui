@@ -45,7 +45,6 @@ pub fn radio(cfg RadioCfg) View {
 		color:        if cfg.select { cfg.color_select } else { cfg.color_unselect }
 		color_border: cfg.color_border
 		border_width: border_width
-		fill:         cfg.select
 		radius:       cfg.size / 2 // Circle radius logic is automatic in render_circle but helpful for layout?
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible

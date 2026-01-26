@@ -29,8 +29,6 @@ pub:
 	id_focus          u32
 	select_multiple   bool
 	no_wrap           bool
-	fill              bool = gui_theme.select_style.fill
-	fill_border       bool = gui_theme.select_style.fill_border
 	sizing            Sizing
 }
 
@@ -101,8 +99,6 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 			float_tie_off:  .top_left
 			float_offset_y: -cfg.border_width
 
-			fill: cfg.fill
-
 			// List/Scroll Props merged
 			id_scroll: fnv1a.sum32_string(cfg.id + 'dropdown')
 			padding:   padding(pad_small, pad_medium, pad_small, pad_small)
@@ -120,7 +116,6 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 		// Container props
 		color:        cfg.color
 		color_border: cfg.color_border
-		fill:         cfg.fill
 		border_width: cfg.border_width
 		radius:       cfg.radius
 		padding:      cfg.padding
@@ -262,7 +257,6 @@ fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_sc
 	color_select := cfg.color_select
 
 	return row(
-		fill:     true
 		color:    if highlighted { cfg.color_select } else { color_transparent }
 		padding:  padding(0, pad_small, 0, 1)
 		sizing:   fill_fit

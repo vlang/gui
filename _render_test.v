@@ -57,7 +57,6 @@ fn test_render_rectangle_inside_clip() {
 		width:        30
 		height:       40
 		color:        rgb(100, 150, 200)
-		fill:         true
 		radius:       5
 		border_width: 0
 	}
@@ -93,7 +92,6 @@ fn test_render_rectangle_outside_clip_disables_shape() {
 		width:      20
 		height:     20
 		color:      rgb(10, 10, 10)
-		fill:       false
 	}
 	clip := make_clip(0, 0, 50, 50)
 
@@ -115,7 +113,6 @@ fn test_render_circle_inside_clip() {
 		width:        40
 		height:       20
 		color:        rgb(1, 2, 3)
-		fill:         true
 		border_width: 0
 	}
 	clip := make_clip(-10, -10, 100, 100)
@@ -131,7 +128,6 @@ fn test_render_circle_inside_clip() {
 			assert f32_are_close(c.y, s.y + s.height / 2)
 			// Radius is half of the shortest side
 			assert f32_are_close(c.radius, f32_min(s.width, s.height) / 2)
-			assert c.fill == s.fill
 			assert c.color == s.color.to_gx_color()
 		}
 		else {

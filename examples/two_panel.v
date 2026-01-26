@@ -28,7 +28,6 @@ fn main_view(mut w gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		content: [
 			gui.column(
-				fill:       true
 				sizing:     gui.fill_fill
 				max_width:  150
 				max_height: 330

@@ -111,7 +111,6 @@ fn group_select(group string, app &ArrowsApp) gui.View {
 	}
 	return gui.row(
 		color:    color
-		fill:     app.selected_group == group
 		padding:  gui.theme().padding_small
 		content:  [gui.text(text: group, text_style: gui.theme().n3)]
 		on_click: fn [group] (_ voidptr, mut e gui.Event, mut w gui.Window) {
@@ -120,7 +119,6 @@ fn group_select(group string, app &ArrowsApp) gui.View {
 			w.scroll_to_view('group-${group}')
 		}
 		on_hover: fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			layout.shape.fill = true
 			layout.shape.color = gui.theme().color_hover
 			w.set_mouse_cursor_pointing_hand()
 		}

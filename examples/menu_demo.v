@@ -209,7 +209,6 @@ fn body(mut app MenuApp, window &gui.Window) gui.View {
 		content: [
 			gui.rectangle(
 				height: 40
-				fill:   false
 				color:  gui.color_transparent
 				sizing: gui.fill_fixed
 			),

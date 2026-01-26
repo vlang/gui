@@ -91,8 +91,6 @@ pub:
 	disabled           bool
 	invisible          bool
 	is_password        bool // mask input characters with '*'s
-	fill               bool = gui_theme.input_style.fill
-	fill_border        bool = gui_theme.input_style.fill_border
 }
 
 // input
@@ -162,7 +160,6 @@ pub fn input(cfg InputCfg) View {
 		color_border:    cfg.color_border
 		border_width:    border_width
 		invisible:       cfg.invisible
-		fill:            cfg.fill
 		padding:         cfg.padding
 		radius:          cfg.radius
 		sizing:          cfg.sizing

@@ -69,14 +69,12 @@ pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 
 	return row(
 		name:         'date_picker border'
-		fill:         cfg.fill_border
 		color:        cfg.color_border
 		invisible:    cfg.invisible
 		border_width: cfg.border_width
 
 		content: [
 			column(
-				fill:    cfg.fill
 				color:   cfg.color
 				padding: cfg.padding
 				name:    'date_picker interior'
@@ -117,8 +115,6 @@ pub:
 	disabled                 bool
 	invisible                bool
 	select_multiple          bool
-	fill                     bool = gui_theme.date_picker_style.fill
-	fill_border              bool = gui_theme.date_picker_style.fill_border
 	hide_today_indicator     bool = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week bool = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months     bool = gui_theme.date_picker_style.show_adjacent_months

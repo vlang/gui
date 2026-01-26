@@ -18,7 +18,6 @@ pub:
 	border_width f32 = gui_theme.rectangle_style.border_width
 	disabled     bool
 	invisible    bool
-	fill         bool = gui_theme.rectangle_style.fill
 }
 
 // rectangle draws a rectangle (shocking!). Rectangles can be filled, outlined,
@@ -38,7 +37,6 @@ pub fn rectangle(cfg RectangleCfg) View {
 		color:        cfg.color
 		color_border: cfg.color_border
 		gradient:     cfg.gradient
-		fill:         cfg.fill
 		padding:      padding_none
 		radius:       cfg.radius
 		border_width: cfg.border_width

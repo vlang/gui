@@ -38,7 +38,6 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				name:     'menu_item separator'
 				id:       item_cfg.id
 				height:   item_cfg.text_style.size / 2
-				fill:     true
 				sizing:   fill_fit
 				padding:  padding_none
 				v_align:  .middle
@@ -76,7 +75,6 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 				color:        color
 				color_border: color
 				border_width: 1
-				fill:         item_cfg.selected
 				padding:      item_cfg.padding
 				radius:       item_cfg.radius
 				sizing:       item_cfg.sizing

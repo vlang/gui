@@ -40,8 +40,6 @@ pub:
 	disabled                 bool
 	invisible                bool
 	select_multiple          bool
-	fill                     bool = gui_theme.date_picker_style.fill
-	fill_border              bool = gui_theme.date_picker_style.fill_border
 	hide_today_indicator     bool = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week bool = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months     bool = gui_theme.date_picker_style.show_adjacent_months
@@ -107,8 +105,6 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 				color_border_focus: cfg.color_border_focus
 				disabled:           cfg.disabled
 				invisible:          cfg.invisible
-				fill:               cfg.fill
-				fill_border:        cfg.fill_border
 			),
 			row(
 				float:          true
@@ -144,8 +140,6 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 						disabled:                 cfg.disabled
 						invisible:                cfg.invisible
 						select_multiple:          cfg.select_multiple
-						fill:                     cfg.fill
-						fill_border:              cfg.fill_border
 						hide_today_indicator:     cfg.hide_today_indicator
 						monday_first_day_of_week: cfg.monday_first_day_of_week
 						show_adjacent_months:     cfg.show_adjacent_months

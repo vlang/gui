@@ -48,7 +48,6 @@ fn side_panel(mut w gui.Window) gui.View {
 	return gui.column(
 		id:      'side-panel'
 		color:   gui.theme().color_interior
-		fill:    true
 		sizing:  gui.fit_fill
 		padding: gui.padding_large
 		content: [

@@ -82,7 +82,6 @@ fn main_view(mut w gui.Window) gui.View {
 		v_align: .middle
 		content: [
 			gui.column(
-				fill:    true
 				spacing: bpadding
 				color:   gui.rgb(195, 105, 0)
 				padding: gui.padding_medium

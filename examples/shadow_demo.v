@@ -153,7 +153,6 @@ fn main_view(mut w gui.Window) gui.View {
 						height:  150
 						radius:  10
 						color:   gui.light_blue
-						fill:    true
 						shadow:  gui.BoxShadow{
 							blur_radius: 15
 							offset_y:    5
@@ -177,7 +176,6 @@ fn main_view(mut w gui.Window) gui.View {
 						height:  150
 						radius:  10
 						color:   gui.orange
-						fill:    true
 						shadow:  gui.BoxShadow{
 							blur_radius: 20
 							offset_y:    8

@@ -28,8 +28,6 @@ pub:
 	disabled           bool
 	invisible          bool
 	select             bool
-	fill               bool = gui_theme.toggle_style.fill
-	fill_border        bool = gui_theme.toggle_style.fill_border
 }
 
 // toggle creates a toggle button (a.k.a checkbox) from the given [ToggleCfg](#ToggleCfg)
@@ -57,7 +55,6 @@ pub fn toggle(cfg ToggleCfg) View {
 		color_border: cfg.color_border
 		border_width: border_width
 		padding:      padding
-		fill:         cfg.fill
 		radius:       cfg.radius
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible

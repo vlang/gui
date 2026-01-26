@@ -15,7 +15,6 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 		name:          'menubar'
 		id:            cfg.id
 		color:         cfg.color
-		fill:          true
 		float:         cfg.float
 		float_anchor:  cfg.float_anchor
 		float_tie_off: cfg.float_tie_off
@@ -90,7 +89,6 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 					border_width: cfg.border_width
 					color_border: cfg.color_border
 
-					fill:           true
 					float:          true
 					float_anchor:   if level == 0 { .bottom_left } else { .top_right }
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }

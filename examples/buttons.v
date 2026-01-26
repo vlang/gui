@@ -85,7 +85,6 @@ fn main_view(mut window gui.Window) gui.View {
 						content:      [gui.text(text: button_text)]
 						min_width:    b_width
 						max_width:    b_width
-						fill_border:  false
 						border_width: 1
 
 						on_click: click_handler

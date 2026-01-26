@@ -61,7 +61,6 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			spacing:         cv.spacing
 			sizing:          cv.sizing
 			padding:         cv.padding
-			fill:            cv.fill
 			h_align:         cv.h_align
 			v_align:         cv.v_align
 			radius:          cv.radius
@@ -199,7 +198,6 @@ pub:
 	clip            bool
 	focus_skip      bool
 	over_draw       bool
-	fill            bool = gui_theme.container_style.fill
 	float           bool
 }
 
@@ -274,7 +272,6 @@ fn container(cfg ContainerCfg) View {
 		max_height:      if cfg.sizing.height == .fixed { cfg.height } else { cfg.max_height }
 		clip:            cfg.clip
 		color:           cfg.color
-		fill:            cfg.fill
 		h_align:         cfg.h_align
 		v_align:         cfg.v_align
 		padding:         cfg.padding
@@ -433,7 +430,6 @@ fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 			color:        eraser_color
 			color_border: eraser_color
 			float:        true
-			fill:         true
 		}
 	}
 	// 2. Text Node

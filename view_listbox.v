@@ -27,9 +27,7 @@ pub:
 	radius_border    f32 = gui_theme.list_box_style.radius_border
 	id_scroll        u32
 	multiple         bool // allow multiple selections
-	fill             bool = gui_theme.list_box_style.fill
-	fill_border      bool = gui_theme.list_box_style.fill_border
-	border_width     f32  = gui_theme.list_box_style.border_width
+	border_width     f32 = gui_theme.list_box_style.border_width
 }
 
 // ListBoxOption is the data for a row in a [list_box](#list_box).
@@ -91,7 +89,6 @@ pub fn list_box(cfg ListBoxCfg) View {
 		list << row(
 			name:     'list_box option'
 			color:    color
-			fill:     true
 			padding:  padding_two_five
 			sizing:   fill_fit
 			content:  content
@@ -112,7 +109,6 @@ pub fn list_box(cfg ListBoxCfg) View {
 				if on_select != unsafe { nil } && !is_subheader {
 					w.set_mouse_cursor_pointing_hand()
 					if layout.shape.color == color_transparent {
-						layout.shape.fill = true
 						layout.shape.color = color_hover
 					}
 				}
@@ -133,7 +129,6 @@ pub fn list_box(cfg ListBoxCfg) View {
 		color_border: cfg.color_border
 		border_width: cfg.border_width
 		radius:       cfg.radius
-		fill:         cfg.fill
 		padding:      cfg.padding
 		sizing:       cfg.sizing
 		spacing:      0

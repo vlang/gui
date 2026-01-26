@@ -77,7 +77,6 @@ pub mut:
 	float_tie_off       FloatAttach     // Anchor point on the floating shape itself
 	clip                bool            // Whether to clip children/content to bounds
 	disabled            bool            // Visual and interactive disabled state
-	fill                bool            // Whether to fill or stroke the shape
 	float               bool            // Whether the shape is floating (removed from flow)
 	focus_skip          bool            // If true, skip this element in focus navigation
 	over_draw           bool            // If true, allows drawing into padding and ignores spacing impact

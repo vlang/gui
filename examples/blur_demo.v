@@ -34,7 +34,6 @@ fn main_view(mut w gui.Window) gui.View {
 						width:       150
 						height:      150
 						radius:      75 // Circle
-						fill:        true
 						color:       gui.Color{0, 255, 0, 150}
 						blur_radius: 20 // Soft Green Glow / Orb
 						h_align:     .center
@@ -45,7 +44,6 @@ fn main_view(mut w gui.Window) gui.View {
 						width:       150
 						height:      150
 						radius:      20
-						fill:        true
 						color:       gui.Color{255, 100, 100, 200}
 						blur_radius: 10 // Soft Rounded Rect
 						h_align:     .center
@@ -61,7 +59,6 @@ fn main_view(mut w gui.Window) gui.View {
 						width:       200
 						height:      100
 						radius:      10
-						fill:        true
 						color:       gui.blue
 						blur_radius: 50 // Large blur
 						h_align:     .center

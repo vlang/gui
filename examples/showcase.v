@@ -97,7 +97,6 @@ fn main_view(mut window gui.Window) gui.View {
 fn side_bar(mut w gui.Window) gui.View {
 	mut app := w.state[ShowcaseApp]()
 	return gui.column(
-		fill:    true
 		color:   gui.theme().color_panel
 		sizing:  gui.fit_fill
 		content: [
@@ -163,7 +162,6 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 	}
 	return gui.row(
 		color:    color
-		fill:     app.selected_tab == tab_item
 		padding:  gui.theme().padding_small
 		content:  [gui.text(text: label, text_style: gui.theme().n2)]
 		on_click: fn [tab_item] (_ voidptr, mut e gui.Event, mut w gui.Window) {
@@ -172,7 +170,6 @@ fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
 			w.update_view(main_view)
 		}
 		on_hover: fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			layout.shape.fill = true
 			layout.shape.color = gui.theme().color_hover
 			w.set_mouse_cursor_pointing_hand()
 		}
@@ -199,7 +196,6 @@ fn line() gui.View {
 			gui.row(
 				height:  1
 				sizing:  gui.fill_fit
-				fill:    true
 				padding: gui.padding_none
 				color:   gui.theme().color_active
 			),
@@ -270,9 +266,8 @@ fn buttons(w &gui.Window) gui.View {
 						id_focus:     103
 						border_width: 3
 
-						fill_border: false
-						content:     [gui.text(text: 'Detached Border')]
-						on_click:    button_click
+						content:  [gui.text(text: 'Detached Border')]
+						on_click: button_click
 					),
 					gui.button(
 						id_focus:     104
@@ -811,7 +806,6 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 						sizing:          gui.fill_fixed
 						percent:         percent
 						text_background: tbg1
-						text_fill:       true
 					),
 					gui.progress_bar(
 						sizing:  gui.fill_fixed
@@ -842,7 +836,6 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 						width:           2
 						percent:         percent
 						text_background: tbg2
-						text_fill:       false
 					),
 					gui.progress_bar(
 						vertical: true

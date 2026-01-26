@@ -80,7 +80,6 @@ fn main_view(mut w gui.Window) gui.View {
 						height:   150
 						radius:   15
 						gradient: &app.grad_blue_purple
-						fill:     true
 						h_align:  .center
 						v_align:  .middle
 						content:  [
@@ -99,7 +98,6 @@ fn main_view(mut w gui.Window) gui.View {
 						height:   150
 						radius:   15
 						gradient: &app.grad_red_orange
-						fill:     true
 						h_align:  .center
 						v_align:  .middle
 						content:  [
@@ -123,7 +121,6 @@ fn main_view(mut w gui.Window) gui.View {
 						height:   150
 						radius:   15
 						gradient: &app.grad_green_blue
-						fill:     true
 						shadow:   gui.BoxShadow{
 							blur_radius: 20
 							color:       gui.Color{0, 0, 0, 50}

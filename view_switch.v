@@ -26,8 +26,6 @@ pub:
 	disabled           bool
 	invisible          bool
 	select             bool
-	fill               bool = gui_theme.switch_style.fill
-	fill_border        bool = gui_theme.switch_style.fill_border
 }
 
 // switch creates a pill shaped box with a sliding toggle from the given [SwitchCfg](#SwitchCfg)
@@ -46,7 +44,6 @@ pub fn switch(cfg SwitchCfg) View {
 		color_border: cfg.color_border
 		border_width: cfg.border_width
 
-		fill:         cfg.fill
 		radius:       cfg.radius
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
@@ -58,7 +55,6 @@ pub fn switch(cfg SwitchCfg) View {
 			circle(
 				name:   'select thumb'
 				color:  color
-				fill:   true
 				width:  circle_size
 				height: circle_size
 				sizing: fixed_fixed

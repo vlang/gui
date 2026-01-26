@@ -89,7 +89,6 @@ fn main_view(window &gui.Window) gui.View {
 						sizing:       gui.fixed_fit
 						border_width: 1
 
-						fill_border:     false
 						radius:          0
 						radius_border:   0
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {

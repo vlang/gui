@@ -37,15 +37,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_click:        cfg.color_focus
 			color_focus:        cfg.color_active
 			color_hover:        cfg.color_hover
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			border_width:       cfg.border_width
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 		}
 		container_style:    ContainerStyle{
 			color:        color_transparent
-			fill:         false
 			padding:      cfg.padding
 			radius:       cfg.radius
 			spacing:      cfg.spacing_medium
@@ -59,8 +56,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_select
 			color_select:       cfg.color_select
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            cfg.padding
 			border_width:       cfg.border_width
 			radius:             cfg.radius
@@ -70,8 +65,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		dialog_style:       DialogStyle{
 			color:        cfg.color_panel
 			color_border: cfg.color_border
-			fill:         cfg.fill
-			fill_border:  cfg.fill_border
 			padding:      cfg.padding_large
 			border_width: cfg.border_width
 
@@ -86,8 +79,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		expand_panel_style: ExpandPanelStyle{
 			color:        cfg.color_panel
 			color_border: cfg.color_border
-			fill:         cfg.fill
-			fill_border:  cfg.fill_border
 			padding:      cfg.padding_small
 			border_width: cfg.border_width
 
@@ -100,8 +91,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
 			color_focus:        cfg.color_interior
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            cfg.padding
 			border_width:       cfg.border_width
 			radius:             cfg.radius
@@ -127,8 +116,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_hover:  cfg.color_hover
 			color_border: cfg.color_border
 			color_select: cfg.color_select
-			fill:         cfg.fill
-			fill_border:  cfg.fill_border
 			padding:      cfg.padding
 			border_width: cfg.border_width
 
@@ -160,7 +147,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		progress_bar_style: ProgressBarStyle{
 			color:      cfg.color_interior
 			color_bar:  cfg.color_active
-			fill:       true
 			padding:    cfg.padding_medium
 			radius:     cfg.radius
 			text_style: cfg.text_style
@@ -183,8 +169,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_hover:  cfg.color_hover
 			color_border: cfg.color_border
 			color_click:  cfg.color_select
-			fill:         true
-			fill_border:  true
 			padding:      padding_none
 			border_width: cfg.border_width
 
@@ -194,7 +178,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		rectangle_style:    RectangleStyle{
 			color:        cfg.color_border
 			radius:       cfg.radius
-			fill:         cfg.fill
 			border_width: cfg.border_width
 		}
 		scrollbar_style:    ScrollbarStyle{
@@ -207,11 +190,9 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		select_style:       SelectStyle{
 			color:              cfg.color_interior
 			color_border:       cfg.color_border
-			color_border_focus: cfg.color_select
+			color_border_focus: cfg.color_border_focus
 			color_focus:        cfg.color_focus
 			color_select:       cfg.color_select
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
 			border_width:       cfg.border_width
 			radius:             cfg.radius_medium
@@ -237,8 +218,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_border_focus: cfg.color_border_focus
 			color_select:       cfg.color_select
 			color_unselect:     cfg.color_active
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            padding_three
 			border_width:       cfg.border_width
 			radius:             radius_large * 2
@@ -254,8 +233,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_focus:        cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_select:       cfg.color_interior
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            padding(1, 1, 1, 2)
 			border_width:       cfg.border_width
 			radius:             if cfg.radius != 0 { radius_small } else { 0 }
@@ -270,8 +247,6 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_click:        cfg.color_active
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
-			fill:               cfg.fill
-			fill_border:        cfg.fill_border
 			padding:            cfg.padding_small
 			border_width:       cfg.border_width
 			radius:             cfg.radius_small

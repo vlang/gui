@@ -43,7 +43,6 @@ fn main_view(window &gui.Window) gui.View {
 				sizing:          gui.fill_fixed
 				percent:         0.20
 				text_background: tbg1
-				text_fill:       true
 			),
 			gui.progress_bar(
 				sizing:  gui.fill_fixed
@@ -70,7 +69,6 @@ fn main_view(window &gui.Window) gui.View {
 						width:           2
 						percent:         0.40
 						text_background: tbg2
-						text_fill:       false
 					),
 					gui.progress_bar(
 						vertical: true

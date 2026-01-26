@@ -290,7 +290,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 		}
 	}
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
-	if shape.gradient != unsafe { nil } && shape.fill {
+	if shape.gradient != unsafe { nil } {
 		window.renderers << DrawGradient{
 			x:        shape.x
 			y:        shape.y
@@ -299,7 +299,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			radius:   shape.radius
 			gradient: shape.gradient
 		}
-	} else if shape.blur_radius > 0 && shape.fill {
+	} else if shape.blur_radius > 0 && shape.color.a > 0 {
 		window.renderers << DrawBlur{
 			x:           shape.x
 			y:           shape.y
@@ -310,9 +310,8 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			color:       shape.color.to_gx_color()
 		}
 	} else {
-		// println('render_container: No Gradient. Fill=${shape.fill} GradientPtr=${ptr_str(shape.gradient)}')
 		// Check for Border Gradient
-		if shape.border_gradient != unsafe { nil } && !shape.fill {
+		if shape.border_gradient != unsafe { nil } {
 			window.renderers << DrawGradientBorder{
 				x:        shape.x
 				y:        shape.y
@@ -344,51 +343,31 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 		x := shape.x + shape.width / 2
 		y := shape.y + shape.height / 2
 
-		if shape.fill {
-			if color != color_transparent {
-				window.renderers << DrawCircle{
-					x:      x
-					y:      y
-					radius: radius
-					fill:   true
-					color:  gx_color
-				}
+		// Fill
+		if color.a > 0 {
+			window.renderers << DrawCircle{
+				x:      x
+				y:      y
+				radius: radius
+				fill:   true
+				color:  gx_color
 			}
-			// Draw border on top
-			if shape.border_width > 0 {
-				color_border := if shape.disabled {
-					dim_alpha(shape.color_border)
-				} else {
-					shape.color_border
-				}
-				if color_border != color_transparent {
-					// Use DrawStrokeRect to utilize thickness support for circles (radius = circle radius)
-					window.renderers << DrawStrokeRect{
-						x:         draw_rect.x
-						y:         draw_rect.y
-						w:         draw_rect.width
-						h:         draw_rect.height
-						color:     color_border.to_gx_color()
-						radius:    radius
-						thickness: shape.border_width
-					}
-				}
-			}
-		} else {
-			// Just border (legacy or transparent fill)
-			mut stroke_color := gx_color
-			if shape.color_border.a > 0 {
-				c := if shape.disabled { dim_alpha(shape.color_border) } else { shape.color_border }
-				stroke_color = c.to_gx_color()
-			}
+		}
 
-			if stroke_color.a > 0 {
+		// Border
+		if shape.border_width > 0 {
+			c_border := if shape.disabled {
+				dim_alpha(shape.color_border)
+			} else {
+				shape.color_border
+			}
+			if c_border.a > 0 {
 				window.renderers << DrawStrokeRect{
 					x:         draw_rect.x
 					y:         draw_rect.y
 					w:         draw_rect.width
 					h:         draw_rect.height
-					color:     stroke_color
+					color:     c_border.to_gx_color()
 					radius:    radius
 					thickness: shape.border_width
 				}
@@ -412,56 +391,35 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 	gx_color := color.to_gx_color()
 
 	if rects_overlap(draw_rect, clip) {
-		if shape.fill {
-			if color != color_transparent {
-				window.renderers << DrawRect{
-					x:          draw_rect.x
-					y:          draw_rect.y
-					w:          draw_rect.width
-					h:          draw_rect.height
-					color:      gx_color
-					style:      .fill
-					is_rounded: shape.radius > 0
-					radius:     shape.radius
-				}
+		// Fill
+		if color.a > 0 {
+			window.renderers << DrawRect{
+				x:          draw_rect.x
+				y:          draw_rect.y
+				w:          draw_rect.width
+				h:          draw_rect.height
+				color:      gx_color
+				style:      .fill
+				is_rounded: shape.radius > 0
+				radius:     shape.radius
 			}
-			// Draw border on top of fill if it exists
-			if shape.border_width > 0 {
-				color_border := if shape.disabled {
-					dim_alpha(shape.color_border)
-				} else {
-					shape.color_border
-				}
-				if color_border != color_transparent {
-					window.renderers << DrawStrokeRect{
-						x:         draw_rect.x
-						y:         draw_rect.y
-						w:         draw_rect.width
-						h:         draw_rect.height
-						color:     color_border.to_gx_color()
-						radius:    shape.radius
-						thickness: shape.border_width
-					}
-				}
-			}
-		} else {
-			// Just a border (legacy behavior, or transparent fill)
-			// Use generic color if color_border is not set?
-			// For backward compatibility, if fill is false, `color` usually meant the border color.
-			// Let's check if color_border is set.
-			mut stroke_color := gx_color
-			if shape.color_border.a > 0 {
-				c := if shape.disabled { dim_alpha(shape.color_border) } else { shape.color_border }
-				stroke_color = c.to_gx_color()
+		}
+
+		// Border
+		if shape.border_width > 0 {
+			c_border := if shape.disabled {
+				dim_alpha(shape.color_border)
+			} else {
+				shape.color_border
 			}
 
-			if stroke_color.a > 0 {
+			if c_border.a > 0 {
 				window.renderers << DrawStrokeRect{
 					x:         draw_rect.x
 					y:         draw_rect.y
 					w:         draw_rect.width
 					h:         draw_rect.height
-					color:     stroke_color
+					color:     c_border.to_gx_color()
 					radius:    shape.radius
 					thickness: shape.border_width
 				}

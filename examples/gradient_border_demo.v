@@ -33,7 +33,6 @@ fn main_view(mut w gui.Window) gui.View {
 						width:           200
 						height:          100
 						radius:          10
-						fill:            false // Hollow, just border
 						border_gradient: &gui.Gradient{
 							stops: [
 								gui.GradientStop{
@@ -56,7 +55,6 @@ fn main_view(mut w gui.Window) gui.View {
 						width:           150
 						height:          150
 						radius:          75 // Circle
-						fill:            false
 						border_gradient: &gui.Gradient{
 							stops: [
 								gui.GradientStop{

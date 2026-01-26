@@ -101,8 +101,7 @@ fn test_theme_maker_applies_cfg_and_invariants() {
 	assert t.color_select == orange
 	assert t.titlebar_dark
 
-	// Container invariant: not filled and transparent color
-	assert !t.container_style.fill
+	// Container invariant: transparent color
 	assert t.container_style.color == color_transparent
 	// Padding/radius/spacings derived from cfg defaults
 	assert t.container_style.padding == custom_cfg.padding

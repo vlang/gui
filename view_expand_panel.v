@@ -22,8 +22,6 @@ pub:
 	min_height    f32
 	max_height    f32
 	open          bool
-	fill          bool = gui_theme.expand_panel_style.fill
-	fill_border   bool = gui_theme.expand_panel_style.fill_border
 }
 
 // expand_panel creates an expandable panel view.
@@ -35,7 +33,6 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 		color:        cfg.color
 		color_border: cfg.color_border
 		border_width: cfg.border_width
-		fill:         cfg.fill
 		padding:      cfg.padding
 		radius:       cfg.radius
 		sizing:       cfg.sizing
@@ -75,7 +72,6 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 				}
 				on_hover: fn (mut layout Layout, mut e Event, mut w Window) {
 					w.set_mouse_cursor_pointing_hand()
-					layout.shape.fill = true
 					layout.shape.color = gui_theme.color_hover
 					e.is_handled = true
 				}

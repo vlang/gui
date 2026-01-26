@@ -53,8 +53,6 @@ pub:
 	id_track         u32
 	overflow         ScrollbarOverflow
 	orientation      ScrollbarOrientation
-	fill_thumb       bool = gui_theme.scrollbar_style.fill_thumb
-	fill_background  bool = gui_theme.scrollbar_style.fill_background
 }
 
 const scrollbar_vertical_name = 'scrollbar vertical'
@@ -68,7 +66,6 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 		row(
 			name:         scrollbar_horizontal_name
 			id:           cfg.id
-			fill:         cfg.fill_background
 			color:        cfg.color_background
 			over_draw:    true
 			spacing:      0
@@ -84,7 +81,6 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 		column(
 			name:         scrollbar_vertical_name
 			id:           cfg.id
-			fill:         cfg.fill_background
 			color:        cfg.color_background
 			over_draw:    true
 			spacing:      0
@@ -104,7 +100,6 @@ fn thumb(cfg &ScrollbarCfg, id string) View {
 		name:     'scrollbar thumb'
 		id:       id
 		color:    cfg.color_thumb
-		fill:     cfg.fill_thumb
 		radius:   cfg.radius_thumb
 		padding:  padding_none
 		spacing:  0

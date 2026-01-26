@@ -35,8 +35,6 @@ pub:
 	radius_border f32 = gui_theme.range_slider_style.radius_border
 	id_focus      u32
 	round_value   bool // round value to nearest int
-	fill          bool = gui_theme.range_slider_style.fill
-	fill_border   bool = gui_theme.range_slider_style.fill_border
 	vertical      bool
 	disabled      bool
 	invisible     bool
@@ -74,7 +72,6 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		border_width: cfg.border_width
 		radius:       cfg.radius_border
 		padding:      padding_none
-		fill:         cfg.fill_border
 		sizing:       cfg.sizing
 		h_align:      .center
 		v_align:      .middle
@@ -86,7 +83,6 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		content:      [
 			rectangle(
 				name:         'range_slider left-bar'
-				fill:         cfg.fill
 				sizing:       fill_fill
 				color:        cfg.color_left
 				color_border: cfg.color_left
@@ -95,7 +91,6 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 				name:         'range_slider thumb'
 				width:        cfg.thumb_size
 				height:       cfg.thumb_size
-				fill:         cfg.fill
 				color:        cfg.color_thumb
 				color_border: cfg.color_border
 				border_width: cfg.border_width
