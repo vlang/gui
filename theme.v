@@ -176,7 +176,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border: cfg.radius_small
 		}
 		rectangle_style:    RectangleStyle{
-			color:        cfg.color_border
+			color_border: cfg.color_border
 			radius:       cfg.radius
 			border_width: cfg.border_width
 		}

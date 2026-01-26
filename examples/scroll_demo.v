@@ -58,7 +58,7 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 		scrollbar_cfg_y: &gui.ScrollbarCfg{
 			overflow: if window.is_focus(id) { .visible } else { .hidden }
 		}
-		color:           match window.is_focus(id) {
+		color_border:    match window.is_focus(id) {
 			true { gui.theme().button_style.color_border_focus } // just for fun
 			else { gui.theme().container_style.color }
 		}

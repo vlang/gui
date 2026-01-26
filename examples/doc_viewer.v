@@ -88,7 +88,10 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 
 	mut content := []gui.View{}
 	content << nav_files
-	content << gui.rectangle(sizing: gui.fill_fill, color: gui.color_transparent)
+	content << gui.rectangle(
+		sizing:       gui.fill_fill
+		color_border: gui.color_transparent
+	)
 	content << tab_stops(w)
 
 	return gui.column(
