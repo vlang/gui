@@ -107,7 +107,7 @@ fn theme_button(app &ScrollApp) gui.View {
 		on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[ScrollApp]()
 			app.light = !app.light
-			w.set_theme(if app.light { gui.theme_light } else { gui.theme_dark })
+			w.set_theme(if app.light { gui.theme_light_bordered } else { gui.theme_dark_bordered })
 		}
 	)
 }
