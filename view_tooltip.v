@@ -34,27 +34,20 @@ pub:
 // tooltip creates a tooltip from the given [TooltipCfg](#TooltipCfg)
 pub fn tooltip(cfg TooltipCfg) View {
 	return row(
-		name:         'tooltip border'
-		color:        cfg.color_border
-		fill:         cfg.fill_border
+		name:         'tooltip'
+		color:        cfg.color
+		color_border: cfg.color_border
+		fill:         cfg.fill
 		border_width: cfg.border_width
+		radius:       cfg.radius
+		padding:      cfg.padding
 
-		radius:         cfg.radius_border
 		float:          true
 		float_anchor:   cfg.anchor
 		float_tie_off:  cfg.tie_off
 		float_offset_x: cfg.offset_x
 		float_offset_y: cfg.offset_y
-		content:        [
-			row(
-				name:    'tooltip interior'
-				color:   cfg.color
-				fill:    cfg.fill
-				padding: cfg.padding
-				radius:  cfg.radius
-				content: cfg.content
-			),
-		]
+		content:        cfg.content
 	)
 }
 
