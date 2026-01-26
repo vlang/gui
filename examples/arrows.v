@@ -96,7 +96,6 @@ fn sidebar(mut w gui.Window) gui.View {
 		sizing:    gui.fit_fill
 		padding:   gui.padding_large
 		spacing:   gui.spacing_small
-		color:     gui.theme().color_interior
 		id:        'sidebar-scroll'
 		id_scroll: 3
 		content:   toggles
@@ -129,7 +128,6 @@ fn header(mut w gui.Window) gui.View {
 	mut app := w.state[ArrowsApp]()
 	return gui.row(
 		id:      'header'
-		color:   gui.theme().color_interior
 		sizing:  gui.fill_fit
 		padding: gui.padding_medium
 		spacing: gui.spacing_large
@@ -261,6 +259,8 @@ fn list_view(mut w gui.Window) gui.View {
 
 		content << w.table(
 			data:            rows
+			color_border: gui.white
+			align_head: .left
 			text_style_head: gui.theme().b3
 			text_style:      gui.theme().n2
 		)

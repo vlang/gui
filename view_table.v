@@ -33,8 +33,9 @@ pub:
 	cell_padding         Padding   = padding_two_five
 	text_style           TextStyle = gui_theme.n3
 	text_style_head      TextStyle = gui_theme.b3
-	border_width         f32       = gui_theme.border_width
+	align_head           HorizontalAlign = HorizontalAlign.center
 	column_width_default f32       = 50
+	border_width         f32       
 pub mut:
 	data []TableRowCfg
 }
@@ -74,7 +75,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 			}
 
 			h_align := match cell.head_cell {
-				true { HorizontalAlign.center }
+				true { cfg.align_head }
 				else { HorizontalAlign.start }
 			}
 
@@ -82,6 +83,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 				name:         'table cell'
 				color:        color_transparent
 				color_border: cfg.color_border
+				border_width: cfg.border_width
 				padding:      cfg.cell_padding
 				radius:       0
 				spacing:      0
