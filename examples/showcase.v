@@ -244,29 +244,26 @@ fn buttons(w &gui.Window) gui.View {
 					gui.button(
 						id_focus:    100
 						size_border: 0
-
 						content:  [gui.text(text: 'No Border')]
 						on_click: button_click
 					),
 					gui.button(
 						id_focus:    101
 						size_border: 1
-
 						content:  [gui.text(text: 'Thin Border')]
 						on_click: button_click
 					),
 					gui.button(
 						id_focus:    102
 						size_border: 2
-
 						content:  [gui.text(text: 'Thicker Border')]
 						on_click: button_click
 					),
 					gui.button(
 						id_focus:    103
-						size_border: 3
-
-						content:  [gui.text(text: 'Detached Border')]
+						size_border: 2
+						disabled: true
+						content:  [gui.text(text: 'Disabled')]
 						on_click: button_click
 					),
 					gui.button(

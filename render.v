@@ -281,7 +281,7 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 // At some point, it should be moved to the container logic, along with some layout amend logic.
 // Honestly, it was more expedient to put it here.
 fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
-	if shape.shadow.color.a > 0 {
+	if shape.shadow.color.a > 0 && shape.shadow.blur_radius > 0 {
 		window.renderers << DrawShadow{
 			x:           shape.x + shape.shadow.offset_x
 			y:           shape.y + shape.shadow.offset_y
