@@ -17,7 +17,7 @@ pub:
 	padding            Padding     = gui_theme.button_style.padding
 	size_border        f32         = gui_theme.button_style.size_border
 	blur_radius        f32         = gui_theme.button_style.blur_radius
-	shadow             BoxShadow   = gui_theme.button_style.shadow
+	shadow             &BoxShadow  = gui_theme.button_style.shadow
 	gradient           &Gradient   = gui_theme.button_style.gradient
 	sizing             Sizing
 	content            []View

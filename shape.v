@@ -17,6 +17,7 @@ pub mut:
 
 	// Pointer fields (8 bytes)
 	vglyph_layout &vglyph.Layout = unsafe { nil } // Unified layout engine object for both plain and rich text
+	rich_text     &RichText      = unsafe { nil } // Source data structure for Rich Text Format (RTF)
 
 	// Event Handlers
 	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle character input
@@ -33,7 +34,6 @@ pub mut:
 	text_style TextStyle // Configuration for text rendering (font, size, color)
 	shape_clip DrawClip  // Calculated clipping rectangle for rendering and hit-testing
 	padding    Padding   // Inner spacing
-	rich_text  RichText  // Source data structure for Rich Text Format (RTF)
 
 	// 4 bytes (f32/u32/Color)
 	x                     f32 // Final calculated X position (absolute)
@@ -55,13 +55,13 @@ pub mut:
 	text_sel_beg          u32 // Start index of text selection (runes)
 	text_sel_end          u32 // End index of text selection (runes)
 	text_tab_size         u32 = 4 // Tab width in spaces
-	last_constraint_width f32       // Optimization: cached width used for last text layout generation
-	color                 Color     // Background or foreground color
-	color_border          Color     // Border color (if different from color)
-	shadow                BoxShadow // Drop shadow configuration
-	gradient              &Gradient = unsafe { nil } // Gradient background configuration
-	border_gradient       &Gradient = unsafe { nil } // Gradient border configuration
-	size_border           f32       = 1.0            // Thickness of the border
+	last_constraint_width f32   // Optimization: cached width used for last text layout generation
+	color                 Color // Background or foreground color
+	color_border          Color // Border color (if different from color)
+	shadow                &BoxShadow = unsafe { nil } // Drop shadow configuration
+	gradient              &Gradient  = unsafe { nil } // Gradient background configuration
+	border_gradient       &Gradient  = unsafe { nil } // Gradient border configuration
+	size_border           f32        = 1.0            // Thickness of the border
 
 	// 2 bytes
 	sizing Sizing // Sizing logic (e.g. fixed, fit, grow)

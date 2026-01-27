@@ -6,11 +6,11 @@ pub:
 	name            string = 'rectangle'
 	id              string
 	sizing          Sizing
-	color           Color     = gui_theme.rectangle_style.color
-	color_border    Color     = gui_theme.rectangle_style.color_border
-	gradient        &Gradient = gui_theme.rectangle_style.gradient
-	border_gradient &Gradient = gui_theme.rectangle_style.border_gradient
-	shadow          BoxShadow = gui_theme.rectangle_style.shadow
+	color           Color      = gui_theme.rectangle_style.color
+	color_border    Color      = gui_theme.rectangle_style.color_border
+	gradient        &Gradient  = gui_theme.rectangle_style.gradient
+	border_gradient &Gradient  = gui_theme.rectangle_style.border_gradient
+	shadow          &BoxShadow = gui_theme.rectangle_style.shadow
 	width           f32
 	height          f32
 	min_width       f32

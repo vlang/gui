@@ -64,7 +64,7 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 		text_mode:     rtf.mode
 		sizing:        rtf.sizing
 		vglyph_layout: &layout
-		rich_text:     rtf.rich_text
+		rich_text:     &rtf.rich_text
 		on_click:      rtf_on_click
 		on_mouse_move: rtf_mouse_move
 	}

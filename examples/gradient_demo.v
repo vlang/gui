@@ -121,7 +121,7 @@ fn main_view(mut w gui.Window) gui.View {
 						height:   150
 						radius:   15
 						gradient: &app.grad_green_blue
-						shadow:   gui.BoxShadow{
+						shadow:   &gui.BoxShadow{
 							blur_radius: 20
 							color:       gui.Color{0, 0, 0, 50}
 							offset_y:    5

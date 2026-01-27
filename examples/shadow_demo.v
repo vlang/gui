@@ -52,7 +52,7 @@ fn main_view(mut w gui.Window) gui.View {
 						radius:       10
 						color_border: gui.black
 						size_border:  1.5
-						shadow:       gui.BoxShadow{
+						shadow:       &gui.BoxShadow{
 							blur_radius: 10
 							offset_y:    4
 							color:       gui.Color{0, 0, 0, 30}
@@ -76,7 +76,7 @@ fn main_view(mut w gui.Window) gui.View {
 						radius:       10
 						color_border: gui.black
 						size_border:  1.5
-						shadow:       gui.BoxShadow{
+						shadow:       &gui.BoxShadow{
 							blur_radius: 20
 							offset_y:    10
 							color:       gui.Color{0, 0, 0, 40}
@@ -105,7 +105,7 @@ fn main_view(mut w gui.Window) gui.View {
 						radius:       10
 						color_border: gui.black
 						size_border:  1.5
-						shadow:       gui.BoxShadow{
+						shadow:       &gui.BoxShadow{
 							blur_radius: 30
 							color:       gui.Color{100, 100, 255, 100}
 						}
@@ -128,7 +128,7 @@ fn main_view(mut w gui.Window) gui.View {
 						radius:       10
 						color_border: gui.black
 						size_border:  1.5
-						shadow:       gui.BoxShadow{
+						shadow:       &gui.BoxShadow{
 							blur_radius: 0
 							offset_x:    10
 							offset_y:    10
@@ -158,7 +158,7 @@ fn main_view(mut w gui.Window) gui.View {
 						radius:      10
 						color:       gui.light_blue
 						size_border: 1.5
-						shadow:      gui.BoxShadow{
+						shadow:      &gui.BoxShadow{
 							blur_radius: 15
 							offset_y:    5
 							color:       gui.Color{0, 0, 0, 50}
@@ -182,7 +182,7 @@ fn main_view(mut w gui.Window) gui.View {
 						radius:      10
 						color:       gui.orange
 						size_border: 1.5
-						shadow:      gui.BoxShadow{
+						shadow:      &gui.BoxShadow{
 							blur_radius: 20
 							offset_y:    8
 							color:       gui.Color{0, 0, 0, 60}

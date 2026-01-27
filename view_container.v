@@ -167,7 +167,7 @@ pub:
 	tooltip         &TooltipCfg   = unsafe { nil }
 	color           Color         = gui_theme.container_style.color
 	color_border    Color         = gui_theme.container_style.color_border
-	shadow          BoxShadow     = gui_theme.container_style.shadow
+	shadow          &BoxShadow    = gui_theme.container_style.shadow
 	gradient        &Gradient     = gui_theme.container_style.gradient
 	border_gradient &Gradient     = gui_theme.container_style.border_gradient
 	size_border     f32           = gui_theme.container_style.size_border
