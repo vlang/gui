@@ -145,11 +145,32 @@ pub fn table_cfg_from_data(data [][]string) TableCfg {
 
 // table_cfg_from_csv_string converts a string representing a csv format to a TableCfg.
 // First row is treated as a header row.
+// Returns an error if the CSV data is empty or malformed.
 pub fn table_cfg_from_csv_string(data string) !TableCfg {
-	mut parser := csv.csv_reader_from_string(data)!
-	mut rows := [][]string{}
-	for y in 0 .. int(parser.rows_count()!) {
-		rows << parser.get_row(y)!
+	// Validate input
+	if data.len == 0 {
+		return error('cannot parse empty CSV data')
+	}
+
+	// Create parser with error context
+	mut parser := csv.csv_reader_from_string(data) or {
+		return error('failed to create CSV parser: ${err.msg()}')
+	}
+
+	// Get row count with validation
+	row_count := parser.rows_count() or {
+		return error('failed to get CSV row count: ${err.msg()}')
+	}
+
+	if row_count == 0 {
+		return error('CSV data contains no rows')
+	}
+
+	// Parse rows with error context
+	mut rows := [][]string{cap: int(row_count)}
+	for y in 0 .. int(row_count) {
+		row := parser.get_row(y) or { return error('failed to parse CSV row ${y}: ${err.msg()}') }
+		rows << row
 	}
 	return table_cfg_from_data(rows)
 }

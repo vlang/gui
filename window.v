@@ -130,11 +130,22 @@ pub fn window(cfg &WindowCfg) &Window {
 		sample_count:                 int(cfg.samples)
 		init_fn:                      fn [on_init, cursor_blink] (mut w Window) {
 			w.update_window_size()
+
+			// Initialize text rendering system
 			w.text_system = vglyph.new_text_system(mut w.ui) or {
-				log.error('${@FILE_LINE}: ${err.str()}')
-				panic(err.str())
+				log.error('Failed to initialize text rendering system: ${err.str()}')
+				log.error('This is typically caused by OpenGL compatibility issues.')
+				log.error('Please ensure your graphics drivers are up to date.')
+				panic('Cannot continue without text rendering: ${err.str()}')
 			}
-			initialize_fonts(mut w.text_system)
+
+			// Initialize fonts with graceful degradation
+			initialize_fonts(mut w.text_system) or {
+				log.warn('Font initialization failed: ${err.msg()}')
+				log.warn('Application will continue with system fonts only.')
+				// Continue without custom fonts as fallback
+			}
+
 			spawn w.animation_loop()
 			if cursor_blink {
 				w.blinky_cursor_animation()

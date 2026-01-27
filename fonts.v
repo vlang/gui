@@ -22,13 +22,28 @@ pub const icon_font_name = 'feathericon'
 
 // initialize_fonts ensures all required font files exist in the data directory by checking for
 // each font file and writing the embedded font data if not found.
-fn initialize_fonts(mut ts vglyph.TextSystem) {
-	if !os.exists(font_file_icon) {
-		os.write_file(font_file_icon, $embed_file('assets/feathericon.ttf', .zlib).to_string()) or {
-			log.error(err.msg())
+// Returns an error if font initialization fails critically.
+fn initialize_fonts(mut ts vglyph.TextSystem) ! {
+	// Ensure font directory exists
+	font_dir := os.dir(font_file_icon)
+	if font_dir.len > 0 && !os.exists(font_dir) {
+		os.mkdir_all(font_dir) or {
+			return error('failed to create font directory ${font_dir}: ${err.msg()}')
 		}
 	}
-	load_font(font_file_icon, mut ts)
+
+	// Extract embedded icon font if needed
+	if !os.exists(font_file_icon) {
+		font_data := $embed_file('assets/feathericon.ttf', .zlib).to_string()
+		os.write_file(font_file_icon, font_data) or {
+			return error('failed to write icon font to ${font_file_icon}: ${err.msg()}')
+		}
+	}
+
+	// Load font with proper error propagation
+	if !load_font(font_file_icon, mut ts) {
+		return error('failed to load icon font from ${font_file_icon}')
+	}
 }
 
 // load_font attempts to load a font file from the specified path into the text system.

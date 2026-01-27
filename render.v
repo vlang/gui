@@ -154,7 +154,10 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 		}
 		DrawText {
 			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, renderer.cfg) or {
-				log.error(err.msg())
+				// Log error with context for debugging
+				log.error('Text render failed at (${renderer.x}, ${renderer.y}): ${err.msg()}')
+				log.debug('Failed text content: "${renderer.text}"')
+				// Continue without crashing - text simply won't appear
 			}
 		}
 		DrawLayout {
