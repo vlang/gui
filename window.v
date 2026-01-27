@@ -14,14 +14,6 @@ import sync
 import log
 import vglyph
 
-// gg_sample_count defines the MSAA (Multi-Sample Anti-Aliasing) level.
-// On macOS, we set this to 0 because macOS's HighDPI (Retina) scaling handles
-// anti-aliasing effectively at the compositor level, and Sokol's MSAA can
-// sometimes conflict with HighDPI framebuffers or cause unnecessary overhead.
-// On other platforms, 2 samples provide a good balance of quality and performance
-// for rounded corners and smooth lines.
-const gg_sample_count = $if macos { 0 } $else { 2 }
-
 pub struct Window {
 mut:
 	ui                    &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
@@ -94,7 +86,6 @@ pub:
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	log_level           log.Level                   = default_log_level()
-	samples             u32                         = gg_sample_count // MSAA sample count; rounded corners of buttons with 0 and 1 look jagged on linux/windows
 }
 
 fn default_log_level() log.Level {
@@ -126,7 +117,6 @@ pub fn window(cfg &WindowCfg) &Window {
 		frame_fn:                     frame_fn
 		ui_mode:                      true // only draw on events
 		user_data:                    window
-		sample_count:                 int(cfg.samples)
 		init_fn:                      fn [on_init, cursor_blink] (mut w Window) {
 			w.update_window_size()
 
