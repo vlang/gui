@@ -47,13 +47,20 @@ struct VertexOut {
 };
 
 fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
+    // Unpack radius and thickness.
+    // See shaders.v for packing logic.
     float radius = floor(in.params / 1000.0);
     float thickness = fmod(in.params, 1000.0);
     
+    // Pixel-independent coordinate system:
+    // fwidth gives the change in texture coordinates per pixel.
+    // Inverse of this gives pixels per texture coordinate unit.
     float2 width_inv = float2(fwidth(in.uv.x), fwidth(in.uv.y));
     float2 half_size = 1.0 / (width_inv + 1e-6);
     float2 pos = in.uv * half_size;
 
+    // SDF Calculation:
+    // Calculate distance to the rounded box boundary.
     float2 q = abs(pos) - half_size + float2(radius);
     float2 max_q = max(q, float2(0.0));
     float d = length(max_q) + min(max(q.x, q.y), 0.0) - radius;
@@ -135,12 +142,13 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
     float2 pos = in.uv * half_size;
 
     // SDF for rounded box
+    // q: Distance vector from the "corner center"
     float2 q = abs(pos) - half_size + float2(radius + 1.5 * blur);
     float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 
     // Casting box SDF (clipped shadow region):
     // The casting box is offset by `in.offset` relative to the shadow.
-    // Casting box center relative to pos is `in.offset`.
+    // This computation masks out the shadow that lies BENEATH the object casting it.
     float2 q_c = abs(pos + in.offset) - half_size + float2(radius + 1.5 * blur);
     float d_c = length(max(q_c, 0.0)) + min(max(q_c.x, q_c.y), 0.0) - radius;
 

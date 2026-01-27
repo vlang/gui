@@ -18,6 +18,9 @@ const vs_glsl = '
         gl_Position = mvp * vec4(position.xy, 0.0, 1.0);
         uv = texcoord0;
         color = color0;
+        // Pass unpacked z-coordinate as "params" to fragment shader.
+        // Rasterizer will interpolate this, but since it is constant per quad,
+        // it acts as a flat uniform per-primitive.
         params = position.z;
     }
 '
@@ -32,16 +35,29 @@ const fs_glsl = '
     out vec4 frag_color;
 
     void main() {
+        // Unpack radius and thickness from the float parameter.
+        // Example: params = 5002.0 -> Radius=5.0, Thickness=2.0.
         float radius = floor(params / 1000.0);
         float thickness = mod(params, 1000.0);
 
-        // Use fwidth to get pixel size in UV space, then convert UV to pixels
+        // UV and Pixel Conversion
+        // fwidth() calculates the rate of change of the UV coordinates relative to screen pixels.
+        // fwidth(uv.x) gives the change in u per horizontal pixel step.
+        // Inverse of this value yields the number of pixels per UV unit.
         vec2 uv_to_px = 1.0 / (vec2(fwidth(uv.x), fwidth(uv.y)) + 1e-6);
-        vec2 half_size = uv_to_px;  // half size in pixels (since UV spans -1 to 1)
-        vec2 pos = uv * half_size;  // position in pixels from center
+        vec2 half_size = uv_to_px;  // Since UV is -1..1, the total size is 2.0 UV units. half-size in UV = 1.0. 1.0 UV * uv_to_px = half size in pixels.
+        vec2 pos = uv * half_size;  // Map current UV to pixel coordinates relative to center (0,0).
 
-        // SDF for rounded rectangle
+        // SDF (Signed Distance Field) Calculation for Rounded Box
+        // q calculates the vector from the corner "core" (inner rectangle for the rounded corners).
+        // abs(pos) folds all 4 quadrants into one.
+        // - half_size + radius: shifts origin to the corner center.
         vec2 q = abs(pos) - half_size + vec2(radius);
+        
+        // d is the distance to the rounded edge.
+        // length(max(q, 0.0)): Distance from the corner center to the query point (for outside corner).
+        // min(max(q.x, q.y), 0.0): inner distance correction.
+        // - radius: Subtract radius to get surface distance.
         float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 
         if (thickness > 0.0) {
@@ -114,8 +130,13 @@ const fs_shadow_glsl = '
         float d_c = length(max(q_c, 0.0)) + min(max(q_c.x, q_c.y), 0.0) - radius;
 
         // Shadow logic:
-        // Clip inner shadow (d < 0) regarding casting box to prevent bleeding.
+        // alpha_falloff: Smooth transition from 0 (inside) to blur radius (outside).
+        // Inverted (1.0 - ...) so opacity is 1 inside the shadow and 0 outside.
         float alpha_falloff = 1.0 - smoothstep(0.0, max(1.0, blur), d);
+        
+        // alpha_clip: The shadow should not be visible *under* the casting object.
+        // d_c < 0 means the fragment is inside the casting box.
+        // Shadow fades out where d_c < 0 (inside casting box).
         float alpha_clip = smoothstep(-1.0, 0.0, d_c); // Hard fade at casting edge
 
         float alpha = alpha_falloff * alpha_clip;
