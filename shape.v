@@ -16,8 +16,11 @@ pub mut:
 	image_name string // Filename or path for image shapes
 
 	// Pointer fields (8 bytes)
-	vglyph_layout &vglyph.Layout = unsafe { nil } // Unified layout engine object for both plain and rich text
-	rich_text     &RichText      = unsafe { nil } // Source data structure for Rich Text Format (RTF)
+	vglyph_layout   &vglyph.Layout = unsafe { nil } // Unified layout engine object for both plain and rich text
+	rich_text       &RichText      = unsafe { nil } // Source data structure for Rich Text Format (RTF)
+	shadow          &BoxShadow     = unsafe { nil } // Drop shadow configuration
+	gradient        &Gradient      = unsafe { nil } // Gradient background configuration
+	border_gradient &Gradient      = unsafe { nil } // Gradient border configuration
 
 	// Event Handlers
 	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle character input
@@ -34,6 +37,7 @@ pub mut:
 	text_style TextStyle // Configuration for text rendering (font, size, color)
 	shape_clip DrawClip  // Calculated clipping rectangle for rendering and hit-testing
 	padding    Padding   // Inner spacing
+	sizing     Sizing    // Sizing logic (e.g. fixed, fit, grow)
 
 	// 4 bytes (f32/u32/Color)
 	x                     f32 // Final calculated X position (absolute)
@@ -58,13 +62,7 @@ pub mut:
 	last_constraint_width f32   // Optimization: cached width used for last text layout generation
 	color                 Color // Background or foreground color
 	color_border          Color // Border color (if different from color)
-	shadow                &BoxShadow = unsafe { nil } // Drop shadow configuration
-	gradient              &Gradient  = unsafe { nil } // Gradient background configuration
-	border_gradient       &Gradient  = unsafe { nil } // Gradient border configuration
-	size_border           f32        = 1.0            // Thickness of the border
-
-	// 2 bytes
-	sizing Sizing // Sizing logic (e.g. fixed, fit, grow)
+	size_border           f32   // Thickness of the border
 
 	// 1 byte (Enums/Bools)
 	axis                Axis            // Layout direction (row/column)
