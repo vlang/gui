@@ -52,11 +52,11 @@ fn main_view(mut window gui.Window) gui.View {
 				content: [
 					button_change_theme(app),
 					button_row('Plain ole button', gui.button(
-						min_width: b_width
-						max_width: b_width
+						min_width:   b_width
+						max_width:   b_width
 						size_border: 0
-						content:   [gui.text(text: button_text)]
-						on_click:  click_handler
+						content:     [gui.text(text: button_text)]
+						on_click:    click_handler
 					)),
 					button_row('Disabled button', gui.button(
 						min_width: b_width
