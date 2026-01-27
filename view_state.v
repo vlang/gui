@@ -24,6 +24,7 @@ mut:
 	id_focus                 u32  // current view that has focus
 	cursor_on_sticky         bool // keeps the cursor visible during cursor movement
 	input_cursor_on          bool = true // used by cursor blink animation
+	tooltip                  TooltipState // State for the active tooltip
 }
 
 // MouseLockCfg stores callback functions for mouse event handling in a locked state.

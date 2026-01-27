@@ -109,14 +109,15 @@ as a cross-platform, immediate mode GUI toolkit.
 
 ## Comparison Table
 
-| Feature | v-gui | Flutter | Dear ImGui |
-| :--- | :--- | :--- | :--- |
-| **Paradigm** | Immediate (Clay-based) | Retained (Widget Tree) | Immediate |
-| **Language** | V | Dart | C++ |
-| **Layout** | Flexbox-like | Flexbox-like | Linear / Columns |
-| **Rendering** | Sokol/GG | Skia/Impeller | Custom OpenGL |
-| **State** | User-managed (Simple) | Widget-managed (Complex) | User-managed |
-| **Styling** | Code-defined | Widget-composition | Global Styles |
+| Feature       | v-gui                  | Flutter                  | Dear ImGui       |
+|-:-------------|-:----------------------|-:------------------------|-:----------------|
+| **Paradigm**  | Immediate (Clay-based) | Retained (Widget Tree)   | Immediate        |
+| **Language**  | V                      | Dart                     | C++              |
+| **Layout**    | Flexbox-like           | Flexbox-like             | Linear / Columns |
+| **Rendering** | Sokol/GG               | Skia/Impeller            | Custom OpenGL    |
+| **State**     | User-managed (Simple)  | Widget-managed (Complex) | User-managed     |
+| **Styling**   | Code-defined           | Widget-composition       | Global Styles    |
+
 
 ## Summary
 `v-gui` is well-positioned as a simplified, high-performance alternative to Flutter for V

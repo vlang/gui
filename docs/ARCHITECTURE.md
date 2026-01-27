@@ -226,28 +226,6 @@ sequenceDiagram
     Renderer->>User: Updated UI
 ```
 
-### Window Resize
-
-```mermaid
-sequenceDiagram
-    participant User
-    participant Window
-    participant ViewGen
-    participant Layout
-    participant Renderer
-    
-    User->>Window: Resize window
-    Window->>Window: Update window_size()
-    Window->>ViewGen: Call view_generator(window)
-    ViewGen->>Window: Query window_size()
-    ViewGen->>ViewGen: Build View with new dimensions
-    ViewGen-->>Window: Return View
-    Window->>Layout: Recalculate layout
-    Layout-->>Window: New Layout
-    Window->>Renderer: Redraw
-    Renderer->>User: Resized UI
-```
-
 ## Key Architectural Decisions
 
 ### Immediate Mode Rendering

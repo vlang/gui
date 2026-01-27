@@ -76,49 +76,7 @@ fn (mut stats Stats) increment_layouts() {
 	}
 }
 
-// Global helpers for centralized statistics gathering.
-// These are no-ops in production builds with zero overhead.
-@[if !prod]
-fn stats_increment_container_views() {
-	$if !prod {
-		gui_stats.increment_container_views()
-	}
-}
-
-@[if !prod]
-fn stats_increment_text_views() {
-	$if !prod {
-		gui_stats.increment_text_views()
-	}
-}
-
-@[if !prod]
-fn stats_increment_image_views() {
-	$if !prod {
-		gui_stats.increment_image_views()
-	}
-}
-
-@[if !prod]
-fn stats_increment_rtf_views() {
-	$if !prod {
-		gui_stats.increment_rtf_views()
-	}
-}
-
-@[if !prod]
-fn stats_update_max_renderers(count usize) {
-	$if !prod {
-		gui_stats.update_max_renderers(count)
-	}
-}
-
-@[if !prod]
-fn stats_increment_layouts() {
-	$if !prod {
-		gui_stats.increment_layouts()
-	}
-}
+// Methods for Stats struct
 
 fn (window &Window) stats() string {
 	$if prod {
@@ -145,12 +103,12 @@ fn (window &Window) view_stats() string {
 		tx << ''
 		tx << 'Views Generated'
 		tx << stat_sub_div
-		tx << 'container views ${cm(gui_stats.container_views):17}'
-		tx << 'text views      ${cm(gui_stats.text_views):17}'
-		tx << 'image views     ${cm(gui_stats.image_views):17}'
-		tx << 'rtf views       ${cm(gui_stats.rtf_views):17}'
-		tx << 'layouts         ${cm(gui_stats.layouts):17}'
-		tx << 'max renderers   ${cm(gui_stats.max_renderers):17}'
+		tx << 'container views ${cm(window.stats.container_views):17}'
+		tx << 'text views      ${cm(window.stats.text_views):17}'
+		tx << 'image views     ${cm(window.stats.image_views):17}'
+		tx << 'rtf views       ${cm(window.stats.rtf_views):17}'
+		tx << 'layouts         ${cm(window.stats.layouts):17}'
+		tx << 'max renderers   ${cm(window.stats.max_renderers):17}'
 		return tx.join('\n')
 	}
 }

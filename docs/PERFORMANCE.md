@@ -15,14 +15,15 @@ guidance for building performant applications.
 
 ### Layout Pipeline Costs
 
-| Pass | Relative Cost | Notes |
-|------|---------------|-------|
-| `layout_widths` | Low | Simple arithmetic |
-| `layout_fill_widths` | Low | Simple arithmetic |
-| `layout_wrap_text` | Medium-High | Text measurement is expensive |
-| `layout_heights` | Low | Simple arithmetic |
-| `layout_fill_heights` | Low | Simple arithmetic |
-| `layout_positions` | Low | Simple arithmetic |
+| Pass                  | Relative Cost | Notes                         |
+|-----------------------|---------------|-------------------------------|
+| `layout_widths`       | Low           | Simple arithmetic             |
+| `layout_fill_widths`  | Low           | Simple arithmetic             |
+| `layout_wrap_text`    | Medium-High   | Text measurement is expensive |
+| `layout_heights`      | Low           | Simple arithmetic             |
+| `layout_fill_heights` | Low           | Simple arithmetic             |
+| `layout_positions`    | Low           | Simple arithmetic             |
+
 
 **Bottleneck**: Text wrapping and measurement dominate layout time for text-heavy UIs.
 
@@ -37,15 +38,15 @@ guidance for building performant applications.
 
 ### Costs by Renderer Type
 
-| Renderer | Relative Cost | Notes |
-|----------|---------------|-------|
-| `DrawRect` | Very Low | Single quad |
-| `DrawRoundedRect` | Low | Custom shader |
-| `DrawText` | Medium | Font rendering |
-| `DrawShadow` | Medium-High | Blur calculation |
-| `DrawBlur` | High | Multi-pass blur |
-| `DrawGradient` | Low | Single quad |
-| `DrawImage` | Low-Medium | Texture sampling |
+| Renderer          | Relative Cost | Notes            |
+|-------------------|---------------|------------------|
+| `DrawRect`        | Very Low      | Single quad      |
+| `DrawRoundedRect` | Low           | Custom shader    |
+| `DrawText`        | Medium        | Font rendering   |
+| `DrawShadow`      | Medium-High   | Blur calculation |
+| `DrawBlur`        | High          | Multi-pass blur  |
+| `DrawGradient`    | Low           | Single quad      |
+| `DrawImage`       | Low-Medium    | Texture sampling |
 
 ### GPU Considerations
 
@@ -57,19 +58,20 @@ guidance for building performant applications.
 
 ### Per-Widget Memory
 
-| Component | Size | Notes |
-|-----------|------|-------|
-| Layout | ~200 bytes | Tree node |
-| Shape | ~300 bytes | Rendering data |
-| **Total** | ~500 bytes | Per widget |
+| Component | Size       | Notes          |
+|-----------|------------|----------------|
+| Layout    | ~200 bytes | Tree node      |
+| Shape     | ~300 bytes | Rendering data |
+| **Total** | ~500 bytes | Per widget     |
 
 ### Example Calculations
 
-| Widgets | Layout Memory | Notes |
-|---------|---------------|-------|
-| 100 | ~50 KB | Small form |
-| 1,000 | ~500 KB | Complex dashboard |
-| 10,000 | ~5 MB | Large list view |
+| Widgets | Layout Memory | Notes   |                   |
+|---------|---------------|---------|-------------------|
+|         | 100           | ~50 KB  | Small form        |
+|         | 1,000         | ~500 KB | Complex dashboard |
+|         | 10,000        | ~5 MB   | Large list view   |
+
 
 ### Memory Tips
 
@@ -96,11 +98,11 @@ Text rendering is the most expensive operation in typical GUIs.
 
 ### Costs
 
-| Operation | Relative Cost |
-|-----------|---------------|
-| Measure text | Medium |
-| Wrap text | High |
-| Render text | Medium |
+| Operation    | Relative Cost   |
+|--------------|-----------------|
+| Measure text | Medium          |
+| Wrap text    | High            |
+| Render text  | Medium          |
 | Font loading | High (one-time) |
 
 ### Optimization Tips
@@ -148,12 +150,13 @@ v run tests/benchmarks/layout_bench.v
 
 ### Expected Results (Reference Hardware)
 
-| Test | Time | Notes |
-|------|------|-------|
-| Layout 100 widgets | ~1-2ms | Simple tree |
+| Test                | Time     | Notes        |
+|---------------------|----------|--------------|
+| Layout 100 widgets  | ~1-2ms   | Simple tree  |
 | Layout 1000 widgets | ~10-15ms | Complex tree |
-| Render 100 widgets | ~0.5ms | No shadows |
-| Render with shadows | ~2-5ms | Per shadow |
+| Render 100 widgets  | ~0.5ms   | No shadows   |
+| Render with shadows | ~2-5ms   | Per shadow   |
+
 
 ## Best Practices
 

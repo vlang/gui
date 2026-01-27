@@ -33,7 +33,8 @@ pub:
 }
 
 fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
-	stats_increment_layouts()
+	window.stats.increment_layouts()
+	window.stats.increment_rtf_views()
 
 	// Convert RichText to vglyph.RichText
 	vg_rich_text := rtf.rich_text.to_vglyph_rich_text()
@@ -75,8 +76,6 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 
 // rtf creates a view from the given RtfCfg
 pub fn rtf(cfg RtfCfg) View {
-	stats_increment_rtf_views()
-
 	if cfg.invisible {
 		return invisible_container_view()
 	}

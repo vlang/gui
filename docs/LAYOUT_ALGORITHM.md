@@ -55,11 +55,12 @@ This separation simplifies the constraint solving and avoids circular dependenci
 
 Each axis (width/height) can use different sizing modes:
 
-| Mode | Description | Example |
-|------|-------------|---------|
-| **Fixed** | Explicit pixel value | `width: 200` |
-| **Fractional** | Percentage of parent | `width: 0.5` (50%) |
-| **Fit** | Shrink-wrap to content | `width: fit` |
+| Mode           | Description            | Example            |
+|----------------|------------------------|--------------------|
+| **Fixed**      | Explicit pixel value   | `width: 200`       |
+| **Fractional** | Percentage of parent   | `width: 0.5` (50%) |
+| **Fit**        | Shrink-wrap to content | `width: fit`       |
+
 
 ### Sizing Mode Combinations
 
@@ -140,17 +141,18 @@ for each child:
 
 Alignment adjusts position based on remaining space:
 
-| H-Align | Behavior |
-|---------|----------|
-| `.left` | No adjustment |
+| H-Align   | Behavior                    |
+|-----------|-----------------------------|
+| `.left`   | No adjustment               |
 | `.center` | x += (available - used) / 2 |
-| `.right` | x += (available - used) |
+| `.right`  | x += (available - used)     |
 
-| V-Align | Behavior |
-|---------|----------|
-| `.top` | No adjustment |
+| V-Align   | Behavior                    |
+|-----------|-----------------------------|
+| `.top`    | No adjustment               |
 | `.middle` | y += (available - used) / 2 |
-| `.bottom` | y += (available - used) |
+| `.bottom` | y += (available - used)     |
+
 
 ## Floating Layouts
 

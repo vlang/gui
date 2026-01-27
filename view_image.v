@@ -26,7 +26,8 @@ pub:
 }
 
 fn (mut iv ImageView) generate_layout(mut window Window) Layout {
-	stats_increment_layouts()
+	window.stats.increment_layouts()
+	window.stats.increment_image_views()
 	image := window.load_image(iv.file_name) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
 		return Layout{
@@ -61,7 +62,6 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 // It displays the specified image file.
 // If cfg.invisible is true, it returns an invisible ContainerView instead.
 pub fn image(cfg ImageCfg) View {
-	stats_increment_image_views()
 	if cfg.invisible {
 		return invisible_container_view()
 	}

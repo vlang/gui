@@ -33,12 +33,22 @@ mut:
 
 fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 	assert cv.shape_type in [.rectangle, .circle]
-	stats_increment_layouts()
+	w.stats.increment_layouts()
+	w.stats.increment_container_views()
 
 	mut children := []Layout{}
 
 	// Inject Group Box title (Eraser + Text) if text is present
 	cv.add_group_box_title(mut w, mut children)
+
+	if w.view_state.tooltip.id != '' {
+		if cv.tooltip != unsafe { nil } {
+			if cv.tooltip.id == w.view_state.tooltip.id {
+				mut tooltip_view := tooltip(*cv.tooltip)
+				children << generate_layout(mut tooltip_view, mut w)
+			}
+		}
+	}
 
 	layout := Layout{
 		children: children
@@ -205,8 +215,6 @@ pub:
 // its content top-to-bottom or left_to_right. A `.none` axis allows a
 // container to behave as a canvas with no additional layout.
 fn container(cfg ContainerCfg) View {
-	stats_increment_container_views()
-
 	if cfg.invisible {
 		return invisible_container_view()
 	}
@@ -241,14 +249,6 @@ fn container(cfg ContainerCfg) View {
 				orientation: .vertical
 				id_track:    cfg.id_scroll
 			})
-		}
-	}
-
-	if gui_tooltip.id != '' {
-		if cfg.tooltip != unsafe { nil } {
-			if cfg.tooltip.id == gui_tooltip.id {
-				extra_content << tooltip(cfg.tooltip)
-			}
 		}
 	}
 
@@ -362,7 +362,7 @@ fn (cv &ContainerView) on_mouse_move_tooltip(layout &Layout, mut e Event, mut w 
 	if cv.tooltip != unsafe { nil } {
 		if cv.tooltip.content.len > 0 {
 			w.animation_add(mut cv.tooltip.animation_tooltip())
-			gui_tooltip.bounds = DrawClip{
+			w.view_state.tooltip.bounds = DrawClip{
 				x:      layout.shape.x
 				y:      layout.shape.y
 				width:  layout.shape.width
