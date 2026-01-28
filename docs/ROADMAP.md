@@ -35,7 +35,7 @@ as a cross-platform, immediate mode GUI toolkit.
     - Drop shadows (box-shadow)
     - Gaussian blur (background blur for glass effects)
     - Gradient borders and complex fills
-- [ ] **Animation System 2.0:**
+- [x] **Animation System 2.0:**
     - Add physics-based spring animations (more natural than linear/easing curves).
     - Support layout transitions (animated constraints when window resizes).
     - Add "hero" transitions between views.
@@ -110,7 +110,7 @@ as a cross-platform, immediate mode GUI toolkit.
 ## Comparison Table
 
 | Feature       | v-gui                  | Flutter                  | Dear ImGui       |
-|-:-------------|-:----------------------|-:------------------------|-:----------------|
+|---------------|------------------------|--------------------------|------------------|
 | **Paradigm**  | Immediate (Clay-based) | Retained (Widget Tree)   | Immediate        |
 | **Language**  | V                      | Dart                     | C++              |
 | **Layout**    | Flexbox-like           | Flexbox-like             | Linear / Columns |
