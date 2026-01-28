@@ -232,8 +232,8 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 		shape_clip = DrawClip{
 			x:      sc.x + layout.shape.padding_left()
 			y:      sc.y + layout.shape.padding_top()
-			width:  sc.width - layout.shape.padding_width()
-			height: sc.height - layout.shape.padding_height()
+			width:  f32_max(0, sc.width - layout.shape.padding_width())
+			height: f32_max(0, sc.height - layout.shape.padding_height())
 		}
 		window.renderers << shape_clip
 	}
@@ -836,7 +836,6 @@ fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, gradient &Gradie
 	if w <= 0 || h <= 0 {
 		return
 	}
-	println('DrawGradientBorder: x=${x} y=${y} w=${w} h=${h} radius=${radius} stops=${gradient.stops.len}')
 
 	// For now, simple implementation: mapping colors to corners for a stroke.
 	// Since sgl doesn't have a simple "gradient stroke" primitive that respects rounded corners perfectly

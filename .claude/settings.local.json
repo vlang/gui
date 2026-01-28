@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(v run:*)",
+      "Bash(echo:*)",
+      "Bash(SOKOL_DEBUG=1 timeout 3 v run:*)",
+      "Bash(v:*)",
+      "Bash(glxinfo:*)"
+    ]
+  }
+}

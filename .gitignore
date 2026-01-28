@@ -26,7 +26,6 @@ bin/
 .idea/
 .vscode/
 .ropeproject
-.claude
 *.iml
 *.json.gz
 gemini_cli_config.json
