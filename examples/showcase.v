@@ -1,6 +1,7 @@
 import gui
 import encoding.csv
 import math
+import time
 
 // Showcase
 // =============================
@@ -18,6 +19,8 @@ enum TabItem {
 	tab_tree_view
 	tab_text_view
 	tab_table_view
+	tab_date_pickers
+	tab_animations
 }
 
 @[heap]
@@ -52,6 +55,14 @@ pub mut:
 	open_expand_panel bool
 	// Tables
 	csv_table TableData
+	// Date Pickers
+	date_picker_dates []time.Time
+	input_date        time.Time = time.now()
+	roller_date       time.Time = time.now()
+	// Animations
+	anim_tween_x  f32
+	anim_spring_x f32
+	anim_layout_expanded bool
 }
 
 @[heap]
@@ -108,6 +119,8 @@ fn side_bar(mut w gui.Window) gui.View {
 			tab_select('Tree View', .tab_tree_view, app),
 			tab_select('Text', .tab_text_view, app),
 			tab_select('Tables', .tab_table_view, app),
+			tab_select('Date Pickers', .tab_date_pickers, app),
+			tab_select('Animations', .tab_animations, app),
 			gui.column(sizing: gui.fit_fill),
 			toggle_theme(app),
 		]
@@ -149,6 +162,12 @@ fn gallery(mut w gui.Window) gui.View {
 			}
 			.tab_table_view {
 				[tables(mut w)]
+			}
+			.tab_date_pickers {
+				[date_pickers(mut w)]
+			}
+			.tab_animations {
+				[animations(mut w)]
 			}
 		}
 	)
@@ -245,26 +264,22 @@ fn buttons(w &gui.Window) gui.View {
 						id_focus:    100
 						size_border: 0
 						content:     [gui.text(text: 'No Border')]
-						on_click:    button_click
 					),
 					gui.button(
 						id_focus:    101
 						size_border: 1
 						content:     [gui.text(text: 'Thin Border')]
-						on_click:    button_click
 					),
 					gui.button(
 						id_focus:    102
 						size_border: 2
 						content:     [gui.text(text: 'Thicker Border')]
-						on_click:    button_click
 					),
 					gui.button(
 						id_focus:    103
 						size_border: 2
 						disabled:    true
 						content:     [gui.text(text: 'Disabled')]
-						on_click:    button_click
 					),
 					gui.button(
 						id_focus:    104
@@ -300,10 +315,6 @@ fn buttons(w &gui.Window) gui.View {
 			),
 		]
 	)
-}
-
-fn button_click(_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-	e.is_handled = true
 }
 
 // ==============================================================
@@ -379,7 +390,7 @@ fn inputs(w &gui.Window) gui.View {
 						text:        app.input_multiline
 						size_border: 1
 
-						placeholder:     'Multline...'
+						placeholder:     'Multiline...'
 						mode:            .multiline
 						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
 							mut app := w.state[ShowcaseApp]()
@@ -525,7 +536,7 @@ fn message_type() gui.View {
 				dialog_type:   .message
 				title:         'Title Displays Here'
 				body:          '
-body text displayes here...
+body text displays here...
 
 Multi-line text supported.
 See DialogCfg for other parameters
@@ -544,7 +555,7 @@ fn confirm_type() gui.View {
 		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.dialog(
 				dialog_type:  .confirm
-				title:        'Destory All Data?'
+				title:        'Destroy All Data?'
 				body:         'Are you sure?'
 				on_ok_yes:    fn (mut w gui.Window) {
 					w.dialog(title: 'Clicked Yes')
@@ -934,7 +945,7 @@ fn list_box_sample(w &gui.Window) gui.View {
 					gui.list_box_option('Wisconsin', 'WI'),
 					gui.list_box_option('Wyoming', 'WY'),
 					gui.list_box_option('---Territories', ''),
-					gui.list_box_option('American Somoa', 'AS'),
+					gui.list_box_option('American Samoa', 'AS'),
 					gui.list_box_option('Guam', 'GU'),
 					gui.list_box_option('Northern Mariana Islands', 'MP'),
 					gui.list_box_option('Puerto Rico', 'PR'),
@@ -1095,8 +1106,7 @@ fn select_samples(w &gui.Window) gui.View {
 					'Vermont',
 					'Virginia',
 					'Washington',
-					'West',
-					'Virginia',
+					'West Virginia',
 					'Wisconsin',
 					'Wyoming',
 				]
@@ -1908,3 +1918,377 @@ Britanney Silva,1-281-414-9085,nascetur.ridiculus.mus@google.ca,429-6408 Nec Rd.
 Brennan Hooper,1-534-697-7689,nunc.pulvinar.arcu@aol.edu,Ap #425-8524 Pellentesque. Ave,8834,Morayshire
 Eliana Fry,1-822-880-5214,orci.luctus.et@protonmail.edu,351-931 Non St.,731577,Viken
 '
+
+// ==============================================================
+// Date Pickers
+// ==============================================================
+
+fn date_pickers(mut w gui.Window) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		sizing:  gui.fill_fit
+		content: [
+			view_title('Date Pickers'),
+			gui.row(
+				padding: gui.padding_none
+				sizing:  gui.fill_fit
+				content: [date_picker_samples(mut w)]
+			),
+		]
+	)
+}
+
+fn date_picker_samples(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.spacing_large * 2
+		content: [
+			gui.row(
+				spacing: gui.spacing_large * 2
+				v_align: .top
+				content: [
+					gui.column(
+						padding: gui.padding_none
+						content: [
+							gui.text(text: 'Calendar Date Picker', text_style: gui.theme().b2),
+							gui.text(
+								text:       selected_dates_text(app.date_picker_dates)
+								text_style: gui.theme().n4
+							),
+							w.date_picker(
+								id:        'dp1'
+								dates:     app.date_picker_dates
+								on_select: fn (dates []time.Time, mut e gui.Event, mut w gui.Window) {
+									mut app := w.state[ShowcaseApp]()
+									app.date_picker_dates = dates
+									e.is_handled = true
+								}
+							),
+						]
+					),
+					gui.column(
+						padding: gui.padding_none
+						content: [
+							gui.text(text: 'Input Date (with dropdown)', text_style: gui.theme().b2),
+							gui.text(
+								text:       'Selected: ${app.input_date.format()}'
+								text_style: gui.theme().n4
+							),
+							w.input_date(
+								id:        'id1'
+								id_focus:  4000
+								date:      app.input_date
+								on_select: fn (dates []time.Time, mut e gui.Event, mut w gui.Window) {
+									mut app := w.state[ShowcaseApp]()
+									if dates.len > 0 {
+										app.input_date = dates[0]
+									}
+									e.is_handled = true
+								}
+							),
+						]
+					),
+				]
+			),
+			gui.column(
+				padding: gui.padding_none
+				content: [
+					gui.text(text: 'Date Picker Roller', text_style: gui.theme().b2),
+					gui.text(
+						text:       'Selected: ${app.roller_date.format()}'
+						text_style: gui.theme().n4
+					),
+					gui.row(
+						v_align: .top
+						content: [
+							gui.column(
+								padding: gui.padding_none
+								h_align: .center
+								content: [
+									gui.text(text: '.month_day_year', text_style: gui.theme().n4),
+									gui.date_picker_roller(
+										id:            'dpr1'
+										id_focus:      4001
+										selected_date: app.roller_date
+										display_mode:  .month_day_year
+										long_months:   true
+										on_change:     fn (d time.Time, mut w gui.Window) {
+											mut app := w.state[ShowcaseApp]()
+											app.roller_date = d
+										}
+									),
+								]
+							),
+							gui.column(
+								padding: gui.padding_none
+								h_align: .center
+								content: [
+									gui.text(text: '.month_year', text_style: gui.theme().n4),
+									gui.date_picker_roller(
+										id:            'dpr2'
+										id_focus:      4002
+										selected_date: app.roller_date
+										display_mode:  .month_year
+										long_months:   false
+										on_change:     fn (d time.Time, mut w gui.Window) {
+											mut app := w.state[ShowcaseApp]()
+											app.roller_date = d
+										}
+									),
+								]
+							),
+							gui.column(
+								padding: gui.padding_none
+								h_align: .center
+								content: [
+									gui.text(text: '.year_only', text_style: gui.theme().n4),
+									gui.date_picker_roller(
+										id:            'dpr3'
+										id_focus:      4003
+										selected_date: app.roller_date
+										display_mode:  .year_only
+										on_change:     fn (d time.Time, mut w gui.Window) {
+											mut app := w.state[ShowcaseApp]()
+											app.roller_date = d
+										}
+									),
+								]
+							),
+						]
+					),
+				]
+			),
+		]
+	)
+}
+
+fn selected_dates_text(dates []time.Time) string {
+	if dates.len == 0 {
+		return 'No dates selected'
+	}
+	mut parts := []string{cap: dates.len}
+	for d in dates {
+		parts << d.format()
+	}
+	return 'Selected: ${parts.join(", ")}'
+}
+
+// ==============================================================
+// Animations
+// ==============================================================
+
+fn animations(mut w gui.Window) gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		sizing:  gui.fill_fit
+		content: [
+			view_title('Animations'),
+			gui.row(
+				padding: gui.padding_none
+				sizing:  gui.fill_fit
+				content: [animation_samples(mut w)]
+			),
+		]
+	)
+}
+
+fn animation_samples(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	box_color := if app.light_theme { gui.dark_blue } else { gui.cornflower_blue }
+	return gui.column(
+		spacing: gui.spacing_large * 2
+		content: [
+			// Tween Animation
+			gui.column(
+				padding: gui.padding_none
+				content: [
+					gui.text(text: 'Tween Animation', text_style: gui.theme().b2),
+					gui.text(
+						text:       'Interpolates values over time with easing functions'
+						text_style: gui.theme().n4
+					),
+					gui.row(
+						content: [
+							gui.button(
+								content:  [gui.text(text: 'ease_out_cubic')]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									start_tween(mut w, gui.ease_out_cubic)
+								}
+							),
+							gui.button(
+								content:  [gui.text(text: 'ease_out_bounce')]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									start_tween(mut w, gui.ease_out_bounce)
+								}
+							),
+							gui.button(
+								content:  [gui.text(text: 'ease_out_elastic')]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									start_tween(mut w, gui.ease_out_elastic)
+								}
+							),
+							gui.button(
+								content:  [gui.text(text: 'ease_out_back')]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									start_tween(mut w, gui.ease_out_back)
+								}
+							),
+						]
+					),
+					gui.row(
+						height:  40
+						sizing:  gui.fill_fixed
+						padding: gui.padding_none
+						content: [
+							gui.row(
+								width:   int(app.anim_tween_x)
+								sizing:  gui.fixed_fit
+								padding: gui.padding_none
+							),
+							gui.row(
+								width:   30
+								height:  30
+								sizing:  gui.fixed_fixed
+								padding: gui.padding_none
+								color:   box_color
+								radius:  4
+							),
+						]
+					),
+				]
+			),
+			// Spring Animation
+			gui.column(
+				padding: gui.padding_none
+				content: [
+					gui.text(text: 'Spring Animation', text_style: gui.theme().b2),
+					gui.text(
+						text:       'Physics-based motion with natural feel'
+						text_style: gui.theme().n4
+					),
+					gui.row(
+						content: [
+							gui.button(
+								content:  [gui.text(text: 'spring_default')]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									start_spring(mut w, gui.spring_default)
+								}
+							),
+							gui.button(
+								content:  [gui.text(text: 'spring_gentle')]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									start_spring(mut w, gui.spring_gentle)
+								}
+							),
+							gui.button(
+								content:  [gui.text(text: 'spring_bouncy')]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									start_spring(mut w, gui.spring_bouncy)
+								}
+							),
+							gui.button(
+								content:  [gui.text(text: 'spring_stiff')]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									start_spring(mut w, gui.spring_stiff)
+								}
+							),
+						]
+					),
+					gui.row(
+						height:  40
+						sizing:  gui.fill_fixed
+						padding: gui.padding_none
+						content: [
+							gui.row(
+								width:   int(app.anim_spring_x)
+								sizing:  gui.fixed_fit
+								padding: gui.padding_none
+							),
+							gui.row(
+								width:   30
+								height:  30
+								sizing:  gui.fixed_fixed
+								padding: gui.padding_none
+								color:   box_color
+								radius:  15
+							),
+						]
+					),
+				]
+			),
+			// Layout Transition
+			gui.column(
+				padding: gui.padding_none
+				content: [
+					gui.text(text: 'Layout Transition', text_style: gui.theme().b2),
+					gui.text(
+						text:       'Automatically animates position changes'
+						text_style: gui.theme().n4
+					),
+					gui.button(
+						content:  [gui.text(text: 'Toggle Layout')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.animate_layout(duration: 400 * time.millisecond)
+							mut app := w.state[ShowcaseApp]()
+							app.anim_layout_expanded = !app.anim_layout_expanded
+						}
+					),
+					gui.row(
+						height:  60
+						sizing:  gui.fill_fixed
+						padding: gui.padding_none
+						content: layout_boxes(app.anim_layout_expanded, box_color)
+					),
+				]
+			),
+		]
+	)
+}
+
+fn start_tween(mut w gui.Window, easing gui.EasingFn) {
+	app := w.state[ShowcaseApp]()
+	target := if app.anim_tween_x < 200 { f32(400) } else { f32(0) }
+	w.animation_add(mut gui.TweenAnimation{
+		id:       'tween_demo'
+		from:     app.anim_tween_x
+		to:       target
+		duration: 600 * time.millisecond
+		easing:   easing
+		on_value: fn (v f32, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.anim_tween_x = v
+		}
+	})
+}
+
+fn start_spring(mut w gui.Window, config gui.SpringConfig) {
+	app := w.state[ShowcaseApp]()
+	target := if app.anim_spring_x < 200 { f32(400) } else { f32(0) }
+	mut spring := gui.SpringAnimation{
+		id:       'spring_demo'
+		config:   config
+		on_value: fn (v f32, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.anim_spring_x = v
+		}
+	}
+	spring.spring_to(app.anim_spring_x, target)
+	w.animation_add(mut spring)
+}
+
+fn layout_boxes(expanded bool, color gui.Color) []gui.View {
+	if expanded {
+		return [
+			gui.row(id: 'box_a', width: 40, height: 40, color: color, radius: 4),
+			gui.row(sizing: gui.fill_fit, padding: gui.padding_none),
+			gui.row(id: 'box_b', width: 40, height: 40, color: color, radius: 4),
+			gui.row(sizing: gui.fill_fit, padding: gui.padding_none),
+			gui.row(id: 'box_c', width: 40, height: 40, color: color, radius: 4),
+		]
+	}
+	return [
+		gui.row(id: 'box_a', width: 40, height: 40, color: color, radius: 4),
+		gui.row(id: 'box_b', width: 40, height: 40, color: color, radius: 4),
+		gui.row(id: 'box_c', width: 40, height: 40, color: color, radius: 4),
+	]
+}
