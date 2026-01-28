@@ -41,3 +41,21 @@ fn u32_sort(a u32, b u32) (u32, u32) {
 		else { a, b }
 	}
 }
+
+// f32_abs returns absolute value
+@[inline]
+pub fn f32_abs(x f32) f32 {
+	return if x < 0 { -x } else { x }
+}
+
+// f32_min returns smaller of a and b
+@[inline]
+pub fn f32_min(a f32, b f32) f32 {
+	return if a < b { a } else { b }
+}
+
+// f32_max returns larger of a and b
+@[inline]
+pub fn f32_max(a f32, b f32) f32 {
+	return if a > b { a } else { b }
+}

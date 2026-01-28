@@ -162,6 +162,16 @@ pub fn rgba(r u8, g u8, b u8, a u8) Color {
 	}
 }
 
+// with_opacity returns color with alpha multiplied by opacity (0.0-1.0)
+pub fn (c Color) with_opacity(opacity f32) Color {
+	return Color{
+		r: c.r
+		g: c.g
+		b: c.b
+		a: u8(f32(c.a) * f32_clamp(opacity, 0, 1))
+	}
+}
+
 // + adds `b` to `a`, with a maximum value of 255 for each channel
 pub fn (a Color) + (b Color) Color {
 	mut na := int(a.a) + b.a

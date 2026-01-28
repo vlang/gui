@@ -79,9 +79,12 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_scroll_containers(mut layout, 0)
 	// 10. Final layout adjustments/amendments
 	layout_amend(mut layout, mut window)
-	// 11. Calculate clipping rectangles for rendering
+	// 11. Apply animation transitions (layout/hero)
+	apply_layout_transition(mut layout, window)
+	apply_hero_transition(mut layout, window)
+	// 12. Calculate clipping rectangles for rendering
 	layout_set_shape_clips(mut layout, window.window_rect())
-	// 12. Update hover states
+	// 13. Update hover states
 	layout_hover(mut layout, mut window)
 }
 

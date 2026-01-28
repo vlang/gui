@@ -100,6 +100,8 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			on_hover:      cv.on_hover
 			on_scroll:     cv.on_scroll
 			amend_layout:  cv.amend_layout
+			hero:          cv.hero
+			opacity:       cv.opacity
 		}
 	}
 
@@ -209,6 +211,8 @@ pub:
 	focus_skip      bool
 	over_draw       bool
 	float           bool
+	hero            bool // Participates in hero transitions
+	opacity         f32 = 1.0 // Opacity (0.0 = transparent, 1.0 = opaque)
 }
 
 // container is the fundamental layout container in gui. It is used to layout
@@ -309,6 +313,8 @@ fn container(cfg ContainerCfg) View {
 		on_hover:        cfg.on_hover
 		on_scroll:       cfg.on_scroll
 		amend_layout:    cfg.amend_layout
+		hero:            cfg.hero
+		opacity:         cfg.opacity
 		content:         content
 	}
 	return view

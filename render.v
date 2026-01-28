@@ -250,6 +250,16 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 
 // render_shape examines the Shape.type and calls the appropriate renderer.
 fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
+	// Apply opacity to colors
+	if shape.opacity < 1.0 {
+		shape.color = shape.color.with_opacity(shape.opacity)
+		shape.color_border = shape.color_border.with_opacity(shape.opacity)
+		shape.text_style = TextStyle{
+			...shape.text_style
+			color: shape.text_style.color.with_opacity(shape.opacity)
+		}
+	}
+
 	has_visible_border := shape.size_border > 0 && shape.color_border != color_transparent
 	has_visible_text := shape.shape_type == .text && shape.text_style.color != color_transparent
 	if shape.color == color_transparent && shape.gradient == unsafe { nil }

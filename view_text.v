@@ -38,6 +38,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 		shape: &Shape{
 			name:                'text'
 			shape_type:          .text
+			id:                  tv.id
 			id_focus:            tv.id_focus
 			clip:                tv.clip
 			focus_skip:          tv.focus_skip
@@ -55,6 +56,8 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			on_char:             tv.on_char
 			on_keydown:          tv.on_key_down
 			on_click:            tv.on_click
+			hero:                tv.hero
+			opacity:             tv.opacity
 		}
 	}
 
@@ -85,6 +88,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 pub struct TextCfg {
 	sizing Sizing
 pub:
+	id                 string
 	text               string
 	text_style         TextStyle = gui_theme.text_style
 	id_focus           u32
@@ -97,6 +101,8 @@ pub:
 	disabled           bool
 	is_password        bool
 	placeholder_active bool
+	hero               bool
+	opacity            f32 = 1.0
 }
 
 // text is a general purpose text view. Use it for labels or larger
@@ -107,6 +113,7 @@ pub fn text(cfg TextCfg) View {
 		return invisible_container_view()
 	}
 	return TextView{
+		id:                 cfg.id
 		text:               cfg.text
 		text_style:         cfg.text_style
 		id_focus:           cfg.id_focus
@@ -119,6 +126,8 @@ pub fn text(cfg TextCfg) View {
 		disabled:           cfg.disabled
 		is_password:        cfg.is_password
 		placeholder_active: cfg.placeholder_active
+		hero:               cfg.hero
+		opacity:            cfg.opacity
 		sizing:             if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 	}
 }

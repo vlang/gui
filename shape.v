@@ -80,6 +80,8 @@ pub mut:
 	over_draw           bool            // If true, allows drawing into padding and ignores spacing impact
 	text_is_password    bool            // If true, mask text characters
 	text_is_placeholder bool            // If true, text is a placeholder (affects styling)
+	hero                bool            // If true, element participates in hero transitions
+	opacity             f32 = 1.0 // Opacity multiplier (0.0 = transparent, 1.0 = opaque)
 }
 
 // ShapeType defines the kind of Shape.
