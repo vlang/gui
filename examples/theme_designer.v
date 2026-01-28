@@ -13,6 +13,8 @@ const editor_max_width = 260
 const scrollbar_gap = 4
 const row_spacing = 2
 const button_spacing = 3
+const section_padding = 8
+const slider_value_gap = 3
 
 // Label widths
 const label_width_small = 15
@@ -64,7 +66,56 @@ const subtle_alpha = u8(150)
 const id_scroll_editor = 1
 const id_scroll_preview = 2
 
-// Focus IDs for preview
+// Focus IDs for editor panel
+const id_focus_preset_dark = 10
+const id_focus_preset_light = 11
+const id_focus_preset_dark_bordered = 12
+const id_focus_preset_light_bordered = 13
+const id_focus_preset_blue_bordered = 14
+const id_focus_bg_r = 20
+const id_focus_bg_g = 21
+const id_focus_bg_b = 22
+const id_focus_panel_r = 23
+const id_focus_panel_g = 24
+const id_focus_panel_b = 25
+const id_focus_text_r = 26
+const id_focus_text_g = 27
+const id_focus_text_b = 28
+const id_focus_accent_r = 29
+const id_focus_accent_g = 30
+const id_focus_accent_b = 31
+const id_focus_border_r = 32
+const id_focus_border_g = 33
+const id_focus_border_b = 34
+const id_focus_style_radius = 35
+const id_focus_style_border = 36
+const id_focus_style_spacing = 37
+const id_focus_font_system = 38
+const id_focus_font_serif = 39
+const id_focus_font_mono = 40
+const id_focus_font_size = 41
+const id_focus_shadow_offset_x = 42
+const id_focus_shadow_offset_y = 43
+const id_focus_shadow_blur = 44
+const id_focus_shadow_spread = 45
+const id_focus_shadow_alpha = 46
+const id_focus_grad_enable = 47
+const id_focus_grad_linear = 48
+const id_focus_grad_radial = 49
+const id_focus_grad_start_x = 50
+const id_focus_grad_start_y = 51
+const id_focus_grad_end_x = 52
+const id_focus_grad_end_y = 53
+const id_focus_grad_stop1_r = 54
+const id_focus_grad_stop1_g = 55
+const id_focus_grad_stop1_b = 56
+const id_focus_grad_stop1_pos = 57
+const id_focus_grad_stop2_r = 58
+const id_focus_grad_stop2_g = 59
+const id_focus_grad_stop2_b = 60
+const id_focus_grad_stop2_pos = 61
+
+// Focus IDs for preview panel
 const id_focus_btn_primary = 100
 const id_focus_btn_accent = 101
 const id_focus_btn_disabled = 102
@@ -229,8 +280,9 @@ fn get_gradient(app &ThemeEditorState) &gui.Gradient {
 	}
 }
 
-fn toggle_button(label string, is_selected bool, on_click fn (&gui.Layout, mut gui.Event, mut gui.Window)) gui.View {
+fn toggle_button(label string, is_selected bool, id_focus u32, on_click fn (&gui.Layout, mut gui.Event, mut gui.Window)) gui.View {
 	return gui.button(
+		id_focus:     id_focus
 		padding:      gui.padding(2, 4, 2, 4)
 		color:        if is_selected { gui.theme().color_active } else { gui.theme().color_interior }
 		color_border: if is_selected { gui.theme().color_select } else { gui.theme().color_border }
@@ -241,11 +293,12 @@ fn toggle_button(label string, is_selected bool, on_click fn (&gui.Layout, mut g
 	)
 }
 
-fn slider_row(label string, value f32, min f32, max f32, label_width int, value_width int, id string, round bool, on_change fn (f32, mut gui.Event, mut gui.Window)) gui.View {
+fn slider_row(label string, value f32, min f32, max f32, label_width int, value_width int, id string, round bool, id_focus u32, decimals int, on_change fn (f32, mut gui.Event, mut gui.Window)) gui.View {
 	mut content := []gui.View{cap: 3}
 	content << gui.text(text: label, min_width: label_width, text_style: label_style())
 	content << gui.range_slider(
 		id:          id
+		id_focus:    id_focus
 		value:       value
 		min:         min
 		max:         max
@@ -254,7 +307,13 @@ fn slider_row(label string, value f32, min f32, max f32, label_width int, value_
 		on_change:   on_change
 	)
 	if value_width > 0 {
-		content << gui.text(text: '${int(value)}', min_width: value_width, text_style: label_style())
+		value_text := if decimals > 0 { '${value:.2}' } else { '${int(value)}' }
+		content << gui.row(
+			padding: gui.padding(0, 0, 0, slider_value_gap)
+			content: [
+				gui.text(text: value_text, min_width: value_width, text_style: label_style()),
+			]
+		)
 	}
 	return gui.row(
 		sizing:  gui.fill_fit
@@ -333,19 +392,20 @@ fn preset_buttons() gui.View {
 				padding: gui.padding_none
 				spacing: button_spacing
 				content: [
-					preset_button('Drk', 'Dark'),
-					preset_button('Lgt', 'Light'),
-					preset_button('D+B', 'Dark Bordered'),
-					preset_button('L+B', 'Light Bordered'),
-					preset_button('Blu', 'Blue Bordered'),
+					preset_button('Drk', 'Dark', id_focus_preset_dark),
+					preset_button('Lgt', 'Light', id_focus_preset_light),
+					preset_button('D+B', 'Dark Bordered', id_focus_preset_dark_bordered),
+					preset_button('L+B', 'Light Bordered', id_focus_preset_light_bordered),
+					preset_button('Blu', 'Blue Bordered', id_focus_preset_blue_bordered),
 				]
 			),
 		]
 	)
 }
 
-fn preset_button(label string, tooltip_text string) gui.View {
+fn preset_button(label string, tooltip_text string, id_focus u32) gui.View {
 	return gui.button(
+		id_focus:     id_focus
 		padding:      gui.padding(2, 5, 2, 5)
 		color:        gui.theme().color_interior
 		color_border: gui.theme().color_border
@@ -386,23 +446,31 @@ fn apply_preset(name string, mut w gui.Window) {
 fn color_sliders(prefix string, window &gui.Window) gui.View {
 	app := window.state[ThemeEditorState]()
 	r, g, b := get_color_rgb(prefix, app)
+	base_id := u32(match prefix {
+		'bg' { id_focus_bg_r }
+		'panel' { id_focus_panel_r }
+		'text' { id_focus_text_r }
+		'accent' { id_focus_accent_r }
+		'border' { id_focus_border_r }
+		else { 0 }
+	})
 
 	return gui.column(
 		sizing:  gui.fill_fit
 		spacing: row_spacing
 		padding: gui.padding_none
 		content: [
-			color_slider_row('R', r, prefix, 'r'),
-			color_slider_row('G', g, prefix, 'g'),
-			color_slider_row('B', b, prefix, 'b'),
+			color_slider_row('R', r, prefix, 'r', base_id),
+			color_slider_row('G', g, prefix, 'g', base_id + 1),
+			color_slider_row('B', b, prefix, 'b', base_id + 2),
 			color_preview(prefix, app),
 		]
 	)
 }
 
-fn color_slider_row(label string, value f32, prefix string, component string) gui.View {
+fn color_slider_row(label string, value f32, prefix string, component string, id_focus u32) gui.View {
 	return slider_row(label, value, 0, color_max, label_width_small, value_width_large,
-		'${prefix}_${component}', true, make_color_handler(prefix, component))
+		'${prefix}_${component}', true, id_focus, 0, make_color_handler(prefix, component))
 }
 
 fn make_color_handler(prefix string, component string) fn (f32, mut gui.Event, mut gui.Window) {
@@ -483,11 +551,11 @@ fn style_sliders(window &gui.Window) gui.View {
 		padding: gui.padding_none
 		content: [
 			slider_row('Radius', app.border_radius, 0, radius_max, label_width_medium,
-				value_width_medium, 'style_radius', true, make_style_handler('radius')),
+				value_width_medium, 'style_radius', true, id_focus_style_radius, 0, make_style_handler('radius')),
 			slider_row('Border', app.border_size, 0, border_max, label_width_medium, value_width_medium,
-				'style_border', true, make_style_handler('border_size')),
+				'style_border', true, id_focus_style_border, 0, make_style_handler('border_size')),
 			slider_row('Spacing', app.spacing, 0, spacing_max, label_width_medium, value_width_medium,
-				'style_spacing', true, make_style_handler('spacing')),
+				'style_spacing', true, id_focus_style_spacing, 0, make_style_handler('spacing')),
 		]
 	)
 }
@@ -518,13 +586,13 @@ fn typeface_picker(window &gui.Window) gui.View {
 				spacing: gui.spacing_small
 				content: [
 					gui.text(text: 'Family', min_width: 45),
-					font_button('System', app),
-					font_button('Serif', app),
-					font_button('Mono', app),
+					font_button('System', id_focus_font_system, app),
+					font_button('Serif', id_focus_font_serif, app),
+					font_button('Mono', id_focus_font_mono, app),
 				]
 			),
 			slider_row('Size', app.font_size, font_size_min, font_size_max, 45, value_width_small,
-				'font_size', true, fn (value f32, mut _ gui.Event, mut w gui.Window) {
+				'font_size', true, id_focus_font_size, 0, fn (value f32, mut _ gui.Event, mut w gui.Window) {
 				mut state := w.state[ThemeEditorState]()
 				state.font_size = value
 			}),
@@ -533,8 +601,8 @@ fn typeface_picker(window &gui.Window) gui.View {
 	)
 }
 
-fn font_button(name string, app &ThemeEditorState) gui.View {
-	return toggle_button(name, app.font_family == name, fn [name] (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+fn font_button(name string, id_focus u32, app &ThemeEditorState) gui.View {
+	return toggle_button(name, app.font_family == name, id_focus, fn [name] (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 		mut state := w.state[ThemeEditorState]()
 		state.font_family = name
 	})
@@ -560,15 +628,18 @@ fn shadow_sliders(window &gui.Window) gui.View {
 		padding: gui.padding_none
 		content: [
 			slider_row('Offset X', app.shadow_offset_x, shadow_offset_min, shadow_offset_max,
-				label_width_medium, value_width_medium, 'shadow_offset_x', true, make_shadow_handler('offset_x')),
+				label_width_medium, value_width_medium, 'shadow_offset_x', true, id_focus_shadow_offset_x,
+				0, make_shadow_handler('offset_x')),
 			slider_row('Offset Y', app.shadow_offset_y, shadow_offset_min, shadow_offset_max,
-				label_width_medium, value_width_medium, 'shadow_offset_y', true, make_shadow_handler('offset_y')),
+				label_width_medium, value_width_medium, 'shadow_offset_y', true, id_focus_shadow_offset_y,
+				0, make_shadow_handler('offset_y')),
 			slider_row('Blur', app.shadow_blur, 0, shadow_blur_max, label_width_medium,
-				value_width_medium, 'shadow_blur', true, make_shadow_handler('blur')),
+				value_width_medium, 'shadow_blur', true, id_focus_shadow_blur, 0, make_shadow_handler('blur')),
 			slider_row('Spread', app.shadow_spread, shadow_spread_min, shadow_spread_max,
-				label_width_medium, value_width_medium, 'shadow_spread', true, make_shadow_handler('spread')),
+				label_width_medium, value_width_medium, 'shadow_spread', true, id_focus_shadow_spread,
+				0, make_shadow_handler('spread')),
 			slider_row('Opacity', app.shadow_alpha, 0, color_max, label_width_medium,
-				value_width_medium, 'shadow_alpha', true, make_shadow_handler('alpha')),
+				value_width_medium, 'shadow_alpha', true, id_focus_shadow_alpha, 0, make_shadow_handler('alpha')),
 			shadow_preview(app),
 		]
 	)
@@ -611,7 +682,7 @@ fn gradient_controls(window &gui.Window) gui.View {
 	return gui.column(
 		sizing:  gui.fill_fit
 		spacing: row_spacing
-		padding: gui.padding_none
+		padding: gui.padding(0, section_padding, 0, section_padding)
 		content: [
 			gui.row(
 				sizing:  gui.fill_fit
@@ -620,35 +691,36 @@ fn gradient_controls(window &gui.Window) gui.View {
 				spacing: gui.spacing_small
 				content: [
 					gui.switch(
+						id_focus: id_focus_grad_enable
 						select:   app.gradient_enabled
 						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 							mut state := w.state[ThemeEditorState]()
 							state.gradient_enabled = !state.gradient_enabled
 						}
 					),
-					grad_type_button('Lin', 'Linear', app),
-					grad_type_button('Rad', 'Radial', app),
+					grad_type_button('Lin', 'Linear', id_focus_grad_linear, app),
+					grad_type_button('Rad', 'Radial', id_focus_grad_radial, app),
 					gradient_preview(app),
 				]
 			),
-			slider_row('X1', app.gradient_start_x, 0, 1.0, label_width_gradient, 0, 'grad_start_x',
-				false, make_grad_dir_handler('start_x')),
-			slider_row('Y1', app.gradient_start_y, 0, 1.0, label_width_gradient, 0, 'grad_start_y',
-				false, make_grad_dir_handler('start_y')),
-			slider_row('X2', app.gradient_end_x, 0, 1.0, label_width_gradient, 0, 'grad_end_x',
-				false, make_grad_dir_handler('end_x')),
-			slider_row('Y2', app.gradient_end_y, 0, 1.0, label_width_gradient, 0, 'grad_end_y',
-				false, make_grad_dir_handler('end_y')),
+			slider_row('X1', app.gradient_start_x, 0, 1.0, label_width_gradient, value_width_medium,
+				'grad_start_x', false, id_focus_grad_start_x, 2, make_grad_dir_handler('start_x')),
+			slider_row('Y1', app.gradient_start_y, 0, 1.0, label_width_gradient, value_width_medium,
+				'grad_start_y', false, id_focus_grad_start_y, 2, make_grad_dir_handler('start_y')),
+			slider_row('X2', app.gradient_end_x, 0, 1.0, label_width_gradient, value_width_medium,
+				'grad_end_x', false, id_focus_grad_end_x, 2, make_grad_dir_handler('end_x')),
+			slider_row('Y2', app.gradient_end_y, 0, 1.0, label_width_gradient, value_width_medium,
+				'grad_end_y', false, id_focus_grad_end_y, 2, make_grad_dir_handler('end_y')),
 			grad_stop_row('1', app.grad_stop1_r, app.grad_stop1_g, app.grad_stop1_b, app.grad_stop1_pos,
-				'stop1'),
+				'stop1', id_focus_grad_stop1_r),
 			grad_stop_row('2', app.grad_stop2_r, app.grad_stop2_g, app.grad_stop2_b, app.grad_stop2_pos,
-				'stop2'),
+				'stop2', id_focus_grad_stop2_r),
 		]
 	)
 }
 
-fn grad_type_button(label string, type_name string, app &ThemeEditorState) gui.View {
-	return toggle_button(label, app.gradient_type == type_name, fn [type_name] (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+fn grad_type_button(label string, type_name string, id_focus u32, app &ThemeEditorState) gui.View {
+	return toggle_button(label, app.gradient_type == type_name, id_focus, fn [type_name] (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 		mut state := w.state[ThemeEditorState]()
 		state.gradient_type = type_name
 	})
@@ -667,7 +739,7 @@ fn make_grad_dir_handler(field string) fn (f32, mut gui.Event, mut gui.Window) {
 	}
 }
 
-fn grad_stop_row(label string, r f32, g f32, b f32, pos f32, stop string) gui.View {
+fn grad_stop_row(label string, r f32, g f32, b f32, pos f32, stop string, id_focus_base u32) gui.View {
 	return gui.row(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
@@ -686,6 +758,7 @@ fn grad_stop_row(label string, r f32, g f32, b f32, pos f32, stop string) gui.Vi
 			),
 			gui.range_slider(
 				id:          'grad_${stop}_r'
+				id_focus:    id_focus_base
 				value:       r
 				min:         0
 				max:         color_max
@@ -695,6 +768,7 @@ fn grad_stop_row(label string, r f32, g f32, b f32, pos f32, stop string) gui.Vi
 			),
 			gui.range_slider(
 				id:          'grad_${stop}_g'
+				id_focus:    id_focus_base + 1
 				value:       g
 				min:         0
 				max:         color_max
@@ -704,6 +778,7 @@ fn grad_stop_row(label string, r f32, g f32, b f32, pos f32, stop string) gui.Vi
 			),
 			gui.range_slider(
 				id:          'grad_${stop}_b'
+				id_focus:    id_focus_base + 2
 				value:       b
 				min:         0
 				max:         color_max
@@ -713,6 +788,7 @@ fn grad_stop_row(label string, r f32, g f32, b f32, pos f32, stop string) gui.Vi
 			),
 			gui.range_slider(
 				id:        'grad_${stop}_pos'
+				id_focus:  id_focus_base + 3
 				value:     pos
 				min:       0
 				max:       1.0
