@@ -21,8 +21,6 @@ module gui
 // - canvas(): Creates a free-form container
 // - circle(): Creates a circular container
 //
-import arrays
-
 @[heap; minify]
 struct ContainerView implements View {
 	ContainerCfg
@@ -87,21 +85,19 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			float_tie_off:   cv.float_tie_off
 			float_offset_x:  cv.float_offset_x
 			float_offset_y:  cv.float_offset_y
-			// text:           cv.text // Handled via child nodes now
-			// text_style: ... // Handled via child nodes
-			id_scroll:     cv.id_scroll
-			over_draw:     cv.over_draw
-			scroll_mode:   cv.scroll_mode
-			on_click:      cv.on_click
-			on_char:       cv.on_char
-			on_keydown:    cv.on_keydown
-			on_mouse_move: cv.on_mouse_move_tooltip
-			on_mouse_up:   cv.on_mouse_up
-			on_hover:      cv.on_hover
-			on_scroll:     cv.on_scroll
-			amend_layout:  cv.amend_layout
-			hero:          cv.hero
-			opacity:       cv.opacity
+			id_scroll:       cv.id_scroll
+			over_draw:       cv.over_draw
+			scroll_mode:     cv.scroll_mode
+			on_click:        cv.on_click
+			on_char:         cv.on_char
+			on_keydown:      cv.on_keydown
+			on_mouse_move:   cv.on_mouse_move_tooltip
+			on_mouse_up:     cv.on_mouse_up
+			on_hover:        cv.on_hover
+			on_scroll:       cv.on_scroll
+			amend_layout:    cv.amend_layout
+			hero:            cv.hero
+			opacity:         cv.opacity
 		}
 	}
 
@@ -157,13 +153,13 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 // box. Set the `text` property to enable this feature.
 @[minify]
 pub struct ContainerCfg {
-pub mut:
-	name string // internally set. read-only.
+mut:
+	name string // internally set
 	axis Axis
 pub:
 	id              string
 	title           string
-	title_bg        Color         = theme().color_background
+	title_bg        Color         = gui_theme.color_background
 	scrollbar_cfg_x &ScrollbarCfg = unsafe { nil }
 	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
 	tooltip         &TooltipCfg   = unsafe { nil }
@@ -223,9 +219,9 @@ fn container(cfg ContainerCfg) View {
 		return invisible_container_view()
 	}
 
-	mut extra_content := []View{cap: 3}
-
+	mut content := unsafe { cfg.content }
 	if cfg.id_scroll > 0 {
+		mut extra_content := []View{cap: 2}
 		if cfg.scrollbar_cfg_x != unsafe { nil } {
 			if cfg.scrollbar_cfg_x.overflow != .hidden {
 				extra_content << scrollbar(ScrollbarCfg{
@@ -254,11 +250,10 @@ fn container(cfg ContainerCfg) View {
 				id_scroll:   cfg.id_scroll
 			})
 		}
-	}
-
-	content := match extra_content.len > 0 {
-		true { arrays.append(cfg.content, extra_content) }
-		else { cfg.content }
+		if extra_content.len > 0 {
+			content = cfg.content.clone()
+			content << extra_content
+		}
 	}
 
 	view := ContainerView{
@@ -289,7 +284,6 @@ fn container(cfg ContainerCfg) View {
 		sizing:          cfg.sizing
 		spacing:         cfg.spacing
 		disabled:        cfg.disabled
-		invisible:       cfg.invisible
 		title:           cfg.title
 		title_bg:        cfg.title_bg
 		id_scroll:       cfg.id_scroll
@@ -304,7 +298,7 @@ fn container(cfg ContainerCfg) View {
 		on_click:        if cfg.on_any_click != unsafe { nil } {
 			cfg.on_any_click
 		} else {
-			cfg.left_click()
+			left_click_only(cfg.on_click)
 		}
 		on_char:         cfg.on_char
 		on_keydown:      cfg.on_keydown
@@ -382,18 +376,6 @@ fn (cv &ContainerView) on_mouse_move_tooltip(layout &Layout, mut e Event, mut w 
 	}
 }
 
-fn (cfg &ContainerCfg) left_click() fn (&Layout, mut Event, mut Window) {
-	if cfg.on_click == unsafe { nil } {
-		return cfg.on_click
-	}
-	on_click := cfg.on_click
-	return fn [on_click] (layout &Layout, mut e Event, mut w Window) {
-		if e.mouse_button == .left {
-			on_click(layout, mut e, mut w)
-		}
-	}
-}
-
 fn invisible_container_view() ContainerView {
 	return ContainerView{
 		disabled:  true
@@ -402,7 +384,7 @@ fn invisible_container_view() ContainerView {
 	}
 }
 
-fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
+fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 	if cv.title.len == 0 {
 		return
 	}
@@ -425,7 +407,7 @@ fn (cv ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 	metrics := w.text_system.font_metrics(cfg)
 
 	offset := metrics.ascender - metrics.descender
-	padding := 5
+	padding := f32(5)
 
 	// 1. Eraser Node (hides the border)
 	parent_bg := cv.title_bg
