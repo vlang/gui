@@ -64,6 +64,11 @@ fn main() {
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 
+	// Custom style with code block background color
+	custom_style := gui.MarkdownStyle{
+		code_block_bg: gui.rgb(40, 44, 52)
+	}
+
 	return gui.column(
 		width:     w
 		height:    h
@@ -74,6 +79,7 @@ fn main_view(window &gui.Window) gui.View {
 		content:   [
 			gui.markdown(
 				source: markdown_source
+				style:  custom_style
 				mode:   .wrap
 			),
 		]

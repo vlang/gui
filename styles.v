@@ -331,7 +331,8 @@ pub struct TextStyle {
 pub:
 	family         string
 	color          Color
-	size           f32 = size_text_medium
+	bg_color       Color = color_transparent
+	size           f32   = size_text_medium
 	line_spacing   f32
 	letter_spacing f32
 	align          TextAlignment = .left

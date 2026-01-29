@@ -2,8 +2,15 @@ module gui
 
 // xtra_markdown.v implements a markdown parser that converts markdown text to RichText.
 
-// markdown_to_rich_text parses markdown source and returns styled RichText.
-pub fn markdown_to_rich_text(source string) RichText {
+// MarkdownBlock represents a parsed block of markdown content.
+struct MarkdownBlock {
+	is_code bool
+	content RichText
+}
+
+// markdown_to_blocks parses markdown source and returns styled blocks.
+fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
+	mut blocks := []MarkdownBlock{}
 	mut runs := []RichTextRun{}
 	lines := source.split('\n')
 	mut i := 0
@@ -16,17 +23,38 @@ pub fn markdown_to_rich_text(source string) RichText {
 		// Handle code blocks
 		if line.starts_with('```') {
 			if in_code_block {
-				// End code block
+				// End code block - flush current runs first, then add code block
+				if runs.len > 0 {
+					blocks << MarkdownBlock{
+						is_code: false
+						content: RichText{runs: runs.clone()}
+					}
+					runs.clear()
+				}
 				if code_block_content.len > 0 {
-					runs << RichTextRun{
-						text:  code_block_content.join('\n')
-						style: gui_theme.m4
+					blocks << MarkdownBlock{
+						is_code: true
+						content: RichText{
+							runs: [
+								RichTextRun{
+									text:  code_block_content.join('\n')
+									style: style.code
+								},
+							]
+						}
 					}
 				}
 				code_block_content.clear()
 				in_code_block = false
 			} else {
-				// Start code block
+				// Start code block - flush current runs
+				if runs.len > 0 {
+					blocks << MarkdownBlock{
+						is_code: false
+						content: RichText{runs: runs.clone()}
+					}
+					runs.clear()
+				}
 				in_code_block = true
 			}
 			i++
@@ -47,7 +75,7 @@ pub fn markdown_to_rich_text(source string) RichText {
 			// Add horizontal line using box-drawing characters
 			runs << RichTextRun{
 				text:  '────────────────────────'
-				style: TextStyle{...gui_theme.n4, color: gui_theme.color_border}
+				style: TextStyle{...style.text, color: style.hr_color}
 			}
 			runs << rich_br()
 			i++
@@ -66,32 +94,32 @@ pub fn markdown_to_rich_text(source string) RichText {
 
 		// Headers
 		if line.starts_with('######') {
-			parse_header(line[6..].trim_left(' '), gui_theme.b6, mut runs)
+			parse_header(line[6..].trim_left(' '), style.h6, style, mut runs)
 			i++
 			continue
 		}
 		if line.starts_with('#####') {
-			parse_header(line[5..].trim_left(' '), gui_theme.b5, mut runs)
+			parse_header(line[5..].trim_left(' '), style.h5, style, mut runs)
 			i++
 			continue
 		}
 		if line.starts_with('####') {
-			parse_header(line[4..].trim_left(' '), gui_theme.b4, mut runs)
+			parse_header(line[4..].trim_left(' '), style.h4, style, mut runs)
 			i++
 			continue
 		}
 		if line.starts_with('###') {
-			parse_header(line[3..].trim_left(' '), gui_theme.b3, mut runs)
+			parse_header(line[3..].trim_left(' '), style.h3, style, mut runs)
 			i++
 			continue
 		}
 		if line.starts_with('##') {
-			parse_header(line[2..].trim_left(' '), gui_theme.b2, mut runs)
+			parse_header(line[2..].trim_left(' '), style.h2, style, mut runs)
 			i++
 			continue
 		}
 		if line.starts_with('#') {
-			parse_header(line[1..].trim_left(' '), gui_theme.b1, mut runs)
+			parse_header(line[1..].trim_left(' '), style.h1, style, mut runs)
 			i++
 			continue
 		}
@@ -100,9 +128,9 @@ pub fn markdown_to_rich_text(source string) RichText {
 		if line.starts_with('- ') || line.starts_with('* ') || line.starts_with('+ ') {
 			runs << RichTextRun{
 				text:  '  • '
-				style: gui_theme.n3
+				style: style.text
 			}
-			parse_inline(line[2..], gui_theme.n3, mut runs)
+			parse_inline(line[2..], style.text, style, mut runs)
 			runs << rich_br()
 			i++
 			continue
@@ -115,16 +143,16 @@ pub fn markdown_to_rich_text(source string) RichText {
 			rest := line[dot_pos + 1..].trim_left(' ')
 			runs << RichTextRun{
 				text:  '  ${num}. '
-				style: gui_theme.n3
+				style: style.text
 			}
-			parse_inline(rest, gui_theme.n3, mut runs)
+			parse_inline(rest, style.text, style, mut runs)
 			runs << rich_br()
 			i++
 			continue
 		}
 
 		// Regular paragraph
-		parse_inline(line, gui_theme.n3, mut runs)
+		parse_inline(line, style.text, style, mut runs)
 		i++
 
 		// Add line break if not last line
@@ -135,28 +163,58 @@ pub fn markdown_to_rich_text(source string) RichText {
 
 	// Handle unclosed code block
 	if in_code_block && code_block_content.len > 0 {
-		runs << RichTextRun{
-			text:  code_block_content.join('\n')
-			style: gui_theme.m4
+		if runs.len > 0 {
+			blocks << MarkdownBlock{
+				is_code: false
+				content: RichText{runs: runs.clone()}
+			}
+			runs.clear()
+		}
+		blocks << MarkdownBlock{
+			is_code: true
+			content: RichText{
+				runs: [
+					RichTextRun{
+						text:  code_block_content.join('\n')
+						style: style.code
+					},
+				]
+			}
 		}
 	}
 
-	return RichText{
-		runs: runs
+	// Flush remaining runs
+	if runs.len > 0 {
+		blocks << MarkdownBlock{
+			is_code: false
+			content: RichText{runs: runs}
+		}
 	}
+
+	return blocks
+}
+
+// markdown_to_rich_text parses markdown source and returns styled RichText (legacy).
+pub fn markdown_to_rich_text(source string, style MarkdownStyle) RichText {
+	blocks := markdown_to_blocks(source, style)
+	mut all_runs := []RichTextRun{}
+	for block in blocks {
+		all_runs << block.content.runs
+	}
+	return RichText{runs: all_runs}
 }
 
 // parse_header adds header text with the given style.
-fn parse_header(text string, style TextStyle, mut runs []RichTextRun) {
+fn parse_header(text string, header_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun) {
 	if runs.len > 0 {
 		runs << rich_br()
 	}
-	parse_inline(text, style, mut runs)
+	parse_inline(text, header_style, md_style, mut runs)
 	runs << rich_br()
 }
 
 // parse_inline parses inline markdown (bold, italic, code, links).
-fn parse_inline(text string, base_style TextStyle, mut runs []RichTextRun) {
+fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun) {
 	mut pos := 0
 	mut current_text := ''
 
@@ -174,7 +232,7 @@ fn parse_inline(text string, base_style TextStyle, mut runs []RichTextRun) {
 			if end > pos + 1 {
 				runs << RichTextRun{
 					text:  text[pos + 1..end]
-					style: gui_theme.m3
+					style: md_style.code
 				}
 				pos = end + 1
 				continue
@@ -192,11 +250,10 @@ fn parse_inline(text string, base_style TextStyle, mut runs []RichTextRun) {
 			}
 			end := find_double_closing(text, pos + 2, `*`)
 			if end > pos + 2 {
-				// Use b3 (bold medium) but preserve size from base_style
 				runs << RichTextRun{
 					text:  text[pos + 2..end]
 					style: TextStyle{
-						...gui_theme.b3
+						...md_style.bold
 						size: base_style.size
 					}
 				}
@@ -216,11 +273,10 @@ fn parse_inline(text string, base_style TextStyle, mut runs []RichTextRun) {
 			}
 			end := find_closing(text, pos + 1, `*`)
 			if end > pos + 1 {
-				// Use i3 (italic medium) but preserve size from base_style
 				runs << RichTextRun{
 					text:  text[pos + 1..end]
 					style: TextStyle{
-						...gui_theme.i3
+						...md_style.italic
 						size: base_style.size
 					}
 				}
@@ -244,7 +300,15 @@ fn parse_inline(text string, base_style TextStyle, mut runs []RichTextRun) {
 					}
 					link_text := text[pos + 1..bracket_end]
 					link_url := text[bracket_end + 2..paren_end]
-					runs << rich_link(link_text, link_url, base_style)
+					runs << RichTextRun{
+						text: link_text
+						link: link_url
+						style: TextStyle{
+							...base_style
+							color:     md_style.link_color
+							underline: true
+						}
+					}
 					pos = paren_end + 1
 					continue
 				}

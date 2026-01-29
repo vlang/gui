@@ -68,6 +68,7 @@ pub fn (ts TextStyle) to_vglyph_style() vglyph.TextStyle {
 	return vglyph.TextStyle{
 		font_name:     ts.family
 		color:         ts.color.to_gx_color()
+		bg_color:      ts.bg_color.to_gx_color()
 		size:          ts.size
 		features:      ts.features
 		underline:     ts.underline
