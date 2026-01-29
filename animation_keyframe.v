@@ -140,18 +140,29 @@ fn interpolate_keyframes(keyframes []Keyframe, progress f32) f32 {
 		return if keyframes.len == 1 { keyframes[0].value } else { 0 }
 	}
 
-	mut prev := keyframes[0]
-	for i := 1; i < keyframes.len; i++ {
-		curr := keyframes[i]
-		if progress <= curr.at {
-			segment_len := curr.at - prev.at
-			if segment_len <= 0 {
-				return curr.value
-			}
-			local := (progress - prev.at) / segment_len
-			return lerp(prev.value, curr.value, curr.easing(local))
+	// Binary search to find segment
+	mut lo := 0
+	mut hi := keyframes.len - 1
+	for lo < hi {
+		mid := (lo + hi) / 2
+		if keyframes[mid].at < progress {
+			lo = mid + 1
+		} else {
+			hi = mid
 		}
-		prev = curr
 	}
-	return keyframes.last().value
+
+	// lo is now the first keyframe with at >= progress (or len-1 if past all)
+	if lo == 0 {
+		return keyframes[0].value
+	}
+
+	prev := keyframes[lo - 1]
+	curr := keyframes[lo]
+	segment_len := curr.at - prev.at
+	if segment_len <= 0 {
+		return curr.value
+	}
+	local := (progress - prev.at) / segment_len
+	return lerp(prev.value, curr.value, curr.easing(local))
 }

@@ -181,17 +181,12 @@ fn update_hero_transition(mut ht HeroTransition, mut w Window, mut deferred []An
 
 // apply_hero_transition modifies layout during render for hero effect
 fn apply_hero_transition(mut layout Layout, w &Window) {
-	for animation in w.animations {
-		if animation.id == '__hero_transition__' {
-			if animation is HeroTransition {
-				if animation.stopped {
-					return
-				}
-				apply_hero_recursive(mut layout, animation.progress, animation.outgoing,
-					animation.incoming)
-				return
-			}
+	animation := w.animations['__hero_transition__'] or { return }
+	if animation is HeroTransition {
+		if animation.stopped {
+			return
 		}
+		apply_hero_recursive(mut layout, animation.progress, animation.outgoing, animation.incoming)
 	}
 }
 

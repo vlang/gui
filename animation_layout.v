@@ -185,10 +185,9 @@ fn update_layout_transition(mut lt LayoutTransition, mut w Window, mut deferred 
 
 // get_layout_transition returns active layout transition if any
 fn (w &Window) get_layout_transition() ?&LayoutTransition {
-	for animation in w.animations {
-		if animation is LayoutTransition {
-			return animation
-		}
+	animation := w.animations['__layout_transition__'] or { return none }
+	if animation is LayoutTransition {
+		return animation
 	}
 	return none
 }

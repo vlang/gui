@@ -23,22 +23,22 @@ mut:
 	focused               bool                        = true           // Window focus state
 	text_system           &vglyph.TextSystem          = unsafe { nil } // Text rendering system
 	on_event              fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}        // Global event handler
-	view_state            ViewState    // Manages state for widgets (scroll, selection, etc.)
-	dialog_cfg            DialogCfg    // Configuration for the active dialog (if any)
-	layout                Layout       // The current calculated layout tree
-	renderers             []Renderer   // Flat list of drawing instructions for the current frame
-	animations            []Animation  // Active animations
-	window_size           gg.Size      // cached, gg.window_size() relatively slow
-	refresh_window        bool         // Flag to trigger a layout update on the next frame
-	debug_layout          bool         // enable layout performance stats
-	layout_stats          LayoutStats  // populated when debug_layout is true
-	stats                 Stats        // Rendering statistics
-	rounded_rect_pip      sgl.Pipeline // Pipeline for drawing rounded rectangles
-	rounded_rect_pip_init bool         // Initialization flag for the pipeline
-	shadow_pip            sgl.Pipeline // Pipeline for drawing drop shadows
-	shadow_pip_init       bool         // Initialization flag for shadow pipeline
-	blur_pip              sgl.Pipeline // Pipeline for drawing blurred shapes (glows)
-	blur_pip_init         bool         // Initialization flag for blur pipeline
+	view_state            ViewState            // Manages state for widgets (scroll, selection, etc.)
+	dialog_cfg            DialogCfg            // Configuration for the active dialog (if any)
+	layout                Layout               // The current calculated layout tree
+	renderers             []Renderer           // Flat list of drawing instructions for the current frame
+	animations            map[string]Animation // Active animations (keyed by id)
+	window_size           gg.Size              // cached, gg.window_size() relatively slow
+	refresh_window        bool                 // Flag to trigger a layout update on the next frame
+	debug_layout          bool                 // enable layout performance stats
+	layout_stats          LayoutStats          // populated when debug_layout is true
+	stats                 Stats                // Rendering statistics
+	rounded_rect_pip      sgl.Pipeline         // Pipeline for drawing rounded rectangles
+	rounded_rect_pip_init bool                 // Initialization flag for the pipeline
+	shadow_pip            sgl.Pipeline         // Pipeline for drawing drop shadows
+	shadow_pip_init       bool                 // Initialization flag for shadow pipeline
+	blur_pip              sgl.Pipeline         // Pipeline for drawing blurred shapes (glows)
+	blur_pip_init         bool                 // Initialization flag for blur pipeline
 }
 
 // Window is the main application window. `state` holds app state.

@@ -2,6 +2,9 @@ module gui
 
 import math
 
+// LUT size for bezier precomputation (257 entries for 0..256 inclusive)
+const bezier_lut_size = 257
+
 // EasingFn maps progress t (0.0 to 1.0) to an eased value.
 // Use with TweenAnimation to control motion curves.
 pub type EasingFn = fn (f32) f32
@@ -88,12 +91,76 @@ pub fn ease_out_bounce(t f32) f32 {
 	}
 }
 
+// BezierLUT stores precomputed bezier values for O(1) lookup
+struct BezierLUT {
+mut:
+	values [bezier_lut_size]f32
+}
+
+// build_bezier_lut precomputes bezier curve values
+fn build_bezier_lut(x1 f32, y1 f32, x2 f32, y2 f32) BezierLUT {
+	mut lut := BezierLUT{}
+	for i in 0 .. bezier_lut_size {
+		t := f32(i) / f32(bezier_lut_size - 1)
+		lut.values[i] = bezier_calc(t, x1, y1, x2, y2)
+	}
+	return lut
+}
+
+// lookup_bezier returns interpolated value from LUT
+@[inline]
+fn (lut &BezierLUT) lookup(t f32) f32 {
+	if t <= 0 {
+		return 0
+	}
+	if t >= 1 {
+		return 1
+	}
+	// Map t to LUT index with interpolation
+	idx_f := t * f32(bezier_lut_size - 1)
+	idx := int(idx_f)
+	frac := idx_f - f32(idx)
+	if idx >= bezier_lut_size - 1 {
+		return lut.values[bezier_lut_size - 1]
+	}
+	// Linear interpolation between LUT entries
+	return lut.values[idx] + frac * (lut.values[idx + 1] - lut.values[idx])
+}
+
+// Precomputed LUTs for common CSS bezier curves
+const ease_lut = build_bezier_lut(0.25, 0.1, 0.25, 1.0)
+const ease_in_lut = build_bezier_lut(0.42, 0, 1.0, 1.0)
+const ease_out_lut = build_bezier_lut(0, 0, 0.58, 1.0)
+const ease_in_out_lut = build_bezier_lut(0.42, 0, 0.58, 1.0)
+
+// ease_css returns CSS "ease" curve (fast start, slow end). Uses precomputed LUT.
+pub fn ease_css(t f32) f32 {
+	return ease_lut.lookup(t)
+}
+
+// ease_in_css returns CSS "ease-in" curve. Uses precomputed LUT.
+pub fn ease_in_css(t f32) f32 {
+	return ease_in_lut.lookup(t)
+}
+
+// ease_out_css returns CSS "ease-out" curve. Uses precomputed LUT.
+pub fn ease_out_css(t f32) f32 {
+	return ease_out_lut.lookup(t)
+}
+
+// ease_in_out_css returns CSS "ease-in-out" curve. Uses precomputed LUT.
+pub fn ease_in_out_css(t f32) f32 {
+	return ease_in_out_lut.lookup(t)
+}
+
 // cubic_bezier creates a custom easing function from bezier control points.
-// Works like CSS cubic-bezier(). Common presets:
-//   ease:        cubic_bezier(0.25, 0.1, 0.25, 1.0)
-//   ease-in:     cubic_bezier(0.42, 0, 1.0, 1.0)
-//   ease-out:    cubic_bezier(0, 0, 0.58, 1.0)
-//   ease-in-out: cubic_bezier(0.42, 0, 0.58, 1.0)
+// Works like CSS cubic-bezier(). For standard CSS curves, prefer the precomputed
+// LUT versions (ease_css, ease_in_css, ease_out_css, ease_in_out_css) which are O(1).
+// Common presets:
+//   ease:        cubic_bezier(0.25, 0.1, 0.25, 1.0) or ease_css
+//   ease-in:     cubic_bezier(0.42, 0, 1.0, 1.0) or ease_in_css
+//   ease-out:    cubic_bezier(0, 0, 0.58, 1.0) or ease_out_css
+//   ease-in-out: cubic_bezier(0.42, 0, 0.58, 1.0) or ease_in_out_css
 pub fn cubic_bezier(x1 f32, y1 f32, x2 f32, y2 f32) EasingFn {
 	return fn [x1, y1, x2, y2] (t f32) f32 {
 		return bezier_calc(t, x1, y1, x2, y2)

@@ -34,23 +34,22 @@ mut:
 pub fn (mut window Window) animation_add(mut animation Animation) {
 	window.lock()
 	defer { window.unlock() }
-	window.animations = window.animations.filter(it.id != animation.id)
-	window.animations << animation
 	animation.start = time.now()
+	window.animations[animation.id] = animation
 }
 
 // has_animation returns true if an animation with the given id is currently active.
 pub fn (mut window Window) has_animation(id string) bool {
 	window.lock()
 	defer { window.unlock() }
-	return window.animations.any(it.id == id)
+	return id in window.animations
 }
 
 // remove_animation stops and removes an animation by id.
 pub fn (mut window Window) remove_animation(id string) {
 	window.lock()
 	defer { window.unlock() }
-	window.animations = window.animations.filter(it.id != id)
+	window.animations.delete(id)
 }
 
 fn (mut window Window) animation_loop() {
@@ -61,9 +60,10 @@ fn (mut window Window) animation_loop() {
 		time.sleep(animation_cycle)
 		mut refresh := false
 		mut deferred := []AnimationCallback{}
+		mut stopped_ids := []string{}
 		//--------------------------------------------
 		window.lock()
-		for mut animation in window.animations {
+		for _, mut animation in window.animations {
 			match mut animation {
 				Animate {
 					refresh = update_animate(mut animation, mut window, mut deferred) || refresh
@@ -82,10 +82,18 @@ fn (mut window Window) animation_loop() {
 					refresh = update_hero_transition(mut animation, mut window, mut deferred)
 						|| refresh
 				}
+				KeyframeAnimation {
+					refresh = update_keyframe(mut animation, mut window, mut deferred) || refresh
+				}
 				else {}
 			}
+			if animation.stopped {
+				stopped_ids << animation.id
+			}
 		}
-		window.animations = window.animations.filter(!it.stopped)
+		for id in stopped_ids {
+			window.animations.delete(id)
+		}
 		window.unlock()
 		//--------------------------------------------
 		// Call deferred callbacks outside lock to avoid deadlock
