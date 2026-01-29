@@ -131,8 +131,33 @@ type Renderer = DrawCircle
 // This function and renderer_draw constitute then entire
 // draw logic of GUI
 fn renderers_draw(renderers []Renderer, mut window Window) {
-	for renderer in renderers {
-		renderer_draw(renderer, mut window)
+	mut i := 0
+	for i < renderers.len {
+		renderer := renderers[i]
+		// Batch consecutive DrawSvg with same color, position, scale
+		if renderer is DrawSvg {
+			mut batch := []f32{}
+			color := renderer.color
+			x := renderer.x
+			y := renderer.y
+			scale := renderer.scale
+			// Collect consecutive matching DrawSvg
+			for i < renderers.len {
+				if renderers[i] is DrawSvg {
+					svg := renderers[i] as DrawSvg
+					if svg.color == color && svg.x == x && svg.y == y && svg.scale == scale {
+						batch << svg.triangles
+						i++
+						continue
+					}
+				}
+				break
+			}
+			draw_triangles(batch, color, x, y, scale, mut window)
+		} else {
+			renderer_draw(renderer, mut window)
+			i++
+		}
 	}
 	window.text_system.commit()
 }

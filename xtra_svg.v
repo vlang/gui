@@ -16,7 +16,8 @@ pub:
 // Width and height determine the display size and tessellation scale.
 pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&CachedSvg {
 	// Generate cache key including size for scale-specific caching
-	cache_key := '${svg_src}:${width}x${height}'
+	// Round to nearest integer to reduce cache misses from minor float differences
+	cache_key := '${svg_src}:${int(width + 0.5)}x${int(height + 0.5)}'
 
 	// Check cache first
 	if cached := window.view_state.svg_cache[cache_key] {

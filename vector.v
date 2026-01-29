@@ -112,7 +112,9 @@ pub:
 //   }
 //   ```
 pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
-	tolerance := 0.5 / scale // adaptive tolerance based on scale
+	// Adaptive tolerance with minimum floor to prevent excessive tessellation at small scales
+	base_tolerance := 0.5 / scale
+	tolerance := if base_tolerance > 1.5 { base_tolerance } else { f32(1.5) }
 	mut result := []TessellatedPath{cap: vg.paths.len * 2}
 	for path in vg.paths {
 		polylines := flatten_path(path, tolerance)
@@ -158,7 +160,9 @@ fn is_identity_transform(m [6]f32) bool {
 // flatten_path converts bezier curves to polylines with given tolerance.
 fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 	mut polylines := [][]f32{}
-	mut current := []f32{}
+	// Estimate capacity: 2 floats per segment + curve expansion (~8 points per curve)
+	estimated_cap := path.segments.len * 16
+	mut current := []f32{cap: estimated_cap}
 	mut x := f32(0)
 	mut y := f32(0)
 	mut start_x := f32(0)
@@ -171,7 +175,7 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 				if current.len >= 4 {
 					polylines << current
 				}
-				current = []f32{}
+				current = []f32{cap: estimated_cap}
 				x = seg.points[0]
 				y = seg.points[1]
 				start_x = x
@@ -250,7 +254,7 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 				if current.len >= 6 {
 					polylines << current
 				}
-				current = []f32{}
+				current = []f32{cap: estimated_cap}
 				x = start_x
 				y = start_y
 			}
@@ -264,8 +268,16 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 	return polylines
 }
 
+// Max recursion depth for curve flattening (16 levels = 65536 segments max)
+const max_flatten_depth = 16
+
 // flatten_quad flattens a quadratic bezier curve using recursive subdivision.
 fn flatten_quad(x0 f32, y0 f32, cx f32, cy f32, x1 f32, y1 f32, tolerance f32, mut points []f32) {
+	flatten_quad_recursive(x0, y0, cx, cy, x1, y1, tolerance, 0, mut points)
+}
+
+// flatten_quad_recursive is the depth-limited recursive implementation.
+fn flatten_quad_recursive(x0 f32, y0 f32, cx f32, cy f32, x1 f32, y1 f32, tolerance f32, depth int, mut points []f32) {
 	// Calculate flatness using distance from control point to midpoint of line
 	mx := (x0 + x1) / 2
 	my := (y0 + y1) / 2
@@ -273,7 +285,7 @@ fn flatten_quad(x0 f32, y0 f32, cx f32, cy f32, x1 f32, y1 f32, tolerance f32, m
 	dy := cy - my
 	d := math.sqrtf(dx * dx + dy * dy)
 
-	if d <= tolerance {
+	if d <= tolerance || depth >= max_flatten_depth {
 		points << x1
 		points << y1
 	} else {
@@ -285,13 +297,18 @@ fn flatten_quad(x0 f32, y0 f32, cx f32, cy f32, x1 f32, y1 f32, tolerance f32, m
 		abx := (ax + bx) / 2
 		aby := (ay + by) / 2
 
-		flatten_quad(x0, y0, ax, ay, abx, aby, tolerance, mut points)
-		flatten_quad(abx, aby, bx, by, x1, y1, tolerance, mut points)
+		flatten_quad_recursive(x0, y0, ax, ay, abx, aby, tolerance, depth + 1, mut points)
+		flatten_quad_recursive(abx, aby, bx, by, x1, y1, tolerance, depth + 1, mut points)
 	}
 }
 
 // flatten_cubic flattens a cubic bezier curve using recursive subdivision.
 fn flatten_cubic(x0 f32, y0 f32, c1x f32, c1y f32, c2x f32, c2y f32, x1 f32, y1 f32, tolerance f32, mut points []f32) {
+	flatten_cubic_recursive(x0, y0, c1x, c1y, c2x, c2y, x1, y1, tolerance, 0, mut points)
+}
+
+// flatten_cubic_recursive is the depth-limited recursive implementation.
+fn flatten_cubic_recursive(x0 f32, y0 f32, c1x f32, c1y f32, c2x f32, c2y f32, x1 f32, y1 f32, tolerance f32, depth int, mut points []f32) {
 	// Check flatness using distance of control points from line
 	dx := x1 - x0
 	dy := y1 - y0
@@ -308,7 +325,7 @@ fn flatten_cubic(x0 f32, y0 f32, c1x f32, c1y f32, c2x f32, c2y f32, x1 f32, y1 
 	d1 := f32_abs((c1x - x0) * dy - (c1y - y0) * dx) / d
 	d2 := f32_abs((c2x - x0) * dy - (c2y - y0) * dx) / d
 
-	if d1 + d2 <= tolerance {
+	if d1 + d2 <= tolerance || depth >= max_flatten_depth {
 		points << x1
 		points << y1
 	} else {
@@ -326,8 +343,10 @@ fn flatten_cubic(x0 f32, y0 f32, c1x f32, c1y f32, c2x f32, c2y f32, x1 f32, y1 
 		mx := (abx + bcx) / 2
 		my := (aby + bcy) / 2
 
-		flatten_cubic(x0, y0, ax, ay, abx, aby, mx, my, tolerance, mut points)
-		flatten_cubic(mx, my, bcx, bcy, cx, cy, x1, y1, tolerance, mut points)
+		flatten_cubic_recursive(x0, y0, ax, ay, abx, aby, mx, my, tolerance, depth + 1, mut
+			points)
+		flatten_cubic_recursive(mx, my, bcx, bcy, cx, cy, x1, y1, tolerance, depth + 1, mut
+			points)
 	}
 }
 
