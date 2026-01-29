@@ -4,24 +4,24 @@ import time
 
 // HeroSnapshot captures element state for hero transitions
 struct HeroSnapshot {
-	x       f32
-	y       f32
-	width   f32
-	height  f32
-	opacity f32
+	x      f32
+	y      f32
+	width  f32
+	height f32
 }
 
 // HeroTransitionCfg configures hero transition
 pub struct HeroTransitionCfg {
 pub:
-	duration time.Duration = 300 * time.millisecond
-	easing   EasingFn      = ease_out_cubic
+	duration time.Duration
+	easing   ?EasingFn
 }
 
-// HeroTransition animates elements between views
+// HeroTransition animates elements between views.
+// Only one HeroTransition can be active at a time (uses fixed internal ID).
 pub struct HeroTransition implements Animation {
 pub:
-	id       string          = '__hero_transition__'
+	id       string          = '__hero_transition__' // internal: only one active at a time
 	duration time.Duration   = 300 * time.millisecond
 	easing   EasingFn        = ease_out_cubic
 	on_done  fn (mut Window) = unsafe { nil }
@@ -34,7 +34,71 @@ mut:
 	progress f32
 }
 
-// transition_to_view switches view with hero animation
+// transition_to_view switches to a new view with animated hero element transitions.
+//
+// Hero transitions create smooth visual continuity when navigating between views by
+// animating shared elements (heroes) from their old positions to their new positions.
+// This is commonly used for list-to-detail transitions where a thumbnail morphs into
+// a full image, or navigation transitions where a title moves to a new location.
+//
+// # How It Works
+//
+// 1. Captures positions of all hero elements in the current view (outgoing)
+// 2. Switches to the new view generator
+// 3. Generates the new layout to capture hero positions (incoming)
+// 4. Creates a HeroTransition animation that interpolates between snapshots
+//
+// # Hero Element Matching
+//
+// Elements are matched by their `id` field. An element in the old view with id="card_1"
+// will animate to the element in the new view with id="card_1". Elements must also have
+// `hero: true` set to participate in the transition.
+//
+// # Animation Phases
+//
+// The transition runs in two phases over the configured duration:
+// - First half (0-50%): Matched heroes morph position/size from old to new
+// - Second half (50-100%): New-only elements fade in
+//
+// Elements that exist only in the outgoing view are not rendered during transition.
+//
+// # Parameters
+//
+// - `gen`: View generator function for the new view. Called twice: once to capture
+//   incoming hero positions, then used as the active view generator.
+// - `cfg`: Optional configuration for duration (default 300ms) and easing
+//   (default ease_out_cubic).
+//
+// # Example
+//
+// ```
+// // Mark elements as heroes with matching IDs
+// fn list_view(mut w Window) View {
+//     return row(
+//         .{},
+//         [image(.{ id: 'product_img', hero: true, src: 'thumb.png' })]
+//     )
+// }
+//
+// fn detail_view(mut w Window) View {
+//     return column(
+//         .{},
+//         [image(.{ id: 'product_img', hero: true, src: 'full.png' })]
+//     )
+// }
+//
+// // Trigger transition on click
+// fn on_click(mut w Window) {
+//     w.transition_to_view(detail_view, .{})
+// }
+// ```
+//
+// # Requirements
+//
+// - Hero elements must have both `id` and `hero: true` set
+// - IDs must match between views for elements to animate together
+// - Only one HeroTransition can be active at a time; starting a new one replaces any
+//   in-progress transition
 pub fn (mut w Window) transition_to_view(gen fn (mut Window) View, cfg HeroTransitionCfg) {
 	// Capture outgoing hero elements
 	outgoing := capture_hero_snapshots(w.layout)
@@ -57,9 +121,11 @@ pub fn (mut w Window) transition_to_view(gen fn (mut Window) View, cfg HeroTrans
 	}
 	incoming := capture_hero_snapshots(temp_layout)
 
+	dur := if cfg.duration != 0 { cfg.duration } else { 300 * time.millisecond }
+	eas := cfg.easing or { ease_out_cubic }
 	mut transition := &HeroTransition{
-		duration: cfg.duration
-		easing:   cfg.easing
+		duration: dur
+		easing:   eas
 		outgoing: outgoing
 		incoming: incoming
 	}
@@ -77,11 +143,10 @@ fn capture_hero_snapshots(layout Layout) map[string]HeroSnapshot {
 fn capture_heroes_recursive(layout Layout, mut snapshots map[string]HeroSnapshot) {
 	if layout.shape.hero && layout.shape.id != '' {
 		snapshots[layout.shape.id] = HeroSnapshot{
-			x:       layout.shape.x
-			y:       layout.shape.y
-			width:   layout.shape.width
-			height:  layout.shape.height
-			opacity: 1.0
+			x:      layout.shape.x
+			y:      layout.shape.y
+			width:  layout.shape.width
+			height: layout.shape.height
 		}
 	}
 	for child in layout.children {

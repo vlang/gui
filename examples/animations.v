@@ -82,6 +82,7 @@ fn main_view(mut window gui.Window) gui.View {
 					anim_button('Spring', spring_sidebar),
 					anim_button('Bounce', bounce_anim),
 					anim_button('Elastic', elastic_anim),
+					anim_button('Keyframe', keyframe_anim),
 					anim_button('Layout', layout_anim),
 					anim_button('Hero', hero_anim),
 				]
@@ -151,7 +152,7 @@ fn main_view(mut window gui.Window) gui.View {
 							gui.column(
 								id:     'spring'
 								x:      state.spring_value // <-- animated value
-								y:      130
+								y:      150
 								width:  40
 								height: 40
 								sizing: gui.fixed_fixed
@@ -282,7 +283,7 @@ fn tween_box(mut w gui.Window) {
 //   - gui.spring_stiff   : quick, minimal bounce
 //   - gui.spring_gentle  : slow, smooth settling
 //
-// Custom springs: gui.SpringConfig{ stiffness: 100, damping: 10 }
+// Custom springs: gui.SpringCfg{ stiffness: 100, damping: 10 }
 //
 fn spring_sidebar(mut w gui.Window) {
 	state := w.state[State]()
@@ -405,4 +406,58 @@ fn hero_anim(mut w gui.Window) {
 fn hero_back(mut w gui.Window) {
 	// Transition back - card morphs from full-screen to small
 	w.transition_to_view(main_view, duration: 600 * time.millisecond)
+}
+
+// ============================================================================
+// KEYFRAME ANIMATION
+// ============================================================================
+// KeyframeAnimation interpolates through multiple waypoints with per-segment
+// easing. Each keyframe specifies a position (0.0-1.0), value, and easing
+// function to reach it.
+//
+// Use for: shake effects, staged progress, animations with pauses
+//
+fn keyframe_anim(mut w gui.Window) {
+	state := w.state[State]()
+	center := state.box_x
+
+	w.animation_add(mut gui.KeyframeAnimation{
+		id:        'shake'
+		duration:  500 * time.millisecond
+		keyframes: [
+			gui.Keyframe{
+				at:    0.0
+				value: center
+			},
+			gui.Keyframe{
+				at:     0.2
+				value:  center - 30
+				easing: gui.ease_out_quad
+			},
+			gui.Keyframe{
+				at:     0.4
+				value:  center + 25
+				easing: gui.ease_out_quad
+			},
+			gui.Keyframe{
+				at:     0.6
+				value:  center - 15
+				easing: gui.ease_out_quad
+			},
+			gui.Keyframe{
+				at:     0.8
+				value:  center + 8
+				easing: gui.ease_out_quad
+			},
+			gui.Keyframe{
+				at:     1.0
+				value:  center
+				easing: gui.ease_out_quad
+			},
+		]
+		on_value:  fn (v f32, mut w gui.Window) {
+			mut s := w.state[State]()
+			s.box_x = v
+		}
+	})
 }

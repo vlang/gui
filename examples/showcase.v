@@ -2366,7 +2366,7 @@ fn start_tween(mut w gui.Window, easing gui.EasingFn) {
 	})
 }
 
-fn start_spring(mut w gui.Window, config gui.SpringConfig) {
+fn start_spring(mut w gui.Window, config gui.SpringCfg) {
 	app := w.state[ShowcaseApp]()
 	target := if app.anim_spring_x < 200 { f32(400) } else { f32(0) }
 	mut spring := gui.SpringAnimation{

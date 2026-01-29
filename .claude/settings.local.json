@@ -10,7 +10,11 @@
       "Bash(find:*)",
       "Bash(wc:*)",
       "Bash(sort:*)",
-      "Bash(git push)"
+      "Bash(git push)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(xxd:*)"
     ]
   }
 }

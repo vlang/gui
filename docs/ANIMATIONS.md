@@ -10,6 +10,7 @@ The animation system supports four types of animations:
 | Type               | Use Case                          | Duration    |
 |--------------------|-----------------------------------|-------------|
 | TweenAnimation     | Value interpolation with easing   | Fixed       |
+| KeyframeAnimation  | Multi-waypoint with per-segment easing | Fixed  |
 | SpringAnimation    | Physics-based natural motion      | Open-ended  |
 | Layout Transition  | Animate layout changes            | Fixed       |
 | Hero Transition    | Morph elements between views      | Fixed       |
@@ -148,6 +149,87 @@ w.animation_add(mut gui.TweenAnimation{
 })
 ```
 
+## Keyframe Animations
+
+Keyframe animations interpolate through multiple waypoints over a fixed duration. Each
+keyframe specifies a position (0.0-1.0), value, and easing function to reach it. Use for
+complex motion patterns like shake effects, staged progress, or animations with pauses.
+
+### Basic Example
+
+```oksyntax
+import time
+
+fn shake_box(mut w gui.Window) {
+    state := w.state[State]()
+
+    w.animation_add(mut gui.KeyframeAnimation{
+        id:       'shake'
+        duration: 500 * time.millisecond
+        keyframes: [
+            gui.Keyframe{ at: 0.0,  value: state.box_x },
+            gui.Keyframe{ at: 0.2,  value: state.box_x - 20, easing: gui.ease_out_quad },
+            gui.Keyframe{ at: 0.4,  value: state.box_x + 15, easing: gui.ease_out_quad },
+            gui.Keyframe{ at: 0.6,  value: state.box_x - 10, easing: gui.ease_out_quad },
+            gui.Keyframe{ at: 0.8,  value: state.box_x + 5,  easing: gui.ease_out_quad },
+            gui.Keyframe{ at: 1.0,  value: state.box_x,      easing: gui.ease_out_quad },
+        ]
+        on_value: fn (v f32, mut w gui.Window) {
+            mut s := w.state[State]()
+            s.box_x = v
+        }
+    })
+}
+```
+
+### Keyframe Properties
+
+| Property   | Type          | Default              | Description                    |
+|------------|---------------|----------------------|--------------------------------|
+| `at`       | `f32`         | required             | Position in animation (0.0-1.0)|
+| `value`    | `f32`         | required             | Target value at this keyframe  |
+| `easing`   | `EasingFn`    | `ease_linear`        | Easing function TO this point  |
+
+### KeyframeAnimation Properties
+
+| Property    | Type           | Default              | Description                   |
+|-------------|----------------|----------------------|-------------------------------|
+| `id`        | `string`       | required             | Unique animation identifier   |
+| `duration`  | `time.Duration`| 500ms                | Total animation length        |
+| `keyframes` | `[]Keyframe`   | required             | List of waypoints             |
+| `on_value`  | `fn(f32, mut Window)` | required      | Called each frame with value  |
+| `on_done`   | `fn(mut Window)`| nil                 | Called when animation ends    |
+| `repeat`    | `bool`         | false                | Loop animation continuously   |
+| `delay`     | `time.Duration`| 0                    | Wait before starting          |
+
+### When to Use Keyframes
+
+- **Shake/wiggle effects**: Oscillate around a center point
+- **Staged progress**: Animate to intermediate values before final target
+- **Hold/pause**: Stay at a value by repeating it across keyframes
+- **Complex easing**: Different easing curves for different segments
+
+### Repeating Animations
+
+Set `repeat: true` for continuous looping:
+
+```oksyntax
+w.animation_add(mut gui.KeyframeAnimation{
+    id:     'pulse'
+    repeat: true
+    duration: 1000 * time.millisecond
+    keyframes: [
+        gui.Keyframe{ at: 0.0, value: 1.0 },
+        gui.Keyframe{ at: 0.5, value: 1.2, easing: gui.ease_out_quad },
+        gui.Keyframe{ at: 1.0, value: 1.0, easing: gui.ease_in_quad },
+    ]
+    on_value: fn (v f32, mut w gui.Window) {
+        mut s := w.state[State]()
+        s.scale = v
+    }
+})
+```
+
 ## Spring Animations
 
 Spring animations use physics simulation for natural-feeling motion. Unlike tweens,
@@ -185,7 +267,7 @@ fn spring_sidebar(mut w gui.Window) {
 ### Custom Spring Configuration
 
 ```oksyntax
-custom_spring := gui.SpringConfig{
+custom_spring := gui.SpringCfg{
     stiffness: 200  // higher = snappier
     damping:   12   // higher = less oscillation
     mass:      1.0  // higher = more inertia
