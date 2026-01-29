@@ -115,6 +115,9 @@ fn text_height(shape &Shape, mut window Window) f32 {
 
 @[inline]
 fn line_height(shape &Shape, mut window Window) f32 {
+	if shape.cached_line_height > 0 {
+		return shape.cached_line_height
+	}
 	cfg := shape.text_style.to_vglyph_cfg()
 	height := window.text_system.font_height(cfg)
 	return height + shape.text_style.line_spacing
@@ -129,6 +132,7 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		// Only set width for actual wrapping modes. multiline/single_line should not wrap based on width.
 		should_wrap := shape.text_mode in [.wrap, .wrap_keep_spaces]
 
+		// Collapse spaces must happen before skip check since render uses shape.text with layout indices
 		if shape.text_mode == .wrap {
 			shape.text = collapse_spaces(shape.text)
 		}
@@ -139,11 +143,12 @@ fn text_wrap(mut shape Shape, mut window Window) {
 			else { -1.0 }
 		}
 
-		// Optimization: If layout is already generated for this width (and text hasn't changed), skip regeneration.
-		// Note: We assume text and style haven't changed because Shape is usually recreated per frame if those change.
-		// The main variable during layout passes is the width constraint.
-		if width == shape.last_constraint_width && shape.has_text_layout()
-			&& shape.vglyph_layout.lines.len > 0 {
+		// Optimization: compute hash of collapsed text for dirty checking
+		text_hash := shape.text.hash()
+
+		// Optimization: If layout is already generated for this width and text hasn't changed, skip.
+		if width == shape.last_constraint_width && text_hash == shape.last_text_hash
+			&& shape.has_text_layout() && shape.vglyph_layout.lines.len > 0 {
 			return
 		}
 
@@ -154,6 +159,9 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		layout := window.text_system.layout_text(shape.text, cfg) or { vglyph.Layout{} }
 		shape.vglyph_layout = &layout
 		shape.last_constraint_width = width
+		shape.last_text_hash = text_hash
+		shape.cached_line_height = 0 // Clear before recomputing
+		shape.cached_line_height = line_height(shape, mut window)
 
 		// Calculate height based on layout
 		// vglyph layout provides pixel height (visual_height or height?)

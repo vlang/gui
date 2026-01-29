@@ -61,6 +61,8 @@ pub mut:
 	text_sel_end          u32 // End index of text selection (runes)
 	text_tab_size         u32 = 4 // Tab width in spaces
 	last_constraint_width f32   // Optimization: cached width used for last text layout generation
+	last_text_hash        int   // Optimization: hash of text for dirty checking
+	cached_line_height    f32   // Optimization: cached line height after layout
 	color                 Color // Background or foreground color
 	color_border          Color // Border color (if different from color)
 	size_border           f32   // Thickness of the border

@@ -90,7 +90,7 @@ fn cursor_end(shape Shape) int {
 	return shape.text.len
 }
 
-const runes_blanks = [` `, `\t`, `\f`, `\v`]!
+const bytes_blanks = [u8(` `), `\t`, `\f`, `\v`]!
 
 // cursor_start_of_word finds the start of the current word in wrapped text by locating
 // the line containing the given position, searching backwards through blank characters
@@ -110,11 +110,11 @@ fn cursor_start_of_word(shape Shape, pos int) int {
 	}
 
 	// 1. Skip spaces backwards
-	for i >= 0 && shape.text[i] in runes_blanks.map(u8(it)) {
+	for i >= 0 && shape.text[i] in bytes_blanks {
 		i--
 	}
 	// 2. Skip non-spaces backwards
-	for i >= 0 && shape.text[i] !in runes_blanks.map(u8(it)) {
+	for i >= 0 && shape.text[i] !in bytes_blanks {
 		i--
 	}
 
@@ -133,11 +133,11 @@ fn cursor_end_of_word(shape Shape, pos int) int {
 	mut i := byte_idx
 
 	// 1. Skip spaces forward
-	for i < shape.text.len && shape.text[i] in runes_blanks.map(u8(it)) {
+	for i < shape.text.len && shape.text[i] in bytes_blanks {
 		i++
 	}
 	// 2. Skip non-spaces forward
-	for i < shape.text.len && shape.text[i] !in runes_blanks.map(u8(it)) {
+	for i < shape.text.len && shape.text[i] !in bytes_blanks {
 		i++
 	}
 	return byte_to_rune_index(shape.text, i)
@@ -312,18 +312,13 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 	}
 
 	// Update the input state with the positions
+	sel_beg, sel_end := selection_range(start_cursor_pos, mouse_cursor_pos)
 	w.view_state.input_state[id_focus] = InputState{
 		...w.view_state.input_state[id_focus]
 		cursor_pos:    mouse_cursor_pos
 		cursor_offset: -1
-		select_beg:    match start_cursor_pos < mouse_cursor_pos {
-			true { u32(start_cursor_pos) }
-			else { u32(mouse_cursor_pos) }
-		}
-		select_end:    match start_cursor_pos < mouse_cursor_pos {
-			true { u32(mouse_cursor_pos) }
-			else { u32(start_cursor_pos) }
-		}
+		select_beg:    sel_beg
+		select_end:    sel_end
 	}
 
 	scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
