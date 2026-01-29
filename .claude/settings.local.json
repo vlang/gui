@@ -14,7 +14,8 @@
       "Bash(timeout:*)",
       "Bash(curl:*)",
       "Bash(pkill:*)",
-      "Bash(xxd:*)"
+      "Bash(xxd:*)",
+      "Bash(git stash:*)"
     ]
   }
 }

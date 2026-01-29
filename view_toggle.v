@@ -42,11 +42,6 @@ pub fn toggle(cfg ToggleCfg) View {
 		}
 	}
 	mut content := []View{cap: 2}
-	padding := Padding{
-		...cfg.padding
-		right:  cfg.padding.right + 3
-		bottom: cfg.padding.bottom + 2
-	}
 
 	// Capture values needed for callbacks by copy to avoid dangling reference to cfg
 	color_focus := cfg.color_focus
@@ -59,7 +54,7 @@ pub fn toggle(cfg ToggleCfg) View {
 		color:        color
 		color_border: cfg.color_border
 		size_border:  cfg.size_border
-		padding:      padding
+		padding:      cfg.padding
 		radius:       cfg.radius
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible

@@ -290,12 +290,12 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 	cursor_pos := w.view_state.input_state[id_focus].cursor_pos
 	start_cursor_pos := w.view_state.mouse_lock.cursor_pos
 
-	// synthesize an event
-	e := Event{
+	// synthesize an event relative to the layout shape
+	raw_ev := &Event{
 		mouse_x: w.ui.mouse_pos_x
 		mouse_y: w.ui.mouse_pos_y
 	}
-	ev := event_relative_to(layout.shape, e)
+	ev := event_relative_to(layout.shape, raw_ev)
 	mut mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
 
 	scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
@@ -326,7 +326,7 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 	// Decide how fast the scroll animation should be based on the distance
 	// the mouse is outside the scroll container view.
 	scroll_container := find_layout_by_id_scroll(w.layout, id_scroll_container) or { return }
-	evs := event_relative_to(scroll_container.shape, e)
+	evs := event_relative_to(scroll_container.shape, raw_ev)
 
 	distance := match evs.mouse_y < 0 {
 		true { -evs.mouse_y }
@@ -359,13 +359,17 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 
 	rect := shape.vglyph_layout.get_char_rect(byte_idx) or { gg.Rect{} }
 
-	cursor_top := rect.y
-	cursor_bottom := rect.y + rect.height
-
 	current_scroll_y := w.view_state.scroll_y[id_scroll_container]
 
-	// Ensure visible in view
-	// View is from -current_scroll_y to -current_scroll_y + view_height
+	// rect.y is in text-local coords. Convert to scroll container content coords
+	// by adding shape's original position (before scroll was applied).
+	// shape.y = original_y + scroll_y, so original_y = shape.y - scroll_y
+	shape_y_in_content := shape.y - current_scroll_y - scroll_container.shape.y
+	cursor_top := shape_y_in_content + rect.y
+	cursor_bottom := cursor_top + rect.height
+
+	// View spans from 0 to scroll_view_height in content coords when scroll=0
+	// With scroll, visible region is from -scroll_y to -scroll_y + height
 	view_top := -current_scroll_y
 	view_bottom := view_top + scroll_view_height
 
