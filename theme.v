@@ -755,6 +755,10 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			...t.rectangle_style
 			color_border: border
 		}
+		scrollbar_style:    ScrollbarStyle{
+			...t.scrollbar_style
+			color_thumb: active
+		}
 		select_style:       SelectStyle{
 			...t.select_style
 			color:              interior
