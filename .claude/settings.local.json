@@ -6,7 +6,8 @@
       "Bash(SOKOL_DEBUG=1 timeout 3 v run:*)",
       "Bash(v:*)",
       "Bash(glxinfo:*)",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(find:*)"
     ]
   }
 }
