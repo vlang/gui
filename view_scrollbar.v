@@ -6,8 +6,7 @@ module gui
 // both vertical and horizontal orientations.
 
 // ScrollbarOverflow determines how scrollbars are shown.
-// Remember that to set id_scroll > 0 or these options
-// have no effect.
+// Remember to set id_scroll > 0 or these options have no effect.
 //
 // - auto shows scrollbar when required
 // - hidden hides the scrollbar
@@ -51,13 +50,17 @@ pub:
 	radius_thumb     f32   = gui_theme.scrollbar_style.radius_thumb
 	gap_edge         f32   = gui_theme.scrollbar_style.gap_edge
 	gap_end          f32   = gui_theme.scrollbar_style.gap_end
-	id_track         u32
+	id_scroll        u32
 	overflow         ScrollbarOverflow
 	orientation      ScrollbarOrientation
 }
 
 const scrollbar_vertical_name = 'scrollbar vertical'
 const scrollbar_horizontal_name = 'scrollbar horizontal'
+const scroll_extend = 10 // cushion on scroll range ends
+const scroll_snap_min = f32(0.03) // snap to 0% below this threshold
+const scroll_snap_max = f32(0.97) // snap to 100% above this threshold
+const thumb_index = 0
 
 // scrollbar creates a scrollbar view based on the provided configuration.
 // It adapts its layout (row or column) depending on the `orientation`
@@ -75,7 +78,7 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 			on_hover:     make_scrollbar_on_hover(cfg)
 			on_click:     make_scrollbar_gutter_click(cfg)
 			content:      [
-				thumb(cfg, '__thumb__${cfg.id_track}'),
+				thumb(cfg, '__thumb__${cfg.id_scroll}'),
 			]
 		)
 	} else {
@@ -90,7 +93,7 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 			on_hover:     make_scrollbar_on_hover(cfg)
 			on_click:     make_scrollbar_gutter_click(cfg)
 			content:      [
-				thumb(cfg, '__thumb__${cfg.id_track}'),
+				thumb(cfg, '__thumb__${cfg.id_scroll}'),
 			]
 		)
 	}
@@ -133,44 +136,47 @@ fn make_scrollbar_on_mouse_down(cfg ScrollbarCfg) fn (voidptr, mut Event, mut Wi
 	}
 }
 
+// scrollbar_mouse_move handles mouse movement during thumb drag.
+// Shared by on_mouse_down and gutter_click to avoid code duplication.
+fn scrollbar_mouse_move(orientation ScrollbarOrientation, id_scroll u32, layout &Layout, mut e Event, mut w Window) {
+	if ly := find_layout_by_id_scroll(layout, id_scroll) {
+		match orientation == .horizontal {
+			true {
+				if e.mouse_x >= (ly.shape.x - scroll_extend)
+					&& e.mouse_x <= (ly.shape.x + ly.shape.width + scroll_extend) {
+					offset := offset_mouse_change_x(ly, e.mouse_dx, id_scroll, w)
+					w.view_state.scroll_x[id_scroll] = offset
+					if ly.shape.on_scroll != unsafe { nil } {
+						ly.shape.on_scroll(ly, mut w)
+					}
+				}
+			}
+			else {
+				if e.mouse_y >= (ly.shape.y - scroll_extend)
+					&& e.mouse_y <= (ly.shape.y + ly.shape.height + scroll_extend) {
+					offset := offset_mouse_change_y(ly, e.mouse_dy, id_scroll, w)
+					w.view_state.scroll_y[id_scroll] = offset
+					if ly.shape.on_scroll != unsafe { nil } {
+						ly.shape.on_scroll(ly, mut w)
+					}
+				}
+			}
+		}
+	}
+}
+
 // on_mouse_down handles the mouse button press event on the scrollbar thumb.
 // It sets focus to the scrollable content (if applicable) and locks the mouse
 // to handle the drag operation (scrolling).
 fn (cfg &ScrollbarCfg) on_mouse_down(_ voidptr, mut e Event, mut w Window) {
 	// Capture values needed for mouse_lock callbacks
 	orientation := cfg.orientation
-	id_track := cfg.id_track
+	id_scroll := cfg.id_scroll
 	// Lock the mouse to this control to capture all mouse move/up events
 	// until the button is released. This ensures smooth dragging even if cursor leaves the thumb.
 	w.mouse_lock(MouseLockCfg{
-		mouse_move: fn [orientation, id_track] (layout &Layout, mut e Event, mut w Window) {
-			extend := 10 // give some cushion on the ends of the scroll range
-			if ly := find_layout_by_id_scroll(layout, id_track) {
-				match orientation == .horizontal {
-					true {
-						if e.mouse_x >= (ly.shape.x - extend)
-							&& e.mouse_x <= (ly.shape.x + ly.shape.width + extend) {
-							offset := offset_mouse_change_x(ly, e.mouse_dx, id_track,
-								w)
-							w.view_state.scroll_x[id_track] = offset
-							if ly.shape.on_scroll != unsafe { nil } {
-								ly.shape.on_scroll(ly, mut w)
-							}
-						}
-					}
-					else {
-						if e.mouse_y >= (ly.shape.y - extend)
-							&& e.mouse_y <= (ly.shape.y + ly.shape.height + extend) {
-							offset := offset_mouse_change_y(ly, e.mouse_dy, id_track,
-								w)
-							w.view_state.scroll_y[id_track] = offset
-							if ly.shape.on_scroll != unsafe { nil } {
-								ly.shape.on_scroll(ly, mut w)
-							}
-						}
-					}
-				}
-			}
+		mouse_move: fn [orientation, id_scroll] (layout &Layout, mut e Event, mut w Window) {
+			scrollbar_mouse_move(orientation, id_scroll, layout, mut e, mut w)
 		}
 		mouse_up:   fn (_ &Layout, mut e Event, mut w Window) {
 			w.mouse_unlock()
@@ -187,43 +193,17 @@ fn (cfg &ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 	if !w.mouse_is_locked() {
 		// Calculate and apply the new scroll offset based on the click coordinates
 		match cfg.orientation == .horizontal {
-			true { offset_from_mouse_x(w.layout, e.mouse_x, cfg.id_track, mut w) }
-			else { offset_from_mouse_y(w.layout, e.mouse_y, cfg.id_track, mut w) }
+			true { offset_from_mouse_x(w.layout, e.mouse_x, cfg.id_scroll, mut w) }
+			else { offset_from_mouse_y(w.layout, e.mouse_y, cfg.id_scroll, mut w) }
 		}
 
 		// Capture values needed for mouse_lock callbacks
 		orientation := cfg.orientation
-		id_track := cfg.id_track
+		id_scroll := cfg.id_scroll
 		// Lock the mouse to continue scrolling if the user holds and drags
 		w.mouse_lock(MouseLockCfg{
-			mouse_move: fn [orientation, id_track] (layout &Layout, mut e Event, mut w Window) {
-				extend := 10 // give some cushion on the ends of the scroll range
-				if ly := find_layout_by_id_scroll(layout, id_track) {
-					match orientation == .horizontal {
-						true {
-							if e.mouse_x >= (ly.shape.x - extend)
-								&& e.mouse_x <= (ly.shape.x + ly.shape.width + extend) {
-								offset := offset_mouse_change_x(ly, e.mouse_dx, id_track,
-									w)
-								w.view_state.scroll_x[id_track] = offset
-								if ly.shape.on_scroll != unsafe { nil } {
-									ly.shape.on_scroll(ly, mut w)
-								}
-							}
-						}
-						else {
-							if e.mouse_y >= (ly.shape.y - extend)
-								&& e.mouse_y <= (ly.shape.y + ly.shape.height + extend) {
-								offset := offset_mouse_change_y(ly, e.mouse_dy, id_track,
-									w)
-								w.view_state.scroll_y[id_track] = offset
-								if ly.shape.on_scroll != unsafe { nil } {
-									ly.shape.on_scroll(ly, mut w)
-								}
-							}
-						}
-					}
-				}
+			mouse_move: fn [orientation, id_scroll] (layout &Layout, mut e Event, mut w Window) {
+				scrollbar_mouse_move(orientation, id_scroll, layout, mut e, mut w)
 			}
 			mouse_up:   fn (_ &Layout, mut e Event, mut w Window) {
 				w.mouse_unlock()
@@ -237,7 +217,6 @@ fn (cfg &ScrollbarCfg) gutter_click(_ &Layout, mut e Event, mut w Window) {
 // be until after the layout is almost done requiring manual layout here.
 // Scrollbars are hard.
 fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
-	thumb := 0
 	min_thumb_size := cfg.min_thumb_size
 	mut parent := layout.parent
 
@@ -249,11 +228,14 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 			layout.shape.height = cfg.size
 
 			c_width := content_width(parent)
+			if c_width == 0 {
+				return
+			}
 			t_width := layout.shape.width * (layout.shape.width / c_width)
 			thumb_width := f32_clamp(t_width, min_thumb_size, layout.shape.width)
 
 			available_width := layout.shape.width - thumb_width
-			scroll_offset := -w.view_state.scroll_x[cfg.id_track]
+			scroll_offset := -w.view_state.scroll_x[cfg.id_scroll]
 
 			layout.shape.x -= cfg.gap_end
 			layout.shape.y -= cfg.gap_edge
@@ -264,13 +246,13 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 				f32_clamp((scroll_offset / (c_width - layout.shape.width)) * available_width,
 					0, available_width)
 			}
-			layout.children[thumb].shape.x = layout.shape.x + offset
-			layout.children[thumb].shape.y = layout.shape.y
-			layout.children[thumb].shape.width = thumb_width - cfg.gap_end - cfg.gap_end
-			layout.children[thumb].shape.height = cfg.size
+			layout.children[thumb_index].shape.x = layout.shape.x + offset
+			layout.children[thumb_index].shape.y = layout.shape.y
+			layout.children[thumb_index].shape.width = thumb_width - cfg.gap_end - cfg.gap_end
+			layout.children[thumb_index].shape.height = cfg.size
 
 			if (cfg.overflow != .visible && available_width < 0.1) || cfg.overflow == .on_hover {
-				layout.children[thumb].shape.color = color_transparent
+				layout.children[thumb_index].shape.color = color_transparent
 			}
 		}
 		else {
@@ -280,28 +262,31 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 			layout.shape.height = parent.shape.height - parent.shape.padding.height()
 
 			c_height := content_height(parent)
+			if c_height == 0 {
+				return
+			}
 			t_height := layout.shape.height * (layout.shape.height / c_height)
 			thumb_height := f32_clamp(t_height, min_thumb_size, layout.shape.height)
 
 			available_height := layout.shape.height - thumb_height
-			scroll_offset := -w.view_state.scroll_y[cfg.id_track]
+			scroll_offset := -w.view_state.scroll_y[cfg.id_scroll]
 
 			layout.shape.x -= cfg.gap_edge
 			layout.shape.y += cfg.gap_end
 			layout.shape.height -= cfg.gap_end + cfg.gap_end
-			layout.children[thumb].shape.x = layout.shape.x
+			layout.children[thumb_index].shape.x = layout.shape.x
 			offset := if available_height == 0 {
 				0
 			} else {
 				f32_clamp((scroll_offset / (c_height - layout.shape.height)) * available_height,
 					0, available_height)
 			}
-			layout.children[thumb].shape.y = layout.shape.y + offset
-			layout.children[thumb].shape.height = thumb_height - cfg.gap_end - cfg.gap_end
-			layout.children[thumb].shape.width = cfg.size
+			layout.children[thumb_index].shape.y = layout.shape.y + offset
+			layout.children[thumb_index].shape.height = thumb_height - cfg.gap_end - cfg.gap_end
+			layout.children[thumb_index].shape.width = cfg.size
 
 			if (cfg.overflow != .visible && available_height < 0.1) || cfg.overflow == .on_hover {
-				layout.children[thumb].shape.color = color_transparent
+				layout.children[thumb_index].shape.color = color_transparent
 			}
 		}
 	}
@@ -311,51 +296,49 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 // It changes the thumb's color to a hover state if it's not transparent
 // or if the overflow mode is set to `on_hover`.
 fn (cfg &ScrollbarCfg) on_hover(mut layout Layout, mut e Event, mut w Window) {
-	// on hover dim color of thumb
-	thumb := 0
-	if layout.children[thumb].shape.color != color_transparent || cfg.overflow == .on_hover {
-		layout.children[thumb].shape.color = gui_theme.color_active
+	if layout.children[thumb_index].shape.color != color_transparent || cfg.overflow == .on_hover {
+		layout.children[thumb_index].shape.color = cfg.color_thumb
 		w.set_mouse_cursor_arrow()
 		e.is_handled = true
 	}
 }
 
 // offset_mouse_change_x calculates the new horizontal offset for a scrollable layout
-// based on mouse movement.
+// based on mouse movement delta.
 //
 // Parameters:
 //   layout:    The layout for which the offset is being calculated.
-//   mouse_x:   The current x-coordinate of the mouse.
+//   mouse_dx:  The mouse movement delta in x direction.
 //   id_scroll: The ID of the scrollable area.
 //   w:         The window context.
 //
 // Returns:
 //   The new calculated horizontal offset, clamped within valid bounds.
-fn offset_mouse_change_x(layout &Layout, mouse_x f32, id_scroll u32, w &Window) f32 {
+fn offset_mouse_change_x(layout &Layout, mouse_dx f32, id_scroll u32, w &Window) f32 {
 	total_width := content_width(layout)
 	shape_width := layout.shape.width - layout.shape.padding.width()
 	old_offset := w.view_state.scroll_x[id_scroll]
-	new_offset := mouse_x * (total_width / shape_width)
+	new_offset := mouse_dx * (total_width / shape_width)
 	offset := old_offset - new_offset
 	return f32_min(0, f32_max(offset, shape_width - total_width))
 }
 
 // offset_mouse_change_y calculates the new vertical offset for a scrollable layout
-// based on mouse movement.
+// based on mouse movement delta.
 //
 // Parameters:
 //   layout:    The layout for which the offset is being calculated.
-//   mouse_y:   The current y-coordinate of the mouse.
+//   mouse_dy:  The mouse movement delta in y direction.
 //   id_scroll: The ID of the scrollable area.
 //   w:         The window context.
 //
 // Returns:
 //   The new calculated vertical offset, clamped within valid bounds.
-fn offset_mouse_change_y(layout &Layout, mouse_y f32, id_scroll u32, w &Window) f32 {
+fn offset_mouse_change_y(layout &Layout, mouse_dy f32, id_scroll u32, w &Window) f32 {
 	total_height := content_height(layout)
 	shape_height := layout.shape.height - layout.shape.padding.height()
 	old_offset := w.view_state.scroll_y[id_scroll]
-	new_offset := mouse_y * (total_height / shape_height)
+	new_offset := mouse_dy * (total_height / shape_height)
 	offset := old_offset - new_offset
 	return f32_min(0, f32_max(offset, shape_height - total_height))
 }
@@ -373,10 +356,10 @@ fn offset_from_mouse_x(layout &Layout, mouse_x f32, id_scroll u32, mut w Window)
 		total_width := content_width(sb)
 		mut percent := mouse_x / sb.shape.width
 		percent = f32_clamp(percent, 0, 1)
-		if percent <= 0.03 {
+		if percent <= scroll_snap_min {
 			percent = 0
 		}
-		if percent >= 0.97 {
+		if percent >= scroll_snap_max {
 			percent = 1
 		}
 		w.view_state.scroll_x[id_scroll] = -percent * (total_width - sb.shape.width)
@@ -399,10 +382,10 @@ fn offset_from_mouse_y(layout &Layout, mouse_y f32, id_scroll u32, mut w Window)
 		total_height := content_height(sb)
 		mut percent := mouse_y / sb.shape.height
 		percent = f32_clamp(percent, 0, 1)
-		if percent <= 0.03 {
+		if percent <= scroll_snap_min {
 			percent = 0
 		}
-		if percent >= 0.97 {
+		if percent >= scroll_snap_max {
 			percent = 1
 		}
 		w.view_state.scroll_y[id_scroll] = -percent * (total_height - sb.shape.height)

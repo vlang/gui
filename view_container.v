@@ -231,13 +231,13 @@ fn container(cfg ContainerCfg) View {
 				extra_content << scrollbar(ScrollbarCfg{
 					...*cfg.scrollbar_cfg_x
 					orientation: .horizontal
-					id_track:    cfg.id_scroll
+					id_scroll:   cfg.id_scroll
 				})
 			}
 		} else {
 			extra_content << scrollbar(ScrollbarCfg{
 				orientation: .horizontal
-				id_track:    cfg.id_scroll
+				id_scroll:   cfg.id_scroll
 			})
 		}
 		if cfg.scrollbar_cfg_y != unsafe { nil } {
@@ -245,13 +245,13 @@ fn container(cfg ContainerCfg) View {
 				extra_content << scrollbar(ScrollbarCfg{
 					...*cfg.scrollbar_cfg_y
 					orientation: .vertical
-					id_track:    cfg.id_scroll
+					id_scroll:   cfg.id_scroll
 				})
 			}
 		} else {
 			extra_content << scrollbar(ScrollbarCfg{
 				orientation: .vertical
-				id_track:    cfg.id_scroll
+				id_scroll:   cfg.id_scroll
 			})
 		}
 	}
