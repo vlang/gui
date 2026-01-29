@@ -1,108 +1,107 @@
 # GUI
 
-![Stars](https://img.shields.io/github/stars/mike-ward/gui?style=flat-square&label=Stars&logo=github&logoColor=white)  
-![Forks](https://img.shields.io/github/forks/mike-ward/gui?style=flat-square&label=Forks&logo=github&logoColor=white)  
-![Issues](https://img.shields.io/github/issues/mike-ward/gui?style=flat-square&label=Issues&logo=github&logoColor=white)  
+![Stars](https://img.shields.io/github/stars/mike-ward/gui?style=flat-square&label=Stars&logo=github&logoColor=white)
+![Forks](https://img.shields.io/github/forks/mike-ward/gui?style=flat-square&label=Forks&logo=github&logoColor=white)
+![Issues](https://img.shields.io/github/issues/mike-ward/gui?style=flat-square&label=Issues&logo=github&logoColor=white)
 ![License](https://img.shields.io/github/license/mike-ward/gui?style=flat-square&label=License&logo=github&logoColor=white)
 
-## Overview
-
-v-gui is an immediate mode UI framework for the V programming language
-based on the rendering algorithm of Clay. It provides a modern,
-declarative approach to building user interfaces with flex-box style
-layout syntax and thread-safe view updates.
+**An immediate-mode UI framework for V that stays out of your way.**
 
 ![showcase](assets/showcase.png)
 
-## Key Features
+## Motivation
 
-- **Pure V**: Written entirely in the V programming language
-- **Immediate Mode Rendering**: Efficient rendering with automatic
-  updates
-- **Thread Safe**: Safe view updates across different threads
-- **Declarative Syntax**: Flex-box style layout with intuitive API
-- **Performance Focused**: Optimized for speed and efficiency
-- **Rich Text**: Rendering with multiple styles and mixed content
-- **SVG Icons**: Vector graphics with path-based rendering, color override, and caching
-- **Animations**: Tweens with easing, physics-based springs, layout transitions, and hero morphs
-- **Drop Shadows**: Fast, SDF-based shadows with adjustable blur and color
-- **Transparent Container Shadows**: Hollow shadows that respect transparent backgrounds
-- **Gradient Borders**: Flexible border styles with gradient colors
-- **Accessibility**: Automatic screen reader support (Work in Progress)
+Most UI frameworks want you to think about data binding, observables, and UI thread
+synchronization. v-gui doesn't. Your view is just a function of your state—change the state
+anywhere and the UI updates. No wiring. No callbacks to remember. No threading headaches.
 
+The layout engine is inspired by [Clay](https://github.com/nicbarker/clay), a fast layout
+algorithm that makes flex-box style layouts simple to reason about.
 
-## Installation
+V is a simple language. It deserves a simple UI framework.
 
-Install the v-gui framework using V’s package manager:
+## Who Is This For?
 
-```bash
-v install gui
-```
+**Good fit if you want:**
+- State as plain structs, no observables
+- Thread-safe UI updates from anywhere
+- Code-defined layouts (no XML, no designers)
+- Desktop apps, tools, data viewers, games
 
-## Core Concepts
+**Maybe not if you need:**
+- Mature accessibility support (work in progress)
+- Production mobile apps
+- Native platform widgets
+- Drag-and-drop UI designers
 
-### View Generators
+## Features
 
-v-gui uses a view generator (a function that returns a View) to render the
-contents of the Window. As the state of the app changes, either through
-user actions or business logic, v-gui calls the view generator to build a
-new view.
+**Layout**
+- Flex-box rows and columns
+- Fit/fill/fixed sizing per axis
+- Scroll containers with momentum
+- Nested layouts to any depth
 
-### State Management
+**Widgets (30+)**
+- Text, inputs, textareas
+- Buttons, toggles, switches, checkboxes, radio buttons
+- Dropdowns, listboxes, tables, trees
+- Menus, menubars, tabs, dialogs
+- Progress bars, tooltips, date pickers
 
-The framework follows a functional approach where:
+**Rendering**
+- SDF-based drop shadows
+- Gradient borders
+- Blur effects
+- SVG icons with color override
 
-- The view is simply a function of the model (state)
-- No data binding or other observation mechanisms required
-- No worries about synchronizing with the UI thread
-- No need to remember to undo previous UI states
+**Animation**
+- Tweens with easing curves
+- Physics-based springs
+- Automatic layout transitions
+- Hero morphs between views
 
-## Basic Usage
+**Text** (via vglyph/Pango)
+- Subpixel positioning and hinting
+- Rich text with mixed styles in a single widget
+- Bidirectional text, ligatures, emoji
+- Full Unicode and OpenType support
 
-### Creating a Simple Application
+**Architecture**
+- Thread-safe state updates
+- 60 FPS with 1000+ widgets
+- Pure V, no C bindings in user code
 
-Here’s a complete example of a basic v-gui application:
+## Quick Start
 
-```v
+```v ignore
 import gui
 
-struct App_1 {
+@[heap]
+struct App {
 pub mut:
 	clicks int
 }
 
 fn main() {
 	mut window := gui.window(
-		state:   &App_1{}
-		width:   300
-		height:  300
-		on_init: fn (mut w gui.Window) {
-			// Call update_view() anywhere in your
-			// business logic to change views.
-			w.update_view(main_view)
-		}
+		state: &App{}
+		on_init: fn (mut w gui.Window) { w.update_view(main_view) }
 	)
 	window.run()
 }
 
-// The view generator set in update_view() is called on
-// every user event (mouse move, click, resize, etc.).
 fn main_view(window &gui.Window) gui.View {
-	w, h := window.window_size()
-	app := window.state[App_1]()
+	app := window.state[App]()
 	return gui.column(
-		width:   w
-		height:  h
 		h_align: .center
 		v_align: .middle
-		sizing:  gui.fixed_fixed
 		content: [
-			gui.text(text: 'Welcome to v-gui'),
+			gui.text(text: '${app.clicks} clicks'),
 			gui.button(
-				content:  [gui.text(text: '${app.clicks} Clicks')]
-				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[App_1]()
-					app.clicks += 1
+				content: [gui.text(text: 'Click me')]
+				on_click: fn (_, _, mut w gui.Window) {
+					w.state[App]().clicks += 1
 				}
 			),
 		]
@@ -110,293 +109,60 @@ fn main_view(window &gui.Window) gui.View {
 }
 ```
 
-![get started](assets/get-started.png)
+See [GET_STARTED.md](docs/GET_STARTED.md) for a detailed walkthrough.
 
-## Core Components
-
-### Window
-
-The `gui.window()` function creates the main application window with the
-following parameters:
-
-- `state`: Application state object
-- `width`: Window width in pixels
-- `height`: Window height in pixels
-- `on_init`: Initialization callback function
-
-### Layout Components
-
-#### Column Layout
-
-```v
-import gui
-
-gui.column(
-	width:   300
-	height:  300
-	h_align: .center // Horizontal alignment
-	v_align: .middle // Vertical alignment
-	sizing:  gui.fixed_fixed
-	content: [
-		// Child components
-	]
-)
-```
-
-### UI Elements
-
-#### Text
-
-```v
-import gui
-
-gui.text(text: 'Your text here')
-```
-
-#### Button
-
-```v
-import gui
-
-gui.button(
-	content:  [gui.text(text: 'Button Text')]
-	on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-		// Handle click event
-	}
-)
-```
-
-## Accessibility (Work in progress)
-
-v-gui provides automatic accessibility support through platform APIs
-(NSAccessibility on macOS, UI Automation on Windows, etc.).
-
-- **Screen Readers**: Text is automatically exposed.
-- **Navigation**: Keyboard navigation is supported for interactive elements.
-- **Contrast**: Default themes are designed with accessibility in mind.
-
-## Event Handling
-
-Events are handled through callback functions passed to UI components.
-The event system provides:
-
-- Mouse events (click, move, etc.)
-- Keyboard events
-- Window events (resize, etc.)
-
-Event handlers receive:
-
-- Component configuration
-- Event object
-- Window reference for state access
-
-### Accessing State
-
-``` v
-fn view_function(window &gui.Window) gui.View {
-    app := window.state[App_1]()  // Get typed state
-    // Use app state in view
-}
-```
-
-### Updating State
-
-``` v
-on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-    mut app := w.state[App_1]()  // Get mutable state reference
-    app.clicks += 1            // Modify state
-    // View automatically updates
-}
-```
-
-## Layout System
-
-The framework uses a flex-box inspired layout system with:
-
-### Alignment Options
-
-- **Horizontal alignment**: `.left`, `.center`, `.right`
-- **Vertical alignment**: `.top`, `.middle`, `.bottom`
-
-### Sizing Options
-
-- `gui.fixed_fixed`: Fixed width and height
-- Additional sizing modes available
-
-## Building and Running
-
-The README.md in the examples folder describes how to build v-gui
-programs. Don’t fret, it’s a one-liner.
-
-To build a v-gui application:
+## Installation
 
 ```bash
-v run your_app.v
+v install gui
 ```
 
-## Examples
+## Dependencies
 
-### Getting Started
-
-If you’re new to v-gui, start with the get-started.v example. It explains
-the basics of view generators, state models and event handling.
-
-### Available Examples
-
-- `get-started.v` - Basic introduction
-- `animations.v` - Tweens, springs, layout and hero transitions
-- `svg_demo.v` - SVG icon rendering
-- `two-panel.v` - Two-panel layout example
-- `test-layout.v` - Layout engine testing
-- `doc_viewer.v` - Documentation viewer
+| Package | Purpose | Source |
+|---------|---------|--------|
+| `vglyph` | Text rendering | Auto-installed with v-gui |
+| `gg` | 2D graphics | V standard library |
+| `sokol.sapp` | Windowing and events | V standard library |
 
 ## Documentation
 
-### Generated Documentation
+| Document | Description |
+|----------|-------------|
+| [GET_STARTED.md](docs/GET_STARTED.md) | Tutorial: first app to working knowledge |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How v-gui works under the hood |
+| [LAYOUT_ALGORITHM.md](docs/LAYOUT_ALGORITHM.md) | Sizing, alignment, and positioning |
+| [ANIMATIONS.md](docs/ANIMATIONS.md) | Tweens, springs, and transitions |
 
-**\_doc.vsh** is included in the project root. Use it to generate and view the
-documentation:
-
+Generate API docs with:
 ```bash
 v run _doc.vsh
 ```
 
-### Manual Documentation
+## Examples
 
-There is also some hand written documentation in the `/doc folder` labeled
-`01 Introduction.md`, `02 Getting Started.md`, etc. The `doc_viewer.v` example
-can be used to read them or use a browser.
+The `examples/` folder contains working apps for every feature:
 
-## Architecture Overview
+```bash
+v run examples/get_started.v    # Start here
+v run examples/buttons.v        # Button variants
+v run examples/animations.v     # Tweens and springs
+v run examples/theme_designer.v # Build custom themes
+v run examples/snake.v          # A complete game
+```
 
-![architecture](assets/gui-architecture.png)
+## Status
 
-The `v-gui` project follows a layered architecture, ensuring a clear separation of
-concerns. Here's a breakdown of its main parts and their interactions:
-
-### **Application Layer**
-
-This layer represents the entry points for users and developers.
-
-- **Application Code**: These are the actual user applications built using the
-  `v-gui` library.
-- **Examples**: A collection of demonstration applications showcasing various
-  features and usage patterns of the `v-gui` framework.
-
-### **Window Management Layer**
-
-This layer handles the main application window and user interactions.
-
-- **Window**: The central orchestrator of the v-gui system, managing the
-  application window.
-- **WindowCfg**: Configuration parameters used during the creation of a window,
-  such as dimensions, title, and initial callbacks.
-- **Event System**: Responsible for capturing and processing all user input
-  events, including mouse actions, keyboard presses, and window-specific events
-  like resizing.
-
-### **View Layer**
-
-This layer defines the UI elements and how they are generated.
-
-- **View**: An abstract representation of UI components and their layouts. Views
-  are stateless and generate layouts.
-- **View Generator**: Functions that dynamically create `View` instances based
-  on the application's current state.
-- **ViewState**: Manages the transient state of views, such as focus, selection,
-  and scroll positions, which are not stored directly within the stateless
-  `View` objects.
-
-### **Layout Engine**
-
-This is the core system for arranging and positioning UI elements.
-
-- **Layout**: A hierarchical tree structure that defines the arrangement of UI
-  elements on the screen. It's generated from `View`s.
-- **Shape**: The fundamental geometric representation of any UI element, holding
-  properties like position, size, and styling.
-- **Sizing, Alignment, Padding**: These modules control how elements are
-  dimensioned, positioned relative to each other, and how spacing is applied
-  around them, respectively.
-
-### **UI Components**
-
-This layer provides a rich set of pre-built UI elements for common use cases.
-
-- **Common Components**: Includes basic interactive elements like `Button`,
-  `Text`, `Input`, `Image`, `Svg`, and more specialized widgets.
-- **Containers**: Layout-specific components such as `Column`, `Row`, and
-  `Canvas` that organize child elements.
-
-### **Rendering System**
-
-This layer is responsible for the actual drawing of UI elements onto the screen.
-
-- **Renderer**: The component that takes the processed `Layout` information and
-  translates it into drawing instructions.
-- **Animation**: Four animation types - tweens with easing curves, physics-based
-  springs, automatic layout transitions, and hero morphs between views.
-
-### **Core Systems**
-
-These are foundational utilities and styling mechanisms.
-
-- **Theme & Colors**: Manages the visual styling of the entire application,
-  including color palettes and overall theme settings.
-- **Fonts & Styles**: Provides text rendering capabilities, including font
-  loading, variants (bold, italic, mono), and text styling options.
-
-### **External Dependencies**
-
-These are external libraries that the `v-gui` project relies on.
-
-- **gg Graphics**: A graphics library used for low-level 2D rendering
-  operations.
-- **sokol.sapp**: A cross-platform application framework that provides windowing
-  and event handling functionalities.
-
-The overall flow begins with user applications creating a `Window`. The `Window`
-then uses `View Generators` to produce `View`s, which are transformed into
-`Layout`s by the `Layout Engine`. Finally, the `Rendering` system draws these
-`Layout`s using `gg Graphics` and `sokol.sapp`, adhering to the defined `Theme`
-and `Fonts`.
-
-## Development Status
-
-Current state of the project can be found at:
-[Progress Reports and Feedback](https://github.com/mike-ward/gui/issues/3)
-
-## Best Practices
-
-1.  **Keep views pure**: View functions should only depend on the provided state
-2.  **Handle state changes in event handlers**: Modify state in click handlers
-    and other event callbacks
-3.  **Use declarative layouts**: Leverage the flex-box style layout system
-4.  **Start simple**: Begin with basic examples and gradually add complexity
-
-## Troubleshooting
-
-Since the framework is in early development:
-
-- Check the GitHub issues for known problems
-- Refer to working examples for proper usage patterns
-- Provide feedback to help improve the framework
+v-gui is in active development. Join the discussion on
+[Discord](https://discord.com/channels/592103645835821068/665558664949530644).
 
 ## Contributing
 
-The project welcomes contributions and feedback. Visit the GitHub repository to:
-
-- Report issues
+Contributions welcome:
+- Report bugs and request features via GitHub issues
 - Submit pull requests
-- Provide feedback on the framework design
-- Help with documentation
+- Improve documentation
 
-## Related Projects
+## License
 
-V also provides other UI solutions:
-
-- **v-ui**: Older cross-platform widget toolkit
-- **gg**: Graphics library for 2D applications using OpenGL/Metal/DirectX 11
-
-This v-gui framework focuses specifically on immediate mode rendering with a
-declarative API, making it distinct from other V UI solutions.
+MIT
