@@ -222,9 +222,9 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 
 	match cfg.orientation == .horizontal {
 		true {
-			layout.shape.x = parent.shape.x + parent.shape.padding.left
+			layout.shape.x = parent.shape.x + parent.shape.padding_left()
 			layout.shape.y = parent.shape.y + parent.shape.height - cfg.size
-			layout.shape.width = parent.shape.width - parent.shape.padding.width()
+			layout.shape.width = parent.shape.width - parent.shape.padding_width()
 			layout.shape.height = cfg.size
 
 			c_width := content_width(parent)
@@ -257,9 +257,9 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 		}
 		else {
 			layout.shape.x = parent.shape.x + parent.shape.width - cfg.size
-			layout.shape.y = parent.shape.y + parent.shape.padding.top
+			layout.shape.y = parent.shape.y + parent.shape.padding_top()
 			layout.shape.width = cfg.size
-			layout.shape.height = parent.shape.height - parent.shape.padding.height()
+			layout.shape.height = parent.shape.height - parent.shape.padding_height()
 
 			c_height := content_height(parent)
 			if c_height == 0 {
@@ -316,7 +316,7 @@ fn (cfg &ScrollbarCfg) on_hover(mut layout Layout, mut e Event, mut w Window) {
 //   The new calculated horizontal offset, clamped within valid bounds.
 fn offset_mouse_change_x(layout &Layout, mouse_dx f32, id_scroll u32, w &Window) f32 {
 	total_width := content_width(layout)
-	shape_width := layout.shape.width - layout.shape.padding.width()
+	shape_width := layout.shape.width - layout.shape.padding_width()
 	old_offset := w.view_state.scroll_x[id_scroll]
 	new_offset := mouse_dx * (total_width / shape_width)
 	offset := old_offset - new_offset
@@ -336,7 +336,7 @@ fn offset_mouse_change_x(layout &Layout, mouse_dx f32, id_scroll u32, w &Window)
 //   The new calculated vertical offset, clamped within valid bounds.
 fn offset_mouse_change_y(layout &Layout, mouse_dy f32, id_scroll u32, w &Window) f32 {
 	total_height := content_height(layout)
-	shape_height := layout.shape.height - layout.shape.padding.height()
+	shape_height := layout.shape.height - layout.shape.padding_height()
 	old_offset := w.view_state.scroll_y[id_scroll]
 	new_offset := mouse_dy * (total_height / shape_height)
 	offset := old_offset - new_offset
@@ -408,7 +408,7 @@ fn scroll_horizontal(layout &Layout, delta f32, mut w Window) bool {
 	v_id := layout.shape.id_scroll
 	if v_id > 0 {
 		// scrollable region does not including padding
-		max_offset := f32_min(0, layout.shape.width - layout.shape.padding.width() - content_width(layout))
+		max_offset := f32_min(0, layout.shape.width - layout.shape.padding_width() - content_width(layout))
 		offset_x := w.view_state.scroll_x[v_id] + delta * gui_theme.scroll_multiplier
 		w.view_state.scroll_x[v_id] = f32_clamp(offset_x, max_offset, 0)
 		if layout.shape.on_scroll != unsafe { nil } {
@@ -432,7 +432,7 @@ fn scroll_vertical(layout &Layout, delta f32, mut w Window) bool {
 	v_id := layout.shape.id_scroll
 	if v_id > 0 {
 		// scrollable region does not including padding
-		max_offset := f32_min(0, layout.shape.height - layout.shape.padding.height() - content_height(layout))
+		max_offset := f32_min(0, layout.shape.height - layout.shape.padding_height() - content_height(layout))
 		offset_y := w.view_state.scroll_y[v_id] + delta * gui_theme.scroll_multiplier
 		w.view_state.scroll_y[v_id] = f32_clamp(offset_y, max_offset, 0)
 		if layout.shape.on_scroll != unsafe { nil } {
