@@ -22,7 +22,6 @@
 // ```
 // v run examples/get_started.v
 // ```
-
 import gui
 
 // ## Step 1: Define Your Application State
@@ -94,14 +93,14 @@ fn main_view(window &gui.Window) gui.View {
 	//
 	// Both support alignment and sizing options.
 	return gui.column(
-		width:   w
-		height:  h
+		width:  w
+		height: h
 		// `sizing` controls how the container calculates its size:
 		// - fixed_fixed: Use exact width/height values
 		// - fit_fit: Shrink to fit content
 		// - fill_fill: Expand to fill parent
 		// - Combinations like fit_fixed, fill_fit, etc.
-		sizing:  gui.fixed_fixed
+		sizing: gui.fixed_fixed
 		// Alignment options: .left/.center/.right for h_align
 		//                    .top/.middle/.bottom for v_align
 		h_align: .center
@@ -126,7 +125,7 @@ fn main_view(window &gui.Window) gui.View {
 				// can be tabbed to and activated with Enter/Space.
 				id_focus: 1
 				// Button content is an array of widgets (usually just text)
-				content:  [gui.text(text: '${app.clicks} Clicks')]
+				content: [gui.text(text: '${app.clicks} Clicks')]
 				// ## Step 5: Handle Events
 				//
 				// Event handlers receive:

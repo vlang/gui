@@ -96,6 +96,14 @@ struct DrawGradient {
 	gradient &Gradient
 }
 
+struct DrawSvg {
+	triangles []f32 // x,y pairs forming triangles
+	color     gg.Color
+	x         f32
+	y         f32
+	scale     f32
+}
+
 struct DrawLayout {
 	layout &vglyph.Layout
 	x      f32
@@ -112,6 +120,7 @@ type Renderer = DrawCircle
 	| DrawNone
 	| DrawRect
 	| DrawStrokeRect
+	| DrawSvg
 	| DrawText
 	| DrawShadow
 	| DrawBlur
@@ -198,6 +207,10 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			draw_gradient_border(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
 				renderer.gradient, mut window)
 		}
+		DrawSvg {
+			draw_triangles(renderer.triangles, renderer.color, renderer.x, renderer.y,
+				renderer.scale, mut window)
+		}
 		DrawNone {}
 	}
 }
@@ -281,6 +294,9 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 		}
 		.rtf {
 			render_rtf(mut shape, clip, mut window)
+		}
+		.svg {
+			render_svg(mut shape, clip, mut window)
 		}
 		.none {}
 	}
@@ -922,4 +938,68 @@ fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, gradient &Gradie
 
 	sgl.end()
 	sgl.load_default_pipeline()
+}
+
+// render_svg renders an SVG shape
+fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
+	dr := gg.Rect{
+		x:      shape.x
+		y:      shape.y
+		width:  shape.width
+		height: shape.height
+	}
+	if !rects_overlap(dr, clip) {
+		shape.disabled = true
+		return
+	}
+
+	cached := window.load_svg(shape.svg_name, shape.width, shape.height) or {
+		log.error('${@FILE_LINE} > ${err.msg()}')
+		return
+	}
+
+	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
+
+	for tpath in cached.triangles {
+		// Use shape color if set (monochrome override), otherwise path color
+		c := if color.a > 0 { color } else { tpath.color }
+		window.renderers << DrawSvg{
+			triangles: tpath.triangles
+			color:     c.to_gx_color()
+			x:         shape.x
+			y:         shape.y
+			scale:     cached.scale
+		}
+	}
+}
+
+// draw_triangles renders triangulated geometry using SGL
+fn draw_triangles(triangles []f32, c gg.Color, x f32, y f32, tri_scale f32, mut window Window) {
+	if triangles.len < 6 {
+		return
+	}
+
+	scale := window.ui.scale
+
+	sgl.begin_triangles()
+	sgl.c4b(c.r, c.g, c.b, c.a)
+
+	mut i := 0
+	for i < triangles.len - 5 {
+		// Triangle vertices
+		x0 := (x + triangles[i] * tri_scale) * scale
+		y0 := (y + triangles[i + 1] * tri_scale) * scale
+		x1 := (x + triangles[i + 2] * tri_scale) * scale
+		y1 := (y + triangles[i + 3] * tri_scale) * scale
+		x2 := (x + triangles[i + 4] * tri_scale) * scale
+		y2 := (y + triangles[i + 5] * tri_scale) * scale
+
+		sgl.v2f(x0, y0)
+		sgl.v2f(x1, y1)
+		sgl.v2f(x2, y2)
+
+		i += 6
+	}
+
+	sgl.end()
 }

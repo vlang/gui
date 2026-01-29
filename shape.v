@@ -14,6 +14,7 @@ pub mut:
 	name       string // Internal name, useful for debugging (e.g., 'Container', 'Text')
 	text       string // Text content for text-based shapes
 	image_name string // Filename or path for image shapes
+	svg_name   string // Filename or path for SVG shapes
 
 	// Pointer fields (8 bytes)
 	vglyph_layout   &vglyph.Layout = unsafe { nil } // Unified layout engine object for both plain and rich text
@@ -92,6 +93,7 @@ pub enum ShapeType as u8 {
 	image
 	circle
 	rtf
+	svg
 }
 
 // point_in_shape determines if the given point is within the shape's shape_clip

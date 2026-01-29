@@ -23,6 +23,8 @@ layout syntax and thread-safe view updates.
 - **Declarative Syntax**: Flex-box style layout with intuitive API
 - **Performance Focused**: Optimized for speed and efficiency
 - **Rich Text**: Rendering with multiple styles and mixed content
+- **SVG Icons**: Vector graphics with path-based rendering, color override, and caching
+- **Animations**: Tweens with easing, physics-based springs, layout transitions, and hero morphs
 - **Drop Shadows**: Fast, SDF-based shadows with adjustable blur and color
 - **Transparent Container Shadows**: Hollow shadows that respect transparent backgrounds
 - **Gradient Borders**: Flexible border styles with gradient colors
@@ -242,6 +244,8 @@ the basics of view generators, state models and event handling.
 ### Available Examples
 
 - `get-started.v` - Basic introduction
+- `animations.v` - Tweens, springs, layout and hero transitions
+- `svg_demo.v` - SVG icon rendering
 - `two-panel.v` - Two-panel layout example
 - `test-layout.v` - Layout engine testing
 - `doc_viewer.v` - Documentation viewer
@@ -320,7 +324,7 @@ This is the core system for arranging and positioning UI elements.
 This layer provides a rich set of pre-built UI elements for common use cases.
 
 - **Common Components**: Includes basic interactive elements like `Button`,
-  `Text`, `Input`, `Image`, and more specialized widgets.
+  `Text`, `Input`, `Image`, `Svg`, and more specialized widgets.
 - **Containers**: Layout-specific components such as `Column`, `Row`, and
   `Canvas` that organize child elements.
 
@@ -330,8 +334,8 @@ This layer is responsible for the actual drawing of UI elements onto the screen.
 
 - **Renderer**: The component that takes the processed `Layout` information and
   translates it into drawing instructions.
-- **Animation**: Handles animated UI elements, providing smooth transitions and
-  visual feedback.
+- **Animation**: Four animation types - tweens with easing curves, physics-based
+  springs, automatic layout transitions, and hero morphs between views.
 
 ### **Core Systems**
 

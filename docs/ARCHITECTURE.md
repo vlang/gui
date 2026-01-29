@@ -125,6 +125,7 @@ Pre-built, composable UI elements.
 **Primitives**:
 - `text`: Text rendering via vglyph
 - `image`: Bitmap display
+- `svg`: Vector graphics with tessellation and color override
 
 **Composite Components**: Built from primitives:
 - `button`, `toggle`, `switch`: Interactive buttons
@@ -149,7 +150,9 @@ Draws the layout to screen.
 - Displays images
 - Applies clipping
 
-**Animation**: Handles animated elements with smooth transitions.
+**Animation**: Four types - tweens (value interpolation with easing), springs
+(physics-based motion), layout transitions (automatic position animation), and
+hero transitions (element morphing between views).
 
 ### Core Systems
 

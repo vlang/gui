@@ -39,8 +39,7 @@ as a cross-platform, immediate mode GUI toolkit.
     - Add physics-based spring animations (more natural than linear/easing curves).
     - Support layout transitions (animated constraints when window resizes).
     - Add "hero" transitions between views.
-- [ ] **Vector Graphics:** Better integration for SVG icons or path-based drawing beyond simple
-       shapes.
+- [x] **Vector Graphics:** SVG icon support with path-based rendering, tessellation, and caching.
 
 ### Phase 2: Fundamental Widgets & UX
 *Focus: Completing the standard library of widgets expected by developers.*

@@ -15,6 +15,7 @@ mut:
 	menu_state               map[u32]string                   // [id_menubar] -> id of menu
 	menu_key_nav             bool                             // true, menu navigated by keyboard
 	image_map                map[string]int                   // [file name] -> context.cache image id
+	svg_cache                map[string]&CachedSvg            // [cache key] -> cached SVG data
 	select_state             map[string]bool                  // [id select] -> open/close state
 	select_highlight         map[string]int                   // [id select] -> highlighted index
 	tree_state               map[string]map[string]bool       // [tree id] -> [node id ] -> open/closed

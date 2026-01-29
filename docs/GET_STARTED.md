@@ -175,6 +175,7 @@ v-gui comes with everything you need:
 | Buttons     | `button`, `toggle`, `switch`, `checkbox`, `radio`    |
 | Selection   | `select`, `dropdown`, `listbox`                      |
 | Data        | `table`, `tree`                                      |
+| Graphics    | `image`, `svg`                                       |
 | Layout      | `row`, `column`, `container`, `scroll`, `canvas`     |
 | Feedback    | `progress_bar`, `pulsar`, `tooltip`, `dialog`        |
 | Navigation  | `menu`, `menubar`, `tabs`                            |
@@ -209,7 +210,8 @@ v run examples/inputs.v
 v run examples/containers.v
 
 # Cool stuff
-v run examples/animations.v
+v run examples/animations.v     # Tweens, springs, hero transitions
+v run examples/svg_demo.v       # Vector icon rendering
 v run examples/theme_designer.v
 v run examples/snake.v          # Yes, it's a game
 ```

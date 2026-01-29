@@ -60,8 +60,8 @@ pub mut:
 	input_date        time.Time = time.now()
 	roller_date       time.Time = time.now()
 	// Animations
-	anim_tween_x  f32
-	anim_spring_x f32
+	anim_tween_x         f32
+	anim_spring_x        f32
 	anim_layout_expanded bool
 }
 
@@ -2070,7 +2070,7 @@ fn selected_dates_text(dates []time.Time) string {
 	for d in dates {
 		parts << d.format()
 	}
-	return 'Selected: ${parts.join(", ")}'
+	return 'Selected: ${parts.join(', ')}'
 }
 
 // ==============================================================
@@ -2226,7 +2226,9 @@ fn animation_samples(mut w gui.Window) gui.View {
 						text_style: gui.theme().n4
 					),
 					gui.button(
-						content:  [gui.text(text: 'Toggle Layout')]
+						content:  [
+							gui.text(text: 'Toggle Layout'),
+						]
 						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 							w.animate_layout(duration: 400 * time.millisecond)
 							mut app := w.state[ShowcaseApp]()
