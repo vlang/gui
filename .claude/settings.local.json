@@ -7,7 +7,10 @@
       "Bash(v:*)",
       "Bash(glxinfo:*)",
       "Bash(awk:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(git push)"
     ]
   }
 }

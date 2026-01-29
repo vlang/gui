@@ -212,6 +212,7 @@ v run examples/containers.v
 # Cool stuff
 v run examples/animations.v     # Tweens, springs, hero transitions
 v run examples/svg_demo.v       # Vector icon rendering
+v run examples/tiger.v          # Complex SVG (Ghostscript Tiger)
 v run examples/theme_designer.v
 v run examples/snake.v          # Yes, it's a game
 ```

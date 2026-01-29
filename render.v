@@ -275,8 +275,11 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 
 	has_visible_border := shape.size_border > 0 && shape.color_border != color_transparent
 	has_visible_text := shape.shape_type == .text && shape.text_style.color != color_transparent
+	// SVG shapes have their own internal colors, so don't skip them
+	is_svg := shape.shape_type == .svg
 	if shape.color == color_transparent && shape.gradient == unsafe { nil }
-		&& shape.border_gradient == unsafe { nil } && !has_visible_border && !has_visible_text {
+		&& shape.border_gradient == unsafe { nil } && !has_visible_border && !has_visible_text
+		&& !is_svg {
 		return
 	}
 	match shape.shape_type {

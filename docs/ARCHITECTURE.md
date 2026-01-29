@@ -125,7 +125,7 @@ Pre-built, composable UI elements.
 **Primitives**:
 - `text`: Text rendering via vglyph
 - `image`: Bitmap display
-- `svg`: Vector graphics with tessellation and color override
+- `svg`: Vector graphics with full SVG support (paths, transforms, groups, strokes)
 
 **Composite Components**: Built from primitives:
 - `button`, `toggle`, `switch`: Interactive buttons

@@ -2,6 +2,16 @@ module gui
 
 import math
 
+// Tessellation and stroke constants
+const stroke_cross_tolerance = f32(0.001) // tolerance for detecting straight joins
+const stroke_miter_limit = f32(4.0) // SVG default miter limit multiplier
+const stroke_round_cap_segments = 8 // segments for round cap semicircle
+const curve_degenerate_threshold = f32(0.0001) // threshold for degenerate curves
+const closed_path_epsilon = f32(0.0001) // tolerance for closed path detection
+
+// color_inherit is a sentinel color indicating the value should be inherited.
+const color_inherit = Color{255, 0, 255, 1}
+
 // PathCmd defines the type of drawing command in a path segment.
 pub enum PathCmd as u8 {
 	move_to  // 2 floats: x, y
@@ -18,11 +28,32 @@ pub:
 	points []f32
 }
 
+// StrokeCap defines line cap styles.
+pub enum StrokeCap as u8 {
+	butt
+	round
+	square
+	inherit // sentinel: use inherited value
+}
+
+// StrokeJoin defines line join styles.
+pub enum StrokeJoin as u8 {
+	miter
+	round
+	bevel
+	inherit // sentinel: use inherited value
+}
+
 // VectorPath represents a single filled path with color.
 pub struct VectorPath {
 pub mut:
-	segments   []PathSegment
-	fill_color Color
+	segments     []PathSegment
+	fill_color   Color      = color_inherit
+	transform    [6]f32     = [f32(1), 0, 0, 1, 0, 0]! // identity: [a,b,c,d,e,f]
+	stroke_color Color      = color_inherit
+	stroke_width f32        = -1.0 // negative = inherit from parent
+	stroke_cap   StrokeCap  = .inherit
+	stroke_join  StrokeJoin = .inherit
 }
 
 // VectorGraphic holds the complete parsed vector graphic (e.g., from SVG).
@@ -40,21 +71,88 @@ pub:
 	color     Color
 }
 
-// get_triangles tessellates all paths in the graphic at the given scale.
+// get_triangles tessellates all paths in the graphic into GPU-ready triangle geometry.
+//
+// This is the core rendering pipeline that converts vector paths into triangles:
+//
+// 1. **Curve Flattening**: Bezier curves (quadratic and cubic) are recursively subdivided
+//    into line segments until they're within `tolerance` of the true curve. The tolerance
+//    is adaptive: `0.5 / scale`, so higher scales produce more segments for smooth curves.
+//
+// 2. **Transform Application**: Each path's affine transform matrix is applied to all
+//    coordinates during flattening, baking transforms into the geometry.
+//
+// 3. **Fill Tessellation**: Closed polylines are triangulated using the ear clipping
+//    algorithm. Holes are handled by merging them into the outer contour via bridge edges.
+//
+// 4. **Stroke Tessellation**: Polylines are expanded into quads perpendicular to the path.
+//    Line joins (miter, bevel, round) connect segments at vertices. Line caps (butt,
+//    round, square) close open path endpoints. Stroke width is scaled by `scale`.
+//
+// Parameters:
+//   - `scale`: Display scale factor. Affects curve flattening tolerance (higher = smoother)
+//     and stroke width. Typically `display_width / viewBox_width`.
+//
+// Returns:
+//   Array of `TessellatedPath`, each containing:
+//   - `triangles`: Flat array of f32 x,y pairs forming triangles (every 6 values = 1 triangle)
+//   - `color`: Fill or stroke color for this geometry
+//
+// A single VectorPath may produce two TessellatedPaths: one for fill, one for stroke.
+// Paths with transparent fill or stroke (alpha = 0) skip that tessellation.
+//
+// Example:
+//   ```
+//   vg := parse_svg(svg_content)!
+//   scale := display_width / vg.width
+//   tess := vg.get_triangles(scale)
+//   for t in tess {
+//       // t.triangles contains x,y,x,y,x,y,... for triangles
+//       // t.color is the color to render them with
+//   }
+//   ```
 pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 	tolerance := 0.5 / scale // adaptive tolerance based on scale
-	mut result := []TessellatedPath{cap: vg.paths.len}
+	mut result := []TessellatedPath{cap: vg.paths.len * 2}
 	for path in vg.paths {
 		polylines := flatten_path(path, tolerance)
-		triangles := tessellate_polylines(polylines)
-		if triangles.len > 0 {
-			result << TessellatedPath{
-				triangles: triangles
-				color:     path.fill_color
+		// Tessellate fill
+		if path.fill_color.a > 0 {
+			triangles := tessellate_polylines(polylines)
+			if triangles.len > 0 {
+				result << TessellatedPath{
+					triangles: triangles
+					color:     path.fill_color
+				}
+			}
+		}
+		// Tessellate stroke
+		if path.stroke_color.a > 0 && path.stroke_width > 0 {
+			stroke_width := path.stroke_width * scale
+			stroke_tris := tessellate_stroke(polylines, stroke_width, path.stroke_cap,
+				path.stroke_join)
+			if stroke_tris.len > 0 {
+				result << TessellatedPath{
+					triangles: stroke_tris
+					color:     path.stroke_color
+				}
 			}
 		}
 	}
 	return result
+}
+
+// apply_transform transforms a point (x, y) by affine matrix [a,b,c,d,e,f].
+// Result: (a*x + c*y + e, b*x + d*y + f)
+@[inline]
+fn apply_transform(x f32, y f32, m [6]f32) (f32, f32) {
+	return m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5]
+}
+
+// is_identity_transform checks if a transform is the identity matrix.
+@[inline]
+fn is_identity_transform(m [6]f32) bool {
+	return m[0] == 1 && m[1] == 0 && m[2] == 0 && m[3] == 1 && m[4] == 0 && m[5] == 0
 }
 
 // flatten_path converts bezier curves to polylines with given tolerance.
@@ -65,6 +163,7 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 	mut y := f32(0)
 	mut start_x := f32(0)
 	mut start_y := f32(0)
+	has_transform := !is_identity_transform(path.transform)
 
 	for seg in path.segments {
 		match seg.cmd {
@@ -77,21 +176,40 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 				y = seg.points[1]
 				start_x = x
 				start_y = y
-				current << x
-				current << y
+				if has_transform {
+					tx, ty := apply_transform(x, y, path.transform)
+					current << tx
+					current << ty
+				} else {
+					current << x
+					current << y
+				}
 			}
 			.line_to {
 				x = seg.points[0]
 				y = seg.points[1]
-				current << x
-				current << y
+				if has_transform {
+					tx, ty := apply_transform(x, y, path.transform)
+					current << tx
+					current << ty
+				} else {
+					current << x
+					current << y
+				}
 			}
 			.quad_to {
 				cx := seg.points[0]
 				cy := seg.points[1]
 				ex := seg.points[2]
 				ey := seg.points[3]
-				flatten_quad(x, y, cx, cy, ex, ey, tolerance, mut current)
+				if has_transform {
+					tx, ty := apply_transform(x, y, path.transform)
+					tcx, tcy := apply_transform(cx, cy, path.transform)
+					tex, tey := apply_transform(ex, ey, path.transform)
+					flatten_quad(tx, ty, tcx, tcy, tex, tey, tolerance, mut current)
+				} else {
+					flatten_quad(x, y, cx, cy, ex, ey, tolerance, mut current)
+				}
 				x = ex
 				y = ey
 			}
@@ -102,7 +220,16 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 				c2y := seg.points[3]
 				ex := seg.points[4]
 				ey := seg.points[5]
-				flatten_cubic(x, y, c1x, c1y, c2x, c2y, ex, ey, tolerance, mut current)
+				if has_transform {
+					tx, ty := apply_transform(x, y, path.transform)
+					tc1x, tc1y := apply_transform(c1x, c1y, path.transform)
+					tc2x, tc2y := apply_transform(c2x, c2y, path.transform)
+					tex, tey := apply_transform(ex, ey, path.transform)
+					flatten_cubic(tx, ty, tc1x, tc1y, tc2x, tc2y, tex, tey, tolerance, mut
+						current)
+				} else {
+					flatten_cubic(x, y, c1x, c1y, c2x, c2y, ex, ey, tolerance, mut current)
+				}
 				x = ex
 				y = ey
 			}
@@ -110,8 +237,14 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 				if current.len >= 2 {
 					// close path by connecting to start
 					if x != start_x || y != start_y {
-						current << start_x
-						current << start_y
+						if has_transform {
+							tx, ty := apply_transform(start_x, start_y, path.transform)
+							current << tx
+							current << ty
+						} else {
+							current << start_x
+							current << start_y
+						}
 					}
 				}
 				if current.len >= 6 {
@@ -164,7 +297,7 @@ fn flatten_cubic(x0 f32, y0 f32, c1x f32, c1y f32, c2x f32, c2y f32, x1 f32, y1 
 	dy := y1 - y0
 	d := math.sqrtf(dx * dx + dy * dy)
 
-	if d < 0.0001 {
+	if d < curve_degenerate_threshold {
 		// Degenerate case
 		points << x1
 		points << y1
@@ -251,6 +384,272 @@ fn tessellate_polylines(polylines [][]f32) []f32 {
 	}
 
 	return ear_clip(outer)
+}
+
+// tessellate_stroke converts polylines to stroke triangles.
+fn tessellate_stroke(polylines [][]f32, width f32, cap StrokeCap, join StrokeJoin) []f32 {
+	mut result := []f32{}
+	half_w := width / 2
+
+	for poly in polylines {
+		n := poly.len / 2
+		if n < 2 {
+			continue
+		}
+
+		// Check if path is closed (use epsilon for float comparison)
+		dx_close := poly[0] - poly[(n - 1) * 2]
+		dy_close := poly[1] - poly[(n - 1) * 2 + 1]
+		is_closed := n > 2 && f32_abs(dx_close) < closed_path_epsilon
+			&& f32_abs(dy_close) < closed_path_epsilon
+		point_count := if is_closed { n - 1 } else { n }
+
+		if point_count < 2 {
+			continue
+		}
+
+		// Build normals for each segment
+		mut normals := []f32{cap: point_count * 2}
+		for i := 0; i < point_count - 1; i++ {
+			dx := poly[(i + 1) * 2] - poly[i * 2]
+			dy := poly[(i + 1) * 2 + 1] - poly[i * 2 + 1]
+			len := math.sqrtf(dx * dx + dy * dy)
+			if len > 0 {
+				normals << -dy / len
+				normals << dx / len
+			} else {
+				normals << 0
+				normals << 1
+			}
+		}
+		// For closed paths, last segment connects back to start
+		if is_closed {
+			dx := poly[0] - poly[(point_count - 1) * 2]
+			dy := poly[1] - poly[(point_count - 1) * 2 + 1]
+			len := math.sqrtf(dx * dx + dy * dy)
+			if len > 0 {
+				normals << -dy / len
+				normals << dx / len
+			} else {
+				normals << 0
+				normals << 1
+			}
+		}
+
+		// Generate stroke quads for each segment
+		for i := 0; i < point_count - 1; i++ {
+			x0 := poly[i * 2]
+			y0 := poly[i * 2 + 1]
+			x1 := poly[(i + 1) * 2]
+			y1 := poly[(i + 1) * 2 + 1]
+			nx := normals[i * 2]
+			ny := normals[i * 2 + 1]
+
+			// Quad vertices
+			ax := x0 + nx * half_w
+			ay := y0 + ny * half_w
+			bx := x0 - nx * half_w
+			by := y0 - ny * half_w
+			cx := x1 - nx * half_w
+			cy := y1 - ny * half_w
+			dx := x1 + nx * half_w
+			dy := y1 + ny * half_w
+
+			// Two triangles for the quad
+			result << [ax, ay, bx, by, cx, cy, ax, ay, cx, cy, dx, dy]
+		}
+
+		// Line joins at interior vertices
+		num_normals := normals.len / 2
+		if is_closed {
+			// For closed paths, join at all vertices
+			for i := 0; i < point_count; i++ {
+				prev_norm := if i == 0 { num_normals - 1 } else { i - 1 }
+				next_norm := i
+				if next_norm < num_normals && prev_norm < num_normals {
+					add_line_join(poly[i * 2], poly[i * 2 + 1], normals[prev_norm * 2],
+						normals[prev_norm * 2 + 1], normals[next_norm * 2], normals[next_norm * 2 +
+						1], half_w, join, mut result)
+				}
+			}
+		} else {
+			// For open paths, join at interior vertices only (skip first and last)
+			for i := 1; i < point_count - 1; i++ {
+				if i < num_normals {
+					add_line_join(poly[i * 2], poly[i * 2 + 1], normals[(i - 1) * 2],
+						normals[(i - 1) * 2 + 1], normals[i * 2], normals[i * 2 + 1],
+						half_w, join, mut result)
+				}
+			}
+		}
+
+		// Line caps (only for open paths)
+		if !is_closed && normals.len >= 2 {
+			// Start cap
+			add_line_cap(poly[0], poly[1], -normals[0], -normals[1], normals[0], normals[1],
+				half_w, cap, mut result)
+			// End cap
+			last_idx := (point_count - 1) * 2
+			last_norm_idx := (normals.len / 2 - 1) * 2
+			add_line_cap(poly[last_idx], poly[last_idx + 1], normals[last_norm_idx], normals[
+				last_norm_idx + 1], -normals[last_norm_idx], -normals[last_norm_idx + 1],
+				half_w, cap, mut result)
+		}
+	}
+
+	return result
+}
+
+// add_line_join adds triangles for a line join at point (x, y).
+fn add_line_join(x f32, y f32, n1x f32, n1y f32, n2x f32, n2y f32, half_w f32, join StrokeJoin, mut result []f32) {
+	// Compute cross product to determine turn direction
+	cross := n1x * n2y - n1y * n2x
+
+	if f32_abs(cross) < stroke_cross_tolerance {
+		// Nearly straight, no join needed
+		return
+	}
+
+	// Miter calculation
+	// The miter point is where the offset lines intersect
+	dot := n1x * n2x + n1y * n2y
+	miter_len := half_w / math.sqrtf((1 + dot) / 2)
+	miter_limit := stroke_miter_limit * half_w
+
+	// Average normal direction for miter
+	mx := n1x + n2x
+	my := n1y + n2y
+	mlen := math.sqrtf(mx * mx + my * my)
+	if mlen > 0 {
+		mx_norm := mx / mlen
+		my_norm := my / mlen
+
+		if join == .miter && miter_len <= miter_limit {
+			// Miter join
+			if cross > 0 {
+				// Left turn - join on right side
+				result << [x, y, x - n1x * half_w, y - n1y * half_w, x - mx_norm * miter_len,
+					y - my_norm * miter_len]
+				result << [x, y, x - mx_norm * miter_len, y - my_norm * miter_len, x - n2x * half_w,
+					y - n2y * half_w]
+			} else {
+				// Right turn - join on left side
+				result << [x, y, x + mx_norm * miter_len, y + my_norm * miter_len, x + n1x * half_w,
+					y + n1y * half_w]
+				result << [x, y, x + n2x * half_w, y + n2y * half_w, x + mx_norm * miter_len,
+					y + my_norm * miter_len]
+			}
+		} else if join == .round {
+			// Round join - approximate with arc
+			add_round_join(x, y, n1x, n1y, n2x, n2y, half_w, cross > 0, mut result)
+		} else {
+			// Bevel join (or miter that exceeds limit)
+			if cross > 0 {
+				result << [x, y, x - n1x * half_w, y - n1y * half_w, x - n2x * half_w,
+					y - n2y * half_w]
+			} else {
+				result << [x, y, x + n2x * half_w, y + n2y * half_w, x + n1x * half_w,
+					y + n1y * half_w]
+			}
+		}
+	}
+}
+
+// add_round_join adds triangles for a round join.
+fn add_round_join(x f32, y f32, n1x f32, n1y f32, n2x f32, n2y f32, half_w f32, left_turn bool, mut result []f32) {
+	// Calculate angle between normals
+	angle1 := f32(math.atan2(n1y, n1x))
+	mut angle2 := f32(math.atan2(n2y, n2x))
+
+	if left_turn {
+		if angle2 > angle1 {
+			angle2 -= 2 * math.pi
+		}
+	} else {
+		if angle2 < angle1 {
+			angle2 += 2 * math.pi
+		}
+	}
+
+	// Number of segments based on angle
+	angle_diff := f32_abs(angle2 - angle1)
+	segments := int(math.ceil(angle_diff / (math.pi / 4))) + 1
+
+	if segments < 2 {
+		return
+	}
+
+	step := (angle2 - angle1) / f32(segments)
+	mut prev_x := x + math.cosf(angle1) * half_w * (if left_turn { -1 } else { 1 })
+	mut prev_y := y + math.sinf(angle1) * half_w * (if left_turn { -1 } else { 1 })
+
+	for i := 1; i <= segments; i++ {
+		angle := angle1 + step * f32(i)
+		curr_x := x + math.cosf(angle) * half_w * (if left_turn { -1 } else { 1 })
+		curr_y := y + math.sinf(angle) * half_w * (if left_turn { -1 } else { 1 })
+
+		if left_turn {
+			result << [x, y, prev_x, prev_y, curr_x, curr_y]
+		} else {
+			result << [x, y, curr_x, curr_y, prev_x, prev_y]
+		}
+
+		prev_x = curr_x
+		prev_y = curr_y
+	}
+}
+
+// add_line_cap adds triangles for a line cap.
+fn add_line_cap(x f32, y f32, dx f32, dy f32, nx f32, ny f32, half_w f32, cap StrokeCap, mut result []f32) {
+	if cap == .butt {
+		// Butt cap - nothing to add
+		return
+	}
+
+	// Direction along the line (outward from endpoint)
+	len := math.sqrtf(dx * dx + dy * dy)
+	if len == 0 {
+		return
+	}
+	dir_x := dx / len
+	dir_y := dy / len
+
+	if cap == .square {
+		// Square cap - extend by half_w
+		ex := x + dir_x * half_w
+		ey := y + dir_y * half_w
+		// Quad for the cap extension
+		ax := x + nx * half_w
+		ay := y + ny * half_w
+		bx := x - nx * half_w
+		by := y - ny * half_w
+		cx := ex - nx * half_w
+		cy := ey - ny * half_w
+		dx2 := ex + nx * half_w
+		dy2 := ey + ny * half_w
+
+		result << [ax, ay, bx, by, cx, cy, ax, ay, cx, cy, dx2, dy2]
+	} else if cap == .round {
+		// Round cap - semicircle
+		center_x := x
+		center_y := y
+		segments := stroke_round_cap_segments
+		start_angle := f32(math.atan2(ny, nx))
+
+		mut prev_x := center_x + math.cosf(start_angle) * half_w
+		mut prev_y := center_y + math.sinf(start_angle) * half_w
+
+		for i := 1; i <= segments; i++ {
+			angle := start_angle + math.pi * f32(i) / f32(segments)
+			curr_x := center_x + math.cosf(angle) * half_w
+			curr_y := center_y + math.sinf(angle) * half_w
+
+			result << [center_x, center_y, prev_x, prev_y, curr_x, curr_y]
+
+			prev_x = curr_x
+			prev_y = curr_y
+		}
+	}
 }
 
 // Contour represents a polygon contour with its computed area.

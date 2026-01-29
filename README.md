@@ -53,7 +53,7 @@ V is a simple language. It deserves a simple UI framework.
 - SDF-based drop shadows
 - Gradient borders
 - Blur effects
-- SVG icons with color override
+- Full SVG support (paths, transforms, groups, strokes)
 
 **Animation**
 - Tweens with easing curves
@@ -133,6 +133,7 @@ v install gui
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | How v-gui works under the hood |
 | [LAYOUT_ALGORITHM.md](docs/LAYOUT_ALGORITHM.md) | Sizing, alignment, and positioning |
 | [ANIMATIONS.md](docs/ANIMATIONS.md) | Tweens, springs, and transitions |
+| [SVG.md](docs/SVG.md) | Vector graphics and icon rendering |
 
 Generate API docs with:
 ```bash
@@ -148,6 +149,7 @@ v run examples/get_started.v    # Start here
 v run examples/buttons.v        # Button variants
 v run examples/animations.v     # Tweens and springs
 v run examples/theme_designer.v # Build custom themes
+v run examples/tiger.v          # SVG rendering demo
 v run examples/snake.v          # A complete game
 ```
 

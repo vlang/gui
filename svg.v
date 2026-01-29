@@ -1,6 +1,17 @@
 module gui
 
+import math
 import os
+
+// GroupStyle holds inherited style properties for groups.
+struct GroupStyle {
+	transform    [6]f32
+	fill         string
+	stroke       string
+	stroke_width string
+	stroke_cap   string
+	stroke_join  string
+}
 
 // parse_svg parses an SVG string and returns a VectorGraphic.
 pub fn parse_svg(content string) !VectorGraphic {
@@ -26,38 +37,287 @@ pub fn parse_svg(content string) !VectorGraphic {
 		}
 	}
 
-	// Parse paths
-	vg.paths << parse_elements(content, '<path', parse_path_element)
-	vg.paths << parse_elements(content, '<rect', parse_rect_element)
-	vg.paths << parse_elements(content, '<circle', parse_circle_element)
-	vg.paths << parse_elements(content, '<ellipse', parse_ellipse_element)
-	vg.paths << parse_elements(content, '<polygon', fn (elem string) ?VectorPath {
-		return parse_polygon_element(elem, true)
-	})
-	vg.paths << parse_elements(content, '<polyline', fn (elem string) ?VectorPath {
-		return parse_polygon_element(elem, false)
-	})
-	vg.paths << parse_elements(content, '<line', parse_line_element)
+	// Parse with group support
+	default_style := GroupStyle{
+		transform: identity_transform
+	}
+	vg.paths = parse_svg_content(content, default_style)
 
 	return vg
 }
 
-// parse_elements finds all elements of a given tag and parses them
-fn parse_elements(content string, tag string, parser fn (string) ?VectorPath) []VectorPath {
+// parse_svg_content parses SVG content recursively, handling groups.
+fn parse_svg_content(content string, inherited GroupStyle) []VectorPath {
 	mut paths := []VectorPath{}
 	mut pos := 0
 
-	for {
-		start := find_index(content, tag, pos) or { break }
-		end := find_index(content, '>', start) or { break }
-		elem := content[start..end + 1]
-		if p := parser(elem) {
-			paths << p
+	for pos < content.len {
+		// Find next element
+		start := find_index(content, '<', pos) or { break }
+
+		// Skip comments and declarations
+		if start + 3 < content.len {
+			if content[start..start + 4] == '<!--' {
+				// Skip comment
+				end := find_index(content, '-->', start) or { break }
+				pos = end + 3
+				continue
+			}
+			if content[start + 1] == `!` || content[start + 1] == `?` {
+				end := find_index(content, '>', start) or { break }
+				pos = end + 1
+				continue
+			}
 		}
-		pos = end + 1
+
+		// Check for closing tag
+		if start + 1 < content.len && content[start + 1] == `/` {
+			end := find_index(content, '>', start) or { break }
+			pos = end + 1
+			continue
+		}
+
+		// Extract tag name
+		tag_end := find_tag_name_end(content, start + 1)
+		if tag_end <= start + 1 {
+			pos = start + 1
+			continue
+		}
+		tag_name := content[start + 1..tag_end]
+
+		// Find element end
+		elem_end := find_index(content, '>', start) or { break }
+		elem := content[start..elem_end + 1]
+		is_self_closing := elem_end > 0 && content[elem_end - 1] == `/`
+
+		// Handle different elements
+		if tag_name == 'g' {
+			// Parse group
+			group_style := merge_group_style(elem, inherited)
+
+			if is_self_closing {
+				pos = elem_end + 1
+				continue
+			}
+
+			// Find closing </g> tag
+			group_content_start := elem_end + 1
+			group_end := find_closing_tag(content, 'g', group_content_start)
+			if group_end > group_content_start {
+				group_content := content[group_content_start..group_end]
+				paths << parse_svg_content(group_content, group_style)
+			}
+			// Skip past </g>
+			close_end := find_index(content, '>', group_end) or { break }
+			pos = close_end + 1
+		} else if tag_name == 'path' {
+			if p := parse_path_with_style(elem, inherited) {
+				paths << p
+			}
+			pos = elem_end + 1
+		} else if tag_name == 'rect' {
+			if p := parse_rect_with_style(elem, inherited) {
+				paths << p
+			}
+			pos = elem_end + 1
+		} else if tag_name == 'circle' {
+			if p := parse_circle_with_style(elem, inherited) {
+				paths << p
+			}
+			pos = elem_end + 1
+		} else if tag_name == 'ellipse' {
+			if p := parse_ellipse_with_style(elem, inherited) {
+				paths << p
+			}
+			pos = elem_end + 1
+		} else if tag_name == 'polygon' {
+			if p := parse_polygon_with_style(elem, inherited, true) {
+				paths << p
+			}
+			pos = elem_end + 1
+		} else if tag_name == 'polyline' {
+			if p := parse_polygon_with_style(elem, inherited, false) {
+				paths << p
+			}
+			pos = elem_end + 1
+		} else if tag_name == 'line' {
+			if p := parse_line_with_style(elem, inherited) {
+				paths << p
+			}
+			pos = elem_end + 1
+		} else {
+			pos = elem_end + 1
+		}
 	}
 
 	return paths
+}
+
+// find_tag_name_end finds the end of a tag name.
+fn find_tag_name_end(s string, start int) int {
+	mut i := start
+	for i < s.len {
+		c := s[i]
+		if c == ` ` || c == `\t` || c == `\n` || c == `\r` || c == `>` || c == `/` {
+			break
+		}
+		i++
+	}
+	return i
+}
+
+// find_closing_tag finds the position of the closing tag for a given element.
+fn find_closing_tag(content string, tag string, start int) int {
+	close_tag := '</${tag}'
+	open_tag := '<${tag}'
+	mut depth := 1
+	mut pos := start
+
+	for pos < content.len && depth > 0 {
+		// Find next < character
+		next := find_index(content, '<', pos) or { break }
+
+		// Check for closing tag
+		if next + close_tag.len <= content.len && content[next..next + close_tag.len] == close_tag {
+			depth--
+			if depth == 0 {
+				return next
+			}
+			pos = next + close_tag.len
+			continue
+		}
+
+		// Check for opening tag (nested)
+		if next + open_tag.len <= content.len && content[next..next + open_tag.len] == open_tag {
+			// Make sure it's actually the tag and not something like <glyph
+			end_pos := next + open_tag.len
+			if end_pos < content.len {
+				c := content[end_pos]
+				if c == ` ` || c == `\t` || c == `\n` || c == `>` || c == `/` {
+					depth++
+				}
+			}
+		}
+
+		pos = next + 1
+	}
+
+	return content.len
+}
+
+// merge_group_style merges element attributes with inherited style.
+fn merge_group_style(elem string, inherited GroupStyle) GroupStyle {
+	// Get element's transform and compose with inherited
+	elem_transform := get_transform(elem)
+	combined_transform := matrix_multiply(inherited.transform, elem_transform)
+
+	// Inherit or override style properties
+	fill := find_attr(elem, 'fill') or { inherited.fill }
+	stroke := find_attr(elem, 'stroke') or { inherited.stroke }
+	stroke_width := find_attr(elem, 'stroke-width') or { inherited.stroke_width }
+	stroke_cap := find_attr(elem, 'stroke-linecap') or { inherited.stroke_cap }
+	stroke_join := find_attr(elem, 'stroke-linejoin') or { inherited.stroke_join }
+
+	return GroupStyle{
+		transform:    combined_transform
+		fill:         fill
+		stroke:       stroke
+		stroke_width: stroke_width
+		stroke_cap:   stroke_cap
+		stroke_join:  stroke_join
+	}
+}
+
+// apply_inherited_style applies inherited style to a path.
+fn apply_inherited_style(mut path VectorPath, inherited GroupStyle) {
+	// Compose transforms
+	path.transform = matrix_multiply(inherited.transform, path.transform)
+
+	// Apply inherited fill if element doesn't specify one (uses sentinel)
+	if path.fill_color == color_inherit {
+		if inherited.fill.len > 0 {
+			path.fill_color = parse_svg_color(inherited.fill)
+		} else {
+			path.fill_color = black // SVG default
+		}
+	}
+
+	// Apply inherited stroke if element doesn't specify one (uses sentinel)
+	if path.stroke_color == color_inherit {
+		if inherited.stroke.len > 0 {
+			path.stroke_color = parse_svg_color(inherited.stroke)
+		} else {
+			path.stroke_color = color_transparent
+		}
+	}
+	if inherited.stroke_width.len > 0 && path.stroke_width < 0 {
+		path.stroke_width = parse_length(inherited.stroke_width)
+	}
+	if path.stroke_width < 0 {
+		path.stroke_width = 1.0 // SVG default
+	}
+	if inherited.stroke_cap.len > 0 && path.stroke_cap == .inherit {
+		path.stroke_cap = match inherited.stroke_cap {
+			'round' { StrokeCap.round }
+			'square' { StrokeCap.square }
+			else { StrokeCap.butt }
+		}
+	}
+	if path.stroke_cap == .inherit {
+		path.stroke_cap = .butt
+	}
+	if inherited.stroke_join.len > 0 && path.stroke_join == .inherit {
+		path.stroke_join = match inherited.stroke_join {
+			'round' { StrokeJoin.round }
+			'bevel' { StrokeJoin.bevel }
+			else { StrokeJoin.miter }
+		}
+	}
+	if path.stroke_join == .inherit {
+		path.stroke_join = .miter
+	}
+}
+
+// parse_path_with_style parses a path element with inherited style.
+fn parse_path_with_style(elem string, inherited GroupStyle) ?VectorPath {
+	mut path := parse_path_element(elem) or { return none }
+	apply_inherited_style(mut path, inherited)
+	return path
+}
+
+// parse_rect_with_style parses a rect element with inherited style.
+fn parse_rect_with_style(elem string, inherited GroupStyle) ?VectorPath {
+	mut path := parse_rect_element(elem) or { return none }
+	apply_inherited_style(mut path, inherited)
+	return path
+}
+
+// parse_circle_with_style parses a circle element with inherited style.
+fn parse_circle_with_style(elem string, inherited GroupStyle) ?VectorPath {
+	mut path := parse_circle_element(elem) or { return none }
+	apply_inherited_style(mut path, inherited)
+	return path
+}
+
+// parse_ellipse_with_style parses an ellipse element with inherited style.
+fn parse_ellipse_with_style(elem string, inherited GroupStyle) ?VectorPath {
+	mut path := parse_ellipse_element(elem) or { return none }
+	apply_inherited_style(mut path, inherited)
+	return path
+}
+
+// parse_polygon_with_style parses a polygon/polyline element with inherited style.
+fn parse_polygon_with_style(elem string, inherited GroupStyle, close bool) ?VectorPath {
+	mut path := parse_polygon_element(elem, close) or { return none }
+	apply_inherited_style(mut path, inherited)
+	return path
+}
+
+// parse_line_with_style parses a line element with inherited style.
+fn parse_line_with_style(elem string, inherited GroupStyle) ?VectorPath {
+	mut path := parse_line_element(elem) or { return none }
+	apply_inherited_style(mut path, inherited)
+	return path
 }
 
 // find_index finds the index of substr in s starting from pos, returns none if not found
@@ -83,25 +343,24 @@ pub fn parse_svg_file(path string) !VectorGraphic {
 	return parse_svg(content)
 }
 
-// find_attr extracts an attribute value from an element string
+// find_attr extracts an attribute value from an element string.
+// Ensures attribute name is preceded by whitespace to avoid matching substrings.
 fn find_attr(elem string, name string) ?string {
-	// Try double quotes
-	pattern := '${name}="'
-	mut start := find_index(elem, pattern, 0) or { -1 }
-	if start >= 0 {
-		start += pattern.len
-		end := find_index(elem, '"', start) or { return none }
-		if end > start {
-			return elem[start..end]
+	// Whitespace prefixes to check
+	prefixes := [u8(` `), `\t`, `\n`, `\r`]
+	// Quote styles
+	quotes := [u8(`"`), `'`]
+
+	for prefix in prefixes {
+		for quote in quotes {
+			pattern := '${prefix.ascii_str()}${name}=${quote.ascii_str()}'
+			mut start := find_index(elem, pattern, 0) or { continue }
+			start += pattern.len
+			end := find_index(elem, quote.ascii_str(), start) or { continue }
+			if end > start {
+				return elem[start..end]
+			}
 		}
-	}
-	// Try single quotes
-	pattern2 := "${name}='"
-	start = find_index(elem, pattern2, 0) or { return none }
-	start += pattern2.len
-	end := find_index(elem, "'", start) or { return none }
-	if end > start {
-		return elem[start..end]
 	}
 	return none
 }
@@ -125,7 +384,12 @@ fn parse_path_element(elem string) ?VectorPath {
 	fill := find_attr(elem, 'fill') or { '' }
 
 	mut path := VectorPath{
-		fill_color: parse_svg_color(fill)
+		fill_color:   parse_svg_color(fill)
+		transform:    get_transform(elem)
+		stroke_color: get_stroke_color(elem)
+		stroke_width: get_stroke_width(elem)
+		stroke_cap:   get_stroke_linecap(elem)
+		stroke_join:  get_stroke_linejoin(elem)
 	}
 	path.segments = parse_path_d(d)
 
@@ -183,8 +447,13 @@ fn parse_rect_element(elem string) ?VectorPath {
 	}
 
 	return VectorPath{
-		segments:   segments
-		fill_color: parse_svg_color(fill)
+		segments:     segments
+		fill_color:   parse_svg_color(fill)
+		transform:    get_transform(elem)
+		stroke_color: get_stroke_color(elem)
+		stroke_width: get_stroke_width(elem)
+		stroke_cap:   get_stroke_linecap(elem)
+		stroke_join:  get_stroke_linejoin(elem)
 	}
 }
 
@@ -195,7 +464,7 @@ fn parse_circle_element(elem string) ?VectorPath {
 	r := (find_attr(elem, 'r') or { return none }).f32()
 	fill := find_attr(elem, 'fill') or { '' }
 
-	return ellipse_to_path(cx, cy, r, r, fill)
+	return ellipse_to_path(cx, cy, r, r, elem, fill)
 }
 
 // parse_ellipse_element converts <ellipse> to path
@@ -206,11 +475,11 @@ fn parse_ellipse_element(elem string) ?VectorPath {
 	ry := (find_attr(elem, 'ry') or { return none }).f32()
 	fill := find_attr(elem, 'fill') or { '' }
 
-	return ellipse_to_path(cx, cy, rx, ry, fill)
+	return ellipse_to_path(cx, cy, rx, ry, elem, fill)
 }
 
 // ellipse_to_path converts an ellipse to a path using 4 cubic beziers
-fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, fill string) VectorPath {
+fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string) VectorPath {
 	// Approximate circle with 4 cubic beziers (kappa = 4*(sqrt(2)-1)/3)
 	k := f32(0.5522847498)
 	kx := rx * k
@@ -225,8 +494,13 @@ fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, fill string) VectorPath {
 	segments << PathSegment{.close, []}
 
 	return VectorPath{
-		segments:   segments
-		fill_color: parse_svg_color(fill)
+		segments:     segments
+		fill_color:   parse_svg_color(fill)
+		transform:    get_transform(elem)
+		stroke_color: get_stroke_color(elem)
+		stroke_width: get_stroke_width(elem)
+		stroke_cap:   get_stroke_linecap(elem)
+		stroke_join:  get_stroke_linejoin(elem)
 	}
 }
 
@@ -250,8 +524,13 @@ fn parse_polygon_element(elem string, close bool) ?VectorPath {
 	}
 
 	return VectorPath{
-		segments:   segments
-		fill_color: parse_svg_color(fill)
+		segments:     segments
+		fill_color:   parse_svg_color(fill)
+		transform:    get_transform(elem)
+		stroke_color: get_stroke_color(elem)
+		stroke_width: get_stroke_width(elem)
+		stroke_cap:   get_stroke_linecap(elem)
+		stroke_join:  get_stroke_linejoin(elem)
 	}
 }
 
@@ -263,25 +542,31 @@ fn parse_line_element(elem string) ?VectorPath {
 	y2 := (find_attr(elem, 'y2') or { '0' }).f32()
 
 	return VectorPath{
-		segments:   [
+		segments:     [
 			PathSegment{.move_to, [x1, y1]},
 			PathSegment{.line_to, [x2, y2]},
 		]
-		fill_color: color_transparent
+		fill_color:   color_transparent
+		transform:    get_transform(elem)
+		stroke_color: get_stroke_color(elem)
+		stroke_width: get_stroke_width(elem)
+		stroke_cap:   get_stroke_linecap(elem)
+		stroke_join:  get_stroke_linejoin(elem)
 	}
 }
 
-// parse_svg_color parses SVG color values
+// parse_svg_color parses SVG color values.
+// Returns color_inherit sentinel if string is empty (attribute not present).
 fn parse_svg_color(s string) Color {
 	str := s.trim_space()
 	if str.len == 0 {
-		return black // default fill is black per SVG spec
+		return color_inherit // not specified, should inherit
 	}
 	if str == 'none' {
 		return color_transparent
 	}
-	if str == 'currentColor' {
-		return black
+	if str == 'currentColor' || str == 'inherit' {
+		return color_inherit
 	}
 	if str.starts_with('#') {
 		return parse_hex_color(str)
@@ -371,6 +656,152 @@ fn parse_rgb_color(s string) Color {
 		}
 	}
 	return Color{u8(r), u8(g), u8(b), u8(a)}
+}
+
+// identity_transform is the identity affine matrix.
+const identity_transform = [f32(1), 0, 0, 1, 0, 0]!
+
+// matrix_multiply composes two affine transforms: result = m1 * m2.
+fn matrix_multiply(m1 [6]f32, m2 [6]f32) [6]f32 {
+	// | a1 c1 e1 |   | a2 c2 e2 |
+	// | b1 d1 f1 | * | b2 d2 f2 |
+	// | 0  0  1  |   | 0  0  1  |
+	return [
+		m1[0] * m2[0] + m1[2] * m2[1], // a
+		m1[1] * m2[0] + m1[3] * m2[1], // b
+		m1[0] * m2[2] + m1[2] * m2[3], // c
+		m1[1] * m2[2] + m1[3] * m2[3], // d
+		m1[0] * m2[4] + m1[2] * m2[5] + m1[4], // e
+		m1[1] * m2[4] + m1[3] * m2[5] + m1[5], // f
+	]!
+}
+
+// parse_transform parses SVG transform attribute.
+// Supports: matrix, translate, scale, rotate, skewX, skewY
+fn parse_transform(s string) [6]f32 {
+	mut result := identity_transform
+	mut pos := 0
+	str := s.trim_space()
+
+	for pos < str.len {
+		// Skip whitespace and commas
+		for pos < str.len && (str[pos] == ` ` || str[pos] == `,` || str[pos] == `\t`) {
+			pos++
+		}
+		if pos >= str.len {
+			break
+		}
+
+		// Find transform name
+		mut name_end := pos
+		for name_end < str.len && str[name_end] != `(` && str[name_end] != ` ` {
+			name_end++
+		}
+		name := str[pos..name_end]
+
+		// Find opening paren
+		paren_start := find_index(str, '(', name_end) or { break }
+		paren_end := find_index(str, ')', paren_start) or { break }
+		args_str := str[paren_start + 1..paren_end]
+		args := parse_number_list(args_str)
+
+		m := parse_single_transform(name, args)
+		result = matrix_multiply(result, m)
+		pos = paren_end + 1
+	}
+
+	return result
+}
+
+// parse_single_transform parses a single transform function.
+fn parse_single_transform(name string, args []f32) [6]f32 {
+	if name == 'matrix' && args.len >= 6 {
+		return [args[0], args[1], args[2], args[3], args[4], args[5]]!
+	}
+	if name == 'translate' {
+		tx := if args.len >= 1 { args[0] } else { f32(0) }
+		ty := if args.len >= 2 { args[1] } else { f32(0) }
+		return [f32(1), 0, 0, 1, tx, ty]!
+	}
+	if name == 'scale' {
+		sx := if args.len >= 1 { args[0] } else { f32(1) }
+		sy := if args.len >= 2 { args[1] } else { sx }
+		return [sx, f32(0), 0, sy, 0, 0]!
+	}
+	if name == 'rotate' {
+		return parse_rotate_transform(args)
+	}
+	if name == 'skewX' && args.len >= 1 {
+		angle := args[0] * math.pi / 180.0
+		return [f32(1), 0, math.tanf(angle), 1, 0, 0]!
+	}
+	if name == 'skewY' && args.len >= 1 {
+		angle := args[0] * math.pi / 180.0
+		return [f32(1), math.tanf(angle), 0, 1, 0, 0]!
+	}
+	return identity_transform
+}
+
+// parse_rotate_transform handles rotate(angle) or rotate(angle, cx, cy).
+fn parse_rotate_transform(args []f32) [6]f32 {
+	if args.len < 1 {
+		return identity_transform
+	}
+	angle := args[0] * math.pi / 180.0
+	cos_a := math.cosf(angle)
+	sin_a := math.sinf(angle)
+	if args.len >= 3 {
+		// rotate(angle, cx, cy) - rotate around point
+		cx := args[1]
+		cy := args[2]
+		return [cos_a, sin_a, -sin_a, cos_a, cx - cos_a * cx + sin_a * cy,
+			cy - sin_a * cx - cos_a * cy]!
+	}
+	return [cos_a, sin_a, -sin_a, cos_a, f32(0), 0]!
+}
+
+// get_transform extracts and parses transform attribute from element.
+fn get_transform(elem string) [6]f32 {
+	if t := find_attr(elem, 'transform') {
+		return parse_transform(t)
+	}
+	return identity_transform
+}
+
+// get_stroke_color extracts stroke color from element.
+// Returns color_inherit sentinel if not specified.
+fn get_stroke_color(elem string) Color {
+	stroke := find_attr(elem, 'stroke') or { return color_inherit }
+	return parse_svg_color(stroke)
+}
+
+// get_stroke_width extracts stroke width from element.
+// Returns -1 (sentinel) if not specified.
+fn get_stroke_width(elem string) f32 {
+	width := find_attr(elem, 'stroke-width') or { return -1.0 }
+	return parse_length(width)
+}
+
+// get_stroke_linecap extracts stroke-linecap from element.
+// Returns .inherit sentinel if not specified.
+fn get_stroke_linecap(elem string) StrokeCap {
+	cap := find_attr(elem, 'stroke-linecap') or { return .inherit }
+	return match cap {
+		'round' { StrokeCap.round }
+		'square' { StrokeCap.square }
+		else { StrokeCap.butt }
+	}
+}
+
+// get_stroke_linejoin extracts stroke-linejoin from element.
+// Returns .inherit sentinel if not specified.
+fn get_stroke_linejoin(elem string) StrokeJoin {
+	join := find_attr(elem, 'stroke-linejoin') or { return .inherit }
+	return match join {
+		'round' { StrokeJoin.round }
+		'bevel' { StrokeJoin.bevel }
+		else { StrokeJoin.miter }
+	}
 }
 
 // parse_path_d parses the SVG path d attribute
