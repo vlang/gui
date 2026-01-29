@@ -24,6 +24,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		if line.starts_with('```') {
 			if in_code_block {
 				// End code block - flush current runs first, then add code block
+				trim_trailing_breaks(mut runs)
 				if runs.len > 0 {
 					blocks << MarkdownBlock{
 						is_code: false
@@ -46,8 +47,11 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				}
 				code_block_content.clear()
 				in_code_block = false
+				// Add leading space for content after code block
+				runs << rich_br()
 			} else {
 				// Start code block - flush current runs
+				trim_trailing_breaks(mut runs)
 				if runs.len > 0 {
 					blocks << MarkdownBlock{
 						is_code: false
@@ -85,7 +89,6 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		// Blank line = paragraph break
 		if line.trim_space() == '' {
 			if runs.len > 0 {
-				runs << rich_br()
 				runs << rich_br()
 			}
 			i++
@@ -360,4 +363,22 @@ fn is_ordered_list(line string) bool {
 		}
 	}
 	return line[dot_pos + 1] == ` `
+}
+
+// trim_trailing_breaks removes excess trailing newline runs, keeping at most one.
+fn trim_trailing_breaks(mut runs []RichTextRun) {
+	// Count trailing newlines
+	mut count := 0
+	for i := runs.len - 1; i >= 0; i-- {
+		if runs[i].text == '\n' {
+			count++
+		} else {
+			break
+		}
+	}
+	// Remove all but one
+	for count > 1 {
+		runs.pop()
+		count--
+	}
 }

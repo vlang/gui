@@ -78,9 +78,13 @@ fn main_view(window &gui.Window) gui.View {
 		id_scroll: 1
 		content:   [
 			gui.markdown(
-				source: markdown_source
-				style:  custom_style
-				mode:   .wrap
+				source:       markdown_source
+				style:        custom_style
+				mode:         .wrap
+				color_border: gui.theme().color_border
+				size_border:  1
+				radius:       gui.theme().radius_medium
+				padding:      gui.theme().padding_medium
 			),
 		]
 	)

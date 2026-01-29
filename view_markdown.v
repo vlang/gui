@@ -27,16 +27,21 @@ pub:
 @[minify]
 pub struct MarkdownCfg {
 pub:
-	id         string
-	source     string // Raw markdown text
-	style      MarkdownStyle
-	id_focus   u32
-	mode       TextMode = .wrap
-	min_width  f32
-	invisible  bool
-	clip       bool
-	focus_skip bool
-	disabled   bool
+	id           string
+	source       string // Raw markdown text
+	style        MarkdownStyle
+	id_focus     u32
+	mode         TextMode = .wrap
+	min_width    f32
+	invisible    bool
+	clip         bool
+	focus_skip   bool
+	disabled     bool
+	color        Color   = color_transparent
+	color_border Color   = color_transparent
+	size_border  f32
+	radius       f32
+	padding      Padding
 }
 
 // markdown creates a view from the given MarkdownCfg
@@ -79,8 +84,13 @@ pub fn markdown(cfg MarkdownCfg) View {
 	}
 
 	return column(
-		spacing: cfg.style.block_spacing
-		sizing:  if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
-		content: content
+		color:        cfg.color
+		color_border: cfg.color_border
+		size_border:  cfg.size_border
+		radius:       cfg.radius
+		padding:      cfg.padding
+		spacing:      cfg.style.block_spacing
+		sizing:       if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
+		content:      content
 	)
 }
