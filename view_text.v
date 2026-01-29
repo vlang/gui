@@ -74,7 +74,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	}
 	if tv.mode == .single_line || layout.shape.sizing.height == .fixed {
 		layout.shape.min_height = f32_max(layout.shape.height, layout.shape.min_height)
-		layout.shape.height = layout.shape.height
+		layout.shape.height = layout.shape.min_height
 	}
 	return layout
 }
@@ -406,22 +406,13 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 
 	// Only copy if there is an active selection
 	if input_state.select_beg != input_state.select_end {
-		// Use shape.text source of truth
 		beg := int(input_state.select_beg)
 		end := int(input_state.select_end)
-		if beg < end && end <= shape.text.len { // Check bounds just in case? visual indices are runes?
-			// input_state.select_beg/end are likely rune indices (based on usage elsewhere)
-			// Need to slice runes.
-			// shape.text.runes()[beg..end]
-			// This is expensive but safe.
-
-			// Wait, are select_beg/end byte indices or rune indices?
-			// `on_click`: cursor_pos := tv.mouse_cursor_pos(...)
-			// `mouse_cursor_pos` returns `byte_to_rune_index`. So they are Rune indices.
-
-			// So we must slice runes.
+		// select_beg/end are rune indices (from mouse_cursor_pos which uses byte_to_rune_index)
+		if beg < end && end <= utf8_str_visible_length(shape.text) {
 			cpy := shape.text.runes()[beg..end].string()
 			to_clipboard(cpy)
+			return cpy
 		}
 	}
 	return none
