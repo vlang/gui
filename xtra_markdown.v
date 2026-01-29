@@ -5,6 +5,7 @@ module gui
 // MarkdownBlock represents a parsed block of markdown content.
 struct MarkdownBlock {
 	is_code bool
+	is_hr   bool
 	content RichText
 }
 
@@ -73,15 +74,19 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 
 		// Horizontal rule
 		if line.trim_space() in ['---', '***', '___'] && line.trim_space().len >= 3 {
+			// Flush current runs first
+			trim_trailing_breaks(mut runs)
 			if runs.len > 0 {
-				runs << rich_br()
+				blocks << MarkdownBlock{
+					is_code: false
+					content: RichText{runs: runs.clone()}
+				}
+				runs.clear()
 			}
-			// Add horizontal line using box-drawing characters
-			runs << RichTextRun{
-				text:  '────────────────────────'
-				style: TextStyle{...style.text, color: style.hr_color}
+			// Add hr as separate block
+			blocks << MarkdownBlock{
+				is_hr: true
 			}
-			runs << rich_br()
 			i++
 			continue
 		}

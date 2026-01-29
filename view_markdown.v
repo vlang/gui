@@ -61,13 +61,20 @@ pub fn markdown(cfg MarkdownCfg) View {
 				color:   cfg.style.code_block_bg
 				padding: gui_theme.padding_medium
 				radius:  gui_theme.radius_small
-				sizing:  fit_fit
+				sizing:  fill_fit
 				content: [
 					rtf(
 						rich_text: block.content
 						mode:      .single_line
 					),
 				]
+			)
+		} else if block.is_hr {
+			// Horizontal rule - fill width
+			content << rectangle(
+				sizing: fill_fixed
+				height: 1
+				color:  cfg.style.hr_color
 			)
 		} else {
 			content << rtf(
