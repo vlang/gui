@@ -131,13 +131,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		line := lines[i]
 		trimmed := line.trim_space()
 
-		// Skip link definition lines (metadata)
-		if !in_code_block && is_link_definition(line) {
-			i++
-			continue
-		}
-
-		// Skip footnote definition lines (metadata)
+		// Skip footnote definition lines (metadata) - must check before link definitions
+		// since [^id]: matches [*]: pattern
 		if !in_code_block && is_footnote_definition(line) {
 			// Skip continuation lines (may have blank lines between)
 			i++
@@ -159,6 +154,12 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				}
 				i++
 			}
+			continue
+		}
+
+		// Skip link definition lines (metadata)
+		if !in_code_block && is_link_definition(line) {
+			i++
 			continue
 		}
 
