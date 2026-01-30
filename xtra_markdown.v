@@ -4,6 +4,7 @@ module gui
 
 // MarkdownBlock represents a parsed block of markdown content.
 struct MarkdownBlock {
+	header_level     int // 0=not header, 1-6 for h1-h6
 	is_code          bool
 	is_hr            bool
 	is_blockquote    bool
@@ -245,32 +246,50 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 
 		// Headers
 		if line.starts_with('######') {
-			parse_header(line[6..].trim_left(' '), style.h6, style, mut runs)
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			blocks << parse_header_block(line[6..].trim_left(' '), 6, style.h6, style)
 			i++
 			continue
 		}
 		if line.starts_with('#####') {
-			parse_header(line[5..].trim_left(' '), style.h5, style, mut runs)
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			blocks << parse_header_block(line[5..].trim_left(' '), 5, style.h5, style)
 			i++
 			continue
 		}
 		if line.starts_with('####') {
-			parse_header(line[4..].trim_left(' '), style.h4, style, mut runs)
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			blocks << parse_header_block(line[4..].trim_left(' '), 4, style.h4, style)
 			i++
 			continue
 		}
 		if line.starts_with('###') {
-			parse_header(line[3..].trim_left(' '), style.h3, style, mut runs)
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			blocks << parse_header_block(line[3..].trim_left(' '), 3, style.h3, style)
 			i++
 			continue
 		}
 		if line.starts_with('##') {
-			parse_header(line[2..].trim_left(' '), style.h2, style, mut runs)
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			blocks << parse_header_block(line[2..].trim_left(' '), 2, style.h2, style)
 			i++
 			continue
 		}
 		if line.starts_with('#') {
-			parse_header(line[1..].trim_left(' '), style.h1, style, mut runs)
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			blocks << parse_header_block(line[1..].trim_left(' '), 1, style.h1, style)
 			i++
 			continue
 		}
@@ -398,13 +417,16 @@ pub fn markdown_to_rich_text(source string, style MarkdownStyle) RichText {
 	}
 }
 
-// parse_header adds header text with the given style.
-fn parse_header(text string, header_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun) {
-	if runs.len > 0 && runs.last().text != '\n' {
-		runs << rich_br()
+// parse_header_block creates a header block with the given level.
+fn parse_header_block(text string, level int, header_style TextStyle, md_style MarkdownStyle) MarkdownBlock {
+	mut header_runs := []RichTextRun{cap: 10}
+	parse_inline(text, header_style, md_style, mut header_runs)
+	return MarkdownBlock{
+		header_level: level
+		content:      RichText{
+			runs: header_runs
+		}
 	}
-	parse_inline(text, header_style, md_style, mut runs)
-	runs << rich_br()
 }
 
 // parse_inline parses inline markdown (bold, italic, code, links).

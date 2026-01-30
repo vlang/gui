@@ -28,6 +28,8 @@ pub:
 	prefix_char_width  f32       = 8  // approx char width for list prefix column
 	code_block_padding Padding   = padding(10, 10, 10, 10)
 	code_block_radius  f32       = 3.5
+	h1_separator       bool
+	h2_separator       bool
 }
 
 // MarkdownCfg configures a Markdown View.
@@ -153,6 +155,17 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 		} else if block.is_image {
 			// Image block
 			content << image(file_name: block.image_src)
+		} else if block.header_level > 0 {
+			// Header block
+			content << rtf(rich_text: block.content, mode: cfg.mode)
+			if (block.header_level == 1 && cfg.style.h1_separator)
+				|| (block.header_level == 2 && cfg.style.h2_separator) {
+				content << rectangle(
+					sizing: fill_fixed
+					height: 1
+					color:  cfg.style.hr_color
+				)
+			}
 		} else if block.is_list {
 			// List item as two-column row: fixed bullet column + fill content column
 			indent_width := if block.list_indent > 0 {
