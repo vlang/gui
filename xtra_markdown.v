@@ -87,8 +87,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			continue
 		}
 
-		// Horizontal rule
-		if trimmed in ['---', '***', '___'] {
+		// Horizontal rule (3+ of same char: ---, ***, ___)
+		if is_horizontal_rule(trimmed) {
 			// Flush current runs first
 			if block := flush_runs(mut runs) {
 				blocks << block
@@ -723,6 +723,23 @@ fn find_triple_closing(text string, start int, ch u8) int {
 		}
 	}
 	return -1
+}
+
+// is_horizontal_rule checks if a line is a horizontal rule (3+ of -, *, or _).
+fn is_horizontal_rule(line string) bool {
+	if line.len < 3 {
+		return false
+	}
+	c := line[0]
+	if c != `-` && c != `*` && c != `_` {
+		return false
+	}
+	for ch in line {
+		if ch != c {
+			return false
+		}
+	}
+	return true
 }
 
 // is_ordered_list checks if a line is an ordered list item (e.g., "1. item").
