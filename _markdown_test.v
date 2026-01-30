@@ -91,12 +91,21 @@ fn test_markdown_paragraph_break() {
 }
 
 fn test_markdown_paragraph_continuation() {
-	// Single newline within paragraph becomes space, not line break
+	// Single newline within paragraph joins lines with space
 	rt := markdown_to_rich_text('line one\nline two', MarkdownStyle{})
-	spaces := rt.runs.filter(it.text == ' ')
 	line_breaks := rt.runs.filter(it.text == '\n')
-	assert spaces.len >= 1
+	assert rt.runs[0].text.contains(' ')
 	assert line_breaks.len == 0
+}
+
+fn test_markdown_multiline_link() {
+	// Links spanning multiple lines should be parsed correctly
+	rt := markdown_to_rich_text('[CommonMark\nSpecification](https://commonmark.org/)',
+		MarkdownStyle{})
+	links := rt.runs.filter(it.link != '')
+	assert links.len == 1
+	assert links[0].text == 'CommonMark Specification'
+	assert links[0].link == 'https://commonmark.org/'
 }
 
 // New tests for added features

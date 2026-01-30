@@ -340,25 +340,17 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			continue
 		}
 
-		// Regular paragraph
-		parse_inline(line, style.text, style, mut runs)
-		i++
+		// Regular paragraph - collect continuation lines first
+		content, consumed := collect_paragraph_content(line, lines, i + 1)
+		parse_inline(content, style.text, style, mut runs)
+		i += 1 + consumed
 
-		// Add space if next line continues paragraph, line break if block element
+		// Add line break if block element follows
 		if i < lines.len {
 			next := lines[i]
 			next_trimmed := next.trim_space()
-			if next_trimmed == '' {
-				// Blank line handler will deal with it
-			} else if is_block_start(next) {
-				// Block element coming - add line break
+			if next_trimmed != '' && is_block_start(next) {
 				runs << rich_br()
-			} else {
-				// Continuation of paragraph - add space instead of line break
-				runs << RichTextRun{
-					text:  ' '
-					style: style.text
-				}
 			}
 		}
 	}
@@ -774,6 +766,39 @@ fn get_indent_level(line string) int {
 		}
 	}
 	return spaces / 2
+}
+
+// collect_paragraph_content joins continuation lines for paragraphs.
+fn collect_paragraph_content(first_line string, lines []string, start_idx int) (string, int) {
+	mut consumed := 0
+	mut idx := start_idx
+
+	// Count continuation lines (non-blank, non-block-start)
+	for idx < lines.len {
+		next := lines[idx]
+		next_trimmed := next.trim_space()
+		if next_trimmed == '' || is_block_start(next) {
+			break
+		}
+		consumed++
+		idx++
+	}
+
+	// Fast path: no continuation
+	if consumed == 0 {
+		return first_line, 0
+	}
+
+	// Build combined content
+	mut buf := []u8{cap: first_line.len + consumed * 80}
+	buf << first_line.bytes()
+	idx = start_idx
+	for _ in 0 .. consumed {
+		buf << ` `
+		buf << lines[idx].bytes()
+		idx++
+	}
+	return buf.bytestr(), consumed
 }
 
 // collect_list_item_content collects the full content of a list item including continuation lines.
