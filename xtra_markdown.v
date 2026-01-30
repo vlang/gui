@@ -44,6 +44,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 
 	for i < lines.len {
 		line := lines[i]
+		trimmed := line.trim_space()
 
 		// Handle code blocks
 		if line.starts_with('```') {
@@ -87,7 +88,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// Horizontal rule
-		if line.trim_space() in ['---', '***', '___'] {
+		if trimmed in ['---', '***', '___'] {
 			// Flush current runs first
 			if block := flush_runs(mut runs) {
 				blocks << block
@@ -101,7 +102,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// Blank line = paragraph break
-		if line.trim_space() == '' {
+		if trimmed == '' {
 			if runs.len > 0 {
 				runs << rich_br()
 			}
@@ -116,13 +117,13 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// Table recognition: lines starting with | or separator rows
-		if line.trim_space().starts_with('|') || is_table_separator(line) {
+		if trimmed.starts_with('|') || is_table_separator(trimmed) {
 			// Flush current runs
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
 			// Collect consecutive table lines
-			mut table_lines := []string{}
+			mut table_lines := []string{cap: 10}
 			for i < lines.len {
 				tl := lines[i].trim_space()
 				if tl.starts_with('|') || is_table_separator(tl) || tl.contains('|') {
@@ -152,8 +153,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// Definition list: line starting with : (treat as paragraph for now)
-		if line.trim_space().starts_with(':') && line.trim_space().len > 1
-			&& line.trim_space()[1] == ` ` {
+		if trimmed.len > 1 && trimmed[0] == `:` && trimmed[1] == ` ` {
 			// Treat as regular paragraph
 			parse_inline(line, style.text, style, mut runs)
 			runs << rich_br()
@@ -190,7 +190,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 			// Count initial depth and collect consecutive blockquote lines
 			mut max_depth := count_blockquote_depth(line)
-			mut quote_lines := []string{}
+			mut quote_lines := []string{cap: 10}
 			for i < lines.len {
 				q := lines[i]
 				if q.starts_with('>') {
@@ -206,7 +206,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 					break
 				}
 			}
-			mut quote_runs := []RichTextRun{}
+			mut quote_runs := []RichTextRun{cap: 20}
 			for qi, ql in quote_lines {
 				// Skip blank lines but keep them as line breaks
 				if ql.trim_space() == '' {
@@ -271,16 +271,16 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// List items
-		trimmed := line.trim_left(' \t')
+		left_trimmed := line.trim_left(' \t')
 		indent := get_indent_level(line)
 
 		// Task list (checked or unchecked)
-		if task_prefix := get_task_prefix(trimmed) {
+		if task_prefix := get_task_prefix(left_trimmed) {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			content, consumed := collect_list_item_content(trimmed[6..], lines, i + 1)
-			mut item_runs := []RichTextRun{}
+			content, consumed := collect_list_item_content(left_trimmed[6..], lines, i + 1)
+			mut item_runs := []RichTextRun{cap: 10}
 			parse_inline(content, style.text, style, mut item_runs)
 			blocks << MarkdownBlock{
 				is_list:     true
@@ -295,13 +295,14 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// Unordered list (with nesting support)
-		if trimmed.starts_with('- ') || trimmed.starts_with('* ') || trimmed.starts_with('+ ') {
+		if left_trimmed.starts_with('- ') || left_trimmed.starts_with('* ')
+			|| left_trimmed.starts_with('+ ') {
 			// Flush any pending runs before list item
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			content, consumed := collect_list_item_content(trimmed[2..], lines, i + 1)
-			mut item_runs := []RichTextRun{}
+			content, consumed := collect_list_item_content(left_trimmed[2..], lines, i + 1)
+			mut item_runs := []RichTextRun{cap: 10}
 			parse_inline(content, style.text, style, mut item_runs)
 			blocks << MarkdownBlock{
 				is_list:     true
@@ -316,16 +317,16 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// Ordered list (with nesting support)
-		if is_ordered_list(trimmed) {
+		if is_ordered_list(left_trimmed) {
 			// Flush any pending runs before list item
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			dot_pos := trimmed.index('.') or { 0 }
-			num := trimmed[..dot_pos]
-			rest := trimmed[dot_pos + 1..].trim_left(' ')
+			dot_pos := left_trimmed.index('.') or { 0 }
+			num := left_trimmed[..dot_pos]
+			rest := left_trimmed[dot_pos + 1..].trim_left(' ')
 			content, consumed := collect_list_item_content(rest, lines, i + 1)
-			mut item_runs := []RichTextRun{}
+			mut item_runs := []RichTextRun{cap: 10}
 			parse_inline(content, style.text, style, mut item_runs)
 			blocks << MarkdownBlock{
 				is_list:     true
@@ -778,33 +779,38 @@ fn get_indent_level(line string) int {
 // collect_list_item_content collects the full content of a list item including continuation lines.
 // Returns the combined content and the number of lines consumed (excluding the first).
 fn collect_list_item_content(first_content string, lines []string, start_idx int) (string, int) {
-	mut content := first_content
 	mut consumed := 0
 	mut idx := start_idx
 
+	// Check if any continuation lines exist
 	for idx < lines.len {
 		next := lines[idx]
+		if next.len == 0 || (next[0] != ` ` && next[0] != `\t`) {
+			break
+		}
 		next_trimmed := next.trim_space()
-
-		// Blank line ends the item
-		if next_trimmed == '' {
+		if next_trimmed == '' || is_block_start(next) {
 			break
 		}
-		// New block element ends the item
-		if is_block_start(next) {
-			break
-		}
-		// Continuation line - must be indented
-		if next.len > 0 && (next[0] == ` ` || next[0] == `\t`) {
-			content += ' ' + next_trimmed
-			consumed++
-			idx++
-		} else {
-			break
-		}
+		consumed++
+		idx++
 	}
 
-	return content, consumed
+	// Fast path: no continuation lines
+	if consumed == 0 {
+		return first_content, 0
+	}
+
+	// Build combined content with buffer
+	mut buf := []u8{cap: first_content.len + consumed * 40}
+	buf << first_content.bytes()
+	idx = start_idx
+	for _ in 0 .. consumed {
+		buf << ` `
+		buf << lines[idx].trim_space().bytes()
+		idx++
+	}
+	return buf.bytestr(), consumed
 }
 
 // is_block_start checks if a line starts a new block element.
@@ -884,15 +890,15 @@ fn strip_blockquote_prefix(line string) string {
 }
 
 // is_table_separator checks if a line is a markdown table separator (e.g., |---|---|).
-fn is_table_separator(line string) bool {
-	trimmed := line.trim_space()
-	if trimmed.len < 3 {
+// Expects pre-trimmed input.
+fn is_table_separator(s string) bool {
+	if s.len < 3 {
 		return false
 	}
 	// Must contain at least --- or | and -
 	mut has_dash := false
 	mut has_pipe := false
-	for c in trimmed {
+	for c in s {
 		if c == `-` {
 			has_dash = true
 		} else if c == `|` {
