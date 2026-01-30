@@ -305,12 +305,19 @@ fn (mut window Window) render_rtf_tooltip(clip DrawClip) {
 	tooltip_text := window.view_state.rtf_tooltip_text
 	rect := window.view_state.rtf_tooltip_rect
 
-	// Create and layout tooltip view
-	mut tooltip_view := View(tooltip(TooltipCfg{
+	// Create and layout tooltip view with max width and wrapping
+	mut tooltip_view := tooltip(TooltipCfg{
 		id:      '__rtf_tooltip__'
-		content: [View(text(TextCfg{ text: tooltip_text }))]
+		padding: padding_none
+		content: [
+			column(
+				padding: padding_small
+				max_width: 200
+				content:   [View(text(TextCfg{ text: tooltip_text, mode: .wrap }))]
+			),
+		]
 		anchor:  .bottom_center
-	}))
+	})
 	mut layout := generate_layout(mut tooltip_view, mut window)
 
 	// Calculate sizes (without position)

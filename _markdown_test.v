@@ -222,11 +222,47 @@ fn test_markdown_table() {
 	assert blocks[0].is_table == true
 }
 
-fn test_markdown_footnote_defense() {
+fn test_markdown_footnote_basic() {
+	source := 'See note[^1] here\n\n[^1]: This is the footnote content.'
+	rt := markdown_to_rich_text(source, MarkdownStyle{})
+	// Should have footnote marker with tooltip
+	fn_runs := rt.runs.filter(it.tooltip != '')
+	assert fn_runs.len == 1
+	assert fn_runs[0].text == '[1]'
+	assert fn_runs[0].tooltip == 'This is the footnote content.'
+}
+
+fn test_markdown_footnote_named() {
+	source := 'See[^note] here\n\n[^note]: Named footnote.'
+	rt := markdown_to_rich_text(source, MarkdownStyle{})
+	fn_runs := rt.runs.filter(it.tooltip != '')
+	assert fn_runs.len == 1
+	assert fn_runs[0].text == '[note]'
+	assert fn_runs[0].tooltip == 'Named footnote.'
+}
+
+fn test_markdown_footnote_undefined() {
 	rt := markdown_to_rich_text('See note[^1] here', MarkdownStyle{})
-	// Should not crash, footnote rendered as literal
+	// Undefined footnote rendered as literal
 	found := rt.runs.any(it.text.contains('[^1]'))
 	assert found
+}
+
+fn test_markdown_footnote_multiline() {
+	source := 'Text[^1]\n\n[^1]: First line\n    continuation.'
+	rt := markdown_to_rich_text(source, MarkdownStyle{})
+	fn_runs := rt.runs.filter(it.tooltip != '')
+	assert fn_runs.len == 1
+	assert fn_runs[0].tooltip == 'First line continuation.'
+}
+
+fn test_markdown_footnote_multiline_blank() {
+	// Blank line between definition and indented continuation - preserved as paragraph break
+	source := 'Text[^1]\n\n[^1]: First paragraph.\n\n    Second paragraph.'
+	rt := markdown_to_rich_text(source, MarkdownStyle{})
+	fn_runs := rt.runs.filter(it.tooltip != '')
+	assert fn_runs.len == 1
+	assert fn_runs[0].tooltip == 'First paragraph.\n\nSecond paragraph.'
 }
 
 fn test_markdown_reference_link() {

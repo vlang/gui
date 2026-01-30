@@ -62,6 +62,18 @@ pub fn rich_abbr(text string, expansion string, style TextStyle) RichTextRun {
 	}
 }
 
+// rich_footnote creates a footnote marker with tooltip showing definition.
+pub fn rich_footnote(id string, content string, base_style TextStyle, md_style MarkdownStyle) RichTextRun {
+	return RichTextRun{
+		text:    '\xE2\x80\x89[${id}]' // thin space
+		tooltip: content
+		style:   TextStyle{
+			...base_style
+			size: base_style.size * 0.7
+		}
+	}
+}
+
 // to_vglyph_rich_text converts a RichText to vglyph.RichText for layout.
 fn (rt RichText) to_vglyph_rich_text() vglyph.RichText {
 	mut vg_runs := []vglyph.StyleRun{cap: rt.runs.len}

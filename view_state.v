@@ -24,12 +24,12 @@ mut:
 	date_picker_state        map[string]DatePickerState       // [id date_picker -> DatePickerState
 	date_picker_roller_state map[string]DatePickerRollerState // [id] -> DatePickerRollerState
 	mouse_lock               MouseLockCfg                     // mouse down/move/up/scroll/sliders, etc. use this
-	id_focus                 u32  // current view that has focus
-	cursor_on_sticky         bool // keeps the cursor visible during cursor movement
+	tooltip                  TooltipState                     // State for the active tooltip
+	rtf_tooltip_rect         gg.Rect // RTF abbreviation tooltip anchor rect
+	id_focus                 u32     // current view that has focus
+	cursor_on_sticky         bool    // keeps the cursor visible during cursor movement
+	rtf_tooltip_text         string  // RTF abbreviation tooltip text
 	input_cursor_on          bool = true // used by cursor blink animation
-	tooltip                  TooltipState // State for the active tooltip
-	rtf_tooltip_text         string       // RTF abbreviation tooltip text
-	rtf_tooltip_rect         gg.Rect      // RTF abbreviation tooltip anchor rect
 }
 
 // MouseLockCfg stores callback functions for mouse event handling in a locked state.

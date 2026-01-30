@@ -41,6 +41,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	lines := source.split('\n')
 	link_defs := collect_link_definitions(lines)
 	abbr_defs := collect_abbreviations(lines)
+	footnote_defs := collect_footnotes(lines)
 	mut blocks := []MarkdownBlock{cap: lines.len / 3}
 	mut runs := []RichTextRun{cap: 20}
 	mut i := 0
@@ -54,6 +55,31 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		// Skip link definition lines (metadata)
 		if !in_code_block && is_link_definition(line) {
 			i++
+			continue
+		}
+
+		// Skip footnote definition lines (metadata)
+		if !in_code_block && is_footnote_definition(line) {
+			// Skip continuation lines (may have blank lines between)
+			i++
+			for i < lines.len {
+				next := lines[i]
+				if next.len == 0 {
+					// Peek ahead for indented continuation
+					if i + 1 < lines.len {
+						peek := lines[i + 1]
+						if peek.len > 0 && (peek[0] == ` ` || peek[0] == `\t`) {
+							i++
+							continue
+						}
+					}
+					break
+				}
+				if next[0] != ` ` && next[0] != `\t` {
+					break
+				}
+				i++
+			}
 			continue
 		}
 
@@ -178,7 +204,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			first_content := trimmed[2..].trim_left(' \t')
 			content, consumed := collect_definition_content(first_content, lines, i + 1)
 			mut def_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut def_runs, link_defs)
+			parse_inline(content, style.text, style, mut def_runs, link_defs, footnote_defs)
 			blocks << MarkdownBlock{
 				is_def_value: true
 				content:      RichText{
@@ -240,7 +266,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				if ql.trim_space() == '' {
 					quote_runs << rich_br()
 				} else {
-					parse_inline(ql, style.text, style, mut quote_runs, link_defs)
+					parse_inline(ql, style.text, style, mut quote_runs, link_defs, footnote_defs)
 					if qi < quote_lines.len - 1 {
 						next_ql := quote_lines[qi + 1]
 						if next_ql.trim_space() == '' {
@@ -272,7 +298,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				blocks << block
 			}
 			blocks << parse_header_block(line[6..].trim_left(' '), 6, style.h6, style,
-				link_defs)
+				link_defs, footnote_defs)
 			i++
 			continue
 		}
@@ -281,7 +307,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				blocks << block
 			}
 			blocks << parse_header_block(line[5..].trim_left(' '), 5, style.h5, style,
-				link_defs)
+				link_defs, footnote_defs)
 			i++
 			continue
 		}
@@ -290,7 +316,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				blocks << block
 			}
 			blocks << parse_header_block(line[4..].trim_left(' '), 4, style.h4, style,
-				link_defs)
+				link_defs, footnote_defs)
 			i++
 			continue
 		}
@@ -299,7 +325,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				blocks << block
 			}
 			blocks << parse_header_block(line[3..].trim_left(' '), 3, style.h3, style,
-				link_defs)
+				link_defs, footnote_defs)
 			i++
 			continue
 		}
@@ -308,7 +334,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				blocks << block
 			}
 			blocks << parse_header_block(line[2..].trim_left(' '), 2, style.h2, style,
-				link_defs)
+				link_defs, footnote_defs)
 			i++
 			continue
 		}
@@ -317,7 +343,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				blocks << block
 			}
 			blocks << parse_header_block(line[1..].trim_left(' '), 1, style.h1, style,
-				link_defs)
+				link_defs, footnote_defs)
 			i++
 			continue
 		}
@@ -333,7 +359,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 			content, consumed := collect_list_item_content(left_trimmed[6..], lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs, link_defs)
+			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs)
 			blocks << MarkdownBlock{
 				is_list:     true
 				list_prefix: task_prefix
@@ -355,7 +381,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 			content, consumed := collect_list_item_content(left_trimmed[2..], lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs, link_defs)
+			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs)
 			blocks << MarkdownBlock{
 				is_list:     true
 				list_prefix: '• '
@@ -379,7 +405,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			rest := left_trimmed[dot_pos + 1..].trim_left(' ')
 			content, consumed := collect_list_item_content(rest, lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs, link_defs)
+			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs)
 			blocks << MarkdownBlock{
 				is_list:     true
 				list_prefix: '${num}. '
@@ -400,7 +426,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 			// Create def_term block with bold styling
 			mut term_runs := []RichTextRun{cap: 10}
-			parse_inline(trimmed, style.bold, style, mut term_runs, link_defs)
+			parse_inline(trimmed, style.bold, style, mut term_runs, link_defs, footnote_defs)
 			blocks << MarkdownBlock{
 				is_def_term: true
 				content:     RichText{
@@ -413,7 +439,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 
 		// Regular paragraph - collect continuation lines first
 		content, consumed := collect_paragraph_content(line, lines, i + 1)
-		parse_inline(content, style.text, style, mut runs, link_defs)
+		parse_inline(content, style.text, style, mut runs, link_defs, footnote_defs)
 		i += 1 + consumed
 
 		// Add line break if block element follows
@@ -480,9 +506,9 @@ pub fn markdown_to_rich_text(source string, style MarkdownStyle) RichText {
 }
 
 // parse_header_block creates a header block with the given level.
-fn parse_header_block(text string, level int, header_style TextStyle, md_style MarkdownStyle, link_defs map[string]string) MarkdownBlock {
+fn parse_header_block(text string, level int, header_style TextStyle, md_style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) MarkdownBlock {
 	mut header_runs := []RichTextRun{cap: 10}
-	parse_inline(text, header_style, md_style, mut header_runs, link_defs)
+	parse_inline(text, header_style, md_style, mut header_runs, link_defs, footnote_defs)
 	return MarkdownBlock{
 		header_level: level
 		content:      RichText{
@@ -491,8 +517,8 @@ fn parse_header_block(text string, level int, header_style TextStyle, md_style M
 	}
 }
 
-// parse_inline parses inline markdown (bold, italic, code, links).
-fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun, link_defs map[string]string) {
+// parse_inline parses inline markdown (bold, italic, code, links, footnotes).
+fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun, link_defs map[string]string, footnote_defs map[string]string) {
 	mut pos := 0
 	mut current := []u8{cap: text.len}
 
@@ -722,8 +748,27 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 
 		// Check for links [text](url) or reference links [text][ref], [text][], [text]
 		if text[pos] == `[` {
-			// Footnote defense: [^...] treat as literal
+			// Footnote: [^id] -> styled marker with tooltip
 			if pos + 1 < text.len && text[pos + 1] == `^` {
+				// Find closing ]
+				fn_end := find_closing(text, pos + 2, `]`)
+				if fn_end > pos + 2 {
+					footnote_id := text[pos + 2..fn_end]
+					if content := footnote_defs[footnote_id] {
+						// Flush current text
+						if current.len > 0 {
+							runs << RichTextRun{
+								text:  current.bytestr()
+								style: base_style
+							}
+							current.clear()
+						}
+						runs << rich_footnote(footnote_id, content, base_style, md_style)
+						pos = fn_end + 1
+						continue
+					}
+				}
+				// Undefined footnote - treat as literal
 				current << text[pos]
 				pos++
 				continue
@@ -1233,6 +1278,77 @@ fn collect_abbreviations(lines []string) map[string]string {
 		}
 	}
 	return defs
+}
+
+// collect_footnotes scans lines for footnote definitions [^id]: text.
+// Returns id -> content mapping, including continuation lines.
+// Blank lines between paragraphs preserved as \n\n, multiple blanks collapsed.
+fn collect_footnotes(lines []string) map[string]string {
+	mut defs := map[string]string{}
+	mut i := 0
+	for i < lines.len {
+		line := lines[i]
+		trimmed := line.trim_space()
+		// Pattern: [^id]: text
+		if !trimmed.starts_with('[^') {
+			i++
+			continue
+		}
+		bracket_end := trimmed.index(']:') or {
+			i++
+			continue
+		}
+		if bracket_end < 2 {
+			i++
+			continue
+		}
+		id := trimmed[2..bracket_end]
+		mut content := trimmed[bracket_end + 2..].trim_left(' \t')
+		i++
+		// Collect continuation lines (indented, may have blank lines between)
+		mut had_blank := false
+		for i < lines.len {
+			next := lines[i]
+			// Blank line - check if next non-blank is indented continuation
+			if next.len == 0 {
+				// Peek ahead for indented line
+				if i + 1 < lines.len {
+					peek := lines[i + 1]
+					if peek.len > 0 && (peek[0] == ` ` || peek[0] == `\t`) {
+						had_blank = true
+						i++
+						continue
+					}
+				}
+				break
+			}
+			if next[0] != ` ` && next[0] != `\t` {
+				break
+			}
+			// Add paragraph break if we had blank line(s)
+			if had_blank {
+				content += '\n\n'
+				had_blank = false
+			} else {
+				content += ' '
+			}
+			content += next.trim_space()
+			i++
+		}
+		if id.len > 0 && content.len > 0 {
+			defs[id] = content
+		}
+	}
+	return defs
+}
+
+// is_footnote_definition checks if a line is a footnote definition [^id]: text.
+fn is_footnote_definition(line string) bool {
+	trimmed := line.trim_space()
+	if !trimmed.starts_with('[^') {
+		return false
+	}
+	return trimmed.index(']:') or { return false } >= 2
 }
 
 // is_word_boundary checks if char at pos is a word boundary (non-alphanumeric).
