@@ -39,13 +39,10 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 	// Inject Group Box title (Eraser + Text) if text is present
 	cv.add_group_box_title(mut w, mut children)
 
-	if w.view_state.tooltip.id != '' {
-		if cv.tooltip != unsafe { nil } {
-			if cv.tooltip.id == w.view_state.tooltip.id {
-				mut tooltip_view := tooltip(*cv.tooltip)
-				children << generate_layout(mut tooltip_view, mut w)
-			}
-		}
+	if w.view_state.tooltip.id != '' && cv.tooltip != unsafe { nil }
+		&& cv.tooltip.id == w.view_state.tooltip.id {
+		mut tooltip_view := tooltip(*cv.tooltip)
+		children << generate_layout(mut tooltip_view, mut w)
 	}
 
 	layout := Layout{
@@ -250,10 +247,8 @@ fn container(cfg ContainerCfg) View {
 				id_scroll:   cfg.id_scroll
 			})
 		}
-		if extra_content.len > 0 {
-			content = cfg.content.clone()
-			content << extra_content
-		}
+		content = cfg.content.clone()
+		content << extra_content
 	}
 
 	view := ContainerView{
@@ -284,6 +279,7 @@ fn container(cfg ContainerCfg) View {
 		sizing:          cfg.sizing
 		spacing:         cfg.spacing
 		disabled:        cfg.disabled
+		focus_skip:      cfg.focus_skip
 		title:           cfg.title
 		title_bg:        cfg.title_bg
 		id_scroll:       cfg.id_scroll
@@ -359,15 +355,13 @@ pub fn circle(cfg ContainerCfg) View {
 }
 
 fn (cv &ContainerView) on_mouse_move_tooltip(layout &Layout, mut e Event, mut w Window) {
-	if cv.tooltip != unsafe { nil } {
-		if cv.tooltip.content.len > 0 {
-			w.animation_add(mut cv.tooltip.animation_tooltip())
-			w.view_state.tooltip.bounds = DrawClip{
-				x:      layout.shape.x
-				y:      layout.shape.y
-				width:  layout.shape.width
-				height: layout.shape.height
-			}
+	if cv.tooltip != unsafe { nil } && cv.tooltip.content.len > 0 {
+		w.animation_add(mut cv.tooltip.animation_tooltip())
+		w.view_state.tooltip.bounds = DrawClip{
+			x:      layout.shape.x
+			y:      layout.shape.y
+			width:  layout.shape.width
+			height: layout.shape.height
 		}
 		e.is_handled = true
 	}
