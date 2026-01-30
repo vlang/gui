@@ -108,6 +108,22 @@ fn test_markdown_multiline_link() {
 	assert links[0].link == 'https://commonmark.org/'
 }
 
+fn test_markdown_link_with_backticks() {
+	// Backticks in link text should not confuse bracket matching
+	rt := markdown_to_rich_text('[`example`](https://example.com)', MarkdownStyle{})
+	links := rt.runs.filter(it.link != '')
+	assert links.len == 1
+	assert links[0].link == 'https://example.com'
+}
+
+fn test_markdown_bold_link_with_backticks() {
+	// Bold wrapped link with backticks in text
+	rt := markdown_to_rich_text('**[`code`](url)**', MarkdownStyle{})
+	links := rt.runs.filter(it.link != '')
+	assert links.len == 1
+	assert links[0].link == 'url'
+}
+
 // New tests for added features
 
 fn test_markdown_strikethrough() {

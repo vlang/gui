@@ -661,13 +661,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					}
 					current.clear()
 				}
-				runs << RichTextRun{
-					text:  text[pos + 3..end]
-					style: TextStyle{
-						...md_style.bold_italic
-						size: base_style.size
-					}
+				bi_style := TextStyle{
+					...md_style.bold_italic
+					size: base_style.size
 				}
+				parse_inline(text[pos + 3..end], bi_style, md_style, mut runs, link_defs,
+					footnote_defs)
 				pos = end + 3
 				continue
 			}
@@ -684,13 +683,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					}
 					current.clear()
 				}
-				runs << RichTextRun{
-					text:  text[pos + 2..end]
-					style: TextStyle{
-						...md_style.bold
-						size: base_style.size
-					}
+				bold_style := TextStyle{
+					...md_style.bold
+					size: base_style.size
 				}
+				parse_inline(text[pos + 2..end], bold_style, md_style, mut runs, link_defs,
+					footnote_defs)
 				pos = end + 2
 				continue
 			}
@@ -707,13 +705,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			}
 			end := find_double_closing(text, pos + 2, `~`)
 			if end > pos + 2 {
-				runs << RichTextRun{
-					text:  text[pos + 2..end]
-					style: TextStyle{
-						...base_style
-						strikethrough: true
-					}
+				strike_style := TextStyle{
+					...base_style
+					strikethrough: true
 				}
+				parse_inline(text[pos + 2..end], strike_style, md_style, mut runs, link_defs,
+					footnote_defs)
 				pos = end + 2
 				continue
 			}
@@ -730,13 +727,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					}
 					current.clear()
 				}
-				runs << RichTextRun{
-					text:  text[pos + 1..end]
-					style: TextStyle{
-						...md_style.italic
-						size: base_style.size
-					}
+				italic_style := TextStyle{
+					...md_style.italic
+					size: base_style.size
 				}
+				parse_inline(text[pos + 1..end], italic_style, md_style, mut runs, link_defs,
+					footnote_defs)
 				pos = end + 1
 				continue
 			}
@@ -753,13 +749,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					}
 					current.clear()
 				}
-				runs << RichTextRun{
-					text:  text[pos + 3..end]
-					style: TextStyle{
-						...md_style.bold_italic
-						size: base_style.size
-					}
+				bi_style := TextStyle{
+					...md_style.bold_italic
+					size: base_style.size
 				}
+				parse_inline(text[pos + 3..end], bi_style, md_style, mut runs, link_defs,
+					footnote_defs)
 				pos = end + 3
 				continue
 			}
@@ -776,13 +771,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					}
 					current.clear()
 				}
-				runs << RichTextRun{
-					text:  text[pos + 2..end]
-					style: TextStyle{
-						...md_style.bold
-						size: base_style.size
-					}
+				bold_style := TextStyle{
+					...md_style.bold
+					size: base_style.size
 				}
+				parse_inline(text[pos + 2..end], bold_style, md_style, mut runs, link_defs,
+					footnote_defs)
 				pos = end + 2
 				continue
 			}
@@ -799,13 +793,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					}
 					current.clear()
 				}
-				runs << RichTextRun{
-					text:  text[pos + 1..end]
-					style: TextStyle{
-						...md_style.italic
-						size: base_style.size
-					}
+				italic_style := TextStyle{
+					...md_style.italic
+					size: base_style.size
 				}
+				parse_inline(text[pos + 1..end], italic_style, md_style, mut runs, link_defs,
+					footnote_defs)
 				pos = end + 1
 				continue
 			}
@@ -994,11 +987,26 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 }
 
 // find_closing finds the position of a closing character.
+// For ] and ) it skips backtick spans to handle links like [`code`](url).
 fn find_closing(text string, start int, ch u8) int {
-	for i := start; i < text.len; i++ {
+	skip_backticks := ch == `]` || ch == `)`
+	mut i := start
+	for i < text.len {
+		// Skip backtick spans when searching for link delimiters
+		if skip_backticks && text[i] == `\`` {
+			i++
+			for i < text.len && text[i] != `\`` {
+				i++
+			}
+			if i < text.len {
+				i++ // skip closing backtick
+			}
+			continue
+		}
 		if text[i] == ch {
 			return i
 		}
+		i++
 	}
 	return -1
 }
