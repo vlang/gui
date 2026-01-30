@@ -64,6 +64,7 @@ pub fn markdown(cfg MarkdownCfg) View {
 		if !block.is_list && list_items.len > 0 {
 			content << column(
 				sizing:  fill_fit
+				padding: Padding{}
 				spacing: cfg.style.block_spacing / 2
 				content: list_items.clone()
 			)
@@ -76,6 +77,7 @@ pub fn markdown(cfg MarkdownCfg) View {
 				padding: gui_theme.padding_medium
 				radius:  gui_theme.radius_small
 				sizing:  fill_fit
+				clip:    true
 				content: [
 					rtf(
 						rich_text: block.content
@@ -134,7 +136,7 @@ pub fn markdown(cfg MarkdownCfg) View {
 			content << image(file_name: block.image_src)
 		} else if block.is_list {
 			// List item as two-column row: fixed bullet column + fill content column
-			indent_width := f32(block.list_indent) * 16
+			indent_width := if block.list_indent > 0 { f32(block.list_indent - 1) * 16 } else { 0 }
 			list_items << row(
 				sizing:  fill_fit
 				padding: padding(0, 0, 0, indent_width)
@@ -164,6 +166,7 @@ pub fn markdown(cfg MarkdownCfg) View {
 			if i == blocks.len - 1 {
 				content << column(
 					sizing:  fill_fit
+					padding: Padding{}
 					spacing: cfg.style.block_spacing / 2
 					content: list_items.clone()
 				)

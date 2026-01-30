@@ -156,8 +156,7 @@ Autolinks work for URLs: <https://www.github.com> and email addresses:
 
 ### Images
 
-![Placeholder image
-description](https://via.placeholder.com/600x200/0066cc/ffffff?text=Sample+Image)
+![Placeholder image description](../assets/logo.jpg)
 
 *Caption: Images can have alt text for accessibility and optional
 titles.*
