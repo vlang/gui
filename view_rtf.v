@@ -21,15 +21,16 @@ pub mut:
 @[minify]
 pub struct RtfCfg {
 pub:
-	id         string
-	rich_text  RichText
-	min_width  f32
-	id_focus   u32
-	mode       TextMode
-	invisible  bool
-	clip       bool
-	focus_skip bool
-	disabled   bool
+	id             string
+	rich_text      RichText
+	min_width      f32
+	id_focus       u32
+	mode           TextMode
+	invisible      bool
+	clip           bool
+	focus_skip     bool
+	disabled       bool
+	hanging_indent f32 // negative indent for wrapped lines (for lists)
 }
 
 fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
@@ -40,10 +41,12 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	vg_rich_text := rtf.rich_text.to_vglyph_rich_text()
 
 	// Create vglyph text config
+	// Negative indent creates hanging indent (wrapped lines indented)
 	cfg := vglyph.TextConfig{
 		block: vglyph.BlockStyle{
-			wrap:  if rtf.mode in [.wrap, .wrap_keep_spaces] { .word } else { .word }
-			width: if rtf.mode in [.wrap, .wrap_keep_spaces] { f32(-1.0) } else { f32(-1.0) }
+			wrap:   if rtf.mode in [.wrap, .wrap_keep_spaces] { .word } else { .word }
+			width:  if rtf.mode in [.wrap, .wrap_keep_spaces] { f32(-1.0) } else { f32(-1.0) }
+			indent: -rtf.hanging_indent
 		}
 	}
 
@@ -51,22 +54,23 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	layout := window.text_system.layout_rich_text(vg_rich_text, cfg) or { vglyph.Layout{} }
 
 	shape := &Shape{
-		name:          'rtf'
-		shape_type:    .rtf
-		id:            rtf.id
-		id_focus:      rtf.id_focus
-		width:         layout.width
-		height:        layout.height
-		clip:          rtf.clip
-		focus_skip:    rtf.focus_skip
-		disabled:      rtf.disabled
-		min_width:     rtf.min_width
-		text_mode:     rtf.mode
-		sizing:        rtf.sizing
-		vglyph_layout: &layout
-		rich_text:     &rtf.rich_text
-		on_click:      rtf_on_click
-		on_mouse_move: rtf_mouse_move
+		name:           'rtf'
+		shape_type:     .rtf
+		id:             rtf.id
+		id_focus:       rtf.id_focus
+		width:          layout.width
+		height:         layout.height
+		clip:           rtf.clip
+		focus_skip:     rtf.focus_skip
+		disabled:       rtf.disabled
+		min_width:      rtf.min_width
+		text_mode:      rtf.mode
+		sizing:         rtf.sizing
+		hanging_indent: rtf.hanging_indent
+		vglyph_layout:  &layout
+		rich_text:      &rtf.rich_text
+		on_click:       rtf_on_click
+		on_mouse_move:  rtf_mouse_move
 	}
 
 	return Layout{
@@ -81,16 +85,17 @@ pub fn rtf(cfg RtfCfg) View {
 	}
 
 	return RtfView{
-		id:         cfg.id
-		id_focus:   cfg.id_focus
-		invisible:  cfg.invisible
-		clip:       cfg.clip
-		focus_skip: cfg.focus_skip
-		disabled:   cfg.disabled
-		min_width:  cfg.min_width
-		mode:       cfg.mode
-		rich_text:  cfg.rich_text
-		sizing:     if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
+		id:             cfg.id
+		id_focus:       cfg.id_focus
+		invisible:      cfg.invisible
+		clip:           cfg.clip
+		focus_skip:     cfg.focus_skip
+		disabled:       cfg.disabled
+		min_width:      cfg.min_width
+		mode:           cfg.mode
+		rich_text:      cfg.rich_text
+		hanging_indent: cfg.hanging_indent
+		sizing:         if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 	}
 }
 

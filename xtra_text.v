@@ -180,11 +180,12 @@ fn text_wrap(mut shape Shape, mut window Window) {
 
 				// Optimization: Check if width changed significantly or if we haven't constrained yet
 				if width > 0 && width != shape.last_constraint_width {
-					// Re-layout with new width constraint
+					// Re-layout with new width constraint, preserving hanging indent
 					mut cfg := vglyph.TextConfig{
 						block: vglyph.BlockStyle{
-							wrap:  .word
-							width: width
+							wrap:   .word
+							width:  width
+							indent: -shape.hanging_indent
 						}
 					}
 					// Use stored source text

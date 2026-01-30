@@ -4,9 +4,33 @@ module gui
 
 // MarkdownBlock represents a parsed block of markdown content.
 struct MarkdownBlock {
-	is_code bool
-	is_hr   bool
-	content RichText
+	is_code          bool
+	is_hr            bool
+	is_blockquote    bool
+	is_image         bool
+	is_table         bool
+	is_list          bool
+	blockquote_depth int
+	list_prefix      string // "• ", "1. ", "☐ ", "☑ "
+	list_indent      int    // nesting level (0, 1, 2...)
+	image_src        string
+	image_alt        string
+	content          RichText
+}
+
+// flush_runs creates a block from accumulated runs and clears state.
+fn flush_runs(mut runs []RichTextRun) ?MarkdownBlock {
+	trim_trailing_breaks(mut runs)
+	if runs.len == 0 {
+		return none
+	}
+	block := MarkdownBlock{
+		content: RichText{
+			runs: runs.clone()
+		}
+	}
+	runs.clear()
+	return block
 }
 
 // markdown_to_blocks parses markdown source and returns styled blocks.
@@ -25,13 +49,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		if line.starts_with('```') {
 			if in_code_block {
 				// End code block - flush current runs first, then add code block
-				trim_trailing_breaks(mut runs)
-				if runs.len > 0 {
-					blocks << MarkdownBlock{
-						is_code: false
-						content: RichText{runs: runs.clone()}
-					}
-					runs.clear()
+				if block := flush_runs(mut runs) {
+					blocks << block
 				}
 				if code_block_content.len > 0 {
 					blocks << MarkdownBlock{
@@ -52,13 +71,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				runs << rich_br()
 			} else {
 				// Start code block - flush current runs
-				trim_trailing_breaks(mut runs)
-				if runs.len > 0 {
-					blocks << MarkdownBlock{
-						is_code: false
-						content: RichText{runs: runs.clone()}
-					}
-					runs.clear()
+				if block := flush_runs(mut runs) {
+					blocks << block
 				}
 				in_code_block = true
 			}
@@ -75,13 +89,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		// Horizontal rule
 		if line.trim_space() in ['---', '***', '___'] && line.trim_space().len >= 3 {
 			// Flush current runs first
-			trim_trailing_breaks(mut runs)
-			if runs.len > 0 {
-				blocks << MarkdownBlock{
-					is_code: false
-					content: RichText{runs: runs.clone()}
-				}
-				runs.clear()
+			if block := flush_runs(mut runs) {
+				blocks << block
 			}
 			// Add hr as separate block
 			blocks << MarkdownBlock{
@@ -97,6 +106,135 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				runs << rich_br()
 			}
 			i++
+			continue
+		}
+
+		// Abbreviation defense: *[ABBR]: skip as metadata
+		if line.starts_with('*[') && line.contains(']:') {
+			i++
+			continue
+		}
+
+		// Table recognition: lines starting with | or separator rows
+		if line.trim_space().starts_with('|') || is_table_separator(line) {
+			// Flush current runs
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			// Collect consecutive table lines
+			mut table_lines := []string{}
+			for i < lines.len {
+				tl := lines[i].trim_space()
+				if tl.starts_with('|') || is_table_separator(tl) || tl.contains('|') {
+					table_lines << lines[i]
+					i++
+				} else if tl == '' && table_lines.len > 0 {
+					// Blank line ends table
+					break
+				} else {
+					break
+				}
+			}
+			if table_lines.len > 0 {
+				blocks << MarkdownBlock{
+					is_table: true
+					content:  RichText{
+						runs: [
+							RichTextRun{
+								text:  table_lines.join('\n')
+								style: style.code
+							},
+						]
+					}
+				}
+			}
+			continue
+		}
+
+		// Definition list: line starting with : (treat as paragraph for now)
+		if line.trim_space().starts_with(':') && line.trim_space().len > 1
+			&& line.trim_space()[1] == ` ` {
+			// Treat as regular paragraph
+			parse_inline(line, style.text, style, mut runs)
+			runs << rich_br()
+			i++
+			continue
+		}
+
+		// Image ![alt](path) - must be at start of line
+		if line.starts_with('![') {
+			bracket_end := line.index(']') or { -1 }
+			if bracket_end > 2 && bracket_end + 1 < line.len && line[bracket_end + 1] == `(` {
+				paren_end := line.index_after(')', bracket_end + 2) or { -1 }
+				if paren_end > bracket_end + 2 {
+					// Flush current runs
+					if block := flush_runs(mut runs) {
+						blocks << block
+						}
+					blocks << MarkdownBlock{
+						is_image:  true
+						image_alt: line[2..bracket_end]
+						image_src: line[bracket_end + 2..paren_end]
+					}
+					i++
+					continue
+				}
+			}
+		}
+
+		// Blockquote
+		if line.starts_with('>') {
+			// Flush current runs
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			// Count initial depth and collect consecutive blockquote lines
+			mut max_depth := count_blockquote_depth(line)
+			mut quote_lines := []string{}
+			for i < lines.len {
+				q := lines[i]
+				if q.starts_with('>') {
+					depth := count_blockquote_depth(q)
+					if depth > max_depth {
+						max_depth = depth
+					}
+					// Strip all > and spaces at start
+					content := strip_blockquote_prefix(q)
+					quote_lines << content
+					i++
+				} else {
+					break
+				}
+			}
+			mut quote_runs := []RichTextRun{}
+			for qi, ql in quote_lines {
+				// Skip blank lines but keep them as line breaks
+				if ql.trim_space() == '' {
+					quote_runs << rich_br()
+				} else {
+					parse_inline(ql, style.text, style, mut quote_runs)
+					if qi < quote_lines.len - 1 {
+						next_ql := quote_lines[qi + 1]
+						if next_ql.trim_space() == '' {
+							// Next line is blank - paragraph break coming
+							quote_runs << rich_br()
+						} else {
+							// Continuation of paragraph - add space
+							quote_runs << RichTextRun{
+								text:  ' '
+								style: style.text
+							}
+						}
+					}
+				}
+			}
+			blocks << MarkdownBlock{
+				is_blockquote:    true
+				blockquote_depth: max_depth
+				content:          RichText{
+					runs: quote_runs
+				}
+			}
 			continue
 		}
 
@@ -132,30 +270,86 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			continue
 		}
 
-		// Unordered list
-		if line.starts_with('- ') || line.starts_with('* ') || line.starts_with('+ ') {
-			runs << RichTextRun{
-				text:  '  • '
-				style: style.text
+		// List items
+		trimmed := line.trim_left(' \t')
+		indent := get_indent_level(line)
+
+		// Task list unchecked
+		if trimmed.starts_with('- [ ] ') || trimmed.starts_with('* [ ] ') {
+			// Flush any pending runs before list item
+			if block := flush_runs(mut runs) {
+				blocks << block
 			}
-			parse_inline(line[2..], style.text, style, mut runs)
-			runs << rich_br()
-			i++
+			content, consumed := collect_list_item_content(trimmed[6..], lines, i + 1)
+			mut item_runs := []RichTextRun{}
+			parse_inline(content, style.text, style, mut item_runs)
+			blocks << MarkdownBlock{
+				is_list:     true
+				list_prefix: '☐ '
+				list_indent: indent
+				content:     RichText{runs: item_runs}
+			}
+			i += 1 + consumed
+			continue
+		}
+		// Task list checked
+		if trimmed.starts_with('- [x] ') || trimmed.starts_with('* [x] ')
+			|| trimmed.starts_with('- [X] ') || trimmed.starts_with('* [X] ') {
+			// Flush any pending runs before list item
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			content, consumed := collect_list_item_content(trimmed[6..], lines, i + 1)
+			mut item_runs := []RichTextRun{}
+			parse_inline(content, style.text, style, mut item_runs)
+			blocks << MarkdownBlock{
+				is_list:     true
+				list_prefix: '☑ '
+				list_indent: indent
+				content:     RichText{runs: item_runs}
+			}
+			i += 1 + consumed
 			continue
 		}
 
-		// Ordered list
-		if is_ordered_list(line) {
-			dot_pos := line.index('.') or { 0 }
-			num := line[..dot_pos]
-			rest := line[dot_pos + 1..].trim_left(' ')
-			runs << RichTextRun{
-				text:  '  ${num}. '
-				style: style.text
+		// Unordered list (with nesting support)
+		if trimmed.starts_with('- ') || trimmed.starts_with('* ') || trimmed.starts_with('+ ') {
+			// Flush any pending runs before list item
+			if block := flush_runs(mut runs) {
+				blocks << block
 			}
-			parse_inline(rest, style.text, style, mut runs)
-			runs << rich_br()
-			i++
+			content, consumed := collect_list_item_content(trimmed[2..], lines, i + 1)
+			mut item_runs := []RichTextRun{}
+			parse_inline(content, style.text, style, mut item_runs)
+			blocks << MarkdownBlock{
+				is_list:     true
+				list_prefix: '• '
+				list_indent: indent
+				content:     RichText{runs: item_runs}
+			}
+			i += 1 + consumed
+			continue
+		}
+
+		// Ordered list (with nesting support)
+		if is_ordered_list(trimmed) {
+			// Flush any pending runs before list item
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			dot_pos := trimmed.index('.') or { 0 }
+			num := trimmed[..dot_pos]
+			rest := trimmed[dot_pos + 1..].trim_left(' ')
+			content, consumed := collect_list_item_content(rest, lines, i + 1)
+			mut item_runs := []RichTextRun{}
+			parse_inline(content, style.text, style, mut item_runs)
+			blocks << MarkdownBlock{
+				is_list:     true
+				list_prefix: '${num}. '
+				list_indent: indent
+				content:     RichText{runs: item_runs}
+			}
+			i += 1 + consumed
 			continue
 		}
 
@@ -163,20 +357,29 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		parse_inline(line, style.text, style, mut runs)
 		i++
 
-		// Add line break if not last line
+		// Add space if next line continues paragraph, line break if block element
 		if i < lines.len {
-			runs << rich_br()
+			next := lines[i]
+			next_trimmed := next.trim_space()
+			if next_trimmed == '' {
+				// Blank line handler will deal with it
+			} else if is_block_start(next) {
+				// Block element coming - add line break
+				runs << rich_br()
+			} else {
+				// Continuation of paragraph - add space instead of line break
+				runs << RichTextRun{
+					text:  ' '
+					style: style.text
+				}
+			}
 		}
 	}
 
 	// Handle unclosed code block
 	if in_code_block && code_block_content.len > 0 {
-		if runs.len > 0 {
-			blocks << MarkdownBlock{
-				is_code: false
-				content: RichText{runs: runs.clone()}
-			}
-			runs.clear()
+		if block := flush_runs(mut runs) {
+			blocks << block
 		}
 		blocks << MarkdownBlock{
 			is_code: true
@@ -192,11 +395,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	}
 
 	// Flush remaining runs
-	if runs.len > 0 {
-		blocks << MarkdownBlock{
-			is_code: false
-			content: RichText{runs: runs}
-		}
+	if block := flush_runs(mut runs) {
+		blocks << block
 	}
 
 	return blocks
@@ -209,7 +409,9 @@ pub fn markdown_to_rich_text(source string, style MarkdownStyle) RichText {
 	for block in blocks {
 		all_runs << block.content.runs
 	}
-	return RichText{runs: all_runs}
+	return RichText{
+		runs: all_runs
+	}
 }
 
 // parse_header adds header text with the given style.
@@ -227,6 +429,13 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 	mut current_text := ''
 
 	for pos < text.len {
+		// Escape character: backslash makes next char literal
+		if text[pos] == `\\` && pos + 1 < text.len {
+			current_text += text[pos + 1].ascii_str()
+			pos += 2
+			continue
+		}
+
 		// Check for inline code
 		if text[pos] == `\`` {
 			if current_text.len > 0 {
@@ -247,17 +456,40 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			}
 		}
 
+		// Check for bold+italic (***text***)
+		if pos + 2 < text.len && text[pos] == `*` && text[pos + 1] == `*` && text[pos + 2] == `*` {
+			end := find_triple_closing(text, pos + 3, `*`)
+			if end > pos + 3 {
+				if current_text.len > 0 {
+					runs << RichTextRun{
+						text:  current_text
+						style: base_style
+					}
+					current_text = ''
+				}
+				runs << RichTextRun{
+					text:  text[pos + 3..end]
+					style: TextStyle{
+						...md_style.bold_italic
+						size: base_style.size
+					}
+				}
+				pos = end + 3
+				continue
+			}
+		}
+
 		// Check for bold (**text**)
 		if pos + 1 < text.len && text[pos] == `*` && text[pos + 1] == `*` {
-			if current_text.len > 0 {
-				runs << RichTextRun{
-					text:  current_text
-					style: base_style
-				}
-				current_text = ''
-			}
 			end := find_double_closing(text, pos + 2, `*`)
 			if end > pos + 2 {
+				if current_text.len > 0 {
+					runs << RichTextRun{
+						text:  current_text
+						style: base_style
+					}
+					current_text = ''
+				}
 				runs << RichTextRun{
 					text:  text[pos + 2..end]
 					style: TextStyle{
@@ -270,8 +502,8 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			}
 		}
 
-		// Check for italic (*text*)
-		if text[pos] == `*` {
+		// Check for strikethrough (~~text~~)
+		if pos + 1 < text.len && text[pos] == `~` && text[pos + 1] == `~` {
 			if current_text.len > 0 {
 				runs << RichTextRun{
 					text:  current_text
@@ -279,8 +511,31 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				}
 				current_text = ''
 			}
+			end := find_double_closing(text, pos + 2, `~`)
+			if end > pos + 2 {
+				runs << RichTextRun{
+					text:  text[pos + 2..end]
+					style: TextStyle{
+						...base_style
+						strikethrough: true
+					}
+				}
+				pos = end + 2
+				continue
+			}
+		}
+
+		// Check for italic (*text*)
+		if text[pos] == `*` {
 			end := find_closing(text, pos + 1, `*`)
 			if end > pos + 1 {
+				if current_text.len > 0 {
+					runs << RichTextRun{
+						text:  current_text
+						style: base_style
+					}
+					current_text = ''
+				}
 				runs << RichTextRun{
 					text:  text[pos + 1..end]
 					style: TextStyle{
@@ -293,10 +548,124 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			}
 		}
 
+		// Check for bold+italic (___text___)
+		if pos + 2 < text.len && text[pos] == `_` && text[pos + 1] == `_` && text[pos + 2] == `_` {
+			end := find_triple_closing(text, pos + 3, `_`)
+			if end > pos + 3 {
+				if current_text.len > 0 {
+					runs << RichTextRun{
+						text:  current_text
+						style: base_style
+					}
+					current_text = ''
+				}
+				runs << RichTextRun{
+					text:  text[pos + 3..end]
+					style: TextStyle{
+						...md_style.bold_italic
+						size: base_style.size
+					}
+				}
+				pos = end + 3
+				continue
+			}
+		}
+
+		// Check for bold (__text__)
+		if pos + 1 < text.len && text[pos] == `_` && text[pos + 1] == `_` {
+			end := find_double_closing(text, pos + 2, `_`)
+			if end > pos + 2 {
+				if current_text.len > 0 {
+					runs << RichTextRun{
+						text:  current_text
+						style: base_style
+					}
+					current_text = ''
+				}
+				runs << RichTextRun{
+					text:  text[pos + 2..end]
+					style: TextStyle{
+						...md_style.bold
+						size: base_style.size
+					}
+				}
+				pos = end + 2
+				continue
+			}
+		}
+
+		// Check for italic (_text_)
+		if text[pos] == `_` {
+			end := find_closing(text, pos + 1, `_`)
+			if end > pos + 1 {
+				if current_text.len > 0 {
+					runs << RichTextRun{
+						text:  current_text
+						style: base_style
+					}
+					current_text = ''
+				}
+				runs << RichTextRun{
+					text:  text[pos + 1..end]
+					style: TextStyle{
+						...md_style.italic
+						size: base_style.size
+					}
+				}
+				pos = end + 1
+				continue
+			}
+		}
+
+		// Check for autolinks <url> or <email>
+		if text[pos] == `<` {
+			end := find_closing(text, pos + 1, `>`)
+			if end > pos + 1 {
+				inner := text[pos + 1..end]
+				// Check if it's a URL or email
+				if inner.starts_with('http://') || inner.starts_with('https://')
+					|| inner.contains('@') {
+					if current_text.len > 0 {
+						runs << RichTextRun{
+							text:  current_text
+							style: base_style
+						}
+						current_text = ''
+					}
+					link_url := if inner.contains('@') && !inner.contains('://')
+						{ 'mailto:${inner}' } else { inner }
+					runs << RichTextRun{
+						text:  inner
+						link:  link_url
+						style: TextStyle{
+							...base_style
+							color:     md_style.link_color
+							underline: true
+						}
+					}
+					pos = end + 1
+					continue
+				}
+			}
+		}
+
 		// Check for links [text](url)
 		if text[pos] == `[` {
+			// Footnote defense: [^...] treat as literal
+			if pos + 1 < text.len && text[pos + 1] == `^` {
+				current_text += text[pos].ascii_str()
+				pos++
+				continue
+			}
 			bracket_end := find_closing(text, pos + 1, `]`)
-			if bracket_end > pos + 1 && bracket_end + 1 < text.len && text[bracket_end + 1] == `(` {
+			if bracket_end > pos + 1 {
+				// Reference link defense: [text][ref] - no ( after ]
+				if bracket_end + 1 >= text.len || text[bracket_end + 1] != `(` {
+					// Not a standard link, treat as literal text
+					current_text += text[pos].ascii_str()
+					pos++
+					continue
+				}
 				paren_end := find_closing(text, bracket_end + 2, `)`)
 				if paren_end > bracket_end + 2 {
 					if current_text.len > 0 {
@@ -309,8 +678,8 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					link_text := text[pos + 1..bracket_end]
 					link_url := text[bracket_end + 2..paren_end]
 					runs << RichTextRun{
-						text: link_text
-						link: link_url
+						text:  link_text
+						link:  link_url
 						style: TextStyle{
 							...base_style
 							color:     md_style.link_color
@@ -321,6 +690,10 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					continue
 				}
 			}
+			// Fallthrough: treat [ as literal
+			current_text += text[pos].ascii_str()
+			pos++
+			continue
 		}
 
 		current_text += text[pos].ascii_str()
@@ -349,6 +722,16 @@ fn find_closing(text string, start int, ch u8) int {
 fn find_double_closing(text string, start int, ch u8) int {
 	for i := start; i < text.len - 1; i++ {
 		if text[i] == ch && text[i + 1] == ch {
+			return i
+		}
+	}
+	return -1
+}
+
+// find_triple_closing finds the position of triple closing characters (e.g., ***).
+fn find_triple_closing(text string, start int, ch u8) int {
+	for i := start; i < text.len - 2; i++ {
+		if text[i] == ch && text[i + 1] == ch && text[i + 2] == ch {
 			return i
 		}
 	}
@@ -386,4 +769,148 @@ fn trim_trailing_breaks(mut runs []RichTextRun) {
 		runs.pop()
 		count--
 	}
+}
+
+// get_indent_level counts leading whitespace and returns indent level (2 spaces or 1 tab = 1 level).
+fn get_indent_level(line string) int {
+	mut spaces := 0
+	for c in line {
+		if c == ` ` {
+			spaces++
+		} else if c == `\t` {
+			spaces += 2
+		} else {
+			break
+		}
+	}
+	return spaces / 2
+}
+
+// collect_list_item_content collects the full content of a list item including continuation lines.
+// Returns the combined content and the number of lines consumed (excluding the first).
+fn collect_list_item_content(first_content string, lines []string, start_idx int) (string, int) {
+	mut content := first_content
+	mut consumed := 0
+	mut idx := start_idx
+
+	for idx < lines.len {
+		next := lines[idx]
+		next_trimmed := next.trim_space()
+
+		// Blank line ends the item
+		if next_trimmed == '' {
+			break
+		}
+		// New block element ends the item
+		if is_block_start(next) {
+			break
+		}
+		// Continuation line - must be indented
+		if next.len > 0 && (next[0] == ` ` || next[0] == `\t`) {
+			content += ' ' + next_trimmed
+			consumed++
+			idx++
+		} else {
+			break
+		}
+	}
+
+	return content, consumed
+}
+
+// is_block_start checks if a line starts a new block element.
+fn is_block_start(line string) bool {
+	trimmed := line.trim_space()
+	if trimmed.starts_with('#') {
+		return true
+	}
+	if trimmed.starts_with('>') {
+		return true
+	}
+	if trimmed.starts_with('```') {
+		return true
+	}
+	if trimmed.starts_with('![') {
+		return true
+	}
+	if trimmed in ['---', '***', '___'] {
+		return true
+	}
+	if trimmed.starts_with('- ') || trimmed.starts_with('* ') || trimmed.starts_with('+ ') {
+		return true
+	}
+	if trimmed.starts_with('- [ ]') || trimmed.starts_with('- [x]') || trimmed.starts_with('- [X]') {
+		return true
+	}
+	if trimmed.starts_with('* [ ]') || trimmed.starts_with('* [x]') || trimmed.starts_with('* [X]') {
+		return true
+	}
+	if is_ordered_list(trimmed) {
+		return true
+	}
+	if trimmed.starts_with('|') || is_table_separator(trimmed) {
+		return true
+	}
+	return false
+}
+
+// count_blockquote_depth counts the number of > at the start of a line.
+fn count_blockquote_depth(line string) int {
+	mut depth := 0
+	mut pos := 0
+	for pos < line.len {
+		if line[pos] == `>` {
+			depth++
+			pos++
+			// Skip optional space after >
+			if pos < line.len && line[pos] == ` ` {
+				pos++
+			}
+		} else if line[pos] == ` ` {
+			pos++
+		} else {
+			break
+		}
+	}
+	return depth
+}
+
+// strip_blockquote_prefix removes all > and leading spaces from a line.
+fn strip_blockquote_prefix(line string) string {
+	mut pos := 0
+	for pos < line.len {
+		if line[pos] == `>` {
+			pos++
+			// Skip optional space after >
+			if pos < line.len && line[pos] == ` ` {
+				pos++
+			}
+		} else if line[pos] == ` ` {
+			pos++
+		} else {
+			break
+		}
+	}
+	return if pos < line.len { line[pos..] } else { '' }
+}
+
+// is_table_separator checks if a line is a markdown table separator (e.g., |---|---|).
+fn is_table_separator(line string) bool {
+	trimmed := line.trim_space()
+	if trimmed.len < 3 {
+		return false
+	}
+	// Must contain at least --- or | and -
+	mut has_dash := false
+	mut has_pipe := false
+	for c in trimmed {
+		if c == `-` {
+			has_dash = true
+		} else if c == `|` {
+			has_pipe = true
+		} else if c != `:` && c != ` ` {
+			return false
+		}
+	}
+	return has_dash && has_pipe
 }

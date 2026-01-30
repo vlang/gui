@@ -7,20 +7,24 @@ module gui
 @[minify]
 pub struct MarkdownStyle {
 pub:
-	text          TextStyle = gui_theme.n3
-	h1            TextStyle = gui_theme.b1
-	h2            TextStyle = gui_theme.b2
-	h3            TextStyle = gui_theme.b3
-	h4            TextStyle = gui_theme.b4
-	h5            TextStyle = gui_theme.b5
-	h6            TextStyle = gui_theme.b6
-	bold          TextStyle = gui_theme.b3
-	italic        TextStyle = gui_theme.i3
-	code          TextStyle = gui_theme.m3
-	code_block_bg Color     = gui_theme.color_interior
-	hr_color      Color     = gui_theme.color_border
-	link_color    Color     = gui_theme.color_select
-	block_spacing f32       = 8
+	text              TextStyle = gui_theme.n3
+	h1                TextStyle = gui_theme.b1
+	h2                TextStyle = gui_theme.b2
+	h3                TextStyle = gui_theme.b3
+	h4                TextStyle = gui_theme.b4
+	h5                TextStyle = gui_theme.b5
+	h6                TextStyle = gui_theme.b6
+	bold              TextStyle = gui_theme.b3
+	italic            TextStyle = gui_theme.i3
+	bold_italic       TextStyle = gui_theme.b3 // TODO: needs vglyph bold+italic support
+	code              TextStyle = gui_theme.m5
+	code_block_bg     Color     = gui_theme.color_interior
+	hr_color          Color     = gui_theme.color_border
+	link_color        Color     = gui_theme.color_select
+	blockquote_border Color     = gui_theme.color_border
+	blockquote_bg     Color     = rgba(128, 128, 128, 20)
+	block_spacing     f32       = 8
+	list_indent       f32       = 36 // hanging indent for wrapped list items (~4 spaces + bullet)
 }
 
 // MarkdownCfg configures a Markdown View.
@@ -37,8 +41,8 @@ pub:
 	clip         bool
 	focus_skip   bool
 	disabled     bool
-	color        Color   = color_transparent
-	color_border Color   = color_transparent
+	color        Color = color_transparent
+	color_border Color = color_transparent
 	size_border  f32
 	radius       f32
 	padding      Padding
@@ -54,9 +58,33 @@ pub fn markdown(cfg MarkdownCfg) View {
 
 	// Build content views from blocks
 	mut content := []View{cap: blocks.len}
-	for block in blocks {
+	mut list_items := []View{} // accumulate consecutive list items
+	for i, block in blocks {
+		// Check if we need to flush accumulated list items
+		if !block.is_list && list_items.len > 0 {
+			content << column(
+				sizing:  fill_fit
+				spacing: cfg.style.block_spacing / 2
+				content: list_items.clone()
+			)
+			list_items.clear()
+		}
 		if block.is_code {
 			// Code block in a column with background
+			content << column(
+				color:   cfg.style.code_block_bg
+				padding: gui_theme.padding_medium
+				radius:  gui_theme.radius_small
+				sizing:  fill_fit
+				content: [
+					rtf(
+						rich_text: block.content
+						mode:      .single_line
+					),
+				]
+			)
+		} else if block.is_table {
+			// Table rendered as monospace text block
 			content << column(
 				color:   cfg.style.code_block_bg
 				padding: gui_theme.padding_medium
@@ -76,6 +104,72 @@ pub fn markdown(cfg MarkdownCfg) View {
 				height: 1
 				color:  cfg.style.hr_color
 			)
+		} else if block.is_blockquote {
+			// Blockquote with left border, increased margin for nested quotes
+			left_margin := f32(block.blockquote_depth - 1) * 16
+			content << row(
+				sizing:  fill_fit
+				padding: padding(0, 0, 0, left_margin)
+				content: [
+					rectangle(
+						sizing: fixed_fill
+						width:  3
+						color:  cfg.style.blockquote_border
+					),
+					column(
+						color:   cfg.style.blockquote_bg
+						padding: padding(8, 12, 8, 12)
+						sizing:  fill_fit
+						content: [
+							rtf(
+								rich_text: block.content
+								mode:      cfg.mode
+							),
+						]
+					),
+				]
+			)
+		} else if block.is_image {
+			// Image block
+			content << image(file_name: block.image_src)
+		} else if block.is_list {
+			// List item as two-column row: fixed bullet column + fill content column
+			indent_width := f32(block.list_indent) * 16
+			list_items << row(
+				sizing:  fill_fit
+				padding: padding(0, 0, 0, indent_width)
+				content: [
+					column(
+						sizing: fixed_fit
+						width:  12
+						content: [
+							text(
+								text:       block.list_prefix
+								text_style: cfg.style.text
+							),
+						]
+					),
+					column(
+						sizing: fill_fit
+						content: [
+							rtf(
+								rich_text: block.content
+								mode:      cfg.mode
+							),
+						]
+					),
+				]
+			)
+			// Flush if last block
+			if i == blocks.len - 1 {
+				content << column(
+					sizing:  fill_fit
+					spacing: cfg.style.block_spacing / 2
+					content: list_items.clone()
+				)
+				list_items.clear()
+			}
+			continue
 		} else {
 			content << rtf(
 				id:         cfg.id

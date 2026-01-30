@@ -60,6 +60,7 @@ pub mut:
 	text_sel_beg          u32 // Start index of text selection (runes)
 	text_sel_end          u32 // End index of text selection (runes)
 	text_tab_size         u32 = 4 // Tab width in spaces
+	hanging_indent        f32   // Hanging indent for wrapped lines (lists)
 	last_constraint_width f32   // Optimization: cached width used for last text layout generation
 	last_text_hash        int   // Optimization: hash of text for dirty checking
 	cached_line_height    f32   // Optimization: cached line height after layout
