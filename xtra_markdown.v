@@ -40,6 +40,7 @@ fn flush_runs(mut runs []RichTextRun) ?MarkdownBlock {
 fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	lines := source.split('\n')
 	link_defs := collect_link_definitions(lines)
+	abbr_defs := collect_abbreviations(lines)
 	mut blocks := []MarkdownBlock{cap: lines.len / 3}
 	mut runs := []RichTextRun{cap: 20}
 	mut i := 0
@@ -446,6 +447,21 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	// Flush remaining runs
 	if block := flush_runs(mut runs) {
 		blocks << block
+	}
+
+	// Post-process: apply abbreviation replacements to all blocks (except code)
+	if abbr_defs.len > 0 {
+		for j, block in blocks {
+			if block.is_code || block.is_table {
+				continue
+			}
+			blocks[j] = MarkdownBlock{
+				...block
+				content: RichText{
+					runs: replace_abbreviations(block.content.runs, abbr_defs, style)
+				}
+			}
+		}
 	}
 
 	return blocks
@@ -1194,4 +1210,126 @@ fn collect_definition_content(first_content string, lines []string, start_idx in
 		idx++
 	}
 	return buf.bytestr(), consumed
+}
+
+// collect_abbreviations scans lines for abbreviation definitions *[ABBR]: expansion.
+// Returns case-sensitive abbr -> expansion mapping.
+fn collect_abbreviations(lines []string) map[string]string {
+	mut defs := map[string]string{}
+	for line in lines {
+		trimmed := line.trim_space()
+		// Pattern: *[ABBR]: expansion
+		if !trimmed.starts_with('*[') {
+			continue
+		}
+		bracket_end := trimmed.index(']:') or { continue }
+		if bracket_end < 2 {
+			continue
+		}
+		abbr := trimmed[2..bracket_end]
+		expansion := trimmed[bracket_end + 2..].trim_left(' \t')
+		if abbr.len > 0 && expansion.len > 0 {
+			defs[abbr] = expansion
+		}
+	}
+	return defs
+}
+
+// is_word_boundary checks if char at pos is a word boundary (non-alphanumeric).
+fn is_word_boundary(text string, pos int) bool {
+	if pos < 0 || pos >= text.len {
+		return true
+	}
+	c := text[pos]
+	// alphanumeric = word char
+	if (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`) || (c >= `0` && c <= `9`) || c == `_` {
+		return false
+	}
+	return true
+}
+
+// replace_abbreviations scans runs for abbreviation occurrences and splits/marks them.
+// Uses word boundaries to avoid partial matches.
+fn replace_abbreviations(runs []RichTextRun, abbr_defs map[string]string, md_style MarkdownStyle) []RichTextRun {
+	if abbr_defs.len == 0 {
+		return runs
+	}
+	mut result := []RichTextRun{cap: runs.len * 2}
+	for run in runs {
+		// Skip non-text runs (links, code, etc)
+		if run.link != '' || run.tooltip != '' {
+			result << run
+			continue
+		}
+		result << split_run_for_abbrs(run, abbr_defs, md_style)
+	}
+	return result
+}
+
+// split_run_for_abbrs splits a single run at abbreviation boundaries.
+fn split_run_for_abbrs(run RichTextRun, abbr_defs map[string]string, md_style MarkdownStyle) []RichTextRun {
+	text := run.text
+	if text.len == 0 {
+		return [run]
+	}
+	mut result := []RichTextRun{cap: 4}
+	mut pos := 0
+
+	for pos < text.len {
+		// Find earliest valid abbreviation match (with word boundaries)
+		mut best_start := -1
+		mut best_end := -1
+		mut best_abbr := ''
+		mut best_expansion := ''
+
+		for abbr, expansion in abbr_defs {
+			// Search for all occurrences of this abbreviation starting from pos
+			mut search_pos := pos
+			for search_pos < text.len {
+				start := text.index_after(abbr, search_pos) or { break }
+				end := start + abbr.len
+				// Check word boundaries
+				if is_word_boundary(text, start - 1) && is_word_boundary(text, end) {
+					// Valid match - check if it's the earliest
+					if best_start == -1 || start < best_start {
+						best_start = start
+						best_end = end
+						best_abbr = abbr
+						best_expansion = expansion
+					}
+					break // Found valid match for this abbr
+				}
+				// Not a valid word boundary, search further
+				search_pos = start + 1
+			}
+		}
+
+		if best_start == -1 {
+			// No more matches - add remaining text
+			if pos < text.len {
+				result << RichTextRun{
+					text:  text[pos..]
+					style: run.style
+				}
+			}
+			break
+		}
+
+		// Add text before abbreviation
+		if best_start > pos {
+			result << RichTextRun{
+				text:  text[pos..best_start]
+				style: run.style
+			}
+		}
+
+		// Add abbreviation run with tooltip and bold style
+		result << rich_abbr(best_abbr, best_expansion, run.style)
+		pos = best_end
+	}
+
+	if result.len == 0 {
+		return [run]
+	}
+	return result
 }

@@ -208,10 +208,10 @@ Term 2
 
 ### Abbreviations
 
-The HTML specification is maintained by the W3C.
+The HTML specification is maintained by the W3C. HTMLX is not the same as HTML.
 
-*\[HTML\]: Hyper Text Markup Language* \[W3C\]: World Wide Web
-Consortium
+*[HTML]: Hyper Text Markup Language
+*[W3C]: World Wide Web Consortium
 
 ## Escaping Characters
 

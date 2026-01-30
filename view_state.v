@@ -1,5 +1,6 @@
 module gui
 
+import gg
 import sokol.sapp
 
 // ViewState stores the transient state of the GUI views.
@@ -27,6 +28,8 @@ mut:
 	cursor_on_sticky         bool // keeps the cursor visible during cursor movement
 	input_cursor_on          bool = true // used by cursor blink animation
 	tooltip                  TooltipState // State for the active tooltip
+	rtf_tooltip_text         string       // RTF abbreviation tooltip text
+	rtf_tooltip_rect         gg.Rect      // RTF abbreviation tooltip anchor rect
 }
 
 // MouseLockCfg stores callback functions for mouse event handling in a locked state.

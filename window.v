@@ -220,6 +220,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		.mouse_move {
 			w.set_mouse_cursor_arrow()
 			w.view_state.menu_key_nav = false
+			w.view_state.rtf_tooltip_text = '' // Clear before checking for new tooltip
 			mouse_move_handler(layout, mut e, mut w)
 		}
 		.mouse_up {
@@ -274,6 +275,11 @@ fn (mut window Window) update() {
 	mut view := window.view_generator(window)
 	window.layout = window.compose_layout(mut view)
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
+
+	// Render RTF tooltip if active
+	if window.view_state.rtf_tooltip_text != '' {
+		window.render_rtf_tooltip(clip_rect)
+	}
 	window.unlock()
 	//--------------------------------------------
 

@@ -103,7 +103,7 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 	if !layout.shape.has_rtf_layout() {
 		return
 	}
-	// Check for links by finding which run the mouse is over
+	// Check for links/abbreviations by finding which run the mouse is over
 	for run in layout.shape.vglyph_layout.items {
 		if run.is_object {
 			continue
@@ -117,6 +117,23 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 		if e.mouse_x >= run_rect.x && e.mouse_y >= run_rect.y
 			&& e.mouse_x < (run_rect.x + run_rect.width)
 			&& e.mouse_y < (run_rect.y + run_rect.height) {
+			// Find corresponding RichTextRun via character offset
+			found_run := rtf_find_run_at_index(layout, run.start_index)
+
+			// Check for tooltip (abbreviation)
+			if found_run.tooltip != '' {
+				// Convert to window coordinates (run_rect is relative to layout)
+				abs_rect := gg.Rect{
+					x:      run_rect.x + layout.shape.x
+					y:      run_rect.y + layout.shape.y
+					width:  run_rect.width
+					height: run_rect.height
+				}
+				w.set_rtf_tooltip(found_run.tooltip, abs_rect)
+				e.is_handled = true
+				return
+			}
+
 			// Links have underline style
 			if run.has_underline {
 				w.set_mouse_cursor_pointing_hand()
@@ -125,6 +142,19 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 			}
 		}
 	}
+}
+
+// rtf_find_run_at_index maps a character index to the corresponding RichTextRun.
+fn rtf_find_run_at_index(layout &Layout, start_index int) RichTextRun {
+	mut current_idx := u32(0)
+	for r in layout.shape.rich_text.runs {
+		run_len := u32(r.text.len)
+		if u32(start_index) >= current_idx && u32(start_index) < current_idx + run_len {
+			return r
+		}
+		current_idx += run_len
+	}
+	return RichTextRun{}
 }
 
 fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {

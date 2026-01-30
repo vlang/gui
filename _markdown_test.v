@@ -308,3 +308,24 @@ fn test_markdown_definition_list_multiple_defs() {
 	assert blocks[2].is_def_value == true
 	assert blocks[2].content.runs[0].text == 'Alternative def'
 }
+
+fn test_markdown_abbreviation_basic() {
+	source := '*[HTML]: Hyper Text Markup Language\n\nThe HTML spec.'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	assert blocks.len == 1
+	runs := blocks[0].content.runs
+	// Should have: "The " + abbr("HTML") + " spec."
+	assert runs.len >= 3
+	found_abbr := runs.any(it.tooltip == 'Hyper Text Markup Language' && it.text == 'HTML')
+	assert found_abbr
+}
+
+fn test_markdown_abbreviation_word_boundary() {
+	source := '*[HTML]: Hyper Text Markup Language\n\nHTMLX is not HTML.'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	runs := blocks[0].content.runs
+	// HTML should match, HTMLX should not
+	abbr_runs := runs.filter(it.tooltip != '')
+	assert abbr_runs.len == 1
+	assert abbr_runs[0].text == 'HTML'
+}

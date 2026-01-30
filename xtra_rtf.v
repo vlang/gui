@@ -9,9 +9,10 @@ import vglyph
 @[minify]
 pub struct RichTextRun {
 pub:
-	text  string
-	style TextStyle
-	link  string // URL for hyperlinks (empty if not a link)
+	text    string
+	style   TextStyle
+	link    string // URL for hyperlinks (empty if not a link)
+	tooltip string // tooltip text for abbreviations (empty if not an abbreviation)
 }
 
 // RichText contains runs of styled text for mixed-style paragraphs.
@@ -46,6 +47,18 @@ pub fn rich_br() RichTextRun {
 	return RichTextRun{
 		text:  '\n'
 		style: gui_theme.n3
+	}
+}
+
+// rich_abbr creates an abbreviation run with tooltip and styled text.
+pub fn rich_abbr(text string, expansion string, style TextStyle) RichTextRun {
+	return RichTextRun{
+		text:    text
+		tooltip: expansion
+		style:   TextStyle{
+			...style
+			typeface: .bold
+		}
 	}
 }
 
