@@ -338,6 +338,7 @@ pub:
 	align          TextAlignment = .left
 	underline      bool
 	strikethrough  bool
+	typeface       vglyph.Typeface // .regular, .bold, .italic, .bold_italic
 	// features is a pointer to font features (OpenType features and variation axes).
 	features &vglyph.FontFeatures = unsafe { nil }
 }
@@ -359,6 +360,7 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 			features:      ts.features
 			underline:     ts.underline
 			strikethrough: ts.strikethrough
+			typeface:      ts.typeface
 		}
 		block: vglyph.BlockStyle{
 			align: match ts.align {

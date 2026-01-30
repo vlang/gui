@@ -336,6 +336,10 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		...theme.text_style
 		family: variants.italic
 	}
+	bold_italic := TextStyle{
+		...theme.text_style
+		typeface: .bold_italic
+	}
 	mono := TextStyle{
 		...theme.text_style
 		family: variants.mono
@@ -367,6 +371,13 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		i4: make_style(italic, theme.size_text_small)
 		i5: make_style(italic, theme.size_text_x_small)
 		i6: make_style(italic, theme.size_text_tiny)
+		// Bold+Italic
+		bi1: make_style(bold_italic, theme.size_text_x_large)
+		bi2: make_style(bold_italic, theme.size_text_large)
+		bi3: make_style(bold_italic, theme.size_text_medium)
+		bi4: make_style(bold_italic, theme.size_text_small)
+		bi5: make_style(bold_italic, theme.size_text_x_small)
+		bi6: make_style(bold_italic, theme.size_text_tiny)
 		// Mono
 		m1: make_style(mono, theme.size_text_x_large + 1)
 		m2: make_style(mono, theme.size_text_large + 1)

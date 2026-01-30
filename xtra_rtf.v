@@ -73,5 +73,6 @@ pub fn (ts TextStyle) to_vglyph_style() vglyph.TextStyle {
 		features:      ts.features
 		underline:     ts.underline
 		strikethrough: ts.strikethrough
+		typeface:      ts.typeface
 	}
 }

@@ -64,6 +64,13 @@ pub:
 	i4 TextStyle
 	i5 TextStyle
 	i6 TextStyle
+	// Bold+Italic
+	bi1 TextStyle
+	bi2 TextStyle
+	bi3 TextStyle
+	bi4 TextStyle
+	bi5 TextStyle
+	bi6 TextStyle
 	// Mono
 	m1 TextStyle
 	m2 TextStyle

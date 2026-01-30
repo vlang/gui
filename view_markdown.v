@@ -16,7 +16,7 @@ pub:
 	h6                 TextStyle = gui_theme.b6
 	bold               TextStyle = gui_theme.b3
 	italic             TextStyle = gui_theme.i3
-	bold_italic        TextStyle = gui_theme.b3 // TODO: needs vglyph bold+italic support
+	bold_italic        TextStyle = gui_theme.bi3
 	code               TextStyle = gui_theme.m5
 	code_block_bg      Color     = gui_theme.color_interior
 	hr_color           Color     = gui_theme.color_border
@@ -111,7 +111,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 				radius:      cfg.style.code_block_radius
 				size_border: 0
 				sizing:      fill_fit
-				clip:        block.is_code
+				clip:        true
 				content:     [
 					rtf(
 						rich_text: block.content
