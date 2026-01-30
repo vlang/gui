@@ -202,4 +202,3 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 		}
 	}
 }
-

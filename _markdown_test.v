@@ -459,3 +459,139 @@ fn test_markdown_reference_link_javascript() {
 	links := blocks[0].content.runs.filter(it.link != '')
 	assert links.len == 0
 }
+
+// Self-synchronizing parser tests
+
+fn test_markdown_tilde_fence() {
+	source := '~~~
+fn main() {}
+~~~'
+	rt := markdown_to_rich_text(source, MarkdownStyle{})
+	assert rt.runs.len >= 1
+	found_code := rt.runs.any(it.text.contains('fn main()'))
+	assert found_code
+}
+
+fn test_markdown_tilde_fence_with_lang() {
+	source := '~~~v
+let x = 1
+~~~'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	assert blocks.len >= 1
+	assert blocks.any(it.is_code)
+}
+
+fn test_markdown_mismatched_fence_ignored() {
+	// Opening ``` should not be closed by ~~~
+	source := '```
+code here
+~~~
+still code
+```'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	code_blocks := blocks.filter(it.is_code)
+	assert code_blocks.len == 1
+	// Content should include the ~~~ line since it doesn't close backtick fence
+	content := code_blocks[0].content.runs[0].text
+	assert content.contains('code here')
+	assert content.contains('still code')
+}
+
+fn test_code_block_state_detection() {
+	lines := [
+		'text',
+		'```',
+		'code',
+		'```',
+		'more text',
+	]
+	// At index 0: not in code block
+	state0 := detect_code_block_state(lines, 0)
+	assert state0.in_code_block == false
+
+	// At index 2 (inside code block)
+	state2 := detect_code_block_state(lines, 2)
+	assert state2.in_code_block == true
+	assert state2.fence_char == `\``
+
+	// At index 4 (after code block closed)
+	state4 := detect_code_block_state(lines, 4)
+	assert state4.in_code_block == false
+}
+
+fn test_code_block_state_tilde() {
+	lines := [
+		'~~~',
+		'code',
+	]
+	state := detect_code_block_state(lines, 2)
+	assert state.in_code_block == true
+	assert state.fence_char == `~`
+}
+
+fn test_parse_code_fence() {
+	// Backtick fence
+	if fence := parse_code_fence('```') {
+		assert fence.char == `\``
+		assert fence.count == 3
+	} else {
+		assert false
+	}
+
+	// Tilde fence
+	if fence := parse_code_fence('~~~python') {
+		assert fence.char == `~`
+		assert fence.count == 3
+	} else {
+		assert false
+	}
+
+	// Longer fence
+	if fence := parse_code_fence('`````') {
+		assert fence.char == `\``
+		assert fence.count == 5
+	} else {
+		assert false
+	}
+
+	// Not a fence
+	assert parse_code_fence('hello') == none
+	assert parse_code_fence('``') == none
+}
+
+fn test_bounded_blockquote() {
+	// Blockquote should be bounded (verify no infinite loop)
+	mut lines := []string{cap: 150}
+	for _ in 0 .. 150 {
+		lines << '> line'
+	}
+	source := lines.join('\n')
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	// Should have at least one blockquote block, bounded at 100 lines
+	assert blocks.len >= 1
+	assert blocks[0].is_blockquote == true
+}
+
+fn test_bounded_table() {
+	// Table should be bounded
+	mut lines := []string{cap: 10}
+	lines << '| A | B |'
+	lines << '|---|---|'
+	for _ in 0 .. 5 {
+		lines << '| 1 | 2 |'
+	}
+	source := lines.join('\n')
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].is_table == true
+}
+
+fn test_unclosed_code_block() {
+	// Unclosed code block should still be rendered
+	source := '```
+code without closing'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	code_blocks := blocks.filter(it.is_code)
+	assert code_blocks.len == 1
+	assert code_blocks[0].content.runs[0].text == 'code without closing'
+}

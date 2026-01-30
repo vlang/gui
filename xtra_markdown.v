@@ -2,6 +2,83 @@ module gui
 
 // xtra_markdown.v implements a markdown parser that converts markdown text to RichText.
 
+// Bounds for multi-line constructs (self-synchronization limits)
+const max_blockquote_lines = 100
+const max_table_lines = 500
+const max_list_continuation_lines = 50
+const max_footnote_continuation_lines = 20
+const max_paragraph_continuation_lines = 100
+
+// CodeBlockState tracks whether we're inside a fenced code block.
+struct CodeBlockState {
+	in_code_block bool
+	fence_char    u8
+	fence_count   int
+}
+
+// CodeFence represents a parsed code fence line.
+struct CodeFence {
+	char  u8
+	count int
+}
+
+// parse_code_fence checks if line is a code fence (``` or ~~~).
+// Returns fence info or none.
+fn parse_code_fence(line string) ?CodeFence {
+	trimmed := line.trim_left(' \t')
+	if trimmed.len < 3 {
+		return none
+	}
+	c := trimmed[0]
+	if c != `\`` && c != `~` {
+		return none
+	}
+	mut count := 0
+	for ch in trimmed {
+		if ch == c {
+			count++
+		} else {
+			break
+		}
+	}
+	if count >= 3 {
+		return CodeFence{
+			char:  c
+			count: count
+		}
+	}
+	return none
+}
+
+// detect_code_block_state scans from start to idx to determine code block state.
+fn detect_code_block_state(lines []string, idx int) CodeBlockState {
+	mut in_block := false
+	mut fence_char := u8(0)
+	mut fence_count := 0
+
+	for i := 0; i < idx && i < lines.len; i++ {
+		if fence := parse_code_fence(lines[i]) {
+			if !in_block {
+				// Opening fence
+				in_block = true
+				fence_char = fence.char
+				fence_count = fence.count
+			} else if fence.char == fence_char && fence.count >= fence_count {
+				// Matching closing fence
+				in_block = false
+				fence_char = 0
+				fence_count = 0
+			}
+			// Non-matching fence inside block: ignored
+		}
+	}
+	return CodeBlockState{
+		in_code_block: in_block
+		fence_char:    fence_char
+		fence_count:   fence_count
+	}
+}
+
 // MarkdownBlock represents a parsed block of markdown content.
 struct MarkdownBlock {
 	header_level     int // 0=not header, 1-6 for h1-h6
@@ -46,6 +123,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	mut runs := []RichTextRun{cap: 20}
 	mut i := 0
 	mut in_code_block := false
+	mut code_fence_char := u8(0)
+	mut code_fence_count := 0
 	mut code_block_content := []string{}
 
 	for i < lines.len {
@@ -83,9 +162,9 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			continue
 		}
 
-		// Handle code blocks
-		if line.starts_with('```') {
-			if in_code_block {
+		// Handle code blocks (``` or ~~~)
+		if fence := parse_code_fence(line) {
+			if in_code_block && fence.char == code_fence_char && fence.count >= code_fence_count {
 				// End code block - flush current runs first, then add code block
 				if block := flush_runs(mut runs) {
 					blocks << block
@@ -105,14 +184,18 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				}
 				code_block_content.clear()
 				in_code_block = false
+				code_fence_char = 0
+				code_fence_count = 0
 				// Add leading space for content after code block
 				runs << rich_br()
-			} else {
+			} else if !in_code_block {
 				// Start code block - flush current runs
 				if block := flush_runs(mut runs) {
 					blocks << block
 				}
 				in_code_block = true
+				code_fence_char = fence.char
+				code_fence_count = fence.count
 			}
 			i++
 			continue
@@ -164,9 +247,9 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			// Collect consecutive table lines
+			// Collect consecutive table lines (bounded)
 			mut table_lines := []string{cap: 10}
-			for i < lines.len {
+			for i < lines.len && table_lines.len < max_table_lines {
 				tl := lines[i].trim_space()
 				if tl.starts_with('|') || is_table_separator(tl) || tl.contains('|') {
 					table_lines << lines[i]
@@ -258,10 +341,10 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			// Count initial depth and collect consecutive blockquote lines
+			// Count initial depth and collect consecutive blockquote lines (bounded)
 			mut max_depth := count_blockquote_depth(line)
 			mut quote_lines := []string{cap: 10}
-			for i < lines.len {
+			for i < lines.len && quote_lines.len < max_blockquote_lines {
 				q := lines[i]
 				if q.starts_with('>') {
 					depth := count_blockquote_depth(q)
@@ -1027,8 +1110,8 @@ fn collect_paragraph_content(first_line string, lines []string, start_idx int) (
 	mut consumed := 0
 	mut idx := start_idx
 
-	// Count continuation lines (non-blank, non-block-start)
-	for idx < lines.len {
+	// Count continuation lines (non-blank, non-block-start, bounded)
+	for idx < lines.len && consumed < max_paragraph_continuation_lines {
 		next := lines[idx]
 		next_trimmed := next.trim_space()
 		if next_trimmed == '' || is_block_start(next) {
@@ -1061,8 +1144,8 @@ fn collect_list_item_content(first_content string, lines []string, start_idx int
 	mut consumed := 0
 	mut idx := start_idx
 
-	// Check if any continuation lines exist
-	for idx < lines.len {
+	// Check if any continuation lines exist (bounded)
+	for idx < lines.len && consumed < max_list_continuation_lines {
 		next := lines[idx]
 		if next.len == 0 || (next[0] != ` ` && next[0] != `\t`) {
 			break
@@ -1101,7 +1184,7 @@ fn is_block_start(line string) bool {
 	if trimmed.starts_with('>') {
 		return true
 	}
-	if trimmed.starts_with('```') {
+	if trimmed.starts_with('```') || trimmed.starts_with('~~~') {
 		return true
 	}
 	if trimmed.starts_with('![') {
@@ -1359,9 +1442,10 @@ fn collect_footnotes(lines []string) map[string]string {
 		id := trimmed[2..bracket_end]
 		mut content := trimmed[bracket_end + 2..].trim_left(' \t')
 		i++
-		// Collect continuation lines (indented, may have blank lines between)
+		// Collect continuation lines (indented, may have blank lines between, bounded)
 		mut had_blank := false
-		for i < lines.len {
+		mut cont_count := 0
+		for i < lines.len && cont_count < max_footnote_continuation_lines {
 			next := lines[i]
 			// Blank line - check if next non-blank is indented continuation
 			if next.len == 0 {
@@ -1387,6 +1471,7 @@ fn collect_footnotes(lines []string) map[string]string {
 				content += ' '
 			}
 			content += next.trim_space()
+			cont_count++
 			i++
 		}
 		if id.len > 0 && content.len > 0 {
