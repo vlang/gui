@@ -18,8 +18,9 @@ const id_scroll_doc_view = 1
 @[heap]
 struct DocViewerApp {
 pub mut:
-	doc_file string
-	tab_size string = '4'
+	doc_file      string
+	tab_size      string = '4'
+	markdown_mode bool
 }
 
 fn main() {
@@ -93,6 +94,14 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 		color_border: gui.color_transparent
 	)
 	content << tab_stops(w)
+	content << gui.toggle(
+		label:    'Markdown'
+		select:   app.markdown_mode
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut win gui.Window) {
+			mut a := win.state[DocViewerApp]()
+			a.markdown_mode = !a.markdown_mode
+		}
+	)
 
 	return gui.column(
 		id:      'nav'
@@ -122,20 +131,25 @@ fn tab_stops(w &gui.Window) gui.View {
 
 fn (mut app DocViewerApp) doc_panel(w &gui.Window) gui.View {
 	text := os.read_file(os.join_path('../docs', app.doc_file)) or { 'select a doc' }
+	content := if app.markdown_mode {
+		[w.markdown(source: text, mode: .wrap)]
+	} else {
+		[
+			gui.View(gui.text(
+				id_focus:   1 // enables selectable text
+				text:       text
+				mode:       .multiline
+				tab_size:   app.tab_size.u32()
+				text_style: gui.theme().m4
+			)),
+		]
+	}
 	return gui.column(
 		id:        'doc'
 		id_scroll: id_scroll_doc_view
 		min_width: 250
 		color:     gui.theme().color_panel
 		sizing:    gui.fill_fill
-		content:   [
-			gui.text(
-				id_focus:   1 // enables selectable text
-				text:       text
-				mode:       .multiline
-				tab_size:   app.tab_size.u32()
-				text_style: gui.theme().m4
-			),
-		]
+		content:   content
 	)
 }
