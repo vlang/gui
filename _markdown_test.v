@@ -228,7 +228,7 @@ fn test_markdown_footnote_basic() {
 	// Should have footnote marker with tooltip
 	fn_runs := rt.runs.filter(it.tooltip != '')
 	assert fn_runs.len == 1
-	assert fn_runs[0].text == '[1]'
+	assert fn_runs[0].text == '\u2009[1]' // thin space prefix
 	assert fn_runs[0].tooltip == 'This is the footnote content.'
 }
 
@@ -237,7 +237,7 @@ fn test_markdown_footnote_named() {
 	rt := markdown_to_rich_text(source, MarkdownStyle{})
 	fn_runs := rt.runs.filter(it.tooltip != '')
 	assert fn_runs.len == 1
-	assert fn_runs[0].text == '[note]'
+	assert fn_runs[0].text == '\u2009[note]' // thin space prefix
 	assert fn_runs[0].tooltip == 'Named footnote.'
 }
 
@@ -364,4 +364,18 @@ fn test_markdown_abbreviation_word_boundary() {
 	abbr_runs := runs.filter(it.tooltip != '')
 	assert abbr_runs.len == 1
 	assert abbr_runs[0].text == 'HTML'
+}
+
+fn test_markdown_setext_h1() {
+	t := theme()
+	rt := markdown_to_rich_text('Hello\n=====', MarkdownStyle{})
+	text_run := rt.runs.filter(it.text == 'Hello')[0] or { panic('no Hello run') }
+	assert text_run.style.size == t.b1.size
+}
+
+fn test_markdown_setext_h2() {
+	t := theme()
+	rt := markdown_to_rich_text('World\n-----', MarkdownStyle{})
+	text_run := rt.runs.filter(it.text == 'World')[0] or { panic('no World run') }
+	assert text_run.style.size == t.b2.size
 }

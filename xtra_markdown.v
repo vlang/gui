@@ -236,6 +236,21 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 		}
 
+		// Setext-style headers (check before ATX and blockquote)
+		if trimmed.len > 0 && i + 1 < lines.len && !is_block_start(trimmed) {
+			level := is_setext_underline(lines[i + 1])
+			if level > 0 {
+				if block := flush_runs(mut runs) {
+					blocks << block
+				}
+				header_style := if level == 1 { style.h1 } else { style.h2 }
+				blocks << parse_header_block(trimmed, level, header_style, style, link_defs,
+					footnote_defs)
+				i += 2
+				continue
+			}
+		}
+
 		// Blockquote
 		if line.starts_with('>') {
 			// Flush current runs
@@ -901,6 +916,24 @@ fn find_triple_closing(text string, start int, ch u8) int {
 		}
 	}
 	return -1
+}
+
+// is_setext_underline checks if a line is a setext-style header underline.
+// Returns 1 for h1 (===), 2 for h2 (---), 0 for neither.
+fn is_setext_underline(line string) int {
+	trimmed := line.trim_space()
+	if trimmed.len == 0 {
+		return 0
+	}
+	// Check for all '=' (h1)
+	if trimmed.replace('=', '') == '' {
+		return 1
+	}
+	// Check for all '-' (h2)
+	if trimmed.replace('-', '') == '' {
+		return 2
+	}
+	return 0
 }
 
 // is_horizontal_rule checks if a line is a horizontal rule (3+ of -, *, or _).

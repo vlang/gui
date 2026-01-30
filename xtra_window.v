@@ -311,7 +311,7 @@ fn (mut window Window) render_rtf_tooltip(clip DrawClip) {
 		padding: padding_none
 		content: [
 			column(
-				padding: padding_small
+				padding:   padding_small
 				max_width: 200
 				content:   [View(text(TextCfg{ text: tooltip_text, mode: .wrap }))]
 			),
