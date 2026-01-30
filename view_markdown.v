@@ -73,7 +73,17 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 	// Build content views from blocks
 	mut content := []View{cap: blocks.len}
 	mut list_items := []View{cap: 10} // accumulate consecutive list items
+	mut prev_was_blockquote := false
 	for i, block in blocks {
+		// Extra space after blockquote group
+		if prev_was_blockquote && !block.is_blockquote {
+			content << rectangle(
+				sizing:      fill_fixed
+				height:      cfg.style.block_spacing
+				size_border: 0
+			)
+		}
+		prev_was_blockquote = block.is_blockquote
 		// Check if we need to flush accumulated list items
 		if !block.is_list && list_items.len > 0 {
 			content << column(
@@ -82,6 +92,12 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 				size_border: 0
 				spacing:     cfg.style.block_spacing / 2
 				content:     list_items.clone()
+			)
+			// Extra space after outer list
+			content << rectangle(
+				sizing:      fill_fixed
+				height:      cfg.style.block_spacing
+				size_border: 0
 			)
 			list_items.clear()
 		}

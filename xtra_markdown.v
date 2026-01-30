@@ -101,10 +101,15 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			continue
 		}
 
-		// Blank line = paragraph break
+		// Blank line = paragraph break (2 newlines total)
 		if trimmed == '' {
 			if runs.len > 0 {
+				// Add breaks to reach 2 total
+				last_is_br := runs.last().text == '\n'
 				runs << rich_br()
+				if !last_is_br {
+					runs << rich_br()
+				}
 			}
 			i++
 			continue
