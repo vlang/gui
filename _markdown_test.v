@@ -229,9 +229,36 @@ fn test_markdown_footnote_defense() {
 	assert found
 }
 
-fn test_markdown_reference_link_defense() {
-	rt := markdown_to_rich_text('See [link][ref] here', MarkdownStyle{})
-	// Should not crash, rendered as literal
+fn test_markdown_reference_link() {
+	blocks := markdown_to_blocks('[link][ref]\n\n[ref]: https://example.com', MarkdownStyle{})
+	assert blocks.len == 1
+	links := blocks[0].content.runs.filter(it.link != '')
+	assert links.len == 1
+	assert links[0].text == 'link'
+	assert links[0].link == 'https://example.com'
+}
+
+fn test_markdown_implicit_reference_link() {
+	blocks := markdown_to_blocks('[Example][]\n\n[Example]: https://example.com', MarkdownStyle{})
+	assert blocks.len == 1
+	links := blocks[0].content.runs.filter(it.link != '')
+	assert links.len == 1
+	assert links[0].text == 'Example'
+	assert links[0].link == 'https://example.com'
+}
+
+fn test_markdown_shortcut_reference_link() {
+	blocks := markdown_to_blocks('[Example]\n\n[Example]: https://example.com', MarkdownStyle{})
+	assert blocks.len == 1
+	links := blocks[0].content.runs.filter(it.link != '')
+	assert links.len == 1
+	assert links[0].text == 'Example'
+	assert links[0].link == 'https://example.com'
+}
+
+fn test_markdown_reference_link_undefined() {
+	rt := markdown_to_rich_text('See [link][undefined] here', MarkdownStyle{})
+	// No definition, rendered as literal
 	found := rt.runs.any(it.text.contains('['))
 	assert found
 }
@@ -252,4 +279,32 @@ fn test_markdown_ordered_list_double_digit() {
 	assert blocks[0].is_list == true
 	assert blocks[0].list_prefix == '10. '
 	assert blocks[0].content.runs[0].text == 'tenth item'
+}
+
+fn test_markdown_definition_list_simple() {
+	blocks := markdown_to_blocks('Term\n: Definition', MarkdownStyle{})
+	assert blocks.len == 2
+	assert blocks[0].is_def_term == true
+	assert blocks[0].content.runs[0].text == 'Term'
+	assert blocks[1].is_def_value == true
+	assert blocks[1].content.runs[0].text == 'Definition'
+}
+
+fn test_markdown_definition_list_multiline() {
+	blocks := markdown_to_blocks('Term\n: First line\n  continues here', MarkdownStyle{})
+	assert blocks.len == 2
+	assert blocks[0].is_def_term == true
+	assert blocks[1].is_def_value == true
+	found := blocks[1].content.runs.any(it.text.contains('First line continues here'))
+	assert found
+}
+
+fn test_markdown_definition_list_multiple_defs() {
+	blocks := markdown_to_blocks('Term\n: Primary def\n: Alternative def', MarkdownStyle{})
+	assert blocks.len == 3
+	assert blocks[0].is_def_term == true
+	assert blocks[1].is_def_value == true
+	assert blocks[1].content.runs[0].text == 'Primary def'
+	assert blocks[2].is_def_value == true
+	assert blocks[2].content.runs[0].text == 'Alternative def'
 }

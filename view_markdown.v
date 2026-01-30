@@ -166,6 +166,16 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 					color:  cfg.style.hr_color
 				)
 			}
+		} else if block.is_def_term {
+			// Definition term - rendered bold
+			content << rtf(rich_text: block.content, mode: cfg.mode)
+		} else if block.is_def_value {
+			// Definition value - indented
+			content << row(
+				sizing:  fill_fit
+				padding: padding(0, 0, 0, cfg.style.nest_indent)
+				content: [rtf(rich_text: block.content, mode: cfg.mode)]
+			)
 		} else if block.is_list {
 			// List item as two-column row: fixed bullet column + fill content column
 			indent_width := if block.list_indent > 0 {

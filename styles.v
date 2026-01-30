@@ -333,12 +333,12 @@ pub:
 	color          Color
 	bg_color       Color = color_transparent
 	size           f32   = size_text_medium
+	typeface       vglyph.Typeface // .regular, .bold, .italic, .bold_italic
 	line_spacing   f32
 	letter_spacing f32
 	align          TextAlignment = .left
 	underline      bool
 	strikethrough  bool
-	typeface       vglyph.Typeface // .regular, .bold, .italic, .bold_italic
 	// features is a pointer to font features (OpenType features and variation axes).
 	features &vglyph.FontFeatures = unsafe { nil }
 }

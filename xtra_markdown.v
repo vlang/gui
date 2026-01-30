@@ -11,6 +11,8 @@ struct MarkdownBlock {
 	is_image         bool
 	is_table         bool
 	is_list          bool
+	is_def_term      bool // definition list term
+	is_def_value     bool // definition list value
 	blockquote_depth int
 	list_prefix      string // "• ", "1. ", "☐ ", "☑ "
 	list_indent      int    // nesting level (0, 1, 2...)
@@ -37,6 +39,7 @@ fn flush_runs(mut runs []RichTextRun) ?MarkdownBlock {
 // markdown_to_blocks parses markdown source and returns styled blocks.
 fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	lines := source.split('\n')
+	link_defs := collect_link_definitions(lines)
 	mut blocks := []MarkdownBlock{cap: lines.len / 3}
 	mut runs := []RichTextRun{cap: 20}
 	mut i := 0
@@ -46,6 +49,12 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	for i < lines.len {
 		line := lines[i]
 		trimmed := line.trim_space()
+
+		// Skip link definition lines (metadata)
+		if !in_code_block && is_link_definition(line) {
+			i++
+			continue
+		}
 
 		// Handle code blocks
 		if line.starts_with('```') {
@@ -158,12 +167,24 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			continue
 		}
 
-		// Definition list: line starting with : (treat as paragraph for now)
-		if trimmed.len > 1 && trimmed[0] == `:` && trimmed[1] == ` ` {
-			// Treat as regular paragraph
-			parse_inline(line, style.text, style, mut runs)
-			runs << rich_br()
-			i++
+		// Definition list value: line starting with ": "
+		if is_definition_line(line) {
+			// Flush current runs
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			// Strip ": " prefix and collect continuation lines
+			first_content := trimmed[2..].trim_left(' \t')
+			content, consumed := collect_definition_content(first_content, lines, i + 1)
+			mut def_runs := []RichTextRun{cap: 10}
+			parse_inline(content, style.text, style, mut def_runs, link_defs)
+			blocks << MarkdownBlock{
+				is_def_value: true
+				content:      RichText{
+					runs: def_runs
+				}
+			}
+			i += 1 + consumed
 			continue
 		}
 
@@ -218,7 +239,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				if ql.trim_space() == '' {
 					quote_runs << rich_br()
 				} else {
-					parse_inline(ql, style.text, style, mut quote_runs)
+					parse_inline(ql, style.text, style, mut quote_runs, link_defs)
 					if qi < quote_lines.len - 1 {
 						next_ql := quote_lines[qi + 1]
 						if next_ql.trim_space() == '' {
@@ -249,7 +270,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			blocks << parse_header_block(line[6..].trim_left(' '), 6, style.h6, style)
+			blocks << parse_header_block(line[6..].trim_left(' '), 6, style.h6, style,
+				link_defs)
 			i++
 			continue
 		}
@@ -257,7 +279,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			blocks << parse_header_block(line[5..].trim_left(' '), 5, style.h5, style)
+			blocks << parse_header_block(line[5..].trim_left(' '), 5, style.h5, style,
+				link_defs)
 			i++
 			continue
 		}
@@ -265,7 +288,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			blocks << parse_header_block(line[4..].trim_left(' '), 4, style.h4, style)
+			blocks << parse_header_block(line[4..].trim_left(' '), 4, style.h4, style,
+				link_defs)
 			i++
 			continue
 		}
@@ -273,7 +297,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			blocks << parse_header_block(line[3..].trim_left(' '), 3, style.h3, style)
+			blocks << parse_header_block(line[3..].trim_left(' '), 3, style.h3, style,
+				link_defs)
 			i++
 			continue
 		}
@@ -281,7 +306,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			blocks << parse_header_block(line[2..].trim_left(' '), 2, style.h2, style)
+			blocks << parse_header_block(line[2..].trim_left(' '), 2, style.h2, style,
+				link_defs)
 			i++
 			continue
 		}
@@ -289,7 +315,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			blocks << parse_header_block(line[1..].trim_left(' '), 1, style.h1, style)
+			blocks << parse_header_block(line[1..].trim_left(' '), 1, style.h1, style,
+				link_defs)
 			i++
 			continue
 		}
@@ -305,7 +332,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 			content, consumed := collect_list_item_content(left_trimmed[6..], lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs)
+			parse_inline(content, style.text, style, mut item_runs, link_defs)
 			blocks << MarkdownBlock{
 				is_list:     true
 				list_prefix: task_prefix
@@ -327,7 +354,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 			content, consumed := collect_list_item_content(left_trimmed[2..], lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs)
+			parse_inline(content, style.text, style, mut item_runs, link_defs)
 			blocks << MarkdownBlock{
 				is_list:     true
 				list_prefix: '• '
@@ -351,7 +378,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			rest := left_trimmed[dot_pos + 1..].trim_left(' ')
 			content, consumed := collect_list_item_content(rest, lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs)
+			parse_inline(content, style.text, style, mut item_runs, link_defs)
 			blocks << MarkdownBlock{
 				is_list:     true
 				list_prefix: '${num}. '
@@ -364,9 +391,28 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			continue
 		}
 
+		// Check if this is a definition term (next non-blank line starts with ": ")
+		if peek_for_definition(lines, i + 1) {
+			// Flush current runs
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			// Create def_term block with bold styling
+			mut term_runs := []RichTextRun{cap: 10}
+			parse_inline(trimmed, style.bold, style, mut term_runs, link_defs)
+			blocks << MarkdownBlock{
+				is_def_term: true
+				content:     RichText{
+					runs: term_runs
+				}
+			}
+			i++
+			continue
+		}
+
 		// Regular paragraph - collect continuation lines first
 		content, consumed := collect_paragraph_content(line, lines, i + 1)
-		parse_inline(content, style.text, style, mut runs)
+		parse_inline(content, style.text, style, mut runs, link_defs)
 		i += 1 + consumed
 
 		// Add line break if block element follows
@@ -418,9 +464,9 @@ pub fn markdown_to_rich_text(source string, style MarkdownStyle) RichText {
 }
 
 // parse_header_block creates a header block with the given level.
-fn parse_header_block(text string, level int, header_style TextStyle, md_style MarkdownStyle) MarkdownBlock {
+fn parse_header_block(text string, level int, header_style TextStyle, md_style MarkdownStyle, link_defs map[string]string) MarkdownBlock {
 	mut header_runs := []RichTextRun{cap: 10}
-	parse_inline(text, header_style, md_style, mut header_runs)
+	parse_inline(text, header_style, md_style, mut header_runs, link_defs)
 	return MarkdownBlock{
 		header_level: level
 		content:      RichText{
@@ -430,7 +476,7 @@ fn parse_header_block(text string, level int, header_style TextStyle, md_style M
 }
 
 // parse_inline parses inline markdown (bold, italic, code, links).
-fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun) {
+fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun, link_defs map[string]string) {
 	mut pos := 0
 	mut current := []u8{cap: text.len}
 
@@ -658,7 +704,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			}
 		}
 
-		// Check for links [text](url)
+		// Check for links [text](url) or reference links [text][ref], [text][], [text]
 		if text[pos] == `[` {
 			// Footnote defense: [^...] treat as literal
 			if pos + 1 < text.len && text[pos + 1] == `^` {
@@ -668,15 +714,66 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			}
 			bracket_end := find_closing(text, pos + 1, `]`)
 			if bracket_end > pos + 1 {
-				// Reference link defense: [text][ref] - no ( after ]
-				if bracket_end + 1 >= text.len || text[bracket_end + 1] != `(` {
-					// Not a standard link, treat as literal text
-					current << text[pos]
-					pos++
-					continue
+				link_text := text[pos + 1..bracket_end]
+				// Check for standard link [text](url)
+				if bracket_end + 1 < text.len && text[bracket_end + 1] == `(` {
+					paren_end := find_closing(text, bracket_end + 2, `)`)
+					if paren_end > bracket_end + 2 {
+						if current.len > 0 {
+							runs << RichTextRun{
+								text:  current.bytestr()
+								style: base_style
+							}
+							current.clear()
+						}
+						link_url := text[bracket_end + 2..paren_end]
+						runs << RichTextRun{
+							text:  link_text
+							link:  link_url
+							style: TextStyle{
+								...base_style
+								color:     md_style.link_color
+								underline: true
+							}
+						}
+						pos = paren_end + 1
+						continue
+					}
 				}
-				paren_end := find_closing(text, bracket_end + 2, `)`)
-				if paren_end > bracket_end + 2 {
+				// Check for reference link [text][ref] or [text][]
+				if bracket_end + 1 < text.len && text[bracket_end + 1] == `[` {
+					ref_end := find_closing(text, bracket_end + 2, `]`)
+					if ref_end >= bracket_end + 2 {
+						ref_id := if ref_end == bracket_end + 2 {
+							link_text.to_lower() // implicit [text][]
+						} else {
+							text[bracket_end + 2..ref_end].to_lower()
+						}
+						if url := link_defs[ref_id] {
+							if current.len > 0 {
+								runs << RichTextRun{
+									text:  current.bytestr()
+									style: base_style
+								}
+								current.clear()
+							}
+							runs << RichTextRun{
+								text:  link_text
+								link:  url
+								style: TextStyle{
+									...base_style
+									color:     md_style.link_color
+									underline: true
+								}
+							}
+							pos = ref_end + 1
+							continue
+						}
+					}
+				}
+				// Check for shortcut reference link [text]
+				shortcut_id := link_text.to_lower()
+				if url := link_defs[shortcut_id] {
 					if current.len > 0 {
 						runs << RichTextRun{
 							text:  current.bytestr()
@@ -684,18 +781,16 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 						}
 						current.clear()
 					}
-					link_text := text[pos + 1..bracket_end]
-					link_url := text[bracket_end + 2..paren_end]
 					runs << RichTextRun{
 						text:  link_text
-						link:  link_url
+						link:  url
 						style: TextStyle{
 							...base_style
 							color:     md_style.link_color
 							underline: true
 						}
 					}
-					pos = paren_end + 1
+					pos = bracket_end + 1
 					continue
 				}
 			}
@@ -915,6 +1010,9 @@ fn is_block_start(line string) bool {
 	if trimmed.starts_with('|') || is_table_separator(trimmed) {
 		return true
 	}
+	if is_definition_line(trimmed) {
+		return true
+	}
 	return false
 }
 
@@ -989,4 +1087,111 @@ fn get_task_prefix(trimmed string) ?string {
 		return '☑ '
 	}
 	return none
+}
+
+// collect_link_definitions scans lines for reference link definitions [id]: url "title".
+// Returns lowercase id -> url mapping.
+fn collect_link_definitions(lines []string) map[string]string {
+	mut defs := map[string]string{}
+	for line in lines {
+		trimmed := line.trim_space()
+		// Pattern: [id]: url or [id]: url "title"
+		if !trimmed.starts_with('[') {
+			continue
+		}
+		bracket_end := trimmed.index(']:') or { continue }
+		if bracket_end < 1 {
+			continue
+		}
+		id := trimmed[1..bracket_end].to_lower()
+		rest := trimmed[bracket_end + 2..].trim_left(' \t')
+		if rest.len == 0 {
+			continue
+		}
+		// Extract URL (up to space or end)
+		mut url_end := rest.len
+		for j, c in rest {
+			if c == ` ` || c == `\t` {
+				url_end = j
+				break
+			}
+		}
+		url := rest[..url_end]
+		if url.len > 0 {
+			defs[id] = url
+		}
+	}
+	return defs
+}
+
+// is_link_definition checks if a line is a reference link definition.
+fn is_link_definition(line string) bool {
+	trimmed := line.trim_space()
+	if !trimmed.starts_with('[') {
+		return false
+	}
+	bracket_end := trimmed.index(']:') or { return false }
+	return bracket_end >= 1
+}
+
+// is_definition_line checks if a line is a definition list value (starts with ": ").
+fn is_definition_line(line string) bool {
+	trimmed := line.trim_space()
+	return trimmed.len > 1 && trimmed[0] == `:` && trimmed[1] == ` `
+}
+
+// peek_for_definition checks if the next non-blank line is a definition.
+fn peek_for_definition(lines []string, start_idx int) bool {
+	for i := start_idx; i < lines.len; i++ {
+		trimmed := lines[i].trim_space()
+		if trimmed == '' {
+			return false
+		}
+		if is_definition_line(lines[i]) {
+			return true
+		}
+		return false
+	}
+	return false
+}
+
+// collect_definition_content collects continuation lines for a definition value.
+// Continuation lines must be indented. Returns content and lines consumed.
+fn collect_definition_content(first_content string, lines []string, start_idx int) (string, int) {
+	mut consumed := 0
+	mut idx := start_idx
+
+	// Check if any continuation lines exist (must be indented)
+	for idx < lines.len {
+		next := lines[idx]
+		if next.len == 0 {
+			break
+		}
+		// Continuation must start with whitespace but not be a new definition
+		if next[0] != ` ` && next[0] != `\t` {
+			break
+		}
+		next_trimmed := next.trim_space()
+		if next_trimmed == '' || is_block_start(next) || is_definition_line(next) {
+			break
+		}
+		consumed++
+		idx++
+	}
+
+	// Fast path: no continuation lines
+	if consumed == 0 {
+		return first_content, 0
+	}
+
+	// Build combined content with buffer
+	mut buf := []u8{cap: first_content.len + consumed * 40}
+	buf << first_content.bytes()
+	idx = start_idx
+	for _ in 0 .. consumed {
+		buf << ` `
+		buf << lines[idx].trim_space().bytes()
+		idx++
+	}
+	return buf.bytestr(), consumed
 }
