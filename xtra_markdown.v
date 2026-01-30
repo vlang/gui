@@ -400,7 +400,7 @@ pub fn markdown_to_rich_text(source string, style MarkdownStyle) RichText {
 
 // parse_header adds header text with the given style.
 fn parse_header(text string, header_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun) {
-	if runs.len > 0 {
+	if runs.len > 0 && runs.last().text != '\n' {
 		runs << rich_br()
 	}
 	parse_inline(text, header_style, md_style, mut runs)
