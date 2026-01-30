@@ -87,7 +87,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// Horizontal rule
-		if line.trim_space() in ['---', '***', '___'] && line.trim_space().len >= 3 {
+		if line.trim_space() in ['---', '***', '___'] {
 			// Flush current runs first
 			if block := flush_runs(mut runs) {
 				blocks << block
@@ -170,7 +170,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 					// Flush current runs
 					if block := flush_runs(mut runs) {
 						blocks << block
-						}
+					}
 					blocks << MarkdownBlock{
 						is_image:  true
 						image_alt: line[2..bracket_end]
@@ -274,9 +274,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		trimmed := line.trim_left(' \t')
 		indent := get_indent_level(line)
 
-		// Task list unchecked
-		if trimmed.starts_with('- [ ] ') || trimmed.starts_with('* [ ] ') {
-			// Flush any pending runs before list item
+		// Task list (checked or unchecked)
+		if task_prefix := get_task_prefix(trimmed) {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
@@ -285,28 +284,11 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			parse_inline(content, style.text, style, mut item_runs)
 			blocks << MarkdownBlock{
 				is_list:     true
-				list_prefix: '☐ '
+				list_prefix: task_prefix
 				list_indent: indent
-				content:     RichText{runs: item_runs}
-			}
-			i += 1 + consumed
-			continue
-		}
-		// Task list checked
-		if trimmed.starts_with('- [x] ') || trimmed.starts_with('* [x] ')
-			|| trimmed.starts_with('- [X] ') || trimmed.starts_with('* [X] ') {
-			// Flush any pending runs before list item
-			if block := flush_runs(mut runs) {
-				blocks << block
-			}
-			content, consumed := collect_list_item_content(trimmed[6..], lines, i + 1)
-			mut item_runs := []RichTextRun{}
-			parse_inline(content, style.text, style, mut item_runs)
-			blocks << MarkdownBlock{
-				is_list:     true
-				list_prefix: '☑ '
-				list_indent: indent
-				content:     RichText{runs: item_runs}
+				content:     RichText{
+					runs: item_runs
+				}
 			}
 			i += 1 + consumed
 			continue
@@ -325,7 +307,9 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				is_list:     true
 				list_prefix: '• '
 				list_indent: indent
-				content:     RichText{runs: item_runs}
+				content:     RichText{
+					runs: item_runs
+				}
 			}
 			i += 1 + consumed
 			continue
@@ -347,7 +331,9 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				is_list:     true
 				list_prefix: '${num}. '
 				list_indent: indent
-				content:     RichText{runs: item_runs}
+				content:     RichText{
+					runs: item_runs
+				}
 			}
 			i += 1 + consumed
 			continue
@@ -632,8 +618,11 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 						}
 						current_text = ''
 					}
-					link_url := if inner.contains('@') && !inner.contains('://')
-						{ 'mailto:${inner}' } else { inner }
+					link_url := if inner.contains('@') && !inner.contains('://') {
+						'mailto:${inner}'
+					} else {
+						inner
+					}
 					runs << RichTextRun{
 						text:  inner
 						link:  link_url
@@ -913,4 +902,16 @@ fn is_table_separator(line string) bool {
 		}
 	}
 	return has_dash && has_pipe
+}
+
+// get_task_prefix returns task list prefix if line is a task item, none otherwise.
+fn get_task_prefix(trimmed string) ?string {
+	if trimmed.starts_with('- [ ] ') || trimmed.starts_with('* [ ] ') {
+		return '☐ '
+	}
+	if trimmed.starts_with('- [x] ') || trimmed.starts_with('* [x] ')
+		|| trimmed.starts_with('- [X] ') || trimmed.starts_with('* [X] ') {
+		return '☑ '
+	}
+	return none
 }

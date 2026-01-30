@@ -24,7 +24,8 @@ pub:
 	blockquote_border Color     = gui_theme.color_border
 	blockquote_bg     Color     = rgba(128, 128, 128, 20)
 	block_spacing     f32       = 8
-	list_indent       f32       = 36 // hanging indent for wrapped list items (~4 spaces + bullet)
+	nest_indent       f32       = 16 // indent per nesting level for lists/blockquotes
+	prefix_char_width f32       = 8  // approx char width for list prefix column
 }
 
 // MarkdownCfg configures a Markdown View.
@@ -70,28 +71,14 @@ pub fn markdown(cfg MarkdownCfg) View {
 			)
 			list_items.clear()
 		}
-		if block.is_code {
-			// Code block in a column with background
+		if block.is_code || block.is_table {
+			// Code block / table in a column with background
 			content << column(
 				color:   cfg.style.code_block_bg
 				padding: gui_theme.padding_medium
 				radius:  gui_theme.radius_small
 				sizing:  fill_fit
-				clip:    true
-				content: [
-					rtf(
-						rich_text: block.content
-						mode:      .single_line
-					),
-				]
-			)
-		} else if block.is_table {
-			// Table rendered as monospace text block
-			content << column(
-				color:   cfg.style.code_block_bg
-				padding: gui_theme.padding_medium
-				radius:  gui_theme.radius_small
-				sizing:  fill_fit
+				clip:    block.is_code
 				content: [
 					rtf(
 						rich_text: block.content
@@ -108,7 +95,7 @@ pub fn markdown(cfg MarkdownCfg) View {
 			)
 		} else if block.is_blockquote {
 			// Blockquote with left border, increased margin for nested quotes
-			left_margin := f32(block.blockquote_depth - 1) * 16
+			left_margin := f32(block.blockquote_depth - 1) * cfg.style.nest_indent
 			content << row(
 				sizing:  fill_fit
 				padding: padding(0, 0, 0, left_margin)
@@ -136,14 +123,21 @@ pub fn markdown(cfg MarkdownCfg) View {
 			content << image(file_name: block.image_src)
 		} else if block.is_list {
 			// List item as two-column row: fixed bullet column + fill content column
-			indent_width := if block.list_indent > 0 { f32(block.list_indent - 1) * 16 } else { 0 }
+			indent_width := if block.list_indent > 0 {
+				f32(block.list_indent - 1) * cfg.style.nest_indent
+			} else {
+				0
+			}
+			prefix_width := f32(block.list_prefix.len) * cfg.style.prefix_char_width
 			list_items << row(
 				sizing:  fill_fit
+				spacing: 0
 				padding: padding(0, 0, 0, indent_width)
 				content: [
 					column(
-						sizing: fixed_fit
-						width:  12
+						sizing:  fixed_fit
+						width:   prefix_width
+						padding: padding_none
 						content: [
 							text(
 								text:       block.list_prefix
@@ -152,7 +146,8 @@ pub fn markdown(cfg MarkdownCfg) View {
 						]
 					),
 					column(
-						sizing: fill_fit
+						sizing:  fill_fit
+						padding: padding_none
 						content: [
 							rtf(
 								rich_text: block.content

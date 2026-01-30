@@ -236,3 +236,11 @@ fn test_markdown_list_continuation() {
 	found := blocks[0].content.runs.any(it.text.contains('item one continues'))
 	assert found
 }
+
+fn test_markdown_ordered_list_double_digit() {
+	blocks := markdown_to_blocks('10. tenth item', MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].is_list == true
+	assert blocks[0].list_prefix == '10. '
+	assert blocks[0].content.runs[0].text == 'tenth item'
+}
