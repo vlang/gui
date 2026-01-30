@@ -15,7 +15,10 @@
       "Bash(curl:*)",
       "Bash(pkill:*)",
       "Bash(xxd:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(for f in examples/*.v)",
+      "Bash(do echo -n \"$f: \")",
+      "Bash(done)"
     ]
   }
 }

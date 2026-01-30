@@ -9,9 +9,10 @@ import vglyph
 @[minify]
 pub struct RichTextRun {
 pub:
-	text  string
-	style TextStyle
-	link  string // URL for hyperlinks (empty if not a link)
+	text    string
+	style   TextStyle
+	link    string // URL for hyperlinks (empty if not a link)
+	tooltip string // tooltip text for abbreviations (empty if not an abbreviation)
 }
 
 // RichText contains runs of styled text for mixed-style paragraphs.
@@ -49,6 +50,30 @@ pub fn rich_br() RichTextRun {
 	}
 }
 
+// rich_abbr creates an abbreviation run with tooltip and styled text.
+pub fn rich_abbr(text string, expansion string, style TextStyle) RichTextRun {
+	return RichTextRun{
+		text:    text
+		tooltip: expansion
+		style:   TextStyle{
+			...style
+			typeface: .bold
+		}
+	}
+}
+
+// rich_footnote creates a footnote marker with tooltip showing definition.
+pub fn rich_footnote(id string, content string, base_style TextStyle, md_style MarkdownStyle) RichTextRun {
+	return RichTextRun{
+		text:    '\xE2\x80\x89[${id}]' // thin space
+		tooltip: content
+		style:   TextStyle{
+			...base_style
+			size: base_style.size * 0.7
+		}
+	}
+}
+
 // to_vglyph_rich_text converts a RichText to vglyph.RichText for layout.
 fn (rt RichText) to_vglyph_rich_text() vglyph.RichText {
 	mut vg_runs := []vglyph.StyleRun{cap: rt.runs.len}
@@ -68,9 +93,11 @@ pub fn (ts TextStyle) to_vglyph_style() vglyph.TextStyle {
 	return vglyph.TextStyle{
 		font_name:     ts.family
 		color:         ts.color.to_gx_color()
+		bg_color:      ts.bg_color.to_gx_color()
 		size:          ts.size
 		features:      ts.features
 		underline:     ts.underline
 		strikethrough: ts.strikethrough
+		typeface:      ts.typeface
 	}
 }

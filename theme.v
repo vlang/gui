@@ -336,6 +336,10 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		...theme.text_style
 		family: variants.italic
 	}
+	bold_italic := TextStyle{
+		...theme.text_style
+		typeface: .bold_italic
+	}
 	mono := TextStyle{
 		...theme.text_style
 		family: variants.mono
@@ -367,6 +371,13 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		i4: make_style(italic, theme.size_text_small)
 		i5: make_style(italic, theme.size_text_x_small)
 		i6: make_style(italic, theme.size_text_tiny)
+		// Bold+Italic
+		bi1: make_style(bold_italic, theme.size_text_x_large)
+		bi2: make_style(bold_italic, theme.size_text_large)
+		bi3: make_style(bold_italic, theme.size_text_medium)
+		bi4: make_style(bold_italic, theme.size_text_small)
+		bi5: make_style(bold_italic, theme.size_text_x_small)
+		bi6: make_style(bold_italic, theme.size_text_tiny)
 		// Mono
 		m1: make_style(mono, theme.size_text_x_large + 1)
 		m2: make_style(mono, theme.size_text_large + 1)
@@ -402,6 +413,22 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			subheading_style: TextStyle{
 				...bold
 			}
+		}
+		// markdown
+		markdown_style: MarkdownStyle{
+			text:          normal
+			h1:            make_style(bold, theme.size_text_x_large)
+			h2:            make_style(bold, theme.size_text_large)
+			h3:            make_style(bold, theme.size_text_medium)
+			h4:            make_style(bold, theme.size_text_small)
+			h5:            make_style(bold, theme.size_text_x_small)
+			h6:            make_style(bold, theme.size_text_tiny)
+			bold:          make_style(bold, theme.size_text_medium)
+			italic:        make_style(italic, theme.size_text_medium)
+			code:          make_style(mono, theme.size_text_medium + 1)
+			code_block_bg: theme.color_interior
+			hr_color:      theme.color_border
+			link_color:    theme.color_select
 		}
 	}
 }
@@ -608,6 +635,14 @@ pub fn (t Theme) with_tree_style(style TreeStyle) Theme {
 	return Theme{
 		...t
 		tree_style: style
+	}
+}
+
+// with_markdown_style returns a new Theme with the markdown style replaced.
+pub fn (t Theme) with_markdown_style(style MarkdownStyle) Theme {
+	return Theme{
+		...t
+		markdown_style: style
 	}
 }
 

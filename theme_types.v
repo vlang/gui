@@ -38,6 +38,7 @@ pub:
 	toggle_style       ToggleStyle
 	tooltip_style      TooltipStyle
 	tree_style         TreeStyle
+	markdown_style     MarkdownStyle
 
 	// n's and b's are convenience configs for sizing
 	// similar to H1-H6 in html markup. n3 is the
@@ -63,6 +64,13 @@ pub:
 	i4 TextStyle
 	i5 TextStyle
 	i6 TextStyle
+	// Bold+Italic
+	bi1 TextStyle
+	bi2 TextStyle
+	bi3 TextStyle
+	bi4 TextStyle
+	bi5 TextStyle
+	bi6 TextStyle
 	// Mono
 	m1 TextStyle
 	m2 TextStyle

@@ -331,7 +331,9 @@ pub struct TextStyle {
 pub:
 	family         string
 	color          Color
-	size           f32 = size_text_medium
+	bg_color       Color = color_transparent
+	size           f32   = size_text_medium
+	typeface       vglyph.Typeface // .regular, .bold, .italic, .bold_italic
 	line_spacing   f32
 	letter_spacing f32
 	align          TextAlignment = .left
@@ -358,6 +360,7 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 			features:      ts.features
 			underline:     ts.underline
 			strikethrough: ts.strikethrough
+			typeface:      ts.typeface
 		}
 		block: vglyph.BlockStyle{
 			align: match ts.align {

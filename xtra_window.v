@@ -293,6 +293,60 @@ pub fn (mut window Window) set_mouse_cursor_resize_nwse() {
 	window.view_state.mouse_cursor = .resize_nwse
 }
 
+// set_rtf_tooltip shows a tooltip with the given text at the specified rect.
+// Used for abbreviation tooltips in RTF views.
+pub fn (mut window Window) set_rtf_tooltip(text string, rect gg.Rect) {
+	window.view_state.rtf_tooltip_text = text
+	window.view_state.rtf_tooltip_rect = rect
+}
+
+// render_rtf_tooltip renders an active RTF abbreviation tooltip.
+fn (mut window Window) render_rtf_tooltip(clip DrawClip) {
+	tooltip_text := window.view_state.rtf_tooltip_text
+	rect := window.view_state.rtf_tooltip_rect
+
+	// Create and layout tooltip view with max width and wrapping
+	mut tooltip_view := tooltip(TooltipCfg{
+		id:      '__rtf_tooltip__'
+		padding: padding_none
+		content: [
+			column(
+				padding:   padding_small
+				max_width: 200
+				content:   [View(text(TextCfg{ text: tooltip_text, mode: .wrap }))]
+			),
+		]
+		anchor:  .bottom_center
+	})
+	mut layout := generate_layout(mut tooltip_view, mut window)
+
+	// Calculate sizes (without position)
+	layout_widths(mut layout)
+	layout_fill_widths(mut layout)
+	layout_wrap_text(mut layout, mut window)
+	layout_heights(mut layout)
+	layout_fill_heights(mut layout)
+
+	// Calculate position below abbreviation, clamped to stay on screen
+	mut x := rect.x + rect.width / 2 - layout.shape.width / 2
+	if x < 0 {
+		x = 0
+	}
+	y := rect.y + rect.height + 3
+
+	// Now compute positions with the offset
+	layout_positions(mut layout, x, y, window)
+
+	layout.shape.shape_clip = DrawClip{
+		x:      layout.shape.x
+		y:      layout.shape.y
+		width:  layout.shape.width
+		height: layout.shape.height
+	}
+
+	render_layout(mut layout, color_transparent, clip, mut window)
+}
+
 // set_theme sets the current theme to the given theme.
 // GUI has two builtin themes. theme_dark, theme_light
 pub fn (mut window Window) set_theme(theme Theme) {
