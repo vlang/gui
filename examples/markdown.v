@@ -269,7 +269,7 @@ fn main_view(window &gui.Window) gui.View {
 		id_focus:  1
 		id_scroll: 1
 		content:   [
-			gui.markdown(
+			window.markdown(
 				source:      markdown_source
 				style:       custom_style
 				mode:        .wrap

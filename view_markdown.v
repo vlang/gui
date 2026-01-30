@@ -50,16 +50,27 @@ pub:
 }
 
 // markdown creates a view from the given MarkdownCfg
-pub fn markdown(cfg MarkdownCfg) View {
+pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 	if cfg.invisible {
 		return invisible_container_view()
 	}
 
-	blocks := markdown_to_blocks(cfg.source, cfg.style)
+	// Cache lookup using source hash
+	hash := cfg.source.hash()
+	blocks := if cached := window.view_state.markdown_cache[hash] {
+		cached
+	} else {
+		parsed := markdown_to_blocks(cfg.source, cfg.style)
+		unsafe {
+			mut w := window
+			w.view_state.markdown_cache[hash] = parsed
+		}
+		parsed
+	}
 
 	// Build content views from blocks
 	mut content := []View{cap: blocks.len}
-	mut list_items := []View{} // accumulate consecutive list items
+	mut list_items := []View{cap: 10} // accumulate consecutive list items
 	for i, block in blocks {
 		// Check if we need to flush accumulated list items
 		if !block.is_list && list_items.len > 0 {

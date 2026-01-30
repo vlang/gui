@@ -26,18 +26,18 @@ fn flush_runs(mut runs []RichTextRun) ?MarkdownBlock {
 	}
 	block := MarkdownBlock{
 		content: RichText{
-			runs: runs.clone()
+			runs: runs
 		}
 	}
-	runs.clear()
+	runs = []RichTextRun{cap: 20}
 	return block
 }
 
 // markdown_to_blocks parses markdown source and returns styled blocks.
 fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
-	mut blocks := []MarkdownBlock{}
-	mut runs := []RichTextRun{}
 	lines := source.split('\n')
+	mut blocks := []MarkdownBlock{cap: lines.len / 3}
+	mut runs := []RichTextRun{cap: 20}
 	mut i := 0
 	mut in_code_block := false
 	mut code_block_content := []string{}
@@ -412,24 +412,24 @@ fn parse_header(text string, header_style TextStyle, md_style MarkdownStyle, mut
 // parse_inline parses inline markdown (bold, italic, code, links).
 fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun) {
 	mut pos := 0
-	mut current_text := ''
+	mut current := []u8{cap: text.len}
 
 	for pos < text.len {
 		// Escape character: backslash makes next char literal
 		if text[pos] == `\\` && pos + 1 < text.len {
-			current_text += text[pos + 1].ascii_str()
+			current << text[pos + 1]
 			pos += 2
 			continue
 		}
 
 		// Check for inline code
 		if text[pos] == `\`` {
-			if current_text.len > 0 {
+			if current.len > 0 {
 				runs << RichTextRun{
-					text:  current_text
+					text:  current.bytestr()
 					style: base_style
 				}
-				current_text = ''
+				current.clear()
 			}
 			end := find_closing(text, pos + 1, `\``)
 			if end > pos + 1 {
@@ -446,12 +446,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		if pos + 2 < text.len && text[pos] == `*` && text[pos + 1] == `*` && text[pos + 2] == `*` {
 			end := find_triple_closing(text, pos + 3, `*`)
 			if end > pos + 3 {
-				if current_text.len > 0 {
+				if current.len > 0 {
 					runs << RichTextRun{
-						text:  current_text
+						text:  current.bytestr()
 						style: base_style
 					}
-					current_text = ''
+					current.clear()
 				}
 				runs << RichTextRun{
 					text:  text[pos + 3..end]
@@ -469,12 +469,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		if pos + 1 < text.len && text[pos] == `*` && text[pos + 1] == `*` {
 			end := find_double_closing(text, pos + 2, `*`)
 			if end > pos + 2 {
-				if current_text.len > 0 {
+				if current.len > 0 {
 					runs << RichTextRun{
-						text:  current_text
+						text:  current.bytestr()
 						style: base_style
 					}
-					current_text = ''
+					current.clear()
 				}
 				runs << RichTextRun{
 					text:  text[pos + 2..end]
@@ -490,12 +490,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 
 		// Check for strikethrough (~~text~~)
 		if pos + 1 < text.len && text[pos] == `~` && text[pos + 1] == `~` {
-			if current_text.len > 0 {
+			if current.len > 0 {
 				runs << RichTextRun{
-					text:  current_text
+					text:  current.bytestr()
 					style: base_style
 				}
-				current_text = ''
+				current.clear()
 			}
 			end := find_double_closing(text, pos + 2, `~`)
 			if end > pos + 2 {
@@ -515,12 +515,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		if text[pos] == `*` {
 			end := find_closing(text, pos + 1, `*`)
 			if end > pos + 1 {
-				if current_text.len > 0 {
+				if current.len > 0 {
 					runs << RichTextRun{
-						text:  current_text
+						text:  current.bytestr()
 						style: base_style
 					}
-					current_text = ''
+					current.clear()
 				}
 				runs << RichTextRun{
 					text:  text[pos + 1..end]
@@ -538,12 +538,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		if pos + 2 < text.len && text[pos] == `_` && text[pos + 1] == `_` && text[pos + 2] == `_` {
 			end := find_triple_closing(text, pos + 3, `_`)
 			if end > pos + 3 {
-				if current_text.len > 0 {
+				if current.len > 0 {
 					runs << RichTextRun{
-						text:  current_text
+						text:  current.bytestr()
 						style: base_style
 					}
-					current_text = ''
+					current.clear()
 				}
 				runs << RichTextRun{
 					text:  text[pos + 3..end]
@@ -561,12 +561,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		if pos + 1 < text.len && text[pos] == `_` && text[pos + 1] == `_` {
 			end := find_double_closing(text, pos + 2, `_`)
 			if end > pos + 2 {
-				if current_text.len > 0 {
+				if current.len > 0 {
 					runs << RichTextRun{
-						text:  current_text
+						text:  current.bytestr()
 						style: base_style
 					}
-					current_text = ''
+					current.clear()
 				}
 				runs << RichTextRun{
 					text:  text[pos + 2..end]
@@ -584,12 +584,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		if text[pos] == `_` {
 			end := find_closing(text, pos + 1, `_`)
 			if end > pos + 1 {
-				if current_text.len > 0 {
+				if current.len > 0 {
 					runs << RichTextRun{
-						text:  current_text
+						text:  current.bytestr()
 						style: base_style
 					}
-					current_text = ''
+					current.clear()
 				}
 				runs << RichTextRun{
 					text:  text[pos + 1..end]
@@ -611,12 +611,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				// Check if it's a URL or email
 				if inner.starts_with('http://') || inner.starts_with('https://')
 					|| inner.contains('@') {
-					if current_text.len > 0 {
+					if current.len > 0 {
 						runs << RichTextRun{
-							text:  current_text
+							text:  current.bytestr()
 							style: base_style
 						}
-						current_text = ''
+						current.clear()
 					}
 					link_url := if inner.contains('@') && !inner.contains('://') {
 						'mailto:${inner}'
@@ -642,7 +642,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		if text[pos] == `[` {
 			// Footnote defense: [^...] treat as literal
 			if pos + 1 < text.len && text[pos + 1] == `^` {
-				current_text += text[pos].ascii_str()
+				current << text[pos]
 				pos++
 				continue
 			}
@@ -651,18 +651,18 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				// Reference link defense: [text][ref] - no ( after ]
 				if bracket_end + 1 >= text.len || text[bracket_end + 1] != `(` {
 					// Not a standard link, treat as literal text
-					current_text += text[pos].ascii_str()
+					current << text[pos]
 					pos++
 					continue
 				}
 				paren_end := find_closing(text, bracket_end + 2, `)`)
 				if paren_end > bracket_end + 2 {
-					if current_text.len > 0 {
+					if current.len > 0 {
 						runs << RichTextRun{
-							text:  current_text
+							text:  current.bytestr()
 							style: base_style
 						}
-						current_text = ''
+						current.clear()
 					}
 					link_text := text[pos + 1..bracket_end]
 					link_url := text[bracket_end + 2..paren_end]
@@ -680,18 +680,18 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				}
 			}
 			// Fallthrough: treat [ as literal
-			current_text += text[pos].ascii_str()
+			current << text[pos]
 			pos++
 			continue
 		}
 
-		current_text += text[pos].ascii_str()
+		current << text[pos]
 		pos++
 	}
 
-	if current_text.len > 0 {
+	if current.len > 0 {
 		runs << RichTextRun{
-			text:  current_text
+			text:  current.bytestr()
 			style: base_style
 		}
 	}
