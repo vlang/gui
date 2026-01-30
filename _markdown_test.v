@@ -238,6 +238,37 @@ fn test_markdown_table() {
 	assert blocks[0].is_table == true
 }
 
+fn test_markdown_table_parsing() {
+	parsed := parse_markdown_table('| A | B |\n|---|---|\n| 1 | 2 |') or { panic('parse failed') }
+	assert parsed.headers == ['A', 'B']
+	assert parsed.rows.len == 1
+	assert parsed.rows[0] == ['1', '2']
+}
+
+fn test_markdown_table_alignments() {
+	parsed := parse_markdown_table('| L | C | R |\n|:---|:---:|---:|\n| a | b | c |') or {
+		panic('parse failed')
+	}
+	assert parsed.alignments.len == 3
+	assert parsed.alignments[0] == .start
+	assert parsed.alignments[1] == .center
+	assert parsed.alignments[2] == .end
+}
+
+fn test_markdown_table_no_outer_pipes() {
+	parsed := parse_markdown_table('A | B\n---|---\n1 | 2') or { panic('parse failed') }
+	assert parsed.headers == ['A', 'B']
+	assert parsed.rows.len == 1
+	assert parsed.rows[0] == ['1', '2']
+}
+
+fn test_markdown_table_empty_cells() {
+	parsed := parse_markdown_table('| A | B | C |\n|---|---|---|\n| 1 |  | 3 |') or {
+		panic('parse failed')
+	}
+	assert parsed.rows[0] == ['1', '', '3']
+}
+
 fn test_markdown_footnote_basic() {
 	source := 'See note[^1] here\n\n[^1]: This is the footnote content.'
 	rt := markdown_to_rich_text(source, MarkdownStyle{})

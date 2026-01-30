@@ -9,7 +9,9 @@ import math
 @[heap]
 struct TableDemoApp {
 pub mut:
-	csv_table TableData
+	csv_table       TableData
+	selected_rows   []int
+	selection_label string
 }
 
 @[heap]
@@ -57,22 +59,65 @@ fn main_view(mut window gui.Window) gui.View {
 
 fn tables(mut window gui.Window) []gui.View {
 	mut app := window.state[TableDemoApp]()
+
+	sample_data := [
+		gui.tr([gui.th('First'), gui.th('Last'), gui.th('Email')]),
+		gui.tr([gui.td('Matt'), gui.td('Williams'), gui.td('non.egestas.a@protonmail.org')]),
+		gui.tr([gui.td('Clara'), gui.td('Nelson'), gui.td('mauris.sagittis@icloud.net')]),
+		gui.tr([gui.td('Frank'), gui.td('Johnson'), gui.td('ac.libero.nec@aol.com')]),
+		gui.tr([gui.td('Elmer'), gui.td('Fudd'), gui.td('mus@aol.couk')]),
+	]
+
 	return [
-		gui.text(text: 'Declarative Layout', text_style: gui.theme().b2),
+		gui.text(text: 'Border Style: all (default grid)', text_style: gui.theme().b2),
+		window.table(
+			color_border:    gui.gray
+			size_border:     1.0
+			border_style:    .all
+			text_style_head: gui.theme().b3
+			data:            sample_data
+		),
+		gui.text(text: 'Border Style: horizontal', text_style: gui.theme().b2),
+		window.table(
+			color_border:    gui.gray
+			size_border:     1.0
+			border_style:    .horizontal
+			text_style_head: gui.theme().b3
+			data:            sample_data
+		),
+		gui.text(text: 'Border Style: header_only', text_style: gui.theme().b2),
+		window.table(
+			color_border:       gui.gray
+			size_border:        1.0
+			size_border_header: 2.0
+			border_style:       .header_only
+			text_style_head:    gui.theme().b3
+			data:               sample_data
+		),
+		gui.text(text: 'Border Style: none', text_style: gui.theme().b2),
+		window.table(
+			border_style:    .none
+			text_style_head: gui.theme().b3
+			color_row_alt:   gui.Color{32, 32, 32, 255}
+			data:            sample_data
+		),
+		gui.text(text: 'Selection Demo', text_style: gui.theme().b2),
+		gui.text(text: 'Selected: ${app.selection_label}', text_style: gui.theme().n3),
 		window.table(
 			color_border:    gui.gray
 			size_border:     1.0
 			text_style_head: gui.theme().b3
-			data:            [
-				gui.tr([gui.th('First'), gui.th('Last'), gui.th('Email')]),
-				gui.tr([gui.td('Matt'), gui.td('Williams'), gui.td('non.egestas.a@protonmail.org')]),
-				gui.tr([gui.td('Clara'), gui.td('Nelson'), gui.td('mauris.sagittis@icloud.net')]),
-				gui.tr([gui.td('Frank'), gui.td('Johnson'), gui.td('ac.libero.nec@aol.com')]),
-				gui.tr([gui.td('Elmer'), gui.td('Fudd'), gui.td('mus@aol.couk')]),
-				gui.tr([gui.td('Roy'), gui.td('Rogers'), gui.td('amet.ultricies@yahoo.com')]),
-			]
+			color_row_alt:   gui.Color{32, 32, 32, 255}
+			selected:        app.selected_rows
+			multi_select:    true
+			on_select:       fn (selected []int, row_idx int, mut e gui.Event, mut w gui.Window) {
+				mut a := w.state[TableDemoApp]()
+				a.selected_rows = selected
+				a.selection_label = selected.map(it.str()).join(', ')
+			}
+			data:            sample_data
 		),
-		gui.text(text: 'CSV Data', text_style: gui.theme().b2),
+		gui.text(text: 'CSV Data with Sortable Columns', text_style: gui.theme().b2),
 		table_with_sortable_columns(mut app.csv_table, mut window),
 		gui.text(text: ''),
 	]

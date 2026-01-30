@@ -30,6 +30,14 @@ pub:
 	code_block_radius  f32       = 3.5
 	h1_separator       bool
 	h2_separator       bool
+	// Table styling
+	table_border_style TableBorderStyle = .header_only
+	table_border_color Color            = gui_theme.color_border
+	table_border_size  f32              = 1
+	table_head_style   TextStyle        = gui_theme.b3
+	table_cell_style   TextStyle        = gui_theme.n3
+	table_cell_padding Padding          = padding(5, 10, 5, 10)
+	table_row_alt      ?Color
 }
 
 // MarkdownCfg configures a Markdown View.
@@ -51,6 +59,35 @@ pub:
 	size_border  f32
 	radius       f32
 	padding      Padding
+}
+
+// build_markdown_table_data converts parsed table to TableRowCfg array.
+fn build_markdown_table_data(parsed ParsedTable, style MarkdownStyle) []TableRowCfg {
+	mut rows := []TableRowCfg{cap: parsed.rows.len + 1}
+	// Header row
+	mut header_cells := []TableCellCfg{cap: parsed.headers.len}
+	for h in parsed.headers {
+		header_cells << TableCellCfg{
+			value:     h
+			head_cell: true
+		}
+	}
+	rows << TableRowCfg{
+		cells: header_cells
+	}
+	// Data rows
+	for r in parsed.rows {
+		mut cells := []TableCellCfg{cap: r.len}
+		for cell in r {
+			cells << TableCellCfg{
+				value: cell
+			}
+		}
+		rows << TableRowCfg{
+			cells: cells
+		}
+	}
+	return rows
 }
 
 // markdown creates a view from the given MarkdownCfg
@@ -103,8 +140,8 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			)
 			list_items.clear()
 		}
-		if block.is_code || block.is_table {
-			// Code block / table in a column with background
+		if block.is_code {
+			// Code block in a column with background
 			content << column(
 				color:       cfg.style.code_block_bg
 				padding:     cfg.style.code_block_padding
@@ -119,6 +156,37 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 					),
 				]
 			)
+		} else if block.is_table {
+			// Table rendered using table view
+			if parsed := parse_markdown_table(block.content.runs[0].text) {
+				mut w := unsafe { window }
+				content << w.table(
+					border_style:    cfg.style.table_border_style
+					color_border:    cfg.style.table_border_color
+					size_border:     cfg.style.table_border_size
+					text_style_head: cfg.style.table_head_style
+					text_style:      cfg.style.table_cell_style
+					cell_padding:    cfg.style.table_cell_padding
+					color_row_alt:   cfg.style.table_row_alt
+					data:            build_markdown_table_data(parsed, cfg.style)
+				)
+			} else {
+				// Fallback: render as code block
+				content << column(
+					color:       cfg.style.code_block_bg
+					padding:     cfg.style.code_block_padding
+					radius:      cfg.style.code_block_radius
+					size_border: 0
+					sizing:      fill_fit
+					clip:        true
+					content:     [
+						rtf(
+							rich_text: block.content
+							mode:      .single_line
+						),
+					]
+				)
+			}
 		} else if block.is_hr {
 			// Horizontal rule - fill width
 			content << rectangle(

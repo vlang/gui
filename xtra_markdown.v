@@ -1263,6 +1263,86 @@ fn strip_blockquote_prefix(line string) string {
 	return if pos < line.len { line[pos..] } else { '' }
 }
 
+// ParsedTable represents a parsed markdown table.
+struct ParsedTable {
+	headers    []string
+	alignments []HorizontalAlign
+	rows       [][]string
+}
+
+// parse_markdown_table parses raw table markdown into structured data.
+fn parse_markdown_table(raw string) ?ParsedTable {
+	lines := raw.split('\n').filter(it.trim_space() != '')
+	if lines.len < 2 {
+		return none
+	}
+	// Line 0 = headers
+	headers := parse_table_row(lines[0])
+	if headers.len == 0 {
+		return none
+	}
+	// Line 1 = separator with alignments
+	alignments := parse_table_alignments(lines[1], headers.len)
+	// Lines 2+ = data rows
+	mut rows := [][]string{cap: lines.len - 2}
+	for i := 2; i < lines.len; i++ {
+		row := parse_table_row(lines[i])
+		// Pad or trim to match header count
+		mut normalized := []string{len: headers.len, init: ''}
+		for j, cell in row {
+			if j < headers.len {
+				normalized[j] = cell
+			}
+		}
+		rows << normalized
+	}
+	return ParsedTable{
+		headers:    headers
+		alignments: alignments
+		rows:       rows
+	}
+}
+
+// parse_table_row splits a table row by | and trims cells.
+fn parse_table_row(line string) []string {
+	trimmed := line.trim_space()
+	// Remove outer pipes if present
+	mut inner := trimmed
+	if inner.starts_with('|') {
+		inner = inner[1..]
+	}
+	if inner.ends_with('|') {
+		inner = inner[..inner.len - 1]
+	}
+	parts := inner.split('|')
+	mut cells := []string{cap: parts.len}
+	for p in parts {
+		cells << p.trim_space()
+	}
+	return cells
+}
+
+// parse_table_alignments parses separator row for column alignments.
+fn parse_table_alignments(line string, cols int) []HorizontalAlign {
+	parts := parse_table_row(line)
+	mut aligns := []HorizontalAlign{len: cols, init: HorizontalAlign.start}
+	for i, p in parts {
+		if i >= cols {
+			break
+		}
+		trimmed := p.trim_space()
+		left_colon := trimmed.starts_with(':')
+		right_colon := trimmed.ends_with(':')
+		if left_colon && right_colon {
+			aligns[i] = .center
+		} else if right_colon {
+			aligns[i] = .end
+		}
+		// default is .start (left)
+	}
+	return aligns
+}
+
 // is_table_separator checks if a line is a markdown table separator (e.g., |---|---|).
 // Expects pre-trimmed input.
 fn is_table_separator(s string) bool {

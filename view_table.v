@@ -81,6 +81,7 @@ pub:
 	value      string
 	head_cell  bool
 	text_style ?TextStyle
+	content    ?View // optional custom cell content (overrides value)
 	on_click   fn (&Layout, mut Event, mut Window) = unsafe { nil }
 }
 
@@ -117,6 +118,11 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 
 			h_align := if cell.head_cell { cfg.align_head } else { HorizontalAlign.start }
 
+			cell_content := if c := cell.content {
+				[c]
+			} else {
+				[text(text: cell.value, text_style: cell_text_style)]
+			}
 			cells << column(
 				name:         'table cell'
 				color:        color_transparent
@@ -129,9 +135,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 				sizing:       fixed_fill
 				width:        column_width + cfg.cell_padding.width()
 				on_click:     cell.on_click
-				content:      [
-					text(text: cell.value, text_style: cell_text_style),
-				]
+				content:      cell_content
 				on_hover:     fn [cell, cfg] (mut layout Layout, mut e Event, mut w Window) {
 					if cell.on_click != unsafe { nil } {
 						w.set_mouse_cursor_pointing_hand()
