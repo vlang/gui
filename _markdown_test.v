@@ -379,3 +379,83 @@ fn test_markdown_setext_h2() {
 	text_run := rt.runs.filter(it.text == 'World')[0] or { panic('no World run') }
 	assert text_run.style.size == t.b2.size
 }
+
+// Security tests
+
+fn test_markdown_blocks_javascript_url() {
+	// javascript: URLs should be rejected - link empty, text unstyled
+	rt := markdown_to_rich_text('[click](javascript:alert(1))', MarkdownStyle{})
+	links := rt.runs.filter(it.link != '')
+	assert links.len == 0
+	// Text should still appear
+	found := rt.runs.any(it.text == 'click')
+	assert found
+}
+
+fn test_markdown_blocks_data_url() {
+	// data: URLs should be rejected
+	rt := markdown_to_rich_text('[click](data:text/html,<script>alert(1)</script>)', MarkdownStyle{})
+	links := rt.runs.filter(it.link != '')
+	assert links.len == 0
+}
+
+fn test_markdown_blocks_vbscript_url() {
+	// vbscript: URLs should be rejected
+	rt := markdown_to_rich_text('[click](vbscript:msgbox(1))', MarkdownStyle{})
+	links := rt.runs.filter(it.link != '')
+	assert links.len == 0
+}
+
+fn test_markdown_blocks_safe_urls() {
+	// http, https, mailto should work
+	rt := markdown_to_rich_text('[a](http://x) [b](https://y) [c](mailto:z@z)', MarkdownStyle{})
+	links := rt.runs.filter(it.link != '')
+	assert links.len == 3
+	assert links[0].link == 'http://x'
+	assert links[1].link == 'https://y'
+	assert links[2].link == 'mailto:z@z'
+}
+
+fn test_markdown_blocks_relative_url() {
+	// Relative URLs (no protocol) should work
+	rt := markdown_to_rich_text('[page](./other.html)', MarkdownStyle{})
+	links := rt.runs.filter(it.link != '')
+	assert links.len == 1
+	assert links[0].link == './other.html'
+}
+
+fn test_markdown_image_path_traversal() {
+	// Path traversal should be blocked
+	blocks := markdown_to_blocks('![alt](../../../etc/passwd)', MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].is_image == true
+	assert blocks[0].image_src == '' // blocked
+}
+
+fn test_markdown_image_absolute_path() {
+	// Absolute paths should be blocked
+	blocks := markdown_to_blocks('![alt](/etc/passwd)', MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].image_src == ''
+}
+
+fn test_markdown_image_safe_path() {
+	// Relative paths without traversal should work
+	blocks := markdown_to_blocks('![alt](images/photo.png)', MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].image_src == 'images/photo.png'
+}
+
+fn test_markdown_autolink_javascript() {
+	// javascript: in autolink should be rejected
+	rt := markdown_to_rich_text('<javascript:alert(1)>', MarkdownStyle{})
+	links := rt.runs.filter(it.link != '')
+	assert links.len == 0
+}
+
+fn test_markdown_reference_link_javascript() {
+	// javascript: URLs in reference links should be rejected
+	blocks := markdown_to_blocks('[click][x]\n\n[x]: javascript:alert(1)', MarkdownStyle{})
+	links := blocks[0].content.runs.filter(it.link != '')
+	assert links.len == 0
+}

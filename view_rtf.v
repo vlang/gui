@@ -193,7 +193,7 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 
 			if found_run_idx >= 0 {
 				found_run := layout.shape.rich_text.runs[found_run_idx]
-				if found_run.link != '' {
+				if found_run.link != '' && is_safe_url(found_run.link) {
 					os.open_uri(found_run.link) or {}
 					e.is_handled = true
 				}
@@ -202,3 +202,4 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 		}
 	}
 }
+

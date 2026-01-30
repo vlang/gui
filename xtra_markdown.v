@@ -225,10 +225,11 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 					if block := flush_runs(mut runs) {
 						blocks << block
 					}
+					src := line[bracket_end + 2..paren_end]
 					blocks << MarkdownBlock{
 						is_image:  true
 						image_alt: line[2..bracket_end]
-						image_src: line[bracket_end + 2..paren_end]
+						image_src: if is_safe_image_path(src) { src } else { '' }
 					}
 					i++
 					continue
@@ -746,13 +747,18 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					} else {
 						inner
 					}
+					safe_link := if is_safe_url(link_url) { link_url } else { '' }
 					runs << RichTextRun{
 						text:  inner
-						link:  link_url
+						link:  safe_link
 						style: TextStyle{
 							...base_style
-							color:     md_style.link_color
-							underline: true
+							color:     if safe_link != '' {
+								md_style.link_color
+							} else {
+								base_style.color
+							}
+							underline: safe_link != ''
 						}
 					}
 					pos = end + 1
@@ -803,13 +809,18 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 							current.clear()
 						}
 						link_url := text[bracket_end + 2..paren_end]
+						safe_link := if is_safe_url(link_url) { link_url } else { '' }
 						runs << RichTextRun{
 							text:  link_text
-							link:  link_url
+							link:  safe_link
 							style: TextStyle{
 								...base_style
-								color:     md_style.link_color
-								underline: true
+								color:     if safe_link != '' {
+									md_style.link_color
+								} else {
+									base_style.color
+								}
+								underline: safe_link != ''
 							}
 						}
 						pos = paren_end + 1
@@ -826,6 +837,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 							text[bracket_end + 2..ref_end].to_lower()
 						}
 						if url := link_defs[ref_id] {
+							safe_link := if is_safe_url(url) { url } else { '' }
 							if current.len > 0 {
 								runs << RichTextRun{
 									text:  current.bytestr()
@@ -835,11 +847,15 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 							}
 							runs << RichTextRun{
 								text:  link_text
-								link:  url
+								link:  safe_link
 								style: TextStyle{
 									...base_style
-									color:     md_style.link_color
-									underline: true
+									color:     if safe_link != '' {
+										md_style.link_color
+									} else {
+										base_style.color
+									}
+									underline: safe_link != ''
 								}
 							}
 							pos = ref_end + 1
@@ -850,6 +866,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				// Check for shortcut reference link [text]
 				shortcut_id := link_text.to_lower()
 				if url := link_defs[shortcut_id] {
+					safe_link := if is_safe_url(url) { url } else { '' }
 					if current.len > 0 {
 						runs << RichTextRun{
 							text:  current.bytestr()
@@ -859,11 +876,15 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					}
 					runs << RichTextRun{
 						text:  link_text
-						link:  url
+						link:  safe_link
 						style: TextStyle{
 							...base_style
-							color:     md_style.link_color
-							underline: true
+							color:     if safe_link != '' {
+								md_style.link_color
+							} else {
+								base_style.color
+							}
+							underline: safe_link != ''
 						}
 					}
 					pos = bracket_end + 1
@@ -1382,6 +1403,36 @@ fn is_footnote_definition(line string) bool {
 		return false
 	}
 	return trimmed.index(']:') or { return false } >= 2
+}
+
+// is_safe_url checks if URL uses allowed protocol.
+fn is_safe_url(url string) bool {
+	lower := url.to_lower().trim_space()
+	if lower.starts_with('http://') || lower.starts_with('https://') || lower.starts_with('mailto:') {
+		return true
+	}
+	// Relative URLs (no protocol) are safe
+	if !lower.contains('://') && !lower.starts_with('javascript:') && !lower.starts_with('data:')
+		&& !lower.starts_with('vbscript:') {
+		return true
+	}
+	return false
+}
+
+// is_safe_image_path checks for path traversal.
+fn is_safe_image_path(path string) bool {
+	// Block absolute paths and traversal
+	if path.starts_with('/') || path.starts_with('\\') {
+		return false
+	}
+	if path.contains('..') {
+		return false
+	}
+	// Block URLs in image paths (not supported anyway)
+	if path.contains('://') {
+		return false
+	}
+	return true
 }
 
 // is_word_boundary checks if char at pos is a word boundary (non-alphanumeric).
