@@ -245,6 +245,7 @@ fn main() {
 	mut window := gui.window(
 		width:   500
 		height:  600
+		title:   'Markdown View'
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
