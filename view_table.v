@@ -2,6 +2,14 @@ module gui
 
 import encoding.csv
 
+// TableBorderStyle controls which borders are drawn in a table
+pub enum TableBorderStyle {
+	none        // no borders
+	all         // full grid (default)
+	horizontal  // horizontal lines between rows only
+	header_only // single line under header row only
+}
+
 // TableCfg configures a table layout. It loosely follows the conventions of HTML tables.
 // The `data` member consists of rows ([TableRowCfg](#TableRowCfg)) and cells
 // ([TableCellCfg](#TableCellCfg)). Because the formatting of structs can use large amounts
@@ -29,22 +37,40 @@ import encoding.csv
 pub struct TableCfg {
 pub:
 	id                   string
-	color_border         Color           = gui_theme.color_border
+	color_border         Color = gui_theme.color_border
+	color_select         Color = gui_theme.color_select
+	color_hover          Color = gui_theme.color_hover
+	color_row_alt        ?Color
 	cell_padding         Padding         = padding_two_five
 	text_style           TextStyle       = gui_theme.n3
 	text_style_head      TextStyle       = gui_theme.b3
 	align_head           HorizontalAlign = HorizontalAlign.center
 	column_width_default f32             = 50
 	size_border          f32
+	size_border_header   f32 // optional header separator override
+	border_style         TableBorderStyle = .all
+	width                f32
+	height               f32
+	min_width            f32
+	max_width            f32
+	min_height           f32
+	max_height           f32
+	sizing               Sizing
+	id_scroll            u32
+	multi_select         bool
+	selected             []int // selected row indices (0-based, header is row 0)
+	on_select            fn (selected []int, row_idx int, mut e Event, mut w Window) = unsafe { nil }
 pub mut:
 	data []TableRowCfg
 }
 
 // TableRowCfg configures a table row from the given cells
+@[minify]
 pub struct TableRowCfg {
 pub:
-	id    string
-	cells []TableCellCfg
+	id       string
+	cells    []TableCellCfg
+	on_click fn (&Layout, mut Event, mut Window) = unsafe { nil }
 }
 
 // TableCellCfg configures a table cell
@@ -60,30 +86,42 @@ pub:
 
 // table generates a table from the given [TableCfg](#TableCfg)
 pub fn (mut window Window) table(cfg TableCfg) View {
-	mut rows := []View{cap: cfg.data.len}
+	mut rows := []View{cap: cfg.data.len * 2} // extra capacity for separators
 	column_widths := window.table_column_widths(cfg)
-	for r in cfg.data {
+	last_row_idx := cfg.data.len - 1
+
+	// Determine cell border based on style
+	cell_border := match cfg.border_style {
+		.all { cfg.size_border }
+		else { f32(0) }
+	}
+
+	// Row spacing for .all style (negative to overlap borders)
+	row_spacing := match cfg.border_style {
+		.all { -cfg.size_border }
+		else { f32(0) }
+	}
+
+	for row_idx, r in cfg.data {
 		mut cells := []View{cap: r.cells.len}
 		for idx, cell in r.cells {
 			cell_text_style := cell.text_style or {
 				if cell.head_cell { cfg.text_style_head } else { cfg.text_style }
 			}
 
-			column_width := match idx < column_widths.len {
-				true { column_widths[idx] }
-				else { cfg.column_width_default }
+			column_width := if idx < column_widths.len {
+				column_widths[idx]
+			} else {
+				cfg.column_width_default
 			}
 
-			h_align := match cell.head_cell {
-				true { cfg.align_head }
-				else { HorizontalAlign.start }
-			}
+			h_align := if cell.head_cell { cfg.align_head } else { HorizontalAlign.start }
 
 			cells << column(
 				name:         'table cell'
 				color:        color_transparent
 				color_border: cfg.color_border
-				size_border:  cfg.size_border
+				size_border:  cell_border
 				padding:      cfg.cell_padding
 				radius:       0
 				spacing:      0
@@ -94,31 +132,101 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 				content:      [
 					text(text: cell.value, text_style: cell_text_style),
 				]
-				on_hover:     fn [cell] (mut layout Layout, mut e Event, mut w Window) {
+				on_hover:     fn [cell, cfg] (mut layout Layout, mut e Event, mut w Window) {
 					if cell.on_click != unsafe { nil } {
 						w.set_mouse_cursor_pointing_hand()
-						layout.shape.color = gui_theme.color_hover
+						layout.shape.color = cfg.color_hover
 					}
 				}
 			)
 		}
+
+		// Determine row background color
+		is_selected := row_idx in cfg.selected
+		row_color := if is_selected {
+			cfg.color_select
+		} else if alt := cfg.color_row_alt {
+			if row_idx % 2 == 1 { alt } else { color_transparent }
+		} else {
+			color_transparent
+		}
+
+		// Row click handler - selection or custom
+		row_on_click := r.on_click
+		on_select := cfg.on_select
+		selected := cfg.selected
+		multi_select := cfg.multi_select
+
 		rows << row(
 			name:        'table row'
-			spacing:     -cfg.size_border
+			color:       row_color
+			spacing:     -cell_border
 			radius:      0
 			padding:     padding_none
 			size_border: 0
 			content:     cells
+			on_click:    fn [row_idx, row_on_click, on_select, selected, multi_select] (layout &Layout, mut e Event, mut w Window) {
+				if row_on_click != unsafe { nil } {
+					row_on_click(layout, mut e, mut w)
+				}
+				if on_select != unsafe { nil } {
+					mut new_selected := if multi_select { selected.clone() } else { []int{} }
+					if row_idx in new_selected {
+						new_selected = new_selected.filter(it != row_idx)
+					} else {
+						new_selected << row_idx
+					}
+					on_select(new_selected, row_idx, mut e, mut w)
+				}
+			}
+			on_hover:    fn [cfg, is_selected] (mut layout Layout, mut e Event, mut w Window) {
+				if cfg.on_select != unsafe { nil } {
+					w.set_mouse_cursor_pointing_hand()
+					if !is_selected {
+						layout.shape.color = cfg.color_hover
+					}
+				}
+			}
 		)
+
+		// Add separator for horizontal/header_only styles
+		separator_height := if row_idx == 0 && cfg.size_border_header > 0 {
+			cfg.size_border_header
+		} else {
+			cfg.size_border
+		}
+
+		needs_separator := match cfg.border_style {
+			.horizontal { row_idx != last_row_idx }
+			.header_only { row_idx == 0 }
+			else { false }
+		}
+
+		if needs_separator {
+			rows << rectangle(
+				name:   'table separator'
+				color:  cfg.color_border
+				height: separator_height
+				sizing: fill_fixed
+			)
+		}
 	}
 	return column(
-		name:    'table'
-		id:      cfg.id
-		color:   color_transparent
-		padding: padding_none
-		radius:  0
-		spacing: -cfg.size_border
-		content: rows
+		name:       'table'
+		id:         cfg.id
+		id_scroll:  cfg.id_scroll
+		color:      color_transparent
+		padding:    padding_none
+		radius:     0
+		spacing:    row_spacing
+		sizing:     cfg.sizing
+		width:      cfg.width
+		height:     cfg.height
+		min_width:  cfg.min_width
+		max_width:  cfg.max_width
+		min_height: cfg.min_height
+		max_height: cfg.max_height
+		content:    rows
 	)
 }
 
@@ -211,20 +319,24 @@ pub fn td(value string) TableCellCfg {
 	}
 }
 
-// table_column_widths find the widest column for each column
+// table_column_widths calculates max width per column
 fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 	if cfg.data.len == 0 || cfg.data[0].cells.len == 0 {
 		return []
 	}
 	mut column_widths := []f32{cap: cfg.data[0].cells.len}
-	for idx, cell in cfg.data[0].cells {
+	for idx, _ in cfg.data[0].cells {
 		mut longest := f32(0)
 		for row in cfg.data {
+			if idx >= row.cells.len {
+				continue
+			}
+			cell := row.cells[idx]
 			text_style := cell.text_style or {
 				if cell.head_cell { cfg.text_style_head } else { cfg.text_style }
 			}
 
-			width := text_width(row.cells[idx].value, text_style, mut window)
+			width := text_width(cell.value, text_style, mut window)
 			longest = f32_max(width, longest)
 		}
 		column_widths << longest
