@@ -7,25 +7,27 @@ module gui
 @[minify]
 pub struct MarkdownStyle {
 pub:
-	text              TextStyle = gui_theme.n3
-	h1                TextStyle = gui_theme.b1
-	h2                TextStyle = gui_theme.b2
-	h3                TextStyle = gui_theme.b3
-	h4                TextStyle = gui_theme.b4
-	h5                TextStyle = gui_theme.b5
-	h6                TextStyle = gui_theme.b6
-	bold              TextStyle = gui_theme.b3
-	italic            TextStyle = gui_theme.i3
-	bold_italic       TextStyle = gui_theme.b3 // TODO: needs vglyph bold+italic support
-	code              TextStyle = gui_theme.m5
-	code_block_bg     Color     = gui_theme.color_interior
-	hr_color          Color     = gui_theme.color_border
-	link_color        Color     = gui_theme.color_select
-	blockquote_border Color     = gui_theme.color_border
-	blockquote_bg     Color     = rgba(128, 128, 128, 20)
-	block_spacing     f32       = 8
-	nest_indent       f32       = 16 // indent per nesting level for lists/blockquotes
-	prefix_char_width f32       = 8  // approx char width for list prefix column
+	text               TextStyle = gui_theme.n3
+	h1                 TextStyle = gui_theme.b1
+	h2                 TextStyle = gui_theme.b2
+	h3                 TextStyle = gui_theme.b3
+	h4                 TextStyle = gui_theme.b4
+	h5                 TextStyle = gui_theme.b5
+	h6                 TextStyle = gui_theme.b6
+	bold               TextStyle = gui_theme.b3
+	italic             TextStyle = gui_theme.i3
+	bold_italic        TextStyle = gui_theme.b3 // TODO: needs vglyph bold+italic support
+	code               TextStyle = gui_theme.m5
+	code_block_bg      Color     = gui_theme.color_interior
+	hr_color           Color     = gui_theme.color_border
+	link_color         Color     = gui_theme.color_select
+	blockquote_border  Color     = gui_theme.color_border
+	blockquote_bg      Color     = rgba(128, 128, 128, 20)
+	block_spacing      f32       = 8
+	nest_indent        f32       = 16 // indent per nesting level for lists/blockquotes
+	prefix_char_width  f32       = 8  // approx char width for list prefix column
+	code_block_padding Padding   = padding(10, 10, 10, 10)
+	code_block_radius  f32       = 3.5
 }
 
 // MarkdownCfg configures a Markdown View.
@@ -75,22 +77,24 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 		// Check if we need to flush accumulated list items
 		if !block.is_list && list_items.len > 0 {
 			content << column(
-				sizing:  fill_fit
-				padding: Padding{}
-				spacing: cfg.style.block_spacing / 2
-				content: list_items.clone()
+				sizing:      fill_fit
+				padding:     padding_none
+				size_border: 0
+				spacing:     cfg.style.block_spacing / 2
+				content:     list_items.clone()
 			)
 			list_items.clear()
 		}
 		if block.is_code || block.is_table {
 			// Code block / table in a column with background
 			content << column(
-				color:   cfg.style.code_block_bg
-				padding: gui_theme.padding_medium
-				radius:  gui_theme.radius_small
-				sizing:  fill_fit
-				clip:    block.is_code
-				content: [
+				color:       cfg.style.code_block_bg
+				padding:     cfg.style.code_block_padding
+				radius:      cfg.style.code_block_radius
+				size_border: 0
+				sizing:      fill_fit
+				clip:        block.is_code
+				content:     [
 					rtf(
 						rich_text: block.content
 						mode:      .single_line
@@ -108,19 +112,20 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			// Blockquote with left border, increased margin for nested quotes
 			left_margin := f32(block.blockquote_depth - 1) * cfg.style.nest_indent
 			content << row(
-				sizing:  fill_fit
-				padding: padding(0, 0, 0, left_margin)
-				content: [
+				sizing:      fill_fit
+				size_border: 0
+				padding:     padding(0, 0, 0, left_margin)
+				content:     [
 					rectangle(
 						sizing: fixed_fill
 						width:  3
 						color:  cfg.style.blockquote_border
 					),
 					column(
-						color:   cfg.style.blockquote_bg
-						padding: padding(8, 12, 8, 12)
-						sizing:  fill_fit
-						content: [
+						padding:     padding_none
+						size_border: 0
+						sizing:      fill_fit
+						content:     [
 							rtf(
 								rich_text: block.content
 								mode:      cfg.mode
@@ -139,17 +144,22 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			} else {
 				0
 			}
-			prefix_width := f32(block.list_prefix.len) * cfg.style.prefix_char_width
+			mut prefix_width := f32(block.list_prefix.len) * cfg.style.prefix_char_width
+			if block.list_prefix == '• ' {
+				prefix_width /= 2
+			}
 			list_items << row(
-				sizing:  fill_fit
-				spacing: 0
-				padding: padding(0, 0, 0, indent_width)
-				content: [
+				sizing:      fill_fit
+				spacing:     0
+				size_border: 0
+				padding:     padding(0, 0, 0, indent_width)
+				content:     [
 					column(
-						sizing:  fixed_fit
-						width:   prefix_width
-						padding: padding_none
-						content: [
+						sizing:      fixed_fit
+						width:       prefix_width
+						padding:     padding_none
+						size_border: 0
+						content:     [
 							text(
 								text:       block.list_prefix
 								text_style: cfg.style.text
@@ -157,9 +167,10 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 						]
 					),
 					column(
-						sizing:  fill_fit
-						padding: padding_none
-						content: [
+						sizing:      fill_fit
+						padding:     padding_none
+						size_border: 0
+						content:     [
 							rtf(
 								rich_text: block.content
 								mode:      cfg.mode
@@ -171,10 +182,11 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			// Flush if last block
 			if i == blocks.len - 1 {
 				content << column(
-					sizing:  fill_fit
-					padding: Padding{}
-					spacing: cfg.style.block_spacing / 2
-					content: list_items.clone()
+					sizing:      fill_fit
+					padding:     padding_none
+					size_border: 0
+					spacing:     cfg.style.block_spacing / 2
+					content:     list_items.clone()
 				)
 				list_items.clear()
 			}
