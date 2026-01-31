@@ -14,6 +14,15 @@ import sokol.sapp
 // - u64: data hashes - table_warned_no_id
 struct ViewState {
 mut:
+	cursor_on_sticky         bool // keeps the cursor visible during cursor movement
+	id_focus                 u32  // current view that has focus
+	input_cursor_on          bool = true // used by cursor blink animation
+	menu_key_nav             bool             // true, menu navigated by keyboard
+	mouse_cursor             sapp.MouseCursor // arrow, finger, ibeam, etc.
+	mouse_lock               MouseLockCfg     // mouse down/move/up/scroll/sliders, etc. use this
+	rtf_tooltip_rect         gg.Rect          // RTF abbreviation tooltip anchor rect
+	rtf_tooltip_text         string           // RTF abbreviation tooltip text
+	tooltip                  TooltipState     // State for the active tooltip
 	input_state              BoundedMap[u32, InputState] = BoundedMap[u32, InputState]{
 		max_size: 100
 	}
@@ -26,11 +35,9 @@ mut:
 	scroll_y                 BoundedMap[u32, f32] = BoundedMap[u32, f32]{
 		max_size: 200
 	}
-	mouse_cursor             sapp.MouseCursor // arrow, finger, ibeam, etc.
 	menu_state               BoundedMap[u32, string] = BoundedMap[u32, string]{
 		max_size: 20
 	}
-	menu_key_nav             bool // true, menu navigated by keyboard
 	image_map                BoundedImageMap = BoundedImageMap{
 		max_size: 100
 	}
@@ -55,13 +62,6 @@ mut:
 	date_picker_roller_state BoundedMap[string, DatePickerRollerState] = BoundedMap[string, DatePickerRollerState]{
 		max_size: 20
 	}
-	mouse_lock               MouseLockCfg // mouse down/move/up/scroll/sliders, etc. use this
-	tooltip                  TooltipState // State for the active tooltip
-	rtf_tooltip_rect         gg.Rect      // RTF abbreviation tooltip anchor rect
-	id_focus                 u32          // current view that has focus
-	cursor_on_sticky         bool         // keeps the cursor visible during cursor movement
-	rtf_tooltip_text         string       // RTF abbreviation tooltip text
-	input_cursor_on          bool = true // used by cursor blink animation
 	table_col_widths         BoundedMap[string, TableColCache] = BoundedMap[string, TableColCache]{
 		max_size: 50
 	}
