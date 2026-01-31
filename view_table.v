@@ -47,6 +47,7 @@ pub:
 	align_head           HorizontalAlign = HorizontalAlign.center
 	column_alignments    []HorizontalAlign // per-column data cell alignment
 	column_width_default f32 = 50
+	column_width_min     f32 = 20 // minimum column width
 	size_border          f32
 	size_border_header   f32 // optional header separator override
 	border_style         TableBorderStyle = .all
@@ -75,6 +76,7 @@ pub:
 }
 
 // TableCellCfg configures a table cell
+// Note: @[minify] not used due to V compiler bug with optional fields
 pub struct TableCellCfg {
 pub:
 	id         string
@@ -357,7 +359,7 @@ fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 			}
 			longest = f32_max(width, longest)
 		}
-		column_widths << longest
+		column_widths << f32_max(longest, cfg.column_width_min)
 	}
 	return column_widths
 }
