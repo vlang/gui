@@ -10,7 +10,7 @@ import math
 struct TableDemoApp {
 pub mut:
 	csv_table       TableData
-	selected_rows   []int
+	selected_rows   map[int]bool
 	selection_label string
 }
 
@@ -71,6 +71,7 @@ fn tables(mut window gui.Window) []gui.View {
 	return [
 		gui.text(text: 'Border Style: all (default grid)', text_style: gui.theme().b2),
 		window.table(
+			id:              'table-all'
 			color_border:    gui.gray
 			size_border:     1.0
 			border_style:    .all
@@ -79,6 +80,7 @@ fn tables(mut window gui.Window) []gui.View {
 		),
 		gui.text(text: 'Border Style: horizontal', text_style: gui.theme().b2),
 		window.table(
+			id:              'table-horiz'
 			color_border:    gui.gray
 			size_border:     1.0
 			border_style:    .horizontal
@@ -87,6 +89,7 @@ fn tables(mut window gui.Window) []gui.View {
 		),
 		gui.text(text: 'Border Style: header_only', text_style: gui.theme().b2),
 		window.table(
+			id:                 'table-header'
 			color_border:       gui.gray
 			size_border:        1.0
 			size_border_header: 2.0
@@ -96,6 +99,7 @@ fn tables(mut window gui.Window) []gui.View {
 		),
 		gui.text(text: 'Border Style: none', text_style: gui.theme().b2),
 		window.table(
+			id:              'table-none'
 			border_style:    .none
 			text_style_head: gui.theme().b3
 			color_row_alt:   gui.Color{32, 32, 32, 255}
@@ -104,16 +108,17 @@ fn tables(mut window gui.Window) []gui.View {
 		gui.text(text: 'Selection Demo', text_style: gui.theme().b2),
 		gui.text(text: 'Selected: ${app.selection_label}', text_style: gui.theme().n3),
 		window.table(
+			id:              'table-select'
 			color_border:    gui.gray
 			size_border:     1.0
 			text_style_head: gui.theme().b3
 			color_row_alt:   gui.Color{32, 32, 32, 255}
 			selected:        app.selected_rows
 			multi_select:    true
-			on_select:       fn (selected []int, row_idx int, mut e gui.Event, mut w gui.Window) {
+			on_select:       fn (selected map[int]bool, row_idx int, mut e gui.Event, mut w gui.Window) {
 				mut a := w.state[TableDemoApp]()
-				a.selected_rows = selected
-				a.selection_label = selected.map(it.str()).join(', ')
+				a.selected_rows = selected.clone()
+				a.selection_label = selected.keys().map(it.str()).join(', ')
 			}
 			data:            sample_data
 		),
@@ -127,6 +132,9 @@ fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) 
 	mut table_cfg := gui.table_cfg_from_data(table_data.sorted)
 	table_cfg = gui.TableCfg{
 		...table_cfg
+		id:           'table-csv'
+		id_scroll:    2
+		max_height:   200
 		color_border: gui.gray
 		size_border:  1.0
 	}

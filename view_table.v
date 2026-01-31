@@ -1,6 +1,7 @@
 module gui
 
 import encoding.csv
+import log
 
 // TableBorderStyle controls which borders are drawn in a table
 pub enum TableBorderStyle {
@@ -59,9 +60,10 @@ pub:
 	max_height           f32
 	sizing               Sizing
 	id_scroll            u32
+	scrollbar            ScrollbarOverflow // default .auto shows scrollbar; use .hidden to hide
 	multi_select         bool
-	selected             []int // selected row indices (0-based, header is row 0)
-	on_select            fn (selected []int, row_idx int, mut e Event, mut w Window) = unsafe { nil }
+	selected             map[int]bool // selected row indices (0-based, header is row 0)
+	on_select            fn (selected map[int]bool, row_idx int, mut e Event, mut w Window) = unsafe { nil }
 pub mut:
 	data []TableRowCfg
 }
@@ -91,7 +93,6 @@ pub:
 
 // table generates a table from the given [TableCfg](#TableCfg)
 pub fn (mut window Window) table(cfg TableCfg) View {
-	mut rows := []View{cap: cfg.data.len * 2} // extra capacity for separators
 	column_widths := window.table_column_widths(cfg)
 	last_row_idx := cfg.data.len - 1
 
@@ -107,7 +108,33 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 		else { f32(0) }
 	}
 
-	for row_idx, r in cfg.data {
+	// Virtualization: only render visible rows for scrollable tables with constrained height
+	table_height := if cfg.height > 0 { cfg.height } else { cfg.max_height }
+	virtualize := cfg.id_scroll > 0 && table_height > 0 && cfg.data.len > 0
+	row_height := table_estimate_row_height(cfg, mut window)
+	first_visible, last_visible := if virtualize {
+		table_visible_range(table_height, row_height, cfg, mut window)
+	} else {
+		0, last_row_idx
+	}
+
+	mut rows := []View{cap: (last_visible - first_visible + 1) * 2 + 2}
+
+	// Add top spacer for virtualized rows
+	if virtualize && first_visible > 0 {
+		rows << rectangle(
+			name:   'table spacer top'
+			color:  color_transparent
+			height: f32(first_visible) * row_height
+			sizing: fill_fixed
+		)
+	}
+
+	for row_idx in first_visible .. last_visible + 1 {
+		if row_idx >= cfg.data.len {
+			break
+		}
+		r := cfg.data[row_idx]
 		mut cells := []View{cap: r.cells.len}
 		for idx, cell in r.cells {
 			cell_text_style := cell.text_style or {
@@ -158,7 +185,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 		}
 
 		// Determine row background color
-		is_selected := row_idx in cfg.selected
+		is_selected := cfg.selected[row_idx]
 		row_color := if is_selected {
 			cfg.color_select
 		} else if alt := cfg.color_row_alt {
@@ -170,7 +197,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 		// Row click handler - selection or custom
 		row_on_click := r.on_click
 		on_select := cfg.on_select
-		selected := cfg.selected
+		selected := cfg.selected.clone()
 		multi_select := cfg.multi_select
 
 		rows << row(
@@ -186,11 +213,15 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 					row_on_click(layout, mut e, mut w)
 				}
 				if on_select != unsafe { nil } {
-					mut new_selected := if multi_select { selected.clone() } else { []int{} }
-					if row_idx in new_selected {
-						new_selected = new_selected.filter(it != row_idx)
+					mut new_selected := if multi_select {
+						selected.clone()
 					} else {
-						new_selected << row_idx
+						map[int]bool{}
+					}
+					if new_selected[row_idx] {
+						new_selected.delete(row_idx)
+					} else {
+						new_selected[row_idx] = true
 					}
 					on_select(new_selected, row_idx, mut e, mut w)
 				}
@@ -227,22 +258,38 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 			)
 		}
 	}
+
+	// Add bottom spacer for virtualized rows
+	if virtualize && last_visible < last_row_idx {
+		remaining := last_row_idx - last_visible
+		rows << rectangle(
+			name:   'table spacer bottom'
+			color:  color_transparent
+			height: f32(remaining) * row_height
+			sizing: fill_fixed
+		)
+	}
+
+	scrollbar_cfg := ScrollbarCfg{
+		overflow: cfg.scrollbar
+	}
 	return column(
-		name:       'table'
-		id:         cfg.id
-		id_scroll:  cfg.id_scroll
-		color:      color_transparent
-		padding:    padding_none
-		radius:     0
-		spacing:    row_spacing
-		sizing:     cfg.sizing
-		width:      cfg.width
-		height:     cfg.height
-		min_width:  cfg.min_width
-		max_width:  cfg.max_width
-		min_height: cfg.min_height
-		max_height: cfg.max_height
-		content:    rows
+		name:            'table'
+		id:              cfg.id
+		id_scroll:       cfg.id_scroll
+		scrollbar_cfg_y: &scrollbar_cfg
+		color:           color_transparent
+		padding:         padding_none
+		radius:          0
+		spacing:         row_spacing
+		sizing:          cfg.sizing
+		width:           cfg.width
+		height:          cfg.height
+		min_width:       cfg.min_width
+		max_width:       cfg.max_width
+		min_height:      cfg.min_height
+		max_height:      cfg.max_height
+		content:         rows
 	)
 }
 
@@ -335,11 +382,69 @@ pub fn td(value string) TableCellCfg {
 	}
 }
 
-// table_column_widths calculates max width per column
+// clear_table_cache clears cached column widths for a specific table
+pub fn (mut w Window) clear_table_cache(id string) {
+	w.view_state.table_col_widths.delete(id)
+}
+
+// clear_all_table_caches clears all cached table column widths
+pub fn (mut w Window) clear_all_table_caches() {
+	w.view_state.table_col_widths.clear()
+}
+
+// table_column_widths calculates max width per column (cached)
 fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 	if cfg.data.len == 0 || cfg.data[0].cells.len == 0 {
 		return []
 	}
+
+	data_hash := table_data_hash(cfg)
+
+	// Check cache if table has id
+	if cfg.id.len > 0 {
+		if cached := window.view_state.table_col_widths[cfg.id] {
+			if cached.hash == data_hash {
+				return cached.widths
+			}
+		}
+		widths := table_compute_column_widths(cfg, mut window)
+		window.view_state.table_col_widths[cfg.id] = TableColCache{
+			hash:   data_hash
+			widths: widths
+		}
+		return widths
+	}
+
+	// Warn once for tables without id that have many rows
+	if cfg.data.len > 20 && !window.view_state.table_warned_no_id[data_hash] {
+		window.view_state.table_warned_no_id[data_hash] = true
+		log.warn('table with ${cfg.data.len} rows has no id; column widths not cached')
+	}
+
+	return table_compute_column_widths(cfg, mut window)
+}
+
+// table_data_hash computes hash for cache invalidation
+fn table_data_hash(cfg &TableCfg) u64 {
+	mut h := u64(cfg.data.len)
+	h = h * 31 + u64(cfg.data[0].cells.len)
+	// Sample first, middle, last rows for change detection
+	sample_indices := [0, cfg.data.len / 2, cfg.data.len - 1]
+	for idx in sample_indices {
+		if idx >= 0 && idx < cfg.data.len {
+			row := cfg.data[idx]
+			for cell in row.cells {
+				for c in cell.value {
+					h = h * 31 + u64(c)
+				}
+			}
+		}
+	}
+	return h
+}
+
+// table_compute_column_widths calculates max width per column
+fn table_compute_column_widths(cfg &TableCfg, mut window Window) []f32 {
 	mut column_widths := []f32{cap: cfg.data[0].cells.len}
 	for idx, _ in cfg.data[0].cells {
 		mut longest := f32(0)
@@ -362,4 +467,26 @@ fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 		column_widths << f32_max(longest, cfg.column_width_min)
 	}
 	return column_widths
+}
+
+// table_estimate_row_height estimates row height for virtualization
+fn table_estimate_row_height(cfg &TableCfg, mut window Window) f32 {
+	vg_cfg := cfg.text_style.to_vglyph_cfg()
+	font_h := window.text_system.font_height(vg_cfg)
+	border := match cfg.border_style {
+		.all { cfg.size_border }
+		else { f32(0) }
+	}
+	return font_h + cfg.cell_padding.height() + border
+}
+
+// table_visible_range calculates first/last visible row indices for virtualization
+fn table_visible_range(table_height f32, row_height f32, cfg &TableCfg, mut window Window) (int, int) {
+	scroll_y := -window.view_state.scroll_y[cfg.id_scroll] // scroll_y is negative
+	first := int(scroll_y / row_height)
+	visible_rows := int(table_height / row_height) + 1
+	buffer := 2
+	first_visible := int_max(0, first - buffer)
+	last_visible := int_min(cfg.data.len - 1, first + visible_rows + buffer)
+	return first_visible, last_visible
 }

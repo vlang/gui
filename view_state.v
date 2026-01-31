@@ -30,6 +30,14 @@ mut:
 	cursor_on_sticky         bool    // keeps the cursor visible during cursor movement
 	rtf_tooltip_text         string  // RTF abbreviation tooltip text
 	input_cursor_on          bool = true // used by cursor blink animation
+	table_col_widths         map[string]TableColCache // [table id] -> cached column widths
+	table_warned_no_id       map[u64]bool             // tracks warned tables without id (by data hash)
+}
+
+// TableColCache stores cached column widths and hash for invalidation
+struct TableColCache {
+	hash   u64   // hash of table data for cache invalidation
+	widths []f32 // cached column widths
 }
 
 // MouseLockCfg stores callback functions for mouse event handling in a locked state.

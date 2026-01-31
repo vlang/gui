@@ -109,10 +109,13 @@ fn test_table_border_styles() {
 fn test_table_selection_config() {
 	cfg := TableCfg{
 		multi_select: true
-		selected:     [1, 3]
+		selected:     {
+			1: true
+			3: true
+		}
 	}
 	assert cfg.multi_select == true
 	assert cfg.selected.len == 2
-	assert 1 in cfg.selected
-	assert 3 in cfg.selected
+	assert cfg.selected[1]
+	assert cfg.selected[3]
 }
