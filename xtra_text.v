@@ -19,6 +19,18 @@ pub fn text_width(text string, text_style TextStyle, mut window Window) f32 {
 	return window.text_system.text_width(text, cfg) or { 0 }
 }
 
+// rich_text_width calculates the width of RichText accounting for all font styles.
+fn rich_text_width(rt RichText, mut window Window) f32 {
+	cfg := vglyph.TextConfig{
+		block: vglyph.BlockStyle{
+			wrap:  .word
+			width: -1.0
+		}
+	}
+	layout := window.text_system.layout_rich_text(rt.to_vglyph_rich_text(), cfg) or { return 0 }
+	return layout.width
+}
+
 // text_width_shape measures the visual width of the shape's lines, mirroring render rules:
 // - when in password mode (and not placeholder), measure '*' repeated for visible rune count
 fn text_width_shape(shape &Shape, mut window Window) f32 {

@@ -79,6 +79,7 @@ pub struct TableCellCfg {
 pub:
 	id         string
 	value      string
+	rich_text  ?RichText // for accurate width calculation with mixed fonts
 	head_cell  bool
 	h_align    ?HorizontalAlign // optional per-cell override
 	text_style ?TextStyle
@@ -345,11 +346,15 @@ fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 				continue
 			}
 			cell := row.cells[idx]
-			text_style := cell.text_style or {
-				if cell.head_cell { cfg.text_style_head } else { cfg.text_style }
-			}
+			width := if rt := cell.rich_text {
+				rich_text_width(rt, mut window)
+			} else {
+				text_style := cell.text_style or {
+					if cell.head_cell { cfg.text_style_head } else { cfg.text_style }
+				}
 
-			width := text_width(cell.value, text_style, mut window)
+				text_width(cell.value, text_style, mut window)
+			}
 			longest = f32_max(width, longest)
 		}
 		column_widths << longest

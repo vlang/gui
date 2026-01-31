@@ -77,7 +77,8 @@ fn build_markdown_table_data(parsed ParsedTable, style MarkdownStyle) []TableRow
 	mut header_cells := []TableCellCfg{cap: parsed.headers.len}
 	for h in parsed.headers {
 		header_cells << TableCellCfg{
-			value:     rich_text_plain(h) // for width calculation
+			value:     rich_text_plain(h)
+			rich_text: h
 			head_cell: true
 			content:   rtf(rich_text: h, mode: .single_line)
 		}
@@ -90,8 +91,9 @@ fn build_markdown_table_data(parsed ParsedTable, style MarkdownStyle) []TableRow
 		mut cells := []TableCellCfg{cap: r.len}
 		for cell in r {
 			cells << TableCellCfg{
-				value:   rich_text_plain(cell) // for width calculation
-				content: rtf(rich_text: cell, mode: .single_line)
+				value:     rich_text_plain(cell)
+				rich_text: cell
+				content:   rtf(rich_text: cell, mode: .single_line)
 			}
 		}
 		rows << TableRowCfg{
