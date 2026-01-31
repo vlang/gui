@@ -45,7 +45,7 @@ fn make_menu_amend_layout(cfg MenubarCfg) fn (mut Layout, mut Window) {
 fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
 	mut content := []View{cap: items.len}
 
-	id_selected := window.view_state.menu_state[cfg.id_focus]
+	id_selected := window.view_state.menu_state.get(cfg.id_focus) or { '' }
 	sizing := if level == 0 { fit_fit } else { fill_fit }
 
 	for item in items {
@@ -125,7 +125,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 // highlighted when the user clicks elsewhere.
 fn (cfg &MenubarCfg) amend_layout_menubar(mut layout Layout, mut w Window) {
 	if !w.is_focus(cfg.id_focus) {
-		w.view_state.menu_state[cfg.id_focus] = ''
+		w.view_state.menu_state.set(cfg.id_focus, '')
 		return
 	}
 }
@@ -136,7 +136,7 @@ fn (cfg &MenubarCfg) amend_layout_menubar(mut layout Layout, mut w Window) {
 // navigation in desktop UI toolkits. Involves navigating both Layout and MenubarCfg
 // trees to determine relationships.
 fn (cfg &MenubarCfg) on_hover_submenu(mut layout Layout, mut _ Event, mut w Window) {
-	id_selected := w.view_state.menu_state[cfg.id_focus]
+	id_selected := w.view_state.menu_state.get(cfg.id_focus) or { '' }
 	has_selected := descendant_has_menu_id(layout, id_selected)
 
 	if has_selected {
@@ -147,7 +147,7 @@ fn (cfg &MenubarCfg) on_hover_submenu(mut layout Layout, mut _ Event, mut w Wind
 			// then highlight the parent menu item (id = layout.shape.id).
 			if mi_cfg := find_menu_item_cfg(cfg.items, id_selected) {
 				if mi_cfg.submenu.len == 0 {
-					w.view_state.menu_state[cfg.id_focus] = layout.shape.id
+					w.view_state.menu_state.set(cfg.id_focus, layout.shape.id)
 				}
 			}
 		}

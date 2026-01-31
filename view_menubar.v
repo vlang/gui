@@ -88,10 +88,11 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 
 	// If the menubar already has focus but no selected menu yet,
 	// choose the first selectable menu item.
-	if window.is_focus(cfg.id_focus) && window.view_state.menu_state[cfg.id_focus] == '' {
+	current_menu := window.view_state.menu_state.get(cfg.id_focus) or { '' }
+	if window.is_focus(cfg.id_focus) && current_menu == '' {
 		for item in cfg.items {
 			if is_selectable_menu_id(item.id) {
-				window.view_state.menu_state[cfg.id_focus] = item.id
+				window.view_state.menu_state.set(cfg.id_focus, item.id)
 				break
 			}
 		}
@@ -149,12 +150,12 @@ struct MenuIdNode {
 // space/enter activate the focused menu-item (item action first, then menubar action)
 // left/right/up/down use the precomputed menu_mapper graph to relocate focus
 fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
-	menu_id := w.view_state.menu_state[cfg.id_focus]
+	menu_id := w.view_state.menu_state.get(cfg.id_focus) or { '' }
 
 	if e.key_code == .escape {
 		// Close menus and drop focus.
 		w.set_id_focus(0)
-		w.view_state.menu_state[cfg.id_focus] = ''
+		w.view_state.menu_state.set(cfg.id_focus, '')
 		e.is_handled = true
 		return
 	}
@@ -179,7 +180,7 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 		}
 		// Close after activation.
 		w.set_id_focus(0)
-		w.view_state.menu_state[cfg.id_focus] = ''
+		w.view_state.menu_state.set(cfg.id_focus, '')
 		e.is_handled = true
 		return
 	}
@@ -196,7 +197,7 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 	// Apply navigation if valid and selectable.
 	if menu_id != new_menu_id && is_selectable_menu_id(new_menu_id) {
 		w.view_state.menu_key_nav = true
-		w.view_state.menu_state[cfg.id_focus] = new_menu_id
+		w.view_state.menu_state.set(cfg.id_focus, new_menu_id)
 		e.is_handled = true
 	}
 }

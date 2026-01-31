@@ -19,8 +19,8 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 	// Round to nearest integer to reduce cache misses from minor float differences
 	cache_key := '${svg_src}:${int(width + 0.5)}x${int(height + 0.5)}'
 
-	// Check cache first
-	if cached := window.view_state.svg_cache[cache_key] {
+	// Check cache first (LRU: get moves to end)
+	if cached := window.view_state.svg_cache.get(cache_key) {
 		return cached
 	}
 
@@ -50,7 +50,8 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		scale:     scale
 	}
 
-	window.view_state.svg_cache[cache_key] = cached
+	// set handles LRU eviction internally
+	window.view_state.svg_cache.set(cache_key, cached)
 	return cached
 }
 
@@ -60,7 +61,7 @@ pub fn (mut window Window) remove_svg_from_cache(svg_src string) {
 	// Cache keys are formatted as "${svg_src}:${width}x${height}"
 	prefix := '${svg_src}:'
 	mut keys_to_delete := []string{}
-	for key, _ in window.view_state.svg_cache {
+	for key in window.view_state.svg_cache.keys() {
 		if key.starts_with(prefix) {
 			keys_to_delete << key
 		}

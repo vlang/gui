@@ -111,13 +111,13 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 
 	// Cache lookup using source hash
 	hash := cfg.source.hash()
-	blocks := if cached := window.view_state.markdown_cache[hash] {
+	blocks := if cached := window.view_state.markdown_cache.get(hash) {
 		cached
 	} else {
 		parsed := markdown_to_blocks(cfg.source, cfg.style)
 		unsafe {
 			mut w := window
-			w.view_state.markdown_cache[hash] = parsed
+			w.view_state.markdown_cache.set(hash, parsed)
 		}
 		parsed
 	}

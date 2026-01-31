@@ -161,7 +161,7 @@ fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&Layout, mut Event
 		}
 
 		// Mark this item as the selected/highlighted one.
-		w.view_state.menu_state[cfg.id_focus] = item_cfg.id
+		w.view_state.menu_state.set(cfg.id_focus, item_cfg.id)
 
 		// Item-specific action callback.
 		if item_cfg.action != unsafe { nil } {
@@ -176,9 +176,9 @@ fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&Layout, mut Event
 		// If the item has no submenu and is not top-level, clicking collapses the menu.
 		if item_cfg.submenu.len == 0 && item_cfg.id !in cfg.items.map(it.id) {
 			w.set_id_focus(0)
-			w.view_state.menu_state[cfg.id_focus] = ''
+			w.view_state.menu_state.set(cfg.id_focus, '')
 		} else {
-			w.view_state.menu_state[cfg.id_focus] = item_cfg.id
+			w.view_state.menu_state.set(cfg.id_focus, item_cfg.id)
 		}
 
 		e.is_handled = true
@@ -194,5 +194,5 @@ fn (cfg &MenubarCfg) on_hover_item(mut layout Layout, mut _ Event, mut w Window)
 		return
 	}
 	// Set the currently hovered menu item as selected.
-	w.view_state.menu_state[cfg.id_focus] = layout.shape.id
+	w.view_state.menu_state.set(cfg.id_focus, layout.shape.id)
 }

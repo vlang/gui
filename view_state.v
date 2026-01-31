@@ -3,9 +3,6 @@ module gui
 import gg
 import sokol.sapp
 
-const max_svg_cache_size = 100
-const max_markdown_cache_size = 50
-
 // ViewState stores the transient state of the GUI views.
 // Since views are regenerated every frame in immediate mode, this struct
 // persists state like focus, scroll positions, and input selections across frames.
@@ -23,14 +20,18 @@ mut:
 	scroll_y                 BoundedMap[u32, f32] = BoundedMap[u32, f32]{
 		max_size: 200
 	}
-	mouse_cursor             sapp.MouseCursor        // arrow, finger, ibeam, etc.
-	menu_state               map[u32]string          // [id_menubar] -> id of menu
-	menu_key_nav             bool                    // true, menu navigated by keyboard
-	image_map                BoundedImageMap         // [file name] -> context.cache image id (max 100)
-	svg_cache                map[string]&CachedSvg   // [cache key] -> cached SVG data
-	svg_cache_order          []string                // LRU order for svg_cache eviction
-	markdown_cache           map[int][]MarkdownBlock // [source hash] -> parsed blocks
-	markdown_cache_order     []int                   // FIFO order for markdown_cache eviction
+	mouse_cursor             sapp.MouseCursor // arrow, finger, ibeam, etc.
+	menu_state               BoundedMap[u32, string] = BoundedMap[u32, string]{
+		max_size: 20
+	}
+	menu_key_nav             bool            // true, menu navigated by keyboard
+	image_map                BoundedImageMap // [file name] -> context.cache image id (max 100)
+	svg_cache                BoundedSvgCache = BoundedSvgCache{
+		max_size: 100
+	}
+	markdown_cache           BoundedMarkdownCache = BoundedMarkdownCache{
+		max_size: 50
+	}
 	select_state             BoundedMap[string, bool] = BoundedMap[string, bool]{
 		max_size: 50
 	}
