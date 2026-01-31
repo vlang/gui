@@ -663,7 +663,7 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 	if window.is_focus(shape.id_focus) && shape.shape_type == .text
 		&& window.view_state.input_cursor_on {
-		input_state := window.view_state.input_state[shape.id_focus]
+		input_state := window.view_state.input_state.get(shape.id_focus) or { InputState{} }
 		cursor_pos := input_state.cursor_pos
 
 		if cursor_pos >= 0 {

@@ -30,9 +30,9 @@ pub fn (mut window Window) load_image(file_name string) !&Image {
 pub fn (mut window Window) load_image_no_validate(file_name string) !&Image {
 	real_path := os.real_path(file_name)
 	mut ctx := window.context()
-	return ctx.get_cached_image_by_idx(window.view_state.image_map[real_path] or {
+	return ctx.get_cached_image_by_idx(window.view_state.image_map.get(real_path) or {
 		image := ctx.create_image(file_name)! // ctx.create_image caches images
-		window.view_state.image_map[real_path] = image.id
+		window.view_state.image_map.set(real_path, image.id, mut ctx)
 		return &image
 	})
 }
@@ -42,10 +42,12 @@ pub fn (mut window Window) load_image_no_validate(file_name string) !&Image {
 pub fn (mut window Window) remove_image_from_cache(image &Image) {
 	mut ctx := window.context()
 	ctx.remove_cached_image_by_idx(image.id)
-	for key, value in window.view_state.image_map {
-		if value == image.id {
-			window.view_state.image_map.delete(key)
-			break
+	for key in window.view_state.image_map.keys() {
+		if value := window.view_state.image_map.get(key) {
+			if value == image.id {
+				window.view_state.image_map.delete(key)
+				break
+			}
 		}
 	}
 }
@@ -54,8 +56,64 @@ pub fn (mut window Window) remove_image_from_cache(image &Image) {
 // Does nothing if not in cache.
 pub fn (mut window Window) remove_image_from_cache_by_file_name(file_name string) {
 	real_path := os.real_path(file_name)
-	image_idx := window.view_state.image_map[real_path] or { return }
+	image_idx := window.view_state.image_map.get(real_path) or { return }
 	window.view_state.image_map.delete(real_path)
 	mut ctx := window.context()
 	ctx.remove_cached_image_by_idx(image_idx)
+}
+
+// BoundedImageMap stores image paths -> cache IDs with eviction cleanup.
+// On eviction, removes cached image from graphics context.
+struct BoundedImageMap {
+mut:
+	data     map[string]int
+	order    []string
+	max_size int = 100
+}
+
+// set adds or updates image cache entry. Evicts oldest with cleanup if at capacity.
+fn (mut m BoundedImageMap) set(key string, value int, mut ctx gg.Context) {
+	if key !in m.data {
+		if m.data.len >= m.max_size && m.order.len > 0 {
+			oldest := m.order[0]
+			if old_id := m.data[oldest] {
+				ctx.remove_cached_image_by_idx(old_id)
+			}
+			m.data.delete(oldest)
+			m.order.delete(0)
+		}
+		m.order << key
+	}
+	m.data[key] = value
+}
+
+// get returns cache ID for image path, or none if not found.
+fn (m &BoundedImageMap) get(key string) ?int {
+	return m.data[key] or { return none }
+}
+
+// contains returns true if image path is cached.
+fn (m &BoundedImageMap) contains(key string) bool {
+	return key in m.data
+}
+
+// delete removes image from cache tracking (does not remove from graphics context).
+fn (mut m BoundedImageMap) delete(key string) {
+	if key in m.data {
+		m.data.delete(key)
+		idx := m.order.index(key)
+		if idx >= 0 {
+			m.order.delete(idx)
+		}
+	}
+}
+
+// keys returns all cached image paths in insertion order.
+fn (m &BoundedImageMap) keys() []string {
+	return m.order
+}
+
+// len returns number of cached images.
+fn (m &BoundedImageMap) len() int {
+	return m.data.len
 }

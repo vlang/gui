@@ -43,7 +43,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	window.stats.increment_layouts()
 	window.stats.increment_text_views()
 
-	input_state := window.view_state.input_state[tv.id_focus]
+	input_state := window.view_state.input_state.get(tv.id_focus) or { InputState{} }
 	mut layout := Layout{
 		shape: &Shape{
 			name:                'text'
@@ -174,14 +174,14 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 		)
 		// Set cursor position and reset text selection
 		cursor_offset := offset_from_cursor_position(layout.shape, cursor_pos, mut w)
-		input_state := w.view_state.input_state[layout.shape.id_focus]
-		w.view_state.input_state[layout.shape.id_focus] = InputState{
+		input_state := w.view_state.input_state.get(layout.shape.id_focus) or { InputState{} }
+		w.view_state.input_state.set(layout.shape.id_focus, InputState{
 			...input_state
 			cursor_pos:    cursor_pos
 			select_beg:    0
 			select_end:    0
 			cursor_offset: cursor_offset
-		}
+		})
 		e.is_handled = true
 	}
 }
@@ -204,7 +204,7 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 		mut mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
 
 		scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
-		current_scroll_y := w.view_state.scroll_y[id_scroll_container]
+		current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
 
 		if scroll_y != current_scroll_y {
 			if !w.has_animation(id_auto_scroll_animation) {
@@ -224,13 +224,13 @@ fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
 		}
 
 		sel_beg, sel_end := selection_range(start_cursor_pos, mouse_cursor_pos)
-		w.view_state.input_state[id_focus] = InputState{
-			...w.view_state.input_state[id_focus]
+		w.view_state.input_state.set(id_focus, InputState{
+			...w.view_state.input_state.get(id_focus) or { InputState{} }
 			cursor_pos:    mouse_cursor_pos
 			cursor_offset: -1
 			select_beg:    sel_beg
 			select_end:    sel_end
-		}
+		})
 
 		scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
 		e.is_handled = true
@@ -251,7 +251,9 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		if tv.placeholder_active || window.mouse_is_locked() {
 			return
 		}
-		mut input_state := window.view_state.input_state[layout.shape.id_focus]
+		mut input_state := window.view_state.input_state.get(layout.shape.id_focus) or {
+			InputState{}
+		}
 		mut pos := input_state.cursor_pos
 		mut offset := input_state.cursor_offset
 
@@ -350,13 +352,13 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		}
 
 		// Update input state with new cursor position and selection
-		window.view_state.input_state[layout.shape.id_focus] = InputState{
+		window.view_state.input_state.set(layout.shape.id_focus, InputState{
 			...input_state
 			cursor_pos:    pos
 			select_beg:    select_beg
 			select_end:    select_end
 			cursor_offset: offset
-		}
+		})
 
 		// Ensure the new cursor position is visible
 		scroll_cursor_into_view(pos, layout, mut window)
@@ -407,7 +409,7 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 	if cfg.placeholder_active || cfg.is_password {
 		return none
 	}
-	input_state := w.view_state.input_state[cfg.id_focus]
+	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 
 	// Only copy if there is an active selection
 	if input_state.select_beg != input_state.select_end {
@@ -430,25 +432,25 @@ pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
 	if tv.placeholder_active {
 		return
 	}
-	input_state := w.view_state.input_state[tv.id_focus]
+	input_state := w.view_state.input_state.get(tv.id_focus) or { InputState{} }
 	len := utf8_str_visible_length(tv.text)
-	w.view_state.input_state[tv.id_focus] = InputState{
+	w.view_state.input_state.set(tv.id_focus, InputState{
 		...input_state
 		cursor_pos:    len
 		select_beg:    0
 		select_end:    u32(len)
 		cursor_offset: offset_from_cursor_position(shape, len, mut w)
-	}
+	})
 }
 
 // unselect_all clears any active text selection and resets the cursor
 // position to the beginning of the text. This collapses the selection range
 // to zero.
 pub fn (tv &TextView) unselect_all(mut w Window) {
-	input_state := w.view_state.input_state[tv.id_focus]
-	w.view_state.input_state[tv.id_focus] = InputState{
+	input_state := w.view_state.input_state.get(tv.id_focus) or { InputState{} }
+	w.view_state.input_state.set(tv.id_focus, InputState{
 		...input_state
 		select_beg: 0
 		select_end: 0
-	}
+	})
 }

@@ -3,6 +3,8 @@ module gui
 import encoding.csv
 import log
 
+const max_table_warned_size = 1000
+
 // TableBorderStyle controls which borders are drawn in a table
 pub enum TableBorderStyle {
 	none        // no borders
@@ -16,7 +18,7 @@ pub enum TableBorderStyle {
 // ([TableCellCfg](#TableCellCfg)). Because the formatting of structs can use large amounts
 // of vertical space, several helper methods are available:
 //
-// - `tr(tr(cols []TableCellCfg))` creates a row from the given cells
+// - `tr(cols []TableCellCfg)` creates a row from the given cells
 // - `th(text string)` creates a header cell
 // - `td(text string)` creates a data cell
 //
@@ -367,7 +369,7 @@ pub fn tr(cols []TableCellCfg) TableRowCfg {
 	}
 }
 
-// th is a helper method to configure a table cell from the given of [TableCellCfg](#TableCellCfg)
+// th is a helper method to configure a header cell
 pub fn th(value string) TableCellCfg {
 	return TableCellCfg{
 		value:     value
@@ -375,7 +377,7 @@ pub fn th(value string) TableCellCfg {
 	}
 }
 
-// td is a helper method to configure a table cell from the given of [TableCellCfg](#TableCellCfg)
+// td is a helper method to configure a data cell
 pub fn td(value string) TableCellCfg {
 	return TableCellCfg{
 		value: value
@@ -402,22 +404,22 @@ fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 
 	// Check cache if table has id
 	if cfg.id.len > 0 {
-		if cached := window.view_state.table_col_widths[cfg.id] {
+		if cached := window.view_state.table_col_widths.get(cfg.id) {
 			if cached.hash == data_hash {
 				return cached.widths
 			}
 		}
 		widths := table_compute_column_widths(cfg, mut window)
-		window.view_state.table_col_widths[cfg.id] = TableColCache{
+		window.view_state.table_col_widths.set(cfg.id, TableColCache{
 			hash:   data_hash
 			widths: widths
-		}
+		})
 		return widths
 	}
 
 	// Warn once for tables without id that have many rows
-	if cfg.data.len > 20 && !window.view_state.table_warned_no_id[data_hash] {
-		window.view_state.table_warned_no_id[data_hash] = true
+	if cfg.data.len > 20 && !(window.view_state.table_warned_no_id.get(data_hash) or { false }) {
+		window.view_state.table_warned_no_id.set(data_hash, true)
 		log.warn('table with ${cfg.data.len} rows has no id; column widths not cached')
 	}
 
@@ -482,7 +484,7 @@ fn table_estimate_row_height(cfg &TableCfg, mut window Window) f32 {
 
 // table_visible_range calculates first/last visible row indices for virtualization
 fn table_visible_range(table_height f32, row_height f32, cfg &TableCfg, mut window Window) (int, int) {
-	scroll_y := -window.view_state.scroll_y[cfg.id_scroll] // scroll_y is negative
+	scroll_y := -(window.view_state.scroll_y.get(cfg.id_scroll) or { f32(0) }) // scroll_y is negative
 	first := int(scroll_y / row_height)
 	visible_rows := int(table_height / row_height) + 1
 	buffer := 2

@@ -68,6 +68,7 @@ pub:
 // Returns:
 //   View - A column layout containing the input field and floating date picker
 pub fn (mut window Window) input_date(cfg InputDateCfg) View {
+	picker_visible := window.view_state.input_date_state.get(cfg.id) or { false }
 	return column(
 		padding: padding_none
 		content: [
@@ -79,9 +80,9 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 				// on_text_changed:    cfg.on_text_changed
 				on_enter:          cfg.on_enter
 				on_click_icon:     fn [cfg] (_ &Layout, mut e Event, mut w Window) {
-					visible := w.view_state.input_date_state[cfg.id]
+					visible := w.view_state.input_date_state.get(cfg.id) or { false }
 					w.view_state.input_date_state.clear() // close all other date_pickers
-					w.view_state.input_date_state[cfg.id] = !visible
+					w.view_state.input_date_state.set(cfg.id, !visible)
 					e.is_handled = true
 				}
 				sizing:            cfg.sizing
@@ -111,7 +112,7 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 				float_anchor:   .bottom_left
 				float_offset_y: -cfg.size_border
 
-				invisible: !window.view_state.input_date_state[cfg.id]
+				invisible: !picker_visible
 				padding:   padding_none
 				content:   [
 					window.date_picker(DatePickerCfg{

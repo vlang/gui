@@ -65,7 +65,10 @@ fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, mut window Window) []View {
 
 fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 	id := if node.id.len == 0 { node.text } else { node.id }
-	is_open := window.view_state.tree_state[cfg.id][id]
+	tree_map := window.view_state.tree_state.get(cfg.id) or {
+		map[string]bool{}
+	}
+	is_open := tree_map[id]
 	arrow := match true {
 		node.nodes.len == 0 { ' ' }
 		is_open { icon_drop_down }
@@ -105,7 +108,11 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 		]
 		on_click: fn [cfg_id, on_select, is_open, node, id] (_ &Layout, mut e Event, mut w Window) {
 			if node.nodes.len > 0 {
-				w.view_state.tree_state[cfg_id][id] = !is_open
+				mut tree_map := w.view_state.tree_state.get(cfg_id) or {
+					map[string]bool{}
+				}
+				tree_map[id] = !is_open
+				w.view_state.tree_state.set(cfg_id, tree_map)
 			}
 			if on_select != unsafe { nil } {
 				on_select(id, mut w)

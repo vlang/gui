@@ -10,7 +10,6 @@ module gui
 // - Password field masking and placeholder text
 // - Custom callbacks for text changes and enter key
 import log
-import datatypes
 import arrays
 
 // InputState manages focus and input states. The window maintains this state
@@ -23,8 +22,8 @@ pub:
 	cursor_pos int
 	select_beg u32
 	select_end u32
-	undo       datatypes.Stack[InputMemento]
-	redo       datatypes.Stack[InputMemento]
+	undo       BoundedStack[InputMemento]
+	redo       BoundedStack[InputMemento]
 	// cursor_offset is used to maintain the horizontal offset of the cursor
 	// when traversing vertically through text. It is reset when a non-vertical
 	// navigation operation occurs.
@@ -322,7 +321,7 @@ fn (cfg &InputCfg) on_char(layout &Layout, mut event Event, mut w Window) {
 // undo stack before modification. Returns modified text or none if invalid.
 fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 	mut text := cfg.text.runes()
-	input_state := w.view_state.input_state[cfg.id_focus]
+	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 	mut cursor_pos := input_state.cursor_pos
 	if cursor_pos < 0 {
 		cursor_pos = cfg.text.len
@@ -361,13 +360,13 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 		select_end:    input_state.select_end
 		cursor_offset: input_state.cursor_offset
 	})
-	w.view_state.input_state[cfg.id_focus] = InputState{
+	w.view_state.input_state.set(cfg.id_focus, InputState{
 		cursor_pos:    cursor_pos
 		select_beg:    0
 		select_end:    0
 		undo:          undo
 		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
-	}
+	})
 	return text.string()
 }
 
@@ -385,7 +384,7 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		}
 	}
 	mut text := cfg.text.runes()
-	input_state := w.view_state.input_state[cfg.id_focus]
+	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 	mut cursor_pos := input_state.cursor_pos
 	if cursor_pos < 0 {
 		text = arrays.append(cfg.text.runes(), s.runes())
@@ -414,13 +413,13 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		select_end:    input_state.select_end
 		cursor_offset: input_state.cursor_offset
 	})
-	w.view_state.input_state[cfg.id_focus] = InputState{
+	w.view_state.input_state.set(cfg.id_focus, InputState{
 		cursor_pos:    cursor_pos
 		select_beg:    0
 		select_end:    0
 		undo:          undo
 		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
-	}
+	})
 	return text.string()
 }
 
@@ -440,7 +439,7 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	if cfg.is_password {
 		return none
 	}
-	input_state := w.view_state.input_state[cfg.id_focus]
+	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 		len := utf8_str_visible_length(cfg.text)
@@ -467,7 +466,7 @@ pub fn (cfg &InputCfg) paste(s string, mut w Window) !string {
 // undo reverts to previous state from undo stack and pushes current state
 // to redo stack. Returns restored text or current text if stack empty.
 pub fn (cfg &InputCfg) undo(mut w Window) string {
-	input_state := w.view_state.input_state[cfg.id_focus]
+	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 	mut undo := input_state.undo
 	memento := undo.pop() or { return cfg.text }
 	mut redo := input_state.redo
@@ -478,21 +477,21 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 		select_end:    input_state.select_end
 		cursor_offset: input_state.cursor_offset
 	})
-	w.view_state.input_state[cfg.id_focus] = InputState{
+	w.view_state.input_state.set(cfg.id_focus, InputState{
 		cursor_pos:    memento.cursor_pos
 		select_beg:    memento.select_beg
 		select_end:    memento.select_end
 		undo:          undo
 		redo:          redo
 		cursor_offset: memento.cursor_offset
-	}
+	})
 	return memento.text
 }
 
 // redo reapplies a previously undone operation. Returns restored text or
 // current text if stack empty.
 pub fn (cfg &InputCfg) redo(mut w Window) string {
-	input_state := w.view_state.input_state[cfg.id_focus]
+	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 	mut redo := input_state.redo
 	memento := redo.pop() or { return cfg.text }
 	mut undo := input_state.undo
@@ -503,14 +502,14 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 		select_end:    input_state.select_end
 		cursor_offset: input_state.cursor_offset
 	})
-	w.view_state.input_state[cfg.id_focus] = InputState{
+	w.view_state.input_state.set(cfg.id_focus, InputState{
 		cursor_pos:    memento.cursor_pos
 		select_beg:    memento.select_beg
 		select_end:    memento.select_end
 		cursor_offset: memento.cursor_offset
 		undo:          undo
 		redo:          redo
-	}
+	})
 	return memento.text
 }
 

@@ -287,7 +287,7 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 	}
 
 	// This is similar what is done in mouse-move
-	cursor_pos := w.view_state.input_state[id_focus].cursor_pos
+	cursor_pos := (w.view_state.input_state.get(id_focus) or { InputState{} }).cursor_pos
 	start_cursor_pos := w.view_state.mouse_lock.cursor_pos
 
 	// synthesize an event relative to the layout shape
@@ -299,7 +299,7 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 	mut mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
 
 	scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
-	current_scroll_y := w.view_state.scroll_y[id_scroll_container]
+	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
 
 	// Here's the key difference from mouse-move. If the cursor is outside
 	// the view, scroll up or down one line, not to mouse_cursor_pos
@@ -313,13 +313,13 @@ fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut 
 
 	// Update the input state with the positions
 	sel_beg, sel_end := selection_range(start_cursor_pos, mouse_cursor_pos)
-	w.view_state.input_state[id_focus] = InputState{
-		...w.view_state.input_state[id_focus]
+	w.view_state.input_state.set(id_focus, InputState{
+		...w.view_state.input_state.get(id_focus) or { InputState{} }
 		cursor_pos:    mouse_cursor_pos
 		cursor_offset: -1
 		select_beg:    sel_beg
 		select_end:    sel_end
-	}
+	})
 
 	scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
 
@@ -359,7 +359,7 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 
 	rect := shape.vglyph_layout.get_char_rect(byte_idx) or { gg.Rect{} }
 
-	current_scroll_y := w.view_state.scroll_y[id_scroll_container]
+	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
 
 	// rect.y is in text-local coords. Convert to scroll container content coords
 	// by adding shape's original position (before scroll was applied).

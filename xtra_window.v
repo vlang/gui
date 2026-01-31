@@ -61,7 +61,7 @@ pub fn (mut window Window) dialog(cfg DialogCfg) {
 // dialog_dismiss closes an dialog box without invoking callbacks.
 // Useful for custom dialog types.
 pub fn (mut window Window) dialog_dismiss() {
-	window.view_state.input_state[window.dialog_cfg.id_focus] = InputState{}
+	window.view_state.input_state.set(window.dialog_cfg.id_focus, InputState{})
 	window.dialog_cfg = DialogCfg{}
 }
 
@@ -199,10 +199,10 @@ pub fn (mut w Window) scroll_to_view(id string) {
 		p = p.parent
 		if p.shape.id_scroll > 0 {
 			scroll_id := p.shape.id_scroll
-			current_scroll := w.view_state.scroll_y[scroll_id]
+			current_scroll := w.view_state.scroll_y.get(scroll_id) or { f32(0) }
 			base_y := p.shape.y + p.shape.padding.top
 			new_scroll := base_y - target.shape.y + current_scroll
-			w.view_state.scroll_y[scroll_id] = new_scroll
+			w.view_state.scroll_y.set(scroll_id, new_scroll)
 			w.update_window()
 			return
 		}
@@ -212,25 +212,27 @@ pub fn (mut w Window) scroll_to_view(id string) {
 // scroll_horizontal_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_horizontal_by(id_scroll u32, delta f32) {
-	window.view_state.scroll_x[id_scroll] += delta
+	current := window.view_state.scroll_x.get(id_scroll) or { f32(0) }
+	window.view_state.scroll_x.set(id_scroll, current + delta)
 }
 
 // scroll_horizontal_to scrolls the given scrollable to the offset. offset is negative.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_horizontal_to(id_scroll u32, offset f32) {
-	window.view_state.scroll_x[id_scroll] = offset
+	window.view_state.scroll_x.set(id_scroll, offset)
 }
 
 // scroll_vertical_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_by(id_scroll u32, delta f32) {
-	window.view_state.scroll_y[id_scroll] += delta
+	current := window.view_state.scroll_y.get(id_scroll) or { f32(0) }
+	window.view_state.scroll_y.set(id_scroll, current + delta)
 }
 
 // scroll_vertical_to scrolls the given scrollable to the offset. offset is negative.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
-	window.view_state.scroll_y[id_scroll] = offset
+	window.view_state.scroll_y.set(id_scroll, offset)
 }
 
 // set_id_focus sets the window's focus id.

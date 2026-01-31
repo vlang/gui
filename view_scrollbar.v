@@ -145,7 +145,7 @@ fn scrollbar_mouse_move(orientation ScrollbarOrientation, id_scroll u32, layout 
 				if e.mouse_x >= (ly.shape.x - scroll_extend)
 					&& e.mouse_x <= (ly.shape.x + ly.shape.width + scroll_extend) {
 					offset := offset_mouse_change_x(ly, e.mouse_dx, id_scroll, w)
-					w.view_state.scroll_x[id_scroll] = offset
+					w.view_state.scroll_x.set(id_scroll, offset)
 					if ly.shape.on_scroll != unsafe { nil } {
 						ly.shape.on_scroll(ly, mut w)
 					}
@@ -155,7 +155,7 @@ fn scrollbar_mouse_move(orientation ScrollbarOrientation, id_scroll u32, layout 
 				if e.mouse_y >= (ly.shape.y - scroll_extend)
 					&& e.mouse_y <= (ly.shape.y + ly.shape.height + scroll_extend) {
 					offset := offset_mouse_change_y(ly, e.mouse_dy, id_scroll, w)
-					w.view_state.scroll_y[id_scroll] = offset
+					w.view_state.scroll_y.set(id_scroll, offset)
 					if ly.shape.on_scroll != unsafe { nil } {
 						ly.shape.on_scroll(ly, mut w)
 					}
@@ -235,7 +235,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 			thumb_width := f32_clamp(t_width, min_thumb_size, layout.shape.width)
 
 			available_width := layout.shape.width - thumb_width
-			scroll_offset := -w.view_state.scroll_x[cfg.id_scroll]
+			scroll_offset := -(w.view_state.scroll_x.get(cfg.id_scroll) or { f32(0) })
 
 			layout.shape.x -= cfg.gap_end
 			layout.shape.y -= cfg.gap_edge
@@ -269,7 +269,7 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 			thumb_height := f32_clamp(t_height, min_thumb_size, layout.shape.height)
 
 			available_height := layout.shape.height - thumb_height
-			scroll_offset := -w.view_state.scroll_y[cfg.id_scroll]
+			scroll_offset := -(w.view_state.scroll_y.get(cfg.id_scroll) or { f32(0) })
 
 			layout.shape.x -= cfg.gap_edge
 			layout.shape.y += cfg.gap_end
@@ -317,7 +317,7 @@ fn (cfg &ScrollbarCfg) on_hover(mut layout Layout, mut e Event, mut w Window) {
 fn offset_mouse_change_x(layout &Layout, mouse_dx f32, id_scroll u32, w &Window) f32 {
 	total_width := content_width(layout)
 	shape_width := layout.shape.width - layout.shape.padding_width()
-	old_offset := w.view_state.scroll_x[id_scroll]
+	old_offset := w.view_state.scroll_x.get(id_scroll) or { f32(0) }
 	new_offset := mouse_dx * (total_width / shape_width)
 	offset := old_offset - new_offset
 	return f32_min(0, f32_max(offset, shape_width - total_width))
@@ -337,7 +337,7 @@ fn offset_mouse_change_x(layout &Layout, mouse_dx f32, id_scroll u32, w &Window)
 fn offset_mouse_change_y(layout &Layout, mouse_dy f32, id_scroll u32, w &Window) f32 {
 	total_height := content_height(layout)
 	shape_height := layout.shape.height - layout.shape.padding_height()
-	old_offset := w.view_state.scroll_y[id_scroll]
+	old_offset := w.view_state.scroll_y.get(id_scroll) or { f32(0) }
 	new_offset := mouse_dy * (total_height / shape_height)
 	offset := old_offset - new_offset
 	return f32_min(0, f32_max(offset, shape_height - total_height))
@@ -362,7 +362,7 @@ fn offset_from_mouse_x(layout &Layout, mouse_x f32, id_scroll u32, mut w Window)
 		if percent >= scroll_snap_max {
 			percent = 1
 		}
-		w.view_state.scroll_x[id_scroll] = -percent * (total_width - sb.shape.width)
+		w.view_state.scroll_x.set(id_scroll, -percent * (total_width - sb.shape.width))
 		if sb.shape.on_scroll != unsafe { nil } {
 			sb.shape.on_scroll(sb, mut w)
 		}
@@ -388,7 +388,7 @@ fn offset_from_mouse_y(layout &Layout, mouse_y f32, id_scroll u32, mut w Window)
 		if percent >= scroll_snap_max {
 			percent = 1
 		}
-		w.view_state.scroll_y[id_scroll] = -percent * (total_height - sb.shape.height)
+		w.view_state.scroll_y.set(id_scroll, -percent * (total_height - sb.shape.height))
 		if sb.shape.on_scroll != unsafe { nil } {
 			sb.shape.on_scroll(sb, mut w)
 		}
@@ -409,8 +409,9 @@ fn scroll_horizontal(layout &Layout, delta f32, mut w Window) bool {
 	if v_id > 0 {
 		// scrollable region does not including padding
 		max_offset := f32_min(0, layout.shape.width - layout.shape.padding_width() - content_width(layout))
-		offset_x := w.view_state.scroll_x[v_id] + delta * gui_theme.scroll_multiplier
-		w.view_state.scroll_x[v_id] = f32_clamp(offset_x, max_offset, 0)
+		offset_x := (w.view_state.scroll_x.get(v_id) or { f32(0) }) +
+			delta * gui_theme.scroll_multiplier
+		w.view_state.scroll_x.set(v_id, f32_clamp(offset_x, max_offset, 0))
 		if layout.shape.on_scroll != unsafe { nil } {
 			layout.shape.on_scroll(layout, mut w)
 		}
@@ -433,8 +434,9 @@ fn scroll_vertical(layout &Layout, delta f32, mut w Window) bool {
 	if v_id > 0 {
 		// scrollable region does not including padding
 		max_offset := f32_min(0, layout.shape.height - layout.shape.padding_height() - content_height(layout))
-		offset_y := w.view_state.scroll_y[v_id] + delta * gui_theme.scroll_multiplier
-		w.view_state.scroll_y[v_id] = f32_clamp(offset_y, max_offset, 0)
+		offset_y := (w.view_state.scroll_y.get(v_id) or { f32(0) }) +
+			delta * gui_theme.scroll_multiplier
+		w.view_state.scroll_y.set(v_id, f32_clamp(offset_y, max_offset, 0))
 		if layout.shape.on_scroll != unsafe { nil } {
 			layout.shape.on_scroll(layout, mut w)
 		}

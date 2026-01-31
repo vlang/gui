@@ -56,7 +56,7 @@ pub mut:
 
 // date_picker creates a date-picker view from the given [DatePickerCfg](#DatePickerCfg)
 pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
-	mut state := window.view_state.date_picker_state[cfg.id]
+	mut state := window.view_state.date_picker_state.get(cfg.id) or { DatePickerState{} }
 	if state.view_year == 0 {
 		now := time.now()
 		v_time := if cfg.dates.len > 0 { cfg.dates[0] } else { date(now.day, now.month, now.year) }
@@ -65,7 +65,7 @@ pub fn (mut window Window) date_picker(cfg DatePickerCfg) View {
 	}
 	state.cell_size = cfg.cell_size(mut window)
 	state.month_width = cfg.month_picker_width(mut window)
-	window.view_state.date_picker_state[cfg.id] = state
+	window.view_state.date_picker_state.set(cfg.id, state)
 
 	return column(
 		name:         'date_picker'
@@ -117,7 +117,7 @@ pub:
 
 // date_picker_reset clears the internal view state of the given date picker
 pub fn (mut window Window) date_picker_reset(id string) {
-	window.view_state.date_picker_state[id] = DatePickerState{}
+	window.view_state.date_picker_state.set(id, DatePickerState{})
 }
 
 // controls creates the top row of navigation buttons (month/year picker, prev/next month)
@@ -143,9 +143,9 @@ fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
 		color_border: color_transparent
 		content:      [text(text: view_time(state).custom_format('MMMM YYYY'))]
 		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
-			mut state := w.view_state.date_picker_state[id]
+			mut state := w.view_state.date_picker_state.get(id) or { DatePickerState{} }
 			state.show_year_month_picker = !state.show_year_month_picker
-			w.view_state.date_picker_state[id] = state
+			w.view_state.date_picker_state.set(id, state)
 			if state.show_year_month_picker {
 				w.set_id_focus(date_picker_roller_id_focus)
 			}
@@ -161,7 +161,7 @@ fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_left, text_style: gui_theme.icon3)]
 		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
-			mut dps := w.view_state.date_picker_state[id]
+			mut dps := w.view_state.date_picker_state.get(id) or { DatePickerState{} }
 			dps.view_month = dps.view_month - 1
 			if dps.view_month < 1 {
 				dps.view_month = 12
@@ -169,7 +169,7 @@ fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
 			if dps.view_month == 12 {
 				dps.view_year -= 1
 			}
-			w.view_state.date_picker_state[id] = dps
+			w.view_state.date_picker_state.set(id, dps)
 		}
 	)
 }
@@ -181,7 +181,7 @@ fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 		color_border: color_transparent
 		content:      [text(text: icon_arrow_right, text_style: gui_theme.icon3)]
 		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
-			mut dps := w.view_state.date_picker_state[id]
+			mut dps := w.view_state.date_picker_state.get(id) or { DatePickerState{} }
 			dps.view_month = dps.view_month + 1
 			if dps.view_month > 12 {
 				dps.view_month = 1
@@ -189,7 +189,7 @@ fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 			if dps.view_month == 1 {
 				dps.view_year += 1
 			}
-			w.view_state.date_picker_state[id] = dps
+			w.view_state.date_picker_state.set(id, dps)
 		}
 	)
 }
@@ -213,10 +213,10 @@ fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
 			cfg.month(state),
 		]
 		amend_layout: fn [id] (mut layout Layout, mut w Window) {
-			mut state := w.view_state.date_picker_state[id]
+			mut state := w.view_state.date_picker_state.get(id) or { DatePickerState{} }
 			state.calendar_width = layout.shape.width
 			state.calendar_height = layout.shape.height
-			w.view_state.date_picker_state[id] = state
+			w.view_state.date_picker_state.set(id, state)
 		}
 	)
 }
@@ -477,10 +477,10 @@ fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
 					year:  state.view_year
 				)
 				on_change:     fn [id] (t time.Time, mut w Window) {
-					mut state := w.view_state.date_picker_state[id]
+					mut state := w.view_state.date_picker_state.get(id) or { DatePickerState{} }
 					state.view_month = t.month
 					state.view_year = t.year
-					w.view_state.date_picker_state[id] = state
+					w.view_state.date_picker_state.set(id, state)
 				}
 			),
 		]

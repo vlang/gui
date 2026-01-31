@@ -150,14 +150,14 @@ fn (vs ViewState) view_state_stats() string {
 	tx << ''
 	tx << 'View State'
 	tx << stat_sub_div
-	tx << 'input_state length       ${cm(usize(vs.input_state.len)):8}'
-	tx << 'scroll_x length          ${cm(usize(vs.scroll_x.len)):8}'
-	tx << 'scroll_y length          ${cm(usize(vs.scroll_y.len)):8}'
+	tx << 'input_state length       ${cm(usize(vs.input_state.len())):8}'
+	tx << 'scroll_x length          ${cm(usize(vs.scroll_x.len())):8}'
+	tx << 'scroll_y length          ${cm(usize(vs.scroll_y.len())):8}'
 	tx << 'menu_state length        ${cm(usize(vs.menu_state.len)):8}'
-	tx << 'image_map length         ${cm(usize(vs.image_map.len)):8}'
-	tx << 'select_state length      ${cm(usize(vs.select_state.len)):8}'
-	tx << 'tree_state length        ${cm(usize(vs.tree_state.len)):8}'
-	tx << 'date_picker_state length ${cm(usize(vs.date_picker_state.len)):8}'
+	tx << 'image_map length         ${cm(usize(vs.image_map.len())):8}'
+	tx << 'select_state length      ${cm(usize(vs.select_state.len())):8}'
+	tx << 'tree_state length        ${cm(usize(vs.tree_state.len())):8}'
+	tx << 'date_picker_state length ${cm(usize(vs.date_picker_state.len())):8}'
 	return tx.join('\n')
 }
 
