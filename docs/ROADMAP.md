@@ -53,14 +53,14 @@ as a cross-platform, immediate mode GUI toolkit.
     - **Toast/Snackbar:** Non-modal notifications.
     - **Modal Logic:** Refine the dialog system to support stacked modals and custom backdrops.
     - **Tooltip:** Enhance with rich content support (not just text).
-- [ ] **Data Display:**
-    - **DataGrid:** A performant table with sorting, filtering, and column resizing (expanding on
-      `view_table.v`).
+- [~] **Data Display:**
+    - **DataGrid:** Basic table with borders, selection, and virtualization done. Advanced features
+      (filtering, column resizing) TODO.
     - **TreeGrid:** Hierarchical data combined with column data.
     - **Charting:**
         - **Basic Charts:** Line, Bar, Pie, and Area charts.
         - **Interactivity:** Tooltips on hover, legend toggling, and zooming.
-- [ ] **Rich Content:**
+- [x] **Rich Content:**
     - **Markdown View:** Render rich text from markdown source (headers, lists, code blocks).
     - **Code Editor Widget:**
         - **Syntax Highlighting:** Tokenizer rendering pipeline.

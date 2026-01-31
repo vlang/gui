@@ -174,7 +174,7 @@ v-gui comes with everything you need:
 | Text        | `text`, `input`, `textarea`                          |
 | Buttons     | `button`, `toggle`, `switch`, `checkbox`, `radio`    |
 | Selection   | `select`, `dropdown`, `listbox`                      |
-| Data        | `table`, `tree`                                      |
+| Data        | `table`, `tree`, `markdown`                          |
 | Graphics    | `image`, `svg`                                       |
 | Layout      | `row`, `column`, `container`, `scroll`, `canvas`     |
 | Feedback    | `progress_bar`, `pulsar`, `tooltip`, `dialog`        |
@@ -213,6 +213,8 @@ v run examples/containers.v
 v run examples/animations.v     # Tweens, springs, hero transitions
 v run examples/svg_demo.v       # Vector icon rendering
 v run examples/tiger.v          # Complex SVG (Ghostscript Tiger)
+v run examples/markdown.v       # Markdown rendering
+v run examples/table_demo.v     # Table widget demo
 v run examples/theme_designer.v
 v run examples/snake.v          # Yes, it's a game
 ```
@@ -225,6 +227,8 @@ Read the code. It's short. That's the point.
 - **[`ARCHITECTURE.md`](ARCHITECTURE.md)** - How v-gui works under the hood
 - **[`LAYOUT_ALGORITHM.md`](LAYOUT_ALGORITHM.md)** - Deep dive into sizing and positioning
 - **[`ANIMATIONS.md`](ANIMATIONS.md)** - Bring your UI to life
+- **[`MARKDOWN.md`](MARKDOWN.md)** - Markdown rendering
+- **[`TABLES.md`](TABLES.md)** - Table widget and data display
 
 ---
 

@@ -14,13 +14,15 @@ import os
 // to remember to "unhighlight" previous selection.
 
 const id_scroll_doc_view = 1
+const docs_path = os.join_path(@DIR, '..', 'docs')
+const readme_path = os.join_path(@DIR, '..', 'README.md')
 
 @[heap]
 struct DocViewerApp {
 pub mut:
 	doc_file      string
 	tab_size      string = '4'
-	markdown_mode bool
+	markdown_mode bool   = true
 }
 
 fn main() {
@@ -56,8 +58,10 @@ fn main_view(window &gui.Window) gui.View {
 }
 
 fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
-	files := os.ls('../docs') or { [] }
-	doc_files := files.filter(os.file_ext(it) == '.md').sorted()
+	files := os.ls(docs_path) or { [] }
+	mut doc_files := files.filter(os.file_ext(it) == '.md').sorted().map(os.join_path(docs_path,
+		it))
+	doc_files.prepend(readme_path)
 
 	mut nav_files := []gui.View{}
 	for doc_file in doc_files {
@@ -78,7 +82,7 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 				win.scroll_vertical_to(id_scroll_doc_view, 0)
 			}
 			content:  [
-				gui.text(text: doc_file),
+				gui.text(text: os.file_name(doc_file)),
 			]
 			on_hover: fn (mut layout gui.Layout, mut e gui.Event, mut w gui.Window) {
 				w.set_mouse_cursor_pointing_hand()
@@ -130,7 +134,7 @@ fn tab_stops(w &gui.Window) gui.View {
 }
 
 fn (mut app DocViewerApp) doc_panel(w &gui.Window) gui.View {
-	text := os.read_file(os.join_path('../docs', app.doc_file)) or { 'select a doc' }
+	text := os.read_file(app.doc_file) or { 'select a doc' }
 	mut content := []gui.View{}
 	if app.markdown_mode {
 		content = [w.markdown(source: text, mode: .wrap)]

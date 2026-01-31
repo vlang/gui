@@ -45,7 +45,7 @@ V is a simple language. It deserves a simple UI framework.
 **Widgets (30+)**
 - Text, inputs, textareas
 - Buttons, toggles, switches, checkboxes, radio buttons
-- Dropdowns, listboxes, tables, trees
+- Dropdowns, listboxes, tables, trees, markdown
 - Menus, menubars, tabs, dialogs
 - Progress bars, tooltips, date pickers
 
@@ -134,6 +134,8 @@ v install gui
 | [LAYOUT_ALGORITHM.md](docs/LAYOUT_ALGORITHM.md) | Sizing, alignment, and positioning |
 | [ANIMATIONS.md](docs/ANIMATIONS.md) | Tweens, springs, and transitions |
 | [SVG.md](docs/SVG.md) | Vector graphics and icon rendering |
+| [MARKDOWN.md](docs/MARKDOWN.md) | Markdown rendering |
+| [TABLES.md](docs/TABLES.md) | Table widget and data display |
 
 Generate API docs with:
 ```bash
@@ -150,6 +152,8 @@ v run examples/buttons.v        # Button variants
 v run examples/animations.v     # Tweens and springs
 v run examples/theme_designer.v # Build custom themes
 v run examples/tiger.v          # SVG rendering demo
+v run examples/markdown.v       # Markdown rendering
+v run examples/table_demo.v     # Table widget demo
 v run examples/snake.v          # A complete game
 ```
 
