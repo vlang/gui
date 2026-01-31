@@ -45,7 +45,8 @@ pub:
 	text_style           TextStyle       = gui_theme.n3
 	text_style_head      TextStyle       = gui_theme.b3
 	align_head           HorizontalAlign = HorizontalAlign.center
-	column_width_default f32             = 50
+	column_alignments    []HorizontalAlign // per-column data cell alignment
+	column_width_default f32 = 50
 	size_border          f32
 	size_border_header   f32 // optional header separator override
 	border_style         TableBorderStyle = .all
@@ -74,12 +75,12 @@ pub:
 }
 
 // TableCellCfg configures a table cell
-@[minify]
 pub struct TableCellCfg {
 pub:
 	id         string
 	value      string
 	head_cell  bool
+	h_align    ?HorizontalAlign // optional per-cell override
 	text_style ?TextStyle
 	content    ?View // optional custom cell content (overrides value)
 	on_click   fn (&Layout, mut Event, mut Window) = unsafe { nil }
@@ -116,7 +117,15 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 				cfg.column_width_default
 			}
 
-			h_align := if cell.head_cell { cfg.align_head } else { HorizontalAlign.start }
+			h_align := if align := cell.h_align {
+				align
+			} else if cell.head_cell {
+				cfg.align_head
+			} else if idx < cfg.column_alignments.len {
+				cfg.column_alignments[idx]
+			} else {
+				HorizontalAlign.start
+			}
 
 			cell_content := if c := cell.content {
 				[c]

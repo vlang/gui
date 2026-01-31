@@ -172,14 +172,15 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			if parsed := block.table_data {
 				mut w := unsafe { window }
 				content << w.table(
-					border_style:    cfg.style.table_border_style
-					color_border:    cfg.style.table_border_color
-					size_border:     cfg.style.table_border_size
-					text_style_head: cfg.style.table_head_style
-					text_style:      cfg.style.table_cell_style
-					cell_padding:    cfg.style.table_cell_padding
-					color_row_alt:   cfg.style.table_row_alt
-					data:            build_markdown_table_data(parsed, cfg.style)
+					border_style:      cfg.style.table_border_style
+					color_border:      cfg.style.table_border_color
+					size_border:       cfg.style.table_border_size
+					text_style_head:   cfg.style.table_head_style
+					text_style:        cfg.style.table_cell_style
+					cell_padding:      cfg.style.table_cell_padding
+					color_row_alt:     cfg.style.table_row_alt
+					column_alignments: parsed.alignments
+					data:              build_markdown_table_data(parsed, cfg.style)
 				)
 			} else {
 				// Fallback: render as code block
