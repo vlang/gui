@@ -135,9 +135,10 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		// Skip footnote definition lines (metadata) - must check before link definitions
 		// since [^id]: matches [*]: pattern
 		if !in_code_block && is_footnote_definition(line) {
-			// Skip continuation lines (may have blank lines between)
+			// Skip continuation lines (may have blank lines between, bounded)
 			i++
-			for i < lines.len {
+			mut fn_cont := 0
+			for i < lines.len && fn_cont < max_footnote_continuation_lines {
 				next := lines[i]
 				if next.len == 0 {
 					// Peek ahead for indented continuation
@@ -153,6 +154,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				if next[0] != ` ` && next[0] != `\t` {
 					break
 				}
+				fn_cont++
 				i++
 			}
 			continue
@@ -1509,8 +1511,8 @@ fn collect_definition_content(first_content string, lines []string, start_idx in
 	mut consumed := 0
 	mut idx := start_idx
 
-	// Check if any continuation lines exist (must be indented)
-	for idx < lines.len {
+	// Check if any continuation lines exist (must be indented, bounded)
+	for idx < lines.len && consumed < max_list_continuation_lines {
 		next := lines[idx]
 		if next.len == 0 {
 			break
