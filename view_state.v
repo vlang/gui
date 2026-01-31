@@ -6,6 +6,12 @@ import sokol.sapp
 // ViewState stores the transient state of the GUI views.
 // Since views are regenerated every frame in immediate mode, this struct
 // persists state like focus, scroll positions, and input selections across frames.
+//
+// Key type rationale:
+// - u32: widget IDs (hash-based) - input_state, scroll, menu_state, id_focus
+// - string: user-provided identifiers - tree_state, date_picker_state, select_state
+// - int: content hashes - markdown_cache
+// - u64: data hashes - table_warned_no_id
 struct ViewState {
 mut:
 	input_state              BoundedMap[u32, InputState] = BoundedMap[u32, InputState]{
@@ -24,8 +30,10 @@ mut:
 	menu_state               BoundedMap[u32, string] = BoundedMap[u32, string]{
 		max_size: 20
 	}
-	menu_key_nav             bool            // true, menu navigated by keyboard
-	image_map                BoundedImageMap // [file name] -> context.cache image id (max 100)
+	menu_key_nav             bool // true, menu navigated by keyboard
+	image_map                BoundedImageMap = BoundedImageMap{
+		max_size: 100
+	}
 	svg_cache                BoundedSvgCache = BoundedSvgCache{
 		max_size: 100
 	}
@@ -79,9 +87,11 @@ pub:
 	mouse_up   ?fn (&Layout, mut Event, mut Window)
 }
 
-// clear releases all stored view state maps and resets the window's ViewState.
-// Call this when a window is destroyed or needs its GUI state fully reinitialized.
-fn (mut vs ViewState) clear(mut w Window) {
+// clear_view_state resets all GUI state for this window.
+// Call when window destroyed or needs full GUI state reinitialization.
+fn (mut w Window) clear_view_state() {
+	mut ctx := w.context()
+	w.view_state.image_map.clear(mut ctx)
 	w.view_state = ViewState{}
 }
 

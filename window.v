@@ -249,7 +249,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 // update_view replaces the current view generator and clears view state.
 pub fn (mut window Window) update_view(gen_view fn (&Window) View) {
 	window.lock()
-	window.view_state.clear(mut window)
+	window.clear_view_state()
 	window.view_generator = gen_view
 	window.unlock()
 	window.update_window()

@@ -29,7 +29,7 @@ pub fn (_ &Window) color_background() Color {
 // clear_view_states clears all cached view_states. Gui keeps a number of items
 // like scroll positions, cursor positions, etc.
 pub fn (mut window Window) clear_view_states() {
-	window.view_state.clear(mut window)
+	window.clear_view_state()
 }
 
 // context gets the windows gg.Context

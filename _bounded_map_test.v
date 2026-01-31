@@ -131,3 +131,56 @@ fn test_bounded_tree_state() {
 	assert m.contains('tree3') == true
 	assert m.len() == 2
 }
+
+fn test_bounded_map_max_size_one() {
+	mut m := BoundedMap[string, int]{
+		max_size: 1
+	}
+
+	m.set('a', 1)
+	assert m.get('a') or { -1 } == 1
+	assert m.len() == 1
+
+	// Adding 'b' should evict 'a'
+	m.set('b', 2)
+	assert m.get('a') == none
+	assert m.get('b') or { -1 } == 2
+	assert m.len() == 1
+}
+
+fn test_bounded_map_max_size_zero() {
+	mut m := BoundedMap[string, int]{
+		max_size: 0
+	}
+
+	m.set('a', 1)
+	assert m.len() == 0 // nothing stored when max_size < 1
+}
+
+fn test_bounded_map_delete_nonexistent() {
+	mut m := BoundedMap[string, int]{
+		max_size: 3
+	}
+
+	m.set('a', 1)
+	m.delete('nonexistent') // should not panic
+	assert m.len() == 1
+	assert m.get('a') or { -1 } == 1
+}
+
+fn test_bounded_markdown_cache_fifo() {
+	mut m := BoundedMarkdownCache{
+		max_size: 2
+	}
+
+	m.set(100, [])
+	m.set(200, [])
+	assert m.len() == 2
+
+	// Adding third should evict first (FIFO)
+	m.set(300, [])
+	assert m.get(100) == none
+	assert m.get(200) != none
+	assert m.get(300) != none
+	assert m.len() == 2
+}

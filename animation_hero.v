@@ -105,7 +105,7 @@ pub fn (mut w Window) transition_to_view(gen fn (mut Window) View, cfg HeroTrans
 
 	// Switch to new view
 	w.lock()
-	w.view_state.clear(mut w)
+	w.clear_view_state()
 	w.view_generator = gen
 	w.unlock()
 

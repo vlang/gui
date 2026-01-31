@@ -66,13 +66,17 @@ pub fn (mut window Window) remove_image_from_cache_by_file_name(file_name string
 // On eviction, removes cached image from graphics context.
 struct BoundedImageMap {
 mut:
-	data     map[string]int
-	order    []string
-	max_size int = 100
+	data      map[string]int
+	order     []string
+	index_map map[string]int
+	max_size  int = 100
 }
 
 // set adds or updates image cache entry. Evicts oldest with cleanup if at capacity.
 fn (mut m BoundedImageMap) set(key string, value int, mut ctx gg.Context) {
+	if m.max_size < 1 {
+		return
+	}
 	if key !in m.data {
 		if m.data.len >= m.max_size && m.order.len > 0 {
 			oldest := m.order[0]
@@ -80,8 +84,13 @@ fn (mut m BoundedImageMap) set(key string, value int, mut ctx gg.Context) {
 				ctx.remove_cached_image_by_idx(old_id)
 			}
 			m.data.delete(oldest)
+			m.index_map.delete(oldest)
 			m.order.delete(0)
+			for k, idx in m.index_map {
+				m.index_map[k] = idx - 1
+			}
 		}
+		m.index_map[key] = m.order.len
 		m.order << key
 	}
 	m.data[key] = value
@@ -101,9 +110,14 @@ fn (m &BoundedImageMap) contains(key string) bool {
 fn (mut m BoundedImageMap) delete(key string) {
 	if key in m.data {
 		m.data.delete(key)
-		idx := m.order.index(key)
-		if idx >= 0 {
+		if idx := m.index_map[key] {
 			m.order.delete(idx)
+			m.index_map.delete(key)
+			for k, i in m.index_map {
+				if i > idx {
+					m.index_map[k] = i - 1
+				}
+			}
 		}
 	}
 }
@@ -116,4 +130,16 @@ fn (m &BoundedImageMap) keys() []string {
 // len returns number of cached images.
 fn (m &BoundedImageMap) len() int {
 	return m.data.len
+}
+
+// clear removes all entries with graphics context cleanup.
+fn (mut m BoundedImageMap) clear(mut ctx gg.Context) {
+	for key in m.order {
+		if id := m.data[key] {
+			ctx.remove_cached_image_by_idx(id)
+		}
+	}
+	m.data.clear()
+	m.order.clear()
+	m.index_map.clear()
 }
