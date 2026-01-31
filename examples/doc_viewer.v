@@ -131,10 +131,11 @@ fn tab_stops(w &gui.Window) gui.View {
 
 fn (mut app DocViewerApp) doc_panel(w &gui.Window) gui.View {
 	text := os.read_file(os.join_path('../docs', app.doc_file)) or { 'select a doc' }
-	content := if app.markdown_mode {
-		[w.markdown(source: text, mode: .wrap)]
+	mut content := []gui.View{}
+	if app.markdown_mode {
+		content = [w.markdown(source: text, mode: .wrap)]
 	} else {
-		[
+		content = [
 			gui.View(gui.text(
 				id_focus:   1 // enables selectable text
 				text:       text
