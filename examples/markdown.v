@@ -163,14 +163,14 @@ titles.*
 
 ## Tables
 
-| Feature     | Basic Markdown |  Extended Markdown | Notes                              |
-|-------------|----------------|--------------------|------------------------------------|
-| Headers     |       ✓        |                  ✓ | Six levels available (h1-h6)       |
-| Emphasis    |       ✓        |                  ✓ | Bold, italic, and combinations     |
-| Lists       |       ✓        |                  ✓ | Ordered, unordered, and nested     |
-| Task Lists  |       ✗        |                  ✓ | GitHub Flavored Markdown extension |
-| Tables      |       ✗        |                  ✓ | Alignment options with colons      |
-| Footnotes   |       ✗        |                  ✓ | Not universally supported          |
+| Feature     | Basic  | Extended | Notes                              |
+|-------------|--------|----------|------------------------------------|
+| Headers     |      ✓ |        ✓ | Six levels available (h1-h6)       |
+| Emphasis    |      ✓ |        ✓ | Bold, italic, and combinations     |
+| Lists       |      ✓ |        ✓ | Ordered, unordered, and nested     |
+| Task Lists  |      ✗ |        ✓ | GitHub Flavored Markdown extension |
+| Tables      |      ✗ |        ✓ | Alignment options with colons      |
+| Footnotes   |      ✗ |        ✓ | Not universally supported          |
  
 *Table columns can be left-aligned, center-aligned, or right-aligned
 using colons in the separator row.*

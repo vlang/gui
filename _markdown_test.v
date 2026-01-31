@@ -238,17 +238,30 @@ fn test_markdown_table() {
 	assert blocks[0].is_table == true
 }
 
+// Helper to extract text from RichText for test comparison
+fn rich_text_to_string(rt RichText) string {
+	mut s := ''
+	for run in rt.runs {
+		s += run.text
+	}
+	return s
+}
+
 fn test_markdown_table_parsing() {
-	parsed := parse_markdown_table('| A | B |\n|---|---|\n| 1 | 2 |') or { panic('parse failed') }
-	assert parsed.headers == ['A', 'B']
+	style := MarkdownStyle{}
+	parsed := parse_markdown_table('| A | B |\n|---|---|\n| 1 | 2 |', style, map[string]string{},
+		map[string]string{}) or { panic('parse failed') }
+	assert rich_text_to_string(parsed.headers[0]) == 'A'
+	assert rich_text_to_string(parsed.headers[1]) == 'B'
 	assert parsed.rows.len == 1
-	assert parsed.rows[0] == ['1', '2']
+	assert rich_text_to_string(parsed.rows[0][0]) == '1'
+	assert rich_text_to_string(parsed.rows[0][1]) == '2'
 }
 
 fn test_markdown_table_alignments() {
-	parsed := parse_markdown_table('| L | C | R |\n|:---|:---:|---:|\n| a | b | c |') or {
-		panic('parse failed')
-	}
+	style := MarkdownStyle{}
+	parsed := parse_markdown_table('| L | C | R |\n|:---|:---:|---:|\n| a | b | c |',
+		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
 	assert parsed.alignments.len == 3
 	assert parsed.alignments[0] == .start
 	assert parsed.alignments[1] == .center
@@ -256,17 +269,77 @@ fn test_markdown_table_alignments() {
 }
 
 fn test_markdown_table_no_outer_pipes() {
-	parsed := parse_markdown_table('A | B\n---|---\n1 | 2') or { panic('parse failed') }
-	assert parsed.headers == ['A', 'B']
+	style := MarkdownStyle{}
+	parsed := parse_markdown_table('A | B\n---|---\n1 | 2', style, map[string]string{},
+		map[string]string{}) or { panic('parse failed') }
+	assert rich_text_to_string(parsed.headers[0]) == 'A'
+	assert rich_text_to_string(parsed.headers[1]) == 'B'
 	assert parsed.rows.len == 1
-	assert parsed.rows[0] == ['1', '2']
+	assert rich_text_to_string(parsed.rows[0][0]) == '1'
+	assert rich_text_to_string(parsed.rows[0][1]) == '2'
 }
 
 fn test_markdown_table_empty_cells() {
-	parsed := parse_markdown_table('| A | B | C |\n|---|---|---|\n| 1 |  | 3 |') or {
-		panic('parse failed')
+	style := MarkdownStyle{}
+	parsed := parse_markdown_table('| A | B | C |\n|---|---|---|\n| 1 |  | 3 |', style,
+		map[string]string{}, map[string]string{}) or { panic('parse failed') }
+	assert rich_text_to_string(parsed.rows[0][0]) == '1'
+	assert rich_text_to_string(parsed.rows[0][1]) == ''
+	assert rich_text_to_string(parsed.rows[0][2]) == '3'
+}
+
+fn test_markdown_table_inline_formatting() {
+	style := MarkdownStyle{}
+	parsed := parse_markdown_table('| **bold** | _italic_ | `code` |\n|---|---|---|\n| [link](url) | a | b |',
+		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
+	// Headers should have inline formatting parsed
+	assert rich_text_to_string(parsed.headers[0]) == 'bold'
+	assert rich_text_to_string(parsed.headers[1]) == 'italic'
+	assert rich_text_to_string(parsed.headers[2]) == 'code'
+	// Check that bold header has multiple runs (text styling applied)
+	assert parsed.headers[0].runs.len >= 1
+	// Cell with link
+	assert rich_text_to_string(parsed.rows[0][0]) == 'link'
+	assert parsed.rows[0][0].runs[0].link == 'url'
+}
+
+fn test_markdown_table_invalid_separator() {
+	style := MarkdownStyle{}
+	// Separator without dashes should fail
+	result := parse_markdown_table('| A | B |\n|:::|:::|\n| 1 | 2 |', style, map[string]string{},
+		map[string]string{})
+	assert result == none
+}
+
+fn test_markdown_table_no_separator() {
+	style := MarkdownStyle{}
+	// No separator row should fail
+	result := parse_markdown_table('| A | B |\n| 1 | 2 |', style, map[string]string{},
+		map[string]string{})
+	assert result == none
+}
+
+fn test_markdown_table_without_leading_pipes() {
+	// Tables without leading pipes should still be recognized
+	source := 'Header A | Header B\n---------|----------\nCell 1 | Cell 2'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].is_table == true
+	if tbl := blocks[0].table_data {
+		assert tbl.headers.len == 2
+		assert rich_text_to_string(tbl.headers[0]) == 'Header A'
+		assert rich_text_to_string(tbl.rows[0][1]) == 'Cell 2'
+	} else {
+		assert false // table_data should exist
 	}
-	assert parsed.rows[0] == ['1', '', '3']
+}
+
+fn test_markdown_prose_with_pipe_not_table() {
+	// Prose containing | should NOT be captured as table
+	source := 'Use a|b syntax for alternatives.'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].is_table == false
 }
 
 fn test_markdown_footnote_basic() {

@@ -61,6 +61,15 @@ pub:
 	padding      Padding
 }
 
+// rich_text_plain extracts plain text from RichText for width calculation.
+fn rich_text_plain(rt RichText) string {
+	mut s := ''
+	for run in rt.runs {
+		s += run.text
+	}
+	return s
+}
+
 // build_markdown_table_data converts parsed table to TableRowCfg array.
 fn build_markdown_table_data(parsed ParsedTable, style MarkdownStyle) []TableRowCfg {
 	mut rows := []TableRowCfg{cap: parsed.rows.len + 1}
@@ -68,8 +77,9 @@ fn build_markdown_table_data(parsed ParsedTable, style MarkdownStyle) []TableRow
 	mut header_cells := []TableCellCfg{cap: parsed.headers.len}
 	for h in parsed.headers {
 		header_cells << TableCellCfg{
-			value:     h
+			value:     rich_text_plain(h) // for width calculation
 			head_cell: true
+			content:   rtf(rich_text: h, mode: .single_line)
 		}
 	}
 	rows << TableRowCfg{
@@ -80,7 +90,8 @@ fn build_markdown_table_data(parsed ParsedTable, style MarkdownStyle) []TableRow
 		mut cells := []TableCellCfg{cap: r.len}
 		for cell in r {
 			cells << TableCellCfg{
-				value: cell
+				value:   rich_text_plain(cell) // for width calculation
+				content: rtf(rich_text: cell, mode: .single_line)
 			}
 		}
 		rows << TableRowCfg{
@@ -158,7 +169,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			)
 		} else if block.is_table {
 			// Table rendered using table view
-			if parsed := parse_markdown_table(block.content.runs[0].text) {
+			if parsed := block.table_data {
 				mut w := unsafe { window }
 				content << w.table(
 					border_style:    cfg.style.table_border_style

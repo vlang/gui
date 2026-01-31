@@ -96,6 +96,7 @@ struct MarkdownBlock {
 	image_src        string
 	image_alt        string
 	content          RichText
+	table_data       ?ParsedTable // parsed table with inline formatting
 }
 
 // flush_runs creates a block from accumulated runs and clears state.
@@ -243,7 +244,11 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// Table recognition: lines starting with | or separator rows
-		if trimmed.starts_with('|') || is_table_separator(trimmed) {
+		// Also recognize table start if current line has | and next is separator
+		is_table_start := trimmed.starts_with('|') || is_table_separator(trimmed)
+			|| (trimmed.contains('|') && i + 1 < lines.len
+			&& is_table_separator(lines[i + 1].trim_space()))
+		if is_table_start {
 			// Flush current runs
 			if block := flush_runs(mut runs) {
 				blocks << block
@@ -252,6 +257,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			mut table_lines := []string{cap: 10}
 			for i < lines.len && table_lines.len < max_table_lines {
 				tl := lines[i].trim_space()
+				// Collect lines with pipes or separators (entry already validated table start)
 				if tl.starts_with('|') || is_table_separator(tl) || tl.contains('|') {
 					table_lines << lines[i]
 					i++
@@ -263,12 +269,15 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				}
 			}
 			if table_lines.len > 0 {
+				raw_table := table_lines.join('\n')
+				parsed_table := parse_markdown_table(raw_table, style, link_defs, footnote_defs)
 				blocks << MarkdownBlock{
-					is_table: true
-					content:  RichText{
+					is_table:   true
+					table_data: parsed_table
+					content:    RichText{
 						runs: [
 							RichTextRun{
-								text:  table_lines.join('\n')
+								text:  raw_table
 								style: style.code
 							},
 						]
@@ -578,7 +587,37 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	// Post-process: apply abbreviation replacements to all blocks (except code)
 	if abbr_defs.len > 0 {
 		for j, block in blocks {
-			if block.is_code || block.is_table {
+			if block.is_code {
+				continue
+			}
+			if block.is_table {
+				// Apply abbreviations to table cells
+				if tbl := block.table_data {
+					mut new_headers := []RichText{cap: tbl.headers.len}
+					for h in tbl.headers {
+						new_headers << RichText{
+							runs: replace_abbreviations(h.runs, abbr_defs, style)
+						}
+					}
+					mut new_rows := [][]RichText{cap: tbl.rows.len}
+					for row in tbl.rows {
+						mut new_row := []RichText{cap: row.len}
+						for cell in row {
+							new_row << RichText{
+								runs: replace_abbreviations(cell.runs, abbr_defs, style)
+							}
+						}
+						new_rows << new_row
+					}
+					blocks[j] = MarkdownBlock{
+						...block
+						table_data: ParsedTable{
+							headers:    new_headers
+							alignments: tbl.alignments
+							rows:       new_rows
+						}
+					}
+				}
 				continue
 			}
 			blocks[j] = MarkdownBlock{
@@ -1265,13 +1304,13 @@ fn strip_blockquote_prefix(line string) string {
 
 // ParsedTable represents a parsed markdown table.
 struct ParsedTable {
-	headers    []string
+	headers    []RichText
 	alignments []HorizontalAlign
-	rows       [][]string
+	rows       [][]RichText
 }
 
 // parse_markdown_table parses raw table markdown into structured data.
-fn parse_markdown_table(raw string) ?ParsedTable {
+fn parse_markdown_table(raw string, style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) ?ParsedTable {
 	lines := raw.split('\n').filter(it.trim_space() != '')
 	if lines.len < 2 {
 		return none
@@ -1281,23 +1320,40 @@ fn parse_markdown_table(raw string) ?ParsedTable {
 	if headers.len == 0 {
 		return none
 	}
-	// Line 1 = separator with alignments
-	alignments := parse_table_alignments(lines[1], headers.len)
+	// Line 1 must be a valid separator row
+	if !is_table_separator(lines[1].trim_space()) {
+		return none
+	}
+	// Line 1 = separator with alignments (validates each cell has dash)
+	alignments := parse_table_alignments(lines[1], headers.len) or { return none }
+	// Parse headers with inline formatting
+	mut header_rich := []RichText{cap: headers.len}
+	for h in headers {
+		mut runs := []RichTextRun{cap: 4}
+		parse_inline(h, style.text, style, mut runs, link_defs, footnote_defs)
+		header_rich << RichText{
+			runs: runs
+		}
+	}
 	// Lines 2+ = data rows
-	mut rows := [][]string{cap: lines.len - 2}
+	mut rows := [][]RichText{cap: lines.len - 2}
 	for i := 2; i < lines.len; i++ {
 		row := parse_table_row(lines[i])
 		// Pad or trim to match header count
-		mut normalized := []string{len: headers.len, init: ''}
+		mut normalized := []RichText{len: headers.len, init: RichText{}}
 		for j, cell in row {
 			if j < headers.len {
-				normalized[j] = cell
+				mut runs := []RichTextRun{cap: 4}
+				parse_inline(cell, style.text, style, mut runs, link_defs, footnote_defs)
+				normalized[j] = RichText{
+					runs: runs
+				}
 			}
 		}
 		rows << normalized
 	}
 	return ParsedTable{
-		headers:    headers
+		headers:    header_rich
 		alignments: alignments
 		rows:       rows
 	}
@@ -1323,7 +1379,8 @@ fn parse_table_row(line string) []string {
 }
 
 // parse_table_alignments parses separator row for column alignments.
-fn parse_table_alignments(line string, cols int) []HorizontalAlign {
+// Returns none if any cell is invalid (missing dash).
+fn parse_table_alignments(line string, cols int) ?[]HorizontalAlign {
 	parts := parse_table_row(line)
 	mut aligns := []HorizontalAlign{len: cols, init: HorizontalAlign.start}
 	for i, p in parts {
@@ -1331,6 +1388,10 @@ fn parse_table_alignments(line string, cols int) []HorizontalAlign {
 			break
 		}
 		trimmed := p.trim_space()
+		// Each separator cell must contain at least one dash
+		if !trimmed.contains('-') {
+			return none
+		}
 		left_colon := trimmed.starts_with(':')
 		right_colon := trimmed.ends_with(':')
 		if left_colon && right_colon {
