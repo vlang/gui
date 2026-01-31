@@ -236,7 +236,19 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			)
 		} else if block.is_image {
 			// Image block
-			content << image(file_name: block.image_src)
+			if block.image_src.to_lower().ends_with('.svg') {
+				content << svg(
+					file_name: block.image_src
+					width:     block.image_width
+					height:    block.image_height
+				)
+			} else {
+				content << image(
+					file_name: block.image_src
+					width:     block.image_width
+					height:    block.image_height
+				)
+			}
 		} else if block.header_level > 0 {
 			// Header block
 			content << rtf(rich_text: block.content, mode: cfg.mode)

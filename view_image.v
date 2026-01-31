@@ -30,9 +30,8 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 	window.stats.increment_image_views()
 	image := window.load_image(iv.file_name) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
-		return Layout{
-			shape: &Shape{}
-		}
+		mut error_text := text(text: '[missing: ${iv.file_name}]')
+		return error_text.generate_layout(mut window)
 	}
 
 	width := if iv.width > 0 { iv.width } else { image.width }

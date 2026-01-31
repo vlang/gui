@@ -95,6 +95,8 @@ struct MarkdownBlock {
 	list_indent      int    // nesting level (0, 1, 2...)
 	image_src        string
 	image_alt        string
+	image_width      f32 // 0 = auto
+	image_height     f32 // 0 = auto
 	content          RichText
 	table_data       ?ParsedTable // parsed table with inline formatting
 }
@@ -310,7 +312,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			continue
 		}
 
-		// Image ![alt](path) - must be at start of line
+		// Image ![alt](path) or ![alt](path =WxH) - must be at start of line
 		if line.starts_with('![') {
 			bracket_end := line.index(']') or { -1 }
 			if bracket_end > 2 && bracket_end + 1 < line.len && line[bracket_end + 1] == `(` {
@@ -320,11 +322,14 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 					if block := flush_runs(mut runs) {
 						blocks << block
 					}
-					src := line[bracket_end + 2..paren_end]
+					raw := line[bracket_end + 2..paren_end]
+					src, w, h := parse_image_src(raw)
 					blocks << MarkdownBlock{
-						is_image:  true
-						image_alt: line[2..bracket_end]
-						image_src: if is_safe_image_path(src) { src } else { '' }
+						is_image:     true
+						image_alt:    line[2..bracket_end]
+						image_src:    if is_safe_image_path(src) { src } else { '' }
+						image_width:  w
+						image_height: h
 					}
 					i++
 					continue
@@ -1670,6 +1675,33 @@ fn is_safe_image_path(path string) bool {
 		return false
 	}
 	return true
+}
+
+// parse_image_src splits "path =WxH" into (path, width, height).
+// Supports: "path =WxH", "path =Wx", "path =xH", "path" (no dimensions).
+fn parse_image_src(raw string) (string, f32, f32) {
+	// Find " =" pattern for dimensions
+	eq_idx := raw.index(' =') or { return raw.trim_space(), 0, 0 }
+	path := raw[..eq_idx].trim_space()
+	dims := raw[eq_idx + 2..].trim_space()
+	if dims.len == 0 {
+		return path, 0, 0
+	}
+	// Parse WxH, Wx, or xH
+	x_idx := dims.index('x') or { return path, 0, 0 }
+	w_str := dims[..x_idx]
+	h_str := dims[x_idx + 1..]
+	w_raw := if w_str.len > 0 { w_str.f32() } else { f32(0) }
+	h_raw := if h_str.len > 0 { h_str.f32() } else { f32(0) }
+	return path, if w_raw > 0 {
+		w_raw
+	} else {
+		0
+	}, if h_raw > 0 {
+		h_raw
+	} else {
+		0
+	}
 }
 
 // is_word_boundary checks if char at pos is a word boundary (non-alphanumeric).

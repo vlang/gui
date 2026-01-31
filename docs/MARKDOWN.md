@@ -32,29 +32,29 @@ window.markdown(
 
 ### Block Elements
 
-| Element | Syntax | Notes |
-|---------|--------|-------|
-| Headers | `# H1` through `###### H6` | Optional separator lines via style |
-| Paragraphs | Blank line separation | Auto-wrapping |
-| Unordered lists | `- item` or `* item` | Nested with indentation |
-| Ordered lists | `1. item` | Auto-numbered |
-| Task lists | `- [x] done` / `- [ ] todo` | Checkbox rendering |
-| Code blocks | Triple backticks | Language hint supported |
-| Blockquotes | `> text` | Nested quotes supported |
-| Horizontal rules | `---` or `***` | Full-width line |
-| Tables | Pipe syntax | Column alignment supported |
-| Images | `![alt](path)` | Renders via `image()` widget |
+| Element          | Syntax                        | Notes                                   |
+|------------------|-------------------------------|-----------------------------------------|
+| Headers          | `# H1` through `###### H6`    | Optional separator lines via style      |
+| Paragraphs       | Blank line separation         | Auto-wrapping                           |
+| Unordered lists  | `- item` or `* item`          | Nested with indentation                 |
+| Ordered lists    | `1. item`                     | Auto-numbered                           |
+| Task lists       | `- [x] done` / `- [ ] todo`   | Checkbox rendering                      |
+| Code blocks      | Triple backticks              | Language hint supported                 |
+| Blockquotes      | `> text`                      | Nested quotes supported                 |
+| Horizontal rules | `---` or `***`                | Full-width line                         |
+| Tables           | Pipe syntax                   | Column alignment supported              |
+| Images           | `![alt](path)`                | PNG/JPG via `image()`, SVG via `svg()`  |
 
 ### Inline Elements
 
-| Element | Syntax | Notes |
-|---------|--------|-------|
-| Bold | `**text**` or `__text__` | |
-| Italic | `*text*` or `_text_` | |
-| Bold italic | `***text***` | Combined styling |
-| Strikethrough | `~~text~~` | |
-| Inline code | `` `code` `` | Monospace styling |
-| Links | `[text](url)` | Clickable |
+| Element       | Syntax                   | Notes             |
+|---------------|--------------------------|-------------------|
+| Bold          | `**text**` or `__text__` |                   |
+| Italic        | `*text*` or `_text_`     |                   |
+| Bold italic   | `***text***`             | Combined styling  |
+| Strikethrough | `~~text~~`               |                   |
+| Inline code   | `` `code` ``             | Monospace styling |
+| Links         | `[text](url)`            | Clickable         |
 
 ## Extended Features
 
@@ -81,6 +81,30 @@ The HTML specification is maintained by the W3C.
 *[HTML]: Hyper Text Markup Language
 *[W3C]: World Wide Web Consortium
 ```
+
+### Images
+
+```markdown
+![Photo](photo.png)
+![Diagram](diagram.svg)
+```
+SVG files render via `svg()` with auto-detected dimensions. Other formats (PNG, JPG) use `image()`.
+
+#### Image Dimensions
+
+Specify dimensions using `=WxH` syntax after the path:
+
+```markdown
+![logo](logo.svg =100x50)      // width=100, height=50
+![icon](icon.png =32x32)       // square 32x32
+![wide](banner.jpg =200x)      // width=200, auto height
+![tall](photo.png =x150)       // auto width, height=150
+![auto](photo.png)             // auto dimensions (default)
+```
+
+![Tiger](tiger.svg =200x200)
+
+![Sample](sample.jpeg =300x)
 
 ## Styling
 

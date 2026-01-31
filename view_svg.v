@@ -31,29 +31,15 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 
 	svg_src := if sv.file_name.len > 0 { sv.file_name } else { sv.svg_data }
 
-	// Try to load SVG to get default dimensions if not specified
-	mut width := sv.width
-	mut height := sv.height
-
-	if width == 0 || height == 0 {
-		if cached := window.load_svg(svg_src, 24, 24) {
-			if width == 0 {
-				width = cached.width
-			}
-			if height == 0 {
-				height = cached.height
-			}
-		} else {
-			log.error('${@FILE_LINE} > ${err.msg()}')
-			// Use default icon size
-			if width == 0 {
-				width = 24
-			}
-			if height == 0 {
-				height = 24
-			}
-		}
+	// Always load SVG to validate it exists and get dimensions if needed
+	cached := window.load_svg(svg_src, 24, 24) or {
+		log.error('${@FILE_LINE} > ${err.msg()}')
+		mut error_text := text(text: '[missing: ${svg_src}]')
+		return error_text.generate_layout(mut window)
 	}
+
+	width := if sv.width > 0 { sv.width } else { cached.width }
+	height := if sv.height > 0 { sv.height } else { cached.height }
 
 	return Layout{
 		shape: &Shape{
