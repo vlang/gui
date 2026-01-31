@@ -130,7 +130,7 @@ gui.column(content: [          // Vertical stack
 Every widget can size itself three ways per axis:
 
 | Mode    | Behavior                        |
-|---------|----------------------------------|
+|---------|---------------------------------|
 | `fit`   | Shrink to content               |
 | `fill`  | Expand to available space       |
 | `fixed` | Use exact pixel value           |

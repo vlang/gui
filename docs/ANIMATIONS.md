@@ -7,13 +7,13 @@ This document explains the four animation types and how to use them effectively.
 
 The animation system supports four types of animations:
 
-| Type               | Use Case                          | Duration    |
-|--------------------|-----------------------------------|-------------|
-| TweenAnimation     | Value interpolation with easing   | Fixed       |
-| KeyframeAnimation  | Multi-waypoint with per-segment easing | Fixed  |
-| SpringAnimation    | Physics-based natural motion      | Open-ended  |
-| Layout Transition  | Animate layout changes            | Fixed       |
-| Hero Transition    | Morph elements between views      | Fixed       |
+| Type               | Use Case                                | Duration   |
+|--------------------|-----------------------------------------|------------|
+| TweenAnimation     | Value interpolation with easing         | Fixed      |
+| KeyframeAnimation  | Multi-waypoint with per-segment easing  | Fixed      |
+| SpringAnimation    | Physics-based natural motion            | Open-ended |
+| Layout Transition  | Animate layout changes                  | Fixed      |
+| Hero Transition    | Morph elements between views            | Fixed      |
 
 All animations are managed through the window and run on a background thread at ~60fps.
 

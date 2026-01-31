@@ -1,27 +1,28 @@
 {
-        "permissions": {
-                "allow": [
-                        "Bash(v run:*)",
-                        "Bash(echo:*)",
-                        "Bash(SOKOL_DEBUG=1 timeout 3 v run:*)",
-                        "Bash(v:*)",
-                        "Bash(glxinfo:*)",
-                        "Bash(awk:*)",
-                        "Bash(find:*)",
-                        "Bash(wc:*)",
-                        "Bash(sort:*)",
-                        "Bash(git push)",
-                        "Bash(timeout:*)",
-                        "Bash(curl:*)",
-                        "Bash(pkill:*)",
-                        "Bash(xxd:*)",
-                        "Bash(git stash:*)",
-                        "Bash(for f in examples/*.v)",
-                        "Bash(do echo -n \"$f: \")",
-                        "Bash(done)",
-                        "Bash(git -C /Users/mike/Documents/github/gui log *)",
-                        "Bash(git -C /Users/mike/Documents/github/gui show *)",
-                        "Bash(git -C /Users/mike/Documents/github/gui diff *)"
-                ]
-        }
+  "permissions": {
+    "allow": [
+      "Bash(v run:*)",
+      "Bash(echo:*)",
+      "Bash(SOKOL_DEBUG=1 timeout 3 v run:*)",
+      "Bash(v:*)",
+      "Bash(glxinfo:*)",
+      "Bash(awk:*)",
+      "Bash(find:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(git push)",
+      "Bash(timeout:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)",
+      "Bash(xxd:*)",
+      "Bash(git stash:*)",
+      "Bash(for f in examples/*.v)",
+      "Bash(do echo -n \"$f: \")",
+      "Bash(done)",
+      "Bash(git -C /Users/mike/Documents/github/gui log *)",
+      "Bash(git -C /Users/mike/Documents/github/gui show *)",
+      "Bash(git -C /Users/mike/Documents/github/gui diff *)",
+      "Bash(git add:*)"
+    ]
+  }
 }
