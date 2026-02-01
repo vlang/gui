@@ -54,6 +54,7 @@ V is a simple language. It deserves a simple UI framework.
 - Gradient borders
 - Blur effects
 - Full SVG support (paths, transforms, groups, strokes)
+- Mermaid diagram rendering
 
 **Animation**
 - Tweens with easing curves

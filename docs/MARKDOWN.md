@@ -44,6 +44,7 @@ window.markdown(
 | Horizontal rules | `---` or `***`                | Full-width line                         |
 | Tables           | Pipe syntax                   | Column alignment supported              |
 | Images           | `![alt](path)`                | PNG/JPG via `image()`, SVG via `svg()`  |
+| Mermaid diagrams | ` ```mermaid ` fence          | Async via Kroki API                     |
 
 ### Inline Elements
 
@@ -105,6 +106,28 @@ Specify dimensions using `=WxH` syntax after the path:
 ![Tiger](tiger.svg =200x200)
 
 ![Sample](sample.jpeg =300x)
+
+### Mermaid Diagrams
+
+Render mermaid diagrams using fenced code blocks:
+
+```mermaid
+graph LR
+    A[Start] --> B[Process]
+    B --> C[End]
+```
+
+Diagrams are rendered asynchronously via the [Kroki](https://kroki.io) API.
+
+**Configuration:**
+- `mermaid_width: int = 500` - max diagram width (auto-scaled if wider)
+
+**Notes:**
+- Requires network connection
+- Diagram source sent to external kroki.io API
+- Supports all mermaid diagram types (flowcharts, sequence, class, state, gantt, etc.)
+- Shows loading indicator during fetch
+- Cached to avoid re-fetching (max 50 diagrams)
 
 ## Styling
 

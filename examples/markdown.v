@@ -222,6 +222,16 @@ interpreted as Markdown:
 
 \# This is not a heading
 
+## Mermaid Diagrams
+
+```mermaid
+graph TD
+    A[User Input] --> B{Valid?}
+    B -->|Yes| C[Process]
+    B -->|No| D[Error]
+    C --> E[Output]
+```
+
 ## Conclusion
 
 This document has covered all the common Markdown elements you're likely
