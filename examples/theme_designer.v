@@ -102,10 +102,10 @@ const id_focus_shadow_alpha = 46
 const id_focus_grad_enable = 47
 const id_focus_grad_linear = 48
 const id_focus_grad_radial = 49
-const id_focus_grad_start_x = 50
-const id_focus_grad_start_y = 51
-const id_focus_grad_end_x = 52
-const id_focus_grad_end_y = 53
+const id_focus_grad_dir_top = 50
+const id_focus_grad_dir_right = 51
+const id_focus_grad_dir_bottom = 52
+const id_focus_grad_dir_left = 53
 const id_focus_grad_stop1_r = 54
 const id_focus_grad_stop1_g = 55
 const id_focus_grad_stop1_b = 56
@@ -155,20 +155,17 @@ pub mut:
 	shadow_spread   f32
 	shadow_alpha    f32 = 80
 	// Gradient
-	gradient_enabled bool
-	gradient_type    string = 'Linear'
-	gradient_start_x f32
-	gradient_start_y f32
-	gradient_end_x   f32 = 1.0
-	gradient_end_y   f32 = 1.0
-	grad_stop1_pos   f32
-	grad_stop1_r     f32 = 100
-	grad_stop1_g     f32 = 100
-	grad_stop1_b     f32 = 200
-	grad_stop2_pos   f32 = 1.0
-	grad_stop2_r     f32 = 50
-	grad_stop2_g     f32 = 50
-	grad_stop2_b     f32 = 100
+	gradient_enabled   bool
+	gradient_type      string                = 'Linear'
+	gradient_direction gui.GradientDirection = .to_bottom
+	grad_stop1_pos     f32
+	grad_stop1_r       f32 = 100
+	grad_stop1_g       f32 = 100
+	grad_stop1_b       f32 = 200
+	grad_stop2_pos     f32 = 1.0
+	grad_stop2_r       f32 = 50
+	grad_stop2_g       f32 = 50
+	grad_stop2_b       f32 = 100
 	// Preview state
 	input_text   string = 'Sample text'
 	toggle_state bool
@@ -262,12 +259,9 @@ fn get_gradient(app &ThemeEditorState) &gui.Gradient {
 		return unsafe { nil }
 	}
 	return &gui.Gradient{
-		type:    if app.gradient_type == 'Radial' { .radial } else { .linear }
-		start_x: app.gradient_start_x
-		start_y: app.gradient_start_y
-		end_x:   app.gradient_end_x
-		end_y:   app.gradient_end_y
-		stops:   [
+		type:      if app.gradient_type == 'Radial' { .radial } else { .linear }
+		direction: app.gradient_direction
+		stops:     [
 			gui.GradientStop{
 				color: gui.rgb(u8(app.grad_stop1_r), u8(app.grad_stop1_g), u8(app.grad_stop1_b))
 				pos:   app.grad_stop1_pos
@@ -703,14 +697,19 @@ fn gradient_controls(window &gui.Window) gui.View {
 					gradient_preview(app),
 				]
 			),
-			slider_row('X1', app.gradient_start_x, 0, 1.0, label_width_gradient, value_width_medium,
-				'grad_start_x', false, id_focus_grad_start_x, 2, make_grad_dir_handler('start_x')),
-			slider_row('Y1', app.gradient_start_y, 0, 1.0, label_width_gradient, value_width_medium,
-				'grad_start_y', false, id_focus_grad_start_y, 2, make_grad_dir_handler('start_y')),
-			slider_row('X2', app.gradient_end_x, 0, 1.0, label_width_gradient, value_width_medium,
-				'grad_end_x', false, id_focus_grad_end_x, 2, make_grad_dir_handler('end_x')),
-			slider_row('Y2', app.gradient_end_y, 0, 1.0, label_width_gradient, value_width_medium,
-				'grad_end_y', false, id_focus_grad_end_y, 2, make_grad_dir_handler('end_y')),
+			gui.row(
+				sizing:  gui.fill_fit
+				padding: gui.padding_none
+				v_align: .middle
+				spacing: gui.spacing_small
+				content: [
+					gui.text(text: 'Dir', min_width: label_width_gradient, text_style: label_style()),
+					grad_dir_button('\u25B2', .to_top, id_focus_grad_dir_top, app),
+					grad_dir_button('\u25B6', .to_right, id_focus_grad_dir_right, app),
+					grad_dir_button('\u25BC', .to_bottom, id_focus_grad_dir_bottom, app),
+					grad_dir_button('\u25C0', .to_left, id_focus_grad_dir_left, app),
+				]
+			),
 			grad_stop_row('1', app.grad_stop1_r, app.grad_stop1_g, app.grad_stop1_b, app.grad_stop1_pos,
 				'stop1', id_focus_grad_stop1_r),
 			grad_stop_row('2', app.grad_stop2_r, app.grad_stop2_g, app.grad_stop2_b, app.grad_stop2_pos,
@@ -726,17 +725,11 @@ fn grad_type_button(label string, type_name string, id_focus u32, app &ThemeEdit
 	})
 }
 
-fn make_grad_dir_handler(field string) fn (f32, mut gui.Event, mut gui.Window) {
-	return fn [field] (v f32, mut _ gui.Event, mut w gui.Window) {
+fn grad_dir_button(label string, dir gui.GradientDirection, id_focus u32, app &ThemeEditorState) gui.View {
+	return toggle_button(label, app.gradient_direction == dir, id_focus, fn [dir] (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 		mut state := w.state[ThemeEditorState]()
-		match field {
-			'start_x' { state.gradient_start_x = v }
-			'start_y' { state.gradient_start_y = v }
-			'end_x' { state.gradient_end_x = v }
-			'end_y' { state.gradient_end_y = v }
-			else {}
-		}
-	}
+		state.gradient_direction = dir
+	})
 }
 
 fn grad_stop_row(label string, r f32, g f32, b f32, pos f32, stop string, id_focus_base u32) gui.View {

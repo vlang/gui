@@ -51,7 +51,7 @@ V is a simple language. It deserves a simple UI framework.
 
 **Rendering**
 - SDF-based drop shadows
-- Gradient borders
+- Linear and radial gradients
 - Blur effects
 - Full SVG support (paths, transforms, groups, strokes)
 - Mermaid diagram rendering
@@ -137,6 +137,7 @@ v install gui
 | [SVG.md](docs/SVG.md) | Vector graphics and icon rendering |
 | [MARKDOWN.md](docs/MARKDOWN.md) | Markdown rendering |
 | [TABLES.md](docs/TABLES.md) | Table widget and data display |
+| [GRADIENTS.md](docs/GRADIENTS.md) | Linear and radial gradients |
 
 Generate API docs with:
 ```bash

@@ -34,7 +34,7 @@ as a cross-platform, immediate mode GUI toolkit.
 - [x] **Advanced Shaders:** Implement `sgl` pipelines for:
     - Drop shadows (box-shadow)
     - Gaussian blur (background blur for glass effects)
-    - Gradient borders and complex fills
+    - ~~Gradient borders and complex fills~~
 - [x] **Animation System 2.0:**
     - Add physics-based spring animations (more natural than linear/easing curves).
     - Support layout transitions (animated constraints when window resizes).

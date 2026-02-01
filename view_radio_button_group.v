@@ -24,15 +24,17 @@ module gui
 @[minify]
 pub struct RadioButtonGroupCfg {
 pub:
-	title      string
-	title_bg   Color = gui_theme.color_background
-	value      string
-	sizing     Sizing
-	on_select  fn (string, mut Window) @[required]
-	options    []RadioOption
-	min_width  f32
-	min_height f32
-	id_focus   u32
+	title        string
+	title_bg     Color = gui_theme.color_background
+	value        string
+	sizing       Sizing
+	on_select    fn (string, mut Window) @[required]
+	options      []RadioOption
+	min_width    f32
+	min_height   f32
+	id_focus     u32
+	color_border Color = gui_theme.color_border
+	size_border  f32   = gui_theme.size_border
 }
 
 // RadioOption defines a radio button for a [RadioButtonGroupCfg](#RadioButtonGroupCfg)
@@ -57,8 +59,8 @@ pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 		name:         'radio_button_group_column'
 		title:        cfg.title
 		title_bg:     cfg.title_bg
-		color_border: gui_theme.color_border
-		size_border:  gui_theme.size_border
+		color_border: cfg.color_border
+		size_border:  cfg.size_border
 		padding:      if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
 		min_width:    cfg.min_width
 		min_height:   cfg.min_height
@@ -74,8 +76,8 @@ pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
 		name:         'radio_button_group_row'
 		title:        cfg.title
 		title_bg:     cfg.title_bg
-		color_border: gui_theme.color_border
-		size_border:  gui_theme.size_border
+		color_border: cfg.color_border
+		size_border:  cfg.size_border
 		padding:      if cfg.title.len == 0 {
 			gui_theme.padding_medium
 		} else {

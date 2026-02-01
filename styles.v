@@ -24,7 +24,7 @@ pub enum GradientType {
 	radial
 }
 
-pub enum Direction {
+pub enum GradientDirection {
 	to_top
 	to_top_right
 	to_right
@@ -44,12 +44,8 @@ pub:
 pub struct Gradient {
 pub:
 	stops     []GradientStop
-	start_x   f32 // deprecated, kept for compatibility
-	start_y   f32
-	end_x     f32
-	end_y     f32
-	type      GradientType = .linear
-	direction Direction    = .to_bottom // CSS default
+	type      GradientType      = .linear
+	direction GradientDirection = .to_bottom // CSS default
 	angle     ?f32 // Optional explicit angle (degrees), overrides direction
 }
 

@@ -840,7 +840,7 @@ fn gradient_direction(gradient &Gradient, width f32, height f32) (f32, f32) {
 }
 
 fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient, mut window Window) {
-	if w <= 0 || h <= 0 {
+	if w <= 0 || h <= 0 || gradient.stops.len == 0 {
 		return
 	}
 

@@ -37,5 +37,12 @@ source code. Type `make doc` to produce the documention and `make read`
 to open the documention in the browser.
 
 There is also some hand written documentation in the `/doc` folder
-labled `01 Introduction.md`, `02 Getting Started.md`, etc. It’s a work
+labled `01 Introduction.md`, `02 Getting Started.md`, etc. It's a work
 in progress.
+
+## More Examples
+
+``` bash
+v run gradient_demo.v         # Linear and radial gradients
+v run gradient_border_demo.v  # Gradient borders
+```
