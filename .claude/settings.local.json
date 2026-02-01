@@ -1,30 +1,23 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(v run:*)",
-      "Bash(echo:*)",
-      "Bash(SOKOL_DEBUG=1 timeout 3 v run:*)",
-      "Bash(v:*)",
-      "Bash(glxinfo:*)",
-      "Bash(awk:*)",
-      "Bash(find:*)",
-      "Bash(wc:*)",
-      "Bash(sort:*)",
-      "Bash(git push)",
-      "Bash(timeout:*)",
-      "Bash(curl:*)",
-      "Bash(pkill:*)",
-      "Bash(xxd:*)",
-      "Bash(git stash:*)",
-      "Bash(for f in examples/*.v)",
-      "Bash(do echo -n \"$f: \")",
-      "Bash(done)",
-      "Bash(git add:*)",
-      "Bash(git diff:*)",
-      "Bash(git log:*)",
-      "WebFetch(domain:docs.kroki.io)",
-      "WebSearch",
-      "WebFetch(domain:modules.vlang.io)"
-    ]
-  }
+        "permissions": {
+                "allow": [
+                        "Bash(date:*)",
+                        "Bash(echo:*)",
+                        "Bash(cat:*)",
+                        "Bash(ls:*)",
+                        "Bash(mkdir:*)",
+                        "Bash(wc:*)",
+                        "Bash(head:*)",
+                        "Bash(tail:*)",
+                        "Bash(sort:*)",
+                        "Bash(grep:*)",
+                        "Bash(tr:*)",
+                        "Bash(git add:*)",
+                        "Bash(git commit:*)",
+                        "Bash(git status:*)",
+                        "Bash(git log:*)",
+                        "Bash(git diff:*)",
+                        "Bash(git tag:*)"
+                ]
+        }
 }
