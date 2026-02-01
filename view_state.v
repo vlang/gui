@@ -68,6 +68,9 @@ mut:
 	table_warned_no_id       BoundedMap[u64, bool] = BoundedMap[u64, bool]{
 		max_size: 100
 	}
+	diagram_cache            BoundedDiagramCache = BoundedDiagramCache{
+		max_size: 50
+	}
 }
 
 // TableColCache stores cached column widths and hash for invalidation

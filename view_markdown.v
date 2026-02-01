@@ -44,21 +44,22 @@ pub:
 @[minify]
 pub struct MarkdownCfg {
 pub:
-	id           string
-	source       string // Raw markdown text
-	style        MarkdownStyle
-	id_focus     u32
-	mode         TextMode = .wrap
-	min_width    f32
-	invisible    bool
-	clip         bool
-	focus_skip   bool
-	disabled     bool
-	color        Color = color_transparent
-	color_border Color = color_transparent
-	size_border  f32
-	radius       f32
-	padding      Padding
+	id            string
+	source        string // Raw markdown text
+	style         MarkdownStyle
+	id_focus      u32
+	mode          TextMode = .wrap
+	min_width     f32
+	invisible     bool
+	clip          bool
+	focus_skip    bool
+	disabled      bool
+	color         Color = color_transparent
+	color_border  Color = color_transparent
+	size_border   f32
+	radius        f32
+	padding       Padding
+	mermaid_width int = 500
 }
 
 // rich_text_plain extracts plain text from RichText for width calculation.
@@ -154,21 +155,90 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			list_items.clear()
 		}
 		if block.is_code {
-			// Code block in a column with background
-			content << column(
-				color:       cfg.style.code_block_bg
-				padding:     cfg.style.code_block_padding
-				radius:      cfg.style.code_block_radius
-				size_border: 0
-				sizing:      fill_fit
-				clip:        true
-				content:     [
-					rtf(
-						rich_text: block.content
-						mode:      .single_line
-					),
-				]
-			)
+			if block.code_language == 'mermaid' {
+				// Mermaid diagram - async render via Kroki (PNG format)
+				// NOTE: Mermaid source is sent to external kroki.io API
+				source := block.content.runs[0].text
+				// Combine hash with length for better collision resistance
+				diagram_hash := i64((u64(source.hash()) << 32) | u64(source.len))
+				mut w := unsafe { window }
+				if entry := w.view_state.diagram_cache.get(diagram_hash) {
+					match entry.state {
+						.loading {
+							content << column(
+								color:       cfg.style.code_block_bg
+								padding:     cfg.style.code_block_padding
+								radius:      cfg.style.code_block_radius
+								size_border: 0
+								sizing:      fill_fit
+								h_align:     .center
+								content:     [text(text: 'Loading diagram...')]
+							)
+						}
+						.ready {
+							content << column(
+								color:       rgba(248, 248, 255, 255) // ghost white
+								padding:     cfg.style.code_block_padding
+								radius:      cfg.style.code_block_radius
+								size_border: 0
+								sizing:      fill_fit
+								content:     [
+									image(file_name: entry.png_path),
+								]
+							)
+						}
+						.error {
+							content << column(
+								color:       cfg.style.code_block_bg
+								padding:     cfg.style.code_block_padding
+								radius:      cfg.style.code_block_radius
+								size_border: 0
+								sizing:      fill_fit
+								content:     [
+									text(
+										text:       entry.error
+										text_style: TextStyle{
+											...cfg.style.code
+											color: rgba(200, 50, 50, 255)
+										}
+									),
+								]
+							)
+						}
+					}
+				} else {
+					// Start async fetch
+					w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
+						state: .loading
+					})
+					fetch_mermaid_async(mut w, source, diagram_hash, cfg.mermaid_width)
+					content << column(
+						color:       cfg.style.code_block_bg
+						padding:     cfg.style.code_block_padding
+						radius:      cfg.style.code_block_radius
+						size_border: 0
+						sizing:      fill_fit
+						h_align:     .center
+						content:     [text(text: 'Loading diagram...')]
+					)
+				}
+			} else {
+				// Regular code block in a column with background
+				content << column(
+					color:       cfg.style.code_block_bg
+					padding:     cfg.style.code_block_padding
+					radius:      cfg.style.code_block_radius
+					size_border: 0
+					sizing:      fill_fit
+					clip:        true
+					content:     [
+						rtf(
+							rich_text: block.content
+							mode:      .single_line
+						),
+					]
+				)
+			}
 		} else if block.is_table {
 			// Table rendered using table view
 			if parsed := block.table_data {

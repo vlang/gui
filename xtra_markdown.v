@@ -18,12 +18,13 @@ struct CodeBlockState {
 
 // CodeFence represents a parsed code fence line.
 struct CodeFence {
-	char  u8
-	count int
+	char     u8
+	count    int
+	language string
 }
 
 // parse_code_fence checks if line is a code fence (``` or ~~~).
-// Returns fence info or none.
+// Returns fence info or none. Extracts language hint after fence chars.
 fn parse_code_fence(line string) ?CodeFence {
 	trimmed := line.trim_left(' \t')
 	if trimmed.len < 3 {
@@ -42,9 +43,12 @@ fn parse_code_fence(line string) ?CodeFence {
 		}
 	}
 	if count >= 3 {
+		// Extract language hint after fence chars
+		lang := trimmed[count..].trim_space()
 		return CodeFence{
-			char:  c
-			count: count
+			char:     c
+			count:    count
+			language: lang
 		}
 	}
 	return none
@@ -95,8 +99,9 @@ struct MarkdownBlock {
 	list_indent      int    // nesting level (0, 1, 2...)
 	image_src        string
 	image_alt        string
-	image_width      f32 // 0 = auto
-	image_height     f32 // 0 = auto
+	image_width      f32    // 0 = auto
+	image_height     f32    // 0 = auto
+	code_language    string // language hint from code fence
 	content          RichText
 	table_data       ?ParsedTable // parsed table with inline formatting
 }
@@ -128,6 +133,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	mut in_code_block := false
 	mut code_fence_char := u8(0)
 	mut code_fence_count := 0
+	mut code_fence_lang := ''
 	mut code_block_content := []string{}
 
 	for i < lines.len {
@@ -177,8 +183,9 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				}
 				if code_block_content.len > 0 {
 					blocks << MarkdownBlock{
-						is_code: true
-						content: RichText{
+						is_code:       true
+						code_language: code_fence_lang
+						content:       RichText{
 							runs: [
 								RichTextRun{
 									text:  code_block_content.join('\n')
@@ -192,6 +199,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				in_code_block = false
 				code_fence_char = 0
 				code_fence_count = 0
+				code_fence_lang = ''
 				// Add leading space for content after code block
 				runs << rich_br()
 			} else if !in_code_block {
@@ -202,6 +210,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				in_code_block = true
 				code_fence_char = fence.char
 				code_fence_count = fence.count
+				code_fence_lang = fence.language
 			}
 			i++
 			continue
@@ -574,8 +583,9 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			blocks << block
 		}
 		blocks << MarkdownBlock{
-			is_code: true
-			content: RichText{
+			is_code:       true
+			code_language: code_fence_lang
+			content:       RichText{
 				runs: [
 					RichTextRun{
 						text:  code_block_content.join('\n')

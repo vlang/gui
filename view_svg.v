@@ -31,15 +31,24 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 
 	svg_src := if sv.file_name.len > 0 { sv.file_name } else { sv.svg_data }
 
-	// Always load SVG to validate it exists and get dimensions if needed
-	cached := window.load_svg(svg_src, 24, 24) or {
+	// Determine display dimensions - use specified or SVG's natural size
+	// First load at 1:1 scale to get natural dimensions
+	initial := window.load_svg(svg_src, 0, 0) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
 		mut error_text := text(text: '[missing: ${svg_src}]')
 		return error_text.generate_layout(mut window)
 	}
 
-	width := if sv.width > 0 { sv.width } else { cached.width }
-	height := if sv.height > 0 { sv.height } else { cached.height }
+	width := if sv.width > 0 { sv.width } else { initial.width }
+	height := if sv.height > 0 { sv.height } else { initial.height }
+
+	// Now load at the actual display dimensions for proper tessellation
+	cached := window.load_svg(svg_src, width, height) or {
+		log.error('${@FILE_LINE} > ${err.msg()}')
+		mut error_text := text(text: '[missing: ${svg_src}]')
+		return error_text.generate_layout(mut window)
+	}
+	_ = cached // cache entry now exists at correct scale
 
 	return Layout{
 		shape: &Shape{

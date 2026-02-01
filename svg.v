@@ -2,6 +2,21 @@ module gui
 
 import math
 import os
+import strings
+
+// Security limits for SVG parsing
+const default_icon_size = 24
+const max_group_depth = 32
+const max_elements = 100000
+const max_path_segments = 100000
+const max_viewbox_dim = 10000
+const max_attr_len = 1048576
+
+// ParseState tracks mutable state during SVG parsing.
+struct ParseState {
+mut:
+	elem_count int
+}
 
 // GroupStyle holds inherited style properties for groups.
 struct GroupStyle {
@@ -16,24 +31,24 @@ struct GroupStyle {
 // parse_svg parses an SVG string and returns a VectorGraphic.
 pub fn parse_svg(content string) !VectorGraphic {
 	mut vg := VectorGraphic{
-		width:  24 // default icon size
-		height: 24
+		width:  default_icon_size
+		height: default_icon_size
 	}
 
 	// Parse viewBox
 	if vb := find_attr(content, 'viewBox') {
 		parts := vb.split_any(' ,')
 		if parts.len >= 4 {
-			vg.width = parts[2].f32()
-			vg.height = parts[3].f32()
+			vg.width = clamp_viewbox_dim(parts[2].f32())
+			vg.height = clamp_viewbox_dim(parts[3].f32())
 		}
 	} else {
 		// Try width/height attributes
 		if w := find_attr(content, 'width') {
-			vg.width = parse_length(w)
+			vg.width = clamp_viewbox_dim(parse_length(w))
 		}
 		if h := find_attr(content, 'height') {
-			vg.height = parse_length(h)
+			vg.height = clamp_viewbox_dim(parse_length(h))
 		}
 	}
 
@@ -41,17 +56,28 @@ pub fn parse_svg(content string) !VectorGraphic {
 	default_style := GroupStyle{
 		transform: identity_transform
 	}
-	vg.paths = parse_svg_content(content, default_style)
+	mut state := ParseState{}
+	vg.paths = parse_svg_content(content, default_style, 0, mut state)
 
 	return vg
 }
 
 // parse_svg_content parses SVG content recursively, handling groups.
-fn parse_svg_content(content string, inherited GroupStyle) []VectorPath {
+// depth limits recursion; state.elem_count limits total elements parsed.
+fn parse_svg_content(content string, inherited GroupStyle, depth int, mut state ParseState) []VectorPath {
 	mut paths := []VectorPath{}
 	mut pos := 0
 
+	// Reject excessive nesting depth
+	if depth > max_group_depth {
+		return paths
+	}
+
 	for pos < content.len {
+		// Stop if element limit reached
+		if state.elem_count >= max_elements {
+			break
+		}
 		// Find next element
 		start := find_index(content, '<', pos) or { break }
 
@@ -94,6 +120,7 @@ fn parse_svg_content(content string, inherited GroupStyle) []VectorPath {
 		if tag_name == 'g' {
 			// Parse group
 			group_style := merge_group_style(elem, inherited)
+			state.elem_count++
 
 			if is_self_closing {
 				pos = elem_end + 1
@@ -105,42 +132,50 @@ fn parse_svg_content(content string, inherited GroupStyle) []VectorPath {
 			group_end := find_closing_tag(content, 'g', group_content_start)
 			if group_end > group_content_start {
 				group_content := content[group_content_start..group_end]
-				paths << parse_svg_content(group_content, group_style)
+				paths << parse_svg_content(group_content, group_style, depth + 1, mut
+					state)
 			}
 			// Skip past </g>
 			close_end := find_index(content, '>', group_end) or { break }
 			pos = close_end + 1
 		} else if tag_name == 'path' {
+			state.elem_count++
 			if p := parse_path_with_style(elem, inherited) {
 				paths << p
 			}
 			pos = elem_end + 1
 		} else if tag_name == 'rect' {
+			state.elem_count++
 			if p := parse_rect_with_style(elem, inherited) {
 				paths << p
 			}
 			pos = elem_end + 1
 		} else if tag_name == 'circle' {
+			state.elem_count++
 			if p := parse_circle_with_style(elem, inherited) {
 				paths << p
 			}
 			pos = elem_end + 1
 		} else if tag_name == 'ellipse' {
+			state.elem_count++
 			if p := parse_ellipse_with_style(elem, inherited) {
 				paths << p
 			}
 			pos = elem_end + 1
 		} else if tag_name == 'polygon' {
+			state.elem_count++
 			if p := parse_polygon_with_style(elem, inherited, true) {
 				paths << p
 			}
 			pos = elem_end + 1
 		} else if tag_name == 'polyline' {
+			state.elem_count++
 			if p := parse_polygon_with_style(elem, inherited, false) {
 				paths << p
 			}
 			pos = elem_end + 1
 		} else if tag_name == 'line' {
+			state.elem_count++
 			if p := parse_line_with_style(elem, inherited) {
 				paths << p
 			}
@@ -358,11 +393,26 @@ fn find_attr(elem string, name string) ?string {
 			start += pattern.len
 			end := find_index(elem, quote.ascii_str(), start) or { continue }
 			if end > start {
+				attr_len := end - start
+				if attr_len > max_attr_len {
+					return none // attribute too long, reject
+				}
 				return elem[start..end]
 			}
 		}
 	}
 	return none
+}
+
+// clamp_viewbox_dim clamps dimension to prevent extreme allocations
+fn clamp_viewbox_dim(v f32) f32 {
+	if v < 0 {
+		return 0
+	}
+	if v > max_viewbox_dim {
+		return max_viewbox_dim
+	}
+	return v
 }
 
 // parse_length parses a CSS length value (ignores units for now)
@@ -818,7 +868,7 @@ fn parse_path_d(d string) []PathSegment {
 	mut last_ctrl_y := f32(0)
 	mut last_cmd := u8(0)
 
-	for i < tokens.len {
+	for i < tokens.len && segments.len < max_path_segments {
 		token := tokens[i]
 		if token.len == 0 {
 			i++
@@ -1092,7 +1142,8 @@ fn parse_path_d(d string) []PathSegment {
 // tokenize_path splits path d string into tokens
 fn tokenize_path(d string) []string {
 	mut tokens := []string{}
-	mut current := ''
+	mut current := strings.new_builder(32)
+	mut has_dot := false
 	mut i := 0
 
 	for i < d.len {
@@ -1100,8 +1151,9 @@ fn tokenize_path(d string) []string {
 
 		if c == ` ` || c == `\t` || c == `\n` || c == `\r` || c == `,` {
 			if current.len > 0 {
-				tokens << current
-				current = ''
+				tokens << current.str()
+				current = strings.new_builder(32)
+				has_dot = false
 			}
 			i++
 			continue
@@ -1110,8 +1162,9 @@ fn tokenize_path(d string) []string {
 		// Command letters
 		if (c >= `A` && c <= `Z`) || (c >= `a` && c <= `z`) {
 			if current.len > 0 {
-				tokens << current
-				current = ''
+				tokens << current.str()
+				current = strings.new_builder(32)
+				has_dot = false
 			}
 			tokens << c.ascii_str()
 			i++
@@ -1120,18 +1173,27 @@ fn tokenize_path(d string) []string {
 
 		// Numbers (including negative and decimal)
 		if (c >= `0` && c <= `9`) || c == `-` || c == `+` || c == `.` {
+			cur_str := current.str()
+			cur_len := cur_str.len
 			// Handle negative sign that's part of a number sequence
-			if (c == `-` || c == `+`) && current.len > 0 && current[current.len - 1] != `e`
-				&& current[current.len - 1] != `E` {
-				tokens << current
-				current = ''
+			if (c == `-` || c == `+`) && cur_len > 0 && cur_str[cur_len - 1] != `e`
+				&& cur_str[cur_len - 1] != `E` {
+				tokens << cur_str
+				current = strings.new_builder(32)
+				has_dot = false
+			} else if cur_len > 0 {
+				current.write_string(cur_str)
 			}
 			// Handle implicit separator for consecutive numbers like "1.5.5"
-			if c == `.` && current.contains('.') {
-				tokens << current
-				current = ''
+			if c == `.` && has_dot {
+				tokens << current.str()
+				current = strings.new_builder(32)
+				has_dot = false
 			}
-			current += c.ascii_str()
+			current.write_u8(c)
+			if c == `.` {
+				has_dot = true
+			}
 			i++
 			continue
 		}
@@ -1140,7 +1202,7 @@ fn tokenize_path(d string) []string {
 	}
 
 	if current.len > 0 {
-		tokens << current
+		tokens << current.str()
 	}
 
 	return tokens
