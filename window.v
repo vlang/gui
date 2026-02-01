@@ -39,6 +39,8 @@ mut:
 	shadow_pip_init       bool                 // Initialization flag for shadow pipeline
 	blur_pip              sgl.Pipeline         // Pipeline for drawing blurred shapes (glows)
 	blur_pip_init         bool                 // Initialization flag for blur pipeline
+	gradient_pip          sgl.Pipeline         // Pipeline for drawing multi-stop gradients
+	gradient_pip_init     bool                 // Initialization flag for gradient pipeline
 }
 
 // Window is the main application window. `state` holds app state.

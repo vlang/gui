@@ -24,6 +24,17 @@ pub enum GradientType {
 	radial
 }
 
+pub enum Direction {
+	to_top
+	to_top_right
+	to_right
+	to_bottom_right
+	to_bottom
+	to_bottom_left
+	to_left
+	to_top_left
+}
+
 pub struct GradientStop {
 pub:
 	color Color
@@ -32,12 +43,14 @@ pub:
 
 pub struct Gradient {
 pub:
-	stops   []GradientStop
-	start_x f32 // 0.0 to 1.0 (relative to container width)
-	start_y f32
-	end_x   f32 // 0.0 to 1.0
-	end_y   f32
-	type    GradientType = .linear
+	stops     []GradientStop
+	start_x   f32 // deprecated, kept for compatibility
+	start_y   f32
+	end_x     f32
+	end_y     f32
+	type      GradientType = .linear
+	direction Direction    = .to_bottom // CSS default
+	angle     ?f32 // Optional explicit angle (degrees), overrides direction
 }
 
 pub struct ButtonStyle {

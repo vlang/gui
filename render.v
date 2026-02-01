@@ -4,6 +4,7 @@ import gg
 import sokol.sgl
 import log
 import vglyph
+import math
 
 // A Renderer is the final computed drawing instruction. gui.Window keeps an array
 // of Renderers and only uses that array to paint the window. The window can be
@@ -79,12 +80,13 @@ struct DrawBlur {
 }
 
 struct DrawGradientBorder {
-	x        f32
-	y        f32
-	w        f32
-	h        f32
-	radius   f32
-	gradient &Gradient
+	x         f32
+	y         f32
+	w         f32
+	h         f32
+	radius    f32
+	thickness f32
+	gradient  &Gradient
 }
 
 struct DrawGradient {
@@ -127,7 +129,7 @@ type Renderer = DrawCircle
 	| DrawGradient
 	| DrawGradientBorder
 
-// renderers_draw walks the array of renderers and drawings them.
+// renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
 // draw logic of GUI
 fn renderers_draw(renderers []Renderer, mut window Window) {
@@ -230,7 +232,7 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 		}
 		DrawGradientBorder {
 			draw_gradient_border(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
-				renderer.gradient, mut window)
+				renderer.thickness, renderer.gradient, mut window)
 		}
 		DrawSvg {
 			draw_triangles(renderer.triangles, renderer.color, renderer.x, renderer.y,
@@ -372,12 +374,13 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 		// Check for Border Gradient
 		if shape.border_gradient != unsafe { nil } {
 			window.renderers << DrawGradientBorder{
-				x:        shape.x
-				y:        shape.y
-				w:        shape.width
-				h:        shape.height
-				radius:   shape.radius
-				gradient: shape.border_gradient
+				x:         shape.x
+				y:         shape.y
+				w:         shape.width
+				h:         shape.height
+				radius:    shape.radius
+				thickness: shape.size_border
+				gradient:  shape.border_gradient
 			}
 		} else {
 			render_rectangle(mut shape, clip, mut window)
@@ -437,7 +440,7 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 }
 
-// render_rectangle draw_rectangle draws a shape as a rectangle.
+// render_rectangle draws a shape as a rectangle.
 fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 	assert shape.shape_type == .rectangle
 	draw_rect := gg.Rect{
@@ -807,6 +810,35 @@ pub fn draw_blur_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.Col
 	sgl.matrix_mode_modelview()
 }
 
+// angle_to_direction converts CSS angle (degrees) to unit direction vector
+// CSS: 0deg=top, clockwise. Math: 0rad=right, counter-clockwise.
+fn angle_to_direction(css_degrees f32) (f32, f32) {
+	rad := (90.0 - css_degrees) * math.pi / 180.0
+	return f32(math.cos(rad)), f32(math.sin(rad))
+}
+
+// gradient_direction computes direction vector from Gradient config
+// Handles both explicit angle and direction keywords
+fn gradient_direction(gradient &Gradient, width f32, height f32) (f32, f32) {
+	// If explicit angle provided, use it
+	if angle := gradient.angle {
+		return angle_to_direction(angle)
+	}
+
+	// Convert direction keyword to angle
+	css_angle := match gradient.direction {
+		.to_top { f32(0.0) }
+		.to_right { f32(90.0) }
+		.to_bottom { f32(180.0) }
+		.to_left { f32(270.0) }
+		.to_top_right { 90.0 - f32(math.atan2(height, width)) * 180.0 / math.pi }
+		.to_bottom_right { 90.0 + f32(math.atan2(height, width)) * 180.0 / math.pi }
+		.to_bottom_left { 270.0 - f32(math.atan2(height, width)) * 180.0 / math.pi }
+		.to_top_left { 270.0 + f32(math.atan2(height, width)) * 180.0 / math.pi }
+	}
+	return angle_to_direction(css_angle)
+}
+
 fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient, mut window Window) {
 	if w <= 0 || h <= 0 {
 		return
@@ -827,29 +859,66 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 		r = 0
 	}
 
-	// Use the rounded rect pipeline for clipping/shape
-	init_rounded_rect_pipeline(mut window)
-	sgl.load_pipeline(window.rounded_rect_pip)
+	init_gradient_pipeline(mut window)
 
-	// We need to calculate colors for vertices based on the gradient.
-	// For a simple linear gradient implementation using vertex colors:
-	// This only supports 2 stops accurately for a quad.
-	// For comprehensive support, we'd need a fragment shader or texture.
-	// HACK: For now, interpolate start and end colors for the 4 corners.
+	// Pack gradient stops into tm matrix via sgl
+	sgl.matrix_mode_texture()
+	sgl.push_matrix()
 
-	mut c_start := gradient.stops[0].color
-	mut c_end := gradient.stops.last().color
+	// Pack up to 3 stops into tm matrix (column-major order for sokol)
+	mut tm_data := [16]f32{}
+	stop_count := if gradient.stops.len > 3 { 3 } else { gradient.stops.len }
+	for i in 0 .. stop_count {
+		stop := gradient.stops[i]
+		// Column-major: each stop is a column vec4(r, g, b, pos)
+		tm_data[i * 4 + 0] = f32(stop.color.r) / 255.0
+		tm_data[i * 4 + 1] = f32(stop.color.g) / 255.0
+		tm_data[i * 4 + 2] = f32(stop.color.b) / 255.0
+		tm_data[i * 4 + 3] = stop.pos
+	}
+	// Pad remaining stops with last stop
+	if stop_count < 3 {
+		last := gradient.stops.last()
+		for i in stop_count .. 3 {
+			tm_data[i * 4 + 0] = f32(last.color.r) / 255.0
+			tm_data[i * 4 + 1] = f32(last.color.g) / 255.0
+			tm_data[i * 4 + 2] = f32(last.color.b) / 255.0
+			tm_data[i * 4 + 3] = 1.0
+		}
+	}
 
-	// If using sgl pipeline, the fragment shader uses the color passed in `sgl.c4b`.
-	// The current shader multiplies texture color (if any) or uses flat color.
-	// The vertex color attribute is `color0`.
-	// If I set `sgl.c4b` per vertex, it *should* interpolate.
+	// tm[3] content depends on gradient type
+	if gradient.type == .radial {
+		// Aspect ratio for perfect circles (closest-side sizing)
+		// Scale the LONGER axis to 1.0, shorter axis gets ratio
+		aspect_x := if sw >= sh { f32(1.0) } else { sw / sh }
+		aspect_y := if sh >= sw { f32(1.0) } else { sh / sw }
+		tm_data[12] = aspect_x // tm[3].x
+		tm_data[13] = aspect_y // tm[3].y
+		tm_data[14] = 1.0 // Radial flag (shader checks > 0.5)
+		tm_data[15] = 1.0
+	} else {
+		// Linear gradient
+		dx, dy := gradient_direction(gradient, sw, sh)
+		tm_data[12] = dx // tm[3].x = cos(math_angle)
+		tm_data[13] = dy // tm[3].y = sin(math_angle)
+		tm_data[14] = 0.0 // Linear flag
+		tm_data[15] = 1.0
+	}
 
-	z_val := pack_shader_params(r, 0)
+	// Load the gradient data matrix
+	sgl.load_matrix(tm_data[0..])
 
-	draw_quad_gradient(sx, sy, sw, sh, z_val, c_start, c_end, gradient.type)
+	sgl.load_pipeline(window.gradient_pip)
+	sgl.c4b(255, 255, 255, 255) // White base color (shader computes actual color)
+
+	z_val := pack_shader_params(r, f32(stop_count))
+
+	draw_quad(sx, sy, sw, sh, z_val)
 
 	sgl.load_default_pipeline()
+	sgl.pop_matrix()
+	sgl.matrix_mode_modelview()
 }
 
 fn draw_quad_gradient(x f32, y f32, w f32, h f32, z f32, c1 Color, c2 Color, g_type GradientType) {
@@ -886,7 +955,7 @@ fn draw_quad_gradient(x f32, y f32, w f32, h f32, z f32, c1 Color, c2 Color, g_t
 	sgl.end()
 }
 
-fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient, mut window Window) {
+fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, thickness f32, gradient &Gradient, mut window Window) {
 	if w <= 0 || h <= 0 {
 		return
 	}
@@ -927,11 +996,7 @@ fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, gradient &Gradie
 	c2 := if gradient.stops.len > 1 { gradient.stops[1].color.to_gx_color() } else { c1 }
 
 	// Pack params for STROKE (thickness > 0)
-
-	// Pack params for STROKE (thickness > 0)
-	// Pack params for STROKE (thickness > 0)
-	thickness := 10.0 * scale // DEBUG: Thick border
-	z_val := pack_shader_params(r, thickness)
+	z_val := pack_shader_params(r, thickness * scale)
 
 	// Draw Quad with Per-Vertex Colors
 	sgl.begin_quads()

@@ -1,23 +1,30 @@
 {
-        "permissions": {
-                "allow": [
-                        "Bash(date:*)",
-                        "Bash(echo:*)",
-                        "Bash(cat:*)",
-                        "Bash(ls:*)",
-                        "Bash(mkdir:*)",
-                        "Bash(wc:*)",
-                        "Bash(head:*)",
-                        "Bash(tail:*)",
-                        "Bash(sort:*)",
-                        "Bash(grep:*)",
-                        "Bash(tr:*)",
-                        "Bash(git add:*)",
-                        "Bash(git commit:*)",
-                        "Bash(git status:*)",
-                        "Bash(git log:*)",
-                        "Bash(git diff:*)",
-                        "Bash(git tag:*)"
-                ]
-        }
+  "permissions": {
+    "allow": [
+      "Bash(date:*)",
+      "Bash(echo:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Bash(wc:*)",
+      "Bash(head:*)",
+      "Bash(tail:*)",
+      "Bash(sort:*)",
+      "Bash(grep:*)",
+      "Bash(tr:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git tag:*)",
+      "WebSearch",
+      "WebFetch(domain:www.w3.org)",
+      "WebFetch(domain:mtldoc.com)",
+      "WebFetch(domain:www.warp.dev)",
+      "WebFetch(domain:nical.github.io)",
+      "WebFetch(domain:alexharri.com)",
+      "Bash(git show:*)"
+    ]
+  }
 }
