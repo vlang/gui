@@ -7,35 +7,42 @@ decisions.
 ## High-Level Overview
 
 ```mermaid
-graph TD
+flowchart TD
     App[Application Code] --> Window[Window Management]
     Examples[Examples] --> Window
-    
+
     Window --> ViewGen[View Generator]
     Window --> Events[Event System]
-    
+
     ViewGen --> View[View Layer]
+
+    %% Vertical grouping for View/Core UI hierarchy
     View --> Layout[Layout Engine]
-    
-    Layout --> Shape[Shape System]
-    Layout --> Sizing[Sizing & Alignment]
-    Layout --> Padding[Padding & Spacing]
-    
     View --> Components[UI Components]
-    Components --> Containers[Containers: row/column/canvas]
-    Components --> Primitives[Primitives: text/image]
-    Components --> Composite[Composite: button/input/menu]
-    
-    Layout --> Renderer[Rendering System]
+
+    %% Stack Layout Engine children vertically
+    Layout --> Shape[Shape System]
+    Shape --> Sizing[Sizing & Alignment]
+    Sizing --> Padding[Padding & Spacing]
+    Padding --> Renderer[Rendering System]
     Renderer --> Animation[Animation]
-    
     Renderer --> GG[gg Graphics]
-    Events --> SAPP[sokol.sapp]
-    GG --> SAPP
-    
+    GG --> SAPP[sokol.sapp]
+    Events --> SAPP
+
+    %% Make the component break-out less horizontal
+    Components --> Containers[Containers: row/column/canvas]
+    Containers --> Primitives[Primitives: text/image]
+    Primitives --> Composite[Composite: button/input/menu]
+
+    %% Theme & Fonts positioning
     Theme[Theme & Styles] -.applies to.-> Components
     Theme -.applies to.-> Renderer
     Fonts[Fonts & vglyph] -.used by.-> Primitives
+
+    %% Invisible links to promote verticality
+    Theme ~~~ App
+    Fonts ~~~ Primitives
 ```
 
 ## System Layers
