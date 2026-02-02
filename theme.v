@@ -261,8 +261,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			color_select:       cfg.color_interior
 			padding:            padding(1, 1, 1, 2)
 			size_border:        cfg.size_border
-			radius:             if cfg.radius != 0 { radius_small } else { 0 }
-			radius_border:      if radius_border != 0 { radius_small } else { 0 }
+			radius:             cfg.radius
+			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
 			text_style_label:   cfg.text_style
 		}
@@ -804,7 +804,8 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_border_focus: border_focus
 			color_select:       sel
 		}
-		switch_style:       SwitchStyle{
+
+		switch_style:  SwitchStyle{
 			...t.switch_style
 			color:              panel
 			color_click:        interior
@@ -815,7 +816,7 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_select:       sel
 			color_unselect:     active
 		}
-		toggle_style:       ToggleStyle{
+		toggle_style:  ToggleStyle{
 			...t.toggle_style
 			color:              panel
 			color_border:       border
@@ -825,7 +826,7 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_hover:        hover
 			color_select:       interior
 		}
-		tooltip_style:      TooltipStyle{
+		tooltip_style: TooltipStyle{
 			...t.tooltip_style
 			color:              interior
 			color_hover:        hover
@@ -834,7 +835,7 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_border:       border
 			color_border_focus: border_focus
 		}
-		tree_style:         TreeStyle{
+		tree_style:    TreeStyle{
 			...t.tree_style
 			color_hover:        hover
 			color_focus:        focus

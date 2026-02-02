@@ -318,8 +318,8 @@ pub:
 
 pub struct SwitchStyle {
 pub:
-	size_width         f32        = 26 // dedicated width (was: n2.size * 1.65)
-	size_height        f32        = 16 // dedicated height (was: n2.size)
+	size_width         f32        = 36 // dedicated width
+	size_height        f32        = 22 // dedicated height
 	color              Color      = color_interior_dark
 	color_click        Color      = color_interior_dark
 	color_focus        Color      = color_focus_dark
