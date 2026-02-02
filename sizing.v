@@ -25,3 +25,17 @@ pub const fixed_fixed = Sizing{.fixed, .fixed}
 pub const fill_fit = Sizing{.fill, .fit}
 pub const fill_fill = Sizing{.fill, .fill}
 pub const fill_fixed = Sizing{.fill, .fixed}
+
+// apply_fixed_sizing_constraints sets min = max = size when sizing is .fixed.
+// Call this on Shape after initial field assignment.
+@[inline]
+pub fn apply_fixed_sizing_constraints(mut shape Shape) {
+	if shape.sizing.width == .fixed && shape.width > 0 {
+		shape.min_width = shape.width
+		shape.max_width = shape.width
+	}
+	if shape.sizing.height == .fixed && shape.height > 0 {
+		shape.min_height = shape.height
+		shape.max_height = shape.height
+	}
+}

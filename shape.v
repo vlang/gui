@@ -43,12 +43,12 @@ pub mut:
 	// 4 bytes (f32/u32/Color)
 	x                     f32 // Final calculated X position (absolute)
 	y                     f32 // Final calculated Y position (absolute)
-	width                 f32 // Final calculated width
-	min_width             f32 // Minimum width constraint
-	max_width             f32 // Maximum width constraint
-	height                f32 // Final calculated height
-	min_height            f32 // Minimum height constraint
-	max_height            f32 // Maximum height constraint
+	width                 f32 // Size value. For .fixed sizing, this IS the size.
+	min_width             f32 // Min constraint. Ignored when sizing.width == .fixed
+	max_width             f32 // Max constraint. Ignored when sizing.width == .fixed
+	height                f32 // Size value. For .fixed sizing, this IS the size.
+	min_height            f32 // Min constraint. Ignored when sizing.height == .fixed
+	max_height            f32 // Max constraint. Ignored when sizing.height == .fixed
 	radius                f32 // Corner radius for rounded rectangles
 	blur_radius           f32 // Gaussian blur radius
 	spacing               f32 // Spacing between children (loaded from style)

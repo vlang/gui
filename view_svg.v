@@ -50,7 +50,7 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 	}
 	_ = cached // cache entry now exists at correct scale
 
-	return Layout{
+	mut layout := Layout{
 		shape: &Shape{
 			name:       'svg'
 			shape_type: .svg
@@ -64,6 +64,8 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 			on_click:   sv.left_click()
 		}
 	}
+	apply_fixed_sizing_constraints(mut layout.shape)
+	return layout
 }
 
 // svg creates an SVG view component from an SVG file or inline data.

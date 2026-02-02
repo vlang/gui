@@ -86,6 +86,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 		layout.shape.min_height = f32_max(layout.shape.height, layout.shape.min_height)
 		layout.shape.height = layout.shape.min_height
 	}
+	apply_fixed_sizing_constraints(mut layout.shape)
 	return layout
 }
 

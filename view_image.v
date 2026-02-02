@@ -37,7 +37,7 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 	width := if iv.width > 0 { iv.width } else { image.width }
 	height := if iv.height > 0 { iv.height } else { image.height }
 
-	layout := Layout{
+	mut layout := Layout{
 		shape: &Shape{
 			name:       'image'
 			shape_type: .image
@@ -53,6 +53,7 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 			on_hover:   iv.on_hover
 		}
 	}
+	apply_fixed_sizing_constraints(mut layout.shape)
 
 	return layout
 }
