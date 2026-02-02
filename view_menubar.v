@@ -1,6 +1,5 @@
 module gui
 
-import datatypes
 import arrays
 
 // MenubarCfg configures a horizontal menubar that supports nested submenus.
@@ -80,12 +79,6 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 		panic('MenubarCfg.id_focus must be non-zero')
 	}
 
-	// Ensure all menu IDs (recursively) are unique.
-	mut ids := datatypes.Set[string]{}
-	if duplicate_id := check_menu_ids(cfg.items, mut ids) {
-		panic('Duplicate menu-id found menubar-id "${cfg.id}": "${duplicate_id}"')
-	}
-
 	// If the menubar already has focus but no selected menu yet,
 	// choose the first selectable menu item.
 	current_menu := window.view_state.menu_state.get(cfg.id_focus) or { '' }
@@ -113,7 +106,7 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 		size_border:   cfg.size_border
 		sizing:        cfg.sizing
 		on_keydown:    make_menubar_on_keydown(cfg)
-		amend_layout:  make_menubar_amend_layout(cfg)
+		amend_layout:  make_menubar_amend_layout(cfg.id_focus)
 		padding:       cfg.padding
 		radius:        cfg.radius
 		// menu_build handles constructing root items and their submenus.
@@ -128,9 +121,12 @@ fn make_menubar_on_keydown(cfg MenubarCfg) fn (&Layout, mut Event, mut Window) {
 	}
 }
 
-fn make_menubar_amend_layout(cfg MenubarCfg) fn (mut Layout, mut Window) {
-	return fn [cfg] (mut layout Layout, mut w Window) {
-		cfg.amend_layout_menubar(mut layout, mut w)
+// Wrapper function to capture minimal values needed for amend_layout.
+fn make_menubar_amend_layout(id_focus u32) fn (mut Layout, mut Window) {
+	return fn [id_focus] (mut layout Layout, mut w Window) {
+		if !w.is_focus(id_focus) {
+			w.view_state.menu_state.set(id_focus, '')
+		}
 	}
 }
 

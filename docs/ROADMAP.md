@@ -1,13 +1,19 @@
 # Roadmap
 
-This document outlines the strategic vision for `v-gui`, aiming to establish it as the premier high-performance, cross-platform UI toolkit for the V language. Our goal is to combine the simplicity of immediate mode with the visual fidelity and accessibility of retained mode frameworks.
+This document outlines the strategic vision for `v-gui`, aiming to establish it as the premier
+high-performance, cross-platform UI toolkit for the V language. Our goal is to combine the
+simplicity of immediate mode with the visual fidelity and accessibility of retained mode frameworks.
 
 ## Strategic Pillars
 
-1.  **Rendering Excellence:** Leverage GPU acceleration (`sgl`/`gg`) to achieve 120fps animations, glassmorphism, and advanced effects that rival Flutter's Impeller.
-2.  **Accessibility First:** Integrated support for platform accessibility APIs (A11y) to serve all users, a non-negotiable requirement for modern software.
-3.  **Cross-Platform Native:** Seamless execution on macOS, Windows, Linux, with experimental support for Mobile (iOS/Android) and Web (Wasm).
-4.  **Developer Joy:** Zero-config tooling, hot-reload capabilities, and a comprehensive widget standard library.
+1.  **Rendering Excellence:** Leverage GPU acceleration (`sgl`/`gg`) to achieve 120fps animations,
+    glassmorphism, and advanced effects that rival Flutter's Impeller.
+2.  **Accessibility First:** Integrated support for platform accessibility APIs (A11y) to serve all
+    users, a non-negotiable requirement for modern software.
+3.  **Cross-Platform Native:** Seamless execution on macOS, Windows, Linux, with experimental
+    support for Mobile (iOS/Android) and Web (Wasm).
+4.  **Developer Joy:** Zero-config tooling, hot-reload capabilities, and a comprehensive widget
+    standard library.
 
 ---
 
@@ -44,13 +50,15 @@ This document outlines the strategic vision for `v-gui`, aiming to establish it 
 *Focus: Essential features for enterprise and commercial adoption.*
 
 #### Accessibility (A11y)
-- [ ] **A11y Tree Generation:** Map internal View hierarchy to platform accessibility trees (NSAccessibility, UIAutomation, AT-SPI).
+- [ ] **A11y Tree Generation:** Map internal View hierarchy to platform accessibility trees
+      (NSAccessibility, UIAutomation, AT-SPI).
 - [ ] **Screen Reader Support:** Semantic announcements for state changes and navigation.
 - [ ] **Keyboard Navigation:** Full focus management network, tab loops, and visual focus rings.
 
 #### Internationalization (I18n)
 - [ ] **Locale Awareness:** Runtime language switching.
-- [ ] **RTL Support:** Bi-directional text layout and interface mirroring for right-to-left languages (Arabic, Hebrew).
+- [ ] **RTL Support:** Bi-directional text layout and interface mirroring for right-to-left
+      languages (Arabic, Hebrew).
 - [ ] **Formatting:** Locale-specific date, number, and currency input masks.
 
 #### Ecosystem & Tools
@@ -87,4 +95,8 @@ This document outlines the strategic vision for `v-gui`, aiming to establish it 
 
 ## Summary
 
-`v-gui` aims to fill the niche of a **lightweight, dependency-free** UI framework that doesn't compromise on modern aesthetics. While frameworks like Tauri rely on heavy webviews and Flutter carries a VM, `v-gui` offers a direct-to-metal approach ideal for resource-constrained environments and developers seeking pure performance. The immediate roadmap prioritizes **Accessibility** and **Rich Text** to satisfy the baseline requirements of modern application development.
+`v-gui` aims to fill the niche of a **lightweight, dependency-free** UI framework that doesn't
+compromise on modern aesthetics. While frameworks like Tauri rely on heavy webviews and Flutter
+carries a VM, `v-gui` offers a direct-to-metal approach ideal for resource-constrained environments
+and developers seeking pure performance. The immediate roadmap prioritizes **Accessibility** and
+**Rich Text** to satisfy the baseline requirements of modern application development.

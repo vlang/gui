@@ -24,17 +24,19 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 
 		radius:       cfg.radius
 		sizing:       cfg.sizing
-		amend_layout: make_menu_amend_layout(cfg)
+		amend_layout: make_menu_amend_layout(cfg.id_focus)
 		padding:      cfg.padding_submenu
 		spacing:      cfg.spacing_submenu
 		content:      menu_build(cfg, 1, cfg.items, window)
 	)
 }
 
-// Wrapper function to capture MenubarCfg by value to avoid dangling reference issues.
-fn make_menu_amend_layout(cfg MenubarCfg) fn (mut Layout, mut Window) {
-	return fn [cfg] (mut layout Layout, mut w Window) {
-		cfg.amend_layout_menubar(mut layout, mut w)
+// Wrapper function to capture minimal values needed for amend_layout.
+fn make_menu_amend_layout(id_focus u32) fn (mut Layout, mut Window) {
+	return fn [id_focus] (mut layout Layout, mut w Window) {
+		if !w.is_focus(id_focus) {
+			w.view_state.menu_state.set(id_focus, '')
+		}
 	}
 }
 
@@ -87,6 +89,8 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 		// Attach floating submenu if the item is selected or part of the open menu path.
 		if item.submenu.len > 0 {
 			if item_cfg.selected || selected_in_tree {
+				// Extract id_focus for closure capture
+				id_focus := cfg.id_focus
 				submenu := column(
 					name:         'menubar submenu'
 					id:           item_cfg.id
@@ -99,12 +103,10 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 					float:          true
 					float_anchor:   if level == 0 { .bottom_left } else { .top_right }
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }
-					on_hover:       fn [cfg] (mut layout Layout, mut e Event, mut w Window) {
-						cfg.on_hover_submenu(mut layout, mut e, mut w)
-					}
-					on_click:       fn [cfg] (_ &Layout, mut e Event, mut w Window) {
+					on_hover:       make_submenu_on_hover(cfg)
+					on_click:       fn [id_focus] (_ &Layout, mut e Event, mut w Window) {
 						e.is_handled = true
-						w.set_id_focus(cfg.id_focus)
+						w.set_id_focus(id_focus)
 					}
 					padding:        cfg.padding_submenu
 					spacing:        cfg.spacing_submenu
@@ -120,34 +122,27 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 	return content
 }
 
-// amend_layout_menubar ensures that if the menubar itself does not have focus,
-// no menu item remains selected. Without this, menu items could appear stuck
-// highlighted when the user clicks elsewhere.
-fn (cfg &MenubarCfg) amend_layout_menubar(mut layout Layout, mut w Window) {
-	if !w.is_focus(cfg.id_focus) {
-		w.view_state.menu_state.set(cfg.id_focus, '')
-		return
-	}
-}
+// make_submenu_on_hover creates an optimized hover handler for submenus.
+// Uses 'make_*' prefix for functions that create closures with minimal captures,
+// following the optimization pattern from view_button.v. This differs from 'on_*'
+// methods which are event handlers on structs.
+fn make_submenu_on_hover(cfg MenubarCfg) fn (mut Layout, mut Event, mut Window) {
+	id_focus := cfg.id_focus
+	items := cfg.items
+	return fn [id_focus, items] (mut layout Layout, mut _ Event, mut w Window) {
+		id_selected := w.view_state.menu_state.get(id_focus) or { '' }
+		has_selected := descendant_has_menu_id(layout, id_selected)
 
-// on_hover_submenu handles subtle hover behavior of floating submenus. When the
-// cursor leaves a submenu panel, the leaf selected item should unselect, and visual
-// focus returns to the parent menu-item. This behavior mirrors traditional menu
-// navigation in desktop UI toolkits. Involves navigating both Layout and MenubarCfg
-// trees to determine relationships.
-fn (cfg &MenubarCfg) on_hover_submenu(mut layout Layout, mut _ Event, mut w Window) {
-	id_selected := w.view_state.menu_state.get(cfg.id_focus) or { '' }
-	has_selected := descendant_has_menu_id(layout, id_selected)
-
-	if has_selected {
-		ctx := w.context()
-		// If mouse leaves the submenu panel…
-		if !layout.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
-			// …and the selected item is a leaf (has no submenu),
-			// then highlight the parent menu item (id = layout.shape.id).
-			if mi_cfg := find_menu_item_cfg(cfg.items, id_selected) {
-				if mi_cfg.submenu.len == 0 {
-					w.view_state.menu_state.set(cfg.id_focus, layout.shape.id)
+		if has_selected {
+			ctx := w.context()
+			// If mouse leaves the submenu panel…
+			if !layout.shape.point_in_shape(f32(ctx.mouse_pos_x), f32(ctx.mouse_pos_y)) {
+				// …and the selected item is a leaf (has no submenu),
+				// then highlight the parent menu item (id = layout.shape.id).
+				if mi_cfg := find_menu_item_cfg(items, id_selected) {
+					if mi_cfg.submenu.len == 0 {
+						w.view_state.menu_state.set(id_focus, layout.shape.id)
+					}
 				}
 			}
 		}
@@ -188,7 +183,7 @@ fn find_menu_item_cfg(items []MenuItemCfg, id string) ?MenuItemCfg {
 fn check_for_duplicate_menu_ids(items []MenuItemCfg) {
 	mut ids := datatypes.Set[string]{}
 	if duplicate_id := check_menu_ids(items, mut ids) {
-		panic('Duplicate menu-id found menubar-id [${duplicate_id}]')
+		panic('Duplicate menu ID: "${duplicate_id}"')
 	}
 }
 
@@ -213,7 +208,7 @@ fn check_menu_ids(items []MenuItemCfg, mut ids datatypes.Set[string]) ?string {
 // Used to highlight intermediate menu-items that lead to the currently open subtree.
 fn is_menu_id_in_tree(submenu []MenuItemCfg, id string) bool {
 	for menu in submenu {
-		if menu.id.len > 0 && menu.id == id {
+		if menu.id == id {
 			return true
 		}
 		if is_menu_id_in_tree(menu.submenu, id) {
