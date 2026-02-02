@@ -1,126 +1,90 @@
 # Roadmap
 
-This roadmap outlines the strategic direction for `v-gui`, focusing on enhancing its capabilities 
-as a cross-platform, immediate mode GUI toolkit.
+This document outlines the strategic vision for `v-gui`, aiming to establish it as the premier high-performance, cross-platform UI toolkit for the V language. Our goal is to combine the simplicity of immediate mode with the visual fidelity and accessibility of retained mode frameworks.
 
-## Toolkit Analysis
+## Strategic Pillars
 
-### Strengths
-- **Simplicity:** The pure V implementation eliminates complex build chains and C++ interoperability
-  headaches common in other toolkits.
-- **Immediate Mode:** The "data-first" approach simplifies state management, avoiding the "sync"
-  problems (observables, data binding) of retained mode systems like Qt or WPF.
-- **Performance:** Lightweight architecture with minimal memory overhead compared to browser-based
-  (Electron) or VM-based (Java/Flutter) solutions.
-- **Modern Layout:** The Flexbox-inspired layout engine is intuitive for web developers.
-
-### Weaknesses / Opportunities
-- **Rendering:** Using basic 2D primitives (`gg`/`sokol`) limits advanced visual effects
-  (shadows, blurs, glassmorphism) compared to Compose or Flutter.
-- **Accessibility:** Currently "Work in Progress". This is a critical barrier for adoption in
-  enterprise or government software.
-- **Mobile Support:** Event handling is mouse/keyboard centric. Mobile gestures (swipe, pinch) and
-  behaviors (soft keyboard handling) need integrated support.
-- **Ecosystem:** Fewer ready-made high-level components (Charts, DataGrids) compared to mature
-  frameworks.
+1.  **Rendering Excellence:** Leverage GPU acceleration (`sgl`/`gg`) to achieve 120fps animations, glassmorphism, and advanced effects that rival Flutter's Impeller.
+2.  **Accessibility First:** Integrated support for platform accessibility APIs (A11y) to serve all users, a non-negotiable requirement for modern software.
+3.  **Cross-Platform Native:** Seamless execution on macOS, Windows, Linux, with experimental support for Mobile (iOS/Android) and Web (Wasm).
+4.  **Developer Joy:** Zero-config tooling, hot-reload capabilities, and a comprehensive widget standard library.
 
 ---
 
-## 2026 Roadmap
+## 2026-2027 Roadmap
 
-### Phase 1: Core Rendering & Visual Polish
-*Focus: Matching the "premium" look of modern UI frameworks.*
+### Phase 1: Core Fidelity & Widget Completeness (Q1-Q2 2026)
+*Focus: Polishing the desktop experience to "Premium" standards.*
 
-- [x] **Advanced Shaders:** Implement `sgl` pipelines for:
-    - Drop shadows (box-shadow)
-    - Gaussian blur (background blur for glass effects)
-    - ~~Gradient borders and complex fills~~
-- [x] **Animation System 2.0:**
-    - Add physics-based spring animations (more natural than linear/easing curves).
-    - Support layout transitions (animated constraints when window resizes).
-    - Add "hero" transitions between views.
-- [x] **Vector Graphics:** Full SVG support including paths, transforms (matrix, translate, rotate,
-      scale, skew), nested groups with style inheritance, and strokes (width, linecap, linejoin).
+#### Rendering & Visuals
+- [x] **Advanced Shadows:** Box-shadow implementation with spread/blur radius.
+- [x] **Blur Effects:** Background blur (frosted glass) support.
+- [ ] **Custom Shaders:** User-exposed API for fragment shaders on specific views.
+- [ ] **Vector Graphics:** Complete SVG compliance (interactions, masking).
 
-### Phase 2: Fundamental Widgets & UX
-*Focus: Completing the standard library of widgets expected by developers.*
+#### Essential Widgets
+- [ ] **Navigation:**
+    - `TabControl` (Closeable tabs, draggable reordering).
+    - `BreadcrumbBar` (Path navigation).
+    - `NavigationDrawer` (Collapsible sidebar with animation).
+- [ ] **Overlays:**
+    - `Toast` (Non-blocking notifications).
+    - `Modal` (Stacked dialog architecture with backdrop management).
+    - `CommandPalette` (Quick action search interface, e.g., Cmd+K).
+- [ ] **Rich Content:**
+    - `RichTextEditor` (Selection, copy/paste, bold/italic keybinds).
+    - `CodeEditor` (Syntax highlighting, line numbers, folding).
 
-- [ ] **Navigation Components:**
-    - **Tabs:** A flexible tab bar and view switcher.
-    - **Breadcrumbs:** For navigational hierarchy.
-    - **Drawer:** Slide-out navigation menu (essential for mobile).
-- [ ] **Feedback & Overlays:**
-    - **Toast/Snackbar:** Non-modal notifications.
-    - **Modal Logic:** Refine the dialog system to support stacked modals and custom backdrops.
-    - **Tooltip:** Enhance with rich content support (not just text).
-- [~] **Data Display:**
-    - **DataGrid:** Basic table with borders, selection, and virtualization done. Advanced features
-      (filtering, column resizing) TODO.
-    - **TreeGrid:** Hierarchical data combined with column data.
-    - **Charting:**
-        - **Basic Charts:** Line, Bar, Pie, and Area charts.
-        - **Interactivity:** Tooltips on hover, legend toggling, and zooming.
-- [x] **Rich Content:**
-    - **Markdown View:** Render rich text from markdown source (headers, lists, code blocks).
-    - **Code Editor Widget:**
-        - **Syntax Highlighting:** Tokenizer rendering pipeline.
-        - **Gutter:** Line numbers and active line highlighting.
-        - **Virtualization:** Efficient rendering of large documents (only visible lines).
+#### Windowing & System
+- [ ] **Multi-Window Support:** Spawning secondary windows from the main app.
+- [ ] **System Tray:** Cross-platform tray icons and menus.
+- [ ] **Drag & Drop:** OS-level drag and drop (files, data) between apps.
 
+### Phase 2: Professional Grade (Q3-Q4 2026)
+*Focus: Essential features for enterprise and commercial adoption.*
 
+#### Accessibility (A11y)
+- [ ] **A11y Tree Generation:** Map internal View hierarchy to platform accessibility trees (NSAccessibility, UIAutomation, AT-SPI).
+- [ ] **Screen Reader Support:** Semantic announcements for state changes and navigation.
+- [ ] **Keyboard Navigation:** Full focus management network, tab loops, and visual focus rings.
 
-### Phase 3: Accessibility & I18n
-*Focus: Professional readiness and compliance.*
+#### Internationalization (I18n)
+- [ ] **Locale Awareness:** Runtime language switching.
+- [ ] **RTL Support:** Bi-directional text layout and interface mirroring for right-to-left languages (Arabic, Hebrew).
+- [ ] **Formatting:** Locale-specific date, number, and currency input masks.
 
-- [ ] **Accessibility (A11y) Tree:**
-    - Map `View` hierarchy to platform A11y APIs (NSAccessibility, UIAutomation, AT-SPI).
-    - ensure semantic roles (Button, Slider, List) are correctly exposed.
-    - Support focus navigation order customization.
-- [ ] **Internationalization (I18n):**
-    - Built-in `tr()` support in views.
-    - Dynamic directionality (RTL/LTR) flipping based on locale.
-    - Date/Number formatting utilities integrated with input widgets.
+#### Ecosystem & Tools
+- [ ] **Inspector Tool:** Runtime debugging overlay to inspect view bounds, padding, and state.
+- [ ] **Live Preview:** Hot-reload style development workflow.
+- [ ] **Component Gallery:** A reference application showcasing all widgets and states.
 
-### Phase 4: Platform & Input
-*Focus: Breaking out of the "desktop" box.*
+### Phase 3: Ubiquity (2027+)
+*Focus: Expanding beyond the desktop.*
 
-- [ ] **Touch & Gestures:**
-    - Abstraction for Pointers (Mouse/Touch/Pen).
-    - Recognizers for: Swipe, Pinch, Long Press, Double Tap.
-    - Kinetic scrolling for lists (physics-based fling).
-- [ ] **Mobile Integration:**
-    - Handle safe areas (notch/dynamic island).
-    - Soft keyboard visibility management (resize window vs overlay).
-- [ ] **OS Integration:**
-    - Native File Dialogs (if not fully covered).
-    - System Tray support.
-    - Badge counts app icon.
+#### Mobile (iOS/Android)
+- [ ] **Touch System:** Abstraction for multi-touch pointers, gestures (Pinch, Rotation, Swipe).
+- [ ] **Kinetic Scrolling:** Physics-based fling scrolling with platform-specific friction.
+- [ ] **Safe Areas:** Handling notches, dynamic islands, and system bars.
+- [ ] **Virtual Keyboard:** Soft keyboard management (panning view on focus).
 
-### Phase 5: Developer Experience (DX)
-*Focus: Making `v-gui` a joy to use.*
+#### Web (Wasm)
+- [ ] **Web Integration:** Canvas-based rendering target.
+- [ ] **Clipboard/History:** Browser API integration.
 
-- [ ] **Inspector Tool:** An in-app debug overlay (similar to Flutter Inspector) to:
-    - Visualize layout bounds/padding/margins.
-    - Pick widgets and see their state.
-    - View performance metrics per-widget.
-- [ ] **Theme System Upgrade:**
-    - Support "Design Tokens" for easy mapping from Figma.
-    - Runtime theme switching (Dark/Light/High Contrast) without app restart.
+---
 
-## Comparison Table
+## Competitive Analysis
 
-| Feature       | v-gui                  | Flutter                  | Dear ImGui       |
-|---------------|------------------------|--------------------------|------------------|
-| **Paradigm**  | Immediate (Clay-based) | Retained (Widget Tree)   | Immediate        |
-| **Language**  | V                      | Dart                     | C++              |
-| **Layout**    | Flexbox-like           | Flexbox-like             | Linear / Columns |
-| **Rendering** | Sokol/GG               | Skia/Impeller            | Custom OpenGL    |
-| **State**     | User-managed (Simple)  | Widget-managed (Complex) | User-managed     |
-| **Styling**   | Code-defined           | Widget-composition       | Global Styles    |
-
+| Feature | v-gui | Flutter | Tauri | Qt |
+| :--- | :--- | :--- | :--- | :--- |
+| **Language** | V | Dart | Rust (Backend) + JS/HTML | C++ / Python |
+| **Architecture** | Immediate Mode (Custom) | Retained Mode (Skia/Impeller) | Webview Wrapper | Retained (QPainter/Scenegraph) |
+| **Binary Size** | Tiny (<5MB) | Medium (~20MB) | Small (<10MB) | Large (>40MB) |
+| **Startup Time** | Instant | Fast | Medium (WebView initialization) | Medium |
+| **Accessibility** | 🚧 Planned | ✅ Excellent | ✅ Native (Browser) | ✅ Mature |
+| **Look & Feel** | Drawn (Customizable) | Drawn (Material/Cupertino) | Native/Web | Native (Widgets) or Custom (QML) |
+| **Hot Reload** | 🚧 Varies | ✅ State-preserving | ✅ Web Frontend Only | ⚠️ Limited (QML) |
 
 ## Summary
-`v-gui` is well-positioned as a simplified, high-performance alternative to Flutter for V
-developers.
-The immediate priority should be **Rendering Fidelity** (shadows/blur) and **Accessibility** to
-validate it for production desktop apps, before expanding fully into mobile.
+
+`v-gui` aims to fill the niche of a **lightweight, dependency-free** UI framework that doesn't compromise on modern aesthetics. While frameworks like Tauri rely on heavy webviews and Flutter carries a VM, `v-gui` offers a direct-to-metal approach ideal for resource-constrained environments and developers seeking pure performance. The immediate roadmap prioritizes **Accessibility** and **Rich Text** to satisfy the baseline requirements of modern application development.

@@ -8,5 +8,8 @@
     "research": true,
     "plan_check": true,
     "verifier": true
+  },
+  "git": {
+    "branching_strategy": "milestone"
   }
 }
