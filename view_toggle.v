@@ -85,6 +85,9 @@ pub fn toggle(cfg ToggleCfg) View {
 		on_click:     left_click_only(cfg.on_click)
 		on_hover:     fn [color_hover, color_click] (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
+			if layout.children.len == 0 {
+				return
+			}
 			layout.children[0].shape.color = color_hover
 			if e.mouse_button == .left {
 				layout.children[0].shape.color = color_click
@@ -93,6 +96,9 @@ pub fn toggle(cfg ToggleCfg) View {
 		min_width:    cfg.min_width
 		amend_layout: fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
 			if layout.shape.disabled || layout.shape.on_click == unsafe { nil } {
+				return
+			}
+			if layout.children.len == 0 {
 				return
 			}
 			if w.is_focus(layout.shape.id_focus) {
