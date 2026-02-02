@@ -755,6 +755,7 @@ pub fn draw_shadow_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.C
 
 	draw_quad(sx, sy, sw, sh, z_val)
 	sgl.load_default_pipeline()
+	sgl.c4b(255, 255, 255, 255) // Reset color state
 
 	sgl.pop_matrix()
 	sgl.matrix_mode_modelview()

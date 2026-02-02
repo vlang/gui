@@ -805,6 +805,7 @@ pub fn draw_blur_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.Col
 
 	draw_quad(sx, sy, sw, sh, z_val)
 	sgl.load_default_pipeline()
+	sgl.c4b(255, 255, 255, 255) // Reset color state
 
 	sgl.pop_matrix()
 	sgl.matrix_mode_modelview()
@@ -917,6 +918,7 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 	draw_quad(sx, sy, sw, sh, z_val)
 
 	sgl.load_default_pipeline()
+	sgl.c4b(255, 255, 255, 255) // Reset color state
 	sgl.pop_matrix()
 	sgl.matrix_mode_modelview()
 }
