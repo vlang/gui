@@ -127,6 +127,7 @@ pub:
 	color              Color      = color_panel_dark
 	color_hover        Color      = color_hover_dark
 	color_focus        Color      = color_focus_dark
+	color_click        Color      = color_active_dark
 	color_border       Color      = color_border_dark
 	color_border_focus Color      = color_select_dark
 	padding            Padding    = padding_one

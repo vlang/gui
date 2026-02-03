@@ -11,6 +11,8 @@ pub:
 	content      View
 	sizing       Sizing
 	color        Color   = gui_theme.expand_panel_style.color
+	color_hover  Color   = gui_theme.expand_panel_style.color_hover
+	color_click  Color   = gui_theme.expand_panel_style.color_click
 	color_border Color   = gui_theme.expand_panel_style.color_border
 	padding      Padding = gui_theme.expand_panel_style.padding
 	size_border  f32     = gui_theme.expand_panel_style.size_border
@@ -27,6 +29,8 @@ pub:
 // expand_panel creates an expandable panel view.
 pub fn expand_panel(cfg ExpandPanelCfg) View {
 	on_toggle := cfg.on_toggle
+	color_hover := cfg.color_hover
+	color_click := cfg.color_click
 	return column(
 		name:         'expand_panel'
 		id:           cfg.id
@@ -70,9 +74,12 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 						e.is_handled = true
 					}
 				}
-				on_hover: fn (mut layout Layout, mut e Event, mut w Window) {
+				on_hover: fn [color_hover, color_click] (mut layout Layout, mut e Event, mut w Window) {
 					w.set_mouse_cursor_pointing_hand()
-					layout.shape.color = gui_theme.color_hover
+					layout.shape.color = color_hover
+					if e.mouse_button == .left {
+						layout.shape.color = color_click
+					}
 					e.is_handled = true
 				}
 			),
