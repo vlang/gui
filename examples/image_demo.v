@@ -25,8 +25,8 @@ fn main_view(window &gui.Window) gui.View {
 		v_align: .middle
 		content: [
 			gui.image(
-				file_name: sample_path
-				on_click:  fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+				src:      sample_path
+				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
 					w.dialog(
 						align_buttons: .end
 						dialog_type:   .message

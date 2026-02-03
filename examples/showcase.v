@@ -1538,7 +1538,7 @@ fn image_sample(w &gui.Window) gui.View {
 			view_title('Image'),
 			gui.column(
 				content: [
-					gui.image(file_name: sample_image_path),
+					gui.image(src: sample_image_path),
 					gui.text(text: 'Pinard Falls, Oregon', text_style: gui.theme().b2),
 				]
 			),

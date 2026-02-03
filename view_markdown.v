@@ -183,7 +183,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 								size_border: 0
 								sizing:      fill_fit
 								content:     [
-									image(file_name: entry.png_path),
+									image(src: entry.png_path),
 								]
 							)
 						}
@@ -314,9 +314,9 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 				)
 			} else {
 				content << image(
-					file_name: block.image_src
-					width:     block.image_width
-					height:    block.image_height
+					src:    block.image_src
+					width:  block.image_width
+					height: block.image_height
 				)
 			}
 		} else if block.header_level > 0 {

@@ -253,7 +253,7 @@ specific Markdown processor.
 
 fn main() {
 	mut window := gui.window(
-		width:   500
+		width:   600
 		height:  600
 		title:   'Markdown View'
 		on_init: fn (mut w gui.Window) {

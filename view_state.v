@@ -41,6 +41,9 @@ mut:
 	image_map                BoundedImageMap = BoundedImageMap{
 		max_size: 100
 	}
+	active_downloads         BoundedMap[string, i64] = BoundedMap[string, i64]{
+		max_size: 50
+	}
 	svg_cache                BoundedSvgCache = BoundedSvgCache{
 		max_size: 100
 	}
