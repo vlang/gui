@@ -42,6 +42,8 @@ const date_picker_weekdays_three = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'S
 const date_picker_weekdays_full = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 	'Saturday']!
 
+const date_picker_format_month_year = 'MMMM YYYY'
+
 @[minify]
 struct DatePickerState {
 pub mut:
@@ -141,7 +143,9 @@ fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
 	id := cfg.id
 	return button(
 		color_border: color_transparent
-		content:      [text(text: view_time(state).custom_format('MMMM YYYY'))]
+		content:      [
+			text(text: view_time(state).custom_format(date_picker_format_month_year)),
+		]
 		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
 			mut state := w.view_state.date_picker_state.get(id) or { DatePickerState{} }
 			state.show_year_month_picker = !state.show_year_month_picker
@@ -165,8 +169,6 @@ fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
 			dps.view_month = dps.view_month - 1
 			if dps.view_month < 1 {
 				dps.view_month = 12
-			}
-			if dps.view_month == 12 {
 				dps.view_year -= 1
 			}
 			w.view_state.date_picker_state.set(id, dps)
@@ -185,8 +187,6 @@ fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 			dps.view_month = dps.view_month + 1
 			if dps.view_month > 12 {
 				dps.view_month = 1
-			}
-			if dps.view_month == 1 {
 				dps.view_year += 1
 			}
 			w.view_state.date_picker_state.set(id, dps)
@@ -228,17 +228,21 @@ fn (cfg DatePickerCfg) weekdays(state DatePickerState) View {
 		.three_letter { date_picker_weekdays_three }
 		.full { date_picker_weekdays_full }
 	}
+
+	// Shift days based on Monday start preference
+	// Standard array is Sun..Sat (0..6)
 	for i in 0 .. 7 {
-		mut weekday := match cfg.monday_first_day_of_week {
-			true { weekdays_names[(i + 1) % 7] }
-			else { weekdays_names[i] }
-		}
+		day_idx := if cfg.monday_first_day_of_week { (i + 1) % 7 } else { i }
 
 		is_disabled := if cfg.allowed_weekdays.len > 0 {
-			// Sunday is 7 and not 0. Not sure if that's standard but not
-			// what I expected. Rather than change all the other logic here,
-			// handle the edge case in an error handler. (sigh)
-			wd := DatePickerWeekdays.from(i) or { DatePickerWeekdays.sunday }
+			// day_idx: 0=Sun, 1=Mon, ..., 6=Sat
+			// DatePickerWeekdays: 1=Monday ... 7=Sunday
+			// We need to map 0->7 (Sunday), others match directly if we treat Sun as 7
+			// Actually DatePickerWeekdays enum values are:
+			// Mon=1, Tue=2, Wed=3, Thu=4, Fri=5, Sat=6, Sun=7
+
+			dw_val := if day_idx == 0 { 7 } else { day_idx }
+			wd := DatePickerWeekdays.from(u8(dw_val)) or { DatePickerWeekdays.sunday }
 			wd !in cfg.allowed_weekdays
 		} else {
 			false
@@ -251,7 +255,7 @@ fn (cfg DatePickerCfg) weekdays(state DatePickerState) View {
 			min_width:    state.cell_size
 			max_width:    state.cell_size
 			padding:      padding_two
-			content:      [text(text: weekday)]
+			content:      [text(text: weekdays_names[day_idx])]
 		)
 	}
 	return row(
@@ -263,100 +267,119 @@ fn (cfg DatePickerCfg) weekdays(state DatePickerState) View {
 }
 
 fn (cfg DatePickerCfg) month(state DatePickerState) View {
-	mut month := []View{cap: 6}
+	mut month_rows := []View{cap: 6}
 
 	today := time.now()
 	vt := view_time(state)
 	days_in_month := time.days_in_month(vt.month, vt.year) or { 0 }
-	first_day_of_month := time.day_of_week(vt.year, vt.month, 1)
-	last_month := if vt.month == 1 { 12 } else { vt.month - 1 }
-	year := if vt.month == 12 { vt.year - 1 } else { vt.year }
-	days_prev_month := time.days_in_month(last_month, year) or { 0 }
 
-	// Calculate the offset for the first day of the month.
-	// 1 = Monday, 7 = Sunday.
-	// We want to map this to an offset where Monday starts at 0 (or similar depending on week start).
-	// The offsets below shift the starting position in the 7-cell row.
-	// e.g. if the month starts on Tuesday (2), we want to skip 1 cell, so offset is -1.
-	mut count := match cfg.monday_first_day_of_week {
-		true { 2 - first_day_of_month }
-		else { 1 - (first_day_of_month % 7) }
+	// day_of_week returns 1 (Mon) to 7 (Sun)
+	first_dow := time.day_of_week(vt.year, vt.month, 1)
+
+	// Determine starting offset
+	// If Monday First: Mon(1)->0, Tue(2)->1 ... Sun(7)->6
+	// If Sunday First: Sun(7)->0, Mon(1)->1 ... Sat(6)->6
+
+	start_offset := if cfg.monday_first_day_of_week {
+		first_dow - 1
+	} else {
+		if first_dow == 7 { 0 } else { first_dow }
 	}
 
-	for _ in 0 .. 6 { // six weeks to display a month
+	prev_month := if vt.month == 1 { 12 } else { vt.month - 1 }
+	prev_year := if vt.month == 1 { vt.year - 1 } else { vt.year }
+	days_prev_month := time.days_in_month(prev_month, prev_year) or { 30 }
+
+	mut current_day_counter := 1
+	// We iterate 42 cells (6 rows * 7 cols) to ensure full month coverage
+	for _ in 0 .. 6 {
 		mut week := []View{cap: 7}
-		for _ in 0 .. 7 { // 7 days in a week
-			day := match true {
-				count <= 0 {
-					if cfg.show_adjacent_months { (days_prev_month + count).str() } else { '' }
-				}
-				count > days_in_month {
-					if cfg.show_adjacent_months { (count - days_in_month).str() } else { '' }
-				}
-				else {
-					count.str()
-				}
+		for _ in 0 .. 7 {
+			mut day_num := 0
+			mut is_prev_month := false
+			mut is_next_month := false
+
+			// Determine which day number to show
+			if current_day_counter <= start_offset {
+				// Previous month
+				day_num = days_prev_month - (start_offset - current_day_counter)
+				is_prev_month = true
+			} else if current_day_counter > start_offset + days_in_month {
+				// Next month
+				day_num = current_day_counter - (start_offset + days_in_month)
+				is_next_month = true
+			} else {
+				// Current month
+				day_num = current_day_counter - start_offset
 			}
 
-			is_today := count == today.day && vt.month == today.month && vt.year == today.year
-				&& !cfg.hide_today_indicator
+			// Text and visibility
+			day_str := if (!is_prev_month && !is_next_month) || cfg.show_adjacent_months {
+				day_num.str()
+			} else {
+				''
+			}
 
-			// Check selection without allocating new arrays
+			// State checks
+			is_current_month_day := !is_prev_month && !is_next_month
+			is_today := is_current_month_day && day_num == today.day && vt.month == today.month
+				&& vt.year == today.year && !cfg.hide_today_indicator
+
 			mut is_selected_day := false
-			if count > 0 && count <= days_in_month {
-				// We only check exact date matches for valid days in this month
+			if is_current_month_day {
+				// Check selection
+				target_time := date(day_num, vt.month, vt.year)
 				if cfg.select_multiple {
 					for d in cfg.dates {
-						if d.day == count && d.month == vt.month && d.year == vt.year {
+						if is_same_day(d, target_time) {
 							is_selected_day = true
 							break
 						}
 					}
-				} else {
-					if cfg.dates.len > 0 {
-						d := cfg.dates[0]
-						if d.day == count && d.month == vt.month && d.year == vt.year {
-							is_selected_day = true
-						}
-					} else {
-						// Default to today if nothing selected
-						if count == today.day && vt.month == today.month && vt.year == today.year {
-							is_selected_day = true
-						}
+				} else if cfg.dates.len > 0 {
+					if is_same_day(cfg.dates[0], target_time) {
+						is_selected_day = true
 					}
+				} else if is_today && cfg.dates.len == 0 {
+					// Default to today if nothing selected?? Original logic did this.
+					is_selected_day = true
 				}
 			}
 
-			dt := date(count, vt.month, vt.year)
-			is_disabled := cfg.disabled(dt, state)
+			dt := if is_current_month_day { date(day_num, vt.month, vt.year) } else { time.unix(0) }
+			is_disabled_cell := is_current_month_day && cfg.disabled(dt, state)
 
+			// Styling
 			color := if is_selected_day { cfg.color_select } else { cfg.color }
 			color_border := if is_today { cfg.text_style.color } else { color_transparent }
 			color_hover := if is_selected_day { cfg.color_select } else { cfg.color_hover }
+
+			// Captures for closure
 			on_select := cfg.on_select
-			update_selections := cfg.update_selections
+			update_selections_fn := cfg.update_selections
+			selected_day_val := day_num // capture by value
 
 			week << button(
 				color:        color
 				color_border: color_border
 				color_click:  cfg.color_select
 				color_hover:  color_hover
-				disabled:     count <= 0 || count > days_in_month || is_disabled
+				disabled:     !is_current_month_day || is_disabled_cell
 				min_width:    state.cell_size
 				max_width:    state.cell_size
 				max_height:   state.cell_size
 				size_border:  2
-				content:      [text(text: day)]
-				on_click:     fn [on_select, update_selections, count, state] (_ &Layout, mut e Event, mut w Window) {
+				content:      [text(text: day_str)]
+				on_click:     fn [on_select, update_selections_fn, selected_day_val, state] (_ &Layout, mut e Event, mut w Window) {
 					if on_select != unsafe { nil } {
-						selected_dates := update_selections(count, state)
+						selected_dates := update_selections_fn(selected_day_val, state)
 						on_select(selected_dates, mut e, mut w)
 					}
 				}
 			)
-			count += 1
+			current_day_counter++
 		}
-		month << row(
+		month_rows << row(
 			padding: padding_none
 			spacing: cfg.cell_spacing
 			content: week
@@ -366,7 +389,7 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 		name:    'date_picker month'
 		padding: padding_none
 		spacing: cfg.cell_spacing
-		content: month
+		content: month_rows
 	)
 }
 
@@ -378,9 +401,17 @@ fn (cfg DatePickerCfg) update_selections(day int, state DatePickerState) []time.
 
 	mut selections := []time.Time{}
 	selections << dates(cfg.dates)
-	if selected in selections {
-		selections = selections.filter(it != selected)
-	} else {
+
+	// Check if already selected to toggle
+	mut found := false
+	for i, s in selections {
+		if is_same_day(s, selected) {
+			selections.delete(i)
+			found = true
+			break
+		}
+	}
+	if !found {
 		selections << selected
 	}
 	return selections
@@ -401,6 +432,10 @@ fn dates(times []time.Time) []time.Time {
 	return times.map(date(it.day, it.month, it.year))
 }
 
+fn is_same_day(a time.Time, b time.Time) bool {
+	return a.day == b.day && a.month == b.month && a.year == b.year
+}
+
 fn (cfg DatePickerCfg) cell_size(mut w Window) f32 {
 	w_size := match cfg.weekdays_len {
 		.one_letter { text_width('W', cfg.text_style, mut w) }
@@ -418,7 +453,11 @@ fn (cfg DatePickerCfg) month_picker_width(mut w Window) f32 {
 
 fn (cfg DatePickerCfg) disabled(date time.Time, state DatePickerState) bool {
 	if cfg.allowed_weekdays.len > 0 {
-		dow := DatePickerWeekdays.from(time.day_of_week(date.year, date.month, date.day)) or {
+		// V time.day_of_week: 1=Mon, ..., 7=Sun
+		// DatePickerWeekdays: 1=Mon, ..., 7=Sun
+		// Direct mapping works
+		dow_int := time.day_of_week(date.year, date.month, date.day)
+		dow := DatePickerWeekdays.from(u8(dow_int)) or {
 			log.error(err.msg())
 			return true
 		}
@@ -427,7 +466,7 @@ fn (cfg DatePickerCfg) disabled(date time.Time, state DatePickerState) bool {
 		}
 	}
 	if cfg.allowed_months.len > 0 {
-		month := DatePickerMonths.from(state.view_month) or {
+		month := DatePickerMonths.from(u16(state.view_month)) or {
 			log.error(err.msg())
 			return true
 		}
@@ -442,7 +481,7 @@ fn (cfg DatePickerCfg) disabled(date time.Time, state DatePickerState) bool {
 	}
 	if cfg.allowed_dates.len > 0 {
 		for allowed in cfg.allowed_dates {
-			if allowed.day == date.day && allowed.month == date.month && allowed.year == date.year {
+			if is_same_day(allowed, date) {
 				return false
 			}
 		}

@@ -357,7 +357,6 @@ fn parse_line_with_style(elem string, inherited GroupStyle) ?VectorPath {
 	return path
 }
 
-
 // find_index finds the index of substr in s starting from pos, returns none if not found.
 // Optimized for single-char searches (common case in attribute parsing).
 fn find_index(s string, substr string, pos int) ?int {
@@ -371,7 +370,7 @@ fn find_index(s string, substr string, pos int) ?int {
 		}
 		return none
 	}
-	
+
 	// General case for multi-char substrings
 	for i := pos; i <= s.len - substr.len; i++ {
 		mut found := true
@@ -1151,8 +1150,8 @@ fn parse_path_d(d string) []PathSegment {
 					if rx <= 0 || ry <= 0 {
 						segments << PathSegment{.line_to, [ex, ey]}
 					} else {
-						arc_segs := arc_to_cubic(cur_x, cur_y, rx, ry, phi, large_arc, sweep,
-							ex, ey)
+						arc_segs := arc_to_cubic(cur_x, cur_y, rx, ry, phi, large_arc,
+							sweep, ex, ey)
 						segments << arc_segs
 					}
 
@@ -1217,7 +1216,7 @@ fn tokenize_path(d string) []string {
 				// Check if this is truly a new number (not exponent like 1e-5)
 				if cur_len > 0 && cur_str[cur_len - 1] != `e` && cur_str[cur_len - 1] != `E` {
 					tokens << cur_str
-					current.go_back_to(0)  // Reset for new number
+					current.go_back_to(0) // Reset for new number
 					has_dot = false
 				}
 			}

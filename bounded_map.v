@@ -136,7 +136,7 @@ struct BoundedSvgCache {
 mut:
 	data         map[string]&CachedSvg
 	access_time  map[string]u64 // Last access timestamp for LRU
-	access_count u64              // Monotonic counter
+	access_count u64            // Monotonic counter
 	max_size     int = 100
 }
 
@@ -156,7 +156,7 @@ fn (mut m BoundedSvgCache) set(key string, value &CachedSvg) {
 	if m.max_size < 1 {
 		return
 	}
-	
+
 	// Update existing entry
 	if key in m.data {
 		m.access_count++
@@ -166,7 +166,7 @@ fn (mut m BoundedSvgCache) set(key string, value &CachedSvg) {
 		}
 		return
 	}
-	
+
 	// Need to add new entry - evict LRU if at capacity
 	if m.data.len >= m.max_size && m.max_size > 0 {
 		// Find entry with oldest access time - O(n) but only when cache full
@@ -183,7 +183,7 @@ fn (mut m BoundedSvgCache) set(key string, value &CachedSvg) {
 			m.access_time.delete(oldest_key)
 		}
 	}
-	
+
 	// Add new entry
 	m.access_count++
 	m.access_time[key] = m.access_count
