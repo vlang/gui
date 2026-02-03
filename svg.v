@@ -6,11 +6,12 @@ import strings
 
 // Security limits for SVG parsing
 const default_icon_size = 24
-const max_group_depth = 32
-const max_elements = 100000
-const max_path_segments = 100000
-const max_viewbox_dim = 10000
-const max_attr_len = 1048576
+const max_group_depth = 32 // Prevents stack overflow from deep nesting
+const max_elements = 100000 // Prevents DoS from element count
+const max_path_segments = 100000 // Prevents DoS from path complexity
+const max_viewbox_dim = 10000 // Prevents extreme allocations
+const max_attr_len = 1048576 // 1MB attribute limit
+const max_coordinate = 1000000.0 // Prevents overflow in polygon operations
 
 // ParseState tracks mutable state during SVG parsing.
 struct ParseState {
@@ -415,7 +416,8 @@ fn clamp_viewbox_dim(v f32) f32 {
 	return v
 }
 
-// parse_length parses a CSS length value (ignores units for now)
+// parse_length parses a CSS length value (ignores units for now).
+// Clamps to max_coordinate to prevent overflow/OOM.
 fn parse_length(s string) f32 {
 	mut num := ''
 	for c in s {
@@ -425,7 +427,15 @@ fn parse_length(s string) f32 {
 			break
 		}
 	}
-	return num.f32()
+	value := num.f32()
+	// Clamp to prevent integer overflow in downstream operations
+	if value > max_coordinate {
+		return max_coordinate
+	}
+	if value < -max_coordinate {
+		return -max_coordinate
+	}
+	return value
 }
 
 // parse_path_element parses a <path> element
@@ -560,7 +570,8 @@ fn parse_polygon_element(elem string, close bool) ?VectorPath {
 	fill := find_attr(elem, 'fill') or { '' }
 
 	numbers := parse_number_list(points_str)
-	if numbers.len < 4 {
+	// Validate: need at least 2 points (4 coords) and even count for x,y pairs
+	if numbers.len < 4 || numbers.len % 2 != 0 {
 		return none
 	}
 
@@ -1116,9 +1127,14 @@ fn parse_path_d(d string) []PathSegment {
 						ey += cur_y
 					}
 
-					arc_segs := arc_to_cubic(cur_x, cur_y, rx, ry, phi, large_arc, sweep,
-						ex, ey)
-					segments << arc_segs
+					// Validate arc radii - degenerate arcs become line segments
+					if rx <= 0 || ry <= 0 {
+						segments << PathSegment{.line_to, [ex, ey]}
+					} else {
+						arc_segs := arc_to_cubic(cur_x, cur_y, rx, ry, phi, large_arc, sweep,
+							ex, ey)
+						segments << arc_segs
+					}
 
 					cur_x = ex
 					cur_y = ey

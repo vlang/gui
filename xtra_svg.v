@@ -1,6 +1,6 @@
 module gui
 
-import crypto.md5
+import hash.fnv1a
 import os
 
 // CachedSvg holds pre-tessellated SVG data for efficient rendering.
@@ -18,10 +18,10 @@ pub:
 // If width/height are 0, uses the SVG's natural dimensions (scale 1.0).
 pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&CachedSvg {
 	// Generate cache key including size for scale-specific caching
-	// Round to nearest integer to reduce cache misses from minor float differences
-	// Hash svg_src to prevent cache key injection via special characters
-	src_hash := md5.hexhash(svg_src)
-	cache_key := '${src_hash}:${int(width + 0.5)}x${int(height + 0.5)}'
+	// Round to 0.1px precision to reduce collisions while maintaining distinct scales
+	// Use fnv1a hash (faster than MD5, sufficient for cache keys)
+	src_hash := fnv1a.sum64_string(svg_src).hex()
+	cache_key := '${src_hash}:${int(width * 10)}x${int(height * 10)}'
 
 	// Check cache first (LRU: get moves to end)
 	if cached := window.view_state.svg_cache.get(cache_key) {
@@ -56,6 +56,23 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 	// Tessellate at the target scale
 	triangles := vg.get_triangles(scale)
 
+	// Validate size: prevent caching extremely complex SVGs (>10MB of geometry)
+	// Each triangle vertex is 2 f32 (8 bytes), rough estimate
+	mut total_verts := 0
+	for tri in triangles {
+		total_verts += tri.triangles.len
+	}
+	max_cached_verts := 1250000 // ~10MB limit
+	if total_verts > max_cached_verts {
+		// Return without caching - too large
+		return &CachedSvg{
+			triangles: triangles
+			width:     vg.width
+			height:    vg.height
+			scale:     scale
+		}
+	}
+
 	cached := &CachedSvg{
 		triangles: triangles
 		width:     vg.width
@@ -72,7 +89,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 pub fn (mut window Window) remove_svg_from_cache(svg_src string) {
 	// Remove all cache entries for this source (any size)
 	// Cache keys are formatted as "${src_hash}:${width}x${height}"
-	src_hash := md5.hexhash(svg_src)
+	src_hash := fnv1a.sum64_string(svg_src).hex()
 	prefix := '${src_hash}:'
 	mut keys_to_delete := []string{}
 	for key in window.view_state.svg_cache.keys() {

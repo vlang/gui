@@ -411,6 +411,10 @@ fn tessellate_stroke(polylines [][]f32, width f32, cap StrokeCap, join StrokeJoi
 	half_w := width / 2
 
 	for poly in polylines {
+		// Validate: poly.len must be even and >= 4 for at least 2 points
+		if poly.len < 4 || poly.len % 2 != 0 {
+			continue
+		}
 		n := poly.len / 2
 		if n < 2 {
 			continue
@@ -762,8 +766,15 @@ fn merge_hole(outer []f32, hole []f32) []f32 {
 		}
 	}
 
-	// Build merged polygon: outer[0..best_idx] + hole[hole_idx..] + hole[0..hole_idx] + outer[best_idx..]
-	mut result := []f32{cap: outer.len + hole.len + 4}
+	// Build merged polygon: outer[0..best_idx] + hole[hole_idx..] + hole\n[0..hole_idx] + outer[best_idx..]
+	// Guard against overflow: clamp capacity to reasonable limit (2M vertices = 8MB)
+	max_verts := 1000000
+	est_cap := outer.len + hole.len + 4
+	if est_cap / 2 > max_verts {
+		// Polygon too complex, return outer only (skip hole merge)
+		return outer.clone()
+	}
+	mut result := []f32{cap: est_cap}
 
 	// Add outer vertices up to and including bridge point
 	for i := 0; i <= best_idx; i++ {
