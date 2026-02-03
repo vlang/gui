@@ -118,9 +118,11 @@ pub:
 pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 	mut result := []TessellatedPath{cap: vg.paths.len * 2}
 
-	// Adaptive tolerance with minimum floor to prevent excessive tessellation at small scales
-	base_tolerance := 1.5 / scale
-	tolerance := if base_tolerance > 1.5 { base_tolerance } else { f32(1.5) }
+	// Adaptive tolerance: smaller value = more segments = smoother curves
+	// Use 0.25px visual tolerance scaled by matrix
+	// Minimum floor of 0.1 prevents infinite recursion on degenerate info
+	base_tolerance := 0.5 / scale
+	tolerance := if base_tolerance > 0.15 { base_tolerance } else { f32(0.15) }
 
 	for path in vg.paths {
 		polylines := flatten_path(path, tolerance)
