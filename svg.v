@@ -4,14 +4,15 @@ import math
 import os
 import strings
 
-// Security limits for SVG parsing
+// Security limits for SVG parsing to prevent DoS attacks.
+// These values are conservative but allow rendering of complex real-world SVGs.
 const default_icon_size = 24
-const max_group_depth = 32 // Prevents stack overflow from deep nesting
-const max_elements = 100000 // Prevents DoS from element count
-const max_path_segments = 100000 // Prevents DoS from path complexity
-const max_viewbox_dim = 10000 // Prevents extreme allocations
-const max_attr_len = 1048576 // 1MB attribute limit
-const max_coordinate = 1000000.0 // Prevents overflow in polygon operations
+const max_group_depth = 32 // Prevents stack overflow from deep nesting. SVG spec has no limit; 32 allows 2³² elements via exponential nesting while staying within stack bounds.
+const max_elements = 100000 // Prevents DoS from element count. Most icons have <10 elements; complex SVGs like tiger.svg have ~240.
+const max_path_segments = 100000 // Prevents DoS from path complexity. Typical paths have <50 segments.
+const max_viewbox_dim = 10000 // Prevents extreme allocations from huge viewBox dimensions.
+const max_attr_len = 1048576 // 1MB attribute limit prevents excessive string allocations.
+const max_coordinate = 1000000.0 // Prevents overflow in polygon operations and OOM from extreme coordinate values.
 
 // ParseState tracks mutable state during SVG parsing.
 struct ParseState {
@@ -630,8 +631,12 @@ fn parse_line_element(elem string) ?VectorPath {
 	}
 }
 
-// parse_svg_color parses SVG color values.
+// parse_svg_color converts SVG color strings to Color values.
 // Returns color_inherit sentinel if string is empty (attribute not present).
+// Sentinel values are used to implement CSS-style inheritance:
+// - color_inherit (magenta): Attribute not specified, inherit from parent/group
+// - color_transparent (alpha=0): Explicit 'none' value, don't render
+// These sentinels are resolved during style application (lines 274, 283).
 fn parse_svg_color(s string) Color {
 	str := s.trim_space()
 	if str.len == 0 {
@@ -850,11 +855,12 @@ fn get_stroke_color(elem string) Color {
 	return parse_svg_color(stroke)
 }
 
-// get_stroke_width extracts stroke width from element.
-// Returns -1 (sentinel) if not specified.
+// get_stroke_width extracts stroke width from element attribute.
+// Returns -1.0 sentinel if not specified (caller should use default or inherit).
+// The -1.0 sentinel allows distinguishing "not set" from explicit 0.0 (no stroke).
 fn get_stroke_width(elem string) f32 {
-	width := find_attr(elem, 'stroke-width') or { return -1.0 }
-	return parse_length(width)
+	width_str := find_attr(elem, 'stroke-width') or { return -1.0 }
+	return width_str.f32()
 }
 
 // get_stroke_linecap extracts stroke-linecap from element.

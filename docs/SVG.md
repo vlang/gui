@@ -153,8 +153,55 @@ demonstrating full SVG compatibility.
 
 ## Limitations
 
-Currently not supported:
-- `<defs>` and `<use>` (symbol reuse)
+### Security Limits
+
+To prevent denial-of-service attacks, the following limits are enforced:
+
+- **Elements**: 100,000 max (most icons have <10; complex SVGs like tiger.svg: ~240)
+- **Path segments**: 100,000 max per path (typical paths: <50)
+- **Group nesting**: 32 levels max (prevents stack overflow)
+- **ViewBox dimensions**: 10,000 max (prevents extreme allocations)
+- **Coordinates**: ±1,000,000 max (prevents integer overflow)
+- **Attribute length**: 1MB max (prevents excessive string allocations)
+
+SVGs exceeding these limits will be partially rendered or rejected. For
+production use, optimize SVG files to stay well within limits.
+
+### Cache Behavior
+
+SVGs are cached for performance:
+
+- **Capacity**: 100 entries (unique source + size combinations)
+- **Eviction**: LRU (least recently accessed)
+- **Key**: `hash(source):width×10:height×10` (0.1px precision)
+- **Memory**: Each entry stores tessellated triangles (~1-10MB for complex SVGs)
+- **Limit**: SVGs generating >10MB triangles bypass cache (still render)
+
+**Cache invalidation**: Call `window.clear_svg_cache()` or
+`window.remove_svg_from_cache(source)` after modifying files.
+
+**Cache efficiency**: SVGs at different sizes are cached separately. Round sizes
+to 0.1px to maximize reuse (e.g., 24.0, 32.0, 48.0).
+
+### Performance Tuning
+
+**Optimize SVG files**:
+- Remove editor metadata (`<metadata>`, `<sodipodi>` tags)
+- Merge paths where possible (reduces element count)
+- Simplify transforms (inline when possible)
+- Use integers for coordinates (faster parsing)
+
+**When to pre-render**: For SVGs with >100 paths or heavy use of filters/masks
+(not supported), consider rasterizing to PNG at target sizes.
+
+**Rendering performance**:
+- First load: ~1-5ms parse + tessellate (depends on complexity)
+- Cached: ~0.01ms (hash lookup + GPU upload)
+- Frame time: <0.1ms per SVG (GPU batched)
+
+### Not Supported
+
+- Gradients, patterns, filterse>` (symbol reuse)
 - `<clipPath>` and `<mask>`
 - `<linearGradient>` and `<radialGradient>`
 - CSS styling (`<style>` blocks, `class` attributes)

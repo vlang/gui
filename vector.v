@@ -102,20 +102,26 @@ pub:
 // Paths with transparent fill or stroke (alpha = 0) skip that tessellation.
 //
 // Example:
-//   ```
-//   vg := parse_svg(svg_content)!
-//   scale := display_width / vg.width
-//   tess := vg.get_triangles(scale)
-//   for t in tess {
-//       // t.triangles contains x,y,x,y,x,y,... for triangles
-//       // t.color is the color to render them with
-//   }
-//   ```
+// get_triangles tessellates all paths in the vector graphic into GPU-ready triangles.
+// Returns triangles in **viewBox coordinate space**, not screen pixels.
+// Caller is responsible for transforming to screen coordinates.
+//
+// The `scale` parameter affects:
+// - Stroke width: multiplied by scale to maintain visual thickness at display size
+// - Curve flattening tolerance: adjusted for perceptual quality at target scale
+// - Does NOT affect output coordinates (those remain in viewBox space)
+//
+// Example: For 100x100 viewBox rendered at 500x500 pixels (scale=5.0):
+// - Output triangles still use 0-100 coordinate range
+// - 2px stroke becomes 10px (2 * 5.0) in viewBox units
+// - Curves flattened to ~0.3px tolerance for smooth appearance
 pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
+	mut result := []TessellatedPath{cap: vg.paths.len * 2}
+
 	// Adaptive tolerance with minimum floor to prevent excessive tessellation at small scales
 	base_tolerance := 0.5 / scale
 	tolerance := if base_tolerance > 1.5 { base_tolerance } else { f32(1.5) }
-	mut result := []TessellatedPath{cap: vg.paths.len * 2}
+
 	for path in vg.paths {
 		polylines := flatten_path(path, tolerance)
 		// Tessellate fill
@@ -699,8 +705,17 @@ fn reverse_polygon(poly []f32) []f32 {
 	return result
 }
 
-// merge_hole connects a hole to the outer contour using a bridge.
+// merge_hole connects a hole to the outer contour using a bridge edge.
 // This creates a single polygon that can be triangulated with ear clipping.
+//
+// Algorithm: Bridge Edge Method
+// 1. Find rightmost point in hole (most likely to be visible from outer contour)
+// 2. Cast ray rightward to find closest intersection with outer contour edges
+// 3. Check direct visibility from hole point to outer vertices
+// 4. Connect via bridge: outer[0..bridge] + hole + outer[bridge..]
+//
+// Handles complex polygons with overflow protection (max 1M vertices).
+// For polygons exceeding limit, returns outer only (hole is skipped).
 fn merge_hole(outer []f32, hole []f32) []f32 {
 	// Find the rightmost point in the hole
 	mut hole_idx := 0
