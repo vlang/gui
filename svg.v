@@ -860,7 +860,7 @@ fn get_stroke_color(elem string) Color {
 // The -1.0 sentinel allows distinguishing "not set" from explicit 0.0 (no stroke).
 fn get_stroke_width(elem string) f32 {
 	width_str := find_attr(elem, 'stroke-width') or { return -1.0 }
-	return width_str.f32()
+	return parse_length(width_str)
 }
 
 // get_stroke_linecap extracts stroke-linecap from element.

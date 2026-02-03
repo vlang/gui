@@ -119,7 +119,7 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 	mut result := []TessellatedPath{cap: vg.paths.len * 2}
 
 	// Adaptive tolerance with minimum floor to prevent excessive tessellation at small scales
-	base_tolerance := 0.5 / scale
+	base_tolerance := 1.5 / scale
 	tolerance := if base_tolerance > 1.5 { base_tolerance } else { f32(1.5) }
 
 	for path in vg.paths {
