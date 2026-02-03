@@ -1,7 +1,7 @@
 module gui
 
 // TreeCfg configures a [tree](#tree). In a tree view, hierarchical data is presented as
-// nodes in a tree-like format.The `indent` property controls the the amount each subtree
+// nodes in a tree-like format. The `indent` property controls the amount each subtree
 // is indented. The `spacing` property controls the space between nodes. The `icon` property
 // configures the font used to display icons in a [TreeNodeCfg](#TreeNodeCfg)
 @[minify]
@@ -16,9 +16,15 @@ pub:
 
 // tree creates a tree view from the given [TreeCfg](#TreeCfg)
 pub fn (mut window Window) tree(cfg TreeCfg) View {
+	// Optimization: Fetch the tree state map once at the top level to avoid
+	// repeated lookups for every node in the recursive build process.
+	tree_map := window.view_state.tree_state.get(cfg.id) or {
+		map[string]bool{}
+	}
+
 	mut content := []View{cap: cfg.nodes.len}
 	for node in cfg.nodes {
-		content << cfg.node_content(node, mut window)
+		content << cfg.node_content(node, tree_map, mut window)
 	}
 	return column(
 		name:    'tree'
@@ -42,13 +48,13 @@ pub:
 }
 
 // tree_node is a helper method to define a [TreeNodeCfg](#TreeNodeCfg).
-// It's only advantage is it allows defining a TreeNodeCfg in a single
-// line, where as `TextNodeCfg{}` will format across multiple lines.
+// Its only advantage is it allows defining a TreeNodeCfg in a single
+// line, whereas `TextNodeCfg{}` will format across multiple lines.
 pub fn tree_node(cfg TreeNodeCfg) TreeNodeCfg {
 	return cfg
 }
 
-fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, mut window Window) []View {
+fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, tree_map map[string]bool, mut window Window) []View {
 	mut tnodes := []View{cap: nodes.len}
 
 	for node in nodes {
@@ -57,17 +63,14 @@ fn (cfg &TreeCfg) build_nodes(nodes []TreeNodeCfg, mut window Window) []View {
 			id:      node.id
 			padding: padding_none
 			spacing: cfg.spacing
-			content: cfg.node_content(node, mut window)
+			content: cfg.node_content(node, tree_map, mut window)
 		)
 	}
 	return tnodes
 }
 
-fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
+fn (cfg &TreeCfg) node_content(node TreeNodeCfg, tree_map map[string]bool, mut window Window) []View {
 	id := if node.id.len == 0 { node.text } else { node.id }
-	tree_map := window.view_state.tree_state.get(cfg.id) or {
-		map[string]bool{}
-	}
 	is_open := tree_map[id]
 	arrow := match true {
 		node.nodes.len == 0 { ' ' }
@@ -79,6 +82,9 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 	mut content := []View{cap: 2}
 	cfg_id := cfg.id
 	on_select := cfg.on_select
+
+	// Capture only what's needed for the closure to reduce allocation
+	has_children := node.nodes.len > 0
 
 	content << row(
 		name:     'tree node content'
@@ -106,8 +112,8 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 				]
 			),
 		]
-		on_click: fn [cfg_id, on_select, is_open, node, id] (_ &Layout, mut e Event, mut w Window) {
-			if node.nodes.len > 0 {
+		on_click: fn [cfg_id, on_select, is_open, has_children, id] (_ &Layout, mut e Event, mut w Window) {
+			if has_children {
 				mut tree_map := w.view_state.tree_state.get(cfg_id) or {
 					map[string]bool{}
 				}
@@ -133,7 +139,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, mut window Window) []View {
 			padding: Padding{
 				left: cfg.indent
 			}
-			content: cfg.build_nodes(node.nodes, mut window)
+			content: cfg.build_nodes(node.nodes, tree_map, mut window)
 		)
 	}
 	return content

@@ -14,6 +14,9 @@ import vglyph
 // text_width calculates the width of a given text based on its style and window configuration,
 // leveraging a caching mechanism to optimize performance.
 pub fn text_width(text string, text_style TextStyle, mut window Window) f32 {
+	if window.text_system == unsafe { nil } {
+		return 0
+	}
 	mut cfg := text_style.to_vglyph_cfg()
 	cfg.no_hit_testing = true
 	return window.text_system.text_width(text, cfg) or { 0 }
