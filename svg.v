@@ -356,8 +356,22 @@ fn parse_line_with_style(elem string, inherited GroupStyle) ?VectorPath {
 	return path
 }
 
-// find_index finds the index of substr in s starting from pos, returns none if not found
+
+// find_index finds the index of substr in s starting from pos, returns none if not found.
+// Optimized for single-char searches (common case in attribute parsing).
 fn find_index(s string, substr string, pos int) ?int {
+	// Fast path for single-char search (30+ uses in parsing)
+	if substr.len == 1 {
+		target := substr[0]
+		for i := pos; i < s.len; i++ {
+			if s[i] == target {
+				return i
+			}
+		}
+		return none
+	}
+	
+	// General case for multi-char substrings
 	for i := pos; i <= s.len - substr.len; i++ {
 		mut found := true
 		for j := 0; j < substr.len; j++ {
@@ -1158,7 +1172,8 @@ fn parse_path_d(d string) []PathSegment {
 // tokenize_path splits path d string into tokens
 fn tokenize_path(d string) []string {
 	mut tokens := []string{}
-	mut current := strings.new_builder(32)
+	// Pre-allocate with estimated capacity
+	mut current := strings.new_builder(d.len / 4)
 	mut has_dot := false
 	mut i := 0
 
@@ -1168,7 +1183,7 @@ fn tokenize_path(d string) []string {
 		if c == ` ` || c == `\t` || c == `\n` || c == `\r` || c == `,` {
 			if current.len > 0 {
 				tokens << current.str()
-				current = strings.new_builder(32)
+				current.go_back_to(0) // Reuse instead of new allocation
 				has_dot = false
 			}
 			i++
@@ -1179,7 +1194,7 @@ fn tokenize_path(d string) []string {
 		if (c >= `A` && c <= `Z`) || (c >= `a` && c <= `z`) {
 			if current.len > 0 {
 				tokens << current.str()
-				current = strings.new_builder(32)
+				current.go_back_to(0) // Reuse instead of new allocation
 				has_dot = false
 			}
 			tokens << c.ascii_str()
@@ -1189,21 +1204,21 @@ fn tokenize_path(d string) []string {
 
 		// Numbers (including negative and decimal)
 		if (c >= `0` && c <= `9`) || c == `-` || c == `+` || c == `.` {
-			cur_str := current.str()
-			cur_len := cur_str.len
-			// Handle negative sign that's part of a number sequence
-			if (c == `-` || c == `+`) && cur_len > 0 && cur_str[cur_len - 1] != `e`
-				&& cur_str[cur_len - 1] != `E` {
-				tokens << cur_str
-				current = strings.new_builder(32)
-				has_dot = false
-			} else if cur_len > 0 {
-				current.write_string(cur_str)
+			// Handle negative sign that starts a new number
+			if (c == `-` || c == `+`) && current.len > 0 {
+				cur_str := current.str()
+				cur_len := cur_str.len
+				// Check if this is truly a new number (not exponent like 1e-5)
+				if cur_len > 0 && cur_str[cur_len - 1] != `e` && cur_str[cur_len - 1] != `E` {
+					tokens << cur_str
+					current.go_back_to(0)  // Reset for new number
+					has_dot = false
+				}
 			}
 			// Handle implicit separator for consecutive numbers like "1.5.5"
 			if c == `.` && has_dot {
 				tokens << current.str()
-				current = strings.new_builder(32)
+				current.go_back_to(0)
 				has_dot = false
 			}
 			current.write_u8(c)

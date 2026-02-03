@@ -130,73 +130,72 @@ fn (mut m BoundedTreeState) clear() {
 }
 
 // BoundedSvgCache is an LRU cache for SVG data.
-// Access moves item to end; evicts oldest on capacity.
-// Note: get() mutates state (LRU update) so requires mut receiver.
+// Uses lazy LRU via access counter for O(1) operations.
+// Evicts least-recently-accessed entry when at capacity.
 struct BoundedSvgCache {
 mut:
-	data      map[string]&CachedSvg
-	order     []string
-	index_map map[string]int
-	max_size  int = 100
+	data         map[string]&CachedSvg
+	access_time  map[string]u64 // Last access timestamp for LRU
+	access_count u64              // Monotonic counter
+	max_size     int = 100
 }
 
-// get returns cached SVG and moves to end (LRU).
+// get returns cached SVG and updates access time (O(1) LRU).
 fn (mut m BoundedSvgCache) get(key string) ?&CachedSvg {
 	if key in m.data {
-		// Move to end for LRU
-		if idx := m.index_map[key] {
-			m.order.delete(idx)
-			// Decrement indices after removed position
-			for k, i in m.index_map {
-				if i > idx {
-					m.index_map[k] = i - 1
-				}
-			}
-			m.index_map[key] = m.order.len
-			m.order << key
-		}
+		// Update access time - O(1) instead of O(n) index rebuild
+		m.access_count++
+		m.access_time[key] = m.access_count
 		return m.data[key] or { return none }
 	}
 	return none
 }
 
-// set adds SVG to cache. Evicts oldest if at capacity.
+// set adds SVG to cache. Evicts LRU entry if at capacity (O(n) scan only when full).
 fn (mut m BoundedSvgCache) set(key string, value &CachedSvg) {
 	if m.max_size < 1 {
 		return
 	}
-	if key !in m.data {
-		if m.data.len >= m.max_size && m.order.len > 0 {
-			oldest := m.order[0]
-			m.data.delete(oldest)
-			m.index_map.delete(oldest)
-			m.order.delete(0)
-			for k, idx in m.index_map {
-				m.index_map[k] = idx - 1
+	
+	// Update existing entry
+	if key in m.data {
+		m.access_count++
+		m.access_time[key] = m.access_count
+		unsafe {
+			m.data[key] = value
+		}
+		return
+	}
+	
+	// Need to add new entry - evict LRU if at capacity
+	if m.data.len >= m.max_size && m.max_size > 0 {
+		// Find entry with oldest access time - O(n) but only when cache full
+		mut oldest_key := ''
+		mut oldest_time := m.access_count + 1
+		for k, t in m.access_time {
+			if t < oldest_time {
+				oldest_time = t
+				oldest_key = k
 			}
 		}
-		m.index_map[key] = m.order.len
-		m.order << key
+		if oldest_key.len > 0 {
+			m.data.delete(oldest_key)
+			m.access_time.delete(oldest_key)
+		}
 	}
+	
+	// Add new entry
+	m.access_count++
+	m.access_time[key] = m.access_count
 	unsafe {
 		m.data[key] = value
 	}
 }
 
-// delete removes key from cache.
+// delete removes key from cache (O(1)).
 fn (mut m BoundedSvgCache) delete(key string) {
-	if key in m.data {
-		m.data.delete(key)
-		if idx := m.index_map[key] {
-			m.order.delete(idx)
-			m.index_map.delete(key)
-			for k, i in m.index_map {
-				if i > idx {
-					m.index_map[k] = i - 1
-				}
-			}
-		}
-	}
+	m.data.delete(key)
+	m.access_time.delete(key)
 }
 
 // contains returns true if key exists.
@@ -204,9 +203,13 @@ fn (m &BoundedSvgCache) contains(key string) bool {
 	return key in m.data
 }
 
-// keys returns all keys (for iteration).
+// keys returns all keys (no specific order).
 fn (m &BoundedSvgCache) keys() []string {
-	return m.order
+	mut result := []string{cap: m.data.len}
+	for k in m.data.keys() {
+		result << k
+	}
+	return result
 }
 
 // len returns number of entries.
@@ -217,8 +220,8 @@ fn (m &BoundedSvgCache) len() int {
 // clear removes all entries.
 fn (mut m BoundedSvgCache) clear() {
 	m.data.clear()
-	m.order.clear()
-	m.index_map.clear()
+	m.access_time.clear()
+	m.access_count = 0
 }
 
 // BoundedMarkdownCache is a FIFO cache for parsed markdown blocks.
