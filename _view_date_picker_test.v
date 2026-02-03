@@ -71,3 +71,101 @@ fn test_update_selections_multiple() {
 	// Remove d1. Result: empty.
 	assert res2.len == 0
 }
+
+fn test_disabled_weekdays() {
+	// Mondays allowed only
+	cfg := DatePickerCfg{
+		id:               'test'
+		dates:            []
+		allowed_weekdays: [.monday]
+	}
+	state := DatePickerState{
+		view_month: 1
+		view_year:  2023
+	}
+
+	// Jan 1 2023 is a Sunday. Should be disabled.
+	d_sun := date(1, 1, 2023)
+	assert cfg.disabled(d_sun, state) == true
+
+	// Jan 2 2023 is a Monday. Should be enabled.
+	d_mon := date(2, 1, 2023)
+	assert cfg.disabled(d_mon, state) == false
+}
+
+fn test_disabled_months() {
+	// Only January allowed
+	cfg := DatePickerCfg{
+		id:             'test'
+		dates:          []
+		allowed_months: [.january]
+	}
+	// View state here is less relevant for the specific date check inside disabled,
+	// but `disabled` implementation currently reads `state.view_month` for the month check logic?
+	// Let's check logic:
+	// `month := DatePickerMonths.from(u16(state.view_month))`
+	// So it checks if the *entire view month* is allowed, not the specific day's month?
+	// Wait, if `state.view_month` is the one being checked, then it disables the whole view?
+	// The implementation of disabled() says:
+	// if cfg.allowed_months.len > 0 {
+	//    month := DatePickerMonths.from(state.view_month) ...
+	//    if month !in cfg.allowed_months { return true }
+	// }
+	// So YES, it disables based on the CURRENT VIEW month.
+
+	state_jan := DatePickerState{
+		view_month: 1
+		view_year:  2023
+	}
+	// Pass any date, logic depends on state.view_month
+	d := date(1, 1, 2023)
+	assert cfg.disabled(d, state_jan) == false
+
+	state_feb := DatePickerState{
+		view_month: 2
+		view_year:  2023
+	}
+	assert cfg.disabled(d, state_feb) == true
+}
+
+fn test_disabled_years() {
+	cfg := DatePickerCfg{
+		id:            'test'
+		dates:         []
+		allowed_years: [2023]
+	}
+
+	// Logic checks state.view_year
+	state_2023 := DatePickerState{
+		view_month: 1
+		view_year:  2023
+	}
+	d := date(1, 1, 2023)
+	assert cfg.disabled(d, state_2023) == false
+
+	state_2024 := DatePickerState{
+		view_month: 1
+		view_year:  2024
+	}
+	assert cfg.disabled(d, state_2024) == true
+}
+
+fn test_disabled_specific_dates() {
+	target := date(15, 1, 2023)
+	cfg := DatePickerCfg{
+		id:            'test'
+		dates:         []
+		allowed_dates: [target]
+	}
+	state := DatePickerState{
+		view_month: 1
+		view_year:  2023
+	}
+
+	// 15th allowed
+	assert cfg.disabled(target, state) == false
+
+	// 16th disabled
+	other := date(16, 1, 2023)
+	assert cfg.disabled(other, state) == true
+}
