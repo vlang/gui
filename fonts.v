@@ -41,21 +41,17 @@ fn initialize_fonts(mut ts vglyph.TextSystem) ! {
 	}
 
 	// Load font with proper error propagation
-	if !load_font(font_file_icon, mut ts) {
-		return error('failed to load icon font from ${font_file_icon}')
+	load_font(font_file_icon, mut ts) or {
+		return error('failed to load icon font from ${font_file_icon}: ${err.msg()}')
 	}
 }
 
 // load_font attempts to load a font file from the specified path into the text system.
-// It returns true if the font was successfully added, false otherwise.
+// It returns an error if the font could not be added.
 // It also logs the outcome of the operation to the standard logger.
-pub fn load_font(path string, mut ts vglyph.TextSystem) bool {
-	success := ts.add_font_file(path)
-	match success {
-		true { log.info('${path} successfully loaded') }
-		else { log.error('${@FILE_LINE}: failed to load ${path}') }
-	}
-	return success
+pub fn load_font(path string, mut ts vglyph.TextSystem) ! {
+	ts.add_font_file(path)!
+	log.info('${path} successfully loaded')
 }
 
 // font_variants retrieves the names of the files for the 4 font families in Gui. See [FontVariants](#FontVariants)

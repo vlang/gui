@@ -172,7 +172,7 @@ pub fn (mut window Window) run() {
 // resolve_font_name returns the actual font family name that Pango resolves
 // for the given font description string. Useful for debugging system font loading.
 pub fn (mut window Window) resolve_font_name(desc string) string {
-	return window.text_system.resolve_font_name(desc)
+	return window.text_system.resolve_font_name(desc) or { desc }
 }
 
 // set_color_background changes the windows background color

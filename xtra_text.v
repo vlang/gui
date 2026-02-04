@@ -120,7 +120,7 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 fn text_height(shape &Shape, mut window Window) f32 {
 	if (!shape.has_text_layout() || shape.vglyph_layout.lines.len == 0) && shape.text.len > 0 {
 		cfg := shape.text_style.to_vglyph_cfg()
-		return window.text_system.font_height(cfg)
+		return window.text_system.font_height(cfg) or { 0 }
 	}
 	if shape.has_text_layout() {
 		return shape.vglyph_layout.height
@@ -134,7 +134,7 @@ fn line_height(shape &Shape, mut window Window) f32 {
 		return shape.cached_line_height
 	}
 	cfg := shape.text_style.to_vglyph_cfg()
-	height := window.text_system.font_height(cfg)
+	height := window.text_system.font_height(cfg) or { 0 }
 	return height + shape.text_style.line_spacing
 }
 

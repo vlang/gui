@@ -21,6 +21,8 @@ module gui
 // - canvas(): Creates a free-form container
 // - circle(): Creates a circular container
 //
+import vglyph
+
 @[heap; minify]
 struct ContainerView implements View {
 	ContainerCfg
@@ -399,7 +401,7 @@ fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []Layout) 
 
 	cfg := text_style.to_vglyph_cfg()
 	text_width := w.text_system.text_width(cv.title, cfg) or { 0 }
-	metrics := w.text_system.font_metrics(cfg)
+	metrics := w.text_system.font_metrics(cfg) or { vglyph.TextMetrics{} }
 
 	offset := metrics.ascender - metrics.descender
 	padding := f32(5)

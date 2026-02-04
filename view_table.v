@@ -474,7 +474,7 @@ fn table_compute_column_widths(cfg &TableCfg, mut window Window) []f32 {
 // table_estimate_row_height estimates row height for virtualization
 fn table_estimate_row_height(cfg &TableCfg, mut window Window) f32 {
 	vg_cfg := cfg.text_style.to_vglyph_cfg()
-	font_h := window.text_system.font_height(vg_cfg)
+	font_h := window.text_system.font_height(vg_cfg) or { 0 }
 	border := match cfg.border_style {
 		.all { cfg.size_border }
 		else { f32(0) }
