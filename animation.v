@@ -32,8 +32,9 @@ mut:
 // The animation's start time is set to the current time and will be processed
 // in the animation loop.
 pub fn (mut window Window) animation_add(mut animation Animation) {
-	window.lock()
-	defer { window.unlock() }
+	if window.try_lock() {
+		defer { window.unlock() }
+	}
 	animation.start = time.now()
 	window.animations[animation.id] = animation
 }

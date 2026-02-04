@@ -74,6 +74,9 @@ mut:
 	diagram_cache            BoundedDiagramCache = BoundedDiagramCache{
 		max_size: 50
 	}
+	progress_state           BoundedMap[string, f32] = BoundedMap[string, f32]{
+		max_size: 50
+	}
 }
 
 // TableColCache stores cached column widths and hash for invalidation

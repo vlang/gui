@@ -152,6 +152,10 @@ pub fn (mut window Window) @lock() {
 	window.mutex.lock()
 }
 
+pub fn (mut window Window) try_lock() bool {
+	return window.mutex.try_lock()
+}
+
 // unlock unlocks the locked mutex. Same precautions apply as with [lock](#lock)
 pub fn (mut window Window) unlock() {
 	window.mutex.unlock()

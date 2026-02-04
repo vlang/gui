@@ -59,6 +59,12 @@ fn main_view(window &gui.Window) gui.View {
 				percent:   0.80
 				text_show: false
 			),
+			gui.progress_bar(
+				id:         'pbar_indefinite'
+				height:     20
+				sizing:     gui.fill_fixed
+				indefinite: true
+			),
 			gui.row(
 				spacing: 40
 				sizing:  gui.fit_fill

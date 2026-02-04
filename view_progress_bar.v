@@ -1,6 +1,7 @@
 module gui
 
 import math
+import time
 
 // ProgressBarCfg configures a [progress_bar](#progress_bar)
 @[minify]
@@ -25,7 +26,7 @@ pub:
 	text_show       bool = gui_theme.progress_bar_style.text_show
 	disabled        bool
 	invisible       bool
-	indefinite      bool // TODO: not implemented
+	indefinite      bool // indicates indeterminate progress state
 	vertical        bool // orientation
 }
 
@@ -38,7 +39,7 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 		radius:  cfg.radius
 		color:   cfg.color_bar
 	)
-	if cfg.text_show {
+	if cfg.text_show && !cfg.indefinite {
 		mut percent := f64_min(f64_max(cfg.percent, f64(0)), f64(1))
 		percent = math.round(percent * 100)
 		content << row(
@@ -53,6 +54,8 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 	bar_percent := cfg.percent
 	text_show := cfg.text_show
 	vertical := cfg.vertical
+	indefinite := cfg.indefinite
+	id := cfg.id
 
 	size := f32(gui_theme.progress_bar_style.size)
 	container_cfg := ContainerCfg{
@@ -72,17 +75,66 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 		padding:      padding_none
 		h_align:      .center
 		v_align:      .middle
-		amend_layout: fn [bar_percent, text_show, vertical] (mut layout Layout, mut w Window) {
+		amend_layout: fn [bar_percent, text_show, vertical, indefinite, id] (mut layout Layout, mut w Window) {
 			if layout.children.len >= 0 {
-				percent := f32_clamp(bar_percent, 0, 1)
+				mut percent := f32_clamp(bar_percent, 0, 1)
+				mut offset := f32(0)
+
+				if indefinite {
+					// 30% width bar for indefinite mode
+					percent = 0.3
+
+					// Register animation if missing
+					anim_id := '${id}_indefinite'
+					if anim_id !in w.animations {
+						mut anim := KeyframeAnimation{
+							id:        anim_id
+							repeat:    true
+							duration:  1500 * time.millisecond
+							keyframes: [
+								Keyframe{
+									at:    0.0
+									value: 0.0
+								},
+								Keyframe{
+									at:     0.5
+									value:  1.0
+									easing: ease_in_out_quad
+								},
+								Keyframe{
+									at:     1.0
+									value:  0.0
+									easing: ease_in_out_quad
+								},
+							]
+							on_value:  fn [id] (v f32, mut w Window) {
+								if w.view_state.progress_state.contains(id) {
+									w.view_state.progress_state.set(id, v)
+								} else {
+									// ensure entry exists
+									w.view_state.progress_state.set(id, v)
+								}
+							}
+						}
+						anim.start = time.now()
+						w.animation_add(mut anim)
+					}
+
+					// Read current animation progress
+					if progress := w.view_state.progress_state.get(id) {
+						// Calculate offset based on available space (1.0 - bar_width_percent) * progress
+						offset = (1.0 - percent) * progress
+					}
+				}
+
 				if vertical {
 					height := f32_min(layout.shape.height * percent, layout.shape.height)
 					layout.children[0].shape.x = layout.shape.x
-					layout.children[0].shape.y = layout.shape.y
+					layout.children[0].shape.y = layout.shape.y + (layout.shape.height * offset)
 					layout.children[0].shape.height = height
 					layout.children[0].shape.width = layout.shape.width
 					// center label on bar. Label is row containing text
-					if text_show {
+					if text_show && !indefinite {
 						center := layout.shape.x + layout.shape.width / 2
 						half_width := layout.children[1].shape.width / 2
 						old_x := layout.children[1].shape.x
@@ -97,12 +149,12 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 					}
 				} else {
 					width := f32_min(layout.shape.width * percent, layout.shape.width)
-					layout.children[0].shape.x = layout.shape.x
+					layout.children[0].shape.x = layout.shape.x + (layout.shape.width * offset)
 					layout.children[0].shape.y = layout.shape.y
 					layout.children[0].shape.width = width
 					layout.children[0].shape.height = layout.shape.height
 					// center label on bar. Label is row containing text
-					if text_show {
+					if text_show && !indefinite {
 						middle := layout.shape.y + layout.shape.height / 2
 						half_height := layout.children[1].shape.height / 2
 						old_y := layout.children[1].shape.y
