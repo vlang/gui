@@ -25,7 +25,6 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// Floating layouts do not affect parent or sibling elements.
 	mut floating_layouts := []Layout{}
 	layout_remove_floating_layouts(mut layout, mut floating_layouts)
-	fix_float_parents(mut floating_layouts)
 
 	// Dialog is a pop-up dialog.
 	// Add last to ensure it is always on top.
@@ -36,6 +35,8 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 		layout_parents(mut dialog_layout, layout)
 		floating_layouts << dialog_layout
 	}
+
+	fix_float_parents(mut floating_layouts)
 
 	// Compute the layout without the floating elements.
 	layout_pipeline(mut layout, mut window)

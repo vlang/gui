@@ -1,10 +1,7 @@
 module gui
 
-// ==================================================
-// Note: Adding @[heap] to struct Layout causes flickering in scrollbars.
-// Test by running `v run fonts.v`.
-
 // Layout defines a tree of Layouts. Views generate Layouts
+@[heap]
 pub struct Layout {
 pub mut:
 	shape    &Shape  = unsafe { nil }
