@@ -1657,20 +1657,6 @@ fn is_footnote_definition(line string) bool {
 	return trimmed.index(']:') or { return false } >= 2
 }
 
-// is_safe_url checks if URL uses allowed protocol.
-fn is_safe_url(url string) bool {
-	lower := url.to_lower().trim_space()
-	if lower.starts_with('http://') || lower.starts_with('https://') || lower.starts_with('mailto:') {
-		return true
-	}
-	// Relative URLs (no protocol) are safe
-	if !lower.contains('://') && !lower.starts_with('javascript:') && !lower.starts_with('data:')
-		&& !lower.starts_with('vbscript:') {
-		return true
-	}
-	return false
-}
-
 // is_safe_image_path checks for path traversal.
 fn is_safe_image_path(path string) bool {
 	// Block absolute paths and traversal

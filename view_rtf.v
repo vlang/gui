@@ -176,8 +176,6 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 			&& e.mouse_x < (run_rect.x + run_rect.width)
 			&& e.mouse_y < (run_rect.y + run_rect.height) {
 			// Find corresponding run in original RichText
-			// We map via offsets because vglyph text runs might be split or reordered (bidi),
-			// and text content might be empty for some glyph runs.
 			mut current_idx := u32(0)
 			mut found_run_idx := -1
 			for i, r in layout.shape.rich_text.runs {

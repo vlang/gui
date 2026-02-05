@@ -440,3 +440,17 @@ fn count_chars(strs []string) int {
 	}
 	return count
 }
+
+// is_safe_url checks if URL uses allowed protocol.
+pub fn is_safe_url(url string) bool {
+	lower := url.to_lower().trim_space()
+	if lower.starts_with('http://') || lower.starts_with('https://') || lower.starts_with('mailto:') {
+		return true
+	}
+	// Relative URLs (no protocol) are safe
+	if !lower.contains('://') && !lower.starts_with('javascript:') && !lower.starts_with('data:')
+		&& !lower.starts_with('vbscript:') {
+		return true
+	}
+	return false
+}
