@@ -25,12 +25,6 @@
 
 ## Known Bugs & Issues
 
-**Silent Resource Load Failures:**
-- Issue: Failures to load SVG, images, or fonts are logged to stderr but not reflected in the UI.
-- Files: `render.v:190` (Text), `render.v:723` (Image), `render.v:984` (SVG).
-- Risk: Users see an incomplete UI without knowing why resources are missing.
-- Fix approach: Render "error placeholders" (e.g., magenta squares or warning icons).
-
 **Window Initialization Panic:**
 - Issue: `window.v` panics if the text rendering system (`vglyph`) fails to start.
 - Files: `window.v:130`.
@@ -73,6 +67,8 @@
 
 ## Addressed Concerns (2026-02-05)
 
+- **Silent Resource Load Failures:** Implemented magenta "error placeholders" for failed image and
+  SVG loads during the render pass, and updated view fallbacks to use distinct magenta text.
 - **Panics on Configuration Errors:** Replaced panics in RangeSlider, Menubar, Menu, and MenuItem
   with log.warn and safe fallback values to prevent application crashes during development.
 - **Indefinite Progress Bar:** Fully implemented using KeyframeAnimation.

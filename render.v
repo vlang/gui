@@ -193,7 +193,9 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 				// Log error with context for debugging
 				log.error('Text render failed at (${renderer.x}, ${renderer.y}): ${err.msg()}')
 				log.debug('Failed text content: "${renderer.text}"')
-				// Continue without crashing - text simply won't appear
+
+				// Fallback: draw small magenta indicator
+				draw_error_placeholder(renderer.x, renderer.y, 10, 10, mut window)
 			}
 		}
 		DrawLayout {
@@ -725,6 +727,7 @@ fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 	image := window.load_image(shape.image_name) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
+		draw_error_placeholder(shape.x, shape.y, shape.width, shape.height, mut window)
 		return
 	}
 	window.renderers << DrawImage{
@@ -1050,6 +1053,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 
 	cached := window.load_svg(shape.svg_name, shape.width, shape.height) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
+		draw_error_placeholder(shape.x, shape.y, shape.width, shape.height, mut window)
 		return
 	}
 
@@ -1097,4 +1101,13 @@ fn draw_triangles(triangles []f32, c gg.Color, x f32, y f32, tri_scale f32, mut 
 	}
 
 	sgl.end()
+}
+
+// draw_error_placeholder draws a magenta box with a white cross to indicate a missing resource.
+fn draw_error_placeholder(x f32, y f32, w f32, h f32, mut window Window) {
+	draw_rounded_rect_filled(x, y, w, h, 0, magenta.to_gx_color(), mut window)
+	draw_rounded_rect_empty(x, y, w, h, 0, 1.0, white.to_gx_color(), mut window)
+	// Draw a white cross
+	window.ui.draw_line(x, y, x + w, y + h, white.to_gx_color())
+	window.ui.draw_line(x + w, y, x, y + h, white.to_gx_color())
 }

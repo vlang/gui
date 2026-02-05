@@ -74,7 +74,13 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 
 	image := window.load_image(image_path) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
-		mut error_text := text(text: '[missing: ${iv.src}]')
+		mut error_text := text(
+			text:       '[missing: ${iv.src}]'
+			text_style: TextStyle{
+				...gui_theme.text_style
+				color: magenta
+			}
+		)
 		return error_text.generate_layout(mut window)
 	}
 

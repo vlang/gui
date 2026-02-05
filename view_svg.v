@@ -35,7 +35,13 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 	// First load at 1:1 scale to get natural dimensions
 	initial := window.load_svg(svg_src, 0, 0) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
-		mut error_text := text(text: '[missing: ${svg_src}]')
+		mut error_text := text(
+			text:       '[missing: ${svg_src}]'
+			text_style: TextStyle{
+				...gui_theme.text_style
+				color: magenta
+			}
+		)
 		return error_text.generate_layout(mut window)
 	}
 
@@ -45,7 +51,13 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 	// Now load at the actual display dimensions for proper tessellation
 	cached := window.load_svg(svg_src, width, height) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
-		mut error_text := text(text: '[missing: ${svg_src}]')
+		mut error_text := text(
+			text:       '[missing: ${svg_src}]'
+			text_style: TextStyle{
+				...gui_theme.text_style
+				color: magenta
+			}
+		)
 		return error_text.generate_layout(mut window)
 	}
 	_ = cached // cache entry now exists at correct scale
