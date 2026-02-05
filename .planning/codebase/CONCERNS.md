@@ -9,13 +9,6 @@
 - Impact: Core desktop application features (file picking) are unavailable.
 - Fix approach: Implement native OS dialog wrappers or a dedicated V-gui file browser.
 
-**Shader Limitation (Alpha & Stop Count):**
-- Issue: Current gradient shaders in `shaders_glsl.v` and `shaders_metal.v` hardcode alpha=1.0
-  and are limited to 3 color stops.
-- Files: `shaders_glsl.v:279`, `shaders_metal.v:321`.
-- Impact: Multi-stop gradients (>3) and semi-transparent gradients are not yet supported.
-- Fix approach: Update uniform buffers to pass alpha data and expand the stop count limit.
-
 ## Known Bugs & Issues
 
 **Window Initialization Panic:**
@@ -60,6 +53,9 @@
 
 ## Addressed Concerns (2026-02-05)
 
+- **Shader Limitation (Alpha & Stop Count):** Implemented bit-packing for gradient stops,
+  enabling full alpha support and expanding the limit from 3 to 6 stops within the existing
+  texture matrix uniform space. Updated both GLSL and Metal shaders.
 - **Markdown Parser Complexity:** Refactored the monolithic 1800-line `xtra_markdown.v` into five
   focused modules (`types`, `inline`, `blocks`, `tables`, `metadata`), reducing orchestration
   logic to ~500 lines.

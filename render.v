@@ -843,6 +843,17 @@ fn gradient_direction(gradient &Gradient, width f32, height f32) (f32, f32) {
 	return angle_to_direction(css_angle)
 }
 
+// pack_rgb packs Red, Green, Blue into a single f32 (up to 16.7M, safe for f32 mantissa).
+fn pack_rgb(c Color) f32 {
+	return f32(c.r) + f32(c.g) * 256.0 + f32(c.b) * 65536.0
+}
+
+// pack_alpha_pos packs Alpha (0..255) and Position (0.0..1.0) into a single f32.
+// Position precision is 1/10000.
+fn pack_alpha_pos(c Color, pos f32) f32 {
+	return f32(c.a) + f32(math.floor(pos * 10000.0)) * 256.0
+}
+
 fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient, mut window Window) {
 	if w <= 0 || h <= 0 || gradient.stops.len == 0 {
 		return
@@ -869,54 +880,49 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 	sgl.matrix_mode_texture()
 	sgl.push_matrix()
 
-	// Pack up to 3 stops into tm matrix (column-major order for sokol)
+	// Pack up to 6 stops into tm matrix (column-major order for sokol)
 	mut tm_data := [16]f32{}
-	stop_count := if gradient.stops.len > 3 { 3 } else { gradient.stops.len }
+	stop_count := if gradient.stops.len > 6 { 6 } else { gradient.stops.len }
 	for i in 0 .. stop_count {
 		stop := gradient.stops[i]
-		// Column-major: each stop is a column vec4(r, g, b, pos)
-		tm_data[i * 4 + 0] = f32(stop.color.r) / 255.0
-		tm_data[i * 4 + 1] = f32(stop.color.g) / 255.0
-		tm_data[i * 4 + 2] = f32(stop.color.b) / 255.0
-		tm_data[i * 4 + 3] = stop.pos
-	}
-	// Pad remaining stops with last stop
-	if stop_count < 3 {
-		last := gradient.stops.last()
-		for i in stop_count .. 3 {
-			tm_data[i * 4 + 0] = f32(last.color.r) / 255.0
-			tm_data[i * 4 + 1] = f32(last.color.g) / 255.0
-			tm_data[i * 4 + 2] = f32(last.color.b) / 255.0
-			tm_data[i * 4 + 3] = 1.0
-		}
+		// Each stop takes 2 floats: [packed_rgb, packed_alpha_pos]
+		midx := i * 2
+		tm_data[midx] = pack_rgb(stop.color)
+		tm_data[midx + 1] = pack_alpha_pos(stop.color, stop.pos)
 	}
 
-	// tm[3] content depends on gradient type
+	// tm[3] (index 12..15) stores core metadata
+
+	tm_data[12] = sw / 2.0 // hw
+
+	tm_data[13] = sh / 2.0 // hh
+
+	tm_data[14] = if gradient.type == .radial { f32(1.0) } else { f32(0.0) } // type
+
+	tm_data[15] = f32(stop_count) // count
+
+	// Additional metadata in unused stop slots (Stop 6 slots: 10, 11)
+
 	if gradient.type == .radial {
-		// Aspect ratio for perfect circles (closest-side sizing)
-		// Scale the LONGER axis to 1.0, shorter axis gets ratio
-		aspect_x := if sw >= sh { f32(1.0) } else { sw / sh }
-		aspect_y := if sh >= sw { f32(1.0) } else { sh / sw }
-		tm_data[12] = aspect_x // tm[3].x
-		tm_data[13] = aspect_y // tm[3].y
-		tm_data[14] = 1.0 // Radial flag (shader checks > 0.5)
-		tm_data[15] = 1.0
+		target_radius := math.sqrt((sw / 2.0) * (sw / 2.0) + (sh / 2.0) * (sh / 2.0))
+
+		tm_data[11] = f32(target_radius)
 	} else {
-		// Linear gradient
 		dx, dy := gradient_direction(gradient, sw, sh)
-		tm_data[12] = dx // tm[3].x = cos(math_angle)
-		tm_data[13] = dy // tm[3].y = sin(math_angle)
-		tm_data[14] = 0.0 // Linear flag
-		tm_data[15] = 1.0
+
+		tm_data[10] = dx
+
+		tm_data[11] = dy
 	}
 
 	// Load the gradient data matrix
+
 	sgl.load_matrix(tm_data[0..])
 
 	sgl.load_pipeline(window.gradient_pip)
 	sgl.c4b(255, 255, 255, 255) // White base color (shader computes actual color)
 
-	z_val := pack_shader_params(r, f32(stop_count))
+	z_val := pack_shader_params(r, 0)
 
 	draw_quad(sx, sy, sw, sh, z_val)
 

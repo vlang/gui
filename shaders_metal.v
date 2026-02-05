@@ -218,11 +218,10 @@ struct VertexOut {
     float2 uv;
     float4 color;
     float params;
-    float4 stop1;
-    float4 stop2;
-    float4 stop3;
-    float2 stop_dir;
-    float grad_type;
+    float4 stop12;
+    float4 stop34;
+    float4 stop56;
+    float4 meta;
 };
 
 struct Uniforms {
@@ -237,12 +236,11 @@ vertex VertexOut vs_main(VertexIn in [[stage_in]], constant Uniforms &uniforms [
     out.uv = in.texcoord0;
     out.color = in.color0;
     out.params = in.position.z;
-    // Pass gradient stops from tm to FS via varyings
-    out.stop1 = uniforms.tm[0];
-    out.stop2 = uniforms.tm[1];
-    out.stop3 = uniforms.tm[2];
-    out.stop_dir = uniforms.tm[3].xy;
-    out.grad_type = uniforms.tm[3].z;
+    // Pass packed gradient data to FS via varyings
+    out.stop12 = uniforms.tm[0];
+    out.stop34 = uniforms.tm[1];
+    out.stop56 = uniforms.tm[2];
+    out.meta = uniforms.tm[3];
     return out;
 }
 '
@@ -256,26 +254,41 @@ struct VertexOut {
     float2 uv;
     float4 color;
     float params;
-    float4 stop1;
-    float4 stop2;
-    float4 stop3;
-    float2 stop_dir;
-    float grad_type;
+    float4 stop12;
+    float4 stop34;
+    float4 stop56;
+    float4 meta;
 };
 
 float random(float2 coords) {
     return fract(sin(dot(coords, float2(12.9898, 78.233))) * 43758.5453);
 }
 
+void unpack_gradient_data(float val1, float val2, thread float4& c, thread float& p) {
+    float r = fmod(val1, 256.0);
+    float g = fmod(floor(val1 / 256.0), 256.0);
+    float b = floor(val1 / 65536.0);
+    
+    float a = fmod(val2, 256.0);
+    p = floor(val2 / 256.0) / 10000.0;
+    
+    c = float4(r/255.0, g/255.0, b/255.0, a/255.0);
+}
+
 fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
     float radius = floor(in.params / 1000.0);
 
-    // SDF clipping for rounded rect
-    float2 width_inv = float2(fwidth(in.uv.x), fwidth(in.uv.y));
-    float2 half_size = 1.0 / (width_inv + 1e-6);
-    float2 pos = in.uv * half_size;
+    // Metadata extraction
+    float hw = in.meta.x;
+    float hh = in.meta.y;
+    float grad_type = in.meta.z;
+    int stop_count = int(in.meta.w);
 
-    float2 q = abs(pos) - half_size + float2(radius);
+    // Pixel-based position from UV
+    float2 pos = in.uv * float2(hw, hh);
+
+    // SDF clipping for rounded rect (using passed dimensions)
+    float2 q = abs(pos) - float2(hw, hh) + float2(radius);
     float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
 
     float grad_len = length(float2(dfdx(d), dfdy(d)));
@@ -284,55 +297,66 @@ fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[textur
 
     // Unified gradient t calculation
     float t;
-    if (in.grad_type > 0.5) {
-        // Radial: distance from center with aspect correction
-        float2 aspect = in.stop_dir;
-        t = length(in.uv * aspect);
+    if (grad_type > 0.5) {
+        float target_radius = in.stop56.w; // Packed in tm_data[11]
+        t = length(pos) / target_radius;
     } else {
-        // Linear: project onto direction vector
-        float2 dir = in.stop_dir;
-        t = dot(in.uv, dir) * 0.5 + 0.5;
+        float2 stop_dir = float2(in.stop56.z, in.stop56.w); // tm_data[10, 11]
+        t = dot(in.uv, stop_dir) * 0.5 + 0.5;
     }
     t = clamp(t, 0.0, 1.0);
 
-    // Read gradient stops from varyings (passed from VS)
-    float4 stop1 = in.stop1;
-    float4 stop2 = in.stop2;
-    float4 stop3 = in.stop3;
+    // Unpack stops (up to 5 fully supported with metadata packing)
+    float4 stop_colors[6];
+    float stop_positions[6];
 
-    // Multi-stop interpolation
-    float4 gradient_color;
-    float4 c1, c2;
-    float local_t;
+    unpack_gradient_data(in.stop12.x, in.stop12.y, stop_colors[0], stop_positions[0]);
+    unpack_gradient_data(in.stop12.z, in.stop12.w, stop_colors[1], stop_positions[1]);
+    unpack_gradient_data(in.stop34.x, in.stop34.y, stop_colors[2], stop_positions[2]);
+    unpack_gradient_data(in.stop34.z, in.stop34.w, stop_colors[3], stop_positions[3]);
+    unpack_gradient_data(in.stop56.x, in.stop56.y, stop_colors[4], stop_positions[4]);
+    // Stop 6 slot partially used for metadata
+    stop_colors[5] = stop_colors[4]; stop_positions[5] = stop_positions[4];
 
-    if (t <= stop2.w) {
-        c1 = stop1;
-        c2 = stop2;
-        local_t = (t - stop1.w) / max(stop2.w - stop1.w, 0.0001);
-    } else {
-        c1 = stop2;
-        c2 = stop3;
-        local_t = (t - stop2.w) / max(stop3.w - stop2.w, 0.0001);
+    // Multi-stop interpolation loop
+    float4 c1 = stop_colors[0];
+    float4 c2 = c1;
+    float p1 = stop_positions[0];
+    float p2 = p1;
+
+    for (int i = 1; i < 6; i++) {
+        if (i >= stop_count) break;
+        if (t <= stop_positions[i]) {
+            c2 = stop_colors[i];
+            p2 = stop_positions[i];
+            c1 = stop_colors[i-1];
+            p1 = stop_positions[i-1];
+            break;
+        }
+        if (i == stop_count - 1) {
+            c1 = stop_colors[i];
+            c2 = c1;
+            p1 = stop_positions[i];
+            p2 = p1;
+        }
     }
 
+    float local_t = (t - p1) / max(p2 - p1, 0.0001f);
+
     // Premultiplied alpha interpolation (CSS spec)
-    // Currently stops are packed as (r,g,b,position), alpha=1.0
-    // Structure ready for alpha support when stop format extended
-    float c1_alpha = 1.0;  // TODO: read from extended stop format
-    float c2_alpha = 1.0;
-    float3 c1_pre = c1.rgb * c1_alpha;
-    float3 c2_pre = c2.rgb * c2_alpha;
+    float3 c1_pre = c1.rgb * c1.a;
+    float3 c2_pre = c2.rgb * c2.a;
     float3 rgb_pre = mix(c1_pre, c2_pre, local_t);
-    float alpha = mix(c1_alpha, c2_alpha, local_t);
+    float alpha = mix(c1.a, c2.a, local_t);
     float3 rgb = rgb_pre / max(alpha, 0.0001f);
-    gradient_color = float4(rgb, alpha);
+    float4 gradient_color = float4(rgb, alpha);
 
     // Add dithering to prevent color banding
     float dither = (random(in.position.xy) - 0.5) / 255.0;
     gradient_color.rgb += float3(dither);
 
-    // Combine gradient with SDF clipping
-    float4 frag_color = float4(gradient_color.rgb, gradient_color.a * sdf_alpha);
+    // Combine gradient with SDF clipping and vertex opacity
+    float4 frag_color = float4(gradient_color.rgb, gradient_color.a * sdf_alpha * in.color.a);
 
     // sgl workaround: dummy texture sample
     if (frag_color.a < 0.0) {
