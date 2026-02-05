@@ -17,7 +17,7 @@ pub:
 
 // RichText contains runs of styled text for mixed-style paragraphs.
 pub struct RichText {
-pub:
+pub mut:
 	runs []RichTextRun
 }
 

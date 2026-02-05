@@ -4,13 +4,6 @@
 
 ## Tech Debt
 
-**Markdown Parser Complexity & Maintenance:**
-- Issue: `xtra_markdown.v` is a monolithic 1800-line parser implementing complex state machines
-  for blockquotes, lists, and tables.
-- Impact: High risk of regressions when adding new markdown features. Difficult to optimize
-  beyond the current source-level caching.
-- Fix approach: Refactor into a modular parser (Block vs. Inline parsers).
-
 **Future Dialog Types Stubbed:**
 - Issue: `browse`, `save`, and `color` dialog types remain stubs in `view_dialog.v`.
 - Impact: Core desktop application features (file picking) are unavailable.
@@ -67,6 +60,9 @@
 
 ## Addressed Concerns (2026-02-05)
 
+- **Markdown Parser Complexity:** Refactored the monolithic 1800-line `xtra_markdown.v` into five
+  focused modules (`types`, `inline`, `blocks`, `tables`, `metadata`), reducing orchestration
+  logic to ~500 lines.
 - **Silent Resource Load Failures:** Implemented magenta "error placeholders" for failed image and
   SVG loads during the render pass, and updated view fallbacks to use distinct magenta text.
 - **Panics on Configuration Errors:** Replaced panics in RangeSlider, Menubar, Menu, and MenuItem
