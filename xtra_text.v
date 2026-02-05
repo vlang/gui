@@ -441,9 +441,15 @@ fn count_chars(strs []string) int {
 	return count
 }
 
-// is_safe_url checks if URL uses allowed protocol.
-pub fn is_safe_url(url string) bool {
+// is_safe_url validates URL protocol to prevent XSS attacks.
+// Allows: http://, https://, mailto:, and relative URLs (no protocol).
+// Blocks: javascript:, vbscript:, data:, file:, and other unsafe protocols.
+// Uses case-insensitive matching to prevent bypass via capitalization.
+fn is_safe_url(url string) bool {
 	lower := url.to_lower().trim_space()
+	if lower.len == 0 {
+		return false
+	}
 	if lower.starts_with('http://') || lower.starts_with('https://') || lower.starts_with('mailto:') {
 		return true
 	}

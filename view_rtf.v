@@ -44,8 +44,8 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	// Negative indent creates hanging indent (wrapped lines indented)
 	cfg := vglyph.TextConfig{
 		block: vglyph.BlockStyle{
-			wrap:   if rtf.mode in [.wrap, .wrap_keep_spaces] { .word } else { .word }
-			width:  if rtf.mode in [.wrap, .wrap_keep_spaces] { f32(-1.0) } else { f32(-1.0) }
+			wrap:   .word
+			width:  -1.0
 			indent: -rtf.hanging_indent
 		}
 	}
@@ -99,6 +99,20 @@ pub fn rtf(cfg RtfCfg) View {
 	}
 }
 
+// rtf_hit_test checks if mouse coordinates intersect a vglyph run's bounds.
+fn rtf_hit_test(run vglyph.Item, mouse_x f32, mouse_y f32) bool {
+	run_rect := gg.Rect{
+		x:      f32(run.x)
+		y:      f32(run.y) - f32(run.ascent)
+		width:  f32(run.width)
+		height: f32(run.ascent + run.descent)
+	}
+	return mouse_x >= run_rect.x && mouse_y >= run_rect.y && mouse_x < (run_rect.x + run_rect.width)
+		&& mouse_y < (run_rect.y + run_rect.height)
+}
+
+// rtf_mouse_move handles mouse movement over RTF content, showing tooltips
+// for abbreviations and changing cursor for links.
 fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 	if !layout.shape.has_rtf_layout() {
 		return
@@ -108,26 +122,18 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 		if run.is_object {
 			continue
 		}
-		run_rect := gg.Rect{
-			x:      f32(run.x)
-			y:      f32(run.y) - f32(run.ascent)
-			width:  f32(run.width)
-			height: f32(run.ascent + run.descent)
-		}
-		if e.mouse_x >= run_rect.x && e.mouse_y >= run_rect.y
-			&& e.mouse_x < (run_rect.x + run_rect.width)
-			&& e.mouse_y < (run_rect.y + run_rect.height) {
+		if rtf_hit_test(run, e.mouse_x, e.mouse_y) {
 			// Find corresponding RichTextRun via character offset
 			found_run := rtf_find_run_at_index(layout, run.start_index)
 
 			// Check for tooltip (abbreviation)
 			if found_run.tooltip != '' {
-				// Convert to window coordinates (run_rect is relative to layout)
+				// Convert to window coordinates (run position is relative to layout)
 				abs_rect := gg.Rect{
-					x:      run_rect.x + layout.shape.x
-					y:      run_rect.y + layout.shape.y
-					width:  run_rect.width
-					height: run_rect.height
+					x:      f32(run.x) + layout.shape.x
+					y:      f32(run.y) - f32(run.ascent) + layout.shape.y
+					width:  f32(run.width)
+					height: f32(run.ascent + run.descent)
 				}
 				w.set_rtf_tooltip(found_run.tooltip, abs_rect)
 				e.is_handled = true
@@ -157,6 +163,7 @@ fn rtf_find_run_at_index(layout &Layout, start_index int) RichTextRun {
 	return RichTextRun{}
 }
 
+// rtf_on_click handles clicks on RTF links, validating URLs before opening.
 fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 	if !layout.shape.has_rtf_layout() {
 		return
@@ -166,35 +173,12 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 		if run.is_object {
 			continue
 		}
-		run_rect := gg.Rect{
-			x:      f32(run.x)
-			y:      f32(run.y) - f32(run.ascent)
-			width:  f32(run.width)
-			height: f32(run.ascent + run.descent)
-		}
-		if e.mouse_x >= run_rect.x && e.mouse_y >= run_rect.y
-			&& e.mouse_x < (run_rect.x + run_rect.width)
-			&& e.mouse_y < (run_rect.y + run_rect.height) {
+		if rtf_hit_test(run, e.mouse_x, e.mouse_y) {
 			// Find corresponding run in original RichText
-			mut current_idx := u32(0)
-			mut found_run_idx := -1
-			for i, r in layout.shape.rich_text.runs {
-				run_len := u32(r.text.len)
-				// Check if the clicked run's start index falls within this RichText run
-				if u32(run.start_index) >= current_idx
-					&& u32(run.start_index) < current_idx + run_len {
-					found_run_idx = i
-					break
-				}
-				current_idx += run_len
-			}
-
-			if found_run_idx >= 0 {
-				found_run := layout.shape.rich_text.runs[found_run_idx]
-				if found_run.link != '' && is_safe_url(found_run.link) {
-					os.open_uri(found_run.link) or {}
-					e.is_handled = true
-				}
+			found_run := rtf_find_run_at_index(layout, run.start_index)
+			if found_run.link != '' && is_safe_url(found_run.link) {
+				os.open_uri(found_run.link) or {}
+				e.is_handled = true
 			}
 			return
 		}
