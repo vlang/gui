@@ -1,6 +1,7 @@
 module gui
 
 import arrays
+import log
 
 // MenubarCfg configures a horizontal menubar that supports nested submenus.
 // A menubar holds MenuItemCfg items, each of which may contain further submenus.
@@ -20,7 +21,7 @@ import arrays
 //
 @[heap; minify]
 pub struct MenubarCfg {
-pub:
+pub mut:
 	id                  string
 	text_style          TextStyle = gui_theme.menubar_style.text_style
 	text_style_subtitle TextStyle = gui_theme.menubar_style.text_style_subtitle
@@ -75,17 +76,22 @@ pub:
 // containing the border container and interior menu bar content.
 // Returns the constructed top-level View for rendering.
 pub fn (mut window Window) menubar(cfg MenubarCfg) View {
-	if cfg.id_focus == 0 {
-		panic('MenubarCfg.id_focus must be non-zero')
+	mut c := cfg
+	if c.id_focus == 0 {
+		log.warn('MenubarCfg.id_focus must be non-zero; generating fallback ID')
+		c.id_focus = u32(c.id.hash()) ^ 0xDEADBEEF
+		if c.id_focus == 0 {
+			c.id_focus = 7568971
+		}
 	}
 
 	// If the menubar already has focus but no selected menu yet,
 	// choose the first selectable menu item.
-	current_menu := window.view_state.menu_state.get(cfg.id_focus) or { '' }
-	if window.is_focus(cfg.id_focus) && current_menu == '' {
-		for item in cfg.items {
+	current_menu := window.view_state.menu_state.get(c.id_focus) or { '' }
+	if window.is_focus(c.id_focus) && current_menu == '' {
+		for item in c.items {
 			if is_selectable_menu_id(item.id) {
-				window.view_state.menu_state.set(cfg.id_focus, item.id)
+				window.view_state.menu_state.set(c.id_focus, item.id)
 				break
 			}
 		}
@@ -94,23 +100,23 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 	// Construct the menubar UI tree.
 	return row(
 		name:          'menubar'
-		id:            cfg.id
-		id_focus:      cfg.id_focus
-		color:         cfg.color
-		color_border:  cfg.color_border
-		float:         cfg.float
-		float_anchor:  cfg.float_anchor
-		float_tie_off: cfg.float_tie_off
-		disabled:      cfg.disabled
-		invisible:     cfg.invisible
-		size_border:   cfg.size_border
-		sizing:        cfg.sizing
-		on_keydown:    make_menubar_on_keydown(cfg)
-		amend_layout:  make_menubar_amend_layout(cfg.id_focus)
-		padding:       cfg.padding
-		radius:        cfg.radius
+		id:            c.id
+		id_focus:      c.id_focus
+		color:         c.color
+		color_border:  c.color_border
+		float:         c.float
+		float_anchor:  c.float_anchor
+		float_tie_off: c.float_tie_off
+		disabled:      c.disabled
+		invisible:     c.invisible
+		size_border:   c.size_border
+		sizing:        c.sizing
+		on_keydown:    make_menubar_on_keydown(c)
+		amend_layout:  make_menubar_amend_layout(c.id_focus)
+		padding:       c.padding
+		radius:        c.radius
 		// menu_build handles constructing root items and their submenus.
-		content: menu_build(cfg, 0, cfg.items, window)
+		content: menu_build(c, 0, c.items, window)
 	)
 }
 

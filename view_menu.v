@@ -1,33 +1,39 @@
 module gui
 
 import datatypes
+import log
 
 // menu builds the top-level columnar menu view. Historically this was part of the
 // menubar implementation, so it still uses `MenubarCfg`. It creates the outer border
 // and interior containers, and delegates actual menu item creation to `menu_build`.
 // Requires `cfg.id_focus` to be non-zero so the view state can track selected items.
 pub fn (window &Window) menu(cfg MenubarCfg) View {
-	if cfg.id_focus == 0 {
-		panic('MenubarCfg.id_focus must be non-zero')
+	mut c := cfg
+	if c.id_focus == 0 {
+		log.warn('MenubarCfg.id_focus must be non-zero; generating fallback ID')
+		c.id_focus = u32(c.id.hash()) ^ 0xDEADBEEF
+		if c.id_focus == 0 {
+			c.id_focus = 7568971
+		}
 	}
-	check_for_duplicate_menu_ids(cfg.items)
+	check_for_duplicate_menu_ids(c.items)
 	return column(
 		name:          'menubar'
-		id:            cfg.id
-		color:         cfg.color
-		float:         cfg.float
-		float_anchor:  cfg.float_anchor
-		float_tie_off: cfg.float_tie_off
-		invisible:     cfg.invisible
-		size_border:   cfg.size_border
-		color_border:  cfg.color_border
+		id:            c.id
+		color:         c.color
+		float:         c.float
+		float_anchor:  c.float_anchor
+		float_tie_off: c.float_tie_off
+		invisible:     c.invisible
+		size_border:   c.size_border
+		color_border:  c.color_border
 
-		radius:       cfg.radius
-		sizing:       cfg.sizing
-		amend_layout: make_menu_amend_layout(cfg.id_focus)
-		padding:      cfg.padding_submenu
-		spacing:      cfg.spacing_submenu
-		content:      menu_build(cfg, 1, cfg.items, window)
+		radius:       c.radius
+		sizing:       c.sizing
+		amend_layout: make_menu_amend_layout(c.id_focus)
+		padding:      c.padding_submenu
+		spacing:      c.spacing_submenu
+		content:      menu_build(c, 1, c.items, window)
 	)
 }
 
@@ -179,11 +185,11 @@ fn find_menu_item_cfg(items []MenuItemCfg, id string) ?MenuItemCfg {
 }
 
 // check_for_duplicate_menu_ids ensures unique menu item ids across the entire
-// menu hierarchy (except for predefined special ids). Panics if duplicate ids exist.
+// menu hierarchy (except for predefined special ids).
 fn check_for_duplicate_menu_ids(items []MenuItemCfg) {
 	mut ids := datatypes.Set[string]{}
 	if duplicate_id := check_menu_ids(items, mut ids) {
-		panic('Duplicate menu ID: "${duplicate_id}"')
+		log.warn('Duplicate menu ID detected: "${duplicate_id}". Menu behavior may be inconsistent.')
 	}
 }
 

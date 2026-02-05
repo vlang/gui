@@ -1,5 +1,7 @@
 module gui
 
+import log
+
 pub const menu_separator_id = '__separator__'
 pub const menu_subtitle_id = '__subtitle__'
 
@@ -31,7 +33,7 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 	return match item_cfg.separator {
 		true {
 			if item_cfg.action != unsafe { nil } {
-				panic('Menu separator action != nil')
+				log.warn('Menu separator action != nil; separators cannot have actions')
 			}
 			// Render a visual separator as a thin horizontal line.
 			column(
@@ -99,11 +101,13 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 
 // menu_item_text creates a simple text-only menu item using an id and label
 pub fn menu_item_text(id string, text string) MenuItemCfg {
-	if id.is_blank() {
-		panic("blank menu id's are invalid")
+	mut final_id := id
+	if final_id.is_blank() {
+		log.warn("blank menu id's are invalid; generating fallback from text")
+		final_id = 'menu_item_${text.hash()}'
 	}
 	return MenuItemCfg{
-		id:   id
+		id:   final_id
 		text: text
 	}
 }

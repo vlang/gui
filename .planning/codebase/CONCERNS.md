@@ -31,12 +31,6 @@
 - Risk: Users see an incomplete UI without knowing why resources are missing.
 - Fix approach: Render "error placeholders" (e.g., magenta squares or warning icons).
 
-**Panics on Configuration Errors:**
-- Issue: Several components panic on invalid initialization (e.g., min > max in sliders).
-- Files: `view_menu.v:11`, `view_menubar.v:79`, `view_range_slider.v:77`.
-- Risk: Developer errors during UI definition crash the entire application.
-- Fix approach: Replace panics with Result types or fallback to safe default values.
-
 **Window Initialization Panic:**
 - Issue: `window.v` panics if the text rendering system (`vglyph`) fails to start.
 - Files: `window.v:130`.
@@ -79,6 +73,8 @@
 
 ## Addressed Concerns (2026-02-05)
 
+- **Panics on Configuration Errors:** Replaced panics in RangeSlider, Menubar, Menu, and MenuItem
+  with log.warn and safe fallback values to prevent application crashes during development.
 - **Indefinite Progress Bar:** Fully implemented using KeyframeAnimation.
 - **Markdown Parsing Caching:** Implemented via source-hash lookup in Window state.
 - **Undo/Redo Memory Growth:** BoundedStack now enforces a 50-item limit.

@@ -6,13 +6,14 @@ module gui
 // styling, keyboard navigation, mouse wheel input, and configurable value ranges.
 //
 import math
+import log
 
 // RangeSliderCfg defines the configuration options for the range slider component.
 // It includes visual styling properties like colors and dimensions, behavioral
 // settings like value range and step size, and callbacks for handling user input.
 @[heap; minify]
 pub struct RangeSliderCfg {
-pub:
+pub mut:
 	id            string @[required]
 	sizing        Sizing
 	color         Color   = gui_theme.range_slider_style.color
@@ -73,61 +74,64 @@ pub:
 //   View - A fully configured range slider View component
 //
 pub fn range_slider(cfg RangeSliderCfg) View {
-	if cfg.min >= cfg.max {
-		panic('range_slider.min must be less than range_slider.max')
+	mut c := cfg
+	if c.min >= c.max {
+		log.warn('range_slider.min (${c.min}) must be less than range_slider.max (${c.max}); adjusting max to ${
+			c.min + 1.0}')
+		c.max = c.min + 1.0
 	}
 
 	// Wrapper dimensions (Main Axis: Config Width/Size, Cross Axis: max(Size, ThumbSize))
 	// Track dimensions (Main Axis: Fill, Cross Axis: Config Size)
-	mut wrapper_width := cfg.size
-	mut wrapper_height := f32_max(cfg.size, cfg.thumb_size)
+	mut wrapper_width := c.size
+	mut wrapper_height := f32_max(c.size, c.thumb_size)
 
 	mut track_width := f32(0) // 0 = fill
-	mut track_height := cfg.size
+	mut track_height := c.size
 
-	if cfg.vertical {
-		wrapper_width = f32_max(cfg.size, cfg.thumb_size)
-		wrapper_height = cfg.size
-		track_width = cfg.size
+	if c.vertical {
+		wrapper_width = f32_max(c.size, c.thumb_size)
+		wrapper_height = c.size
+		track_width = c.size
 		track_height = 0 // 0 = fill
 	}
 
-	if cfg.width > 0 {
-		wrapper_width = cfg.width
+	if c.width > 0 {
+		wrapper_width = c.width
 	}
-	if cfg.height > 0 {
-		wrapper_height = cfg.height
+	if c.height > 0 {
+		wrapper_height = c.height
 	}
 
 	return container(
 		name:      'range_slider_wrapper'
-		id:        cfg.id
-		id_focus:  cfg.id_focus
+		id:        c.id
+		id_focus:  c.id_focus
 		width:     wrapper_width
 		height:    wrapper_height
-		disabled:  cfg.disabled
-		invisible: cfg.invisible
+		disabled:  c.disabled
+		invisible: c.invisible
 		padding:   padding_none
-		sizing:    cfg.sizing
+		sizing:    c.sizing
 		// Center the track within the wrapper
 		h_align: .center
 		v_align: .middle
-		axis:    if cfg.vertical { .top_to_bottom } else { .left_to_right }
+		axis:    if c.vertical { .top_to_bottom } else { .left_to_right }
 		// Events handled by wrapper for larger hit target
-		on_click:     fn [cfg] (layout &Layout, mut e Event, mut w Window) {
+		on_click:     fn [c] (layout &Layout, mut e Event, mut w Window) {
 			mut ev := &Event{
 				...e
 				// touches: e.touches // copy triggers memory error check if not needed
 				mouse_x: e.mouse_x + layout.shape.x
 				mouse_y: e.mouse_y + layout.shape.y
 			}
-			cfg.mouse_move(layout, mut ev, mut w)
+			c.mouse_move(layout, mut ev, mut w)
 
 			// Lock the mouse to the range slider until the mouse button is released
 			w.mouse_lock(MouseLockCfg{
 				// event mouse coordinates are not adjusted here
-				mouse_move: fn [cfg] (layout &Layout, mut e Event, mut w Window) {
-					cfg.mouse_move(layout, mut e, mut w)
+				mouse_move: fn [c] (layout &Layout, mut e Event, mut w Window) {
+					c.mouse_move(layout, mut e, mut w)
 				}
 				mouse_up:   fn (_ &Layout, mut _ Event, mut w Window) {
 					w.mouse_unlock()
@@ -135,14 +139,14 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 			})
 			e.is_handled = true
 		}
-		amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
-			cfg.amend_layout_slide(mut layout, mut w)
+		amend_layout: fn [c] (mut layout Layout, mut w Window) {
+			c.amend_layout_slide(mut layout, mut w)
 		}
-		on_hover:     fn [cfg] (mut layout Layout, mut e Event, mut w Window) {
-			cfg.on_hover_slide(mut layout, mut e, mut w)
+		on_hover:     fn [c] (mut layout Layout, mut e Event, mut w Window) {
+			c.on_hover_slide(mut layout, mut e, mut w)
 		}
-		on_keydown:   fn [cfg] (layout &Layout, mut e Event, mut w Window) {
-			cfg.on_keydown(layout, mut e, mut w)
+		on_keydown:   fn [c] (layout &Layout, mut e Event, mut w Window) {
+			c.on_keydown(layout, mut e, mut w)
 		}
 		content:      [
 			// The Track
@@ -150,36 +154,36 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 				name:         'range_slider_track'
 				width:        track_width
 				height:       track_height
-				sizing:       if cfg.vertical {
+				sizing:       if c.vertical {
 					Sizing{.fixed, .fill}
 				} else {
 					Sizing{.fill, .fixed}
 				} // Fill main axis, Fixed cross axis
-				color:        cfg.color
-				color_border: cfg.color_border
-				size_border:  cfg.size_border
-				radius:       cfg.radius_border
+				color:        c.color
+				color_border: c.color_border
+				size_border:  c.size_border
+				radius:       c.radius_border
 				padding:      padding_none
-				axis:         if cfg.vertical { .top_to_bottom } else { .left_to_right }
+				axis:         if c.vertical { .top_to_bottom } else { .left_to_right }
 				content:      [
 					// Left Bar (Fill)
 					rectangle(
 						name:         'range_slider_fill'
 						sizing:       fill_fill
-						color:        cfg.color_left
-						color_border: cfg.color_left
+						color:        c.color_left
+						color_border: c.color_left
 					),
 					// Thumb
 					circle(
 						name:         'range_slider_thumb'
-						width:        cfg.thumb_size
-						height:       cfg.thumb_size
-						color:        cfg.color_thumb
-						color_border: cfg.color_border
-						size_border:  cfg.size_border
+						width:        c.thumb_size
+						height:       c.thumb_size
+						color:        c.color_thumb
+						color_border: c.color_border
+						size_border:  c.size_border
 						padding:      padding_none
-						amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
-							cfg.amend_layout_thumb(mut layout, mut w)
+						amend_layout: fn [c] (mut layout Layout, mut w Window) {
+							c.amend_layout_thumb(mut layout, mut w)
 						}
 					),
 				]

@@ -42,3 +42,13 @@ fn test_range_slider_structure() {
 	// View is an interface and doesn't expose id field directly
 	_ = rs_view
 }
+
+fn test_range_slider_invalid_range() {
+	// Should not panic, but log a warning and adjust max
+	_ := range_slider(
+		id:        'invalid_slider'
+		min:       100
+		max:       0
+		on_change: fn (val f32, mut e Event, mut w Window) {}
+	)
+}
