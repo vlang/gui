@@ -161,6 +161,33 @@ pub fn (mut window Window) unlock() {
 	window.mutex.unlock()
 }
 
+// queue_command adds a command to the window's atomic command queue.
+// The command will be executed on the main thread during the next frame
+// update. This is the preferred way to update UI state from other threads.
+pub fn (mut window Window) queue_command(cb WindowCommand) {
+	window.commands_mutex.lock()
+	window.commands << cb
+	window.commands_mutex.unlock()
+	window.ui.refresh_ui()
+}
+
+// flush_commands executes all pending commands in the command queue.
+// Internal use only; called by the main loop.
+fn (mut window Window) flush_commands() {
+	if window.commands.len == 0 {
+		return
+	}
+
+	window.commands_mutex.lock()
+	to_run := window.commands.clone()
+	window.commands.clear()
+	window.commands_mutex.unlock()
+
+	for cb in to_run {
+		cb(mut window)
+	}
+}
+
 // resize_to_content is currently not working. Need to implement gg.resize()
 pub fn (mut window Window) resize_to_content() {
 	window.lock()

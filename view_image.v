@@ -118,9 +118,9 @@ fn download_image(url string, path string, mut w Window) {
 
 	head := http.head(url) or {
 		log.error('Failed to fetch image headers for ${url}: ${err}')
-		w.lock()
-		w.view_state.active_downloads.delete(url)
-		w.unlock()
+		w.queue_command(fn [url] (mut w Window) {
+			w.view_state.active_downloads.delete(url)
+		})
 		return
 	}
 
@@ -128,36 +128,35 @@ fn download_image(url string, path string, mut w Window) {
 	content_length := head.header.get(.content_length) or { '0' }.i64()
 	if content_length > max_size {
 		log.error('Image too large (${content_length} bytes > ${max_size} bytes): ${url}')
-		w.lock()
-		w.view_state.active_downloads.delete(url)
-		w.unlock()
+		w.queue_command(fn [url] (mut w Window) {
+			w.view_state.active_downloads.delete(url)
+		})
 		return
 	}
 
 	// Validate content type
 	if !head.header.get(.content_type) or { '' }.starts_with('image/') {
 		log.error('Invalid content type for image (expected image/*): ${url}')
-		w.lock()
-		w.view_state.active_downloads.delete(url)
-		w.unlock()
+		w.queue_command(fn [url] (mut w Window) {
+			w.view_state.active_downloads.delete(url)
+		})
 		return
 	}
 
 	// Download file
 	http.download_file(url, path) or {
 		log.error('Failed to download image ${url}: ${err}')
-		w.lock()
-		w.view_state.active_downloads.delete(url)
-		w.unlock()
+		w.queue_command(fn [url] (mut w Window) {
+			w.view_state.active_downloads.delete(url)
+		})
 		return
 	}
 
 	// Remove from active downloads (thread-safe)
-	w.lock()
-	w.view_state.active_downloads.delete(url)
-	w.unlock()
-
-	w.update_window()
+	w.queue_command(fn [url] (mut w Window) {
+		w.view_state.active_downloads.delete(url)
+		w.update_window()
+	})
 }
 
 // image creates a new image view from the provided configuration.

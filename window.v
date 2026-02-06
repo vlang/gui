@@ -14,6 +14,10 @@ import sync
 import log
 import vglyph
 
+// WindowCommand is a callback function that executes on the main thread
+// to update the window state. Used for thread-safe state mutations.
+pub type WindowCommand = fn (mut Window)
+
 pub struct Window {
 mut:
 	ui                    &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
@@ -28,19 +32,21 @@ mut:
 	layout                Layout               // The current calculated layout tree
 	renderers             []Renderer           // Flat list of drawing instructions for the current frame
 	animations            map[string]Animation // Active animations (keyed by id)
-	window_size           gg.Size              // cached, gg.window_size() relatively slow
-	refresh_window        bool                 // Flag to trigger a layout update on the next frame
-	debug_layout          bool                 // enable layout performance stats
-	layout_stats          LayoutStats          // populated when debug_layout is true
-	stats                 Stats                // Rendering statistics
-	rounded_rect_pip      sgl.Pipeline         // Pipeline for drawing rounded rectangles
-	rounded_rect_pip_init bool                 // Initialization flag for the pipeline
-	shadow_pip            sgl.Pipeline         // Pipeline for drawing drop shadows
-	shadow_pip_init       bool                 // Initialization flag for shadow pipeline
-	blur_pip              sgl.Pipeline         // Pipeline for drawing blurred shapes (glows)
-	blur_pip_init         bool                 // Initialization flag for blur pipeline
-	gradient_pip          sgl.Pipeline         // Pipeline for drawing multi-stop gradients
-	gradient_pip_init     bool                 // Initialization flag for gradient pipeline
+	commands              []WindowCommand      // Atomic command queue for UI state updates
+	commands_mutex        &sync.Mutex = sync.new_mutex() // Mutex for command queue
+	window_size           gg.Size      // cached, gg.window_size() relatively slow
+	refresh_window        bool         // Flag to trigger a layout update on the next frame
+	debug_layout          bool         // enable layout performance stats
+	layout_stats          LayoutStats  // populated when debug_layout is true
+	stats                 Stats        // Rendering statistics
+	rounded_rect_pip      sgl.Pipeline // Pipeline for drawing rounded rectangles
+	rounded_rect_pip_init bool         // Initialization flag for the pipeline
+	shadow_pip            sgl.Pipeline // Pipeline for drawing drop shadows
+	shadow_pip_init       bool         // Initialization flag for shadow pipeline
+	blur_pip              sgl.Pipeline // Pipeline for drawing blurred shapes (glows)
+	blur_pip_init         bool         // Initialization flag for blur pipeline
+	gradient_pip          sgl.Pipeline // Pipeline for drawing multi-stop gradients
+	gradient_pip_init     bool         // Initialization flag for gradient pipeline
 }
 
 // Window is the main application window. `state` holds app state.
@@ -156,6 +162,8 @@ pub fn window(cfg &WindowCfg) &Window {
 
 // frame_fn is the only place where the window is rendered.
 fn frame_fn(mut window Window) {
+	window.flush_commands()
+
 	if window.refresh_window {
 		window.update()
 		window.refresh_window = false

@@ -172,7 +172,11 @@ fn update_tween(mut tw TweenAnimation, mut w Window, mut deferred []AnimationCal
 
 	anim_elapsed := elapsed - tw.delay
 	if anim_elapsed >= tw.duration {
-		tw.on_value(tw.to, mut w)
+		on_value := tw.on_value
+		to_val := tw.to
+		deferred << fn [on_value, to_val] (mut w Window) {
+			on_value(to_val, mut w)
+		}
 		if tw.on_done != unsafe { nil } {
 			deferred << tw.on_done
 		}
@@ -184,6 +188,9 @@ fn update_tween(mut tw TweenAnimation, mut w Window, mut deferred []AnimationCal
 	progress := f32(anim_elapsed) / f32(tw.duration)
 	eased := tw.easing(progress)
 	value := lerp(tw.from, tw.to, eased)
-	tw.on_value(value, mut w)
+	on_value := tw.on_value
+	deferred << fn [on_value, value] (mut w Window) {
+		on_value(value, mut w)
+	}
 	return true
 }

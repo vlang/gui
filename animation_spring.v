@@ -229,7 +229,11 @@ fn update_spring(mut sp SpringAnimation, mut w Window, dt f32, mut deferred []An
 		sp.state.position = sp.state.target
 		sp.state.velocity = 0
 		sp.state.at_rest = true
-		sp.on_value(sp.state.target, mut w)
+		on_value := sp.on_value
+		target := sp.state.target
+		deferred << fn [on_value, target] (mut w Window) {
+			on_value(target, mut w)
+		}
 		if sp.on_done != unsafe { nil } {
 			deferred << sp.on_done
 		}
@@ -237,6 +241,10 @@ fn update_spring(mut sp SpringAnimation, mut w Window, dt f32, mut deferred []An
 		return true
 	}
 
-	sp.on_value(sp.state.position, mut w)
+	on_value := sp.on_value
+	pos := sp.state.position
+	deferred << fn [on_value, pos] (mut w Window) {
+		on_value(pos, mut w)
+	}
 	return true
 }

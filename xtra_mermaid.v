@@ -57,38 +57,41 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 			url:    'https://kroki.io/mermaid/png'
 			data:   source
 		) or {
-			window.lock()
-			window.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-				state: .error
-				error: 'Network error: ${err.msg()}'
+			err_msg := err.msg()
+			window.queue_command(fn [hash, err_msg] (mut w Window) {
+				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+					state: .error
+					error: 'Network error: ${err_msg}'
+				})
+				w.update_window()
 			})
-			window.unlock()
-			window.update_window()
 			return
 		}
 
 		if result.status_code == 200 {
 			// Reject oversized responses (>10MB)
 			if result.body.len > 10 * 1024 * 1024 {
-				window.lock()
-				window.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state: .error
-					error: 'Response too large (>${result.body.len / 1024 / 1024}MB)'
+				body_len := result.body.len
+				window.queue_command(fn [hash, body_len] (mut w Window) {
+					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+						state: .error
+						error: 'Response too large (>${body_len / 1024 / 1024}MB)'
+					})
+					w.update_window()
 				})
-				window.unlock()
-				window.update_window()
 				return
 			}
 			// Load PNG from memory and resize if needed
 			png_bytes := result.body.bytes()
 			img := stbi.load_from_memory(png_bytes.data, png_bytes.len) or {
-				window.lock()
-				window.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state: .error
-					error: 'Failed to decode PNG: ${err.msg()}'
+				err_msg := err.msg()
+				window.queue_command(fn [hash, err_msg] (mut w Window) {
+					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+						state: .error
+						error: 'Failed to decode PNG: ${err_msg}'
+					})
+					w.update_window()
 				})
-				window.unlock()
-				window.update_window()
 				return
 			}
 
@@ -100,13 +103,14 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 				new_h := int(f64(img.height) * scale)
 				final_img = stbi.resize_uint8(&img, max_width, new_h) or {
 					img.free()
-					window.lock()
-					window.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-						state: .error
-						error: 'Failed to resize: ${err.msg()}'
+					err_msg := err.msg()
+					window.queue_command(fn [hash, err_msg] (mut w Window) {
+						w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+							state: .error
+							error: 'Failed to resize: ${err_msg}'
+						})
+						w.update_window()
 					})
-					window.unlock()
-					window.update_window()
 					return
 				}
 			}
@@ -125,13 +129,14 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 				if resized {
 					final_img.free()
 				}
-				window.lock()
-				window.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state: .error
-					error: 'Failed to write temp file: ${err.msg()}'
+				err_msg := err.msg()
+				window.queue_command(fn [hash, err_msg] (mut w Window) {
+					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+						state: .error
+						error: 'Failed to write temp file: ${err_msg}'
+					})
+					w.update_window()
 				})
-				window.unlock()
-				window.update_window()
 				return
 			}
 			// Free stbi memory after writing PNG
@@ -139,10 +144,12 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 			if resized {
 				final_img.free()
 			}
-			window.lock()
-			window.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-				state:    .ready
-				png_path: tmp_path
+			window.queue_command(fn [hash, tmp_path] (mut w Window) {
+				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+					state:    .ready
+					png_path: tmp_path
+				})
+				w.update_window()
 			})
 		} else {
 			body_preview := if result.body.len > 200 {
@@ -150,14 +157,15 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 			} else {
 				result.body
 			}
-			window.lock()
-			window.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-				state: .error
-				error: 'HTTP ${result.status_code}: ${body_preview}'
+			status_code := result.status_code
+			window.queue_command(fn [hash, status_code, body_preview] (mut w Window) {
+				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+					state: .error
+					error: 'HTTP ${status_code}: ${body_preview}'
+				})
+				w.update_window()
 			})
 		}
-		window.unlock()
-		window.update_window()
 	}()
 }
 

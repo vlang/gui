@@ -18,12 +18,6 @@
 
 ## Threading & Synchronization Concerns
 
-**Unsafe Lock Usage Pattern:**
-- Issue: `xtra_window.v` warns that locking twice in the same thread causes deadlocks.
-- Risk: Complex event -> animation -> mutation chains can inadvertently cause a deadlock.
-- Current mitigation: Deferred callbacks executed outside the lock.
-- Recommendation: Transition to an atomic command queue for UI state updates.
-
 **Mermaid Diagram Async Fetch:**
 - Issue: `fetch_mermaid_async` lacks timeout or cancellation mechanisms.
 - Files: `xtra_mermaid.v:51`.
@@ -50,6 +44,13 @@
 
 **Accessibility Foundation:**
 - Problem: No semantic tree or hooks for screen readers.
+
+## Addressed Concerns (2026-02-06)
+
+- **Atomic Command Queue (Deadlock Prevention):** Implemented `WindowCommand` queue to replace
+  direct locking from background threads. All animations and async fetches (Mermaid, Images) now
+  queue state updates to the main thread, eliminating deadlock risks from complex event/mutation
+  chains.
 
 ## Addressed Concerns (2026-02-05)
 

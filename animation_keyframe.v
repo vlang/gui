@@ -116,7 +116,11 @@ fn update_keyframe(mut kf KeyframeAnimation, mut w Window, mut deferred []Animat
 	anim_elapsed := elapsed - kf.delay
 	if anim_elapsed >= kf.duration {
 		if kf.keyframes.len > 0 {
-			kf.on_value(kf.keyframes.last().value, mut w)
+			on_value := kf.on_value
+			val := kf.keyframes.last().value
+			deferred << fn [on_value, val] (mut w Window) {
+				on_value(val, mut w)
+			}
 		}
 		if kf.repeat {
 			kf.start = time.now()
@@ -131,7 +135,10 @@ fn update_keyframe(mut kf KeyframeAnimation, mut w Window, mut deferred []Animat
 
 	progress := f32(anim_elapsed) / f32(kf.duration)
 	value := interpolate_keyframes(kf.keyframes, progress)
-	kf.on_value(value, mut w)
+	on_value := kf.on_value
+	deferred << fn [on_value, value] (mut w Window) {
+		on_value(value, mut w)
+	}
 	return true
 }
 

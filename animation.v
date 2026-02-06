@@ -97,9 +97,9 @@ fn (mut window Window) animation_loop() {
 		}
 		window.unlock()
 		//--------------------------------------------
-		// Call deferred callbacks outside lock to avoid deadlock
+		// Queue deferred callbacks to be executed on the main thread
 		for cb in deferred {
-			cb(mut window)
+			window.queue_command(cb)
 		}
 		if refresh {
 			window.update_window()
