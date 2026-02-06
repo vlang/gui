@@ -67,6 +67,7 @@ V is a simple language. It deserves a simple UI framework.
 - Rich text with mixed styles in a single widget
 - Bidirectional text, ligatures, emoji
 - Full Unicode and OpenType support
+- IME support for CJK and other complex input methods
 
 **Architecture**
 - Thread-safe state updates

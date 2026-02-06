@@ -69,6 +69,7 @@ Manages the application window and orchestrates the system.
 - Mouse events (move, click, drag)
 - Keyboard events (press, release)
 - Window events (resize, focus, close)
+- IME composition and commit events (CJK input)
 
 ### View Layer
 
@@ -175,6 +176,7 @@ hero transitions (element morphing between views).
 - Text shaping and layout (via vglyph)
 - TextStyle: family, size, color, properties
 - Built-in presets (n1-n6, b1-b6, i1-i6, m1-m6)
+- IME overlay via vglyph's StandardIMEHandler (macOS)
 
 ### External Dependencies
 

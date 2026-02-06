@@ -182,6 +182,11 @@ Cfg structs. Overrideable per-component via explicit color/style parameters.
 **Focus Management:** ViewState tracks focused element ID; keyboard events dispatch to focused
 shape's `on_char`/`on_keydown` handlers.
 
+**IME Integration:** `ime.v` manages per-window IME state via vglyph's StandardIMEHandler.
+Overlay created lazily in `frame_fn` (NSWindow unavailable during init). Focus changes
+route to `update_ime_focus()` which makes the overlay first responder. Composition events
+(commit, update, layout, cursor) forwarded to the focused input field's callbacks.
+
 **Scroll Management:** Scroll position tracked in ViewState; scroll containers clip children and
 adjust positions via `layout_adjust_scroll_offsets()`.
 

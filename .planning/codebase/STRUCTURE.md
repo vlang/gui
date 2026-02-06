@@ -104,6 +104,9 @@
     │   ├── event_handlers.v # Traversal and callback execution
     │   └── event_traversal.v # Tree traversal order logic
     │
+    ├── [IME Support]
+    │   └── ime.v            # IME overlay, composition/commit routing
+    │
     ├── [Styling & Theme]
     │   ├── theme.v          # Theme application and color overrides
     │   ├── theme_types.v    # Theme struct definition

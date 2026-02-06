@@ -15,6 +15,17 @@
   - Location: `xtra_mermaid.v` - `fetch_mermaid_async()` function (line 55)
   - Caching: Local FIFO cache (max 50 diagrams) with temp file storage
 
+**IME Input (macOS):**
+- vglyph StandardIMEHandler - Routes IME composition events to focused input
+  - SDK/Client: `vglyph` (V library)
+  - Integration: NSTextInputClient protocol via overlay view
+  - Auth: None (local OS API)
+  - Location: `ime.v` - `init_ime()`, `update_ime_focus()`
+  - Events: commit (final text), update (marked text change),
+    layout (cursor position), cursor index (byte offset)
+  - Lifecycle: Overlay created lazily in `frame_fn` because NSWindow
+    unavailable during `init_fn`
+
 ## Data Storage
 
 **Databases:**
