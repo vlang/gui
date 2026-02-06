@@ -27,12 +27,12 @@ existing renderer dispatch pipeline.
 
 ### 1. Add `CustomShader` struct to `styles.v` (after Gradient)
 
-```v
+```v ignore
 pub struct CustomShader {
 pub:
-    fs_glsl  string   // GLSL 330 fragment source
-    fs_metal string   // MSL fragment source
-    uniforms [16]f32  // User data passed via tm matrix
+	fs_glsl  string  // GLSL 330 fragment source
+	fs_metal string  // MSL fragment source
+	uniforms [16]f32 // User data passed via tm matrix
 }
 ```
 
@@ -88,9 +88,9 @@ struct with `u0..u3` float4 fields.
 ### 5. Pipeline creation + draw function in `shaders.v`
 
 **Hash function:**
-```v
+```v ignore
 fn shader_cache_key(shader &CustomShader) u64 {
-    return shader.fs_glsl.hash()
+	return shader.fs_glsl.hash()
 }
 ```
 
@@ -116,32 +116,29 @@ fn shader_cache_key(shader &CustomShader) u64 {
 ### 6. Add renderer struct + dispatch in `render.v`
 
 **New struct:**
-```v
+```v ignore
 struct DrawCustomShader {
-    x             f32
-    y             f32
-    w             f32
-    h             f32
-    radius        f32
-    custom_shader &CustomShader
+	x             f32
+	y             f32
+	w             f32
+	h             f32
+	radius        f32
+	custom_shader &CustomShader
 }
 ```
 
 **Add `| DrawCustomShader`** to the `Renderer` sum type (line ~130).
 
 **Add match arm** in `renderer_draw` (line ~238):
-```v
-DrawCustomShader {
-    draw_custom_shader_rect(renderer.x, renderer.y, renderer.w,
-        renderer.h, renderer.radius, renderer.custom_shader,
-        mut window)
-}
+```v ignore
+DrawCustomShader{draw_custom_shader_rect(renderer.x, renderer.y, renderer.w, renderer.h,
+	renderer.radius, renderer.custom_shader, mut window)}
 ```
 
 **Add dispatch** in `render_container` — insert before the gradient
 check (line 356). Custom shader takes priority over gradient/blur:
 
-```v
+```v ignore
 if shape.custom_shader != unsafe { nil } {
     window.renderers << DrawCustomShader{
         x:             shape.x
@@ -161,7 +158,7 @@ custom-shader views can still have drop shadows.
 ### 7. Add pipeline cache to `Window` in `window.v`
 
 Add to `mut:` section (line ~51, after `gradient_pip_init`):
-```v
+```v ignore
 custom_shader_pips map[u64]sgl.Pipeline
 ```
 
