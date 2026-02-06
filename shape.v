@@ -10,11 +10,12 @@ pub:
 	uid u64 = rand.u64() // internal use only
 pub mut:
 	// String fields (16 bytes)
-	id         string // Unique identifier assigned by the user
-	name       string // Internal name, useful for debugging (e.g., 'Container', 'Text')
-	text       string // Text content for text-based shapes
-	image_name string // Filename or path for image shapes
-	svg_name   string // Filename or path for SVG shapes
+	id               string // Unique identifier assigned by the user
+	name             string // Internal name, useful for debugging (e.g., 'Container', 'Text')
+	text             string // Text content for text-based shapes
+	text_composition string // In-progress IME text
+	image_name       string // Filename or path for image shapes
+	svg_name         string // Filename or path for SVG shapes
 
 	// Pointer fields (8 bytes)
 	vglyph_layout   &vglyph.Layout = unsafe { nil } // Unified layout engine object for both plain and rich text

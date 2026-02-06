@@ -28,6 +28,8 @@ pub:
 	// when traversing vertically through text. It is reset when a non-vertical
 	// navigation operation occurs.
 	cursor_offset f32
+pub mut:
+	composition_text string // in-progress IME text
 }
 
 // InputMemento stores a snapshot of the input state for undo/redo
@@ -78,6 +80,7 @@ pub:
 	radius             f32 = gui_theme.input_style.radius
 	radius_border      f32 = gui_theme.input_style.radius_border
 	id_focus           u32 // 0 = readonly, >0 = focusable and tabbing order
+	id_focus_override  u32
 	id_scroll          u32
 	scroll_mode        ScrollMode
 	padding            Padding = gui_theme.input_style.padding
@@ -147,34 +150,36 @@ pub fn input(cfg InputCfg) View {
 	on_click_icon := cfg.on_click_icon
 
 	return column(
-		name:            'input'
-		id:              cfg.id
-		id_focus:        cfg.id_focus
-		tooltip:         cfg.tooltip
-		width:           cfg.width
-		height:          cfg.height
-		min_width:       cfg.min_width
-		max_width:       cfg.max_width
-		min_height:      cfg.min_height
-		max_height:      cfg.max_height
-		disabled:        cfg.disabled
-		clip:            true
-		color:           cfg.color
-		color_border:    cfg.color_border
-		size_border:     cfg.size_border
-		invisible:       cfg.invisible
-		padding:         cfg.padding
-		radius:          cfg.radius
-		sizing:          cfg.sizing
-		on_char:         make_input_on_char(cfg)
-		on_hover:        fn [color_hover, id_focus] (mut layout Layout, mut e Event, mut w Window) {
+		name:               'input'
+		id:                 cfg.id
+		id_focus:           cfg.id_focus
+		tooltip:            cfg.tooltip
+		width:              cfg.width
+		height:             cfg.height
+		min_width:          cfg.min_width
+		max_width:          cfg.max_width
+		min_height:         cfg.min_height
+		max_height:         cfg.max_height
+		disabled:           cfg.disabled
+		clip:               true
+		color:              cfg.color
+		color_border:       cfg.color_border
+		size_border:        cfg.size_border
+		invisible:          cfg.invisible
+		padding:            cfg.padding
+		radius:             cfg.radius
+		sizing:             cfg.sizing
+		on_char:            make_input_on_char(cfg)
+		on_ime_composition: make_input_on_ime_composition(cfg)
+		on_ime_result:      make_input_on_ime_result(cfg)
+		on_hover:           fn [color_hover, id_focus] (mut layout Layout, mut e Event, mut w Window) {
 			if w.is_focus(id_focus) {
 				w.set_mouse_cursor_ibeam()
 			} else {
 				layout.shape.color = color_hover
 			}
 		}
-		amend_layout:    fn [color_border_focus] (mut layout Layout, mut w Window) {
+		amend_layout:       fn [color_border_focus] (mut layout Layout, mut w Window) {
 			if layout.shape.disabled {
 				return
 			}
@@ -182,11 +187,11 @@ pub fn input(cfg InputCfg) View {
 				layout.shape.color_border = color_border_focus
 			}
 		}
-		id_scroll:       cfg.id_scroll
-		scrollbar_cfg_x: cfg.scrollbar_cfg_x
-		scrollbar_cfg_y: cfg.scrollbar_cfg_y
-		spacing:         0
-		content:         [
+		id_scroll:          cfg.id_scroll
+		scrollbar_cfg_x:    cfg.scrollbar_cfg_x
+		scrollbar_cfg_y:    cfg.scrollbar_cfg_y
+		spacing:            0
+		content:            [
 			row(
 				name:     'input interior'
 				padding:  padding_none
@@ -460,6 +465,36 @@ fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 fn (_ &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
 	if layout.shape.on_click != unsafe { nil } {
 		w.set_mouse_cursor_pointing_hand()
+	}
+}
+
+// make_input_on_ime_composition creates a handler for in-progress IME text.
+fn make_input_on_ime_composition(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg] (layout &Layout, mut event Event, mut w Window) {
+		mut state := w.view_state.input_state.get(cfg.id_focus) or { return }
+		state.composition_text = event.ime_text
+		w.view_state.input_state.set(cfg.id_focus, state)
+		w.update_window()
+		event.is_handled = true
+	}
+}
+
+// make_input_on_ime_result creates a handler for committed IME text.
+fn make_input_on_ime_result(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg] (layout &Layout, mut event Event, mut w Window) {
+		if cfg.on_text_changed != unsafe { nil } {
+			res := cfg.insert(event.ime_text, mut w) or {
+				log.error(err.msg())
+				return
+			}
+			// Clear composition text upon commitment
+			mut state := w.view_state.input_state.get(cfg.id_focus) or { return }
+			state.composition_text = ''
+			w.view_state.input_state.set(cfg.id_focus, state)
+
+			event.is_handled = true
+			cfg.on_text_changed(layout, res, mut w)
+		}
 	}
 }
 

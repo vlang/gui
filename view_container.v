@@ -26,6 +26,8 @@ import vglyph
 @[heap; minify]
 struct ContainerView implements View {
 	ContainerCfg
+	on_ime_composition fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	on_ime_result      fn (&Layout, mut Event, mut Window) = unsafe { nil }
 mut:
 	content    []View
 	shape_type ShapeType = .rectangle
@@ -50,53 +52,55 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 	mut layout := Layout{
 		children: children
 		shape:    &Shape{
-			shape_type:      cv.shape_type
-			id:              cv.id
-			id_focus:        cv.id_focus
-			axis:            cv.axis
-			name:            cv.name
-			x:               cv.x
-			y:               cv.y
-			width:           cv.width
-			min_width:       cv.min_width
-			max_width:       cv.max_width
-			height:          cv.height
-			min_height:      cv.min_height
-			max_height:      cv.max_height
-			clip:            cv.clip
-			focus_skip:      cv.focus_skip
-			spacing:         cv.spacing
-			sizing:          cv.sizing
-			padding:         cv.padding
-			h_align:         cv.h_align
-			v_align:         cv.v_align
-			radius:          cv.radius
-			blur_radius:     cv.blur_radius
-			color:           cv.color
-			shadow:          cv.shadow
-			gradient:        cv.gradient
-			border_gradient: cv.border_gradient
-			size_border:     cv.size_border
-			color_border:    cv.color_border
-			disabled:        cv.disabled
-			float:           cv.float
-			float_anchor:    cv.float_anchor
-			float_tie_off:   cv.float_tie_off
-			float_offset_x:  cv.float_offset_x
-			float_offset_y:  cv.float_offset_y
-			id_scroll:       cv.id_scroll
-			over_draw:       cv.over_draw
-			scroll_mode:     cv.scroll_mode
-			on_click:        cv.on_click
-			on_char:         cv.on_char
-			on_keydown:      cv.on_keydown
-			on_mouse_move:   cv.on_mouse_move_tooltip
-			on_mouse_up:     cv.on_mouse_up
-			on_hover:        cv.on_hover
-			on_scroll:       cv.on_scroll
-			amend_layout:    cv.amend_layout
-			hero:            cv.hero
-			opacity:         cv.opacity
+			shape_type:         cv.shape_type
+			id:                 cv.id
+			id_focus:           cv.id_focus
+			axis:               cv.axis
+			name:               cv.name
+			x:                  cv.x
+			y:                  cv.y
+			width:              cv.width
+			min_width:          cv.min_width
+			max_width:          cv.max_width
+			height:             cv.height
+			min_height:         cv.min_height
+			max_height:         cv.max_height
+			clip:               cv.clip
+			focus_skip:         cv.focus_skip
+			spacing:            cv.spacing
+			sizing:             cv.sizing
+			padding:            cv.padding
+			h_align:            cv.h_align
+			v_align:            cv.v_align
+			radius:             cv.radius
+			blur_radius:        cv.blur_radius
+			color:              cv.color
+			shadow:             cv.shadow
+			gradient:           cv.gradient
+			border_gradient:    cv.border_gradient
+			size_border:        cv.size_border
+			color_border:       cv.color_border
+			disabled:           cv.disabled
+			float:              cv.float
+			float_anchor:       cv.float_anchor
+			float_tie_off:      cv.float_tie_off
+			float_offset_x:     cv.float_offset_x
+			float_offset_y:     cv.float_offset_y
+			id_scroll:          cv.id_scroll
+			over_draw:          cv.over_draw
+			scroll_mode:        cv.scroll_mode
+			on_click:           cv.on_click
+			on_char:            cv.on_char
+			on_keydown:         cv.on_keydown
+			on_mouse_move:      cv.on_mouse_move_tooltip
+			on_mouse_up:        cv.on_mouse_up
+			on_hover:           cv.on_hover
+			on_scroll:          cv.on_scroll
+			on_ime_composition: cv.on_ime_composition
+			on_ime_result:      cv.on_ime_result
+			amend_layout:       cv.amend_layout
+			hero:               cv.hero
+			opacity:            cv.opacity
 		}
 	}
 	apply_fixed_sizing_constraints(mut layout.shape)
@@ -157,58 +161,60 @@ mut:
 	name string // internally set
 	axis Axis
 pub:
-	id              string
-	title           string
-	title_bg        Color         = gui_theme.color_background
-	scrollbar_cfg_x &ScrollbarCfg = unsafe { nil }
-	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
-	tooltip         &TooltipCfg   = unsafe { nil }
-	color           Color         = gui_theme.container_style.color
-	color_border    Color         = gui_theme.container_style.color_border
-	shadow          &BoxShadow    = gui_theme.container_style.shadow
-	gradient        &Gradient     = gui_theme.container_style.gradient
-	border_gradient &Gradient     = gui_theme.container_style.border_gradient
-	size_border     f32           = gui_theme.container_style.size_border
-	padding         Padding       = gui_theme.container_style.padding
-	sizing          Sizing
-	content         []View
-	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_any_click    fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_scroll       fn (&Layout, mut Window)               = unsafe { nil }
-	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	width           f32
-	height          f32
-	min_width       f32
-	min_height      f32
-	max_width       f32
-	max_height      f32
-	x               f32
-	y               f32
-	spacing         f32 = gui_theme.container_style.spacing
-	radius          f32 = gui_theme.container_style.radius
-	blur_radius     f32 = gui_theme.container_style.blur_radius
-	float_offset_x  f32
-	float_offset_y  f32
-	id_focus        u32
-	id_scroll       u32
-	scroll_mode     ScrollMode
-	h_align         HorizontalAlign
-	v_align         VerticalAlign
-	float_anchor    FloatAttach
-	float_tie_off   FloatAttach
-	disabled        bool
-	invisible       bool
-	clip            bool
-	focus_skip      bool
-	over_draw       bool
-	float           bool
-	hero            bool // Participates in hero transitions
-	opacity         f32 = 1.0 // Opacity (0.0 = transparent, 1.0 = opaque)
+	id                 string
+	title              string
+	title_bg           Color         = gui_theme.color_background
+	scrollbar_cfg_x    &ScrollbarCfg = unsafe { nil }
+	scrollbar_cfg_y    &ScrollbarCfg = unsafe { nil }
+	tooltip            &TooltipCfg   = unsafe { nil }
+	color              Color         = gui_theme.container_style.color
+	color_border       Color         = gui_theme.container_style.color_border
+	shadow             &BoxShadow    = gui_theme.container_style.shadow
+	gradient           &Gradient     = gui_theme.container_style.gradient
+	border_gradient    &Gradient     = gui_theme.container_style.border_gradient
+	size_border        f32           = gui_theme.container_style.size_border
+	padding            Padding       = gui_theme.container_style.padding
+	sizing             Sizing
+	content            []View
+	on_char            fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_click           fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_any_click       fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_keydown         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_scroll          fn (&Layout, mut Window)               = unsafe { nil }
+	amend_layout       fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover           fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	on_ime_composition fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_ime_result      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	width              f32
+	height             f32
+	min_width          f32
+	min_height         f32
+	max_width          f32
+	max_height         f32
+	x                  f32
+	y                  f32
+	spacing            f32 = gui_theme.container_style.spacing
+	radius             f32 = gui_theme.container_style.radius
+	blur_radius        f32 = gui_theme.container_style.blur_radius
+	float_offset_x     f32
+	float_offset_y     f32
+	id_focus           u32
+	id_scroll          u32
+	scroll_mode        ScrollMode
+	h_align            HorizontalAlign
+	v_align            VerticalAlign
+	float_anchor       FloatAttach
+	float_tie_off      FloatAttach
+	disabled           bool
+	invisible          bool
+	clip               bool
+	focus_skip         bool
+	over_draw          bool
+	float              bool
+	hero               bool // Participates in hero transitions
+	opacity            f32 = 1.0 // Opacity (0.0 = transparent, 1.0 = opaque)
 }
 
 // container is the fundamental layout container in gui. It is used to layout
@@ -255,60 +261,62 @@ fn container(cfg ContainerCfg) View {
 	}
 
 	view := ContainerView{
-		id:              cfg.id
-		id_focus:        cfg.id_focus
-		axis:            cfg.axis
-		name:            cfg.name
-		x:               cfg.x
-		y:               cfg.y
-		width:           cfg.width
-		min_width:       cfg.min_width
-		max_width:       cfg.max_width
-		height:          cfg.height
-		min_height:      cfg.min_height
-		max_height:      cfg.max_height
-		clip:            cfg.clip
-		color:           cfg.color
-		h_align:         cfg.h_align
-		v_align:         cfg.v_align
-		padding:         cfg.padding
-		radius:          cfg.radius
-		blur_radius:     cfg.blur_radius
-		shadow:          cfg.shadow
-		gradient:        cfg.gradient
-		border_gradient: cfg.border_gradient
-		size_border:     cfg.size_border
-		color_border:    cfg.color_border
-		sizing:          cfg.sizing
-		spacing:         cfg.spacing
-		disabled:        cfg.disabled
-		focus_skip:      cfg.focus_skip
-		title:           cfg.title
-		title_bg:        cfg.title_bg
-		id_scroll:       cfg.id_scroll
-		over_draw:       cfg.over_draw
-		scroll_mode:     cfg.scroll_mode
-		float:           cfg.float
-		float_anchor:    cfg.float_anchor
-		float_tie_off:   cfg.float_tie_off
-		float_offset_x:  cfg.float_offset_x
-		float_offset_y:  cfg.float_offset_y
-		tooltip:         cfg.tooltip
-		on_click:        if cfg.on_any_click != unsafe { nil } {
+		id:                 cfg.id
+		id_focus:           cfg.id_focus
+		axis:               cfg.axis
+		name:               cfg.name
+		x:                  cfg.x
+		y:                  cfg.y
+		width:              cfg.width
+		min_width:          cfg.min_width
+		max_width:          cfg.max_width
+		height:             cfg.height
+		min_height:         cfg.min_height
+		max_height:         cfg.max_height
+		clip:               cfg.clip
+		color:              cfg.color
+		h_align:            cfg.h_align
+		v_align:            cfg.v_align
+		padding:            cfg.padding
+		radius:             cfg.radius
+		blur_radius:        cfg.blur_radius
+		shadow:             cfg.shadow
+		gradient:           cfg.gradient
+		border_gradient:    cfg.border_gradient
+		size_border:        cfg.size_border
+		color_border:       cfg.color_border
+		sizing:             cfg.sizing
+		spacing:            cfg.spacing
+		disabled:           cfg.disabled
+		focus_skip:         cfg.focus_skip
+		title:              cfg.title
+		title_bg:           cfg.title_bg
+		id_scroll:          cfg.id_scroll
+		over_draw:          cfg.over_draw
+		scroll_mode:        cfg.scroll_mode
+		float:              cfg.float
+		float_anchor:       cfg.float_anchor
+		float_tie_off:      cfg.float_tie_off
+		float_offset_x:     cfg.float_offset_x
+		float_offset_y:     cfg.float_offset_y
+		tooltip:            cfg.tooltip
+		on_click:           if cfg.on_any_click != unsafe { nil } {
 			cfg.on_any_click
 		} else {
 			left_click_only(cfg.on_click)
 		}
-		on_char:         cfg.on_char
-		on_keydown:      cfg.on_keydown
-		on_mouse_move:   cfg.on_mouse_move
-		on_mouse_up:     cfg.on_mouse_up
-		on_hover:        cfg.on_hover
-		on_scroll:       cfg.on_scroll
-		amend_layout:    cfg.amend_layout
-		hero:            cfg.hero
-		opacity:         cfg.opacity
-		content:         content
+		on_char:            cfg.on_char
+		on_keydown:         cfg.on_keydown
+		on_mouse_move:      cfg.on_mouse_move
+		on_mouse_up:        cfg.on_mouse_up
+		on_hover:           cfg.on_hover
+		on_scroll:          cfg.on_scroll
+		on_ime_composition: cfg.on_ime_composition
+		on_ime_result:      cfg.on_ime_result
+		amend_layout:       cfg.amend_layout
+		hero:               cfg.hero
+		opacity:            cfg.opacity
+		content:            content
 	}
 	return view
 }
