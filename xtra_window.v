@@ -198,6 +198,17 @@ pub fn (mut window Window) resize_to_content() {
 // run starts the UI and handles events
 pub fn (mut window Window) run() {
 	window.ui.run()
+
+	// If initialization failed, report it and exit with error
+	if window.init_error != '' {
+		separator := '============================================================'
+		eprintln('\n' + separator)
+		eprintln('GUI INITIALIZATION ERROR')
+		eprintln(separator)
+		eprintln(window.init_error)
+		eprintln(separator + '\n')
+		exit(1)
+	}
 }
 
 // resolve_font_name returns the actual font family name that Pango resolves

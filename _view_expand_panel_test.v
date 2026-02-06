@@ -2,7 +2,9 @@ module gui
 
 fn test_expand_panel_defaults() {
 	cfg := ExpandPanelCfg{
-		id: 'test'
+		id:      'test'
+		head:    column(ContainerCfg{})
+		content: column(ContainerCfg{})
 	}
 	assert cfg.id == 'test'
 	assert cfg.open == false

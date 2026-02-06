@@ -11,11 +11,6 @@
 
 ## Known Bugs & Issues
 
-**Window Initialization Panic:**
-- Issue: `window.v` panics if the text rendering system (`vglyph`) fails to start.
-- Files: `window.v:130`.
-- Risk: Immediate crash on systems with driver/OpenGL incompatibilities.
-
 ## Threading & Synchronization Concerns
 
 **Mermaid Diagram Async Fetch:**
@@ -47,6 +42,9 @@
 
 ## Addressed Concerns (2026-02-06)
 
+- **Graceful Initialization Failure:** Replaced hard panics during text system initialization with a
+  mechanism that captures errors, requests a graceful shutdown via `sapp.quit()`, and reports
+  formatted error messages to `stderr` upon exit.
 - **Atomic Command Queue (Deadlock Prevention):** Implemented `WindowCommand` queue to replace
   direct locking from background threads. All animations and async fetches (Mermaid, Images) now
   queue state updates to the main thread, eliminating deadlock risks from complex event/mutation

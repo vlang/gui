@@ -34,6 +34,7 @@ mut:
 	animations            map[string]Animation // Active animations (keyed by id)
 	commands              []WindowCommand      // Atomic command queue for UI state updates
 	commands_mutex        &sync.Mutex = sync.new_mutex() // Mutex for command queue
+	init_error            string       // error during initialization (e.g. text system fail)
 	window_size           gg.Size      // cached, gg.window_size() relatively slow
 	refresh_window        bool         // Flag to trigger a layout update on the next frame
 	debug_layout          bool         // enable layout performance stats
@@ -130,10 +131,10 @@ pub fn window(cfg &WindowCfg) &Window {
 
 			// Initialize text rendering system
 			w.text_system = vglyph.new_text_system(mut w.ui) or {
-				log.error('Failed to initialize text rendering system: ${err.str()}')
-				log.error('This is typically caused by OpenGL compatibility issues.')
-				log.error('Please ensure your graphics drivers are up to date.')
-				panic('Cannot continue without text rendering: ${err.str()}')
+				w.init_error = 'Failed to initialize text rendering system: ${err.str()}\n\nThis is typically caused by OpenGL compatibility issues.'
+				log.error(w.init_error)
+				sapp.quit()
+				return
 			}
 
 			// Initialize fonts with graceful degradation
