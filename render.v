@@ -701,11 +701,6 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 			cy := shape.y + shape.padding_top() + rect.y
 			ch := rect.height
 
-			// Draw IME composition text if active
-			if shape.text_composition != '' {
-				render_ime_composition(shape, cx, cy, ch, mut window)
-			}
-
 			// Draw cursor line
 			window.renderers << DrawRect{
 				x:     cx
@@ -716,28 +711,6 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 				style: .fill
 			}
 		}
-	}
-}
-
-fn render_ime_composition(shape &Shape, x f32, y f32, h f32, mut window Window) {
-	text_cfg := shape.text_style.to_vglyph_cfg()
-	width := window.text_system.text_width(shape.text_composition, text_cfg) or { 0 }
-
-	// Draw composition feedback (underline)
-	window.renderers << DrawRect{
-		x:     x
-		y:     y + h - 2
-		w:     width
-		h:     1.5
-		color: shape.text_style.color.to_gx_color()
-		style: .fill
-	}
-
-	window.renderers << DrawText{
-		x:    x
-		y:    y
-		text: shape.text_composition
-		cfg:  text_cfg
 	}
 }
 

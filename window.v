@@ -243,12 +243,6 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		.resized {
 			w.update_window_size()
 		}
-		.ime_composition {
-			ime_composition_handler(layout, mut e, mut w)
-		}
-		.ime_result {
-			ime_result_handler(layout, mut e, mut w)
-		}
 		else {
 			// dump(e)
 		}

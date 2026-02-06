@@ -56,7 +56,6 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			min_width:           tv.min_width
 			sizing:              tv.sizing
 			text:                tv.text
-			text_composition:    input_state.composition_text
 			text_is_password:    tv.is_password
 			text_is_placeholder: tv.placeholder_active
 			text_mode:           tv.mode

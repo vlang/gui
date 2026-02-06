@@ -32,34 +32,6 @@ fn char_handler(layout &Layout, mut e Event, mut w Window) {
 	execute_focus_callback(layout, mut e, mut w, layout.shape.on_char, 'char_handler')
 }
 
-// ime_composition_handler handles IME composition events (in-progress typing).
-fn ime_composition_handler(layout &Layout, mut e Event, mut w Window) {
-	for child in layout.children {
-		if !is_child_enabled(child) {
-			continue
-		}
-		ime_composition_handler(child, mut e, mut w)
-		if e.is_handled {
-			return
-		}
-	}
-	execute_focus_callback(layout, mut e, mut w, layout.shape.on_ime_composition, 'ime_composition_handler')
-}
-
-// ime_result_handler handles IME result events (committed typing).
-fn ime_result_handler(layout &Layout, mut e Event, mut w Window) {
-	for child in layout.children {
-		if !is_child_enabled(child) {
-			continue
-		}
-		ime_result_handler(child, mut e, mut w)
-		if e.is_handled {
-			return
-		}
-	}
-	execute_focus_callback(layout, mut e, mut w, layout.shape.on_ime_result, 'ime_result_handler')
-}
-
 // keydown_handler handles key down events (special keys, shortcuts).
 // Traverses forward and delivers to focused element.
 // Also handles scroll behavior for focusable scroll containers.
