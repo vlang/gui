@@ -23,7 +23,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	layout_parents(mut layout, unsafe { nil })
 
 	// Floating layouts do not affect parent or sibling elements.
-	mut floating_layouts := []Layout{}
+	mut floating_layouts := []&Layout{}
 	layout_remove_floating_layouts(mut layout, mut floating_layouts)
 
 	// Dialog is a pop-up dialog.
@@ -32,11 +32,11 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	if window.dialog_cfg.visible {
 		mut dialog_view := dialog_view_generator(window.dialog_cfg)
 		mut dialog_layout := generate_layout(mut dialog_view, mut window)
-		layout_parents(mut dialog_layout, layout)
-		floating_layouts << dialog_layout
+		layout_parents(mut dialog_layout, &layout)
+		floating_layouts << &Layout{
+			...dialog_layout
+		}
 	}
-
-	fix_float_parents(mut floating_layouts)
 
 	// Compute the layout without the floating elements.
 	layout_pipeline(mut layout, mut window)
@@ -50,7 +50,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 			continue
 		}
 		layout_pipeline(mut floating_layout, mut window)
-		layouts << floating_layout
+		layouts << *floating_layout
 	}
 	return layouts
 }
@@ -105,18 +105,28 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 // It replaces them with empty placeholder nodes to preserve the tree structure indices
 // while removing them from standard flow layout calculations. The extracted layouts
 // are collected into the `layouts` array to be processed as separate layers.
-fn layout_remove_floating_layouts(mut layout Layout, mut layouts []Layout) {
-	for i, mut child in layout.children {
-		if child.shape.float {
-			layouts << child
-		}
+fn layout_remove_floating_layouts(mut layout Layout, mut layouts []&Layout) {
+	for i in 0 .. layout.children.len {
+		if layout.children[i].shape.float {
+			// Move floating layout to heap to ensure stable parent pointers for its children
+			mut heap_layout := &Layout{
+				...layout.children[i]
+			}
 
-		layout_remove_floating_layouts(mut child, mut layouts)
+			// Update direct children to point to the new heap-allocated parent
+			for mut child in heap_layout.children {
+				child.parent = heap_layout
+			}
 
-		if child.shape.float {
-			// shape.type == .none enables identification as empty node by
-			// fix_nested_sibling_floats() and removes it from spacing calculations.
+			layouts << heap_layout
+
+			// Recurse into the floating layout to find nested floats
+			layout_remove_floating_layouts(mut *heap_layout, mut layouts)
+
+			// Replace in original tree with empty placeholder
 			layout.children[i] = empty_layout
+		} else {
+			layout_remove_floating_layouts(mut layout.children[i], mut layouts)
 		}
 	}
 }

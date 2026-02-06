@@ -47,22 +47,3 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 	y += layout.shape.float_offset_y
 	return x, y
 }
-
-// fix_float_parents fixes an edge case when floats are nested immediately within floats.
-// When layout_remove_floating_layouts() removes nodes from the layout it replaces them
-// with an .none node. If floats have child floats, the child float parents will often
-// times point at these .none nodes. The actual parent node is earlier in the
-// floating_layouts array. Find it and use it as the parent.
-fn fix_float_parents(mut floating_layouts []Layout) {
-	for i := floating_layouts.len - 1; i > 0; i-- {
-		if floating_layouts[i].parent.shape.shape_type == .none && i > 0 {
-			mut j := i
-			for ; j > 0; j-- {
-				if floating_layouts[j].parent.shape.shape_type != .none {
-					break
-				}
-			}
-			floating_layouts[i].parent = unsafe { &floating_layouts[j] }
-		}
-	}
-}

@@ -20,12 +20,6 @@
   to keep structure sizes (Layout, Shape) small. Option types have too much overhead here.
 - Risk: Requires manual `if ptr != unsafe { nil }` checks at every call site.
 
-**Residual Floating Layout Pointer Risk:**
-- Issue: `fix_float_parents` in `float_attach.v` uses unsafe pointer assignment to elements
-  within the `floating_layouts` array.
-- Risk: While `layout_arrange` now sequences this safely, it remains a fragile area of the
-  positioning logic.
-
 ## Missing Critical Features
 
 **Internationalization (IME & RTL):**
@@ -37,6 +31,10 @@
 
 ## Addressed Concerns (2026-02-06)
 
+- **Stable Floating Layout Pointers:** Refactored floating layout extraction to use individual heap
+  allocations and stable pointers. Children of extracted floats are updated to point to the new heap
+  objects, eliminating dangling pointers to overwritten tree slots and removing the need for the
+  fragile `fix_float_parents` logic.
 - **Async Resource Fetch Timeouts:** Implemented a coordinator/fetcher pattern with timeouts for
   Mermaid diagrams (15s) and Image downloads (30s). Blocking HTTP calls now run in threads
   without `Window` references, preventing resource leaks and UI stalls from hung network requests.
