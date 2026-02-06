@@ -42,6 +42,7 @@ fn from_gg_event(e &gg.Event) &Event {
 		window_height:      e.window_height
 		framebuffer_width:  e.framebuffer_width
 		framebuffer_height: e.framebuffer_height
+		ime_text:           '' // TODO: need to find where sokol stores IME text
 	}
 }
 
@@ -77,6 +78,7 @@ pub mut:
 	mouse_button       MouseButton
 	key_repeat         bool
 	is_handled         bool
+	ime_text           string
 }
 
 pub enum EventType as u8 {
@@ -104,6 +106,8 @@ pub enum EventType as u8 {
 	quit_requested
 	clipboard_pasted
 	files_dropped
+	ime_composition
+	ime_result
 	num
 }
 

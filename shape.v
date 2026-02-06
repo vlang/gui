@@ -24,15 +24,17 @@ pub mut:
 	border_gradient &Gradient      = unsafe { nil } // Gradient border configuration
 
 	// Event Handlers
-	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle character input
-	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle key press
-	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse click
-	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse movement over shape
-	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse button release
-	on_mouse_scroll fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle scroll wheel events
-	on_scroll       fn (&Layout, mut Window)               = unsafe { nil } // Handle scroll container updates
-	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil } // Custom hook to modify layout during the pipeline
-	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil } // Handle hover state changes
+	on_char            fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle character input
+	on_keydown         fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle key press
+	on_click           fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse click
+	on_mouse_move      fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse movement over shape
+	on_mouse_up        fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse button release
+	on_mouse_scroll    fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle scroll wheel events
+	on_scroll          fn (&Layout, mut Window)               = unsafe { nil } // Handle scroll container updates
+	amend_layout       fn (mut Layout, mut Window)            = unsafe { nil } // Custom hook to modify layout during the pipeline
+	on_hover           fn (mut Layout, mut Event, mut Window) = unsafe { nil } // Handle hover state changes
+	on_ime_composition fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle IME composition
+	on_ime_result      fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle IME result
 
 	// Structs (Large/Aligned)
 	text_style TextStyle // Configuration for text rendering (font, size, color)
