@@ -33,6 +33,7 @@ pub mut:
 	on_scroll       fn (&Layout, mut Window)               = unsafe { nil } // Handle scroll container updates
 	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil } // Custom hook to modify layout during the pipeline
 	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil } // Handle hover state changes
+	on_ime_commit   fn (&Layout, string, mut Window)       = unsafe { nil } // Handle IME text commit
 
 	// Structs (Large/Aligned)
 	text_style TextStyle // Configuration for text rendering (font, size, color)

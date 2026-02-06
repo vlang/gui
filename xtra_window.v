@@ -282,8 +282,14 @@ pub fn (mut window Window) set_id_focus(id u32) {
 	window.view_state.clear_input_selections()
 	if id != window.view_state.id_focus {
 		log.debug('set_id_focus: ${id}')
+		// Cancel active IME composition on focus change
+		if window.text_system != unsafe { nil } && window.text_system.is_composing() {
+			window.text_system.reset_ime_state()
+		}
 	}
 	window.view_state.id_focus = id
+	// Route IME overlay to focused field
+	window.update_ime_focus(id)
 }
 
 // set_mouse_cursor_all sets the window's mouse cursor to cross arrows

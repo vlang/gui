@@ -714,6 +714,49 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 			}
 		}
 	}
+
+	// Draw IME composition underlines when composing
+	if window.is_focus(shape.id_focus) && shape.has_text_layout()
+		&& window.text_system != unsafe { nil } && window.text_system.is_composing()
+		&& !shape.text_is_password {
+		render_composition(shape, mut window)
+	}
+}
+
+// render_composition draws clause underlines for active IME
+// preedit text. Thick underline for selected clause, thin for
+// others.
+fn render_composition(shape &Shape, mut window Window) {
+	cs := window.text_system.composition
+	clause_rects := cs.get_clause_rects(*shape.vglyph_layout)
+	text_color := shape.text_style.color.to_gx_color()
+	underline_color := gg.Color{
+		r: text_color.r
+		g: text_color.g
+		b: text_color.b
+		a: 178 // ~70% opacity
+	}
+
+	ox := shape.x + shape.padding_left()
+	oy := shape.y + shape.padding_top()
+
+	for cr in clause_rects {
+		thickness := if cr.style == .selected {
+			f32(2.0)
+		} else {
+			f32(1.0)
+		}
+		for rect in cr.rects {
+			window.renderers << DrawRect{
+				x:     ox + rect.x
+				y:     oy + rect.y + rect.height - thickness
+				w:     rect.width
+				h:     thickness
+				color: underline_color
+				style: .fill
+			}
+		}
+	}
 }
 
 fn render_image(mut shape Shape, clip DrawClip, mut window Window) {

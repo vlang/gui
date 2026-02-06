@@ -11,6 +11,7 @@ module gui
 // - Custom callbacks for text changes and enter key
 import log
 import arrays
+import vglyph
 
 // InputState manages focus and input states. The window maintains this state
 // in a map keyed by w.view_state.id_focus. This state map is cleared when a
@@ -167,6 +168,7 @@ pub fn input(cfg InputCfg) View {
 		radius:          cfg.radius
 		sizing:          cfg.sizing
 		on_char:         make_input_on_char(cfg)
+		on_ime_commit:   make_input_on_ime_commit(cfg)
 		on_hover:        fn [color_hover, id_focus] (mut layout Layout, mut e Event, mut w Window) {
 			if w.is_focus(id_focus) {
 				w.set_mouse_cursor_ibeam()
@@ -471,6 +473,12 @@ fn make_input_on_char(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
 		if w.mouse_is_locked() {
 			return
 		}
+		// Suppress char events already handled by IME
+		if vglyph.ime_did_handle_key()
+			|| (w.text_system != unsafe { nil } && w.text_system.is_composing()) {
+			event.is_handled = true
+			return
+		}
 		c := event.char_code
 		if cfg.on_text_changed != unsafe { nil } {
 			mut text := cfg.text
@@ -538,5 +546,21 @@ fn make_input_on_char(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
 			event.is_handled = true
 			cfg.on_text_changed(layout, text, mut w)
 		}
+	}
+}
+
+// make_input_on_ime_commit creates a callback that inserts
+// IME-committed text into the input field and fires
+// on_text_changed.
+fn make_input_on_ime_commit(cfg InputCfg) fn (&Layout, string, mut Window) {
+	return fn [cfg] (layout &Layout, text string, mut w Window) {
+		if cfg.on_text_changed == unsafe { nil } {
+			return
+		}
+		new_text := cfg.insert(text, mut w) or {
+			log.error(err.msg())
+			return
+		}
+		cfg.on_text_changed(layout, new_text, mut w)
 	}
 }

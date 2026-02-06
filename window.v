@@ -48,6 +48,9 @@ mut:
 	blur_pip_init         bool         // Initialization flag for blur pipeline
 	gradient_pip          sgl.Pipeline // Pipeline for drawing multi-stop gradients
 	gradient_pip_init     bool         // Initialization flag for gradient pipeline
+	ime_overlay           voidptr      // Native IME overlay handle (macOS)
+	ime_handler           &vglyph.StandardIMEHandler = unsafe { nil }
+	ime_initialized       bool // Lazy init flag (NSWindow not ready at init_fn)
 }
 
 // Window is the main application window. `state` holds app state.
@@ -164,6 +167,7 @@ pub fn window(cfg &WindowCfg) &Window {
 // frame_fn is the only place where the window is rendered.
 fn frame_fn(mut window Window) {
 	window.flush_commands()
+	window.init_ime()
 
 	if window.refresh_window {
 		window.update()
@@ -213,11 +217,11 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			keydown_handler(layout, mut e, mut w)
 			if !e.is_handled && e.key_code == .tab && e.modifiers == .shift {
 				if shape := layout.previous_focusable(mut w) {
-					w.view_state.id_focus = shape.id_focus
+					w.set_id_focus(shape.id_focus)
 				}
 			} else if !e.is_handled && e.key_code == .tab {
 				if shape := layout.next_focusable(mut w) {
-					w.view_state.id_focus = shape.id_focus
+					w.set_id_focus(shape.id_focus)
 				}
 			}
 		}

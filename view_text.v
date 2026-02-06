@@ -252,6 +252,10 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		if tv.placeholder_active || window.mouse_is_locked() {
 			return
 		}
+		// Suppress navigation while IME is composing
+		if window.text_system != unsafe { nil } && window.text_system.is_composing() {
+			return
+		}
 		mut input_state := window.view_state.input_state.get(layout.shape.id_focus) or {
 			InputState{}
 		}
