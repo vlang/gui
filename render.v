@@ -558,11 +558,13 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 					render_str = password_char.repeat(utf8_str_visible_length(render_str))
 				}
 
-				window.renderers << DrawText{
-					x:    draw_x
-					y:    draw_y
-					text: render_str
-					cfg:  text_cfg
+				if render_str.len > 0 {
+					window.renderers << DrawText{
+						x:    draw_x
+						y:    draw_y
+						text: render_str
+						cfg:  text_cfg
+					}
 				}
 
 				// Draw text selection
