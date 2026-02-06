@@ -13,11 +13,6 @@
 
 ## Threading & Synchronization Concerns
 
-**Mermaid Diagram Async Fetch:**
-- Issue: `fetch_mermaid_async` lacks timeout or cancellation mechanisms.
-- Files: `xtra_mermaid.v:51`.
-- Risk: A hung HTTP request can indefinitely hold a thread and a reference to the Window.
-
 ## Unsafe Pointer Usage
 
 **Pattern: `unsafe { nil }` for Optional Pointers:**
@@ -42,6 +37,9 @@
 
 ## Addressed Concerns (2026-02-06)
 
+- **Async Resource Fetch Timeouts:** Implemented a coordinator/fetcher pattern with timeouts for
+  Mermaid diagrams (15s) and Image downloads (30s). Blocking HTTP calls now run in threads
+  without `Window` references, preventing resource leaks and UI stalls from hung network requests.
 - **Graceful Initialization Failure:** Replaced hard panics during text system initialization with a
   mechanism that captures errors, requests a graceful shutdown via `sapp.quit()`, and reports
   formatted error messages to `stderr` upon exit.

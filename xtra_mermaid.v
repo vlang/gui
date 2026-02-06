@@ -4,6 +4,7 @@ import net.http
 import os
 import rand
 import stbi
+import time
 
 // DiagramState represents the loading state of a diagram.
 enum DiagramState {
@@ -44,30 +45,67 @@ fn fill_transparent_with_bg(data &u8, width int, height int, channels int) {
 	}
 }
 
+struct MermaidFetchResult {
+	res     http.Response
+	err_msg string
+	is_err  bool
+}
+
 // fetch_mermaid_async fetches a mermaid diagram from Kroki API in background thread.
 // Uses PNG format since SVG from Kroki uses foreignObject/CSS which our parser doesn't support.
 // Updates diagram_cache with result and triggers window refresh.
 // NOTE: Mermaid source is sent to external kroki.io API for rendering.
 fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int) {
 	spawn fn [mut window, source, hash, max_width] () {
-		// Use fetch with explicit config for binary data
-		// Note: V's http.fetch doesn't support timeout config
-		result := http.fetch(
-			method: .post
-			url:    'https://kroki.io/mermaid/png'
-			data:   source
-		) or {
-			err_msg := err.msg()
+		ch := chan MermaidFetchResult{}
+
+		// Spawn fetcher thread WITHOUT window reference to avoid holding it if hung
+		spawn fn [source, ch] () {
+			result := http.fetch(
+				method: .post
+				url:    'https://kroki.io/mermaid/png'
+				data:   source
+			) or {
+				ch <- MermaidFetchResult{
+					err_msg: err.msg()
+					is_err:  true
+				}
+				return
+			}
+			ch <- MermaidFetchResult{
+				res:    result
+				is_err: false
+			}
+		}()
+
+		// Wait for result with 15s timeout
+		mut fetch_res := MermaidFetchResult{
+			is_err:  true
+			err_msg: 'Request timed out'
+		}
+
+		select {
+			res := <-ch {
+				fetch_res = res
+			}
+			15 * time.second {
+				// use default timeout value
+			}
+		}
+
+		if fetch_res.is_err {
+			err_msg := fetch_res.err_msg
 			window.queue_command(fn [hash, err_msg] (mut w Window) {
 				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
 					state: .error
-					error: 'Network error: ${err_msg}'
+					error: err_msg
 				})
 				w.update_window()
 			})
 			return
 		}
 
+		result := fetch_res.res
 		if result.status_code == 200 {
 			// Reject oversized responses (>10MB)
 			if result.body.len > 10 * 1024 * 1024 {

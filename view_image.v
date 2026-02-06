@@ -108,55 +108,94 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 	return layout
 }
 
+struct ImageFetchResult {
+	err_msg string
+	is_err  bool
+}
+
 // download_image downloads a file from a URL to a local path in a background thread.
 // It performs security checks (Content-Length < 50MB, Content-Type is image/*)
 // and handles thread synchronization for updating active downloads state.
 fn download_image(url string, path string, mut w Window) {
-	// Security check: Verify Content-Length and Content-Type
-	// We use i64 for max size to match http.Response.content_length
-	max_size := i64(50 * 1024 * 1024)
+	spawn fn [url, path, mut w] () {
+		ch := chan ImageFetchResult{}
 
-	head := http.head(url) or {
-		log.error('Failed to fetch image headers for ${url}: ${err}')
+		// Spawn fetcher thread WITHOUT window reference to avoid holding it if hung
+		spawn fn [url, path, ch] () {
+			// Security check: Verify Content-Length and Content-Type
+			// We use i64 for max size to match http.Response.content_length
+			max_size := i64(50 * 1024 * 1024)
+
+			head := http.head(url) or {
+				ch <- ImageFetchResult{
+					err_msg: 'Failed to fetch image headers for ${url}: ${err}'
+					is_err:  true
+				}
+				return
+			}
+
+			// Validate content length
+			content_length := head.header.get(.content_length) or { '0' }.i64()
+			if content_length > max_size {
+				ch <- ImageFetchResult{
+					err_msg: 'Image too large (${content_length} bytes > ${max_size} bytes): ${url}'
+					is_err:  true
+				}
+				return
+			}
+
+			// Validate content type
+			if !head.header.get(.content_type) or { '' }.starts_with('image/') {
+				ch <- ImageFetchResult{
+					err_msg: 'Invalid content type for image (expected image/*): ${url}'
+					is_err:  true
+				}
+				return
+			}
+
+			// Download file
+			http.download_file(url, path) or {
+				ch <- ImageFetchResult{
+					err_msg: 'Failed to download image ${url}: ${err}'
+					is_err:  true
+				}
+				return
+			}
+
+			ch <- ImageFetchResult{
+				is_err: false
+			}
+		}()
+
+		// Wait for result with 30s timeout (images can be large)
+		mut fetch_res := ImageFetchResult{
+			is_err:  true
+			err_msg: 'Image download timed out: ${url}'
+		}
+
+		select {
+			res := <-ch {
+				fetch_res = res
+			}
+			30 * time.second {
+				// use default timeout value
+			}
+		}
+
+		if fetch_res.is_err {
+			log.error(fetch_res.err_msg)
+			w.queue_command(fn [url] (mut w Window) {
+				w.view_state.active_downloads.delete(url)
+			})
+			return
+		}
+
+		// Remove from active downloads (thread-safe)
 		w.queue_command(fn [url] (mut w Window) {
 			w.view_state.active_downloads.delete(url)
+			w.update_window()
 		})
-		return
-	}
-
-	// Validate content length
-	content_length := head.header.get(.content_length) or { '0' }.i64()
-	if content_length > max_size {
-		log.error('Image too large (${content_length} bytes > ${max_size} bytes): ${url}')
-		w.queue_command(fn [url] (mut w Window) {
-			w.view_state.active_downloads.delete(url)
-		})
-		return
-	}
-
-	// Validate content type
-	if !head.header.get(.content_type) or { '' }.starts_with('image/') {
-		log.error('Invalid content type for image (expected image/*): ${url}')
-		w.queue_command(fn [url] (mut w Window) {
-			w.view_state.active_downloads.delete(url)
-		})
-		return
-	}
-
-	// Download file
-	http.download_file(url, path) or {
-		log.error('Failed to download image ${url}: ${err}')
-		w.queue_command(fn [url] (mut w Window) {
-			w.view_state.active_downloads.delete(url)
-		})
-		return
-	}
-
-	// Remove from active downloads (thread-safe)
-	w.queue_command(fn [url] (mut w Window) {
-		w.view_state.active_downloads.delete(url)
-		w.update_window()
-	})
+	}()
 }
 
 // image creates a new image view from the provided configuration.
