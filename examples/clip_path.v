@@ -8,9 +8,9 @@ const test_no_clip = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/s
 
 fn main() {
 	mut window := gui.window(
-		title:  'clipPath Test'
-		width:  600
-		height: 250
+		title:   'clipPath Test'
+		width:   600
+		height:  250
 		on_init: fn (mut w gui.Window) {
 			w.update_view(fn (window &gui.Window) gui.View {
 				return gui.row(
@@ -23,8 +23,8 @@ fn main() {
 								gui.text(text: 'Circle clip'),
 								gui.svg(
 									svg_data: test_circle_clip
-									width: 150
-									height: 150
+									width:    150
+									height:   150
 								),
 							]
 						),
@@ -34,8 +34,8 @@ fn main() {
 								gui.text(text: 'Star clip group'),
 								gui.svg(
 									svg_data: test_path_clip_group
-									width: 150
-									height: 150
+									width:    150
+									height:   150
 								),
 							]
 						),
@@ -45,8 +45,8 @@ fn main() {
 								gui.text(text: 'No clip (control)'),
 								gui.svg(
 									svg_data: test_no_clip
-									width: 150
-									height: 150
+									width:    150
+									height:   150
 								),
 							]
 						),

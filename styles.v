@@ -49,6 +49,21 @@ pub:
 	angle     ?f32 // Optional explicit angle (degrees), overrides direction
 }
 
+pub struct ColorPickerStyle {
+pub:
+	color              Color     = color_interior_dark
+	color_hover        Color     = color_hover_dark
+	color_border       Color     = color_border_dark
+	color_border_focus Color     = color_select_dark
+	padding            Padding   = padding_small
+	size_border        f32       = size_border
+	radius             f32       = radius_medium
+	sv_size            f32       = 200
+	slider_height      f32       = 16
+	indicator_size     f32       = 12
+	text_style         TextStyle = text_style_dark
+}
+
 pub struct ButtonStyle {
 pub:
 	color              Color   = color_interior_dark

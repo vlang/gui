@@ -19,6 +19,7 @@ pub:
 	titlebar_dark    bool
 
 	button_style       ButtonStyle
+	color_picker_style ColorPickerStyle
 	container_style    ContainerStyle
 	date_picker_style  DatePickerStyle
 	dialog_style       DialogStyle

@@ -30,6 +30,16 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		color_select:     cfg.color_select
 		titlebar_dark:    cfg.titlebar_dark
 
+		color_picker_style: ColorPickerStyle{
+			color:              cfg.color_interior
+			color_hover:        cfg.color_hover
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			padding:            cfg.padding_small
+			size_border:        cfg.size_border
+			radius:             cfg.radius
+			text_style:         cfg.text_style
+		}
 		button_style:       ButtonStyle{
 			color:              cfg.color_interior
 			color_border:       cfg.color_border
@@ -494,6 +504,14 @@ pub fn (t Theme) with_button_style(style ButtonStyle) Theme {
 	}
 }
 
+// with_color_picker_style returns a new Theme with the color picker style replaced.
+pub fn (t Theme) with_color_picker_style(style ColorPickerStyle) Theme {
+	return Theme{
+		...t
+		color_picker_style: style
+	}
+}
+
 // with_container_style returns a new Theme with the container style replaced.
 pub fn (t Theme) with_container_style(style ContainerStyle) Theme {
 	return Theme{
@@ -696,6 +714,13 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 		color_border:     border
 		color_select:     sel
 
+		color_picker_style: ColorPickerStyle{
+			...t.color_picker_style
+			color:              interior
+			color_hover:        hover
+			color_border:       border
+			color_border_focus: border_focus
+		}
 		button_style:       ButtonStyle{
 			...t.button_style
 			color:              interior
