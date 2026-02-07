@@ -807,60 +807,131 @@ fn progress_bar_samples(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	percent := app.range_value / f32(100)
 
-	return gui.row(
+	return gui.column(
 		spacing: gui.theme().spacing_large
 		content: [
-			gui.column(
-				width:   200
-				spacing: 20
-				sizing:  gui.fit_fill
+			gui.row(
+				spacing: gui.theme().spacing_large
 				content: [
-					gui.progress_bar(
-						height:          2
-						sizing:          gui.fill_fixed
-						percent:         percent
-						text_background: tbg1
+					gui.column(
+						width:   200
+						spacing: 20
+						sizing:  gui.fit_fill
+						content: [
+							gui.progress_bar(
+								height:          2
+								sizing:          gui.fill_fixed
+								percent:         percent
+								text_background: tbg1
+							),
+							gui.progress_bar(
+								sizing:  gui.fill_fixed
+								percent: percent
+							),
+							gui.progress_bar(
+								height:  20
+								sizing:  gui.fill_fixed
+								percent: percent
+							),
+							gui.progress_bar(
+								height:    20
+								sizing:    gui.fill_fixed
+								percent:   percent
+								text_show: false
+							),
+						]
 					),
-					gui.progress_bar(
-						sizing:  gui.fill_fixed
-						percent: percent
-					),
-					gui.progress_bar(
-						height:  20
-						sizing:  gui.fill_fixed
-						percent: percent
-					),
-					gui.progress_bar(
-						height:    20
-						sizing:    gui.fill_fixed
-						percent:   percent
-						text_show: false
+					gui.row(
+						width:   150
+						height:  100
+						spacing: 40
+						sizing:  gui.fit_fill
+						content: [
+							gui.progress_bar(
+								vertical:        true
+								sizing:          gui.fixed_fill
+								width:           2
+								percent:         percent
+								text_background: tbg2
+							),
+							gui.progress_bar(
+								vertical: true
+								sizing:   gui.fixed_fill
+								percent:  percent
+							),
+							gui.progress_bar(
+								vertical: true
+								sizing:   gui.fixed_fill
+								width:    20
+								percent:  percent
+							),
+						]
 					),
 				]
 			),
 			gui.row(
-				width:   150
-				height:  100
-				spacing: 40
-				sizing:  gui.fit_fill
+				spacing: gui.theme().spacing_large
 				content: [
-					gui.progress_bar(
-						vertical:        true
-						sizing:          gui.fixed_fill
-						width:           2
-						percent:         percent
-						text_background: tbg2
+					gui.column(
+						width:   200
+						spacing: 20
+						sizing:  gui.fit_fill
+						content: [
+							gui.progress_bar(
+								id:              'sc_pbar_indef_h1'
+								height:          2
+								sizing:          gui.fill_fixed
+								indefinite:      true
+								text_background: tbg1
+							),
+							gui.progress_bar(
+								id:         'sc_pbar_indef_h2'
+								sizing:     gui.fill_fixed
+								indefinite: true
+							),
+							gui.progress_bar(
+								id:         'sc_pbar_indef_h3'
+								height:     20
+								sizing:     gui.fill_fixed
+								indefinite: true
+							),
+							gui.progress_bar(
+								id:         'sc_pbar_indef_h4'
+								height:     20
+								sizing:     gui.fill_fixed
+								indefinite: true
+								text_show:  false
+							),
+						]
 					),
-					gui.progress_bar(
-						vertical: true
-						sizing:   gui.fixed_fill
-						percent:  percent
-					),
-					gui.progress_bar(
-						vertical: true
-						sizing:   gui.fixed_fill
-						width:    20
-						percent:  percent
+					gui.row(
+						width:   150
+						height:  100
+						spacing: 40
+						sizing:  gui.fit_fill
+						content: [
+							gui.progress_bar(
+								id:              'sc_pbar_indef_v1'
+								vertical:        true
+								sizing:          gui.fixed_fill
+								width:           2
+								indefinite:      true
+								text_background: tbg2
+							),
+							gui.progress_bar(
+								id:         'sc_pbar_indef_v2'
+								vertical:   true
+								sizing:     gui.fixed_fill
+								indefinite: true
+							),
+							gui.progress_bar(
+								id:         'sc_pbar_indef_v3'
+								vertical:   true
+								sizing:     gui.fixed_fill
+								width:      20
+								indefinite: true
+							),
+						]
 					),
 				]
 			),
