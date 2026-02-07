@@ -55,6 +55,9 @@ fn (mut w Window) update_ime_focus(id u32) {
 			return
 		}
 		if id > 0 {
+			if w.layout.shape == unsafe { nil } {
+				return
+			}
 			ly := find_layout_by_id_focus(&w.layout, id) or {
 				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '')
 				return
