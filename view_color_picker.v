@@ -24,7 +24,7 @@ pub fn color_picker(cfg ColorPickerCfg) View {
 	slider_h := cfg.style.slider_height
 
 	return column(
-		name:    'color_picker_expanded'
+		name:    'color_picker'
 		id:      cfg.id
 		padding: cfg.style.padding
 		spacing: cfg.style.padding.top
@@ -40,11 +40,8 @@ pub fn color_picker(cfg ColorPickerCfg) View {
 					cfg.hue_slider(slider_h, sv_size),
 				]
 			),
-			// Alpha slider
 			cfg.alpha_slider(),
-			// Preview + hex
 			cfg.preview_row(),
-			// RGBA inputs
 			cfg.rgba_inputs(),
 		]
 	)
@@ -90,6 +87,7 @@ fn (cfg &ColorPickerCfg) sv_area(size f32) View {
 				}
 				mouse_up:   fn (_ &Layout, mut _ Event, mut w Window) {
 					w.mouse_unlock()
+					w.set_mouse_cursor_arrow()
 				}
 			})
 			e.is_handled = true
@@ -210,21 +208,27 @@ fn (cfg &ColorPickerCfg) hue_slider(w f32, h f32) View {
 
 // alpha_slider renders an alpha range slider (0-255).
 fn (cfg &ColorPickerCfg) alpha_slider() View {
-	return range_slider(
-		id:        '${cfg.id}_alpha'
-		sizing:    fill_fit
-		value:     f32(cfg.color.a)
-		min:       0
-		max:       255
-		on_change: fn [cfg] (value f32, mut e Event, mut w Window) {
-			c := Color{
-				r: cfg.color.r
-				g: cfg.color.g
-				b: cfg.color.b
-				a: u8(value)
-			}
-			cfg.on_color_change(c, mut e, mut w)
-		}
+	return row(
+		padding: padding(0, 5, 0, 5)
+		sizing:  fill_fit
+		content: [
+			range_slider(
+				id:        '${cfg.id}_alpha'
+				sizing:    fill_fit
+				value:     f32(cfg.color.a)
+				min:       0
+				max:       255
+				on_change: fn [cfg] (value f32, mut e Event, mut w Window) {
+					c := Color{
+						r: cfg.color.r
+						g: cfg.color.g
+						b: cfg.color.b
+						a: u8(value)
+					}
+					cfg.on_color_change(c, mut e, mut w)
+				}
+			),
+		]
 	)
 }
 
@@ -235,6 +239,7 @@ fn (cfg &ColorPickerCfg) preview_row() View {
 		name:    'preview_row'
 		padding: padding_none
 		spacing: cfg.style.padding.left
+		sizing:  fill_fit
 		v_align: .middle
 		content: [
 			rectangle(
@@ -251,6 +256,7 @@ fn (cfg &ColorPickerCfg) preview_row() View {
 				text:            hex_str
 				min_width:       100
 				max_width:       100
+				padding:         padding_small
 				text_style:      cfg.style.text_style
 				on_text_changed: fn [cfg] (_ &Layout, s string, mut w Window) {
 					if c := color_from_hex_string(s) {
@@ -259,37 +265,52 @@ fn (cfg &ColorPickerCfg) preview_row() View {
 					}
 				}
 			),
+			row(
+				v_align: .middle
+				padding: padding_none
+				spacing: 5
+				content: [
+					text(text: 'A', text_style: cfg.style.text_style),
+					cfg.channel_input('a', cfg.color.a, cfg.id_focus_base() + 4),
+				]
+			),
 		]
 	)
 }
 
 // rgba_inputs renders R, G, B, A numeric input fields.
 fn (cfg &ColorPickerCfg) rgba_inputs() View {
-	return column(
+	return row(
 		name:    'rgba_inputs'
 		padding: padding_none
-		spacing: cfg.style.padding.top
+		spacing: 8
+		v_align: .middle
 		content: [
 			row(
 				padding: padding_none
-				spacing: cfg.style.padding.left
 				v_align: .middle
+				spacing: 5
 				content: [
 					text(text: 'R', text_style: cfg.style.text_style),
 					cfg.channel_input('r', cfg.color.r, cfg.id_focus_base() + 1),
+				]
+			),
+			row(
+				padding: padding_none
+				v_align: .middle
+				spacing: 5
+				content: [
 					text(text: 'G', text_style: cfg.style.text_style),
 					cfg.channel_input('g', cfg.color.g, cfg.id_focus_base() + 2),
 				]
 			),
 			row(
 				padding: padding_none
-				spacing: cfg.style.padding.left
 				v_align: .middle
+				spacing: 5
 				content: [
 					text(text: 'B', text_style: cfg.style.text_style),
 					cfg.channel_input('b', cfg.color.b, cfg.id_focus_base() + 3),
-					text(text: 'A', text_style: cfg.style.text_style),
-					cfg.channel_input('a', cfg.color.a, cfg.id_focus_base() + 4),
 				]
 			),
 		]
@@ -305,8 +326,9 @@ fn (cfg &ColorPickerCfg) channel_input(ch string, val u8, id_focus u32) View {
 		id:              '${cfg.id}_${ch}'
 		id_focus:        id_focus
 		text:            val.str()
-		min_width:       55
-		max_width:       55
+		min_width:       45
+		max_width:       45
+		padding:         padding_small
 		text_style:      cfg.style.text_style
 		on_text_changed: fn [cfg, ch, val] (_ &Layout, s string, mut w Window) {
 			mut nv := val

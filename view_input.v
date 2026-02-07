@@ -147,6 +147,44 @@ pub fn input(cfg InputCfg) View {
 	id_focus := cfg.id_focus
 	on_click_icon := cfg.on_click_icon
 
+	mut txt_content := [
+		text(
+			id_focus:           cfg.id_focus
+			sizing:             fill_fill
+			text:               txt
+			text_style:         txt_style
+			mode:               mode
+			is_password:        cfg.is_password
+			placeholder_active: placeholder_active
+		),
+	]
+
+	if cfg.icon.len > 0 {
+		txt_content << [
+			rectangle(
+				color:        color_transparent
+				color_border: color_transparent
+				sizing:       fill_fill
+			),
+			row(
+				name:     'input icon'
+				padding:  padding_none
+				on_click: cfg.on_click_icon
+				on_hover: fn [on_click_icon] (mut layout Layout, mut e Event, mut w Window) {
+					if on_click_icon != unsafe { nil } {
+						w.set_mouse_cursor_pointing_hand()
+					}
+				}
+				content:  [
+					text(
+						text:       cfg.icon
+						text_style: cfg.icon_style
+					),
+				]
+			),
+		]
+	}
+
 	return column(
 		name:            'input'
 		id:              cfg.id
@@ -202,38 +240,7 @@ pub fn input(cfg InputCfg) View {
 						w.set_id_focus(ly.shape.id_focus)
 					}
 				}
-				content:  [
-					text(
-						id_focus:           cfg.id_focus
-						sizing:             fill_fill
-						text:               txt
-						text_style:         txt_style
-						mode:               mode
-						is_password:        cfg.is_password
-						placeholder_active: placeholder_active
-					),
-					rectangle(
-						color:        color_transparent
-						color_border: color_transparent
-						sizing:       fill_fill
-					),
-					row(
-						name:     'input icon'
-						padding:  padding_none
-						on_click: cfg.on_click_icon
-						on_hover: fn [on_click_icon] (mut layout Layout, mut e Event, mut w Window) {
-							if on_click_icon != unsafe { nil } {
-								w.set_mouse_cursor_pointing_hand()
-							}
-						}
-						content:  [
-							text(
-								text:       cfg.icon
-								text_style: cfg.icon_style
-							),
-						]
-					),
-				]
+				content:  txt_content
 			),
 		]
 	)

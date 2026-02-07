@@ -16,8 +16,8 @@ fn main() {
 	mut window := gui.window(
 		title:   'Color Picker'
 		state:   &ColorPickerApp{}
-		width:   400
-		height:  500
+		width:   300
+		height:  450
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -39,7 +39,7 @@ fn main_view(window &gui.Window) gui.View {
 		content: [
 			gui.row(
 				h_align: .end
-				sizing:  gui.fill_fit
+				sizing:  gui.fit_fit
 				padding: gui.padding_none
 				content: [toggle_theme(app)]
 			),
@@ -51,18 +51,6 @@ fn main_view(window &gui.Window) gui.View {
 					mut a := w.state[ColorPickerApp]()
 					a.color = c
 				}
-			),
-			// Preview area showing the selected color
-			gui.rectangle(
-				width:        200
-				height:       50
-				color:        app.color
-				color_border: gui.theme().color_border
-				size_border:  gui.theme().size_border
-				radius:       gui.theme().radius_medium
-			),
-			gui.text(
-				text: 'Selected: ${app.color.to_hex_string()}'
 			),
 		]
 	)
