@@ -47,14 +47,23 @@ fn (mut w Window) init_ime() {
 
 // update_ime_focus makes the IME overlay first responder when
 // a focusable input field gains focus, or clears it when focus
-// is lost (id == 0).
+// is lost (id == 0). Only activates for elements with
+// on_ime_commit (input fields), not menus or other focusables.
 fn (mut w Window) update_ime_focus(id u32) {
 	$if macos {
 		if w.ime_overlay == unsafe { nil } {
 			return
 		}
 		if id > 0 {
-			vglyph.ime_overlay_set_focused_field(w.ime_overlay, '${id}')
+			ly := find_layout_by_id_focus(&w.layout, id) or {
+				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '')
+				return
+			}
+			if ly.shape.on_ime_commit != unsafe { nil } {
+				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '${id}')
+			} else {
+				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '')
+			}
 		} else {
 			vglyph.ime_overlay_set_focused_field(w.ime_overlay, '')
 		}
