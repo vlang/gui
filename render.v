@@ -890,6 +890,24 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 				x:      shape.x
 				y:      shape.y
 			}
+			// Draw inline math images at InlineObject positions
+			for item in shape.vglyph_layout.items {
+				if item.is_object && item.object_id != '' {
+					ihash := math_cache_hash(item.object_id)
+					if entry := window.view_state.diagram_cache.get(ihash) {
+						if entry.state == .ready && entry.png_path.len > 0 {
+							img := window.load_image(entry.png_path) or { continue }
+							window.renderers << DrawImage{
+								x:   shape.x + f32(item.x)
+								y:   shape.y + f32(item.y) - f32(item.ascent)
+								w:   f32(item.width)
+								h:   f32(item.ascent + item.descent)
+								img: img
+							}
+						}
+					}
+				}
+			}
 		} else {
 			shape.disabled = true
 		}

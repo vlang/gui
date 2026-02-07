@@ -123,6 +123,25 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 		parsed
 	}
 
+	// Trigger inline math fetches for unseen math runs
+	{
+		mut w := unsafe { window }
+		for block in blocks {
+			for run in block.content.runs {
+				if run.math_id != '' {
+					mhash := math_cache_hash(run.math_id)
+					if _ := w.view_state.diagram_cache.get(mhash) {
+					} else {
+						w.view_state.diagram_cache.set(mhash, DiagramCacheEntry{
+							state: .loading
+						})
+						fetch_math_async(mut w, run.math_latex, mhash, false, cfg.style.text.color)
+					}
+				}
+			}
+		}
+	}
+
 	// Build content views from blocks
 	mut content := []View{cap: blocks.len}
 	mut list_items := []View{cap: 10} // accumulate consecutive list items
@@ -154,7 +173,82 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			)
 			list_items.clear()
 		}
-		if block.is_code {
+		if block.is_math {
+			// Display math block — async render via Codecogs
+			// NOTE: LaTeX source is sent to external codecogs API
+			diagram_hash := math_cache_hash('display_${block.math_latex.hash()}')
+			mut w := unsafe { window }
+			if entry := w.view_state.diagram_cache.get(diagram_hash) {
+				match entry.state {
+					.loading {
+						content << column(
+							color:       cfg.style.code_block_bg
+							padding:     cfg.style.code_block_padding
+							radius:      cfg.style.code_block_radius
+							size_border: 0
+							sizing:      fill_fit
+							h_align:     .center
+							content:     [
+								text(
+									text:       block.math_latex
+									text_style: cfg.style.code
+								),
+							]
+						)
+					}
+					.ready {
+						content << column(
+							padding:     cfg.style.code_block_padding
+							radius:      cfg.style.code_block_radius
+							size_border: 0
+							sizing:      fill_fit
+							h_align:     .center
+							content:     [
+								image(src: entry.png_path),
+							]
+						)
+					}
+					.error {
+						content << column(
+							color:       cfg.style.code_block_bg
+							padding:     cfg.style.code_block_padding
+							radius:      cfg.style.code_block_radius
+							size_border: 0
+							sizing:      fill_fit
+							content:     [
+								text(
+									text:       entry.error
+									text_style: TextStyle{
+										...cfg.style.code
+										color: rgba(200, 50, 50, 255)
+									}
+								),
+							]
+						)
+					}
+				}
+			} else {
+				// Start async fetch
+				w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
+					state: .loading
+				})
+				fetch_math_async(mut w, block.math_latex, diagram_hash, true, cfg.style.text.color)
+				content << column(
+					color:       cfg.style.code_block_bg
+					padding:     cfg.style.code_block_padding
+					radius:      cfg.style.code_block_radius
+					size_border: 0
+					sizing:      fill_fit
+					h_align:     .center
+					content:     [
+						text(
+							text:       block.math_latex
+							text_style: cfg.style.code
+						),
+					]
+				)
+			}
+		} else if block.is_code {
 			if block.code_language == 'mermaid' {
 				// Mermaid diagram - async render via Kroki (PNG format)
 				// NOTE: Mermaid source is sent to external kroki.io API

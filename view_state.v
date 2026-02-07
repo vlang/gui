@@ -72,7 +72,7 @@ mut:
 		max_size: 100
 	}
 	diagram_cache            BoundedDiagramCache = BoundedDiagramCache{
-		max_size: 50
+		max_size: 200
 	}
 	progress_state           BoundedMap[string, f32] = BoundedMap[string, f32]{
 		max_size: 50

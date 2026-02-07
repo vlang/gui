@@ -37,8 +37,8 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	window.stats.increment_layouts()
 	window.stats.increment_rtf_views()
 
-	// Convert RichText to vglyph.RichText
-	vg_rich_text := rtf.rich_text.to_vglyph_rich_text()
+	// Convert RichText to vglyph.RichText (with math inline objects)
+	vg_rich_text := rtf.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache)
 
 	// Create vglyph text config
 	// Negative indent creates hanging indent (wrapped lines indented)

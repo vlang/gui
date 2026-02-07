@@ -715,3 +715,73 @@ code without closing'
 	assert code_blocks.len == 1
 	assert code_blocks[0].content.runs[0].text == 'code without closing'
 }
+
+// Math tests
+
+fn test_markdown_display_math_single_line() {
+	blocks := markdown_to_blocks(r'$$ E=mc^2 $$', MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].is_math == true
+	assert blocks[0].math_latex == 'E=mc^2'
+}
+
+fn test_markdown_display_math_multi_line() {
+	source := '\$\$
+\\int_0^1 x^2 dx
+\$\$'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	math_blocks := blocks.filter(it.is_math)
+	assert math_blocks.len == 1
+	assert math_blocks[0].math_latex.contains('\\int_0^1')
+}
+
+fn test_markdown_math_code_fence() {
+	source := '```math
+\\sum_{n=1}^{\\infty} \\frac{1}{n^2}
+```'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	math_blocks := blocks.filter(it.is_math)
+	assert math_blocks.len == 1
+	assert math_blocks[0].math_latex.contains('\\sum')
+	// Should NOT be a code block
+	code_blocks := blocks.filter(it.is_code)
+	assert code_blocks.len == 0
+}
+
+fn test_markdown_inline_math() {
+	rt := markdown_to_rich_text(r'The equation $E=mc^2$ is famous.', MarkdownStyle{})
+	math_runs := rt.runs.filter(it.math_id != '')
+	assert math_runs.len == 1
+	assert math_runs[0].math_latex == 'E=mc^2'
+	assert math_runs[0].text == '\uFFFC'
+}
+
+fn test_markdown_inline_math_dollar_price() {
+	// $10 should NOT be treated as math (digit after $)
+	rt := markdown_to_rich_text(r'The price is $10 today.', MarkdownStyle{})
+	math_runs := rt.runs.filter(it.math_id != '')
+	assert math_runs.len == 0
+}
+
+fn test_markdown_inline_math_dollar_space() {
+	// $ x$ should NOT be math (space after opening $)
+	rt := markdown_to_rich_text(r'Value $ x$ here.', MarkdownStyle{})
+	math_runs := rt.runs.filter(it.math_id != '')
+	assert math_runs.len == 0
+}
+
+fn test_markdown_escaped_dollar() {
+	// Escaped \$ should be literal
+	rt := markdown_to_rich_text(r'Cost is \$5.', MarkdownStyle{})
+	math_runs := rt.runs.filter(it.math_id != '')
+	assert math_runs.len == 0
+	found := rt.runs.any(it.text.contains('$'))
+	assert found
+}
+
+fn test_markdown_inline_math_not_preceded_by_digit() {
+	// Digit before $ should prevent math
+	rt := markdown_to_rich_text(r'Get 5$x$ here.', MarkdownStyle{})
+	math_runs := rt.runs.filter(it.math_id != '')
+	assert math_runs.len == 0
+}

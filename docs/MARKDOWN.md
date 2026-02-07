@@ -45,17 +45,19 @@ window.markdown(
 | Tables           | Pipe syntax                   | Column alignment supported              |
 | Images           | `![alt](path)`                | PNG/JPG via `image()`, SVG via `svg()`  |
 | Mermaid diagrams | ` ```mermaid ` fence          | Async via Kroki API                     |
+| Math (display) | `$$...$$` or ` ```math ` fence | Async via Codecogs API                |
 
 ### Inline Elements
 
-| Element       | Syntax                   | Notes             |
-|---------------|--------------------------|-------------------|
-| Bold          | `**text**` or `__text__` |                   |
-| Italic        | `*text*` or `_text_`     |                   |
-| Bold italic   | `***text***`             | Combined styling  |
-| Strikethrough | `~~text~~`               |                   |
-| Inline code   | `` `code` ``             | Monospace styling |
-| Links         | `[text](url)`            | Clickable         |
+| Element       | Syntax                   | Notes                         |
+|---------------|--------------------------|-------------------------------|
+| Bold          | `**text**` or `__text__` |                               |
+| Italic        | `*text*` or `_text_`     |                               |
+| Bold italic   | `***text***`             | Combined styling              |
+| Strikethrough | `~~text~~`               |                               |
+| Inline code   | `` `code` ``             | Monospace styling             |
+| Links         | `[text](url)`            | Clickable                     |
+| Math (inline) | `$...$`                  | Via Codecogs API              |
 
 ## Extended Features
 
@@ -127,7 +129,43 @@ Diagrams are rendered asynchronously via the [Kroki](https://kroki.io) API.
 - Diagram source sent to external kroki.io API
 - Supports all mermaid diagram types (flowcharts, sequence, class, state, gantt, etc.)
 - Shows loading indicator during fetch
-- Cached to avoid re-fetching (max 50 diagrams)
+- Cached to avoid re-fetching
+
+### Math Expressions
+
+Render LaTeX math using display or inline syntax:
+
+**Display math** (block-level, centered):
+
+```markdown
+$$ E = mc^2 $$
+```
+
+Or with a fenced code block:
+
+````markdown
+```math
+\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}
+```
+````
+
+**Inline math** (within text flow):
+
+```markdown
+The equation $E = mc^2$ relates energy and mass.
+```
+
+Math is rendered asynchronously via the
+[Codecogs](https://latex.codecogs.com) API.
+
+**Notes:**
+- Requires network connection
+- LaTeX source sent to external latex.codecogs.com API
+- Display math rendered at 150 DPI, inline at 110 DPI
+- PNG images with transparency (blends with any background)
+- Shows raw LaTeX as fallback while loading
+- Cached to avoid re-fetching
+- `$` adjacent to digits (e.g. `$10`) not treated as math
 
 ## Styling
 
@@ -266,7 +304,6 @@ Currently not supported:
 - HTML tags within markdown
 - Custom link handlers (links are display-only)
 - Syntax highlighting in code blocks (renders as monospace text)
-- LaTeX/math expressions
 - Embedded videos
 
 For documents requiring these features, consider using a webview or rendering to HTML externally.

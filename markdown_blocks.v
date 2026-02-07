@@ -185,6 +185,9 @@ fn is_block_start(line string) bool {
 	if is_definition_line(trimmed) {
 		return true
 	}
+	if trimmed.starts_with('$$') {
+		return true
+	}
 	return false
 }
 

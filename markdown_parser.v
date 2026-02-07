@@ -64,16 +64,23 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 					blocks << block
 				}
 				if code_block_content.len > 0 {
-					blocks << MarkdownBlock{
-						is_code:       true
-						code_language: code_fence_lang
-						content:       RichText{
-							runs: [
-								RichTextRun{
-									text:  code_block_content.join('\n')
-									style: style.code
-								},
-							]
+					if code_fence_lang == 'math' {
+						blocks << MarkdownBlock{
+							is_math:    true
+							math_latex: code_block_content.join('\n')
+						}
+					} else {
+						blocks << MarkdownBlock{
+							is_code:       true
+							code_language: code_fence_lang
+							content:       RichText{
+								runs: [
+									RichTextRun{
+										text:  code_block_content.join('\n')
+										style: style.code
+									},
+								]
+							}
 						}
 					}
 				}
@@ -422,6 +429,44 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				}
 			}
 			i += 1 + consumed
+			continue
+		}
+
+		// Display math: $$ ... $$
+		if trimmed.starts_with('$$') {
+			if block := flush_runs(mut runs) {
+				blocks << block
+			}
+			// Single-line: $$ E=mc^2 $$
+			if trimmed.len > 4 && trimmed.ends_with('$$') {
+				latex := trimmed[2..trimmed.len - 2].trim_space()
+				if latex.len > 0 {
+					blocks << MarkdownBlock{
+						is_math:    true
+						math_latex: latex
+					}
+					i++
+					continue
+				}
+			}
+			// Multi-line: collect lines between $$ delimiters
+			i++
+			mut math_lines := []string{cap: 20}
+			for i < lines.len && math_lines.len < 200 {
+				ml := lines[i]
+				if ml.trim_space() == '$$' {
+					break
+				}
+				math_lines << ml
+				i++
+			}
+			if math_lines.len > 0 {
+				blocks << MarkdownBlock{
+					is_math:    true
+					math_latex: math_lines.join('\n')
+				}
+			}
+			i++ // skip closing $$
 			continue
 		}
 

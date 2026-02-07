@@ -204,7 +204,7 @@ fn text_wrap(mut shape Shape, mut window Window) {
 						}
 					}
 					// Use stored source text
-					layout := window.text_system.layout_rich_text(shape.rich_text.to_vglyph_rich_text(),
+					layout := window.text_system.layout_rich_text(shape.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache),
 						cfg) or { vglyph.Layout{} }
 					shape.vglyph_layout = &layout
 					shape.last_constraint_width = width

@@ -15,6 +15,54 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			continue
 		}
 
+		// Check for inline math $...$
+		if text[pos] == `$` && pos + 1 < text.len && text[pos + 1] != `$` {
+			// Disambiguation: opening $ not preceded by digit or $
+			prev_ok := pos == 0
+				|| (text[pos - 1] != `$` && !(text[pos - 1] >= `0` && text[pos - 1] <= `9`))
+			// Opening $ not followed by space
+			next_ok := text[pos + 1] != ` `
+			if prev_ok && next_ok {
+				// Find closing $ (not preceded by space, not followed by digit)
+				mut end := pos + 2
+				mut found := false
+				for end < text.len {
+					if text[end] == `$` {
+						// Closing $ not preceded by space
+						if text[end - 1] != ` ` {
+							// Closing $ not followed by digit
+							close_ok := end + 1 >= text.len || !(text[end + 1] >= `0`
+								&& text[end + 1] <= `9`)
+							if close_ok {
+								found = true
+								break
+							}
+						}
+					}
+					end++
+				}
+				if found && end > pos + 1 {
+					if current.len > 0 {
+						runs << RichTextRun{
+							text:  current.bytestr()
+							style: base_style
+						}
+						current.clear()
+					}
+					latex := text[pos + 1..end]
+					math_id := 'math_${latex.hash()}'
+					runs << RichTextRun{
+						text:       '\uFFFC' // object replacement char
+						style:      base_style
+						math_id:    math_id
+						math_latex: latex
+					}
+					pos = end + 1
+					continue
+				}
+			}
+		}
+
 		// Check for inline code
 		if text[pos] == `\`` {
 			if current.len > 0 {

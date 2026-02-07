@@ -152,8 +152,8 @@ fn replace_abbreviations(runs []RichTextRun, abbr_defs map[string]string, md_sty
 	}
 	mut result := []RichTextRun{cap: runs.len * 2}
 	for run in runs {
-		// Skip non-text runs (links, code, etc)
-		if run.link != '' || run.tooltip != '' {
+		// Skip non-text runs (links, code, math, etc)
+		if run.link != '' || run.tooltip != '' || run.math_id != '' {
 			result << run
 			continue
 		}

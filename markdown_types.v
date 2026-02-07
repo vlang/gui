@@ -30,6 +30,7 @@ struct MarkdownBlock {
 	is_image         bool
 	is_table         bool
 	is_list          bool
+	is_math          bool
 	is_def_term      bool // definition list term
 	is_def_value     bool // definition list value
 	blockquote_depth int
@@ -40,6 +41,7 @@ struct MarkdownBlock {
 	image_width      f32    // 0 = auto
 	image_height     f32    // 0 = auto
 	code_language    string // language hint from code fence
+	math_latex       string // raw LaTeX source for math blocks
 pub mut:
 	content    RichText
 	table_data ?ParsedTable // parsed table with inline formatting

@@ -9,10 +9,12 @@ import vglyph
 @[minify]
 pub struct RichTextRun {
 pub:
-	text    string
-	style   TextStyle
-	link    string // URL for hyperlinks (empty if not a link)
-	tooltip string // tooltip text for abbreviations (empty if not an abbreviation)
+	text       string
+	style      TextStyle
+	link       string // URL for hyperlinks (empty if not a link)
+	tooltip    string // tooltip text for abbreviations (empty if not an abbreviation)
+	math_id    string // cache key for inline math
+	math_latex string // raw LaTeX source for inline math fetch
 }
 
 // RichText contains runs of styled text for mixed-style paragraphs.
@@ -76,8 +78,44 @@ pub fn rich_footnote(id string, content string, base_style TextStyle, md_style M
 
 // to_vglyph_rich_text converts a RichText to vglyph.RichText for layout.
 fn (rt RichText) to_vglyph_rich_text() vglyph.RichText {
+	return rt.to_vglyph_rich_text_with_math(unsafe { nil })
+}
+
+// to_vglyph_rich_text_with_math converts RichText to vglyph.RichText,
+// emitting InlineObject for math runs when cache has dimensions.
+fn (rt RichText) to_vglyph_rich_text_with_math(cache &BoundedDiagramCache) vglyph.RichText {
 	mut vg_runs := []vglyph.StyleRun{cap: rt.runs.len}
 	for run in rt.runs {
+		if run.math_id != '' && unsafe { cache != nil } {
+			hash := math_cache_hash(run.math_id)
+			if entry := cache.get(hash) {
+				if entry.state == .ready && entry.width > 0 {
+					// Scale pixel dims to points, then match
+					// surrounding text size
+					dpi := f32(200.0)
+					scale := (f32(72.0) / dpi) * (run.style.size / f32(6.0))
+					vg_runs << vglyph.StyleRun{
+						text:  run.text
+						style: vglyph.TextStyle{
+							...run.style.to_vglyph_style()
+							object: &vglyph.InlineObject{
+								id:     run.math_id
+								width:  entry.width * scale
+								height: entry.height * scale
+								offset: 0
+							}
+						}
+					}
+					continue
+				}
+			}
+			// Loading/error: show raw LaTeX as fallback
+			vg_runs << vglyph.StyleRun{
+				text:  run.math_latex
+				style: run.style.to_vglyph_style()
+			}
+			continue
+		}
 		vg_runs << vglyph.StyleRun{
 			text:  run.text
 			style: run.style.to_vglyph_style()

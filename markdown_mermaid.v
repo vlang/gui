@@ -18,6 +18,8 @@ struct DiagramCacheEntry {
 	state    DiagramState
 	png_path string // temp file path for PNG
 	error    string
+	width    f32
+	height   f32
 }
 
 // fill_transparent_with_bg replaces transparent pixels with ghost white background.
@@ -182,10 +184,14 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 			if resized {
 				final_img.free()
 			}
-			window.queue_command(fn [hash, tmp_path] (mut w Window) {
+			final_w := f32(final_img.width)
+			final_h := f32(final_img.height)
+			window.queue_command(fn [hash, tmp_path, final_w, final_h] (mut w Window) {
 				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
 					state:    .ready
 					png_path: tmp_path
+					width:    final_w
+					height:   final_h
 				})
 				w.update_window()
 			})
