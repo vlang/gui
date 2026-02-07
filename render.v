@@ -99,11 +99,13 @@ struct DrawGradient {
 }
 
 struct DrawSvg {
-	triangles []f32 // x,y pairs forming triangles
-	color     gg.Color
-	x         f32
-	y         f32
-	scale     f32
+	triangles    []f32 // x,y pairs forming triangles
+	color        gg.Color
+	x            f32
+	y            f32
+	scale        f32
+	is_clip_mask bool // stencil-write geometry
+	clip_group   int  // non-zero = uses stencil clipping
 }
 
 struct DrawLayout {
@@ -138,16 +140,22 @@ fn renderers_draw(renderers []Renderer, mut window Window) {
 		renderer := renderers[i]
 		// Batch consecutive DrawSvg with same color, position, scale
 		if renderer is DrawSvg {
+			// Handle stencil clip groups
+			if renderer.clip_group > 0 {
+				draw_clipped_svg_group(renderers, mut i, mut window)
+				continue
+			}
 			mut batch := []f32{}
 			color := renderer.color
 			x := renderer.x
 			y := renderer.y
 			scale := renderer.scale
-			// Collect consecutive matching DrawSvg
+			// Collect consecutive matching DrawSvg (non-clipped only)
 			for i < renderers.len {
 				if renderers[i] is DrawSvg {
 					svg := renderers[i] as DrawSvg
-					if svg.color == color && svg.x == x && svg.y == y && svg.scale == scale {
+					if svg.clip_group == 0 && svg.color == color && svg.x == x && svg.y == y
+						&& svg.scale == scale {
 						batch << svg.triangles
 						i++
 						continue
@@ -162,6 +170,90 @@ fn renderers_draw(renderers []Renderer, mut window Window) {
 		}
 	}
 	window.text_system.commit()
+}
+
+// draw_clipped_svg_group renders a stencil-clipped SVG group.
+// Collects all DrawSvg renderers sharing the same clip_group,
+// draws mask geometry to stencil, then draws content with
+// stencil test.
+fn draw_clipped_svg_group(renderers []Renderer, mut idx &int, mut window Window) {
+	first := renderers[*idx] as DrawSvg
+	group := first.clip_group
+
+	mut masks := []DrawSvg{}
+	mut content := []DrawSvg{}
+
+	// Collect all renderers in this clip group
+	for *idx < renderers.len {
+		if renderers[*idx] is DrawSvg {
+			svg := renderers[*idx] as DrawSvg
+			if svg.clip_group == group {
+				if svg.is_clip_mask {
+					masks << svg
+				} else {
+					content << svg
+				}
+				(*idx)++
+				continue
+			}
+		}
+		break
+	}
+
+	if masks.len == 0 || content.len == 0 {
+		// No mask or no content — draw content unclipped
+		for c in content {
+			draw_triangles(c.triangles, c.color, c.x, c.y, c.scale, mut window)
+		}
+		return
+	}
+
+	init_stencil_pipelines(mut window)
+
+	// Step 1: Write clip mask to stencil buffer (ref=1)
+	sgl.load_pipeline(window.stencil_write_pip)
+	for m in masks {
+		draw_triangles_raw(m.triangles, m.x, m.y, m.scale, mut window)
+	}
+
+	// Step 2: Draw content where stencil == 1
+	sgl.load_pipeline(window.stencil_test_pip)
+	for c in content {
+		sgl.c4b(c.color.r, c.color.g, c.color.b, c.color.a)
+		draw_triangles_raw(c.triangles, c.x, c.y, c.scale, mut window)
+	}
+
+	// Step 3: Clear stencil by re-drawing mask with ref=0
+	sgl.load_pipeline(window.stencil_clear_pip)
+	for m in masks {
+		draw_triangles_raw(m.triangles, m.x, m.y, m.scale, mut window)
+	}
+
+	sgl.load_default_pipeline()
+}
+
+// draw_triangles_raw emits triangle vertices without setting
+// color (caller sets pipeline and color).
+fn draw_triangles_raw(triangles []f32, x f32, y f32, tri_scale f32, mut window Window) {
+	if triangles.len < 6 {
+		return
+	}
+	scale := window.ui.scale
+	sgl.begin_triangles()
+	mut i := 0
+	for i < triangles.len - 5 {
+		x0 := (x + triangles[i] * tri_scale) * scale
+		y0 := (y + triangles[i + 1] * tri_scale) * scale
+		x1 := (x + triangles[i + 2] * tri_scale) * scale
+		y1 := (y + triangles[i + 3] * tri_scale) * scale
+		x2 := (x + triangles[i + 4] * tri_scale) * scale
+		y2 := (y + triangles[i + 5] * tri_scale) * scale
+		sgl.v2f(x0, y0)
+		sgl.v2f(x1, y1)
+		sgl.v2f(x2, y2)
+		i += 6
+	}
+	sgl.end()
 }
 
 // renderer_draw draws a single renderer
@@ -1114,11 +1206,13 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 		// Use shape color if set (monochrome override), otherwise path color
 		c := if color.a > 0 { color } else { tpath.color }
 		window.renderers << DrawSvg{
-			triangles: tpath.triangles
-			color:     c.to_gx_color()
-			x:         shape.x
-			y:         shape.y
-			scale:     cached.scale
+			triangles:    tpath.triangles
+			color:        c.to_gx_color()
+			x:            shape.x
+			y:            shape.y
+			scale:        cached.scale
+			is_clip_mask: tpath.is_clip_mask
+			clip_group:   tpath.clip_group
 		}
 	}
 }

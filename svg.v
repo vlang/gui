@@ -28,6 +28,7 @@ struct GroupStyle {
 	stroke_width string
 	stroke_cap   string
 	stroke_join  string
+	clip_path_id string
 }
 
 // parse_svg parses an SVG string and returns a VectorGraphic.
@@ -53,6 +54,9 @@ pub fn parse_svg(content string) !VectorGraphic {
 			vg.height = clamp_viewbox_dim(parse_length(h))
 		}
 	}
+
+	// Pre-pass: extract <defs> blocks for <clipPath> definitions
+	vg.clip_paths = parse_defs_clip_paths(content)
 
 	// Parse with group support
 	default_style := GroupStyle{
@@ -119,6 +123,18 @@ fn parse_svg_content(content string, inherited GroupStyle, depth int, mut state 
 		is_self_closing := elem_end > 0 && content[elem_end - 1] == `/`
 
 		// Handle different elements
+		// Skip <defs> blocks (already parsed in pre-pass)
+		if tag_name == 'defs' {
+			if is_self_closing {
+				pos = elem_end + 1
+				continue
+			}
+			defs_end := find_closing_tag(content, 'defs', elem_end + 1)
+			close_end := find_index(content, '>', defs_end) or { break }
+			pos = close_end + 1
+			continue
+		}
+
 		if tag_name == 'g' {
 			// Parse group
 			group_style := merge_group_style(elem, inherited)
@@ -254,6 +270,7 @@ fn merge_group_style(elem string, inherited GroupStyle) GroupStyle {
 	stroke_width := find_attr(elem, 'stroke-width') or { inherited.stroke_width }
 	stroke_cap := find_attr(elem, 'stroke-linecap') or { inherited.stroke_cap }
 	stroke_join := find_attr(elem, 'stroke-linejoin') or { inherited.stroke_join }
+	clip_path_id := parse_clip_path_url(elem) or { inherited.clip_path_id }
 
 	return GroupStyle{
 		transform:    combined_transform
@@ -262,6 +279,7 @@ fn merge_group_style(elem string, inherited GroupStyle) GroupStyle {
 		stroke_width: stroke_width
 		stroke_cap:   stroke_cap
 		stroke_join:  stroke_join
+		clip_path_id: clip_path_id
 	}
 }
 
@@ -269,6 +287,11 @@ fn merge_group_style(elem string, inherited GroupStyle) GroupStyle {
 fn apply_inherited_style(mut path VectorPath, inherited GroupStyle) {
 	// Compose transforms
 	path.transform = matrix_multiply(inherited.transform, path.transform)
+
+	// Apply clip path from element or inherit from group
+	if path.clip_path_id.len == 0 && inherited.clip_path_id.len > 0 {
+		path.clip_path_id = inherited.clip_path_id
+	}
 
 	// Apply inherited fill if element doesn't specify one (uses sentinel)
 	if path.fill_color == color_inherit {
@@ -318,6 +341,7 @@ fn apply_inherited_style(mut path VectorPath, inherited GroupStyle) {
 // parse_path_with_style parses a path element with inherited style.
 fn parse_path_with_style(elem string, inherited GroupStyle) ?VectorPath {
 	mut path := parse_path_element(elem) or { return none }
+	path.clip_path_id = parse_clip_path_url(elem) or { '' }
 	apply_inherited_style(mut path, inherited)
 	return path
 }
@@ -325,6 +349,7 @@ fn parse_path_with_style(elem string, inherited GroupStyle) ?VectorPath {
 // parse_rect_with_style parses a rect element with inherited style.
 fn parse_rect_with_style(elem string, inherited GroupStyle) ?VectorPath {
 	mut path := parse_rect_element(elem) or { return none }
+	path.clip_path_id = parse_clip_path_url(elem) or { '' }
 	apply_inherited_style(mut path, inherited)
 	return path
 }
@@ -332,6 +357,7 @@ fn parse_rect_with_style(elem string, inherited GroupStyle) ?VectorPath {
 // parse_circle_with_style parses a circle element with inherited style.
 fn parse_circle_with_style(elem string, inherited GroupStyle) ?VectorPath {
 	mut path := parse_circle_element(elem) or { return none }
+	path.clip_path_id = parse_clip_path_url(elem) or { '' }
 	apply_inherited_style(mut path, inherited)
 	return path
 }
@@ -339,6 +365,7 @@ fn parse_circle_with_style(elem string, inherited GroupStyle) ?VectorPath {
 // parse_ellipse_with_style parses an ellipse element with inherited style.
 fn parse_ellipse_with_style(elem string, inherited GroupStyle) ?VectorPath {
 	mut path := parse_ellipse_element(elem) or { return none }
+	path.clip_path_id = parse_clip_path_url(elem) or { '' }
 	apply_inherited_style(mut path, inherited)
 	return path
 }
@@ -346,6 +373,7 @@ fn parse_ellipse_with_style(elem string, inherited GroupStyle) ?VectorPath {
 // parse_polygon_with_style parses a polygon/polyline element with inherited style.
 fn parse_polygon_with_style(elem string, inherited GroupStyle, close bool) ?VectorPath {
 	mut path := parse_polygon_element(elem, close) or { return none }
+	path.clip_path_id = parse_clip_path_url(elem) or { '' }
 	apply_inherited_style(mut path, inherited)
 	return path
 }
@@ -353,6 +381,7 @@ fn parse_polygon_with_style(elem string, inherited GroupStyle, close bool) ?Vect
 // parse_line_with_style parses a line element with inherited style.
 fn parse_line_with_style(elem string, inherited GroupStyle) ?VectorPath {
 	mut path := parse_line_element(elem) or { return none }
+	path.clip_path_id = parse_clip_path_url(elem) or { '' }
 	apply_inherited_style(mut path, inherited)
 	return path
 }
@@ -1263,4 +1292,69 @@ fn parse_number_list(s string) []f32 {
 		}
 	}
 	return numbers
+}
+
+// parse_clip_path_url extracts clip path ID from
+// clip-path="url(#id)" attribute.
+fn parse_clip_path_url(elem string) ?string {
+	val := find_attr(elem, 'clip-path') or { return none }
+	// Expected format: url(#id)
+	hash_pos := find_index(val, '#', 0) or { return none }
+	end_pos := find_index(val, ')', hash_pos) or { return none }
+	if end_pos > hash_pos + 1 {
+		return val[hash_pos + 1..end_pos]
+	}
+	return none
+}
+
+// parse_defs_clip_paths extracts <clipPath> definitions from
+// <defs> blocks. Returns map of id -> clip geometry paths.
+fn parse_defs_clip_paths(content string) map[string][]VectorPath {
+	mut clip_paths := map[string][]VectorPath{}
+	mut pos := 0
+
+	for pos < content.len {
+		// Find next <clipPath
+		cp_start := find_index(content, '<clipPath', pos) or { break }
+		// Find end of opening tag
+		tag_end := find_index(content, '>', cp_start) or { break }
+		opening_tag := content[cp_start..tag_end + 1]
+		is_self_closing := content[tag_end - 1] == `/`
+
+		// Extract id attribute
+		clip_id := find_attr(opening_tag, 'id') or {
+			pos = tag_end + 1
+			continue
+		}
+
+		if is_self_closing {
+			pos = tag_end + 1
+			continue
+		}
+
+		// Find closing </clipPath>
+		cp_content_start := tag_end + 1
+		cp_end := find_closing_tag(content, 'clipPath', cp_content_start)
+		if cp_end <= cp_content_start {
+			pos = tag_end + 1
+			continue
+		}
+
+		// Parse shapes inside <clipPath> as paths
+		cp_content := content[cp_content_start..cp_end]
+		default_style := GroupStyle{
+			transform: identity_transform
+		}
+		mut state := ParseState{}
+		paths := parse_svg_content(cp_content, default_style, 0, mut state)
+		if paths.len > 0 {
+			clip_paths[clip_id] = paths
+		}
+
+		// Skip past </clipPath>
+		close_end := find_index(content, '>', cp_end) or { break }
+		pos = close_end + 1
+	}
+
+	return clip_paths
 }

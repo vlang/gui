@@ -54,21 +54,25 @@ pub mut:
 	stroke_width f32        = -1.0 // negative = inherit from parent
 	stroke_cap   StrokeCap  = .inherit
 	stroke_join  StrokeJoin = .inherit
+	clip_path_id string // references clip_paths key, empty = none
 }
 
 // VectorGraphic holds the complete parsed vector graphic (e.g., from SVG).
 pub struct VectorGraphic {
 pub mut:
-	width  f32 // viewBox width
-	height f32 // viewBox height
-	paths  []VectorPath
+	width      f32 // viewBox width
+	height     f32 // viewBox height
+	paths      []VectorPath
+	clip_paths map[string][]VectorPath // id -> clip geometry
 }
 
 // TessellatedPath holds triangulated geometry ready for rendering.
 pub struct TessellatedPath {
 pub:
-	triangles []f32 // x,y pairs forming triangles
-	color     Color
+	triangles    []f32 // x,y pairs forming triangles
+	color        Color
+	is_clip_mask bool // true = stencil-write geometry
+	clip_group   int  // groups clip mask + clipped content (0 = none)
 }
 
 // get_triangles tessellates all paths in the graphic into GPU-ready triangle geometry.
@@ -124,15 +128,40 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 	base_tolerance := 0.5 / scale
 	tolerance := if base_tolerance > 0.15 { base_tolerance } else { f32(0.15) }
 
+	mut clip_group_counter := 0
+
 	for path in vg.paths {
+		// Determine clip group for this path
+		mut clip_group := 0
+		if path.clip_path_id.len > 0 {
+			if clip_geom := vg.clip_paths[path.clip_path_id] {
+				clip_group_counter++
+				clip_group = clip_group_counter
+				// Tessellate clip mask geometry
+				for cp in clip_geom {
+					cp_polylines := flatten_path(cp, tolerance)
+					clip_tris := tessellate_polylines(cp_polylines)
+					if clip_tris.len > 0 {
+						result << TessellatedPath{
+							triangles:    clip_tris
+							color:        Color{255, 255, 255, 255}
+							is_clip_mask: true
+							clip_group:   clip_group
+						}
+					}
+				}
+			}
+		}
+
 		polylines := flatten_path(path, tolerance)
 		// Tessellate fill
 		if path.fill_color.a > 0 {
 			triangles := tessellate_polylines(polylines)
 			if triangles.len > 0 {
 				result << TessellatedPath{
-					triangles: triangles
-					color:     path.fill_color
+					triangles:  triangles
+					color:      path.fill_color
+					clip_group: clip_group
 				}
 			}
 		}
@@ -143,8 +172,9 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 				path.stroke_join)
 			if stroke_tris.len > 0 {
 				result << TessellatedPath{
-					triangles: stroke_tris
-					color:     path.stroke_color
+					triangles:  stroke_tris
+					color:      path.stroke_color
+					clip_group: clip_group
 				}
 			}
 		}

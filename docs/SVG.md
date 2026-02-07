@@ -30,6 +30,7 @@ gui.svg(file_name: 'icon.svg', width: 24, height: 24, color: gui.theme().text_co
 | `<polygon>` | Full |
 | `<polyline>` | Full |
 | `<g>` | Full (nested groups with style inheritance) |
+| `<clipPath>` | Full (binary stencil clipping via `<defs>`) |
 
 ### Transforms
 
@@ -74,6 +75,23 @@ Styles cascade from parent groups to children:
     <circle fill="red" /> <!-- red fill, inherits black stroke -->
 </g>
 ```
+
+### Clip Paths
+
+Clip paths use stencil-based clipping to restrict rendering to
+a defined shape:
+
+```xml
+<defs>
+    <clipPath id="myClip">
+        <circle cx="50" cy="50" r="40"/>
+    </clipPath>
+</defs>
+<rect width="100" height="100" fill="blue" clip-path="url(#myClip)"/>
+```
+
+The `clip-path` attribute works on individual shapes and `<g>`
+groups. Group clip paths are inherited by children.
 
 ## Architecture
 
@@ -201,8 +219,9 @@ to 0.1px to maximize reuse (e.g., 24.0, 32.0, 48.0).
 
 ### Not Supported
 
-- Gradients, patterns, filterse>` (symbol reuse)
-- `<clipPath>` and `<mask>`
+- Gradients, patterns, filters
+- `<use>` (symbol reuse)
+- `<mask>` (luminance alpha masking)
 - `<linearGradient>` and `<radialGradient>`
 - CSS styling (`<style>` blocks, `class` attributes)
 - `opacity` attribute

@@ -48,6 +48,12 @@ mut:
 	blur_pip_init         bool         // Initialization flag for blur pipeline
 	gradient_pip          sgl.Pipeline // Pipeline for drawing multi-stop gradients
 	gradient_pip_init     bool         // Initialization flag for gradient pipeline
+	stencil_write_pip      sgl.Pipeline // Pipeline: write clip mask to stencil
+	stencil_write_pip_init bool
+	stencil_test_pip       sgl.Pipeline // Pipeline: draw with stencil test
+	stencil_test_pip_init  bool
+	stencil_clear_pip      sgl.Pipeline // Pipeline: clear stencil (ref=0)
+	stencil_clear_pip_init bool
 	ime_overlay           voidptr      // Native IME overlay handle (macOS)
 	ime_handler           &vglyph.StandardIMEHandler = unsafe { nil }
 	ime_initialized       bool // Lazy init flag (NSWindow not ready at init_fn)

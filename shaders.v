@@ -831,6 +831,118 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, thickness
 	sgl.load_default_pipeline()
 }
 
+// init_stencil_pipelines creates two sgl pipelines for clipPath
+// stencil clipping:
+//   stencil_write_pip: writes 1 to stencil, no color output
+//   stencil_test_pip:  draws only where stencil == 1
+fn init_stencil_pipelines(mut window Window) {
+	if !window.stencil_write_pip_init {
+		// Stencil write: always pass, replace with ref=1,
+		// disable color writes.
+		mut colors_w := [4]gfx.ColorTargetState{}
+		colors_w[0] = gfx.ColorTargetState{
+			write_mask: .none
+		}
+		desc_w := gfx.PipelineDesc{
+			label:   c'stencil_write_pip'
+			colors:  colors_w
+			stencil: gfx.StencilState{
+				enabled:    true
+				front:      gfx.StencilFaceState{
+					compare:       .always
+					pass_op:       .replace
+					fail_op:       .keep
+					depth_fail_op: .keep
+				}
+				back:       gfx.StencilFaceState{
+					compare:       .always
+					pass_op:       .replace
+					fail_op:       .keep
+					depth_fail_op: .keep
+				}
+				read_mask:  0xFF
+				write_mask: 0xFF
+				ref:        1
+			}
+		}
+		window.stencil_write_pip = sgl.make_pipeline(&desc_w)
+		window.stencil_write_pip_init = true
+	}
+
+	if !window.stencil_test_pip_init {
+		// Stencil test: draw only where stencil == ref(1),
+		// normal alpha blending.
+		mut colors_t := [4]gfx.ColorTargetState{}
+		colors_t[0] = gfx.ColorTargetState{
+			blend:      gfx.BlendState{
+				enabled:          true
+				src_factor_rgb:   .src_alpha
+				dst_factor_rgb:   .one_minus_src_alpha
+				src_factor_alpha: .one
+				dst_factor_alpha: .one_minus_src_alpha
+			}
+			write_mask: .rgba
+		}
+		desc_t := gfx.PipelineDesc{
+			label:   c'stencil_test_pip'
+			colors:  colors_t
+			stencil: gfx.StencilState{
+				enabled:    true
+				front:      gfx.StencilFaceState{
+					compare:       .equal
+					pass_op:       .keep
+					fail_op:       .keep
+					depth_fail_op: .keep
+				}
+				back:       gfx.StencilFaceState{
+					compare:       .equal
+					pass_op:       .keep
+					fail_op:       .keep
+					depth_fail_op: .keep
+				}
+				read_mask:  0xFF
+				write_mask: 0x00
+				ref:        1
+			}
+		}
+		window.stencil_test_pip = sgl.make_pipeline(&desc_t)
+		window.stencil_test_pip_init = true
+	}
+
+	if !window.stencil_clear_pip_init {
+		// Stencil clear: write ref=0 to reset stencil bits,
+		// no color output.
+		mut colors_c := [4]gfx.ColorTargetState{}
+		colors_c[0] = gfx.ColorTargetState{
+			write_mask: .none
+		}
+		desc_c := gfx.PipelineDesc{
+			label:   c'stencil_clear_pip'
+			colors:  colors_c
+			stencil: gfx.StencilState{
+				enabled:    true
+				front:      gfx.StencilFaceState{
+					compare:       .always
+					pass_op:       .replace
+					fail_op:       .keep
+					depth_fail_op: .keep
+				}
+				back:       gfx.StencilFaceState{
+					compare:       .always
+					pass_op:       .replace
+					fail_op:       .keep
+					depth_fail_op: .keep
+				}
+				read_mask:  0xFF
+				write_mask: 0xFF
+				ref:        0
+			}
+		}
+		window.stencil_clear_pip = sgl.make_pipeline(&desc_c)
+		window.stencil_clear_pip_init = true
+	}
+}
+
 fn draw_quad(x f32, y f32, w f32, h f32, z f32) {
 	sgl.begin_quads()
 
