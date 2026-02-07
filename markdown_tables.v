@@ -118,5 +118,5 @@ fn is_table_separator(s string) bool {
 			return false
 		}
 	}
-	return has_dash || (has_dash && has_pipe)
+	return has_dash && has_pipe
 }

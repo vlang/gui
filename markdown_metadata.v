@@ -162,66 +162,75 @@ fn replace_abbreviations(runs []RichTextRun, abbr_defs map[string]string, md_sty
 	return result
 }
 
-// split_run_for_abbrs splits a single run at abbreviation boundaries.
+// AbbrMatch stores a found abbreviation position.
+struct AbbrMatch {
+	start     int
+	end       int
+	abbr      string
+	expansion string
+}
+
+// split_run_for_abbrs splits a single run at abbreviation
+// boundaries. Collects all matches in one pass per abbreviation,
+// sorts by position, then splits linearly.
 fn split_run_for_abbrs(run RichTextRun, abbr_defs map[string]string, md_style MarkdownStyle) []RichTextRun {
 	text := run.text
 	if text.len == 0 {
 		return [run]
 	}
-	mut result := []RichTextRun{cap: 4}
+
+	// Collect all valid matches across all abbreviations
+	mut matches := []AbbrMatch{cap: 8}
+	for abbr, expansion in abbr_defs {
+		mut search_pos := 0
+		for search_pos < text.len {
+			start := text.index_after(abbr, search_pos) or { break }
+			end := start + abbr.len
+			if is_word_boundary(text, start - 1) && is_word_boundary(text, end) {
+				matches << AbbrMatch{
+					start:     start
+					end:       end
+					abbr:      abbr
+					expansion: expansion
+				}
+			}
+			search_pos = start + 1
+		}
+	}
+
+	if matches.len == 0 {
+		return [run]
+	}
+
+	// Sort by position; on tie, prefer longer match
+	matches.sort_with_compare(fn (a &AbbrMatch, b &AbbrMatch) int {
+		if a.start != b.start {
+			return a.start - b.start
+		}
+		return b.end - a.end
+	})
+
+	// Walk matches linearly, skipping overlaps
+	mut result := []RichTextRun{cap: matches.len * 2 + 1}
 	mut pos := 0
-
-	for pos < text.len {
-		// Find earliest valid abbreviation match (with word boundaries)
-		mut best_start := -1
-		mut best_end := -1
-		mut best_abbr := ''
-		mut best_expansion := ''
-
-		for abbr, expansion in abbr_defs {
-			// Search for all occurrences of this abbreviation starting from pos
-			mut search_pos := pos
-			for search_pos < text.len {
-				start := text.index_after(abbr, search_pos) or { break }
-				end := start + abbr.len
-				// Check word boundaries
-				if is_word_boundary(text, start - 1) && is_word_boundary(text, end) {
-					// Valid match - check if it's the earliest
-					if best_start == -1 || start < best_start {
-						best_start = start
-						best_end = end
-						best_abbr = abbr
-						best_expansion = expansion
-					}
-					break // Found valid match for this abbr
-				}
-				// Not a valid word boundary, search further
-				search_pos = start + 1
-			}
+	for m in matches {
+		if m.start < pos {
+			continue // overlaps previous match
 		}
-
-		if best_start == -1 {
-			// No more matches - add remaining text
-			if pos < text.len {
-				result << RichTextRun{
-					text:  text[pos..]
-					style: run.style
-				}
-			}
-			break
-		}
-
-		// Add text before abbreviation
-		if best_start > pos {
+		if m.start > pos {
 			result << RichTextRun{
-				text:  text[pos..best_start]
+				text:  text[pos..m.start]
 				style: run.style
 			}
 		}
-
-		// Add abbreviation run with tooltip and bold style
-		result << rich_abbr(best_abbr, best_expansion, run.style)
-		pos = best_end
+		result << rich_abbr(m.abbr, m.expansion, run.style)
+		pos = m.end
+	}
+	if pos < text.len {
+		result << RichTextRun{
+			text:  text[pos..]
+			style: run.style
+		}
 	}
 
 	if result.len == 0 {

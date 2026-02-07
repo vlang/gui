@@ -161,7 +161,9 @@ Math is rendered asynchronously via the
 **Notes:**
 - Requires network connection
 - LaTeX source sent to external latex.codecogs.com API
-- Display math rendered at 150 DPI, inline at 110 DPI
+- Default 150 DPI display, 200 DPI inline (configurable
+  via `math_dpi_display` / `math_dpi_inline` in
+  `MarkdownStyle`)
 - PNG images with transparency (blends with any background)
 - Shows raw LaTeX as fallback while loading
 - Cached to avoid re-fetching

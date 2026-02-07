@@ -38,6 +38,8 @@ pub:
 	table_cell_style   TextStyle        = gui_theme.n3
 	table_cell_padding Padding          = padding(5, 10, 5, 10)
 	table_row_alt      ?Color
+	math_dpi_display   int = 150
+	math_dpi_inline    int = 200
 }
 
 // MarkdownCfg configures a Markdown View.
@@ -135,7 +137,8 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 						w.view_state.diagram_cache.set(mhash, DiagramCacheEntry{
 							state: .loading
 						})
-						fetch_math_async(mut w, run.math_latex, mhash, false, cfg.style.text.color)
+						fetch_math_async(mut w, run.math_latex, mhash, cfg.style.math_dpi_inline,
+							cfg.style.text.color)
 					}
 				}
 			}
@@ -232,7 +235,8 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 				w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
 					state: .loading
 				})
-				fetch_math_async(mut w, block.math_latex, diagram_hash, true, cfg.style.text.color)
+				fetch_math_async(mut w, block.math_latex, diagram_hash, cfg.style.math_dpi_display,
+					cfg.style.text.color)
 				content << column(
 					color:       cfg.style.code_block_bg
 					padding:     cfg.style.code_block_padding

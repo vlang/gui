@@ -453,9 +453,11 @@ fn is_safe_url(url string) bool {
 	if lower.starts_with('http://') || lower.starts_with('https://') || lower.starts_with('mailto:') {
 		return true
 	}
-	// Relative URLs (no protocol) are safe
+	// Relative URLs (no protocol) are safe; block known
+	// dangerous schemes
 	if !lower.contains('://') && !lower.starts_with('javascript:') && !lower.starts_with('data:')
-		&& !lower.starts_with('vbscript:') {
+		&& !lower.starts_with('vbscript:') && !lower.starts_with('file:')
+		&& !lower.starts_with('blob:') {
 		return true
 	}
 	return false

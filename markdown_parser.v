@@ -371,7 +371,10 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			content, consumed := collect_list_item_content(left_trimmed[6..], lines, i + 1)
+			// Task list prefix is always "- [ ] " or "- [x] " (6 bytes)
+			task_prefix_len := 6
+			content, consumed := collect_list_item_content(left_trimmed[task_prefix_len..],
+				lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
 			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs)
 			blocks << MarkdownBlock{

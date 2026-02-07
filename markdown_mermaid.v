@@ -20,6 +20,16 @@ struct DiagramCacheEntry {
 	error    string
 	width    f32
 	height   f32
+	dpi      f32 // DPI used for rendering (for scale calc)
+}
+
+// write_stbi_temp writes an stbi image to a temp PNG file.
+// Returns the file path or an error string.
+fn write_stbi_temp(prefix string, hash i64, img stbi.Image) !string {
+	rand_suffix := rand.intn(1000000) or { 0 }
+	tmp_path := os.join_path(os.temp_dir(), '${prefix}_${hash}_${rand_suffix}.png')
+	stbi.stbi_write_png(tmp_path, img.width, img.height, img.nr_channels, img.data, img.width * img.nr_channels)!
+	return tmp_path
 }
 
 // fill_transparent_with_bg replaces transparent pixels with ghost white background.
@@ -159,12 +169,7 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 			fill_transparent_with_bg(final_img.data, final_img.width, final_img.height,
 				final_img.nr_channels)
 
-			// Write PNG to temp file with random suffix
-			rand_suffix := rand.intn(1000000) or { 0 }
-			tmp_path := os.join_path(os.temp_dir(), 'mermaid_${hash}_${rand_suffix}.png')
-			stbi.stbi_write_png(tmp_path, final_img.width, final_img.height, final_img.nr_channels,
-				final_img.data, final_img.width * final_img.nr_channels) or {
-				// Free stbi memory before returning
+			tmp_path := write_stbi_temp('mermaid', hash, final_img) or {
 				img.free()
 				if resized {
 					final_img.free()

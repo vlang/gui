@@ -1,8 +1,6 @@
 module gui
 
 import net.http
-import os
-import rand
 import stbi
 import time
 
@@ -21,22 +19,38 @@ fn math_cache_hash(math_id string) i64 {
 // a background thread. Uses PNG format. Updates diagram_cache
 // with result and triggers window refresh.
 // NOTE: LaTeX source is sent to external latex.codecogs.com API.
-fn fetch_math_async(mut window Window, latex string, hash i64, display bool, fg_color Color) {
-	spawn fn [mut window, latex, hash, display, fg_color] () {
+// sanitize_latex strips dangerous TeX commands that could
+// enable shell escape or file access on the remote renderer.
+fn sanitize_latex(s string) string {
+	// Block shell-escape and file-access commands
+	blocked := ['\\write18', '\\input', '\\include', '\\openin', '\\openout', '\\read', '\\write',
+		'\\csname', '\\immediate', '\\catcode']
+	mut result := s
+	for cmd in blocked {
+		result = result.replace(cmd, '')
+	}
+	return result
+}
+
+fn fetch_math_async(mut window Window, latex string, hash i64, dpi int, fg_color Color) {
+	spawn fn [mut window, latex, hash, dpi, fg_color] () {
 		ch := chan MathFetchResult{}
+
+		safe_latex := sanitize_latex(latex)
 
 		// Build codecogs URL with DPI and optional color prefix.
 		// Use named color to avoid bracket syntax that breaks
 		// when percent-encoded.
-		dpi := if display { '150' } else { '200' }
+		dpi_str := '${dpi}'
 		lum := 0.299 * f64(fg_color.r) + 0.587 * f64(fg_color.g) + 0.114 * f64(fg_color.b)
 		color_cmd := if lum > 128.0 { '\\color{white}' } else { '' }
-		prefix := '\\dpi{${dpi}}${color_cmd}'
+		prefix := '\\dpi{${dpi_str}}${color_cmd}'
 		// Replace spaces with {} (empty group) — acts as
 		// command terminator without visible output. V's
 		// http library re-encodes %20 as + which codecogs
 		// renders as literal plus signs.
-		encoded := (prefix + latex).replace(' ', '{}').replace('#', '%23').replace('&', '%26')
+		encoded := (prefix + safe_latex).replace(' ', '{}').replace('#', '%23').replace('&',
+			'%26')
 		url := 'https://latex.codecogs.com/png.image?${encoded}'
 
 		spawn fn [url, ch] () {
@@ -113,10 +127,7 @@ fn fetch_math_async(mut window Window, latex string, hash i64, display bool, fg_
 			// No transparent fill — keep PNG alpha for blending
 			// with any background color
 
-			rand_suffix := rand.intn(1000000) or { 0 }
-			tmp_path := os.join_path(os.temp_dir(), 'math_${hash}_${rand_suffix}.png')
-			stbi.stbi_write_png(tmp_path, img.width, img.height, img.nr_channels, img.data,
-				img.width * img.nr_channels) or {
+			tmp_path := write_stbi_temp('math', hash, img) or {
 				img.free()
 				err_msg := err.msg()
 				window.queue_command(fn [hash, err_msg] (mut w Window) {
@@ -130,13 +141,15 @@ fn fetch_math_async(mut window Window, latex string, hash i64, display bool, fg_
 			}
 			img_w := f32(img.width)
 			img_h := f32(img.height)
+			img_dpi := f32(dpi)
 			img.free()
-			window.queue_command(fn [hash, tmp_path, img_w, img_h] (mut w Window) {
+			window.queue_command(fn [hash, tmp_path, img_w, img_h, img_dpi] (mut w Window) {
 				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
 					state:    .ready
 					png_path: tmp_path
 					width:    img_w
 					height:   img_h
+					dpi:      img_dpi
 				})
 				// Invalidate markdown cache to trigger re-layout
 				// with actual inline math dimensions
