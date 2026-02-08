@@ -54,7 +54,6 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	layout := window.text_system.layout_rich_text(vg_rich_text, cfg) or { vglyph.Layout{} }
 
 	shape := &Shape{
-		name:           'rtf'
 		shape_type:     .rtf
 		id:             rtf.id
 		id_focus:       rtf.id_focus
@@ -69,8 +68,10 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 		hanging_indent: rtf.hanging_indent
 		vglyph_layout:  &layout
 		rich_text:      &rtf.rich_text
-		on_click:       rtf_on_click
-		on_mouse_move:  rtf_mouse_move
+		events:         &EventHandlers{
+			on_click:      rtf_on_click
+			on_mouse_move: rtf_mouse_move
+		}
 	}
 
 	return Layout{

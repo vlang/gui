@@ -88,7 +88,8 @@ pub fn button(cfg ButtonCfg) View {
 		on_click:     cfg.on_click
 		on_char:      spacebar_to_click(cfg.on_click)
 		amend_layout: fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
-			if layout.shape.disabled || layout.shape.on_click == unsafe { nil } {
+			if layout.shape.disabled || !layout.shape.has_events()
+				|| layout.shape.events.on_click == unsafe { nil } {
 				return
 			}
 			if w.is_focus(layout.shape.id_focus) {
@@ -97,7 +98,7 @@ pub fn button(cfg ButtonCfg) View {
 			}
 		}
 		on_hover:     fn [color_hover, color_click, user_on_hover] (mut layout Layout, mut e Event, mut w Window) {
-			if layout.shape.on_click == unsafe { nil } {
+			if !layout.shape.has_events() || layout.shape.events.on_click == unsafe { nil } {
 				return
 			}
 			w.set_mouse_cursor_pointing_hand()

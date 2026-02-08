@@ -95,7 +95,8 @@ pub fn toggle(cfg ToggleCfg) View {
 		}
 		min_width:    cfg.min_width
 		amend_layout: fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
-			if layout.shape.disabled || layout.shape.on_click == unsafe { nil } {
+			if layout.shape.disabled || !layout.shape.has_events()
+				|| layout.shape.events.on_click == unsafe { nil } {
 				return
 			}
 			if layout.children.len == 0 {

@@ -59,7 +59,6 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 			// But to avoid error log from load_image, we can return early
 			mut layout := Layout{
 				shape: &Shape{
-					name:       'image_loading'
 					shape_type: .rectangle // Placeholder
 					id:         iv.id
 					width:      if iv.width > 0 { iv.width } else { 100 }
@@ -87,20 +86,25 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 	width := if iv.width > 0 { iv.width } else { image.width }
 	height := if iv.height > 0 { iv.height } else { image.height }
 
+	mut events := unsafe { &EventHandlers(nil) }
+	if iv.on_click != unsafe { nil } || iv.on_hover != unsafe { nil } {
+		events = &EventHandlers{
+			on_click: iv.on_click
+			on_hover: iv.on_hover
+		}
+	}
 	mut layout := Layout{
 		shape: &Shape{
-			name:       'image'
 			shape_type: .image
 			id:         iv.id
-			image_name: image_path
+			resource:   image_path
 			width:      width
 			min_width:  iv.min_width
 			max_width:  iv.max_width
 			height:     height
 			min_height: iv.min_height
 			max_height: iv.max_height
-			on_click:   iv.on_click
-			on_hover:   iv.on_hover
+			events:     events
 		}
 	}
 	apply_fixed_sizing_constraints(mut layout.shape)

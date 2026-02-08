@@ -10,11 +10,9 @@ pub:
 	uid u64 = rand.u64() // internal use only
 pub mut:
 	// String fields (16 bytes)
-	id         string // Unique identifier assigned by the user
-	name       string // Internal name, useful for debugging (e.g., 'Container', 'Text')
-	text       string // Text content for text-based shapes
-	image_name string // Filename or path for image shapes
-	svg_name   string // Filename or path for SVG shapes
+	id       string // Unique identifier assigned by the user
+	text     string // Text content for text-based shapes
+	resource string // Image path or SVG source (discriminated by shape_type)
 
 	// Pointer fields (8 bytes)
 	vglyph_layout   &vglyph.Layout = unsafe { nil } // Unified layout engine object for both plain and rich text
@@ -24,17 +22,8 @@ pub mut:
 	border_gradient &Gradient      = unsafe { nil } // Gradient border configuration
 	shader          &Shader        = unsafe { nil } // Custom fragment shader
 
-	// Event Handlers
-	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle character input
-	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle key press
-	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse click
-	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse movement over shape
-	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle mouse button release
-	on_mouse_scroll fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle scroll wheel events
-	on_scroll       fn (&Layout, mut Window)               = unsafe { nil } // Handle scroll container updates
-	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil } // Custom hook to modify layout during the pipeline
-	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil } // Handle hover state changes
-	on_ime_commit   fn (&Layout, string, mut Window)       = unsafe { nil } // Handle IME text commit
+	// Event handlers (optional sub-struct, nil for shapes without handlers)
+	events &EventHandlers = unsafe { nil }
 
 	// Structs (Large/Aligned)
 	text_style TextStyle // Configuration for text rendering (font, size, color)
@@ -71,23 +60,47 @@ pub mut:
 	size_border           f32   // Thickness of the border
 
 	// 1 byte (Enums/Bools)
-	axis                Axis            // Layout direction (row/column)
-	shape_type          ShapeType       // Discriminator for shape kind
-	h_align             HorizontalAlign // Horizontal alignment of children/content
-	v_align             VerticalAlign   // Vertical alignment of children/content
-	text_mode           TextMode        // Text wrapping/multiline mode
-	scroll_mode         ScrollMode      // Scrolling behavior (e.g. auto, always, never)
-	float_anchor        FloatAttach     // Anchor point on the parent for floating shapes
-	float_tie_off       FloatAttach     // Anchor point on the floating shape itself
-	clip                bool            // Whether to clip children/content to bounds
-	disabled            bool            // Visual and interactive disabled state
-	float               bool            // Whether the shape is floating (removed from flow)
-	focus_skip          bool            // If true, skip this element in focus navigation
-	over_draw           bool            // If true, allows drawing into padding and ignores spacing impact
-	text_is_password    bool            // If true, mask text characters
-	text_is_placeholder bool            // If true, text is a placeholder (affects styling)
-	hero                bool            // If true, element participates in hero transitions
-	opacity             f32 = 1.0 // Opacity multiplier (0.0 = transparent, 1.0 = opaque)
+	axis                  Axis                 // Layout direction (row/column)
+	shape_type            ShapeType            // Discriminator for shape kind
+	h_align               HorizontalAlign      // Horizontal alignment of children/content
+	v_align               VerticalAlign        // Vertical alignment of children/content
+	text_mode             TextMode             // Text wrapping/multiline mode
+	scroll_mode           ScrollMode           // Scrolling behavior (e.g. auto, always, never)
+	scrollbar_orientation ScrollbarOrientation // Scrollbar type (.none for non-scrollbar shapes)
+	float_anchor          FloatAttach          // Anchor point on the parent for floating shapes
+	float_tie_off         FloatAttach          // Anchor point on the floating shape itself
+	clip                  bool                 // Whether to clip children/content to bounds
+	disabled              bool                 // Visual and interactive disabled state
+	float                 bool                 // Whether the shape is floating (removed from flow)
+	focus_skip            bool                 // If true, skip this element in focus navigation
+	over_draw             bool                 // If true, allows drawing into padding and ignores spacing impact
+	text_is_password      bool                 // If true, mask text characters
+	text_is_placeholder   bool                 // If true, text is a placeholder (affects styling)
+	hero                  bool                 // If true, element participates in hero transitions
+	opacity               f32 = 1.0 // Opacity multiplier (0.0 = transparent, 1.0 = opaque)
+}
+
+// EventHandlers holds optional event callback fields for a Shape.
+// Allocated only when a shape has at least one handler.
+@[heap]
+pub struct EventHandlers {
+pub mut:
+	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_scroll fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_scroll       fn (&Layout, mut Window)               = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	on_ime_commit   fn (&Layout, string, mut Window)       = unsafe { nil }
+}
+
+// has_events returns true if the shape has an allocated EventHandlers.
+@[inline]
+pub fn (shape &Shape) has_events() bool {
+	return shape.events != unsafe { nil }
 }
 
 // ShapeType defines the kind of Shape.

@@ -467,7 +467,7 @@ fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
 
 // hover_icon changes cursor to pointing hand if icon is interactive.
 fn (_ &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
-	if layout.shape.on_click != unsafe { nil } {
+	if layout.shape.has_events() && layout.shape.events.on_click != unsafe { nil } {
 		w.set_mouse_cursor_pointing_hand()
 	}
 }

@@ -81,7 +81,8 @@ pub fn switch(cfg SwitchCfg) View {
 			}
 		}
 		amend_layout: fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
-			if layout.shape.disabled || layout.shape.on_click == unsafe { nil } {
+			if layout.shape.disabled || !layout.shape.has_events()
+				|| layout.shape.events.on_click == unsafe { nil } {
 				return
 			}
 			if w.is_focus(layout.shape.id_focus) {

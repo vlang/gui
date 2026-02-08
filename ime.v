@@ -62,7 +62,7 @@ fn (mut w Window) update_ime_focus(id u32) {
 				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '')
 				return
 			}
-			if ly.shape.on_ime_commit != unsafe { nil } {
+			if ly.shape.has_events() && ly.shape.events.on_ime_commit != unsafe { nil } {
 				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '${id}')
 			} else {
 				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '')
@@ -87,8 +87,8 @@ fn ime_on_commit(text string, data voidptr) {
 			return
 		}
 		ly := find_layout_by_id_focus(&w.layout, id_focus) or { return }
-		if ly.shape.on_ime_commit != unsafe { nil } {
-			ly.shape.on_ime_commit(&ly, text, mut w)
+		if ly.shape.has_events() && ly.shape.events.on_ime_commit != unsafe { nil } {
+			ly.shape.events.on_ime_commit(&ly, text, mut w)
 		}
 	}
 }

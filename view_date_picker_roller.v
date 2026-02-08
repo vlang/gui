@@ -122,7 +122,10 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 		on_keydown:   cfg.on_keydown
 		content:      drums
 		amend_layout: fn [cfg, drum_order] (mut layout Layout, mut w Window) {
-			layout.shape.on_mouse_scroll = fn [cfg, drum_order] (ly &Layout, mut e Event, mut w Window) {
+			if layout.shape.events == unsafe { nil } {
+				layout.shape.events = &EventHandlers{}
+			}
+			layout.shape.events.on_mouse_scroll = fn [cfg, drum_order] (ly &Layout, mut e Event, mut w Window) {
 				cfg.on_scroll(ly, drum_order, mut e, mut w)
 			}
 		}

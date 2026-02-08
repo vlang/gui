@@ -50,55 +50,47 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 	mut layout := Layout{
 		children: children
 		shape:    &Shape{
-			shape_type:      cv.shape_type
-			id:              cv.id
-			id_focus:        cv.id_focus
-			axis:            cv.axis
-			name:            cv.name
-			x:               cv.x
-			y:               cv.y
-			width:           cv.width
-			min_width:       cv.min_width
-			max_width:       cv.max_width
-			height:          cv.height
-			min_height:      cv.min_height
-			max_height:      cv.max_height
-			clip:            cv.clip
-			focus_skip:      cv.focus_skip
-			spacing:         cv.spacing
-			sizing:          cv.sizing
-			padding:         cv.padding
-			h_align:         cv.h_align
-			v_align:         cv.v_align
-			radius:          cv.radius
-			blur_radius:     cv.blur_radius
-			color:           cv.color
-			shadow:          cv.shadow
-			gradient:        cv.gradient
-			border_gradient: cv.border_gradient
-			shader:          cv.shader
-			size_border:     cv.size_border
-			color_border:    cv.color_border
-			disabled:        cv.disabled
-			float:           cv.float
-			float_anchor:    cv.float_anchor
-			float_tie_off:   cv.float_tie_off
-			float_offset_x:  cv.float_offset_x
-			float_offset_y:  cv.float_offset_y
-			id_scroll:       cv.id_scroll
-			over_draw:       cv.over_draw
-			scroll_mode:     cv.scroll_mode
-			on_click:        cv.on_click
-			on_char:         cv.on_char
-			on_keydown:      cv.on_keydown
-			on_mouse_move:   cv.on_mouse_move_tooltip
-			on_mouse_up:     cv.on_mouse_up
-			on_hover:        cv.on_hover
-			on_ime_commit:   cv.on_ime_commit
-			on_scroll:       cv.on_scroll
-			amend_layout:    cv.amend_layout
-			hero:            cv.hero
-			opacity:         cv.opacity
+			shape_type:            cv.shape_type
+			id:                    cv.id
+			id_focus:              cv.id_focus
+			axis:                  cv.axis
+			scrollbar_orientation: cv.scrollbar_orientation
+			x:                     cv.x
+			y:                     cv.y
+			width:                 cv.width
+			min_width:             cv.min_width
+			max_width:             cv.max_width
+			height:                cv.height
+			min_height:            cv.min_height
+			max_height:            cv.max_height
+			clip:                  cv.clip
+			focus_skip:            cv.focus_skip
+			spacing:               cv.spacing
+			sizing:                cv.sizing
+			padding:               cv.padding
+			h_align:               cv.h_align
+			v_align:               cv.v_align
+			radius:                cv.radius
+			blur_radius:           cv.blur_radius
+			color:                 cv.color
+			shadow:                cv.shadow
+			gradient:              cv.gradient
+			border_gradient:       cv.border_gradient
+			shader:                cv.shader
+			size_border:           cv.size_border
+			color_border:          cv.color_border
+			disabled:              cv.disabled
+			float:                 cv.float
+			float_anchor:          cv.float_anchor
+			float_tie_off:         cv.float_tie_off
+			float_offset_x:        cv.float_offset_x
+			float_offset_y:        cv.float_offset_y
+			id_scroll:             cv.id_scroll
+			over_draw:             cv.over_draw
+			scroll_mode:           cv.scroll_mode
+			events:                cv.make_events()
+			hero:                  cv.hero
+			opacity:               cv.opacity
 		}
 	}
 	apply_fixed_sizing_constraints(mut layout.shape)
@@ -156,8 +148,9 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 @[minify]
 pub struct ContainerCfg {
 mut:
-	name string // internally set
-	axis Axis
+	name                  string // internally set (unused by Shape)
+	scrollbar_orientation ScrollbarOrientation
+	axis                  Axis
 pub:
 	id              string
 	title           string
@@ -259,62 +252,63 @@ fn container(cfg ContainerCfg) View {
 	}
 
 	view := ContainerView{
-		id:              cfg.id
-		id_focus:        cfg.id_focus
-		axis:            cfg.axis
-		name:            cfg.name
-		x:               cfg.x
-		y:               cfg.y
-		width:           cfg.width
-		min_width:       cfg.min_width
-		max_width:       cfg.max_width
-		height:          cfg.height
-		min_height:      cfg.min_height
-		max_height:      cfg.max_height
-		clip:            cfg.clip
-		color:           cfg.color
-		h_align:         cfg.h_align
-		v_align:         cfg.v_align
-		padding:         cfg.padding
-		radius:          cfg.radius
-		blur_radius:     cfg.blur_radius
-		shadow:          cfg.shadow
-		gradient:        cfg.gradient
-		border_gradient: cfg.border_gradient
-		shader:          cfg.shader
-		size_border:     cfg.size_border
-		color_border:    cfg.color_border
-		sizing:          cfg.sizing
-		spacing:         cfg.spacing
-		disabled:        cfg.disabled
-		focus_skip:      cfg.focus_skip
-		title:           cfg.title
-		title_bg:        cfg.title_bg
-		id_scroll:       cfg.id_scroll
-		over_draw:       cfg.over_draw
-		scroll_mode:     cfg.scroll_mode
-		float:           cfg.float
-		float_anchor:    cfg.float_anchor
-		float_tie_off:   cfg.float_tie_off
-		float_offset_x:  cfg.float_offset_x
-		float_offset_y:  cfg.float_offset_y
-		tooltip:         cfg.tooltip
-		on_click:        if cfg.on_any_click != unsafe { nil } {
+		id:                    cfg.id
+		id_focus:              cfg.id_focus
+		axis:                  cfg.axis
+		name:                  cfg.name
+		scrollbar_orientation: cfg.scrollbar_orientation
+		x:                     cfg.x
+		y:                     cfg.y
+		width:                 cfg.width
+		min_width:             cfg.min_width
+		max_width:             cfg.max_width
+		height:                cfg.height
+		min_height:            cfg.min_height
+		max_height:            cfg.max_height
+		clip:                  cfg.clip
+		color:                 cfg.color
+		h_align:               cfg.h_align
+		v_align:               cfg.v_align
+		padding:               cfg.padding
+		radius:                cfg.radius
+		blur_radius:           cfg.blur_radius
+		shadow:                cfg.shadow
+		gradient:              cfg.gradient
+		border_gradient:       cfg.border_gradient
+		shader:                cfg.shader
+		size_border:           cfg.size_border
+		color_border:          cfg.color_border
+		sizing:                cfg.sizing
+		spacing:               cfg.spacing
+		disabled:              cfg.disabled
+		focus_skip:            cfg.focus_skip
+		title:                 cfg.title
+		title_bg:              cfg.title_bg
+		id_scroll:             cfg.id_scroll
+		over_draw:             cfg.over_draw
+		scroll_mode:           cfg.scroll_mode
+		float:                 cfg.float
+		float_anchor:          cfg.float_anchor
+		float_tie_off:         cfg.float_tie_off
+		float_offset_x:        cfg.float_offset_x
+		float_offset_y:        cfg.float_offset_y
+		tooltip:               cfg.tooltip
+		on_click:              if cfg.on_any_click != unsafe { nil } {
 			cfg.on_any_click
 		} else {
 			left_click_only(cfg.on_click)
 		}
-		on_char:         cfg.on_char
-		on_keydown:      cfg.on_keydown
-		on_mouse_move:   cfg.on_mouse_move
-		on_mouse_up:     cfg.on_mouse_up
-		on_hover:        cfg.on_hover
-		on_ime_commit:   cfg.on_ime_commit
-		on_scroll:       cfg.on_scroll
-		amend_layout:    cfg.amend_layout
-		hero:            cfg.hero
-		opacity:         cfg.opacity
-		content:         content
+		on_char:               cfg.on_char
+		on_keydown:            cfg.on_keydown
+		on_mouse_move:         cfg.on_mouse_move
+		on_mouse_up:           cfg.on_mouse_up
+		on_hover:              cfg.on_hover
+		on_ime_commit:         cfg.on_ime_commit
+		on_scroll:             cfg.on_scroll
+		amend_layout:          cfg.amend_layout
+		hero:                  cfg.hero
+		opacity:               cfg.opacity
+		content:               content
 	}
 	return view
 }
@@ -363,19 +357,60 @@ pub fn circle(cfg ContainerCfg) View {
 	return circle
 }
 
-fn (cv &ContainerView) on_mouse_move_tooltip(layout &Layout, mut e Event, mut w Window) {
-	if cv.tooltip != unsafe { nil } && cv.tooltip.content.len > 0 {
-		w.animation_add(mut cv.tooltip.animation_tooltip())
-		w.view_state.tooltip.bounds = DrawClip{
-			x:      layout.shape.x
-			y:      layout.shape.y
-			width:  layout.shape.width
-			height: layout.shape.height
-		}
-		e.is_handled = true
+fn (cv &ContainerView) make_events() &EventHandlers {
+	if cv.on_click == unsafe { nil } && cv.on_char == unsafe { nil }
+		&& cv.on_keydown == unsafe { nil } && cv.on_mouse_move == unsafe { nil }
+		&& cv.on_mouse_up == unsafe { nil } && cv.on_hover == unsafe { nil }
+		&& cv.on_ime_commit == unsafe { nil } && cv.on_scroll == unsafe { nil }
+		&& cv.amend_layout == unsafe { nil } && cv.tooltip == unsafe { nil } {
+		return unsafe { nil }
 	}
-	if cv.on_mouse_move != unsafe { nil } {
-		cv.on_mouse_move(layout, mut e, mut w)
+	return &EventHandlers{
+		on_click:      cv.on_click
+		on_char:       cv.on_char
+		on_keydown:    cv.on_keydown
+		on_mouse_move: make_mouse_move_tooltip(cv.tooltip, cv.on_mouse_move)
+		on_mouse_up:   cv.on_mouse_up
+		on_hover:      cv.on_hover
+		on_ime_commit: cv.on_ime_commit
+		on_scroll:     cv.on_scroll
+		amend_layout:  cv.amend_layout
+	}
+}
+
+// make_mouse_move_tooltip wraps on_mouse_move with tooltip
+// handling. Captures only tooltip and on_mouse_move, NOT the
+// entire ContainerView (avoids false GC retention).
+fn make_mouse_move_tooltip(tooltip &TooltipCfg, on_mouse_move fn (&Layout, mut Event, mut Window)) fn (&Layout, mut Event, mut Window) {
+	if tooltip == unsafe { nil } {
+		return on_mouse_move // nil or user callback
+	}
+	if on_mouse_move == unsafe { nil } {
+		return fn [tooltip] (layout &Layout, mut e Event, mut w Window) {
+			if tooltip.content.len > 0 {
+				w.animation_add(mut tooltip.animation_tooltip())
+				w.view_state.tooltip.bounds = DrawClip{
+					x:      layout.shape.x
+					y:      layout.shape.y
+					width:  layout.shape.width
+					height: layout.shape.height
+				}
+				e.is_handled = true
+			}
+		}
+	}
+	return fn [tooltip, on_mouse_move] (layout &Layout, mut e Event, mut w Window) {
+		if tooltip.content.len > 0 {
+			w.animation_add(mut tooltip.animation_tooltip())
+			w.view_state.tooltip.bounds = DrawClip{
+				x:      layout.shape.x
+				y:      layout.shape.y
+				width:  layout.shape.width
+				height: layout.shape.height
+			}
+			e.is_handled = true
+		}
+		on_mouse_move(layout, mut e, mut w)
 	}
 }
 

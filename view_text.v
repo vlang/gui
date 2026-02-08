@@ -44,9 +44,17 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	window.stats.increment_text_views()
 
 	input_state := window.view_state.input_state.get(tv.id_focus) or { InputState{} }
+	mut events := unsafe { &EventHandlers(nil) }
+	if tv.on_char != unsafe { nil } || tv.on_key_down != unsafe { nil }
+		|| tv.on_click != unsafe { nil } {
+		events = &EventHandlers{
+			on_char:    tv.on_char
+			on_keydown: tv.on_key_down
+			on_click:   tv.on_click
+		}
+	}
 	mut layout := Layout{
 		shape: &Shape{
-			name:                'text'
 			shape_type:          .text
 			id:                  tv.id
 			id_focus:            tv.id_focus
@@ -63,9 +71,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			text_sel_beg:        input_state.select_beg
 			text_sel_end:        input_state.select_end
 			text_tab_size:       tv.tab_size
-			on_char:             tv.on_char
-			on_keydown:          tv.on_key_down
-			on_click:            tv.on_click
+			events:              events
 			hero:                tv.hero
 			opacity:             tv.opacity
 		}

@@ -62,18 +62,24 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 	}
 	_ = cached // cache entry now exists at correct scale
 
+	mut events := unsafe { &EventHandlers(nil) }
+	on_click := sv.left_click()
+	if on_click != unsafe { nil } {
+		events = &EventHandlers{
+			on_click: on_click
+		}
+	}
 	mut layout := Layout{
 		shape: &Shape{
-			name:       'svg'
 			shape_type: .svg
 			id:         sv.id
-			svg_name:   svg_src
+			resource:   svg_src
 			width:      width
 			height:     height
 			color:      sv.color
 			sizing:     sv.sizing
 			padding:    sv.padding
-			on_click:   sv.left_click()
+			events:     events
 		}
 	}
 	apply_fixed_sizing_constraints(mut layout.shape)

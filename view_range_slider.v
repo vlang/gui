@@ -205,7 +205,10 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 //   layout Layout - The wrapper layout node
 //   w Window      - Window context for focus state handling
 fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
-	layout.shape.on_mouse_scroll = cfg.on_mouse_scroll
+	if layout.shape.events == unsafe { nil } {
+		layout.shape.events = &EventHandlers{}
+	}
+	layout.shape.events.on_mouse_scroll = cfg.on_mouse_scroll
 
 	if layout.children.len == 0 {
 		return

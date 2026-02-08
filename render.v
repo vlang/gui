@@ -361,14 +361,14 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 	mut shape_clip := clip
 	if layout.shape.over_draw { // allow drawing in the padded area of shape
 		shape_clip = layout.shape.shape_clip
-		if layout.shape.name == scrollbar_vertical_name {
+		if layout.shape.scrollbar_orientation == .vertical {
 			shape_clip = DrawClip{
 				...shape_clip
 				y:      clip.y
 				height: clip.height
 			}
 		}
-		if layout.shape.name == scrollbar_horizontal_name {
+		if layout.shape.scrollbar_orientation == .horizontal {
 			shape_clip = DrawClip{
 				...shape_clip
 				x:     clip.x
@@ -908,7 +908,7 @@ fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 		shape.disabled = true
 		return
 	}
-	image := window.load_image(shape.image_name) or {
+	image := window.load_image(shape.resource) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
 		draw_error_placeholder(shape.x, shape.y, shape.width, shape.height, mut window)
 		return
@@ -1265,7 +1265,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 		return
 	}
 
-	cached := window.load_svg(shape.svg_name, shape.width, shape.height) or {
+	cached := window.load_svg(shape.resource, shape.width, shape.height) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
 		draw_error_placeholder(shape.x, shape.y, shape.width, shape.height, mut window)
 		return

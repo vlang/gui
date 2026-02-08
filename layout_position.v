@@ -178,8 +178,8 @@ fn layout_amend(mut layout Layout, mut w Window) {
 	for mut child in layout.children {
 		layout_amend(mut child, mut w)
 	}
-	if layout.shape.amend_layout != unsafe { nil } {
-		layout.shape.amend_layout(mut layout, mut w)
+	if layout.shape.has_events() && layout.shape.events.amend_layout != unsafe { nil } {
+		layout.shape.events.amend_layout(mut layout, mut w)
 	}
 }
 
@@ -194,7 +194,7 @@ fn layout_hover(mut layout Layout, mut w Window) bool {
 			return true
 		}
 	}
-	if layout.shape.on_hover != unsafe { nil } {
+	if layout.shape.has_events() && layout.shape.events.on_hover != unsafe { nil } {
 		if layout.shape.disabled {
 			return false
 		}
@@ -224,7 +224,7 @@ fn layout_hover(mut layout Layout, mut w Window) bool {
 				window_width:  ctx.width
 				window_height: ctx.height
 			}
-			layout.shape.on_hover(mut layout, mut ev, mut w)
+			layout.shape.events.on_hover(mut layout, mut ev, mut w)
 			return ev.is_handled
 		}
 	}

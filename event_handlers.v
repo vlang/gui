@@ -29,7 +29,8 @@ fn char_handler(layout &Layout, mut e Event, mut w Window) {
 		}
 	}
 	// Execute callback if this layout has focus
-	execute_focus_callback(layout, mut e, mut w, layout.shape.on_char, 'char_handler')
+	on_char := if layout.shape.has_events() { layout.shape.events.on_char } else { unsafe { nil } }
+	execute_focus_callback(layout, mut e, mut w, on_char, 'char_handler')
 }
 
 // keydown_handler handles key down events (special keys, shortcuts).
@@ -62,7 +63,12 @@ fn keydown_handler(layout &Layout, mut e Event, mut w Window) {
 		}
 	}
 	// Execute keydown callback
-	execute_focus_callback(layout, mut e, mut w, layout.shape.on_keydown, 'keydown_handler')
+	on_keydown := if layout.shape.has_events() {
+		layout.shape.events.on_keydown
+	} else {
+		unsafe { nil }
+	}
+	execute_focus_callback(layout, mut e, mut w, on_keydown, 'keydown_handler')
 }
 
 // key_down_scroll_handler handles keyboard-based scrolling.
@@ -119,7 +125,12 @@ fn mouse_down_handler(layout &Layout, in_handler bool, mut e Event, mut w Window
 			w.set_id_focus(layout.shape.id_focus)
 		}
 		// Execute click callback with relative coordinates
-		execute_mouse_callback(layout, mut e, mut w, layout.shape.on_click, 'mouse_down_handler')
+		on_click := if layout.shape.has_events() {
+			layout.shape.events.on_click
+		} else {
+			unsafe { nil }
+		}
+		execute_mouse_callback(layout, mut e, mut w, on_click, 'mouse_down_handler')
 	}
 }
 
@@ -146,7 +157,12 @@ fn mouse_move_handler(layout &Layout, mut e Event, mut w Window) {
 		}
 	}
 	// Execute mouse move callback with relative coordinates
-	execute_mouse_callback(layout, mut e, mut w, layout.shape.on_mouse_move, 'mouse_move_handler')
+	on_mouse_move := if layout.shape.has_events() {
+		layout.shape.events.on_mouse_move
+	} else {
+		unsafe { nil }
+	}
+	execute_mouse_callback(layout, mut e, mut w, on_mouse_move, 'mouse_move_handler')
 }
 
 // mouse_up_handler handles mouse button release events.
@@ -168,7 +184,12 @@ fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 		}
 	}
 	// Execute mouse up callback with relative coordinates
-	execute_mouse_callback(layout, mut e, mut w, layout.shape.on_mouse_up, 'mouse_up_handler')
+	on_mouse_up := if layout.shape.has_events() {
+		layout.shape.events.on_mouse_up
+	} else {
+		unsafe { nil }
+	}
+	execute_mouse_callback(layout, mut e, mut w, on_mouse_up, 'mouse_up_handler')
 }
 
 // mouse_scroll_handler handles mouse wheel scroll events.
@@ -192,8 +213,8 @@ fn mouse_scroll_handler(layout &Layout, mut e Event, mut w Window) {
 			return l.shape.id_focus == id_focus
 		})
 		{
-			if ly.shape.on_mouse_scroll != unsafe { nil } {
-				ly.shape.on_mouse_scroll(ly, mut e, mut w)
+			if ly.shape.has_events() && ly.shape.events.on_mouse_scroll != unsafe { nil } {
+				ly.shape.events.on_mouse_scroll(ly, mut e, mut w)
 				return
 			}
 		}
