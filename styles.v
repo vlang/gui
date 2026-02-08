@@ -59,8 +59,8 @@ pub:
 	size_border        f32       = size_border
 	radius             f32       = radius_medium
 	sv_size            f32       = 200
-	slider_height      f32       = 16
-	indicator_size     f32       = 12
+	slider_height      f32       = 24
+	indicator_size     f32       = 16
 	text_style         TextStyle = text_style_dark
 }
 

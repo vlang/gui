@@ -77,6 +77,18 @@ mut:
 	progress_state           BoundedMap[string, f32] = BoundedMap[string, f32]{
 		max_size: 50
 	}
+	color_picker_state       BoundedMap[string, ColorPickerState] = BoundedMap[string, ColorPickerState]{
+		max_size: 20
+	}
+}
+
+// ColorPickerState stores persistent HSV values for ColorPickers.
+// This preserves hue even when color becomes grayscale (s=0 or v=0).
+pub struct ColorPickerState {
+pub:
+	h f32
+	s f32
+	v f32
 }
 
 // TableColCache stores cached column widths and hash for invalidation
