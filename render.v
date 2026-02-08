@@ -973,7 +973,7 @@ pub fn draw_blur_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.Col
 // CSS: 0deg=top, clockwise. Math: 0rad=right, counter-clockwise.
 fn angle_to_direction(css_degrees f32) (f32, f32) {
 	rad := (90.0 - css_degrees) * math.pi / 180.0
-	return f32(math.cos(rad)), f32(math.sin(rad))
+	return f32(math.cos(rad)), -f32(math.sin(rad))
 }
 
 // gradient_direction computes direction vector from Gradient config

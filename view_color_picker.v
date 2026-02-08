@@ -167,24 +167,16 @@ fn (cfg &ColorPickerCfg) hue_slider(w f32, h f32) View {
 					pos:   0
 				},
 				GradientStop{
-					color: hue_color(60)
-					pos:   0.167
-				},
-				GradientStop{
-					color: hue_color(120)
-					pos:   0.333
+					color: hue_color(90)
+					pos:   0.25
 				},
 				GradientStop{
 					color: hue_color(180)
 					pos:   0.5
 				},
 				GradientStop{
-					color: hue_color(240)
-					pos:   0.667
-				},
-				GradientStop{
-					color: hue_color(300)
-					pos:   0.833
+					color: hue_color(270)
+					pos:   0.75
 				},
 				GradientStop{
 					color: hue_color(360)
