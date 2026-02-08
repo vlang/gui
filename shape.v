@@ -22,6 +22,7 @@ pub mut:
 	shadow          &BoxShadow     = unsafe { nil } // Drop shadow configuration
 	gradient        &Gradient      = unsafe { nil } // Gradient background configuration
 	border_gradient &Gradient      = unsafe { nil } // Gradient border configuration
+	shader          &Shader        = unsafe { nil } // Custom fragment shader
 
 	// Event Handlers
 	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil } // Handle character input

@@ -98,6 +98,16 @@ struct DrawGradient {
 	gradient &Gradient
 }
 
+struct DrawCustomShader {
+	x      f32
+	y      f32
+	w      f32
+	h      f32
+	radius f32
+	color  gg.Color
+	shader &Shader
+}
+
 struct DrawSvg {
 	triangles    []f32 // x,y pairs forming triangles
 	color        gg.Color
@@ -130,6 +140,7 @@ type Renderer = DrawCircle
 	| DrawBlur
 	| DrawGradient
 	| DrawGradientBorder
+	| DrawCustomShader
 
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
@@ -328,6 +339,10 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			draw_gradient_border(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
 				renderer.thickness, renderer.gradient, mut window)
 		}
+		DrawCustomShader {
+			draw_custom_shader_rect(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
+				renderer.color, renderer.shader, mut window)
+		}
 		DrawSvg {
 			draw_triangles(renderer.triangles, renderer.color, renderer.x, renderer.y,
 				renderer.scale, mut window)
@@ -399,8 +414,8 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 	// SVG shapes have their own internal colors, so don't skip them
 	is_svg := shape.shape_type == .svg
 	if shape.color == color_transparent && shape.gradient == unsafe { nil }
-		&& shape.border_gradient == unsafe { nil } && !has_visible_border && !has_visible_text
-		&& !is_svg {
+		&& shape.shader == unsafe { nil } && shape.border_gradient == unsafe { nil }
+		&& !has_visible_border && !has_visible_text && !is_svg {
 		return
 	}
 	match shape.shape_type {
@@ -445,7 +460,38 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 		}
 	}
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
-	if shape.gradient != unsafe { nil } {
+	if shape.shader != unsafe { nil } {
+		color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
+		window.renderers << DrawCustomShader{
+			x:      shape.x
+			y:      shape.y
+			w:      shape.width
+			h:      shape.height
+			radius: shape.radius
+			color:  color.to_gx_color()
+			shader: shape.shader
+		}
+		// Draw border separately if present
+		if shape.size_border > 0 && shape.color_border != color_transparent {
+			c_border := if shape.disabled {
+				dim_alpha(shape.color_border)
+			} else {
+				shape.color_border
+			}
+			if c_border.a > 0 {
+				window.renderers << DrawStrokeRect{
+					x:         shape.x
+					y:         shape.y
+					w:         shape.width
+					h:         shape.height
+					color:     c_border.to_gx_color()
+					radius:    shape.radius
+					thickness: shape.size_border
+				}
+			}
+		}
+		return
+	} else if shape.gradient != unsafe { nil } {
 		window.renderers << DrawGradient{
 			x:        shape.x
 			y:        shape.y

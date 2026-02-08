@@ -54,7 +54,8 @@ mut:
 	stencil_test_pip_init  bool
 	stencil_clear_pip      sgl.Pipeline // Pipeline: clear stencil (ref=0)
 	stencil_clear_pip_init bool
-	ime_overlay            voidptr // Native IME overlay handle (macOS)
+	shader_pipelines       map[u64]sgl.Pipeline // Cached custom shader pipelines
+	ime_overlay            voidptr              // Native IME overlay handle (macOS)
 	ime_handler            &vglyph.StandardIMEHandler = unsafe { nil }
 	ime_initialized        bool // Lazy init flag (NSWindow not ready at init_fn)
 }

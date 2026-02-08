@@ -943,6 +943,199 @@ fn init_stencil_pipelines(mut window Window) {
 	}
 }
 
+// init_custom_pipeline creates and caches a pipeline for a custom
+// fragment shader. Pipelines are keyed by source hash so identical
+// shader bodies share a single compiled pipeline.
+fn init_custom_pipeline(shader &Shader, mut window Window) sgl.Pipeline {
+	key := shader_hash(shader)
+	if pip := window.shader_pipelines[key] {
+		return pip
+	}
+
+	mut attrs := [16]gfx.VertexAttrDesc{}
+	attrs[0] = gfx.VertexAttrDesc{
+		format:       .float3
+		offset:       0
+		buffer_index: 0
+	}
+	attrs[1] = gfx.VertexAttrDesc{
+		format:       .float2
+		offset:       12
+		buffer_index: 0
+	}
+	attrs[2] = gfx.VertexAttrDesc{
+		format:       .ubyte4n
+		offset:       20
+		buffer_index: 0
+	}
+
+	mut buffers := [8]gfx.VertexBufferLayoutState{}
+	buffers[0] = gfx.VertexBufferLayoutState{
+		stride: 24
+	}
+
+	mut shader_attrs := [16]gfx.ShaderAttrDesc{}
+	shader_attrs[0] = gfx.ShaderAttrDesc{
+		name:      c'position'
+		sem_name:  c'POSITION'
+		sem_index: 0
+	}
+	shader_attrs[1] = gfx.ShaderAttrDesc{
+		name:      c'texcoord0'
+		sem_name:  c'TEXCOORD'
+		sem_index: 0
+	}
+	shader_attrs[2] = gfx.ShaderAttrDesc{
+		name:      c'color0'
+		sem_name:  c'COLOR'
+		sem_index: 0
+	}
+
+	mut ub_uniforms := [16]gfx.ShaderUniformDesc{}
+	ub_uniforms[0] = gfx.ShaderUniformDesc{
+		name:        c'mvp'
+		@type:       .mat4
+		array_count: 1
+	}
+	ub_uniforms[1] = gfx.ShaderUniformDesc{
+		name:        c'tm'
+		@type:       .mat4
+		array_count: 1
+	}
+
+	mut ub := [4]gfx.ShaderUniformBlockDesc{}
+	ub[0] = gfx.ShaderUniformBlockDesc{
+		size:     128
+		uniforms: ub_uniforms
+	}
+
+	mut colors := [4]gfx.ColorTargetState{}
+	colors[0] = gfx.ColorTargetState{
+		blend:      gfx.BlendState{
+			enabled:          true
+			src_factor_rgb:   .src_alpha
+			dst_factor_rgb:   .one_minus_src_alpha
+			src_factor_alpha: .one
+			dst_factor_alpha: .one_minus_src_alpha
+		}
+		write_mask: .rgba
+	}
+
+	mut shader_images := [12]gfx.ShaderImageDesc{}
+	shader_images[0] = gfx.ShaderImageDesc{
+		used:        true
+		image_type:  ._2d
+		sample_type: .float
+	}
+
+	mut shader_samplers := [8]gfx.ShaderSamplerDesc{}
+	shader_samplers[0] = gfx.ShaderSamplerDesc{
+		used:         true
+		sampler_type: .filtering
+	}
+
+	mut shader_image_sampler_pairs := [12]gfx.ShaderImageSamplerPairDesc{}
+	shader_image_sampler_pairs[0] = gfx.ShaderImageSamplerPairDesc{
+		used:         true
+		image_slot:   0
+		sampler_slot: 0
+		glsl_name:    c'tex'
+	}
+
+	mut shader_desc := gfx.ShaderDesc{
+		attrs: shader_attrs
+	}
+
+	$if macos {
+		fs_source := build_metal_fragment(shader.metal)
+		shader_desc.vs = gfx.ShaderStageDesc{
+			source:         vs_custom_metal.str
+			entry:          c'vs_main'
+			uniform_blocks: ub
+		}
+		shader_desc.fs = gfx.ShaderStageDesc{
+			source:              fs_source.str
+			entry:               c'fs_main'
+			images:              shader_images
+			samplers:            shader_samplers
+			image_sampler_pairs: shader_image_sampler_pairs
+		}
+	} $else {
+		fs_source := build_glsl_fragment(shader.glsl)
+		shader_desc.vs = gfx.ShaderStageDesc{
+			source:         vs_custom_glsl.str
+			uniform_blocks: ub
+		}
+		shader_desc.fs = gfx.ShaderStageDesc{
+			source:              fs_source.str
+			images:              shader_images
+			samplers:            shader_samplers
+			image_sampler_pairs: shader_image_sampler_pairs
+		}
+	}
+
+	desc := gfx.PipelineDesc{
+		label:  c'custom_shader_pip'
+		colors: colors
+		layout: gfx.VertexLayoutState{
+			attrs:   attrs
+			buffers: buffers
+		}
+		shader: gfx.make_shader(&shader_desc)
+	}
+
+	pip := sgl.make_pipeline(&desc)
+	window.shader_pipelines[key] = pip
+	return pip
+}
+
+// draw_custom_shader_rect draws a rounded rectangle filled by a
+// custom fragment shader. User params are loaded into the tm matrix.
+pub fn draw_custom_shader_rect(x f32, y f32, w f32, h f32, radius f32, c gg.Color, shader &Shader, mut window Window) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	scale := window.ui.scale
+	sx := x * scale
+	sy := y * scale
+	sw := w * scale
+	sh := h * scale
+	mut r := radius * scale
+
+	min_dim := if sw < sh { sw } else { sh }
+	if r > min_dim / 2.0 {
+		r = min_dim / 2.0
+	}
+	if r < 0 {
+		r = 0
+	}
+
+	pip := init_custom_pipeline(shader, mut window)
+
+	// Load user params into tm matrix
+	sgl.matrix_mode_texture()
+	sgl.push_matrix()
+
+	mut tm_data := [16]f32{}
+	max_params := if shader.params.len > 16 { 16 } else { shader.params.len }
+	for i in 0 .. max_params {
+		tm_data[i] = shader.params[i]
+	}
+	sgl.load_matrix(tm_data[0..])
+
+	sgl.load_pipeline(pip)
+	sgl.c4b(c.r, c.g, c.b, c.a)
+
+	z_val := pack_shader_params(r, 0)
+	draw_quad(sx, sy, sw, sh, z_val)
+
+	sgl.load_default_pipeline()
+	sgl.c4b(255, 255, 255, 255)
+	sgl.pop_matrix()
+	sgl.matrix_mode_modelview()
+}
+
 fn draw_quad(x f32, y f32, w f32, h f32, z f32) {
 	sgl.begin_quads()
 

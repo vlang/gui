@@ -11,6 +11,7 @@ pub:
 	gradient        &Gradient  = gui_theme.rectangle_style.gradient
 	border_gradient &Gradient  = gui_theme.rectangle_style.border_gradient
 	shadow          &BoxShadow = gui_theme.rectangle_style.shadow
+	shader          &Shader    = unsafe { nil }
 	width           f32
 	height          f32
 	min_width       f32
@@ -42,6 +43,7 @@ pub fn rectangle(cfg RectangleCfg) View {
 		gradient:        cfg.gradient
 		border_gradient: cfg.border_gradient
 		shadow:          cfg.shadow
+		shader:          cfg.shader
 		blur_radius:     cfg.blur_radius
 		padding:         padding_none
 		radius:          cfg.radius
