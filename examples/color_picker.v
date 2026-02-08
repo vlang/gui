@@ -9,6 +9,7 @@ pub mut:
 		b: 0
 		a: 255
 	}
+	show_hsv    bool
 	light_theme bool
 }
 
@@ -17,7 +18,7 @@ fn main() {
 		title:   'Color Picker'
 		state:   &ColorPickerApp{}
 		width:   300
-		height:  450
+		height:  490
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -38,21 +39,34 @@ fn main_view(window &gui.Window) gui.View {
 		spacing: gui.theme().spacing_medium
 		content: [
 			gui.row(
-				h_align: .end
+				v_align: .middle
 				sizing:  gui.fit_fit
 				padding: gui.padding_none
-				content: [toggle_theme(app)]
+				spacing: gui.theme().spacing_medium
+				content: [toggle_theme(app), toggle_hsv(app)]
 			),
 			gui.color_picker(
 				id:              'picker'
 				color:           app.color
 				id_focus:        10
+				show_hsv:        app.show_hsv
 				on_color_change: fn (c gui.Color, mut _ gui.Event, mut w gui.Window) {
 					mut a := w.state[ColorPickerApp]()
 					a.color = c
 				}
 			),
 		]
+	)
+}
+
+fn toggle_hsv(app &ColorPickerApp) gui.View {
+	return gui.switch(
+		label:    'HSV'
+		select:   app.show_hsv
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			mut a := w.state[ColorPickerApp]()
+			a.show_hsv = !a.show_hsv
+		}
 	)
 }
 

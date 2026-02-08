@@ -13,6 +13,7 @@ pub:
 	on_color_change fn (Color, mut Event, mut Window) @[required]
 	style           ColorPickerStyle = gui_theme.color_picker_style
 	id_focus        u32
+	show_hsv        bool
 	sizing          Sizing
 	width           f32
 	height          f32
@@ -23,6 +24,24 @@ pub fn color_picker(cfg ColorPickerCfg) View {
 	sv_size := cfg.style.sv_size
 	slider_h := cfg.style.slider_height
 
+	mut content := [
+		// SV area + hue slider side by side
+		row(
+			padding: padding_none
+			spacing: cfg.style.padding.left
+			content: [
+				cfg.sv_area(sv_size),
+				cfg.hue_slider(slider_h, sv_size),
+			]
+		),
+		cfg.alpha_slider(),
+		cfg.preview_row(),
+		cfg.rgba_inputs(),
+	]
+	if cfg.show_hsv {
+		content << cfg.hsv_inputs()
+	}
+
 	return column(
 		name:         'color_picker'
 		id:           cfg.id
@@ -30,20 +49,7 @@ pub fn color_picker(cfg ColorPickerCfg) View {
 		spacing:      cfg.style.padding.top
 		color:        cfg.style.color
 		radius:       cfg.style.radius
-		content:      [
-			// SV area + hue slider side by side
-			row(
-				padding: padding_none
-				spacing: cfg.style.padding.left
-				content: [
-					cfg.sv_area(sv_size),
-					cfg.hue_slider(slider_h, sv_size),
-				]
-			),
-			cfg.alpha_slider(),
-			cfg.preview_row(),
-			cfg.rgba_inputs(),
-		]
+		content:      content
 		amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
 			// Initialize state from color if not already present
 			if !w.view_state.color_picker_state.contains(cfg.id) {
@@ -411,6 +417,97 @@ fn (cfg &ColorPickerCfg) channel_input(ch string, val u8, id_focus u32) View {
 			// Update persistent HSV state
 			ch_h, ch_s, ch_v := clr.to_hsv()
 			w.view_state.color_picker_state.set(cfg.id, ColorPickerState{ch_h, ch_s, ch_v})
+		}
+	)
+}
+
+// hsv_inputs renders H, S, V numeric input fields.
+fn (cfg &ColorPickerCfg) hsv_inputs() View {
+	ch, cs, cv := cfg.color.to_hsv()
+	h_val := int(ch + 0.5)
+	s_val := int(cs * 100.0 + 0.5)
+	v_val := int(cv * 100.0 + 0.5)
+
+	return row(
+		name:    'hsv_inputs'
+		padding: padding_none
+		spacing: 8
+		v_align: .middle
+		content: [
+			row(
+				padding: padding_none
+				v_align: .middle
+				spacing: 5
+				content: [
+					text(text: 'H', text_style: cfg.style.text_style),
+					cfg.hsv_channel_input('h', h_val, 360, cfg.id_focus_base() + 5),
+				]
+			),
+			row(
+				padding: padding_none
+				v_align: .middle
+				spacing: 5
+				content: [
+					text(text: 'S', text_style: cfg.style.text_style),
+					cfg.hsv_channel_input('s', s_val, 100, cfg.id_focus_base() + 6),
+				]
+			),
+			row(
+				padding: padding_none
+				v_align: .middle
+				spacing: 5
+				content: [
+					text(text: 'V', text_style: cfg.style.text_style),
+					cfg.hsv_channel_input('v', v_val, 100, cfg.id_focus_base() + 7),
+				]
+			),
+		]
+	)
+}
+
+// hsv_channel_input creates a numeric input for an HSV
+// channel. H: 0-360 degrees, S/V: 0-100 percent.
+fn (cfg &ColorPickerCfg) hsv_channel_input(ch string, val int, max_val int, id_focus u32) View {
+	id := cfg.id
+	on_color_change := cfg.on_color_change
+	color := cfg.color
+
+	return input(
+		id:              '${cfg.id}_hsv_${ch}'
+		id_focus:        id_focus
+		text:            val.str()
+		min_width:       45
+		max_width:       45
+		padding:         padding_small
+		text_style:      cfg.style.text_style
+		on_text_changed: fn [id, ch, max_val, on_color_change, color] (_ &Layout, s string, mut w Window) {
+			mut n := 0
+			if s.len > 0 {
+				mut valid := true
+				for b in s {
+					if b < `0` || b > `9` {
+						valid = false
+						break
+					}
+				}
+				if valid {
+					n = s.int()
+					if n > max_val {
+						n = max_val
+					}
+				}
+			}
+			state := w.view_state.color_picker_state.get(id) or {
+				h, sv_s, sv_v := color.to_hsv()
+				ColorPickerState{h, sv_s, sv_v}
+			}
+			new_h := if ch == 'h' { f32(n) } else { state.h }
+			new_s := if ch == 's' { f32(n) / 100.0 } else { state.s }
+			new_v := if ch == 'v' { f32(n) / 100.0 } else { state.v }
+			w.view_state.color_picker_state.set(id, ColorPickerState{new_h, new_s, new_v})
+			clr := color_from_hsva(new_h, new_s, new_v, color.a)
+			mut ev := Event{}
+			on_color_change(clr, mut ev, mut w)
 		}
 	)
 }
