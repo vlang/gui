@@ -153,8 +153,8 @@ Draws the layout to screen.
 - Draws borders and rounded corners
 - Renders shadows via SDF shaders (hollow/rim rendering for transparency support)
 - Uses texture matrix for precise shadow offset clipping
+- Renders custom fragment shaders with SDF round-rect clipping
 - Renders text (delegates to vglyph)
-
 - Displays images
 - Applies clipping
 

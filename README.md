@@ -53,6 +53,7 @@ V is a simple language. It deserves a simple UI framework.
 - SDF-based drop shadows
 - Linear and radial gradients
 - Blur effects
+- Custom fragment shaders (Metal + GLSL)
 - Full SVG support (paths, transforms, groups, strokes)
 - Mermaid diagram rendering
 
@@ -139,6 +140,7 @@ v install gui
 | [MARKDOWN.md](docs/MARKDOWN.md) | Markdown rendering |
 | [TABLES.md](docs/TABLES.md) | Table widget and data display |
 | [GRADIENTS.md](docs/GRADIENTS.md) | Linear and radial gradients |
+| [SHADERS.md](docs/SHADERS.md) | Custom fragment shaders |
 
 Generate API docs with:
 ```bash
@@ -157,6 +159,7 @@ v run examples/theme_designer.v # Build custom themes
 v run examples/tiger.v          # SVG rendering demo
 v run examples/markdown.v       # Markdown rendering
 v run examples/table_demo.v     # Table widget demo
+v run examples/custom_shader.v  # Custom fragment shaders
 v run examples/snake.v          # A complete game
 ```
 

@@ -34,6 +34,8 @@ Features already shipped and available in the current codebase.
 - [x] **Advanced shadows** — box-shadow with spread/blur radius.
 - [x] **Blur effects** — background blur (frosted glass) via multi-pass shaders.
 - [x] **Gradients** — linear and radial with multiple stops and directions.
+- [x] **Custom shaders** — user fragment shaders on containers/rectangles
+      with SDF clipping, pipeline caching, up to 16 float params.
 - [x] **SVG rendering** — full parser (1200+ lines) with DoS protection limits.
       Partial compliance; masking and interactions remain.
 - [x] **Markdown rendering** — tables, mermaid diagrams (async via Kroki API).
@@ -86,8 +88,8 @@ Features already shipped and available in the current codebase.
 ### Infrastructure
 - [x] **21 test files** — layout, rendering, widgets, integration.
 - [x] **55+ examples.**
-- [x] **8 documentation guides** — architecture, layout, animations, SVG,
-      markdown, tables, gradients, performance.
+- [x] **9 documentation guides** — architecture, layout, animations, SVG,
+      markdown, tables, gradients, shaders, performance.
 - [x] **Async resource loading** — threaded image downloads, mermaid rendering,
       timeouts, thread-safe command queue.
 - [x] **Focus navigation** — Tab/Shift+Tab with focus ID ordering and skip
@@ -101,7 +103,7 @@ Features already shipped and available in the current codebase.
 *Focus: Polishing the desktop experience to "Premium" standards.*
 
 #### Advanced Rendering
-- [ ] **Custom Shaders:** User-exposed API for fragment shaders on specific
+- [x] **Custom Shaders:** User-exposed API for fragment shaders on specific
       views.
 - [ ] **SVG Compliance:** Interactions, masking, remaining SVG spec gaps.
 
