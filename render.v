@@ -1035,9 +1035,16 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 	sgl.matrix_mode_texture()
 	sgl.push_matrix()
 
-	// Pack up to 6 stops into tm matrix (column-major order for sokol)
+	// Pack up to 5 stops into tm matrix (indices 10-11 reserved
+	// for direction/radius metadata)
 	mut tm_data := [16]f32{}
-	stop_count := if gradient.stops.len > 6 { 6 } else { gradient.stops.len }
+	stop_count := if gradient.stops.len > 5 {
+		eprintln('warning: gradient has ${gradient.stops.len} stops,' +
+			' max 5 supported; extra stops ignored')
+		5
+	} else {
+		gradient.stops.len
+	}
 	for i in 0 .. stop_count {
 		stop := gradient.stops[i]
 		// Each stop takes 2 floats: [packed_rgb, packed_alpha_pos]
