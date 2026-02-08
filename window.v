@@ -289,12 +289,13 @@ fn (mut window Window) update() {
 	log.debug('update_window')
 	//--------------------------------------------
 	window.lock()
-	window.renderers.clear()
 	clip_rect := window.window_rect()
 	background_color := window.color_background()
 
 	mut view := window.view_generator(window)
+	layout_clear(mut window.layout)
 	window.layout = window.compose_layout(mut view)
+	unsafe { window.renderers.free() }
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
 
 	// Render RTF tooltip if active
