@@ -191,3 +191,39 @@ fn test_render_layout_clip_push_pop() {
 		}
 	}
 }
+
+fn test_render_shape_opacity_no_text_config_non_text_is_safe() {
+	mut w := make_window()
+	mut s := Shape{
+		shape_type: .rectangle
+		x:          0
+		y:          0
+		width:      20
+		height:     10
+		color:      rgb(100, 120, 140)
+		opacity:    0.5
+	}
+	clip := make_clip(0, 0, 200, 200)
+
+	render_shape(mut s, color_transparent, clip, mut w)
+
+	assert w.renderers.len == 1
+}
+
+fn test_render_shape_text_without_text_config_degrades_safe() {
+	mut w := make_window()
+	mut s := Shape{
+		shape_type: .text
+		x:          0
+		y:          0
+		width:      50
+		height:     20
+		color:      black
+		opacity:    0.5
+	}
+	clip := make_clip(0, 0, 200, 200)
+
+	render_shape(mut s, color_transparent, clip, mut w)
+
+	assert w.renderers.len == 0
+}
