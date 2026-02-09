@@ -1,5 +1,4 @@
 import gui
-import encoding.csv
 import math
 import os
 import time
@@ -13,25 +12,10 @@ const id_scroll_list_box = 2
 const id_scroll_catalog = 3
 const id_scroll_sync_demo = 4
 
-enum TabItem {
-	tab_stock = 1000
-	tab_icons
-	tab_svg
-	tab_image
-	tab_menus
-	tab_dialogs
-	tab_tree_view
-	tab_text_view
-	tab_table_view
-	tab_date_pickers
-	tab_animations
-}
-
 @[heap]
 struct ShowcaseApp {
 pub mut:
 	light_theme        bool
-	selected_tab       TabItem = .tab_stock
 	nav_query          string
 	selected_group     string = 'all'
 	selected_component string = 'button'
@@ -61,12 +45,13 @@ pub mut:
 	// list Box
 	list_box_multiple_select bool
 	list_box_selected_values []string
+	// table
+	table_sort_by      int
+	table_border_style string = 'all'
 	// radio
 	select_radio bool
 	// expand_pad
 	open_expand_panel bool
-	// Tables
-	csv_table TableData
 	// Date Pickers
 	date_picker_dates []time.Time
 	input_date        time.Time = time.now()
@@ -84,6 +69,7 @@ pub mut:
 	// Animations
 	anim_tween_x         f32
 	anim_spring_x        f32
+	anim_keyframe_x      f32
 	anim_layout_expanded bool
 }
 
@@ -95,14 +81,6 @@ struct DemoEntry {
 	tags    []string
 }
 
-@[heap]
-struct TableData {
-pub mut:
-	sort_by  int // 1's based sort column index. -sort_by = descending order, 0 == unsorted
-	sorted   [][]string
-	unsorted [][]string
-}
-
 fn main() {
 	mut window := gui.window(
 		title:        'Gui Showcase'
@@ -111,8 +89,6 @@ fn main() {
 		height:       600
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
-			mut app := w.state[ShowcaseApp]()
-			app.csv_table = get_table_data() or { panic(err.msg()) }
 			w.update_view(main_view)
 		}
 	)
@@ -386,6 +362,20 @@ fn demo_entries() []DemoEntry {
 			tags:    ['motion', 'tween', 'spring']
 		},
 		DemoEntry{
+			id:      'gradient'
+			label:   'Gradients'
+			group:   'foundations'
+			summary: 'Linear and radial gradient fills'
+			tags:    ['linear', 'radial', 'fill']
+		},
+		DemoEntry{
+			id:      'shader'
+			label:   'Custom Shaders'
+			group:   'foundations'
+			summary: 'Custom fragment shaders for dynamic fills'
+			tags:    ['shader', 'glsl', 'metal']
+		},
+		DemoEntry{
 			id:      'icons'
 			label:   'Icons'
 			group:   'foundations'
@@ -475,11 +465,17 @@ fn catalog_panel(mut w gui.Window) gui.View {
 			group_picker(app),
 			line(),
 			gui.column(
-				id_scroll: id_scroll_catalog
-				sizing:    gui.fill_fill
-				spacing:   2
-				padding:   gui.padding_none
-				content:   catalog_rows(entries, app)
+				id_scroll:       id_scroll_catalog
+				sizing:          gui.fill_fill
+				spacing:         2
+				padding:         gui.Padding{
+					...gui.padding_none
+					right: gui.theme().scrollbar_style.size + 4
+				}
+				scrollbar_cfg_y: &gui.ScrollbarCfg{
+					gap_edge: 3
+				}
+				content:         catalog_rows(entries, app)
 			),
 			toggle_theme(app),
 		]
@@ -623,7 +619,7 @@ fn detail_panel(mut w gui.Window) gui.View {
 	content << view_title(entry.label)
 	content << gui.text(text: entry.summary, text_style: gui.theme().n3)
 	content << gui.text(text: 'Group: ${entry.group}', text_style: gui.theme().n5)
-	content << basic_demo(mut w, entry.id)
+	content << component_demo(mut w, entry.id)
 	content << line()
 	content << gui.text(
 		text:       'Related examples: ${related_examples(entry.id)}'
@@ -641,39 +637,41 @@ fn detail_panel(mut w gui.Window) gui.View {
 	)
 }
 
-fn basic_demo(mut w gui.Window, id string) gui.View {
+fn component_demo(mut w gui.Window, id string) gui.View {
 	return match id {
-		'button' { basic_button_demo(mut w) }
-		'input' { basic_input_demo(w) }
-		'toggle' { basic_toggle_demo(w) }
-		'switch' { basic_switch_demo(w) }
-		'radio' { basic_radio_demo(w) }
-		'radio_group' { basic_radio_group_demo(w) }
-		'select' { basic_select_demo(w) }
-		'listbox' { basic_list_box_demo(w) }
-		'range_slider' { basic_range_slider_demo(w) }
-		'progress_bar' { basic_progress_bar_demo(w) }
-		'pulsar' { basic_pulsar_demo(mut w) }
-		'menus' { basic_menu_demo(mut w) }
-		'dialog' { basic_dialog_demo() }
-		'tree' { basic_tree_demo(mut w) }
-		'text' { basic_text_demo() }
-		'rtf' { basic_rtf_demo() }
-		'table' { basic_table_demo(mut w) }
-		'date_picker' { basic_date_picker_demo(mut w) }
-		'input_date' { basic_input_date_demo(mut w) }
-		'date_picker_roller' { basic_date_picker_roller_demo(mut w) }
-		'svg' { basic_svg_demo() }
-		'image' { basic_image_demo() }
-		'expand_panel' { basic_expand_panel_demo(w) }
-		'icons' { basic_icons_demo() }
-		'animations' { basic_animations_demo(mut w) }
-		'color_picker' { basic_color_picker_demo(w) }
-		'markdown' { basic_markdown_demo(mut w) }
-		'tab_control' { basic_tab_control_demo(w) }
-		'tooltip' { basic_tooltip_demo() }
-		'rectangle' { basic_rectangle_demo() }
-		'scrollbar' { basic_scrollbar_demo() }
+		'button' { demo_button(mut w) }
+		'input' { demo_input(w) }
+		'toggle' { demo_toggle(w) }
+		'switch' { demo_switch(w) }
+		'radio' { demo_radio(w) }
+		'radio_group' { demo_radio_group(w) }
+		'select' { demo_select(w) }
+		'listbox' { demo_list_box(w) }
+		'range_slider' { demo_range_slider(w) }
+		'progress_bar' { demo_progress_bar(w) }
+		'pulsar' { demo_pulsar(mut w) }
+		'menus' { demo_menu(mut w) }
+		'dialog' { demo_dialog() }
+		'tree' { demo_tree(mut w) }
+		'text' { demo_text() }
+		'rtf' { demo_rtf() }
+		'table' { demo_table(mut w) }
+		'date_picker' { demo_date_picker(mut w) }
+		'input_date' { demo_input_date(mut w) }
+		'date_picker_roller' { demo_date_picker_roller(mut w) }
+		'svg' { demo_svg() }
+		'image' { demo_image() }
+		'expand_panel' { demo_expand_panel(w) }
+		'icons' { demo_icons() }
+		'gradient' { demo_gradient() }
+		'shader' { demo_shader() }
+		'animations' { demo_animations(mut w) }
+		'color_picker' { demo_color_picker(w) }
+		'markdown' { demo_markdown(mut w) }
+		'tab_control' { demo_tab_control(w) }
+		'tooltip' { demo_tooltip() }
+		'rectangle' { demo_rectangle() }
+		'scrollbar' { demo_scrollbar() }
 		else { gui.text(text: 'No demo configured') }
 	}
 }
@@ -701,6 +699,8 @@ fn related_examples(id string) string {
 		'image' { 'examples/image_demo.v, examples/remote_image.v' }
 		'expand_panel' { 'examples/expand_panel.v' }
 		'icons' { 'examples/icon_font_demo.v' }
+		'gradient' { 'examples/gradient_demo.v, examples/gradient_border_demo.v' }
+		'shader' { 'examples/custom_shader.v' }
 		'animations' { 'examples/animations.v, examples/animation_stress.v' }
 		'color_picker' { 'examples/color_picker.v' }
 		'markdown' { 'examples/markdown.v, examples/doc_viewer.v' }
@@ -710,100 +710,6 @@ fn related_examples(id string) string {
 		'scrollbar' { 'examples/scroll_demo.v, examples/column_scroll.v' }
 		else { 'examples/showcase.v' }
 	}
-}
-
-fn side_bar(mut w gui.Window) gui.View {
-	mut app := w.state[ShowcaseApp]()
-	return gui.column(
-		color:   gui.theme().color_panel
-		sizing:  gui.fit_fill
-		content: [
-			tab_select('Stock', .tab_stock, app),
-			tab_select('Icons', .tab_icons, app),
-			tab_select('SVG', .tab_svg, app),
-			tab_select('Image', .tab_image, app),
-			tab_select('Menus', .tab_menus, app),
-			tab_select('Dialogs', .tab_dialogs, app),
-			tab_select('Tree View', .tab_tree_view, app),
-			tab_select('Text', .tab_text_view, app),
-			tab_select('Tables', .tab_table_view, app),
-			tab_select('Date Pickers', .tab_date_pickers, app),
-			tab_select('Animations', .tab_animations, app),
-			gui.column(sizing: gui.fit_fill),
-			toggle_theme(app),
-		]
-	)
-}
-
-fn gallery(mut w gui.Window) gui.View {
-	mut app := w.state[ShowcaseApp]()
-	return gui.column(
-		id_scroll:       id_scroll_gallery
-		scrollbar_cfg_y: &gui.ScrollbarCfg{
-			gap_edge: 4
-		}
-		sizing:          gui.fill_fill
-		spacing:         gui.spacing_large * 2
-		content:         match app.selected_tab {
-			.tab_stock {
-				[buttons(w), inputs(w), toggles(w), select_drop_down(w),
-					list_box(w), expand_panel(w), progress_bars(w),
-					range_sliders(w), pulsars(mut w)]
-			}
-			.tab_icons {
-				[icons(mut w)]
-			}
-			.tab_svg {
-				[svg_icons(mut w)]
-			}
-			.tab_image {
-				[image_sample(w)]
-			}
-			.tab_menus {
-				[menus(mut w)]
-			}
-			.tab_dialogs {
-				[dialogs(w)]
-			}
-			.tab_tree_view {
-				[tree_view(mut w)]
-			}
-			.tab_text_view {
-				[text_sizes_weights(w), rich_text_format(w)]
-			}
-			.tab_table_view {
-				[tables(mut w)]
-			}
-			.tab_date_pickers {
-				[date_pickers(mut w)]
-			}
-			.tab_animations {
-				[animations(mut w)]
-			}
-		}
-	)
-}
-
-fn tab_select(label string, tab_item TabItem, app &ShowcaseApp) gui.View {
-	color := if app.selected_tab == tab_item {
-		gui.theme().color_active
-	} else {
-		gui.color_transparent
-	}
-	return gui.row(
-		color:    color
-		padding:  gui.theme().padding_small
-		content:  [gui.text(text: label, text_style: gui.theme().n2)]
-		on_click: fn [tab_item] (_ voidptr, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[ShowcaseApp]()
-			app.selected_tab = tab_item
-			w.update_view(main_view)
-		}
-		on_hover: fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			layout.shape.color = gui.theme().color_hover
-			w.set_mouse_cursor_pointing_hand()
-		}
-	)
 }
 
 fn view_title(label string) gui.View {
@@ -858,161 +764,90 @@ fn toggle_theme(app &ShowcaseApp) gui.View {
 // Buttons
 // ==============================================================
 
-fn buttons(w &gui.Window) gui.View {
-	app := w.state[ShowcaseApp]()
-	color := if app.light_theme { gui.light_gray } else { gui.dark_blue }
-	color_left := if app.light_theme { gui.dark_gray } else { gui.dark_green }
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Buttons'),
-			gui.row(
-				sizing:  gui.fill_fit
-				v_align: .bottom
-				content: [
-					gui.button(
-						id_focus:    100
-						size_border: 0
-						content:     [gui.text(text: 'No Border')]
-					),
-					gui.button(
-						id_focus:    101
-						size_border: 1
-						content:     [gui.text(text: 'Thin Border')]
-					),
-					gui.button(
-						id_focus:    102
-						size_border: 2
-						content:     [gui.text(text: 'Thicker Border')]
-					),
-					gui.button(
-						id_focus:    103
-						size_border: 2
-						disabled:    true
-						content:     [gui.text(text: 'Disabled')]
-					),
-					gui.button(
-						id_focus:    104
-						size_border: 2
+fn button_feature_rows(app &ShowcaseApp, base_focus u32) []gui.View {
+	button_text := '${app.button_clicks} Clicks Given'
+	button_width := f32(160)
+	progress := f32(math.fmod(f64(app.button_clicks) / 25.0, 1.0))
+	return [
+		showcase_button_row('Plain ole button', gui.button(
+			id_focus:    base_focus + 0
+			min_width:   button_width
+			max_width:   button_width
+			size_border: 0
+			content:     [gui.text(text: button_text)]
+			on_click:    showcase_button_click
+		)),
+		showcase_button_row('Disabled button', gui.button(
+			id_focus:  base_focus + 1
+			min_width: button_width
+			max_width: button_width
+			disabled:  true
+			content:   [gui.text(text: button_text)]
+			on_click:  showcase_button_click
+		)),
+		showcase_button_row('With border', gui.button(
+			id_focus:    base_focus + 2
+			min_width:   button_width
+			max_width:   button_width
+			size_border: 2
+			content:     [gui.text(text: button_text)]
+			on_click:    showcase_button_click
+		)),
+		showcase_button_row('With focus border', gui.button(
+			id_focus:    base_focus + 3
+			min_width:   button_width
+			max_width:   button_width
+			size_border: 2
+			content:     [gui.text(text: button_text)]
+			on_click:    showcase_button_click
+		)),
+		showcase_button_row('With other content', gui.button(
+			id:           'showcase-button-progress'
+			id_focus:     base_focus + 4
+			min_width:    200
+			max_width:    200
+			color:        gui.rgb(195, 105, 0)
+			color_hover:  gui.rgb(195, 105, 0)
+			color_click:  gui.rgb(205, 115, 0)
+			size_border:  2
+			color_border: gui.rgb(160, 160, 160)
+			padding:      gui.padding_medium
+			v_align:      .middle
+			content:      [gui.text(text: '${app.button_clicks}', min_width: 25),
+				gui.progress_bar(
+					width:   75
+					height:  gui.theme().text_style.size
+					percent: progress
+				)]
+			on_click:     showcase_button_click
+		)),
+	]
+}
 
-						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[ShowcaseApp]()
-							app.button_clicks += 1
-						}
-						content:  [
-							gui.column(
-								spacing: gui.spacing_small
-								padding: gui.padding_none
-								h_align: .center
-								content: [
-									gui.text(
-										text:       'Custom Content'
-										text_style: gui.theme().n6
-									),
-									gui.progress_bar(
-										color:      color
-										color_bar:  color_left
-										percent:    (app.button_clicks % 25) / f32(25)
-										sizing:     gui.fill_fit
-										text_style: gui.theme().m4
-										height:     gui.theme().n3.size
-									),
-								]
-							),
-						]
-					),
-				]
+fn showcase_button_row(label string, button gui.View) gui.View {
+	return gui.row(
+		padding: gui.padding_none
+		sizing:  gui.fill_fit
+		v_align: .middle
+		content: [
+			gui.row(
+				padding: gui.padding_none
+				content: [gui.text(text: label, mode: .single_line)]
 			),
+			gui.row(sizing: gui.fill_fit),
+			button,
 		]
 	)
+}
+
+fn showcase_button_click(_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+	mut app := w.state[ShowcaseApp]()
+	app.button_clicks += 1
 }
 
 // ==============================================================
 // Inputs
 // ==============================================================
-
-fn inputs(w &gui.Window) gui.View {
-	app := w.state[ShowcaseApp]()
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Inputs'),
-			gui.row(
-				sizing:  gui.fill_fit
-				content: [
-					gui.input(
-						id_focus:    200
-						width:       150
-						sizing:      gui.fixed_fit
-						text:        app.input_text
-						size_border: 0
-
-						placeholder:     'Plain...'
-						mode:            .single_line
-						on_text_changed: text_changed
-					),
-					gui.input(
-						id_focus:    201
-						width:       150
-						sizing:      gui.fixed_fit
-						text:        app.input_text
-						size_border: 1
-
-						placeholder:     'Thin Border...'
-						mode:            .single_line
-						on_text_changed: text_changed
-					),
-					gui.input(
-						id_focus:    202
-						width:       150
-						sizing:      gui.fixed_fit
-						text:        app.input_text
-						size_border: 2
-
-						placeholder:     'Thicker Border...'
-						mode:            .single_line
-						on_text_changed: text_changed
-					),
-					gui.input(
-						id_focus:    203
-						width:       150
-						sizing:      gui.fixed_fit
-						text:        app.input_text
-						size_border: 1
-
-						placeholder:     'Password...'
-						is_password:     true
-						mode:            .single_line
-						on_text_changed: text_changed
-					),
-				]
-			),
-			gui.row(
-				sizing:  gui.fill_fit
-				v_align: .middle
-				content: [
-					gui.text(text: 'Multiline Text Input:'),
-					gui.input(
-						id_focus:    204
-						width:       300
-						sizing:      gui.fixed_fit
-						text:        app.input_multiline
-						size_border: 1
-
-						placeholder:     'Multiline...'
-						mode:            .multiline
-						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
-							mut app := w.state[ShowcaseApp]()
-							app.input_multiline = s
-						}
-					),
-				]
-			),
-		]
-	)
-}
 
 fn text_changed(_ &gui.Layout, s string, mut w gui.Window) {
 	mut app := w.state[ShowcaseApp]()
@@ -1022,240 +857,6 @@ fn text_changed(_ &gui.Layout, s string, mut w gui.Window) {
 // ==============================================================
 // Toggles
 // ==============================================================
-
-fn toggles(w &gui.Window) gui.View {
-	mut app := w.state[ShowcaseApp]()
-	options := [
-		gui.radio_option('New York', 'ny'),
-		gui.radio_option('Chicago', 'chi'),
-		gui.radio_option('Denver', 'den'),
-		gui.radio_option('Los Angeles', 'la'),
-	]
-
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Toggle, Switch, and Radio Button Group'),
-			gui.row(
-				v_align: .middle
-				content: [
-					gui.toggle(
-						label:    'toggle (a.k.a. checkbox)'
-						select:   app.select_checkbox
-						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[ShowcaseApp]()
-							app.select_checkbox = !app.select_checkbox
-						}
-					),
-					gui.toggle(
-						label:       'toggle with icon'
-						select:      app.select_toggle
-						text_select: gui.icon_github_alt
-						text_style:  gui.theme().icon1
-						on_click:    fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[ShowcaseApp]()
-							app.select_toggle = !app.select_toggle
-						}
-					),
-					gui.switch(
-						label:    'switch'
-						select:   app.select_switch
-						on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[ShowcaseApp]()
-							app.select_switch = !app.select_switch
-						}
-					),
-				]
-			),
-			gui.row(
-				content: [
-					gui.radio_button_group_column(
-						title:     'Time Zone'
-						id_focus:  3000
-						value:     app.select_city
-						options:   options
-						on_select: fn (value string, mut w gui.Window) {
-							mut app := w.state[ShowcaseApp]()
-							app.select_city = value
-						}
-					),
-					// Intentionally using the same data/focus id to show vertical
-					// and horizontal differences side-by-side
-					gui.radio_button_group_row(
-						title:     'Time Zone'
-						id_focus:  3000
-						value:     app.select_city
-						options:   options
-						on_select: fn (value string, mut w gui.Window) {
-							mut app := w.state[ShowcaseApp]()
-							app.select_city = value
-						}
-					),
-				]
-			),
-		]
-	)
-}
-
-// ==============================================================
-// Dialogs
-// ==============================================================
-
-fn dialogs(w &gui.Window) gui.View {
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Dialogs'),
-			gui.row(
-				sizing:  gui.fill_fit
-				content: [
-					gui.row(
-						padding: gui.padding_none
-						content: [
-							gui.column(
-								padding: gui.padding_none
-								content: [
-									message_type(),
-									confirm_type(),
-								]
-							),
-							gui.column(
-								padding: gui.padding_none
-								content: [
-									prompt_type(),
-									custom_type(),
-								]
-							),
-						]
-					),
-				]
-			),
-		]
-	)
-}
-
-fn message_type() gui.View {
-	return gui.button(
-		id_focus: 1
-		sizing:   gui.fill_fit
-		content:  [gui.text(text: '.dialog_type == .message')]
-		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			w.dialog(
-				align_buttons: .end
-				dialog_type:   .message
-				title:         'Title Displays Here'
-				body:          '
-body text displays here...
-
-Multi-line text supported.
-See DialogCfg for other parameters
-
-Buttons can be left/center/right aligned'.trim_indent()
-			)
-		}
-	)
-}
-
-fn confirm_type() gui.View {
-	return gui.button(
-		id_focus: 2
-		sizing:   gui.fill_fit
-		content:  [gui.text(text: '.dialog_type == .confirm')]
-		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			w.dialog(
-				dialog_type:  .confirm
-				title:        'Destroy All Data?'
-				body:         'Are you sure?'
-				on_ok_yes:    fn (mut w gui.Window) {
-					w.dialog(title: 'Clicked Yes')
-				}
-				on_cancel_no: fn (mut w gui.Window) {
-					w.dialog(title: 'Clicked No')
-				}
-			)
-		}
-	)
-}
-
-fn prompt_type() gui.View {
-	return gui.button(
-		id_focus: 3
-		sizing:   gui.fill_fit
-		content:  [gui.text(text: '.dialog_type == .prompt')]
-		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			w.dialog(
-				dialog_type:  .prompt
-				title:        'Monty Python Quiz'
-				body:         'What is your quest?'
-				on_reply:     fn (reply string, mut w gui.Window) {
-					w.dialog(title: 'Replied', body: reply)
-				}
-				on_cancel_no: fn (mut w gui.Window) {
-					w.dialog(title: 'Canceled')
-				}
-			)
-		}
-	)
-}
-
-fn custom_type() gui.View {
-	return gui.button(
-		id_focus: 4
-		sizing:   gui.fill_fit
-		content:  [gui.text(text: '.dialog_type == .custom')]
-		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			w.dialog(
-				dialog_type:    .custom
-				custom_content: [
-					gui.column(
-						h_align: .center
-						v_align: .middle
-						content: [
-							gui.text(text: 'Custom Content'),
-							gui.button(
-								id_focus: gui.dialog_base_id_focus
-								content:  [gui.text(text: 'Close Me')]
-								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-									w.dialog_dismiss()
-								}
-							),
-						]
-					),
-				]
-			)
-		}
-	)
-}
-
-// ==============================================================
-// Menu
-// ==============================================================
-
-fn menus(mut w gui.Window) gui.View {
-	app := w.state[ShowcaseApp]()
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Menus'),
-			gui.column(
-				sizing:  gui.fill_fit
-				content: [
-					menu(mut w),
-					gui.text(
-						text: if app.selected_menu_id !in ['', 'file', 'edit', 'view', 'go', 'window'] {
-							'Selected: "${app.selected_menu_id}"'
-						} else {
-							''
-						}
-					),
-				]
-			),
-		]
-	)
-}
 
 fn menu(mut window gui.Window) gui.View {
 	app := window.state[ShowcaseApp]()
@@ -1387,725 +988,6 @@ fn menu(mut window gui.Window) gui.View {
 }
 
 // ==============================================================
-// Progress Bars
-// ==============================================================
-
-fn progress_bars(w &gui.Window) gui.View {
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Progress Bars'),
-			gui.row(
-				sizing:  gui.fill_fit
-				padding: gui.padding_none
-				content: [progress_bar_samples(w)]
-			),
-		]
-	)
-}
-
-fn progress_bar_samples(w &gui.Window) gui.View {
-	tbg1 := if gui.theme().name.starts_with('light') { gui.orange } else { gui.dark_green }
-	tbg2 := if gui.theme().name.starts_with('light') { gui.cornflower_blue } else { gui.white }
-
-	app := w.state[ShowcaseApp]()
-	percent := app.range_value / f32(100)
-
-	return gui.column(
-		spacing: gui.theme().spacing_large
-		content: [
-			gui.row(
-				spacing: gui.theme().spacing_large
-				content: [
-					gui.column(
-						width:   200
-						spacing: 20
-						sizing:  gui.fit_fill
-						content: [
-							gui.progress_bar(
-								height:          2
-								sizing:          gui.fill_fixed
-								percent:         percent
-								text_background: tbg1
-							),
-							gui.progress_bar(
-								sizing:  gui.fill_fixed
-								percent: percent
-							),
-							gui.progress_bar(
-								height:  20
-								sizing:  gui.fill_fixed
-								percent: percent
-							),
-							gui.progress_bar(
-								height:    20
-								sizing:    gui.fill_fixed
-								percent:   percent
-								text_show: false
-							),
-						]
-					),
-					gui.row(
-						width:   150
-						height:  100
-						spacing: 40
-						sizing:  gui.fit_fill
-						content: [
-							gui.progress_bar(
-								vertical:        true
-								sizing:          gui.fixed_fill
-								width:           2
-								percent:         percent
-								text_background: tbg2
-							),
-							gui.progress_bar(
-								vertical: true
-								sizing:   gui.fixed_fill
-								percent:  percent
-							),
-							gui.progress_bar(
-								vertical: true
-								sizing:   gui.fixed_fill
-								width:    20
-								percent:  percent
-							),
-						]
-					),
-				]
-			),
-			gui.row(
-				spacing: gui.theme().spacing_large
-				content: [
-					gui.column(
-						width:   200
-						spacing: 20
-						sizing:  gui.fit_fill
-						content: [
-							gui.progress_bar(
-								id:              'sc_pbar_indef_h1'
-								height:          2
-								sizing:          gui.fill_fixed
-								indefinite:      true
-								text_background: tbg1
-							),
-							gui.progress_bar(
-								id:         'sc_pbar_indef_h2'
-								sizing:     gui.fill_fixed
-								indefinite: true
-							),
-							gui.progress_bar(
-								id:         'sc_pbar_indef_h3'
-								height:     20
-								sizing:     gui.fill_fixed
-								indefinite: true
-							),
-							gui.progress_bar(
-								id:         'sc_pbar_indef_h4'
-								height:     20
-								sizing:     gui.fill_fixed
-								indefinite: true
-								text_show:  false
-							),
-						]
-					),
-					gui.row(
-						width:   150
-						height:  100
-						spacing: 40
-						sizing:  gui.fit_fill
-						content: [
-							gui.progress_bar(
-								id:              'sc_pbar_indef_v1'
-								vertical:        true
-								sizing:          gui.fixed_fill
-								width:           2
-								indefinite:      true
-								text_background: tbg2
-							),
-							gui.progress_bar(
-								id:         'sc_pbar_indef_v2'
-								vertical:   true
-								sizing:     gui.fixed_fill
-								indefinite: true
-							),
-							gui.progress_bar(
-								id:         'sc_pbar_indef_v3'
-								vertical:   true
-								sizing:     gui.fixed_fill
-								width:      20
-								indefinite: true
-							),
-						]
-					),
-				]
-			),
-		]
-	)
-}
-
-// ==============================================================
-// List Box
-// ==============================================================
-
-fn list_box(w &gui.Window) gui.View {
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('List Box'),
-			gui.row(
-				sizing:  gui.fill_fit
-				content: [list_box_sample(w)]
-			),
-		]
-	)
-}
-
-fn list_box_sample(w &gui.Window) gui.View {
-	app := w.state[ShowcaseApp]()
-	return gui.row(
-		height:  250
-		sizing:  gui.fit_fixed
-		content: [
-			gui.list_box(
-				id_scroll: id_scroll_list_box
-				multiple:  app.list_box_multiple_select
-				selected:  app.list_box_selected_values
-				sizing:    gui.fit_fill
-				data:      [
-					gui.list_box_option('---States', ''),
-					gui.list_box_option('Alabama', 'AL'),
-					gui.list_box_option('Alaska', 'AK'),
-					gui.list_box_option('Arizona', 'AZ'),
-					gui.list_box_option('Arkansas', 'AR'),
-					gui.list_box_option('California', 'CA'),
-					gui.list_box_option('Colorado', 'CO'),
-					gui.list_box_option('Connecticut', 'CT'),
-					gui.list_box_option('Delaware', 'DE'),
-					gui.list_box_option('District of Columbia', 'DC'),
-					gui.list_box_option('Florida', 'FL'),
-					gui.list_box_option('Georgia', 'GA'),
-					gui.list_box_option('Hawaii', 'HI'),
-					gui.list_box_option('Idaho', 'ID'),
-					gui.list_box_option('Illinois', 'IL'),
-					gui.list_box_option('Indiana', 'IN'),
-					gui.list_box_option('Iowa', 'IA'),
-					gui.list_box_option('Kansas', 'KS'),
-					gui.list_box_option('Kentucky', 'KY'),
-					gui.list_box_option('Louisiana', 'LA'),
-					gui.list_box_option('Maine', 'ME'),
-					gui.list_box_option('Maryland', 'MD'),
-					gui.list_box_option('Massachusetts', 'MA'),
-					gui.list_box_option('Michigan', 'MI'),
-					gui.list_box_option('Minnesota', 'MN'),
-					gui.list_box_option('Mississippi', 'MS'),
-					gui.list_box_option('Missouri', 'MO'),
-					gui.list_box_option('Montana', 'MT'),
-					gui.list_box_option('Nebraska', 'NE'),
-					gui.list_box_option('Nevada', 'NV'),
-					gui.list_box_option('New Hampshire', 'NH'),
-					gui.list_box_option('New Jersey', 'NJ'),
-					gui.list_box_option('New Mexico', 'NM'),
-					gui.list_box_option('New York', 'NY'),
-					gui.list_box_option('North Carolina', 'NC'),
-					gui.list_box_option('North Dakota', 'ND'),
-					gui.list_box_option('Ohio', 'OH'),
-					gui.list_box_option('Oklahoma', 'OK'),
-					gui.list_box_option('Oregon', 'OR'),
-					gui.list_box_option('Pennsylvania', 'PA'),
-					gui.list_box_option('Rhode Island', 'RI'),
-					gui.list_box_option('South Carolina', 'SC'),
-					gui.list_box_option('South Dakota', 'SD'),
-					gui.list_box_option('Tennessee', 'TN'),
-					gui.list_box_option('Texas', 'TX'),
-					gui.list_box_option('Utah', 'UT'),
-					gui.list_box_option('Vermont', 'VT'),
-					gui.list_box_option('Virginia', 'VA'),
-					gui.list_box_option('Washington', 'WA'),
-					gui.list_box_option('West Virginia', 'WV'),
-					gui.list_box_option('Wisconsin', 'WI'),
-					gui.list_box_option('Wyoming', 'WY'),
-					gui.list_box_option('---Territories', ''),
-					gui.list_box_option('American Samoa', 'AS'),
-					gui.list_box_option('Guam', 'GU'),
-					gui.list_box_option('Northern Mariana Islands', 'MP'),
-					gui.list_box_option('Puerto Rico', 'PR'),
-					gui.list_box_option('U.S. Virgin Islands', 'VI'),
-				]
-				on_select: fn (values []string, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[ShowcaseApp]()
-					app.list_box_selected_values = values
-					e.is_handled = true
-				}
-			),
-			gui.toggle(
-				label:    'Multi-Select'
-				select:   app.list_box_multiple_select
-				on_click: fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-					mut app := w.state[ShowcaseApp]()
-					app.list_box_multiple_select = !app.list_box_multiple_select
-					app.list_box_selected_values.clear()
-				}
-			),
-		]
-	)
-}
-
-// ==============================================================
-// Range Sliders
-// ==============================================================
-
-fn range_sliders(w &gui.Window) gui.View {
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Range Sliders'),
-			gui.row(
-				sizing:  gui.fill_fit
-				content: [range_slider_samples(w)]
-			),
-		]
-	)
-}
-
-fn range_slider_samples(w &gui.Window) gui.View {
-	app := w.state[ShowcaseApp]()
-	return gui.row(
-		sizing:  gui.fill_fill
-		content: [
-			gui.column(
-				width:   200
-				content: [
-					gui.range_slider(
-						id:          'rs1'
-						value:       app.range_value
-						round_value: true
-						sizing:      gui.fill_fit
-						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[ShowcaseApp]()
-							app.range_value = value
-						}
-					),
-					gui.text(text: app.range_value.str()),
-				]
-			),
-			gui.column(
-				height:  50
-				content: [
-					gui.range_slider(
-						id:          'rs2'
-						value:       app.range_value
-						round_value: true
-						vertical:    true
-						sizing:      gui.fit_fill
-						on_change:   fn (value f32, mut e gui.Event, mut w gui.Window) {
-							mut app := w.state[ShowcaseApp]()
-							app.range_value = value
-						}
-					),
-				]
-			),
-		]
-	)
-}
-
-// ==============================================================
-// Select
-// ==============================================================
-
-fn select_drop_down(w &gui.Window) gui.View {
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Select (Drop Down)'),
-			gui.row(
-				sizing:  gui.fill_fit
-				content: [select_samples(w)]
-			),
-		]
-	)
-}
-
-fn select_samples(w &gui.Window) gui.View {
-	app := w.state[ShowcaseApp]()
-	return gui.row(
-		content: [
-			w.select(
-				id:              'sel1'
-				min_width:       200
-				max_width:       200
-				select:          app.selected_1
-				placeholder:     'Pick one or more'
-				select_multiple: true
-				options:         [
-					'Alabama',
-					'Alaska',
-					'Arizona',
-					'Arkansas',
-					'California',
-					'Colorado',
-					'Connecticut',
-					'Delaware',
-					'Florida',
-					'Georgia',
-					'Hawaii',
-					'Idaho',
-					'Illinois',
-					'Indiana',
-					'Iowa',
-					'Kansas',
-					'Kentucky',
-					'Louisiana',
-					'Maine',
-					'Maryland',
-					'Massachusetts',
-					'Michigan',
-					'Minnesota',
-					'Mississippi',
-					'Missouri',
-					'Montana',
-					'Nebraska',
-					'Nevada',
-					'New Hampshire',
-					'New Jersey',
-					'New Mexico',
-					'New York',
-					'North Carolina',
-					'North Dakota',
-					'Ohio',
-					'Oklahoma',
-					'Oregon',
-					'Pennsylvania',
-					'Rhode Island',
-					'South Carolina',
-					'South Dakota',
-					'Tennessee',
-					'Texas',
-					'Utah',
-					'Vermont',
-					'Virginia',
-					'Washington',
-					'West Virginia',
-					'Wisconsin',
-					'Wyoming',
-				]
-				on_select:       fn (s []string, mut e gui.Event, mut w gui.Window) {
-					mut app_ := w.state[ShowcaseApp]()
-					app_.selected_1 = s
-					e.is_handled = true
-				}
-			),
-			w.select(
-				id:          'sel2'
-				min_width:   300
-				max_width:   300
-				select:      app.selected_2
-				placeholder: 'Pick a country'
-				options:     [
-					'---Africa',
-					'Algeria',
-					'Angola',
-					'Benin',
-					'Botswana',
-					'Burkina Faso',
-					'Burundi',
-					'Cabo Verde',
-					'Cameroon',
-					'Central African Republic',
-					'Chad',
-					'Comoros',
-					'Congo',
-					'Democratic Republic of the Congo',
-					'Djibouti',
-					'Egypt',
-					'Equatorial Guinea',
-					'Eritrea',
-					'Eswatini',
-					'Ethiopia',
-					'Gabon',
-					'Gambia',
-					'Ghana',
-					'Guinea',
-					'Guinea-Bissau',
-					'Ivory Coast',
-					'Kenya',
-					'Lesotho',
-					'Liberia',
-					'Libya',
-					'Madagascar',
-					'Malawi',
-					'Mali',
-					'Mauritania',
-					'Mauritius',
-					'Morocco',
-					'Mozambique',
-					'Namibia',
-					'Niger',
-					'Nigeria',
-					'Rwanda',
-					'Sao Tome and Principe',
-					'Senegal',
-					'Seychelles',
-					'Sierra Leone',
-					'Somalia',
-					'South Africa',
-					'South Sudan',
-					'Sudan',
-					'Tanzania',
-					'Togo',
-					'Tunisia',
-					'Uganda',
-					'Zambia',
-					'Zimbabwe',
-					'---Asia',
-					'Afghanistan',
-					'Armenia',
-					'Azerbaijan',
-					'Bahrain',
-					'Bangladesh',
-					'Bhutan',
-					'Brunei',
-					'Cambodia',
-					'China',
-					'Cyprus',
-					'East Timor',
-					'Georgia',
-					'India',
-					'Indonesia',
-					'Iran',
-					'Iraq',
-					'Israel',
-					'Japan',
-					'Jordan',
-					'Kazakhstan',
-					'Kuwait',
-					'Kyrgyzstan',
-					'Laos',
-					'Lebanon',
-					'Malaysia',
-					'Maldives',
-					'Mongolia',
-					'Myanmar',
-					'Nepal',
-					'North Korea',
-					'Oman',
-					'Pakistan',
-					'Palestine',
-					'Philippines',
-					'Qatar',
-					'Russia',
-					'Saudi Arabia',
-					'Singapore',
-					'South Korea',
-					'Sri Lanka',
-					'Syria',
-					'Taiwan',
-					'Tajikistan',
-					'Thailand',
-					'Turkey',
-					'Turkmenistan',
-					'United Arab Emirates',
-					'Uzbekistan',
-					'Vietnam',
-					'Yemen',
-					'---Europe',
-					'Albania',
-					'Andorra',
-					'Austria',
-					'Belarus',
-					'Belgium',
-					'Bosnia and Herzegovina',
-					'Bulgaria',
-					'Croatia',
-					'Czechia',
-					'Denmark',
-					'Estonia',
-					'Finland',
-					'France',
-					'Germany',
-					'Greece',
-					'Hungary',
-					'Iceland',
-					'Ireland',
-					'Italy',
-					'Kosovo',
-					'Latvia',
-					'Liechtenstein',
-					'Lithuania',
-					'Luxembourg',
-					'Malta',
-					'Moldova',
-					'Monaco',
-					'Montenegro',
-					'Netherlands',
-					'North Macedonia',
-					'Norway',
-					'Poland',
-					'Portugal',
-					'Romania',
-					'San Marino',
-					'Serbia',
-					'Slovakia',
-					'Slovenia',
-					'Spain',
-					'Sweden',
-					'Switzerland',
-					'Ukraine',
-					'United Kingdom',
-					'Vatican City',
-					'---North America',
-					'Antigua and Barbuda',
-					'Bahamas',
-					'Barbados',
-					'Belize',
-					'Canada',
-					'Costa Rica',
-					'Cuba',
-					'Dominica',
-					'Dominican Republic',
-					'El Salvador',
-					'Grenada',
-					'Guatemala',
-					'Haiti',
-					'Honduras',
-					'Jamaica',
-					'Mexico',
-					'Nicaragua',
-					'Panama',
-					'Saint Kitts and Nevis',
-					'Saint Lucia',
-					'Saint Vincent and the Grenadines',
-					'Trinidad and Tobago',
-					'United States',
-					'---Oceania',
-					'Australia',
-					'Fiji',
-					'Kiribati',
-					'Marshall Islands',
-					'Micronesia',
-					'Nauru',
-					'New Zealand',
-					'Palau',
-					'Papua New Guinea',
-					'Samoa',
-					'Solomon Islands',
-					'Tonga',
-					'Tuvalu',
-					'Vanuatu',
-					'---South America',
-					'Argentina',
-					'Bolivia',
-					'Brazil',
-					'Chile',
-					'Colombia',
-					'Ecuador',
-					'Guyana',
-					'Paraguay',
-					'Peru',
-					'Suriname',
-					'Uruguay',
-					'Venezuela',
-				]
-				on_select:   fn (s []string, mut e gui.Event, mut w gui.Window) {
-					mut app_ := w.state[ShowcaseApp]()
-					app_.selected_2 = s
-					e.is_handled = true
-				}
-			),
-		]
-	)
-}
-
-// ==============================================================
-// Icons
-// ==============================================================
-
-fn icons(mut w gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		content: [
-			view_title('Icons (Font)'),
-			gui.row(
-				sizing:  gui.fill_fit
-				spacing: 0
-				padding: gui.padding_none
-				content: [icon_catalog(mut w)]
-			),
-		]
-	)
-}
-
-fn icon_catalog(mut w gui.Window) gui.View {
-	// find the longest text
-	mut longest := f32(0)
-	for s in gui.icons_map.keys() {
-		longest = f32_max(gui.text_width(s, gui.theme().n4, mut w), longest)
-	}
-
-	// Break the icons_maps into rows
-	chunks := chunk_map(gui.icons_map, 4)
-	mut all_icons := []gui.View{cap: chunks.len}
-
-	cfg := gui.TextStyle{
-		...gui.theme().icon1
-		size: 24
-	}
-
-	// create rows of icons/text
-	for chunk in chunks {
-		mut icons := []gui.View{cap: chunk.len}
-		for key, val in chunk {
-			icons << gui.column(
-				min_width: longest
-				h_align:   .center
-				padding:   gui.padding_none
-				content:   [
-					gui.text(text: val, text_style: cfg),
-					gui.text(text: key, text_style: gui.theme().n4),
-				]
-			)
-		}
-		all_icons << gui.row(
-			spacing: 0
-			padding: gui.padding_none
-			content: icons
-		)
-	}
-
-	return gui.column(
-		spacing: gui.spacing_large
-		sizing:  gui.fill_fill
-		padding: gui.padding_none
-		content: all_icons
-	)
-}
-
-// maybe this should be a standard library function?
-fn chunk_map[K, V](input map[K]V, chunk_size int) []map[K]V {
-	mut chunks := []map[K]V{cap: input.keys().len / chunk_size + 1}
-	mut current_chunk := map[K]V{}
-	mut count := 0
-
-	for key, value in input {
-		current_chunk[key] = value
-		count += 1
-		if count == chunk_size {
-			chunks << current_chunk
-			current_chunk = map[K]V{}
-			count = 0
-		}
-	}
-	// Add any remaining items as the last chunk
-	if current_chunk.len > 0 {
-		chunks << current_chunk
-	}
-	return chunks
-}
-
-// ==============================================================
 // SVG
 // ==============================================================
 
@@ -2121,132 +1003,7 @@ const svg_inherit_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1
 const tiger_svg_path = os.join_path(os.dir(@FILE), 'tiger.svg')
 const missing_svg_path = os.join_path(os.dir(@FILE), 'missing-icon.svg')
 
-fn svg_icons(mut w gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		content: [
-			view_title('SVG Icons'),
-			gui.column(
-				spacing: gui.spacing_large
-				content: [
-					gui.text(text: 'Default Size (24x24)', text_style: gui.theme().b2),
-					gui.row(
-						spacing: 10
-						content: [
-							gui.svg(
-								svg_data: svg_home
-								width:    24
-								height:   24
-								color:    gui.theme().text_style.color
-							),
-							gui.svg(
-								svg_data: svg_settings
-								width:    24
-								height:   24
-								color:    gui.theme().text_style.color
-							),
-							gui.svg(
-								svg_data: svg_star
-								width:    24
-								height:   24
-								color:    gui.theme().text_style.color
-							),
-							gui.svg(
-								svg_data: svg_heart
-								width:    24
-								height:   24
-								color:    gui.theme().text_style.color
-							),
-							gui.svg(
-								svg_data: svg_check
-								width:    24
-								height:   24
-								color:    gui.theme().text_style.color
-							),
-						]
-					),
-					gui.text(text: 'With Colors', text_style: gui.theme().b2),
-					gui.row(
-						spacing: 10
-						content: [
-							gui.svg(svg_data: svg_home, width: 32, height: 32, color: gui.blue),
-							gui.svg(svg_data: svg_settings, width: 32, height: 32, color: gui.gray),
-							gui.svg(svg_data: svg_star, width: 32, height: 32, color: gui.yellow),
-							gui.svg(svg_data: svg_heart, width: 32, height: 32, color: gui.red),
-							gui.svg(svg_data: svg_check, width: 32, height: 32, color: gui.green),
-						]
-					),
-					gui.text(text: 'Scaled (48x48, 64x64)', text_style: gui.theme().b2),
-					gui.row(
-						spacing: 20
-						v_align: .middle
-						content: [
-							gui.svg(svg_data: svg_home, width: 48, height: 48, color: gui.cyan),
-							gui.svg(svg_data: svg_star, width: 64, height: 64, color: gui.orange),
-							gui.svg(svg_data: svg_heart, width: 48, height: 48, color: gui.pink),
-						]
-					),
-					gui.text(text: 'Clickable', text_style: gui.theme().b2),
-					gui.svg(
-						svg_data: svg_settings
-						width:    40
-						height:   40
-						color:    gui.theme().text_style.color
-						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-							w.dialog(
-								dialog_type: .message
-								title:       'SVG Clicked'
-								body:        'Settings icon was clicked!'
-							)
-						}
-					),
-				]
-			),
-		]
-	)
-}
-
-// ==============================================================
-// Image
-// ==============================================================
-
 const sample_image_path = os.join_path(os.dir(@FILE), 'sample.jpeg')
-
-fn image_sample(w &gui.Window) gui.View {
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Image'),
-			gui.column(
-				content: [
-					gui.image(src: sample_image_path),
-					gui.text(text: 'Pinard Falls, Oregon', text_style: gui.theme().b2),
-				]
-			),
-		]
-	)
-}
-
-// ==============================================================
-// Tree View
-// ==============================================================
-
-fn tree_view(mut w gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		sizing:  gui.fill_fill
-		content: [
-			view_title('TreeView'),
-			gui.row(
-				sizing:  gui.fill_fit
-				spacing: 0
-				padding: gui.padding_none
-				content: [tree_view_sample(mut w)]
-			),
-		]
-	)
-}
 
 fn on_select(id string, mut w gui.Window) {
 	mut app := w.state[ShowcaseApp]()
@@ -2310,22 +1067,6 @@ fn tree_view_sample(mut w gui.Window) gui.View {
 // Expand Panel
 // ==============================================================
 
-fn expand_panel(w &gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		sizing:  gui.fill_fill
-		content: [
-			view_title('Expand Panel'),
-			gui.row(
-				padding: gui.padding_none
-				sizing:  gui.fill_fit
-				spacing: 0
-				content: [expand_panel_sample(w)]
-			),
-		]
-	)
-}
-
 fn expand_panel_sample(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.expand_panel(
@@ -2366,672 +1107,6 @@ const brazil_text = 'The word "Brazil" likely comes from the Portuguese word for
 // Pulsars
 // ==============================================================
 
-fn pulsars(mut w gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		sizing:  gui.fill_fill
-		content: [
-			view_title('Pulsars'),
-			gui.row(
-				padding: gui.padding_none
-				sizing:  gui.fill_fit
-				spacing: 0
-				content: [pulsar_samples(mut w)]
-			),
-		]
-	)
-}
-
-fn pulsar_samples(mut w gui.Window) gui.View {
-	return gui.row(
-		content: [
-			w.pulsar(),
-			w.pulsar(size: 20),
-			w.pulsar(size: 30, color: gui.orange),
-			w.pulsar(size: 30, icon1: gui.icon_heart, icon2: gui.icon_heart_o, color: gui.red),
-			w.pulsar(size: 30, icon1: gui.icon_expand, icon2: gui.icon_compress, color: gui.green),
-		]
-	)
-}
-
-// ==============================================================
-// Text Sizes & Weights
-// ==============================================================
-
-fn text_sizes_weights(w &gui.Window) gui.View {
-	text_style_file := gui.TextStyle{
-		...gui.theme().text_style
-		color: gui.theme().color_border
-	}
-	variants := gui.font_variants(gui.theme().text_style)
-	return gui.column(
-		sizing:  gui.fill_fit
-		padding: gui.padding_none
-		content: [
-			view_title('Text Sizes & Weights'),
-			gui.column(
-				spacing: 0
-				padding: gui.padding_none
-				content: [
-					gui.text(text: variants.normal, text_style: text_style_file),
-					gui.row(
-						padding: gui.padding_none
-						sizing:  gui.fill_fit
-						v_align: .bottom
-						content: [
-							gui.text(text: 'Theme().n1', text_style: gui.theme().n1),
-							gui.text(text: 'Theme().n2', text_style: gui.theme().n2),
-							gui.text(text: 'Theme().n3', text_style: gui.theme().n3),
-							gui.text(text: 'Theme().n4', text_style: gui.theme().n4),
-							gui.text(text: 'Theme().n5', text_style: gui.theme().n5),
-							gui.text(text: 'Theme().n6', text_style: gui.theme().n6),
-						]
-					),
-				]
-			),
-			gui.column(
-				spacing: 0
-				padding: gui.padding_none
-				content: [
-					gui.text(text: variants.bold, text_style: text_style_file),
-					gui.row(
-						padding: gui.padding_none
-						sizing:  gui.fill_fit
-						v_align: .bottom
-						content: [
-							gui.text(text: 'Theme().b1', text_style: gui.theme().b1),
-							gui.text(text: 'Theme().b2', text_style: gui.theme().b2),
-							gui.text(text: 'Theme().b3', text_style: gui.theme().b3),
-							gui.text(text: 'Theme().b4', text_style: gui.theme().b4),
-							gui.text(text: 'Theme().b5', text_style: gui.theme().b5),
-							gui.text(text: 'Theme().b6', text_style: gui.theme().b6),
-						]
-					),
-				]
-			),
-			gui.column(
-				spacing: 0
-				padding: gui.padding_none
-				content: [
-					gui.text(text: variants.italic, text_style: text_style_file),
-					gui.row(
-						padding: gui.padding_none
-						sizing:  gui.fill_fit
-						v_align: .bottom
-						content: [
-							gui.text(text: 'Theme().i1', text_style: gui.theme().i1),
-							gui.text(text: 'Theme().i2', text_style: gui.theme().i2),
-							gui.text(text: 'Theme().i3', text_style: gui.theme().i3),
-							gui.text(text: 'Theme().i4', text_style: gui.theme().i4),
-							gui.text(text: 'Theme().i5', text_style: gui.theme().i5),
-							gui.text(text: 'Theme().i6', text_style: gui.theme().i6),
-						]
-					),
-				]
-			),
-			gui.column(
-				spacing: 0
-				padding: gui.padding_none
-				content: [
-					gui.text(text: variants.mono, text_style: text_style_file),
-					gui.row(
-						padding: gui.padding_none
-						sizing:  gui.fill_fit
-						v_align: .bottom
-						content: [
-							gui.text(text: 'Theme().m1', text_style: gui.theme().m1),
-							gui.text(text: 'Theme().m2', text_style: gui.theme().m2),
-							gui.text(text: 'Theme().m3', text_style: gui.theme().m3),
-							gui.text(text: 'Theme().m4', text_style: gui.theme().m4),
-							gui.text(text: 'Theme().m5', text_style: gui.theme().m5),
-							gui.text(text: 'Theme().m6', text_style: gui.theme().m6),
-						]
-					),
-				]
-			),
-		]
-	)
-}
-
-// ==============================================================
-// Rich Text Format
-// ==============================================================
-fn rich_text_format(w &gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		sizing:  gui.fill_fill
-		content: [
-			view_title('Rich Text Format (RTF)'),
-			gui.row(
-				padding: gui.padding_none
-				sizing:  gui.fill_fit
-				spacing: 0
-				content: [rtf_sample(w)]
-			),
-		]
-	)
-}
-
-fn rtf_sample(w &gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		sizing:  gui.fill_fill
-		content: [
-			gui.rtf(
-				mode:      .wrap
-				rich_text: gui.RichText{
-					runs: [
-						gui.rich_run('Hello', gui.theme().n3),
-						gui.rich_run(' RTF ', gui.theme().b3),
-						gui.rich_run('World', gui.theme().n3),
-						gui.rich_br(),
-						gui.rich_br(),
-						gui.RichTextRun{
-							text:  'Now is the'
-							style: gui.TextStyle{
-								...gui.theme().n3
-								strikethrough: true
-							}
-						},
-						gui.rich_run(' ', gui.theme().n3),
-						gui.rich_run('time', gui.theme().i3),
-						gui.rich_run(' for all', gui.theme().n3),
-						gui.RichTextRun{
-							text:  ' good men '
-							style: gui.TextStyle{
-								...gui.theme().n3
-								color: gui.green
-							}
-						},
-						gui.rich_run('to come to the aid of their ', gui.theme().n3),
-						gui.RichTextRun{
-							text:  'country'
-							style: gui.TextStyle{
-								...gui.theme().b3
-								underline: true
-							}
-						},
-						gui.rich_br(),
-						gui.rich_br(),
-						gui.rich_run('This is a ', gui.theme().n3),
-						gui.rich_link('hyperlink', 'https://www.example.com', gui.theme().n3),
-					]
-				}
-			),
-		]
-	)
-}
-
-// ==============================================================
-// Tables
-// ==============================================================
-fn tables(mut w gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		sizing:  gui.fill_fill
-		content: [
-			view_title('Tables'),
-			gui.row(
-				padding: gui.padding_none
-				sizing:  gui.fill_fit
-				spacing: 0
-				content: [table_samples(mut w)]
-			),
-		]
-	)
-}
-
-fn table_samples(mut w gui.Window) gui.View {
-	mut app := w.state[ShowcaseApp]()
-	return gui.column(
-		content: [
-			gui.text(text: 'Declarative Layout', text_style: gui.theme().b2),
-			w.table(
-				size_border:     1.0
-				color_border:    gui.gray
-				text_style_head: gui.theme().b3
-				data:            [
-					gui.tr([gui.th('First'), gui.th('Last'), gui.th('Email')]),
-					gui.tr([gui.td('Matt'), gui.td('Williams'),
-						gui.td('non.egestas.a@protonmail.org')]),
-					gui.tr([gui.td('Clara'), gui.td('Nelson'),
-						gui.td('mauris.sagittis@icloud.net')]),
-					gui.tr([gui.td('Frank'), gui.td('Johnson'),
-						gui.td('ac.libero.nec@aol.com')]),
-					gui.tr([gui.td('Elmer'), gui.td('Fudd'), gui.td('mus@aol.couk')]),
-					gui.tr([gui.td('Roy'), gui.td('Rogers'), gui.td('amet.ultricies@yahoo.com')]),
-				]
-			),
-			gui.text(text: ''),
-			gui.text(text: 'CSV Data', text_style: gui.theme().b2),
-			table_with_sortable_columns(mut app.csv_table, mut w),
-			gui.text(text: ''),
-		]
-	)
-}
-
-fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) gui.View {
-	mut table_cfg := gui.table_cfg_from_data(table_data.sorted)
-	table_cfg = gui.TableCfg{
-		...table_cfg
-		color_border: gui.gray
-		size_border:  1.0
-	}
-
-	// Replace with first row with clickable column headers
-	mut tds := []gui.TableCellCfg{}
-	for idx, cell in table_cfg.data[0].cells {
-		tds << gui.TableCellCfg{
-			...cell
-			value:    match true {
-				idx + 1 == table_data.sort_by { cell.value + '  ↓' }
-				-(idx + 1) == table_data.sort_by { cell.value + ' ↑' }
-				else { cell.value }
-			}
-			on_click: fn [idx, mut table_data] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-				table_data.sort_by = match true {
-					table_data.sort_by == (idx + 1) { -(idx + 1) }
-					table_data.sort_by == -(idx + 1) { 0 }
-					else { idx + 1 }
-				}
-				table_sort(mut table_data)
-				e.is_handled = true
-			}
-		}
-	}
-
-	table_cfg.data.delete(0)
-	table_cfg.data.insert(0, gui.tr(tds))
-	return window.table(table_cfg)
-}
-
-fn table_sort(mut table_data TableData) {
-	if table_data.sort_by == 0 {
-		table_data.sorted = table_data.unsorted
-		return
-	}
-	direction := table_data.sort_by > 0
-	idx := math.abs(table_data.sort_by) - 1
-	head_row := table_data.sorted[0]
-	table_data.sorted.delete(0) // duplicates the array so no clone needed above
-	table_data.sorted.sort_with_compare(fn [direction, idx] (mut a []string, mut b []string) int {
-		return match true {
-			a[idx] < b[idx] && direction { -1 }
-			a[idx] > b[idx] && !direction { -1 }
-			a[idx] > b[idx] && direction { 1 }
-			a[idx] < b[idx] && !direction { 1 }
-			else { 0 }
-		}
-	})
-	table_data.sorted.insert(0, head_row)
-}
-
-fn get_table_data() !TableData {
-	mut table_data := TableData{}
-	mut parser := csv.csv_reader_from_string(csv_table_data_source)!
-	for y in 0 .. int(parser.rows_count()!) {
-		table_data.unsorted << parser.get_row(y)!
-	}
-	table_data.sorted = table_data.unsorted
-	return table_data
-}
-
-const csv_table_data_source = 'Name,Phone,Email,Address,Postal Zip,Region
-Keelie Snow,1-164-548-3178,erat.vivamus@icloud.net,Ap #414-702 Libero Avenue,698863,Chernivtsi oblast
-Anthony Keith,1-918-510-5824,pulvinar.arcu@google.ca,Ap #358-7921 Placerat. Street,S4V 2M4,Leinster
-Carissa Larson,1-646-772-7793,enim.gravida@aol.couk,"667-994 Mi, St.",1231,Sardegna
-Joseph Herrera,1-746-758-0438,posuere@hotmail.couk,Ap #638-5604 Adipiscing Ave,51262,Pará
-Nerea Romero,1-425-458-5525,pretium.neque@google.edu,990-4951 Mauris St.,46317,Junín
-Macey Reed,1-175-242-2264,massa.quisque@hotmail.couk,1239 Arcu. Av.,WI1 8TR,Lai Châu
-Craig Roach,1-541-688-6830,lorem.sit@hotmail.ca,385-9173 Libero. Rd.,07132,Newfoundland and Labrador
-Yardley Barlow,1-648-862-5647,sodales@hotmail.couk,893-8994 Aliquet. St.,97-286,Lambayeque
-Shad Whitfield,1-525-513-5416,augue.id.ante@protonmail.org,Ap #560-3609 Lorem Ave,70666,North Jeolla
-Eugenia Bell,1-578-560-1252,laoreet.ipsum@icloud.edu,"P.O. Box 922, 5077 Sed Ave",28133,Kon Tum
-Nash Hernandez,1-897-393-7624,convallis.convallis.dolor@google.couk,5853 Diam. Rd.,734884,Tasmania
-Rinah Woods,1-698-796-5903,dui.nec.urna@icloud.ca,252-4094 Neque. Avenue,17571,Northern Territory
-Jescie Beasley,1-264-555-2460,sapien.cursus@google.org,"873-7406 At, Rd.",44324,Gyeonggi
-Jordan Harrison,1-627-442-6681,scelerisque.scelerisque@hotmail.net,696-2283 Turpis Rd.,3709,Umbria
-Abdul Rowe,1-384-151-2787,ornare.fusce.mollis@hotmail.edu,"Ap #856-6933 Ut, St.",25878,Mississippi
-Simone Bullock,1-623-422-9718,sed.facilisis@outlook.couk,2620 Mattis St.,49275,Luxemburg
-Lillian Montgomery,1-317-854-9787,ut@outlook.couk,Ap #132-4005 Enim Ave,571928,Leinster
-Tanisha Rodriquez,1-217-655-3165,id@aol.couk,"P.O. Box 490, 1311 Et, Road",45133,Chiapas
-Alexandra Dyer,1-442-662-6576,amet.consectetuer.adipiscing@protonmail.edu,Ap #474-4869 Malesuada St.,613696,Rajasthan
-Gretchen Carr,1-465-576-3555,eu.nibh@yahoo.org,Ap #617-6465 Nascetur Rd.,872532,São Paulo
-Patience Cobb,1-833-211-2532,sed@hotmail.couk,1431 Pellentesque Street,644218,Paraná
-Jaquelyn Carlson,1-774-851-3274,amet.dapibus@aol.ca,"Ap #529-8389 Lectus, Av.",5680-5371,Central Region
-Britanney Silva,1-281-414-9085,nascetur.ridiculus.mus@google.ca,429-6408 Nec Rd.,6132,Vorarlberg
-Brennan Hooper,1-534-697-7689,nunc.pulvinar.arcu@aol.edu,Ap #425-8524 Pellentesque. Ave,8834,Morayshire
-Eliana Fry,1-822-880-5214,orci.luctus.et@protonmail.edu,351-931 Non St.,731577,Viken
-'
-
-// ==============================================================
-// Date Pickers
-// ==============================================================
-
-fn date_pickers(mut w gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		sizing:  gui.fill_fit
-		content: [
-			view_title('Date Pickers'),
-			gui.row(
-				padding: gui.padding_none
-				sizing:  gui.fill_fit
-				content: [date_picker_samples(mut w)]
-			),
-		]
-	)
-}
-
-fn date_picker_samples(mut w gui.Window) gui.View {
-	app := w.state[ShowcaseApp]()
-	return gui.column(
-		spacing: gui.spacing_large * 2
-		content: [
-			gui.row(
-				spacing: gui.spacing_large * 2
-				v_align: .top
-				content: [
-					gui.column(
-						padding: gui.padding_none
-						content: [
-							gui.text(text: 'Calendar Date Picker', text_style: gui.theme().b2),
-							gui.text(
-								text:       selected_dates_text(app.date_picker_dates)
-								text_style: gui.theme().n4
-							),
-							w.date_picker(
-								id:        'dp1'
-								dates:     app.date_picker_dates
-								on_select: fn (dates []time.Time, mut e gui.Event, mut w gui.Window) {
-									mut app := w.state[ShowcaseApp]()
-									app.date_picker_dates = dates
-									e.is_handled = true
-								}
-							),
-						]
-					),
-					gui.column(
-						padding: gui.padding_none
-						content: [
-							gui.text(text: 'Input Date (with dropdown)', text_style: gui.theme().b2),
-							gui.text(
-								text:       'Selected: ${app.input_date.format()}'
-								text_style: gui.theme().n4
-							),
-							w.input_date(
-								id:        'id1'
-								id_focus:  4000
-								date:      app.input_date
-								on_select: fn (dates []time.Time, mut e gui.Event, mut w gui.Window) {
-									mut app := w.state[ShowcaseApp]()
-									if dates.len > 0 {
-										app.input_date = dates[0]
-									}
-									e.is_handled = true
-								}
-							),
-						]
-					),
-				]
-			),
-			gui.column(
-				padding: gui.padding_none
-				content: [
-					gui.text(text: 'Date Picker Roller', text_style: gui.theme().b2),
-					gui.text(
-						text:       'Selected: ${app.roller_date.format()}'
-						text_style: gui.theme().n4
-					),
-					gui.row(
-						v_align: .top
-						content: [
-							gui.column(
-								padding: gui.padding_none
-								h_align: .center
-								content: [
-									gui.text(text: '.month_day_year', text_style: gui.theme().n4),
-									gui.date_picker_roller(
-										id:            'dpr1'
-										id_focus:      4001
-										selected_date: app.roller_date
-										display_mode:  .month_day_year
-										long_months:   true
-										on_change:     fn (d time.Time, mut w gui.Window) {
-											mut app := w.state[ShowcaseApp]()
-											app.roller_date = d
-										}
-									),
-								]
-							),
-							gui.column(
-								padding: gui.padding_none
-								h_align: .center
-								content: [
-									gui.text(text: '.month_year', text_style: gui.theme().n4),
-									gui.date_picker_roller(
-										id:            'dpr2'
-										id_focus:      4002
-										selected_date: app.roller_date
-										display_mode:  .month_year
-										long_months:   false
-										on_change:     fn (d time.Time, mut w gui.Window) {
-											mut app := w.state[ShowcaseApp]()
-											app.roller_date = d
-										}
-									),
-								]
-							),
-							gui.column(
-								padding: gui.padding_none
-								h_align: .center
-								content: [
-									gui.text(text: '.year_only', text_style: gui.theme().n4),
-									gui.date_picker_roller(
-										id:            'dpr3'
-										id_focus:      4003
-										selected_date: app.roller_date
-										display_mode:  .year_only
-										on_change:     fn (d time.Time, mut w gui.Window) {
-											mut app := w.state[ShowcaseApp]()
-											app.roller_date = d
-										}
-									),
-								]
-							),
-						]
-					),
-				]
-			),
-		]
-	)
-}
-
-fn selected_dates_text(dates []time.Time) string {
-	if dates.len == 0 {
-		return 'No dates selected'
-	}
-	mut parts := []string{cap: dates.len}
-	for d in dates {
-		parts << d.format()
-	}
-	return 'Selected: ${parts.join(', ')}'
-}
-
-// ==============================================================
-// Animations
-// ==============================================================
-
-fn animations(mut w gui.Window) gui.View {
-	return gui.column(
-		padding: gui.padding_none
-		sizing:  gui.fill_fit
-		content: [
-			view_title('Animations'),
-			gui.row(
-				padding: gui.padding_none
-				sizing:  gui.fill_fit
-				content: [animation_samples(mut w)]
-			),
-		]
-	)
-}
-
-fn animation_samples(mut w gui.Window) gui.View {
-	app := w.state[ShowcaseApp]()
-	box_color := if app.light_theme { gui.dark_blue } else { gui.cornflower_blue }
-	return gui.column(
-		spacing: gui.spacing_large * 2
-		content: [
-			// Tween Animation
-			gui.column(
-				padding: gui.padding_none
-				content: [
-					gui.text(text: 'Tween Animation', text_style: gui.theme().b2),
-					gui.text(
-						text:       'Interpolates values over time with easing functions'
-						text_style: gui.theme().n4
-					),
-					gui.row(
-						content: [
-							gui.button(
-								content:  [gui.text(text: 'ease_out_cubic')]
-								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-									start_tween(mut w, gui.ease_out_cubic)
-								}
-							),
-							gui.button(
-								content:  [gui.text(text: 'ease_out_bounce')]
-								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-									start_tween(mut w, gui.ease_out_bounce)
-								}
-							),
-							gui.button(
-								content:  [gui.text(text: 'ease_out_elastic')]
-								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-									start_tween(mut w, gui.ease_out_elastic)
-								}
-							),
-							gui.button(
-								content:  [gui.text(text: 'ease_out_back')]
-								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-									start_tween(mut w, gui.ease_out_back)
-								}
-							),
-						]
-					),
-					gui.row(
-						height:  40
-						sizing:  gui.fill_fixed
-						padding: gui.padding_none
-						content: [
-							gui.row(
-								width:   int(app.anim_tween_x)
-								sizing:  gui.fixed_fit
-								padding: gui.padding_none
-							),
-							gui.row(
-								width:   30
-								height:  30
-								sizing:  gui.fixed_fixed
-								padding: gui.padding_none
-								color:   box_color
-								radius:  4
-							),
-						]
-					),
-				]
-			),
-			// Spring Animation
-			gui.column(
-				padding: gui.padding_none
-				content: [
-					gui.text(text: 'Spring Animation', text_style: gui.theme().b2),
-					gui.text(
-						text:       'Physics-based motion with natural feel'
-						text_style: gui.theme().n4
-					),
-					gui.row(
-						content: [
-							gui.button(
-								content:  [gui.text(text: 'spring_default')]
-								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-									start_spring(mut w, gui.spring_default)
-								}
-							),
-							gui.button(
-								content:  [gui.text(text: 'spring_gentle')]
-								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-									start_spring(mut w, gui.spring_gentle)
-								}
-							),
-							gui.button(
-								content:  [gui.text(text: 'spring_bouncy')]
-								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-									start_spring(mut w, gui.spring_bouncy)
-								}
-							),
-							gui.button(
-								content:  [gui.text(text: 'spring_stiff')]
-								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-									start_spring(mut w, gui.spring_stiff)
-								}
-							),
-						]
-					),
-					gui.row(
-						height:  40
-						sizing:  gui.fill_fixed
-						padding: gui.padding_none
-						content: [
-							gui.row(
-								width:   int(app.anim_spring_x)
-								sizing:  gui.fixed_fit
-								padding: gui.padding_none
-							),
-							gui.row(
-								width:   30
-								height:  30
-								sizing:  gui.fixed_fixed
-								padding: gui.padding_none
-								color:   box_color
-								radius:  15
-							),
-						]
-					),
-				]
-			),
-			// Layout Transition
-			gui.column(
-				padding: gui.padding_none
-				content: [
-					gui.text(text: 'Layout Transition', text_style: gui.theme().b2),
-					gui.text(
-						text:       'Automatically animates position changes'
-						text_style: gui.theme().n4
-					),
-					gui.button(
-						content:  [
-							gui.text(text: 'Toggle Layout'),
-						]
-						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-							w.animate_layout(duration: 400 * time.millisecond)
-							mut app := w.state[ShowcaseApp]()
-							app.anim_layout_expanded = !app.anim_layout_expanded
-						}
-					),
-					gui.row(
-						height:  60
-						sizing:  gui.fill_fixed
-						padding: gui.padding_none
-						content: layout_boxes(app.anim_layout_expanded, box_color)
-					),
-				]
-			),
-		]
-	)
-}
-
 fn start_tween(mut w gui.Window, easing gui.EasingFn) {
 	app := w.state[ShowcaseApp]()
 	target := if app.anim_tween_x < 200 { f32(400) } else { f32(0) }
@@ -3061,6 +1136,40 @@ fn start_spring(mut w gui.Window, config gui.SpringCfg) {
 	}
 	spring.spring_to(app.anim_spring_x, target)
 	w.animation_add(mut spring)
+}
+
+fn start_keyframe(mut w gui.Window) {
+	app := w.state[ShowcaseApp]()
+	target := if app.anim_keyframe_x < 180 { f32(320) } else { f32(20) }
+	w.animation_add(mut gui.KeyframeAnimation{
+		id:        'keyframe_demo'
+		duration:  550 * time.millisecond
+		keyframes: [
+			gui.Keyframe{
+				at:    0.0
+				value: app.anim_keyframe_x
+			},
+			gui.Keyframe{
+				at:     0.35
+				value:  target + 35
+				easing: gui.ease_out_cubic
+			},
+			gui.Keyframe{
+				at:     0.70
+				value:  target - 14
+				easing: gui.ease_out_quad
+			},
+			gui.Keyframe{
+				at:     1.0
+				value:  target
+				easing: gui.ease_out_quad
+			},
+		]
+		on_value:  fn (v f32, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.anim_keyframe_x = v
+		}
+	})
 }
 
 fn layout_boxes(expanded bool, color gui.Color) []gui.View {
@@ -3150,29 +1259,39 @@ fn markdown_preview(window &gui.Window) gui.View {
 | Table     | Data    | Ready  |
 | Dialog    | Overlay | Ready  |'
 
-fn basic_button_demo(mut w gui.Window) gui.View {
-	app := w.state[ShowcaseApp]()
-	return gui.row(
-		v_align: .middle
-		content: [
-			gui.button(
-				id_focus: 9100
-				content:  [gui.text(text: 'Click Me')]
-				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-					mut app := w.state[ShowcaseApp]()
-					app.button_clicks += 1
-				}
-			),
-			gui.text(text: 'Clicks: ${app.button_clicks}'),
-		]
-	)
-}
-
-fn basic_input_demo(w &gui.Window) gui.View {
+fn demo_button(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
 		spacing: gui.theme().spacing_small
 		content: [
+			gui.text(
+				text:       'Clicks: ${app.button_clicks}'
+				text_style: gui.theme().n5
+			),
+			gui.column(
+				sizing:  gui.fill_fit
+				spacing: gui.spacing_small
+				content: button_feature_rows(app, 9100)
+			),
+		]
+	)
+}
+
+fn demo_input(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'Accessibility: supports IME composition, keyboard tab focus, and masked input.'
+				text_style: gui.theme().b5
+				mode:       .wrap
+			),
+			gui.text(
+				text:       'Designed to work with VoiceOver and other screen-reader/assistive technologies.'
+				text_style: gui.theme().b5
+				mode:       .wrap
+			),
 			gui.row(
 				v_align: .middle
 				content: [
@@ -3267,7 +1386,7 @@ fn basic_input_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_toggle_demo(w &gui.Window) gui.View {
+fn demo_toggle(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
 		spacing: gui.theme().spacing_small
@@ -3295,7 +1414,7 @@ fn basic_toggle_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_switch_demo(w &gui.Window) gui.View {
+fn demo_switch(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.switch(
 		label:    'Enable switch'
@@ -3307,7 +1426,7 @@ fn basic_switch_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_radio_demo(w &gui.Window) gui.View {
+fn demo_radio(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.radio(
 		label:    'Radio option'
@@ -3319,7 +1438,7 @@ fn basic_radio_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_radio_group_demo(w &gui.Window) gui.View {
+fn demo_radio_group(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	options := [
 		gui.radio_option('New York', 'ny'),
@@ -3352,7 +1471,7 @@ fn basic_radio_group_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_select_demo(w &gui.Window) gui.View {
+fn demo_select(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return w.select(
 		id:              'catalog_select'
@@ -3370,7 +1489,7 @@ fn basic_select_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_list_box_demo(w &gui.Window) gui.View {
+fn demo_list_box(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
 		spacing: gui.theme().spacing_small
@@ -3408,7 +1527,7 @@ fn basic_list_box_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_range_slider_demo(w &gui.Window) gui.View {
+fn demo_range_slider(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.row(
 		v_align: .middle
@@ -3455,7 +1574,7 @@ fn basic_range_slider_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_progress_bar_demo(w &gui.Window) gui.View {
+fn demo_progress_bar(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	percent := app.range_value / f32(100)
 	return gui.column(
@@ -3474,7 +1593,7 @@ fn basic_progress_bar_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_pulsar_demo(mut w gui.Window) gui.View {
+fn demo_pulsar(mut w gui.Window) gui.View {
 	return gui.row(
 		content: [
 			w.pulsar(),
@@ -3484,7 +1603,7 @@ fn basic_pulsar_demo(mut w gui.Window) gui.View {
 	)
 }
 
-fn basic_menu_demo(mut w gui.Window) gui.View {
+fn demo_menu(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
 		spacing: gui.theme().spacing_small
@@ -3501,50 +1620,359 @@ fn basic_menu_demo(mut w gui.Window) gui.View {
 	)
 }
 
-fn basic_dialog_demo() gui.View {
-	return gui.row(
+fn demo_dialog() gui.View {
+	return gui.column(
+		spacing: gui.theme().spacing_small
 		content: [
-			gui.button(
-				content:  [gui.text(text: 'Message Dialog')]
-				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-					w.dialog(
-						dialog_type: .message
-						title:       'Message'
-						body:        'Dialog control example'
-					)
-				}
+			gui.text(
+				text:       'Dialog types and native file/folder dialogs'
+				text_style: gui.theme().n5
 			),
-			gui.button(
-				content:  [gui.text(text: 'Confirm Dialog')]
-				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-					w.dialog(
-						dialog_type: .confirm
-						title:       'Confirm'
-						body:        'Continue?'
-					)
-				}
+			gui.row(
+				content: [
+					gui.button(
+						content:  [gui.text(text: 'Message')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.dialog(
+								align_buttons: .end
+								dialog_type:   .message
+								title:         'Message'
+								body:          '
+Dialog body text.
+
+Multi-line text supported.
+Buttons can be left/center/right aligned.'.trim_indent()
+							)
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Confirm')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.dialog(
+								dialog_type:  .confirm
+								title:        'Destroy all data?'
+								body:         'Are you sure?'
+								on_ok_yes:    fn (mut w gui.Window) {
+									w.dialog(title: 'Clicked Yes')
+								}
+								on_cancel_no: fn (mut w gui.Window) {
+									w.dialog(title: 'Clicked No')
+								}
+							)
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Prompt')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.dialog(
+								dialog_type:  .prompt
+								title:        'Monty Python Quiz'
+								body:         'What is your quest?'
+								on_reply:     fn (reply string, mut w gui.Window) {
+									w.dialog(title: 'Replied', body: reply)
+								}
+								on_cancel_no: fn (mut w gui.Window) {
+									w.dialog(title: 'Canceled')
+								}
+							)
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Custom')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.dialog(
+								dialog_type:    .custom
+								custom_content: [
+									gui.column(
+										h_align: .center
+										v_align: .middle
+										content: [
+											gui.text(text: 'Custom Content'),
+											gui.button(
+												id_focus: gui.dialog_base_id_focus
+												content:  [gui.text(text: 'Close')]
+												on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+													w.dialog_dismiss()
+												}
+											),
+										]
+									),
+								]
+							)
+						}
+					),
+				]
+			),
+			gui.row(
+				content: [
+					gui.button(
+						content:  [
+							gui.text(text: 'Native Open'),
+						]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.native_open_dialog(
+								title:          'Open Files'
+								allow_multiple: true
+								filters:        [
+									gui.NativeFileFilter{
+										name:       'Images'
+										extensions: [
+											'png',
+											'jpg',
+											'jpeg',
+										]
+									},
+									gui.NativeFileFilter{
+										name:       'Docs'
+										extensions: [
+											'txt',
+											'md',
+										]
+									},
+								]
+								on_done:        fn (result gui.NativeDialogResult, mut w gui.Window) {
+									demo_dialog_show_native_result('native_open_dialog()',
+										result, mut w)
+								}
+							)
+						}
+					),
+					gui.button(
+						content:  [
+							gui.text(text: 'Native Save'),
+						]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.native_save_dialog(
+								title:             'Save As'
+								default_name:      'untitled'
+								default_extension: 'txt'
+								filters:           [
+									gui.NativeFileFilter{
+										name:       'Text'
+										extensions: [
+											'txt',
+										]
+									},
+								]
+								on_done:           fn (result gui.NativeDialogResult, mut w gui.Window) {
+									demo_dialog_show_native_result('native_save_dialog()',
+										result, mut w)
+								}
+							)
+						}
+					),
+					gui.button(
+						content:  [
+							gui.text(text: 'Native Folder'),
+						]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.native_folder_dialog(
+								title:                  'Choose Folder'
+								can_create_directories: true
+								on_done:                fn (result gui.NativeDialogResult, mut w gui.Window) {
+									demo_dialog_show_native_result('native_folder_dialog()',
+										result, mut w)
+								}
+							)
+						}
+					),
+				]
 			),
 		]
 	)
 }
 
-fn basic_tree_demo(mut w gui.Window) gui.View {
+fn demo_dialog_show_native_result(kind string, result gui.NativeDialogResult, mut w gui.Window) {
+	body := match result.status {
+		.ok {
+			if result.paths.len == 0 {
+				'No paths returned.'
+			} else {
+				result.paths.join('\n')
+			}
+		}
+		.cancel {
+			'Canceled.'
+		}
+		.error {
+			if result.error_code.len > 0 && result.error_message.len > 0 {
+				'${result.error_code}: ${result.error_message}'
+			} else if result.error_message.len > 0 {
+				result.error_message
+			} else {
+				'Unknown error.'
+			}
+		}
+	}
+	w.dialog(title: kind, body: body)
+}
+
+fn demo_tree(mut w gui.Window) gui.View {
 	return tree_view_sample(mut w)
 }
 
-fn basic_text_demo() gui.View {
+fn demo_text() gui.View {
+	wrap_sample := 'Wrap mode collapses repeated spaces and wraps words to fit the available width.'
+	keep_spaces_sample := 'wrap_keep_spaces keeps    repeated spaces.\nColumns:\nName\tRole\nAlex\tDesigner\nRiley\tEngineer'
+	emoji_sample := 'Emoji: 😀 🚀 🎉 👍🏽 👩‍💻 🧑‍🚀'
+	grapheme_sample := 'Multi-grapheme: 👨‍👩‍👧‍👦  🇺🇸  1️⃣  café'
+	i18n_sample := 'i18n: English | Español | العربية | हिन्दी | 日本語 | 한국어 | עברית | ไทย'
 	return gui.column(
-		spacing: 0
+		spacing: gui.theme().spacing_small
 		content: [
-			gui.text(text: 'Theme n3 text', text_style: gui.theme().n3),
-			gui.text(text: 'Theme b3 text', text_style: gui.theme().b3),
-			gui.text(text: 'Theme i3 text', text_style: gui.theme().i3),
-			gui.text(text: 'Theme m3 text', text_style: gui.theme().m3),
+			gui.text(
+				text:       'Text supports style variants, alignment, wrapping modes, tabs, and selection/copy.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.text(text: 'Theme n3 text', text_style: gui.theme().n3),
+					gui.text(text: 'Theme b3 text', text_style: gui.theme().b3),
+					gui.text(text: 'Theme i3 text', text_style: gui.theme().i3),
+					gui.text(text: 'Theme m3 text', text_style: gui.theme().m3),
+				]
+			),
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.text(
+						text:       'Underlined'
+						text_style: gui.TextStyle{
+							...gui.theme().n4
+							underline: true
+						}
+					),
+					gui.text(
+						text:       'Strikethrough'
+						text_style: gui.TextStyle{
+							...gui.theme().n4
+							strikethrough: true
+						}
+					),
+					gui.text(
+						text:       'Background color'
+						text_style: gui.TextStyle{
+							...gui.theme().n4
+							color:    gui.white
+							bg_color: gui.dark_blue
+						}
+					),
+				]
+			),
+			gui.column(
+				sizing:       gui.fill_fit
+				color:        gui.theme().color_panel
+				color_border: gui.theme().color_border
+				size_border:  1
+				padding:      gui.padding_small
+				spacing:      gui.theme().spacing_small
+				content:      [
+					gui.text(text: 'Emoji, Multi-grapheme, and i18n', text_style: gui.theme().b5),
+					gui.text(text: emoji_sample, mode: .wrap, text_style: gui.theme().n4),
+					gui.text(text: grapheme_sample, mode: .wrap, text_style: gui.theme().n4),
+					gui.text(text: i18n_sample, mode: .wrap, text_style: gui.theme().n4),
+					gui.text(
+						text:       'RTL sample: العربية עברית'
+						mode:       .wrap
+						text_style: gui.TextStyle{
+							...gui.theme().n4
+							align: .right
+						}
+					),
+				]
+			),
+			gui.row(
+				spacing: gui.theme().spacing_small
+				v_align: .top
+				content: [
+					gui.column(
+						width:        260
+						sizing:       gui.fixed_fit
+						color:        gui.theme().color_panel
+						color_border: gui.theme().color_border
+						size_border:  1
+						padding:      gui.padding_small
+						spacing:      gui.theme().spacing_small
+						content:      [
+							gui.text(text: 'mode: .wrap + alignment', text_style: gui.theme().b5),
+							gui.text(
+								text:       wrap_sample
+								mode:       .wrap
+								text_style: gui.TextStyle{
+									...gui.theme().n5
+									align: .left
+								}
+							),
+							gui.text(
+								text:       'Center aligned text'
+								mode:       .wrap
+								text_style: gui.TextStyle{
+									...gui.theme().n5
+									align: .center
+								}
+							),
+							gui.text(
+								text:       'Right aligned text'
+								mode:       .wrap
+								text_style: gui.TextStyle{
+									...gui.theme().n5
+									align: .right
+								}
+							),
+						]
+					),
+					gui.column(
+						width:        260
+						sizing:       gui.fixed_fit
+						color:        gui.theme().color_panel
+						color_border: gui.theme().color_border
+						size_border:  1
+						padding:      gui.padding_small
+						spacing:      gui.theme().spacing_small
+						content:      [
+							gui.text(text: 'mode: .wrap_keep_spaces', text_style: gui.theme().b5),
+							gui.text(
+								text:       keep_spaces_sample
+								mode:       .wrap_keep_spaces
+								tab_size:   8
+								text_style: gui.theme().m5
+							),
+						]
+					),
+				]
+			),
+			gui.column(
+				sizing:       gui.fill_fit
+				color:        gui.theme().color_panel
+				color_border: gui.theme().color_border
+				size_border:  1
+				padding:      gui.padding_small
+				spacing:      gui.theme().spacing_small
+				content:      [
+					gui.text(
+						text:       'Focus/select/copy: click inside block, drag selection, then Cmd/Ctrl+C.'
+						text_style: gui.theme().n5
+						mode:       .wrap
+					),
+					gui.text(
+						id_focus:   9155
+						focus_skip: false
+						mode:       .multiline
+						text:       'Selectable text block\n- Click to focus\n- Drag to select range\n- Copy with Cmd/Ctrl+C'
+						text_style: gui.TextStyle{
+							...gui.theme().n4
+							bg_color: gui.theme().color_panel
+						}
+					),
+				]
+			),
 		]
 	)
 }
 
-fn basic_rtf_demo() gui.View {
+fn demo_rtf() gui.View {
 	return gui.rtf(
 		mode:      .wrap
 		rich_text: gui.RichText{
@@ -3560,20 +1988,121 @@ fn basic_rtf_demo() gui.View {
 	)
 }
 
-fn basic_table_demo(mut w gui.Window) gui.View {
-	return w.table(
-		size_border:  1
-		color_border: gui.gray
-		data:         [
-			gui.tr([gui.th('Name'), gui.th('Role')]),
-			gui.tr([gui.td('Alex'), gui.td('Designer')]),
-			gui.tr([gui.td('Riley'), gui.td('Engineer')]),
-			gui.tr([gui.td('Jordan'), gui.td('PM')]),
+fn showcase_table_rows() [][]string {
+	return [
+		['Name', 'Role', 'Team', 'City'],
+		['Alex', 'Designer', 'Foundations', 'Austin'],
+		['Riley', 'Engineer', 'Core UI', 'Seattle'],
+		['Jordan', 'PM', 'Platform', 'New York'],
+		['Sam', 'QA', 'Core UI', 'Denver'],
+		['Priya', 'Engineer', 'Platform', 'Chicago'],
+		['Noah', 'Designer', 'Growth', 'Boston'],
+		['Mina', 'Engineer', 'Foundations', 'San Diego'],
+		['Omar', 'PM', 'Growth', 'Atlanta'],
+	]
+}
+
+fn showcase_table_rows_sorted(sort_by int) [][]string {
+	mut rows := showcase_table_rows().clone()
+	if sort_by == 0 || rows.len <= 2 {
+		return rows
+	}
+	is_ascending := sort_by > 0
+	idx := math.abs(sort_by) - 1
+	head := rows[0]
+	mut body := rows[1..].clone()
+	body.sort_with_compare(fn [is_ascending, idx] (mut a []string, mut b []string) int {
+		if idx >= a.len || idx >= b.len {
+			return 0
+		}
+		a_value := a[idx].to_lower()
+		b_value := b[idx].to_lower()
+		return match true {
+			a_value < b_value && is_ascending { -1 }
+			a_value > b_value && is_ascending { 1 }
+			a_value < b_value && !is_ascending { 1 }
+			a_value > b_value && !is_ascending { -1 }
+			else { 0 }
+		}
+	})
+	mut sorted := [][]string{cap: rows.len}
+	sorted << head
+	for row in body {
+		sorted << row
+	}
+	return sorted
+}
+
+fn table_border_style_from_value(value string) gui.TableBorderStyle {
+	return match value {
+		'horizontal' { .horizontal }
+		'header_only' { .header_only }
+		'none' { .none }
+		else { .all }
+	}
+}
+
+fn demo_table(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	mut table_cfg := gui.table_cfg_from_data(showcase_table_rows_sorted(app.table_sort_by))
+	table_cfg = gui.TableCfg{
+		...table_cfg
+		id:                 'catalog_table'
+		size_border:        1
+		size_border_header: 2
+		border_style:       table_border_style_from_value(app.table_border_style)
+		color_border:       gui.gray
+		text_style_head:    gui.theme().b4
+	}
+	mut head_cells := []gui.TableCellCfg{}
+	for idx, cell in table_cfg.data[0].cells {
+		col := idx + 1
+		head_cells << gui.TableCellCfg{
+			...cell
+			value:    match true {
+				app.table_sort_by == col { '${cell.value}  ↓' }
+				app.table_sort_by == -col { '${cell.value} ↑' }
+				else { cell.value }
+			}
+			on_click: fn [col] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
+				mut app := w.state[ShowcaseApp]()
+				app.table_sort_by = match true {
+					app.table_sort_by == col { -col }
+					app.table_sort_by == -col { 0 }
+					else { col }
+				}
+				e.is_handled = true
+			}
+		}
+	}
+	table_cfg.data.delete(0)
+	table_cfg.data.insert(0, gui.tr(head_cells))
+	border_options := [
+		gui.radio_option('All', 'all'),
+		gui.radio_option('Horizontal', 'horizontal'),
+		gui.radio_option('Header only', 'header_only'),
+		gui.radio_option('None', 'none'),
+	]
+	return gui.column(
+		spacing: gui.theme().spacing_medium
+		content: [
+			gui.radio_button_group_row(
+				title:     'Border style'
+				id_focus:  9108
+				padding:   gui.padding(2, 4, 2, 4)
+				value:     app.table_border_style
+				options:   border_options
+				on_select: fn (value string, mut w gui.Window) {
+					w.state[ShowcaseApp]().table_border_style = value
+				}
+			),
+			gui.text(text: 'Click a column header to sort.', text_style: gui.theme().n5),
+			w.table(table_cfg),
 		]
 	)
 }
 
-fn basic_date_picker_demo(mut w gui.Window) gui.View {
+fn demo_date_picker(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return w.date_picker(
 		id:        'catalog_date_picker'
@@ -3586,7 +2115,7 @@ fn basic_date_picker_demo(mut w gui.Window) gui.View {
 	)
 }
 
-fn basic_input_date_demo(mut w gui.Window) gui.View {
+fn demo_input_date(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return w.input_date(
 		id:        'catalog_input_date'
@@ -3602,7 +2131,7 @@ fn basic_input_date_demo(mut w gui.Window) gui.View {
 	)
 }
 
-fn basic_date_picker_roller_demo(mut w gui.Window) gui.View {
+fn demo_date_picker_roller(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.date_picker_roller(
 		id:            'catalog_date_picker_roller'
@@ -3616,7 +2145,7 @@ fn basic_date_picker_roller_demo(mut w gui.Window) gui.View {
 	)
 }
 
-fn basic_svg_demo() gui.View {
+fn demo_svg() gui.View {
 	return gui.column(
 		spacing: gui.theme().spacing_small
 		content: [
@@ -3685,7 +2214,7 @@ fn basic_svg_demo() gui.View {
 	)
 }
 
-fn basic_image_demo() gui.View {
+fn demo_image() gui.View {
 	return gui.column(
 		padding: gui.padding_none
 		content: [
@@ -3695,11 +2224,11 @@ fn basic_image_demo() gui.View {
 	)
 }
 
-fn basic_expand_panel_demo(w &gui.Window) gui.View {
+fn demo_expand_panel(w &gui.Window) gui.View {
 	return expand_panel_sample(w)
 }
 
-fn basic_icons_demo() gui.View {
+fn demo_icons() gui.View {
 	return gui.row(
 		content: [
 			gui.text(text: gui.icon_github_alt, text_style: gui.theme().icon2),
@@ -3710,11 +2239,168 @@ fn basic_icons_demo() gui.View {
 	)
 }
 
-fn basic_animations_demo(mut w gui.Window) gui.View {
+fn demo_gradient() gui.View {
+	linear := &gui.Gradient{
+		direction: .to_bottom_right
+		stops:     [
+			gui.GradientStop{
+				color: gui.cornflower_blue
+				pos:   0.0
+			},
+			gui.GradientStop{
+				color: gui.dark_blue
+				pos:   1.0
+			},
+		]
+	}
+	radial := &gui.Gradient{
+		type:  .radial
+		stops: [
+			gui.GradientStop{
+				color: gui.yellow
+				pos:   0.0
+			},
+			gui.GradientStop{
+				color: gui.orange
+				pos:   0.55
+			},
+			gui.GradientStop{
+				color: gui.red
+				pos:   1.0
+			},
+		]
+	}
+	return gui.row(
+		spacing: gui.theme().spacing_large
+		content: [
+			gui.column(
+				spacing: gui.theme().spacing_small
+				content: [
+					gui.text(text: 'Linear', text_style: gui.theme().b5),
+					gui.rectangle(
+						width:        220
+						height:       120
+						sizing:       gui.fixed_fixed
+						radius:       10
+						gradient:     linear
+						color_border: gui.theme().color_border
+						size_border:  1
+					),
+				]
+			),
+			gui.column(
+				spacing: gui.theme().spacing_small
+				content: [
+					gui.text(text: 'Radial', text_style: gui.theme().b5),
+					gui.rectangle(
+						width:        220
+						height:       120
+						sizing:       gui.fixed_fixed
+						radius:       10
+						gradient:     radial
+						color_border: gui.theme().color_border
+						size_border:  1
+					),
+				]
+			),
+		]
+	)
+}
+
+fn demo_shader() gui.View {
+	band_shader := &gui.Shader{
+		metal: '
+			float2 st = in.uv * 0.5 + 0.5;
+			float bands = 0.5 + 0.5 * sin((st.x + st.y) * 16.0);
+			float3 c1 = float3(0.12, 0.22, 0.85);
+			float3 c2 = float3(0.10, 0.85, 0.80);
+			float3 c = c1 * (1.0 - bands) + c2 * bands;
+			float4 frag_color = float4(c, 1.0);
+		'
+		glsl:  '
+			vec2 st = uv * 0.5 + 0.5;
+			float bands = 0.5 + 0.5 * sin((st.x + st.y) * 16.0);
+			vec3 c1 = vec3(0.12, 0.22, 0.85);
+			vec3 c2 = vec3(0.10, 0.85, 0.80);
+			vec3 c = c1 * (1.0 - bands) + c2 * bands;
+			vec4 frag_color = vec4(c, 1.0);
+		'
+	}
+	orb_shader := &gui.Shader{
+		metal: '
+			float2 st = in.uv;
+			float r = length(st);
+			float core = 1.0 - smoothstep(0.0, 0.35, r);
+			float halo = 1.0 - smoothstep(0.35, 0.9, r);
+			float3 c = float3(1.00, 0.65, 0.25) * core
+				+ float3(0.25, 0.65, 1.00) * (halo * 0.75);
+			float4 frag_color = float4(c, 1.0);
+		'
+		glsl:  '
+			vec2 st = uv;
+			float r = length(st);
+			float core = 1.0 - smoothstep(0.0, 0.35, r);
+			float halo = 1.0 - smoothstep(0.35, 0.9, r);
+			vec3 c = vec3(1.00, 0.65, 0.25) * core
+				+ vec3(0.25, 0.65, 1.00) * (halo * 0.75);
+			vec4 frag_color = vec4(c, 1.0);
+		'
+	}
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'Fragment shader bodies for Metal and GLSL.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.row(
+				spacing: gui.theme().spacing_large
+				content: [
+					gui.column(
+						spacing: gui.theme().spacing_small
+						content: [
+							gui.text(text: 'Band Shader', text_style: gui.theme().b5),
+							gui.rectangle(
+								width:        220
+								height:       120
+								sizing:       gui.fixed_fixed
+								radius:       10
+								shader:       band_shader
+								color_border: gui.theme().color_border
+								size_border:  1
+							),
+							gui.text(text: 'GLSL + Metal', text_style: gui.theme().n5),
+						]
+					),
+					gui.column(
+						spacing: gui.theme().spacing_small
+						content: [
+							gui.text(text: 'Orb Shader', text_style: gui.theme().b5),
+							gui.rectangle(
+								width:        220
+								height:       120
+								sizing:       gui.fixed_fixed
+								radius:       10
+								shader:       orb_shader
+								color_border: gui.theme().color_border
+								size_border:  1
+							),
+							gui.text(text: 'Custom Fragment', text_style: gui.theme().n5),
+						]
+					),
+				]
+			),
+		]
+	)
+}
+
+fn demo_animations(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	box_color := if app.light_theme { gui.dark_blue } else { gui.cornflower_blue }
 	return gui.column(
-		spacing: gui.theme().spacing_small
+		sizing:  gui.fill_fit
+		spacing: gui.theme().spacing_medium
 		content: [
 			gui.row(
 				content: [
@@ -3730,10 +2416,33 @@ fn basic_animations_demo(mut w gui.Window) gui.View {
 							start_spring(mut w, gui.spring_default)
 						}
 					),
+					gui.button(
+						content:  [gui.text(text: 'Keyframe')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							start_keyframe(mut w)
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Layout')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.animate_layout(duration: 350 * time.millisecond)
+							mut app := w.state[ShowcaseApp]()
+							app.anim_layout_expanded = !app.anim_layout_expanded
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Hero')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.transition_to_view(showcase_hero_detail_view,
+								duration: 550 * time.millisecond
+							)
+						}
+					),
 				]
 			),
+			gui.text(text: 'Tween', text_style: gui.theme().n5),
 			gui.row(
-				height:  34
+				height:  28
 				sizing:  gui.fill_fixed
 				padding: gui.padding_none
 				content: [
@@ -3743,11 +2452,120 @@ fn basic_animations_demo(mut w gui.Window) gui.View {
 						padding: gui.padding_none
 					),
 					gui.row(
-						width:  24
-						height: 24
+						width:  22
+						height: 22
 						sizing: gui.fixed_fixed
 						color:  box_color
 						radius: 4
+					),
+				]
+			),
+			gui.text(text: 'Spring', text_style: gui.theme().n5),
+			gui.row(
+				height:  28
+				sizing:  gui.fill_fixed
+				padding: gui.padding_none
+				content: [
+					gui.row(
+						width:   int(app.anim_spring_x)
+						sizing:  gui.fixed_fit
+						padding: gui.padding_none
+					),
+					gui.row(
+						width:  22
+						height: 22
+						sizing: gui.fixed_fixed
+						color:  gui.green
+						radius: 11
+					),
+				]
+			),
+			gui.text(text: 'Keyframe', text_style: gui.theme().n5),
+			gui.row(
+				height:  28
+				sizing:  gui.fill_fixed
+				padding: gui.padding_none
+				content: [
+					gui.row(
+						width:   int(app.anim_keyframe_x)
+						sizing:  gui.fixed_fit
+						padding: gui.padding_none
+					),
+					gui.row(
+						width:  22
+						height: 22
+						sizing: gui.fixed_fixed
+						color:  gui.orange
+						radius: 4
+					),
+				]
+			),
+			gui.text(text: 'Layout Transition', text_style: gui.theme().n5),
+			gui.row(
+				height:  52
+				sizing:  gui.fill_fixed
+				padding: gui.padding_none
+				content: layout_boxes(app.anim_layout_expanded, box_color)
+			),
+			gui.text(text: 'Hero Source Card', text_style: gui.theme().n5),
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.column(
+						id:      'showcase_anim_hero_card'
+						hero:    true
+						width:   120
+						height:  72
+						sizing:  gui.fixed_fixed
+						color:   gui.orange
+						radius:  10
+						h_align: .center
+						v_align: .middle
+						content: [
+							gui.text(
+								id:         'showcase_anim_hero_title'
+								hero:       true
+								text:       'Hero'
+								text_style: gui.theme().b4
+							),
+						]
+					),
+					gui.text(text: 'Press Hero to transition', text_style: gui.theme().n5),
+				]
+			),
+		]
+	)
+}
+
+fn showcase_hero_detail_view(mut window gui.Window) gui.View {
+	w, h := window.window_size()
+	return gui.column(
+		width:   w
+		height:  h
+		sizing:  gui.fixed_fixed
+		padding: gui.theme().padding_large
+		spacing: gui.theme().spacing_medium
+		content: [
+			gui.button(
+				content:  [gui.text(text: 'Back')]
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					w.transition_to_view(main_view, duration: 550 * time.millisecond)
+				}
+			),
+			gui.column(
+				id:      'showcase_anim_hero_card'
+				hero:    true
+				sizing:  gui.fill_fill
+				color:   gui.orange
+				radius:  16
+				h_align: .center
+				v_align: .middle
+				content: [
+					gui.text(
+						id:         'showcase_anim_hero_title'
+						hero:       true
+						text:       'Hero Detail'
+						text_style: gui.theme().b2
 					),
 				]
 			),
@@ -3755,7 +2573,7 @@ fn basic_animations_demo(mut w gui.Window) gui.View {
 	)
 }
 
-fn basic_color_picker_demo(w &gui.Window) gui.View {
+fn demo_color_picker(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
 		spacing: gui.theme().spacing_small
@@ -3782,7 +2600,7 @@ fn basic_color_picker_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_markdown_demo(mut w gui.Window) gui.View {
+fn demo_markdown(mut w gui.Window) gui.View {
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_small
@@ -3798,7 +2616,7 @@ fn basic_markdown_demo(mut w gui.Window) gui.View {
 	)
 }
 
-fn basic_tab_control_demo(w &gui.Window) gui.View {
+fn demo_tab_control(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.tab_control(
 		id:        'catalog_tabs'
@@ -3816,7 +2634,7 @@ fn basic_tab_control_demo(w &gui.Window) gui.View {
 	)
 }
 
-fn basic_tooltip_demo() gui.View {
+fn demo_tooltip() gui.View {
 	return gui.row(
 		content: [
 			gui.button(
@@ -3841,7 +2659,7 @@ fn basic_tooltip_demo() gui.View {
 	)
 }
 
-fn basic_rectangle_demo() gui.View {
+fn demo_rectangle() gui.View {
 	return gui.row(
 		v_align: .middle
 		content: [
@@ -3867,7 +2685,7 @@ fn basic_rectangle_demo() gui.View {
 	)
 }
 
-fn basic_scrollbar_demo() gui.View {
+fn demo_scrollbar() gui.View {
 	return gui.column(
 		spacing: gui.theme().spacing_small
 		content: [

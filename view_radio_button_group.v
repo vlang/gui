@@ -26,6 +26,7 @@ pub struct RadioButtonGroupCfg {
 pub:
 	title        string
 	title_bg     Color = gui_theme.color_background
+	padding      ?Padding
 	value        string
 	sizing       Sizing
 	on_select    fn (string, mut Window) @[required]
@@ -55,13 +56,14 @@ pub fn radio_option(label string, value string) RadioOption {
 // radio_button_group_column creates a vertically stacked radio button group from
 // the given [RadioButtonGroupCfg](#RadioButtonGroupCfg)
 pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
+	default_padding := if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
 	return column(
 		name:         'radio_button_group_column'
 		title:        cfg.title
 		title_bg:     cfg.title_bg
 		color_border: cfg.color_border
 		size_border:  cfg.size_border
-		padding:      if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
+		padding:      cfg.padding or { default_padding }
 		min_width:    cfg.min_width
 		min_height:   cfg.min_height
 		sizing:       cfg.sizing
@@ -72,17 +74,18 @@ pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 // radio_button_group_row creates a horizontally stacked radio button group from
 // the given [RadioButtonGroupCfg](#RadioButtonGroupCfg)
 pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
+	default_padding := if cfg.title.len == 0 {
+		gui_theme.padding_medium
+	} else {
+		gui_theme.padding_large
+	}
 	return row(
 		name:         'radio_button_group_row'
 		title:        cfg.title
 		title_bg:     cfg.title_bg
 		color_border: cfg.color_border
 		size_border:  cfg.size_border
-		padding:      if cfg.title.len == 0 {
-			gui_theme.padding_medium
-		} else {
-			gui_theme.padding_large
-		}
+		padding:      cfg.padding or { default_padding }
 		min_width:    cfg.min_width
 		min_height:   cfg.min_height
 		sizing:       cfg.sizing
