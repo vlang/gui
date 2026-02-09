@@ -10,6 +10,8 @@ import time
 
 const id_scroll_gallery = 1
 const id_scroll_list_box = 2
+const id_scroll_catalog = 3
+const id_scroll_sync_demo = 4
 
 enum TabItem {
 	tab_stock = 1000
@@ -28,12 +30,18 @@ enum TabItem {
 @[heap]
 struct ShowcaseApp {
 pub mut:
-	light_theme  bool
-	selected_tab TabItem = .tab_stock
+	light_theme        bool
+	selected_tab       TabItem = .tab_stock
+	nav_query          string
+	selected_group     string = 'all'
+	selected_component string = 'button'
 	// buttons
 	button_clicks int
 	// inputs
 	input_text      string
+	input_password  string
+	input_phone     string
+	input_expiry    string
 	input_multiline string = 'Now is the time for all good men to come to the aid of their country'
 	// toggles
 	select_toggle   bool
@@ -53,6 +61,8 @@ pub mut:
 	// list Box
 	list_box_multiple_select bool
 	list_box_selected_values []string
+	// radio
+	select_radio bool
 	// expand_pad
 	open_expand_panel bool
 	// Tables
@@ -61,10 +71,28 @@ pub mut:
 	date_picker_dates []time.Time
 	input_date        time.Time = time.now()
 	roller_date       time.Time = time.now()
+	// tab control
+	tab_selected string = 'overview'
+	// color picker
+	color_picker_color gui.Color = gui.Color{
+		r: 255
+		g: 85
+		b: 0
+		a: 255
+	}
+	color_picker_hsv   bool
 	// Animations
 	anim_tween_x         f32
 	anim_spring_x        f32
 	anim_layout_expanded bool
+}
+
+struct DemoEntry {
+	id      string
+	label   string
+	group   string
+	summary string
+	tags    []string
 }
 
 @[heap]
@@ -101,10 +129,587 @@ fn main_view(mut window gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		spacing: 0
 		content: [
-			side_bar(mut window),
-			gallery(mut window),
+			catalog_panel(mut window),
+			detail_panel(mut window),
 		]
 	)
+}
+
+struct DemoGroup {
+	key   string
+	label string
+}
+
+fn demo_groups() []DemoGroup {
+	return [
+		DemoGroup{
+			key:   'input'
+			label: 'Input'
+		},
+		DemoGroup{
+			key:   'selection'
+			label: 'Selection'
+		},
+		DemoGroup{
+			key:   'data'
+			label: 'Data Display'
+		},
+		DemoGroup{
+			key:   'navigation'
+			label: 'Navigation'
+		},
+		DemoGroup{
+			key:   'feedback'
+			label: 'Feedback'
+		},
+		DemoGroup{
+			key:   'overlays'
+			label: 'Overlays'
+		},
+		DemoGroup{
+			key:   'foundations'
+			label: 'Foundations'
+		},
+	]
+}
+
+fn demo_entries() []DemoEntry {
+	return [
+		DemoEntry{
+			id:      'color_picker'
+			label:   'Color Picker'
+			group:   'input'
+			summary: 'Pick RGBA and optional HSV values'
+			tags:    ['color', 'hsv', 'rgba']
+		},
+		DemoEntry{
+			id:      'date_picker'
+			label:   'Date Picker'
+			group:   'input'
+			summary: 'Select one or many dates from a calendar'
+			tags:    ['calendar', 'dates', 'input']
+		},
+		DemoEntry{
+			id:      'date_picker_roller'
+			label:   'Date Picker Roller'
+			group:   'input'
+			summary: 'Roll wheel-style month/day/year controls'
+			tags:    ['date', 'roller', 'time']
+		},
+		DemoEntry{
+			id:      'input'
+			label:   'Input'
+			group:   'input'
+			summary: 'Single-line, password, and multiline text input'
+			tags:    ['text', 'textarea', 'password']
+		},
+		DemoEntry{
+			id:      'input_date'
+			label:   'Input Date'
+			group:   'input'
+			summary: 'Text input with date picker dropdown'
+			tags:    ['date', 'input', 'calendar']
+		},
+		DemoEntry{
+			id:      'listbox'
+			label:   'List Box'
+			group:   'selection'
+			summary: 'Single and multi-select list options'
+			tags:    ['list', 'multi', 'select']
+		},
+		DemoEntry{
+			id:      'radio'
+			label:   'Radio'
+			group:   'selection'
+			summary: 'Single radio control'
+			tags:    ['option', 'boolean', 'choice']
+		},
+		DemoEntry{
+			id:      'radio_group'
+			label:   'Radio Button Group'
+			group:   'selection'
+			summary: 'Mutually exclusive options in row or column'
+			tags:    ['group', 'options', 'select']
+		},
+		DemoEntry{
+			id:      'range_slider'
+			label:   'Range Slider'
+			group:   'selection'
+			summary: 'Drag horizontal or vertical value controls'
+			tags:    ['slider', 'value', 'range']
+		},
+		DemoEntry{
+			id:      'select'
+			label:   'Select'
+			group:   'selection'
+			summary: 'Dropdown with optional multi-select'
+			tags:    ['dropdown', 'pick', 'options']
+		},
+		DemoEntry{
+			id:      'switch'
+			label:   'Switch'
+			group:   'selection'
+			summary: 'On/off switch control'
+			tags:    ['toggle', 'boolean', 'control']
+		},
+		DemoEntry{
+			id:      'toggle'
+			label:   'Toggle'
+			group:   'selection'
+			summary: 'Checkbox-style and icon toggles'
+			tags:    ['checkbox', 'boolean', 'control']
+		},
+		DemoEntry{
+			id:      'image'
+			label:   'Image'
+			group:   'data'
+			summary: 'Render local or remote image assets'
+			tags:    ['photo', 'asset', 'media']
+		},
+		DemoEntry{
+			id:      'markdown'
+			label:   'Markdown'
+			group:   'data'
+			summary: 'Render markdown into styled rich content'
+			tags:    ['docs', 'text', 'rich']
+		},
+		DemoEntry{
+			id:      'rectangle'
+			label:   'Rectangle'
+			group:   'data'
+			summary: 'Draw colored shapes with border and radius'
+			tags:    ['shape', 'primitive', 'box']
+		},
+		DemoEntry{
+			id:      'rtf'
+			label:   'Rich Text Format'
+			group:   'data'
+			summary: 'Mixed styles, links, and inline rich runs'
+			tags:    ['rich text', 'link', 'style']
+		},
+		DemoEntry{
+			id:      'svg'
+			label:   'SVG'
+			group:   'data'
+			summary: 'Render vector graphics from svg strings'
+			tags:    ['vector', 'icon', 'path']
+		},
+		DemoEntry{
+			id:      'table'
+			label:   'Table'
+			group:   'data'
+			summary: 'Declarative and sortable table data'
+			tags:    ['rows', 'columns', 'csv']
+		},
+		DemoEntry{
+			id:      'text'
+			label:   'Text'
+			group:   'data'
+			summary: 'Theme typography sizes, weights, and styles'
+			tags:    ['font', 'type', 'styles']
+		},
+		DemoEntry{
+			id:      'tree'
+			label:   'Tree View'
+			group:   'data'
+			summary: 'Hierarchical expandable node display'
+			tags:    ['nodes', 'hierarchy', 'outline']
+		},
+		DemoEntry{
+			id:      'menus'
+			label:   'Menus + Menubar'
+			group:   'navigation'
+			summary: 'Nested menus, separators, and custom menu items'
+			tags:    ['menu', 'menubar', 'submenu']
+		},
+		DemoEntry{
+			id:      'scrollbar'
+			label:   'Scrollable Containers'
+			group:   'navigation'
+			summary: 'Bind scrollable layouts to shared scroll ids'
+			tags:    ['scrollbar', 'scroll', 'container']
+		},
+		DemoEntry{
+			id:      'tab_control'
+			label:   'Tab Control'
+			group:   'navigation'
+			summary: 'Switch content panels with keyboard-friendly tabs'
+			tags:    ['tabs', 'navigation', 'panes']
+		},
+		DemoEntry{
+			id:      'button'
+			label:   'Button'
+			group:   'feedback'
+			summary: 'Trigger actions with click and keyboard focus'
+			tags:    ['action', 'press', 'click']
+		},
+		DemoEntry{
+			id:      'progress_bar'
+			label:   'Progress Bar'
+			group:   'feedback'
+			summary: 'Determinate and indeterminate progress indicators'
+			tags:    ['progress', 'loader', 'status']
+		},
+		DemoEntry{
+			id:      'pulsar'
+			label:   'Pulsar'
+			group:   'feedback'
+			summary: 'Animated pulse indicator with optional icons'
+			tags:    ['pulse', 'loading', 'indicator']
+		},
+		DemoEntry{
+			id:      'dialog'
+			label:   'Dialog'
+			group:   'overlays'
+			summary: 'Message, confirm, prompt, and custom dialogs'
+			tags:    ['modal', 'confirm', 'prompt']
+		},
+		DemoEntry{
+			id:      'expand_panel'
+			label:   'Expand Panel'
+			group:   'overlays'
+			summary: 'Collapsible region with custom header and content'
+			tags:    ['accordion', 'collapse', 'panel']
+		},
+		DemoEntry{
+			id:      'tooltip'
+			label:   'Tooltip'
+			group:   'overlays'
+			summary: 'Hover hints with custom placement and content'
+			tags:    ['hover', 'hint', 'floating']
+		},
+		DemoEntry{
+			id:      'animations'
+			label:   'Animations'
+			group:   'foundations'
+			summary: 'Tween, spring, and layout transition samples'
+			tags:    ['motion', 'tween', 'spring']
+		},
+		DemoEntry{
+			id:      'icons'
+			label:   'Icons'
+			group:   'foundations'
+			summary: 'Icon font catalog and glyph references'
+			tags:    ['icon', 'font', 'glyph']
+		},
+	]
+}
+
+fn entry_matches_query(entry DemoEntry, query string) bool {
+	if query.len == 0 {
+		return true
+	}
+	q := query.to_lower()
+	if entry.id.to_lower().contains(q) || entry.label.to_lower().contains(q)
+		|| entry.summary.to_lower().contains(q) || entry.group.to_lower().contains(q) {
+		return true
+	}
+	for tag in entry.tags {
+		if tag.to_lower().contains(q) {
+			return true
+		}
+	}
+	return false
+}
+
+fn filtered_entries(app &ShowcaseApp) []DemoEntry {
+	mut out := []DemoEntry{}
+	for entry in demo_entries() {
+		if app.selected_group != 'all' && entry.group != app.selected_group {
+			continue
+		}
+		if !entry_matches_query(entry, app.nav_query) {
+			continue
+		}
+		out << entry
+	}
+	return out
+}
+
+fn has_entry(entries []DemoEntry, selected string) bool {
+	for entry in entries {
+		if entry.id == selected {
+			return true
+		}
+	}
+	return false
+}
+
+fn selected_entry(entries []DemoEntry, selected string) DemoEntry {
+	for entry in entries {
+		if entry.id == selected {
+			return entry
+		}
+	}
+	return entries[0]
+}
+
+fn catalog_panel(mut w gui.Window) gui.View {
+	mut app := w.state[ShowcaseApp]()
+	entries := filtered_entries(app)
+	if entries.len == 0 {
+		app.selected_component = ''
+	} else if !has_entry(entries, app.selected_component) {
+		app.selected_component = entries[0].id
+	}
+	return gui.column(
+		width:   300
+		sizing:  gui.fixed_fill
+		color:   gui.theme().color_panel
+		padding: gui.theme().padding_small
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(text: 'Component Catalog', text_style: gui.theme().b3),
+			gui.input(
+				id:              'showcase_catalog_query'
+				id_focus:        10
+				text:            app.nav_query
+				mode:            .single_line
+				placeholder:     'Search controls...'
+				sizing:          gui.fill_fit
+				on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.nav_query = s
+				}
+			),
+			group_picker(app),
+			line(),
+			gui.column(
+				id_scroll: id_scroll_catalog
+				sizing:    gui.fill_fill
+				spacing:   2
+				padding:   gui.padding_none
+				content:   catalog_rows(entries, app)
+			),
+			toggle_theme(app),
+		]
+	)
+}
+
+fn group_picker(app &ShowcaseApp) gui.View {
+	return gui.column(
+		spacing: 3
+		padding: gui.padding_none
+		content: [
+			gui.row(
+				spacing: 3
+				padding: gui.padding_none
+				content: [
+					group_picker_item('All', 'all', app),
+					group_picker_item('Input', 'input', app),
+					group_picker_item('Selection', 'selection', app),
+					group_picker_item('Data', 'data', app),
+				]
+			),
+			gui.row(
+				spacing: 3
+				padding: gui.padding_none
+				content: [
+					group_picker_item('Nav', 'navigation', app),
+					group_picker_item('Feedback', 'feedback', app),
+					group_picker_item('Overlays', 'overlays', app),
+					group_picker_item('Foundations', 'foundations', app),
+				]
+			),
+		]
+	)
+}
+
+fn group_picker_item(label string, key string, app &ShowcaseApp) gui.View {
+	is_selected := app.selected_group == key
+	return gui.row(
+		padding:  if is_selected {
+			gui.padding(3, 6, 3, 6)
+		} else {
+			gui.padding(2, 5, 2, 5)
+		}
+		color:    if is_selected {
+			gui.theme().color_active
+		} else {
+			gui.theme().color_background
+		}
+		radius:   3
+		content:  [gui.text(text: label, text_style: gui.theme().n5)]
+		on_click: fn [key] (_ voidptr, mut _ gui.Event, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.selected_group = key
+			w.scroll_vertical_to(id_scroll_catalog, 0)
+			w.update_window()
+		}
+		on_hover: fn (mut _ gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			w.set_mouse_cursor_pointing_hand()
+		}
+	)
+}
+
+fn catalog_rows(entries []DemoEntry, app &ShowcaseApp) []gui.View {
+	mut rows := []gui.View{}
+	if entries.len == 0 {
+		rows << gui.text(text: 'No matching components', text_style: gui.theme().n4)
+		return rows
+	}
+	for group in demo_groups() {
+		mut group_rows := []gui.View{}
+		for entry in entries {
+			if entry.group == group.key {
+				group_rows << catalog_row(entry, app)
+			}
+		}
+		if group_rows.len == 0 {
+			continue
+		}
+		if rows.len > 0 {
+			rows << gui.row(
+				height:  6
+				sizing:  gui.fill_fixed
+				padding: gui.padding_none
+			)
+		}
+		rows << gui.text(text: group.label, text_style: gui.theme().b5)
+		for row in group_rows {
+			rows << row
+		}
+	}
+	return rows
+}
+
+fn catalog_row(entry DemoEntry, app &ShowcaseApp) gui.View {
+	is_selected := app.selected_component == entry.id
+	return gui.row(
+		color:    if is_selected { gui.theme().color_active } else { gui.color_transparent }
+		padding:  gui.padding(3, 6, 3, 6)
+		radius:   4
+		sizing:   gui.fill_fit
+		content:  [
+			gui.text(text: entry.label, text_style: gui.theme().n4),
+			gui.row(sizing: gui.fill_fit, padding: gui.padding_none),
+		]
+		on_click: fn [entry] (_ voidptr, mut _ gui.Event, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.selected_component = entry.id
+			w.scroll_vertical_to(id_scroll_gallery, 0)
+			w.update_window()
+		}
+		on_hover: fn [is_selected] (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			w.set_mouse_cursor_pointing_hand()
+			if !is_selected {
+				layout.shape.color = gui.theme().menubar_style.color_select
+			}
+		}
+	)
+}
+
+fn detail_panel(mut w gui.Window) gui.View {
+	mut app := w.state[ShowcaseApp]()
+	entries := filtered_entries(app)
+	if entries.len == 0 {
+		return gui.column(
+			id_scroll:       id_scroll_gallery
+			scrollbar_cfg_y: &gui.ScrollbarCfg{
+				gap_edge: 4
+			}
+			sizing:          gui.fill_fill
+			padding:         gui.theme().padding_large
+			content:         [
+				gui.text(text: 'No component matches filter', text_style: gui.theme().b2),
+			]
+		)
+	}
+	if !has_entry(entries, app.selected_component) {
+		app.selected_component = entries[0].id
+	}
+	entry := selected_entry(entries, app.selected_component)
+	mut content := []gui.View{}
+	content << view_title(entry.label)
+	content << gui.text(text: entry.summary, text_style: gui.theme().n3)
+	content << gui.text(text: 'Group: ${entry.group}', text_style: gui.theme().n5)
+	content << basic_demo(mut w, entry.id)
+	content << line()
+	content << gui.text(
+		text:       'Related examples: ${related_examples(entry.id)}'
+		text_style: gui.theme().n5
+	)
+	return gui.column(
+		id_scroll:       id_scroll_gallery
+		scrollbar_cfg_y: &gui.ScrollbarCfg{
+			gap_edge: 4
+		}
+		sizing:          gui.fill_fill
+		padding:         gui.theme().padding_large
+		spacing:         gui.spacing_large
+		content:         content
+	)
+}
+
+fn basic_demo(mut w gui.Window, id string) gui.View {
+	return match id {
+		'button' { basic_button_demo(mut w) }
+		'input' { basic_input_demo(w) }
+		'toggle' { basic_toggle_demo(w) }
+		'switch' { basic_switch_demo(w) }
+		'radio' { basic_radio_demo(w) }
+		'radio_group' { basic_radio_group_demo(w) }
+		'select' { basic_select_demo(w) }
+		'listbox' { basic_list_box_demo(w) }
+		'range_slider' { basic_range_slider_demo(w) }
+		'progress_bar' { basic_progress_bar_demo(w) }
+		'pulsar' { basic_pulsar_demo(mut w) }
+		'menus' { basic_menu_demo(mut w) }
+		'dialog' { basic_dialog_demo() }
+		'tree' { basic_tree_demo(mut w) }
+		'text' { basic_text_demo() }
+		'rtf' { basic_rtf_demo() }
+		'table' { basic_table_demo(mut w) }
+		'date_picker' { basic_date_picker_demo(mut w) }
+		'input_date' { basic_input_date_demo(mut w) }
+		'date_picker_roller' { basic_date_picker_roller_demo(mut w) }
+		'svg' { basic_svg_demo() }
+		'image' { basic_image_demo() }
+		'expand_panel' { basic_expand_panel_demo(w) }
+		'icons' { basic_icons_demo() }
+		'animations' { basic_animations_demo(mut w) }
+		'color_picker' { basic_color_picker_demo(w) }
+		'markdown' { basic_markdown_demo(mut w) }
+		'tab_control' { basic_tab_control_demo(w) }
+		'tooltip' { basic_tooltip_demo() }
+		'rectangle' { basic_rectangle_demo() }
+		'scrollbar' { basic_scrollbar_demo() }
+		else { gui.text(text: 'No demo configured') }
+	}
+}
+
+fn related_examples(id string) string {
+	return match id {
+		'button' { 'examples/buttons.v' }
+		'input' { 'examples/inputs.v, examples/multiline_input.v' }
+		'toggle', 'switch' { 'examples/toggles.v' }
+		'radio', 'radio_group' { 'examples/radio_button_group.v' }
+		'select' { 'examples/select_demo.v' }
+		'listbox' { 'examples/listbox.v' }
+		'range_slider' { 'examples/range_sliders.v' }
+		'progress_bar' { 'examples/progress_bars.v' }
+		'pulsar' { 'examples/pulsars.v' }
+		'menus' { 'examples/menu_demo.v, examples/context_menu_demo.v' }
+		'dialog' { 'examples/dialogs.v' }
+		'tree' { 'examples/tree_view.v' }
+		'text' { 'examples/fonts.v, examples/system_font.v' }
+		'rtf' { 'examples/rtf.v' }
+		'table' { 'examples/table_demo.v' }
+		'date_picker', 'input_date' { 'examples/date_picker_options.v, examples/date_time.v' }
+		'date_picker_roller' { 'examples/date_picker_roller.v' }
+		'svg' { 'examples/svg_demo.v, examples/tiger.v' }
+		'image' { 'examples/image_demo.v, examples/remote_image.v' }
+		'expand_panel' { 'examples/expand_panel.v' }
+		'icons' { 'examples/icon_font_demo.v' }
+		'animations' { 'examples/animations.v, examples/animation_stress.v' }
+		'color_picker' { 'examples/color_picker.v' }
+		'markdown' { 'examples/markdown.v, examples/doc_viewer.v' }
+		'tab_control' { 'examples/tab_view.v' }
+		'tooltip' { 'examples/tooltips.v' }
+		'rectangle' { 'examples/border_demo.v, examples/gradient_border_demo.v' }
+		'scrollbar' { 'examples/scroll_demo.v, examples/column_scroll.v' }
+		else { 'examples/showcase.v' }
+	}
 }
 
 fn side_bar(mut w gui.Window) gui.View {
@@ -1509,6 +2114,12 @@ const svg_settings = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24
 const svg_star = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>'
 const svg_heart = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'
 const svg_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
+const svg_clip_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80"><defs><clipPath id="c"><circle cx="40" cy="40" r="28"/></clipPath></defs><rect x="4" y="4" width="112" height="72" fill="#3f80ff" clip-path="url(#c)"/><circle cx="80" cy="40" r="28" fill="#ff8c00"/></svg>'
+const svg_stroke_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 80"><line x1="12" y1="16" x2="118" y2="16" stroke="#56b6ff" stroke-width="10" stroke-linecap="butt"/><line x1="12" y1="40" x2="118" y2="40" stroke="#9be564" stroke-width="10" stroke-linecap="round"/><polyline points="12,68 45,52 78,68 111,52" fill="none" stroke="#ff8c66" stroke-width="8" stroke-linejoin="round"/></svg>'
+const svg_transform_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 90"><rect x="8" y="10" width="24" height="24" fill="#7aa2ff"/><g transform="translate(48,22) rotate(20)"><rect x="-12" y="-12" width="24" height="24" fill="#57d39b"/></g><g transform="translate(94,26) rotate(-30) scale(1.3,0.8)"><rect x="-12" y="-12" width="24" height="24" fill="#ffb04d"/></g><g transform="translate(120,62) skewX(25)"><rect x="-12" y="-10" width="24" height="20" fill="#ff7d9c"/></g></svg>'
+const svg_inherit_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 90"><g fill="#7fd1ff" stroke="#11314a" stroke-width="3"><rect x="10" y="14" width="34" height="24" rx="5"/><circle cx="74" cy="26" r="12"/><rect x="96" y="14" width="34" height="24" rx="5" fill="#ff8c96"/></g><g transform="translate(0,40)" fill="#7fd1ff" stroke="#11314a" stroke-width="3"><circle cx="26" cy="20" r="12" fill="#90e87a"/><rect x="56" y="8" width="30" height="24" rx="5"/><rect x="96" y="8" width="34" height="24" rx="5"/></g></svg>'
+const tiger_svg_path = os.join_path(os.dir(@FILE), 'tiger.svg')
+const missing_svg_path = os.join_path(os.dir(@FILE), 'missing-icon.svg')
 
 fn svg_icons(mut w gui.Window) gui.View {
 	return gui.column(
@@ -2467,4 +3078,866 @@ fn layout_boxes(expanded bool, color gui.Color) []gui.View {
 		gui.row(id: 'box_b', width: 40, height: 40, color: color, radius: 4),
 		gui.row(id: 'box_c', width: 40, height: 40, color: color, radius: 4),
 	]
+}
+
+const showcase_markdown_source = '# Markdown Demo
+
+This panel demonstrates the markdown renderer with real content.
+Use this as a quick visual sanity check while building docs-heavy apps.
+
+## Why This Demo Exists
+
+The showcase focuses on discoverability and practical snippets.
+Examples include **bold**, *italic*, ~~strikethrough~~, and `inline code`.
+
+## Supported Markdown Features
+
+### Block Elements
+
+- [x] Headings (`#` through `######`)
+- [x] Paragraphs and line wrapping
+- [x] Unordered and ordered lists
+- [x] Task lists (`- [x] done`)
+- [x] Blockquotes (including nested)
+- [x] Horizontal rules (`---` / `***`)
+- [x] Fenced code blocks with highlighting
+- [x] Tables with column alignment
+- [x] Images (PNG/JPG via `image()`, SVG via `svg()`)
+- [x] Mermaid diagrams (fenced `mermaid`)
+- [x] Display math (`$$...$$` and fenced `math`)
+
+### Inline Elements
+
+- [x] Bold, italic, and bold-italic
+- [x] Strikethrough
+- [x] Inline code
+- [x] Links
+- [x] Inline math (`$...$`)
+
+### Extended Elements
+
+- [x] Footnotes
+- [x] Definition lists
+- [x] Abbreviations
+
+### Blockquote Example
+
+> Blockquote: keep each demo focused and discoverable.
+>
+> Render quality matters as much as parser correctness.
+
+### Code Example
+
+```v
+import gui
+
+fn markdown_preview(window &gui.Window) gui.View {
+	return gui.column(
+		padding: gui.theme().padding_medium
+		content: [
+			gui.text(text: "Markdown Preview"),
+			gui.button(content: [gui.text(text: "Render")]),
+		]
+	)
+}
+```
+
+## Feature Matrix Table
+
+| Component | Group   | Status |
+|-----------|---------|--------|
+| Input     | Input   | Ready  |
+| Table     | Data    | Ready  |
+| Dialog    | Overlay | Ready  |'
+
+fn basic_button_demo(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.row(
+		v_align: .middle
+		content: [
+			gui.button(
+				id_focus: 9100
+				content:  [gui.text(text: 'Click Me')]
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.button_clicks += 1
+				}
+			),
+			gui.text(text: 'Clicks: ${app.button_clicks}'),
+		]
+	)
+}
+
+fn basic_input_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.text(text: 'Text', min_width: 80),
+					gui.input(
+						id_focus:        9110
+						width:           280
+						sizing:          gui.fixed_fit
+						text:            app.input_text
+						placeholder:     'Single line input...'
+						mode:            .single_line
+						on_text_changed: text_changed
+					),
+				]
+			),
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.text(text: 'Password', min_width: 80),
+					gui.input(
+						id_focus:        9111
+						width:           280
+						sizing:          gui.fixed_fit
+						text:            app.input_password
+						placeholder:     'Enter password...'
+						is_password:     true
+						mode:            .single_line
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+							mut app := w.state[ShowcaseApp]()
+							app.input_password = s
+						}
+					),
+				]
+			),
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.text(text: 'Phone', min_width: 80),
+					gui.input(
+						id_focus:        9112
+						width:           280
+						sizing:          gui.fixed_fit
+						text:            app.input_phone
+						mask_preset:     .phone_us
+						placeholder:     '(555) 123-4567'
+						mode:            .single_line
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+							mut app := w.state[ShowcaseApp]()
+							app.input_phone = s
+						}
+					),
+				]
+			),
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.text(text: 'Expiry', min_width: 80),
+					gui.input(
+						id_focus:        9113
+						width:           280
+						sizing:          gui.fixed_fit
+						text:            app.input_expiry
+						mask_preset:     .expiry_mm_yy
+						placeholder:     '12/28'
+						mode:            .single_line
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+							mut app := w.state[ShowcaseApp]()
+							app.input_expiry = s
+						}
+					),
+				]
+			),
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.text(text: 'Multiline', min_width: 80),
+					gui.input(
+						id_focus:        9114
+						width:           360
+						sizing:          gui.fixed_fit
+						text:            app.input_multiline
+						placeholder:     'Multiline input...'
+						mode:            .multiline
+						on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+							mut app := w.state[ShowcaseApp]()
+							app.input_multiline = s
+						}
+					),
+				]
+			),
+		]
+	)
+}
+
+fn basic_toggle_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.toggle(
+				label:    'Toggle this option'
+				select:   app.select_checkbox
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.select_checkbox = !app.select_checkbox
+				}
+			),
+			gui.toggle(
+				label:         'Icon toggle'
+				select:        app.select_toggle
+				text_select:   gui.icon_heart
+				text_unselect: gui.icon_heart_o
+				text_style:    gui.theme().icon2
+				on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.select_toggle = !app.select_toggle
+				}
+			),
+		]
+	)
+}
+
+fn basic_switch_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.switch(
+		label:    'Enable switch'
+		select:   app.select_switch
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.select_switch = !app.select_switch
+		}
+	)
+}
+
+fn basic_radio_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.radio(
+		label:    'Radio option'
+		select:   app.select_radio
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.select_radio = !app.select_radio
+		}
+	)
+}
+
+fn basic_radio_group_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	options := [
+		gui.radio_option('New York', 'ny'),
+		gui.radio_option('Chicago', 'chi'),
+		gui.radio_option('Denver', 'den'),
+	]
+	return gui.row(
+		content: [
+			gui.radio_button_group_column(
+				title:     'City (Vertical)'
+				id_focus:  9103
+				value:     app.select_city
+				options:   options
+				on_select: fn (value string, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.select_city = value
+				}
+			),
+			gui.radio_button_group_row(
+				title:     'City (Horizontal)'
+				id_focus:  9104
+				value:     app.select_city
+				options:   options
+				on_select: fn (value string, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.select_city = value
+				}
+			),
+		]
+	)
+}
+
+fn basic_select_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return w.select(
+		id:              'catalog_select'
+		min_width:       250
+		max_width:       250
+		select:          app.selected_1
+		placeholder:     'Pick one or more'
+		select_multiple: true
+		options:         ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California']
+		on_select:       fn (s []string, mut e gui.Event, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.selected_1 = s
+			e.is_handled = true
+		}
+	)
+}
+
+fn basic_list_box_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.list_box(
+				id_scroll: id_scroll_list_box
+				height:    180
+				sizing:    gui.fill_fixed
+				multiple:  app.list_box_multiple_select
+				selected:  app.list_box_selected_values
+				data:      [
+					gui.list_box_option('---States', ''),
+					gui.list_box_option('California', 'CA'),
+					gui.list_box_option('Colorado', 'CO'),
+					gui.list_box_option('Florida', 'FL'),
+					gui.list_box_option('New York', 'NY'),
+					gui.list_box_option('Washington', 'WA'),
+				]
+				on_select: fn (values []string, mut e gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.list_box_selected_values = values
+					e.is_handled = true
+				}
+			),
+			gui.toggle(
+				label:    'Multi-select'
+				select:   app.list_box_multiple_select
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.list_box_multiple_select = !app.list_box_multiple_select
+					app.list_box_selected_values.clear()
+				}
+			),
+		]
+	)
+}
+
+fn basic_range_slider_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.row(
+		v_align: .middle
+		spacing: gui.theme().spacing_large
+		content: [
+			gui.column(
+				width:   220
+				sizing:  gui.fit_fit
+				padding: gui.padding_none
+				content: [
+					gui.range_slider(
+						id:          'catalog_slider'
+						value:       app.range_value
+						round_value: true
+						sizing:      gui.fill_fit
+						on_change:   fn (value f32, mut _ gui.Event, mut w gui.Window) {
+							mut app := w.state[ShowcaseApp]()
+							app.range_value = value
+						}
+					),
+					gui.text(text: 'Value: ${int(app.range_value)}'),
+				]
+			),
+			gui.column(
+				height:  90
+				sizing:  gui.fit_fixed
+				h_align: .center
+				padding: gui.padding_none
+				content: [
+					gui.range_slider(
+						id:          'catalog_slider_vertical'
+						value:       app.range_value
+						round_value: true
+						vertical:    true
+						sizing:      gui.fit_fill
+						on_change:   fn (value f32, mut _ gui.Event, mut w gui.Window) {
+							mut app := w.state[ShowcaseApp]()
+							app.range_value = value
+						}
+					),
+				]
+			),
+		]
+	)
+}
+
+fn basic_progress_bar_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	percent := app.range_value / f32(100)
+	return gui.column(
+		width:   250
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.progress_bar(
+				sizing:  gui.fill_fit
+				percent: percent
+			),
+			gui.progress_bar(
+				sizing:     gui.fill_fit
+				indefinite: true
+			),
+		]
+	)
+}
+
+fn basic_pulsar_demo(mut w gui.Window) gui.View {
+	return gui.row(
+		content: [
+			w.pulsar(),
+			w.pulsar(size: 20),
+			w.pulsar(size: 28, color: gui.orange),
+		]
+	)
+}
+
+fn basic_menu_demo(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			menu(mut w),
+			gui.text(
+				text: if app.selected_menu_id.len > 0 {
+					'Selected: ${app.selected_menu_id}'
+				} else {
+					'Select a menu item'
+				}
+			),
+		]
+	)
+}
+
+fn basic_dialog_demo() gui.View {
+	return gui.row(
+		content: [
+			gui.button(
+				content:  [gui.text(text: 'Message Dialog')]
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					w.dialog(
+						dialog_type: .message
+						title:       'Message'
+						body:        'Dialog control example'
+					)
+				}
+			),
+			gui.button(
+				content:  [gui.text(text: 'Confirm Dialog')]
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					w.dialog(
+						dialog_type: .confirm
+						title:       'Confirm'
+						body:        'Continue?'
+					)
+				}
+			),
+		]
+	)
+}
+
+fn basic_tree_demo(mut w gui.Window) gui.View {
+	return tree_view_sample(mut w)
+}
+
+fn basic_text_demo() gui.View {
+	return gui.column(
+		spacing: 0
+		content: [
+			gui.text(text: 'Theme n3 text', text_style: gui.theme().n3),
+			gui.text(text: 'Theme b3 text', text_style: gui.theme().b3),
+			gui.text(text: 'Theme i3 text', text_style: gui.theme().i3),
+			gui.text(text: 'Theme m3 text', text_style: gui.theme().m3),
+		]
+	)
+}
+
+fn basic_rtf_demo() gui.View {
+	return gui.rtf(
+		mode:      .wrap
+		rich_text: gui.RichText{
+			runs: [
+				gui.rich_run('RTF supports ', gui.theme().n3),
+				gui.rich_run('bold', gui.theme().b3),
+				gui.rich_run(', ', gui.theme().n3),
+				gui.rich_run('italic', gui.theme().i3),
+				gui.rich_run(', and ', gui.theme().n3),
+				gui.rich_link('links', 'https://github.com/mike-ward/gui', gui.theme().n3),
+			]
+		}
+	)
+}
+
+fn basic_table_demo(mut w gui.Window) gui.View {
+	return w.table(
+		size_border:  1
+		color_border: gui.gray
+		data:         [
+			gui.tr([gui.th('Name'), gui.th('Role')]),
+			gui.tr([gui.td('Alex'), gui.td('Designer')]),
+			gui.tr([gui.td('Riley'), gui.td('Engineer')]),
+			gui.tr([gui.td('Jordan'), gui.td('PM')]),
+		]
+	)
+}
+
+fn basic_date_picker_demo(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return w.date_picker(
+		id:        'catalog_date_picker'
+		dates:     app.date_picker_dates
+		on_select: fn (dates []time.Time, mut e gui.Event, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.date_picker_dates = dates
+			e.is_handled = true
+		}
+	)
+}
+
+fn basic_input_date_demo(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return w.input_date(
+		id:        'catalog_input_date'
+		id_focus:  9104
+		date:      app.input_date
+		on_select: fn (dates []time.Time, mut e gui.Event, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			if dates.len > 0 {
+				app.input_date = dates[0]
+			}
+			e.is_handled = true
+		}
+	)
+}
+
+fn basic_date_picker_roller_demo(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.date_picker_roller(
+		id:            'catalog_date_picker_roller'
+		id_focus:      9105
+		selected_date: app.roller_date
+		display_mode:  .month_day_year
+		on_change:     fn (d time.Time, mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.roller_date = d
+		}
+	)
+}
+
+fn basic_svg_demo() gui.View {
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(text: 'Inline Icons', text_style: gui.theme().b4),
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.svg(
+						svg_data: svg_home
+						width:    28
+						height:   28
+						color:    gui.theme().text_style.color
+					),
+					gui.svg(
+						svg_data: svg_settings
+						width:    28
+						height:   28
+						color:    gui.cornflower_blue
+					),
+					gui.svg(svg_data: svg_heart, width: 28, height: 28, color: gui.red),
+				]
+			),
+			gui.text(text: 'clipPath', text_style: gui.theme().b4),
+			gui.svg(
+				svg_data: svg_clip_demo
+				width:    220
+				height:   150
+			),
+			gui.text(text: 'Stroke Styles', text_style: gui.theme().b4),
+			gui.svg(
+				svg_data: svg_stroke_demo
+				width:    220
+				height:   140
+			),
+			gui.text(text: 'Group Transforms', text_style: gui.theme().b4),
+			gui.svg(
+				svg_data: svg_transform_demo
+				width:    240
+				height:   150
+			),
+			gui.text(text: 'Style Inheritance', text_style: gui.theme().b4),
+			gui.svg(
+				svg_data: svg_inherit_demo
+				width:    240
+				height:   150
+			),
+			gui.text(text: 'File-based SVG (small)', text_style: gui.theme().b4),
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.svg(
+						file_name: tiger_svg_path
+						width:     84
+						height:    84
+					),
+					gui.text(text: 'Read from `tiger.svg`'),
+				]
+			),
+			gui.text(text: 'Missing-file Fallback', text_style: gui.theme().b4),
+			gui.svg(
+				file_name: missing_svg_path
+				width:     220
+				height:    24
+			),
+		]
+	)
+}
+
+fn basic_image_demo() gui.View {
+	return gui.column(
+		padding: gui.padding_none
+		content: [
+			gui.image(src: sample_image_path),
+			gui.text(text: 'Pinard Falls, Oregon', text_style: gui.theme().n4),
+		]
+	)
+}
+
+fn basic_expand_panel_demo(w &gui.Window) gui.View {
+	return expand_panel_sample(w)
+}
+
+fn basic_icons_demo() gui.View {
+	return gui.row(
+		content: [
+			gui.text(text: gui.icon_github_alt, text_style: gui.theme().icon2),
+			gui.text(text: gui.icon_twitter, text_style: gui.theme().icon2),
+			gui.text(text: gui.icon_bug, text_style: gui.theme().icon2),
+			gui.text(text: gui.icon_heart, text_style: gui.theme().icon2),
+		]
+	)
+}
+
+fn basic_animations_demo(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	box_color := if app.light_theme { gui.dark_blue } else { gui.cornflower_blue }
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.row(
+				content: [
+					gui.button(
+						content:  [gui.text(text: 'Tween')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							start_tween(mut w, gui.ease_out_cubic)
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Spring')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							start_spring(mut w, gui.spring_default)
+						}
+					),
+				]
+			),
+			gui.row(
+				height:  34
+				sizing:  gui.fill_fixed
+				padding: gui.padding_none
+				content: [
+					gui.row(
+						width:   int(app.anim_tween_x)
+						sizing:  gui.fixed_fit
+						padding: gui.padding_none
+					),
+					gui.row(
+						width:  24
+						height: 24
+						sizing: gui.fixed_fixed
+						color:  box_color
+						radius: 4
+					),
+				]
+			),
+		]
+	)
+}
+
+fn basic_color_picker_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.switch(
+				label:    'HSV mode'
+				select:   app.color_picker_hsv
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.color_picker_hsv = !app.color_picker_hsv
+				}
+			),
+			gui.color_picker(
+				id:              'catalog_color_picker'
+				color:           app.color_picker_color
+				id_focus:        9106
+				show_hsv:        app.color_picker_hsv
+				on_color_change: fn (c gui.Color, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.color_picker_color = c
+				}
+			),
+		]
+	)
+}
+
+fn basic_markdown_demo(mut w gui.Window) gui.View {
+	return gui.column(
+		sizing:  gui.fill_fit
+		padding: gui.padding_small
+		color:   gui.theme().color_panel
+		content: [
+			w.markdown(
+				id:      'catalog_markdown'
+				source:  showcase_markdown_source
+				mode:    .wrap
+				padding: gui.padding_none
+			),
+		]
+	)
+}
+
+fn basic_tab_control_demo(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.tab_control(
+		id:        'catalog_tabs'
+		id_focus:  9107
+		sizing:    gui.fill_fit
+		selected:  app.tab_selected
+		items:     [
+			gui.tab_item('overview', 'Overview', [gui.text(text: 'Overview panel')]),
+			gui.tab_item('metrics', 'Metrics', [gui.text(text: 'Metrics panel')]),
+			gui.tab_item('settings', 'Settings', [gui.text(text: 'Settings panel')]),
+		]
+		on_select: fn (id string, mut _e gui.Event, mut w gui.Window) {
+			w.state[ShowcaseApp]().tab_selected = id
+		}
+	)
+}
+
+fn basic_tooltip_demo() gui.View {
+	return gui.row(
+		content: [
+			gui.button(
+				sizing:  gui.fill_fit
+				tooltip: &gui.TooltipCfg{
+					id:      'catalog_tip_default'
+					content: [gui.text(text: 'Default tooltip placement')]
+				}
+				content: [gui.text(text: 'Hover for tooltip')]
+			),
+			gui.button(
+				sizing:  gui.fill_fit
+				tooltip: &gui.TooltipCfg{
+					id:      'catalog_tip_top'
+					anchor:  .top_center
+					tie_off: .bottom_center
+					content: [gui.text(text: 'Tooltip with top anchor')]
+				}
+				content: [gui.text(text: 'Top anchored tooltip')]
+			),
+		]
+	)
+}
+
+fn basic_rectangle_demo() gui.View {
+	return gui.row(
+		v_align: .middle
+		content: [
+			gui.rectangle(
+				width:        120
+				height:       70
+				sizing:       gui.fixed_fixed
+				color:        gui.theme().color_panel
+				color_border: gui.theme().color_active
+				size_border:  1
+				radius:       8
+			),
+			gui.rectangle(
+				width:        70
+				height:       70
+				sizing:       gui.fixed_fixed
+				color:        gui.cornflower_blue
+				color_border: gui.white
+				size_border:  1
+				radius:       35
+			),
+		]
+	)
+}
+
+fn basic_scrollbar_demo() gui.View {
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.row(
+				content: [
+					gui.button(
+						content:  [gui.text(text: 'Top')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.scroll_vertical_to(id_scroll_sync_demo, 0)
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Down')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.scroll_vertical_by(id_scroll_sync_demo, -120)
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Up')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.scroll_vertical_by(id_scroll_sync_demo, 120)
+						}
+					),
+				]
+			),
+			gui.row(
+				spacing: gui.theme().spacing_small
+				content: [
+					gui.column(
+						id_scroll:       id_scroll_sync_demo
+						width:           220
+						height:          180
+						sizing:          gui.fixed_fixed
+						color:           gui.theme().color_panel
+						color_border:    gui.theme().color_border
+						size_border:     1
+						padding:         gui.padding_none
+						scrollbar_cfg_y: &gui.ScrollbarCfg{
+							gap_edge: 3
+						}
+						content:         scroll_demo_rows('Left')
+					),
+					gui.column(
+						id_scroll:       id_scroll_sync_demo
+						width:           220
+						height:          180
+						sizing:          gui.fixed_fixed
+						color:           gui.theme().color_panel
+						color_border:    gui.theme().color_border
+						size_border:     1
+						padding:         gui.padding_none
+						scrollbar_cfg_y: &gui.ScrollbarCfg{
+							gap_edge: 3
+						}
+						content:         scroll_demo_rows('Right')
+					),
+				]
+			),
+		]
+	)
+}
+
+fn scroll_demo_rows(prefix string) []gui.View {
+	mut rows := []gui.View{cap: 24}
+	for i in 1 .. 25 {
+		rows << gui.row(
+			sizing:  gui.fill_fit
+			padding: gui.padding(2, 6, 2, 6)
+			content: [gui.text(text: '${prefix} row ${i.str()}')]
+		)
+	}
+	return rows
 }
