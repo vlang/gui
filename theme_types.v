@@ -34,6 +34,7 @@ pub:
 	scrollbar_style    ScrollbarStyle
 	select_style       SelectStyle
 	switch_style       SwitchStyle
+	tab_style          TabStyle
 	text_style         TextStyle
 	text_style_bold    TextStyle
 	toggle_style       ToggleStyle

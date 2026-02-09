@@ -260,6 +260,51 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border:      radius_large * 2
 			text_style:         cfg.text_style
 		}
+		tab_style:          TabStyle{
+			color:                  cfg.color_panel
+			color_border:           cfg.color_border
+			color_header:           color_transparent
+			color_header_border:    color_transparent
+			color_content:          cfg.color_panel
+			color_content_border:   cfg.color_border
+			color_tab:              cfg.color_interior
+			color_tab_hover:        cfg.color_hover
+			color_tab_focus:        cfg.color_focus
+			color_tab_click:        cfg.color_active
+			color_tab_selected:     cfg.color_select
+			color_tab_disabled:     cfg.color_panel
+			color_tab_border:       cfg.color_border
+			color_tab_border_focus: cfg.color_border_focus
+			padding:                padding_none
+			padding_header:         padding_none
+			padding_content:        cfg.padding
+			padding_tab:            cfg.padding_small
+			size_border:            cfg.size_border
+			size_header_border:     0
+			size_content_border:    cfg.size_border
+			size_tab_border:        cfg.size_border
+			radius:                 cfg.radius
+			radius_header:          cfg.radius_small
+			radius_content:         cfg.radius
+			radius_tab:             cfg.radius_small
+			radius_tab_border:      cfg.radius_small
+			spacing:                cfg.spacing_small
+			spacing_header:         cfg.spacing_small
+			text_style:             cfg.text_style
+			text_style_selected:    TextStyle{
+				...cfg.text_style
+				typeface: .bold
+			}
+			text_style_disabled:    TextStyle{
+				...cfg.text_style
+				color: Color{
+					r: cfg.text_style.color.r
+					g: cfg.text_style.color.g
+					b: cfg.text_style.color.b
+					a: 130
+				}
+			}
+		}
 		text_style:         cfg.text_style
 		toggle_style:       ToggleStyle{
 			color:              cfg.color_panel
@@ -422,6 +467,20 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			...theme.list_box_style
 			subheading_style: TextStyle{
 				...bold
+			}
+		}
+		tab_style:      TabStyle{
+			...theme.tab_style
+			text_style:          normal
+			text_style_selected: bold
+			text_style_disabled: TextStyle{
+				...normal
+				color: Color{
+					r: normal.color.r
+					g: normal.color.g
+					b: normal.color.b
+					a: 130
+				}
 			}
 		}
 		// markdown
@@ -629,6 +688,14 @@ pub fn (t Theme) with_switch_style(style SwitchStyle) Theme {
 	}
 }
 
+// with_tab_style returns a new Theme with the tab style replaced.
+pub fn (t Theme) with_tab_style(style TabStyle) Theme {
+	return Theme{
+		...t
+		tab_style: style
+	}
+}
+
 // with_text_style returns a new Theme with the text style replaced.
 pub fn (t Theme) with_text_style(style TextStyle) Theme {
 	return Theme{
@@ -833,6 +900,21 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_border:       border
 			color_border_focus: border_focus
 			color_select:       sel
+		}
+		tab_style:          TabStyle{
+			...t.tab_style
+			color:                  panel
+			color_border:           border
+			color_content:          panel
+			color_content_border:   border
+			color_tab:              interior
+			color_tab_hover:        hover
+			color_tab_focus:        focus
+			color_tab_click:        active
+			color_tab_selected:     sel
+			color_tab_disabled:     panel
+			color_tab_border:       border
+			color_tab_border_focus: border_focus
 		}
 
 		switch_style:  SwitchStyle{

@@ -352,6 +352,53 @@ pub:
 	text_style         TextStyle  = text_style_dark
 }
 
+pub struct TabStyle {
+pub:
+	color                  Color   = color_panel_dark
+	color_border           Color   = color_border_dark
+	color_header           Color   = color_transparent
+	color_header_border    Color   = color_transparent
+	color_content          Color   = color_panel_dark
+	color_content_border   Color   = color_border_dark
+	color_tab              Color   = color_interior_dark
+	color_tab_hover        Color   = color_hover_dark
+	color_tab_focus        Color   = color_focus_dark
+	color_tab_click        Color   = color_active_dark
+	color_tab_selected     Color   = color_select_dark
+	color_tab_disabled     Color   = color_panel_dark
+	color_tab_border       Color   = color_border_dark
+	color_tab_border_focus Color   = color_select_dark
+	padding                Padding = padding_none
+	padding_header         Padding = padding_none
+	padding_content        Padding = padding_medium
+	padding_tab            Padding = padding_small
+	size_border            f32     = size_border
+	size_header_border     f32
+	size_content_border    f32       = size_border
+	size_tab_border        f32       = size_border
+	radius                 f32       = radius_medium
+	radius_header          f32       = radius_small
+	radius_content         f32       = radius_medium
+	radius_tab             f32       = radius_small
+	radius_tab_border      f32       = radius_small
+	spacing                f32       = spacing_small
+	spacing_header         f32       = spacing_small
+	text_style             TextStyle = text_style_dark
+	text_style_selected    TextStyle = TextStyle{
+		...text_style_dark
+		typeface: .bold
+	}
+	text_style_disabled    TextStyle = TextStyle{
+		...text_style_dark
+		color: Color{
+			r: text_style_dark.color.r
+			g: text_style_dark.color.g
+			b: text_style_dark.color.b
+			a: 130
+		}
+	}
+}
+
 @[minify]
 pub struct TextStyle {
 pub:

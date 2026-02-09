@@ -1,22 +1,19 @@
 import gui
 
 // Tab View
-// =============================
-// Tab views are a staple of many UI frameworks. Gui does not have one
-// mostly because it is super easy to write your own.
 
 @[heap]
 struct TabViewApp {
 pub mut:
-	select_tab  string = 'tab1'
-	light_theme bool
+	selected_tab string = 'tab1'
+	light_theme  bool
 }
 
 fn main() {
 	mut window := gui.window(
 		state:   &TabViewApp{}
-		width:   400
-		height:  300
+		width:   440
+		height:  340
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -27,68 +24,51 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	mut app := window.state[TabViewApp]()
+	app := window.state[TabViewApp]()
 
 	return gui.column(
 		width:   w
 		height:  h
 		sizing:  gui.fixed_fixed
 		padding: gui.theme().padding_large
+		spacing: gui.theme().spacing_medium
 		content: [
-			gui.column(
-				spacing: 0
-				sizing:  gui.fill_fill
-				content: [
-					gui.row(
-						sizing:  gui.fill_fit
-						h_align: .end
-						content: [theme_button(app)]
-					),
-					gui.row(
-						spacing: 0
-						content: [app.tab_button(1, 'tab1', 'Tab 1'),
-							app.tab_button(2, 'tab2', 'Tab 2'),
-							app.tab_button(3, 'tab3', 'Tab 3'),
-							app.tab_button(4, 'tab4', 'Tab 4')]
-					),
-					gui.column(
-						sizing:  gui.fill_fill
-						h_align: .center
-						v_align: .middle
-						color:   gui.theme().color_active
-						content: [gui.text(text: 'Content for "${app.select_tab}" goes here')]
-					),
-				]
+			gui.row(
+				sizing:  gui.fill_fit
+				h_align: .end
+				content: [theme_button(app)]
+			),
+			gui.tab_control(
+				id:        'example_tabs'
+				id_focus:  1
+				sizing:    gui.fill_fill
+				selected:  app.selected_tab
+				items:     [tab_item('tab1', 'Tab 1', 'Overview panel'),
+					tab_item('tab2', 'Tab 2', 'Reports panel'),
+					tab_item('tab3', 'Tab 3', 'Settings panel'),
+					tab_item('tab4', 'Tab 4', 'About panel')]
+				on_select: fn (id string, mut _e gui.Event, mut w gui.Window) {
+					w.state[TabViewApp]().selected_tab = id
+				}
 			),
 		]
 	)
 }
 
-// tab buttons can be anything you want. This one is admittedly simple.
-fn (mut app TabViewApp) tab_button(id_focus u32, id string, text string) gui.View {
-	color := if app.select_tab == id {
-		gui.theme().color_select
-	} else {
-		gui.theme().color_active
-	}
-	return gui.button(
-		id:           'tab1'
-		id_focus:     id_focus
-		color_border: color
-		padding:      gui.pad_tblr(4, 10)
-		size_border:  1
-
-		content:  [gui.text(text: text, text_style: gui.theme().b4)]
-		on_click: fn [id] (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			mut tvapp := w.state[TabViewApp]()
-			tvapp.select_tab = id
-		}
-	)
+fn tab_item(id string, label string, body string) gui.TabItemCfg {
+	return gui.tab_item(id, label, [
+		gui.column(
+			sizing:  gui.fill_fill
+			h_align: .center
+			v_align: .middle
+			content: [gui.text(text: body)]
+		),
+	])
 }
 
 fn theme_button(app &TabViewApp) gui.View {
 	return gui.toggle(
-		id_focus:      3
+		id_focus:      2
 		text_select:   gui.icon_moon
 		text_unselect: gui.icon_sunny_o
 		text_style:    gui.theme().icon3
