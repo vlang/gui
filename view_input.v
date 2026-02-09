@@ -60,6 +60,9 @@ pub:
 	text               string // text to display/edit
 	icon               string // icon constant
 	placeholder        string // text to show when empty
+	mask               string
+	mask_preset        InputMaskPreset = .none
+	mask_tokens        []MaskTokenDef
 	on_text_changed    fn (&Layout, string, mut Window)    = unsafe { nil }
 	on_enter           fn (&Layout, mut Event, mut Window) = unsafe { nil }
 	on_click_icon      fn (&Layout, mut Event, mut Window) = unsafe { nil }
@@ -246,11 +249,89 @@ pub fn input(cfg InputCfg) View {
 	)
 }
 
+fn (cfg &InputCfg) active_mask_pattern() string {
+	if cfg.mask.len > 0 {
+		return cfg.mask
+	}
+	return input_mask_from_preset(cfg.mask_preset)
+}
+
+fn (cfg &InputCfg) active_compiled_mask() ?CompiledInputMask {
+	mask := cfg.active_mask_pattern()
+	if mask.len == 0 {
+		return none
+	}
+	compiled := compile_input_mask(mask, cfg.mask_tokens) or {
+		log.error(err.msg())
+		return none
+	}
+	return compiled
+}
+
+fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_pos int, mut w Window) string {
+	if text == cfg.text {
+		return cfg.text
+	}
+	mut undo := input_state.undo
+	undo.push(InputMemento{
+		text:          cfg.text
+		cursor_pos:    input_state.cursor_pos
+		select_beg:    input_state.select_beg
+		select_end:    input_state.select_end
+		cursor_offset: input_state.cursor_offset
+	})
+	w.view_state.input_state.set(cfg.id_focus, InputState{
+		cursor_pos:    cursor_pos
+		select_beg:    0
+		select_end:    0
+		undo:          undo
+		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
+	})
+	return text
+}
+
+fn (cfg &InputCfg) masked_insert(s string, mut w Window, compiled CompiledInputMask) !string {
+	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	res := input_mask_insert(cfg.text, input_state.cursor_pos, input_state.select_beg,
+		input_state.select_end, s, &compiled)
+	if !res.changed {
+		return cfg.text
+	}
+	// Clamp max chars to width for single line fixed inputs.
+	if cfg.mode == .single_line && cfg.sizing.width == .fixed {
+		ctx := w.ui
+		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
+		width := ctx.text_width(res.text)
+		if width > cfg.width - cfg.padding.width() - (cfg.size_border * 2) {
+			return cfg.text
+		}
+	}
+	return cfg.apply_text_edit(input_state, res.text, res.cursor_pos, mut w)
+}
+
+fn (cfg &InputCfg) masked_delete(mut w Window, is_delete bool, compiled CompiledInputMask) ?string {
+	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	res := if is_delete {
+		input_mask_delete(cfg.text, input_state.cursor_pos, input_state.select_beg, input_state.select_end,
+			&compiled)
+	} else {
+		input_mask_backspace(cfg.text, input_state.cursor_pos, input_state.select_beg,
+			input_state.select_end, &compiled)
+	}
+	if !res.changed {
+		return cfg.text
+	}
+	return cfg.apply_text_edit(input_state, res.text, res.cursor_pos, mut w)
+}
+
 // delete removes text based on cursor position or selection. If text is
 // selected, the entire selection is deleted. Otherwise, it deletes the
 // character before (backspace) or after (delete) the cursor. Saves state to
 // undo stack before modification. Returns modified text or none if invalid.
 fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
+	if compiled := cfg.active_compiled_mask() {
+		return cfg.masked_delete(mut w, is_delete, compiled)
+	}
 	mut text := cfg.text.runes()
 	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 	mut cursor_pos := input_state.cursor_pos
@@ -283,28 +364,16 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 			cursor_pos--
 		}
 	}
-	mut undo := input_state.undo
-	undo.push(InputMemento{
-		text:          cfg.text
-		cursor_pos:    input_state.cursor_pos
-		select_beg:    input_state.select_beg
-		select_end:    input_state.select_end
-		cursor_offset: input_state.cursor_offset
-	})
-	w.view_state.input_state.set(cfg.id_focus, InputState{
-		cursor_pos:    cursor_pos
-		select_beg:    0
-		select_end:    0
-		undo:          undo
-		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
-	})
-	return text.string()
+	return cfg.apply_text_edit(input_state, text.string(), cursor_pos, mut w)
 }
 
 // insert adds text at the cursor or replaces selection. For single-line
 // fixed-width inputs, it validates width constraints. Saves state to undo
 // stack before modification. Returns modified text or error.
 fn (cfg &InputCfg) insert(s string, mut w Window) !string {
+	if compiled := cfg.active_compiled_mask() {
+		return cfg.masked_insert(s, mut w, compiled)
+	}
 	// clamp max chars to width of box when single line fixed.
 	if cfg.mode == .single_line && cfg.sizing.width == .fixed {
 		ctx := w.ui
@@ -336,22 +405,7 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		text = arrays.append(arrays.append(text[..cursor_pos], rs), text[cursor_pos..])
 		cursor_pos = int_min(cursor_pos + rs.len, text.len)
 	}
-	mut undo := input_state.undo
-	undo.push(InputMemento{
-		text:          cfg.text
-		cursor_pos:    input_state.cursor_pos
-		select_beg:    input_state.select_beg
-		select_end:    input_state.select_end
-		cursor_offset: input_state.cursor_offset
-	})
-	w.view_state.input_state.set(cfg.id_focus, InputState{
-		cursor_pos:    cursor_pos
-		select_beg:    0
-		select_end:    0
-		undo:          undo
-		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
-	})
-	return text.string()
+	return cfg.apply_text_edit(input_state, text.string(), cursor_pos, mut w)
 }
 
 // cut copies selected text to clipboard then deletes it. Returns modified
@@ -551,7 +605,9 @@ fn make_input_on_char(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
 				}
 			}
 			event.is_handled = true
-			cfg.on_text_changed(layout, text, mut w)
+			if text != cfg.text {
+				cfg.on_text_changed(layout, text, mut w)
+			}
 		}
 	}
 }
@@ -568,6 +624,8 @@ fn make_input_on_ime_commit(cfg InputCfg) fn (&Layout, string, mut Window) {
 			log.error(err.msg())
 			return
 		}
-		cfg.on_text_changed(layout, new_text, mut w)
+		if new_text != cfg.text {
+			cfg.on_text_changed(layout, new_text, mut w)
+		}
 	}
 }

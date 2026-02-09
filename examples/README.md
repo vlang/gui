@@ -46,4 +46,5 @@ in progress.
 v run gradient_demo.v         # Linear and radial gradients
 v run gradient_border_demo.v  # Gradient borders
 v run custom_shader.v         # Custom fragment shaders
+v run input_masks.v           # Input mask presets, custom tokens, paste sanitize
 ```

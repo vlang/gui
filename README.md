@@ -158,6 +158,7 @@ v run examples/animations.v     # Tweens and springs
 v run examples/theme_designer.v # Build custom themes
 v run examples/tiger.v          # SVG rendering demo
 v run examples/markdown.v       # Markdown rendering
+v run examples/input_masks.v    # Input mask presets and custom tokens
 v run examples/table_demo.v     # Table widget demo
 v run examples/custom_shader.v  # Custom fragment shaders
 v run examples/snake.v          # A complete game
