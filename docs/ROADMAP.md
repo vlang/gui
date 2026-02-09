@@ -28,9 +28,9 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 ### Native Desktop Dialogs
 
-- [ ] Native open-file dialog (single + multi-select, extension filters)
-- [ ] Native save-file dialog (default extension, overwrite handling)
-- [ ] Native folder-picker dialog
+- [x] Native open-file dialog (single + multi-select, extension filters)
+- [x] Native save-file dialog (default extension, overwrite handling)
+- [x] Native folder-picker dialog
 - [ ] Native color picker dialog
 - [ ] Native message/alert fallback adapter (opt-in over custom GUI dialog)
 - [ ] Permission + sandbox-safe path handling on macOS/Windows/Linux portals
@@ -107,9 +107,9 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 ## Suggested First 10 Tickets
 
-- [ ] Input mask core + tests
-- [ ] Native open/save/folder dialogs (macOS first)
-- [ ] Markdown code highlighting (inline + fenced)
+- [x] Input mask core + tests
+- [x] Native open/save/folder dialogs (macOS first)
+- [x] Markdown code highlighting (inline + fenced)
 - [ ] Tab control component
 - [ ] Splitter component
 - [ ] Virtualized list view

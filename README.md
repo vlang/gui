@@ -48,6 +48,7 @@ V is a simple language. It deserves a simple UI framework.
 - Dropdowns, listboxes, tables, trees, markdown
 - Menus, menubars, tabs, dialogs
 - Progress bars, tooltips, date pickers
+- Native open/save/folder dialogs (macOS, stubs elsewhere)
 
 **Rendering**
 - SDF-based drop shadows
@@ -158,6 +159,7 @@ v run examples/animations.v     # Tweens and springs
 v run examples/theme_designer.v # Build custom themes
 v run examples/tiger.v          # SVG rendering demo
 v run examples/markdown.v       # Markdown rendering
+v run examples/dialogs.v        # Custom + native dialogs
 v run examples/input_masks.v    # Input mask presets and custom tokens
 v run examples/table_demo.v     # Table widget demo
 v run examples/custom_shader.v  # Custom fragment shaders

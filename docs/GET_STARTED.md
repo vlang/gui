@@ -182,6 +182,16 @@ v-gui comes with everything you need:
 
 All follow the same pattern: call the function, set some options, done.
 
+## Native File Dialogs
+
+Use native desktop file dialogs from `Window`:
+- `native_open_dialog`
+- `native_save_dialog`
+- `native_folder_dialog`
+
+On non-macOS, callbacks still fire and return `.error` with
+`error_code == 'unsupported'`.
+
 ## Masked Input
 
 `gui.input` supports masked input formatting and paste sanitization.
@@ -260,6 +270,7 @@ v run examples/animations.v     # Tweens, springs, hero transitions
 v run examples/svg_demo.v       # Vector icon rendering
 v run examples/tiger.v          # Complex SVG (Ghostscript Tiger)
 v run examples/markdown.v       # Markdown rendering
+v run examples/dialogs.v        # Custom + native dialogs
 v run examples/table_demo.v     # Table widget demo
 v run examples/theme_designer.v
 v run examples/snake.v          # Yes, it's a game

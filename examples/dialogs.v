@@ -2,9 +2,7 @@ import gui
 
 // Dialogs
 // =============================
-// Demonstrates how to invoke two different styles of dialog boxes.
-// As an aside, it shows how easy it is to make a theme.
-//
+// Demonstrates custom dialogs and native file dialogs.
 @[heap]
 struct DialogsApp {
 pub mut:
@@ -14,8 +12,8 @@ pub mut:
 fn main() {
 	mut window := gui.window(
 		state:        &DialogsApp{}
-		width:        500
-		height:       300
+		width:        640
+		height:       420
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -44,6 +42,9 @@ fn main_view(window &gui.Window) gui.View {
 					confirm_type(),
 					prompt_type(),
 					custom_type(),
+					native_open_type(),
+					native_save_type(),
+					native_folder_type(),
 				]
 			),
 		]
@@ -141,6 +142,99 @@ fn custom_type() gui.View {
 			)
 		}
 	)
+}
+
+fn native_open_type() gui.View {
+	return gui.button(
+		id_focus: 5
+		sizing:   gui.fill_fit
+		content:  [gui.text(text: 'native_open_dialog()')]
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			w.native_open_dialog(
+				title:          'Open Files'
+				allow_multiple: true
+				filters:        [
+					gui.NativeFileFilter{
+						name:       'Images'
+						extensions: ['png', 'jpg', 'jpeg']
+					},
+					gui.NativeFileFilter{
+						name:       'Docs'
+						extensions: ['txt', 'md']
+					},
+				]
+				on_done:        fn (result gui.NativeDialogResult, mut w gui.Window) {
+					show_native_result('native_open_dialog()', result, mut w)
+				}
+			)
+		}
+	)
+}
+
+fn native_save_type() gui.View {
+	return gui.button(
+		id_focus: 6
+		sizing:   gui.fill_fit
+		content:  [gui.text(text: 'native_save_dialog()')]
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			w.native_save_dialog(
+				title:             'Save As'
+				default_name:      'untitled'
+				default_extension: 'txt'
+				filters:           [
+					gui.NativeFileFilter{
+						name:       'Text'
+						extensions: ['txt']
+					},
+				]
+				on_done:           fn (result gui.NativeDialogResult, mut w gui.Window) {
+					show_native_result('native_save_dialog()', result, mut w)
+				}
+			)
+		}
+	)
+}
+
+fn native_folder_type() gui.View {
+	return gui.button(
+		id_focus: 7
+		sizing:   gui.fill_fit
+		content:  [gui.text(text: 'native_folder_dialog()')]
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			w.native_folder_dialog(
+				title:                  'Choose Folder'
+				can_create_directories: true
+				on_done:                fn (result gui.NativeDialogResult, mut w gui.Window) {
+					show_native_result('native_folder_dialog()', result, mut w)
+				}
+			)
+		}
+	)
+}
+
+fn show_native_result(kind string, result gui.NativeDialogResult, mut w gui.Window) {
+	body := match result.status {
+		.ok {
+			if result.paths.len == 0 {
+				'No paths returned.'
+			} else {
+				result.paths.join('\n')
+			}
+		}
+		.cancel {
+			'Canceled.'
+		}
+		.error {
+			if result.error_code.len > 0 && result.error_message.len > 0 {
+				'${result.error_code}: ${result.error_message}'
+			} else if result.error_message.len > 0 {
+				result.error_message
+			} else {
+				'Unknown error.'
+			}
+		}
+	}
+	w.dialog(title: kind, body: body)
 }
 
 fn toggle_theme(app &DialogsApp) gui.View {
