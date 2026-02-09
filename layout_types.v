@@ -14,10 +14,11 @@ const empty_layout = Layout{
 }
 
 fn layout_clear(mut layout Layout) {
-	for mut ly in layout.children {
-		layout_clear(mut ly)
+	for i in 0 .. layout.children.len {
+		layout_clear(mut layout.children[i])
 	}
 	layout.shape = unsafe { nil }
 	layout.parent = unsafe { nil }
-	unsafe { layout.children.free() }
+	layout.children.clear()
+	layout.children = []Layout{}
 }
