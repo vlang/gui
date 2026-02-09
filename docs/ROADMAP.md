@@ -1,187 +1,119 @@
 # Roadmap
 
-This document outlines the strategic vision for `v-gui`, aiming to establish it as the
-premier high-performance, cross-platform UI toolkit for the V language. Combines the
-simplicity of immediate mode with the visual fidelity and accessibility of retained mode
-frameworks.
+This file is a forward-only todo list for professional-grade `v-gui`.
 
-## Strategic Pillars
+## Legend
 
-1.  **Rendering Excellence:** GPU acceleration (`sgl`/`gg`) for 120fps animations,
-    glassmorphism, and advanced effects rivaling Flutter's Impeller.
-2.  **Accessibility First:** Integrated support for platform accessibility APIs (A11y)
-    to serve all users.
-3.  **Cross-Platform Native:** Seamless execution on macOS, Windows, Linux, with
-    experimental support for Mobile (iOS/Android) and Web (Wasm).
-4.  **Developer Joy:** Zero-config tooling, hot-reload capabilities, and a comprehensive
-    widget standard library.
+- `[ ]` not started
+- `[x]` shipped
 
----
+## Baseline Shipped
 
-## Implemented
+- [x] Immediate-mode rendering, retained layout tree, theme system, animation stack
+- [x] Core widgets: input, button family, table, tree, markdown, dialogs, menus
+- [x] SVG + shaders + gradients + blur + shadows
+- [x] IME, clipboard text, async image loading, drag/drop inbound files
+- [x] Desktop targets: macOS, Windows, Linux
 
-Features already shipped and available in the current codebase.
+## 2026 H1: Professional Desktop Baseline (P0)
 
-### Core Architecture
-- [x] **Immediate-mode rendering pipeline** with 60fps / 1000+ widget capacity.
-- [x] **Clay-inspired flex layout engine** — row/column, fit/fill/fixed sizing,
-      multi-pass pipeline.
-- [x] **Floating layouts** — absolute positioning for tooltips, dialogs, menus.
-- [x] **Scroll containers** — horizontal/vertical, auto/always/never visibility.
+### Input + Forms
 
-### Rendering & Visuals
-- [x] **SDF shaders** for anti-aliased rounded rectangles and shadows.
-- [x] **Advanced shadows** — box-shadow with spread/blur radius.
-- [x] **Blur effects** — background blur (frosted glass) via multi-pass shaders.
-- [x] **Gradients** — linear and radial with multiple stops and directions.
-- [x] **Custom shaders** — user fragment shaders on containers/rectangles
-      with SDF clipping, pipeline caching, up to 16 float params.
-- [x] **SVG rendering** — full parser (1200+ lines) with DoS protection limits.
-      Partial compliance; masking and interactions remain.
-- [x] **Markdown rendering** — tables, mermaid diagrams (async via Kroki API).
+- [ ] Input masking engine (`9`, `a`, `*`, literals, escaped tokens, custom tokens)
+- [ ] Ready masks: phone, date, time, credit card, postal, SSN
+- [ ] Numeric input view with locale-aware parse/format and step controls
+- [ ] Currency/percent input modes with round-trip-safe formatting
+- [ ] Form validation model: sync/async validators, touched/dirty state, error slots
+- [ ] Unified input formatter pipeline (pre-commit transform + post-commit normalize)
 
-### Widgets (31)
-- [x] **Layout:** `column`, `row`, `canvas`, `container`, `expand_panel`,
-      `rectangle`.
-- [x] **Input:** `input` (single/multiline, selection, clipboard, undo/redo),
-      `input_date`, `select`.
-- [x] **Buttons:** `button`, `toggle`, `switch`, `radio`.
-- [x] **Display:** `text` (rich text runs, wrapping modes), `rtf`, `image`
-      (async loading/caching with timeout), `svg`, `markdown`.
-- [x] **Data:** `table` (CSV, configurable borders), `tree`, `listbox`.
-- [x] **Date/Range:** `date_picker`, `date_picker_roller`, `range_slider`.
-- [x] **Overlay:** `dialog` (message/confirm/prompt/custom), `menu`, `menubar`,
-      `tooltip`.
-- [x] **Feedback:** `progress_bar`, `pulsar`.
+### Native Desktop Dialogs
 
-### Animation System
-- [x] **Tween** — value interpolation with 20+ easing curves.
-- [x] **Spring** — physics-based motion with damping.
-- [x] **Keyframe** — multi-point animation sequences.
-- [x] **Layout transitions** — automatic position/size animation.
-- [x] **Hero transitions** — element morphing between views.
+- [ ] Native open-file dialog (single + multi-select, extension filters)
+- [ ] Native save-file dialog (default extension, overwrite handling)
+- [ ] Native folder-picker dialog
+- [ ] Native color picker dialog
+- [ ] Native message/alert fallback adapter (opt-in over custom GUI dialog)
+- [ ] Permission + sandbox-safe path handling on macOS/Windows/Linux portals
 
-### Text & Fonts
-- [x] **vglyph/Pango** text shaping — complex scripts, bidi, ligatures, emoji.
-- [x] **Font variants** — normal, bold, italic, mono; 6 size presets each.
-- [x] **Icon font** — Feathericon with 80+ icons.
-- [x] **Text cursor** — viewport tracking, line/word navigation, selection.
-- [x] **IME support** — composition and commit events for CJK input.
+### Markdown + Rich Text
 
-### Theming
-- [x] **Theme builder** — generate complete themes from compact config.
-- [x] **Built-in themes** — dark, light, bordered variants.
-- [x] **Per-component styles** — button, input, container, date picker, etc.
-- [x] **Color operations** — add, subtract, multiply, opacity, Porter-Duff over.
+- [ ] Markdown fenced code syntax highlighting (language-tag driven)
+- [ ] Theme-aware code highlight palettes (dark/light + custom themes)
+- [ ] Incremental markdown re-render (avoid full rebuild for small edits)
+- [ ] Offline mode for mermaid/math renderers (local backend option)
+- [ ] Link context menu support (copy/open/inspect target)
 
-### Events & Input
-- [x] **Mouse** — click (L/M/R), move, enter, leave, scroll, drag.
-- [x] **Keyboard** — down, up, char, common shortcuts (Ctrl+C/V/X/Z/A).
-- [x] **Touch** — multi-touch with tool type detection (finger/stylus/eraser).
-- [x] **Window** — resize, focus/unfocus, close request.
-- [x] **File drop** — configurable limits on count and path length.
+### Missing Core Components
 
-### Platform
-- [x] **macOS, Linux, Windows** via gg/sokol.sapp.
-- [x] **Windows titlebar** — dark mode via DWM API.
+- [ ] `tab_control` widget (reorder, close button, overflow menu, keyboard nav)
+- [ ] `splitter` / pane divider widget (drag, collapse, min/max pane size)
+- [ ] `breadcrumb_bar` widget
+- [ ] `command_palette` widget (search + ranking + keyboard-first UX)
+- [ ] `toast` / non-blocking notification system
+- [ ] `combobox` with typeahead filter and async options provider
 
-### Infrastructure
-- [x] **21 test files** — layout, rendering, widgets, integration.
-- [x] **55+ examples.**
-- [x] **9 documentation guides** — architecture, layout, animations, SVG,
-      markdown, tables, gradients, shaders, performance.
-- [x] **Async resource loading** — threaded image downloads, mermaid rendering,
-      timeouts, thread-safe command queue.
-- [x] **Focus navigation** — Tab/Shift+Tab with focus ID ordering and skip
-      flags.
+### Data-Heavy UI
 
----
+- [ ] Virtualized list view (windowed rows, stable item identity)
+- [ ] Data grid v2: virtual rows, sort, filter, resize/reorder/pin columns
+- [ ] Tree virtualization + lazy node loading
+- [ ] Cell editors for grid/list (text, select, date, checkbox)
 
-## 2026-2027 Roadmap
+## 2026 H2: Accessibility + Globalization + Scale (P0/P1)
 
-### Phase 1: Core Fidelity & Widget Completeness (Q1-Q2 2026)
-*Focus: Polishing the desktop experience to "Premium" standards.*
+### Accessibility (A11y)
 
-#### Advanced Rendering
-- [x] **Custom Shaders:** User-exposed API for fragment shaders on specific
-      views.
-- [ ] **SVG Compliance:** Interactions, masking, remaining SVG spec gaps.
+- [ ] Accessibility tree mapping for macOS NSAccessibility
+- [ ] Accessibility tree mapping for Windows UI Automation
+- [ ] Accessibility tree mapping for Linux AT-SPI
+- [ ] Screen-reader labels/roles/states for every core widget
+- [ ] Keyboard parity matrix (tab, arrows, home/end, page up/down, escape)
+- [ ] High-contrast theme preset + visible focus ring system
 
-#### Essential Widgets
-- [ ] **Navigation:**
-    - `TabControl` (Closeable tabs, draggable reordering).
-    - `BreadcrumbBar` (Path navigation).
-    - `NavigationDrawer` (Collapsible sidebar with animation).
-- [ ] **Overlays:**
-    - `Toast` (Non-blocking notifications).
-    - `CommandPalette` (Quick action search, e.g., Cmd+K).
-- [ ] **Rich Content:**
-    - `RichTextEditor` (Selection, copy/paste, bold/italic keybinds).
-    - `CodeEditor` (Syntax highlighting, line numbers, folding).
+### Internationalization (i18n/l10n)
 
-#### Windowing & System
-- [ ] **Multi-Window Support:** Spawning secondary windows from the main app.
-- [ ] **System Tray:** Cross-platform tray icons and menus.
-- [ ] **Drag & Drop:** Bidirectional OS-level drag and drop between apps
-      (inbound file drop already implemented).
+- [ ] Locale service (number/date/time/currency formatting)
+- [ ] BiDi-aware UI mirroring for RTL layouts (not only text shaping)
+- [ ] Translation bundle loading + runtime language switch
+- [ ] Input method edge-case suite (dead keys, surrogate pairs, mixed scripts)
 
-### Phase 2: Professional Grade (Q3-Q4 2026)
-*Focus: Essential features for enterprise and commercial adoption.*
+### Performance
 
-#### Accessibility (A11y)
-- [ ] **A11y Tree Generation:** Map View hierarchy to platform accessibility
-      trees (NSAccessibility, UIAutomation, AT-SPI).
-- [ ] **Screen Reader Support:** Semantic announcements for state changes and
-      navigation.
-- [ ] **Visual Focus Rings:** Visible focus indicators beyond current
-      Tab/Shift+Tab traversal.
+- [ ] Dirty-region rendering
+- [ ] Layout cache with strict invalidation rules
+- [ ] Renderer batching + draw-call reduction instrumentation
+- [ ] GPU text atlas / glyph cache tuning and diagnostics
+- [ ] Built-in frame timeline overlay (layout ms, render ms, event ms)
 
-#### Internationalization (I18n)
-- [ ] **Locale Awareness:** Runtime language switching.
-- [ ] **RTL Interface Mirroring:** Layout mirroring for right-to-left languages
-      (bidi text rendering already handled by vglyph/Pango).
-- [ ] **Formatting:** Locale-specific date, number, and currency input masks.
+## 2027+: Platform Expansion (P1/P2)
 
-#### Ecosystem & Tools
-- [ ] **Inspector Tool:** Runtime debugging overlay to inspect view bounds,
-      padding, and state.
-- [ ] **Live Preview:** Hot-reload style development workflow.
-- [ ] **Component Gallery:** Reference application showcasing all widgets and
-      states.
+- [ ] Multi-window API (owned windows, modal ownership, shared resources)
+- [ ] Docking layout system (IDE-style panels, drag docking targets)
+- [ ] System tray integration on all desktop targets
+- [ ] Native notifications API
+- [ ] Outbound OS drag/drop (text/files/custom payloads)
+- [ ] Mobile target spike (gesture model, safe area, virtual keyboard insets)
+- [ ] Web target spike (Wasm renderer + browser clipboard/input backends)
 
-### Phase 3: Ubiquity (2027+)
-*Focus: Expanding beyond the desktop.*
+## Quality + DevEx Track (Always On)
 
-#### Mobile (iOS/Android)
-- [ ] **Gesture Recognition:** Pinch, rotation, swipe built on existing
-      multi-touch events.
-- [ ] **Kinetic Scrolling:** Physics-based fling with platform-specific
-      friction (basic momentum scrolling exists).
-- [ ] **Safe Areas:** Handling notches, dynamic islands, and system bars.
-- [ ] **Virtual Keyboard:** Soft keyboard management (panning view on focus).
+- [ ] Runtime inspector overlay (view tree, bounds, style, event trace)
+- [ ] Component gallery app with state permutations and edge-case fixtures
+- [ ] Snapshot/golden rendering tests per widget/state
+- [ ] Parser fuzzing for markdown/svg/url handlers
+- [ ] Memory + resource leak CI checks
+- [ ] API stability policy (versioning, deprecation windows, migration notes)
+- [ ] Public benchmark suite (widgets count tiers, text-heavy, svg-heavy scenarios)
 
-#### Web (Wasm)
-- [ ] **Web Integration:** Canvas-based rendering target.
-- [ ] **Clipboard/History:** Browser API integration.
+## Suggested First 10 Tickets
 
----
-
-## Competitive Analysis
-
-| Feature | v-gui | Flutter | Tauri | Qt |
-| :--- | :--- | :--- | :--- | :--- |
-| **Language** | V | Dart | Rust + JS/HTML | C++ / Python |
-| **Architecture** | Immediate Mode | Retained (Skia/Impeller) | Webview | Retained (QPainter) |
-| **Binary Size** | Tiny (<5MB) | Medium (~20MB) | Small (<10MB) | Large (>40MB) |
-| **Startup Time** | Instant | Fast | Medium | Medium |
-| **Accessibility** | Partial (focus nav) | Excellent | Native (Browser) | Mature |
-| **Look & Feel** | Drawn (Themed) | Drawn (Material) | Native/Web | Native or QML |
-| **Hot Reload** | Varies | State-preserving | Web Frontend | Limited (QML) |
-
-## Summary
-
-`v-gui` fills the niche of a **lightweight, dependency-free** UI framework that doesn't
-compromise on modern aesthetics. While Tauri relies on heavy webviews and Flutter carries
-a VM, `v-gui` offers a direct-to-metal approach ideal for resource-constrained
-environments. The immediate roadmap prioritizes **Accessibility** and **Rich Content
-Editing** to satisfy baseline requirements of modern application development.
+- [ ] Input mask core + tests
+- [ ] Native open/save/folder dialogs (macOS first)
+- [ ] Markdown code highlighting (inline + fenced)
+- [ ] Tab control component
+- [ ] Splitter component
+- [ ] Virtualized list view
+- [ ] Data grid v2 foundations
+- [ ] Accessibility role model + macOS backend
+- [ ] Inspector overlay MVP
+- [ ] Snapshot test harness
