@@ -306,6 +306,7 @@ fn (mut window Window) update() {
 	window.unlock()
 	//--------------------------------------------
 
+	view_clear(mut view)
 	window.stats.update_max_renderers(usize(window.renderers.len))
 }
 

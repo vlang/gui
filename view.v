@@ -25,3 +25,11 @@ fn generate_layout(mut view View, mut window Window) Layout {
 	}
 	return layout
 }
+
+fn view_clear(mut view View) {
+	for i in 0 .. view.content.len {
+		view_clear(mut view.content[i])
+	}
+	view.content.clear()
+	view.content = []
+}
