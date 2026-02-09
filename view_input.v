@@ -60,9 +60,9 @@ pub:
 	text               string // text to display/edit
 	icon               string // icon constant
 	placeholder        string // text to show when empty
-	mask               string
-	mask_preset        InputMaskPreset = .none
-	mask_tokens        []MaskTokenDef
+	mask               string // explicit pattern; e.g. '(999) 999-9999'
+	mask_preset        InputMaskPreset = .none // preset pattern when `mask` is empty
+	mask_tokens        []MaskTokenDef // custom token defs; merged with built-ins
 	on_text_changed    fn (&Layout, string, mut Window)    = unsafe { nil }
 	on_enter           fn (&Layout, mut Event, mut Window) = unsafe { nil }
 	on_click_icon      fn (&Layout, mut Event, mut Window) = unsafe { nil }
@@ -118,6 +118,11 @@ pub:
 // - is_password flag causes the input view to display '*'s.
 // - Copy operation is disabled when is_password is true.
 // - wrap allows the input fields to be multiline.
+//
+// Masked input:
+// - `mask` sets an explicit mask pattern.
+// - `mask_preset` selects a built-in mask when `mask` is empty.
+// - `mask_tokens` adds or overrides token definitions for `mask`.
 //
 // Keyboard shortcuts:
 // - left/right: moves cursor left/right one character

@@ -182,6 +182,52 @@ v-gui comes with everything you need:
 
 All follow the same pattern: call the function, set some options, done.
 
+## Masked Input
+
+`gui.input` supports masked input formatting and paste sanitization.
+
+Fields:
+- `mask string`
+- `mask_preset InputMaskPreset = .none`
+- `mask_tokens []MaskTokenDef`
+
+Rules:
+- `mask` wins when non-empty.
+- `mask_preset` is used when `mask` is empty.
+- `mask_tokens` adds or overrides token defs used by `mask`.
+
+```v ignore
+gui.input(
+	id_focus:    1
+	text:        app.phone
+	mask_preset: .phone_us
+	placeholder: '(555) 123-4567'
+	on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+		w.state[App]().phone = s
+	}
+)
+```
+
+Custom token example:
+
+```v ignore
+gui.input(
+	id_focus:    2
+	text:        app.license
+	mask:        'AA-9999'
+	mask_tokens: [
+		gui.MaskTokenDef{
+			symbol:    `A`
+			matcher:   is_ascii_letter
+			transform: to_upper_ascii
+		},
+	]
+	on_text_changed: fn (_ &gui.Layout, s string, mut w gui.Window) {
+		w.state[App]().license = s
+	}
+)
+```
+
 ## Why v-gui Feels Different
 
 **No widget objects to manage.** Traditional frameworks make you create button objects, store
