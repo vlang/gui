@@ -39,7 +39,7 @@ window.markdown(
 | Unordered lists  | `- item` or `* item`          | Nested with indentation                 |
 | Ordered lists    | `1. item`                     | Auto-numbered                           |
 | Task lists       | `- [x] done` / `- [ ] todo`   | Checkbox rendering                      |
-| Code blocks      | Triple backticks              | Language hint supported                 |
+| Code blocks      | Triple backticks              | Highlighting for v/js/ts/py/json + fallback |
 | Blockquotes      | `> text`                      | Nested quotes supported                 |
 | Horizontal rules | `---` or `***`                | Full-width line                         |
 | Tables           | Pipe syntax                   | Column alignment supported              |
@@ -55,7 +55,7 @@ window.markdown(
 | Italic        | `*text*` or `_text_`     |                               |
 | Bold italic   | `***text***`             | Combined styling              |
 | Strikethrough | `~~text~~`               |                               |
-| Inline code   | `` `code` ``             | Monospace styling             |
+| Inline code   | `` `code` ``             | Monospace + generic token highlighting |
 | Links         | `[text](url)`            | Clickable                     |
 | Math (inline) | `$...$`                  | Via Codecogs API              |
 
@@ -186,6 +186,11 @@ pub:
 
     // Colors
     code_block_bg      Color      // code block background
+    code_keyword_color Color      // keyword tokens
+    code_string_color  Color      // string tokens
+    code_number_color  Color      // numeric tokens
+    code_comment_color Color      // comment tokens
+    code_operator_color Color     // punctuation/operators
     hr_color           Color      // horizontal rule
     link_color         Color      // link text
     blockquote_border  Color      // left border
@@ -305,7 +310,6 @@ See `examples/markdown.v` for a complete demonstration including:
 Currently not supported:
 - HTML tags within markdown
 - Custom link handlers (links are display-only)
-- Syntax highlighting in code blocks (renders as monospace text)
 - Embedded videos
 
 For documents requiring these features, consider using a webview or rendering to HTML externally.

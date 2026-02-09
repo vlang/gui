@@ -116,7 +116,7 @@ Text rendering is the most expensive operation in typical GUIs.
 
 ### Enable Debug Stats
 
-```oksyntax
+```v ignore
 mut window := gui.window(
     debug_layout: true
     // ...

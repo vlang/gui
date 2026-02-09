@@ -426,19 +426,24 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 		// markdown
 		markdown_style: MarkdownStyle{
-			text:          normal
-			h1:            make_style(bold, theme.size_text_x_large)
-			h2:            make_style(bold, theme.size_text_large)
-			h3:            make_style(bold, theme.size_text_medium)
-			h4:            make_style(bold, theme.size_text_small)
-			h5:            make_style(bold, theme.size_text_x_small)
-			h6:            make_style(bold, theme.size_text_tiny)
-			bold:          make_style(bold, theme.size_text_medium)
-			italic:        make_style(italic, theme.size_text_medium)
-			code:          make_style(mono, theme.size_text_medium + 1)
-			code_block_bg: theme.color_interior
-			hr_color:      theme.color_border
-			link_color:    theme.color_select
+			text:                normal
+			h1:                  make_style(bold, theme.size_text_x_large)
+			h2:                  make_style(bold, theme.size_text_large)
+			h3:                  make_style(bold, theme.size_text_medium)
+			h4:                  make_style(bold, theme.size_text_small)
+			h5:                  make_style(bold, theme.size_text_x_small)
+			h6:                  make_style(bold, theme.size_text_tiny)
+			bold:                make_style(bold, theme.size_text_medium)
+			italic:              make_style(italic, theme.size_text_medium)
+			code:                make_style(mono, theme.size_text_medium + 1)
+			code_block_bg:       rgb(40, 44, 52)
+			code_keyword_color:  theme.color_select
+			code_string_color:   rgb(152, 195, 121)
+			code_number_color:   rgb(209, 154, 102)
+			code_comment_color:  theme.color_border
+			code_operator_color: normal.color
+			hr_color:            theme.color_border
+			link_color:          theme.color_select
 		}
 	}
 }

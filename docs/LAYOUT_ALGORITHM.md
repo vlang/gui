@@ -66,7 +66,7 @@ Each axis (width/height) can use different sizing modes:
 
 The `SizingMode` enum represents all combinations:
 
-```oksyntax
+```v ignore
 pub enum SizingMode {
     fixed_fixed           // Both axes fixed
     fixed_fractional      // Width fixed, height fractional
@@ -168,7 +168,7 @@ separately:
 
 Scroll containers use `id_scroll` to track scroll state:
 
-```oksyntax
+```v ignore
 // In ViewState
 scroll_x: map[u32]f32  // [id_scroll] -> horizontal offset
 scroll_y: map[u32]f32  // [id_scroll] -> vertical offset
@@ -186,7 +186,7 @@ The scroll offset affects child positions but not the container itself.
 ## Common Layout Patterns
 
 ### Centering Content
-```oksyntax
+```v ignore
 column(
     h_align: .center
     v_align: .middle
@@ -198,7 +198,7 @@ column(
 ```
 
 ### Responsive Width with Fixed Height
-```oksyntax
+```v ignore
 button(
     width: 0.9      // 90% of parent
     height: 44      // Fixed 44px
@@ -207,7 +207,7 @@ button(
 ```
 
 ### Shrink-wrap Container
-```oksyntax
+```v ignore
 row(
     sizing: fit_fit  // Size to content
     content: [...]
@@ -215,7 +215,7 @@ row(
 ```
 
 ### Scrollable List
-```oksyntax
+```v ignore
 column(
     id_scroll: 1
     scroll_mode: .vertical
@@ -230,7 +230,7 @@ column(
 
 Enable debug mode to see layout statistics:
 
-```oksyntax
+```v ignore
 mut window := gui.window(
     debug_layout: true
     // ...

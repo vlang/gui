@@ -74,10 +74,8 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			}
 			end := find_closing(text, pos + 1, `\``)
 			if end > pos + 1 {
-				runs << RichTextRun{
-					text:  text[pos + 1..end]
-					style: md_style.code
-				}
+				code_text := text[pos + 1..end]
+				runs << highlight_inline_code(code_text, md_style)
 				pos = end + 1
 				continue
 			}
@@ -511,8 +509,7 @@ fn trim_trailing_breaks(mut runs []RichTextRun) {
 	// Count trailing newlines
 	mut count := 0
 	for i := runs.len - 1; i >= 0; i-- {
-		if runs[i].text == '
-' {
+		if runs[i].text == '\n' {
 			count++
 		} else {
 			break

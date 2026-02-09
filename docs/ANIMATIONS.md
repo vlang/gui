@@ -33,7 +33,7 @@ Every animation requires a unique `id` string. If you add an animation with an I
 already exists, the new animation replaces the old one. This prevents duplicate
 animations from stacking up.
 
-```oksyntax
+```v ignore
 w.animation_add(mut gui.TweenAnimation{
     id: 'my_animation' // unique identifier
     // ...
@@ -44,7 +44,7 @@ w.animation_add(mut gui.TweenAnimation{
 
 Animations modify your application state, which triggers view regeneration:
 
-```oksyntax
+```v ignore
 struct State {
 mut:
     box_x f32 = 0 // animated value
@@ -64,7 +64,7 @@ functions to control the motion curve.
 
 ### Basic Example
 
-```oksyntax
+```v ignore
 import time
 
 fn move_box(mut w gui.Window) {
@@ -108,7 +108,7 @@ For most UI animations, `ease_out_cubic` provides natural-feeling deceleration.
 
 Create custom easing curves matching CSS `cubic-bezier()`:
 
-```oksyntax
+```v ignore
 // CSS-style "ease" curve
 my_easing := gui.cubic_bezier(0.25, 0.1, 0.25, 1.0)
 
@@ -123,7 +123,7 @@ w.animation_add(mut gui.TweenAnimation{
 
 Use `on_done` to sequence animations:
 
-```oksyntax
+```v ignore
 w.animation_add(mut gui.TweenAnimation{
     id:       'step1'
     from:     0
@@ -157,7 +157,7 @@ complex motion patterns like shake effects, staged progress, or animations with 
 
 ### Basic Example
 
-```oksyntax
+```v ignore
 import time
 
 fn shake_box(mut w gui.Window) {
@@ -213,7 +213,7 @@ fn shake_box(mut w gui.Window) {
 
 Set `repeat: true` for continuous looping:
 
-```oksyntax
+```v ignore
 w.animation_add(mut gui.KeyframeAnimation{
     id:     'pulse'
     repeat: true
@@ -237,7 +237,7 @@ they have no fixed duration - they settle naturally based on physics parameters.
 
 ### Basic Example
 
-```oksyntax
+```v ignore
 fn spring_sidebar(mut w gui.Window) {
     state := w.state[State]()
     target := if state.width > 100 { 60.0 } else { 200.0 }
@@ -266,7 +266,7 @@ fn spring_sidebar(mut w gui.Window) {
 
 ### Custom Spring Configuration
 
-```oksyntax
+```v ignore
 custom_spring := gui.SpringCfg{
     stiffness: 200  // higher = snappier
     damping:   12   // higher = less oscillation
@@ -285,7 +285,7 @@ mut spring := gui.SpringAnimation{
 
 Change the target while preserving velocity for smooth redirects:
 
-```oksyntax
+```v ignore
 // Initial animation
 mut spring := gui.SpringAnimation{
     id: 'position'
@@ -306,7 +306,7 @@ Call `animate_layout()` before modifying state that affects layout.
 
 ### Basic Example
 
-```oksyntax
+```v ignore
 fn toggle_sidebar(mut w gui.Window) {
     // Step 1: Capture current layout positions
     w.animate_layout(duration: 300 * time.millisecond)
@@ -330,7 +330,7 @@ fn toggle_sidebar(mut w gui.Window) {
 
 Elements must have an `id` to participate in layout transitions:
 
-```oksyntax
+```v ignore
 gui.column(
     id:    'sidebar' // required for animation
     width: state.sidebar_width
@@ -340,7 +340,7 @@ gui.column(
 
 ### Configuration
 
-```oksyntax
+```v ignore
 w.animate_layout(
     duration: 200 * time.millisecond // animation length
     easing:   gui.ease_out_cubic     // motion curve
@@ -354,7 +354,7 @@ matching IDs and `hero: true` animate together during view switches.
 
 ### Basic Example
 
-```oksyntax
+```v ignore
 // Source view
 fn list_view(mut w gui.Window) gui.View {
     return gui.column(
@@ -407,7 +407,7 @@ The framework interpolates these properties:
 
 Child elements can also be heroes for more complex animations:
 
-```oksyntax
+```v ignore
 gui.column(
     id:   'card'
     hero: true
@@ -425,7 +425,7 @@ gui.column(
 
 ### Check Animation Status
 
-```oksyntax
+```v ignore
 if w.has_animation('my_animation') {
     // animation is still running
 }
@@ -433,7 +433,7 @@ if w.has_animation('my_animation') {
 
 ### Remove Animation
 
-```oksyntax
+```v ignore
 w.remove_animation('my_animation') // stops and removes
 ```
 
@@ -441,7 +441,7 @@ w.remove_animation('my_animation') // stops and removes
 
 All animation types support a delay before starting:
 
-```oksyntax
+```v ignore
 w.animation_add(mut gui.TweenAnimation{
     id:    'delayed'
     delay: 200 * time.millisecond // wait before starting

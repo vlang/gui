@@ -48,6 +48,15 @@ fn test_markdown_inline_code() {
 	assert rt.runs[2].text == ' here'
 }
 
+fn test_markdown_inline_code_highlight_tokens() {
+	style := MarkdownStyle{}
+	rt := markdown_to_rich_text('Use `x == 10` here', style)
+	op_run := rt.runs.filter(it.text == '==')[0] or { panic('no operator run') }
+	num_run := rt.runs.filter(it.text == '10')[0] or { panic('no number run') }
+	assert op_run.style.color == style.code_operator_color
+	assert num_run.style.color == style.code_number_color
+}
+
 fn test_markdown_link() {
 	rt := markdown_to_rich_text('Visit [vlang](https://vlang.io)', MarkdownStyle{})
 	assert rt.runs.len == 2
@@ -80,7 +89,7 @@ fn main() {}
 ```'
 	rt := markdown_to_rich_text(source, MarkdownStyle{})
 	assert rt.runs.len >= 1
-	found_code := rt.runs.any(it.text.contains('fn main()'))
+	found_code := rich_text_to_string(rt).contains('fn main()')
 	assert found_code
 }
 
@@ -588,7 +597,7 @@ fn main() {}
 ~~~'
 	rt := markdown_to_rich_text(source, MarkdownStyle{})
 	assert rt.runs.len >= 1
-	found_code := rt.runs.any(it.text.contains('fn main()'))
+	found_code := rich_text_to_string(rt).contains('fn main()')
 	assert found_code
 }
 
@@ -612,9 +621,54 @@ still code
 	code_blocks := blocks.filter(it.is_code)
 	assert code_blocks.len == 1
 	// Content should include the ~~~ line since it doesn't close backtick fence
-	content := code_blocks[0].content.runs[0].text
+	content := rich_text_to_string(code_blocks[0].content)
 	assert content.contains('code here')
 	assert content.contains('still code')
+}
+
+fn test_markdown_fenced_v_highlight() {
+	style := MarkdownStyle{}
+	source := '```v
+fn main() {
+	return 1
+}
+```'
+	blocks := markdown_to_blocks(source, style)
+	code := blocks.filter(it.is_code)[0] or { panic('no code block') }
+	assert code.code_language == 'v'
+	fn_run := code.content.runs.filter(it.text == 'fn')[0] or { panic('no fn run') }
+	num_run := code.content.runs.filter(it.text == '1')[0] or { panic('no number run') }
+	assert fn_run.style.color == style.code_keyword_color
+	assert num_run.style.color == style.code_number_color
+}
+
+fn test_markdown_fenced_python_highlight() {
+	style := MarkdownStyle{}
+	source := '```python
+# note
+if x:
+    pass
+```'
+	blocks := markdown_to_blocks(source, style)
+	code := blocks.filter(it.is_code)[0] or { panic('no code block') }
+	comment_run := code.content.runs.filter(it.text == '# note')[0] or { panic('no comment run') }
+	kw_run := code.content.runs.filter(it.text == 'if')[0] or { panic('no keyword run') }
+	assert comment_run.style.color == style.code_comment_color
+	assert kw_run.style.color == style.code_keyword_color
+}
+
+fn test_markdown_fenced_unknown_language_generic_highlight() {
+	style := MarkdownStyle{}
+	source := '```foo
+x == 42
+```'
+	blocks := markdown_to_blocks(source, style)
+	code := blocks.filter(it.is_code)[0] or { panic('no code block') }
+	assert code.code_language == 'foo'
+	op_run := code.content.runs.filter(it.text == '==')[0] or { panic('no operator run') }
+	num_run := code.content.runs.filter(it.text == '42')[0] or { panic('no number run') }
+	assert op_run.style.color == style.code_operator_color
+	assert num_run.style.color == style.code_number_color
 }
 
 fn test_code_block_state_detection() {
@@ -713,7 +767,36 @@ code without closing'
 	blocks := markdown_to_blocks(source, MarkdownStyle{})
 	code_blocks := blocks.filter(it.is_code)
 	assert code_blocks.len == 1
-	assert code_blocks[0].content.runs[0].text == 'code without closing'
+	assert rich_text_to_string(code_blocks[0].content) == 'code without closing'
+}
+
+fn test_markdown_highlight_inline_limit_fallback() {
+	style := MarkdownStyle{}
+	code := 'x'.repeat(max_inline_code_highlight_bytes + 10)
+	runs := highlight_inline_code(code, style)
+	assert runs.len == 1
+	assert runs[0].text == code
+	assert runs[0].style.color == style.code.color
+}
+
+fn test_markdown_highlight_block_depth_limit_no_hang() {
+	style := MarkdownStyle{}
+	openers := '/*'.repeat(max_highlight_comment_depth + 1)
+	closers := '*/'.repeat(max_highlight_comment_depth + 1)
+	code := '${openers}x${closers}'
+	runs := highlight_fenced_code(code, 'v', style)
+	assert rich_text_to_string(RichText{
+		runs: runs
+	}) == code
+}
+
+fn test_markdown_highlight_string_scan_limit_no_hang() {
+	style := MarkdownStyle{}
+	code := '"' + 'a'.repeat(max_highlight_string_scan_bytes + 20)
+	runs := highlight_fenced_code(code, 'js', style)
+	assert rich_text_to_string(RichText{
+		runs: runs
+	}) == code
 }
 
 // Math tests

@@ -7,29 +7,34 @@ module gui
 @[minify]
 pub struct MarkdownStyle {
 pub:
-	text               TextStyle = gui_theme.n3
-	h1                 TextStyle = gui_theme.b1
-	h2                 TextStyle = gui_theme.b2
-	h3                 TextStyle = gui_theme.b3
-	h4                 TextStyle = gui_theme.b4
-	h5                 TextStyle = gui_theme.b5
-	h6                 TextStyle = gui_theme.b6
-	bold               TextStyle = gui_theme.b3
-	italic             TextStyle = gui_theme.i3
-	bold_italic        TextStyle = gui_theme.bi3
-	code               TextStyle = gui_theme.m5
-	code_block_bg      Color     = gui_theme.color_interior
-	hr_color           Color     = gui_theme.color_border
-	link_color         Color     = gui_theme.color_select
-	blockquote_border  Color     = gui_theme.color_border
-	blockquote_bg      Color     = rgba(128, 128, 128, 20)
-	block_spacing      f32       = 8
-	nest_indent        f32       = 16 // indent per nesting level for lists/blockquotes
-	prefix_char_width  f32       = 8  // approx char width for list prefix column
-	code_block_padding Padding   = padding(10, 10, 10, 10)
-	code_block_radius  f32       = 3.5
-	h1_separator       bool
-	h2_separator       bool
+	text                TextStyle = gui_theme.n3
+	h1                  TextStyle = gui_theme.b1
+	h2                  TextStyle = gui_theme.b2
+	h3                  TextStyle = gui_theme.b3
+	h4                  TextStyle = gui_theme.b4
+	h5                  TextStyle = gui_theme.b5
+	h6                  TextStyle = gui_theme.b6
+	bold                TextStyle = gui_theme.b3
+	italic              TextStyle = gui_theme.i3
+	bold_italic         TextStyle = gui_theme.bi3
+	code                TextStyle = gui_theme.m5
+	code_block_bg       Color     = rgb(40, 44, 52)
+	code_keyword_color  Color     = gui_theme.color_select
+	code_string_color   Color     = rgb(152, 195, 121)
+	code_number_color   Color     = rgb(209, 154, 102)
+	code_comment_color  Color     = rgb(128, 128, 128)
+	code_operator_color Color     = gui_theme.n3.color
+	hr_color            Color     = gui_theme.color_border
+	link_color          Color     = gui_theme.color_select
+	blockquote_border   Color     = gui_theme.color_border
+	blockquote_bg       Color     = rgba(128, 128, 128, 20)
+	block_spacing       f32       = 8
+	nest_indent         f32       = 16 // indent per nesting level for lists/blockquotes
+	prefix_char_width   f32       = 8  // approx char width for list prefix column
+	code_block_padding  Padding   = padding(10, 10, 10, 10)
+	code_block_radius   f32       = 3.5
+	h1_separator        bool
+	h2_separator        bool
 	// Table styling
 	table_border_style TableBorderStyle = .header_only
 	table_border_color Color            = gui_theme.color_border
@@ -256,7 +261,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			if block.code_language == 'mermaid' {
 				// Mermaid diagram - async render via Kroki (PNG format)
 				// NOTE: Mermaid source is sent to external kroki.io API
-				source := block.content.runs[0].text
+				source := rich_text_plain(block.content)
 				// Combine hash with length for better collision resistance
 				diagram_hash := i64((u64(source.hash()) << 32) | u64(source.len))
 				mut w := unsafe { window }

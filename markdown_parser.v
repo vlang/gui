@@ -59,27 +59,24 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		// Handle code blocks (``` or ~~~)
 		if fence := parse_code_fence(line) {
 			if in_code_block && fence.char == code_fence_char && fence.count >= code_fence_count {
+				lang_hint := normalize_markdown_code_language_hint(code_fence_lang)
+				code_text := code_block_content.join('\n')
 				// End code block - flush current runs first, then add code block
 				if block := flush_runs(mut runs) {
 					blocks << block
 				}
 				if code_block_content.len > 0 {
-					if code_fence_lang == 'math' {
+					if lang_hint == 'math' {
 						blocks << MarkdownBlock{
 							is_math:    true
-							math_latex: code_block_content.join('\n')
+							math_latex: code_text
 						}
 					} else {
 						blocks << MarkdownBlock{
 							is_code:       true
-							code_language: code_fence_lang
+							code_language: lang_hint
 							content:       RichText{
-								runs: [
-									RichTextRun{
-										text:  code_block_content.join('\n')
-										style: style.code
-									},
-								]
+								runs: highlight_fenced_code(code_text, lang_hint, style)
 							}
 						}
 					}
@@ -509,19 +506,16 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 
 	// Handle unclosed code block
 	if in_code_block && code_block_content.len > 0 {
+		lang_hint := normalize_markdown_code_language_hint(code_fence_lang)
+		code_text := code_block_content.join('\n')
 		if block := flush_runs(mut runs) {
 			blocks << block
 		}
 		blocks << MarkdownBlock{
 			is_code:       true
-			code_language: code_fence_lang
+			code_language: lang_hint
 			content:       RichText{
-				runs: [
-					RichTextRun{
-						text:  code_block_content.join('\n')
-						style: style.code
-					},
-				]
+				runs: highlight_fenced_code(code_text, lang_hint, style)
 			}
 		}
 	}
