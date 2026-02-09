@@ -45,11 +45,13 @@ fn create_mock_shape() Shape {
 
 	mut shape := Shape{
 		shape_type: .text
-		text:       text_content
+		tc:         &TextConfig{
+			text: text_content
+		}
 	}
 
 	// Mock the layout lines
-	shape.vglyph_layout = &vglyph.Layout{
+	shape.tc.vglyph_layout = &vglyph.Layout{
 		lines: [
 			vglyph.Line{
 				start_index: 0

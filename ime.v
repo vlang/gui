@@ -119,14 +119,14 @@ fn ime_get_layout(data voidptr) &vglyph.Layout {
 		}
 		ly := find_layout_by_id_focus(&w.layout, id_focus) or { return unsafe { nil } }
 		if ly.shape.has_text_layout() {
-			return ly.shape.vglyph_layout
+			return ly.shape.tc.vglyph_layout
 		}
 		// Input fields nest the text shape inside children.
 		// Walk children to find the text shape with matching
 		// id_focus.
 		child := find_layout_by_id_focus(&ly, id_focus) or { return unsafe { nil } }
 		if child.shape.has_text_layout() {
-			return child.shape.vglyph_layout
+			return child.shape.tc.vglyph_layout
 		}
 	}
 	return unsafe { nil }
@@ -160,7 +160,7 @@ fn ime_get_cursor_index(data voidptr) int {
 		}
 		input_state := w.view_state.input_state.get(id_focus) or { InputState{} }
 		shape := ime_focused_text_shape(w) or { return 0 }
-		return rune_to_byte_index(shape.text, input_state.cursor_pos)
+		return rune_to_byte_index(shape.tc.text, input_state.cursor_pos)
 	}
 	return 0
 }

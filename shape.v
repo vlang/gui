@@ -11,60 +11,43 @@ pub:
 pub mut:
 	// String fields (16 bytes)
 	id       string // Unique identifier assigned by the user
-	text     string // Text content for text-based shapes
 	resource string // Image path or SVG source (discriminated by shape_type)
 
-	// Pointer fields (8 bytes)
-	vglyph_layout   &vglyph.Layout = unsafe { nil } // Unified layout engine object for both plain and rich text
-	rich_text       &RichText      = unsafe { nil } // Source data structure for Rich Text Format (RTF)
-	shadow          &BoxShadow     = unsafe { nil } // Drop shadow configuration
-	gradient        &Gradient      = unsafe { nil } // Gradient background configuration
-	border_gradient &Gradient      = unsafe { nil } // Gradient border configuration
-	shader          &Shader        = unsafe { nil } // Custom fragment shader
-
-	// Event handlers (optional sub-struct, nil for shapes without handlers)
-	events &EventHandlers = unsafe { nil }
+	// Optional sub-structs (nil when unused)
+	events &EventHandlers = unsafe { nil } // Event handlers
+	tc     &TextConfig    = unsafe { nil } // Text/RTF fields
+	fx     &ShapeEffects  = unsafe { nil } // Visual effects
 
 	// Structs (Large/Aligned)
-	text_style TextStyle // Configuration for text rendering (font, size, color)
-	shape_clip DrawClip  // Calculated clipping rectangle for rendering and hit-testing
-	padding    Padding   // Inner spacing
-	sizing     Sizing    // Sizing logic (e.g. fixed, fit, grow)
+	shape_clip DrawClip // Calculated clipping rectangle for rendering and hit-testing
+	padding    Padding  // Inner spacing
+	sizing     Sizing   // Sizing logic (e.g. fixed, fit, grow)
 
 	// 4 bytes (f32/u32/Color)
-	x                     f32 // Final calculated X position (absolute)
-	y                     f32 // Final calculated Y position (absolute)
-	width                 f32 // Size value. For .fixed sizing, this IS the size.
-	min_width             f32 // Min constraint. Ignored when sizing.width == .fixed
-	max_width             f32 // Max constraint. Ignored when sizing.width == .fixed
-	height                f32 // Size value. For .fixed sizing, this IS the size.
-	min_height            f32 // Min constraint. Ignored when sizing.height == .fixed
-	max_height            f32 // Max constraint. Ignored when sizing.height == .fixed
-	radius                f32 // Corner radius for rounded rectangles
-	blur_radius           f32 // Gaussian blur radius
-	spacing               f32 // Spacing between children (loaded from style)
-	float_offset_x        f32 // X offset for floating elements relative to anchor
-	float_offset_y        f32 // Y offset for floating elements relative to anchor
-	id_focus              u32 // Focus ID. >0 means focusable. Value determines tab order.
-	id_scroll             u32 // Scroll ID. >0 means receives scroll events.
-	id_scroll_container   u32 // ID of the parent scroll container
-	text_sel_beg          u32 // Start index of text selection (runes)
-	text_sel_end          u32 // End index of text selection (runes)
-	text_tab_size         u32 = 4 // Tab width in spaces
-	hanging_indent        f32   // Hanging indent for wrapped lines (lists)
-	last_constraint_width f32   // Optimization: cached width used for last text layout generation
-	last_text_hash        int   // Optimization: hash of text for dirty checking
-	cached_line_height    f32   // Optimization: cached line height after layout
-	color                 Color // Background or foreground color
-	color_border          Color // Border color (if different from color)
-	size_border           f32   // Thickness of the border
+	x                   f32   // Final calculated X position (absolute)
+	y                   f32   // Final calculated Y position (absolute)
+	width               f32   // Size value. For .fixed sizing, this IS the size.
+	min_width           f32   // Min constraint. Ignored when sizing.width == .fixed
+	max_width           f32   // Max constraint. Ignored when sizing.width == .fixed
+	height              f32   // Size value. For .fixed sizing, this IS the size.
+	min_height          f32   // Min constraint. Ignored when sizing.height == .fixed
+	max_height          f32   // Max constraint. Ignored when sizing.height == .fixed
+	radius              f32   // Corner radius for rounded rectangles
+	spacing             f32   // Spacing between children (loaded from style)
+	float_offset_x      f32   // X offset for floating elements relative to anchor
+	float_offset_y      f32   // Y offset for floating elements relative to anchor
+	id_focus            u32   // Focus ID. >0 means focusable. Value determines tab order.
+	id_scroll           u32   // Scroll ID. >0 means receives scroll events.
+	id_scroll_container u32   // ID of the parent scroll container
+	color               Color // Background or foreground color
+	color_border        Color // Border color (if different from color)
+	size_border         f32   // Thickness of the border
 
 	// 1 byte (Enums/Bools)
 	axis                  Axis                 // Layout direction (row/column)
 	shape_type            ShapeType            // Discriminator for shape kind
 	h_align               HorizontalAlign      // Horizontal alignment of children/content
 	v_align               VerticalAlign        // Vertical alignment of children/content
-	text_mode             TextMode             // Text wrapping/multiline mode
 	scroll_mode           ScrollMode           // Scrolling behavior (e.g. auto, always, never)
 	scrollbar_orientation ScrollbarOrientation // Scrollbar type (.none for non-scrollbar shapes)
 	float_anchor          FloatAttach          // Anchor point on the parent for floating shapes
@@ -74,10 +57,29 @@ pub mut:
 	float                 bool                 // Whether the shape is floating (removed from flow)
 	focus_skip            bool                 // If true, skip this element in focus navigation
 	over_draw             bool                 // If true, allows drawing into padding and ignores spacing impact
-	text_is_password      bool                 // If true, mask text characters
-	text_is_placeholder   bool                 // If true, text is a placeholder (affects styling)
 	hero                  bool                 // If true, element participates in hero transitions
 	opacity               f32 = 1.0 // Opacity multiplier (0.0 = transparent, 1.0 = opaque)
+}
+
+// TextConfig holds text/RTF-specific fields for a Shape.
+// Allocated only for shapes with shape_type .text or .rtf.
+@[heap]
+pub struct TextConfig {
+pub mut:
+	text                  string
+	vglyph_layout         &vglyph.Layout = unsafe { nil }
+	rich_text             &RichText      = unsafe { nil }
+	text_style            TextStyle
+	text_mode             TextMode
+	text_sel_beg          u32
+	text_sel_end          u32
+	text_tab_size         u32 = 4
+	text_is_password      bool
+	text_is_placeholder   bool
+	hanging_indent        f32
+	last_constraint_width f32
+	last_text_hash        int
+	cached_line_height    f32
 }
 
 // EventHandlers holds optional event callback fields for a Shape.
@@ -101,6 +103,18 @@ pub mut:
 @[inline]
 pub fn (shape &Shape) has_events() bool {
 	return shape.events != unsafe { nil }
+}
+
+// ShapeEffects holds optional visual effect fields for a Shape.
+// Allocated only for shapes with shadows, gradients, shaders, or blur.
+@[heap]
+pub struct ShapeEffects {
+pub mut:
+	shadow          &BoxShadow = unsafe { nil }
+	gradient        &Gradient  = unsafe { nil }
+	border_gradient &Gradient  = unsafe { nil }
+	shader          &Shader    = unsafe { nil }
+	blur_radius     f32
 }
 
 // ShapeType defines the kind of Shape.
@@ -129,13 +143,15 @@ pub fn (shape &Shape) point_in_shape(x f32, y f32) bool {
 // has_text_layout returns true if the shape has a valid vglyph text layout.
 @[inline]
 pub fn (shape &Shape) has_text_layout() bool {
-	return shape.vglyph_layout != unsafe { nil } && shape.shape_type == .text
+	return shape.tc != unsafe { nil } && shape.tc.vglyph_layout != unsafe { nil }
+		&& shape.shape_type == .text
 }
 
 // has_rtf_layout returns true if the shape has a valid vglyph rich text layout.
 @[inline]
 pub fn (shape &Shape) has_rtf_layout() bool {
-	return shape.vglyph_layout != unsafe { nil } && shape.shape_type == .rtf
+	return shape.tc != unsafe { nil } && shape.tc.vglyph_layout != unsafe { nil }
+		&& shape.shape_type == .rtf
 }
 
 // padding_left returns the effective left padding (padding + border)

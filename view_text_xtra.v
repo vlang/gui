@@ -37,7 +37,7 @@ fn rich_text_width(rt RichText, mut window Window) f32 {
 // text_width_shape measures the visual width of the shape's lines, mirroring render rules:
 // - when in password mode (and not placeholder), measure '*' repeated for visible rune count
 fn text_width_shape(shape &Shape, mut window Window) f32 {
-	cfg := shape.text_style.to_vglyph_cfg()
+	cfg := shape.tc.text_style.to_vglyph_cfg()
 
 	// Fallback: If layout is not generated yet (e.g. during initial generate_layout),
 	// measure the raw text. This ensures containers don't collapse to 0 width.
@@ -47,11 +47,11 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 	// measure the raw text. This ensures containers don't collapse to 0 width.
 	// We measure "unwrapped" width here, essentially treating it as a single line.
 	// The layout engine will later constrain this width if wrapping is enabled.
-	if !shape.has_text_layout()
-		|| (shape.has_text_layout() && shape.vglyph_layout.lines.len == 0 && shape.text.len > 0) {
-		effective := match shape.text_is_password && !shape.text_is_placeholder {
-			true { password_char.repeat(utf8_str_visible_length(shape.text)) }
-			else { shape.text }
+	if !shape.has_text_layout() || (shape.has_text_layout() && shape.tc.vglyph_layout.lines.len == 0
+		&& shape.tc.text.len > 0) {
+		effective := match shape.tc.text_is_password && !shape.tc.text_is_placeholder {
+			true { password_char.repeat(utf8_str_visible_length(shape.tc.text)) }
+			else { shape.tc.text }
 		}
 		return window.text_system.text_width(effective, cfg) or { 0 }
 	}
@@ -62,19 +62,19 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 	// For "fit content", we often want the max line width.
 	// vglyph.Layout.width is the width of the layout box (or max line width if not wrapping).
 	// Let's trust vglyph's calculation.
-	if shape.has_text_layout() && shape.vglyph_layout.lines.len > 0 {
+	if shape.has_text_layout() && shape.tc.vglyph_layout.lines.len > 0 {
 		// Use visual width (ink) to match previous behavior of measuring visible pixels.
 		// OR use logical width if visual width is too tight?
 		// Usually visual_width matches the bounding box of the ink.
 		// check if password mode needs special verification?
 		// Password mode is handled by masking text BEFORE layout if we did it right,
 		// but current logic masks lazily.
-		// Wait, text_wrap uses shape.text (unmasked).
+		// Wait, text_wrap uses shape.tc.text (unmasked).
 		// If we want accurate width for password, we must rely on the previous fallback
 		// or layout the masked text.
 		// Current compromise: If password, use the old measurement loop (it's rare).
 		// If normal text, use cached layout width.
-		if !shape.text_is_password {
+		if !shape.tc.text_is_password {
 			// In vglyph, `width` is the logical width (often the wrap width).
 			// `visual_width` is the actual ink width.
 			// We want the content width.
@@ -83,7 +83,7 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 			// Iterate lines is fast if we rely on line.rect?
 			// vglyph.Line.rect is relative to layout.
 			mut max_w := f32(0)
-			for line in shape.vglyph_layout.lines {
+			for line in shape.tc.vglyph_layout.lines {
 				max_w = f32_max(max_w, line.rect.width)
 			}
 			return max_w
@@ -95,18 +95,18 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 	if !shape.has_text_layout() {
 		return 0
 	}
-	for line in shape.vglyph_layout.lines {
-		if line.start_index >= shape.text.len {
+	for line in shape.tc.vglyph_layout.lines {
+		if line.start_index >= shape.tc.text.len {
 			continue
 		}
 		mut end := line.start_index + line.length
-		if end > shape.text.len {
-			end = shape.text.len
+		if end > shape.tc.text.len {
+			end = shape.tc.text.len
 		}
 
-		sub := shape.text[line.start_index..end]
+		sub := shape.tc.text[line.start_index..end]
 		// Mirror password masking used in render so measurement matches drawing
-		effective := match shape.text_is_password && !shape.text_is_placeholder {
+		effective := match shape.tc.text_is_password && !shape.tc.text_is_placeholder {
 			true { password_char.repeat(utf8_str_visible_length(sub)) }
 			else { sub }
 		}
@@ -118,24 +118,24 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 
 @[inline]
 fn text_height(shape &Shape, mut window Window) f32 {
-	if (!shape.has_text_layout() || shape.vglyph_layout.lines.len == 0) && shape.text.len > 0 {
-		cfg := shape.text_style.to_vglyph_cfg()
+	if (!shape.has_text_layout() || shape.tc.vglyph_layout.lines.len == 0) && shape.tc.text.len > 0 {
+		cfg := shape.tc.text_style.to_vglyph_cfg()
 		return window.text_system.font_height(cfg) or { 0 }
 	}
 	if shape.has_text_layout() {
-		return shape.vglyph_layout.height
+		return shape.tc.vglyph_layout.height
 	}
 	return 0
 }
 
 @[inline]
 fn line_height(shape &Shape, mut window Window) f32 {
-	if shape.cached_line_height > 0 {
-		return shape.cached_line_height
+	if shape.tc.cached_line_height > 0 {
+		return shape.tc.cached_line_height
 	}
-	cfg := shape.text_style.to_vglyph_cfg()
+	cfg := shape.tc.text_style.to_vglyph_cfg()
 	height := window.text_system.font_height(cfg) or { 0 }
-	return height + shape.text_style.line_spacing
+	return height + shape.tc.text_style.line_spacing
 }
 
 // text_wrap applies text wrapping logic to a given shape based on its text mode.
@@ -145,11 +145,11 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		// Update config with shape-specific layout constraints.
 		// Since vglyph types are immutable, we create a new instance with updates.
 		// Only set width for actual wrapping modes. multiline/single_line should not wrap based on width.
-		should_wrap := shape.text_mode in [.wrap, .wrap_keep_spaces]
+		should_wrap := shape.tc.text_mode in [.wrap, .wrap_keep_spaces]
 
-		// Collapse spaces must happen before skip check since render uses shape.text with layout indices
-		if shape.text_mode == .wrap {
-			shape.text = collapse_spaces(shape.text)
+		// Collapse spaces must happen before skip check since render uses shape.tc.text with layout indices
+		if shape.tc.text_mode == .wrap {
+			shape.tc.text = collapse_spaces(shape.tc.text)
 		}
 
 		// Use -1.0 for unbounded width (standard Pango behavior). match default BlockStyle.
@@ -159,55 +159,55 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		}
 
 		// Optimization: compute hash of collapsed text for dirty checking
-		text_hash := shape.text.hash()
+		text_hash := shape.tc.text.hash()
 
 		// Optimization: If layout is already generated for this width and text hasn't changed, skip.
-		if width == shape.last_constraint_width && text_hash == shape.last_text_hash
-			&& shape.has_text_layout() && shape.vglyph_layout.lines.len > 0 {
+		if width == shape.tc.last_constraint_width && text_hash == shape.tc.last_text_hash
+			&& shape.has_text_layout() && shape.tc.vglyph_layout.lines.len > 0 {
 			return
 		}
 
-		mut cfg := shape.text_style.to_vglyph_cfg()
+		mut cfg := shape.tc.text_style.to_vglyph_cfg()
 		cfg.block.width = width
 		cfg.no_hit_testing = shape.id_focus == 0
 
-		layout := window.text_system.layout_text(shape.text, cfg) or { vglyph.Layout{} }
-		shape.vglyph_layout = &layout
-		shape.last_constraint_width = width
-		shape.last_text_hash = text_hash
-		shape.cached_line_height = 0 // Clear before recomputing
-		shape.cached_line_height = line_height(shape, mut window)
+		layout := window.text_system.layout_text(shape.tc.text, cfg) or { vglyph.Layout{} }
+		shape.tc.vglyph_layout = &layout
+		shape.tc.last_constraint_width = width
+		shape.tc.last_text_hash = text_hash
+		shape.tc.cached_line_height = 0 // Clear before recomputing
+		shape.tc.cached_line_height = line_height(shape, mut window)
 
 		// Calculate height based on layout
 		// vglyph layout provides pixel height (visual_height or height?)
 		// standard height (logical_height) includes line spacing usually.
-		shape.height = match shape.text.len == 0 {
+		shape.height = match shape.tc.text.len == 0 {
 			true { line_height(shape, mut window) + shape.padding.height() }
-			else { shape.vglyph_layout.height + shape.padding.height() }
+			else { shape.tc.vglyph_layout.height + shape.padding.height() }
 		}
 		shape.max_height = shape.height
 		shape.min_height = shape.height
 	} else if shape.shape_type == .rtf {
 		// New vglyph-based RTF
 		if shape.has_rtf_layout() {
-			if shape.text_mode in [.wrap, .wrap_keep_spaces] {
+			if shape.tc.text_mode in [.wrap, .wrap_keep_spaces] {
 				width := shape.width - shape.padding.width()
 
 				// Optimization: Check if width changed significantly or if we haven't constrained yet
-				if width > 0 && width != shape.last_constraint_width {
+				if width > 0 && width != shape.tc.last_constraint_width {
 					// Re-layout with new width constraint, preserving hanging indent
 					mut cfg := vglyph.TextConfig{
 						block: vglyph.BlockStyle{
 							wrap:   .word
 							width:  width
-							indent: -shape.hanging_indent
+							indent: -shape.tc.hanging_indent
 						}
 					}
 					// Use stored source text
-					layout := window.text_system.layout_rich_text(shape.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache),
+					layout := window.text_system.layout_rich_text(shape.tc.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache),
 						cfg) or { vglyph.Layout{} }
-					shape.vglyph_layout = &layout
-					shape.last_constraint_width = width
+					shape.tc.vglyph_layout = &layout
+					shape.tc.last_constraint_width = width
 					shape.width = layout.width + shape.padding.width()
 					shape.height = layout.height + shape.padding.height()
 				}

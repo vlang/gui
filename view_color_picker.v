@@ -78,7 +78,10 @@ fn (cfg &ColorPickerCfg) sv_area(size f32) View {
 				ColorPickerState{h, s, v}
 			}
 			pure := hue_color(state.h)
-			layout.shape.gradient = &Gradient{
+			if layout.shape.fx == unsafe { nil } {
+				layout.shape.fx = &ShapeEffects{}
+			}
+			layout.shape.fx.gradient = &Gradient{
 				stops:     [
 					GradientStop{
 						color: white

@@ -55,25 +55,27 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	}
 	mut layout := Layout{
 		shape: &Shape{
-			shape_type:          .text
-			id:                  tv.id
-			id_focus:            tv.id_focus
-			clip:                tv.clip
-			focus_skip:          tv.focus_skip
-			disabled:            tv.disabled
-			min_width:           tv.min_width
-			sizing:              tv.sizing
-			text:                tv.text
-			text_is_password:    tv.is_password
-			text_is_placeholder: tv.placeholder_active
-			text_mode:           tv.mode
-			text_style:          &tv.text_style
-			text_sel_beg:        input_state.select_beg
-			text_sel_end:        input_state.select_end
-			text_tab_size:       tv.tab_size
-			events:              events
-			hero:                tv.hero
-			opacity:             tv.opacity
+			shape_type: .text
+			id:         tv.id
+			id_focus:   tv.id_focus
+			clip:       tv.clip
+			focus_skip: tv.focus_skip
+			disabled:   tv.disabled
+			min_width:  tv.min_width
+			sizing:     tv.sizing
+			events:     events
+			hero:       tv.hero
+			opacity:    tv.opacity
+			tc:         &TextConfig{
+				text:                tv.text
+				text_is_password:    tv.is_password
+				text_is_placeholder: tv.placeholder_active
+				text_mode:           tv.mode
+				text_style:          &tv.text_style
+				text_sel_beg:        input_state.select_beg
+				text_sel_end:        input_state.select_end
+				text_tab_size:       tv.tab_size
+			}
 		}
 	}
 
@@ -427,8 +429,8 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 		beg := int(input_state.select_beg)
 		end := int(input_state.select_end)
 		// select_beg/end are rune indices (from mouse_cursor_pos which uses byte_to_rune_index)
-		if beg < end && end <= utf8_str_visible_length(shape.text) {
-			cpy := shape.text.runes()[beg..end].string()
+		if beg < end && end <= utf8_str_visible_length(shape.tc.text) {
+			cpy := shape.tc.text.runes()[beg..end].string()
 			to_clipboard(cpy)
 			return cpy
 		}

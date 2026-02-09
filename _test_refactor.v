@@ -14,15 +14,17 @@ fn test_shape_rich_text_ptr() {
 
 	// Simulate the assignment done in view_rtf.v
 	mut shape := Shape{
-		rich_text: &rtf_cfg.rich_text
+		tc: &TextConfig{
+			rich_text: &rtf_cfg.rich_text
+		}
 	}
 
 	// Verify pointer is not nil
-	assert shape.rich_text != unsafe { nil }
+	assert shape.tc.rich_text != unsafe { nil }
 
 	// Verify data access via pointer (auto-dereference check)
-	assert shape.rich_text.runs.len == 1
-	assert shape.rich_text.runs[0].text == 'Hello'
+	assert shape.tc.rich_text.runs.len == 1
+	assert shape.tc.rich_text.runs[0].text == 'Hello'
 
 	// Verify xtra_text.v usage pattern (calling method on pointer)
 	// We need a dummy method call if possible, but to_vglyph_rich_text is internal?
@@ -30,6 +32,6 @@ fn test_shape_rich_text_ptr() {
 	// So we can't call it from here if we are "outside"?
 	// But we are `module gui`, so we can call it.
 
-	vg_rt := shape.rich_text.to_vglyph_rich_text()
+	vg_rt := shape.tc.rich_text.to_vglyph_rich_text()
 	assert vg_rt.runs.len == 1
 }

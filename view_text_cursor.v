@@ -16,7 +16,7 @@ fn cursor_left(pos int) int {
 // the cursor from moving beyond the end of the text. Returns the new cursor
 // position.
 fn cursor_right(shape Shape, pos int) int {
-	return int_min(shape.text.len, pos + 1)
+	return int_min(shape.tc.text.len, pos + 1)
 }
 
 // cursor_up moves the cursor position up one line using vglyph geometry.
@@ -25,15 +25,15 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut w
 		return cursor_pos
 	}
 
-	byte_idx := rune_to_byte_index(shape.text, cursor_pos)
+	byte_idx := rune_to_byte_index(shape.tc.text, cursor_pos)
 
 	// Check for nil layout
 	if !shape.has_text_layout() {
 		return cursor_pos
 	}
 
-	rect := shape.vglyph_layout.get_char_rect(byte_idx) or {
-		if byte_idx >= shape.text.len && shape.text.len > 0 {
+	rect := shape.tc.vglyph_layout.get_char_rect(byte_idx) or {
+		if byte_idx >= shape.tc.text.len && shape.tc.text.len > 0 {
 			return cursor_pos
 		}
 		return cursor_pos
@@ -43,11 +43,11 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut w
 	current_y := rect.y
 
 	target_x := if cursor_offset >= 0 { cursor_offset } else { current_x }
-	target_y := current_y - (rect.height * lines_up) - (shape.text_style.line_spacing * lines_up)
+	target_y := current_y - (rect.height * lines_up) - (shape.tc.text_style.line_spacing * lines_up)
 
-	new_byte_idx := shape.vglyph_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
+	new_byte_idx := shape.tc.vglyph_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
 
-	return byte_to_rune_index(shape.text, new_byte_idx)
+	return byte_to_rune_index(shape.tc.text, new_byte_idx)
 }
 
 // cursor_down moves the cursor position down one line using vglyph geometry.
@@ -56,24 +56,24 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, m
 		return cursor_pos
 	}
 
-	byte_idx := rune_to_byte_index(shape.text, cursor_pos)
+	byte_idx := rune_to_byte_index(shape.tc.text, cursor_pos)
 
 	if !shape.has_text_layout() {
 		return cursor_pos
 	}
 
-	rect := shape.vglyph_layout.get_char_rect(byte_idx) or { return cursor_pos }
+	rect := shape.tc.vglyph_layout.get_char_rect(byte_idx) or { return cursor_pos }
 
 	current_x := rect.x
 	current_y := rect.y
 
 	target_x := if cursor_offset >= 0 { cursor_offset } else { current_x }
 	target_y := current_y + (rect.height * lines_down) +
-		(shape.text_style.line_spacing * lines_down)
+		(shape.tc.text_style.line_spacing * lines_down)
 
-	new_byte_idx := shape.vglyph_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
+	new_byte_idx := shape.tc.vglyph_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
 
-	return byte_to_rune_index(shape.text, new_byte_idx)
+	return byte_to_rune_index(shape.tc.text, new_byte_idx)
 }
 
 // cursor_home moves the cursor to the beginning of the text by returning
@@ -87,7 +87,7 @@ fn cursor_home() int {
 // character count across all wrapped text lines. This is equivalent to the
 // "End" key behavior, placing the cursor at the end of the entire text content.
 fn cursor_end(shape Shape) int {
-	return shape.text.len
+	return shape.tc.text.len
 }
 
 const bytes_blanks = [u8(` `), `\t`, `\f`, `\v`]!
@@ -102,23 +102,23 @@ fn cursor_start_of_word(shape Shape, pos int) int {
 		return 0
 	}
 
-	byte_idx := rune_to_byte_index(shape.text, pos)
+	byte_idx := rune_to_byte_index(shape.tc.text, pos)
 	// Simple backward search on string
 	mut i := byte_idx - 1
-	if i >= shape.text.len {
-		i = shape.text.len - 1
+	if i >= shape.tc.text.len {
+		i = shape.tc.text.len - 1
 	}
 
 	// 1. Skip spaces backwards
-	for i >= 0 && shape.text[i] in bytes_blanks {
+	for i >= 0 && shape.tc.text[i] in bytes_blanks {
 		i--
 	}
 	// 2. Skip non-spaces backwards
-	for i >= 0 && shape.text[i] !in bytes_blanks {
+	for i >= 0 && shape.tc.text[i] !in bytes_blanks {
 		i--
 	}
 
-	return byte_to_rune_index(shape.text, i + 1)
+	return byte_to_rune_index(shape.tc.text, i + 1)
 }
 
 // cursor_end_of_word finds the end of the current word in wrapped text by locating
@@ -129,42 +129,42 @@ fn cursor_end_of_word(shape Shape, pos int) int {
 	if pos < 0 {
 		return 0
 	}
-	byte_idx := rune_to_byte_index(shape.text, pos)
+	byte_idx := rune_to_byte_index(shape.tc.text, pos)
 	mut i := byte_idx
 
 	// 1. Skip spaces forward
-	for i < shape.text.len && shape.text[i] in bytes_blanks {
+	for i < shape.tc.text.len && shape.tc.text[i] in bytes_blanks {
 		i++
 	}
 	// 2. Skip non-spaces forward
-	for i < shape.text.len && shape.text[i] !in bytes_blanks {
+	for i < shape.tc.text.len && shape.tc.text[i] !in bytes_blanks {
 		i++
 	}
-	return byte_to_rune_index(shape.text, i)
+	return byte_to_rune_index(shape.tc.text, i)
 }
 
 // cursor_start_of_line finds the start of the current line in wrapped text using
 // vglyph layout information.
 fn cursor_start_of_line(shape Shape, pos int) int {
-	byte_idx := rune_to_byte_index(shape.text, pos)
+	byte_idx := rune_to_byte_index(shape.tc.text, pos)
 
 	if !shape.has_text_layout() {
 		return 0
 	}
 	// Find which line contains the index
-	for line in shape.vglyph_layout.lines {
+	for line in shape.tc.vglyph_layout.lines {
 		end := line.start_index + line.length
 		if byte_idx >= line.start_index && byte_idx < end {
-			return byte_to_rune_index(shape.text, line.start_index)
+			return byte_to_rune_index(shape.tc.text, line.start_index)
 		}
 	}
 
 	// If not found, check if it's at the very end of the last line
-	if shape.vglyph_layout.lines.len > 0 {
-		last := shape.vglyph_layout.lines.last()
+	if shape.tc.vglyph_layout.lines.len > 0 {
+		last := shape.tc.vglyph_layout.lines.last()
 		last_end := last.start_index + last.length
 		if byte_idx == last_end {
-			return byte_to_rune_index(shape.text, last.start_index)
+			return byte_to_rune_index(shape.tc.text, last.start_index)
 		}
 	}
 
@@ -174,28 +174,28 @@ fn cursor_start_of_line(shape Shape, pos int) int {
 // cursor_end_of_line finds the end of the current line in wrapped text using
 // vglyph layout information.
 fn cursor_end_of_line(shape Shape, pos int) int {
-	byte_idx := rune_to_byte_index(shape.text, pos)
+	byte_idx := rune_to_byte_index(shape.tc.text, pos)
 
 	if !shape.has_text_layout() {
-		return shape.text.len
+		return shape.tc.text.len
 	}
 
-	for i, line in shape.vglyph_layout.lines {
+	for i, line in shape.tc.vglyph_layout.lines {
 		end := line.start_index + line.length
 		if byte_idx >= line.start_index && byte_idx <= end {
 			// Return end of this line.
 			// If it's the last line, text.len.
 			mut limit := end
-			if i < shape.vglyph_layout.lines.len - 1 {
+			if i < shape.tc.vglyph_layout.lines.len - 1 {
 				// Check if line ends with newline (it likely does if hard wrap)
-				if limit > 0 && shape.text[limit - 1] == `\n` {
+				if limit > 0 && shape.tc.text[limit - 1] == `\n` {
 					limit--
 				}
 			}
-			return byte_to_rune_index(shape.text, limit)
+			return byte_to_rune_index(shape.tc.text, limit)
 		}
 	}
-	return shape.text.len // default to end
+	return shape.tc.text.len // default to end
 }
 
 // cursor_start_of_paragraph finds the start of the current paragraph in wrapped text
@@ -204,15 +204,15 @@ fn cursor_start_of_paragraph(shape Shape, pos int) int {
 	if pos < 0 {
 		return 0
 	}
-	byte_idx := rune_to_byte_index(shape.text, pos)
+	byte_idx := rune_to_byte_index(shape.tc.text, pos)
 	mut i := byte_idx - 1
-	if i >= shape.text.len {
-		i = shape.text.len - 1
+	if i >= shape.tc.text.len {
+		i = shape.tc.text.len - 1
 	}
 
 	for i >= 0 {
-		if shape.text[i] == `\n` {
-			return byte_to_rune_index(shape.text, i + 1)
+		if shape.tc.text[i] == `\n` {
+			return byte_to_rune_index(shape.tc.text, i + 1)
 		}
 		i--
 	}
@@ -246,14 +246,14 @@ fn cursor_position_from_offset(str string, offset f32, style TextStyle, mut wind
 // offset_from_cursor_position returns the horizontal pixel offset of the cursor
 // position using vglyph geometry.
 fn offset_from_cursor_position(shape Shape, cursor_position int, mut window Window) f32 {
-	byte_idx := rune_to_byte_index(shape.text, cursor_position)
+	byte_idx := rune_to_byte_index(shape.tc.text, cursor_position)
 	if !shape.has_text_layout() {
 		return 0
 	}
-	rect := shape.vglyph_layout.get_char_rect(byte_idx) or {
+	rect := shape.tc.vglyph_layout.get_char_rect(byte_idx) or {
 		// If at end, maybe get end of last line?
-		if shape.vglyph_layout.lines.len > 0 {
-			for line in shape.vglyph_layout.lines {
+		if shape.tc.vglyph_layout.lines.len > 0 {
+			for line in shape.tc.vglyph_layout.lines {
 				end := line.start_index + line.length
 				if byte_idx == end {
 					return line.rect.x + line.rect.width
@@ -352,12 +352,12 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 	scroll_container := find_layout_by_id_scroll(w.layout, id_scroll_container) or { return -1 }
 	scroll_view_height := scroll_container.shape.height - scroll_container.shape.padding.height()
 
-	byte_idx := rune_to_byte_index(shape.text, cursor_pos)
+	byte_idx := rune_to_byte_index(shape.tc.text, cursor_pos)
 	if !shape.has_text_layout() {
 		return -1
 	}
 
-	rect := shape.vglyph_layout.get_char_rect(byte_idx) or { gg.Rect{} }
+	rect := shape.tc.vglyph_layout.get_char_rect(byte_idx) or { gg.Rect{} }
 
 	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
 
@@ -401,7 +401,7 @@ fn cursor_pos_to_scroll_x(cursor_pos int, shape &Shape, mut w Window) f32 {
 // 	// Find the index of the line where the cursor is located.
 // 	mut line_idx := 0
 // 	mut total_len := 0
-// 	for i, line in shape.text_lines {
+// 	for i, line in shape.tc.text_lines {
 // 		line_idx = i
 // 		total_len += utf8_str_visible_length(line)
 // 		if total_len > cursor_pos {
@@ -409,7 +409,7 @@ fn cursor_pos_to_scroll_x(cursor_pos int, shape &Shape, mut w Window) f32 {
 // 		}
 // 	}
 //
-// 	width := utf8_str_visible_length(shape.text.lines[line_idx][..total_len - cursor_pos])
+// 	width := utf8_str_visible_length(shape.tc.text.lines[line_idx][..total_len - cursor_pos])
 // }
 
 // mouse_cursor_pos determines the character index (cursor position) within
@@ -428,8 +428,8 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 	if !shape.has_text_layout() {
 		return 0
 	}
-	byte_idx := shape.vglyph_layout.get_closest_offset(rel_x, rel_y)
-	return byte_to_rune_index(shape.text, byte_idx)
+	byte_idx := shape.tc.vglyph_layout.get_closest_offset(rel_x, rel_y)
+	return byte_to_rune_index(shape.tc.text, byte_idx)
 }
 
 // scroll_cursor_into_view ensures that the text cursor is visible within the

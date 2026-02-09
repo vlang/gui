@@ -18,9 +18,11 @@ fn test_render_container_shadow_opacity() {
 		height:     100
 		color:      container_color
 		radius:     5
-		shadow:     &BoxShadow{
-			blur_radius: 10
-			color:       rgba(0, 0, 0, shadow_alpha)
+		fx:         &ShapeEffects{
+			shadow: &BoxShadow{
+				blur_radius: 10
+				color:       rgba(0, 0, 0, shadow_alpha)
+			}
 		}
 	}
 	clip := gg.Rect{0, 0, 200, 200}

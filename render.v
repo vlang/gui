@@ -403,19 +403,21 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 	if shape.opacity < 1.0 {
 		shape.color = shape.color.with_opacity(shape.opacity)
 		shape.color_border = shape.color_border.with_opacity(shape.opacity)
-		shape.text_style = TextStyle{
-			...shape.text_style
-			color: shape.text_style.color.with_opacity(shape.opacity)
+		shape.tc.text_style = TextStyle{
+			...shape.tc.text_style
+			color: shape.tc.text_style.color.with_opacity(shape.opacity)
 		}
 	}
 
 	has_visible_border := shape.size_border > 0 && shape.color_border != color_transparent
-	has_visible_text := shape.shape_type == .text && shape.text_style.color != color_transparent
+	has_visible_text := shape.shape_type == .text && shape.tc.text_style.color != color_transparent
 	// SVG shapes have their own internal colors, so don't skip them
 	is_svg := shape.shape_type == .svg
-	if shape.color == color_transparent && shape.gradient == unsafe { nil }
-		&& shape.shader == unsafe { nil } && shape.border_gradient == unsafe { nil }
-		&& !has_visible_border && !has_visible_text && !is_svg {
+	has_effects := shape.fx != unsafe { nil } && (shape.fx.gradient != unsafe { nil }
+		|| shape.fx.shader != unsafe { nil }
+		|| shape.fx.border_gradient != unsafe { nil })
+	if shape.color == color_transparent && !has_effects && !has_visible_border && !has_visible_text
+		&& !is_svg {
 		return
 	}
 	match shape.shape_type {
@@ -446,21 +448,23 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 // At some point, it should be moved to the container logic, along with some layout amend logic.
 // Honestly, it was more expedient to put it here.
 fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
-	if shape.shadow != unsafe { nil } && shape.shadow.color.a > 0 && shape.shadow.blur_radius > 0 {
+	fx := shape.fx
+	has_fx := fx != unsafe { nil }
+	if has_fx && fx.shadow != unsafe { nil } && fx.shadow.color.a > 0 && fx.shadow.blur_radius > 0 {
 		window.renderers << DrawShadow{
-			x:           shape.x + shape.shadow.offset_x
-			y:           shape.y + shape.shadow.offset_y
+			x:           shape.x + fx.shadow.offset_x
+			y:           shape.y + fx.shadow.offset_y
 			width:       shape.width
 			height:      shape.height
 			radius:      shape.radius
-			blur_radius: shape.shadow.blur_radius
-			color:       shape.shadow.color.to_gx_color()
-			offset_x:    shape.shadow.offset_x
-			offset_y:    shape.shadow.offset_y
+			blur_radius: fx.shadow.blur_radius
+			color:       fx.shadow.color.to_gx_color()
+			offset_x:    fx.shadow.offset_x
+			offset_y:    fx.shadow.offset_y
 		}
 	}
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
-	if shape.shader != unsafe { nil } {
+	if has_fx && fx.shader != unsafe { nil } {
 		color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 		window.renderers << DrawCustomShader{
 			x:      shape.x
@@ -469,7 +473,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			h:      shape.height
 			radius: shape.radius
 			color:  color.to_gx_color()
-			shader: shape.shader
+			shader: fx.shader
 		}
 		// Draw border separately if present
 		if shape.size_border > 0 && shape.color_border != color_transparent {
@@ -491,28 +495,28 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			}
 		}
 		return
-	} else if shape.gradient != unsafe { nil } {
+	} else if has_fx && fx.gradient != unsafe { nil } {
 		window.renderers << DrawGradient{
 			x:        shape.x
 			y:        shape.y
 			w:        shape.width
 			h:        shape.height
 			radius:   shape.radius
-			gradient: shape.gradient
+			gradient: fx.gradient
 		}
-	} else if shape.blur_radius > 0 && shape.color.a > 0 {
+	} else if has_fx && fx.blur_radius > 0 && shape.color.a > 0 {
 		window.renderers << DrawBlur{
 			x:           shape.x
 			y:           shape.y
 			width:       shape.width
 			height:      shape.height
 			radius:      shape.radius
-			blur_radius: shape.blur_radius
+			blur_radius: fx.blur_radius
 			color:       shape.color.to_gx_color()
 		}
 	} else {
 		// Check for Border Gradient
-		if shape.border_gradient != unsafe { nil } {
+		if has_fx && fx.border_gradient != unsafe { nil } {
 			window.renderers << DrawGradientBorder{
 				x:         shape.x
 				y:         shape.y
@@ -520,7 +524,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 				h:         shape.height
 				radius:    shape.radius
 				thickness: shape.size_border
-				gradient:  shape.border_gradient
+				gradient:  fx.border_gradient
 			}
 		} else {
 			render_rectangle(mut shape, clip, mut window)
@@ -646,32 +650,36 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		shape.disabled = true
 		return
 	}
-	color := if shape.disabled { dim_alpha(shape.text_style.color) } else { shape.text_style.color }
+	color := if shape.disabled {
+		dim_alpha(shape.tc.text_style.color)
+	} else {
+		shape.tc.text_style.color
+	}
 	text_cfg := TextStyle{
-		...shape.text_style
+		...shape.tc.text_style
 		color: color
 	}.to_vglyph_cfg()
 
 	lh := line_height(shape, mut window)
-	beg := int(shape.text_sel_beg)
-	end := int(shape.text_sel_end)
+	beg := int(shape.tc.text_sel_beg)
+	end := int(shape.tc.text_sel_end)
 
 	// Convert selection range to byte indices because vglyph uses bytes
-	byte_beg := rune_to_byte_index(shape.text, beg)
-	byte_end := rune_to_byte_index(shape.text, end)
+	byte_beg := rune_to_byte_index(shape.tc.text, beg)
+	byte_end := rune_to_byte_index(shape.tc.text, end)
 
 	if shape.has_text_layout() {
-		for line in shape.vglyph_layout.lines {
+		for line in shape.tc.vglyph_layout.lines {
 			draw_x := shape.x + shape.padding_left() + line.rect.x
 			draw_y := shape.y + shape.padding_top() + line.rect.y
 
 			// Extract text for this line
-			if line.start_index >= shape.text.len {
+			if line.start_index >= shape.tc.text.len {
 				continue
 			}
 			mut line_end := line.start_index + line.length
-			if line_end > shape.text.len {
-				line_end = shape.text.len
+			if line_end > shape.tc.text.len {
+				line_end = shape.tc.text.len
 			}
 
 			// Drawing
@@ -687,12 +695,12 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				// Remove newlines for rendering (draw_text usually handles one line)
 				// Optimization: Slice instead of replace/alloc if possible
 				mut slice_end := line_end
-				if slice_end > line.start_index && shape.text[slice_end - 1] == `\n` {
+				if slice_end > line.start_index && shape.tc.text[slice_end - 1] == `\n` {
 					slice_end--
 				}
-				mut render_str := shape.text[line.start_index..slice_end]
+				mut render_str := shape.tc.text[line.start_index..slice_end]
 
-				if shape.text_is_password && !shape.text_is_placeholder {
+				if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
 					render_str = password_char.repeat(utf8_str_visible_length(render_str))
 				}
 
@@ -748,11 +756,11 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 	i_end := int_min(byte_end, line.start_index + line.length)
 
 	if i_start < i_end {
-		if shape.text_is_password {
+		if shape.tc.text_is_password {
 			// Password fields still need measurement because the rendered text (*)
 			// is different from the logical text.
-			pre_text := shape.text[line.start_index..i_start]
-			sel_text := shape.text[i_start..i_end]
+			pre_text := shape.tc.text[line.start_index..i_start]
+			sel_text := shape.tc.text[i_start..i_end]
 
 			pw_pre := password_char.repeat(utf8_str_visible_length(pre_text))
 			start_x_offset := window.text_system.text_width(pw_pre, text_cfg) or { 0 }
@@ -773,11 +781,11 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 		} else {
 			// Optimization: Use cached layout geometry
 			// Get rect for start char
-			r_start := shape.vglyph_layout.get_char_rect(i_start) or { gg.Rect{} }
+			r_start := shape.tc.vglyph_layout.get_char_rect(i_start) or { gg.Rect{} }
 
 			// Get rect for end char (or end of line)
-			x_end := if i_end < (line.start_index + line.length) && shape.text[i_end] != `\n` {
-				r_end := shape.vglyph_layout.get_char_rect(i_end) or {
+			x_end := if i_end < (line.start_index + line.length) && shape.tc.text[i_end] != `\n` {
+				r_end := shape.tc.vglyph_layout.get_char_rect(i_end) or {
 					gg.Rect{
 						x: line.rect.width
 					}
@@ -812,14 +820,14 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 		cursor_pos := input_state.cursor_pos
 
 		if cursor_pos >= 0 {
-			byte_idx := rune_to_byte_index(shape.text, cursor_pos)
+			byte_idx := rune_to_byte_index(shape.tc.text, cursor_pos)
 
 			// Use vglyph to get the rect
 			rect := if shape.has_text_layout() {
-				shape.vglyph_layout.get_char_rect(byte_idx) or {
+				shape.tc.vglyph_layout.get_char_rect(byte_idx) or {
 					// If not found, check if it's at the very end
-					if byte_idx >= shape.text.len && shape.vglyph_layout.lines.len > 0 {
-						last_line := shape.vglyph_layout.lines.last()
+					if byte_idx >= shape.tc.text.len && shape.tc.vglyph_layout.lines.len > 0 {
+						last_line := shape.tc.vglyph_layout.lines.last()
 						// Correction: use layout logic relative to shape
 						gg.Rect{
 							x:      last_line.rect.x + last_line.rect.width
@@ -847,7 +855,7 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 				y:     cy
 				w:     1.5 // slightly thicker
 				h:     ch
-				color: shape.text_style.color.to_gx_color()
+				color: shape.tc.text_style.color.to_gx_color()
 				style: .fill
 			}
 		}
@@ -856,7 +864,7 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 	// Draw IME composition underlines when composing
 	if window.is_focus(shape.id_focus) && shape.has_text_layout()
 		&& window.text_system != unsafe { nil } && window.text_system.is_composing()
-		&& !shape.text_is_password {
+		&& !shape.tc.text_is_password {
 		render_composition(shape, mut window)
 	}
 }
@@ -866,8 +874,8 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 // others.
 fn render_composition(shape &Shape, mut window Window) {
 	cs := window.text_system.composition
-	clause_rects := cs.get_clause_rects(*shape.vglyph_layout)
-	text_color := shape.text_style.color.to_gx_color()
+	clause_rects := cs.get_clause_rects(*shape.tc.vglyph_layout)
+	text_color := shape.tc.text_style.color.to_gx_color()
 	underline_color := gg.Color{
 		r: text_color.r
 		g: text_color.g
@@ -932,12 +940,12 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 		}
 		if rects_overlap(dr, clip) {
 			window.renderers << DrawLayout{
-				layout: shape.vglyph_layout
+				layout: shape.tc.vglyph_layout
 				x:      shape.x
 				y:      shape.y
 			}
 			// Draw inline math images at InlineObject positions
-			for item in shape.vglyph_layout.items {
+			for item in shape.tc.vglyph_layout.items {
 				if item.is_object && item.object_id != '' {
 					ihash := math_cache_hash(item.object_id)
 					if entry := window.view_state.diagram_cache.get(ihash) {

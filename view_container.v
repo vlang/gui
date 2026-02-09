@@ -71,12 +71,8 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			h_align:               cv.h_align
 			v_align:               cv.v_align
 			radius:                cv.radius
-			blur_radius:           cv.blur_radius
 			color:                 cv.color
-			shadow:                cv.shadow
-			gradient:              cv.gradient
-			border_gradient:       cv.border_gradient
-			shader:                cv.shader
+			fx:                    cv.make_effects()
 			size_border:           cv.size_border
 			color_border:          cv.color_border
 			disabled:              cv.disabled
@@ -357,6 +353,21 @@ pub fn circle(cfg ContainerCfg) View {
 	return circle
 }
 
+fn (cv &ContainerView) make_effects() &ShapeEffects {
+	if cv.shadow == unsafe { nil } && cv.gradient == unsafe { nil }
+		&& cv.border_gradient == unsafe { nil } && cv.shader == unsafe { nil }
+		&& cv.blur_radius == 0 {
+		return unsafe { nil }
+	}
+	return &ShapeEffects{
+		shadow:          cv.shadow
+		gradient:        cv.gradient
+		border_gradient: cv.border_gradient
+		shader:          cv.shader
+		blur_radius:     cv.blur_radius
+	}
+}
+
 fn (cv &ContainerView) make_events() &EventHandlers {
 	if cv.on_click == unsafe { nil } && cv.on_char == unsafe { nil }
 		&& cv.on_keydown == unsafe { nil } && cv.on_mouse_move == unsafe { nil }
@@ -467,14 +478,16 @@ fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []Layout) 
 	children << Layout{
 		shape: &Shape{
 			shape_type: .text
-			text:       cv.title
 			x:          20 + padding
 			y:          -offset
-			text_style: text_style // use the one computed above which includes correct color base
 			color:      text_color
 			width:      text_width
 			height:     metrics.ascender + metrics.descender // Logical height
 			float:      true
+			tc:         &TextConfig{
+				text:       cv.title
+				text_style: text_style
+			}
 		}
 	}
 }

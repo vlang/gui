@@ -54,23 +54,25 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	layout := window.text_system.layout_rich_text(vg_rich_text, cfg) or { vglyph.Layout{} }
 
 	shape := &Shape{
-		shape_type:     .rtf
-		id:             rtf.id
-		id_focus:       rtf.id_focus
-		width:          layout.width
-		height:         layout.height
-		clip:           rtf.clip
-		focus_skip:     rtf.focus_skip
-		disabled:       rtf.disabled
-		min_width:      rtf.min_width
-		text_mode:      rtf.mode
-		sizing:         rtf.sizing
-		hanging_indent: rtf.hanging_indent
-		vglyph_layout:  &layout
-		rich_text:      &rtf.rich_text
-		events:         &EventHandlers{
+		shape_type: .rtf
+		id:         rtf.id
+		id_focus:   rtf.id_focus
+		width:      layout.width
+		height:     layout.height
+		clip:       rtf.clip
+		focus_skip: rtf.focus_skip
+		disabled:   rtf.disabled
+		min_width:  rtf.min_width
+		sizing:     rtf.sizing
+		events:     &EventHandlers{
 			on_click:      rtf_on_click
 			on_mouse_move: rtf_mouse_move
+		}
+		tc:         &TextConfig{
+			text_mode:      rtf.mode
+			hanging_indent: rtf.hanging_indent
+			vglyph_layout:  &layout
+			rich_text:      &rtf.rich_text
 		}
 	}
 
@@ -119,7 +121,7 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 		return
 	}
 	// Check for links/abbreviations by finding which run the mouse is over
-	for run in layout.shape.vglyph_layout.items {
+	for run in layout.shape.tc.vglyph_layout.items {
 		if run.is_object {
 			continue
 		}
@@ -154,7 +156,7 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 // rtf_find_run_at_index maps a character index to the corresponding RichTextRun.
 fn rtf_find_run_at_index(layout &Layout, start_index int) RichTextRun {
 	mut current_idx := u32(0)
-	for r in layout.shape.rich_text.runs {
+	for r in layout.shape.tc.rich_text.runs {
 		run_len := u32(r.text.len)
 		if u32(start_index) >= current_idx && u32(start_index) < current_idx + run_len {
 			return r
@@ -170,7 +172,7 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 		return
 	}
 	// Find the clicked run and check if it's a link
-	for run in layout.shape.vglyph_layout.items {
+	for run in layout.shape.tc.vglyph_layout.items {
 		if run.is_object {
 			continue
 		}
