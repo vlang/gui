@@ -666,6 +666,26 @@ fn text_shape_draw_transform(shape &Shape) ?vglyph.AffineTransform {
 	return shape.tc.text_style.effective_text_transform()
 }
 
+fn clone_layout_for_draw(src &vglyph.Layout) &vglyph.Layout {
+	if src == unsafe { nil } {
+		return &vglyph.Layout{}
+	}
+	return &vglyph.Layout{
+		cloned_object_ids:  src.cloned_object_ids.clone()
+		items:              src.items.clone()
+		glyphs:             src.glyphs.clone()
+		char_rects:         src.char_rects.clone()
+		char_rect_by_index: src.char_rect_by_index.clone()
+		lines:              src.lines.clone()
+		log_attrs:          src.log_attrs.clone()
+		log_attr_by_index:  src.log_attr_by_index.clone()
+		width:              src.width
+		height:             src.height
+		visual_width:       src.visual_width
+		visual_height:      src.visual_height
+	}
+}
+
 fn password_mask_text_keep_newlines(text string) string {
 	mut out := []rune{cap: utf8_str_visible_length(text)}
 	for r in text.runes_iterator() {
@@ -704,26 +724,20 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 
 	if shape.has_text_layout() && color != color_transparent {
 		if transform := text_shape_draw_transform(shape) {
-			mut layout_to_draw := shape.tc.vglyph_layout
-			if window.text_system != unsafe { nil } {
+			mut layout_to_draw := clone_layout_for_draw(shape.tc.vglyph_layout)
+			if shape.tc.text_is_password && !shape.tc.text_is_placeholder
+				&& window.text_system != unsafe { nil } {
 				mut cfg := text_cfg
 				cfg.block.width = shape.tc.last_constraint_width
 				cfg.no_hit_testing = true
-				render_text := if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
-					password_mask_text_keep_newlines(shape.tc.text)
-				} else {
-					shape.tc.text
-				}
+				render_text := password_mask_text_keep_newlines(shape.tc.text)
 				mut transformed_layout := window.text_system.layout_text(render_text,
 					cfg) or {
 					log.error('Transformed text layout failed at (${shape.x}, ${shape.y}): ${err.msg()}')
-					if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
-						return
-					}
-					vglyph.Layout{}
+					return
 				}
 				if transformed_layout.lines.len > 0 || render_text.len == 0 {
-					layout_to_draw = &transformed_layout
+					layout_to_draw = clone_layout_for_draw(&transformed_layout)
 				}
 			}
 			window.renderers << DrawLayoutTransformed{
@@ -1041,7 +1055,7 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 			}
 			if has_transform {
 				window.renderers << DrawLayoutTransformed{
-					layout:    shape.tc.vglyph_layout
+					layout:    clone_layout_for_draw(shape.tc.vglyph_layout)
 					x:         shape.x
 					y:         shape.y
 					transform: transform

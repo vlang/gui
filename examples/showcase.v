@@ -2,6 +2,7 @@ import gui
 import math
 import os
 import time
+import vglyph
 
 // Showcase
 // =============================
@@ -2192,6 +2193,52 @@ fn demo_text() gui.View {
 							...gui.theme().n4
 							bg_color: gui.theme().color_panel
 						}
+					),
+				]
+			),
+			gui.column(
+				sizing:       gui.fill_fit
+				color:        gui.theme().color_panel
+				color_border: gui.theme().color_border
+				size_border:  1
+				padding:      gui.padding_small
+				spacing:      gui.theme().spacing_small
+				content:      [
+					gui.text(text: 'Transforms', text_style: gui.theme().b5),
+					gui.row(
+						sizing:  gui.fill_fixed
+						height:  gui.theme().b4.size * 4
+						v_align: .top
+						content: [
+							gui.text(
+								text:       'Rotated text via TextStyle.rotation_radians'
+								text_style: gui.TextStyle{
+									...gui.theme().b4
+									rotation_radians: 0.35
+								}
+							),
+						]
+					),
+					gui.row(
+						sizing:  gui.fill_fixed
+						height:  gui.theme().b4.size * 4
+						v_align: .top
+						content: [
+							gui.text(
+								text:       'Affine text: skew + translate'
+								text_style: gui.TextStyle{
+									...gui.theme().b4
+									affine_transform: vglyph.AffineTransform{
+										xx: 1.0
+										xy: -0.35
+										yx: 0.15
+										yy: 1.0
+										x0: 24
+										y0: 0
+									}
+								}
+							),
+						]
 					),
 				]
 			),
