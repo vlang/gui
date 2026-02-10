@@ -1,24 +1,24 @@
 import gui
 
-// Split Panel Example
-// =============================
-// Gui does not hava a "splitter" view (that may change) but it
-// can be done simply by using a button (or row/column if you want
-// more control over appearance) and some mouse_move logic. The only
-// width that needs to be controlled is the 'A' panel. The splitter
-// button and 'B' panel are positioned/sized by the layout engine.
-
 @[heap]
 struct SplitPanelApp {
 pub mut:
-	a_width f32 = 125
+	main_state   gui.SplitterState = gui.SplitterState{
+		ratio: 0.30
+	}
+	detail_state gui.SplitterState = gui.SplitterState{
+		ratio: 0.55
+	}
 }
+
+const id_focus_main_split = u32(51)
+const id_focus_detail_split = u32(52)
 
 fn main() {
 	mut window := gui.window(
 		state:   &SplitPanelApp{}
-		width:   300
-		height:  300
+		width:   880
+		height:  560
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}
@@ -30,74 +30,117 @@ fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
 	app := window.state[SplitPanelApp]()
 
-	return gui.row(
+	return gui.column(
 		width:   w
 		height:  h
 		sizing:  gui.fixed_fixed
-		spacing: 1
+		padding: gui.padding_none
+		spacing: 0
 		content: [
-			gui.column(
-				id:      'A'
-				width:   app.a_width
-				color:   gui.theme().color_interior
-				sizing:  gui.fixed_fill
-				h_align: .center
-				v_align: .middle
-				clip:    true
-				content: [
-					gui.text(text: 'Panel A'),
-				]
-			),
-			gui.button(
-				id_focus:    1
-				width:       5
-				color:       gui.rgb(0x40, 0x40, 0x40)
-				color_click: gui.theme().button_style.color_hover
-				color_focus: gui.theme().button_style.color_hover
-				sizing:      gui.fit_fill
-				padding:     gui.padding_none
-				on_click:    split_click
-				on_hover:    fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-					w.set_mouse_cursor_ew()
+			gui.splitter(
+				id:          'main_split'
+				id_focus:    id_focus_main_split
+				sizing:      gui.fill_fill
+				orientation: .horizontal
+				ratio:       app.main_state.ratio
+				collapsed:   app.main_state.collapsed
+				on_change:   on_main_split_change
+				first:       gui.SplitterPaneCfg{
+					min_size: 150
+					max_size: 420
+					content:  [
+						left_panel(),
+					]
 				}
-			),
-			gui.column(
-				color:   gui.theme().color_interior
-				sizing:  gui.fill_fill
-				h_align: .center
-				v_align: .middle
-				content: [
-					gui.text(text: 'Panel B'),
-				]
+				second:      gui.SplitterPaneCfg{
+					min_size: 250
+					content:  [
+						detail_split(window),
+					]
+				}
 			),
 		]
 	)
 }
 
-fn split_click(_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-	w.set_mouse_cursor_ew()
-	w.mouse_lock(gui.MouseLockCfg{
-		mouse_move: fn (layout &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			// The layout here is first layout in the view. This is because
-			// the handler here has nothing to do with button per se.
-			// In this case, the button is not even needed after the
-			// initial click event. The panel that needs to be resized
-			// is the 'A' panel. The button and 'B' panel require no
-			// additional work because the layout engine will position
-			// and size them for you.
-			if a_layout := layout.find_layout(fn (n gui.Layout) bool {
-				return n.shape.id == 'A'
-			})
-			{
-				mut app := w.state[SplitPanelApp]()
-				width, _ := w.window_size()
-				app.a_width = gui.f32_clamp(a_layout.shape.width + e.mouse_dx, 20, width - 50)
-				w.set_mouse_cursor_ew()
-			}
+fn detail_split(window &gui.Window) gui.View {
+	app := window.state[SplitPanelApp]()
+	return gui.splitter(
+		id:                    'detail_split'
+		id_focus:              id_focus_detail_split
+		orientation:           .vertical
+		sizing:                gui.fill_fill
+		handle_size:           10
+		show_collapse_buttons: true
+		ratio:                 app.detail_state.ratio
+		collapsed:             app.detail_state.collapsed
+		on_change:             on_detail_split_change
+		first:                 gui.SplitterPaneCfg{
+			min_size: 140
+			content:  [
+				content_panel('Editor', 'Top pane. Drag divider or use keyboard arrows.'),
+			]
 		}
-		mouse_up:   fn (_ &gui.Layout, mut e gui.Event, mut w gui.Window) {
-			w.mouse_unlock()
-			w.set_id_focus(0)
+		second:                gui.SplitterPaneCfg{
+			min_size: 120
+			content:  [
+				content_panel('Preview', 'Bottom pane. Home/End collapses panes.'),
+			]
 		}
+	)
+}
+
+fn left_panel() gui.View {
+	return gui.column(
+		sizing:  gui.fill_fill
+		padding: gui.padding(12, 12, 12, 12)
+		spacing: 8
+		color:   gui.theme().color_panel
+		content: [
+			gui.text(text: 'Project'),
+			gui.text(text: '- src'),
+			gui.text(text: '- docs'),
+			gui.text(text: '- tests'),
+			gui.text(
+				text: 'Click a splitter then use arrow keys. Shift+arrow uses larger steps.'
+				mode: .wrap
+			),
+		]
+	)
+}
+
+fn content_panel(title string, note string) gui.View {
+	return gui.column(
+		sizing:  gui.fill_fill
+		padding: gui.padding(12, 12, 12, 12)
+		spacing: 8
+		color:   gui.theme().color_panel
+		content: [
+			gui.text(text: title, text_style: gui.theme().b2),
+			gui.text(text: note, mode: .wrap),
+			gui.rectangle(
+				sizing:       gui.fill_fill
+				color:        gui.theme().color_background
+				color_border: gui.theme().color_border
+				size_border:  gui.theme().size_border
+				radius:       gui.theme().radius_small
+			),
+		]
+	)
+}
+
+fn on_main_split_change(ratio f32, collapsed gui.SplitterCollapsed, mut _e gui.Event, mut w gui.Window) {
+	mut app := w.state[SplitPanelApp]()
+	app.main_state = gui.splitter_state_normalize(gui.SplitterState{
+		ratio:     ratio
+		collapsed: collapsed
+	})
+}
+
+fn on_detail_split_change(ratio f32, collapsed gui.SplitterCollapsed, mut _e gui.Event, mut w gui.Window) {
+	mut app := w.state[SplitPanelApp]()
+	app.detail_state = gui.splitter_state_normalize(gui.SplitterState{
+		ratio:     ratio
+		collapsed: collapsed
 	})
 }

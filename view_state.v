@@ -80,6 +80,9 @@ mut:
 	color_picker_state       BoundedMap[string, ColorPickerState] = BoundedMap[string, ColorPickerState]{
 		max_size: 20
 	}
+	splitter_runtime_state   BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
+		max_size: 20
+	}
 }
 
 // ColorPickerState stores persistent HSV values for ColorPickers.
@@ -89,6 +92,12 @@ pub:
 	h f32
 	s f32
 	v f32
+}
+
+// SplitterRuntimeState stores transient splitter interaction state.
+struct SplitterRuntimeState {
+mut:
+	last_handle_click_frame u64
 }
 
 // TableColCache stores cached column widths and hash for invalidation

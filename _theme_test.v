@@ -171,6 +171,20 @@ fn test_with_input_style() {
 	assert modified.button_style == t.button_style
 }
 
+fn test_with_splitter_style() {
+	t := theme_dark
+	new_style := SplitterStyle{
+		...t.splitter_style
+		handle_size: 13
+		color_grip:  yellow
+	}
+	modified := t.with_splitter_style(new_style)
+
+	assert modified.splitter_style.handle_size == 13
+	assert modified.splitter_style.color_grip == yellow
+	assert modified.button_style == t.button_style
+}
+
 fn test_with_colors_single_override() {
 	t := theme_dark
 	new_hover := rgb(200, 100, 50)

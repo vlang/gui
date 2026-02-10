@@ -46,7 +46,7 @@ V is a simple language. It deserves a simple UI framework.
 - Text, inputs, textareas
 - Buttons, toggles, switches, checkboxes, radio buttons
 - Dropdowns, listboxes, tables, trees, markdown
-- Menus, menubars, tabs, dialogs
+- Menus, menubars, tabs, splitters, dialogs
 - Progress bars, tooltips, date pickers
 - Native open/save/folder dialogs (macOS + Linux)
 
@@ -144,6 +144,7 @@ v install gui
 | [GRADIENTS.md](docs/GRADIENTS.md) | Linear and radial gradients |
 | [SHADERS.md](docs/SHADERS.md) | Custom fragment shaders |
 | [PRINTING.md](docs/PRINTING.md) | PDF export and native print dialog |
+| [SPLITTER.md](docs/SPLITTER.md) | Splitter component (drag, collapse, keyboard) |
 
 Generate API docs with:
 ```bash
@@ -162,6 +163,7 @@ v run examples/theme_designer.v # Build custom themes
 v run examples/tiger.v          # SVG rendering demo
 v run examples/markdown.v       # Markdown rendering
 v run examples/dialogs.v        # Custom + native dialogs
+v run examples/split_panel.v    # Splitter + nested splitter
 v run examples/printing.v       # PDF export + native print
 v run examples/input_masks.v    # Input mask presets and custom tokens
 v run examples/text_transform.v # Rotated and affine text

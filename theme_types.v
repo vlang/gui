@@ -33,6 +33,7 @@ pub:
 	rectangle_style    RectangleStyle
 	scrollbar_style    ScrollbarStyle
 	select_style       SelectStyle
+	splitter_style     SplitterStyle
 	switch_style       SwitchStyle
 	tab_style          TabStyle
 	text_style         TextStyle
@@ -175,6 +176,7 @@ pub:
 	size_progress_bar        f32 = 10 // progress bar height
 	size_range_slider        f32 = 7  // range slider track size
 	size_range_slider_thumb  f32 = 15 // range slider thumb size
+	size_splitter_handle     f32 = 9  // splitter divider size
 
 	// Submenu width constraints
 	width_submenu_min f32 = 50

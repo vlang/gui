@@ -86,6 +86,7 @@ creates views based on current state.
 - Selection ranges
 - Scroll positions
 - Hover state
+- Splitter interaction state (double-click timing)
 
 ### Layout Engine
 
@@ -139,10 +140,11 @@ Pre-built, composable UI elements.
 - `button`, `toggle`, `switch`: Interactive buttons
 - `input`, `select`: Text entry
 - `menu`, `menubar`: Navigation
+- `splitter`: Draggable pane divider with keyboard/collapse behavior
 - `dialog`, `tooltip`: Overlays
 - `progress_bar`, `pulsar`: Indicators
 - `listbox`, `table`, `tree`: Data display
-- Many more (28 total)
+- Many more
 
 ### Rendering System
 
@@ -343,4 +345,3 @@ v-gui runs on many of the platforms V supports:
 - **Windowing**: sokol.sapp handles platform-specific windowing
 - **Events**: Cross-platform event abstraction
 - **Text**: vglyph works on many platforms
-

@@ -243,6 +243,23 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				}
 			}
 		}
+		splitter_style:     SplitterStyle{
+			handle_size:         cfg.size_splitter_handle
+			drag_step:           0.02
+			drag_step_large:     0.10
+			color_handle:        cfg.color_interior
+			color_handle_hover:  cfg.color_hover
+			color_handle_active: cfg.color_active
+			color_handle_border: cfg.color_border
+			color_grip:          cfg.color_select
+			color_button:        cfg.color_interior
+			color_button_hover:  cfg.color_hover
+			color_button_active: cfg.color_active
+			color_button_icon:   cfg.text_style.color
+			size_border:         cfg.size_border
+			radius:              cfg.radius_small
+			radius_border:       cfg.radius_small
+		}
 		switch_style:       SwitchStyle{
 			size_width:         cfg.size_switch_width
 			size_height:        cfg.size_switch_height
@@ -680,6 +697,14 @@ pub fn (t Theme) with_select_style(style SelectStyle) Theme {
 	}
 }
 
+// with_splitter_style returns a new Theme with the splitter style replaced.
+pub fn (t Theme) with_splitter_style(style SplitterStyle) Theme {
+	return Theme{
+		...t
+		splitter_style: style
+	}
+}
+
 // with_switch_style returns a new Theme with the switch style replaced.
 pub fn (t Theme) with_switch_style(style SwitchStyle) Theme {
 	return Theme{
@@ -900,6 +925,17 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_border:       border
 			color_border_focus: border_focus
 			color_select:       sel
+		}
+		splitter_style:     SplitterStyle{
+			...t.splitter_style
+			color_handle:        interior
+			color_handle_hover:  hover
+			color_handle_active: active
+			color_handle_border: border
+			color_grip:          sel
+			color_button:        interior
+			color_button_hover:  hover
+			color_button_active: active
 		}
 		tab_style:          TabStyle{
 			...t.tab_style

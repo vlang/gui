@@ -291,6 +291,25 @@ pub:
 	size_border     f32        = size_border
 }
 
+pub struct SplitterStyle {
+pub:
+	handle_size         f32   = 9
+	drag_step           f32   = 0.02
+	drag_step_large     f32   = 0.10
+	color_handle        Color = color_interior_dark
+	color_handle_hover  Color = color_hover_dark
+	color_handle_active Color = color_active_dark
+	color_handle_border Color = color_border_dark
+	color_grip          Color = color_select_dark
+	color_button        Color = color_interior_dark
+	color_button_hover  Color = color_hover_dark
+	color_button_active Color = color_active_dark
+	color_button_icon   Color = color_text_dark
+	size_border         f32   = size_border
+	radius              f32   = radius_small
+	radius_border       f32   = radius_small
+}
+
 pub struct ScrollbarStyle {
 pub:
 	size             f32   = 7

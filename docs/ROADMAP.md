@@ -46,7 +46,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 ### Missing Core Components
 
 - [ ] `tab_control` advanced features (reorder, close button, overflow menu)
-- [ ] `splitter` / pane divider widget (drag, collapse, min/max pane size)
+- [x] `splitter` / pane divider widget (drag, collapse, min/max pane size)
 - [ ] `breadcrumb_bar` widget
 - [ ] `command_palette` widget (search + ranking + keyboard-first UX)
 - [ ] `toast` / non-blocking notification system
@@ -111,7 +111,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Native open/save/folder dialogs (macOS first)
 - [x] Markdown code highlighting (inline + fenced)
 - [x] Tab control component
-- [ ] Splitter component
+- [x] Splitter component
 - [ ] Virtualized list view
 - [ ] Data grid v2 foundations
 - [ ] Accessibility role model + macOS backend

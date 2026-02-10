@@ -125,6 +125,44 @@ gui.column(content: [          // Vertical stack
          column
 ```
 
+### Split Layouts with `splitter`
+
+Use `splitter` for draggable pane dividers. It is controlled by app state:
+
+```v ignore
+@[heap]
+struct App {
+pub mut:
+	main_split gui.SplitterState = gui.SplitterState{
+		ratio: 0.30
+	}
+}
+
+gui.splitter(
+	id:        'main_split'
+	id_focus:  21
+	ratio:     app.main_split.ratio
+	collapsed: app.main_split.collapsed
+	on_change: fn (ratio f32, collapsed gui.SplitterCollapsed, mut _e gui.Event, mut w gui.Window) {
+		w.state[App]().main_split = gui.splitter_state_normalize(gui.SplitterState{
+			ratio:     ratio
+			collapsed: collapsed
+		})
+	}
+	first: gui.SplitterPaneCfg{
+		min_size: 140
+		content:  [left_panel()]
+	}
+	second: gui.SplitterPaneCfg{
+		min_size: 220
+		content:  [right_panel()]
+	}
+)
+```
+
+Keyboard defaults (when focused): arrows resize, `Shift+arrow` uses larger
+steps, `Home/End` collapse first/second pane, `Enter/Space` toggles collapse.
+
 ### Sizing: Fit, Fill, Fixed
 
 Every widget can size itself three ways per axis:
@@ -178,7 +216,7 @@ v-gui comes with everything you need:
 | Graphics    | `image`, `svg`                                       |
 | Layout      | `row`, `column`, `container`, `scroll`, `canvas`     |
 | Feedback    | `progress_bar`, `pulsar`, `tooltip`, `dialog`        |
-| Navigation  | `menu`, `menubar`, `tabs`                            |
+| Navigation  | `menu`, `menubar`, `tabs`, `splitter`                |
 
 All follow the same pattern: call the function, set some options, done.
 
