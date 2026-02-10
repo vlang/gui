@@ -124,12 +124,20 @@ struct DrawLayout {
 	y      f32
 }
 
+struct DrawLayoutTransformed {
+	layout    &vglyph.Layout
+	x         f32
+	y         f32
+	transform vglyph.AffineTransform
+}
+
 type DrawClip = gg.Rect
 type DrawRect = gg.DrawRectParams
 type Renderer = DrawCircle
 	| DrawClip
 	| DrawImage
 	| DrawLayout
+	| DrawLayoutTransformed
 	| DrawLine
 	| DrawNone
 	| DrawRect
@@ -303,6 +311,10 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 		}
 		DrawLayout {
 			window.text_system.draw_layout(renderer.layout, renderer.x, renderer.y)
+		}
+		DrawLayoutTransformed {
+			window.text_system.draw_layout_transformed(renderer.layout, renderer.x, renderer.y,
+				renderer.transform)
 		}
 		DrawClip {
 			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
@@ -644,6 +656,28 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 }
 
+fn text_shape_draw_transform(shape &Shape) ?vglyph.AffineTransform {
+	if shape.id_focus > 0 {
+		return none
+	}
+	if !shape.tc.text_style.has_text_transform() {
+		return none
+	}
+	return shape.tc.text_style.effective_text_transform()
+}
+
+fn password_mask_text_keep_newlines(text string) string {
+	mut out := []rune{cap: utf8_str_visible_length(text)}
+	for r in text.runes_iterator() {
+		if r == `\n` {
+			out << `\n`
+		} else {
+			out << `*`
+		}
+	}
+	return out.string()
+}
+
 // render_text renders text including multiline text using vglyph layout.
 // If cursor coordinates are present, it draws the input cursor.
 // The highlighting of selected text happens here also.
@@ -667,6 +701,40 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		...shape.tc.text_style
 		color: color
 	}.to_vglyph_cfg()
+
+	if shape.has_text_layout() && color != color_transparent {
+		if transform := text_shape_draw_transform(shape) {
+			mut layout_to_draw := shape.tc.vglyph_layout
+			if window.text_system != unsafe { nil } {
+				mut cfg := text_cfg
+				cfg.block.width = shape.tc.last_constraint_width
+				cfg.no_hit_testing = true
+				render_text := if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
+					password_mask_text_keep_newlines(shape.tc.text)
+				} else {
+					shape.tc.text
+				}
+				mut transformed_layout := window.text_system.layout_text(render_text,
+					cfg) or {
+					log.error('Transformed text layout failed at (${shape.x}, ${shape.y}): ${err.msg()}')
+					if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
+						return
+					}
+					vglyph.Layout{}
+				}
+				if transformed_layout.lines.len > 0 || render_text.len == 0 {
+					layout_to_draw = &transformed_layout
+				}
+			}
+			window.renderers << DrawLayoutTransformed{
+				layout:    layout_to_draw
+				x:         shape.x + shape.padding_left()
+				y:         shape.y + shape.padding_top()
+				transform: transform
+			}
+			return
+		}
+	}
 
 	lh := line_height(shape, mut window)
 	beg := int(shape.tc.text_sel_beg)
@@ -947,10 +1015,43 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 			height: shape.height
 		}
 		if rects_overlap(dr, clip) {
-			window.renderers << DrawLayout{
-				layout: shape.tc.vglyph_layout
-				x:      shape.x
-				y:      shape.y
+			mut has_transform := false
+			mut transform := vglyph.AffineTransform{}
+			mut mixed_transform := false
+			mut has_inline_objects := false
+			if shape.tc.rich_text != unsafe { nil } {
+				if draw_transform := shape.tc.rich_text.uniform_text_transform() {
+					has_transform = true
+					transform = draw_transform
+				}
+				mixed_transform = shape.tc.rich_text.has_mixed_text_transform()
+			}
+			for item in shape.tc.vglyph_layout.items {
+				if item.is_object {
+					has_inline_objects = true
+					break
+				}
+			}
+			if mixed_transform {
+				log.warn('RTF transform ignored for shape "${shape.id}": mixed run transforms')
+			}
+			if has_transform && has_inline_objects {
+				log.warn('RTF transform ignored for shape "${shape.id}": inline objects not supported')
+				has_transform = false
+			}
+			if has_transform {
+				window.renderers << DrawLayoutTransformed{
+					layout:    shape.tc.vglyph_layout
+					x:         shape.x
+					y:         shape.y
+					transform: transform
+				}
+			} else {
+				window.renderers << DrawLayout{
+					layout: shape.tc.vglyph_layout
+					x:      shape.x
+					y:      shape.y
+				}
 			}
 			// Draw inline math images at InlineObject positions
 			for item in shape.tc.vglyph_layout.items {

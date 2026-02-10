@@ -81,3 +81,25 @@ fn test_is_safe_url_edge_cases() {
 	// Protocol-like patterns in path (relative path, not protocol)
 	assert is_safe_url('path/javascript:test.js')
 }
+
+fn test_rtf_hit_test_with_affine_inverse() {
+	run := vglyph.Item{
+		ft_face: unsafe { nil }
+		x:       10
+		y:       20
+		width:   100
+		ascent:  15
+		descent: 5
+	}
+	transform := vglyph.affine_rotation(0.35)
+	inverse := rtf_affine_inverse(transform) or {
+		assert false, 'expected inverse transform'
+		return
+	}
+
+	src_x := f32(50)
+	src_y := f32(10)
+	mouse_x, mouse_y := transform.apply(src_x, src_y)
+	assert rtf_hit_test(run, mouse_x, mouse_y, inverse)
+	assert !rtf_hit_test(run, mouse_x + 200, mouse_y + 200, inverse)
+}

@@ -1,6 +1,7 @@
 module gui
 
 import gg
+import vglyph
 
 // Helpers
 fn make_window() Window {
@@ -226,4 +227,220 @@ fn test_render_shape_text_without_text_config_degrades_safe() {
 	render_shape(mut s, color_transparent, clip, mut w)
 
 	assert w.renderers.len == 0
+}
+
+fn test_render_text_transformed_non_focusable_uses_draw_layout_transformed() {
+	mut w := make_window()
+	mut s := Shape{
+		shape_type: .text
+		x:          10
+		y:          20
+		width:      120
+		height:     24
+		tc:         &TextConfig{
+			text:               'abc'
+			cached_line_height: 12
+			text_style:         TextStyle{
+				color:            black
+				rotation_radians: 0.4
+			}
+			vglyph_layout:      &vglyph.Layout{
+				lines: [
+					vglyph.Line{
+						start_index: 0
+						length:      3
+						rect:        gg.Rect{
+							width:  20
+							height: 12
+						}
+					},
+				]
+			}
+		}
+	}
+
+	render_text(mut s, make_clip(0, 0, 300, 300), mut w)
+
+	assert w.renderers.len == 1
+	r := w.renderers[0]
+	match r {
+		DrawLayoutTransformed {
+			assert f32_are_close(r.x, s.x + s.padding_left())
+			assert f32_are_close(r.y, s.y + s.padding_top())
+		}
+		else {
+			assert false, 'expected DrawLayoutTransformed'
+		}
+	}
+}
+
+fn test_render_text_transformed_focusable_falls_back_to_draw_text() {
+	mut w := make_window()
+	mut s := Shape{
+		shape_type: .text
+		id_focus:   1
+		x:          10
+		y:          20
+		width:      120
+		height:     24
+		tc:         &TextConfig{
+			text:               'abc'
+			cached_line_height: 12
+			text_style:         TextStyle{
+				color:            black
+				rotation_radians: 0.4
+			}
+			vglyph_layout:      &vglyph.Layout{
+				lines: [
+					vglyph.Line{
+						start_index: 0
+						length:      3
+						rect:        gg.Rect{
+							width:  20
+							height: 12
+						}
+					},
+				]
+			}
+		}
+	}
+
+	render_text(mut s, make_clip(0, 0, 300, 300), mut w)
+
+	assert w.renderers.len == 1
+	match w.renderers[0] {
+		DrawText {}
+		else {
+			assert false, 'expected DrawText'
+		}
+	}
+}
+
+fn test_render_rtf_uniform_transform_uses_draw_layout_transformed() {
+	mut w := make_window()
+	mut s := Shape{
+		shape_type: .rtf
+		id:         'rtf-uniform'
+		x:          5
+		y:          7
+		width:      140
+		height:     40
+		tc:         &TextConfig{
+			rich_text:     &RichText{
+				runs: [
+					RichTextRun{
+						text:  'A'
+						style: TextStyle{
+							color:            black
+							rotation_radians: 0.2
+						}
+					},
+					RichTextRun{
+						text:  'B'
+						style: TextStyle{
+							color:            black
+							rotation_radians: 0.2
+						}
+					},
+				]
+			}
+			vglyph_layout: &vglyph.Layout{}
+		}
+	}
+
+	render_rtf(mut s, make_clip(0, 0, 300, 300), mut w)
+
+	assert w.renderers.len == 1
+	match w.renderers[0] {
+		DrawLayoutTransformed {}
+		else {
+			assert false, 'expected DrawLayoutTransformed'
+		}
+	}
+}
+
+fn test_render_rtf_mixed_transform_falls_back_to_draw_layout() {
+	mut w := make_window()
+	mut s := Shape{
+		shape_type: .rtf
+		id:         'rtf-mixed'
+		x:          5
+		y:          7
+		width:      140
+		height:     40
+		tc:         &TextConfig{
+			rich_text:     &RichText{
+				runs: [
+					RichTextRun{
+						text:  'A'
+						style: TextStyle{
+							color:            black
+							rotation_radians: 0.2
+						}
+					},
+					RichTextRun{
+						text:  'B'
+						style: TextStyle{
+							color: black
+						}
+					},
+				]
+			}
+			vglyph_layout: &vglyph.Layout{}
+		}
+	}
+
+	render_rtf(mut s, make_clip(0, 0, 300, 300), mut w)
+
+	assert w.renderers.len == 1
+	match w.renderers[0] {
+		DrawLayout {}
+		else {
+			assert false, 'expected DrawLayout'
+		}
+	}
+}
+
+fn test_render_rtf_transform_with_inline_object_falls_back_to_draw_layout() {
+	mut w := make_window()
+	mut s := Shape{
+		shape_type: .rtf
+		id:         'rtf-inline'
+		x:          5
+		y:          7
+		width:      140
+		height:     40
+		tc:         &TextConfig{
+			rich_text:     &RichText{
+				runs: [
+					RichTextRun{
+						text:  'A'
+						style: TextStyle{
+							color:            black
+							rotation_radians: 0.2
+						}
+					},
+				]
+			}
+			vglyph_layout: &vglyph.Layout{
+				items: [
+					vglyph.Item{
+						ft_face:   unsafe { nil }
+						is_object: true
+						object_id: 'math1'
+					},
+				]
+			}
+		}
+	}
+
+	render_rtf(mut s, make_clip(0, 0, 300, 300), mut w)
+
+	assert w.renderers.len == 1
+	match w.renderers[0] {
+		DrawLayout {}
+		else {
+			assert false, 'expected DrawLayout'
+		}
+	}
 }

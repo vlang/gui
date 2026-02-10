@@ -3,6 +3,7 @@ module gui
 import gg
 import math
 import strings
+import vglyph
 
 struct PdfRenderContext {
 	page_width    f32
@@ -104,6 +105,11 @@ fn pdf_collect_alphas(renderers []Renderer) []u8 {
 				seen[renderer.color.a] = true
 			}
 			DrawLayout {
+				for item in renderer.layout.items {
+					seen[item.color.a] = true
+				}
+			}
+			DrawLayoutTransformed {
 				for item in renderer.layout.items {
 					seen[item.color.a] = true
 				}
@@ -279,6 +285,75 @@ fn pdf_draw_text(mut out strings.Builder, ctx PdfRenderContext, text string, x f
 	out.writeln('ET')
 }
 
+fn pdf_draw_text_local(mut out strings.Builder, text string, x f32, y f32, size f32, color gg.Color) {
+	if text.len == 0 || color.a == 0 {
+		return
+	}
+	mut font_size := size
+	if font_size <= 0 {
+		font_size = 12
+	}
+	pdf_set_fill_color(mut out, color)
+	escaped := pdf_escape_text(text)
+	out.writeln('BT')
+	out.writeln('/F1 ${pdf_num(font_size)} Tf')
+	out.writeln('${pdf_num(x)} ${pdf_num(y)} Td')
+	out.writeln('(${escaped}) Tj')
+	out.writeln('ET')
+}
+
+fn pdf_transform_is_valid(transform vglyph.AffineTransform) bool {
+	values := [
+		transform.xx,
+		transform.xy,
+		transform.yx,
+		transform.yy,
+		transform.x0,
+		transform.y0,
+	]
+	for value in values {
+		if math.is_nan(value) || math.is_inf(value, 0) {
+			return false
+		}
+	}
+	return true
+}
+
+fn pdf_draw_layout_transformed(mut out strings.Builder, ctx PdfRenderContext, renderer DrawLayoutTransformed) {
+	if !pdf_transform_is_valid(renderer.transform) {
+		for item in renderer.layout.items {
+			if item.is_object || item.run_text.trim_space().len == 0 {
+				continue
+			}
+			size := f32(item.ascent + item.descent)
+			pdf_draw_text(mut out, ctx, item.run_text, renderer.x + f32(item.x), renderer.y +
+				f32(item.y - item.ascent), size, item.color)
+		}
+		return
+	}
+
+	scale := ctx.scale
+	a := scale * renderer.transform.xx
+	b := scale * -renderer.transform.yx
+	c := scale * -renderer.transform.xy
+	d := scale * renderer.transform.yy
+	e := ctx.margins.left + scale * (renderer.x + renderer.transform.x0)
+	f := ctx.page_height - ctx.margins.top - scale * (renderer.y + renderer.transform.y0)
+
+	out.writeln('q')
+	out.writeln('${pdf_num(a)} ${pdf_num(b)} ${pdf_num(c)} ${pdf_num(d)} ${pdf_num(e)} ${pdf_num(f)} cm')
+	for item in renderer.layout.items {
+		if item.is_object || item.run_text.trim_space().len == 0 {
+			continue
+		}
+		size := f32(item.ascent + item.descent)
+		local_x := f32(item.x)
+		local_y := -(f32(item.y - item.ascent) + size * 0.8)
+		pdf_draw_text_local(mut out, item.run_text, local_x, local_y, size, item.color)
+	}
+	out.writeln('Q')
+}
+
 fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext) string {
 	mut out := strings.new_builder(4096)
 	mut clip_active := false
@@ -370,6 +445,9 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext) string {
 					pdf_draw_text(mut out, ctx, item.run_text, renderer.x + f32(item.x),
 						renderer.y + f32(item.y - item.ascent), size, item.color)
 				}
+			}
+			DrawLayoutTransformed {
+				pdf_draw_layout_transformed(mut out, ctx, renderer)
 			}
 			DrawSvg {
 				if renderer.clip_group > 0 {

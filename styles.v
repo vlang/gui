@@ -402,16 +402,18 @@ pub:
 @[minify]
 pub struct TextStyle {
 pub:
-	family         string
-	color          Color
-	bg_color       Color = color_transparent
-	size           f32   = size_text_medium
-	typeface       vglyph.Typeface // .regular, .bold, .italic, .bold_italic
-	line_spacing   f32
-	letter_spacing f32
-	align          TextAlignment = .left
-	underline      bool
-	strikethrough  bool
+	family           string
+	color            Color
+	bg_color         Color = color_transparent
+	size             f32   = size_text_medium
+	typeface         vglyph.Typeface // .regular, .bold, .italic, .bold_italic
+	line_spacing     f32
+	letter_spacing   f32
+	align            TextAlignment = .left
+	underline        bool
+	strikethrough    bool
+	rotation_radians f32
+	affine_transform ?vglyph.AffineTransform
 	// features is a pointer to font features (OpenType features and variation axes).
 	features &vglyph.FontFeatures = unsafe { nil }
 }
@@ -443,6 +445,29 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 			}
 		}
 	}
+}
+
+@[inline]
+fn affine_is_identity(transform vglyph.AffineTransform) bool {
+	return transform.xx == 1.0 && transform.xy == 0.0 && transform.yx == 0.0 && transform.yy == 1.0
+		&& transform.x0 == 0.0 && transform.y0 == 0.0
+}
+
+pub fn (ts TextStyle) has_text_transform() bool {
+	if transform := ts.affine_transform {
+		return !affine_is_identity(transform)
+	}
+	return ts.rotation_radians != 0
+}
+
+pub fn (ts TextStyle) effective_text_transform() vglyph.AffineTransform {
+	if transform := ts.affine_transform {
+		return transform
+	}
+	if ts.rotation_radians != 0 {
+		return vglyph.affine_rotation(ts.rotation_radians)
+	}
+	return vglyph.affine_identity()
 }
 
 pub struct ToggleStyle {

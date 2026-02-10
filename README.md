@@ -67,6 +67,7 @@ V is a simple language. It deserves a simple UI framework.
 **Text** (via vglyph/Pango)
 - Subpixel positioning and hinting
 - Rich text with mixed styles in a single widget
+- Rotated and affine-transformed text
 - Bidirectional text, ligatures, emoji
 - Full Unicode and OpenType support
 - IME support for CJK and other complex input methods
@@ -163,6 +164,7 @@ v run examples/markdown.v       # Markdown rendering
 v run examples/dialogs.v        # Custom + native dialogs
 v run examples/printing.v       # PDF export + native print
 v run examples/input_masks.v    # Input mask presets and custom tokens
+v run examples/text_transform.v # Rotated and affine text
 v run examples/table_demo.v     # Table widget demo
 v run examples/custom_shader.v  # Custom fragment shaders
 v run examples/snake.v          # A complete game

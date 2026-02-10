@@ -121,3 +121,42 @@ fn test_pdf_render_document_honors_svg_clip_groups() {
 	assert !pdf.contains('1 0 0 rg')
 	assert pdf.contains('0 0 1 rg')
 }
+
+fn test_pdf_render_document_supports_transformed_layout_text() {
+	layout := &vglyph.Layout{
+		items: [
+			vglyph.Item{
+				run_text: 'tilt'
+				ft_face:  unsafe { nil }
+				x:        12
+				y:        24
+				ascent:   9
+				descent:  3
+				color:    gg.Color{220, 120, 40, 255}
+			},
+		]
+	}
+
+	renderers := [
+		Renderer(DrawLayoutTransformed{
+			layout:    layout
+			x:         14
+			y:         16
+			transform: vglyph.AffineTransform{
+				xx: 0.9
+				xy: -0.2
+				yx: 0.3
+				yy: 1.1
+				x0: 4
+				y0: 3
+			}
+		}),
+	]
+
+	pdf := pdf_render_document(renderers, 120, 90, PdfExportCfg{
+		path: 'unused.pdf'
+	}) or { panic(err.msg()) }
+
+	assert pdf.contains(' cm')
+	assert pdf.contains('(tilt) Tj')
+}

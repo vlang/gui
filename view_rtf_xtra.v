@@ -4,6 +4,7 @@ module gui
 // These types wrap vglyph's RichText/StyleRun internally while providing
 // a gui-native API.
 import vglyph
+import math
 
 // RichTextRun is a styled segment of text within a RichText block.
 @[minify]
@@ -138,4 +139,71 @@ pub fn (ts TextStyle) to_vglyph_style() vglyph.TextStyle {
 		strikethrough: ts.strikethrough
 		typeface:      ts.typeface
 	}
+}
+
+const affine_transform_epsilon = f32(0.00001)
+
+@[inline]
+fn affine_equal(a f32, b f32) bool {
+	return f32(math.abs(a - b)) <= affine_transform_epsilon
+}
+
+fn affine_transforms_equal(a vglyph.AffineTransform, b vglyph.AffineTransform) bool {
+	return affine_equal(a.xx, b.xx) && affine_equal(a.xy, b.xy) && affine_equal(a.yx, b.yx)
+		&& affine_equal(a.yy, b.yy) && affine_equal(a.x0, b.x0) && affine_equal(a.y0, b.y0)
+}
+
+// uniform_text_transform returns a transform only when all runs have the same one.
+pub fn (rt RichText) uniform_text_transform() ?vglyph.AffineTransform {
+	if rt.runs.len == 0 {
+		return none
+	}
+	mut saw_unset := false
+	mut saw_set := false
+	mut transform := vglyph.AffineTransform{}
+	for run in rt.runs {
+		if !run.style.has_text_transform() {
+			saw_unset = true
+			continue
+		}
+		run_transform := run.style.effective_text_transform()
+		if !saw_set {
+			transform = run_transform
+			saw_set = true
+			continue
+		}
+		if !affine_transforms_equal(transform, run_transform) {
+			return none
+		}
+	}
+	if !saw_set || saw_unset {
+		return none
+	}
+	return transform
+}
+
+// has_mixed_text_transform returns true when run transforms are inconsistent.
+pub fn (rt RichText) has_mixed_text_transform() bool {
+	if rt.runs.len == 0 {
+		return false
+	}
+	mut saw_unset := false
+	mut saw_set := false
+	mut transform := vglyph.AffineTransform{}
+	for run in rt.runs {
+		if !run.style.has_text_transform() {
+			saw_unset = true
+			continue
+		}
+		run_transform := run.style.effective_text_transform()
+		if !saw_set {
+			transform = run_transform
+			saw_set = true
+			continue
+		}
+		if !affine_transforms_equal(transform, run_transform) {
+			return true
+		}
+	}
+	return saw_set && saw_unset
 }

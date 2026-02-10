@@ -272,6 +272,7 @@ v run examples/svg_demo.v       # Vector icon rendering
 v run examples/tiger.v          # Complex SVG (Ghostscript Tiger)
 v run examples/markdown.v       # Markdown rendering
 v run examples/dialogs.v        # Custom + native dialogs
+v run examples/text_transform.v # Rotated and affine text
 v run examples/table_demo.v     # Table widget demo
 v run examples/theme_designer.v
 v run examples/snake.v          # Yes, it's a game

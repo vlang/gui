@@ -4,6 +4,7 @@ module gui
 // It renders text with multiple typefaces, sizes, and styles within a single view.
 // Supports text wrapping, clickable links, and custom text runs.
 import gg
+import math
 import os
 import vglyph
 
@@ -103,15 +104,92 @@ pub fn rtf(cfg RtfCfg) View {
 }
 
 // rtf_hit_test checks if mouse coordinates intersect a vglyph run's bounds.
-fn rtf_hit_test(run vglyph.Item, mouse_x f32, mouse_y f32) bool {
-	run_rect := gg.Rect{
+const rtf_affine_inverse_epsilon = f32(0.000001)
+
+fn rtf_run_rect(run vglyph.Item) gg.Rect {
+	return gg.Rect{
 		x:      f32(run.x)
 		y:      f32(run.y) - f32(run.ascent)
 		width:  f32(run.width)
 		height: f32(run.ascent + run.descent)
 	}
-	return mouse_x >= run_rect.x && mouse_y >= run_rect.y && mouse_x < (run_rect.x + run_rect.width)
-		&& mouse_y < (run_rect.y + run_rect.height)
+}
+
+fn rtf_uniform_transform(shape &Shape) ?vglyph.AffineTransform {
+	if shape.tc == unsafe { nil } || shape.tc.rich_text == unsafe { nil } {
+		return none
+	}
+	return shape.tc.rich_text.uniform_text_transform()
+}
+
+fn rtf_affine_inverse(transform vglyph.AffineTransform) ?vglyph.AffineTransform {
+	det := transform.xx * transform.yy - transform.xy * transform.yx
+	if f32(math.abs(det)) <= rtf_affine_inverse_epsilon {
+		return none
+	}
+	inv_det := f32(1.0) / det
+	xx := transform.yy * inv_det
+	xy := -transform.xy * inv_det
+	yx := -transform.yx * inv_det
+	yy := transform.xx * inv_det
+	return vglyph.AffineTransform{
+		xx: xx
+		xy: xy
+		yx: yx
+		yy: yy
+		x0: -(xx * transform.x0 + xy * transform.y0)
+		y0: -(yx * transform.x0 + yy * transform.y0)
+	}
+}
+
+fn rtf_transform_rect(rect gg.Rect, transform vglyph.AffineTransform) gg.Rect {
+	x0, y0 := transform.apply(rect.x, rect.y)
+	x1, y1 := transform.apply(rect.x + rect.width, rect.y)
+	x2, y2 := transform.apply(rect.x + rect.width, rect.y + rect.height)
+	x3, y3 := transform.apply(rect.x, rect.y + rect.height)
+
+	mut min_x := x0
+	mut max_x := x0
+	mut min_y := y0
+	mut max_y := y0
+	for x in [x1, x2, x3] {
+		min_x = f32_min(min_x, x)
+		max_x = f32_max(max_x, x)
+	}
+	for y in [y1, y2, y3] {
+		min_y = f32_min(min_y, y)
+		max_y = f32_max(max_y, y)
+	}
+	return gg.Rect{
+		x:      min_x
+		y:      min_y
+		width:  max_x - min_x
+		height: max_y - min_y
+	}
+}
+
+fn rtf_abs_run_rect(run vglyph.Item, shape &Shape, transform ?vglyph.AffineTransform) gg.Rect {
+	mut rect := rtf_run_rect(run)
+	if t := transform {
+		rect = rtf_transform_rect(rect, t)
+	}
+	return gg.Rect{
+		x:      rect.x + shape.x
+		y:      rect.y + shape.y
+		width:  rect.width
+		height: rect.height
+	}
+}
+
+fn rtf_hit_test(run vglyph.Item, mouse_x f32, mouse_y f32, inverse_transform ?vglyph.AffineTransform) bool {
+	mut test_x := mouse_x
+	mut test_y := mouse_y
+	if inverse := inverse_transform {
+		test_x, test_y = inverse.apply(mouse_x, mouse_y)
+	}
+	run_rect := rtf_run_rect(run)
+	return test_x >= run_rect.x && test_y >= run_rect.y && test_x < (run_rect.x + run_rect.width)
+		&& test_y < (run_rect.y + run_rect.height)
 }
 
 // rtf_mouse_move handles mouse movement over RTF content, showing tooltips
@@ -120,24 +198,24 @@ fn rtf_mouse_move(layout &Layout, mut e Event, mut w Window) {
 	if !layout.shape.has_rtf_layout() {
 		return
 	}
+	forward_transform := rtf_uniform_transform(layout.shape)
+	inverse_transform := if t := forward_transform {
+		rtf_affine_inverse(t)
+	} else {
+		none
+	}
 	// Check for links/abbreviations by finding which run the mouse is over
 	for run in layout.shape.tc.vglyph_layout.items {
 		if run.is_object {
 			continue
 		}
-		if rtf_hit_test(run, e.mouse_x, e.mouse_y) {
+		if rtf_hit_test(run, e.mouse_x, e.mouse_y, inverse_transform) {
 			// Find corresponding RichTextRun via character offset
 			found_run := rtf_find_run_at_index(layout, run.start_index)
 
 			// Check for tooltip (abbreviation)
 			if found_run.tooltip != '' {
-				// Convert to window coordinates (run position is relative to layout)
-				abs_rect := gg.Rect{
-					x:      f32(run.x) + layout.shape.x
-					y:      f32(run.y) - f32(run.ascent) + layout.shape.y
-					width:  f32(run.width)
-					height: f32(run.ascent + run.descent)
-				}
+				abs_rect := rtf_abs_run_rect(run, layout.shape, forward_transform)
 				w.set_rtf_tooltip(found_run.tooltip, abs_rect)
 				e.is_handled = true
 				return
@@ -171,12 +249,17 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 	if !layout.shape.has_rtf_layout() {
 		return
 	}
+	inverse_transform := if t := rtf_uniform_transform(layout.shape) {
+		rtf_affine_inverse(t)
+	} else {
+		none
+	}
 	// Find the clicked run and check if it's a link
 	for run in layout.shape.tc.vglyph_layout.items {
 		if run.is_object {
 			continue
 		}
-		if rtf_hit_test(run, e.mouse_x, e.mouse_y) {
+		if rtf_hit_test(run, e.mouse_x, e.mouse_y, inverse_transform) {
 			// Find corresponding run in original RichText
 			found_run := rtf_find_run_at_index(layout, run.start_index)
 			if found_run.link != '' && is_safe_url(found_run.link) {
