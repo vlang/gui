@@ -4,7 +4,7 @@
 - Date: 2026-02-10
 - Branch:
 - PR/Issue:
-- Current phase: Completed Phase E
+- Current phase: Phase 2 complete
 - Last completed acceptance check: `v test .`, `v check-md -w` docs + README
 
 ## Scope
@@ -57,10 +57,13 @@
 
 ## Decision Log
 - [x] 2026-02-10: `data_grid` shipped as new API; existing `table` unchanged.
+- [x] 2026-02-10: Phase 2 adds controlled column reorder + pinning.
+- [x] 2026-02-10: Header keyboard tab order uses sequential focus ids; avoid hash-based ids.
+- [x] 2026-02-10: Header keyboard shortcuts added for sort/reorder/resize/pin + focus return.
 
 ## Deferred Backlog
-- [ ] Column pinning
-- [ ] Column reorder
+- [x] Column pinning
+- [x] Column reorder
 - [ ] Grouping + aggregation
 - [ ] Master-detail rows
 - [ ] Cell/row editors

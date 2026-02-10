@@ -8,7 +8,10 @@
 - Per-column filter row + quick filter input
 - Row selection: single, toggle, range
 - Keyboard navigation + `ctrl/cmd+a`
+- Header keyboard controls (sort/reorder/resize/pin/focus)
 - Column resize drag + double-click auto-fit
+- Controlled column reorder (`<` / `>` header controls)
+- Controlled column pin cycle (`•` -> `↤` -> `↦`)
 - Clipboard copy (`ctrl/cmd+c`) to TSV
 - CSV helper export
 
@@ -21,10 +24,13 @@
 
 ## Controlled Model
 Application state owns query, selection, and rows.
+Application also owns optional `column_order` and pin state (`GridColumnCfg.pin`).
 
 Grid emits callbacks:
 - `on_query_change`
 - `on_selection_change`
+- `on_column_order_change`
+- `on_column_pin_change`
 - `on_row_activate`
 - `on_copy_rows`
 
@@ -75,3 +81,17 @@ csv := gui.grid_rows_to_csv(columns, rows)
 ## Notes
 - `table` remains available and unchanged.
 - `data_grid` is for heavier interactive tabular workflows.
+- Tab order follows numeric `id_focus` sort, not visual tree order.
+- Avoid hashed focus ids for ordered header navigation. Hash order is unstable.
+- Prefer reserved focus-id ranges per grid, then assign sequential header ids left->right.
+- Keep ranges non-overlapping across sibling widgets to avoid collisions and tab-order corruption.
+
+## Header Keyboard
+- `Tab` focuses header cells (left->right), not per-icon controls.
+- `Left` / `Right`: move header focus.
+- `Space` or `Enter`: toggle sort (`Shift` appends in multi-sort mode).
+- `Ctrl`/`Cmd` + `Left` / `Right`: reorder current column.
+- `Alt` + `Left` / `Right`: resize column by step.
+- `Shift` + `Alt` + `Left` / `Right`: resize by larger step.
+- `P`: cycle pin (`none -> left -> right -> none`).
+- `Esc`: return focus to grid body.

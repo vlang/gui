@@ -3,10 +3,12 @@ import gui
 @[heap]
 struct DataGridDemoApp {
 pub mut:
-	all_rows    []gui.GridRow
-	query       gui.GridQueryState
-	selection   gui.GridSelection
-	last_action string
+	all_rows     []gui.GridRow
+	columns      []gui.GridColumnCfg
+	column_order []string
+	query        gui.GridQueryState
+	selection    gui.GridSelection
+	last_action  string
 }
 
 fn main() {
@@ -18,6 +20,8 @@ fn main() {
 		on_init: fn (mut w gui.Window) {
 			mut app := w.state[DataGridDemoApp]()
 			app.all_rows = sample_rows()
+			app.columns = sample_columns()
+			app.column_order = app.columns.map(it.id)
 			w.update_view(main_view)
 		}
 	)
@@ -38,21 +42,40 @@ fn main_view(mut window gui.Window) gui.View {
 				text_style: gui.theme().n4
 			),
 			window.data_grid(
-				id:                  'demo-grid'
-				max_height:          520
-				columns:             sample_columns()
-				rows:                rows
-				query:               app.query
-				selection:           app.selection
-				on_query_change:     fn (query gui.GridQueryState, mut _ gui.Event, mut w gui.Window) {
+				id:                     'demo-grid'
+				max_height:             520
+				columns:                app.columns
+				column_order:           app.column_order
+				rows:                   rows
+				query:                  app.query
+				selection:              app.selection
+				on_query_change:        fn (query gui.GridQueryState, mut _ gui.Event, mut w gui.Window) {
 					mut state := w.state[DataGridDemoApp]()
 					state.query = query
 				}
-				on_selection_change: fn (selection gui.GridSelection, mut _ gui.Event, mut w gui.Window) {
+				on_selection_change:    fn (selection gui.GridSelection, mut _ gui.Event, mut w gui.Window) {
 					mut state := w.state[DataGridDemoApp]()
 					state.selection = selection
 				}
-				on_row_activate:     fn (row gui.GridRow, mut _ gui.Event, mut w gui.Window) {
+				on_column_order_change: fn (order []string, mut _ gui.Event, mut w gui.Window) {
+					mut state := w.state[DataGridDemoApp]()
+					state.column_order = order.clone()
+				}
+				on_column_pin_change:   fn (col_id string, pin gui.GridColumnPin, mut _ gui.Event, mut w gui.Window) {
+					mut state := w.state[DataGridDemoApp]()
+					mut cols := state.columns.clone()
+					for i, col in cols {
+						if col.id == col_id {
+							cols[i] = gui.GridColumnCfg{
+								...col
+								pin: pin
+							}
+							break
+						}
+					}
+					state.columns = cols
+				}
+				on_row_activate:        fn (row gui.GridRow, mut _ gui.Event, mut w gui.Window) {
 					mut state := w.state[DataGridDemoApp]()
 					state.last_action = 'Activated row ${row.id}'
 				}

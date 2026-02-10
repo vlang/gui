@@ -14,82 +14,85 @@ import sokol.sapp
 // - u64: data hashes - table_warned_no_id
 struct ViewState {
 mut:
-	cursor_on_sticky         bool // keeps the cursor visible during cursor movement
-	id_focus                 u32  // current view that has focus
-	input_cursor_on          bool = true // used by cursor blink animation
-	menu_key_nav             bool             // true, menu navigated by keyboard
-	mouse_cursor             sapp.MouseCursor // arrow, finger, ibeam, etc.
-	mouse_lock               MouseLockCfg     // mouse down/move/up/scroll/sliders, etc. use this
-	rtf_tooltip_rect         gg.Rect          // RTF abbreviation tooltip anchor rect
-	rtf_tooltip_text         string           // RTF abbreviation tooltip text
-	tooltip                  TooltipState     // State for the active tooltip
-	input_state              BoundedMap[u32, InputState] = BoundedMap[u32, InputState]{
+	cursor_on_sticky           bool // keeps the cursor visible during cursor movement
+	id_focus                   u32  // current view that has focus
+	input_cursor_on            bool = true // used by cursor blink animation
+	menu_key_nav               bool             // true, menu navigated by keyboard
+	mouse_cursor               sapp.MouseCursor // arrow, finger, ibeam, etc.
+	mouse_lock                 MouseLockCfg     // mouse down/move/up/scroll/sliders, etc. use this
+	rtf_tooltip_rect           gg.Rect          // RTF abbreviation tooltip anchor rect
+	rtf_tooltip_text           string           // RTF abbreviation tooltip text
+	tooltip                    TooltipState     // State for the active tooltip
+	input_state                BoundedMap[u32, InputState] = BoundedMap[u32, InputState]{
 		max_size: 100
 	}
-	input_date_state         BoundedMap[string, bool] = BoundedMap[string, bool]{
+	input_date_state           BoundedMap[string, bool] = BoundedMap[string, bool]{
 		max_size: 50
 	}
-	scroll_x                 BoundedMap[u32, f32] = BoundedMap[u32, f32]{
+	scroll_x                   BoundedMap[u32, f32] = BoundedMap[u32, f32]{
 		max_size: 200
 	}
-	scroll_y                 BoundedMap[u32, f32] = BoundedMap[u32, f32]{
+	scroll_y                   BoundedMap[u32, f32] = BoundedMap[u32, f32]{
 		max_size: 200
 	}
-	menu_state               BoundedMap[u32, string] = BoundedMap[u32, string]{
+	menu_state                 BoundedMap[u32, string] = BoundedMap[u32, string]{
 		max_size: 20
 	}
-	image_map                BoundedImageMap = BoundedImageMap{
+	image_map                  BoundedImageMap = BoundedImageMap{
 		max_size: 100
 	}
-	active_downloads         BoundedMap[string, i64] = BoundedMap[string, i64]{
+	active_downloads           BoundedMap[string, i64] = BoundedMap[string, i64]{
 		max_size: 50
 	}
-	svg_cache                BoundedSvgCache = BoundedSvgCache{
+	svg_cache                  BoundedSvgCache = BoundedSvgCache{
 		max_size: 100
 	}
-	markdown_cache           BoundedMarkdownCache = BoundedMarkdownCache{
+	markdown_cache             BoundedMarkdownCache = BoundedMarkdownCache{
 		max_size: 50
 	}
-	select_state             BoundedMap[string, bool] = BoundedMap[string, bool]{
+	select_state               BoundedMap[string, bool] = BoundedMap[string, bool]{
 		max_size: 50
 	}
-	select_highlight         BoundedMap[string, int] = BoundedMap[string, int]{
+	select_highlight           BoundedMap[string, int] = BoundedMap[string, int]{
 		max_size: 50
 	}
-	tree_state               BoundedTreeState = BoundedTreeState{
+	tree_state                 BoundedTreeState = BoundedTreeState{
 		max_size: 30
 	}
-	date_picker_state        BoundedMap[string, DatePickerState] = BoundedMap[string, DatePickerState]{
+	date_picker_state          BoundedMap[string, DatePickerState] = BoundedMap[string, DatePickerState]{
 		max_size: 20
 	}
-	date_picker_roller_state BoundedMap[string, DatePickerRollerState] = BoundedMap[string, DatePickerRollerState]{
+	date_picker_roller_state   BoundedMap[string, DatePickerRollerState] = BoundedMap[string, DatePickerRollerState]{
 		max_size: 20
 	}
-	table_col_widths         BoundedMap[string, TableColCache] = BoundedMap[string, TableColCache]{
+	table_col_widths           BoundedMap[string, TableColCache] = BoundedMap[string, TableColCache]{
 		max_size: 50
 	}
-	table_warned_no_id       BoundedMap[u64, bool] = BoundedMap[u64, bool]{
+	table_warned_no_id         BoundedMap[u64, bool] = BoundedMap[u64, bool]{
 		max_size: 100
 	}
-	diagram_cache            BoundedDiagramCache = BoundedDiagramCache{
+	diagram_cache              BoundedDiagramCache = BoundedDiagramCache{
 		max_size: 200
 	}
-	progress_state           BoundedMap[string, f32] = BoundedMap[string, f32]{
+	progress_state             BoundedMap[string, f32] = BoundedMap[string, f32]{
 		max_size: 50
 	}
-	color_picker_state       BoundedMap[string, ColorPickerState] = BoundedMap[string, ColorPickerState]{
+	color_picker_state         BoundedMap[string, ColorPickerState] = BoundedMap[string, ColorPickerState]{
 		max_size: 20
 	}
-	data_grid_col_widths     BoundedMap[string, &DataGridColWidths] = BoundedMap[string, &DataGridColWidths]{
+	data_grid_col_widths       BoundedMap[string, &DataGridColWidths] = BoundedMap[string, &DataGridColWidths]{
 		max_size: 50
 	}
-	data_grid_resize_state   BoundedMap[string, DataGridResizeState] = BoundedMap[string, DataGridResizeState]{
+	data_grid_resize_state     BoundedMap[string, DataGridResizeState] = BoundedMap[string, DataGridResizeState]{
 		max_size: 20
 	}
-	data_grid_range_state    BoundedMap[string, DataGridRangeState] = BoundedMap[string, DataGridRangeState]{
+	data_grid_header_hover_col BoundedMap[string, string] = BoundedMap[string, string]{
 		max_size: 20
 	}
-	splitter_runtime_state   BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
+	data_grid_range_state      BoundedMap[string, DataGridRangeState] = BoundedMap[string, DataGridRangeState]{
+		max_size: 20
+	}
+	splitter_runtime_state     BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
 		max_size: 20
 	}
 }

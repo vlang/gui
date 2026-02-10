@@ -168,3 +168,118 @@ fn test_data_grid_scroll_padding_hidden() {
 	pad := data_grid_scroll_padding(cfg)
 	assert pad.right == 0
 }
+
+fn test_grid_column_order_move() {
+	order := ['a', 'b', 'c', 'd']
+	left := grid_column_order_move(order, 'c', -1)
+	assert left == ['a', 'c', 'b', 'd']
+
+	right := grid_column_order_move(order, 'b', 2)
+	assert right == ['a', 'c', 'd', 'b']
+
+	clamped := grid_column_order_move(order, 'a', -1)
+	assert clamped == order
+}
+
+fn test_data_grid_effective_columns_respects_order_and_pin() {
+	cfg := DataGridCfg{
+		id:           'effective-cols'
+		column_order: ['c', 'a', 'b']
+		columns:      [
+			GridColumnCfg{
+				id:    'a'
+				title: 'A'
+				pin:   .none
+			},
+			GridColumnCfg{
+				id:    'b'
+				title: 'B'
+				pin:   .left
+			},
+			GridColumnCfg{
+				id:    'c'
+				title: 'C'
+				pin:   .right
+			},
+		]
+		rows:         []
+	}
+	cols := data_grid_effective_columns(cfg)
+	assert cols.len == 3
+	assert cols[0].id == 'b'
+	assert cols[1].id == 'a'
+	assert cols[2].id == 'c'
+}
+
+fn test_grid_column_next_pin_cycles() {
+	assert grid_column_next_pin(.none) == .left
+	assert grid_column_next_pin(.left) == .right
+	assert grid_column_next_pin(.right) == .none
+}
+
+fn test_data_grid_header_control_state_compacts_when_narrow() {
+	state := data_grid_header_control_state(50, padding_two_five, true, true, true)
+	assert state.show_label == false
+	assert state.show_reorder == true
+	assert state.show_pin == false
+	assert state.show_resize == true
+}
+
+fn test_data_grid_header_control_state_keeps_all_when_wide() {
+	state := data_grid_header_control_state(220, padding_two_five, true, true, true)
+	assert state.show_label == true
+	assert state.show_reorder == true
+	assert state.show_pin == true
+	assert state.show_resize == true
+}
+
+fn test_data_grid_show_header_controls() {
+	assert data_grid_show_header_controls('name', 'name', '', '') == true
+	assert data_grid_show_header_controls('name', '', 'name', '') == true
+	assert data_grid_show_header_controls('name', '', '', 'name') == true
+	assert data_grid_show_header_controls('name', 'team', '', '') == false
+	assert data_grid_show_header_controls('', 'name', 'name', 'name') == false
+}
+
+fn test_data_grid_header_col_id_from_layout_id() {
+	assert data_grid_header_col_id_from_layout_id('users', 'users:header:name') == 'name'
+	assert data_grid_header_col_id_from_layout_id('users:grid', 'users:grid:header:team') == 'team'
+	assert data_grid_header_col_id_from_layout_id('users', 'users:row:1') == ''
+}
+
+fn test_data_grid_header_focus_ids_are_sequential() {
+	cfg := DataGridCfg{
+		id_focus: 100
+		id:       'grid'
+		columns:  []
+		rows:     []
+	}
+	assert data_grid_header_focus_id(cfg, 4, 0) == 101
+	assert data_grid_header_focus_id(cfg, 4, 3) == 104
+	assert data_grid_header_focus_index(cfg, 4, 103) == 2
+}
+
+fn test_data_grid_header_focused_col_id() {
+	cfg := DataGridCfg{
+		id_focus: 1000
+		id:       'grid'
+		columns:  []
+		rows:     []
+	}
+	cols := [
+		GridColumnCfg{
+			id:    'a'
+			title: 'A'
+		},
+		GridColumnCfg{
+			id:    'b'
+			title: 'B'
+		},
+		GridColumnCfg{
+			id:    'c'
+			title: 'C'
+		},
+	]
+	assert data_grid_header_focused_col_id(cfg, cols, 1002) == 'b'
+	assert data_grid_header_focused_col_id(cfg, cols, 77) == ''
+}

@@ -7,10 +7,21 @@ const data_grid_resize_double_click_frames = u64(24)
 const data_grid_resize_handle_width = f32(6)
 const data_grid_autofit_padding = f32(18)
 const data_grid_indicator_alpha = u8(140)
+const data_grid_resize_key_step = f32(8)
+const data_grid_resize_key_step_large = f32(24)
+const data_grid_header_control_width = f32(12)
+const data_grid_header_reorder_spacing = f32(1)
+const data_grid_header_label_min_width = f32(24)
 
 pub enum GridSortDir as u8 {
 	asc
 	desc
+}
+
+pub enum GridColumnPin as u8 {
+	none
+	left
+	right
 }
 
 @[minify]
@@ -47,16 +58,18 @@ pub:
 @[minify]
 pub struct GridColumnCfg {
 pub:
-	id         string @[required]
-	title      string @[required]
-	width      f32             = 120
-	min_width  f32             = 60
-	max_width  f32             = 600
-	resizable  bool            = true
-	sortable   bool            = true
-	filterable bool            = true
-	align      HorizontalAlign = .start
-	text_style ?TextStyle
+	id          string @[required]
+	title       string @[required]
+	width       f32             = 120
+	min_width   f32             = 60
+	max_width   f32             = 600
+	resizable   bool            = true
+	reorderable bool            = true
+	sortable    bool            = true
+	filterable  bool            = true
+	pin         GridColumnPin   = .none
+	align       HorizontalAlign = .start
+	text_style  ?TextStyle
 }
 
 @[minify]
@@ -73,7 +86,8 @@ pub:
 	id_focus                 u32
 	id_scroll                u32
 	columns                  []GridColumnCfg @[required]
-	rows                     []GridRow       @[required]
+	column_order             []string
+	rows                     []GridRow @[required]
 	query                    GridQueryState
 	selection                GridSelection
 	multi_sort               bool = true
@@ -112,16 +126,20 @@ pub:
 	max_width                f32
 	min_height               f32
 	max_height               f32
-	on_query_change          fn (GridQueryState, mut Event, mut Window)    = unsafe { nil }
-	on_selection_change      fn (GridSelection, mut Event, mut Window)     = unsafe { nil }
-	on_copy_rows             fn ([]GridRow, mut Event, mut Window) ?string = unsafe { nil }
-	on_row_activate          fn (GridRow, mut Event, mut Window)           = unsafe { nil }
+	on_query_change          fn (GridQueryState, mut Event, mut Window)        = unsafe { nil }
+	on_selection_change      fn (GridSelection, mut Event, mut Window)         = unsafe { nil }
+	on_column_order_change   fn ([]string, mut Event, mut Window)              = unsafe { nil }
+	on_column_pin_change     fn (string, GridColumnPin, mut Event, mut Window) = unsafe { nil }
+	on_copy_rows             fn ([]GridRow, mut Event, mut Window) ?string     = unsafe { nil }
+	on_row_activate          fn (GridRow, mut Event, mut Window)               = unsafe { nil }
 }
 
 // data_grid renders a controlled, virtualized data grid view.
 pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	focus_id := data_grid_focus_id(cfg)
 	scroll_id := data_grid_scroll_id(cfg)
+	hovered_col_id := window.view_state.data_grid_header_hover_col.get(cfg.id) or { '' }
+	resizing_col_id := data_grid_active_resize_col_id(cfg.id, window)
 	row_height := data_grid_row_height(cfg, mut window)
 	static_top := data_grid_static_top_height(cfg, row_height)
 	grid_height := data_grid_height(cfg)
@@ -131,6 +149,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	} else {
 		f32(0)
 	}
+	columns := data_grid_effective_columns(cfg)
+	focused_col_id := data_grid_header_focused_col_id(cfg, columns, window.id_focus())
 
 	mut column_widths := data_grid_column_widths(cfg, mut window)
 	last_row_idx := cfg.rows.len - 1
@@ -146,10 +166,11 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		rows << data_grid_quick_filter_row(cfg)
 	}
 	if cfg.show_header {
-		rows << data_grid_header_row(cfg, column_widths, focus_id)
+		rows << data_grid_header_row(cfg, columns, column_widths, focus_id, hovered_col_id,
+			resizing_col_id, focused_col_id)
 	}
 	if cfg.show_filter_row {
-		rows << data_grid_filter_row(cfg, column_widths)
+		rows << data_grid_filter_row(cfg, columns, column_widths)
 	}
 
 	if virtualize && first_visible > 0 {
@@ -165,8 +186,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		if row_idx < 0 || row_idx >= cfg.rows.len {
 			continue
 		}
-		rows << data_grid_row_view(cfg, cfg.rows[row_idx], row_idx, column_widths, row_height,
-			focus_id)
+		rows << data_grid_row_view(cfg, cfg.rows[row_idx], row_idx, columns, column_widths,
+			row_height, focus_id)
 	}
 
 	if virtualize && last_visible < last_row_idx {
@@ -195,25 +216,26 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		content:         rows
 	)
 	return column(
-		name:         'data_grid'
-		id:           cfg.id
-		id_focus:     focus_id
-		on_keydown:   make_data_grid_on_keydown(cfg, row_height, static_top, scroll_id)
-		on_char:      make_data_grid_on_char(cfg)
-		color:        cfg.color_background
-		color_border: cfg.color_border
-		size_border:  cfg.size_border
-		radius:       cfg.radius
-		padding:      padding_none
-		spacing:      0
-		sizing:       cfg.sizing
-		width:        cfg.width
-		height:       cfg.height
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
-		min_height:   cfg.min_height
-		max_height:   cfg.max_height
-		content:      [scroll_body]
+		name:          'data_grid'
+		id:            cfg.id
+		id_focus:      focus_id
+		on_keydown:    make_data_grid_on_keydown(cfg, row_height, static_top, scroll_id)
+		on_char:       make_data_grid_on_char(cfg)
+		on_mouse_move: make_data_grid_on_mouse_move(cfg)
+		color:         cfg.color_background
+		color_border:  cfg.color_border
+		size_border:   cfg.size_border
+		radius:        cfg.radius
+		padding:       padding_none
+		spacing:       0
+		sizing:        cfg.sizing
+		width:         cfg.width
+		height:        cfg.height
+		min_width:     cfg.min_width
+		max_width:     cfg.max_width
+		min_height:    cfg.min_height
+		max_height:    cfg.max_height
+		content:       [scroll_body]
 	)
 }
 
@@ -268,11 +290,13 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 	)
 }
 
-fn data_grid_header_row(cfg DataGridCfg, column_widths map[string]f32, focus_id u32) View {
-	mut cells := []View{cap: cfg.columns.len}
-	for col in cfg.columns {
+fn data_grid_header_row(cfg DataGridCfg, columns []GridColumnCfg, column_widths map[string]f32, focus_id u32, hovered_col_id string, resizing_col_id string, focused_col_id string) View {
+	mut cells := []View{cap: columns.len}
+	for idx, col in columns {
 		width := data_grid_column_width_for(col, column_widths)
-		cells << data_grid_header_cell(cfg, col, width, focus_id)
+		show_controls := data_grid_show_header_controls(col.id, hovered_col_id, resizing_col_id,
+			focused_col_id)
+		cells << data_grid_header_cell(cfg, col, idx, columns.len, width, focus_id, show_controls)
 	}
 	return row(
 		name:         'data_grid header row'
@@ -287,8 +311,13 @@ fn data_grid_header_row(cfg DataGridCfg, column_widths map[string]f32, focus_id 
 	)
 }
 
-fn data_grid_header_cell(cfg DataGridCfg, col GridColumnCfg, width f32, focus_id u32) View {
-	mut content := []View{cap: 2}
+fn data_grid_header_cell(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_count int, width f32, focus_id u32, show_controls bool) View {
+	has_reorder := show_controls && cfg.on_column_order_change != unsafe { nil } && col.reorderable
+	has_pin := show_controls && cfg.on_column_pin_change != unsafe { nil }
+	header_controls := data_grid_header_control_state(width, cfg.padding_header, has_reorder,
+		has_pin, show_controls && col.resizable)
+	header_focus_id := data_grid_header_focus_id(cfg, col_count, col_idx)
+	mut content := []View{cap: 5}
 	indicator := data_grid_header_indicator(cfg.query, col.id)
 	mut label_content := []View{cap: 2}
 	label_content << text(
@@ -303,17 +332,33 @@ fn data_grid_header_cell(cfg DataGridCfg, col GridColumnCfg, width f32, focus_id
 			text_style: data_grid_indicator_text_style(cfg.text_style_header)
 		)
 	}
-	content << row(
-		name:    'data_grid header label'
-		sizing:  fill_fill
-		padding: padding_none
-		h_align: col.align
-		v_align: .middle
-		spacing: 6
-		content: label_content
-	)
-	if col.resizable {
-		content << data_grid_resize_handle(cfg, col, focus_id)
+	if header_controls.show_label {
+		content << row(
+			name:    'data_grid header label'
+			sizing:  fill_fill
+			clip:    true
+			padding: padding_none
+			h_align: col.align
+			v_align: .middle
+			spacing: 6
+			content: label_content
+		)
+	} else {
+		content << row(
+			name:    'data_grid header spacer'
+			sizing:  fill_fill
+			padding: padding_none
+			content: []
+		)
+	}
+	if header_controls.show_reorder {
+		content << data_grid_reorder_controls(cfg, col)
+	}
+	if header_controls.show_pin {
+		content << data_grid_pin_control(cfg, col)
+	}
+	if header_controls.show_resize {
+		content << data_grid_resize_handle(cfg, col, header_focus_id)
 	}
 
 	on_query_change := cfg.on_query_change
@@ -323,27 +368,32 @@ fn data_grid_header_cell(cfg DataGridCfg, col GridColumnCfg, width f32, focus_id
 		width:        width
 		sizing:       fixed_fill
 		padding:      cfg.padding_header
+		clip:         true
 		color:        color_transparent
 		color_border: cfg.color_border
 		size_border:  cfg.size_border
 		spacing:      0
-		on_click:     fn [cfg, col, on_query_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
+		on_click:     fn [cfg, col, on_query_change, focus_id, header_focus_id] (_ &Layout, mut e Event, mut w Window) {
 			if col.sortable && on_query_change != unsafe { nil } {
 				shift_sort := cfg.multi_sort && e.modifiers.has(.shift)
 				next := data_grid_toggle_sort(cfg.query, col.id, cfg.multi_sort, shift_sort)
 				on_query_change(next, mut e, mut w)
 				e.is_handled = true
 			}
-			if focus_id > 0 {
+			if header_focus_id > 0 {
+				w.set_id_focus(header_focus_id)
+			} else if focus_id > 0 {
 				w.set_id_focus(focus_id)
 			}
 		}
+		on_keydown:   make_data_grid_header_on_keydown(cfg, col, col_idx, col_count, focus_id)
 		on_hover:     fn [cfg, col] (mut layout Layout, mut _ Event, mut w Window) {
 			if col.sortable {
 				w.set_mouse_cursor_pointing_hand()
 				layout.shape.color = cfg.color_header_hover
 			}
 		}
+		id_focus:     header_focus_id
 		content:      content
 	)
 }
@@ -379,9 +429,111 @@ fn data_grid_resize_handle(cfg DataGridCfg, col GridColumnCfg, focus_id u32) Vie
 	)
 }
 
-fn data_grid_filter_row(cfg DataGridCfg, column_widths map[string]f32) View {
-	mut cells := []View{cap: cfg.columns.len}
-	for col in cfg.columns {
+fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
+	return row(
+		name:    'data_grid reorder controls'
+		padding: padding_none
+		spacing: data_grid_header_reorder_spacing
+		width:   data_grid_header_controls_width(true, false, false)
+		sizing:  fixed_fill
+		content: [
+			data_grid_order_button('◀', cfg.text_style_header, cfg.color_header_hover,
+				fn [cfg, col] (mut e Event, mut w Window) {
+				if cfg.on_column_order_change == unsafe { nil } {
+					e.is_handled = true
+					return
+				}
+				base_order := data_grid_normalized_column_order(cfg)
+				next_order := grid_column_order_move(base_order, col.id, -1)
+				if next_order == base_order {
+					e.is_handled = true
+					return
+				}
+				cfg.on_column_order_change(next_order, mut e, mut w)
+				e.is_handled = true
+			}),
+			data_grid_order_button('▶', cfg.text_style_header, cfg.color_header_hover,
+				fn [cfg, col] (mut e Event, mut w Window) {
+				if cfg.on_column_order_change == unsafe { nil } {
+					e.is_handled = true
+					return
+				}
+				base_order := data_grid_normalized_column_order(cfg)
+				next_order := grid_column_order_move(base_order, col.id, 1)
+				if next_order == base_order {
+					e.is_handled = true
+					return
+				}
+				cfg.on_column_order_change(next_order, mut e, mut w)
+				e.is_handled = true
+			}),
+		]
+	)
+}
+
+fn data_grid_order_button(label string, base_style TextStyle, hover_color Color, cb fn (mut Event, mut Window)) View {
+	return button(
+		width:        data_grid_header_control_width
+		sizing:       fixed_fill
+		padding:      padding_none
+		size_border:  0
+		radius:       0
+		color:        color_transparent
+		color_hover:  hover_color
+		color_focus:  color_transparent
+		color_click:  hover_color
+		color_border: color_transparent
+		on_click:     fn [cb] (_ &Layout, mut e Event, mut w Window) {
+			cb(mut e, mut w)
+		}
+		content:      [
+			text(
+				text:       label
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(base_style)
+			),
+		]
+	)
+}
+
+fn data_grid_pin_control(cfg DataGridCfg, col GridColumnCfg) View {
+	label := match col.pin {
+		.none { '•' }
+		.left { '↤' }
+		.right { '↦' }
+	}
+	return button(
+		width:        data_grid_header_control_width
+		padding:      padding_none
+		sizing:       fixed_fill
+		size_border:  0
+		radius:       0
+		color:        color_transparent
+		color_hover:  cfg.color_header_hover
+		color_focus:  color_transparent
+		color_click:  cfg.color_header_hover
+		color_border: color_transparent
+		on_click:     fn [cfg, col] (_ &Layout, mut e Event, mut w Window) {
+			if cfg.on_column_pin_change == unsafe { nil } {
+				return
+			}
+			next_pin := grid_column_next_pin(col.pin)
+			cfg.on_column_pin_change(col.id, next_pin, mut e, mut w)
+			e.is_handled = true
+		}
+		content:      [
+			text(
+				text:       label
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(cfg.text_style_header)
+			),
+		]
+	)
+}
+
+fn data_grid_filter_row(cfg DataGridCfg, columns []GridColumnCfg, column_widths map[string]f32) View {
+	mut cells := []View{cap: columns.len}
+	for col in columns {
 		cells << data_grid_filter_cell(cfg, col, data_grid_column_width_for(col, column_widths))
 	}
 	return row(
@@ -436,11 +588,11 @@ fn data_grid_filter_cell(cfg DataGridCfg, col GridColumnCfg, width f32) View {
 	)
 }
 
-fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, column_widths map[string]f32, row_height f32, focus_id u32) View {
+fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []GridColumnCfg, column_widths map[string]f32, row_height f32, focus_id u32) View {
 	row_id := data_grid_row_id(row_data, row_idx)
 	is_selected := cfg.selection.selected_row_ids[row_id]
-	mut cells := []View{cap: cfg.columns.len}
-	for col in cfg.columns {
+	mut cells := []View{cap: columns.len}
+	for col in columns {
 		value := row_data.cells[col.id] or { '' }
 		text_style := col.text_style or { cfg.text_style }
 		cells << row(
@@ -630,16 +782,17 @@ fn make_data_grid_on_char(cfg DataGridCfg) fn (&Layout, mut Event, mut Window) {
 			return
 		}
 		selected_rows := data_grid_selected_rows(cfg.rows, cfg.selection)
+		columns := data_grid_effective_columns(cfg)
 		if selected_rows.len == 0 {
 			return
 		}
 		mut payload := ''
 		if cfg.on_copy_rows != unsafe { nil } {
 			payload = cfg.on_copy_rows(selected_rows, mut e, mut w) or {
-				grid_rows_to_tsv(cfg.columns, selected_rows)
+				grid_rows_to_tsv(columns, selected_rows)
 			}
 		} else {
-			payload = grid_rows_to_tsv(cfg.columns, selected_rows)
+			payload = grid_rows_to_tsv(columns, selected_rows)
 		}
 		if payload.len == 0 {
 			return
@@ -647,6 +800,143 @@ fn make_data_grid_on_char(cfg DataGridCfg) fn (&Layout, mut Event, mut Window) {
 		to_clipboard(payload)
 		e.is_handled = true
 	}
+}
+
+fn make_data_grid_on_mouse_move(cfg DataGridCfg) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
+		mouse_x := layout.shape.x + e.mouse_x
+		mouse_y := layout.shape.y + e.mouse_y
+		col_id := data_grid_header_col_under_cursor(layout, cfg.id, mouse_x, mouse_y)
+		if col_id.len == 0 {
+			w.view_state.data_grid_header_hover_col.delete(cfg.id)
+			return
+		}
+		w.view_state.data_grid_header_hover_col.set(cfg.id, col_id)
+	}
+}
+
+fn make_data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_count int, grid_focus_id u32) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg, col, col_idx, col_count, grid_focus_id] (_ &Layout, mut e Event, mut w Window) {
+		data_grid_header_on_keydown(cfg, col, col_idx, col_count, grid_focus_id, mut e, mut
+			w)
+	}
+}
+
+fn data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_count int, grid_focus_id u32, mut e Event, mut w Window) {
+	is_ctrl_or_super := e.modifiers.has(.ctrl) || e.modifiers.has(.super)
+	is_alt := e.modifiers.has(.alt)
+	is_shift := e.modifiers.has(.shift)
+
+	match e.key_code {
+		.enter, .space {
+			if e.modifiers == .none || e.modifiers == .shift {
+				data_grid_header_toggle_sort(cfg, col, mut e, mut w)
+			}
+			return
+		}
+		.left, .right {
+			if is_ctrl_or_super {
+				delta := if e.key_code == .left { -1 } else { 1 }
+				data_grid_header_reorder_by_key(cfg, col, col_count, delta, mut e, mut
+					w)
+				return
+			}
+			if is_alt {
+				step := if is_shift {
+					data_grid_resize_key_step_large
+				} else {
+					data_grid_resize_key_step
+				}
+				delta := if e.key_code == .left { -step } else { step }
+				data_grid_header_resize_by_key(cfg, col, delta, mut e, mut w)
+				return
+			}
+			if e.modifiers == .none {
+				next_idx := int_clamp(col_idx + if e.key_code == .left { -1 } else { 1 },
+					0, col_count - 1)
+				if next_idx != col_idx {
+					next_focus_id := data_grid_header_focus_id(cfg, col_count, next_idx)
+					if next_focus_id > 0 {
+						w.set_id_focus(next_focus_id)
+					}
+					e.is_handled = true
+				}
+			}
+			return
+		}
+		.p {
+			if e.modifiers == .none {
+				data_grid_header_pin_by_key(cfg, col, col_count, mut e, mut w)
+			}
+			return
+		}
+		.escape {
+			if e.modifiers == .none {
+				if grid_focus_id > 0 {
+					w.set_id_focus(grid_focus_id)
+				}
+				e.is_handled = true
+			}
+			return
+		}
+		else {}
+	}
+}
+
+fn data_grid_header_toggle_sort(cfg DataGridCfg, col GridColumnCfg, mut e Event, mut w Window) {
+	if !col.sortable || cfg.on_query_change == unsafe { nil } {
+		return
+	}
+	shift_sort := cfg.multi_sort && e.modifiers.has(.shift)
+	next := data_grid_toggle_sort(cfg.query, col.id, cfg.multi_sort, shift_sort)
+	cfg.on_query_change(next, mut e, mut w)
+	e.is_handled = true
+}
+
+fn data_grid_header_reorder_by_key(cfg DataGridCfg, col GridColumnCfg, col_count int, delta int, mut e Event, mut w Window) {
+	if !col.reorderable || cfg.on_column_order_change == unsafe { nil } {
+		return
+	}
+	base_order := data_grid_normalized_column_order(cfg)
+	next_order := grid_column_order_move(base_order, col.id, delta)
+	if next_order == base_order {
+		e.is_handled = true
+		return
+	}
+	cfg.on_column_order_change(next_order, mut e, mut w)
+	next_idx := data_grid_effective_index_for_column_with_order(cfg, next_order, col.id)
+	if next_idx >= 0 {
+		next_focus_id := data_grid_header_focus_id(cfg, col_count, next_idx)
+		if next_focus_id > 0 {
+			w.set_id_focus(next_focus_id)
+		}
+	}
+	e.is_handled = true
+}
+
+fn data_grid_header_resize_by_key(cfg DataGridCfg, col GridColumnCfg, delta f32, mut e Event, mut w Window) {
+	if !col.resizable {
+		return
+	}
+	current := data_grid_column_width(cfg, col, mut w)
+	data_grid_set_column_width(cfg.id, col, current + delta, mut w)
+	e.is_handled = true
+}
+
+fn data_grid_header_pin_by_key(cfg DataGridCfg, col GridColumnCfg, col_count int, mut e Event, mut w Window) {
+	if cfg.on_column_pin_change == unsafe { nil } {
+		return
+	}
+	next_pin := grid_column_next_pin(col.pin)
+	cfg.on_column_pin_change(col.id, next_pin, mut e, mut w)
+	next_idx := data_grid_effective_index_for_column_with_pin(cfg, col.id, next_pin)
+	if next_idx >= 0 {
+		next_focus_id := data_grid_header_focus_id(cfg, col_count, next_idx)
+		if next_focus_id > 0 {
+			w.set_id_focus(next_focus_id)
+		}
+	}
+	e.is_handled = true
 }
 
 fn make_data_grid_on_keydown(cfg DataGridCfg, row_height f32, static_top f32, scroll_id u32) fn (&Layout, mut Event, mut Window) {
@@ -1023,6 +1313,282 @@ fn data_grid_dim_color(c Color) Color {
 		b: c.b
 		a: data_grid_indicator_alpha
 	}
+}
+
+fn data_grid_active_resize_col_id(grid_id string, window &Window) string {
+	if runtime := window.view_state.data_grid_resize_state.get(grid_id) {
+		if runtime.active {
+			return runtime.col_id
+		}
+	}
+	return ''
+}
+
+fn data_grid_header_focus_base_id(cfg DataGridCfg, col_count int) u32 {
+	if col_count <= 0 {
+		return 0
+	}
+	span := u32(col_count)
+	body := data_grid_focus_id(cfg)
+	if body <= max_u32 - span {
+		return body + 1
+	}
+	if body > span {
+		return body - span
+	}
+	return 1
+}
+
+fn data_grid_header_focus_id(cfg DataGridCfg, col_count int, col_idx int) u32 {
+	if col_count <= 0 || col_idx < 0 || col_idx >= col_count {
+		return 0
+	}
+	base := data_grid_header_focus_base_id(cfg, col_count)
+	return base + u32(col_idx)
+}
+
+fn data_grid_header_focus_index(cfg DataGridCfg, col_count int, focus_id u32) int {
+	if col_count <= 0 || focus_id == 0 {
+		return -1
+	}
+	base := data_grid_header_focus_base_id(cfg, col_count)
+	if focus_id < base {
+		return -1
+	}
+	idx := int(focus_id - base)
+	if idx < 0 || idx >= col_count {
+		return -1
+	}
+	return idx
+}
+
+fn data_grid_header_focused_col_id(cfg DataGridCfg, columns []GridColumnCfg, focus_id u32) string {
+	idx := data_grid_header_focus_index(cfg, columns.len, focus_id)
+	if idx < 0 || idx >= columns.len {
+		return ''
+	}
+	return columns[idx].id
+}
+
+fn data_grid_show_header_controls(col_id string, hovered_col_id string, resizing_col_id string, focused_col_id string) bool {
+	return col_id.len > 0
+		&& (col_id == hovered_col_id || col_id == resizing_col_id || col_id == focused_col_id)
+}
+
+fn data_grid_header_col_under_cursor(layout &Layout, grid_id string, mouse_x f32, mouse_y f32) string {
+	prefix := '${grid_id}:header:'
+	if cell := layout.find_layout(fn [prefix, mouse_x, mouse_y] (n Layout) bool {
+		return n.shape.id.starts_with(prefix) && n.shape.point_in_shape(mouse_x, mouse_y)
+	})
+	{
+		return data_grid_header_col_id_from_layout_id(grid_id, cell.shape.id)
+	}
+	return ''
+}
+
+fn data_grid_header_col_id_from_layout_id(grid_id string, layout_id string) string {
+	prefix := '${grid_id}:header:'
+	if !layout_id.starts_with(prefix) {
+		return ''
+	}
+	return layout_id[prefix.len..]
+}
+
+fn data_grid_effective_index_for_column_with_order(cfg DataGridCfg, next_order []string, col_id string) int {
+	next_cfg := DataGridCfg{
+		...cfg
+		column_order: next_order
+	}
+	cols := data_grid_effective_columns(next_cfg)
+	for idx, col in cols {
+		if col.id == col_id {
+			return idx
+		}
+	}
+	return -1
+}
+
+fn data_grid_effective_index_for_column_with_pin(cfg DataGridCfg, col_id string, pin GridColumnPin) int {
+	mut next_columns := cfg.columns.clone()
+	for idx, col in next_columns {
+		if col.id != col_id {
+			continue
+		}
+		next_columns[idx] = GridColumnCfg{
+			...col
+			pin: pin
+		}
+		break
+	}
+	next_cfg := DataGridCfg{
+		...cfg
+		columns: next_columns
+	}
+	cols := data_grid_effective_columns(next_cfg)
+	for idx, col in cols {
+		if col.id == col_id {
+			return idx
+		}
+	}
+	return -1
+}
+
+struct DataGridHeaderControlState {
+mut:
+	show_label   bool
+	show_reorder bool
+	show_pin     bool
+	show_resize  bool
+}
+
+fn data_grid_header_control_state(width f32, padding Padding, has_reorder bool, has_pin bool, has_resize bool) DataGridHeaderControlState {
+	available := f32_max(0, width - padding.width())
+	mut state := DataGridHeaderControlState{
+		show_label:   true
+		show_reorder: has_reorder
+		show_pin:     has_pin
+		show_resize:  has_resize
+	}
+	mut controls_width := data_grid_header_controls_width(state.show_reorder, state.show_pin,
+		state.show_resize)
+	if available < controls_width + data_grid_header_label_min_width {
+		state.show_label = false
+	}
+	if state.show_pin && available < controls_width {
+		state.show_pin = false
+		controls_width = data_grid_header_controls_width(state.show_reorder, state.show_pin,
+			state.show_resize)
+	}
+	if state.show_reorder && available < controls_width {
+		state.show_reorder = false
+		controls_width = data_grid_header_controls_width(state.show_reorder, state.show_pin,
+			state.show_resize)
+	}
+	if state.show_resize && available < controls_width {
+		state.show_resize = false
+		controls_width = data_grid_header_controls_width(state.show_reorder, state.show_pin,
+			state.show_resize)
+	}
+	if available >= controls_width + data_grid_header_label_min_width {
+		state.show_label = true
+	}
+	return state
+}
+
+fn data_grid_header_controls_width(show_reorder bool, show_pin bool, show_resize bool) f32 {
+	mut width := f32(0)
+	if show_reorder {
+		width += data_grid_header_control_width * 2 + data_grid_header_reorder_spacing
+	}
+	if show_pin {
+		width += data_grid_header_control_width
+	}
+	if show_resize {
+		width += data_grid_resize_handle_width
+	}
+	return width
+}
+
+fn data_grid_effective_columns(cfg DataGridCfg) []GridColumnCfg {
+	if cfg.columns.len == 0 {
+		return []
+	}
+	order := data_grid_normalized_column_order(cfg)
+	cols_by_id := data_grid_columns_by_id(cfg.columns)
+	mut ordered := []GridColumnCfg{cap: cfg.columns.len}
+	for id in order {
+		col := cols_by_id[id] or { continue }
+		ordered << col
+	}
+	return data_grid_partition_pins(ordered)
+}
+
+fn data_grid_normalized_column_order(cfg DataGridCfg) []string {
+	if cfg.columns.len == 0 {
+		return []
+	}
+	mut seen := map[string]bool{}
+	mut order := []string{cap: cfg.columns.len}
+	for id in cfg.column_order {
+		if id.len == 0 || seen[id] {
+			continue
+		}
+		if cfg.columns.any(it.id == id) {
+			seen[id] = true
+			order << id
+		}
+	}
+	for col in cfg.columns {
+		if col.id.len == 0 || seen[col.id] {
+			continue
+		}
+		seen[col.id] = true
+		order << col.id
+	}
+	return order
+}
+
+fn data_grid_columns_by_id(columns []GridColumnCfg) map[string]GridColumnCfg {
+	mut res := map[string]GridColumnCfg{}
+	for col in columns {
+		if col.id.len == 0 {
+			continue
+		}
+		res[col.id] = col
+	}
+	return res
+}
+
+fn data_grid_partition_pins(columns []GridColumnCfg) []GridColumnCfg {
+	mut left := []GridColumnCfg{}
+	mut center := []GridColumnCfg{}
+	mut right := []GridColumnCfg{}
+	for col in columns {
+		match col.pin {
+			.left { left << col }
+			.right { right << col }
+			.none { center << col }
+		}
+	}
+	mut merged := []GridColumnCfg{cap: columns.len}
+	merged << left
+	merged << center
+	merged << right
+	return merged
+}
+
+fn grid_column_next_pin(pin GridColumnPin) GridColumnPin {
+	return match pin {
+		.none { .left }
+		.left { .right }
+		.right { .none }
+	}
+}
+
+// grid_column_order_move moves `col_id` in `order` by delta (-1 left, +1 right).
+pub fn grid_column_order_move(order []string, col_id string, delta int) []string {
+	if order.len == 0 || delta == 0 {
+		return order.clone()
+	}
+	mut idx := -1
+	for i, id in order {
+		if id == col_id {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		return order.clone()
+	}
+	target := int_clamp(idx + delta, 0, order.len - 1)
+	if target == idx {
+		return order.clone()
+	}
+	mut next := order.clone()
+	value := next[idx]
+	next.delete(idx)
+	next.insert(target, value)
+	return next
 }
 
 fn grid_query_set_filter(query GridQueryState, col_id string, value string) GridQueryState {
