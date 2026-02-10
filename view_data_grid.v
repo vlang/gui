@@ -1,6 +1,7 @@
 module gui
 
 import hash.fnv1a
+import strconv
 
 const data_grid_virtual_buffer_rows = 2
 const data_grid_resize_double_click_frames = u64(24)
@@ -22,6 +23,14 @@ pub enum GridColumnPin as u8 {
 	none
 	left
 	right
+}
+
+pub enum GridAggregateOp as u8 {
+	count
+	sum
+	avg
+	min
+	max
 }
 
 @[minify]
@@ -79,6 +88,35 @@ pub:
 	cells map[string]string
 }
 
+@[minify]
+pub struct GridAggregateCfg {
+pub:
+	col_id string
+	op     GridAggregateOp = .count
+	label  string
+}
+
+enum DataGridDisplayRowKind as u8 {
+	data
+	group_header
+}
+
+struct DataGridDisplayRow {
+	kind            DataGridDisplayRowKind
+	data_row_idx    int = -1
+	group_col_id    string
+	group_value     string
+	group_col_title string
+	group_depth     int
+	group_count     int
+	aggregate_text  string
+}
+
+struct DataGridPresentation {
+	rows            []DataGridDisplayRow
+	data_to_display map[int]int
+}
+
 @[heap; minify]
 pub struct DataGridCfg {
 pub:
@@ -87,6 +125,8 @@ pub:
 	id_scroll                u32
 	columns                  []GridColumnCfg @[required]
 	column_order             []string
+	group_by                 []string
+	aggregates               []GridAggregateCfg
 	rows                     []GridRow @[required]
 	query                    GridQueryState
 	selection                GridSelection
@@ -96,6 +136,7 @@ pub:
 	show_header              bool = true
 	show_filter_row          bool
 	show_quick_filter        bool
+	show_group_counts        bool              = true
 	quick_filter_placeholder string            = 'Search'
 	row_height               f32               = 30
 	header_height            f32               = 34
@@ -150,18 +191,19 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		f32(0)
 	}
 	columns := data_grid_effective_columns(cfg)
+	presentation := data_grid_presentation(cfg, columns)
 	focused_col_id := data_grid_header_focused_col_id(cfg, columns, window.id_focus())
 
 	mut column_widths := data_grid_column_widths(cfg, mut window)
-	last_row_idx := cfg.rows.len - 1
+	last_row_idx := presentation.rows.len - 1
 	first_visible, last_visible := if virtualize {
-		data_grid_visible_range_for_scroll(scroll_y, grid_height, row_height, cfg.rows.len,
+		data_grid_visible_range_for_scroll(scroll_y, grid_height, row_height, presentation.rows.len,
 			static_top, data_grid_virtual_buffer_rows)
 	} else {
 		0, last_row_idx
 	}
 
-	mut rows := []View{cap: cfg.rows.len + 8}
+	mut rows := []View{cap: presentation.rows.len + 8}
 	if cfg.show_quick_filter {
 		rows << data_grid_quick_filter_row(cfg)
 	}
@@ -183,11 +225,19 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	}
 
 	for row_idx in first_visible .. last_visible + 1 {
-		if row_idx < 0 || row_idx >= cfg.rows.len {
+		if row_idx < 0 || row_idx >= presentation.rows.len {
 			continue
 		}
-		rows << data_grid_row_view(cfg, cfg.rows[row_idx], row_idx, columns, column_widths,
-			row_height, focus_id)
+		entry := presentation.rows[row_idx]
+		if entry.kind == .group_header {
+			rows << data_grid_group_header_row_view(cfg, entry, row_height)
+			continue
+		}
+		if entry.data_row_idx < 0 || entry.data_row_idx >= cfg.rows.len {
+			continue
+		}
+		rows << data_grid_row_view(cfg, cfg.rows[entry.data_row_idx], entry.data_row_idx,
+			columns, column_widths, row_height, focus_id)
 	}
 
 	if virtualize && last_visible < last_row_idx {
@@ -583,6 +633,36 @@ fn data_grid_filter_cell(cfg DataGridCfg, col GridColumnCfg, width f32) View {
 					mut e := Event{}
 					on_query_change(next, mut e, mut w)
 				}
+			),
+		]
+	)
+}
+
+fn data_grid_group_header_row_view(cfg DataGridCfg, entry DataGridDisplayRow, row_height f32) View {
+	depth_pad := f32(entry.group_depth) * 14
+	mut label := '${entry.group_col_title}: ${entry.group_value}'
+	if cfg.show_group_counts {
+		label += ' (${entry.group_count})'
+	}
+	if entry.aggregate_text.len > 0 {
+		label += '  ${entry.aggregate_text}'
+	}
+	return row(
+		name:         'data_grid group header row'
+		id:           '${cfg.id}:group:${entry.group_col_id}:${entry.group_value}:${entry.group_depth}'
+		height:       row_height
+		sizing:       fill_fixed
+		color:        cfg.color_filter
+		color_border: cfg.color_border
+		size_border:  0
+		padding:      padding(cfg.padding_cell.top, cfg.padding_cell.right, cfg.padding_cell.bottom,
+			cfg.padding_cell.left + depth_pad)
+		spacing:      -cfg.size_border
+		content:      [
+			text(
+				text:       label
+				mode:       .single_line
+				text_style: cfg.text_style_header
 			),
 		]
 	)
@@ -1046,7 +1126,10 @@ fn make_data_grid_on_keydown(cfg DataGridCfg, row_height f32, static_top f32, sc
 		}
 
 		cfg.on_selection_change(next, mut e, mut w)
-		data_grid_scroll_row_into_view(cfg, target, row_height, static_top, scroll_id, mut
+		columns := data_grid_effective_columns(cfg)
+		presentation := data_grid_presentation(cfg, columns)
+		display_idx := presentation.data_to_display[target] or { target }
+		data_grid_scroll_row_into_view(cfg, display_idx, row_height, static_top, scroll_id, mut
 			w)
 		e.is_handled = true
 	}
@@ -1122,6 +1205,263 @@ fn data_grid_csv_escape(value string) string {
 	}
 	escaped := value.replace('"', '""')
 	return '"${escaped}"'
+}
+
+fn data_grid_presentation(cfg DataGridCfg, columns []GridColumnCfg) DataGridPresentation {
+	mut rows := []DataGridDisplayRow{cap: cfg.rows.len + 8}
+	mut data_to_display := map[int]int{}
+	group_cols := data_grid_group_columns(cfg.group_by, columns)
+	if group_cols.len == 0 || cfg.rows.len == 0 {
+		for row_idx in 0 .. cfg.rows.len {
+			data_to_display[row_idx] = rows.len
+			rows << DataGridDisplayRow{
+				kind:         .data
+				data_row_idx: row_idx
+			}
+		}
+		return DataGridPresentation{
+			rows:            rows
+			data_to_display: data_to_display
+		}
+	}
+
+	group_titles := data_grid_group_titles(columns)
+	group_ranges := data_grid_group_ranges(cfg.rows, group_cols)
+	mut prev_values := []string{len: group_cols.len}
+	mut has_prev := false
+
+	for row_idx, row in cfg.rows {
+		mut values := []string{cap: group_cols.len}
+		for col_id in group_cols {
+			values << row.cells[col_id] or { '' }
+		}
+		mut change_depth := -1
+		if !has_prev {
+			change_depth = 0
+		} else {
+			for depth, value in values {
+				if value != prev_values[depth] {
+					change_depth = depth
+					break
+				}
+			}
+		}
+		if change_depth >= 0 {
+			for depth in change_depth .. group_cols.len {
+				col_id := group_cols[depth]
+				range_end := group_ranges[data_grid_group_range_key(depth, row_idx)] or { row_idx }
+				count := int_max(0, range_end - row_idx + 1)
+				rows << DataGridDisplayRow{
+					kind:            .group_header
+					group_col_id:    col_id
+					group_value:     values[depth]
+					group_col_title: group_titles[col_id] or { col_id }
+					group_depth:     depth
+					group_count:     count
+					aggregate_text:  data_grid_group_aggregate_text(cfg, row_idx, range_end)
+				}
+			}
+		}
+		data_to_display[row_idx] = rows.len
+		rows << DataGridDisplayRow{
+			kind:         .data
+			data_row_idx: row_idx
+		}
+		prev_values = values.clone()
+		has_prev = true
+	}
+
+	return DataGridPresentation{
+		rows:            rows
+		data_to_display: data_to_display
+	}
+}
+
+fn data_grid_group_columns(group_by []string, columns []GridColumnCfg) []string {
+	if group_by.len == 0 {
+		return []
+	}
+	mut available := map[string]bool{}
+	for col in columns {
+		if col.id.len > 0 {
+			available[col.id] = true
+		}
+	}
+	mut seen := map[string]bool{}
+	mut cols := []string{cap: group_by.len}
+	for col_id in group_by {
+		if col_id.len == 0 || seen[col_id] || !available[col_id] {
+			continue
+		}
+		seen[col_id] = true
+		cols << col_id
+	}
+	return cols
+}
+
+fn data_grid_group_titles(columns []GridColumnCfg) map[string]string {
+	mut titles := map[string]string{}
+	for col in columns {
+		if col.id.len == 0 {
+			continue
+		}
+		titles[col.id] = col.title
+	}
+	return titles
+}
+
+fn data_grid_group_range_key(depth int, start_idx int) string {
+	return '${depth}:${start_idx}'
+}
+
+fn data_grid_group_ranges(rows []GridRow, group_cols []string) map[string]int {
+	mut ranges := map[string]int{}
+	if rows.len == 0 || group_cols.len == 0 {
+		return ranges
+	}
+
+	mut starts := []int{len: group_cols.len, init: 0}
+	mut values := []string{len: group_cols.len}
+	for depth, col_id in group_cols {
+		values[depth] = rows[0].cells[col_id] or { '' }
+	}
+
+	for row_idx in 1 .. rows.len {
+		mut change_depth := -1
+		for depth, col_id in group_cols {
+			value := rows[row_idx].cells[col_id] or { '' }
+			if value != values[depth] {
+				change_depth = depth
+				break
+			}
+		}
+		if change_depth < 0 {
+			continue
+		}
+
+		mut depth := group_cols.len - 1
+		for depth >= change_depth {
+			ranges[data_grid_group_range_key(depth, starts[depth])] = row_idx - 1
+			if depth == 0 {
+				break
+			}
+			depth--
+		}
+
+		for dep in change_depth .. group_cols.len {
+			col_id := group_cols[dep]
+			starts[dep] = row_idx
+			values[dep] = rows[row_idx].cells[col_id] or { '' }
+		}
+	}
+
+	last := rows.len - 1
+	mut depth := group_cols.len - 1
+	for {
+		ranges[data_grid_group_range_key(depth, starts[depth])] = last
+		if depth == 0 {
+			break
+		}
+		depth--
+	}
+	return ranges
+}
+
+fn data_grid_group_aggregate_text(cfg DataGridCfg, start_idx int, end_idx int) string {
+	if cfg.aggregates.len == 0 || start_idx < 0 || end_idx < start_idx || end_idx >= cfg.rows.len {
+		return ''
+	}
+	mut parts := []string{cap: cfg.aggregates.len}
+	for agg in cfg.aggregates {
+		value := data_grid_aggregate_value(cfg.rows, start_idx, end_idx, agg) or { continue }
+		parts << '${data_grid_aggregate_label(agg)}: ${value}'
+	}
+	return parts.join('  ')
+}
+
+fn data_grid_aggregate_label(agg GridAggregateCfg) string {
+	if agg.label.len > 0 {
+		return agg.label
+	}
+	if agg.op == .count {
+		return 'count'
+	}
+	if agg.col_id.len == 0 {
+		return agg.op.str()
+	}
+	return '${agg.op.str()} ${agg.col_id}'
+}
+
+fn data_grid_aggregate_value(rows []GridRow, start_idx int, end_idx int, agg GridAggregateCfg) ?string {
+	if agg.op == .count {
+		return (end_idx - start_idx + 1).str()
+	}
+	if agg.col_id.len == 0 {
+		return none
+	}
+
+	mut values := []f64{}
+	for idx in start_idx .. end_idx + 1 {
+		raw := rows[idx].cells[agg.col_id] or { continue }
+		number := data_grid_parse_number(raw) or { continue }
+		values << number
+	}
+	if values.len == 0 {
+		return none
+	}
+
+	mut result := f64(0)
+	match agg.op {
+		.sum, .avg {
+			for value in values {
+				result += value
+			}
+			if agg.op == .avg {
+				result = result / values.len
+			}
+		}
+		.min {
+			result = values[0]
+			for value in values[1..] {
+				if value < result {
+					result = value
+				}
+			}
+		}
+		.max {
+			result = values[0]
+			for value in values[1..] {
+				if value > result {
+					result = value
+				}
+			}
+		}
+		.count {
+			return (end_idx - start_idx + 1).str()
+		}
+	}
+
+	return data_grid_format_number(result)
+}
+
+fn data_grid_parse_number(value string) ?f64 {
+	trimmed := value.trim_space()
+	if trimmed.len == 0 {
+		return none
+	}
+	number := strconv.atof64(trimmed) or { return none }
+	return number
+}
+
+fn data_grid_format_number(value f64) string {
+	mut text := '${value:.4f}'
+	for text.contains('.') && text.ends_with('0') {
+		text = text[..text.len - 1]
+	}
+	if text.ends_with('.') {
+		text = text[..text.len - 1]
+	}
+	return text
 }
 
 fn data_grid_selected_rows(rows []GridRow, selection GridSelection) []GridRow {

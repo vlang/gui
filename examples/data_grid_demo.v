@@ -46,6 +46,19 @@ fn main_view(mut window gui.Window) gui.View {
 				max_height:             520
 				columns:                app.columns
 				column_order:           app.column_order
+				group_by:               ['team']
+				aggregates:             [gui.GridAggregateCfg{
+					op:    .count
+					label: 'count'
+				}, gui.GridAggregateCfg{
+					op:     .avg
+					col_id: 'score'
+					label:  'avg score'
+				}, gui.GridAggregateCfg{
+					op:     .max
+					col_id: 'score'
+					label:  'max score'
+				}]
 				rows:                   rows
 				query:                  app.query
 				selection:              app.selection
@@ -128,7 +141,7 @@ fn sample_rows() []gui.GridRow {
 	for i in 0 .. 800 {
 		row_id := i + 1
 		name := names[i % names.len]
-		team := teams[i % teams.len]
+		team := teams[(i / 120) % teams.len]
 		score := 60 + ((i * 7) % 41)
 		rows << gui.GridRow{
 			id:    '${row_id}'

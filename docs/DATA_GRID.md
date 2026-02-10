@@ -12,19 +12,22 @@
 - Column resize drag + double-click auto-fit
 - Controlled column reorder (`<` / `>` header controls)
 - Controlled column pin cycle (`•` -> `↤` -> `↦`)
+- Group headers (`group_by`) with optional aggregates
 - Clipboard copy (`ctrl/cmd+c`) to TSV
 - CSV helper export
 
 ## Core Types
 - `DataGridCfg`
 - `GridColumnCfg`
+- `GridAggregateCfg`
 - `GridRow`
 - `GridQueryState`
 - `GridSelection`
 
 ## Controlled Model
 Application state owns query, selection, and rows.
-Application also owns optional `column_order` and pin state (`GridColumnCfg.pin`).
+Application also owns optional `column_order`, pin state (`GridColumnCfg.pin`),
+and grouping (`group_by`, `aggregates`).
 
 Grid emits callbacks:
 - `on_query_change`
@@ -85,6 +88,7 @@ csv := gui.grid_rows_to_csv(columns, rows)
 - Avoid hashed focus ids for ordered header navigation. Hash order is unstable.
 - Prefer reserved focus-id ranges per grid, then assign sequential header ids left->right.
 - Keep ranges non-overlapping across sibling widgets to avoid collisions and tab-order corruption.
+- Grouping is contiguous. Sort data by group columns first for stable large groups.
 
 ## Header Keyboard
 - `Tab` focuses header cells (left->right), not per-icon controls.
