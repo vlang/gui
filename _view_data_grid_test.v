@@ -440,3 +440,147 @@ fn test_data_grid_aggregate_value_numeric_ops() {
 	assert min == '10'
 	assert max == '25'
 }
+
+fn test_data_grid_next_detail_expanded_map_toggle() {
+	base := {
+		'2': true
+	}
+	next1 := data_grid_next_detail_expanded_map(base, '2')
+	assert next1['2'] == false
+
+	next2 := data_grid_next_detail_expanded_map(base, '3')
+	assert next2['2'] == true
+	assert next2['3'] == true
+}
+
+fn test_data_grid_presentation_with_master_detail_rows() {
+	cfg := DataGridCfg{
+		id:                      'detail'
+		columns:                 [
+			GridColumnCfg{
+				id:    'name'
+				title: 'Name'
+			},
+		]
+		rows:                    [
+			GridRow{
+				id:    '1'
+				cells: {
+					'name': 'A'
+				}
+			},
+			GridRow{
+				id:    '2'
+				cells: {
+					'name': 'B'
+				}
+			},
+		]
+		detail_expanded_row_ids: {
+			'2': true
+		}
+		on_detail_row_view:      fn (_ GridRow, mut _ Window) View {
+			return rectangle(
+				width:  1
+				height: 1
+				sizing: fixed_fixed
+				color:  color_transparent
+			)
+		}
+	}
+	p := data_grid_presentation(cfg, cfg.columns)
+	assert p.rows.len == 3
+	assert p.rows[0].kind == .data
+	assert p.rows[1].kind == .data
+	assert p.rows[2].kind == .detail
+	assert p.rows[2].data_row_idx == 1
+	assert p.data_to_display[0] == 0
+	assert p.data_to_display[1] == 1
+}
+
+fn test_data_grid_first_editable_column_index() {
+	cfg := DataGridCfg{
+		id:           'edit-cols'
+		columns:      [
+			GridColumnCfg{
+				id:    'name'
+				title: 'Name'
+			},
+			GridColumnCfg{
+				id:       'team'
+				title:    'Team'
+				editable: true
+			},
+		]
+		rows:         []
+		on_cell_edit: fn (_ GridCellEdit, mut _ Event, mut _ Window) {}
+	}
+	assert data_grid_first_editable_column_index(cfg, cfg.columns) == 1
+}
+
+fn test_data_grid_first_editable_column_index_without_callback() {
+	cfg := DataGridCfg{
+		id:      'edit-cols-no-callback'
+		columns: [
+			GridColumnCfg{
+				id:       'name'
+				title:    'Name'
+				editable: true
+			},
+		]
+		rows:    []
+	}
+	assert data_grid_first_editable_column_index(cfg, cfg.columns) == -1
+}
+
+fn test_data_grid_cell_editor_focus_id() {
+	cfg := DataGridCfg{
+		id_focus: 500
+		id:       'focus'
+		columns:  []
+		rows:     []
+	}
+	assert data_grid_cell_editor_focus_id(cfg, 3, 0, 0) == 504
+	assert data_grid_cell_editor_focus_id(cfg, 3, 2, 1) == 511
+	assert data_grid_cell_editor_focus_id(cfg, 3, -1, 0) == 0
+}
+
+fn test_data_grid_editor_bool_value() {
+	assert data_grid_editor_bool_value('true') == true
+	assert data_grid_editor_bool_value('YES') == true
+	assert data_grid_editor_bool_value('1') == true
+	assert data_grid_editor_bool_value('false') == false
+	assert data_grid_editor_bool_value('0') == false
+	assert data_grid_editor_bool_value('abc') == false
+}
+
+fn test_data_grid_parse_editor_date() {
+	parsed := data_grid_parse_editor_date('2/10/2026')
+	assert parsed.custom_format('M/D/YYYY') == '2/10/2026'
+}
+
+fn test_data_grid_has_row_id() {
+	rows := [
+		GridRow{
+			id: '1'
+		},
+		GridRow{
+			id: '2'
+		},
+	]
+	assert data_grid_has_row_id(rows, '2') == true
+	assert data_grid_has_row_id(rows, '3') == false
+}
+
+fn test_data_grid_has_keyboard_modifiers_ignores_mouse_bits() {
+	mut e := Event{
+		modifiers: .lmb
+	}
+	assert data_grid_has_keyboard_modifiers(&e) == false
+
+	e.modifiers = .shift
+	assert data_grid_has_keyboard_modifiers(&e) == true
+
+	e.modifiers = .ctrl_alt
+	assert data_grid_has_keyboard_modifiers(&e) == true
+}

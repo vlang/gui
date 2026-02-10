@@ -92,6 +92,9 @@ mut:
 	data_grid_range_state      BoundedMap[string, DataGridRangeState] = BoundedMap[string, DataGridRangeState]{
 		max_size: 20
 	}
+	data_grid_edit_state       BoundedMap[string, DataGridEditState] = BoundedMap[string, DataGridEditState]{
+		max_size: 20
+	}
 	splitter_runtime_state     BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
 		max_size: 20
 	}
@@ -132,6 +135,14 @@ struct DataGridColWidths {
 struct DataGridRangeState {
 mut:
 	anchor_row_id string
+}
+
+// DataGridEditState stores transient edit mode state for a grid id.
+struct DataGridEditState {
+mut:
+	editing_row_id    string
+	last_click_row_id string
+	last_click_frame  u64
 }
 
 // TableColCache stores cached column widths and hash for invalidation

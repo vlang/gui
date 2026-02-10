@@ -4,13 +4,13 @@
 - Date: 2026-02-10
 - Branch:
 - PR/Issue:
-- Current phase: Phase 3 complete
+- Current phase: Phase 5 complete
 - Last completed acceptance check: `v test .`, `v check-md -w` docs + README
 
 ## Scope
 - New `data_grid` API (controlled)
 - Phase 1 bundle: core + sort/filter/select + resize + copy TSV
-- Deferred: master-detail/editors/XLSX/PDF
+- Deferred: XLSX/PDF
 
 ## Phases
 
@@ -61,11 +61,13 @@
 - [x] 2026-02-10: Header keyboard tab order uses sequential focus ids; avoid hash-based ids.
 - [x] 2026-02-10: Header keyboard shortcuts added for sort/reorder/resize/pin + focus return.
 - [x] 2026-02-10: Phase 3 adds contiguous grouping + aggregate summaries.
+- [x] 2026-02-10: Phase 4 adds controlled master-detail rows.
+- [x] 2026-02-10: Phase 5 adds controlled row edit mode with typed cell editors.
 
 ## Deferred Backlog
 - [x] Column pinning
 - [x] Column reorder
 - [x] Grouping + aggregation
-- [ ] Master-detail rows
-- [ ] Cell/row editors
+- [x] Master-detail rows
+- [x] Cell/row editors
 - [ ] PDF/XLSX export
