@@ -8,12 +8,12 @@ This guide covers native path dialogs:
 ## Platform Behavior
 
 - macOS: uses native AppKit dialogs.
-- Linux: uses `zenity` (`--file-selection` modes).
+- Linux: uses `zenity` or `kdialog` (first available).
 - other platforms: callback runs, returns `.error` with `error_code == 'unsupported'`.
 
 Linux notes:
-- requires `zenity` in `PATH`.
-- if `zenity` is missing, callback returns `.error` with `error_code == 'unsupported'`.
+- requires `zenity` or `kdialog` in `PATH`.
+- if both are missing, callback returns `.error` with `error_code == 'unsupported'`.
 - if display/session launch fails, callback returns `.error` with `error_code == 'internal'`.
 
 ## Result Model

@@ -4,6 +4,11 @@ import os
 
 const linux_dialog_separator = '\n'
 
+enum LinuxDialogTool {
+	zenity
+	kdialog
+}
+
 struct LinuxCommandResult {
 	exit_code int
 	stdout    string
@@ -11,14 +16,49 @@ struct LinuxCommandResult {
 }
 
 fn linux_open_dialog(cfg BridgeOpenCfg) BridgeDialogResult {
-	if !os.exists_in_system_path('zenity') {
-		return BridgeDialogResult{
-			status:        .error
-			error_code:    'unsupported'
-			error_message: 'zenity is required for native dialogs on Linux'
-		}
+	tool := linux_pick_dialog_tool() or { return linux_dialog_tool_error_result() }
+	return match tool {
+		.zenity { linux_open_dialog_zenity(cfg) }
+		.kdialog { linux_open_dialog_kdialog(cfg) }
+	}
+}
+
+fn linux_save_dialog(cfg BridgeSaveCfg) BridgeDialogResult {
+	tool := linux_pick_dialog_tool() or { return linux_dialog_tool_error_result() }
+	mut dialog_result := match tool {
+		.zenity { linux_save_dialog_zenity(cfg) }
+		.kdialog { linux_save_dialog_kdialog(cfg) }
+	}
+	if dialog_result.status != .ok || dialog_result.paths.len == 0 {
+		return dialog_result
 	}
 
+	mut selected := dialog_result.paths[0]
+	if cfg.default_extension.trim_space().len > 0 && os.file_ext(selected).len == 0 {
+		selected += '.${cfg.default_extension}'
+	}
+	if !cfg.confirm_overwrite && os.exists(selected) {
+		return BridgeDialogResult{
+			status:        .error
+			error_code:    'overwrite_disallowed'
+			error_message: 'file already exists'
+		}
+	}
+	return BridgeDialogResult{
+		status: .ok
+		paths:  [selected]
+	}
+}
+
+fn linux_folder_dialog(cfg BridgeFolderCfg) BridgeDialogResult {
+	tool := linux_pick_dialog_tool() or { return linux_dialog_tool_error_result() }
+	return match tool {
+		.zenity { linux_folder_dialog_zenity(cfg) }
+		.kdialog { linux_folder_dialog_kdialog(cfg) }
+	}
+}
+
+fn linux_open_dialog_zenity(cfg BridgeOpenCfg) BridgeDialogResult {
 	mut args := ['--file-selection']
 	if cfg.title.trim_space().len > 0 {
 		args << '--title=${cfg.title}'
@@ -46,15 +86,7 @@ fn linux_open_dialog(cfg BridgeOpenCfg) BridgeDialogResult {
 	return linux_dialog_result_from_command(result)
 }
 
-fn linux_save_dialog(cfg BridgeSaveCfg) BridgeDialogResult {
-	if !os.exists_in_system_path('zenity') {
-		return BridgeDialogResult{
-			status:        .error
-			error_code:    'unsupported'
-			error_message: 'zenity is required for native dialogs on Linux'
-		}
-	}
-
+fn linux_save_dialog_zenity(cfg BridgeSaveCfg) BridgeDialogResult {
 	mut args := ['--file-selection', '--save']
 	if cfg.title.trim_space().len > 0 {
 		args << '--title=${cfg.title}'
@@ -78,37 +110,10 @@ fn linux_save_dialog(cfg BridgeSaveCfg) BridgeDialogResult {
 			error_message: err.msg()
 		}
 	}
-	mut dialog_result := linux_dialog_result_from_command(result)
-	if dialog_result.status != .ok || dialog_result.paths.len == 0 {
-		return dialog_result
-	}
-
-	mut selected := dialog_result.paths[0]
-	if cfg.default_extension.trim_space().len > 0 && os.file_ext(selected).len == 0 {
-		selected += '.${cfg.default_extension}'
-	}
-	if !cfg.confirm_overwrite && os.exists(selected) {
-		return BridgeDialogResult{
-			status:        .error
-			error_code:    'overwrite_disallowed'
-			error_message: 'file already exists'
-		}
-	}
-	return BridgeDialogResult{
-		status: .ok
-		paths:  [selected]
-	}
+	return linux_dialog_result_from_command(result)
 }
 
-fn linux_folder_dialog(cfg BridgeFolderCfg) BridgeDialogResult {
-	if !os.exists_in_system_path('zenity') {
-		return BridgeDialogResult{
-			status:        .error
-			error_code:    'unsupported'
-			error_message: 'zenity is required for native dialogs on Linux'
-		}
-	}
-
+fn linux_folder_dialog_zenity(cfg BridgeFolderCfg) BridgeDialogResult {
 	mut args := ['--file-selection', '--directory']
 	if cfg.title.trim_space().len > 0 {
 		args << '--title=${cfg.title}'
@@ -128,14 +133,82 @@ fn linux_folder_dialog(cfg BridgeFolderCfg) BridgeDialogResult {
 	return linux_dialog_result_from_command(result)
 }
 
-fn linux_print_pdf_dialog(cfg BridgePrintCfg) BridgePrintResult {
-	if !os.exists_in_system_path('lp') {
-		return BridgePrintResult{
+fn linux_open_dialog_kdialog(cfg BridgeOpenCfg) BridgeDialogResult {
+	mut args := []string{}
+	if cfg.title.trim_space().len > 0 {
+		args << '--title'
+		args << cfg.title
+	}
+	args << '--getopenfilename'
+	start := linux_dialog_start_path(cfg.start_dir, '', false)
+	if start.len > 0 {
+		args << start
+	}
+	filter := linux_kdialog_filter_arg(cfg.extensions)
+	if filter.len > 0 {
+		args << filter
+	}
+	if cfg.allow_multiple {
+		args << '--multiple'
+		args << '--separate-output'
+	}
+	result := linux_run_command('kdialog', args) or {
+		return BridgeDialogResult{
 			status:        .error
-			error_code:    'unsupported'
-			error_message: 'lp is required for native printing on Linux'
+			error_code:    'internal'
+			error_message: err.msg()
 		}
 	}
+	return linux_dialog_result_from_command(result)
+}
+
+fn linux_save_dialog_kdialog(cfg BridgeSaveCfg) BridgeDialogResult {
+	mut args := []string{}
+	if cfg.title.trim_space().len > 0 {
+		args << '--title'
+		args << cfg.title
+	}
+	args << '--getsavefilename'
+	start := linux_dialog_start_path(cfg.start_dir, cfg.default_name, false)
+	if start.len > 0 {
+		args << start
+	}
+	filter := linux_kdialog_filter_arg(cfg.extensions)
+	if filter.len > 0 {
+		args << filter
+	}
+	result := linux_run_command('kdialog', args) or {
+		return BridgeDialogResult{
+			status:        .error
+			error_code:    'internal'
+			error_message: err.msg()
+		}
+	}
+	return linux_dialog_result_from_command(result)
+}
+
+fn linux_folder_dialog_kdialog(cfg BridgeFolderCfg) BridgeDialogResult {
+	mut args := []string{}
+	if cfg.title.trim_space().len > 0 {
+		args << '--title'
+		args << cfg.title
+	}
+	args << '--getexistingdirectory'
+	start := linux_dialog_start_path(cfg.start_dir, '', true)
+	if start.len > 0 {
+		args << start
+	}
+	result := linux_run_command('kdialog', args) or {
+		return BridgeDialogResult{
+			status:        .error
+			error_code:    'internal'
+			error_message: err.msg()
+		}
+	}
+	return linux_dialog_result_from_command(result)
+}
+
+fn linux_print_pdf_dialog(cfg BridgePrintCfg) BridgePrintResult {
 	pdf_path := cfg.pdf_path.trim_space()
 	if pdf_path.len == 0 {
 		return BridgePrintResult{
@@ -152,6 +225,43 @@ fn linux_print_pdf_dialog(cfg BridgePrintCfg) BridgePrintResult {
 		}
 	}
 
+	if os.exists_in_system_path('xdg-open') {
+		return linux_open_pdf_for_print('xdg-open', [pdf_path])
+	}
+	if os.exists_in_system_path('gio') {
+		return linux_open_pdf_for_print('gio', ['open', pdf_path])
+	}
+	if os.exists_in_system_path('lp') {
+		return linux_print_pdf_direct(cfg, pdf_path)
+	}
+	return BridgePrintResult{
+		status:        .error
+		error_code:    'unsupported'
+		error_message: 'native printing on Linux requires xdg-open, gio, or lp'
+	}
+}
+
+fn linux_open_pdf_for_print(command string, args []string) BridgePrintResult {
+	result := linux_run_command(command, args) or {
+		return BridgePrintResult{
+			status:        .error
+			error_code:    'io_error'
+			error_message: err.msg()
+		}
+	}
+	if result.exit_code == 0 {
+		return BridgePrintResult{
+			status: .cancel
+		}
+	}
+	return BridgePrintResult{
+		status:        .error
+		error_code:    'io_error'
+		error_message: linux_error_message(result)
+	}
+}
+
+fn linux_print_pdf_direct(cfg BridgePrintCfg, pdf_path string) BridgePrintResult {
 	mut args := []string{}
 	destination := linux_find_print_destination() or {
 		return BridgePrintResult{
@@ -212,7 +322,8 @@ fn linux_find_print_destination() !string {
 		default_result := linux_run_command('lpstat', ['-d']) or {
 			return error('failed to discover print destination: ${err.msg()}')
 		}
-		default_destination := linux_parse_lpstat_default(default_result.stdout)
+		default_destination := linux_parse_lpstat_default(default_result.stdout + '\n' +
+			default_result.stderr)
 		if default_destination.len > 0 {
 			return default_destination
 		}
@@ -227,6 +338,24 @@ fn linux_find_print_destination() !string {
 	}
 
 	return error('no print destination found; configure a default printer or set LPDEST')
+}
+
+fn linux_pick_dialog_tool() !LinuxDialogTool {
+	if os.exists_in_system_path('zenity') {
+		return .zenity
+	}
+	if os.exists_in_system_path('kdialog') {
+		return .kdialog
+	}
+	return error('no supported Linux native dialog tool found')
+}
+
+fn linux_dialog_tool_error_result() BridgeDialogResult {
+	return BridgeDialogResult{
+		status:        .error
+		error_code:    'unsupported'
+		error_message: 'native dialogs on Linux require zenity or kdialog'
+	}
 }
 
 fn linux_dialog_start_path(start_dir string, default_name string, is_directory bool) string {
@@ -254,6 +383,14 @@ fn linux_filter_arg(extensions []string) string {
 		patterns << '*.${ext}'
 	}
 	return patterns.join(' ')
+}
+
+fn linux_kdialog_filter_arg(extensions []string) string {
+	pattern := linux_filter_arg(extensions)
+	if pattern.len == 0 {
+		return ''
+	}
+	return '${pattern} | Files'
 }
 
 fn linux_dialog_result_from_command(result LinuxCommandResult) BridgeDialogResult {
@@ -344,10 +481,14 @@ fn linux_media_from_size(width f32, height f32) string {
 fn linux_parse_lpstat_default(output string) string {
 	for raw_line in output.split_into_lines() {
 		line := raw_line.trim_space()
-		lower := line.to_lower()
-		prefix := 'system default destination:'
-		if lower.starts_with(prefix) {
-			return line[prefix.len..].trim_space()
+		if line.len == 0 {
+			continue
+		}
+		if line.contains(':') {
+			candidate := line.all_after(':').trim_space()
+			if candidate.len > 0 {
+				return candidate
+			}
 		}
 	}
 	return ''

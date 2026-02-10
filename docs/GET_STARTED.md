@@ -189,7 +189,8 @@ Use native desktop file dialogs from `Window`:
 - `native_save_dialog`
 - `native_folder_dialog`
 
-On non-macOS, callbacks still fire and return `.error` with
+On Linux/macOS, native dialogs are supported.
+On other platforms, callbacks still fire and return `.error` with
 `error_code == 'unsupported'`.
 
 ## Masked Input

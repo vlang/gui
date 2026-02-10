@@ -5,6 +5,11 @@ fn test_linux_filter_arg_builds_patterns() {
 	assert filter == '*.png *.jpg *.txt'
 }
 
+fn test_linux_kdialog_filter_arg_builds_pattern() {
+	filter := linux_kdialog_filter_arg(['png', 'jpg'])
+	assert filter == '*.png *.jpg | Files'
+}
+
 fn test_linux_media_from_size_matches_orientation() {
 	assert linux_media_from_size(595, 842) == 'A4'
 	assert linux_media_from_size(842, 595) == 'A4'
@@ -31,6 +36,11 @@ fn test_linux_dialog_result_from_command_error_with_stderr() {
 fn test_linux_parse_lpstat_default_extracts_destination() {
 	name := linux_parse_lpstat_default('system default destination: Office_Printer\n')
 	assert name == 'Office_Printer'
+}
+
+fn test_linux_parse_lpstat_default_rejects_no_default_line() {
+	name := linux_parse_lpstat_default('no system default destination\n')
+	assert name == ''
 }
 
 fn test_linux_parse_lpstat_available_extracts_first_queue() {

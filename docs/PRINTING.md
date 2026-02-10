@@ -7,12 +7,14 @@ This guide covers:
 ## Platform Behavior
 
 - macOS: uses native print panel.
-- Linux: dispatches print job with `lp` (CUPS).
+- Linux: opens PDF in default app (`xdg-open`/`gio`) for user-initiated print dialog.
 - other platforms: callback runs and returns `.error` with `error_code == 'unsupported'`.
 
 Linux notes:
-- requires `lp` in `PATH` and a configured print destination.
-- Linux path does direct dispatch, so `.cancel` is generally not expected.
+- prefers `xdg-open`, then `gio open` to launch the PDF.
+- falls back to direct `lp` dispatch only if openers are unavailable.
+- with opener path, callback returns `.cancel` because user print/cancel outcome is not observable.
+- callback `.ok` currently means direct dispatch succeeded (`lp` fallback path).
 
 ## Export PDF
 
