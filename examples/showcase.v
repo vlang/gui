@@ -35,6 +35,9 @@ pub mut:
 	// menu
 	selected_menu_id string
 	search_text      string
+	// printing
+	printing_last_path string
+	printing_status    string
 	// range sliders
 	range_value f32 = 50
 	// select
@@ -303,6 +306,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['nodes', 'hierarchy', 'outline']
 		},
 		DemoEntry{
+			id:      'printing'
+			label:   'Printing'
+			group:   'foundations'
+			summary: 'Export current view to PDF and open native print dialog'
+			tags:    ['print', 'pdf', 'export']
+		},
+		DemoEntry{
 			id:      'menus'
 			label:   'Menus + Menubar'
 			group:   'navigation'
@@ -522,6 +532,12 @@ fn group_picker(app &ShowcaseApp) gui.View {
 					group_picker_item('Data', 'data', app),
 					group_picker_item('Nav', 'navigation', app),
 					group_picker_item('Feedback', 'feedback', app),
+				]
+			),
+			gui.row(
+				spacing: 3
+				padding: gui.padding_none
+				content: [
 					group_picker_item('Overlays', 'overlays', app),
 					group_picker_item('Foundations', 'foundations', app),
 				]
@@ -564,15 +580,34 @@ fn catalog_rows(entries []DemoEntry, app &ShowcaseApp) []gui.View {
 		return rows
 	}
 	for group in demo_groups() {
-		mut group_rows := []gui.View{}
+		mut group_entries := []DemoEntry{}
 		for entry in entries {
 			if entry.group == group.key {
-				group_rows << catalog_row(entry, app)
+				group_entries << entry
 			}
 		}
-		if group_rows.len == 0 {
+		if group_entries.len == 0 {
 			continue
 		}
+		group_entries.sort_with_compare(fn (a &DemoEntry, b &DemoEntry) int {
+			a_label := a.label.to_lower()
+			b_label := b.label.to_lower()
+			if a_label < b_label {
+				return -1
+			}
+			if a_label > b_label {
+				return 1
+			}
+			a_id := a.id.to_lower()
+			b_id := b.id.to_lower()
+			if a_id < b_id {
+				return -1
+			}
+			if a_id > b_id {
+				return 1
+			}
+			return 0
+		})
 		if rows.len > 0 {
 			rows << gui.row(
 				height:  6
@@ -581,8 +616,8 @@ fn catalog_rows(entries []DemoEntry, app &ShowcaseApp) []gui.View {
 			)
 		}
 		rows << gui.text(text: group.label, text_style: gui.theme().b5)
-		for row in group_rows {
-			rows << row
+		for entry in group_entries {
+			rows << catalog_row(entry, app)
 		}
 	}
 	return rows
@@ -672,6 +707,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'menus' { demo_menu(mut w) }
 		'dialog' { demo_dialog() }
 		'tree' { demo_tree(mut w) }
+		'printing' { demo_printing(w) }
 		'text' { demo_text() }
 		'rtf' { demo_rtf() }
 		'table' { demo_table(mut w) }
@@ -711,6 +747,7 @@ fn related_examples(id string) string {
 		'menus' { 'examples/menu_demo.v, examples/context_menu_demo.v' }
 		'dialog' { 'examples/dialogs.v' }
 		'tree' { 'examples/tree_view.v' }
+		'printing' { 'examples/printing.v' }
 		'text' { 'examples/fonts.v, examples/system_font.v' }
 		'rtf' { 'examples/rtf.v' }
 		'table' { 'examples/table_demo.v' }
@@ -1857,6 +1894,148 @@ fn demo_dialog_show_native_result(kind string, result gui.NativeDialogResult, mu
 
 fn demo_tree(mut w gui.Window) gui.View {
 	return tree_view_sample(mut w)
+}
+
+fn demo_printing(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	last_path := if app.printing_last_path.len > 0 {
+		app.printing_last_path
+	} else {
+		'(none)'
+	}
+	status := if app.printing_status.len > 0 {
+		app.printing_status
+	} else {
+		'No print action yet.'
+	}
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'Export this view to PDF, print the current view, or print the exported file.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.row(
+				spacing: gui.theme().spacing_small
+				content: [
+					gui.button(
+						content:  [gui.text(text: 'Export PDF')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							path := os.join_path(os.temp_dir(), 'v_gui_showcase_print_${time.now().unix_micro()}.pdf')
+							result := w.export_pdf(gui.PdfExportCfg{
+								path: path
+							})
+							mut app := w.state[ShowcaseApp]()
+							if result.is_ok() {
+								app.printing_last_path = result.path
+								app.printing_status = 'Exported: ${result.path}'
+							} else {
+								app.printing_status = 'Export failed: ${result.error_code}: ${result.error_message}'
+							}
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Print Current View')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.native_print_dialog(
+								title:   'Showcase Print Current View'
+								content: gui.NativePrintContent{
+									kind: .current_view_pdf
+								}
+								on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
+									mut app := w.state[ShowcaseApp]()
+									match result.status {
+										.ok {
+											app.printing_last_path = result.pdf_path
+											app.printing_status = 'Printed: ${result.pdf_path}'
+										}
+										.cancel {
+											app.printing_status = 'Print canceled.'
+										}
+										.error {
+											app.printing_status = 'Print failed: ${result.error_code}: ${result.error_message}'
+										}
+									}
+								}
+							)
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Print Exported PDF')]
+						disabled: app.printing_last_path.len == 0
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							path := w.state[ShowcaseApp]().printing_last_path
+							if path.len == 0 {
+								return
+							}
+							w.native_print_dialog(
+								title:   'Showcase Print Existing PDF'
+								content: gui.NativePrintContent{
+									kind:     .prepared_pdf_path
+									pdf_path: path
+								}
+								on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
+									mut app := w.state[ShowcaseApp]()
+									match result.status {
+										.ok {
+											app.printing_status = 'Printed: ${result.pdf_path}'
+										}
+										.cancel {
+											app.printing_status = 'Print canceled.'
+										}
+										.error {
+											app.printing_status = 'Print failed: ${result.error_code}: ${result.error_message}'
+										}
+									}
+								}
+							)
+						}
+					),
+				]
+			),
+			gui.text(
+				text:       'Last exported path: ${last_path}'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.text(text: 'Last result: ${status}', text_style: gui.theme().n5, mode: .wrap),
+			gui.column(
+				color:        gui.theme().color_panel
+				color_border: gui.theme().color_border
+				size_border:  1
+				padding:      gui.padding_small
+				spacing:      gui.theme().spacing_small
+				content:      [
+					gui.text(text: 'Preview content exported to PDF', text_style: gui.theme().b5),
+					gui.text(
+						text:       'Shapes, text, and layout in this panel are included in exported output.'
+						text_style: gui.theme().n5
+						mode:       .wrap
+					),
+					gui.row(
+						spacing: gui.theme().spacing_small
+						content: [
+							gui.rectangle(
+								width:  80
+								height: 40
+								color:  gui.cornflower_blue
+								radius: 4
+							),
+							gui.rectangle(
+								width:        80
+								height:       40
+								color:        gui.color_transparent
+								color_border: gui.theme().color_active
+								size_border:  2
+								radius:       4
+							),
+						]
+					),
+				]
+			),
+		]
+	)
 }
 
 fn demo_text() gui.View {
