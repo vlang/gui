@@ -142,6 +142,7 @@ v install gui
 | [TABLES.md](docs/TABLES.md) | Table widget and data display |
 | [GRADIENTS.md](docs/GRADIENTS.md) | Linear and radial gradients |
 | [SHADERS.md](docs/SHADERS.md) | Custom fragment shaders |
+| [PRINTING.md](docs/PRINTING.md) | PDF export and native print dialog |
 
 Generate API docs with:
 ```bash
@@ -160,6 +161,7 @@ v run examples/theme_designer.v # Build custom themes
 v run examples/tiger.v          # SVG rendering demo
 v run examples/markdown.v       # Markdown rendering
 v run examples/dialogs.v        # Custom + native dialogs
+v run examples/printing.v       # PDF export + native print
 v run examples/input_masks.v    # Input mask presets and custom tokens
 v run examples/table_demo.v     # Table widget demo
 v run examples/custom_shader.v  # Custom fragment shaders

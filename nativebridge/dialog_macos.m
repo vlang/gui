@@ -1,3 +1,7 @@
+// .m is required: this file uses Objective-C AppKit/Foundation APIs.
+// V compiles it via `#flag darwin ... dialog_macos.m` in c_bindings.v.
+// .mm is unnecessary because no C++ interop is used here.
+
 #import <AppKit/AppKit.h>
 #import <Foundation/Foundation.h>
 #include <stdlib.h>
