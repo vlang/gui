@@ -9,6 +9,72 @@
 
 #import "print_bridge.h"
 
+@interface GuiNativePdfPrintView : NSView
+
+@property(nonatomic, strong) NSPDFImageRep* rep;
+@property(nonatomic, assign) NSInteger page_count;
+
+- (instancetype)initWithPDFRep:(NSPDFImageRep*)rep frame:(NSRect)frame;
+
+@end
+
+@implementation GuiNativePdfPrintView
+
+- (instancetype)initWithPDFRep:(NSPDFImageRep*)rep frame:(NSRect)frame {
+    self = [super initWithFrame:frame];
+    if (self != nil) {
+        self.rep = rep;
+        NSInteger count = (NSInteger)[rep pageCount];
+        self.page_count = count > 0 ? count : 1;
+    }
+    return self;
+}
+
+- (BOOL)knowsPageRange:(NSRangePointer)range {
+    if (range != NULL) {
+        range->location = 1;
+        range->length = self.page_count;
+    }
+    return YES;
+}
+
+- (NSRect)rectForPage:(NSInteger)page {
+    NSInteger page_index = page - 1;
+    if (page_index < 0) {
+        page_index = 0;
+    }
+    if (page_index >= self.page_count) {
+        page_index = self.page_count - 1;
+    }
+    [self.rep setCurrentPage:(int)page_index];
+    return [self bounds];
+}
+
+- (void)drawRect:(NSRect)dirtyRect {
+    (void)dirtyRect;
+    NSRect bounds = [self bounds];
+    NSSize source_size = [self.rep size];
+    if (source_size.width <= 0.0 || source_size.height <= 0.0) {
+        [self.rep drawInRect:bounds];
+        return;
+    }
+
+    CGFloat scale_x = bounds.size.width / source_size.width;
+    CGFloat scale_y = bounds.size.height / source_size.height;
+    CGFloat scale = MIN(scale_x, scale_y);
+
+    NSSize draw_size = NSMakeSize(source_size.width * scale, source_size.height * scale);
+    NSRect target = NSMakeRect(
+        bounds.origin.x + (bounds.size.width - draw_size.width) * 0.5,
+        bounds.origin.y + (bounds.size.height - draw_size.height) * 0.5,
+        draw_size.width,
+        draw_size.height
+    );
+    [self.rep drawInRect:target];
+}
+
+@end
+
 enum {
     gui_native_print_status_ok = 0,
     gui_native_print_status_cancel = 1,
@@ -101,13 +167,6 @@ GuiNativePrintResult gui_native_print_pdf_dialog(
             return gui_print_result_error("render_error", "failed to decode PDF data");
         }
 
-        NSImage* image = [[NSImage alloc] initWithSize:rep.size];
-        [image addRepresentation:rep];
-        NSImageView* image_view = [[NSImageView alloc] initWithFrame:
-            NSMakeRect(0, 0, rep.size.width, rep.size.height)];
-        [image_view setImage:image];
-        [image_view setImageScaling:NSImageScaleAxesIndependently];
-
         NSPrintInfo* print_info = [[NSPrintInfo sharedPrintInfo] copy];
         if (paper_width > 0.0 && paper_height > 0.0) {
             [print_info setPaperSize:NSMakeSize((CGFloat)paper_width, (CGFloat)paper_height)];
@@ -121,8 +180,18 @@ GuiNativePrintResult gui_native_print_pdf_dialog(
         [print_info setOrientation:
             orientation == 1 ? NSPaperOrientationLandscape : NSPaperOrientationPortrait];
 
+        CGFloat view_width = (CGFloat)paper_width - (CGFloat)margin_left - (CGFloat)margin_right;
+        CGFloat view_height = (CGFloat)paper_height - (CGFloat)margin_top - (CGFloat)margin_bottom;
+        if (view_width <= 0.0 || view_height <= 0.0) {
+            view_width = rep.size.width > 0.0 ? rep.size.width : 612.0;
+            view_height = rep.size.height > 0.0 ? rep.size.height : 792.0;
+        }
+        GuiNativePdfPrintView* pdf_view = [[GuiNativePdfPrintView alloc]
+            initWithPDFRep:rep
+            frame:NSMakeRect(0, 0, view_width, view_height)];
+
         NSPrintOperation* operation =
-            [NSPrintOperation printOperationWithView:image_view printInfo:print_info];
+            [NSPrintOperation printOperationWithView:pdf_view printInfo:print_info];
         [operation setShowsPrintPanel:YES];
         [operation setShowsProgressPanel:YES];
 

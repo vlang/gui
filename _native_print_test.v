@@ -8,6 +8,14 @@ fn test_nativebridge_print_module_loads() {
 	_ = nativebridge.BridgePrintStatus.ok
 }
 
+fn test_native_print_supported_matches_platform() {
+	$if macos {
+		assert native_print_supported()
+	} $else {
+		assert !native_print_supported()
+	}
+}
+
 fn test_validate_native_print_cfg_requires_pdf_path_for_prepared_content() {
 	validate_native_print_cfg(NativePrintDialogCfg{
 		content: NativePrintContent{

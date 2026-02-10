@@ -91,3 +91,33 @@ fn test_export_pdf_writes_file() {
 
 	os.rm(path) or {}
 }
+
+fn test_pdf_render_document_honors_svg_clip_groups() {
+	renderers := [
+		Renderer(DrawSvg{
+			triangles:    [f32(0), 0, 30, 0, 0, 30]
+			color:        gg.Color{255, 0, 0, 255}
+			x:            10
+			y:            10
+			scale:        1
+			is_clip_mask: true
+			clip_group:   4
+		}),
+		Renderer(DrawSvg{
+			triangles:  [f32(0), 0, 40, 0, 0, 40]
+			color:      gg.Color{0, 0, 255, 255}
+			x:          20
+			y:          20
+			scale:      1
+			clip_group: 4
+		}),
+	]
+
+	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
+		path: 'unused.pdf'
+	}) or { panic(err.msg()) }
+
+	assert pdf.contains('W n')
+	assert !pdf.contains('1 0 0 rg')
+	assert pdf.contains('0 0 1 rg')
+}

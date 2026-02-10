@@ -10,6 +10,11 @@ fn native_print_dialog_impl(mut w Window, cfg NativePrintDialogCfg) {
 			err.msg()))
 		return
 	}
+	if !native_print_supported() {
+		native_dispatch_print_done(mut w, cfg.on_done, native_print_error_result('unsupported',
+			'native print is not implemented on this platform'))
+		return
+	}
 
 	pdf_path := native_print_resolve_pdf_path(mut w, cfg) or {
 		code := native_print_resolve_error_code(cfg.content.kind, err.msg())
@@ -34,6 +39,14 @@ fn native_print_dialog_impl(mut w Window, cfg NativePrintDialogCfg) {
 	})
 	result := native_print_result_from_bridge(bridge_result, pdf_path)
 	native_dispatch_print_done(mut w, cfg.on_done, result)
+}
+
+fn native_print_supported() bool {
+	$if macos {
+		return true
+	} $else {
+		return false
+	}
 }
 
 fn native_print_resolve_error_code(kind NativePrintContentKind, message string) string {

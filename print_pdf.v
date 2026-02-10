@@ -177,7 +177,7 @@ fn pdf_draw_image_placeholder(mut out strings.Builder, ctx PdfRenderContext, ima
 }
 
 fn pdf_draw_svg(mut out strings.Builder, ctx PdfRenderContext, renderer DrawSvg) {
-	if renderer.color.a == 0 || renderer.triangles.len < 6 {
+	if renderer.is_clip_mask || renderer.color.a == 0 || renderer.triangles.len < 6 {
 		return
 	}
 	pdf_set_fill_color(mut out, renderer.color)
@@ -192,6 +192,72 @@ fn pdf_draw_svg(mut out strings.Builder, ctx PdfRenderContext, renderer DrawSvg)
 		out.writeln('${pdf_num(x0)} ${pdf_num(y0)} m ${pdf_num(x1)} ${pdf_num(y1)} l ${pdf_num(x2)} ${pdf_num(y2)} l h f')
 		i += 6
 	}
+}
+
+fn pdf_append_svg_triangles_path(mut out strings.Builder, ctx PdfRenderContext, renderer DrawSvg) {
+	if renderer.triangles.len < 6 {
+		return
+	}
+	mut i := 0
+	for i < renderer.triangles.len - 5 {
+		x0 := ctx.map_x(renderer.x + renderer.triangles[i] * renderer.scale)
+		y0 := ctx.map_y(renderer.y + renderer.triangles[i + 1] * renderer.scale)
+		x1 := ctx.map_x(renderer.x + renderer.triangles[i + 2] * renderer.scale)
+		y1 := ctx.map_y(renderer.y + renderer.triangles[i + 3] * renderer.scale)
+		x2 := ctx.map_x(renderer.x + renderer.triangles[i + 4] * renderer.scale)
+		y2 := ctx.map_y(renderer.y + renderer.triangles[i + 5] * renderer.scale)
+		out.writeln('${pdf_num(x0)} ${pdf_num(y0)} m ${pdf_num(x1)} ${pdf_num(y1)} l ${pdf_num(x2)} ${pdf_num(y2)} l h')
+		i += 6
+	}
+}
+
+fn pdf_draw_svg_clip_group(renderers []Renderer, idx int, mut out strings.Builder, ctx PdfRenderContext) int {
+	mut next_idx := idx
+	if idx < 0 || idx >= renderers.len {
+		return idx + 1
+	}
+	first := renderers[idx] as DrawSvg
+	group := first.clip_group
+
+	mut masks := []DrawSvg{}
+	mut content := []DrawSvg{}
+
+	for next_idx < renderers.len {
+		if renderers[next_idx] is DrawSvg {
+			svg := renderers[next_idx] as DrawSvg
+			if svg.clip_group == group {
+				if svg.is_clip_mask {
+					masks << svg
+				} else {
+					content << svg
+				}
+				next_idx++
+				continue
+			}
+		}
+		break
+	}
+
+	if content.len == 0 {
+		return next_idx
+	}
+	if masks.len == 0 {
+		for svg in content {
+			pdf_draw_svg(mut out, ctx, svg)
+		}
+		return next_idx
+	}
+
+	out.writeln('q')
+	for svg in masks {
+		pdf_append_svg_triangles_path(mut out, ctx, svg)
+	}
+	out.writeln('W n')
+	for svg in content {
+		pdf_draw_svg(mut out, ctx, svg)
+	}
+	out.writeln('Q')
+	return next_idx
 }
 
 fn pdf_draw_text(mut out strings.Builder, ctx PdfRenderContext, text string, x f32, y f32, size f32, color gg.Color) {
@@ -218,7 +284,10 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext) string {
 	mut clip_active := false
 	out.writeln('q')
 
-	for renderer in renderers {
+	mut i := 0
+	for i < renderers.len {
+		renderer := renderers[i]
+		mut advance := true
 		match renderer {
 			DrawClip {
 				if clip_active {
@@ -226,71 +295,67 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext) string {
 				}
 				if renderer.width <= 0 || renderer.height <= 0 {
 					clip_active = false
-					continue
+				} else {
+					x := ctx.map_x(renderer.x)
+					y := ctx.map_rect_y(renderer.y, renderer.height)
+					w := renderer.width * ctx.scale
+					h := renderer.height * ctx.scale
+					out.writeln('q')
+					out.writeln('${pdf_num(x)} ${pdf_num(y)} ${pdf_num(w)} ${pdf_num(h)} re W n')
+					clip_active = true
 				}
-				x := ctx.map_x(renderer.x)
-				y := ctx.map_rect_y(renderer.y, renderer.height)
-				w := renderer.width * ctx.scale
-				h := renderer.height * ctx.scale
-				out.writeln('q')
-				out.writeln('${pdf_num(x)} ${pdf_num(y)} ${pdf_num(w)} ${pdf_num(h)} re W n')
-				clip_active = true
 			}
 			DrawRect {
-				if renderer.w <= 0 || renderer.h <= 0 || renderer.color.a == 0 {
-					continue
-				}
-				x := ctx.map_x(renderer.x)
-				y := ctx.map_rect_y(renderer.y, renderer.h)
-				w := renderer.w * ctx.scale
-				h := renderer.h * ctx.scale
-				if renderer.style == .fill {
-					pdf_set_fill_color(mut out, renderer.color)
-					out.writeln('${pdf_num(x)} ${pdf_num(y)} ${pdf_num(w)} ${pdf_num(h)} re f')
-				} else {
-					pdf_set_stroke_color(mut out, renderer.color)
-					out.writeln('1 w')
-					out.writeln('${pdf_num(x)} ${pdf_num(y)} ${pdf_num(w)} ${pdf_num(h)} re S')
+				if renderer.w > 0 && renderer.h > 0 && renderer.color.a > 0 {
+					x := ctx.map_x(renderer.x)
+					y := ctx.map_rect_y(renderer.y, renderer.h)
+					w := renderer.w * ctx.scale
+					h := renderer.h * ctx.scale
+					if renderer.style == .fill {
+						pdf_set_fill_color(mut out, renderer.color)
+						out.writeln('${pdf_num(x)} ${pdf_num(y)} ${pdf_num(w)} ${pdf_num(h)} re f')
+					} else {
+						pdf_set_stroke_color(mut out, renderer.color)
+						out.writeln('1 w')
+						out.writeln('${pdf_num(x)} ${pdf_num(y)} ${pdf_num(w)} ${pdf_num(h)} re S')
+					}
 				}
 			}
 			DrawStrokeRect {
-				if renderer.w <= 0 || renderer.h <= 0 || renderer.color.a == 0 {
-					continue
+				if renderer.w > 0 && renderer.h > 0 && renderer.color.a > 0 {
+					x := ctx.map_x(renderer.x)
+					y := ctx.map_rect_y(renderer.y, renderer.h)
+					w := renderer.w * ctx.scale
+					h := renderer.h * ctx.scale
+					pdf_set_stroke_color(mut out, renderer.color)
+					line_width := f32_max(0.25, renderer.thickness * ctx.scale)
+					out.writeln('${pdf_num(line_width)} w')
+					out.writeln('${pdf_num(x)} ${pdf_num(y)} ${pdf_num(w)} ${pdf_num(h)} re S')
 				}
-				x := ctx.map_x(renderer.x)
-				y := ctx.map_rect_y(renderer.y, renderer.h)
-				w := renderer.w * ctx.scale
-				h := renderer.h * ctx.scale
-				pdf_set_stroke_color(mut out, renderer.color)
-				line_width := f32_max(0.25, renderer.thickness * ctx.scale)
-				out.writeln('${pdf_num(line_width)} w')
-				out.writeln('${pdf_num(x)} ${pdf_num(y)} ${pdf_num(w)} ${pdf_num(h)} re S')
 			}
 			DrawLine {
-				if renderer.cfg.color.a == 0 {
-					continue
+				if renderer.cfg.color.a > 0 {
+					pdf_set_stroke_color(mut out, renderer.cfg.color)
+					line_width := f32_max(0.25, renderer.cfg.thickness * ctx.scale)
+					out.writeln('${pdf_num(line_width)} w')
+					x0 := ctx.map_x(renderer.x)
+					y0 := ctx.map_y(renderer.y)
+					x1 := ctx.map_x(renderer.x1)
+					y1 := ctx.map_y(renderer.y1)
+					out.writeln('${pdf_num(x0)} ${pdf_num(y0)} m ${pdf_num(x1)} ${pdf_num(y1)} l S')
 				}
-				pdf_set_stroke_color(mut out, renderer.cfg.color)
-				line_width := f32_max(0.25, renderer.cfg.thickness * ctx.scale)
-				out.writeln('${pdf_num(line_width)} w')
-				x0 := ctx.map_x(renderer.x)
-				y0 := ctx.map_y(renderer.y)
-				x1 := ctx.map_x(renderer.x1)
-				y1 := ctx.map_y(renderer.y1)
-				out.writeln('${pdf_num(x0)} ${pdf_num(y0)} m ${pdf_num(x1)} ${pdf_num(y1)} l S')
 			}
 			DrawCircle {
-				if renderer.color.a == 0 {
-					continue
+				if renderer.color.a > 0 {
+					if renderer.fill {
+						pdf_set_fill_color(mut out, renderer.color)
+					} else {
+						pdf_set_stroke_color(mut out, renderer.color)
+						out.writeln('1 w')
+					}
+					pdf_draw_circle(mut out, ctx, renderer.x, renderer.y, renderer.radius,
+						renderer.fill)
 				}
-				if renderer.fill {
-					pdf_set_fill_color(mut out, renderer.color)
-				} else {
-					pdf_set_stroke_color(mut out, renderer.color)
-					out.writeln('1 w')
-				}
-				pdf_draw_circle(mut out, ctx, renderer.x, renderer.y, renderer.radius,
-					renderer.fill)
 			}
 			DrawText {
 				pdf_draw_text(mut out, ctx, renderer.text, renderer.x, renderer.y, renderer.cfg.style.size,
@@ -307,12 +372,20 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext) string {
 				}
 			}
 			DrawSvg {
-				pdf_draw_svg(mut out, ctx, renderer)
+				if renderer.clip_group > 0 {
+					i = pdf_draw_svg_clip_group(renderers, i, mut out, ctx)
+					advance = false
+				} else {
+					pdf_draw_svg(mut out, ctx, renderer)
+				}
 			}
 			DrawImage {
 				pdf_draw_image_placeholder(mut out, ctx, renderer)
 			}
 			DrawShadow, DrawBlur, DrawGradient, DrawGradientBorder, DrawCustomShader, DrawNone {}
+		}
+		if advance {
+			i++
 		}
 	}
 
