@@ -18,7 +18,7 @@ pub mut:
 	light_theme        bool
 	nav_query          string
 	selected_group     string = 'all'
-	selected_component string = 'button'
+	selected_component string = 'welcome'
 	// buttons
 	button_clicks int
 	// inputs
@@ -119,6 +119,10 @@ struct DemoGroup {
 fn demo_groups() []DemoGroup {
 	return [
 		DemoGroup{
+			key:   'welcome'
+			label: 'Welcome'
+		},
+		DemoGroup{
 			key:   'input'
 			label: 'Input'
 		},
@@ -151,6 +155,13 @@ fn demo_groups() []DemoGroup {
 
 fn demo_entries() []DemoEntry {
 	return [
+		DemoEntry{
+			id:      'welcome'
+			label:   'Welcome'
+			group:   'welcome'
+			summary: 'Start here for a quick introduction to v-gui and this showcase.'
+			tags:    ['start', 'intro', 'overview']
+		},
 		DemoEntry{
 			id:      'color_picker'
 			label:   'Color Picker'
@@ -498,16 +509,17 @@ fn group_picker(app &ShowcaseApp) gui.View {
 				spacing: 3
 				padding: gui.padding_none
 				content: [
+					group_picker_item('Welcome', 'welcome', app),
 					group_picker_item('All', 'all', app),
 					group_picker_item('Input', 'input', app),
 					group_picker_item('Selection', 'selection', app),
-					group_picker_item('Data', 'data', app),
 				]
 			),
 			gui.row(
 				spacing: 3
 				padding: gui.padding_none
 				content: [
+					group_picker_item('Data', 'data', app),
 					group_picker_item('Nav', 'navigation', app),
 					group_picker_item('Feedback', 'feedback', app),
 					group_picker_item('Overlays', 'overlays', app),
@@ -625,7 +637,6 @@ fn detail_panel(mut w gui.Window) gui.View {
 	mut content := []gui.View{}
 	content << view_title(entry.label)
 	content << gui.text(text: entry.summary, text_style: gui.theme().n3)
-	content << gui.text(text: 'Group: ${entry.group}', text_style: gui.theme().n5)
 	content << component_demo(mut w, entry.id)
 	content << line()
 	content << gui.text(
@@ -646,6 +657,7 @@ fn detail_panel(mut w gui.Window) gui.View {
 
 fn component_demo(mut w gui.Window, id string) gui.View {
 	return match id {
+		'welcome' { demo_welcome(mut w) }
 		'button' { demo_button(mut w) }
 		'input' { demo_input(w) }
 		'toggle' { demo_toggle(w) }
@@ -686,6 +698,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 
 fn related_examples(id string) string {
 	return match id {
+		'welcome' { 'examples/showcase.v, examples/README.md' }
 		'button' { 'examples/buttons.v' }
 		'input' { 'examples/inputs.v, examples/multiline_input.v' }
 		'toggle', 'switch' { 'examples/toggles.v' }
@@ -1197,6 +1210,32 @@ fn layout_boxes(expanded bool, color gui.Color) []gui.View {
 		gui.row(id: 'box_c', width: 40, height: 40, color: color, radius: 4),
 	]
 }
+
+const showcase_welcome_source = '# 👋 Welcome to v-gui
+
+`v-gui` is a declarative GUI framework for V focused on building desktop interfaces with
+clear, composable code. Views are described with rows, columns, and controls, while the
+framework handles layout, painting, focus, and event routing.
+
+The toolkit targets real app workflows, not toy demos. It includes built-in theming,
+keyboard-first navigation, text input with IME support, and modern rendering features so
+native-feeling UI can be built quickly and maintained without UI boilerplate.
+
+## ✨ Top Features
+
+- Declarative layout primitives (`row`, `column`, fixed/fill sizing, spacing, padding)
+- Rich control set (inputs, selects, tables, tabs, dialogs, trees, date pickers, more)
+- Theme system with light/dark palettes and consistent component styling
+- Rendering effects: gradients, shadows, blur, SVG, markdown, and custom shaders
+- Animation support for tween, spring, keyframe, and layout transitions
+- Accessibility and productivity features: focus ids, keyboard nav, IME-aware input
+
+## 🧭 About Showcase
+
+This program is an interactive component catalog.
+Use the left panel to filter categories and components, then inspect live demos on
+the right.
+Each demo includes related example files for deeper reference.'
 
 const showcase_markdown_source = '# Markdown Demo
 
@@ -2357,7 +2396,7 @@ fn demo_box_shadows() gui.View {
 				mode:       .wrap
 			),
 			gui.row(
-				spacing: gui.theme().spacing_medium
+				spacing: 40
 				content: [
 					showcase_shadow_card('Soft depth', 'Blur 12, Y 3', card_color, gui.Color{0, 0, 0, 40},
 						0, 3, 12, 0),
@@ -2366,7 +2405,7 @@ fn demo_box_shadows() gui.View {
 				]
 			),
 			gui.row(
-				spacing: gui.theme().spacing_medium
+				spacing: 40
 				content: [
 					showcase_shadow_card('Directional', 'Blur 10, X 8, Y 8', card_color,
 						gui.Color{0, 0, 0, 65}, 8, 8, 10, 0),
@@ -2380,7 +2419,7 @@ fn demo_box_shadows() gui.View {
 				mode:       .wrap
 			),
 			gui.row(
-				spacing: gui.theme().spacing_medium
+				spacing: 40
 				content: [
 					showcase_shadow_card('Spread 0', 'spread_radius: 0', card_color, gui.Color{0, 0, 0, 70},
 						4, 6, 14, 0),
@@ -2694,6 +2733,22 @@ fn demo_markdown(mut w gui.Window) gui.View {
 			w.markdown(
 				id:      'catalog_markdown'
 				source:  showcase_markdown_source
+				mode:    .wrap
+				padding: gui.padding_none
+			),
+		]
+	)
+}
+
+fn demo_welcome(mut w gui.Window) gui.View {
+	return gui.column(
+		sizing:  gui.fill_fit
+		padding: gui.padding_small
+		color:   gui.theme().color_panel
+		content: [
+			w.markdown(
+				id:      'catalog_welcome'
+				source:  showcase_welcome_source
 				mode:    .wrap
 				padding: gui.padding_none
 			),
