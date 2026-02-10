@@ -200,6 +200,32 @@ pub:
 	subheading_style   TextStyle  = text_style_dark
 }
 
+pub struct DataGridStyle {
+pub:
+	color_background    Color     = color_interior_dark
+	color_header        Color     = color_panel_dark
+	color_header_hover  Color     = color_hover_dark
+	color_filter        Color     = color_interior_dark
+	color_quick_filter  Color     = color_panel_dark
+	color_row_hover     Color     = color_hover_dark
+	color_row_alt       Color     = color_transparent
+	color_row_selected  Color     = color_select_dark
+	color_border        Color     = color_border_dark
+	color_resize_handle Color     = color_border_dark
+	color_resize_active Color     = color_select_dark
+	padding_cell        Padding   = padding_two_five
+	padding_header      Padding   = padding_two_five
+	padding_filter      Padding   = padding_none
+	size_border         f32       = size_border
+	radius              f32       = radius_small
+	text_style          TextStyle = text_style_dark
+	text_style_header   TextStyle = TextStyle{
+		...text_style_dark
+		typeface: .bold
+	}
+	text_style_filter   TextStyle = text_style_dark
+}
+
 pub struct MenubarStyle {
 pub:
 	width_submenu_min   f32        = 50

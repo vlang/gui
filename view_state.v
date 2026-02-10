@@ -80,6 +80,15 @@ mut:
 	color_picker_state       BoundedMap[string, ColorPickerState] = BoundedMap[string, ColorPickerState]{
 		max_size: 20
 	}
+	data_grid_col_widths     BoundedMap[string, &DataGridColWidths] = BoundedMap[string, &DataGridColWidths]{
+		max_size: 50
+	}
+	data_grid_resize_state   BoundedMap[string, DataGridResizeState] = BoundedMap[string, DataGridResizeState]{
+		max_size: 20
+	}
+	data_grid_range_state    BoundedMap[string, DataGridRangeState] = BoundedMap[string, DataGridRangeState]{
+		max_size: 20
+	}
 	splitter_runtime_state   BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
 		max_size: 20
 	}
@@ -98,6 +107,28 @@ pub:
 struct SplitterRuntimeState {
 mut:
 	last_handle_click_frame u64
+}
+
+// DataGridResizeState stores transient state for active column resizing.
+struct DataGridResizeState {
+mut:
+	active            bool
+	col_id            string
+	start_mouse_x     f32
+	start_width       f32
+	last_click_frame  u64
+	last_click_col_id string
+}
+
+// DataGridColWidths stores per-column runtime widths for a grid id.
+struct DataGridColWidths {
+	widths map[string]f32
+}
+
+// DataGridRangeState stores transient range-selection anchor state.
+struct DataGridRangeState {
+mut:
+	anchor_row_id string
 }
 
 // TableColCache stores cached column widths and hash for invalidation

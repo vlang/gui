@@ -72,6 +72,30 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
 		}
+		data_grid_style:    DataGridStyle{
+			color_background:    cfg.color_interior
+			color_header:        cfg.color_panel
+			color_header_hover:  cfg.color_hover
+			color_filter:        cfg.color_interior
+			color_quick_filter:  cfg.color_panel
+			color_row_hover:     cfg.color_hover
+			color_row_alt:       color_transparent
+			color_row_selected:  cfg.color_select
+			color_border:        cfg.color_border
+			color_resize_handle: cfg.color_border
+			color_resize_active: cfg.color_border_focus
+			padding_cell:        padding_two_five
+			padding_header:      padding_two_five
+			padding_filter:      padding_none
+			size_border:         cfg.size_border
+			radius:              cfg.radius_small
+			text_style:          cfg.text_style
+			text_style_header:   TextStyle{
+				...cfg.text_style
+				typeface: .bold
+			}
+			text_style_filter:   cfg.text_style
+		}
 		dialog_style:       DialogStyle{
 			color:              cfg.color_panel
 			color_border:       cfg.color_border
@@ -480,13 +504,19 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		// listbox
-		list_box_style: ListBoxStyle{
+		list_box_style:  ListBoxStyle{
 			...theme.list_box_style
 			subheading_style: TextStyle{
 				...bold
 			}
 		}
-		tab_style:      TabStyle{
+		data_grid_style: DataGridStyle{
+			...theme.data_grid_style
+			text_style:        normal
+			text_style_header: bold
+			text_style_filter: normal
+		}
+		tab_style:       TabStyle{
 			...theme.tab_style
 			text_style:          normal
 			text_style_selected: bold
@@ -606,6 +636,14 @@ pub fn (t Theme) with_date_picker_style(style DatePickerStyle) Theme {
 	return Theme{
 		...t
 		date_picker_style: style
+	}
+}
+
+// with_data_grid_style returns a new Theme with the data grid style replaced.
+pub fn (t Theme) with_data_grid_style(style DataGridStyle) Theme {
+	return Theme{
+		...t
+		data_grid_style: style
 	}
 }
 
@@ -871,6 +909,19 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_border:       border
 			color_border_focus: border_focus
 			color_select:       sel
+		}
+		data_grid_style:    DataGridStyle{
+			...t.data_grid_style
+			color_background:    interior
+			color_header:        panel
+			color_header_hover:  hover
+			color_filter:        interior
+			color_quick_filter:  panel
+			color_row_hover:     hover
+			color_row_selected:  sel
+			color_border:        border
+			color_resize_handle: border
+			color_resize_active: border_focus
 		}
 		menubar_style:      MenubarStyle{
 			...t.menubar_style

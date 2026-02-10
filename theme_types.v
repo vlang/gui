@@ -22,6 +22,7 @@ pub:
 	color_picker_style ColorPickerStyle
 	container_style    ContainerStyle
 	date_picker_style  DatePickerStyle
+	data_grid_style    DataGridStyle
 	dialog_style       DialogStyle
 	expand_panel_style ExpandPanelStyle
 	input_style        InputStyle

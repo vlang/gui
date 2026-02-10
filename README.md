@@ -45,7 +45,7 @@ V is a simple language. It deserves a simple UI framework.
 **Widgets (30+)**
 - Text, inputs, textareas
 - Buttons, toggles, switches, checkboxes, radio buttons
-- Dropdowns, listboxes, tables, trees, markdown
+- Dropdowns, listboxes, tables, data grids, trees, markdown
 - Menus, menubars, tabs, splitters, dialogs
 - Progress bars, tooltips, date pickers
 - Native open/save/folder dialogs (macOS + Linux)
@@ -141,6 +141,7 @@ v install gui
 | [SVG.md](docs/SVG.md) | Vector graphics and icon rendering |
 | [MARKDOWN.md](docs/MARKDOWN.md) | Markdown rendering |
 | [TABLES.md](docs/TABLES.md) | Table widget and data display |
+| [DATA_GRID.md](docs/DATA_GRID.md) | Data grid widget and API |
 | [GRADIENTS.md](docs/GRADIENTS.md) | Linear and radial gradients |
 | [SHADERS.md](docs/SHADERS.md) | Custom fragment shaders |
 | [PRINTING.md](docs/PRINTING.md) | PDF export and native print dialog |
@@ -168,6 +169,7 @@ v run examples/printing.v       # PDF export + native print
 v run examples/input_masks.v    # Input mask presets and custom tokens
 v run examples/text_transform.v # Rotated and affine text
 v run examples/table_demo.v     # Table widget demo
+v run examples/data_grid_demo.v # Data grid widget demo
 v run examples/custom_shader.v  # Custom fragment shaders
 v run examples/snake.v          # A complete game
 ```
