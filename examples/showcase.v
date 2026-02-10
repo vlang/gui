@@ -1559,19 +1559,90 @@ fn demo_radio_group(w &gui.Window) gui.View {
 
 fn demo_select(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
-	return w.select(
-		id:              'catalog_select'
-		min_width:       250
-		max_width:       250
-		select:          app.selected_1
-		placeholder:     'Pick one or more'
-		select_multiple: true
-		options:         ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California']
-		on_select:       fn (s []string, mut e gui.Event, mut w gui.Window) {
-			mut app := w.state[ShowcaseApp]()
-			app.selected_1 = s
-			e.is_handled = true
-		}
+	multi_value := if app.selected_1.len > 0 { app.selected_1.join(', ') } else { 'none' }
+	single_value := if app.selected_2.len > 0 { app.selected_2[0] } else { 'none' }
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'Keyboard: Tab to focus, Space/Enter to open, arrows to move, Escape to close.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.row(
+				v_align: .top
+				spacing: gui.theme().spacing_large
+				content: [
+					gui.column(
+						spacing: gui.theme().spacing_small
+						content: [
+							gui.text(text: 'Multi-select', text_style: gui.theme().b5),
+							w.select(
+								id:              'catalog_select_multi'
+								id_focus:        9120
+								min_width:       280
+								max_width:       280
+								select:          app.selected_1
+								placeholder:     'Pick one or more states'
+								select_multiple: true
+								no_wrap:         true
+								options:         [
+									'Alabama',
+									'Alaska',
+									'Arizona',
+									'Arkansas',
+									'California',
+									'Colorado',
+									'Florida',
+									'New York',
+									'Texas',
+								]
+								on_select:       fn (s []string, mut e gui.Event, mut w gui.Window) {
+									mut app := w.state[ShowcaseApp]()
+									app.selected_1 = s
+									e.is_handled = true
+								}
+							),
+							gui.text(
+								text:       'Selected: ${multi_value}'
+								text_style: gui.theme().n5
+								mode:       .wrap
+							),
+						]
+					),
+					gui.column(
+						spacing: gui.theme().spacing_small
+						content: [
+							gui.text(text: 'Single-select + groups', text_style: gui.theme().b5),
+							w.select(
+								id:          'catalog_select_single'
+								id_focus:    9121
+								min_width:   280
+								max_width:   280
+								select:      app.selected_2
+								placeholder: 'Pick one city'
+								options:     [
+									'---West',
+									'Los Angeles',
+									'San Francisco',
+									'Seattle',
+									'---East',
+									'Boston',
+									'Miami',
+									'New York',
+								]
+								on_select:   fn (s []string, mut e gui.Event, mut w gui.Window) {
+									mut app := w.state[ShowcaseApp]()
+									app.selected_2 = s
+									e.is_handled = true
+								}
+							),
+							gui.text(text: 'Selected: ${single_value}', text_style: gui.theme().n5),
+						]
+					),
+				]
+			),
+		]
 	)
 }
 
