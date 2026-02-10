@@ -50,7 +50,7 @@ pub mut:
 	tree_id string
 	// list Box
 	list_box_multiple_select bool
-	list_box_selected_values []string
+	list_box_selected_ids    []string
 	// table
 	table_sort_by      int
 	table_border_style string = 'all'
@@ -717,7 +717,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'radio' { demo_radio(w) }
 		'radio_group' { demo_radio_group(w) }
 		'select' { demo_select(w) }
-		'listbox' { demo_list_box(w) }
+		'listbox' { demo_list_box(mut w) }
 		'range_slider' { demo_range_slider(w) }
 		'progress_bar' { demo_progress_bar(w) }
 		'pulsar' { demo_pulsar(mut w) }
@@ -1664,28 +1664,36 @@ fn demo_select(w &gui.Window) gui.View {
 	)
 }
 
-fn demo_list_box(w &gui.Window) gui.View {
+fn demo_list_box(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
 		spacing: gui.theme().spacing_small
 		content: [
-			gui.list_box(
-				id_scroll: id_scroll_list_box
-				height:    180
-				sizing:    gui.fill_fixed
-				multiple:  app.list_box_multiple_select
-				selected:  app.list_box_selected_values
-				data:      [
-					gui.list_box_option('---States', ''),
-					gui.list_box_option('California', 'CA'),
-					gui.list_box_option('Colorado', 'CO'),
-					gui.list_box_option('Florida', 'FL'),
-					gui.list_box_option('New York', 'NY'),
-					gui.list_box_option('Washington', 'WA'),
+			gui.text(
+				text:       'List boxes support virtualization for large datasets.'
+				text_style: gui.theme().n5
+			),
+			gui.text(
+				text:       'Enable with id_scroll + bounded height/max_height.'
+				text_style: gui.theme().n5
+			),
+			w.list_box(
+				id_scroll:    id_scroll_list_box
+				height:       180
+				sizing:       gui.fill_fixed
+				multiple:     app.list_box_multiple_select
+				selected_ids: app.list_box_selected_ids
+				data:         [
+					gui.list_box_subheading('states-header', 'States'),
+					gui.list_box_option('CA', 'California', 'CA'),
+					gui.list_box_option('CO', 'Colorado', 'CO'),
+					gui.list_box_option('FL', 'Florida', 'FL'),
+					gui.list_box_option('NY', 'New York', 'NY'),
+					gui.list_box_option('WA', 'Washington', 'WA'),
 				]
-				on_select: fn (values []string, mut e gui.Event, mut w gui.Window) {
+				on_select:    fn (ids []string, mut e gui.Event, mut w gui.Window) {
 					mut app := w.state[ShowcaseApp]()
-					app.list_box_selected_values = values
+					app.list_box_selected_ids = ids
 					e.is_handled = true
 				}
 			),
@@ -1695,7 +1703,7 @@ fn demo_list_box(w &gui.Window) gui.View {
 				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[ShowcaseApp]()
 					app.list_box_multiple_select = !app.list_box_multiple_select
-					app.list_box_selected_values.clear()
+					app.list_box_selected_ids.clear()
 				}
 			),
 		]

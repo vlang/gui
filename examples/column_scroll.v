@@ -1,27 +1,28 @@
 import gui
 
-// Column Scrolling
+// Virtualized List Box Scrolling
 // =============================
-// Demonstrates column scrolling with 10,000 different text items.
-// No virtualization, just pure layout calculated 10's of thousands
-// of times. Build with the -prod flag for buttery smooth performance.
-// Gui layout/rendering is fast!
+// Demonstrates list box virtualization with 10,000 items.
+// Build with -prod for smooth scrolling and lower frame-time jitter.
 
 @[heap]
 struct App {
-	items []gui.View
+pub mut:
+	items        []gui.ListBoxOption
+	selected_ids []string
 }
 
 fn main() {
-	size := 10_000 // 10K!
-	mut items := []gui.View{cap: size + 1}
+	size := 10_000
+	mut items := []gui.ListBoxOption{cap: size}
 	for i in 1 .. size + 1 {
-		items << gui.text(text: '${i:05} text list item')
+		id := '${i:05}'
+		items << gui.list_box_option(id, '${id} text list item', id)
 	}
 
 	mut window := gui.window(
-		width:   300
-		height:  300
+		width:   240
+		height:  420
 		state:   &App{
 			items: items
 		}
@@ -33,27 +34,37 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(mut window gui.Window) gui.View {
 	app := window.state[App]()
 	w, h := window.window_size()
+	selected := if app.selected_ids.len > 0 {
+		app.selected_ids[0]
+	} else {
+		'none'
+	}
 
 	return gui.column(
 		width:   w
 		height:  h
 		h_align: .center
-		spacing: gui.spacing_small
 		sizing:  gui.fixed_fixed
+		spacing: gui.spacing_small
+		padding: gui.padding(8, 8, 8, 8)
 		content: [
-			// Columns can function as list boxes.
-			// TODO: add selection logic
-			gui.column(
-				id_focus:  1
-				id_scroll: 1
-				color:     gui.theme().color_interior
-				sizing:    gui.fit_fill
-				spacing:   gui.spacing_small
-				padding:   gui.padding(3, 10, 3, 10)
-				content:   app.items
+			gui.text(text: '10,000-item virtualized list box', text_style: gui.theme().b4),
+			gui.text(text: 'Selected id: ${selected}', text_style: gui.theme().n5),
+			window.list_box(
+				id:           'virtual-listbox-10k'
+				id_scroll:    1
+				height:       h - 70
+				sizing:       gui.fill_fixed
+				selected_ids: app.selected_ids
+				data:         app.items
+				on_select:    fn (ids []string, mut e gui.Event, mut w gui.Window) {
+					mut app := w.state[App]()
+					app.selected_ids = ids
+					e.is_handled = true
+				}
 			),
 		]
 	)

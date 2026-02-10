@@ -54,7 +54,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 ### Data-Heavy UI
 
-- [ ] Virtualized list view (windowed rows, stable item identity)
+- [x] Virtualized list view (windowed rows, stable item identity)
 - [ ] Data grid v2: virtual rows, sort, filter, resize/reorder/pin columns
 - [ ] Tree virtualization + lazy node loading
 - [ ] Cell editors for grid/list (text, select, date, checkbox)
@@ -112,7 +112,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Markdown code highlighting (inline + fenced)
 - [x] Tab control component
 - [x] Splitter component
-- [ ] Virtualized list view
+- [x] Virtualized list view
 - [ ] Data grid v2 foundations
 - [ ] Accessibility role model + macOS backend
 - [ ] Inspector overlay MVP
