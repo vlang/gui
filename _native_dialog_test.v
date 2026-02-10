@@ -35,7 +35,7 @@ fn test_native_save_extensions_appends_default_once() {
 	assert extensions == ['jpg', 'png']
 }
 
-$if !macos {
+$if !(macos || linux) {
 	fn test_nativebridge_stub_returns_unsupported() {
 		open_result := nativebridge.open_dialog(nativebridge.BridgeOpenCfg{})
 		assert open_result.status == .error

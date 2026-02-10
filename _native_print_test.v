@@ -9,7 +9,7 @@ fn test_nativebridge_print_module_loads() {
 }
 
 fn test_native_print_supported_matches_platform() {
-	$if macos {
+	$if macos || linux {
 		assert native_print_supported()
 	} $else {
 		assert !native_print_supported()
@@ -53,7 +53,7 @@ fn test_native_print_resolve_pdf_path_for_prepared_file() {
 	assert resolved == path
 }
 
-$if !macos {
+$if !(macos || linux) {
 	fn test_nativebridge_print_stub_returns_unsupported() {
 		result := nativebridge.print_pdf_dialog(nativebridge.BridgePrintCfg{})
 		assert result.status == .error

@@ -42,7 +42,7 @@ fn native_print_dialog_impl(mut w Window, cfg NativePrintDialogCfg) {
 }
 
 fn native_print_supported() bool {
-	$if macos {
+	$if macos || linux {
 		return true
 	} $else {
 		return false

@@ -8,7 +8,13 @@ This guide covers native path dialogs:
 ## Platform Behavior
 
 - macOS: uses native AppKit dialogs.
-- non-macOS: callback still runs, returns `.error` with `error_code == 'unsupported'`.
+- Linux: uses `zenity` (`--file-selection` modes).
+- other platforms: callback runs, returns `.error` with `error_code == 'unsupported'`.
+
+Linux notes:
+- requires `zenity` in `PATH`.
+- if `zenity` is missing, callback returns `.error` with `error_code == 'unsupported'`.
+- if display/session launch fails, callback returns `.error` with `error_code == 'internal'`.
 
 ## Result Model
 

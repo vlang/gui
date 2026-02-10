@@ -7,7 +7,12 @@ This guide covers:
 ## Platform Behavior
 
 - macOS: uses native print panel.
-- non-macOS: callback runs and returns `.error` with `error_code == 'unsupported'`.
+- Linux: dispatches print job with `lp` (CUPS).
+- other platforms: callback runs and returns `.error` with `error_code == 'unsupported'`.
+
+Linux notes:
+- requires `lp` in `PATH` and a configured print destination.
+- Linux path does direct dispatch, so `.cancel` is generally not expected.
 
 ## Export PDF
 

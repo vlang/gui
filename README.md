@@ -48,7 +48,7 @@ V is a simple language. It deserves a simple UI framework.
 - Dropdowns, listboxes, tables, trees, markdown
 - Menus, menubars, tabs, dialogs
 - Progress bars, tooltips, date pickers
-- Native open/save/folder dialogs (macOS, stubs elsewhere)
+- Native open/save/folder dialogs (macOS + Linux)
 
 **Rendering**
 - SDF-based drop shadows
