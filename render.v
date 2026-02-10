@@ -725,18 +725,21 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	if shape.has_text_layout() && color != color_transparent {
 		if transform := text_shape_draw_transform(shape) {
 			mut layout_to_draw := clone_layout_for_draw(shape.tc.vglyph_layout)
-			if shape.tc.text_is_password && !shape.tc.text_is_placeholder
-				&& window.text_system != unsafe { nil } {
+			if window.text_system != unsafe { nil } {
 				mut cfg := text_cfg
 				cfg.block.width = shape.tc.last_constraint_width
 				cfg.no_hit_testing = true
-				render_text := password_mask_text_keep_newlines(shape.tc.text)
-				mut transformed_layout := window.text_system.layout_text(render_text,
+				text_to_layout := if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
+					password_mask_text_keep_newlines(shape.tc.text)
+				} else {
+					shape.tc.text
+				}
+				mut transformed_layout := window.text_system.layout_text(text_to_layout,
 					cfg) or {
 					log.error('Transformed text layout failed at (${shape.x}, ${shape.y}): ${err.msg()}')
 					return
 				}
-				if transformed_layout.lines.len > 0 || render_text.len == 0 {
+				if transformed_layout.lines.len > 0 || text_to_layout.len == 0 {
 					layout_to_draw = clone_layout_for_draw(&transformed_layout)
 				}
 			}
