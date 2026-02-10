@@ -12,6 +12,8 @@ const id_scroll_gallery = 1
 const id_scroll_list_box = 2
 const id_scroll_catalog = 3
 const id_scroll_sync_demo = 4
+const id_focus_showcase_splitter_main = u32(9160)
+const id_focus_showcase_splitter_detail = u32(9161)
 
 @[heap]
 struct ShowcaseApp {
@@ -62,6 +64,13 @@ pub mut:
 	roller_date       time.Time = time.now()
 	// tab control
 	tab_selected string = 'overview'
+	// splitter
+	splitter_main_state   gui.SplitterState = gui.SplitterState{
+		ratio: 0.30
+	}
+	splitter_detail_state gui.SplitterState = gui.SplitterState{
+		ratio: 0.55
+	}
 	// color picker
 	color_picker_color gui.Color = gui.Color{
 		r: 255
@@ -326,6 +335,13 @@ fn demo_entries() []DemoEntry {
 			group:   'navigation'
 			summary: 'Bind scrollable layouts to shared scroll ids'
 			tags:    ['scrollbar', 'scroll', 'container']
+		},
+		DemoEntry{
+			id:      'splitter'
+			label:   'Splitter'
+			group:   'navigation'
+			summary: 'Resizable panes with drag, keyboard, and collapse'
+			tags:    ['split', 'pane', 'resize']
 		},
 		DemoEntry{
 			id:      'tab_control'
@@ -729,6 +745,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'tooltip' { demo_tooltip() }
 		'rectangle' { demo_rectangle() }
 		'scrollbar' { demo_scrollbar() }
+		'splitter' { demo_splitter(w) }
 		else { gui.text(text: 'No demo configured') }
 	}
 }
@@ -768,6 +785,7 @@ fn related_examples(id string) string {
 		'tooltip' { 'examples/tooltips.v' }
 		'rectangle' { 'examples/border_demo.v, examples/gradient_border_demo.v' }
 		'scrollbar' { 'examples/scroll_demo.v, examples/column_scroll.v' }
+		'splitter' { 'examples/split_panel.v' }
 		else { 'examples/showcase.v' }
 	}
 }
@@ -3051,6 +3069,143 @@ fn demo_welcome(mut w gui.Window) gui.View {
 			),
 		]
 	)
+}
+
+fn demo_splitter(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	main_ratio := int(app.splitter_main_state.ratio * 100)
+	detail_ratio := int(app.splitter_detail_state.ratio * 100)
+	return gui.column(
+		sizing:  gui.fill_fit
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'Drag handle. Focus splitter, then use arrow keys. Shift+arrow moves faster.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.text(
+				text:       'Main ${main_ratio}% (${app.splitter_main_state.collapsed.str()}), detail ${detail_ratio}% (${app.splitter_detail_state.collapsed.str()}).'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.row(
+				height:       373
+				sizing:       gui.fill_fixed
+				color:        gui.theme().color_panel
+				color_border: gui.theme().color_border
+				size_border:  1
+				radius:       gui.theme().radius_small
+				content:      [
+					showcase_splitter_main(w),
+				]
+			),
+		]
+	)
+}
+
+fn showcase_splitter_main(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.splitter(
+		id:          'catalog_splitter_main'
+		id_focus:    id_focus_showcase_splitter_main
+		sizing:      gui.fill_fill
+		orientation: .horizontal
+		ratio:       app.splitter_main_state.ratio
+		collapsed:   app.splitter_main_state.collapsed
+		on_change:   on_showcase_splitter_main_change
+		first:       gui.SplitterPaneCfg{
+			min_size: 140
+			max_size: 340
+			content:  [
+				showcase_splitter_pane('Project', '- src\n- docs\n- tests', gui.cornflower_blue),
+			]
+		}
+		second:      gui.SplitterPaneCfg{
+			min_size: 220
+			content:  [
+				showcase_splitter_detail(w),
+			]
+		}
+	)
+}
+
+fn showcase_splitter_detail(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.splitter(
+		id:                    'catalog_splitter_detail'
+		id_focus:              id_focus_showcase_splitter_detail
+		orientation:           .vertical
+		sizing:                gui.fill_fill
+		handle_size:           10
+		show_collapse_buttons: true
+		ratio:                 app.splitter_detail_state.ratio
+		collapsed:             app.splitter_detail_state.collapsed
+		on_change:             on_showcase_splitter_detail_change
+		first:                 gui.SplitterPaneCfg{
+			min_size: 110
+			content:  [
+				showcase_splitter_pane('Editor', 'Top pane. Home/End collapses pane.',
+					gui.green),
+			]
+		}
+		second:                gui.SplitterPaneCfg{
+			min_size: 90
+			content:  [
+				showcase_splitter_pane('Preview', 'Bottom pane. Drag or use keyboard.',
+					gui.orange),
+			]
+		}
+	)
+}
+
+fn showcase_splitter_pane(title string, note string, accent gui.Color) gui.View {
+	return gui.column(
+		sizing:  gui.fill_fill
+		padding: gui.padding(10, 10, 10, 10)
+		spacing: 6
+		color:   gui.theme().color_panel
+		content: [
+			gui.row(
+				v_align: .middle
+				content: [
+					gui.row(
+						width:   8
+						height:  8
+						sizing:  gui.fixed_fixed
+						color:   accent
+						padding: gui.padding_none
+						radius:  4
+					),
+					gui.text(text: title, text_style: gui.theme().b5),
+				]
+			),
+			gui.text(text: note, text_style: gui.theme().n5, mode: .wrap),
+			gui.rectangle(
+				sizing:       gui.fill_fill
+				color:        gui.theme().color_background
+				color_border: gui.theme().color_border
+				size_border:  1
+				radius:       gui.theme().radius_small
+			),
+		]
+	)
+}
+
+fn on_showcase_splitter_main_change(ratio f32, collapsed gui.SplitterCollapsed, mut _e gui.Event, mut w gui.Window) {
+	mut app := w.state[ShowcaseApp]()
+	app.splitter_main_state = gui.splitter_state_normalize(gui.SplitterState{
+		ratio:     ratio
+		collapsed: collapsed
+	})
+}
+
+fn on_showcase_splitter_detail_change(ratio f32, collapsed gui.SplitterCollapsed, mut _e gui.Event, mut w gui.Window) {
+	mut app := w.state[ShowcaseApp]()
+	app.splitter_detail_state = gui.splitter_state_normalize(gui.SplitterState{
+		ratio:     ratio
+		collapsed: collapsed
+	})
 }
 
 fn demo_tab_control(w &gui.Window) gui.View {
