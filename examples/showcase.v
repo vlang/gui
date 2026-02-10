@@ -369,6 +369,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['linear', 'radial', 'fill']
 		},
 		DemoEntry{
+			id:      'box_shadows'
+			label:   'Box Shadows'
+			group:   'foundations'
+			summary: 'Shadow presets with spread_radius behavior notes'
+			tags:    ['shadow', 'depth', 'spread_radius']
+		},
+		DemoEntry{
 			id:      'shader'
 			label:   'Custom Shaders'
 			group:   'foundations'
@@ -664,6 +671,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'expand_panel' { demo_expand_panel(w) }
 		'icons' { demo_icons() }
 		'gradient' { demo_gradient() }
+		'box_shadows' { demo_box_shadows() }
 		'shader' { demo_shader() }
 		'animations' { demo_animations(mut w) }
 		'color_picker' { demo_color_picker(w) }
@@ -700,6 +708,7 @@ fn related_examples(id string) string {
 		'expand_panel' { 'examples/expand_panel.v' }
 		'icons' { 'examples/icon_font_demo.v' }
 		'gradient' { 'examples/gradient_demo.v, examples/gradient_border_demo.v' }
+		'box_shadows' { 'examples/shadow_demo.v, examples/theme_designer.v' }
 		'shader' { 'examples/custom_shader.v' }
 		'animations' { 'examples/animations.v, examples/animation_stress.v' }
 		'color_picker' { 'examples/color_picker.v' }
@@ -2301,6 +2310,82 @@ fn demo_gradient() gui.View {
 						color_border: gui.theme().color_border
 						size_border:  1
 					),
+				]
+			),
+		]
+	)
+}
+
+fn showcase_shadow_card(title string, note string, bg gui.Color, shadow_color gui.Color, shadow_offset_x f32, shadow_offset_y f32, shadow_blur f32, shadow_spread f32) gui.View {
+	return gui.column(
+		width:        170
+		height:       96
+		sizing:       gui.fixed_fixed
+		padding:      gui.padding_small
+		spacing:      2
+		radius:       10
+		color:        bg
+		color_border: gui.theme().color_border
+		size_border:  1
+		shadow:       &gui.BoxShadow{
+			color:         shadow_color
+			offset_x:      shadow_offset_x
+			offset_y:      shadow_offset_y
+			blur_radius:   shadow_blur
+			spread_radius: shadow_spread
+		}
+		content:      [
+			gui.text(text: title, text_style: gui.theme().b5),
+			gui.text(text: note, text_style: gui.theme().n5, mode: .wrap),
+		]
+	)
+}
+
+fn demo_box_shadows() gui.View {
+	card_color := gui.theme().color_background
+	return gui.column(
+		spacing: gui.theme().spacing_medium
+		content: [
+			gui.text(
+				text:       'offset_x/offset_y move the shadow. blur_radius controls softness.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.text(
+				text:       'spread_radius exists in gui.BoxShadow, but this render path does not apply it.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.row(
+				spacing: gui.theme().spacing_medium
+				content: [
+					showcase_shadow_card('Soft depth', 'Blur 12, Y 3', card_color, gui.Color{0, 0, 0, 40},
+						0, 3, 12, 0),
+					showcase_shadow_card('Elevated', 'Blur 22, Y 10', card_color, gui.Color{0, 0, 0, 55},
+						0, 10, 22, 0),
+				]
+			),
+			gui.row(
+				spacing: gui.theme().spacing_medium
+				content: [
+					showcase_shadow_card('Directional', 'Blur 10, X 8, Y 8', card_color,
+						gui.Color{0, 0, 0, 65}, 8, 8, 10, 0),
+					showcase_shadow_card('Blue glow', 'Blur 24, no offset', card_color,
+						gui.Color{80, 120, 255, 85}, 0, 0, 24, 0),
+				]
+			),
+			gui.text(
+				text:       'spread_radius compare: cards below should match today.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.row(
+				spacing: gui.theme().spacing_medium
+				content: [
+					showcase_shadow_card('Spread 0', 'spread_radius: 0', card_color, gui.Color{0, 0, 0, 70},
+						4, 6, 14, 0),
+					showcase_shadow_card('Spread 16', 'spread_radius: 16', card_color,
+						gui.Color{0, 0, 0, 70}, 4, 6, 14, 16),
 				]
 			),
 		]
