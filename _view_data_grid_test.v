@@ -639,7 +639,8 @@ fn test_data_grid_cell_editor_focus_id() {
 		rows:     []
 	}
 	assert data_grid_cell_editor_focus_id(cfg, 3, 0, 0) == 504
-	assert data_grid_cell_editor_focus_id(cfg, 3, 2, 1) == 511
+	assert data_grid_cell_editor_focus_id(cfg, 3, 2, 1) == 505
+	assert data_grid_cell_editor_focus_id(cfg, 3, 99, 1) == 505
 	assert data_grid_cell_editor_focus_id(cfg, 3, -1, 0) == 0
 }
 

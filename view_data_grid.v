@@ -1412,8 +1412,9 @@ fn data_grid_cell_editor_focus_id(cfg DataGridCfg, col_count int, row_idx int, c
 	if base == 0 {
 		return 0
 	}
-	row_offset := u64(row_idx) * u64(col_count)
-	cell_offset := row_offset + u64(col_idx)
+	// Editor focus ids are column-scoped because only one row is editable at a
+	// time. Keeping ids independent of row index preserves focus while sorting.
+	cell_offset := u64(col_idx)
 	if cell_offset > u64(max_u32 - base) {
 		return 0
 	}
