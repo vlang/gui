@@ -7,6 +7,7 @@ pub mut:
 	columns      []gui.GridColumnCfg
 	column_order []string
 	detail_ids   map[string]bool
+	hidden_cols  map[string]bool
 	page_index   int
 	query        gui.GridQueryState
 	selection    gui.GridSelection
@@ -51,6 +52,8 @@ fn main_view(mut window gui.Window) gui.View {
 				group_by:                  ['team']
 				page_size:                 80
 				page_index:                app.page_index
+				show_column_chooser:       true
+				hidden_column_ids:         app.hidden_cols
 				aggregates:                [gui.GridAggregateCfg{
 					op:    .count
 					label: 'count'
@@ -92,6 +95,10 @@ fn main_view(mut window gui.Window) gui.View {
 						}
 					}
 					state.columns = cols
+				}
+				on_hidden_columns_change:  fn (hidden map[string]bool, mut _ gui.Event, mut w gui.Window) {
+					mut state := w.state[DataGridDemoApp]()
+					state.hidden_cols = hidden.clone()
 				}
 				on_page_change:            fn (page int, mut _ gui.Event, mut w gui.Window) {
 					mut state := w.state[DataGridDemoApp]()

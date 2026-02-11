@@ -169,9 +169,11 @@ pub:
 	show_header               bool = true
 	show_filter_row           bool
 	show_quick_filter         bool
+	show_column_chooser       bool
 	show_group_counts         bool = true
 	page_size                 int
 	page_index                int
+	hidden_column_ids         map[string]bool
 	detail_expanded_row_ids   map[string]bool
 	quick_filter_placeholder  string            = 'Search'
 	row_height                f32               = 30
@@ -207,7 +209,8 @@ pub:
 	on_selection_change       fn (GridSelection, mut Event, mut Window)                  = unsafe { nil }
 	on_column_order_change    fn ([]string, mut Event, mut Window)                       = unsafe { nil }
 	on_column_pin_change      fn (string, GridColumnPin, mut Event, mut Window)          = unsafe { nil }
-	on_page_change            fn (int, mut Event, mut Window)                            = unsafe { nil }
+	on_hidden_columns_change  fn (hidden_ids map[string]bool, mut e Event, mut w Window) = unsafe { nil }
+	on_page_change            fn (int, mut Event, mut Window) = unsafe { nil }
 	on_detail_expanded_change fn (detail_ids map[string]bool, mut e Event, mut w Window) = unsafe { nil }
 	on_cell_edit              fn (GridCellEdit, mut Event, mut Window)                   = unsafe { nil }
 	on_detail_row_view        fn (GridRow, mut Window) View                 = unsafe { nil }
@@ -221,8 +224,9 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	scroll_id := data_grid_scroll_id(cfg)
 	hovered_col_id := window.view_state.data_grid_header_hover_col.get(cfg.id) or { '' }
 	resizing_col_id := data_grid_active_resize_col_id(cfg.id, window)
+	chooser_open := window.view_state.data_grid_column_chooser_open.get(cfg.id) or { false }
 	row_height := data_grid_row_height(cfg, mut window)
-	static_top := data_grid_static_top_height(cfg, row_height)
+	static_top := data_grid_static_top_height(cfg, row_height, chooser_open)
 	page_start, page_end, page_index, page_count := data_grid_page_bounds(cfg.rows.len,
 		cfg.page_size, cfg.page_index)
 	page_indices := data_grid_page_row_indices(page_start, page_end)
@@ -258,6 +262,9 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	mut rows := []View{cap: presentation.rows.len + 8}
 	if cfg.show_quick_filter {
 		rows << data_grid_quick_filter_row(cfg)
+	}
+	if cfg.show_column_chooser {
+		rows << data_grid_column_chooser_row(cfg, chooser_open, focus_id)
 	}
 	if cfg.show_header {
 		rows << data_grid_header_row(cfg, columns, column_widths, focus_id, hovered_col_id,
@@ -405,6 +412,115 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 			),
 		]
 	)
+}
+
+fn data_grid_column_chooser_row(cfg DataGridCfg, is_open bool, focus_id u32) View {
+	has_visibility_callback := cfg.on_hidden_columns_change != unsafe { nil }
+	chooser_label := if is_open { 'Columns ▼' } else { 'Columns ▶' }
+	row_h := if cfg.row_height > 0 {
+		cfg.row_height
+	} else {
+		data_grid_header_height(cfg)
+	}
+	mut content := []View{cap: 2}
+	content << row(
+		name:    'data_grid column chooser toolbar'
+		height:  row_h
+		sizing:  fill_fixed
+		padding: cfg.padding_filter
+		spacing: 6
+		v_align: .middle
+		content: [
+			button(
+				sizing:       fit_fill
+				padding:      padding_none
+				size_border:  0
+				radius:       0
+				color:        color_transparent
+				color_hover:  cfg.color_header_hover
+				color_focus:  color_transparent
+				color_click:  cfg.color_header_hover
+				color_border: color_transparent
+				on_click:     fn [cfg, focus_id] (_ &Layout, mut e Event, mut w Window) {
+					data_grid_toggle_column_chooser_open(cfg.id, mut w)
+					if focus_id > 0 {
+						w.set_id_focus(focus_id)
+					}
+					e.is_handled = true
+				}
+				content:      [
+					text(
+						text:       chooser_label
+						mode:       .single_line
+						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+					),
+				]
+			),
+		]
+	)
+	if is_open {
+		mut options := []View{cap: cfg.columns.len}
+		for col in cfg.columns {
+			if col.id.len == 0 {
+				continue
+			}
+			hidden := cfg.hidden_column_ids[col.id]
+			options << toggle(
+				id:       '${cfg.id}:col-chooser:${col.id}'
+				label:    col.title
+				select:   !hidden
+				disabled: !has_visibility_callback
+				on_click: fn [cfg, col, focus_id] (_ &Layout, mut e Event, mut w Window) {
+					if cfg.on_hidden_columns_change == unsafe { nil } {
+						return
+					}
+					next_hidden := data_grid_next_hidden_columns(cfg.hidden_column_ids,
+						col.id, cfg.columns)
+					cfg.on_hidden_columns_change(next_hidden, mut e, mut w)
+					if focus_id > 0 {
+						w.set_id_focus(focus_id)
+					}
+					e.is_handled = true
+				}
+			)
+		}
+		content << row(
+			name:         'data_grid column chooser options'
+			height:       row_h
+			sizing:       fill_fixed
+			padding:      cfg.padding_filter
+			spacing:      8
+			color:        color_transparent
+			color_border: cfg.color_border
+			size_border:  0
+			content:      options
+		)
+	}
+	return column(
+		name:         'data_grid column chooser row'
+		height:       data_grid_column_chooser_height(cfg, is_open)
+		sizing:       fill_fixed
+		color:        cfg.color_filter
+		color_border: cfg.color_border
+		size_border:  0
+		padding:      padding_none
+		spacing:      0
+		content:      content
+	)
+}
+
+fn data_grid_toggle_column_chooser_open(grid_id string, mut w Window) {
+	is_open := w.view_state.data_grid_column_chooser_open.get(grid_id) or { false }
+	w.view_state.data_grid_column_chooser_open.set(grid_id, !is_open)
+}
+
+fn data_grid_column_chooser_height(cfg DataGridCfg, is_open bool) f32 {
+	base := if cfg.row_height > 0 {
+		cfg.row_height
+	} else {
+		data_grid_header_height(cfg)
+	}
+	return if is_open { base * 2 } else { base }
 }
 
 fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count int, page_start int, page_end int, total_rows int) View {
@@ -2792,6 +2908,34 @@ fn data_grid_header_controls_width(show_reorder bool, show_pin bool, show_resize
 	return width
 }
 
+fn data_grid_visible_column_count(columns []GridColumnCfg, hidden map[string]bool) int {
+	mut count := 0
+	for col in columns {
+		if col.id.len == 0 || hidden[col.id] {
+			continue
+		}
+		count++
+	}
+	return count
+}
+
+fn data_grid_next_hidden_columns(hidden map[string]bool, col_id string, columns []GridColumnCfg) map[string]bool {
+	mut next := hidden.clone()
+	if col_id.len == 0 {
+		return next
+	}
+	if next[col_id] {
+		next.delete(col_id)
+		return next
+	}
+	visible_count := data_grid_visible_column_count(columns, next)
+	if visible_count <= 1 {
+		return next
+	}
+	next[col_id] = true
+	return next
+}
+
 fn data_grid_effective_columns(cfg DataGridCfg) []GridColumnCfg {
 	if cfg.columns.len == 0 {
 		return []
@@ -2800,8 +2944,18 @@ fn data_grid_effective_columns(cfg DataGridCfg) []GridColumnCfg {
 	cols_by_id := data_grid_columns_by_id(cfg.columns)
 	mut ordered := []GridColumnCfg{cap: cfg.columns.len}
 	for id in order {
+		if cfg.hidden_column_ids[id] {
+			continue
+		}
 		col := cols_by_id[id] or { continue }
 		ordered << col
+	}
+	if ordered.len == 0 {
+		for id in order {
+			col := cols_by_id[id] or { continue }
+			ordered << col
+			break
+		}
 	}
 	return data_grid_partition_pins(ordered)
 }
@@ -3111,10 +3265,13 @@ fn data_grid_row_height(cfg DataGridCfg, mut window Window) f32 {
 	return font_h + cfg.padding_cell.height() + cfg.size_border
 }
 
-fn data_grid_static_top_height(cfg DataGridCfg, row_height f32) f32 {
+fn data_grid_static_top_height(cfg DataGridCfg, row_height f32, chooser_open bool) f32 {
 	mut top := f32(0)
 	if cfg.show_quick_filter {
 		top += data_grid_quick_filter_height(cfg)
+	}
+	if cfg.show_column_chooser {
+		top += data_grid_column_chooser_height(cfg, chooser_open)
 	}
 	if cfg.show_header {
 		top += data_grid_header_height(cfg)

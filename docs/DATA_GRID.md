@@ -12,6 +12,7 @@
 - Column resize drag + double-click auto-fit
 - Controlled column reorder (`<` / `>` header controls)
 - Controlled column pin cycle (`•` -> `↤` -> `↦`)
+- Controlled column chooser (`show_column_chooser`, `hidden_column_ids`)
 - Group headers (`group_by`) with optional aggregates
 - Controlled master-detail rows
 - Controlled row edit mode + typed cell editors (`text/select/date/checkbox`)
@@ -33,7 +34,8 @@
 ## Controlled Model
 Application state owns query, selection, and rows.
 Application also owns optional `column_order`, pin state (`GridColumnCfg.pin`),
-grouping (`group_by`, `aggregates`), and detail expansion map
+column visibility (`hidden_column_ids`), grouping (`group_by`, `aggregates`),
+and detail expansion map
 (`detail_expanded_row_ids`), row cell data updates for edits, and
 pagination state (`page_size`, `page_index`).
 
@@ -42,6 +44,7 @@ Grid emits callbacks:
 - `on_selection_change`
 - `on_column_order_change`
 - `on_column_pin_change`
+- `on_hidden_columns_change`
 - `on_page_change`
 - `on_cell_edit`
 - `on_detail_expanded_change`
@@ -114,6 +117,7 @@ gui.grid_rows_to_pdf_file('/tmp/grid.pdf', columns, rows) or {}
 - Enter edit mode with row double-click or `F2` on active row.
 - Exit edit mode with `Esc` (or `Enter` in text editor).
 - Pagination is controlled. Grid emits next page index via `on_page_change`.
+- Column chooser is controlled. Grid emits hidden-id map via `on_hidden_columns_change`.
 
 ## Header Keyboard
 - `Tab` focuses header cells (left->right), not per-icon controls.

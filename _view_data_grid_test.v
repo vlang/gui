@@ -215,6 +215,82 @@ fn test_data_grid_effective_columns_respects_order_and_pin() {
 	assert cols[2].id == 'c'
 }
 
+fn test_data_grid_effective_columns_respects_hidden_columns() {
+	cfg := DataGridCfg{
+		id:                'hidden-cols'
+		column_order:      ['a', 'b', 'c']
+		hidden_column_ids: {
+			'b': true
+		}
+		columns:           [
+			GridColumnCfg{
+				id:    'a'
+				title: 'A'
+			},
+			GridColumnCfg{
+				id:    'b'
+				title: 'B'
+			},
+			GridColumnCfg{
+				id:    'c'
+				title: 'C'
+			},
+		]
+		rows:              []
+	}
+	cols := data_grid_effective_columns(cfg)
+	assert cols.len == 2
+	assert cols[0].id == 'a'
+	assert cols[1].id == 'c'
+}
+
+fn test_data_grid_next_hidden_columns_keeps_one_visible() {
+	columns := [
+		GridColumnCfg{
+			id:    'a'
+			title: 'A'
+		},
+		GridColumnCfg{
+			id:    'b'
+			title: 'B'
+		},
+	]
+	base := {
+		'b': true
+	}
+	next_a := data_grid_next_hidden_columns(base, 'a', columns)
+	assert next_a['a'] == false
+	assert next_a['b'] == true
+
+	next_b := data_grid_next_hidden_columns(base, 'b', columns)
+	assert next_b['b'] == false
+}
+
+fn test_data_grid_effective_columns_keeps_one_when_all_hidden() {
+	cfg := DataGridCfg{
+		id:                'all-hidden'
+		column_order:      ['a', 'b']
+		hidden_column_ids: {
+			'a': true
+			'b': true
+		}
+		columns:           [
+			GridColumnCfg{
+				id:    'a'
+				title: 'A'
+			},
+			GridColumnCfg{
+				id:    'b'
+				title: 'B'
+			},
+		]
+		rows:              []
+	}
+	cols := data_grid_effective_columns(cfg)
+	assert cols.len == 1
+	assert cols[0].id == 'a'
+}
+
 fn test_grid_column_next_pin_cycles() {
 	assert grid_column_next_pin(.none) == .left
 	assert grid_column_next_pin(.left) == .right
