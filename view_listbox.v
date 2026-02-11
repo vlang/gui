@@ -19,7 +19,6 @@ pub:
 	selected_ids     []string // selected item ids
 	data             []ListBoxOption
 	on_select        fn (ids []string, mut e Event, mut w Window) = unsafe { nil }
-	width            f32
 	height           f32
 	min_width        f32
 	max_width        f32
@@ -163,8 +162,10 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
 		)
 	}
 
+	dat_id := dat.id
 	is_multiple := cfg.multiple
 	on_select := cfg.on_select
+	has_on_select := on_select != unsafe { nil }
 	selected_ids := cfg.selected_ids
 	color_hover := cfg.color_hover
 
@@ -174,21 +175,22 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
 		padding:  padding_two_five
 		sizing:   fill_fit
 		content:  content
-		on_click: fn [is_multiple, on_select, selected_ids, dat, is_subheader] (_ voidptr, mut e Event, mut w Window) {
+		on_click: fn [is_multiple, on_select, selected_ids, dat_id, is_subheader] (_ voidptr, mut e Event, mut w Window) {
 			if on_select != unsafe { nil } && !is_subheader {
 				mut ids := selected_ids.clone()
 				if !is_multiple {
 					ids.clear()
 				}
-				match dat.id in selected_ids {
-					true { ids = ids.filter(it != dat.id) }
-					else { ids << dat.id }
+				if dat_id in selected_ids {
+					ids = ids.filter(it != dat_id)
+				} else {
+					ids << dat_id
 				}
 				on_select(ids, mut e, mut w)
 			}
 		}
-		on_hover: fn [on_select, color_hover, is_subheader] (mut layout Layout, mut e Event, mut w Window) {
-			if on_select != unsafe { nil } && !is_subheader {
+		on_hover: fn [has_on_select, color_hover, is_subheader] (mut layout Layout, mut e Event, mut w Window) {
+			if has_on_select && !is_subheader {
 				w.set_mouse_cursor_pointing_hand()
 				if layout.shape.color == color_transparent {
 					layout.shape.color = color_hover
