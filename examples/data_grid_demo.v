@@ -51,7 +51,7 @@ fn main_view(mut window gui.Window) gui.View {
 		padding: gui.padding_small
 		spacing: gui.spacing_small
 		content: [
-			gui.text(text: 'Data Grid v1 Demo', text_style: gui.theme().b2),
+			gui.text(text: 'Data Grid Demo', text_style: gui.theme().b2),
 			gui.row(
 				v_align: .middle
 				sizing:  gui.fill_fit
