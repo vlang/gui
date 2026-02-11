@@ -20,7 +20,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 ### Input + Forms
 
 - [ ] Input masking engine (`9`, `a`, `*`, literals, escaped tokens, custom tokens)
-- [ ] Ready masks: phone, date, time, credit card, postal, SSN
+- [x] Ready masks: phone, date, time, credit card, postal, SSN
 - [ ] Numeric input view with locale-aware parse/format and step controls
 - [ ] Currency/percent input modes with round-trip-safe formatting
 - [ ] Form validation model: sync/async validators, touched/dirty state, error slots
@@ -31,33 +31,34 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Native open-file dialog (single + multi-select, extension filters)
 - [x] Native save-file dialog (default extension, overwrite handling)
 - [x] Native folder-picker dialog
-- [ ] Native color picker dialog
+- [?] Native color picker dialog
 - [ ] Native message/alert fallback adapter (opt-in over custom GUI dialog)
 - [ ] Permission + sandbox-safe path handling on macOS/Windows/Linux portals
 
 ### Markdown + Rich Text
 
-- [ ] Markdown fenced code syntax highlighting (language-tag driven)
-- [ ] Theme-aware code highlight palettes (dark/light + custom themes)
-- [ ] Incremental markdown re-render (avoid full rebuild for small edits)
-- [ ] Offline mode for mermaid/math renderers (local backend option)
-- [ ] Link context menu support (copy/open/inspect target)
+- [x] Markdown fenced code syntax highlighting (language-tag driven)
+- [?] Theme-aware code highlight palettes (dark/light + custom themes)
+- [?] Incremental markdown re-render (avoid full rebuild for small edits)
+- [?] Offline mode for mermaid/math renderers (local backend option)
+- [?] Link context menu support (copy/open/inspect target)
+- [ ] Copy code block enhancement
 
 ### Missing Core Components
 
-- [ ] `tab_control` advanced features (reorder, close button, overflow menu)
+- [x] `tab_control` advanced features (reorder, close button, overflow menu)
 - [x] `splitter` / pane divider widget (drag, collapse, min/max pane size)
 - [ ] `breadcrumb_bar` widget
 - [ ] `command_palette` widget (search + ranking + keyboard-first UX)
 - [ ] `toast` / non-blocking notification system
-- [ ] `combobox` with typeahead filter and async options provider
+- [?] `combobox` with typeahead filter and async options provider
 
 ### Data-Heavy UI
 
 - [x] Virtualized list view (windowed rows, stable item identity)
-- [ ] Data grid v2: virtual rows, sort, filter, resize/reorder/pin columns
+- [x] Data grid v2: virtual rows, sort, filter, resize/reorder/pin columns
 - [ ] Tree virtualization + lazy node loading
-- [ ] Cell editors for grid/list (text, select, date, checkbox)
+- [x] Cell editors for grid/list (text, select, date, checkbox)
 
 ## 2026 H2: Accessibility + Globalization + Scale (P0/P1)
 
@@ -113,7 +114,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Tab control component
 - [x] Splitter component
 - [x] Virtualized list view
-- [ ] Data grid v2 foundations
+- [x] Data grid v2 foundations
 - [ ] Accessibility role model + macOS backend
 - [ ] Inspector overlay MVP
 - [ ] Snapshot test harness
