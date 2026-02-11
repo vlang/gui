@@ -65,6 +65,9 @@ pub:
 	mask_tokens        []MaskTokenDef // custom token defs; merged with built-ins
 	on_text_changed    fn (&Layout, string, mut Window)    = unsafe { nil }
 	on_enter           fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	on_key_down        fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	on_mouse_scroll    fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	on_blur            fn (&Layout, mut Window)            = unsafe { nil }
 	on_click_icon      fn (&Layout, mut Event, mut Window) = unsafe { nil }
 	scrollbar_cfg_x    &ScrollbarCfg                       = unsafe { nil }
 	scrollbar_cfg_y    &ScrollbarCfg                       = unsafe { nil }
@@ -154,16 +157,19 @@ pub fn input(cfg InputCfg) View {
 	color_hover := cfg.color_hover
 	id_focus := cfg.id_focus
 	on_click_icon := cfg.on_click_icon
+	on_blur := cfg.on_blur
 
 	mut txt_content := [
 		text(
-			id_focus:           cfg.id_focus
-			sizing:             fill_fill
-			text:               txt
-			text_style:         txt_style
-			mode:               mode
-			is_password:        cfg.is_password
-			placeholder_active: placeholder_active
+			id_focus:             cfg.id_focus
+			sizing:               fill_fill
+			text:                 txt
+			text_style:           txt_style
+			mode:                 mode
+			is_password:          cfg.is_password
+			placeholder_active:   placeholder_active
+			on_key_down_hook:     cfg.on_key_down
+			on_mouse_scroll_hook: cfg.on_mouse_scroll
 		),
 	]
 
@@ -222,11 +228,17 @@ pub fn input(cfg InputCfg) View {
 				layout.shape.color = color_hover
 			}
 		}
-		amend_layout:    fn [color_border_focus] (mut layout Layout, mut w Window) {
-			if layout.shape.disabled {
+		amend_layout:    fn [color_border_focus, on_blur] (mut layout Layout, mut w Window) {
+			if layout.shape.id_focus == 0 {
 				return
 			}
-			if layout.shape.id_focus > 0 && layout.shape.id_focus == w.id_focus() {
+			focused := !layout.shape.disabled && layout.shape.id_focus == w.id_focus()
+			was_focused := w.view_state.input_focus_state.get(layout.shape.id_focus) or { false }
+			if was_focused && !focused && on_blur != unsafe { nil } {
+				on_blur(layout, mut w)
+			}
+			w.view_state.input_focus_state.set(layout.shape.id_focus, focused)
+			if focused {
 				layout.shape.color_border = color_border_focus
 			}
 		}
@@ -239,6 +251,7 @@ pub fn input(cfg InputCfg) View {
 				name:     'input interior'
 				padding:  padding_none
 				sizing:   fill_fill
+				v_align:  if cfg.mode == .single_line { .middle } else { .top }
 				on_click: fn (layout &Layout, mut e Event, mut w Window) {
 					if layout.children.len < 1 {
 						return

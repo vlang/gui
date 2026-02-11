@@ -167,6 +167,7 @@ v run examples/dialogs.v        # Custom + native dialogs
 v run examples/split_panel.v    # Splitter + nested splitter
 v run examples/printing.v       # PDF export + native print
 v run examples/input_masks.v    # Input mask presets and custom tokens
+v run examples/numeric_input.v  # Locale-aware numeric input + step controls
 v run examples/text_transform.v # Rotated and affine text
 v run examples/table_demo.v     # Table widget demo
 v run examples/data_grid_demo.v # Data grid widget demo

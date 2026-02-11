@@ -46,12 +46,16 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	input_state := window.view_state.input_state.get(tv.id_focus) or { InputState{} }
 	mut events := unsafe { &EventHandlers(nil) }
 	if tv.on_char != unsafe { nil } || tv.on_key_down != unsafe { nil }
-		|| tv.on_click != unsafe { nil } {
-		events = &EventHandlers{
+		|| tv.on_click != unsafe { nil } || tv.on_mouse_scroll_hook != unsafe { nil } {
+		mut text_events := &EventHandlers{
 			on_char:    tv.on_char
 			on_keydown: tv.on_key_down
 			on_click:   tv.on_click
 		}
+		if tv.on_mouse_scroll_hook != unsafe { nil } {
+			text_events.on_mouse_scroll = tv.on_mouse_scroll
+		}
+		events = text_events
 	}
 	mut layout := Layout{
 		shape: &Shape{
@@ -107,21 +111,24 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 pub struct TextCfg {
 	sizing Sizing
 pub:
-	id                 string
-	text               string
-	text_style         TextStyle = gui_theme.text_style
-	id_focus           u32
-	tab_size           u32 = 4
-	min_width          f32
-	mode               TextMode
-	invisible          bool
-	clip               bool
-	focus_skip         bool = true
-	disabled           bool
-	is_password        bool
-	placeholder_active bool
-	hero               bool
-	opacity            f32 = 1.0
+	id                   string
+	text                 string
+	text_style           TextStyle = gui_theme.text_style
+	id_focus             u32
+	tab_size             u32 = 4
+	min_width            f32
+	mode                 TextMode
+	invisible            bool
+	clip                 bool
+	focus_skip           bool = true
+	disabled             bool
+	is_password          bool
+	placeholder_active   bool
+	hero                 bool
+	opacity              f32 = 1.0
+	on_char_hook         fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	on_key_down_hook     fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	on_mouse_scroll_hook fn (&Layout, mut Event, mut Window) = unsafe { nil }
 }
 
 // text is a general purpose text view. Use it for labels or larger
@@ -132,22 +139,25 @@ pub fn text(cfg TextCfg) View {
 		return invisible_container_view()
 	}
 	return TextView{
-		id:                 cfg.id
-		text:               cfg.text
-		text_style:         cfg.text_style
-		id_focus:           cfg.id_focus
-		tab_size:           cfg.tab_size
-		min_width:          cfg.min_width
-		mode:               cfg.mode
-		invisible:          cfg.invisible
-		clip:               cfg.clip
-		focus_skip:         cfg.focus_skip
-		disabled:           cfg.disabled
-		is_password:        cfg.is_password
-		placeholder_active: cfg.placeholder_active
-		hero:               cfg.hero
-		opacity:            cfg.opacity
-		sizing:             if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
+		id:                   cfg.id
+		text:                 cfg.text
+		text_style:           cfg.text_style
+		id_focus:             cfg.id_focus
+		tab_size:             cfg.tab_size
+		min_width:            cfg.min_width
+		mode:                 cfg.mode
+		invisible:            cfg.invisible
+		clip:                 cfg.clip
+		focus_skip:           cfg.focus_skip
+		disabled:             cfg.disabled
+		is_password:          cfg.is_password
+		placeholder_active:   cfg.placeholder_active
+		hero:                 cfg.hero
+		opacity:              cfg.opacity
+		on_char_hook:         cfg.on_char_hook
+		on_key_down_hook:     cfg.on_key_down_hook
+		on_mouse_scroll_hook: cfg.on_mouse_scroll_hook
+		sizing:               if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 	}
 }
 
@@ -196,6 +206,12 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 // It supports standard navigation keys (arrows, home, end) and modifiers
 // (Alt, Ctrl, Shift) for word/line jumping and selection extension.
 fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
+	if tv.on_key_down_hook != unsafe { nil } {
+		tv.on_key_down_hook(layout, mut e, mut window)
+		if e.is_handled {
+			return
+		}
+	}
 	if window.is_focus(layout.shape.id_focus) {
 		if tv.placeholder_active || window.mouse_is_locked() {
 			return
@@ -324,6 +340,12 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 // (Ctrl/Cmd+C), as well as the Escape key to clear text selection. The function
 // only processes events when the view has focus and the mouse is not locked.
 fn (tv &TextView) on_char(layout &Layout, mut event Event, mut w Window) {
+	if tv.on_char_hook != unsafe { nil } {
+		tv.on_char_hook(layout, mut event, mut w)
+		if event.is_handled {
+			return
+		}
+	}
 	if w.is_focus(layout.shape.id_focus) && !w.mouse_is_locked() {
 		c := event.char_code
 		mut is_handled := true
@@ -349,6 +371,12 @@ fn (tv &TextView) on_char(layout &Layout, mut event Event, mut w Window) {
 			}
 		}
 		event.is_handled = is_handled
+	}
+}
+
+fn (tv &TextView) on_mouse_scroll(layout &Layout, mut e Event, mut w Window) {
+	if tv.on_mouse_scroll_hook != unsafe { nil } {
+		tv.on_mouse_scroll_hook(layout, mut e, mut w)
 	}
 }
 

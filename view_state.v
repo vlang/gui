@@ -26,6 +26,9 @@ mut:
 	input_state                   BoundedMap[u32, InputState] = BoundedMap[u32, InputState]{
 		max_size: 100
 	}
+	input_focus_state             BoundedMap[u32, bool] = BoundedMap[u32, bool]{
+		max_size: 100
+	}
 	input_date_state              BoundedMap[string, bool] = BoundedMap[string, bool]{
 		max_size: 50
 	}

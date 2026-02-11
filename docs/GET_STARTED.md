@@ -277,6 +277,43 @@ gui.input(
 )
 ```
 
+## Numeric Input
+
+`gui.numeric_input` provides locale-aware numeric parsing/formatting and step controls.
+
+Fields:
+- `value ?f64`
+- `locale NumericLocaleCfg`
+- `step_cfg NumericStepCfg`
+- `decimals int`
+- `min ?f64` / `max ?f64`
+- `on_value_commit fn (&Layout, ?f64, string, mut Window)`
+
+Rules:
+- raw text can be temporarily invalid while editing
+- commit (`enter` / blur / step) parses, clamps, formats, emits `on_value_commit`
+- step controls support buttons, mouse wheel, and `up/down` keys
+- `shift` multiplies step by `10`, `alt` multiplies step by `0.1`
+
+```v ignore
+gui.numeric_input(
+	id_focus:  1
+	text:      app.amount_text
+	value:     app.amount_value
+	decimals:  2
+	min:       0.0
+	max:       10000.0
+	on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+		w.state[App]().amount_text = text
+	}
+	on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+		mut app := w.state[App]()
+		app.amount_value = value
+		app.amount_text = text
+	}
+)
+```
+
 ## Why v-gui Feels Different
 
 **No widget objects to manage.** Traditional frameworks make you create button objects, store
@@ -309,6 +346,7 @@ v run examples/animations.v     # Tweens, springs, hero transitions
 v run examples/svg_demo.v       # Vector icon rendering
 v run examples/tiger.v          # Complex SVG (Ghostscript Tiger)
 v run examples/markdown.v       # Markdown rendering
+v run examples/numeric_input.v  # Locale-aware numeric input + stepping
 v run examples/dialogs.v        # Custom + native dialogs
 v run examples/text_transform.v # Rotated and affine text
 v run examples/table_demo.v     # Table widget demo
