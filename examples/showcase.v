@@ -54,6 +54,11 @@ pub mut:
 	// table
 	table_sort_by      int
 	table_border_style string = 'all'
+	// data grid
+	data_grid_query     gui.GridQueryState
+	data_grid_selection gui.GridSelection = gui.GridSelection{
+		selected_row_ids: map[string]bool{}
+	}
 	// radio
 	select_radio bool
 	// expand_pad
@@ -302,6 +307,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['rows', 'columns', 'csv']
 		},
 		DemoEntry{
+			id:      'data_grid'
+			label:   'Data Grid'
+			group:   'data'
+			summary: 'Controlled virtualized grid for interactive tabular data'
+			tags:    ['grid', 'virtualized', 'data']
+		},
+		DemoEntry{
 			id:      'text'
 			label:   'Text'
 			group:   'data'
@@ -479,13 +491,23 @@ fn selected_entry(entries []DemoEntry, selected string) DemoEntry {
 	return entries[0]
 }
 
+fn preferred_component_for_group(group string, entries []DemoEntry) string {
+	if entries.len == 0 {
+		return ''
+	}
+	if group == 'data' && has_entry(entries, 'data_grid') {
+		return 'data_grid'
+	}
+	return entries[0].id
+}
+
 fn catalog_panel(mut w gui.Window) gui.View {
 	mut app := w.state[ShowcaseApp]()
 	entries := filtered_entries(app)
 	if entries.len == 0 {
 		app.selected_component = ''
 	} else if !has_entry(entries, app.selected_component) {
-		app.selected_component = entries[0].id
+		app.selected_component = preferred_component_for_group(app.selected_group, entries)
 	}
 	return gui.column(
 		width:   300
@@ -581,6 +603,10 @@ fn group_picker_item(label string, key string, app &ShowcaseApp) gui.View {
 		on_click: fn [key] (_ voidptr, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.selected_group = key
+			if key == 'data' {
+				entries := filtered_entries(app)
+				app.selected_component = preferred_component_for_group(key, entries)
+			}
 			w.scroll_vertical_to(id_scroll_catalog, 0)
 			w.update_window()
 		}
@@ -666,6 +692,14 @@ fn catalog_row(entry DemoEntry, app &ShowcaseApp) gui.View {
 	)
 }
 
+fn detail_panel_padding() gui.Padding {
+	base := gui.theme().padding_large
+	return gui.Padding{
+		...base
+		right: base.right + gui.theme().scrollbar_style.size + f32(4)
+	}
+}
+
 fn detail_panel(mut w gui.Window) gui.View {
 	mut app := w.state[ShowcaseApp]()
 	entries := filtered_entries(app)
@@ -676,14 +710,14 @@ fn detail_panel(mut w gui.Window) gui.View {
 				gap_edge: 4
 			}
 			sizing:          gui.fill_fill
-			padding:         gui.theme().padding_large
+			padding:         detail_panel_padding()
 			content:         [
 				gui.text(text: 'No component matches filter', text_style: gui.theme().b2),
 			]
 		)
 	}
 	if !has_entry(entries, app.selected_component) {
-		app.selected_component = entries[0].id
+		app.selected_component = preferred_component_for_group(app.selected_group, entries)
 	}
 	entry := selected_entry(entries, app.selected_component)
 	mut content := []gui.View{}
@@ -701,7 +735,7 @@ fn detail_panel(mut w gui.Window) gui.View {
 			gap_edge: 4
 		}
 		sizing:          gui.fill_fill
-		padding:         gui.theme().padding_large
+		padding:         detail_panel_padding()
 		spacing:         gui.spacing_large
 		content:         content
 	)
@@ -728,6 +762,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'text' { demo_text() }
 		'rtf' { demo_rtf() }
 		'table' { demo_table(mut w) }
+		'data_grid' { demo_data_grid(mut w) }
 		'date_picker' { demo_date_picker(mut w) }
 		'input_date' { demo_input_date(mut w) }
 		'date_picker_roller' { demo_date_picker_roller(mut w) }
@@ -769,6 +804,7 @@ fn related_examples(id string) string {
 		'text' { 'examples/fonts.v, examples/system_font.v' }
 		'rtf' { 'examples/rtf.v' }
 		'table' { 'examples/table_demo.v' }
+		'data_grid' { 'examples/data_grid_demo.v, docs/DATA_GRID.md' }
 		'date_picker', 'input_date' { 'examples/date_picker_options.v, examples/date_time.v' }
 		'date_picker_roller' { 'examples/date_picker_roller.v' }
 		'svg' { 'examples/svg_demo.v, examples/tiger.v' }
@@ -1362,6 +1398,31 @@ fn markdown_preview(window &gui.Window) gui.View {
 | Input     | Input   | Ready  |
 | Table     | Data    | Ready  |
 | Dialog    | Overlay | Ready  |'
+
+const showcase_data_grid_features_source = '# Data Grid Features
+
+- Virtual row rendering
+- Single and multi-column sorting (shift-click)
+- Per-column filter row + quick filter input
+- Row selection: single, toggle, range
+- Keyboard navigation + `ctrl/cmd+a`
+- Header keyboard controls (sort/reorder/resize/pin/focus)
+- Column resize drag + double-click auto-fit
+- Controlled column reorder (`<` / `>` header controls)
+- Controlled column pin cycle (`•` -> `↤` -> `↦`)
+- Controlled column chooser (`show_column_chooser`, `hidden_column_ids`)
+- Group headers (`group_by`) with optional aggregates
+- Controlled master-detail rows
+- Controlled row edit mode + typed cell editors (`text/select/date/checkbox`)
+- Conditional cell formatting (`on_cell_format`)
+- Controlled pagination (`page_size`, `page_index`)
+- Controlled top frozen rows (`frozen_top_row_ids`)
+- Optional frozen header row (`freeze_header`)
+- Clipboard copy (`ctrl/cmd+c`) to TSV
+- CSV import helper
+- CSV helper export
+- XLSX helper export
+- PDF helper export'
 
 fn demo_button(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -2359,6 +2420,114 @@ fn demo_rtf() gui.View {
 	)
 }
 
+fn showcase_data_grid_columns() []gui.GridColumnCfg {
+	return [
+		gui.GridColumnCfg{
+			id:    'name'
+			title: 'Name'
+			width: 180
+		},
+		gui.GridColumnCfg{
+			id:    'team'
+			title: 'Team'
+			width: 140
+		},
+		gui.GridColumnCfg{
+			id:    'status'
+			title: 'Status'
+			width: 120
+		},
+	]
+}
+
+fn showcase_data_grid_rows() []gui.GridRow {
+	return [
+		gui.GridRow{
+			id:    '1'
+			cells: {
+				'name':   'Alex'
+				'team':   'Core'
+				'status': 'Active'
+			}
+		},
+		gui.GridRow{
+			id:    '2'
+			cells: {
+				'name':   'Mina'
+				'team':   'Data'
+				'status': 'Active'
+			}
+		},
+		gui.GridRow{
+			id:    '3'
+			cells: {
+				'name':   'Noah'
+				'team':   'Platform'
+				'status': 'Paused'
+			}
+		},
+		gui.GridRow{
+			id:    '4'
+			cells: {
+				'name':   'Priya'
+				'team':   'Core'
+				'status': 'Active'
+			}
+		},
+		gui.GridRow{
+			id:    '5'
+			cells: {
+				'name':   'Sam'
+				'team':   'Security'
+				'status': 'Offline'
+			}
+		},
+	]
+}
+
+fn showcase_data_grid_apply_query(rows []gui.GridRow, query gui.GridQueryState) []gui.GridRow {
+	mut filtered := rows.filter(showcase_data_grid_row_matches_query(it, query))
+	for sort_idx in 0 .. query.sorts.len {
+		i := query.sorts.len - 1 - sort_idx
+		sort := query.sorts[i]
+		filtered.sort_with_compare(fn [sort] (a &gui.GridRow, b &gui.GridRow) int {
+			a_val := a.cells[sort.col_id] or { '' }
+			b_val := b.cells[sort.col_id] or { '' }
+			if a_val == b_val {
+				return 0
+			}
+			if sort.dir == .asc {
+				return if a_val < b_val { -1 } else { 1 }
+			}
+			return if a_val > b_val { -1 } else { 1 }
+		})
+	}
+	return filtered
+}
+
+fn showcase_data_grid_row_matches_query(row gui.GridRow, query gui.GridQueryState) bool {
+	if query.quick_filter.len > 0 {
+		needle := query.quick_filter.to_lower()
+		mut any := false
+		for _, value in row.cells {
+			if value.to_lower().contains(needle) {
+				any = true
+				break
+			}
+		}
+		if !any {
+			return false
+		}
+	}
+	for filter in query.filters {
+		cell := row.cells[filter.col_id] or { '' }
+		if !cell.to_lower().contains(filter.value.to_lower()) {
+			return false
+		}
+	}
+	return true
+}
+
 fn showcase_table_rows() [][]string {
 	return [
 		['Name', 'Role', 'Team', 'City'],
@@ -2469,6 +2638,48 @@ fn demo_table(mut w gui.Window) gui.View {
 			),
 			gui.text(text: 'Click a column header to sort.', text_style: gui.theme().n5),
 			w.table(table_cfg),
+		]
+	)
+}
+
+fn demo_data_grid(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	rows := showcase_data_grid_apply_query(showcase_data_grid_rows(), app.data_grid_query)
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'Simple controlled grid. Sort, filter, and select rows.'
+				text_style: gui.theme().n5
+			),
+			gui.text(
+				text:       'Rows: ${rows.len}  Selected: ${app.data_grid_selection.selected_row_ids.len}'
+				text_style: gui.theme().n5
+			),
+			w.data_grid(
+				id:                  'catalog_data_grid'
+				id_focus:            9162
+				sizing:              gui.fit_fit
+				columns:             showcase_data_grid_columns()
+				rows:                rows
+				query:               app.data_grid_query
+				selection:           app.data_grid_selection
+				max_height:          260
+				on_query_change:     fn (query gui.GridQueryState, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.data_grid_query = query
+				}
+				on_selection_change: fn (selection gui.GridSelection, mut _ gui.Event, mut w gui.Window) {
+					mut app := w.state[ShowcaseApp]()
+					app.data_grid_selection = selection
+				}
+			),
+			w.markdown(
+				id:      'catalog_data_grid_features'
+				source:  showcase_data_grid_features_source
+				mode:    .wrap
+				padding: gui.padding_none
+			),
 		]
 	)
 }
