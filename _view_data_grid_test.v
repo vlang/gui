@@ -107,6 +107,59 @@ fn test_grid_rows_to_csv_quotes() {
 	assert csv == 'Name,Note\n"Alice, Jr","He said ""hi"""'
 }
 
+fn test_grid_data_from_csv_basic() {
+	parsed := grid_data_from_csv('Name,Team\nAlice,Core\nBob,Data') or { panic(err) }
+	assert parsed.columns.len == 2
+	assert parsed.columns[0].title == 'Name'
+	assert parsed.columns[0].id == 'name'
+	assert parsed.columns[1].title == 'Team'
+	assert parsed.columns[1].id == 'team'
+	assert parsed.rows.len == 2
+	assert parsed.rows[0].id == '1'
+	assert parsed.rows[0].cells['name'] == 'Alice'
+	assert parsed.rows[0].cells['team'] == 'Core'
+	assert parsed.rows[1].id == '2'
+	assert parsed.rows[1].cells['name'] == 'Bob'
+	assert parsed.rows[1].cells['team'] == 'Data'
+}
+
+fn test_grid_data_from_csv_normalizes_headers_and_row_widths() {
+	data := '\xEF\xBB\xBFName,,Name\nAlice,,One\nBob,Ops,Two\nCara'
+	parsed := grid_data_from_csv(data) or { panic(err) }
+	assert parsed.columns.len == 3
+	assert parsed.columns[0].title == 'Name'
+	assert parsed.columns[0].id == 'name'
+	assert parsed.columns[1].title == 'Column 2'
+	assert parsed.columns[1].id == 'col_2'
+	assert parsed.columns[2].title == 'Name'
+	assert parsed.columns[2].id == 'name_2'
+	assert parsed.rows.len == 3
+	assert parsed.rows[0].cells['name'] == 'Alice'
+	assert parsed.rows[0].cells['col_2'] == ''
+	assert parsed.rows[0].cells['name_2'] == 'One'
+	assert parsed.rows[1].cells['name'] == 'Bob'
+	assert parsed.rows[1].cells['col_2'] == 'Ops'
+	assert parsed.rows[1].cells['name_2'] == 'Two'
+	assert parsed.rows[2].cells['name'] == 'Cara'
+	assert parsed.rows[2].cells['col_2'] == ''
+	assert parsed.rows[2].cells['name_2'] == ''
+}
+
+fn test_grid_data_from_csv_quotes() {
+	parsed := grid_data_from_csv('Name,Note\n"Alice, Jr","He said ""hi"""') or { panic(err) }
+	assert parsed.rows.len == 1
+	assert parsed.rows[0].cells['name'] == 'Alice, Jr'
+	assert parsed.rows[0].cells['note'] == 'He said "hi"'
+}
+
+fn test_grid_data_from_csv_empty_error() {
+	_ := grid_data_from_csv('   ') or {
+		assert err.msg() == 'csv data is required'
+		return
+	}
+	assert false
+}
+
 fn test_data_grid_visible_range_for_scroll() {
 	first, last := data_grid_visible_range_for_scroll(0, 120, 20, 100, 40, 2)
 	assert first == 0

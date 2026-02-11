@@ -21,6 +21,7 @@
 - Controlled top frozen rows (`frozen_top_row_ids`)
 - Optional frozen header row (`freeze_header`)
 - Clipboard copy (`ctrl/cmd+c`) to TSV
+- CSV import helper
 - CSV helper export
 - XLSX helper export
 - PDF helper export
@@ -29,6 +30,7 @@
 - `DataGridCfg`
 - `GridColumnCfg`
 - `GridCellEdit`
+- `GridCsvData`
 - `GridAggregateCfg`
 - `GridRow`
 - `GridQueryState`
@@ -93,9 +95,13 @@ fn main_view(mut w gui.Window) gui.View {
 }
 ```
 
-## Export Helpers
+## Import and Export Helpers
 
 ```v ignore
+parsed := gui.grid_data_from_csv(csv_data) or { panic(err) }
+columns := parsed.columns
+rows := parsed.rows
+
 tsv := gui.grid_rows_to_tsv(columns, rows)
 csv := gui.grid_rows_to_csv(columns, rows)
 xlsx := gui.grid_rows_to_xlsx(columns, rows) or { []u8{} }
@@ -121,6 +127,7 @@ gui.grid_rows_to_pdf_file('/tmp/grid.pdf', columns, rows) or {}
 - Row editing is controlled. App applies `on_cell_edit` updates to row data.
 - Conditional cell formatting is callback-driven via `on_cell_format`.
 - Provide stable unique `GridRow.id` values. Empty ids use best-effort auto ids.
+- `grid_data_from_csv` creates 1-based row ids and normalizes column ids.
 - Top frozen rows are controlled via `frozen_top_row_ids`.
 - Frozen rows are scoped to current page and keep current visible order.
 - Frozen rows bypass group header generation and keep row/detail interactions.

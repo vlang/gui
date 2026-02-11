@@ -1,6 +1,7 @@
 module gui
 
 import compress.szip
+import encoding.csv
 import hash.fnv1a
 import os
 import strconv
@@ -126,6 +127,13 @@ pub:
 	row_idx int
 	col_id  string
 	value   string
+}
+
+@[minify]
+pub struct GridCsvData {
+pub:
+	columns []GridColumnCfg
+	rows    []GridRow
 }
 
 @[minify]
@@ -1924,6 +1932,63 @@ fn data_grid_next_page_index_for_key(page_index int, page_count int, e &Event) ?
 	}
 }
 
+// grid_data_from_csv parses CSV data into data-grid columns and rows.
+//
+// - First CSV row becomes column headers.
+// - Blank headers are replaced with `Column N`.
+// - Duplicate header ids are suffixed (`name`, `name_2`, ...).
+// - Row ids are generated as 1-based strings in CSV order.
+pub fn grid_data_from_csv(data string) !GridCsvData {
+	if data.trim_space().len == 0 {
+		return error('csv data is required')
+	}
+	mut source := data
+	if !source.ends_with('\n') {
+		source += '\n'
+	}
+	mut parser := csv.csv_reader_from_string(source) or {
+		return error('failed to create CSV parser: ${err.msg()}')
+	}
+	row_count := parser.rows_count() or {
+		return error('failed to get CSV row count: ${err.msg()}')
+	}
+	if row_count <= 0 {
+		return error('csv data contains no rows')
+	}
+	mut parsed_rows := [][]string{cap: int(row_count)}
+	mut max_cols := 0
+	for row_idx in 0 .. int(row_count) {
+		fields := parser.get_row(row_idx) or {
+			return error('failed to parse CSV row ${row_idx + 1}: ${err.msg()}')
+		}
+		decoded := fields.map(data_grid_csv_unquote(it))
+		if decoded.len > max_cols {
+			max_cols = decoded.len
+		}
+		parsed_rows << decoded
+	}
+	if max_cols <= 0 {
+		return error('csv header row is empty')
+	}
+	columns := data_grid_csv_columns(parsed_rows[0], max_cols)
+	mut rows := []GridRow{cap: int_max(0, parsed_rows.len - 1)}
+	for row_idx in 1 .. parsed_rows.len {
+		fields := parsed_rows[row_idx]
+		mut cells := map[string]string{}
+		for col_idx, col in columns {
+			cells[col.id] = if col_idx < fields.len { fields[col_idx] } else { '' }
+		}
+		rows << GridRow{
+			id:    '${row_idx}'
+			cells: cells
+		}
+	}
+	return GridCsvData{
+		columns: columns
+		rows:    rows
+	}
+}
+
 // grid_rows_to_tsv converts rows to tab-separated text with a header row.
 pub fn grid_rows_to_tsv(columns []GridColumnCfg, rows []GridRow) string {
 	if columns.len == 0 {
@@ -2243,6 +2308,112 @@ fn data_grid_csv_escape(value string) string {
 	}
 	escaped := value.replace('"', '""')
 	return '"${escaped}"'
+}
+
+fn data_grid_csv_unquote(value string) string {
+	if value.len >= 2 && value[0] == `"` && value[value.len - 1] == `"` {
+		inner := value[1..value.len - 1]
+		return inner.replace('""', '"')
+	}
+	return value
+}
+
+fn data_grid_csv_columns(header []string, max_cols int) []GridColumnCfg {
+	mut columns := []GridColumnCfg{cap: max_cols}
+	mut used_ids := map[string]bool{}
+	for idx in 0 .. max_cols {
+		header_value := if idx < header.len {
+			data_grid_csv_strip_bom(header[idx], idx)
+		} else {
+			''
+		}
+		title := data_grid_csv_column_title(header_value, idx)
+		base_id := if header_value.trim_space().len == 0 {
+			'col_${idx + 1}'
+		} else {
+			data_grid_csv_column_id(title, idx)
+		}
+		col_id := data_grid_csv_unique_id(base_id, mut used_ids)
+		columns << GridColumnCfg{
+			id:    col_id
+			title: title
+		}
+	}
+	return columns
+}
+
+fn data_grid_csv_column_title(value string, idx int) string {
+	title := value.trim_space()
+	if title.len > 0 {
+		return title
+	}
+	return 'Column ${idx + 1}'
+}
+
+fn data_grid_csv_column_id(title string, idx int) string {
+	lower := title.to_lower()
+	mut out := []u8{cap: lower.len}
+	mut last_is_underscore := false
+	for ch in lower.bytes() {
+		is_alpha := ch >= `a` && ch <= `z`
+		is_digit := ch >= `0` && ch <= `9`
+		if is_alpha || is_digit {
+			out << ch
+			last_is_underscore = false
+			continue
+		}
+		if !last_is_underscore {
+			out << `_`
+			last_is_underscore = true
+		}
+	}
+	mut id := data_grid_trim_char_edges(out.bytestr(), `_`)
+	if id.len == 0 {
+		id = 'col_${idx + 1}'
+	}
+	return id
+}
+
+fn data_grid_trim_char_edges(value string, ch u8) string {
+	if value.len == 0 {
+		return ''
+	}
+	mut start := 0
+	mut end := value.len
+	for start < end && value[start] == ch {
+		start++
+	}
+	for end > start && value[end - 1] == ch {
+		end--
+	}
+	return value[start..end]
+}
+
+fn data_grid_csv_unique_id(base string, mut used map[string]bool) string {
+	if !used[base] {
+		used[base] = true
+		return base
+	}
+	mut suffix := 2
+	for {
+		candidate := '${base}_${suffix}'
+		if !used[candidate] {
+			used[candidate] = true
+			return candidate
+		}
+		suffix++
+	}
+	return base
+}
+
+fn data_grid_csv_strip_bom(value string, idx int) string {
+	if idx != 0 || value.len < 3 {
+		return value
+	}
+	if value[0] == u8(0xef) && value[1] == u8(0xbb) && value[2] == u8(0xbf) {
+		return value[3..]
+	}
+	return value
 }
 
 fn data_grid_detail_toggle_control(cfg DataGridCfg, row_id string, expanded bool, enabled bool, focus_id u32) View {
