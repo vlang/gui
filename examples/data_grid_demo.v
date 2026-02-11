@@ -13,6 +13,7 @@ pub mut:
 	group_rows      bool
 	column_selector bool
 	paging          bool
+	search          bool
 	hidden_cols     map[string]bool
 	page_index      int
 	query           gui.GridQueryState
@@ -36,6 +37,7 @@ fn main() {
 			app.group_rows = false
 			app.column_selector = false
 			app.paging = false
+			app.search = false
 			app.frozen_top = []string{}
 			w.update_view(main_view)
 		}
@@ -111,6 +113,18 @@ fn main_view(mut window gui.Window) gui.View {
 							}
 						}
 					),
+					gui.switch(
+						id_focus: 47
+						label:    'Search'
+						select:   app.search
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut state := w.state[DataGridDemoApp]()
+							state.search = !state.search
+							if !state.search {
+								state.query.quick_filter = ''
+							}
+						}
+					),
 				]
 			),
 			gui.text(
@@ -134,6 +148,7 @@ fn main_view(mut window gui.Window) gui.View {
 				freeze_header:             app.freeze_header
 				frozen_top_row_ids:        app.frozen_top
 				show_column_chooser:       app.column_selector
+				show_quick_filter:         app.search
 				hidden_column_ids:         app.hidden_cols
 				aggregates:                [
 					gui.GridAggregateCfg{

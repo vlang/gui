@@ -223,6 +223,63 @@ fn test_data_grid_static_top_height_include_header_toggle() {
 	assert with_header == without_header + cfg.header_height
 }
 
+fn test_data_grid_filter_and_quick_filter_height_prefer_header_height() {
+	cfg := DataGridCfg{
+		id:            'filter-height'
+		row_height:    30
+		header_height: 34
+		columns:       []
+		rows:          []
+	}
+	assert data_grid_filter_height(cfg) == 34
+	assert data_grid_quick_filter_height(cfg) == 34
+}
+
+fn test_data_grid_static_top_height_excludes_quick_filter_row() {
+	cfg := DataGridCfg{
+		id:                'top-height-no-quick-filter'
+		show_quick_filter: true
+		row_height:        30
+		header_height:     34
+		columns:           []
+		rows:              []
+	}
+	assert data_grid_static_top_height(cfg, 30, false, false) == 0
+}
+
+fn test_data_grid_quick_filter_matches_text_local() {
+	cfg := DataGridCfg{
+		id:      'matches-local'
+		columns: []
+		rows:    [
+			GridRow{
+				id: '1'
+			},
+			GridRow{
+				id: '2'
+			},
+		]
+	}
+	assert data_grid_quick_filter_matches_text(cfg) == 'Matches 2'
+}
+
+fn test_data_grid_quick_filter_matches_text_with_total() {
+	cfg := DataGridCfg{
+		id:        'matches-total'
+		row_count: ?int(50)
+		columns:   []
+		rows:      [
+			GridRow{
+				id: '1'
+			},
+			GridRow{
+				id: '2'
+			},
+		]
+	}
+	assert data_grid_quick_filter_matches_text(cfg) == 'Matches 2/50'
+}
+
 fn test_data_grid_scroll_padding_visible() {
 	cfg := DataGridCfg{
 		id:      'padding-visible'

@@ -291,6 +291,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	focused_col_id := data_grid_header_focused_col_id(resolved_cfg, columns, window.id_focus())
 
 	mut column_widths := data_grid_column_widths(resolved_cfg, mut window)
+	total_width := data_grid_columns_total_width(columns, column_widths)
 	header_view := data_grid_header_row(resolved_cfg, columns, column_widths, focus_id,
 		hovered_col_id, resizing_col_id, focused_col_id)
 	header_height := data_grid_header_height(resolved_cfg)
@@ -307,9 +308,6 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	}
 
 	mut rows := []View{cap: presentation.rows.len + 8}
-	if resolved_cfg.show_quick_filter {
-		rows << data_grid_quick_filter_row(resolved_cfg)
-	}
 	if resolved_cfg.show_column_chooser {
 		rows << data_grid_column_chooser_row(resolved_cfg, chooser_open, focus_id)
 	}
@@ -386,15 +384,21 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		sizing:          fill_fill
 		content:         rows
 	)
-	mut content := []View{cap: 4}
+	mut content := []View{cap: 6}
+	if resolved_cfg.show_quick_filter {
+		quick_filter_height := data_grid_quick_filter_height(resolved_cfg)
+		content << data_grid_frozen_top_zone(resolved_cfg, [
+			data_grid_quick_filter_row(resolved_cfg),
+		], quick_filter_height, total_width, scroll_x)
+	}
 	if resolved_cfg.show_header && resolved_cfg.freeze_header {
 		content << data_grid_frozen_top_zone(resolved_cfg, [header_view], header_height,
-			data_grid_columns_total_width(columns, column_widths), scroll_x)
+			total_width, scroll_x)
 	}
 	if frozen_top_display_rows > 0 {
 		frozen_height := f32(frozen_top_display_rows) * row_height
 		content << data_grid_frozen_top_zone(resolved_cfg, frozen_top_views, frozen_height,
-			data_grid_columns_total_width(columns, column_widths), scroll_x)
+			total_width, scroll_x)
 	}
 	content << scroll_body
 	if pager_enabled {
@@ -436,6 +440,9 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 	query := cfg.query
 	value := query.quick_filter
 	input_id := '${cfg.id}:quick_filter'
+	input_focus_id := fnv1a.sum32_string(input_id)
+	matches_text := data_grid_quick_filter_matches_text(cfg)
+	clear_disabled := value.len == 0 || query_callback == unsafe { nil }
 	return row(
 		name:         'data_grid quick filter row'
 		height:       h
@@ -443,15 +450,25 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 		color:        cfg.color_quick_filter
 		color_border: cfg.color_border
 		size_border:  0
-		padding:      cfg.padding_filter
-		spacing:      0
+		padding:      padding(0, cfg.padding_cell.right, 0, cfg.padding_cell.left)
+		spacing:      6
+		v_align:      .middle
+		on_click:     fn [input_focus_id] (_ &Layout, mut e Event, mut w Window) {
+			if input_focus_id > 0 {
+				w.set_id_focus(input_focus_id)
+			}
+			e.is_handled = true
+		}
 		content:      [
 			input(
 				id:                input_id
-				id_focus:          fnv1a.sum32_string(input_id)
+				id_focus:          input_focus_id
 				text:              value
 				placeholder:       cfg.quick_filter_placeholder
 				sizing:            fill_fill
+				padding:           padding_none
+				size_border:       0
+				radius:            0
 				color:             cfg.color_quick_filter
 				color_hover:       cfg.color_quick_filter
 				color_border:      cfg.color_border
@@ -478,8 +495,57 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 					query_callback(next, mut e, mut w)
 				}
 			),
+			text(
+				text:       matches_text
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+			),
+			button(
+				sizing:       fit_fill
+				padding:      padding_none
+				size_border:  0
+				radius:       0
+				color:        color_transparent
+				color_hover:  cfg.color_header_hover
+				color_focus:  color_transparent
+				color_click:  cfg.color_header_hover
+				color_border: color_transparent
+				disabled:     clear_disabled
+				on_click:     fn [query_callback, query, input_focus_id] (_ &Layout, mut e Event, mut w Window) {
+					if query_callback == unsafe { nil } {
+						return
+					}
+					next := GridQueryState{
+						sorts:        query.sorts.clone()
+						filters:      query.filters.clone()
+						quick_filter: ''
+					}
+					query_callback(next, mut e, mut w)
+					if input_focus_id > 0 {
+						w.set_id_focus(input_focus_id)
+					}
+					e.is_handled = true
+				}
+				content:      [
+					text(
+						text:       'Clear'
+						mode:       .single_line
+						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+					),
+				]
+			),
 		]
 	)
+}
+
+fn data_grid_quick_filter_matches_text(cfg DataGridCfg) string {
+	if total := cfg.row_count {
+		return 'Matches ${cfg.rows.len}/${total}'
+	}
+	if data_grid_has_source(cfg) {
+		return 'Matches ${cfg.rows.len}/?'
+	}
+	return 'Matches ${cfg.rows.len}'
 }
 
 fn data_grid_column_chooser_row(cfg DataGridCfg, is_open bool, focus_id u32) View {
@@ -1000,6 +1066,9 @@ fn data_grid_filter_cell(cfg DataGridCfg, col GridColumnCfg, width f32) View {
 				placeholder:     if col.filterable { 'Filter' } else { '' }
 				disabled:        !col.filterable || on_query_change == unsafe { nil }
 				sizing:          fill_fill
+				padding:         padding_none
+				size_border:     0
+				radius:          0
 				color:           cfg.color_filter
 				color_hover:     cfg.color_filter
 				color_border:    cfg.color_border
@@ -3729,17 +3798,17 @@ fn data_grid_header_height(cfg DataGridCfg) f32 {
 }
 
 fn data_grid_filter_height(cfg DataGridCfg) f32 {
-	if cfg.row_height > 0 {
-		return cfg.row_height
+	if cfg.header_height > 0 {
+		return cfg.header_height
 	}
-	return data_grid_header_height(cfg)
+	return cfg.row_height
 }
 
 fn data_grid_quick_filter_height(cfg DataGridCfg) f32 {
-	if cfg.row_height > 0 {
-		return cfg.row_height
+	if cfg.header_height > 0 {
+		return cfg.header_height
 	}
-	return data_grid_header_height(cfg)
+	return cfg.row_height
 }
 
 fn data_grid_row_height(cfg DataGridCfg, mut window Window) f32 {
@@ -3754,9 +3823,6 @@ fn data_grid_row_height(cfg DataGridCfg, mut window Window) f32 {
 
 fn data_grid_static_top_height(cfg DataGridCfg, row_height f32, chooser_open bool, include_header bool) f32 {
 	mut top := f32(0)
-	if cfg.show_quick_filter {
-		top += data_grid_quick_filter_height(cfg)
-	}
 	if cfg.show_column_chooser {
 		top += data_grid_column_chooser_height(cfg, chooser_open)
 	}
