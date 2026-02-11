@@ -143,6 +143,7 @@ fn main_view(mut window gui.Window) gui.View {
 					state.all_rows = rows
 					state.last_action = 'Edited ${edit.row_id}.${edit.col_id}'
 				}
+				on_cell_format:            data_grid_demo_cell_format
 				on_row_activate:           fn (row gui.GridRow, mut _ gui.Event, mut w gui.Window) {
 					mut state := w.state[DataGridDemoApp]()
 					state.last_action = 'Activated row ${row.id}'
@@ -266,6 +267,56 @@ fn apply_query(rows []gui.GridRow, query gui.GridQueryState) []gui.GridRow {
 		})
 	}
 	return filtered
+}
+
+fn data_grid_demo_cell_format(row gui.GridRow, _ int, col gui.GridColumnCfg, value string, mut _ gui.Window) gui.GridCellFormat {
+	if row.id.len == 0 {
+		return gui.GridCellFormat{}
+	}
+	if col.id == 'status' && value == 'Closed' {
+		return gui.GridCellFormat{
+			has_text_color: true
+			text_color:     gui.Color{
+				r: 220
+				g: 95
+				b: 90
+				a: 255
+			}
+		}
+	}
+	if col.id == 'score' {
+		score := value.int()
+		if score < 70 {
+			return gui.GridCellFormat{
+				has_text_color: true
+				text_color:     gui.Color{
+					r: 232
+					g: 108
+					b: 97
+					a: 255
+				}
+			}
+		}
+		if score >= 95 {
+			return gui.GridCellFormat{
+				has_bg_color:   true
+				bg_color:       gui.Color{
+					r: 28
+					g: 70
+					b: 38
+					a: 190
+				}
+				has_text_color: true
+				text_color:     gui.Color{
+					r: 178
+					g: 238
+					b: 191
+					a: 255
+				}
+			}
+		}
+	}
+	return gui.GridCellFormat{}
 }
 
 fn row_matches_query(row gui.GridRow, query gui.GridQueryState) bool {

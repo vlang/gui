@@ -634,9 +634,79 @@ fn test_data_grid_editor_bool_value() {
 	assert data_grid_editor_bool_value('abc') == false
 }
 
+fn test_data_grid_resolve_cell_format_defaults() {
+	base := TextStyle{
+		color: white
+		size:  13
+	}
+	next_style, bg := data_grid_resolve_cell_format(base, GridCellFormat{})
+	assert next_style.color == base.color
+	assert next_style.size == base.size
+	assert bg == color_transparent
+}
+
+fn test_data_grid_resolve_cell_format_overrides() {
+	base := TextStyle{
+		color: white
+		size:  13
+	}
+	next_style, bg := data_grid_resolve_cell_format(base, GridCellFormat{
+		has_bg_color:   true
+		bg_color:       red
+		has_text_color: true
+		text_color:     green
+	})
+	assert next_style.color == green
+	assert next_style.size == base.size
+	assert bg == red
+}
+
 fn test_data_grid_parse_editor_date() {
 	parsed := data_grid_parse_editor_date('2/10/2026')
 	assert parsed.custom_format('M/D/YYYY') == '2/10/2026'
+}
+
+fn test_data_grid_row_id_prefers_explicit_id() {
+	row := GridRow{
+		id:    'row-7'
+		cells: {
+			'name': 'Ada'
+		}
+	}
+	assert data_grid_row_id(row, 99) == 'row-7'
+}
+
+fn test_data_grid_row_id_fallback_is_stable_for_same_cells() {
+	row := GridRow{
+		id:    ''
+		cells: {
+			'team':  'Core'
+			'name':  'Ada'
+			'score': '95'
+		}
+	}
+	id1 := data_grid_row_id(row, 1)
+	id2 := data_grid_row_id(row, 27)
+	assert id1 == id2
+	assert id1.starts_with('__auto_')
+}
+
+fn test_data_grid_row_id_fallback_differs_for_diff_cells() {
+	row_a := GridRow{
+		id:    ''
+		cells: {
+			'name':  'Ada'
+			'score': '95'
+		}
+	}
+	row_b := GridRow{
+		id:    ''
+		cells: {
+			'name':  'Ada'
+			'score': '40'
+		}
+	}
+	assert data_grid_row_id(row_a, 0) != data_grid_row_id(row_b, 0)
 }
 
 fn test_data_grid_has_row_id() {

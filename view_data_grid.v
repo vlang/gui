@@ -128,6 +128,15 @@ pub:
 	value   string
 }
 
+@[minify]
+pub struct GridCellFormat {
+pub:
+	has_bg_color   bool
+	bg_color       Color
+	has_text_color bool
+	text_color     Color
+}
+
 enum DataGridDisplayRowKind as u8 {
 	data
 	group_header
@@ -211,8 +220,9 @@ pub:
 	on_column_pin_change      fn (string, GridColumnPin, mut Event, mut Window)          = unsafe { nil }
 	on_hidden_columns_change  fn (hidden_ids map[string]bool, mut e Event, mut w Window) = unsafe { nil }
 	on_page_change            fn (int, mut Event, mut Window) = unsafe { nil }
-	on_detail_expanded_change fn (detail_ids map[string]bool, mut e Event, mut w Window) = unsafe { nil }
-	on_cell_edit              fn (GridCellEdit, mut Event, mut Window)                   = unsafe { nil }
+	on_detail_expanded_change fn (detail_ids map[string]bool, mut e Event, mut w Window)          = unsafe { nil }
+	on_cell_edit              fn (GridCellEdit, mut Event, mut Window)                            = unsafe { nil }
+	on_cell_format            fn (GridRow, int, GridColumnCfg, string, mut Window) GridCellFormat = unsafe { nil }
 	on_detail_row_view        fn (GridRow, mut Window) View                 = unsafe { nil }
 	on_copy_rows              fn ([]GridRow, mut Event, mut Window) ?string = unsafe { nil }
 	on_row_activate           fn (GridRow, mut Event, mut Window)           = unsafe { nil }
@@ -328,7 +338,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		scrollbar_cfg_y: &scrollbar_cfg
 		color:           cfg.color_background
 		padding:         data_grid_scroll_padding(cfg)
-		spacing:         -cfg.size_border
+		spacing:         0
 		sizing:          fill_fill
 		content:         rows
 	)
@@ -710,11 +720,11 @@ fn data_grid_header_cell(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_co
 		size_border:  cfg.size_border
 		spacing:      0
 		on_click:     fn [cfg, col, on_query_change, focus_id, header_focus_id] (_ &Layout, mut e Event, mut w Window) {
+			e.is_handled = true
 			if col.sortable && on_query_change != unsafe { nil } {
 				shift_sort := cfg.multi_sort && e.modifiers.has(.shift)
 				next := data_grid_toggle_sort(cfg.query, col.id, cfg.multi_sort, shift_sort)
 				on_query_change(next, mut e, mut w)
-				e.is_handled = true
 			}
 			if header_focus_id > 0 {
 				w.set_id_focus(header_focus_id)
@@ -1007,7 +1017,16 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 	mut cells := []View{cap: columns.len}
 	for col_idx, col in columns {
 		value := row_data.cells[col.id] or { '' }
-		text_style := col.text_style or { cfg.text_style }
+		base_text_style := col.text_style or { cfg.text_style }
+		mut text_style := base_text_style
+		mut cell_color := color_transparent
+		if cfg.on_cell_format != unsafe { nil } {
+			cell_format := cfg.on_cell_format(row_data, row_idx, col, value, mut window)
+			next_text_style, next_cell_color := data_grid_resolve_cell_format(base_text_style,
+				cell_format)
+			text_style = next_text_style
+			cell_color = next_cell_color
+		}
 		is_editing_cell := is_editing_row && col.editable
 		mut cell_content := []View{cap: 2}
 		if col_idx == 0 && detail_enabled {
@@ -1032,7 +1051,7 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 			width:        data_grid_column_width_for(col, column_widths)
 			sizing:       fixed_fill
 			padding:      if is_editing_cell { padding_none } else { cfg.padding_cell }
-			color:        color_transparent
+			color:        cell_color
 			color_border: cfg.color_border
 			size_border:  cfg.size_border
 			h_align:      if col_idx == 0 && detail_enabled { .start } else { col.align }
@@ -1079,6 +1098,21 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 		}
 		content:      cells
 	)
+}
+
+fn data_grid_resolve_cell_format(base TextStyle, format GridCellFormat) (TextStyle, Color) {
+	mut text_style := base
+	if format.has_text_color {
+		text_style = TextStyle{
+			...text_style
+			color: format.text_color
+		}
+	}
+	mut bg_color := color_transparent
+	if format.has_bg_color {
+		bg_color = format.bg_color
+	}
+	return text_style, bg_color
 }
 
 fn data_grid_row_click(cfg DataGridCfg, row_idx int, row_id string, focus_id u32, columns []GridColumnCfg, mut e Event, mut w Window) {
@@ -3210,7 +3244,30 @@ fn data_grid_row_id(row GridRow, idx int) string {
 	if row.id.len > 0 {
 		return row.id
 	}
+	auto_id := data_grid_row_auto_id(row)
+	if auto_id.len > 0 {
+		return auto_id
+	}
 	return idx.str()
+}
+
+fn data_grid_row_auto_id(row GridRow) string {
+	if row.cells.len == 0 {
+		return ''
+	}
+	mut keys := row.cells.keys()
+	keys.sort()
+	mut parts := []string{cap: keys.len}
+	for key in keys {
+		value := row.cells[key] or { '' }
+		parts << '${key}=${value}'
+	}
+	serialized := parts.join('\x1f')
+	if serialized.len == 0 {
+		return ''
+	}
+	hash := fnv1a.sum64_string(serialized)
+	return '__auto_${hash:016x}'
 }
 
 fn data_grid_height(cfg DataGridCfg) f32 {

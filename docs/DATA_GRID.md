@@ -16,6 +16,7 @@
 - Group headers (`group_by`) with optional aggregates
 - Controlled master-detail rows
 - Controlled row edit mode + typed cell editors (`text/select/date/checkbox`)
+- Conditional cell formatting (`on_cell_format`)
 - Controlled pagination (`page_size`, `page_index`)
 - Clipboard copy (`ctrl/cmd+c`) to TSV
 - CSV helper export
@@ -36,7 +37,7 @@ Application state owns query, selection, and rows.
 Application also owns optional `column_order`, pin state (`GridColumnCfg.pin`),
 column visibility (`hidden_column_ids`), grouping (`group_by`, `aggregates`),
 and detail expansion map
-(`detail_expanded_row_ids`), row cell data updates for edits, and
+(`detail_expanded_row_ids`), conditional format logic, row cell data updates for edits, and
 pagination state (`page_size`, `page_index`).
 
 Grid emits callbacks:
@@ -47,6 +48,7 @@ Grid emits callbacks:
 - `on_hidden_columns_change`
 - `on_page_change`
 - `on_cell_edit`
+- `on_cell_format`
 - `on_detail_expanded_change`
 - `on_row_activate`
 - `on_copy_rows`
@@ -114,6 +116,8 @@ gui.grid_rows_to_pdf_file('/tmp/grid.pdf', columns, rows) or {}
 - Grouping is contiguous. Sort data by group columns first for stable large groups.
 - Master-detail is controlled. App owns expanded ids and detail row content callback.
 - Row editing is controlled. App applies `on_cell_edit` updates to row data.
+- Conditional cell formatting is callback-driven via `on_cell_format`.
+- Provide stable unique `GridRow.id` values. Empty ids use best-effort auto ids.
 - Enter edit mode with row double-click or `F2` on active row.
 - Exit edit mode with `Esc` (or `Enter` in text editor).
 - Pagination is controlled. Grid emits next page index via `on_page_change`.
