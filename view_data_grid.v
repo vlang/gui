@@ -646,10 +646,17 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 				padding: padding_none
 				content: []
 			),
-			text(
-				text:       rows_text
-				mode:       .single_line
-				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+			row(
+				name:    'data_grid pager rows status'
+				sizing:  fit_fill
+				padding: padding(0, 6, 0, 0)
+				content: [
+					text(
+						text:       rows_text
+						mode:       .single_line
+						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+					),
+				]
 			),
 		]
 	)

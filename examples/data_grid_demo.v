@@ -12,6 +12,7 @@ pub mut:
 	freeze_header   bool
 	group_rows      bool
 	column_selector bool
+	paging          bool
 	hidden_cols     map[string]bool
 	page_index      int
 	query           gui.GridQueryState
@@ -23,7 +24,7 @@ fn main() {
 	mut window := gui.window(
 		title:   'Data Grid Demo'
 		state:   &DataGridDemoApp{}
-		width:   980
+		width:   1100
 		height:  640
 		on_init: fn (mut w gui.Window) {
 			mut app := w.state[DataGridDemoApp]()
@@ -34,6 +35,7 @@ fn main() {
 			app.freeze_header = false
 			app.group_rows = false
 			app.column_selector = false
+			app.paging = false
 			app.frozen_top = []string{}
 			w.update_view(main_view)
 		}
@@ -97,6 +99,18 @@ fn main_view(mut window gui.Window) gui.View {
 							state.column_selector = !state.column_selector
 						}
 					),
+					gui.switch(
+						id_focus: 46
+						label:    'Paging'
+						select:   app.paging
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut state := w.state[DataGridDemoApp]()
+							state.paging = !state.paging
+							if !state.paging {
+								state.page_index = 0
+							}
+						}
+					),
 				]
 			),
 			gui.text(
@@ -115,8 +129,8 @@ fn main_view(mut window gui.Window) gui.View {
 				} else {
 					[]string{}
 				}
-				page_size:                 80
-				page_index:                app.page_index
+				page_size:                 if app.paging { 80 } else { 0 }
+				page_index:                if app.paging { app.page_index } else { 0 }
 				freeze_header:             app.freeze_header
 				frozen_top_row_ids:        app.frozen_top
 				show_column_chooser:       app.column_selector
