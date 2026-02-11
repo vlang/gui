@@ -12,104 +12,105 @@ fn test_splitter_state_normalize() {
 }
 
 fn test_splitter_effective_collapsed() {
-	cfg := SplitterCfg{
+	core := SplitterCore{
 		id:        'splitter-collapse'
 		on_change: noop_splitter_change
-		first:     SplitterPaneCfg{
+		first:     SplitterPaneCore{
 			collapsible: false
 		}
-		second:    SplitterPaneCfg{
+		second:    SplitterPaneCore{
 			collapsible: true
 		}
 	}
-	assert splitter_effective_collapsed(&cfg, .first) == .none
-	assert splitter_effective_collapsed(&cfg, .second) == .second
-	assert splitter_effective_collapsed(&cfg, .none) == .none
+	assert splitter_effective_collapsed(&core, .first) == .none
+	assert splitter_effective_collapsed(&core, .second) == .second
+	assert splitter_effective_collapsed(&core, .none) == .none
 }
 
 fn test_splitter_toggle_target() {
-	cfg := SplitterCfg{
+	core := SplitterCore{
 		id:        'splitter-toggle'
 		on_change: noop_splitter_change
-		first:     SplitterPaneCfg{
+		first:     SplitterPaneCore{
 			collapsible: false
 		}
-		second:    SplitterPaneCfg{
+		second:    SplitterPaneCore{
 			collapsible: true
 		}
 	}
-	assert splitter_toggle_target(&cfg, .none) == .second
+	assert splitter_toggle_target(&core, .none) == .second
 }
 
 fn test_splitter_toggle_target_prefers_current_collapsed() {
-	cfg := SplitterCfg{
+	core := SplitterCore{
 		id:        'splitter-toggle-current'
 		on_change: noop_splitter_change
-		first:     SplitterPaneCfg{
+		first:     SplitterPaneCore{
 			collapsible: true
 		}
-		second:    SplitterPaneCfg{
+		second:    SplitterPaneCore{
 			collapsible: true
 		}
 	}
-	assert splitter_toggle_target(&cfg, .second) == .second
-	assert splitter_toggle_target(&cfg, .first) == .first
-	assert splitter_toggle_target(&cfg, .none) == .first
+	assert splitter_toggle_target(&core, .second) == .second
+	assert splitter_toggle_target(&core, .first) == .first
+	assert splitter_toggle_target(&core, .none) == .first
 }
 
 fn test_splitter_clamp_ratio_respects_constraints() {
-	cfg := SplitterCfg{
+	core := SplitterCore{
 		id:        'splitter-clamp'
 		on_change: noop_splitter_change
-		first:     SplitterPaneCfg{
+		first:     SplitterPaneCore{
 			min_size: 100
 		}
-		second:    SplitterPaneCfg{
+		second:    SplitterPaneCore{
 			min_size: 200
 		}
 	}
 	available := f32(600)
-	min_ratio := splitter_clamp_ratio(&cfg, available, 0.0)
-	max_ratio := splitter_clamp_ratio(&cfg, available, 1.0)
+	min_ratio := splitter_clamp_ratio(&core, available, 0.0)
+	max_ratio := splitter_clamp_ratio(&core, available, 1.0)
 	assert f32_are_close(min_ratio, 100 / 600.0)
 	assert f32_are_close(max_ratio, 400 / 600.0)
 }
 
 fn test_splitter_compute_collapsed_first() {
-	cfg := SplitterCfg{
-		id:        'splitter-compute'
-		on_change: noop_splitter_change
-		collapsed: .first
-		first:     SplitterPaneCfg{
+	core := SplitterCore{
+		id:          'splitter-compute'
+		on_change:   noop_splitter_change
+		collapsed:   .first
+		handle_size: 8
+		first:       SplitterPaneCore{
 			collapsible:    true
 			collapsed_size: 20
 			min_size:       10
 		}
-		second:    SplitterPaneCfg{
+		second:      SplitterPaneCore{
 			min_size: 100
 		}
 	}
-	computed := splitter_compute(&cfg, 300)
+	computed := splitter_compute(&core, 300)
 	assert computed.collapsed == .first
-	assert computed.handle_main == cfg.handle_size
+	assert computed.handle_main == core.handle_size
 	assert computed.first_main >= 10
 	assert computed.second_main >= 100
 }
 
 fn test_splitter_collapsed_second_rebalances_after_max_clamp() {
-	cfg := SplitterCfg{
+	core := SplitterCore{
 		id:        'splitter-collapsed-second'
 		on_change: noop_splitter_change
-		first:     SplitterPaneCfg{
+		first:     SplitterPaneCore{
 			max_size: 300
 		}
-		second:    SplitterPaneCfg{
+		second:    SplitterPaneCore{
 			max_size:       100
 			collapsible:    true
 			collapsed_size: 0
 		}
 	}
-	first, second := splitter_collapsed_second(&cfg, 500)
+	first, second := splitter_collapsed_second(&core, 500)
 	assert f32_are_close(second, 100)
 	assert f32_are_close(first + second, 500)
 }

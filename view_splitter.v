@@ -42,6 +42,15 @@ pub:
 	content        []View
 }
 
+// SplitterPaneCore holds pane fields needed by callbacks.
+// Excludes content array to avoid GC false retention.
+struct SplitterPaneCore {
+	min_size       f32
+	max_size       f32
+	collapsible    bool
+	collapsed_size f32
+}
+
 // SplitterCfg configures a splitter component.
 @[heap; minify]
 pub struct SplitterCfg {
@@ -76,6 +85,54 @@ pub:
 	invisible             bool
 }
 
+// SplitterCore holds callback-relevant fields without content
+// arrays or colors. Captured in closures to avoid GC false
+// retention of the full SplitterCfg.
+@[heap]
+struct SplitterCore {
+	id                    string
+	id_focus              u32
+	orientation           SplitterOrientation
+	ratio                 f32
+	collapsed             SplitterCollapsed
+	on_change             fn (f32, SplitterCollapsed, mut Event, mut Window) @[required]
+	first                 SplitterPaneCore
+	second                SplitterPaneCore
+	handle_size           f32
+	drag_step             f32
+	drag_step_large       f32
+	double_click_collapse bool
+	disabled              bool
+}
+
+fn splitter_core(cfg &SplitterCfg) &SplitterCore {
+	return &SplitterCore{
+		id:                    cfg.id
+		id_focus:              cfg.id_focus
+		orientation:           cfg.orientation
+		ratio:                 cfg.ratio
+		collapsed:             cfg.collapsed
+		on_change:             cfg.on_change
+		first:                 SplitterPaneCore{
+			min_size:       cfg.first.min_size
+			max_size:       cfg.first.max_size
+			collapsible:    cfg.first.collapsible
+			collapsed_size: cfg.first.collapsed_size
+		}
+		second:                SplitterPaneCore{
+			min_size:       cfg.second.min_size
+			max_size:       cfg.second.max_size
+			collapsible:    cfg.second.collapsible
+			collapsed_size: cfg.second.collapsed_size
+		}
+		handle_size:           cfg.handle_size
+		drag_step:             cfg.drag_step
+		drag_step_large:       cfg.drag_step_large
+		double_click_collapse: cfg.double_click_collapse
+		disabled:              cfg.disabled
+	}
+}
+
 struct SplitterComputed {
 	first_main  f32
 	second_main f32
@@ -92,6 +149,7 @@ pub fn split(cfg SplitterCfg) View {
 // splitter creates a two-pane splitter with drag/keyboard/collapse controls.
 pub fn splitter(cfg SplitterCfg) View {
 	c := cfg
+	core := splitter_core(&c)
 
 	return canvas(
 		name:         'splitter'
@@ -103,16 +161,16 @@ pub fn splitter(cfg SplitterCfg) View {
 		clip:         true
 		disabled:     c.disabled
 		invisible:    c.invisible
-		on_keydown:   fn [c] (_ &Layout, mut e Event, mut w Window) {
-			c.on_keydown(mut e, mut w)
+		on_keydown:   fn [core] (_ &Layout, mut e Event, mut w Window) {
+			splitter_on_keydown(core, mut e, mut w)
 		}
-		amend_layout: fn [c] (mut layout Layout, mut w Window) {
-			c.amend_layout(mut layout, mut w)
+		amend_layout: fn [core] (mut layout Layout, mut w Window) {
+			splitter_amend_layout(core, mut layout, mut w)
 		}
 		content:      [
-			splitter_pane('${c.id}:pane:first', c.first.content.clone()),
-			splitter_handle(c),
-			splitter_pane('${c.id}:pane:second', c.second.content.clone()),
+			splitter_pane('${c.id}:pane:first', unsafe { c.first.content }),
+			splitter_handle_view(c, core),
+			splitter_pane('${c.id}:pane:second', unsafe { c.second.content }),
 		]
 	)
 }
@@ -129,48 +187,30 @@ fn splitter_pane(id string, content []View) View {
 	)
 }
 
-fn splitter_handle(cfg SplitterCfg) View {
+fn splitter_handle_view(cfg SplitterCfg, core &SplitterCore) View {
 	mut content := []View{}
 	if cfg.show_collapse_buttons && (cfg.first.collapsible || cfg.second.collapsible) {
 		if cfg.first.collapsible {
-			content << splitter_button(cfg, .first)
+			content << splitter_button(cfg, core, .first)
 		}
 		content << splitter_grip(cfg)
 		if cfg.second.collapsible {
-			content << splitter_button(cfg, .second)
+			content << splitter_button(cfg, core, .second)
 		}
 	} else {
 		content << splitter_grip(cfg)
 	}
 
-	if cfg.orientation == .horizontal {
-		return column(
-			name:         'splitter_handle'
-			id:           '${cfg.id}:handle'
-			sizing:       fixed_fixed
-			width:        cfg.handle_size
-			padding:      padding_none
-			spacing:      1
-			color:        cfg.color_handle
-			color_border: cfg.color_handle_border
-			size_border:  cfg.size_border
-			radius:       cfg.radius
-			h_align:      .center
-			v_align:      .middle
-			on_click:     fn [cfg] (layout &Layout, mut e Event, mut w Window) {
-				cfg.on_handle_click(layout, mut e, mut w)
-			}
-			on_hover:     fn [cfg] (mut layout Layout, mut e Event, mut w Window) {
-				cfg.on_handle_hover(mut layout, mut e, mut w)
-			}
-			content:      content
-		)
-	}
-	return row(
+	orientation := cfg.orientation
+	color_hover := cfg.color_handle_hover
+	color_active := cfg.color_handle_active
+
+	handle_cfg := ContainerCfg{
 		name:         'splitter_handle'
 		id:           '${cfg.id}:handle'
 		sizing:       fixed_fixed
-		height:       cfg.handle_size
+		width:        if orientation == .horizontal { cfg.handle_size } else { f32(0) }
+		height:       if orientation == .horizontal { f32(0) } else { cfg.handle_size }
 		padding:      padding_none
 		spacing:      1
 		color:        cfg.color_handle
@@ -179,36 +219,41 @@ fn splitter_handle(cfg SplitterCfg) View {
 		radius:       cfg.radius
 		h_align:      .center
 		v_align:      .middle
-		on_click:     fn [cfg] (layout &Layout, mut e Event, mut w Window) {
-			cfg.on_handle_click(layout, mut e, mut w)
+		on_click:     fn [core] (layout &Layout, mut e Event, mut w Window) {
+			splitter_on_handle_click(core, layout, mut e, mut w)
 		}
-		on_hover:     fn [cfg] (mut layout Layout, mut e Event, mut w Window) {
-			cfg.on_handle_hover(mut layout, mut e, mut w)
+		on_hover:     fn [orientation, color_hover, color_active] (mut layout Layout, mut e Event, mut w Window) {
+			splitter_on_handle_hover(orientation, color_hover, color_active, mut layout, mut
+				e, mut w)
 		}
 		content:      content
-	)
+	}
+	if orientation == .horizontal {
+		return column(handle_cfg)
+	}
+	return row(handle_cfg)
 }
 
 fn splitter_grip(cfg SplitterCfg) View {
-	if cfg.orientation == .horizontal {
-		return rectangle(
-			width:  f32_max(2, cfg.handle_size * 0.35)
-			height: f32_max(14, cfg.handle_size * 2.0)
-			color:  cfg.color_grip
-			radius: cfg.radius_border
-			sizing: fixed_fixed
-		)
-	}
+	is_horiz := cfg.orientation == .horizontal
 	return rectangle(
-		width:  f32_max(14, cfg.handle_size * 2.0)
-		height: f32_max(2, cfg.handle_size * 0.35)
+		width:  if is_horiz {
+			f32_max(2, cfg.handle_size * 0.35)
+		} else {
+			f32_max(14, cfg.handle_size * 2.0)
+		}
+		height: if is_horiz {
+			f32_max(14, cfg.handle_size * 2.0)
+		} else {
+			f32_max(2, cfg.handle_size * 0.35)
+		}
 		color:  cfg.color_grip
 		radius: cfg.radius_border
 		sizing: fixed_fixed
 	)
 }
 
-fn splitter_button(cfg SplitterCfg, target SplitterCollapsed) View {
+fn splitter_button(cfg SplitterCfg, core &SplitterCore, target SplitterCollapsed) View {
 	size := f32_max(4, cfg.handle_size - 2)
 	text_style := TextStyle{
 		...gui_theme.icon2
@@ -227,21 +272,21 @@ fn splitter_button(cfg SplitterCfg, target SplitterCollapsed) View {
 		color_click: cfg.color_button_active
 		color_focus: cfg.color_button_hover
 		radius:      cfg.radius_border
-		on_click:    fn [cfg, target] (layout &Layout, mut e Event, mut w Window) {
-			cfg.on_button_click(target, layout, mut e, mut w)
+		on_click:    fn [core, target] (_ &Layout, mut e Event, mut w Window) {
+			splitter_on_button_click(core, target, mut e, mut w)
 		}
 		content:     [
 			text(
-				text:       splitter_button_icon(cfg, target)
+				text:       splitter_button_icon(core, target)
 				text_style: text_style
 			),
 		]
 	)
 }
 
-fn splitter_button_icon(cfg SplitterCfg, target SplitterCollapsed) string {
-	current := splitter_effective_collapsed(&cfg, cfg.collapsed)
-	if cfg.orientation == .horizontal {
+fn splitter_button_icon(core &SplitterCore, target SplitterCollapsed) string {
+	current := splitter_effective_collapsed(core, core.collapsed)
+	if core.orientation == .horizontal {
 		if target == .first {
 			return if current == .first { icon_arrow_right } else { icon_arrow_left }
 		}
@@ -253,17 +298,17 @@ fn splitter_button_icon(cfg SplitterCfg, target SplitterCollapsed) string {
 	return if current == .second { icon_arrow_up } else { icon_arrow_down }
 }
 
-fn (cfg &SplitterCfg) on_keydown(mut e Event, mut w Window) {
-	if cfg.disabled {
+fn splitter_on_keydown(core &SplitterCore, mut e Event, mut w Window) {
+	if core.disabled {
 		return
 	}
-	layout := w.find_layout_by_id(cfg.id) or { return }
-	main := splitter_main_size(&layout, cfg.orientation)
-	handle := splitter_handle_size_from_layout(&layout, cfg.orientation, cfg.handle_size)
+	layout := w.find_layout_by_id(core.id) or { return }
+	main := splitter_main_size(&layout, core.orientation)
+	handle := splitter_handle_size_from_layout(&layout, core.orientation, core.handle_size)
 	available := f32_max(0, main - handle)
 
-	mut next_ratio := splitter_clamp_ratio(cfg, available, cfg.ratio)
-	mut next_collapsed := splitter_effective_collapsed(cfg, cfg.collapsed)
+	mut next_ratio := splitter_clamp_ratio(core, available, core.ratio)
+	mut next_collapsed := splitter_effective_collapsed(core, core.collapsed)
 	mut handled := false
 
 	is_shift := e.modifiers == .shift
@@ -271,52 +316,52 @@ fn (cfg &SplitterCfg) on_keydown(mut e Event, mut w Window) {
 
 	match e.key_code {
 		.left {
-			if cfg.orientation == .horizontal && (is_none || is_shift) {
+			if core.orientation == .horizontal && (is_none || is_shift) {
 				next_collapsed = .none
-				step := if is_shift { cfg.drag_step_large } else { cfg.drag_step }
-				next_ratio = splitter_clamp_ratio(cfg, available, next_ratio - splitter_step(step))
+				step := if is_shift { core.drag_step_large } else { core.drag_step }
+				next_ratio = splitter_clamp_ratio(core, available, next_ratio - splitter_step(step))
 				handled = true
 			}
 		}
 		.right {
-			if cfg.orientation == .horizontal && (is_none || is_shift) {
+			if core.orientation == .horizontal && (is_none || is_shift) {
 				next_collapsed = .none
-				step := if is_shift { cfg.drag_step_large } else { cfg.drag_step }
-				next_ratio = splitter_clamp_ratio(cfg, available, next_ratio + splitter_step(step))
+				step := if is_shift { core.drag_step_large } else { core.drag_step }
+				next_ratio = splitter_clamp_ratio(core, available, next_ratio + splitter_step(step))
 				handled = true
 			}
 		}
 		.up {
-			if cfg.orientation == .vertical && (is_none || is_shift) {
+			if core.orientation == .vertical && (is_none || is_shift) {
 				next_collapsed = .none
-				step := if is_shift { cfg.drag_step_large } else { cfg.drag_step }
-				next_ratio = splitter_clamp_ratio(cfg, available, next_ratio - splitter_step(step))
+				step := if is_shift { core.drag_step_large } else { core.drag_step }
+				next_ratio = splitter_clamp_ratio(core, available, next_ratio - splitter_step(step))
 				handled = true
 			}
 		}
 		.down {
-			if cfg.orientation == .vertical && (is_none || is_shift) {
+			if core.orientation == .vertical && (is_none || is_shift) {
 				next_collapsed = .none
-				step := if is_shift { cfg.drag_step_large } else { cfg.drag_step }
-				next_ratio = splitter_clamp_ratio(cfg, available, next_ratio + splitter_step(step))
+				step := if is_shift { core.drag_step_large } else { core.drag_step }
+				next_ratio = splitter_clamp_ratio(core, available, next_ratio + splitter_step(step))
 				handled = true
 			}
 		}
 		.home {
-			if is_none && cfg.first.collapsible {
+			if is_none && core.first.collapsible {
 				next_collapsed = .first
 				handled = true
 			}
 		}
 		.end {
-			if is_none && cfg.second.collapsible {
+			if is_none && core.second.collapsible {
 				next_collapsed = .second
 				handled = true
 			}
 		}
 		.enter, .space {
 			if is_none {
-				target := splitter_toggle_target(cfg, next_collapsed)
+				target := splitter_toggle_target(core, next_collapsed)
 				if target != .none {
 					next_collapsed = if next_collapsed == target {
 						SplitterCollapsed.none
@@ -331,37 +376,37 @@ fn (cfg &SplitterCfg) on_keydown(mut e Event, mut w Window) {
 	}
 
 	if handled {
-		cfg.emit_change(next_ratio, next_collapsed, mut e, mut w)
+		splitter_emit_change(core, next_ratio, next_collapsed, mut e, mut w)
 	}
 }
 
-fn (cfg &SplitterCfg) on_handle_click(_ &Layout, mut e Event, mut w Window) {
-	if cfg.disabled {
+fn splitter_on_handle_click(core &SplitterCore, _ &Layout, mut e Event, mut w Window) {
+	if core.disabled {
 		return
 	}
-	splitter_set_cursor(cfg.orientation, mut w)
-	cfg.focus(mut w)
+	splitter_set_cursor(core.orientation, mut w)
+	splitter_focus(core, mut w)
 
-	mut runtime := w.view_state.splitter_runtime_state.get(cfg.id) or { SplitterRuntimeState{} }
-	current := splitter_effective_collapsed(cfg, cfg.collapsed)
-	target := splitter_toggle_target(cfg, current)
-	if cfg.double_click_collapse && target != .none && runtime.last_handle_click_frame > 0
+	mut runtime := w.view_state.splitter_runtime_state.get(core.id) or { SplitterRuntimeState{} }
+	current := splitter_effective_collapsed(core, core.collapsed)
+	target := splitter_toggle_target(core, current)
+	if core.double_click_collapse && target != .none && runtime.last_handle_click_frame > 0
 		&& e.frame_count - runtime.last_handle_click_frame <= splitter_double_click_frames {
-		ratio := cfg.current_ratio(w)
+		ratio := splitter_current_ratio(core, w)
 		next := if current == target { SplitterCollapsed.none } else { target }
 		runtime.last_handle_click_frame = 0
-		w.view_state.splitter_runtime_state.set(cfg.id, runtime)
-		cfg.emit_change(ratio, next, mut e, mut w)
+		w.view_state.splitter_runtime_state.set(core.id, runtime)
+		splitter_emit_change(core, ratio, next, mut e, mut w)
 		return
 	}
 
 	runtime.last_handle_click_frame = e.frame_count
-	w.view_state.splitter_runtime_state.set(cfg.id, runtime)
+	w.view_state.splitter_runtime_state.set(core.id, runtime)
 
-	id_focus := cfg.id_focus
+	id_focus := core.id_focus
 	w.mouse_lock(MouseLockCfg{
-		mouse_move: fn [cfg] (_ &Layout, mut e Event, mut w Window) {
-			cfg.on_drag_move(mut e, mut w)
+		mouse_move: fn [core] (_ &Layout, mut e Event, mut w Window) {
+			splitter_on_drag_move(core, mut e, mut w)
 		}
 		mouse_up:   fn [id_focus] (_ &Layout, mut _ Event, mut w Window) {
 			w.mouse_unlock()
@@ -373,63 +418,60 @@ fn (cfg &SplitterCfg) on_handle_click(_ &Layout, mut e Event, mut w Window) {
 	e.is_handled = true
 }
 
-fn (cfg &SplitterCfg) on_drag_move(mut e Event, mut w Window) {
-	if cfg.disabled {
+fn splitter_on_drag_move(core &SplitterCore, mut e Event, mut w Window) {
+	if core.disabled {
 		return
 	}
-	layout := w.find_layout_by_id(cfg.id) or { return }
-	main := splitter_main_size(&layout, cfg.orientation)
-	handle := splitter_handle_size_from_layout(&layout, cfg.orientation, cfg.handle_size)
+	layout := w.find_layout_by_id(core.id) or { return }
+	main := splitter_main_size(&layout, core.orientation)
+	handle := splitter_handle_size_from_layout(&layout, core.orientation, core.handle_size)
 	available := f32_max(0, main - handle)
 	if available <= 0 {
 		return
 	}
 
-	cursor_main := if cfg.orientation == .horizontal {
+	cursor_main := if core.orientation == .horizontal {
 		e.mouse_x - layout.shape.x - (handle / 2)
 	} else {
 		e.mouse_y - layout.shape.y - (handle / 2)
 	}
-	ratio := splitter_clamp_ratio(cfg, available, cursor_main / available)
-	splitter_set_cursor(cfg.orientation, mut w)
-	cfg.emit_change(ratio, .none, mut e, mut w)
+	ratio := splitter_clamp_ratio(core, available, cursor_main / available)
+	splitter_set_cursor(core.orientation, mut w)
+	splitter_emit_change(core, ratio, .none, mut e, mut w)
 }
 
-fn (cfg &SplitterCfg) on_handle_hover(mut layout Layout, mut e Event, mut w Window) {
-	if cfg.disabled {
-		return
-	}
-	splitter_set_cursor(cfg.orientation, mut w)
-	layout.shape.color = cfg.color_handle_hover
+fn splitter_on_handle_hover(orientation SplitterOrientation, color_hover Color, color_active Color, mut layout Layout, mut e Event, mut w Window) {
+	splitter_set_cursor(orientation, mut w)
+	layout.shape.color = color_hover
 	if e.mouse_button == .left {
-		layout.shape.color = cfg.color_handle_active
+		layout.shape.color = color_active
 	}
 	e.is_handled = true
 }
 
-fn (cfg &SplitterCfg) on_button_click(target SplitterCollapsed, _ &Layout, mut e Event, mut w Window) {
-	if cfg.disabled {
+fn splitter_on_button_click(core &SplitterCore, target SplitterCollapsed, mut e Event, mut w Window) {
+	if core.disabled {
 		return
 	}
-	valid_target := splitter_effective_collapsed(cfg, target)
+	valid_target := splitter_effective_collapsed(core, target)
 	if valid_target == .none {
 		return
 	}
-	ratio := cfg.current_ratio(w)
-	current := splitter_effective_collapsed(cfg, cfg.collapsed)
+	ratio := splitter_current_ratio(core, w)
+	current := splitter_effective_collapsed(core, core.collapsed)
 	next := if current == valid_target { SplitterCollapsed.none } else { valid_target }
-	cfg.emit_change(ratio, next, mut e, mut w)
+	splitter_emit_change(core, ratio, next, mut e, mut w)
 }
 
-fn (cfg &SplitterCfg) amend_layout(mut layout Layout, mut w Window) {
+fn splitter_amend_layout(core &SplitterCore, mut layout Layout, mut w Window) {
 	if layout.children.len < 3 {
 		return
 	}
 
-	main := splitter_main_size(&layout, cfg.orientation)
-	computed := splitter_compute(cfg, main)
+	main := splitter_main_size(&layout, core.orientation)
+	computed := splitter_compute(core, main)
 
-	if cfg.orientation == .horizontal {
+	if core.orientation == .horizontal {
 		x := layout.shape.x
 		y := layout.shape.y
 		h := layout.shape.height
@@ -493,46 +535,46 @@ fn splitter_reset_positions(mut layout Layout, is_root bool, parent_axis Axis, p
 	}
 }
 
-fn (cfg &SplitterCfg) current_ratio(w &Window) f32 {
-	layout := w.find_layout_by_id(cfg.id) or { return splitter_normalize_ratio(cfg.ratio) }
-	main := splitter_main_size(&layout, cfg.orientation)
-	handle := splitter_handle_size_from_layout(&layout, cfg.orientation, cfg.handle_size)
-	return splitter_clamp_ratio(cfg, f32_max(0, main - handle), cfg.ratio)
+fn splitter_current_ratio(core &SplitterCore, w &Window) f32 {
+	layout := w.find_layout_by_id(core.id) or { return splitter_normalize_ratio(core.ratio) }
+	main := splitter_main_size(&layout, core.orientation)
+	handle := splitter_handle_size_from_layout(&layout, core.orientation, core.handle_size)
+	return splitter_clamp_ratio(core, f32_max(0, main - handle), core.ratio)
 }
 
-fn (cfg &SplitterCfg) emit_change(ratio f32, collapsed SplitterCollapsed, mut e Event, mut w Window) {
+fn splitter_emit_change(core &SplitterCore, ratio f32, collapsed SplitterCollapsed, mut e Event, mut w Window) {
 	state := splitter_state_normalize(SplitterState{
 		ratio:     ratio
 		collapsed: collapsed
 	})
-	cfg.on_change(state.ratio, state.collapsed, mut e, mut w)
-	cfg.focus(mut w)
+	core.on_change(state.ratio, state.collapsed, mut e, mut w)
+	splitter_focus(core, mut w)
 	e.is_handled = true
 }
 
-fn (cfg &SplitterCfg) focus(mut w Window) {
-	if cfg.id_focus > 0 {
-		w.set_id_focus(cfg.id_focus)
+fn splitter_focus(core &SplitterCore, mut w Window) {
+	if core.id_focus > 0 {
+		w.set_id_focus(core.id_focus)
 	}
 }
 
-fn splitter_compute(cfg &SplitterCfg, main_size f32) SplitterComputed {
-	handle := splitter_handle_size(cfg.handle_size, main_size)
+fn splitter_compute(core &SplitterCore, main_size f32) SplitterComputed {
+	handle := splitter_handle_size(core.handle_size, main_size)
 	available := f32_max(0, main_size - handle)
-	mut ratio := splitter_clamp_ratio(cfg, available, cfg.ratio)
-	collapsed := splitter_effective_collapsed(cfg, cfg.collapsed)
+	mut ratio := splitter_clamp_ratio(core, available, core.ratio)
+	collapsed := splitter_effective_collapsed(core, core.collapsed)
 
 	mut first := f32(0)
 	mut second := f32(0)
 	match collapsed {
 		.first {
-			first, second = splitter_collapsed_first(cfg, available)
+			first, second = splitter_collapsed_first(core, available)
 		}
 		.second {
-			first, second = splitter_collapsed_second(cfg, available)
+			first, second = splitter_collapsed_second(core, available)
 		}
 		.none {
-			first = splitter_clamp_first_size(cfg, available, ratio * available)
+			first = splitter_clamp_first_size(core, available, ratio * available)
 			second = f32_max(0, available - first)
 			ratio = if available > 0 { first / available } else { splitter_default_ratio }
 		}
@@ -546,30 +588,30 @@ fn splitter_compute(cfg &SplitterCfg, main_size f32) SplitterComputed {
 	}
 }
 
-fn splitter_collapsed_first(cfg &SplitterCfg, available f32) (f32, f32) {
-	first_target := f32_clamp(cfg.first.collapsed_size, 0, available)
-	mut second_min := f32_max(0, cfg.second.min_size)
-	second_max := splitter_limit_max(cfg.second.max_size, available)
+fn splitter_collapsed_first(core &SplitterCore, available f32) (f32, f32) {
+	first_target := f32_clamp(core.first.collapsed_size, 0, available)
+	mut second_min := f32_max(0, core.second.min_size)
+	second_max := splitter_limit_max(core.second.max_size, available)
 	if second_min > second_max {
 		second_min = second_max
 	}
 	mut second := f32_clamp(available - first_target, second_min, second_max)
 	mut first := f32_max(0, available - second)
-	first = f32_min(first, splitter_limit_max(cfg.first.max_size, available))
+	first = f32_min(first, splitter_limit_max(core.first.max_size, available))
 	second = f32_max(0, available - first)
 	return first, second
 }
 
-fn splitter_collapsed_second(cfg &SplitterCfg, available f32) (f32, f32) {
-	second_target := f32_clamp(cfg.second.collapsed_size, 0, available)
-	mut first_min := f32_max(0, cfg.first.min_size)
-	first_max := splitter_limit_max(cfg.first.max_size, available)
+fn splitter_collapsed_second(core &SplitterCore, available f32) (f32, f32) {
+	second_target := f32_clamp(core.second.collapsed_size, 0, available)
+	mut first_min := f32_max(0, core.first.min_size)
+	first_max := splitter_limit_max(core.first.max_size, available)
 	if first_min > first_max {
 		first_min = first_max
 	}
 	first := f32_clamp(available - second_target, first_min, first_max)
 	mut second := f32_max(0, available - first)
-	second = f32_min(second, splitter_limit_max(cfg.second.max_size, available))
+	second = f32_min(second, splitter_limit_max(core.second.max_size, available))
 	return f32_max(0, available - second), f32_max(0, second)
 }
 
@@ -593,17 +635,17 @@ fn splitter_handle_size(handle_size f32, main_size f32) f32 {
 	return f32_min(size, main_size)
 }
 
-fn splitter_clamp_ratio(cfg &SplitterCfg, available f32, ratio f32) f32 {
+fn splitter_clamp_ratio(core &SplitterCore, available f32, ratio f32) f32 {
 	if available <= 0 {
 		return splitter_default_ratio
 	}
 	target := splitter_normalize_ratio(ratio) * available
-	first := splitter_clamp_first_size(cfg, available, target)
+	first := splitter_clamp_first_size(core, available, target)
 	return first / available
 }
 
-fn splitter_clamp_first_size(cfg &SplitterCfg, available f32, target f32) f32 {
-	mut lower, mut upper := splitter_bounds(cfg, available)
+fn splitter_clamp_first_size(core &SplitterCore, available f32, target f32) f32 {
+	mut lower, mut upper := splitter_bounds(core, available)
 	lower = f32_clamp(lower, 0, available)
 	upper = f32_clamp(upper, 0, available)
 	if lower <= upper {
@@ -612,15 +654,15 @@ fn splitter_clamp_first_size(cfg &SplitterCfg, available f32, target f32) f32 {
 	return f32_clamp(target, upper, lower)
 }
 
-fn splitter_bounds(cfg &SplitterCfg, available f32) (f32, f32) {
-	mut first_min := f32_max(0, cfg.first.min_size)
-	first_max := splitter_limit_max(cfg.first.max_size, available)
+fn splitter_bounds(core &SplitterCore, available f32) (f32, f32) {
+	mut first_min := f32_max(0, core.first.min_size)
+	first_max := splitter_limit_max(core.first.max_size, available)
 	if first_min > first_max {
 		first_min = first_max
 	}
 
-	mut second_min := f32_max(0, cfg.second.min_size)
-	second_max := splitter_limit_max(cfg.second.max_size, available)
+	mut second_min := f32_max(0, core.second.min_size)
+	second_max := splitter_limit_max(core.second.max_size, available)
 	if second_min > second_max {
 		second_min = second_max
 	}
@@ -641,15 +683,15 @@ fn splitter_normalize_ratio(ratio f32) f32 {
 	return f32_clamp(ratio, 0, 1)
 }
 
-fn splitter_toggle_target(cfg &SplitterCfg, current SplitterCollapsed) SplitterCollapsed {
-	active := splitter_effective_collapsed(cfg, current)
+fn splitter_toggle_target(core &SplitterCore, current SplitterCollapsed) SplitterCollapsed {
+	active := splitter_effective_collapsed(core, current)
 	if active != .none {
 		return active
 	}
-	if cfg.first.collapsible {
+	if core.first.collapsible {
 		return .first
 	}
-	if cfg.second.collapsible {
+	if core.second.collapsible {
 		return .second
 	}
 	return .none
@@ -659,17 +701,17 @@ fn splitter_step(step f32) f32 {
 	return if step > 0 { step } else { f32(0.02) }
 }
 
-fn splitter_effective_collapsed(cfg &SplitterCfg, collapsed SplitterCollapsed) SplitterCollapsed {
+fn splitter_effective_collapsed(core &SplitterCore, collapsed SplitterCollapsed) SplitterCollapsed {
 	return match collapsed {
 		.first {
-			if cfg.first.collapsible {
+			if core.first.collapsible {
 				SplitterCollapsed.first
 			} else {
 				SplitterCollapsed.none
 			}
 		}
 		.second {
-			if cfg.second.collapsible {
+			if core.second.collapsible {
 				SplitterCollapsed.second
 			} else {
 				SplitterCollapsed.none
