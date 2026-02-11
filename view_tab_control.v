@@ -81,20 +81,62 @@ pub fn tabs(cfg TabControlCfg) View {
 // - Right/Down: next enabled tab
 // - Home/End: first/last enabled tab
 pub fn tab_control(cfg TabControlCfg) View {
-	tab_warn_duplicate_ids(cfg.id, cfg.items)
+	$if !prod {
+		tab_warn_duplicate_ids(cfg.id, cfg.items)
+	}
 	selected_idx := tab_selected_index(cfg.items, cfg.selected)
 
 	mut header_items := []View{cap: cfg.items.len}
 	for i, item in cfg.items {
 		is_selected := i == selected_idx
 		is_disabled := cfg.disabled || item.disabled
+		tab_color := if is_disabled {
+			cfg.color_tab_disabled
+		} else if is_selected {
+			cfg.color_tab_selected
+		} else {
+			cfg.color_tab
+		}
+		hover_color := if is_disabled {
+			cfg.color_tab_disabled
+		} else if is_selected {
+			cfg.color_tab_selected
+		} else {
+			cfg.color_tab_hover
+		}
+		focus_color := if is_disabled {
+			cfg.color_tab_disabled
+		} else if is_selected {
+			cfg.color_tab_selected
+		} else {
+			cfg.color_tab_focus
+		}
+		click_color := if is_disabled {
+			cfg.color_tab_disabled
+		} else if is_selected {
+			cfg.color_tab_selected
+		} else {
+			cfg.color_tab_click
+		}
+		border_color := if is_selected && !is_disabled {
+			cfg.color_tab_border_focus
+		} else {
+			cfg.color_tab_border
+		}
+		ts := if is_disabled {
+			cfg.text_style_disabled
+		} else if is_selected {
+			cfg.text_style_selected
+		} else {
+			cfg.text_style
+		}
 		header_items << button(
 			id:                 tab_button_id(cfg.id, item.id)
-			color:              tab_color_for(cfg, is_selected, is_disabled)
-			color_hover:        tab_hover_color_for(cfg, is_selected, is_disabled)
-			color_focus:        tab_focus_color_for(cfg, is_selected, is_disabled)
-			color_click:        tab_click_color_for(cfg, is_selected, is_disabled)
-			color_border:       tab_border_color_for(cfg, is_selected, is_disabled)
+			color:              tab_color
+			color_hover:        hover_color
+			color_focus:        focus_color
+			color_click:        click_color
+			color_border:       border_color
 			color_border_focus: cfg.color_tab_border_focus
 			padding:            cfg.padding_tab
 			size_border:        cfg.size_tab_border
@@ -105,7 +147,7 @@ pub fn tab_control(cfg TabControlCfg) View {
 			content:            [
 				text(
 					text:       item.label
-					text_style: tab_text_style_for(cfg, is_selected, is_disabled)
+					text_style: ts
 				),
 			]
 		)
@@ -115,6 +157,15 @@ pub fn tab_control(cfg TabControlCfg) View {
 	if selected_idx >= 0 && selected_idx < cfg.items.len {
 		active_content = cfg.items[selected_idx].content.clone()
 	}
+
+	// Extract only the fields needed by the keydown closure
+	// to avoid capturing the entire TabControlCfg struct
+	// (conservative GC false retention).
+	disabled := cfg.disabled
+	items := cfg.items
+	selected := cfg.selected
+	on_select := cfg.on_select
+	id_focus := cfg.id_focus
 
 	return column(
 		name:         'tab_control'
@@ -129,7 +180,10 @@ pub fn tab_control(cfg TabControlCfg) View {
 		spacing:      cfg.spacing
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
-		on_keydown:   make_tab_control_on_keydown(cfg)
+		on_keydown:   fn [disabled, items, selected, on_select, id_focus] (_ &Layout, mut e Event, mut w Window) {
+			tab_control_on_keydown(disabled, items, selected, on_select, id_focus, mut
+				e, mut w)
+		}
 		content:      [
 			row(
 				name:         'tab_control_header'
@@ -166,45 +220,39 @@ fn make_tab_on_click(on_select fn (string, mut Event, mut Window), id string, id
 	}
 }
 
-fn make_tab_control_on_keydown(cfg TabControlCfg) fn (&Layout, mut Event, mut Window) {
-	return fn [cfg] (_ &Layout, mut e Event, mut w Window) {
-		cfg.on_keydown(mut e, mut w)
-	}
-}
-
-fn (cfg &TabControlCfg) on_keydown(mut e Event, mut w Window) {
-	if cfg.disabled || cfg.items.len == 0 || e.modifiers != .none {
+fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on_select fn (string, mut Event, mut Window), id_focus u32, mut e Event, mut w Window) {
+	if disabled || items.len == 0 || e.modifiers != .none {
 		return
 	}
 
-	selected_idx := tab_selected_index(cfg.items, cfg.selected)
+	selected_idx := tab_selected_index(items, selected)
 	mut target_idx := -1
 	match e.key_code {
 		.left, .up {
 			target_idx = if selected_idx >= 0 {
-				tab_prev_enabled_index(cfg.items, selected_idx)
+				tab_prev_enabled_index(items, selected_idx)
 			} else {
-				tab_last_enabled_index(cfg.items)
+				tab_last_enabled_index(items)
 			}
 		}
 		.right, .down {
 			target_idx = if selected_idx >= 0 {
-				tab_next_enabled_index(cfg.items, selected_idx)
+				tab_next_enabled_index(items, selected_idx)
 			} else {
-				tab_first_enabled_index(cfg.items)
+				tab_first_enabled_index(items)
 			}
 		}
 		.home {
-			target_idx = tab_first_enabled_index(cfg.items)
+			target_idx = tab_first_enabled_index(items)
 		}
 		.end {
-			target_idx = tab_last_enabled_index(cfg.items)
+			target_idx = tab_last_enabled_index(items)
 		}
 		.enter, .space {
 			target_idx = if selected_idx >= 0 {
 				selected_idx
 			} else {
-				tab_first_enabled_index(cfg.items)
+				tab_first_enabled_index(items)
 			}
 		}
 		else {
@@ -212,20 +260,21 @@ fn (cfg &TabControlCfg) on_keydown(mut e Event, mut w Window) {
 		}
 	}
 
-	if target_idx < 0 || target_idx >= cfg.items.len {
+	if target_idx < 0 || target_idx >= items.len {
 		return
 	}
 
-	target_id := cfg.items[target_idx].id
+	target_id := items[target_idx].id
 	if target_id.len == 0 {
 		return
 	}
 
-	if target_id != cfg.selected || e.key_code in [.enter, .space] {
-		cfg.on_select(target_id, mut e, mut w)
+	// Enter/Space re-fires on_select even on current tab.
+	if target_id != selected || e.key_code in [.enter, .space] {
+		on_select(target_id, mut e, mut w)
 	}
-	if cfg.id_focus > 0 {
-		w.set_id_focus(cfg.id_focus)
+	if id_focus > 0 {
+		w.set_id_focus(id_focus)
 	}
 	e.is_handled = true
 }
@@ -251,8 +300,7 @@ fn tab_first_enabled_index(items []TabItemCfg) int {
 }
 
 fn tab_last_enabled_index(items []TabItemCfg) int {
-	for idx in 0 .. items.len {
-		i := items.len - idx - 1
+	for i := items.len - 1; i >= 0; i-- {
 		if !items[i].disabled {
 			return i
 		}
@@ -313,46 +361,4 @@ fn tab_warn_duplicate_ids(control_id string, items []TabItemCfg) {
 		}
 		seen[item.id] = true
 	}
-}
-
-fn tab_color_for(cfg TabControlCfg, is_selected bool, is_disabled bool) Color {
-	if is_disabled {
-		return cfg.color_tab_disabled
-	}
-	return if is_selected { cfg.color_tab_selected } else { cfg.color_tab }
-}
-
-fn tab_hover_color_for(cfg TabControlCfg, is_selected bool, is_disabled bool) Color {
-	if is_disabled {
-		return cfg.color_tab_disabled
-	}
-	return if is_selected { cfg.color_tab_selected } else { cfg.color_tab_hover }
-}
-
-fn tab_focus_color_for(cfg TabControlCfg, is_selected bool, is_disabled bool) Color {
-	if is_disabled {
-		return cfg.color_tab_disabled
-	}
-	return if is_selected { cfg.color_tab_selected } else { cfg.color_tab_focus }
-}
-
-fn tab_click_color_for(cfg TabControlCfg, is_selected bool, is_disabled bool) Color {
-	if is_disabled {
-		return cfg.color_tab_disabled
-	}
-	return if is_selected { cfg.color_tab_selected } else { cfg.color_tab_click }
-}
-
-fn tab_border_color_for(cfg TabControlCfg, is_selected bool, is_disabled bool) Color {
-	if is_selected && !is_disabled {
-		return cfg.color_tab_border_focus
-	}
-	return cfg.color_tab_border
-}
-
-fn tab_text_style_for(cfg TabControlCfg, is_selected bool, is_disabled bool) TextStyle {
-	if is_disabled {
-		return cfg.text_style_disabled
-	}
-	return if is_selected { cfg.text_style_selected } else { cfg.text_style }
 }
