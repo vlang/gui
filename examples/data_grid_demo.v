@@ -3,15 +3,20 @@ import gui
 @[heap]
 struct DataGridDemoApp {
 pub mut:
-	all_rows     []gui.GridRow
-	columns      []gui.GridColumnCfg
-	column_order []string
-	detail_ids   map[string]bool
-	hidden_cols  map[string]bool
-	page_index   int
-	query        gui.GridQueryState
-	selection    gui.GridSelection
-	last_action  string
+	all_rows        []gui.GridRow
+	columns         []gui.GridColumnCfg
+	column_order    []string
+	detail_ids      map[string]bool
+	frozen_top      []string
+	freeze_rows     bool
+	freeze_header   bool
+	group_rows      bool
+	column_selector bool
+	hidden_cols     map[string]bool
+	page_index      int
+	query           gui.GridQueryState
+	selection       gui.GridSelection
+	last_action     string
 }
 
 fn main() {
@@ -25,6 +30,11 @@ fn main() {
 			app.all_rows = sample_rows()
 			app.columns = sample_columns()
 			app.column_order = app.columns.map(it.id)
+			app.freeze_rows = false
+			app.freeze_header = false
+			app.group_rows = false
+			app.column_selector = false
+			app.frozen_top = []string{}
 			w.update_view(main_view)
 		}
 	)
@@ -40,6 +50,55 @@ fn main_view(mut window gui.Window) gui.View {
 		spacing: gui.spacing_small
 		content: [
 			gui.text(text: 'Data Grid v1 Demo', text_style: gui.theme().b2),
+			gui.row(
+				v_align: .middle
+				sizing:  gui.fill_fit
+				padding: gui.padding_none
+				spacing: gui.spacing_small
+				content: [
+					gui.switch(
+						id_focus: 43
+						label:    'Freeze header row'
+						select:   app.freeze_header
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut state := w.state[DataGridDemoApp]()
+							state.freeze_header = !state.freeze_header
+						}
+					),
+					gui.switch(
+						id_focus: 42
+						label:    'Freeze top rows'
+						select:   app.freeze_rows
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut state := w.state[DataGridDemoApp]()
+							state.freeze_rows = !state.freeze_rows
+							state.frozen_top = if state.freeze_rows {
+								demo_frozen_row_ids()
+							} else {
+								[]string{}
+							}
+						}
+					),
+					gui.switch(
+						id_focus: 44
+						label:    'Group rows'
+						select:   app.group_rows
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut state := w.state[DataGridDemoApp]()
+							state.group_rows = !state.group_rows
+						}
+					),
+					gui.switch(
+						id_focus: 45
+						label:    'Column selector'
+						select:   app.column_selector
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut state := w.state[DataGridDemoApp]()
+							state.column_selector = !state.column_selector
+						}
+					),
+				]
+			),
 			gui.text(
 				text:       'Rows: ${rows.len}  Selected: ${app.selection.selected_row_ids.len}  ${app.last_action}'
 				text_style: gui.theme().n4
@@ -49,23 +108,35 @@ fn main_view(mut window gui.Window) gui.View {
 				max_height:                520
 				columns:                   app.columns
 				column_order:              app.column_order
-				group_by:                  ['team']
+				group_by:                  if app.group_rows {
+					[
+						'team',
+					]
+				} else {
+					[]string{}
+				}
 				page_size:                 80
 				page_index:                app.page_index
-				show_column_chooser:       true
+				freeze_header:             app.freeze_header
+				frozen_top_row_ids:        app.frozen_top
+				show_column_chooser:       app.column_selector
 				hidden_column_ids:         app.hidden_cols
-				aggregates:                [gui.GridAggregateCfg{
-					op:    .count
-					label: 'count'
-				}, gui.GridAggregateCfg{
-					op:     .avg
-					col_id: 'score'
-					label:  'avg score'
-				}, gui.GridAggregateCfg{
-					op:     .max
-					col_id: 'score'
-					label:  'max score'
-				}]
+				aggregates:                [
+					gui.GridAggregateCfg{
+						op:    .count
+						label: 'count'
+					},
+					gui.GridAggregateCfg{
+						op:     .avg
+						col_id: 'score'
+						label:  'avg score'
+					},
+					gui.GridAggregateCfg{
+						op:     .max
+						col_id: 'score'
+						label:  'max score'
+					},
+				]
 				rows:                      rows
 				query:                     app.query
 				selection:                 app.selection
@@ -151,6 +222,10 @@ fn main_view(mut window gui.Window) gui.View {
 			),
 		]
 	)
+}
+
+fn demo_frozen_row_ids() []string {
+	return ['1', '4']
 }
 
 fn sample_columns() []gui.GridColumnCfg {

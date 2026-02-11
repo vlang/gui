@@ -148,8 +148,26 @@ fn test_data_grid_defaults_hide_optional_filter_rows() {
 		rows:    []
 	}
 	assert cfg.show_header == true
+	assert cfg.freeze_header == false
 	assert cfg.show_filter_row == false
 	assert cfg.show_quick_filter == false
+}
+
+fn test_data_grid_static_top_height_include_header_toggle() {
+	cfg := DataGridCfg{
+		id:                  'top-height-header-toggle'
+		show_quick_filter:   true
+		show_column_chooser: true
+		show_header:         true
+		show_filter_row:     true
+		row_height:          30
+		header_height:       34
+		columns:             []
+		rows:                []
+	}
+	with_header := data_grid_static_top_height(cfg, 30, false, true)
+	without_header := data_grid_static_top_height(cfg, 30, false, false)
+	assert with_header == without_header + cfg.header_height
 }
 
 fn test_data_grid_scroll_padding_visible() {
@@ -754,6 +772,99 @@ fn test_data_grid_page_bounds_enabled() {
 fn test_data_grid_page_row_indices() {
 	indices := data_grid_page_row_indices(3, 7)
 	assert indices == [3, 4, 5, 6]
+}
+
+fn test_data_grid_split_frozen_top_indices_no_frozen_ids() {
+	cfg := DataGridCfg{
+		id:      'freeze-none'
+		columns: []
+		rows:    [
+			GridRow{
+				id: '1'
+			},
+			GridRow{
+				id: '2'
+			},
+			GridRow{
+				id: '3'
+			},
+		]
+	}
+	top, body := data_grid_split_frozen_top_indices(cfg, [0, 1, 2])
+	assert top.len == 0
+	assert body == [0, 1, 2]
+}
+
+fn test_data_grid_split_frozen_top_indices_preserves_visible_order() {
+	cfg := DataGridCfg{
+		id:                 'freeze-order'
+		frozen_top_row_ids: ['3', 'missing', '1', '3']
+		columns:            []
+		rows:               [
+			GridRow{
+				id: '1'
+			},
+			GridRow{
+				id: '2'
+			},
+			GridRow{
+				id: '3'
+			},
+			GridRow{
+				id: '4'
+			},
+		]
+	}
+	top, body := data_grid_split_frozen_top_indices(cfg, [0, 1, 2, 3])
+	assert top == [0, 2]
+	assert body == [1, 3]
+}
+
+fn test_data_grid_split_frozen_top_indices_page_scope_only() {
+	cfg := DataGridCfg{
+		id:                 'freeze-page'
+		frozen_top_row_ids: ['1', '4']
+		columns:            []
+		rows:               [
+			GridRow{
+				id: '1'
+			},
+			GridRow{
+				id: '2'
+			},
+			GridRow{
+				id: '3'
+			},
+			GridRow{
+				id: '4'
+			},
+		]
+	}
+	top, body := data_grid_split_frozen_top_indices(cfg, [2, 3])
+	assert top == [3]
+	assert body == [2]
+}
+
+fn test_data_grid_split_frozen_top_indices_keeps_body_for_duplicate_row_ids() {
+	cfg := DataGridCfg{
+		id:                 'freeze-dup-id'
+		frozen_top_row_ids: ['dup']
+		columns:            []
+		rows:               [
+			GridRow{
+				id: 'dup'
+			},
+			GridRow{
+				id: 'dup'
+			},
+			GridRow{
+				id: '3'
+			},
+		]
+	}
+	top, body := data_grid_split_frozen_top_indices(cfg, [0, 1, 2])
+	assert top == [0]
+	assert body == [1, 2]
 }
 
 fn test_data_grid_presentation_rows_paginates() {

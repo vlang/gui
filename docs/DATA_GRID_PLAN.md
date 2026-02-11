@@ -4,7 +4,7 @@
 - Date: 2026-02-11
 - Branch:
 - PR/Issue:
-- Current phase: Phase 9 complete
+- Current phase: Phase 11 complete
 - Last completed acceptance check: `v test .`, `v check-md -w` docs + README
 
 ## Scope
@@ -67,6 +67,7 @@
 - [x] 2026-02-10: Phase 7 adds controlled pagination with in-grid pager controls.
 - [x] 2026-02-10: Phase 8 adds controlled column chooser with hide/show state.
 - [x] 2026-02-11: Phase 9 adds callback-driven conditional cell formatting.
+- [x] 2026-02-11: Phase 11 adds controlled top frozen rows and optional frozen header.
 
 ## Deferred Backlog
 - [x] Column pinning
@@ -78,3 +79,5 @@
 - [x] Pagination
 - [x] Column chooser
 - [x] Conditional formatting
+- [x] Top frozen rows
+- [x] Frozen header row

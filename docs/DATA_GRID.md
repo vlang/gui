@@ -18,6 +18,8 @@
 - Controlled row edit mode + typed cell editors (`text/select/date/checkbox`)
 - Conditional cell formatting (`on_cell_format`)
 - Controlled pagination (`page_size`, `page_index`)
+- Controlled top frozen rows (`frozen_top_row_ids`)
+- Optional frozen header row (`freeze_header`)
 - Clipboard copy (`ctrl/cmd+c`) to TSV
 - CSV helper export
 - XLSX helper export
@@ -36,8 +38,9 @@
 Application state owns query, selection, and rows.
 Application also owns optional `column_order`, pin state (`GridColumnCfg.pin`),
 column visibility (`hidden_column_ids`), grouping (`group_by`, `aggregates`),
-and detail expansion map
-(`detail_expanded_row_ids`), conditional format logic, row cell data updates for edits, and
+detail expansion map (`detail_expanded_row_ids`), and frozen top row ids
+(`frozen_top_row_ids`)
+along with conditional format logic, row cell data updates for edits, and
 pagination state (`page_size`, `page_index`).
 
 Grid emits callbacks:
@@ -118,6 +121,10 @@ gui.grid_rows_to_pdf_file('/tmp/grid.pdf', columns, rows) or {}
 - Row editing is controlled. App applies `on_cell_edit` updates to row data.
 - Conditional cell formatting is callback-driven via `on_cell_format`.
 - Provide stable unique `GridRow.id` values. Empty ids use best-effort auto ids.
+- Top frozen rows are controlled via `frozen_top_row_ids`.
+- Frozen rows are scoped to current page and keep current visible order.
+- Frozen rows bypass group header generation and keep row/detail interactions.
+- Enable `freeze_header` to keep the header row visible while vertical scrolling.
 - Enter edit mode with row double-click or `F2` on active row.
 - Exit edit mode with `Esc` (or `Enter` in text editor).
 - Pagination is controlled. Grid emits next page index via `on_page_change`.
