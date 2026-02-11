@@ -1,7 +1,10 @@
 module gui
 
+import compress.szip
 import hash.fnv1a
+import os
 import strconv
+import strings
 import time
 
 const data_grid_virtual_buffer_rows = 2
@@ -15,6 +18,12 @@ const data_grid_resize_key_step_large = f32(24)
 const data_grid_header_control_width = f32(12)
 const data_grid_header_reorder_spacing = f32(1)
 const data_grid_header_label_min_width = f32(24)
+const data_grid_pdf_page_width = f32(612)
+const data_grid_pdf_page_height = f32(792)
+const data_grid_pdf_margin = f32(40)
+const data_grid_pdf_font_size = f32(10)
+const data_grid_pdf_line_height = f32(12)
+const data_grid_pdf_max_line_chars = 180
 
 pub enum GridSortDir as u8 {
 	asc
@@ -1595,6 +1604,275 @@ pub fn grid_rows_to_csv(columns []GridColumnCfg, rows []GridRow) string {
 		lines << fields.join(',')
 	}
 	return lines.join('\n')
+}
+
+// grid_rows_to_pdf converts rows to a simple single-page PDF table-like export.
+pub fn grid_rows_to_pdf(columns []GridColumnCfg, rows []GridRow) string {
+	if columns.len == 0 {
+		return ''
+	}
+	lines := data_grid_pdf_lines(columns, rows)
+	return data_grid_pdf_document(lines)
+}
+
+// grid_rows_to_pdf_file writes a simple single-page PDF table-like export.
+pub fn grid_rows_to_pdf_file(path string, columns []GridColumnCfg, rows []GridRow) ! {
+	target := path.trim_space()
+	if target.len == 0 {
+		return error('pdf path is required')
+	}
+	dir := os.dir(target)
+	if dir.len > 0 && dir != '.' {
+		os.mkdir_all(dir)!
+	}
+	payload := grid_rows_to_pdf(columns, rows)
+	if payload.len == 0 {
+		return error('no columns to export')
+	}
+	os.write_file(target, payload)!
+}
+
+// grid_rows_to_xlsx creates a minimal XLSX workbook and returns the file bytes.
+pub fn grid_rows_to_xlsx(columns []GridColumnCfg, rows []GridRow) ![]u8 {
+	tmp_path := os.join_path(os.temp_dir(), 'gui_data_grid_${time.now().unix_micro()}.xlsx')
+	defer {
+		os.rm(tmp_path) or {}
+	}
+	grid_rows_to_xlsx_file(tmp_path, columns, rows)!
+	return os.read_bytes(tmp_path)!
+}
+
+// grid_rows_to_xlsx_file writes a minimal XLSX workbook to `path`.
+pub fn grid_rows_to_xlsx_file(path string, columns []GridColumnCfg, rows []GridRow) ! {
+	target := path.trim_space()
+	if target.len == 0 {
+		return error('xlsx path is required')
+	}
+	dir := os.dir(target)
+	if dir.len > 0 && dir != '.' {
+		os.mkdir_all(dir)!
+	}
+	mut zip := szip.open(target, .default_compression, .write)!
+	defer {
+		zip.close()
+	}
+	data_grid_xlsx_write_entry(mut zip, '[Content_Types].xml', data_grid_xlsx_content_types_xml())!
+	data_grid_xlsx_write_entry(mut zip, '_rels/.rels', data_grid_xlsx_root_rels_xml())!
+	data_grid_xlsx_write_entry(mut zip, 'xl/workbook.xml', data_grid_xlsx_workbook_xml())!
+	data_grid_xlsx_write_entry(mut zip, 'xl/_rels/workbook.xml.rels', data_grid_xlsx_workbook_rels_xml())!
+	data_grid_xlsx_write_entry(mut zip, 'xl/worksheets/sheet1.xml', data_grid_xlsx_sheet_xml(columns,
+		rows))!
+}
+
+fn data_grid_pdf_lines(columns []GridColumnCfg, rows []GridRow) []string {
+	mut lines := []string{cap: rows.len + 1}
+	mut header := []string{cap: columns.len}
+	for col in columns {
+		header << data_grid_pdf_clip_text(col.title)
+	}
+	lines << header.join(' | ')
+	for row in rows {
+		lines << data_grid_pdf_line(columns, row)
+	}
+	return lines
+}
+
+fn data_grid_pdf_line(columns []GridColumnCfg, row GridRow) string {
+	mut parts := []string{cap: columns.len}
+	for col in columns {
+		value := row.cells[col.id] or { '' }
+		parts << data_grid_pdf_clip_text(value)
+	}
+	return parts.join(' | ')
+}
+
+fn data_grid_pdf_clip_text(value string) string {
+	if value.len <= data_grid_pdf_max_line_chars {
+		return value
+	}
+	return value[..data_grid_pdf_max_line_chars - 3] + '...'
+}
+
+fn data_grid_pdf_document(lines []string) string {
+	if lines.len == 0 {
+		return ''
+	}
+	mut visible := lines.clone()
+	mut max_lines := int((data_grid_pdf_page_height - data_grid_pdf_margin * 2) / data_grid_pdf_line_height)
+	if max_lines < 1 {
+		max_lines = 1
+	}
+	if visible.len > max_lines {
+		overflow := visible.len - max_lines + 1
+		mut trimmed := visible[..max_lines - 1].clone()
+		trimmed << '... ${overflow} more rows'
+		visible = trimmed.clone()
+	}
+	mut stream := strings.new_builder(2048)
+	stream.writeln('BT')
+	stream.writeln('/F1 ${pdf_num(data_grid_pdf_font_size)} Tf')
+	stream.writeln('${pdf_num(data_grid_pdf_line_height)} TL')
+	stream.writeln('${pdf_num(data_grid_pdf_margin)} ${pdf_num(data_grid_pdf_page_height - data_grid_pdf_margin)} Td')
+	for idx, line in visible {
+		if idx > 0 {
+			stream.writeln('T*')
+		}
+		stream.writeln('(${pdf_escape_text(line)}) Tj')
+	}
+	stream.writeln('ET')
+	content := stream.bytestr()
+	page_obj := '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdf_num(data_grid_pdf_page_width)} ${pdf_num(data_grid_pdf_page_height)}] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Courier >> >> >> /Contents 4 0 R >>'
+	content_obj := '<< /Length ${content.len} >>\nstream\n${content}endstream'
+	return pdf_encode([
+		'<< /Type /Catalog /Pages 2 0 R >>',
+		'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+		page_obj,
+		content_obj,
+	])
+}
+
+fn data_grid_xlsx_write_entry(mut zip szip.Zip, name string, content string) ! {
+	zip.open_entry(name)!
+	zip.write_entry(content.bytes())!
+	zip.close_entry()
+}
+
+fn data_grid_xlsx_content_types_xml() string {
+	return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+		'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+		'<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+		'<Default Extension="xml" ContentType="application/xml"/>' +
+		'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+		'<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+		'</Types>'
+}
+
+fn data_grid_xlsx_root_rels_xml() string {
+	return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+		'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+		'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>' +
+		'</Relationships>'
+}
+
+fn data_grid_xlsx_workbook_xml() string {
+	return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+		'<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">' +
+		'<sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>'
+}
+
+fn data_grid_xlsx_workbook_rels_xml() string {
+	return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
+		'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+		'<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>' +
+		'</Relationships>'
+}
+
+fn data_grid_xlsx_sheet_xml(columns []GridColumnCfg, rows []GridRow) string {
+	cells_per_row := int_max(1, columns.len)
+	mut out := strings.new_builder(1024 + (rows.len + 1) * cells_per_row * 56)
+	out.write_string('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n')
+	out.write_string('<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>')
+	if columns.len > 0 {
+		out.write_string('<row r="1">')
+		for col_idx, col in columns {
+			cell_ref := data_grid_xlsx_cell_ref(col_idx, 1)
+			out.write_string(data_grid_xlsx_string_cell_xml(cell_ref, col.title))
+		}
+		out.write_string('</row>')
+	}
+	for row_idx, row in rows {
+		xml_row := row_idx + 2
+		out.write_string('<row r="${xml_row}">')
+		for col_idx, col in columns {
+			cell_ref := data_grid_xlsx_cell_ref(col_idx, xml_row)
+			value := row.cells[col.id] or { '' }
+			out.write_string(data_grid_xlsx_cell_xml(cell_ref, value))
+		}
+		out.write_string('</row>')
+	}
+	out.write_string('</sheetData></worksheet>')
+	return out.bytestr()
+}
+
+fn data_grid_xlsx_cell_xml(cell_ref string, value string) string {
+	trimmed := value.trim_space()
+	if data_grid_xlsx_is_bool(trimmed) {
+		return '<c r="${cell_ref}" t="b"><v>${data_grid_xlsx_bool_value(trimmed)}</v></c>'
+	}
+	if data_grid_xlsx_is_number(trimmed) {
+		return '<c r="${cell_ref}"><v>${trimmed}</v></c>'
+	}
+	return data_grid_xlsx_string_cell_xml(cell_ref, value)
+}
+
+fn data_grid_xlsx_string_cell_xml(cell_ref string, value string) string {
+	escaped := data_grid_xlsx_escape(value)
+	if data_grid_xlsx_preserve_spaces(value) {
+		return '<c r="${cell_ref}" t="inlineStr"><is><t xml:space="preserve">${escaped}</t></is></c>'
+	}
+	return '<c r="${cell_ref}" t="inlineStr"><is><t>${escaped}</t></is></c>'
+}
+
+fn data_grid_xlsx_escape(value string) string {
+	return value.replace_each([
+		'&',
+		'&amp;',
+		'<',
+		'&lt;',
+		'>',
+		'&gt;',
+		'"',
+		'&quot;',
+		"'",
+		'&apos;',
+		'\r',
+		'',
+		'\n',
+		'&#10;',
+		'\t',
+		'&#9;',
+	])
+}
+
+fn data_grid_xlsx_preserve_spaces(value string) bool {
+	return value.len > 0 && (value[0] == ` ` || value[value.len - 1] == ` `)
+}
+
+fn data_grid_xlsx_is_bool(value string) bool {
+	if value.len == 0 {
+		return false
+	}
+	return value.to_lower() in ['true', 'false', 'yes', 'no', 'on', 'off']
+}
+
+fn data_grid_xlsx_bool_value(value string) string {
+	return if value.to_lower() in ['true', 'yes', 'on'] { '1' } else { '0' }
+}
+
+fn data_grid_xlsx_is_number(value string) bool {
+	if value.len == 0 {
+		return false
+	}
+	strconv.atof64(value) or { return false }
+	return true
+}
+
+fn data_grid_xlsx_cell_ref(col_idx int, row_idx int) string {
+	return '${data_grid_xlsx_col_ref(col_idx)}${row_idx}'
+}
+
+fn data_grid_xlsx_col_ref(col_idx int) string {
+	if col_idx < 0 {
+		return 'A'
+	}
+	mut n := col_idx + 1
+	mut label := ''
+	for n > 0 {
+		rem := (n - 1) % 26
+		label = rune(`A` + rem).str() + label
+		n = (n - 1) / 26
+	}
+	return label
 }
 
 fn data_grid_tsv_escape(value string) string {

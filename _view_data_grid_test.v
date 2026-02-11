@@ -1,5 +1,9 @@
 module gui
 
+import compress.szip
+import os
+import time
+
 fn test_data_grid_toggle_sort_single_cycle() {
 	base := GridQueryState{}
 	q1 := data_grid_toggle_sort(base, 'name', false, false)
@@ -583,4 +587,139 @@ fn test_data_grid_has_keyboard_modifiers_ignores_mouse_bits() {
 
 	e.modifiers = .ctrl_alt
 	assert data_grid_has_keyboard_modifiers(&e) == true
+}
+
+fn test_grid_rows_to_pdf_signature() {
+	columns := [
+		GridColumnCfg{
+			id:    'name'
+			title: 'Name'
+		},
+		GridColumnCfg{
+			id:    'age'
+			title: 'Age'
+		},
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'name': 'Alice'
+				'age':  '30'
+			}
+		},
+	]
+	pdf := grid_rows_to_pdf(columns, rows)
+	assert pdf.starts_with('%PDF-1.4')
+	assert pdf.contains('/Type /Catalog')
+	assert pdf.contains('Alice')
+}
+
+fn test_grid_rows_to_pdf_file() {
+	columns := [
+		GridColumnCfg{
+			id:    'name'
+			title: 'Name'
+		},
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'name': 'Alice'
+			}
+		},
+	]
+	path := os.join_path(os.temp_dir(), 'data_grid_pdf_${time.now().unix_micro()}.pdf')
+	defer {
+		os.rm(path) or {}
+	}
+	grid_rows_to_pdf_file(path, columns, rows) or { panic(err) }
+	data := os.read_file(path) or { panic(err) }
+	assert data.starts_with('%PDF-1.4')
+}
+
+fn test_data_grid_xlsx_col_ref() {
+	assert data_grid_xlsx_col_ref(0) == 'A'
+	assert data_grid_xlsx_col_ref(25) == 'Z'
+	assert data_grid_xlsx_col_ref(26) == 'AA'
+	assert data_grid_xlsx_col_ref(27) == 'AB'
+	assert data_grid_xlsx_col_ref(51) == 'AZ'
+	assert data_grid_xlsx_col_ref(52) == 'BA'
+	assert data_grid_xlsx_col_ref(701) == 'ZZ'
+	assert data_grid_xlsx_col_ref(702) == 'AAA'
+}
+
+fn test_grid_rows_to_xlsx_signature() {
+	columns := [
+		GridColumnCfg{
+			id:    'name'
+			title: 'Name'
+		},
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'name': 'Alice'
+			}
+		},
+	]
+	bytes := grid_rows_to_xlsx(columns, rows) or { panic(err) }
+	assert bytes.len > 2
+	assert bytes[0] == `P`
+	assert bytes[1] == `K`
+}
+
+fn test_grid_rows_to_xlsx_file_contains_sheet() {
+	columns := [
+		GridColumnCfg{
+			id:    'name'
+			title: 'Name'
+		},
+		GridColumnCfg{
+			id:    'age'
+			title: 'Age'
+		},
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'name': 'Alice'
+				'age':  '30'
+			}
+		},
+	]
+	path := os.join_path(os.temp_dir(), 'data_grid_xlsx_${time.now().unix_micro()}.xlsx')
+	defer {
+		os.rm(path) or {}
+	}
+	grid_rows_to_xlsx_file(path, columns, rows) or { panic(err) }
+	sheet := zip_entry_text(path, 'xl/worksheets/sheet1.xml') or { panic(err) }
+	assert sheet.contains('SheetData') == false
+	assert sheet.contains('Name')
+	assert sheet.contains('Alice')
+	assert sheet.contains('<c r="B2"><v>30</v></c>')
+}
+
+fn zip_entry_text(path string, entry_name string) !string {
+	mut zip := szip.open(path, .no_compression, .read_only)!
+	defer {
+		zip.close()
+	}
+	total := zip.total()!
+	for idx in 0 .. total {
+		zip.open_entry_by_index(idx)!
+		name := zip.name()
+		if name == entry_name {
+			size := int(zip.size())
+			mut buf := []u8{len: int_max(1, size)}
+			read_len := zip.read_entry_buf(buf.data, buf.len)!
+			zip.close_entry()
+			return buf[..read_len].bytestr()
+		}
+		zip.close_entry()
+	}
+	return error('zip entry not found: ${entry_name}')
 }

@@ -17,6 +17,8 @@
 - Controlled row edit mode + typed cell editors (`text/select/date/checkbox`)
 - Clipboard copy (`ctrl/cmd+c`) to TSV
 - CSV helper export
+- XLSX helper export
+- PDF helper export
 
 ## Core Types
 - `DataGridCfg`
@@ -85,6 +87,15 @@ fn main_view(mut w gui.Window) gui.View {
 ```v ignore
 tsv := gui.grid_rows_to_tsv(columns, rows)
 csv := gui.grid_rows_to_csv(columns, rows)
+xlsx := gui.grid_rows_to_xlsx(columns, rows) or { []u8{} }
+pdf := gui.grid_rows_to_pdf(columns, rows)
+```
+
+File helpers:
+
+```v ignore
+gui.grid_rows_to_xlsx_file('/tmp/grid.xlsx', columns, rows) or {}
+gui.grid_rows_to_pdf_file('/tmp/grid.pdf', columns, rows) or {}
 ```
 
 ## Notes
