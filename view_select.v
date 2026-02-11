@@ -274,6 +274,7 @@ fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_sc
 	on_select := cfg.on_select
 	select_array := cfg.select
 	color_select := cfg.color_select
+	cfg_id := cfg.id
 
 	return row(
 		color:    if highlighted { cfg.color_select } else { color_transparent }
@@ -327,12 +328,11 @@ fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_sc
 				e.is_handled = true
 			}
 		}
-		on_hover: fn [color_select, cfg, index, id_scroll] (mut layout Layout, mut e Event, mut w Window) {
+		on_hover: fn [color_select, cfg_id, index] (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
 			layout.shape.color = color_select
-			if (w.view_state.select_highlight.get(cfg.id) or { 0 }) != index {
-				w.view_state.select_highlight.set(cfg.id, index)
-				// w.view_state.scroll_y.set(id_scroll, ...) // Don't auto-scroll on mouse hover
+			if (w.view_state.select_highlight.get(cfg_id) or { 0 }) != index {
+				w.view_state.select_highlight.set(cfg_id, index)
 			}
 		}
 	)
@@ -378,14 +378,4 @@ fn sub_header(cfg &SelectCfg, option string) View {
 			),
 		]
 	)
-}
-
-fn (cfg &SelectCfg) amend_layout(mut layout Layout, mut w Window) {
-	if layout.shape.disabled {
-		return
-	}
-	if w.is_focus(layout.shape.id_focus) {
-		layout.shape.color = cfg.color_focus
-		layout.shape.color_border = cfg.color_border_focus
-	}
 }

@@ -157,28 +157,25 @@ pub fn text(cfg TextCfg) View {
 fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 	if e.mouse_button == .left && layout.shape.id_focus > 0 {
 		id_focus := layout.shape.id_focus
+		placeholder_active := tv.placeholder_active
 		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
-		// Init mouse lock to handle dragging selection (mouse move) and finishing selection (mouse up)
+		// Init mouse lock to handle dragging selection (mouse move)
+		// and finishing selection (mouse up)
 		w.mouse_lock(
 			cursor_pos: cursor_pos
-			mouse_move: fn [tv, id_focus] (layout &Layout, mut e Event, mut w Window) {
+			mouse_move: fn [placeholder_active, id_focus] (layout &Layout, mut e Event, mut w Window) {
 				// The layout in mouse locks is always the root layout.
 				if ly := layout.find_layout(fn [id_focus] (ly Layout) bool {
 					return ly.shape.id_focus == id_focus
 				})
 				{
-					tv.mouse_move_locked(ly, mut e, mut w)
+					text_mouse_move_locked(ly, mut e, mut w, placeholder_active)
 				}
 			}
-			mouse_up:   fn [tv, id_focus] (layout &Layout, mut e Event, mut w Window) {
+			mouse_up:   fn (layout &Layout, mut e Event, mut w Window) {
 				w.mouse_unlock()
-				// The layout in mouse locks is always the root layout.
-				if ly := layout.find_layout(fn [id_focus] (ly Layout) bool {
-					return ly.shape.id_focus == id_focus
-				})
-				{
-					tv.mouse_up_locked(ly, mut e, mut w)
-				}
+				w.remove_animation(id_auto_scroll_animation)
+				e.is_handled = true
 			}
 		)
 		// Set cursor position and reset text selection
@@ -193,63 +190,6 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 		})
 		e.is_handled = true
 	}
-}
-
-// mouse_move_locked handles mouse movement events while the mouse is locked (dragged).
-// It updates the text selection range based on the current mouse position relative to the
-// starting cursor position.
-fn (tv &TextView) mouse_move_locked(layout &Layout, mut e Event, mut w Window) {
-	// mouse_move events don't have mouse button info. Use context.
-	if w.ui.mouse_buttons == .left {
-		if tv.placeholder_active {
-			return
-		}
-
-		id_focus := layout.shape.id_focus
-		id_scroll_container := layout.shape.id_scroll_container
-
-		start_cursor_pos := w.view_state.mouse_lock.cursor_pos
-		ev := event_relative_to(layout.shape, e)
-		mut mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
-
-		scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
-		current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
-
-		if scroll_y != current_scroll_y {
-			if !w.has_animation(id_auto_scroll_animation) {
-				w.animation_add(mut Animate{
-					id:       id_auto_scroll_animation
-					callback: fn [tv, id_focus, id_scroll_container] (mut an Animate, mut w Window) {
-						tv.auto_scroll_cursor(id_focus, id_scroll_container, mut an, mut
-							w)
-					}
-					delay:    auto_scroll_slow
-					repeat:   true
-				})
-			}
-			return
-		} else {
-			w.remove_animation(id_auto_scroll_animation)
-		}
-
-		sel_beg, sel_end := selection_range(start_cursor_pos, mouse_cursor_pos)
-		w.view_state.input_state.set(id_focus, InputState{
-			...w.view_state.input_state.get(id_focus) or { InputState{} }
-			cursor_pos:    mouse_cursor_pos
-			cursor_offset: -1
-			select_beg:    sel_beg
-			select_end:    sel_end
-		})
-
-		scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
-		e.is_handled = true
-	}
-}
-
-// mouse_up_locked handles mouse up events while the mouse is locked (after a drag selection).
-fn (tv &TextView) mouse_up_locked(layout &Layout, mut e Event, mut w Window) {
-	w.remove_animation(id_auto_scroll_animation)
-	e.is_handled = true
 }
 
 // on_key_down handles keyboard input for navigation and text selection.

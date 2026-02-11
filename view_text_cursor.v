@@ -265,84 +265,6 @@ fn offset_from_cursor_position(shape Shape, cursor_position int, mut window Wind
 	return rect.x
 }
 
-// auto_scroll_cursor automatically scrolls the text view when the cursor moves outside
-// the visible area during text selection. It's called repeatedly by an animation
-// callback when the user drags to select text beyond the view boundaries. The function
-// scrolls one line at a time (up or down) and updates the cursor position and selection
-// range accordingly, providing smooth auto-scrolling behavior during drag selection.
-fn (tv &TextView) auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut an Animate, mut w Window) {
-	mut layout := w.layout.find_layout(fn [id_focus] (ly Layout) bool {
-		return ly.shape.id_scroll == id_focus
-	}) or { return }
-
-	// The focus shape may not be a text shape.
-	for {
-		if layout.shape.shape_type == .text {
-			break
-		}
-		if layout.children.len == 0 {
-			return
-		}
-		layout = layout.children[0]
-	}
-
-	// This is similar what is done in mouse-move
-	cursor_pos := (w.view_state.input_state.get(id_focus) or { InputState{} }).cursor_pos
-	start_cursor_pos := w.view_state.mouse_lock.cursor_pos
-
-	// synthesize an event relative to the layout shape
-	raw_ev := &Event{
-		mouse_x: w.ui.mouse_pos_x
-		mouse_y: w.ui.mouse_pos_y
-	}
-	ev := event_relative_to(layout.shape, raw_ev)
-	mut mouse_cursor_pos := tv.mouse_cursor_pos(layout.shape, ev, mut w)
-
-	scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
-	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
-
-	// Here's the key difference from mouse-move. If the cursor is outside
-	// the view, scroll up or down one line, not to mouse_cursor_pos
-	if scroll_y > current_scroll_y {
-		mouse_cursor_pos = cursor_up(layout.shape, cursor_pos, -1, 1, mut w)
-	} else if scroll_y < current_scroll_y {
-		mouse_cursor_pos = cursor_down(layout.shape, cursor_pos, -1, 1, mut w)
-	} else {
-		return
-	}
-
-	// Update the input state with the positions
-	sel_beg, sel_end := selection_range(start_cursor_pos, mouse_cursor_pos)
-	w.view_state.input_state.set(id_focus, InputState{
-		...w.view_state.input_state.get(id_focus) or { InputState{} }
-		cursor_pos:    mouse_cursor_pos
-		cursor_offset: -1
-		select_beg:    sel_beg
-		select_end:    sel_end
-	})
-
-	scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
-
-	// Decide how fast the scroll animation should be based on the distance
-	// the mouse is outside the scroll container view.
-	scroll_container := find_layout_by_id_scroll(w.layout, id_scroll_container) or { return }
-	evs := event_relative_to(scroll_container.shape, raw_ev)
-
-	distance := match evs.mouse_y < 0 {
-		true { -evs.mouse_y }
-		else { evs.mouse_y - scroll_container.shape.height }
-	}
-
-	lh := line_height(layout.shape, mut w)
-	if distance > 2 * lh {
-		an.delay = auto_scroll_fast
-	} else if distance > lh {
-		an.delay = auto_scroll_medium
-	} else {
-		an.delay = auto_scroll_slow
-	}
-}
-
 // cursor_pos_to_scroll_y calculates the vertical scroll offset using vglyph geometry.
 fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 	id_scroll_container := shape.id_scroll_container
@@ -437,4 +359,135 @@ fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
 fn scroll_cursor_into_view(cursor_pos int, layout &Layout, mut w Window) {
 	new_scroll_y := cursor_pos_to_scroll_y(cursor_pos, layout.shape, mut w)
 	w.scroll_vertical_to(layout.shape.id_scroll_container, new_scroll_y)
+}
+
+// text_mouse_cursor_pos is a standalone version of mouse_cursor_pos that
+// takes placeholder_active as a parameter instead of capturing tv.
+fn text_mouse_cursor_pos(shape &Shape, e &Event, mut w Window, placeholder_active bool) int {
+	if placeholder_active {
+		return 0
+	}
+	rel_x := f32(e.mouse_x) - shape.padding.left
+	rel_y := f32(e.mouse_y) - shape.padding.top
+	if !shape.has_text_layout() {
+		return 0
+	}
+	byte_idx := shape.tc.vglyph_layout.get_closest_offset(rel_x, rel_y)
+	return byte_to_rune_index(shape.tc.text, byte_idx)
+}
+
+// text_auto_scroll_cursor is a standalone version of auto_scroll_cursor
+// that avoids capturing tv in animation closures.
+fn text_auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut an Animate, mut w Window, placeholder_active bool) {
+	mut layout := w.layout.find_layout(fn [id_focus] (ly Layout) bool {
+		return ly.shape.id_scroll == id_focus
+	}) or { return }
+
+	for {
+		if layout.shape.shape_type == .text {
+			break
+		}
+		if layout.children.len == 0 {
+			return
+		}
+		layout = layout.children[0]
+	}
+
+	cursor_pos := (w.view_state.input_state.get(id_focus) or { InputState{} }).cursor_pos
+	start_cursor_pos := w.view_state.mouse_lock.cursor_pos
+
+	raw_ev := &Event{
+		mouse_x: w.ui.mouse_pos_x
+		mouse_y: w.ui.mouse_pos_y
+	}
+	ev := event_relative_to(layout.shape, raw_ev)
+	mut mouse_cursor_pos := text_mouse_cursor_pos(layout.shape, ev, mut w, placeholder_active)
+
+	scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
+	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
+
+	if scroll_y > current_scroll_y {
+		mouse_cursor_pos = cursor_up(layout.shape, cursor_pos, -1, 1, mut w)
+	} else if scroll_y < current_scroll_y {
+		mouse_cursor_pos = cursor_down(layout.shape, cursor_pos, -1, 1, mut w)
+	} else {
+		return
+	}
+
+	sel_beg, sel_end := selection_range(start_cursor_pos, mouse_cursor_pos)
+	w.view_state.input_state.set(id_focus, InputState{
+		...w.view_state.input_state.get(id_focus) or { InputState{} }
+		cursor_pos:    mouse_cursor_pos
+		cursor_offset: -1
+		select_beg:    sel_beg
+		select_end:    sel_end
+	})
+
+	scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
+
+	scroll_container := find_layout_by_id_scroll(w.layout, id_scroll_container) or { return }
+	evs := event_relative_to(scroll_container.shape, raw_ev)
+
+	distance := match evs.mouse_y < 0 {
+		true { -evs.mouse_y }
+		else { evs.mouse_y - scroll_container.shape.height }
+	}
+
+	lh := line_height(layout.shape, mut w)
+	if distance > 2 * lh {
+		an.delay = auto_scroll_fast
+	} else if distance > lh {
+		an.delay = auto_scroll_medium
+	} else {
+		an.delay = auto_scroll_slow
+	}
+}
+
+// text_mouse_move_locked is a standalone version of mouse_move_locked
+// that avoids capturing tv in mouse lock closures.
+fn text_mouse_move_locked(layout &Layout, mut e Event, mut w Window, placeholder_active bool) {
+	if w.ui.mouse_buttons == .left {
+		if placeholder_active {
+			return
+		}
+
+		id_focus := layout.shape.id_focus
+		id_scroll_container := layout.shape.id_scroll_container
+
+		start_cursor_pos := w.view_state.mouse_lock.cursor_pos
+		ev := event_relative_to(layout.shape, e)
+		mut mouse_cursor_pos := text_mouse_cursor_pos(layout.shape, ev, mut w, placeholder_active)
+
+		scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
+		current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
+
+		if scroll_y != current_scroll_y {
+			if !w.has_animation(id_auto_scroll_animation) {
+				w.animation_add(mut Animate{
+					id:       id_auto_scroll_animation
+					callback: fn [placeholder_active, id_focus, id_scroll_container] (mut an Animate, mut w Window) {
+						text_auto_scroll_cursor(id_focus, id_scroll_container, mut an, mut
+							w, placeholder_active)
+					}
+					delay:    auto_scroll_slow
+					repeat:   true
+				})
+			}
+			return
+		} else {
+			w.remove_animation(id_auto_scroll_animation)
+		}
+
+		sel_beg, sel_end := selection_range(start_cursor_pos, mouse_cursor_pos)
+		w.view_state.input_state.set(id_focus, InputState{
+			...w.view_state.input_state.get(id_focus) or { InputState{} }
+			cursor_pos:    mouse_cursor_pos
+			cursor_offset: -1
+			select_beg:    sel_beg
+			select_end:    sel_end
+		})
+
+		scroll_cursor_into_view(mouse_cursor_pos, layout, mut w)
+		e.is_handled = true
+	}
 }

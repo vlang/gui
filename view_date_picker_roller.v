@@ -108,6 +108,11 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 		}
 	}
 
+	on_change := cfg.on_change
+	selected_date := cfg.selected_date
+	min_year := cfg.min_year
+	max_year := cfg.max_year
+
 	return row(
 		name:         'date_picker_roller'
 		id:           cfg.id
@@ -119,14 +124,18 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 		spacing:      4
 		h_align:      .center
 		v_align:      .middle
-		on_keydown:   cfg.on_keydown
+		on_keydown:   fn [on_change, selected_date, min_year, max_year] (_ &Layout, mut e Event, mut w Window) {
+			date_picker_on_keydown(on_change, selected_date, min_year, max_year, mut e, mut
+				w)
+		}
 		content:      drums
-		amend_layout: fn [cfg, drum_order] (mut layout Layout, mut w Window) {
+		amend_layout: fn [on_change, selected_date, min_year, max_year, drum_order] (mut layout Layout, mut w Window) {
 			if layout.shape.events == unsafe { nil } {
 				layout.shape.events = &EventHandlers{}
 			}
-			layout.shape.events.on_mouse_scroll = fn [cfg, drum_order] (ly &Layout, mut e Event, mut w Window) {
-				cfg.on_scroll(ly, drum_order, mut e, mut w)
+			layout.shape.events.on_mouse_scroll = fn [on_change, selected_date, min_year, max_year, drum_order] (ly &Layout, mut e Event, mut w Window) {
+				date_picker_on_scroll(ly, drum_order, on_change, selected_date, min_year,
+					max_year, mut e, mut w)
 			}
 		}
 	)
@@ -151,13 +160,12 @@ fn year_format(v int) string {
 	return v.str()
 }
 
-// on_scroll handles scroll events and dispatches to the correct drum based on mouse position
-fn (cfg &DatePickerRollerCfg) on_scroll(layout &Layout, drum_order []string, mut e Event, mut w Window) {
-	if cfg.on_change == unsafe { nil } {
+// date_picker_on_scroll handles scroll events, dispatching to correct drum.
+fn date_picker_on_scroll(layout &Layout, drum_order []string, on_change fn (time.Time, mut Window), selected_date time.Time, min_year int, max_year int, mut e Event, mut w Window) {
+	if on_change == unsafe { nil } {
 		return
 	}
 
-	// Find which drum column the mouse is over
 	for i, child in layout.children {
 		if child.shape.point_in_shape(e.mouse_x, e.mouse_y) {
 			if i < drum_order.len {
@@ -165,9 +173,17 @@ fn (cfg &DatePickerRollerCfg) on_scroll(layout &Layout, drum_order []string, mut
 				delta := if e.scroll_y > 0 { -1 } else { 1 }
 
 				match drum_name {
-					'day_drum' { cfg.adjust_day(delta, mut w) }
-					'month_drum' { cfg.adjust_month(delta, mut w) }
-					'year_drum' { cfg.adjust_year(delta, mut w) }
+					'day_drum' {
+						date_picker_adjust_day(delta, selected_date, on_change, mut w)
+					}
+					'month_drum' {
+						date_picker_adjust_month(delta, selected_date, on_change, mut
+							w)
+					}
+					'year_drum' {
+						date_picker_adjust_year(delta, selected_date, min_year, max_year,
+							on_change, mut w)
+					}
 					else {}
 				}
 				e.is_handled = true
@@ -242,43 +258,39 @@ fn (cfg &DatePickerRollerCfg) make_drum(name string, value int, min int, max int
 	)
 }
 
-// on_keydown handles keyboard navigation with modifier keys.
-fn (cfg &DatePickerRollerCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
-	if cfg.on_change == unsafe { nil } {
+// date_picker_on_keydown handles keyboard navigation with modifier keys.
+fn date_picker_on_keydown(on_change fn (time.Time, mut Window), selected_date time.Time, min_year int, max_year int, mut e Event, mut w Window) {
+	if on_change == unsafe { nil } {
 		return
 	}
 
-	// Determine direction
 	delta := match e.key_code {
 		.up { -1 }
 		.down { 1 }
 		else { return }
 	}
 
-	// Determine which drum to adjust based on modifiers
 	match true {
 		e.modifiers.has(.shift) {
-			// Shift: adjust day
-			cfg.adjust_day(delta, mut w)
+			date_picker_adjust_day(delta, selected_date, on_change, mut w)
 			e.is_handled = true
 		}
 		e.modifiers.has(.alt) {
-			// Alt: adjust month
-			cfg.adjust_month(delta, mut w)
+			date_picker_adjust_month(delta, selected_date, on_change, mut w)
 			e.is_handled = true
 		}
 		e.modifiers == .none {
-			// No modifier: adjust year
-			cfg.adjust_year(delta, mut w)
+			date_picker_adjust_year(delta, selected_date, min_year, max_year, on_change, mut
+				w)
 			e.is_handled = true
 		}
 		else {}
 	}
 }
 
-fn (cfg &DatePickerRollerCfg) adjust_day(delta int, mut w Window) {
-	max_days := time.days_in_month(cfg.selected_date.month, cfg.selected_date.year) or { 31 }
-	mut new_day := cfg.selected_date.day + delta
+fn date_picker_adjust_day(delta int, selected_date time.Time, on_change fn (time.Time, mut Window), mut w Window) {
+	max_days := time.days_in_month(selected_date.month, selected_date.year) or { 31 }
+	mut new_day := selected_date.day + delta
 
 	if new_day < 1 {
 		new_day = max_days
@@ -287,15 +299,15 @@ fn (cfg &DatePickerRollerCfg) adjust_day(delta int, mut w Window) {
 	}
 
 	new_date := time.new(
-		year:  cfg.selected_date.year
-		month: cfg.selected_date.month
+		year:  selected_date.year
+		month: selected_date.month
 		day:   new_day
 	)
-	cfg.on_change(new_date, mut w)
+	on_change(new_date, mut w)
 }
 
-fn (cfg &DatePickerRollerCfg) adjust_month(delta int, mut w Window) {
-	mut new_month := cfg.selected_date.month + delta
+fn date_picker_adjust_month(delta int, selected_date time.Time, on_change fn (time.Time, mut Window), mut w Window) {
+	mut new_month := selected_date.month + delta
 
 	if new_month < 1 {
 		new_month = 12
@@ -303,33 +315,33 @@ fn (cfg &DatePickerRollerCfg) adjust_month(delta int, mut w Window) {
 		new_month = 1
 	}
 
-	max_days := time.days_in_month(new_month, cfg.selected_date.year) or { 31 }
-	new_day := if cfg.selected_date.day > max_days { max_days } else { cfg.selected_date.day }
+	max_days := time.days_in_month(new_month, selected_date.year) or { 31 }
+	new_day := if selected_date.day > max_days { max_days } else { selected_date.day }
 
 	new_date := time.new(
-		year:  cfg.selected_date.year
+		year:  selected_date.year
 		month: new_month
 		day:   new_day
 	)
-	cfg.on_change(new_date, mut w)
+	on_change(new_date, mut w)
 }
 
-fn (cfg &DatePickerRollerCfg) adjust_year(delta int, mut w Window) {
-	mut new_year := cfg.selected_date.year + delta
+fn date_picker_adjust_year(delta int, selected_date time.Time, min_year int, max_year int, on_change fn (time.Time, mut Window), mut w Window) {
+	mut new_year := selected_date.year + delta
 
-	if new_year < cfg.min_year {
-		new_year = cfg.min_year
-	} else if new_year > cfg.max_year {
-		new_year = cfg.max_year
+	if new_year < min_year {
+		new_year = min_year
+	} else if new_year > max_year {
+		new_year = max_year
 	}
 
-	max_days := time.days_in_month(cfg.selected_date.month, new_year) or { 31 }
-	new_day := if cfg.selected_date.day > max_days { max_days } else { cfg.selected_date.day }
+	max_days := time.days_in_month(selected_date.month, new_year) or { 31 }
+	new_day := if selected_date.day > max_days { max_days } else { selected_date.day }
 
 	new_date := time.new(
 		year:  new_year
-		month: cfg.selected_date.month
+		month: selected_date.month
 		day:   new_day
 	)
-	cfg.on_change(new_date, mut w)
+	on_change(new_date, mut w)
 }

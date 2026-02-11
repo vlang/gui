@@ -43,36 +43,10 @@ pub mut:
 	invisible     bool
 }
 
-// range_slider creates and returns a range slider View component based on the provided configuration.
-// The range slider allows users to select a numeric value within a specified range by dragging
-// a thumb along a track or using keyboard/mouse wheel input.
-//
-// Parameters:
-//   cfg RangeSliderCfg - Configuration struct containing all customization options including:
-//   - Visual styling (colors, dimensions, etc.)
-//   - Value range (min/max)
-//   - Step size
-//   - Callbacks for input handling
-//   - Layout options
-//
-// Returns:
-//   View - A fully configured range slider View component
-//
-// range_slider creates and returns a range slider View component based on the provided configuration.
-// The range slider allows users to select a numeric value within a specified range by dragging
-// a thumb along a track or using keyboard/mouse wheel input.
-//
-// Parameters:
-//   cfg RangeSliderCfg - Configuration struct containing all customization options including:
-//   - Visual styling (colors, dimensions, etc.)
-//   - Value range (min/max)
-//   - Step size
-//   - Callbacks for input handling
-//   - Layout options
-//
-// Returns:
-//   View - A fully configured range slider View component
-//
+// range_slider creates and returns a range slider View component based on
+// the provided configuration. The range slider allows users to select a
+// numeric value within a specified range by dragging a thumb along a track
+// or using keyboard/mouse wheel input.
 pub fn range_slider(cfg RangeSliderCfg) View {
 	mut c := cfg
 	if c.min >= c.max {
@@ -81,7 +55,8 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		c.max = c.min + 1.0
 	}
 
-	// Wrapper dimensions (Main Axis: Config Width/Size, Cross Axis: max(Size, ThumbSize))
+	// Wrapper dimensions (Main Axis: Config Width/Size,
+	// Cross Axis: max(Size, ThumbSize))
 	// Track dimensions (Main Axis: Fill, Cross Axis: Config Size)
 	mut wrapper_width := c.size
 	mut wrapper_height := f32_max(c.size, c.thumb_size)
@@ -103,6 +78,25 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		wrapper_height = c.height
 	}
 
+	// Extract fields for closure captures to avoid retaining
+	// the full @[heap] RangeSliderCfg.
+	slider_id := c.id
+	on_change := c.on_change
+	value := c.value
+	min := c.min
+	max := c.max
+	step := c.step
+	vertical := c.vertical
+	round_value := c.round_value
+	size := c.size
+	sz_border := c.size_border
+	thumb_size := c.thumb_size
+	color_focus := c.color_focus
+	color_hover := c.color_hover
+	color_click := c.color_click
+	disabled := c.disabled
+	id_focus := c.id_focus
+
 	return container(
 		name:      'range_slider_wrapper'
 		id:        c.id
@@ -118,20 +112,19 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 		v_align: .middle
 		axis:    if c.vertical { .top_to_bottom } else { .left_to_right }
 		// Events handled by wrapper for larger hit target
-		on_click:     fn [c] (layout &Layout, mut e Event, mut w Window) {
+		on_click:     fn [slider_id, on_change, value, min, max, vertical, round_value] (layout &Layout, mut e Event, mut w Window) {
 			mut ev := &Event{
 				...e
-				// touches: e.touches // copy triggers memory error check if not needed
 				mouse_x: e.mouse_x + layout.shape.x
 				mouse_y: e.mouse_y + layout.shape.y
 			}
-			c.mouse_move(layout, mut ev, mut w)
+			range_slider_mouse_move(layout, mut ev, mut w, slider_id, on_change, value,
+				min, max, vertical, round_value)
 
-			// Lock the mouse to the range slider until the mouse button is released
 			w.mouse_lock(MouseLockCfg{
-				// event mouse coordinates are not adjusted here
-				mouse_move: fn [c] (layout &Layout, mut e Event, mut w Window) {
-					c.mouse_move(layout, mut e, mut w)
+				mouse_move: fn [slider_id, on_change, value, min, max, vertical, round_value] (layout &Layout, mut e Event, mut w Window) {
+					range_slider_mouse_move(layout, mut e, mut w, slider_id, on_change,
+						value, min, max, vertical, round_value)
 				}
 				mouse_up:   fn (_ &Layout, mut _ Event, mut w Window) {
 					w.mouse_unlock()
@@ -139,14 +132,22 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 			})
 			e.is_handled = true
 		}
-		amend_layout: fn [c] (mut layout Layout, mut w Window) {
-			c.amend_layout_slide(mut layout, mut w)
+		amend_layout: fn [on_change, value, min, max, size, sz_border, vertical, color_focus, disabled, id_focus, round_value] (mut layout Layout, mut w Window) {
+			range_slider_amend_layout_slide(mut layout, mut w, on_change, value, min,
+				max, size, sz_border, vertical, color_focus, disabled, id_focus, round_value)
 		}
-		on_hover:     fn [c] (mut layout Layout, mut e Event, mut w Window) {
-			c.on_hover_slide(mut layout, mut e, mut w)
+		on_hover:     fn [color_hover, color_click] (mut layout Layout, mut e Event, mut w Window) {
+			w.set_mouse_cursor_pointing_hand()
+			if layout.children.len > 0 {
+				layout.children[0].shape.color_border = color_hover
+				if e.mouse_button == .left && layout.children[0].children.len > 1 {
+					layout.children[0].children[1].shape.color_border = color_click
+				}
+			}
 		}
-		on_keydown:   fn [c] (layout &Layout, mut e Event, mut w Window) {
-			c.on_keydown(layout, mut e, mut w)
+		on_keydown:   fn [on_change, value, min, max, step, round_value] (layout &Layout, mut e Event, mut w Window) {
+			range_slider_on_keydown(layout, mut e, mut w, on_change, value, min, max,
+				step, round_value)
 		}
 		content:      [
 			// The Track
@@ -182,8 +183,9 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 						color_border: c.color_border
 						size_border:  c.size_border
 						padding:      padding_none
-						amend_layout: fn [c] (mut layout Layout, mut w Window) {
-							c.amend_layout_thumb(mut layout, mut w)
+						amend_layout: fn [value, min, max, thumb_size, vertical] (mut layout Layout, mut w Window) {
+							range_slider_amend_layout_thumb(mut layout, mut w, value,
+								min, max, thumb_size, vertical)
 						}
 					),
 				]
@@ -192,23 +194,15 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 	)
 }
 
-// amend_layout_slide adjusts the layout of the range slider components based on the
-// current value and configuration.
-//
-// Hierarchy:
-// Wrapper (layout)
-//   -> Track (layout.children[0])
-//      -> Left Bar (layout.children[0].children[0])
-//      -> Thumb (layout.children[0].children[1])
-//
-// Parameters:
-//   layout Layout - The wrapper layout node
-//   w Window      - Window context for focus state handling
-fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
+// range_slider_amend_layout_slide adjusts the layout of the range slider
+// components based on the current value.
+fn range_slider_amend_layout_slide(mut layout Layout, mut w Window, on_change fn (f32, mut Event, mut Window), value f32, min f32, max f32, size f32, size_border f32, vertical bool, color_focus Color, disabled bool, id_focus u32, round_value bool) {
 	if layout.shape.events == unsafe { nil } {
 		layout.shape.events = &EventHandlers{}
 	}
-	layout.shape.events.on_mouse_scroll = cfg.on_mouse_scroll
+	layout.shape.events.on_mouse_scroll = fn [on_change, value, min, max, round_value] (_ &Layout, mut e Event, mut w Window) {
+		range_slider_on_mouse_scroll(mut e, mut w, on_change, value, min, max, round_value)
+	}
 
 	if layout.children.len == 0 {
 		return
@@ -220,54 +214,38 @@ fn (cfg &RangeSliderCfg) amend_layout_slide(mut layout Layout, mut w Window) {
 	mut left_bar := unsafe { &track.children[0] }
 	mut thumb := unsafe { &track.children[1] }
 
-	// set positions of left/right or top/bottom rectangles
-	value := f32_clamp(cfg.value, cfg.min, cfg.max)
-	percent := math.abs(value / (cfg.max - cfg.min))
+	clamped := f32_clamp(value, min, max)
+	percent := math.abs(clamped / (max - min))
 
-	if cfg.vertical {
+	if vertical {
 		height := track.shape.height
 		y := f32_min(height * percent, height)
 		left_bar.shape.height = y
-		left_bar.shape.width = cfg.size - (cfg.size_border * 2)
+		left_bar.shape.width = size - (size_border * 2)
 	} else {
 		width := track.shape.width
 		x := f32_min(width * percent, width)
 		left_bar.shape.width = x
-		left_bar.shape.height = cfg.size - (cfg.size_border * 2)
+		left_bar.shape.height = size - (size_border * 2)
 	}
 
-	if layout.shape.disabled {
+	if disabled {
 		return
 	}
 
-	if w.is_focus(layout.shape.id_focus) {
-		thumb.shape.color = cfg.color_focus
-		thumb.shape.color_border = cfg.color_focus
+	if w.is_focus(id_focus) {
+		thumb.shape.color = color_focus
+		thumb.shape.color_border = color_focus
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_hover_slide(mut layout Layout, mut e Event, mut w Window) {
-	w.set_mouse_cursor_pointing_hand()
-	// Highlight track border on hover (Wrapper is transparent usually, so we target Track)
-	if layout.children.len > 0 {
-		layout.children[0].shape.color_border = cfg.color_hover
-		if e.mouse_button == .left && layout.children[0].children.len > 1 {
-			layout.children[0].children[1].shape.color_border = cfg.color_click // Thumb border
-		}
-	}
-}
+// range_slider_amend_layout_thumb positions the slider's thumb element.
+fn range_slider_amend_layout_thumb(mut layout Layout, mut _ Window, value f32, min f32, max f32, thumb_size f32, vertical bool) {
+	clamped := f32_clamp(value, min, max)
+	percent := math.abs(clamped / (max - min))
+	radius := thumb_size / 2
 
-// amend_layout_thumb positions the slider's thumb element.
-// Thumb is a child of Track.
-// layout.parent is Track.
-fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut _ Window) {
-	// set the thumb position
-	value := f32_clamp(cfg.value, cfg.min, cfg.max)
-	percent := math.abs(value / (cfg.max - cfg.min))
-	radius := cfg.thumb_size / 2
-
-	// Parent is Track
-	if cfg.vertical {
+	if vertical {
 		height := layout.parent.shape.height
 		y := f32_min(height * percent, height)
 		layout.shape.y = layout.parent.shape.y + y - radius
@@ -280,70 +258,68 @@ fn (cfg &RangeSliderCfg) amend_layout_thumb(mut layout Layout, mut _ Window) {
 	}
 }
 
-// mouse_move expects the events mouse coordinates to NOT be adjusted (see on_mouse_down)
-fn (cfg &RangeSliderCfg) mouse_move(layout &Layout, mut e Event, mut w Window) {
-	id := cfg.id
-
-	if cfg.on_change != unsafe { nil } {
-		range_slider := layout.find_layout(fn [id] (n Layout) bool {
-			return n.shape.id == id
+// range_slider_mouse_move handles mouse move during drag.
+fn range_slider_mouse_move(layout &Layout, mut e Event, mut w Window, slider_id string, on_change fn (f32, mut Event, mut Window), cur_value f32, min f32, max f32, vertical bool, round_value bool) {
+	if on_change != unsafe { nil } {
+		range_slider := layout.find_layout(fn [slider_id] (n Layout) bool {
+			return n.shape.id == slider_id
 		})
 		if range_slider != none {
 			w.set_mouse_cursor_pointing_hand()
 			shape := range_slider.shape
-			if cfg.vertical {
+			if vertical {
 				height := shape.height
 				percent := f32_clamp((e.mouse_y - shape.y) / height, 0, 1)
-				val := (cfg.max - cfg.min) * percent
-				mut value := f32_clamp(val, cfg.min, cfg.max)
-				if cfg.round_value {
+				val := (max - min) * percent
+				mut value := f32_clamp(val, min, max)
+				if round_value {
 					value = f32(math.round(f64(value)))
 				}
-				cfg.on_change(value, mut e, mut w)
+				on_change(value, mut e, mut w)
 			} else {
 				width := shape.width
 				percent := f32_clamp((e.mouse_x - shape.x) / width, 0, 1)
-				val := (cfg.max - cfg.min) * percent
-				mut value := f32_clamp(val, cfg.min, cfg.max)
-				if cfg.round_value {
+				val := (max - min) * percent
+				mut value := f32_clamp(val, min, max)
+				if round_value {
 					value = f32(math.round(f64(value)))
 				}
-				if value != cfg.value {
-					cfg.on_change(value, mut e, mut w)
+				if value != cur_value {
+					on_change(value, mut e, mut w)
 				}
 			}
 		}
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
-	if cfg.on_change != unsafe { nil } && e.modifiers == .none {
-		mut value := cfg.value
+fn range_slider_on_keydown(_ &Layout, mut e Event, mut w Window, on_change fn (f32, mut Event, mut Window), cur_value f32, min f32, max f32, step f32, round_value bool) {
+	if on_change != unsafe { nil } && e.modifiers == .none {
+		mut value := cur_value
 		match e.key_code {
-			.home { value = cfg.min }
-			.end { value = cfg.max }
-			.left, .up { value = f32_clamp(value - cfg.step, cfg.min, cfg.max) }
-			.right, .down { value = f32_clamp(value + cfg.step, cfg.min, cfg.max) }
+			.home { value = min }
+			.end { value = max }
+			.left, .up { value = f32_clamp(value - step, min, max) }
+			.right, .down { value = f32_clamp(value + step, min, max) }
 			else { return }
 		}
-		if cfg.round_value {
+		if round_value {
 			value = f32(math.round(f64(value)))
 		}
-		if value != cfg.value {
-			cfg.on_change(value, mut e, mut w)
+		if value != cur_value {
+			on_change(value, mut e, mut w)
 		}
 	}
 }
 
-fn (cfg &RangeSliderCfg) on_mouse_scroll(_ &Layout, mut e Event, mut w Window) {
+fn range_slider_on_mouse_scroll(mut e Event, mut w Window, on_change fn (f32, mut Event, mut Window), cur_value f32, min f32, max f32, round_value bool) {
 	e.is_handled = true
-	if cfg.on_change != unsafe { nil } && e.modifiers == .none {
-		mut value := f32_clamp(cfg.value + e.scroll_y, cfg.min, cfg.max)
-		if cfg.round_value {
+	if on_change != unsafe { nil } && e.modifiers == .none {
+		mut value := f32_clamp(cur_value + e.scroll_y, min, max)
+		if round_value {
 			value = f32(math.round(f64(value)))
 		}
-		if value != cfg.value {
-			cfg.on_change(value, mut e, mut w)
+		if value != cur_value {
+			on_change(value, mut e, mut w)
 		}
 	}
 }
