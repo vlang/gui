@@ -1,64 +1,95 @@
 # Data Grid Widget
 
-`data_grid` is a controlled, virtualized grid for tabular data.
+`data_grid` is a controlled, virtualized grid for interactive tabular data.
 
-## Features (v1)
-- Virtual row rendering
-- Single and multi-column sorting (shift-click)
-- Per-column filter row + quick filter input
-- Row selection: single, toggle, range
-- Keyboard navigation + `ctrl/cmd+a`
-- Header keyboard controls (sort/reorder/resize/pin/focus)
-- Column resize drag + double-click auto-fit
-- Controlled column reorder (`<` / `>` header controls)
-- Controlled column pin cycle (`•` -> `↤` -> `↦`)
-- Controlled column chooser (`show_column_chooser`, `hidden_column_ids`)
-- Group headers (`group_by`) with optional aggregates
-- Controlled master-detail rows
-- Controlled row edit mode + typed cell editors (`text/select/date/checkbox`)
-- Conditional cell formatting (`on_cell_format`)
-- Controlled pagination (`page_size`, `page_index`)
-- Controlled top frozen rows (`frozen_top_row_ids`)
-- Optional frozen header row (`freeze_header`)
-- Clipboard copy (`ctrl/cmd+c`) to TSV
-- CSV import helper
-- CSV helper export
-- XLSX helper export
-- PDF helper export
+## Modes
 
-## Core Types
-- `DataGridCfg`
-- `GridColumnCfg`
-- `GridCellEdit`
-- `GridCsvData`
-- `GridAggregateCfg`
-- `GridRow`
-- `GridQueryState`
-- `GridSelection`
+`data_grid` supports two modes:
 
-## Controlled Model
-Application state owns query, selection, and rows.
-Application also owns optional `column_order`, pin state (`GridColumnCfg.pin`),
-column visibility (`hidden_column_ids`), grouping (`group_by`, `aggregates`),
-detail expansion map (`detail_expanded_row_ids`), and frozen top row ids
-(`frozen_top_row_ids`)
-along with conditional format logic, row cell data updates for edits, and
-pagination state (`page_size`, `page_index`).
+- `rows` mode: app passes `rows` directly (existing controlled model).
+- `data_source` mode: grid fetches rows via `DataGridDataSource`.
 
-Grid emits callbacks:
-- `on_query_change`
-- `on_selection_change`
-- `on_column_order_change`
-- `on_column_pin_change`
-- `on_hidden_columns_change`
-- `on_page_change`
-- `on_cell_edit`
-- `on_cell_format`
-- `on_detail_expanded_change`
-- `on_row_activate`
-- `on_copy_rows`
+`rows` mode is still fully supported and unchanged.
 
-## Basic Example
+## Data Source Model
+
+Data-source mode centralizes server fetch via `fetch_data(req GridDataRequest)`.
+
+Core pieces:
+
+- `DataGridDataSource`
+- `GridDataRequest`
+- `GridDataResult`
+- `GridDataCapabilities`
+- `GridAbortController` / `GridAbortSignal`
+
+### Request shape
+
+- `grid_id`: source-aware request routing
+- `query`: typed sort/filter/quick filter (`GridQueryState`)
+- `page`: `GridCursorPageReq` or `GridOffsetPageReq`
+- `signal`: cancellation token
+- `request_id`: monotonic id for stale-response guards
+
+### Result shape
+
+- `rows`: returned page rows
+- `next_cursor` / `prev_cursor`: cursor navigation tokens
+- `row_count`: `?int`; use `none` when total unknown/infinite
+- `has_more`: paging continuation hint
+- `received_count`: returned row count for this page
+
+### Capabilities metadata
+
+`capabilities()` returns explicit support flags:
+
+- `supports_cursor_pagination`
+- `supports_offset_pagination`
+- `supports_numbered_pages`
+- `row_count_known`
+
+Grid uses this metadata to select pagination behavior and display counts safely.
+
+## Cursor-First Pagination
+
+Use cursor pagination by default. It is stable for infinite scroll and changing data.
+
+Offset pagination is supported for static snapshots and numbered-page workflows.
+
+Set mode in `DataGridCfg`:
+
+- `pagination_kind: .cursor` (default)
+- `pagination_kind: .offset`
+
+Set page size with `page_limit`.
+
+## Cancellation and Race Safety
+
+Grid starts async fetches and cancels stale requests automatically.
+
+Internal behavior:
+
+- each new fetch aborts the previous active request
+- each response checks `request_id` before apply
+- stale or aborted responses are ignored
+
+This prevents scroll/filter race corruption.
+
+## `DataGridCfg` additions
+
+New fields:
+
+- `data_source DataGridDataSource`
+- `pagination_kind GridPaginationKind`
+- `cursor string`
+- `page_limit int`
+- `row_count ?int`
+- `loading bool`
+- `load_error string`
+
+When `data_source` is set, fetched rows are used for render. Local `rows` paging is disabled.
+
+## Example: Data Source Mode
 
 ```v ignore
 import gui
@@ -66,89 +97,78 @@ import gui
 @[heap]
 struct App {
 pub mut:
+	source    ?gui.DataGridDataSource
 	query     gui.GridQueryState
 	selection gui.GridSelection
-	rows      []gui.GridRow
 }
 
-fn main_view(mut w gui.Window) gui.View {
+fn view(mut w gui.Window) gui.View {
 	mut app := w.state[App]()
 	return w.data_grid(
-		id: 'users-grid'
-		columns: [
-			gui.GridColumnCfg{id: 'name', title: 'Name', width: 180},
-			gui.GridColumnCfg{id: 'email', title: 'Email', width: 260},
-		]
-		rows: app.rows
-		query: app.query
-		selection: app.selection
-		max_height: 360
+		id:              'users-grid'
+		columns:         columns()
+		data_source:     app.source
+		pagination_kind: .cursor
+		page_limit:      200
+		query:           app.query
+		selection:       app.selection
+		show_filter_row: true
+		show_quick_filter: true
 		on_query_change: fn (q gui.GridQueryState, mut _ gui.Event, mut w gui.Window) {
-			mut a := w.state[App]()
-			a.query = q
+			w.state[App]().query = q
 		}
 		on_selection_change: fn (s gui.GridSelection, mut _ gui.Event, mut w gui.Window) {
-			mut a := w.state[App]()
-			a.selection = s
+			w.state[App]().selection = s
 		}
 	)
 }
 ```
 
-## Import and Export Helpers
+Built-in concrete sources:
+
+- `InMemoryCursorDataSource`
+- `InMemoryOffsetDataSource`
+
+See `examples/data_grid_data_source_demo.v` for a 50k-row demo.
+
+## Example: Rows Mode (unchanged)
 
 ```v ignore
-parsed := gui.grid_data_from_csv(csv_data) or { panic(err) }
-columns := parsed.columns
-rows := parsed.rows
-
-tsv := gui.grid_rows_to_tsv(columns, rows)
-csv := gui.grid_rows_to_csv(columns, rows)
-xlsx := gui.grid_rows_to_xlsx(columns, rows) or { []u8{} }
-pdf := gui.grid_rows_to_pdf(columns, rows)
+window.data_grid(
+	id: 'users-grid'
+	columns: columns
+	rows: rows
+	query: app.query
+	selection: app.selection
+	on_query_change: on_query_change
+	on_selection_change: on_selection_change
+)
 ```
 
-File helpers:
+## Runtime Stats
+
+Use runtime counters for diagnostics:
 
 ```v ignore
-gui.grid_rows_to_xlsx_file('/tmp/grid.xlsx', columns, rows) or {}
-gui.grid_rows_to_pdf_file('/tmp/grid.pdf', columns, rows) or {}
+stats := window.data_grid_source_stats('users-grid')
 ```
+
+Fields include loading/error/request counts and stale/cancel counters.
+
+## Import/Export Helpers
+
+These helpers are unchanged:
+
+- `grid_data_from_csv`
+- `grid_rows_to_tsv`
+- `grid_rows_to_csv`
+- `grid_rows_to_xlsx`
+- `grid_rows_to_pdf`
 
 ## Notes
-- `table` remains available and unchanged.
-- `data_grid` is for heavier interactive tabular workflows.
-- Tab order follows numeric `id_focus` sort, not visual tree order.
-- Avoid hashed focus ids for ordered header navigation. Hash order is unstable.
-- Prefer reserved focus-id ranges per grid, then assign sequential header ids left->right.
-- Keep ranges non-overlapping across sibling widgets to avoid collisions and tab-order corruption.
-- Grouping is contiguous. Sort data by group columns first for stable large groups.
-- Master-detail is controlled. App owns expanded ids and detail row content callback.
-- Row editing is controlled. App applies `on_cell_edit` updates to row data.
-- Conditional cell formatting is callback-driven via `on_cell_format`.
-- Provide stable unique `GridRow.id` values. Empty ids use best-effort auto ids.
-- `grid_data_from_csv` creates 1-based row ids and normalizes column ids.
-- Top frozen rows are controlled via `frozen_top_row_ids`.
-- Frozen rows are scoped to current page and keep current visible order.
-- Frozen rows bypass group header generation and keep row/detail interactions.
-- Enable `freeze_header` to keep the header row visible while vertical scrolling.
-- Enter edit mode with row double-click or `F2` on active row.
-- Exit edit mode with `Esc` (or `Enter` in text editor).
-- Pagination is controlled. Grid emits next page index via `on_page_change`.
-- Column chooser is controlled. Grid emits hidden-id map via `on_hidden_columns_change`.
 
-## Header Keyboard
-- `Tab` focuses header cells (left->right), not per-icon controls.
-- `Left` / `Right`: move header focus.
-- `Space` or `Enter`: toggle sort (`Shift` appends in multi-sort mode).
-- `Ctrl`/`Cmd` + `Left` / `Right`: reorder current column.
-- `Alt` + `Left` / `Right`: resize column by step.
-- `Shift` + `Alt` + `Left` / `Right`: resize by larger step.
-- `P`: cycle pin (`none -> left -> right -> none`).
-- `Esc`: return focus to grid body.
-
-## Body Keyboard
-- `F2`: enter edit mode for active row (first editable column focused).
-- `Esc`: exit row edit mode.
-- `Ctrl`/`Cmd` + `PageUp` / `PageDown`: previous/next page.
-- `Alt` + `Home` / `End`: first/last page.
+- `table` remains unchanged.
+- Keep `GridRow.id` stable and unique.
+- Grouping is contiguous; pre-sort by group keys for stable large groups.
+- Row editing is controlled through `on_cell_edit`.
+- Tab order follows numeric `id_focus`, not tree order.

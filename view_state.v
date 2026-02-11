@@ -101,6 +101,9 @@ mut:
 	data_grid_edit_state          BoundedMap[string, DataGridEditState] = BoundedMap[string, DataGridEditState]{
 		max_size: 20
 	}
+	data_grid_source_state        BoundedMap[string, DataGridSourceState] = BoundedMap[string, DataGridSourceState]{
+		max_size: 20
+	}
 	splitter_runtime_state        BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
 		max_size: 20
 	}
@@ -149,6 +152,31 @@ mut:
 	editing_row_id    string
 	last_click_row_id string
 	last_click_frame  u64
+}
+
+// DataGridSourceState stores async data-source runtime state per grid id.
+struct DataGridSourceState {
+mut:
+	rows             []GridRow
+	loading          bool
+	load_error       string
+	has_loaded       bool
+	request_id       u64
+	request_key      string
+	query_signature  string
+	current_cursor   string
+	next_cursor      string
+	prev_cursor      string
+	offset_start     int
+	row_count        ?int
+	has_more         bool
+	received_count   int
+	request_count    int
+	cancelled_count  int
+	stale_drop_count int
+	active_abort     &GridAbortController = unsafe { nil }
+	pagination_kind  GridPaginationKind   = .cursor
+	config_cursor    string
 }
 
 // TableColCache stores cached column widths and hash for invalidation

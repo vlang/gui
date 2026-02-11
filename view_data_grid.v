@@ -180,7 +180,14 @@ pub:
 	column_order              []string
 	group_by                  []string
 	aggregates                []GridAggregateCfg
-	rows                      []GridRow @[required]
+	rows                      []GridRow
+	data_source               ?DataGridDataSource
+	pagination_kind           GridPaginationKind = .cursor
+	cursor                    string
+	page_limit                int = 100
+	row_count                 ?int
+	loading                   bool
+	load_error                string
 	query                     GridQueryState
 	selection                 GridSelection
 	multi_sort                bool = true
@@ -243,45 +250,53 @@ pub:
 
 // data_grid renders a controlled, virtualized data grid view.
 pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
-	focus_id := data_grid_focus_id(cfg)
-	scroll_id := data_grid_scroll_id(cfg)
-	hovered_col_id := window.view_state.data_grid_header_hover_col.get(cfg.id) or { '' }
-	resizing_col_id := data_grid_active_resize_col_id(cfg.id, window)
-	chooser_open := window.view_state.data_grid_column_chooser_open.get(cfg.id) or { false }
-	row_height := data_grid_row_height(cfg, mut window)
-	header_in_scroll_body := cfg.show_header && !cfg.freeze_header
-	static_top := data_grid_static_top_height(cfg, row_height, chooser_open, header_in_scroll_body)
-	page_start, page_end, page_index, page_count := data_grid_page_bounds(cfg.rows.len,
-		cfg.page_size, cfg.page_index)
-	page_indices := data_grid_page_row_indices(page_start, page_end)
-	frozen_top_indices, body_page_indices := data_grid_split_frozen_top_indices(cfg, page_indices)
-	frozen_top_ids := data_grid_frozen_top_id_set(cfg)
-	pager_enabled := data_grid_pager_enabled(cfg, page_count)
-	mut grid_height := data_grid_height(cfg)
-	if pager_enabled && grid_height > 0 {
-		grid_height = f32_max(0, grid_height - data_grid_pager_height(cfg))
+	resolved_cfg, source_state, has_source, source_caps := data_grid_resolve_source_cfg(cfg, mut
+		window)
+	focus_id := data_grid_focus_id(resolved_cfg)
+	scroll_id := data_grid_scroll_id(resolved_cfg)
+	hovered_col_id := window.view_state.data_grid_header_hover_col.get(resolved_cfg.id) or { '' }
+	resizing_col_id := data_grid_active_resize_col_id(resolved_cfg.id, window)
+	chooser_open := window.view_state.data_grid_column_chooser_open.get(resolved_cfg.id) or {
+		false
 	}
-	virtualize := grid_height > 0 && cfg.rows.len > 0
+	row_height := data_grid_row_height(resolved_cfg, mut window)
+	header_in_scroll_body := resolved_cfg.show_header && !resolved_cfg.freeze_header
+	static_top := data_grid_static_top_height(resolved_cfg, row_height, chooser_open,
+		header_in_scroll_body)
+	page_start, page_end, page_index, page_count := data_grid_page_bounds(resolved_cfg.rows.len,
+		resolved_cfg.page_size, resolved_cfg.page_index)
+	page_indices := data_grid_page_row_indices(page_start, page_end)
+	frozen_top_indices, body_page_indices := data_grid_split_frozen_top_indices(resolved_cfg,
+		page_indices)
+	frozen_top_ids := data_grid_frozen_top_id_set(resolved_cfg)
+	pager_enabled := data_grid_pager_enabled(resolved_cfg, page_count)
+	source_pager_enabled := has_source
+	mut grid_height := data_grid_height(resolved_cfg)
+	if (pager_enabled || source_pager_enabled) && grid_height > 0 {
+		grid_height = f32_max(0, grid_height - data_grid_pager_height(resolved_cfg))
+	}
+	virtualize := grid_height > 0 && resolved_cfg.rows.len > 0
 	scroll_y := if virtualize {
 		-(window.view_state.scroll_y.get(scroll_id) or { f32(0) })
 	} else {
 		f32(0)
 	}
-	columns := data_grid_effective_columns(cfg)
-	presentation := data_grid_presentation_rows(cfg, columns, body_page_indices)
-	mut editing_row_id := data_grid_editing_row_id(cfg.id, window)
-	if editing_row_id.len > 0 && !data_grid_has_row_id(cfg.rows, editing_row_id) {
-		data_grid_clear_editing_row(cfg.id, mut window)
+	columns := data_grid_effective_columns(resolved_cfg)
+	presentation := data_grid_presentation_rows(resolved_cfg, columns, body_page_indices)
+	mut editing_row_id := data_grid_editing_row_id(resolved_cfg.id, window)
+	if editing_row_id.len > 0 && !data_grid_has_row_id(resolved_cfg.rows, editing_row_id) {
+		data_grid_clear_editing_row(resolved_cfg.id, mut window)
 		editing_row_id = ''
 	}
-	focused_col_id := data_grid_header_focused_col_id(cfg, columns, window.id_focus())
+	focused_col_id := data_grid_header_focused_col_id(resolved_cfg, columns, window.id_focus())
 
-	mut column_widths := data_grid_column_widths(cfg, mut window)
-	header_view := data_grid_header_row(cfg, columns, column_widths, focus_id, hovered_col_id,
-		resizing_col_id, focused_col_id)
-	header_height := data_grid_header_height(cfg)
-	frozen_top_views, frozen_top_display_rows := data_grid_frozen_top_views(cfg, frozen_top_indices,
-		columns, column_widths, row_height, focus_id, editing_row_id, mut window)
+	mut column_widths := data_grid_column_widths(resolved_cfg, mut window)
+	header_view := data_grid_header_row(resolved_cfg, columns, column_widths, focus_id,
+		hovered_col_id, resizing_col_id, focused_col_id)
+	header_height := data_grid_header_height(resolved_cfg)
+	frozen_top_views, frozen_top_display_rows := data_grid_frozen_top_views(resolved_cfg,
+		frozen_top_indices, columns, column_widths, row_height, focus_id, editing_row_id, mut
+		window)
 	scroll_x := window.view_state.scroll_x.get(scroll_id) or { f32(0) }
 	last_row_idx := presentation.rows.len - 1
 	first_visible, last_visible := if virtualize {
@@ -292,17 +307,23 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	}
 
 	mut rows := []View{cap: presentation.rows.len + 8}
-	if cfg.show_quick_filter {
-		rows << data_grid_quick_filter_row(cfg)
+	if resolved_cfg.show_quick_filter {
+		rows << data_grid_quick_filter_row(resolved_cfg)
 	}
-	if cfg.show_column_chooser {
-		rows << data_grid_column_chooser_row(cfg, chooser_open, focus_id)
+	if resolved_cfg.show_column_chooser {
+		rows << data_grid_column_chooser_row(resolved_cfg, chooser_open, focus_id)
 	}
 	if header_in_scroll_body {
 		rows << header_view
 	}
-	if cfg.show_filter_row {
-		rows << data_grid_filter_row(cfg, columns, column_widths)
+	if resolved_cfg.show_filter_row {
+		rows << data_grid_filter_row(resolved_cfg, columns, column_widths)
+	}
+	if has_source && resolved_cfg.loading && presentation.rows.len == 0 {
+		rows << data_grid_source_status_row(resolved_cfg, 'Loading...')
+	}
+	if has_source && resolved_cfg.load_error.len > 0 && presentation.rows.len == 0 {
+		rows << data_grid_source_status_row(resolved_cfg, 'Load error: ${resolved_cfg.load_error}')
 	}
 
 	if virtualize && first_visible > 0 {
@@ -320,22 +341,24 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		}
 		entry := presentation.rows[row_idx]
 		if entry.kind == .group_header {
-			rows << data_grid_group_header_row_view(cfg, entry, row_height)
+			rows << data_grid_group_header_row_view(resolved_cfg, entry, row_height)
 			continue
 		}
 		if entry.kind == .detail {
-			if entry.data_row_idx < 0 || entry.data_row_idx >= cfg.rows.len {
+			if entry.data_row_idx < 0 || entry.data_row_idx >= resolved_cfg.rows.len {
 				continue
 			}
-			rows << data_grid_detail_row_view(cfg, cfg.rows[entry.data_row_idx], entry.data_row_idx,
-				columns, column_widths, row_height, focus_id, mut window)
+			rows << data_grid_detail_row_view(resolved_cfg, resolved_cfg.rows[entry.data_row_idx],
+				entry.data_row_idx, columns, column_widths, row_height, focus_id, mut
+				window)
 			continue
 		}
-		if entry.data_row_idx < 0 || entry.data_row_idx >= cfg.rows.len {
+		if entry.data_row_idx < 0 || entry.data_row_idx >= resolved_cfg.rows.len {
 			continue
 		}
-		rows << data_grid_row_view(cfg, cfg.rows[entry.data_row_idx], entry.data_row_idx,
-			columns, column_widths, row_height, focus_id, editing_row_id, mut window)
+		rows << data_grid_row_view(resolved_cfg, resolved_cfg.rows[entry.data_row_idx],
+			entry.data_row_idx, columns, column_widths, row_height, focus_id, editing_row_id, mut
+			window)
 	}
 
 	if virtualize && last_visible < last_row_idx {
@@ -349,56 +372,60 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	}
 
 	scrollbar_cfg := ScrollbarCfg{
-		overflow: cfg.scrollbar
+		overflow: resolved_cfg.scrollbar
 	}
 	scroll_body := column(
 		name:            'data_grid scroll body'
-		id:              '${cfg.id}:scroll'
+		id:              '${resolved_cfg.id}:scroll'
 		id_scroll:       scroll_id
 		scrollbar_cfg_x: &scrollbar_cfg
 		scrollbar_cfg_y: &scrollbar_cfg
-		color:           cfg.color_background
-		padding:         data_grid_scroll_padding(cfg)
+		color:           resolved_cfg.color_background
+		padding:         data_grid_scroll_padding(resolved_cfg)
 		spacing:         0
 		sizing:          fill_fill
 		content:         rows
 	)
 	mut content := []View{cap: 4}
-	if cfg.show_header && cfg.freeze_header {
-		content << data_grid_frozen_top_zone(cfg, [header_view], header_height, data_grid_columns_total_width(columns,
-			column_widths), scroll_x)
+	if resolved_cfg.show_header && resolved_cfg.freeze_header {
+		content << data_grid_frozen_top_zone(resolved_cfg, [header_view], header_height,
+			data_grid_columns_total_width(columns, column_widths), scroll_x)
 	}
 	if frozen_top_display_rows > 0 {
 		frozen_height := f32(frozen_top_display_rows) * row_height
-		content << data_grid_frozen_top_zone(cfg, frozen_top_views, frozen_height, data_grid_columns_total_width(columns,
-			column_widths), scroll_x)
+		content << data_grid_frozen_top_zone(resolved_cfg, frozen_top_views, frozen_height,
+			data_grid_columns_total_width(columns, column_widths), scroll_x)
 	}
 	content << scroll_body
 	if pager_enabled {
-		content << data_grid_pager_row(cfg, focus_id, page_index, page_count, page_start,
-			page_end, cfg.rows.len)
+		total_rows := if count := resolved_cfg.row_count { count } else { resolved_cfg.rows.len }
+		content << data_grid_pager_row(resolved_cfg, focus_id, page_index, page_count,
+			page_start, page_end, total_rows)
+	}
+	if source_pager_enabled {
+		content << data_grid_source_pager_row(resolved_cfg, focus_id, source_state, source_caps)
 	}
 	return column(
 		name:          'data_grid'
-		id:            cfg.id
+		id:            resolved_cfg.id
 		id_focus:      focus_id
-		on_keydown:    make_data_grid_on_keydown(cfg, columns, row_height, static_top,
+		on_keydown:    make_data_grid_on_keydown(resolved_cfg, columns, row_height, static_top,
 			scroll_id, page_indices, frozen_top_ids, presentation.data_to_display)
-		on_char:       make_data_grid_on_char(cfg, columns)
-		on_mouse_move: make_data_grid_on_mouse_move(cfg.id)
-		color:         cfg.color_background
-		color_border:  cfg.color_border
-		size_border:   cfg.size_border
-		radius:        cfg.radius
+		on_char:       make_data_grid_on_char(resolved_cfg, columns)
+		on_mouse_move: make_data_grid_on_mouse_move(resolved_cfg.id)
+		color:         resolved_cfg.color_background
+		color_border:  resolved_cfg.color_border
+		size_border:   resolved_cfg.size_border
+		radius:        resolved_cfg.radius
 		padding:       padding_none
 		spacing:       0
-		sizing:        cfg.sizing
-		width:         cfg.width
-		height:        cfg.height
-		min_width:     cfg.min_width
-		max_width:     cfg.max_width
-		min_height:    cfg.min_height
-		max_height:    cfg.max_height
+		sizing:        resolved_cfg.sizing
+		width:         resolved_cfg.width
+		height:        resolved_cfg.height
+		min_width:     resolved_cfg.min_width
+		max_width:     resolved_cfg.max_width
+		min_height:    resolved_cfg.min_height
+		max_height:    resolved_cfg.max_height
 		content:       content
 	)
 }
