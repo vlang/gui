@@ -170,6 +170,8 @@ pub:
 	show_filter_row           bool
 	show_quick_filter         bool
 	show_group_counts         bool = true
+	page_size                 int
+	page_index                int
 	detail_expanded_row_ids   map[string]bool
 	quick_filter_placeholder  string            = 'Search'
 	row_height                f32               = 30
@@ -205,6 +207,7 @@ pub:
 	on_selection_change       fn (GridSelection, mut Event, mut Window)                  = unsafe { nil }
 	on_column_order_change    fn ([]string, mut Event, mut Window)                       = unsafe { nil }
 	on_column_pin_change      fn (string, GridColumnPin, mut Event, mut Window)          = unsafe { nil }
+	on_page_change            fn (int, mut Event, mut Window)                            = unsafe { nil }
 	on_detail_expanded_change fn (detail_ids map[string]bool, mut e Event, mut w Window) = unsafe { nil }
 	on_cell_edit              fn (GridCellEdit, mut Event, mut Window)                   = unsafe { nil }
 	on_detail_row_view        fn (GridRow, mut Window) View                 = unsafe { nil }
@@ -220,7 +223,14 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	resizing_col_id := data_grid_active_resize_col_id(cfg.id, window)
 	row_height := data_grid_row_height(cfg, mut window)
 	static_top := data_grid_static_top_height(cfg, row_height)
-	grid_height := data_grid_height(cfg)
+	page_start, page_end, page_index, page_count := data_grid_page_bounds(cfg.rows.len,
+		cfg.page_size, cfg.page_index)
+	page_indices := data_grid_page_row_indices(page_start, page_end)
+	pager_enabled := data_grid_pager_enabled(cfg, page_count)
+	mut grid_height := data_grid_height(cfg)
+	if pager_enabled && grid_height > 0 {
+		grid_height = f32_max(0, grid_height - data_grid_pager_height(cfg))
+	}
 	virtualize := grid_height > 0 && cfg.rows.len > 0
 	scroll_y := if virtualize {
 		-(window.view_state.scroll_y.get(scroll_id) or { f32(0) })
@@ -228,7 +238,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		f32(0)
 	}
 	columns := data_grid_effective_columns(cfg)
-	presentation := data_grid_presentation(cfg, columns)
+	presentation := data_grid_presentation_rows(cfg, columns, page_indices)
 	mut editing_row_id := data_grid_editing_row_id(cfg.id, window)
 	if editing_row_id.len > 0 && !data_grid_has_row_id(cfg.rows, editing_row_id) {
 		data_grid_clear_editing_row(cfg.id, mut window)
@@ -315,11 +325,18 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		sizing:          fill_fill
 		content:         rows
 	)
+	mut content := []View{cap: 2}
+	content << scroll_body
+	if pager_enabled {
+		content << data_grid_pager_row(cfg, focus_id, page_index, page_count, page_start,
+			page_end, cfg.rows.len)
+	}
 	return column(
 		name:          'data_grid'
 		id:            cfg.id
 		id_focus:      focus_id
-		on_keydown:    make_data_grid_on_keydown(cfg, row_height, static_top, scroll_id)
+		on_keydown:    make_data_grid_on_keydown(cfg, row_height, static_top, scroll_id,
+			page_indices)
 		on_char:       make_data_grid_on_char(cfg)
 		on_mouse_move: make_data_grid_on_mouse_move(cfg)
 		color:         cfg.color_background
@@ -335,7 +352,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		max_width:     cfg.max_width
 		min_height:    cfg.min_height
 		max_height:    cfg.max_height
-		content:       [scroll_body]
+		content:       content
 	)
 }
 
@@ -385,6 +402,109 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 					mut e := Event{}
 					query_callback(next, mut e, mut w)
 				}
+			),
+		]
+	)
+}
+
+fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count int, page_start int, page_end int, total_rows int) View {
+	has_callback := cfg.on_page_change != unsafe { nil }
+	is_first := page_index <= 0
+	is_last := page_index >= page_count - 1
+	page_text := 'Page ${page_index + 1}/${page_count}'
+	rows_text := if total_rows == 0 || page_end <= page_start {
+		'Rows 0/0'
+	} else {
+		'Rows ${page_start + 1}-${page_end}/${total_rows}'
+	}
+	return row(
+		name:         'data_grid pager row'
+		height:       data_grid_pager_height(cfg)
+		sizing:       fill_fixed
+		color:        cfg.color_filter
+		color_border: cfg.color_border
+		size_border:  0
+		padding:      cfg.padding_filter
+		spacing:      6
+		v_align:      .middle
+		content:      [
+			button(
+				width:        data_grid_header_control_width + 10
+				sizing:       fixed_fill
+				padding:      padding_none
+				size_border:  0
+				radius:       0
+				color:        color_transparent
+				color_hover:  cfg.color_header_hover
+				color_focus:  color_transparent
+				color_click:  cfg.color_header_hover
+				color_border: color_transparent
+				disabled:     !has_callback || is_first
+				on_click:     fn [cfg, page_index, focus_id] (_ &Layout, mut e Event, mut w Window) {
+					if cfg.on_page_change == unsafe { nil } {
+						return
+					}
+					next := int_max(0, page_index - 1)
+					cfg.on_page_change(next, mut e, mut w)
+					if focus_id > 0 {
+						w.set_id_focus(focus_id)
+					}
+					e.is_handled = true
+				}
+				content:      [
+					text(
+						text:       '◀'
+						mode:       .single_line
+						text_style: data_grid_indicator_text_style(cfg.text_style_header)
+					),
+				]
+			),
+			text(
+				text:       page_text
+				mode:       .single_line
+				text_style: cfg.text_style_filter
+			),
+			button(
+				width:        data_grid_header_control_width + 10
+				sizing:       fixed_fill
+				padding:      padding_none
+				size_border:  0
+				radius:       0
+				color:        color_transparent
+				color_hover:  cfg.color_header_hover
+				color_focus:  color_transparent
+				color_click:  cfg.color_header_hover
+				color_border: color_transparent
+				disabled:     !has_callback || is_last
+				on_click:     fn [cfg, page_index, page_count, focus_id] (_ &Layout, mut e Event, mut w Window) {
+					if cfg.on_page_change == unsafe { nil } {
+						return
+					}
+					next := int_min(page_count - 1, page_index + 1)
+					cfg.on_page_change(next, mut e, mut w)
+					if focus_id > 0 {
+						w.set_id_focus(focus_id)
+					}
+					e.is_handled = true
+				}
+				content:      [
+					text(
+						text:       '▶'
+						mode:       .single_line
+						text_style: data_grid_indicator_text_style(cfg.text_style_header)
+					),
+				]
+			),
+			row(
+				name:    'data_grid pager spacer'
+				sizing:  fill_fill
+				padding: padding_none
+				content: []
+			),
+			text(
+				text:       rows_text
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
 			),
 		]
 	)
@@ -1420,8 +1540,8 @@ fn data_grid_header_pin_by_key(cfg DataGridCfg, col GridColumnCfg, col_count int
 	e.is_handled = true
 }
 
-fn make_data_grid_on_keydown(cfg DataGridCfg, row_height f32, static_top f32, scroll_id u32) fn (&Layout, mut Event, mut Window) {
-	return fn [cfg, row_height, static_top, scroll_id] (_ &Layout, mut e Event, mut w Window) {
+fn make_data_grid_on_keydown(cfg DataGridCfg, row_height f32, static_top f32, scroll_id u32, page_indices []int) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg, row_height, static_top, scroll_id, page_indices] (_ &Layout, mut e Event, mut w Window) {
 		if e.modifiers == .none && e.key_code == .escape {
 			if data_grid_editing_row_id(cfg.id, w).len > 0 {
 				data_grid_clear_editing_row(cfg.id, mut w)
@@ -1433,7 +1553,14 @@ fn make_data_grid_on_keydown(cfg DataGridCfg, row_height f32, static_top f32, sc
 			data_grid_start_edit_active_row(cfg, mut e, mut w)
 			return
 		}
+		if data_grid_handle_pager_key(cfg, mut e, mut w) {
+			return
+		}
 		if cfg.rows.len == 0 {
+			return
+		}
+		visible_indices := data_grid_visible_row_indices(cfg.rows.len, page_indices)
+		if visible_indices.len == 0 {
 			return
 		}
 
@@ -1478,36 +1605,36 @@ fn make_data_grid_on_keydown(cfg DataGridCfg, row_height f32, static_top f32, sc
 		}
 
 		current := data_grid_active_row_index(cfg.rows, cfg.selection)
-		if current < 0 {
-			return
-		}
-		mut target := current
+		current_pos := data_grid_index_in_list(visible_indices, current)
+		mut visible_pos := if current_pos >= 0 { current_pos } else { 0 }
+		mut target_pos := visible_pos
 		page_rows := data_grid_page_rows(cfg, row_height)
 
 		match e.key_code {
 			.up {
-				target--
+				target_pos--
 			}
 			.down {
-				target++
+				target_pos++
 			}
 			.home {
-				target = 0
+				target_pos = 0
 			}
 			.end {
-				target = cfg.rows.len - 1
+				target_pos = visible_indices.len - 1
 			}
 			.page_up {
-				target -= page_rows
+				target_pos -= page_rows
 			}
 			.page_down {
-				target += page_rows
+				target_pos += page_rows
 			}
 			else {
 				return
 			}
 		}
-		target = int_clamp(target, 0, cfg.rows.len - 1)
+		target_pos = int_clamp(target_pos, 0, visible_indices.len - 1)
+		target := visible_indices[target_pos]
 		if cfg.on_selection_change == unsafe { nil } {
 			return
 		}
@@ -1544,7 +1671,7 @@ fn make_data_grid_on_keydown(cfg DataGridCfg, row_height f32, static_top f32, sc
 
 		cfg.on_selection_change(next, mut e, mut w)
 		columns := data_grid_effective_columns(cfg)
-		presentation := data_grid_presentation(cfg, columns)
+		presentation := data_grid_presentation_rows(cfg, columns, visible_indices)
 		display_idx := presentation.data_to_display[target] or { target }
 		data_grid_scroll_row_into_view(cfg, display_idx, row_height, static_top, scroll_id, mut
 			w)
@@ -1570,6 +1697,46 @@ fn data_grid_scroll_row_into_view(cfg DataGridCfg, row_idx int, row_height f32, 
 		next = 0
 	}
 	w.scroll_vertical_to(scroll_id, -next)
+}
+
+fn data_grid_handle_pager_key(cfg DataGridCfg, mut e Event, mut w Window) bool {
+	if cfg.on_page_change == unsafe { nil } || cfg.page_size <= 0 {
+		return false
+	}
+	_, _, page_index, page_count := data_grid_page_bounds(cfg.rows.len, cfg.page_size,
+		cfg.page_index)
+	if page_count <= 1 {
+		return false
+	}
+	next := data_grid_next_page_index_for_key(page_index, page_count, &e) or { return false }
+	if next == page_index {
+		e.is_handled = true
+		return true
+	}
+	cfg.on_page_change(next, mut e, mut w)
+	e.is_handled = true
+	return true
+}
+
+fn data_grid_next_page_index_for_key(page_index int, page_count int, e &Event) ?int {
+	if page_count <= 1 || page_index < 0 || page_index >= page_count {
+		return none
+	}
+	if e.modifiers == .alt {
+		return match e.key_code {
+			.home { 0 }
+			.end { page_count - 1 }
+			else { none }
+		}
+	}
+	if !e.modifiers.has_any(.ctrl, .super) || e.modifiers.has(.alt) {
+		return none
+	}
+	return match e.key_code {
+		.page_up { int_max(0, page_index - 1) }
+		.page_down { int_min(page_count - 1, page_index + 1) }
+		else { none }
+	}
 }
 
 // grid_rows_to_tsv converts rows to tab-separated text with a header row.
@@ -1978,11 +2145,18 @@ fn data_grid_columns_total_width(columns []GridColumnCfg, column_widths map[stri
 }
 
 fn data_grid_presentation(cfg DataGridCfg, columns []GridColumnCfg) DataGridPresentation {
+	return data_grid_presentation_rows(cfg, columns, data_grid_visible_row_indices(cfg.rows.len,
+		[]int{}))
+}
+
+fn data_grid_presentation_rows(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int) DataGridPresentation {
 	mut rows := []DataGridDisplayRow{cap: cfg.rows.len + 8}
 	mut data_to_display := map[int]int{}
+	visible_indices := data_grid_visible_row_indices(cfg.rows.len, row_indices)
 	group_cols := data_grid_group_columns(cfg.group_by, columns)
-	if group_cols.len == 0 || cfg.rows.len == 0 {
-		for row_idx, row in cfg.rows {
+	if group_cols.len == 0 || visible_indices.len == 0 {
+		for row_idx in visible_indices {
+			row := cfg.rows[row_idx]
 			data_to_display[row_idx] = rows.len
 			rows << DataGridDisplayRow{
 				kind:         .data
@@ -2003,11 +2177,13 @@ fn data_grid_presentation(cfg DataGridCfg, columns []GridColumnCfg) DataGridPres
 	}
 
 	group_titles := data_grid_group_titles(columns)
-	group_ranges := data_grid_group_ranges(cfg.rows, group_cols)
+	local_rows := visible_indices.map(cfg.rows[it])
+	group_ranges := data_grid_group_ranges(local_rows, group_cols)
 	mut prev_values := []string{len: group_cols.len}
 	mut has_prev := false
 
-	for row_idx, row in cfg.rows {
+	for local_idx, row_idx in visible_indices {
+		row := cfg.rows[row_idx]
 		mut values := []string{cap: group_cols.len}
 		for col_id in group_cols {
 			values << row.cells[col_id] or { '' }
@@ -2026,8 +2202,11 @@ fn data_grid_presentation(cfg DataGridCfg, columns []GridColumnCfg) DataGridPres
 		if change_depth >= 0 {
 			for depth in change_depth .. group_cols.len {
 				col_id := group_cols[depth]
-				range_end := group_ranges[data_grid_group_range_key(depth, row_idx)] or { row_idx }
-				count := int_max(0, range_end - row_idx + 1)
+				range_end_local := group_ranges[data_grid_group_range_key(depth, local_idx)] or {
+					local_idx
+				}
+				range_end := visible_indices[range_end_local]
+				count := int_max(0, range_end_local - local_idx + 1)
 				rows << DataGridDisplayRow{
 					kind:            .group_header
 					group_col_id:    col_id
@@ -2832,6 +3011,47 @@ fn data_grid_clamp_width(col GridColumnCfg, width f32) f32 {
 	return f32_clamp(width, min_width, max_width)
 }
 
+fn data_grid_page_bounds(total_rows int, page_size int, requested_page int) (int, int, int, int) {
+	if total_rows <= 0 {
+		return 0, 0, 0, 1
+	}
+	if page_size <= 0 {
+		return 0, total_rows, 0, 1
+	}
+	page_count := int_max(1, int((total_rows + page_size - 1) / page_size))
+	page_index := int_clamp(requested_page, 0, page_count - 1)
+	start := page_index * page_size
+	end := int_min(total_rows, start + page_size)
+	return start, end, page_index, page_count
+}
+
+fn data_grid_page_row_indices(start int, end int) []int {
+	if end <= start || start < 0 {
+		return []
+	}
+	mut indices := []int{cap: end - start}
+	for idx in start .. end {
+		indices << idx
+	}
+	return indices
+}
+
+fn data_grid_visible_row_indices(row_count int, page_indices []int) []int {
+	if page_indices.len > 0 {
+		return page_indices
+	}
+	return data_grid_page_row_indices(0, int_max(0, row_count))
+}
+
+fn data_grid_index_in_list(values []int, target int) int {
+	for idx, value in values {
+		if value == target {
+			return idx
+		}
+	}
+	return -1
+}
+
 fn data_grid_row_id(row GridRow, idx int) string {
 	if row.id.len > 0 {
 		return row.id
@@ -2847,6 +3067,17 @@ fn data_grid_height(cfg DataGridCfg) f32 {
 		return cfg.max_height
 	}
 	return f32(0)
+}
+
+fn data_grid_pager_enabled(cfg DataGridCfg, page_count int) bool {
+	return cfg.page_size > 0 && page_count > 1
+}
+
+fn data_grid_pager_height(cfg DataGridCfg) f32 {
+	if cfg.row_height > 0 {
+		return cfg.row_height
+	}
+	return data_grid_header_height(cfg)
 }
 
 fn data_grid_header_height(cfg DataGridCfg) f32 {

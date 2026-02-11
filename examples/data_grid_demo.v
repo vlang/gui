@@ -7,6 +7,7 @@ pub mut:
 	columns      []gui.GridColumnCfg
 	column_order []string
 	detail_ids   map[string]bool
+	page_index   int
 	query        gui.GridQueryState
 	selection    gui.GridSelection
 	last_action  string
@@ -48,6 +49,8 @@ fn main_view(mut window gui.Window) gui.View {
 				columns:                   app.columns
 				column_order:              app.column_order
 				group_by:                  ['team']
+				page_size:                 80
+				page_index:                app.page_index
 				aggregates:                [gui.GridAggregateCfg{
 					op:    .count
 					label: 'count'
@@ -89,6 +92,10 @@ fn main_view(mut window gui.Window) gui.View {
 						}
 					}
 					state.columns = cols
+				}
+				on_page_change:            fn (page int, mut _ gui.Event, mut w gui.Window) {
+					mut state := w.state[DataGridDemoApp]()
+					state.page_index = page
 				}
 				on_detail_expanded_change: fn (detail_ids map[string]bool, mut _ gui.Event, mut w gui.Window) {
 					mut state := w.state[DataGridDemoApp]()

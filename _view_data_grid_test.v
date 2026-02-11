@@ -589,6 +589,101 @@ fn test_data_grid_has_keyboard_modifiers_ignores_mouse_bits() {
 	assert data_grid_has_keyboard_modifiers(&e) == true
 }
 
+fn test_data_grid_page_bounds_disabled() {
+	start, end, page, count := data_grid_page_bounds(23, 0, 9)
+	assert start == 0
+	assert end == 23
+	assert page == 0
+	assert count == 1
+}
+
+fn test_data_grid_page_bounds_enabled() {
+	start, end, page, count := data_grid_page_bounds(23, 10, 2)
+	assert start == 20
+	assert end == 23
+	assert page == 2
+	assert count == 3
+}
+
+fn test_data_grid_page_row_indices() {
+	indices := data_grid_page_row_indices(3, 7)
+	assert indices == [3, 4, 5, 6]
+}
+
+fn test_data_grid_presentation_rows_paginates() {
+	cfg := DataGridCfg{
+		id:      'paged'
+		columns: [
+			GridColumnCfg{
+				id:    'name'
+				title: 'Name'
+			},
+		]
+		rows:    [
+			GridRow{
+				id:    '1'
+				cells: {
+					'name': 'A'
+				}
+			},
+			GridRow{
+				id:    '2'
+				cells: {
+					'name': 'B'
+				}
+			},
+			GridRow{
+				id:    '3'
+				cells: {
+					'name': 'C'
+				}
+			},
+		]
+	}
+	p := data_grid_presentation_rows(cfg, cfg.columns, [1, 2])
+	assert p.rows.len == 2
+	assert p.rows[0].kind == .data
+	assert p.rows[0].data_row_idx == 1
+	assert p.rows[1].data_row_idx == 2
+	assert p.data_to_display[1] == 0
+	assert p.data_to_display[2] == 1
+	assert p.data_to_display[0] == 0
+}
+
+fn test_data_grid_next_page_index_for_key_ctrl_page() {
+	mut e := Event{
+		modifiers: .ctrl
+		key_code:  .page_down
+	}
+	next := data_grid_next_page_index_for_key(1, 4, &e) or { -1 }
+	assert next == 2
+
+	e.key_code = .page_up
+	prev := data_grid_next_page_index_for_key(1, 4, &e) or { -1 }
+	assert prev == 0
+}
+
+fn test_data_grid_next_page_index_for_key_alt_home_end() {
+	mut e := Event{
+		modifiers: .alt
+		key_code:  .home
+	}
+	first := data_grid_next_page_index_for_key(2, 6, &e) or { -1 }
+	assert first == 0
+
+	e.key_code = .end
+	last := data_grid_next_page_index_for_key(2, 6, &e) or { -1 }
+	assert last == 5
+}
+
+fn test_data_grid_next_page_index_for_key_invalid_combo() {
+	e := Event{
+		modifiers: .none
+		key_code:  .page_down
+	}
+	assert data_grid_next_page_index_for_key(1, 4, &e) == none
+}
+
 fn test_grid_rows_to_pdf_signature() {
 	columns := [
 		GridColumnCfg{

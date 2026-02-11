@@ -4,7 +4,7 @@
 - Date: 2026-02-10
 - Branch:
 - PR/Issue:
-- Current phase: Phase 6 complete
+- Current phase: Phase 7 complete
 - Last completed acceptance check: `v test .`, `v check-md -w` docs + README
 
 ## Scope
@@ -64,6 +64,7 @@
 - [x] 2026-02-10: Phase 4 adds controlled master-detail rows.
 - [x] 2026-02-10: Phase 5 adds controlled row edit mode with typed cell editors.
 - [x] 2026-02-10: Phase 6 adds row export helpers for XLSX and PDF.
+- [x] 2026-02-10: Phase 7 adds controlled pagination with in-grid pager controls.
 
 ## Deferred Backlog
 - [x] Column pinning
@@ -72,3 +73,4 @@
 - [x] Master-detail rows
 - [x] Cell/row editors
 - [x] PDF/XLSX export
+- [x] Pagination

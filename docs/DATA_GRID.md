@@ -15,6 +15,7 @@
 - Group headers (`group_by`) with optional aggregates
 - Controlled master-detail rows
 - Controlled row edit mode + typed cell editors (`text/select/date/checkbox`)
+- Controlled pagination (`page_size`, `page_index`)
 - Clipboard copy (`ctrl/cmd+c`) to TSV
 - CSV helper export
 - XLSX helper export
@@ -33,13 +34,15 @@
 Application state owns query, selection, and rows.
 Application also owns optional `column_order`, pin state (`GridColumnCfg.pin`),
 grouping (`group_by`, `aggregates`), and detail expansion map
-(`detail_expanded_row_ids`), plus row cell data updates for edits.
+(`detail_expanded_row_ids`), row cell data updates for edits, and
+pagination state (`page_size`, `page_index`).
 
 Grid emits callbacks:
 - `on_query_change`
 - `on_selection_change`
 - `on_column_order_change`
 - `on_column_pin_change`
+- `on_page_change`
 - `on_cell_edit`
 - `on_detail_expanded_change`
 - `on_row_activate`
@@ -110,6 +113,7 @@ gui.grid_rows_to_pdf_file('/tmp/grid.pdf', columns, rows) or {}
 - Row editing is controlled. App applies `on_cell_edit` updates to row data.
 - Enter edit mode with row double-click or `F2` on active row.
 - Exit edit mode with `Esc` (or `Enter` in text editor).
+- Pagination is controlled. Grid emits next page index via `on_page_change`.
 
 ## Header Keyboard
 - `Tab` focuses header cells (left->right), not per-icon controls.
@@ -124,3 +128,5 @@ gui.grid_rows_to_pdf_file('/tmp/grid.pdf', columns, rows) or {}
 ## Body Keyboard
 - `F2`: enter edit mode for active row (first editable column focused).
 - `Esc`: exit row edit mode.
+- `Ctrl`/`Cmd` + `PageUp` / `PageDown`: previous/next page.
+- `Alt` + `Home` / `End`: first/last page.
