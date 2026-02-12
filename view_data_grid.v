@@ -1472,7 +1472,7 @@ fn data_grid_header_row(cfg DataGridCfg, columns []GridColumnCfg, column_widths 
 		name:         'data_grid header row'
 		height:       data_grid_header_height(cfg)
 		sizing:       fill_fixed
-		color:        cfg.color_header
+		color:        color_transparent
 		color_border: cfg.color_border
 		size_border:  0
 		padding:      padding_none
@@ -1544,7 +1544,7 @@ fn data_grid_header_cell(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_co
 		sizing:       fixed_fill
 		padding:      cfg.padding_header
 		clip:         true
-		color:        color_transparent
+		color:        cfg.color_header
 		color_border: cfg.color_border
 		size_border:  cfg.size_border
 		spacing:      0
