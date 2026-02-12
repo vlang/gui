@@ -327,6 +327,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 				}
 			} else {
 				// Regular code block in a column with background
+				code_text := rich_text_plain(block.content)
 				content << column(
 					color:       cfg.style.code_block_bg
 					padding:     cfg.style.code_block_padding
@@ -338,6 +339,35 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 						rtf(
 							rich_text: block.content
 							mode:      .single_line
+						),
+						row(
+							float:          true
+							float_anchor:   .top_right
+							float_tie_off:  .top_right
+							float_offset_x: -4
+							float_offset_y: 4
+							padding:        pad_all(4)
+							radius:         4
+							color:          rgba(255, 255, 255, 15)
+							on_click:       fn [code_text] (_ voidptr, mut e Event, mut _ Window) {
+								to_clipboard(code_text)
+								e.is_handled = true
+							}
+							on_hover:       fn (mut layout Layout, mut e Event, mut w Window) {
+								w.set_mouse_cursor_pointing_hand()
+								layout.shape.color = rgba(255, 255, 255, 40)
+								e.is_handled = true
+							}
+							content:        [
+								text(
+									text:       icon_document
+									text_style: TextStyle{
+										family: icon_font_name
+										size:   12
+										color:  rgba(255, 255, 255, 120)
+									}
+								),
+							]
 						),
 					]
 				)
@@ -510,6 +540,37 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			)
 		}
 	}
+
+	source := cfg.source
+	content << row(
+		float:          true
+		float_anchor:   .top_right
+		float_tie_off:  .top_right
+		float_offset_x: -4
+		float_offset_y: 4
+		padding:        pad_all(4)
+		radius:         4
+		color:          rgba(128, 128, 128, 20)
+		on_click:       fn [source] (_ voidptr, mut e Event, mut _ Window) {
+			to_clipboard(source)
+			e.is_handled = true
+		}
+		on_hover:       fn (mut layout Layout, mut e Event, mut w Window) {
+			w.set_mouse_cursor_pointing_hand()
+			layout.shape.color = rgba(128, 128, 128, 50)
+			e.is_handled = true
+		}
+		content:        [
+			text(
+				text:       icon_document
+				text_style: TextStyle{
+					family: icon_font_name
+					size:   12
+					color:  cfg.style.text.color
+				}
+			),
+		]
+	)
 
 	return column(
 		color:        cfg.color
