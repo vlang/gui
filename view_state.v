@@ -113,6 +113,9 @@ mut:
 	data_grid_source_state        BoundedMap[string, DataGridSourceState] = BoundedMap[string, DataGridSourceState]{
 		max_size: 50
 	}
+	list_box_source_state         BoundedMap[string, ListBoxSourceState] = BoundedMap[string, ListBoxSourceState]{
+		max_size: 50
+	}
 	splitter_runtime_state        BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
 		max_size: 20
 	}
@@ -205,6 +208,23 @@ mut:
 	caps_cached      bool
 	rows_dirty       bool = true
 	rows_signature   u64
+}
+
+// ListBoxSourceState stores async data-source runtime state per list-box id.
+struct ListBoxSourceState {
+mut:
+	data             []ListBoxOption
+	loading          bool
+	load_error       string
+	has_loaded       bool
+	request_id       u64
+	request_key      string
+	request_count    int
+	cancelled_count  int
+	stale_drop_count int
+	received_count   int
+	active_abort     &GridAbortController = unsafe { nil }
+	data_dirty       bool                 = true
 }
 
 // TableColCache stores cached column widths and hash for invalidation

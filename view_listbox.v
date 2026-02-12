@@ -18,6 +18,11 @@ pub:
 	padding          Padding   = gui_theme.list_box_style.padding
 	selected_ids     []string // selected item ids
 	data             []ListBoxOption
+	data_source      ?ListBoxDataSource
+	source_key       string
+	query            string
+	loading          bool
+	load_error       string
 	on_select        fn (ids []string, mut e Event, mut w Window) = unsafe { nil }
 	height           f32
 	min_width        f32
@@ -40,6 +45,59 @@ pub:
 	value string
 }
 
+@[minify]
+pub struct ListBoxDataRequest {
+pub:
+	list_box_id string
+	query       string
+	signal      &GridAbortSignal = unsafe { nil }
+	request_id  u64
+}
+
+@[minify]
+pub struct ListBoxDataResult {
+pub:
+	data []ListBoxOption
+}
+
+pub interface ListBoxDataSource {
+	fetch_data(req ListBoxDataRequest) !ListBoxDataResult
+}
+
+@[heap; minify]
+pub struct InMemoryListBoxDataSource {
+pub mut:
+	data []ListBoxOption
+pub:
+	latency_ms int
+}
+
+pub fn (source InMemoryListBoxDataSource) fetch_data(req ListBoxDataRequest) !ListBoxDataResult {
+	if !isnil(req.signal) && req.signal.is_aborted() {
+		return error('request aborted')
+	}
+	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
+		return error('request aborted')
+	}
+	filtered := list_box_source_apply_query(source.data, req.query)
+	if !isnil(req.signal) && req.signal.is_aborted() {
+		return error('request aborted')
+	}
+	return ListBoxDataResult{
+		data: filtered
+	}
+}
+
+pub struct ListBoxSourceStats {
+pub:
+	loading          bool
+	load_error       string
+	request_count    int
+	cancelled_count  int
+	stale_drop_count int
+	received_count   int
+}
+
 // list_box builds a list box without viewport virtualization.
 // Use [Window.list_box](#list_box) for virtualization support.
 pub fn list_box(cfg ListBoxCfg) View {
@@ -49,21 +107,23 @@ pub fn list_box(cfg ListBoxCfg) View {
 // list_box is a convenience view for simple cases. See [ListBoxCfg](#ListBoxCfg).
 // Virtualization is enabled only when `id_scroll > 0` and bounded height exists.
 pub fn (mut window Window) list_box(cfg ListBoxCfg) View {
-	last_row_idx := cfg.data.len - 1
-	list_height := list_box_height(cfg)
-	virtualize := cfg.id_scroll > 0 && list_height > 0 && cfg.data.len > 0
+	resolved_cfg, _ := list_box_resolve_source_cfg(cfg, mut window)
+	last_row_idx := resolved_cfg.data.len - 1
+	list_height := list_box_height(resolved_cfg)
+	virtualize := resolved_cfg.id_scroll > 0 && list_height > 0 && resolved_cfg.data.len > 0
 	row_height := if virtualize {
-		list_box_estimate_row_height(cfg, mut window)
+		list_box_estimate_row_height(resolved_cfg, mut window)
 	} else {
 		f32(0)
 	}
 	first_visible, last_visible := if virtualize {
-		list_box_visible_range(list_height, row_height, cfg, mut window)
+		list_box_visible_range(list_height, row_height, resolved_cfg, mut window)
 	} else {
 		0, last_row_idx
 	}
 
-	return list_box_from_range(first_visible, last_visible, cfg, virtualize, row_height)
+	return list_box_from_range(first_visible, last_visible, resolved_cfg, virtualize,
+		row_height)
 }
 
 fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virtualize bool, row_height f32) View {
@@ -74,6 +134,13 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 		list_box_estimate_row_height_no_window(cfg)
 	}
 	mut list := []View{cap: (last_visible - first_visible + 1) + 2}
+
+	if cfg.loading && cfg.data.len == 0 {
+		list << list_box_source_status_row(cfg, 'Loading...')
+	}
+	if cfg.load_error.len > 0 && cfg.data.len == 0 {
+		list << list_box_source_status_row(cfg, 'Load error: ${cfg.load_error}')
+	}
 
 	if virtualize && first_visible > 0 {
 		list << rectangle(
@@ -236,6 +303,188 @@ fn list_box_visible_range(list_height f32, row_height f32, cfg ListBoxCfg, mut w
 		first_visible = last_visible
 	}
 	return first_visible, last_visible
+}
+
+pub fn (window &Window) list_box_source_stats(list_box_id string) ListBoxSourceStats {
+	if state := window.view_state.list_box_source_state.get(list_box_id) {
+		return ListBoxSourceStats{
+			loading:          state.loading
+			load_error:       state.load_error
+			request_count:    state.request_count
+			cancelled_count:  state.cancelled_count
+			stale_drop_count: state.stale_drop_count
+			received_count:   state.received_count
+		}
+	}
+	return ListBoxSourceStats{}
+}
+
+pub fn (mut window Window) list_box_source_force_refetch(list_box_id string) {
+	list_box_source_force_refetch(list_box_id, mut window)
+}
+
+fn list_box_source_force_refetch(list_box_id string, mut window Window) {
+	mut state := window.view_state.list_box_source_state.get(list_box_id) or { return }
+	if state.loading && !isnil(state.active_abort) {
+		mut active := state.active_abort
+		active.abort()
+		state.cancelled_count++
+		state.loading = false
+	}
+	state.request_key = ''
+	state.load_error = ''
+	window.view_state.list_box_source_state.set(list_box_id, state)
+	window.update_window()
+}
+
+fn list_box_source_status_row(cfg ListBoxCfg, message string) View {
+	return row(
+		name:    'list_box source status row'
+		sizing:  fill_fit
+		padding: padding_two_five
+		content: [
+			text(
+				text:       message
+				mode:       .single_line
+				text_style: cfg.text_style
+			),
+		]
+	)
+}
+
+fn list_box_has_source(cfg ListBoxCfg) bool {
+	return cfg.data_source != none
+}
+
+fn list_box_resolve_source_cfg(cfg ListBoxCfg, mut window Window) (ListBoxCfg, bool) {
+	if !list_box_has_source(cfg) {
+		return cfg, false
+	}
+	if cfg.id.len == 0 {
+		load_error := if cfg.load_error.len > 0 {
+			cfg.load_error
+		} else {
+			'id is required when data_source is set'
+		}
+		return ListBoxCfg{
+			...cfg
+			data:       []ListBoxOption{}
+			loading:    false
+			load_error: load_error
+		}, true
+	}
+	state := list_box_source_resolve_state(cfg, mut window)
+	data := if state.data_dirty { state.data.clone() } else { state.data }
+	load_error := if cfg.load_error.len > 0 { cfg.load_error } else { state.load_error }
+	return ListBoxCfg{
+		...cfg
+		data:       data
+		loading:    cfg.loading || state.loading
+		load_error: load_error
+	}, true
+}
+
+fn list_box_source_resolve_state(cfg ListBoxCfg, mut window Window) ListBoxSourceState {
+	mut state := window.view_state.list_box_source_state.get(cfg.id) or { ListBoxSourceState{} }
+	request_key := list_box_source_request_key(cfg)
+	if request_key != state.request_key {
+		list_box_source_start_request(cfg, request_key, mut state, mut window)
+	}
+	state.data_dirty = false
+	window.view_state.list_box_source_state.set(cfg.id, state)
+	return state
+}
+
+fn list_box_source_request_key(cfg ListBoxCfg) string {
+	return 'k:${cfg.id}|q:${cfg.query}|s:${cfg.source_key}'
+}
+
+fn list_box_source_start_request(cfg ListBoxCfg, request_key string, mut state ListBoxSourceState, mut window Window) {
+	source := cfg.data_source or { return }
+	if state.loading && !isnil(state.active_abort) {
+		mut active := state.active_abort
+		active.abort()
+		state.cancelled_count++
+	}
+	controller := new_grid_abort_controller()
+	next_request_id := state.request_id + 1
+	req := ListBoxDataRequest{
+		list_box_id: cfg.id
+		query:       cfg.query
+		signal:      controller.signal
+		request_id:  next_request_id
+	}
+	state.loading = true
+	state.load_error = ''
+	state.request_id = next_request_id
+	state.request_key = request_key
+	state.active_abort = controller
+	state.request_count++
+	list_box_id := cfg.id
+	spawn fn [source, req, list_box_id, next_request_id] (mut w Window) {
+		result := source.fetch_data(req) or {
+			if !isnil(req.signal) && req.signal.is_aborted() {
+				return
+			}
+			err_msg := err.msg()
+			w.queue_command(fn [list_box_id, next_request_id, err_msg] (mut w Window) {
+				list_box_source_apply_error(list_box_id, next_request_id, err_msg, mut
+					w)
+			})
+			return
+		}
+		if !isnil(req.signal) && req.signal.is_aborted() {
+			return
+		}
+		w.queue_command(fn [list_box_id, next_request_id, result] (mut w Window) {
+			list_box_source_apply_success(list_box_id, next_request_id, result, mut w)
+		})
+	}(mut window)
+}
+
+fn list_box_source_apply_success(list_box_id string, request_id u64, result ListBoxDataResult, mut window Window) {
+	mut state := window.view_state.list_box_source_state.get(list_box_id) or { return }
+	if request_id != state.request_id {
+		state.stale_drop_count++
+		window.view_state.list_box_source_state.set(list_box_id, state)
+		return
+	}
+	state.loading = false
+	state.load_error = ''
+	state.has_loaded = true
+	state.data = result.data.clone()
+	state.received_count = result.data.len
+	state.data_dirty = true
+	state.active_abort = unsafe { nil }
+	window.view_state.list_box_source_state.set(list_box_id, state)
+	window.update_window()
+}
+
+fn list_box_source_apply_error(list_box_id string, request_id u64, err_msg string, mut window Window) {
+	mut state := window.view_state.list_box_source_state.get(list_box_id) or { return }
+	if request_id != state.request_id {
+		state.stale_drop_count++
+		window.view_state.list_box_source_state.set(list_box_id, state)
+		return
+	}
+	state.loading = false
+	state.load_error = err_msg
+	state.active_abort = unsafe { nil }
+	window.view_state.list_box_source_state.set(list_box_id, state)
+	window.update_window()
+}
+
+fn list_box_source_apply_query(options []ListBoxOption, query string) []ListBoxOption {
+	needle := query.trim_space().to_lower()
+	if needle.len == 0 {
+		return options.clone()
+	}
+	return options.filter(list_box_source_option_matches_query(it, needle))
+}
+
+fn list_box_source_option_matches_query(option ListBoxOption, needle string) bool {
+	return option.id.to_lower().contains(needle) || option.name.to_lower().contains(needle)
+		|| option.value.to_lower().contains(needle)
 }
 
 // list_box_option is a helper method to construct [ListBoxOption](#ListBoxOption).

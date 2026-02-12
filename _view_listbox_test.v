@@ -72,6 +72,127 @@ fn test_list_box_selection_uses_id_not_value() {
 	assert cfg.data[0].id !in cfg.selected_ids
 }
 
+fn test_list_box_source_request_key_uses_query_and_source_key() {
+	cfg := ListBoxCfg{
+		id:         'list_a'
+		query:      'Ada'
+		source_key: 'rev_1'
+	}
+	assert list_box_source_request_key(cfg) == 'k:list_a|q:Ada|s:rev_1'
+	assert list_box_source_request_key(ListBoxCfg{
+		id:         'list_a'
+		query:      'Ada'
+		source_key: 'rev_2'
+	}) != list_box_source_request_key(cfg)
+}
+
+fn test_list_box_resolve_source_cfg_requires_id() {
+	mut w := Window{}
+	source := ListBoxDataSource(&InMemoryListBoxDataSource{
+		data: list_box_test_data(4)
+	})
+	resolved, has_source := list_box_resolve_source_cfg(ListBoxCfg{
+		data_source: source
+	}, mut w)
+	assert has_source
+	assert !resolved.loading
+	assert resolved.data.len == 0
+	assert resolved.load_error.contains('id is required')
+}
+
+fn test_window_list_box_source_sets_loading_state_and_stats() {
+	mut w := Window{}
+	source := ListBoxDataSource(&InMemoryListBoxDataSource{
+		data:       list_box_test_data(12)
+		latency_ms: 40
+	})
+	resolved, has_source := list_box_resolve_source_cfg(ListBoxCfg{
+		id:          'list_loading'
+		data_source: source
+	}, mut w)
+	assert has_source
+	assert resolved.loading
+	assert resolved.data.len == 0
+	state := w.view_state.list_box_source_state.get('list_loading') or {
+		panic('expected list box source state')
+	}
+	assert state.loading
+	assert state.request_count == 1
+	stats := w.list_box_source_stats('list_loading')
+	assert stats.loading
+	assert stats.request_count == 1
+}
+
+fn test_list_box_source_force_refetch_clears_request_key() {
+	mut w := Window{}
+	source := ListBoxDataSource(&InMemoryListBoxDataSource{
+		data:       list_box_test_data(8)
+		latency_ms: 40
+	})
+	_, _ = list_box_resolve_source_cfg(ListBoxCfg{
+		id:          'list_refetch'
+		data_source: source
+	}, mut w)
+	state_before := w.view_state.list_box_source_state.get('list_refetch') or {
+		panic('expected source state before refetch')
+	}
+	assert state_before.request_key.len > 0
+	list_box_source_force_refetch('list_refetch', mut w)
+	state_after := w.view_state.list_box_source_state.get('list_refetch') or {
+		panic('expected source state after refetch')
+	}
+	assert state_after.request_key == ''
+}
+
+fn test_in_memory_list_box_data_source_applies_query() {
+	source := InMemoryListBoxDataSource{
+		data: [
+			list_box_option('1', 'Alice', 'A'),
+			list_box_option('2', 'Bob', 'B'),
+			list_box_option('3', 'Cara', 'C'),
+		]
+	}
+	res := source.fetch_data(ListBoxDataRequest{
+		list_box_id: 'list_query'
+		query:       'ali'
+	}) or { panic(err) }
+	assert res.data.len == 1
+	assert res.data[0].id == '1'
+}
+
+fn test_in_memory_list_box_data_source_honors_abort_signal() {
+	source := InMemoryListBoxDataSource{
+		data:       list_box_test_data(10)
+		latency_ms: 30
+	}
+	mut controller := new_grid_abort_controller()
+	controller.abort()
+	_ := source.fetch_data(ListBoxDataRequest{
+		list_box_id: 'list_abort'
+		signal:      controller.signal
+	}) or {
+		assert err.msg().contains('aborted')
+		return
+	}
+	assert false
+}
+
+fn test_list_box_renders_source_loading_status_row() {
+	cfg := ListBoxCfg{
+		loading: true
+	}
+	v := list_box(cfg)
+	assert v.content.len == 1
+}
+
+fn test_list_box_renders_source_error_status_row() {
+	cfg := ListBoxCfg{
+		load_error: 'network down'
+	}
+	v := list_box(cfg)
+	assert v.content.len == 1
+}
+
 fn list_box_test_data(count int) []ListBoxOption {
 	mut out := []ListBoxOption{cap: count}
 	for i in 0 .. count {
