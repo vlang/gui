@@ -5,6 +5,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 ## Legend
 
 - `[ ]` not started
+- `[?]` unsure
 - `[x]` shipped
 
 ## Baseline Shipped
@@ -42,7 +43,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [?] Incremental markdown re-render (avoid full rebuild for small edits)
 - [?] Offline mode for mermaid/math renderers (local backend option)
 - [?] Link context menu support (copy/open/inspect target)
-- [ ] Copy code block enhancement
+- [x] Copy code block enhancement
 
 ### Missing Core Components
 
@@ -99,7 +100,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 ## Quality + DevEx Track (Always On)
 
 - [ ] Runtime inspector overlay (view tree, bounds, style, event trace)
-- [ ] Component gallery app with state permutations and edge-case fixtures
+- [x] Component gallery app with state permutations and edge-case fixtures
 - [ ] Snapshot/golden rendering tests per widget/state
 - [ ] Parser fuzzing for markdown/svg/url handlers
 - [ ] Memory + resource leak CI checks
