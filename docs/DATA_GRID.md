@@ -128,8 +128,70 @@ Built-in concrete sources:
 
 - `InMemoryCursorDataSource`
 - `InMemoryOffsetDataSource`
+- `GridOrmDataSource`
 
 See `examples/data_grid_data_source_demo.v` for a 50k-row demo.
+
+## ORM Data Source
+
+`GridOrmDataSource` adapts database-backed fetches to `DataGridDataSource`.
+It is fetch-only and intended for server-side query pushdown.
+
+Core types:
+
+- `GridOrmColumnSpec`: whitelist mapping from grid column ids to DB fields
+- `GridOrmQuerySpec`: normalized query + paging (`limit`, `offset`, `cursor`)
+- `GridOrmPage`: rows + paging metadata
+- `GridOrmFetchFn`: callback for DB execution
+
+Initial query subset:
+
+- quick filter
+- filter ops: `contains`, `equals`, `starts_with`, `ends_with`
+- sort: asc/desc
+
+Unsupported columns/ops are dropped by `grid_orm_validate_query(...)`.
+
+### ORM example (SQLite)
+
+`examples/data_grid_orm_demo.v` shows:
+
+- V ORM table creation (`create table`)
+- V ORM inserts (`insert ... into ...`)
+- relationship modeling (`TeamRow` -> `[]MemberRow`)
+- SQL pushdown for quick filter, column filters, sort, and pagination
+
+Minimal setup:
+
+```v ignore
+source := &gui.GridOrmDataSource{
+	columns: [
+		gui.GridOrmColumnSpec{
+			id:       'name'
+			db_field: 'm.name'
+		},
+		gui.GridOrmColumnSpec{
+			id:       'team'
+			db_field: 't.name'
+		},
+	]
+	fetch_fn: fn (spec gui.GridOrmQuerySpec, signal &gui.GridAbortSignal) !gui.GridOrmPage {
+		return fetch_from_db(spec, signal)
+	}
+}
+```
+
+Use it in `data_grid` exactly like other sources:
+
+```v ignore
+window.data_grid(
+	id:          'orm-grid'
+	columns:     columns
+	data_source: source
+	query:       app.query
+	selection:   app.selection
+)
+```
 
 ## Example: Rows Mode (unchanged)
 
