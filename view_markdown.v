@@ -333,7 +333,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 				cp_id := 'md_cp_${code_text.hash()}'
 				mut w := unsafe { window }
 				white120 := rgba(255, 255, 255, 120)
-				cp_alt := 'btn_alt_${cp_id}' in w.animations
+				cp_alt := w.has_animation('btn_alt_${cp_id}')
 				content << column(
 					color:       cfg.style.code_block_bg
 					padding:     cfg.style.code_block_padding
@@ -561,7 +561,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 	cp_doc_id := 'md_cp_doc_${hash}'
 	mut w2 := unsafe { window }
 	doc_icon_color := cfg.style.text.color
-	doc_alt := 'btn_alt_${cp_doc_id}' in w2.animations
+	doc_alt := w2.has_animation('btn_alt_${cp_doc_id}')
 	content << button(
 		id:             cp_doc_id
 		show_alt:       doc_alt

@@ -909,7 +909,8 @@ fn toggle_theme(app &ShowcaseApp) gui.View {
 // Buttons
 // ==============================================================
 
-fn button_feature_rows(app &ShowcaseApp, base_focus u32) []gui.View {
+fn button_feature_rows(w &gui.Window, base_focus u32) []gui.View {
+	app := w.state[ShowcaseApp]()
 	button_text := '${app.button_clicks} Clicks Given'
 	button_width := f32(160)
 	progress := f32(math.fmod(f64(app.button_clicks) / 25.0, 1.0))
@@ -964,6 +965,17 @@ fn button_feature_rows(app &ShowcaseApp, base_focus u32) []gui.View {
 					height:  gui.theme().text_style.size
 					percent: progress
 				)]
+			on_click:     showcase_button_click
+		)),
+		showcase_button_row('Copy feedback', gui.button(
+			id:           'showcase-button-copy'
+			id_focus:     base_focus + 5
+			min_width:    button_width
+			max_width:    button_width
+			show_alt:     w.has_animation('btn_alt_showcase-button-copy')
+			content:      [gui.text(text: 'Copy to clipboard')]
+			alt_content:  [gui.text(text: 'Copied ✓')]
+			alt_duration: 2 * time.second
 			on_click:     showcase_button_click
 		)),
 	]
@@ -1467,7 +1479,7 @@ fn demo_button(mut w gui.Window) gui.View {
 			gui.column(
 				sizing:  gui.fill_fit
 				spacing: gui.spacing_small
-				content: button_feature_rows(app, 9100)
+				content: button_feature_rows(w, 9100)
 			),
 		]
 	)

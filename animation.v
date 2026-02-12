@@ -39,10 +39,9 @@ pub fn (mut window Window) animation_add(mut animation Animation) {
 	window.animations[animation.id] = animation
 }
 
-// has_animation returns true if an animation with the given id is currently active.
-pub fn (mut window Window) has_animation(id string) bool {
-	window.lock()
-	defer { window.unlock() }
+// has_animation returns true if an animation with the given id is
+// currently active. Safe to call during view generation (no lock).
+pub fn (window &Window) has_animation(id string) bool {
 	return id in window.animations
 }
 
