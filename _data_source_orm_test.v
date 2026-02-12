@@ -285,6 +285,22 @@ fn test_grid_orm_data_source_mutate_create_update_delete() {
 	assert delete_res.deleted_ids == ['7', '8']
 }
 
+fn test_grid_orm_data_source_mutate_delete_single_fn() {
+	mut source := GridOrmDataSource{
+		columns:   orm_test_columns()
+		fetch_fn:  orm_test_fetch_ok
+		delete_fn: fn (row_id string, _ &GridAbortSignal) !string {
+			return row_id
+		}
+	}
+	res := source.mutate_data(GridMutationRequest{
+		grid_id: 'orm-grid'
+		kind:    .delete
+		row_ids: ['3', '5']
+	}) or { panic(err) }
+	assert res.deleted_ids == ['3', '5']
+}
+
 fn test_grid_orm_data_source_mutate_unsupported_operation() {
 	mut source := GridOrmDataSource{
 		columns:  orm_test_columns()

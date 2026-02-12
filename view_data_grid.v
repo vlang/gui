@@ -517,7 +517,14 @@ fn data_grid_rows_signature(rows []GridRow) u64 {
 
 fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, DataGridCrudState) {
 	mut state := window.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
-	signature := data_grid_rows_signature(cfg.rows)
+	// Use precomputed signature from source state when
+	// available; fall back to full computation for
+	// local-rows mode.
+	signature := if src_state := window.view_state.data_grid_source_state.get(cfg.id) {
+		src_state.rows_signature
+	} else {
+		data_grid_rows_signature(cfg.rows)
+	}
 	has_unsaved := data_grid_crud_has_unsaved(state)
 	if !has_unsaved
 		&& (state.source_signature != signature || state.working_rows.len != cfg.rows.len) {
@@ -1078,6 +1085,10 @@ fn data_grid_crud_restore_on_error(cfg DataGridCfg, mut e Event, mut w Window, m
 	state.source_signature = data_grid_rows_signature(state.committed_rows)
 	w.view_state.data_grid_crud_state.set(cfg.id, state)
 	data_grid_clear_editing_row(cfg.id, mut w)
+	// Refetch source data to stay in sync after partial
+	// mutation failure (create may have succeeded before
+	// update/delete failed).
+	data_grid_source_force_refetch(cfg.id, mut w)
 	if cfg.on_crud_error != unsafe { nil } {
 		cfg.on_crud_error(err_msg, mut e, mut w)
 	}

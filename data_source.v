@@ -30,6 +30,11 @@ pub:
 
 pub type GridPageRequest = GridCursorPageReq | GridOffsetPageReq
 
+// GridAbortSignal communicates cancellation from the main
+// thread to a spawned goroutine. `aborted` is a plain bool
+// (not atomic) — the stale-response request_id guard in
+// apply_success catches races, so a missed cancellation only
+// wastes work rather than causing incorrect state.
 @[heap; minify]
 pub struct GridAbortSignal {
 mut:
@@ -511,7 +516,7 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 	if req_rows.len > 0 {
 		for req_row in req_rows {
 			if req_row.id.len == 0 {
-				continue
+				return error('update row has empty id')
 			}
 			if idx := grid_data_source_row_index(rows, req_row.id) {
 				mut cells := rows[idx].cells.clone()
@@ -528,8 +533,11 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 	}
 	if edits.len > 0 {
 		for edit in edits {
-			if edit.row_id.len == 0 || edit.col_id.len == 0 {
-				continue
+			if edit.row_id.len == 0 {
+				return error('edit has empty row id')
+			}
+			if edit.col_id.len == 0 {
+				return error('edit has empty col id')
 			}
 			if idx := grid_data_source_row_index(rows, edit.row_id) {
 				mut cells := rows[idx].cells.clone()
@@ -575,7 +583,7 @@ fn grid_data_source_apply_delete(mut rows []GridRow, req_rows []GridRow, req_row
 		}
 		kept << row
 	}
-	rows = kept.clone()
+	rows = unsafe { kept }
 	return GridMutationApplyResult{
 		deleted_ids: deleted_ids
 	}
@@ -607,10 +615,14 @@ fn grid_data_source_next_mutation_row_id(rows []GridRow, preferred_id string) st
 	if id.len > 0 && !grid_data_source_rows_contains_id(rows, id) {
 		return id
 	}
+	mut existing := map[string]bool{}
+	for idx, row in rows {
+		existing[data_grid_row_id(row, idx)] = true
+	}
 	mut next := rows.len + 1
 	for {
 		candidate := '${next}'
-		if !grid_data_source_rows_contains_id(rows, candidate) {
+		if !existing[candidate] {
 			return candidate
 		}
 		next++

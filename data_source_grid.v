@@ -38,6 +38,8 @@ fn data_grid_source_apply_local_mutation(grid_id string, rows []GridRow, row_cou
 	state.has_loaded = true
 	state.loading = false
 	state.load_error = ''
+	state.rows_dirty = true
+	state.rows_signature = data_grid_rows_signature(rows)
 	if count := row_count {
 		state.row_count = ?int(count)
 	}
@@ -54,6 +56,7 @@ fn data_grid_source_force_refetch(grid_id string, mut window Window) {
 	}
 	state.request_key = ''
 	state.load_error = ''
+	state.caps_cached = false
 	window.view_state.data_grid_source_state.set(grid_id, state)
 	window.update_window()
 }
@@ -70,15 +73,24 @@ fn data_grid_resolve_source_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg
 		return cfg, DataGridSourceState{}, false, GridDataCapabilities{}
 	}
 
-	caps := data_source.capabilities()
+	// Use cached capabilities when available; invalidated
+	// on force_refetch.
+	existing := window.view_state.data_grid_source_state.get(cfg.id) or { DataGridSourceState{} }
+	caps := if existing.caps_cached {
+		existing.cached_caps
+	} else {
+		data_source.capabilities()
+	}
 	state := data_grid_source_resolve_state(cfg, caps, mut window)
 	mut row_count := cfg.row_count
 	if count := state.row_count {
 		row_count = ?int(count)
 	}
+	// Skip clone when rows unchanged since last frame.
+	rows := if state.rows_dirty { state.rows.clone() } else { state.rows }
 	resolved := DataGridCfg{
 		...cfg
-		rows:       state.rows.clone()
+		rows:       rows
 		page_size:  0
 		page_index: 0
 		loading:    state.loading
@@ -96,6 +108,10 @@ fn data_grid_source_resolve_state(cfg DataGridCfg, caps GridDataCapabilities, mu
 			pagination_kind: cfg.pagination_kind
 			config_cursor:   cfg.cursor
 		}
+	}
+	if !state.caps_cached {
+		state.cached_caps = caps
+		state.caps_cached = true
 	}
 	kind := data_grid_source_effective_pagination_kind(cfg.pagination_kind, caps)
 	if state.pagination_kind != kind {
@@ -124,6 +140,7 @@ fn data_grid_source_resolve_state(cfg DataGridCfg, caps GridDataCapabilities, mu
 	if request_key != state.request_key {
 		data_grid_source_start_request(cfg, caps, kind, request_key, mut state, mut window)
 	}
+	state.rows_dirty = false
 	window.view_state.data_grid_source_state.set(cfg.id, state)
 	return state
 }
@@ -283,6 +300,8 @@ fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDat
 	state.load_error = ''
 	state.has_loaded = true
 	state.rows = result.rows.clone()
+	state.rows_dirty = true
+	state.rows_signature = data_grid_rows_signature(result.rows)
 	state.next_cursor = result.next_cursor
 	state.prev_cursor = result.prev_cursor
 	state.has_more = result.has_more

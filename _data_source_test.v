@@ -313,6 +313,164 @@ fn test_in_memory_offset_data_source_mutate_batch_delete() {
 	assert page.rows[2].id == '5'
 }
 
+fn test_in_memory_cursor_data_source_empty_fetch() {
+	source := InMemoryCursorDataSource{
+		rows: []GridRow{}
+	}
+	res := source.fetch_data(GridDataRequest{
+		grid_id: 'grid'
+		query:   GridQueryState{}
+		page:    GridPageRequest(GridCursorPageReq{
+			limit: 10
+		})
+	}) or { panic(err) }
+	assert res.rows.len == 0
+	assert res.next_cursor == ''
+	assert res.prev_cursor == ''
+	assert res.has_more == false
+	assert res.received_count == 0
+}
+
+fn test_in_memory_offset_data_source_with_cursor_request() {
+	source := InMemoryOffsetDataSource{
+		rows:              data_source_rows(10)
+		default_page_size: 5
+	}
+	res := source.fetch_data(GridDataRequest{
+		grid_id: 'grid'
+		query:   GridQueryState{}
+		page:    GridPageRequest(GridCursorPageReq{
+			cursor: 'i:3'
+			limit:  4
+		})
+	}) or { panic(err) }
+	assert res.rows.len == 4
+	assert res.rows[0].id == '4'
+	assert res.rows[3].id == '7'
+	assert res.has_more == true
+}
+
+fn test_in_memory_source_starts_with_ends_with_filters() {
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'name': 'Alice'
+			}
+		},
+		GridRow{
+			id:    '2'
+			cells: {
+				'name': 'Bob'
+			}
+		},
+		GridRow{
+			id:    '3'
+			cells: {
+				'name': 'Alicia'
+			}
+		},
+	]
+	source := InMemoryCursorDataSource{
+		rows: rows
+	}
+	starts := source.fetch_data(GridDataRequest{
+		grid_id: 'grid'
+		query:   GridQueryState{
+			filters: [
+				GridFilter{
+					col_id: 'name'
+					op:     'starts_with'
+					value:  'Ali'
+				},
+			]
+		}
+		page:    GridPageRequest(GridCursorPageReq{
+			limit: 10
+		})
+	}) or { panic(err) }
+	assert starts.rows.len == 2
+	assert starts.rows[0].id == '1'
+	assert starts.rows[1].id == '3'
+
+	ends := source.fetch_data(GridDataRequest{
+		grid_id: 'grid'
+		query:   GridQueryState{
+			filters: [
+				GridFilter{
+					col_id: 'name'
+					op:     'ends_with'
+					value:  'ce'
+				},
+			]
+		}
+		page:    GridPageRequest(GridCursorPageReq{
+			limit: 10
+		})
+	}) or { panic(err) }
+	assert ends.rows.len == 1
+	assert ends.rows[0].id == '1'
+}
+
+fn test_in_memory_source_update_empty_row_id_returns_error() {
+	mut source := InMemoryCursorDataSource{
+		rows: data_source_rows(3)
+	}
+	_ := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .update
+		rows:    [
+			GridRow{
+				id:    ''
+				cells: {
+					'name': 'Oops'
+				}
+			},
+		]
+	}) or {
+		assert err.msg().contains('empty id')
+		return
+	}
+	assert false
+}
+
+fn test_in_memory_source_edit_empty_col_id_returns_error() {
+	mut source := InMemoryCursorDataSource{
+		rows: data_source_rows(3)
+	}
+	_ := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .update
+		edits:   [
+			GridCellEdit{
+				row_id: '1'
+				col_id: ''
+				value:  'x'
+			},
+		]
+	}) or {
+		assert err.msg().contains('empty col id')
+		return
+	}
+	assert false
+}
+
+fn test_in_memory_source_row_count_unknown() {
+	source := InMemoryCursorDataSource{
+		rows:            data_source_rows(5)
+		row_count_known: false
+	}
+	res := source.fetch_data(GridDataRequest{
+		grid_id: 'grid'
+		query:   GridQueryState{}
+		page:    GridPageRequest(GridCursorPageReq{
+			limit: 10
+		})
+	}) or { panic(err) }
+	assert res.rows.len == 5
+	assert res.row_count == none
+}
+
 fn data_source_rows(count int) []GridRow {
 	mut rows := []GridRow{cap: count}
 	for i in 0 .. count {

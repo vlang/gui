@@ -87,31 +87,31 @@ mut:
 		max_size: 50
 	}
 	data_grid_resize_state        BoundedMap[string, DataGridResizeState] = BoundedMap[string, DataGridResizeState]{
-		max_size: 20
+		max_size: 50
 	}
 	data_grid_header_hover_col    BoundedMap[string, string] = BoundedMap[string, string]{
-		max_size: 20
+		max_size: 50
 	}
 	data_grid_range_state         BoundedMap[string, DataGridRangeState] = BoundedMap[string, DataGridRangeState]{
-		max_size: 20
+		max_size: 50
 	}
 	data_grid_column_chooser_open BoundedMap[string, bool] = BoundedMap[string, bool]{
-		max_size: 20
+		max_size: 50
 	}
 	data_grid_edit_state          BoundedMap[string, DataGridEditState] = BoundedMap[string, DataGridEditState]{
-		max_size: 20
+		max_size: 50
 	}
 	data_grid_crud_state          BoundedMap[string, DataGridCrudState] = BoundedMap[string, DataGridCrudState]{
-		max_size: 20
+		max_size: 50
 	}
 	data_grid_jump_input          BoundedMap[string, string] = BoundedMap[string, string]{
-		max_size: 20
+		max_size: 50
 	}
 	data_grid_pending_jump_row    BoundedMap[string, int] = BoundedMap[string, int]{
-		max_size: 20
+		max_size: 50
 	}
 	data_grid_source_state        BoundedMap[string, DataGridSourceState] = BoundedMap[string, DataGridSourceState]{
-		max_size: 20
+		max_size: 50
 	}
 	splitter_runtime_state        BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
 		max_size: 20
@@ -201,6 +201,10 @@ mut:
 	pagination_kind  GridPaginationKind   = .cursor
 	config_cursor    string
 	pending_jump_row int = -1
+	cached_caps      GridDataCapabilities
+	caps_cached      bool
+	rows_dirty       bool = true
+	rows_signature   u64
 }
 
 // TableColCache stores cached column widths and hash for invalidation

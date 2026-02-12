@@ -160,7 +160,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 				return GridMutationResult{}
 			}
 			mut deleted_ids := []string{}
-			if ids.len > 1 && source.delete_many_fn != unsafe { nil } {
+			if source.delete_many_fn != unsafe { nil } {
 				deleted_ids = source.delete_many_fn(ids.clone(), req.signal)!
 			} else if source.delete_fn != unsafe { nil } {
 				mut out := []string{cap: ids.len}
@@ -170,9 +170,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 						out << deleted
 					}
 				}
-				deleted_ids = out.clone()
-			} else if source.delete_many_fn != unsafe { nil } {
-				deleted_ids = source.delete_many_fn(ids.clone(), req.signal)!
+				deleted_ids = unsafe { out }
 			} else {
 				return error('delete not supported')
 			}
