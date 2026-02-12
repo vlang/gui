@@ -101,8 +101,9 @@ pub:
 	editable           bool
 	editor             GridCellEditorKind = .text
 	editor_options     []string
-	editor_true_value  string          = 'true'
-	editor_false_value string          = 'false'
+	editor_true_value  string = 'true'
+	editor_false_value string = 'false'
+	default_value      string
 	pin                GridColumnPin   = .none
 	align              HorizontalAlign = .start
 	text_style         ?TextStyle
@@ -188,6 +189,9 @@ pub:
 	row_count                 ?int
 	loading                   bool
 	load_error                string
+	show_crud_toolbar         bool
+	allow_create              bool = true
+	allow_delete              bool = true
 	query                     GridQueryState
 	selection                 GridSelection
 	multi_sort                bool = true
@@ -242,6 +246,8 @@ pub:
 	on_page_change            fn (int, mut Event, mut Window) = unsafe { nil }
 	on_detail_expanded_change fn (detail_ids map[string]bool, mut e Event, mut w Window)          = unsafe { nil }
 	on_cell_edit              fn (GridCellEdit, mut Event, mut Window)                            = unsafe { nil }
+	on_rows_change            fn ([]GridRow, mut Event, mut Window)                               = unsafe { nil }
+	on_crud_error             fn (string, mut Event, mut Window)                                  = unsafe { nil }
 	on_cell_format            fn (GridRow, int, GridColumnCfg, string, mut Window) GridCellFormat = unsafe { nil }
 	on_detail_row_view        fn (GridRow, mut Window) View                 = unsafe { nil }
 	on_copy_rows              fn ([]GridRow, mut Event, mut Window) ?string = unsafe { nil }
@@ -250,12 +256,28 @@ pub:
 
 // data_grid renders a controlled, virtualized data grid view.
 pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
-	resolved_cfg, source_state, has_source, source_caps := data_grid_resolve_source_cfg(cfg, mut
+	resolved_cfg0, source_state0, has_source, source_caps := data_grid_resolve_source_cfg(cfg, mut
 		window)
+	mut resolved_cfg := resolved_cfg0
+	mut source_state := source_state0
 	if has_source {
 		data_grid_source_apply_pending_jump_selection(resolved_cfg, source_state, mut
 			window)
 	}
+	mut crud_state := DataGridCrudState{}
+	crud_enabled := data_grid_crud_enabled(resolved_cfg)
+	if crud_enabled {
+		next_cfg, next_crud_state := data_grid_crud_resolve_cfg(resolved_cfg, mut window)
+		resolved_cfg = next_cfg
+		crud_state = next_crud_state
+		if has_source {
+			if latest_state := window.view_state.data_grid_source_state.get(resolved_cfg.id) {
+				source_state = latest_state
+			}
+		}
+	}
+	row_delete_enabled := data_grid_crud_row_delete_enabled(resolved_cfg, has_source,
+		source_caps)
 	focus_id := data_grid_focus_id(resolved_cfg)
 	scroll_id := data_grid_scroll_id(resolved_cfg)
 	hovered_col_id := window.view_state.data_grid_header_hover_col.get(resolved_cfg.id) or { '' }
@@ -304,8 +326,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		hovered_col_id, resizing_col_id, focused_col_id)
 	header_height := data_grid_header_height(resolved_cfg)
 	frozen_top_views, frozen_top_display_rows := data_grid_frozen_top_views(resolved_cfg,
-		frozen_top_indices, columns, column_widths, row_height, focus_id, editing_row_id, mut
-		window)
+		frozen_top_indices, columns, column_widths, row_height, focus_id, editing_row_id,
+		row_delete_enabled, mut window)
 	scroll_x := window.view_state.scroll_x.get(scroll_id) or { f32(0) }
 	last_row_idx := presentation.rows.len - 1
 	first_visible, last_visible := if virtualize {
@@ -363,8 +385,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 			continue
 		}
 		rows << data_grid_row_view(resolved_cfg, resolved_cfg.rows[entry.data_row_idx],
-			entry.data_row_idx, columns, column_widths, row_height, focus_id, editing_row_id, mut
-			window)
+			entry.data_row_idx, columns, column_widths, row_height, focus_id, editing_row_id,
+			row_delete_enabled, mut window)
 	}
 
 	if virtualize && last_visible < last_row_idx {
@@ -393,6 +415,10 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		content:         rows
 	)
 	mut content := []View{cap: 6}
+	if crud_enabled {
+		content << data_grid_crud_toolbar_row(resolved_cfg, crud_state, source_caps, has_source,
+			focus_id)
+	}
 	if resolved_cfg.show_quick_filter {
 		quick_filter_height := data_grid_quick_filter_height(resolved_cfg)
 		content << data_grid_frozen_top_zone(resolved_cfg, [
@@ -444,6 +470,607 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		max_height:    resolved_cfg.max_height
 		content:       content
 	)
+}
+
+fn data_grid_crud_enabled(cfg DataGridCfg) bool {
+	return cfg.show_crud_toolbar
+}
+
+fn data_grid_crud_has_unsaved(state DataGridCrudState) bool {
+	return state.dirty_row_ids.len > 0 || state.draft_row_ids.len > 0
+		|| state.deleted_row_ids.len > 0
+}
+
+fn data_grid_crud_row_delete_enabled(cfg DataGridCfg, has_source bool, caps GridDataCapabilities) bool {
+	if !data_grid_crud_enabled(cfg) || !cfg.allow_delete {
+		return false
+	}
+	if !has_source {
+		return true
+	}
+	return caps.supports_delete
+}
+
+fn data_grid_rows_signature(rows []GridRow) u64 {
+	if rows.len == 0 {
+		return u64(0)
+	}
+	mut parts := []string{cap: rows.len}
+	for idx, row in rows {
+		row_id := data_grid_row_id(row, idx)
+		mut keys := row.cells.keys()
+		keys.sort()
+		mut cell_parts := []string{cap: keys.len}
+		for key in keys {
+			cell_parts << '${key}=${row.cells[key] or { '' }}'
+		}
+		parts << '${row_id}\x1e${cell_parts.join('\x1f')}'
+	}
+	return fnv1a.sum64_string(parts.join('\x1d'))
+}
+
+fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, DataGridCrudState) {
+	mut state := window.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
+	signature := data_grid_rows_signature(cfg.rows)
+	has_unsaved := data_grid_crud_has_unsaved(state)
+	if !has_unsaved
+		&& (state.source_signature != signature || state.working_rows.len != cfg.rows.len) {
+		state.committed_rows = cfg.rows.clone()
+		state.working_rows = cfg.rows.clone()
+		state.source_signature = signature
+		state.dirty_row_ids = map[string]bool{}
+		state.draft_row_ids = map[string]bool{}
+		state.deleted_row_ids = map[string]bool{}
+	}
+	if state.working_rows.len == 0 && state.committed_rows.len == 0 && cfg.rows.len > 0 {
+		state.committed_rows = cfg.rows.clone()
+		state.working_rows = cfg.rows.clone()
+		state.source_signature = signature
+	}
+	window.view_state.data_grid_crud_state.set(cfg.id, state)
+	mut load_error := cfg.load_error
+	if state.save_error.len > 0 {
+		load_error = state.save_error
+	}
+	return DataGridCfg{
+		...cfg
+		rows:       state.working_rows.clone()
+		load_error: load_error
+		loading:    cfg.loading || state.saving
+	}, state
+}
+
+fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps GridDataCapabilities, has_source bool, focus_id u32) View {
+	has_unsaved := data_grid_crud_has_unsaved(state)
+	can_create := cfg.allow_create && (!has_source || caps.supports_create)
+	can_delete := cfg.allow_delete && (!has_source || caps.supports_delete)
+	selected_count := cfg.selection.selected_row_ids.len
+	mut dirty_count := state.dirty_row_ids.len
+	if dirty_count < 0 {
+		dirty_count = 0
+	}
+	draft_count := state.draft_row_ids.len
+	delete_count := state.deleted_row_ids.len
+	status := if state.saving {
+		'Saving...'
+	} else if state.save_error.len > 0 {
+		'Save failed'
+	} else if has_unsaved {
+		'Draft ${draft_count} Dirty ${dirty_count} Delete ${delete_count}'
+	} else {
+		'Clean'
+	}
+	return row(
+		name:         'data_grid crud toolbar'
+		height:       data_grid_header_height(cfg)
+		sizing:       fill_fixed
+		color:        cfg.color_filter
+		color_border: cfg.color_border
+		size_border:  0
+		padding:      data_grid_pager_padding(cfg)
+		spacing:      6
+		v_align:      .middle
+		content:      [
+			button(
+				sizing:       fit_fill
+				padding:      padding_none
+				size_border:  0
+				radius:       0
+				color:        color_transparent
+				color_hover:  cfg.color_header_hover
+				color_focus:  color_transparent
+				color_click:  cfg.color_header_hover
+				color_border: color_transparent
+				disabled:     !can_create || state.saving
+				on_click:     fn [cfg, focus_id] (_ &Layout, mut e Event, mut w Window) {
+					data_grid_crud_add_row(cfg, focus_id, mut e, mut w)
+				}
+				content:      [
+					text(
+						text:       'Add'
+						mode:       .single_line
+						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+					),
+				]
+			),
+			button(
+				sizing:       fit_fill
+				padding:      padding_none
+				size_border:  0
+				radius:       0
+				color:        color_transparent
+				color_hover:  cfg.color_header_hover
+				color_focus:  color_transparent
+				color_click:  cfg.color_header_hover
+				color_border: color_transparent
+				disabled:     !can_delete || selected_count == 0 || state.saving
+				on_click:     fn [cfg, focus_id] (_ &Layout, mut e Event, mut w Window) {
+					data_grid_crud_delete_selected(cfg, focus_id, mut e, mut w)
+				}
+				content:      [
+					text(
+						text:       'Delete'
+						mode:       .single_line
+						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+					),
+				]
+			),
+			button(
+				sizing:       fit_fill
+				padding:      padding_none
+				size_border:  0
+				radius:       0
+				color:        color_transparent
+				color_hover:  cfg.color_header_hover
+				color_focus:  color_transparent
+				color_click:  cfg.color_header_hover
+				color_border: color_transparent
+				disabled:     !has_unsaved || state.saving
+				on_click:     fn [cfg, focus_id, has_source, caps] (_ &Layout, mut e Event, mut w Window) {
+					data_grid_crud_save(cfg, has_source, caps, focus_id, mut e, mut w)
+				}
+				content:      [
+					text(
+						text:       'Save'
+						mode:       .single_line
+						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+					),
+				]
+			),
+			button(
+				sizing:       fit_fill
+				padding:      padding_none
+				size_border:  0
+				radius:       0
+				color:        color_transparent
+				color_hover:  cfg.color_header_hover
+				color_focus:  color_transparent
+				color_click:  cfg.color_header_hover
+				color_border: color_transparent
+				disabled:     (!has_unsaved && state.save_error.len == 0) || state.saving
+				on_click:     fn [cfg, focus_id] (_ &Layout, mut e Event, mut w Window) {
+					data_grid_crud_cancel(cfg, focus_id, mut e, mut w)
+				}
+				content:      [
+					text(
+						text:       'Cancel'
+						mode:       .single_line
+						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+					),
+				]
+			),
+			row(
+				name:    'data_grid crud spacer'
+				sizing:  fill_fill
+				padding: padding_none
+				content: []
+			),
+			text(
+				text:       'Selected ${selected_count}'
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+			),
+			text(
+				text:       status
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+			),
+		]
+	)
+}
+
+fn data_grid_crud_default_cells(cfg DataGridCfg) map[string]string {
+	mut cells := map[string]string{}
+	for col in cfg.columns {
+		if col.id.len == 0 {
+			continue
+		}
+		cells[col.id] = col.default_value
+	}
+	return cells
+}
+
+fn data_grid_crud_add_row(cfg DataGridCfg, focus_id u32, mut e Event, mut w Window) {
+	mut state := w.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
+	state.next_draft_seq++
+	draft_id := '__draft_${cfg.id}_${state.next_draft_seq}'
+	row := GridRow{
+		id:    draft_id
+		cells: data_grid_crud_default_cells(cfg)
+	}
+	state.working_rows.insert(0, row)
+	state.draft_row_ids[draft_id] = true
+	state.dirty_row_ids[draft_id] = true
+	state.save_error = ''
+	w.view_state.data_grid_crud_state.set(cfg.id, state)
+	data_grid_set_editing_row(cfg.id, draft_id, mut w)
+	if cfg.on_selection_change != unsafe { nil } {
+		next := GridSelection{
+			anchor_row_id:    draft_id
+			active_row_id:    draft_id
+			selected_row_ids: {
+				draft_id: true
+			}
+		}
+		cfg.on_selection_change(next, mut e, mut w)
+	}
+	if focus_id > 0 {
+		w.set_id_focus(focus_id)
+	}
+	e.is_handled = true
+}
+
+fn data_grid_crud_delete_selected(cfg DataGridCfg, focus_id u32, mut e Event, mut w Window) {
+	if cfg.selection.selected_row_ids.len == 0 {
+		return
+	}
+	mut ids := []string{cap: cfg.selection.selected_row_ids.len}
+	for row_id, selected in cfg.selection.selected_row_ids {
+		if selected && row_id.len > 0 {
+			ids << row_id
+		}
+	}
+	data_grid_crud_delete_rows(cfg, ids, focus_id, mut e, mut w)
+}
+
+fn data_grid_crud_delete_rows(cfg DataGridCfg, row_ids []string, focus_id u32, mut e Event, mut w Window) {
+	if row_ids.len == 0 {
+		return
+	}
+	mut delete_ids := map[string]bool{}
+	for row_id in row_ids {
+		id := row_id.trim_space()
+		if id.len > 0 {
+			delete_ids[id] = true
+		}
+	}
+	if delete_ids.len == 0 {
+		return
+	}
+	mut state := w.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
+	mut kept := []GridRow{cap: state.working_rows.len}
+	for idx, row in state.working_rows {
+		row_id := data_grid_row_id(row, idx)
+		if delete_ids[row_id] {
+			if state.draft_row_ids[row_id] {
+				state.draft_row_ids.delete(row_id)
+			} else {
+				state.deleted_row_ids[row_id] = true
+			}
+			state.dirty_row_ids.delete(row_id)
+			continue
+		}
+		kept << row
+	}
+	state.working_rows = kept
+	state.save_error = ''
+	w.view_state.data_grid_crud_state.set(cfg.id, state)
+	editing_row := data_grid_editing_row_id(cfg.id, w)
+	if editing_row.len > 0 && delete_ids[editing_row] {
+		data_grid_clear_editing_row(cfg.id, mut w)
+	}
+	if cfg.on_selection_change != unsafe { nil } {
+		next_selection := data_grid_selection_remove_ids(cfg.selection, delete_ids)
+		cfg.on_selection_change(next_selection, mut e, mut w)
+	}
+	if focus_id > 0 {
+		w.set_id_focus(focus_id)
+	}
+	e.is_handled = true
+}
+
+fn data_grid_selection_remove_ids(selection GridSelection, remove_ids map[string]bool) GridSelection {
+	mut selected := map[string]bool{}
+	for row_id, value in selection.selected_row_ids {
+		if value && !remove_ids[row_id] {
+			selected[row_id] = true
+		}
+	}
+	mut active := selection.active_row_id
+	mut anchor := selection.anchor_row_id
+	if remove_ids[active] {
+		active = ''
+	}
+	if remove_ids[anchor] {
+		anchor = ''
+	}
+	return GridSelection{
+		anchor_row_id:    anchor
+		active_row_id:    active
+		selected_row_ids: selected
+	}
+}
+
+fn data_grid_crud_build_payload(state DataGridCrudState) ([]GridRow, []GridRow, []GridCellEdit, []string) {
+	mut create_rows := []GridRow{}
+	mut update_rows := []GridRow{}
+	mut update_edits := []GridCellEdit{}
+	mut delete_ids := []string{}
+	mut committed_map := map[string]GridRow{}
+	for idx, row in state.committed_rows {
+		committed_map[data_grid_row_id(row, idx)] = row
+	}
+	for idx, row in state.working_rows {
+		row_id := data_grid_row_id(row, idx)
+		if state.draft_row_ids[row_id] {
+			create_rows << row
+			continue
+		}
+		if !state.dirty_row_ids[row_id] {
+			continue
+		}
+		update_rows << row
+		before := committed_map[row_id] or {
+			GridRow{
+				id:    row_id
+				cells: {}
+			}
+		}
+		mut keys := row.cells.keys()
+		for key in before.cells.keys() {
+			if key !in keys {
+				keys << key
+			}
+		}
+		keys.sort()
+		for key in keys {
+			next_value := row.cells[key] or { '' }
+			prev_value := before.cells[key] or { '' }
+			if next_value == prev_value {
+				continue
+			}
+			update_edits << GridCellEdit{
+				row_id: row_id
+				col_id: key
+				value:  next_value
+			}
+		}
+	}
+	mut delete_sorted := state.deleted_row_ids.keys()
+	delete_sorted.sort()
+	delete_ids = delete_sorted.clone()
+	return create_rows, update_rows, update_edits, delete_ids
+}
+
+fn data_grid_crud_replace_created_rows(mut rows []GridRow, create_rows []GridRow, created []GridRow) map[string]string {
+	mut replace := map[string]string{}
+	if create_rows.len == 0 || created.len == 0 {
+		return replace
+	}
+	mut draft_pos := 0
+	for idx, row in rows {
+		if draft_pos >= create_rows.len || draft_pos >= created.len {
+			break
+		}
+		draft_id := create_rows[draft_pos].id
+		if row.id != draft_id {
+			continue
+		}
+		next_row := created[draft_pos]
+		rows[idx] = next_row
+		if draft_id.len > 0 && next_row.id.len > 0 {
+			replace[draft_id] = next_row.id
+		}
+		draft_pos++
+	}
+	return replace
+}
+
+fn data_grid_crud_remap_selection(cfg DataGridCfg, replace_ids map[string]string, mut e Event, mut w Window) {
+	if cfg.on_selection_change == unsafe { nil } || replace_ids.len == 0 {
+		return
+	}
+	mut selected := map[string]bool{}
+	for row_id, value in cfg.selection.selected_row_ids {
+		if !value {
+			continue
+		}
+		next_id := replace_ids[row_id] or { row_id }
+		selected[next_id] = true
+	}
+	active := replace_ids[cfg.selection.active_row_id] or { cfg.selection.active_row_id }
+	anchor := replace_ids[cfg.selection.anchor_row_id] or { cfg.selection.anchor_row_id }
+	cfg.on_selection_change(GridSelection{
+		anchor_row_id:    anchor
+		active_row_id:    active
+		selected_row_ids: selected
+	}, mut e, mut w)
+}
+
+fn data_grid_crud_apply_cell_edit(cfg DataGridCfg, edit GridCellEdit, mut e Event, mut w Window) {
+	if edit.row_id.len == 0 || edit.col_id.len == 0 {
+		return
+	}
+	if data_grid_crud_enabled(cfg) {
+		mut state := w.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
+		for idx, row in state.working_rows {
+			if data_grid_row_id(row, idx) != edit.row_id {
+				continue
+			}
+			mut cells := row.cells.clone()
+			cells[edit.col_id] = edit.value
+			state.working_rows[idx] = GridRow{
+				...row
+				cells: cells
+			}
+			state.dirty_row_ids[edit.row_id] = true
+			state.save_error = ''
+			break
+		}
+		w.view_state.data_grid_crud_state.set(cfg.id, state)
+	}
+	if cfg.on_cell_edit != unsafe { nil } {
+		cfg.on_cell_edit(edit, mut e, mut w)
+	}
+}
+
+fn data_grid_crud_cancel(cfg DataGridCfg, focus_id u32, mut e Event, mut w Window) {
+	mut state := w.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
+	state.working_rows = state.committed_rows.clone()
+	state.dirty_row_ids = map[string]bool{}
+	state.draft_row_ids = map[string]bool{}
+	state.deleted_row_ids = map[string]bool{}
+	state.save_error = ''
+	state.saving = false
+	w.view_state.data_grid_crud_state.set(cfg.id, state)
+	data_grid_clear_editing_row(cfg.id, mut w)
+	if focus_id > 0 {
+		w.set_id_focus(focus_id)
+	}
+	e.is_handled = true
+}
+
+fn data_grid_crud_save(cfg DataGridCfg, has_source bool, caps GridDataCapabilities, focus_id u32, mut e Event, mut w Window) {
+	mut state := w.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
+	if state.saving || !data_grid_crud_has_unsaved(state) {
+		return
+	}
+	create_rows, update_rows, update_edits, delete_ids := data_grid_crud_build_payload(state)
+	snapshot_rows := state.committed_rows.clone()
+	state.saving = true
+	state.save_error = ''
+	w.view_state.data_grid_crud_state.set(cfg.id, state)
+	mut has_row_count := false
+	mut row_count_value := 0
+	mut replace_ids := map[string]string{}
+	if has_source {
+		mut source := cfg.data_source or {
+			state.saving = false
+			state.save_error = 'data source unavailable'
+			w.view_state.data_grid_crud_state.set(cfg.id, state)
+			return
+		}
+
+		if create_rows.len > 0 {
+			if !caps.supports_create {
+				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
+					'create not supported')
+				return
+			}
+			res_create := source.mutate_data(GridMutationRequest{
+				grid_id: cfg.id
+				kind:    .create
+				query:   cfg.query
+				rows:    create_rows.clone()
+			}) or {
+				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
+					err.msg())
+				return
+			}
+			replace_ids = data_grid_crud_replace_created_rows(mut state.working_rows,
+				create_rows, res_create.created)
+			if count := res_create.row_count {
+				has_row_count = true
+				row_count_value = count
+			}
+		}
+		if update_edits.len > 0 {
+			if !caps.supports_update {
+				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
+					'update not supported')
+				return
+			}
+			res_update := source.mutate_data(GridMutationRequest{
+				grid_id: cfg.id
+				kind:    .update
+				query:   cfg.query
+				rows:    update_rows.clone()
+				edits:   update_edits.clone()
+			}) or {
+				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
+					err.msg())
+				return
+			}
+			if count := res_update.row_count {
+				has_row_count = true
+				row_count_value = count
+			}
+		}
+		if delete_ids.len > 0 {
+			if !caps.supports_delete {
+				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
+					'delete not supported')
+				return
+			}
+			res_delete := source.mutate_data(GridMutationRequest{
+				grid_id: cfg.id
+				kind:    .delete
+				query:   cfg.query
+				row_ids: delete_ids.clone()
+			}) or {
+				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
+					err.msg())
+				return
+			}
+			if count := res_delete.row_count {
+				has_row_count = true
+				row_count_value = count
+			}
+		}
+		data_grid_crud_remap_selection(cfg, replace_ids, mut e, mut w)
+	}
+	state.committed_rows = state.working_rows.clone()
+	state.dirty_row_ids = map[string]bool{}
+	state.draft_row_ids = map[string]bool{}
+	state.deleted_row_ids = map[string]bool{}
+	state.saving = false
+	state.save_error = ''
+	state.source_signature = data_grid_rows_signature(state.committed_rows)
+	w.view_state.data_grid_crud_state.set(cfg.id, state)
+	data_grid_clear_editing_row(cfg.id, mut w)
+	if cfg.on_rows_change != unsafe { nil } {
+		cfg.on_rows_change(state.working_rows.clone(), mut e, mut w)
+	}
+	if has_source {
+		if has_row_count {
+			data_grid_source_apply_local_mutation(cfg.id, state.working_rows.clone(),
+				?int(row_count_value), mut w)
+		} else {
+			data_grid_source_apply_local_mutation(cfg.id, state.working_rows.clone(),
+				none, mut w)
+		}
+		data_grid_source_force_refetch(cfg.id, mut w)
+	}
+	if focus_id > 0 {
+		w.set_id_focus(focus_id)
+	}
+	e.is_handled = true
+}
+
+fn data_grid_crud_restore_on_error(cfg DataGridCfg, mut e Event, mut w Window, mut state DataGridCrudState, snapshot_rows []GridRow, err_msg string) {
+	state.committed_rows = snapshot_rows.clone()
+	state.working_rows = snapshot_rows.clone()
+	state.dirty_row_ids = map[string]bool{}
+	state.draft_row_ids = map[string]bool{}
+	state.deleted_row_ids = map[string]bool{}
+	state.saving = false
+	state.save_error = err_msg
+	state.source_signature = data_grid_rows_signature(state.committed_rows)
+	w.view_state.data_grid_crud_state.set(cfg.id, state)
+	data_grid_clear_editing_row(cfg.id, mut w)
+	if cfg.on_crud_error != unsafe { nil } {
+		cfg.on_crud_error(err_msg, mut e, mut w)
+	}
 }
 
 fn data_grid_quick_filter_row(cfg DataGridCfg) View {
@@ -1209,13 +1836,13 @@ fn data_grid_detail_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, col
 	)
 }
 
-fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []GridColumnCfg, column_widths map[string]f32, row_height f32, focus_id u32, editing_row_id string, mut window Window) View {
+fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []GridColumnCfg, column_widths map[string]f32, row_height f32, focus_id u32, editing_row_id string, show_delete_action bool, mut window Window) View {
 	row_id := data_grid_row_id(row_data, row_idx)
 	is_selected := cfg.selection.selected_row_ids[row_id]
 	detail_enabled := cfg.on_detail_row_view != unsafe { nil }
 	detail_toggle_enabled := cfg.on_detail_expanded_change != unsafe { nil }
 	detail_expanded := data_grid_detail_row_expanded(cfg, row_id)
-	is_editing_row := editing_row_id == row_id && cfg.on_cell_edit != unsafe { nil }
+	is_editing_row := editing_row_id == row_id && data_grid_editing_enabled(cfg)
 	mut cells := []View{cap: columns.len}
 	for col_idx, col in columns {
 		value := row_data.cells[col.id] or { '' }
@@ -1266,6 +1893,31 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 					v_align: .middle
 					spacing: if is_editing_cell { 0 } else { 4 }
 					content: cell_content
+				),
+			]
+		)
+	}
+	if show_delete_action {
+		cells << button(
+			id:           '${cfg.id}:row-delete:${row_id}'
+			width:        data_grid_header_control_width + 10
+			sizing:       fixed_fill
+			padding:      padding_none
+			size_border:  0
+			radius:       0
+			color:        color_transparent
+			color_hover:  cfg.color_header_hover
+			color_focus:  color_transparent
+			color_click:  cfg.color_header_hover
+			color_border: cfg.color_border
+			on_click:     fn [cfg, row_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_crud_delete_rows(cfg, [row_id], focus_id, mut e, mut w)
+			}
+			content:      [
+				text(
+					text:       '×'
+					mode:       .single_line
+					text_style: data_grid_indicator_text_style(cfg.text_style_filter)
 				),
 			]
 		)
@@ -1382,7 +2034,6 @@ fn data_grid_compute_row_selection(rows []GridRow, selection GridSelection, grid
 
 fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col GridColumnCfg, value string, editor_focus_id u32, grid_focus_id u32, mut window Window) View {
 	editor_id := '${cfg.id}:editor:${row_id}:${col.id}'
-	on_cell_edit := cfg.on_cell_edit
 	col_id := col.id
 	grid_id := cfg.id
 	mut editor := View(invisible_container_view())
@@ -1401,10 +2052,10 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 				padding:     padding_none
 				size_border: 0
 				radius:      0
-				on_select:   fn [on_cell_edit, row_id, row_idx, col_id] (selected []string, mut e Event, mut w Window) {
+				on_select:   fn [cfg, row_id, row_idx, col_id] (selected []string, mut e Event, mut w Window) {
 					next_value := if selected.len > 0 { selected[0] } else { '' }
-					if on_cell_edit != unsafe { nil } && row_id.len > 0 && col_id.len > 0 {
-						on_cell_edit(GridCellEdit{
+					if row_id.len > 0 && col_id.len > 0 {
+						data_grid_crud_apply_cell_edit(cfg, GridCellEdit{
 							row_id:  row_id
 							row_idx: row_idx
 							col_id:  col_id
@@ -1424,13 +2075,13 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 				padding:     padding_none
 				size_border: 0
 				radius:      0
-				on_select:   fn [on_cell_edit, row_id, row_idx, col_id] (dates []time.Time, mut e Event, mut w Window) {
+				on_select:   fn [cfg, row_id, row_idx, col_id] (dates []time.Time, mut e Event, mut w Window) {
 					if dates.len == 0 {
 						return
 					}
 					next_value := dates[0].custom_format('M/D/YYYY')
-					if on_cell_edit != unsafe { nil } && row_id.len > 0 && col_id.len > 0 {
-						on_cell_edit(GridCellEdit{
+					if row_id.len > 0 && col_id.len > 0 {
+						data_grid_crud_apply_cell_edit(cfg, GridCellEdit{
 							row_id:  row_id
 							row_idx: row_idx
 							col_id:  col_id
@@ -1449,14 +2100,14 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 				id_focus: editor_focus_id
 				select:   checked
 				padding:  padding_none
-				on_click: fn [on_cell_edit, row_id, row_idx, col_id, checked, editor_true_value, editor_false_value] (_ &Layout, mut e Event, mut w Window) {
+				on_click: fn [cfg, row_id, row_idx, col_id, checked, editor_true_value, editor_false_value] (_ &Layout, mut e Event, mut w Window) {
 					next_value := if !checked {
 						editor_true_value
 					} else {
 						editor_false_value
 					}
-					if on_cell_edit != unsafe { nil } && row_id.len > 0 && col_id.len > 0 {
-						on_cell_edit(GridCellEdit{
+					if row_id.len > 0 && col_id.len > 0 {
+						data_grid_crud_apply_cell_edit(cfg, GridCellEdit{
 							row_id:  row_id
 							row_idx: row_idx
 							col_id:  col_id
@@ -1476,10 +2127,10 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 				padding:         padding_none
 				size_border:     0
 				radius:          0
-				on_text_changed: fn [on_cell_edit, row_id, row_idx, col_id] (_ &Layout, text string, mut w Window) {
-					if on_cell_edit != unsafe { nil } && row_id.len > 0 && col_id.len > 0 {
+				on_text_changed: fn [cfg, row_id, row_idx, col_id] (_ &Layout, text string, mut w Window) {
+					if row_id.len > 0 && col_id.len > 0 {
 						mut e := Event{}
-						on_cell_edit(GridCellEdit{
+						data_grid_crud_apply_cell_edit(cfg, GridCellEdit{
 							row_id:  row_id
 							row_idx: row_idx
 							col_id:  col_id
@@ -1523,8 +2174,12 @@ fn make_data_grid_editor_on_keydown(grid_id string, grid_focus_id u32) fn (&Layo
 	}
 }
 
+fn data_grid_editing_enabled(cfg DataGridCfg) bool {
+	return cfg.on_cell_edit != unsafe { nil } || data_grid_crud_enabled(cfg)
+}
+
 fn data_grid_track_row_edit_click(cfg DataGridCfg, columns []GridColumnCfg, row_idx int, row_id string, grid_focus_id u32, mut e Event, mut w Window) {
-	if cfg.on_cell_edit == unsafe { nil } || data_grid_has_keyboard_modifiers(&e) {
+	if !data_grid_editing_enabled(cfg) || data_grid_has_keyboard_modifiers(&e) {
 		return
 	}
 	first_col_idx := data_grid_first_editable_column_index(cfg, columns)
@@ -1560,7 +2215,7 @@ fn data_grid_has_keyboard_modifiers(e &Event) bool {
 }
 
 fn data_grid_start_edit_active_row(cfg DataGridCfg, mut e Event, mut w Window) {
-	if cfg.on_cell_edit == unsafe { nil } || cfg.rows.len == 0 {
+	if !data_grid_editing_enabled(cfg) || cfg.rows.len == 0 {
 		return
 	}
 	columns := data_grid_effective_columns(cfg)
@@ -1582,7 +2237,7 @@ fn data_grid_start_edit_active_row(cfg DataGridCfg, mut e Event, mut w Window) {
 }
 
 fn data_grid_first_editable_column_index(cfg DataGridCfg, columns []GridColumnCfg) int {
-	if cfg.on_cell_edit == unsafe { nil } {
+	if !data_grid_editing_enabled(cfg) {
 		return -1
 	}
 	for idx, col in columns {
@@ -1936,7 +2591,8 @@ fn make_data_grid_on_keydown(cfg DataGridCfg, columns []GridColumnCfg, row_heigh
 	on_selection_change := cfg.on_selection_change
 	on_row_activate := cfg.on_row_activate
 	on_page_change := cfg.on_page_change
-	on_cell_edit := cfg.on_cell_edit
+	edit_enabled := data_grid_editing_enabled(cfg)
+	crud_enabled := data_grid_crud_enabled(cfg)
 	page_size := cfg.page_size
 	page_index := cfg.page_index
 	viewport_h := data_grid_height(cfg)
@@ -1944,16 +2600,28 @@ fn make_data_grid_on_keydown(cfg DataGridCfg, columns []GridColumnCfg, row_heigh
 	first_edit_col_idx := data_grid_first_editable_column_index(cfg, columns)
 	editor_focus_base := data_grid_cell_editor_focus_base_id(cfg, columns.len)
 	col_count := columns.len
-	return fn [grid_id, rows, selection, multi_select, range_select, on_selection_change, on_row_activate, on_page_change, on_cell_edit, page_size, page_index, viewport_h, page_rows, first_edit_col_idx, editor_focus_base, col_count, row_height, static_top, scroll_id, page_indices, frozen_top_ids, data_to_display] (_ &Layout, mut e Event, mut w Window) {
+	return fn [cfg, grid_id, rows, selection, multi_select, range_select, on_selection_change, on_row_activate, on_page_change, edit_enabled, crud_enabled, page_size, page_index, viewport_h, page_rows, first_edit_col_idx, editor_focus_base, col_count, row_height, static_top, scroll_id, page_indices, frozen_top_ids, data_to_display] (_ &Layout, mut e Event, mut w Window) {
 		if e.modifiers == .none && e.key_code == .escape {
 			if data_grid_editing_row_id(grid_id, w).len > 0 {
 				data_grid_clear_editing_row(grid_id, mut w)
 				e.is_handled = true
+				return
+			}
+			if crud_enabled {
+				data_grid_crud_cancel(cfg, 0, mut e, mut w)
 			}
 			return
 		}
+		if crud_enabled && e.modifiers == .none && e.key_code == .insert {
+			data_grid_crud_add_row(cfg, 0, mut e, mut w)
+			return
+		}
+		if crud_enabled && e.modifiers == .none && e.key_code == .delete {
+			data_grid_crud_delete_selected(cfg, 0, mut e, mut w)
+			return
+		}
 		if e.modifiers == .none && e.key_code == .f2 {
-			if on_cell_edit != unsafe { nil } && rows.len > 0 && first_edit_col_idx >= 0 {
+			if edit_enabled && rows.len > 0 && first_edit_col_idx >= 0 {
 				row_idx := data_grid_active_row_index(rows, selection)
 				if row_idx >= 0 && row_idx < rows.len {
 					r_id := data_grid_row_id(rows[row_idx], row_idx)
@@ -2767,7 +3435,7 @@ fn data_grid_frozen_top_zone(cfg DataGridCfg, row_views []View, zone_height f32,
 	)
 }
 
-fn data_grid_frozen_top_views(cfg DataGridCfg, frozen_top_indices []int, columns []GridColumnCfg, column_widths map[string]f32, row_height f32, focus_id u32, editing_row_id string, mut window Window) ([]View, int) {
+fn data_grid_frozen_top_views(cfg DataGridCfg, frozen_top_indices []int, columns []GridColumnCfg, column_widths map[string]f32, row_height f32, focus_id u32, editing_row_id string, show_delete_action bool, mut window Window) ([]View, int) {
 	if frozen_top_indices.len == 0 {
 		return []View{}, 0
 	}
@@ -2780,7 +3448,7 @@ fn data_grid_frozen_top_views(cfg DataGridCfg, frozen_top_indices []int, columns
 		row_data := cfg.rows[row_idx]
 		row_id := data_grid_row_id(row_data, row_idx)
 		views << data_grid_row_view(cfg, row_data, row_idx, columns, column_widths, row_height,
-			focus_id, editing_row_id, mut window)
+			focus_id, editing_row_id, show_delete_action, mut window)
 		display_rows++
 		if cfg.on_detail_row_view != unsafe { nil } && data_grid_detail_row_expanded(cfg, row_id) {
 			views << data_grid_detail_row_view(cfg, row_data, row_idx, columns, column_widths,

@@ -31,6 +31,33 @@ pub fn (window &Window) data_grid_source_stats(grid_id string) DataGridSourceSta
 	return DataGridSourceStats{}
 }
 
+fn data_grid_source_apply_local_mutation(grid_id string, rows []GridRow, row_count ?int, mut window Window) {
+	mut state := window.view_state.data_grid_source_state.get(grid_id) or { DataGridSourceState{} }
+	state.rows = rows.clone()
+	state.received_count = rows.len
+	state.has_loaded = true
+	state.loading = false
+	state.load_error = ''
+	if count := row_count {
+		state.row_count = ?int(count)
+	}
+	window.view_state.data_grid_source_state.set(grid_id, state)
+}
+
+fn data_grid_source_force_refetch(grid_id string, mut window Window) {
+	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	if state.loading && !isnil(state.active_abort) {
+		mut active := state.active_abort
+		active.abort()
+		state.cancelled_count++
+		state.loading = false
+	}
+	state.request_key = ''
+	state.load_error = ''
+	window.view_state.data_grid_source_state.set(grid_id, state)
+	window.update_window()
+}
+
 fn data_grid_has_source(cfg DataGridCfg) bool {
 	return cfg.data_source != none
 }

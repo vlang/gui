@@ -234,6 +234,85 @@ fn test_data_grid_source_jump_enabled_rules() {
 	assert !data_grid_source_jump_enabled(cfg, state_no_total, .offset, 200)
 }
 
+fn test_in_memory_cursor_data_source_mutate_crud() {
+	mut source := InMemoryCursorDataSource{
+		rows: data_source_rows(3)
+	}
+	create_res := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .create
+		rows:    [
+			GridRow{
+				id:    ''
+				cells: {
+					'name':  'New User'
+					'team':  'Data'
+					'score': '91'
+				}
+			},
+		]
+	}) or { panic(err) }
+	assert create_res.created.len == 1
+	assert create_res.created[0].id == '4'
+
+	update_res := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .update
+		edits:   [
+			GridCellEdit{
+				row_id: '2'
+				col_id: 'team'
+				value:  'Core'
+			},
+		]
+	}) or { panic(err) }
+	assert update_res.updated.len == 1
+	assert update_res.updated[0].cells['team'] == 'Core'
+
+	delete_res := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .delete
+		row_ids: ['1']
+	}) or { panic(err) }
+	assert delete_res.deleted_ids == ['1']
+	final := source.fetch_data(GridDataRequest{
+		grid_id: 'grid'
+		query:   GridQueryState{}
+		page:    GridPageRequest(GridCursorPageReq{
+			limit: 20
+		})
+	}) or { panic(err) }
+	assert final.rows.len == 3
+	assert final.rows[0].id == '2'
+	assert final.rows[0].cells['team'] == 'Core'
+}
+
+fn test_in_memory_offset_data_source_mutate_batch_delete() {
+	mut source := InMemoryOffsetDataSource{
+		rows: data_source_rows(5)
+	}
+	res := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .delete
+		row_ids: ['2', '4']
+	}) or { panic(err) }
+	assert res.deleted_ids.len == 2
+	assert res.deleted_ids[0] == '2'
+	assert res.deleted_ids[1] == '4'
+	page := source.fetch_data(GridDataRequest{
+		grid_id: 'grid'
+		query:   GridQueryState{}
+		page:    GridPageRequest(GridOffsetPageReq{
+			start_index: 0
+			end_index:   10
+		})
+	}) or { panic(err) }
+	assert page.rows.len == 3
+	assert page.rows[0].id == '1'
+	assert page.rows[1].id == '3'
+	assert page.rows[2].id == '5'
+}
+
 fn data_source_rows(count int) []GridRow {
 	mut rows := []GridRow{cap: count}
 	for i in 0 .. count {

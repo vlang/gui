@@ -101,6 +101,9 @@ mut:
 	data_grid_edit_state          BoundedMap[string, DataGridEditState] = BoundedMap[string, DataGridEditState]{
 		max_size: 20
 	}
+	data_grid_crud_state          BoundedMap[string, DataGridCrudState] = BoundedMap[string, DataGridCrudState]{
+		max_size: 20
+	}
 	data_grid_jump_input          BoundedMap[string, string] = BoundedMap[string, string]{
 		max_size: 20
 	}
@@ -158,6 +161,20 @@ mut:
 	editing_row_id    string
 	last_click_row_id string
 	last_click_frame  u64
+}
+
+// DataGridCrudState stores staged CRUD state for a grid id.
+struct DataGridCrudState {
+mut:
+	source_signature u64
+	committed_rows   []GridRow
+	working_rows     []GridRow
+	dirty_row_ids    map[string]bool
+	draft_row_ids    map[string]bool
+	deleted_row_ids  map[string]bool
+	next_draft_seq   int
+	saving           bool
+	save_error       string
 }
 
 // DataGridSourceState stores async data-source runtime state per grid id.

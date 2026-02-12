@@ -1252,6 +1252,79 @@ fn test_grid_rows_to_xlsx_file_contains_sheet() {
 	assert sheet.contains('<c r="B2"><v>30</v></c>')
 }
 
+fn test_data_grid_crud_build_payload() {
+	state := DataGridCrudState{
+		committed_rows:  [
+			GridRow{
+				id:    '1'
+				cells: {
+					'name': 'A'
+				}
+			},
+			GridRow{
+				id:    '2'
+				cells: {
+					'name': 'B'
+				}
+			},
+		]
+		working_rows:    [
+			GridRow{
+				id:    '__draft_grid_1'
+				cells: {
+					'name': 'Draft'
+				}
+			},
+			GridRow{
+				id:    '1'
+				cells: {
+					'name': 'A+'
+				}
+			},
+		]
+		dirty_row_ids:   {
+			'1':              true
+			'__draft_grid_1': true
+		}
+		draft_row_ids:   {
+			'__draft_grid_1': true
+		}
+		deleted_row_ids: {
+			'2': true
+		}
+	}
+	create_rows, update_rows, edits, delete_ids := data_grid_crud_build_payload(state)
+	assert create_rows.len == 1
+	assert create_rows[0].id == '__draft_grid_1'
+	assert update_rows.len == 1
+	assert update_rows[0].id == '1'
+	assert edits.len == 1
+	assert edits[0].row_id == '1'
+	assert edits[0].col_id == 'name'
+	assert edits[0].value == 'A+'
+	assert delete_ids == ['2']
+}
+
+fn test_data_grid_selection_remove_ids() {
+	selection := GridSelection{
+		anchor_row_id:    '2'
+		active_row_id:    '3'
+		selected_row_ids: {
+			'1': true
+			'2': true
+			'3': true
+		}
+	}
+	next := data_grid_selection_remove_ids(selection, {
+		'2': true
+		'3': true
+	})
+	assert next.anchor_row_id == ''
+	assert next.active_row_id == ''
+	assert next.selected_row_ids.len == 1
+	assert next.selected_row_ids['1']
+}
+
 fn zip_entry_text(path string, entry_name string) !string {
 	mut zip := szip.open(path, .no_compression, .read_only)!
 	defer {

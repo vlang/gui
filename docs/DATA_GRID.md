@@ -20,6 +20,8 @@ Core pieces:
 - `DataGridDataSource`
 - `GridDataRequest`
 - `GridDataResult`
+- `GridMutationRequest`
+- `GridMutationResult`
 - `GridDataCapabilities`
 - `GridAbortController` / `GridAbortSignal`
 
@@ -47,8 +49,36 @@ Core pieces:
 - `supports_offset_pagination`
 - `supports_numbered_pages`
 - `row_count_known`
+- `supports_create`
+- `supports_update`
+- `supports_delete`
+- `supports_batch_delete`
 
 Grid uses this metadata to select pagination behavior and display counts safely.
+
+## CRUD Model
+
+Grid CRUD is explicit-save.
+
+- Cell edits stage locally.
+- `Save` sends staged changes to source via `mutate_data(...)`.
+- `Cancel` restores last committed rows.
+- Source-mode save applies optimistic UI, then background refetch.
+
+Mutation request fields:
+
+- `kind` (`.create`, `.update`, `.delete`)
+- `rows` (create/update payload)
+- `row_ids` (delete payload)
+- `edits` (cell-level updates)
+- `query`, `signal`, `request_id`
+
+Mutation result fields:
+
+- `created` canonical created rows (final IDs)
+- `updated` canonical updated rows
+- `deleted_ids`
+- `row_count` optional total after mutation
 
 ## Cursor-First Pagination
 
@@ -86,6 +116,11 @@ New fields:
 - `row_count ?int`
 - `loading bool`
 - `load_error string`
+- `show_crud_toolbar bool`
+- `allow_create bool`
+- `allow_delete bool`
+- `on_rows_change fn ([]GridRow, mut Event, mut Window)`
+- `on_crud_error fn (string, mut Event, mut Window)`
 
 When `data_source` is set, fetched rows are used for render. Local `rows` paging is disabled.
 
@@ -104,7 +139,7 @@ pub mut:
 
 fn view(mut w gui.Window) gui.View {
 	mut app := w.state[App]()
-	return w.data_grid(
+return w.data_grid(
 		id:              'users-grid'
 		columns:         columns()
 		data_source:     app.source
@@ -114,11 +149,15 @@ fn view(mut w gui.Window) gui.View {
 		selection:       app.selection
 		show_filter_row: true
 		show_quick_filter: true
+		show_crud_toolbar: true
 		on_query_change: fn (q gui.GridQueryState, mut _ gui.Event, mut w gui.Window) {
 			w.state[App]().query = q
 		}
 		on_selection_change: fn (s gui.GridSelection, mut _ gui.Event, mut w gui.Window) {
 			w.state[App]().selection = s
+		}
+		on_crud_error: fn (msg string, mut _ gui.Event, mut _ gui.Window) {
+			eprintln(msg)
 		}
 	)
 }
@@ -134,8 +173,8 @@ See `examples/data_grid_data_source_demo.v` for a 50k-row demo.
 
 ## ORM Data Source
 
-`GridOrmDataSource` adapts database-backed fetches to `DataGridDataSource`.
-It is fetch-only and intended for server-side query pushdown.
+`GridOrmDataSource` adapts database-backed fetches and mutations to
+`DataGridDataSource`.
 
 Core types:
 
@@ -143,6 +182,7 @@ Core types:
 - `GridOrmQuerySpec`: normalized query + paging (`limit`, `offset`, `cursor`)
 - `GridOrmPage`: rows + paging metadata
 - `GridOrmFetchFn`: callback for DB execution
+- `GridOrmCreateFn` / `GridOrmUpdateFn` / `GridOrmDeleteFn` / `GridOrmDeleteManyFn`
 
 Initial query subset:
 
@@ -177,6 +217,15 @@ source := &gui.GridOrmDataSource{
 	]
 	fetch_fn: fn (spec gui.GridOrmQuerySpec, signal &gui.GridAbortSignal) !gui.GridOrmPage {
 		return fetch_from_db(spec, signal)
+	}
+	create_fn: fn (rows []gui.GridRow, signal &gui.GridAbortSignal) ![]gui.GridRow {
+		return create_rows(rows, signal)
+	}
+	update_fn: fn (rows []gui.GridRow, edits []gui.GridCellEdit, signal &gui.GridAbortSignal) ![]gui.GridRow {
+		return update_rows(rows, edits, signal)
+	}
+	delete_many_fn: fn (row_ids []string, signal &gui.GridAbortSignal) ![]string {
+		return delete_rows(row_ids, signal)
 	}
 }
 ```
@@ -232,5 +281,5 @@ These helpers are unchanged:
 - `table` remains unchanged.
 - Keep `GridRow.id` stable and unique.
 - Grouping is contiguous; pre-sort by group keys for stable large groups.
-- Row editing is controlled through `on_cell_edit`.
+- Row editing uses staged save when `show_crud_toolbar` is enabled.
 - Tab order follows numeric `id_focus`, not tree order.

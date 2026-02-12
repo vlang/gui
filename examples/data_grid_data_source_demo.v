@@ -10,6 +10,7 @@ pub mut:
 	selection        gui.GridSelection
 	use_offset       bool
 	simulate_latency bool = true
+	last_action      string
 }
 
 fn main() {
@@ -73,12 +74,13 @@ fn main_view(mut window gui.Window) gui.View {
 				]
 			),
 			gui.text(
-				text:       'mode=${mode} loading=${loading} req=${stats.request_count} cancel=${stats.cancelled_count} stale=${stats.stale_drop_count} rows=${stats.received_count}/${count_text}'
+				text:       'mode=${mode} loading=${loading} req=${stats.request_count} cancel=${stats.cancelled_count} stale=${stats.stale_drop_count} rows=${stats.received_count}/${count_text} ${app.last_action}'
 				text_style: gui.theme().n4
 			),
 			window.data_grid(
 				id:                  'source-grid'
 				max_height:          620
+				show_crud_toolbar:   true
 				show_quick_filter:   true
 				columns:             app.columns
 				data_source:         app.source
@@ -97,6 +99,14 @@ fn main_view(mut window gui.Window) gui.View {
 				on_selection_change: fn (selection gui.GridSelection, mut _ gui.Event, mut w gui.Window) {
 					mut state := w.state[DataGridSourceDemoApp]()
 					state.selection = selection
+				}
+				on_cell_edit:        fn (edit gui.GridCellEdit, mut _ gui.Event, mut w gui.Window) {
+					mut state := w.state[DataGridSourceDemoApp]()
+					state.last_action = 'Edited ${edit.row_id}.${edit.col_id}'
+				}
+				on_crud_error:       fn (msg string, mut _ gui.Event, mut w gui.Window) {
+					mut state := w.state[DataGridSourceDemoApp]()
+					state.last_action = 'CRUD error: ${msg}'
 				}
 			),
 		]
@@ -123,40 +133,60 @@ fn data_source_demo_rebuild_source(mut app DataGridSourceDemoApp) {
 fn data_source_demo_columns() []gui.GridColumnCfg {
 	return [
 		gui.GridColumnCfg{
-			id:    'name'
-			title: 'Name'
-			width: 180
+			id:            'name'
+			title:         'Name'
+			width:         180
+			editable:      true
+			default_value: 'New User'
 		},
 		gui.GridColumnCfg{
-			id:    'team'
-			title: 'Team'
-			width: 140
+			id:             'team'
+			title:          'Team'
+			width:          140
+			editable:       true
+			editor:         .select
+			editor_options: ['Core', 'Data', 'Platform', 'R&D', 'Web', 'Security']
+			default_value:  'Core'
 		},
 		gui.GridColumnCfg{
-			id:    'email'
-			title: 'Email'
-			width: 250
+			id:            'email'
+			title:         'Email'
+			width:         250
+			editable:      true
+			default_value: 'new@grid.dev'
 		},
 		gui.GridColumnCfg{
-			id:    'status'
-			title: 'Status'
-			width: 120
+			id:             'status'
+			title:          'Status'
+			width:          120
+			editable:       true
+			editor:         .select
+			editor_options: ['Open', 'Paused', 'Closed']
+			default_value:  'Open'
 		},
 		gui.GridColumnCfg{
-			id:    'active'
-			title: 'Active'
-			width: 90
+			id:            'active'
+			title:         'Active'
+			width:         90
+			editable:      true
+			editor:        .checkbox
+			default_value: 'true'
 		},
 		gui.GridColumnCfg{
-			id:    'score'
-			title: 'Score'
-			width: 110
-			align: .end
+			id:            'score'
+			title:         'Score'
+			width:         110
+			align:         .end
+			editable:      true
+			default_value: '70'
 		},
 		gui.GridColumnCfg{
-			id:    'start'
-			title: 'Start'
-			width: 130
+			id:            'start'
+			title:         'Start'
+			width:         130
+			editable:      true
+			editor:        .date
+			default_value: '1/1/2026'
 		},
 	]
 }

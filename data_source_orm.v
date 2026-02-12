@@ -37,14 +37,26 @@ pub:
 
 pub type GridOrmFetchFn = fn (spec GridOrmQuerySpec, signal &GridAbortSignal) !GridOrmPage
 
+pub type GridOrmCreateFn = fn (rows []GridRow, signal &GridAbortSignal) ![]GridRow
+
+pub type GridOrmUpdateFn = fn (rows []GridRow, edits []GridCellEdit, signal &GridAbortSignal) ![]GridRow
+
+pub type GridOrmDeleteFn = fn (row_id string, signal &GridAbortSignal) !string
+
+pub type GridOrmDeleteManyFn = fn (row_ids []string, signal &GridAbortSignal) ![]string
+
 @[heap; minify]
 pub struct GridOrmDataSource {
 pub:
 	columns         []GridOrmColumnSpec
 	fetch_fn        GridOrmFetchFn @[required]
-	default_limit   int  = 100
-	supports_offset bool = true
-	row_count_known bool = true
+	default_limit   int                 = 100
+	supports_offset bool                = true
+	row_count_known bool                = true
+	create_fn       GridOrmCreateFn     = unsafe { nil }
+	update_fn       GridOrmUpdateFn     = unsafe { nil }
+	delete_fn       GridOrmDeleteFn     = unsafe { nil }
+	delete_many_fn  GridOrmDeleteManyFn = unsafe { nil }
 }
 
 pub fn (source GridOrmDataSource) capabilities() GridDataCapabilities {
@@ -53,6 +65,11 @@ pub fn (source GridOrmDataSource) capabilities() GridDataCapabilities {
 		supports_offset_pagination: source.supports_offset
 		supports_numbered_pages:    source.supports_offset
 		row_count_known:            source.row_count_known
+		supports_create:            source.create_fn != unsafe { nil }
+		supports_update:            source.update_fn != unsafe { nil }
+		supports_delete:            source.delete_fn != unsafe { nil }
+			|| source.delete_many_fn != unsafe { nil }
+		supports_batch_delete:      source.delete_many_fn != unsafe { nil }
 	}
 }
 
@@ -88,6 +105,84 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 		row_count:      page.row_count
 		has_more:       page.has_more
 		received_count: page.rows.len
+	}
+}
+
+pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
+	if grid_data_mutation_is_aborted(req) {
+		return error('request aborted')
+	}
+	return match req.kind {
+		.create {
+			if source.create_fn == unsafe { nil } {
+				return error('create not supported')
+			}
+			created := source.create_fn(req.rows.clone(), req.signal)!
+			if grid_data_mutation_is_aborted(req) {
+				return error('request aborted')
+			}
+			GridMutationResult{
+				created: created.clone()
+			}
+		}
+		.update {
+			if source.update_fn == unsafe { nil } {
+				return error('update not supported')
+			}
+			updated := source.update_fn(req.rows.clone(), req.edits.clone(), req.signal)!
+			if grid_data_mutation_is_aborted(req) {
+				return error('request aborted')
+			}
+			GridMutationResult{
+				updated: updated.clone()
+			}
+		}
+		.delete {
+			mut ids := []string{}
+			mut seen := map[string]bool{}
+			for row in req.rows {
+				id := row.id.trim_space()
+				if id.len == 0 || seen[id] {
+					continue
+				}
+				ids << id
+				seen[id] = true
+			}
+			for row_id in req.row_ids {
+				id := row_id.trim_space()
+				if id.len == 0 || seen[id] {
+					continue
+				}
+				ids << id
+				seen[id] = true
+			}
+			if ids.len == 0 {
+				return GridMutationResult{}
+			}
+			mut deleted_ids := []string{}
+			if ids.len > 1 && source.delete_many_fn != unsafe { nil } {
+				deleted_ids = source.delete_many_fn(ids.clone(), req.signal)!
+			} else if source.delete_fn != unsafe { nil } {
+				mut out := []string{cap: ids.len}
+				for row_id in ids {
+					deleted := source.delete_fn(row_id, req.signal)!
+					if deleted.len > 0 {
+						out << deleted
+					}
+				}
+				deleted_ids = out.clone()
+			} else if source.delete_many_fn != unsafe { nil } {
+				deleted_ids = source.delete_many_fn(ids.clone(), req.signal)!
+			} else {
+				return error('delete not supported')
+			}
+			if grid_data_mutation_is_aborted(req) {
+				return error('request aborted')
+			}
+			GridMutationResult{
+				deleted_ids: deleted_ids.clone()
+			}
+		}
 	}
 }
 

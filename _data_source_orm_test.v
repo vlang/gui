@@ -219,6 +219,87 @@ fn test_grid_orm_data_source_propagates_fetch_error() {
 	assert false
 }
 
+fn test_grid_orm_data_source_mutate_create_update_delete() {
+	mut source := GridOrmDataSource{
+		columns:        orm_test_columns()
+		fetch_fn:       orm_test_fetch_ok
+		create_fn:      fn (rows []GridRow, _ &GridAbortSignal) ![]GridRow {
+			assert rows.len == 1
+			return [
+				GridRow{
+					id:    '101'
+					cells: rows[0].cells.clone()
+				},
+			]
+		}
+		update_fn:      fn (_ []GridRow, edits []GridCellEdit, _ &GridAbortSignal) ![]GridRow {
+			assert edits.len == 1
+			return [
+				GridRow{
+					id:    edits[0].row_id
+					cells: {
+						edits[0].col_id: edits[0].value
+					}
+				},
+			]
+		}
+		delete_many_fn: fn (row_ids []string, _ &GridAbortSignal) ![]string {
+			assert row_ids == ['7', '8']
+			return row_ids
+		}
+	}
+	create_res := source.mutate_data(GridMutationRequest{
+		grid_id: 'orm-grid'
+		kind:    .create
+		rows:    [
+			GridRow{
+				id:    ''
+				cells: {
+					'name': 'New'
+				}
+			},
+		]
+	}) or { panic(err) }
+	assert create_res.created.len == 1
+	assert create_res.created[0].id == '101'
+
+	update_res := source.mutate_data(GridMutationRequest{
+		grid_id: 'orm-grid'
+		kind:    .update
+		edits:   [
+			GridCellEdit{
+				row_id: '5'
+				col_id: 'name'
+				value:  'Updated'
+			},
+		]
+	}) or { panic(err) }
+	assert update_res.updated.len == 1
+	assert update_res.updated[0].id == '5'
+
+	delete_res := source.mutate_data(GridMutationRequest{
+		grid_id: 'orm-grid'
+		kind:    .delete
+		row_ids: ['7', '8']
+	}) or { panic(err) }
+	assert delete_res.deleted_ids == ['7', '8']
+}
+
+fn test_grid_orm_data_source_mutate_unsupported_operation() {
+	mut source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	_ := source.mutate_data(GridMutationRequest{
+		grid_id: 'orm-grid'
+		kind:    .create
+	}) or {
+		assert err.msg().contains('not supported')
+		return
+	}
+	assert false
+}
+
 fn orm_test_fetch_ok(_ GridOrmQuerySpec, _ &GridAbortSignal) !GridOrmPage {
 	return GridOrmPage{}
 }

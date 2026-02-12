@@ -8,6 +8,12 @@ pub enum GridPaginationKind as u8 {
 	offset
 }
 
+pub enum GridMutationKind as u8 {
+	create
+	update
+	delete
+}
+
 @[minify]
 pub struct GridCursorPageReq {
 pub:
@@ -89,17 +95,46 @@ pub:
 	supports_offset_pagination bool
 	supports_numbered_pages    bool
 	row_count_known            bool
+	supports_create            bool
+	supports_update            bool
+	supports_delete            bool
+	supports_batch_delete      bool
+}
+
+@[minify]
+pub struct GridMutationRequest {
+pub:
+	grid_id    string
+	kind       GridMutationKind
+	query      GridQueryState
+	rows       []GridRow
+	row_ids    []string
+	edits      []GridCellEdit
+	signal     &GridAbortSignal = unsafe { nil }
+	request_id u64
+}
+
+@[minify]
+pub struct GridMutationResult {
+pub:
+	created     []GridRow
+	updated     []GridRow
+	deleted_ids []string
+	row_count   ?int
 }
 
 pub interface DataGridDataSource {
 	capabilities() GridDataCapabilities
 	fetch_data(req GridDataRequest) !GridDataResult
+mut:
+	mutate_data(req GridMutationRequest) !GridMutationResult
 }
 
 @[heap; minify]
 pub struct InMemoryCursorDataSource {
+pub mut:
+	rows []GridRow
 pub:
-	rows            []GridRow
 	default_limit   int = 100
 	latency_ms      int
 	row_count_known bool = true
@@ -112,6 +147,10 @@ pub fn (source InMemoryCursorDataSource) capabilities() GridDataCapabilities {
 		supports_offset_pagination: source.supports_offset
 		supports_numbered_pages:    source.supports_offset
 		row_count_known:            source.row_count_known
+		supports_create:            true
+		supports_update:            true
+		supports_delete:            true
+		supports_batch_delete:      true
 	}
 }
 
@@ -183,10 +222,33 @@ pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDa
 	}
 }
 
+pub fn (mut source InMemoryCursorDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
+	if grid_data_mutation_is_aborted(req) {
+		return error('request aborted')
+	}
+	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
+		return error('request aborted')
+	}
+	mut rows := source.rows.clone()
+	result := grid_data_source_apply_mutation(mut rows, req.kind, req.rows, req.row_ids,
+		req.edits)!
+	if grid_data_mutation_is_aborted(req) {
+		return error('request aborted')
+	}
+	source.rows = rows
+	return GridMutationResult{
+		created:     result.created.clone()
+		updated:     result.updated.clone()
+		deleted_ids: result.deleted_ids.clone()
+		row_count:   if source.row_count_known { ?int(source.rows.len) } else { none }
+	}
+}
+
 @[heap; minify]
 pub struct InMemoryOffsetDataSource {
+pub mut:
+	rows []GridRow
 pub:
-	rows              []GridRow
 	default_page_size int = 100
 	latency_ms        int
 	row_count_known   bool = true
@@ -198,6 +260,10 @@ pub fn (source InMemoryOffsetDataSource) capabilities() GridDataCapabilities {
 		supports_offset_pagination: true
 		supports_numbered_pages:    true
 		row_count_known:            source.row_count_known
+		supports_create:            true
+		supports_update:            true
+		supports_delete:            true
+		supports_batch_delete:      true
 	}
 }
 
@@ -243,7 +309,36 @@ pub fn (source InMemoryOffsetDataSource) fetch_data(req GridDataRequest) !GridDa
 	}
 }
 
+pub fn (mut source InMemoryOffsetDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
+	if grid_data_mutation_is_aborted(req) {
+		return error('request aborted')
+	}
+	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
+		return error('request aborted')
+	}
+	mut rows := source.rows.clone()
+	result := grid_data_source_apply_mutation(mut rows, req.kind, req.rows, req.row_ids,
+		req.edits)!
+	if grid_data_mutation_is_aborted(req) {
+		return error('request aborted')
+	}
+	source.rows = rows
+	return GridMutationResult{
+		created:     result.created.clone()
+		updated:     result.updated.clone()
+		deleted_ids: result.deleted_ids.clone()
+		row_count:   if source.row_count_known { ?int(source.rows.len) } else { none }
+	}
+}
+
 fn grid_data_request_is_aborted(req GridDataRequest) bool {
+	if isnil(req.signal) {
+		return false
+	}
+	return req.signal.is_aborted()
+}
+
+fn grid_data_mutation_is_aborted(req GridMutationRequest) bool {
 	if isnil(req.signal) {
 		return false
 	}
@@ -374,4 +469,151 @@ fn grid_query_signature(query GridQueryState) string {
 		out.write_string('${filter.col_id}:${filter.op}:${filter.value};')
 	}
 	return out.str()
+}
+
+@[minify]
+struct GridMutationApplyResult {
+	created     []GridRow
+	updated     []GridRow
+	deleted_ids []string
+}
+
+fn grid_data_source_apply_mutation(mut rows []GridRow, kind GridMutationKind, req_rows []GridRow, req_row_ids []string, edits []GridCellEdit) !GridMutationApplyResult {
+	return match kind {
+		.create { grid_data_source_apply_create(mut rows, req_rows) }
+		.update { grid_data_source_apply_update(mut rows, req_rows, edits) }
+		.delete { grid_data_source_apply_delete(mut rows, req_rows, req_row_ids) }
+	}
+}
+
+fn grid_data_source_apply_create(mut rows []GridRow, req_rows []GridRow) !GridMutationApplyResult {
+	if req_rows.len == 0 {
+		return GridMutationApplyResult{}
+	}
+	mut created := []GridRow{cap: req_rows.len}
+	for row in req_rows {
+		next_id := grid_data_source_next_mutation_row_id(rows, row.id)
+		next_row := GridRow{
+			...row
+			id:    next_id
+			cells: row.cells.clone()
+		}
+		rows << next_row
+		created << next_row
+	}
+	return GridMutationApplyResult{
+		created: created
+	}
+}
+
+fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits []GridCellEdit) !GridMutationApplyResult {
+	mut updated := []GridRow{}
+	if req_rows.len > 0 {
+		for req_row in req_rows {
+			if req_row.id.len == 0 {
+				continue
+			}
+			if idx := grid_data_source_row_index(rows, req_row.id) {
+				mut cells := rows[idx].cells.clone()
+				for key, value in req_row.cells {
+					cells[key] = value
+				}
+				rows[idx] = GridRow{
+					...rows[idx]
+					cells: cells
+				}
+				updated << rows[idx]
+			}
+		}
+	}
+	if edits.len > 0 {
+		for edit in edits {
+			if edit.row_id.len == 0 || edit.col_id.len == 0 {
+				continue
+			}
+			if idx := grid_data_source_row_index(rows, edit.row_id) {
+				mut cells := rows[idx].cells.clone()
+				cells[edit.col_id] = edit.value
+				rows[idx] = GridRow{
+					...rows[idx]
+					cells: cells
+				}
+				if !grid_data_source_rows_contains_id(updated, edit.row_id) {
+					updated << rows[idx]
+				}
+			}
+		}
+	}
+	return GridMutationApplyResult{
+		updated: updated
+	}
+}
+
+fn grid_data_source_apply_delete(mut rows []GridRow, req_rows []GridRow, req_row_ids []string) !GridMutationApplyResult {
+	mut delete_ids := map[string]bool{}
+	for row in req_rows {
+		if row.id.len > 0 {
+			delete_ids[row.id] = true
+		}
+	}
+	for row_id in req_row_ids {
+		id := row_id.trim_space()
+		if id.len > 0 {
+			delete_ids[id] = true
+		}
+	}
+	if delete_ids.len == 0 {
+		return GridMutationApplyResult{}
+	}
+	mut kept := []GridRow{cap: rows.len}
+	mut deleted_ids := []string{}
+	for idx, row in rows {
+		row_id := data_grid_row_id(row, idx)
+		if delete_ids[row_id] {
+			deleted_ids << row_id
+			continue
+		}
+		kept << row
+	}
+	rows = kept.clone()
+	return GridMutationApplyResult{
+		deleted_ids: deleted_ids
+	}
+}
+
+fn grid_data_source_row_index(rows []GridRow, row_id string) ?int {
+	if row_id.len == 0 {
+		return none
+	}
+	for idx, row in rows {
+		if data_grid_row_id(row, idx) == row_id {
+			return idx
+		}
+	}
+	return none
+}
+
+fn grid_data_source_rows_contains_id(rows []GridRow, row_id string) bool {
+	for idx, row in rows {
+		if data_grid_row_id(row, idx) == row_id {
+			return true
+		}
+	}
+	return false
+}
+
+fn grid_data_source_next_mutation_row_id(rows []GridRow, preferred_id string) string {
+	id := preferred_id.trim_space()
+	if id.len > 0 && !grid_data_source_rows_contains_id(rows, id) {
+		return id
+	}
+	mut next := rows.len + 1
+	for {
+		candidate := '${next}'
+		if !grid_data_source_rows_contains_id(rows, candidate) {
+			return candidate
+		}
+		next++
+	}
+	return '${rows.len + 1}'
 }
