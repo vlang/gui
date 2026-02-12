@@ -301,6 +301,12 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	if (pager_enabled || source_pager_enabled) && grid_height > 0 {
 		grid_height = f32_max(0, grid_height - data_grid_pager_height(resolved_cfg))
 	}
+	if crud_enabled {
+		toolbar_height := data_grid_crud_toolbar_height(resolved_cfg)
+		if grid_height > 0 {
+			grid_height = f32_max(0, grid_height - toolbar_height)
+		}
+	}
 	virtualize := grid_height > 0 && resolved_cfg.rows.len > 0
 	scroll_y := if virtualize {
 		-(window.view_state.scroll_y.get(scroll_id) or { f32(0) })
@@ -677,6 +683,10 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 			),
 		]
 	)
+}
+
+fn data_grid_crud_toolbar_height(cfg DataGridCfg) f32 {
+	return data_grid_header_height(cfg)
 }
 
 fn data_grid_crud_default_cells(cfg DataGridCfg) map[string]string {
