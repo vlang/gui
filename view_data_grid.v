@@ -1,3 +1,7 @@
+// Virtualized data grid with sorting, grouping, pagination,
+// frozen rows/columns, inline cell editing, CRUD operations,
+// row selection, column reordering/resizing/pinning, detail
+// row expansion, and CSV/TSV/XLSX/PDF export.
 module gui
 
 import compress.szip
@@ -255,7 +259,13 @@ pub:
 }
 
 // data_grid renders a controlled, virtualized data grid view.
+//
+// Orchestration: resolve config → source/CRUD state →
+// layout metrics → pagination → frozen rows →
+// virtualization → view assembly.
 pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
+	// Resolve data source (if any) and apply pending
+	// jump/selection from a previous page change.
 	resolved_cfg0, source_state0, has_source, source_caps := data_grid_resolve_source_cfg(cfg, mut
 		window)
 	mut resolved_cfg := resolved_cfg0
@@ -264,6 +274,9 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		data_grid_source_apply_pending_jump_selection(resolved_cfg, source_state, mut
 			window)
 	}
+
+	// If CRUD is enabled, overlay working copy of rows onto
+	// the resolved config so edits are reflected in the grid.
 	mut crud_state := DataGridCrudState{}
 	crud_enabled := data_grid_crud_enabled(resolved_cfg)
 	if crud_enabled {
@@ -276,6 +289,9 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 			}
 		}
 	}
+
+	// Interaction state: focus/scroll IDs, hovered/resizing
+	// column, and column chooser visibility.
 	row_delete_enabled := data_grid_crud_row_delete_enabled(resolved_cfg, has_source,
 		source_caps)
 	focus_id := data_grid_focus_id(resolved_cfg)
@@ -285,6 +301,12 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	chooser_open := window.view_state.data_grid_column_chooser_open.get(resolved_cfg.id) or {
 		false
 	}
+
+	// Height/layout waterfall: static_top accumulates
+	// non-scrolling zone heights (chooser, header, filter);
+	// grid_height subtracts pager and toolbar; virtualize
+	// requires both positive grid_height and rows; scroll_y
+	// is negated because scroll state is stored negative.
 	row_height := data_grid_row_height(resolved_cfg, mut window)
 	header_in_scroll_body := resolved_cfg.show_header && !resolved_cfg.freeze_header
 	static_top := data_grid_static_top_height(resolved_cfg, row_height, chooser_open,
@@ -313,12 +335,19 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	} else {
 		f32(0)
 	}
+
+	// Build column list and flat display rows (with group
+	// headers and detail rows interleaved). Apply any
+	// pending jump-to-row scroll from a prior page change.
 	columns := data_grid_effective_columns(resolved_cfg)
 	presentation := data_grid_presentation_rows(resolved_cfg, columns, body_page_indices)
 	if pager_enabled && !has_source {
 		data_grid_apply_pending_local_jump_scroll(resolved_cfg, grid_height, row_height,
 			static_top, scroll_id, presentation.data_to_display, mut window)
 	}
+
+	// Clear stale editing state if the edited row no longer
+	// exists (e.g. deleted or filtered out).
 	mut editing_row_id := data_grid_editing_row_id(resolved_cfg.id, window)
 	if editing_row_id.len > 0 && !data_grid_has_row_id(resolved_cfg.rows, editing_row_id) {
 		data_grid_clear_editing_row(resolved_cfg.id, mut window)
@@ -326,6 +355,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	}
 	focused_col_id := data_grid_header_focused_col_id(resolved_cfg, columns, window.id_focus())
 
+	// Pre-build header, frozen top rows, and column widths
+	// before entering the row assembly loop.
 	mut column_widths := data_grid_column_widths(resolved_cfg, mut window)
 	total_width := data_grid_columns_total_width(columns, column_widths)
 	header_view := data_grid_header_row(resolved_cfg, columns, column_widths, focus_id,
@@ -336,6 +367,11 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		row_delete_enabled, mut window)
 	scroll_x := window.view_state.scroll_x.get(scroll_id) or { f32(0) }
 	last_row_idx := presentation.rows.len - 1
+
+	// Virtual windowing: only rows in [first_visible,
+	// last_visible] are instantiated. Transparent spacer
+	// rectangles above and below fill the remaining height
+	// so the scrollbar reflects total content size.
 	first_visible, last_visible := if virtualize {
 		data_grid_visible_range_for_scroll(scroll_y, grid_height, row_height, presentation.rows.len,
 			static_top, data_grid_virtual_buffer_rows)
@@ -343,6 +379,9 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		0, last_row_idx
 	}
 
+	// Assemble scroll body rows: optional column chooser,
+	// non-frozen header, filter row, then source status
+	// placeholders when data is loading or errored.
 	mut rows := []View{cap: presentation.rows.len + 8}
 	if resolved_cfg.show_column_chooser {
 		rows << data_grid_column_chooser_row(resolved_cfg, chooser_open, focus_id)
@@ -369,6 +408,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		)
 	}
 
+	// Emit visible rows: group headers, detail expansions,
+	// or regular data rows depending on entry kind.
 	for row_idx in first_visible .. last_visible + 1 {
 		if row_idx < 0 || row_idx >= presentation.rows.len {
 			continue
@@ -405,6 +446,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		)
 	}
 
+	// Wrap all rows in a scrollable column with both
+	// horizontal and vertical scrollbars.
 	scrollbar_cfg := ScrollbarCfg{
 		overflow: resolved_cfg.scrollbar
 	}
@@ -420,6 +463,11 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		sizing:          fill_fill
 		content:         rows
 	)
+
+	// Frozen zone stacking order: CRUD toolbar → quick
+	// filter → frozen header → frozen top rows → scroll
+	// body → pager. Each frozen zone clips its content and
+	// offsets by scroll_x to track horizontal scroll.
 	mut content := []View{cap: 6}
 	if crud_enabled {
 		content << data_grid_crud_toolbar_row(resolved_cfg, crud_state, source_caps, has_source,
@@ -453,6 +501,9 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		content << data_grid_source_pager_row(resolved_cfg, focus_id, source_state, source_caps,
 			jump_text)
 	}
+
+	// Final assembly: outer column with keyboard/mouse
+	// handlers wrapping all frozen zones and scroll body.
 	return column(
 		name:          'data_grid'
 		id:            resolved_cfg.id
@@ -515,6 +566,10 @@ fn data_grid_rows_signature(rows []GridRow) u64 {
 	return fnv1a.sum64_string(parts.join('\x1d'))
 }
 
+// CRUD uses a working copy of rows. When no unsaved changes
+// exist and the source signature changes, the working copy
+// resets to match the new source data. Signature is an
+// FNV-1a hash of all row ids + cell values.
 fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, DataGridCrudState) {
 	mut state := window.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
 	// Use precomputed signature from source state when
@@ -818,6 +873,10 @@ fn data_grid_selection_remove_ids(selection GridSelection, remove_ids map[string
 	}
 }
 
+// Diffs working_rows against committed_rows to produce three
+// mutation lists: new draft rows (create), dirty non-draft rows
+// with per-cell deltas (update), and deleted row IDs.
+// committed_map enables O(1) lookup of previous cell values.
 fn data_grid_crud_build_payload(state DataGridCrudState) ([]GridRow, []GridRow, []GridCellEdit, []string) {
 	mut create_rows := []GridRow{}
 	mut update_rows := []GridRow{}
@@ -2008,6 +2067,11 @@ fn data_grid_row_click(cfg DataGridCfg, row_idx int, row_id string, focus_id u32
 	e.is_handled = true
 }
 
+// Three selection modes:
+// - Shift+click: range select from anchor to clicked row
+// - Ctrl/Cmd+click: toggle individual row in selection
+// - Plain click: single select, replaces entire selection
+// Anchor is persisted in view_state to survive re-renders.
 fn data_grid_compute_row_selection(rows []GridRow, selection GridSelection, grid_id string, multi_select bool, range_select bool, row_id string, mut e Event, mut w Window) GridSelection {
 	is_shift := e.modifiers.has(.shift)
 	is_toggle := e.modifiers.has(.ctrl) || e.modifiers.has(.super)
@@ -2269,6 +2333,10 @@ fn data_grid_first_editable_column_index(cfg DataGridCfg, columns []GridColumnCf
 	return -1
 }
 
+// Focus ID allocation: grid_focus_id is the base. Header
+// cells get IDs [base+1 .. base+col_count]. Editor cells
+// start at base+col_count+1, indexed by column only (not
+// row) because only one row is editable at a time.
 fn data_grid_cell_editor_focus_base_id(cfg DataGridCfg, col_count int) u32 {
 	if col_count <= 0 {
 		return 0
@@ -2603,6 +2671,12 @@ fn data_grid_header_pin_by_key(cfg DataGridCfg, col GridColumnCfg, col_count int
 	e.is_handled = true
 }
 
+// Keyboard bindings:
+// Escape: cancel edit/CRUD. Insert/Delete: CRUD ops.
+// F2: start editing. Ctrl+PageUp/Down: page navigation.
+// Ctrl+A: select all. Up/Down/Home/End/PageUp/PageDown:
+// row navigation with optional Shift for range extend.
+// Enter: activate row or commit edit.
 fn make_data_grid_on_keydown(cfg DataGridCfg, columns []GridColumnCfg, row_height f32, static_top f32, scroll_id u32, page_indices []int, frozen_top_ids map[string]bool, data_to_display map[int]int) fn (&Layout, mut Event, mut Window) {
 	grid_id := cfg.id
 	rows := cfg.rows
@@ -2802,6 +2876,10 @@ fn data_grid_scroll_row_into_view(cfg DataGridCfg, row_idx int, row_height f32, 
 		scroll_id, mut w)
 }
 
+// Computes scroll offset to make a row fully visible. If
+// row_top is above the viewport, scroll up to row_top. If
+// row_bottom is below viewport, scroll down so row_bottom
+// aligns with viewport bottom.
 fn data_grid_scroll_row_into_view_ex(viewport_h f32, row_idx int, row_height f32, static_top f32, scroll_id u32, mut w Window) {
 	if viewport_h <= 0 || row_height <= 0 {
 		return
@@ -3040,6 +3118,10 @@ fn data_grid_pdf_clip_text(value string) string {
 	return runes[..data_grid_pdf_max_line_chars - 3].string() + '...'
 }
 
+// Generates a minimal single-page PDF. Computes max visible
+// lines from page dimensions. Truncates overflow rows with a
+// summary line. Builds a PDF text stream with Courier font,
+// then assembles catalog → pages → page → content stream.
 fn data_grid_pdf_document(lines []string) string {
 	if lines.len == 0 {
 		return ''
@@ -3208,6 +3290,9 @@ fn data_grid_xlsx_cell_ref(col_idx int, row_idx int) string {
 	return '${data_grid_xlsx_col_ref(col_idx)}${row_idx}'
 }
 
+// Converts 0-based column index to Excel-style letter
+// reference (0→A, 25→Z, 26→AA). Uses base-26 with
+// 1-based digit values (A=1 not A=0).
 fn data_grid_xlsx_col_ref(col_idx int) string {
 	if col_idx < 0 {
 		return 'A'
@@ -3521,6 +3606,12 @@ fn data_grid_presentation(cfg DataGridCfg, columns []GridColumnCfg) DataGridPres
 		[]int{}))
 }
 
+// Builds the flat display list from data rows, inserting
+// group headers when grouped column values change. Group
+// headers carry depth, count, and aggregate text. Detail
+// expansion rows are interleaved after their parent data
+// row. data_to_display maps data row index → display index
+// for scroll-into-view.
 fn data_grid_presentation_rows(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int) DataGridPresentation {
 	mut rows := []DataGridDisplayRow{cap: cfg.rows.len + 8}
 	mut data_to_display := map[int]int{}
@@ -3649,6 +3740,11 @@ fn data_grid_group_range_key(depth int, start_idx int) string {
 	return '${depth}:${start_idx}'
 }
 
+// Pre-computes the contiguous range [start, end] for each
+// group at each nesting depth. Walks rows sequentially;
+// when a group value changes at depth D, closes ranges for
+// depths D..max, then opens new ranges. Key format is
+// "depth:start_idx".
 fn data_grid_group_ranges(rows []GridRow, group_cols []string) map[string]int {
 	mut ranges := map[string]int{}
 	if rows.len == 0 || group_cols.len == 0 {
@@ -3939,6 +4035,11 @@ fn data_grid_submit_local_jump(cfg DataGridCfg, total_rows int, page_index int, 
 	e.is_handled = true
 }
 
+// Navigates to a specific row by index. If the target is
+// on a different page, stores a pending jump and triggers a
+// page change; on the next frame, the pending jump is
+// applied as a scroll. If on current page, scrolls
+// immediately.
 fn data_grid_jump_to_local_row(cfg DataGridCfg, target_idx int, page_index int, viewport_h f32, row_height f32, static_top f32, scroll_id u32, data_to_display map[int]int, mut e Event, mut w Window) {
 	if target_idx < 0 || target_idx >= cfg.rows.len {
 		return
@@ -4044,6 +4145,10 @@ fn data_grid_range_indices(rows []GridRow, a string, b string) (int, int) {
 	return b_idx, a_idx
 }
 
+// Cycles sort state: none→asc→desc→none. In multi-sort
+// append mode (Shift+click), adds/updates/removes the
+// column in the existing sort list. In single-sort mode,
+// replaces the entire sort list.
 fn data_grid_toggle_sort(query GridQueryState, col_id string, multi_sort bool, append bool) GridQueryState {
 	mut next := GridQueryState{
 		sorts:        query.sorts.clone()
@@ -4260,6 +4365,11 @@ mut:
 	show_resize  bool
 }
 
+// Progressive disclosure: header controls (reorder, pin,
+// resize) shown only if they fit. Controls are dropped in
+// priority order (pin, reorder, resize). Label is hidden
+// if controls alone exceed width, then restored if dropping
+// controls freed enough space.
 fn data_grid_header_control_state(width f32, padding Padding, has_reorder bool, has_pin bool, has_resize bool) DataGridHeaderControlState {
 	available := f32_max(0, width - padding.width())
 	mut state := DataGridHeaderControlState{
@@ -4336,6 +4446,10 @@ fn data_grid_next_hidden_columns(hidden map[string]bool, col_id string, columns 
 	return next
 }
 
+// Resolves final visible column list: apply column_order
+// (fallback to declaration order), filter hidden columns,
+// ensure at least one column remains, then partition into
+// [left-pinned, unpinned, right-pinned].
 fn data_grid_effective_columns(cfg DataGridCfg) []GridColumnCfg {
 	if cfg.columns.len == 0 {
 		return []
@@ -4501,6 +4615,10 @@ fn grid_query_filter_value(query GridQueryState, col_id string) string {
 	return query.filters[idx].value
 }
 
+// Resolves column widths from cached view_state, falling
+// back to column config defaults. Clamps each width to
+// [min_width, max_width]. Prunes stale entries for removed
+// columns. Writes back to cache only if changed.
 fn data_grid_column_widths(cfg DataGridCfg, mut w Window) map[string]f32 {
 	mut widths := if cached := w.view_state.data_grid_col_widths.get(cfg.id) {
 		cached.widths.clone()
@@ -4577,6 +4695,9 @@ fn data_grid_clamp_width(col GridColumnCfg, width f32) f32 {
 	return f32_clamp(width, min_width, max_width)
 }
 
+// Computes pagination tuple (start, end, pageIndex,
+// pageCount). page_count rounds up. page_index clamped to
+// valid range. Returns [start, end) as half-open interval.
 fn data_grid_page_bounds(total_rows int, page_size int, requested_page int) (int, int, int, int) {
 	if total_rows <= 0 {
 		return 0, 0, 0, 1
@@ -4629,6 +4750,10 @@ fn data_grid_row_id(row GridRow, idx int) string {
 	return idx.str()
 }
 
+// Generates deterministic row ID from cell content when no
+// explicit ID is provided. Sorts cell keys for stability,
+// joins as "key=value" pairs, hashes with FNV-1a. Prefixed
+// with `__auto_` to avoid collisions with user IDs.
 fn data_grid_row_auto_id(row GridRow) string {
 	if row.cells.len == 0 {
 		return ''
@@ -4746,6 +4871,11 @@ fn data_grid_scroll_id(cfg DataGridCfg) u32 {
 	return fnv1a.sum32_string(cfg.id + ':scroll')
 }
 
+// Converts scroll position to range of row indices to
+// render. Subtracts static_top (non-scrolling header area)
+// from scroll_y to get body-relative offset. Adds buffer
+// rows above and below for smooth scrolling. Clamps to
+// [0, row_count-1].
 fn data_grid_visible_range_for_scroll(scroll_y f32, viewport_height f32, row_height f32, row_count int, static_top f32, buffer int) (int, int) {
 	if row_count == 0 || row_height <= 0 || viewport_height <= 0 {
 		return 0, -1
