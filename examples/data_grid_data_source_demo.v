@@ -79,6 +79,7 @@ fn main_view(mut window gui.Window) gui.View {
 			window.data_grid(
 				id:                  'source-grid'
 				max_height:          620
+				show_quick_filter:   true
 				columns:             app.columns
 				data_source:         app.source
 				pagination_kind:     if app.use_offset {

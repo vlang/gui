@@ -101,6 +101,12 @@ mut:
 	data_grid_edit_state          BoundedMap[string, DataGridEditState] = BoundedMap[string, DataGridEditState]{
 		max_size: 20
 	}
+	data_grid_jump_input          BoundedMap[string, string] = BoundedMap[string, string]{
+		max_size: 20
+	}
+	data_grid_pending_jump_row    BoundedMap[string, int] = BoundedMap[string, int]{
+		max_size: 20
+	}
 	data_grid_source_state        BoundedMap[string, DataGridSourceState] = BoundedMap[string, DataGridSourceState]{
 		max_size: 20
 	}
@@ -177,6 +183,7 @@ mut:
 	active_abort     &GridAbortController = unsafe { nil }
 	pagination_kind  GridPaginationKind   = .cursor
 	config_cursor    string
+	pending_jump_row int = -1
 }
 
 // TableColCache stores cached column widths and hash for invalidation

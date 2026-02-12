@@ -280,6 +280,92 @@ fn test_data_grid_quick_filter_matches_text_with_total() {
 	assert data_grid_quick_filter_matches_text(cfg) == 'Matches 2/50'
 }
 
+fn test_data_grid_jump_digits_and_target_parsing() {
+	assert data_grid_jump_digits('1a-2') == '12'
+	if target := data_grid_parse_jump_target('3', 10) {
+		assert target == 2
+	} else {
+		assert false
+	}
+	if target := data_grid_parse_jump_target('999', 10) {
+		assert target == 9
+	} else {
+		assert false
+	}
+	if _ := data_grid_parse_jump_target('0', 10) {
+		assert false
+	}
+	if _ := data_grid_parse_jump_target('', 10) {
+		assert false
+	}
+}
+
+fn test_data_grid_row_position_text_uses_page_start_without_selection() {
+	mut rows := []GridRow{cap: 100}
+	for i in 0 .. 100 {
+		rows << GridRow{
+			id: '${i + 1}'
+		}
+	}
+	cfg := DataGridCfg{
+		id:        'row-pos-page-start'
+		page_size: 20
+		columns:   []
+		rows:      rows
+	}
+	assert data_grid_row_position_text(cfg, 40, 60, 100) == 'Row 41 of 100'
+}
+
+fn test_data_grid_row_position_text_uses_active_row() {
+	cfg := DataGridCfg{
+		id:        'row-pos-active'
+		columns:   []
+		rows:      [
+			GridRow{
+				id: '1'
+			},
+			GridRow{
+				id: '2'
+			},
+			GridRow{
+				id: '3'
+			},
+		]
+		selection: GridSelection{
+			active_row_id: '2'
+		}
+	}
+	assert data_grid_row_position_text(cfg, 0, 3, 3) == 'Row 2 of 3'
+}
+
+fn test_data_grid_pager_padding_uses_cell_gutter_when_filter_padding_is_zero() {
+	cfg := DataGridCfg{
+		id:             'pager-padding-fallback'
+		columns:        []
+		rows:           []
+		padding_cell:   padding(0, 7, 0, 5)
+		padding_filter: padding_none
+	}
+	pad := data_grid_pager_padding(cfg)
+	assert pad.left == 5
+	assert pad.right == 7
+}
+
+fn test_data_grid_pager_padding_preserves_larger_filter_padding() {
+	cfg := DataGridCfg{
+		id:             'pager-padding-filter'
+		columns:        []
+		rows:           []
+		padding_cell:   padding(0, 4, 0, 3)
+		padding_filter: padding(2, 10, 1, 8)
+	}
+	pad := data_grid_pager_padding(cfg)
+	assert pad.top == 2
+	assert pad.bottom == 1
+	assert pad.left == 8
+	assert pad.right == 10
+}
+
 fn test_data_grid_scroll_padding_visible() {
 	cfg := DataGridCfg{
 		id:      'padding-visible'

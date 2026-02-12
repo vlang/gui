@@ -195,6 +195,45 @@ fn test_data_grid_source_rows_text_cursor_opaque_fallback() {
 	assert text == 'Rows 220/50000'
 }
 
+fn test_data_grid_source_row_position_text_offset() {
+	cfg := DataGridCfg{
+		id:        'source-row-position'
+		columns:   []
+		rows:      [
+			GridRow{
+				id: '101'
+			},
+			GridRow{
+				id: '102'
+			},
+		]
+		selection: GridSelection{
+			active_row_id: '102'
+		}
+	}
+	state := DataGridSourceState{
+		offset_start: 100
+		row_count:    ?int(500)
+	}
+	assert data_grid_source_row_position_text(cfg, state, .offset) == 'Row 102 of 500'
+}
+
+fn test_data_grid_source_jump_enabled_rules() {
+	cfg := DataGridCfg{
+		id:                  'source-jump'
+		columns:             []
+		rows:                []
+		on_selection_change: fn (_ GridSelection, mut _ Event, mut _ Window) {}
+	}
+	state := DataGridSourceState{
+		row_count: ?int(1000)
+	}
+	assert data_grid_source_jump_enabled(cfg, state, .offset, 200)
+	assert !data_grid_source_jump_enabled(cfg, state, .cursor, 200)
+	state_no_total := DataGridSourceState{}
+	assert !data_grid_source_jump_enabled(cfg, state_no_total, .offset, 200)
+}
+
 fn data_source_rows(count int) []GridRow {
 	mut rows := []GridRow{cap: count}
 	for i in 0 .. count {

@@ -1,5 +1,7 @@
 module gui
 
+import hash.fnv1a
+
 pub struct DataGridSourceStats {
 pub:
 	loading          bool
@@ -99,6 +101,33 @@ fn data_grid_source_resolve_state(cfg DataGridCfg, caps GridDataCapabilities, mu
 	return state
 }
 
+fn data_grid_source_apply_pending_jump_selection(cfg DataGridCfg, state DataGridSourceState, mut window Window) {
+	if cfg.on_selection_change == unsafe { nil } || state.pending_jump_row < 0 {
+		return
+	}
+	if state.loading {
+		return
+	}
+	local_idx := state.pending_jump_row - state.offset_start
+	if local_idx < 0 || local_idx >= cfg.rows.len {
+		return
+	}
+	row_id := data_grid_row_id(cfg.rows[local_idx], local_idx)
+	next := GridSelection{
+		anchor_row_id:    row_id
+		active_row_id:    row_id
+		selected_row_ids: {
+			row_id: true
+		}
+	}
+	mut e := Event{}
+	cfg.on_selection_change(next, mut e, mut window)
+	data_grid_set_anchor(cfg.id, row_id, mut window)
+	mut next_state := window.view_state.data_grid_source_state.get(cfg.id) or { return }
+	next_state.pending_jump_row = -1
+	window.view_state.data_grid_source_state.set(cfg.id, next_state)
+}
+
 fn data_grid_source_apply_query_reset(mut state DataGridSourceState, cfg DataGridCfg) {
 	query_signature := grid_query_signature(cfg.query)
 	if query_signature == state.query_signature {
@@ -110,6 +139,7 @@ fn data_grid_source_apply_query_reset(mut state DataGridSourceState, cfg DataGri
 	state.prev_cursor = ''
 	state.offset_start = 0
 	state.request_key = ''
+	state.pending_jump_row = -1
 }
 
 fn data_grid_source_effective_pagination_kind(preferred GridPaginationKind, caps GridDataCapabilities) GridPaginationKind {
@@ -359,6 +389,75 @@ fn data_grid_source_next_page(grid_id string, kind GridPaginationKind, page_limi
 	window.update_window()
 }
 
+fn data_grid_source_jump_to_row(grid_id string, target_idx int, page_limit int, mut window Window) {
+	if page_limit <= 0 || target_idx < 0 {
+		return
+	}
+	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	state.pending_jump_row = target_idx
+	page_start := (target_idx / page_limit) * page_limit
+	if page_start != state.offset_start {
+		state.offset_start = page_start
+		state.request_key = ''
+		state.load_error = ''
+	}
+	window.view_state.data_grid_source_state.set(grid_id, state)
+	window.update_window()
+}
+
+fn data_grid_source_row_position_text(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind) string {
+	total_text := if total := state.row_count {
+		total.str()
+	} else {
+		'?'
+	}
+	if cfg.rows.len == 0 {
+		return 'Row 0 of ${total_text}'
+	}
+	mut local_idx := data_grid_active_row_index_strict(cfg.rows, cfg.selection)
+	if local_idx < 0 || local_idx >= cfg.rows.len {
+		local_idx = 0
+	}
+	mut current := local_idx + 1
+	if kind == .offset {
+		current = state.offset_start + local_idx + 1
+	} else if start := grid_data_source_cursor_to_index_opt(state.current_cursor) {
+		current = start + local_idx + 1
+	}
+	if total := state.row_count {
+		current = int_clamp(current, 0, total)
+	}
+	return 'Row ${current} of ${total_text}'
+}
+
+fn data_grid_source_jump_enabled(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind, page_limit int) bool {
+	if cfg.on_selection_change == unsafe { nil } || page_limit <= 0 {
+		return false
+	}
+	if kind != .offset || state.loading || state.load_error.len > 0 {
+		return false
+	}
+	if total := state.row_count {
+		return total > 0
+	}
+	return false
+}
+
+fn data_grid_source_submit_jump(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind, page_limit int, grid_id string, focus_id u32, mut e Event, mut window Window) {
+	if !data_grid_source_jump_enabled(cfg, state, kind, page_limit) {
+		return
+	}
+	total := state.row_count or { return }
+	jump_text := window.view_state.data_grid_jump_input.get(grid_id) or { '' }
+	target_idx := data_grid_parse_jump_target(jump_text, total) or { return }
+	window.view_state.data_grid_jump_input.set(grid_id, '${target_idx + 1}')
+	data_grid_source_jump_to_row(grid_id, target_idx, page_limit, mut window)
+	if focus_id > 0 {
+		window.set_id_focus(focus_id)
+	}
+	e.is_handled = true
+}
+
 fn data_grid_source_retry(grid_id string, mut window Window) {
 	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
 	state.request_key = ''
@@ -367,12 +466,13 @@ fn data_grid_source_retry(grid_id string, mut window Window) {
 	window.update_window()
 }
 
-fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourceState, caps GridDataCapabilities) View {
+fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourceState, caps GridDataCapabilities, jump_text string) View {
 	kind := data_grid_source_effective_pagination_kind(cfg.pagination_kind, caps)
 	page_limit := data_grid_page_limit(cfg)
 	has_prev := data_grid_source_can_prev(kind, state, page_limit)
 	has_next := data_grid_source_can_next(kind, state, page_limit)
 	rows_text := data_grid_source_rows_text(kind, state)
+	jump_enabled := data_grid_source_jump_enabled(cfg, state, kind, page_limit)
 	mode_text := if kind == .cursor { 'Cursor' } else { 'Offset' }
 	status := if state.loading {
 		'Loading...'
@@ -382,7 +482,8 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 		mode_text
 	}
 	grid_id := cfg.id
-	mut content := []View{cap: 8}
+	jump_input_id := '${grid_id}:jump'
+	mut content := []View{cap: 10}
 	content << button(
 		width:        data_grid_header_control_width + 10
 		sizing:       fixed_fill
@@ -479,6 +580,7 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 		name:    'data_grid source rows status'
 		sizing:  fit_fill
 		padding: padding(0, 6, 0, 0)
+		v_align: .middle
 		content: [
 			text(
 				text:       rows_text
@@ -487,6 +589,40 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 			),
 		]
 	)
+	if kind == .offset {
+		content << text(
+			text:       'Jump'
+			mode:       .single_line
+			text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+		)
+		content << input(
+			id:              jump_input_id
+			id_focus:        fnv1a.sum32_string(jump_input_id)
+			text:            jump_text
+			placeholder:     '#'
+			disabled:        !jump_enabled
+			width:           68
+			sizing:          fixed_fill
+			padding:         padding_none
+			size_border:     0
+			radius:          0
+			color:           cfg.color_filter
+			color_hover:     cfg.color_filter
+			color_border:    cfg.color_border
+			text_style:      cfg.text_style_filter
+			on_text_changed: fn [cfg, state, kind, page_limit, grid_id] (_ &Layout, text string, mut w Window) {
+				digits := data_grid_jump_digits(text)
+				w.view_state.data_grid_jump_input.set(grid_id, digits)
+				mut e := Event{}
+				data_grid_source_submit_jump(cfg, state, kind, page_limit, grid_id, 0, mut
+					e, mut w)
+			}
+			on_enter:        fn [cfg, state, kind, page_limit, grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_source_submit_jump(cfg, state, kind, page_limit, grid_id, focus_id, mut
+					e, mut w)
+			}
+		)
+	}
 	return row(
 		name:         'data_grid source pager row'
 		height:       data_grid_pager_height(cfg)
@@ -494,7 +630,7 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 		color:        cfg.color_filter
 		color_border: cfg.color_border
 		size_border:  0
-		padding:      cfg.padding_filter
+		padding:      data_grid_pager_padding(cfg)
 		spacing:      6
 		v_align:      .middle
 		content:      content

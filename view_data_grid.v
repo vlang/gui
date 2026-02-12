@@ -252,6 +252,10 @@ pub:
 pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	resolved_cfg, source_state, has_source, source_caps := data_grid_resolve_source_cfg(cfg, mut
 		window)
+	if has_source {
+		data_grid_source_apply_pending_jump_selection(resolved_cfg, source_state, mut
+			window)
+	}
 	focus_id := data_grid_focus_id(resolved_cfg)
 	scroll_id := data_grid_scroll_id(resolved_cfg)
 	hovered_col_id := window.view_state.data_grid_header_hover_col.get(resolved_cfg.id) or { '' }
@@ -283,6 +287,10 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	}
 	columns := data_grid_effective_columns(resolved_cfg)
 	presentation := data_grid_presentation_rows(resolved_cfg, columns, body_page_indices)
+	if pager_enabled && !has_source {
+		data_grid_apply_pending_local_jump_scroll(resolved_cfg, grid_height, row_height,
+			static_top, scroll_id, presentation.data_to_display, mut window)
+	}
 	mut editing_row_id := data_grid_editing_row_id(resolved_cfg.id, window)
 	if editing_row_id.len > 0 && !data_grid_has_row_id(resolved_cfg.rows, editing_row_id) {
 		data_grid_clear_editing_row(resolved_cfg.id, mut window)
@@ -403,11 +411,15 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	content << scroll_body
 	if pager_enabled {
 		total_rows := if count := resolved_cfg.row_count { count } else { resolved_cfg.rows.len }
+		jump_text := window.view_state.data_grid_jump_input.get(resolved_cfg.id) or { '' }
 		content << data_grid_pager_row(resolved_cfg, focus_id, page_index, page_count,
-			page_start, page_end, total_rows)
+			page_start, page_end, total_rows, grid_height, row_height, static_top, scroll_id,
+			presentation.data_to_display, jump_text)
 	}
 	if source_pager_enabled {
-		content << data_grid_source_pager_row(resolved_cfg, focus_id, source_state, source_caps)
+		jump_text := window.view_state.data_grid_jump_input.get(resolved_cfg.id) or { '' }
+		content << data_grid_source_pager_row(resolved_cfg, focus_id, source_state, source_caps,
+			jump_text)
 	}
 	return column(
 		name:          'data_grid'
@@ -662,7 +674,7 @@ fn data_grid_column_chooser_height(cfg DataGridCfg, is_open bool) f32 {
 	return if is_open { base * 2 } else { base }
 }
 
-fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count int, page_start int, page_end int, total_rows int) View {
+fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count int, page_start int, page_end int, total_rows int, viewport_h f32, row_height f32, static_top f32, scroll_id u32, data_to_display map[int]int, jump_text string) View {
 	on_page_change := cfg.on_page_change
 	has_callback := on_page_change != unsafe { nil }
 	is_first := page_index <= 0
@@ -673,6 +685,130 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 	} else {
 		'Rows ${page_start + 1}-${page_end}/${total_rows}'
 	}
+	jump_enabled := data_grid_jump_enabled_local(cfg, total_rows)
+	grid_id := cfg.id
+	jump_input_id := '${grid_id}:jump'
+	jump_focus_id := fnv1a.sum32_string(jump_input_id)
+	mut content := []View{cap: 9}
+	content << button(
+		width:        data_grid_header_control_width + 10
+		sizing:       fixed_fill
+		padding:      padding_none
+		size_border:  0
+		radius:       0
+		color:        color_transparent
+		color_hover:  cfg.color_header_hover
+		color_focus:  color_transparent
+		color_click:  cfg.color_header_hover
+		color_border: color_transparent
+		disabled:     !has_callback || is_first
+		on_click:     fn [on_page_change, page_index, focus_id] (_ &Layout, mut e Event, mut w Window) {
+			if on_page_change == unsafe { nil } {
+				return
+			}
+			next := int_max(0, page_index - 1)
+			on_page_change(next, mut e, mut w)
+			if focus_id > 0 {
+				w.set_id_focus(focus_id)
+			}
+			e.is_handled = true
+		}
+		content:      [
+			text(
+				text:       '◀'
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(cfg.text_style_header)
+			),
+		]
+	)
+	content << text(
+		text:       page_text
+		mode:       .single_line
+		text_style: cfg.text_style_filter
+	)
+	content << button(
+		width:        data_grid_header_control_width + 10
+		sizing:       fixed_fill
+		padding:      padding_none
+		size_border:  0
+		radius:       0
+		color:        color_transparent
+		color_hover:  cfg.color_header_hover
+		color_focus:  color_transparent
+		color_click:  cfg.color_header_hover
+		color_border: color_transparent
+		disabled:     !has_callback || is_last
+		on_click:     fn [on_page_change, page_index, page_count, focus_id] (_ &Layout, mut e Event, mut w Window) {
+			if on_page_change == unsafe { nil } {
+				return
+			}
+			next := int_min(page_count - 1, page_index + 1)
+			on_page_change(next, mut e, mut w)
+			if focus_id > 0 {
+				w.set_id_focus(focus_id)
+			}
+			e.is_handled = true
+		}
+		content:      [
+			text(
+				text:       '▶'
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(cfg.text_style_header)
+			),
+		]
+	)
+	content << row(
+		name:    'data_grid pager spacer'
+		sizing:  fill_fill
+		padding: padding_none
+		content: []
+	)
+	content << row(
+		name:    'data_grid pager rows status'
+		sizing:  fit_fill
+		padding: padding(0, 6, 0, 0)
+		v_align: .middle
+		content: [
+			text(
+				text:       rows_text
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+			),
+		]
+	)
+	content << text(
+		text:       'Jump'
+		mode:       .single_line
+		text_style: data_grid_indicator_text_style(cfg.text_style_filter)
+	)
+	content << input(
+		id:              jump_input_id
+		id_focus:        jump_focus_id
+		text:            jump_text
+		placeholder:     '#'
+		disabled:        !jump_enabled
+		width:           68
+		sizing:          fixed_fill
+		padding:         padding_none
+		size_border:     0
+		radius:          0
+		color:           cfg.color_filter
+		color_hover:     cfg.color_filter
+		color_border:    cfg.color_border
+		text_style:      cfg.text_style_filter
+		on_text_changed: fn [cfg, total_rows, page_index, viewport_h, row_height, static_top, scroll_id, data_to_display, grid_id] (_ &Layout, text string, mut w Window) {
+			digits := data_grid_jump_digits(text)
+			w.view_state.data_grid_jump_input.set(grid_id, digits)
+			mut e := Event{}
+			data_grid_submit_local_jump(cfg, total_rows, page_index, viewport_h, row_height,
+				static_top, scroll_id, data_to_display, grid_id, 0, mut e, mut w)
+		}
+		on_enter:        fn [cfg, total_rows, page_index, viewport_h, row_height, static_top, scroll_id, data_to_display, grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
+			data_grid_submit_local_jump(cfg, total_rows, page_index, viewport_h, row_height,
+				static_top, scroll_id, data_to_display, grid_id, focus_id, mut e, mut
+				w)
+		}
+	)
 	return row(
 		name:         'data_grid pager row'
 		height:       data_grid_pager_height(cfg)
@@ -680,96 +816,10 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 		color:        cfg.color_filter
 		color_border: cfg.color_border
 		size_border:  0
-		padding:      cfg.padding_filter
+		padding:      data_grid_pager_padding(cfg)
 		spacing:      6
 		v_align:      .middle
-		content:      [
-			button(
-				width:        data_grid_header_control_width + 10
-				sizing:       fixed_fill
-				padding:      padding_none
-				size_border:  0
-				radius:       0
-				color:        color_transparent
-				color_hover:  cfg.color_header_hover
-				color_focus:  color_transparent
-				color_click:  cfg.color_header_hover
-				color_border: color_transparent
-				disabled:     !has_callback || is_first
-				on_click:     fn [on_page_change, page_index, focus_id] (_ &Layout, mut e Event, mut w Window) {
-					if on_page_change == unsafe { nil } {
-						return
-					}
-					next := int_max(0, page_index - 1)
-					on_page_change(next, mut e, mut w)
-					if focus_id > 0 {
-						w.set_id_focus(focus_id)
-					}
-					e.is_handled = true
-				}
-				content:      [
-					text(
-						text:       '◀'
-						mode:       .single_line
-						text_style: data_grid_indicator_text_style(cfg.text_style_header)
-					),
-				]
-			),
-			text(
-				text:       page_text
-				mode:       .single_line
-				text_style: cfg.text_style_filter
-			),
-			button(
-				width:        data_grid_header_control_width + 10
-				sizing:       fixed_fill
-				padding:      padding_none
-				size_border:  0
-				radius:       0
-				color:        color_transparent
-				color_hover:  cfg.color_header_hover
-				color_focus:  color_transparent
-				color_click:  cfg.color_header_hover
-				color_border: color_transparent
-				disabled:     !has_callback || is_last
-				on_click:     fn [on_page_change, page_index, page_count, focus_id] (_ &Layout, mut e Event, mut w Window) {
-					if on_page_change == unsafe { nil } {
-						return
-					}
-					next := int_min(page_count - 1, page_index + 1)
-					on_page_change(next, mut e, mut w)
-					if focus_id > 0 {
-						w.set_id_focus(focus_id)
-					}
-					e.is_handled = true
-				}
-				content:      [
-					text(
-						text:       '▶'
-						mode:       .single_line
-						text_style: data_grid_indicator_text_style(cfg.text_style_header)
-					),
-				]
-			),
-			row(
-				name:    'data_grid pager spacer'
-				sizing:  fill_fill
-				padding: padding_none
-				content: []
-			),
-			row(
-				name:    'data_grid pager rows status'
-				sizing:  fit_fill
-				padding: padding(0, 6, 0, 0)
-				content: [
-					text(
-						text:       rows_text
-						mode:       .single_line
-						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
-					),
-				]
-			),
-		]
+		content:      content
 	)
 }
 
@@ -3111,6 +3161,146 @@ fn data_grid_active_row_index(rows []GridRow, selection GridSelection) int {
 	return 0
 }
 
+fn data_grid_active_row_index_strict(rows []GridRow, selection GridSelection) int {
+	if rows.len == 0 {
+		return -1
+	}
+	if selection.active_row_id.len > 0 {
+		for idx, row in rows {
+			if data_grid_row_id(row, idx) == selection.active_row_id {
+				return idx
+			}
+		}
+	}
+	if selection.selected_row_ids.len > 0 {
+		for idx, row in rows {
+			if selection.selected_row_ids[data_grid_row_id(row, idx)] {
+				return idx
+			}
+		}
+	}
+	return -1
+}
+
+fn data_grid_row_position_text(cfg DataGridCfg, page_start int, page_end int, total_rows int) string {
+	if total_rows <= 0 {
+		return 'Row 0 of 0'
+	}
+	mut row_idx := data_grid_active_row_index_strict(cfg.rows, cfg.selection)
+	if row_idx < 0 {
+		row_idx = if cfg.page_size > 0 && page_end > page_start { page_start } else { 0 }
+	}
+	if cfg.page_size > 0 && (row_idx < page_start || row_idx >= page_end) {
+		row_idx = if page_end > page_start { page_start } else { 0 }
+	}
+	row_idx = int_clamp(row_idx, 0, total_rows - 1)
+	return 'Row ${row_idx + 1} of ${total_rows}'
+}
+
+fn data_grid_jump_enabled_local(cfg DataGridCfg, total_rows int) bool {
+	if total_rows <= 0 || cfg.rows.len == 0 {
+		return false
+	}
+	if cfg.on_selection_change == unsafe { nil } {
+		return false
+	}
+	if cfg.page_size > 0 && cfg.on_page_change == unsafe { nil } {
+		return false
+	}
+	return true
+}
+
+fn data_grid_jump_digits(text string) string {
+	mut digits := []u8{cap: text.len}
+	for ch in text.bytes() {
+		if ch >= `0` && ch <= `9` {
+			digits << ch
+		}
+	}
+	return digits.bytestr()
+}
+
+fn data_grid_parse_jump_target(text string, total_rows int) ?int {
+	if total_rows <= 0 {
+		return none
+	}
+	digits := data_grid_jump_digits(text)
+	if digits.len == 0 {
+		return none
+	}
+	target := digits.int()
+	if target <= 0 {
+		return none
+	}
+	return int_clamp(target, 1, total_rows) - 1
+}
+
+fn data_grid_submit_local_jump(cfg DataGridCfg, total_rows int, page_index int, viewport_h f32, row_height f32, static_top f32, scroll_id u32, data_to_display map[int]int, grid_id string, focus_id u32, mut e Event, mut w Window) {
+	if !data_grid_jump_enabled_local(cfg, total_rows) {
+		return
+	}
+	jump_text := w.view_state.data_grid_jump_input.get(grid_id) or { '' }
+	target_idx := data_grid_parse_jump_target(jump_text, total_rows) or { return }
+	w.view_state.data_grid_jump_input.set(grid_id, '${target_idx + 1}')
+	data_grid_jump_to_local_row(cfg, target_idx, page_index, viewport_h, row_height, static_top,
+		scroll_id, data_to_display, mut e, mut w)
+	if focus_id > 0 {
+		w.set_id_focus(focus_id)
+	}
+	e.is_handled = true
+}
+
+fn data_grid_jump_to_local_row(cfg DataGridCfg, target_idx int, page_index int, viewport_h f32, row_height f32, static_top f32, scroll_id u32, data_to_display map[int]int, mut e Event, mut w Window) {
+	if target_idx < 0 || target_idx >= cfg.rows.len {
+		return
+	}
+	target_row_id := data_grid_row_id(cfg.rows[target_idx], target_idx)
+	if cfg.on_selection_change != unsafe { nil } {
+		next := GridSelection{
+			anchor_row_id:    target_row_id
+			active_row_id:    target_row_id
+			selected_row_ids: {
+				target_row_id: true
+			}
+		}
+		cfg.on_selection_change(next, mut e, mut w)
+		data_grid_set_anchor(cfg.id, target_row_id, mut w)
+	}
+	if cfg.page_size > 0 {
+		if cfg.on_page_change == unsafe { nil } {
+			return
+		}
+		target_page := target_idx / cfg.page_size
+		if target_page != page_index {
+			w.view_state.data_grid_pending_jump_row.set(cfg.id, target_idx)
+			cfg.on_page_change(target_page, mut e, mut w)
+			return
+		}
+	}
+	w.view_state.data_grid_pending_jump_row.delete(cfg.id)
+	display_idx := data_to_display[target_idx] or { -1 }
+	if display_idx < 0 {
+		return
+	}
+	data_grid_scroll_row_into_view_ex(viewport_h, display_idx, row_height, static_top,
+		scroll_id, mut w)
+}
+
+fn data_grid_apply_pending_local_jump_scroll(cfg DataGridCfg, viewport_h f32, row_height f32, static_top f32, scroll_id u32, data_to_display map[int]int, mut w Window) {
+	target_idx := w.view_state.data_grid_pending_jump_row.get(cfg.id) or { return }
+	if target_idx < 0 || target_idx >= cfg.rows.len {
+		w.view_state.data_grid_pending_jump_row.delete(cfg.id)
+		return
+	}
+	display_idx := data_to_display[target_idx] or { return }
+	if display_idx < 0 {
+		return
+	}
+	data_grid_scroll_row_into_view_ex(viewport_h, display_idx, row_height, static_top,
+		scroll_id, mut w)
+	w.view_state.data_grid_pending_jump_row.delete(cfg.id)
+}
+
 fn data_grid_anchor_row_id(cfg DataGridCfg, mut w Window, fallback string) string {
 	return data_grid_anchor_row_id_ex(cfg.selection, cfg.id, cfg.rows, mut w, fallback)
 }
@@ -3788,6 +3978,12 @@ fn data_grid_pager_height(cfg DataGridCfg) f32 {
 		return cfg.row_height
 	}
 	return data_grid_header_height(cfg)
+}
+
+fn data_grid_pager_padding(cfg DataGridCfg) Padding {
+	left := f32_max(cfg.padding_filter.left, cfg.padding_cell.left)
+	right := f32_max(cfg.padding_filter.right, cfg.padding_cell.right)
+	return padding(cfg.padding_filter.top, right, cfg.padding_filter.bottom, left)
 }
 
 fn data_grid_header_height(cfg DataGridCfg) f32 {
