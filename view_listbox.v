@@ -40,11 +40,15 @@ pub:
 // See [list_box_option](#list_box_option) helper method.
 pub struct ListBoxOption {
 pub:
-	id    string
-	name  string
-	value string
+	id            string
+	name          string
+	value         string
+	is_subheading bool
 }
 
+// ListBoxDataRequest is passed to ListBoxDataSource.fetch_data.
+// Reuses GridAbortSignal/GridAbortController from data_source.v
+// as shared cancellation primitives.
 @[minify]
 pub struct ListBoxDataRequest {
 pub:
@@ -101,7 +105,8 @@ pub:
 // list_box builds a list box without viewport virtualization.
 // Use [Window.list_box](#list_box) for virtualization support.
 pub fn list_box(cfg ListBoxCfg) View {
-	return list_box_from_range(0, cfg.data.len - 1, cfg, false, f32(0))
+	last := if cfg.data.len > 0 { cfg.data.len - 1 } else { -1 }
+	return list_box_from_range(0, last, cfg, false, f32(0))
 }
 
 // list_box is a convenience view for simple cases. See [ListBoxCfg](#ListBoxCfg).
@@ -151,11 +156,12 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 		)
 	}
 
+	selected := list_box_selection_map(cfg.selected_ids)
 	for idx in first_visible .. last_visible + 1 {
 		if idx < 0 || idx >= cfg.data.len {
 			continue
 		}
-		list << list_box_item_view(cfg.data[idx], cfg)
+		list << list_box_item_view(cfg.data[idx], cfg, selected)
 	}
 
 	if virtualize && last_visible < last_row_idx {
@@ -188,23 +194,23 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	)
 }
 
-fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
-	color := if dat.id in cfg.selected_ids {
+fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, selected map[string]bool) View {
+	color := if dat.id in selected {
 		cfg.color_select
 	} else {
 		color_transparent
 	}
-	is_subheader := dat.name.starts_with('---')
+	is_sub := dat.is_subheading
 	mut content := []View{cap: 1}
 
-	if is_subheader {
+	if is_sub {
 		content << column(
 			spacing: 1
 			padding: padding_none
 			sizing:  fill_fit
 			content: [
 				text(
-					text:       dat.name[3..]
+					text:       dat.name
 					text_style: cfg.subheading_style
 				),
 				row(
@@ -242,8 +248,8 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
 		padding:  padding_two_five
 		sizing:   fill_fit
 		content:  content
-		on_click: fn [is_multiple, on_select, selected_ids, dat_id, is_subheader] (_ voidptr, mut e Event, mut w Window) {
-			if on_select != unsafe { nil } && !is_subheader {
+		on_click: fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ voidptr, mut e Event, mut w Window) {
+			if has_on_select && !is_sub {
 				mut ids := selected_ids.clone()
 				if !is_multiple {
 					ids.clear()
@@ -256,8 +262,8 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
 				on_select(ids, mut e, mut w)
 			}
 		}
-		on_hover: fn [has_on_select, color_hover, is_subheader] (mut layout Layout, mut e Event, mut w Window) {
-			if has_on_select && !is_subheader {
+		on_hover: fn [has_on_select, color_hover, is_sub] (mut layout Layout, mut e Event, mut w Window) {
+			if has_on_select && !is_sub {
 				w.set_mouse_cursor_pointing_hand()
 				if layout.shape.color == color_transparent {
 					layout.shape.color = color_hover
@@ -265,6 +271,14 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
 			}
 		}
 	)
+}
+
+fn list_box_selection_map(ids []string) map[string]bool {
+	mut m := map[string]bool{}
+	for id in ids {
+		m[id] = true
+	}
+	return m
 }
 
 fn list_box_height(cfg ListBoxCfg) f32 {
@@ -452,8 +466,8 @@ fn list_box_source_apply_success(list_box_id string, request_id u64, result List
 	state.loading = false
 	state.load_error = ''
 	state.has_loaded = true
-	state.data = result.data.clone()
-	state.received_count = result.data.len
+	state.data = result.data
+	state.received_count += result.data.len
 	state.data_dirty = true
 	state.active_abort = unsafe { nil }
 	window.view_state.list_box_source_state.set(list_box_id, state)
@@ -477,14 +491,43 @@ fn list_box_source_apply_error(list_box_id string, request_id u64, err_msg strin
 fn list_box_source_apply_query(options []ListBoxOption, query string) []ListBoxOption {
 	needle := query.trim_space().to_lower()
 	if needle.len == 0 {
-		return options.clone()
+		return options
 	}
 	return options.filter(list_box_source_option_matches_query(it, needle))
 }
 
 fn list_box_source_option_matches_query(option ListBoxOption, needle string) bool {
-	return option.id.to_lower().contains(needle) || option.name.to_lower().contains(needle)
-		|| option.value.to_lower().contains(needle)
+	return str_contains_ci(option.id, needle) || str_contains_ci(option.name, needle)
+		|| str_contains_ci(option.value, needle)
+}
+
+// Case-insensitive contains. Assumes needle is already
+// lowercased. Avoids per-call allocation from to_lower().
+fn str_contains_ci(haystack string, needle_lower string) bool {
+	if needle_lower.len == 0 {
+		return true
+	}
+	if needle_lower.len > haystack.len {
+		return false
+	}
+	limit := haystack.len - needle_lower.len
+	for i := 0; i <= limit; i++ {
+		mut matched := true
+		for j in 0 .. needle_lower.len {
+			mut c := haystack[i + j]
+			if c >= `A` && c <= `Z` {
+				c += 32
+			}
+			if c != needle_lower[j] {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			return true
+		}
+	}
+	return false
 }
 
 // list_box_option is a helper method to construct [ListBoxOption](#ListBoxOption).
@@ -500,8 +543,8 @@ pub fn list_box_option(id string, name string, value string) ListBoxOption {
 // list_box_subheading is a helper method for list box heading rows.
 pub fn list_box_subheading(id string, title string) ListBoxOption {
 	return ListBoxOption{
-		id:    id
-		name:  '---${title}'
-		value: ''
+		id:            id
+		name:          title
+		is_subheading: true
 	}
 }

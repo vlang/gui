@@ -10,8 +10,8 @@ fn test_list_box_option_helper_sets_fields() {
 fn test_list_box_subheading_helper_sets_marker() {
 	head := list_box_subheading('hdr', 'States')
 	assert head.id == 'hdr'
-	assert head.name == '---States'
-	assert head.value == ''
+	assert head.name == 'States'
+	assert head.is_subheading
 }
 
 fn test_list_box_visible_range_bounds() {
