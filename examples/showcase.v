@@ -66,6 +66,12 @@ pub mut:
 	data_grid_selection gui.GridSelection = gui.GridSelection{
 		selected_row_ids: map[string]bool{}
 	}
+	// data source
+	data_source_query     gui.GridQueryState
+	data_source_selection gui.GridSelection = gui.GridSelection{
+		selected_row_ids: map[string]bool{}
+	}
+	data_source           ?gui.DataGridDataSource
 	// radio
 	select_radio bool
 	// expand_pad
@@ -326,6 +332,13 @@ fn demo_entries() []DemoEntry {
 			group:   'data'
 			summary: 'Controlled virtualized grid for interactive tabular data'
 			tags:    ['grid', 'virtualized', 'data']
+		},
+		DemoEntry{
+			id:      'data_source'
+			label:   'Data Source'
+			group:   'data'
+			summary: 'Async data-source backed grid with CRUD'
+			tags:    ['async', 'pagination', 'crud', 'source']
 		},
 		DemoEntry{
 			id:      'text'
@@ -777,6 +790,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'rtf' { demo_rtf() }
 		'table' { demo_table(mut w) }
 		'data_grid' { demo_data_grid(mut w) }
+		'data_source' { demo_data_source(mut w) }
 		'date_picker' { demo_date_picker(mut w) }
 		'input_date' { demo_input_date(mut w) }
 		'numeric_input' { demo_numeric_input(w) }
@@ -820,6 +834,7 @@ fn related_examples(id string) string {
 		'rtf' { 'examples/rtf.v' }
 		'table' { 'examples/table_demo.v' }
 		'data_grid' { 'examples/data_grid_demo.v, docs/DATA_GRID.md' }
+		'data_source' { 'examples/data_grid_data_source_demo.v' }
 		'numeric_input' { 'examples/numeric_input.v' }
 		'date_picker', 'input_date' { 'examples/date_picker_options.v, examples/date_time.v' }
 		'date_picker_roller' { 'examples/date_picker_roller.v' }
@@ -2698,6 +2713,116 @@ fn demo_data_grid(mut w gui.Window) gui.View {
 			),
 		]
 	)
+}
+
+fn demo_data_source(mut w gui.Window) gui.View {
+	mut app := w.state[ShowcaseApp]()
+	if app.data_source == none {
+		rows := showcase_data_source_rows()
+		app.data_source = &gui.InMemoryCursorDataSource{
+			rows:          rows
+			default_limit: 50
+			latency_ms:    140
+		}
+	}
+	stats := w.data_grid_source_stats('catalog_data_source')
+	loading := if stats.loading { 'yes' } else { 'no' }
+	count_text := if count := stats.row_count {
+		count.str()
+	} else {
+		'?'
+	}
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'loading=${loading}  req=${stats.request_count}  rows=${stats.received_count}/${count_text}'
+				text_style: gui.theme().n5
+			),
+			w.data_grid(
+				id:                  'catalog_data_source'
+				id_focus:            9175
+				sizing:              gui.fit_fit
+				columns:             showcase_data_grid_columns()
+				data_source:         app.data_source
+				pagination_kind:     .cursor
+				page_limit:          50
+				show_quick_filter:   true
+				show_crud_toolbar:   true
+				query:               app.data_source_query
+				selection:           app.data_source_selection
+				max_height:          260
+				on_query_change:     fn (query gui.GridQueryState, mut _ gui.Event, mut w gui.Window) {
+					mut a := w.state[ShowcaseApp]()
+					a.data_source_query = query
+				}
+				on_selection_change: fn (selection gui.GridSelection, mut _ gui.Event, mut w gui.Window) {
+					mut a := w.state[ShowcaseApp]()
+					a.data_source_selection = selection
+				}
+			),
+			gui.column(
+				padding: gui.padding(gui.theme().spacing_large, 0, 0, 0)
+				content: [
+					gui.text(
+						text:       '- DataGridDataSource interface for async backends'
+						text_style: gui.theme().n5
+					),
+					gui.text(
+						text:       '- InMemoryCursorDataSource \u2014 cursor pagination'
+						text_style: gui.theme().n5
+					),
+					gui.text(
+						text:       '- InMemoryOffsetDataSource \u2014 offset pagination'
+						text_style: gui.theme().n5
+					),
+					gui.text(
+						text:       '- GridOrmDataSource \u2014 ORM-style with typed callbacks'
+						text_style: gui.theme().n5
+					),
+					gui.text(
+						text:       '- Async fetch with abort/cancellation signals'
+						text_style: gui.theme().n5
+					),
+					gui.text(
+						text:       '- Stale response detection and request dedup'
+						text_style: gui.theme().n5
+					),
+					gui.text(
+						text:       '- CRUD mutations (create, update, delete, batch delete)'
+						text_style: gui.theme().n5
+					),
+					gui.text(
+						text:       '- Capability discovery (pagination, mutations, row count)'
+						text_style: gui.theme().n5
+					),
+					gui.text(
+						text:       '- Simulated latency for testing loading states'
+						text_style: gui.theme().n5
+					),
+				]
+			),
+		]
+	)
+}
+
+fn showcase_data_source_rows() []gui.GridRow {
+	names := ['Ada', 'Grace', 'Alan', 'Katherine', 'Barbara', 'Linus', 'Margaret', 'Edsger']
+	teams := ['Core', 'Data', 'Platform', 'R&D', 'Web', 'Security']
+	statuses := ['Open', 'Paused', 'Closed']
+	mut rows := []gui.GridRow{cap: 200}
+	for i in 0 .. 200 {
+		id := i + 1
+		rows << gui.GridRow{
+			id:    '${id}'
+			cells: {
+				'name':   '${names[i % names.len]} ${id}'
+				'team':   teams[(i / 30) % teams.len]
+				'status': statuses[i % statuses.len]
+			}
+		}
+	}
+	return rows
 }
 
 fn demo_date_picker(mut w gui.Window) gui.View {
