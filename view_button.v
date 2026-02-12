@@ -40,7 +40,6 @@ pub:
 	max_width          f32
 	max_height         f32
 	radius             f32 = gui_theme.button_style.radius
-	radius_border      f32 = gui_theme.button_style.radius_border
 	id_focus           u32
 	h_align            HorizontalAlign = .center
 	v_align            VerticalAlign   = .middle
@@ -57,10 +56,9 @@ pub:
 // 	max_width:      90
 // 	size_border:   1
 // 	content:        [gui.text(text: '${app.clicks} Clicks')]
-// 	on_click:       fn (_ &gui.Layout, _ &gui.Event, mut w gui.Window) bool {
+// 	on_click:       fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 // 		mut app := w.state[App]()
 // 		app.clicks += 1
-// 		return true
 // 	}
 // )
 // ```

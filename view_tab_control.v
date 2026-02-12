@@ -141,7 +141,6 @@ pub fn tab_control(cfg TabControlCfg) View {
 			padding:            cfg.padding_tab
 			size_border:        cfg.size_tab_border
 			radius:             cfg.radius_tab
-			radius_border:      cfg.radius_tab_border
 			disabled:           is_disabled
 			on_click:           make_tab_on_click(cfg.on_select, item.id, cfg.id_focus)
 			content:            [

@@ -190,22 +190,21 @@ fn numeric_input_step_buttons(cfg NumericInputCfg, locale NumericLocaleCfg, step
 		padding:   padding(0, pad_small, 0, 0)
 		content:   [
 			button(
-				id:            id_step_up
-				sizing:        fill_fill
-				padding:       padding_none
-				color:         base_color
-				color_hover:   cfg.color_hover
-				color_focus:   cfg.color_hover
-				color_click:   cfg.color_border_focus
-				color_border:  color_transparent
-				size_border:   0
-				radius:        0
-				radius_border: 0
-				on_click:      fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
+				id:           id_step_up
+				sizing:       fill_fill
+				padding:      padding_none
+				color:        base_color
+				color_hover:  cfg.color_hover
+				color_focus:  cfg.color_hover
+				color_click:  cfg.color_border_focus
+				color_border: color_transparent
+				size_border:  0
+				radius:       0
+				on_click:     fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
 					numeric_input_apply_step(layout, cfg, locale, step_cfg, 1.0, e.modifiers, mut
 						e, mut w)
 				}
-				content:       [
+				content:      [
 					text(
 						text:       '▲'
 						text_style: triangle_style
@@ -213,22 +212,21 @@ fn numeric_input_step_buttons(cfg NumericInputCfg, locale NumericLocaleCfg, step
 				]
 			),
 			button(
-				id:            id_step_down
-				sizing:        fill_fill
-				padding:       padding_none
-				color:         base_color
-				color_hover:   cfg.color_hover
-				color_focus:   cfg.color_hover
-				color_click:   cfg.color_border_focus
-				color_border:  color_transparent
-				size_border:   0
-				radius:        0
-				radius_border: 0
-				on_click:      fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
+				id:           id_step_down
+				sizing:       fill_fill
+				padding:      padding_none
+				color:        base_color
+				color_hover:  cfg.color_hover
+				color_focus:  cfg.color_hover
+				color_click:  cfg.color_border_focus
+				color_border: color_transparent
+				size_border:  0
+				radius:       0
+				on_click:     fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
 					numeric_input_apply_step(layout, cfg, locale, step_cfg, -1.0, e.modifiers, mut
 						e, mut w)
 				}
-				content:       [
+				content:      [
 					text(
 						text:       '▼'
 						text_style: triangle_style
