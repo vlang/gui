@@ -1,5 +1,7 @@
 module gui
 
+import time
+
 // view_markdown.v defines the Markdown view component.
 // It parses markdown source and renders it using the RTF infrastructure.
 
@@ -328,6 +330,10 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			} else {
 				// Regular code block in a column with background
 				code_text := rich_text_plain(block.content)
+				cp_id := 'md_cp_${code_text.hash()}'
+				mut w := unsafe { window }
+				white120 := rgba(255, 255, 255, 120)
+				cp_alt := 'btn_alt_${cp_id}' in w.animations
 				content << column(
 					color:       cfg.style.code_block_bg
 					padding:     cfg.style.code_block_padding
@@ -340,7 +346,11 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 							rich_text: block.content
 							mode:      .single_line
 						),
-						row(
+						button(
+							id:             cp_id
+							show_alt:       cp_alt
+							size_border:    if cp_alt { f32(1) } else { 0 }
+							color_border:   white120
 							float:          true
 							float_anchor:   .top_right
 							float_tie_off:  .top_right
@@ -349,13 +359,9 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 							padding:        pad_all(4)
 							radius:         4
 							color:          rgba(255, 255, 255, 15)
-							on_click:       fn [code_text] (_ voidptr, mut e Event, mut _ Window) {
+							color_hover:    rgba(255, 255, 255, 40)
+							on_click:       fn [code_text] (_ &Layout, mut e Event, mut _ Window) {
 								to_clipboard(code_text)
-								e.is_handled = true
-							}
-							on_hover:       fn (mut layout Layout, mut e Event, mut w Window) {
-								w.set_mouse_cursor_pointing_hand()
-								layout.shape.color = rgba(255, 255, 255, 40)
 								e.is_handled = true
 							}
 							content:        [
@@ -364,10 +370,20 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 									text_style: TextStyle{
 										family: icon_font_name
 										size:   12
-										color:  rgba(255, 255, 255, 120)
+										color:  white120
 									}
 								),
 							]
+							alt_content:    [
+								text(
+									text:       'Copied ✓'
+									text_style: TextStyle{
+										size:  11
+										color: white120
+									}
+								),
+							]
+							alt_duration:   2 * time.second
 						),
 					]
 				)
@@ -542,7 +558,15 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 	}
 
 	source := cfg.source
-	content << row(
+	cp_doc_id := 'md_cp_doc_${hash}'
+	mut w2 := unsafe { window }
+	doc_icon_color := cfg.style.text.color
+	doc_alt := 'btn_alt_${cp_doc_id}' in w2.animations
+	content << button(
+		id:             cp_doc_id
+		show_alt:       doc_alt
+		size_border:    if doc_alt { f32(1) } else { 0 }
+		color_border:   doc_icon_color
 		float:          true
 		float_anchor:   .top_right
 		float_tie_off:  .top_right
@@ -551,13 +575,9 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 		padding:        pad_all(4)
 		radius:         4
 		color:          rgba(128, 128, 128, 20)
-		on_click:       fn [source] (_ voidptr, mut e Event, mut _ Window) {
+		color_hover:    rgba(128, 128, 128, 50)
+		on_click:       fn [source] (_ &Layout, mut e Event, mut _ Window) {
 			to_clipboard(source)
-			e.is_handled = true
-		}
-		on_hover:       fn (mut layout Layout, mut e Event, mut w Window) {
-			w.set_mouse_cursor_pointing_hand()
-			layout.shape.color = rgba(128, 128, 128, 50)
 			e.is_handled = true
 		}
 		content:        [
@@ -566,10 +586,20 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 				text_style: TextStyle{
 					family: icon_font_name
 					size:   12
-					color:  cfg.style.text.color
+					color:  doc_icon_color
 				}
 			),
 		]
+		alt_content:    [
+			text(
+				text:       'Copied ✓'
+				text_style: TextStyle{
+					size:  11
+					color: doc_icon_color
+				}
+			),
+		]
+		alt_duration:   2 * time.second
 	)
 
 	return column(
