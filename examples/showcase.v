@@ -43,6 +43,13 @@ pub mut:
 	printing_status    string
 	// range sliders
 	range_value f32 = 50
+	// numeric input
+	numeric_en_text     string = '1,234.50'
+	numeric_en_value    ?f64   = 1234.5
+	numeric_de_text     string = '1.234,50'
+	numeric_de_value    ?f64   = 1234.5
+	numeric_plain_text  string
+	numeric_plain_value ?f64
 	// select
 	selected_1 []string
 	selected_2 []string
@@ -214,6 +221,13 @@ fn demo_entries() []DemoEntry {
 			group:   'input'
 			summary: 'Text input with date picker dropdown'
 			tags:    ['date', 'input', 'calendar']
+		},
+		DemoEntry{
+			id:      'numeric_input'
+			label:   'Numeric Input'
+			group:   'input'
+			summary: 'Locale-aware number input with step controls'
+			tags:    ['number', 'decimal', 'locale', 'spinner']
 		},
 		DemoEntry{
 			id:      'listbox'
@@ -765,6 +779,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'data_grid' { demo_data_grid(mut w) }
 		'date_picker' { demo_date_picker(mut w) }
 		'input_date' { demo_input_date(mut w) }
+		'numeric_input' { demo_numeric_input(w) }
 		'date_picker_roller' { demo_date_picker_roller(mut w) }
 		'svg' { demo_svg() }
 		'image' { demo_image() }
@@ -805,6 +820,7 @@ fn related_examples(id string) string {
 		'rtf' { 'examples/rtf.v' }
 		'table' { 'examples/table_demo.v' }
 		'data_grid' { 'examples/data_grid_demo.v, docs/DATA_GRID.md' }
+		'numeric_input' { 'examples/numeric_input.v' }
 		'date_picker', 'input_date' { 'examples/date_picker_options.v, examples/date_time.v' }
 		'date_picker_roller' { 'examples/date_picker_roller.v' }
 		'svg' { 'examples/svg_demo.v, examples/tiger.v' }
@@ -3569,4 +3585,101 @@ fn scroll_demo_rows(prefix string) []gui.View {
 		)
 	}
 	return rows
+}
+
+fn demo_numeric_input(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.spacing_medium
+		sizing:  gui.fill_fit
+		content: [
+			// en_US with step buttons
+			gui.text(text: 'Default (en_US)', text_style: gui.theme().b1),
+			gui.numeric_input(
+				id:              'num_en'
+				id_focus:        9170
+				text:            app.numeric_en_text
+				value:           app.numeric_en_value
+				decimals:        2
+				min:             0.0
+				max:             10000.0
+				width:           220
+				sizing:          gui.fixed_fit
+				on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_en_text = text
+				}
+				on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_en_value = value
+					s.numeric_en_text = text
+				}
+			),
+			gui.text(
+				text: 'Committed: ${showcase_numeric_value_text(app.numeric_en_value)}'
+			),
+			// de_DE locale
+			gui.text(text: 'German (de_DE)', text_style: gui.theme().b1),
+			gui.numeric_input(
+				id:              'num_de'
+				id_focus:        9171
+				text:            app.numeric_de_text
+				value:           app.numeric_de_value
+				decimals:        2
+				locale:          gui.NumericLocaleCfg{
+					decimal_sep: `,`
+					group_sep:   `.`
+				}
+				min:             0.0
+				max:             10000.0
+				width:           220
+				sizing:          gui.fixed_fit
+				on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_de_text = text
+				}
+				on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_de_value = value
+					s.numeric_de_text = text
+				}
+			),
+			gui.text(
+				text: 'Committed: ${showcase_numeric_value_text(app.numeric_de_value)}'
+			),
+			// No buttons, integer
+			gui.text(text: 'No buttons (integer)', text_style: gui.theme().b1),
+			gui.numeric_input(
+				id:              'num_plain'
+				id_focus:        9172
+				text:            app.numeric_plain_text
+				value:           app.numeric_plain_value
+				decimals:        0
+				step_cfg:        gui.NumericStepCfg{
+					show_buttons: false
+				}
+				width:           220
+				sizing:          gui.fixed_fit
+				on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_plain_text = text
+				}
+				on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_plain_value = value
+					s.numeric_plain_text = text
+				}
+			),
+			gui.text(
+				text: 'Committed: ${showcase_numeric_value_text(app.numeric_plain_value)}'
+			),
+		]
+	)
+}
+
+fn showcase_numeric_value_text(value ?f64) string {
+	if v := value {
+		return '${v:.2f}'
+	}
+	return 'none'
 }
