@@ -52,7 +52,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [ ] `breadcrumb_bar` widget
 - [ ] `command_palette` widget (search + ranking + keyboard-first UX)
 - [ ] `toast` / non-blocking notification system
-- [?] `combobox` with typeahead filter and async options provider
+- [ ] `combobox` with typeahead filter and async options provider
 
 ### Data-Heavy UI
 
@@ -60,6 +60,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Data grid v2: virtual rows, sort, filter, resize/reorder/pin columns
 - [ ] Tree virtualization + lazy node loading
 - [x] Cell editors for grid/list (text, select, date, checkbox)
+- [ ] Charting/Graphs/Plottong package (external lib)
 
 ## 2026 H2: Accessibility + Globalization + Scale (P0/P1)
 
@@ -102,7 +103,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [ ] Runtime inspector overlay (view tree, bounds, style, event trace)
 - [x] Component gallery app with state permutations and edge-case fixtures
 - [ ] Snapshot/golden rendering tests per widget/state
-- [ ] Parser fuzzing for markdown/svg/url handlers
+- [x] Parser fuzzing for markdown/svg/url handlers
 - [ ] Memory + resource leak CI checks
 - [ ] API stability policy (versioning, deprecation windows, migration notes)
 - [ ] Public benchmark suite (widgets count tiers, text-heavy, svg-heavy scenarios)
