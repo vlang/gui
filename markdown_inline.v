@@ -502,22 +502,18 @@ fn find_triple_closing(text string, start int, ch u8) int {
 // parse_image_src parses "path =WxH" or "path" into (path, width, height).
 fn parse_image_src(raw string) (string, f32, f32) {
 	trimmed := raw.trim_space()
-	if trimmed.contains(' =') {
-		parts := trimmed.split(' =')
-		if parts.len == 2 {
-			src := parts[0].trim_space()
-			dim := parts[1].trim_space()
-			if dim.contains('x') {
-				wh := dim.split('x')
-				if wh.len == 2 {
-					return src, wh[0].f32(), wh[1].f32()
-				}
-			} else {
-				return src, dim.f32(), 0
-			}
+	idx := trimmed.last_index(' =') or { return trimmed, 0, 0 }
+
+	src := trimmed[..idx].trim_space()
+	dim := trimmed[idx + 2..].trim_space()
+
+	if dim.contains('x') {
+		wh := dim.split('x')
+		if wh.len == 2 {
+			return src, wh[0].f32(), wh[1].f32()
 		}
 	}
-	return trimmed, 0, 0
+	return src, dim.f32(), 0
 }
 
 // is_safe_image_path performs basic validation on image paths.

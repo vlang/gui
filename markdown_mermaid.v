@@ -67,7 +67,11 @@ struct MermaidFetchResult {
 // fetch_mermaid_async fetches a mermaid diagram from Kroki API in background thread.
 // Uses PNG format since SVG from Kroki uses foreignObject/CSS which our parser doesn't support.
 // Updates diagram_cache with result and triggers window refresh.
-// NOTE: Mermaid source is sent to external kroki.io API for rendering.
+//
+// PRIVACY NOTE: Mermaid source is sent to external third-party
+// API (kroki.io) for rendering. This may leak document content
+// to the service provider.
+// Use MarkdownCfg.disable_external_apis to disable this.
 fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int, bg_r u8, bg_g u8, bg_b u8) {
 	spawn fn [mut window, source, hash, max_width, bg_r, bg_g, bg_b] () {
 		if source.len > max_mermaid_source_len {

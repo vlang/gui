@@ -4,13 +4,13 @@ module gui
 
 // collect_metadata scans lines once for all metadata definitions:
 // link refs, abbreviations, and footnotes.
-fn collect_metadata(lines []string) (map[string]string, map[string]string, map[string]string) {
+fn collect_metadata(scanner MarkdownScanner) (map[string]string, map[string]string, map[string]string) {
 	mut link_defs := map[string]string{}
 	mut abbr_defs := map[string]string{}
 	mut footnote_defs := map[string]string{}
 	mut i := 0
-	for i < lines.len {
-		line := lines[i]
+	for i < scanner.len() {
+		line := scanner.get_line(i)
 		trimmed := line.trim_space()
 
 		// Abbreviation: *[ABBR]: expansion
@@ -41,11 +41,11 @@ fn collect_metadata(lines []string) (map[string]string, map[string]string, map[s
 			mut content := trimmed[bracket_end + 2..].trim_left(' \t')
 			i++
 			mut fn_cont := 0
-			for i < lines.len && fn_cont < max_footnote_continuation_lines {
-				next := lines[i]
+			for i < scanner.len() && fn_cont < max_footnote_continuation_lines {
+				next := scanner.get_line(i)
 				if next.len == 0 {
-					if i + 1 < lines.len {
-						peek := lines[i + 1]
+					if i + 1 < scanner.len() {
+						peek := scanner.get_line(i + 1)
 						if peek.len > 0 && (peek[0] == ` ` || peek[0] == `\t`) {
 							content += '\n\n'
 							i++

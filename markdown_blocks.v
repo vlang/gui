@@ -99,13 +99,13 @@ fn get_indent_level(line string) int {
 }
 
 // collect_paragraph_content joins continuation lines for paragraphs.
-fn collect_paragraph_content(first_line string, lines []string, start_idx int) (string, int) {
+fn collect_paragraph_content(first_line string, scanner MarkdownScanner, start_idx int) (string, int) {
 	mut consumed := 0
 	mut idx := start_idx
 
 	// Count continuation lines (non-blank, non-block-start, bounded)
-	for idx < lines.len && consumed < max_paragraph_continuation_lines {
-		next := lines[idx]
+	for idx < scanner.len() && consumed < max_paragraph_continuation_lines {
+		next := scanner.get_line(idx)
 		next_trimmed := next.trim_space()
 		if next_trimmed == '' || is_block_start(next) {
 			break
@@ -125,7 +125,7 @@ fn collect_paragraph_content(first_line string, lines []string, start_idx int) (
 	idx = start_idx
 	for _ in 0 .. consumed {
 		buf << ` `
-		buf << lines[idx].bytes()
+		buf << scanner.get_line(idx).bytes()
 		idx++
 	}
 	return buf.bytestr(), consumed
@@ -133,13 +133,13 @@ fn collect_paragraph_content(first_line string, lines []string, start_idx int) (
 
 // collect_list_item_content collects the full content of a list item including continuation lines.
 // Returns the combined content and the number of lines consumed (excluding the first).
-fn collect_list_item_content(first_content string, lines []string, start_idx int) (string, int) {
+fn collect_list_item_content(first_content string, scanner MarkdownScanner, start_idx int) (string, int) {
 	mut consumed := 0
 	mut idx := start_idx
 
 	// Check if any continuation lines exist (bounded)
-	for idx < lines.len && consumed < max_list_continuation_lines {
-		next := lines[idx]
+	for idx < scanner.len() && consumed < max_list_continuation_lines {
+		next := scanner.get_line(idx)
 		if next.len == 0 || (next[0] != ` ` && next[0] != `\x09`) {
 			break
 		}
@@ -162,7 +162,7 @@ fn collect_list_item_content(first_content string, lines []string, start_idx int
 	idx = start_idx
 	for _ in 0 .. consumed {
 		buf << ` `
-		buf << lines[idx].trim_space().bytes()
+		buf << scanner.get_line(idx).trim_space().bytes()
 		idx++
 	}
 	return buf.bytestr(), consumed
@@ -278,13 +278,13 @@ fn is_definition_line(line string) bool {
 }
 
 // peek_for_definition checks if the next non-blank line is a definition.
-fn peek_for_definition(lines []string, start_idx int) bool {
-	for i := start_idx; i < lines.len; i++ {
-		trimmed := lines[i].trim_space()
+fn peek_for_definition(scanner MarkdownScanner, start_idx int) bool {
+	for i := start_idx; i < scanner.len(); i++ {
+		trimmed := scanner.get_line(i).trim_space()
 		if trimmed == '' {
 			return false
 		}
-		if is_definition_line(lines[i]) {
+		if is_definition_line(scanner.get_line(i)) {
 			return true
 		}
 		return false
@@ -294,13 +294,13 @@ fn peek_for_definition(lines []string, start_idx int) bool {
 
 // collect_definition_content collects continuation lines for a definition value.
 // Continuation lines must be indented. Returns content and lines consumed.
-fn collect_definition_content(first_content string, lines []string, start_idx int) (string, int) {
+fn collect_definition_content(first_content string, scanner MarkdownScanner, start_idx int) (string, int) {
 	mut consumed := 0
 	mut idx := start_idx
 
 	// Check if any continuation lines exist (must be indented, bounded)
-	for idx < lines.len && consumed < max_list_continuation_lines {
-		next := lines[idx]
+	for idx < scanner.len() && consumed < max_list_continuation_lines {
+		next := scanner.get_line(idx)
 		if next.len == 0 {
 			break
 		}
@@ -327,7 +327,7 @@ fn collect_definition_content(first_content string, lines []string, start_idx in
 	idx = start_idx
 	for _ in 0 .. consumed {
 		buf << ` `
-		buf << lines[idx].trim_space().bytes()
+		buf << scanner.get_line(idx).trim_space().bytes()
 		idx++
 	}
 	return buf.bytestr(), consumed

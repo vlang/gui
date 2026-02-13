@@ -679,33 +679,31 @@ x == 42
 }
 
 fn test_code_block_state_detection() {
-	lines := [
-		'text',
-		'```',
-		'code',
-		'```',
-		'more text',
-	]
+	source := 'text
+```
+code
+```
+more text'
+	scanner := new_markdown_scanner(source)
 	// At index 0: not in code block
-	state0 := detect_code_block_state(lines, 0)
+	state0 := detect_code_block_state(scanner, 0)
 	assert state0.in_code_block == false
 
 	// At index 2 (inside code block)
-	state2 := detect_code_block_state(lines, 2)
+	state2 := detect_code_block_state(scanner, 2)
 	assert state2.in_code_block == true
 	assert state2.fence_char == `\``
 
 	// At index 4 (after code block closed)
-	state4 := detect_code_block_state(lines, 4)
+	state4 := detect_code_block_state(scanner, 4)
 	assert state4.in_code_block == false
 }
 
 fn test_code_block_state_tilde() {
-	lines := [
-		'~~~',
-		'code',
-	]
-	state := detect_code_block_state(lines, 2)
+	source := '~~~
+code'
+	scanner := new_markdown_scanner(source)
+	state := detect_code_block_state(scanner, 2)
 	assert state.in_code_block == true
 	assert state.fence_char == `~`
 }
@@ -979,7 +977,8 @@ fn test_is_safe_url_percent_encoded_javascript() {
 // S3: empty link definition key
 fn test_empty_link_definition_rejected() {
 	// "[]: url" should not register as link def
-	link_defs, _, _ := collect_metadata(['[]: http://evil.com'])
+	scanner := new_markdown_scanner('[]: http://evil.com')
+	link_defs, _, _ := collect_metadata(scanner)
 	assert link_defs.len == 0
 }
 

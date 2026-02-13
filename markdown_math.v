@@ -18,7 +18,12 @@ fn math_cache_hash(math_id string) i64 {
 // fetch_math_async fetches a LaTeX math image from codecogs in
 // a background thread. Uses PNG format. Updates diagram_cache
 // with result and triggers window refresh.
-// NOTE: LaTeX source is sent to external latex.codecogs.com API.
+//
+// PRIVACY NOTE: LaTeX source is sent to external third-party
+// API (latex.codecogs.com) for rendering. This may leak
+// document content to the service provider.
+// Use MarkdownCfg.disable_external_apis to disable this.
+//
 // sanitize_latex strips dangerous TeX commands that could
 // enable shell escape or file access on the remote renderer.
 fn sanitize_latex(s string) string {

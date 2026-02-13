@@ -504,7 +504,8 @@ fn is_safe_url(url string) bool {
 	// dangerous schemes
 	if !lower.contains('://') && !lower.starts_with('javascript:') && !lower.starts_with('data:')
 		&& !lower.starts_with('vbscript:') && !lower.starts_with('file:')
-		&& !lower.starts_with('blob:') {
+		&& !lower.starts_with('blob:') && !lower.starts_with('mhtml:')
+		&& !lower.starts_with('ms-help:') && !lower.starts_with('disk:') {
 		return true
 	}
 	return false
