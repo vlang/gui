@@ -122,7 +122,7 @@ fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, 
 	if !has_unsaved
 		&& (state.source_signature != signature || state.working_rows.len != cfg.rows.len) {
 		state.committed_rows = cfg.rows.clone()
-		state.working_rows = cfg.rows.clone()
+		state.working_rows = state.committed_rows.clone()
 		state.source_signature = signature
 		state.dirty_row_ids = map[string]bool{}
 		state.draft_row_ids = map[string]bool{}
@@ -130,7 +130,7 @@ fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, 
 	}
 	if state.working_rows.len == 0 && state.committed_rows.len == 0 && cfg.rows.len > 0 {
 		state.committed_rows = cfg.rows.clone()
-		state.working_rows = cfg.rows.clone()
+		state.working_rows = state.committed_rows.clone()
 		state.source_signature = signature
 	}
 	window.view_state.data_grid_crud_state.set(cfg.id, state)

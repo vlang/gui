@@ -340,23 +340,15 @@ fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, colu
 	if column_map.len == 0 {
 		return
 	}
-	mut valid := map[string]bool{}
-	for col_id, _ in column_map {
-		valid[col_id] = true
-	}
-	grid_orm_validate_mutation_columns_set(rows, edits, valid)!
-}
-
-fn grid_orm_validate_mutation_columns_set(rows []GridRow, edits []GridCellEdit, valid map[string]bool) ! {
 	for row in rows {
 		for col_id, _ in row.cells {
-			if !valid[col_id] {
+			if col_id !in column_map {
 				return error('unknown column id: ${col_id}')
 			}
 		}
 	}
 	for edit in edits {
-		if !valid[edit.col_id] {
+		if edit.col_id !in column_map {
 			return error('unknown column id: ${edit.col_id}')
 		}
 	}

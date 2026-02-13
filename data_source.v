@@ -388,6 +388,9 @@ fn grid_data_source_is_decimal(input string) bool {
 }
 
 fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow {
+	if query.quick_filter.len == 0 && query.filters.len == 0 && query.sorts.len == 0 {
+		return rows
+	}
 	needle := query.quick_filter.to_lower()
 	mut lowered_filters := []GridFilterLowered{cap: query.filters.len}
 	for filter in query.filters {
@@ -683,18 +686,6 @@ fn grid_data_source_apply_delete(mut rows []GridRow, req_rows []GridRow, req_row
 	return GridMutationApplyResult{
 		deleted_ids: deleted_ids
 	}
-}
-
-fn grid_data_source_row_index(rows []GridRow, row_id string) ?int {
-	if row_id.len == 0 {
-		return none
-	}
-	for idx, row in rows {
-		if data_grid_row_id(row, idx) == row_id {
-			return idx
-		}
-	}
-	return none
 }
 
 fn grid_data_source_next_create_row_id(rows []GridRow, existing map[string]bool, preferred_id string) !string {

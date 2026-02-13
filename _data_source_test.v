@@ -166,7 +166,7 @@ fn test_data_grid_source_apply_query_reset_resets_paging() {
 			quick_filter: 'ada'
 		}
 	}
-	data_grid_source_apply_query_reset(mut state, cfg)
+	data_grid_source_apply_query_reset(mut state, cfg, grid_query_signature(cfg.query))
 	assert state.current_cursor == ''
 	assert state.next_cursor == ''
 	assert state.prev_cursor == ''

@@ -125,7 +125,8 @@ fn data_grid_source_resolve_state(cfg DataGridCfg, caps GridDataCapabilities, mu
 		state.current_cursor = cfg.cursor
 		state.request_key = ''
 	}
-	data_grid_source_apply_query_reset(mut state, cfg)
+	query_sig := grid_query_signature(cfg.query)
+	data_grid_source_apply_query_reset(mut state, cfg, query_sig)
 	if kind == .offset && cfg.page_size > 0 {
 		desired_start := int_max(0, cfg.page_index * cfg.page_size)
 		if desired_start != state.offset_start {
@@ -133,7 +134,7 @@ fn data_grid_source_resolve_state(cfg DataGridCfg, caps GridDataCapabilities, mu
 			state.request_key = ''
 		}
 	}
-	request_key := data_grid_source_request_key(cfg, state, kind)
+	request_key := data_grid_source_request_key(cfg, state, kind, query_sig)
 	if request_key != state.request_key {
 		data_grid_source_start_request(cfg, caps, kind, request_key, mut state, mut window)
 	}
@@ -169,8 +170,8 @@ fn data_grid_source_apply_pending_jump_selection(cfg DataGridCfg, state DataGrid
 	window.view_state.data_grid_source_state.set(cfg.id, next_state)
 }
 
-fn data_grid_source_apply_query_reset(mut state DataGridSourceState, cfg DataGridCfg) {
-	query_signature := grid_query_signature(cfg.query)
+fn data_grid_source_apply_query_reset(mut state DataGridSourceState, cfg DataGridCfg, query_sig string) {
+	query_signature := query_sig
 	if query_signature == state.query_signature {
 		return
 	}
@@ -212,9 +213,8 @@ fn data_grid_page_limit(cfg DataGridCfg) int {
 	return 100
 }
 
-fn data_grid_source_request_key(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind) string {
+fn data_grid_source_request_key(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind, query_sig string) string {
 	limit := data_grid_page_limit(cfg)
-	query_sig := grid_query_signature(cfg.query)
 	return match kind {
 		.cursor {
 			'k:cursor|cursor:${state.current_cursor}|limit:${limit}|q:${query_sig}'
@@ -296,9 +296,9 @@ fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDat
 	state.loading = false
 	state.load_error = ''
 	state.has_loaded = true
-	state.rows = result.rows.clone()
-	state.rows_dirty = true
 	state.rows_signature = data_grid_rows_signature(result.rows, []string{})
+	state.rows_dirty = true
+	state.rows = result.rows
 	state.next_cursor = result.next_cursor
 	state.prev_cursor = result.prev_cursor
 	state.has_more = result.has_more
