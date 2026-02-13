@@ -522,18 +522,16 @@ fn parse_image_src(raw string) (string, f32, f32) {
 
 // is_safe_image_path performs basic validation on image paths.
 fn is_safe_image_path(path string) bool {
-	p := path.to_lower()
-	// Allow common image extensions and web URLs
+	if path.contains('..') {
+		return false
+	}
+	p := path.to_lower().trim_space()
 	if p.starts_with('http://') || p.starts_with('https://') {
 		return true
 	}
-	// Block path traversal in local paths
-	if p.contains('..') {
-		return false
-	}
 	// Blocks: javascript:, vbscript:, data:, file:,
-	// and other unsafe protocols.
-	if p.contains(':') && !p.starts_with('http') {
+	// and other unsafe protocols. Use is_safe_url logic.
+	if !is_safe_url(path) {
 		return false
 	}
 	// Basic extension check

@@ -40,7 +40,8 @@ struct MarkdownCodePalette {
 struct MarkdownCodeToken {
 	kind MarkdownCodeTokenKind
 mut:
-	text string
+	start int
+	end   int
 }
 
 fn normalize_markdown_code_language_hint(language string) string {
@@ -140,7 +141,7 @@ fn highlight_code_runs(code string, lang MarkdownCodeLanguage, style MarkdownSty
 	mut pos := 0
 	for pos < code.len {
 		if tokens.len >= max_highlight_tokens_per_block {
-			return markdown_fallback_with_tail(tokens, code[pos..], palette)
+			return markdown_fallback_with_tail(tokens, code, pos, palette)
 		}
 
 		start_pos := pos
@@ -150,21 +151,21 @@ fn highlight_code_runs(code string, lang MarkdownCodeLanguage, style MarkdownSty
 			mut end := pos + 1
 			for end < code.len && is_markdown_code_whitespace(code[end]) {
 				if end - pos >= max_highlight_token_bytes {
-					return markdown_fallback_with_tail(tokens, code[pos..], palette)
+					return markdown_fallback_with_tail(tokens, code, pos, palette)
 				}
 				end++
 			}
-			markdown_append_token(mut tokens, .plain, code[pos..end])
+			markdown_append_token(mut tokens, .plain, pos, end)
 			pos = end
 		} else if markdown_has_line_comment_start(code, pos, lang) {
 			mut end := pos + markdown_line_comment_prefix_len(code, pos, lang)
 			for end < code.len && code[end] != `\n` {
 				if end - pos >= max_highlight_token_bytes {
-					return markdown_fallback_with_tail(tokens, code[pos..], palette)
+					return markdown_fallback_with_tail(tokens, code, pos, palette)
 				}
 				end++
 			}
-			markdown_append_token(mut tokens, .comment, code[pos..end])
+			markdown_append_token(mut tokens, .comment, pos, end)
 			pos = end
 		} else if markdown_has_block_comment_start(code, pos, lang) {
 			mut end := pos + 2
@@ -172,13 +173,13 @@ fn highlight_code_runs(code string, lang MarkdownCodeLanguage, style MarkdownSty
 			for end < code.len {
 				if end - pos >= max_highlight_string_scan_bytes
 					|| end - pos >= max_highlight_token_bytes {
-					return markdown_fallback_with_tail(tokens, code[pos..], palette)
+					return markdown_fallback_with_tail(tokens, code, pos, palette)
 				}
 				if markdown_block_comments_nested(lang) && end + 1 < code.len && code[end] == `/`
 					&& code[end + 1] == `*` {
 					depth++
 					if depth > max_highlight_comment_depth {
-						return markdown_fallback_with_tail(tokens, code[pos..], palette)
+						return markdown_fallback_with_tail(tokens, code, pos, palette)
 					}
 					end += 2
 					continue
@@ -196,26 +197,26 @@ fn highlight_code_runs(code string, lang MarkdownCodeLanguage, style MarkdownSty
 			if end > code.len {
 				end = code.len
 			}
-			markdown_append_token(mut tokens, .comment, code[pos..end])
+			markdown_append_token(mut tokens, .comment, pos, end)
 			pos = end
 		} else if markdown_is_string_delim(ch, lang) {
 			end, ok := markdown_scan_string(code, pos, lang)
 			if !ok {
-				return markdown_fallback_with_tail(tokens, code[pos..], palette)
+				return markdown_fallback_with_tail(tokens, code, pos, palette)
 			}
-			markdown_append_token(mut tokens, .string, code[pos..end])
+			markdown_append_token(mut tokens, .string, pos, end)
 			pos = end
 		} else if markdown_is_number_start(code, pos) {
 			end, ok := markdown_scan_number(code, pos)
 			if !ok {
-				return markdown_fallback_with_tail(tokens, code[pos..], palette)
+				return markdown_fallback_with_tail(tokens, code, pos, palette)
 			}
-			markdown_append_token(mut tokens, .number, code[pos..end])
+			markdown_append_token(mut tokens, .number, pos, end)
 			pos = end
 		} else if markdown_is_identifier_start(ch, lang) {
 			end, ok := markdown_scan_identifier(code, pos, lang)
 			if !ok {
-				return markdown_fallback_with_tail(tokens, code[pos..], palette)
+				return markdown_fallback_with_tail(tokens, code, pos, palette)
 			}
 			ident := code[pos..end]
 			token_kind := if markdown_is_keyword(ident, lang) {
@@ -223,50 +224,50 @@ fn highlight_code_runs(code string, lang MarkdownCodeLanguage, style MarkdownSty
 			} else {
 				MarkdownCodeTokenKind.plain
 			}
-			markdown_append_token(mut tokens, token_kind, ident)
+			markdown_append_token(mut tokens, token_kind, pos, end)
 			pos = end
 		} else if markdown_is_operator_char(ch) {
 			mut end := pos + 1
 			for end < code.len && markdown_is_operator_char(code[end]) {
 				if end - pos >= max_highlight_token_bytes {
-					return markdown_fallback_with_tail(tokens, code[pos..], palette)
+					return markdown_fallback_with_tail(tokens, code, pos, palette)
 				}
 				end++
 			}
-			markdown_append_token(mut tokens, .operator, code[pos..end])
+			markdown_append_token(mut tokens, .operator, pos, end)
 			pos = end
 		} else {
-			markdown_append_token(mut tokens, .plain, code[pos..pos + 1])
+			markdown_append_token(mut tokens, .plain, pos, pos + 1)
 			pos++
 		}
 
 		// Self-synchronization fallback: force forward progress.
 		if pos <= start_pos {
-			markdown_append_token(mut tokens, .plain, code[start_pos..start_pos + 1])
+			markdown_append_token(mut tokens, .plain, start_pos, start_pos + 1)
 			pos = start_pos + 1
 		}
 	}
 
-	return markdown_tokens_to_runs(tokens, palette)
+	return markdown_tokens_to_runs(tokens, code, palette)
 }
 
-fn markdown_fallback_with_tail(tokens []MarkdownCodeToken, tail string, palette MarkdownCodePalette) []RichTextRun {
-	mut runs := markdown_tokens_to_runs(tokens, palette)
-	if tail.len > 0 {
+fn markdown_fallback_with_tail(tokens []MarkdownCodeToken, code string, pos int, palette MarkdownCodePalette) []RichTextRun {
+	mut runs := markdown_tokens_to_runs(tokens, code, palette)
+	if pos < code.len {
 		runs << RichTextRun{
-			text:  tail
+			text:  code[pos..]
 			style: palette.base
 		}
 	}
 	return runs
 }
 
-fn markdown_tokens_to_runs(tokens []MarkdownCodeToken, palette MarkdownCodePalette) []RichTextRun {
+fn markdown_tokens_to_runs(tokens []MarkdownCodeToken, code string, palette MarkdownCodePalette) []RichTextRun {
 	mut runs := []RichTextRun{cap: tokens.len}
 	for token in tokens {
 		style := markdown_style_for_token(token.kind, palette)
 		runs << RichTextRun{
-			text:  token.text
+			text:  code[token.start..token.end]
 			style: style
 		}
 	}
@@ -284,17 +285,18 @@ fn markdown_style_for_token(kind MarkdownCodeTokenKind, palette MarkdownCodePale
 	}
 }
 
-fn markdown_append_token(mut tokens []MarkdownCodeToken, kind MarkdownCodeTokenKind, text string) {
-	if text.len == 0 {
+fn markdown_append_token(mut tokens []MarkdownCodeToken, kind MarkdownCodeTokenKind, start int, end int) {
+	if start == end {
 		return
 	}
-	if tokens.len > 0 && tokens[tokens.len - 1].kind == kind {
-		tokens[tokens.len - 1].text += text
+	if tokens.len > 0 && tokens.last().kind == kind && tokens.last().end == start {
+		tokens[tokens.len - 1].end = end
 		return
 	}
 	tokens << MarkdownCodeToken{
-		kind: kind
-		text: text
+		kind:  kind
+		start: start
+		end:   end
 	}
 }
 
