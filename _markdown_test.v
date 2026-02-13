@@ -949,3 +949,62 @@ fn test_markdown_find_triple_closing_trailing_backslash() {
 	pos := find_triple_closing(r'abc\', 0, `*`)
 	assert pos == -1
 }
+
+// S1: sanitize_latex nested payload bypass
+fn test_sanitize_latex_nested_bypass() {
+	// \inp + \input + ut → after one pass: \input
+	assert sanitize_latex(r'\inp\inputut') == ''
+	// Nested \include: \inc + \include + lude → \include
+	assert sanitize_latex(r'\inc\includelude') == ''
+	// Already-blocked single command
+	assert sanitize_latex(r'\write18') == ''
+	// Clean input unchanged
+	assert sanitize_latex(r'\frac{1}{2}') == r'\frac{1}{2}'
+}
+
+// S2: is_safe_url percent-encoded protocol bypass
+fn test_is_safe_url_percent_encoded_javascript() {
+	// %6A = 'j' → javascript:
+	assert is_safe_url('%6Aavascript:alert(1)') == false
+	// Mixed case + percent encoding
+	assert is_safe_url('%6a%61vascript:alert(1)') == false
+	// Percent-encoded data:
+	assert is_safe_url('%64ata:text/html,<script>') == false
+	// Normal safe URLs still work
+	assert is_safe_url('https://example.com') == true
+	assert is_safe_url('mailto:a@b.com') == true
+	assert is_safe_url('./relative') == true
+}
+
+// S3: empty link definition key
+fn test_empty_link_definition_rejected() {
+	// "[]: url" should not register as link def
+	link_defs, _, _ := collect_metadata(['[]: http://evil.com'])
+	assert link_defs.len == 0
+}
+
+fn test_is_link_definition_empty_key() {
+	assert is_link_definition('[]: http://example.com') == false
+	assert is_link_definition('[a]: http://example.com') == true
+}
+
+// Table column limit
+fn test_table_column_limit() {
+	// Build table with 150 columns (exceeds max_table_columns=100)
+	mut hdr := []string{cap: 150}
+	mut sep := []string{cap: 150}
+	mut row := []string{cap: 150}
+	for i in 0 .. 150 {
+		hdr << 'H${i}'
+		sep << '---'
+		row << '${i}'
+	}
+	lines := [hdr.join('|'), sep.join('|'), row.join('|')]
+	style := MarkdownStyle{}
+	parsed := parse_markdown_table(lines, style, map[string]string{}, map[string]string{}) or {
+		// Rejected due to column limit — acceptable
+		return
+	}
+	// If parsed, headers must be capped
+	assert parsed.headers.len <= max_table_columns
+}

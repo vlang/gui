@@ -76,7 +76,7 @@ fn collect_metadata(lines []string) (map[string]string, map[string]string, map[s
 				i++
 				continue
 			}
-			if bracket_end >= 1 {
+			if bracket_end > 1 {
 				id := trimmed[1..bracket_end].to_lower()
 				rest := trimmed[bracket_end + 2..].trim_left(' \t')
 				if rest.len > 0 {
@@ -106,7 +106,7 @@ fn is_link_definition(line string) bool {
 		return false
 	}
 	bracket_end := trimmed.index(']:') or { return false }
-	return bracket_end >= 1
+	return bracket_end > 1
 }
 
 // is_footnote_definition checks if a line is a footnote definition.

@@ -46,8 +46,9 @@ pub:
 	table_cell_style   TextStyle        = gui_theme.n3
 	table_cell_padding Padding          = padding(5, 10, 5, 10)
 	table_row_alt      ?Color
-	math_dpi_display   int = 150
-	math_dpi_inline    int = 200
+	math_dpi_display   int   = 150
+	math_dpi_inline    int   = 200
+	mermaid_bg         Color = rgba(248, 248, 255, 255)
 }
 
 // MarkdownCfg configures a Markdown View.
@@ -147,6 +148,9 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 					mhash := math_cache_hash(run.math_id)
 					if _ := w.view_state.diagram_cache.get(mhash) {
 					} else {
+						if w.view_state.diagram_cache.loading_count() >= max_concurrent_diagram_fetches {
+							continue
+						}
 						w.view_state.diagram_cache.set(mhash, DiagramCacheEntry{
 							state: .loading
 						})
@@ -244,12 +248,14 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 					}
 				}
 			} else {
-				// Start async fetch
-				w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
-					state: .loading
-				})
-				fetch_math_async(mut w, block.math_latex, diagram_hash, cfg.style.math_dpi_display,
-					cfg.style.text.color)
+				// Start async fetch (if under concurrency limit)
+				if w.view_state.diagram_cache.loading_count() < max_concurrent_diagram_fetches {
+					w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
+						state: .loading
+					})
+					fetch_math_async(mut w, block.math_latex, diagram_hash, cfg.style.math_dpi_display,
+						cfg.style.text.color)
+				}
 				content << column(
 					color:       cfg.style.code_block_bg
 					padding:     cfg.style.code_block_padding
@@ -288,7 +294,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 						}
 						.ready {
 							content << column(
-								color:       rgba(248, 248, 255, 255) // ghost white
+								color:       cfg.style.mermaid_bg
 								padding:     cfg.style.code_block_padding
 								radius:      cfg.style.code_block_radius
 								size_border: 0
@@ -318,11 +324,14 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 						}
 					}
 				} else {
-					// Start async fetch
-					w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
-						state: .loading
-					})
-					fetch_mermaid_async(mut w, source, diagram_hash, cfg.mermaid_width)
+					// Start async fetch (if under concurrency limit)
+					if w.view_state.diagram_cache.loading_count() < max_concurrent_diagram_fetches {
+						w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
+							state: .loading
+						})
+						fetch_mermaid_async(mut w, source, diagram_hash, cfg.mermaid_width,
+							cfg.style.mermaid_bg.r, cfg.style.mermaid_bg.g, cfg.style.mermaid_bg.b)
+					}
 					content << column(
 						color:       cfg.style.code_block_bg
 						padding:     cfg.style.code_block_padding

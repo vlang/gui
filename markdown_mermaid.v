@@ -6,6 +6,8 @@ import rand
 import stbi
 import time
 
+const max_concurrent_diagram_fetches = 8
+
 // DiagramState represents the loading state of a diagram.
 enum DiagramState {
 	loading
@@ -32,14 +34,13 @@ fn write_stbi_temp(prefix string, hash i64, img stbi.Image) !string {
 	return tmp_path
 }
 
-// fill_transparent_with_bg replaces transparent pixels with ghost white background.
-// Modifies RGBA image data in place.
-fn fill_transparent_with_bg(data &u8, width int, height int, channels int) {
+// fill_transparent_with_bg replaces transparent pixels with the
+// given background color. Modifies RGBA image data in place.
+fn fill_transparent_with_bg(data &u8, width int, height int, channels int, r u8, g u8, b u8) {
 	if channels != 4 {
 		return
 	}
-	// Ghost white: RGB(248, 248, 255)
-	bg_r, bg_g, bg_b := f32(248), f32(248), f32(255)
+	bg_r, bg_g, bg_b := f32(r), f32(g), f32(b)
 	total := width * height * 4
 	mut ptr := unsafe { data }
 	for i := 0; i < total; i += 4 {
@@ -67,8 +68,8 @@ struct MermaidFetchResult {
 // Uses PNG format since SVG from Kroki uses foreignObject/CSS which our parser doesn't support.
 // Updates diagram_cache with result and triggers window refresh.
 // NOTE: Mermaid source is sent to external kroki.io API for rendering.
-fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int) {
-	spawn fn [mut window, source, hash, max_width] () {
+fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int, bg_r u8, bg_g u8, bg_b u8) {
+	spawn fn [mut window, source, hash, max_width, bg_r, bg_g, bg_b] () {
 		ch := chan MermaidFetchResult{}
 
 		// Spawn fetcher thread WITHOUT window reference to avoid holding it if hung
@@ -188,9 +189,9 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 				}
 			}
 
-			// Fill transparent pixels with ghost white background
+			// Fill transparent pixels with background color
 			fill_transparent_with_bg(final_img.data, final_img.width, final_img.height,
-				final_img.nr_channels)
+				final_img.nr_channels, bg_r, bg_g, bg_b)
 
 			tmp_path := write_stbi_temp('mermaid', hash, final_img) or {
 				img.free()
@@ -244,10 +245,9 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 // BoundedDiagramCache is a FIFO cache for diagram entries.
 struct BoundedDiagramCache {
 mut:
-	data      map[i64]DiagramCacheEntry
-	order     []i64
-	index_map map[i64]int
-	max_size  int = 50
+	data     map[i64]DiagramCacheEntry
+	order    []i64
+	max_size int = 50
 }
 
 // get returns cached diagram entry.
@@ -270,16 +270,22 @@ fn (mut m BoundedDiagramCache) set(key i64, value DiagramCacheEntry) {
 				}
 			}
 			m.data.delete(oldest)
-			m.index_map.delete(oldest)
 			m.order.delete(0)
-			for k, idx in m.index_map {
-				m.index_map[k] = idx - 1
-			}
 		}
-		m.index_map[key] = m.order.len
 		m.order << key
 	}
 	m.data[key] = value
+}
+
+// loading_count returns number of entries in loading state.
+fn (m &BoundedDiagramCache) loading_count() int {
+	mut n := 0
+	for _, entry in m.data {
+		if entry.state == .loading {
+			n++
+		}
+	}
+	return n
 }
 
 // len returns number of entries.
@@ -296,5 +302,4 @@ fn (mut m BoundedDiagramCache) clear() {
 	}
 	m.data.clear()
 	m.order.clear()
-	m.index_map.clear()
 }

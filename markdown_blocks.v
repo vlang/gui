@@ -171,6 +171,15 @@ fn collect_list_item_content(first_content string, lines []string, start_idx int
 // is_block_start checks if a line starts a new block element.
 fn is_block_start(line string) bool {
 	trimmed := line.trim_space()
+	if trimmed.len == 0 {
+		return false
+	}
+	// Fast path: check first char against known block starters
+	fc := trimmed[0]
+	if fc != `#` && fc != `>` && fc != `\`` && fc != `~` && fc != `!` && fc != `-` && fc != `*`
+		&& fc != `+` && fc != `|` && fc != `:` && fc != `$` && fc != `_` && (fc < `0` || fc > `9`) {
+		return false
+	}
 	if trimmed.starts_with('#') {
 		return true
 	}

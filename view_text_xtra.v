@@ -441,12 +441,54 @@ fn count_chars(strs []string) int {
 	return count
 }
 
+// decode_percent_prefix decodes percent-encoded bytes in
+// the first 20 chars of a string (protocol area only).
+fn decode_percent_prefix(s string) string {
+	limit := if s.len < 20 { s.len } else { 20 }
+	mut buf := []u8{cap: limit}
+	mut i := 0
+	for i < limit {
+		if s[i] == `%` && i + 2 < s.len {
+			hi := hex_digit(s[i + 1])
+			lo := hex_digit(s[i + 2])
+			if hi >= 0 && lo >= 0 {
+				buf << u8(hi * 16 + lo)
+				i += 3
+				continue
+			}
+		}
+		buf << s[i]
+		i++
+	}
+	// Append remainder unmodified
+	if limit < s.len {
+		buf << s[limit..].bytes()
+	}
+	return buf.bytestr()
+}
+
+// hex_digit returns 0-15 for valid hex char, -1 otherwise.
+fn hex_digit(c u8) int {
+	if c >= `0` && c <= `9` {
+		return int(c - `0`)
+	}
+	if c >= `a` && c <= `f` {
+		return int(c - `a`) + 10
+	}
+	if c >= `A` && c <= `F` {
+		return int(c - `A`) + 10
+	}
+	return -1
+}
+
 // is_safe_url validates URL protocol to prevent XSS attacks.
 // Allows: http://, https://, mailto:, and relative URLs (no protocol).
-// Blocks: javascript:, vbscript:, data:, file:, and other unsafe protocols.
-// Uses case-insensitive matching to prevent bypass via capitalization.
+// Blocks: javascript:, vbscript:, data:, file:, and other unsafe
+// protocols. Decodes percent-encoding in the protocol portion to
+// prevent bypasses like %6Aavascript:. Uses case-insensitive
+// matching to prevent bypass via capitalization.
 fn is_safe_url(url string) bool {
-	lower := url.to_lower().trim_space()
+	lower := decode_percent_prefix(url).to_lower().trim_space()
 	if lower.len == 0 {
 		return false
 	}

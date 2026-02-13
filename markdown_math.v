@@ -23,10 +23,9 @@ fn math_cache_hash(math_id string) i64 {
 // enable shell escape or file access on the remote renderer.
 fn sanitize_latex(s string) string {
 	// Block shell-escape and file-access commands.
-	// Single-pass replace is safe: V's replace removes all
-	// non-overlapping occurrences left-to-right, so nested
-	// payloads like `\inp\inputut` cannot reassemble into
-	// a blocked command after removal.
+	// Loop until stable: single-pass replace can miss
+	// nested payloads like `\inp\inputut` that reassemble
+	// into `\input` after one removal pass.
 	blocked := [
 		'\\write18',
 		'\\input',
@@ -48,8 +47,14 @@ fn sanitize_latex(s string) string {
 		'\\futurelet',
 	]
 	mut result := s
-	for cmd in blocked {
-		result = result.replace(cmd, '')
+	for {
+		prev := result
+		for cmd in blocked {
+			result = result.replace(cmd, '')
+		}
+		if result == prev {
+			break
+		}
 	}
 	return result
 }

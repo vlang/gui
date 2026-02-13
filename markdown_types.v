@@ -3,6 +3,7 @@ module gui
 // Bounds for multi-line constructs (self-synchronization limits)
 const max_blockquote_lines = 100
 const max_table_lines = 500
+const max_table_columns = 100
 const max_list_continuation_lines = 50
 const max_footnote_continuation_lines = 20
 const max_paragraph_continuation_lines = 100

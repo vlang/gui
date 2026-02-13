@@ -4,10 +4,9 @@ module gui
 // evicted (FIFO). Used to prevent unbounded memory growth in view state.
 struct BoundedMap[K, V] {
 mut:
-	data      map[K]V
-	order     []K
-	index_map map[K]int // key -> position in order for O(1) lookup
-	max_size  int = 100
+	data     map[K]V
+	order    []K
+	max_size int = 100
 }
 
 // set adds or updates key-value pair. Evicts oldest if at capacity.
@@ -19,14 +18,8 @@ fn (mut m BoundedMap[K, V]) set(key K, value V) {
 		if m.data.len >= m.max_size && m.order.len > 0 {
 			oldest := m.order[0]
 			m.data.delete(oldest)
-			m.index_map.delete(oldest)
 			m.order.delete(0)
-			// Decrement all indices after removal
-			for k, idx in m.index_map {
-				m.index_map[k] = idx - 1
-			}
 		}
-		m.index_map[key] = m.order.len
 		m.order << key
 	}
 	m.data[key] = value
@@ -41,14 +34,10 @@ fn (m &BoundedMap[K, V]) get(key K) ?V {
 fn (mut m BoundedMap[K, V]) delete(key K) {
 	if key in m.data {
 		m.data.delete(key)
-		if idx := m.index_map[key] {
-			m.order.delete(idx)
-			m.index_map.delete(key)
-			// Decrement indices after removed position
-			for k, i in m.index_map {
-				if i > idx {
-					m.index_map[k] = i - 1
-				}
+		for i, k in m.order {
+			if k == key {
+				m.order.delete(i)
+				break
 			}
 		}
 	}
@@ -68,7 +57,6 @@ fn (m &BoundedMap[K, V]) len() int {
 fn (mut m BoundedMap[K, V]) clear() {
 	m.data.clear()
 	m.order.clear()
-	m.index_map.clear()
 }
 
 // keys returns all keys in insertion order.
@@ -76,14 +64,14 @@ fn (m &BoundedMap[K, V]) keys() []K {
 	return m.order
 }
 
-// BoundedTreeState is a specialized bounded map for tree state (string -> map[string]bool).
-// Maps require clone() when stored, which generic BoundedMap can't handle.
+// BoundedTreeState is a specialized bounded map for tree state
+// (string -> map[string]bool). Maps require clone() when stored,
+// which generic BoundedMap can't handle.
 struct BoundedTreeState {
 mut:
-	data      map[string]map[string]bool
-	order     []string
-	index_map map[string]int
-	max_size  int = 30
+	data     map[string]map[string]bool
+	order    []string
+	max_size int = 30
 }
 
 // set adds or updates tree state. Evicts oldest if at capacity.
@@ -95,13 +83,8 @@ fn (mut m BoundedTreeState) set(key string, value map[string]bool) {
 		if m.data.len >= m.max_size && m.order.len > 0 {
 			oldest := m.order[0]
 			m.data.delete(oldest)
-			m.index_map.delete(oldest)
 			m.order.delete(0)
-			for k, idx in m.index_map {
-				m.index_map[k] = idx - 1
-			}
 		}
-		m.index_map[key] = m.order.len
 		m.order << key
 	}
 	m.data[key] = value.clone()
@@ -126,7 +109,6 @@ fn (m &BoundedTreeState) len() int {
 fn (mut m BoundedTreeState) clear() {
 	m.data.clear()
 	m.order.clear()
-	m.index_map.clear()
 }
 
 // BoundedSvgCache is an LRU cache for SVG data.
@@ -227,10 +209,9 @@ fn (mut m BoundedSvgCache) clear() {
 // BoundedMarkdownCache is a FIFO cache for parsed markdown blocks.
 struct BoundedMarkdownCache {
 mut:
-	data      map[int][]MarkdownBlock
-	order     []int
-	index_map map[int]int
-	max_size  int = 50
+	data     map[int][]MarkdownBlock
+	order    []int
+	max_size int = 50
 }
 
 // get returns cached blocks.
@@ -247,13 +228,8 @@ fn (mut m BoundedMarkdownCache) set(key int, value []MarkdownBlock) {
 		if m.data.len >= m.max_size && m.order.len > 0 {
 			oldest := m.order[0]
 			m.data.delete(oldest)
-			m.index_map.delete(oldest)
 			m.order.delete(0)
-			for k, idx in m.index_map {
-				m.index_map[k] = idx - 1
-			}
 		}
-		m.index_map[key] = m.order.len
 		m.order << key
 	}
 	m.data[key] = value.clone()
@@ -268,5 +244,4 @@ fn (m &BoundedMarkdownCache) len() int {
 fn (mut m BoundedMarkdownCache) clear() {
 	m.data.clear()
 	m.order.clear()
-	m.index_map.clear()
 }

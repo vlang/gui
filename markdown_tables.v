@@ -9,7 +9,7 @@ fn parse_markdown_table(lines []string, style MarkdownStyle, link_defs map[strin
 	}
 	// Line 0 = headers
 	headers := parse_table_row(lines[0])
-	if headers.len == 0 {
+	if headers.len == 0 || headers.len > max_table_columns {
 		return none
 	}
 	// Line 1 must be a valid separator row
@@ -78,13 +78,18 @@ fn parse_table_row(line string) []string {
 			cells << current.bytestr().trim_space()
 			current.clear()
 			i++
+			if cells.len >= max_table_columns {
+				break
+			}
 		} else {
 			current << inner[i]
 			i++
 		}
 	}
-	// Final cell
-	cells << current.bytestr().trim_space()
+	// Final cell (only if under limit)
+	if cells.len < max_table_columns {
+		cells << current.bytestr().trim_space()
+	}
 	return cells
 }
 
