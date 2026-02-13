@@ -12,6 +12,7 @@ const data_grid_resize_double_click_frames = u64(24)
 const data_grid_edit_double_click_frames = u64(36)
 const data_grid_resize_handle_width = f32(6)
 const data_grid_autofit_padding = f32(18)
+const data_grid_autofit_max_rows = 1000
 const data_grid_indicator_alpha = u8(140)
 const data_grid_resize_key_step = f32(8)
 const data_grid_resize_key_step_large = f32(24)
@@ -260,6 +261,22 @@ pub:
 	on_detail_row_view        fn (GridRow, mut Window) View                 = unsafe { nil }
 	on_copy_rows              fn ([]GridRow, mut Event, mut Window) ?string = unsafe { nil }
 	on_row_activate           fn (GridRow, mut Event, mut Window)           = unsafe { nil }
+}
+
+fn data_grid_indicator_text_style(base TextStyle) TextStyle {
+	return TextStyle{
+		...base
+		color: data_grid_dim_color(base.color)
+	}
+}
+
+fn data_grid_dim_color(c Color) Color {
+	return Color{
+		r: c.r
+		g: c.g
+		b: c.b
+		a: data_grid_indicator_alpha
+	}
 }
 
 // data_grid renders a controlled, virtualized data grid view.
@@ -574,8 +591,7 @@ fn data_grid_presentation_rows(cfg DataGridCfg, columns []GridColumnCfg, row_ind
 	}
 
 	group_titles := data_grid_group_titles(columns)
-	local_rows := visible_indices.map(cfg.rows[it])
-	group_ranges := data_grid_group_ranges(local_rows, group_cols)
+	group_ranges := data_grid_group_ranges(cfg.rows, visible_indices, group_cols)
 	mut prev_values := []string{len: group_cols.len}
 	mut has_prev := false
 
@@ -627,7 +643,7 @@ fn data_grid_presentation_rows(cfg DataGridCfg, columns []GridColumnCfg, row_ind
 				data_row_idx: row_idx
 			}
 		}
-		prev_values = values.clone()
+		prev_values = unsafe { values }
 		has_prev = true
 	}
 
@@ -678,23 +694,25 @@ fn data_grid_group_range_key(depth int, start_idx int) string {
 // group at each nesting depth. Walks rows sequentially;
 // when a group value changes at depth D, closes ranges for
 // depths D..max, then opens new ranges. Key format is
-// "depth:start_idx".
-fn data_grid_group_ranges(rows []GridRow, group_cols []string) map[string]int {
+// "depth:start_idx". Accepts full rows array + indices to
+// avoid copying row structs.
+fn data_grid_group_ranges(rows []GridRow, indices []int, group_cols []string) map[string]int {
 	mut ranges := map[string]int{}
-	if rows.len == 0 || group_cols.len == 0 {
+	if indices.len == 0 || group_cols.len == 0 {
 		return ranges
 	}
 
 	mut starts := []int{len: group_cols.len, init: 0}
 	mut values := []string{len: group_cols.len}
 	for depth, col_id in group_cols {
-		values[depth] = rows[0].cells[col_id] or { '' }
+		values[depth] = rows[indices[0]].cells[col_id] or { '' }
 	}
 
-	for row_idx in 1 .. rows.len {
+	for i in 1 .. indices.len {
+		row := rows[indices[i]]
 		mut change_depth := -1
 		for depth, col_id in group_cols {
-			value := rows[row_idx].cells[col_id] or { '' }
+			value := row.cells[col_id] or { '' }
 			if value != values[depth] {
 				change_depth = depth
 				break
@@ -706,7 +724,7 @@ fn data_grid_group_ranges(rows []GridRow, group_cols []string) map[string]int {
 
 		mut depth := group_cols.len - 1
 		for depth >= change_depth {
-			ranges[data_grid_group_range_key(depth, starts[depth])] = row_idx - 1
+			ranges[data_grid_group_range_key(depth, starts[depth])] = i - 1
 			if depth == 0 {
 				break
 			}
@@ -715,12 +733,12 @@ fn data_grid_group_ranges(rows []GridRow, group_cols []string) map[string]int {
 
 		for dep in change_depth .. group_cols.len {
 			col_id := group_cols[dep]
-			starts[dep] = row_idx
-			values[dep] = rows[row_idx].cells[col_id] or { '' }
+			starts[dep] = i
+			values[dep] = row.cells[col_id] or { '' }
 		}
 	}
 
-	last := rows.len - 1
+	last := indices.len - 1
 	mut depth := group_cols.len - 1
 	for {
 		ranges[data_grid_group_range_key(depth, starts[depth])] = last
@@ -801,9 +819,7 @@ fn data_grid_aggregate_value(rows []GridRow, start_idx int, end_idx int, agg Gri
 				}
 			}
 		}
-		.count {
-			return (end_idx - start_idx + 1).str()
-		}
+		else {}
 	}
 
 	return data_grid_format_number(result)
@@ -934,18 +950,6 @@ fn data_grid_focus_id(cfg DataGridCfg) u32 {
 		return cfg.id_focus
 	}
 	return fnv1a.sum32_string(cfg.id + ':focus')
-}
-
-fn data_grid_scroll_padding(cfg DataGridCfg) Padding {
-	if cfg.scrollbar == .hidden {
-		return padding_none
-	}
-	return padding(0, data_grid_scroll_gutter(), 0, 0)
-}
-
-fn data_grid_scroll_gutter() f32 {
-	style := gui_theme.scrollbar_style
-	return style.size + style.gap_edge + style.gap_end
 }
 
 fn data_grid_scroll_id(cfg DataGridCfg) u32 {

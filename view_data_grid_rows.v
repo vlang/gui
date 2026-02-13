@@ -92,7 +92,7 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 	detail_enabled := cfg.on_detail_row_view != unsafe { nil }
 	detail_toggle_enabled := cfg.on_detail_expanded_change != unsafe { nil }
 	detail_expanded := data_grid_detail_row_expanded(cfg, row_id)
-	is_editing_row := editing_row_id == row_id && data_grid_editing_enabled(cfg)
+	is_editing_row := editing_row_id == row_id && edit_enabled
 	mut cells := []View{cap: columns.len}
 	for col_idx, col in columns {
 		value := row_data.cells[col.id] or { '' }
@@ -439,10 +439,6 @@ fn make_data_grid_editor_on_keydown(grid_id string, grid_focus_id u32) fn (&Layo
 	}
 }
 
-fn data_grid_editing_enabled(cfg DataGridCfg) bool {
-	return cfg.on_cell_edit != unsafe { nil } || data_grid_crud_enabled(cfg)
-}
-
 fn data_grid_track_row_edit_click(grid_id string, edit_enabled bool, editor_focus_base u32, col_count int, columns []GridColumnCfg, row_idx int, row_id string, grid_focus_id u32, mut e Event, mut w Window) {
 	if !edit_enabled || data_grid_has_keyboard_modifiers(&e) {
 		return
@@ -693,12 +689,16 @@ fn data_grid_detail_indent() f32 {
 	return data_grid_header_control_width + data_grid_detail_indent_gap
 }
 
-fn data_grid_columns_total_width(columns []GridColumnCfg, column_widths map[string]f32) f32 {
-	mut total := f32(0)
-	for col in columns {
-		total += data_grid_column_width_for(col, column_widths)
+fn data_grid_scroll_padding(cfg DataGridCfg) Padding {
+	if cfg.scrollbar == .hidden {
+		return padding_none
 	}
-	return total
+	return padding(0, data_grid_scroll_gutter(), 0, 0)
+}
+
+fn data_grid_scroll_gutter() f32 {
+	style := gui_theme.scrollbar_style
+	return style.size + style.gap_edge + style.gap_end
 }
 
 fn data_grid_frozen_top_zone(cfg DataGridCfg, row_views []View, zone_height f32, total_width f32, scroll_x f32) View {

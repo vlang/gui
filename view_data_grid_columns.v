@@ -149,7 +149,7 @@ fn data_grid_partition_pins(columns []GridColumnCfg) []GridColumnCfg {
 	return merged
 }
 
-fn grid_column_next_pin(pin GridColumnPin) GridColumnPin {
+fn data_grid_column_next_pin(pin GridColumnPin) GridColumnPin {
 	return match pin {
 		.none { .left }
 		.left { .right }
@@ -157,8 +157,8 @@ fn grid_column_next_pin(pin GridColumnPin) GridColumnPin {
 	}
 }
 
-// grid_column_order_move moves `col_id` in `order` by delta (-1 left, +1 right).
-pub fn grid_column_order_move(order []string, col_id string, delta int) []string {
+// data_grid_column_order_move moves `col_id` in `order` by delta (-1 left, +1 right).
+pub fn data_grid_column_order_move(order []string, col_id string, delta int) []string {
 	if order.len == 0 || delta == 0 {
 		return order.clone()
 	}
@@ -244,13 +244,13 @@ fn data_grid_sort_index(sorts []GridSort, col_id string) int {
 	return -1
 }
 
-fn grid_query_set_filter(query GridQueryState, col_id string, value string) GridQueryState {
+fn data_grid_query_set_filter(query GridQueryState, col_id string, value string) GridQueryState {
 	mut next := GridQueryState{
 		sorts:        query.sorts.clone()
 		filters:      query.filters.clone()
 		quick_filter: query.quick_filter
 	}
-	idx := grid_query_filter_index(next.filters, col_id)
+	idx := data_grid_query_filter_index(next.filters, col_id)
 	trimmed := value.trim_space()
 	if trimmed.len == 0 {
 		if idx >= 0 {
@@ -274,7 +274,7 @@ fn grid_query_set_filter(query GridQueryState, col_id string, value string) Grid
 	return next
 }
 
-fn grid_query_filter_index(filters []GridFilter, col_id string) int {
+fn data_grid_query_filter_index(filters []GridFilter, col_id string) int {
 	for idx, filter in filters {
 		if filter.col_id == col_id {
 			return idx
@@ -283,8 +283,8 @@ fn grid_query_filter_index(filters []GridFilter, col_id string) int {
 	return -1
 }
 
-fn grid_query_filter_value(query GridQueryState, col_id string) string {
-	idx := grid_query_filter_index(query.filters, col_id)
+fn data_grid_query_filter_value(query GridQueryState, col_id string) string {
+	idx := data_grid_query_filter_index(query.filters, col_id)
 	if idx < 0 {
 		return ''
 	}
@@ -369,4 +369,12 @@ fn data_grid_clamp_width(col GridColumnCfg, width f32) f32 {
 		min_width = 1
 	}
 	return f32_clamp(width, min_width, max_width)
+}
+
+fn data_grid_columns_total_width(columns []GridColumnCfg, column_widths map[string]f32) f32 {
+	mut total := f32(0)
+	for col in columns {
+		total += data_grid_column_width_for(col, column_widths)
+	}
+	return total
 }

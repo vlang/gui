@@ -37,18 +37,18 @@ fn test_data_grid_toggle_sort_multi_append() {
 	assert q4.sorts[0].col_id == 'age'
 }
 
-fn test_grid_query_set_filter_add_update_remove() {
+fn test_data_grid_query_set_filter_add_update_remove() {
 	base := GridQueryState{}
-	q1 := grid_query_set_filter(base, 'name', 'alice')
+	q1 := data_grid_query_set_filter(base, 'name', 'alice')
 	assert q1.filters.len == 1
 	assert q1.filters[0].col_id == 'name'
 	assert q1.filters[0].value == 'alice'
 
-	q2 := grid_query_set_filter(q1, 'name', 'bob')
+	q2 := data_grid_query_set_filter(q1, 'name', 'bob')
 	assert q2.filters.len == 1
 	assert q2.filters[0].value == 'bob'
 
-	q3 := grid_query_set_filter(q2, 'name', '   ')
+	q3 := data_grid_query_set_filter(q2, 'name', '   ')
 	assert q3.filters.len == 0
 }
 
@@ -464,15 +464,15 @@ fn test_data_grid_scroll_padding_hidden() {
 	assert pad.right == 0
 }
 
-fn test_grid_column_order_move() {
+fn test_data_grid_column_order_move() {
 	order := ['a', 'b', 'c', 'd']
-	left := grid_column_order_move(order, 'c', -1)
+	left := data_grid_column_order_move(order, 'c', -1)
 	assert left == ['a', 'c', 'b', 'd']
 
-	right := grid_column_order_move(order, 'b', 2)
+	right := data_grid_column_order_move(order, 'b', 2)
 	assert right == ['a', 'c', 'd', 'b']
 
-	clamped := grid_column_order_move(order, 'a', -1)
+	clamped := data_grid_column_order_move(order, 'a', -1)
 	assert clamped == order
 }
 
@@ -582,10 +582,10 @@ fn test_data_grid_effective_columns_keeps_one_when_all_hidden() {
 	assert cols[0].id == 'a'
 }
 
-fn test_grid_column_next_pin_cycles() {
-	assert grid_column_next_pin(.none) == .left
-	assert grid_column_next_pin(.left) == .right
-	assert grid_column_next_pin(.right) == .none
+fn test_data_grid_column_next_pin_cycles() {
+	assert data_grid_column_next_pin(.none) == .left
+	assert data_grid_column_next_pin(.left) == .right
+	assert data_grid_column_next_pin(.right) == .none
 }
 
 fn test_data_grid_header_control_state_compacts_when_narrow() {
@@ -701,7 +701,8 @@ fn test_data_grid_group_ranges_nested() {
 			}
 		},
 	]
-	ranges := data_grid_group_ranges(rows, ['team', 'status'])
+	indices := []int{len: rows.len, init: index}
+	ranges := data_grid_group_ranges(rows, indices, ['team', 'status'])
 	assert ranges[data_grid_group_range_key(0, 0)] == 2
 	assert ranges[data_grid_group_range_key(1, 0)] == 1
 	assert ranges[data_grid_group_range_key(1, 2)] == 2

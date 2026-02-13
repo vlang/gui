@@ -8,6 +8,10 @@ fn data_grid_crud_enabled(cfg DataGridCfg) bool {
 	return cfg.show_crud_toolbar
 }
 
+fn data_grid_editing_enabled(cfg DataGridCfg) bool {
+	return cfg.on_cell_edit != unsafe { nil } || data_grid_crud_enabled(cfg)
+}
+
 fn data_grid_crud_has_unsaved(state DataGridCrudState) bool {
 	return state.dirty_row_ids.len > 0 || state.draft_row_ids.len > 0
 		|| state.deleted_row_ids.len > 0
@@ -446,7 +450,7 @@ fn data_grid_crud_build_payload(state DataGridCrudState) ([]GridRow, []GridRow, 
 	}
 	mut delete_sorted := state.deleted_row_ids.keys()
 	delete_sorted.sort()
-	delete_ids = delete_sorted.clone()
+	delete_ids = unsafe { delete_sorted }
 	return create_rows, update_rows, update_edits, delete_ids
 }
 

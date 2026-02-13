@@ -219,19 +219,11 @@ fn test_data_grid_source_row_position_text_offset() {
 }
 
 fn test_data_grid_source_jump_enabled_rules() {
-	cfg := DataGridCfg{
-		id:                  'source-jump'
-		columns:             []
-		rows:                []
-		on_selection_change: fn (_ GridSelection, mut _ Event, mut _ Window) {}
-	}
-	state := DataGridSourceState{
-		row_count: ?int(1000)
-	}
-	assert data_grid_source_jump_enabled(cfg, state, .offset, 200)
-	assert !data_grid_source_jump_enabled(cfg, state, .cursor, 200)
-	state_no_total := DataGridSourceState{}
-	assert !data_grid_source_jump_enabled(cfg, state_no_total, .offset, 200)
+	on_sel := fn (_ GridSelection, mut _ Event, mut _ Window) {}
+	row_count := ?int(1000)
+	assert data_grid_source_jump_enabled(on_sel, row_count, false, '', .offset, 200)
+	assert !data_grid_source_jump_enabled(on_sel, row_count, false, '', .cursor, 200)
+	assert !data_grid_source_jump_enabled(on_sel, ?int(none), false, '', .offset, 200)
 }
 
 fn test_in_memory_cursor_data_source_mutate_crud() {

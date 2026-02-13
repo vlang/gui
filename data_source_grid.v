@@ -476,24 +476,25 @@ fn data_grid_source_row_position_text(cfg DataGridCfg, state DataGridSourceState
 	return 'Row ${current} of ${total_text}'
 }
 
-fn data_grid_source_jump_enabled(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind, page_limit int) bool {
-	if cfg.on_selection_change == unsafe { nil } || page_limit <= 0 {
+fn data_grid_source_jump_enabled(on_selection_change fn (GridSelection, mut Event, mut Window), row_count ?int, loading bool, load_error string, kind GridPaginationKind, page_limit int) bool {
+	if on_selection_change == unsafe { nil } || page_limit <= 0 {
 		return false
 	}
-	if kind != .offset || state.loading || state.load_error.len > 0 {
+	if kind != .offset || loading || load_error.len > 0 {
 		return false
 	}
-	if total := state.row_count {
+	if total := row_count {
 		return total > 0
 	}
 	return false
 }
 
-fn data_grid_source_submit_jump(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind, page_limit int, grid_id string, focus_id u32, mut e Event, mut window Window) {
-	if !data_grid_source_jump_enabled(cfg, state, kind, page_limit) {
+fn data_grid_source_submit_jump(on_selection_change fn (GridSelection, mut Event, mut Window), row_count ?int, loading bool, load_error string, kind GridPaginationKind, page_limit int, grid_id string, focus_id u32, mut e Event, mut window Window) {
+	if !data_grid_source_jump_enabled(on_selection_change, row_count, loading, load_error,
+		kind, page_limit) {
 		return
 	}
-	total := state.row_count or { return }
+	total := row_count or { return }
 	jump_text := window.view_state.data_grid_jump_input.get(grid_id) or { '' }
 	target_idx := data_grid_parse_jump_target(jump_text, total) or { return }
 	window.view_state.data_grid_jump_input.set(grid_id, '${target_idx + 1}')
@@ -518,7 +519,12 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 	has_prev := data_grid_source_can_prev(kind, state, page_limit)
 	has_next := data_grid_source_can_next(kind, state, page_limit)
 	rows_text := data_grid_source_rows_text(kind, state)
-	jump_enabled := data_grid_source_jump_enabled(cfg, state, kind, page_limit)
+	on_selection_change := cfg.on_selection_change
+	row_count := state.row_count
+	loading := state.loading
+	load_error := state.load_error
+	jump_enabled := data_grid_source_jump_enabled(on_selection_change, row_count, loading,
+		load_error, kind, page_limit)
 	mode_text := if kind == .cursor { 'Cursor' } else { 'Offset' }
 	status := if state.loading {
 		'Loading...'
@@ -656,16 +662,16 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 			color_hover:     cfg.color_filter
 			color_border:    cfg.color_border
 			text_style:      cfg.text_style_filter
-			on_text_changed: fn [cfg, state, kind, page_limit, grid_id] (_ &Layout, text string, mut w Window) {
+			on_text_changed: fn [on_selection_change, row_count, loading, load_error, kind, page_limit, grid_id] (_ &Layout, text string, mut w Window) {
 				digits := data_grid_jump_digits(text)
 				w.view_state.data_grid_jump_input.set(grid_id, digits)
 				mut e := Event{}
-				data_grid_source_submit_jump(cfg, state, kind, page_limit, grid_id, 0, mut
-					e, mut w)
+				data_grid_source_submit_jump(on_selection_change, row_count, loading,
+					load_error, kind, page_limit, grid_id, 0, mut e, mut w)
 			}
-			on_enter:        fn [cfg, state, kind, page_limit, grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
-				data_grid_source_submit_jump(cfg, state, kind, page_limit, grid_id, focus_id, mut
-					e, mut w)
+			on_enter:        fn [on_selection_change, row_count, loading, load_error, kind, page_limit, grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_source_submit_jump(on_selection_change, row_count, loading,
+					load_error, kind, page_limit, grid_id, focus_id, mut e, mut w)
 			}
 		)
 	}

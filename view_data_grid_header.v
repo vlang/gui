@@ -174,7 +174,7 @@ fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
 					e.is_handled = true
 					return
 				}
-				next_order := grid_column_order_move(base_order, col_id, -1)
+				next_order := data_grid_column_order_move(base_order, col_id, -1)
 				if next_order == base_order {
 					e.is_handled = true
 					return
@@ -188,7 +188,7 @@ fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
 					e.is_handled = true
 					return
 				}
-				next_order := grid_column_order_move(base_order, col_id, 1)
+				next_order := data_grid_column_order_move(base_order, col_id, 1)
 				if next_order == base_order {
 					e.is_handled = true
 					return
@@ -249,7 +249,7 @@ fn data_grid_pin_control(cfg DataGridCfg, col GridColumnCfg) View {
 			if on_column_pin_change == unsafe { nil } {
 				return
 			}
-			next_pin := grid_column_next_pin(col_pin)
+			next_pin := data_grid_column_next_pin(col_pin)
 			on_column_pin_change(col_id, next_pin, mut e, mut w)
 			e.is_handled = true
 		}
@@ -283,9 +283,10 @@ fn data_grid_filter_row(cfg DataGridCfg, columns []GridColumnCfg, column_widths 
 
 fn data_grid_filter_cell(cfg DataGridCfg, col GridColumnCfg, width f32) View {
 	query := cfg.query
-	value := grid_query_filter_value(query, col.id)
+	value := data_grid_query_filter_value(query, col.id)
 	input_id := '${cfg.id}:filter:${col.id}'
 	on_query_change := cfg.on_query_change
+	col_id := col.id
 	return row(
 		name:         'data_grid filter cell'
 		id:           '${cfg.id}:filter_cell:${col.id}'
@@ -311,11 +312,11 @@ fn data_grid_filter_cell(cfg DataGridCfg, col GridColumnCfg, width f32) View {
 				color_hover:     cfg.color_filter
 				color_border:    cfg.color_border
 				text_style:      cfg.text_style_filter
-				on_text_changed: fn [on_query_change, query, col] (_ &Layout, text string, mut w Window) {
+				on_text_changed: fn [on_query_change, query, col_id] (_ &Layout, text string, mut w Window) {
 					if on_query_change == unsafe { nil } {
 						return
 					}
-					next := grid_query_set_filter(query, col.id, text)
+					next := data_grid_query_set_filter(query, col_id, text)
 					mut e := Event{}
 					on_query_change(next, mut e, mut w)
 				}
@@ -386,7 +387,12 @@ fn data_grid_end_resize(grid_id string, mut w Window) {
 fn data_grid_auto_fit_width(rows []GridRow, text_style_header TextStyle, text_style TextStyle, padding_cell Padding, col GridColumnCfg, mut w Window) f32 {
 	mut longest := text_width(col.title, text_style_header, mut w)
 	style := col.text_style or { text_style }
-	for row in rows {
+	sample := if rows.len > data_grid_autofit_max_rows {
+		rows[..data_grid_autofit_max_rows]
+	} else {
+		rows
+	}
+	for row in sample {
 		value := row.cells[col.id] or { '' }
 		width := text_width(value, style, mut w)
 		if width > longest {
@@ -407,22 +413,6 @@ fn data_grid_header_indicator(query GridQueryState, col_id string) string {
 		return '${idx + 1}${dir}'
 	}
 	return dir
-}
-
-fn data_grid_indicator_text_style(base TextStyle) TextStyle {
-	return TextStyle{
-		...base
-		color: data_grid_dim_color(base.color)
-	}
-}
-
-fn data_grid_dim_color(c Color) Color {
-	return Color{
-		r: c.r
-		g: c.g
-		b: c.b
-		a: data_grid_indicator_alpha
-	}
 }
 
 fn data_grid_active_resize_col_id(grid_id string, window &Window) string {

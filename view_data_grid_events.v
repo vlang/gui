@@ -527,7 +527,7 @@ fn data_grid_header_reorder_by_key(columns []GridColumnCfg, column_order []strin
 		return
 	}
 	base_order := data_grid_normalized_column_order(columns, column_order)
-	next_order := grid_column_order_move(base_order, col.id, delta)
+	next_order := data_grid_column_order_move(base_order, col.id, delta)
 	if next_order == base_order {
 		e.is_handled = true
 		return
@@ -558,7 +558,7 @@ fn data_grid_header_pin_by_key(columns []GridColumnCfg, column_order []string, h
 	if on_column_pin_change == unsafe { nil } {
 		return
 	}
-	next_pin := grid_column_next_pin(col.pin)
+	next_pin := data_grid_column_next_pin(col.pin)
 	on_column_pin_change(col.id, next_pin, mut e, mut w)
 	next_idx := data_grid_effective_index_for_column_with_pin(columns, column_order, hidden_column_ids,
 		col.id, next_pin)
