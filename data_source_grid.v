@@ -39,7 +39,7 @@ fn data_grid_source_apply_local_mutation(grid_id string, rows []GridRow, row_cou
 	state.loading = false
 	state.load_error = ''
 	state.rows_dirty = true
-	state.rows_signature = data_grid_rows_signature(rows)
+	state.rows_signature = data_grid_rows_signature(rows, []string{})
 	if count := row_count {
 		state.row_count = ?int(count)
 	}
@@ -298,7 +298,7 @@ fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDat
 	state.has_loaded = true
 	state.rows = result.rows.clone()
 	state.rows_dirty = true
-	state.rows_signature = data_grid_rows_signature(result.rows)
+	state.rows_signature = data_grid_rows_signature(result.rows, []string{})
 	state.next_cursor = result.next_cursor
 	state.prev_cursor = result.prev_cursor
 	state.has_more = result.has_more
@@ -510,30 +510,6 @@ fn data_grid_source_retry(grid_id string, mut window Window) {
 	window.update_window()
 }
 
-fn data_grid_source_pager_button(symbol string, disabled bool, color_hover Color, text_style_header TextStyle, on_click fn (&Layout, mut Event, mut Window)) View {
-	return button(
-		width:        data_grid_header_control_width + 10
-		sizing:       fixed_fill
-		padding:      padding_none
-		size_border:  0
-		radius:       0
-		color:        color_transparent
-		color_hover:  color_hover
-		color_focus:  color_transparent
-		color_click:  color_hover
-		color_border: color_transparent
-		disabled:     disabled
-		on_click:     on_click
-		content:      [
-			text(
-				text:       symbol
-				mode:       .single_line
-				text_style: data_grid_indicator_text_style(text_style_header)
-			),
-		]
-	)
-}
-
 fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourceState, caps GridDataCapabilities, jump_text string) View {
 	kind := data_grid_source_effective_pagination_kind(cfg.pagination_kind, caps)
 	page_limit := data_grid_page_limit(cfg)
@@ -557,8 +533,8 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 	grid_id := cfg.id
 	jump_input_id := '${grid_id}:jump'
 	mut content := []View{cap: 10}
-	content << data_grid_source_pager_button('◀', state.loading || !has_prev, cfg.color_header_hover,
-		cfg.text_style_header, fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
+	content << data_grid_indicator_button('◀', cfg.text_style_header, cfg.color_header_hover,
+		state.loading || !has_prev, data_grid_header_control_width + 10, fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
 		data_grid_source_prev_page(grid_id, kind, page_limit, mut w)
 		if focus_id > 0 {
 			w.set_id_focus(focus_id)
@@ -570,8 +546,8 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 		mode:       .single_line
 		text_style: cfg.text_style_filter
 	)
-	content << data_grid_source_pager_button('▶', state.loading || !has_next, cfg.color_header_hover,
-		cfg.text_style_header, fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
+	content << data_grid_indicator_button('▶', cfg.text_style_header, cfg.color_header_hover,
+		state.loading || !has_next, data_grid_header_control_width + 10, fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
 		data_grid_source_next_page(grid_id, kind, page_limit, mut w)
 		if focus_id > 0 {
 			w.set_id_focus(focus_id)

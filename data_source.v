@@ -577,45 +577,54 @@ fn grid_data_source_apply_create(mut rows []GridRow, req_rows []GridRow) !GridMu
 fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits []GridCellEdit) !GridMutationApplyResult {
 	mut updated := []GridRow{}
 	mut updated_ids := map[string]bool{}
-	if req_rows.len > 0 {
-		for req_row in req_rows {
-			if req_row.id.len == 0 {
-				return error('update row has empty id')
+	// Group edits by row_id for single-pass application.
+	mut edits_by_row := map[string][]GridCellEdit{}
+	for edit in edits {
+		if edit.row_id.len == 0 {
+			return error('edit has empty row id')
+		}
+		if edit.col_id.len == 0 {
+			return error('edit has empty col id')
+		}
+		edits_by_row[edit.row_id] << edit
+	}
+	// Apply req_rows with matching edits in one clone.
+	for req_row in req_rows {
+		if req_row.id.len == 0 {
+			return error('update row has empty id')
+		}
+		if idx := grid_data_source_row_index(rows, req_row.id) {
+			mut cells := rows[idx].cells.clone()
+			for key, value in req_row.cells {
+				cells[key] = value
 			}
-			if idx := grid_data_source_row_index(rows, req_row.id) {
-				mut cells := rows[idx].cells.clone()
-				for key, value in req_row.cells {
-					cells[key] = value
-				}
-				rows[idx] = GridRow{
-					...rows[idx]
-					cells: cells
-				}
-				updated << rows[idx]
-				updated_ids[req_row.id] = true
+			for edit in edits_by_row[req_row.id] or { []GridCellEdit{} } {
+				cells[edit.col_id] = edit.value
 			}
+			rows[idx] = GridRow{
+				...rows[idx]
+				cells: cells
+			}
+			updated << rows[idx]
+			updated_ids[req_row.id] = true
 		}
 	}
-	if edits.len > 0 {
-		for edit in edits {
-			if edit.row_id.len == 0 {
-				return error('edit has empty row id')
-			}
-			if edit.col_id.len == 0 {
-				return error('edit has empty col id')
-			}
-			if idx := grid_data_source_row_index(rows, edit.row_id) {
-				mut cells := rows[idx].cells.clone()
+	// Apply remaining edits not covered by req_rows.
+	for row_id, row_edits in edits_by_row {
+		if updated_ids[row_id] {
+			continue
+		}
+		if idx := grid_data_source_row_index(rows, row_id) {
+			mut cells := rows[idx].cells.clone()
+			for edit in row_edits {
 				cells[edit.col_id] = edit.value
-				rows[idx] = GridRow{
-					...rows[idx]
-					cells: cells
-				}
-				if !updated_ids[edit.row_id] {
-					updated << rows[idx]
-					updated_ids[edit.row_id] = true
-				}
 			}
+			rows[idx] = GridRow{
+				...rows[idx]
+				cells: cells
+			}
+			updated << rows[idx]
+			updated_ids[row_id] = true
 		}
 	}
 	return GridMutationApplyResult{

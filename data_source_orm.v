@@ -12,6 +12,7 @@ pub:
 	sortable         bool = true
 	case_insensitive bool = true
 	allowed_ops      []string
+	normalized_ops   []string // pre-lowered allowed_ops; populated by new_grid_orm_data_source
 }
 
 @[minify]
@@ -49,6 +50,7 @@ pub type GridOrmDeleteManyFn = fn (row_ids []string, signal &GridAbortSignal) ![
 pub struct GridOrmDataSource {
 pub:
 	columns         []GridOrmColumnSpec
+	column_map      map[string]GridOrmColumnSpec // validated; built by new_grid_orm_data_source
 	fetch_fn        GridOrmFetchFn @[required]
 	default_limit   int                 = 100
 	supports_offset bool                = true
@@ -57,6 +59,21 @@ pub:
 	update_fn       GridOrmUpdateFn     = unsafe { nil }
 	delete_fn       GridOrmDeleteFn     = unsafe { nil }
 	delete_many_fn  GridOrmDeleteManyFn = unsafe { nil }
+}
+
+// new_grid_orm_data_source validates columns and builds
+// the cached column_map with pre-normalized filter ops.
+pub fn new_grid_orm_data_source(src GridOrmDataSource) !&GridOrmDataSource {
+	column_map := grid_orm_validate_column_map(src.columns)!
+	mut validated_columns := []GridOrmColumnSpec{cap: src.columns.len}
+	for col in src.columns {
+		validated_columns << column_map[col.id.trim_space()] or { col }
+	}
+	return &GridOrmDataSource{
+		...src
+		columns:    validated_columns
+		column_map: column_map
+	}
 }
 
 pub fn (source GridOrmDataSource) capabilities() GridDataCapabilities {
@@ -77,7 +94,12 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
-	query := grid_orm_validate_query(req.query, source.columns)!
+	column_map := if source.column_map.len > 0 {
+		source.column_map
+	} else {
+		grid_orm_validate_column_map(source.columns)!
+	}
+	query := grid_orm_validate_query_with_map(req.query, column_map)!
 	limit, offset, cursor := grid_orm_resolve_page(req.page, source.default_limit)
 	page := source.fetch_fn(GridOrmQuerySpec{
 		quick_filter: query.quick_filter
@@ -112,12 +134,17 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
+	column_map := if source.column_map.len > 0 {
+		source.column_map
+	} else {
+		grid_orm_validate_column_map(source.columns)!
+	}
 	return match req.kind {
 		.create {
 			if source.create_fn == unsafe { nil } {
 				return error('create not supported')
 			}
-			grid_orm_validate_mutation_columns(req.rows, []GridCellEdit{}, source.columns)!
+			grid_orm_validate_mutation_columns_map(req.rows, []GridCellEdit{}, column_map)!
 			created := source.create_fn(req.rows.clone(), req.signal)!
 			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
@@ -130,7 +157,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			if source.update_fn == unsafe { nil } {
 				return error('update not supported')
 			}
-			grid_orm_validate_mutation_columns(req.rows, req.edits, source.columns)!
+			grid_orm_validate_mutation_columns_map(req.rows, req.edits, column_map)!
 			updated := source.update_fn(req.rows.clone(), req.edits.clone(), req.signal)!
 			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
@@ -188,6 +215,10 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 
 pub fn grid_orm_validate_query(query GridQueryState, columns []GridOrmColumnSpec) !GridQueryState {
 	column_map := grid_orm_validate_column_map(columns)!
+	return grid_orm_validate_query_with_map(query, column_map)
+}
+
+fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]GridOrmColumnSpec) !GridQueryState {
 	mut sorts := []GridSort{}
 	for sort in query.sorts {
 		col := column_map[sort.col_id] or { continue }
@@ -259,10 +290,16 @@ fn grid_orm_validate_column_map(columns []GridOrmColumnSpec) !map[string]GridOrm
 		if id in out {
 			return error('duplicate orm column id: ${id}')
 		}
+		// Pre-normalize allowed_ops once at construction.
+		mut norm_ops := []string{cap: col.allowed_ops.len}
+		for raw_op in col.allowed_ops {
+			norm_ops << grid_orm_normalize_filter_op(raw_op)
+		}
 		out[id] = GridOrmColumnSpec{
 			...col
-			id:       id
-			db_field: db_field
+			id:             id
+			db_field:       db_field
+			normalized_ops: norm_ops
 		}
 	}
 	return out
@@ -279,6 +316,10 @@ fn grid_orm_normalize_filter_op(op string) string {
 fn grid_orm_column_allows_filter_op(col GridOrmColumnSpec, op string) bool {
 	if op.len == 0 {
 		return false
+	}
+	// Use pre-normalized ops when available (from factory fn).
+	if col.normalized_ops.len > 0 {
+		return op in col.normalized_ops
 	}
 	if col.allowed_ops.len == 0 {
 		return op in grid_orm_default_filter_ops
@@ -299,6 +340,21 @@ fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, colu
 	for col in columns {
 		valid[col.id] = true
 	}
+	grid_orm_validate_mutation_columns_set(rows, edits, valid)!
+}
+
+fn grid_orm_validate_mutation_columns_map(rows []GridRow, edits []GridCellEdit, column_map map[string]GridOrmColumnSpec) ! {
+	if column_map.len == 0 {
+		return
+	}
+	mut valid := map[string]bool{}
+	for col_id, _ in column_map {
+		valid[col_id] = true
+	}
+	grid_orm_validate_mutation_columns_set(rows, edits, valid)!
+}
+
+fn grid_orm_validate_mutation_columns_set(rows []GridRow, edits []GridCellEdit, valid map[string]bool) ! {
 	for row in rows {
 		for col_id, _ in row.cells {
 			if !valid[col_id] {

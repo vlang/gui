@@ -5,6 +5,20 @@ module gui
 const data_grid_fnv64_offset = u64(14695981039346656037)
 const data_grid_fnv64_prime = u64(1099511628211)
 
+fn data_grid_sorted_col_ids(columns []GridColumnCfg) []string {
+	if columns.len == 0 {
+		return []string{}
+	}
+	mut ids := []string{cap: columns.len}
+	for col in columns {
+		if col.id.len > 0 {
+			ids << col.id
+		}
+	}
+	ids.sort()
+	return ids
+}
+
 fn data_grid_crud_enabled(cfg DataGridCfg) bool {
 	return cfg.show_crud_toolbar
 }
@@ -28,7 +42,9 @@ fn data_grid_crud_row_delete_enabled(cfg DataGridCfg, has_source bool, caps Grid
 	return caps.supports_delete
 }
 
-fn data_grid_rows_signature(rows []GridRow) u64 {
+// col_ids: pre-sorted column ID list. When non-empty,
+// avoids per-row .keys() + .sort() allocations.
+fn data_grid_rows_signature(rows []GridRow, col_ids []string) u64 {
 	if rows.len == 0 {
 		return u64(0)
 	}
@@ -40,8 +56,13 @@ fn data_grid_rows_signature(rows []GridRow) u64 {
 		row_id := data_grid_row_id(row, idx)
 		h = data_grid_fnv64_str(h, row_id)
 		h = data_grid_fnv64_str(h, data_grid_record_sep)
-		mut keys := row.cells.keys()
-		keys.sort()
+		keys := if col_ids.len > 0 {
+			col_ids
+		} else {
+			mut k := row.cells.keys()
+			k.sort()
+			k
+		}
 		for j, key in keys {
 			if j > 0 {
 				h = data_grid_fnv64_str(h, data_grid_unit_sep)
@@ -91,7 +112,7 @@ fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, 
 			&& state.local_rows_id_signature == local_id_signature {
 			signature = state.source_signature
 		} else {
-			signature = data_grid_rows_signature(cfg.rows)
+			signature = data_grid_rows_signature(cfg.rows, data_grid_sorted_col_ids(cfg.columns))
 			state.local_rows_signature_valid = true
 			state.local_rows_len = local_len
 			state.local_rows_id_signature = local_id_signature
@@ -525,7 +546,7 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 				grid_id: grid_id
 				kind:    .create
 				query:   ctx.query
-				rows:    create_rows.clone()
+				rows:    create_rows
 			}) or {
 				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
 					w, snapshot_rows, err.msg())
@@ -548,8 +569,8 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 				grid_id: grid_id
 				kind:    .update
 				query:   ctx.query
-				rows:    update_rows.clone()
-				edits:   update_edits.clone()
+				rows:    update_rows
+				edits:   update_edits
 			}) or {
 				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
 					w, snapshot_rows, err.msg())
@@ -570,7 +591,7 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 				grid_id: grid_id
 				kind:    .delete
 				query:   ctx.query
-				row_ids: delete_ids.clone()
+				row_ids: delete_ids
 			}) or {
 				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
 					w, snapshot_rows, err.msg())
@@ -590,7 +611,7 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 	state.deleted_row_ids = map[string]bool{}
 	state.saving = false
 	state.save_error = ''
-	state.source_signature = data_grid_rows_signature(state.committed_rows)
+	state.source_signature = data_grid_rows_signature(state.committed_rows, []string{})
 	w.view_state.data_grid_crud_state.set(grid_id, state)
 	data_grid_clear_editing_row(grid_id, mut w)
 	if ctx.on_rows_change != unsafe { nil } {
@@ -625,7 +646,7 @@ fn data_grid_crud_restore_on_error(grid_id string, on_crud_error fn (msg string,
 	state.deleted_row_ids = map[string]bool{}
 	state.saving = false
 	state.save_error = err_msg
-	state.source_signature = data_grid_rows_signature(state.committed_rows)
+	state.source_signature = data_grid_rows_signature(state.committed_rows, []string{})
 	w.view_state.data_grid_crud_state.set(grid_id, state)
 	data_grid_clear_editing_row(grid_id, mut w)
 	// Refetch source data to stay in sync after partial
