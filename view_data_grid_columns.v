@@ -160,7 +160,7 @@ fn data_grid_column_next_pin(pin GridColumnPin) GridColumnPin {
 // data_grid_column_order_move moves `col_id` in `order` by delta (-1 left, +1 right).
 pub fn data_grid_column_order_move(order []string, col_id string, delta int) []string {
 	if order.len == 0 || delta == 0 {
-		return order.clone()
+		return order
 	}
 	mut idx := -1
 	for i, id in order {
@@ -170,11 +170,11 @@ pub fn data_grid_column_order_move(order []string, col_id string, delta int) []s
 		}
 	}
 	if idx < 0 {
-		return order.clone()
+		return order
 	}
 	target := int_clamp(idx + delta, 0, order.len - 1)
 	if target == idx {
-		return order.clone()
+		return order
 	}
 	mut next := order.clone()
 	value := next[idx]
@@ -302,21 +302,17 @@ fn data_grid_column_widths(grid_id string, columns []GridColumnCfg, mut w Window
 		map[string]f32{}
 	}
 	mut changed := false
+	mut col_ids := map[string]bool{}
 	for col in columns {
 		if col.id.len == 0 {
 			continue
 		}
+		col_ids[col.id] = true
 		base := widths[col.id] or { data_grid_initial_width(col) }
 		clamped := data_grid_clamp_width(col, base)
 		if widths[col.id] or { f32(-1) } != clamped {
 			widths[col.id] = clamped
 			changed = true
-		}
-	}
-	mut col_ids := map[string]bool{}
-	for col in columns {
-		if col.id.len > 0 {
-			col_ids[col.id] = true
 		}
 	}
 	for key in widths.keys() {

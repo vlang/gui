@@ -368,10 +368,16 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 			static_top, scroll_id, presentation.data_to_display, mut window)
 	}
 
+	// Build row ID set for O(1) membership checks.
+	mut row_id_set := map[string]bool{}
+	for ri, r in resolved_cfg.rows {
+		row_id_set[data_grid_row_id(r, ri)] = true
+	}
+
 	// Clear stale editing state if the edited row no longer
 	// exists (e.g. deleted or filtered out).
 	mut editing_row_id := data_grid_editing_row_id(resolved_cfg.id, window)
-	if editing_row_id.len > 0 && !data_grid_has_row_id(resolved_cfg.rows, editing_row_id) {
+	if editing_row_id.len > 0 && !row_id_set[editing_row_id] {
 		data_grid_clear_editing_row(resolved_cfg.id, mut window)
 		editing_row_id = ''
 	}

@@ -1,8 +1,9 @@
 // Data grid: CRUD operations, toolbar, dirty-state.
 module gui
 
-import hash.fnv1a
-import strings
+// FNV-1a 64-bit constants (hash.fnv1a keeps these private).
+const data_grid_fnv64_offset = u64(14695981039346656037)
+const data_grid_fnv64_prime = u64(1099511628211)
 
 fn data_grid_crud_enabled(cfg DataGridCfg) bool {
 	return cfg.show_crud_toolbar
@@ -31,40 +32,40 @@ fn data_grid_rows_signature(rows []GridRow) u64 {
 	if rows.len == 0 {
 		return u64(0)
 	}
-	mut sb := strings.new_builder(rows.len * 128)
+	mut h := u64(data_grid_fnv64_offset)
 	for idx, row in rows {
 		if idx > 0 {
-			sb.write_string(data_grid_group_sep)
+			h = data_grid_fnv64_str(h, data_grid_group_sep)
 		}
 		row_id := data_grid_row_id(row, idx)
-		sb.write_string(row_id)
-		sb.write_string(data_grid_record_sep)
+		h = data_grid_fnv64_str(h, row_id)
+		h = data_grid_fnv64_str(h, data_grid_record_sep)
 		mut keys := row.cells.keys()
 		keys.sort()
 		for j, key in keys {
 			if j > 0 {
-				sb.write_string(data_grid_unit_sep)
+				h = data_grid_fnv64_str(h, data_grid_unit_sep)
 			}
-			sb.write_string(key)
-			sb.write_string('=')
-			sb.write_string(row.cells[key] or { '' })
+			h = data_grid_fnv64_str(h, key)
+			h = data_grid_fnv64_byte(h, `=`)
+			h = data_grid_fnv64_str(h, row.cells[key] or { '' })
 		}
 	}
-	return fnv1a.sum64_string(sb.str())
+	return h
 }
 
 fn data_grid_rows_id_signature(rows []GridRow) u64 {
 	if rows.len == 0 {
 		return u64(0)
 	}
-	mut sb := strings.new_builder(rows.len * 16)
+	mut h := u64(data_grid_fnv64_offset)
 	for idx, row in rows {
 		if idx > 0 {
-			sb.write_string(data_grid_group_sep)
+			h = data_grid_fnv64_str(h, data_grid_group_sep)
 		}
-		sb.write_string(data_grid_row_id(row, idx))
+		h = data_grid_fnv64_str(h, data_grid_row_id(row, idx))
 	}
-	return fnv1a.sum64_string(sb.str())
+	return h
 }
 
 // CRUD uses a working copy of rows. When no unsaved changes
@@ -218,9 +219,18 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 				color_border: color_transparent
 				disabled:     !has_unsaved || state.saving
 				on_click:     fn [grid_id, data_source, query, on_crud_error, on_rows_change, selection, on_selection_change, focus_id, has_source, caps] (_ &Layout, mut e Event, mut w Window) {
-					data_grid_crud_save(grid_id, data_source, query, on_crud_error, on_rows_change,
-						selection, on_selection_change, has_source, caps, focus_id, mut
-						e, mut w)
+					data_grid_crud_save(DataGridCrudSaveContext{
+						grid_id:             grid_id
+						data_source:         data_source
+						query:               query
+						on_crud_error:       on_crud_error
+						on_rows_change:      on_rows_change
+						selection:           selection
+						on_selection_change: on_selection_change
+						has_source:          has_source
+						caps:                caps
+						focus_id:            focus_id
+					}, mut e, mut w)
 				}
 				content:      [
 					text(
@@ -542,7 +552,21 @@ fn data_grid_crud_cancel(grid_id string, focus_id u32, mut e Event, mut w Window
 	e.is_handled = true
 }
 
-fn data_grid_crud_save(grid_id string, data_source ?DataGridDataSource, query GridQueryState, on_crud_error fn (msg string, mut e Event, mut w Window), on_rows_change fn (rows_ []GridRow, mut e Event, mut w Window), selection GridSelection, on_selection_change fn (sel GridSelection, mut e Event, mut w Window), has_source bool, caps GridDataCapabilities, focus_id u32, mut e Event, mut w Window) {
+struct DataGridCrudSaveContext {
+	grid_id             string
+	data_source         ?DataGridDataSource
+	query               GridQueryState
+	on_crud_error       fn (msg string, mut e Event, mut w Window)      = unsafe { nil }
+	on_rows_change      fn (rows_ []GridRow, mut e Event, mut w Window) = unsafe { nil }
+	selection           GridSelection
+	on_selection_change fn (sel GridSelection, mut e Event, mut w Window) = unsafe { nil }
+	has_source          bool
+	caps                GridDataCapabilities
+	focus_id            u32
+}
+
+fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
+	grid_id := ctx.grid_id
 	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
 	if state.saving || !data_grid_crud_has_unsaved(state) {
 		return
@@ -555,8 +579,8 @@ fn data_grid_crud_save(grid_id string, data_source ?DataGridDataSource, query Gr
 	mut has_row_count := false
 	mut row_count_value := 0
 	mut replace_ids := map[string]string{}
-	if has_source {
-		mut source := data_source or {
+	if ctx.has_source {
+		mut source := ctx.data_source or {
 			state.saving = false
 			state.save_error = 'data source unavailable'
 			w.view_state.data_grid_crud_state.set(grid_id, state)
@@ -564,19 +588,19 @@ fn data_grid_crud_save(grid_id string, data_source ?DataGridDataSource, query Gr
 		}
 
 		if create_rows.len > 0 {
-			if !caps.supports_create {
-				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
-					snapshot_rows, 'create not supported')
+			if !ctx.caps.supports_create {
+				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
+					w, snapshot_rows, 'create not supported')
 				return
 			}
 			res_create := source.mutate_data(GridMutationRequest{
 				grid_id: grid_id
 				kind:    .create
-				query:   query
+				query:   ctx.query
 				rows:    create_rows.clone()
 			}) or {
-				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
-					snapshot_rows, err.msg())
+				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
+					w, snapshot_rows, err.msg())
 				return
 			}
 			replace_ids = data_grid_crud_replace_created_rows(mut state.working_rows,
@@ -587,20 +611,20 @@ fn data_grid_crud_save(grid_id string, data_source ?DataGridDataSource, query Gr
 			}
 		}
 		if update_edits.len > 0 {
-			if !caps.supports_update {
-				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
-					snapshot_rows, 'update not supported')
+			if !ctx.caps.supports_update {
+				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
+					w, snapshot_rows, 'update not supported')
 				return
 			}
 			res_update := source.mutate_data(GridMutationRequest{
 				grid_id: grid_id
 				kind:    .update
-				query:   query
+				query:   ctx.query
 				rows:    update_rows.clone()
 				edits:   update_edits.clone()
 			}) or {
-				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
-					snapshot_rows, err.msg())
+				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
+					w, snapshot_rows, err.msg())
 				return
 			}
 			if count := res_update.row_count {
@@ -609,19 +633,19 @@ fn data_grid_crud_save(grid_id string, data_source ?DataGridDataSource, query Gr
 			}
 		}
 		if delete_ids.len > 0 {
-			if !caps.supports_delete {
-				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
-					snapshot_rows, 'delete not supported')
+			if !ctx.caps.supports_delete {
+				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
+					w, snapshot_rows, 'delete not supported')
 				return
 			}
 			res_delete := source.mutate_data(GridMutationRequest{
 				grid_id: grid_id
 				kind:    .delete
-				query:   query
+				query:   ctx.query
 				row_ids: delete_ids.clone()
 			}) or {
-				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
-					snapshot_rows, err.msg())
+				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
+					w, snapshot_rows, err.msg())
 				return
 			}
 			if count := res_delete.row_count {
@@ -629,7 +653,7 @@ fn data_grid_crud_save(grid_id string, data_source ?DataGridDataSource, query Gr
 				row_count_value = count
 			}
 		}
-		data_grid_crud_remap_selection(selection, on_selection_change, replace_ids, mut
+		data_grid_crud_remap_selection(ctx.selection, ctx.on_selection_change, replace_ids, mut
 			e, mut w)
 	}
 	state.committed_rows = state.working_rows.clone()
@@ -641,10 +665,10 @@ fn data_grid_crud_save(grid_id string, data_source ?DataGridDataSource, query Gr
 	state.source_signature = data_grid_rows_signature(state.committed_rows)
 	w.view_state.data_grid_crud_state.set(grid_id, state)
 	data_grid_clear_editing_row(grid_id, mut w)
-	if on_rows_change != unsafe { nil } {
-		on_rows_change(state.working_rows.clone(), mut e, mut w)
+	if ctx.on_rows_change != unsafe { nil } {
+		ctx.on_rows_change(state.working_rows.clone(), mut e, mut w)
 	}
-	if has_source {
+	if ctx.has_source {
 		if has_row_count {
 			data_grid_source_apply_local_mutation(grid_id, state.working_rows.clone(),
 				?int(row_count_value), mut w)
@@ -654,8 +678,8 @@ fn data_grid_crud_save(grid_id string, data_source ?DataGridDataSource, query Gr
 		}
 		data_grid_source_force_refetch(grid_id, mut w)
 	}
-	if focus_id > 0 {
-		w.set_id_focus(focus_id)
+	if ctx.focus_id > 0 {
+		w.set_id_focus(ctx.focus_id)
 	}
 	e.is_handled = true
 }
@@ -683,4 +707,19 @@ fn data_grid_crud_restore_on_error(grid_id string, on_crud_error fn (msg string,
 	if on_crud_error != unsafe { nil } {
 		on_crud_error(err_msg, mut e, mut w)
 	}
+}
+
+// Incremental FNV-1a: feed a string into running hash.
+@[direct_array_access; inline]
+fn data_grid_fnv64_str(h u64, s string) u64 {
+	mut hash := h
+	for i in 0 .. s.len {
+		hash = (hash ^ u64(s[i])) * data_grid_fnv64_prime
+	}
+	return hash
+}
+
+@[inline]
+fn data_grid_fnv64_byte(h u64, b u8) u64 {
+	return (h ^ u64(b)) * data_grid_fnv64_prime
 }
