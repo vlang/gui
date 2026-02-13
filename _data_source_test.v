@@ -469,12 +469,15 @@ fn test_next_mutation_row_id_returns_error_on_exhaustion() {
 	// all of which already exist in the map.
 	n := 100_000
 	mut rows := []GridRow{cap: n}
+	mut existing := map[string]bool{}
 	for i in 0 .. n {
-		rows << GridRow{
+		row := GridRow{
 			id: '${n + i + 1}'
 		}
+		existing[data_grid_row_id(row, i)] = true
+		rows << row
 	}
-	grid_data_source_next_mutation_row_id(rows, '') or {
+	grid_data_source_next_create_row_id(rows, existing, '') or {
 		assert err.msg().contains('unable to generate unique row id')
 		return
 	}

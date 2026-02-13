@@ -193,11 +193,8 @@ pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDa
 			}
 		}
 		GridOffsetPageReq {
-			start := int_clamp(req.page.start_index, 0, filtered.len)
-			mut end := int_clamp(req.page.end_index, start, filtered.len)
-			if end <= start {
-				end = int_min(filtered.len, start + limit)
-			}
+			start, end := grid_data_source_offset_bounds(req.page.start_index, req.page.end_index,
+				filtered.len, limit)
 			rows := filtered[start..end].clone()
 			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
@@ -257,11 +254,8 @@ pub fn (source InMemoryOffsetDataSource) fetch_data(req GridDataRequest) !GridDa
 	page_size := int_max(1, if source.default_page_size > 0 { source.default_page_size } else { 100 })
 	start, end := match req.page {
 		GridOffsetPageReq {
-			mut next_end := int_clamp(req.page.end_index, req.page.start_index, filtered.len)
-			if next_end <= req.page.start_index {
-				next_end = int_min(filtered.len, req.page.start_index + page_size)
-			}
-			int_clamp(req.page.start_index, 0, filtered.len), int_clamp(next_end, 0, filtered.len)
+			grid_data_source_offset_bounds(req.page.start_index, req.page.end_index, filtered.len,
+				page_size)
 		}
 		GridCursorPageReq {
 			next_start := int_clamp(grid_data_source_cursor_to_index(req.page.cursor),
@@ -309,6 +303,17 @@ fn grid_data_source_inmemory_mutate(mut rows []GridRow, latency_ms int, row_coun
 		deleted_ids: result.deleted_ids
 		row_count:   if row_count_known { ?int(rows.len) } else { none }
 	}
+}
+
+// grid_data_source_offset_bounds clamps start/end to [0,total]
+// and falls back to default_limit when the range is empty.
+fn grid_data_source_offset_bounds(start_index int, end_index int, total int, default_limit int) (int, int) {
+	start := int_clamp(start_index, 0, total)
+	mut end := int_clamp(end_index, start, total)
+	if end <= start {
+		end = int_min(total, start + default_limit)
+	}
+	return start, end
 }
 
 fn grid_abort_signal_is_aborted(signal &GridAbortSignal) bool {
@@ -527,13 +532,18 @@ fn grid_ends_with_lower(haystack string, needle string) bool {
 fn grid_query_signature(query GridQueryState) string {
 	mut out := strings.new_builder(128)
 	out.write_string(query.quick_filter)
+	// Sorts: preserve order (primary/secondary priority matters).
 	out.write_string('|s:')
 	for sort in query.sorts {
 		dir := if sort.dir == .desc { 'd' } else { 'a' }
 		out.write_string('${sort.col_id}:${dir};')
 	}
+	// Filters: sort by col_id for stable signature
+	// (AND-combined, so order is semantically irrelevant).
 	out.write_string('|f:')
-	for filter in query.filters {
+	mut sorted_filters := query.filters.clone()
+	sorted_filters.sort(a.col_id < b.col_id)
+	for filter in sorted_filters {
 		out.write_string('${filter.col_id}:${filter.op}:${filter.value};')
 	}
 	return out.str()
@@ -558,15 +568,21 @@ fn grid_data_source_apply_create(mut rows []GridRow, req_rows []GridRow) !GridMu
 	if req_rows.len == 0 {
 		return GridMutationApplyResult{}
 	}
+	// Build existing-id set once for O(1) lookups.
+	mut existing := map[string]bool{}
+	for idx, row in rows {
+		existing[data_grid_row_id(row, idx)] = true
+	}
 	mut created := []GridRow{cap: req_rows.len}
 	for row in req_rows {
-		next_id := grid_data_source_next_mutation_row_id(rows, row.id)!
+		next_id := grid_data_source_next_create_row_id(rows, existing, row.id)!
 		next_row := GridRow{
 			...row
 			id:    next_id
 			cells: row.cells.clone()
 		}
 		rows << next_row
+		existing[next_id] = true
 		created << next_row
 	}
 	return GridMutationApplyResult{
@@ -588,12 +604,17 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 		}
 		edits_by_row[edit.row_id] << edit
 	}
+	// Build index map once to avoid O(n) scan per lookup.
+	mut row_idx := map[string]int{}
+	for idx, row in rows {
+		row_idx[data_grid_row_id(row, idx)] = idx
+	}
 	// Apply req_rows with matching edits in one clone.
 	for req_row in req_rows {
 		if req_row.id.len == 0 {
 			return error('update row has empty id')
 		}
-		if idx := grid_data_source_row_index(rows, req_row.id) {
+		if idx := row_idx[req_row.id] {
 			mut cells := rows[idx].cells.clone()
 			for key, value in req_row.cells {
 				cells[key] = value
@@ -614,7 +635,7 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 		if updated_ids[row_id] {
 			continue
 		}
-		if idx := grid_data_source_row_index(rows, row_id) {
+		if idx := row_idx[row_id] {
 			mut cells := rows[idx].cells.clone()
 			for edit in row_edits {
 				cells[edit.col_id] = edit.value
@@ -676,11 +697,7 @@ fn grid_data_source_row_index(rows []GridRow, row_id string) ?int {
 	return none
 }
 
-fn grid_data_source_next_mutation_row_id(rows []GridRow, preferred_id string) !string {
-	mut existing := map[string]bool{}
-	for idx, row in rows {
-		existing[data_grid_row_id(row, idx)] = true
-	}
+fn grid_data_source_next_create_row_id(rows []GridRow, existing map[string]bool, preferred_id string) !string {
 	id := preferred_id.trim_space()
 	if id.len > 0 && !existing[id] {
 		return id

@@ -94,6 +94,8 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
+	// Fallback guards against direct struct construction
+	// bypassing new_grid_orm_data_source factory.
 	column_map := if source.column_map.len > 0 {
 		source.column_map
 	} else {
@@ -121,7 +123,7 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 		prev_cursor = grid_data_source_prev_cursor(offset, limit)
 	}
 	return GridDataResult{
-		rows:           page.rows.clone()
+		rows:           page.rows
 		next_cursor:    next_cursor
 		prev_cursor:    prev_cursor
 		row_count:      page.row_count
@@ -134,6 +136,8 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
+	// Fallback guards against direct struct construction
+	// bypassing new_grid_orm_data_source factory.
 	column_map := if source.column_map.len > 0 {
 		source.column_map
 	} else {
@@ -144,7 +148,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			if source.create_fn == unsafe { nil } {
 				return error('create not supported')
 			}
-			grid_orm_validate_mutation_columns_map(req.rows, []GridCellEdit{}, column_map)!
+			grid_orm_validate_mutation_columns(req.rows, []GridCellEdit{}, column_map)!
 			created := source.create_fn(req.rows.clone(), req.signal)!
 			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
@@ -157,7 +161,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			if source.update_fn == unsafe { nil } {
 				return error('update not supported')
 			}
-			grid_orm_validate_mutation_columns_map(req.rows, req.edits, column_map)!
+			grid_orm_validate_mutation_columns(req.rows, req.edits, column_map)!
 			updated := source.update_fn(req.rows.clone(), req.edits.clone(), req.signal)!
 			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
@@ -332,18 +336,7 @@ fn grid_orm_column_allows_filter_op(col GridOrmColumnSpec, op string) bool {
 	return false
 }
 
-fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, columns []GridOrmColumnSpec) ! {
-	if columns.len == 0 {
-		return
-	}
-	mut valid := map[string]bool{}
-	for col in columns {
-		valid[col.id] = true
-	}
-	grid_orm_validate_mutation_columns_set(rows, edits, valid)!
-}
-
-fn grid_orm_validate_mutation_columns_map(rows []GridRow, edits []GridCellEdit, column_map map[string]GridOrmColumnSpec) ! {
+fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, column_map map[string]GridOrmColumnSpec) ! {
 	if column_map.len == 0 {
 		return
 	}
