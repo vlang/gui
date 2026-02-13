@@ -14,7 +14,8 @@ fn collect_metadata(lines []string) (map[string]string, map[string]string, map[s
 		trimmed := line.trim_space()
 
 		// Abbreviation: *[ABBR]: expansion
-		if trimmed.starts_with('*[') && trimmed.contains(']:') && abbr_defs.len < 1000 {
+		if trimmed.starts_with('*[') && trimmed.contains(']:')
+			&& abbr_defs.len < max_abbreviation_defs {
 			bracket_end := trimmed.index(']:') or {
 				i++
 				continue
@@ -31,7 +32,7 @@ fn collect_metadata(lines []string) (map[string]string, map[string]string, map[s
 		}
 
 		// Footnote: [^id]: content (with continuation)
-		if is_footnote_definition(line) && footnote_defs.len < 10000 {
+		if is_footnote_definition(line) && footnote_defs.len < max_footnote_defs {
 			bracket_end := trimmed.index(']:') or {
 				i++
 				continue
@@ -71,7 +72,7 @@ fn collect_metadata(lines []string) (map[string]string, map[string]string, map[s
 		}
 
 		// Link definition: [id]: url
-		if trimmed.starts_with('[') && link_defs.len < 10000 {
+		if trimmed.starts_with('[') && link_defs.len < max_link_defs {
 			bracket_end := trimmed.index(']:') or {
 				i++
 				continue
@@ -138,6 +139,11 @@ fn replace_abbreviations(runs []RichTextRun, abbr_defs map[string]string, md_sty
 	if abbr_defs.len == 0 {
 		return runs
 	}
+	// Sort abbreviations by length descending once for all runs
+	mut sorted_abbrs := abbr_defs.keys()
+	sorted_abbrs.sort_with_compare(fn (a &string, b &string) int {
+		return b.len - a.len
+	})
 	mut result := []RichTextRun{cap: runs.len * 2}
 	for run in runs {
 		// Skip non-text runs (links, code, math, etc)
@@ -145,7 +151,7 @@ fn replace_abbreviations(runs []RichTextRun, abbr_defs map[string]string, md_sty
 			result << run
 			continue
 		}
-		result << split_run_for_abbrs(run, abbr_defs, md_style)
+		result << split_run_for_abbrs(run, sorted_abbrs, abbr_defs, md_style)
 	}
 	return result
 }
@@ -159,29 +165,20 @@ struct AbbrMatch {
 }
 
 // split_run_for_abbrs splits a single run at abbreviation
-// boundaries. Uses a single pass over the text for efficiency.
-fn split_run_for_abbrs(run RichTextRun, abbr_defs map[string]string, md_style MarkdownStyle) []RichTextRun {
+// boundaries. Uses a single pass over the text with a
+// first-char bitset for O(1) skip.
+fn split_run_for_abbrs(run RichTextRun, sorted_abbrs []string, abbr_defs map[string]string, md_style MarkdownStyle) []RichTextRun {
 	text := run.text
 	if text.len == 0 {
 		return [run]
 	}
 
-	// Sort abbreviations by length descending for greedy matching
-	mut sorted_abbrs := abbr_defs.keys()
-	sorted_abbrs.sort_with_compare(fn (a &string, b &string) int {
-		return b.len - a.len
-	})
-
-	// Pre-filter: only abbreviations whose first char exists in text
-	mut active_abbrs := []string{cap: sorted_abbrs.len}
+	// Build first-char bitset for O(1) skip per position
+	mut first_chars := [256]bool{}
 	for abbr in sorted_abbrs {
-		if text.contains(abbr) {
-			active_abbrs << abbr
+		if abbr.len > 0 {
+			first_chars[abbr[0]] = true
 		}
-	}
-
-	if active_abbrs.len == 0 {
-		return [run]
 	}
 
 	mut result := []RichTextRun{cap: 8}
@@ -189,8 +186,12 @@ fn split_run_for_abbrs(run RichTextRun, abbr_defs map[string]string, md_style Ma
 	mut last_pos := 0
 
 	for pos < text.len {
+		if !first_chars[text[pos]] {
+			pos++
+			continue
+		}
 		mut matched := false
-		for abbr in active_abbrs {
+		for abbr in sorted_abbrs {
 			if pos + abbr.len <= text.len && text[pos..pos + abbr.len] == abbr {
 				// Match found; verify word boundaries
 				if is_word_boundary(text, pos - 1) && is_word_boundary(text, pos + abbr.len) {

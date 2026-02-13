@@ -482,11 +482,16 @@ fn hex_digit(c u8) int {
 }
 
 // is_safe_url validates URL protocol to prevent XSS attacks.
-// Allows: http://, https://, mailto:, and relative URLs (no protocol).
-// Blocks: javascript:, vbscript:, data:, file:, and other unsafe
-// protocols. Decodes percent-encoding in the protocol portion to
-// prevent bypasses like %6Aavascript:. Uses case-insensitive
+// Allows: http://, https://, mailto:, and relative URLs
+// (no protocol). Blocks: javascript:, vbscript:, data:,
+// file:, and other unsafe protocols. Decodes
+// percent-encoding in the protocol portion to prevent
+// bypasses like %6Aavascript:. Uses case-insensitive
 // matching to prevent bypass via capitalization.
+// Design: allowlist safe schemes, then blocklist dangerous
+// ones, with fallthrough allowing relative URLs. This
+// tradeoff supports relative paths (common in markdown)
+// while blocking known attack vectors.
 fn is_safe_url(url string) bool {
 	lower := decode_percent_prefix(url).to_lower().trim_space()
 	if lower.len == 0 {

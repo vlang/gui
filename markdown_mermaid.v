@@ -70,6 +70,16 @@ struct MermaidFetchResult {
 // NOTE: Mermaid source is sent to external kroki.io API for rendering.
 fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int, bg_r u8, bg_g u8, bg_b u8) {
 	spawn fn [mut window, source, hash, max_width, bg_r, bg_g, bg_b] () {
+		if source.len > max_mermaid_source_len {
+			window.queue_command(fn [hash] (mut w Window) {
+				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+					state: .error
+					error: 'Mermaid source too large'
+				})
+				w.update_window()
+			})
+			return
+		}
 		ch := chan MermaidFetchResult{}
 
 		// Spawn fetcher thread WITHOUT window reference to avoid holding it if hung
@@ -85,7 +95,7 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 			// Escape remaining control chars U+0000-U+001F
 			mut buf := []u8{cap: escaped.len}
 			for ech in escaped {
-				if ech < 0x20 {
+				if ech < 0x20 || ech == 0x7f {
 					hex := '0000${ech:X}'
 					buf << '\\u${hex[hex.len - 4..]}'.bytes()
 				} else {

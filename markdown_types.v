@@ -7,6 +7,20 @@ const max_table_columns = 100
 const max_list_continuation_lines = 50
 const max_footnote_continuation_lines = 20
 const max_paragraph_continuation_lines = 100
+const max_code_block_lines = 10000
+const max_math_block_lines = 200
+
+// Inline parsing limits
+const max_inline_nesting_depth = 16
+
+// Source length caps for external API submissions
+const max_latex_source_len = 2000
+const max_mermaid_source_len = 10000
+
+// Metadata collection limits
+const max_abbreviation_defs = 1000
+const max_footnote_defs = 10000
+const max_link_defs = 10000
 
 // CodeBlockState tracks whether we're inside a fenced code block.
 struct CodeBlockState {

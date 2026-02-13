@@ -52,6 +52,11 @@ fn (mut p MarkdownParser) parse() []MarkdownBlock {
 					continue
 				}
 			}
+			if p.code_block_content.len >= max_code_block_lines {
+				p.flush_code_block()
+				p.i++
+				continue
+			}
 			p.code_block_content << line
 			p.i++
 			continue
@@ -403,7 +408,8 @@ fn (mut p MarkdownParser) try_list_item() bool {
 
 	// Task list (checked or unchecked)
 	if task_prefix := get_task_prefix(left_trimmed) {
-		// Task list prefix is always "- [ ] " or "- [x] " (6 bytes)
+		// Source prefix length: "- [ ] " or "- [x] " = 6 bytes.
+		// Not the Unicode replacement length.
 		task_prefix_len := 6
 		content, consumed := collect_list_item_content(left_trimmed[task_prefix_len..],
 			p.lines, p.i + 1)
@@ -491,7 +497,7 @@ fn (mut p MarkdownParser) try_math_block(trimmed string) bool {
 		}
 		p.i++
 		mut math_lines := []string{cap: 64}
-		for p.i < p.lines.len && math_lines.len < 200 {
+		for p.i < p.lines.len && math_lines.len < max_math_block_lines {
 			ml := p.lines[p.i]
 			if ml.trim_space() == '$$' {
 				break

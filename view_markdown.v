@@ -456,6 +456,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 						color:  cfg.style.blockquote_border
 					),
 					column(
+						color:       cfg.style.blockquote_bg
 						padding:     padding_none
 						size_border: 0
 						sizing:      fill_fit

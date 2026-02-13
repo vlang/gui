@@ -119,8 +119,11 @@ fn sanitize_latex(s string) string {
 		'\\valign',
 		'\\vrule',
 	]
+	if s.len > max_latex_source_len {
+		return ''
+	}
 	mut result := s
-	for {
+	for _ in 0 .. 10 {
 		prev := result
 		for cmd in blocked {
 			result = result.replace(cmd, '')

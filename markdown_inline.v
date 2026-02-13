@@ -8,7 +8,7 @@ const valid_image_exts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.web
 fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun, link_defs map[string]string, footnote_defs map[string]string, depth int) {
 	// Limit recursion depth to prevent stack overflow on
 	// malformed input (e.g. '***___'.repeat(200)).
-	if depth >= 16 {
+	if depth >= max_inline_nesting_depth {
 		if text.len > 0 {
 			runs << RichTextRun{
 				text:  text
@@ -522,7 +522,7 @@ fn parse_image_src(raw string) (string, f32, f32) {
 
 // is_safe_image_path performs basic validation on image paths.
 fn is_safe_image_path(path string) bool {
-	if path.contains('..') {
+	if path.to_lower().replace('%2e', '.').contains('..') {
 		return false
 	}
 	p := path.to_lower().trim_space()
