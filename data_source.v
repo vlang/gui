@@ -160,12 +160,7 @@ pub fn (source InMemoryCursorDataSource) capabilities() GridDataCapabilities {
 }
 
 pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDataResult {
-	if grid_abort_signal_is_aborted(req.signal) {
-		return error('request aborted')
-	}
-	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
-		return error('request aborted')
-	}
+	grid_data_source_sleep_with_abort(req.signal, source.latency_ms)!
 	filtered := grid_data_source_apply_query(source.rows, req.query)
 	limit := int_max(1, if source.default_limit > 0 { source.default_limit } else { 100 })
 	match req.page {
@@ -180,9 +175,7 @@ pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDa
 				''
 			}
 			prev_cursor := grid_data_source_prev_cursor(start, chunk_limit)
-			if grid_abort_signal_is_aborted(req.signal) {
-				return error('request aborted')
-			}
+			grid_abort_check(req.signal)!
 			return GridDataResult{
 				rows:           rows
 				next_cursor:    next_cursor
@@ -196,9 +189,7 @@ pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDa
 			start, end := grid_data_source_offset_bounds(req.page.start_index, req.page.end_index,
 				filtered.len, limit)
 			rows := filtered[start..end].clone()
-			if grid_abort_signal_is_aborted(req.signal) {
-				return error('request aborted')
-			}
+			grid_abort_check(req.signal)!
 			return GridDataResult{
 				rows:           rows
 				next_cursor:    if end < filtered.len {
@@ -225,9 +216,9 @@ pub struct InMemoryOffsetDataSource {
 pub mut:
 	rows []GridRow
 pub:
-	default_page_size int = 100
-	latency_ms        int
-	row_count_known   bool = true
+	default_limit   int = 100
+	latency_ms      int
+	row_count_known bool = true
 }
 
 pub fn (source InMemoryOffsetDataSource) capabilities() GridDataCapabilities {
@@ -244,14 +235,9 @@ pub fn (source InMemoryOffsetDataSource) capabilities() GridDataCapabilities {
 }
 
 pub fn (source InMemoryOffsetDataSource) fetch_data(req GridDataRequest) !GridDataResult {
-	if grid_abort_signal_is_aborted(req.signal) {
-		return error('request aborted')
-	}
-	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
-		return error('request aborted')
-	}
+	grid_data_source_sleep_with_abort(req.signal, source.latency_ms)!
 	filtered := grid_data_source_apply_query(source.rows, req.query)
-	page_size := int_max(1, if source.default_page_size > 0 { source.default_page_size } else { 100 })
+	page_size := int_max(1, if source.default_limit > 0 { source.default_limit } else { 100 })
 	start, end := match req.page {
 		GridOffsetPageReq {
 			grid_data_source_offset_bounds(req.page.start_index, req.page.end_index, filtered.len,
@@ -265,9 +251,7 @@ pub fn (source InMemoryOffsetDataSource) fetch_data(req GridDataRequest) !GridDa
 		}
 	}
 	rows := filtered[start..end].clone()
-	if grid_abort_signal_is_aborted(req.signal) {
-		return error('request aborted')
-	}
+	grid_abort_check(req.signal)!
 	return GridDataResult{
 		rows:           rows
 		next_cursor:    if end < filtered.len { grid_data_source_cursor_from_index(end) } else { '' }
@@ -284,18 +268,11 @@ pub fn (mut source InMemoryOffsetDataSource) mutate_data(req GridMutationRequest
 }
 
 fn grid_data_source_inmemory_mutate(mut rows []GridRow, latency_ms int, row_count_known bool, req GridMutationRequest) !GridMutationResult {
-	if grid_abort_signal_is_aborted(req.signal) {
-		return error('request aborted')
-	}
-	if grid_data_source_sleep_with_abort(req.signal, latency_ms) {
-		return error('request aborted')
-	}
+	grid_data_source_sleep_with_abort(req.signal, latency_ms)!
 	mut work := rows.clone()
 	result := grid_data_source_apply_mutation(mut work, req.kind, req.rows, req.row_ids,
 		req.edits)!
-	if grid_abort_signal_is_aborted(req.signal) {
-		return error('request aborted')
-	}
+	grid_abort_check(req.signal)!
 	rows = unsafe { work }
 	return GridMutationResult{
 		created:     result.created
@@ -323,20 +300,25 @@ fn grid_abort_signal_is_aborted(signal &GridAbortSignal) bool {
 	return signal.aborted
 }
 
-fn grid_data_source_sleep_with_abort(signal &GridAbortSignal, latency_ms int) bool {
-	if latency_ms <= 0 {
-		return grid_abort_signal_is_aborted(signal)
+fn grid_abort_check(signal &GridAbortSignal) ! {
+	if grid_abort_signal_is_aborted(signal) {
+		return error('request aborted')
 	}
-	mut remaining := latency_ms
+}
+
+fn grid_data_source_sleep_with_abort(signal &GridAbortSignal, ms int) ! {
+	if ms <= 0 {
+		grid_abort_check(signal)!
+		return
+	}
+	mut remaining := ms
 	for remaining > 0 {
-		if grid_abort_signal_is_aborted(signal) {
-			return true
-		}
-		step_ms := int_min(remaining, 20)
-		time.sleep(step_ms * time.millisecond)
-		remaining -= step_ms
+		grid_abort_check(signal)!
+		step := int_min(remaining, 20)
+		time.sleep(step * time.millisecond)
+		remaining -= step
 	}
-	return grid_abort_signal_is_aborted(signal)
+	grid_abort_check(signal)!
 }
 
 fn grid_data_source_cursor_from_index(index int) string {
@@ -405,6 +387,9 @@ fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow 
 		return filtered
 	}
 	n := filtered.len
+	if n <= 1 {
+		return filtered
+	}
 	mut idxs := []int{len: n, init: index}
 	if query.sorts.len == 1 {
 		// Single-sort fast path: one key array, no inner loop.
@@ -751,7 +736,7 @@ fn grid_data_source_apply_delete(mut rows []GridRow, req_rows []GridRow, req_row
 		return GridMutationApplyResult{}
 	}
 	mut kept := []GridRow{cap: rows.len}
-	mut deleted_ids := []string{}
+	mut deleted_ids := []string{cap: delete_ids.len}
 	for idx, row in rows {
 		row_id := data_grid_row_id(row, idx)
 		if delete_ids[row_id] {

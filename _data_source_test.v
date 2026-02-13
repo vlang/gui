@@ -38,8 +38,8 @@ fn test_in_memory_cursor_data_source_pages_with_cursor() {
 
 fn test_in_memory_offset_data_source_pages_with_offsets() {
 	source := InMemoryOffsetDataSource{
-		rows:              data_source_rows(10)
-		default_page_size: 4
+		rows:          data_source_rows(10)
+		default_limit: 4
 	}
 	res := source.fetch_data(GridDataRequest{
 		grid_id: 'grid'
@@ -325,8 +325,8 @@ fn test_in_memory_cursor_data_source_empty_fetch() {
 
 fn test_in_memory_offset_data_source_with_cursor_request() {
 	source := InMemoryOffsetDataSource{
-		rows:              data_source_rows(10)
-		default_page_size: 5
+		rows:          data_source_rows(10)
+		default_limit: 5
 	}
 	res := source.fetch_data(GridDataRequest{
 		grid_id: 'grid'
@@ -496,6 +496,75 @@ fn test_contains_lower_ascii() {
 	assert !grid_starts_with_lower('Hello', 'elo')
 	assert grid_ends_with_lower('Hello', 'llo')
 	assert !grid_ends_with_lower('Hello', 'hel')
+}
+
+fn test_multi_sort_secondary_priority() {
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'team':  'Data'
+				'score': '80'
+			}
+		},
+		GridRow{
+			id:    '2'
+			cells: {
+				'team':  'Core'
+				'score': '90'
+			}
+		},
+		GridRow{
+			id:    '3'
+			cells: {
+				'team':  'Data'
+				'score': '95'
+			}
+		},
+		GridRow{
+			id:    '4'
+			cells: {
+				'team':  'Core'
+				'score': '70'
+			}
+		},
+	]
+	sorted := grid_data_source_apply_query(rows, GridQueryState{
+		sorts: [
+			GridSort{
+				col_id: 'team'
+				dir:    .asc
+			},
+			GridSort{
+				col_id: 'score'
+				dir:    .desc
+			},
+		]
+	})
+	assert sorted.len == 4
+	// Core group: score desc → 90, 70
+	assert sorted[0].id == '2'
+	assert sorted[1].id == '4'
+	// Data group: score desc → 95, 80
+	assert sorted[2].id == '3'
+	assert sorted[3].id == '1'
+}
+
+fn test_cursor_to_index_plain_integer() {
+	// Plain integer (no "i:" prefix).
+	if idx := grid_data_source_cursor_to_index_opt('5') {
+		assert idx == 5
+	} else {
+		assert false
+	}
+	// Invalid non-numeric string returns none.
+	assert grid_data_source_cursor_to_index_opt('abc') == none
+	// Empty string returns 0.
+	if idx := grid_data_source_cursor_to_index_opt('') {
+		assert idx == 0
+	} else {
+		assert false
+	}
 }
 
 fn data_source_rows(count int) []GridRow {

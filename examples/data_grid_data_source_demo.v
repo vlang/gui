@@ -117,9 +117,9 @@ fn data_source_demo_rebuild_source(mut app DataGridSourceDemoApp) {
 	latency := if app.simulate_latency { 140 } else { 0 }
 	if app.use_offset {
 		app.source = &gui.InMemoryOffsetDataSource{
-			rows:              app.all_rows
-			default_page_size: 220
-			latency_ms:        latency
+			rows:          app.all_rows
+			default_limit: 220
+			latency_ms:    latency
 		}
 		return
 	}

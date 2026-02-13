@@ -76,6 +76,15 @@ pub fn new_grid_orm_data_source(src GridOrmDataSource) !&GridOrmDataSource {
 	}
 }
 
+// resolved_column_map returns the cached column_map or
+// validates one on the fly (direct-construction fallback).
+fn (source GridOrmDataSource) resolved_column_map() !map[string]GridOrmColumnSpec {
+	if source.column_map.len > 0 {
+		return source.column_map
+	}
+	return grid_orm_validate_column_map(source.columns)
+}
+
 pub fn (source GridOrmDataSource) capabilities() GridDataCapabilities {
 	return GridDataCapabilities{
 		supports_cursor_pagination: true
@@ -91,16 +100,8 @@ pub fn (source GridOrmDataSource) capabilities() GridDataCapabilities {
 }
 
 pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResult {
-	if grid_abort_signal_is_aborted(req.signal) {
-		return error('request aborted')
-	}
-	// Fallback guards against direct struct construction
-	// bypassing new_grid_orm_data_source factory.
-	column_map := if source.column_map.len > 0 {
-		source.column_map
-	} else {
-		grid_orm_validate_column_map(source.columns)!
-	}
+	grid_abort_check(req.signal)!
+	column_map := source.resolved_column_map()!
 	query := grid_orm_validate_query_with_map(req.query, column_map)!
 	limit, offset, cursor := grid_orm_resolve_page(req.page, source.default_limit)
 	page := source.fetch_fn(GridOrmQuerySpec{
@@ -111,9 +112,7 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 		offset:       offset
 		cursor:       cursor
 	}, req.signal)!
-	if grid_abort_signal_is_aborted(req.signal) {
-		return error('request aborted')
-	}
+	grid_abort_check(req.signal)!
 	mut next_cursor := page.next_cursor
 	if next_cursor.len == 0 && page.has_more {
 		next_cursor = grid_data_source_cursor_from_index(offset + page.rows.len)
@@ -133,16 +132,8 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 }
 
 pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
-	if grid_abort_signal_is_aborted(req.signal) {
-		return error('request aborted')
-	}
-	// Fallback guards against direct struct construction
-	// bypassing new_grid_orm_data_source factory.
-	column_map := if source.column_map.len > 0 {
-		source.column_map
-	} else {
-		grid_orm_validate_column_map(source.columns)!
-	}
+	grid_abort_check(req.signal)!
+	column_map := source.resolved_column_map()!
 	return match req.kind {
 		.create {
 			if source.create_fn == unsafe { nil } {
@@ -150,9 +141,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			}
 			grid_orm_validate_mutation_columns(req.rows, []GridCellEdit{}, column_map)!
 			created := source.create_fn(req.rows.clone(), req.signal)!
-			if grid_abort_signal_is_aborted(req.signal) {
-				return error('request aborted')
-			}
+			grid_abort_check(req.signal)!
 			GridMutationResult{
 				created: created
 			}
@@ -163,9 +152,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			}
 			grid_orm_validate_mutation_columns(req.rows, req.edits, column_map)!
 			updated := source.update_fn(req.rows.clone(), req.edits.clone(), req.signal)!
-			if grid_abort_signal_is_aborted(req.signal) {
-				return error('request aborted')
-			}
+			grid_abort_check(req.signal)!
 			GridMutationResult{
 				updated: updated
 			}
@@ -207,9 +194,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			} else {
 				return error('delete not supported')
 			}
-			if grid_abort_signal_is_aborted(req.signal) {
-				return error('request aborted')
-			}
+			grid_abort_check(req.signal)!
 			GridMutationResult{
 				deleted_ids: deleted_ids
 			}
