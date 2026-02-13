@@ -432,10 +432,16 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 
 // find_closing finds the position of a closing character.
 // For ] and ) it skips backtick spans to handle links like [`code`](url).
+// Skips escaped characters (e.g. \]).
 fn find_closing(text string, start int, ch u8) int {
 	skip_backticks := ch == `]` || ch == `)`
 	mut i := start
 	for i < text.len {
+		// Skip escaped character
+		if text[i] == `\\` {
+			i += 2
+			continue
+		}
 		// Skip backtick spans when searching for link delimiters
 		if skip_backticks && text[i] == `\`` {
 			i++
@@ -457,20 +463,32 @@ fn find_closing(text string, start int, ch u8) int {
 
 // find_double_closing finds the position of double closing characters (e.g., **).
 fn find_double_closing(text string, start int, ch u8) int {
-	for i := start; i < text.len - 1; i++ {
+	mut i := start
+	for i < text.len - 1 {
+		if text[i] == `\\` {
+			i += 2
+			continue
+		}
 		if text[i] == ch && text[i + 1] == ch {
 			return i
 		}
+		i++
 	}
 	return -1
 }
 
 // find_triple_closing finds the position of triple closing characters (e.g., ***).
 fn find_triple_closing(text string, start int, ch u8) int {
-	for i := start; i < text.len - 2; i++ {
+	mut i := start
+	for i < text.len - 2 {
+		if text[i] == `\\` {
+			i += 2
+			continue
+		}
 		if text[i] == ch && text[i + 1] == ch && text[i + 2] == ch {
 			return i
 		}
+		i++
 	}
 	return -1
 }

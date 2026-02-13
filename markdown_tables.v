@@ -2,10 +2,8 @@ module gui
 
 // markdown_tables.v handles parsing of markdown tables.
 
-// parse_markdown_table parses raw table markdown into structured data.
-fn parse_markdown_table(raw string, style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) ?ParsedTable {
-	lines := raw.split('
-').filter(it.trim_space() != '')
+// parse_markdown_table parses raw table lines into structured data.
+fn parse_markdown_table(lines []string, style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) ?ParsedTable {
 	if lines.len < 2 {
 		return none
 	}

@@ -81,6 +81,13 @@ fn test_markdown_ordered_list() {
 	assert blocks[0].is_list == true
 	assert blocks[0].list_prefix == '1. '
 	assert blocks[0].content.runs[0].text == 'first'
+
+	// Support ')' delimiter
+	blocks2 := markdown_to_blocks('1) second', MarkdownStyle{})
+	assert blocks2.len == 1
+	assert blocks2[0].is_list == true
+	assert blocks2[0].list_prefix == '1) '
+	assert blocks2[0].content.runs[0].text == 'second'
 }
 
 fn test_markdown_code_block() {
@@ -258,8 +265,8 @@ fn rich_text_to_string(rt RichText) string {
 
 fn test_markdown_table_parsing() {
 	style := MarkdownStyle{}
-	parsed := parse_markdown_table('| A | B |\n|---|---|\n| 1 | 2 |', style, map[string]string{},
-		map[string]string{}) or { panic('parse failed') }
+	parsed := parse_markdown_table('| A | B |\n|---|---|\n| 1 | 2 |'.split('\n'), style,
+		map[string]string{}, map[string]string{}) or { panic('parse failed') }
 	assert rich_text_to_string(parsed.headers[0]) == 'A'
 	assert rich_text_to_string(parsed.headers[1]) == 'B'
 	assert parsed.rows.len == 1
@@ -269,7 +276,7 @@ fn test_markdown_table_parsing() {
 
 fn test_markdown_table_alignments() {
 	style := MarkdownStyle{}
-	parsed := parse_markdown_table('| L | C | R |\n|:---|:---:|---:|\n| a | b | c |',
+	parsed := parse_markdown_table('| L | C | R |\n|:---|:---:|---:|\n| a | b | c |'.split('\n'),
 		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
 	assert parsed.alignments.len == 3
 	assert parsed.alignments[0] == .start
@@ -279,7 +286,7 @@ fn test_markdown_table_alignments() {
 
 fn test_markdown_table_no_outer_pipes() {
 	style := MarkdownStyle{}
-	parsed := parse_markdown_table('A | B\n---|---\n1 | 2', style, map[string]string{},
+	parsed := parse_markdown_table('A | B\n---|---\n1 | 2'.split('\n'), style, map[string]string{},
 		map[string]string{}) or { panic('parse failed') }
 	assert rich_text_to_string(parsed.headers[0]) == 'A'
 	assert rich_text_to_string(parsed.headers[1]) == 'B'
@@ -290,8 +297,8 @@ fn test_markdown_table_no_outer_pipes() {
 
 fn test_markdown_table_empty_cells() {
 	style := MarkdownStyle{}
-	parsed := parse_markdown_table('| A | B | C |\n|---|---|---|\n| 1 |  | 3 |', style,
-		map[string]string{}, map[string]string{}) or { panic('parse failed') }
+	parsed := parse_markdown_table('| A | B | C |\n|---|---|---|\n| 1 |  | 3 |'.split('\n'),
+		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
 	assert rich_text_to_string(parsed.rows[0][0]) == '1'
 	assert rich_text_to_string(parsed.rows[0][1]) == ''
 	assert rich_text_to_string(parsed.rows[0][2]) == '3'
@@ -299,7 +306,7 @@ fn test_markdown_table_empty_cells() {
 
 fn test_markdown_table_inline_formatting() {
 	style := MarkdownStyle{}
-	parsed := parse_markdown_table('| **bold** | _italic_ | `code` |\n|---|---|---|\n| [link](url) | a | b |',
+	parsed := parse_markdown_table('| **bold** | _italic_ | `code` |\n|---|---|---|\n| [link](url) | a | b |'.split('\n'),
 		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
 	// Headers should have inline formatting parsed
 	assert rich_text_to_string(parsed.headers[0]) == 'bold'
@@ -315,15 +322,15 @@ fn test_markdown_table_inline_formatting() {
 fn test_markdown_table_invalid_separator() {
 	style := MarkdownStyle{}
 	// Separator without dashes should fail
-	result := parse_markdown_table('| A | B |\n|:::|:::|\n| 1 | 2 |', style, map[string]string{},
-		map[string]string{})
+	result := parse_markdown_table('| A | B |\n|:::|:::|\n| 1 | 2 |'.split('\n'), style,
+		map[string]string{}, map[string]string{})
 	assert result == none
 }
 
 fn test_markdown_table_no_separator() {
 	style := MarkdownStyle{}
 	// No separator row should fail
-	result := parse_markdown_table('| A | B |\n| 1 | 2 |', style, map[string]string{},
+	result := parse_markdown_table('| A | B |\n| 1 | 2 |'.split('\n'), style, map[string]string{},
 		map[string]string{})
 	assert result == none
 }

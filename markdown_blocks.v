@@ -65,10 +65,13 @@ fn is_horizontal_rule(line string) bool {
 	return count >= 3
 }
 
-// is_ordered_list checks if a line is an ordered list item (e.g., "1. item").
+// is_ordered_list checks if a line is an ordered list item (e.g., "1. item" or "1) item").
 fn is_ordered_list(line string) bool {
-	dot_pos := line.index('.') or { return false }
-	if dot_pos == 0 || dot_pos >= line.len - 1 {
+	mut dot_pos := line.index('.') or { -1 }
+	if dot_pos == -1 {
+		dot_pos = line.index(')') or { -1 }
+	}
+	if dot_pos <= 0 || dot_pos >= line.len - 1 {
 		return false
 	}
 	num_part := line[..dot_pos]

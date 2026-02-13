@@ -174,9 +174,9 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 
 		// Image ![alt](path) or ![alt](path =WxH) - must be at start of line
 		if line.starts_with('![') {
-			bracket_end := line.index(']') or { -1 }
+			bracket_end := find_closing(line, 2, `]`)
 			if bracket_end > 2 && bracket_end + 1 < line.len && line[bracket_end + 1] == `(` {
-				paren_end := line.index_after(')', bracket_end + 2) or { -1 }
+				paren_end := find_closing(line, bracket_end + 2, `)`)
 				if paren_end > bracket_end + 2 {
 					// Flush current runs
 					if block := flush_runs(mut runs) {
@@ -513,16 +513,20 @@ fn try_parse_list_item(lines []string, start_idx int, style MarkdownStyle, link_
 
 	// Ordered list (with nesting support)
 	if is_ordered_list(left_trimmed) {
-		dot_pos := left_trimmed.index('.') or { 0 }
-		num := left_trimmed[..dot_pos]
-		rest := left_trimmed[dot_pos + 1..].trim_left(' ')
+		mut sep_pos := left_trimmed.index('.') or { -1 }
+		if sep_pos == -1 {
+			sep_pos = left_trimmed.index(')') or { -1 }
+		}
+		num := left_trimmed[..sep_pos]
+		sep := left_trimmed[sep_pos..sep_pos + 1]
+		rest := left_trimmed[sep_pos + 1..].trim_left(' ')
 		content, consumed := collect_list_item_content(rest, lines, start_idx + 1)
 		mut item_runs := []RichTextRun{cap: 10}
 		parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
 			0)
 		return MarkdownBlock{
 			is_list:     true
-			list_prefix: '${num}. '
+			list_prefix: '${num}${sep} '
 			list_indent: indent
 			content:     RichText{
 				runs: item_runs
@@ -561,15 +565,14 @@ fn try_parse_table(lines []string, start_idx int, style MarkdownStyle, link_defs
 		}
 	}
 	if table_lines.len > 0 {
-		raw_table := table_lines.join('\n')
-		parsed_table := parse_markdown_table(raw_table, style, link_defs, footnote_defs)
+		parsed_table := parse_markdown_table(table_lines, style, link_defs, footnote_defs)
 		return MarkdownBlock{
 			is_table:   true
 			table_data: parsed_table
 			content:    RichText{
 				runs: [
 					RichTextRun{
-						text:  raw_table
+						text:  table_lines.join('\n')
 						style: style.code
 					},
 				]
