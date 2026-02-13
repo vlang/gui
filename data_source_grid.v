@@ -267,7 +267,7 @@ fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, ki
 	grid_id := cfg.id
 	spawn fn [source, req, grid_id, next_request_id, caps] (mut w Window) {
 		result := source.fetch_data(req) or {
-			if !isnil(req.signal) && req.signal.is_aborted() {
+			if grid_abort_signal_is_aborted(req.signal) {
 				return
 			}
 			err_msg := err.msg()
@@ -276,7 +276,7 @@ fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, ki
 			})
 			return
 		}
-		if !isnil(req.signal) && req.signal.is_aborted() {
+		if grid_abort_signal_is_aborted(req.signal) {
 			return
 		}
 		w.queue_command(fn [grid_id, next_request_id, result, caps] (mut w Window) {

@@ -74,7 +74,7 @@ pub fn (source GridOrmDataSource) capabilities() GridDataCapabilities {
 }
 
 pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResult {
-	if grid_data_request_is_aborted(req) {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	query := grid_orm_validate_query(req.query, source.columns)!
@@ -87,7 +87,7 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 		offset:       offset
 		cursor:       cursor
 	}, req.signal)!
-	if grid_data_request_is_aborted(req) {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	mut next_cursor := page.next_cursor
@@ -95,8 +95,8 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 		next_cursor = grid_data_source_cursor_from_index(offset + page.rows.len)
 	}
 	mut prev_cursor := page.prev_cursor
-	if prev_cursor.len == 0 && offset > 0 {
-		prev_cursor = grid_data_source_cursor_from_index(int_max(0, offset - limit))
+	if prev_cursor.len == 0 {
+		prev_cursor = grid_data_source_prev_cursor(offset, limit)
 	}
 	return GridDataResult{
 		rows:           page.rows.clone()
@@ -109,7 +109,7 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 }
 
 pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
-	if grid_data_mutation_is_aborted(req) {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	return match req.kind {
@@ -119,7 +119,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			}
 			grid_orm_validate_mutation_columns(req.rows, []GridCellEdit{}, source.columns)!
 			created := source.create_fn(req.rows.clone(), req.signal)!
-			if grid_data_mutation_is_aborted(req) {
+			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
 			}
 			GridMutationResult{
@@ -132,7 +132,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			}
 			grid_orm_validate_mutation_columns(req.rows, req.edits, source.columns)!
 			updated := source.update_fn(req.rows.clone(), req.edits.clone(), req.signal)!
-			if grid_data_mutation_is_aborted(req) {
+			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
 			}
 			GridMutationResult{
@@ -176,7 +176,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			} else {
 				return error('delete not supported')
 			}
-			if grid_data_mutation_is_aborted(req) {
+			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
 			}
 			GridMutationResult{
@@ -253,6 +253,9 @@ fn grid_orm_validate_column_map(columns []GridOrmColumnSpec) !map[string]GridOrm
 		if db_field.len == 0 {
 			return error('orm column "${id}" requires db_field')
 		}
+		if !grid_orm_valid_db_field(db_field) {
+			return error('orm column "${id}" has invalid db_field: ${db_field}')
+		}
 		if id in out {
 			return error('duplicate orm column id: ${id}')
 		}
@@ -308,4 +311,26 @@ fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, colu
 			return error('unknown column id: ${edit.col_id}')
 		}
 	}
+}
+
+// grid_orm_valid_db_field checks that a db_field contains only
+// alphanumeric chars, underscores, and dots (for table-qualified
+// names). Must start with a letter or underscore.
+fn grid_orm_valid_db_field(field string) bool {
+	if field.len == 0 {
+		return false
+	}
+	first := field[0]
+	if !((first >= `a` && first <= `z`) || (first >= `A` && first <= `Z`) || first == `_`) {
+		return false
+	}
+	for i := 1; i < field.len; i++ {
+		c := field[i]
+		if (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`) || (c >= `0` && c <= `9`)
+			|| c == `_` || c == `.` {
+			continue
+		}
+		return false
+	}
+	return true
 }

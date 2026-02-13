@@ -463,6 +463,38 @@ fn test_in_memory_source_row_count_unknown() {
 	assert res.row_count == none
 }
 
+fn test_next_mutation_row_id_returns_error_on_exhaustion() {
+	// Build 100_000 rows with IDs "100001".."200000".
+	// rows.len=100_000, so candidates="100001".."200000",
+	// all of which already exist in the map.
+	n := 100_000
+	mut rows := []GridRow{cap: n}
+	for i in 0 .. n {
+		rows << GridRow{
+			id: '${n + i + 1}'
+		}
+	}
+	grid_data_source_next_mutation_row_id(rows, '') or {
+		assert err.msg().contains('unable to generate unique row id')
+		return
+	}
+	assert false
+}
+
+fn test_contains_lower_ascii() {
+	assert grid_contains_lower('Hello World', 'hello')
+	assert grid_contains_lower('ABCDEF', 'cde')
+	assert !grid_contains_lower('ABC', 'xyz')
+	assert grid_contains_lower('', '')
+	assert !grid_contains_lower('', 'a')
+	assert grid_equals_lower('Hello', 'hello')
+	assert !grid_equals_lower('Hello', 'hell')
+	assert grid_starts_with_lower('Hello', 'hel')
+	assert !grid_starts_with_lower('Hello', 'elo')
+	assert grid_ends_with_lower('Hello', 'llo')
+	assert !grid_ends_with_lower('Hello', 'hel')
+}
+
 fn data_source_rows(count int) []GridRow {
 	mut rows := []GridRow{cap: count}
 	for i in 0 .. count {

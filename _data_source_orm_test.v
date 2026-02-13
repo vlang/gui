@@ -316,6 +316,41 @@ fn test_grid_orm_data_source_mutate_unsupported_operation() {
 	assert false
 }
 
+fn test_grid_orm_validate_column_map_rejects_bad_db_field() {
+	_ := grid_orm_validate_query(GridQueryState{}, [
+		GridOrmColumnSpec{
+			id:       'col'
+			db_field: 'valid_field'
+		},
+	]) or {
+		assert false
+		return
+	}
+	// SQL injection attempt
+	_ := grid_orm_validate_query(GridQueryState{}, [
+		GridOrmColumnSpec{
+			id:       'col'
+			db_field: 'name; DROP TABLE--'
+		},
+	]) or {
+		assert err.msg().contains('invalid db_field')
+		return
+	}
+	assert false
+}
+
+fn test_grid_orm_valid_db_field_accepts_qualified_names() {
+	assert grid_orm_valid_db_field('users')
+	assert grid_orm_valid_db_field('users.name')
+	assert grid_orm_valid_db_field('_private')
+	assert grid_orm_valid_db_field('t1.col_2')
+	assert !grid_orm_valid_db_field('')
+	assert !grid_orm_valid_db_field('1bad')
+	assert !grid_orm_valid_db_field('no spaces')
+	assert !grid_orm_valid_db_field('semi;colon')
+	assert !grid_orm_valid_db_field('dash-name')
+}
+
 fn orm_test_fetch_ok(_ GridOrmQuerySpec, _ &GridAbortSignal) !GridOrmPage {
 	return GridOrmPage{}
 }

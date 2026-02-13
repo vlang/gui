@@ -160,7 +160,7 @@ pub fn (source InMemoryCursorDataSource) capabilities() GridDataCapabilities {
 }
 
 pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDataResult {
-	if grid_data_request_is_aborted(req) {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
@@ -179,13 +179,8 @@ pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDa
 			} else {
 				''
 			}
-			prev_start := int_max(0, start - chunk_limit)
-			prev_cursor := if start > 0 {
-				grid_data_source_cursor_from_index(prev_start)
-			} else {
-				''
-			}
-			if grid_data_request_is_aborted(req) {
+			prev_cursor := grid_data_source_prev_cursor(start, chunk_limit)
+			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
 			}
 			return GridDataResult{
@@ -204,7 +199,7 @@ pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDa
 				end = int_min(filtered.len, start + limit)
 			}
 			rows := filtered[start..end].clone()
-			if grid_data_request_is_aborted(req) {
+			if grid_abort_signal_is_aborted(req.signal) {
 				return error('request aborted')
 			}
 			return GridDataResult{
@@ -214,11 +209,7 @@ pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDa
 				} else {
 					''
 				}
-				prev_cursor:    if start > 0 {
-					grid_data_source_cursor_from_index(int_max(0, start - (end - start)))
-				} else {
-					''
-				}
+				prev_cursor:    grid_data_source_prev_cursor(start, end - start)
 				row_count:      if source.row_count_known { ?int(filtered.len) } else { none }
 				has_more:       end < filtered.len
 				received_count: rows.len
@@ -256,7 +247,7 @@ pub fn (source InMemoryOffsetDataSource) capabilities() GridDataCapabilities {
 }
 
 pub fn (source InMemoryOffsetDataSource) fetch_data(req GridDataRequest) !GridDataResult {
-	if grid_data_request_is_aborted(req) {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
@@ -280,17 +271,13 @@ pub fn (source InMemoryOffsetDataSource) fetch_data(req GridDataRequest) !GridDa
 		}
 	}
 	rows := filtered[start..end].clone()
-	if grid_data_request_is_aborted(req) {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	return GridDataResult{
 		rows:           rows
 		next_cursor:    if end < filtered.len { grid_data_source_cursor_from_index(end) } else { '' }
-		prev_cursor:    if start > 0 {
-			grid_data_source_cursor_from_index(int_max(0, start - (end - start)))
-		} else {
-			''
-		}
+		prev_cursor:    grid_data_source_prev_cursor(start, end - start)
 		row_count:      if source.row_count_known { ?int(filtered.len) } else { none }
 		has_more:       end < filtered.len
 		received_count: rows.len
@@ -303,7 +290,7 @@ pub fn (mut source InMemoryOffsetDataSource) mutate_data(req GridMutationRequest
 }
 
 fn grid_data_source_inmemory_mutate(mut rows []GridRow, latency_ms int, row_count_known bool, req GridMutationRequest) !GridMutationResult {
-	if grid_data_mutation_is_aborted(req) {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	if grid_data_source_sleep_with_abort(req.signal, latency_ms) {
@@ -312,7 +299,7 @@ fn grid_data_source_inmemory_mutate(mut rows []GridRow, latency_ms int, row_coun
 	mut work := rows.clone()
 	result := grid_data_source_apply_mutation(mut work, req.kind, req.rows, req.row_ids,
 		req.edits)!
-	if grid_data_mutation_is_aborted(req) {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	rows = unsafe { work }
@@ -324,38 +311,38 @@ fn grid_data_source_inmemory_mutate(mut rows []GridRow, latency_ms int, row_coun
 	}
 }
 
-fn grid_data_request_is_aborted(req GridDataRequest) bool {
-	if isnil(req.signal) {
+fn grid_abort_signal_is_aborted(signal &GridAbortSignal) bool {
+	if isnil(signal) {
 		return false
 	}
-	return req.signal.is_aborted()
-}
-
-fn grid_data_mutation_is_aborted(req GridMutationRequest) bool {
-	if isnil(req.signal) {
-		return false
-	}
-	return req.signal.is_aborted()
+	return signal.aborted
 }
 
 fn grid_data_source_sleep_with_abort(signal &GridAbortSignal, latency_ms int) bool {
 	if latency_ms <= 0 {
-		return !isnil(signal) && signal.is_aborted()
+		return grid_abort_signal_is_aborted(signal)
 	}
 	mut remaining := latency_ms
 	for remaining > 0 {
-		if !isnil(signal) && signal.is_aborted() {
+		if grid_abort_signal_is_aborted(signal) {
 			return true
 		}
 		step_ms := int_min(remaining, 20)
 		time.sleep(step_ms * time.millisecond)
 		remaining -= step_ms
 	}
-	return !isnil(signal) && signal.is_aborted()
+	return grid_abort_signal_is_aborted(signal)
 }
 
 fn grid_data_source_cursor_from_index(index int) string {
 	return 'i:${int_max(0, index)}'
+}
+
+fn grid_data_source_prev_cursor(start int, page_size int) string {
+	if start <= 0 {
+		return ''
+	}
+	return grid_data_source_cursor_from_index(int_max(0, start - page_size))
 }
 
 fn grid_data_source_cursor_to_index(cursor string) int {
@@ -436,7 +423,7 @@ fn grid_data_source_row_matches_query(row GridRow, needle string, filters []Grid
 	if needle.len > 0 {
 		mut matched := false
 		for _, value in row.cells {
-			if value.to_lower().contains(needle) {
+			if grid_contains_lower(value, needle) {
 				matched = true
 				break
 			}
@@ -446,14 +433,91 @@ fn grid_data_source_row_matches_query(row GridRow, needle string, filters []Grid
 		}
 	}
 	for filter in filters {
-		cell_lower := (row.cells[filter.col_id] or { '' }).to_lower()
+		cell := row.cells[filter.col_id] or { '' }
 		matched := match filter.op {
-			'equals' { cell_lower == filter.value }
-			'starts_with' { cell_lower.starts_with(filter.value) }
-			'ends_with' { cell_lower.ends_with(filter.value) }
-			else { cell_lower.contains(filter.value) }
+			'equals' { grid_equals_lower(cell, filter.value) }
+			'starts_with' { grid_starts_with_lower(cell, filter.value) }
+			'ends_with' { grid_ends_with_lower(cell, filter.value) }
+			else { grid_contains_lower(cell, filter.value) }
 		}
 		if !matched {
+			return false
+		}
+	}
+	return true
+}
+
+// ASCII lowercase byte (a-z, A-Z only).
+@[inline]
+fn grid_lower_byte(c u8) u8 {
+	if c >= `A` && c <= `Z` {
+		return c | 0x20
+	}
+	return c
+}
+
+// grid_contains_lower checks haystack.to_lower().contains(needle)
+// without allocating. `needle` must already be lowered.
+fn grid_contains_lower(haystack string, needle string) bool {
+	if needle.len == 0 {
+		return true
+	}
+	if haystack.len < needle.len {
+		return false
+	}
+	limit := haystack.len - needle.len
+	for i := 0; i <= limit; i++ {
+		mut found := true
+		for j := 0; j < needle.len; j++ {
+			if grid_lower_byte(unsafe { haystack.str[i + j] }) != unsafe { needle.str[j] } {
+				found = false
+				break
+			}
+		}
+		if found {
+			return true
+		}
+	}
+	return false
+}
+
+// grid_equals_lower checks haystack.to_lower() == needle
+// without allocating. `needle` must already be lowered.
+fn grid_equals_lower(haystack string, needle string) bool {
+	if haystack.len != needle.len {
+		return false
+	}
+	for i := 0; i < haystack.len; i++ {
+		if grid_lower_byte(unsafe { haystack.str[i] }) != unsafe { needle.str[i] } {
+			return false
+		}
+	}
+	return true
+}
+
+// grid_starts_with_lower checks haystack.to_lower().starts_with(needle)
+// without allocating. `needle` must already be lowered.
+fn grid_starts_with_lower(haystack string, needle string) bool {
+	if haystack.len < needle.len {
+		return false
+	}
+	for i := 0; i < needle.len; i++ {
+		if grid_lower_byte(unsafe { haystack.str[i] }) != unsafe { needle.str[i] } {
+			return false
+		}
+	}
+	return true
+}
+
+// grid_ends_with_lower checks haystack.to_lower().ends_with(needle)
+// without allocating. `needle` must already be lowered.
+fn grid_ends_with_lower(haystack string, needle string) bool {
+	if haystack.len < needle.len {
+		return false
+	}
+	off := haystack.len - needle.len
+	for i := 0; i < needle.len; i++ {
+		if grid_lower_byte(unsafe { haystack.str[i + off] }) != unsafe { needle.str[i] } {
 			return false
 		}
 	}
@@ -496,7 +560,7 @@ fn grid_data_source_apply_create(mut rows []GridRow, req_rows []GridRow) !GridMu
 	}
 	mut created := []GridRow{cap: req_rows.len}
 	for row in req_rows {
-		next_id := grid_data_source_next_mutation_row_id(rows, row.id)
+		next_id := grid_data_source_next_mutation_row_id(rows, row.id)!
 		next_row := GridRow{
 			...row
 			id:    next_id
@@ -603,16 +667,7 @@ fn grid_data_source_row_index(rows []GridRow, row_id string) ?int {
 	return none
 }
 
-fn grid_data_source_rows_contains_id(rows []GridRow, row_id string) bool {
-	for idx, row in rows {
-		if data_grid_row_id(row, idx) == row_id {
-			return true
-		}
-	}
-	return false
-}
-
-fn grid_data_source_next_mutation_row_id(rows []GridRow, preferred_id string) string {
+fn grid_data_source_next_mutation_row_id(rows []GridRow, preferred_id string) !string {
 	mut existing := map[string]bool{}
 	for idx, row in rows {
 		existing[data_grid_row_id(row, idx)] = true
@@ -630,5 +685,5 @@ fn grid_data_source_next_mutation_row_id(rows []GridRow, preferred_id string) st
 		}
 		next++
 	}
-	return '${rows.len + 1}'
+	return error('unable to generate unique row id')
 }

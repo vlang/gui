@@ -77,14 +77,14 @@ pub:
 }
 
 pub fn (source InMemoryListBoxDataSource) fetch_data(req ListBoxDataRequest) !ListBoxDataResult {
-	if !isnil(req.signal) && req.signal.is_aborted() {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
 		return error('request aborted')
 	}
 	filtered := list_box_source_apply_query(source.data, req.query)
-	if !isnil(req.signal) && req.signal.is_aborted() {
+	if grid_abort_signal_is_aborted(req.signal) {
 		return error('request aborted')
 	}
 	return ListBoxDataResult{
@@ -437,7 +437,7 @@ fn list_box_source_start_request(cfg ListBoxCfg, request_key string, mut state L
 	list_box_id := cfg.id
 	spawn fn [source, req, list_box_id, next_request_id] (mut w Window) {
 		result := source.fetch_data(req) or {
-			if !isnil(req.signal) && req.signal.is_aborted() {
+			if grid_abort_signal_is_aborted(req.signal) {
 				return
 			}
 			err_msg := err.msg()
@@ -447,7 +447,7 @@ fn list_box_source_start_request(cfg ListBoxCfg, request_key string, mut state L
 			})
 			return
 		}
-		if !isnil(req.signal) && req.signal.is_aborted() {
+		if grid_abort_signal_is_aborted(req.signal) {
 			return
 		}
 		w.queue_command(fn [list_box_id, next_request_id, result] (mut w Window) {

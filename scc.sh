@@ -1,1 +1,1 @@
-scc --exclude-dir examples --exclude-dir doc --no-cocomo --no-size --no-complexity
+scc --exclude-dir examples --exclude-dir doc --no-size --no-complexity
