@@ -499,7 +499,7 @@ fn test_data_grid_effective_columns_respects_order_and_pin() {
 		]
 		rows:         []
 	}
-	cols := data_grid_effective_columns(cfg)
+	cols := data_grid_effective_columns(cfg.columns, cfg.column_order, cfg.hidden_column_ids)
 	assert cols.len == 3
 	assert cols[0].id == 'b'
 	assert cols[1].id == 'a'
@@ -529,7 +529,7 @@ fn test_data_grid_effective_columns_respects_hidden_columns() {
 		]
 		rows:              []
 	}
-	cols := data_grid_effective_columns(cfg)
+	cols := data_grid_effective_columns(cfg.columns, cfg.column_order, cfg.hidden_column_ids)
 	assert cols.len == 2
 	assert cols[0].id == 'a'
 	assert cols[1].id == 'c'
@@ -577,7 +577,7 @@ fn test_data_grid_effective_columns_keeps_one_when_all_hidden() {
 		]
 		rows:              []
 	}
-	cols := data_grid_effective_columns(cfg)
+	cols := data_grid_effective_columns(cfg.columns, cfg.column_order, cfg.hidden_column_ids)
 	assert cols.len == 1
 	assert cols[0].id == 'a'
 }
