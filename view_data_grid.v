@@ -32,6 +32,9 @@ const data_grid_pdf_margin = f32(40)
 const data_grid_pdf_font_size = f32(10)
 const data_grid_pdf_line_height = f32(12)
 const data_grid_pdf_max_line_chars = 180
+const data_grid_record_sep = '\x1e'
+const data_grid_unit_sep = '\x1f'
+const data_grid_group_sep = '\x1d'
 
 pub enum GridSortDir as u8 {
 	asc
@@ -559,29 +562,40 @@ fn data_grid_rows_signature(rows []GridRow) u64 {
 	if rows.len == 0 {
 		return u64(0)
 	}
-	mut parts := []string{cap: rows.len}
+	mut sb := strings.new_builder(rows.len * 128)
 	for idx, row in rows {
+		if idx > 0 {
+			sb.write_string(data_grid_group_sep)
+		}
 		row_id := data_grid_row_id(row, idx)
+		sb.write_string(row_id)
+		sb.write_string(data_grid_record_sep)
 		mut keys := row.cells.keys()
 		keys.sort()
-		mut cell_parts := []string{cap: keys.len}
-		for key in keys {
-			cell_parts << '${key}=${row.cells[key] or { '' }}'
+		for j, key in keys {
+			if j > 0 {
+				sb.write_string(data_grid_unit_sep)
+			}
+			sb.write_string(key)
+			sb.write_string('=')
+			sb.write_string(row.cells[key] or { '' })
 		}
-		parts << '${row_id}\x1e${cell_parts.join('\x1f')}'
 	}
-	return fnv1a.sum64_string(parts.join('\x1d'))
+	return fnv1a.sum64_string(sb.str())
 }
 
 fn data_grid_rows_id_signature(rows []GridRow) u64 {
 	if rows.len == 0 {
 		return u64(0)
 	}
-	mut parts := []string{cap: rows.len}
+	mut sb := strings.new_builder(rows.len * 16)
 	for idx, row in rows {
-		parts << data_grid_row_id(row, idx)
+		if idx > 0 {
+			sb.write_string(data_grid_group_sep)
+		}
+		sb.write_string(data_grid_row_id(row, idx))
 	}
-	return fnv1a.sum64_string(parts.join('\x1d'))
+	return fnv1a.sum64_string(sb.str())
 }
 
 // CRUD uses a working copy of rows. When no unsaved changes
@@ -3154,46 +3168,58 @@ fn data_grid_pdf_clip_text(value string) string {
 	return runes[..data_grid_pdf_max_line_chars - 3].string() + '...'
 }
 
-// Generates a minimal single-page PDF. Computes max visible
-// lines from page dimensions. Truncates overflow rows with a
-// summary line. Builds a PDF text stream with Courier font,
-// then assembles catalog → pages → page → content stream.
+// Generates a multi-page PDF. Computes max lines per page from dimensions.
+// Splitting lines into chunks and creating catalog → pages → [page, content]*
+// sequence for a complete export.
 fn data_grid_pdf_document(lines []string) string {
 	if lines.len == 0 {
 		return ''
 	}
-	mut visible := lines.clone()
 	mut max_lines := int((data_grid_pdf_page_height - data_grid_pdf_margin * 2) / data_grid_pdf_line_height)
 	if max_lines < 1 {
 		max_lines = 1
 	}
-	if visible.len > max_lines {
-		overflow := visible.len - max_lines + 1
-		mut trimmed := visible[..max_lines - 1].clone()
-		trimmed << '... ${overflow} more rows'
-		visible = trimmed.clone()
+
+	mut pages := [][]string{}
+	for i := 0; i < lines.len; i += max_lines {
+		end := if i + max_lines > lines.len { lines.len } else { i + max_lines }
+		pages << lines[i..end].clone()
 	}
-	mut stream := strings.new_builder(2048)
-	stream.writeln('BT')
-	stream.writeln('/F1 ${pdf_num(data_grid_pdf_font_size)} Tf')
-	stream.writeln('${pdf_num(data_grid_pdf_line_height)} TL')
-	stream.writeln('${pdf_num(data_grid_pdf_margin)} ${pdf_num(data_grid_pdf_page_height - data_grid_pdf_margin)} Td')
-	for idx, line in visible {
-		if idx > 0 {
-			stream.writeln('T*')
+
+	mut objects := []string{cap: 2 + pages.len * 2}
+	objects << '<< /Type /Catalog /Pages 2 0 R >>'
+
+	mut kids := []string{cap: pages.len}
+	for i in 0 .. pages.len {
+		page_obj_idx := 3 + i * 2
+		kids << '${page_obj_idx} 0 R'
+	}
+	objects << '<< /Type /Pages /Kids [${kids.join(' ')}] /Count ${pages.len} >>'
+
+	for i, page_lines in pages {
+		mut stream := strings.new_builder(2048)
+		stream.writeln('BT')
+		stream.writeln('/F1 ${pdf_num(data_grid_pdf_font_size)} Tf')
+		stream.writeln('${pdf_num(data_grid_pdf_line_height)} TL')
+		stream.writeln('${pdf_num(data_grid_pdf_margin)} ${pdf_num(data_grid_pdf_page_height - data_grid_pdf_margin)} Td')
+		for j, line in page_lines {
+			if j > 0 {
+				stream.writeln('T*')
+			}
+			stream.writeln('(${pdf_escape_text(line)}) Tj')
 		}
-		stream.writeln('(${pdf_escape_text(line)}) Tj')
+		stream.writeln('ET')
+		content := stream.bytestr()
+
+		content_obj_idx := 4 + i * 2
+		page_obj := '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdf_num(data_grid_pdf_page_width)} ${pdf_num(data_grid_pdf_page_height)}] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Courier >> >> >> /Contents ${content_obj_idx} 0 R >>'
+		content_obj := '<< /Length ${content.len} >>\nstream\n${content}endstream'
+
+		objects << page_obj
+		objects << content_obj
 	}
-	stream.writeln('ET')
-	content := stream.bytestr()
-	page_obj := '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdf_num(data_grid_pdf_page_width)} ${pdf_num(data_grid_pdf_page_height)}] /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Courier >> >> >> /Contents 4 0 R >>'
-	content_obj := '<< /Length ${content.len} >>\nstream\n${content}endstream'
-	return pdf_encode([
-		'<< /Type /Catalog /Pages 2 0 R >>',
-		'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-		page_obj,
-		content_obj,
-	])
+
+	return pdf_encode(objects)
 }
 
 fn data_grid_xlsx_write_entry(mut zip szip.Zip, name string, content string) ! {
@@ -3990,24 +4016,14 @@ fn data_grid_page_rows(cfg DataGridCfg, row_height f32) int {
 }
 
 fn data_grid_active_row_index(rows []GridRow, selection GridSelection) int {
-	if rows.len == 0 {
-		return -1
+	res := data_grid_active_row_index_strict(rows, selection)
+	if res >= 0 {
+		return res
 	}
-	if selection.active_row_id.len > 0 {
-		for idx, row in rows {
-			if data_grid_row_id(row, idx) == selection.active_row_id {
-				return idx
-			}
-		}
+	if rows.len > 0 {
+		return 0
 	}
-	if selection.selected_row_ids.len > 0 {
-		for idx, row in rows {
-			if selection.selected_row_ids[data_grid_row_id(row, idx)] {
-				return idx
-			}
-		}
-	}
-	return 0
+	return -1
 }
 
 fn data_grid_active_row_index_strict(rows []GridRow, selection GridSelection) int {
@@ -4833,7 +4849,7 @@ fn data_grid_row_auto_id(row GridRow) string {
 		value := row.cells[key] or { '' }
 		parts << '${key}=${value}'
 	}
-	serialized := parts.join('\x1f')
+	serialized := parts.join(data_grid_unit_sep)
 	if serialized.len == 0 {
 		return ''
 	}
