@@ -27,6 +27,13 @@ fn test_numeric_parse_invalid_string() {
 	assert numeric_parse('abc', NumericLocaleCfg{}) == none
 }
 
+fn test_numeric_parse_invalid_grouping() {
+	locale := NumericLocaleCfg{
+		group_sizes: [3, 2]
+	}
+	assert numeric_parse('12,345,67', locale) == none
+}
+
 fn test_numeric_format_en_locale() {
 	assert numeric_format(1234.5, 2, NumericLocaleCfg{}) == '1,234.50'
 }
@@ -45,6 +52,11 @@ fn test_numeric_format_group_sizes() {
 		group_sizes: [3, 2]
 	}
 	assert numeric_format(1234567, 0, locale) == '12,34,567'
+}
+
+fn test_numeric_clamp_unbounded_allows_large_values() {
+	value := 1.0e308
+	assert numeric_clamp(value, none, none) == value
 }
 
 fn test_numeric_commit_result_clamps() {

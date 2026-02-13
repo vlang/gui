@@ -1,5 +1,6 @@
 module gui
 
+import math
 import strconv
 
 // NumericLocaleCfg defines symbols used for parse/format.
@@ -263,7 +264,8 @@ fn numeric_input_on_mouse_scroll(layout &Layout, mut e Event, mut w Window, cfg 
 	if e.scroll_y == 0 {
 		return
 	}
-	numeric_input_apply_step(layout, cfg, locale, step_cfg, f64(e.scroll_y), e.modifiers, mut
+	direction := if e.scroll_y > 0 { f64(1.0) } else { f64(-1.0) }
+	numeric_input_apply_step(layout, cfg, locale, step_cfg, direction, e.modifiers, mut
 		e, mut w)
 }
 
@@ -329,13 +331,12 @@ fn numeric_step_seed(text string, value ?f64, min ?f64, locale NumericLocaleCfg)
 }
 
 fn numeric_step_delta(cfg NumericStepCfg, modifiers Modifier) f64 {
-	normalized := numeric_step_cfg_normalize(cfg)
-	mut step := normalized.step
+	mut step := cfg.step
 	if modifiers.has(.shift) {
-		step *= normalized.shift_multiplier
+		step *= cfg.shift_multiplier
 	}
 	if modifiers.has(.alt) {
-		step *= normalized.alt_multiplier
+		step *= cfg.alt_multiplier
 	}
 	if step < 0 {
 		return -step
@@ -355,8 +356,8 @@ fn numeric_step_cfg_normalize(cfg NumericStepCfg) NumericStepCfg {
 }
 
 fn numeric_clamp(value f64, min ?f64, max ?f64) f64 {
-	mut low := min or { f64(-1.0e307) }
-	mut high := max or { f64(1.0e307) }
+	mut low := min or { math.inf(-1) }
+	mut high := max or { math.inf(1) }
 	if low > high {
 		low, high = high, low
 	}
@@ -380,6 +381,8 @@ fn numeric_parse(raw string, locale NumericLocaleCfg) ?f64 {
 	mut seen_digit := false
 	mut seen_decimal := false
 	mut prev_group := false
+	mut saw_group_sep := false
+	mut decimal_index := -1
 
 	if rs[0] == loc.minus_sign {
 		normalized << `-`
@@ -402,6 +405,7 @@ fn numeric_parse(raw string, locale NumericLocaleCfg) ?f64 {
 			normalized << `.`
 			seen_decimal = true
 			prev_group = false
+			decimal_index = i
 			continue
 		}
 		if loc.group_sep != rune(0) && ch == loc.group_sep {
@@ -409,6 +413,7 @@ fn numeric_parse(raw string, locale NumericLocaleCfg) ?f64 {
 				return none
 			}
 			prev_group = true
+			saw_group_sep = true
 			continue
 		}
 		return none
@@ -417,8 +422,61 @@ fn numeric_parse(raw string, locale NumericLocaleCfg) ?f64 {
 	if !seen_digit || prev_group {
 		return none
 	}
+
+	if loc.group_sep != rune(0) && saw_group_sep {
+		integer_end := if decimal_index >= 0 { decimal_index } else { rs.len }
+		if integer_end < start {
+			return none
+		}
+		integer_segment := rs[start..integer_end]
+		if integer_segment.len == 0 {
+			return none
+		}
+		if !numeric_integer_groups_valid(integer_segment, loc.group_sep, loc.group_sizes) {
+			return none
+		}
+	}
+
 	number := strconv.atof64(normalized.string()) or { return none }
 	return number
+}
+
+fn numeric_integer_groups_valid(integer_segment []rune, group_sep rune, group_sizes []int) bool {
+	mut group_lengths := []int{}
+	mut count := 0
+	for i := integer_segment.len - 1; i >= 0; i-- {
+		ch := integer_segment[i]
+		if ch == group_sep {
+			if count == 0 {
+				return false
+			}
+			group_lengths << count
+			count = 0
+			continue
+		}
+		if ch < `0` || ch > `9` {
+			return false
+		}
+		count++
+	}
+	if count == 0 {
+		return false
+	}
+	group_lengths << count
+	for idx := 0; idx < group_lengths.len; idx++ {
+		length := group_lengths[idx]
+		expected := numeric_group_size(group_sizes, idx)
+		if idx == group_lengths.len - 1 {
+			if length <= expected {
+				continue
+			}
+			return false
+		}
+		if length != expected {
+			return false
+		}
+	}
+	return true
 }
 
 fn numeric_format(value f64, decimals int, locale NumericLocaleCfg) string {
