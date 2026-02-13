@@ -875,3 +875,77 @@ fn test_markdown_inline_math_not_preceded_by_digit() {
 	math_runs := rt.runs.filter(it.math_id != '')
 	assert math_runs.len == 0
 }
+
+// Edge case tests for parser fixes
+
+fn test_markdown_escaped_closing_delimiter() {
+	t := theme()
+	// Escaped \* prevents ** from closing bold
+	rt := markdown_to_rich_text(r'**text\**', MarkdownStyle{})
+	// Bold requires matching **, but \* escapes one star.
+	// Verify no run has bold family (bold not matched).
+	for run in rt.runs {
+		assert run.style.family != t.b3.family
+	}
+}
+
+fn test_markdown_table_escaped_pipe() {
+	style := MarkdownStyle{}
+	parsed := parse_markdown_table(r'| a \| b | c |
+|---|---|
+| d \| e | f |'.split('\n'),
+		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
+	// Should have 2 columns, not 3
+	assert parsed.headers.len == 2
+	assert rich_text_to_string(parsed.headers[0]) == 'a | b'
+	assert rich_text_to_string(parsed.headers[1]) == 'c'
+	assert rich_text_to_string(parsed.rows[0][0]) == 'd | e'
+	assert rich_text_to_string(parsed.rows[0][1]) == 'f'
+}
+
+fn test_markdown_blockquote_depth_first_line() {
+	// Depth should reflect first line, not max across all lines
+	blocks := markdown_to_blocks('> a\n>> b\n> c', MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].is_blockquote == true
+	assert blocks[0].blockquote_depth == 1
+}
+
+fn test_markdown_math_block_many_lines() {
+	// Math block with >20 lines (cap consistency)
+	mut lines := []string{cap: 30}
+	lines << '$$'
+	for i in 0 .. 25 {
+		lines << 'x_{${i}} + y_{${i}}'
+	}
+	lines << '$$'
+	blocks := markdown_to_blocks(lines.join('\n'), MarkdownStyle{})
+	math_blocks := blocks.filter(it.is_math)
+	assert math_blocks.len == 1
+	assert math_blocks[0].math_latex.contains('x_{24}')
+}
+
+fn test_markdown_ordered_list_paren() {
+	// Ordered list with ) separator
+	blocks := markdown_to_blocks('1) item', MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].is_list == true
+	assert blocks[0].list_prefix == '1) '
+	assert blocks[0].content.runs[0].text == 'item'
+}
+
+fn test_markdown_find_closing_trailing_backslash() {
+	// Backslash as last char should not cause out-of-bounds
+	pos := find_closing(r'abc\', 0, `x`)
+	assert pos == -1
+}
+
+fn test_markdown_find_double_closing_trailing_backslash() {
+	pos := find_double_closing(r'abc\', 0, `*`)
+	assert pos == -1
+}
+
+fn test_markdown_find_triple_closing_trailing_backslash() {
+	pos := find_triple_closing(r'abc\', 0, `*`)
+	assert pos == -1
+}

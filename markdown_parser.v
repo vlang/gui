@@ -261,7 +261,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 			// Multi-line: collect lines between $$ delimiters
 			i++
-			mut math_lines := []string{cap: 20}
+			mut math_lines := []string{cap: 64}
 			for i < lines.len && math_lines.len < 200 {
 				ml := lines[i]
 				if ml.trim_space() == '$$' {
@@ -418,16 +418,12 @@ fn try_parse_blockquote(lines []string, start_idx int, style MarkdownStyle, link
 		return none
 	}
 	mut i := start_idx
-	// Count initial depth and collect consecutive blockquote lines (bounded)
-	mut max_depth := count_blockquote_depth(line)
+	// Use first line's depth as block nesting level
+	block_depth := count_blockquote_depth(line)
 	mut quote_lines := []string{cap: 10}
 	for i < lines.len && quote_lines.len < max_blockquote_lines {
 		q := lines[i]
 		if q.starts_with('>') {
-			depth := count_blockquote_depth(q)
-			if depth > max_depth {
-				max_depth = depth
-			}
 			// Strip all > and spaces at start
 			content := strip_blockquote_prefix(q)
 			quote_lines << content
@@ -461,7 +457,7 @@ fn try_parse_blockquote(lines []string, start_idx int, style MarkdownStyle, link
 	}
 	return MarkdownBlock{
 		is_blockquote:    true
-		blockquote_depth: max_depth
+		blockquote_depth: block_depth
 		content:          RichText{
 			runs: quote_runs
 		}
@@ -516,6 +512,9 @@ fn try_parse_list_item(lines []string, start_idx int, style MarkdownStyle, link_
 		mut sep_pos := left_trimmed.index('.') or { -1 }
 		if sep_pos == -1 {
 			sep_pos = left_trimmed.index(')') or { -1 }
+		}
+		if sep_pos <= 0 {
+			return none
 		}
 		num := left_trimmed[..sep_pos]
 		sep := left_trimmed[sep_pos..sep_pos + 1]

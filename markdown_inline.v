@@ -349,11 +349,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					}
 				}
 				// Check for reference link [text][ref] or [text][]
+				link_text_lower := link_text.to_lower()
 				if bracket_end + 1 < text.len && text[bracket_end + 1] == `[` {
 					ref_end := find_closing(text, bracket_end + 2, `]`)
 					if ref_end >= bracket_end + 2 {
 						ref_id := if ref_end == bracket_end + 2 {
-							link_text.to_lower() // implicit [text][]
+							link_text_lower // implicit [text][]
 						} else {
 							text[bracket_end + 2..ref_end].to_lower()
 						}
@@ -385,7 +386,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					}
 				}
 				// Check for shortcut reference link [text]
-				shortcut_id := link_text.to_lower()
+				shortcut_id := link_text_lower
 				if url := link_defs[shortcut_id] {
 					safe_link := if is_safe_url(url) { url } else { '' }
 					if current.len > 0 {
@@ -438,7 +439,7 @@ fn find_closing(text string, start int, ch u8) int {
 	mut i := start
 	for i < text.len {
 		// Skip escaped character
-		if text[i] == `\\` {
+		if text[i] == `\\` && i + 1 < text.len {
 			i += 2
 			continue
 		}
@@ -446,6 +447,11 @@ fn find_closing(text string, start int, ch u8) int {
 		if skip_backticks && text[i] == `\`` {
 			i++
 			for i < text.len && text[i] != `\`` {
+				// Skip escaped backtick inside span
+				if text[i] == `\\` && i + 1 < text.len {
+					i += 2
+					continue
+				}
 				i++
 			}
 			if i < text.len {
@@ -465,7 +471,7 @@ fn find_closing(text string, start int, ch u8) int {
 fn find_double_closing(text string, start int, ch u8) int {
 	mut i := start
 	for i < text.len - 1 {
-		if text[i] == `\\` {
+		if text[i] == `\\` && i + 1 < text.len {
 			i += 2
 			continue
 		}
@@ -481,7 +487,7 @@ fn find_double_closing(text string, start int, ch u8) int {
 fn find_triple_closing(text string, start int, ch u8) int {
 	mut i := start
 	for i < text.len - 2 {
-		if text[i] == `\\` {
+		if text[i] == `\\` && i + 1 < text.len {
 			i += 2
 			continue
 		}

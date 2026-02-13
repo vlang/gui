@@ -53,6 +53,7 @@ fn parse_markdown_table(lines []string, style MarkdownStyle, link_defs map[strin
 }
 
 // parse_table_row splits a table row by | and trims cells.
+// Escaped pipes (\|) are treated as literal | within cells.
 fn parse_table_row(line string) []string {
 	trimmed := line.trim_space()
 	// Remove outer pipes if present
@@ -60,14 +61,30 @@ fn parse_table_row(line string) []string {
 	if inner.starts_with('|') {
 		inner = inner[1..]
 	}
-	if inner.ends_with('|') {
+	if inner.ends_with('|') && !inner.ends_with('\\|') {
 		inner = inner[..inner.len - 1]
 	}
-	parts := inner.split('|')
-	mut cells := []string{cap: parts.len}
-	for p in parts {
-		cells << p.trim_space()
+	// Split on unescaped | characters
+	mut cells := []string{cap: 8}
+	mut current := []u8{cap: inner.len}
+	mut i := 0
+	for i < inner.len {
+		if inner[i] == `\\` && i + 1 < inner.len && inner[i + 1] == `|` {
+			// Escaped pipe: emit literal |
+			current << `|`
+			i += 2
+		} else if inner[i] == `|` {
+			// Cell boundary
+			cells << current.bytestr().trim_space()
+			current.clear()
+			i++
+		} else {
+			current << inner[i]
+			i++
+		}
 	}
+	// Final cell
+	cells << current.bytestr().trim_space()
 	return cells
 }
 
