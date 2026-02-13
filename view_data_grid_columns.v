@@ -69,8 +69,7 @@ fn data_grid_effective_columns(columns []GridColumnCfg, column_order []string, h
 	if columns.len == 0 {
 		return []
 	}
-	order := data_grid_normalized_column_order(columns, column_order)
-	cols_by_id := data_grid_columns_by_id(columns)
+	order, cols_by_id := data_grid_column_order_and_map(columns, column_order)
 	mut ordered := []GridColumnCfg{cap: columns.len}
 	for id in order {
 		if hidden_column_ids[id] {
@@ -120,15 +119,37 @@ fn data_grid_normalized_column_order(columns []GridColumnCfg, column_order []str
 	return order
 }
 
-fn data_grid_columns_by_id(columns []GridColumnCfg) map[string]GridColumnCfg {
-	mut res := map[string]GridColumnCfg{}
+// Single-pass construction of both the normalized column
+// order list and the id→column map. Avoids iterating
+// columns twice (once for order, once for map).
+fn data_grid_column_order_and_map(columns []GridColumnCfg, column_order []string) ([]string, map[string]GridColumnCfg) {
+	mut by_id := map[string]GridColumnCfg{}
+	mut col_ids := map[string]bool{}
 	for col in columns {
-		if col.id.len == 0 {
+		if col.id.len > 0 {
+			col_ids[col.id] = true
+			by_id[col.id] = col
+		}
+	}
+	mut seen := map[string]bool{}
+	mut order := []string{cap: columns.len}
+	for id in column_order {
+		if id.len == 0 || seen[id] {
 			continue
 		}
-		res[col.id] = col
+		if col_ids[id] {
+			seen[id] = true
+			order << id
+		}
 	}
-	return res
+	for col in columns {
+		if col.id.len == 0 || seen[col.id] {
+			continue
+		}
+		seen[col.id] = true
+		order << col.id
+	}
+	return order, by_id
 }
 
 fn data_grid_partition_pins(columns []GridColumnCfg) []GridColumnCfg {
@@ -323,7 +344,7 @@ fn data_grid_column_widths(grid_id string, columns []GridColumnCfg, mut w Window
 	}
 	if changed || !w.view_state.data_grid_col_widths.contains(grid_id) {
 		w.view_state.data_grid_col_widths.set(grid_id, &DataGridColWidths{
-			widths: widths.clone()
+			widths: widths
 		})
 	}
 	return widths

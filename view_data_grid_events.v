@@ -70,40 +70,22 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 				mode:       .single_line
 				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
 			),
-			button(
-				sizing:       fit_fill
-				padding:      padding_none
-				size_border:  0
-				radius:       0
-				color:        color_transparent
-				color_hover:  cfg.color_header_hover
-				color_focus:  color_transparent
-				color_click:  cfg.color_header_hover
-				color_border: color_transparent
-				disabled:     clear_disabled
-				on_click:     fn [query_callback, query, input_focus_id] (_ &Layout, mut e Event, mut w Window) {
-					if query_callback == unsafe { nil } {
-						return
-					}
-					next := GridQueryState{
-						sorts:        query.sorts.clone()
-						filters:      query.filters.clone()
-						quick_filter: ''
-					}
-					query_callback(next, mut e, mut w)
-					if input_focus_id > 0 {
-						w.set_id_focus(input_focus_id)
-					}
-					e.is_handled = true
+			data_grid_indicator_button('Clear', cfg.text_style_filter, cfg.color_header_hover,
+				clear_disabled, 0, fn [query_callback, query, input_focus_id] (_ &Layout, mut e Event, mut w Window) {
+				if query_callback == unsafe { nil } {
+					return
 				}
-				content:      [
-					text(
-						text:       'Clear'
-						mode:       .single_line
-						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
-					),
-				]
-			),
+				next := GridQueryState{
+					sorts:        query.sorts.clone()
+					filters:      query.filters.clone()
+					quick_filter: ''
+				}
+				query_callback(next, mut e, mut w)
+				if input_focus_id > 0 {
+					w.set_id_focus(input_focus_id)
+				}
+				e.is_handled = true
+			}),
 		]
 	)
 }
@@ -139,31 +121,14 @@ fn data_grid_column_chooser_row(cfg DataGridCfg, is_open bool, focus_id u32) Vie
 		spacing: 6
 		v_align: .middle
 		content: [
-			button(
-				sizing:       fit_fill
-				padding:      padding_none
-				size_border:  0
-				radius:       0
-				color:        color_transparent
-				color_hover:  cfg.color_header_hover
-				color_focus:  color_transparent
-				color_click:  cfg.color_header_hover
-				color_border: color_transparent
-				on_click:     fn [grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
-					data_grid_toggle_column_chooser_open(grid_id, mut w)
-					if focus_id > 0 {
-						w.set_id_focus(focus_id)
-					}
-					e.is_handled = true
+			data_grid_indicator_button(chooser_label, cfg.text_style_filter, cfg.color_header_hover,
+				false, 0, fn [grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_toggle_column_chooser_open(grid_id, mut w)
+				if focus_id > 0 {
+					w.set_id_focus(focus_id)
 				}
-				content:      [
-					text(
-						text:       chooser_label
-						mode:       .single_line
-						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
-					),
-				]
-			),
+				e.is_handled = true
+			}),
 		]
 	)
 	if is_open {
@@ -266,73 +231,35 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 	jump_input_id := '${grid_id}:jump'
 	jump_focus_id := fnv1a.sum32_string(jump_input_id)
 	mut content := []View{cap: 9}
-	content << button(
-		width:        data_grid_header_control_width + 10
-		sizing:       fixed_fill
-		padding:      padding_none
-		size_border:  0
-		radius:       0
-		color:        color_transparent
-		color_hover:  cfg.color_header_hover
-		color_focus:  color_transparent
-		color_click:  cfg.color_header_hover
-		color_border: color_transparent
-		disabled:     !has_callback || is_first
-		on_click:     fn [on_page_change, page_index, focus_id] (_ &Layout, mut e Event, mut w Window) {
-			if on_page_change == unsafe { nil } {
-				return
-			}
-			next := int_max(0, page_index - 1)
-			on_page_change(next, mut e, mut w)
-			if focus_id > 0 {
-				w.set_id_focus(focus_id)
-			}
-			e.is_handled = true
+	content << data_grid_indicator_button('◀', cfg.text_style_header, cfg.color_header_hover,
+		!has_callback || is_first, data_grid_header_control_width + 10, fn [on_page_change, page_index, focus_id] (_ &Layout, mut e Event, mut w Window) {
+		if on_page_change == unsafe { nil } {
+			return
 		}
-		content:      [
-			text(
-				text:       '◀'
-				mode:       .single_line
-				text_style: data_grid_indicator_text_style(cfg.text_style_header)
-			),
-		]
-	)
+		next := int_max(0, page_index - 1)
+		on_page_change(next, mut e, mut w)
+		if focus_id > 0 {
+			w.set_id_focus(focus_id)
+		}
+		e.is_handled = true
+	})
 	content << text(
 		text:       page_text
 		mode:       .single_line
 		text_style: cfg.text_style_filter
 	)
-	content << button(
-		width:        data_grid_header_control_width + 10
-		sizing:       fixed_fill
-		padding:      padding_none
-		size_border:  0
-		radius:       0
-		color:        color_transparent
-		color_hover:  cfg.color_header_hover
-		color_focus:  color_transparent
-		color_click:  cfg.color_header_hover
-		color_border: color_transparent
-		disabled:     !has_callback || is_last
-		on_click:     fn [on_page_change, page_index, page_count, focus_id] (_ &Layout, mut e Event, mut w Window) {
-			if on_page_change == unsafe { nil } {
-				return
-			}
-			next := int_min(page_count - 1, page_index + 1)
-			on_page_change(next, mut e, mut w)
-			if focus_id > 0 {
-				w.set_id_focus(focus_id)
-			}
-			e.is_handled = true
+	content << data_grid_indicator_button('▶', cfg.text_style_header, cfg.color_header_hover,
+		!has_callback || is_last, data_grid_header_control_width + 10, fn [on_page_change, page_index, page_count, focus_id] (_ &Layout, mut e Event, mut w Window) {
+		if on_page_change == unsafe { nil } {
+			return
 		}
-		content:      [
-			text(
-				text:       '▶'
-				mode:       .single_line
-				text_style: data_grid_indicator_text_style(cfg.text_style_header)
-			),
-		]
-	)
+		next := int_min(page_count - 1, page_index + 1)
+		on_page_change(next, mut e, mut w)
+		if focus_id > 0 {
+			w.set_id_focus(focus_id)
+		}
+		e.is_handled = true
+	})
 	content << row(
 		name:    'data_grid pager spacer'
 		sizing:  fill_fill

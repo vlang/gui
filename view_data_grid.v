@@ -8,8 +8,8 @@ import hash.fnv1a
 import strconv
 
 const data_grid_virtual_buffer_rows = 2
-const data_grid_resize_double_click_frames = u64(24)
-const data_grid_edit_double_click_frames = u64(36)
+const data_grid_resize_double_click_frames = u64(24) // ~400ms at 60fps
+const data_grid_edit_double_click_frames = u64(36) // ~600ms at 60fps
 const data_grid_resize_handle_width = f32(6)
 const data_grid_autofit_padding = f32(18)
 const data_grid_autofit_max_rows = 1000
@@ -279,6 +279,34 @@ fn data_grid_dim_color(c Color) Color {
 	}
 }
 
+// Shared button style for pager, CRUD toolbar, column
+// chooser, and header controls. Transparent background,
+// hover highlight, no border/radius, indicator text.
+// When width > 0, uses fixed_fill; otherwise fit_fill.
+fn data_grid_indicator_button(label string, text_style TextStyle, hover_color Color, disabled bool, width f32, on_click fn (&Layout, mut Event, mut Window)) View {
+	return button(
+		width:        width
+		sizing:       if width > 0 { fixed_fill } else { fit_fill }
+		padding:      padding_none
+		size_border:  0
+		radius:       0
+		color:        color_transparent
+		color_hover:  hover_color
+		color_focus:  color_transparent
+		color_click:  hover_color
+		color_border: color_transparent
+		disabled:     disabled
+		on_click:     on_click
+		content:      [
+			text(
+				text:       label
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(text_style)
+			),
+		]
+	)
+}
+
 // data_grid renders a controlled, virtualized data grid view.
 //
 // Orchestration: resolve config → source/CRUD state →
@@ -368,16 +396,19 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 			static_top, scroll_id, presentation.data_to_display, mut window)
 	}
 
-	// Build row ID set for O(1) membership checks.
-	mut row_id_set := map[string]bool{}
-	for ri, r in resolved_cfg.rows {
-		row_id_set[data_grid_row_id(r, ri)] = true
-	}
-
-	// Clear stale editing state if the edited row no longer
-	// exists (e.g. deleted or filtered out).
+	// Build row ID set for O(1) membership checks and
+	// clear stale editing state in the same pass.
 	mut editing_row_id := data_grid_editing_row_id(resolved_cfg.id, window)
-	if editing_row_id.len > 0 && !row_id_set[editing_row_id] {
+	mut row_id_set := map[string]bool{}
+	mut editing_row_found := editing_row_id.len == 0
+	for ri, r in resolved_cfg.rows {
+		rid := data_grid_row_id(r, ri)
+		row_id_set[rid] = true
+		if !editing_row_found && rid == editing_row_id {
+			editing_row_found = true
+		}
+	}
+	if !editing_row_found {
 		data_grid_clear_editing_row(resolved_cfg.id, mut window)
 		editing_row_id = ''
 	}

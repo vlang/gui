@@ -161,107 +161,35 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 		spacing:      6
 		v_align:      .middle
 		content:      [
-			button(
-				sizing:       fit_fill
-				padding:      padding_none
-				size_border:  0
-				radius:       0
-				color:        color_transparent
-				color_hover:  cfg.color_header_hover
-				color_focus:  color_transparent
-				color_click:  cfg.color_header_hover
-				color_border: color_transparent
-				disabled:     !can_create || state.saving
-				on_click:     fn [grid_id, columns, on_selection_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
-					data_grid_crud_add_row(grid_id, columns, on_selection_change, focus_id, mut
-						e, mut w)
-				}
-				content:      [
-					text(
-						text:       'Add'
-						mode:       .single_line
-						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
-					),
-				]
-			),
-			button(
-				sizing:       fit_fill
-				padding:      padding_none
-				size_border:  0
-				radius:       0
-				color:        color_transparent
-				color_hover:  cfg.color_header_hover
-				color_focus:  color_transparent
-				color_click:  cfg.color_header_hover
-				color_border: color_transparent
-				disabled:     !can_delete || selected_count == 0 || state.saving
-				on_click:     fn [grid_id, selection, on_selection_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
-					data_grid_crud_delete_selected(grid_id, selection, on_selection_change,
-						focus_id, mut e, mut w)
-				}
-				content:      [
-					text(
-						text:       'Delete'
-						mode:       .single_line
-						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
-					),
-				]
-			),
-			button(
-				sizing:       fit_fill
-				padding:      padding_none
-				size_border:  0
-				radius:       0
-				color:        color_transparent
-				color_hover:  cfg.color_header_hover
-				color_focus:  color_transparent
-				color_click:  cfg.color_header_hover
-				color_border: color_transparent
-				disabled:     !has_unsaved || state.saving
-				on_click:     fn [grid_id, data_source, query, on_crud_error, on_rows_change, selection, on_selection_change, focus_id, has_source, caps] (_ &Layout, mut e Event, mut w Window) {
-					data_grid_crud_save(DataGridCrudSaveContext{
-						grid_id:             grid_id
-						data_source:         data_source
-						query:               query
-						on_crud_error:       on_crud_error
-						on_rows_change:      on_rows_change
-						selection:           selection
-						on_selection_change: on_selection_change
-						has_source:          has_source
-						caps:                caps
-						focus_id:            focus_id
-					}, mut e, mut w)
-				}
-				content:      [
-					text(
-						text:       'Save'
-						mode:       .single_line
-						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
-					),
-				]
-			),
-			button(
-				sizing:       fit_fill
-				padding:      padding_none
-				size_border:  0
-				radius:       0
-				color:        color_transparent
-				color_hover:  cfg.color_header_hover
-				color_focus:  color_transparent
-				color_click:  cfg.color_header_hover
-				color_border: color_transparent
-				disabled:     (!has_unsaved && state.save_error.len == 0) || state.saving
-				on_click:     fn [grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
-					data_grid_crud_cancel(grid_id, focus_id, mut e, mut w)
-				}
-				content:      [
-					text(
-						text:       'Cancel'
-						mode:       .single_line
-						text_style: data_grid_indicator_text_style(cfg.text_style_filter)
-					),
-				]
-			),
+			data_grid_indicator_button('Add', cfg.text_style_filter, cfg.color_header_hover,
+				!can_create || state.saving, 0, fn [grid_id, columns, on_selection_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_crud_add_row(grid_id, columns, on_selection_change, focus_id, mut
+					e, mut w)
+			}),
+			data_grid_indicator_button('Delete', cfg.text_style_filter, cfg.color_header_hover,
+				!can_delete || selected_count == 0 || state.saving, 0, fn [grid_id, selection, on_selection_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_crud_delete_selected(grid_id, selection, on_selection_change,
+					focus_id, mut e, mut w)
+			}),
+			data_grid_indicator_button('Save', cfg.text_style_filter, cfg.color_header_hover,
+				!has_unsaved || state.saving, 0, fn [grid_id, data_source, query, on_crud_error, on_rows_change, selection, on_selection_change, focus_id, has_source, caps] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_crud_save(DataGridCrudSaveContext{
+					grid_id:             grid_id
+					data_source:         data_source
+					query:               query
+					on_crud_error:       on_crud_error
+					on_rows_change:      on_rows_change
+					selection:           selection
+					on_selection_change: on_selection_change
+					has_source:          has_source
+					caps:                caps
+					focus_id:            focus_id
+				}, mut e, mut w)
+			}),
+			data_grid_indicator_button('Cancel', cfg.text_style_filter, cfg.color_header_hover,
+				(!has_unsaved && state.save_error.len == 0) || state.saving, 0, fn [grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_crud_cancel(grid_id, focus_id, mut e, mut w)
+			}),
 			row(
 				name:    'data_grid crud spacer'
 				sizing:  fill_fill

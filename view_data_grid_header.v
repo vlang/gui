@@ -201,28 +201,10 @@ fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
 }
 
 fn data_grid_order_button(label string, base_style TextStyle, hover_color Color, cb fn (mut Event, mut Window)) View {
-	return button(
-		width:        data_grid_header_control_width
-		sizing:       fixed_fill
-		padding:      padding_none
-		size_border:  0
-		radius:       0
-		color:        color_transparent
-		color_hover:  hover_color
-		color_focus:  color_transparent
-		color_click:  hover_color
-		color_border: color_transparent
-		on_click:     fn [cb] (_ &Layout, mut e Event, mut w Window) {
-			cb(mut e, mut w)
-		}
-		content:      [
-			text(
-				text:       label
-				mode:       .single_line
-				text_style: data_grid_indicator_text_style(base_style)
-			),
-		]
-	)
+	return data_grid_indicator_button(label, base_style, hover_color, false, data_grid_header_control_width,
+		fn [cb] (_ &Layout, mut e Event, mut w Window) {
+		cb(mut e, mut w)
+	})
 }
 
 fn data_grid_pin_control(cfg DataGridCfg, col GridColumnCfg) View {
@@ -234,33 +216,15 @@ fn data_grid_pin_control(cfg DataGridCfg, col GridColumnCfg) View {
 	on_column_pin_change := cfg.on_column_pin_change
 	col_id := col.id
 	col_pin := col.pin
-	return button(
-		width:        data_grid_header_control_width
-		padding:      padding_none
-		sizing:       fixed_fill
-		size_border:  0
-		radius:       0
-		color:        color_transparent
-		color_hover:  cfg.color_header_hover
-		color_focus:  color_transparent
-		color_click:  cfg.color_header_hover
-		color_border: color_transparent
-		on_click:     fn [on_column_pin_change, col_id, col_pin] (_ &Layout, mut e Event, mut w Window) {
-			if on_column_pin_change == unsafe { nil } {
-				return
-			}
-			next_pin := data_grid_column_next_pin(col_pin)
-			on_column_pin_change(col_id, next_pin, mut e, mut w)
-			e.is_handled = true
+	return data_grid_indicator_button(label, cfg.text_style_header, cfg.color_header_hover,
+		false, data_grid_header_control_width, fn [on_column_pin_change, col_id, col_pin] (_ &Layout, mut e Event, mut w Window) {
+		if on_column_pin_change == unsafe { nil } {
+			return
 		}
-		content:      [
-			text(
-				text:       label
-				mode:       .single_line
-				text_style: data_grid_indicator_text_style(cfg.text_style_header)
-			),
-		]
-	)
+		next_pin := data_grid_column_next_pin(col_pin)
+		on_column_pin_change(col_id, next_pin, mut e, mut w)
+		e.is_handled = true
+	})
 }
 
 fn data_grid_filter_row(cfg DataGridCfg, columns []GridColumnCfg, column_widths map[string]f32) View {
@@ -433,6 +397,9 @@ fn data_grid_header_focus_base_id(cfg DataGridCfg, col_count int) u32 {
 	if body <= max_u32 - span {
 		return body + 1
 	}
+	// Overflow fallback: place header IDs below body ID.
+	// May collide with other widget IDs in the same window
+	// but avoids wrapping past max_u32.
 	if body > span {
 		return body - span
 	}
@@ -516,31 +483,34 @@ mut:
 // controls freed enough space.
 fn data_grid_header_control_state(width f32, padding Padding, has_reorder bool, has_pin bool, has_resize bool) DataGridHeaderControlState {
 	available := f32_max(0, width - padding.width())
+	reorder_w := if has_reorder {
+		data_grid_header_control_width * 2 + data_grid_header_reorder_spacing
+	} else {
+		f32(0)
+	}
+	pin_w := if has_pin { data_grid_header_control_width } else { f32(0) }
+	resize_w := if has_resize { data_grid_resize_handle_width } else { f32(0) }
 	mut state := DataGridHeaderControlState{
 		show_label:   true
 		show_reorder: has_reorder
 		show_pin:     has_pin
 		show_resize:  has_resize
 	}
-	mut controls_width := data_grid_header_controls_width(state.show_reorder, state.show_pin,
-		state.show_resize)
+	mut controls_width := reorder_w + pin_w + resize_w
 	if available < controls_width + data_grid_header_label_min_width {
 		state.show_label = false
 	}
 	if state.show_pin && available < controls_width {
 		state.show_pin = false
-		controls_width = data_grid_header_controls_width(state.show_reorder, state.show_pin,
-			state.show_resize)
+		controls_width -= pin_w
 	}
 	if state.show_reorder && available < controls_width {
 		state.show_reorder = false
-		controls_width = data_grid_header_controls_width(state.show_reorder, state.show_pin,
-			state.show_resize)
+		controls_width -= reorder_w
 	}
 	if state.show_resize && available < controls_width {
 		state.show_resize = false
-		controls_width = data_grid_header_controls_width(state.show_reorder, state.show_pin,
-			state.show_resize)
+		controls_width -= resize_w
 	}
 	if available >= controls_width + data_grid_header_label_min_width {
 		state.show_label = true
