@@ -66,7 +66,7 @@ pub fn rich_abbr(text string, expansion string, style TextStyle) RichTextRun {
 }
 
 // rich_footnote creates a footnote marker with tooltip showing definition.
-pub fn rich_footnote(id string, content string, base_style TextStyle, md_style MarkdownStyle) RichTextRun {
+pub fn rich_footnote(id string, content string, base_style TextStyle) RichTextRun {
 	return RichTextRun{
 		text:    '\xE2\x80\x89[${id}]' // thin space
 		tooltip: content

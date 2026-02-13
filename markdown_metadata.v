@@ -2,100 +2,47 @@ module gui
 
 // markdown_metadata.v handles parsing of markdown metadata (links, footnotes, abbreviations).
 
-// collect_link_definitions scans lines for reference link definitions [id]: url "title".
-// Returns lowercase id -> url mapping.
-fn collect_link_definitions(lines []string) map[string]string {
-	mut defs := map[string]string{}
-	for line in lines {
-		if defs.len >= 10000 {
-			break
-		}
-		trimmed := line.trim_space()
-		// Pattern: [id]: url or [id]: url "title"
-		if !trimmed.starts_with('[') {
-			continue
-		}
-		bracket_end := trimmed.index(']:') or { continue }
-		if bracket_end < 1 {
-			continue
-		}
-		id := trimmed[1..bracket_end].to_lower()
-		rest := trimmed[bracket_end + 2..].trim_left(' 	')
-		if rest.len == 0 {
-			continue
-		}
-		// Extract URL (up to space or end)
-		mut url_end := rest.len
-		for j, c in rest {
-			if c == ` ` || c == `\x09` {
-				url_end = j
-				break
-			}
-		}
-		url := rest[..url_end]
-		if url.len > 0 {
-			defs[id] = url
-		}
-	}
-	return defs
-}
-
-// is_link_definition checks if a line is a reference link definition.
-fn is_link_definition(line string) bool {
-	trimmed := line.trim_space()
-	if !trimmed.starts_with('[') {
-		return false
-	}
-	bracket_end := trimmed.index(']:') or { return false }
-	return bracket_end >= 1
-}
-
-// collect_abbreviations scans lines for abbreviation definitions *[ABBR]: expansion.
-// Returns map of ABBR -> expansion.
-fn collect_abbreviations(lines []string) map[string]string {
-	mut defs := map[string]string{}
-	for line in lines {
-		if defs.len >= 1000 {
-			break
-		}
-		trimmed := line.trim_space()
-		if trimmed.starts_with('*[') && trimmed.contains(']:') {
-			bracket_end := trimmed.index(']:') or { continue }
-			if bracket_end > 2 {
-				abbr := trimmed[2..bracket_end]
-				expansion := trimmed[bracket_end + 2..].trim_space()
-				if abbr.len > 0 && expansion.len > 0 {
-					defs[abbr] = expansion
-				}
-			}
-		}
-	}
-	return defs
-}
-
-// collect_footnotes scans lines for footnote definitions [^id]: content.
-// Returns map of id -> content.
-fn collect_footnotes(lines []string) map[string]string {
-	mut defs := map[string]string{}
+// collect_metadata scans lines once for all metadata definitions:
+// link refs, abbreviations, and footnotes.
+fn collect_metadata(lines []string) (map[string]string, map[string]string, map[string]string) {
+	mut link_defs := map[string]string{}
+	mut abbr_defs := map[string]string{}
+	mut footnote_defs := map[string]string{}
 	mut i := 0
 	for i < lines.len {
 		line := lines[i]
 		trimmed := line.trim_space()
-		if is_footnote_definition(line) {
+
+		// Abbreviation: *[ABBR]: expansion
+		if trimmed.starts_with('*[') && trimmed.contains(']:') && abbr_defs.len < 1000 {
+			bracket_end := trimmed.index(']:') or {
+				i++
+				continue
+			}
+			if bracket_end > 2 {
+				abbr := trimmed[2..bracket_end]
+				expansion := trimmed[bracket_end + 2..].trim_space()
+				if abbr.len > 0 && expansion.len > 0 {
+					abbr_defs[abbr] = expansion
+				}
+			}
+			i++
+			continue
+		}
+
+		// Footnote: [^id]: content (with continuation)
+		if is_footnote_definition(line) && footnote_defs.len < 10000 {
 			bracket_end := trimmed.index(']:') or {
 				i++
 				continue
 			}
 			id := trimmed[2..bracket_end]
-			mut content := trimmed[bracket_end + 2..].trim_left(' 	')
-
-			// Collect continuation lines (indented, bounded)
+			mut content := trimmed[bracket_end + 2..].trim_left(' \t')
 			i++
 			mut fn_cont := 0
 			for i < lines.len && fn_cont < max_footnote_continuation_lines {
 				next := lines[i]
 				if next.len == 0 {
-					// Peek ahead for indented continuation
 					if i + 1 < lines.len {
 						peek := lines[i + 1]
 						if peek.len > 0 && (peek[0] == ` ` || peek[0] == `\t`) {
@@ -118,13 +65,48 @@ fn collect_footnotes(lines []string) map[string]string {
 				i++
 			}
 			if id.len > 0 && content.len > 0 {
-				defs[id] = content
+				footnote_defs[id] = content
 			}
 			continue
 		}
+
+		// Link definition: [id]: url
+		if trimmed.starts_with('[') && link_defs.len < 10000 {
+			bracket_end := trimmed.index(']:') or {
+				i++
+				continue
+			}
+			if bracket_end >= 1 {
+				id := trimmed[1..bracket_end].to_lower()
+				rest := trimmed[bracket_end + 2..].trim_left(' \t')
+				if rest.len > 0 {
+					mut url_end := rest.len
+					for j, c in rest {
+						if c == ` ` || c == `\x09` {
+							url_end = j
+							break
+						}
+					}
+					url := rest[..url_end]
+					if url.len > 0 {
+						link_defs[id] = url
+					}
+				}
+			}
+		}
 		i++
 	}
-	return defs
+	return link_defs, abbr_defs, footnote_defs
+}
+
+// is_link_definition checks if a line is a reference link definition.
+fn is_link_definition(line string) bool {
+	trimmed := line.trim_space()
+	if !trimmed.starts_with('[') {
+		return false
+	}
+	bracket_end := trimmed.index(']:') or { return false }
+	return bracket_end >= 1
 }
 
 // is_footnote_definition checks if a line is a footnote definition.

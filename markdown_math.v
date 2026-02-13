@@ -22,7 +22,11 @@ fn math_cache_hash(math_id string) i64 {
 // sanitize_latex strips dangerous TeX commands that could
 // enable shell escape or file access on the remote renderer.
 fn sanitize_latex(s string) string {
-	// Block shell-escape and file-access commands
+	// Block shell-escape and file-access commands.
+	// Single-pass replace is safe: V's replace removes all
+	// non-overlapping occurrences left-to-right, so nested
+	// payloads like `\inp\inputut` cannot reassemble into
+	// a blocked command after removal.
 	blocked := [
 		'\\write18',
 		'\\input',
@@ -169,9 +173,11 @@ fn fetch_math_async(mut window Window, latex string, hash i64, dpi int, fg_color
 					height:   img_h
 					dpi:      img_dpi
 				})
-				// Invalidate markdown cache to trigger re-layout
-				// with actual inline math dimensions
-				w.view_state.markdown_cache.clear()
+				// No markdown_cache clear needed: parsed blocks
+				// don't change; RTF reads math dims from
+				// diagram_cache at render time. update_window
+				// triggers view rebuild picking up new
+				// dimensions via to_vglyph_rich_text_with_math.
 				w.update_window()
 			})
 		} else {

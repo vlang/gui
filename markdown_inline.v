@@ -2,6 +2,8 @@ module gui
 
 // markdown_inline.v handles parsing of inline markdown elements (bold, italic, links, etc.)
 
+const valid_image_exts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp']
+
 // parse_inline parses inline markdown elements from a string and appends them to runs.
 fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun, link_defs map[string]string, footnote_defs map[string]string, depth int) {
 	// Limit recursion depth to prevent stack overflow on
@@ -303,7 +305,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 							}
 							current.clear()
 						}
-						runs << rich_footnote(footnote_id, content, base_style, md_style)
+						runs << rich_footnote(footnote_id, content, base_style)
 						pos = fn_end + 1
 						continue
 					}
@@ -501,13 +503,17 @@ fn is_safe_image_path(path string) bool {
 	if p.starts_with('http://') || p.starts_with('https://') {
 		return true
 	}
-	// Blocks: javascript:, vbscript:, data:, file:, and other unsafe protocols.
+	// Block path traversal in local paths
+	if p.contains('..') {
+		return false
+	}
+	// Blocks: javascript:, vbscript:, data:, file:,
+	// and other unsafe protocols.
 	if p.contains(':') && !p.starts_with('http') {
 		return false
 	}
 	// Basic extension check
-	valid_exts := ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp']
-	for ext in valid_exts {
+	for ext in valid_image_exts {
 		if p.ends_with(ext) {
 			return true
 		}

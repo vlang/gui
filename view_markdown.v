@@ -179,15 +179,15 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 				padding:     padding_none
 				size_border: 0
 				spacing:     cfg.style.block_spacing / 2
-				content:     list_items.clone()
+				content:     list_items
 			)
+			list_items = []View{cap: 10}
 			// Extra space after outer list
 			content << rectangle(
 				sizing:      fill_fixed
 				height:      cfg.style.block_spacing
 				size_border: 0
 			)
-			list_items.clear()
 		}
 		if block.is_math {
 			// Display math block — async render via Codecogs
@@ -544,9 +544,9 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 					padding:     padding_none
 					size_border: 0
 					spacing:     cfg.style.block_spacing / 2
-					content:     list_items.clone()
+					content:     list_items
 				)
-				list_items.clear()
+				list_items = []View{cap: 10}
 			}
 			continue
 		} else {

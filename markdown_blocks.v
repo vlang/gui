@@ -22,15 +22,23 @@ fn is_setext_underline(line string) int {
 	if trimmed.len == 0 {
 		return 0
 	}
-	// Check for all '=' (h1)
-	if trimmed.replace('=', '') == '' {
+	if is_all_char(trimmed, `=`) {
 		return 1
 	}
-	// Check for all '-' (h2)
-	if trimmed.replace('-', '') == '' {
+	if is_all_char(trimmed, `-`) {
 		return 2
 	}
 	return 0
+}
+
+// is_all_char returns true if every byte in s equals c.
+fn is_all_char(s string, c u8) bool {
+	for ch in s {
+		if ch != c {
+			return false
+		}
+	}
+	return true
 }
 
 // is_horizontal_rule checks if a line is a horizontal rule (3+ of -, *, or _).

@@ -74,25 +74,24 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 		// Spawn fetcher thread WITHOUT window reference to avoid holding it if hung
 
 		spawn fn [source, ch] () {
-			// Kroki POST /mermaid/png expects a JSON body with 'diagram_source'
-
-			// or raw source if Content-Type is text/plain.
-
-			// Let's use JSON to be explicit.
-
-			// Basic JSON escape for the source string
-
+			// Kroki POST /mermaid/png: JSON body with
+			// 'diagram_source'. Escape per RFC 8259.
 			mut escaped := source.replace('\\', '\\\\')
-
 			escaped = escaped.replace('"', '\\"')
-
 			escaped = escaped.replace('\n', '\\n')
-
 			escaped = escaped.replace('\r', '\\r')
-
 			escaped = escaped.replace('\t', '\\t')
-
-			json_data := '{"diagram_source": "${escaped}"}'
+			// Escape remaining control chars U+0000-U+001F
+			mut buf := []u8{cap: escaped.len}
+			for ech in escaped {
+				if ech < 0x20 {
+					hex := '0000${ech:X}'
+					buf << '\\u${hex[hex.len - 4..]}'.bytes()
+				} else {
+					buf << ech
+				}
+			}
+			json_data := '{"diagram_source": "${buf.bytestr()}"}'
 
 			result := http.fetch(
 				method: .post

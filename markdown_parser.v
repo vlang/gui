@@ -1,14 +1,12 @@
 module gui
 
-// xtra_markdown.v implements a markdown parser that converts markdown text to RichText.
+// markdown_parser.v implements a markdown parser that converts markdown text to RichText.
 // It orchestrates the parsing process by delegating to block, inline, table, and metadata modules.
 
 // markdown_to_blocks parses markdown source and returns styled blocks.
 fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	lines := source.split('\n')
-	link_defs := collect_link_definitions(lines)
-	abbr_defs := collect_abbreviations(lines)
-	footnote_defs := collect_footnotes(lines)
+	link_defs, abbr_defs, footnote_defs := collect_metadata(lines)
 	mut blocks := []MarkdownBlock{cap: lines.len / 3}
 	mut runs := []RichTextRun{cap: 20}
 	mut i := 0

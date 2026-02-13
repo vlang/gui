@@ -309,7 +309,7 @@ See `examples/markdown.v` for a complete demonstration including:
 
 Currently not supported:
 - HTML tags within markdown
-- Custom link handlers (links are display-only)
+- Custom link handlers (links open via `os.open_uri`)
 - Embedded videos
 
 For documents requiring these features, consider using a webview or rendering to HTML externally.
