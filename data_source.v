@@ -409,21 +409,19 @@ fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow 
 	if query.sorts.len == 0 {
 		return filtered
 	}
-	for sort_idx in 0 .. query.sorts.len {
-		i := query.sorts.len - 1 - sort_idx
-		sort := query.sorts[i]
-		filtered.sort_with_compare(fn [sort] (a &GridRow, b &GridRow) int {
+	sorts := query.sorts
+	filtered.sort_with_compare(fn [sorts] (a &GridRow, b &GridRow) int {
+		for sort in sorts {
 			a_value := a.cells[sort.col_id] or { '' }
 			b_value := b.cells[sort.col_id] or { '' }
 			if a_value == b_value {
-				return 0
+				continue
 			}
-			if sort.dir == .asc {
-				return if a_value < b_value { -1 } else { 1 }
-			}
-			return if a_value > b_value { -1 } else { 1 }
-		})
-	}
+			cmp := if a_value < b_value { -1 } else { 1 }
+			return if sort.dir == .asc { cmp } else { -cmp }
+		}
+		return 0
+	})
 	return filtered
 }
 
@@ -514,6 +512,7 @@ fn grid_data_source_apply_create(mut rows []GridRow, req_rows []GridRow) !GridMu
 
 fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits []GridCellEdit) !GridMutationApplyResult {
 	mut updated := []GridRow{}
+	mut updated_ids := map[string]bool{}
 	if req_rows.len > 0 {
 		for req_row in req_rows {
 			if req_row.id.len == 0 {
@@ -529,6 +528,7 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 					cells: cells
 				}
 				updated << rows[idx]
+				updated_ids[req_row.id] = true
 			}
 		}
 	}
@@ -547,8 +547,9 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 					...rows[idx]
 					cells: cells
 				}
-				if !grid_data_source_rows_contains_id(updated, edit.row_id) {
+				if !updated_ids[edit.row_id] {
 					updated << rows[idx]
+					updated_ids[edit.row_id] = true
 				}
 			}
 		}
@@ -612,13 +613,13 @@ fn grid_data_source_rows_contains_id(rows []GridRow, row_id string) bool {
 }
 
 fn grid_data_source_next_mutation_row_id(rows []GridRow, preferred_id string) string {
-	id := preferred_id.trim_space()
-	if id.len > 0 && !grid_data_source_rows_contains_id(rows, id) {
-		return id
-	}
 	mut existing := map[string]bool{}
 	for idx, row in rows {
 		existing[data_grid_row_id(row, idx)] = true
+	}
+	id := preferred_id.trim_space()
+	if id.len > 0 && !existing[id] {
+		return id
 	}
 	cap := rows.len + 100_000
 	mut next := rows.len + 1

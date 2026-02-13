@@ -66,9 +66,6 @@ fn data_grid_has_source(cfg DataGridCfg) bool {
 }
 
 fn data_grid_resolve_source_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, DataGridSourceState, bool, GridDataCapabilities) {
-	if !data_grid_has_source(cfg) {
-		return cfg, DataGridSourceState{}, false, GridDataCapabilities{}
-	}
 	data_source := cfg.data_source or {
 		return cfg, DataGridSourceState{}, false, GridDataCapabilities{}
 	}
@@ -513,6 +510,30 @@ fn data_grid_source_retry(grid_id string, mut window Window) {
 	window.update_window()
 }
 
+fn data_grid_source_pager_button(symbol string, disabled bool, color_hover Color, text_style_header TextStyle, on_click fn (&Layout, mut Event, mut Window)) View {
+	return button(
+		width:        data_grid_header_control_width + 10
+		sizing:       fixed_fill
+		padding:      padding_none
+		size_border:  0
+		radius:       0
+		color:        color_transparent
+		color_hover:  color_hover
+		color_focus:  color_transparent
+		color_click:  color_hover
+		color_border: color_transparent
+		disabled:     disabled
+		on_click:     on_click
+		content:      [
+			text(
+				text:       symbol
+				mode:       .single_line
+				text_style: data_grid_indicator_text_style(text_style_header)
+			),
+		]
+	)
+}
+
 fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourceState, caps GridDataCapabilities, jump_text string) View {
 	kind := data_grid_source_effective_pagination_kind(cfg.pagination_kind, caps)
 	page_limit := data_grid_page_limit(cfg)
@@ -536,65 +557,27 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 	grid_id := cfg.id
 	jump_input_id := '${grid_id}:jump'
 	mut content := []View{cap: 10}
-	content << button(
-		width:        data_grid_header_control_width + 10
-		sizing:       fixed_fill
-		padding:      padding_none
-		size_border:  0
-		radius:       0
-		color:        color_transparent
-		color_hover:  cfg.color_header_hover
-		color_focus:  color_transparent
-		color_click:  cfg.color_header_hover
-		color_border: color_transparent
-		disabled:     state.loading || !has_prev
-		on_click:     fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
-			data_grid_source_prev_page(grid_id, kind, page_limit, mut w)
-			if focus_id > 0 {
-				w.set_id_focus(focus_id)
-			}
-			e.is_handled = true
+	content << data_grid_source_pager_button('◀', state.loading || !has_prev, cfg.color_header_hover,
+		cfg.text_style_header, fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
+		data_grid_source_prev_page(grid_id, kind, page_limit, mut w)
+		if focus_id > 0 {
+			w.set_id_focus(focus_id)
 		}
-		content:      [
-			text(
-				text:       '◀'
-				mode:       .single_line
-				text_style: data_grid_indicator_text_style(cfg.text_style_header)
-			),
-		]
-	)
+		e.is_handled = true
+	})
 	content << text(
 		text:       status
 		mode:       .single_line
 		text_style: cfg.text_style_filter
 	)
-	content << button(
-		width:        data_grid_header_control_width + 10
-		sizing:       fixed_fill
-		padding:      padding_none
-		size_border:  0
-		radius:       0
-		color:        color_transparent
-		color_hover:  cfg.color_header_hover
-		color_focus:  color_transparent
-		color_click:  cfg.color_header_hover
-		color_border: color_transparent
-		disabled:     state.loading || !has_next
-		on_click:     fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
-			data_grid_source_next_page(grid_id, kind, page_limit, mut w)
-			if focus_id > 0 {
-				w.set_id_focus(focus_id)
-			}
-			e.is_handled = true
+	content << data_grid_source_pager_button('▶', state.loading || !has_next, cfg.color_header_hover,
+		cfg.text_style_header, fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
+		data_grid_source_next_page(grid_id, kind, page_limit, mut w)
+		if focus_id > 0 {
+			w.set_id_focus(focus_id)
 		}
-		content:      [
-			text(
-				text:       '▶'
-				mode:       .single_line
-				text_style: data_grid_indicator_text_style(cfg.text_style_header)
-			),
-		]
-	)
+		e.is_handled = true
+	})
 	content << row(
 		name:    'data_grid source pager spacer'
 		sizing:  fill_fill

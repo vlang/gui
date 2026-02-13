@@ -117,6 +117,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			if source.create_fn == unsafe { nil } {
 				return error('create not supported')
 			}
+			grid_orm_validate_mutation_columns(req.rows, []GridCellEdit{}, source.columns)!
 			created := source.create_fn(req.rows.clone(), req.signal)!
 			if grid_data_mutation_is_aborted(req) {
 				return error('request aborted')
@@ -129,6 +130,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			if source.update_fn == unsafe { nil } {
 				return error('update not supported')
 			}
+			grid_orm_validate_mutation_columns(req.rows, req.edits, source.columns)!
 			updated := source.update_fn(req.rows.clone(), req.edits.clone(), req.signal)!
 			if grid_data_mutation_is_aborted(req) {
 				return error('request aborted')
@@ -284,4 +286,26 @@ fn grid_orm_column_allows_filter_op(col GridOrmColumnSpec, op string) bool {
 		}
 	}
 	return false
+}
+
+fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, columns []GridOrmColumnSpec) ! {
+	if columns.len == 0 {
+		return
+	}
+	mut valid := map[string]bool{}
+	for col in columns {
+		valid[col.id] = true
+	}
+	for row in rows {
+		for col_id, _ in row.cells {
+			if !valid[col_id] {
+				return error('unknown column id: ${col_id}')
+			}
+		}
+	}
+	for edit in edits {
+		if !valid[edit.col_id] {
+			return error('unknown column id: ${edit.col_id}')
+		}
+	}
 }
