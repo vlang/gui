@@ -1,5 +1,7 @@
 module gui
 
+import strings
+
 // markdown_parser.v implements a markdown parser that converts markdown text to RichText.
 // It orchestrates the parsing process by delegating to block, inline, table, and metadata modules.
 
@@ -201,7 +203,18 @@ fn (mut p MarkdownParser) try_code_fence(line string) bool {
 
 fn (mut p MarkdownParser) flush_code_block() {
 	lang_hint := normalize_markdown_code_language_hint(p.code_fence_lang)
-	code_text := p.code_block_content.join('\n')
+	mut cap := 0
+	for line in p.code_block_content {
+		cap += line.len + 1
+	}
+	mut sb := strings.new_builder(cap)
+	for j, line in p.code_block_content {
+		sb.write_string(line)
+		if j < p.code_block_content.len - 1 {
+			sb.write_u8(`\n`)
+		}
+	}
+	code_text := sb.str()
 	p.flush_runs()
 	if p.code_block_content.len > 0 {
 		if lang_hint == 'math' {

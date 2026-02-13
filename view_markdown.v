@@ -46,9 +46,11 @@ pub:
 	table_cell_style   TextStyle        = gui_theme.n3
 	table_cell_padding Padding          = padding(5, 10, 5, 10)
 	table_row_alt      ?Color
-	math_dpi_display   int   = 150
-	math_dpi_inline    int   = 200
-	mermaid_bg         Color = rgba(248, 248, 255, 255)
+	math_dpi_display   int = 150
+	math_dpi_inline    int = 200
+	// Near-white default suits dark themes. Override for
+	// light themes where diagram lines may be light.
+	mermaid_bg Color = rgba(248, 248, 255, 255)
 }
 
 // MarkdownCfg configures a Markdown View.
@@ -120,6 +122,238 @@ fn build_markdown_table_data(parsed ParsedTable, style MarkdownStyle) []TableRow
 		}
 	}
 	return rows
+}
+
+// render_md_math renders a display math block.
+fn render_md_math(block MarkdownBlock, cfg MarkdownCfg, window &Window) View {
+	if cfg.disable_external_apis {
+		return column(
+			color:       cfg.style.code_block_bg
+			padding:     cfg.style.code_block_padding
+			radius:      cfg.style.code_block_radius
+			size_border: 0
+			sizing:      fill_fit
+			content:     [
+				text(
+					text:       block.math_latex
+					text_style: cfg.style.code
+				),
+			]
+		)
+	}
+	diagram_hash := math_cache_hash('display_${block.math_latex.hash()}')
+	mut w := unsafe { window }
+	if entry := w.view_state.diagram_cache.get(diagram_hash) {
+		return match entry.state {
+			.loading {
+				column(
+					color:       cfg.style.code_block_bg
+					padding:     cfg.style.code_block_padding
+					radius:      cfg.style.code_block_radius
+					size_border: 0
+					sizing:      fill_fit
+					h_align:     .center
+					content:     [
+						text(
+							text:       block.math_latex
+							text_style: cfg.style.code
+						),
+					]
+				)
+			}
+			.ready {
+				column(
+					padding:     cfg.style.code_block_padding
+					radius:      cfg.style.code_block_radius
+					size_border: 0
+					sizing:      fill_fit
+					h_align:     .center
+					content:     [
+						image(src: entry.png_path),
+					]
+				)
+			}
+			.error {
+				column(
+					color:       cfg.style.code_block_bg
+					padding:     cfg.style.code_block_padding
+					radius:      cfg.style.code_block_radius
+					size_border: 0
+					sizing:      fill_fit
+					content:     [
+						text(
+							text:       entry.error
+							text_style: TextStyle{
+								...cfg.style.code
+								color: rgba(200, 50, 50, 255)
+							}
+						),
+					]
+				)
+			}
+		}
+	}
+	// Start async fetch (if under concurrency limit)
+	if w.view_state.diagram_cache.loading_count() < max_concurrent_diagram_fetches {
+		w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
+			state: .loading
+		})
+		fetch_math_async(mut w, block.math_latex, diagram_hash, cfg.style.math_dpi_display,
+			cfg.style.text.color)
+	}
+	return column(
+		color:       cfg.style.code_block_bg
+		padding:     cfg.style.code_block_padding
+		radius:      cfg.style.code_block_radius
+		size_border: 0
+		sizing:      fill_fit
+		h_align:     .center
+		content:     [
+			text(
+				text:       block.math_latex
+				text_style: cfg.style.code
+			),
+		]
+	)
+}
+
+// render_md_mermaid renders a mermaid diagram block.
+fn render_md_mermaid(block MarkdownBlock, cfg MarkdownCfg, window &Window) View {
+	if cfg.disable_external_apis {
+		return column(
+			color:       cfg.style.code_block_bg
+			padding:     cfg.style.code_block_padding
+			radius:      cfg.style.code_block_radius
+			size_border: 0
+			sizing:      fill_fit
+			content:     [
+				rtf(
+					rich_text: block.content
+					mode:      .single_line
+				),
+			]
+		)
+	}
+	source := rich_text_plain(block.content)
+	// Combine hash with length for better collision resistance
+	diagram_hash := i64((u64(source.hash()) << 32) | u64(source.len))
+	mut w := unsafe { window }
+	loading_view := column(
+		color:       cfg.style.code_block_bg
+		padding:     cfg.style.code_block_padding
+		radius:      cfg.style.code_block_radius
+		size_border: 0
+		sizing:      fill_fit
+		h_align:     .center
+		content:     [text(text: 'Loading diagram...')]
+	)
+	if entry := w.view_state.diagram_cache.get(diagram_hash) {
+		return match entry.state {
+			.loading {
+				loading_view
+			}
+			.ready {
+				column(
+					color:       cfg.style.mermaid_bg
+					padding:     cfg.style.code_block_padding
+					radius:      cfg.style.code_block_radius
+					size_border: 0
+					sizing:      fill_fit
+					content:     [
+						image(src: entry.png_path),
+					]
+				)
+			}
+			.error {
+				column(
+					color:       cfg.style.code_block_bg
+					padding:     cfg.style.code_block_padding
+					radius:      cfg.style.code_block_radius
+					size_border: 0
+					sizing:      fill_fit
+					content:     [
+						text(
+							text:       entry.error
+							text_style: TextStyle{
+								...cfg.style.code
+								color: rgba(200, 50, 50, 255)
+							}
+						),
+					]
+				)
+			}
+		}
+	}
+	// Start async fetch (if under concurrency limit)
+	if w.view_state.diagram_cache.loading_count() < max_concurrent_diagram_fetches {
+		w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
+			state: .loading
+		})
+		fetch_mermaid_async(mut w, source, diagram_hash, cfg.mermaid_width, cfg.style.mermaid_bg.r,
+			cfg.style.mermaid_bg.g, cfg.style.mermaid_bg.b)
+	}
+	return loading_view
+}
+
+// render_md_code renders a fenced code block with copy button.
+fn render_md_code(block MarkdownBlock, i int, cfg MarkdownCfg, window &Window) View {
+	code_text := rich_text_plain(block.content)
+	cp_id := 'md_cp_${i}_${code_text.hash()}'
+	icon_color := cfg.style.code.color
+	cp_alt := window.has_animation('btn_alt_${cp_id}')
+	return column(
+		color:       cfg.style.code_block_bg
+		padding:     cfg.style.code_block_padding
+		radius:      cfg.style.code_block_radius
+		size_border: 0
+		sizing:      fill_fit
+		clip:        true
+		content:     [
+			rtf(
+				rich_text: block.content
+				mode:      .single_line
+			),
+			button(
+				id:             cp_id
+				show_alt:       cp_alt
+				size_border:    if cp_alt { f32(1) } else { 0 }
+				color_border:   icon_color
+				float:          true
+				float_anchor:   .top_right
+				float_tie_off:  .top_right
+				float_offset_x: -4
+				float_offset_y: 4
+				padding:        pad_all(4)
+				radius:         4
+				color:          rgba(255, 255, 255, 15)
+				color_hover:    rgba(255, 255, 255, 40)
+				on_click:       fn [code_text] (_ &Layout, mut e Event, mut _ Window) {
+					to_clipboard(code_text)
+					e.is_handled = true
+				}
+				content:        [
+					text(
+						text:       icon_document
+						text_style: TextStyle{
+							family: icon_font_name
+							size:   12
+							color:  icon_color
+						}
+					),
+				]
+				alt_content:    [
+					text(
+						text:       'Copied ✓'
+						text_style: TextStyle{
+							size:  11
+							color: icon_color
+						}
+					),
+				]
+				alt_duration:   2 * time.second
+			),
+		]
+	)
 }
 
 // markdown creates a view from the given MarkdownCfg
@@ -196,246 +430,12 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			)
 		}
 		if block.is_math {
-			if cfg.disable_external_apis {
-				content << column(
-					color:       cfg.style.code_block_bg
-					padding:     cfg.style.code_block_padding
-					radius:      cfg.style.code_block_radius
-					size_border: 0
-					sizing:      fill_fit
-					content:     [
-						text(
-							text:       block.math_latex
-							text_style: cfg.style.code
-						),
-					]
-				)
-				continue
-			}
-			// Display math block — async render via Codecogs
-			// NOTE: LaTeX source is sent to external codecogs API
-			diagram_hash := math_cache_hash('display_${block.math_latex.hash()}')
-			mut w := unsafe { window }
-			if entry := w.view_state.diagram_cache.get(diagram_hash) {
-				match entry.state {
-					.loading {
-						content << column(
-							color:       cfg.style.code_block_bg
-							padding:     cfg.style.code_block_padding
-							radius:      cfg.style.code_block_radius
-							size_border: 0
-							sizing:      fill_fit
-							h_align:     .center
-							content:     [
-								text(
-									text:       block.math_latex
-									text_style: cfg.style.code
-								),
-							]
-						)
-					}
-					.ready {
-						content << column(
-							padding:     cfg.style.code_block_padding
-							radius:      cfg.style.code_block_radius
-							size_border: 0
-							sizing:      fill_fit
-							h_align:     .center
-							content:     [
-								image(src: entry.png_path),
-							]
-						)
-					}
-					.error {
-						content << column(
-							color:       cfg.style.code_block_bg
-							padding:     cfg.style.code_block_padding
-							radius:      cfg.style.code_block_radius
-							size_border: 0
-							sizing:      fill_fit
-							content:     [
-								text(
-									text:       entry.error
-									text_style: TextStyle{
-										...cfg.style.code
-										color: rgba(200, 50, 50, 255)
-									}
-								),
-							]
-						)
-					}
-				}
-			} else {
-				// Start async fetch (if under concurrency limit)
-				if w.view_state.diagram_cache.loading_count() < max_concurrent_diagram_fetches {
-					w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
-						state: .loading
-					})
-					fetch_math_async(mut w, block.math_latex, diagram_hash, cfg.style.math_dpi_display,
-						cfg.style.text.color)
-				}
-				content << column(
-					color:       cfg.style.code_block_bg
-					padding:     cfg.style.code_block_padding
-					radius:      cfg.style.code_block_radius
-					size_border: 0
-					sizing:      fill_fit
-					h_align:     .center
-					content:     [
-						text(
-							text:       block.math_latex
-							text_style: cfg.style.code
-						),
-					]
-				)
-			}
+			content << render_md_math(block, cfg, window)
 		} else if block.is_code {
 			if block.code_language == 'mermaid' {
-				if cfg.disable_external_apis {
-					content << column(
-						color:       cfg.style.code_block_bg
-						padding:     cfg.style.code_block_padding
-						radius:      cfg.style.code_block_radius
-						size_border: 0
-						sizing:      fill_fit
-						content:     [
-							rtf(
-								rich_text: block.content
-								mode:      .single_line
-							),
-						]
-					)
-					continue
-				}
-				// Mermaid diagram - async render via Kroki (PNG format)
-				// NOTE: Mermaid source is sent to external kroki.io API
-				source := rich_text_plain(block.content)
-				// Combine hash with length for better collision resistance
-				diagram_hash := i64((u64(source.hash()) << 32) | u64(source.len))
-				mut w := unsafe { window }
-				if entry := w.view_state.diagram_cache.get(diagram_hash) {
-					match entry.state {
-						.loading {
-							content << column(
-								color:       cfg.style.code_block_bg
-								padding:     cfg.style.code_block_padding
-								radius:      cfg.style.code_block_radius
-								size_border: 0
-								sizing:      fill_fit
-								h_align:     .center
-								content:     [text(text: 'Loading diagram...')]
-							)
-						}
-						.ready {
-							content << column(
-								color:       cfg.style.mermaid_bg
-								padding:     cfg.style.code_block_padding
-								radius:      cfg.style.code_block_radius
-								size_border: 0
-								sizing:      fill_fit
-								content:     [
-									image(src: entry.png_path),
-								]
-							)
-						}
-						.error {
-							content << column(
-								color:       cfg.style.code_block_bg
-								padding:     cfg.style.code_block_padding
-								radius:      cfg.style.code_block_radius
-								size_border: 0
-								sizing:      fill_fit
-								content:     [
-									text(
-										text:       entry.error
-										text_style: TextStyle{
-											...cfg.style.code
-											color: rgba(200, 50, 50, 255)
-										}
-									),
-								]
-							)
-						}
-					}
-				} else {
-					// Start async fetch (if under concurrency limit)
-					if w.view_state.diagram_cache.loading_count() < max_concurrent_diagram_fetches {
-						w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
-							state: .loading
-						})
-						fetch_mermaid_async(mut w, source, diagram_hash, cfg.mermaid_width,
-							cfg.style.mermaid_bg.r, cfg.style.mermaid_bg.g, cfg.style.mermaid_bg.b)
-					}
-					content << column(
-						color:       cfg.style.code_block_bg
-						padding:     cfg.style.code_block_padding
-						radius:      cfg.style.code_block_radius
-						size_border: 0
-						sizing:      fill_fit
-						h_align:     .center
-						content:     [text(text: 'Loading diagram...')]
-					)
-				}
+				content << render_md_mermaid(block, cfg, window)
 			} else {
-				// Regular code block in a column with background
-				code_text := rich_text_plain(block.content)
-				cp_id := 'md_cp_${code_text.hash()}'
-				mut w := unsafe { window }
-				white120 := rgba(255, 255, 255, 120)
-				cp_alt := w.has_animation('btn_alt_${cp_id}')
-				content << column(
-					color:       cfg.style.code_block_bg
-					padding:     cfg.style.code_block_padding
-					radius:      cfg.style.code_block_radius
-					size_border: 0
-					sizing:      fill_fit
-					clip:        true
-					content:     [
-						rtf(
-							rich_text: block.content
-							mode:      .single_line
-						),
-						button(
-							id:             cp_id
-							show_alt:       cp_alt
-							size_border:    if cp_alt { f32(1) } else { 0 }
-							color_border:   white120
-							float:          true
-							float_anchor:   .top_right
-							float_tie_off:  .top_right
-							float_offset_x: -4
-							float_offset_y: 4
-							padding:        pad_all(4)
-							radius:         4
-							color:          rgba(255, 255, 255, 15)
-							color_hover:    rgba(255, 255, 255, 40)
-							on_click:       fn [code_text] (_ &Layout, mut e Event, mut _ Window) {
-								to_clipboard(code_text)
-								e.is_handled = true
-							}
-							content:        [
-								text(
-									text:       icon_document
-									text_style: TextStyle{
-										family: icon_font_name
-										size:   12
-										color:  white120
-									}
-								),
-							]
-							alt_content:    [
-								text(
-									text:       'Copied ✓'
-									text_style: TextStyle{
-										size:  11
-										color: white120
-									}
-								),
-							]
-							alt_duration:   2 * time.second
-						),
-					]
-				)
+				content << render_md_code(block, i, cfg, window)
 			}
 		} else if block.is_table {
 			// Table rendered using table view
@@ -609,9 +609,8 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 
 	source := cfg.source
 	cp_doc_id := 'md_cp_doc_${hash}'
-	mut w2 := unsafe { window }
 	doc_icon_color := cfg.style.text.color
-	doc_alt := w2.has_animation('btn_alt_${cp_doc_id}')
+	doc_alt := window.has_animation('btn_alt_${cp_doc_id}')
 	content << button(
 		id:             cp_doc_id
 		show_alt:       doc_alt

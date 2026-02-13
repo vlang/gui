@@ -268,20 +268,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					} else {
 						inner
 					}
-					safe_link := if is_safe_url(link_url) { link_url } else { '' }
-					runs << RichTextRun{
-						text:  inner
-						link:  safe_link
-						style: TextStyle{
-							...base_style
-							color:     if safe_link != '' {
-								md_style.link_color
-							} else {
-								base_style.color
-							}
-							underline: safe_link != ''
-						}
-					}
+					runs << make_link_run(inner, link_url, base_style, md_style.link_color)
 					pos = end + 1
 					continue
 				}
@@ -330,20 +317,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 							current.clear()
 						}
 						link_url := text[bracket_end + 2..paren_end]
-						safe_link := if is_safe_url(link_url) { link_url } else { '' }
-						runs << RichTextRun{
-							text:  link_text
-							link:  safe_link
-							style: TextStyle{
-								...base_style
-								color:     if safe_link != '' {
-									md_style.link_color
-								} else {
-									base_style.color
-								}
-								underline: safe_link != ''
-							}
-						}
+						runs << make_link_run(link_text, link_url, base_style, md_style.link_color)
 						pos = paren_end + 1
 						continue
 					}
@@ -359,7 +333,6 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 							text[bracket_end + 2..ref_end].to_lower()
 						}
 						if url := link_defs[ref_id] {
-							safe_link := if is_safe_url(url) { url } else { '' }
 							if current.len > 0 {
 								runs << RichTextRun{
 									text:  current.bytestr()
@@ -367,19 +340,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 								}
 								current.clear()
 							}
-							runs << RichTextRun{
-								text:  link_text
-								link:  safe_link
-								style: TextStyle{
-									...base_style
-									color:     if safe_link != '' {
-										md_style.link_color
-									} else {
-										base_style.color
-									}
-									underline: safe_link != ''
-								}
-							}
+							runs << make_link_run(link_text, url, base_style, md_style.link_color)
 							pos = ref_end + 1
 							continue
 						}
@@ -388,7 +349,6 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				// Check for shortcut reference link [text]
 				shortcut_id := link_text_lower
 				if url := link_defs[shortcut_id] {
-					safe_link := if is_safe_url(url) { url } else { '' }
 					if current.len > 0 {
 						runs << RichTextRun{
 							text:  current.bytestr()
@@ -396,19 +356,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 						}
 						current.clear()
 					}
-					runs << RichTextRun{
-						text:  link_text
-						link:  safe_link
-						style: TextStyle{
-							...base_style
-							color:     if safe_link != '' {
-								md_style.link_color
-							} else {
-								base_style.color
-							}
-							underline: safe_link != ''
-						}
-					}
+					runs << make_link_run(link_text, url, base_style, md_style.link_color)
 					pos = bracket_end + 1
 					continue
 				}
@@ -427,6 +375,20 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		runs << RichTextRun{
 			text:  current.bytestr()
 			style: base_style
+		}
+	}
+}
+
+// make_link_run creates a styled link run with URL safety check.
+fn make_link_run(link_text string, url string, base_style TextStyle, link_color Color) RichTextRun {
+	safe_link := if is_safe_url(url) { url } else { '' }
+	return RichTextRun{
+		text:  link_text
+		link:  safe_link
+		style: TextStyle{
+			...base_style
+			color:     if safe_link != '' { link_color } else { base_style.color }
+			underline: safe_link != ''
 		}
 	}
 }

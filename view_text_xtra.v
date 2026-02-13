@@ -501,7 +501,10 @@ fn is_safe_url(url string) bool {
 		return true
 	}
 	// Relative URLs (no protocol) are safe; block known
-	// dangerous schemes
+	// dangerous schemes. Note: ftp:// is intentionally
+	// blocked (contains "://"). Non-"://" schemes like
+	// tel:, sms: pass through as relative — harmless in
+	// a desktop GUI context.
 	if !lower.contains('://') && !lower.starts_with('javascript:') && !lower.starts_with('data:')
 		&& !lower.starts_with('vbscript:') && !lower.starts_with('file:')
 		&& !lower.starts_with('blob:') && !lower.starts_with('mhtml:')
