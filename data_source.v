@@ -161,6 +161,7 @@ pub fn (source InMemoryCursorDataSource) capabilities() GridDataCapabilities {
 
 pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDataResult {
 	grid_data_source_sleep_with_abort(req.signal, source.latency_ms)!
+	grid_abort_check(req.signal)!
 	filtered := grid_data_source_apply_query(source.rows, req.query)
 	limit := int_max(1, if source.default_limit > 0 { source.default_limit } else { 100 })
 	match req.page {
@@ -236,6 +237,7 @@ pub fn (source InMemoryOffsetDataSource) capabilities() GridDataCapabilities {
 
 pub fn (source InMemoryOffsetDataSource) fetch_data(req GridDataRequest) !GridDataResult {
 	grid_data_source_sleep_with_abort(req.signal, source.latency_ms)!
+	grid_abort_check(req.signal)!
 	filtered := grid_data_source_apply_query(source.rows, req.query)
 	page_size := int_max(1, if source.default_limit > 0 { source.default_limit } else { 100 })
 	start, end := match req.page {
@@ -273,6 +275,7 @@ fn grid_data_source_inmemory_mutate(mut rows []GridRow, latency_ms int, row_coun
 	result := grid_data_source_apply_mutation(mut work, req.kind, req.rows, req.row_ids,
 		req.edits)!
 	grid_abort_check(req.signal)!
+	// V requires `unsafe` to fully reassign a `mut` array param.
 	rows = unsafe { work }
 	return GridMutationResult{
 		created:     result.created
@@ -720,35 +723,44 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 }
 
 fn grid_data_source_apply_delete(mut rows []GridRow, req_rows []GridRow, req_row_ids []string) !GridMutationApplyResult {
-	mut delete_ids := map[string]bool{}
-	for row in req_rows {
-		if row.id.len > 0 {
-			delete_ids[row.id] = true
-		}
-	}
-	for row_id in req_row_ids {
-		id := row_id.trim_space()
-		if id.len > 0 {
-			delete_ids[id] = true
-		}
-	}
-	if delete_ids.len == 0 {
+	id_set := grid_deduplicate_row_ids(req_rows, req_row_ids)
+	if id_set.len == 0 {
 		return GridMutationApplyResult{}
 	}
 	mut kept := []GridRow{cap: rows.len}
-	mut deleted_ids := []string{cap: delete_ids.len}
+	mut deleted_ids := []string{cap: id_set.len}
 	for idx, row in rows {
 		row_id := data_grid_row_id(row, idx)
-		if delete_ids[row_id] {
+		if id_set[row_id] {
 			deleted_ids << row_id
 			continue
 		}
 		kept << row
 	}
+	// V requires `unsafe` to fully reassign a `mut` array param.
 	rows = unsafe { kept }
 	return GridMutationApplyResult{
 		deleted_ids: deleted_ids
 	}
+}
+
+// grid_deduplicate_row_ids collects unique non-empty IDs from
+// GridRow.id values and raw ID strings. Shared by in-memory
+// and ORM delete paths.
+fn grid_deduplicate_row_ids(rows []GridRow, row_ids []string) map[string]bool {
+	mut seen := map[string]bool{}
+	for row in rows {
+		if row.id.len > 0 {
+			seen[row.id] = true
+		}
+	}
+	for row_id in row_ids {
+		id := row_id.trim_space()
+		if id.len > 0 {
+			seen[id] = true
+		}
+	}
+	return seen
 }
 
 fn grid_data_source_next_create_row_id(rows []GridRow, existing map[string]bool, preferred_id string) !string {

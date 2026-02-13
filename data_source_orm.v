@@ -158,24 +158,8 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			}
 		}
 		.delete {
-			mut ids := []string{}
-			mut seen := map[string]bool{}
-			for row in req.rows {
-				id := row.id.trim_space()
-				if id.len == 0 || seen[id] {
-					continue
-				}
-				ids << id
-				seen[id] = true
-			}
-			for row_id in req.row_ids {
-				id := row_id.trim_space()
-				if id.len == 0 || seen[id] {
-					continue
-				}
-				ids << id
-				seen[id] = true
-			}
+			id_set := grid_deduplicate_row_ids(req.rows, req.row_ids)
+			ids := id_set.keys()
 			if ids.len == 0 {
 				return GridMutationResult{}
 			}
@@ -325,17 +309,26 @@ fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, colu
 	if column_map.len == 0 {
 		return
 	}
+	mut seen := map[string]bool{}
 	for row in rows {
 		for col_id, _ in row.cells {
+			if seen[col_id] {
+				continue
+			}
 			if col_id !in column_map {
 				return error('unknown column id: ${col_id}')
 			}
+			seen[col_id] = true
 		}
 	}
 	for edit in edits {
+		if seen[edit.col_id] {
+			continue
+		}
 		if edit.col_id !in column_map {
 			return error('unknown column id: ${edit.col_id}')
 		}
+		seen[edit.col_id] = true
 	}
 }
 
