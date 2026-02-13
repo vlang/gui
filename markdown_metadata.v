@@ -7,6 +7,9 @@ module gui
 fn collect_link_definitions(lines []string) map[string]string {
 	mut defs := map[string]string{}
 	for line in lines {
+		if defs.len >= 10000 {
+			break
+		}
 		trimmed := line.trim_space()
 		// Pattern: [id]: url or [id]: url "title"
 		if !trimmed.starts_with('[') {
@@ -52,6 +55,9 @@ fn is_link_definition(line string) bool {
 fn collect_abbreviations(lines []string) map[string]string {
 	mut defs := map[string]string{}
 	for line in lines {
+		if defs.len >= 1000 {
+			break
+		}
 		trimmed := line.trim_space()
 		if trimmed.starts_with('*[') && trimmed.contains(']:') {
 			bracket_end := trimmed.index(']:') or { continue }

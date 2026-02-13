@@ -196,7 +196,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			first_content := trimmed[2..].trim_left(' \t')
 			content, consumed := collect_definition_content(first_content, lines, i + 1)
 			mut def_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut def_runs, link_defs, footnote_defs)
+			parse_inline(content, style.text, style, mut def_runs, link_defs, footnote_defs,
+				0)
 			blocks << MarkdownBlock{
 				is_def_value: true
 				content:      RichText{
@@ -277,7 +278,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 				if ql.trim_space() == '' {
 					quote_runs << rich_br()
 				} else {
-					parse_inline(ql, style.text, style, mut quote_runs, link_defs, footnote_defs)
+					parse_inline(ql, style.text, style, mut quote_runs, link_defs, footnote_defs,
+						0)
 					if qi < quote_lines.len - 1 {
 						next_ql := quote_lines[qi + 1]
 						if next_ql.trim_space() == '' {
@@ -373,7 +375,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			content, consumed := collect_list_item_content(left_trimmed[task_prefix_len..],
 				lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs)
+			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
+				0)
 			blocks << MarkdownBlock{
 				is_list:     true
 				list_prefix: task_prefix
@@ -395,7 +398,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 			content, consumed := collect_list_item_content(left_trimmed[2..], lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs)
+			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
+				0)
 			blocks << MarkdownBlock{
 				is_list:     true
 				list_prefix: '• '
@@ -419,7 +423,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			rest := left_trimmed[dot_pos + 1..].trim_left(' ')
 			content, consumed := collect_list_item_content(rest, lines, i + 1)
 			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs)
+			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
+				0)
 			blocks << MarkdownBlock{
 				is_list:     true
 				list_prefix: '${num}. '
@@ -478,7 +483,8 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			}
 			// Create def_term block with bold styling
 			mut term_runs := []RichTextRun{cap: 10}
-			parse_inline(trimmed, style.bold, style, mut term_runs, link_defs, footnote_defs)
+			parse_inline(trimmed, style.bold, style, mut term_runs, link_defs, footnote_defs,
+				0)
 			blocks << MarkdownBlock{
 				is_def_term: true
 				content:     RichText{
@@ -491,7 +497,7 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 
 		// Regular paragraph - collect continuation lines first
 		content, consumed := collect_paragraph_content(line, lines, i + 1)
-		parse_inline(content, style.text, style, mut runs, link_defs, footnote_defs)
+		parse_inline(content, style.text, style, mut runs, link_defs, footnote_defs, 0)
 		i += 1 + consumed
 
 		// Add line break if block element follows

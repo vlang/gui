@@ -24,7 +24,7 @@ fn parse_markdown_table(raw string, style MarkdownStyle, link_defs map[string]st
 	mut header_rich := []RichText{cap: headers.len}
 	for h in headers {
 		mut runs := []RichTextRun{cap: 4}
-		parse_inline(h, style.text, style, mut runs, link_defs, footnote_defs)
+		parse_inline(h, style.text, style, mut runs, link_defs, footnote_defs, 0)
 		header_rich << RichText{
 			runs: runs
 		}
@@ -38,7 +38,8 @@ fn parse_markdown_table(raw string, style MarkdownStyle, link_defs map[string]st
 		for j, cell in row {
 			if j < headers.len {
 				mut runs := []RichTextRun{cap: 4}
-				parse_inline(cell, style.text, style, mut runs, link_defs, footnote_defs)
+				parse_inline(cell, style.text, style, mut runs, link_defs, footnote_defs,
+					0)
 				normalized[j] = RichText{
 					runs: runs
 				}

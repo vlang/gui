@@ -790,8 +790,13 @@ fn parse_transform(s string) [6]f32 {
 	mut result := identity_transform
 	mut pos := 0
 	str := s.trim_space()
+	mut count := 0
 
 	for pos < str.len {
+		count++
+		if count > 100 {
+			break
+		}
 		// Skip whitespace and commas
 		for pos < str.len && (str[pos] == ` ` || str[pos] == `,` || str[pos] == `\t`) {
 			pos++

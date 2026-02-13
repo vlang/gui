@@ -13,6 +13,8 @@ import log
 import arrays
 import vglyph
 
+const input_max_insert_runes = 65_536
+
 // InputState manages focus and input states. The window maintains this state
 // in a map keyed by w.view_state.id_focus. This state map is cleared when a
 // new view is introduced.
@@ -354,8 +356,9 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 	mut cursor_pos := input_state.cursor_pos
 	if cursor_pos < 0 {
-		cursor_pos = cfg.text.len
-	} else if input_state.select_beg != input_state.select_end {
+		cursor_pos = text.len
+	}
+	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 		if beg >= text.len || end > text.len {
 			log.error('beg or end out of range (delete)')
@@ -367,17 +370,18 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 		if cursor_pos == 0 && !is_delete {
 			return text.string()
 		}
+		if cursor_pos == text.len && is_delete {
+			return text.string()
+		}
 		if cursor_pos > text.len {
 			log.error('cursor_pos out of range (delete)')
 			return none
 		}
-		step := if is_delete { 1 } else { 0 }
-		step_beg := cursor_pos - 1 + step
-		step_end := cursor_pos + step
-		if step_beg < 0 && step_end >= text.len {
+		delete_pos := if is_delete { cursor_pos } else { cursor_pos - 1 }
+		if delete_pos < 0 || delete_pos >= text.len {
 			return none
 		}
-		text = arrays.append(text[..step_beg], text[step_end..])
+		text = arrays.append(text[..delete_pos], text[delete_pos + 1..])
 		if !is_delete {
 			cursor_pos--
 		}
@@ -389,14 +393,23 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 // fixed-width inputs, it validates width constraints. Saves state to undo
 // stack before modification. Returns modified text or error.
 fn (cfg &InputCfg) insert(s string, mut w Window) !string {
+	if s.len == 0 {
+		return cfg.text
+	}
 	if compiled := cfg.active_compiled_mask() {
 		return cfg.masked_insert(s, mut w, compiled)
 	}
+	mut insert_runes := s.runes()
+	if insert_runes.len > input_max_insert_runes {
+		log.warn('input insert exceeds ${input_max_insert_runes} runes; truncating')
+		insert_runes = insert_runes[..input_max_insert_runes].clone()
+	}
+	insert_text := insert_runes.string()
 	// clamp max chars to width of box when single line fixed.
 	if cfg.mode == .single_line && cfg.sizing.width == .fixed {
 		ctx := w.ui
 		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
-		width := ctx.text_width(cfg.text + s)
+		width := ctx.text_width(cfg.text + insert_text)
 		if width > cfg.width - cfg.padding.width() - (cfg.size_border * 2) {
 			return cfg.text
 		}
@@ -405,23 +418,21 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 	mut cursor_pos := input_state.cursor_pos
 	if cursor_pos < 0 {
-		text = arrays.append(cfg.text.runes(), s.runes())
+		text = arrays.append(cfg.text.runes(), insert_runes)
 		cursor_pos = text.len
 	} else if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 		if beg >= text.len || end > text.len {
 			return error('beg or end out of range (insert)')
 		}
-		rs := s.runes()
-		text = arrays.append(arrays.append(text[..beg], rs), text[end..])
-		cursor_pos = int_min(int(beg) + rs.len, text.len)
+		text = arrays.append(arrays.append(text[..beg], insert_runes), text[end..])
+		cursor_pos = int_min(int(beg) + insert_runes.len, text.len)
 	} else {
 		if cursor_pos > text.len {
 			return error('cursor_pos out of range (insert)')
 		}
-		rs := s.runes()
-		text = arrays.append(arrays.append(text[..cursor_pos], rs), text[cursor_pos..])
-		cursor_pos = int_min(cursor_pos + rs.len, text.len)
+		text = arrays.append(arrays.append(text[..cursor_pos], insert_runes), text[cursor_pos..])
+		cursor_pos = int_min(cursor_pos + insert_runes.len, text.len)
 	}
 	return cfg.apply_text_edit(input_state, text.string(), cursor_pos, mut w)
 }
@@ -436,8 +447,8 @@ pub fn (cfg &InputCfg) cut(mut w Window) ?string {
 	return cfg.delete(mut w, false)
 }
 
-// copy copies selected text to clipboard. Returns none if successful or
-// disabled (password fields).
+// copy copies selected text to clipboard and returns copied text.
+// Returns none for password fields or empty/invalid selection.
 pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	if cfg.is_password {
 		return none
@@ -445,17 +456,18 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
-		len := utf8_str_visible_length(cfg.text)
-		if beg >= len || end > len {
+		text_len := utf8_str_visible_length(cfg.text)
+		if beg > text_len || end > text_len {
 			log.error('beg or end out of range (copy)')
 			return none
 		}
-		rune_text := cfg.text.runes()
-		if beg < 0 || end >= len {
+		if beg >= end {
 			return none
 		}
-		cpy := rune_text[beg..end]
+		rune_text := cfg.text.runes()
+		cpy := rune_text[int(beg)..int(end)]
 		to_clipboard(cpy.string())
+		return cpy.string()
 	}
 	return none
 }
@@ -514,34 +526,6 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 		redo:          redo
 	})
 	return memento.text
-}
-
-// amend_layout adjusts appearance during layout, effectively updating visual
-// hints like border color based on focus/disabled state.
-fn (cfg &InputCfg) amend_layout(mut layout Layout, mut w Window) {
-	if layout.shape.disabled {
-		return
-	}
-	if layout.shape.id_focus > 0 && layout.shape.id_focus == w.id_focus() {
-		layout.shape.color_border = cfg.color_border_focus
-	}
-}
-
-// hover handles mouse-over events. Sets I-beam cursor when focused,
-// otherwise applies hover color.
-fn (cfg &InputCfg) hover(mut layout Layout, mut e Event, mut w Window) {
-	if w.is_focus(layout.shape.id_focus) {
-		w.set_mouse_cursor_ibeam()
-	} else {
-		layout.shape.color = cfg.color_hover
-	}
-}
-
-// hover_icon changes cursor to pointing hand if icon is interactive.
-fn (_ &InputCfg) hover_icon(mut layout Layout, mut e Event, mut w Window) {
-	if layout.shape.has_events() && layout.shape.events.on_click != unsafe { nil } {
-		w.set_mouse_cursor_pointing_hand()
-	}
 }
 
 // make_input_on_char creates an on_char handler that captures the InputCfg

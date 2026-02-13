@@ -5,7 +5,8 @@ module gui
 // parse_header_block parses a header line into a MarkdownBlock.
 fn parse_header_block(text string, level int, header_style TextStyle, md_style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) MarkdownBlock {
 	mut header_runs := []RichTextRun{cap: 10}
-	parse_inline(text, header_style, md_style, mut header_runs, link_defs, footnote_defs)
+	parse_inline(text, header_style, md_style, mut header_runs, link_defs, footnote_defs,
+		0)
 	return MarkdownBlock{
 		header_level: level
 		content:      RichText{

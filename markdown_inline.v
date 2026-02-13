@@ -3,7 +3,18 @@ module gui
 // markdown_inline.v handles parsing of inline markdown elements (bold, italic, links, etc.)
 
 // parse_inline parses inline markdown elements from a string and appends them to runs.
-fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun, link_defs map[string]string, footnote_defs map[string]string) {
+fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun, link_defs map[string]string, footnote_defs map[string]string, depth int) {
+	// Limit recursion depth to prevent stack overflow on
+	// malformed input (e.g. '***___'.repeat(200)).
+	if depth >= 16 {
+		if text.len > 0 {
+			runs << RichTextRun{
+				text:  text
+				style: base_style
+			}
+		}
+		return
+	}
 	mut pos := 0
 	mut current := []u8{cap: text.len}
 
@@ -97,7 +108,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					size: base_style.size
 				}
 				parse_inline(text[pos + 3..end], bi_style, md_style, mut runs, link_defs,
-					footnote_defs)
+					footnote_defs, depth + 1)
 				pos = end + 3
 				continue
 			}
@@ -119,7 +130,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					size: base_style.size
 				}
 				parse_inline(text[pos + 2..end], bold_style, md_style, mut runs, link_defs,
-					footnote_defs)
+					footnote_defs, depth + 1)
 				pos = end + 2
 				continue
 			}
@@ -141,7 +152,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					strikethrough: true
 				}
 				parse_inline(text[pos + 2..end], strike_style, md_style, mut runs, link_defs,
-					footnote_defs)
+					footnote_defs, depth + 1)
 				pos = end + 2
 				continue
 			}
@@ -163,7 +174,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					size: base_style.size
 				}
 				parse_inline(text[pos + 1..end], italic_style, md_style, mut runs, link_defs,
-					footnote_defs)
+					footnote_defs, depth + 1)
 				pos = end + 1
 				continue
 			}
@@ -185,7 +196,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					size: base_style.size
 				}
 				parse_inline(text[pos + 3..end], bi_style, md_style, mut runs, link_defs,
-					footnote_defs)
+					footnote_defs, depth + 1)
 				pos = end + 3
 				continue
 			}
@@ -207,7 +218,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					size: base_style.size
 				}
 				parse_inline(text[pos + 2..end], bold_style, md_style, mut runs, link_defs,
-					footnote_defs)
+					footnote_defs, depth + 1)
 				pos = end + 2
 				continue
 			}
@@ -229,7 +240,7 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					size: base_style.size
 				}
 				parse_inline(text[pos + 1..end], italic_style, md_style, mut runs, link_defs,
-					footnote_defs)
+					footnote_defs, depth + 1)
 				pos = end + 1
 				continue
 			}
