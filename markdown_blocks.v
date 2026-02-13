@@ -34,20 +34,27 @@ fn is_setext_underline(line string) int {
 }
 
 // is_horizontal_rule checks if a line is a horizontal rule (3+ of -, *, or _).
+// Allows spaces between characters but no other characters.
 fn is_horizontal_rule(line string) bool {
-	if line.len < 3 {
+	trimmed := line.trim_space()
+	if trimmed.len < 3 {
 		return false
 	}
-	c := line[0]
+	c := trimmed[0]
 	if c != `-` && c != `*` && c != `_` {
 		return false
 	}
-	for ch in line {
-		if ch != c {
+	mut count := 0
+	for ch in trimmed {
+		if ch == c {
+			count++
+		} else if ch == ` ` || ch == `\t` {
+			continue
+		} else {
 			return false
 		}
 	}
-	return true
+	return count >= 3
 }
 
 // is_ordered_list checks if a line is an ordered list item (e.g., "1. item").
@@ -165,7 +172,7 @@ fn is_block_start(line string) bool {
 	if trimmed.starts_with('![') {
 		return true
 	}
-	if trimmed in ['---', '***', '___'] {
+	if is_horizontal_rule(trimmed) {
 		return true
 	}
 	if trimmed.starts_with('- ') || trimmed.starts_with('* ') || trimmed.starts_with('+ ') {

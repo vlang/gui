@@ -1,6 +1,7 @@
 module gui
 
 import time
+import strings
 
 // view_markdown.v defines the Markdown view component.
 // It parses markdown source and renders it using the RTF infrastructure.
@@ -50,6 +51,8 @@ pub:
 }
 
 // MarkdownCfg configures a Markdown View.
+// NOTE: Rendering math (LaTeX) and mermaid diagrams sends the source
+// content to external third-party APIs (codecogs.com and kroki.io).
 @[minify]
 pub struct MarkdownCfg {
 pub:
@@ -73,11 +76,14 @@ pub:
 
 // rich_text_plain extracts plain text from RichText for width calculation.
 fn rich_text_plain(rt RichText) string {
-	mut s := ''
-	for run in rt.runs {
-		s += run.text
+	if rt.runs.len == 0 {
+		return ''
 	}
-	return s
+	mut sb := strings.new_builder(rt.runs.len * 32)
+	for run in rt.runs {
+		sb.write_string(run.text)
+	}
+	return sb.str()
 }
 
 // build_markdown_table_data converts parsed table to TableRowCfg array.

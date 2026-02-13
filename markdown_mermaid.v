@@ -72,11 +72,35 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 		ch := chan MermaidFetchResult{}
 
 		// Spawn fetcher thread WITHOUT window reference to avoid holding it if hung
+
 		spawn fn [source, ch] () {
+			// Kroki POST /mermaid/png expects a JSON body with 'diagram_source'
+
+			// or raw source if Content-Type is text/plain.
+
+			// Let's use JSON to be explicit.
+
+			// Basic JSON escape for the source string
+
+			mut escaped := source.replace('\\', '\\\\')
+
+			escaped = escaped.replace('"', '\\"')
+
+			escaped = escaped.replace('\n', '\\n')
+
+			escaped = escaped.replace('\r', '\\r')
+
+			escaped = escaped.replace('\t', '\\t')
+
+			json_data := '{"diagram_source": "${escaped}"}'
+
 			result := http.fetch(
 				method: .post
 				url:    'https://kroki.io/mermaid/png'
-				data:   source
+				data:   json_data
+				header: http.new_custom_header_from_map({
+					'Content-Type': 'application/json'
+				}) or { http.Header{} }
 			) or {
 				ch <- MermaidFetchResult{
 					err_msg: err.msg()

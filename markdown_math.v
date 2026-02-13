@@ -23,8 +23,26 @@ fn math_cache_hash(math_id string) i64 {
 // enable shell escape or file access on the remote renderer.
 fn sanitize_latex(s string) string {
 	// Block shell-escape and file-access commands
-	blocked := ['\\write18', '\\input', '\\include', '\\openin', '\\openout', '\\read', '\\write',
-		'\\csname', '\\immediate', '\\catcode']
+	blocked := [
+		'\\write18',
+		'\\input',
+		'\\include',
+		'\\openin',
+		'\\openout',
+		'\\read',
+		'\\write',
+		'\\csname',
+		'\\immediate',
+		'\\catcode',
+		'\\special',
+		'\\outer',
+		'\\def',
+		'\\edef',
+		'\\gdef',
+		'\\xdef',
+		'\\let',
+		'\\futurelet',
+	]
 	mut result := s
 	for cmd in blocked {
 		result = result.replace(cmd, '')

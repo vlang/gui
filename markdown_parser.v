@@ -142,47 +142,13 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 			continue
 		}
 
-		// Table recognition: lines starting with | or separator rows
-		// Also recognize table start if current line has | and next is separator
-		is_table_start := trimmed.starts_with('|') || is_table_separator(trimmed)
-			|| (trimmed.contains('|') && i + 1 < lines.len
-			&& is_table_separator(lines[i + 1].trim_space()))
-		if is_table_start {
-			// Flush current runs
+		// Table recognition
+		if t_block, t_consumed := try_parse_table(lines, i, style, link_defs, footnote_defs) {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			// Collect consecutive table lines (bounded)
-			mut table_lines := []string{cap: 10}
-			for i < lines.len && table_lines.len < max_table_lines {
-				tl := lines[i].trim_space()
-				// Collect lines with pipes or separators (entry already validated table start)
-				if tl.starts_with('|') || is_table_separator(tl) || tl.contains('|') {
-					table_lines << lines[i]
-					i++
-				} else if tl == '' && table_lines.len > 0 {
-					// Blank line ends table
-					break
-				} else {
-					break
-				}
-			}
-			if table_lines.len > 0 {
-				raw_table := table_lines.join('\n')
-				parsed_table := parse_markdown_table(raw_table, style, link_defs, footnote_defs)
-				blocks << MarkdownBlock{
-					is_table:   true
-					table_data: parsed_table
-					content:    RichText{
-						runs: [
-							RichTextRun{
-								text:  raw_table
-								style: style.code
-							},
-						]
-					}
-				}
-			}
+			blocks << t_block
+			i += t_consumed
 			continue
 		}
 
@@ -249,191 +215,32 @@ fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 		}
 
 		// Blockquote
-		if line.starts_with('>') {
-			// Flush current runs
+		if b_block, b_consumed := try_parse_blockquote(lines, i, style, link_defs, footnote_defs) {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			// Count initial depth and collect consecutive blockquote lines (bounded)
-			mut max_depth := count_blockquote_depth(line)
-			mut quote_lines := []string{cap: 10}
-			for i < lines.len && quote_lines.len < max_blockquote_lines {
-				q := lines[i]
-				if q.starts_with('>') {
-					depth := count_blockquote_depth(q)
-					if depth > max_depth {
-						max_depth = depth
-					}
-					// Strip all > and spaces at start
-					content := strip_blockquote_prefix(q)
-					quote_lines << content
-					i++
-				} else {
-					break
-				}
-			}
-			mut quote_runs := []RichTextRun{cap: 20}
-			for qi, ql in quote_lines {
-				// Skip blank lines but keep them as line breaks
-				if ql.trim_space() == '' {
-					quote_runs << rich_br()
-				} else {
-					parse_inline(ql, style.text, style, mut quote_runs, link_defs, footnote_defs,
-						0)
-					if qi < quote_lines.len - 1 {
-						next_ql := quote_lines[qi + 1]
-						if next_ql.trim_space() == '' {
-							// Next line is blank - paragraph break coming
-							quote_runs << rich_br()
-						} else {
-							// Continuation of paragraph - add space
-							quote_runs << RichTextRun{
-								text:  ' '
-								style: style.text
-							}
-						}
-					}
-				}
-			}
-			blocks << MarkdownBlock{
-				is_blockquote:    true
-				blockquote_depth: max_depth
-				content:          RichText{
-					runs: quote_runs
-				}
-			}
+			blocks << b_block
+			i += b_consumed
 			continue
 		}
 
-		// Headers
-		if line.starts_with('######') {
+		// ATX Headers
+		if h_block, h_consumed := try_parse_atx_header(line, style, link_defs, footnote_defs) {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			blocks << parse_header_block(line[6..].trim_left(' '), 6, style.h6, style,
-				link_defs, footnote_defs)
-			i++
-			continue
-		}
-		if line.starts_with('#####') {
-			if block := flush_runs(mut runs) {
-				blocks << block
-			}
-			blocks << parse_header_block(line[5..].trim_left(' '), 5, style.h5, style,
-				link_defs, footnote_defs)
-			i++
-			continue
-		}
-		if line.starts_with('####') {
-			if block := flush_runs(mut runs) {
-				blocks << block
-			}
-			blocks << parse_header_block(line[4..].trim_left(' '), 4, style.h4, style,
-				link_defs, footnote_defs)
-			i++
-			continue
-		}
-		if line.starts_with('###') {
-			if block := flush_runs(mut runs) {
-				blocks << block
-			}
-			blocks << parse_header_block(line[3..].trim_left(' '), 3, style.h3, style,
-				link_defs, footnote_defs)
-			i++
-			continue
-		}
-		if line.starts_with('##') {
-			if block := flush_runs(mut runs) {
-				blocks << block
-			}
-			blocks << parse_header_block(line[2..].trim_left(' '), 2, style.h2, style,
-				link_defs, footnote_defs)
-			i++
-			continue
-		}
-		if line.starts_with('#') {
-			if block := flush_runs(mut runs) {
-				blocks << block
-			}
-			blocks << parse_header_block(line[1..].trim_left(' '), 1, style.h1, style,
-				link_defs, footnote_defs)
-			i++
+			blocks << h_block
+			i += h_consumed
 			continue
 		}
 
 		// List items
-		left_trimmed := line.trim_left(' \t')
-		indent := get_indent_level(line)
-
-		// Task list (checked or unchecked)
-		if task_prefix := get_task_prefix(left_trimmed) {
+		if l_block, l_consumed := try_parse_list_item(lines, i, style, link_defs, footnote_defs) {
 			if block := flush_runs(mut runs) {
 				blocks << block
 			}
-			// Task list prefix is always "- [ ] " or "- [x] " (6 bytes)
-			task_prefix_len := 6
-			content, consumed := collect_list_item_content(left_trimmed[task_prefix_len..],
-				lines, i + 1)
-			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
-				0)
-			blocks << MarkdownBlock{
-				is_list:     true
-				list_prefix: task_prefix
-				list_indent: indent
-				content:     RichText{
-					runs: item_runs
-				}
-			}
-			i += 1 + consumed
-			continue
-		}
-
-		// Unordered list (with nesting support)
-		if left_trimmed.starts_with('- ') || left_trimmed.starts_with('* ')
-			|| left_trimmed.starts_with('+ ') {
-			// Flush any pending runs before list item
-			if block := flush_runs(mut runs) {
-				blocks << block
-			}
-			content, consumed := collect_list_item_content(left_trimmed[2..], lines, i + 1)
-			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
-				0)
-			blocks << MarkdownBlock{
-				is_list:     true
-				list_prefix: '• '
-				list_indent: indent
-				content:     RichText{
-					runs: item_runs
-				}
-			}
-			i += 1 + consumed
-			continue
-		}
-
-		// Ordered list (with nesting support)
-		if is_ordered_list(left_trimmed) {
-			// Flush any pending runs before list item
-			if block := flush_runs(mut runs) {
-				blocks << block
-			}
-			dot_pos := left_trimmed.index('.') or { 0 }
-			num := left_trimmed[..dot_pos]
-			rest := left_trimmed[dot_pos + 1..].trim_left(' ')
-			content, consumed := collect_list_item_content(rest, lines, i + 1)
-			mut item_runs := []RichTextRun{cap: 10}
-			parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
-				0)
-			blocks << MarkdownBlock{
-				is_list:     true
-				list_prefix: '${num}. '
-				list_indent: indent
-				content:     RichText{
-					runs: item_runs
-				}
-			}
-			i += 1 + consumed
+			blocks << l_block
+			i += l_consumed
 			continue
 		}
 
@@ -601,6 +408,200 @@ fn parse_code_fence(line string) ?CodeFence {
 			count:    count
 			language: lang
 		}
+	}
+	return none
+}
+
+// try_parse_blockquote checks if line starts a blockquote.
+// Returns (block, consumed_lines) if matched, else none.
+fn try_parse_blockquote(lines []string, start_idx int, style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) ?(MarkdownBlock, int) {
+	line := lines[start_idx]
+	if !line.starts_with('>') {
+		return none
+	}
+	mut i := start_idx
+	// Count initial depth and collect consecutive blockquote lines (bounded)
+	mut max_depth := count_blockquote_depth(line)
+	mut quote_lines := []string{cap: 10}
+	for i < lines.len && quote_lines.len < max_blockquote_lines {
+		q := lines[i]
+		if q.starts_with('>') {
+			depth := count_blockquote_depth(q)
+			if depth > max_depth {
+				max_depth = depth
+			}
+			// Strip all > and spaces at start
+			content := strip_blockquote_prefix(q)
+			quote_lines << content
+			i++
+		} else {
+			break
+		}
+	}
+	mut quote_runs := []RichTextRun{cap: 20}
+	for qi, ql in quote_lines {
+		// Skip blank lines but keep them as line breaks
+		if ql.trim_space() == '' {
+			quote_runs << rich_br()
+		} else {
+			parse_inline(ql, style.text, style, mut quote_runs, link_defs, footnote_defs,
+				0)
+			if qi < quote_lines.len - 1 {
+				next_ql := quote_lines[qi + 1]
+				if next_ql.trim_space() == '' {
+					// Next line is blank - paragraph break coming
+					quote_runs << rich_br()
+				} else {
+					// Continuation of paragraph - add space
+					quote_runs << RichTextRun{
+						text:  ' '
+						style: style.text
+					}
+				}
+			}
+		}
+	}
+	return MarkdownBlock{
+		is_blockquote:    true
+		blockquote_depth: max_depth
+		content:          RichText{
+			runs: quote_runs
+		}
+	}, i - start_idx
+}
+
+// try_parse_list_item checks if line is a list item (task, unordered, or ordered).
+// Returns (block, consumed_lines) if matched, else none.
+fn try_parse_list_item(lines []string, start_idx int, style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) ?(MarkdownBlock, int) {
+	line := lines[start_idx]
+	left_trimmed := line.trim_left(' \t')
+	indent := get_indent_level(line)
+
+	// Task list (checked or unchecked)
+	if task_prefix := get_task_prefix(left_trimmed) {
+		// Task list prefix is always "- [ ] " or "- [x] " (6 bytes)
+		task_prefix_len := 6
+		content, consumed := collect_list_item_content(left_trimmed[task_prefix_len..],
+			lines, start_idx + 1)
+		mut item_runs := []RichTextRun{cap: 10}
+		parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
+			0)
+		return MarkdownBlock{
+			is_list:     true
+			list_prefix: task_prefix
+			list_indent: indent
+			content:     RichText{
+				runs: item_runs
+			}
+		}, 1 + consumed
+	}
+
+	// Unordered list (with nesting support)
+	if left_trimmed.starts_with('- ') || left_trimmed.starts_with('* ')
+		|| left_trimmed.starts_with('+ ') {
+		content, consumed := collect_list_item_content(left_trimmed[2..], lines, start_idx + 1)
+		mut item_runs := []RichTextRun{cap: 10}
+		parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
+			0)
+		return MarkdownBlock{
+			is_list:     true
+			list_prefix: '• '
+			list_indent: indent
+			content:     RichText{
+				runs: item_runs
+			}
+		}, 1 + consumed
+	}
+
+	// Ordered list (with nesting support)
+	if is_ordered_list(left_trimmed) {
+		dot_pos := left_trimmed.index('.') or { 0 }
+		num := left_trimmed[..dot_pos]
+		rest := left_trimmed[dot_pos + 1..].trim_left(' ')
+		content, consumed := collect_list_item_content(rest, lines, start_idx + 1)
+		mut item_runs := []RichTextRun{cap: 10}
+		parse_inline(content, style.text, style, mut item_runs, link_defs, footnote_defs,
+			0)
+		return MarkdownBlock{
+			is_list:     true
+			list_prefix: '${num}. '
+			list_indent: indent
+			content:     RichText{
+				runs: item_runs
+			}
+		}, 1 + consumed
+	}
+
+	return none
+}
+
+// try_parse_table checks if lines starting at idx form a markdown table.
+// Returns (block, consumed_lines) if matched, else none.
+fn try_parse_table(lines []string, start_idx int, style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) ?(MarkdownBlock, int) {
+	line := lines[start_idx]
+	trimmed := line.trim_space()
+	is_table_start := trimmed.starts_with('|') || is_table_separator(trimmed)
+		|| (trimmed.contains('|') && start_idx + 1 < lines.len
+		&& is_table_separator(lines[start_idx + 1].trim_space()))
+	if !is_table_start {
+		return none
+	}
+	mut i := start_idx
+	// Collect consecutive table lines (bounded)
+	mut table_lines := []string{cap: 10}
+	for i < lines.len && table_lines.len < max_table_lines {
+		tl := lines[i].trim_space()
+		// Collect lines with pipes or separators (entry already validated table start)
+		if tl.starts_with('|') || is_table_separator(tl) || tl.contains('|') {
+			table_lines << lines[i]
+			i++
+		} else if tl == '' && table_lines.len > 0 {
+			// Blank line ends table
+			break
+		} else {
+			break
+		}
+	}
+	if table_lines.len > 0 {
+		raw_table := table_lines.join('\n')
+		parsed_table := parse_markdown_table(raw_table, style, link_defs, footnote_defs)
+		return MarkdownBlock{
+			is_table:   true
+			table_data: parsed_table
+			content:    RichText{
+				runs: [
+					RichTextRun{
+						text:  raw_table
+						style: style.code
+					},
+				]
+			}
+		}, i - start_idx
+	}
+	return none
+}
+
+// try_parse_atx_header checks if line is an ATX-style header (# h1).
+// Returns (block, consumed_lines) if matched, else none.
+fn try_parse_atx_header(line string, style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) ?(MarkdownBlock, int) {
+	if !line.starts_with('#') {
+		return none
+	}
+	mut level := 0
+	for level < line.len && level < 6 && line[level] == `#` {
+		level++
+	}
+	if level > 0 && (level == line.len || line[level] == ` ` || line[level] == `\t`) {
+		header_style := match level {
+			1 { style.h1 }
+			2 { style.h2 }
+			3 { style.h3 }
+			4 { style.h4 }
+			5 { style.h5 }
+			else { style.h6 }
+		}
+		text := line[level..].trim_left(' \t')
+		return parse_header_block(text, level, header_style, style, link_defs, footnote_defs), 1
 	}
 	return none
 }
