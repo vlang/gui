@@ -368,7 +368,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 
 	// Pre-build header, frozen top rows, and column widths
 	// before entering the row assembly loop.
-	mut column_widths := data_grid_column_widths(resolved_cfg, mut window)
+	mut column_widths := data_grid_column_widths(resolved_cfg.id, resolved_cfg.columns, mut
+		window)
 	total_width := data_grid_columns_total_width(columns, column_widths)
 	header_view := data_grid_header_row(resolved_cfg, columns, column_widths, focus_id,
 		hovered_col_id, resizing_col_id, focused_col_id)
@@ -665,6 +666,10 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 	columns := cfg.columns
 	selection := cfg.selection
 	on_selection_change := cfg.on_selection_change
+	data_source := cfg.data_source
+	query := cfg.query
+	on_crud_error := cfg.on_crud_error
+	on_rows_change := cfg.on_rows_change
 	dirty_count := state.dirty_row_ids.len
 	draft_count := state.draft_row_ids.len
 	delete_count := state.deleted_row_ids.len
@@ -745,8 +750,10 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 				color_click:  cfg.color_header_hover
 				color_border: color_transparent
 				disabled:     !has_unsaved || state.saving
-				on_click:     fn [cfg, focus_id, has_source, caps] (_ &Layout, mut e Event, mut w Window) {
-					data_grid_crud_save(cfg, has_source, caps, focus_id, mut e, mut w)
+				on_click:     fn [grid_id, data_source, query, on_crud_error, on_rows_change, selection, on_selection_change, focus_id, has_source, caps] (_ &Layout, mut e Event, mut w Window) {
+					data_grid_crud_save(grid_id, data_source, query, on_crud_error, on_rows_change,
+						selection, on_selection_change, has_source, caps, focus_id, mut
+						e, mut w)
 				}
 				content:      [
 					text(
@@ -1004,21 +1011,21 @@ fn data_grid_crud_replace_created_rows(mut rows []GridRow, create_rows []GridRow
 	return replace
 }
 
-fn data_grid_crud_remap_selection(cfg DataGridCfg, replace_ids map[string]string, mut e Event, mut w Window) {
-	if cfg.on_selection_change == unsafe { nil } || replace_ids.len == 0 {
+fn data_grid_crud_remap_selection(selection GridSelection, on_selection_change fn (GridSelection, mut Event, mut Window), replace_ids map[string]string, mut e Event, mut w Window) {
+	if on_selection_change == unsafe { nil } || replace_ids.len == 0 {
 		return
 	}
 	mut selected := map[string]bool{}
-	for row_id, value in cfg.selection.selected_row_ids {
+	for row_id, value in selection.selected_row_ids {
 		if !value {
 			continue
 		}
 		next_id := replace_ids[row_id] or { row_id }
 		selected[next_id] = true
 	}
-	active := replace_ids[cfg.selection.active_row_id] or { cfg.selection.active_row_id }
-	anchor := replace_ids[cfg.selection.anchor_row_id] or { cfg.selection.anchor_row_id }
-	cfg.on_selection_change(GridSelection{
+	active := replace_ids[selection.active_row_id] or { selection.active_row_id }
+	anchor := replace_ids[selection.anchor_row_id] or { selection.anchor_row_id }
+	on_selection_change(GridSelection{
 		anchor_row_id:    anchor
 		active_row_id:    active
 		selected_row_ids: selected
@@ -1068,8 +1075,8 @@ fn data_grid_crud_cancel(grid_id string, focus_id u32, mut e Event, mut w Window
 	e.is_handled = true
 }
 
-fn data_grid_crud_save(cfg DataGridCfg, has_source bool, caps GridDataCapabilities, focus_id u32, mut e Event, mut w Window) {
-	mut state := w.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
+fn data_grid_crud_save(grid_id string, data_source ?DataGridDataSource, query GridQueryState, on_crud_error fn (string, mut Event, mut Window), on_rows_change fn ([]GridRow, mut Event, mut Window), selection GridSelection, on_selection_change fn (GridSelection, mut Event, mut Window), has_source bool, caps GridDataCapabilities, focus_id u32, mut e Event, mut w Window) {
+	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
 	if state.saving || !data_grid_crud_has_unsaved(state) {
 		return
 	}
@@ -1077,32 +1084,32 @@ fn data_grid_crud_save(cfg DataGridCfg, has_source bool, caps GridDataCapabiliti
 	snapshot_rows := state.committed_rows.clone()
 	state.saving = true
 	state.save_error = ''
-	w.view_state.data_grid_crud_state.set(cfg.id, state)
+	w.view_state.data_grid_crud_state.set(grid_id, state)
 	mut has_row_count := false
 	mut row_count_value := 0
 	mut replace_ids := map[string]string{}
 	if has_source {
-		mut source := cfg.data_source or {
+		mut source := data_source or {
 			state.saving = false
 			state.save_error = 'data source unavailable'
-			w.view_state.data_grid_crud_state.set(cfg.id, state)
+			w.view_state.data_grid_crud_state.set(grid_id, state)
 			return
 		}
 
 		if create_rows.len > 0 {
 			if !caps.supports_create {
-				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
-					'create not supported')
+				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
+					snapshot_rows, 'create not supported')
 				return
 			}
 			res_create := source.mutate_data(GridMutationRequest{
-				grid_id: cfg.id
+				grid_id: grid_id
 				kind:    .create
-				query:   cfg.query
+				query:   query
 				rows:    create_rows.clone()
 			}) or {
-				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
-					err.msg())
+				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
+					snapshot_rows, err.msg())
 				return
 			}
 			replace_ids = data_grid_crud_replace_created_rows(mut state.working_rows,
@@ -1114,19 +1121,19 @@ fn data_grid_crud_save(cfg DataGridCfg, has_source bool, caps GridDataCapabiliti
 		}
 		if update_edits.len > 0 {
 			if !caps.supports_update {
-				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
-					'update not supported')
+				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
+					snapshot_rows, 'update not supported')
 				return
 			}
 			res_update := source.mutate_data(GridMutationRequest{
-				grid_id: cfg.id
+				grid_id: grid_id
 				kind:    .update
-				query:   cfg.query
+				query:   query
 				rows:    update_rows.clone()
 				edits:   update_edits.clone()
 			}) or {
-				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
-					err.msg())
+				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
+					snapshot_rows, err.msg())
 				return
 			}
 			if count := res_update.row_count {
@@ -1136,18 +1143,18 @@ fn data_grid_crud_save(cfg DataGridCfg, has_source bool, caps GridDataCapabiliti
 		}
 		if delete_ids.len > 0 {
 			if !caps.supports_delete {
-				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
-					'delete not supported')
+				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
+					snapshot_rows, 'delete not supported')
 				return
 			}
 			res_delete := source.mutate_data(GridMutationRequest{
-				grid_id: cfg.id
+				grid_id: grid_id
 				kind:    .delete
-				query:   cfg.query
+				query:   query
 				row_ids: delete_ids.clone()
 			}) or {
-				data_grid_crud_restore_on_error(cfg, mut e, mut w, mut state, snapshot_rows,
-					err.msg())
+				data_grid_crud_restore_on_error(grid_id, on_crud_error, mut e, mut w,
+					snapshot_rows, err.msg())
 				return
 			}
 			if count := res_delete.row_count {
@@ -1155,7 +1162,8 @@ fn data_grid_crud_save(cfg DataGridCfg, has_source bool, caps GridDataCapabiliti
 				row_count_value = count
 			}
 		}
-		data_grid_crud_remap_selection(cfg, replace_ids, mut e, mut w)
+		data_grid_crud_remap_selection(selection, on_selection_change, replace_ids, mut
+			e, mut w)
 	}
 	state.committed_rows = state.working_rows.clone()
 	state.dirty_row_ids = map[string]bool{}
@@ -1164,20 +1172,20 @@ fn data_grid_crud_save(cfg DataGridCfg, has_source bool, caps GridDataCapabiliti
 	state.saving = false
 	state.save_error = ''
 	state.source_signature = data_grid_rows_signature(state.committed_rows)
-	w.view_state.data_grid_crud_state.set(cfg.id, state)
-	data_grid_clear_editing_row(cfg.id, mut w)
-	if cfg.on_rows_change != unsafe { nil } {
-		cfg.on_rows_change(state.working_rows.clone(), mut e, mut w)
+	w.view_state.data_grid_crud_state.set(grid_id, state)
+	data_grid_clear_editing_row(grid_id, mut w)
+	if on_rows_change != unsafe { nil } {
+		on_rows_change(state.working_rows.clone(), mut e, mut w)
 	}
 	if has_source {
 		if has_row_count {
-			data_grid_source_apply_local_mutation(cfg.id, state.working_rows.clone(),
+			data_grid_source_apply_local_mutation(grid_id, state.working_rows.clone(),
 				?int(row_count_value), mut w)
 		} else {
-			data_grid_source_apply_local_mutation(cfg.id, state.working_rows.clone(),
+			data_grid_source_apply_local_mutation(grid_id, state.working_rows.clone(),
 				none, mut w)
 		}
-		data_grid_source_force_refetch(cfg.id, mut w)
+		data_grid_source_force_refetch(grid_id, mut w)
 	}
 	if focus_id > 0 {
 		w.set_id_focus(focus_id)
@@ -1185,8 +1193,13 @@ fn data_grid_crud_save(cfg DataGridCfg, has_source bool, caps GridDataCapabiliti
 	e.is_handled = true
 }
 
-fn data_grid_crud_restore_on_error(cfg DataGridCfg, mut e Event, mut w Window, mut state DataGridCrudState, snapshot_rows []GridRow, err_msg string) {
-	state.committed_rows = snapshot_rows.clone()
+fn data_grid_crud_restore_on_error(grid_id string, on_crud_error fn (string, mut Event, mut Window), mut e Event, mut w Window, snapshot_rows []GridRow, err_msg string) {
+	// Re-fetch authoritative state from view_state to avoid
+	// overwriting edits made between snapshot and error.
+	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	// snapshot_rows is already a clone; assign directly for
+	// committed, clone once for working to avoid sharing.
+	state.committed_rows = snapshot_rows
 	state.working_rows = snapshot_rows.clone()
 	state.dirty_row_ids = map[string]bool{}
 	state.draft_row_ids = map[string]bool{}
@@ -1194,14 +1207,14 @@ fn data_grid_crud_restore_on_error(cfg DataGridCfg, mut e Event, mut w Window, m
 	state.saving = false
 	state.save_error = err_msg
 	state.source_signature = data_grid_rows_signature(state.committed_rows)
-	w.view_state.data_grid_crud_state.set(cfg.id, state)
-	data_grid_clear_editing_row(cfg.id, mut w)
+	w.view_state.data_grid_crud_state.set(grid_id, state)
+	data_grid_clear_editing_row(grid_id, mut w)
 	// Refetch source data to stay in sync after partial
 	// mutation failure (create may have succeeded before
 	// update/delete failed).
-	data_grid_source_force_refetch(cfg.id, mut w)
-	if cfg.on_crud_error != unsafe { nil } {
-		cfg.on_crud_error(err_msg, mut e, mut w)
+	data_grid_source_force_refetch(grid_id, mut w)
+	if on_crud_error != unsafe { nil } {
+		on_crud_error(err_msg, mut e, mut w)
 	}
 }
 
@@ -1701,18 +1714,25 @@ fn data_grid_header_cell(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_co
 }
 
 fn data_grid_resize_handle(cfg DataGridCfg, col GridColumnCfg, focus_id u32) View {
+	grid_id := cfg.id
+	columns := cfg.columns
+	rows := cfg.rows
+	text_style_header := cfg.text_style_header
+	text_style := cfg.text_style
+	padding_cell := cfg.padding_cell
 	color_resize_handle := cfg.color_resize_handle
 	color_resize_active := cfg.color_resize_active
 	return row(
 		name:     'data_grid resize handle'
-		id:       '${cfg.id}:resize:${col.id}'
+		id:       '${grid_id}:resize:${col.id}'
 		width:    data_grid_resize_handle_width
 		sizing:   fixed_fill
 		padding:  padding_none
 		color:    color_resize_handle
-		on_click: fn [cfg, col, focus_id] (layout &Layout, mut e Event, mut w Window) {
+		on_click: fn [grid_id, columns, rows, text_style_header, text_style, padding_cell, col, focus_id] (layout &Layout, mut e Event, mut w Window) {
 			start_x := layout.shape.x + e.mouse_x
-			data_grid_start_resize(cfg, col, focus_id, start_x, mut e, mut w)
+			data_grid_start_resize(grid_id, columns, rows, text_style_header, text_style,
+				padding_cell, col, focus_id, start_x, mut e, mut w)
 		}
 		on_hover: fn [color_resize_handle, color_resize_active] (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_ew()
@@ -2515,19 +2535,20 @@ fn data_grid_parse_editor_date(value string) time.Time {
 	return time.now()
 }
 
-fn data_grid_start_resize(cfg DataGridCfg, col GridColumnCfg, focus_id u32, start_mouse_x f32, mut e Event, mut w Window) {
+fn data_grid_start_resize(grid_id string, columns []GridColumnCfg, rows []GridRow, text_style_header TextStyle, text_style TextStyle, padding_cell Padding, col GridColumnCfg, focus_id u32, start_mouse_x f32, mut e Event, mut w Window) {
 	if focus_id > 0 {
 		w.set_id_focus(focus_id)
 	}
-	mut runtime := w.view_state.data_grid_resize_state.get(cfg.id) or { DataGridResizeState{} }
+	mut runtime := w.view_state.data_grid_resize_state.get(grid_id) or { DataGridResizeState{} }
 	if runtime.last_click_col_id == col.id && runtime.last_click_frame > 0
 		&& e.frame_count - runtime.last_click_frame <= data_grid_resize_double_click_frames {
-		fit_width := data_grid_auto_fit_width(cfg, col, mut w)
-		data_grid_set_column_width(cfg.id, col, fit_width, mut w)
+		fit_width := data_grid_auto_fit_width(rows, text_style_header, text_style, padding_cell,
+			col, mut w)
+		data_grid_set_column_width(grid_id, col, fit_width, mut w)
 		runtime.active = false
 		runtime.last_click_frame = 0
 		runtime.last_click_col_id = ''
-		w.view_state.data_grid_resize_state.set(cfg.id, runtime)
+		w.view_state.data_grid_resize_state.set(grid_id, runtime)
 		e.is_handled = true
 		return
 	}
@@ -2535,12 +2556,11 @@ fn data_grid_start_resize(cfg DataGridCfg, col GridColumnCfg, focus_id u32, star
 	runtime.active = true
 	runtime.col_id = col.id
 	runtime.start_mouse_x = start_mouse_x
-	runtime.start_width = data_grid_column_width(cfg, col, mut w)
+	runtime.start_width = data_grid_column_width(grid_id, columns, col, mut w)
 	runtime.last_click_frame = e.frame_count
 	runtime.last_click_col_id = col.id
-	w.view_state.data_grid_resize_state.set(cfg.id, runtime)
+	w.view_state.data_grid_resize_state.set(grid_id, runtime)
 
-	grid_id := cfg.id
 	w.mouse_lock(MouseLockCfg{
 		mouse_move: fn [grid_id, col] (_ &Layout, mut e Event, mut w Window) {
 			data_grid_resize_drag(grid_id, col, mut e, mut w)
@@ -2574,17 +2594,17 @@ fn data_grid_end_resize(grid_id string, mut w Window) {
 	w.view_state.data_grid_resize_state.set(grid_id, runtime)
 }
 
-fn data_grid_auto_fit_width(cfg DataGridCfg, col GridColumnCfg, mut w Window) f32 {
-	mut longest := text_width(col.title, cfg.text_style_header, mut w)
-	style := col.text_style or { cfg.text_style }
-	for row in cfg.rows {
+fn data_grid_auto_fit_width(rows []GridRow, text_style_header TextStyle, text_style TextStyle, padding_cell Padding, col GridColumnCfg, mut w Window) f32 {
+	mut longest := text_width(col.title, text_style_header, mut w)
+	style := col.text_style or { text_style }
+	for row in rows {
 		value := row.cells[col.id] or { '' }
 		width := text_width(value, style, mut w)
 		if width > longest {
 			longest = width
 		}
 	}
-	return data_grid_clamp_width(col, longest + cfg.padding_cell.width() + data_grid_autofit_padding)
+	return data_grid_clamp_width(col, longest + padding_cell.width() + data_grid_autofit_padding)
 }
 
 fn make_data_grid_on_char(cfg DataGridCfg, columns []GridColumnCfg) fn (&Layout, mut Event, mut Window) {
@@ -2629,13 +2649,24 @@ fn make_data_grid_on_mouse_move(grid_id string) fn (&Layout, mut Event, mut Wind
 }
 
 fn make_data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_count int, grid_focus_id u32) fn (&Layout, mut Event, mut Window) {
-	return fn [cfg, col, col_idx, col_count, grid_focus_id] (_ &Layout, mut e Event, mut w Window) {
-		data_grid_header_on_keydown(cfg, col, col_idx, col_count, grid_focus_id, mut e, mut
-			w)
+	grid_id := cfg.id
+	columns := cfg.columns
+	column_order := cfg.column_order
+	hidden_column_ids := cfg.hidden_column_ids.clone()
+	query := cfg.query
+	multi_sort := cfg.multi_sort
+	on_query_change := cfg.on_query_change
+	on_column_order_change := cfg.on_column_order_change
+	on_column_pin_change := cfg.on_column_pin_change
+	header_focus_base := data_grid_header_focus_base_id(cfg, col_count)
+	return fn [grid_id, columns, column_order, hidden_column_ids, query, multi_sort, on_query_change, on_column_order_change, on_column_pin_change, header_focus_base, col, col_idx, col_count, grid_focus_id] (_ &Layout, mut e Event, mut w Window) {
+		data_grid_header_on_keydown(grid_id, columns, column_order, hidden_column_ids,
+			query, multi_sort, on_query_change, on_column_order_change, on_column_pin_change,
+			header_focus_base, col, col_idx, col_count, grid_focus_id, mut e, mut w)
 	}
 }
 
-fn data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_count int, grid_focus_id u32, mut e Event, mut w Window) {
+fn data_grid_header_on_keydown(grid_id string, columns []GridColumnCfg, column_order []string, hidden_column_ids map[string]bool, query GridQueryState, multi_sort bool, on_query_change fn (GridQueryState, mut Event, mut Window), on_column_order_change fn ([]string, mut Event, mut Window), on_column_pin_change fn (string, GridColumnPin, mut Event, mut Window), header_focus_base u32, col GridColumnCfg, col_idx int, col_count int, grid_focus_id u32, mut e Event, mut w Window) {
 	is_ctrl_or_super := e.modifiers.has(.ctrl) || e.modifiers.has(.super)
 	is_alt := e.modifiers.has(.alt)
 	is_shift := e.modifiers.has(.shift)
@@ -2643,15 +2674,17 @@ fn data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx int, 
 	match e.key_code {
 		.enter, .space {
 			if e.modifiers == .none || e.modifiers == .shift {
-				data_grid_header_toggle_sort(cfg, col, mut e, mut w)
+				data_grid_header_toggle_sort(query, multi_sort, on_query_change, col, mut
+					e, mut w)
 			}
 			return
 		}
 		.left, .right {
 			if is_ctrl_or_super {
 				delta := if e.key_code == .left { -1 } else { 1 }
-				data_grid_header_reorder_by_key(cfg, col, col_count, delta, mut e, mut
-					w)
+				data_grid_header_reorder_by_key(columns, column_order, hidden_column_ids,
+					on_column_order_change, header_focus_base, col, col_count, delta, mut
+					e, mut w)
 				return
 			}
 			if is_alt {
@@ -2661,14 +2694,16 @@ fn data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx int, 
 					data_grid_resize_key_step
 				}
 				delta := if e.key_code == .left { -step } else { step }
-				data_grid_header_resize_by_key(cfg, col, delta, mut e, mut w)
+				data_grid_header_resize_by_key(grid_id, columns, col, delta, mut e, mut
+					w)
 				return
 			}
 			if e.modifiers == .none {
 				next_idx := int_clamp(col_idx + if e.key_code == .left { -1 } else { 1 },
 					0, col_count - 1)
 				if next_idx != col_idx {
-					next_focus_id := data_grid_header_focus_id(cfg, col_count, next_idx)
+					next_focus_id := data_grid_header_focus_id_from_base(header_focus_base,
+						col_count, next_idx)
 					if next_focus_id > 0 {
 						w.set_id_focus(next_focus_id)
 					}
@@ -2679,7 +2714,9 @@ fn data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx int, 
 		}
 		.p {
 			if e.modifiers == .none {
-				data_grid_header_pin_by_key(cfg, col, col_count, mut e, mut w)
+				data_grid_header_pin_by_key(columns, column_order, hidden_column_ids,
+					on_column_pin_change, header_focus_base, col, col_count, mut e, mut
+					w)
 			}
 			return
 		}
@@ -2696,31 +2733,32 @@ fn data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx int, 
 	}
 }
 
-fn data_grid_header_toggle_sort(cfg DataGridCfg, col GridColumnCfg, mut e Event, mut w Window) {
-	if !col.sortable || cfg.on_query_change == unsafe { nil } {
+fn data_grid_header_toggle_sort(query GridQueryState, multi_sort bool, on_query_change fn (GridQueryState, mut Event, mut Window), col GridColumnCfg, mut e Event, mut w Window) {
+	if !col.sortable || on_query_change == unsafe { nil } {
 		return
 	}
-	shift_sort := cfg.multi_sort && e.modifiers.has(.shift)
-	next := data_grid_toggle_sort(cfg.query, col.id, cfg.multi_sort, shift_sort)
-	cfg.on_query_change(next, mut e, mut w)
+	shift_sort := multi_sort && e.modifiers.has(.shift)
+	next := data_grid_toggle_sort(query, col.id, multi_sort, shift_sort)
+	on_query_change(next, mut e, mut w)
 	e.is_handled = true
 }
 
-fn data_grid_header_reorder_by_key(cfg DataGridCfg, col GridColumnCfg, col_count int, delta int, mut e Event, mut w Window) {
-	if !col.reorderable || cfg.on_column_order_change == unsafe { nil } {
+fn data_grid_header_reorder_by_key(columns []GridColumnCfg, column_order []string, hidden_column_ids map[string]bool, on_column_order_change fn ([]string, mut Event, mut Window), header_focus_base u32, col GridColumnCfg, col_count int, delta int, mut e Event, mut w Window) {
+	if !col.reorderable || on_column_order_change == unsafe { nil } {
 		return
 	}
-	base_order := data_grid_normalized_column_order(cfg.columns, cfg.column_order)
+	base_order := data_grid_normalized_column_order(columns, column_order)
 	next_order := grid_column_order_move(base_order, col.id, delta)
 	if next_order == base_order {
 		e.is_handled = true
 		return
 	}
-	cfg.on_column_order_change(next_order, mut e, mut w)
-	next_idx := data_grid_effective_index_for_column_with_order(cfg.columns, cfg.hidden_column_ids,
+	on_column_order_change(next_order, mut e, mut w)
+	next_idx := data_grid_effective_index_for_column_with_order(columns, hidden_column_ids,
 		next_order, col.id)
 	if next_idx >= 0 {
-		next_focus_id := data_grid_header_focus_id(cfg, col_count, next_idx)
+		next_focus_id := data_grid_header_focus_id_from_base(header_focus_base, col_count,
+			next_idx)
 		if next_focus_id > 0 {
 			w.set_id_focus(next_focus_id)
 		}
@@ -2728,25 +2766,26 @@ fn data_grid_header_reorder_by_key(cfg DataGridCfg, col GridColumnCfg, col_count
 	e.is_handled = true
 }
 
-fn data_grid_header_resize_by_key(cfg DataGridCfg, col GridColumnCfg, delta f32, mut e Event, mut w Window) {
+fn data_grid_header_resize_by_key(grid_id string, columns []GridColumnCfg, col GridColumnCfg, delta f32, mut e Event, mut w Window) {
 	if !col.resizable {
 		return
 	}
-	current := data_grid_column_width(cfg, col, mut w)
-	data_grid_set_column_width(cfg.id, col, current + delta, mut w)
+	current := data_grid_column_width(grid_id, columns, col, mut w)
+	data_grid_set_column_width(grid_id, col, current + delta, mut w)
 	e.is_handled = true
 }
 
-fn data_grid_header_pin_by_key(cfg DataGridCfg, col GridColumnCfg, col_count int, mut e Event, mut w Window) {
-	if cfg.on_column_pin_change == unsafe { nil } {
+fn data_grid_header_pin_by_key(columns []GridColumnCfg, column_order []string, hidden_column_ids map[string]bool, on_column_pin_change fn (string, GridColumnPin, mut Event, mut Window), header_focus_base u32, col GridColumnCfg, col_count int, mut e Event, mut w Window) {
+	if on_column_pin_change == unsafe { nil } {
 		return
 	}
 	next_pin := grid_column_next_pin(col.pin)
-	cfg.on_column_pin_change(col.id, next_pin, mut e, mut w)
-	next_idx := data_grid_effective_index_for_column_with_pin(cfg.columns, cfg.column_order,
-		cfg.hidden_column_ids, col.id, next_pin)
+	on_column_pin_change(col.id, next_pin, mut e, mut w)
+	next_idx := data_grid_effective_index_for_column_with_pin(columns, column_order, hidden_column_ids,
+		col.id, next_pin)
 	if next_idx >= 0 {
-		next_focus_id := data_grid_header_focus_id(cfg, col_count, next_idx)
+		next_focus_id := data_grid_header_focus_id_from_base(header_focus_base, col_count,
+			next_idx)
 		if next_focus_id > 0 {
 			w.set_id_focus(next_focus_id)
 		}
@@ -3449,8 +3488,15 @@ fn data_grid_spreadsheet_safe_text(value string) string {
 }
 
 fn data_grid_tsv_escape(value string) string {
-	mut out := value.replace_each(['\r\n', ' ', '\n', ' ', '\r', ' ', '\t', ' '])
-	return out.trim_space()
+	if value.len == 0 {
+		return ''
+	}
+	needs_quotes := value.contains('\t') || value.contains('"') || value.contains('\n')
+		|| value.contains('\r')
+	if !needs_quotes {
+		return value
+	}
+	return '"' + value.replace('"', '""') + '"'
 }
 
 fn data_grid_csv_escape(value string) string {
@@ -3458,7 +3504,7 @@ fn data_grid_csv_escape(value string) string {
 		return ''
 	}
 	needs_quotes := value.contains(',') || value.contains('"') || value.contains('\n')
-		|| value.contains('\r')
+		|| value.contains('\r') || value.contains('\t')
 	if !needs_quotes {
 		return value
 	}
@@ -4408,6 +4454,13 @@ fn data_grid_header_focus_id(cfg DataGridCfg, col_count int, col_idx int) u32 {
 	return base + u32(col_idx)
 }
 
+fn data_grid_header_focus_id_from_base(base u32, col_count int, col_idx int) u32 {
+	if base == 0 || col_count <= 0 || col_idx < 0 || col_idx >= col_count {
+		return 0
+	}
+	return base + u32(col_idx)
+}
+
 fn data_grid_header_focus_index(cfg DataGridCfg, col_count int, focus_id u32) int {
 	if col_count <= 0 || focus_id == 0 {
 		return -1
@@ -4748,14 +4801,14 @@ fn grid_query_filter_value(query GridQueryState, col_id string) string {
 // back to column config defaults. Clamps each width to
 // [min_width, max_width]. Prunes stale entries for removed
 // columns. Writes back to cache only if changed.
-fn data_grid_column_widths(cfg DataGridCfg, mut w Window) map[string]f32 {
-	mut widths := if cached := w.view_state.data_grid_col_widths.get(cfg.id) {
+fn data_grid_column_widths(grid_id string, columns []GridColumnCfg, mut w Window) map[string]f32 {
+	mut widths := if cached := w.view_state.data_grid_col_widths.get(grid_id) {
 		cached.widths.clone()
 	} else {
 		map[string]f32{}
 	}
 	mut changed := false
-	for col in cfg.columns {
+	for col in columns {
 		if col.id.len == 0 {
 			continue
 		}
@@ -4767,7 +4820,7 @@ fn data_grid_column_widths(cfg DataGridCfg, mut w Window) map[string]f32 {
 		}
 	}
 	mut col_ids := map[string]bool{}
-	for col in cfg.columns {
+	for col in columns {
 		if col.id.len > 0 {
 			col_ids[col.id] = true
 		}
@@ -4778,16 +4831,16 @@ fn data_grid_column_widths(cfg DataGridCfg, mut w Window) map[string]f32 {
 			changed = true
 		}
 	}
-	if changed || !w.view_state.data_grid_col_widths.contains(cfg.id) {
-		w.view_state.data_grid_col_widths.set(cfg.id, &DataGridColWidths{
+	if changed || !w.view_state.data_grid_col_widths.contains(grid_id) {
+		w.view_state.data_grid_col_widths.set(grid_id, &DataGridColWidths{
 			widths: widths.clone()
 		})
 	}
 	return widths
 }
 
-fn data_grid_column_width(cfg DataGridCfg, col GridColumnCfg, mut w Window) f32 {
-	widths := data_grid_column_widths(cfg, mut w)
+fn data_grid_column_width(grid_id string, columns []GridColumnCfg, col GridColumnCfg, mut w Window) f32 {
+	widths := data_grid_column_widths(grid_id, columns, mut w)
 	return data_grid_column_width_for(col, widths)
 }
 
@@ -4827,13 +4880,14 @@ fn data_grid_clamp_width(col GridColumnCfg, width f32) f32 {
 // Computes pagination tuple (start, end, pageIndex,
 // pageCount). page_count rounds up. page_index clamped to
 // valid range. Returns [start, end) as half-open interval.
-fn data_grid_page_bounds(total_rows int, page_size int, requested_page int) (int, int, int, int) {
+fn data_grid_page_bounds(total_rows int, page_size_ int, requested_page int) (int, int, int, int) {
 	if total_rows <= 0 {
 		return 0, 0, 0, 1
 	}
-	if page_size <= 0 {
+	if page_size_ <= 0 {
 		return 0, total_rows, 0, 1
 	}
+	page_size := int_min(page_size_, total_rows)
 	page_count := int_max(1, int((total_rows + page_size - 1) / page_size))
 	page_index := int_clamp(requested_page, 0, page_count - 1)
 	start := page_index * page_size
@@ -4868,6 +4922,10 @@ fn data_grid_index_in_list(values []int, target int) int {
 	return -1
 }
 
+// Returns stable row ID. Falls back to auto-generated
+// content hash, then index. WARNING: index-based fallback
+// breaks selection, editing, and detail expansion after
+// sort/filter. Always set GridRow.id for correct behavior.
 fn data_grid_row_id(row GridRow, idx int) string {
 	if row.id.len > 0 {
 		return row.id
