@@ -46,14 +46,19 @@ fn data_grid_source_apply_local_mutation(grid_id string, rows []GridRow, row_cou
 	window.view_state.data_grid_source_state.set(grid_id, state)
 }
 
+fn data_grid_source_cancel_active(mut state DataGridSourceState) {
+	if !state.loading || isnil(state.active_abort) {
+		return
+	}
+	mut active := state.active_abort
+	active.abort()
+	state.cancelled_count++
+}
+
 fn data_grid_source_force_refetch(grid_id string, mut window Window) {
 	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
-	if state.loading && !isnil(state.active_abort) {
-		mut active := state.active_abort
-		active.abort()
-		state.cancelled_count++
-		state.loading = false
-	}
+	data_grid_source_cancel_active(mut state)
+	state.loading = false
 	state.request_key = ''
 	state.load_error = ''
 	state.caps_cached = false
@@ -171,11 +176,10 @@ fn data_grid_source_apply_pending_jump_selection(cfg DataGridCfg, state DataGrid
 }
 
 fn data_grid_source_apply_query_reset(mut state DataGridSourceState, cfg DataGridCfg, query_sig string) {
-	query_signature := query_sig
-	if query_signature == state.query_signature {
+	if query_sig == state.query_signature {
 		return
 	}
-	state.query_signature = query_signature
+	state.query_signature = query_sig
 	state.current_cursor = cfg.cursor
 	state.next_cursor = ''
 	state.prev_cursor = ''
@@ -228,11 +232,7 @@ fn data_grid_source_request_key(cfg DataGridCfg, state DataGridSourceState, kind
 
 fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, kind GridPaginationKind, request_key string, mut state DataGridSourceState, mut window Window) {
 	source := cfg.data_source or { return }
-	if state.loading && !isnil(state.active_abort) {
-		mut active := state.active_abort
-		active.abort()
-		state.cancelled_count++
-	}
+	data_grid_source_cancel_active(mut state)
 	limit := data_grid_page_limit(cfg)
 	controller := new_grid_abort_controller()
 	next_request_id := state.request_id + 1

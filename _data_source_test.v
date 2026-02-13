@@ -464,10 +464,10 @@ fn test_in_memory_source_row_count_unknown() {
 }
 
 fn test_next_mutation_row_id_returns_error_on_exhaustion() {
-	// Build 100_000 rows with IDs "100001".."200000".
-	// rows.len=100_000, so candidates="100001".."200000",
+	// Build 1000 rows with IDs "1001".."2000".
+	// rows.len=1000, so candidates="1001".."2000",
 	// all of which already exist in the map.
-	n := 100_000
+	n := 1000
 	mut rows := []GridRow{cap: n}
 	mut existing := map[string]bool{}
 	for i in 0 .. n {

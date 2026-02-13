@@ -404,20 +404,68 @@ fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow 
 	if query.sorts.len == 0 {
 		return filtered
 	}
-	sorts := query.sorts
-	filtered.sort_with_compare(fn [sorts] (a &GridRow, b &GridRow) int {
-		for sort in sorts {
-			a_value := a.cells[sort.col_id] or { '' }
-			b_value := b.cells[sort.col_id] or { '' }
-			if a_value == b_value {
-				continue
-			}
-			cmp := if a_value < b_value { -1 } else { 1 }
-			return if sort.dir == .asc { cmp } else { -cmp }
+	n := filtered.len
+	mut idxs := []int{len: n, init: index}
+	if query.sorts.len == 1 {
+		// Single-sort fast path: one key array, no inner loop.
+		sort0 := query.sorts[0]
+		keys := []string{len: n, init: filtered[index].cells[sort0.col_id] or { '' }}
+		if sort0.dir == .asc {
+			idxs.sort_with_compare(fn [keys] (ia &int, ib &int) int {
+				ka := keys[*ia]
+				kb := keys[*ib]
+				if ka < kb {
+					return -1
+				}
+				if ka > kb {
+					return 1
+				}
+				return 0
+			})
+		} else {
+			idxs.sort_with_compare(fn [keys] (ia &int, ib &int) int {
+				ka := keys[*ia]
+				kb := keys[*ib]
+				if ka > kb {
+					return -1
+				}
+				if ka < kb {
+					return 1
+				}
+				return 0
+			})
 		}
-		return 0
-	})
-	return filtered
+	} else {
+		// Multi-sort: pre-extract key columns.
+		sorts := query.sorts
+		mut key_cols := [][]string{len: sorts.len}
+		for si, sort in sorts {
+			mut col := []string{len: n}
+			for i, row in filtered {
+				col[i] = row.cells[sort.col_id] or { '' }
+			}
+			key_cols[si] = col
+		}
+		idxs.sort_with_compare(fn [sorts, key_cols] (ia &int, ib &int) int {
+			a := *ia
+			b := *ib
+			for si, sort in sorts {
+				ka := key_cols[si][a]
+				kb := key_cols[si][b]
+				if ka == kb {
+					continue
+				}
+				cmp := if ka < kb { -1 } else { 1 }
+				return if sort.dir == .asc { cmp } else { -cmp }
+			}
+			return 0
+		})
+	}
+	mut result := []GridRow{len: n}
+	for i, idx in idxs {
+		result[i] = filtered[idx]
+	}
+	return result
 }
 
 @[minify]
@@ -538,16 +586,46 @@ fn grid_query_signature(query GridQueryState) string {
 	// Sorts: preserve order (primary/secondary priority matters).
 	out.write_string('|s:')
 	for sort in query.sorts {
-		dir := if sort.dir == .desc { 'd' } else { 'a' }
-		out.write_string('${sort.col_id}:${dir};')
+		out.write_string(sort.col_id)
+		out.write_u8(`:`)
+		out.write_u8(if sort.dir == .desc { `d` } else { `a` })
+		out.write_u8(`;`)
 	}
 	// Filters: sort by col_id for stable signature
 	// (AND-combined, so order is semantically irrelevant).
 	out.write_string('|f:')
-	mut sorted_filters := query.filters.clone()
-	sorted_filters.sort(a.col_id < b.col_id)
-	for filter in sorted_filters {
-		out.write_string('${filter.col_id}:${filter.op}:${filter.value};')
+	if query.filters.len <= 1 {
+		for filter in query.filters {
+			out.write_string(filter.col_id)
+			out.write_u8(`:`)
+			out.write_string(filter.op)
+			out.write_u8(`:`)
+			out.write_string(filter.value)
+			out.write_u8(`;`)
+		}
+	} else {
+		filters := query.filters
+		mut idxs := []int{len: filters.len, init: index}
+		idxs.sort_with_compare(fn [filters] (ia &int, ib &int) int {
+			fa := filters[*ia].col_id
+			fb := filters[*ib].col_id
+			if fa < fb {
+				return -1
+			}
+			if fa > fb {
+				return 1
+			}
+			return 0
+		})
+		for i in idxs {
+			filter := query.filters[i]
+			out.write_string(filter.col_id)
+			out.write_u8(`:`)
+			out.write_string(filter.op)
+			out.write_u8(`:`)
+			out.write_string(filter.value)
+			out.write_u8(`;`)
+		}
 	}
 	return out.str()
 }
@@ -594,7 +672,7 @@ fn grid_data_source_apply_create(mut rows []GridRow, req_rows []GridRow) !GridMu
 }
 
 fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits []GridCellEdit) !GridMutationApplyResult {
-	mut updated := []GridRow{}
+	mut updated := []GridRow{cap: req_rows.len}
 	mut updated_ids := map[string]bool{}
 	// Group edits by row_id for single-pass application.
 	mut edits_by_row := map[string][]GridCellEdit{}
@@ -693,7 +771,7 @@ fn grid_data_source_next_create_row_id(rows []GridRow, existing map[string]bool,
 	if id.len > 0 && !existing[id] {
 		return id
 	}
-	cap := rows.len + 100_000
+	cap := rows.len + 1000
 	mut next := rows.len + 1
 	for next <= cap {
 		candidate := '${next}'
