@@ -228,25 +228,8 @@ pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDa
 }
 
 pub fn (mut source InMemoryCursorDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
-	if grid_data_mutation_is_aborted(req) {
-		return error('request aborted')
-	}
-	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
-		return error('request aborted')
-	}
-	mut rows := source.rows.clone()
-	result := grid_data_source_apply_mutation(mut rows, req.kind, req.rows, req.row_ids,
-		req.edits)!
-	if grid_data_mutation_is_aborted(req) {
-		return error('request aborted')
-	}
-	source.rows = rows
-	return GridMutationResult{
-		created:     result.created.clone()
-		updated:     result.updated.clone()
-		deleted_ids: result.deleted_ids.clone()
-		row_count:   if source.row_count_known { ?int(source.rows.len) } else { none }
-	}
+	return grid_data_source_inmemory_mutate(mut source.rows, source.latency_ms, source.row_count_known,
+		req)
 }
 
 @[heap; minify]
@@ -315,24 +298,29 @@ pub fn (source InMemoryOffsetDataSource) fetch_data(req GridDataRequest) !GridDa
 }
 
 pub fn (mut source InMemoryOffsetDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
+	return grid_data_source_inmemory_mutate(mut source.rows, source.latency_ms, source.row_count_known,
+		req)
+}
+
+fn grid_data_source_inmemory_mutate(mut rows []GridRow, latency_ms int, row_count_known bool, req GridMutationRequest) !GridMutationResult {
 	if grid_data_mutation_is_aborted(req) {
 		return error('request aborted')
 	}
-	if grid_data_source_sleep_with_abort(req.signal, source.latency_ms) {
+	if grid_data_source_sleep_with_abort(req.signal, latency_ms) {
 		return error('request aborted')
 	}
-	mut rows := source.rows.clone()
-	result := grid_data_source_apply_mutation(mut rows, req.kind, req.rows, req.row_ids,
+	mut work := rows.clone()
+	result := grid_data_source_apply_mutation(mut work, req.kind, req.rows, req.row_ids,
 		req.edits)!
 	if grid_data_mutation_is_aborted(req) {
 		return error('request aborted')
 	}
-	source.rows = rows
+	rows = unsafe { work }
 	return GridMutationResult{
-		created:     result.created.clone()
-		updated:     result.updated.clone()
-		deleted_ids: result.deleted_ids.clone()
-		row_count:   if source.row_count_known { ?int(source.rows.len) } else { none }
+		created:     result.created
+		updated:     result.updated
+		deleted_ids: result.deleted_ids
+		row_count:   if row_count_known { ?int(rows.len) } else { none }
 	}
 }
 
@@ -408,7 +396,16 @@ fn grid_data_source_is_decimal(input string) bool {
 }
 
 fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow {
-	mut filtered := rows.filter(grid_data_source_row_matches_query(it, query))
+	needle := query.quick_filter.to_lower()
+	mut lowered_filters := []GridFilterLowered{cap: query.filters.len}
+	for filter in query.filters {
+		lowered_filters << GridFilterLowered{
+			col_id: filter.col_id
+			op:     filter.op
+			value:  filter.value.to_lower()
+		}
+	}
+	mut filtered := rows.filter(grid_data_source_row_matches_query(it, needle, lowered_filters))
 	if query.sorts.len == 0 {
 		return filtered
 	}
@@ -430,9 +427,15 @@ fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow 
 	return filtered
 }
 
-fn grid_data_source_row_matches_query(row GridRow, query GridQueryState) bool {
-	if query.quick_filter.len > 0 {
-		needle := query.quick_filter.to_lower()
+@[minify]
+struct GridFilterLowered {
+	col_id string
+	op     string
+	value  string
+}
+
+fn grid_data_source_row_matches_query(row GridRow, needle string, filters []GridFilterLowered) bool {
+	if needle.len > 0 {
 		mut matched := false
 		for _, value in row.cells {
 			if value.to_lower().contains(needle) {
@@ -444,15 +447,13 @@ fn grid_data_source_row_matches_query(row GridRow, query GridQueryState) bool {
 			return false
 		}
 	}
-	for filter in query.filters {
-		cell := row.cells[filter.col_id] or { '' }
-		value := filter.value.to_lower()
-		cell_lower := cell.to_lower()
+	for filter in filters {
+		cell_lower := (row.cells[filter.col_id] or { '' }).to_lower()
 		matched := match filter.op {
-			'equals' { cell_lower == value }
-			'starts_with' { cell_lower.starts_with(value) }
-			'ends_with' { cell_lower.ends_with(value) }
-			else { cell_lower.contains(value) }
+			'equals' { cell_lower == filter.value }
+			'starts_with' { cell_lower.starts_with(filter.value) }
+			'ends_with' { cell_lower.ends_with(filter.value) }
+			else { cell_lower.contains(filter.value) }
 		}
 		if !matched {
 			return false
@@ -619,8 +620,9 @@ fn grid_data_source_next_mutation_row_id(rows []GridRow, preferred_id string) st
 	for idx, row in rows {
 		existing[data_grid_row_id(row, idx)] = true
 	}
+	cap := rows.len + 100_000
 	mut next := rows.len + 1
-	for {
+	for next <= cap {
 		candidate := '${next}'
 		if !existing[candidate] {
 			return candidate

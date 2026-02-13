@@ -122,7 +122,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 				return error('request aborted')
 			}
 			GridMutationResult{
-				created: created.clone()
+				created: created
 			}
 		}
 		.update {
@@ -134,7 +134,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 				return error('request aborted')
 			}
 			GridMutationResult{
-				updated: updated.clone()
+				updated: updated
 			}
 		}
 		.delete {
@@ -161,7 +161,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 			}
 			mut deleted_ids := []string{}
 			if source.delete_many_fn != unsafe { nil } {
-				deleted_ids = source.delete_many_fn(ids.clone(), req.signal)!
+				deleted_ids = source.delete_many_fn(ids, req.signal)!
 			} else if source.delete_fn != unsafe { nil } {
 				mut out := []string{cap: ids.len}
 				for row_id in ids {
@@ -178,7 +178,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 				return error('request aborted')
 			}
 			GridMutationResult{
-				deleted_ids: deleted_ids.clone()
+				deleted_ids: deleted_ids
 			}
 		}
 	}
