@@ -83,6 +83,25 @@ fn test_grid_rows_to_tsv_with_header() {
 	assert tsv == 'Name\tAge\nAlice\t30\nBob\t25'
 }
 
+fn test_grid_rows_to_tsv_sanitizes_formulas() {
+	columns := [
+		GridColumnCfg{
+			id:    'danger'
+			title: 'Danger'
+		},
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'danger': '=2+2'
+			}
+		},
+	]
+	tsv := grid_rows_to_tsv(columns, rows)
+	assert tsv == "Danger\n'=2+2"
+}
+
 fn test_grid_rows_to_csv_quotes() {
 	columns := [
 		GridColumnCfg{
@@ -105,6 +124,46 @@ fn test_grid_rows_to_csv_quotes() {
 	]
 	csv := grid_rows_to_csv(columns, rows)
 	assert csv == 'Name,Note\n"Alice, Jr","He said ""hi"""'
+}
+
+fn test_grid_rows_to_csv_sanitizes_formulas() {
+	columns := [
+		GridColumnCfg{
+			id:    'danger'
+			title: 'Danger'
+		},
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'danger': '@cmd'
+			}
+		},
+	]
+	csv := grid_rows_to_csv(columns, rows)
+	assert csv == "Danger\n'@cmd"
+}
+
+fn test_grid_rows_to_csv_with_cfg_disable_sanitize() {
+	columns := [
+		GridColumnCfg{
+			id:    'danger'
+			title: 'Danger'
+		},
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'danger': '=2+2'
+			}
+		},
+	]
+	csv := grid_rows_to_csv_with_cfg(columns, rows, GridExportCfg{
+		sanitize_spreadsheet_formulas: false
+	})
+	assert csv == 'Danger\n=2+2'
 }
 
 fn test_grid_data_from_csv_basic() {
@@ -298,6 +357,24 @@ fn test_data_grid_jump_digits_and_target_parsing() {
 	if _ := data_grid_parse_jump_target('', 10) {
 		assert false
 	}
+}
+
+fn test_data_grid_apply_pending_local_jump_scroll_clears_missing_mapping() {
+	mut w := Window{}
+	cfg := DataGridCfg{
+		id:      'pending-jump-clear'
+		columns: []
+		rows:    [
+			GridRow{
+				id: '1'
+			},
+		]
+	}
+	w.view_state.data_grid_pending_jump_row.set(cfg.id, 0)
+	data_grid_apply_pending_local_jump_scroll(cfg, 120, 20, 0, 11, map[int]int{}, mut
+		w)
+	pending := w.view_state.data_grid_pending_jump_row.get(cfg.id) or { -1 }
+	assert pending == -1
 }
 
 fn test_data_grid_row_position_text_uses_page_start_without_selection() {
@@ -1249,7 +1326,57 @@ fn test_grid_rows_to_xlsx_file_contains_sheet() {
 	assert sheet.contains('SheetData') == false
 	assert sheet.contains('Name')
 	assert sheet.contains('Alice')
-	assert sheet.contains('<c r="B2"><v>30</v></c>')
+	assert sheet.contains('<c r="B2" t="inlineStr"><is><t>30</t></is></c>')
+}
+
+fn test_grid_rows_to_xlsx_file_with_cfg_auto_type() {
+	columns := [
+		GridColumnCfg{
+			id:    'age'
+			title: 'Age'
+		},
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'age': '30'
+			}
+		},
+	]
+	path := os.join_path(os.temp_dir(), 'data_grid_xlsx_typed_${time.now().unix_micro()}.xlsx')
+	defer {
+		os.rm(path) or {}
+	}
+	grid_rows_to_xlsx_file_with_cfg(path, columns, rows, GridExportCfg{
+		xlsx_auto_type: true
+	}) or { panic(err) }
+	sheet := zip_entry_text(path, 'xl/worksheets/sheet1.xml') or { panic(err) }
+	assert sheet.contains('<c r="A2"><v>30</v></c>')
+}
+
+fn test_grid_rows_to_xlsx_file_sanitizes_formulas() {
+	columns := [
+		GridColumnCfg{
+			id:    'danger'
+			title: 'Danger'
+		},
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'danger': '=2+2'
+			}
+		},
+	]
+	path := os.join_path(os.temp_dir(), 'data_grid_xlsx_safe_${time.now().unix_micro()}.xlsx')
+	defer {
+		os.rm(path) or {}
+	}
+	grid_rows_to_xlsx_file(path, columns, rows) or { panic(err) }
+	sheet := zip_entry_text(path, 'xl/worksheets/sheet1.xml') or { panic(err) }
+	assert sheet.contains('&apos;=2+2')
 }
 
 fn test_data_grid_crud_build_payload() {

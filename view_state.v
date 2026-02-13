@@ -169,15 +169,18 @@ mut:
 // DataGridCrudState stores staged CRUD state for a grid id.
 struct DataGridCrudState {
 mut:
-	source_signature u64
-	committed_rows   []GridRow
-	working_rows     []GridRow
-	dirty_row_ids    map[string]bool
-	draft_row_ids    map[string]bool
-	deleted_row_ids  map[string]bool
-	next_draft_seq   int
-	saving           bool
-	save_error       string
+	source_signature           u64
+	local_rows_len             int = -1
+	local_rows_id_signature    u64
+	local_rows_signature_valid bool
+	committed_rows             []GridRow
+	working_rows               []GridRow
+	dirty_row_ids              map[string]bool
+	draft_row_ids              map[string]bool
+	deleted_row_ids            map[string]bool
+	next_draft_seq             int
+	saving                     bool
+	save_error                 string
 }
 
 // DataGridSourceState stores async data-source runtime state per grid id.

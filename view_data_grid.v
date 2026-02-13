@@ -145,6 +145,13 @@ pub:
 }
 
 @[minify]
+pub struct GridExportCfg {
+pub:
+	sanitize_spreadsheet_formulas bool = true
+	xlsx_auto_type                bool
+}
+
+@[minify]
 pub struct GridCellFormat {
 pub:
 	has_bg_color   bool
@@ -566,6 +573,17 @@ fn data_grid_rows_signature(rows []GridRow) u64 {
 	return fnv1a.sum64_string(parts.join('\x1d'))
 }
 
+fn data_grid_rows_id_signature(rows []GridRow) u64 {
+	if rows.len == 0 {
+		return u64(0)
+	}
+	mut parts := []string{cap: rows.len}
+	for idx, row in rows {
+		parts << data_grid_row_id(row, idx)
+	}
+	return fnv1a.sum64_string(parts.join('\x1d'))
+}
+
 // CRUD uses a working copy of rows. When no unsaved changes
 // exist and the source signature changes, the working copy
 // resets to match the new source data. Signature is an
@@ -573,12 +591,27 @@ fn data_grid_rows_signature(rows []GridRow) u64 {
 fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, DataGridCrudState) {
 	mut state := window.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
 	// Use precomputed signature from source state when
-	// available; fall back to full computation for
-	// local-rows mode.
-	signature := if src_state := window.view_state.data_grid_source_state.get(cfg.id) {
-		src_state.rows_signature
+	// available. In local-rows mode, skip full signature
+	// recompute when row count and row-id signature are
+	// unchanged.
+	mut signature := u64(0)
+	if src_state := window.view_state.data_grid_source_state.get(cfg.id) {
+		signature = src_state.rows_signature
+		state.local_rows_signature_valid = false
+		state.local_rows_len = -1
+		state.local_rows_id_signature = 0
 	} else {
-		data_grid_rows_signature(cfg.rows)
+		local_len := cfg.rows.len
+		local_id_signature := data_grid_rows_id_signature(cfg.rows)
+		if state.local_rows_signature_valid && state.local_rows_len == local_len
+			&& state.local_rows_id_signature == local_id_signature {
+			signature = state.source_signature
+		} else {
+			signature = data_grid_rows_signature(cfg.rows)
+			state.local_rows_signature_valid = true
+			state.local_rows_len = local_len
+			state.local_rows_id_signature = local_id_signature
+		}
 	}
 	has_unsaved := data_grid_crud_has_unsaved(state)
 	if !has_unsaved
@@ -2899,25 +2932,6 @@ fn data_grid_scroll_row_into_view_ex(viewport_h f32, row_idx int, row_height f32
 	w.scroll_vertical_to(scroll_id, -next)
 }
 
-fn data_grid_handle_pager_key(cfg DataGridCfg, mut e Event, mut w Window) bool {
-	if cfg.on_page_change == unsafe { nil } || cfg.page_size <= 0 {
-		return false
-	}
-	_, _, page_index, page_count := data_grid_page_bounds(cfg.rows.len, cfg.page_size,
-		cfg.page_index)
-	if page_count <= 1 {
-		return false
-	}
-	next := data_grid_next_page_index_for_key(page_index, page_count, &e) or { return false }
-	if next == page_index {
-		e.is_handled = true
-		return true
-	}
-	cfg.on_page_change(next, mut e, mut w)
-	e.is_handled = true
-	return true
-}
-
 fn data_grid_next_page_index_for_key(page_index int, page_count int, e &Event) ?int {
 	if page_count <= 1 || page_index < 0 || page_index >= page_count {
 		return none
@@ -2998,15 +3012,21 @@ pub fn grid_data_from_csv(data string) !GridCsvData {
 
 // grid_rows_to_tsv converts rows to tab-separated text with a header row.
 pub fn grid_rows_to_tsv(columns []GridColumnCfg, rows []GridRow) string {
+	return grid_rows_to_tsv_with_cfg(columns, rows, GridExportCfg{})
+}
+
+// grid_rows_to_tsv_with_cfg converts rows to tab-separated text with a header row.
+pub fn grid_rows_to_tsv_with_cfg(columns []GridColumnCfg, rows []GridRow, export_cfg GridExportCfg) string {
 	if columns.len == 0 {
 		return ''
 	}
 	mut lines := []string{cap: rows.len + 1}
-	lines << columns.map(data_grid_tsv_escape(it.title)).join('\t')
+	lines << columns.map(data_grid_tsv_escape(data_grid_export_text(it.title, export_cfg))).join('\t')
 	for row in rows {
 		mut fields := []string{cap: columns.len}
 		for col in columns {
-			fields << data_grid_tsv_escape(row.cells[col.id] or { '' })
+			fields << data_grid_tsv_escape(data_grid_export_text(row.cells[col.id] or { '' },
+				export_cfg))
 		}
 		lines << fields.join('\t')
 	}
@@ -3015,15 +3035,21 @@ pub fn grid_rows_to_tsv(columns []GridColumnCfg, rows []GridRow) string {
 
 // grid_rows_to_csv converts rows to comma-separated text with a header row.
 pub fn grid_rows_to_csv(columns []GridColumnCfg, rows []GridRow) string {
+	return grid_rows_to_csv_with_cfg(columns, rows, GridExportCfg{})
+}
+
+// grid_rows_to_csv_with_cfg converts rows to comma-separated text with a header row.
+pub fn grid_rows_to_csv_with_cfg(columns []GridColumnCfg, rows []GridRow, export_cfg GridExportCfg) string {
 	if columns.len == 0 {
 		return ''
 	}
 	mut lines := []string{cap: rows.len + 1}
-	lines << columns.map(data_grid_csv_escape(it.title)).join(',')
+	lines << columns.map(data_grid_csv_escape(data_grid_export_text(it.title, export_cfg))).join(',')
 	for row in rows {
 		mut fields := []string{cap: columns.len}
 		for col in columns {
-			fields << data_grid_csv_escape(row.cells[col.id] or { '' })
+			fields << data_grid_csv_escape(data_grid_export_text(row.cells[col.id] or { '' },
+				export_cfg))
 		}
 		lines << fields.join(',')
 	}
@@ -3058,16 +3084,26 @@ pub fn grid_rows_to_pdf_file(path string, columns []GridColumnCfg, rows []GridRo
 
 // grid_rows_to_xlsx creates a minimal XLSX workbook and returns the file bytes.
 pub fn grid_rows_to_xlsx(columns []GridColumnCfg, rows []GridRow) ![]u8 {
+	return grid_rows_to_xlsx_with_cfg(columns, rows, GridExportCfg{})
+}
+
+// grid_rows_to_xlsx_with_cfg creates a minimal XLSX workbook and returns the file bytes.
+pub fn grid_rows_to_xlsx_with_cfg(columns []GridColumnCfg, rows []GridRow, export_cfg GridExportCfg) ![]u8 {
 	tmp_path := os.join_path(os.temp_dir(), 'gui_data_grid_${time.now().unix_micro()}.xlsx')
 	defer {
 		os.rm(tmp_path) or {}
 	}
-	grid_rows_to_xlsx_file(tmp_path, columns, rows)!
+	grid_rows_to_xlsx_file_with_cfg(tmp_path, columns, rows, export_cfg)!
 	return os.read_bytes(tmp_path)!
 }
 
 // grid_rows_to_xlsx_file writes a minimal XLSX workbook to `path`.
 pub fn grid_rows_to_xlsx_file(path string, columns []GridColumnCfg, rows []GridRow) ! {
+	grid_rows_to_xlsx_file_with_cfg(path, columns, rows, GridExportCfg{})!
+}
+
+// grid_rows_to_xlsx_file_with_cfg writes a minimal XLSX workbook to `path`.
+pub fn grid_rows_to_xlsx_file_with_cfg(path string, columns []GridColumnCfg, rows []GridRow, export_cfg GridExportCfg) ! {
 	target := path.trim_space()
 	if target.len == 0 {
 		return error('xlsx path is required')
@@ -3085,7 +3121,7 @@ pub fn grid_rows_to_xlsx_file(path string, columns []GridColumnCfg, rows []GridR
 	data_grid_xlsx_write_entry(mut zip, 'xl/workbook.xml', data_grid_xlsx_workbook_xml())!
 	data_grid_xlsx_write_entry(mut zip, 'xl/_rels/workbook.xml.rels', data_grid_xlsx_workbook_rels_xml())!
 	data_grid_xlsx_write_entry(mut zip, 'xl/worksheets/sheet1.xml', data_grid_xlsx_sheet_xml(columns,
-		rows))!
+		rows, export_cfg))!
 }
 
 fn data_grid_pdf_lines(columns []GridColumnCfg, rows []GridRow) []string {
@@ -3196,7 +3232,7 @@ fn data_grid_xlsx_workbook_rels_xml() string {
 		'</Relationships>'
 }
 
-fn data_grid_xlsx_sheet_xml(columns []GridColumnCfg, rows []GridRow) string {
+fn data_grid_xlsx_sheet_xml(columns []GridColumnCfg, rows []GridRow, export_cfg GridExportCfg) string {
 	cells_per_row := int_max(1, columns.len)
 	mut out := strings.new_builder(1024 + (rows.len + 1) * cells_per_row * 56)
 	out.write_string('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n')
@@ -3205,7 +3241,8 @@ fn data_grid_xlsx_sheet_xml(columns []GridColumnCfg, rows []GridRow) string {
 		out.write_string('<row r="1">')
 		for col_idx, col in columns {
 			cell_ref := data_grid_xlsx_cell_ref(col_idx, 1)
-			out.write_string(data_grid_xlsx_string_cell_xml(cell_ref, col.title))
+			out.write_string(data_grid_xlsx_string_cell_xml(cell_ref, data_grid_export_text(col.title,
+				export_cfg)))
 		}
 		out.write_string('</row>')
 	}
@@ -3214,8 +3251,8 @@ fn data_grid_xlsx_sheet_xml(columns []GridColumnCfg, rows []GridRow) string {
 		out.write_string('<row r="${xml_row}">')
 		for col_idx, col in columns {
 			cell_ref := data_grid_xlsx_cell_ref(col_idx, xml_row)
-			value := row.cells[col.id] or { '' }
-			out.write_string(data_grid_xlsx_cell_xml(cell_ref, value))
+			value := data_grid_export_text(row.cells[col.id] or { '' }, export_cfg)
+			out.write_string(data_grid_xlsx_cell_xml(cell_ref, value, export_cfg))
 		}
 		out.write_string('</row>')
 	}
@@ -3223,7 +3260,10 @@ fn data_grid_xlsx_sheet_xml(columns []GridColumnCfg, rows []GridRow) string {
 	return out.bytestr()
 }
 
-fn data_grid_xlsx_cell_xml(cell_ref string, value string) string {
+fn data_grid_xlsx_cell_xml(cell_ref string, value string, export_cfg GridExportCfg) string {
+	if !export_cfg.xlsx_auto_type {
+		return data_grid_xlsx_string_cell_xml(cell_ref, value)
+	}
 	trimmed := value.trim_space()
 	if data_grid_xlsx_is_bool(trimmed) {
 		return '<c r="${cell_ref}" t="b"><v>${data_grid_xlsx_bool_value(trimmed)}</v></c>'
@@ -3305,6 +3345,30 @@ fn data_grid_xlsx_col_ref(col_idx int) string {
 		n = (n - 1) / 26
 	}
 	return label
+}
+
+fn data_grid_export_text(value string, export_cfg GridExportCfg) string {
+	if !export_cfg.sanitize_spreadsheet_formulas {
+		return value
+	}
+	return data_grid_spreadsheet_safe_text(value)
+}
+
+fn data_grid_spreadsheet_safe_text(value string) string {
+	if value.len == 0 {
+		return value
+	}
+	mut first := 0
+	for first < value.len && (value[first] == ` ` || value[first] == `\t`) {
+		first++
+	}
+	if first >= value.len {
+		return value
+	}
+	if value[first] in [`=`, `+`, `-`, `@`] {
+		return "'" + value
+	}
+	return value
 }
 
 fn data_grid_tsv_escape(value string) string {
@@ -4082,8 +4146,12 @@ fn data_grid_apply_pending_local_jump_scroll(cfg DataGridCfg, viewport_h f32, ro
 		w.view_state.data_grid_pending_jump_row.delete(cfg.id)
 		return
 	}
-	display_idx := data_to_display[target_idx] or { return }
+	display_idx := data_to_display[target_idx] or {
+		w.view_state.data_grid_pending_jump_row.delete(cfg.id)
+		return
+	}
 	if display_idx < 0 {
+		w.view_state.data_grid_pending_jump_row.delete(cfg.id)
 		return
 	}
 	data_grid_scroll_row_into_view_ex(viewport_h, display_idx, row_height, static_top,
