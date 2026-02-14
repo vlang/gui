@@ -611,6 +611,300 @@ fn test_grid_orm_direct_construction_resolved_column_map() {
 	}
 }
 
+fn test_build_sql_empty_spec() {
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	b := source.build_sql(GridOrmQuerySpec{
+		limit:  50
+		offset: 10
+	}) or { panic(err) }
+	assert b.where_sql == ''
+	assert b.order_sql == ''
+	assert b.limit_sql == 'limit ?'
+	assert b.offset_sql == 'offset ?'
+	// Only limit + offset params.
+	assert b.params.len == 2
+	assert b.params[0] == '50'
+	assert b.params[1] == '10'
+}
+
+fn test_build_sql_quick_filter_only() {
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	b := source.build_sql(GridOrmQuerySpec{
+		quick_filter: 'Ada'
+		limit:        100
+		offset:       0
+	}) or { panic(err) }
+	// Quick filter produces OR clause across quick_filter
+	// columns (name, team, email all have quick_filter: true).
+	assert b.where_sql.contains('(')
+	assert b.where_sql.contains(' or ')
+	assert b.where_sql.contains('lower(')
+	assert b.where_sql.contains('like ?')
+	// 3 quick_filter columns + limit + offset = 5 params.
+	assert b.params.len == 5
+	assert b.params[0] == '%ada%' || b.params[1] == '%ada%' || b.params[2] == '%ada%'
+}
+
+fn test_build_sql_column_filters() {
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	b := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'contains'
+				value:  'Alice'
+			},
+			GridFilter{
+				col_id: 'team'
+				op:     'equals'
+				value:  'Data'
+			},
+		]
+		limit:   100
+		offset:  0
+	}) or { panic(err) }
+	assert b.where_sql.contains('like ?')
+	assert b.where_sql.contains('= ?')
+	assert b.where_sql.contains(' and ')
+	// 2 filter params + limit + offset = 4.
+	assert b.params.len == 4
+	assert b.params[0] == '%alice%'
+	assert b.params[1] == 'data'
+}
+
+fn test_build_sql_case_sensitive() {
+	source := GridOrmDataSource{
+		columns:  [
+			GridOrmColumnSpec{
+				id:               'score'
+				db_field:         'score'
+				filterable:       true
+				case_insensitive: false
+				allowed_ops:      ['equals']
+			},
+		]
+		fetch_fn: orm_test_fetch_ok
+	}
+	b := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'score'
+				op:     'equals'
+				value:  '42'
+			},
+		]
+		limit:   10
+		offset:  0
+	}) or { panic(err) }
+	// Case-sensitive: no lower() wrapping.
+	assert !b.where_sql.contains('lower(')
+	assert b.where_sql.contains('score = ?')
+	assert b.params[0] == '42'
+}
+
+fn test_build_sql_case_insensitive() {
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	b := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'contains'
+				value:  'Alice'
+			},
+		]
+		limit:   10
+		offset:  0
+	}) or { panic(err) }
+	assert b.where_sql.contains('lower(')
+	assert b.params[0] == '%alice%'
+}
+
+fn test_build_sql_mixed_quick_and_column_filters() {
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	b := source.build_sql(GridOrmQuerySpec{
+		quick_filter: 'test'
+		filters:      [
+			GridFilter{
+				col_id: 'name'
+				op:     'starts_with'
+				value:  'A'
+			},
+		]
+		limit:        100
+		offset:       0
+	}) or { panic(err) }
+	// Quick filter OR clause AND column filter clause.
+	assert b.where_sql.contains('(')
+	assert b.where_sql.contains(' and ')
+	// 3 quick_filter params + 1 column filter + limit + offset.
+	assert b.params.len == 6
+}
+
+fn test_build_sql_sorts() {
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	b := source.build_sql(GridOrmQuerySpec{
+		sorts:  [
+			GridSort{
+				col_id: 'name'
+				dir:    .desc
+			},
+		]
+		limit:  100
+		offset: 0
+	}) or { panic(err) }
+	assert b.order_sql == 'users.name desc'
+}
+
+fn test_build_sql_params_ordering() {
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	b := source.build_sql(GridOrmQuerySpec{
+		quick_filter: 'x'
+		filters:      [
+			GridFilter{
+				col_id: 'name'
+				op:     'equals'
+				value:  'Bob'
+			},
+		]
+		limit:        25
+		offset:       50
+	}) or { panic(err) }
+	// Params order: quick_filter params, column filter params,
+	// limit, offset.
+	last := b.params.len
+	assert b.params[last - 2] == '25'
+	assert b.params[last - 1] == '50'
+}
+
+fn test_build_sql_invalid_columns_dropped() {
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	b := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'nonexistent'
+				op:     'contains'
+				value:  'x'
+			},
+		]
+		sorts:   [
+			GridSort{
+				col_id: 'nonexistent'
+				dir:    .asc
+			},
+		]
+		limit:   10
+		offset:  0
+	}) or { panic(err) }
+	assert b.where_sql == ''
+	assert b.order_sql == ''
+	// Only limit + offset.
+	assert b.params.len == 2
+}
+
+fn test_build_sql_filter_value_max_length_error() {
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	long_val := 'x'.repeat(grid_orm_max_filter_value_len + 1)
+	_ := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'contains'
+				value:  long_val
+			},
+		]
+		limit:   10
+		offset:  0
+	}) or {
+		assert err.msg().contains('max length')
+		return
+	}
+	assert false
+}
+
+fn test_build_sql_op_mapping() {
+	cols := [
+		GridOrmColumnSpec{
+			id:               'f'
+			db_field:         'field'
+			filterable:       true
+			case_insensitive: false
+		},
+	]
+	source := GridOrmDataSource{
+		columns:  cols
+		fetch_fn: orm_test_fetch_ok
+	}
+	// starts_with
+	b1 := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'f'
+				op:     'starts_with'
+				value:  'abc'
+			},
+		]
+		limit:   1
+		offset:  0
+	}) or { panic(err) }
+	assert b1.where_sql == 'field like ?'
+	assert b1.params[0] == 'abc%'
+	// ends_with
+	b2 := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'f'
+				op:     'ends_with'
+				value:  'xyz'
+			},
+		]
+		limit:   1
+		offset:  0
+	}) or { panic(err) }
+	assert b2.where_sql == 'field like ?'
+	assert b2.params[0] == '%xyz'
+	// contains (default)
+	b3 := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'f'
+				op:     'contains'
+				value:  'mid'
+			},
+		]
+		limit:   1
+		offset:  0
+	}) or { panic(err) }
+	assert b3.where_sql == 'field like ?'
+	assert b3.params[0] == '%mid%'
+}
+
 fn orm_test_fetch_ok(_ GridOrmQuerySpec, _ &GridAbortSignal) !GridOrmPage {
 	return GridOrmPage{}
 }

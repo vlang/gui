@@ -128,6 +128,8 @@ pub:
 	created     []GridRow
 	updated     []GridRow
 	deleted_ids []string
+	failed_ids  []string          // row IDs that failed in batch ops
+	errors      map[string]string // row_id -> error message
 	row_count   ?int
 }
 

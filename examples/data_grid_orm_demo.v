@@ -342,45 +342,20 @@ fn (mut fetcher SqliteGridOrmFetcher) fetch(spec gui.GridOrmQuerySpec, signal &g
 	defer {
 		fetcher.mutex.unlock()
 	}
-	mut where_parts := []string{}
-	mut params := []string{}
-	orm_demo_apply_quick_filter(spec, fetcher.columns, mut where_parts, mut params)
-	for filter in spec.filters {
-		col := fetcher.columns[filter.col_id] or { continue }
-		if !col.filterable {
-			continue
-		}
-		clause, value := orm_demo_filter_clause(col.db_field, filter.op, filter.value,
-			col.case_insensitive)
-		where_parts << clause
-		params << value
-	}
-	mut order_parts := []string{}
-	for sort in spec.sorts {
-		col := fetcher.columns[sort.col_id] or { continue }
-		if !col.sortable {
-			continue
-		}
-		dir := if sort.dir == .desc { 'desc' } else { 'asc' }
-		order_parts << '${col.db_field} ${dir}'
-	}
-	if order_parts.len == 0 {
-		order_parts << 'm.id asc'
-	}
+	b := gui.grid_orm_build_sql(spec, fetcher.columns)!
 	base_from := ' from members m join teams t on t.id = m.team_id'
-	where_sql := if where_parts.len > 0 {
-		' where ${where_parts.join(' and ')}'
+	where_sql := if b.where_sql.len > 0 { ' where ${b.where_sql}' } else { '' }
+	order_sql := if b.order_sql.len > 0 { b.order_sql } else { 'm.id asc' }
+	rows_sql := 'select m.id, m.name, t.name, m.email, m.status, m.active, m.score, m.start_date${base_from}${where_sql} order by ${order_sql} ${b.limit_sql} ${b.offset_sql}'
+	sql_rows := fetcher.db.exec_param_many(rows_sql, b.params)!
+	// Count query uses params without limit/offset (last 2).
+	count_params := if b.params.len >= 2 {
+		b.params[..b.params.len - 2]
 	} else {
-		''
+		[]string{}
 	}
-	order_sql := order_parts.join(', ')
-	rows_sql := 'select m.id, m.name, t.name, m.email, m.status, m.active, m.score, m.start_date${base_from}${where_sql} order by ${order_sql} limit ? offset ?'
-	mut row_params := params.clone()
-	row_params << spec.limit.str()
-	row_params << spec.offset.str()
-	sql_rows := fetcher.db.exec_param_many(rows_sql, row_params)!
 	count_sql := 'select count(*)${base_from}${where_sql}'
-	count_rows := fetcher.db.exec_param_many(count_sql, params)!
+	count_rows := fetcher.db.exec_param_many(count_sql, count_params)!
 	total := if count_rows.len > 0 && count_rows[0].vals.len > 0 {
 		count_rows[0].vals[0].int()
 	} else {
@@ -623,41 +598,6 @@ fn orm_demo_member_field(col_id string) string {
 fn orm_demo_parse_bool(input string) bool {
 	lower := input.trim_space().to_lower()
 	return lower in ['1', 'true', 't', 'yes', 'y', 'on']
-}
-
-fn orm_demo_apply_quick_filter(spec gui.GridOrmQuerySpec, columns map[string]gui.GridOrmColumnSpec, mut where_parts []string, mut params []string) {
-	needle := spec.quick_filter.trim_space()
-	if needle.len == 0 {
-		return
-	}
-	lower_needle := needle.to_lower()
-	mut or_parts := []string{}
-	for _, col in columns {
-		if !col.quick_filter {
-			continue
-		}
-		if col.case_insensitive {
-			or_parts << 'lower(${col.db_field}) like ?'
-			params << '%${lower_needle}%'
-			continue
-		}
-		or_parts << '${col.db_field} like ?'
-		params << '%${needle}%'
-	}
-	if or_parts.len > 0 {
-		where_parts << '(${or_parts.join(' or ')})'
-	}
-}
-
-fn orm_demo_filter_clause(field string, op string, value string, case_insensitive bool) (string, string) {
-	target_field := if case_insensitive { 'lower(${field})' } else { field }
-	target_value := if case_insensitive { value.to_lower() } else { value }
-	return match op {
-		'equals' { '${target_field} = ?', target_value }
-		'starts_with' { '${target_field} like ?', '${target_value}%' }
-		'ends_with' { '${target_field} like ?', '%${target_value}' }
-		else { '${target_field} like ?', '%${target_value}%' }
-	}
 }
 
 fn orm_demo_bool_text(input string) string {

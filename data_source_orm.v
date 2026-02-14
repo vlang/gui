@@ -384,6 +384,115 @@ fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, colu
 	}
 }
 
+@[minify]
+pub struct GridOrmSqlBuilder {
+pub:
+	where_sql  string   // e.g. "lower(name) like ? and status = ?"
+	order_sql  string   // e.g. "name desc, email asc"
+	limit_sql  string   // "limit ?"
+	offset_sql string   // "offset ?"
+	params     []string // ordered to match ? placeholders
+}
+
+// build_sql validates the query spec against the source's
+// columns and builds SQL fragments with parameterized
+// placeholders. Delegates to grid_orm_build_sql.
+pub fn (source GridOrmDataSource) build_sql(spec GridOrmQuerySpec) !GridOrmSqlBuilder {
+	column_map := source.resolved_column_map()!
+	return grid_orm_build_sql(spec, column_map)
+}
+
+// grid_orm_build_sql builds SQL fragments from a query spec
+// and pre-validated column map. No SQL keywords (WHERE,
+// ORDER BY) are included — caller composes the final query.
+// Use this when you have a column map but no GridOrmDataSource.
+pub fn grid_orm_build_sql(spec GridOrmQuerySpec, column_map map[string]GridOrmColumnSpec) !GridOrmSqlBuilder {
+	query := grid_orm_validate_query_with_map(GridQueryState{
+		quick_filter: spec.quick_filter
+		sorts:        spec.sorts
+		filters:      spec.filters
+	}, column_map)!
+	mut params := []string{}
+	mut where_parts := []string{}
+	qf := grid_orm_build_quick_filter(query.quick_filter, column_map, mut params)
+	if qf.len > 0 {
+		where_parts << qf
+	}
+	for filter in query.filters {
+		col := column_map[filter.col_id] or { continue }
+		clause := grid_orm_build_filter_clause(col.db_field, filter.op, filter.value,
+			col.case_insensitive, mut params)
+		where_parts << clause
+	}
+	order := grid_orm_build_order(query.sorts, column_map)
+	params << spec.limit.str()
+	params << spec.offset.str()
+	return GridOrmSqlBuilder{
+		where_sql:  where_parts.join(' and ')
+		order_sql:  order
+		limit_sql:  'limit ?'
+		offset_sql: 'offset ?'
+		params:     params
+	}
+}
+
+// grid_orm_build_quick_filter returns a parenthesized OR
+// clause for quick_filter columns, or empty string.
+fn grid_orm_build_quick_filter(needle string, columns map[string]GridOrmColumnSpec, mut params []string) string {
+	trimmed := needle.trim_space()
+	if trimmed.len == 0 {
+		return ''
+	}
+	lower_needle := trimmed.to_lower()
+	mut or_parts := []string{}
+	for _, col in columns {
+		if !col.quick_filter {
+			continue
+		}
+		if col.case_insensitive {
+			or_parts << 'lower(${col.db_field}) like ?'
+			params << '%${lower_needle}%'
+		} else {
+			or_parts << '${col.db_field} like ?'
+			params << '%${trimmed}%'
+		}
+	}
+	if or_parts.len == 0 {
+		return ''
+	}
+	return '(${or_parts.join(' or ')})'
+}
+
+// grid_orm_build_filter_clause returns a single WHERE clause
+// and appends the parameterized value.
+fn grid_orm_build_filter_clause(db_field string, op string, value string, case_insensitive bool, mut params []string) string {
+	target_field := if case_insensitive { 'lower(${db_field})' } else { db_field }
+	target_value := if case_insensitive { value.to_lower() } else { value }
+	clause, param := match op {
+		'equals' { '${target_field} = ?', target_value }
+		'starts_with' { '${target_field} like ?', '${target_value}%' }
+		'ends_with' { '${target_field} like ?', '%${target_value}' }
+		else { '${target_field} like ?', '%${target_value}%' }
+	}
+	params << param
+	return clause
+}
+
+// grid_orm_build_order returns comma-separated order terms
+// or empty string.
+fn grid_orm_build_order(sorts []GridSort, column_map map[string]GridOrmColumnSpec) string {
+	mut parts := []string{}
+	for sort in sorts {
+		col := column_map[sort.col_id] or { continue }
+		if !col.sortable {
+			continue
+		}
+		dir := if sort.dir == .desc { 'desc' } else { 'asc' }
+		parts << '${col.db_field} ${dir}'
+	}
+	return parts.join(', ')
+}
+
 // grid_orm_valid_db_field checks that a db_field contains only
 // alphanumeric chars, underscores, and at most one dot (for
 // table-qualified names like "table.column"). Must start with
