@@ -340,31 +340,15 @@ fn data_grid_source_apply_query(rows []GridRow, query GridQueryState) []GridRow 
 		// Single-sort fast path: one key array, no inner loop.
 		sort0 := query.sorts[0]
 		keys := []string{len: n, init: filtered[index].cells[sort0.col_id] or { '' }}
-		if sort0.dir == .asc {
-			idxs.sort_with_compare(fn [keys] (ia &int, ib &int) int {
-				ka := keys[*ia]
-				kb := keys[*ib]
-				if ka < kb {
-					return -1
-				}
-				if ka > kb {
-					return 1
-				}
+		dir := if sort0.dir == .asc { 1 } else { -1 }
+		idxs.sort_with_compare(fn [keys, dir] (ia &int, ib &int) int {
+			ka := keys[*ia]
+			kb := keys[*ib]
+			if ka == kb {
 				return 0
-			})
-		} else {
-			idxs.sort_with_compare(fn [keys] (ia &int, ib &int) int {
-				ka := keys[*ia]
-				kb := keys[*ib]
-				if ka > kb {
-					return -1
-				}
-				if ka < kb {
-					return 1
-				}
-				return 0
-			})
-		}
+			}
+			return if ka < kb { -dir } else { dir }
+		})
 	} else {
 		// Multi-sort: pre-extract key columns.
 		sorts := query.sorts
@@ -533,18 +517,9 @@ fn grid_query_signature(query GridQueryState) u64 {
 	// (AND-combined, so order is semantically irrelevant).
 	h = data_grid_fnv64_byte(h, `|`)
 	h = data_grid_fnv64_byte(h, `f`)
-	if query.filters.len <= 1 {
-		for filter in query.filters {
-			h = data_grid_fnv64_byte(h, 0x1e) // record_sep between filters
-			h = data_grid_fnv64_str(h, filter.col_id)
-			h = data_grid_fnv64_byte(h, 0x1f) // unit_sep between fields
-			h = data_grid_fnv64_str(h, filter.op)
-			h = data_grid_fnv64_byte(h, 0x1f)
-			h = data_grid_fnv64_str(h, filter.value)
-		}
-	} else {
-		filters := query.filters
-		mut idxs := []int{len: filters.len, init: index}
+	filters := query.filters
+	mut idxs := []int{len: filters.len, init: index}
+	if filters.len > 1 {
 		idxs.sort_with_compare(fn [filters] (ia &int, ib &int) int {
 			a := filters[*ia]
 			b := filters[*ib]
@@ -568,15 +543,15 @@ fn grid_query_signature(query GridQueryState) u64 {
 			}
 			return 0
 		})
-		for i in idxs {
-			filter := query.filters[i]
-			h = data_grid_fnv64_byte(h, 0x1e)
-			h = data_grid_fnv64_str(h, filter.col_id)
-			h = data_grid_fnv64_byte(h, 0x1f)
-			h = data_grid_fnv64_str(h, filter.op)
-			h = data_grid_fnv64_byte(h, 0x1f)
-			h = data_grid_fnv64_str(h, filter.value)
-		}
+	}
+	for i in idxs {
+		filter := filters[i]
+		h = data_grid_fnv64_byte(h, 0x1e)
+		h = data_grid_fnv64_str(h, filter.col_id)
+		h = data_grid_fnv64_byte(h, 0x1f)
+		h = data_grid_fnv64_str(h, filter.op)
+		h = data_grid_fnv64_byte(h, 0x1f)
+		h = data_grid_fnv64_str(h, filter.value)
 	}
 	return h
 }
