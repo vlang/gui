@@ -133,12 +133,14 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 	}, req.signal)!
 	grid_abort_check(req.signal)!
 	mut next_cursor := page.next_cursor
-	if next_cursor.len == 0 && page.has_more {
-		next_cursor = data_grid_source_cursor_from_index(offset + page.rows.len)
-	}
 	mut prev_cursor := page.prev_cursor
-	if prev_cursor.len == 0 {
-		prev_cursor = data_grid_source_prev_cursor(offset, limit)
+	if req.page is GridCursorPageReq {
+		if next_cursor.len == 0 && page.has_more {
+			next_cursor = data_grid_source_cursor_from_index(offset + page.rows.len)
+		}
+		if prev_cursor.len == 0 {
+			prev_cursor = data_grid_source_prev_cursor(offset, limit)
+		}
 	}
 	return GridDataResult{
 		rows:           page.rows
@@ -232,7 +234,6 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 		}
 	}
 	mut filters := []GridFilter{}
-	mut seen_filter := map[string]bool{}
 	for filter in query.filters {
 		if filter.value.len > grid_orm_max_filter_value_len {
 			return error('grid orm: filter value exceeds max length (${grid_orm_max_filter_value_len})')
@@ -245,11 +246,16 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 		if !grid_orm_column_allows_filter_op(col, op) {
 			continue
 		}
-		dedup_key := '${filter.col_id}\x00${op}'
-		if seen_filter[dedup_key] {
+		mut dup := false
+		for seen in filters {
+			if seen.col_id == filter.col_id && seen.op == op {
+				dup = true
+				break
+			}
+		}
+		if dup {
 			continue
 		}
-		seen_filter[dedup_key] = true
 		filters << GridFilter{
 			col_id: filter.col_id
 			op:     op
@@ -329,19 +335,10 @@ fn grid_orm_column_allows_filter_op(col GridOrmColumnSpec, op string) bool {
 	if op.len == 0 {
 		return false
 	}
-	// Use pre-normalized ops when available (from factory fn).
 	if col.normalized_ops.len > 0 {
 		return op in col.normalized_ops
 	}
-	if col.allowed_ops.len == 0 {
-		return op in grid_orm_default_filter_ops
-	}
-	for raw_op in col.allowed_ops {
-		if grid_orm_normalize_filter_op(raw_op) == op {
-			return true
-		}
-	}
-	return false
+	return op in grid_orm_default_filter_ops
 }
 
 // grid_orm_validate_mutation_columns rejects unknown columns

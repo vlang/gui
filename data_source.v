@@ -522,32 +522,42 @@ fn grid_query_signature(query GridQueryState) u64 {
 	h = data_grid_fnv64_byte(h, `|`)
 	h = data_grid_fnv64_byte(h, `f`)
 	filters := query.filters
-	mut idxs := []int{len: filters.len, init: index}
-	if filters.len > 1 {
-		idxs.sort_with_compare(fn [filters] (ia &int, ib &int) int {
-			a := filters[*ia]
-			b := filters[*ib]
-			if a.col_id < b.col_id {
-				return -1
-			}
-			if a.col_id > b.col_id {
-				return 1
-			}
-			if a.op < b.op {
-				return -1
-			}
-			if a.op > b.op {
-				return 1
-			}
-			if a.value < b.value {
-				return -1
-			}
-			if a.value > b.value {
-				return 1
-			}
-			return 0
-		})
+	if filters.len <= 1 {
+		// 0 or 1 filter: no sort needed, skip index alloc.
+		for filter in filters {
+			h = data_grid_fnv64_byte(h, 0x1e)
+			h = data_grid_fnv64_str(h, filter.col_id)
+			h = data_grid_fnv64_byte(h, 0x1f)
+			h = data_grid_fnv64_str(h, filter.op)
+			h = data_grid_fnv64_byte(h, 0x1f)
+			h = data_grid_fnv64_str(h, filter.value)
+		}
+		return h
 	}
+	mut idxs := []int{len: filters.len, init: index}
+	idxs.sort_with_compare(fn [filters] (ia &int, ib &int) int {
+		a := filters[*ia]
+		b := filters[*ib]
+		if a.col_id < b.col_id {
+			return -1
+		}
+		if a.col_id > b.col_id {
+			return 1
+		}
+		if a.op < b.op {
+			return -1
+		}
+		if a.op > b.op {
+			return 1
+		}
+		if a.value < b.value {
+			return -1
+		}
+		if a.value > b.value {
+			return 1
+		}
+		return 0
+	})
 	for i in idxs {
 		filter := filters[i]
 		h = data_grid_fnv64_byte(h, 0x1e)

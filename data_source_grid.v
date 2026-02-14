@@ -443,6 +443,9 @@ fn data_grid_source_jump_to_row(grid_id string, target_idx int, page_limit int, 
 		return
 	}
 	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	if state.loading {
+		return
+	}
 	state.pending_jump_row = target_idx
 	page_start := (target_idx / page_limit) * page_limit
 	if page_start != state.offset_start {

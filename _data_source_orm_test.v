@@ -175,8 +175,9 @@ fn test_grid_orm_data_source_fetch_data_maps_offset_request() {
 		})
 	}) or { panic(err) }
 	assert res.received_count == 3
+	// Offset requests: no auto-cursor generation.
 	assert res.next_cursor == ''
-	assert res.prev_cursor == 'i:1'
+	assert res.prev_cursor == ''
 	if total := res.row_count {
 		assert total == 200
 	} else {
