@@ -5,20 +5,6 @@ module gui
 const data_grid_fnv64_offset = u64(14695981039346656037)
 const data_grid_fnv64_prime = u64(1099511628211)
 
-fn data_grid_sorted_col_ids(columns []GridColumnCfg) []string {
-	if columns.len == 0 {
-		return []string{}
-	}
-	mut ids := []string{cap: columns.len}
-	for col in columns {
-		if col.id.len > 0 {
-			ids << col.id
-		}
-	}
-	ids.sort()
-	return ids
-}
-
 fn data_grid_crud_enabled(cfg DataGridCfg) bool {
 	return cfg.show_crud_toolbar
 }
@@ -112,26 +98,22 @@ fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, 
 			&& state.local_rows_id_signature == local_id_signature {
 			signature = state.source_signature
 		} else {
-			signature = data_grid_rows_signature(cfg.rows, data_grid_sorted_col_ids(cfg.columns))
+			signature = data_grid_rows_signature(cfg.rows, []string{})
 			state.local_rows_signature_valid = true
 			state.local_rows_len = local_len
 			state.local_rows_id_signature = local_id_signature
 		}
 	}
 	has_unsaved := data_grid_crud_has_unsaved(state)
-	if !has_unsaved
-		&& (state.source_signature != signature || state.working_rows.len != cfg.rows.len) {
+	if (!has_unsaved && (state.source_signature != signature
+		|| state.working_rows.len != cfg.rows.len))
+		|| (state.working_rows.len == 0 && state.committed_rows.len == 0 && cfg.rows.len > 0) {
 		state.committed_rows = cfg.rows.clone()
 		state.working_rows = state.committed_rows.clone()
 		state.source_signature = signature
 		state.dirty_row_ids = map[string]bool{}
 		state.draft_row_ids = map[string]bool{}
 		state.deleted_row_ids = map[string]bool{}
-	}
-	if state.working_rows.len == 0 && state.committed_rows.len == 0 && cfg.rows.len > 0 {
-		state.committed_rows = cfg.rows.clone()
-		state.working_rows = state.committed_rows.clone()
-		state.source_signature = signature
 	}
 	window.view_state.data_grid_crud_state.set(cfg.id, state)
 	mut load_error := cfg.load_error
@@ -531,7 +513,7 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 	if ctx.has_source {
 		mut source := ctx.data_source or {
 			state.saving = false
-			state.save_error = 'data source unavailable'
+			state.save_error = 'grid: data source unavailable'
 			w.view_state.data_grid_crud_state.set(grid_id, state)
 			return
 		}
@@ -539,7 +521,7 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 		if create_rows.len > 0 {
 			if !ctx.caps.supports_create {
 				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
-					w, snapshot_rows, 'create not supported')
+					w, snapshot_rows, 'grid: create not supported')
 				return
 			}
 			res_create := source.mutate_data(GridMutationRequest{
@@ -562,7 +544,7 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 		if update_edits.len > 0 {
 			if !ctx.caps.supports_update {
 				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
-					w, snapshot_rows, 'update not supported')
+					w, snapshot_rows, 'grid: update not supported')
 				return
 			}
 			res_update := source.mutate_data(GridMutationRequest{
@@ -584,7 +566,7 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 		if delete_ids.len > 0 {
 			if !ctx.caps.supports_delete {
 				data_grid_crud_restore_on_error(grid_id, ctx.on_crud_error, mut e, mut
-					w, snapshot_rows, 'delete not supported')
+					w, snapshot_rows, 'grid: delete not supported')
 				return
 			}
 			res_delete := source.mutate_data(GridMutationRequest{
@@ -614,16 +596,16 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 	state.source_signature = data_grid_rows_signature(state.committed_rows, []string{})
 	w.view_state.data_grid_crud_state.set(grid_id, state)
 	data_grid_clear_editing_row(grid_id, mut w)
+	rows_copy := state.working_rows.clone()
 	if ctx.on_rows_change != unsafe { nil } {
-		ctx.on_rows_change(state.working_rows.clone(), mut e, mut w)
+		ctx.on_rows_change(rows_copy, mut e, mut w)
 	}
 	if ctx.has_source {
 		if has_row_count {
-			data_grid_source_apply_local_mutation(grid_id, state.working_rows.clone(),
-				?int(row_count_value), mut w)
+			data_grid_source_apply_local_mutation(grid_id, rows_copy, ?int(row_count_value), mut
+				w)
 		} else {
-			data_grid_source_apply_local_mutation(grid_id, state.working_rows.clone(),
-				none, mut w)
+			data_grid_source_apply_local_mutation(grid_id, rows_copy, none, mut w)
 		}
 		data_grid_source_force_refetch(grid_id, mut w)
 	}

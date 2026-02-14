@@ -266,11 +266,11 @@ fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, ki
 	state.pagination_kind = kind
 	grid_id := cfg.id
 	spawn fn [source, req, grid_id, next_request_id, caps] (mut w Window) {
-		if grid_abort_signal_is_aborted(req.signal) {
+		if req.signal.is_aborted() {
 			return
 		}
 		result := source.fetch_data(req) or {
-			if grid_abort_signal_is_aborted(req.signal) {
+			if req.signal.is_aborted() {
 				return
 			}
 			err_msg := err.msg()
@@ -279,7 +279,7 @@ fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, ki
 			})
 			return
 		}
-		if grid_abort_signal_is_aborted(req.signal) {
+		if req.signal.is_aborted() {
 			return
 		}
 		w.queue_command(fn [grid_id, next_request_id, result, caps] (mut w Window) {
@@ -289,11 +289,18 @@ fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, ki
 	}(mut window)
 }
 
-fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDataResult, caps GridDataCapabilities, mut window Window) {
-	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+fn data_grid_source_is_stale(request_id u64, mut state DataGridSourceState, mut window Window, grid_id string) bool {
 	if request_id != state.request_id {
 		state.stale_drop_count++
 		window.view_state.data_grid_source_state.set(grid_id, state)
+		return true
+	}
+	return false
+}
+
+fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDataResult, caps GridDataCapabilities, mut window Window) {
+	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	if data_grid_source_is_stale(request_id, mut state, mut window, grid_id) {
 		return
 	}
 	state.loading = false
@@ -322,9 +329,7 @@ fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDat
 
 fn data_grid_source_apply_error(grid_id string, request_id u64, err_msg string, mut window Window) {
 	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
-	if request_id != state.request_id {
-		state.stale_drop_count++
-		window.view_state.data_grid_source_state.set(grid_id, state)
+	if data_grid_source_is_stale(request_id, mut state, mut window, grid_id) {
 		return
 	}
 	state.loading = false

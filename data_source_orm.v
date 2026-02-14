@@ -137,7 +137,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 	return match req.kind {
 		.create {
 			if source.create_fn == unsafe { nil } {
-				return error('create not supported')
+				return error('grid orm: create not supported')
 			}
 			grid_orm_validate_mutation_columns(req.rows, []GridCellEdit{}, column_map)!
 			created := source.create_fn(req.rows.clone(), req.signal)!
@@ -148,7 +148,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 		}
 		.update {
 			if source.update_fn == unsafe { nil } {
-				return error('update not supported')
+				return error('grid orm: update not supported')
 			}
 			grid_orm_validate_mutation_columns(req.rows, req.edits, column_map)!
 			updated := source.update_fn(req.rows.clone(), req.edits.clone(), req.signal)!
@@ -170,13 +170,14 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 				mut out := []string{cap: ids.len}
 				for row_id in ids {
 					deleted := source.delete_fn(row_id, req.signal)!
+					grid_abort_check(req.signal)!
 					if deleted.len > 0 {
 						out << deleted
 					}
 				}
 				deleted_ids = unsafe { out }
 			} else {
-				return error('delete not supported')
+				return error('grid orm: delete not supported')
 			}
 			grid_abort_check(req.signal)!
 			GridMutationResult{
@@ -251,17 +252,17 @@ fn grid_orm_validate_column_map(columns []GridOrmColumnSpec) !map[string]GridOrm
 	for col in columns {
 		id := col.id.trim_space()
 		if id.len == 0 {
-			return error('orm column id is required')
+			return error('grid orm: column id is required')
 		}
 		db_field := col.db_field.trim_space()
 		if db_field.len == 0 {
-			return error('orm column "${id}" requires db_field')
+			return error('grid orm: column "${id}" requires db_field')
 		}
 		if !grid_orm_valid_db_field(db_field) {
-			return error('orm column "${id}" has invalid db_field: ${db_field}')
+			return error('grid orm: column "${id}" has invalid db_field: ${db_field}')
 		}
 		if id in out {
-			return error('duplicate orm column id: ${id}')
+			return error('grid orm: duplicate column id: ${id}')
 		}
 		// Pre-normalize allowed_ops once at construction.
 		mut norm_ops := []string{cap: col.allowed_ops.len}
@@ -316,7 +317,7 @@ fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, colu
 				continue
 			}
 			if col_id !in column_map {
-				return error('unknown column id: ${col_id}')
+				return error('grid orm: unknown column id: ${col_id}')
 			}
 			seen[col_id] = true
 		}
@@ -326,7 +327,7 @@ fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, colu
 			continue
 		}
 		if edit.col_id !in column_map {
-			return error('unknown column id: ${edit.col_id}')
+			return error('grid orm: unknown column id: ${edit.col_id}')
 		}
 		seen[edit.col_id] = true
 	}

@@ -43,6 +43,9 @@ mut:
 
 // is_aborted reports cancellation status.
 pub fn (signal &GridAbortSignal) is_aborted() bool {
+	if isnil(signal) {
+		return false
+	}
 	return signal.aborted
 }
 
@@ -296,16 +299,9 @@ fn grid_data_source_offset_bounds(start_index int, end_index int, total int, def
 	return start, end
 }
 
-fn grid_abort_signal_is_aborted(signal &GridAbortSignal) bool {
-	if isnil(signal) {
-		return false
-	}
-	return signal.aborted
-}
-
 fn grid_abort_check(signal &GridAbortSignal) ! {
-	if grid_abort_signal_is_aborted(signal) {
-		return error('request aborted')
+	if signal.is_aborted() {
+		return error('grid: request aborted')
 	}
 }
 
@@ -510,6 +506,7 @@ fn grid_contains_lower(haystack string, needle string) bool {
 		return false
 	}
 	limit := haystack.len - needle.len
+	// bounds: i+j <= limit+needle.len-1 == haystack.len-1
 	for i := 0; i <= limit; i++ {
 		mut found := true
 		for j := 0; j < needle.len; j++ {
@@ -531,6 +528,7 @@ fn grid_equals_lower(haystack string, needle string) bool {
 	if haystack.len != needle.len {
 		return false
 	}
+	// bounds: i < haystack.len == needle.len
 	for i := 0; i < haystack.len; i++ {
 		if grid_lower_byte(unsafe { haystack.str[i] }) != unsafe { needle.str[i] } {
 			return false
@@ -545,6 +543,7 @@ fn grid_starts_with_lower(haystack string, needle string) bool {
 	if haystack.len < needle.len {
 		return false
 	}
+	// bounds: i < needle.len <= haystack.len
 	for i := 0; i < needle.len; i++ {
 		if grid_lower_byte(unsafe { haystack.str[i] }) != unsafe { needle.str[i] } {
 			return false
@@ -560,6 +559,7 @@ fn grid_ends_with_lower(haystack string, needle string) bool {
 		return false
 	}
 	off := haystack.len - needle.len
+	// bounds: i+off < needle.len+off == haystack.len
 	for i := 0; i < needle.len; i++ {
 		if grid_lower_byte(unsafe { haystack.str[i + off] }) != unsafe { needle.str[i] } {
 			return false
@@ -666,10 +666,10 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 	mut edits_by_row := map[string][]GridCellEdit{}
 	for edit in edits {
 		if edit.row_id.len == 0 {
-			return error('edit has empty row id')
+			return error('grid: edit has empty row id')
 		}
 		if edit.col_id.len == 0 {
-			return error('edit has empty col id')
+			return error('grid: edit has empty col id')
 		}
 		edits_by_row[edit.row_id] << edit
 	}
@@ -681,7 +681,7 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 	// Apply req_rows with matching edits in one clone.
 	for req_row in req_rows {
 		if req_row.id.len == 0 {
-			return error('update row has empty id')
+			return error('grid: update row has empty id')
 		}
 		if idx := row_idx[req_row.id] {
 			mut cells := rows[idx].cells.clone()
@@ -777,5 +777,5 @@ fn grid_data_source_next_create_row_id(rows []GridRow, existing map[string]bool,
 		}
 		next++
 	}
-	return error('unable to generate unique row id')
+	return error('grid: unable to generate unique row id')
 }
