@@ -567,6 +567,50 @@ fn test_grid_orm_direct_construction_fallback() {
 	assert res.rows.len == 2
 }
 
+fn test_grid_orm_normalize_filter_op_whitespace_only() {
+	// Whitespace-only input → default 'contains'.
+	assert grid_orm_normalize_filter_op('   ') == 'contains'
+	assert grid_orm_normalize_filter_op('\t') == 'contains'
+}
+
+fn test_grid_orm_column_allows_filter_op_empty_op() {
+	col := GridOrmColumnSpec{
+		id:       'x'
+		db_field: 'x'
+	}
+	assert !grid_orm_column_allows_filter_op(col, '')
+}
+
+fn test_grid_orm_valid_db_field_consecutive_dots() {
+	assert !grid_orm_valid_db_field('a..b')
+}
+
+fn test_grid_orm_direct_construction_resolved_column_map() {
+	// Direct-construction resolved_column_map produces
+	// same result as factory column_map.
+	source_direct := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}
+	direct_map := source_direct.resolved_column_map() or { panic(err) }
+	source_factory := new_grid_orm_data_source(GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}) or { panic(err) }
+	factory_map := source_factory.column_map.clone()
+	assert direct_map.len == factory_map.len
+	for key, dcol in direct_map {
+		fcol := factory_map[key] or {
+			assert false
+			continue
+		}
+		assert dcol.id == fcol.id
+		assert dcol.db_field == fcol.db_field
+		assert dcol.sortable == fcol.sortable
+		assert dcol.filterable == fcol.filterable
+	}
+}
+
 fn orm_test_fetch_ok(_ GridOrmQuerySpec, _ &GridAbortSignal) !GridOrmPage {
 	return GridOrmPage{}
 }

@@ -244,7 +244,6 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 		}
 	}
 	mut filters := []GridFilter{}
-	mut seen_filters := map[string]bool{}
 	for filter in query.filters {
 		if filter.value.len > grid_orm_max_filter_value_len {
 			return error('grid orm: filter value exceeds max length (${grid_orm_max_filter_value_len})')
@@ -257,11 +256,18 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 		if !grid_orm_column_allows_filter_op(col, op) {
 			continue
 		}
-		dedup_key := '${filter.col_id}\x00${op}\x00${filter.value}'
-		if dedup_key in seen_filters {
+		// Linear scan dedup — O(n²) is fine for typical
+		// filter counts (< ~50, UI-driven).
+		mut is_dup := false
+		for f in filters {
+			if f.col_id == filter.col_id && f.op == op && f.value == filter.value {
+				is_dup = true
+				break
+			}
+		}
+		if is_dup {
 			continue
 		}
-		seen_filters[dedup_key] = true
 		filters << GridFilter{
 			col_id: filter.col_id
 			op:     op

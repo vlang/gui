@@ -530,12 +530,7 @@ fn grid_query_signature(query GridQueryState) u64 {
 	if filters.len <= 1 {
 		// 0 or 1 filter: no sort needed, skip index alloc.
 		for filter in filters {
-			h = data_grid_fnv64_byte(h, 0x1e)
-			h = data_grid_fnv64_str(h, filter.col_id)
-			h = data_grid_fnv64_byte(h, 0x1f)
-			h = data_grid_fnv64_str(h, filter.op)
-			h = data_grid_fnv64_byte(h, 0x1f)
-			h = data_grid_fnv64_str(h, filter.value)
+			h = grid_hash_filter(h, filter)
 		}
 		return h
 	}
@@ -564,13 +559,7 @@ fn grid_query_signature(query GridQueryState) u64 {
 		return 0
 	})
 	for i in idxs {
-		filter := filters[i]
-		h = data_grid_fnv64_byte(h, 0x1e)
-		h = data_grid_fnv64_str(h, filter.col_id)
-		h = data_grid_fnv64_byte(h, 0x1f)
-		h = data_grid_fnv64_str(h, filter.op)
-		h = data_grid_fnv64_byte(h, 0x1f)
-		h = data_grid_fnv64_str(h, filter.value)
+		h = grid_hash_filter(h, filters[i])
 	}
 	return h
 }
@@ -588,6 +577,18 @@ fn data_grid_fnv64_str(h u64, s string) u64 {
 @[inline]
 fn data_grid_fnv64_byte(h u64, b u8) u64 {
 	return (h ^ u64(b)) * data_grid_fnv64_prime
+}
+
+// grid_hash_filter hashes a single filter into a running
+// FNV-1a hash. Used by grid_query_signature.
+fn grid_hash_filter(h u64, f GridFilter) u64 {
+	mut hash := data_grid_fnv64_byte(h, 0x1e)
+	hash = data_grid_fnv64_str(hash, f.col_id)
+	hash = data_grid_fnv64_byte(hash, 0x1f)
+	hash = data_grid_fnv64_str(hash, f.op)
+	hash = data_grid_fnv64_byte(hash, 0x1f)
+	hash = data_grid_fnv64_str(hash, f.value)
+	return hash
 }
 
 @[minify]
@@ -637,7 +638,7 @@ fn data_grid_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 	mut edits_by_row := map[string][]GridCellEdit{}
 	for edit in edits {
 		if edit.row_id.len == 0 {
-			return error('grid: edit has empty row id')
+			return error('grid: row id is required')
 		}
 		if edit.col_id.len == 0 {
 			return error('grid: edit has empty col id')
@@ -653,7 +654,7 @@ fn data_grid_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 	// Apply req_rows with matching edits in one clone.
 	for req_row in req_rows {
 		if req_row.id.len == 0 {
-			return error('grid: update row has empty id')
+			return error('grid: row id is required')
 		}
 		if idx := row_idx[req_row.id] {
 			mut cells := rows[idx].cells.clone()

@@ -424,7 +424,7 @@ fn test_in_memory_source_update_empty_row_id_returns_error() {
 			},
 		]
 	}) or {
-		assert err.msg().contains('empty id')
+		assert err.msg().contains('row id is required')
 		return
 	}
 	assert false
@@ -1000,6 +1000,81 @@ fn test_jump_to_row_rejected_while_loading() {
 	// State unchanged because loading == true.
 	assert state.pending_jump_row == -1
 	assert state.offset_start == 20
+}
+
+fn test_grid_hash_filter_deterministic() {
+	f := GridFilter{
+		col_id: 'name'
+		op:     'equals'
+		value:  'Ada'
+	}
+	h1 := grid_hash_filter(data_grid_fnv64_offset, f)
+	h2 := grid_hash_filter(data_grid_fnv64_offset, f)
+	assert h1 == h2
+	// Different filter → different hash.
+	g := GridFilter{
+		col_id: 'name'
+		op:     'contains'
+		value:  'Ada'
+	}
+	assert grid_hash_filter(data_grid_fnv64_offset, g) != h1
+}
+
+fn test_grid_query_signature_with_duplicate_filters() {
+	// Duplicate filters should not change signature (dedup
+	// happens upstream; signature hashes what it receives).
+	q_no_dup := GridQueryState{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'equals'
+				value:  'Ada'
+			},
+			GridFilter{
+				col_id: 'team'
+				op:     'contains'
+				value:  'Data'
+			},
+		]
+	}
+	q_with_dup := GridQueryState{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'equals'
+				value:  'Ada'
+			},
+			GridFilter{
+				col_id: 'team'
+				op:     'contains'
+				value:  'Data'
+			},
+			GridFilter{
+				col_id: 'name'
+				op:     'equals'
+				value:  'Ada'
+			},
+		]
+	}
+	// With a dup, signature differs (3 filters vs 2).
+	assert grid_query_signature(q_no_dup) != grid_query_signature(q_with_dup)
+}
+
+fn test_offset_bounds_end_less_than_start() {
+	// end_index < start_index → end clamped to start,
+	// then fallback to default_limit.
+	start, end := data_grid_source_offset_bounds(10, 5, 100, 20)
+	assert start == 10
+	assert end == 30
+}
+
+fn test_is_decimal_negative_cases() {
+	assert !data_grid_source_is_decimal('')
+	assert !data_grid_source_is_decimal('abc')
+	assert !data_grid_source_is_decimal('12a3')
+	assert !data_grid_source_is_decimal(' 42')
+	assert data_grid_source_is_decimal('0')
+	assert data_grid_source_is_decimal('12345')
 }
 
 fn data_source_rows(count int) []GridRow {
