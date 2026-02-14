@@ -1407,6 +1407,14 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 
+	// Clip SVG content to shape bounds (viewBox overflow)
+	window.renderers << DrawClip{
+		x:      shape.x
+		y:      shape.y
+		width:  shape.width
+		height: shape.height
+	}
+
 	for tpath in cached.triangles {
 		// Use shape color if set (monochrome override), otherwise path color
 		c := if color.a > 0 { color } else { tpath.color }
@@ -1420,6 +1428,9 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 			clip_group:   tpath.clip_group
 		}
 	}
+
+	// Restore parent clip
+	window.renderers << clip
 }
 
 // draw_triangles renders triangulated geometry using SGL
