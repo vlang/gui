@@ -1,3 +1,10 @@
+// vtest build: false
+// TODO: this test is skipped for now on the CI, because it needs a X11 server to be running,
+// in order for clipboard copy/paste to work.
+// See these for a way to do it on the CI (which does not run a graphics service by default):
+// https://github.com/vlang/v/blob/master/.github/workflows/c2v_ci.yml#L75
+// https://github.com/vlang/v/blob/master/.github/workflows/c2v_ci.yml#L103
+// https://github.com/vlang/v/blob/master/.github/workflows/c2v_ci.yml#L130
 module gui
 
 fn test_input_delete_key_at_end_is_noop() {
