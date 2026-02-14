@@ -391,6 +391,10 @@ fn data_grid_crud_build_payload(state DataGridCrudState) ([]GridRow, []GridRow, 
 	return create_rows, update_rows, update_edits, delete_ids
 }
 
+// data_grid_crud_replace_created_rows replaces draft rows with
+// server-assigned rows. The source MUST return `created` in the
+// same order as the input `create_rows`; mismatched order causes
+// draft IDs to persist silently.
 fn data_grid_crud_replace_created_rows(mut rows []GridRow, create_rows []GridRow, created []GridRow) map[string]string {
 	mut replace := map[string]string{}
 	if create_rows.len == 0 || created.len == 0 {

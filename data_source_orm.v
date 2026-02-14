@@ -46,16 +46,26 @@ pub:
 // unescaped.
 pub type GridOrmFetchFn = fn (spec GridOrmQuerySpec, signal &GridAbortSignal) !GridOrmPage
 
-// GridOrmCreateFn persists new rows and returns them with assigned IDs.
+// GridOrmCreateFn persists new rows and returns them with
+// assigned IDs. Implementations MUST use parameterized queries
+// for all cell values — they come from user input unescaped.
 pub type GridOrmCreateFn = fn (rows []GridRow, signal &GridAbortSignal) ![]GridRow
 
-// GridOrmUpdateFn applies row replacements and cell edits, returns updated rows.
+// GridOrmUpdateFn applies row replacements and cell edits,
+// returns updated rows. Implementations MUST use parameterized
+// queries for cell values and row IDs — they come from user
+// input unescaped.
 pub type GridOrmUpdateFn = fn (rows []GridRow, edits []GridCellEdit, signal &GridAbortSignal) ![]GridRow
 
-// GridOrmDeleteFn deletes a single row by ID, returns the deleted ID (or empty to skip).
+// GridOrmDeleteFn deletes a single row by ID, returns the
+// deleted ID (or empty to skip). Implementations MUST use
+// parameterized queries for the row ID — it comes from user
+// input unescaped.
 pub type GridOrmDeleteFn = fn (row_id string, signal &GridAbortSignal) !string
 
-// GridOrmDeleteManyFn deletes multiple rows by ID, returns the deleted IDs.
+// GridOrmDeleteManyFn deletes multiple rows by ID, returns
+// the deleted IDs. Implementations MUST use parameterized
+// queries for row IDs — they come from user input unescaped.
 pub type GridOrmDeleteManyFn = fn (row_ids []string, signal &GridAbortSignal) ![]string
 
 // GridOrmDataSource wraps user-provided ORM callbacks with
@@ -234,6 +244,7 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 		}
 	}
 	mut filters := []GridFilter{}
+	mut seen_filters := map[string]bool{}
 	for filter in query.filters {
 		if filter.value.len > grid_orm_max_filter_value_len {
 			return error('grid orm: filter value exceeds max length (${grid_orm_max_filter_value_len})')
@@ -246,16 +257,11 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 		if !grid_orm_column_allows_filter_op(col, op) {
 			continue
 		}
-		mut dup := false
-		for seen in filters {
-			if seen.col_id == filter.col_id && seen.op == op {
-				dup = true
-				break
-			}
-		}
-		if dup {
+		dedup_key := '${filter.col_id}\x00${op}'
+		if dedup_key in seen_filters {
 			continue
 		}
+		seen_filters[dedup_key] = true
 		filters << GridFilter{
 			col_id: filter.col_id
 			op:     op

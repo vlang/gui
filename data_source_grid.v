@@ -207,6 +207,8 @@ fn data_grid_source_effective_pagination_kind(preferred GridPaginationKind, caps
 		if caps.supports_offset_pagination {
 			return .offset
 		}
+		// Neither kind declared; use preferred — source
+		// must handle fetch_data regardless.
 		return .cursor
 	}
 	if caps.supports_offset_pagination {
@@ -215,6 +217,8 @@ fn data_grid_source_effective_pagination_kind(preferred GridPaginationKind, caps
 	if caps.supports_cursor_pagination {
 		return .cursor
 	}
+	// Neither kind declared; use preferred — source
+	// must handle fetch_data regardless.
 	return .offset
 }
 
