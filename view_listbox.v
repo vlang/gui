@@ -490,37 +490,8 @@ fn list_box_source_apply_query(options []ListBoxOption, query string) []ListBoxO
 }
 
 fn list_box_source_option_matches_query(option ListBoxOption, needle string) bool {
-	return str_contains_ci(option.id, needle) || str_contains_ci(option.name, needle)
-		|| str_contains_ci(option.value, needle)
-}
-
-// Case-insensitive contains. Assumes needle is already
-// lowercased. Avoids per-call allocation from to_lower().
-fn str_contains_ci(haystack string, needle_lower string) bool {
-	if needle_lower.len == 0 {
-		return true
-	}
-	if needle_lower.len > haystack.len {
-		return false
-	}
-	limit := haystack.len - needle_lower.len
-	for i := 0; i <= limit; i++ {
-		mut matched := true
-		for j in 0 .. needle_lower.len {
-			mut c := haystack[i + j]
-			if c >= `A` && c <= `Z` {
-				c += 32
-			}
-			if c != needle_lower[j] {
-				matched = false
-				break
-			}
-		}
-		if matched {
-			return true
-		}
-	}
-	return false
+	return grid_contains_lower(option.id, needle) || grid_contains_lower(option.name, needle)
+		|| grid_contains_lower(option.value, needle)
 }
 
 // list_box_option is a helper method to construct [ListBoxOption](#ListBoxOption).
