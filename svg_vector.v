@@ -61,6 +61,21 @@ pub:
 	stops []SvgGradientStop
 }
 
+// SvgText holds a parsed <text> element for deferred rendering.
+pub struct SvgText {
+pub:
+	text        string
+	x           f32
+	y           f32 // baseline y in viewBox coords
+	font_family string
+	font_size   f32 // viewBox units (pre-transform-scaled)
+	bold        bool
+	italic      bool
+	color       Color
+	anchor      u8 // 0=start, 1=middle, 2=end
+	opacity     f32 = 1.0
+}
+
 // VectorPath represents a single filled path with color.
 pub struct VectorPath {
 pub mut:
@@ -86,6 +101,7 @@ pub mut:
 	view_box_x f32 // viewBox min-x offset
 	view_box_y f32 // viewBox min-y offset
 	paths      []VectorPath
+	texts      []SvgText
 	clip_paths map[string][]VectorPath   // id -> clip geometry
 	gradients  map[string]SvgGradientDef // id -> gradient def
 }

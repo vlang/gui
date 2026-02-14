@@ -18,6 +18,7 @@ const max_coordinate = 1000000.0 // Prevents overflow in polygon operations and 
 struct ParseState {
 mut:
 	elem_count int
+	texts      []SvgText
 }
 
 // GroupStyle holds inherited style properties for groups.
@@ -97,6 +98,7 @@ pub fn parse_svg(content string) !VectorGraphic {
 	}
 	mut state := ParseState{}
 	vg.paths = parse_svg_content(content, default_style, 0, mut state)
+	vg.texts = state.texts
 
 	return vg
 }
@@ -231,12 +233,194 @@ fn parse_svg_content(content string, inherited GroupStyle, depth int, mut state 
 				paths << p
 			}
 			pos = elem_end + 1
+		} else if tag_name == 'text' {
+			state.elem_count++
+			if !is_self_closing {
+				text_content_start := elem_end + 1
+				text_end := find_closing_tag(content, 'text', text_content_start)
+				if text_end > text_content_start {
+					text_body := content[text_content_start..text_end]
+					parse_text_element(elem, text_body, inherited, mut state)
+				}
+				close := find_index(content, '>', text_end) or { break }
+				pos = close + 1
+			} else {
+				pos = elem_end + 1
+			}
+			continue
 		} else {
 			pos = elem_end + 1
 		}
 	}
 
 	return paths
+}
+
+// extract_transform_scale returns the average scale factor from an
+// affine transform matrix [a,b,c,d,e,f].
+fn extract_transform_scale(m [6]f32) f32 {
+	sx := math.sqrtf(m[0] * m[0] + m[1] * m[1])
+	sy := math.sqrtf(m[2] * m[2] + m[3] * m[3])
+	return (sx + sy) / 2.0
+}
+
+// extract_plain_text returns text content before the first child element.
+fn extract_plain_text(body string) string {
+	lt := find_index(body, '<', 0) or { return body.trim_space() }
+	return body[..lt].trim_space()
+}
+
+// parse_text_element parses a <text> element and its <tspan> children.
+fn parse_text_element(elem string, body string, inherited GroupStyle, mut state ParseState) {
+	style := merge_group_style(elem, inherited)
+	// Base position
+	base_x := parse_length(find_attr(elem, 'x') or { '0' })
+	base_y := parse_length(find_attr(elem, 'y') or { '0' })
+	// Font attributes
+	font_family_raw := find_attr_or_style(elem, 'font-family') or { '' }
+	// Strip CSS fallbacks: "Arial, sans-serif" → "Arial"
+	font_family := if font_family_raw.contains(',') {
+		font_family_raw.all_before(',').trim_space().trim('\'"')
+	} else {
+		font_family_raw.trim_space().trim('\'"')
+	}
+	font_size := parse_length(find_attr_or_style(elem, 'font-size') or { '16' })
+	fw := find_attr_or_style(elem, 'font-weight') or { '' }
+	bold := fw == 'bold' || fw.f32() >= 600
+	fs := find_attr_or_style(elem, 'font-style') or { '' }
+	italic := fs == 'italic' || fs == 'oblique'
+	// Fill → text color (default black)
+	fill_str := find_attr_or_style(elem, 'fill') or { style.fill }
+	color := if fill_str.len > 0 && fill_str != 'none' {
+		parse_svg_color(fill_str)
+	} else {
+		black
+	}
+	// Anchor
+	anchor_str := find_attr_or_style(elem, 'text-anchor') or { 'start' }
+	anchor := match anchor_str {
+		'middle' { u8(1) }
+		'end' { u8(2) }
+		else { u8(0) }
+	}
+	// Opacity
+	elem_opacity := parse_opacity_attr(elem, 'opacity', 1.0)
+	opacity := style.opacity * elem_opacity
+
+	// Apply transform to position
+	tx, ty := apply_transform(base_x, base_y, style.transform)
+	scale := extract_transform_scale(style.transform)
+	scaled_size := font_size * scale
+
+	// Check for tspan children
+	if body.contains('<tspan') {
+		parse_tspan_elements(body, tx, ty, font_family, scaled_size, bold, italic, color,
+			anchor, opacity, style, mut state)
+	} else {
+		plain := extract_plain_text(body)
+		if plain.len > 0 {
+			state.texts << SvgText{
+				text:        plain
+				x:           tx
+				y:           ty
+				font_family: font_family
+				font_size:   scaled_size
+				bold:        bold
+				italic:      italic
+				color:       color
+				anchor:      anchor
+				opacity:     opacity
+			}
+		}
+	}
+}
+
+// parse_tspan_elements iterates <tspan> children inside a <text> body.
+fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_color Color, parent_anchor u8, parent_opacity f32, style GroupStyle, mut state ParseState) {
+	mut current_y := base_y
+	mut search_pos := 0
+
+	for search_pos < body.len {
+		tspan_start := find_index(body, '<tspan', search_pos) or { break }
+		tag_end := find_index(body, '>', tspan_start) or { break }
+		tspan_elem := body[tspan_start..tag_end + 1]
+
+		// Extract text content between > and </tspan>
+		content_start := tag_end + 1
+		content_end := find_index(body, '</tspan', content_start) or { break }
+		text := body[content_start..content_end].trim_space()
+
+		// Close tag end
+		close_end := find_index(body, '>', content_end) or { break }
+		search_pos = close_end + 1
+
+		if text.len == 0 {
+			continue
+		}
+
+		// tspan x overrides base_x
+		tx := if x_attr := find_attr(tspan_elem, 'x') {
+			px, _ := apply_transform(parse_length(x_attr), 0, style.transform)
+			px
+		} else {
+			base_x
+		}
+		// Accumulate dy
+		if dy_attr := find_attr(tspan_elem, 'dy') {
+			dy_val := parse_length(dy_attr)
+			scale := extract_transform_scale(style.transform)
+			current_y += dy_val * scale
+		}
+		// Per-tspan overrides
+		fill_str := find_attr_or_style(tspan_elem, 'fill') or { '' }
+		color := if fill_str.len > 0 && fill_str != 'none' {
+			parse_svg_color(fill_str)
+		} else {
+			parent_color
+		}
+		fw := find_attr_or_style(tspan_elem, 'font-weight') or { '' }
+		bold := if fw.len > 0 {
+			fw == 'bold' || fw.f32() >= 600
+		} else {
+			parent_bold
+		}
+		fi := find_attr_or_style(tspan_elem, 'font-style') or { '' }
+		italic := if fi.len > 0 {
+			fi == 'italic' || fi == 'oblique'
+		} else {
+			parent_italic
+		}
+
+		state.texts << SvgText{
+			text:        text
+			x:           tx
+			y:           current_y
+			font_family: parent_family
+			font_size:   parent_size
+			bold:        bold
+			italic:      italic
+			color:       color
+			anchor:      parent_anchor
+			opacity:     parent_opacity
+		}
+	}
+
+	// Also capture plain text before the first tspan
+	plain := extract_plain_text(body)
+	if plain.len > 0 {
+		state.texts << SvgText{
+			text:        plain
+			x:           base_x
+			y:           base_y
+			font_family: parent_family
+			font_size:   parent_size
+			bold:        parent_bold
+			italic:      parent_italic
+			color:       parent_color
+			anchor:      parent_anchor
+			opacity:     parent_opacity
+		}
+	}
 }
 
 // find_tag_name_end finds the end of a tag name.

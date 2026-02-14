@@ -1451,8 +1451,60 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 		}
 	}
 
+	// Emit text elements
+	for svg_txt in cached.texts {
+		render_svg_text(svg_txt, shape.x, shape.y, cached.scale, mut window)
+	}
+
 	// Restore parent clip
 	window.renderers << clip
+}
+
+// render_svg_text converts an SvgText into a DrawText renderer.
+fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, mut window Window) {
+	if t.text.len == 0 {
+		return
+	}
+	typeface := match true {
+		t.bold && t.italic { vglyph.Typeface.bold_italic }
+		t.bold { vglyph.Typeface.bold }
+		t.italic { vglyph.Typeface.italic }
+		else { vglyph.Typeface.regular }
+	}
+	text_style := TextStyle{
+		family:   t.font_family
+		size:     t.font_size * scale
+		typeface: typeface
+		color:    if t.opacity < 1.0 {
+			Color{t.color.r, t.color.g, t.color.b, u8(f32(t.color.a) * t.opacity)}
+		} else {
+			t.color
+		}
+	}
+	cfg := text_style.to_vglyph_cfg()
+
+	// Measure for anchor adjustment
+	tw := window.text_system.text_width(t.text, cfg) or { 0 }
+	fh := window.text_system.font_height(cfg) or { t.font_size * scale }
+	// Approximate baseline→top: ascent ≈ 80% of font height
+	ascent := fh * 0.8
+
+	mut x := shape_x + t.x * scale
+	y := shape_y + t.y * scale - ascent
+
+	// text-anchor adjustment
+	if t.anchor == 1 {
+		x -= tw / 2
+	} else if t.anchor == 2 {
+		x -= tw
+	}
+
+	window.renderers << DrawText{
+		text: t.text
+		cfg:  cfg
+		x:    x
+		y:    y
+	}
 }
 
 // draw_triangles renders triangulated geometry using SGL

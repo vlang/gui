@@ -7,6 +7,7 @@ import os
 pub struct CachedSvg {
 pub:
 	triangles []TessellatedPath // Tessellated paths
+	texts     []SvgText         // Text elements for DrawText rendering
 	width     f32               // Original viewBox width
 	height    f32               // Original viewBox height
 	scale     f32               // Scale factor applied during tessellation
@@ -70,6 +71,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		// Return without caching - too large
 		return &CachedSvg{
 			triangles: triangles
+			texts:     vg.texts
 			width:     vg.width
 			height:    vg.height
 			scale:     scale
@@ -78,6 +80,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 
 	cached := &CachedSvg{
 		triangles: triangles
+		texts:     vg.texts
 		width:     vg.width
 		height:    vg.height
 		scale:     scale
