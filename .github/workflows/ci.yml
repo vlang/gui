@@ -32,10 +32,12 @@ jobs:
           check-latest: true
       - name: Install vglyph
         run: v install vglyph
-      - name: Update packages
-        run: v retry -- sudo apt -qq update
-      - name: Install X11/GL development dependencies (headers and libs)
-        run: v retry -- sudo apt install libpango1.0-dev libfontconfig1-dev libfribidi-dev libharfbuzz-dev libfreetype-dev libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
+      - name: Install C development dependencies (headers and libs)
+        if: runner.os == 'Linux'
+        run: v retry -- sudo apt -qq update && v retry -- sudo apt install libpango1.0-dev libfontconfig1-dev libfribidi-dev libharfbuzz-dev libfreetype-dev libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
+      - name: Install development dependencies on macos (headers and libs)
+        if: runner.os == 'macOS'
+        run: v retry -- brew install pango harfbuzz freetype2
       - name: Checkout the gui module
         uses: actions/checkout@v4
         with:
@@ -44,14 +46,10 @@ jobs:
         run: v fmt -verify -inprocess gui/
       - name: Check formatting of MD files
         run: v check-md gui/
-      - name: Run tests
-        run: v test gui/
       - name: Check syntax of examples
         run: v gui/examples/_check.vsh
-      - name: Check compilation of examples
-        run: v should-compile-all gui/examples/
 
-  compiling-with-prod:
+  compiling:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -59,7 +57,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     env:
-      VFLAGS: -no-parallel
+      VFLAGS: -no-parallel -cc clang
     steps:
       - name: Install V
         id: install-v
@@ -82,10 +80,10 @@ jobs:
         run: v test gui/
       - name: Check compilation of examples
         run: v should-compile-all gui/examples/
-      - name: Check compilation of examples with -prod
+      - name: Check compilation of examples with -W
         run: v gui/examples/_build.vsh
 
-  compiling-with-prod-on-windows:
+  compiling-on-windows:
     runs-on: windows-latest
     timeout-minutes: 25
     env:
@@ -96,6 +94,8 @@ jobs:
         uses: vlang/setup-v@v1.4
         with:
           check-latest: true
+      - name: Install pango and freetype
+        run: vcpkg install pango freetype
       - name: Install vglyph
         run: v install vglyph
       - name: Checkout the gui module
@@ -106,5 +106,5 @@ jobs:
         run: v test gui/
       - name: Check compilation of examples
         run: v should-compile-all gui/examples/
-      - name: Check compilation of examples with -prod
+      - name: Check compilation of examples with -W
         run: v gui/examples/_build.vsh
