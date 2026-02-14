@@ -504,6 +504,35 @@ fn test_grid_orm_valid_db_field_accepts_qualified_names() {
 	assert !grid_orm_valid_db_field('a.b.c')
 }
 
+fn test_grid_orm_direct_construction_fallback() {
+	// Construct without factory; resolved_column_map rebuilds
+	// on-the-fly and fetch_data should still succeed.
+	source := GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: fn (spec GridOrmQuerySpec, _ &GridAbortSignal) !GridOrmPage {
+			return GridOrmPage{
+				rows: orm_test_rows(['1', '2'])
+			}
+		}
+	}
+	assert source.column_map.len == 0
+	res := source.fetch_data(GridDataRequest{
+		grid_id: 'direct-grid'
+		query:   GridQueryState{
+			sorts: [
+				GridSort{
+					col_id: 'name'
+					dir:    .asc
+				},
+			]
+		}
+		page:    GridPageRequest(GridCursorPageReq{
+			limit: 10
+		})
+	}) or { panic(err) }
+	assert res.rows.len == 2
+}
+
 fn orm_test_fetch_ok(_ GridOrmQuerySpec, _ &GridAbortSignal) !GridOrmPage {
 	return GridOrmPage{}
 }

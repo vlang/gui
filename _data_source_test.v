@@ -920,6 +920,47 @@ fn test_data_grid_source_can_next_heuristic_fallback() {
 	assert !data_grid_source_can_next(.offset, known, 100)
 }
 
+fn test_data_grid_source_can_prev_offset() {
+	at_start := DataGridSourceState{
+		offset_start: 0
+	}
+	assert !data_grid_source_can_prev(.offset, at_start, 10)
+
+	past_start := DataGridSourceState{
+		offset_start: 20
+	}
+	assert data_grid_source_can_prev(.offset, past_start, 10)
+}
+
+fn test_data_grid_source_can_prev_cursor() {
+	empty_prev := DataGridSourceState{
+		prev_cursor: ''
+	}
+	assert !data_grid_source_can_prev(.cursor, empty_prev, 10)
+
+	has_prev := DataGridSourceState{
+		prev_cursor: 'i:10'
+	}
+	assert data_grid_source_can_prev(.cursor, has_prev, 10)
+}
+
+fn test_data_grid_source_format_rows() {
+	// Normal range with known total.
+	assert data_grid_source_format_rows(0, 10, ?int(100)) == 'Rows 1-10/100'
+
+	// Zero count.
+	assert data_grid_source_format_rows(0, 0, ?int(50)) == 'Rows 0/50'
+
+	// End clamped to total.
+	assert data_grid_source_format_rows(95, 10, ?int(100)) == 'Rows 96-100/100'
+
+	// Unknown total.
+	assert data_grid_source_format_rows(0, 25, ?int(none)) == 'Rows 1-25/?'
+
+	// Zero count with unknown total.
+	assert data_grid_source_format_rows(0, 0, ?int(none)) == 'Rows 0/?'
+}
+
 fn data_source_rows(count int) []GridRow {
 	mut rows := []GridRow{cap: count}
 	for i in 0 .. count {
