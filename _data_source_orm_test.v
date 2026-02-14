@@ -55,6 +55,36 @@ fn test_grid_orm_validate_query_normalizes_and_whitelists() {
 	assert next.filters[0].op == 'equals'
 }
 
+fn test_grid_orm_validate_query_deduplicates_filters() {
+	query := GridQueryState{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'contains'
+				value:  'first'
+			},
+			GridFilter{
+				col_id: 'name'
+				op:     'contains'
+				value:  'second'
+			},
+			GridFilter{
+				col_id: 'team'
+				op:     'equals'
+				value:  'Data'
+			},
+		]
+	}
+	next := grid_orm_validate_query(query, orm_test_columns()) or { panic(err) }
+	// Duplicate (name, contains) collapsed to first occurrence.
+	assert next.filters.len == 2
+	assert next.filters[0].col_id == 'name'
+	assert next.filters[0].op == 'contains'
+	assert next.filters[0].value == 'first'
+	assert next.filters[1].col_id == 'team'
+	assert next.filters[1].op == 'equals'
+}
+
 fn test_grid_orm_validate_query_rejects_duplicate_column_ids() {
 	_ := grid_orm_validate_query(GridQueryState{}, [
 		GridOrmColumnSpec{
@@ -125,7 +155,7 @@ fn test_grid_orm_data_source_fetch_data_maps_offset_request() {
 		fetch_fn:      fn (spec GridOrmQuerySpec, _ &GridAbortSignal) !GridOrmPage {
 			assert spec.limit == 3
 			assert spec.offset == 4
-			assert spec.cursor == 'i:4'
+			assert spec.cursor == ''
 			return GridOrmPage{
 				rows:        orm_test_rows(['5', '6', '7'])
 				has_more:    false

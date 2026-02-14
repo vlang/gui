@@ -427,12 +427,7 @@ fn data_grid_source_next_page(grid_id string, kind GridPaginationKind, page_limi
 		}
 		state.current_cursor = state.next_cursor
 	} else {
-		step := if state.received_count > 0 {
-			state.received_count
-		} else {
-			int_max(1, page_limit)
-		}
-		state.offset_start += step
+		state.offset_start += int_max(1, page_limit)
 		if total := state.row_count {
 			state.offset_start = int_min(state.offset_start, int_max(0, total - 1))
 		}

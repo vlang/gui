@@ -232,6 +232,7 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 		}
 	}
 	mut filters := []GridFilter{}
+	mut seen_filter := map[string]bool{}
 	for filter in query.filters {
 		if filter.value.len > grid_orm_max_filter_value_len {
 			return error('grid orm: filter value exceeds max length (${grid_orm_max_filter_value_len})')
@@ -244,6 +245,11 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 		if !grid_orm_column_allows_filter_op(col, op) {
 			continue
 		}
+		dedup_key := '${filter.col_id}\x00${op}'
+		if seen_filter[dedup_key] {
+			continue
+		}
+		seen_filter[dedup_key] = true
 		filters << GridFilter{
 			col_id: filter.col_id
 			op:     op
@@ -274,7 +280,7 @@ fn grid_orm_resolve_page(page GridPageRequest, configured_limit int) (int, int, 
 			} else {
 				default_limit
 			}, 1, data_grid_source_max_page_limit)
-			limit, offset, data_grid_source_cursor_from_index(offset)
+			limit, offset, ''
 		}
 	}
 }

@@ -133,6 +133,10 @@ pub:
 
 const data_grid_source_max_page_limit = 10000
 
+// FNV-1a 64-bit constants (hash.fnv1a keeps these private).
+const data_grid_fnv64_offset = u64(14695981039346656037)
+const data_grid_fnv64_prime = u64(1099511628211)
+
 pub interface DataGridDataSource {
 	capabilities() GridDataCapabilities
 	fetch_data(req GridDataRequest) !GridDataResult
@@ -554,6 +558,21 @@ fn grid_query_signature(query GridQueryState) u64 {
 		h = data_grid_fnv64_str(h, filter.value)
 	}
 	return h
+}
+
+// Incremental FNV-1a: feed a string into running hash.
+@[direct_array_access; inline]
+fn data_grid_fnv64_str(h u64, s string) u64 {
+	mut hash := h
+	for i in 0 .. s.len {
+		hash = (hash ^ u64(s[i])) * data_grid_fnv64_prime
+	}
+	return hash
+}
+
+@[inline]
+fn data_grid_fnv64_byte(h u64, b u8) u64 {
+	return (h ^ u64(b)) * data_grid_fnv64_prime
 }
 
 @[minify]

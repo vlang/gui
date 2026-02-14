@@ -1,10 +1,6 @@
 // Data grid: CRUD operations, toolbar, dirty-state.
 module gui
 
-// FNV-1a 64-bit constants (hash.fnv1a keeps these private).
-const data_grid_fnv64_offset = u64(14695981039346656037)
-const data_grid_fnv64_prime = u64(1099511628211)
-
 fn data_grid_crud_enabled(cfg DataGridCfg) bool {
 	return cfg.show_crud_toolbar
 }
@@ -638,19 +634,4 @@ fn data_grid_crud_restore_on_error(grid_id string, on_crud_error fn (msg string,
 	if on_crud_error != unsafe { nil } {
 		on_crud_error(err_msg, mut e, mut w)
 	}
-}
-
-// Incremental FNV-1a: feed a string into running hash.
-@[direct_array_access; inline]
-fn data_grid_fnv64_str(h u64, s string) u64 {
-	mut hash := h
-	for i in 0 .. s.len {
-		hash = (hash ^ u64(s[i])) * data_grid_fnv64_prime
-	}
-	return hash
-}
-
-@[inline]
-fn data_grid_fnv64_byte(h u64, b u8) u64 {
-	return (h ^ u64(b)) * data_grid_fnv64_prime
 }
