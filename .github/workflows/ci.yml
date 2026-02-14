@@ -49,7 +49,7 @@ jobs:
       - name: Check syntax of examples
         run: v gui/examples/_check.vsh
 
-  compiling-with-prod:
+  compiling:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
@@ -80,10 +80,10 @@ jobs:
         run: v test gui/
       - name: Check compilation of examples
         run: v should-compile-all gui/examples/
-      - name: Check compilation of examples with -prod
+      - name: Check compilation of examples with -W
         run: v gui/examples/_build.vsh
 
-  compiling-with-prod-on-windows:
+  compiling-on-windows:
     runs-on: windows-latest
     timeout-minutes: 25
     env:
@@ -94,6 +94,8 @@ jobs:
         uses: vlang/setup-v@v1.4
         with:
           check-latest: true
+      - name: Install pango and freetype
+        run: vcpkg install pango freetype
       - name: Install vglyph
         run: v install vglyph
       - name: Checkout the gui module
@@ -104,5 +106,5 @@ jobs:
         run: v test gui/
       - name: Check compilation of examples
         run: v should-compile-all gui/examples/
-      - name: Check compilation of examples with -prod
+      - name: Check compilation of examples with -W
         run: v gui/examples/_build.vsh
