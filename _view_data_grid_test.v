@@ -1268,8 +1268,14 @@ fn test_grid_rows_to_pdf_file() {
 
 fn test_pdf_col_widths_proportional() {
 	columns := [
-		GridColumnCfg{ id: 'a', title: 'ID' },
-		GridColumnCfg{ id: 'b', title: 'Description' },
+		GridColumnCfg{
+			id:    'a'
+			title: 'ID'
+		},
+		GridColumnCfg{
+			id:    'b'
+			title: 'Description'
+		},
 	]
 	rows := [
 		GridRow{
