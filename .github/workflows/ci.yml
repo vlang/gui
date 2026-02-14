@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      VFLAGS: -no-parallel
+      VFLAGS: -no-parallel -cc clang
     steps:
       - name: Install V
         id: install-v
@@ -59,7 +59,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     env:
-      VFLAGS: -no-parallel
+      VFLAGS: -no-parallel -cc clang
     steps:
       - name: Install V
         id: install-v
