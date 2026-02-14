@@ -199,7 +199,7 @@ mut:
 	offset_start     int
 	row_count        ?int
 	has_more         bool
-	received_count   int
+	received_count   int // latest page count only (reset per fetch)
 	request_count    int
 	cancelled_count  int
 	stale_drop_count int
@@ -225,7 +225,7 @@ mut:
 	request_count    int
 	cancelled_count  int
 	stale_drop_count int
-	received_count   int
+	received_count   int // cumulative across all requests
 	active_abort     &GridAbortController = unsafe { nil }
 	data_dirty       bool                 = true
 }

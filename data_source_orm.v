@@ -95,6 +95,8 @@ pub fn new_grid_orm_data_source(src GridOrmDataSource) !&GridOrmDataSource {
 
 // resolved_column_map returns the cached column_map or
 // validates one on the fly (direct-construction fallback).
+// The on-the-fly path re-validates every call; prefer
+// new_grid_orm_data_source factory for production use.
 fn (source GridOrmDataSource) resolved_column_map() !map[string]GridOrmColumnSpec {
 	if source.column_map.len > 0 {
 		return source.column_map
@@ -210,6 +212,10 @@ pub fn grid_orm_validate_query(query GridQueryState, columns []GridOrmColumnSpec
 	return grid_orm_validate_query_with_map(query, column_map)
 }
 
+// grid_orm_validate_query_with_map silently drops unknown,
+// non-sortable, or non-filterable columns from queries.
+// This is intentional graceful degradation: the UI may
+// reference stale column IDs after schema changes.
 fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]GridOrmColumnSpec) !GridQueryState {
 	if query.quick_filter.len > grid_orm_max_filter_value_len {
 		return error('grid orm: quick_filter exceeds max length (${grid_orm_max_filter_value_len})')
@@ -332,6 +338,10 @@ fn grid_orm_column_allows_filter_op(col GridOrmColumnSpec, op string) bool {
 	return false
 }
 
+// grid_orm_validate_mutation_columns rejects unknown columns
+// strictly (returns error), unlike query validation which
+// silently drops them. Mutations must be correct — writing
+// to an unknown column indicates a bug, not stale UI state.
 fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, column_map map[string]GridOrmColumnSpec) ! {
 	if column_map.len == 0 {
 		return
