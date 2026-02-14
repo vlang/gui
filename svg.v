@@ -83,8 +83,9 @@ pub fn parse_svg(content string) !VectorGraphic {
 		}
 	}
 
-	// Pre-pass: extract <defs> blocks for <clipPath> definitions
+	// Pre-pass: extract <defs> blocks
 	vg.clip_paths = parse_defs_clip_paths(content)
+	vg.gradients = parse_defs_gradients(content)
 
 	// Parse with group support — apply viewBox offset as translation
 	mut vb_transform := identity_transform
@@ -340,9 +341,15 @@ fn apply_inherited_style(mut path VectorPath, inherited GroupStyle) {
 	}
 
 	// Apply inherited fill if element doesn't specify one (uses sentinel)
-	if path.fill_color == color_inherit {
+	if path.fill_gradient_id.len > 0 {
+		// Gradient fill — keep fill_color transparent; gradient takes precedence
+	} else if path.fill_color == color_inherit {
 		if inherited.fill.len > 0 {
-			path.fill_color = parse_svg_color(inherited.fill)
+			if gid := parse_fill_url(inherited.fill) {
+				path.fill_gradient_id = gid
+			} else {
+				path.fill_color = parse_svg_color(inherited.fill)
+			}
 		} else {
 			path.fill_color = black // SVG default
 		}
@@ -667,6 +674,9 @@ fn parse_path_element(elem string) ?VectorPath {
 		fill_opacity:   s.fill_opacity
 		stroke_opacity: s.stroke_opacity
 	}
+	if gid := parse_fill_url(fill) {
+		path.fill_gradient_id = gid
+	}
 	path.segments = parse_path_d(d)
 
 	if path.segments.len == 0 {
@@ -723,7 +733,7 @@ fn parse_rect_element(elem string) ?VectorPath {
 		segments << PathSegment{.close, []}
 	}
 
-	return VectorPath{
+	mut vp := VectorPath{
 		segments:       segments
 		fill_color:     parse_svg_color(fill)
 		transform:      s.transform
@@ -735,6 +745,10 @@ fn parse_rect_element(elem string) ?VectorPath {
 		fill_opacity:   s.fill_opacity
 		stroke_opacity: s.stroke_opacity
 	}
+	if gid := parse_fill_url(fill) {
+		vp.fill_gradient_id = gid
+	}
+	return vp
 }
 
 // parse_circle_element converts <circle> to path
@@ -773,7 +787,7 @@ fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string, s E
 	segments << PathSegment{.cubic_to, [cx - rx, cy - ky, cx - kx, cy - ry, cx, cy - ry]}
 	segments << PathSegment{.close, []}
 
-	return VectorPath{
+	mut vp := VectorPath{
 		segments:       segments
 		fill_color:     parse_svg_color(fill)
 		transform:      s.transform
@@ -785,6 +799,10 @@ fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string, s E
 		fill_opacity:   s.fill_opacity
 		stroke_opacity: s.stroke_opacity
 	}
+	if gid := parse_fill_url(fill) {
+		vp.fill_gradient_id = gid
+	}
+	return vp
 }
 
 // parse_polygon_element converts <polygon> or <polyline> to path
@@ -808,7 +826,7 @@ fn parse_polygon_element(elem string, close bool) ?VectorPath {
 		segments << PathSegment{.close, []}
 	}
 
-	return VectorPath{
+	mut vp := VectorPath{
 		segments:       segments
 		fill_color:     parse_svg_color(fill)
 		transform:      s.transform
@@ -820,6 +838,10 @@ fn parse_polygon_element(elem string, close bool) ?VectorPath {
 		fill_opacity:   s.fill_opacity
 		stroke_opacity: s.stroke_opacity
 	}
+	if gid := parse_fill_url(fill) {
+		vp.fill_gradient_id = gid
+	}
+	return vp
 }
 
 // parse_line_element converts <line> to path.
@@ -852,12 +874,27 @@ fn parse_line_element(elem string) ?VectorPath {
 	}
 }
 
+// parse_fill_url extracts gradient ID from fill="url(#id)".
+// Returns the ID string or none if not a url() reference.
+fn parse_fill_url(fill string) ?string {
+	str := fill.trim_space()
+	if !str.starts_with('url(') {
+		return none
+	}
+	hash_pos := find_index(str, '#', 0) or { return none }
+	end_pos := find_index(str, ')', hash_pos) or { return none }
+	if end_pos > hash_pos + 1 {
+		return str[hash_pos + 1..end_pos]
+	}
+	return none
+}
+
 // parse_svg_color converts SVG color strings to Color values.
 // Returns color_inherit sentinel if string is empty (attribute not present).
 // Sentinel values are used to implement CSS-style inheritance:
 // - color_inherit (magenta): Attribute not specified, inherit from parent/group
 // - color_transparent (alpha=0): Explicit 'none' value, don't render
-// These sentinels are resolved during style application (lines 274, 283).
+// These sentinels are resolved during style application.
 fn parse_svg_color(s string) Color {
 	str := s.trim_space()
 	if str.len == 0 {
@@ -868,6 +905,11 @@ fn parse_svg_color(s string) Color {
 	}
 	if str == 'currentColor' || str == 'inherit' {
 		return color_inherit
+	}
+	// url() references handled by parse_fill_url; treat as
+	// transparent here so fill_gradient_id takes precedence.
+	if str.starts_with('url(') {
+		return color_transparent
 	}
 	if str.starts_with('#') {
 		return parse_hex_color(str)
@@ -1592,4 +1634,110 @@ fn parse_defs_clip_paths(content string) map[string][]VectorPath {
 	}
 
 	return clip_paths
+}
+
+// parse_defs_gradients extracts <linearGradient> definitions from
+// <defs> blocks. Returns map of id -> SvgGradientDef.
+fn parse_defs_gradients(content string) map[string]SvgGradientDef {
+	mut gradients := map[string]SvgGradientDef{}
+	mut pos := 0
+
+	for pos < content.len {
+		lg_start := find_index(content, '<linearGradient', pos) or { break }
+		tag_end := find_index(content, '>', lg_start) or { break }
+		opening_tag := content[lg_start..tag_end + 1]
+		is_self_closing := content[tag_end - 1] == `/`
+
+		grad_id := find_attr(opening_tag, 'id') or {
+			pos = tag_end + 1
+			continue
+		}
+
+		x1 := (find_attr(opening_tag, 'x1') or { '0' }).f32()
+		y1 := (find_attr(opening_tag, 'y1') or { '0' }).f32()
+		x2 := (find_attr(opening_tag, 'x2') or { '0' }).f32()
+		y2 := (find_attr(opening_tag, 'y2') or { '0' }).f32()
+
+		if is_self_closing {
+			gradients[grad_id] = SvgGradientDef{
+				x1: x1
+				y1: y1
+				x2: x2
+				y2: y2
+			}
+			pos = tag_end + 1
+			continue
+		}
+
+		// Find closing </linearGradient>
+		lg_content_start := tag_end + 1
+		lg_end := find_closing_tag(content, 'linearGradient', lg_content_start)
+		if lg_end <= lg_content_start {
+			pos = tag_end + 1
+			continue
+		}
+
+		// Parse <stop> elements
+		lg_content := content[lg_content_start..lg_end]
+		stops := parse_gradient_stops(lg_content)
+
+		gradients[grad_id] = SvgGradientDef{
+			x1:    x1
+			y1:    y1
+			x2:    x2
+			y2:    y2
+			stops: stops
+		}
+
+		close_end := find_index(content, '>', lg_end) or { break }
+		pos = close_end + 1
+	}
+
+	return gradients
+}
+
+// parse_gradient_stops extracts <stop> elements from gradient content.
+fn parse_gradient_stops(content string) []SvgGradientStop {
+	mut stops := []SvgGradientStop{}
+	mut pos := 0
+
+	for pos < content.len {
+		stop_start := find_index(content, '<stop', pos) or { break }
+		stop_end := find_index(content, '>', stop_start) or { break }
+		stop_elem := content[stop_start..stop_end + 1]
+
+		offset_str := find_attr_or_style(stop_elem, 'offset') or { '0' }
+		mut offset := if offset_str.ends_with('%') {
+			offset_str[..offset_str.len - 1].f32() / 100.0
+		} else {
+			offset_str.f32()
+		}
+		if offset < 0 {
+			offset = 0
+		}
+		if offset > 1 {
+			offset = 1
+		}
+
+		color_str := find_attr_or_style(stop_elem, 'stop-color') or { '#000000' }
+		mut color := parse_svg_color(color_str)
+		if color == color_inherit {
+			color = black
+		}
+
+		// Apply stop-opacity
+		stop_opacity := parse_opacity_attr(stop_elem, 'stop-opacity', 1.0)
+		if stop_opacity < 1.0 {
+			color = apply_opacity(color, stop_opacity)
+		}
+
+		stops << SvgGradientStop{
+			offset: offset
+			color:  color
+		}
+
+		pos = stop_end + 1
+	}
+
+	return stops
 }

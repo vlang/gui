@@ -109,13 +109,14 @@ struct DrawCustomShader {
 }
 
 struct DrawSvg {
-	triangles    []f32 // x,y pairs forming triangles
-	color        gg.Color
-	x            f32
-	y            f32
-	scale        f32
-	is_clip_mask bool // stencil-write geometry
-	clip_group   int  // non-zero = uses stencil clipping
+	triangles     []f32 // x,y pairs forming triangles
+	color         gg.Color
+	vertex_colors []gg.Color // per-vertex colors; empty = flat color
+	x             f32
+	y             f32
+	scale         f32
+	is_clip_mask  bool // stencil-write geometry
+	clip_group    int  // non-zero = uses stencil clipping
 }
 
 struct DrawLayout {
@@ -164,17 +165,24 @@ fn renderers_draw(renderers []Renderer, mut window Window) {
 				draw_clipped_svg_group(renderers, mut i, mut window)
 				continue
 			}
+			// Per-vertex colored SVGs cannot batch
+			if renderer.vertex_colors.len > 0 {
+				draw_triangles_gradient(renderer.triangles, renderer.vertex_colors, renderer.x,
+					renderer.y, renderer.scale, mut window)
+				i++
+				continue
+			}
 			mut batch := []f32{}
 			color := renderer.color
 			x := renderer.x
 			y := renderer.y
 			scale := renderer.scale
-			// Collect consecutive matching DrawSvg (non-clipped only)
+			// Collect consecutive matching DrawSvg (non-clipped, non-gradient)
 			for i < renderers.len {
 				if renderers[i] is DrawSvg {
 					svg := renderers[i] as DrawSvg
-					if svg.clip_group == 0 && svg.color == color && svg.x == x && svg.y == y
-						&& svg.scale == scale {
+					if svg.clip_group == 0 && svg.vertex_colors.len == 0 && svg.color == color
+						&& svg.x == x && svg.y == y && svg.scale == scale {
 						batch << svg.triangles
 						i++
 						continue
@@ -356,8 +364,13 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 				renderer.color, renderer.shader, mut window)
 		}
 		DrawSvg {
-			draw_triangles(renderer.triangles, renderer.color, renderer.x, renderer.y,
-				renderer.scale, mut window)
+			if renderer.vertex_colors.len > 0 {
+				draw_triangles_gradient(renderer.triangles, renderer.vertex_colors, renderer.x,
+					renderer.y, renderer.scale, mut window)
+			} else {
+				draw_triangles(renderer.triangles, renderer.color, renderer.x, renderer.y,
+					renderer.scale, mut window)
+			}
 		}
 		DrawNone {}
 	}
@@ -1417,15 +1430,24 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 
 	for tpath in cached.triangles {
 		// Use shape color if set (monochrome override), otherwise path color
-		c := if color.a > 0 { color } else { tpath.color }
+		has_vcols := tpath.vertex_colors.len > 0
+		c := if color.a > 0 && !has_vcols { color } else { tpath.color }
+		mut gx_vcols := []gg.Color{}
+		if has_vcols && color.a == 0 {
+			gx_vcols = []gg.Color{cap: tpath.vertex_colors.len}
+			for vc in tpath.vertex_colors {
+				gx_vcols << vc.to_gx_color()
+			}
+		}
 		window.renderers << DrawSvg{
-			triangles:    tpath.triangles
-			color:        c.to_gx_color()
-			x:            shape.x
-			y:            shape.y
-			scale:        cached.scale
-			is_clip_mask: tpath.is_clip_mask
-			clip_group:   tpath.clip_group
+			triangles:     tpath.triangles
+			color:         c.to_gx_color()
+			vertex_colors: gx_vcols
+			x:             shape.x
+			y:             shape.y
+			scale:         cached.scale
+			is_clip_mask:  tpath.is_clip_mask
+			clip_group:    tpath.clip_group
 		}
 	}
 
@@ -1460,6 +1482,47 @@ fn draw_triangles(triangles []f32, c gg.Color, x f32, y f32, tri_scale f32, mut 
 		sgl.v2f(x2, y2)
 
 		i += 6
+	}
+
+	sgl.end()
+}
+
+// draw_triangles_gradient renders triangles with per-vertex colors.
+fn draw_triangles_gradient(triangles []f32, vertex_colors []gg.Color, x f32, y f32, tri_scale f32, mut window Window) {
+	if triangles.len < 6 || vertex_colors.len < 3 {
+		return
+	}
+
+	scale := window.ui.scale
+
+	sgl.load_pipeline(window.ui.pipeline.alpha)
+	sgl.begin_triangles()
+
+	mut vi := 0 // vertex index into vertex_colors
+	mut i := 0
+	for i < triangles.len - 5 {
+		if vi + 2 < vertex_colors.len {
+			c0 := vertex_colors[vi]
+			c1 := vertex_colors[vi + 1]
+			c2 := vertex_colors[vi + 2]
+
+			x0 := (x + triangles[i] * tri_scale) * scale
+			y0 := (y + triangles[i + 1] * tri_scale) * scale
+			x1 := (x + triangles[i + 2] * tri_scale) * scale
+			y1 := (y + triangles[i + 3] * tri_scale) * scale
+			x2 := (x + triangles[i + 4] * tri_scale) * scale
+			y2 := (y + triangles[i + 5] * tri_scale) * scale
+
+			sgl.c4b(c0.r, c0.g, c0.b, c0.a)
+			sgl.v2f(x0, y0)
+			sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+			sgl.v2f(x1, y1)
+			sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+			sgl.v2f(x2, y2)
+		}
+
+		i += 6
+		vi += 3
 	}
 
 	sgl.end()

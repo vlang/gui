@@ -44,20 +44,38 @@ pub enum StrokeJoin as u8 {
 	inherit // sentinel: use inherited value
 }
 
+// SvgGradientStop holds one color stop in a linear gradient.
+pub struct SvgGradientStop {
+pub:
+	offset f32
+	color  Color
+}
+
+// SvgGradientDef holds a parsed <linearGradient> definition.
+pub struct SvgGradientDef {
+pub:
+	x1    f32
+	y1    f32
+	x2    f32
+	y2    f32
+	stops []SvgGradientStop
+}
+
 // VectorPath represents a single filled path with color.
 pub struct VectorPath {
 pub mut:
-	segments       []PathSegment
-	fill_color     Color      = color_inherit
-	transform      [6]f32     = [f32(1), 0, 0, 1, 0, 0]! // identity: [a,b,c,d,e,f]
-	stroke_color   Color      = color_inherit
-	stroke_width   f32        = -1.0 // negative = inherit from parent
-	stroke_cap     StrokeCap  = .inherit
-	stroke_join    StrokeJoin = .inherit
-	clip_path_id   string // references clip_paths key, empty = none
-	opacity        f32 = 1.0
-	fill_opacity   f32 = 1.0
-	stroke_opacity f32 = 1.0
+	segments         []PathSegment
+	fill_color       Color      = color_inherit
+	transform        [6]f32     = [f32(1), 0, 0, 1, 0, 0]! // identity: [a,b,c,d,e,f]
+	stroke_color     Color      = color_inherit
+	stroke_width     f32        = -1.0 // negative = inherit from parent
+	stroke_cap       StrokeCap  = .inherit
+	stroke_join      StrokeJoin = .inherit
+	clip_path_id     string // references clip_paths key, empty = none
+	fill_gradient_id string // references gradients key, empty = flat fill
+	opacity          f32 = 1.0
+	fill_opacity     f32 = 1.0
+	stroke_opacity   f32 = 1.0
 }
 
 // VectorGraphic holds the complete parsed vector graphic (e.g., from SVG).
@@ -68,16 +86,71 @@ pub mut:
 	view_box_x f32 // viewBox min-x offset
 	view_box_y f32 // viewBox min-y offset
 	paths      []VectorPath
-	clip_paths map[string][]VectorPath // id -> clip geometry
+	clip_paths map[string][]VectorPath   // id -> clip geometry
+	gradients  map[string]SvgGradientDef // id -> gradient def
 }
 
 // TessellatedPath holds triangulated geometry ready for rendering.
 pub struct TessellatedPath {
 pub:
-	triangles    []f32 // x,y pairs forming triangles
-	color        Color
-	is_clip_mask bool // true = stencil-write geometry
-	clip_group   int  // groups clip mask + clipped content (0 = none)
+	triangles     []f32 // x,y pairs forming triangles
+	color         Color
+	vertex_colors []Color // per-vertex colors (len = triangles.len/2); empty = flat color
+	is_clip_mask  bool    // true = stencil-write geometry
+	clip_group    int     // groups clip mask + clipped content (0 = none)
+}
+
+// project_onto_gradient computes parameter t for vertex (vx,vy) on
+// gradient axis (x1,y1)->(x2,y2). Clamped to [0,1].
+fn project_onto_gradient(vx f32, vy f32, g SvgGradientDef) f32 {
+	dx := g.x2 - g.x1
+	dy := g.y2 - g.y1
+	len_sq := dx * dx + dy * dy
+	if len_sq == 0 {
+		return 0
+	}
+	t := ((vx - g.x1) * dx + (vy - g.y1) * dy) / len_sq
+	if t < 0 {
+		return 0
+	}
+	if t > 1 {
+		return 1
+	}
+	return t
+}
+
+// interpolate_gradient returns the color at parameter t along gradient
+// stops. Clamps to first/last stop outside range.
+fn interpolate_gradient(stops []SvgGradientStop, t f32) Color {
+	if stops.len == 0 {
+		return Color{0, 0, 0, 255}
+	}
+	if t <= stops[0].offset || stops.len == 1 {
+		return stops[0].color
+	}
+	last := stops[stops.len - 1]
+	if t >= last.offset {
+		return last.color
+	}
+	// Find surrounding stops
+	for i := 0; i < stops.len - 1; i++ {
+		s0 := stops[i]
+		s1 := stops[i + 1]
+		if t >= s0.offset && t <= s1.offset {
+			range_ := s1.offset - s0.offset
+			if range_ <= 0 {
+				return s0.color
+			}
+			f := (t - s0.offset) / range_
+			return Color{
+				r: u8(f32(s0.color.r) + (f32(s1.color.r) - f32(s0.color.r)) * f)
+				g: u8(f32(s0.color.g) + (f32(s1.color.g) - f32(s0.color.g)) * f)
+				b: u8(f32(s0.color.b) + (f32(s1.color.b) - f32(s0.color.b)) * f)
+				a: u8(f32(s0.color.a) + (f32(s1.color.a) - f32(s0.color.a)) * f)
+			}
+		}
+	}
+	return last.color
 }
 
 // get_triangles tessellates all paths in the graphic into GPU-ready triangle geometry.
@@ -160,13 +233,33 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 
 		polylines := flatten_path(path, tolerance)
 		// Tessellate fill
-		if path.fill_color.a > 0 {
+		has_gradient := path.fill_gradient_id.len > 0
+		if path.fill_color.a > 0 || has_gradient {
 			triangles := tessellate_polylines(polylines)
 			if triangles.len > 0 {
+				mut vcols := []Color{}
+				if has_gradient {
+					if grad := vg.gradients[path.fill_gradient_id] {
+						n_verts := triangles.len / 2
+						vcols = []Color{cap: n_verts}
+						opacity := path.opacity * path.fill_opacity
+						for vi := 0; vi < n_verts; vi++ {
+							vx := triangles[vi * 2]
+							vy := triangles[vi * 2 + 1]
+							t := project_onto_gradient(vx, vy, grad)
+							mut c := interpolate_gradient(grad.stops, t)
+							if opacity < 1.0 {
+								c = apply_opacity(c, opacity)
+							}
+							vcols << c
+						}
+					}
+				}
 				result << TessellatedPath{
-					triangles:  triangles
-					color:      path.fill_color
-					clip_group: clip_group
+					triangles:     triangles
+					color:         path.fill_color
+					vertex_colors: vcols
+					clip_group:    clip_group
 				}
 			}
 		}
