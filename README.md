@@ -105,7 +105,7 @@ fn main_view(window &gui.Window) gui.View {
 			gui.text(text: '${app.clicks} clicks'),
 			gui.button(
 				content: [gui.text(text: 'Click me')]
-				on_click: fn (_, _, mut w gui.Window) {
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 					w.state[App]().clicks += 1
 				}
 			),
