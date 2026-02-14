@@ -2,6 +2,9 @@ module gui
 
 import hash.fnv1a
 
+const data_grid_default_page_limit = 100
+const data_grid_jump_input_width = 68
+
 pub struct DataGridSourceStats {
 pub:
 	loading          bool
@@ -33,15 +36,18 @@ pub fn (window &Window) data_grid_source_stats(grid_id string) DataGridSourceSta
 
 fn data_grid_source_apply_local_mutation(grid_id string, rows []GridRow, row_count ?int, mut window Window) {
 	mut state := window.view_state.data_grid_source_state.get(grid_id) or { DataGridSourceState{} }
-	state.rows = rows.clone()
+	state.rows = rows
 	state.received_count = rows.len
 	state.has_loaded = true
 	state.loading = false
 	state.load_error = ''
 	state.rows_dirty = true
 	state.rows_signature = data_grid_rows_signature(rows, []string{})
+	state.active_abort = unsafe { nil }
 	if count := row_count {
 		state.row_count = ?int(count)
+	} else {
+		state.row_count = none
 	}
 	window.view_state.data_grid_source_state.set(grid_id, state)
 }
@@ -62,6 +68,7 @@ fn data_grid_source_force_refetch(grid_id string, mut window Window) {
 	state.request_key = ''
 	state.load_error = ''
 	state.caps_cached = false
+	state.active_abort = unsafe { nil }
 	window.view_state.data_grid_source_state.set(grid_id, state)
 	window.update_window()
 }
@@ -83,13 +90,15 @@ fn data_grid_resolve_source_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg
 	} else {
 		data_source.capabilities()
 	}
+	// Read rows_dirty before resolve_state clears it.
+	was_dirty := existing.rows_dirty
 	state := data_grid_source_resolve_state(cfg, caps, mut window)
 	mut row_count := cfg.row_count
 	if count := state.row_count {
 		row_count = ?int(count)
 	}
 	// Skip clone when rows unchanged since last frame.
-	rows := if state.rows_dirty { state.rows.clone() } else { state.rows }
+	rows := if was_dirty { state.rows.clone() } else { state.rows }
 	resolved := DataGridCfg{
 		...cfg
 		rows:       rows
@@ -118,11 +127,7 @@ fn data_grid_source_resolve_state(cfg DataGridCfg, caps GridDataCapabilities, mu
 	kind := data_grid_source_effective_pagination_kind(cfg.pagination_kind, caps)
 	if state.pagination_kind != kind {
 		state.pagination_kind = kind
-		state.current_cursor = cfg.cursor
-		state.next_cursor = ''
-		state.prev_cursor = ''
-		state.offset_start = 0
-		state.request_key = ''
+		data_grid_source_reset_pagination(mut state, cfg.cursor)
 		state.rows = []GridRow{}
 	}
 	if cfg.cursor != state.config_cursor {
@@ -180,12 +185,16 @@ fn data_grid_source_apply_query_reset(mut state DataGridSourceState, cfg DataGri
 		return
 	}
 	state.query_signature = query_sig
-	state.current_cursor = cfg.cursor
+	data_grid_source_reset_pagination(mut state, cfg.cursor)
+	state.pending_jump_row = -1
+}
+
+fn data_grid_source_reset_pagination(mut state DataGridSourceState, cursor string) {
+	state.current_cursor = cursor
 	state.next_cursor = ''
 	state.prev_cursor = ''
 	state.offset_start = 0
 	state.request_key = ''
-	state.pending_jump_row = -1
 }
 
 fn data_grid_source_effective_pagination_kind(preferred GridPaginationKind, caps GridDataCapabilities) GridPaginationKind {
@@ -214,7 +223,7 @@ fn data_grid_page_limit(cfg DataGridCfg) int {
 	if cfg.page_size > 0 {
 		return cfg.page_size
 	}
-	return 100
+	return data_grid_default_page_limit
 }
 
 fn data_grid_source_request_key(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind, query_sig string) string {
@@ -341,37 +350,26 @@ fn data_grid_source_apply_error(grid_id string, request_id u64, err_msg string, 
 
 fn data_grid_source_rows_text(kind GridPaginationKind, state DataGridSourceState) string {
 	if kind == .offset {
-		start := state.offset_start
-		if state.received_count <= 0 {
-			if total := state.row_count {
-				return 'Rows 0/${total}'
-			}
-			return 'Rows 0/?'
-		}
-		end := start + state.received_count
-		if total := state.row_count {
-			return 'Rows ${start + 1}-${end}/${total}'
-		}
-		return 'Rows ${start + 1}-${end}/?'
+		return data_grid_source_format_rows(state.offset_start, state.received_count,
+			state.row_count)
 	}
 	if start := grid_data_source_cursor_to_index_opt(state.current_cursor) {
-		if state.received_count <= 0 {
-			if total := state.row_count {
-				return 'Rows 0/${total}'
-			}
-			return 'Rows 0/?'
-		}
-		mut end := start + state.received_count
-		if total := state.row_count {
-			end = int_min(end, total)
-			return 'Rows ${start + 1}-${end}/${total}'
-		}
-		return 'Rows ${start + 1}-${end}/?'
+		return data_grid_source_format_rows(start, state.received_count, state.row_count)
 	}
-	if total := state.row_count {
-		return 'Rows ${state.received_count}/${total}'
+	total_text := if total := state.row_count { '${total}' } else { '?' }
+	return 'Rows ${state.received_count}/${total_text}'
+}
+
+fn data_grid_source_format_rows(start int, count int, total ?int) string {
+	total_text := if t := total { '${t}' } else { '?' }
+	if count <= 0 {
+		return 'Rows 0/${total_text}'
 	}
-	return 'Rows ${state.received_count}/?'
+	mut end := start + count
+	if t := total {
+		end = int_min(end, t)
+	}
+	return 'Rows ${start + 1}-${end}/${total_text}'
 }
 
 fn data_grid_source_can_prev(kind GridPaginationKind, state DataGridSourceState, page_limit int) bool {
@@ -433,6 +431,9 @@ fn data_grid_source_next_page(grid_id string, kind GridPaginationKind, page_limi
 			int_max(1, page_limit)
 		}
 		state.offset_start += step
+		if total := state.row_count {
+			state.offset_start = int_min(state.offset_start, int_max(0, total - 1))
+		}
 	}
 	state.request_key = ''
 	state.load_error = ''
@@ -620,7 +621,7 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 			text:            jump_text
 			placeholder:     '#'
 			disabled:        !jump_enabled
-			width:           68
+			width:           data_grid_jump_input_width
 			sizing:          fixed_fill
 			padding:         padding_none
 			size_border:     0

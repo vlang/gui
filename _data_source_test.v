@@ -1,7 +1,7 @@
 module gui
 
 fn test_in_memory_cursor_data_source_pages_with_cursor() {
-	source := InMemoryCursorDataSource{
+	source := InMemoryDataSource{
 		rows:          data_source_rows(10)
 		default_limit: 3
 	}
@@ -37,9 +37,10 @@ fn test_in_memory_cursor_data_source_pages_with_cursor() {
 }
 
 fn test_in_memory_offset_data_source_pages_with_offsets() {
-	source := InMemoryOffsetDataSource{
-		rows:          data_source_rows(10)
-		default_limit: 4
+	source := InMemoryDataSource{
+		rows:            data_source_rows(10)
+		default_limit:   4
+		supports_cursor: false
 	}
 	res := source.fetch_data(GridDataRequest{
 		grid_id: 'grid'
@@ -83,7 +84,7 @@ fn test_in_memory_source_applies_query_sort_filter() {
 			}
 		},
 	]
-	source := InMemoryCursorDataSource{
+	source := InMemoryDataSource{
 		rows: rows
 	}
 	res := source.fetch_data(GridDataRequest{
@@ -114,7 +115,7 @@ fn test_in_memory_source_applies_query_sort_filter() {
 }
 
 fn test_in_memory_source_honors_abort_signal() {
-	source := InMemoryCursorDataSource{
+	source := InMemoryDataSource{
 		rows:       data_source_rows(20)
 		latency_ms: 30
 	}
@@ -227,7 +228,7 @@ fn test_data_grid_source_jump_enabled_rules() {
 }
 
 fn test_in_memory_cursor_data_source_mutate_crud() {
-	mut source := InMemoryCursorDataSource{
+	mut source := InMemoryDataSource{
 		rows: data_source_rows(3)
 	}
 	create_res := source.mutate_data(GridMutationRequest{
@@ -280,8 +281,9 @@ fn test_in_memory_cursor_data_source_mutate_crud() {
 }
 
 fn test_in_memory_offset_data_source_mutate_batch_delete() {
-	mut source := InMemoryOffsetDataSource{
-		rows: data_source_rows(5)
+	mut source := InMemoryDataSource{
+		rows:            data_source_rows(5)
+		supports_cursor: false
 	}
 	res := source.mutate_data(GridMutationRequest{
 		grid_id: 'grid'
@@ -306,7 +308,7 @@ fn test_in_memory_offset_data_source_mutate_batch_delete() {
 }
 
 fn test_in_memory_cursor_data_source_empty_fetch() {
-	source := InMemoryCursorDataSource{
+	source := InMemoryDataSource{
 		rows: []GridRow{}
 	}
 	res := source.fetch_data(GridDataRequest{
@@ -324,9 +326,10 @@ fn test_in_memory_cursor_data_source_empty_fetch() {
 }
 
 fn test_in_memory_offset_data_source_with_cursor_request() {
-	source := InMemoryOffsetDataSource{
-		rows:          data_source_rows(10)
-		default_limit: 5
+	source := InMemoryDataSource{
+		rows:            data_source_rows(10)
+		default_limit:   5
+		supports_cursor: false
 	}
 	res := source.fetch_data(GridDataRequest{
 		grid_id: 'grid'
@@ -363,7 +366,7 @@ fn test_in_memory_source_starts_with_ends_with_filters() {
 			}
 		},
 	]
-	source := InMemoryCursorDataSource{
+	source := InMemoryDataSource{
 		rows: rows
 	}
 	starts := source.fetch_data(GridDataRequest{
@@ -405,7 +408,7 @@ fn test_in_memory_source_starts_with_ends_with_filters() {
 }
 
 fn test_in_memory_source_update_empty_row_id_returns_error() {
-	mut source := InMemoryCursorDataSource{
+	mut source := InMemoryDataSource{
 		rows: data_source_rows(3)
 	}
 	_ := source.mutate_data(GridMutationRequest{
@@ -426,8 +429,30 @@ fn test_in_memory_source_update_empty_row_id_returns_error() {
 	assert false
 }
 
+fn test_in_memory_source_update_nonexistent_row_returns_error() {
+	mut source := InMemoryDataSource{
+		rows: data_source_rows(3)
+	}
+	_ := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .update
+		rows:    [
+			GridRow{
+				id:    'no-such-id'
+				cells: {
+					'name': 'Ghost'
+				}
+			},
+		]
+	}) or {
+		assert err.msg().contains('update row not found')
+		return
+	}
+	assert false
+}
+
 fn test_in_memory_source_edit_empty_col_id_returns_error() {
-	mut source := InMemoryCursorDataSource{
+	mut source := InMemoryDataSource{
 		rows: data_source_rows(3)
 	}
 	_ := source.mutate_data(GridMutationRequest{
@@ -448,7 +473,7 @@ fn test_in_memory_source_edit_empty_col_id_returns_error() {
 }
 
 fn test_in_memory_source_row_count_unknown() {
-	source := InMemoryCursorDataSource{
+	source := InMemoryDataSource{
 		rows:            data_source_rows(5)
 		row_count_known: false
 	}
@@ -463,10 +488,10 @@ fn test_in_memory_source_row_count_unknown() {
 	assert res.row_count == none
 }
 
-fn test_next_mutation_row_id_returns_error_on_exhaustion() {
+fn test_next_mutation_row_id_falls_back_to_random() {
 	// Build 1000 rows with IDs "1001".."2000".
-	// rows.len=1000, so candidates="1001".."2000",
-	// all of which already exist in the map.
+	// rows.len=1000, so numeric candidates="1001".."2000"
+	// are all exhausted; random hex fallback should succeed.
 	n := 1000
 	mut rows := []GridRow{cap: n}
 	mut existing := map[string]bool{}
@@ -477,11 +502,11 @@ fn test_next_mutation_row_id_returns_error_on_exhaustion() {
 		existing[data_grid_row_id(row, i)] = true
 		rows << row
 	}
-	grid_data_source_next_create_row_id(rows, existing, '') or {
-		assert err.msg().contains('unable to generate unique row id')
+	id := grid_data_source_next_create_row_id(rows, existing, '') or {
+		assert false
 		return
 	}
-	assert false
+	assert id.starts_with('__gen_')
 }
 
 fn test_contains_lower_ascii() {
@@ -565,6 +590,283 @@ fn test_cursor_to_index_plain_integer() {
 	} else {
 		assert false
 	}
+}
+
+fn test_in_memory_offset_data_source_pages_full_assertions() {
+	source := InMemoryDataSource{
+		rows:            data_source_rows(10)
+		default_limit:   4
+		supports_cursor: false
+	}
+	res := source.fetch_data(GridDataRequest{
+		grid_id: 'grid'
+		query:   GridQueryState{}
+		page:    GridPageRequest(GridOffsetPageReq{
+			start_index: 2
+			end_index:   5
+		})
+	}) or { panic(err) }
+	assert res.rows.len == 3
+	assert res.has_more == true
+	assert res.received_count == 3
+	if total := res.row_count {
+		assert total == 10
+	} else {
+		assert false
+	}
+}
+
+fn test_in_memory_cursor_capabilities() {
+	source := InMemoryDataSource{
+		rows:            data_source_rows(3)
+		supports_offset: false
+	}
+	caps := source.capabilities()
+	assert caps.supports_cursor_pagination == true
+	assert caps.supports_offset_pagination == false
+	assert caps.supports_numbered_pages == false
+	assert caps.row_count_known == true
+	assert caps.supports_create == true
+	assert caps.supports_update == true
+	assert caps.supports_delete == true
+	assert caps.supports_batch_delete == true
+}
+
+fn test_in_memory_offset_capabilities() {
+	source := InMemoryDataSource{
+		rows:            data_source_rows(3)
+		supports_cursor: false
+		row_count_known: false
+	}
+	caps := source.capabilities()
+	assert caps.supports_cursor_pagination == false
+	assert caps.supports_offset_pagination == true
+	assert caps.supports_numbered_pages == true
+	assert caps.row_count_known == false
+}
+
+fn test_grid_query_signature_stable_across_filter_order() {
+	q1 := GridQueryState{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'equals'
+				value:  'Ada'
+			},
+			GridFilter{
+				col_id: 'team'
+				op:     'contains'
+				value:  'Data'
+			},
+		]
+	}
+	q2 := GridQueryState{
+		filters: [
+			GridFilter{
+				col_id: 'team'
+				op:     'contains'
+				value:  'Data'
+			},
+			GridFilter{
+				col_id: 'name'
+				op:     'equals'
+				value:  'Ada'
+			},
+		]
+	}
+	assert grid_query_signature(q1) == grid_query_signature(q2)
+}
+
+fn test_grid_query_signature_different_ops_on_same_col() {
+	q1 := GridQueryState{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'contains'
+				value:  'A'
+			},
+			GridFilter{
+				col_id: 'name'
+				op:     'equals'
+				value:  'A'
+			},
+		]
+	}
+	q2 := GridQueryState{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'equals'
+				value:  'A'
+			},
+			GridFilter{
+				col_id: 'name'
+				op:     'contains'
+				value:  'A'
+			},
+		]
+	}
+	assert grid_query_signature(q1) == grid_query_signature(q2)
+}
+
+fn test_in_memory_source_sort_only_no_filter() {
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'name': 'Cara'
+			}
+		},
+		GridRow{
+			id:    '2'
+			cells: {
+				'name': 'Ada'
+			}
+		},
+		GridRow{
+			id:    '3'
+			cells: {
+				'name': 'Bob'
+			}
+		},
+	]
+	sorted := grid_data_source_apply_query(rows, GridQueryState{
+		sorts: [
+			GridSort{
+				col_id: 'name'
+				dir:    .asc
+			},
+		]
+	})
+	assert sorted.len == 3
+	assert sorted[0].id == '2'
+	assert sorted[1].id == '3'
+	assert sorted[2].id == '1'
+}
+
+fn test_in_memory_source_quick_filter() {
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'name': 'Alice'
+				'team': 'Core'
+			}
+		},
+		GridRow{
+			id:    '2'
+			cells: {
+				'name': 'Bob'
+				'team': 'Data'
+			}
+		},
+		GridRow{
+			id:    '3'
+			cells: {
+				'name': 'Charlie'
+				'team': 'Core'
+			}
+		},
+	]
+	source := InMemoryDataSource{
+		rows: rows
+	}
+	res := source.fetch_data(GridDataRequest{
+		grid_id: 'grid'
+		query:   GridQueryState{
+			quick_filter: 'bob'
+		}
+		page:    GridPageRequest(GridCursorPageReq{
+			limit: 10
+		})
+	}) or { panic(err) }
+	assert res.rows.len == 1
+	assert res.rows[0].id == '2'
+}
+
+fn test_in_memory_source_create_with_preferred_id() {
+	mut source := InMemoryDataSource{
+		rows: data_source_rows(3)
+	}
+	res := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .create
+		rows:    [
+			GridRow{
+				id:    'custom-99'
+				cells: {
+					'name': 'Custom'
+				}
+			},
+		]
+	}) or { panic(err) }
+	assert res.created.len == 1
+	assert res.created[0].id == 'custom-99'
+}
+
+fn test_in_memory_source_delete_via_rows() {
+	mut source := InMemoryDataSource{
+		rows: data_source_rows(5)
+	}
+	res := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .delete
+		rows:    [GridRow{
+			id: '2'
+		}, GridRow{
+			id: '4'
+		}]
+	}) or { panic(err) }
+	assert res.deleted_ids.len == 2
+	assert '2' in res.deleted_ids
+	assert '4' in res.deleted_ids
+}
+
+fn test_cursor_to_index_with_prefix() {
+	if idx := grid_data_source_cursor_to_index_opt('i:42') {
+		assert idx == 42
+	} else {
+		assert false
+	}
+	if idx := grid_data_source_cursor_to_index_opt('i:0') {
+		assert idx == 0
+	} else {
+		assert false
+	}
+	assert grid_data_source_cursor_to_index_opt('i:abc') == none
+}
+
+fn test_offset_bounds_empty_range_fallback() {
+	// When end <= start, falls back to default_limit.
+	start, end := grid_data_source_offset_bounds(5, 5, 100, 10)
+	assert start == 5
+	assert end == 15
+
+	// When start==0, end==0.
+	s2, e2 := grid_data_source_offset_bounds(0, 0, 100, 20)
+	assert s2 == 0
+	assert e2 == 20
+
+	// Total limits the fallback.
+	s3, e3 := grid_data_source_offset_bounds(95, 95, 100, 20)
+	assert s3 == 95
+	assert e3 == 100
+}
+
+fn test_data_grid_source_apply_query_reset_clears_pending_jump() {
+	mut state := DataGridSourceState{
+		query_signature:  grid_query_signature(GridQueryState{})
+		pending_jump_row: 42
+	}
+	cfg := DataGridCfg{
+		id:      'grid'
+		columns: []
+		query:   GridQueryState{
+			quick_filter: 'x'
+		}
+	}
+	data_grid_source_apply_query_reset(mut state, cfg, grid_query_signature(cfg.query))
+	assert state.pending_jump_row == -1
 }
 
 fn data_source_rows(count int) []GridRow {

@@ -165,8 +165,7 @@ return w.data_grid(
 
 Built-in concrete sources:
 
-- `InMemoryCursorDataSource`
-- `InMemoryOffsetDataSource`
+- `InMemoryDataSource`
 - `GridOrmDataSource`
 
 See `examples/data_grid_data_source_demo.v` for a 50k-row demo.

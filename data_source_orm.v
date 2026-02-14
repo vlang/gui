@@ -36,6 +36,11 @@ pub:
 	has_more    bool
 }
 
+// GridOrmFetchFn fetches a page of grid data. Implementations
+// MUST use parameterized queries for all user-provided values
+// (quick_filter, filter values, cursor). Column IDs and
+// operators are pre-validated, but values are passed through
+// unescaped.
 pub type GridOrmFetchFn = fn (spec GridOrmQuerySpec, signal &GridAbortSignal) !GridOrmPage
 
 pub type GridOrmCreateFn = fn (rows []GridRow, signal &GridAbortSignal) ![]GridRow
@@ -46,6 +51,11 @@ pub type GridOrmDeleteFn = fn (row_id string, signal &GridAbortSignal) !string
 
 pub type GridOrmDeleteManyFn = fn (row_ids []string, signal &GridAbortSignal) ![]string
 
+// GridOrmDataSource wraps user-provided ORM callbacks with
+// column validation, query normalization, and abort handling.
+// Construct via new_grid_orm_data_source() to pre-validate
+// columns and cache the column map. Direct construction
+// re-validates columns on each fetch/mutate call.
 @[heap; minify]
 pub struct GridOrmDataSource {
 pub:
@@ -67,7 +77,7 @@ pub fn new_grid_orm_data_source(src GridOrmDataSource) !&GridOrmDataSource {
 	column_map := grid_orm_validate_column_map(src.columns)!
 	mut validated_columns := []GridOrmColumnSpec{cap: src.columns.len}
 	for col in src.columns {
-		validated_columns << column_map[col.id.trim_space()] or { col }
+		validated_columns << column_map[col.id.trim_space()]
 	}
 	return &GridOrmDataSource{
 		...src
@@ -175,6 +185,7 @@ pub fn (mut source GridOrmDataSource) mutate_data(req GridMutationRequest) !Grid
 						out << deleted
 					}
 				}
+				// V requires unsafe or clone for array reassignment.
 				deleted_ids = unsafe { out }
 			} else {
 				return error('grid orm: delete not supported')
@@ -228,20 +239,22 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 }
 
 fn grid_orm_resolve_page(page GridPageRequest, configured_limit int) (int, int, string) {
-	default_limit := int_max(1, if configured_limit > 0 { configured_limit } else { 100 })
+	default_limit := int_clamp(if configured_limit > 0 { configured_limit } else { 100 },
+		1, grid_data_source_max_page_limit)
 	return match page {
 		GridCursorPageReq {
-			limit := int_max(1, if page.limit > 0 { page.limit } else { default_limit })
+			limit := int_clamp(if page.limit > 0 { page.limit } else { default_limit },
+				1, grid_data_source_max_page_limit)
 			offset := int_max(0, grid_data_source_cursor_to_index(page.cursor))
 			limit, offset, page.cursor
 		}
 		GridOffsetPageReq {
 			offset := int_max(0, page.start_index)
-			limit := if page.end_index > page.start_index {
-				int_max(1, page.end_index - page.start_index)
+			limit := int_clamp(if page.end_index > page.start_index {
+				page.end_index - page.start_index
 			} else {
 				default_limit
-			}
+			}, 1, grid_data_source_max_page_limit)
 			limit, offset, grid_data_source_cursor_from_index(offset)
 		}
 	}
@@ -334,8 +347,9 @@ fn grid_orm_validate_mutation_columns(rows []GridRow, edits []GridCellEdit, colu
 }
 
 // grid_orm_valid_db_field checks that a db_field contains only
-// alphanumeric chars, underscores, and dots (for table-qualified
-// names). Must start with a letter or underscore.
+// alphanumeric chars, underscores, and at most one dot (for
+// table-qualified names like "table.column"). Must start with
+// a letter or underscore. Rejects trailing/consecutive dots.
 fn grid_orm_valid_db_field(field string) bool {
 	if field.len == 0 {
 		return false
@@ -344,10 +358,21 @@ fn grid_orm_valid_db_field(field string) bool {
 	if !((first >= `a` && first <= `z`) || (first >= `A` && first <= `Z`) || first == `_`) {
 		return false
 	}
+	mut dot_count := 0
 	for i := 1; i < field.len; i++ {
 		c := field[i]
-		if (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`) || (c >= `0` && c <= `9`)
-			|| c == `_` || c == `.` {
+		if c == `.` {
+			dot_count++
+			if dot_count > 1 {
+				return false
+			}
+			// Dot must not be last char or follow another dot.
+			if i == field.len - 1 {
+				return false
+			}
+			continue
+		}
+		if (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`) || (c >= `0` && c <= `9`) || c == `_` {
 			continue
 		}
 		return false

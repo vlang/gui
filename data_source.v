@@ -1,5 +1,6 @@
 module gui
 
+import rand
 import strings
 import time
 
@@ -131,6 +132,8 @@ pub:
 	row_count   ?int
 }
 
+const grid_data_source_max_page_limit = 10000
+
 pub interface DataGridDataSource {
 	capabilities() GridDataCapabilities
 	fetch_data(req GridDataRequest) !GridDataResult
@@ -139,19 +142,20 @@ mut:
 }
 
 @[heap; minify]
-pub struct InMemoryCursorDataSource {
+pub struct InMemoryDataSource {
 pub mut:
 	rows []GridRow
 pub:
 	default_limit   int = 100
 	latency_ms      int
 	row_count_known bool = true
+	supports_cursor bool = true
 	supports_offset bool = true
 }
 
-pub fn (source InMemoryCursorDataSource) capabilities() GridDataCapabilities {
+pub fn (source InMemoryDataSource) capabilities() GridDataCapabilities {
 	return GridDataCapabilities{
-		supports_cursor_pagination: true
+		supports_cursor_pagination: source.supports_cursor
 		supports_offset_pagination: source.supports_offset
 		supports_numbered_pages:    source.supports_offset
 		row_count_known:            source.row_count_known
@@ -162,114 +166,47 @@ pub fn (source InMemoryCursorDataSource) capabilities() GridDataCapabilities {
 	}
 }
 
-pub fn (source InMemoryCursorDataSource) fetch_data(req GridDataRequest) !GridDataResult {
-	grid_data_source_sleep_with_abort(req.signal, source.latency_ms)!
-	grid_abort_check(req.signal)!
-	filtered := grid_data_source_apply_query(source.rows, req.query)
-	limit := int_max(1, if source.default_limit > 0 { source.default_limit } else { 100 })
-	match req.page {
-		GridCursorPageReq {
-			start := int_clamp(grid_data_source_cursor_to_index(req.page.cursor), 0, filtered.len)
-			chunk_limit := int_max(1, if req.page.limit > 0 { req.page.limit } else { limit })
-			end := int_min(filtered.len, start + chunk_limit)
-			rows := filtered[start..end].clone()
-			next_cursor := if end < filtered.len {
-				grid_data_source_cursor_from_index(end)
-			} else {
-				''
-			}
-			prev_cursor := grid_data_source_prev_cursor(start, chunk_limit)
-			grid_abort_check(req.signal)!
-			return GridDataResult{
-				rows:           rows
-				next_cursor:    next_cursor
-				prev_cursor:    prev_cursor
-				row_count:      if source.row_count_known { ?int(filtered.len) } else { none }
-				has_more:       end < filtered.len
-				received_count: rows.len
-			}
-		}
-		GridOffsetPageReq {
-			start, end := grid_data_source_offset_bounds(req.page.start_index, req.page.end_index,
-				filtered.len, limit)
-			rows := filtered[start..end].clone()
-			grid_abort_check(req.signal)!
-			return GridDataResult{
-				rows:           rows
-				next_cursor:    if end < filtered.len {
-					grid_data_source_cursor_from_index(end)
-				} else {
-					''
-				}
-				prev_cursor:    grid_data_source_prev_cursor(start, end - start)
-				row_count:      if source.row_count_known { ?int(filtered.len) } else { none }
-				has_more:       end < filtered.len
-				received_count: rows.len
-			}
-		}
-	}
+pub fn (source InMemoryDataSource) fetch_data(req GridDataRequest) !GridDataResult {
+	return grid_data_source_inmemory_fetch(source.rows, source.default_limit, source.latency_ms,
+		source.row_count_known, req)
 }
 
-pub fn (mut source InMemoryCursorDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
+pub fn (mut source InMemoryDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
 	return grid_data_source_inmemory_mutate(mut source.rows, source.latency_ms, source.row_count_known,
 		req)
 }
 
-@[heap; minify]
-pub struct InMemoryOffsetDataSource {
-pub mut:
-	rows []GridRow
-pub:
-	default_limit   int = 100
-	latency_ms      int
-	row_count_known bool = true
-}
-
-pub fn (source InMemoryOffsetDataSource) capabilities() GridDataCapabilities {
-	return GridDataCapabilities{
-		supports_cursor_pagination: false
-		supports_offset_pagination: true
-		supports_numbered_pages:    true
-		row_count_known:            source.row_count_known
-		supports_create:            true
-		supports_update:            true
-		supports_delete:            true
-		supports_batch_delete:      true
-	}
-}
-
-pub fn (source InMemoryOffsetDataSource) fetch_data(req GridDataRequest) !GridDataResult {
-	grid_data_source_sleep_with_abort(req.signal, source.latency_ms)!
+fn grid_data_source_inmemory_fetch(rows []GridRow, default_limit int, latency_ms int, row_count_known bool, req GridDataRequest) !GridDataResult {
+	grid_data_source_sleep_with_abort(req.signal, latency_ms)!
 	grid_abort_check(req.signal)!
-	filtered := grid_data_source_apply_query(source.rows, req.query)
-	page_size := int_max(1, if source.default_limit > 0 { source.default_limit } else { 100 })
+	filtered := grid_data_source_apply_query(rows, req.query)
+	limit := int_clamp(if default_limit > 0 { default_limit } else { 100 }, 1, grid_data_source_max_page_limit)
 	start, end := match req.page {
+		GridCursorPageReq {
+			s := int_clamp(grid_data_source_cursor_to_index(req.page.cursor), 0, filtered.len)
+			chunk := int_clamp(if req.page.limit > 0 { req.page.limit } else { limit },
+				1, grid_data_source_max_page_limit)
+			s, int_min(filtered.len, s + chunk)
+		}
 		GridOffsetPageReq {
 			grid_data_source_offset_bounds(req.page.start_index, req.page.end_index, filtered.len,
-				page_size)
-		}
-		GridCursorPageReq {
-			next_start := int_clamp(grid_data_source_cursor_to_index(req.page.cursor),
-				0, filtered.len)
-			next_size := int_max(1, if req.page.limit > 0 { req.page.limit } else { page_size })
-			next_start, int_min(filtered.len, next_start + next_size)
+				limit)
 		}
 	}
-	rows := filtered[start..end].clone()
+	page := filtered[start..end].clone()
 	grid_abort_check(req.signal)!
 	return GridDataResult{
-		rows:           rows
-		next_cursor:    if end < filtered.len { grid_data_source_cursor_from_index(end) } else { '' }
+		rows:           page
+		next_cursor:    if end < filtered.len {
+			grid_data_source_cursor_from_index(end)
+		} else {
+			''
+		}
 		prev_cursor:    grid_data_source_prev_cursor(start, end - start)
-		row_count:      if source.row_count_known { ?int(filtered.len) } else { none }
+		row_count:      if row_count_known { ?int(filtered.len) } else { none }
 		has_more:       end < filtered.len
-		received_count: rows.len
+		received_count: page.len
 	}
-}
-
-pub fn (mut source InMemoryOffsetDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
-	return grid_data_source_inmemory_mutate(mut source.rows, source.latency_ms, source.row_count_known,
-		req)
 }
 
 fn grid_data_source_inmemory_mutate(mut rows []GridRow, latency_ms int, row_count_known bool, req GridMutationRequest) !GridMutationResult {
@@ -372,16 +309,21 @@ fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow 
 	if query.quick_filter.len == 0 && query.filters.len == 0 && query.sorts.len == 0 {
 		return rows
 	}
-	needle := query.quick_filter.to_lower()
-	mut lowered_filters := []GridFilterLowered{cap: query.filters.len}
-	for filter in query.filters {
-		lowered_filters << GridFilterLowered{
-			col_id: filter.col_id
-			op:     filter.op
-			value:  filter.value.to_lower()
+	has_filters := query.quick_filter.len > 0 || query.filters.len > 0
+	mut filtered := if has_filters {
+		needle := query.quick_filter.to_lower()
+		mut lowered_filters := []GridFilterLowered{cap: query.filters.len}
+		for filter in query.filters {
+			lowered_filters << GridFilterLowered{
+				col_id: filter.col_id
+				op:     filter.op
+				value:  filter.value.to_lower()
+			}
 		}
+		rows.filter(grid_data_source_row_matches_query(it, needle, lowered_filters))
+	} else {
+		rows.clone()
 	}
-	mut filtered := rows.filter(grid_data_source_row_matches_query(it, needle, lowered_filters))
 	if query.sorts.len == 0 {
 		return filtered
 	}
@@ -595,12 +537,24 @@ fn grid_query_signature(query GridQueryState) string {
 		filters := query.filters
 		mut idxs := []int{len: filters.len, init: index}
 		idxs.sort_with_compare(fn [filters] (ia &int, ib &int) int {
-			fa := filters[*ia].col_id
-			fb := filters[*ib].col_id
-			if fa < fb {
+			a := filters[*ia]
+			b := filters[*ib]
+			if a.col_id < b.col_id {
 				return -1
 			}
-			if fa > fb {
+			if a.col_id > b.col_id {
+				return 1
+			}
+			if a.op < b.op {
+				return -1
+			}
+			if a.op > b.op {
+				return 1
+			}
+			if a.value < b.value {
+				return -1
+			}
+			if a.value > b.value {
 				return 1
 			}
 			return 0
@@ -697,6 +651,8 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 			}
 			updated << rows[idx]
 			updated_ids[req_row.id] = true
+		} else {
+			return error('grid: update row not found: ${req_row.id}')
 		}
 	}
 	// Apply remaining edits not covered by req_rows.
@@ -714,7 +670,6 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 				cells: cells
 			}
 			updated << rows[idx]
-			updated_ids[row_id] = true
 		}
 	}
 	return GridMutationApplyResult{
@@ -776,6 +731,13 @@ fn grid_data_source_next_create_row_id(rows []GridRow, existing map[string]bool,
 			return candidate
 		}
 		next++
+	}
+	// Numeric range exhausted; try random hex IDs.
+	for _ in 0 .. 10 {
+		candidate := '__gen_${rand.u64():016x}'
+		if !existing[candidate] {
+			return candidate
+		}
 	}
 	return error('grid: unable to generate unique row id')
 }

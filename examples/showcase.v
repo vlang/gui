@@ -1551,7 +1551,7 @@ Async data-source backed grid with CRUD operations.
 ## Usage
 
 ```v
-source := gui.InMemoryCursorDataSource{
+source := gui.InMemoryDataSource{
     rows: my_rows,
 }
 
@@ -1570,13 +1570,15 @@ gui.data_grid(
 | fetch_data | fn (GridDataRequest) !GridDataResult | Load rows for page |
 | mutate_data | fn (GridMutationRequest) !GridMutationResult | Create/update/delete |
 
-## InMemoryCursorDataSource
+## InMemoryDataSource
 
 | Property | Type | Description |
 |----------|------|-------------|
 | rows | []GridRow | In-memory row data |
 | default_limit | int | Page size (default: 100) |
 | latency_ms | int | Simulated latency for testing |
+| supports_cursor | bool | Cursor pagination (default: true) |
+| supports_offset | bool | Offset pagination (default: true) |
 
 See also: docs/DATA_GRID.md'
 		}
@@ -4152,7 +4154,7 @@ fn demo_data_source(mut w gui.Window) gui.View {
 	mut app := w.state[ShowcaseApp]()
 	if app.data_source == none {
 		rows := showcase_data_source_rows()
-		app.data_source = &gui.InMemoryCursorDataSource{
+		app.data_source = &gui.InMemoryDataSource{
 			rows:          rows
 			default_limit: 50
 			latency_ms:    140
@@ -4202,11 +4204,7 @@ fn demo_data_source(mut w gui.Window) gui.View {
 						text_style: gui.theme().n5
 					),
 					gui.text(
-						text:       '- InMemoryCursorDataSource \u2014 cursor pagination'
-						text_style: gui.theme().n5
-					),
-					gui.text(
-						text:       '- InMemoryOffsetDataSource \u2014 offset pagination'
+						text:       '- InMemoryDataSource \u2014 cursor and/or offset pagination'
 						text_style: gui.theme().n5
 					),
 					gui.text(

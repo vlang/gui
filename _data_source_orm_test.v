@@ -244,7 +244,9 @@ fn test_grid_orm_data_source_mutate_create_update_delete() {
 			]
 		}
 		delete_many_fn: fn (row_ids []string, _ &GridAbortSignal) ![]string {
-			assert row_ids == ['7', '8']
+			assert row_ids.len == 2
+			assert '7' in row_ids
+			assert '8' in row_ids
 			return row_ids
 		}
 	}
@@ -282,7 +284,9 @@ fn test_grid_orm_data_source_mutate_create_update_delete() {
 		kind:    .delete
 		row_ids: ['7', '8']
 	}) or { panic(err) }
-	assert delete_res.deleted_ids == ['7', '8']
+	assert delete_res.deleted_ids.len == 2
+	assert '7' in delete_res.deleted_ids
+	assert '8' in delete_res.deleted_ids
 }
 
 fn test_grid_orm_data_source_mutate_delete_single_fn() {
@@ -298,7 +302,9 @@ fn test_grid_orm_data_source_mutate_delete_single_fn() {
 		kind:    .delete
 		row_ids: ['3', '5']
 	}) or { panic(err) }
-	assert res.deleted_ids == ['3', '5']
+	assert res.deleted_ids.len == 2
+	assert '3' in res.deleted_ids
+	assert '5' in res.deleted_ids
 }
 
 fn test_grid_orm_data_source_mutate_unsupported_operation() {
@@ -339,6 +345,95 @@ fn test_grid_orm_validate_column_map_rejects_bad_db_field() {
 	assert false
 }
 
+fn test_new_grid_orm_data_source_factory() {
+	source := new_grid_orm_data_source(GridOrmDataSource{
+		columns:  orm_test_columns()
+		fetch_fn: orm_test_fetch_ok
+	}) or { panic(err) }
+	assert source.column_map.len == 3
+	assert 'name' in source.column_map
+	assert 'team' in source.column_map
+	assert 'email' in source.column_map
+	// Factory pre-normalizes allowed_ops.
+	email_col := source.column_map['email']
+	assert email_col.normalized_ops.len == 1
+	assert email_col.normalized_ops[0] == 'equals'
+}
+
+fn test_new_grid_orm_data_source_factory_rejects_bad_columns() {
+	_ := new_grid_orm_data_source(GridOrmDataSource{
+		columns:  [
+			GridOrmColumnSpec{
+				id:       ''
+				db_field: 'x'
+			},
+		]
+		fetch_fn: orm_test_fetch_ok
+	}) or {
+		assert err.msg().contains('column id is required')
+		return
+	}
+	assert false
+}
+
+fn test_grid_orm_capabilities_with_mutation_fns() {
+	mut source := GridOrmDataSource{
+		columns:        orm_test_columns()
+		fetch_fn:       orm_test_fetch_ok
+		create_fn:      fn (_ []GridRow, _ &GridAbortSignal) ![]GridRow {
+			return []GridRow{}
+		}
+		update_fn:      fn (_ []GridRow, _ []GridCellEdit, _ &GridAbortSignal) ![]GridRow {
+			return []GridRow{}
+		}
+		delete_many_fn: fn (_ []string, _ &GridAbortSignal) ![]string {
+			return []string{}
+		}
+	}
+	caps := source.capabilities()
+	assert caps.supports_create
+	assert caps.supports_update
+	assert caps.supports_delete
+	assert caps.supports_batch_delete
+}
+
+fn test_grid_orm_validate_mutation_columns_rejects_unknown() {
+	column_map := grid_orm_validate_column_map(orm_test_columns()) or { panic(err) }
+	grid_orm_validate_mutation_columns([
+		GridRow{
+			id:    '1'
+			cells: {
+				'bogus': 'value'
+			}
+		},
+	], []GridCellEdit{}, column_map) or {
+		assert err.msg().contains('unknown column id')
+		return
+	}
+	assert false
+}
+
+fn test_grid_orm_delete_fn_empty_string_skipped() {
+	mut source := GridOrmDataSource{
+		columns:   orm_test_columns()
+		fetch_fn:  orm_test_fetch_ok
+		delete_fn: fn (row_id string, _ &GridAbortSignal) !string {
+			if row_id == '2' {
+				return ''
+			}
+			return row_id
+		}
+	}
+	res := source.mutate_data(GridMutationRequest{
+		grid_id: 'orm-grid'
+		kind:    .delete
+		row_ids: ['1', '2', '3']
+	}) or { panic(err) }
+	assert res.deleted_ids.len == 2
+	assert '1' in res.deleted_ids
+	assert '3' in res.deleted_ids
+}
+
 fn test_grid_orm_valid_db_field_accepts_qualified_names() {
 	assert grid_orm_valid_db_field('users')
 	assert grid_orm_valid_db_field('users.name')
@@ -349,6 +444,9 @@ fn test_grid_orm_valid_db_field_accepts_qualified_names() {
 	assert !grid_orm_valid_db_field('no spaces')
 	assert !grid_orm_valid_db_field('semi;colon')
 	assert !grid_orm_valid_db_field('dash-name')
+	assert !grid_orm_valid_db_field('table.')
+	assert !grid_orm_valid_db_field('table..col')
+	assert !grid_orm_valid_db_field('a.b.c')
 }
 
 fn orm_test_fetch_ok(_ GridOrmQuerySpec, _ &GridAbortSignal) !GridOrmPage {
