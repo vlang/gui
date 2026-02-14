@@ -2,6 +2,7 @@ module gui
 
 const grid_orm_default_filter_ops = ['contains', 'equals', 'starts_with', 'ends_with']
 const grid_orm_max_filter_value_len = 500
+const grid_orm_max_filter_count = 100
 
 @[minify]
 pub struct GridOrmColumnSpec {
@@ -231,6 +232,9 @@ pub fn grid_orm_validate_query(query GridQueryState, columns []GridOrmColumnSpec
 fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]GridOrmColumnSpec) !GridQueryState {
 	if query.quick_filter.len > grid_orm_max_filter_value_len {
 		return error('grid orm: quick_filter exceeds max length (${grid_orm_max_filter_value_len})')
+	}
+	if query.filters.len > grid_orm_max_filter_count {
+		return error('grid orm: too many filters (${query.filters.len} > ${grid_orm_max_filter_count})')
 	}
 	mut sorts := []GridSort{}
 	for sort in query.sorts {
