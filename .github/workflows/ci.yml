@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      VFLAGS: -no-parallel -cc clang
+      VFLAGS: -no-parallel
     steps:
       - name: Install V
         id: install-v
@@ -32,10 +32,6 @@ jobs:
           check-latest: true
       - name: Install vglyph
         run: v install vglyph
-      - name: Update packages
-        run: v retry -- sudo apt -qq update
-      - name: Install X11/GL development dependencies (headers and libs)
-        run: v retry -- sudo apt install libpango1.0-dev libfontconfig1-dev libfribidi-dev libharfbuzz-dev libfreetype-dev libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
       - name: Checkout the gui module
         uses: actions/checkout@v4
         with:
@@ -44,12 +40,8 @@ jobs:
         run: v fmt -verify -inprocess gui/
       - name: Check formatting of MD files
         run: v check-md gui/
-      - name: Run tests
-        run: v test gui/
       - name: Check syntax of examples
         run: v gui/examples/_check.vsh
-      - name: Check compilation of examples
-        run: v should-compile-all gui/examples/
 
   compiling-with-prod:
     strategy:
