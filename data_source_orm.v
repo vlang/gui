@@ -436,6 +436,16 @@ pub fn grid_orm_build_sql(spec GridOrmQuerySpec, column_map map[string]GridOrmCo
 	}
 }
 
+// grid_orm_escape_like escapes SQL LIKE wildcard characters
+// (%, _) in user input so they match literally. Uses
+// backslash as escape char (SQLite/Postgres compatible).
+fn grid_orm_escape_like(s string) string {
+	if !s.contains('%') && !s.contains('_') && !s.contains('\\') {
+		return s
+	}
+	return s.replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_')
+}
+
 // grid_orm_build_quick_filter returns a parenthesized OR
 // clause for quick_filter columns, or empty string.
 fn grid_orm_build_quick_filter(needle string, columns map[string]GridOrmColumnSpec, mut params []string) string {
@@ -444,17 +454,19 @@ fn grid_orm_build_quick_filter(needle string, columns map[string]GridOrmColumnSp
 		return ''
 	}
 	lower_needle := trimmed.to_lower()
+	escaped_lower := grid_orm_escape_like(lower_needle)
+	escaped_trimmed := grid_orm_escape_like(trimmed)
 	mut or_parts := []string{}
 	for _, col in columns {
 		if !col.quick_filter {
 			continue
 		}
 		if col.case_insensitive {
-			or_parts << 'lower(${col.db_field}) like ?'
-			params << '%${lower_needle}%'
+			or_parts << 'lower(${col.db_field}) like ? escape \'\\\''
+			params << '%${escaped_lower}%'
 		} else {
-			or_parts << '${col.db_field} like ?'
-			params << '%${trimmed}%'
+			or_parts << '${col.db_field} like ? escape \'\\\''
+			params << '%${escaped_trimmed}%'
 		}
 	}
 	if or_parts.len == 0 {
@@ -469,10 +481,18 @@ fn grid_orm_build_filter_clause(db_field string, op string, value string, case_i
 	target_field := if case_insensitive { 'lower(${db_field})' } else { db_field }
 	target_value := if case_insensitive { value.to_lower() } else { value }
 	clause, param := match op {
-		'equals' { '${target_field} = ?', target_value }
-		'starts_with' { '${target_field} like ?', '${target_value}%' }
-		'ends_with' { '${target_field} like ?', '%${target_value}' }
-		else { '${target_field} like ?', '%${target_value}%' }
+		'equals' {
+			'${target_field} = ?', target_value
+		}
+		'starts_with' {
+			'${target_field} like ? escape \'\\\'', '${grid_orm_escape_like(target_value)}%'
+		}
+		'ends_with' {
+			'${target_field} like ? escape \'\\\'', '%${grid_orm_escape_like(target_value)}'
+		}
+		else {
+			'${target_field} like ? escape \'\\\'', '%${grid_orm_escape_like(target_value)}%'
+		}
 	}
 	params << param
 	return clause

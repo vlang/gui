@@ -873,7 +873,7 @@ fn test_build_sql_op_mapping() {
 		limit:   1
 		offset:  0
 	}) or { panic(err) }
-	assert b1.where_sql == 'field like ?'
+	assert b1.where_sql == "field like ? escape '\\'"
 	assert b1.params[0] == 'abc%'
 	// ends_with
 	b2 := source.build_sql(GridOrmQuerySpec{
@@ -887,7 +887,7 @@ fn test_build_sql_op_mapping() {
 		limit:   1
 		offset:  0
 	}) or { panic(err) }
-	assert b2.where_sql == 'field like ?'
+	assert b2.where_sql == "field like ? escape '\\'"
 	assert b2.params[0] == '%xyz'
 	// contains (default)
 	b3 := source.build_sql(GridOrmQuerySpec{
@@ -901,8 +901,87 @@ fn test_build_sql_op_mapping() {
 		limit:   1
 		offset:  0
 	}) or { panic(err) }
-	assert b3.where_sql == 'field like ?'
+	assert b3.where_sql == "field like ? escape '\\'"
 	assert b3.params[0] == '%mid%'
+}
+
+fn test_grid_orm_escape_like() {
+	// No special chars — returned as-is.
+	assert grid_orm_escape_like('hello') == 'hello'
+	// Percent escaped.
+	assert grid_orm_escape_like('100%') == '100\\%'
+	// Underscore escaped.
+	assert grid_orm_escape_like('a_b') == 'a\\_b'
+	// Backslash escaped before wildcard chars.
+	assert grid_orm_escape_like('a\\b') == 'a\\\\b'
+	// All three together.
+	assert grid_orm_escape_like('%_\\') == '\\%\\_\\\\'
+	// Empty string.
+	assert grid_orm_escape_like('') == ''
+}
+
+fn test_build_sql_like_wildcards_escaped() {
+	cols := [
+		GridOrmColumnSpec{
+			id:               'f'
+			db_field:         'field'
+			filterable:       true
+			quick_filter:     true
+			case_insensitive: false
+		},
+	]
+	source := GridOrmDataSource{
+		columns:  cols
+		fetch_fn: orm_test_fetch_ok
+	}
+	// Column filter: contains with % in value.
+	b1 := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'f'
+				op:     'contains'
+				value:  '50%'
+			},
+		]
+		limit:   1
+		offset:  0
+	}) or { panic(err) }
+	assert b1.where_sql == "field like ? escape '\\'"
+	assert b1.params[0] == '%50\\%%'
+	// Quick filter with _ in value.
+	b2 := source.build_sql(GridOrmQuerySpec{
+		quick_filter: 'a_b'
+		limit:        1
+		offset:       0
+	}) or { panic(err) }
+	assert b2.where_sql == "(field like ? escape '\\')"
+	assert b2.params[0] == '%a\\_b%'
+	// starts_with with %.
+	b3 := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'f'
+				op:     'starts_with'
+				value:  '%x'
+			},
+		]
+		limit:   1
+		offset:  0
+	}) or { panic(err) }
+	assert b3.params[0] == '\\%x%'
+	// ends_with with _.
+	b4 := source.build_sql(GridOrmQuerySpec{
+		filters: [
+			GridFilter{
+				col_id: 'f'
+				op:     'ends_with'
+				value:  'y_'
+			},
+		]
+		limit:   1
+		offset:  0
+	}) or { panic(err) }
+	assert b4.params[0] == '%y\\_'
 }
 
 fn orm_test_fetch_ok(_ GridOrmQuerySpec, _ &GridAbortSignal) !GridOrmPage {
