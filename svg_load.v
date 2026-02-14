@@ -39,6 +39,9 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		return error('SVG not found: ${svg_src}')
 	}
 
+	// Cache dimensions for O(1) lookup by get_svg_dimensions
+	window.view_state.svg_dim_cache[src_hash] = [vg.width, vg.height]!
+
 	// Calculate scale to fit requested dimensions
 	// If width/height are 0, use natural dimensions (scale 1.0)
 	scale := if width <= 0 || height <= 0 {
@@ -88,15 +91,10 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 // get_svg_dimensions returns natural SVG dimensions without full
 // parse+tessellate. Reads from cache or parses just the header.
 pub fn (mut window Window) get_svg_dimensions(svg_src string) !(f32, f32) {
-	// Check if any cached entry exists for this source
 	src_hash := fnv1a.sum64_string(svg_src).hex()
-	prefix := '${src_hash}:'
-	for key in window.view_state.svg_cache.keys() {
-		if key.starts_with(prefix) {
-			if cached := window.view_state.svg_cache.get(key) {
-				return cached.width, cached.height
-			}
-		}
+	// O(1) lookup in dimension cache
+	if dims := window.view_state.svg_dim_cache[src_hash] {
+		return dims[0], dims[1]
 	}
 	// Not cached — parse dimensions only
 	content := if svg_src.starts_with('<') {
@@ -107,6 +105,7 @@ pub fn (mut window Window) get_svg_dimensions(svg_src string) !(f32, f32) {
 		return error('SVG not found: ${svg_src}')
 	}
 	w, h := parse_svg_dimensions(content)
+	window.view_state.svg_dim_cache[src_hash] = [w, h]!
 	return w, h
 }
 
@@ -125,9 +124,11 @@ pub fn (mut window Window) remove_svg_from_cache(svg_src string) {
 	for key in keys_to_delete {
 		window.view_state.svg_cache.delete(key)
 	}
+	window.view_state.svg_dim_cache.delete(src_hash)
 }
 
 // clear_svg_cache removes all cached SVGs.
 pub fn (mut window Window) clear_svg_cache() {
 	window.view_state.svg_cache.clear()
+	window.view_state.svg_dim_cache = map[string][2]f32{}
 }

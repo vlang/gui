@@ -81,6 +81,10 @@ fn test_parse_length_with_units() {
 	assert parse_length('50em') == 50.0
 }
 
+fn test_parse_length_plus_prefix() {
+	assert parse_length('+42') == 42.0
+}
+
 fn test_parse_length_empty() {
 	assert parse_length('') == 0
 }
@@ -213,6 +217,12 @@ fn test_parse_line_element() {
 	assert p.fill_color.a == 0 // lines have transparent fill
 }
 
+fn test_parse_line_element_degenerate() {
+	// Degenerate line (0,0 -> 0,0) should return none
+	result := parse_line_element('<line x1="0" y1="0" x2="0" y2="0"/>')
+	assert result == none
+}
+
 // --- Style attribute tests ---
 
 fn test_find_style_property() {
@@ -237,12 +247,12 @@ fn test_style_attribute_fill() {
 	assert vg.paths[0].fill_color.g == 0
 }
 
-fn test_presentation_attr_overrides_style() {
-	// Presentation attribute takes priority over style
+fn test_style_overrides_presentation_attr() {
+	// Inline style has higher specificity than presentation attribute
 	elem := '<rect fill="blue" style="fill:red" width="10" height="10"/>'
 	p := parse_rect_element(elem) or { panic('parse failed') }
-	// fill="blue" should win over style="fill:red"
-	assert p.fill_color.b == 255
+	// style="fill:red" should win over fill="blue"
+	assert p.fill_color.r == 255
 }
 
 // --- Opacity tests ---
@@ -370,6 +380,11 @@ fn test_tokenize_path_implicit_separator() {
 	// "1.5.5" should be two numbers: 1.5 and .5
 	tokens := tokenize_path('M1.5.5')
 	assert tokens == ['M', '1.5', '.5']
+}
+
+fn test_tokenize_path_exponent() {
+	tokens := tokenize_path('1e-5 2E+3')
+	assert tokens == ['1e-5', '2E+3']
 }
 
 // --- find_attr tests ---

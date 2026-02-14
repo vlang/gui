@@ -50,6 +50,7 @@ mut:
 	svg_cache                     BoundedSvgCache = BoundedSvgCache{
 		max_size: 100
 	}
+	svg_dim_cache                 map[string][2]f32
 	markdown_cache                BoundedMarkdownCache = BoundedMarkdownCache{
 		max_size: 50
 	}

@@ -47,15 +47,17 @@ pub enum StrokeJoin as u8 {
 // VectorPath represents a single filled path with color.
 pub struct VectorPath {
 pub mut:
-	segments     []PathSegment
-	fill_color   Color      = color_inherit
-	transform    [6]f32     = [f32(1), 0, 0, 1, 0, 0]! // identity: [a,b,c,d,e,f]
-	stroke_color Color      = color_inherit
-	stroke_width f32        = -1.0 // negative = inherit from parent
-	stroke_cap   StrokeCap  = .inherit
-	stroke_join  StrokeJoin = .inherit
-	clip_path_id string // references clip_paths key, empty = none
-	raw_elem     string // original element for deferred attribute lookup
+	segments       []PathSegment
+	fill_color     Color      = color_inherit
+	transform      [6]f32     = [f32(1), 0, 0, 1, 0, 0]! // identity: [a,b,c,d,e,f]
+	stroke_color   Color      = color_inherit
+	stroke_width   f32        = -1.0 // negative = inherit from parent
+	stroke_cap     StrokeCap  = .inherit
+	stroke_join    StrokeJoin = .inherit
+	clip_path_id   string // references clip_paths key, empty = none
+	opacity        f32 = 1.0
+	fill_opacity   f32 = 1.0
+	stroke_opacity f32 = 1.0
 }
 
 // VectorGraphic holds the complete parsed vector graphic (e.g., from SVG).

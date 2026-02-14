@@ -39,7 +39,7 @@ struct GroupStyle {
 // dimensions are specified.
 pub fn parse_svg_dimensions(content string) (f32, f32) {
 	if vb := find_attr(content, 'viewBox') {
-		parts := vb.split_any(' ,')
+		parts := vb.split_any(' ,').filter(it.len > 0)
 		if parts.len >= 4 {
 			return clamp_viewbox_dim(parts[2].f32()), clamp_viewbox_dim(parts[3].f32())
 		}
@@ -66,7 +66,7 @@ pub fn parse_svg(content string) !VectorGraphic {
 
 	// Parse viewBox
 	if vb := find_attr(content, 'viewBox') {
-		parts := vb.split_any(' ,')
+		parts := vb.split_any(' ,').filter(it.len > 0)
 		if parts.len >= 4 {
 			vg.view_box_x = parts[0].f32()
 			vg.view_box_y = parts[1].f32()
@@ -257,8 +257,13 @@ fn find_closing_tag(content string, tag string, start int) int {
 	open_tag := '<${tag}'
 	mut depth := 1
 	mut pos := start
+	mut iterations := 0
 
 	for pos < content.len && depth > 0 {
+		iterations++
+		if iterations > max_elements {
+			break
+		}
 		// Find next < character
 		next := find_index(content, '<', pos) or { break }
 
@@ -379,10 +384,17 @@ fn apply_inherited_style(mut path VectorPath, inherited GroupStyle) {
 	}
 
 	// Apply opacity: element opacity * group opacity * fill/stroke-opacity
-	elem_opacity := parse_opacity_attr(path.raw_elem, 'opacity', 1.0)
-	combined_opacity := inherited.opacity * elem_opacity
-	fill_opacity := parse_opacity_attr(path.raw_elem, 'fill-opacity', inherited.fill_opacity)
-	stroke_opacity := parse_opacity_attr(path.raw_elem, 'stroke-opacity', inherited.stroke_opacity)
+	combined_opacity := inherited.opacity * path.opacity
+	fill_opacity := if path.fill_opacity < 1.0 {
+		path.fill_opacity
+	} else {
+		inherited.fill_opacity
+	}
+	stroke_opacity := if path.stroke_opacity < 1.0 {
+		path.stroke_opacity
+	} else {
+		inherited.stroke_opacity
+	}
 	path.fill_color = apply_opacity(path.fill_color, combined_opacity * fill_opacity)
 	path.stroke_color = apply_opacity(path.stroke_color, combined_opacity * stroke_opacity)
 }
@@ -507,38 +519,58 @@ fn find_style_property(style string, name string) ?string {
 	return none
 }
 
-// find_attr_or_style checks presentation attribute first,
-// then falls back to inline style property.
+// find_attr_or_style checks inline style first (higher specificity),
+// then falls back to presentation attribute per SVG spec.
 fn find_attr_or_style(elem string, name string) ?string {
-	if attr := find_attr(elem, name) {
-		return attr
+	if style := find_attr(elem, 'style') {
+		if val := find_style_property(style, name) {
+			return val
+		}
 	}
-	style := find_attr(elem, 'style') or { return none }
-	return find_style_property(style, name)
+	return find_attr(elem, name)
 }
 
 // find_attr extracts an attribute value from an element string.
-// Ensures attribute name is preceded by whitespace to avoid matching substrings.
+// Ensures attribute name is preceded by whitespace to avoid
+// matching substrings. Zero-allocation byte-level matching.
 fn find_attr(elem string, name string) ?string {
-	// Whitespace prefixes to check
-	prefixes := [u8(` `), `\t`, `\n`, `\r`]
-	// Quote styles
-	quotes := [u8(`"`), `'`]
-
-	for prefix in prefixes {
-		for quote in quotes {
-			pattern := '${prefix.ascii_str()}${name}=${quote.ascii_str()}'
-			mut start := find_index(elem, pattern, 0) or { continue }
-			start += pattern.len
-			end := find_index(elem, quote.ascii_str(), start) or { continue }
-			if end > start {
-				attr_len := end - start
-				if attr_len > max_attr_len {
-					return none // attribute too long, reject
-				}
-				return elem[start..end]
-			}
+	mut pos := 0
+	for pos < elem.len {
+		// Find attribute name
+		idx := find_index(elem, name, pos) or { return none }
+		// Verify preceded by whitespace
+		if idx == 0 || (elem[idx - 1] != ` ` && elem[idx - 1] != `\t` && elem[idx - 1] != `\n`
+			&& elem[idx - 1] != `\r`) {
+			pos = idx + name.len
+			continue
 		}
+		// Check for '=' after name
+		eq := idx + name.len
+		if eq >= elem.len || elem[eq] != `=` {
+			pos = eq
+			continue
+		}
+		// Check for quote character
+		q := eq + 1
+		if q >= elem.len {
+			return none
+		}
+		quote := elem[q]
+		if quote != `"` && quote != `'` {
+			pos = q
+			continue
+		}
+		// Find closing quote
+		start := q + 1
+		end := find_index(elem, quote.ascii_str(), start) or { return none }
+		if end > start {
+			attr_len := end - start
+			if attr_len > max_attr_len {
+				return none
+			}
+			return elem[start..end]
+		}
+		return none
 	}
 	return none
 }
@@ -572,7 +604,7 @@ fn parse_length(s string) f32 {
 	mut end := 0
 	for end < s.len {
 		c := s[end]
-		if (c >= `0` && c <= `9`) || c == `.` || c == `-` {
+		if (c >= `0` && c <= `9`) || c == `.` || c == `-` || c == `+` {
 			end++
 		} else {
 			break
@@ -592,19 +624,48 @@ fn parse_length(s string) f32 {
 	return value
 }
 
+// ElementStyle holds common style properties extracted from an SVG element.
+struct ElementStyle {
+	transform      [6]f32
+	stroke_color   Color
+	stroke_width   f32
+	stroke_cap     StrokeCap
+	stroke_join    StrokeJoin
+	opacity        f32
+	fill_opacity   f32
+	stroke_opacity f32
+}
+
+// parse_element_style extracts common style properties from an element.
+fn parse_element_style(elem string) ElementStyle {
+	return ElementStyle{
+		transform:      get_transform(elem)
+		stroke_color:   get_stroke_color(elem)
+		stroke_width:   get_stroke_width(elem)
+		stroke_cap:     get_stroke_linecap(elem)
+		stroke_join:    get_stroke_linejoin(elem)
+		opacity:        parse_opacity_attr(elem, 'opacity', 1.0)
+		fill_opacity:   parse_opacity_attr(elem, 'fill-opacity', 1.0)
+		stroke_opacity: parse_opacity_attr(elem, 'stroke-opacity', 1.0)
+	}
+}
+
 // parse_path_element parses a <path> element
 fn parse_path_element(elem string) ?VectorPath {
 	d := find_attr(elem, 'd') or { return none }
 	fill := find_attr_or_style(elem, 'fill') or { '' }
+	s := parse_element_style(elem)
 
 	mut path := VectorPath{
-		fill_color:   parse_svg_color(fill)
-		transform:    get_transform(elem)
-		stroke_color: get_stroke_color(elem)
-		stroke_width: get_stroke_width(elem)
-		stroke_cap:   get_stroke_linecap(elem)
-		stroke_join:  get_stroke_linejoin(elem)
-		raw_elem:     elem
+		fill_color:     parse_svg_color(fill)
+		transform:      s.transform
+		stroke_color:   s.stroke_color
+		stroke_width:   s.stroke_width
+		stroke_cap:     s.stroke_cap
+		stroke_join:    s.stroke_join
+		opacity:        s.opacity
+		fill_opacity:   s.fill_opacity
+		stroke_opacity: s.stroke_opacity
 	}
 	path.segments = parse_path_d(d)
 
@@ -623,6 +684,7 @@ fn parse_rect_element(elem string) ?VectorPath {
 	mut rx := (find_attr(elem, 'rx') or { '0' }).f32()
 	mut ry := (find_attr(elem, 'ry') or { '0' }).f32()
 	fill := find_attr_or_style(elem, 'fill') or { '' }
+	s := parse_element_style(elem)
 
 	if rx == 0 && ry > 0 {
 		rx = ry
@@ -662,14 +724,16 @@ fn parse_rect_element(elem string) ?VectorPath {
 	}
 
 	return VectorPath{
-		segments:     segments
-		fill_color:   parse_svg_color(fill)
-		transform:    get_transform(elem)
-		stroke_color: get_stroke_color(elem)
-		stroke_width: get_stroke_width(elem)
-		stroke_cap:   get_stroke_linecap(elem)
-		stroke_join:  get_stroke_linejoin(elem)
-		raw_elem:     elem
+		segments:       segments
+		fill_color:     parse_svg_color(fill)
+		transform:      s.transform
+		stroke_color:   s.stroke_color
+		stroke_width:   s.stroke_width
+		stroke_cap:     s.stroke_cap
+		stroke_join:    s.stroke_join
+		opacity:        s.opacity
+		fill_opacity:   s.fill_opacity
+		stroke_opacity: s.stroke_opacity
 	}
 }
 
@@ -680,7 +744,7 @@ fn parse_circle_element(elem string) ?VectorPath {
 	r := (find_attr(elem, 'r') or { return none }).f32()
 	fill := find_attr_or_style(elem, 'fill') or { '' }
 
-	return ellipse_to_path(cx, cy, r, r, elem, fill)
+	return ellipse_to_path(cx, cy, r, r, elem, fill, parse_element_style(elem))
 }
 
 // parse_ellipse_element converts <ellipse> to path
@@ -691,11 +755,11 @@ fn parse_ellipse_element(elem string) ?VectorPath {
 	ry := (find_attr(elem, 'ry') or { return none }).f32()
 	fill := find_attr_or_style(elem, 'fill') or { '' }
 
-	return ellipse_to_path(cx, cy, rx, ry, elem, fill)
+	return ellipse_to_path(cx, cy, rx, ry, elem, fill, parse_element_style(elem))
 }
 
 // ellipse_to_path converts an ellipse to a path using 4 cubic beziers
-fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string) VectorPath {
+fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string, s ElementStyle) VectorPath {
 	// Approximate circle with 4 cubic beziers (kappa = 4*(sqrt(2)-1)/3)
 	k := f32(0.5522847498)
 	kx := rx * k
@@ -710,14 +774,16 @@ fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string) Vec
 	segments << PathSegment{.close, []}
 
 	return VectorPath{
-		segments:     segments
-		fill_color:   parse_svg_color(fill)
-		transform:    get_transform(elem)
-		stroke_color: get_stroke_color(elem)
-		stroke_width: get_stroke_width(elem)
-		stroke_cap:   get_stroke_linecap(elem)
-		stroke_join:  get_stroke_linejoin(elem)
-		raw_elem:     elem
+		segments:       segments
+		fill_color:     parse_svg_color(fill)
+		transform:      s.transform
+		stroke_color:   s.stroke_color
+		stroke_width:   s.stroke_width
+		stroke_cap:     s.stroke_cap
+		stroke_join:    s.stroke_join
+		opacity:        s.opacity
+		fill_opacity:   s.fill_opacity
+		stroke_opacity: s.stroke_opacity
 	}
 }
 
@@ -725,6 +791,7 @@ fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string) Vec
 fn parse_polygon_element(elem string, close bool) ?VectorPath {
 	points_str := find_attr(elem, 'points') or { return none }
 	fill := find_attr_or_style(elem, 'fill') or { '' }
+	s := parse_element_style(elem)
 
 	numbers := parse_number_list(points_str)
 	// Validate: need at least 2 points (4 coords) and even count for x,y pairs
@@ -742,36 +809,46 @@ fn parse_polygon_element(elem string, close bool) ?VectorPath {
 	}
 
 	return VectorPath{
-		segments:     segments
-		fill_color:   parse_svg_color(fill)
-		transform:    get_transform(elem)
-		stroke_color: get_stroke_color(elem)
-		stroke_width: get_stroke_width(elem)
-		stroke_cap:   get_stroke_linecap(elem)
-		stroke_join:  get_stroke_linejoin(elem)
-		raw_elem:     elem
+		segments:       segments
+		fill_color:     parse_svg_color(fill)
+		transform:      s.transform
+		stroke_color:   s.stroke_color
+		stroke_width:   s.stroke_width
+		stroke_cap:     s.stroke_cap
+		stroke_join:    s.stroke_join
+		opacity:        s.opacity
+		fill_opacity:   s.fill_opacity
+		stroke_opacity: s.stroke_opacity
 	}
 }
 
-// parse_line_element converts <line> to path
+// parse_line_element converts <line> to path.
+// Returns none for degenerate lines (both endpoints identical).
 fn parse_line_element(elem string) ?VectorPath {
 	x1 := (find_attr(elem, 'x1') or { '0' }).f32()
 	y1 := (find_attr(elem, 'y1') or { '0' }).f32()
 	x2 := (find_attr(elem, 'x2') or { '0' }).f32()
 	y2 := (find_attr(elem, 'y2') or { '0' }).f32()
 
+	if x1 == x2 && y1 == y2 {
+		return none
+	}
+
+	s := parse_element_style(elem)
 	return VectorPath{
-		segments:     [
+		segments:       [
 			PathSegment{.move_to, [x1, y1]},
 			PathSegment{.line_to, [x2, y2]},
 		]
-		fill_color:   color_transparent
-		transform:    get_transform(elem)
-		stroke_color: get_stroke_color(elem)
-		stroke_width: get_stroke_width(elem)
-		stroke_cap:   get_stroke_linecap(elem)
-		stroke_join:  get_stroke_linejoin(elem)
-		raw_elem:     elem
+		fill_color:     color_transparent
+		transform:      s.transform
+		stroke_color:   s.stroke_color
+		stroke_width:   s.stroke_width
+		stroke_cap:     s.stroke_cap
+		stroke_join:    s.stroke_join
+		opacity:        s.opacity
+		fill_opacity:   s.fill_opacity
+		stroke_opacity: s.stroke_opacity
 	}
 }
 
@@ -1347,8 +1424,14 @@ fn parse_path_d(d string) []PathSegment {
 	return segments
 }
 
-// tokenize_path splits path d string into tokens
-fn tokenize_path(d string) []string {
+// tokenize_path splits path d string into tokens.
+// max_tokens limits output size (0 = use max_path_segments).
+fn tokenize_path(d string, max_tokens ...int) []string {
+	limit := if max_tokens.len > 0 && max_tokens[0] > 0 {
+		max_tokens[0]
+	} else {
+		max_path_segments
+	}
 	mut tokens := []string{}
 	// Pre-allocate with estimated capacity
 	mut current := strings.new_builder(d.len / 4)
@@ -1356,6 +1439,9 @@ fn tokenize_path(d string) []string {
 	mut i := 0
 
 	for i < d.len {
+		if tokens.len >= limit {
+			break
+		}
 		c := d[i]
 
 		if c == ` ` || c == `\t` || c == `\n` || c == `\r` || c == `,` {
@@ -1368,8 +1454,14 @@ fn tokenize_path(d string) []string {
 			continue
 		}
 
-		// Command letters
+		// Command letters (but not 'e'/'E' inside a number for exponents)
 		if (c >= `A` && c <= `Z`) || (c >= `a` && c <= `z`) {
+			if (c == `e` || c == `E`) && current.len > 0 {
+				// Part of scientific notation (e.g. 1e-5)
+				current.write_u8(c)
+				i++
+				continue
+			}
 			if current.len > 0 {
 				tokens << current.str()
 				current.go_back_to(0) // Reuse instead of new allocation
@@ -1384,12 +1476,11 @@ fn tokenize_path(d string) []string {
 		if (c >= `0` && c <= `9`) || c == `-` || c == `+` || c == `.` {
 			// Handle negative sign that starts a new number
 			if (c == `-` || c == `+`) && current.len > 0 {
-				cur_str := current.str()
-				cur_len := cur_str.len
-				// Check if this is truly a new number (not exponent like 1e-5)
-				if cur_len > 0 && cur_str[cur_len - 1] != `e` && cur_str[cur_len - 1] != `E` {
-					tokens << cur_str
-					current.go_back_to(0) // Reset for new number
+				// Check last byte without consuming via .str()
+				last := current.byte_at(current.len - 1)
+				if last != `e` && last != `E` {
+					tokens << current.str()
+					current.go_back_to(0)
 					has_dot = false
 				}
 			}
