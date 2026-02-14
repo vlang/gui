@@ -77,7 +77,7 @@ pub:
 }
 
 pub fn (source InMemoryListBoxDataSource) fetch_data(req ListBoxDataRequest) !ListBoxDataResult {
-	grid_data_source_sleep_with_abort(req.signal, source.latency_ms)!
+	data_grid_source_sleep_with_abort(req.signal, source.latency_ms)!
 	filtered := list_box_source_apply_query(source.data, req.query)
 	grid_abort_check(req.signal)!
 	return ListBoxDataResult{

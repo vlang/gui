@@ -132,11 +132,11 @@ pub fn (source GridOrmDataSource) fetch_data(req GridDataRequest) !GridDataResul
 	grid_abort_check(req.signal)!
 	mut next_cursor := page.next_cursor
 	if next_cursor.len == 0 && page.has_more {
-		next_cursor = grid_data_source_cursor_from_index(offset + page.rows.len)
+		next_cursor = data_grid_source_cursor_from_index(offset + page.rows.len)
 	}
 	mut prev_cursor := page.prev_cursor
 	if prev_cursor.len == 0 {
-		prev_cursor = grid_data_source_prev_cursor(offset, limit)
+		prev_cursor = data_grid_source_prev_cursor(offset, limit)
 	}
 	return GridDataResult{
 		rows:           page.rows
@@ -253,13 +253,13 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 
 fn grid_orm_resolve_page(page GridPageRequest, configured_limit int) (int, int, string) {
 	default_limit := int_clamp(if configured_limit > 0 { configured_limit } else { 100 },
-		1, grid_data_source_max_page_limit)
+		1, data_grid_source_max_page_limit)
 	return match page {
 		GridCursorPageReq {
 			limit := int_clamp(if page.limit > 0 { page.limit } else { default_limit },
-				1, grid_data_source_max_page_limit)
-			offset := int_max(0, grid_data_source_cursor_to_index(page.cursor))
-			limit, offset, page.cursor
+				1, data_grid_source_max_page_limit)
+			offset := int_max(0, data_grid_source_cursor_to_index(page.cursor))
+			limit, offset, data_grid_source_cursor_from_index(offset)
 		}
 		GridOffsetPageReq {
 			offset := int_max(0, page.start_index)
@@ -267,8 +267,8 @@ fn grid_orm_resolve_page(page GridPageRequest, configured_limit int) (int, int, 
 				page.end_index - page.start_index
 			} else {
 				default_limit
-			}, 1, grid_data_source_max_page_limit)
-			limit, offset, grid_data_source_cursor_from_index(offset)
+			}, 1, data_grid_source_max_page_limit)
+			limit, offset, data_grid_source_cursor_from_index(offset)
 		}
 	}
 }

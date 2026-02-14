@@ -36,6 +36,8 @@ pub fn (window &Window) data_grid_source_stats(grid_id string) DataGridSourceSta
 
 fn data_grid_source_apply_local_mutation(grid_id string, rows []GridRow, row_count ?int, mut window Window) {
 	mut state := window.view_state.data_grid_source_state.get(grid_id) or { DataGridSourceState{} }
+	data_grid_source_cancel_active(mut state)
+	state.request_id++
 	state.rows = rows
 	state.received_count = rows.len
 	state.has_loaded = true
@@ -353,7 +355,7 @@ fn data_grid_source_rows_text(kind GridPaginationKind, state DataGridSourceState
 		return data_grid_source_format_rows(state.offset_start, state.received_count,
 			state.row_count)
 	}
-	if start := grid_data_source_cursor_to_index_opt(state.current_cursor) {
+	if start := data_grid_source_cursor_to_index_opt(state.current_cursor) {
 		return data_grid_source_format_rows(start, state.received_count, state.row_count)
 	}
 	total_text := if total := state.row_count { '${total}' } else { '?' }
@@ -473,7 +475,7 @@ fn data_grid_source_row_position_text(cfg DataGridCfg, state DataGridSourceState
 	mut current := local_idx + 1
 	if kind == .offset {
 		current = state.offset_start + local_idx + 1
-	} else if start := grid_data_source_cursor_to_index_opt(state.current_cursor) {
+	} else if start := data_grid_source_cursor_to_index_opt(state.current_cursor) {
 		current = start + local_idx + 1
 	}
 	if total := state.row_count {

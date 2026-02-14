@@ -523,7 +523,7 @@ fn test_next_mutation_row_id_falls_back_to_random() {
 		existing[data_grid_row_id(row, i)] = true
 		rows << row
 	}
-	id := grid_data_source_next_create_row_id(rows, existing, '') or {
+	id := data_grid_source_next_create_row_id(rows, existing, '') or {
 		assert false
 		return
 	}
@@ -575,7 +575,7 @@ fn test_multi_sort_secondary_priority() {
 			}
 		},
 	]
-	sorted := grid_data_source_apply_query(rows, GridQueryState{
+	sorted := data_grid_source_apply_query(rows, GridQueryState{
 		sorts: [
 			GridSort{
 				col_id: 'team'
@@ -598,15 +598,15 @@ fn test_multi_sort_secondary_priority() {
 
 fn test_cursor_to_index_plain_integer() {
 	// Plain integer (no "i:" prefix).
-	if idx := grid_data_source_cursor_to_index_opt('5') {
+	if idx := data_grid_source_cursor_to_index_opt('5') {
 		assert idx == 5
 	} else {
 		assert false
 	}
 	// Invalid non-numeric string returns none.
-	assert grid_data_source_cursor_to_index_opt('abc') == none
+	assert data_grid_source_cursor_to_index_opt('abc') == none
 	// Empty string returns 0.
-	if idx := grid_data_source_cursor_to_index_opt('') {
+	if idx := data_grid_source_cursor_to_index_opt('') {
 		assert idx == 0
 	} else {
 		assert false
@@ -751,7 +751,7 @@ fn test_in_memory_source_sort_only_no_filter() {
 			}
 		},
 	]
-	sorted := grid_data_source_apply_query(rows, GridQueryState{
+	sorted := data_grid_source_apply_query(rows, GridQueryState{
 		sorts: [
 			GridSort{
 				col_id: 'name'
@@ -844,32 +844,32 @@ fn test_in_memory_source_delete_via_rows() {
 }
 
 fn test_cursor_to_index_with_prefix() {
-	if idx := grid_data_source_cursor_to_index_opt('i:42') {
+	if idx := data_grid_source_cursor_to_index_opt('i:42') {
 		assert idx == 42
 	} else {
 		assert false
 	}
-	if idx := grid_data_source_cursor_to_index_opt('i:0') {
+	if idx := data_grid_source_cursor_to_index_opt('i:0') {
 		assert idx == 0
 	} else {
 		assert false
 	}
-	assert grid_data_source_cursor_to_index_opt('i:abc') == none
+	assert data_grid_source_cursor_to_index_opt('i:abc') == none
 }
 
 fn test_offset_bounds_empty_range_fallback() {
 	// When end <= start, falls back to default_limit.
-	start, end := grid_data_source_offset_bounds(5, 5, 100, 10)
+	start, end := data_grid_source_offset_bounds(5, 5, 100, 10)
 	assert start == 5
 	assert end == 15
 
 	// When start==0, end==0.
-	s2, e2 := grid_data_source_offset_bounds(0, 0, 100, 20)
+	s2, e2 := data_grid_source_offset_bounds(0, 0, 100, 20)
 	assert s2 == 0
 	assert e2 == 20
 
 	// Total limits the fallback.
-	s3, e3 := grid_data_source_offset_bounds(95, 95, 100, 20)
+	s3, e3 := data_grid_source_offset_bounds(95, 95, 100, 20)
 	assert s3 == 95
 	assert e3 == 100
 }
