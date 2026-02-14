@@ -890,6 +890,36 @@ fn test_data_grid_source_apply_query_reset_clears_pending_jump() {
 	assert state.pending_jump_row == -1
 }
 
+fn test_data_grid_source_can_next_heuristic_fallback() {
+	// When row_count is unknown and has_more is false,
+	// can_next uses received_count >= page_limit heuristic.
+	state := DataGridSourceState{
+		received_count: 100
+		has_more:       false
+	}
+	// received_count >= page_limit → true (may have more).
+	assert data_grid_source_can_next(.offset, state, 100)
+	// received_count < page_limit → false (partial page = last).
+	partial := DataGridSourceState{
+		received_count: 50
+		has_more:       false
+	}
+	assert !data_grid_source_can_next(.offset, partial, 100)
+	// has_more true always returns true.
+	more := DataGridSourceState{
+		received_count: 50
+		has_more:       true
+	}
+	assert data_grid_source_can_next(.offset, more, 100)
+	// Known row_count takes priority.
+	known := DataGridSourceState{
+		received_count: 100
+		row_count:      ?int(100)
+		has_more:       false
+	}
+	assert !data_grid_source_can_next(.offset, known, 100)
+}
+
 fn data_source_rows(count int) []GridRow {
 	mut rows := []GridRow{cap: count}
 	for i in 0 .. count {

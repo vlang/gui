@@ -180,7 +180,7 @@ fn data_grid_source_apply_pending_jump_selection(cfg DataGridCfg, state DataGrid
 	window.view_state.data_grid_source_state.set(cfg.id, next_state)
 }
 
-fn data_grid_source_apply_query_reset(mut state DataGridSourceState, cfg DataGridCfg, query_sig string) {
+fn data_grid_source_apply_query_reset(mut state DataGridSourceState, cfg DataGridCfg, query_sig u64) {
 	if query_sig == state.query_signature {
 		return
 	}
@@ -226,7 +226,7 @@ fn data_grid_page_limit(cfg DataGridCfg) int {
 	return data_grid_default_page_limit
 }
 
-fn data_grid_source_request_key(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind, query_sig string) string {
+fn data_grid_source_request_key(cfg DataGridCfg, state DataGridSourceState, kind GridPaginationKind, query_sig u64) string {
 	limit := data_grid_page_limit(cfg)
 	return match kind {
 		.cursor {

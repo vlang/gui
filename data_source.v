@@ -1,7 +1,6 @@
 module gui
 
 import rand
-import strings
 import time
 
 pub enum GridPaginationKind as u8 {
@@ -304,6 +303,10 @@ fn grid_data_source_is_decimal(input string) bool {
 	return true
 }
 
+// grid_data_source_apply_query filters and sorts rows in memory.
+// NOTE: returns `rows` directly (slice alias, not clone) when
+// no filters/sorts apply. Callers must clone if mutation is
+// intended.
 fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow {
 	if query.quick_filter.len == 0 && query.filters.len == 0 && query.sorts.len == 0 {
 		return rows
@@ -326,6 +329,8 @@ fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow 
 	if query.sorts.len == 0 {
 		return filtered
 	}
+	// Sorting is lexicographic (string comparison). Numeric-aware
+	// sorting is the caller's responsibility via custom data sources.
 	n := filtered.len
 	if n <= 1 {
 		return filtered
@@ -509,31 +514,29 @@ fn grid_ends_with_lower(haystack string, needle string) bool {
 	return true
 }
 
-// grid_sig_write_field writes a length-prefixed field to avoid
-// delimiter collision when field values contain `:` or `;`.
-fn grid_sig_write_field(mut out strings.Builder, s string) {
-	out.write_string(s.len.str())
-	out.write_u8(`:`)
-	out.write_string(s)
-}
-
-fn grid_query_signature(query GridQueryState) string {
-	mut out := strings.new_builder(128)
-	grid_sig_write_field(mut out, query.quick_filter)
+// grid_query_signature returns a stable FNV-1a 64-bit hash
+// of the query state. Filters are sorted by col_id for order
+// independence (AND-combined). Eliminates per-frame string
+// allocation compared to the previous Builder approach.
+fn grid_query_signature(query GridQueryState) u64 {
+	mut h := data_grid_fnv64_offset
+	h = data_grid_fnv64_str(h, query.quick_filter)
 	// Sorts: preserve order (primary/secondary priority matters).
-	out.write_string('|s:')
+	h = data_grid_fnv64_byte(h, `|`)
+	h = data_grid_fnv64_byte(h, `s`)
 	for sort in query.sorts {
-		grid_sig_write_field(mut out, sort.col_id)
-		out.write_u8(if sort.dir == .desc { `d` } else { `a` })
+		h = data_grid_fnv64_str(h, sort.col_id)
+		h = data_grid_fnv64_byte(h, if sort.dir == .desc { `d` } else { `a` })
 	}
 	// Filters: sort by col_id for stable signature
 	// (AND-combined, so order is semantically irrelevant).
-	out.write_string('|f:')
+	h = data_grid_fnv64_byte(h, `|`)
+	h = data_grid_fnv64_byte(h, `f`)
 	if query.filters.len <= 1 {
 		for filter in query.filters {
-			grid_sig_write_field(mut out, filter.col_id)
-			grid_sig_write_field(mut out, filter.op)
-			grid_sig_write_field(mut out, filter.value)
+			h = data_grid_fnv64_str(h, filter.col_id)
+			h = data_grid_fnv64_str(h, filter.op)
+			h = data_grid_fnv64_str(h, filter.value)
 		}
 	} else {
 		filters := query.filters
@@ -563,12 +566,12 @@ fn grid_query_signature(query GridQueryState) string {
 		})
 		for i in idxs {
 			filter := query.filters[i]
-			grid_sig_write_field(mut out, filter.col_id)
-			grid_sig_write_field(mut out, filter.op)
-			grid_sig_write_field(mut out, filter.value)
+			h = data_grid_fnv64_str(h, filter.col_id)
+			h = data_grid_fnv64_str(h, filter.op)
+			h = data_grid_fnv64_str(h, filter.value)
 		}
 	}
-	return out.str()
+	return h
 }
 
 @[minify]

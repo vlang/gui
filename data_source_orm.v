@@ -1,9 +1,13 @@
 module gui
 
 const grid_orm_default_filter_ops = ['contains', 'equals', 'starts_with', 'ends_with']
+const grid_orm_max_filter_value_len = 500
 
 @[minify]
 pub struct GridOrmColumnSpec {
+	// Pre-lowered allowed_ops; populated by
+	// grid_orm_validate_column_map. Module-internal.
+	normalized_ops []string
 pub:
 	id               string @[required]
 	db_field         string @[required]
@@ -12,7 +16,6 @@ pub:
 	sortable         bool = true
 	case_insensitive bool = true
 	allowed_ops      []string
-	normalized_ops   []string // pre-lowered allowed_ops; populated by new_grid_orm_data_source
 }
 
 @[minify]
@@ -208,6 +211,9 @@ pub fn grid_orm_validate_query(query GridQueryState, columns []GridOrmColumnSpec
 }
 
 fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]GridOrmColumnSpec) !GridQueryState {
+	if query.quick_filter.len > grid_orm_max_filter_value_len {
+		return error('grid orm: quick_filter exceeds max length (${grid_orm_max_filter_value_len})')
+	}
 	mut sorts := []GridSort{}
 	for sort in query.sorts {
 		col := column_map[sort.col_id] or { continue }
@@ -221,6 +227,9 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 	}
 	mut filters := []GridFilter{}
 	for filter in query.filters {
+		if filter.value.len > grid_orm_max_filter_value_len {
+			return error('grid orm: filter value exceeds max length (${grid_orm_max_filter_value_len})')
+		}
 		col := column_map[filter.col_id] or { continue }
 		if !col.filterable {
 			continue

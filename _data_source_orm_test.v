@@ -434,6 +434,61 @@ fn test_grid_orm_delete_fn_empty_string_skipped() {
 	assert '3' in res.deleted_ids
 }
 
+fn test_grid_orm_data_source_mutate_honors_abort() {
+	mut controller := new_grid_abort_controller()
+	controller.abort()
+	mut source := GridOrmDataSource{
+		columns:   orm_test_columns()
+		fetch_fn:  orm_test_fetch_ok
+		create_fn: fn (_ []GridRow, _ &GridAbortSignal) ![]GridRow {
+			return []GridRow{}
+		}
+	}
+	_ := source.mutate_data(GridMutationRequest{
+		grid_id: 'orm-grid'
+		kind:    .create
+		rows:    [GridRow{
+			id:    ''
+			cells: {
+				'name': 'x'
+			}
+		}]
+		signal:  controller.signal
+	}) or {
+		assert err.msg().contains('aborted')
+		return
+	}
+	assert false
+}
+
+fn test_grid_orm_validate_query_rejects_long_quick_filter() {
+	long_val := 'x'.repeat(grid_orm_max_filter_value_len + 1)
+	_ := grid_orm_validate_query(GridQueryState{
+		quick_filter: long_val
+	}, orm_test_columns()) or {
+		assert err.msg().contains('max length')
+		return
+	}
+	assert false
+}
+
+fn test_grid_orm_validate_query_rejects_long_filter_value() {
+	long_val := 'x'.repeat(grid_orm_max_filter_value_len + 1)
+	_ := grid_orm_validate_query(GridQueryState{
+		filters: [
+			GridFilter{
+				col_id: 'name'
+				op:     'contains'
+				value:  long_val
+			},
+		]
+	}, orm_test_columns()) or {
+		assert err.msg().contains('max length')
+		return
+	}
+	assert false
+}
+
 fn test_grid_orm_valid_db_field_accepts_qualified_names() {
 	assert grid_orm_valid_db_field('users')
 	assert grid_orm_valid_db_field('users.name')

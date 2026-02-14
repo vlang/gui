@@ -192,7 +192,7 @@ mut:
 	has_loaded       bool
 	request_id       u64
 	request_key      string
-	query_signature  string
+	query_signature  u64
 	current_cursor   string
 	next_cursor      string
 	prev_cursor      string
