@@ -31,6 +31,15 @@ fn data_grid_rows_signature(rows []GridRow, col_ids []string) u64 {
 		return u64(0)
 	}
 	mut h := u64(data_grid_fnv64_offset)
+	// When col_ids is empty, extract sorted keys once from the first
+	// row and reuse for all rows (avoids N redundant alloc+sorts).
+	fallback_keys := if col_ids.len == 0 && rows.len > 0 {
+		mut k := rows[0].cells.keys()
+		k.sort()
+		k
+	} else {
+		[]string{}
+	}
 	for idx, row in rows {
 		if idx > 0 {
 			h = data_grid_fnv64_str(h, data_grid_group_sep)
@@ -38,13 +47,7 @@ fn data_grid_rows_signature(rows []GridRow, col_ids []string) u64 {
 		row_id := data_grid_row_id(row, idx)
 		h = data_grid_fnv64_str(h, row_id)
 		h = data_grid_fnv64_str(h, data_grid_record_sep)
-		keys := if col_ids.len > 0 {
-			col_ids
-		} else {
-			mut k := row.cells.keys()
-			k.sort()
-			k
-		}
+		keys := if col_ids.len > 0 { col_ids } else { fallback_keys }
 		for j, key in keys {
 			if j > 0 {
 				h = data_grid_fnv64_str(h, data_grid_unit_sep)

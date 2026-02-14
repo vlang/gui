@@ -76,13 +76,16 @@ fn test_grid_orm_validate_query_deduplicates_filters() {
 		]
 	}
 	next := grid_orm_validate_query(query, orm_test_columns()) or { panic(err) }
-	// Duplicate (name, contains) collapsed to first occurrence.
-	assert next.filters.len == 2
+	// Same col+op but different values: both kept.
+	assert next.filters.len == 3
 	assert next.filters[0].col_id == 'name'
 	assert next.filters[0].op == 'contains'
 	assert next.filters[0].value == 'first'
-	assert next.filters[1].col_id == 'team'
-	assert next.filters[1].op == 'equals'
+	assert next.filters[1].col_id == 'name'
+	assert next.filters[1].op == 'contains'
+	assert next.filters[1].value == 'second'
+	assert next.filters[2].col_id == 'team'
+	assert next.filters[2].op == 'equals'
 }
 
 fn test_grid_orm_validate_query_rejects_duplicate_column_ids() {

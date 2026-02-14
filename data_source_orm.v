@@ -257,7 +257,7 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 		if !grid_orm_column_allows_filter_op(col, op) {
 			continue
 		}
-		dedup_key := '${filter.col_id}\x00${op}'
+		dedup_key := '${filter.col_id}\x00${op}\x00${filter.value}'
 		if dedup_key in seen_filters {
 			continue
 		}

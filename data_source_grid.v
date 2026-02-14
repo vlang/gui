@@ -304,7 +304,7 @@ fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, ki
 	}(mut window)
 }
 
-fn data_grid_source_is_stale(request_id u64, mut state DataGridSourceState, mut window Window, grid_id string) bool {
+fn data_grid_source_drop_if_stale(request_id u64, mut state DataGridSourceState, mut window Window, grid_id string) bool {
 	if request_id != state.request_id {
 		state.stale_drop_count++
 		window.view_state.data_grid_source_state.set(grid_id, state)
@@ -315,7 +315,7 @@ fn data_grid_source_is_stale(request_id u64, mut state DataGridSourceState, mut 
 
 fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDataResult, caps GridDataCapabilities, mut window Window) {
 	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
-	if data_grid_source_is_stale(request_id, mut state, mut window, grid_id) {
+	if data_grid_source_drop_if_stale(request_id, mut state, mut window, grid_id) {
 		return
 	}
 	state.loading = false
@@ -344,7 +344,7 @@ fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDat
 
 fn data_grid_source_apply_error(grid_id string, request_id u64, err_msg string, mut window Window) {
 	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
-	if data_grid_source_is_stale(request_id, mut state, mut window, grid_id) {
+	if data_grid_source_drop_if_stale(request_id, mut state, mut window, grid_id) {
 		return
 	}
 	state.loading = false
@@ -481,7 +481,7 @@ fn data_grid_source_row_position_text(cfg DataGridCfg, state DataGridSourceState
 		current = start + local_idx + 1
 	}
 	if total := state.row_count {
-		current = int_clamp(current, 0, total)
+		current = int_clamp(current, 1, total)
 	}
 	return 'Row ${current} of ${total_text}'
 }

@@ -53,8 +53,9 @@ fn test_in_memory_offset_data_source_pages_with_offsets() {
 	assert res.rows.len == 3
 	assert res.rows[0].id == '3'
 	assert res.rows[2].id == '5'
-	assert res.next_cursor == 'i:5'
-	assert res.prev_cursor == 'i:0'
+	// Offset requests don't populate cursors.
+	assert res.next_cursor == ''
+	assert res.prev_cursor == ''
 }
 
 fn test_in_memory_source_applies_query_sort_filter() {

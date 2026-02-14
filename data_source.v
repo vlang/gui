@@ -197,14 +197,19 @@ fn data_grid_source_inmemory_fetch(rows []GridRow, default_limit int, latency_ms
 	}
 	page := filtered[start..end].clone()
 	grid_abort_check(req.signal)!
+	is_cursor := req.page is GridCursorPageReq
 	return GridDataResult{
 		rows:           page
-		next_cursor:    if end < filtered.len {
+		next_cursor:    if is_cursor && end < filtered.len {
 			data_grid_source_cursor_from_index(end)
 		} else {
 			''
 		}
-		prev_cursor:    data_grid_source_prev_cursor(start, end - start)
+		prev_cursor:    if is_cursor {
+			data_grid_source_prev_cursor(start, end - start)
+		} else {
+			''
+		}
 		row_count:      if row_count_known { ?int(filtered.len) } else { none }
 		has_more:       end < filtered.len
 		received_count: page.len
