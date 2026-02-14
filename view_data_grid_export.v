@@ -181,33 +181,127 @@ pub fn grid_rows_to_xlsx_file_with_cfg(path string, columns []GridColumnCfg, row
 }
 
 fn data_grid_pdf_lines(columns []GridColumnCfg, rows []GridRow) []string {
+	if columns.len == 0 {
+		return []
+	}
+	widths := data_grid_pdf_col_widths(columns, rows)
 	mut lines := []string{cap: rows.len + 1}
 	mut header := []string{cap: columns.len}
-	for col in columns {
-		header << data_grid_pdf_clip_text(col.title)
+	for ci, col in columns {
+		header << data_grid_pdf_pad(col.title, widths[ci])
 	}
 	lines << header.join(' | ')
 	for row in rows {
-		lines << data_grid_pdf_line(columns, row)
+		lines << data_grid_pdf_line(columns, row, widths)
 	}
 	return lines
 }
 
-fn data_grid_pdf_line(columns []GridColumnCfg, row GridRow) string {
+fn data_grid_pdf_line(columns []GridColumnCfg, row GridRow, widths []int) string {
 	mut parts := []string{cap: columns.len}
-	for col in columns {
+	for ci, col in columns {
 		value := row.cells[col.id] or { '' }
-		parts << data_grid_pdf_clip_text(value)
+		parts << data_grid_pdf_pad(value, widths[ci])
 	}
 	return parts.join(' | ')
 }
 
-fn data_grid_pdf_clip_text(value string) string {
+// Compute per-column widths from header + sample data.
+// Samples up to 100 rows to bound scan cost. Each column
+// gets at least its header width and at most the budget
+// after reserving space for separators.
+fn data_grid_pdf_col_widths(columns []GridColumnCfg, rows []GridRow) []int {
+	ncols := columns.len
+	// Usable chars: page width in Courier chars minus margins,
+	// minus separators (" | " = 3 chars between columns).
+	// Courier 10pt ≈ 6pt/char; page_width=612, margin=40 each.
+	chars_per_point := f32(1.0) / f32(6.0)
+	total_chars := int((data_grid_pdf_page_width - data_grid_pdf_margin * 2) * chars_per_point)
+	sep_chars := if ncols > 1 { (ncols - 1) * 3 } else { 0 }
+	budget := if total_chars - sep_chars > ncols {
+		total_chars - sep_chars
+	} else {
+		ncols
+	}
+	// Measure natural widths from header + sample rows.
+	sample_limit := if rows.len < 100 { rows.len } else { 100 }
+	mut natural := []int{len: ncols}
+	for ci, col in columns {
+		w := col.title.runes().len
+		if w > natural[ci] {
+			natural[ci] = w
+		}
+	}
+	for ri in 0 .. sample_limit {
+		for ci, col in columns {
+			value := rows[ri].cells[col.id] or { '' }
+			w := value.runes().len
+			if w > natural[ci] {
+				natural[ci] = w
+			}
+		}
+	}
+	// Distribute budget proportionally. Each column gets at
+	// least 3 chars (room for "...").
+	mut total_natural := 0
+	for w in natural {
+		total_natural += w
+	}
+	mut widths := []int{len: ncols}
+	if total_natural <= budget {
+		// All columns fit — use natural widths.
+		for ci in 0 .. ncols {
+			widths[ci] = natural[ci]
+		}
+	} else {
+		// Proportional shrink.
+		mut assigned := 0
+		for ci in 0 .. ncols {
+			w := int(f64(natural[ci]) * f64(budget) / f64(total_natural))
+			widths[ci] = if w >= 3 { w } else { 3 }
+			assigned += widths[ci]
+		}
+		// Distribute remainder to widest columns first.
+		mut remainder := budget - assigned
+		for remainder > 0 {
+			mut best := -1
+			mut best_nat := 0
+			for ci in 0 .. ncols {
+				if natural[ci] > best_nat && widths[ci] < natural[ci] {
+					best = ci
+					best_nat = natural[ci]
+				}
+			}
+			if best < 0 {
+				break
+			}
+			widths[best] += 1
+			remainder -= 1
+		}
+	}
+	return widths
+}
+
+// Pad or clip value to exactly `width` runes. Clips with
+// "..." suffix when too long; pads with spaces when short.
+fn data_grid_pdf_pad(value string, width int) string {
 	runes := value.runes()
-	if runes.len <= data_grid_pdf_max_line_chars {
+	if runes.len == width {
 		return value
 	}
-	return runes[..data_grid_pdf_max_line_chars - 3].string() + '...'
+	if runes.len > width {
+		if width <= 3 {
+			return '...'[..width]
+		}
+		return runes[..width - 3].string() + '...'
+	}
+	// Pad with spaces.
+	mut sb := strings.new_builder(width)
+	sb.write_string(value)
+	for _ in 0 .. width - runes.len {
+		sb.write_u8(` `)
+	}
+	return sb.bytestr()
 }
 
 // Generates a multi-page PDF. Computes max lines per page from dimensions.

@@ -3,6 +3,7 @@
 module gui
 
 import hash.fnv1a
+import time
 
 fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 	h := data_grid_quick_filter_height(cfg)
@@ -13,6 +14,7 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 	input_focus_id := fnv1a.sum32_string(input_id)
 	matches_text := data_grid_quick_filter_matches_text(cfg)
 	clear_disabled := value.len == 0 || query_callback == unsafe { nil }
+	debounce := cfg.quick_filter_debounce
 	return row(
 		name:         'data_grid quick filter row'
 		height:       h
@@ -52,17 +54,39 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 						a: 140
 					}
 				}
-				on_text_changed:   fn [query, query_callback] (_ &Layout, text string, mut w Window) {
+				on_text_changed:   fn [query, query_callback, input_id, debounce] (_ &Layout, text string, mut w Window) {
 					if query_callback == unsafe { nil } {
 						return
 					}
-					next := GridQueryState{
-						sorts:        query.sorts.clone()
-						filters:      query.filters.clone()
-						quick_filter: text
+					if debounce <= time.Duration(0) {
+						// No debounce: fire immediately.
+						next := GridQueryState{
+							sorts:        query.sorts.clone()
+							filters:      query.filters.clone()
+							quick_filter: text
+						}
+						mut e := Event{}
+						query_callback(next, mut e, mut w)
+						return
 					}
-					mut e := Event{}
-					query_callback(next, mut e, mut w)
+					// Debounce: replace previous timer with
+					// new one. Animate replaces by id, so only
+					// the latest keystroke fires.
+					sorts := query.sorts.clone()
+					filters := query.filters.clone()
+					w.animation_add(mut &Animate{
+						id:       '${input_id}:debounce'
+						delay:    debounce
+						callback: fn [sorts, filters, text, query_callback] (mut an Animate, mut w Window) {
+							next := GridQueryState{
+								sorts:        sorts
+								filters:      filters
+								quick_filter: text
+							}
+							mut e := Event{}
+							query_callback(next, mut e, mut w)
+						}
+					})
 				}
 			),
 			text(
@@ -71,10 +95,11 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
 			),
 			data_grid_indicator_button('Clear', cfg.text_style_filter, cfg.color_header_hover,
-				clear_disabled, 0, fn [query_callback, query, input_focus_id] (_ &Layout, mut e Event, mut w Window) {
+				clear_disabled, 0, fn [query_callback, query, input_id, input_focus_id] (_ &Layout, mut e Event, mut w Window) {
 				if query_callback == unsafe { nil } {
 					return
 				}
+				w.remove_animation('${input_id}:debounce')
 				next := GridQueryState{
 					sorts:        query.sorts.clone()
 					filters:      query.filters.clone()
@@ -866,25 +891,28 @@ fn data_grid_active_row_index(rows []GridRow, selection GridSelection) int {
 	return -1
 }
 
+// Single-pass scan: checks active_row_id and falls back
+// to first selected row in one loop instead of two.
 fn data_grid_active_row_index_strict(rows []GridRow, selection GridSelection) int {
 	if rows.len == 0 {
 		return -1
 	}
-	if selection.active_row_id.len > 0 {
-		for idx, row in rows {
-			if data_grid_row_id(row, idx) == selection.active_row_id {
-				return idx
-			}
+	has_active := selection.active_row_id.len > 0
+	has_selected := selection.selected_row_ids.len > 0
+	if !has_active && !has_selected {
+		return -1
+	}
+	mut first_selected := -1
+	for idx, row in rows {
+		id := data_grid_row_id(row, idx)
+		if has_active && id == selection.active_row_id {
+			return idx
+		}
+		if first_selected < 0 && has_selected && selection.selected_row_ids[id] {
+			first_selected = idx
 		}
 	}
-	if selection.selected_row_ids.len > 0 {
-		for idx, row in rows {
-			if selection.selected_row_ids[data_grid_row_id(row, idx)] {
-				return idx
-			}
-		}
-	}
-	return -1
+	return first_selected
 }
 
 fn data_grid_row_position_text(cfg DataGridCfg, page_start int, page_end int, total_rows int) string {
@@ -1074,6 +1102,9 @@ fn data_grid_range_indices(rows []GridRow, a string, b string) (int, int) {
 		}
 		if id == b {
 			b_idx = idx
+		}
+		if a_idx >= 0 && b_idx >= 0 {
+			break
 		}
 	}
 	if a_idx < 0 || b_idx < 0 {

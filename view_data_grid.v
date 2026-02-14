@@ -6,6 +6,7 @@ module gui
 
 import hash.fnv1a
 import strconv
+import time
 
 const data_grid_virtual_buffer_rows = 2
 const data_grid_resize_double_click_frames = u64(24) // ~400ms at 60fps
@@ -26,7 +27,6 @@ const data_grid_pdf_page_height = f32(792)
 const data_grid_pdf_margin = f32(40)
 const data_grid_pdf_font_size = f32(10)
 const data_grid_pdf_line_height = f32(12)
-const data_grid_pdf_max_line_chars = 180
 const data_grid_record_sep = '\x1e'
 const data_grid_unit_sep = '\x1f'
 const data_grid_group_sep = '\x1d'
@@ -218,6 +218,7 @@ pub:
 	frozen_top_row_ids        []string
 	detail_expanded_row_ids   map[string]bool
 	quick_filter_placeholder  string            = 'Search'
+	quick_filter_debounce     time.Duration     = 200 * time.millisecond
 	row_height                f32               = 30
 	header_height             f32               = 34
 	color_background          Color             = gui_theme.data_grid_style.color_background

@@ -1266,6 +1266,43 @@ fn test_grid_rows_to_pdf_file() {
 	assert data.starts_with('%PDF-1.4')
 }
 
+fn test_pdf_col_widths_proportional() {
+	columns := [
+		GridColumnCfg{ id: 'a', title: 'ID' },
+		GridColumnCfg{ id: 'b', title: 'Description' },
+	]
+	rows := [
+		GridRow{
+			id:    '1'
+			cells: {
+				'a': '1'
+				'b': 'A longer description value'
+			}
+		},
+		GridRow{
+			id:    '2'
+			cells: {
+				'a': '2'
+				'b': 'Short'
+			}
+		},
+	]
+	widths := data_grid_pdf_col_widths(columns, rows)
+	assert widths.len == 2
+	// "Description" col (natural 25 runes) wider than "ID" col
+	// (natural 2 runes).
+	assert widths[1] > widths[0]
+	// Both fit within budget, so natural widths are used.
+	assert widths[0] == 2
+	assert widths[1] == 26
+}
+
+fn test_pdf_pad_clips_long_text() {
+	assert data_grid_pdf_pad('Hello World', 5) == 'He...'
+	assert data_grid_pdf_pad('OK', 5) == 'OK   '
+	assert data_grid_pdf_pad('exact', 5) == 'exact'
+}
+
 fn test_data_grid_xlsx_col_ref() {
 	assert data_grid_xlsx_col_ref(0) == 'A'
 	assert data_grid_xlsx_col_ref(25) == 'Z'
