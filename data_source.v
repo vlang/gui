@@ -178,7 +178,6 @@ pub fn (mut source InMemoryDataSource) mutate_data(req GridMutationRequest) !Gri
 
 fn grid_data_source_inmemory_fetch(rows []GridRow, default_limit int, latency_ms int, row_count_known bool, req GridDataRequest) !GridDataResult {
 	grid_data_source_sleep_with_abort(req.signal, latency_ms)!
-	grid_abort_check(req.signal)!
 	filtered := grid_data_source_apply_query(rows, req.query)
 	limit := int_clamp(if default_limit > 0 { default_limit } else { 100 }, 1, grid_data_source_max_page_limit)
 	start, end := match req.page {
@@ -310,7 +309,7 @@ fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow 
 		return rows
 	}
 	has_filters := query.quick_filter.len > 0 || query.filters.len > 0
-	mut filtered := if has_filters {
+	filtered := if has_filters {
 		needle := query.quick_filter.to_lower()
 		mut lowered_filters := []GridFilterLowered{cap: query.filters.len}
 		for filter in query.filters {
@@ -322,7 +321,7 @@ fn grid_data_source_apply_query(rows []GridRow, query GridQueryState) []GridRow 
 		}
 		rows.filter(grid_data_source_row_matches_query(it, needle, lowered_filters))
 	} else {
-		rows.clone()
+		rows
 	}
 	if query.sorts.len == 0 {
 		return filtered
@@ -510,28 +509,31 @@ fn grid_ends_with_lower(haystack string, needle string) bool {
 	return true
 }
 
+// grid_sig_write_field writes a length-prefixed field to avoid
+// delimiter collision when field values contain `:` or `;`.
+fn grid_sig_write_field(mut out strings.Builder, s string) {
+	out.write_string(s.len.str())
+	out.write_u8(`:`)
+	out.write_string(s)
+}
+
 fn grid_query_signature(query GridQueryState) string {
 	mut out := strings.new_builder(128)
-	out.write_string(query.quick_filter)
+	grid_sig_write_field(mut out, query.quick_filter)
 	// Sorts: preserve order (primary/secondary priority matters).
 	out.write_string('|s:')
 	for sort in query.sorts {
-		out.write_string(sort.col_id)
-		out.write_u8(`:`)
+		grid_sig_write_field(mut out, sort.col_id)
 		out.write_u8(if sort.dir == .desc { `d` } else { `a` })
-		out.write_u8(`;`)
 	}
 	// Filters: sort by col_id for stable signature
 	// (AND-combined, so order is semantically irrelevant).
 	out.write_string('|f:')
 	if query.filters.len <= 1 {
 		for filter in query.filters {
-			out.write_string(filter.col_id)
-			out.write_u8(`:`)
-			out.write_string(filter.op)
-			out.write_u8(`:`)
-			out.write_string(filter.value)
-			out.write_u8(`;`)
+			grid_sig_write_field(mut out, filter.col_id)
+			grid_sig_write_field(mut out, filter.op)
+			grid_sig_write_field(mut out, filter.value)
 		}
 	} else {
 		filters := query.filters
@@ -561,12 +563,9 @@ fn grid_query_signature(query GridQueryState) string {
 		})
 		for i in idxs {
 			filter := query.filters[i]
-			out.write_string(filter.col_id)
-			out.write_u8(`:`)
-			out.write_string(filter.op)
-			out.write_u8(`:`)
-			out.write_string(filter.value)
-			out.write_u8(`;`)
+			grid_sig_write_field(mut out, filter.col_id)
+			grid_sig_write_field(mut out, filter.op)
+			grid_sig_write_field(mut out, filter.value)
 		}
 	}
 	return out.str()
@@ -614,7 +613,6 @@ fn grid_data_source_apply_create(mut rows []GridRow, req_rows []GridRow) !GridMu
 }
 
 fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits []GridCellEdit) !GridMutationApplyResult {
-	mut updated := []GridRow{cap: req_rows.len}
 	mut updated_ids := map[string]bool{}
 	// Group edits by row_id for single-pass application.
 	mut edits_by_row := map[string][]GridCellEdit{}
@@ -627,6 +625,7 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 		}
 		edits_by_row[edit.row_id] << edit
 	}
+	mut updated := []GridRow{cap: req_rows.len + edits_by_row.len}
 	// Build index map once to avoid O(n) scan per lookup.
 	mut row_idx := map[string]int{}
 	for idx, row in rows {
@@ -670,6 +669,8 @@ fn grid_data_source_apply_update(mut rows []GridRow, req_rows []GridRow, edits [
 				cells: cells
 			}
 			updated << rows[idx]
+		} else {
+			return error('grid: edit row not found: ${row_id}')
 		}
 	}
 	return GridMutationApplyResult{

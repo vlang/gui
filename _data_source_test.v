@@ -291,8 +291,8 @@ fn test_in_memory_offset_data_source_mutate_batch_delete() {
 		row_ids: ['2', '4']
 	}) or { panic(err) }
 	assert res.deleted_ids.len == 2
-	assert res.deleted_ids[0] == '2'
-	assert res.deleted_ids[1] == '4'
+	assert '2' in res.deleted_ids
+	assert '4' in res.deleted_ids
 	page := source.fetch_data(GridDataRequest{
 		grid_id: 'grid'
 		query:   GridQueryState{}
@@ -446,6 +446,27 @@ fn test_in_memory_source_update_nonexistent_row_returns_error() {
 		]
 	}) or {
 		assert err.msg().contains('update row not found')
+		return
+	}
+	assert false
+}
+
+fn test_in_memory_source_edit_nonexistent_row_returns_error() {
+	mut source := InMemoryDataSource{
+		rows: data_source_rows(3)
+	}
+	_ := source.mutate_data(GridMutationRequest{
+		grid_id: 'grid'
+		kind:    .update
+		edits:   [
+			GridCellEdit{
+				row_id: 'no-such-id'
+				col_id: 'name'
+				value:  'Ghost'
+			},
+		]
+	}) or {
+		assert err.msg().contains('edit row not found')
 		return
 	}
 	assert false

@@ -43,12 +43,16 @@ pub:
 // unescaped.
 pub type GridOrmFetchFn = fn (spec GridOrmQuerySpec, signal &GridAbortSignal) !GridOrmPage
 
+// GridOrmCreateFn persists new rows and returns them with assigned IDs.
 pub type GridOrmCreateFn = fn (rows []GridRow, signal &GridAbortSignal) ![]GridRow
 
+// GridOrmUpdateFn applies row replacements and cell edits, returns updated rows.
 pub type GridOrmUpdateFn = fn (rows []GridRow, edits []GridCellEdit, signal &GridAbortSignal) ![]GridRow
 
+// GridOrmDeleteFn deletes a single row by ID, returns the deleted ID (or empty to skip).
 pub type GridOrmDeleteFn = fn (row_id string, signal &GridAbortSignal) !string
 
+// GridOrmDeleteManyFn deletes multiple rows by ID, returns the deleted IDs.
 pub type GridOrmDeleteManyFn = fn (row_ids []string, signal &GridAbortSignal) ![]string
 
 // GridOrmDataSource wraps user-provided ORM callbacks with
