@@ -1441,6 +1441,7 @@ fn draw_triangles(triangles []f32, c gg.Color, x f32, y f32, tri_scale f32, mut 
 
 	scale := window.ui.scale
 
+	sgl.load_pipeline(window.ui.pipeline.alpha)
 	sgl.begin_triangles()
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
