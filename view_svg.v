@@ -31,24 +31,32 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 
 	svg_src := if sv.file_name.len > 0 { sv.file_name } else { sv.svg_data }
 
-	// Determine display dimensions - use specified or SVG's natural size
-	// First load at 1:1 scale to get natural dimensions
-	initial := window.load_svg(svg_src, 0, 0) or {
-		log.error('${@FILE_LINE} > ${err.msg()}')
-		mut error_text := text(
-			text:       '[missing: ${svg_src}]'
-			text_style: TextStyle{
-				...gui_theme.text_style
-				color: magenta
-			}
-		)
-		return error_text.generate_layout(mut window)
+	// Determine display dimensions
+	mut width := sv.width
+	mut height := sv.height
+
+	if width <= 0 || height <= 0 {
+		// Need natural dimensions — lightweight header parse
+		nat_w, nat_h := window.get_svg_dimensions(svg_src) or {
+			log.error('${@FILE_LINE} > ${err.msg()}')
+			mut error_text := text(
+				text:       '[missing: ${svg_src}]'
+				text_style: TextStyle{
+					...gui_theme.text_style
+					color: magenta
+				}
+			)
+			return error_text.generate_layout(mut window)
+		}
+		if width <= 0 {
+			width = nat_w
+		}
+		if height <= 0 {
+			height = nat_h
+		}
 	}
 
-	width := if sv.width > 0 { sv.width } else { initial.width }
-	height := if sv.height > 0 { sv.height } else { initial.height }
-
-	// Now load at the actual display dimensions for proper tessellation
+	// Load at display dimensions for tessellation
 	cached := window.load_svg(svg_src, width, height) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
 		mut error_text := text(

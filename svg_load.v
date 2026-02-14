@@ -85,6 +85,31 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 	return cached
 }
 
+// get_svg_dimensions returns natural SVG dimensions without full
+// parse+tessellate. Reads from cache or parses just the header.
+pub fn (mut window Window) get_svg_dimensions(svg_src string) !(f32, f32) {
+	// Check if any cached entry exists for this source
+	src_hash := fnv1a.sum64_string(svg_src).hex()
+	prefix := '${src_hash}:'
+	for key in window.view_state.svg_cache.keys() {
+		if key.starts_with(prefix) {
+			if cached := window.view_state.svg_cache.get(key) {
+				return cached.width, cached.height
+			}
+		}
+	}
+	// Not cached — parse dimensions only
+	content := if svg_src.starts_with('<') {
+		svg_src
+	} else if os.exists(svg_src) {
+		os.read_file(svg_src) or { return error('SVG not found: ${svg_src}') }
+	} else {
+		return error('SVG not found: ${svg_src}')
+	}
+	w, h := parse_svg_dimensions(content)
+	return w, h
+}
+
 // remove_svg_from_cache removes a cached SVG by its source identifier.
 pub fn (mut window Window) remove_svg_from_cache(svg_src string) {
 	// Remove all cache entries for this source (any size)

@@ -55,6 +55,7 @@ pub mut:
 	stroke_cap   StrokeCap  = .inherit
 	stroke_join  StrokeJoin = .inherit
 	clip_path_id string // references clip_paths key, empty = none
+	raw_elem     string // original element for deferred attribute lookup
 }
 
 // VectorGraphic holds the complete parsed vector graphic (e.g., from SVG).
@@ -62,6 +63,8 @@ pub struct VectorGraphic {
 pub mut:
 	width      f32 // viewBox width
 	height     f32 // viewBox height
+	view_box_x f32 // viewBox min-x offset
+	view_box_y f32 // viewBox min-y offset
 	paths      []VectorPath
 	clip_paths map[string][]VectorPath // id -> clip geometry
 }
@@ -1022,7 +1025,11 @@ fn point_in_triangle(px f32, py f32, ax f32, ay f32, bx f32, by f32, cx f32, cy 
 	dot11 := v1x * v1x + v1y * v1y
 	dot12 := v1x * v2x + v1y * v2y
 
-	inv_denom := 1.0 / (dot00 * dot11 - dot01 * dot01)
+	denom := dot00 * dot11 - dot01 * dot01
+	if f32_abs(denom) < 1e-10 {
+		return false // degenerate triangle (zero area)
+	}
+	inv_denom := 1.0 / denom
 	u := (dot11 * dot02 - dot01 * dot12) * inv_denom
 	v := (dot00 * dot12 - dot01 * dot02) * inv_denom
 

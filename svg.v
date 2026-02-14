@@ -22,13 +22,39 @@ mut:
 
 // GroupStyle holds inherited style properties for groups.
 struct GroupStyle {
-	transform    [6]f32
-	fill         string
-	stroke       string
-	stroke_width string
-	stroke_cap   string
-	stroke_join  string
-	clip_path_id string
+	transform      [6]f32
+	fill           string
+	stroke         string
+	stroke_width   string
+	stroke_cap     string
+	stroke_join    string
+	clip_path_id   string
+	opacity        f32 = 1.0
+	fill_opacity   f32 = 1.0
+	stroke_opacity f32 = 1.0
+}
+
+// parse_svg_dimensions extracts only width/height from SVG without
+// full parse+tessellate. Used to avoid double load when display
+// dimensions are specified.
+pub fn parse_svg_dimensions(content string) (f32, f32) {
+	if vb := find_attr(content, 'viewBox') {
+		parts := vb.split_any(' ,')
+		if parts.len >= 4 {
+			return clamp_viewbox_dim(parts[2].f32()), clamp_viewbox_dim(parts[3].f32())
+		}
+	}
+	w := if wa := find_attr(content, 'width') {
+		clamp_viewbox_dim(parse_length(wa))
+	} else {
+		f32(default_icon_size)
+	}
+	h := if ha := find_attr(content, 'height') {
+		clamp_viewbox_dim(parse_length(ha))
+	} else {
+		f32(default_icon_size)
+	}
+	return w, h
 }
 
 // parse_svg parses an SVG string and returns a VectorGraphic.
@@ -42,6 +68,8 @@ pub fn parse_svg(content string) !VectorGraphic {
 	if vb := find_attr(content, 'viewBox') {
 		parts := vb.split_any(' ,')
 		if parts.len >= 4 {
+			vg.view_box_x = parts[0].f32()
+			vg.view_box_y = parts[1].f32()
 			vg.width = clamp_viewbox_dim(parts[2].f32())
 			vg.height = clamp_viewbox_dim(parts[3].f32())
 		}
@@ -58,9 +86,13 @@ pub fn parse_svg(content string) !VectorGraphic {
 	// Pre-pass: extract <defs> blocks for <clipPath> definitions
 	vg.clip_paths = parse_defs_clip_paths(content)
 
-	// Parse with group support
+	// Parse with group support — apply viewBox offset as translation
+	mut vb_transform := identity_transform
+	if vg.view_box_x != 0 || vg.view_box_y != 0 {
+		vb_transform = [f32(1), 0, 0, 1, -vg.view_box_x, -vg.view_box_y]!
+	}
 	default_style := GroupStyle{
-		transform: identity_transform
+		transform: vb_transform
 	}
 	mut state := ParseState{}
 	vg.paths = parse_svg_content(content, default_style, 0, mut state)
@@ -265,21 +297,30 @@ fn merge_group_style(elem string, inherited GroupStyle) GroupStyle {
 	combined_transform := matrix_multiply(inherited.transform, elem_transform)
 
 	// Inherit or override style properties
-	fill := find_attr(elem, 'fill') or { inherited.fill }
-	stroke := find_attr(elem, 'stroke') or { inherited.stroke }
-	stroke_width := find_attr(elem, 'stroke-width') or { inherited.stroke_width }
-	stroke_cap := find_attr(elem, 'stroke-linecap') or { inherited.stroke_cap }
-	stroke_join := find_attr(elem, 'stroke-linejoin') or { inherited.stroke_join }
+	fill := find_attr_or_style(elem, 'fill') or { inherited.fill }
+	stroke := find_attr_or_style(elem, 'stroke') or { inherited.stroke }
+	stroke_width := find_attr_or_style(elem, 'stroke-width') or { inherited.stroke_width }
+	stroke_cap := find_attr_or_style(elem, 'stroke-linecap') or { inherited.stroke_cap }
+	stroke_join := find_attr_or_style(elem, 'stroke-linejoin') or { inherited.stroke_join }
 	clip_path_id := parse_clip_path_url(elem) or { inherited.clip_path_id }
 
+	// Opacity: group opacity multiplies with inherited
+	elem_opacity := parse_opacity_attr(elem, 'opacity', 1.0)
+	group_opacity := inherited.opacity * elem_opacity
+	fill_opacity := parse_opacity_attr(elem, 'fill-opacity', inherited.fill_opacity)
+	stroke_opacity := parse_opacity_attr(elem, 'stroke-opacity', inherited.stroke_opacity)
+
 	return GroupStyle{
-		transform:    combined_transform
-		fill:         fill
-		stroke:       stroke
-		stroke_width: stroke_width
-		stroke_cap:   stroke_cap
-		stroke_join:  stroke_join
-		clip_path_id: clip_path_id
+		transform:      combined_transform
+		fill:           fill
+		stroke:         stroke
+		stroke_width:   stroke_width
+		stroke_cap:     stroke_cap
+		stroke_join:    stroke_join
+		clip_path_id:   clip_path_id
+		opacity:        group_opacity
+		fill_opacity:   fill_opacity
+		stroke_opacity: stroke_opacity
 	}
 }
 
@@ -336,6 +377,14 @@ fn apply_inherited_style(mut path VectorPath, inherited GroupStyle) {
 	if path.stroke_join == .inherit {
 		path.stroke_join = .miter
 	}
+
+	// Apply opacity: element opacity * group opacity * fill/stroke-opacity
+	elem_opacity := parse_opacity_attr(path.raw_elem, 'opacity', 1.0)
+	combined_opacity := inherited.opacity * elem_opacity
+	fill_opacity := parse_opacity_attr(path.raw_elem, 'fill-opacity', inherited.fill_opacity)
+	stroke_opacity := parse_opacity_attr(path.raw_elem, 'stroke-opacity', inherited.stroke_opacity)
+	path.fill_color = apply_opacity(path.fill_color, combined_opacity * fill_opacity)
+	path.stroke_color = apply_opacity(path.stroke_color, combined_opacity * stroke_opacity)
 }
 
 // parse_path_with_style parses a path element with inherited style.
@@ -422,6 +471,52 @@ pub fn parse_svg_file(path string) !VectorGraphic {
 	return parse_svg(content)
 }
 
+// find_style_property extracts a CSS property from a style attribute.
+// e.g., from "fill:red;stroke:blue" extracts "red" for name="fill".
+fn find_style_property(style string, name string) ?string {
+	// Search for "name:" possibly preceded by ; or start of string
+	mut pos := 0
+	for pos < style.len {
+		// Find property name
+		idx := find_index(style, name, pos) or { return none }
+		// Verify it's at start or after ; and whitespace
+		valid_start := idx == 0 || style[idx - 1] == `;` || style[idx - 1] == ` `
+			|| style[idx - 1] == `\t`
+		if !valid_start {
+			pos = idx + name.len
+			continue
+		}
+		// Find the colon after name
+		mut colon := idx + name.len
+		// Skip whitespace between name and colon
+		for colon < style.len && (style[colon] == ` ` || style[colon] == `\t`) {
+			colon++
+		}
+		if colon >= style.len || style[colon] != `:` {
+			pos = colon
+			continue
+		}
+		// Extract value until ; or end
+		val_start := colon + 1
+		val_end := find_index(style, ';', val_start) or { style.len }
+		if val_end > val_start {
+			return style[val_start..val_end].trim_space()
+		}
+		return none
+	}
+	return none
+}
+
+// find_attr_or_style checks presentation attribute first,
+// then falls back to inline style property.
+fn find_attr_or_style(elem string, name string) ?string {
+	if attr := find_attr(elem, name) {
+		return attr
+	}
+	style := find_attr(elem, 'style') or { return none }
+	return find_style_property(style, name)
+}
+
 // find_attr extracts an attribute value from an element string.
 // Ensures attribute name is preceded by whitespace to avoid matching substrings.
 fn find_attr(elem string, name string) ?string {
@@ -448,6 +543,18 @@ fn find_attr(elem string, name string) ?string {
 	return none
 }
 
+// clamp_byte clamps an int to 0..255.
+@[inline]
+fn clamp_byte(v int) int {
+	if v < 0 {
+		return 0
+	}
+	if v > 255 {
+		return 255
+	}
+	return v
+}
+
 // clamp_viewbox_dim clamps dimension to prevent extreme allocations
 fn clamp_viewbox_dim(v f32) f32 {
 	if v < 0 {
@@ -462,15 +569,19 @@ fn clamp_viewbox_dim(v f32) f32 {
 // parse_length parses a CSS length value (ignores units for now).
 // Clamps to max_coordinate to prevent overflow/OOM.
 fn parse_length(s string) f32 {
-	mut num := ''
-	for c in s {
+	mut end := 0
+	for end < s.len {
+		c := s[end]
 		if (c >= `0` && c <= `9`) || c == `.` || c == `-` {
-			num += c.ascii_str()
+			end++
 		} else {
 			break
 		}
 	}
-	value := num.f32()
+	if end == 0 {
+		return 0
+	}
+	value := s[..end].f32()
 	// Clamp to prevent integer overflow in downstream operations
 	if value > max_coordinate {
 		return max_coordinate
@@ -484,7 +595,7 @@ fn parse_length(s string) f32 {
 // parse_path_element parses a <path> element
 fn parse_path_element(elem string) ?VectorPath {
 	d := find_attr(elem, 'd') or { return none }
-	fill := find_attr(elem, 'fill') or { '' }
+	fill := find_attr_or_style(elem, 'fill') or { '' }
 
 	mut path := VectorPath{
 		fill_color:   parse_svg_color(fill)
@@ -493,6 +604,7 @@ fn parse_path_element(elem string) ?VectorPath {
 		stroke_width: get_stroke_width(elem)
 		stroke_cap:   get_stroke_linecap(elem)
 		stroke_join:  get_stroke_linejoin(elem)
+		raw_elem:     elem
 	}
 	path.segments = parse_path_d(d)
 
@@ -510,7 +622,7 @@ fn parse_rect_element(elem string) ?VectorPath {
 	h := (find_attr(elem, 'height') or { return none }).f32()
 	mut rx := (find_attr(elem, 'rx') or { '0' }).f32()
 	mut ry := (find_attr(elem, 'ry') or { '0' }).f32()
-	fill := find_attr(elem, 'fill') or { '' }
+	fill := find_attr_or_style(elem, 'fill') or { '' }
 
 	if rx == 0 && ry > 0 {
 		rx = ry
@@ -557,6 +669,7 @@ fn parse_rect_element(elem string) ?VectorPath {
 		stroke_width: get_stroke_width(elem)
 		stroke_cap:   get_stroke_linecap(elem)
 		stroke_join:  get_stroke_linejoin(elem)
+		raw_elem:     elem
 	}
 }
 
@@ -565,7 +678,7 @@ fn parse_circle_element(elem string) ?VectorPath {
 	cx := (find_attr(elem, 'cx') or { '0' }).f32()
 	cy := (find_attr(elem, 'cy') or { '0' }).f32()
 	r := (find_attr(elem, 'r') or { return none }).f32()
-	fill := find_attr(elem, 'fill') or { '' }
+	fill := find_attr_or_style(elem, 'fill') or { '' }
 
 	return ellipse_to_path(cx, cy, r, r, elem, fill)
 }
@@ -576,7 +689,7 @@ fn parse_ellipse_element(elem string) ?VectorPath {
 	cy := (find_attr(elem, 'cy') or { '0' }).f32()
 	rx := (find_attr(elem, 'rx') or { return none }).f32()
 	ry := (find_attr(elem, 'ry') or { return none }).f32()
-	fill := find_attr(elem, 'fill') or { '' }
+	fill := find_attr_or_style(elem, 'fill') or { '' }
 
 	return ellipse_to_path(cx, cy, rx, ry, elem, fill)
 }
@@ -604,13 +717,14 @@ fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string) Vec
 		stroke_width: get_stroke_width(elem)
 		stroke_cap:   get_stroke_linecap(elem)
 		stroke_join:  get_stroke_linejoin(elem)
+		raw_elem:     elem
 	}
 }
 
 // parse_polygon_element converts <polygon> or <polyline> to path
 fn parse_polygon_element(elem string, close bool) ?VectorPath {
 	points_str := find_attr(elem, 'points') or { return none }
-	fill := find_attr(elem, 'fill') or { '' }
+	fill := find_attr_or_style(elem, 'fill') or { '' }
 
 	numbers := parse_number_list(points_str)
 	// Validate: need at least 2 points (4 coords) and even count for x,y pairs
@@ -635,6 +749,7 @@ fn parse_polygon_element(elem string, close bool) ?VectorPath {
 		stroke_width: get_stroke_width(elem)
 		stroke_cap:   get_stroke_linecap(elem)
 		stroke_join:  get_stroke_linejoin(elem)
+		raw_elem:     elem
 	}
 }
 
@@ -656,6 +771,7 @@ fn parse_line_element(elem string) ?VectorPath {
 		stroke_width: get_stroke_width(elem)
 		stroke_cap:   get_stroke_linecap(elem)
 		stroke_join:  get_stroke_linejoin(elem)
+		raw_elem:     elem
 	}
 }
 
@@ -751,19 +867,42 @@ fn parse_rgb_color(s string) Color {
 	if parts.len < 3 {
 		return black
 	}
-	r := parts[0].trim_space().int()
-	g := parts[1].trim_space().int()
-	b := parts[2].trim_space().int()
+	r := clamp_byte(parts[0].trim_space().int())
+	g := clamp_byte(parts[1].trim_space().int())
+	b := clamp_byte(parts[2].trim_space().int())
 	mut a := 255
 	if parts.len >= 4 {
 		alpha := parts[3].trim_space().f32()
 		if alpha <= 1.0 {
-			a = int(alpha * 255)
+			a = clamp_byte(int(alpha * 255))
 		} else {
-			a = int(alpha)
+			a = clamp_byte(int(alpha))
 		}
 	}
 	return Color{u8(r), u8(g), u8(b), u8(a)}
+}
+
+// parse_opacity_attr extracts an opacity value from element.
+// Returns fallback if not specified. Clamps to 0.0..1.0.
+fn parse_opacity_attr(elem string, name string, fallback f32) f32 {
+	val := find_attr_or_style(elem, name) or { return fallback }
+	o := val.f32()
+	if o < 0 {
+		return 0
+	}
+	if o > 1.0 {
+		return 1.0
+	}
+	return o
+}
+
+// apply_opacity multiplies opacity into color alpha channel.
+@[inline]
+fn apply_opacity(c Color, opacity f32) Color {
+	if opacity >= 1.0 {
+		return c
+	}
+	return Color{c.r, c.g, c.b, u8(f32(c.a) * opacity)}
 }
 
 // identity_transform is the identity affine matrix.
@@ -875,7 +1014,7 @@ fn parse_rotate_transform(args []f32) [6]f32 {
 
 // get_transform extracts and parses transform attribute from element.
 fn get_transform(elem string) [6]f32 {
-	if t := find_attr(elem, 'transform') {
+	if t := find_attr_or_style(elem, 'transform') {
 		return parse_transform(t)
 	}
 	return identity_transform
@@ -884,7 +1023,7 @@ fn get_transform(elem string) [6]f32 {
 // get_stroke_color extracts stroke color from element.
 // Returns color_inherit sentinel if not specified.
 fn get_stroke_color(elem string) Color {
-	stroke := find_attr(elem, 'stroke') or { return color_inherit }
+	stroke := find_attr_or_style(elem, 'stroke') or { return color_inherit }
 	return parse_svg_color(stroke)
 }
 
@@ -892,14 +1031,14 @@ fn get_stroke_color(elem string) Color {
 // Returns -1.0 sentinel if not specified (caller should use default or inherit).
 // The -1.0 sentinel allows distinguishing "not set" from explicit 0.0 (no stroke).
 fn get_stroke_width(elem string) f32 {
-	width_str := find_attr(elem, 'stroke-width') or { return -1.0 }
+	width_str := find_attr_or_style(elem, 'stroke-width') or { return -1.0 }
 	return parse_length(width_str)
 }
 
 // get_stroke_linecap extracts stroke-linecap from element.
 // Returns .inherit sentinel if not specified.
 fn get_stroke_linecap(elem string) StrokeCap {
-	cap := find_attr(elem, 'stroke-linecap') or { return .inherit }
+	cap := find_attr_or_style(elem, 'stroke-linecap') or { return .inherit }
 	return match cap {
 		'round' { StrokeCap.round }
 		'square' { StrokeCap.square }
@@ -910,7 +1049,7 @@ fn get_stroke_linecap(elem string) StrokeCap {
 // get_stroke_linejoin extracts stroke-linejoin from element.
 // Returns .inherit sentinel if not specified.
 fn get_stroke_linejoin(elem string) StrokeJoin {
-	join := find_attr(elem, 'stroke-linejoin') or { return .inherit }
+	join := find_attr_or_style(elem, 'stroke-linejoin') or { return .inherit }
 	return match join {
 		'round' { StrokeJoin.round }
 		'bevel' { StrokeJoin.bevel }
