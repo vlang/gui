@@ -160,3 +160,98 @@ fn test_pdf_render_document_supports_transformed_layout_text() {
 	assert pdf.contains(' cm')
 	assert pdf.contains('(tilt) Tj')
 }
+
+fn test_pdf_render_document_svg_gradient_emits_shading_resources() {
+	renderers := [
+		Renderer(DrawSvg{
+			triangles:     [f32(0), 0, 40, 0, 0, 40]
+			color:         gg.Color{20, 20, 20, 255}
+			vertex_colors: [gg.Color{255, 0, 0, 255}, gg.Color{0, 255, 0, 255},
+				gg.Color{0, 0, 255, 255}]
+			x:             5
+			y:             6
+			scale:         1
+		}),
+	]
+
+	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
+		path: 'unused.pdf'
+	}) or { panic(err.msg()) }
+
+	assert pdf.contains('/Shading <<')
+	assert pdf.contains('/ShadingType 4')
+	assert pdf.contains('/ColorSpace /DeviceRGB')
+	assert pdf.contains('/SH1 sh')
+}
+
+fn test_pdf_render_document_svg_gradient_with_clip_group_uses_clip_and_shading() {
+	renderers := [
+		Renderer(DrawSvg{
+			triangles:    [f32(0), 0, 30, 0, 0, 30]
+			color:        gg.Color{255, 255, 255, 255}
+			x:            0
+			y:            0
+			scale:        1
+			is_clip_mask: true
+			clip_group:   9
+		}),
+		Renderer(DrawSvg{
+			triangles:     [f32(0), 0, 40, 0, 0, 40]
+			color:         gg.Color{80, 80, 80, 255}
+			vertex_colors: [gg.Color{255, 0, 0, 255}, gg.Color{0, 255, 0, 255},
+				gg.Color{0, 0, 255, 255}]
+			x:             10
+			y:             12
+			scale:         1
+			clip_group:    9
+		}),
+	]
+
+	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
+		path: 'unused.pdf'
+	}) or { panic(err.msg()) }
+
+	assert pdf.contains('W n')
+	assert pdf.contains('/SH1 sh')
+}
+
+fn test_pdf_render_document_svg_gradient_malformed_vertex_colors_falls_back_flat() {
+	renderers := [
+		Renderer(DrawSvg{
+			triangles:     [f32(0), 0, 40, 0, 0, 40]
+			color:         gg.Color{0, 128, 0, 255}
+			vertex_colors: [gg.Color{255, 0, 0, 255}, gg.Color{0, 255, 0, 255}]
+			x:             1
+			y:             2
+			scale:         1
+		}),
+	]
+
+	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
+		path: 'unused.pdf'
+	}) or { panic(err.msg()) }
+
+	assert !pdf.contains('/ShadingType 4')
+	assert pdf.contains('0 0.502 0 rg')
+}
+
+fn test_pdf_render_document_svg_gradient_non_uniform_alpha_falls_back_flat() {
+	renderers := [
+		Renderer(DrawSvg{
+			triangles:     [f32(0), 0, 40, 0, 0, 40]
+			color:         gg.Color{0, 0, 0, 255}
+			vertex_colors: [gg.Color{255, 0, 0, 255}, gg.Color{0, 255, 0, 180},
+				gg.Color{0, 0, 255, 255}]
+			x:             3
+			y:             4
+			scale:         1
+		}),
+	]
+
+	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
+		path: 'unused.pdf'
+	}) or { panic(err.msg()) }
+
+	assert !pdf.contains('/ShadingType 4')
+	assert pdf.contains('0 0 0 rg')
+}

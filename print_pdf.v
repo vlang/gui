@@ -14,6 +14,21 @@ struct PdfRenderContext {
 	margins       PrintMargins
 }
 
+struct PdfSvgShadingRef {
+	name  string
+	alpha u8
+}
+
+struct PdfSvgShadingObject {
+	ref         PdfSvgShadingRef
+	object_body string
+}
+
+struct PdfSvgIndexed {
+	idx int
+	svg DrawSvg
+}
+
 fn (ctx PdfRenderContext) map_x(x f32) f32 {
 	return ctx.margins.left + x * ctx.scale
 }
@@ -103,6 +118,9 @@ fn pdf_collect_alphas(renderers []Renderer) []u8 {
 			}
 			DrawSvg {
 				seen[renderer.color.a] = true
+				if alpha := pdf_svg_gradient_alpha(renderer) {
+					seen[alpha] = true
+				}
 			}
 			DrawLayout {
 				for item in renderer.layout.items {
@@ -129,6 +147,141 @@ fn pdf_collect_alphas(renderers []Renderer) []u8 {
 	}
 	alphas.sort()
 	return alphas
+}
+
+fn pdf_svg_gradient_alpha(renderer DrawSvg) ?u8 {
+	if renderer.is_clip_mask || renderer.vertex_colors.len == 0 || renderer.triangles.len < 6 {
+		return none
+	}
+	if renderer.triangles.len % 6 != 0 {
+		return none
+	}
+	if renderer.vertex_colors.len != renderer.triangles.len / 2 {
+		return none
+	}
+	alpha := renderer.vertex_colors[0].a
+	for c in renderer.vertex_colors {
+		if c.a != alpha {
+			return none
+		}
+	}
+	return alpha
+}
+
+fn pdf_u16_from_range(value f32, min_v f32, max_v f32) int {
+	range := max_v - min_v
+	if range <= 0.00001 {
+		return 0
+	}
+	mut t := (value - min_v) / range
+	if t < 0 {
+		t = 0
+	} else if t > 1 {
+		t = 1
+	}
+	mut result := int(t * 65535.0 + 0.5)
+	if result < 0 {
+		result = 0
+	} else if result > 65535 {
+		result = 65535
+	}
+	return result
+}
+
+fn pdf_hex_encode(data []u8) string {
+	hex_chars := '0123456789ABCDEF'
+	mut out := strings.new_builder(data.len * 2 + 1)
+	for b in data {
+		out.write_u8(hex_chars[int((b >> 4) & 0x0F)])
+		out.write_u8(hex_chars[int(b & 0x0F)])
+	}
+	out.write_u8(`>`)
+	return out.bytestr()
+}
+
+fn pdf_build_svg_shading(renderer DrawSvg, name string, ctx PdfRenderContext) ?PdfSvgShadingObject {
+	alpha := pdf_svg_gradient_alpha(renderer) or { return none }
+	vertex_count := renderer.triangles.len / 2
+	mut points := []f32{len: renderer.triangles.len}
+	mut min_x := f32(1e20)
+	mut min_y := f32(1e20)
+	mut max_x := f32(-1e20)
+	mut max_y := f32(-1e20)
+
+	for vi := 0; vi < vertex_count; vi++ {
+		ti := vi * 2
+		x := ctx.map_x(renderer.x + renderer.triangles[ti] * renderer.scale)
+		y := ctx.map_y(renderer.y + renderer.triangles[ti + 1] * renderer.scale)
+		if math.is_nan(x) || math.is_inf(x, 0) || math.is_nan(y) || math.is_inf(y, 0) {
+			return none
+		}
+		points[ti] = x
+		points[ti + 1] = y
+		if x < min_x {
+			min_x = x
+		}
+		if x > max_x {
+			max_x = x
+		}
+		if y < min_y {
+			min_y = y
+		}
+		if y > max_y {
+			max_y = y
+		}
+	}
+
+	mut payload := []u8{cap: vertex_count * 8}
+	for vi := 0; vi < vertex_count; vi++ {
+		ti := vi * 2
+		color := renderer.vertex_colors[vi]
+		x16 := pdf_u16_from_range(points[ti], min_x, max_x)
+		y16 := pdf_u16_from_range(points[ti + 1], min_y, max_y)
+		payload << u8(0)
+		payload << u8((x16 >> 8) & 0xFF)
+		payload << u8(x16 & 0xFF)
+		payload << u8((y16 >> 8) & 0xFF)
+		payload << u8(y16 & 0xFF)
+		payload << color.r
+		payload << color.g
+		payload << color.b
+	}
+
+	hex_stream := pdf_hex_encode(payload)
+	object_body :=
+		'<< /ShadingType 4 /ColorSpace /DeviceRGB /BitsPerCoordinate 16 /BitsPerComponent 8 ' +
+		'/BitsPerFlag 8 /Decode [${pdf_num(min_x)} ${pdf_num(max_x)} ${pdf_num(min_y)} ${pdf_num(max_y)} 0 1 0 1 0 1] /Length ${hex_stream.len} /Filter /ASCIIHexDecode >>\n' +
+		'stream\n${hex_stream}\nendstream'
+	return PdfSvgShadingObject{
+		ref:         PdfSvgShadingRef{
+			name:  name
+			alpha: alpha
+		}
+		object_body: object_body
+	}
+}
+
+fn pdf_collect_svg_shadings(renderers []Renderer, ctx PdfRenderContext) (map[int]PdfSvgShadingRef, []PdfSvgShadingObject) {
+	mut refs := map[int]PdfSvgShadingRef{}
+	mut objects := []PdfSvgShadingObject{}
+	mut next_id := 1
+	for idx, renderer in renderers {
+		if renderer is DrawSvg {
+			name := 'SH${next_id}'
+			shading := pdf_build_svg_shading(renderer, name, ctx) or { continue }
+			refs[idx] = shading.ref
+			objects << shading
+			next_id++
+		}
+	}
+	return refs, objects
+}
+
+fn pdf_draw_svg_shading(mut out strings.Builder, shading PdfSvgShadingRef) {
+	out.writeln('q')
+	out.writeln('/GS${shading.alpha} gs')
+	out.writeln('/${shading.name} sh')
+	out.writeln('Q')
 }
 
 fn pdf_extgstate_dict(alphas []u8) string {
@@ -222,7 +375,7 @@ fn pdf_append_svg_triangles_path(mut out strings.Builder, ctx PdfRenderContext, 
 	}
 }
 
-fn pdf_draw_svg_clip_group(renderers []Renderer, idx int, mut out strings.Builder, ctx PdfRenderContext) int {
+fn pdf_draw_svg_clip_group(renderers []Renderer, idx int, mut out strings.Builder, ctx PdfRenderContext, shading_refs map[int]PdfSvgShadingRef) int {
 	mut next_idx := idx
 	if idx < 0 || idx >= renderers.len {
 		return idx + 1
@@ -231,7 +384,7 @@ fn pdf_draw_svg_clip_group(renderers []Renderer, idx int, mut out strings.Builde
 	group := first.clip_group
 
 	mut masks := []DrawSvg{}
-	mut content := []DrawSvg{}
+	mut content := []PdfSvgIndexed{}
 
 	for next_idx < renderers.len {
 		if renderers[next_idx] is DrawSvg {
@@ -240,7 +393,10 @@ fn pdf_draw_svg_clip_group(renderers []Renderer, idx int, mut out strings.Builde
 				if svg.is_clip_mask {
 					masks << svg
 				} else {
-					content << svg
+					content << PdfSvgIndexed{
+						idx: next_idx
+						svg: svg
+					}
 				}
 				next_idx++
 				continue
@@ -253,8 +409,12 @@ fn pdf_draw_svg_clip_group(renderers []Renderer, idx int, mut out strings.Builde
 		return next_idx
 	}
 	if masks.len == 0 {
-		for svg in content {
-			pdf_draw_svg(mut out, ctx, svg)
+		for item in content {
+			if shading := shading_refs[item.idx] {
+				pdf_draw_svg_shading(mut out, shading)
+			} else {
+				pdf_draw_svg(mut out, ctx, item.svg)
+			}
 		}
 		return next_idx
 	}
@@ -264,8 +424,12 @@ fn pdf_draw_svg_clip_group(renderers []Renderer, idx int, mut out strings.Builde
 		pdf_append_svg_triangles_path(mut out, ctx, svg)
 	}
 	out.writeln('W n')
-	for svg in content {
-		pdf_draw_svg(mut out, ctx, svg)
+	for item in content {
+		if shading := shading_refs[item.idx] {
+			pdf_draw_svg_shading(mut out, shading)
+		} else {
+			pdf_draw_svg(mut out, ctx, item.svg)
+		}
 	}
 	out.writeln('Q')
 	return next_idx
@@ -359,7 +523,7 @@ fn pdf_draw_layout_transformed(mut out strings.Builder, ctx PdfRenderContext, re
 	out.writeln('Q')
 }
 
-fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext) string {
+fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext, shading_refs map[int]PdfSvgShadingRef) string {
 	mut out := strings.new_builder(4096)
 	mut clip_active := false
 	out.writeln('q')
@@ -457,8 +621,10 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext) string {
 			DrawLayoutPlaced {}
 			DrawSvg {
 				if renderer.clip_group > 0 {
-					i = pdf_draw_svg_clip_group(renderers, i, mut out, ctx)
+					i = pdf_draw_svg_clip_group(renderers, i, mut out, ctx, shading_refs)
 					advance = false
+				} else if shading := shading_refs[i] {
+					pdf_draw_svg_shading(mut out, shading)
 				} else {
 					pdf_draw_svg(mut out, ctx, renderer)
 				}
@@ -541,20 +707,35 @@ fn pdf_render_document(renderers []Renderer, source_width f32, source_height f32
 		scale:         scale
 		margins:       cfg.margins
 	}
+	shading_refs, shading_objects := pdf_collect_svg_shadings(renderers, ctx)
 	alphas := pdf_collect_alphas(renderers)
 	extgstate := pdf_extgstate_dict(alphas)
-	stream := pdf_render_stream(renderers, ctx)
+	stream := pdf_render_stream(renderers, ctx, shading_refs)
+
+	mut shading_resource := ''
+	if shading_objects.len > 0 {
+		mut out := strings.new_builder(shading_objects.len * 16 + 16)
+		out.write_string('/Shading << ')
+		for i, shading in shading_objects {
+			out.write_string('/${shading.ref.name} ${5 + i} 0 R ')
+		}
+		out.write_string('>>')
+		shading_resource = out.bytestr()
+	}
 
 	page_obj :=
 		'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pdf_num(page_width)} ${pdf_num(page_height)}]' +
 		' /Resources << /Font << /F1 << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> ' +
-		'${extgstate} >> /Contents 4 0 R >>'
+		'${extgstate} ${shading_resource} >> /Contents 4 0 R >>'
 	content_obj := '<< /Length ${stream.len} >>\nstream\n${stream}endstream'
-	objects := [
+	mut objects := [
 		'<< /Type /Catalog /Pages 2 0 R >>',
 		'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
 		page_obj,
 		content_obj,
 	]
+	for shading in shading_objects {
+		objects << shading.object_body
+	}
 	return pdf_encode(objects)
 }
