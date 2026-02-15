@@ -140,6 +140,10 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 	query := cfg.query
 	on_crud_error := cfg.on_crud_error
 	on_rows_change := cfg.on_rows_change
+	on_page_change := cfg.on_page_change
+	page_size := cfg.page_size
+	page_index := cfg.page_index
+	scroll_id := data_grid_scroll_id(cfg)
 	dirty_count := state.dirty_row_ids.len
 	draft_count := state.draft_row_ids.len
 	delete_count := state.deleted_row_ids.len
@@ -164,9 +168,9 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 		v_align:      .middle
 		content:      [
 			data_grid_indicator_button('Add', cfg.text_style_filter, cfg.color_header_hover,
-				!can_create || state.saving, 0, fn [grid_id, columns, on_selection_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
-				data_grid_crud_add_row(grid_id, columns, on_selection_change, focus_id, mut
-					e, mut w)
+				!can_create || state.saving, 0, fn [grid_id, columns, on_selection_change, focus_id, scroll_id, page_size, page_index, on_page_change] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_crud_add_row(grid_id, columns, on_selection_change, focus_id,
+					scroll_id, page_size, page_index, on_page_change, mut e, mut w)
 			}),
 			data_grid_indicator_button('Delete', cfg.text_style_filter, cfg.color_header_hover,
 				!can_delete || selected_count == 0 || state.saving, 0, fn [grid_id, selection, on_selection_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
@@ -227,7 +231,7 @@ fn data_grid_crud_default_cells(columns []GridColumnCfg) map[string]string {
 	return cells
 }
 
-fn data_grid_crud_add_row(grid_id string, columns []GridColumnCfg, on_selection_change fn (sel GridSelection, mut e Event, mut w Window), focus_id u32, mut e Event, mut w Window) {
+fn data_grid_crud_add_row(grid_id string, columns []GridColumnCfg, on_selection_change fn (sel GridSelection, mut e Event, mut w Window), focus_id u32, scroll_id u32, page_size int, page_index int, on_page_change fn (page int, mut e Event, mut w Window), mut e Event, mut w Window) {
 	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
 	state.next_draft_seq++
 	draft_id := '__draft_${grid_id}_${state.next_draft_seq}'
@@ -251,6 +255,11 @@ fn data_grid_crud_add_row(grid_id string, columns []GridColumnCfg, on_selection_
 		}
 		on_selection_change(next, mut e, mut w)
 	}
+	if page_size > 0 && page_index > 0 && on_page_change != unsafe { nil } {
+		w.view_state.data_grid_pending_jump_row.set(grid_id, 0)
+		on_page_change(0, mut e, mut w)
+	}
+	w.scroll_vertical_to(scroll_id, 0)
 	if focus_id > 0 {
 		w.set_id_focus(focus_id)
 	}

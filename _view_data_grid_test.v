@@ -1476,6 +1476,72 @@ fn test_data_grid_crud_build_payload() {
 	assert delete_ids == ['2']
 }
 
+fn test_data_grid_crud_add_row_scrolls_to_top() {
+	mut w := Window{}
+	mut e := Event{}
+	grid_id := 'crud-add-scroll'
+	scroll_id := u32(77)
+	w.view_state.scroll_y.set(scroll_id, -180)
+	selection_key := '${grid_id}:selected'
+	data_grid_crud_add_row(grid_id, [
+		GridColumnCfg{
+			id:    'name'
+			title: 'Name'
+		},
+	], fn [selection_key] (sel GridSelection, mut _ Event, mut w Window) {
+		w.view_state.data_grid_jump_input.set(selection_key, sel.active_row_id)
+	}, 0, scroll_id, 0, 0, unsafe { nil }, mut e, mut w)
+	state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	draft_id := '__draft_${grid_id}_1'
+	assert state.working_rows.len == 1
+	assert state.working_rows[0].id == draft_id
+	assert (w.view_state.scroll_y.get(scroll_id) or { f32(1) }) == 0
+	assert (w.view_state.data_grid_jump_input.get(selection_key) or { '' }) == draft_id
+	assert e.is_handled
+}
+
+fn test_data_grid_crud_add_row_paged_requests_first_page() {
+	mut w := Window{}
+	mut e := Event{}
+	grid_id := 'crud-add-paged'
+	scroll_id := u32(99)
+	w.view_state.scroll_y.set(scroll_id, -240)
+	page_key := '${grid_id}:requested'
+	data_grid_crud_add_row(grid_id, [
+		GridColumnCfg{
+			id:    'name'
+			title: 'Name'
+		},
+	], fn (_ GridSelection, mut _ Event, mut _ Window) {}, 0, scroll_id, 20, 2, fn [page_key] (page int, mut _ Event, mut w Window) {
+		w.view_state.data_grid_pending_jump_row.set(page_key, page)
+	}, mut e, mut w)
+	assert (w.view_state.data_grid_pending_jump_row.get(page_key) or { -1 }) == 0
+	assert (w.view_state.data_grid_pending_jump_row.get(grid_id) or { -1 }) == 0
+	assert (w.view_state.scroll_y.get(scroll_id) or { f32(1) }) == 0
+	assert e.is_handled
+}
+
+fn test_data_grid_crud_add_row_paged_first_page_no_jump_request() {
+	mut w := Window{}
+	mut e := Event{}
+	grid_id := 'crud-add-page-zero'
+	scroll_id := u32(101)
+	w.view_state.scroll_y.set(scroll_id, -240)
+	page_key := '${grid_id}:requested'
+	data_grid_crud_add_row(grid_id, [
+		GridColumnCfg{
+			id:    'name'
+			title: 'Name'
+		},
+	], fn (_ GridSelection, mut _ Event, mut _ Window) {}, 0, scroll_id, 20, 0, fn [page_key] (page int, mut _ Event, mut w Window) {
+		w.view_state.data_grid_pending_jump_row.set(page_key, page)
+	}, mut e, mut w)
+	assert (w.view_state.data_grid_pending_jump_row.get(page_key) or { -1 }) == -1
+	assert (w.view_state.data_grid_pending_jump_row.get(grid_id) or { -1 }) == -1
+	assert (w.view_state.scroll_y.get(scroll_id) or { f32(1) }) == 0
+	assert e.is_handled
+}
+
 fn test_data_grid_selection_remove_ids() {
 	selection := GridSelection{
 		anchor_row_id:    '2'

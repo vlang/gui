@@ -392,7 +392,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	columns := data_grid_effective_columns(resolved_cfg.columns, resolved_cfg.column_order,
 		resolved_cfg.hidden_column_ids)
 	presentation := data_grid_presentation_rows(resolved_cfg, columns, body_page_indices)
-	if pager_enabled && !has_source {
+	if !has_source {
 		data_grid_apply_pending_local_jump_scroll(resolved_cfg, grid_height, row_height,
 			static_top, scroll_id, presentation.data_to_display, mut window)
 	}

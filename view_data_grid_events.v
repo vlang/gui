@@ -636,8 +636,8 @@ fn data_grid_on_keydown(kd DataGridKeydownContext, mut e Event, mut w Window) {
 		return
 	}
 	if kd.crud_enabled && e.modifiers == .none && e.key_code == .insert {
-		data_grid_crud_add_row(kd.grid_id, kd.columns, kd.on_selection_change, 0, mut
-			e, mut w)
+		data_grid_crud_add_row(kd.grid_id, kd.columns, kd.on_selection_change, 0, kd.scroll_id,
+			kd.page_size, kd.page_index, kd.on_page_change, mut e, mut w)
 		return
 	}
 	if kd.crud_enabled && e.modifiers == .none && e.key_code == .delete {
