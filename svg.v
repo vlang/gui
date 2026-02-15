@@ -1,5 +1,6 @@
 module gui
 
+import encoding.html
 import math
 import os
 import strings
@@ -311,8 +312,8 @@ fn extract_transform_scale(m [6]f32) f32 {
 
 // extract_plain_text returns text content before the first child element.
 fn extract_plain_text(body string) string {
-	lt := find_index(body, '<', 0) or { return body.trim_space() }
-	return body[..lt].trim_space()
+	lt := find_index(body, '<', 0) or { return html.unescape(body.trim_space(), all: true) }
+	return html.unescape(body[..lt].trim_space(), all: true)
 }
 
 // parse_text_element parses a <text> element and its <tspan> children.
@@ -439,7 +440,7 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 		// Extract text content between > and </tspan>
 		content_start := tag_end + 1
 		content_end := find_index(body, '</tspan', content_start) or { break }
-		text := body[content_start..content_end].trim_space()
+		text := html.unescape(body[content_start..content_end].trim_space(), all: true)
 
 		// Close tag end
 		close_end := find_index(body, '>', content_end) or { break }
@@ -576,7 +577,7 @@ fn parse_textpath_element(body string, parent_family string, parent_size f32, pa
 	} else {
 		content_start := tag_end + 1
 		content_end := find_index(body, '</textPath', content_start) or { body.len }
-		body[content_start..content_end].trim_space()
+		html.unescape(body[content_start..content_end].trim_space(), all: true)
 	}
 	if text.len == 0 {
 		return
