@@ -460,8 +460,10 @@ pub:
 	rotation_radians f32
 	affine_transform ?vglyph.AffineTransform
 	// features is a pointer to font features (OpenType features and variation axes).
-	features &vglyph.FontFeatures   = unsafe { nil }
-	gradient &vglyph.GradientConfig = unsafe { nil }
+	features     &vglyph.FontFeatures   = unsafe { nil }
+	gradient     &vglyph.GradientConfig = unsafe { nil }
+	stroke_width f32
+	stroke_color Color = color_transparent
 }
 
 fn (ts TextStyle) to_text_cfg() gg.TextCfg {
@@ -483,6 +485,8 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 			strikethrough:  ts.strikethrough
 			typeface:       ts.typeface
 			letter_spacing: ts.letter_spacing
+			stroke_width:   ts.stroke_width
+			stroke_color:   ts.stroke_color.to_gx_color()
 		}
 		block:    vglyph.BlockStyle{
 			align: match ts.align {

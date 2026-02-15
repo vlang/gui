@@ -1886,6 +1886,12 @@ fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, gradients map
 		strikethrough:  t.strikethrough
 		letter_spacing: t.letter_spacing * scale
 		gradient:       gradient
+		stroke_width:   t.stroke_width * scale
+		stroke_color:   if t.opacity < 1.0 {
+			Color{t.stroke_color.r, t.stroke_color.g, t.stroke_color.b, u8(f32(t.stroke_color.a) * t.opacity)}
+		} else {
+			t.stroke_color
+		}
 	}
 	cfg := text_style.to_vglyph_cfg()
 

@@ -79,6 +79,8 @@ pub:
 	filter_id        string
 	fill_gradient_id string
 	letter_spacing   f32
+	stroke_color     Color = color_transparent
+	stroke_width     f32
 }
 
 // SvgFilter holds a parsed <filter> definition.

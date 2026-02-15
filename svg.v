@@ -332,8 +332,29 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 		black
 	} else if fill_str.len > 0 && fill_str != 'none' {
 		parse_svg_color(fill_str)
+	} else if fill_str == 'none' {
+		color_transparent
 	} else {
 		black
+	}
+	// Stroke
+	stroke_str := find_attr_or_style(elem, 'stroke') or { style.stroke }
+	stroke_color_raw := if stroke_str.len > 0 && stroke_str != 'none' {
+		parse_svg_color(stroke_str)
+	} else {
+		color_transparent
+	}
+	stroke_opacity := parse_opacity_attr(elem, 'stroke-opacity', style.stroke_opacity)
+	stroke_color := if stroke_opacity < 1.0 {
+		Color{stroke_color_raw.r, stroke_color_raw.g, stroke_color_raw.b, u8(f32(stroke_color_raw.a) * stroke_opacity)}
+	} else {
+		stroke_color_raw
+	}
+	stroke_width_str := find_attr_or_style(elem, 'stroke-width') or { style.stroke_width }
+	stroke_width := if stroke_width_str.len > 0 {
+		parse_length(stroke_width_str)
+	} else {
+		f32(0)
 	}
 	// Anchor
 	anchor_str := find_attr_or_style(elem, 'text-anchor') or { 'start' }
@@ -357,8 +378,8 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 	// Check for tspan children
 	if body.contains('<tspan') {
 		parse_tspan_elements(body, tx, ty, font_family, scaled_size, bold, italic, underline,
-			strikethrough, color, fill_gradient_id, anchor, opacity, letter_spacing, style, mut
-			state)
+			strikethrough, color, fill_gradient_id, anchor, opacity, letter_spacing, stroke_color,
+			stroke_width, style, mut state)
 	} else {
 		plain := extract_plain_text(body)
 		if plain.len > 0 {
@@ -378,13 +399,15 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 				filter_id:        style.filter_id
 				fill_gradient_id: fill_gradient_id
 				letter_spacing:   letter_spacing
+				stroke_color:     stroke_color
+				stroke_width:     stroke_width
 			}
 		}
 	}
 }
 
 // parse_tspan_elements iterates <tspan> children inside a <text> body.
-fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_underline bool, parent_strikethrough bool, parent_color Color, parent_gradient_id string, parent_anchor u8, parent_opacity f32, parent_letter_spacing f32, style GroupStyle, mut state ParseState) {
+fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_underline bool, parent_strikethrough bool, parent_color Color, parent_gradient_id string, parent_anchor u8, parent_opacity f32, parent_letter_spacing f32, parent_stroke_color Color, parent_stroke_width f32, style GroupStyle, mut state ParseState) {
 	mut current_y := base_y
 	mut search_pos := 0
 
@@ -460,6 +483,21 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 		} else {
 			parent_letter_spacing
 		}
+		// Per-tspan stroke overrides
+		ts_stroke_str := find_attr_or_style(tspan_elem, 'stroke') or { '' }
+		stroke_color := if ts_stroke_str.len > 0 && ts_stroke_str != 'none' {
+			parse_svg_color(ts_stroke_str)
+		} else if ts_stroke_str == 'none' {
+			color_transparent
+		} else {
+			parent_stroke_color
+		}
+		ts_sw_str := find_attr_or_style(tspan_elem, 'stroke-width') or { '' }
+		stroke_width := if ts_sw_str.len > 0 {
+			parse_length(ts_sw_str)
+		} else {
+			parent_stroke_width
+		}
 
 		state.texts << SvgText{
 			text:             text
@@ -477,6 +515,8 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 			filter_id:        style.filter_id
 			fill_gradient_id: fill_gradient_id
 			letter_spacing:   letter_spacing
+			stroke_color:     stroke_color
+			stroke_width:     stroke_width
 		}
 	}
 
@@ -499,6 +539,8 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 			filter_id:        style.filter_id
 			fill_gradient_id: parent_gradient_id
 			letter_spacing:   parent_letter_spacing
+			stroke_color:     parent_stroke_color
+			stroke_width:     parent_stroke_width
 		}
 	}
 }
