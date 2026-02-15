@@ -772,7 +772,7 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 
 	has_visible_border := shape.size_border > 0 && shape.color_border != color_transparent
 	has_visible_text := shape.shape_type == .text && shape.tc != unsafe { nil }
-		&& shape.tc.text_style.color != color_transparent
+		&& (shape.tc.text_style.color != color_transparent || shape.tc.text_style.stroke_width > 0)
 	// SVG shapes have their own internal colors, so don't skip them
 	is_svg := shape.shape_type == .svg
 	has_effects := shape.fx != unsafe { nil } && (shape.fx.gradient != unsafe { nil }
@@ -1064,7 +1064,8 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		color: color
 	}.to_vglyph_cfg()
 
-	if shape.has_text_layout() && color != color_transparent {
+	has_stroke := shape.tc.text_style.stroke_width > 0
+	if shape.has_text_layout() && (color != color_transparent || has_stroke) {
 		if transform := text_shape_draw_transform(shape) {
 			mut layout_to_draw := clone_layout_for_draw(shape.tc.vglyph_layout)
 			if window.text_system != unsafe { nil } {
@@ -1108,7 +1109,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 
 	if shape.has_text_layout() {
 		// Gradient text: emit single DrawLayout for full layout
-		if has_gradient && color != color_transparent {
+		if has_gradient && (color != color_transparent || has_stroke) {
 			layout_to_draw := clone_layout_for_draw(shape.tc.vglyph_layout)
 			window.renderers << DrawLayout{
 				layout:   layout_to_draw
@@ -1140,7 +1141,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 			}
 
 			// Cull
-			if rects_overlap(clip, draw_rect) && color != color_transparent {
+			if rects_overlap(clip, draw_rect) && (color != color_transparent || has_stroke) {
 				if !has_gradient {
 					// Remove newlines for rendering
 					mut slice_end := line_end

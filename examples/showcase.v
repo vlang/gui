@@ -1,3 +1,4 @@
+import gg
 import gui
 import math
 import os
@@ -346,8 +347,8 @@ fn demo_entries() []DemoEntry {
 			id:      'text'
 			label:   'Text'
 			group:   'data'
-			summary: 'Theme typography sizes, weights, and styles'
-			tags:    ['font', 'type', 'styles']
+			summary: 'Typography, gradients, outlines, and curved text'
+			tags:    ['font', 'type', 'styles', 'gradient', 'outline', 'stroke', 'curve']
 		},
 		DemoEntry{
 			id:      'tree'
@@ -844,7 +845,7 @@ fn related_examples(id string) string {
 		'dialog' { 'examples/dialogs.v' }
 		'tree' { 'examples/tree_view.v' }
 		'printing' { 'examples/printing.v' }
-		'text' { 'examples/fonts.v, examples/system_font.v' }
+		'text' { 'examples/fonts.v, examples/gradient_text.v, examples/text_transform.v' }
 		'rtf' { 'examples/rtf.v' }
 		'table' { 'examples/table_demo.v' }
 		'data_grid' { 'examples/data_grid_demo.v, docs/DATA_GRID.md' }
@@ -1442,7 +1443,10 @@ gui.text(
 | text_style | TextStyle | Font, size, color, weight |
 | mode | TextMode | .single_line, .wrap, .ellipsis |
 | is_password | bool | Mask characters |
-| tab_size | u32 | Tab stop width |'
+| tab_size | u32 | Tab stop width |
+| gradient | &vglyph.GradientConfig | Gradient fill for text |
+| stroke_width | f32 | Outline stroke thickness |
+| stroke_color | Color | Outline stroke color |'
 		}
 		'rtf' {
 			'# Rich Text Format
@@ -3863,6 +3867,124 @@ fn demo_text() gui.View {
 								}
 							),
 						]
+					),
+				]
+			),
+			gui.column(
+				sizing:       gui.fill_fit
+				color:        gui.theme().color_panel
+				color_border: gui.theme().color_border
+				size_border:  1
+				padding:      gui.padding_small
+				spacing:      gui.theme().spacing_small
+				content:      [
+					gui.text(text: 'Gradient Text', text_style: gui.theme().b5),
+					gui.text(
+						text:       'Horizontal Rainbow Gradient'
+						mode:       .wrap
+						text_style: gui.TextStyle{
+							...gui.theme().b2
+							gradient: &vglyph.GradientConfig{
+								stops: [
+									vglyph.GradientStop{
+										color:    gg.Color{255, 0, 0, 255}
+										position: 0.0
+									},
+									vglyph.GradientStop{
+										color:    gg.Color{255, 200, 0, 255}
+										position: 0.33
+									},
+									vglyph.GradientStop{
+										color:    gg.Color{0, 180, 255, 255}
+										position: 0.66
+									},
+									vglyph.GradientStop{
+										color:    gg.Color{180, 0, 255, 255}
+										position: 1.0
+									},
+								]
+							}
+						}
+					),
+					gui.text(
+						text:       'Vertical Sunset Gradient'
+						mode:       .wrap
+						text_style: gui.TextStyle{
+							...gui.theme().b2
+							gradient: &vglyph.GradientConfig{
+								stops:     [
+									vglyph.GradientStop{
+										color:    gg.Color{255, 100, 100, 255}
+										position: 0.0
+									},
+									vglyph.GradientStop{
+										color:    gg.Color{255, 200, 80, 255}
+										position: 0.5
+									},
+									vglyph.GradientStop{
+										color:    gg.Color{180, 80, 200, 255}
+										position: 1.0
+									},
+								]
+								direction: .vertical
+							}
+						}
+					),
+				]
+			),
+			gui.column(
+				sizing:       gui.fill_fit
+				color:        gui.theme().color_panel
+				color_border: gui.theme().color_border
+				size_border:  1
+				padding:      gui.padding_small
+				spacing:      gui.theme().spacing_small
+				content:      [
+					gui.text(
+						text:       'Outlined & Hollow Text'
+						text_style: gui.theme().b5
+					),
+					gui.text(
+						text:       'Outlined text (fill + stroke)'
+						mode:       .wrap
+						text_style: gui.TextStyle{
+							...gui.theme().b2
+							stroke_width: 1.5
+							stroke_color: gui.red
+						}
+					),
+					gui.text(
+						text:       'Hollow text (stroke only)'
+						mode:       .wrap
+						text_style: gui.TextStyle{
+							...gui.theme().b2
+							color:        gui.color_transparent
+							stroke_width: 1.5
+							stroke_color: gui.theme().text_style.color
+						}
+					),
+				]
+			),
+			gui.column(
+				sizing:       gui.fill_fit
+				color:        gui.theme().color_panel
+				color_border: gui.theme().color_border
+				size_border:  1
+				padding:      gui.padding_small
+				spacing:      gui.theme().spacing_small
+				content:      [
+					gui.text(text: 'Curved Text (SVG textPath)', text_style: gui.theme().b5),
+					gui.svg(
+						svg_data: '<svg viewBox="0 0 500 100" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <path id="curve" d="M20,80 Q250,10 480,80" fill="none"/>
+  </defs>
+  <text font-size="18" fill="#3399cc" font-weight="600">
+    <textPath href="#curve" startOffset="50%" text-anchor="middle">Text flowing along a curved path</textPath>
+  </text>
+</svg>'
+						width:    500
+						height:   100
 					),
 				]
 			),
