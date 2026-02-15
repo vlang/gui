@@ -1646,7 +1646,7 @@ gui.input(
 |----------|------|-------------|
 | text | string | Current input value |
 | placeholder | string | Hint text when empty |
-| mode | InputMode | .single_line, .multi_line, .read_only |
+| mode | InputMode | .single_line, .multiline |
 | is_password | bool | Mask characters |
 | mask | string | Input mask pattern |
 | icon | string | Trailing icon glyph |
@@ -2372,10 +2372,10 @@ Nested menus with separators, submenus, and custom items.
 gui.menubar(
     id_focus: 100,
     items: [
-        gui.MenuItemCfg{label: "File", items: [
-            gui.MenuItemCfg{label: "New", action_id: "new"},
+        gui.MenuItemCfg{id: "file", text: "File", submenu: [
+            gui.MenuItemCfg{id: "new", text: "New"},
             gui.MenuItemCfg{separator: true},
-            gui.MenuItemCfg{label: "Quit", action_id: "quit"},
+            gui.MenuItemCfg{id: "quit", text: "Quit"},
         ]},
     ],
     action: fn (id string, mut _ gui.Event, mut w gui.Window) {
@@ -2655,10 +2655,10 @@ gui.tree(
     id:    "file_tree",
     nodes: [
         gui.TreeNodeCfg{
-            label: "Root",
-            children: [
-                gui.TreeNodeCfg{label: "Child 1"},
-                gui.TreeNodeCfg{label: "Child 2"},
+            text: "Root",
+            nodes: [
+                gui.TreeNodeCfg{text: "Child 1"},
+                gui.TreeNodeCfg{text: "Child 2"},
             ],
         },
     ],
@@ -2888,9 +2888,8 @@ gui.text(
 | mode | TextMode | .single_line, .wrap, .ellipsis |
 | is_password | bool | Mask characters |
 | tab_size | u32 | Tab stop width |
-| gradient | &vglyph.GradientConfig | Gradient fill for text |
-| stroke_width | f32 | Outline stroke thickness |
-| stroke_color | Color | Outline stroke color |'
+| hero | bool | Enable hero transition matching |
+| opacity | f32 | Render opacity (0.0–1.0) |'
 
 fn demo_text() gui.View {
 	wrap_sample := 'Wrap mode collapses repeated spaces and wraps words to fit the available width.'
@@ -3546,8 +3545,8 @@ gui.data_grid(
 | rows | []GridRow | Direct row data |
 | data_source | &DataGridDataSource | Async data provider |
 | group_by | []string | Column IDs to group by |
-| query | string | Quick-filter text |
-| selection | GridSelectionMode | .none, .single, .multi |
+| query | GridQueryState | Sort, filter, and page state |
+| selection | GridSelection | Current row selection state |
 
 See also: docs/DATA_GRID.md'
 
@@ -4061,7 +4060,7 @@ fn demo_expand_panel(w &gui.Window) gui.View {
 
 const icons_doc = '# Icons
 
-Icon font catalog with 80+ glyph constants from the Feather icon set.
+Icon font catalog with 256 glyph constants from the Feather icon set.
 
 ## Usage
 
@@ -4445,7 +4444,7 @@ Tween, spring, keyframe, and layout transition animations.
 
 ```v
 // Tween
-w.play_animation(gui.TweenAnimation{
+mut tween := gui.TweenAnimation{
     id:       "fade",
     from:     0, to: 1,
     duration: 300 * time.millisecond,
@@ -4453,17 +4452,19 @@ w.play_animation(gui.TweenAnimation{
         mut s := w.state[MyApp]()
         s.opacity = val
     },
-})
+}
+w.animation_add(mut tween)
 
 // Spring
-w.play_animation(gui.SpringAnimation{
+mut spring := gui.SpringAnimation{
     id:     "bounce",
     config: gui.spring_bouncy,
     on_value: fn (val f32, mut w gui.Window) {
         mut s := w.state[MyApp]()
         s.offset = val
     },
-})
+}
+w.animation_add(mut spring)
 ```
 
 ## Key Types
@@ -4482,8 +4483,8 @@ w.play_animation(gui.SpringAnimation{
 |--------|-----------|---------|-----------|
 | spring_default | 100 | 10 | Balanced |
 | spring_gentle | 50 | 8 | Soft, slow |
-| spring_bouncy | 200 | 12 | Springy |
-| spring_stiff | 400 | 20 | Snappy |
+| spring_bouncy | 300 | 15 | Springy |
+| spring_stiff | 500 | 30 | Snappy |
 
 See also: docs/ANIMATIONS.md'
 
