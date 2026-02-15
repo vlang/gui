@@ -114,6 +114,11 @@ fn pdf_collect_alphas(renderers []Renderer) []u8 {
 					seen[item.color.a] = true
 				}
 			}
+			DrawLayoutPlaced {
+				for item in renderer.layout.items {
+					seen[item.color.a] = true
+				}
+			}
 			else {}
 		}
 	}
@@ -449,6 +454,7 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext) string {
 			DrawLayoutTransformed {
 				pdf_draw_layout_transformed(mut out, ctx, renderer)
 			}
+			DrawLayoutPlaced {}
 			DrawSvg {
 				if renderer.clip_group > 0 {
 					i = pdf_draw_svg_clip_group(renderers, i, mut out, ctx)

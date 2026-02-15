@@ -91,11 +91,12 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		// Compute bbox from triangle vertices
 		bbox := compute_triangle_bbox(fg_tris)
 		cached_fg << CachedFilteredGroup{
-			filter:    filter
-			triangles: fg_tris
-			texts:     fg.texts
-			gradients: vg.gradients
-			bbox:      bbox
+			filter:     filter
+			triangles:  fg_tris
+			texts:      fg.texts
+			text_paths: fg.text_paths
+			gradients:  vg.gradients
+			bbox:       bbox
 		}
 	}
 
@@ -116,6 +117,8 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		return &CachedSvg{
 			triangles:       triangles
 			texts:           vg.texts
+			text_paths:      vg.text_paths
+			defs_paths:      vg.defs_paths
 			filtered_groups: cached_fg
 			gradients:       vg.gradients
 			width:           vg.width
@@ -127,6 +130,8 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 	cached := &CachedSvg{
 		triangles:       triangles
 		texts:           vg.texts
+		text_paths:      vg.text_paths
+		defs_paths:      vg.defs_paths
 		filtered_groups: cached_fg
 		gradients:       vg.gradients
 		width:           vg.width

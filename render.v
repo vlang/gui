@@ -158,6 +158,11 @@ struct DrawLayoutTransformed {
 	gradient  &vglyph.GradientConfig = unsafe { nil }
 }
 
+struct DrawLayoutPlaced {
+	layout     &vglyph.Layout
+	placements []vglyph.GlyphPlacement
+}
+
 type DrawClip = gg.Rect
 type DrawRect = gg.DrawRectParams
 type Renderer = DrawCircle
@@ -165,6 +170,7 @@ type Renderer = DrawCircle
 	| DrawImage
 	| DrawLayout
 	| DrawLayoutTransformed
+	| DrawLayoutPlaced
 	| DrawLine
 	| DrawNone
 	| DrawRect
@@ -364,6 +370,9 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 				window.text_system.draw_layout_transformed(renderer.layout, renderer.x,
 					renderer.y, renderer.transform)
 			}
+		}
+		DrawLayoutPlaced {
+			window.text_system.draw_layout_placed(renderer.layout, renderer.placements)
 		}
 		DrawClip {
 			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
@@ -1791,6 +1800,11 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 		render_svg_text(svg_txt, shape.x, shape.y, cached.scale, cached.gradients, mut
 			window)
 	}
+	// Emit textPath elements
+	for tp in cached.text_paths {
+		render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale, cached.gradients, mut
+			window)
+	}
 
 	// Emit filtered groups
 	for i, fg in cached.filtered_groups {
@@ -1827,6 +1841,11 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 		for svg_txt in fg.texts {
 			render_svg_text(svg_txt, shape.x, shape.y, cached.scale, fg.gradients, mut
 				window)
+		}
+		// Emit textPath elements for filtered group
+		for tp in fg.text_paths {
+			render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale,
+				fg.gradients, mut window)
 		}
 		window.renderers << DrawFilterEnd{}
 	}

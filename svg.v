@@ -90,6 +90,7 @@ pub fn parse_svg(content string) !VectorGraphic {
 	vg.clip_paths = parse_defs_clip_paths(content)
 	vg.gradients = parse_defs_gradients(content)
 	vg.filters = parse_defs_filters(content)
+	vg.defs_paths = parse_defs_paths(content)
 
 	// Parse with group support — apply viewBox offset as translation
 	mut vb_transform := identity_transform
@@ -121,16 +122,27 @@ pub fn parse_svg(content string) !VectorGraphic {
 				vg.texts << t
 			}
 		}
+		// Partition text_paths by filter_id
+		mut filtered_text_paths := map[string][]SvgTextPath{}
+		for tp in state.text_paths {
+			if tp.filter_id.len > 0 && tp.filter_id in vg.filters {
+				filtered_text_paths[tp.filter_id] << tp
+			} else {
+				vg.text_paths << tp
+			}
+		}
 		for fid, fpaths in filtered {
 			vg.filtered_groups << SvgFilteredGroup{
-				filter_id: fid
-				paths:     fpaths
-				texts:     filtered_texts[fid]
+				filter_id:  fid
+				paths:      fpaths
+				texts:      filtered_texts[fid]
+				text_paths: filtered_text_paths[fid]
 			}
 		}
 	} else {
 		vg.paths = all_paths
 		vg.texts = state.texts
+		vg.text_paths = state.text_paths
 	}
 
 	return vg
@@ -376,6 +388,13 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 	ls_raw := find_attr_or_style(elem, 'letter-spacing') or { '0' }
 	letter_spacing := parse_length(ls_raw) * scale
 
+	// Check for textPath children
+	if body.contains('<textPath') {
+		parse_textpath_element(body, font_family, scaled_size, bold, italic, color, fill_gradient_id,
+			opacity, letter_spacing, stroke_color, stroke_width, style, mut state)
+		return
+	}
+
 	// Check for tspan children
 	if body.contains('<tspan') {
 		parse_tspan_elements(body, tx, ty, font_family, scaled_size, bold, italic, underline,
@@ -543,6 +562,112 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 			stroke_color:     parent_stroke_color
 			stroke_width:     parent_stroke_width
 		}
+	}
+}
+
+// parse_textpath_element extracts <textPath> from text body.
+fn parse_textpath_element(body string, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_color Color, parent_gradient_id string, parent_opacity f32, parent_letter_spacing f32, parent_stroke_color Color, parent_stroke_width f32, style GroupStyle, mut state ParseState) {
+	tp_start := find_index(body, '<textPath', 0) or { return }
+	tag_end := find_index(body, '>', tp_start) or { return }
+	tp_elem := body[tp_start..tag_end + 1]
+	is_self_closing := body[tag_end - 1] == `/`
+	text := if is_self_closing {
+		''
+	} else {
+		content_start := tag_end + 1
+		content_end := find_index(body, '</textPath', content_start) or { body.len }
+		body[content_start..content_end].trim_space()
+	}
+	if text.len == 0 {
+		return
+	}
+	// Extract href (try href first, then xlink:href)
+	href_raw := find_attr(tp_elem, 'href') or { find_attr(tp_elem, 'xlink:href') or { return } }
+	path_id := if href_raw.starts_with('#') { href_raw[1..] } else { href_raw }
+	// startOffset
+	offset_str := find_attr(tp_elem, 'startOffset') or { '0' }
+	is_percent := offset_str.ends_with('%')
+	start_offset := if is_percent {
+		offset_str[..offset_str.len - 1].f32() / 100.0
+	} else {
+		parse_length(offset_str)
+	}
+	// text-anchor (textPath overrides parent)
+	anchor_str := find_attr_or_style(tp_elem, 'text-anchor') or { 'start' }
+	anchor := match anchor_str {
+		'middle' { u8(1) }
+		'end' { u8(2) }
+		else { u8(0) }
+	}
+	// Extended attributes
+	spacing_str := find_attr(tp_elem, 'spacing') or { 'auto' }
+	spacing := if spacing_str == 'exact' { u8(1) } else { u8(0) }
+	method_str := find_attr(tp_elem, 'method') or { 'align' }
+	method := if method_str == 'stretch' { u8(1) } else { u8(0) }
+	side_str := find_attr(tp_elem, 'side') or { 'left' }
+	side := if side_str == 'right' { u8(1) } else { u8(0) }
+	// Per-textPath overrides
+	fill_str := find_attr_or_style(tp_elem, 'fill') or { '' }
+	tp_gradient_id := parse_fill_url(fill_str) or { '' }
+	fill_gradient_id := if tp_gradient_id.len > 0 { tp_gradient_id } else { parent_gradient_id }
+	color := if tp_gradient_id.len > 0 {
+		black
+	} else if fill_str.len > 0 && fill_str != 'none' {
+		parse_svg_color(fill_str)
+	} else {
+		parent_color
+	}
+	fw := find_attr_or_style(tp_elem, 'font-weight') or { '' }
+	bold := if fw.len > 0 { fw == 'bold' || fw.f32() >= 600 } else { parent_bold }
+	fi := find_attr_or_style(tp_elem, 'font-style') or { '' }
+	italic := if fi.len > 0 { fi == 'italic' || fi == 'oblique' } else { parent_italic }
+	ls_str := find_attr_or_style(tp_elem, 'letter-spacing') or { '' }
+	letter_spacing := if ls_str.len > 0 {
+		scale := extract_transform_scale(style.transform)
+		parse_length(ls_str) * scale
+	} else {
+		parent_letter_spacing
+	}
+	ts_stroke_str := find_attr_or_style(tp_elem, 'stroke') or { '' }
+	stroke_color := if ts_stroke_str.len > 0 && ts_stroke_str != 'none' {
+		parse_svg_color(ts_stroke_str)
+	} else if ts_stroke_str == 'none' {
+		color_transparent
+	} else {
+		parent_stroke_color
+	}
+	ts_sw_str := find_attr_or_style(tp_elem, 'stroke-width') or { '' }
+	stroke_width := if ts_sw_str.len > 0 { parse_length(ts_sw_str) } else { parent_stroke_width }
+	font_family_raw := find_attr_or_style(tp_elem, 'font-family') or { '' }
+	font_family := if font_family_raw.len > 0 {
+		if font_family_raw.contains(',') {
+			font_family_raw.all_before(',').trim_space().trim('\'"')
+		} else {
+			font_family_raw.trim_space().trim('\'"')
+		}
+	} else {
+		parent_family
+	}
+	state.text_paths << SvgTextPath{
+		text:             text
+		path_id:          path_id
+		start_offset:     start_offset
+		is_percent:       is_percent
+		anchor:           anchor
+		spacing:          spacing
+		method:           method
+		side:             side
+		font_family:      font_family
+		font_size:        parent_size
+		bold:             bold
+		italic:           italic
+		color:            color
+		opacity:          parent_opacity
+		filter_id:        style.filter_id
+		fill_gradient_id: fill_gradient_id
+		letter_spacing:   letter_spacing
+		stroke_color:     stroke_color
+		stroke_width:     stroke_width
 	}
 }
 
@@ -2148,4 +2273,46 @@ fn parse_defs_filters(content string) map[string]SvgFilter {
 	}
 
 	return filters
+}
+
+// parse_defs_paths extracts <path> elements with id attributes
+// from <defs> blocks. Returns map of id -> d attribute string.
+fn parse_defs_paths(content string) map[string]string {
+	mut paths := map[string]string{}
+	mut pos := 0
+	for pos < content.len {
+		defs_start := find_index(content, '<defs', pos) or { break }
+		defs_tag_end := find_index(content, '>', defs_start) or { break }
+		is_self_closing := content[defs_tag_end - 1] == `/`
+		if is_self_closing {
+			pos = defs_tag_end + 1
+			continue
+		}
+		defs_content_start := defs_tag_end + 1
+		defs_end := find_closing_tag(content, 'defs', defs_content_start)
+		if defs_end <= defs_content_start {
+			pos = defs_tag_end + 1
+			continue
+		}
+		defs_body := content[defs_content_start..defs_end]
+		mut ppos := 0
+		for ppos < defs_body.len {
+			p_start := find_index(defs_body, '<path', ppos) or { break }
+			p_end := find_index(defs_body, '>', p_start) or { break }
+			p_elem := defs_body[p_start..p_end + 1]
+			pid := find_attr(p_elem, 'id') or {
+				ppos = p_end + 1
+				continue
+			}
+			d := find_attr(p_elem, 'd') or {
+				ppos = p_end + 1
+				continue
+			}
+			paths[pid] = d
+			ppos = p_end + 1
+		}
+		close_end := find_index(content, '>', defs_end) or { break }
+		pos = close_end + 1
+	}
+	return paths
 }
