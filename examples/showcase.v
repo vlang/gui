@@ -874,1379 +874,46 @@ fn related_examples(id string) string {
 
 fn component_doc(id string) string {
 	return match id {
-		'button' {
-			'# Button
-
-Trigger actions with click and keyboard focus.
-
-## Usage
-
-```v
-gui.button(
-    content:  [gui.text(text: "Save")],
-    on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-        // handle click
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| content | []View | Child views inside the button |
-| alt_content | []View | Temporary replacement content |
-| alt_duration | time.Duration | How long alt_content is shown |
-| tooltip | &TooltipCfg | Tooltip shown on hover |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_click | fn (&Layout, mut Event, mut Window) | Click or Enter key |
-| on_hover | fn (&Layout, mut Event, mut Window) | Pointer enters bounds |
-
-## Example
-
-```v
-gui.button(
-    content:      [gui.text(text: "Submit")],
-    alt_content:  [gui.text(text: "Sent!")],
-    alt_duration: time.second,
-    on_click:     fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-        w.update_window()
-    },
-)
-```'
-		}
-		'input' {
-			'# Input
-
-Single-line, password, and multiline text input with optional mask and icon.
-
-## Usage
-
-```v
-gui.input(
-    text:            state.value,
-    placeholder:     "Enter text",
-    on_text_changed: fn (_ &gui.Layout, val string, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.value = val
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| text | string | Current input value |
-| placeholder | string | Hint text when empty |
-| mode | InputMode | .single_line, .multi_line, .read_only |
-| is_password | bool | Mask characters |
-| mask | string | Input mask pattern |
-| icon | string | Trailing icon glyph |
-| id_focus | u32 | Focus identifier for tab navigation |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_text_changed | fn (&Layout, string, mut Window) | Text content changes |
-| on_enter | fn (&Layout, mut Event, mut Window) | Enter key pressed |
-| on_key_down | fn (&Layout, mut Event, mut Window) | Any key pressed |
-| on_blur | fn (&Layout, mut Window) | Input loses focus |
-| on_click_icon | fn (&Layout, mut Event, mut Window) | Icon clicked |'
-		}
-		'toggle' {
-			'# Toggle
-
-Checkbox-style and icon toggles with labels.
-
-## Usage
-
-```v
-gui.toggle(
-    label:    "Accept terms",
-    select:   state.accepted,
-    on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.accepted = !s.accepted
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| label | string | Text displayed next to toggle |
-| select | bool | Current checked state |
-| text_select | string | Icon/text shown when selected |
-| text_unselect | string | Icon/text shown when unselected |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_click | fn (&Layout, mut Event, mut Window) | Toggle clicked (required) |'
-		}
-		'switch' {
-			'# Switch
-
-On/off switch control with animated thumb.
-
-## Usage
-
-```v
-gui.switch_(
-    label:    "Dark mode",
-    select:   state.dark_mode,
-    on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.dark_mode = !s.dark_mode
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| label | string | Text next to the switch |
-| select | bool | Current on/off state |
-| width | f32 | Switch track width |
-| height | f32 | Switch track height |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_click | fn (&Layout, mut Event, mut Window) | Switch toggled (required) |'
-		}
-		'radio' {
-			'# Radio
-
-Single radio control for selecting one option from a group.
-
-## Usage
-
-```v
-gui.radio(
-    label:    "Option A",
-    select:   state.choice == "a",
-    on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.choice = "a"
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| label | string | Text next to radio circle |
-| select | bool | Whether this option is selected |
-| size | f32 | Radio button diameter |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_click | fn (&Layout, mut Event, mut Window) | Radio clicked (required) |'
-		}
-		'radio_group' {
-			'# Radio Button Group
-
-Mutually exclusive options arranged in a titled group.
-
-## Usage
-
-```v
-gui.radio_button_group(
-    value:     state.selected,
-    options:   [
-        gui.RadioOption{label: "Small", value: "s"},
-        gui.RadioOption{label: "Medium", value: "m"},
-        gui.RadioOption{label: "Large", value: "l"},
-    ],
-    on_select: fn (val string, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.selected = val
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| value | string | Currently selected option value |
-| options | []RadioOption | Available choices |
-| title | string | Group title text |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_select | fn (string, mut Window) | Option changed (required) |'
-		}
-		'select' {
-			'# Select
-
-Dropdown with optional multi-select.
-
-## Usage
-
-```v
-gui.select(
-    id:        "color_select",
-    select:    [state.color],
-    options:   ["Red", "Green", "Blue"],
-    on_select: fn (vals []string, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.color = vals[0]
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| select | []string | Currently selected values |
-| options | []string | Available choices |
-| placeholder | string | Text when nothing selected |
-| select_multiple | bool | Allow multiple selections |
-| no_wrap | bool | Prevent text wrapping |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_select | fn ([]string, mut Event, mut Window) | Selection changed (required) |'
-		}
-		'listbox' {
-			'# List Box
-
-Single and multi-select list with optional async data source.
-
-## Usage
-
-```v
-gui.listbox(
-    data: [
-        gui.ListBoxOption{id: "1", label: "First"},
-        gui.ListBoxOption{id: "2", label: "Second"},
-    ],
-    selected_ids: state.selected,
-    on_select: fn (ids []string, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.selected = ids
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| data | []ListBoxOption | Static list items |
-| data_source | ?ListBoxDataSource | Async data provider |
-| selected_ids | []string | Currently selected item IDs |
-| query | string | Filter/search text |
-| multiple | bool | Allow multiple selections |
-| loading | bool | Show loading indicator |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_select | fn ([]string, mut Event, mut Window) | Selection changed |'
-		}
-		'range_slider' {
-			'# Range Slider
-
-Drag horizontal or vertical value controls.
-
-## Usage
-
-```v
-gui.range_slider(
-    id:        "volume",
-    value:     state.volume,
-    min:       0,
-    max:       100,
-    on_change: fn (val f32, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.volume = val
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| value | f32 | Current position |
-| min | f32 | Minimum value |
-| max | f32 | Maximum value |
-| step | f32 | Snap increment |
-| vertical | bool | Vertical orientation |
-| round_value | bool | Round to nearest step |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_change | fn (f32, mut Event, mut Window) | Value changed (required) |'
-		}
-		'progress_bar' {
-			'# Progress Bar
-
-Determinate and indeterminate progress indicators.
-
-## Usage
-
-```v
-gui.progress_bar(percent: 0.65, text_show: true)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| percent | f32 | Progress 0.0 to 1.0 |
-| indefinite | bool | Animated indeterminate mode |
-| vertical | bool | Vertical orientation |
-| text_show | bool | Show percentage label |
-| text | string | Custom label text |
-| color_bar | Color | Fill color |
-
-## Example
-
-```v
-gui.progress_bar(
-    indefinite: true,
-    color_bar:  gui.Color{80, 160, 240, 255},
-)
-```'
-		}
-		'pulsar' {
-			'# Pulsar
-
-Animated pulse indicator with optional icons.
-
-## Usage
-
-```v
-gui.pulsar()
-
-gui.pulsar(
-    icon1: gui.icon_heart,
-    icon2: gui.icon_star,
-    size:  24,
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| icon1 | string | First alternating icon glyph |
-| icon2 | string | Second alternating icon glyph |
-| color | Color | Pulse color |
-| size | u32 | Icon font size |
-| width | f32 | Pulsar width |'
-		}
-		'menus' {
-			'# Menus + Menubar
-
-Nested menus with separators, submenus, and custom items.
-
-## Usage
-
-```v
-gui.menubar(
-    id_focus: 100,
-    items: [
-        gui.MenuItemCfg{label: "File", items: [
-            gui.MenuItemCfg{label: "New", action_id: "new"},
-            gui.MenuItemCfg{separator: true},
-            gui.MenuItemCfg{label: "Quit", action_id: "quit"},
-        ]},
-    ],
-    action: fn (id string, mut _ gui.Event, mut w gui.Window) {
-        match id {
-            "new" { /* handle */ }
-            else {}
-        }
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id_focus | u32 | Focus id for keyboard nav (required) |
-| items | []MenuItemCfg | Top-level menu items |
-| width_submenu_min | f32 | Minimum submenu width |
-| width_submenu_max | f32 | Maximum submenu width |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| action | fn (string, mut Event, mut Window) | Menu item activated |'
-		}
-		'dialog' {
-			'# Dialog
-
-Message, confirm, prompt, and custom dialogs.
-
-## Usage
-
-```v
-gui.dialog(
-    title:       "Confirm",
-    body:        "Delete this item?",
-    dialog_type: .confirm,
-    on_ok_yes:   fn (mut w gui.Window) { /* confirmed */ },
-    on_cancel_no: fn (mut w gui.Window) { /* cancelled */ },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| title | string | Dialog title |
-| body | string | Message body text |
-| dialog_type | DialogType | .message, .confirm, .prompt, .custom |
-| reply | string | Current prompt input value |
-| custom_content | []View | Views for .custom type |
-| min_width | f32 | Minimum dialog width |
-| max_width | f32 | Maximum dialog width |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_ok_yes | fn (mut Window) | OK/Yes pressed |
-| on_cancel_no | fn (mut Window) | Cancel/No pressed |
-| on_reply | fn (string, mut Window) | Prompt submitted |
-
-See also: docs/NATIVE_DIALOGS.md'
-		}
-		'tree' {
-			'# Tree View
-
-Hierarchical expandable node display.
-
-## Usage
-
-```v
-gui.tree(
-    id:    "file_tree",
-    nodes: [
-        gui.TreeNodeCfg{
-            label: "Root",
-            children: [
-                gui.TreeNodeCfg{label: "Child 1"},
-                gui.TreeNodeCfg{label: "Child 2"},
-            ],
-        },
-    ],
-    on_select: fn (id string, mut w gui.Window) {
-        // handle selection
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| nodes | []TreeNodeCfg | Root-level tree nodes |
-| indent | f32 | Indentation per nesting level |
-| spacing | f32 | Vertical spacing between nodes |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_select | fn (string, mut Window) | Node selected |'
-		}
-		'printing' {
-			'# Printing
-
-Export current view to PDF and open native print dialog.
-
-## Usage
-
-```v
-// Export to PDF
-w.export_pdf(gui.PdfExportCfg{
-    path:  "/tmp/output.pdf",
-    paper: .a4,
-})
-
-// Native print dialog
-w.native_print_dialog(gui.NativePrintDialogCfg{
-    title: "Print Document",
-    paper: .letter,
-    on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
-        // handle result
-    },
-})
-```
-
-## Key Properties (PdfExportCfg)
-
-| Property | Type | Description |
-|----------|------|-------------|
-| path | string | Output file path |
-| paper | PaperSize | .letter, .legal, .a4, .a3 |
-| orientation | PrintOrientation | .portrait, .landscape |
-| margins | PrintMargins | Page margins in points |
-| fit_to_page | bool | Scale content to fit |
-
-See also: docs/PRINTING.md'
-		}
-		'text' {
-			'# Text
-
-Theme typography sizes, weights, and styles.
-
-## Usage
-
-```v
-gui.text(text: "Hello, world")
-
-gui.text(
-    text:       "Styled heading",
-    text_style: gui.theme().h1,
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| text | string | Display text content |
-| text_style | TextStyle | Font, size, color, weight |
-| mode | TextMode | .single_line, .wrap, .ellipsis |
-| is_password | bool | Mask characters |
-| tab_size | u32 | Tab stop width |
-| gradient | &vglyph.GradientConfig | Gradient fill for text |
-| stroke_width | f32 | Outline stroke thickness |
-| stroke_color | Color | Outline stroke color |'
-		}
-		'rtf' {
-			'# Rich Text Format
-
-Mixed styles, links, and inline rich text runs.
-
-## Usage
-
-```v
-gui.rtf(
-    rich_text: gui.RichText{
-        segments: [
-            gui.RichSegment{text: "Bold ", style: gui.theme().b1},
-            gui.RichSegment{text: "and normal"},
-        ],
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| rich_text | RichText | Styled text segments |
-| mode | TextMode | .single_line, .wrap |
-| hanging_indent | f32 | Indent for wrapped lines |'
-		}
-		'table' {
-			'# Table
-
-Declarative and sortable table data with row selection.
-
-## Usage
-
-```v
-gui.table(
-    data: [
-        gui.TableRowCfg{cells: ["Name", "Age"]},
-        gui.TableRowCfg{cells: ["Alice", "30"]},
-        gui.TableRowCfg{cells: ["Bob", "25"]},
-    ],
-    column_width_default: 120,
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| data | []TableRowCfg | Row data (first row is header) |
-| column_width_default | f32 | Default column width |
-| column_alignments | []HorizontalAlign | Per-column alignment |
-| selected | map[int]bool | Selected row indices |
-| multi_select | bool | Allow multiple row selection |
-| border_style | TableBorderStyle | Border rendering mode |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_select | fn (map[int]bool, int, mut Event, mut Window) | Row selection changed |
-
-See also: docs/TABLES.md'
-		}
-		'data_grid' {
-			'# Data Grid
-
-Controlled virtualized grid for interactive tabular data. Supports sorting,
-filtering, grouping, inline editing, and export.
-
-## Usage
-
-```v
-gui.data_grid(
-    id:      "grid1",
-    columns: [
-        gui.GridColumnCfg{id: "name", title: "Name", sortable: true},
-        gui.GridColumnCfg{id: "age", title: "Age", width: 80},
-    ],
-    rows: [
-        gui.GridRow{id: "1", cells: {"name": "Alice", "age": "30"}},
-        gui.GridRow{id: "2", cells: {"name": "Bob", "age": "25"}},
-    ],
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Grid identifier (required) |
-| columns | []GridColumnCfg | Column definitions (required) |
-| rows | []GridRow | Direct row data |
-| data_source | &DataGridDataSource | Async data provider |
-| group_by | []string | Column IDs to group by |
-| query | string | Quick-filter text |
-| selection | GridSelectionMode | .none, .single, .multi |
-
-See also: docs/DATA_GRID.md'
-		}
-		'data_source' {
-			'# Data Source
-
-Async data-source backed grid with CRUD operations.
-
-## Usage
-
-```v
-source := gui.InMemoryDataSource{
-    rows: my_rows,
-}
-
-gui.data_grid(
-    id:          "ds_grid",
-    columns:     my_columns,
-    data_source: &source,
-)
-```
-
-## DataGridDataSource Interface
-
-| Method | Signature | Description |
-|--------|-----------|-------------|
-| capabilities | fn () GridDataCapabilities | Pagination and CRUD support |
-| fetch_data | fn (GridDataRequest) !GridDataResult | Load rows for page |
-| mutate_data | fn (GridMutationRequest) !GridMutationResult | Create/update/delete |
-
-## InMemoryDataSource
-
-| Property | Type | Description |
-|----------|------|-------------|
-| rows | []GridRow | In-memory row data |
-| default_limit | int | Page size (default: 100) |
-| latency_ms | int | Simulated latency for testing |
-| supports_cursor | bool | Cursor pagination (default: true) |
-| supports_offset | bool | Offset pagination (default: true) |
-
-See also: docs/DATA_GRID.md'
-		}
-		'date_picker' {
-			'# Date Picker
-
-Select one or many dates from a calendar view.
-
-## Usage
-
-```v
-gui.date_picker(
-    id:    "cal",
-    dates: [state.selected_date],
-    on_select: fn (dates []time.Time, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.selected_date = dates[0]
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| dates | []time.Time | Selected dates (required) |
-| select_multiple | bool | Allow multiple date selection |
-| allowed_weekdays | []DatePickerWeekdays | Restrict to specific days |
-| allowed_months | []DatePickerMonths | Restrict to specific months |
-| allowed_years | []int | Restrict to specific years |
-| monday_first_day_of_week | bool | Start week on Monday |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_select | fn ([]time.Time, mut Event, mut Window) | Date selected |'
-		}
-		'input_date' {
-			'# Input Date
-
-Text input with date picker dropdown.
-
-## Usage
-
-```v
-gui.input_date(
-    id:   "birthday",
-    date: state.date,
-    on_select: fn (dates []time.Time, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.date = dates[0]
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| date | time.Time | Currently selected date |
-| placeholder | string | Hint text when empty |
-| select_multiple | bool | Allow multiple dates |
-| allowed_weekdays | []DatePickerWeekdays | Restrict to specific days |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_select | fn ([]time.Time, mut Event, mut Window) | Date picked |
-| on_enter | fn (&Layout, mut Event, mut Window) | Enter key pressed |'
-		}
-		'numeric_input' {
-			'# Numeric Input
-
-Locale-aware number input with step controls, min/max validation,
-and configurable decimal precision.
-
-## Usage
-
-```v
-gui.numeric_input(
-    value:    state.amount,
-    min:      0,
-    max:      1000,
-    decimals: 2,
-    on_value_commit: fn (_ &gui.Layout, val ?f64, text string, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.amount = val
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| value | ?f64 | Current numeric value |
-| text | string | Raw text representation |
-| min | ?f64 | Minimum allowed value |
-| max | ?f64 | Maximum allowed value |
-| decimals | int | Decimal places (default: 2) |
-| step_cfg | NumericStepCfg | Step, multipliers, buttons |
-| locale | NumericLocaleCfg | Decimal/group separators |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_text_changed | fn (&Layout, string, mut Window) | Text changes |
-| on_value_commit | fn (&Layout, ?f64, string, mut Window) | Value committed |'
-		}
-		'date_picker_roller' {
-			'# Date Picker Roller
-
-Roll wheel-style month/day/year controls.
-
-## Usage
-
-```v
-gui.date_picker_roller(
-    id:            "roller",
-    selected_date: state.date,
-    on_change: fn (date time.Time, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.date = date
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| selected_date | time.Time | Current date (required) |
-| display_mode | DatePickerRollerDisplayMode | Which rollers to show |
-| min_year | int | Earliest year in roller |
-| max_year | int | Latest year in roller |
-| visible_items | int | Visible roller items |
-| long_months | bool | Full month names |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_change | fn (time.Time, mut Window) | Date changed via roller |'
-		}
-		'svg' {
-			'# SVG
-
-Render vector graphics from file or inline SVG data.
-
-## Usage
-
-```v
-gui.svg(file_name: "icon.svg", width: 48, height: 48)
-
-gui.svg(svg_data: "<svg>...</svg>", width: 100, height: 100)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| file_name | string | Path to SVG file |
-| svg_data | string | Inline SVG markup |
-| width | f32 | Display width |
-| height | f32 | Display height |
-| color | Color | Tint color |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_click | fn (&Layout, mut Event, mut Window) | SVG area clicked |
-
-See also: docs/SVG.md'
-		}
-		'image' {
-			'# Image
-
-Render local or remote image assets.
-
-## Usage
-
-```v
-gui.image(src: "photo.png", width: 200, height: 150)
-
-gui.image(src: "https://example.com/photo.jpg")
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| src | string | File path or URL |
-| width | f32 | Display width |
-| height | f32 | Display height |
-| min_width | f32 | Minimum width constraint |
-| max_width | f32 | Maximum width constraint |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_click | fn (&Layout, mut Event, mut Window) | Image clicked |
-| on_hover | fn (mut Layout, mut Event, mut Window) | Pointer enters image |'
-		}
-		'expand_panel' {
-			'# Expand Panel
-
-Collapsible region with custom header and content.
-
-## Usage
-
-```v
-gui.expand_panel(
-    head:    gui.text(text: "Details"),
-    content: gui.text(text: "Expanded content here"),
-    open:    state.panel_open,
-    on_toggle: fn (mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.panel_open = !s.panel_open
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| head | View | Header view (always visible) |
-| content | View | Body view (shown when open) |
-| open | bool | Expanded state |
-| radius | f32 | Corner radius |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_toggle | fn (mut Window) | Panel opened or closed |'
-		}
-		'icons' {
-			'# Icons
-
-Icon font catalog with 80+ glyph constants from the Feather icon set.
-
-## Usage
-
-```v
-gui.text(text: gui.icon_check, text_style: gui.theme().icon4)
-
-gui.text(text: gui.icon_home, text_style: gui.theme().icon2)
-```
-
-## Common Icons
-
-| Constant | Glyph |
-|----------|-------|
-| icon_check | Checkmark |
-| icon_close | X mark |
-| icon_search | Magnifier |
-| icon_home | House |
-| icon_plus / icon_minus | Add / Remove |
-| icon_arrow_up / down / left / right | Directional arrows |
-| icon_heart / icon_star | Common symbols |
-| icon_eye / icon_lock | Visibility / Security |
-
-Use `gui.icons_map` for programmatic access to all icon names.
-Icons require `gui.theme().icon*` text styles for correct sizing.'
-		}
-		'gradient' {
-			'# Gradients
-
-Linear and radial gradient fills for containers and rectangles.
-
-## Usage
-
-```v
-gui.rectangle(
-    width: 200, height: 100,
-    gradient: &gui.Gradient{
-        stops: [
-            gui.GradientStop{color: gui.color_blue, pos: 0},
-            gui.GradientStop{color: gui.color_red, pos: 1},
-        ],
-        direction: .to_right,
-    },
-)
-```
-
-## Key Properties (Gradient)
-
-| Property | Type | Description |
-|----------|------|-------------|
-| stops | []GradientStop | Color stops (max 5) |
-| type | GradientType | .linear, .radial |
-| direction | GradientDirection | .to_top, .to_right, etc. |
-| angle | ?f32 | Explicit angle in degrees |
-
-## GradientStop
-
-| Property | Type | Description |
-|----------|------|-------------|
-| color | Color | Stop color |
-| pos | f32 | Position 0.0 to 1.0 |
-
-See also: docs/GRADIENTS.md'
-		}
-		'box_shadows' {
-			'# Box Shadows
-
-Shadow presets applied to containers and rectangles.
-
-## Usage
-
-```v
-gui.rectangle(
-    width: 150, height: 80,
-    color: gui.color_white,
-    shadow: &gui.BoxShadow{
-        color:         gui.Color{0, 0, 0, 60},
-        offset_x:      0,
-        offset_y:      4,
-        blur_radius:   8,
-        spread_radius: 0,
-    },
-)
-```
-
-## Key Properties (BoxShadow)
-
-| Property | Type | Description |
-|----------|------|-------------|
-| color | Color | Shadow color (use alpha for softness) |
-| offset_x | f32 | Horizontal offset |
-| offset_y | f32 | Vertical offset |
-| blur_radius | f32 | Blur amount |
-| spread_radius | f32 | Positive expands, negative contracts |
-
-Combine offset and blur for depth effects. Positive `spread_radius`
-enlarges the shadow silhouette; negative values shrink it.'
-		}
-		'shader' {
-			'# Custom Shaders
-
-Custom fragment shaders for dynamic fills on containers and rectangles.
-The framework wraps user code with SDF round-rect clipping, so shaders
-automatically respect corner radius.
-
-## Usage
-
-```v
-gui.rectangle(
-    width: 200, height: 200, radius: 8,
-    shader: &gui.Shader{
-        metal: "
-            float d = length(pos - 0.5);
-            return half4(half3(d, 1.0 - d, 0.5), 1.0);
-        ",
-        glsl: "
-            float d = length(pos - 0.5);
-            frag_color = vec4(d, 1.0 - d, 0.5, 1.0);
-        ",
-    },
-)
-```
-
-## Key Properties (Shader)
-
-| Property | Type | Description |
-|----------|------|-------------|
-| metal | string | MSL fragment body |
-| glsl | string | GLSL 3.3 fragment body |
-| params | []f32 | Up to 16 custom floats |
-
-Built-in uniforms: `pos` (normalized 0..1), `size` (pixels),
-`time` (seconds), `radius`, and the params array via the `tm` matrix.
-
-See also: docs/SHADERS.md'
-		}
-		'animations' {
-			'# Animations
-
-Tween, spring, keyframe, and layout transition animations.
-
-## Usage
-
-```v
-// Tween
-w.play_animation(gui.TweenAnimation{
-    id:       "fade",
-    from:     0, to: 1,
-    duration: 300 * time.millisecond,
-    on_value: fn (val f32, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.opacity = val
-    },
-})
-
-// Spring
-w.play_animation(gui.SpringAnimation{
-    id:     "bounce",
-    config: gui.spring_bouncy,
-    on_value: fn (val f32, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.offset = val
-    },
-})
-```
-
-## Key Types
-
-| Type | Description |
-|------|-------------|
-| TweenAnimation | Value interpolation with easing |
-| SpringAnimation | Physics-based spring motion |
-| KeyframeAnimation | Multi-point timeline animation |
-| LayoutTransitionCfg | Animate layout position changes |
-| HeroTransitionCfg | Cross-view element transitions |
-
-## Spring Presets
-
-| Preset | Stiffness | Damping | Character |
-|--------|-----------|---------|-----------|
-| spring_default | 100 | 10 | Balanced |
-| spring_gentle | 50 | 8 | Soft, slow |
-| spring_bouncy | 200 | 12 | Springy |
-| spring_stiff | 400 | 20 | Snappy |
-
-See also: docs/ANIMATIONS.md'
-		}
-		'color_picker' {
-			'# Color Picker
-
-Pick RGBA and optional HSV values with visual selectors.
-
-## Usage
-
-```v
-gui.color_picker(
-    id:    "picker",
-    color: state.color,
-    on_color_change: fn (c gui.Color, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.color = c
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| color | Color | Current selected color |
-| on_color_change | fn (Color, mut Event, mut Window) | Color changed (required) |
-| style | ColorPickerStyle | Visual style preset |
-| show_hsv | bool | Show HSV sliders |'
-		}
-		'markdown' {
-			'# Markdown
-
-Render markdown source into styled rich content.
-
-## Usage
-
-```v
-w.markdown(source: "# Heading", mode: .wrap)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| source | string | Markdown text to render |
-| mode | TextMode | .single_line, .wrap |
-| style | MarkdownStyle | Custom rendering style |
-| mermaid_width | int | Width for mermaid diagrams |
-
-Supports headings, bold, italic, strikethrough, code blocks,
-tables, task lists, blockquotes, images, links, and mermaid diagrams.
-
-See also: docs/MARKDOWN.md'
-		}
-		'tab_control' {
-			'# Tab Control
-
-Switch content panels with keyboard-friendly tabs.
-
-## Usage
-
-```v
-gui.tab_control(
-    id:       "tabs",
-    selected: state.tab,
-    items: [
-        gui.TabItemCfg{id: "home", label: "Home",
-            content: home_view()},
-        gui.TabItemCfg{id: "settings", label: "Settings",
-            content: settings_view()},
-    ],
-    on_select: fn (id string, mut _ gui.Event, mut w gui.Window) {
-        mut s := w.state[MyApp]()
-        s.tab = id
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| items | []TabItemCfg | Tab definitions (required) |
-| selected | string | Active tab ID |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_select | fn (string, mut Event, mut Window) | Tab changed (required) |'
-		}
-		'tooltip' {
-			'# Tooltip
-
-Hover hints with custom placement and content.
-
-## Usage
-
-```v
-gui.button(
-    content: [gui.text(text: "Hover me")],
-    tooltip: &gui.TooltipCfg{
-        id:      "tip1",
-        content: [gui.text(text: "Helpful hint")],
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| content | []View | Tooltip content views |
-| delay | time.Duration | Show delay |
-| anchor | FloatAttach | Anchor point on parent |
-| tie_off | FloatAttach | Tooltip attachment point |
-| offset_x | f32 | Horizontal offset |
-| offset_y | f32 | Vertical offset |'
-		}
-		'rectangle' {
-			'# Rectangle
-
-Draw colored shapes with border, radius, gradient, shadow, and shader.
-
-## Usage
-
-```v
-gui.rectangle(
-    width:  100,
-    height: 60,
-    color:  gui.Color{100, 150, 200, 255},
-    radius: 8,
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| color | Color | Fill color |
-| radius | f32 | Corner radius |
-| gradient | &Gradient | Gradient fill |
-| shadow | &BoxShadow | Drop shadow |
-| shader | &Shader | Custom fragment shader |
-| blur_radius | f32 | Background blur |
-| border_gradient | &Gradient | Gradient on border |'
-		}
-		'scrollbar' {
-			'# Scrollable Containers
-
-Configure scrollbar appearance for scrollable layouts.
-
-## Usage
-
-```v
-gui.column(
-    id_scroll: 1,
-    sizing:    gui.fill_fill,
-    scrollbar_cfg_y: &gui.ScrollbarCfg{
-        size:     8,
-        gap_edge: 4,
-        radius:   4,
-    },
-    content: long_content,
-)
-```
-
-## Key Properties (ScrollbarCfg)
-
-| Property | Type | Description |
-|----------|------|-------------|
-| size | f32 | Scrollbar track width |
-| min_thumb_size | f32 | Minimum thumb length |
-| color_thumb | Color | Thumb color |
-| color_background | Color | Track background color |
-| radius | f32 | Track corner radius |
-| radius_thumb | f32 | Thumb corner radius |
-| gap_edge | f32 | Gap from container edge |
-| gap_end | f32 | Gap at scroll ends |
-| overflow | ScrollbarOverflow | Visibility mode |'
-		}
-		'splitter' {
-			'# Splitter
-
-Two resizable panes with draggable divider, keyboard support,
-and collapsible sides.
-
-## Usage
-
-```v
-gui.splitter(
-    id:     "main_split",
-    ratio:  0.3,
-    first:  gui.SplitterPaneCfg{content: left_panel()},
-    second: gui.SplitterPaneCfg{content: right_panel()},
-    on_change: fn (ratio f32, collapsed gui.SplitterCollapsed,
-        mut _ gui.Event, mut w gui.Window)
-    {
-        mut s := w.state[MyApp]()
-        s.ratio = ratio
-    },
-)
-```
-
-## Key Properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| id | string | Unique identifier (required) |
-| first | SplitterPaneCfg | First pane config (required) |
-| second | SplitterPaneCfg | Second pane config (required) |
-| ratio | f32 | Split ratio 0.0 to 1.0 |
-| orientation | SplitterOrientation | .horizontal, .vertical |
-| collapsed | SplitterCollapsed | .none, .first, .second |
-| show_collapse_buttons | bool | Show collapse arrows |
-| double_click_collapse | bool | Double-click to collapse |
-
-## Events
-
-| Callback | Signature | Fired when |
-|----------|-----------|------------|
-| on_change | fn (f32, SplitterCollapsed, mut Event, mut Window) | Ratio changed (required) |
-
-See also: docs/SPLITTER.md'
-		}
-		else {
-			'*Documentation coming soon.*'
-		}
+		'button' { button_doc }
+		'input' { input_doc }
+		'toggle' { toggle_doc }
+		'switch' { switch_doc }
+		'radio' { radio_doc }
+		'radio_group' { radio_group_doc }
+		'select' { select_doc }
+		'listbox' { listbox_doc }
+		'range_slider' { range_slider_doc }
+		'progress_bar' { progress_bar_doc }
+		'pulsar' { pulsar_doc }
+		'menus' { menus_doc }
+		'dialog' { dialog_doc }
+		'tree' { tree_doc }
+		'printing' { printing_doc }
+		'text' { text_doc }
+		'rtf' { rtf_doc }
+		'table' { table_doc }
+		'data_grid' { data_grid_doc }
+		'data_source' { data_source_doc }
+		'date_picker' { date_picker_doc }
+		'input_date' { input_date_doc }
+		'numeric_input' { numeric_input_doc }
+		'date_picker_roller' { date_picker_roller_doc }
+		'svg' { svg_doc }
+		'image' { image_doc }
+		'expand_panel' { expand_panel_doc }
+		'icons' { icons_doc }
+		'gradient' { gradient_doc }
+		'box_shadows' { box_shadows_doc }
+		'shader' { shader_doc }
+		'animations' { animations_doc }
+		'color_picker' { color_picker_doc }
+		'markdown' { markdown_doc }
+		'tab_control' { tab_control_doc }
+		'tooltip' { tooltip_doc }
+		'rectangle' { rectangle_doc }
+		'scrollbar' { scrollbar_doc }
+		'splitter' { splitter_doc }
+		else { '*Documentation coming soon.*' }
 	}
 }
 
@@ -2894,6 +1561,50 @@ const showcase_data_grid_features_source = '# Data Grid Features
 - XLSX helper export
 - PDF helper export'
 
+const button_doc = '# Button
+
+Trigger actions with click and keyboard focus.
+
+## Usage
+
+```v
+gui.button(
+    content:  [gui.text(text: "Save")],
+    on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+        // handle click
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| content | []View | Child views inside the button |
+| alt_content | []View | Temporary replacement content |
+| alt_duration | time.Duration | How long alt_content is shown |
+| tooltip | &TooltipCfg | Tooltip shown on hover |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_click | fn (&Layout, mut Event, mut Window) | Click or Enter key |
+| on_hover | fn (&Layout, mut Event, mut Window) | Pointer enters bounds |
+
+## Example
+
+```v
+gui.button(
+    content:      [gui.text(text: "Submit")],
+    alt_content:  [gui.text(text: "Sent!")],
+    alt_duration: time.second,
+    on_click:     fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+        w.update_window()
+    },
+)
+```'
+
 fn demo_button(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
@@ -2911,6 +1622,45 @@ fn demo_button(mut w gui.Window) gui.View {
 		]
 	)
 }
+
+const input_doc = '# Input
+
+Single-line, password, and multiline text input with optional mask and icon.
+
+## Usage
+
+```v
+gui.input(
+    text:            state.value,
+    placeholder:     "Enter text",
+    on_text_changed: fn (_ &gui.Layout, val string, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.value = val
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| text | string | Current input value |
+| placeholder | string | Hint text when empty |
+| mode | InputMode | .single_line, .multi_line, .read_only |
+| is_password | bool | Mask characters |
+| mask | string | Input mask pattern |
+| icon | string | Trailing icon glyph |
+| id_focus | u32 | Focus identifier for tab navigation |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_text_changed | fn (&Layout, string, mut Window) | Text content changes |
+| on_enter | fn (&Layout, mut Event, mut Window) | Enter key pressed |
+| on_key_down | fn (&Layout, mut Event, mut Window) | Any key pressed |
+| on_blur | fn (&Layout, mut Window) | Input loses focus |
+| on_click_icon | fn (&Layout, mut Event, mut Window) | Icon clicked |'
 
 fn demo_input(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -3021,6 +1771,38 @@ fn demo_input(w &gui.Window) gui.View {
 	)
 }
 
+const toggle_doc = '# Toggle
+
+Checkbox-style and icon toggles with labels.
+
+## Usage
+
+```v
+gui.toggle(
+    label:    "Accept terms",
+    select:   state.accepted,
+    on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.accepted = !s.accepted
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| label | string | Text displayed next to toggle |
+| select | bool | Current checked state |
+| text_select | string | Icon/text shown when selected |
+| text_unselect | string | Icon/text shown when unselected |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_click | fn (&Layout, mut Event, mut Window) | Toggle clicked (required) |'
+
 fn demo_toggle(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
@@ -3049,6 +1831,38 @@ fn demo_toggle(w &gui.Window) gui.View {
 	)
 }
 
+const switch_doc = '# Switch
+
+On/off switch control with animated thumb.
+
+## Usage
+
+```v
+gui.switch_(
+    label:    "Dark mode",
+    select:   state.dark_mode,
+    on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.dark_mode = !s.dark_mode
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| label | string | Text next to the switch |
+| select | bool | Current on/off state |
+| width | f32 | Switch track width |
+| height | f32 | Switch track height |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_click | fn (&Layout, mut Event, mut Window) | Switch toggled (required) |'
+
 fn demo_switch(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.switch(
@@ -3061,6 +1875,37 @@ fn demo_switch(w &gui.Window) gui.View {
 	)
 }
 
+const radio_doc = '# Radio
+
+Single radio control for selecting one option from a group.
+
+## Usage
+
+```v
+gui.radio(
+    label:    "Option A",
+    select:   state.choice == "a",
+    on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.choice = "a"
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| label | string | Text next to radio circle |
+| select | bool | Whether this option is selected |
+| size | f32 | Radio button diameter |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_click | fn (&Layout, mut Event, mut Window) | Radio clicked (required) |'
+
 fn demo_radio(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.radio(
@@ -3072,6 +1917,41 @@ fn demo_radio(w &gui.Window) gui.View {
 		}
 	)
 }
+
+const radio_group_doc = '# Radio Button Group
+
+Mutually exclusive options arranged in a titled group.
+
+## Usage
+
+```v
+gui.radio_button_group(
+    value:     state.selected,
+    options:   [
+        gui.RadioOption{label: "Small", value: "s"},
+        gui.RadioOption{label: "Medium", value: "m"},
+        gui.RadioOption{label: "Large", value: "l"},
+    ],
+    on_select: fn (val string, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.selected = val
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| value | string | Currently selected option value |
+| options | []RadioOption | Available choices |
+| title | string | Group title text |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn (string, mut Window) | Option changed (required) |'
 
 fn demo_radio_group(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -3105,6 +1985,41 @@ fn demo_radio_group(w &gui.Window) gui.View {
 		]
 	)
 }
+
+const select_doc = '# Select
+
+Dropdown with optional multi-select.
+
+## Usage
+
+```v
+gui.select(
+    id:        "color_select",
+    select:    [state.color],
+    options:   ["Red", "Green", "Blue"],
+    on_select: fn (vals []string, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.color = vals[0]
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| select | []string | Currently selected values |
+| options | []string | Available choices |
+| placeholder | string | Text when nothing selected |
+| select_multiple | bool | Allow multiple selections |
+| no_wrap | bool | Prevent text wrapping |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn ([]string, mut Event, mut Window) | Selection changed (required) |'
 
 fn demo_select(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -3195,6 +2110,43 @@ fn demo_select(w &gui.Window) gui.View {
 	)
 }
 
+const listbox_doc = '# List Box
+
+Single and multi-select list with optional async data source.
+
+## Usage
+
+```v
+gui.listbox(
+    data: [
+        gui.ListBoxOption{id: "1", label: "First"},
+        gui.ListBoxOption{id: "2", label: "Second"},
+    ],
+    selected_ids: state.selected,
+    on_select: fn (ids []string, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.selected = ids
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| data | []ListBoxOption | Static list items |
+| data_source | ?ListBoxDataSource | Async data provider |
+| selected_ids | []string | Currently selected item IDs |
+| query | string | Filter/search text |
+| multiple | bool | Allow multiple selections |
+| loading | bool | Show loading indicator |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn ([]string, mut Event, mut Window) | Selection changed |'
+
 fn demo_list_box(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
@@ -3240,6 +2192,43 @@ fn demo_list_box(mut w gui.Window) gui.View {
 		]
 	)
 }
+
+const range_slider_doc = '# Range Slider
+
+Drag horizontal or vertical value controls.
+
+## Usage
+
+```v
+gui.range_slider(
+    id:        "volume",
+    value:     state.volume,
+    min:       0,
+    max:       100,
+    on_change: fn (val f32, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.volume = val
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| value | f32 | Current position |
+| min | f32 | Minimum value |
+| max | f32 | Maximum value |
+| step | f32 | Snap increment |
+| vertical | bool | Vertical orientation |
+| round_value | bool | Round to nearest step |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_change | fn (f32, mut Event, mut Window) | Value changed (required) |'
 
 fn demo_range_slider(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -3288,6 +2277,36 @@ fn demo_range_slider(w &gui.Window) gui.View {
 	)
 }
 
+const progress_bar_doc = '# Progress Bar
+
+Determinate and indeterminate progress indicators.
+
+## Usage
+
+```v
+gui.progress_bar(percent: 0.65, text_show: true)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| percent | f32 | Progress 0.0 to 1.0 |
+| indefinite | bool | Animated indeterminate mode |
+| vertical | bool | Vertical orientation |
+| text_show | bool | Show percentage label |
+| text | string | Custom label text |
+| color_bar | Color | Fill color |
+
+## Example
+
+```v
+gui.progress_bar(
+    indefinite: true,
+    color_bar:  gui.Color{80, 160, 240, 255},
+)
+```'
+
 fn demo_progress_bar(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	percent := app.range_value / f32(100)
@@ -3307,6 +2326,32 @@ fn demo_progress_bar(w &gui.Window) gui.View {
 	)
 }
 
+const pulsar_doc = '# Pulsar
+
+Animated pulse indicator with optional icons.
+
+## Usage
+
+```v
+gui.pulsar()
+
+gui.pulsar(
+    icon1: gui.icon_heart,
+    icon2: gui.icon_star,
+    size:  24,
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| icon1 | string | First alternating icon glyph |
+| icon2 | string | Second alternating icon glyph |
+| color | Color | Pulse color |
+| size | u32 | Icon font size |
+| width | f32 | Pulsar width |'
+
 fn demo_pulsar(mut w gui.Window) gui.View {
 	return gui.row(
 		content: [
@@ -3316,6 +2361,46 @@ fn demo_pulsar(mut w gui.Window) gui.View {
 		]
 	)
 }
+
+const menus_doc = '# Menus + Menubar
+
+Nested menus with separators, submenus, and custom items.
+
+## Usage
+
+```v
+gui.menubar(
+    id_focus: 100,
+    items: [
+        gui.MenuItemCfg{label: "File", items: [
+            gui.MenuItemCfg{label: "New", action_id: "new"},
+            gui.MenuItemCfg{separator: true},
+            gui.MenuItemCfg{label: "Quit", action_id: "quit"},
+        ]},
+    ],
+    action: fn (id string, mut _ gui.Event, mut w gui.Window) {
+        match id {
+            "new" { /* handle */ }
+            else {}
+        }
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id_focus | u32 | Focus id for keyboard nav (required) |
+| items | []MenuItemCfg | Top-level menu items |
+| width_submenu_min | f32 | Minimum submenu width |
+| width_submenu_max | f32 | Maximum submenu width |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| action | fn (string, mut Event, mut Window) | Menu item activated |'
 
 fn demo_menu(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -3333,6 +2418,44 @@ fn demo_menu(mut w gui.Window) gui.View {
 		]
 	)
 }
+
+const dialog_doc = '# Dialog
+
+Message, confirm, prompt, and custom dialogs.
+
+## Usage
+
+```v
+gui.dialog(
+    title:       "Confirm",
+    body:        "Delete this item?",
+    dialog_type: .confirm,
+    on_ok_yes:   fn (mut w gui.Window) { /* confirmed */ },
+    on_cancel_no: fn (mut w gui.Window) { /* cancelled */ },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| title | string | Dialog title |
+| body | string | Message body text |
+| dialog_type | DialogType | .message, .confirm, .prompt, .custom |
+| reply | string | Current prompt input value |
+| custom_content | []View | Views for .custom type |
+| min_width | f32 | Minimum dialog width |
+| max_width | f32 | Maximum dialog width |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_ok_yes | fn (mut Window) | OK/Yes pressed |
+| on_cancel_no | fn (mut Window) | Cancel/No pressed |
+| on_reply | fn (string, mut Window) | Prompt submitted |
+
+See also: docs/NATIVE_DIALOGS.md'
 
 fn demo_dialog() gui.View {
 	return gui.column(
@@ -3521,9 +2644,83 @@ fn demo_dialog_show_native_result(kind string, result gui.NativeDialogResult, mu
 	w.dialog(title: kind, body: body)
 }
 
+const tree_doc = '# Tree View
+
+Hierarchical expandable node display.
+
+## Usage
+
+```v
+gui.tree(
+    id:    "file_tree",
+    nodes: [
+        gui.TreeNodeCfg{
+            label: "Root",
+            children: [
+                gui.TreeNodeCfg{label: "Child 1"},
+                gui.TreeNodeCfg{label: "Child 2"},
+            ],
+        },
+    ],
+    on_select: fn (id string, mut w gui.Window) {
+        // handle selection
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| nodes | []TreeNodeCfg | Root-level tree nodes |
+| indent | f32 | Indentation per nesting level |
+| spacing | f32 | Vertical spacing between nodes |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn (string, mut Window) | Node selected |'
+
 fn demo_tree(mut w gui.Window) gui.View {
 	return tree_view_sample(mut w)
 }
+
+const printing_doc = '# Printing
+
+Export current view to PDF and open native print dialog.
+
+## Usage
+
+```v
+// Export to PDF
+w.export_pdf(gui.PdfExportCfg{
+    path:  "/tmp/output.pdf",
+    paper: .a4,
+})
+
+// Native print dialog
+w.native_print_dialog(gui.NativePrintDialogCfg{
+    title: "Print Document",
+    paper: .letter,
+    on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
+        // handle result
+    },
+})
+```
+
+## Key Properties (PdfExportCfg)
+
+| Property | Type | Description |
+|----------|------|-------------|
+| path | string | Output file path |
+| paper | PaperSize | .letter, .legal, .a4, .a3 |
+| orientation | PrintOrientation | .portrait, .landscape |
+| margins | PrintMargins | Page margins in points |
+| fit_to_page | bool | Scale content to fit |
+
+See also: docs/PRINTING.md'
 
 fn demo_printing(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -3666,6 +2863,34 @@ fn demo_printing(w &gui.Window) gui.View {
 		]
 	)
 }
+
+const text_doc = '# Text
+
+Theme typography sizes, weights, and styles.
+
+## Usage
+
+```v
+gui.text(text: "Hello, world")
+
+gui.text(
+    text:       "Styled heading",
+    text_style: gui.theme().h1,
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| text | string | Display text content |
+| text_style | TextStyle | Font, size, color, weight |
+| mode | TextMode | .single_line, .wrap, .ellipsis |
+| is_password | bool | Mask characters |
+| tab_size | u32 | Tab stop width |
+| gradient | &vglyph.GradientConfig | Gradient fill for text |
+| stroke_width | f32 | Outline stroke thickness |
+| stroke_color | Color | Outline stroke color |'
 
 fn demo_text() gui.View {
 	wrap_sample := 'Wrap mode collapses repeated spaces and wraps words to fit the available width.'
@@ -3992,6 +3217,31 @@ fn demo_text() gui.View {
 	)
 }
 
+const rtf_doc = '# Rich Text Format
+
+Mixed styles, links, and inline rich text runs.
+
+## Usage
+
+```v
+gui.rtf(
+    rich_text: gui.RichText{
+        segments: [
+            gui.RichSegment{text: "Bold ", style: gui.theme().b1},
+            gui.RichSegment{text: "and normal"},
+        ],
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| rich_text | RichText | Styled text segments |
+| mode | TextMode | .single_line, .wrap |
+| hanging_indent | f32 | Indent for wrapped lines |'
+
 fn demo_rtf() gui.View {
 	return gui.rtf(
 		mode:      .wrap
@@ -4170,6 +3420,42 @@ fn table_border_style_from_value(value string) gui.TableBorderStyle {
 	}
 }
 
+const table_doc = '# Table
+
+Declarative and sortable table data with row selection.
+
+## Usage
+
+```v
+gui.table(
+    data: [
+        gui.TableRowCfg{cells: ["Name", "Age"]},
+        gui.TableRowCfg{cells: ["Alice", "30"]},
+        gui.TableRowCfg{cells: ["Bob", "25"]},
+    ],
+    column_width_default: 120,
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| data | []TableRowCfg | Row data (first row is header) |
+| column_width_default | f32 | Default column width |
+| column_alignments | []HorizontalAlign | Per-column alignment |
+| selected | map[int]bool | Selected row indices |
+| multi_select | bool | Allow multiple row selection |
+| border_style | TableBorderStyle | Border rendering mode |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn (map[int]bool, int, mut Event, mut Window) | Row selection changed |
+
+See also: docs/TABLES.md'
+
 fn demo_table(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	mut table_cfg := gui.table_cfg_from_data(showcase_table_rows_sorted(app.table_sort_by))
@@ -4230,6 +3516,41 @@ fn demo_table(mut w gui.Window) gui.View {
 	)
 }
 
+const data_grid_doc = '# Data Grid
+
+Controlled virtualized grid for interactive tabular data. Supports sorting,
+filtering, grouping, inline editing, and export.
+
+## Usage
+
+```v
+gui.data_grid(
+    id:      "grid1",
+    columns: [
+        gui.GridColumnCfg{id: "name", title: "Name", sortable: true},
+        gui.GridColumnCfg{id: "age", title: "Age", width: 80},
+    ],
+    rows: [
+        gui.GridRow{id: "1", cells: {"name": "Alice", "age": "30"}},
+        gui.GridRow{id: "2", cells: {"name": "Bob", "age": "25"}},
+    ],
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Grid identifier (required) |
+| columns | []GridColumnCfg | Column definitions (required) |
+| rows | []GridRow | Direct row data |
+| data_source | &DataGridDataSource | Async data provider |
+| group_by | []string | Column IDs to group by |
+| query | string | Quick-filter text |
+| selection | GridSelectionMode | .none, .single, .multi |
+
+See also: docs/DATA_GRID.md'
+
 fn demo_data_grid(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	rows := showcase_data_grid_apply_query(showcase_data_grid_rows(), app.data_grid_query)
@@ -4271,6 +3592,44 @@ fn demo_data_grid(mut w gui.Window) gui.View {
 		]
 	)
 }
+
+const data_source_doc = '# Data Source
+
+Async data-source backed grid with CRUD operations.
+
+## Usage
+
+```v
+source := gui.InMemoryDataSource{
+    rows: my_rows,
+}
+
+gui.data_grid(
+    id:          "ds_grid",
+    columns:     my_columns,
+    data_source: &source,
+)
+```
+
+## DataGridDataSource Interface
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
+| capabilities | fn () GridDataCapabilities | Pagination and CRUD support |
+| fetch_data | fn (GridDataRequest) !GridDataResult | Load rows for page |
+| mutate_data | fn (GridMutationRequest) !GridMutationResult | Create/update/delete |
+
+## InMemoryDataSource
+
+| Property | Type | Description |
+|----------|------|-------------|
+| rows | []GridRow | In-memory row data |
+| default_limit | int | Page size (default: 100) |
+| latency_ms | int | Simulated latency for testing |
+| supports_cursor | bool | Cursor pagination (default: true) |
+| supports_offset | bool | Offset pagination (default: true) |
+
+See also: docs/DATA_GRID.md'
 
 fn demo_data_source(mut w gui.Window) gui.View {
 	mut app := w.state[ShowcaseApp]()
@@ -4378,6 +3737,41 @@ fn showcase_data_source_rows() []gui.GridRow {
 	return rows
 }
 
+const date_picker_doc = '# Date Picker
+
+Select one or many dates from a calendar view.
+
+## Usage
+
+```v
+gui.date_picker(
+    id:    "cal",
+    dates: [state.selected_date],
+    on_select: fn (dates []time.Time, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.selected_date = dates[0]
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| dates | []time.Time | Selected dates (required) |
+| select_multiple | bool | Allow multiple date selection |
+| allowed_weekdays | []DatePickerWeekdays | Restrict to specific days |
+| allowed_months | []DatePickerMonths | Restrict to specific months |
+| allowed_years | []int | Restrict to specific years |
+| monday_first_day_of_week | bool | Start week on Monday |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn ([]time.Time, mut Event, mut Window) | Date selected |'
+
 fn demo_date_picker(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return w.date_picker(
@@ -4390,6 +3784,40 @@ fn demo_date_picker(mut w gui.Window) gui.View {
 		}
 	)
 }
+
+const input_date_doc = '# Input Date
+
+Text input with date picker dropdown.
+
+## Usage
+
+```v
+gui.input_date(
+    id:   "birthday",
+    date: state.date,
+    on_select: fn (dates []time.Time, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.date = dates[0]
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| date | time.Time | Currently selected date |
+| placeholder | string | Hint text when empty |
+| select_multiple | bool | Allow multiple dates |
+| allowed_weekdays | []DatePickerWeekdays | Restrict to specific days |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn ([]time.Time, mut Event, mut Window) | Date picked |
+| on_enter | fn (&Layout, mut Event, mut Window) | Enter key pressed |'
 
 fn demo_input_date(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -4407,6 +3835,41 @@ fn demo_input_date(mut w gui.Window) gui.View {
 	)
 }
 
+const date_picker_roller_doc = '# Date Picker Roller
+
+Roll wheel-style month/day/year controls.
+
+## Usage
+
+```v
+gui.date_picker_roller(
+    id:            "roller",
+    selected_date: state.date,
+    on_change: fn (date time.Time, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.date = date
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| selected_date | time.Time | Current date (required) |
+| display_mode | DatePickerRollerDisplayMode | Which rollers to show |
+| min_year | int | Earliest year in roller |
+| max_year | int | Latest year in roller |
+| visible_items | int | Visible roller items |
+| long_months | bool | Full month names |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_change | fn (time.Time, mut Window) | Date changed via roller |'
+
 fn demo_date_picker_roller(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.date_picker_roller(
@@ -4420,6 +3883,36 @@ fn demo_date_picker_roller(mut w gui.Window) gui.View {
 		}
 	)
 }
+
+const svg_doc = '# SVG
+
+Render vector graphics from file or inline SVG data.
+
+## Usage
+
+```v
+gui.svg(file_name: "icon.svg", width: 48, height: 48)
+
+gui.svg(svg_data: "<svg>...</svg>", width: 100, height: 100)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| file_name | string | Path to SVG file |
+| svg_data | string | Inline SVG markup |
+| width | f32 | Display width |
+| height | f32 | Display height |
+| color | Color | Tint color |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_click | fn (&Layout, mut Event, mut Window) | SVG area clicked |
+
+See also: docs/SVG.md'
 
 fn demo_svg() gui.View {
 	return gui.column(
@@ -4490,6 +3983,35 @@ fn demo_svg() gui.View {
 	)
 }
 
+const image_doc = '# Image
+
+Render local or remote image assets.
+
+## Usage
+
+```v
+gui.image(src: "photo.png", width: 200, height: 150)
+
+gui.image(src: "https://example.com/photo.jpg")
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| src | string | File path or URL |
+| width | f32 | Display width |
+| height | f32 | Display height |
+| min_width | f32 | Minimum width constraint |
+| max_width | f32 | Maximum width constraint |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_click | fn (&Layout, mut Event, mut Window) | Image clicked |
+| on_hover | fn (mut Layout, mut Event, mut Window) | Pointer enters image |'
+
 fn demo_image() gui.View {
 	return gui.column(
 		padding: gui.padding_none
@@ -4500,9 +4022,70 @@ fn demo_image() gui.View {
 	)
 }
 
+const expand_panel_doc = '# Expand Panel
+
+Collapsible region with custom header and content.
+
+## Usage
+
+```v
+gui.expand_panel(
+    head:    gui.text(text: "Details"),
+    content: gui.text(text: "Expanded content here"),
+    open:    state.panel_open,
+    on_toggle: fn (mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.panel_open = !s.panel_open
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| head | View | Header view (always visible) |
+| content | View | Body view (shown when open) |
+| open | bool | Expanded state |
+| radius | f32 | Corner radius |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_toggle | fn (mut Window) | Panel opened or closed |'
+
 fn demo_expand_panel(w &gui.Window) gui.View {
 	return expand_panel_sample(w)
 }
+
+const icons_doc = '# Icons
+
+Icon font catalog with 80+ glyph constants from the Feather icon set.
+
+## Usage
+
+```v
+gui.text(text: gui.icon_check, text_style: gui.theme().icon4)
+
+gui.text(text: gui.icon_home, text_style: gui.theme().icon2)
+```
+
+## Common Icons
+
+| Constant | Glyph |
+|----------|-------|
+| icon_check | Checkmark |
+| icon_close | X mark |
+| icon_search | Magnifier |
+| icon_home | House |
+| icon_plus / icon_minus | Add / Remove |
+| icon_arrow_up / down / left / right | Directional arrows |
+| icon_heart / icon_star | Common symbols |
+| icon_eye / icon_lock | Visibility / Security |
+
+Use `gui.icons_map` for programmatic access to all icon names.
+Icons require `gui.theme().icon*` text styles for correct sizing.'
 
 fn demo_icons() gui.View {
 	return gui.row(
@@ -4514,6 +4097,43 @@ fn demo_icons() gui.View {
 		]
 	)
 }
+
+const gradient_doc = '# Gradients
+
+Linear and radial gradient fills for containers and rectangles.
+
+## Usage
+
+```v
+gui.rectangle(
+    width: 200, height: 100,
+    gradient: &gui.Gradient{
+        stops: [
+            gui.GradientStop{color: gui.color_blue, pos: 0},
+            gui.GradientStop{color: gui.color_red, pos: 1},
+        ],
+        direction: .to_right,
+    },
+)
+```
+
+## Key Properties (Gradient)
+
+| Property | Type | Description |
+|----------|------|-------------|
+| stops | []GradientStop | Color stops (max 5) |
+| type | GradientType | .linear, .radial |
+| direction | GradientDirection | .to_top, .to_right, etc. |
+| angle | ?f32 | Explicit angle in degrees |
+
+## GradientStop
+
+| Property | Type | Description |
+|----------|------|-------------|
+| color | Color | Stop color |
+| pos | f32 | Position 0.0 to 1.0 |
+
+See also: docs/GRADIENTS.md'
 
 fn demo_gradient() gui.View {
 	linear := &gui.Gradient{
@@ -4608,6 +4228,39 @@ fn showcase_shadow_card(title string, note string, bg gui.Color, shadow_color gu
 	)
 }
 
+const box_shadows_doc = '# Box Shadows
+
+Shadow presets applied to containers and rectangles.
+
+## Usage
+
+```v
+gui.rectangle(
+    width: 150, height: 80,
+    color: gui.color_white,
+    shadow: &gui.BoxShadow{
+        color:         gui.Color{0, 0, 0, 60},
+        offset_x:      0,
+        offset_y:      4,
+        blur_radius:   8,
+        spread_radius: 0,
+    },
+)
+```
+
+## Key Properties (BoxShadow)
+
+| Property | Type | Description |
+|----------|------|-------------|
+| color | Color | Shadow color (use alpha for softness) |
+| offset_x | f32 | Horizontal offset |
+| offset_y | f32 | Vertical offset |
+| blur_radius | f32 | Blur amount |
+| spread_radius | f32 | Positive expands, negative contracts |
+
+Combine offset and blur for depth effects. Positive `spread_radius`
+enlarges the shadow silhouette; negative values shrink it.'
+
 fn demo_box_shadows() gui.View {
 	card_color := gui.theme().color_background
 	return gui.column(
@@ -4658,6 +4311,43 @@ fn demo_box_shadows() gui.View {
 		]
 	)
 }
+
+const shader_doc = '# Custom Shaders
+
+Custom fragment shaders for dynamic fills on containers and rectangles.
+The framework wraps user code with SDF round-rect clipping, so shaders
+automatically respect corner radius.
+
+## Usage
+
+```v
+gui.rectangle(
+    width: 200, height: 200, radius: 8,
+    shader: &gui.Shader{
+        metal: "
+            float d = length(pos - 0.5);
+            return half4(half3(d, 1.0 - d, 0.5), 1.0);
+        ",
+        glsl: "
+            float d = length(pos - 0.5);
+            frag_color = vec4(d, 1.0 - d, 0.5, 1.0);
+        ",
+    },
+)
+```
+
+## Key Properties (Shader)
+
+| Property | Type | Description |
+|----------|------|-------------|
+| metal | string | MSL fragment body |
+| glsl | string | GLSL 3.3 fragment body |
+| params | []f32 | Up to 16 custom floats |
+
+Built-in uniforms: `pos` (normalized 0..1), `size` (pixels),
+`time` (seconds), `radius`, and the params array via the `tm` matrix.
+
+See also: docs/SHADERS.md'
 
 fn demo_shader() gui.View {
 	band_shader := &gui.Shader{
@@ -4746,6 +4436,56 @@ fn demo_shader() gui.View {
 		]
 	)
 }
+
+const animations_doc = '# Animations
+
+Tween, spring, keyframe, and layout transition animations.
+
+## Usage
+
+```v
+// Tween
+w.play_animation(gui.TweenAnimation{
+    id:       "fade",
+    from:     0, to: 1,
+    duration: 300 * time.millisecond,
+    on_value: fn (val f32, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.opacity = val
+    },
+})
+
+// Spring
+w.play_animation(gui.SpringAnimation{
+    id:     "bounce",
+    config: gui.spring_bouncy,
+    on_value: fn (val f32, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.offset = val
+    },
+})
+```
+
+## Key Types
+
+| Type | Description |
+|------|-------------|
+| TweenAnimation | Value interpolation with easing |
+| SpringAnimation | Physics-based spring motion |
+| KeyframeAnimation | Multi-point timeline animation |
+| LayoutTransitionCfg | Animate layout position changes |
+| HeroTransitionCfg | Cross-view element transitions |
+
+## Spring Presets
+
+| Preset | Stiffness | Damping | Character |
+|--------|-----------|---------|-----------|
+| spring_default | 100 | 10 | Balanced |
+| spring_gentle | 50 | 8 | Soft, slow |
+| spring_bouncy | 200 | 12 | Springy |
+| spring_stiff | 400 | 20 | Snappy |
+
+See also: docs/ANIMATIONS.md'
 
 fn demo_animations(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -4925,6 +4665,33 @@ fn showcase_hero_detail_view(mut window gui.Window) gui.View {
 	)
 }
 
+const color_picker_doc = '# Color Picker
+
+Pick RGBA and optional HSV values with visual selectors.
+
+## Usage
+
+```v
+gui.color_picker(
+    id:    "picker",
+    color: state.color,
+    on_color_change: fn (c gui.Color, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.color = c
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| color | Color | Current selected color |
+| on_color_change | fn (Color, mut Event, mut Window) | Color changed (required) |
+| style | ColorPickerStyle | Visual style preset |
+| show_hsv | bool | Show HSV sliders |'
+
 fn demo_color_picker(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
@@ -4951,6 +4718,30 @@ fn demo_color_picker(w &gui.Window) gui.View {
 		]
 	)
 }
+
+const markdown_doc = '# Markdown
+
+Render markdown source into styled rich content.
+
+## Usage
+
+```v
+w.markdown(source: "# Heading", mode: .wrap)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| source | string | Markdown text to render |
+| mode | TextMode | .single_line, .wrap |
+| style | MarkdownStyle | Custom rendering style |
+| mermaid_width | int | Width for mermaid diagrams |
+
+Supports headings, bold, italic, strikethrough, code blocks,
+tables, task lists, blockquotes, images, links, and mermaid diagrams.
+
+See also: docs/MARKDOWN.md'
 
 fn demo_markdown(mut w gui.Window) gui.View {
 	return gui.column(
@@ -4983,6 +4774,49 @@ fn demo_welcome(mut w gui.Window) gui.View {
 		]
 	)
 }
+
+const splitter_doc = '# Splitter
+
+Two resizable panes with draggable divider, keyboard support,
+and collapsible sides.
+
+## Usage
+
+```v
+gui.splitter(
+    id:     "main_split",
+    ratio:  0.3,
+    first:  gui.SplitterPaneCfg{content: left_panel()},
+    second: gui.SplitterPaneCfg{content: right_panel()},
+    on_change: fn (ratio f32, collapsed gui.SplitterCollapsed,
+        mut _ gui.Event, mut w gui.Window)
+    {
+        mut s := w.state[MyApp]()
+        s.ratio = ratio
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| first | SplitterPaneCfg | First pane config (required) |
+| second | SplitterPaneCfg | Second pane config (required) |
+| ratio | f32 | Split ratio 0.0 to 1.0 |
+| orientation | SplitterOrientation | .horizontal, .vertical |
+| collapsed | SplitterCollapsed | .none, .first, .second |
+| show_collapse_buttons | bool | Show collapse arrows |
+| double_click_collapse | bool | Double-click to collapse |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_change | fn (f32, SplitterCollapsed, mut Event, mut Window) | Ratio changed (required) |
+
+See also: docs/SPLITTER.md'
 
 fn demo_splitter(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -5121,6 +4955,43 @@ fn on_showcase_splitter_detail_change(ratio f32, collapsed gui.SplitterCollapsed
 	})
 }
 
+const tab_control_doc = '# Tab Control
+
+Switch content panels with keyboard-friendly tabs.
+
+## Usage
+
+```v
+gui.tab_control(
+    id:       "tabs",
+    selected: state.tab,
+    items: [
+        gui.TabItemCfg{id: "home", label: "Home",
+            content: home_view()},
+        gui.TabItemCfg{id: "settings", label: "Settings",
+            content: settings_view()},
+    ],
+    on_select: fn (id string, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.tab = id
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| items | []TabItemCfg | Tab definitions (required) |
+| selected | string | Active tab ID |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn (string, mut Event, mut Window) | Tab changed (required) |'
+
 fn demo_tab_control(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.tab_control(
@@ -5138,6 +5009,34 @@ fn demo_tab_control(w &gui.Window) gui.View {
 		}
 	)
 }
+
+const tooltip_doc = '# Tooltip
+
+Hover hints with custom placement and content.
+
+## Usage
+
+```v
+gui.button(
+    content: [gui.text(text: "Hover me")],
+    tooltip: &gui.TooltipCfg{
+        id:      "tip1",
+        content: [gui.text(text: "Helpful hint")],
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| content | []View | Tooltip content views |
+| delay | time.Duration | Show delay |
+| anchor | FloatAttach | Anchor point on parent |
+| tie_off | FloatAttach | Tooltip attachment point |
+| offset_x | f32 | Horizontal offset |
+| offset_y | f32 | Vertical offset |'
 
 fn demo_tooltip() gui.View {
 	return gui.row(
@@ -5164,6 +5063,33 @@ fn demo_tooltip() gui.View {
 	)
 }
 
+const rectangle_doc = '# Rectangle
+
+Draw colored shapes with border, radius, gradient, shadow, and shader.
+
+## Usage
+
+```v
+gui.rectangle(
+    width:  100,
+    height: 60,
+    color:  gui.Color{100, 150, 200, 255},
+    radius: 8,
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| color | Color | Fill color |
+| radius | f32 | Corner radius |
+| gradient | &Gradient | Gradient fill |
+| shadow | &BoxShadow | Drop shadow |
+| shader | &Shader | Custom fragment shader |
+| blur_radius | f32 | Background blur |
+| border_gradient | &Gradient | Gradient on border |'
+
 fn demo_rectangle() gui.View {
 	return gui.row(
 		v_align: .middle
@@ -5189,6 +5115,39 @@ fn demo_rectangle() gui.View {
 		]
 	)
 }
+
+const scrollbar_doc = '# Scrollable Containers
+
+Configure scrollbar appearance for scrollable layouts.
+
+## Usage
+
+```v
+gui.column(
+    id_scroll: 1,
+    sizing:    gui.fill_fill,
+    scrollbar_cfg_y: &gui.ScrollbarCfg{
+        size:     8,
+        gap_edge: 4,
+        radius:   4,
+    },
+    content: long_content,
+)
+```
+
+## Key Properties (ScrollbarCfg)
+
+| Property | Type | Description |
+|----------|------|-------------|
+| size | f32 | Scrollbar track width |
+| min_thumb_size | f32 | Minimum thumb length |
+| color_thumb | Color | Thumb color |
+| color_background | Color | Track background color |
+| radius | f32 | Track corner radius |
+| radius_thumb | f32 | Thumb corner radius |
+| gap_edge | f32 | Gap from container edge |
+| gap_end | f32 | Gap at scroll ends |
+| overflow | ScrollbarOverflow | Visibility mode |'
 
 fn demo_scrollbar() gui.View {
 	return gui.column(
@@ -5264,6 +5223,45 @@ fn scroll_demo_rows(prefix string) []gui.View {
 	}
 	return rows
 }
+
+const numeric_input_doc = '# Numeric Input
+
+Locale-aware number input with step controls, min/max validation,
+and configurable decimal precision.
+
+## Usage
+
+```v
+gui.numeric_input(
+    value:    state.amount,
+    min:      0,
+    max:      1000,
+    decimals: 2,
+    on_value_commit: fn (_ &gui.Layout, val ?f64, text string, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.amount = val
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| value | ?f64 | Current numeric value |
+| text | string | Raw text representation |
+| min | ?f64 | Minimum allowed value |
+| max | ?f64 | Maximum allowed value |
+| decimals | int | Decimal places (default: 2) |
+| step_cfg | NumericStepCfg | Step, multipliers, buttons |
+| locale | NumericLocaleCfg | Decimal/group separators |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_text_changed | fn (&Layout, string, mut Window) | Text changes |
+| on_value_commit | fn (&Layout, ?f64, string, mut Window) | Value committed |'
 
 fn demo_numeric_input(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
