@@ -321,6 +321,10 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 	bold := fw == 'bold' || fw.f32() >= 600
 	fs := find_attr_or_style(elem, 'font-style') or { '' }
 	italic := fs == 'italic' || fs == 'oblique'
+	// Text decoration
+	td := find_attr_or_style(elem, 'text-decoration') or { '' }
+	underline := td.contains('underline')
+	strikethrough := td.contains('line-through')
 	// Fill → text color (default black); detect gradient url()
 	fill_str := find_attr_or_style(elem, 'fill') or { style.fill }
 	fill_gradient_id := parse_fill_url(fill_str) or { '' }
@@ -349,8 +353,8 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 
 	// Check for tspan children
 	if body.contains('<tspan') {
-		parse_tspan_elements(body, tx, ty, font_family, scaled_size, bold, italic, color,
-			fill_gradient_id, anchor, opacity, style, mut state)
+		parse_tspan_elements(body, tx, ty, font_family, scaled_size, bold, italic, underline,
+			strikethrough, color, fill_gradient_id, anchor, opacity, style, mut state)
 	} else {
 		plain := extract_plain_text(body)
 		if plain.len > 0 {
@@ -362,6 +366,8 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 				font_size:        scaled_size
 				bold:             bold
 				italic:           italic
+				underline:        underline
+				strikethrough:    strikethrough
 				color:            color
 				anchor:           anchor
 				opacity:          opacity
@@ -373,7 +379,7 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 }
 
 // parse_tspan_elements iterates <tspan> children inside a <text> body.
-fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_color Color, parent_gradient_id string, parent_anchor u8, parent_opacity f32, style GroupStyle, mut state ParseState) {
+fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_underline bool, parent_strikethrough bool, parent_color Color, parent_gradient_id string, parent_anchor u8, parent_opacity f32, style GroupStyle, mut state ParseState) {
 	mut current_y := base_y
 	mut search_pos := 0
 
@@ -435,6 +441,13 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 		} else {
 			parent_italic
 		}
+		td := find_attr_or_style(tspan_elem, 'text-decoration') or { '' }
+		underline := if td.len > 0 { td.contains('underline') } else { parent_underline }
+		strikethrough := if td.len > 0 {
+			td.contains('line-through')
+		} else {
+			parent_strikethrough
+		}
 
 		state.texts << SvgText{
 			text:             text
@@ -444,6 +457,8 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 			font_size:        parent_size
 			bold:             bold
 			italic:           italic
+			underline:        underline
+			strikethrough:    strikethrough
 			color:            color
 			anchor:           parent_anchor
 			opacity:          parent_opacity
@@ -463,6 +478,8 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 			font_size:        parent_size
 			bold:             parent_bold
 			italic:           parent_italic
+			underline:        parent_underline
+			strikethrough:    parent_strikethrough
 			color:            parent_color
 			anchor:           parent_anchor
 			opacity:          parent_opacity

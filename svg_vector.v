@@ -74,6 +74,8 @@ pub:
 	color            Color
 	anchor           u8 // 0=start, 1=middle, 2=end
 	opacity          f32 = 1.0
+	underline        bool
+	strikethrough    bool
 	filter_id        string
 	fill_gradient_id string
 }
