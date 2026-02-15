@@ -74,6 +74,24 @@ pub:
 	color       Color
 	anchor      u8 // 0=start, 1=middle, 2=end
 	opacity     f32 = 1.0
+	filter_id   string
+}
+
+// SvgFilter holds a parsed <filter> definition.
+pub struct SvgFilter {
+pub:
+	id          string
+	std_dev     f32
+	blur_layers int = 1 // feMerge blur node count
+	keep_source bool // feMerge includes SourceGraphic
+}
+
+// SvgFilteredGroup holds paths/texts belonging to a filtered <g>.
+pub struct SvgFilteredGroup {
+pub:
+	filter_id string
+	paths     []VectorPath
+	texts     []SvgText
 }
 
 // VectorPath represents a single filled path with color.
@@ -88,6 +106,7 @@ pub mut:
 	stroke_join      StrokeJoin = .inherit
 	clip_path_id     string // references clip_paths key, empty = none
 	fill_gradient_id string // references gradients key, empty = flat fill
+	filter_id        string // references filters key, empty = none
 	opacity          f32 = 1.0
 	fill_opacity     f32 = 1.0
 	stroke_opacity   f32 = 1.0
@@ -96,14 +115,16 @@ pub mut:
 // VectorGraphic holds the complete parsed vector graphic (e.g., from SVG).
 pub struct VectorGraphic {
 pub mut:
-	width      f32 // viewBox width
-	height     f32 // viewBox height
-	view_box_x f32 // viewBox min-x offset
-	view_box_y f32 // viewBox min-y offset
-	paths      []VectorPath
-	texts      []SvgText
-	clip_paths map[string][]VectorPath   // id -> clip geometry
-	gradients  map[string]SvgGradientDef // id -> gradient def
+	width           f32 // viewBox width
+	height          f32 // viewBox height
+	view_box_x      f32 // viewBox min-x offset
+	view_box_y      f32 // viewBox min-y offset
+	paths           []VectorPath
+	texts           []SvgText
+	clip_paths      map[string][]VectorPath   // id -> clip geometry
+	gradients       map[string]SvgGradientDef // id -> gradient def
+	filters         map[string]SvgFilter
+	filtered_groups []SvgFilteredGroup
 }
 
 // TessellatedPath holds triangulated geometry ready for rendering.

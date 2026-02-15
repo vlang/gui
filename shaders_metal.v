@@ -406,3 +406,128 @@ vertex VertexOut vs_main(VertexIn in [[stage_in]], constant Uniforms &uniforms [
     return out;
 }
 '
+
+// --- Offscreen Gaussian blur shaders for SVG filters ---
+
+// Passthrough vertex shader for texture-based blur passes.
+// UVs map 0..1 for texture sampling. tm[0][0] carries stdDeviation.
+const vs_filter_blur_metal = '
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexIn {
+    float3 position [[attribute(0)]];
+    float2 texcoord0 [[attribute(1)]];
+    float4 color0 [[attribute(2)]];
+};
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 uv;
+    float4 color;
+    float std_dev;
+};
+
+struct Uniforms {
+    float4x4 mvp;
+    float4x4 tm;
+};
+
+vertex VertexOut vs_main(VertexIn in [[stage_in]], constant Uniforms &uniforms [[buffer(0)]]) {
+    VertexOut out;
+    out.position = uniforms.mvp * float4(in.position.xy, 0.0, 1.0);
+    out.uv = in.texcoord0;
+    out.color = in.color0;
+    out.std_dev = uniforms.tm[0][0];
+    return out;
+}
+'
+
+// 13-tap horizontal Gaussian blur fragment shader.
+// Weights precomputed for sigma=1, scaled by stdDeviation via step size.
+const fs_filter_blur_h_metal = '
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 uv;
+    float4 color;
+    float std_dev;
+};
+
+fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
+    // Normalized Gaussian weights for sigma=1, 13 taps
+    const float w[7] = { 0.19947, 0.17603, 0.12098, 0.06476, 0.02700, 0.00877, 0.00222 };
+    float step = in.std_dev / float(tex.get_width());
+
+    float4 c = tex.sample(smp, in.uv) * w[0];
+    for (int i = 1; i < 7; i++) {
+        float off = float(i) * step;
+        c += tex.sample(smp, in.uv + float2(off, 0.0)) * w[i];
+        c += tex.sample(smp, in.uv - float2(off, 0.0)) * w[i];
+    }
+    return c;
+}
+'
+
+// 13-tap vertical Gaussian blur fragment shader.
+const fs_filter_blur_v_metal = '
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 uv;
+    float4 color;
+    float std_dev;
+};
+
+fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
+    const float w[7] = { 0.19947, 0.17603, 0.12098, 0.06476, 0.02700, 0.00877, 0.00222 };
+    float step = in.std_dev / float(tex.get_height());
+
+    float4 c = tex.sample(smp, in.uv) * w[0];
+    for (int i = 1; i < 7; i++) {
+        float off = float(i) * step;
+        c += tex.sample(smp, in.uv + float2(0.0, off)) * w[i];
+        c += tex.sample(smp, in.uv - float2(0.0, off)) * w[i];
+    }
+    return c;
+}
+'
+
+// Simple color pass-through shader for rendering SVG content
+// to offscreen texture (no texture sampling).
+const fs_filter_color_metal = '
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 uv;
+    float4 color;
+    float std_dev;
+};
+
+fragment float4 fs_main(VertexOut in [[stage_in]]) {
+    return in.color;
+}
+'
+
+// Simple texture sampling shader for compositing blurred result.
+const fs_filter_texture_metal = '
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 uv;
+    float4 color;
+    float std_dev;
+};
+
+fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
+    return tex.sample(smp, in.uv) * in.color;
+}
+'

@@ -3,14 +3,24 @@ module gui
 import hash.fnv1a
 import os
 
+// CachedFilteredGroup holds tessellated geometry for a filter group.
+pub struct CachedFilteredGroup {
+pub:
+	filter    SvgFilter
+	triangles []TessellatedPath
+	texts     []SvgText
+	bbox      [4]f32 // x, y, width, height in viewBox coords
+}
+
 // CachedSvg holds pre-tessellated SVG data for efficient rendering.
 pub struct CachedSvg {
 pub:
-	triangles []TessellatedPath // Tessellated paths
-	texts     []SvgText         // Text elements for DrawText rendering
-	width     f32               // Original viewBox width
-	height    f32               // Original viewBox height
-	scale     f32               // Scale factor applied during tessellation
+	triangles       []TessellatedPath // Tessellated paths
+	texts           []SvgText         // Text elements for DrawText rendering
+	filtered_groups []CachedFilteredGroup
+	width           f32 // Original viewBox width
+	height          f32 // Original viewBox height
+	scale           f32 // Scale factor applied during tessellation
 }
 
 // load_svg loads and tessellates an SVG, caching the result.
@@ -60,30 +70,60 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 	// Tessellate at the target scale
 	triangles := vg.get_triangles(scale)
 
+	// Tessellate filtered groups
+	mut cached_fg := []CachedFilteredGroup{cap: vg.filtered_groups.len}
+	for fg in vg.filtered_groups {
+		filter := vg.filters[fg.filter_id]
+		// Build temp VectorGraphic for this group's paths
+		mut fg_vg := VectorGraphic{
+			width:      vg.width
+			height:     vg.height
+			paths:      fg.paths
+			gradients:  vg.gradients
+			clip_paths: vg.clip_paths
+		}
+		fg_tris := fg_vg.get_triangles(scale)
+		// Compute bbox from triangle vertices
+		bbox := compute_triangle_bbox(fg_tris)
+		cached_fg << CachedFilteredGroup{
+			filter:    filter
+			triangles: fg_tris
+			texts:     fg.texts
+			bbox:      bbox
+		}
+	}
+
 	// Validate size: prevent caching extremely complex SVGs (>10MB of geometry)
 	// Each triangle vertex is 2 f32 (8 bytes), rough estimate
 	mut total_verts := 0
 	for tri in triangles {
 		total_verts += tri.triangles.len
 	}
+	for cfg_ in cached_fg {
+		for tri in cfg_.triangles {
+			total_verts += tri.triangles.len
+		}
+	}
 	max_cached_verts := 1250000 // ~10MB limit
 	if total_verts > max_cached_verts {
 		// Return without caching - too large
 		return &CachedSvg{
-			triangles: triangles
-			texts:     vg.texts
-			width:     vg.width
-			height:    vg.height
-			scale:     scale
+			triangles:       triangles
+			texts:           vg.texts
+			filtered_groups: cached_fg
+			width:           vg.width
+			height:          vg.height
+			scale:           scale
 		}
 	}
 
 	cached := &CachedSvg{
-		triangles: triangles
-		texts:     vg.texts
-		width:     vg.width
-		height:    vg.height
-		scale:     scale
+		triangles:       triangles
+		texts:           vg.texts
+		filtered_groups: cached_fg
+		width:           vg.width
+		height:          vg.height
+		scale:           scale
 	}
 
 	// set handles LRU eviction internally
@@ -134,4 +174,41 @@ pub fn (mut window Window) remove_svg_from_cache(svg_src string) {
 pub fn (mut window Window) clear_svg_cache() {
 	window.view_state.svg_cache.clear()
 	window.view_state.svg_dim_cache = map[string][2]f32{}
+}
+
+// compute_triangle_bbox computes bounding box from tessellated paths.
+// Returns [x, y, width, height] in viewBox coordinates.
+fn compute_triangle_bbox(tpaths []TessellatedPath) [4]f32 {
+	mut min_x := f32(1e30)
+	mut min_y := f32(1e30)
+	mut max_x := f32(-1e30)
+	mut max_y := f32(-1e30)
+	mut has_data := false
+
+	for tp in tpaths {
+		mut i := 0
+		for i < tp.triangles.len - 1 {
+			x := tp.triangles[i]
+			y := tp.triangles[i + 1]
+			if x < min_x {
+				min_x = x
+			}
+			if x > max_x {
+				max_x = x
+			}
+			if y < min_y {
+				min_y = y
+			}
+			if y > max_y {
+				max_y = y
+			}
+			has_data = true
+			i += 2
+		}
+	}
+
+	if !has_data {
+		return [f32(0), 0, 0, 0]!
+	}
+	return [min_x, min_y, max_x - min_x, max_y - min_y]!
 }

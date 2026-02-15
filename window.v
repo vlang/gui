@@ -55,6 +55,7 @@ mut:
 	stencil_clear_pip      sgl.Pipeline // Pipeline: clear stencil (ref=0)
 	stencil_clear_pip_init bool
 	shader_pipelines       map[u64]sgl.Pipeline // Cached custom shader pipelines
+	filter_state           SvgFilterState       // Offscreen state for SVG filters
 	ime_overlay            voidptr              // Native IME overlay handle (macOS)
 	ime_handler            &vglyph.StandardIMEHandler = unsafe { nil }
 	ime_initialized        bool // Lazy init flag (NSWindow not ready at init_fn)
@@ -180,6 +181,10 @@ fn frame_fn(mut window Window) {
 		window.update()
 		window.refresh_window = false
 	}
+
+	// Process SVG filters in offscreen passes BEFORE the
+	// swapchain pass; sokol doesn't support nested passes.
+	process_svg_filters(mut window)
 
 	window.lock()
 	window.ui.begin()

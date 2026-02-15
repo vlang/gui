@@ -460,7 +460,8 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext) string {
 			DrawImage {
 				pdf_draw_image_placeholder(mut out, ctx, renderer)
 			}
-			DrawShadow, DrawBlur, DrawGradient, DrawGradientBorder, DrawCustomShader, DrawNone {}
+			DrawShadow, DrawBlur, DrawGradient, DrawGradientBorder, DrawCustomShader,
+			DrawFilterBegin, DrawFilterEnd, DrawFilterComposite, DrawNone {}
 		}
 		if advance {
 			i++

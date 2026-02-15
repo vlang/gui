@@ -354,3 +354,101 @@ const vs_custom_glsl = '
         p3 = tm[3];
     }
 '
+
+// --- Offscreen Gaussian blur shaders for SVG filters ---
+
+const vs_filter_blur_glsl = '
+    #version 330
+    layout(location=0) in vec3 position;
+    layout(location=1) in vec2 texcoord0;
+    layout(location=2) in vec4 color0;
+
+    uniform mat4 mvp;
+    uniform mat4 tm;
+
+    out vec2 uv;
+    out vec4 color;
+    out float std_dev;
+
+    void main() {
+        gl_Position = mvp * vec4(position.xy, 0.0, 1.0);
+        uv = texcoord0;
+        color = color0;
+        std_dev = tm[0][0];
+    }
+'
+
+const fs_filter_blur_h_glsl = '
+    #version 330
+    uniform sampler2D tex_smp;
+    in vec2 uv;
+    in vec4 color;
+    in float std_dev;
+
+    out vec4 frag_color;
+
+    void main() {
+        // Normalized Gaussian weights for sigma=1, 13 taps
+        float w[7] = float[7](0.19947, 0.17603, 0.12098, 0.06476, 0.02700, 0.00877, 0.00222);
+        vec2 tex_size = vec2(textureSize(tex_smp, 0));
+        float step_size = std_dev / tex_size.x;
+
+        frag_color = texture(tex_smp, uv) * w[0];
+        for (int i = 1; i < 7; i++) {
+            float off = float(i) * step_size;
+            frag_color += texture(tex_smp, uv + vec2(off, 0.0)) * w[i];
+            frag_color += texture(tex_smp, uv - vec2(off, 0.0)) * w[i];
+        }
+    }
+'
+
+const fs_filter_blur_v_glsl = '
+    #version 330
+    uniform sampler2D tex_smp;
+    in vec2 uv;
+    in vec4 color;
+    in float std_dev;
+
+    out vec4 frag_color;
+
+    void main() {
+        float w[7] = float[7](0.19947, 0.17603, 0.12098, 0.06476, 0.02700, 0.00877, 0.00222);
+        vec2 tex_size = vec2(textureSize(tex_smp, 0));
+        float step_size = std_dev / tex_size.y;
+
+        frag_color = texture(tex_smp, uv) * w[0];
+        for (int i = 1; i < 7; i++) {
+            float off = float(i) * step_size;
+            frag_color += texture(tex_smp, uv + vec2(0.0, off)) * w[i];
+            frag_color += texture(tex_smp, uv - vec2(0.0, off)) * w[i];
+        }
+    }
+'
+
+// Color pass-through for offscreen content (no texture).
+const fs_filter_color_glsl = '
+    #version 330
+    in vec2 uv;
+    in vec4 color;
+    in float std_dev;
+
+    out vec4 frag_color;
+
+    void main() {
+        frag_color = color;
+    }
+'
+
+const fs_filter_texture_glsl = '
+    #version 330
+    uniform sampler2D tex_smp;
+    in vec2 uv;
+    in vec4 color;
+    in float std_dev;
+
+    out vec4 frag_color;
+
+    void main() {
+        frag_color = texture(tex_smp, uv) * color;
+    }
+'
