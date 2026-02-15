@@ -350,11 +350,15 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 	tx, ty := apply_transform(base_x, base_y, style.transform)
 	scale := extract_transform_scale(style.transform)
 	scaled_size := font_size * scale
+	// Letter spacing
+	ls_raw := find_attr_or_style(elem, 'letter-spacing') or { '0' }
+	letter_spacing := parse_length(ls_raw) * scale
 
 	// Check for tspan children
 	if body.contains('<tspan') {
 		parse_tspan_elements(body, tx, ty, font_family, scaled_size, bold, italic, underline,
-			strikethrough, color, fill_gradient_id, anchor, opacity, style, mut state)
+			strikethrough, color, fill_gradient_id, anchor, opacity, letter_spacing, style, mut
+			state)
 	} else {
 		plain := extract_plain_text(body)
 		if plain.len > 0 {
@@ -373,13 +377,14 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 				opacity:          opacity
 				filter_id:        style.filter_id
 				fill_gradient_id: fill_gradient_id
+				letter_spacing:   letter_spacing
 			}
 		}
 	}
 }
 
 // parse_tspan_elements iterates <tspan> children inside a <text> body.
-fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_underline bool, parent_strikethrough bool, parent_color Color, parent_gradient_id string, parent_anchor u8, parent_opacity f32, style GroupStyle, mut state ParseState) {
+fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_underline bool, parent_strikethrough bool, parent_color Color, parent_gradient_id string, parent_anchor u8, parent_opacity f32, parent_letter_spacing f32, style GroupStyle, mut state ParseState) {
 	mut current_y := base_y
 	mut search_pos := 0
 
@@ -448,6 +453,13 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 		} else {
 			parent_strikethrough
 		}
+		ls_str := find_attr_or_style(tspan_elem, 'letter-spacing') or { '' }
+		letter_spacing := if ls_str.len > 0 {
+			scale := extract_transform_scale(style.transform)
+			parse_length(ls_str) * scale
+		} else {
+			parent_letter_spacing
+		}
 
 		state.texts << SvgText{
 			text:             text
@@ -464,6 +476,7 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 			opacity:          parent_opacity
 			filter_id:        style.filter_id
 			fill_gradient_id: fill_gradient_id
+			letter_spacing:   letter_spacing
 		}
 	}
 
@@ -485,6 +498,7 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 			opacity:          parent_opacity
 			filter_id:        style.filter_id
 			fill_gradient_id: parent_gradient_id
+			letter_spacing:   parent_letter_spacing
 		}
 	}
 }

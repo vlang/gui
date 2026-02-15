@@ -475,13 +475,14 @@ fn (ts TextStyle) to_text_cfg() gg.TextCfg {
 pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 	return vglyph.TextConfig{
 		style:    vglyph.TextStyle{
-			font_name:     ts.family
-			color:         ts.color.to_gx_color()
-			size:          ts.size
-			features:      ts.features
-			underline:     ts.underline
-			strikethrough: ts.strikethrough
-			typeface:      ts.typeface
+			font_name:      ts.family
+			color:          ts.color.to_gx_color()
+			size:           ts.size
+			features:       ts.features
+			underline:      ts.underline
+			strikethrough:  ts.strikethrough
+			typeface:       ts.typeface
+			letter_spacing: ts.letter_spacing
 		}
 		block:    vglyph.BlockStyle{
 			align: match ts.align {

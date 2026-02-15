@@ -1874,17 +1874,18 @@ fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, gradients map
 		unsafe { &vglyph.GradientConfig(nil) }
 	}
 	text_style := TextStyle{
-		family:        t.font_family
-		size:          t.font_size * scale
-		typeface:      typeface
-		color:         if t.opacity < 1.0 {
+		family:         t.font_family
+		size:           t.font_size * scale
+		typeface:       typeface
+		color:          if t.opacity < 1.0 {
 			Color{t.color.r, t.color.g, t.color.b, u8(f32(t.color.a) * t.opacity)}
 		} else {
 			t.color
 		}
-		underline:     t.underline
-		strikethrough: t.strikethrough
-		gradient:      gradient
+		underline:      t.underline
+		strikethrough:  t.strikethrough
+		letter_spacing: t.letter_spacing * scale
+		gradient:       gradient
 	}
 	cfg := text_style.to_vglyph_cfg()
 
