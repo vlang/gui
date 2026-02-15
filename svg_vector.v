@@ -64,17 +64,18 @@ pub:
 // SvgText holds a parsed <text> element for deferred rendering.
 pub struct SvgText {
 pub:
-	text        string
-	x           f32
-	y           f32 // baseline y in viewBox coords
-	font_family string
-	font_size   f32 // viewBox units (pre-transform-scaled)
-	bold        bool
-	italic      bool
-	color       Color
-	anchor      u8 // 0=start, 1=middle, 2=end
-	opacity     f32 = 1.0
-	filter_id   string
+	text             string
+	x                f32
+	y                f32 // baseline y in viewBox coords
+	font_family      string
+	font_size        f32 // viewBox units (pre-transform-scaled)
+	bold             bool
+	italic           bool
+	color            Color
+	anchor           u8 // 0=start, 1=middle, 2=end
+	opacity          f32 = 1.0
+	filter_id        string
+	fill_gradient_id string
 }
 
 // SvgFilter holds a parsed <filter> definition.

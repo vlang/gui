@@ -1788,7 +1788,8 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 
 	// Emit text elements
 	for svg_txt in cached.texts {
-		render_svg_text(svg_txt, shape.x, shape.y, cached.scale, mut window)
+		render_svg_text(svg_txt, shape.x, shape.y, cached.scale, cached.gradients, mut
+			window)
 	}
 
 	// Emit filtered groups
@@ -1824,7 +1825,8 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 		}
 		// Emit text elements for filtered group
 		for svg_txt in fg.texts {
-			render_svg_text(svg_txt, shape.x, shape.y, cached.scale, mut window)
+			render_svg_text(svg_txt, shape.x, shape.y, cached.scale, fg.gradients, mut
+				window)
 		}
 		window.renderers << DrawFilterEnd{}
 	}
@@ -1834,7 +1836,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 }
 
 // render_svg_text converts an SvgText into a DrawText renderer.
-fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, mut window Window) {
+fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, gradients map[string]SvgGradientDef, mut window Window) {
 	if t.text.len == 0 {
 		return
 	}
@@ -1843,6 +1845,33 @@ fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, mut window Wi
 		t.bold { vglyph.Typeface.bold }
 		t.italic { vglyph.Typeface.italic }
 		else { vglyph.Typeface.regular }
+	}
+	// Convert SVG gradient def to vglyph gradient config
+	gradient := if t.fill_gradient_id.len > 0 {
+		if gdef := gradients[t.fill_gradient_id] {
+			mut stops := []vglyph.GradientStop{cap: gdef.stops.len}
+			for s in gdef.stops {
+				stops << vglyph.GradientStop{
+					color:    s.color.to_gx_color()
+					position: s.offset
+				}
+			}
+			dx := gdef.x2 - gdef.x1
+			dy := gdef.y2 - gdef.y1
+			dir := if math.abs(dx) >= math.abs(dy) {
+				vglyph.GradientDirection.horizontal
+			} else {
+				vglyph.GradientDirection.vertical
+			}
+			&vglyph.GradientConfig{
+				stops:     stops
+				direction: dir
+			}
+		} else {
+			unsafe { &vglyph.GradientConfig(nil) }
+		}
+	} else {
+		unsafe { &vglyph.GradientConfig(nil) }
 	}
 	text_style := TextStyle{
 		family:   t.font_family
@@ -1853,6 +1882,7 @@ fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, mut window Wi
 		} else {
 			t.color
 		}
+		gradient: gradient
 	}
 	cfg := text_style.to_vglyph_cfg()
 

@@ -9,6 +9,7 @@ pub:
 	filter    SvgFilter
 	triangles []TessellatedPath
 	texts     []SvgText
+	gradients map[string]SvgGradientDef
 	bbox      [4]f32 // x, y, width, height in viewBox coords
 }
 
@@ -18,6 +19,7 @@ pub:
 	triangles       []TessellatedPath // Tessellated paths
 	texts           []SvgText         // Text elements for DrawText rendering
 	filtered_groups []CachedFilteredGroup
+	gradients       map[string]SvgGradientDef
 	width           f32 // Original viewBox width
 	height          f32 // Original viewBox height
 	scale           f32 // Scale factor applied during tessellation
@@ -89,6 +91,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 			filter:    filter
 			triangles: fg_tris
 			texts:     fg.texts
+			gradients: vg.gradients
 			bbox:      bbox
 		}
 	}
@@ -111,6 +114,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 			triangles:       triangles
 			texts:           vg.texts
 			filtered_groups: cached_fg
+			gradients:       vg.gradients
 			width:           vg.width
 			height:          vg.height
 			scale:           scale
@@ -121,6 +125,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		triangles:       triangles
 		texts:           vg.texts
 		filtered_groups: cached_fg
+		gradients:       vg.gradients
 		width:           vg.width
 		height:          vg.height
 		scale:           scale

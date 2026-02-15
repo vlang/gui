@@ -321,9 +321,12 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 	bold := fw == 'bold' || fw.f32() >= 600
 	fs := find_attr_or_style(elem, 'font-style') or { '' }
 	italic := fs == 'italic' || fs == 'oblique'
-	// Fill → text color (default black)
+	// Fill → text color (default black); detect gradient url()
 	fill_str := find_attr_or_style(elem, 'fill') or { style.fill }
-	color := if fill_str.len > 0 && fill_str != 'none' {
+	fill_gradient_id := parse_fill_url(fill_str) or { '' }
+	color := if fill_gradient_id.len > 0 {
+		black
+	} else if fill_str.len > 0 && fill_str != 'none' {
 		parse_svg_color(fill_str)
 	} else {
 		black
@@ -347,29 +350,30 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 	// Check for tspan children
 	if body.contains('<tspan') {
 		parse_tspan_elements(body, tx, ty, font_family, scaled_size, bold, italic, color,
-			anchor, opacity, style, mut state)
+			fill_gradient_id, anchor, opacity, style, mut state)
 	} else {
 		plain := extract_plain_text(body)
 		if plain.len > 0 {
 			state.texts << SvgText{
-				text:        plain
-				x:           tx
-				y:           ty
-				font_family: font_family
-				font_size:   scaled_size
-				bold:        bold
-				italic:      italic
-				color:       color
-				anchor:      anchor
-				opacity:     opacity
-				filter_id:   style.filter_id
+				text:             plain
+				x:                tx
+				y:                ty
+				font_family:      font_family
+				font_size:        scaled_size
+				bold:             bold
+				italic:           italic
+				color:            color
+				anchor:           anchor
+				opacity:          opacity
+				filter_id:        style.filter_id
+				fill_gradient_id: fill_gradient_id
 			}
 		}
 	}
 }
 
 // parse_tspan_elements iterates <tspan> children inside a <text> body.
-fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_color Color, parent_anchor u8, parent_opacity f32, style GroupStyle, mut state ParseState) {
+fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_color Color, parent_gradient_id string, parent_anchor u8, parent_opacity f32, style GroupStyle, mut state ParseState) {
 	mut current_y := base_y
 	mut search_pos := 0
 
@@ -404,9 +408,17 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 			scale := extract_transform_scale(style.transform)
 			current_y += dy_val * scale
 		}
-		// Per-tspan overrides
+		// Per-tspan overrides; detect gradient url()
 		fill_str := find_attr_or_style(tspan_elem, 'fill') or { '' }
-		color := if fill_str.len > 0 && fill_str != 'none' {
+		tspan_gradient_id := parse_fill_url(fill_str) or { '' }
+		fill_gradient_id := if tspan_gradient_id.len > 0 {
+			tspan_gradient_id
+		} else {
+			parent_gradient_id
+		}
+		color := if tspan_gradient_id.len > 0 {
+			black
+		} else if fill_str.len > 0 && fill_str != 'none' {
 			parse_svg_color(fill_str)
 		} else {
 			parent_color
@@ -425,17 +437,18 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 		}
 
 		state.texts << SvgText{
-			text:        text
-			x:           tx
-			y:           current_y
-			font_family: parent_family
-			font_size:   parent_size
-			bold:        bold
-			italic:      italic
-			color:       color
-			anchor:      parent_anchor
-			opacity:     parent_opacity
-			filter_id:   style.filter_id
+			text:             text
+			x:                tx
+			y:                current_y
+			font_family:      parent_family
+			font_size:        parent_size
+			bold:             bold
+			italic:           italic
+			color:            color
+			anchor:           parent_anchor
+			opacity:          parent_opacity
+			filter_id:        style.filter_id
+			fill_gradient_id: fill_gradient_id
 		}
 	}
 
@@ -443,17 +456,18 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 	plain := extract_plain_text(body)
 	if plain.len > 0 {
 		state.texts << SvgText{
-			text:        plain
-			x:           base_x
-			y:           base_y
-			font_family: parent_family
-			font_size:   parent_size
-			bold:        parent_bold
-			italic:      parent_italic
-			color:       parent_color
-			anchor:      parent_anchor
-			opacity:     parent_opacity
-			filter_id:   style.filter_id
+			text:             plain
+			x:                base_x
+			y:                base_y
+			font_family:      parent_family
+			font_size:        parent_size
+			bold:             parent_bold
+			italic:           parent_italic
+			color:            parent_color
+			anchor:           parent_anchor
+			opacity:          parent_opacity
+			filter_id:        style.filter_id
+			fill_gradient_id: parent_gradient_id
 		}
 	}
 }
