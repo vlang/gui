@@ -119,8 +119,8 @@ fn main() {
 	mut window := gui.window(
 		title:        'Gui Showcase'
 		state:        &ShowcaseApp{}
-		width:        900
-		height:       600
+		width:        950
+		height:       700
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
 			w.update_view(main_view)
