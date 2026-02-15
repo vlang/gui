@@ -144,9 +144,10 @@ struct DrawFilterComposite {
 }
 
 struct DrawLayout {
-	layout &vglyph.Layout
-	x      f32
-	y      f32
+	layout   &vglyph.Layout
+	x        f32
+	y        f32
+	gradient &vglyph.GradientConfig = unsafe { nil }
 }
 
 struct DrawLayoutTransformed {
@@ -154,6 +155,7 @@ struct DrawLayoutTransformed {
 	x         f32
 	y         f32
 	transform vglyph.AffineTransform
+	gradient  &vglyph.GradientConfig = unsafe { nil }
 }
 
 type DrawClip = gg.Rect
@@ -347,11 +349,21 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			}
 		}
 		DrawLayout {
-			window.text_system.draw_layout(renderer.layout, renderer.x, renderer.y)
+			if renderer.gradient != unsafe { nil } {
+				window.text_system.draw_layout_with_gradient(renderer.layout, renderer.x,
+					renderer.y, renderer.gradient)
+			} else {
+				window.text_system.draw_layout(renderer.layout, renderer.x, renderer.y)
+			}
 		}
 		DrawLayoutTransformed {
-			window.text_system.draw_layout_transformed(renderer.layout, renderer.x, renderer.y,
-				renderer.transform)
+			if renderer.gradient != unsafe { nil } {
+				window.text_system.draw_layout_transformed_with_gradient(renderer.layout,
+					renderer.x, renderer.y, renderer.transform, renderer.gradient)
+			} else {
+				window.text_system.draw_layout_transformed(renderer.layout, renderer.x,
+					renderer.y, renderer.transform)
+			}
 		}
 		DrawClip {
 			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
@@ -1069,6 +1081,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				x:         shape.x + shape.padding_left()
 				y:         shape.y + shape.padding_top()
 				transform: transform
+				gradient:  shape.tc.text_style.gradient
 			}
 			return
 		}
@@ -1082,7 +1095,20 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	byte_beg := rune_to_byte_index(shape.tc.text, beg)
 	byte_end := rune_to_byte_index(shape.tc.text, end)
 
+	has_gradient := shape.tc.text_style.gradient != unsafe { nil }
+
 	if shape.has_text_layout() {
+		// Gradient text: emit single DrawLayout for full layout
+		if has_gradient && color != color_transparent {
+			layout_to_draw := clone_layout_for_draw(shape.tc.vglyph_layout)
+			window.renderers << DrawLayout{
+				layout:   layout_to_draw
+				x:        shape.x + shape.padding_left()
+				y:        shape.y + shape.padding_top()
+				gradient: shape.tc.text_style.gradient
+			}
+		}
+
 		for line in shape.tc.vglyph_layout.lines {
 			draw_x := shape.x + shape.padding_left() + line.rect.x
 			draw_y := shape.y + shape.padding_top() + line.rect.y
@@ -1106,24 +1132,25 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 
 			// Cull
 			if rects_overlap(clip, draw_rect) && color != color_transparent {
-				// Remove newlines for rendering (draw_text usually handles one line)
-				// Optimization: Slice instead of replace/alloc if possible
-				mut slice_end := line_end
-				if slice_end > line.start_index && shape.tc.text[slice_end - 1] == `\n` {
-					slice_end--
-				}
-				mut render_str := shape.tc.text[line.start_index..slice_end]
+				if !has_gradient {
+					// Remove newlines for rendering
+					mut slice_end := line_end
+					if slice_end > line.start_index && shape.tc.text[slice_end - 1] == `\n` {
+						slice_end--
+					}
+					mut render_str := shape.tc.text[line.start_index..slice_end]
 
-				if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
-					render_str = password_char.repeat(utf8_str_visible_length(render_str))
-				}
+					if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
+						render_str = password_char.repeat(utf8_str_visible_length(render_str))
+					}
 
-				if render_str.len > 0 {
-					window.renderers << DrawText{
-						x:    draw_x
-						y:    draw_y
-						text: render_str
-						cfg:  text_cfg
+					if render_str.len > 0 {
+						window.renderers << DrawText{
+							x:    draw_x
+							y:    draw_y
+							text: render_str
+							cfg:  text_cfg
+						}
 					}
 				}
 
