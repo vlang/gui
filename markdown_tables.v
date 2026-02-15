@@ -8,16 +8,18 @@ fn parse_markdown_table(lines []string, style MarkdownStyle, link_defs map[strin
 		return none
 	}
 	// Line 0 = headers
-	headers := parse_table_row(lines[0])
+	line0 := lines[0]
+	headers := parse_table_row(line0)
 	if headers.len == 0 || headers.len > max_table_columns {
 		return none
 	}
 	// Line 1 must be a valid separator row
-	if !is_table_separator(lines[1].trim_space()) {
+	line1 := lines[1]
+	if !is_table_separator(line1.trim_space()) {
 		return none
 	}
 	// Line 1 = separator with alignments (validates each cell has dash)
-	alignments := parse_table_alignments(lines[1], headers.len) or { return none }
+	alignments := parse_table_alignments(line1, headers.len) or { return none }
 	// Parse headers with inline formatting
 	mut header_rich := []RichText{cap: headers.len}
 	for h in headers {

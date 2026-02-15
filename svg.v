@@ -43,9 +43,9 @@ struct GroupStyle {
 // dimensions are specified.
 pub fn parse_svg_dimensions(content string) (f32, f32) {
 	if vb := find_attr(content, 'viewBox') {
-		parts := vb.split_any(' ,').filter(it.len > 0)
-		if parts.len >= 4 {
-			return clamp_viewbox_dim(parts[2].f32()), clamp_viewbox_dim(parts[3].f32())
+		nums := parse_number_list(vb)
+		if nums.len >= 4 {
+			return clamp_viewbox_dim(nums[2]), clamp_viewbox_dim(nums[3])
 		}
 	}
 	w := if wa := find_attr(content, 'width') {
@@ -70,12 +70,12 @@ pub fn parse_svg(content string) !VectorGraphic {
 
 	// Parse viewBox
 	if vb := find_attr(content, 'viewBox') {
-		parts := vb.split_any(' ,').filter(it.len > 0)
-		if parts.len >= 4 {
-			vg.view_box_x = parts[0].f32()
-			vg.view_box_y = parts[1].f32()
-			vg.width = clamp_viewbox_dim(parts[2].f32())
-			vg.height = clamp_viewbox_dim(parts[3].f32())
+		nums := parse_number_list(vb)
+		if nums.len >= 4 {
+			vg.view_box_x = nums[0]
+			vg.view_box_y = nums[1]
+			vg.width = clamp_viewbox_dim(nums[2])
+			vg.height = clamp_viewbox_dim(nums[3])
 		}
 	} else {
 		// Try width/height attributes

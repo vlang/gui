@@ -188,7 +188,7 @@ fn frame_fn(mut window Window) {
 
 	window.lock()
 	window.ui.begin()
-	renderers_draw(window.renderers, mut window)
+	renderers_draw(mut window)
 	window.ui.end()
 	window.unlock()
 	sapp.set_mouse_cursor(window.view_state.mouse_cursor)

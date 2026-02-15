@@ -189,7 +189,7 @@ type Renderer = DrawCircle
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute then entire
 // draw logic of GUI
-fn renderers_draw(renderers_ []Renderer, mut window Window) {
+fn renderers_draw(mut window Window) {
 	renderers := window.renderers
 
 	mut i := 0

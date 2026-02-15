@@ -94,9 +94,13 @@ pub fn (c Color) to_hex_string() string {
 
 // hex_byte formats a u8 as a two-character uppercase hex string.
 fn hex_byte(b u8) string {
-	hi := '0123456789ABCDEF'[b >> 4]
-	lo := '0123456789ABCDEF'[b & 0x0F]
-	return '${rune(hi)}${rune(lo)}'
+	hex := '0123456789ABCDEF'
+	hi := hex[b >> 4]
+	lo := hex[b & 0x0F]
+	mut res := []u8{len: 2}
+	res[0] = hi
+	res[1] = lo
+	return res.bytestr()
 }
 
 // color_from_hex_string parses a hex color string.
