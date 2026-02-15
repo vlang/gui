@@ -354,7 +354,7 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 	}
 	mut text := cfg.text.runes()
 	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
-	mut cursor_pos := input_state.cursor_pos
+	mut cursor_pos := int_min(input_state.cursor_pos, text.len)
 	if cursor_pos < 0 {
 		cursor_pos = text.len
 	}
@@ -372,10 +372,6 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 		}
 		if cursor_pos == text.len && is_delete {
 			return text.string()
-		}
-		if cursor_pos > text.len {
-			log.error('cursor_pos out of range (delete)')
-			return none
 		}
 		delete_pos := if is_delete { cursor_pos } else { cursor_pos - 1 }
 		if delete_pos < 0 || delete_pos >= text.len {
@@ -416,7 +412,7 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 	}
 	mut text := cfg.text.runes()
 	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
-	mut cursor_pos := input_state.cursor_pos
+	mut cursor_pos := int_min(input_state.cursor_pos, text.len)
 	if cursor_pos < 0 {
 		text = arrays.append(cfg.text.runes(), insert_runes)
 		cursor_pos = text.len
@@ -428,9 +424,6 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		text = arrays.append(arrays.append(text[..beg], insert_runes), text[end..])
 		cursor_pos = int_min(int(beg) + insert_runes.len, text.len)
 	} else {
-		if cursor_pos > text.len {
-			return error('cursor_pos out of range (insert)')
-		}
 		text = arrays.append(arrays.append(text[..cursor_pos], insert_runes), text[cursor_pos..])
 		cursor_pos = int_min(cursor_pos + insert_runes.len, text.len)
 	}

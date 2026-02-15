@@ -1268,7 +1268,11 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 	if window.is_focus(shape.id_focus) && shape.shape_type == .text
 		&& window.view_state.input_cursor_on {
 		input_state := window.view_state.input_state.get(shape.id_focus) or { InputState{} }
-		cursor_pos := input_state.cursor_pos
+		cursor_pos := if shape.tc.text_is_placeholder {
+			0
+		} else {
+			int_min(input_state.cursor_pos, shape.tc.text.runes().len)
+		}
 
 		if cursor_pos >= 0 {
 			byte_idx := rune_to_byte_index(shape.tc.text, cursor_pos)

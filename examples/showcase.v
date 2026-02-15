@@ -636,6 +636,7 @@ fn group_picker_item(label string, key string, app &ShowcaseApp) gui.View {
 			mut app := w.state[ShowcaseApp]()
 			app.selected_group = key
 			app.show_docs = false
+			app.nav_query = ''
 			if key == 'data' {
 				entries := filtered_entries(app)
 				app.selected_component = preferred_component_for_group(key, entries)
@@ -4087,13 +4088,37 @@ Use `gui.icons_map` for programmatic access to all icon names.
 Icons require `gui.theme().icon*` text styles for correct sizing.'
 
 fn demo_icons() gui.View {
-	return gui.row(
-		content: [
-			gui.text(text: gui.icon_github_alt, text_style: gui.theme().icon2),
-			gui.text(text: gui.icon_twitter, text_style: gui.theme().icon2),
-			gui.text(text: gui.icon_bug, text_style: gui.theme().icon2),
-			gui.text(text: gui.icon_heart, text_style: gui.theme().icon2),
-		]
+	keys := gui.icons_map.keys()
+	mut rows := []gui.View{}
+	for i := 0; i < keys.len; i += 5 {
+		mut icons := []gui.View{}
+		end := if i + 5 < keys.len { i + 5 } else { keys.len }
+		for j := i; j < end; j++ {
+			key := keys[j]
+			icons << gui.column(
+				min_width: 100
+				h_align:   .center
+				padding:   gui.padding_small
+				content:   [
+					gui.text(
+						text:       gui.icons_map[key]
+						text_style: gui.theme().icon1
+					),
+					gui.text(
+						text:       key.replace('icon_', '')
+						text_style: gui.theme().n5
+					),
+				]
+			)
+		}
+		rows << gui.row(
+			spacing: 0
+			content: icons
+		)
+	}
+	return gui.column(
+		spacing: gui.spacing_small
+		content: rows
 	)
 }
 
