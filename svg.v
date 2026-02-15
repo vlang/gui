@@ -19,6 +19,7 @@ struct ParseState {
 mut:
 	elem_count int
 	texts      []SvgText
+	text_paths []SvgTextPath
 }
 
 // GroupStyle holds inherited style properties for groups.

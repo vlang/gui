@@ -83,6 +83,30 @@ pub:
 	stroke_width     f32
 }
 
+// SvgTextPath holds a parsed <textPath> for text-on-curve.
+pub struct SvgTextPath {
+pub:
+	text             string
+	path_id          string
+	start_offset     f32
+	is_percent       bool
+	anchor           u8
+	spacing          u8
+	method           u8
+	side             u8
+	font_family      string
+	font_size        f32
+	bold             bool
+	italic           bool
+	color            Color
+	opacity          f32 = 1.0
+	filter_id        string
+	fill_gradient_id string
+	letter_spacing   f32
+	stroke_color     Color = color_transparent
+	stroke_width     f32
+}
+
 // SvgFilter holds a parsed <filter> definition.
 pub struct SvgFilter {
 pub:
@@ -95,9 +119,10 @@ pub:
 // SvgFilteredGroup holds paths/texts belonging to a filtered <g>.
 pub struct SvgFilteredGroup {
 pub:
-	filter_id string
-	paths     []VectorPath
-	texts     []SvgText
+	filter_id  string
+	paths      []VectorPath
+	texts      []SvgText
+	text_paths []SvgTextPath
 }
 
 // VectorPath represents a single filled path with color.
@@ -127,6 +152,8 @@ pub mut:
 	view_box_y      f32 // viewBox min-y offset
 	paths           []VectorPath
 	texts           []SvgText
+	text_paths      []SvgTextPath
+	defs_paths      map[string]string         // id -> raw d attribute
 	clip_paths      map[string][]VectorPath   // id -> clip geometry
 	gradients       map[string]SvgGradientDef // id -> gradient def
 	filters         map[string]SvgFilter

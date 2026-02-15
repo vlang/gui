@@ -6,11 +6,12 @@ import os
 // CachedFilteredGroup holds tessellated geometry for a filter group.
 pub struct CachedFilteredGroup {
 pub:
-	filter    SvgFilter
-	triangles []TessellatedPath
-	texts     []SvgText
-	gradients map[string]SvgGradientDef
-	bbox      [4]f32 // x, y, width, height in viewBox coords
+	filter     SvgFilter
+	triangles  []TessellatedPath
+	texts      []SvgText
+	text_paths []SvgTextPath
+	gradients  map[string]SvgGradientDef
+	bbox       [4]f32 // x, y, width, height in viewBox coords
 }
 
 // CachedSvg holds pre-tessellated SVG data for efficient rendering.
@@ -18,6 +19,8 @@ pub struct CachedSvg {
 pub:
 	triangles       []TessellatedPath // Tessellated paths
 	texts           []SvgText         // Text elements for DrawText rendering
+	text_paths      []SvgTextPath
+	defs_paths      map[string]string // id -> raw d attribute
 	filtered_groups []CachedFilteredGroup
 	gradients       map[string]SvgGradientDef
 	width           f32 // Original viewBox width
