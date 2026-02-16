@@ -1,0 +1,62 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>SVG Loading Spinner Animation - ConvertICO</title>
+  <desc>Animated SVG loading spinner with CSS keyframe animations. Free download at ConvertICO.com</desc>
+
+  <style>
+    .spinner-ring { transform-origin: 200px 170px; animation: spin 1.5s linear infinite; }
+    .spinner-reverse { transform-origin: 200px 170px; animation: spin-reverse 2s linear infinite; }
+    .pulse { animation: pulse 2s ease-in-out infinite; }
+    .dot { animation: dot-pulse 1.2s ease-in-out infinite; }
+    .dot:nth-child(1) { animation-delay: 0s; }
+    .dot:nth-child(2) { animation-delay: 0.15s; }
+    .dot:nth-child(3) { animation-delay: 0.3s; }
+    .dot:nth-child(4) { animation-delay: 0.45s; }
+    .dot:nth-child(5) { animation-delay: 0.6s; }
+    .dot:nth-child(6) { animation-delay: 0.75s; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes spin-reverse { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    @keyframes dot-pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+  </style>
+
+  <defs>
+    <linearGradient id="logoGradient" x1="35" y1="250" x2="465" y2="250" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EF4362"/>
+      <stop offset="0.5625" stop-color="#F04E63"/>
+      <stop offset="1" stop-color="#F16667"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="400" height="400" fill="#1a252f"/>
+
+  <g class="spinner-ring">
+    <circle cx="200" cy="170" r="120" fill="none" stroke="#3399cc" stroke-width="3" stroke-opacity="0.2"/>
+    <path d="M200 50 A120 120 0 0 1 320 170" fill="none" stroke="#3399cc" stroke-width="5" stroke-linecap="round"/>
+  </g>
+
+  <g class="spinner-reverse">
+    <circle cx="200" cy="170" r="85" fill="none" stroke="#339966" stroke-width="2" stroke-opacity="0.2"/>
+    <path d="M200 85 A85 85 0 0 1 285 170" fill="none" stroke="#339966" stroke-width="4" stroke-linecap="round"/>
+  </g>
+
+  <g>
+    <circle class="dot" cx="200" cy="125" r="5" fill="#3399cc"/>
+    <circle class="dot" cx="239" cy="145" r="5" fill="#339966"/>
+    <circle class="dot" cx="245" cy="185" r="5" fill="#e64e4e"/>
+    <circle class="dot" cx="215" cy="215" r="5" fill="#3399cc"/>
+    <circle class="dot" cx="170" cy="200" r="5" fill="#339966"/>
+    <circle class="dot" cx="155" cy="155" r="5" fill="#e64e4e"/>
+  </g>
+
+  <g class="pulse" transform="translate(152, 122) scale(0.192)">
+    <path d="M250 465C368.741 465 465 368.741 465 250C465 131.259 368.741 35 250 35C131.259 35 35 131.259 35 250C35 368.741 131.259 465 250 465Z" fill="url(#logoGradient)"/>
+    <path d="M381.7 222.9C394.9 222.9 405.6 212.2 405.6 199C405.6 185.8 394.9 175.1 381.7 175.1C368.5 175.1 357.8 185.8 357.8 199C357.8 212.2 368.5 222.9 381.7 222.9Z" fill="white"/>
+    <path d="M365.295 294.67C379.597 286.027 359.018 260.022 373.163 248.835C387.308 237.647 402.765 242.338 408.593 251.058C413.021 262.52 412.818 272.435 404.875 278.379C396.932 284.323 411.106 292.461 396.366 308.906C393.517 315.686 395.157 313.774 395.356 324.998C395.555 336.222 379.73 360.586 354.619 346.39C329.509 332.193 350.993 303.313 365.295 294.67Z" fill="white"/>
+    <path d="M359 154.2C350.1 164 335.1 165.2 324.8 156.9C322.2 154.8 319.4 152.8 316.6 150.9C274.1 121.5 212.7 124.7 173.5 158.4C164.8 165.7 157.2 174.1 150.9 183.5C121.5 226 124.7 287.4 158.4 326.6C165.7 335.3 174.1 342.9 183.5 349.2C221.1 375.2 273.5 375.7 312.2 352.2C321.5 346.5 333.4 347.8 341.5 355.1C344.9 358.1 348.3 361.3 351.6 364.2C357.4 369.5 357.1 378.7 350.9 383.5C239.4 469.7 69 379.6 83.5 234.7C93.8 96.1 269.1 33.7 365.5 128.8C370.3 133.6 370.6 141.3 366.1 146.3L359 154.2Z" fill="white"/>
+    <ellipse cx="389.5" cy="263" rx="22.5" ry="23" fill="white"/>
+  </g>
+
+  <text x="200" y="320" font-family="Arial, sans-serif" font-size="26" font-weight="bold" text-anchor="middle" fill="#ffffff">CONVERTICO</text>
+  <text x="200" y="348" font-family="Arial, sans-serif" font-size="13" text-anchor="middle" fill="#666666">Animation Sample</text>
+  <text x="200" y="380" font-family="Arial, sans-serif" font-size="11" text-anchor="middle" fill="#3399cc">convertico.com/samples/svg</text>
+</svg>

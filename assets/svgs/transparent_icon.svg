@@ -1,0 +1,54 @@
+<svg width="400" height="400" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>SVG Transparent Icon Sample - ConvertICO</title>
+  <desc>Sample SVG with various transparency levels for testing alpha channel preservation. Free download at ConvertICO.com</desc>
+
+  <defs>
+    <linearGradient id="logoGradient" x1="35" y1="250" x2="465" y2="250" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EF4362"/>
+      <stop offset="0.5625" stop-color="#F04E63"/>
+      <stop offset="1" stop-color="#F16667"/>
+    </linearGradient>
+    <linearGradient id="fadeGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#339966" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#339966" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#339966" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="checker" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect x="0" y="0" width="10" height="10" fill="#e8e8e8"/>
+      <rect x="10" y="10" width="10" height="10" fill="#e8e8e8"/>
+      <rect x="10" y="0" width="10" height="10" fill="#ffffff"/>
+      <rect x="0" y="10" width="10" height="10" fill="#ffffff"/>
+    </pattern>
+  </defs>
+
+  <rect width="400" height="400" fill="url(#checker)"/>
+
+  <path d="M200 45 L295 95 L295 190 Q295 265 200 320 Q105 265 105 190 L105 95 Z" fill="#3399cc" fill-opacity="0.85" stroke="#2a7aa8" stroke-width="3"/>
+  <path d="M200 70 L270 112 L270 185 Q270 245 200 290 Q130 245 130 185 L130 112 Z" fill="#ffffff" fill-opacity="0.25"/>
+
+  <g transform="translate(130, 100) scale(0.28)">
+    <path d="M250 465C368.741 465 465 368.741 465 250C465 131.259 368.741 35 250 35C131.259 35 35 131.259 35 250C35 368.741 131.259 465 250 465Z" fill="url(#logoGradient)"/>
+    <path d="M381.7 222.9C394.9 222.9 405.6 212.2 405.6 199C405.6 185.8 394.9 175.1 381.7 175.1C368.5 175.1 357.8 185.8 357.8 199C357.8 212.2 368.5 222.9 381.7 222.9Z" fill="white"/>
+    <path d="M365.295 294.67C379.597 286.027 359.018 260.022 373.163 248.835C387.308 237.647 402.765 242.338 408.593 251.058C413.021 262.52 412.818 272.435 404.875 278.379C396.932 284.323 411.106 292.461 396.366 308.906C393.517 315.686 395.157 313.774 395.356 324.998C395.555 336.222 379.73 360.586 354.619 346.39C329.509 332.193 350.993 303.313 365.295 294.67Z" fill="white"/>
+    <path d="M359 154.2C350.1 164 335.1 165.2 324.8 156.9C322.2 154.8 319.4 152.8 316.6 150.9C274.1 121.5 212.7 124.7 173.5 158.4C164.8 165.7 157.2 174.1 150.9 183.5C121.5 226 124.7 287.4 158.4 326.6C165.7 335.3 174.1 342.9 183.5 349.2C221.1 375.2 273.5 375.7 312.2 352.2C321.5 346.5 333.4 347.8 341.5 355.1C344.9 358.1 348.3 361.3 351.6 364.2C357.4 369.5 357.1 378.7 350.9 383.5C239.4 469.7 69 379.6 83.5 234.7C93.8 96.1 269.1 33.7 365.5 128.8C370.3 133.6 370.6 141.3 366.1 146.3L359 154.2Z" fill="white"/>
+    <ellipse cx="389.5" cy="263" rx="22.5" ry="23" fill="white"/>
+  </g>
+
+  <circle cx="50" cy="50" r="25" fill="#e64e4e" fill-opacity="0.7"/>
+  <circle cx="350" cy="50" r="25" fill="#339966" fill-opacity="0.5"/>
+  <circle cx="50" cy="350" r="25" fill="#3399cc" fill-opacity="0.3"/>
+  <circle cx="350" cy="350" r="25" fill="#f5a623" fill-opacity="0.6"/>
+
+  <g font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="#666666">
+    <text x="50" y="88" text-anchor="middle">70%</text>
+    <text x="350" y="88" text-anchor="middle">50%</text>
+    <text x="50" y="322" text-anchor="middle">30%</text>
+    <text x="350" y="322" text-anchor="middle">60%</text>
+  </g>
+
+  <rect x="30" y="150" width="25" height="60" rx="4" fill="url(#fadeGradient)"/>
+
+  <rect x="115" y="348" width="170" height="28" rx="6" fill="#EF4362" fill-opacity="0.9"/>
+  <text x="200" y="368" font-family="Arial, sans-serif" font-size="17" font-weight="bold" text-anchor="middle" fill="#ffffff">CONVERTICO</text>
+  <text x="200" y="392" font-family="Arial, sans-serif" font-size="10" text-anchor="middle" fill="#666666">Transparency Sample</text>
+</svg>
