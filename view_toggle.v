@@ -30,6 +30,11 @@ pub:
 	select             bool
 }
 
+// checkbox is an alias for [toggle](#toggle).
+pub fn checkbox(cfg ToggleCfg) View {
+	return toggle(cfg)
+}
+
 // toggle creates a toggle button (a.k.a checkbox) from the given [ToggleCfg](#ToggleCfg)
 pub fn toggle(cfg ToggleCfg) View {
 	color := if cfg.select { cfg.color_select } else { cfg.color }
