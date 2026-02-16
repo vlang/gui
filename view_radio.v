@@ -41,10 +41,7 @@ pub fn radio(cfg RadioCfg) View {
 	}
 
 	// Capture values needed for callbacks by copy to avoid dangling reference to cfg
-	color_focus := cfg.color_focus
 	color_border_focus := cfg.color_border_focus
-	color_hover := cfg.color_hover
-	color_click := cfg.color_click
 
 	content << circle(
 		name:         'radio circle'
@@ -79,7 +76,7 @@ pub fn radio(cfg RadioCfg) View {
 		v_align:      .middle
 		on_click:     left_click_only(cfg.on_click)
 		on_char:      spacebar_to_click(cfg.on_click)
-		amend_layout: fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
+		amend_layout: fn [color_border_focus] (mut layout Layout, mut w Window) {
 			if layout.shape.disabled || !layout.shape.has_events()
 				|| layout.shape.events.on_click == unsafe { nil } {
 				return
@@ -88,21 +85,11 @@ pub fn radio(cfg RadioCfg) View {
 				return
 			}
 			if w.is_focus(layout.shape.id_focus) {
-				layout.children[0].shape.color = color_focus
 				layout.children[0].shape.color_border = color_border_focus
 			}
 		}
-		on_hover:     fn [color_hover, color_click] (mut layout Layout, mut e Event, mut w Window) {
+		on_hover:     fn (mut _ Layout, mut _ Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
-			if layout.children.len == 0 {
-				return
-			}
-			if !w.is_focus(layout.shape.id_focus) {
-				layout.children[0].shape.color = color_hover
-			}
-			if e.mouse_button == .left {
-				layout.children[0].shape.color = color_click
-			}
 		}
 		content:      content
 	)
