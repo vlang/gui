@@ -197,6 +197,104 @@ fn demo_entries() []DemoEntry {
 			tags:    ['start', 'intro', 'overview']
 		},
 		DemoEntry{
+			id:      'doc_get_started'
+			label:   'Get Started'
+			group:   'welcome'
+			summary: 'Step-by-step guide to building your first v-gui application.'
+			tags:    ['guide', 'tutorial', 'setup']
+		},
+		DemoEntry{
+			id:      'doc_animations'
+			label:   'Animations'
+			group:   'welcome'
+			summary: 'Tween, spring, keyframe, and layout transition animations.'
+			tags:    ['animation', 'tween', 'spring']
+		},
+		DemoEntry{
+			id:      'doc_architecture'
+			label:   'Architecture'
+			group:   'welcome'
+			summary: 'Internal architecture and design decisions of the framework.'
+			tags:    ['design', 'internals', 'structure']
+		},
+		DemoEntry{
+			id:      'doc_data_grid'
+			label:   'Data Grid'
+			group:   'welcome'
+			summary: 'Data grid component documentation and usage patterns.'
+			tags:    ['grid', 'table', 'data']
+		},
+		DemoEntry{
+			id:      'doc_gradients'
+			label:   'Gradients'
+			group:   'welcome'
+			summary: 'Linear and radial gradient rendering techniques.'
+			tags:    ['gradient', 'color', 'effects']
+		},
+		DemoEntry{
+			id:      'doc_layout_algorithm'
+			label:   'Layout Algorithm'
+			group:   'welcome'
+			summary: 'How the layout engine measures and arranges views.'
+			tags:    ['layout', 'sizing', 'algorithm']
+		},
+		DemoEntry{
+			id:      'doc_markdown'
+			label:   'Markdown'
+			group:   'welcome'
+			summary: 'Markdown rendering capabilities and configuration.'
+			tags:    ['markdown', 'docs', 'text']
+		},
+		DemoEntry{
+			id:      'doc_native_dialogs'
+			label:   'Native Dialogs'
+			group:   'welcome'
+			summary: 'Platform-native file, save, and alert dialogs.'
+			tags:    ['dialog', 'native', 'file']
+		},
+		DemoEntry{
+			id:      'doc_performance'
+			label:   'Performance'
+			group:   'welcome'
+			summary: 'Performance optimization tips and best practices.'
+			tags:    ['performance', 'optimization', 'speed']
+		},
+		DemoEntry{
+			id:      'doc_printing'
+			label:   'Printing'
+			group:   'welcome'
+			summary: 'Printing support and page layout configuration.'
+			tags:    ['print', 'page', 'output']
+		},
+		DemoEntry{
+			id:      'doc_shaders'
+			label:   'Shaders'
+			group:   'welcome'
+			summary: 'Custom shader integration and usage.'
+			tags:    ['shader', 'gpu', 'effects']
+		},
+		DemoEntry{
+			id:      'doc_splitter'
+			label:   'Splitter'
+			group:   'welcome'
+			summary: 'Resizable split panel documentation.'
+			tags:    ['splitter', 'panel', 'resize']
+		},
+		DemoEntry{
+			id:      'doc_svg'
+			label:   'SVG'
+			group:   'welcome'
+			summary: 'SVG rendering and inline SVG support.'
+			tags:    ['svg', 'vector', 'graphics']
+		},
+		DemoEntry{
+			id:      'doc_tables'
+			label:   'Tables'
+			group:   'welcome'
+			summary: 'Table component documentation and column configuration.'
+			tags:    ['table', 'columns', 'data']
+		},
+		DemoEntry{
 			id:      'color_picker'
 			label:   'Color Picker'
 			group:   'input'
@@ -667,6 +765,23 @@ fn catalog_rows(entries []DemoEntry, app &ShowcaseApp) []gui.View {
 			continue
 		}
 		group_entries.sort_with_compare(fn (a &DemoEntry, b &DemoEntry) int {
+			a_pin := if a.id == 'welcome' {
+				0
+			} else if a.id == 'doc_get_started' {
+				1
+			} else {
+				2
+			}
+			b_pin := if b.id == 'welcome' {
+				0
+			} else if b.id == 'doc_get_started' {
+				1
+			} else {
+				2
+			}
+			if a_pin != b_pin {
+				return a_pin - b_pin
+			}
 			a_label := a.label.to_lower()
 			b_label := b.label.to_lower()
 			if a_label < b_label {
@@ -756,9 +871,9 @@ fn detail_panel(mut w gui.Window) gui.View {
 	}
 	entry := selected_entry(entries, app.selected_component)
 	mut content := []gui.View{}
-	content << view_title_bar(entry.label, app.show_docs, entry.id)
+	content << view_title_bar(entry.label, app.show_docs, entry.group)
 	content << gui.text(text: entry.summary, text_style: gui.theme().n3)
-	if app.show_docs {
+	if app.show_docs && entry.group != 'welcome' {
 		content << w.markdown(
 			id:     'doc_${entry.id}'
 			source: component_doc(entry.id)
@@ -826,6 +941,20 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'rectangle' { demo_rectangle() }
 		'scrollbar' { demo_scrollbar() }
 		'splitter' { demo_splitter(w) }
+		'doc_get_started' { demo_doc(mut w, 'doc_get_started', doc_get_started_source) }
+		'doc_animations' { demo_doc(mut w, 'doc_animations', doc_animations_source) }
+		'doc_architecture' { demo_doc(mut w, 'doc_architecture', doc_architecture_source) }
+		'doc_data_grid' { demo_doc(mut w, 'doc_data_grid', doc_data_grid_source) }
+		'doc_gradients' { demo_doc(mut w, 'doc_gradients', doc_gradients_source) }
+		'doc_layout_algorithm' { demo_doc(mut w, 'doc_layout_algorithm', doc_layout_algorithm_source) }
+		'doc_markdown' { demo_doc(mut w, 'doc_markdown', doc_markdown_source) }
+		'doc_native_dialogs' { demo_doc(mut w, 'doc_native_dialogs', doc_native_dialogs_source) }
+		'doc_performance' { demo_doc(mut w, 'doc_performance', doc_performance_source) }
+		'doc_printing' { demo_doc(mut w, 'doc_printing', doc_printing_source) }
+		'doc_shaders' { demo_doc(mut w, 'doc_shaders', doc_shaders_source) }
+		'doc_splitter' { demo_doc(mut w, 'doc_splitter', doc_splitter_source) }
+		'doc_svg' { demo_doc(mut w, 'doc_svg', doc_svg_source) }
+		'doc_tables' { demo_doc(mut w, 'doc_tables', doc_tables_source) }
 		else { gui.text(text: 'No demo configured') }
 	}
 }
@@ -940,11 +1069,11 @@ fn doc_button(show_docs bool) gui.View {
 	)
 }
 
-fn view_title_bar(label string, show_docs bool, id string) gui.View {
+fn view_title_bar(label string, show_docs bool, group string) gui.View {
 	mut title_content := [
 		gui.text(text: label, text_style: gui.theme().b1),
 	]
-	if id != 'welcome' {
+	if group != 'welcome' {
 		title_content << gui.row(sizing: gui.fill_fit, padding: gui.padding_none)
 		title_content << doc_button(show_docs)
 	}
@@ -1466,6 +1595,21 @@ This program is an interactive component catalog.
 Use the left panel to filter categories and components, then inspect live demos on
 the right.
 Each demo includes related example files for deeper reference.'
+
+const doc_get_started_source = $embed_file('../docs/GET_STARTED.md').to_string()
+const doc_animations_source = $embed_file('../docs/ANIMATIONS.md').to_string()
+const doc_architecture_source = $embed_file('../docs/ARCHITECTURE.md').to_string()
+const doc_data_grid_source = $embed_file('../docs/DATA_GRID.md').to_string()
+const doc_gradients_source = $embed_file('../docs/GRADIENTS.md').to_string()
+const doc_layout_algorithm_source = $embed_file('../docs/LAYOUT_ALGORITHM.md').to_string()
+const doc_markdown_source = $embed_file('../docs/MARKDOWN.md').to_string()
+const doc_native_dialogs_source = $embed_file('../docs/NATIVE_DIALOGS.md').to_string()
+const doc_performance_source = $embed_file('../docs/PERFORMANCE.md').to_string()
+const doc_printing_source = $embed_file('../docs/PRINTING.md').to_string()
+const doc_shaders_source = $embed_file('../docs/SHADERS.md').to_string()
+const doc_splitter_source = $embed_file('../docs/SPLITTER.md').to_string()
+const doc_svg_source = $embed_file('../docs/SVG.md').to_string()
+const doc_tables_source = $embed_file('../docs/TABLES.md').to_string()
 
 const showcase_markdown_source = '# Markdown Demo
 
@@ -4778,6 +4922,22 @@ fn demo_markdown(mut w gui.Window) gui.View {
 			w.markdown(
 				id:      'catalog_markdown'
 				source:  showcase_markdown_source
+				mode:    .wrap
+				padding: gui.padding_none
+			),
+		]
+	)
+}
+
+fn demo_doc(mut w gui.Window, id string, source string) gui.View {
+	return gui.column(
+		sizing:  gui.fill_fit
+		padding: gui.padding_small
+		color:   gui.theme().color_panel
+		content: [
+			w.markdown(
+				id:      id
+				source:  source
 				mode:    .wrap
 				padding: gui.padding_none
 			),
