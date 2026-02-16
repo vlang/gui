@@ -1,9 +1,8 @@
 import gui
-import os
 
 // Doc Viewer
 // =============================
-// A view to read the markdown doc files in the ../docs folder. Demonstrates the following:
+// A view to read the embedded markdown doc files. Demonstrates the following:
 //
 // - multiline text
 // - text selection
@@ -14,13 +13,37 @@ import os
 // to remember to "unhighlight" previous selection.
 
 const id_scroll_doc_view = 1
-const docs_path = os.join_path(@DIR, '..', 'docs')
-const readme_path = os.join_path(@DIR, '..', 'README.md')
+
+struct DocEntry {
+	name string
+	text string
+}
+
+fn doc_entries() []DocEntry {
+	return [
+		DocEntry{'README.md', $embed_file('../README.md').to_string()},
+		DocEntry{'ANIMATIONS.md', $embed_file('../docs/ANIMATIONS.md').to_string()},
+		DocEntry{'ARCHITECTURE.md', $embed_file('../docs/ARCHITECTURE.md').to_string()},
+		DocEntry{'DATA_GRID.md', $embed_file('../docs/DATA_GRID.md').to_string()},
+		DocEntry{'GET_STARTED.md', $embed_file('../docs/GET_STARTED.md').to_string()},
+		DocEntry{'GRADIENTS.md', $embed_file('../docs/GRADIENTS.md').to_string()},
+		DocEntry{'LAYOUT_ALGORITHM.md', $embed_file('../docs/LAYOUT_ALGORITHM.md').to_string()},
+		DocEntry{'MARKDOWN.md', $embed_file('../docs/MARKDOWN.md').to_string()},
+		DocEntry{'NATIVE_DIALOGS.md', $embed_file('../docs/NATIVE_DIALOGS.md').to_string()},
+		DocEntry{'PERFORMANCE.md', $embed_file('../docs/PERFORMANCE.md').to_string()},
+		DocEntry{'PRINTING.md', $embed_file('../docs/PRINTING.md').to_string()},
+		DocEntry{'ROADMAP.md', $embed_file('../docs/ROADMAP.md').to_string()},
+		DocEntry{'SHADERS.md', $embed_file('../docs/SHADERS.md').to_string()},
+		DocEntry{'SPLITTER.md', $embed_file('../docs/SPLITTER.md').to_string()},
+		DocEntry{'SVG.md', $embed_file('../docs/SVG.md').to_string()},
+		DocEntry{'TABLES.md', $embed_file('../docs/TABLES.md').to_string()},
+	]
+}
 
 @[heap]
 struct DocViewerApp {
 pub mut:
-	doc_file      string
+	selected      int
 	tab_size      string = '4'
 	markdown_mode bool   = true
 }
@@ -42,7 +65,7 @@ fn main() {
 
 fn main_view(window &gui.Window) gui.View {
 	w, h := window.window_size()
-	mut app := window.state[DocViewerApp]()
+	app := window.state[DocViewerApp]()
 
 	return gui.row(
 		width:   w
@@ -51,40 +74,34 @@ fn main_view(window &gui.Window) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			app.nav_panel(window),
-			app.doc_panel(window),
+			nav_panel(app.selected, app.markdown_mode, app.tab_size),
+			doc_panel(window, app.selected),
 		]
 	)
 }
 
-fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
-	files := os.ls(docs_path) or { [] }
-	mut doc_files := files.filter(os.file_ext(it) == '.md').sorted().map(os.join_path(docs_path,
-		it))
-	doc_files.prepend(readme_path)
-
-	mut nav_files := []gui.View{}
-	for doc_file in doc_files {
-		// Change background color of current selection. No need
-		// to remember the old selection to unhighlight.
-		color := if doc_file == app.doc_file {
+fn nav_panel(selected int, markdown_mode bool, tab_size string) gui.View {
+	mut nav_items := []gui.View{}
+	for i, entry in doc_entries() {
+		color := if i == selected {
 			gui.theme().color_active
 		} else {
 			gui.color_transparent
 		}
-		nav_files << gui.row(
+		idx := i
+		nav_items << gui.row(
 			color:    color
 			padding:  gui.padding_two_five
 			sizing:   gui.fill_fit
-			on_click: fn [doc_file] (_ &gui.Layout, mut _ gui.Event, mut win gui.Window) {
-				mut app := win.state[DocViewerApp]()
-				app.doc_file = doc_file
-				win.scroll_vertical_to(id_scroll_doc_view, 0)
+			on_click: fn [idx] (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+				mut app := w.state[DocViewerApp]()
+				app.selected = idx
+				w.scroll_vertical_to(id_scroll_doc_view, 0)
 			}
 			content:  [
-				gui.text(text: os.file_name(doc_file)),
+				gui.text(text: entry.name),
 			]
-			on_hover: fn (mut layout gui.Layout, mut e gui.Event, mut w gui.Window) {
+			on_hover: fn (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
 				w.set_mouse_cursor_pointing_hand()
 				layout.shape.color = gui.theme().color_hover
 			}
@@ -92,18 +109,18 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 	}
 
 	mut content := []gui.View{}
-	content << nav_files
+	content << nav_items
 	content << gui.rectangle(
 		sizing:       gui.fill_fill
 		color_border: gui.color_transparent
 	)
-	content << tab_stops(w)
+	content << tab_stops(tab_size)
 	content << gui.toggle(
 		label:    'Markdown'
-		select:   app.markdown_mode
-		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut win gui.Window) {
-			mut a := win.state[DocViewerApp]()
-			a.markdown_mode = !a.markdown_mode
+		select:   markdown_mode
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			mut app := w.state[DocViewerApp]()
+			app.markdown_mode = !app.markdown_mode
 		}
 	)
 
@@ -115,26 +132,31 @@ fn (mut app DocViewerApp) nav_panel(w &gui.Window) gui.View {
 	)
 }
 
-fn tab_stops(w &gui.Window) gui.View {
-	app := w.state[DocViewerApp]()
+fn tab_stops(tab_size string) gui.View {
 	return gui.radio_button_group_row(
 		title:     'Tab Size '
 		title_bg:  gui.theme().color_panel
-		value:     app.tab_size
+		value:     tab_size
 		options:   [
 			gui.radio_option('2', '2'),
 			gui.radio_option('4', '4'),
 			gui.radio_option('8', '8'),
 		]
-		on_select: fn (value string, mut win gui.Window) {
-			mut app := win.state[DocViewerApp]()
+		on_select: fn (value string, mut w gui.Window) {
+			mut app := w.state[DocViewerApp]()
 			app.tab_size = value
 		}
 	)
 }
 
-fn (mut app DocViewerApp) doc_panel(w &gui.Window) gui.View {
-	text := os.read_file(app.doc_file) or { 'select a doc' }
+fn doc_panel(w &gui.Window, selected int) gui.View {
+	app := w.state[DocViewerApp]()
+	entries := doc_entries()
+	text := if selected >= 0 && selected < entries.len {
+		entries[selected].text
+	} else {
+		'select a doc'
+	}
 	mut content := []gui.View{}
 	if app.markdown_mode {
 		content = [w.markdown(source: text, mode: .wrap)]
