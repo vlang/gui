@@ -181,8 +181,12 @@ fn demo_groups() []DemoGroup {
 			label: 'Overlays'
 		},
 		DemoGroup{
-			key:   'foundations'
-			label: 'Foundations'
+			key:   'text'
+			label: 'Text'
+		},
+		DemoGroup{
+			key:   'graphics'
+			label: 'Graphics'
 		},
 	]
 }
@@ -207,92 +211,92 @@ fn demo_entries() []DemoEntry {
 			id:      'doc_animations'
 			label:   'Animations'
 			group:   'welcome'
-			summary: 'Tween, spring, keyframe, and layout transition animations.'
-			tags:    ['animation', 'tween', 'spring']
+			summary: 'Guide to tween, spring, keyframe, and transition APIs.'
+			tags:    ['doc', 'animation', 'tween', 'spring']
 		},
 		DemoEntry{
 			id:      'doc_architecture'
 			label:   'Architecture'
 			group:   'welcome'
 			summary: 'Internal architecture and design decisions of the framework.'
-			tags:    ['design', 'internals', 'structure']
+			tags:    ['doc', 'design', 'internals', 'structure']
 		},
 		DemoEntry{
 			id:      'doc_data_grid'
 			label:   'Data Grid'
 			group:   'welcome'
 			summary: 'Data grid component documentation and usage patterns.'
-			tags:    ['grid', 'table', 'data']
+			tags:    ['doc', 'grid', 'table', 'data']
 		},
 		DemoEntry{
 			id:      'doc_gradients'
 			label:   'Gradients'
 			group:   'welcome'
-			summary: 'Linear and radial gradient rendering techniques.'
-			tags:    ['gradient', 'color', 'effects']
+			summary: 'Guide to linear and radial gradient APIs.'
+			tags:    ['doc', 'gradient', 'linear', 'radial']
 		},
 		DemoEntry{
 			id:      'doc_layout_algorithm'
 			label:   'Layout Algorithm'
 			group:   'welcome'
 			summary: 'How the layout engine measures and arranges views.'
-			tags:    ['layout', 'sizing', 'algorithm']
+			tags:    ['doc', 'layout', 'sizing', 'algorithm']
 		},
 		DemoEntry{
 			id:      'doc_markdown'
 			label:   'Markdown'
 			group:   'welcome'
-			summary: 'Markdown rendering capabilities and configuration.'
-			tags:    ['markdown', 'docs', 'text']
+			summary: 'Guide to the markdown renderer and its options.'
+			tags:    ['doc', 'markdown', 'renderer']
 		},
 		DemoEntry{
 			id:      'doc_native_dialogs'
 			label:   'Native Dialogs'
 			group:   'welcome'
-			summary: 'Platform-native file, save, and alert dialogs.'
-			tags:    ['dialog', 'native', 'file']
+			summary: 'Guide to native file, save, and alert dialog APIs.'
+			tags:    ['doc', 'dialog', 'native', 'file']
 		},
 		DemoEntry{
 			id:      'doc_performance'
 			label:   'Performance'
 			group:   'welcome'
 			summary: 'Performance optimization tips and best practices.'
-			tags:    ['performance', 'optimization', 'speed']
+			tags:    ['doc', 'performance', 'optimization', 'speed']
 		},
 		DemoEntry{
 			id:      'doc_printing'
 			label:   'Printing'
 			group:   'welcome'
-			summary: 'Printing support and page layout configuration.'
-			tags:    ['print', 'page', 'output']
+			summary: 'Guide to PDF export and native print dialog APIs.'
+			tags:    ['doc', 'print', 'pdf', 'export']
 		},
 		DemoEntry{
 			id:      'doc_shaders'
 			label:   'Shaders'
 			group:   'welcome'
-			summary: 'Custom shader integration and usage.'
-			tags:    ['shader', 'gpu', 'effects']
+			summary: 'Guide to custom fragment shader integration.'
+			tags:    ['doc', 'shader', 'glsl', 'metal']
 		},
 		DemoEntry{
 			id:      'doc_splitter'
 			label:   'Splitter'
 			group:   'welcome'
-			summary: 'Resizable split panel documentation.'
-			tags:    ['splitter', 'panel', 'resize']
+			summary: 'Guide to resizable split panel APIs.'
+			tags:    ['doc', 'splitter', 'panel', 'resize']
 		},
 		DemoEntry{
 			id:      'doc_svg'
 			label:   'SVG'
 			group:   'welcome'
-			summary: 'SVG rendering and inline SVG support.'
-			tags:    ['svg', 'vector', 'graphics']
+			summary: 'Guide to SVG rendering and inline SVG APIs.'
+			tags:    ['doc', 'svg', 'vector', 'path']
 		},
 		DemoEntry{
 			id:      'doc_tables'
 			label:   'Tables'
 			group:   'welcome'
 			summary: 'Table component documentation and column configuration.'
-			tags:    ['table', 'columns', 'data']
+			tags:    ['doc', 'table', 'columns', 'data']
 		},
 		DemoEntry{
 			id:      'color_picker'
@@ -395,28 +399,28 @@ fn demo_entries() []DemoEntry {
 		DemoEntry{
 			id:      'markdown'
 			label:   'Markdown'
-			group:   'data'
+			group:   'text'
 			summary: 'Render markdown into styled rich content'
 			tags:    ['docs', 'text', 'rich']
 		},
 		DemoEntry{
 			id:      'rectangle'
 			label:   'Rectangle'
-			group:   'data'
+			group:   'graphics'
 			summary: 'Draw colored shapes with border and radius'
 			tags:    ['shape', 'primitive', 'box']
 		},
 		DemoEntry{
 			id:      'rtf'
 			label:   'Rich Text Format'
-			group:   'data'
+			group:   'text'
 			summary: 'Mixed styles, links, and inline rich runs'
 			tags:    ['rich text', 'link', 'style']
 		},
 		DemoEntry{
 			id:      'svg'
 			label:   'SVG'
-			group:   'data'
+			group:   'graphics'
 			summary: 'Render vector graphics from svg strings'
 			tags:    ['vector', 'icon', 'path']
 		},
@@ -444,7 +448,7 @@ fn demo_entries() []DemoEntry {
 		DemoEntry{
 			id:      'text'
 			label:   'Text'
-			group:   'data'
+			group:   'text'
 			summary: 'Typography, gradients, outlines, and curved text'
 			tags:    ['font', 'type', 'styles', 'gradient', 'outline', 'stroke', 'curve']
 		},
@@ -458,7 +462,7 @@ fn demo_entries() []DemoEntry {
 		DemoEntry{
 			id:      'printing'
 			label:   'Printing'
-			group:   'foundations'
+			group:   'graphics'
 			summary: 'Export current view to PDF and open native print dialog'
 			tags:    ['print', 'pdf', 'export']
 		},
@@ -535,35 +539,35 @@ fn demo_entries() []DemoEntry {
 		DemoEntry{
 			id:      'animations'
 			label:   'Animations'
-			group:   'foundations'
+			group:   'graphics'
 			summary: 'Tween, spring, and layout transition samples'
 			tags:    ['motion', 'tween', 'spring']
 		},
 		DemoEntry{
 			id:      'gradient'
 			label:   'Gradients'
-			group:   'foundations'
+			group:   'graphics'
 			summary: 'Linear and radial gradient fills'
-			tags:    ['linear', 'radial', 'fill']
+			tags:    ['gradient', 'linear', 'radial', 'fill']
 		},
 		DemoEntry{
 			id:      'box_shadows'
 			label:   'Box Shadows'
-			group:   'foundations'
+			group:   'graphics'
 			summary: 'Shadow presets with spread_radius behavior notes'
-			tags:    ['shadow', 'depth', 'spread_radius']
+			tags:    ['shadow', 'depth', 'blur']
 		},
 		DemoEntry{
 			id:      'shader'
 			label:   'Custom Shaders'
-			group:   'foundations'
+			group:   'graphics'
 			summary: 'Custom fragment shaders for dynamic fills'
 			tags:    ['shader', 'glsl', 'metal']
 		},
 		DemoEntry{
 			id:      'icons'
 			label:   'Icons'
-			group:   'foundations'
+			group:   'text'
 			summary: 'Icon font catalog and glyph references'
 			tags:    ['icon', 'font', 'glyph']
 		},
@@ -623,10 +627,39 @@ fn preferred_component_for_group(group string, entries []DemoEntry) string {
 	if entries.len == 0 {
 		return ''
 	}
-	if group == 'data' && has_entry(entries, 'data_grid') {
-		return 'data_grid'
+	mut best := entries[0]
+	for entry in entries[1..] {
+		if entry_sort_before(entry, best) {
+			best = entry
+		}
 	}
-	return entries[0].id
+	return best.id
+}
+
+fn entry_sort_before(a DemoEntry, b DemoEntry) bool {
+	a_pin := if a.id == 'welcome' {
+		0
+	} else if a.id == 'doc_get_started' {
+		1
+	} else {
+		2
+	}
+	b_pin := if b.id == 'welcome' {
+		0
+	} else if b.id == 'doc_get_started' {
+		1
+	} else {
+		2
+	}
+	if a_pin != b_pin {
+		return a_pin < b_pin
+	}
+	a_label := a.label.to_lower()
+	b_label := b.label.to_lower()
+	if a_label != b_label {
+		return a_label < b_label
+	}
+	return a.id.to_lower() < b.id.to_lower()
 }
 
 fn catalog_panel(mut w gui.Window) gui.View {
@@ -690,25 +723,26 @@ fn group_picker(app &ShowcaseApp) gui.View {
 				content: [
 					group_picker_item('Welcome', 'welcome', app),
 					group_picker_item('All', 'all', app),
+					group_picker_item('Text', 'text', app),
 					group_picker_item('Input', 'input', app),
+				]
+			),
+			gui.row(
+				spacing: 3
+				padding: gui.padding_none
+				content: [
 					group_picker_item('Selection', 'selection', app),
-				]
-			),
-			gui.row(
-				spacing: 3
-				padding: gui.padding_none
-				content: [
 					group_picker_item('Data', 'data', app),
+					group_picker_item('Graphics', 'graphics', app),
 					group_picker_item('Nav', 'navigation', app),
-					group_picker_item('Feedback', 'feedback', app),
 				]
 			),
 			gui.row(
 				spacing: 3
 				padding: gui.padding_none
 				content: [
+					group_picker_item('Feedback', 'feedback', app),
 					group_picker_item('Overlays', 'overlays', app),
-					group_picker_item('Foundations', 'foundations', app),
 				]
 			),
 		]
@@ -735,10 +769,8 @@ fn group_picker_item(label string, key string, app &ShowcaseApp) gui.View {
 			app.selected_group = key
 			app.show_docs = false
 			app.nav_query = ''
-			if key == 'data' {
-				entries := filtered_entries(app)
-				app.selected_component = preferred_component_for_group(key, entries)
-			}
+			entries := filtered_entries(app)
+			app.selected_component = preferred_component_for_group(key, entries)
 			w.scroll_vertical_to(id_scroll_catalog, 0)
 			w.update_window()
 		}
