@@ -57,6 +57,7 @@ struct MarkdownBlock {
 	image_height     f32    // 0 = auto
 	code_language    string // language hint from code fence
 	math_latex       string // raw LaTeX source for math blocks
+	anchor_slug      string // URL slug for heading anchors
 pub mut:
 	content    RichText
 	table_data ?ParsedTable // parsed table with inline formatting

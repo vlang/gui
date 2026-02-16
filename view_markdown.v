@@ -47,6 +47,8 @@ pub:
 	table_cell_style   TextStyle        = gui_theme.n3
 	table_cell_padding Padding          = padding(5, 10, 5, 10)
 	table_row_alt      ?Color
+	highlight_bg       Color = rgb(199, 142, 18)
+	hard_line_breaks   bool
 	math_dpi_display   int = 150
 	math_dpi_inline    int = 200
 	// Near-white default suits dark themes. Override for
@@ -540,8 +542,12 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 				)
 			}
 		} else if block.header_level > 0 {
-			// Header block
-			content << rtf(rich_text: block.content, mode: cfg.mode)
+			// Header block with anchor slug as ID
+			content << rtf(
+				id:        block.anchor_slug
+				rich_text: block.content
+				mode:      cfg.mode
+			)
 			if (block.header_level == 1 && cfg.style.h1_separator)
 				|| (block.header_level == 2 && cfg.style.h2_separator) {
 				content << rectangle(

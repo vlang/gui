@@ -79,6 +79,13 @@ fn test_fuzz_markdown() {
 		'hello ',
 		'world ',
 		'test',
+		'==',
+		':smile:',
+		':',
+		'^',
+		'~',
+		'    ',
+		'#heading',
 	]
 
 	style := MarkdownStyle{}
@@ -108,6 +115,25 @@ fn test_fuzz_markdown() {
 		'[]()',
 		// Deeply nested bold/italic
 		'*' + '**' + '***' + '___' + '__' + '_'.repeat(50),
+		// Highlight bombs
+		'=='.repeat(500),
+		'='.repeat(500),
+		// Emoji edge cases
+		':'.repeat(500),
+		'::::::',
+		':' + 'a'.repeat(100) + ':',
+		// Super/subscript nesting
+		'^'.repeat(200) + 'x' + '^'.repeat(200),
+		'~'.repeat(200) + 'x' + '~'.repeat(200),
+		// Mixed single/double tilde
+		'~x~~y~~~z~~~~',
+		// Indented code vs list
+		'    code\n- list\n    cont\n    code',
+		// Very deep indentation
+		'    '.repeat(20) + 'deep',
+		// Hard break edge cases
+		'line  \nline  \nline  \n'.repeat(50),
+		'line\\\nline\\\n'.repeat(50),
 	]
 
 	for i in 0 .. iterations {
@@ -126,11 +152,33 @@ fn test_fuzz_markdown() {
 		// Must not panic
 		_ = markdown_to_rich_text(input, style)
 	}
+
+	// Second pass with hard_line_breaks enabled
+	style_hb := MarkdownStyle{
+		hard_line_breaks: true
+	}
+	mut rng2 := rand.new_default(seed_: [u32(987654), 321098])
+	for i in 0 .. iterations {
+		input := if i < edge_cases.len {
+			edge_cases[i]
+		} else {
+			bucket := i % 5
+			if bucket == 0 {
+				fuzz_random_bytes(mut rng2, 512)
+			} else {
+				fuzz_grammar_soup(mut rng2, md_tokens, 50)
+			}
+		}
+		// Must not panic
+		_ = markdown_to_rich_text(input, style_hb)
+	}
 }
 
 fn test_fuzz_svg() {
+	// SVG parsing is heavier per iteration; cap at 50k to
+	// avoid timeouts on pathological inputs.
 	iterations := if s := os.getenv_opt('FUZZ_ITERATIONS') {
-		s.int()
+		if s.int() > 50000 { 50000 } else { s.int() }
 	} else {
 		fuzz_iterations
 	}

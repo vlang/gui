@@ -26,6 +26,11 @@ enum MarkdownCodeLanguage {
 	typescript
 	python
 	json
+	golang
+	rust
+	c_lang
+	shell
+	html
 }
 
 struct MarkdownCodePalette {
@@ -63,6 +68,11 @@ fn normalize_markdown_code_language_hint(language string) string {
 		'ts', 'typescript', 'tsx' { 'ts' }
 		'py', 'python', 'python3' { 'py' }
 		'json', 'jsonc' { 'json' }
+		'go', 'golang' { 'go' }
+		'rs', 'rust' { 'rust' }
+		'c', 'cpp', 'c++', 'cc', 'cxx', 'h', 'hpp', 'hxx' { 'c' }
+		'sh', 'bash', 'shell', 'zsh', 'fish' { 'shell' }
+		'html', 'htm', 'css', 'xml', 'svg', 'xhtml' { 'html' }
 		'math', 'latex', 'tex' { 'math' }
 		'mermaid' { 'mermaid' }
 		else { lower }
@@ -76,6 +86,11 @@ fn markdown_code_language_from_hint(language string) MarkdownCodeLanguage {
 		'ts' { return .typescript }
 		'py' { return .python }
 		'json' { return .json }
+		'go' { return .golang }
+		'rust' { return .rust }
+		'c' { return .c_lang }
+		'shell' { return .shell }
+		'html' { return .html }
 		else { return .generic }
 	}
 }
@@ -168,37 +183,59 @@ fn highlight_code_runs(code string, lang MarkdownCodeLanguage, style MarkdownSty
 			markdown_append_token(mut tokens, .comment, pos, end)
 			pos = end
 		} else if markdown_has_block_comment_start(code, pos, lang) {
-			mut end := pos + 2
-			mut depth := 1
-			for end < code.len {
-				if end - pos >= max_highlight_string_scan_bytes
-					|| end - pos >= max_highlight_token_bytes {
-					return markdown_fallback_with_tail(tokens, code, pos, palette)
-				}
-				if markdown_block_comments_nested(lang) && end + 1 < code.len && code[end] == `/`
-					&& code[end + 1] == `*` {
-					depth++
-					if depth > max_highlight_comment_depth {
+			if lang == .html {
+				// HTML <!-- --> comment
+				mut end := pos + 4
+				for end + 2 < code.len {
+					if end - pos >= max_highlight_string_scan_bytes
+						|| end - pos >= max_highlight_token_bytes {
 						return markdown_fallback_with_tail(tokens, code, pos, palette)
 					}
-					end += 2
-					continue
-				}
-				if end + 1 < code.len && code[end] == `*` && code[end + 1] == `/` {
-					depth--
-					end += 2
-					if depth == 0 {
+					if code[end] == `-` && code[end + 1] == `-` && code[end + 2] == `>` {
+						end += 3
 						break
 					}
-					continue
+					end++
 				}
-				end++
+				if end > code.len {
+					end = code.len
+				}
+				markdown_append_token(mut tokens, .comment, pos, end)
+				pos = end
+			} else {
+				// /* */ style block comment
+				mut end := pos + 2
+				mut depth := 1
+				for end < code.len {
+					if end - pos >= max_highlight_string_scan_bytes
+						|| end - pos >= max_highlight_token_bytes {
+						return markdown_fallback_with_tail(tokens, code, pos, palette)
+					}
+					if markdown_block_comments_nested(lang) && end + 1 < code.len
+						&& code[end] == `/` && code[end + 1] == `*` {
+						depth++
+						if depth > max_highlight_comment_depth {
+							return markdown_fallback_with_tail(tokens, code, pos, palette)
+						}
+						end += 2
+						continue
+					}
+					if end + 1 < code.len && code[end] == `*` && code[end + 1] == `/` {
+						depth--
+						end += 2
+						if depth == 0 {
+							break
+						}
+						continue
+					}
+					end++
+				}
+				if end > code.len {
+					end = code.len
+				}
+				markdown_append_token(mut tokens, .comment, pos, end)
+				pos = end
 			}
-			if end > code.len {
-				end = code.len
-			}
-			markdown_append_token(mut tokens, .comment, pos, end)
-			pos = end
 		} else if markdown_is_string_delim(ch, lang) {
 			end, ok := markdown_scan_string(code, pos, lang)
 			if !ok {
@@ -304,14 +341,20 @@ fn markdown_is_identifier_start(ch u8, lang MarkdownCodeLanguage) bool {
 	if (ch >= `a` && ch <= `z`) || (ch >= `A` && ch <= `Z`) || ch == `_` {
 		return true
 	}
-	return (lang in [.javascript, .typescript] || lang == .generic) && ch == `$`
+	if (lang in [.javascript, .typescript] || lang == .generic) && ch == `$` {
+		return true
+	}
+	return lang == .html && ch == `-` // CSS properties like font-size
 }
 
 fn markdown_is_identifier_continue(ch u8, lang MarkdownCodeLanguage) bool {
 	if markdown_is_identifier_start(ch, lang) {
 		return true
 	}
-	return ch >= `0` && ch <= `9`
+	if ch >= `0` && ch <= `9` {
+		return true
+	}
+	return lang == .html && ch == `-`
 }
 
 fn markdown_scan_identifier(code string, pos int, lang MarkdownCodeLanguage) (int, bool) {
@@ -375,6 +418,18 @@ fn markdown_is_string_delim(ch u8, lang MarkdownCodeLanguage) bool {
 		.javascript, .typescript {
 			return ch == `"` || ch == `'` || ch == `\``
 		}
+		.golang {
+			return ch == `"` || ch == `'` || ch == `\``
+		}
+		.rust, .c_lang {
+			return ch == `"` || ch == `'`
+		}
+		.shell {
+			return ch == `"` || ch == `'`
+		}
+		.html {
+			return ch == `"` || ch == `'`
+		}
 		else {
 			return ch == `"` || ch == `'` || ch == `\``
 		}
@@ -423,27 +478,39 @@ fn markdown_scan_string(code string, pos int, lang MarkdownCodeLanguage) (int, b
 
 fn markdown_has_line_comment_start(code string, pos int, lang MarkdownCodeLanguage) bool {
 	if pos + 1 < code.len && code[pos] == `/` && code[pos + 1] == `/`
-		&& lang in [.generic, .vlang, .javascript, .typescript] {
+		&& lang in [.generic, .vlang, .javascript, .typescript, .golang, .rust, .c_lang] {
 		return true
 	}
-	return code[pos] == `#` && lang in [.generic, .python]
+	if code[pos] == `#` && lang in [.generic, .python, .shell] {
+		return true
+	}
+	// HTML <!-- handled as block comment
+	return false
 }
 
 fn markdown_line_comment_prefix_len(code string, pos int, lang MarkdownCodeLanguage) int {
 	if pos + 1 < code.len && code[pos] == `/` && code[pos + 1] == `/`
-		&& lang in [.generic, .vlang, .javascript, .typescript] {
+		&& lang in [.generic, .vlang, .javascript, .typescript, .golang, .rust, .c_lang] {
 		return 2
 	}
 	return 1
 }
 
 fn markdown_has_block_comment_start(code string, pos int, lang MarkdownCodeLanguage) bool {
-	return pos + 1 < code.len && code[pos] == `/` && code[pos + 1] == `*`
-		&& lang in [.generic, .vlang, .javascript, .typescript]
+	if pos + 1 < code.len && code[pos] == `/` && code[pos + 1] == `*`
+		&& lang in [.generic, .vlang, .javascript, .typescript, .golang, .rust, .c_lang] {
+		return true
+	}
+	// HTML <!-- comments
+	if pos + 3 < code.len && code[pos] == `<` && code[pos + 1] == `!` && code[pos + 2] == `-`
+		&& code[pos + 3] == `-` && lang == .html {
+		return true
+	}
+	return false
 }
 
 fn markdown_block_comments_nested(lang MarkdownCodeLanguage) bool {
-	return lang == .vlang || lang == .generic
+	return lang == .vlang || lang == .rust || lang == .generic
 }
 
 fn markdown_is_keyword(ident string, lang MarkdownCodeLanguage) bool {
@@ -478,6 +545,160 @@ fn markdown_is_keyword(ident string, lang MarkdownCodeLanguage) bool {
 				'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally',
 				'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 'not',
 				'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield']
+		}
+		.golang {
+			return ident in ['break', 'case', 'chan', 'const', 'continue', 'default', 'defer',
+				'else', 'fallthrough', 'for', 'func', 'go', 'goto', 'if', 'import', 'interface',
+				'map', 'package', 'range', 'return', 'select', 'struct', 'switch', 'type', 'var',
+				'true', 'false', 'nil', 'iota', 'append', 'cap', 'close', 'copy', 'delete', 'len',
+				'make', 'new', 'panic', 'print', 'println', 'recover', 'error', 'string', 'int',
+				'int8', 'int16', 'int32', 'int64', 'uint', 'uint8', 'uint16', 'uint32', 'uint64',
+				'float32', 'float64', 'complex64', 'complex128', 'bool', 'byte', 'rune', 'any']
+		}
+		.rust {
+			return ident in ['as', 'async', 'await', 'break', 'const', 'continue', 'crate', 'dyn',
+				'else', 'enum', 'extern', 'false', 'fn', 'for', 'if', 'impl', 'in', 'let', 'loop',
+				'match', 'mod', 'move', 'mut', 'pub', 'ref', 'return', 'self', 'Self', 'static',
+				'struct', 'super', 'trait', 'true', 'type', 'unsafe', 'use', 'where', 'while',
+				'yield', 'Box', 'Option', 'Result', 'Some', 'None', 'Ok', 'Err', 'Vec', 'String',
+				'str', 'i8', 'i16', 'i32', 'i64', 'i128', 'isize', 'u8', 'u16', 'u32', 'u64', 'u128',
+				'usize', 'f32', 'f64', 'bool', 'char', 'println', 'eprintln', 'format', 'panic',
+				'todo', 'unimplemented', 'unreachable', 'macro_rules']
+		}
+		.c_lang {
+			return ident in [
+				// C keywords
+				'auto',
+				'break',
+				'case',
+				'char',
+				'const',
+				'continue',
+				'default',
+				'do',
+				'double',
+				'else',
+				'enum',
+				'extern',
+				'float',
+				'for',
+				'goto',
+				'if',
+				'inline',
+				'int',
+				'long',
+				'register',
+				'restrict',
+				'return',
+				'short',
+				'signed',
+				'sizeof',
+				'static',
+				'struct',
+				'switch',
+				'typedef',
+				'union',
+				'unsigned',
+				'void',
+				'volatile',
+				'while',
+				'_Bool',
+				'_Complex',
+				'_Imaginary',
+				'bool',
+				'true',
+				'false',
+				'NULL',
+				'nullptr',
+				// C++ keywords
+				'class',
+				'namespace',
+				'template',
+				'typename',
+				'public',
+				'private',
+				'protected',
+				'virtual',
+				'override',
+				'final',
+				'new',
+				'delete',
+				'this',
+				'throw',
+				'try',
+				'catch',
+				'using',
+				'constexpr',
+				'noexcept',
+				'decltype',
+				'static_cast',
+				'dynamic_cast',
+				'reinterpret_cast',
+				'const_cast',
+				'operator',
+				'friend',
+				'mutable',
+				'explicit',
+				'export',
+				'concept',
+				'requires',
+				'co_await',
+				'co_return',
+				'co_yield',
+				// Preprocessor
+				'include',
+				'define',
+				'ifdef',
+				'ifndef',
+				'endif',
+				'pragma',
+				// Common stdlib
+				'std',
+				'cout',
+				'cin',
+				'endl',
+				'string',
+				'vector',
+				'map',
+				'set',
+				'pair',
+				'unique_ptr',
+				'shared_ptr',
+				'weak_ptr',
+				'size_t',
+				'uint8_t',
+				'uint16_t',
+				'uint32_t',
+				'uint64_t',
+				'int8_t',
+				'int16_t',
+				'int32_t',
+				'int64_t',
+			]
+		}
+		.shell {
+			return ident in ['if', 'then', 'else', 'elif', 'fi', 'for', 'while', 'until', 'do',
+				'done', 'case', 'esac', 'in', 'function', 'select', 'time', 'coproc', 'return',
+				'exit', 'break', 'continue', 'shift', 'export', 'readonly', 'declare', 'local',
+				'typeset', 'unset', 'eval', 'exec', 'source', 'set', 'true', 'false', 'echo',
+				'printf', 'read', 'test', 'cd', 'pwd', 'ls', 'cp', 'mv', 'rm', 'mkdir', 'rmdir',
+				'chmod', 'chown', 'grep', 'sed', 'awk', 'find', 'xargs', 'cat', 'head', 'tail',
+				'sort', 'uniq', 'wc', 'tr', 'cut', 'tee', 'curl', 'wget', 'tar', 'gzip', 'git',
+				'docker', 'sudo', 'apt', 'yum', 'brew', 'pip', 'npm', 'yarn']
+		}
+		.html {
+			return ident in ['html', 'head', 'body', 'div', 'span', 'p', 'a', 'img', 'ul', 'ol',
+				'li', 'table', 'tr', 'td', 'th', 'form', 'input', 'button', 'select', 'option',
+				'textarea', 'label', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'footer', 'nav',
+				'main', 'section', 'article', 'aside', 'script', 'style', 'link', 'meta', 'title',
+				'br', 'hr', 'pre', 'code', 'strong', 'em', 'blockquote', 'iframe', 'canvas', 'svg',
+				'video', 'audio', 'source', 'template', 'slot', 'details', 'summary', 'dialog',
+				'color', 'background', 'margin', 'padding', 'border', 'display', 'position', 'width',
+				'height', 'font', 'text', 'align', 'flex', 'grid', 'float', 'clear', 'overflow',
+				'opacity', 'transform', 'transition', 'animation', 'cursor', 'none', 'block',
+				'inline', 'absolute', 'relative', 'fixed', 'sticky', 'static', 'inherit', 'initial',
+				'unset', 'auto', 'important', 'media', 'keyframes', 'import', 'var', 'calc', 'min',
+				'max', 'clamp', 'rgb', 'rgba', 'hsl', 'hsla']
 		}
 		.json {
 			return ident in ['true', 'false', 'null']

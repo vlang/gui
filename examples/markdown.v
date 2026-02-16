@@ -156,7 +156,7 @@ Autolinks work for URLs: <https://www.github.com> and email addresses:
 
 ### Images
 
-![Placeholder image description](../assets/logo.jpg)
+![Veasal](https://vlang.io/img/veasel.png =250x200)
 
 *Caption: Images can have alt text for accessibility and optional
 titles.*
@@ -247,6 +247,68 @@ graph TD
     B -->|Yes| C[Process]
     B -->|No| D[Error]
     C --> E[Output]
+```
+
+## Highlighted Text
+
+Use double equals signs to ==highlight important text== within a
+paragraph. You can combine it with other formatting: ==**bold
+highlight**== and ==*italic highlight*== both work.
+
+## Emoji Shortcodes
+
+Emoji shortcodes use the `:name:` syntax: :smile: :heart: :rocket:
+:thumbsup: :wave: :star: :fire: :check_mark:
+
+Some common ones: :warning: for caution, :bulb: for ideas, and :+1:
+for approval.
+
+## Superscript and Subscript
+
+Water is H~2~O and Einstein's famous equation is E = mc^2^.
+The notation x^n^ means x raised to the nth power.
+CO~2~ emissions are measured in parts per million.
+
+## Indented Code Blocks
+
+Four spaces or a tab at the start of a line creates a code block:
+
+    fn main() {
+        println('Hello from indented code!')
+    }
+
+Regular text resumes after the indented block.
+
+## Internal Links
+
+Click this link to jump to the [Text Formatting](#text-formatting)
+section above, or go to [Lists](#lists) or [Tables](#tables).
+
+## More Syntax Highlighting
+
+``` go
+func fibonacci(n int) int {
+    if n <= 1 {
+        return n
+    }
+    return fibonacci(n-1) + fibonacci(n-2)
+}
+```
+
+``` rust
+fn main() {
+    let numbers: Vec<i32> = (1..=10).collect();
+    let sum: i32 = numbers.iter().sum();
+    println!('Sum: {}', sum);
+}
+```
+
+``` bash
+#!/bin/bash
+for file in *.txt; do
+    echo $file
+    wc -l $file
+done
 ```
 
 ## Conclusion

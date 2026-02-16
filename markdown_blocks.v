@@ -9,10 +9,33 @@ fn parse_header_block(text string, level int, header_style TextStyle, md_style M
 		0)
 	return MarkdownBlock{
 		header_level: level
+		anchor_slug:  heading_slug(text)
 		content:      RichText{
 			runs: header_runs
 		}
 	}
+}
+
+// heading_slug converts heading text to a URL-safe anchor slug.
+// Lowercase, spaces to hyphens, strip non-alphanumeric except hyphens.
+fn heading_slug(text string) string {
+	mut buf := []u8{cap: text.len}
+	for ch in text.to_lower() {
+		if (ch >= `a` && ch <= `z`) || (ch >= `0` && ch <= `9`) {
+			buf << ch
+		} else if ch == ` ` || ch == `-` || ch == `_` {
+			// Collapse multiple hyphens
+			if buf.len > 0 && buf.last() != `-` {
+				buf << `-`
+			}
+		}
+		// Strip all other chars (formatting markers, etc.)
+	}
+	// Trim trailing hyphen
+	for buf.len > 0 && buf.last() == `-` {
+		buf.pop()
+	}
+	return buf.bytestr()
 }
 
 // is_setext_underline checks if a line is a setext-style header underline.
@@ -99,7 +122,7 @@ fn get_indent_level(line string) int {
 }
 
 // collect_paragraph_content joins continuation lines for paragraphs.
-fn collect_paragraph_content(first_line string, scanner MarkdownScanner, start_idx int) (string, int) {
+fn collect_paragraph_content(first_line string, scanner MarkdownScanner, start_idx int, hard_line_breaks bool) (string, int) {
 	mut consumed := 0
 	mut idx := start_idx
 
@@ -116,19 +139,73 @@ fn collect_paragraph_content(first_line string, scanner MarkdownScanner, start_i
 
 	// Fast path: no continuation
 	if consumed == 0 {
+		if hard_line_breaks {
+			return strip_hard_break_trail(first_line), 0
+		}
 		return first_line, 0
 	}
 
 	// Build combined content
 	mut buf := []u8{cap: first_line.len + consumed * 80}
-	buf << first_line.bytes()
-	idx = start_idx
-	for _ in 0 .. consumed {
+	if hard_line_breaks {
+		stripped := strip_hard_break_trail(first_line)
+		buf << stripped.bytes()
+		if has_hard_break(first_line) {
+			buf << `\n`
+		} else {
+			buf << ` `
+		}
+	} else {
+		buf << first_line.bytes()
 		buf << ` `
-		buf << scanner.get_line(idx).bytes()
+	}
+	idx = start_idx
+	for ci in 0 .. consumed {
+		line := scanner.get_line(idx)
+		if hard_line_breaks {
+			buf << strip_hard_break_trail(line).bytes()
+			if ci < consumed - 1 {
+				if has_hard_break(line) {
+					buf << `\n`
+				} else {
+					buf << ` `
+				}
+			}
+		} else {
+			buf << line.bytes()
+			if ci < consumed - 1 {
+				buf << ` `
+			}
+		}
 		idx++
 	}
 	return buf.bytestr(), consumed
+}
+
+// has_hard_break checks if a line ends with trailing \ or 2+ spaces.
+fn has_hard_break(line string) bool {
+	if line.len == 0 {
+		return false
+	}
+	if line[line.len - 1] == `\\` {
+		return true
+	}
+	// 2+ trailing spaces
+	if line.len >= 2 && line[line.len - 1] == ` ` && line[line.len - 2] == ` ` {
+		return true
+	}
+	return false
+}
+
+// strip_hard_break_trail removes trailing \ or trailing spaces from line.
+fn strip_hard_break_trail(line string) string {
+	if line.len == 0 {
+		return line
+	}
+	if line[line.len - 1] == `\\` {
+		return line[..line.len - 1]
+	}
+	return line.trim_right(' ')
 }
 
 // collect_list_item_content collects the full content of a list item including continuation lines.
@@ -331,4 +408,32 @@ fn collect_definition_content(first_content string, scanner MarkdownScanner, sta
 		idx++
 	}
 	return buf.bytestr(), consumed
+}
+
+// has_code_indent returns true if line starts with 4+ spaces or 1+ tab.
+fn has_code_indent(line string) bool {
+	if line.len == 0 {
+		return false
+	}
+	if line[0] == `\t` {
+		return true
+	}
+	if line.len >= 4 && line[0] == ` ` && line[1] == ` ` && line[2] == ` ` && line[3] == ` ` {
+		return true
+	}
+	return false
+}
+
+// strip_code_indent removes one level of code indent (4 spaces or 1 tab).
+fn strip_code_indent(line string) string {
+	if line.len == 0 {
+		return ''
+	}
+	if line[0] == `\t` {
+		return line[1..]
+	}
+	if line.len >= 4 && line[0] == ` ` && line[1] == ` ` && line[2] == ` ` && line[3] == ` ` {
+		return line[4..]
+	}
+	return line
 }

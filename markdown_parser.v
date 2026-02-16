@@ -142,6 +142,9 @@ fn (mut p MarkdownParser) parse() []MarkdownBlock {
 		if p.try_list_item() {
 			continue
 		}
+		if p.try_indented_code_block(line) {
+			continue
+		}
 		if p.try_math_block(trimmed) {
 			continue
 		}
@@ -405,6 +408,9 @@ fn (mut p MarkdownParser) try_blockquote() bool {
 				if next_ql.trim_space() == '' {
 					// Next line is blank - paragraph break coming
 					quote_runs << rich_br()
+				} else if p.style.hard_line_breaks && has_hard_break(ql) {
+					// Hard line break
+					quote_runs << rich_br()
 				} else {
 					// Continuation of paragraph - add space
 					quote_runs << RichTextRun{
@@ -534,6 +540,46 @@ fn (mut p MarkdownParser) try_list_item() bool {
 	return false
 }
 
+fn (mut p MarkdownParser) try_indented_code_block(line string) bool {
+	if !has_code_indent(line) {
+		return false
+	}
+	// Collect consecutive indented lines (blank lines included
+	// if followed by more indented content)
+	mut code_lines := []string{cap: 20}
+	mut idx := p.i
+	for idx < p.scanner.len() && code_lines.len < max_code_block_lines {
+		l := p.scanner.get_line(idx)
+		if has_code_indent(l) {
+			code_lines << strip_code_indent(l)
+			idx++
+		} else if l.trim_space() == '' {
+			// Blank line: include only if followed by indented line
+			if idx + 1 < p.scanner.len() && has_code_indent(p.scanner.get_line(idx + 1)) {
+				code_lines << ''
+				idx++
+			} else {
+				break
+			}
+		} else {
+			break
+		}
+	}
+	if code_lines.len == 0 {
+		return false
+	}
+	p.flush_runs()
+	code_text := code_lines.join('\n')
+	p.blocks << MarkdownBlock{
+		is_code: true
+		content: RichText{
+			runs: highlight_fenced_code(code_text, '', p.style)
+		}
+	}
+	p.i = idx
+	return true
+}
+
 fn (mut p MarkdownParser) try_math_block(trimmed string) bool {
 	if trimmed.starts_with('$$') {
 		p.flush_runs()
@@ -589,7 +635,7 @@ fn (mut p MarkdownParser) try_definition_term(trimmed string) bool {
 }
 
 fn (mut p MarkdownParser) handle_paragraph(line string) {
-	content, consumed := collect_paragraph_content(line, p.scanner, p.i + 1)
+	content, consumed := collect_paragraph_content(line, p.scanner, p.i + 1, p.style.hard_line_breaks)
 	parse_inline(content, p.style.text, p.style, mut p.runs, p.link_defs, p.footnote_defs,
 		0)
 	p.i += 1 + consumed

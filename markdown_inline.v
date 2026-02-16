@@ -1,8 +1,18 @@
 module gui
 
+import vglyph
+
 // markdown_inline.v handles parsing of inline markdown elements (bold, italic, links, etc.)
 
 const valid_image_exts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp']
+
+const superscript_features = &vglyph.FontFeatures{
+	opentype_features: [vglyph.FontFeature{'sups', 1}]
+}
+
+const subscript_features = &vglyph.FontFeatures{
+	opentype_features: [vglyph.FontFeature{'subs', 1}]
+}
 
 // parse_inline parses inline markdown elements from a string and appends them to runs.
 fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun, link_defs map[string]string, footnote_defs map[string]string, depth int) {
@@ -26,6 +36,30 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			current << text[pos + 1]
 			pos += 2
 			continue
+		}
+
+		// Check for emoji shortcode :name:
+		if text[pos] == `:` && pos + 1 < text.len {
+			end := find_emoji_end(text, pos + 1)
+			if end > 0 && end < text.len && text[end] == `:` {
+				name := text[pos + 1..end]
+				emoji := emoji_lookup(name)
+				if emoji != '' {
+					if current.len > 0 {
+						runs << RichTextRun{
+							text:  current.bytestr()
+							style: base_style
+						}
+						current.clear()
+					}
+					runs << RichTextRun{
+						text:  emoji
+						style: base_style
+					}
+					pos = end + 1
+					continue
+				}
+			}
 		}
 
 		// Check for inline math $...$
@@ -107,7 +141,8 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				}
 				bi_style := TextStyle{
 					...md_style.bold_italic
-					size: base_style.size
+					size:     base_style.size
+					bg_color: base_style.bg_color
 				}
 				parse_inline(text[pos + 3..end], bi_style, md_style, mut runs, link_defs,
 					footnote_defs, depth + 1)
@@ -129,7 +164,8 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				}
 				bold_style := TextStyle{
 					...md_style.bold
-					size: base_style.size
+					size:     base_style.size
+					bg_color: base_style.bg_color
 				}
 				parse_inline(text[pos + 2..end], bold_style, md_style, mut runs, link_defs,
 					footnote_defs, depth + 1)
@@ -160,6 +196,75 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			}
 		}
 
+		// Check for highlight (==text==)
+		if pos + 1 < text.len && text[pos] == `=` && text[pos + 1] == `=` {
+			end := find_double_closing(text, pos + 2, `=`)
+			if end > pos + 2 {
+				if current.len > 0 {
+					runs << RichTextRun{
+						text:  current.bytestr()
+						style: base_style
+					}
+					current.clear()
+				}
+				hl_style := TextStyle{
+					...base_style
+					bg_color: md_style.highlight_bg
+				}
+				parse_inline(text[pos + 2..end], hl_style, md_style, mut runs, link_defs,
+					footnote_defs, depth + 1)
+				pos = end + 2
+				continue
+			}
+		}
+
+		// Check for subscript (~text~) - single tilde, not ~~
+		if text[pos] == `~` && pos + 1 < text.len && text[pos + 1] != `~` {
+			end := find_closing(text, pos + 1, `~`)
+			// Guard: closing ~ not followed by another ~ (that would be ~~)
+			if end > pos + 1 && (end + 1 >= text.len || text[end + 1] != `~`) {
+				if current.len > 0 {
+					runs << RichTextRun{
+						text:  current.bytestr()
+						style: base_style
+					}
+					current.clear()
+				}
+				sub_style := TextStyle{
+					...base_style
+					size:     base_style.size * 1.2
+					features: subscript_features
+				}
+				parse_inline(text[pos + 1..end], sub_style, md_style, mut runs, link_defs,
+					footnote_defs, depth + 1)
+				pos = end + 1
+				continue
+			}
+		}
+
+		// Check for superscript (^text^)
+		if text[pos] == `^` && pos + 1 < text.len {
+			end := find_closing(text, pos + 1, `^`)
+			if end > pos + 1 {
+				if current.len > 0 {
+					runs << RichTextRun{
+						text:  current.bytestr()
+						style: base_style
+					}
+					current.clear()
+				}
+				sup_style := TextStyle{
+					...base_style
+					size:     base_style.size * 1.2
+					features: superscript_features
+				}
+				parse_inline(text[pos + 1..end], sup_style, md_style, mut runs, link_defs,
+					footnote_defs, depth + 1)
+				pos = end + 1
+				continue
+			}
+		}
+
 		// Check for italic (*text*)
 		if text[pos] == `*` {
 			end := find_closing(text, pos + 1, `*`)
@@ -173,7 +278,8 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				}
 				italic_style := TextStyle{
 					...md_style.italic
-					size: base_style.size
+					size:     base_style.size
+					bg_color: base_style.bg_color
 				}
 				parse_inline(text[pos + 1..end], italic_style, md_style, mut runs, link_defs,
 					footnote_defs, depth + 1)
@@ -195,7 +301,8 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				}
 				bi_style := TextStyle{
 					...md_style.bold_italic
-					size: base_style.size
+					size:     base_style.size
+					bg_color: base_style.bg_color
 				}
 				parse_inline(text[pos + 3..end], bi_style, md_style, mut runs, link_defs,
 					footnote_defs, depth + 1)
@@ -217,7 +324,8 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				}
 				bold_style := TextStyle{
 					...md_style.bold
-					size: base_style.size
+					size:     base_style.size
+					bg_color: base_style.bg_color
 				}
 				parse_inline(text[pos + 2..end], bold_style, md_style, mut runs, link_defs,
 					footnote_defs, depth + 1)
@@ -239,7 +347,8 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				}
 				italic_style := TextStyle{
 					...md_style.italic
-					size: base_style.size
+					size:     base_style.size
+					bg_color: base_style.bg_color
 				}
 				parse_inline(text[pos + 1..end], italic_style, md_style, mut runs, link_defs,
 					footnote_defs, depth + 1)

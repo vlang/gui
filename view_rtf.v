@@ -263,7 +263,11 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 			// Find corresponding run in original RichText
 			found_run := rtf_find_run_at_index(layout, run.start_index)
 			if found_run.link != '' && is_safe_url(found_run.link) {
-				os.open_uri(found_run.link) or {}
+				if found_run.link.starts_with('#') {
+					w.scroll_to_view(found_run.link[1..])
+				} else {
+					os.open_uri(found_run.link) or {}
+				}
 				e.is_handled = true
 			}
 			return

@@ -1007,3 +1007,197 @@ fn test_table_column_limit() {
 	// If parsed, headers must be capped
 	assert parsed.headers.len <= max_table_columns
 }
+
+// Highlight tests
+
+fn test_markdown_highlight() {
+	rt := markdown_to_rich_text('Hello ==marked== world', MarkdownStyle{})
+	assert rt.runs.len == 3
+	assert rt.runs[0].text == 'Hello '
+	assert rt.runs[1].text == 'marked'
+	assert rt.runs[1].style.bg_color.a > 0 // has highlight bg
+	assert rt.runs[2].text == ' world'
+}
+
+fn test_markdown_highlight_nested_bold() {
+	rt := markdown_to_rich_text('==**bold highlight**==', MarkdownStyle{})
+	assert rt.runs.len >= 1
+	bold_runs := rt.runs.filter(it.text == 'bold highlight')
+	assert bold_runs.len == 1
+	assert bold_runs[0].style.bg_color.a > 0
+}
+
+// Emoji tests
+
+fn test_markdown_emoji_basic() {
+	rt := markdown_to_rich_text('Hello :smile: world', MarkdownStyle{})
+	found := rt.runs.any(it.text == '😄')
+	assert found
+}
+
+fn test_markdown_emoji_unknown() {
+	// Unknown emoji should stay as literal
+	rt := markdown_to_rich_text(':notanemoji:', MarkdownStyle{})
+	found := rt.runs.any(it.text.contains(':notanemoji:'))
+	assert found
+}
+
+fn test_markdown_emoji_plus_one() {
+	rt := markdown_to_rich_text(':+1:', MarkdownStyle{})
+	found := rt.runs.any(it.text == '👍')
+	assert found
+}
+
+fn test_markdown_emoji_minus_one() {
+	rt := markdown_to_rich_text(':-1:', MarkdownStyle{})
+	found := rt.runs.any(it.text == '👎')
+	assert found
+}
+
+fn test_markdown_emoji_bare_colon() {
+	// Bare colons should not crash or consume text
+	rt := markdown_to_rich_text('time: 10:30', MarkdownStyle{})
+	text := rich_text_to_string(rt)
+	assert text.contains('time: 10:30')
+}
+
+// Indented code block tests
+
+fn test_markdown_indented_code_block() {
+	source := '    fn main() {\n    }'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	assert blocks.len >= 1
+	assert blocks[0].is_code == true
+	content := rich_text_to_string(blocks[0].content)
+	assert content.contains('fn main()')
+}
+
+fn test_markdown_indented_code_tab() {
+	source := '\tfn main() {}'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	assert blocks.len >= 1
+	assert blocks[0].is_code == true
+}
+
+fn test_markdown_indented_code_after_list() {
+	// List item takes priority over indented code
+	source := '- list item\n    code line'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	assert blocks[0].is_list == true
+}
+
+// Heading anchor tests
+
+fn test_markdown_heading_slug() {
+	assert heading_slug('Hello World') == 'hello-world'
+	assert heading_slug('API Reference') == 'api-reference'
+	assert heading_slug('C++ & Rust!') == 'c-rust'
+	assert heading_slug('  spaces  ') == 'spaces'
+}
+
+fn test_markdown_heading_anchor_set() {
+	blocks := markdown_to_blocks('## Hello World', MarkdownStyle{})
+	assert blocks.len == 1
+	assert blocks[0].header_level == 2
+	assert blocks[0].anchor_slug == 'hello-world'
+}
+
+// Superscript/subscript tests
+
+fn test_markdown_superscript() {
+	rt := markdown_to_rich_text('E=mc^2^', MarkdownStyle{})
+	sup_runs := rt.runs.filter(it.text == '2')
+	assert sup_runs.len >= 1
+	// OpenType 'sups' feature handles sizing
+	assert sup_runs[0].style.features != unsafe { nil }
+}
+
+fn test_markdown_subscript() {
+	rt := markdown_to_rich_text('H~2~O', MarkdownStyle{})
+	sub_runs := rt.runs.filter(it.text == '2')
+	assert sub_runs.len >= 1
+	// OpenType 'subs' feature handles sizing
+	assert sub_runs[0].style.features != unsafe { nil }
+}
+
+fn test_markdown_subscript_vs_strikethrough() {
+	// ~~text~~ is strikethrough, not subscript
+	rt := markdown_to_rich_text('~~strike~~', MarkdownStyle{})
+	assert rt.runs.len >= 1
+	assert rt.runs[0].style.strikethrough == true
+}
+
+fn test_markdown_tilde_disambiguation() {
+	// ~x~~y~~ : ~x~ = subscript, ~~y~~ = strikethrough
+	rt := markdown_to_rich_text('~x~ and ~~y~~', MarkdownStyle{})
+	sub_runs := rt.runs.filter(it.text == 'x')
+	strike_runs := rt.runs.filter(it.text == 'y')
+	assert sub_runs.len >= 1
+	assert strike_runs.len >= 1
+	assert strike_runs[0].style.strikethrough == true
+}
+
+// Syntax highlighting language tests
+
+fn test_markdown_fenced_go_highlight() {
+	style := MarkdownStyle{}
+	source := '```go\nfunc main() {\n\treturn\n}\n```'
+	blocks := markdown_to_blocks(source, style)
+	code := blocks.filter(it.is_code)[0] or { panic('no code block') }
+	assert code.code_language == 'go'
+	kw_run := code.content.runs.filter(it.text == 'func')[0] or { panic('no func keyword') }
+	assert kw_run.style.color == style.code_keyword_color
+}
+
+fn test_markdown_fenced_rust_highlight() {
+	style := MarkdownStyle{}
+	source := '```rust\nfn main() {\n\tlet x = 1;\n}\n```'
+	blocks := markdown_to_blocks(source, style)
+	code := blocks.filter(it.is_code)[0] or { panic('no code block') }
+	assert code.code_language == 'rust'
+	kw_run := code.content.runs.filter(it.text == 'fn')[0] or { panic('no fn keyword') }
+	assert kw_run.style.color == style.code_keyword_color
+}
+
+fn test_markdown_fenced_shell_highlight() {
+	style := MarkdownStyle{}
+	source := '```bash\n# comment\necho hello\n```'
+	blocks := markdown_to_blocks(source, style)
+	code := blocks.filter(it.is_code)[0] or { panic('no code block') }
+	assert code.code_language == 'shell'
+	comment_run := code.content.runs.filter(it.text == '# comment')[0] or {
+		panic('no comment run')
+	}
+	assert comment_run.style.color == style.code_comment_color
+}
+
+// Hard line break tests
+
+fn test_markdown_hard_break_backslash() {
+	style := MarkdownStyle{
+		hard_line_breaks: true
+	}
+	rt := markdown_to_rich_text('line one\\\nline two', style)
+	text := rich_text_to_string(rt)
+	assert text.contains('line one')
+	assert text.contains('\n')
+	assert text.contains('line two')
+}
+
+fn test_markdown_hard_break_trailing_spaces() {
+	style := MarkdownStyle{
+		hard_line_breaks: true
+	}
+	rt := markdown_to_rich_text('line one  \nline two', style)
+	text := rich_text_to_string(rt)
+	assert text.contains('\n')
+}
+
+fn test_markdown_no_hard_break_default() {
+	// Without flag, lines join with space
+	style := MarkdownStyle{}
+	rt := markdown_to_rich_text('line one\\\nline two', style)
+	text := rich_text_to_string(rt)
+	// Should join with space, no newline
+	assert text.contains('line one')
+}
