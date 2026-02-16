@@ -4,44 +4,43 @@ import os
 import time
 import nativebridge
 
-fn native_print_dialog_impl(mut w Window, cfg NativePrintDialogCfg) {
-	validate_native_print_cfg(cfg) or {
-		native_dispatch_print_done(mut w, cfg.on_done, native_print_error_result(native_print_error_code_invalid_cfg,
-			err.msg()))
-		return
+fn run_print_job_impl(mut w Window, job PrintJob) PrintRunResult {
+	validate_print_job(job) or {
+		return print_run_error_result(native_print_error_code_invalid_cfg, err.msg())
 	}
-	if !native_print_supported() {
-		native_dispatch_print_done(mut w, cfg.on_done, native_print_error_result('unsupported',
-			'native print is not implemented on this platform'))
-		return
+	if !print_job_supported() {
+		return print_run_error_result('unsupported', 'native print is not implemented on this platform')
 	}
 
-	pdf_path := native_print_resolve_pdf_path(mut w, cfg) or {
-		code := native_print_resolve_error_code(cfg.content.kind, err.msg())
-		native_dispatch_print_done(mut w, cfg.on_done, native_print_error_result(code,
-			err.msg()))
-		return
+	pdf_path := print_job_resolve_pdf_path(mut w, job) or {
+		code := print_job_resolve_error_code(job.source.kind, err.msg())
+		return print_run_error_result(code, err.msg())
 	}
 
-	page_width, page_height := print_page_size(cfg.paper, cfg.orientation)
+	page_width, page_height := print_page_size(job.paper, job.orientation)
+	ranges := normalize_print_page_ranges(job.page_ranges)
 	bridge_result := nativebridge.print_pdf_dialog(nativebridge.BridgePrintCfg{
 		ns_window:     native_dialog_ns_window()
-		title:         cfg.title
-		job_name:      cfg.job_name
+		title:         job.title
+		job_name:      job.job_name
 		pdf_path:      pdf_path
 		paper_width:   page_width
 		paper_height:  page_height
-		margin_top:    cfg.margins.top
-		margin_right:  cfg.margins.right
-		margin_bottom: cfg.margins.bottom
-		margin_left:   cfg.margins.left
-		orientation:   native_orientation_to_int(cfg.orientation)
+		margin_top:    job.margins.top
+		margin_right:  job.margins.right
+		margin_bottom: job.margins.bottom
+		margin_left:   job.margins.left
+		orientation:   print_orientation_to_int(job.orientation)
+		copies:        job.copies
+		page_ranges:   print_page_ranges_to_string(ranges)
+		duplex_mode:   int(job.duplex)
+		color_mode:    int(job.color_mode)
+		scale_mode:    int(job.scale_mode)
 	})
-	result := native_print_result_from_bridge(bridge_result, pdf_path)
-	native_dispatch_print_done(mut w, cfg.on_done, result)
+	return print_run_result_from_bridge(bridge_result, pdf_path)
 }
 
-fn native_print_supported() bool {
+fn print_job_supported() bool {
 	$if macos || linux {
 		return true
 	} $else {
@@ -49,8 +48,8 @@ fn native_print_supported() bool {
 	}
 }
 
-fn native_print_resolve_error_code(kind NativePrintContentKind, message string) string {
-	if kind == .prepared_pdf_path {
+fn print_job_resolve_error_code(kind PrintJobSourceKind, message string) string {
+	if kind == .pdf_path {
 		if message.contains('does not exist') || message.contains('directory') {
 			return native_print_error_code_io
 		}
@@ -59,25 +58,32 @@ fn native_print_resolve_error_code(kind NativePrintContentKind, message string) 
 	return native_print_error_code_render
 }
 
-fn native_print_resolve_pdf_path(mut w Window, cfg NativePrintDialogCfg) !string {
-	match cfg.content.kind {
-		.current_view_pdf {
+fn print_job_resolve_pdf_path(mut w Window, job PrintJob) !string {
+	match job.source.kind {
+		.current_view {
 			tmp_path := os.join_path(os.temp_dir(), 'v_gui_print_${time.now().unix_micro()}.pdf')
-			result := w.export_pdf(PdfExportCfg{
-				path:        tmp_path
-				title:       cfg.title
-				job_name:    cfg.job_name
-				paper:       cfg.paper
-				orientation: cfg.orientation
-				margins:     cfg.margins
+			result := w.export_print_job(PrintJob{
+				output_path:   tmp_path
+				title:         job.title
+				job_name:      job.job_name
+				paper:         job.paper
+				orientation:   job.orientation
+				margins:       job.margins
+				source:        job.source
+				paginate:      job.paginate
+				scale_mode:    job.scale_mode
+				header:        job.header
+				footer:        job.footer
+				source_width:  job.source_width
+				source_height: job.source_height
 			})
 			if !result.is_ok() {
 				return error(result.error_message)
 			}
 			return result.path
 		}
-		.prepared_pdf_path {
-			pdf_path := cfg.content.pdf_path.trim_space()
+		.pdf_path {
+			pdf_path := job.source.pdf_path.trim_space()
 			if pdf_path.len == 0 {
 				return error('pdf_path is required')
 			}
@@ -92,29 +98,58 @@ fn native_print_resolve_pdf_path(mut w Window, cfg NativePrintDialogCfg) !string
 	}
 }
 
-fn native_orientation_to_int(orientation PrintOrientation) int {
+fn print_orientation_to_int(orientation PrintOrientation) int {
 	return if orientation == .landscape { 1 } else { 0 }
 }
 
-fn native_print_result_from_bridge(bridge_result nativebridge.BridgePrintResult, pdf_path string) NativePrintResult {
+fn print_run_result_from_bridge(bridge_result nativebridge.BridgePrintResult, pdf_path string) PrintRunResult {
+	warnings := bridge_warnings_to_print_warnings(bridge_result.warnings)
 	return match bridge_result.status {
 		.ok {
-			native_print_ok_result(pdf_path)
+			print_run_ok_result(pdf_path, warnings)
 		}
 		.cancel {
-			native_print_cancel_result()
+			PrintRunResult{
+				status:   .cancel
+				warnings: warnings
+			}
 		}
 		.error {
-			native_print_error_result(bridge_result.error_code, bridge_result.error_message)
+			PrintRunResult{
+				status:        .error
+				error_code:    bridge_result.error_code
+				error_message: bridge_result.error_message
+				warnings:      warnings
+			}
 		}
 	}
 }
 
-fn native_dispatch_print_done(mut w Window,
-	on_done fn (NativePrintResult, mut Window),
-	result NativePrintResult) {
-	result_cpy := result
-	w.queue_command(fn [on_done, result_cpy] (mut w Window) {
-		on_done(result_cpy, mut w)
-	})
+fn bridge_warnings_to_print_warnings(items []string) []PrintWarning {
+	mut out := []PrintWarning{cap: items.len}
+	for item in items {
+		if item.trim_space().len == 0 {
+			continue
+		}
+		out << PrintWarning{
+			code:    'unsupported_option'
+			message: item
+		}
+	}
+	return out
+}
+
+fn print_page_ranges_to_string(ranges []PrintPageRange) string {
+	if ranges.len == 0 {
+		return ''
+	}
+	mut parts := []string{cap: ranges.len}
+	for range in ranges {
+		if range.from == range.to {
+			parts << range.from.str()
+		} else {
+			parts << '${range.from}-${range.to}'
+		}
+	}
+	return parts.join(',')
 }

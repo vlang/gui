@@ -53,8 +53,11 @@ fn export_button() gui.View {
 		content:  [gui.text(text: 'Export PDF')]
 		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			path := os.join_path(os.temp_dir(), 'v_gui_printing_demo.pdf')
-			result := w.export_pdf(gui.PdfExportCfg{
-				path: path
+			result := w.export_print_job(gui.PrintJob{
+				output_path: path
+				source:      gui.PrintJobSource{
+					kind: .current_view
+				}
 			})
 			if result.is_ok() {
 				w.state[PrintingApp]().last_path = result.path
@@ -70,29 +73,24 @@ fn print_current_button() gui.View {
 	return gui.button(
 		content:  [gui.text(text: 'Print Current View')]
 		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			w.native_print_dialog(
-				title:   'Print Current View'
-				content: gui.NativePrintContent{
-					kind: .current_view_pdf
+			result := w.run_print_job(gui.PrintJob{
+				title:  'Print Current View'
+				source: gui.PrintJobSource{
+					kind: .current_view
 				}
-				on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
-					match result.status {
-						.ok {
-							w.state[PrintingApp]().last_path = result.pdf_path
-							w.dialog(title: 'Print', body: 'Printed ${result.pdf_path}')
-						}
-						.cancel {
-							w.dialog(title: 'Print', body: 'Canceled.')
-						}
-						.error {
-							w.dialog(
-								title: 'Print'
-								body:  '${result.error_code}: ${result.error_message}'
-							)
-						}
-					}
+			})
+			match result.status {
+				.ok {
+					w.state[PrintingApp]().last_path = result.pdf_path
+					w.dialog(title: 'Print', body: 'Printed ${result.pdf_path}')
 				}
-			)
+				.cancel {
+					w.dialog(title: 'Print', body: 'Canceled.')
+				}
+				.error {
+					w.dialog(title: 'Print', body: '${result.error_code}: ${result.error_message}')
+				}
+			}
 		}
 	)
 }
@@ -106,29 +104,24 @@ fn print_file_button(last_path string) gui.View {
 			if path.len == 0 {
 				return
 			}
-			w.native_print_dialog(
-				title:   'Print Existing PDF'
-				content: gui.NativePrintContent{
-					kind:     .prepared_pdf_path
+			result := w.run_print_job(gui.PrintJob{
+				title:  'Print Existing PDF'
+				source: gui.PrintJobSource{
+					kind:     .pdf_path
 					pdf_path: path
 				}
-				on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
-					match result.status {
-						.ok {
-							w.dialog(title: 'Print', body: 'Printed ${result.pdf_path}')
-						}
-						.cancel {
-							w.dialog(title: 'Print', body: 'Canceled.')
-						}
-						.error {
-							w.dialog(
-								title: 'Print'
-								body:  '${result.error_code}: ${result.error_message}'
-							)
-						}
-					}
+			})
+			match result.status {
+				.ok {
+					w.dialog(title: 'Print', body: 'Printed ${result.pdf_path}')
 				}
-			)
+				.cancel {
+					w.dialog(title: 'Print', body: 'Canceled.')
+				}
+				.error {
+					w.dialog(title: 'Print', body: '${result.error_code}: ${result.error_message}')
+				}
+			}
 		}
 	)
 }

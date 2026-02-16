@@ -140,9 +140,18 @@ GuiNativePrintResult gui_native_print_pdf_dialog(
     double margin_right,
     double margin_bottom,
     double margin_left,
-    int orientation
+    int orientation,
+    int copies,
+    const char* page_ranges,
+    int duplex_mode,
+    int color_mode,
+    int scale_mode
 ) {
     (void)ns_window;
+    (void)page_ranges;
+    (void)duplex_mode;
+    (void)color_mode;
+    (void)scale_mode;
     @autoreleasepool {
         NSString* path = gui_nsstring(pdf_path);
         if (path == nil || path.length == 0) {
@@ -179,6 +188,7 @@ GuiNativePrintResult gui_native_print_pdf_dialog(
         [print_info setVerticalPagination:NSAutoPagination];
         [print_info setOrientation:
             orientation == 1 ? NSPaperOrientationLandscape : NSPaperOrientationPortrait];
+        
 
         CGFloat view_width = (CGFloat)paper_width - (CGFloat)margin_left - (CGFloat)margin_right;
         CGFloat view_height = (CGFloat)paper_height - (CGFloat)margin_top - (CGFloat)margin_bottom;

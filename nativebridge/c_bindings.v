@@ -64,6 +64,11 @@ pub:
 	margin_bottom f32
 	margin_left   f32
 	orientation   int
+	copies        int = 1
+	page_ranges   string
+	duplex_mode   int
+	color_mode    int
+	scale_mode    int
 }
 
 pub enum BridgePrintStatus {
@@ -77,6 +82,7 @@ pub:
 	status        BridgePrintStatus
 	error_code    string
 	error_message string
+	warnings      []string
 }
 
 struct C.GuiNativeDialogResult {
@@ -100,7 +106,7 @@ pub:
 	error_message &char
 }
 
-fn C.gui_native_print_pdf_dialog(voidptr, &char, &char, &char, f64, f64, f64, f64, f64, f64, int) C.GuiNativePrintResult
+fn C.gui_native_print_pdf_dialog(voidptr, &char, &char, &char, f64, f64, f64, f64, f64, f64, int, int, &char, int, int, int) C.GuiNativePrintResult
 fn C.gui_native_print_result_free(C.GuiNativePrintResult)
 
 fn bridge_dialog_unsupported_result() BridgeDialogResult {
@@ -116,6 +122,7 @@ fn bridge_print_unsupported_result() BridgePrintResult {
 		status:        .error
 		error_code:    'unsupported'
 		error_message: 'native print is not implemented on this platform'
+		warnings:      []string{}
 	}
 }
 
@@ -192,6 +199,7 @@ fn bridge_print_result_from_c(c_result C.GuiNativePrintResult) BridgePrintResult
 		status:        status
 		error_code:    error_code
 		error_message: error_message
+		warnings:      []string{}
 	}
 }
 
@@ -237,7 +245,8 @@ pub fn print_pdf_dialog(cfg BridgePrintCfg) BridgePrintResult {
 	$if macos {
 		c_result := C.gui_native_print_pdf_dialog(cfg.ns_window, cfg.title.str, cfg.job_name.str,
 			cfg.pdf_path.str, f64(cfg.paper_width), f64(cfg.paper_height), f64(cfg.margin_top),
-			f64(cfg.margin_right), f64(cfg.margin_bottom), f64(cfg.margin_left), cfg.orientation)
+			f64(cfg.margin_right), f64(cfg.margin_bottom), f64(cfg.margin_left), cfg.orientation,
+			cfg.copies, cfg.page_ranges.str, cfg.duplex_mode, cfg.color_mode, cfg.scale_mode)
 		return bridge_print_result_from_c(c_result)
 	} $else $if linux {
 		return linux_print_pdf_dialog(cfg)

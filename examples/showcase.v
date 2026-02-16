@@ -2690,36 +2690,37 @@ fn demo_tree(mut w gui.Window) gui.View {
 
 const printing_doc = '# Printing
 
-Export current view to PDF and open native print dialog.
+Export current view to PDF and open native print dialog with `PrintJob`.
 
 ## Usage
 
 ```v
 // Export to PDF
-w.export_pdf(gui.PdfExportCfg{
-    path:  "/tmp/output.pdf",
-    paper: .a4,
+w.export_print_job(gui.PrintJob{
+    output_path: "/tmp/output.pdf",
+    paper:       .a4,
+    source:      gui.PrintJobSource{kind: .current_view},
 })
 
 // Native print dialog
-w.native_print_dialog(gui.NativePrintDialogCfg{
-    title: "Print Document",
-    paper: .letter,
-    on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
-        // handle result
-    },
+result := w.run_print_job(gui.PrintJob{
+    title:  "Print Document",
+    paper:  .letter,
+    source: gui.PrintJobSource{kind: .current_view},
 })
 ```
 
-## Key Properties (PdfExportCfg)
+## Key Properties (PrintJob)
 
 | Property | Type | Description |
 |----------|------|-------------|
-| path | string | Output file path |
+| output_path | string | Export output file path |
 | paper | PaperSize | .letter, .legal, .a4, .a3 |
 | orientation | PrintOrientation | .portrait, .landscape |
 | margins | PrintMargins | Page margins in points |
-| fit_to_page | bool | Scale content to fit |
+| paginate | bool | Enable multi-page vertical tiling |
+| scale_mode | PrintScaleMode | .fit_to_page or .actual_size |
+| source | PrintJobSource | .current_view or .pdf_path |
 
 See also: docs/PRINTING.md'
 
@@ -2750,8 +2751,11 @@ fn demo_printing(w &gui.Window) gui.View {
 						content:  [gui.text(text: 'Export PDF')]
 						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 							path := os.join_path(os.temp_dir(), 'v_gui_showcase_print_${time.now().unix_micro()}.pdf')
-							result := w.export_pdf(gui.PdfExportCfg{
-								path: path
+							result := w.export_print_job(gui.PrintJob{
+								output_path: path
+								source:      gui.PrintJobSource{
+									kind: .current_view
+								}
 							})
 							mut app := w.state[ShowcaseApp]()
 							if result.is_ok() {
@@ -2765,27 +2769,25 @@ fn demo_printing(w &gui.Window) gui.View {
 					gui.button(
 						content:  [gui.text(text: 'Print Current View')]
 						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-							w.native_print_dialog(
-								title:   'Showcase Print Current View'
-								content: gui.NativePrintContent{
-									kind: .current_view_pdf
+							result := w.run_print_job(gui.PrintJob{
+								title:  'Showcase Print Current View'
+								source: gui.PrintJobSource{
+									kind: .current_view
 								}
-								on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
-									mut app := w.state[ShowcaseApp]()
-									match result.status {
-										.ok {
-											app.printing_last_path = result.pdf_path
-											app.printing_status = 'Printed: ${result.pdf_path}'
-										}
-										.cancel {
-											app.printing_status = 'Print canceled.'
-										}
-										.error {
-											app.printing_status = 'Print failed: ${result.error_code}: ${result.error_message}'
-										}
-									}
+							})
+							mut app := w.state[ShowcaseApp]()
+							match result.status {
+								.ok {
+									app.printing_last_path = result.pdf_path
+									app.printing_status = 'Printed: ${result.pdf_path}'
 								}
-							)
+								.cancel {
+									app.printing_status = 'Print canceled.'
+								}
+								.error {
+									app.printing_status = 'Print failed: ${result.error_code}: ${result.error_message}'
+								}
+							}
 						}
 					),
 					gui.button(
@@ -2796,27 +2798,25 @@ fn demo_printing(w &gui.Window) gui.View {
 							if path.len == 0 {
 								return
 							}
-							w.native_print_dialog(
-								title:   'Showcase Print Existing PDF'
-								content: gui.NativePrintContent{
-									kind:     .prepared_pdf_path
+							result := w.run_print_job(gui.PrintJob{
+								title:  'Showcase Print Existing PDF'
+								source: gui.PrintJobSource{
+									kind:     .pdf_path
 									pdf_path: path
 								}
-								on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
-									mut app := w.state[ShowcaseApp]()
-									match result.status {
-										.ok {
-											app.printing_status = 'Printed: ${result.pdf_path}'
-										}
-										.cancel {
-											app.printing_status = 'Print canceled.'
-										}
-										.error {
-											app.printing_status = 'Print failed: ${result.error_code}: ${result.error_message}'
-										}
-									}
+							})
+							mut app := w.state[ShowcaseApp]()
+							match result.status {
+								.ok {
+									app.printing_status = 'Printed: ${result.pdf_path}'
 								}
-							)
+								.cancel {
+									app.printing_status = 'Print canceled.'
+								}
+								.error {
+									app.printing_status = 'Print failed: ${result.error_code}: ${result.error_message}'
+								}
+							}
 						}
 					),
 				]

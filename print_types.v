@@ -29,95 +29,132 @@ pub fn default_print_margins() PrintMargins {
 	return PrintMargins{}
 }
 
-pub enum NativePrintContentKind as u8 {
-	current_view_pdf
-	prepared_pdf_path
+pub enum PrintScaleMode as u8 {
+	fit_to_page
+	actual_size
 }
 
-pub struct NativePrintContent {
+pub enum PrintDuplexMode as u8 {
+	default_mode
+	simplex
+	long_edge
+	short_edge
+}
+
+pub enum PrintColorMode as u8 {
+	default_mode
+	color
+	grayscale
+}
+
+pub struct PrintPageRange {
 pub:
-	kind     NativePrintContentKind = .current_view_pdf
+	from int
+	to   int
+}
+
+pub struct PrintHeaderFooterCfg {
+pub:
+	enabled bool
+	left    string
+	center  string
+	right   string
+}
+
+pub enum PrintJobSourceKind as u8 {
+	current_view
+	pdf_path
+}
+
+pub struct PrintJobSource {
+pub:
+	kind     PrintJobSourceKind = .current_view
 	pdf_path string
 }
 
-pub enum NativePrintStatus as u8 {
-	ok
-	cancel
-	error
-}
-
-pub struct NativePrintResult {
+pub struct PrintJob {
 pub:
-	status        NativePrintStatus
-	error_code    string
-	error_message string
-	pdf_path      string
-}
-
-pub struct NativePrintDialogCfg {
-pub:
-	title       string
-	job_name    string
-	paper       PaperSize        = .a4
-	orientation PrintOrientation = .portrait
-	margins     PrintMargins     = default_print_margins()
-	content     NativePrintContent
-	on_done     fn (NativePrintResult, mut Window) = fn (_ NativePrintResult, mut _ Window) {}
-}
-
-pub enum PdfExportStatus as u8 {
-	ok
-	error
-}
-
-pub struct PdfExportCfg {
-pub:
-	path          string
+	output_path   string
 	title         string
 	job_name      string
 	paper         PaperSize        = .a4
 	orientation   PrintOrientation = .portrait
 	margins       PrintMargins     = default_print_margins()
-	fit_to_page   bool             = true
+	source        PrintJobSource
+	paginate      bool
+	scale_mode    PrintScaleMode = .fit_to_page
+	page_ranges   []PrintPageRange
+	copies        int             = 1
+	duplex        PrintDuplexMode = .default_mode
+	color_mode    PrintColorMode  = .default_mode
+	header        PrintHeaderFooterCfg
+	footer        PrintHeaderFooterCfg
 	source_width  f32
 	source_height f32
 }
 
-pub struct PdfExportResult {
+pub enum PrintRunStatus as u8 {
+	ok
+	cancel
+	error
+}
+
+pub struct PrintWarning {
 pub:
-	status        PdfExportStatus
+	code    string
+	message string
+}
+
+pub struct PrintRunResult {
+pub:
+	status        PrintRunStatus
+	error_code    string
+	error_message string
+	pdf_path      string
+	warnings      []PrintWarning
+}
+
+pub enum PrintExportStatus as u8 {
+	ok
+	error
+}
+
+pub struct PrintExportResult {
+pub:
+	status        PrintExportStatus
 	path          string
 	error_code    string
 	error_message string
 }
 
-pub fn (result PdfExportResult) is_ok() bool {
+pub fn (result PrintExportResult) is_ok() bool {
 	return result.status == .ok
 }
 
-fn native_print_error_result(code string, message string) NativePrintResult {
-	return NativePrintResult{
+fn print_run_error_result(code string, message string) PrintRunResult {
+	return PrintRunResult{
 		status:        .error
 		error_code:    code
 		error_message: message
 	}
 }
 
-fn native_print_cancel_result() NativePrintResult {
-	return NativePrintResult{
+fn print_run_cancel_result() PrintRunResult {
+	return PrintRunResult{
 		status: .cancel
 	}
 }
 
-fn native_print_ok_result(path string) NativePrintResult {
-	return NativePrintResult{
+fn print_run_ok_result(path string, warnings []PrintWarning) PrintRunResult {
+	return PrintRunResult{
 		status:   .ok
 		pdf_path: path
+		warnings: warnings
 	}
 }
 
-fn pdf_export_error_result(path string, code string, message string) PdfExportResult {
-	return PdfExportResult{
+fn print_export_error_result(path string, code string, message string) PrintExportResult {
+	return PrintExportResult{
 		status:        .error
 		path:          path
 		error_code:    code
@@ -125,8 +162,8 @@ fn pdf_export_error_result(path string, code string, message string) PdfExportRe
 	}
 }
 
-fn pdf_export_ok_result(path string) PdfExportResult {
-	return PdfExportResult{
+fn print_export_ok_result(path string) PrintExportResult {
+	return PrintExportResult{
 		status: .ok
 		path:   path
 	}
@@ -172,23 +209,114 @@ fn validate_print_margins(page_width f32, page_height f32, margins PrintMargins)
 	}
 }
 
-fn validate_pdf_export_cfg(cfg PdfExportCfg) ! {
-	if cfg.path.trim_space().len == 0 {
-		return error('pdf path is required')
+fn validate_print_job(job PrintJob) ! {
+	page_width, page_height := print_page_size(job.paper, job.orientation)
+	validate_print_margins(page_width, page_height, job.margins)!
+	if job.copies < 1 {
+		return error('copies must be >= 1')
 	}
-	page_width, page_height := print_page_size(cfg.paper, cfg.orientation)
-	validate_print_margins(page_width, page_height, cfg.margins)!
-}
-
-fn validate_native_print_cfg(cfg NativePrintDialogCfg) ! {
-	page_width, page_height := print_page_size(cfg.paper, cfg.orientation)
-	validate_print_margins(page_width, page_height, cfg.margins)!
-	match cfg.content.kind {
-		.current_view_pdf {}
-		.prepared_pdf_path {
-			if cfg.content.pdf_path.trim_space().len == 0 {
-				return error('pdf_path is required for prepared_pdf_path content')
+	match job.source.kind {
+		.current_view {}
+		.pdf_path {
+			if job.source.pdf_path.trim_space().len == 0 {
+				return error('pdf_path is required for pdf_path source')
 			}
 		}
 	}
+	for range in job.page_ranges {
+		if range.from < 1 || range.to < range.from {
+			return error('invalid page range ${range.from}-${range.to}')
+		}
+	}
+	validate_header_footer_cfg(job.header)!
+	validate_header_footer_cfg(job.footer)!
+}
+
+fn validate_export_print_job(job PrintJob) ! {
+	if job.output_path.trim_space().len == 0 {
+		return error('output_path is required')
+	}
+	validate_print_job(job)!
+}
+
+fn validate_header_footer_cfg(cfg PrintHeaderFooterCfg) ! {
+	if !cfg.enabled {
+		return
+	}
+	for token in extract_print_tokens(cfg.left) {
+		validate_print_token(token)!
+	}
+	for token in extract_print_tokens(cfg.center) {
+		validate_print_token(token)!
+	}
+	for token in extract_print_tokens(cfg.right) {
+		validate_print_token(token)!
+	}
+}
+
+fn extract_print_tokens(text string) []string {
+	mut tokens := []string{}
+	mut i := 0
+	for i < text.len {
+		if text[i] == `{` {
+			mut j := i + 1
+			for j < text.len && text[j] != `}` {
+				j++
+			}
+			if j < text.len && j > i + 1 {
+				tokens << text[i + 1..j]
+				i = j + 1
+				continue
+			}
+		}
+		i++
+	}
+	return tokens
+}
+
+fn validate_print_token(token string) ! {
+	if token in ['page', 'pages', 'date', 'title', 'job'] {
+		return
+	}
+	return error('unsupported print token {${token}}')
+}
+
+fn normalize_print_page_ranges(ranges []PrintPageRange) []PrintPageRange {
+	if ranges.len == 0 {
+		return []PrintPageRange{}
+	}
+	mut out := ranges.clone()
+	out.sort_with_compare(fn (a &PrintPageRange, b &PrintPageRange) int {
+		if a.from < b.from {
+			return -1
+		}
+		if a.from > b.from {
+			return 1
+		}
+		if a.to < b.to {
+			return -1
+		}
+		if a.to > b.to {
+			return 1
+		}
+		return 0
+	})
+	mut merged := []PrintPageRange{}
+	mut current := out[0]
+	for idx in 1 .. out.len {
+		range := out[idx]
+		if range.from <= current.to + 1 {
+			if range.to > current.to {
+				current = PrintPageRange{
+					from: current.from
+					to:   range.to
+				}
+			}
+			continue
+		}
+		merged << current
+		current = range
+	}
+	merged << current
+	return merged
 }

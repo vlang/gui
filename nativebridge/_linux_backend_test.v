@@ -47,3 +47,14 @@ fn test_linux_parse_lpstat_available_extracts_first_queue() {
 	name := linux_parse_lpstat_available('Office_Printer accepting requests since Thu 01 Jan 1970\nTest_Printer accepting requests\n')
 	assert name == 'Office_Printer'
 }
+
+fn test_linux_print_capability_warnings_include_requested_options() {
+	warnings := linux_print_capability_warnings(BridgePrintCfg{
+		copies:      2
+		page_ranges: '1-3'
+		duplex_mode: 2
+		color_mode:  2
+		scale_mode:  1
+	})
+	assert warnings.len >= 5
+}

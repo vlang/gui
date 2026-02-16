@@ -215,6 +215,7 @@ fn linux_print_pdf_dialog(cfg BridgePrintCfg) BridgePrintResult {
 			status:        .error
 			error_code:    'invalid_cfg'
 			error_message: 'pdf_path is required'
+			warnings:      []string{}
 		}
 	}
 	if !os.exists(pdf_path) || os.is_dir(pdf_path) {
@@ -222,52 +223,59 @@ fn linux_print_pdf_dialog(cfg BridgePrintCfg) BridgePrintResult {
 			status:        .error
 			error_code:    'io_error'
 			error_message: 'pdf_path does not exist or is not a file'
+			warnings:      []string{}
 		}
 	}
 
+	warnings := linux_print_capability_warnings(cfg)
 	if os.exists_in_system_path('xdg-open') {
-		return linux_open_pdf_for_print('xdg-open', [pdf_path])
+		return linux_open_pdf_for_print('xdg-open', [pdf_path], warnings)
 	}
 	if os.exists_in_system_path('gio') {
-		return linux_open_pdf_for_print('gio', ['open', pdf_path])
+		return linux_open_pdf_for_print('gio', ['open', pdf_path], warnings)
 	}
 	if os.exists_in_system_path('lp') {
-		return linux_print_pdf_direct(cfg, pdf_path)
+		return linux_print_pdf_direct(cfg, pdf_path, warnings)
 	}
 	return BridgePrintResult{
 		status:        .error
 		error_code:    'unsupported'
 		error_message: 'native printing on Linux requires xdg-open, gio, or lp'
+		warnings:      warnings
 	}
 }
 
-fn linux_open_pdf_for_print(command string, args []string) BridgePrintResult {
+fn linux_open_pdf_for_print(command string, args []string, warnings []string) BridgePrintResult {
 	result := linux_run_command(command, args) or {
 		return BridgePrintResult{
 			status:        .error
 			error_code:    'io_error'
 			error_message: err.msg()
+			warnings:      warnings
 		}
 	}
 	if result.exit_code == 0 {
 		return BridgePrintResult{
-			status: .cancel
+			status:   .cancel
+			warnings: warnings
 		}
 	}
 	return BridgePrintResult{
 		status:        .error
 		error_code:    'io_error'
 		error_message: linux_error_message(result)
+		warnings:      warnings
 	}
 }
 
-fn linux_print_pdf_direct(cfg BridgePrintCfg, pdf_path string) BridgePrintResult {
+fn linux_print_pdf_direct(cfg BridgePrintCfg, pdf_path string, warnings []string) BridgePrintResult {
 	mut args := []string{}
 	destination := linux_find_print_destination() or {
 		return BridgePrintResult{
 			status:        .error
 			error_code:    'io_error'
 			error_message: err.msg()
+			warnings:      warnings
 		}
 	}
 	args << '-d'
@@ -283,6 +291,40 @@ fn linux_print_pdf_direct(cfg BridgePrintCfg, pdf_path string) BridgePrintResult
 	}
 	args << '-o'
 	args << if cfg.orientation == 1 { 'orientation-requested=4' } else { 'orientation-requested=3' }
+	if cfg.copies > 1 {
+		args << '-n'
+		args << cfg.copies.str()
+	}
+	if cfg.page_ranges.trim_space().len > 0 {
+		args << '-P'
+		args << cfg.page_ranges
+	}
+	match cfg.duplex_mode {
+		2 {
+			args << '-o'
+			args << 'sides=two-sided-long-edge'
+		}
+		3 {
+			args << '-o'
+			args << 'sides=two-sided-short-edge'
+		}
+		1 {
+			args << '-o'
+			args << 'sides=one-sided'
+		}
+		else {}
+	}
+	match cfg.color_mode {
+		2 {
+			args << '-o'
+			args << 'ColorModel=Gray'
+		}
+		1 {
+			args << '-o'
+			args << 'ColorModel=RGB'
+		}
+		else {}
+	}
 	media := linux_media_from_size(cfg.paper_width, cfg.paper_height)
 	if media.len > 0 {
 		args << '-o'
@@ -295,11 +337,13 @@ fn linux_print_pdf_direct(cfg BridgePrintCfg, pdf_path string) BridgePrintResult
 			status:        .error
 			error_code:    'io_error'
 			error_message: err.msg()
+			warnings:      warnings
 		}
 	}
 	if result.exit_code == 0 {
 		return BridgePrintResult{
-			status: .ok
+			status:   .ok
+			warnings: warnings
 		}
 	}
 	message := linux_error_message(result)
@@ -307,7 +351,28 @@ fn linux_print_pdf_direct(cfg BridgePrintCfg, pdf_path string) BridgePrintResult
 		status:        .error
 		error_code:    'io_error'
 		error_message: message
+		warnings:      warnings
 	}
+}
+
+fn linux_print_capability_warnings(cfg BridgePrintCfg) []string {
+	mut warnings := []string{}
+	if cfg.page_ranges.len > 0 {
+		warnings << 'page_ranges may be ignored when using opener-based print flow'
+	}
+	if cfg.copies > 1 {
+		warnings << 'copies may be ignored when using opener-based print flow'
+	}
+	if cfg.duplex_mode != 0 {
+		warnings << 'duplex may be ignored when using opener-based print flow'
+	}
+	if cfg.color_mode != 0 {
+		warnings << 'color mode may be ignored when using opener-based print flow'
+	}
+	if cfg.scale_mode != 0 {
+		warnings << 'scale mode may be ignored on Linux backend'
+	}
+	return warnings
 }
 
 fn linux_find_print_destination() !string {

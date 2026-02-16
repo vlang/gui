@@ -22,7 +22,12 @@ GuiNativePrintResult gui_native_print_pdf_dialog(
     double margin_right,
     double margin_bottom,
     double margin_left,
-    int orientation
+    int orientation,
+    int copies,
+    const char* page_ranges,
+    int duplex_mode,
+    int color_mode,
+    int scale_mode
 );
 
 void gui_native_print_result_free(GuiNativePrintResult result);

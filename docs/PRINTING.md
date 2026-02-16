@@ -1,84 +1,80 @@
 # Printing
 
 This guide covers:
-- `export_pdf`
-- `native_print_dialog`
+- `export_print_job`
+- `run_print_job`
 
-## Platform Behavior
+## Platform behavior
 
 - macOS: uses native print panel.
-- Linux: opens PDF in default app (`xdg-open`/`gio`) for user-initiated print dialog.
-- other platforms: callback runs and returns `.error` with `error_code == 'unsupported'`.
+- Linux: prefers opener (`xdg-open` / `gio open`), falls back to `lp` direct dispatch.
+- other platforms: returns `.error` with `error_code == 'unsupported'`.
 
 Linux notes:
-- prefers `xdg-open`, then `gio open` to launch the PDF.
-- falls back to direct `lp` dispatch only if openers are unavailable.
-- with opener path, callback returns `.cancel` because user print/cancel outcome is not observable.
-- callback `.ok` currently means direct dispatch succeeded (`lp` fallback path).
+- opener path cannot guarantee copies/ranges/duplex/color; warnings are returned.
+- direct `lp` path applies supported options (`copies`, `page_ranges`, `duplex`, `color`).
 
 ## Export PDF
 
-`export_pdf` exports current renderers to single-page PDF.
+`export_print_job` exports current renderers to PDF.
 
 ```v ignore
-result := w.export_pdf(
-	path:        '/tmp/report.pdf'
-	paper:       .letter
-	orientation: .portrait
-	margins:     gui.PrintMargins{
-		top:    36
-		right:  36
-		bottom: 36
-		left:   36
-	}
-)
+result := w.export_print_job(gui.PrintJob{
+    output_path: "/tmp/report.pdf"
+    title:       "Monthly Report"
+    paper:       .letter
+    orientation: .portrait
+    margins:     gui.PrintMargins{top: 36, right: 36, bottom: 36, left: 36}
+    source:      gui.PrintJobSource{kind: .current_view}
+    paginate:    true
+    scale_mode:  .actual_size
+    header:      gui.PrintHeaderFooterCfg{enabled: true, left: "{title}", right: "{page}/{pages}"}
+})
 
 if !result.is_ok() {
-	eprintln('${result.error_code}: ${result.error_message}')
+    eprintln('${result.error_code}: ${result.error_message}')
 }
 ```
 
-## Native Print Dialog
+## Native print dialog
 
-Print current view (exports temporary PDF first):
-
-```v ignore
-w.native_print_dialog(
-	title:       'Print'
-	job_name:    'Monthly Report'
-	paper:       .a4
-	orientation: .portrait
-	content:     gui.NativePrintContent{
-		kind: .current_view_pdf
-	}
-	on_done:     fn (result gui.NativePrintResult, mut w gui.Window) {
-		match result.status {
-			.ok { w.dialog(title: 'Printed', body: result.pdf_path) }
-			.cancel { w.dialog(title: 'Print', body: 'Canceled.') }
-			.error { w.dialog(title: 'Print', body: '${result.error_code}: ${result.error_message}') }
-		}
-	}
-)
-```
-
-Print an existing PDF path:
+`run_print_job` opens native print flow and returns `PrintRunResult`.
 
 ```v ignore
-w.native_print_dialog(
-	title:   'Print Existing PDF'
-	content: gui.NativePrintContent{
-		kind:     .prepared_pdf_path
-		pdf_path: '/tmp/report.pdf'
-	}
-	on_done: fn (result gui.NativePrintResult, mut w gui.Window) {
-		// handle result
-	}
-)
+result := w.run_print_job(gui.PrintJob{
+    title:       "Print"
+    job_name:    "Monthly Report"
+    paper:       .a4
+    orientation: .portrait
+    source:      gui.PrintJobSource{kind: .current_view}
+    copies:      2
+    page_ranges: [gui.PrintPageRange{from: 1, to: 3}]
+    duplex:      .long_edge
+    color_mode:  .grayscale
+})
+
+match result.status {
+    .ok { println('printed: ${result.pdf_path}') }
+    .cancel { println('canceled') }
+    .error { eprintln('${result.error_code}: ${result.error_message}') }
+}
+for warn in result.warnings {
+    eprintln('warning: ${warn.message}')
+}
 ```
 
-## Result Model
+Print existing PDF path:
 
-`on_done` receives `NativePrintResult`:
+```v ignore
+result := w.run_print_job(gui.PrintJob{
+    title:  "Print Existing PDF"
+    source: gui.PrintJobSource{kind: .pdf_path, pdf_path: "/tmp/report.pdf"}
+})
+```
+
+## Result model
+
+`PrintRunResult` fields:
 
 | Field | Meaning |
 |---|---|
@@ -86,3 +82,4 @@ w.native_print_dialog(
 | `error_code` | machine code (`unsupported`, `invalid_cfg`, `io_error`, `render_error`) |
 | `error_message` | human-readable detail |
 | `pdf_path` | generated/printed PDF path when status is `.ok` |
+| `warnings` | best-effort backend warnings for ignored/unsupported options |

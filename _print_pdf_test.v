@@ -44,9 +44,9 @@ fn test_pdf_render_document_includes_core_sections() {
 		}),
 	]
 
-	pdf := pdf_render_document(renderers, 200, 120, PdfExportCfg{
-		path:  'unused.pdf'
-		paper: .letter
+	pdf := pdf_render_document(renderers, 200, 120, PrintJob{
+		output_path: 'unused.pdf'
+		paper:       .letter
 	}) or { panic(err.msg()) }
 
 	assert pdf.starts_with('%PDF-1.4')
@@ -80,8 +80,8 @@ fn test_export_pdf_writes_file() {
 	]
 
 	path := os.join_path(os.temp_dir(), 'gui_print_test_${time.now().unix_micro()}.pdf')
-	result := window.export_pdf(PdfExportCfg{
-		path: path
+	result := window.export_print_job(PrintJob{
+		output_path: path
 	})
 	assert result.is_ok()
 
@@ -113,8 +113,8 @@ fn test_pdf_render_document_honors_svg_clip_groups() {
 		}),
 	]
 
-	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
-		path: 'unused.pdf'
+	pdf := pdf_render_document(renderers, 100, 100, PrintJob{
+		output_path: 'unused.pdf'
 	}) or { panic(err.msg()) }
 
 	assert pdf.contains('W n')
@@ -153,8 +153,8 @@ fn test_pdf_render_document_supports_transformed_layout_text() {
 		}),
 	]
 
-	pdf := pdf_render_document(renderers, 120, 90, PdfExportCfg{
-		path: 'unused.pdf'
+	pdf := pdf_render_document(renderers, 120, 90, PrintJob{
+		output_path: 'unused.pdf'
 	}) or { panic(err.msg()) }
 
 	assert pdf.contains(' cm')
@@ -174,8 +174,8 @@ fn test_pdf_render_document_svg_gradient_emits_shading_resources() {
 		}),
 	]
 
-	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
-		path: 'unused.pdf'
+	pdf := pdf_render_document(renderers, 100, 100, PrintJob{
+		output_path: 'unused.pdf'
 	}) or { panic(err.msg()) }
 
 	assert pdf.contains('/Shading <<')
@@ -207,8 +207,8 @@ fn test_pdf_render_document_svg_gradient_with_clip_group_uses_clip_and_shading()
 		}),
 	]
 
-	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
-		path: 'unused.pdf'
+	pdf := pdf_render_document(renderers, 100, 100, PrintJob{
+		output_path: 'unused.pdf'
 	}) or { panic(err.msg()) }
 
 	assert pdf.contains('W n')
@@ -227,8 +227,8 @@ fn test_pdf_render_document_svg_gradient_malformed_vertex_colors_falls_back_flat
 		}),
 	]
 
-	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
-		path: 'unused.pdf'
+	pdf := pdf_render_document(renderers, 100, 100, PrintJob{
+		output_path: 'unused.pdf'
 	}) or { panic(err.msg()) }
 
 	assert !pdf.contains('/ShadingType 4')
@@ -248,10 +248,35 @@ fn test_pdf_render_document_svg_gradient_non_uniform_alpha_falls_back_flat() {
 		}),
 	]
 
-	pdf := pdf_render_document(renderers, 100, 100, PdfExportCfg{
-		path: 'unused.pdf'
+	pdf := pdf_render_document(renderers, 100, 100, PrintJob{
+		output_path: 'unused.pdf'
 	}) or { panic(err.msg()) }
 
 	assert !pdf.contains('/ShadingType 4')
 	assert pdf.contains('0 0 0 rg')
+}
+
+fn test_pdf_render_document_paginate_emits_multiple_pages_with_header_tokens() {
+	renderers := [
+		Renderer(DrawRect{
+			x:     0
+			y:     0
+			w:     120
+			h:     2000
+			color: gg.Color{30, 30, 30, 255}
+			style: .fill
+		}),
+	]
+	pdf := pdf_render_document(renderers, 120, 2000, PrintJob{
+		output_path: 'unused.pdf'
+		paginate:    true
+		scale_mode:  .actual_size
+		header:      PrintHeaderFooterCfg{
+			enabled: true
+			left:    'p {page}/{pages}'
+		}
+	}) or { panic(err.msg()) }
+	assert pdf.contains('/Type /Pages')
+	assert pdf.contains('/Count 3')
+	assert pdf.contains('(p 1/3) Tj')
 }
