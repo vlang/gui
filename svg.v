@@ -33,6 +33,11 @@ struct GroupStyle {
 	stroke_join    string
 	clip_path_id   string
 	filter_id      string
+	font_family    string
+	font_size      string
+	font_weight    string
+	font_style     string
+	text_anchor    string
 	opacity        f32 = 1.0
 	fill_opacity   f32 = 1.0
 	stroke_opacity f32 = 1.0
@@ -216,8 +221,8 @@ fn parse_svg_content(content string, inherited GroupStyle, depth int, mut state 
 			continue
 		}
 
-		if tag_name == 'g' {
-			// Parse group
+		if tag_name == 'g' || tag_name == 'a' {
+			// Parse group (treat <a> as a container like <g>)
 			group_style := merge_group_style(elem, inherited)
 			state.elem_count++
 
@@ -226,15 +231,14 @@ fn parse_svg_content(content string, inherited GroupStyle, depth int, mut state 
 				continue
 			}
 
-			// Find closing </g> tag
+			// Find closing tag
 			group_content_start := elem_end + 1
-			group_end := find_closing_tag(content, 'g', group_content_start)
+			group_end := find_closing_tag(content, tag_name, group_content_start)
 			if group_end > group_content_start {
 				group_content := content[group_content_start..group_end]
 				paths << parse_svg_content(group_content, group_style, depth + 1, mut
 					state)
 			}
-			// Skip past </g>
 			close_end := find_index(content, '>', group_end) or { break }
 			pos = close_end + 1
 		} else if tag_name == 'path' {
@@ -322,19 +326,20 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 	// Base position
 	base_x := parse_length(find_attr(elem, 'x') or { '0' })
 	base_y := parse_length(find_attr(elem, 'y') or { '0' })
-	// Font attributes
-	font_family_raw := find_attr_or_style(elem, 'font-family') or { '' }
+	// Font attributes (fall back to inherited group style)
+	font_family_raw := find_attr_or_style(elem, 'font-family') or { style.font_family }
 	// Strip CSS fallbacks: "Arial, sans-serif" → "Arial"
 	font_family := if font_family_raw.contains(',') {
 		font_family_raw.all_before(',').trim_space().trim('\'"')
 	} else {
 		font_family_raw.trim_space().trim('\'"')
 	}
-	font_size := parse_length(find_attr_or_style(elem, 'font-size') or { '16' })
-	fw := find_attr_or_style(elem, 'font-weight') or { '' }
+	fs_fallback := if style.font_size.len > 0 { style.font_size } else { '16' }
+	font_size := parse_length(find_attr_or_style(elem, 'font-size') or { fs_fallback })
+	fw := find_attr_or_style(elem, 'font-weight') or { style.font_weight }
 	bold := fw == 'bold' || fw.f32() >= 600
-	fs := find_attr_or_style(elem, 'font-style') or { '' }
-	italic := fs == 'italic' || fs == 'oblique'
+	fst := find_attr_or_style(elem, 'font-style') or { style.font_style }
+	italic := fst == 'italic' || fst == 'oblique'
 	// Text decoration
 	td := find_attr_or_style(elem, 'text-decoration') or { '' }
 	underline := td.contains('underline')
@@ -371,7 +376,8 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 		f32(0)
 	}
 	// Anchor
-	anchor_str := find_attr_or_style(elem, 'text-anchor') or { 'start' }
+	ta_fallback := if style.text_anchor.len > 0 { style.text_anchor } else { 'start' }
+	anchor_str := find_attr_or_style(elem, 'text-anchor') or { ta_fallback }
 	anchor := match anchor_str {
 		'middle' { u8(1) }
 		'end' { u8(2) }
@@ -743,6 +749,11 @@ fn merge_group_style(elem string, inherited GroupStyle) GroupStyle {
 	stroke_join := find_attr_or_style(elem, 'stroke-linejoin') or { inherited.stroke_join }
 	clip_path_id := parse_clip_path_url(elem) or { inherited.clip_path_id }
 	filter_id := parse_filter_url(elem) or { inherited.filter_id }
+	font_family := find_attr_or_style(elem, 'font-family') or { inherited.font_family }
+	font_size := find_attr_or_style(elem, 'font-size') or { inherited.font_size }
+	font_weight := find_attr_or_style(elem, 'font-weight') or { inherited.font_weight }
+	font_style := find_attr_or_style(elem, 'font-style') or { inherited.font_style }
+	text_anchor := find_attr_or_style(elem, 'text-anchor') or { inherited.text_anchor }
 
 	// Opacity: group opacity multiplies with inherited
 	elem_opacity := parse_opacity_attr(elem, 'opacity', 1.0)
@@ -759,6 +770,11 @@ fn merge_group_style(elem string, inherited GroupStyle) GroupStyle {
 		stroke_join:    stroke_join
 		clip_path_id:   clip_path_id
 		filter_id:      filter_id
+		font_family:    font_family
+		font_size:      font_size
+		font_weight:    font_weight
+		font_style:     font_style
+		text_anchor:    text_anchor
 		opacity:        group_opacity
 		fill_opacity:   fill_opacity
 		stroke_opacity: stroke_opacity

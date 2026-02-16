@@ -37,29 +37,35 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 	is_url := iv.src.starts_with('http://') || iv.src.starts_with('https://')
 
 	if is_url {
-		// Calculate cache path
+		// Calculate cache path using hash only (extension determined
+		// by Content-Type during download).
 		hash_sum := hash.sum64(iv.src.bytes(), 0).hex()
-		ext := os.file_ext(iv.src)
 		cache_dir := os.join_path(os.temp_dir(), 'gui_cache', 'images')
 		if !os.exists(cache_dir) {
 			os.mkdir_all(cache_dir) or {}
 		}
-		cache_path := os.join_path(cache_dir, '${hash_sum}${ext}')
+		base_path := os.join_path(cache_dir, hash_sum)
+		cache_path := find_cached_image(base_path)
 
-		if os.exists(cache_path) {
+		if cache_path.len > 0 {
+			if cache_path.ends_with('.svg') {
+				mut sv := SvgView{
+					file_name: cache_path
+					width:     iv.width
+					height:    iv.height
+				}
+				return sv.generate_layout(mut window)
+			}
 			image_path = cache_path
 		} else {
 			// Check if already downloading
 			if !window.view_state.active_downloads.contains(iv.src) {
 				window.view_state.active_downloads.set(iv.src, time.now().unix())
-				spawn download_image(iv.src, cache_path, mut window)
+				spawn download_image(iv.src, base_path, mut window)
 			}
-			// Show placeholder or empty while downloading
-			// For now, let's return an empty layout (or maybe a loading placeholder in future)
-			// But to avoid error log from load_image, we can return early
 			mut layout := Layout{
 				shape: &Shape{
-					shape_type: .rectangle // Placeholder
+					shape_type: .rectangle
 					id:         iv.id
 					width:      if iv.width > 0 { iv.width } else { 100 }
 					height:     if iv.height > 0 { iv.height } else { 100 }
@@ -117,17 +123,14 @@ struct ImageFetchResult {
 	is_err  bool
 }
 
-// download_image downloads a file from a URL to a local path in a background thread.
-// It performs security checks (Content-Length < 50MB, Content-Type is image/*)
-// and handles thread synchronization for updating active downloads state.
-fn download_image(url string, path string, mut w Window) {
-	spawn fn [url, path, mut w] () {
+// download_image downloads a remote image to a local cache path.
+// base_path has no extension; extension is determined from
+// Content-Type header. Validates size (<50MB) and type (image/*).
+fn download_image(url string, base_path string, mut w Window) {
+	spawn fn [url, base_path, mut w] () {
 		ch := chan ImageFetchResult{}
 
-		// Spawn fetcher thread WITHOUT window reference to avoid holding it if hung
-		spawn fn [url, path, ch] () {
-			// Security check: Verify Content-Length and Content-Type
-			// We use i64 for max size to match http.Response.content_length
+		spawn fn [url, base_path, ch] () {
 			max_size := i64(50 * 1024 * 1024)
 
 			head := http.head(url) or {
@@ -149,13 +152,17 @@ fn download_image(url string, path string, mut w Window) {
 			}
 
 			// Validate content type
-			if !head.header.get(.content_type) or { '' }.starts_with('image/') {
+			ct := head.header.get(.content_type) or { '' }
+			if !ct.starts_with('image/') {
 				ch <- ImageFetchResult{
 					err_msg: 'Invalid content type for image (expected image/*): ${url}'
 					is_err:  true
 				}
 				return
 			}
+
+			// Determine extension from Content-Type
+			path := base_path + content_type_to_ext(ct)
 
 			// Download file
 			http.download_file(url, path) or {
@@ -200,6 +207,41 @@ fn download_image(url string, path string, mut w Window) {
 			w.update_window()
 		})
 	}()
+}
+
+// content_type_to_ext maps Content-Type to file extension.
+fn content_type_to_ext(ct string) string {
+	if ct.starts_with('image/svg+xml') {
+		return '.svg'
+	}
+	if ct.starts_with('image/png') {
+		return '.png'
+	}
+	if ct.starts_with('image/jpeg') {
+		return '.jpg'
+	}
+	if ct.starts_with('image/gif') {
+		return '.gif'
+	}
+	if ct.starts_with('image/webp') {
+		return '.webp'
+	}
+	if ct.starts_with('image/bmp') {
+		return '.bmp'
+	}
+	return '.png'
+}
+
+// find_cached_image searches for a cached image file with any
+// valid extension matching the given base path (hash without ext).
+fn find_cached_image(base_path string) string {
+	for ext in ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp', '.svg'] {
+		candidate := base_path + ext
+		if os.exists(candidate) {
+			return candidate
+		}
+	}
+	return ''
 }
 
 // image creates a new image view from the provided configuration.
