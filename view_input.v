@@ -55,7 +55,7 @@ pub enum InputMode as u8 {
 // InputCfg configures an input view. See [input](#input). Use
 // `on_text_changed` to capture text updates. To capture the enter-key, provide
 // an `on_enter` callback. Placeholder text is shown when the field is empty.
-@[heap; minify]
+@[minify]
 pub struct InputCfg {
 pub:
 	id                 string
@@ -521,9 +521,8 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 	return memento.text
 }
 
-// make_input_on_char creates an on_char handler that captures the InputCfg
-// by value to avoid dangling reference issues. The InputCfg is heap-allocated
-// due to its @[heap] attribute.
+// make_input_on_char creates an on_char handler that captures
+// the InputCfg by value.
 fn make_input_on_char(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
 	return fn [cfg] (layout &Layout, mut event Event, mut w Window) {
 		if w.mouse_is_locked() {

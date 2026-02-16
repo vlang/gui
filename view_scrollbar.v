@@ -38,7 +38,7 @@ pub enum ScrollMode as u8 {
 // needed to define id_scroll in the Column/Row config. Scrollbars are
 // optional. Columns/Rows are scrollable without visible scrollbars.
 // [ScrollbarOverflow](#ScrollbarOverflow)
-@[heap; minify]
+@[minify]
 pub struct ScrollbarCfg {
 pub:
 	id               string

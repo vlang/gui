@@ -1,7 +1,7 @@
 module gui
 
 // SwitchCfg displays pill shaped box with a sliding toggle. [Switch](#toggle)
-@[heap; minify]
+@[minify]
 pub struct SwitchCfg {
 pub:
 	id                 string

@@ -32,7 +32,7 @@ pub enum TextMode as u8 {
 	wrap_keep_spaces // wrap at word breaks and `\n`s, Keep white space
 }
 
-@[minify]
+@[heap; minify]
 pub struct TextView implements View {
 	TextCfg
 mut:
@@ -107,7 +107,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 // to create text views for labels, multiline text blocks, or interactive text
 // with selection and copy capabilities. The [TextMode](#TextMode) field controls
 // how text is wrapped and displayed (single line, multiline, or wrapped).
-@[heap; minify]
+@[minify]
 pub struct TextCfg {
 	sizing Sizing
 pub:

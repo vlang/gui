@@ -19,7 +19,7 @@ pub mut:
 }
 
 // DatePickerRollerCfg configures a [date_picker_roller](#date_picker_roller)
-@[heap; minify]
+@[minify]
 pub struct DatePickerRollerCfg {
 pub:
 	id            string @[required]

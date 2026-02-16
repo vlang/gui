@@ -24,7 +24,7 @@ pub fn tab_item(id string, label string, content []View) TabItemCfg {
 // TabControlCfg configures a [tab_control](#tab_control).
 // This is a controlled component: `selected` is owned by app state and updated
 // through `on_select`.
-@[heap; minify]
+@[minify]
 pub struct TabControlCfg {
 pub:
 	id                     string       @[required]

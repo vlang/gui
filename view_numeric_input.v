@@ -24,7 +24,7 @@ pub:
 	show_buttons     bool = true
 }
 
-@[heap; minify]
+@[minify]
 pub struct NumericInputCfg {
 pub:
 	id                 string

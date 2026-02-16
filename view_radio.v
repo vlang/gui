@@ -1,7 +1,7 @@
 module gui
 
 // RadioCfg configures a [radio](#radio) button.
-@[heap; minify]
+@[minify]
 pub struct RadioCfg {
 pub:
 	id                 string

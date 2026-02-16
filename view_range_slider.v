@@ -11,7 +11,7 @@ import log
 // RangeSliderCfg defines the configuration options for the range slider component.
 // It includes visual styling properties like colors and dimensions, behavioral
 // settings like value range and step size, and callbacks for handling user input.
-@[heap; minify]
+@[minify]
 pub struct RangeSliderCfg {
 pub mut:
 	id            string @[required]

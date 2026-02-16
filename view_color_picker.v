@@ -5,7 +5,7 @@ module gui
 // RGBA numeric inputs.
 
 // ColorPickerCfg configures the color picker component.
-@[heap; minify]
+@[minify]
 pub struct ColorPickerCfg {
 pub:
 	id              string @[required]
@@ -30,18 +30,20 @@ pub fn color_picker(cfg ColorPickerCfg) View {
 			padding: padding_none
 			spacing: cfg.style.padding.left
 			content: [
-				cfg.sv_area(sv_size),
-				cfg.hue_slider(slider_h, sv_size),
+				cp_sv_area(cfg, sv_size),
+				cp_hue_slider(cfg, slider_h, sv_size),
 			]
 		),
-		cfg.alpha_slider(),
-		cfg.preview_row(),
-		cfg.rgba_inputs(),
+		cp_alpha_slider(cfg),
+		cp_preview_row(cfg),
+		cp_rgba_inputs(cfg),
 	]
 	if cfg.show_hsv {
-		content << cfg.hsv_inputs()
+		content << cp_hsv_inputs(cfg)
 	}
 
+	id := cfg.id
+	color := cfg.color
 	return column(
 		name:         'color_picker'
 		id:           cfg.id
@@ -50,31 +52,35 @@ pub fn color_picker(cfg ColorPickerCfg) View {
 		color:        cfg.style.color
 		radius:       cfg.style.radius
 		content:      content
-		amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
+		amend_layout: fn [id, color] (mut layout Layout, mut w Window) {
 			// Initialize state from color if not already present
-			if !w.view_state.color_picker_state.contains(cfg.id) {
-				h, s, v := cfg.color.to_hsv()
-				w.view_state.color_picker_state.set(cfg.id, ColorPickerState{h, s, v})
+			if !w.view_state.color_picker_state.contains(id) {
+				h, s, v := color.to_hsv()
+				w.view_state.color_picker_state.set(id, ColorPickerState{h, s, v})
 			}
 		}
 	)
 }
 
-// sv_area renders the saturation-value gradient area.
-fn (cfg &ColorPickerCfg) sv_area(size f32) View {
+// cp_sv_area renders the saturation-value gradient area.
+fn cp_sv_area(cfg ColorPickerCfg, size f32) View {
 	id := cfg.id
+	color := cfg.color
+	on_color_change := cfg.on_color_change
+	indicator_size := cfg.style.indicator_size
+	radius := cfg.style.radius
 
 	return container(
 		name:         'sv_area'
-		id:           '${cfg.id}_sv'
+		id:           '${id}_sv'
 		width:        size
 		height:       size
 		padding:      padding_none
-		radius:       cfg.style.radius
+		radius:       radius
 		clip:         true
-		amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
-			state := w.view_state.color_picker_state.get(cfg.id) or {
-				h, s, v := cfg.color.to_hsv()
+		amend_layout: fn [id, color] (mut layout Layout, mut w Window) {
+			state := w.view_state.color_picker_state.get(id) or {
+				h, s, v := color.to_hsv()
 				ColorPickerState{h, s, v}
 			}
 			pure := hue_color(state.h)
@@ -95,14 +101,14 @@ fn (cfg &ColorPickerCfg) sv_area(size f32) View {
 				direction: .to_right
 			}
 		}
-		on_click:     fn [cfg, id] (layout &Layout, mut e Event, mut w Window) {
+		on_click:     fn [id, color, on_color_change] (layout &Layout, mut e Event, mut w Window) {
 			w.mouse_lock(MouseLockCfg{
-				mouse_move: fn [cfg, id] (layout &Layout, mut e Event, mut w Window) {
+				mouse_move: fn [id, color, on_color_change] (layout &Layout, mut e Event, mut w Window) {
 					sv := layout.find_layout(fn [id] (n Layout) bool {
 						return n.shape.id == '${id}_sv'
 					})
 					if sv != none {
-						cfg.sv_mouse_move(&sv, mut e, mut w)
+						cp_sv_mouse_move(id, color, on_color_change, &sv, mut e, mut w)
 					}
 				}
 				mouse_up:   fn (_ &Layout, mut _ Event, mut w Window) {
@@ -135,14 +141,15 @@ fn (cfg &ColorPickerCfg) sv_area(size f32) View {
 					// SV indicator circle
 					circle(
 						name:         'sv_indicator'
-						width:        cfg.style.indicator_size
-						height:       cfg.style.indicator_size
-						color:        cfg.color.with_opacity(0.5)
+						width:        indicator_size
+						height:       indicator_size
+						color:        color.with_opacity(0.5)
 						color_border: white
 						size_border:  3
 						padding:      padding_none
-						amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
-							cfg.amend_sv_indicator(mut layout, mut w)
+						amend_layout: fn [id, color, indicator_size] (mut layout Layout, mut w Window) {
+							cp_amend_sv_indicator(id, color, indicator_size, mut layout, mut
+								w)
 						}
 					),
 				]
@@ -151,13 +158,15 @@ fn (cfg &ColorPickerCfg) sv_area(size f32) View {
 	)
 }
 
-// hue_slider renders a vertical rainbow hue bar.
-fn (cfg &ColorPickerCfg) hue_slider(w f32, h f32) View {
+// cp_hue_slider renders a vertical rainbow hue bar.
+fn cp_hue_slider(cfg ColorPickerCfg, w f32, h f32) View {
 	id := cfg.id
-
+	color := cfg.color
+	on_color_change := cfg.on_color_change
+	indicator_size := cfg.style.indicator_size
 	return container(
 		name:     'hue_slider'
-		id:       '${cfg.id}_hue'
+		id:       '${id}_hue'
 		width:    w
 		height:   h
 		padding:  padding_none
@@ -188,14 +197,15 @@ fn (cfg &ColorPickerCfg) hue_slider(w f32, h f32) View {
 			]
 			direction: .to_bottom
 		}
-		on_click: fn [cfg, id] (layout &Layout, mut e Event, mut w Window) {
+		on_click: fn [id, color, on_color_change] (layout &Layout, mut e Event, mut w Window) {
 			w.mouse_lock(MouseLockCfg{
-				mouse_move: fn [cfg, id] (layout &Layout, mut e Event, mut w Window) {
+				mouse_move: fn [id, color, on_color_change] (layout &Layout, mut e Event, mut w Window) {
 					hue := layout.find_layout(fn [id] (n Layout) bool {
 						return n.shape.id == '${id}_hue'
 					})
 					if hue != none {
-						cfg.hue_mouse_move(&hue, mut e, mut w)
+						cp_hue_mouse_move(id, color, on_color_change, &hue, mut e, mut
+							w)
 					}
 				}
 				mouse_up:   fn (_ &Layout, mut _ Event, mut w Window) {
@@ -208,52 +218,61 @@ fn (cfg &ColorPickerCfg) hue_slider(w f32, h f32) View {
 			// Hue indicator circle
 			circle(
 				name:         'hue_indicator'
-				width:        cfg.style.indicator_size
-				height:       cfg.style.indicator_size
+				width:        indicator_size
+				height:       indicator_size
 				color:        cfg.style.color // Temporary, fixed in amend
 				color_border: white
 				size_border:  3
 				padding:      padding_none
-				amend_layout: fn [cfg] (mut layout Layout, mut w Window) {
-					cfg.amend_hue_indicator(mut layout, mut w)
+				amend_layout: fn [id, color, indicator_size] (mut layout Layout, mut w Window) {
+					cp_amend_hue_indicator(id, color, indicator_size, mut layout, mut
+						w)
 				}
 			),
 		]
 	)
 }
 
-// alpha_slider renders an alpha range slider (0-255).
-fn (cfg &ColorPickerCfg) alpha_slider() View {
+// cp_alpha_slider renders an alpha range slider (0-255).
+fn cp_alpha_slider(cfg ColorPickerCfg) View {
+	id := cfg.id
+	color := cfg.color
+	on_color_change := cfg.on_color_change
+
 	return row(
 		padding: padding(0, 5, 0, 5)
 		sizing:  fill_fit
 		content: [
 			range_slider(
-				id:        '${cfg.id}_alpha'
+				id:        '${id}_alpha'
 				sizing:    fill_fit
-				value:     f32(cfg.color.a)
+				value:     f32(color.a)
 				min:       0
 				max:       255
-				on_change: fn [cfg] (value f32, mut e Event, mut w Window) {
+				on_change: fn [id, color, on_color_change] (value f32, mut e Event, mut w Window) {
 					c := Color{
-						r: cfg.color.r
-						g: cfg.color.g
-						b: cfg.color.b
+						r: color.r
+						g: color.g
+						b: color.b
 						a: u8(value)
 					}
-					cfg.on_color_change(c, mut e, mut w)
+					on_color_change(c, mut e, mut w)
 					// Update persistent HSV state
 					al_h, al_s, al_v := c.to_hsv()
-					w.view_state.color_picker_state.set(cfg.id, ColorPickerState{al_h, al_s, al_v})
+					w.view_state.color_picker_state.set(id, ColorPickerState{al_h, al_s, al_v})
 				}
 			),
 		]
 	)
 }
 
-// preview_row shows the current color swatch and hex input.
-fn (cfg &ColorPickerCfg) preview_row() View {
-	hex_str := cfg.color.to_hex_string()
+// cp_preview_row shows the current color swatch and hex input.
+fn cp_preview_row(cfg ColorPickerCfg) View {
+	id := cfg.id
+	color := cfg.color
+	on_color_change := cfg.on_color_change
+	hex_str := color.to_hex_string()
+
 	return row(
 		name:    'preview_row'
 		padding: padding_none
@@ -264,26 +283,26 @@ fn (cfg &ColorPickerCfg) preview_row() View {
 			rectangle(
 				width:        32
 				height:       32
-				color:        cfg.color
+				color:        color
 				color_border: cfg.style.color_border
 				size_border:  cfg.style.size_border
 				radius:       cfg.style.radius
 			),
 			input(
-				id:              '${cfg.id}_hex'
-				id_focus:        cfg.id_focus_base()
+				id:              '${id}_hex'
+				id_focus:        cp_id_focus_base(cfg)
 				text:            hex_str
 				min_width:       100
 				max_width:       100
 				padding:         padding_small
 				text_style:      cfg.style.text_style
-				on_text_changed: fn [cfg] (_ &Layout, s string, mut w Window) {
+				on_text_changed: fn [id, on_color_change] (_ &Layout, s string, mut w Window) {
 					if c := color_from_hex_string(s) {
 						mut ev := Event{}
-						cfg.on_color_change(c, mut ev, mut w)
+						on_color_change(c, mut ev, mut w)
 						// Update persistent HSV state
 						h, hs, hv := c.to_hsv()
-						w.view_state.color_picker_state.set(cfg.id, ColorPickerState{h, hs, hv})
+						w.view_state.color_picker_state.set(id, ColorPickerState{h, hs, hv})
 					}
 				}
 			),
@@ -293,15 +312,15 @@ fn (cfg &ColorPickerCfg) preview_row() View {
 				spacing: 5
 				content: [
 					text(text: 'A', text_style: cfg.style.text_style),
-					cfg.channel_input('a', cfg.color.a, cfg.id_focus_base() + 4),
+					cp_channel_input(cfg, 'a', color.a, cp_id_focus_base(cfg) + 4),
 				]
 			),
 		]
 	)
 }
 
-// rgba_inputs renders R, G, B, A numeric input fields.
-fn (cfg &ColorPickerCfg) rgba_inputs() View {
+// cp_rgba_inputs renders R, G, B, A numeric input fields.
+fn cp_rgba_inputs(cfg ColorPickerCfg) View {
 	return row(
 		name:    'rgba_inputs'
 		padding: padding_none
@@ -314,7 +333,7 @@ fn (cfg &ColorPickerCfg) rgba_inputs() View {
 				spacing: 5
 				content: [
 					text(text: 'R', text_style: cfg.style.text_style),
-					cfg.channel_input('r', cfg.color.r, cfg.id_focus_base() + 1),
+					cp_channel_input(cfg, 'r', cfg.color.r, cp_id_focus_base(cfg) + 1),
 				]
 			),
 			row(
@@ -323,7 +342,7 @@ fn (cfg &ColorPickerCfg) rgba_inputs() View {
 				spacing: 5
 				content: [
 					text(text: 'G', text_style: cfg.style.text_style),
-					cfg.channel_input('g', cfg.color.g, cfg.id_focus_base() + 2),
+					cp_channel_input(cfg, 'g', cfg.color.g, cp_id_focus_base(cfg) + 2),
 				]
 			),
 			row(
@@ -332,27 +351,31 @@ fn (cfg &ColorPickerCfg) rgba_inputs() View {
 				spacing: 5
 				content: [
 					text(text: 'B', text_style: cfg.style.text_style),
-					cfg.channel_input('b', cfg.color.b, cfg.id_focus_base() + 3),
+					cp_channel_input(cfg, 'b', cfg.color.b, cp_id_focus_base(cfg) + 3),
 				]
 			),
 		]
 	)
 }
 
-// channel_input creates a single numeric input for a color
+// cp_channel_input creates a single numeric input for a color
 // channel. Values are clamped to 0-255; non-numeric input
 // is ignored. Always fires on_color_change to keep the
 // input text and cursor in sync with the rendered value.
-fn (cfg &ColorPickerCfg) channel_input(ch string, val u8, id_focus u32) View {
+fn cp_channel_input(cfg ColorPickerCfg, ch string, val u8, id_focus u32) View {
+	id := cfg.id
+	color := cfg.color
+	on_color_change := cfg.on_color_change
+
 	return input(
-		id:              '${cfg.id}_${ch}'
+		id:              '${id}_${ch}'
 		id_focus:        id_focus
 		text:            val.str()
 		min_width:       45
 		max_width:       45
 		padding:         padding_small
 		text_style:      cfg.style.text_style
-		on_text_changed: fn [cfg, ch, val] (_ &Layout, s string, mut w Window) {
+		on_text_changed: fn [id, color, on_color_change, ch, val] (_ &Layout, s string, mut w Window) {
 			mut nv := val
 			if s.len > 0 {
 				mut valid := true
@@ -374,50 +397,50 @@ fn (cfg &ColorPickerCfg) channel_input(ch string, val u8, id_focus u32) View {
 				'r' {
 					Color{
 						r: nv
-						g: cfg.color.g
-						b: cfg.color.b
-						a: cfg.color.a
+						g: color.g
+						b: color.b
+						a: color.a
 					}
 				}
 				'g' {
 					Color{
-						r: cfg.color.r
+						r: color.r
 						g: nv
-						b: cfg.color.b
-						a: cfg.color.a
+						b: color.b
+						a: color.a
 					}
 				}
 				'b' {
 					Color{
-						r: cfg.color.r
-						g: cfg.color.g
+						r: color.r
+						g: color.g
 						b: nv
-						a: cfg.color.a
+						a: color.a
 					}
 				}
 				'a' {
 					Color{
-						r: cfg.color.r
-						g: cfg.color.g
-						b: cfg.color.b
+						r: color.r
+						g: color.g
+						b: color.b
 						a: nv
 					}
 				}
 				else {
-					cfg.color
+					color
 				}
 			}
 			mut ev := Event{}
-			cfg.on_color_change(clr, mut ev, mut w)
+			on_color_change(clr, mut ev, mut w)
 			// Update persistent HSV state
 			ch_h, ch_s, ch_v := clr.to_hsv()
-			w.view_state.color_picker_state.set(cfg.id, ColorPickerState{ch_h, ch_s, ch_v})
+			w.view_state.color_picker_state.set(id, ColorPickerState{ch_h, ch_s, ch_v})
 		}
 	)
 }
 
-// hsv_inputs renders H, S, V numeric input fields.
-fn (cfg &ColorPickerCfg) hsv_inputs() View {
+// cp_hsv_inputs renders H, S, V numeric input fields.
+fn cp_hsv_inputs(cfg ColorPickerCfg) View {
 	ch, cs, cv := cfg.color.to_hsv()
 	h_val := int(ch + 0.5)
 	s_val := int(cs * 100.0 + 0.5)
@@ -435,7 +458,7 @@ fn (cfg &ColorPickerCfg) hsv_inputs() View {
 				spacing: 5
 				content: [
 					text(text: 'H', text_style: cfg.style.text_style),
-					cfg.hsv_channel_input('h', h_val, 360, cfg.id_focus_base() + 5),
+					cp_hsv_channel_input(cfg, 'h', h_val, 360, cp_id_focus_base(cfg) + 5),
 				]
 			),
 			row(
@@ -444,7 +467,7 @@ fn (cfg &ColorPickerCfg) hsv_inputs() View {
 				spacing: 5
 				content: [
 					text(text: 'S', text_style: cfg.style.text_style),
-					cfg.hsv_channel_input('s', s_val, 100, cfg.id_focus_base() + 6),
+					cp_hsv_channel_input(cfg, 's', s_val, 100, cp_id_focus_base(cfg) + 6),
 				]
 			),
 			row(
@@ -453,22 +476,22 @@ fn (cfg &ColorPickerCfg) hsv_inputs() View {
 				spacing: 5
 				content: [
 					text(text: 'V', text_style: cfg.style.text_style),
-					cfg.hsv_channel_input('v', v_val, 100, cfg.id_focus_base() + 7),
+					cp_hsv_channel_input(cfg, 'v', v_val, 100, cp_id_focus_base(cfg) + 7),
 				]
 			),
 		]
 	)
 }
 
-// hsv_channel_input creates a numeric input for an HSV
+// cp_hsv_channel_input creates a numeric input for an HSV
 // channel. H: 0-360 degrees, S/V: 0-100 percent.
-fn (cfg &ColorPickerCfg) hsv_channel_input(ch string, val int, max_val int, id_focus u32) View {
+fn cp_hsv_channel_input(cfg ColorPickerCfg, ch string, val int, max_val int, id_focus u32) View {
 	id := cfg.id
 	on_color_change := cfg.on_color_change
 	color := cfg.color
 
 	return input(
-		id:              '${cfg.id}_hsv_${ch}'
+		id:              '${id}_hsv_${ch}'
 		id_focus:        id_focus
 		text:            val.str()
 		min_width:       45
@@ -507,9 +530,9 @@ fn (cfg &ColorPickerCfg) hsv_channel_input(ch string, val int, max_val int, id_f
 	)
 }
 
-// id_focus_base returns the starting id_focus for picker
+// cp_id_focus_base returns the starting id_focus for picker
 // sub-inputs, defaulting to a high value to avoid clashes.
-fn (cfg &ColorPickerCfg) id_focus_base() u32 {
+fn cp_id_focus_base(cfg ColorPickerCfg) u32 {
 	if cfg.id_focus > 0 {
 		return cfg.id_focus
 	}
@@ -518,38 +541,38 @@ fn (cfg &ColorPickerCfg) id_focus_base() u32 {
 
 // --- Mouse interaction helpers ---
 
-// sv_mouse_move handles mouse movement within the SV area.
-fn (cfg &ColorPickerCfg) sv_mouse_move(layout &Layout, mut e Event, mut w Window) {
+// cp_sv_mouse_move handles mouse movement within the SV area.
+fn cp_sv_mouse_move(id string, color Color, on_color_change fn (Color, mut Event, mut Window), layout &Layout, mut e Event, mut w Window) {
 	shape := layout.shape
 	s := f32_clamp((e.mouse_x - shape.x) / shape.width, 0, 1.0)
 	v := 1.0 - f32_clamp((e.mouse_y - shape.y) / shape.height, 0, 1.0)
-	state := w.view_state.color_picker_state.get(cfg.id) or {
-		h, _, _ := cfg.color.to_hsv()
+	state := w.view_state.color_picker_state.get(id) or {
+		h, _, _ := color.to_hsv()
 		ColorPickerState{h, s, v}
 	}
-	w.view_state.color_picker_state.set(cfg.id, ColorPickerState{state.h, s, v})
-	c := color_from_hsva(state.h, s, v, cfg.color.a)
-	cfg.on_color_change(c, mut e, mut w)
+	w.view_state.color_picker_state.set(id, ColorPickerState{state.h, s, v})
+	c := color_from_hsva(state.h, s, v, color.a)
+	on_color_change(c, mut e, mut w)
 }
 
-// hue_mouse_move handles mouse movement within the hue slider.
-fn (cfg &ColorPickerCfg) hue_mouse_move(layout &Layout, mut e Event, mut w Window) {
+// cp_hue_mouse_move handles mouse movement within the hue slider.
+fn cp_hue_mouse_move(id string, color Color, on_color_change fn (Color, mut Event, mut Window), layout &Layout, mut e Event, mut w Window) {
 	shape := layout.shape
 	percent := f32_clamp((e.mouse_y - shape.y) / shape.height, 0, 0.999)
 	h := percent * 360.0
-	state := w.view_state.color_picker_state.get(cfg.id) or {
-		_, s, v := cfg.color.to_hsv()
+	state := w.view_state.color_picker_state.get(id) or {
+		_, s, v := color.to_hsv()
 		ColorPickerState{h, s, v}
 	}
-	w.view_state.color_picker_state.set(cfg.id, ColorPickerState{h, state.s, state.v})
-	c := color_from_hsva(h, state.s, state.v, cfg.color.a)
-	cfg.on_color_change(c, mut e, mut w)
+	w.view_state.color_picker_state.set(id, ColorPickerState{h, state.s, state.v})
+	c := color_from_hsva(h, state.s, state.v, color.a)
+	on_color_change(c, mut e, mut w)
 }
 
 // --- Layout amendment helpers ---
 
-// amend_sv_indicator positions the crosshair circle in the SV area.
-fn (cfg &ColorPickerCfg) amend_sv_indicator(mut layout Layout, mut w Window) {
+// cp_amend_sv_indicator positions the crosshair circle in the SV area.
+fn cp_amend_sv_indicator(id string, color Color, indicator_size f32, mut layout Layout, mut w Window) {
 	parent := layout.parent
 	if parent == unsafe { nil } {
 		return
@@ -559,29 +582,29 @@ fn (cfg &ColorPickerCfg) amend_sv_indicator(mut layout Layout, mut w Window) {
 	if gp == unsafe { nil } {
 		return
 	}
-	state := w.view_state.color_picker_state.get(cfg.id) or {
-		h, s, v := cfg.color.to_hsv()
+	state := w.view_state.color_picker_state.get(id) or {
+		h, s, v := color.to_hsv()
 		ColorPickerState{h, s, v}
 	}
-	layout.shape.color = cfg.color.with_opacity(0.5)
-	radius := cfg.style.indicator_size / 2.0
+	layout.shape.color = color.with_opacity(0.5)
+	radius := indicator_size / 2.0
 	layout.shape.x = gp.shape.x + (state.s * gp.shape.width) - radius
 	layout.shape.y = gp.shape.y + ((1.0 - state.v) * gp.shape.height) - radius
 }
 
-// amend_hue_indicator positions the hue indicator circle.
-fn (cfg &ColorPickerCfg) amend_hue_indicator(mut layout Layout, mut w Window) {
+// cp_amend_hue_indicator positions the hue indicator circle.
+fn cp_amend_hue_indicator(id string, color Color, indicator_size f32, mut layout Layout, mut w Window) {
 	parent := layout.parent
 	if parent == unsafe { nil } {
 		return
 	}
-	state := w.view_state.color_picker_state.get(cfg.id) or {
-		h, s, v := cfg.color.to_hsv()
+	state := w.view_state.color_picker_state.get(id) or {
+		h, s, v := color.to_hsv()
 		ColorPickerState{h, s, v}
 	}
 	layout.shape.color = hue_color(state.h).with_opacity(0.5)
 	percent := state.h / 360.0
-	radius := cfg.style.indicator_size / 2.0
+	radius := indicator_size / 2.0
 	layout.shape.y = parent.shape.y + (percent * parent.shape.height) - radius
 	layout.shape.x = parent.shape.x + (parent.shape.width / 2.0) - radius
 }

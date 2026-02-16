@@ -180,7 +180,7 @@ struct DataGridPresentation {
 	data_to_display map[int]int
 }
 
-@[heap; minify]
+@[minify]
 pub struct DataGridCfg {
 pub:
 	id                        string @[required]

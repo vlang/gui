@@ -52,7 +52,7 @@ struct SplitterPaneCore {
 }
 
 // SplitterCfg configures a splitter component.
-@[heap; minify]
+@[minify]
 pub struct SplitterCfg {
 pub:
 	id                    string @[required]
