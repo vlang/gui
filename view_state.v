@@ -75,9 +75,11 @@ mut:
 	table_warned_no_id            BoundedMap[u64, bool] = BoundedMap[u64, bool]{
 		max_size: 100
 	}
+	external_api_warning_logged   bool
 	diagram_cache                 BoundedDiagramCache = BoundedDiagramCache{
 		max_size: 200
 	}
+	diagram_request_seq           u64
 	progress_state                BoundedMap[string, f32] = BoundedMap[string, f32]{
 		max_size: 50
 	}
@@ -253,6 +255,9 @@ pub:
 fn (mut w Window) clear_view_state() {
 	mut ctx := w.context()
 	w.view_state.image_map.clear(mut ctx)
+	w.view_state.diagram_cache.clear()
+	w.view_state.svg_cache.clear()
+	w.view_state.markdown_cache.clear()
 	w.view_state = ViewState{}
 }
 

@@ -62,7 +62,7 @@ on_value: fn (v f32, mut w gui.Window) {
 Tween animations interpolate between two values over a fixed duration. Use easing
 functions to control the motion curve.
 
-### Basic Example
+### Tween Example
 
 ```v ignore
 import time
@@ -155,7 +155,7 @@ Keyframe animations interpolate through multiple waypoints over a fixed duration
 keyframe specifies a position (0.0-1.0), value, and easing function to reach it. Use for
 complex motion patterns like shake effects, staged progress, or animations with pauses.
 
-### Basic Example
+### Keyframe Example
 
 ```v ignore
 import time
@@ -235,7 +235,7 @@ w.animation_add(mut gui.KeyframeAnimation{
 Spring animations use physics simulation for natural-feeling motion. Unlike tweens,
 they have no fixed duration - they settle naturally based on physics parameters.
 
-### Basic Example
+### Spring Example
 
 ```v ignore
 fn spring_sidebar(mut w gui.Window) {
@@ -304,7 +304,7 @@ spring.retarget(200) // smoothly redirects to new target
 Layout transitions automatically animate position and size changes between frames.
 Call `animate_layout()` before modifying state that affects layout.
 
-### Basic Example
+### Layout Transition Example
 
 ```v ignore
 fn toggle_sidebar(mut w gui.Window) {
@@ -326,7 +326,7 @@ fn toggle_sidebar(mut w gui.Window) {
 3. Framework interpolates between old and new positions
 4. Elements smoothly animate to their new locations
 
-### Requirements
+### Layout Requirements
 
 Elements must have an `id` to participate in layout transitions:
 
@@ -352,7 +352,7 @@ w.animate_layout(
 Hero transitions morph elements between completely different views. Elements with
 matching IDs and `hero: true` animate together during view switches.
 
-### Basic Example
+### Hero Transition Example
 
 ```v ignore
 // Source view
@@ -396,7 +396,7 @@ The framework interpolates these properties:
 - Border radius
 - Opacity (for elements only in target view)
 
-### Requirements
+### Hero Requirements
 
 1. Both source and target elements need `id` set to the same value
 2. Both elements need `hero: true`

@@ -7,6 +7,7 @@ import stbi
 import time
 
 const max_concurrent_diagram_fetches = 8
+const diagram_fetch_timeout = 15 * time.second
 
 // DiagramState represents the loading state of a diagram.
 enum DiagramState {
@@ -17,12 +18,13 @@ enum DiagramState {
 
 // DiagramCacheEntry stores cached diagram data with its state.
 struct DiagramCacheEntry {
-	state    DiagramState
-	png_path string // temp file path for PNG
-	error    string
-	width    f32
-	height   f32
-	dpi      f32 // DPI used for rendering (for scale calc)
+	state      DiagramState
+	png_path   string // temp file path for PNG
+	error      string
+	width      f32
+	height     f32
+	dpi        f32 // DPI used for rendering (for scale calc)
+	request_id u64
 }
 
 // write_stbi_temp writes an stbi image to a temp PNG file.
@@ -58,10 +60,41 @@ fn fill_transparent_with_bg(data &u8, width int, height int, channels int, r u8,
 	}
 }
 
-struct MermaidFetchResult {
-	res     http.Response
-	err_msg string
-	is_err  bool
+fn diagram_cache_should_apply_result(cache &BoundedDiagramCache, hash i64, request_id u64) bool {
+	entry := cache.get(hash) or { return false }
+	return entry.state == .loading && entry.request_id == request_id
+}
+
+fn mermaid_http_fetch(source string) !http.Response {
+	// Kroki POST /mermaid/png: JSON body with
+	// 'diagram_source'. Escape per RFC 8259.
+	mut escaped := source.replace('\\', '\\\\')
+	escaped = escaped.replace('"', '\\"')
+	escaped = escaped.replace('\n', '\\n')
+	escaped = escaped.replace('\r', '\\r')
+	escaped = escaped.replace('\t', '\\t')
+	// Escape remaining control chars U+0000-U+001F
+	mut buf := []u8{cap: escaped.len}
+	for ech in escaped {
+		if ech < 0x20 || ech == 0x7f {
+			hex := '0000${ech:X}'
+			buf << '\\u${hex[hex.len - 4..]}'.bytes()
+		} else {
+			buf << ech
+		}
+	}
+	json_data := '{"diagram_source": "${buf.bytestr()}"}'
+	mut req := http.prepare(
+		method: .post
+		url:    'https://kroki.io/mermaid/png'
+		data:   json_data
+		header: http.new_custom_header_from_map({
+			'Content-Type': 'application/json'
+		}) or { http.Header{} }
+	)!
+	req.read_timeout = i64(diagram_fetch_timeout)
+	req.write_timeout = i64(diagram_fetch_timeout)
+	return req.do()!
 }
 
 // fetch_mermaid_async fetches a mermaid diagram from Kroki API in background thread.
@@ -72,98 +105,53 @@ struct MermaidFetchResult {
 // API (kroki.io) for rendering. This may leak document content
 // to the service provider.
 // Use MarkdownCfg.disable_external_apis to disable this.
-fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int, bg_r u8, bg_g u8, bg_b u8) {
-	spawn fn [mut window, source, hash, max_width, bg_r, bg_g, bg_b] () {
+fn fetch_mermaid_async(mut window Window, source string, hash i64, request_id u64, max_width int, bg_r u8, bg_g u8, bg_b u8) {
+	spawn fn [mut window, source, hash, request_id, max_width, bg_r, bg_g, bg_b] () {
 		if source.len > max_mermaid_source_len {
-			window.queue_command(fn [hash] (mut w Window) {
-				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state: .error
-					error: 'Mermaid source too large'
-				})
-				w.update_window()
-			})
-			return
-		}
-		ch := chan MermaidFetchResult{}
-
-		// Spawn fetcher thread WITHOUT window reference to avoid holding it if hung
-
-		spawn fn [source, ch] () {
-			// Kroki POST /mermaid/png: JSON body with
-			// 'diagram_source'. Escape per RFC 8259.
-			mut escaped := source.replace('\\', '\\\\')
-			escaped = escaped.replace('"', '\\"')
-			escaped = escaped.replace('\n', '\\n')
-			escaped = escaped.replace('\r', '\\r')
-			escaped = escaped.replace('\t', '\\t')
-			// Escape remaining control chars U+0000-U+001F
-			mut buf := []u8{cap: escaped.len}
-			for ech in escaped {
-				if ech < 0x20 || ech == 0x7f {
-					hex := '0000${ech:X}'
-					buf << '\\u${hex[hex.len - 4..]}'.bytes()
-				} else {
-					buf << ech
+			window.queue_command(fn [hash, request_id] (mut w Window) {
+				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+					request_id) {
+					return
 				}
-			}
-			json_data := '{"diagram_source": "${buf.bytestr()}"}'
-
-			result := http.fetch(
-				method: .post
-				url:    'https://kroki.io/mermaid/png'
-				data:   json_data
-				header: http.new_custom_header_from_map({
-					'Content-Type': 'application/json'
-				}) or { http.Header{} }
-			) or {
-				ch <- MermaidFetchResult{
-					err_msg: err.msg()
-					is_err:  true
-				}
-				return
-			}
-			ch <- MermaidFetchResult{
-				res:    result
-				is_err: false
-			}
-		}()
-
-		// Wait for result with 15s timeout
-		mut fetch_res := MermaidFetchResult{
-			is_err:  true
-			err_msg: 'Request timed out'
-		}
-
-		select {
-			res := <-ch {
-				fetch_res = res
-			}
-			15 * time.second {
-				// use default timeout value
-			}
-		}
-
-		if fetch_res.is_err {
-			err_msg := fetch_res.err_msg
-			window.queue_command(fn [hash, err_msg] (mut w Window) {
 				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state: .error
-					error: err_msg
+					state:      .error
+					error:      'Mermaid source too large'
+					request_id: request_id
 				})
 				w.update_window()
 			})
 			return
 		}
 
-		result := fetch_res.res
+		result := mermaid_http_fetch(source) or {
+			err_msg := err.msg()
+			window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
+				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+					request_id) {
+					return
+				}
+				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+					state:      .error
+					error:      err_msg
+					request_id: request_id
+				})
+				w.update_window()
+			})
+			return
+		}
 		if result.status_code == 200 {
 			// Reject oversized responses (>10MB)
 			if result.body.len > 10 * 1024 * 1024 {
 				body_len := result.body.len
-				window.queue_command(fn [hash, body_len] (mut w Window) {
+				window.queue_command(fn [hash, request_id, body_len] (mut w Window) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
+						hash, request_id) {
+						return
+					}
 					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-						state: .error
-						error: 'Response too large (>${body_len / 1024 / 1024}MB)'
+						state:      .error
+						error:      'Response too large (>${body_len / 1024 / 1024}MB)'
+						request_id: request_id
 					})
 					w.update_window()
 				})
@@ -173,10 +161,15 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 			png_bytes := result.body.bytes()
 			img := stbi.load_from_memory(png_bytes.data, png_bytes.len) or {
 				err_msg := err.msg()
-				window.queue_command(fn [hash, err_msg] (mut w Window) {
+				window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
+						hash, request_id) {
+						return
+					}
 					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-						state: .error
-						error: 'Failed to decode PNG: ${err_msg}'
+						state:      .error
+						error:      'Failed to decode PNG: ${err_msg}'
+						request_id: request_id
 					})
 					w.update_window()
 				})
@@ -192,10 +185,15 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 				final_img = stbi.resize_uint8(&img, max_width, new_h) or {
 					img.free()
 					err_msg := err.msg()
-					window.queue_command(fn [hash, err_msg] (mut w Window) {
+					window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
+						if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
+							hash, request_id) {
+							return
+						}
 						w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-							state: .error
-							error: 'Failed to resize: ${err_msg}'
+							state:      .error
+							error:      'Failed to resize: ${err_msg}'
+							request_id: request_id
 						})
 						w.update_window()
 					})
@@ -213,10 +211,15 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 					final_img.free()
 				}
 				err_msg := err.msg()
-				window.queue_command(fn [hash, err_msg] (mut w Window) {
+				window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
+						hash, request_id) {
+						return
+					}
 					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-						state: .error
-						error: 'Failed to write temp file: ${err_msg}'
+						state:      .error
+						error:      'Failed to write temp file: ${err_msg}'
+						request_id: request_id
 					})
 					w.update_window()
 				})
@@ -229,12 +232,18 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 			}
 			final_w := f32(final_img.width)
 			final_h := f32(final_img.height)
-			window.queue_command(fn [hash, tmp_path, final_w, final_h] (mut w Window) {
+			window.queue_command(fn [hash, request_id, tmp_path, final_w, final_h] (mut w Window) {
+				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+					request_id) {
+					os.rm(tmp_path) or {}
+					return
+				}
 				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state:    .ready
-					png_path: tmp_path
-					width:    final_w
-					height:   final_h
+					state:      .ready
+					png_path:   tmp_path
+					width:      final_w
+					height:     final_h
+					request_id: request_id
 				})
 				w.update_window()
 			})
@@ -245,10 +254,15 @@ fn fetch_mermaid_async(mut window Window, source string, hash i64, max_width int
 				result.body
 			}
 			status_code := result.status_code
-			window.queue_command(fn [hash, status_code, body_preview] (mut w Window) {
+			window.queue_command(fn [hash, request_id, status_code, body_preview] (mut w Window) {
+				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+					request_id) {
+					return
+				}
 				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state: .error
-					error: 'HTTP ${status_code}: ${body_preview}'
+					state:      .error
+					error:      'HTTP ${status_code}: ${body_preview}'
+					request_id: request_id
 				})
 				w.update_window()
 			})
@@ -273,6 +287,11 @@ fn (m &BoundedDiagramCache) get(key i64) ?DiagramCacheEntry {
 fn (mut m BoundedDiagramCache) set(key i64, value DiagramCacheEntry) {
 	if m.max_size < 1 {
 		return
+	}
+	if existing := m.data[key] {
+		if existing.png_path.len > 0 && existing.png_path != value.png_path {
+			os.rm(existing.png_path) or {}
+		}
 	}
 	if key !in m.data {
 		if m.data.len >= m.max_size && m.order.len > 0 {

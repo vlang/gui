@@ -5,6 +5,7 @@ module gui
 struct BoundedMap[K, V] {
 mut:
 	data     map[K]V
+	order    []K
 	max_size int = 100
 }
 
@@ -13,16 +14,16 @@ fn (mut m BoundedMap[K, V]) set(key K, value V) {
 	if m.max_size < 1 {
 		return
 	}
-	if key !in m.data {
-		if m.data.len >= m.max_size {
-			mut oldest_key := K{}
-			for k, _ in m.data {
-				oldest_key = k
-				break
-			}
-			m.data.delete(oldest_key)
-		}
+	if key in m.data {
+		m.data[key] = value
+		return
 	}
+	if m.data.len >= m.max_size && m.order.len > 0 {
+		oldest_key := m.order[0]
+		m.order.delete(0)
+		m.data.delete(oldest_key)
+	}
+	m.order << key
 	m.data[key] = value
 }
 
@@ -33,7 +34,16 @@ fn (m &BoundedMap[K, V]) get(key K) ?V {
 
 // delete removes key from map.
 fn (mut m BoundedMap[K, V]) delete(key K) {
+	if key !in m.data {
+		return
+	}
 	m.data.delete(key)
+	for i, item in m.order {
+		if item == key {
+			m.order.delete(i)
+			break
+		}
+	}
 }
 
 // contains returns true if key exists in map.
@@ -49,11 +59,12 @@ fn (m &BoundedMap[K, V]) len() int {
 // clear removes all entries from map.
 fn (mut m BoundedMap[K, V]) clear() {
 	m.data.clear()
+	m.order.clear()
 }
 
 // keys returns all keys in insertion order.
 fn (m &BoundedMap[K, V]) keys() []K {
-	return m.data.keys()
+	return m.order.clone()
 }
 
 // BoundedTreeState is a specialized bounded map for tree state
@@ -62,6 +73,7 @@ fn (m &BoundedMap[K, V]) keys() []K {
 struct BoundedTreeState {
 mut:
 	data     map[string]map[string]bool
+	order    []string
 	max_size int = 30
 }
 
@@ -70,16 +82,16 @@ fn (mut m BoundedTreeState) set(key string, value map[string]bool) {
 	if m.max_size < 1 {
 		return
 	}
-	if key !in m.data {
-		if m.data.len >= m.max_size {
-			mut oldest_key := ''
-			for k, _ in m.data {
-				oldest_key = k
-				break
-			}
-			m.data.delete(oldest_key)
-		}
+	if key in m.data {
+		m.data[key] = value.clone()
+		return
 	}
+	if m.data.len >= m.max_size && m.order.len > 0 {
+		oldest_key := m.order[0]
+		m.order.delete(0)
+		m.data.delete(oldest_key)
+	}
+	m.order << key
 	m.data[key] = value.clone()
 }
 
@@ -101,6 +113,7 @@ fn (m &BoundedTreeState) len() int {
 // clear removes all entries.
 fn (mut m BoundedTreeState) clear() {
 	m.data.clear()
+	m.order.clear()
 }
 
 // BoundedSvgCache is an LRU cache for SVG data.
@@ -202,6 +215,7 @@ fn (mut m BoundedSvgCache) clear() {
 struct BoundedMarkdownCache {
 mut:
 	data     map[int][]MarkdownBlock
+	order    []int
 	max_size int = 50
 }
 
@@ -215,16 +229,16 @@ fn (mut m BoundedMarkdownCache) set(key int, value []MarkdownBlock) {
 	if m.max_size < 1 {
 		return
 	}
-	if key !in m.data {
-		if m.data.len >= m.max_size {
-			mut oldest_key := 0
-			for k, _ in m.data {
-				oldest_key = k
-				break
-			}
-			m.data.delete(oldest_key)
-		}
+	if key in m.data {
+		m.data[key] = value.clone()
+		return
 	}
+	if m.data.len >= m.max_size && m.order.len > 0 {
+		oldest_key := m.order[0]
+		m.order.delete(0)
+		m.data.delete(oldest_key)
+	}
+	m.order << key
 	m.data[key] = value.clone()
 }
 
@@ -236,4 +250,5 @@ fn (m &BoundedMarkdownCache) len() int {
 // clear removes all entries.
 fn (mut m BoundedMarkdownCache) clear() {
 	m.data.clear()
+	m.order.clear()
 }

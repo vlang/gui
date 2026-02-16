@@ -48,6 +48,7 @@ mut:
 	blur_pip_init          bool         // Initialization flag for blur pipeline
 	gradient_pip           sgl.Pipeline // Pipeline for drawing multi-stop gradients
 	gradient_pip_init      bool         // Initialization flag for gradient pipeline
+	gradient_stop_warned   bool         // Logs multi-stop truncation warning only once per session
 	stencil_write_pip      sgl.Pipeline // Pipeline: write clip mask to stencil
 	stencil_write_pip_init bool
 	stencil_test_pip       sgl.Pipeline // Pipeline: draw with stencil test

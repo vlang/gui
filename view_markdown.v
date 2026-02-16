@@ -2,6 +2,7 @@ module gui
 
 import time
 import strings
+import log
 
 // view_markdown.v defines the Markdown view component.
 // It parses markdown source and renders it using the RTF infrastructure.
@@ -89,6 +90,19 @@ fn rich_text_plain(rt RichText) string {
 		sb.write_string(run.text)
 	}
 	return sb.str()
+}
+
+fn next_diagram_request_id(mut w Window) u64 {
+	w.view_state.diagram_request_seq++
+	return w.view_state.diagram_request_seq
+}
+
+fn markdown_warn_external_api_once(mut w Window) {
+	if w.view_state.external_api_warning_logged {
+		return
+	}
+	w.view_state.external_api_warning_logged = true
+	log.warn('markdown external APIs enabled; content may be sent to codecogs.com and kroki.io')
 }
 
 // build_markdown_table_data converts parsed table to TableRowCfg array.
@@ -195,10 +209,12 @@ fn render_md_math(block MarkdownBlock, cfg MarkdownCfg, window &Window) View {
 	}
 	// Start async fetch (if under concurrency limit)
 	if w.view_state.diagram_cache.loading_count() < max_concurrent_diagram_fetches {
+		request_id := next_diagram_request_id(mut w)
 		w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
-			state: .loading
+			state:      .loading
+			request_id: request_id
 		})
-		fetch_math_async(mut w, block.math_latex, diagram_hash, cfg.style.math_dpi_display,
+		fetch_math_async(mut w, block.math_latex, diagram_hash, request_id, cfg.style.math_dpi_display,
 			cfg.style.text.color)
 	}
 	return column(
@@ -286,11 +302,13 @@ fn render_md_mermaid(block MarkdownBlock, cfg MarkdownCfg, window &Window) View 
 	}
 	// Start async fetch (if under concurrency limit)
 	if w.view_state.diagram_cache.loading_count() < max_concurrent_diagram_fetches {
+		request_id := next_diagram_request_id(mut w)
 		w.view_state.diagram_cache.set(diagram_hash, DiagramCacheEntry{
-			state: .loading
+			state:      .loading
+			request_id: request_id
 		})
-		fetch_mermaid_async(mut w, source, diagram_hash, cfg.mermaid_width, cfg.style.mermaid_bg.r,
-			cfg.style.mermaid_bg.g, cfg.style.mermaid_bg.b)
+		fetch_mermaid_async(mut w, source, diagram_hash, request_id, cfg.mermaid_width,
+			cfg.style.mermaid_bg.r, cfg.style.mermaid_bg.g, cfg.style.mermaid_bg.b)
 	}
 	return loading_view
 }
@@ -378,6 +396,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 	// Trigger inline math fetches for unseen math runs
 	if !cfg.disable_external_apis {
 		mut w := unsafe { window }
+		markdown_warn_external_api_once(mut w)
 		for block in blocks {
 			for run in block.content.runs {
 				if run.math_id != '' {
@@ -387,10 +406,12 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 						if w.view_state.diagram_cache.loading_count() >= max_concurrent_diagram_fetches {
 							continue
 						}
+						request_id := next_diagram_request_id(mut w)
 						w.view_state.diagram_cache.set(mhash, DiagramCacheEntry{
-							state: .loading
+							state:      .loading
+							request_id: request_id
 						})
-						fetch_math_async(mut w, run.math_latex, mhash, cfg.style.math_dpi_inline,
+						fetch_math_async(mut w, run.math_latex, mhash, request_id, cfg.style.math_dpi_inline,
 							cfg.style.text.color)
 					}
 				}

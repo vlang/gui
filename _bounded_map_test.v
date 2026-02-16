@@ -184,3 +184,50 @@ fn test_bounded_markdown_cache_fifo() {
 	assert m.get(300) != none
 	assert m.len() == 2
 }
+
+fn test_bounded_map_keys_stable_after_delete_and_insert() {
+	mut m := BoundedMap[string, int]{
+		max_size: 4
+	}
+	m.set('a', 1)
+	m.set('b', 2)
+	m.set('c', 3)
+	m.delete('b')
+	m.set('d', 4)
+	assert m.keys() == ['a', 'c', 'd']
+}
+
+fn test_bounded_tree_state_update_preserves_fifo_position() {
+	mut m := BoundedTreeState{
+		max_size: 2
+	}
+	m.set('left', {
+		'a': true
+	})
+	m.set('right', {
+		'b': true
+	})
+	// update existing key; should not move to back
+	m.set('left', {
+		'a': false
+	})
+	m.set('third', {
+		'c': true
+	})
+	assert m.get('left') == none
+	assert m.get('right') != none
+	assert m.get('third') != none
+}
+
+fn test_bounded_markdown_cache_update_preserves_fifo_position() {
+	mut m := BoundedMarkdownCache{
+		max_size: 2
+	}
+	m.set(10, [])
+	m.set(20, [])
+	m.set(10, [])
+	m.set(30, [])
+	assert m.get(10) == none
+	assert m.get(20) != none
+	assert m.get(30) != none
+}

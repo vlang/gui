@@ -27,7 +27,7 @@ guidance for building performant applications.
 
 **Bottleneck**: Text wrapping and measurement dominate layout time for text-heavy UIs.
 
-### Optimization Tips
+### Text Optimization Tips
 
 1. **Minimize text changes**: Only update text that actually changed
 2. **Use fixed dimensions**: Avoid `fit` sizing when dimensions are known

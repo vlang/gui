@@ -1581,8 +1581,11 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 	// for direction/radius metadata)
 	mut tm_data := [16]f32{}
 	stop_count := if gradient.stops.len > 5 {
-		eprintln('warning: gradient has ${gradient.stops.len} stops,' +
-			' max 5 supported; extra stops ignored')
+		if !window.gradient_stop_warned {
+			window.gradient_stop_warned = true
+			eprintln('warning: gradient has ${gradient.stops.len} stops,' +
+				' max 5 supported; extra stops ignored')
+		}
 		5
 	} else {
 		gradient.stops.len

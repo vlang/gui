@@ -174,11 +174,11 @@ pub fn (mut window Window) queue_command(cb WindowCommand) {
 // flush_commands executes all pending commands in the command queue.
 // Internal use only; called by the main loop.
 fn (mut window Window) flush_commands() {
+	window.commands_mutex.lock()
 	if window.commands.len == 0 {
+		window.commands_mutex.unlock()
 		return
 	}
-
-	window.commands_mutex.lock()
 	to_run := window.commands.clone()
 	window.commands.clear()
 	window.commands_mutex.unlock()
