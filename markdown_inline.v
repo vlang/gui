@@ -381,6 +381,11 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					pos = end + 1
 					continue
 				}
+				// Strip HTML tags (not autolinks)
+				if is_html_tag(inner) {
+					pos = end + 1
+					continue
+				}
 			}
 		}
 
@@ -608,6 +613,23 @@ fn is_safe_image_path(path string) bool {
 		}
 	}
 	return false
+}
+
+// is_html_tag checks if text between < > looks like an HTML tag.
+// Matches: tag, /tag, tag attr, tag/, br/, etc.
+fn is_html_tag(s string) bool {
+	if s.len == 0 {
+		return false
+	}
+	start := if s[0] == `/` { 1 } else { 0 }
+	if start >= s.len {
+		return false
+	}
+	c := s[start]
+	if !((c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`)) {
+		return false
+	}
+	return true
 }
 
 // trim_trailing_breaks removes excess trailing newline runs, keeping at most one.
