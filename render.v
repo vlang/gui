@@ -275,20 +275,20 @@ fn draw_clipped_svg_group(renderers []Renderer, mut idx &int, mut window Window)
 	init_stencil_pipelines(mut window)
 
 	// Step 1: Write clip mask to stencil buffer (ref=1)
-	sgl.load_pipeline(window.stencil_write_pip)
+	sgl.load_pipeline(window.pip.stencil_write)
 	for m in masks {
 		draw_triangles_raw(m.triangles, m.x, m.y, m.scale, mut window)
 	}
 
 	// Step 2: Draw content where stencil == 1
-	sgl.load_pipeline(window.stencil_test_pip)
+	sgl.load_pipeline(window.pip.stencil_test)
 	for c in content {
 		sgl.c4b(c.color.r, c.color.g, c.color.b, c.color.a)
 		draw_triangles_raw(c.triangles, c.x, c.y, c.scale, mut window)
 	}
 
 	// Step 3: Clear stencil by re-drawing mask with ref=0
-	sgl.load_pipeline(window.stencil_clear_pip)
+	sgl.load_pipeline(window.pip.stencil_clear)
 	for m in masks {
 		draw_triangles_raw(m.triangles, m.x, m.y, m.scale, mut window)
 	}
@@ -1498,7 +1498,7 @@ pub fn draw_blur_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.Col
 	// No offset for generic blur
 	sgl.translate(0, 0, 0)
 
-	sgl.load_pipeline(window.blur_pip)
+	sgl.load_pipeline(window.pip.blur)
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
 	z_val := pack_shader_params(r, b)
@@ -1581,8 +1581,8 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 	// for direction/radius metadata)
 	mut tm_data := [16]f32{}
 	stop_count := if gradient.stops.len > 5 {
-		if !window.gradient_stop_warned {
-			window.gradient_stop_warned = true
+		if !window.pip.gradient_stop_warned {
+			window.pip.gradient_stop_warned = true
 			eprintln('warning: gradient has ${gradient.stops.len} stops,' +
 				' max 5 supported; extra stops ignored')
 		}
@@ -1626,7 +1626,7 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 
 	sgl.load_matrix(tm_data[0..])
 
-	sgl.load_pipeline(window.gradient_pip)
+	sgl.load_pipeline(window.pip.gradient)
 	sgl.c4b(255, 255, 255, 255) // White base color (shader computes actual color)
 
 	z_val := pack_shader_params(r, 0)
@@ -1703,7 +1703,7 @@ fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, thickness f32, g
 	}
 
 	init_rounded_rect_pipeline(mut window)
-	sgl.load_pipeline(window.rounded_rect_pip)
+	sgl.load_pipeline(window.pip.rounded_rect)
 
 	// Determine colors based on gradient stops (simplification for 2 stops)
 	c1 := if gradient.stops.len > 0 {

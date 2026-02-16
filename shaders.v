@@ -46,6 +46,21 @@ mut:
 	initialized      bool
 }
 
+// Pipelines holds lazily-initialized GPU rendering pipelines.
+// Each pipeline is considered initialized when its `.id != 0`.
+struct Pipelines {
+mut:
+	rounded_rect         sgl.Pipeline
+	shadow               sgl.Pipeline
+	blur                 sgl.Pipeline
+	gradient             sgl.Pipeline
+	stencil_write        sgl.Pipeline
+	stencil_test         sgl.Pipeline
+	stencil_clear        sgl.Pipeline
+	custom               map[u64]sgl.Pipeline
+	gradient_stop_warned bool
+}
+
 const packing_stride = 1000.0
 
 // pack_shader_params packs radius and thickness into a single f32 for the shader.
@@ -68,7 +83,7 @@ fn pack_shader_params(radius f32, thickness f32) f32 {
 }
 
 fn init_rounded_rect_pipeline(mut window Window) {
-	if window.rounded_rect_pip_init {
+	if window.pip.rounded_rect.id != 0 {
 		return
 	}
 	// Why a custom pipeline?
@@ -236,8 +251,7 @@ fn init_rounded_rect_pipeline(mut window Window) {
 		shader: gfx.make_shader(&shader_desc)
 	}
 
-	window.rounded_rect_pip = sgl.make_pipeline(&desc)
-	window.rounded_rect_pip_init = true
+	window.pip.rounded_rect = sgl.make_pipeline(&desc)
 }
 
 // Metal Shader Source (MSL) for Shadows
@@ -246,7 +260,7 @@ fn init_rounded_rect_pipeline(mut window Window) {
 // It uses a custom shader (vs_shadow/fs_shadow) that implements a Gaussian-like blur approximation
 // using Signed Distance Fields (SDF).
 fn init_shadow_pipeline(mut window Window) {
-	if window.shadow_pip_init {
+	if window.pip.shadow.id != 0 {
 		return
 	}
 
@@ -404,15 +418,14 @@ fn init_shadow_pipeline(mut window Window) {
 		shader: gfx.make_shader(&shader_desc)
 	}
 
-	window.shadow_pip = sgl.make_pipeline(&desc)
-	window.shadow_pip_init = true
+	window.pip.shadow = sgl.make_pipeline(&desc)
 }
 
 // init_blur_pipeline initializes the pipeline for a standalone Gaussian blur effect.
 // It shares the same vertex attributes as the shadow pipeline but uses a specific
 // fragment shader intended for blurring content without the complexities of the drop-shadow offset logic.
 fn init_blur_pipeline(mut window Window) {
-	if window.blur_pip_init {
+	if window.pip.blur.id != 0 {
 		return
 	}
 
@@ -564,15 +577,14 @@ fn init_blur_pipeline(mut window Window) {
 		shader: gfx.make_shader(&shader_desc)
 	}
 
-	window.blur_pip = sgl.make_pipeline(&desc)
-	window.blur_pip_init = true
+	window.pip.blur = sgl.make_pipeline(&desc)
 }
 
 // init_gradient_pipeline initializes the pipeline for multi-stop gradient rendering.
 // It uses custom shaders (vs_gradient/fs_gradient) that implement CSS-style gradients
 // with 3 color stops packed into the tm uniform matrix.
 fn init_gradient_pipeline(mut window Window) {
-	if window.gradient_pip_init {
+	if window.pip.gradient.id != 0 {
 		return
 	}
 
@@ -717,8 +729,7 @@ fn init_gradient_pipeline(mut window Window) {
 		shader: gfx.make_shader(&shader_desc)
 	}
 
-	window.gradient_pip = sgl.make_pipeline(&desc)
-	window.gradient_pip_init = true
+	window.pip.gradient = sgl.make_pipeline(&desc)
 }
 
 // draw_shadow_rect draws a rounded rectangle drop shadow.
@@ -770,7 +781,7 @@ pub fn draw_shadow_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.C
 
 	sgl.translate(ox, oy, 0.0)
 
-	sgl.load_pipeline(window.shadow_pip)
+	sgl.load_pipeline(window.pip.shadow)
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
 	// Pack radius and blur. Blur is stored in fractional part or just use packing logic.
@@ -812,7 +823,7 @@ pub fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Col
 
 	init_rounded_rect_pipeline(mut window)
 
-	sgl.load_pipeline(window.rounded_rect_pip)
+	sgl.load_pipeline(window.pip.rounded_rect)
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
 	z_val := pack_shader_params(r, 0)
@@ -846,7 +857,7 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, thickness
 
 	init_rounded_rect_pipeline(mut window)
 
-	sgl.load_pipeline(window.rounded_rect_pip)
+	sgl.load_pipeline(window.pip.rounded_rect)
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
 	// Pack parameters: r + thickness * 10000
@@ -861,7 +872,7 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, thickness
 //   stencil_write_pip: writes 1 to stencil, no color output
 //   stencil_test_pip:  draws only where stencil == 1
 fn init_stencil_pipelines(mut window Window) {
-	if !window.stencil_write_pip_init {
+	if window.pip.stencil_write.id == 0 {
 		// Stencil write: always pass, replace with ref=1,
 		// disable color writes.
 		mut colors_w := [4]gfx.ColorTargetState{}
@@ -890,11 +901,10 @@ fn init_stencil_pipelines(mut window Window) {
 				ref:        1
 			}
 		}
-		window.stencil_write_pip = sgl.make_pipeline(&desc_w)
-		window.stencil_write_pip_init = true
+		window.pip.stencil_write = sgl.make_pipeline(&desc_w)
 	}
 
-	if !window.stencil_test_pip_init {
+	if window.pip.stencil_test.id == 0 {
 		// Stencil test: draw only where stencil == ref(1),
 		// normal alpha blending.
 		mut colors_t := [4]gfx.ColorTargetState{}
@@ -930,11 +940,10 @@ fn init_stencil_pipelines(mut window Window) {
 				ref:        1
 			}
 		}
-		window.stencil_test_pip = sgl.make_pipeline(&desc_t)
-		window.stencil_test_pip_init = true
+		window.pip.stencil_test = sgl.make_pipeline(&desc_t)
 	}
 
-	if !window.stencil_clear_pip_init {
+	if window.pip.stencil_clear.id == 0 {
 		// Stencil clear: write ref=0 to reset stencil bits,
 		// no color output.
 		mut colors_c := [4]gfx.ColorTargetState{}
@@ -963,8 +972,7 @@ fn init_stencil_pipelines(mut window Window) {
 				ref:        0
 			}
 		}
-		window.stencil_clear_pip = sgl.make_pipeline(&desc_c)
-		window.stencil_clear_pip_init = true
+		window.pip.stencil_clear = sgl.make_pipeline(&desc_c)
 	}
 }
 
@@ -973,7 +981,7 @@ fn init_stencil_pipelines(mut window Window) {
 // shader bodies share a single compiled pipeline.
 fn init_custom_pipeline(shader &Shader, mut window Window) sgl.Pipeline {
 	key := shader_hash(shader)
-	if pip := window.shader_pipelines[key] {
+	if pip := window.pip.custom[key] {
 		return pip
 	}
 
@@ -1110,7 +1118,7 @@ fn init_custom_pipeline(shader &Shader, mut window Window) sgl.Pipeline {
 	}
 
 	pip := sgl.make_pipeline(&desc)
-	window.shader_pipelines[key] = pip
+	window.pip.custom[key] = pip
 	return pip
 }
 

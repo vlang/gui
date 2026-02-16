@@ -24,7 +24,9 @@
       "WebFetch(domain:www.warp.dev)",
       "WebFetch(domain:nical.github.io)",
       "WebFetch(domain:alexharri.com)",
-      "Bash(git show:*)"
+      "Bash(git show:*)",
+      "Bash(git stash:*)",
+      "Bash(v test:*)"
     ]
   }
 }

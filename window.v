@@ -9,7 +9,6 @@ module gui
 //
 import gg
 import sokol.sapp
-import sokol.sgl
 import sync
 import log
 import vglyph
@@ -20,46 +19,29 @@ pub type WindowCommand = fn (mut Window)
 
 pub struct Window {
 mut:
-	ui                     &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
-	state                  voidptr                     = unsafe { nil }    // User state passed to the window
-	mutex                  &sync.Mutex                 = sync.new_mutex() // Mutex for thread-safety
-	view_generator         fn (&Window) View           = empty_view     // Function to generate the UI view
-	focused                bool                        = true           // Window focus state
-	text_system            &vglyph.TextSystem          = unsafe { nil } // Text rendering system
-	on_event               fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}        // Global event handler
-	view_state             ViewState            // Manages state for widgets (scroll, selection, etc.)
-	dialog_cfg             DialogCfg            // Configuration for the active dialog (if any)
-	layout                 Layout               // The current calculated layout tree
-	renderers              []Renderer           // Flat list of drawing instructions for the current frame
-	animations             map[string]Animation // Active animations (keyed by id)
-	commands               []WindowCommand      // Atomic command queue for UI state updates
-	commands_mutex         &sync.Mutex = sync.new_mutex() // Mutex for command queue
-	init_error             string       // error during initialization (e.g. text system fail)
-	window_size            gg.Size      // cached, gg.window_size() relatively slow
-	refresh_window         bool         // Flag to trigger a layout update on the next frame
-	debug_layout           bool         // enable layout performance stats
-	layout_stats           LayoutStats  // populated when debug_layout is true
-	stats                  Stats        // Rendering statistics
-	rounded_rect_pip       sgl.Pipeline // Pipeline for drawing rounded rectangles
-	rounded_rect_pip_init  bool         // Initialization flag for the pipeline
-	shadow_pip             sgl.Pipeline // Pipeline for drawing drop shadows
-	shadow_pip_init        bool         // Initialization flag for shadow pipeline
-	blur_pip               sgl.Pipeline // Pipeline for drawing blurred shapes (glows)
-	blur_pip_init          bool         // Initialization flag for blur pipeline
-	gradient_pip           sgl.Pipeline // Pipeline for drawing multi-stop gradients
-	gradient_pip_init      bool         // Initialization flag for gradient pipeline
-	gradient_stop_warned   bool         // Logs multi-stop truncation warning only once per session
-	stencil_write_pip      sgl.Pipeline // Pipeline: write clip mask to stencil
-	stencil_write_pip_init bool
-	stencil_test_pip       sgl.Pipeline // Pipeline: draw with stencil test
-	stencil_test_pip_init  bool
-	stencil_clear_pip      sgl.Pipeline // Pipeline: clear stencil (ref=0)
-	stencil_clear_pip_init bool
-	shader_pipelines       map[u64]sgl.Pipeline // Cached custom shader pipelines
-	filter_state           SvgFilterState       // Offscreen state for SVG filters
-	ime_overlay            voidptr              // Native IME overlay handle (macOS)
-	ime_handler            &vglyph.StandardIMEHandler = unsafe { nil }
-	ime_initialized        bool // Lazy init flag (NSWindow not ready at init_fn)
+	commands_mutex &sync.Mutex                 = sync.new_mutex() // Mutex for command queue
+	focused        bool                        = true // Window focus state
+	mutex          &sync.Mutex                 = sync.new_mutex() // Mutex for thread-safety
+	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}           // Global event handler
+	state          voidptr                     = unsafe { nil }    // User state passed to the window
+	text_system    &vglyph.TextSystem          = unsafe { nil }    // Text rendering system
+	ui             &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
+	view_generator fn (&Window) View           = empty_view        // Function to generate the UI view
+	animations     map[string]Animation // Active animations (keyed by id)
+	commands       []WindowCommand      // Atomic command queue for UI state updates
+	debug_layout   bool                 // enable layout performance stats
+	dialog_cfg     DialogCfg            // Configuration for the active dialog (if any)
+	filter_state   SvgFilterState       // Offscreen state for SVG filters
+	ime            IME                  // Input Method Editor state (lazily initialized)
+	init_error     string               // error during initialization (e.g. text system fail)
+	layout         Layout               // The current calculated layout tree
+	layout_stats   LayoutStats          // populated when debug_layout is true
+	pip            Pipelines            // GPU rendering pipelines (lazily initialized)
+	refresh_window bool                 // Flag to trigger a layout update on the next frame
+	renderers      []Renderer           // Flat list of drawing instructions for the current frame
+	stats          Stats                // Rendering statistics
+	view_state     ViewState            // Manages state for widgets (scroll, selection, etc.)
+	window_size    gg.Size              // cached, gg.window_size() relatively slow
 }
 
 // Window is the main application window. `state` holds app state.

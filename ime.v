@@ -7,13 +7,22 @@ module gui
 import sokol.sapp
 import vglyph
 
+// IME holds per-window Input Method Editor state.
+// Created lazily because NSWindow is not ready during init_fn.
+struct IME {
+mut:
+	overlay     voidptr = unsafe { nil }
+	handler     voidptr = unsafe { nil }
+	initialized bool
+}
+
 // init_ime lazily creates the macOS IME overlay and registers
 // callbacks via VGlyph's StandardIMEHandler.
 fn (mut w Window) init_ime() {
-	if w.ime_initialized {
+	if w.ime.initialized {
 		return
 	}
-	w.ime_initialized = true
+	w.ime.initialized = true
 
 	$if macos {
 		ns_window := sapp.macos_get_window()
@@ -24,7 +33,7 @@ fn (mut w Window) init_ime() {
 		if overlay == unsafe { nil } {
 			return
 		}
-		w.ime_overlay = overlay
+		w.ime.overlay = overlay
 
 		handler := &vglyph.StandardIMEHandler{
 			ts:               w.text_system
@@ -35,7 +44,7 @@ fn (mut w Window) init_ime() {
 			get_offset:       ime_get_offset
 			get_cursor_index: ime_get_cursor_index
 		}
-		w.ime_handler = handler
+		w.ime.handler = handler
 		w.text_system.register_ime_callbacks(overlay, handler)
 
 		// Apply focus if already set before overlay was ready
@@ -51,7 +60,7 @@ fn (mut w Window) init_ime() {
 // on_ime_commit (input fields), not menus or other focusables.
 fn (mut w Window) update_ime_focus(id u32) {
 	$if macos {
-		if w.ime_overlay == unsafe { nil } {
+		if w.ime.overlay == unsafe { nil } {
 			return
 		}
 		if id > 0 {
@@ -59,16 +68,16 @@ fn (mut w Window) update_ime_focus(id u32) {
 				return
 			}
 			ly := find_layout_by_id_focus(&w.layout, id) or {
-				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '')
+				vglyph.ime_overlay_set_focused_field(w.ime.overlay, '')
 				return
 			}
 			if ly.shape.has_events() && ly.shape.events.on_ime_commit != unsafe { nil } {
-				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '${id}')
+				vglyph.ime_overlay_set_focused_field(w.ime.overlay, '${id}')
 			} else {
-				vglyph.ime_overlay_set_focused_field(w.ime_overlay, '')
+				vglyph.ime_overlay_set_focused_field(w.ime.overlay, '')
 			}
 		} else {
-			vglyph.ime_overlay_set_focused_field(w.ime_overlay, '')
+			vglyph.ime_overlay_set_focused_field(w.ime.overlay, '')
 		}
 	}
 }
