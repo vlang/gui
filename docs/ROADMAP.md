@@ -25,7 +25,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Numeric input view with locale-aware parse/format and step controls
 - [x] Currency/percent input modes with round-trip-safe formatting
 - [ ] Form validation model: sync/async validators, touched/dirty state, error slots
-- [ ] Unified input formatter pipeline (pre-commit transform + post-commit normalize)
+- [x] Unified input formatter pipeline (pre-commit transform + post-commit normalize)
 
 ### Native Desktop Dialogs
 

@@ -210,3 +210,65 @@ fn test_numeric_percent_round_trip_is_canonical() {
 	}
 	assert math.abs(parsed - source.f64()) < 0.000001
 }
+
+fn test_numeric_pre_commit_transform_rejects_invalid_delta() {
+	mode_cfg := NumericModeCfg{}
+	assert numeric_input_pre_commit_transform_mode('12', '12a', 2, NumericLocaleCfg{},
+		mode_cfg) == none
+}
+
+fn test_numeric_pre_commit_transform_accepts_transient_number_forms() {
+	mode_cfg := NumericModeCfg{}
+	mut got := numeric_input_pre_commit_transform_mode('', '-', 2, NumericLocaleCfg{},
+		mode_cfg) or {
+		assert false
+		return
+	}
+	assert got == '-'
+	got = numeric_input_pre_commit_transform_mode('12', '12.', 2, NumericLocaleCfg{},
+		mode_cfg) or {
+		assert false
+		return
+	}
+	assert got == '12.'
+}
+
+fn test_numeric_pre_commit_transform_accepts_transient_currency_affix() {
+	mode_cfg := NumericModeCfg{
+		mode:           .currency
+		affix:          '$'
+		affix_position: .prefix
+	}
+	mut got := numeric_input_pre_commit_transform_mode('', '$', 2, NumericLocaleCfg{},
+		mode_cfg) or {
+		assert false
+		return
+	}
+	assert got == '$'
+	got = numeric_input_pre_commit_transform_mode('', '-$', 2, NumericLocaleCfg{}, mode_cfg) or {
+		assert false
+		return
+	}
+	assert got == '-$'
+}
+
+fn test_numeric_pre_commit_transform_accepts_transient_percent_affix() {
+	mode_cfg := NumericModeCfg{
+		mode:               .percent
+		affix:              '%'
+		affix_position:     .suffix
+		display_multiplier: 100.0
+	}
+	mut got := numeric_input_pre_commit_transform_mode('', '%', 2, NumericLocaleCfg{},
+		mode_cfg) or {
+		assert false
+		return
+	}
+	assert got == '%'
+	got = numeric_input_pre_commit_transform_mode('12', '12.%', 2, NumericLocaleCfg{},
+		mode_cfg) or {
+		assert false
+		return
+	}
+	assert got == '12.%'
+}

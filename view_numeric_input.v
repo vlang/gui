@@ -162,43 +162,53 @@ fn numeric_input_field(cfg NumericInputCfg, locale NumericLocaleCfg, step_cfg Nu
 	input_radius := if fill_parent { f32(0) } else { cfg.radius }
 	input_radius_border := if fill_parent { f32(0) } else { cfg.radius_border }
 	return input(
-		id:                 input_id
-		id_focus:           cfg.id_focus
-		text:               cfg.text
-		placeholder:        cfg.placeholder
-		tooltip:            tooltip
-		sizing:             sizing
-		width:              if fill_parent { 0 } else { cfg.width }
-		height:             if fill_parent { 0 } else { cfg.height }
-		min_width:          if fill_parent { 0 } else { cfg.min_width }
-		min_height:         if fill_parent { 0 } else { cfg.min_height }
-		max_width:          if fill_parent { 0 } else { cfg.max_width }
-		max_height:         if fill_parent { 0 } else { cfg.max_height }
-		padding:            cfg.padding
-		radius:             input_radius
-		radius_border:      input_radius_border
-		size_border:        input_size_border
-		color:              color
-		color_hover:        color_hover
-		color_border:       color_border
-		color_border_focus: color_border_focus
-		text_style:         cfg.text_style
-		placeholder_style:  cfg.placeholder_style
-		disabled:           cfg.disabled
-		invisible:          cfg.invisible
-		on_text_changed:    cfg.on_text_changed
-		on_enter:           fn [cfg, locale] (layout &Layout, mut e Event, mut w Window) {
-			numeric_input_commit(layout, cfg, locale, mut w)
-			e.is_handled = true
+		id:                    input_id
+		id_focus:              cfg.id_focus
+		text:                  cfg.text
+		placeholder:           cfg.placeholder
+		tooltip:               tooltip
+		sizing:                sizing
+		width:                 if fill_parent { 0 } else { cfg.width }
+		height:                if fill_parent { 0 } else { cfg.height }
+		min_width:             if fill_parent { 0 } else { cfg.min_width }
+		min_height:            if fill_parent { 0 } else { cfg.min_height }
+		max_width:             if fill_parent { 0 } else { cfg.max_width }
+		max_height:            if fill_parent { 0 } else { cfg.max_height }
+		padding:               cfg.padding
+		radius:                input_radius
+		radius_border:         input_radius_border
+		size_border:           input_size_border
+		color:                 color
+		color_hover:           color_hover
+		color_border:          color_border
+		color_border_focus:    color_border_focus
+		text_style:            cfg.text_style
+		placeholder_style:     cfg.placeholder_style
+		disabled:              cfg.disabled
+		invisible:             cfg.invisible
+		pre_commit_transform:  fn [cfg, locale] (current string, proposed string) ?string {
+			mode_cfg := numeric_mode_cfg(cfg)
+			return numeric_input_pre_commit_transform_mode(current, proposed, cfg.decimals,
+				locale, mode_cfg)
 		}
-		on_key_down:        fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
+		post_commit_normalize: fn [cfg, locale] (text string, _ InputCommitReason) string {
+			mode_cfg := numeric_mode_cfg(cfg)
+			_, committed := numeric_input_commit_result_mode(text, cfg.value, cfg.min,
+				cfg.max, cfg.decimals, locale, mode_cfg)
+			return committed
+		}
+		on_text_changed:       cfg.on_text_changed
+		on_text_commit:        fn [cfg, locale] (layout &Layout, text string, _ InputCommitReason, mut w Window) {
+			mode_cfg := numeric_mode_cfg(cfg)
+			value, committed := numeric_input_commit_result_mode(text, cfg.value, cfg.min,
+				cfg.max, cfg.decimals, locale, mode_cfg)
+			numeric_input_emit_commit(layout, cfg, value, committed, false, mut w)
+		}
+		on_key_down:           fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
 			numeric_input_on_key_down(layout, mut e, mut w, cfg, locale, step_cfg)
 		}
-		on_mouse_scroll:    fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
+		on_mouse_scroll:       fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
 			numeric_input_on_mouse_scroll(layout, mut e, mut w, cfg, locale, step_cfg)
-		}
-		on_blur:            fn [cfg, locale] (layout &Layout, mut w Window) {
-			numeric_input_commit(layout, cfg, locale, mut w)
 		}
 	)
 }
@@ -303,24 +313,34 @@ fn numeric_input_apply_step(layout &Layout, cfg NumericInputCfg, locale NumericL
 	mode_cfg := numeric_mode_cfg(cfg)
 	next_value, next_text := numeric_input_step_result_mode(cfg.text, cfg.value, cfg.min,
 		cfg.max, cfg.decimals, step_cfg, locale, direction, modifiers, mode_cfg)
-	numeric_input_emit_commit(layout, cfg, next_value, next_text, mut w)
+	numeric_input_emit_commit(layout, cfg, next_value, next_text, true, mut w)
 	e.is_handled = true
 }
 
-fn numeric_input_commit(layout &Layout, cfg NumericInputCfg, locale NumericLocaleCfg, mut w Window) {
-	mode_cfg := numeric_mode_cfg(cfg)
-	value, text := numeric_input_commit_result_mode(cfg.text, cfg.value, cfg.min, cfg.max,
-		cfg.decimals, locale, mode_cfg)
-	numeric_input_emit_commit(layout, cfg, value, text, mut w)
-}
-
-fn numeric_input_emit_commit(layout &Layout, cfg NumericInputCfg, value ?f64, text string, mut w Window) {
-	if cfg.on_text_changed != unsafe { nil } && text != cfg.text {
+fn numeric_input_emit_commit(layout &Layout, cfg NumericInputCfg, value ?f64, text string, emit_text_change bool, mut w Window) {
+	if emit_text_change && cfg.on_text_changed != unsafe { nil } && text != cfg.text {
 		cfg.on_text_changed(layout, text, mut w)
 	}
 	if cfg.on_value_commit != unsafe { nil } {
 		cfg.on_value_commit(layout, value, text, mut w)
 	}
+}
+
+fn numeric_input_pre_commit_transform_mode(current string, proposed string, decimals int, locale NumericLocaleCfg, mode_cfg NumericModeCfg) ?string {
+	if proposed == current {
+		return proposed
+	}
+	trimmed := proposed.trim_space()
+	if trimmed.len == 0 {
+		return ''
+	}
+	if _ := numeric_mode_parse_value(trimmed, decimals, locale, mode_cfg) {
+		return proposed
+	}
+	if numeric_mode_is_transient_input(proposed, locale, mode_cfg) {
+		return proposed
+	}
+	return none
 }
 
 fn numeric_input_commit_result(text string, value ?f64, min ?f64, max ?f64, decimals int, locale NumericLocaleCfg) (?f64, string) {
@@ -448,6 +468,76 @@ fn numeric_mode_parse_value(raw string, decimals int, locale NumericLocaleCfg, m
 	display_scaled := numeric_parse_scaled(plain, decimals, locale) or { return none }
 	display_value := numeric_scaled_to_value(display_scaled, decimals)
 	return numeric_mode_from_display(display_value, mode_cfg)
+}
+
+fn numeric_mode_is_transient_input(raw string, locale NumericLocaleCfg, mode_cfg NumericModeCfg) bool {
+	loc := numeric_locale_normalize(locale)
+	mut text := raw.trim_space()
+	if text.len == 0 {
+		return true
+	}
+	minus := loc.minus_sign.str()
+	plus := loc.plus_sign.str()
+	if minus.len > 0 && text == minus {
+		return true
+	}
+	if plus.len > 0 && text == plus {
+		return true
+	}
+	if minus.len > 0 && text.starts_with(minus) {
+		text = text[minus.len..].trim_left(' \t')
+	} else if plus.len > 0 && text.starts_with(plus) {
+		text = text[plus.len..].trim_left(' \t')
+	}
+	if text.len == 0 {
+		return true
+	}
+	if mode_cfg.affix.len > 0 {
+		match mode_cfg.affix_position {
+			.prefix {
+				if text == mode_cfg.affix {
+					return true
+				}
+				if text.starts_with(mode_cfg.affix) {
+					text = text[mode_cfg.affix.len..].trim_left(' \t')
+					if text.len == 0 {
+						return true
+					}
+				}
+			}
+			.suffix {
+				if text == mode_cfg.affix {
+					return true
+				}
+				mut right := text.trim_right(' \t')
+				if right.ends_with(mode_cfg.affix) {
+					right = right[..right.len - mode_cfg.affix.len].trim_right(' \t')
+					text = right
+					if text.len == 0 {
+						return true
+					}
+				}
+			}
+		}
+	}
+	decimal_sep := loc.decimal_sep.str()
+	if decimal_sep.len == 0 {
+		return false
+	}
+	if text == decimal_sep {
+		return true
+	}
+	if !text.ends_with(decimal_sep) {
+		return false
+	}
+	prefix := text[..text.len - decimal_sep.len]
+	if prefix.len == 0 {
+		return true
+	}
+	if _ := numeric_parse(prefix, loc) {
+		return true
+	}
+	return false
 }
 
 fn numeric_mode_format_value(value f64, decimals int, locale NumericLocaleCfg, mode_cfg NumericModeCfg) string {

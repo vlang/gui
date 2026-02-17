@@ -1807,6 +1807,7 @@ fn demo_button(mut w gui.Window) gui.View {
 const input_doc = '# Input
 
 Single-line, password, and multiline text input with optional mask and icon.
+Supports formatter pipeline hooks for edit-time filtering and commit-time normalization.
 
 ## Usage
 
@@ -1814,9 +1815,25 @@ Single-line, password, and multiline text input with optional mask and icon.
 gui.input(
     text:            state.value,
     placeholder:     "Enter text",
+    pre_commit_transform: fn (_ string, proposed string) ?string {
+        // reject invalid delta
+        if proposed.contains("!") {
+            return none
+        }
+        return proposed
+    },
+    post_commit_normalize: fn (text string, _ gui.InputCommitReason) string {
+        // normalize on Enter/blur
+        return text.trim_space()
+    },
     on_text_changed: fn (_ &gui.Layout, val string, mut w gui.Window) {
         mut s := w.state[MyApp]()
         s.value = val
+    },
+    on_text_commit: fn (_ &gui.Layout, val string, reason gui.InputCommitReason, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.value = val
+        println(reason)
     },
 )
 ```
@@ -1832,16 +1849,24 @@ gui.input(
 | mask | string | Input mask pattern |
 | icon | string | Trailing icon glyph |
 | id_focus | u32 | Focus identifier for tab navigation |
+| pre_commit_transform | fn (string, string) ?string | Filter or transform edit delta |
+| post_commit_normalize | fn (string, InputCommitReason) string | Normalize committed text |
 
 ## Events
 
 | Callback | Signature | Fired when |
 |----------|-----------|------------|
 | on_text_changed | fn (&Layout, string, mut Window) | Text content changes |
+| on_text_commit | fn (&Layout, string, InputCommitReason, mut Window) | Text committed on Enter/blur |
 | on_enter | fn (&Layout, mut Event, mut Window) | Enter key pressed |
 | on_key_down | fn (&Layout, mut Event, mut Window) | Any key pressed |
 | on_blur | fn (&Layout, mut Window) | Input loses focus |
-| on_click_icon | fn (&Layout, mut Event, mut Window) | Icon clicked |'
+| on_click_icon | fn (&Layout, mut Event, mut Window) | Icon clicked |
+
+## Commit Reasons
+
+- `InputCommitReason.enter`
+- `InputCommitReason.blur`'
 
 fn demo_input(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -5471,7 +5496,7 @@ gui.numeric_input(
 | Property | Type | Description |
 |----------|------|-------------|
 | value | ?f64 | Current numeric value |
-| text | string | Raw text representation |
+| text | string | Editable text representation |
 | min | ?f64 | Minimum allowed value |
 | max | ?f64 | Maximum allowed value |
 | decimals | int | Decimal places (default: 2) |
@@ -5485,11 +5510,13 @@ gui.numeric_input(
 
 | Callback | Signature | Fired when |
 |----------|-----------|------------|
-| on_text_changed | fn (&Layout, string, mut Window) | Text changes |
-| on_value_commit | fn (&Layout, ?f64, string, mut Window) | Value committed |
+| on_text_changed | fn (&Layout, string, mut Window) | Accepted text delta or step update |
+| on_value_commit | fn (&Layout, ?f64, string, mut Window) | Canonical value commit |
 
 ## Notes
 
+- Invalid deltas are rejected at pre-commit stage.
+- Enter/blur normalize text before commit callbacks.
 - In percent mode, value is ratio (12.50% => 0.125).'
 
 fn demo_numeric_input(w &gui.Window) gui.View {

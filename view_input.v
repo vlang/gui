@@ -52,53 +52,61 @@ pub enum InputMode as u8 {
 	multiline
 }
 
+pub enum InputCommitReason as u8 {
+	enter
+	blur
+}
+
 // InputCfg configures an input view. See [input](#input). Use
 // `on_text_changed` to capture text updates. To capture the enter-key, provide
 // an `on_enter` callback. Placeholder text is shown when the field is empty.
 @[minify]
 pub struct InputCfg {
 pub:
-	id                 string
-	text               string // text to display/edit
-	icon               string // icon constant
-	placeholder        string // text to show when empty
-	mask               string // explicit pattern; e.g. '(999) 999-9999'
-	mask_preset        InputMaskPreset = .none // preset pattern when `mask` is empty
-	mask_tokens        []MaskTokenDef // custom token defs; merged with built-ins
-	on_text_changed    fn (&Layout, string, mut Window)    = unsafe { nil }
-	on_enter           fn (&Layout, mut Event, mut Window) = unsafe { nil }
-	on_key_down        fn (&Layout, mut Event, mut Window) = unsafe { nil }
-	on_mouse_scroll    fn (&Layout, mut Event, mut Window) = unsafe { nil }
-	on_blur            fn (&Layout, mut Window)            = unsafe { nil }
-	on_click_icon      fn (&Layout, mut Event, mut Window) = unsafe { nil }
-	scrollbar_cfg_x    &ScrollbarCfg                       = unsafe { nil }
-	scrollbar_cfg_y    &ScrollbarCfg                       = unsafe { nil }
-	tooltip            &TooltipCfg                         = unsafe { nil }
-	sizing             Sizing
-	text_style         TextStyle = gui_theme.input_style.text_style
-	placeholder_style  TextStyle = gui_theme.input_style.placeholder_style
-	icon_style         TextStyle = gui_theme.input_style.icon_style
-	width              f32
-	height             f32
-	min_width          f32
-	min_height         f32
-	max_width          f32
-	max_height         f32
-	radius             f32 = gui_theme.input_style.radius
-	radius_border      f32 = gui_theme.input_style.radius_border
-	id_focus           u32 // 0 = readonly, >0 = focusable and tabbing order
-	id_scroll          u32
-	scroll_mode        ScrollMode
-	padding            Padding = gui_theme.input_style.padding
-	size_border        f32     = gui_theme.input_style.size_border
-	color              Color   = gui_theme.input_style.color
-	color_hover        Color   = gui_theme.input_style.color_hover
-	color_border       Color   = gui_theme.input_style.color_border
-	color_border_focus Color   = gui_theme.input_style.color_border_focus
-	mode               InputMode // enable multiline
-	disabled           bool
-	invisible          bool
-	is_password        bool // mask input characters with '*'s
+	id                    string
+	text                  string // text to display/edit
+	icon                  string // icon constant
+	placeholder           string // text to show when empty
+	mask                  string // explicit pattern; e.g. '(999) 999-9999'
+	mask_preset           InputMaskPreset = .none // preset pattern when `mask` is empty
+	mask_tokens           []MaskTokenDef // custom token defs; merged with built-ins
+	pre_commit_transform  fn (string, string) ?string                         = unsafe { nil }
+	post_commit_normalize fn (string, InputCommitReason) string               = unsafe { nil }
+	on_text_changed       fn (&Layout, string, mut Window)                    = unsafe { nil }
+	on_text_commit        fn (&Layout, string, InputCommitReason, mut Window) = unsafe { nil }
+	on_enter              fn (&Layout, mut Event, mut Window)                 = unsafe { nil }
+	on_key_down           fn (&Layout, mut Event, mut Window)                 = unsafe { nil }
+	on_mouse_scroll       fn (&Layout, mut Event, mut Window)                 = unsafe { nil }
+	on_blur               fn (&Layout, mut Window)            = unsafe { nil }
+	on_click_icon         fn (&Layout, mut Event, mut Window) = unsafe { nil }
+	scrollbar_cfg_x       &ScrollbarCfg                       = unsafe { nil }
+	scrollbar_cfg_y       &ScrollbarCfg                       = unsafe { nil }
+	tooltip               &TooltipCfg                         = unsafe { nil }
+	sizing                Sizing
+	text_style            TextStyle = gui_theme.input_style.text_style
+	placeholder_style     TextStyle = gui_theme.input_style.placeholder_style
+	icon_style            TextStyle = gui_theme.input_style.icon_style
+	width                 f32
+	height                f32
+	min_width             f32
+	min_height            f32
+	max_width             f32
+	max_height            f32
+	radius                f32 = gui_theme.input_style.radius
+	radius_border         f32 = gui_theme.input_style.radius_border
+	id_focus              u32 // 0 = readonly, >0 = focusable and tabbing order
+	id_scroll             u32
+	scroll_mode           ScrollMode
+	padding               Padding = gui_theme.input_style.padding
+	size_border           f32     = gui_theme.input_style.size_border
+	color                 Color   = gui_theme.input_style.color
+	color_hover           Color   = gui_theme.input_style.color_hover
+	color_border          Color   = gui_theme.input_style.color_border
+	color_border_focus    Color   = gui_theme.input_style.color_border_focus
+	mode                  InputMode // enable multiline
+	disabled              bool
+	invisible             bool
+	is_password           bool // mask input characters with '*'s
 }
 
 // input
@@ -159,7 +167,6 @@ pub fn input(cfg InputCfg) View {
 	color_hover := cfg.color_hover
 	id_focus := cfg.id_focus
 	on_click_icon := cfg.on_click_icon
-	on_blur := cfg.on_blur
 
 	mut txt_content := [
 		text(
@@ -230,14 +237,17 @@ pub fn input(cfg InputCfg) View {
 				layout.shape.color = color_hover
 			}
 		}
-		amend_layout:    fn [color_border_focus, on_blur] (mut layout Layout, mut w Window) {
+		amend_layout:    fn [color_border_focus, cfg] (mut layout Layout, mut w Window) {
 			if layout.shape.id_focus == 0 {
 				return
 			}
 			focused := !layout.shape.disabled && layout.shape.id_focus == w.id_focus()
 			was_focused := w.view_state.input_focus_state.get(layout.shape.id_focus) or { false }
-			if was_focused && !focused && on_blur != unsafe { nil } {
-				on_blur(layout, mut w)
+			if was_focused && !focused {
+				cfg.commit_text(layout, .blur, mut w)
+				if cfg.on_blur != unsafe { nil } {
+					cfg.on_blur(layout, mut w)
+				}
 			}
 			w.view_state.input_focus_state.set(layout.shape.id_focus, focused)
 			if focused {
@@ -288,9 +298,22 @@ fn (cfg &InputCfg) active_compiled_mask() ?CompiledInputMask {
 	return compiled
 }
 
+fn (cfg &InputCfg) apply_pre_commit_transform(current string, proposed string) ?string {
+	if cfg.pre_commit_transform == unsafe { nil } {
+		return proposed
+	}
+	return cfg.pre_commit_transform(current, proposed)
+}
+
 fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_pos int, mut w Window) string {
-	if text == cfg.text {
+	next_text := cfg.apply_pre_commit_transform(cfg.text, text) or { return cfg.text }
+	if next_text == cfg.text {
 		return cfg.text
+	}
+	next_cursor_pos := if next_text == text {
+		cursor_pos
+	} else {
+		int_clamp(cursor_pos, 0, next_text.runes().len)
 	}
 	mut undo := input_state.undo
 	undo.push(InputMemento{
@@ -301,13 +324,26 @@ fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_p
 		cursor_offset: input_state.cursor_offset
 	})
 	w.view_state.input_state.set(cfg.id_focus, InputState{
-		cursor_pos:    cursor_pos
+		cursor_pos:    next_cursor_pos
 		select_beg:    0
 		select_end:    0
 		undo:          undo
 		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
 	})
-	return text
+	return next_text
+}
+
+fn (cfg &InputCfg) commit_text(layout &Layout, reason InputCommitReason, mut w Window) {
+	mut text := cfg.text
+	if cfg.post_commit_normalize != unsafe { nil } {
+		text = cfg.post_commit_normalize(cfg.text, reason)
+	}
+	if cfg.on_text_changed != unsafe { nil } && text != cfg.text {
+		cfg.on_text_changed(layout, text, mut w)
+	}
+	if cfg.on_text_commit != unsafe { nil } {
+		cfg.on_text_commit(layout, text, reason, mut w)
+	}
 }
 
 fn (cfg &InputCfg) masked_insert(s string, mut w Window, compiled CompiledInputMask) !string {
@@ -535,73 +571,78 @@ fn make_input_on_char(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
 			return
 		}
 		c := event.char_code
-		if cfg.on_text_changed != unsafe { nil } {
-			mut text := cfg.text
-			if event.modifiers == .ctrl_shift {
-				match c {
-					ctrl_z { text = cfg.redo(mut w) }
-					else {}
+		if cfg.on_text_changed == unsafe { nil } {
+			return
+		}
+		mut text := cfg.text
+		if event.modifiers == .ctrl_shift {
+			match c {
+				ctrl_z { text = cfg.redo(mut w) }
+				else {}
+			}
+		} else if event.modifiers == .super_shift {
+			match c {
+				cmd_z { text = cfg.redo(mut w) }
+				else {}
+			}
+		} else if event.modifiers == .ctrl {
+			match c {
+				ctrl_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
+				ctrl_x { text = cfg.cut(mut w) or { return } }
+				ctrl_z { text = cfg.undo(mut w) }
+				else {}
+			}
+		} else if event.modifiers == .super {
+			match c {
+				cmd_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
+				cmd_x { text = cfg.cut(mut w) or { return } }
+				cmd_z { text = cfg.undo(mut w) }
+				else {}
+			}
+		} else {
+			match c {
+				bsp_char {
+					text = cfg.delete(mut w, false) or { return }
 				}
-			} else if event.modifiers == .super_shift {
-				match c {
-					cmd_z { text = cfg.redo(mut w) }
-					else {}
-				}
-			} else if event.modifiers == .ctrl {
-				match c {
-					ctrl_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
-					ctrl_x { text = cfg.cut(mut w) or { return } }
-					ctrl_z { text = cfg.undo(mut w) }
-					else {}
-				}
-			} else if event.modifiers == .super {
-				match c {
-					cmd_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
-					cmd_x { text = cfg.cut(mut w) or { return } }
-					cmd_z { text = cfg.undo(mut w) }
-					else {}
-				}
-			} else {
-				match c {
-					bsp_char {
+				del_char {
+					$if macos {
 						text = cfg.delete(mut w, false) or { return }
+					} $else {
+						text = cfg.delete(mut w, true) or { return }
 					}
-					del_char {
-						$if macos {
-							text = cfg.delete(mut w, false) or { return }
-						} $else {
-							text = cfg.delete(mut w, true) or { return }
-						}
+				}
+				cr_char, lf_char {
+					if cfg.mode == .single_line || cfg.on_enter != unsafe { nil } {
+						cfg.commit_text(layout, .enter, mut w)
 					}
-					cr_char, lf_char {
-						if cfg.on_enter != unsafe { nil } {
-							cfg.on_enter(layout, mut event, mut w)
-							event.is_handled = true
-							return
-						} else {
-							if cfg.mode != .single_line {
-								text = cfg.insert('\n', mut w) or {
-									log.error(err.msg())
-									return
-								}
-							}
-						}
-					}
-					0...0x1F { // non-printable
+					if cfg.on_enter != unsafe { nil } {
+						cfg.on_enter(layout, mut event, mut w)
+						event.is_handled = true
 						return
 					}
-					else {
-						text = cfg.insert(rune(c).str(), mut w) or {
-							log.error(err.msg())
-							return
-						}
+					if cfg.mode == .single_line {
+						event.is_handled = true
+						return
+					}
+					text = cfg.insert('\n', mut w) or {
+						log.error(err.msg())
+						return
+					}
+				}
+				0...0x1F { // non-printable
+					return
+				}
+				else {
+					text = cfg.insert(rune(c).str(), mut w) or {
+						log.error(err.msg())
+						return
 					}
 				}
 			}
-			event.is_handled = true
-			if text != cfg.text {
-				cfg.on_text_changed(layout, text, mut w)
-			}
+		}
+		event.is_handled = true
+		if text != cfg.text {
+			cfg.on_text_changed(layout, text, mut w)
 		}
 	}
 }
