@@ -701,11 +701,21 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 				y = seg.points[1]
 				if has_transform {
 					tx, ty := apply_transform(x, y, path.transform)
-					current << tx
-					current << ty
+					// Skip consecutive duplicate points
+					// (zero-length segments).
+					if current.len >= 2 && tx == current[current.len - 2]
+						&& ty == current[current.len - 1] {
+					} else {
+						current << tx
+						current << ty
+					}
 				} else {
-					current << x
-					current << y
+					if current.len >= 2 && x == current[current.len - 2]
+						&& y == current[current.len - 1] {
+					} else {
+						current << x
+						current << y
+					}
 				}
 			}
 			.quad_to {
@@ -1364,11 +1374,25 @@ fn cross_product_sign(ax f32, ay f32, bx f32, by f32, cx f32, cy f32) f32 {
 // ear_clip implements the ear clipping algorithm for polygon triangulation.
 // Input: flat array of x,y coordinates (polygon must be simple, non-self-intersecting)
 // Output: flat array of x,y coordinates forming triangles
-fn ear_clip(polygon []f32) []f32 {
-	n := polygon.len / 2
+fn ear_clip(polygon_ []f32) []f32 {
+	mut n := polygon_.len / 2
 	if n < 3 {
 		return []f32{}
 	}
+	// Strip trailing first==last duplicate (closed-path artifact)
+	if n > 3 {
+		lx := polygon_[(n - 1) * 2]
+		ly := polygon_[(n - 1) * 2 + 1]
+		fx := polygon_[0]
+		fy := polygon_[1]
+		if f32_abs(lx - fx) < closed_path_epsilon && f32_abs(ly - fy) < closed_path_epsilon {
+			n--
+		}
+	}
+	if n < 3 {
+		return []f32{}
+	}
+	polygon := polygon_[..n * 2]
 	if n == 3 {
 		return polygon.clone()
 	}
@@ -1467,6 +1491,13 @@ fn is_ear(polygon []f32, indices []int, u int, v int, w int) bool {
 		}
 		px := polygon[indices[i] * 2]
 		py := polygon[indices[i] * 2 + 1]
+		// Skip vertices that are coordinate-coincident with
+		// a triangle vertex (duplicate points from zero-length
+		// segments). Exact f32 equality is correct here since
+		// duplicates are bitwise identical values.
+		if (px == ax && py == ay) || (px == bx && py == by) || (px == cx && py == cy) {
+			continue
+		}
 		if point_in_triangle(px, py, ax, ay, bx, by, cx, cy) {
 			return false
 		}
