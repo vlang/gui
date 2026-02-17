@@ -1,4 +1,4 @@
-module gui
+module svg
 
 // parse_path_with_style parses a path element with inherited style.
 fn parse_path_with_style(elem string, inherited GroupStyle) ?VectorPath {
@@ -51,7 +51,7 @@ fn parse_line_with_style(elem string, inherited GroupStyle) ?VectorPath {
 // ElementStyle holds common style properties extracted from an SVG element.
 struct ElementStyle {
 	transform          [6]f32
-	stroke_color       Color
+	stroke_color       SvgColor
 	stroke_width       f32
 	stroke_cap         StrokeCap
 	stroke_join        StrokeJoin

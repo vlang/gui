@@ -1,4 +1,4 @@
-module gui
+module svg
 
 import encoding.html
 import math

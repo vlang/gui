@@ -1,4 +1,4 @@
-module gui
+module svg
 
 // Tessellation and stroke constants
 const stroke_cross_tolerance = f32(0.001) // tolerance for detecting straight joins
@@ -6,9 +6,6 @@ const stroke_miter_limit = f32(4.0) // SVG default miter limit multiplier
 const stroke_round_cap_segments = 8 // segments for round cap semicircle
 const curve_degenerate_threshold = f32(0.0001) // threshold for degenerate curves
 const closed_path_epsilon = f32(0.0001) // tolerance for closed path detection
-
-// color_inherit is a sentinel color indicating the value should be inherited.
-const color_inherit = Color{255, 0, 255, 1}
 
 // PathCmd defines the type of drawing command in a path segment.
 pub enum PathCmd as u8 {
@@ -46,7 +43,7 @@ pub enum StrokeJoin as u8 {
 pub struct SvgGradientStop {
 pub:
 	offset f32
-	color  Color
+	color  SvgColor
 }
 
 // SvgGradientDef holds a parsed <linearGradient> definition.
@@ -70,7 +67,7 @@ pub:
 	font_size        f32 // viewBox units (pre-transform-scaled)
 	bold             bool
 	italic           bool
-	color            Color
+	color            SvgColor
 	anchor           u8 // 0=start, 1=middle, 2=end
 	opacity          f32 = 1.0
 	underline        bool
@@ -78,7 +75,7 @@ pub:
 	filter_id        string
 	fill_gradient_id string
 	letter_spacing   f32
-	stroke_color     Color = color_transparent
+	stroke_color     SvgColor = color_transparent
 	stroke_width     f32
 }
 
@@ -97,12 +94,12 @@ pub:
 	font_size        f32
 	bold             bool
 	italic           bool
-	color            Color
+	color            SvgColor
 	opacity          f32 = 1.0
 	filter_id        string
 	fill_gradient_id string
 	letter_spacing   f32
-	stroke_color     Color = color_transparent
+	stroke_color     SvgColor = color_transparent
 	stroke_width     f32
 }
 
@@ -128,9 +125,9 @@ pub:
 pub struct VectorPath {
 pub mut:
 	segments           []PathSegment
-	fill_color         Color      = color_inherit
+	fill_color         SvgColor   = color_inherit
 	transform          [6]f32     = [f32(1), 0, 0, 1, 0, 0]! // identity: [a,b,c,d,e,f]
-	stroke_color       Color      = color_inherit
+	stroke_color       SvgColor   = color_inherit
 	stroke_width       f32        = -1.0 // negative = inherit from parent
 	stroke_cap         StrokeCap  = .inherit
 	stroke_join        StrokeJoin = .inherit
@@ -165,8 +162,8 @@ pub mut:
 pub struct TessellatedPath {
 pub:
 	triangles     []f32 // x,y pairs forming triangles
-	color         Color
-	vertex_colors []Color // per-vertex colors (len = triangles.len/2); empty = flat color
-	is_clip_mask  bool    // true = stencil-write geometry
-	clip_group    int     // groups clip mask + clipped content (0 = none)
+	color         SvgColor
+	vertex_colors []SvgColor // per-vertex colors (len = triangles.len/2); empty = flat color
+	is_clip_mask  bool       // true = stencil-write geometry
+	clip_group    int        // groups clip mask + clipped content (0 = none)
 }

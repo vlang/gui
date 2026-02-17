@@ -1,4 +1,4 @@
-module gui
+module svg
 
 import math
 
@@ -150,7 +150,7 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 					if clip_tris.len > 0 {
 						result << TessellatedPath{
 							triangles:    clip_tris
-							color:        Color{255, 255, 255, 255}
+							color:        SvgColor{255, 255, 255, 255}
 							is_clip_mask: true
 							clip_group:   clip_group
 						}
@@ -175,7 +175,7 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 						}
 						fill_tris := subdivide_gradient_tris(raw_tris, grad)
 						n_verts := fill_tris.len / 2
-						mut vcols := []Color{cap: n_verts}
+						mut vcols := []SvgColor{cap: n_verts}
 						opacity := path.opacity * path.fill_opacity
 						for vi := 0; vi < n_verts; vi++ {
 							vx := fill_tris[vi * 2]
@@ -225,7 +225,7 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 						}
 						s_tris := subdivide_gradient_tris(raw_stroke, grad)
 						n_verts := s_tris.len / 2
-						mut vcols := []Color{cap: n_verts}
+						mut vcols := []SvgColor{cap: n_verts}
 						opacity := path.opacity * path.stroke_opacity
 						for vi := 0; vi < n_verts; vi++ {
 							vx := s_tris[vi * 2]

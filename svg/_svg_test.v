@@ -1,6 +1,4 @@
-module gui
-
-import math
+module svg
 
 // --- Color parsing tests ---
 
@@ -97,8 +95,8 @@ fn test_parse_length_clamped() {
 // --- viewBox parsing tests ---
 
 fn test_viewbox_dimensions() {
-	svg := '<svg viewBox="0 0 200 100"><rect width="200" height="100"/></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="0 0 200 100"><rect width="200" height="100"/></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	assert vg.width == 200
 	assert vg.height == 100
 	assert vg.view_box_x == 0
@@ -106,8 +104,8 @@ fn test_viewbox_dimensions() {
 }
 
 fn test_viewbox_offset() {
-	svg := '<svg viewBox="10 20 200 100"></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="10 20 200 100"></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	assert vg.view_box_x == 10
 	assert vg.view_box_y == 20
 	assert vg.width == 200
@@ -115,8 +113,8 @@ fn test_viewbox_offset() {
 }
 
 fn test_viewbox_offset_applied_to_paths() {
-	svg := '<svg viewBox="50 50 100 100"><rect x="50" y="50" width="10" height="10"/></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="50 50 100 100"><rect x="50" y="50" width="10" height="10"/></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	// The rect at (50,50) with viewBox origin (50,50) should
 	// have transform translating by (-50,-50), so effective
 	// position is (0,0) in viewBox space.
@@ -240,8 +238,8 @@ fn test_find_style_property_with_spaces() {
 }
 
 fn test_style_attribute_fill() {
-	svg := '<svg viewBox="0 0 10 10"><rect style="fill:red" width="10" height="10"/></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="0 0 10 10"><rect style="fill:red" width="10" height="10"/></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	assert vg.paths.len == 1
 	assert vg.paths[0].fill_color.r == 255
 	assert vg.paths[0].fill_color.g == 0
@@ -264,8 +262,8 @@ fn test_parse_opacity_attr() {
 }
 
 fn test_opacity_applied_to_fill() {
-	svg := '<svg viewBox="0 0 10 10"><rect fill="red" opacity="0.5" width="10" height="10"/></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="0 0 10 10"><rect fill="red" opacity="0.5" width="10" height="10"/></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	assert vg.paths.len == 1
 	// opacity 0.5 * fill_color alpha 255 ≈ 127
 	a := vg.paths[0].fill_color.a
@@ -273,21 +271,21 @@ fn test_opacity_applied_to_fill() {
 }
 
 fn test_fill_opacity() {
-	svg := '<svg viewBox="0 0 10 10"><rect fill="red" fill-opacity="0.5" width="10" height="10"/></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="0 0 10 10"><rect fill="red" fill-opacity="0.5" width="10" height="10"/></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	assert vg.paths.len == 1
 	a := vg.paths[0].fill_color.a
 	assert a >= 126 && a <= 128
 }
 
 fn test_apply_opacity_no_change() {
-	c := Color{255, 0, 0, 200}
+	c := SvgColor{255, 0, 0, 200}
 	result := apply_opacity(c, 1.0)
 	assert result.a == 200
 }
 
 fn test_apply_opacity_half() {
-	c := Color{255, 0, 0, 200}
+	c := SvgColor{255, 0, 0, 200}
 	result := apply_opacity(c, 0.5)
 	assert result.a == 100
 }
@@ -429,8 +427,8 @@ fn test_parse_svg_dimensions_width_height() {
 // --- Integration: full SVG parse ---
 
 fn test_parse_svg_simple_rect() {
-	svg := '<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" fill="#ff0000"/></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" fill="#ff0000"/></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	assert vg.width == 100
 	assert vg.height == 100
 	assert vg.paths.len == 1
@@ -438,23 +436,23 @@ fn test_parse_svg_simple_rect() {
 }
 
 fn test_parse_svg_group_inheritance() {
-	svg := '<svg viewBox="0 0 100 100"><g fill="blue"><rect width="10" height="10"/></g></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="0 0 100 100"><g fill="blue"><rect width="10" height="10"/></g></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	assert vg.paths.len == 1
 	assert vg.paths[0].fill_color.b == 255
 }
 
 fn test_parse_svg_group_stroke_inheritance() {
-	svg := '<svg viewBox="0 0 100 100"><g stroke="red" stroke-width="2"><line x1="0" y1="0" x2="10" y2="10"/></g></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="0 0 100 100"><g stroke="red" stroke-width="2"><line x1="0" y1="0" x2="10" y2="10"/></g></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	assert vg.paths.len == 1
 	assert vg.paths[0].stroke_color.r == 255
 	assert vg.paths[0].stroke_width == 2.0
 }
 
 fn test_parse_svg_empty() {
-	svg := '<svg viewBox="0 0 100 100"></svg>'
-	vg := parse_svg(svg) or { panic(err) }
+	src := '<svg viewBox="0 0 100 100"></svg>'
+	vg := parse_svg(src) or { panic(err) }
 	assert vg.paths.len == 0
 }
 

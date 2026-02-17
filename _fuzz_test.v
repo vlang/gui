@@ -1,5 +1,6 @@
 module gui
 
+import svg
 import os
 import rand
 
@@ -262,7 +263,7 @@ fn test_fuzz_svg() {
 			}
 		}
 		// Must not panic; errors are acceptable
-		parse_svg(input) or { continue }
+		svg.parse_svg(input) or { continue }
 	}
 }
 

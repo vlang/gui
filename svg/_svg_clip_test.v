@@ -1,4 +1,4 @@
-module gui
+module svg
 
 fn test_parse_clip_path_url() {
 	// Element with clip-path attribute
@@ -13,8 +13,8 @@ fn test_parse_clip_path_url() {
 }
 
 fn test_parse_defs_clip_paths() {
-	svg := '<svg viewBox="0 0 100 100"><defs><clipPath id="c1"><circle cx="50" cy="50" r="40"/></clipPath></defs></svg>'
-	clip_paths := parse_defs_clip_paths(svg)
+	src := '<svg viewBox="0 0 100 100"><defs><clipPath id="c1"><circle cx="50" cy="50" r="40"/></clipPath></defs></svg>'
+	clip_paths := parse_defs_clip_paths(src)
 	assert clip_paths.len == 1, 'expected 1 clip path, got ${clip_paths.len}'
 	assert 'c1' in clip_paths, 'expected key "c1"'
 	paths := clip_paths['c1']
@@ -22,8 +22,8 @@ fn test_parse_defs_clip_paths() {
 }
 
 fn test_svg_clip_path_on_path() {
-	svg := '<svg viewBox="0 0 100 100"><defs><clipPath id="cp"><rect width="50" height="50"/></clipPath></defs><rect width="100" height="100" fill="red" clip-path="url(#cp)"/></svg>'
-	vg := parse_svg(svg) or {
+	src := '<svg viewBox="0 0 100 100"><defs><clipPath id="cp"><rect width="50" height="50"/></clipPath></defs><rect width="100" height="100" fill="red" clip-path="url(#cp)"/></svg>'
+	vg := parse_svg(src) or {
 		assert false, 'parse failed: ${err}'
 		return
 	}
@@ -33,8 +33,8 @@ fn test_svg_clip_path_on_path() {
 }
 
 fn test_svg_clip_group_tessellation() {
-	svg := '<svg viewBox="0 0 100 100"><defs><clipPath id="cp"><rect width="50" height="50"/></clipPath></defs><rect width="100" height="100" fill="red" clip-path="url(#cp)"/></svg>'
-	vg := parse_svg(svg) or {
+	src := '<svg viewBox="0 0 100 100"><defs><clipPath id="cp"><rect width="50" height="50"/></clipPath></defs><rect width="100" height="100" fill="red" clip-path="url(#cp)"/></svg>'
+	vg := parse_svg(src) or {
 		assert false, 'parse failed: ${err}'
 		return
 	}

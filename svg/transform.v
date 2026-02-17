@@ -1,4 +1,4 @@
-module gui
+module svg
 
 import math
 
@@ -119,7 +119,7 @@ fn get_transform(elem string) [6]f32 {
 
 // get_stroke_color extracts stroke color from element.
 // Returns color_inherit sentinel if not specified.
-fn get_stroke_color(elem string) Color {
+fn get_stroke_color(elem string) SvgColor {
 	stroke := find_attr_or_style(elem, 'stroke') or { return color_inherit }
 	return parse_svg_color(stroke)
 }

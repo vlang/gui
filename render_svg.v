@@ -1,6 +1,7 @@
 module gui
 
 import gg
+import svg
 import log
 import vglyph
 import math
@@ -35,14 +36,13 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 	}, mut window)
 
 	for tpath in cached.triangles {
-		// Use shape color if set (monochrome override), otherwise path color
 		has_vcols := tpath.vertex_colors.len > 0
-		c := if color.a > 0 && !has_vcols { color } else { tpath.color }
+		c := if color.a > 0 && !has_vcols { color } else { svg_to_color(tpath.color) }
 		mut gx_vcols := []gg.Color{}
 		if has_vcols && color.a == 0 {
 			gx_vcols = []gg.Color{cap: tpath.vertex_colors.len}
 			for vc in tpath.vertex_colors {
-				gx_vcols << vc.to_gx_color()
+				gx_vcols << gg.Color{vc.r, vc.g, vc.b, vc.a}
 			}
 		}
 		emit_renderer(DrawSvg{
@@ -77,15 +77,14 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 			scale:     cached.scale
 			cached:    cached
 		}, mut window)
-		// Emit DrawSvg for filtered group triangles
 		for tpath in fg.triangles {
 			has_vcols := tpath.vertex_colors.len > 0
-			c := if color.a > 0 && !has_vcols { color } else { tpath.color }
+			c := if color.a > 0 && !has_vcols { color } else { svg_to_color(tpath.color) }
 			mut gx_vcols := []gg.Color{}
 			if has_vcols && color.a == 0 {
 				gx_vcols = []gg.Color{cap: tpath.vertex_colors.len}
 				for vc in tpath.vertex_colors {
-					gx_vcols << vc.to_gx_color()
+					gx_vcols << gg.Color{vc.r, vc.g, vc.b, vc.a}
 				}
 			}
 			emit_renderer(DrawSvg{
@@ -99,12 +98,10 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 				clip_group:    tpath.clip_group
 			}, mut window)
 		}
-		// Emit text elements for filtered group
 		for svg_txt in fg.texts {
 			render_svg_text(svg_txt, shape.x, shape.y, cached.scale, fg.gradients, mut
 				window)
 		}
-		// Emit textPath elements for filtered group
 		for tp in fg.text_paths {
 			render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale,
 				fg.gradients, mut window)
@@ -117,7 +114,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 }
 
 // render_svg_text converts an SvgText into a DrawText renderer.
-fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, gradients map[string]SvgGradientDef, mut window Window) {
+fn render_svg_text(t svg.SvgText, shape_x f32, shape_y f32, scale f32, gradients map[string]svg.SvgGradientDef, mut window Window) {
 	if t.text.len == 0 {
 		return
 	}
@@ -133,7 +130,7 @@ fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, gradients map
 			mut stops := []vglyph.GradientStop{cap: gdef.stops.len}
 			for s in gdef.stops {
 				stops << vglyph.GradientStop{
-					color:    s.color.to_gx_color()
+					color:    gg.Color{s.color.r, s.color.g, s.color.b, s.color.a}
 					position: s.offset
 				}
 			}
@@ -161,7 +158,7 @@ fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, gradients map
 		color:          if t.opacity < 1.0 {
 			Color{t.color.r, t.color.g, t.color.b, u8(f32(t.color.a) * t.opacity)}
 		} else {
-			t.color
+			svg_to_color(t.color)
 		}
 		underline:      t.underline
 		strikethrough:  t.strikethrough
@@ -171,7 +168,7 @@ fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, gradients map
 		stroke_color:   if t.opacity < 1.0 {
 			Color{t.stroke_color.r, t.stroke_color.g, t.stroke_color.b, u8(f32(t.stroke_color.a) * t.opacity)}
 		} else {
-			t.stroke_color
+			svg_to_color(t.stroke_color)
 		}
 	}
 	cfg := text_style.to_vglyph_cfg()
@@ -179,7 +176,6 @@ fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, gradients map
 	// Measure for anchor adjustment
 	tw := window.text_system.text_width(t.text, cfg) or { 0 }
 	fh := window.text_system.font_height(cfg) or { t.font_size * scale }
-	// Approximate baseline→top: ascent ≈ 80% of font height
 	ascent := fh * 0.8
 
 	mut x := shape_x + t.x * scale
@@ -200,13 +196,10 @@ fn render_svg_text(t SvgText, shape_x f32, shape_y f32, scale f32, gradients map
 	}
 }
 
-// draw_triangles renders triangulated geometry using SGL
-
-// draw_error_placeholder draws a magenta box with a white cross to indicate a missing resource.
+// draw_error_placeholder draws a magenta box with a white cross.
 fn draw_error_placeholder(x f32, y f32, w f32, h f32, mut window Window) {
 	draw_rounded_rect_filled(x, y, w, h, 0, magenta.to_gx_color(), mut window)
 	draw_rounded_rect_empty(x, y, w, h, 0, 1.0, white.to_gx_color(), mut window)
-	// Draw a white cross
 	window.ui.draw_line(x, y, x + w, y + h, white.to_gx_color())
 	window.ui.draw_line(x + w, y, x, y + h, white.to_gx_color())
 }

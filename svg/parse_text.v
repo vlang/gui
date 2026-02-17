@@ -1,4 +1,4 @@
-module gui
+module svg
 
 import encoding.html
 
@@ -30,13 +30,13 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 	fill_str := find_attr_or_style(elem, 'fill') or { style.fill }
 	fill_gradient_id := parse_fill_url(fill_str) or { '' }
 	color := if fill_gradient_id.len > 0 {
-		black
+		color_black
 	} else if fill_str.len > 0 && fill_str != 'none' {
 		parse_svg_color(fill_str)
 	} else if fill_str == 'none' {
 		color_transparent
 	} else {
-		black
+		color_black
 	}
 	// Stroke
 	stroke_str := find_attr_or_style(elem, 'stroke') or { style.stroke }
@@ -47,7 +47,7 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 	}
 	stroke_opacity := parse_opacity_attr(elem, 'stroke-opacity', style.stroke_opacity)
 	stroke_color := if stroke_opacity < 1.0 {
-		Color{stroke_color_raw.r, stroke_color_raw.g, stroke_color_raw.b, u8(f32(stroke_color_raw.a) * stroke_opacity)}
+		SvgColor{stroke_color_raw.r, stroke_color_raw.g, stroke_color_raw.b, u8(f32(stroke_color_raw.a) * stroke_opacity)}
 	} else {
 		stroke_color_raw
 	}
@@ -116,7 +116,7 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 }
 
 // parse_tspan_elements iterates <tspan> children inside a <text> body.
-fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_underline bool, parent_strikethrough bool, parent_color Color, parent_gradient_id string, parent_anchor u8, parent_opacity f32, parent_letter_spacing f32, parent_stroke_color Color, parent_stroke_width f32, style GroupStyle, mut state ParseState) {
+fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_underline bool, parent_strikethrough bool, parent_color SvgColor, parent_gradient_id string, parent_anchor u8, parent_opacity f32, parent_letter_spacing f32, parent_stroke_color SvgColor, parent_stroke_width f32, style GroupStyle, mut state ParseState) {
 	mut current_y := base_y
 	mut search_pos := 0
 
@@ -160,7 +160,7 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 			parent_gradient_id
 		}
 		color := if tspan_gradient_id.len > 0 {
-			black
+			color_black
 		} else if fill_str.len > 0 && fill_str != 'none' {
 			parse_svg_color(fill_str)
 		} else {
@@ -255,7 +255,7 @@ fn parse_tspan_elements(body string, base_x f32, base_y f32, parent_family strin
 }
 
 // parse_textpath_element extracts <textPath> from text body.
-fn parse_textpath_element(body string, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_color Color, parent_gradient_id string, parent_opacity f32, parent_letter_spacing f32, parent_stroke_color Color, parent_stroke_width f32, style GroupStyle, mut state ParseState) {
+fn parse_textpath_element(body string, parent_family string, parent_size f32, parent_bold bool, parent_italic bool, parent_color SvgColor, parent_gradient_id string, parent_opacity f32, parent_letter_spacing f32, parent_stroke_color SvgColor, parent_stroke_width f32, style GroupStyle, mut state ParseState) {
 	tp_start := find_index(body, '<textPath', 0) or { return }
 	tag_end := find_index(body, '>', tp_start) or { return }
 	tp_elem := body[tp_start..tag_end + 1]
@@ -300,7 +300,7 @@ fn parse_textpath_element(body string, parent_family string, parent_size f32, pa
 	tp_gradient_id := parse_fill_url(fill_str) or { '' }
 	fill_gradient_id := if tp_gradient_id.len > 0 { tp_gradient_id } else { parent_gradient_id }
 	color := if tp_gradient_id.len > 0 {
-		black
+		color_black
 	} else if fill_str.len > 0 && fill_str != 'none' {
 		parse_svg_color(fill_str)
 	} else {

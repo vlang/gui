@@ -1,4 +1,4 @@
-module gui
+module svg
 
 // find_tag_name_end finds the end of a tag name.
 fn find_tag_name_end(s string, start int) int {
@@ -129,7 +129,7 @@ fn apply_inherited_style(mut path VectorPath, inherited GroupStyle) {
 				path.fill_color = parse_svg_color(inherited.fill)
 			}
 		} else {
-			path.fill_color = black // SVG default
+			path.fill_color = color_black // SVG default
 		}
 	}
 

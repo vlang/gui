@@ -1,4 +1,4 @@
-module gui
+module svg
 
 // resolve_gradient maps objectBoundingBox gradient coords to
 // absolute coordinates using the given bounding box.
@@ -70,9 +70,9 @@ fn project_onto_gradient(vx f32, vy f32, g SvgGradientDef) f32 {
 
 // interpolate_gradient returns the color at parameter t along gradient
 // stops. Clamps to first/last stop outside range.
-fn interpolate_gradient(stops []SvgGradientStop, t f32) Color {
+fn interpolate_gradient(stops []SvgGradientStop, t f32) SvgColor {
 	if stops.len == 0 {
-		return Color{0, 0, 0, 255}
+		return SvgColor{0, 0, 0, 255}
 	}
 	if t <= stops[0].offset || stops.len == 1 {
 		return stops[0].color
@@ -91,7 +91,7 @@ fn interpolate_gradient(stops []SvgGradientStop, t f32) Color {
 				return s0.color
 			}
 			f := (t - s0.offset) / range_
-			return Color{
+			return SvgColor{
 				r: u8(f32(s0.color.r) + (f32(s1.color.r) - f32(s0.color.r)) * f)
 				g: u8(f32(s0.color.g) + (f32(s1.color.g) - f32(s0.color.g)) * f)
 				b: u8(f32(s0.color.b) + (f32(s1.color.b) - f32(s0.color.b)) * f)

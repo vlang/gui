@@ -1,4 +1,4 @@
-module gui
+module svg
 
 // parse_filter_url extracts filter ID from
 // filter="url(#id)" attribute.
@@ -182,7 +182,7 @@ fn parse_gradient_stops(content string) []SvgGradientStop {
 		color_str := find_attr_or_style(stop_elem, 'stop-color') or { '#000000' }
 		mut color := parse_svg_color(color_str)
 		if color == color_inherit {
-			color = black
+			color = color_black
 		}
 
 		// Apply stop-opacity
