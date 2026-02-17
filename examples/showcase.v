@@ -1413,7 +1413,7 @@ const svg_clip_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 
 const svg_stroke_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 80"><line x1="12" y1="16" x2="118" y2="16" stroke="#56b6ff" stroke-width="10" stroke-linecap="butt"/><line x1="12" y1="40" x2="118" y2="40" stroke="#9be564" stroke-width="10" stroke-linecap="round"/><polyline points="12,68 45,52 78,68 111,52" fill="none" stroke="#ff8c66" stroke-width="8" stroke-linejoin="round"/></svg>'
 const svg_transform_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 90"><rect x="8" y="10" width="24" height="24" fill="#7aa2ff"/><g transform="translate(48,22) rotate(20)"><rect x="-12" y="-12" width="24" height="24" fill="#57d39b"/></g><g transform="translate(94,26) rotate(-30) scale(1.3,0.8)"><rect x="-12" y="-12" width="24" height="24" fill="#ffb04d"/></g><g transform="translate(120,62) skewX(25)"><rect x="-12" y="-10" width="24" height="20" fill="#ff7d9c"/></g></svg>'
 const svg_inherit_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 90"><g fill="#7fd1ff" stroke="#11314a" stroke-width="3"><rect x="10" y="14" width="34" height="24" rx="5"/><circle cx="74" cy="26" r="12"/><rect x="96" y="14" width="34" height="24" rx="5" fill="#ff8c96"/></g><g transform="translate(0,40)" fill="#7fd1ff" stroke="#11314a" stroke-width="3"><circle cx="26" cy="20" r="12" fill="#90e87a"/><rect x="56" y="8" width="30" height="24" rx="5"/><rect x="96" y="8" width="34" height="24" rx="5"/></g></svg>'
-const tiger_svg_path = os.join_path(os.dir(@FILE), 'tiger.svg')
+const tiger_svg_data = $embed_file('../assets/svgs/tiger.svg').to_string()
 const missing_svg_path = os.join_path(os.dir(@FILE), 'missing-icon.svg')
 
 const sample_image_path = os.join_path(os.dir(@FILE), 'sample.jpeg')
@@ -4137,16 +4137,16 @@ fn demo_svg() gui.View {
 				width:    240
 				height:   150
 			),
-			gui.text(text: 'File-based SVG (small)', text_style: gui.theme().b4),
+			gui.text(text: 'Embedded SVG (small)', text_style: gui.theme().b4),
 			gui.row(
 				v_align: .middle
 				content: [
 					gui.svg(
-						file_name: tiger_svg_path
-						width:     84
-						height:    84
+						svg_data: tiger_svg_data
+						width:    84
+						height:   84
 					),
-					gui.text(text: 'Read from `tiger.svg`'),
+					gui.text(text: 'Embedded `assets/svgs/tiger.svg`'),
 				]
 			),
 			gui.text(text: 'Missing-file Fallback', text_style: gui.theme().b4),
