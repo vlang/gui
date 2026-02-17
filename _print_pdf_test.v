@@ -235,6 +235,55 @@ fn test_pdf_render_document_svg_gradient_malformed_vertex_colors_falls_back_flat
 	assert pdf.contains('0 0.502 0 rg')
 }
 
+fn test_jpeg_encode_rgba_produces_valid_output() {
+	// 2x2 white image (BGRA format: B=255 G=255 R=255 A=255)
+	pixels := []u8{len: 16, init: 255}
+	result := jpeg_encode_rgba(pixels, 2, 2, 85) or {
+		assert false, 'encode failed: ${err.msg()}'
+		return
+	}
+	// JPEG starts with FFD8
+	assert result.len > 2
+	assert result[0] == 0xFF
+	assert result[1] == 0xD8
+}
+
+fn test_raster_pdf_header_footer_respects_margins() {
+	pixels := []u8{len: 100 * 100 * 4, init: 128}
+	jpeg := jpeg_encode_rgba(pixels, 100, 100, 85) or {
+		assert false, 'JPEG encode failed: ${err.msg()}'
+		return
+	}
+	page_jpegs := [jpeg, jpeg]
+	job := PrintJob{
+		output_path: 'unused.pdf'
+		paper:       .a4
+		margins:     PrintMargins{
+			top:    36
+			right:  36
+			bottom: 36
+			left:   36
+		}
+		header:      PrintHeaderFooterCfg{
+			enabled: true
+			left:    'Test Header'
+		}
+		footer:      PrintHeaderFooterCfg{
+			enabled: true
+			left:    'Test Footer'
+		}
+	}
+	pdf := pdf_build_raster_document(page_jpegs, 595, 842, 523, 734, 200, 280,
+		job, 2) or {
+		assert false, 'raster PDF build failed: ${err.msg()}'
+		return
+	}
+	// Header/footer Td must use margins.left (36).
+	assert pdf.contains('36 800 Td'), 'header Td missing margin'
+	assert pdf.contains('(Test Header) Tj')
+	assert pdf.contains('(Test Footer) Tj')
+}
+
 fn test_pdf_render_document_svg_gradient_non_uniform_alpha_falls_back_flat() {
 	renderers := [
 		Renderer(DrawSvg{
@@ -279,4 +328,6 @@ fn test_pdf_render_document_paginate_emits_multiple_pages_with_header_tokens() {
 	assert pdf.contains('/Type /Pages')
 	assert pdf.contains('/Count 3')
 	assert pdf.contains('(p 1/3) Tj')
+	// Header must respect left margin (36pt default).
+	assert pdf.contains('36 800 Td'), 'header Td not at expected margin position'
 }

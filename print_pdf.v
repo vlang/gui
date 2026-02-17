@@ -701,11 +701,16 @@ fn pdf_draw_header_footer_line(mut out strings.Builder, text string, x f32, y f3
 }
 
 fn pdf_append_header_footer(mut out strings.Builder, job PrintJob, page_width f32, page_height f32, page_num int, page_count int) {
+	header_h := print_header_footer_reserved_height(job.header)
+	footer_h := print_header_footer_reserved_height(job.footer)
 	left_x := job.margins.left
 	center_x := page_width * 0.5 - 80
 	right_x := page_width - job.margins.right - 140
 	if job.header.enabled {
-		base_y := page_height - job.margins.top + 6
+		// Place baseline in reserved header space (between
+		// margin top and content area). 9pt font needs ~12pt
+		// from top of reserved space for readable placement.
+		base_y := page_height - job.margins.top - header_h + 12
 		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.header.left, job,
 			page_num, page_count), left_x, base_y)
 		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.header.center, job,
@@ -714,7 +719,9 @@ fn pdf_append_header_footer(mut out strings.Builder, job PrintJob, page_width f3
 			page_num, page_count), right_x, base_y)
 	}
 	if job.footer.enabled {
-		base_y := job.margins.bottom - 12
+		// Place baseline in reserved footer space (between
+		// content area and margin bottom).
+		base_y := job.margins.bottom + footer_h - 12
 		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.footer.left, job,
 			page_num, page_count), left_x, base_y)
 		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.footer.center, job,

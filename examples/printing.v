@@ -95,6 +95,8 @@ fn demo_print_job_with_output(output_path string) gui.PrintJob {
 		}
 		source_width:  print_source_width
 		source_height: print_source_height
+		raster_dpi:    300
+		jpeg_quality:  90
 	}
 }
 

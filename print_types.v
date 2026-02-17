@@ -91,6 +91,8 @@ pub:
 	footer        PrintHeaderFooterCfg
 	source_width  f32
 	source_height f32
+	raster_dpi    int = 300
+	jpeg_quality  int = 85
 }
 
 pub enum PrintRunStatus as u8 {
@@ -230,6 +232,12 @@ fn validate_print_job(job PrintJob) ! {
 	}
 	validate_header_footer_cfg(job.header)!
 	validate_header_footer_cfg(job.footer)!
+	if job.raster_dpi < 72 || job.raster_dpi > 1200 {
+		return error('raster_dpi must be 72..1200')
+	}
+	if job.jpeg_quality < 10 || job.jpeg_quality > 100 {
+		return error('jpeg_quality must be 10..100')
+	}
 }
 
 fn validate_export_print_job(job PrintJob) ! {

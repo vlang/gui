@@ -1,8 +1,11 @@
 module gui
 
 import os
+import sokol.gfx
 
 // export_print_job exports renderer output to PDF using PrintJob settings.
+// Uses GPU raster pipeline when sokol is initialized; falls back to
+// vector PDF path otherwise (e.g. in test environments).
 pub fn (mut w Window) export_print_job(job PrintJob) PrintExportResult {
 	validate_export_print_job(job) or {
 		return print_export_error_result(job.output_path, native_print_error_code_invalid_cfg,
@@ -11,19 +14,19 @@ pub fn (mut w Window) export_print_job(job PrintJob) PrintExportResult {
 
 	mut source_width := job.source_width
 	mut source_height := job.source_height
-	mut renderers := []Renderer{}
 
 	w.lock()
-	renderers = w.renderers.clone()
 	if source_width <= 0 {
 		source_width = f32(w.window_size.width)
 	}
 	if source_height <= 0 {
 		source_height = f32(w.window_size.height)
 	}
+	has_renderers := w.renderers.len > 0
+	renderers := w.renderers.clone()
 	w.unlock()
 
-	if renderers.len == 0 {
+	if !has_renderers {
 		return print_export_error_result(job.output_path, native_print_error_code_render,
 			'no renderers available for export')
 	}
@@ -32,9 +35,16 @@ pub fn (mut w Window) export_print_job(job PrintJob) PrintExportResult {
 			'source dimensions must be positive')
 	}
 
-	content := pdf_render_document(renderers, source_width, source_height, job) or {
-		return print_export_error_result(job.output_path, native_print_error_code_render,
-			err.msg())
+	content := if gfx.is_valid() {
+		pdf_render_document_raster(mut w, source_width, source_height, job) or {
+			return print_export_error_result(job.output_path, native_print_error_code_render,
+				err.msg())
+		}
+	} else {
+		pdf_render_document(renderers, source_width, source_height, job) or {
+			return print_export_error_result(job.output_path, native_print_error_code_render,
+				err.msg())
+		}
 	}
 
 	dir := os.dir(job.output_path)

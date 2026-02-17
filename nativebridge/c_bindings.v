@@ -6,8 +6,11 @@ module nativebridge
 #flag darwin -framework Foundation
 #flag darwin @VMODROOT/nativebridge/dialog_macos.m
 #flag darwin @VMODROOT/nativebridge/print_macos.m
+#flag darwin @VMODROOT/nativebridge/readback_macos.m
+#flag darwin -framework Metal
 #include "@VMODROOT/nativebridge/dialog_bridge.h"
 #include "@VMODROOT/nativebridge/print_bridge.h"
+#include "@VMODROOT/nativebridge/readback_bridge.h"
 
 pub enum BridgeDialogStatus {
 	ok
@@ -108,6 +111,8 @@ pub:
 
 fn C.gui_native_print_pdf_dialog(voidptr, &char, &char, &char, f64, f64, f64, f64, f64, f64, int, int, &char, int, int, int) C.GuiNativePrintResult
 fn C.gui_native_print_result_free(C.GuiNativePrintResult)
+
+fn C.gui_readback_metal_texture(mtl_texture voidptr, command_queue voidptr, width int, height int) &u8
 
 fn bridge_dialog_unsupported_result() BridgeDialogResult {
 	return BridgeDialogResult{
@@ -252,5 +257,27 @@ pub fn print_pdf_dialog(cfg BridgePrintCfg) BridgePrintResult {
 		return linux_print_pdf_dialog(cfg)
 	} $else {
 		return bridge_print_unsupported_result()
+	}
+}
+
+// readback_metal_texture reads BGRA pixels from a Metal
+// render-target texture via blit to shared staging texture.
+// command_queue must be the same queue used for rendering.
+// Caller must gfx.commit() before calling. macOS only.
+pub fn readback_metal_texture(mtl_texture voidptr, command_queue voidptr, width int, height int) ![]u8 {
+	$if macos {
+		ptr := C.gui_readback_metal_texture(mtl_texture, command_queue, width, height)
+		if ptr == unsafe { nil } {
+			return error('Metal texture readback failed')
+		}
+		size := width * height * 4
+		mut pixels := []u8{len: size}
+		unsafe {
+			vmemcpy(pixels.data, ptr, size)
+			free(ptr)
+		}
+		return pixels
+	} $else {
+		return error('Metal readback not available on this platform')
 	}
 }
