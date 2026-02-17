@@ -24,6 +24,33 @@ pub:
 	show_buttons     bool = true
 }
 
+pub enum NumericInputMode as u8 {
+	number
+	currency
+	percent
+}
+
+pub enum NumericAffixPosition as u8 {
+	prefix
+	suffix
+}
+
+// NumericCurrencyModeCfg defines currency symbol placement.
+pub struct NumericCurrencyModeCfg {
+pub:
+	symbol         string               = '$'
+	position       NumericAffixPosition = .prefix
+	symbol_spacing bool
+}
+
+// NumericPercentModeCfg defines percent symbol placement.
+pub struct NumericPercentModeCfg {
+pub:
+	symbol         string               = '%'
+	position       NumericAffixPosition = .suffix
+	symbol_spacing bool
+}
+
 @[minify]
 pub struct NumericInputCfg {
 pub:
@@ -32,9 +59,12 @@ pub:
 	text               string
 	value              ?f64
 	placeholder        string
-	locale             NumericLocaleCfg = NumericLocaleCfg{}
-	step_cfg           NumericStepCfg   = NumericStepCfg{}
-	decimals           int              = 2
+	locale             NumericLocaleCfg       = NumericLocaleCfg{}
+	step_cfg           NumericStepCfg         = NumericStepCfg{}
+	mode               NumericInputMode       = .number
+	currency_mode      NumericCurrencyModeCfg = NumericCurrencyModeCfg{}
+	percent_mode       NumericPercentModeCfg  = NumericPercentModeCfg{}
+	decimals           int                    = 2
 	min                ?f64
 	max                ?f64
 	width              f32
@@ -270,15 +300,17 @@ fn numeric_input_on_mouse_scroll(layout &Layout, mut e Event, mut w Window, cfg 
 }
 
 fn numeric_input_apply_step(layout &Layout, cfg NumericInputCfg, locale NumericLocaleCfg, step_cfg NumericStepCfg, direction f64, modifiers Modifier, mut e Event, mut w Window) {
-	next_value, next_text := numeric_input_step_result(cfg.text, cfg.value, cfg.min, cfg.max,
-		cfg.decimals, step_cfg, locale, direction, modifiers)
+	mode_cfg := numeric_mode_cfg(cfg)
+	next_value, next_text := numeric_input_step_result_mode(cfg.text, cfg.value, cfg.min,
+		cfg.max, cfg.decimals, step_cfg, locale, direction, modifiers, mode_cfg)
 	numeric_input_emit_commit(layout, cfg, next_value, next_text, mut w)
 	e.is_handled = true
 }
 
 fn numeric_input_commit(layout &Layout, cfg NumericInputCfg, locale NumericLocaleCfg, mut w Window) {
-	value, text := numeric_input_commit_result(cfg.text, cfg.value, cfg.min, cfg.max,
-		cfg.decimals, locale)
+	mode_cfg := numeric_mode_cfg(cfg)
+	value, text := numeric_input_commit_result_mode(cfg.text, cfg.value, cfg.min, cfg.max,
+		cfg.decimals, locale, mode_cfg)
 	numeric_input_emit_commit(layout, cfg, value, text, mut w)
 }
 
@@ -292,36 +324,51 @@ fn numeric_input_emit_commit(layout &Layout, cfg NumericInputCfg, value ?f64, te
 }
 
 fn numeric_input_commit_result(text string, value ?f64, min ?f64, max ?f64, decimals int, locale NumericLocaleCfg) (?f64, string) {
+	return numeric_input_commit_result_mode(text, value, min, max, decimals, locale, NumericModeCfg{})
+}
+
+fn numeric_input_commit_result_mode(text string, value ?f64, min ?f64, max ?f64, decimals int, locale NumericLocaleCfg, mode_cfg NumericModeCfg) (?f64, string) {
 	trimmed := text.trim_space()
 	if trimmed.len == 0 {
 		return none, ''
 	}
-	if parsed := numeric_parse(trimmed, locale) {
+	if parsed := numeric_mode_parse_value(trimmed, decimals, locale, mode_cfg) {
 		clamped := numeric_clamp(parsed, min, max)
-		return clamped, numeric_format(clamped, decimals, locale)
+		return clamped, numeric_mode_format_value(clamped, decimals, locale, mode_cfg)
 	}
 	if current := value {
 		clamped := numeric_clamp(current, min, max)
-		return clamped, numeric_format(clamped, decimals, locale)
+		return clamped, numeric_mode_format_value(clamped, decimals, locale, mode_cfg)
 	}
 	return none, ''
 }
 
 fn numeric_input_step_result(text string, value ?f64, min ?f64, max ?f64, decimals int, step_cfg NumericStepCfg, locale NumericLocaleCfg, direction f64, modifiers Modifier) (?f64, string) {
+	return numeric_input_step_result_mode(text, value, min, max, decimals, step_cfg, locale,
+		direction, modifiers, NumericModeCfg{})
+}
+
+fn numeric_input_step_result_mode(text string, value ?f64, min ?f64, max ?f64, decimals int, step_cfg NumericStepCfg, locale NumericLocaleCfg, direction f64, modifiers Modifier, mode_cfg NumericModeCfg) (?f64, string) {
 	if direction == 0 {
-		return numeric_input_commit_result(text, value, min, max, decimals, locale)
+		return numeric_input_commit_result_mode(text, value, min, max, decimals, locale,
+			mode_cfg)
 	}
-	step := numeric_step_delta(step_cfg, modifiers)
-	seed := numeric_step_seed(text, value, min, locale)
-	clamped := numeric_clamp(seed + (step * direction), min, max)
-	return clamped, numeric_format(clamped, decimals, locale)
+	step_display := numeric_step_delta(step_cfg, modifiers)
+	delta := numeric_mode_step_delta(step_display, mode_cfg)
+	seed := numeric_step_seed_mode(text, value, min, decimals, locale, mode_cfg)
+	clamped := numeric_clamp(seed + (delta * direction), min, max)
+	return clamped, numeric_mode_format_value(clamped, decimals, locale, mode_cfg)
 }
 
 fn numeric_step_seed(text string, value ?f64, min ?f64, locale NumericLocaleCfg) f64 {
+	return numeric_step_seed_mode(text, value, min, 9, locale, NumericModeCfg{})
+}
+
+fn numeric_step_seed_mode(text string, value ?f64, min ?f64, decimals int, locale NumericLocaleCfg, mode_cfg NumericModeCfg) f64 {
 	if current := value {
 		return current
 	}
-	if parsed := numeric_parse(text, locale) {
+	if parsed := numeric_mode_parse_value(text, decimals, locale, mode_cfg) {
 		return parsed
 	}
 	if min_value := min {
@@ -342,6 +389,132 @@ fn numeric_step_delta(cfg NumericStepCfg, modifiers Modifier) f64 {
 		return -step
 	}
 	return step
+}
+
+struct NumericModeCfg {
+	mode               NumericInputMode = .number
+	affix              string
+	affix_position     NumericAffixPosition = .suffix
+	affix_spacing      bool
+	display_multiplier f64 = 1.0
+}
+
+fn numeric_mode_cfg(cfg NumericInputCfg) NumericModeCfg {
+	return match cfg.mode {
+		.currency {
+			NumericModeCfg{
+				mode:               .currency
+				affix:              cfg.currency_mode.symbol.trim_space()
+				affix_position:     cfg.currency_mode.position
+				affix_spacing:      cfg.currency_mode.symbol_spacing
+				display_multiplier: 1.0
+			}
+		}
+		.percent {
+			NumericModeCfg{
+				mode:               .percent
+				affix:              cfg.percent_mode.symbol.trim_space()
+				affix_position:     cfg.percent_mode.position
+				affix_spacing:      cfg.percent_mode.symbol_spacing
+				display_multiplier: 100.0
+			}
+		}
+		else {
+			NumericModeCfg{
+				mode:               .number
+				display_multiplier: 1.0
+			}
+		}
+	}
+}
+
+fn numeric_mode_to_display(value f64, mode_cfg NumericModeCfg) f64 {
+	return value * mode_cfg.display_multiplier
+}
+
+fn numeric_mode_from_display(value f64, mode_cfg NumericModeCfg) f64 {
+	if mode_cfg.display_multiplier == 0 {
+		return value
+	}
+	return value / mode_cfg.display_multiplier
+}
+
+fn numeric_mode_step_delta(step_display f64, mode_cfg NumericModeCfg) f64 {
+	return numeric_mode_from_display(step_display, mode_cfg)
+}
+
+fn numeric_mode_parse_value(raw string, decimals int, locale NumericLocaleCfg, mode_cfg NumericModeCfg) ?f64 {
+	plain := numeric_strip_affix(raw.trim_space(), locale, mode_cfg) or { return none }
+	display_scaled := numeric_parse_scaled(plain, decimals, locale) or { return none }
+	display_value := numeric_scaled_to_value(display_scaled, decimals)
+	return numeric_mode_from_display(display_value, mode_cfg)
+}
+
+fn numeric_mode_format_value(value f64, decimals int, locale NumericLocaleCfg, mode_cfg NumericModeCfg) string {
+	display_value := numeric_mode_to_display(value, mode_cfg)
+	scaled := numeric_to_scaled(display_value, decimals)
+	formatted := numeric_format_scaled(scaled, decimals, locale)
+	return numeric_apply_affix(formatted, locale, mode_cfg)
+}
+
+fn numeric_strip_affix(raw string, locale NumericLocaleCfg, mode_cfg NumericModeCfg) ?string {
+	mut text := raw.trim_space()
+	if text.len == 0 {
+		return none
+	}
+	mut sign := ''
+	minus := locale.minus_sign.str()
+	plus := locale.plus_sign.str()
+	if minus.len > 0 && text.starts_with(minus) {
+		sign = minus
+		text = text[minus.len..].trim_left(' \t')
+	} else if plus.len > 0 && text.starts_with(plus) {
+		sign = plus
+		text = text[plus.len..].trim_left(' \t')
+	}
+	if mode_cfg.affix.len > 0 {
+		match mode_cfg.affix_position {
+			.prefix {
+				if text.starts_with(mode_cfg.affix) {
+					text = text[mode_cfg.affix.len..].trim_left(' \t')
+				}
+			}
+			.suffix {
+				mut right := text.trim_right(' \t')
+				if right.ends_with(mode_cfg.affix) {
+					right = right[..right.len - mode_cfg.affix.len].trim_right(' \t')
+				}
+				text = right
+			}
+		}
+	}
+	text = text.trim_space()
+	if text.len == 0 {
+		return none
+	}
+	return sign + text
+}
+
+fn numeric_apply_affix(formatted string, locale NumericLocaleCfg, mode_cfg NumericModeCfg) string {
+	if mode_cfg.affix.len == 0 {
+		return formatted
+	}
+	minus := locale.minus_sign.str()
+	plus := locale.plus_sign.str()
+	mut sign := ''
+	mut number := formatted
+	if minus.len > 0 && number.starts_with(minus) {
+		sign = minus
+		number = number[minus.len..]
+	} else if plus.len > 0 && number.starts_with(plus) {
+		sign = plus
+		number = number[plus.len..]
+	}
+	space := if mode_cfg.affix_spacing { ' ' } else { '' }
+	return match mode_cfg.affix_position {
+		.prefix { sign + mode_cfg.affix + space + number }
+		.suffix { sign + number + space + mode_cfg.affix }
+	}
 }
 
 fn numeric_step_cfg_normalize(cfg NumericStepCfg) NumericStepCfg {
@@ -441,6 +614,13 @@ fn numeric_parse(raw string, locale NumericLocaleCfg) ?f64 {
 	return number
 }
 
+fn numeric_parse_scaled(raw string, decimals int, locale NumericLocaleCfg) ?i64 {
+	if parsed := numeric_parse(raw, locale) {
+		return numeric_to_scaled(parsed, decimals)
+	}
+	return none
+}
+
 fn numeric_integer_groups_valid(integer_segment []rune, group_sep rune, group_sizes []int) bool {
 	mut group_lengths := []int{}
 	mut count := 0
@@ -480,37 +660,49 @@ fn numeric_integer_groups_valid(integer_segment []rune, group_sep rune, group_si
 }
 
 fn numeric_format(value f64, decimals int, locale NumericLocaleCfg) string {
-	loc := numeric_locale_normalize(locale)
-	d := numeric_decimals_clamped(decimals)
-	mut fixed := numeric_fixed(value, d)
-	mut sign := ''
-	if fixed.starts_with('-') {
-		sign = loc.minus_sign.str()
-		fixed = fixed[1..]
-	}
-	parts := fixed.split('.')
-	int_part := numeric_group_integer_part(parts[0], loc.group_sep, loc.group_sizes)
-	if d == 0 {
-		return sign + int_part
-	}
-	frac_part := if parts.len > 1 { parts[1] } else { '' }
-	return sign + int_part + loc.decimal_sep.str() + frac_part
+	scaled := numeric_to_scaled(value, decimals)
+	return numeric_format_scaled(scaled, decimals, locale)
 }
 
-fn numeric_fixed(value f64, decimals int) string {
-	return match numeric_decimals_clamped(decimals) {
-		0 { '${value:.0f}' }
-		1 { '${value:.1f}' }
-		2 { '${value:.2f}' }
-		3 { '${value:.3f}' }
-		4 { '${value:.4f}' }
-		5 { '${value:.5f}' }
-		6 { '${value:.6f}' }
-		7 { '${value:.7f}' }
-		8 { '${value:.8f}' }
-		9 { '${value:.9f}' }
-		else { '${value:.2f}' }
+fn numeric_format_scaled(scaled i64, decimals int, locale NumericLocaleCfg) string {
+	loc := numeric_locale_normalize(locale)
+	d := numeric_decimals_clamped(decimals)
+	scale := numeric_scale_factor(d)
+	mut magnitude := scaled
+	mut sign := ''
+	if scaled < 0 {
+		magnitude = -scaled
+		sign = loc.minus_sign.str()
 	}
+	int_part := (magnitude / scale).str()
+	grouped := numeric_group_integer_part(int_part, loc.group_sep, loc.group_sizes)
+	if d == 0 {
+		return sign + grouped
+	}
+	mut frac_part := (magnitude % scale).str()
+	if frac_part.len < d {
+		frac_part = '0'.repeat(d - frac_part.len) + frac_part
+	}
+	return sign + grouped + loc.decimal_sep.str() + frac_part
+}
+
+fn numeric_scale_factor(decimals int) i64 {
+	d := numeric_decimals_clamped(decimals)
+	mut factor := i64(1)
+	for _ in 0 .. d {
+		factor *= 10
+	}
+	return factor
+}
+
+fn numeric_to_scaled(value f64, decimals int) i64 {
+	factor := f64(numeric_scale_factor(decimals))
+	return i64(math.round(value * factor))
+}
+
+fn numeric_scaled_to_value(scaled i64, decimals int) f64 {
+	factor := f64(numeric_scale_factor(decimals))
+	return f64(scaled) / factor
 }
 
 fn numeric_decimals_clamped(decimals int) int {

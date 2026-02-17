@@ -45,12 +45,16 @@ pub mut:
 	// range sliders
 	range_value f32 = 50
 	// numeric input
-	numeric_en_text     string = '1,234.50'
-	numeric_en_value    ?f64   = 1234.5
-	numeric_de_text     string = '1.234,50'
-	numeric_de_value    ?f64   = 1234.5
-	numeric_plain_text  string
-	numeric_plain_value ?f64
+	numeric_en_text        string = '1,234.50'
+	numeric_en_value       ?f64   = 1234.5
+	numeric_de_text        string = '1.234,50'
+	numeric_de_value       ?f64   = 1234.5
+	numeric_currency_text  string = '$1,234.50'
+	numeric_currency_value ?f64   = 1234.5
+	numeric_percent_text   string = '12.50%'
+	numeric_percent_value  ?f64   = 0.125
+	numeric_plain_text     string
+	numeric_plain_value    ?f64
 	// select
 	selected_1 []string
 	selected_2 []string
@@ -5445,7 +5449,7 @@ fn scroll_demo_rows(prefix string) []gui.View {
 const numeric_input_doc = '# Numeric Input
 
 Locale-aware number input with step controls, min/max validation,
-and configurable decimal precision.
+configurable decimal precision, plus currency and percent modes.
 
 ## Usage
 
@@ -5471,6 +5475,9 @@ gui.numeric_input(
 | min | ?f64 | Minimum allowed value |
 | max | ?f64 | Maximum allowed value |
 | decimals | int | Decimal places (default: 2) |
+| mode | NumericInputMode | `number`, `currency`, `percent` |
+| currency_mode | NumericCurrencyModeCfg | Symbol and placement |
+| percent_mode | NumericPercentModeCfg | Symbol and placement |
 | step_cfg | NumericStepCfg | Step, multipliers, buttons |
 | locale | NumericLocaleCfg | Decimal/group separators |
 
@@ -5479,7 +5486,11 @@ gui.numeric_input(
 | Callback | Signature | Fired when |
 |----------|-----------|------------|
 | on_text_changed | fn (&Layout, string, mut Window) | Text changes |
-| on_value_commit | fn (&Layout, ?f64, string, mut Window) | Value committed |'
+| on_value_commit | fn (&Layout, ?f64, string, mut Window) | Value committed |
+
+## Notes
+
+- In percent mode, value is ratio (12.50% => 0.125).'
 
 fn demo_numeric_input(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -5540,6 +5551,58 @@ fn demo_numeric_input(w &gui.Window) gui.View {
 			),
 			gui.text(
 				text: 'Committed: ${showcase_numeric_value_text(app.numeric_de_value)}'
+			),
+			// Currency mode
+			gui.text(text: 'Currency mode', text_style: gui.theme().b1),
+			gui.numeric_input(
+				id:              'num_currency'
+				id_focus:        9173
+				text:            app.numeric_currency_text
+				value:           app.numeric_currency_value
+				mode:            .currency
+				decimals:        2
+				min:             0.0
+				max:             10000.0
+				width:           220
+				sizing:          gui.fixed_fit
+				on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_currency_text = text
+				}
+				on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_currency_value = value
+					s.numeric_currency_text = text
+				}
+			),
+			gui.text(
+				text: 'Committed: ${showcase_numeric_value_text(app.numeric_currency_value)}'
+			),
+			// Percent mode (ratio value)
+			gui.text(text: 'Percent mode (ratio value)', text_style: gui.theme().b1),
+			gui.numeric_input(
+				id:              'num_percent'
+				id_focus:        9174
+				text:            app.numeric_percent_text
+				value:           app.numeric_percent_value
+				mode:            .percent
+				decimals:        2
+				min:             0.0
+				max:             1.0
+				width:           220
+				sizing:          gui.fixed_fit
+				on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_percent_text = text
+				}
+				on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.numeric_percent_value = value
+					s.numeric_percent_text = text
+				}
+			),
+			gui.text(
+				text: 'Committed ratio: ${showcase_numeric_value_text(app.numeric_percent_value)}'
 			),
 			// No buttons, integer
 			gui.text(text: 'No buttons (integer)', text_style: gui.theme().b1),

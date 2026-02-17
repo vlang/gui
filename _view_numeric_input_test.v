@@ -120,3 +120,93 @@ fn test_numeric_step_result_modifiers() {
 		assert false
 	}
 }
+
+fn test_numeric_currency_commit_result_prefix_symbol() {
+	mode_cfg := NumericModeCfg{
+		mode:               .currency
+		affix:              '$'
+		affix_position:     .prefix
+		display_multiplier: 1.0
+	}
+	value, text := numeric_input_commit_result_mode('-$1,234.5', none, none, none, 2,
+		NumericLocaleCfg{}, mode_cfg)
+	assert text == '-$1,234.50'
+	if parsed := value {
+		assert math.abs(parsed - (-1234.5)) < 0.000001
+	} else {
+		assert false
+	}
+}
+
+fn test_numeric_currency_commit_result_suffix_symbol() {
+	locale := NumericLocaleCfg{
+		decimal_sep: `,`
+		group_sep:   `.`
+	}
+	mode_cfg := NumericModeCfg{
+		mode:               .currency
+		affix:              'EUR'
+		affix_position:     .suffix
+		affix_spacing:      true
+		display_multiplier: 1.0
+	}
+	value, text := numeric_input_commit_result_mode('1.234,5 EUR', none, none, none, 2,
+		locale, mode_cfg)
+	assert text == '1.234,50 EUR'
+	if parsed := value {
+		assert math.abs(parsed - 1234.5) < 0.000001
+	} else {
+		assert false
+	}
+}
+
+fn test_numeric_percent_commit_ratio_value() {
+	mode_cfg := NumericModeCfg{
+		mode:               .percent
+		affix:              '%'
+		affix_position:     .suffix
+		display_multiplier: 100.0
+	}
+	value, text := numeric_input_commit_result_mode('12.5%', none, none, none, 2, NumericLocaleCfg{},
+		mode_cfg)
+	assert text == '12.50%'
+	if parsed := value {
+		assert math.abs(parsed - 0.125) < 0.000001
+	} else {
+		assert false
+	}
+}
+
+fn test_numeric_percent_step_result_uses_display_units() {
+	mode_cfg := NumericModeCfg{
+		mode:               .percent
+		affix:              '%'
+		affix_position:     .suffix
+		display_multiplier: 100.0
+	}
+	value, text := numeric_input_step_result_mode('12.50%', none, none, none, 2, NumericStepCfg{},
+		NumericLocaleCfg{}, 1.0, .none, mode_cfg)
+	assert text == '13.50%'
+	if parsed := value {
+		assert math.abs(parsed - 0.135) < 0.000001
+	} else {
+		assert false
+	}
+}
+
+fn test_numeric_percent_round_trip_is_canonical() {
+	mode_cfg := NumericModeCfg{
+		mode:               .percent
+		affix:              '%'
+		affix_position:     .suffix
+		display_multiplier: 100.0
+	}
+	source := '-0.125'
+	formatted := numeric_mode_format_value(source.f64(), 2, NumericLocaleCfg{}, mode_cfg)
+	assert formatted == '-12.50%'
+	parsed := numeric_mode_parse_value(formatted, 2, NumericLocaleCfg{}, mode_cfg) or {
+		assert false
+		return
+	}
+	assert math.abs(parsed - source.f64()) < 0.000001
+}

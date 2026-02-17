@@ -23,7 +23,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Input masking engine (`9`, `a`, `*`, literals, escaped tokens, custom tokens)
 - [x] Ready masks: phone, date, time, credit card, postal, SSN
 - [x] Numeric input view with locale-aware parse/format and step controls
-- [ ] Currency/percent input modes with round-trip-safe formatting
+- [x] Currency/percent input modes with round-trip-safe formatting
 - [ ] Form validation model: sync/async validators, touched/dirty state, error slots
 - [ ] Unified input formatter pipeline (pre-commit transform + post-commit normalize)
 
