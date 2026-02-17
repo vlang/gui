@@ -54,41 +54,46 @@ pub:
 @[minify]
 pub struct NumericInputCfg {
 pub:
-	id                 string
-	id_focus           u32
-	text               string
-	value              ?f64
-	placeholder        string
-	locale             NumericLocaleCfg       = NumericLocaleCfg{}
-	step_cfg           NumericStepCfg         = NumericStepCfg{}
-	mode               NumericInputMode       = .number
-	currency_mode      NumericCurrencyModeCfg = NumericCurrencyModeCfg{}
-	percent_mode       NumericPercentModeCfg  = NumericPercentModeCfg{}
-	decimals           int                    = 2
-	min                ?f64
-	max                ?f64
-	width              f32
-	height             f32
-	min_width          f32
-	min_height         f32
-	max_width          f32
-	max_height         f32
-	sizing             Sizing
-	padding            Padding   = padding_two_four
-	radius             f32       = gui_theme.input_style.radius
-	radius_border      f32       = gui_theme.input_style.radius_border
-	size_border        f32       = gui_theme.input_style.size_border
-	color              Color     = gui_theme.input_style.color
-	color_hover        Color     = gui_theme.input_style.color_hover
-	color_border       Color     = gui_theme.input_style.color_border
-	color_border_focus Color     = gui_theme.input_style.color_border_focus
-	text_style         TextStyle = gui_theme.input_style.text_style
-	placeholder_style  TextStyle = gui_theme.input_style.placeholder_style
-	disabled           bool
-	invisible          bool
-	tooltip            &TooltipCfg                            = unsafe { nil }
-	on_text_changed    fn (&Layout, string, mut Window)       = unsafe { nil }
-	on_value_commit    fn (&Layout, ?f64, string, mut Window) = unsafe { nil }
+	id                    string
+	id_focus              u32
+	text                  string
+	value                 ?f64
+	placeholder           string
+	locale                NumericLocaleCfg       = NumericLocaleCfg{}
+	step_cfg              NumericStepCfg         = NumericStepCfg{}
+	mode                  NumericInputMode       = .number
+	currency_mode         NumericCurrencyModeCfg = NumericCurrencyModeCfg{}
+	percent_mode          NumericPercentModeCfg  = NumericPercentModeCfg{}
+	decimals              int                    = 2
+	min                   ?f64
+	max                   ?f64
+	width                 f32
+	height                f32
+	min_width             f32
+	min_height            f32
+	max_width             f32
+	max_height            f32
+	sizing                Sizing
+	padding               Padding   = padding_two_four
+	radius                f32       = gui_theme.input_style.radius
+	radius_border         f32       = gui_theme.input_style.radius_border
+	size_border           f32       = gui_theme.input_style.size_border
+	color                 Color     = gui_theme.input_style.color
+	color_hover           Color     = gui_theme.input_style.color_hover
+	color_border          Color     = gui_theme.input_style.color_border
+	color_border_focus    Color     = gui_theme.input_style.color_border_focus
+	text_style            TextStyle = gui_theme.input_style.text_style
+	placeholder_style     TextStyle = gui_theme.input_style.placeholder_style
+	disabled              bool
+	invisible             bool
+	tooltip               &TooltipCfg                            = unsafe { nil }
+	on_text_changed       fn (&Layout, string, mut Window)       = unsafe { nil }
+	on_value_commit       fn (&Layout, ?f64, string, mut Window) = unsafe { nil }
+	field_id              string
+	form_sync_validators  []FormSyncValidator
+	form_async_validators []FormAsyncValidator
+	form_validate_on      FormValidateOn = .inherit
+	form_initial_value    ?string
 }
 
 // numeric_input creates a locale-aware numeric input with optional step controls.
@@ -210,6 +215,11 @@ fn numeric_input_field(cfg NumericInputCfg, locale NumericLocaleCfg, step_cfg Nu
 		on_mouse_scroll:       fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
 			numeric_input_on_mouse_scroll(layout, mut e, mut w, cfg, locale, step_cfg)
 		}
+		field_id:              cfg.field_id
+		form_sync_validators:  cfg.form_sync_validators
+		form_async_validators: cfg.form_async_validators
+		form_validate_on:      cfg.form_validate_on
+		form_initial_value:    cfg.form_initial_value
 	)
 }
 

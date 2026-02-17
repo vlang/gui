@@ -79,9 +79,14 @@ pub:
 	on_mouse_scroll       fn (&Layout, mut Event, mut Window)                 = unsafe { nil }
 	on_blur               fn (&Layout, mut Window)            = unsafe { nil }
 	on_click_icon         fn (&Layout, mut Event, mut Window) = unsafe { nil }
-	scrollbar_cfg_x       &ScrollbarCfg                       = unsafe { nil }
-	scrollbar_cfg_y       &ScrollbarCfg                       = unsafe { nil }
-	tooltip               &TooltipCfg                         = unsafe { nil }
+	field_id              string
+	form_sync_validators  []FormSyncValidator
+	form_async_validators []FormAsyncValidator
+	form_validate_on      FormValidateOn = .inherit
+	form_initial_value    ?string
+	scrollbar_cfg_x       &ScrollbarCfg = unsafe { nil }
+	scrollbar_cfg_y       &ScrollbarCfg = unsafe { nil }
+	tooltip               &TooltipCfg   = unsafe { nil }
 	sizing                Sizing
 	text_style            TextStyle = gui_theme.input_style.text_style
 	placeholder_style     TextStyle = gui_theme.input_style.placeholder_style
@@ -238,6 +243,7 @@ pub fn input(cfg InputCfg) View {
 			}
 		}
 		amend_layout:    fn [color_border_focus, cfg] (mut layout Layout, mut w Window) {
+			cfg.form_register(layout, mut w)
 			if layout.shape.id_focus == 0 {
 				return
 			}
@@ -305,6 +311,31 @@ fn (cfg &InputCfg) apply_pre_commit_transform(current string, proposed string) ?
 	return cfg.pre_commit_transform(current, proposed)
 }
 
+fn (cfg &InputCfg) form_adapter_cfg(value string) FormFieldAdapterCfg {
+	return FormFieldAdapterCfg{
+		field_id:             cfg.field_id
+		value:                value
+		initial_value:        cfg.form_initial_value
+		sync_validators:      cfg.form_sync_validators
+		async_validators:     cfg.form_async_validators
+		validate_on_override: cfg.form_validate_on
+	}
+}
+
+fn (cfg &InputCfg) form_register(layout &Layout, mut w Window) {
+	if cfg.field_id.len == 0 {
+		return
+	}
+	w.form_register_field(layout, cfg.form_adapter_cfg(cfg.text))
+}
+
+fn (cfg &InputCfg) form_notify(layout &Layout, value string, trigger FormValidationTrigger, mut w Window) {
+	if cfg.field_id.len == 0 {
+		return
+	}
+	w.form_on_field_event(layout, cfg.form_adapter_cfg(value), trigger)
+}
+
 fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_pos int, mut w Window) string {
 	next_text := cfg.apply_pre_commit_transform(cfg.text, text) or { return cfg.text }
 	if next_text == cfg.text {
@@ -337,6 +368,15 @@ fn (cfg &InputCfg) commit_text(layout &Layout, reason InputCommitReason, mut w W
 	mut text := cfg.text
 	if cfg.post_commit_normalize != unsafe { nil } {
 		text = cfg.post_commit_normalize(cfg.text, reason)
+	}
+	match reason {
+		.blur {
+			cfg.form_notify(layout, text, .blur, mut w)
+		}
+		.enter {
+			cfg.form_notify(layout, text, .submit, mut w)
+			w.form_request_submit_for_layout(layout)
+		}
 	}
 	if cfg.on_text_changed != unsafe { nil } && text != cfg.text {
 		cfg.on_text_changed(layout, text, mut w)
@@ -642,6 +682,7 @@ fn make_input_on_char(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
 		}
 		event.is_handled = true
 		if text != cfg.text {
+			cfg.form_notify(layout, text, .change, mut w)
 			cfg.on_text_changed(layout, text, mut w)
 		}
 	}
@@ -660,6 +701,7 @@ fn make_input_on_ime_commit(cfg InputCfg) fn (&Layout, string, mut Window) {
 			return
 		}
 		if new_text != cfg.text {
+			cfg.form_notify(layout, new_text, .change, mut w)
 			cfg.on_text_changed(layout, new_text, mut w)
 		}
 	}

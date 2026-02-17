@@ -15,6 +15,7 @@ const id_scroll_catalog = 3
 const id_scroll_sync_demo = 4
 const id_focus_showcase_splitter_main = u32(9160)
 const id_focus_showcase_splitter_detail = u32(9161)
+const showcase_form_id = 'showcase_forms'
 
 @[heap]
 struct ShowcaseApp {
@@ -55,6 +56,12 @@ pub mut:
 	numeric_percent_value  ?f64   = 0.125
 	numeric_plain_text     string
 	numeric_plain_value    ?f64
+	// forms
+	form_username   string
+	form_email      string
+	form_age_text   string
+	form_age_value  ?f64
+	form_submit_msg string
 	// select
 	selected_1 []string
 	selected_2 []string
@@ -233,6 +240,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['doc', 'grid', 'table', 'data']
 		},
 		DemoEntry{
+			id:      'doc_forms'
+			label:   'Forms'
+			group:   'welcome'
+			summary: 'Form validation model and field adapter documentation.'
+			tags:    ['doc', 'forms', 'validation', 'async']
+		},
+		DemoEntry{
 			id:      'doc_gradients'
 			label:   'Gradients'
 			group:   'welcome'
@@ -343,6 +357,13 @@ fn demo_entries() []DemoEntry {
 			group:   'input'
 			summary: 'Locale-aware number input with step controls'
 			tags:    ['number', 'decimal', 'locale', 'spinner']
+		},
+		DemoEntry{
+			id:      'forms'
+			label:   'Forms'
+			group:   'input'
+			summary: 'Form runtime with sync/async validation and slots'
+			tags:    ['form', 'validation', 'async', 'touched', 'dirty']
 		},
 		DemoEntry{
 			id:      'listbox'
@@ -961,6 +982,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'date_picker' { demo_date_picker(mut w) }
 		'input_date' { demo_input_date(mut w) }
 		'numeric_input' { demo_numeric_input(w) }
+		'forms' { demo_forms(w) }
 		'date_picker_roller' { demo_date_picker_roller(mut w) }
 		'svg' { demo_svg() }
 		'image' { demo_image() }
@@ -981,6 +1003,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'doc_animations' { demo_doc(mut w, 'doc_animations', doc_animations_source) }
 		'doc_architecture' { demo_doc(mut w, 'doc_architecture', doc_architecture_source) }
 		'doc_data_grid' { demo_doc(mut w, 'doc_data_grid', doc_data_grid_source) }
+		'doc_forms' { demo_doc(mut w, 'doc_forms', doc_forms_source) }
 		'doc_gradients' { demo_doc(mut w, 'doc_gradients', doc_gradients_source) }
 		'doc_layout_algorithm' { demo_doc(mut w, 'doc_layout_algorithm', doc_layout_algorithm_source) }
 		'doc_markdown' { demo_doc(mut w, 'doc_markdown', doc_markdown_source) }
@@ -1017,6 +1040,7 @@ fn related_examples(id string) string {
 		'data_grid' { 'examples/data_grid_demo.v, docs/DATA_GRID.md' }
 		'data_source' { 'examples/data_grid_data_source_demo.v' }
 		'numeric_input' { 'examples/numeric_input.v' }
+		'forms' { 'examples/form_validation.v, docs/FORMS.md' }
 		'date_picker', 'input_date' { 'examples/date_picker_options.v, examples/date_time.v' }
 		'date_picker_roller' { 'examples/date_picker_roller.v' }
 		'svg' { 'examples/svg_demo.v, examples/tiger.v' }
@@ -1063,6 +1087,7 @@ fn component_doc(id string) string {
 		'date_picker' { date_picker_doc }
 		'input_date' { input_date_doc }
 		'numeric_input' { numeric_input_doc }
+		'forms' { forms_doc }
 		'date_picker_roller' { date_picker_roller_doc }
 		'svg' { svg_doc }
 		'image' { image_doc }
@@ -1636,6 +1661,7 @@ const doc_get_started_source = $embed_file('../docs/GET_STARTED.md').to_string()
 const doc_animations_source = $embed_file('../docs/ANIMATIONS.md').to_string()
 const doc_architecture_source = $embed_file('../docs/ARCHITECTURE.md').to_string()
 const doc_data_grid_source = $embed_file('../docs/DATA_GRID.md').to_string()
+const doc_forms_source = $embed_file('../docs/FORMS.md').to_string()
 const doc_gradients_source = $embed_file('../docs/GRADIENTS.md').to_string()
 const doc_layout_algorithm_source = $embed_file('../docs/LAYOUT_ALGORITHM.md').to_string()
 const doc_markdown_source = $embed_file('../docs/MARKDOWN.md').to_string()
@@ -5519,6 +5545,61 @@ gui.numeric_input(
 - Enter/blur normalize text before commit callbacks.
 - In percent mode, value is ratio (12.50% => 0.125).'
 
+const forms_doc = '# Forms
+
+Form runtime for sync/async validation with field status and error slots.
+
+## Usage
+
+```v
+gui.form(
+    id: "signup",
+    validate_on: .blur_submit,
+    content: [
+        gui.input(
+            field_id: "username",
+            text: state.username,
+            form_sync_validators: [gui.FormSyncValidator(required_username)],
+            form_async_validators: [gui.FormAsyncValidator(unique_username)],
+        ),
+    ],
+    error_slot: fn (_ string, _ []gui.FormIssue) gui.View {
+        return gui.text(text: "username: username required")
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Stable form runtime key (required) |
+| validate_on | FormValidateOn | Default trigger (`change`, `blur_submit`, `submit`) |
+| block_submit_when_invalid | bool | Prevent submit callback when invalid |
+| block_submit_when_pending | bool | Prevent submit callback while async runs |
+| error_slot | fn (string, []FormIssue) View | Per-field error rendering |
+| summary_slot | fn (FormSummaryState) View | Aggregate error rendering |
+| pending_slot | fn (FormPendingState) View | Pending field rendering |
+
+## Field Adapter Properties
+
+Available on `input` and `numeric_input`:
+
+- `field_id string`
+- `form_sync_validators []FormSyncValidator`
+- `form_async_validators []FormAsyncValidator`
+- `form_validate_on FormValidateOn` (`.inherit` uses form default)
+- `form_initial_value ?string`
+
+## Window Helpers
+
+- `window.form_submit(form_id)`
+- `window.form_reset(form_id)`
+- `window.form_summary(form_id)`
+- `window.form_field_state(form_id, field_id)`
+
+See also: docs/FORMS.md'
+
 fn demo_numeric_input(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	return gui.column(
@@ -5666,4 +5747,259 @@ fn showcase_numeric_value_text(value ?f64) string {
 		return '${v:.2f}'
 	}
 	return 'none'
+}
+
+fn demo_forms(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	form_summary := w.form_summary(showcase_form_id)
+	username_state := w.form_field_state(showcase_form_id, 'username') or { gui.FormFieldState{} }
+	email_state := w.form_field_state(showcase_form_id, 'email') or { gui.FormFieldState{} }
+	age_state := w.form_field_state(showcase_form_id, 'age') or { gui.FormFieldState{} }
+	return gui.column(
+		spacing: gui.spacing_medium
+		sizing:  gui.fill_fit
+		content: [
+			gui.form(
+				id:                        showcase_form_id
+				validate_on:               .blur_submit
+				block_submit_when_invalid: true
+				block_submit_when_pending: true
+				error_slot:                showcase_forms_error_slot
+				summary_slot:              showcase_forms_summary_slot
+				pending_slot:              showcase_forms_pending_slot
+				on_submit:                 showcase_forms_on_submit
+				on_reset:                  showcase_forms_on_reset
+				content:                   [
+					showcase_forms_field('Username', gui.input(
+						id:                    'showcase_forms_username'
+						id_focus:              9180
+						width:                 260
+						sizing:                gui.fixed_fit
+						text:                  app.form_username
+						placeholder:           'username'
+						field_id:              'username'
+						form_sync_validators:  [
+							gui.FormSyncValidator(showcase_forms_username_required),
+							gui.FormSyncValidator(showcase_forms_username_len),
+						]
+						form_async_validators: [
+							gui.FormAsyncValidator(showcase_forms_username_unique),
+						]
+						on_text_changed:       fn (_ &gui.Layout, s string, mut w gui.Window) {
+							w.state[ShowcaseApp]().form_username = s
+						}
+					)),
+					showcase_forms_state('Username', username_state),
+					showcase_forms_field('Email', gui.input(
+						id:                   'showcase_forms_email'
+						id_focus:             9181
+						width:                260
+						sizing:               gui.fixed_fit
+						text:                 app.form_email
+						placeholder:          'user@example.com'
+						field_id:             'email'
+						form_sync_validators: [
+							gui.FormSyncValidator(showcase_forms_email_required),
+							gui.FormSyncValidator(showcase_forms_email_shape),
+						]
+						on_text_changed:      fn (_ &gui.Layout, s string, mut w gui.Window) {
+							w.state[ShowcaseApp]().form_email = s
+						}
+					)),
+					showcase_forms_state('Email', email_state),
+					showcase_forms_field('Age', gui.numeric_input(
+						id:                   'showcase_forms_age'
+						id_focus:             9182
+						width:                120
+						sizing:               gui.fixed_fit
+						decimals:             0
+						min:                  0
+						max:                  120
+						text:                 app.form_age_text
+						value:                app.form_age_value
+						field_id:             'age'
+						form_sync_validators: [
+							gui.FormSyncValidator(showcase_forms_age_required),
+						]
+						on_text_changed:      fn (_ &gui.Layout, text string, mut w gui.Window) {
+							w.state[ShowcaseApp]().form_age_text = text
+						}
+						on_value_commit:      fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+							mut state := w.state[ShowcaseApp]()
+							state.form_age_value = value
+							state.form_age_text = text
+						}
+					)),
+					showcase_forms_state('Age', age_state),
+				]
+			),
+			gui.row(
+				spacing: gui.spacing_small
+				content: [
+					gui.button(
+						content:  [
+							gui.text(text: 'Submit'),
+						]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.form_submit(showcase_form_id)
+						}
+					),
+					gui.button(
+						content:  [
+							gui.text(text: 'Reset'),
+						]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.form_reset(showcase_form_id)
+						}
+					),
+				]
+			),
+			gui.text(
+				text: 'Summary: valid=${form_summary.valid} pending=${form_summary.pending} invalid=${form_summary.invalid_count}'
+			),
+			gui.text(
+				text: if app.form_submit_msg.len > 0 {
+					app.form_submit_msg
+				} else {
+					'Submit form to view committed values'
+				}
+			),
+		]
+	)
+}
+
+fn showcase_forms_field(label string, field gui.View) gui.View {
+	return gui.row(
+		padding: gui.padding_none
+		v_align: .middle
+		spacing: gui.spacing_small
+		content: [
+			gui.text(
+				text:      label
+				min_width: 90
+			),
+			field,
+		]
+	)
+}
+
+fn showcase_forms_state(label string, state gui.FormFieldState) gui.View {
+	return gui.text(
+		text:       '${label}: touched=${state.touched}, dirty=${state.dirty}, pending=${state.pending}'
+		text_style: gui.theme().n5
+	)
+}
+
+fn showcase_forms_error_slot(field_id string, issues []gui.FormIssue) gui.View {
+	if issues.len == 0 {
+		return gui.text(text: '')
+	}
+	return gui.text(
+		text:       '${field_id}: ${issues[0].msg}'
+		text_style: gui.TextStyle{
+			...gui.theme().text_style
+			color: gui.rgb(219, 87, 87)
+		}
+	)
+}
+
+fn showcase_forms_summary_slot(summary gui.FormSummaryState) gui.View {
+	if summary.invalid_count == 0 && !summary.pending {
+		return gui.text(text: '')
+	}
+	return gui.text(
+		text: 'Validation summary: invalid=${summary.invalid_count}, pending=${summary.pending_count}'
+	)
+}
+
+fn showcase_forms_pending_slot(pending gui.FormPendingState) gui.View {
+	if pending.pending_count == 0 {
+		return gui.text(text: '')
+	}
+	return gui.text(text: 'Validating: ${pending.field_ids.join(', ')}')
+}
+
+fn showcase_forms_on_submit(ev gui.FormSubmitEvent, mut w gui.Window) {
+	mut app := w.state[ShowcaseApp]()
+	app.form_submit_msg = 'Submitted username=${ev.values['username'] or { '' }}, email=${ev.values['email'] or {
+		''
+	}}'
+}
+
+fn showcase_forms_on_reset(_ gui.FormResetEvent, mut w gui.Window) {
+	mut app := w.state[ShowcaseApp]()
+	app.form_username = ''
+	app.form_email = ''
+	app.form_age_text = ''
+	app.form_age_value = none
+	app.form_submit_msg = 'Form reset'
+}
+
+fn showcase_forms_username_required(field gui.FormFieldSnapshot, _ gui.FormSnapshot) []gui.FormIssue {
+	if field.value.trim_space().len == 0 {
+		return [gui.FormIssue{
+			code: 'required'
+			msg:  'username required'
+		}]
+	}
+	return []gui.FormIssue{}
+}
+
+fn showcase_forms_username_len(field gui.FormFieldSnapshot, _ gui.FormSnapshot) []gui.FormIssue {
+	value := field.value.trim_space()
+	if value.len > 0 && value.len < 3 {
+		return [gui.FormIssue{
+			code: 'min_len'
+			msg:  'username min length is 3'
+		}]
+	}
+	return []gui.FormIssue{}
+}
+
+fn showcase_forms_username_unique(field gui.FormFieldSnapshot, _ gui.FormSnapshot, signal &gui.GridAbortSignal) ![]gui.FormIssue {
+	for _ in 0 .. 4 {
+		if signal.is_aborted() {
+			return []gui.FormIssue{}
+		}
+		time.sleep(60 * time.millisecond)
+	}
+	name := field.value.trim_space().to_lower()
+	if name in ['admin', 'root', 'system'] {
+		return [gui.FormIssue{
+			code: 'taken'
+			msg:  'username already taken'
+		}]
+	}
+	return []gui.FormIssue{}
+}
+
+fn showcase_forms_email_required(field gui.FormFieldSnapshot, _ gui.FormSnapshot) []gui.FormIssue {
+	if field.value.trim_space().len == 0 {
+		return [gui.FormIssue{
+			code: 'required'
+			msg:  'email required'
+		}]
+	}
+	return []gui.FormIssue{}
+}
+
+fn showcase_forms_email_shape(field gui.FormFieldSnapshot, _ gui.FormSnapshot) []gui.FormIssue {
+	email := field.value.trim_space()
+	if email.len > 0 && !email.contains('@') {
+		return [gui.FormIssue{
+			code: 'format'
+			msg:  'email must contain @'
+		}]
+	}
+	return []gui.FormIssue{}
+}
+
+fn showcase_forms_age_required(field gui.FormFieldSnapshot, _ gui.FormSnapshot) []gui.FormIssue {
+	if field.value.trim_space().len == 0 {
+		return [gui.FormIssue{
+			code: 'required'
+			msg:  'age required'
+		}]
+	}
+	return []gui.FormIssue{}
 }

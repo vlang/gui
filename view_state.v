@@ -122,6 +122,9 @@ mut:
 	splitter_runtime_state        BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
 		max_size: 20
 	}
+	form_state                    BoundedMap[string, FormRuntimeState] = BoundedMap[string, FormRuntimeState]{
+		max_size: 50
+	}
 }
 
 // ColorPickerState stores persistent HSV values for ColorPickers.
