@@ -33,6 +33,7 @@ fn main_view(mut w gui.Window) gui.View {
 						width:           200
 						height:          100
 						radius:          10
+						size_border:     3
 						border_gradient: &gui.Gradient{
 							stops: [
 								gui.GradientStop{
@@ -51,10 +52,11 @@ fn main_view(mut w gui.Window) gui.View {
 							gui.text(text: 'Linear Border'),
 						]
 					),
-					gui.column(
+					gui.circle(
 						width:           150
 						height:          150
-						radius:          75 // Circle
+						sizing:          gui.fixed_fixed
+						size_border:     3
 						border_gradient: &gui.Gradient{
 							stops: [
 								gui.GradientStop{

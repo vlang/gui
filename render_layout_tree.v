@@ -222,7 +222,18 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 		}
 
 		// Border
-		if shape.size_border > 0 {
+		fx := shape.fx
+		if fx != unsafe { nil } && fx.border_gradient != unsafe { nil } && shape.size_border > 0 {
+			window.renderers << DrawGradientBorder{
+				x:         draw_rect.x
+				y:         draw_rect.y
+				w:         draw_rect.width
+				h:         draw_rect.height
+				radius:    radius
+				thickness: shape.size_border
+				gradient:  fx.border_gradient
+			}
+		} else if shape.size_border > 0 {
 			c_border := if shape.disabled {
 				dim_alpha(shape.color_border)
 			} else {

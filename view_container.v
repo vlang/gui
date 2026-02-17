@@ -346,6 +346,7 @@ pub fn canvas(cfg ContainerCfg) View {
 // alignment, scrolling, and styling. See [ContainerCfg](#ContainerCfg)
 pub fn circle(cfg ContainerCfg) View {
 	unsafe { // avoid allocating struct
+		cfg.axis = .top_to_bottom
 		cfg.name = if cfg.name.is_blank() { 'circle' } else { cfg.name }
 	}
 	mut circle := container(cfg) as ContainerView
