@@ -36,6 +36,58 @@ if !result.is_ok() {
 }
 ```
 
+## Raster export
+
+When sokol/GPU is initialized (normal app runtime),
+`export_print_job` uses the raster pipeline: each page is
+rendered to an offscreen GPU target, read back as pixels,
+JPEG-encoded, and embedded as a PDF image XObject. This
+preserves full visual fidelity (gradients, rounded rects,
+SVG content). Header/footer text remains vector overlay.
+
+Falls back to the vector PDF path in test environments
+where sokol is not initialized.
+
+### Raster settings
+
+| Field | Default | Range | Effect |
+|---|---|---|---|
+| `raster_dpi` | 300 | 72-1200 | Pixels per inch |
+| `jpeg_quality` | 85 | 10-100 | JPEG compression |
+
+### Scale modes
+
+- `.actual_size` with `paginate: true` — content at 1:1,
+  split across pages.
+- `.fit_to_page` with `paginate: false` — entire source
+  scaled to fit one page.
+
+### Source dimensions
+
+`source_width` and `source_height` define the capture area.
+If omitted (zero), they default to the window size. When
+`source_height` exceeds the actual window height (OS may
+constrain), the raster path generates a temporary print
+layout with the full height so scroll containers do not
+clip content.
+
+```v ignore
+result := w.export_print_job(gui.PrintJob{
+    output_path:   '/tmp/report.pdf'
+    paper:         .a4
+    scale_mode:    .fit_to_page
+    source_width:  520
+    source_height: 1600
+    raster_dpi:    300
+    jpeg_quality:  90
+    header: gui.PrintHeaderFooterCfg{
+        enabled: true
+        left:    '{title}'
+        right:   '{page}/{pages}'
+    }
+})
+```
+
 ## Native print dialog
 
 `run_print_job` opens native print flow and returns `PrintRunResult`.

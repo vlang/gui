@@ -273,8 +273,7 @@ fn test_raster_pdf_header_footer_respects_margins() {
 			left:    'Test Footer'
 		}
 	}
-	pdf := pdf_build_raster_document(page_jpegs, 595, 842, 523, 734, 200, 280,
-		job, 2) or {
+	pdf := pdf_build_raster_document(page_jpegs, 595, 842, 523, 734, 200, 280, job, 2) or {
 		assert false, 'raster PDF build failed: ${err.msg()}'
 		return
 	}

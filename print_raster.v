@@ -284,8 +284,8 @@ fn pdf_render_document_raster(mut window Window, source_width f32, source_height
 	}
 
 	// Build PDF with embedded JPEG images.
-	return pdf_build_raster_document(page_jpegs, page_width, page_height, place_w,
-		place_h, raster_w, raster_h, job, page_count)
+	return pdf_build_raster_document(page_jpegs, page_width, page_height, place_w, place_h,
+		raster_w, raster_h, job, page_count)
 }
 
 fn pdf_build_raster_document(page_jpegs [][]u8, page_width f32, page_height f32, place_w f32, place_h f32, raster_w int, raster_h int, job PrintJob, page_count int) !string {
