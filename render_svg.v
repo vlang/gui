@@ -27,12 +27,12 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 
 	// Clip SVG content to shape bounds (viewBox overflow)
-	window.renderers << DrawClip{
+	emit_renderer(DrawClip{
 		x:      shape.x
 		y:      shape.y
 		width:  shape.width
 		height: shape.height
-	}
+	}, mut window)
 
 	for tpath in cached.triangles {
 		// Use shape color if set (monochrome override), otherwise path color
@@ -45,7 +45,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 				gx_vcols << vc.to_gx_color()
 			}
 		}
-		window.renderers << DrawSvg{
+		emit_renderer(DrawSvg{
 			triangles:     tpath.triangles
 			color:         c.to_gx_color()
 			vertex_colors: gx_vcols
@@ -54,7 +54,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 			scale:         cached.scale
 			is_clip_mask:  tpath.is_clip_mask
 			clip_group:    tpath.clip_group
-		}
+		}, mut window)
 	}
 
 	// Emit text elements
@@ -70,13 +70,13 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 
 	// Emit filtered groups
 	for i, fg in cached.filtered_groups {
-		window.renderers << DrawFilterBegin{
+		emit_renderer(DrawFilterBegin{
 			group_idx: i
 			x:         shape.x
 			y:         shape.y
 			scale:     cached.scale
 			cached:    cached
-		}
+		}, mut window)
 		// Emit DrawSvg for filtered group triangles
 		for tpath in fg.triangles {
 			has_vcols := tpath.vertex_colors.len > 0
@@ -88,7 +88,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 					gx_vcols << vc.to_gx_color()
 				}
 			}
-			window.renderers << DrawSvg{
+			emit_renderer(DrawSvg{
 				triangles:     tpath.triangles
 				color:         c.to_gx_color()
 				vertex_colors: gx_vcols
@@ -97,7 +97,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 				scale:         cached.scale
 				is_clip_mask:  tpath.is_clip_mask
 				clip_group:    tpath.clip_group
-			}
+			}, mut window)
 		}
 		// Emit text elements for filtered group
 		for svg_txt in fg.texts {
@@ -109,11 +109,11 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 			render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale,
 				fg.gradients, mut window)
 		}
-		window.renderers << DrawFilterEnd{}
+		emit_renderer(DrawFilterEnd{}, mut window)
 	}
 
 	// Restore parent clip
-	window.renderers << clip
+	emit_renderer(clip, mut window)
 }
 
 // render_svg_text converts an SvgText into a DrawText renderer.

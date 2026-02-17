@@ -28,7 +28,7 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 				width: clip.width
 			}
 		}
-		window.renderers << shape_clip
+		emit_renderer(shape_clip, mut window)
 	} else if layout.shape.clip {
 		sc := layout.shape.shape_clip
 		shape_clip = DrawClip{
@@ -37,7 +37,7 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 			width:  f32_max(0, sc.width - layout.shape.padding_width())
 			height: f32_max(0, sc.height - layout.shape.padding_height())
 		}
-		window.renderers << shape_clip
+		emit_renderer(shape_clip, mut window)
 	}
 
 	color := if layout.shape.color != color_transparent { layout.shape.color } else { bg_color }
@@ -46,7 +46,7 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 	}
 
 	if layout.shape.clip || layout.shape.over_draw {
-		window.renderers << clip
+		emit_renderer(clip, mut window)
 	}
 }
 
@@ -356,18 +356,18 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 				has_transform = false
 			}
 			if has_transform {
-				window.renderers << DrawLayoutTransformed{
+				emit_renderer(DrawLayoutTransformed{
 					layout:    clone_layout_for_draw(shape.tc.vglyph_layout)
 					x:         shape.x
 					y:         shape.y
 					transform: transform
-				}
+				}, mut window)
 			} else {
-				window.renderers << DrawLayout{
+				emit_renderer(DrawLayout{
 					layout: shape.tc.vglyph_layout
 					x:      shape.x
 					y:      shape.y
-				}
+				}, mut window)
 			}
 			// Draw inline math images at InlineObject positions
 			for item in shape.tc.vglyph_layout.items {

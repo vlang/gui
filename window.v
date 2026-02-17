@@ -19,29 +19,30 @@ pub type WindowCommand = fn (mut Window)
 
 pub struct Window {
 mut:
-	commands_mutex &sync.Mutex                 = sync.new_mutex() // Mutex for command queue
-	focused        bool                        = true // Window focus state
-	mutex          &sync.Mutex                 = sync.new_mutex() // Mutex for thread-safety
-	on_event       fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}           // Global event handler
-	state          voidptr                     = unsafe { nil }    // User state passed to the window
-	text_system    &vglyph.TextSystem          = unsafe { nil }    // Text rendering system
-	ui             &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
-	view_generator fn (&Window) View           = empty_view        // Function to generate the UI view
-	animations     map[string]Animation // Active animations (keyed by id)
-	commands       []WindowCommand      // Atomic command queue for UI state updates
-	debug_layout   bool                 // enable layout performance stats
-	dialog_cfg     DialogCfg            // Configuration for the active dialog (if any)
-	filter_state   SvgFilterState       // Offscreen state for SVG filters
-	ime            IME                  // Input Method Editor state (lazily initialized)
-	init_error     string               // error during initialization (e.g. text system fail)
-	layout         Layout               // The current calculated layout tree
-	layout_stats   LayoutStats          // populated when debug_layout is true
-	pip            Pipelines            // GPU rendering pipelines (lazily initialized)
-	refresh_window bool                 // Flag to trigger a layout update on the next frame
-	renderers      []Renderer           // Flat list of drawing instructions for the current frame
-	stats          Stats                // Rendering statistics
-	view_state     ViewState            // Manages state for widgets (scroll, selection, etc.)
-	window_size    gg.Size              // cached, gg.window_size() relatively slow
+	commands_mutex      &sync.Mutex                 = sync.new_mutex() // Mutex for command queue
+	focused             bool                        = true // Window focus state
+	mutex               &sync.Mutex                 = sync.new_mutex() // Mutex for thread-safety
+	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}           // Global event handler
+	state               voidptr                     = unsafe { nil }    // User state passed to the window
+	text_system         &vglyph.TextSystem          = unsafe { nil }    // Text rendering system
+	ui                  &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
+	view_generator      fn (&Window) View           = empty_view        // Function to generate the UI view
+	animations          map[string]Animation // Active animations (keyed by id)
+	commands            []WindowCommand      // Atomic command queue for UI state updates
+	debug_layout        bool                 // enable layout performance stats
+	dialog_cfg          DialogCfg            // Configuration for the active dialog (if any)
+	filter_state        SvgFilterState       // Offscreen state for SVG filters
+	ime                 IME                  // Input Method Editor state (lazily initialized)
+	init_error          string               // error during initialization (e.g. text system fail)
+	layout              Layout               // The current calculated layout tree
+	layout_stats        LayoutStats          // populated when debug_layout is true
+	pip                 Pipelines            // GPU rendering pipelines (lazily initialized)
+	refresh_window      bool                 // Flag to trigger a layout update on the next frame
+	renderers           []Renderer           // Flat list of drawing instructions for the current frame
+	render_guard_warned map[string]bool      // Renderer kinds warned by render guard (prod only)
+	stats               Stats                // Rendering statistics
+	view_state          ViewState            // Manages state for widgets (scroll, selection, etc.)
+	window_size         gg.Size              // cached, gg.window_size() relatively slow
 }
 
 // Window is the main application window. `state` holds app state.

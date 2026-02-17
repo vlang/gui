@@ -92,13 +92,13 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 					layout_to_draw = clone_layout_for_draw(&transformed_layout)
 				}
 			}
-			window.renderers << DrawLayoutTransformed{
+			emit_renderer(DrawLayoutTransformed{
 				layout:    layout_to_draw
 				x:         shape.x + shape.padding_left()
 				y:         shape.y + shape.padding_top()
 				transform: transform
 				gradient:  shape.tc.text_style.gradient
-			}
+			}, mut window)
 			return
 		}
 	}
@@ -117,12 +117,12 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		// Gradient text: emit single DrawLayout for full layout
 		if has_gradient && (color != color_transparent || has_stroke) {
 			layout_to_draw := clone_layout_for_draw(shape.tc.vglyph_layout)
-			window.renderers << DrawLayout{
+			emit_renderer(DrawLayout{
 				layout:   layout_to_draw
 				x:        shape.x + shape.padding_left()
 				y:        shape.y + shape.padding_top()
 				gradient: shape.tc.text_style.gradient
-			}
+			}, mut window)
 		}
 
 		for line in shape.tc.vglyph_layout.lines {

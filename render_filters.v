@@ -4,6 +4,41 @@ import sokol.gfx
 import sokol.sgl
 import math
 
+struct FilterBracketCollectResult {
+	content   []Renderer
+	found_end bool
+	next_idx  int
+}
+
+fn collect_filter_bracket_content(renderers []Renderer, start_idx int) FilterBracketCollectResult {
+	if start_idx >= renderers.len {
+		return FilterBracketCollectResult{
+			content:   []Renderer{}
+			found_end: false
+			next_idx:  start_idx
+		}
+	}
+	mut idx := start_idx
+	mut content := []Renderer{cap: renderers.len - start_idx}
+	for idx < renderers.len {
+		current := renderers[idx]
+		if current is DrawFilterEnd {
+			return FilterBracketCollectResult{
+				content:   content
+				found_end: true
+				next_idx:  idx + 1
+			}
+		}
+		content << current
+		idx++
+	}
+	return FilterBracketCollectResult{
+		content:   content
+		found_end: false
+		next_idx:  idx
+	}
+}
+
 // process_svg_filters scans renderers for DrawFilterBegin..End brackets,
 // renders the content to offscreen textures, applies Gaussian blur,
 // and replaces the bracket with DrawFilterComposite + original content.
@@ -25,17 +60,16 @@ fn process_svg_filters(mut window Window) {
 			filter := fg.filter
 
 			// Collect content renderers between Begin and End
-			i++
-			mut content := []Renderer{cap: 32}
-			for i < renderers.len {
-				cr := renderers[i]
-				if cr is DrawFilterEnd {
-					i++
-					break
+			collected := collect_filter_bracket_content(renderers, i + 1)
+			i = collected.next_idx
+			if !collected.found_end {
+				$if !prod {
+					assert false, 'DrawFilterBegin without DrawFilterEnd'
 				}
-				content << cr
-				i++
+				new_renderers << collected.content
+				continue
 			}
+			content := collected.content
 
 			// Compute screen-space bbox with blur padding
 			scale := begin.scale

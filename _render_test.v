@@ -444,3 +444,196 @@ fn test_render_rtf_transform_with_inline_object_falls_back_to_draw_layout() {
 		}
 	}
 }
+
+fn test_renderer_guard_valid_draw_rect() {
+	assert renderer_valid_for_draw(Renderer(DrawRect{
+		x:     1
+		y:     2
+		w:     20
+		h:     10
+		color: gg.Color{255, 255, 255, 255}
+		style: .fill
+	}))
+}
+
+fn test_renderer_guard_draw_gradient_allows_zero_size_noop() {
+	gradient := &Gradient{
+		stops: [GradientStop{
+			color: black
+			pos:   0.0
+		}]
+	}
+	assert renderer_valid_for_draw(Renderer(DrawGradient{
+		x:        21
+		y:        66
+		w:        0
+		h:        0
+		radius:   5.5
+		gradient: gradient
+	}))
+}
+
+fn test_renderer_guard_draw_stroke_rect_allows_zero_size_noop() {
+	assert renderer_valid_for_draw(Renderer(DrawStrokeRect{
+		x:         106
+		y:         29
+		w:         241.5
+		h:         0
+		radius:    5.5
+		color:     gg.Color{255, 255, 255, 255}
+		thickness: 1.5
+	}))
+}
+
+fn test_renderer_guard_draw_rect_allows_zero_size_noop() {
+	assert renderer_valid_for_draw(Renderer(DrawRect{
+		x:      244.75
+		y:      312.1875
+		w:      0
+		h:      29.09375
+		radius: 5.5
+		color:  gg.Color{255, 255, 255, 255}
+		style:  .fill
+	}))
+}
+
+fn test_renderer_guard_invalid_draw_svg_odd_triangle_count() {
+	assert !renderer_valid_for_draw(Renderer(DrawSvg{
+		triangles: [f32(0), 0, 10, 0, 0, 10, 5]
+		color:     gg.Color{255, 0, 0, 255}
+		x:         0
+		y:         0
+		scale:     1
+	}))
+}
+
+fn test_renderer_guard_invalid_draw_svg_vertex_colors_count_mismatch() {
+	assert !renderer_valid_for_draw(Renderer(DrawSvg{
+		triangles:     [f32(0), 0, 10, 0, 0, 10]
+		color:         gg.Color{255, 255, 255, 255}
+		vertex_colors: [gg.Color{255, 0, 0, 255}, gg.Color{0, 255, 0, 255},
+			gg.Color{0, 0, 255, 255}, gg.Color{255, 255, 0, 255}]
+		x:             0
+		y:             0
+		scale:         1
+	}))
+}
+
+fn test_renderer_guard_invalid_draw_filter_composite_non_positive_size_or_layers() {
+	assert !renderer_valid_for_draw(Renderer(DrawFilterComposite{
+		x:      0
+		y:      0
+		width:  0
+		height: -1
+		layers: 0
+	}))
+}
+
+fn test_renderer_guard_invalid_draw_layout_nil_layout() {
+	assert !renderer_valid_for_draw(Renderer(DrawLayout{
+		layout: unsafe { nil }
+		x:      0
+		y:      0
+	}))
+}
+
+fn test_renderer_guard_invalid_draw_clip_negative_size() {
+	assert !renderer_valid_for_draw(Renderer(make_clip(10, 20, -1, 5)))
+}
+
+fn test_renderer_guard_draw_text_requires_non_empty_text() {
+	assert renderer_valid_for_draw(Renderer(DrawText{
+		x:    1
+		y:    2
+		text: 'ok'
+		cfg:  TextStyle{
+			color: black
+			size:  16
+		}.to_vglyph_cfg()
+	}))
+	assert !renderer_valid_for_draw(Renderer(DrawText{
+		x:    1
+		y:    2
+		text: ''
+		cfg:  TextStyle{
+			color: black
+			size:  16
+		}.to_vglyph_cfg()
+	}))
+}
+
+fn test_renderer_guard_draw_layout_placed_requires_non_nil_layout() {
+	assert !renderer_valid_for_draw(Renderer(DrawLayoutPlaced{
+		layout:     unsafe { nil }
+		placements: []
+	}))
+	assert renderer_valid_for_draw(Renderer(DrawLayoutPlaced{
+		layout:     &vglyph.Layout{}
+		placements: []
+	}))
+}
+
+fn test_collect_filter_bracket_content_matched_begin_end() {
+	renderers := [
+		Renderer(DrawNone{}),
+		Renderer(DrawSvg{
+			triangles: [f32(0), 0, 10, 0, 0, 10]
+			color:     gg.Color{255, 255, 255, 255}
+			x:         0
+			y:         0
+			scale:     1
+		}),
+		Renderer(DrawFilterEnd{}),
+		Renderer(DrawNone{}),
+	]
+	collected := collect_filter_bracket_content(renderers, 0)
+
+	assert collected.found_end
+	assert collected.content.len == 2
+	assert collected.next_idx == 3
+	match collected.content[1] {
+		DrawSvg {}
+		else {
+			assert false, 'expected DrawSvg in collected content'
+		}
+	}
+}
+
+fn test_collect_filter_bracket_content_unmatched_begin_end() {
+	renderers := [
+		Renderer(DrawNone{}),
+		Renderer(DrawNone{}),
+	]
+	collected := collect_filter_bracket_content(renderers, 0)
+
+	assert !collected.found_end
+	assert collected.content.len == 2
+	assert collected.next_idx == 2
+}
+
+fn test_renderer_guard_valid_draw_clip_zero_size() {
+	assert renderer_valid_for_draw(Renderer(make_clip(10, 20, 0, 0)))
+}
+
+fn test_invalid_clip_is_skipped_and_next_draw_kept() {
+	invalid_clip := Renderer(make_clip(10, 20, -5, 10))
+	valid_rect := Renderer(DrawRect{
+		x:     1
+		y:     2
+		w:     20
+		h:     10
+		color: gg.Color{255, 255, 255, 255}
+		style: .fill
+	})
+
+	mut w := make_window()
+	assert !emit_renderer_if_valid(invalid_clip, mut w)
+	assert emit_renderer_if_valid(valid_rect, mut w)
+	assert w.renderers.len == 1
+	match w.renderers[0] {
+		DrawRect {}
+		else {
+			assert false, 'expected DrawRect after invalid clip skip'
+		}
+	}
+}

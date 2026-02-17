@@ -13,6 +13,10 @@ fn renderers_draw(mut window Window) {
 	mut i := 0
 	for i < renderers.len {
 		renderer := renderers[i]
+		if !guard_renderer_or_skip(renderer, mut window) {
+			i++
+			continue
+		}
 		// Batch consecutive DrawSvg with same color, position, scale
 		if renderer is DrawSvg {
 			// Handle stencil clip groups
@@ -32,10 +36,17 @@ fn renderers_draw(mut window Window) {
 			x := renderer.x
 			y := renderer.y
 			scale := renderer.scale
+			batch << renderer.triangles
+			i++
 			// Collect consecutive matching DrawSvg (non-clipped, non-gradient)
 			for i < renderers.len {
-				if renderers[i] is DrawSvg {
-					svg := renderers[i] as DrawSvg
+				candidate := renderers[i]
+				if !guard_renderer_or_skip(candidate, mut window) {
+					i++
+					continue
+				}
+				if candidate is DrawSvg {
+					svg := candidate
 					if svg.clip_group == 0 && svg.vertex_colors.len == 0 && svg.color == color
 						&& svg.x == x && svg.y == y && svg.scale == scale {
 						batch << svg.triangles
@@ -59,6 +70,13 @@ fn renderers_draw(mut window Window) {
 // draws mask geometry to stencil, then draws content with
 // stencil test.
 fn draw_clipped_svg_group(renderers []Renderer, mut idx &int, mut window Window) {
+	if *idx >= renderers.len {
+		return
+	}
+	if !guard_renderer_or_skip(renderers[*idx], mut window) {
+		(*idx)++
+		return
+	}
 	first := renderers[*idx] as DrawSvg
 	group := first.clip_group
 
@@ -67,8 +85,13 @@ fn draw_clipped_svg_group(renderers []Renderer, mut idx &int, mut window Window)
 
 	// Collect all renderers in this clip group
 	for *idx < renderers.len {
-		if renderers[*idx] is DrawSvg {
-			svg := renderers[*idx] as DrawSvg
+		candidate := renderers[*idx]
+		if !guard_renderer_or_skip(candidate, mut window) {
+			(*idx)++
+			continue
+		}
+		if candidate is DrawSvg {
+			svg := candidate
 			if svg.clip_group == group {
 				if svg.is_clip_mask {
 					masks << svg
@@ -140,6 +163,9 @@ fn draw_triangles_raw(triangles []f32, x f32, y f32, tri_scale f32, mut window W
 
 // renderer_draw draws a single renderer
 fn renderer_draw(renderer Renderer, mut window Window) {
+	if !guard_renderer_or_skip(renderer, mut window) {
+		return
+	}
 	mut ctx := window.ui
 	match renderer {
 		DrawRect {
