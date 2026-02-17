@@ -112,7 +112,7 @@ pub:
 fn C.gui_native_print_pdf_dialog(voidptr, &char, &char, &char, f64, f64, f64, f64, f64, f64, int, int, &char, int, int, int) C.GuiNativePrintResult
 fn C.gui_native_print_result_free(C.GuiNativePrintResult)
 
-fn C.gui_readback_metal_texture(mtl_texture voidptr, command_queue voidptr, width int, height int) &u8
+fn C.gui_readback_metal_texture(mtl_texture voidptr, mtl_device voidptr, width int, height int) &u8
 
 fn bridge_dialog_unsupported_result() BridgeDialogResult {
 	return BridgeDialogResult{
@@ -262,11 +262,11 @@ pub fn print_pdf_dialog(cfg BridgePrintCfg) BridgePrintResult {
 
 // readback_metal_texture reads BGRA pixels from a Metal
 // render-target texture via blit to shared staging texture.
-// command_queue must be the same queue used for rendering.
+// mtl_device is used to create a transient command queue.
 // Caller must gfx.commit() before calling. macOS only.
-pub fn readback_metal_texture(mtl_texture voidptr, command_queue voidptr, width int, height int) ![]u8 {
+pub fn readback_metal_texture(mtl_texture voidptr, mtl_device voidptr, width int, height int) ![]u8 {
 	$if macos {
-		ptr := C.gui_readback_metal_texture(mtl_texture, command_queue, width, height)
+		ptr := C.gui_readback_metal_texture(mtl_texture, mtl_device, width, height)
 		if ptr == unsafe { nil } {
 			return error('Metal texture readback failed')
 		}

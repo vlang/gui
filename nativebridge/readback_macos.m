@@ -4,18 +4,20 @@
 
 uint8_t* gui_readback_metal_texture(
     void* mtl_texture,
-    void* command_queue,
+    void* mtl_device,
     int width,
     int height
 ) {
-    if (mtl_texture == NULL || command_queue == NULL
+    if (mtl_texture == NULL || mtl_device == NULL
         || width <= 0 || height <= 0) {
         return NULL;
     }
     id<MTLTexture> src =
         (__bridge id<MTLTexture>)mtl_texture;
+    id<MTLDevice> device =
+        (__bridge id<MTLDevice>)mtl_device;
     id<MTLCommandQueue> queue =
-        (__bridge id<MTLCommandQueue>)command_queue;
+        [device newCommandQueue];
 
     // Create a shared-storage staging texture that the CPU
     // can read reliably (private render targets may use

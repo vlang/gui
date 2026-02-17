@@ -15,7 +15,7 @@ struct C.sg_mtl_image_info {
 }
 
 fn C.sg_mtl_query_image_info(img gfx.Image) C.sg_mtl_image_info
-fn C.sg_mtl_command_queue() voidptr
+fn C.sg_mtl_device() voidptr
 
 struct PrintPageRaster {
 	tex   gfx.Image
@@ -123,8 +123,8 @@ fn render_page_to_pixels(mut window Window, raster PrintPageRaster, source_width
 	$if macos {
 		info := C.sg_mtl_query_image_info(raster.tex)
 		mtl_tex := info.tex[info.active_slot]
-		mtl_queue := C.sg_mtl_command_queue()
-		return nativebridge.readback_metal_texture(mtl_tex, mtl_queue, raster.w, raster.h)
+		mtl_dev := C.sg_mtl_device()
+		return nativebridge.readback_metal_texture(mtl_tex, mtl_dev, raster.w, raster.h)
 	} $else {
 		return error('raster PDF export not yet supported on this platform')
 	}

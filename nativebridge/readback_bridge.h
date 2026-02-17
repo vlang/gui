@@ -10,12 +10,11 @@ extern "C" {
 // Read BGRA pixels from a Metal render-target texture.
 // Uses a blit to a shared staging texture for reliable
 // readback from private-storage render targets.
-// command_queue must be the same queue the render was
-// submitted on (for ordering).
+// mtl_device is used to create a transient command queue.
 // Caller must free returned buffer. Returns NULL on failure.
 uint8_t* gui_readback_metal_texture(
     void* mtl_texture,
-    void* command_queue,
+    void* mtl_device,
     int width,
     int height
 );
