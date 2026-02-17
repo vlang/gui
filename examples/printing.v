@@ -2,7 +2,7 @@ import gui
 import os
 
 const print_source_width = f32(520.0)
-const print_source_height = f32(1120.0)
+const print_source_height = f32(1600.0)
 const print_output_name = 'v_gui_printing_demo.pdf'
 
 const svg_flow = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 90"><rect x="6" y="6" width="188" height="78" rx="14" fill="#0f1a2d"/><path d="M24 58 L62 24 L100 58 L138 26 L176 58" fill="none" stroke="#7ce8ff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="24" r="7" fill="#7ce8ff"/><circle cx="100" cy="58" r="7" fill="#78f0a4"/><circle cx="138" cy="26" r="7" fill="#ffc86b"/></svg>'
@@ -81,8 +81,8 @@ fn demo_print_job_with_output(output_path string) gui.PrintJob {
 		source:        gui.PrintJobSource{
 			kind: .current_view
 		}
-		paginate:      true
-		scale_mode:    .actual_size
+		paginate:      false
+		scale_mode:    .fit_to_page
 		header:        gui.PrintHeaderFooterCfg{
 			enabled: true
 			left:    '{title}'
@@ -120,12 +120,16 @@ fn main_view(window &gui.Window) gui.View {
 	app := window.state[PrintingApp]()
 	last_result := if app.last_result.len > 0 { app.last_result } else { 'No print action yet.' }
 	return gui.column(
-		width:   w
-		height:  h
-		sizing:  gui.fixed_fixed
-		padding: gui.padding_large
-		spacing: 16
-		content: [
+		width:           w
+		height:          h
+		sizing:          gui.fixed_fixed
+		padding:         gui.padding_large
+		spacing:         16
+		id_scroll:       42
+		scrollbar_cfg_y: &gui.ScrollbarCfg{
+			overflow: .auto
+		}
+		content:         [
 			gui.text(
 				text:       'Printing Demo'
 				text_style: gui.theme().b1

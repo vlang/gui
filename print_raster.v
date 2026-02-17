@@ -1,5 +1,6 @@
 module gui
 
+import gg
 import math
 import nativebridge
 import sokol.gfx
@@ -183,12 +184,6 @@ fn pdf_render_document_raster(mut window Window, source_width f32, source_height
 		return error('invalid page/margin configuration')
 	}
 
-	// Raster dimensions from DPI (PDF points = 1/72 inch).
-	dpi := if job.raster_dpi > 0 { job.raster_dpi } else { 300 }
-	dpi_scale := f32(dpi) / 72.0
-	raster_w := int(math.ceil(content_width * dpi_scale))
-	raster_h := int(math.ceil(content_height * dpi_scale))
-
 	// Source-space page height via scale.
 	mut scale := f32(1.0)
 	if job.scale_mode == .fit_to_page {
@@ -206,6 +201,60 @@ fn pdf_render_document_raster(mut window Window, source_width f32, source_height
 		page_count = int(math.ceil(source_height / page_source_height))
 		if page_count < 1 {
 			page_count = 1
+		}
+	}
+
+	// Raster dimensions from source area at DPI resolution.
+	// Size from source_width × page_source_height so the
+	// raster captures exactly the source content per page.
+	// print_scale = raster_w / source_width stays consistent
+	// for both axes when raster matches source aspect ratio.
+	dpi := if job.raster_dpi > 0 { job.raster_dpi } else { 300 }
+	dpi_scale := f32(dpi) / 72.0
+	raster_w := int(math.ceil(source_width * dpi_scale))
+	raster_h := int(math.ceil(page_source_height * dpi_scale))
+
+	// PDF image placement dimensions. For fit_to_page the
+	// image is scaled to fit within the content area. For
+	// actual_size the image fills the content area.
+	mut place_w := content_width
+	mut place_h := content_height
+	if job.scale_mode == .fit_to_page {
+		place_w = source_width * scale
+		place_h = page_source_height * scale
+	}
+
+	// Generate print-specific renderers covering the full
+	// source area. The OS may constrain the actual window
+	// smaller than source_height, causing scroll containers
+	// to clip content beyond the visible region. Build a
+	// separate layout for print without modifying the
+	// window's active layout (which event handlers still
+	// reference).
+	saved_size := window.window_size
+	saved_renderers := window.renderers
+	print_height := int(math.ceil(source_height))
+	mut print_view := View(ContainerView{})
+	mut print_layout := Layout{}
+	if window.window_size.height < print_height {
+		window.window_size = gg.Size{
+			width:  window.window_size.width
+			height: print_height
+		}
+		print_view = window.view_generator(window)
+		print_layout = window.compose_layout(mut print_view)
+		clip_rect := window.window_rect()
+		bg := window.color_background()
+		window.renderers = []Renderer{}
+		render_layout(mut print_layout, bg, clip_rect, mut window)
+	}
+	defer {
+		if window.window_size.height != saved_size.height {
+			unsafe { window.renderers.free() }
+			window.renderers = saved_renderers
+			window.window_size = saved_size
+			layout_clear(mut print_layout)
+			view_clear(mut print_view)
 		}
 	}
 
@@ -235,11 +284,11 @@ fn pdf_render_document_raster(mut window Window, source_width f32, source_height
 	}
 
 	// Build PDF with embedded JPEG images.
-	return pdf_build_raster_document(page_jpegs, page_width, page_height, content_width,
-		content_height, raster_w, raster_h, job, page_count)
+	return pdf_build_raster_document(page_jpegs, page_width, page_height, place_w,
+		place_h, raster_w, raster_h, job, page_count)
 }
 
-fn pdf_build_raster_document(page_jpegs [][]u8, page_width f32, page_height f32, content_width f32, content_height f32, raster_w int, raster_h int, job PrintJob, page_count int) !string {
+fn pdf_build_raster_document(page_jpegs [][]u8, page_width f32, page_height f32, place_w f32, place_h f32, raster_w int, raster_h int, job PrintJob, page_count int) !string {
 	_ := print_header_footer_reserved_height(job.header)
 	footer_h := print_header_footer_reserved_height(job.footer)
 
@@ -269,9 +318,9 @@ fn pdf_build_raster_document(page_jpegs [][]u8, page_width f32, page_height f32,
 		img_x := job.margins.left
 		img_y := job.margins.bottom + footer_h
 		mut stream := strings.new_builder(256)
-		// Draw JPEG image scaled to content area
+		// Draw JPEG image at placement dimensions
 		stream.writeln('q')
-		stream.writeln('${pdf_num(content_width)} 0 0 ${pdf_num(content_height)} ${pdf_num(img_x)} ${pdf_num(img_y)} cm')
+		stream.writeln('${pdf_num(place_w)} 0 0 ${pdf_num(place_h)} ${pdf_num(img_x)} ${pdf_num(img_y)} cm')
 		stream.writeln('/Img${idx} Do')
 		stream.writeln('Q')
 		// Vector header/footer overlay
