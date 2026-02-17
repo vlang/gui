@@ -1089,27 +1089,31 @@ fn parse_length(s string) f32 {
 
 // ElementStyle holds common style properties extracted from an SVG element.
 struct ElementStyle {
-	transform      [6]f32
-	stroke_color   Color
-	stroke_width   f32
-	stroke_cap     StrokeCap
-	stroke_join    StrokeJoin
-	opacity        f32
-	fill_opacity   f32
-	stroke_opacity f32
+	transform          [6]f32
+	stroke_color       Color
+	stroke_width       f32
+	stroke_cap         StrokeCap
+	stroke_join        StrokeJoin
+	opacity            f32
+	fill_opacity       f32
+	stroke_opacity     f32
+	stroke_gradient_id string
+	stroke_dasharray   []f32
 }
 
 // parse_element_style extracts common style properties from an element.
 fn parse_element_style(elem string) ElementStyle {
 	return ElementStyle{
-		transform:      get_transform(elem)
-		stroke_color:   get_stroke_color(elem)
-		stroke_width:   get_stroke_width(elem)
-		stroke_cap:     get_stroke_linecap(elem)
-		stroke_join:    get_stroke_linejoin(elem)
-		opacity:        parse_opacity_attr(elem, 'opacity', 1.0)
-		fill_opacity:   parse_opacity_attr(elem, 'fill-opacity', 1.0)
-		stroke_opacity: parse_opacity_attr(elem, 'stroke-opacity', 1.0)
+		transform:          get_transform(elem)
+		stroke_color:       get_stroke_color(elem)
+		stroke_width:       get_stroke_width(elem)
+		stroke_cap:         get_stroke_linecap(elem)
+		stroke_join:        get_stroke_linejoin(elem)
+		opacity:            parse_opacity_attr(elem, 'opacity', 1.0)
+		fill_opacity:       parse_opacity_attr(elem, 'fill-opacity', 1.0)
+		stroke_opacity:     parse_opacity_attr(elem, 'stroke-opacity', 1.0)
+		stroke_gradient_id: get_stroke_gradient_id(elem)
+		stroke_dasharray:   get_stroke_dasharray(elem)
 	}
 }
 
@@ -1120,15 +1124,17 @@ fn parse_path_element(elem string) ?VectorPath {
 	s := parse_element_style(elem)
 
 	mut path := VectorPath{
-		fill_color:     parse_svg_color(fill)
-		transform:      s.transform
-		stroke_color:   s.stroke_color
-		stroke_width:   s.stroke_width
-		stroke_cap:     s.stroke_cap
-		stroke_join:    s.stroke_join
-		opacity:        s.opacity
-		fill_opacity:   s.fill_opacity
-		stroke_opacity: s.stroke_opacity
+		fill_color:         parse_svg_color(fill)
+		transform:          s.transform
+		stroke_color:       s.stroke_color
+		stroke_width:       s.stroke_width
+		stroke_cap:         s.stroke_cap
+		stroke_join:        s.stroke_join
+		opacity:            s.opacity
+		fill_opacity:       s.fill_opacity
+		stroke_opacity:     s.stroke_opacity
+		stroke_gradient_id: s.stroke_gradient_id
+		stroke_dasharray:   s.stroke_dasharray
 	}
 	if gid := parse_fill_url(fill) {
 		path.fill_gradient_id = gid
@@ -1190,16 +1196,18 @@ fn parse_rect_element(elem string) ?VectorPath {
 	}
 
 	mut vp := VectorPath{
-		segments:       segments
-		fill_color:     parse_svg_color(fill)
-		transform:      s.transform
-		stroke_color:   s.stroke_color
-		stroke_width:   s.stroke_width
-		stroke_cap:     s.stroke_cap
-		stroke_join:    s.stroke_join
-		opacity:        s.opacity
-		fill_opacity:   s.fill_opacity
-		stroke_opacity: s.stroke_opacity
+		segments:           segments
+		fill_color:         parse_svg_color(fill)
+		transform:          s.transform
+		stroke_color:       s.stroke_color
+		stroke_width:       s.stroke_width
+		stroke_cap:         s.stroke_cap
+		stroke_join:        s.stroke_join
+		opacity:            s.opacity
+		fill_opacity:       s.fill_opacity
+		stroke_opacity:     s.stroke_opacity
+		stroke_gradient_id: s.stroke_gradient_id
+		stroke_dasharray:   s.stroke_dasharray
 	}
 	if gid := parse_fill_url(fill) {
 		vp.fill_gradient_id = gid
@@ -1244,16 +1252,18 @@ fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string, s E
 	segments << PathSegment{.close, []}
 
 	mut vp := VectorPath{
-		segments:       segments
-		fill_color:     parse_svg_color(fill)
-		transform:      s.transform
-		stroke_color:   s.stroke_color
-		stroke_width:   s.stroke_width
-		stroke_cap:     s.stroke_cap
-		stroke_join:    s.stroke_join
-		opacity:        s.opacity
-		fill_opacity:   s.fill_opacity
-		stroke_opacity: s.stroke_opacity
+		segments:           segments
+		fill_color:         parse_svg_color(fill)
+		transform:          s.transform
+		stroke_color:       s.stroke_color
+		stroke_width:       s.stroke_width
+		stroke_cap:         s.stroke_cap
+		stroke_join:        s.stroke_join
+		opacity:            s.opacity
+		fill_opacity:       s.fill_opacity
+		stroke_opacity:     s.stroke_opacity
+		stroke_gradient_id: s.stroke_gradient_id
+		stroke_dasharray:   s.stroke_dasharray
 	}
 	if gid := parse_fill_url(fill) {
 		vp.fill_gradient_id = gid
@@ -1283,16 +1293,18 @@ fn parse_polygon_element(elem string, close bool) ?VectorPath {
 	}
 
 	mut vp := VectorPath{
-		segments:       segments
-		fill_color:     parse_svg_color(fill)
-		transform:      s.transform
-		stroke_color:   s.stroke_color
-		stroke_width:   s.stroke_width
-		stroke_cap:     s.stroke_cap
-		stroke_join:    s.stroke_join
-		opacity:        s.opacity
-		fill_opacity:   s.fill_opacity
-		stroke_opacity: s.stroke_opacity
+		segments:           segments
+		fill_color:         parse_svg_color(fill)
+		transform:          s.transform
+		stroke_color:       s.stroke_color
+		stroke_width:       s.stroke_width
+		stroke_cap:         s.stroke_cap
+		stroke_join:        s.stroke_join
+		opacity:            s.opacity
+		fill_opacity:       s.fill_opacity
+		stroke_opacity:     s.stroke_opacity
+		stroke_gradient_id: s.stroke_gradient_id
+		stroke_dasharray:   s.stroke_dasharray
 	}
 	if gid := parse_fill_url(fill) {
 		vp.fill_gradient_id = gid
@@ -1314,19 +1326,21 @@ fn parse_line_element(elem string) ?VectorPath {
 
 	s := parse_element_style(elem)
 	return VectorPath{
-		segments:       [
+		segments:           [
 			PathSegment{.move_to, [x1, y1]},
 			PathSegment{.line_to, [x2, y2]},
 		]
-		fill_color:     color_transparent
-		transform:      s.transform
-		stroke_color:   s.stroke_color
-		stroke_width:   s.stroke_width
-		stroke_cap:     s.stroke_cap
-		stroke_join:    s.stroke_join
-		opacity:        s.opacity
-		fill_opacity:   s.fill_opacity
-		stroke_opacity: s.stroke_opacity
+		fill_color:         color_transparent
+		transform:          s.transform
+		stroke_color:       s.stroke_color
+		stroke_width:       s.stroke_width
+		stroke_cap:         s.stroke_cap
+		stroke_join:        s.stroke_join
+		opacity:            s.opacity
+		fill_opacity:       s.fill_opacity
+		stroke_opacity:     s.stroke_opacity
+		stroke_gradient_id: s.stroke_gradient_id
+		stroke_dasharray:   s.stroke_dasharray
 	}
 }
 
@@ -1600,6 +1614,36 @@ fn get_transform(elem string) [6]f32 {
 fn get_stroke_color(elem string) Color {
 	stroke := find_attr_or_style(elem, 'stroke') or { return color_inherit }
 	return parse_svg_color(stroke)
+}
+
+// get_stroke_gradient_id extracts gradient ID from stroke="url(#id)".
+fn get_stroke_gradient_id(elem string) string {
+	stroke := find_attr_or_style(elem, 'stroke') or { return '' }
+	return parse_fill_url(stroke) or { '' }
+}
+
+// get_stroke_dasharray parses stroke-dasharray attribute into
+// a list of dash/gap lengths. Returns empty on 'none' or invalid.
+fn get_stroke_dasharray(elem string) []f32 {
+	val := find_attr_or_style(elem, 'stroke-dasharray') or { return []f32{} }
+	if val.trim_space() == 'none' {
+		return []f32{}
+	}
+	// Replace commas with spaces, then split on whitespace
+	parts := val.replace(',', ' ').split(' ').filter(it.len > 0)
+	mut result := []f32{cap: parts.len}
+	for p in parts {
+		n := p.trim_space().f32()
+		if n < 0 {
+			return []f32{}
+		}
+		result << n
+	}
+	// SVG spec: odd-length patterns are repeated to make even
+	if result.len > 0 && result.len % 2 != 0 {
+		result << result
+	}
+	return result
 }
 
 // get_stroke_width extracts stroke width from element attribute.
@@ -2121,17 +2165,24 @@ fn parse_defs_gradients(content string) map[string]SvgGradientDef {
 			continue
 		}
 
-		x1 := (find_attr(opening_tag, 'x1') or { '0' }).f32()
-		y1 := (find_attr(opening_tag, 'y1') or { '0' }).f32()
-		x2 := (find_attr(opening_tag, 'x2') or { '0' }).f32()
-		y2 := (find_attr(opening_tag, 'y2') or { '0' }).f32()
+		units := find_attr(opening_tag, 'gradientUnits') or { 'objectBoundingBox' }
+		is_obb := units != 'userSpaceOnUse'
+		x1_str := find_attr(opening_tag, 'x1') or { '0' }
+		y1_str := find_attr(opening_tag, 'y1') or { '0' }
+		x2_str := find_attr(opening_tag, 'x2') or { '0' }
+		y2_str := find_attr(opening_tag, 'y2') or { '0' }
+		x1 := parse_gradient_coord(x1_str, is_obb)
+		y1 := parse_gradient_coord(y1_str, is_obb)
+		x2 := parse_gradient_coord(x2_str, is_obb)
+		y2 := parse_gradient_coord(y2_str, is_obb)
 
 		if is_self_closing {
 			gradients[grad_id] = SvgGradientDef{
-				x1: x1
-				y1: y1
-				x2: x2
-				y2: y2
+				x1:                  x1
+				y1:                  y1
+				x2:                  x2
+				y2:                  y2
+				object_bounding_box: is_obb
 			}
 			pos = tag_end + 1
 			continue
@@ -2150,11 +2201,12 @@ fn parse_defs_gradients(content string) map[string]SvgGradientDef {
 		stops := parse_gradient_stops(lg_content)
 
 		gradients[grad_id] = SvgGradientDef{
-			x1:    x1
-			y1:    y1
-			x2:    x2
-			y2:    y2
-			stops: stops
+			x1:                  x1
+			y1:                  y1
+			x2:                  x2
+			y2:                  y2
+			stops:               stops
+			object_bounding_box: is_obb
 		}
 
 		close_end := find_index(content, '>', lg_end) or { break }
@@ -2162,6 +2214,17 @@ fn parse_defs_gradients(content string) map[string]SvgGradientDef {
 	}
 
 	return gradients
+}
+
+// parse_gradient_coord parses a gradient coordinate value.
+// For objectBoundingBox gradients, percentages are converted to
+// fractions (e.g. "100%" -> 1.0). Plain numbers stay as-is.
+fn parse_gradient_coord(s string, is_obb bool) f32 {
+	trimmed := s.trim_space()
+	if is_obb && trimmed.ends_with('%') {
+		return trimmed[..trimmed.len - 1].f32() / 100.0
+	}
+	return trimmed.f32()
 }
 
 // parse_gradient_stops extracts <stop> elements from gradient content.

@@ -54,11 +54,12 @@ pub:
 // SvgGradientDef holds a parsed <linearGradient> definition.
 pub struct SvgGradientDef {
 pub:
-	x1    f32
-	y1    f32
-	x2    f32
-	y2    f32
-	stops []SvgGradientStop
+	x1                  f32
+	y1                  f32
+	x2                  f32
+	y2                  f32
+	stops               []SvgGradientStop
+	object_bounding_box bool // true = gradientUnits="objectBoundingBox"
 }
 
 // SvgText holds a parsed <text> element for deferred rendering.
@@ -128,19 +129,21 @@ pub:
 // VectorPath represents a single filled path with color.
 pub struct VectorPath {
 pub mut:
-	segments         []PathSegment
-	fill_color       Color      = color_inherit
-	transform        [6]f32     = [f32(1), 0, 0, 1, 0, 0]! // identity: [a,b,c,d,e,f]
-	stroke_color     Color      = color_inherit
-	stroke_width     f32        = -1.0 // negative = inherit from parent
-	stroke_cap       StrokeCap  = .inherit
-	stroke_join      StrokeJoin = .inherit
-	clip_path_id     string // references clip_paths key, empty = none
-	fill_gradient_id string // references gradients key, empty = flat fill
-	filter_id        string // references filters key, empty = none
-	opacity          f32 = 1.0
-	fill_opacity     f32 = 1.0
-	stroke_opacity   f32 = 1.0
+	segments           []PathSegment
+	fill_color         Color      = color_inherit
+	transform          [6]f32     = [f32(1), 0, 0, 1, 0, 0]! // identity: [a,b,c,d,e,f]
+	stroke_color       Color      = color_inherit
+	stroke_width       f32        = -1.0 // negative = inherit from parent
+	stroke_cap         StrokeCap  = .inherit
+	stroke_join        StrokeJoin = .inherit
+	clip_path_id       string // references clip_paths key, empty = none
+	fill_gradient_id   string // references gradients key, empty = flat fill
+	stroke_gradient_id string // references gradients key
+	filter_id          string // references filters key, empty = none
+	stroke_dasharray   []f32  // dash/gap pattern in SVG units
+	opacity            f32 = 1.0
+	fill_opacity       f32 = 1.0
+	stroke_opacity     f32 = 1.0
 }
 
 // VectorGraphic holds the complete parsed vector graphic (e.g., from SVG).
@@ -168,6 +171,55 @@ pub:
 	vertex_colors []Color // per-vertex colors (len = triangles.len/2); empty = flat color
 	is_clip_mask  bool    // true = stencil-write geometry
 	clip_group    int     // groups clip mask + clipped content (0 = none)
+}
+
+// resolve_gradient maps objectBoundingBox gradient coords to
+// absolute coordinates using the given bounding box.
+fn resolve_gradient(g SvgGradientDef, min_x f32, min_y f32, max_x f32, max_y f32) SvgGradientDef {
+	if !g.object_bounding_box {
+		return g
+	}
+	w := max_x - min_x
+	h := max_y - min_y
+	return SvgGradientDef{
+		...g
+		x1:                  min_x + g.x1 * w
+		y1:                  min_y + g.y1 * h
+		x2:                  min_x + g.x2 * w
+		y2:                  min_y + g.y2 * h
+		object_bounding_box: false
+	}
+}
+
+// bbox_from_triangles computes axis-aligned bounding box from
+// triangle vertices (flat x,y pairs).
+fn bbox_from_triangles(tris []f32) (f32, f32, f32, f32) {
+	if tris.len < 2 {
+		return 0, 0, 0, 0
+	}
+	mut min_x := tris[0]
+	mut min_y := tris[1]
+	mut max_x := min_x
+	mut max_y := min_y
+	mut i := 2
+	for i < tris.len {
+		x := tris[i]
+		y := tris[i + 1]
+		if x < min_x {
+			min_x = x
+		}
+		if x > max_x {
+			max_x = x
+		}
+		if y < min_y {
+			min_y = y
+		}
+		if y > max_y {
+			max_y = y
+		}
+		i += 2
+	}
+	return min_x, min_y, max_x, max_y
 }
 
 // project_onto_gradient computes parameter t for vertex (vx,vy) on
@@ -223,6 +275,127 @@ fn interpolate_gradient(stops []SvgGradientStop, t f32) Color {
 	return last.color
 }
 
+// subdivide_gradient_tris splits triangles at gradient stop
+// boundaries so per-vertex colors accurately represent multi-stop
+// gradients. Without this, GPU linear interpolation between
+// vertices skips intermediate color stops.
+fn subdivide_gradient_tris(tris []f32, grad SvgGradientDef) []f32 {
+	if grad.stops.len <= 2 {
+		return tris
+	}
+	mut stop_ts := []f32{cap: grad.stops.len}
+	for s in grad.stops {
+		if s.offset > 0.001 && s.offset < 0.999 {
+			stop_ts << s.offset
+		}
+	}
+	if stop_ts.len == 0 {
+		return tris
+	}
+	mut result := []f32{cap: tris.len * 2}
+	mut i := 0
+	for i < tris.len - 5 {
+		split_tri_at_stops(tris[i], tris[i + 1], tris[i + 2], tris[i + 3], tris[i + 4],
+			tris[i + 5], grad, stop_ts, mut result)
+		i += 6
+	}
+	return result
+}
+
+// split_tri_at_stops recursively splits a triangle at gradient
+// stop boundaries and appends resulting sub-triangles to result.
+fn split_tri_at_stops(ax f32, ay f32, bx f32, by f32, cx f32, cy f32, grad SvgGradientDef, stop_ts []f32, mut result []f32) {
+	ta := project_onto_gradient(ax, ay, grad)
+	tb := project_onto_gradient(bx, by, grad)
+	tc := project_onto_gradient(cx, cy, grad)
+
+	mut t_min := ta
+	if tb < t_min {
+		t_min = tb
+	}
+	if tc < t_min {
+		t_min = tc
+	}
+	mut t_max := ta
+	if tb > t_max {
+		t_max = tb
+	}
+	if tc > t_max {
+		t_max = tc
+	}
+
+	// Find first stop that splits this triangle
+	for t_s in stop_ts {
+		if t_s > t_min + 1e-4 && t_s < t_max - 1e-4 {
+			// Sort vertices by t (bubble sort)
+			mut p0x := ax
+			mut p0y := ay
+			mut t0 := ta
+			mut p1x := bx
+			mut p1y := by
+			mut t1 := tb
+			mut p2x := cx
+			mut p2y := cy
+			mut t2 := tc
+			if t0 > t1 {
+				p0x, p0y, t0, p1x, p1y, t1 = p1x, p1y, t1, p0x, p0y, t0
+			}
+			if t1 > t2 {
+				p1x, p1y, t1, p2x, p2y, t2 = p2x, p2y, t2, p1x, p1y, t1
+			}
+			if t0 > t1 {
+				p0x, p0y, t0, p1x, p1y, t1 = p1x, p1y, t1, p0x, p0y, t0
+			}
+			// Intersection on edge p0-p2
+			f02 := if t2 - t0 > 1e-6 {
+				(t_s - t0) / (t2 - t0)
+			} else {
+				f32(0.5)
+			}
+			i1x := p0x + f02 * (p2x - p0x)
+			i1y := p0y + f02 * (p2y - p0y)
+
+			if t_s < t1 - 1e-4 {
+				// Split line crosses edges p0-p1 and p0-p2
+				f01 := if t1 - t0 > 1e-6 {
+					(t_s - t0) / (t1 - t0)
+				} else {
+					f32(0.5)
+				}
+				i2x := p0x + f01 * (p1x - p0x)
+				i2y := p0y + f01 * (p1y - p0y)
+				split_tri_at_stops(p0x, p0y, i2x, i2y, i1x, i1y, grad, stop_ts, mut result)
+				split_tri_at_stops(i2x, i2y, p1x, p1y, i1x, i1y, grad, stop_ts, mut result)
+				split_tri_at_stops(p1x, p1y, p2x, p2y, i1x, i1y, grad, stop_ts, mut result)
+			} else if t_s > t1 + 1e-4 {
+				// Split line crosses edges p1-p2 and p0-p2
+				f12 := if t2 - t1 > 1e-6 {
+					(t_s - t1) / (t2 - t1)
+				} else {
+					f32(0.5)
+				}
+				i2x := p1x + f12 * (p2x - p1x)
+				i2y := p1y + f12 * (p2y - p1y)
+				split_tri_at_stops(p0x, p0y, p1x, p1y, i1x, i1y, grad, stop_ts, mut result)
+				split_tri_at_stops(p1x, p1y, i2x, i2y, i1x, i1y, grad, stop_ts, mut result)
+				split_tri_at_stops(i1x, i1y, i2x, i2y, p2x, p2y, grad, stop_ts, mut result)
+			} else {
+				// t_s ~ t1, split through vertex p1
+				split_tri_at_stops(p0x, p0y, p1x, p1y, i1x, i1y, grad, stop_ts, mut result)
+				split_tri_at_stops(p1x, p1y, p2x, p2y, i1x, i1y, grad, stop_ts, mut result)
+			}
+			return
+		}
+	}
+	// No split needed, emit triangle
+	result << ax
+	result << ay
+	result << bx
+	result << by
+	result << cx
+	result << cy
+}
+
 // get_triangles tessellates all paths in the graphic into GPU-ready triangle geometry.
 //
 // This is the core rendering pipeline that converts vector paths into triangles:
@@ -241,6 +414,85 @@ fn interpolate_gradient(stops []SvgGradientStop, t f32) Color {
 //    Line joins (miter, bevel, round) connect segments at vertices. Line caps (butt,
 //    round, square) close open path endpoints. Stroke width is scaled by `scale`.
 //
+// apply_dasharray splits polylines into dash segments according to the
+// SVG stroke-dasharray pattern (alternating dash/gap lengths, cycling).
+// Each "on" (dash) segment becomes a separate open polyline.
+fn apply_dasharray(polylines [][]f32, dasharray []f32) [][]f32 {
+	if dasharray.len == 0 {
+		return polylines
+	}
+	mut result := [][]f32{}
+	for poly in polylines {
+		if poly.len < 4 {
+			continue
+		}
+		mut dash_idx := 0 // index into dasharray
+		mut drawing := true // true = dash (on), false = gap (off)
+		mut remaining := dasharray[0] // distance left in current dash/gap
+		mut current := []f32{cap: poly.len}
+		// Start with the first point
+		mut px := poly[0]
+		mut py := poly[1]
+		if drawing {
+			current << px
+			current << py
+		}
+		mut i := 2
+		for i < poly.len {
+			nx := poly[i]
+			ny := poly[i + 1]
+			dx := nx - px
+			dy := ny - py
+			seg_len := math.sqrtf(dx * dx + dy * dy)
+			if seg_len < 1e-6 {
+				i += 2
+				continue
+			}
+			mut consumed := f32(0)
+			for consumed < seg_len - 1e-6 {
+				avail := seg_len - consumed
+				if remaining <= avail {
+					// Transition within this segment
+					t := (consumed + remaining) / seg_len
+					ix := px + t * dx
+					iy := py + t * dy
+					if drawing {
+						current << ix
+						current << iy
+						if current.len >= 4 {
+							result << current
+						}
+						current = []f32{cap: poly.len}
+					} else {
+						current << ix
+						current << iy
+					}
+					consumed += remaining
+					drawing = !drawing
+					dash_idx = (dash_idx + 1) % dasharray.len
+					remaining = dasharray[dash_idx]
+				} else {
+					// Remaining dash/gap extends beyond segment
+					remaining -= avail
+					if drawing {
+						current << nx
+						current << ny
+					}
+					break
+				}
+			}
+			px = nx
+			py = ny
+			i += 2
+		}
+		// Flush any trailing dash
+		if drawing && current.len >= 4 {
+			result << current
+		}
+	}
+	return result
+}
+
 // Parameters:
 //   - `scale`: Display scale factor. Affects curve flattening tolerance (higher = smoother)
 //     and stroke width. Typically `display_width / viewBox_width`.
@@ -305,17 +557,23 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 		// Tessellate fill
 		has_gradient := path.fill_gradient_id.len > 0
 		if path.fill_color.a > 0 || has_gradient {
-			triangles := tessellate_polylines(polylines)
-			if triangles.len > 0 {
-				mut vcols := []Color{}
+			raw_tris := tessellate_polylines(polylines)
+			if raw_tris.len > 0 {
 				if has_gradient {
-					if grad := vg.gradients[path.fill_gradient_id] {
-						n_verts := triangles.len / 2
-						vcols = []Color{cap: n_verts}
+					if g := vg.gradients[path.fill_gradient_id] {
+						grad := if g.object_bounding_box {
+							bx0, by0, bx1, by1 := bbox_from_triangles(raw_tris)
+							resolve_gradient(g, bx0, by0, bx1, by1)
+						} else {
+							g
+						}
+						fill_tris := subdivide_gradient_tris(raw_tris, grad)
+						n_verts := fill_tris.len / 2
+						mut vcols := []Color{cap: n_verts}
 						opacity := path.opacity * path.fill_opacity
 						for vi := 0; vi < n_verts; vi++ {
-							vx := triangles[vi * 2]
-							vy := triangles[vi * 2 + 1]
+							vx := fill_tris[vi * 2]
+							vy := fill_tris[vi * 2 + 1]
 							t := project_onto_gradient(vx, vy, grad)
 							mut c := interpolate_gradient(grad.stops, t)
 							if opacity < 1.0 {
@@ -323,26 +581,69 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 							}
 							vcols << c
 						}
+						result << TessellatedPath{
+							triangles:     fill_tris
+							color:         path.fill_color
+							vertex_colors: vcols
+							clip_group:    clip_group
+						}
 					}
-				}
-				result << TessellatedPath{
-					triangles:     triangles
-					color:         path.fill_color
-					vertex_colors: vcols
-					clip_group:    clip_group
+				} else {
+					result << TessellatedPath{
+						triangles:  raw_tris
+						color:      path.fill_color
+						clip_group: clip_group
+					}
 				}
 			}
 		}
 		// Tessellate stroke
-		if path.stroke_color.a > 0 && path.stroke_width > 0 {
+		has_stroke_gradient := path.stroke_gradient_id.len > 0
+		if (path.stroke_color.a > 0 || has_stroke_gradient) && path.stroke_width > 0 {
 			stroke_width := path.stroke_width * scale
-			stroke_tris := tessellate_stroke(polylines, stroke_width, path.stroke_cap,
+			stroke_polylines := if path.stroke_dasharray.len > 0 {
+				apply_dasharray(polylines, path.stroke_dasharray)
+			} else {
+				polylines
+			}
+			raw_stroke := tessellate_stroke(stroke_polylines, stroke_width, path.stroke_cap,
 				path.stroke_join)
-			if stroke_tris.len > 0 {
-				result << TessellatedPath{
-					triangles:  stroke_tris
-					color:      path.stroke_color
-					clip_group: clip_group
+			if raw_stroke.len > 0 {
+				if has_stroke_gradient {
+					if g := vg.gradients[path.stroke_gradient_id] {
+						grad := if g.object_bounding_box {
+							bx0, by0, bx1, by1 := bbox_from_triangles(raw_stroke)
+							resolve_gradient(g, bx0, by0, bx1, by1)
+						} else {
+							g
+						}
+						s_tris := subdivide_gradient_tris(raw_stroke, grad)
+						n_verts := s_tris.len / 2
+						mut vcols := []Color{cap: n_verts}
+						opacity := path.opacity * path.stroke_opacity
+						for vi := 0; vi < n_verts; vi++ {
+							vx := s_tris[vi * 2]
+							vy := s_tris[vi * 2 + 1]
+							t := project_onto_gradient(vx, vy, grad)
+							mut c := interpolate_gradient(grad.stops, t)
+							if opacity < 1.0 {
+								c = apply_opacity(c, opacity)
+							}
+							vcols << c
+						}
+						result << TessellatedPath{
+							triangles:     s_tris
+							color:         path.stroke_color
+							vertex_colors: vcols
+							clip_group:    clip_group
+						}
+					}
+				} else {
+					result << TessellatedPath{
+						triangles:  raw_stroke
+						color:      path.stroke_color
+						clip_group: clip_group
+					}
 				}
 			}
 		}
