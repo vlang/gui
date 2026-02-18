@@ -16,6 +16,26 @@ const id_scroll_sync_demo = 4
 const id_focus_showcase_splitter_main = u32(9160)
 const id_focus_showcase_splitter_detail = u32(9161)
 const showcase_form_id = 'showcase_forms'
+const bc_full_path = [
+	gui.BreadcrumbItemCfg{
+		id:    'home'
+		label: 'Home'
+		icon:  gui.icon_home
+	},
+	gui.BreadcrumbItemCfg{
+		id:    'docs'
+		label: 'Docs'
+		icon:  gui.icon_folder
+	},
+	gui.BreadcrumbItemCfg{
+		id:    'guide'
+		label: 'Guide'
+	},
+	gui.BreadcrumbItemCfg{
+		id:    'page'
+		label: 'Getting Started'
+	},
+]
 
 @[heap]
 struct ShowcaseApp {
@@ -92,6 +112,9 @@ pub mut:
 	date_picker_dates []time.Time
 	input_date        time.Time = time.now()
 	roller_date       time.Time = time.now()
+	// breadcrumb
+	bc_selected string                  = 'page'
+	bc_path     []gui.BreadcrumbItemCfg = bc_full_path
 	// tab control
 	tab_selected string = 'overview'
 	// splitter
@@ -490,6 +513,13 @@ fn demo_entries() []DemoEntry {
 			group:   'graphics'
 			summary: 'Export current view to PDF and open native print dialog'
 			tags:    ['print', 'pdf', 'export']
+		},
+		DemoEntry{
+			id:      'breadcrumb'
+			label:   'Breadcrumb'
+			group:   'navigation'
+			summary: 'Trail navigation with optional content panels'
+			tags:    ['breadcrumb', 'navigation', 'trail', 'path']
 		},
 		DemoEntry{
 			id:      'menus'
@@ -970,6 +1000,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'range_slider' { demo_range_slider(w) }
 		'progress_bar' { demo_progress_bar(w) }
 		'pulsar' { demo_pulsar(mut w) }
+		'breadcrumb' { demo_breadcrumb(mut w) }
 		'menus' { demo_menu(mut w) }
 		'dialog' { demo_dialog() }
 		'tree' { demo_tree(mut w) }
@@ -1030,6 +1061,7 @@ fn related_examples(id string) string {
 		'range_slider' { 'examples/range_sliders.v' }
 		'progress_bar' { 'examples/progress_bars.v' }
 		'pulsar' { 'examples/pulsars.v' }
+		'breadcrumb' { 'examples/breadcrumb.v' }
 		'menus' { 'examples/menu_demo.v, examples/context_menu_demo.v' }
 		'dialog' { 'examples/dialogs.v' }
 		'tree' { 'examples/tree_view.v' }
@@ -1075,6 +1107,7 @@ fn component_doc(id string) string {
 		'range_slider' { range_slider_doc }
 		'progress_bar' { progress_bar_doc }
 		'pulsar' { pulsar_doc }
+		'breadcrumb' { breadcrumb_doc }
 		'menus' { menus_doc }
 		'dialog' { dialog_doc }
 		'tree' { tree_doc }
@@ -5226,6 +5259,87 @@ fn on_showcase_splitter_detail_change(ratio f32, collapsed gui.SplitterCollapsed
 		ratio:     ratio
 		collapsed: collapsed
 	})
+}
+
+const breadcrumb_doc = '# Breadcrumb
+
+Trail navigation with optional content panels. Clicking a
+crumb fires `on_select`; the app decides whether to truncate.
+
+## Usage
+
+```v
+gui.breadcrumb(
+    id:       "bc",
+    selected: state.crumb,
+    items: [
+        gui.BreadcrumbItemCfg{id: "home", label: "Home"},
+        gui.BreadcrumbItemCfg{id: "docs", label: "Docs"},
+    ],
+    on_select: fn (id string, mut _ gui.Event, mut w gui.Window) {
+        w.state[MyApp]().crumb = id
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| items | []BreadcrumbItemCfg | Crumb definitions (required) |
+| selected | string | Active crumb ID |
+| separator | string | Text between crumbs (default "/") |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn (string, mut Event, mut Window) | Crumb clicked (required) |'
+
+fn demo_breadcrumb(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.row(
+				sizing:  gui.fill_fit
+				v_align: .middle
+				spacing: gui.theme().spacing_medium
+				content: [
+					gui.text(
+						text:       'Click a crumb to truncate the trail.'
+						text_style: gui.theme().n4
+					),
+					gui.button(
+						id_focus: 9170
+						content:  [gui.text(text: 'Reset')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut ww gui.Window) {
+							mut a := ww.state[ShowcaseApp]()
+							a.bc_path = bc_full_path
+							a.bc_selected = 'page'
+						}
+					),
+				]
+			),
+			gui.breadcrumb(
+				id:        'catalog_breadcrumb'
+				id_focus:  9171
+				selected:  app.bc_selected
+				items:     app.bc_path
+				on_select: fn (id string, mut _e gui.Event, mut ww gui.Window) {
+					mut a := ww.state[ShowcaseApp]()
+					for i, item in a.bc_path {
+						if item.id == id {
+							a.bc_path = a.bc_path[..i + 1]
+							break
+						}
+					}
+					a.bc_selected = id
+				}
+			),
+		]
+	)
 }
 
 const tab_control_doc = '# Tab Control

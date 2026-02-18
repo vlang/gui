@@ -18,6 +18,7 @@ pub:
 	color_select     Color    = color_select_dark     // links and selected
 	titlebar_dark    bool
 
+	breadcrumb_style   BreadcrumbStyle
 	button_style       ButtonStyle
 	color_picker_style ColorPickerStyle
 	container_style    ContainerStyle

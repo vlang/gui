@@ -40,6 +40,48 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:             cfg.radius
 			text_style:         cfg.text_style
 		}
+		breadcrumb_style:   BreadcrumbStyle{
+			color_crumb_hover:    cfg.color_hover
+			color_crumb_click:    cfg.color_active
+			color_content:        cfg.color_panel
+			color_content_border: cfg.color_border
+			padding_trail:        cfg.padding_small
+			padding_content:      cfg.padding
+			radius:               cfg.radius
+			radius_crumb:         cfg.radius_small
+			radius_content:       cfg.radius
+			spacing:              cfg.spacing_small
+			spacing_trail:        cfg.spacing_small
+			size_content_border:  cfg.size_border
+			text_style:           cfg.text_style
+			text_style_selected:  TextStyle{
+				...cfg.text_style
+				typeface: .bold
+			}
+			text_style_disabled:  TextStyle{
+				...cfg.text_style
+				color: Color{
+					r: cfg.text_style.color.r
+					g: cfg.text_style.color.g
+					b: cfg.text_style.color.b
+					a: 130
+				}
+			}
+			text_style_separator: TextStyle{
+				...cfg.text_style
+				color: Color{
+					r: cfg.text_style.color.r
+					g: cfg.text_style.color.g
+					b: cfg.text_style.color.b
+					a: 160
+				}
+			}
+			text_style_icon:      TextStyle{
+				...cfg.text_style
+				family: icon_font_name
+				size:   cfg.size_text_medium
+			}
+		}
 		button_style:       ButtonStyle{
 			color:              cfg.color_interior
 			color_border:       cfg.color_border
@@ -504,19 +546,19 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		// listbox
-		list_box_style:  ListBoxStyle{
+		list_box_style:   ListBoxStyle{
 			...theme.list_box_style
 			subheading_style: TextStyle{
 				...bold
 			}
 		}
-		data_grid_style: DataGridStyle{
+		data_grid_style:  DataGridStyle{
 			...theme.data_grid_style
 			text_style:        normal
 			text_style_header: bold
 			text_style_filter: normal
 		}
-		tab_style:       TabStyle{
+		tab_style:        TabStyle{
 			...theme.tab_style
 			text_style:          normal
 			text_style_selected: bold
@@ -528,6 +570,34 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 					b: normal.color.b
 					a: 130
 				}
+			}
+		}
+		breadcrumb_style: BreadcrumbStyle{
+			...theme.breadcrumb_style
+			text_style:           normal
+			text_style_selected:  bold
+			text_style_disabled:  TextStyle{
+				...normal
+				color: Color{
+					r: normal.color.r
+					g: normal.color.g
+					b: normal.color.b
+					a: 130
+				}
+			}
+			text_style_separator: TextStyle{
+				...normal
+				color: Color{
+					r: normal.color.r
+					g: normal.color.g
+					b: normal.color.b
+					a: 160
+				}
+			}
+			text_style_icon:      TextStyle{
+				...normal
+				family: icon_font_name
+				size:   theme.size_text_medium
 			}
 		}
 		// markdown
@@ -606,6 +676,14 @@ pub fn theme() Theme {
 // These methods allow modifying an existing Theme without going through
 // ThemeCfg + theme_maker(). Each returns a new Theme with the specified
 // style replaced.
+
+// with_breadcrumb_style returns a new Theme with the breadcrumb style replaced.
+pub fn (t Theme) with_breadcrumb_style(style BreadcrumbStyle) Theme {
+	return Theme{
+		...t
+		breadcrumb_style: style
+	}
+}
 
 // with_button_style returns a new Theme with the button style replaced.
 pub fn (t Theme) with_button_style(style ButtonStyle) Theme {
@@ -855,6 +933,13 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_hover:        hover
 			color_border:       border
 			color_border_focus: border_focus
+		}
+		breadcrumb_style:   BreadcrumbStyle{
+			...t.breadcrumb_style
+			color_crumb_hover:    hover
+			color_crumb_click:    active
+			color_content:        panel
+			color_content_border: border
 		}
 		button_style:       ButtonStyle{
 			...t.button_style

@@ -82,6 +82,60 @@ pub:
 	gradient           &Gradient  = unsafe { nil }
 }
 
+pub struct BreadcrumbStyle {
+pub:
+	separator            string  = '/'
+	color                Color   = color_transparent
+	color_border         Color   = color_transparent
+	color_trail          Color   = color_transparent
+	color_crumb          Color   = color_transparent
+	color_crumb_hover    Color   = color_hover_dark
+	color_crumb_click    Color   = color_active_dark
+	color_crumb_selected Color   = color_transparent
+	color_crumb_disabled Color   = color_transparent
+	color_content        Color   = color_panel_dark
+	color_content_border Color   = color_border_dark
+	padding              Padding = padding_none
+	padding_trail        Padding = padding_small
+	padding_crumb        Padding = padding(2, 4, 2, 4)
+	padding_content      Padding = padding_medium
+	radius               f32     = radius_medium
+	radius_crumb         f32     = radius_small
+	radius_content       f32     = radius_medium
+	spacing              f32     = spacing_small
+	spacing_trail        f32     = spacing_small
+	size_border          f32
+	size_content_border  f32       = size_border
+	text_style           TextStyle = text_style_dark
+	text_style_selected  TextStyle = TextStyle{
+		...text_style_dark
+		typeface: .bold
+	}
+	text_style_disabled  TextStyle = TextStyle{
+		...text_style_dark
+		color: Color{
+			r: text_style_dark.color.r
+			g: text_style_dark.color.g
+			b: text_style_dark.color.b
+			a: 130
+		}
+	}
+	text_style_separator TextStyle = TextStyle{
+		...text_style_dark
+		color: Color{
+			r: text_style_dark.color.r
+			g: text_style_dark.color.g
+			b: text_style_dark.color.b
+			a: 160
+		}
+	}
+	text_style_icon      TextStyle = TextStyle{
+		...text_style_dark
+		family: font_file_icon
+		size:   size_text_medium
+	}
+}
+
 pub struct ContainerStyle {
 pub:
 	color           Color   = color_transparent
