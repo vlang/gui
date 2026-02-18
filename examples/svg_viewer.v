@@ -31,8 +31,8 @@ pub mut:
 fn main() {
 	mut window := gui.window(
 		state:   &SvgViewerApp{}
-		width:   900
-		height:  700
+		width:   600
+		height:  400
 		title:   'SVG Viewer'
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -101,7 +101,7 @@ fn content_panel(selected int) gui.View {
 		h_align: .center
 		v_align: .middle
 		content: [
-			gui.svg(svg_data: entry.svg_data),
+			gui.svg(svg_data: entry.svg_data, sizing: gui.fill_fill),
 		]
 	)
 }

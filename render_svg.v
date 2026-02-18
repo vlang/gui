@@ -84,50 +84,54 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 
 	color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
 
-	// Clip SVG content to shape bounds (viewBox overflow)
+	// Center SVG content within container (aspect-preserving scale
+	// may leave unused space in one dimension).
+	sx := shape.x + (shape.width - cached.width * cached.scale) / 2
+	sy := shape.y + (shape.height - cached.height * cached.scale) / 2
+
+	// Clip to the scaled viewBox area, not the full container.
+	// SVG elements beyond the viewBox must be clipped.
 	emit_renderer(DrawClip{
-		x:      shape.x
-		y:      shape.y
-		width:  shape.width
-		height: shape.height
+		x:      sx
+		y:      sy
+		width:  cached.width * cached.scale
+		height: cached.height * cached.scale
 	}, mut window)
 
 	if cached.has_animations {
-		render_svg_animated(cached, color, shape, mut window)
+		render_svg_animated(cached, color, shape.resource, sx, sy, mut window)
 	} else {
 		for tpath in cached.render_paths {
-			emit_svg_path_renderer(tpath, color, shape.x, shape.y, cached.scale, mut window)
+			emit_svg_path_renderer(tpath, color, sx, sy, cached.scale, mut window)
 		}
 	}
 
 	// Emit text elements
 	for draw in cached.text_draws {
-		emit_cached_svg_text_draw(draw, shape.x, shape.y, mut window)
+		emit_cached_svg_text_draw(draw, sx, sy, mut window)
 	}
 	// Emit textPath elements
 	for tp in cached.text_paths {
-		render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale, mut
-			window)
+		render_svg_text_path(tp, cached.defs_paths, sx, sy, cached.scale, mut window)
 	}
 
 	// Emit filtered groups
 	for i, fg in cached.filtered_groups {
 		emit_renderer(DrawFilterBegin{
 			group_idx: i
-			x:         shape.x
-			y:         shape.y
+			x:         sx
+			y:         sy
 			scale:     cached.scale
 			cached:    cached
 		}, mut window)
 		for tpath in fg.render_paths {
-			emit_svg_path_renderer(tpath, color, shape.x, shape.y, cached.scale, mut window)
+			emit_svg_path_renderer(tpath, color, sx, sy, cached.scale, mut window)
 		}
 		for draw in fg.text_draws {
-			emit_cached_svg_text_draw(draw, shape.x, shape.y, mut window)
+			emit_cached_svg_text_draw(draw, sx, sy, mut window)
 		}
 		for tp in fg.text_paths {
-			render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale, mut
-				window)
+			render_svg_text_path(tp, cached.defs_paths, sx, sy, cached.scale, mut window)
 		}
 		emit_renderer(DrawFilterEnd{}, mut window)
 	}
@@ -137,9 +141,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 }
 
 // render_svg_animated emits paths with per-group animation transforms.
-fn render_svg_animated(cached &CachedSvg, color Color, shape &Shape, mut window Window) {
-	// Get/init animation start time
-	res_key := shape.resource
+fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, sy f32, mut window Window) {
 	start_ns := if v := window.view_state.svg_anim_start.get(res_key) {
 		v
 	} else {
@@ -166,9 +168,9 @@ fn render_svg_animated(cached &CachedSvg, color Color, shape &Shape, mut window 
 				group_matrices[anim.target_id] = m
 			}
 			.scale {
-				sx := vals[0]
-				sy := if vals.len >= 2 { vals[1] } else { sx }
-				m := svg.build_scale_matrix(sx, sy)
+				asx := vals[0]
+				asy := if vals.len >= 2 { vals[1] } else { asx }
+				m := svg.build_scale_matrix(asx, asy)
 				group_matrices[anim.target_id] = m
 			}
 			.translate {
@@ -192,8 +194,7 @@ fn render_svg_animated(cached &CachedSvg, color Color, shape &Shape, mut window 
 			if has_matrix {
 				anim_path = CachedSvgPath{
 					...tpath
-					triangles: apply_transform_to_triangles(tpath.triangles, group_matrices[gid],
-						cached.scale)
+					triangles: apply_transform_to_triangles(tpath.triangles, group_matrices[gid])
 				}
 			}
 			if has_opacity {
@@ -204,26 +205,24 @@ fn render_svg_animated(cached &CachedSvg, color Color, shape &Shape, mut window 
 					color: gg.Color{c.r, c.g, c.b, u8(f32(c.a) * opacity)}
 				}
 			}
-			emit_svg_path_renderer(anim_path, color, shape.x, shape.y, cached.scale, mut
-				window)
+			emit_svg_path_renderer(anim_path, color, sx, sy, cached.scale, mut window)
 		} else {
-			emit_svg_path_renderer(tpath, color, shape.x, shape.y, cached.scale, mut window)
+			emit_svg_path_renderer(tpath, color, sx, sy, cached.scale, mut window)
 		}
 	}
 }
 
-// apply_transform_to_triangles transforms triangle vertices by affine
-// matrix m. Triangles are in scaled viewBox coords: divide by scale,
-// transform in viewBox space, multiply back by scale.
-fn apply_transform_to_triangles(tris []f32, m [6]f32, scale f32) []f32 {
+// apply_transform_to_triangles applies affine matrix m to triangle
+// vertices. Triangles are in viewBox space; matrix operates in
+// viewBox space (e.g. rotation center from SVG attributes).
+fn apply_transform_to_triangles(tris []f32, m [6]f32) []f32 {
 	mut out := []f32{len: tris.len}
-	inv_scale := if scale > 0 { 1.0 / scale } else { f32(1) }
 	mut i := 0
 	for i < tris.len - 1 {
-		x := tris[i] * inv_scale
-		y := tris[i + 1] * inv_scale
-		out[i] = (m[0] * x + m[2] * y + m[4]) * scale
-		out[i + 1] = (m[1] * x + m[3] * y + m[5]) * scale
+		x := tris[i]
+		y := tris[i + 1]
+		out[i] = m[0] * x + m[2] * y + m[4]
+		out[i + 1] = m[1] * x + m[3] * y + m[5]
 		i += 2
 	}
 	return out
