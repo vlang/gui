@@ -51,6 +51,12 @@ mut:
 		max_size: 100
 	}
 	svg_dim_cache                 map[string][2]f32
+	svg_anim_start                BoundedMap[string, i64] = BoundedMap[string, i64]{
+		max_size: 50
+	}
+	svg_anim_seen                 BoundedMap[string, i64] = BoundedMap[string, i64]{
+		max_size: 50
+	}
 	markdown_cache                BoundedMarkdownCache = BoundedMarkdownCache{
 		max_size: 50
 	}

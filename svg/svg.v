@@ -20,6 +20,7 @@ mut:
 	elem_count int
 	texts      []SvgText
 	text_paths []SvgTextPath
+	animations []SvgAnimation
 }
 
 // GroupStyle holds inherited style properties for groups.
@@ -40,6 +41,7 @@ struct GroupStyle {
 	opacity        f32 = 1.0
 	fill_opacity   f32 = 1.0
 	stroke_opacity f32 = 1.0
+	group_id       string
 }
 
 // parse_svg_dimensions extracts only width/height from SVG without
@@ -150,6 +152,7 @@ pub fn parse_svg(content string) !VectorGraphic {
 		vg.text_paths = state.text_paths
 	}
 
+	vg.animations = state.animations
 	return vg
 }
 
@@ -235,6 +238,10 @@ fn parse_svg_content(content string, inherited GroupStyle, depth int, mut state 
 			group_end := find_closing_tag(content, tag_name, group_content_start)
 			if group_end > group_content_start {
 				group_content := content[group_content_start..group_end]
+				// Parse SMIL animations inside this <g>
+				if group_style.group_id.len > 0 {
+					state.animations << parse_group_animations(group_content, group_style.group_id)
+				}
 				paths << parse_svg_content(group_content, group_style, depth + 1, mut
 					state)
 			}

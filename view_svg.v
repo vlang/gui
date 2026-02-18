@@ -1,6 +1,8 @@
 module gui
 
+import hash.fnv1a
 import log
+import time
 
 // SvgView is the internal view implementation for rendering SVG graphics.
 @[minify]
@@ -20,6 +22,7 @@ pub:
 	width     f32    // Display width
 	height    f32    // Display height
 	color     Color = color_transparent // Override fill color (for monochrome icons)
+	animated  bool  = true              // Enable SMIL animation (if SVG contains animations)
 	sizing    Sizing
 	padding   Padding
 	on_click  fn (&Layout, mut Event, mut Window) = unsafe { nil }
@@ -68,7 +71,39 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 		)
 		return error_text.generate_layout(mut window)
 	}
-	_ = cached // cache entry now exists at correct scale
+
+	// Register animation loop for animated SVGs
+	if cached.has_animations && sv.animated {
+		anim_hash := fnv1a.sum64_string(svg_src).hex()
+		now_ns := time.now().unix_nano()
+		window.view_state.svg_anim_seen.set(anim_hash, now_ns)
+		if !window.view_state.svg_anim_start.contains(anim_hash) {
+			window.view_state.svg_anim_start.set(anim_hash, now_ns)
+		}
+		anim_id := 'svg_anim:${anim_hash}'
+		if !window.has_animation(anim_id) {
+			window.animation_add(mut &Animate{
+				id:       anim_id
+				delay:    animation_cycle
+				repeat:   true
+				callback: fn [anim_hash] (mut an Animate, mut w Window) {
+					// Check staleness: if SVG left the layout tree, stop
+					if seen := w.view_state.svg_anim_seen.get(anim_hash) {
+						elapsed := time.now().unix_nano() - seen
+						if elapsed > 200_000_000 {
+							// >200ms since last seen → SVG removed
+							an.stopped = true
+							return
+						}
+					} else {
+						an.stopped = true
+						return
+					}
+					w.update_window()
+				}
+			})
+		}
+	}
 
 	mut events := unsafe { &EventHandlers(nil) }
 	on_click := sv.left_click()
@@ -103,6 +138,7 @@ pub fn svg(cfg SvgCfg) View {
 		width:     cfg.width
 		height:    cfg.height
 		color:     cfg.color
+		animated:  cfg.animated
 		sizing:    cfg.sizing
 		padding:   cfg.padding
 		on_click:  cfg.on_click

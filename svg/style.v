@@ -83,6 +83,9 @@ fn merge_group_style(elem string, inherited GroupStyle) GroupStyle {
 	fill_opacity := parse_opacity_attr(elem, 'fill-opacity', inherited.fill_opacity)
 	stroke_opacity := parse_opacity_attr(elem, 'stroke-opacity', inherited.stroke_opacity)
 
+	// Group id: use element's id if present, otherwise inherit
+	gid := find_attr(elem, 'id') or { inherited.group_id }
+
 	return GroupStyle{
 		transform:      combined_transform
 		fill:           fill
@@ -100,6 +103,7 @@ fn merge_group_style(elem string, inherited GroupStyle) GroupStyle {
 		opacity:        group_opacity
 		fill_opacity:   fill_opacity
 		stroke_opacity: stroke_opacity
+		group_id:       gid
 	}
 }
 
@@ -166,6 +170,11 @@ fn apply_inherited_style(mut path VectorPath, inherited GroupStyle) {
 	}
 	if path.stroke_join == .inherit {
 		path.stroke_join = .miter
+	}
+
+	// Apply group_id from enclosing <g>
+	if path.group_id.len == 0 && inherited.group_id.len > 0 {
+		path.group_id = inherited.group_id
 	}
 
 	// Apply opacity: element opacity * group opacity * fill/stroke-opacity

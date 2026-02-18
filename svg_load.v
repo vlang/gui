@@ -22,6 +22,7 @@ struct CachedSvgPath {
 	vertex_colors []gg.Color
 	is_clip_mask  bool
 	clip_group    int
+	group_id      string
 }
 
 struct CachedSvgTextDraw {
@@ -47,6 +48,7 @@ fn cached_svg_paths(paths []svg.TessellatedPath) []CachedSvgPath {
 			vertex_colors: vcols
 			is_clip_mask:  path.is_clip_mask
 			clip_group:    path.clip_group
+			group_id:      path.group_id
 		}
 	}
 	return out
@@ -191,6 +193,8 @@ pub:
 	defs_paths      map[string]string // id -> raw d attribute
 	filtered_groups []CachedFilteredGroup
 	gradients       map[string]svg.SvgGradientDef
+	animations      []svg.SvgAnimation
+	has_animations  bool
 	width           f32 // Original viewBox width
 	height          f32 // Original viewBox height
 	scale           f32 // Scale factor applied during tessellation
@@ -272,6 +276,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		}
 	}
 	max_cached_verts := 1250000
+	has_anims := vg.animations.len > 0
 	if total_verts > max_cached_verts {
 		return &CachedSvg{
 			render_paths:    render_paths
@@ -282,6 +287,8 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 			defs_paths:      vg.defs_paths
 			filtered_groups: cached_fg
 			gradients:       vg.gradients
+			animations:      vg.animations
+			has_animations:  has_anims
 			width:           vg.width
 			height:          vg.height
 			scale:           scale
@@ -297,6 +304,8 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		defs_paths:      vg.defs_paths
 		filtered_groups: cached_fg
 		gradients:       vg.gradients
+		animations:      vg.animations
+		has_animations:  has_anims
 		width:           vg.width
 		height:          vg.height
 		scale:           scale

@@ -2,6 +2,8 @@ module gui
 
 import gg
 import log
+import svg
+import time
 
 fn emit_error_placeholder(x f32, y f32, w f32, h f32, mut window Window) {
 	if w <= 0 || h <= 0 {
@@ -90,8 +92,12 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 		height: shape.height
 	}, mut window)
 
-	for tpath in cached.render_paths {
-		emit_svg_path_renderer(tpath, color, shape.x, shape.y, cached.scale, mut window)
+	if cached.has_animations {
+		render_svg_animated(cached, color, shape, mut window)
+	} else {
+		for tpath in cached.render_paths {
+			emit_svg_path_renderer(tpath, color, shape.x, shape.y, cached.scale, mut window)
+		}
 	}
 
 	// Emit text elements
@@ -128,6 +134,99 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 
 	// Restore parent clip
 	emit_renderer(clip, mut window)
+}
+
+// render_svg_animated emits paths with per-group animation transforms.
+fn render_svg_animated(cached &CachedSvg, color Color, shape &Shape, mut window Window) {
+	// Get/init animation start time
+	res_key := shape.resource
+	start_ns := if v := window.view_state.svg_anim_start.get(res_key) {
+		v
+	} else {
+		now_ns := time.now().unix_nano()
+		window.view_state.svg_anim_start.set(res_key, now_ns)
+		now_ns
+	}
+	elapsed_s := f32(time.now().unix_nano() - start_ns) / 1_000_000_000.0
+
+	// Evaluate animations: build transform matrix and opacity per group_id
+	mut group_matrices := map[string][6]f32{}
+	mut group_opacities := map[string]f32{}
+	for anim in cached.animations {
+		vals := svg.evaluate_animation(anim, elapsed_s)
+		if vals.len == 0 {
+			continue
+		}
+		match anim.anim_type {
+			.rotate {
+				angle := vals[0]
+				cx := if vals.len >= 2 { vals[1] } else { f32(0) }
+				cy := if vals.len >= 3 { vals[2] } else { f32(0) }
+				m := svg.build_rotation_matrix(angle, cx, cy)
+				group_matrices[anim.target_id] = m
+			}
+			.scale {
+				sx := vals[0]
+				sy := if vals.len >= 2 { vals[1] } else { sx }
+				m := svg.build_scale_matrix(sx, sy)
+				group_matrices[anim.target_id] = m
+			}
+			.translate {
+				tx := vals[0]
+				ty := if vals.len >= 2 { vals[1] } else { f32(0) }
+				m := svg.build_translate_matrix(tx, ty)
+				group_matrices[anim.target_id] = m
+			}
+			.opacity {
+				group_opacities[anim.target_id] = vals[0]
+			}
+		}
+	}
+
+	for tpath in cached.render_paths {
+		gid := tpath.group_id
+		has_matrix := gid in group_matrices
+		has_opacity := gid in group_opacities
+		if gid.len > 0 && (has_matrix || has_opacity) {
+			mut anim_path := tpath
+			if has_matrix {
+				anim_path = CachedSvgPath{
+					...tpath
+					triangles: apply_transform_to_triangles(tpath.triangles, group_matrices[gid],
+						cached.scale)
+				}
+			}
+			if has_opacity {
+				opacity := group_opacities[gid]
+				c := anim_path.color
+				anim_path = CachedSvgPath{
+					...anim_path
+					color: gg.Color{c.r, c.g, c.b, u8(f32(c.a) * opacity)}
+				}
+			}
+			emit_svg_path_renderer(anim_path, color, shape.x, shape.y, cached.scale, mut
+				window)
+		} else {
+			emit_svg_path_renderer(tpath, color, shape.x, shape.y, cached.scale, mut window)
+		}
+	}
+}
+
+// apply_transform_to_triangles transforms triangle vertices by affine
+// matrix m. Triangles are in scaled viewBox coords: divide by scale,
+// transform in viewBox space, multiply back by scale.
+fn apply_transform_to_triangles(tris []f32, m [6]f32, scale f32) []f32 {
+	mut out := []f32{len: tris.len}
+	inv_scale := if scale > 0 { 1.0 / scale } else { f32(1) }
+	mut i := 0
+	for i < tris.len - 1 {
+		x := tris[i] * inv_scale
+		y := tris[i + 1] * inv_scale
+		out[i] = (m[0] * x + m[2] * y + m[4]) * scale
+		out[i + 1] = (m[1] * x + m[3] * y + m[5]) * scale
+		i += 2
+	}
+	return out
 }
 
 // draw_error_placeholder draws a magenta box with a white cross.

@@ -139,6 +139,7 @@ pub mut:
 	opacity            f32 = 1.0
 	fill_opacity       f32 = 1.0
 	stroke_opacity     f32 = 1.0
+	group_id           string // id of enclosing <g>
 }
 
 // VectorGraphic holds the complete parsed vector graphic (e.g., from SVG).
@@ -156,6 +157,7 @@ pub mut:
 	gradients       map[string]SvgGradientDef // id -> gradient def
 	filters         map[string]SvgFilter
 	filtered_groups []SvgFilteredGroup
+	animations      []SvgAnimation
 }
 
 // TessellatedPath holds triangulated geometry ready for rendering.
@@ -166,4 +168,26 @@ pub:
 	vertex_colors []SvgColor // per-vertex colors (len = triangles.len/2); empty = flat color
 	is_clip_mask  bool       // true = stencil-write geometry
 	clip_group    int        // groups clip mask + clipped content (0 = none)
+	group_id      string     // id of enclosing <g> (for animation targeting)
+}
+
+// SvgAnimationType identifies the kind of SMIL animation.
+pub enum SvgAnimationType as u8 {
+	rotate
+	scale
+	translate
+	opacity
+}
+
+// SvgAnimation holds a parsed SMIL animation element.
+pub struct SvgAnimation {
+pub:
+	anim_type    SvgAnimationType
+	target_id    string // parent <g> id
+	from         []f32
+	to           []f32
+	values       [][]f32 // multi-step keyframes; outer=keyframes, inner=components
+	dur          f32     // seconds
+	repeat_count f32 = -1 // -1 = indefinite
+	begin_time   f32 // seconds offset
 }

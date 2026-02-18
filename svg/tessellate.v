@@ -153,6 +153,7 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 							color:        SvgColor{255, 255, 255, 255}
 							is_clip_mask: true
 							clip_group:   clip_group
+							group_id:     path.group_id
 						}
 					}
 				}
@@ -192,6 +193,7 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 							color:         path.fill_color
 							vertex_colors: vcols
 							clip_group:    clip_group
+							group_id:      path.group_id
 						}
 					}
 				} else {
@@ -199,6 +201,7 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 						triangles:  raw_tris
 						color:      path.fill_color
 						clip_group: clip_group
+						group_id:   path.group_id
 					}
 				}
 			}
@@ -242,6 +245,7 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 							color:         path.stroke_color
 							vertex_colors: vcols
 							clip_group:    clip_group
+							group_id:      path.group_id
 						}
 					}
 				} else {
@@ -249,6 +253,7 @@ pub fn (vg &VectorGraphic) get_triangles(scale f32) []TessellatedPath {
 						triangles:  raw_stroke
 						color:      path.stroke_color
 						clip_group: clip_group
+						group_id:   path.group_id
 					}
 				}
 			}
