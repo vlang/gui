@@ -1,10 +1,11 @@
-module gui
+module markdown
 
-// markdown_metadata.v handles parsing of markdown metadata (links, footnotes, abbreviations).
+// metadata.v handles parsing of markdown metadata
+// (links, footnotes, abbreviations).
 
 // collect_metadata scans lines once for all metadata definitions:
 // link refs, abbreviations, and footnotes.
-fn collect_metadata(scanner MarkdownScanner) (map[string]string, map[string]string, map[string]string) {
+pub fn collect_metadata(scanner MdScanner) (map[string]string, map[string]string, map[string]string) {
 	mut link_defs := map[string]string{}
 	mut abbr_defs := map[string]string{}
 	mut footnote_defs := map[string]string{}
@@ -101,7 +102,7 @@ fn collect_metadata(scanner MarkdownScanner) (map[string]string, map[string]stri
 }
 
 // is_link_definition checks if a line is a reference link definition.
-fn is_link_definition(line string) bool {
+pub fn is_link_definition(line string) bool {
 	trimmed := line.trim_space()
 	if !trimmed.starts_with('[') {
 		return false
@@ -111,7 +112,7 @@ fn is_link_definition(line string) bool {
 }
 
 // is_footnote_definition checks if a line is a footnote definition.
-fn is_footnote_definition(line string) bool {
+pub fn is_footnote_definition(line string) bool {
 	trimmed := line.trim_space()
 	if !trimmed.starts_with('[^') {
 		return false
@@ -120,60 +121,50 @@ fn is_footnote_definition(line string) bool {
 	return bracket_end >= 3
 }
 
-// is_word_boundary checks if char at pos is a word boundary (non-alphanumeric).
-fn is_word_boundary(text string, pos int) bool {
+// is_word_boundary checks if char at pos is a word boundary
+// (non-alphanumeric).
+pub fn is_word_boundary(text string, pos int) bool {
 	if pos < 0 || pos >= text.len {
 		return true
 	}
 	c := text[pos]
-	// alphanumeric = word char
 	if (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`) || (c >= `0` && c <= `9`) || c == `_` {
 		return false
 	}
 	return true
 }
 
-// replace_abbreviations scans runs for abbreviation occurrences and splits/marks them.
-// Uses word boundaries to avoid partial matches.
-fn replace_abbreviations(runs []RichTextRun, abbr_defs map[string]string, md_style MarkdownStyle) []RichTextRun {
+// replace_abbreviations scans runs for abbreviation occurrences
+// and splits/marks them with tooltips. Uses word boundaries to
+// avoid partial matches.
+pub fn replace_abbreviations(runs []MdRun, abbr_defs map[string]string) []MdRun {
 	if abbr_defs.len == 0 {
 		return runs
 	}
-	// Sort abbreviations by length descending once for all runs
 	mut sorted_abbrs := abbr_defs.keys()
 	sorted_abbrs.sort_with_compare(fn (a &string, b &string) int {
 		return b.len - a.len
 	})
-	mut result := []RichTextRun{cap: runs.len * 2}
+	mut result := []MdRun{cap: runs.len * 2}
 	for run in runs {
-		// Skip non-text runs (links, code, math, etc)
+		// Skip non-text runs (links, tooltips, math)
 		if run.link != '' || run.tooltip != '' || run.math_id != '' {
 			result << run
 			continue
 		}
-		result << split_run_for_abbrs(run, sorted_abbrs, abbr_defs, md_style)
+		result << split_run_for_abbrs(run, sorted_abbrs, abbr_defs)
 	}
 	return result
 }
 
-// AbbrMatch stores a found abbreviation position.
-struct AbbrMatch {
-	start     int
-	end       int
-	abbr      string
-	expansion string
-}
-
 // split_run_for_abbrs splits a single run at abbreviation
-// boundaries. Uses a single pass over the text with a
-// first-char bitset for O(1) skip.
-fn split_run_for_abbrs(run RichTextRun, sorted_abbrs []string, abbr_defs map[string]string, md_style MarkdownStyle) []RichTextRun {
+// boundaries.
+fn split_run_for_abbrs(run MdRun, sorted_abbrs []string, abbr_defs map[string]string) []MdRun {
 	text := run.text
 	if text.len == 0 {
 		return [run]
 	}
 
-	// Build first-char bitset for O(1) skip per position
 	mut first_chars := [256]bool{}
 	for abbr in sorted_abbrs {
 		if abbr.len > 0 {
@@ -181,7 +172,7 @@ fn split_run_for_abbrs(run RichTextRun, sorted_abbrs []string, abbr_defs map[str
 		}
 	}
 
-	mut result := []RichTextRun{cap: 8}
+	mut result := []MdRun{cap: 8}
 	mut pos := 0
 	mut last_pos := 0
 
@@ -193,18 +184,19 @@ fn split_run_for_abbrs(run RichTextRun, sorted_abbrs []string, abbr_defs map[str
 		mut matched := false
 		for abbr in sorted_abbrs {
 			if pos + abbr.len <= text.len && text[pos..pos + abbr.len] == abbr {
-				// Match found; verify word boundaries
 				if is_word_boundary(text, pos - 1) && is_word_boundary(text, pos + abbr.len) {
-					// Flush preceding literal text
 					if pos > last_pos {
-						result << RichTextRun{
-							text:  text[last_pos..pos]
-							style: run.style
+						result << MdRun{
+							...run
+							text: text[last_pos..pos]
 						}
 					}
-					// Add abbreviation run
 					expansion := abbr_defs[abbr]
-					result << rich_abbr(abbr, expansion, run.style)
+					result << MdRun{
+						...run
+						text:    abbr
+						tooltip: expansion
+					}
 					pos += abbr.len
 					last_pos = pos
 					matched = true
@@ -217,11 +209,10 @@ fn split_run_for_abbrs(run RichTextRun, sorted_abbrs []string, abbr_defs map[str
 		}
 	}
 
-	// Flush remaining text
 	if last_pos < text.len {
-		result << RichTextRun{
-			text:  text[last_pos..]
-			style: run.style
+		result << MdRun{
+			...run
+			text: text[last_pos..]
 		}
 	}
 

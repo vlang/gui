@@ -1,11 +1,11 @@
-module gui
+module markdown
 
-// markdown_emoji.v provides emoji shortcode lookup for markdown.
+// emoji.v provides emoji shortcode lookup for markdown.
 // Supports GitHub-standard shortcodes: :name: -> Unicode emoji.
 
 // emoji_lookup returns the Unicode emoji for a shortcode name,
 // or empty string if not found.
-fn emoji_lookup(name string) string {
+pub fn emoji_lookup(name string) string {
 	return emoji_map[name] or { '' }
 }
 
@@ -13,7 +13,7 @@ fn emoji_lookup(name string) string {
 // Returns end position of name (before closing ':') or -1.
 // Max 50 chars scanned. Valid chars: a-z, A-Z, 0-9, _, +, -.
 // First char must be alpha, underscore, + or -.
-fn find_emoji_end(text string, start int) int {
+pub fn find_emoji_end(text string, start int) int {
 	if start >= text.len {
 		return -1
 	}

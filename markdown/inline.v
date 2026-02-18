@@ -1,28 +1,19 @@
-module gui
+module markdown
 
-import vglyph
-
-// markdown_inline.v handles parsing of inline markdown elements (bold, italic, links, etc.)
+// inline.v handles parsing of inline markdown elements
+// (bold, italic, links, etc.) into style-free MdRun sequences.
 
 const valid_image_exts = ['.png', '.jpg', '.jpeg', '.gif', '.svg', '.bmp', '.webp']
 
-const superscript_features = &vglyph.FontFeatures{
-	opentype_features: [vglyph.FontFeature{'sups', 1}]
-}
-
-const subscript_features = &vglyph.FontFeatures{
-	opentype_features: [vglyph.FontFeature{'subs', 1}]
-}
-
-// parse_inline parses inline markdown elements from a string and appends them to runs.
-fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut runs []RichTextRun, link_defs map[string]string, footnote_defs map[string]string, depth int) {
-	// Limit recursion depth to prevent stack overflow on
-	// malformed input (e.g. '***___'.repeat(200)).
+// parse_inline parses inline markdown elements from a string
+// and appends them to runs. format carries the inherited
+// formatting from enclosing markers (e.g. bold wrapping italic).
+pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs map[string]string, footnote_defs map[string]string, depth int) {
 	if depth >= max_inline_nesting_depth {
 		if text.len > 0 {
-			runs << RichTextRun{
-				text:  text
-				style: base_style
+			runs << MdRun{
+				text:   text
+				format: format
 			}
 		}
 		return
@@ -46,15 +37,15 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				emoji := emoji_lookup(name)
 				if emoji != '' {
 					if current.len > 0 {
-						runs << RichTextRun{
-							text:  current.bytestr()
-							style: base_style
+						runs << MdRun{
+							text:   current.bytestr()
+							format: format
 						}
 						current.clear()
 					}
-					runs << RichTextRun{
-						text:  emoji
-						style: base_style
+					runs << MdRun{
+						text:   emoji
+						format: format
 					}
 					pos = end + 1
 					continue
@@ -64,20 +55,15 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 
 		// Check for inline math $...$
 		if text[pos] == `$` && pos + 1 < text.len && text[pos + 1] != `$` {
-			// Disambiguation: opening $ not preceded by digit or $
 			prev_ok := pos == 0
 				|| (text[pos - 1] != `$` && !(text[pos - 1] >= `0` && text[pos - 1] <= `9`))
-			// Opening $ not followed by space
 			next_ok := text[pos + 1] != ` `
 			if prev_ok && next_ok {
-				// Find closing $ (not preceded by space, not followed by digit)
 				mut end := pos + 2
 				mut found := false
 				for end < text.len {
 					if text[end] == `$` {
-						// Closing $ not preceded by space
 						if text[end - 1] != ` ` {
-							// Closing $ not followed by digit
 							close_ok := end + 1 >= text.len || !(text[end + 1] >= `0`
 								&& text[end + 1] <= `9`)
 							if close_ok {
@@ -90,17 +76,17 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 				}
 				if found && end > pos + 1 {
 					if current.len > 0 {
-						runs << RichTextRun{
-							text:  current.bytestr()
-							style: base_style
+						runs << MdRun{
+							text:   current.bytestr()
+							format: format
 						}
 						current.clear()
 					}
 					latex := text[pos + 1..end]
 					math_id := 'math_${latex.hash()}'
-					runs << RichTextRun{
-						text:       '\uFFFC' // object replacement char
-						style:      base_style
+					runs << MdRun{
+						text:       '\uFFFC'
+						format:     format
 						math_id:    math_id
 						math_latex: latex
 					}
@@ -113,16 +99,16 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		// Check for inline code
 		if text[pos] == `\`` {
 			if current.len > 0 {
-				runs << RichTextRun{
-					text:  current.bytestr()
-					style: base_style
+				runs << MdRun{
+					text:   current.bytestr()
+					format: format
 				}
 				current.clear()
 			}
 			end := find_closing(text, pos + 1, `\``)
 			if end > pos + 1 {
 				code_text := text[pos + 1..end]
-				runs << highlight_inline_code(code_text, md_style)
+				tokenize_inline_code(code_text, mut runs)
 				pos = end + 1
 				continue
 			}
@@ -133,19 +119,14 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			end := find_triple_closing(text, pos + 3, `*`)
 			if end > pos + 3 {
 				if current.len > 0 {
-					runs << RichTextRun{
-						text:  current.bytestr()
-						style: base_style
+					runs << MdRun{
+						text:   current.bytestr()
+						format: format
 					}
 					current.clear()
 				}
-				bi_style := TextStyle{
-					...md_style.bold_italic
-					size:     base_style.size
-					bg_color: base_style.bg_color
-				}
-				parse_inline(text[pos + 3..end], bi_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
+				parse_inline(text[pos + 3..end], .bold_italic, mut runs, link_defs, footnote_defs,
+					depth + 1)
 				pos = end + 3
 				continue
 			}
@@ -156,19 +137,14 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			end := find_double_closing(text, pos + 2, `*`)
 			if end > pos + 2 {
 				if current.len > 0 {
-					runs << RichTextRun{
-						text:  current.bytestr()
-						style: base_style
+					runs << MdRun{
+						text:   current.bytestr()
+						format: format
 					}
 					current.clear()
 				}
-				bold_style := TextStyle{
-					...md_style.bold
-					size:     base_style.size
-					bg_color: base_style.bg_color
-				}
-				parse_inline(text[pos + 2..end], bold_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
+				parse_inline(text[pos + 2..end], .bold, mut runs, link_defs, footnote_defs,
+					depth + 1)
 				pos = end + 2
 				continue
 			}
@@ -177,20 +153,24 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		// Check for strikethrough (~~text~~)
 		if pos + 1 < text.len && text[pos] == `~` && text[pos + 1] == `~` {
 			if current.len > 0 {
-				runs << RichTextRun{
-					text:  current.bytestr()
-					style: base_style
+				runs << MdRun{
+					text:   current.bytestr()
+					format: format
 				}
 				current.clear()
 			}
 			end := find_double_closing(text, pos + 2, `~`)
 			if end > pos + 2 {
-				strike_style := TextStyle{
-					...base_style
-					strikethrough: true
+				// Recurse with strikethrough — inner runs get it
+				mut inner := []MdRun{cap: 4}
+				parse_inline(text[pos + 2..end], format, mut inner, link_defs, footnote_defs,
+					depth + 1)
+				for r in inner {
+					runs << MdRun{
+						...r
+						strikethrough: true
+					}
 				}
-				parse_inline(text[pos + 2..end], strike_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
 				pos = end + 2
 				continue
 			}
@@ -201,18 +181,21 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			end := find_double_closing(text, pos + 2, `=`)
 			if end > pos + 2 {
 				if current.len > 0 {
-					runs << RichTextRun{
-						text:  current.bytestr()
-						style: base_style
+					runs << MdRun{
+						text:   current.bytestr()
+						format: format
 					}
 					current.clear()
 				}
-				hl_style := TextStyle{
-					...base_style
-					bg_color: md_style.highlight_bg
+				mut inner := []MdRun{cap: 4}
+				parse_inline(text[pos + 2..end], format, mut inner, link_defs, footnote_defs,
+					depth + 1)
+				for r in inner {
+					runs << MdRun{
+						...r
+						highlight: true
+					}
 				}
-				parse_inline(text[pos + 2..end], hl_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
 				pos = end + 2
 				continue
 			}
@@ -221,22 +204,23 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 		// Check for subscript (~text~) - single tilde, not ~~
 		if text[pos] == `~` && pos + 1 < text.len && text[pos + 1] != `~` {
 			end := find_closing(text, pos + 1, `~`)
-			// Guard: closing ~ not followed by another ~ (that would be ~~)
 			if end > pos + 1 && (end + 1 >= text.len || text[end + 1] != `~`) {
 				if current.len > 0 {
-					runs << RichTextRun{
-						text:  current.bytestr()
-						style: base_style
+					runs << MdRun{
+						text:   current.bytestr()
+						format: format
 					}
 					current.clear()
 				}
-				sub_style := TextStyle{
-					...base_style
-					size:     base_style.size * 1.2
-					features: subscript_features
+				mut inner := []MdRun{cap: 4}
+				parse_inline(text[pos + 1..end], format, mut inner, link_defs, footnote_defs,
+					depth + 1)
+				for r in inner {
+					runs << MdRun{
+						...r
+						subscript: true
+					}
 				}
-				parse_inline(text[pos + 1..end], sub_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
 				pos = end + 1
 				continue
 			}
@@ -247,19 +231,21 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			end := find_closing(text, pos + 1, `^`)
 			if end > pos + 1 {
 				if current.len > 0 {
-					runs << RichTextRun{
-						text:  current.bytestr()
-						style: base_style
+					runs << MdRun{
+						text:   current.bytestr()
+						format: format
 					}
 					current.clear()
 				}
-				sup_style := TextStyle{
-					...base_style
-					size:     base_style.size * 1.2
-					features: superscript_features
+				mut inner := []MdRun{cap: 4}
+				parse_inline(text[pos + 1..end], format, mut inner, link_defs, footnote_defs,
+					depth + 1)
+				for r in inner {
+					runs << MdRun{
+						...r
+						superscript: true
+					}
 				}
-				parse_inline(text[pos + 1..end], sup_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
 				pos = end + 1
 				continue
 			}
@@ -270,19 +256,14 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			end := find_closing(text, pos + 1, `*`)
 			if end > pos + 1 {
 				if current.len > 0 {
-					runs << RichTextRun{
-						text:  current.bytestr()
-						style: base_style
+					runs << MdRun{
+						text:   current.bytestr()
+						format: format
 					}
 					current.clear()
 				}
-				italic_style := TextStyle{
-					...md_style.italic
-					size:     base_style.size
-					bg_color: base_style.bg_color
-				}
-				parse_inline(text[pos + 1..end], italic_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
+				parse_inline(text[pos + 1..end], .italic, mut runs, link_defs, footnote_defs,
+					depth + 1)
 				pos = end + 1
 				continue
 			}
@@ -293,19 +274,14 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			end := find_triple_closing(text, pos + 3, `_`)
 			if end > pos + 3 {
 				if current.len > 0 {
-					runs << RichTextRun{
-						text:  current.bytestr()
-						style: base_style
+					runs << MdRun{
+						text:   current.bytestr()
+						format: format
 					}
 					current.clear()
 				}
-				bi_style := TextStyle{
-					...md_style.bold_italic
-					size:     base_style.size
-					bg_color: base_style.bg_color
-				}
-				parse_inline(text[pos + 3..end], bi_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
+				parse_inline(text[pos + 3..end], .bold_italic, mut runs, link_defs, footnote_defs,
+					depth + 1)
 				pos = end + 3
 				continue
 			}
@@ -316,19 +292,14 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			end := find_double_closing(text, pos + 2, `_`)
 			if end > pos + 2 {
 				if current.len > 0 {
-					runs << RichTextRun{
-						text:  current.bytestr()
-						style: base_style
+					runs << MdRun{
+						text:   current.bytestr()
+						format: format
 					}
 					current.clear()
 				}
-				bold_style := TextStyle{
-					...md_style.bold
-					size:     base_style.size
-					bg_color: base_style.bg_color
-				}
-				parse_inline(text[pos + 2..end], bold_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
+				parse_inline(text[pos + 2..end], .bold, mut runs, link_defs, footnote_defs,
+					depth + 1)
 				pos = end + 2
 				continue
 			}
@@ -339,19 +310,14 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			end := find_closing(text, pos + 1, `_`)
 			if end > pos + 1 {
 				if current.len > 0 {
-					runs << RichTextRun{
-						text:  current.bytestr()
-						style: base_style
+					runs << MdRun{
+						text:   current.bytestr()
+						format: format
 					}
 					current.clear()
 				}
-				italic_style := TextStyle{
-					...md_style.italic
-					size:     base_style.size
-					bg_color: base_style.bg_color
-				}
-				parse_inline(text[pos + 1..end], italic_style, md_style, mut runs, link_defs,
-					footnote_defs, depth + 1)
+				parse_inline(text[pos + 1..end], .italic, mut runs, link_defs, footnote_defs,
+					depth + 1)
 				pos = end + 1
 				continue
 			}
@@ -362,13 +328,12 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			end := find_closing(text, pos + 1, `>`)
 			if end > pos + 1 {
 				inner := text[pos + 1..end]
-				// Check if it's a URL or email
 				if inner.starts_with('http://') || inner.starts_with('https://')
 					|| inner.contains('@') {
 					if current.len > 0 {
-						runs << RichTextRun{
-							text:  current.bytestr()
-							style: base_style
+						runs << MdRun{
+							text:   current.bytestr()
+							format: format
 						}
 						current.clear()
 					}
@@ -377,11 +342,16 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 					} else {
 						inner
 					}
-					runs << make_link_run(inner, link_url, base_style, md_style.link_color)
+					safe_link := if is_safe_url(link_url) { link_url } else { '' }
+					runs << MdRun{
+						text:      inner
+						format:    format
+						link:      safe_link
+						underline: safe_link != ''
+					}
 					pos = end + 1
 					continue
 				}
-				// Strip HTML tags (not autolinks)
 				if is_html_tag(inner) {
 					pos = end + 1
 					continue
@@ -389,29 +359,26 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			}
 		}
 
-		// Check for links [text](url) or reference links [text][ref], [text][], [text]
+		// Check for links [text](url) or reference links
 		if text[pos] == `[` {
-			// Footnote: [^id] -> styled marker with tooltip
+			// Footnote: [^id]
 			if pos + 1 < text.len && text[pos + 1] == `^` {
-				// Find closing ]
 				fn_end := find_closing(text, pos + 2, `]`)
 				if fn_end > pos + 2 {
 					footnote_id := text[pos + 2..fn_end]
 					if content := footnote_defs[footnote_id] {
-						// Flush current text
 						if current.len > 0 {
-							runs << RichTextRun{
-								text:  current.bytestr()
-								style: base_style
+							runs << MdRun{
+								text:   current.bytestr()
+								format: format
 							}
 							current.clear()
 						}
-						runs << rich_footnote(footnote_id, content, base_style)
+						runs << md_footnote(footnote_id, content, format)
 						pos = fn_end + 1
 						continue
 					}
 				}
-				// Undefined footnote - treat as literal
 				current << text[pos]
 				pos++
 				continue
@@ -419,63 +386,61 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 			bracket_end := find_closing(text, pos + 1, `]`)
 			if bracket_end > pos + 1 {
 				link_text := text[pos + 1..bracket_end]
-				// Check for standard link [text](url)
+				// Standard link [text](url)
 				if bracket_end + 1 < text.len && text[bracket_end + 1] == `(` {
 					paren_end := find_closing(text, bracket_end + 2, `)`)
 					if paren_end > bracket_end + 2 {
 						if current.len > 0 {
-							runs << RichTextRun{
-								text:  current.bytestr()
-								style: base_style
+							runs << MdRun{
+								text:   current.bytestr()
+								format: format
 							}
 							current.clear()
 						}
 						link_url := text[bracket_end + 2..paren_end]
-						runs << make_link_run(link_text, link_url, base_style, md_style.link_color)
+						runs << make_md_link(link_text, link_url, format)
 						pos = paren_end + 1
 						continue
 					}
 				}
-				// Check for reference link [text][ref] or [text][]
+				// Reference link [text][ref] or [text][]
 				link_text_lower := link_text.to_lower()
 				if bracket_end + 1 < text.len && text[bracket_end + 1] == `[` {
 					ref_end := find_closing(text, bracket_end + 2, `]`)
 					if ref_end >= bracket_end + 2 {
 						ref_id := if ref_end == bracket_end + 2 {
-							link_text_lower // implicit [text][]
+							link_text_lower
 						} else {
 							text[bracket_end + 2..ref_end].to_lower()
 						}
 						if url := link_defs[ref_id] {
 							if current.len > 0 {
-								runs << RichTextRun{
-									text:  current.bytestr()
-									style: base_style
+								runs << MdRun{
+									text:   current.bytestr()
+									format: format
 								}
 								current.clear()
 							}
-							runs << make_link_run(link_text, url, base_style, md_style.link_color)
+							runs << make_md_link(link_text, url, format)
 							pos = ref_end + 1
 							continue
 						}
 					}
 				}
-				// Check for shortcut reference link [text]
-				shortcut_id := link_text_lower
-				if url := link_defs[shortcut_id] {
+				// Shortcut reference link [text]
+				if url := link_defs[link_text_lower] {
 					if current.len > 0 {
-						runs << RichTextRun{
-							text:  current.bytestr()
-							style: base_style
+						runs << MdRun{
+							text:   current.bytestr()
+							format: format
 						}
 						current.clear()
 					}
-					runs << make_link_run(link_text, url, base_style, md_style.link_color)
+					runs << make_md_link(link_text, url, format)
 					pos = bracket_end + 1
 					continue
 				}
 			}
-			// Fallthrough: treat [ as literal
 			current << text[pos]
 			pos++
 			continue
@@ -486,44 +451,66 @@ fn parse_inline(text string, base_style TextStyle, md_style MarkdownStyle, mut r
 	}
 
 	if current.len > 0 {
-		runs << RichTextRun{
-			text:  current.bytestr()
-			style: base_style
+		runs << MdRun{
+			text:   current.bytestr()
+			format: format
 		}
 	}
 }
 
-// make_link_run creates a styled link run with URL safety check.
-fn make_link_run(link_text string, url string, base_style TextStyle, link_color Color) RichTextRun {
+// make_md_link creates a link run with URL safety check.
+fn make_md_link(link_text string, url string, format MdFormat) MdRun {
 	safe_link := if is_safe_url(url) { url } else { '' }
-	return RichTextRun{
-		text:  link_text
-		link:  safe_link
-		style: TextStyle{
-			...base_style
-			color:     if safe_link != '' { link_color } else { base_style.color }
-			underline: safe_link != ''
+	return MdRun{
+		text:      link_text
+		format:    format
+		link:      safe_link
+		underline: safe_link != ''
+	}
+}
+
+// md_footnote creates a footnote marker run.
+fn md_footnote(id string, content string, format MdFormat) MdRun {
+	return MdRun{
+		text:    '\xE2\x80\x89[${id}]' // thin space
+		format:  format
+		tooltip: content
+	}
+}
+
+// tokenize_inline_code tokenizes inline code and produces
+// MdRun entries with code_token set.
+fn tokenize_inline_code(code string, mut runs []MdRun) {
+	tokens := tokenize_code(code, .generic, max_inline_code_highlight_bytes)
+	if tokens.len == 0 {
+		runs << MdRun{
+			text:   code
+			format: .code
+		}
+		return
+	}
+	for token in tokens {
+		runs << MdRun{
+			text:       code[token.start..token.end]
+			format:     .code
+			code_token: token.kind
 		}
 	}
 }
 
 // find_closing finds the position of a closing character.
-// For ] and ) it skips backtick spans to handle links like [`code`](url).
-// Skips escaped characters (e.g. \]).
-fn find_closing(text string, start int, ch u8) int {
+// For ] and ) it skips backtick spans.
+pub fn find_closing(text string, start int, ch u8) int {
 	skip_backticks := ch == `]` || ch == `)`
 	mut i := start
 	for i < text.len {
-		// Skip escaped character
 		if text[i] == `\\` && i + 1 < text.len {
 			i += 2
 			continue
 		}
-		// Skip backtick spans when searching for link delimiters
 		if skip_backticks && text[i] == `\`` {
 			i++
 			for i < text.len && text[i] != `\`` {
-				// Skip escaped backtick inside span
 				if text[i] == `\\` && i + 1 < text.len {
 					i += 2
 					continue
@@ -531,7 +518,7 @@ fn find_closing(text string, start int, ch u8) int {
 				i++
 			}
 			if i < text.len {
-				i++ // skip closing backtick
+				i++
 			}
 			continue
 		}
@@ -543,8 +530,8 @@ fn find_closing(text string, start int, ch u8) int {
 	return -1
 }
 
-// find_double_closing finds the position of double closing characters (e.g., **).
-fn find_double_closing(text string, start int, ch u8) int {
+// find_double_closing finds position of double closing chars.
+pub fn find_double_closing(text string, start int, ch u8) int {
 	mut i := start
 	for i < text.len - 1 {
 		if text[i] == `\\` && i + 1 < text.len {
@@ -559,8 +546,8 @@ fn find_double_closing(text string, start int, ch u8) int {
 	return -1
 }
 
-// find_triple_closing finds the position of triple closing characters (e.g., ***).
-fn find_triple_closing(text string, start int, ch u8) int {
+// find_triple_closing finds position of triple closing chars.
+pub fn find_triple_closing(text string, start int, ch u8) int {
 	mut i := start
 	for i < text.len - 2 {
 		if text[i] == `\\` && i + 1 < text.len {
@@ -575,8 +562,26 @@ fn find_triple_closing(text string, start int, ch u8) int {
 	return -1
 }
 
-// parse_image_src parses "path =WxH" or "path" into (path, width, height).
-fn parse_image_src(raw string) (string, f32, f32) {
+// trim_trailing_breaks removes excess trailing newline runs,
+// keeping at most one.
+pub fn trim_trailing_breaks(mut runs []MdRun) {
+	mut count := 0
+	for i := runs.len - 1; i >= 0; i-- {
+		if runs[i].text == '\n' {
+			count++
+		} else {
+			break
+		}
+	}
+	for count > 1 {
+		runs.pop()
+		count--
+	}
+}
+
+// parse_image_src parses "path =WxH" or "path" into
+// (path, width, height).
+pub fn parse_image_src(raw string) (string, f32, f32) {
 	trimmed := raw.trim_space()
 	idx := trimmed.last_index(' =') or { return trimmed, 0, 0 }
 
@@ -593,7 +598,7 @@ fn parse_image_src(raw string) (string, f32, f32) {
 }
 
 // is_safe_image_path performs basic validation on image paths.
-fn is_safe_image_path(path string) bool {
+pub fn is_safe_image_path(path string) bool {
 	if path.to_lower().replace('%2e', '.').contains('..') {
 		return false
 	}
@@ -601,12 +606,9 @@ fn is_safe_image_path(path string) bool {
 	if p.starts_with('http://') || p.starts_with('https://') {
 		return true
 	}
-	// Blocks: javascript:, vbscript:, data:, file:,
-	// and other unsafe protocols. Use is_safe_url logic.
 	if !is_safe_url(path) {
 		return false
 	}
-	// Basic extension check
 	for ext in valid_image_exts {
 		if p.ends_with(ext) {
 			return true
@@ -615,9 +617,64 @@ fn is_safe_image_path(path string) bool {
 	return false
 }
 
+// is_safe_url checks that a URL does not use dangerous schemes.
+pub fn is_safe_url(url string) bool {
+	lower := decode_percent_prefix(url).to_lower().trim_space()
+	if lower.len == 0 {
+		return false
+	}
+	if lower.starts_with('http://') || lower.starts_with('https://') || lower.starts_with('mailto:') {
+		return true
+	}
+	if !lower.contains('://') && !lower.starts_with('javascript:') && !lower.starts_with('data:')
+		&& !lower.starts_with('vbscript:') && !lower.starts_with('file:')
+		&& !lower.starts_with('blob:') && !lower.starts_with('mhtml:')
+		&& !lower.starts_with('ms-help:') && !lower.starts_with('disk:') {
+		return true
+	}
+	return false
+}
+
+// decode_percent_prefix decodes leading percent-encoded bytes
+// (first 20 chars only — enough for scheme detection).
+fn decode_percent_prefix(s string) string {
+	limit := if s.len < 20 { s.len } else { 20 }
+	mut buf := []u8{cap: limit}
+	mut i := 0
+	for i < limit {
+		if s[i] == `%` && i + 2 < s.len {
+			hi := hex_val(s[i + 1])
+			lo := hex_val(s[i + 2])
+			if hi >= 0 && lo >= 0 {
+				buf << u8(hi * 16 + lo)
+				i += 3
+				continue
+			}
+		}
+		buf << s[i]
+		i++
+	}
+	if limit < s.len {
+		buf << s[limit..].bytes()
+	}
+	return buf.bytestr()
+}
+
+fn hex_val(c u8) int {
+	if c >= `0` && c <= `9` {
+		return int(c - `0`)
+	}
+	if c >= `a` && c <= `f` {
+		return int(c - `a`) + 10
+	}
+	if c >= `A` && c <= `F` {
+		return int(c - `A`) + 10
+	}
+	return -1
+}
+
 // is_html_tag checks if text between < > looks like an HTML tag.
-// Matches: tag, /tag, tag attr, tag/, br/, etc.
-fn is_html_tag(s string) bool {
+pub fn is_html_tag(s string) bool {
 	if s.len == 0 {
 		return false
 	}
@@ -632,20 +689,9 @@ fn is_html_tag(s string) bool {
 	return true
 }
 
-// trim_trailing_breaks removes excess trailing newline runs, keeping at most one.
-fn trim_trailing_breaks(mut runs []RichTextRun) {
-	// Count trailing newlines
-	mut count := 0
-	for i := runs.len - 1; i >= 0; i-- {
-		if runs[i].text == '\n' {
-			count++
-		} else {
-			break
-		}
-	}
-	// Remove all but one
-	for count > 1 {
-		runs.pop()
-		count--
+// md_br creates a line-break MdRun.
+pub fn md_br() MdRun {
+	return MdRun{
+		text: '\n'
 	}
 }

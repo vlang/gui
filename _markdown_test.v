@@ -1,5 +1,7 @@
 module gui
 
+import markdown
+
 // Tests for markdown parser
 
 fn test_markdown_header_h1() {
@@ -263,74 +265,76 @@ fn rich_text_to_string(rt RichText) string {
 	return s
 }
 
+// Helper to extract text from []MdRun for submodule tests
+fn md_runs_to_string(runs []markdown.MdRun) string {
+	mut s := ''
+	for run in runs {
+		s += run.text
+	}
+	return s
+}
+
 fn test_markdown_table_parsing() {
-	style := MarkdownStyle{}
-	parsed := parse_markdown_table('| A | B |\n|---|---|\n| 1 | 2 |'.split('\n'), style,
-		map[string]string{}, map[string]string{}) or { panic('parse failed') }
-	assert rich_text_to_string(parsed.headers[0]) == 'A'
-	assert rich_text_to_string(parsed.headers[1]) == 'B'
+	parsed := markdown.parse_md_table('| A | B |\n|---|---|\n| 1 | 2 |'.split('\n'), map[string]string{},
+		map[string]string{}) or { panic('parse failed') }
+	assert md_runs_to_string(parsed.headers[0]) == 'A'
+	assert md_runs_to_string(parsed.headers[1]) == 'B'
 	assert parsed.rows.len == 1
-	assert rich_text_to_string(parsed.rows[0][0]) == '1'
-	assert rich_text_to_string(parsed.rows[0][1]) == '2'
+	assert md_runs_to_string(parsed.rows[0][0]) == '1'
+	assert md_runs_to_string(parsed.rows[0][1]) == '2'
 }
 
 fn test_markdown_table_alignments() {
-	style := MarkdownStyle{}
-	parsed := parse_markdown_table('| L | C | R |\n|:---|:---:|---:|\n| a | b | c |'.split('\n'),
-		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
+	parsed := markdown.parse_md_table('| L | C | R |\n|:---|:---:|---:|\n| a | b | c |'.split('\n'),
+		map[string]string{}, map[string]string{}) or { panic('parse failed') }
 	assert parsed.alignments.len == 3
 	assert parsed.alignments[0] == .start
 	assert parsed.alignments[1] == .center
-	assert parsed.alignments[2] == .end
+	assert parsed.alignments[2] == .end_
 }
 
 fn test_markdown_table_no_outer_pipes() {
-	style := MarkdownStyle{}
-	parsed := parse_markdown_table('A | B\n---|---\n1 | 2'.split('\n'), style, map[string]string{},
+	parsed := markdown.parse_md_table('A | B\n---|---\n1 | 2'.split('\n'), map[string]string{},
 		map[string]string{}) or { panic('parse failed') }
-	assert rich_text_to_string(parsed.headers[0]) == 'A'
-	assert rich_text_to_string(parsed.headers[1]) == 'B'
+	assert md_runs_to_string(parsed.headers[0]) == 'A'
+	assert md_runs_to_string(parsed.headers[1]) == 'B'
 	assert parsed.rows.len == 1
-	assert rich_text_to_string(parsed.rows[0][0]) == '1'
-	assert rich_text_to_string(parsed.rows[0][1]) == '2'
+	assert md_runs_to_string(parsed.rows[0][0]) == '1'
+	assert md_runs_to_string(parsed.rows[0][1]) == '2'
 }
 
 fn test_markdown_table_empty_cells() {
-	style := MarkdownStyle{}
-	parsed := parse_markdown_table('| A | B | C |\n|---|---|---|\n| 1 |  | 3 |'.split('\n'),
-		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
-	assert rich_text_to_string(parsed.rows[0][0]) == '1'
-	assert rich_text_to_string(parsed.rows[0][1]) == ''
-	assert rich_text_to_string(parsed.rows[0][2]) == '3'
+	parsed := markdown.parse_md_table('| A | B | C |\n|---|---|---|\n| 1 |  | 3 |'.split('\n'),
+		map[string]string{}, map[string]string{}) or { panic('parse failed') }
+	assert md_runs_to_string(parsed.rows[0][0]) == '1'
+	assert md_runs_to_string(parsed.rows[0][1]) == ''
+	assert md_runs_to_string(parsed.rows[0][2]) == '3'
 }
 
 fn test_markdown_table_inline_formatting() {
-	style := MarkdownStyle{}
-	parsed := parse_markdown_table('| **bold** | _italic_ | `code` |\n|---|---|---|\n| [link](url) | a | b |'.split('\n'),
-		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
+	parsed := markdown.parse_md_table('| **bold** | _italic_ | `code` |\n|---|---|---|\n| [link](url) | a | b |'.split('\n'),
+		map[string]string{}, map[string]string{}) or { panic('parse failed') }
 	// Headers should have inline formatting parsed
-	assert rich_text_to_string(parsed.headers[0]) == 'bold'
-	assert rich_text_to_string(parsed.headers[1]) == 'italic'
-	assert rich_text_to_string(parsed.headers[2]) == 'code'
-	// Check that bold header has multiple runs (text styling applied)
-	assert parsed.headers[0].runs.len >= 1
+	assert md_runs_to_string(parsed.headers[0]) == 'bold'
+	assert md_runs_to_string(parsed.headers[1]) == 'italic'
+	assert md_runs_to_string(parsed.headers[2]) == 'code'
+	// Check that bold header has runs
+	assert parsed.headers[0].len >= 1
 	// Cell with link
-	assert rich_text_to_string(parsed.rows[0][0]) == 'link'
-	assert parsed.rows[0][0].runs[0].link == 'url'
+	assert md_runs_to_string(parsed.rows[0][0]) == 'link'
+	assert parsed.rows[0][0][0].link == 'url'
 }
 
 fn test_markdown_table_invalid_separator() {
-	style := MarkdownStyle{}
 	// Separator without dashes should fail
-	result := parse_markdown_table('| A | B |\n|:::|:::|\n| 1 | 2 |'.split('\n'), style,
-		map[string]string{}, map[string]string{})
+	result := markdown.parse_md_table('| A | B |\n|:::|:::|\n| 1 | 2 |'.split('\n'), map[string]string{},
+		map[string]string{})
 	assert result == none
 }
 
 fn test_markdown_table_no_separator() {
-	style := MarkdownStyle{}
 	// No separator row should fail
-	result := parse_markdown_table('| A | B |\n| 1 | 2 |'.split('\n'), style, map[string]string{},
+	result := markdown.parse_md_table('| A | B |\n| 1 | 2 |'.split('\n'), map[string]string{},
 		map[string]string{})
 	assert result == none
 }
@@ -684,33 +688,33 @@ fn test_code_block_state_detection() {
 code
 ```
 more text'
-	scanner := new_markdown_scanner(source)
+	scanner := markdown.new_scanner(source)
 	// At index 0: not in code block
-	state0 := detect_code_block_state(scanner, 0)
+	state0 := markdown.detect_code_block_state(scanner, 0)
 	assert state0.in_code_block == false
 
 	// At index 2 (inside code block)
-	state2 := detect_code_block_state(scanner, 2)
+	state2 := markdown.detect_code_block_state(scanner, 2)
 	assert state2.in_code_block == true
 	assert state2.fence_char == `\``
 
 	// At index 4 (after code block closed)
-	state4 := detect_code_block_state(scanner, 4)
+	state4 := markdown.detect_code_block_state(scanner, 4)
 	assert state4.in_code_block == false
 }
 
 fn test_code_block_state_tilde() {
 	source := '~~~
 code'
-	scanner := new_markdown_scanner(source)
-	state := detect_code_block_state(scanner, 2)
+	scanner := markdown.new_scanner(source)
+	state := markdown.detect_code_block_state(scanner, 2)
 	assert state.in_code_block == true
 	assert state.fence_char == `~`
 }
 
 fn test_parse_code_fence() {
 	// Backtick fence
-	if fence := parse_code_fence('```') {
+	if fence := markdown.parse_code_fence('```') {
 		assert fence.char == `\``
 		assert fence.count == 3
 	} else {
@@ -718,7 +722,7 @@ fn test_parse_code_fence() {
 	}
 
 	// Tilde fence
-	if fence := parse_code_fence('~~~python') {
+	if fence := markdown.parse_code_fence('~~~python') {
 		assert fence.char == `~`
 		assert fence.count == 3
 	} else {
@@ -726,7 +730,7 @@ fn test_parse_code_fence() {
 	}
 
 	// Longer fence
-	if fence := parse_code_fence('`````') {
+	if fence := markdown.parse_code_fence('`````') {
 		assert fence.char == `\``
 		assert fence.count == 5
 	} else {
@@ -734,8 +738,8 @@ fn test_parse_code_fence() {
 	}
 
 	// Not a fence
-	assert parse_code_fence('hello') == none
-	assert parse_code_fence('``') == none
+	assert markdown.parse_code_fence('hello') == none
+	assert markdown.parse_code_fence('``') == none
 }
 
 fn test_bounded_blockquote() {
@@ -777,31 +781,32 @@ code without closing'
 
 fn test_markdown_highlight_inline_limit_fallback() {
 	style := MarkdownStyle{}
-	code := 'x'.repeat(max_inline_code_highlight_bytes + 10)
-	runs := highlight_inline_code(code, style)
-	assert runs.len == 1
-	assert runs[0].text == code
-	assert runs[0].style.color == style.code.color
+	code := 'x'.repeat(markdown.max_inline_code_highlight_bytes + 10)
+	// Inline code exceeding limit falls back to single unstyled run
+	rt := markdown_to_rich_text('`${code}`', style)
+	code_runs := rt.runs.filter(it.text == code)
+	assert code_runs.len == 1
+	assert code_runs[0].style.color == style.code.color
 }
 
 fn test_markdown_highlight_block_depth_limit_no_hang() {
-	style := MarkdownStyle{}
-	openers := '/*'.repeat(max_highlight_comment_depth + 1)
-	closers := '*/'.repeat(max_highlight_comment_depth + 1)
+	openers := '/*'.repeat(markdown.max_highlight_comment_depth + 1)
+	closers := '*/'.repeat(markdown.max_highlight_comment_depth + 1)
 	code := '${openers}x${closers}'
-	runs := highlight_fenced_code(code, 'v', style)
-	assert rich_text_to_string(RichText{
-		runs: runs
-	}) == code
+	source := '```v\n${code}\n```'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	code_blocks := blocks.filter(it.is_code)
+	assert code_blocks.len == 1
+	assert rich_text_to_string(code_blocks[0].content) == code
 }
 
 fn test_markdown_highlight_string_scan_limit_no_hang() {
-	style := MarkdownStyle{}
-	code := '"' + 'a'.repeat(max_highlight_string_scan_bytes + 20)
-	runs := highlight_fenced_code(code, 'js', style)
-	assert rich_text_to_string(RichText{
-		runs: runs
-	}) == code
+	code := '"' + 'a'.repeat(markdown.max_highlight_string_scan_bytes + 20)
+	source := '```js\n${code}\n```'
+	blocks := markdown_to_blocks(source, MarkdownStyle{})
+	code_blocks := blocks.filter(it.is_code)
+	assert code_blocks.len == 1
+	assert rich_text_to_string(code_blocks[0].content) == code
 }
 
 // Math tests
@@ -888,17 +893,16 @@ fn test_markdown_escaped_closing_delimiter() {
 }
 
 fn test_markdown_table_escaped_pipe() {
-	style := MarkdownStyle{}
-	parsed := parse_markdown_table(r'| a \| b | c |
+	parsed := markdown.parse_md_table(r'| a \| b | c |
 |---|---|
 | d \| e | f |'.split('\n'),
-		style, map[string]string{}, map[string]string{}) or { panic('parse failed') }
+		map[string]string{}, map[string]string{}) or { panic('parse failed') }
 	// Should have 2 columns, not 3
 	assert parsed.headers.len == 2
-	assert rich_text_to_string(parsed.headers[0]) == 'a | b'
-	assert rich_text_to_string(parsed.headers[1]) == 'c'
-	assert rich_text_to_string(parsed.rows[0][0]) == 'd | e'
-	assert rich_text_to_string(parsed.rows[0][1]) == 'f'
+	assert md_runs_to_string(parsed.headers[0]) == 'a | b'
+	assert md_runs_to_string(parsed.headers[1]) == 'c'
+	assert md_runs_to_string(parsed.rows[0][0]) == 'd | e'
+	assert md_runs_to_string(parsed.rows[0][1]) == 'f'
 }
 
 fn test_markdown_blockquote_depth_first_line() {
@@ -934,17 +938,17 @@ fn test_markdown_ordered_list_paren() {
 
 fn test_markdown_find_closing_trailing_backslash() {
 	// Backslash as last char should not cause out-of-bounds
-	pos := find_closing(r'abc\', 0, `x`)
+	pos := markdown.find_closing(r'abc\', 0, `x`)
 	assert pos == -1
 }
 
 fn test_markdown_find_double_closing_trailing_backslash() {
-	pos := find_double_closing(r'abc\', 0, `*`)
+	pos := markdown.find_double_closing(r'abc\', 0, `*`)
 	assert pos == -1
 }
 
 fn test_markdown_find_triple_closing_trailing_backslash() {
-	pos := find_triple_closing(r'abc\', 0, `*`)
+	pos := markdown.find_triple_closing(r'abc\', 0, `*`)
 	assert pos == -1
 }
 
@@ -963,28 +967,28 @@ fn test_sanitize_latex_nested_bypass() {
 // S2: is_safe_url percent-encoded protocol bypass
 fn test_is_safe_url_percent_encoded_javascript() {
 	// %6A = 'j' → javascript:
-	assert is_safe_url('%6Aavascript:alert(1)') == false
+	assert markdown.is_safe_url('%6Aavascript:alert(1)') == false
 	// Mixed case + percent encoding
-	assert is_safe_url('%6a%61vascript:alert(1)') == false
+	assert markdown.is_safe_url('%6a%61vascript:alert(1)') == false
 	// Percent-encoded data:
-	assert is_safe_url('%64ata:text/html,<script>') == false
+	assert markdown.is_safe_url('%64ata:text/html,<script>') == false
 	// Normal safe URLs still work
-	assert is_safe_url('https://example.com') == true
-	assert is_safe_url('mailto:a@b.com') == true
-	assert is_safe_url('./relative') == true
+	assert markdown.is_safe_url('https://example.com') == true
+	assert markdown.is_safe_url('mailto:a@b.com') == true
+	assert markdown.is_safe_url('./relative') == true
 }
 
 // S3: empty link definition key
 fn test_empty_link_definition_rejected() {
 	// "[]: url" should not register as link def
-	scanner := new_markdown_scanner('[]: http://evil.com')
-	link_defs, _, _ := collect_metadata(scanner)
+	scanner := markdown.new_scanner('[]: http://evil.com')
+	link_defs, _, _ := markdown.collect_metadata(scanner)
 	assert link_defs.len == 0
 }
 
 fn test_is_link_definition_empty_key() {
-	assert is_link_definition('[]: http://example.com') == false
-	assert is_link_definition('[a]: http://example.com') == true
+	assert markdown.is_link_definition('[]: http://example.com') == false
+	assert markdown.is_link_definition('[a]: http://example.com') == true
 }
 
 // Table column limit
@@ -999,13 +1003,12 @@ fn test_table_column_limit() {
 		row << '${i}'
 	}
 	lines := [hdr.join('|'), sep.join('|'), row.join('|')]
-	style := MarkdownStyle{}
-	parsed := parse_markdown_table(lines, style, map[string]string{}, map[string]string{}) or {
+	parsed := markdown.parse_md_table(lines, map[string]string{}, map[string]string{}) or {
 		// Rejected due to column limit — acceptable
 		return
 	}
 	// If parsed, headers must be capped
-	assert parsed.headers.len <= max_table_columns
+	assert parsed.headers.len <= markdown.max_table_columns
 }
 
 // Highlight tests
@@ -1089,10 +1092,10 @@ fn test_markdown_indented_code_after_list() {
 // Heading anchor tests
 
 fn test_markdown_heading_slug() {
-	assert heading_slug('Hello World') == 'hello-world'
-	assert heading_slug('API Reference') == 'api-reference'
-	assert heading_slug('C++ & Rust!') == 'c-rust'
-	assert heading_slug('  spaces  ') == 'spaces'
+	assert markdown.heading_slug('Hello World') == 'hello-world'
+	assert markdown.heading_slug('API Reference') == 'api-reference'
+	assert markdown.heading_slug('C++ & Rust!') == 'c-rust'
+	assert markdown.heading_slug('  spaces  ') == 'spaces'
 }
 
 fn test_markdown_heading_anchor_set() {

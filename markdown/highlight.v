@@ -1,55 +1,20 @@
-module gui
+module markdown
 
-// Limits for code highlighting. On cap breach, fall back to plain code style.
-const max_code_block_highlight_bytes = 131072
-const max_inline_code_highlight_bytes = 2048
+// highlight.v provides syntax tokenization for code blocks.
+// Returns token spans only — palette application is done by
+// the gui styling bridge.
+
+// Limits for code highlighting.
+pub const max_code_block_highlight_bytes = 131072
+pub const max_inline_code_highlight_bytes = 2048
 const max_highlight_tokens_per_block = 16384
 const max_highlight_token_bytes = 4096
-const max_highlight_comment_depth = 16
-const max_highlight_string_scan_bytes = 32768
+pub const max_highlight_comment_depth = 16
+pub const max_highlight_string_scan_bytes = 32768
 const max_highlight_identifier_bytes = 256
 const max_highlight_number_bytes = 128
 
-enum MarkdownCodeTokenKind {
-	plain
-	keyword
-	string
-	number
-	comment
-	operator
-}
-
-enum MarkdownCodeLanguage {
-	generic
-	vlang
-	javascript
-	typescript
-	python
-	json
-	golang
-	rust
-	c_lang
-	shell
-	html
-}
-
-struct MarkdownCodePalette {
-	base     TextStyle
-	keyword  TextStyle
-	string   TextStyle
-	number   TextStyle
-	comment  TextStyle
-	operator TextStyle
-}
-
-struct MarkdownCodeToken {
-	kind MarkdownCodeTokenKind
-mut:
-	start int
-	end   int
-}
-
-fn normalize_markdown_code_language_hint(language string) string {
+pub fn normalize_language_hint(language string) string {
 	mut lower := language.trim_space().to_lower()
 	if lower.len == 0 {
 		return ''
@@ -79,8 +44,8 @@ fn normalize_markdown_code_language_hint(language string) string {
 	}
 }
 
-fn markdown_code_language_from_hint(language string) MarkdownCodeLanguage {
-	match normalize_markdown_code_language_hint(language) {
+pub fn language_from_hint(language string) MdCodeLanguage {
+	match normalize_language_hint(language) {
 		'v' { return .vlang }
 		'js' { return .javascript }
 		'ts' { return .typescript }
@@ -95,101 +60,54 @@ fn markdown_code_language_from_hint(language string) MarkdownCodeLanguage {
 	}
 }
 
-fn highlight_inline_code(code string, style MarkdownStyle) []RichTextRun {
-	return highlight_code_runs(code, .generic, style, max_inline_code_highlight_bytes)
-}
-
-fn highlight_fenced_code(code string, language string, style MarkdownStyle) []RichTextRun {
-	lang_hint := normalize_markdown_code_language_hint(language)
-	if lang_hint in ['mermaid', 'math'] {
-		return markdown_plain_code_runs(code, style.code)
-	}
-	lang := markdown_code_language_from_hint(language)
-	return highlight_code_runs(code, lang, style, max_code_block_highlight_bytes)
-}
-
-fn markdown_plain_code_runs(code string, style TextStyle) []RichTextRun {
-	return [
-		RichTextRun{
-			text:  code
-			style: style
-		},
-	]
-}
-
-fn markdown_highlight_palette(style MarkdownStyle) MarkdownCodePalette {
-	return MarkdownCodePalette{
-		base:     style.code
-		keyword:  TextStyle{
-			...style.code
-			color: style.code_keyword_color
-		}
-		string:   TextStyle{
-			...style.code
-			color: style.code_string_color
-		}
-		number:   TextStyle{
-			...style.code
-			color: style.code_number_color
-		}
-		comment:  TextStyle{
-			...style.code
-			color: style.code_comment_color
-		}
-		operator: TextStyle{
-			...style.code
-			color: style.code_operator_color
-		}
-	}
-}
-
-fn highlight_code_runs(code string, lang MarkdownCodeLanguage, style MarkdownStyle, max_bytes int) []RichTextRun {
-	if code.len == 0 {
-		return []RichTextRun{}
-	}
-	if code.len > max_bytes {
-		return markdown_plain_code_runs(code, style.code)
+// tokenize_code tokenizes source code and returns token spans.
+// Returns empty slice if code exceeds max_bytes.
+pub fn tokenize_code(code string, lang MdCodeLanguage, max_bytes int) []MdCodeToken {
+	if code.len == 0 || code.len > max_bytes {
+		return []MdCodeToken{}
 	}
 
-	palette := markdown_highlight_palette(style)
-	mut tokens := []MarkdownCodeToken{cap: 128}
+	mut tokens := []MdCodeToken{cap: 128}
 	mut pos := 0
 	for pos < code.len {
 		if tokens.len >= max_highlight_tokens_per_block {
-			return markdown_fallback_with_tail(tokens, code, pos, palette)
+			append_tail_token(mut tokens, code, pos)
+			return tokens
 		}
 
 		start_pos := pos
 		ch := code[pos]
 
-		if is_markdown_code_whitespace(ch) {
+		if is_code_whitespace(ch) {
 			mut end := pos + 1
-			for end < code.len && is_markdown_code_whitespace(code[end]) {
+			for end < code.len && is_code_whitespace(code[end]) {
 				if end - pos >= max_highlight_token_bytes {
-					return markdown_fallback_with_tail(tokens, code, pos, palette)
+					append_tail_token(mut tokens, code, pos)
+					return tokens
 				}
 				end++
 			}
-			markdown_append_token(mut tokens, .plain, pos, end)
+			append_token(mut tokens, .plain, pos, end)
 			pos = end
-		} else if markdown_has_line_comment_start(code, pos, lang) {
-			mut end := pos + markdown_line_comment_prefix_len(code, pos, lang)
+		} else if has_line_comment_start(code, pos, lang) {
+			mut end := pos + line_comment_prefix_len(code, pos, lang)
 			for end < code.len && code[end] != `\n` {
 				if end - pos >= max_highlight_token_bytes {
-					return markdown_fallback_with_tail(tokens, code, pos, palette)
+					append_tail_token(mut tokens, code, pos)
+					return tokens
 				}
 				end++
 			}
-			markdown_append_token(mut tokens, .comment, pos, end)
+			append_token(mut tokens, .comment, pos, end)
 			pos = end
-		} else if markdown_has_block_comment_start(code, pos, lang) {
+		} else if has_block_comment_start(code, pos, lang) {
 			if lang == .html {
-				// HTML <!-- --> comment
 				mut end := pos + 4
 				for end + 2 < code.len {
 					if end - pos >= max_highlight_string_scan_bytes
 						|| end - pos >= max_highlight_token_bytes {
-						return markdown_fallback_with_tail(tokens, code, pos, palette)
+						append_tail_token(mut tokens, code, pos)
+						return tokens
 					}
 					if code[end] == `-` && code[end + 1] == `-` && code[end + 2] == `>` {
 						end += 3
@@ -200,22 +118,23 @@ fn highlight_code_runs(code string, lang MarkdownCodeLanguage, style MarkdownSty
 				if end > code.len {
 					end = code.len
 				}
-				markdown_append_token(mut tokens, .comment, pos, end)
+				append_token(mut tokens, .comment, pos, end)
 				pos = end
 			} else {
-				// /* */ style block comment
 				mut end := pos + 2
 				mut depth := 1
 				for end < code.len {
 					if end - pos >= max_highlight_string_scan_bytes
 						|| end - pos >= max_highlight_token_bytes {
-						return markdown_fallback_with_tail(tokens, code, pos, palette)
+						append_tail_token(mut tokens, code, pos)
+						return tokens
 					}
-					if markdown_block_comments_nested(lang) && end + 1 < code.len
-						&& code[end] == `/` && code[end + 1] == `*` {
+					if block_comments_nested(lang) && end + 1 < code.len && code[end] == `/`
+						&& code[end + 1] == `*` {
 						depth++
 						if depth > max_highlight_comment_depth {
-							return markdown_fallback_with_tail(tokens, code, pos, palette)
+							append_tail_token(mut tokens, code, pos)
+							return tokens
 						}
 						end += 2
 						continue
@@ -233,96 +152,71 @@ fn highlight_code_runs(code string, lang MarkdownCodeLanguage, style MarkdownSty
 				if end > code.len {
 					end = code.len
 				}
-				markdown_append_token(mut tokens, .comment, pos, end)
+				append_token(mut tokens, .comment, pos, end)
 				pos = end
 			}
-		} else if markdown_is_string_delim(ch, lang) {
-			end, ok := markdown_scan_string(code, pos, lang)
+		} else if is_string_delim(ch, lang) {
+			end, ok := scan_string(code, pos, lang)
 			if !ok {
-				return markdown_fallback_with_tail(tokens, code, pos, palette)
+				append_tail_token(mut tokens, code, pos)
+				return tokens
 			}
-			markdown_append_token(mut tokens, .string, pos, end)
+			append_token(mut tokens, .string_, pos, end)
 			pos = end
-		} else if markdown_is_number_start(code, pos) {
-			end, ok := markdown_scan_number(code, pos)
+		} else if is_number_start(code, pos) {
+			end, ok := scan_number(code, pos)
 			if !ok {
-				return markdown_fallback_with_tail(tokens, code, pos, palette)
+				append_tail_token(mut tokens, code, pos)
+				return tokens
 			}
-			markdown_append_token(mut tokens, .number, pos, end)
+			append_token(mut tokens, .number, pos, end)
 			pos = end
-		} else if markdown_is_identifier_start(ch, lang) {
-			end, ok := markdown_scan_identifier(code, pos, lang)
+		} else if is_identifier_start(ch, lang) {
+			end, ok := scan_identifier(code, pos, lang)
 			if !ok {
-				return markdown_fallback_with_tail(tokens, code, pos, palette)
+				append_tail_token(mut tokens, code, pos)
+				return tokens
 			}
 			ident := code[pos..end]
-			token_kind := if markdown_is_keyword(ident, lang) {
-				MarkdownCodeTokenKind.keyword
+			token_kind := if is_keyword(ident, lang) {
+				MdCodeTokenKind.keyword
 			} else {
-				MarkdownCodeTokenKind.plain
+				MdCodeTokenKind.plain
 			}
-			markdown_append_token(mut tokens, token_kind, pos, end)
+			append_token(mut tokens, token_kind, pos, end)
 			pos = end
-		} else if markdown_is_operator_char(ch) {
+		} else if is_operator_char(ch) {
 			mut end := pos + 1
-			for end < code.len && markdown_is_operator_char(code[end]) {
+			for end < code.len && is_operator_char(code[end]) {
 				if end - pos >= max_highlight_token_bytes {
-					return markdown_fallback_with_tail(tokens, code, pos, palette)
+					append_tail_token(mut tokens, code, pos)
+					return tokens
 				}
 				end++
 			}
-			markdown_append_token(mut tokens, .operator, pos, end)
+			append_token(mut tokens, .operator, pos, end)
 			pos = end
 		} else {
-			markdown_append_token(mut tokens, .plain, pos, pos + 1)
+			append_token(mut tokens, .plain, pos, pos + 1)
 			pos++
 		}
 
-		// Self-synchronization fallback: force forward progress.
 		if pos <= start_pos {
-			markdown_append_token(mut tokens, .plain, start_pos, start_pos + 1)
+			append_token(mut tokens, .plain, start_pos, start_pos + 1)
 			pos = start_pos + 1
 		}
 	}
 
-	return markdown_tokens_to_runs(tokens, code, palette)
+	return tokens
 }
 
-fn markdown_fallback_with_tail(tokens []MarkdownCodeToken, code string, pos int, palette MarkdownCodePalette) []RichTextRun {
-	mut runs := markdown_tokens_to_runs(tokens, code, palette)
+fn append_tail_token(mut tokens []MdCodeToken, code string, pos int) {
 	if pos < code.len {
-		runs << RichTextRun{
-			text:  code[pos..]
-			style: palette.base
-		}
-	}
-	return runs
-}
-
-fn markdown_tokens_to_runs(tokens []MarkdownCodeToken, code string, palette MarkdownCodePalette) []RichTextRun {
-	mut runs := []RichTextRun{cap: tokens.len}
-	for token in tokens {
-		style := markdown_style_for_token(token.kind, palette)
-		runs << RichTextRun{
-			text:  code[token.start..token.end]
-			style: style
-		}
-	}
-	return runs
-}
-
-fn markdown_style_for_token(kind MarkdownCodeTokenKind, palette MarkdownCodePalette) TextStyle {
-	return match kind {
-		.plain { palette.base }
-		.keyword { palette.keyword }
-		.string { palette.string }
-		.number { palette.number }
-		.comment { palette.comment }
-		.operator { palette.operator }
+		append_token(mut tokens, .plain, pos, code.len)
 	}
 }
 
-fn markdown_append_token(mut tokens []MarkdownCodeToken, kind MarkdownCodeTokenKind, start int, end int) {
+fn append_token(mut tokens []MdCodeToken, kind MdCodeTokenKind, start int, end int) {
 	if start == end {
 		return
 	}
@@ -330,25 +224,25 @@ fn markdown_append_token(mut tokens []MarkdownCodeToken, kind MarkdownCodeTokenK
 		tokens[tokens.len - 1].end = end
 		return
 	}
-	tokens << MarkdownCodeToken{
+	tokens << MdCodeToken{
 		kind:  kind
 		start: start
 		end:   end
 	}
 }
 
-fn markdown_is_identifier_start(ch u8, lang MarkdownCodeLanguage) bool {
+fn is_identifier_start(ch u8, lang MdCodeLanguage) bool {
 	if (ch >= `a` && ch <= `z`) || (ch >= `A` && ch <= `Z`) || ch == `_` {
 		return true
 	}
 	if (lang in [.javascript, .typescript] || lang == .generic) && ch == `$` {
 		return true
 	}
-	return lang == .html && ch == `-` // CSS properties like font-size
+	return lang == .html && ch == `-`
 }
 
-fn markdown_is_identifier_continue(ch u8, lang MarkdownCodeLanguage) bool {
-	if markdown_is_identifier_start(ch, lang) {
+fn is_identifier_continue(ch u8, lang MdCodeLanguage) bool {
+	if is_identifier_start(ch, lang) {
 		return true
 	}
 	if ch >= `0` && ch <= `9` {
@@ -357,9 +251,9 @@ fn markdown_is_identifier_continue(ch u8, lang MarkdownCodeLanguage) bool {
 	return lang == .html && ch == `-`
 }
 
-fn markdown_scan_identifier(code string, pos int, lang MarkdownCodeLanguage) (int, bool) {
+fn scan_identifier(code string, pos int, lang MdCodeLanguage) (int, bool) {
 	mut end := pos + 1
-	for end < code.len && markdown_is_identifier_continue(code[end], lang) {
+	for end < code.len && is_identifier_continue(code[end], lang) {
 		if end - pos >= max_highlight_identifier_bytes || end - pos >= max_highlight_token_bytes {
 			return 0, false
 		}
@@ -368,14 +262,14 @@ fn markdown_scan_identifier(code string, pos int, lang MarkdownCodeLanguage) (in
 	return end, true
 }
 
-fn markdown_is_number_start(code string, pos int) bool {
+fn is_number_start(code string, pos int) bool {
 	if code[pos] >= `0` && code[pos] <= `9` {
 		return true
 	}
 	return code[pos] == `.` && pos + 1 < code.len && code[pos + 1] >= `0` && code[pos + 1] <= `9`
 }
 
-fn markdown_scan_number(code string, pos int) (int, bool) {
+fn scan_number(code string, pos int) (int, bool) {
 	mut end := pos
 	mut seen_exp := false
 	for end < code.len {
@@ -407,7 +301,7 @@ fn markdown_scan_number(code string, pos int) (int, bool) {
 	return end, true
 }
 
-fn markdown_is_string_delim(ch u8, lang MarkdownCodeLanguage) bool {
+fn is_string_delim(ch u8, lang MdCodeLanguage) bool {
 	match lang {
 		.json {
 			return ch == `"`
@@ -436,7 +330,7 @@ fn markdown_is_string_delim(ch u8, lang MarkdownCodeLanguage) bool {
 	}
 }
 
-fn markdown_scan_string(code string, pos int, lang MarkdownCodeLanguage) (int, bool) {
+fn scan_string(code string, pos int, lang MdCodeLanguage) (int, bool) {
 	quote := code[pos]
 	if lang == .python && pos + 2 < code.len && code[pos + 1] == quote && code[pos + 2] == quote {
 		mut end := pos + 3
@@ -476,7 +370,7 @@ fn markdown_scan_string(code string, pos int, lang MarkdownCodeLanguage) (int, b
 	return end, true
 }
 
-fn markdown_has_line_comment_start(code string, pos int, lang MarkdownCodeLanguage) bool {
+fn has_line_comment_start(code string, pos int, lang MdCodeLanguage) bool {
 	if pos + 1 < code.len && code[pos] == `/` && code[pos + 1] == `/`
 		&& lang in [.generic, .vlang, .javascript, .typescript, .golang, .rust, .c_lang] {
 		return true
@@ -484,11 +378,10 @@ fn markdown_has_line_comment_start(code string, pos int, lang MarkdownCodeLangua
 	if code[pos] == `#` && lang in [.generic, .python, .shell] {
 		return true
 	}
-	// HTML <!-- handled as block comment
 	return false
 }
 
-fn markdown_line_comment_prefix_len(code string, pos int, lang MarkdownCodeLanguage) int {
+fn line_comment_prefix_len(code string, pos int, lang MdCodeLanguage) int {
 	if pos + 1 < code.len && code[pos] == `/` && code[pos + 1] == `/`
 		&& lang in [.generic, .vlang, .javascript, .typescript, .golang, .rust, .c_lang] {
 		return 2
@@ -496,12 +389,11 @@ fn markdown_line_comment_prefix_len(code string, pos int, lang MarkdownCodeLangu
 	return 1
 }
 
-fn markdown_has_block_comment_start(code string, pos int, lang MarkdownCodeLanguage) bool {
+fn has_block_comment_start(code string, pos int, lang MdCodeLanguage) bool {
 	if pos + 1 < code.len && code[pos] == `/` && code[pos + 1] == `*`
 		&& lang in [.generic, .vlang, .javascript, .typescript, .golang, .rust, .c_lang] {
 		return true
 	}
-	// HTML <!-- comments
 	if pos + 3 < code.len && code[pos] == `<` && code[pos + 1] == `!` && code[pos + 2] == `-`
 		&& code[pos + 3] == `-` && lang == .html {
 		return true
@@ -509,11 +401,11 @@ fn markdown_has_block_comment_start(code string, pos int, lang MarkdownCodeLangu
 	return false
 }
 
-fn markdown_block_comments_nested(lang MarkdownCodeLanguage) bool {
+fn block_comments_nested(lang MdCodeLanguage) bool {
 	return lang == .vlang || lang == .rust || lang == .generic
 }
 
-fn markdown_is_keyword(ident string, lang MarkdownCodeLanguage) bool {
+fn is_keyword(ident string, lang MdCodeLanguage) bool {
 	match lang {
 		.vlang {
 			return ident in ['as', 'asm', 'assert', 'atomic', 'break', 'const', 'continue', 'defer',
@@ -567,7 +459,6 @@ fn markdown_is_keyword(ident string, lang MarkdownCodeLanguage) bool {
 		}
 		.c_lang {
 			return ident in [
-				// C keywords
 				'auto',
 				'break',
 				'case',
@@ -610,7 +501,6 @@ fn markdown_is_keyword(ident string, lang MarkdownCodeLanguage) bool {
 				'false',
 				'NULL',
 				'nullptr',
-				// C++ keywords
 				'class',
 				'namespace',
 				'template',
@@ -645,14 +535,12 @@ fn markdown_is_keyword(ident string, lang MarkdownCodeLanguage) bool {
 				'co_await',
 				'co_return',
 				'co_yield',
-				// Preprocessor
 				'include',
 				'define',
 				'ifdef',
 				'ifndef',
 				'endif',
 				'pragma',
-				// Common stdlib
 				'std',
 				'cout',
 				'cin',
@@ -709,11 +597,11 @@ fn markdown_is_keyword(ident string, lang MarkdownCodeLanguage) bool {
 	}
 }
 
-fn markdown_is_operator_char(ch u8) bool {
+fn is_operator_char(ch u8) bool {
 	return ch in [`+`, `-`, `*`, `/`, `%`, `=`, `&`, `|`, `^`, `!`, `<`, `>`, `?`, `:`, `.`, `,`,
 		`;`, `(`, `)`, `[`, `]`, `{`, `}`, `~`]
 }
 
-fn is_markdown_code_whitespace(ch u8) bool {
+fn is_code_whitespace(ch u8) bool {
 	return ch == ` ` || ch == `\t` || ch == `\n` || ch == `\r`
 }

@@ -1,77 +1,42 @@
-module gui
+module markdown
 
 import strings
 
-// markdown_parser.v implements a markdown parser that converts markdown text to RichText.
-// It orchestrates the parsing process by delegating to block, inline, table, and metadata modules.
+// parser.v implements a markdown parser that converts markdown
+// text to a style-free AST of MdBlocks.
 
-// markdown_to_blocks parses markdown source and returns styled blocks.
-fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
-	scanner := new_markdown_scanner(source)
+// parse parses markdown source into style-free AST blocks.
+pub fn parse(source string) []MdBlock {
+	return parse_with_options(source, ParseOptions{})
+}
+
+// parse_with_options parses with configurable behavior.
+pub fn parse_with_options(source string, opts ParseOptions) []MdBlock {
+	scanner := new_scanner(source)
 	link_defs, abbr_defs, footnote_defs := collect_metadata(scanner)
 
-	mut p := MarkdownParser{
-		style:         style
+	mut p := MdParser{
+		opts:          opts
 		link_defs:     link_defs
 		abbr_defs:     abbr_defs
 		footnote_defs: footnote_defs
 		scanner:       scanner
-		blocks:        []MarkdownBlock{cap: scanner.len() / 3}
-		runs:          []RichTextRun{cap: 20}
+		blocks:        []MdBlock{cap: scanner.len() / 3}
+		runs:          []MdRun{cap: 20}
 	}
 
 	return p.parse()
 }
 
-struct MarkdownScanner {
-	source  string
-	offsets []int
-}
-
-fn new_markdown_scanner(source string) MarkdownScanner {
-	mut offsets := [0]
-	for i := 0; i < source.len; i++ {
-		if source[i] == `\n` {
-			offsets << i + 1
-		}
-	}
-	return MarkdownScanner{
-		source:  source
-		offsets: offsets
-	}
-}
-
-fn (s MarkdownScanner) get_line(i int) string {
-	if i < 0 || i >= s.offsets.len {
-		return ''
-	}
-	start := s.offsets[i]
-	end := if i + 1 < s.offsets.len {
-		s.offsets[i + 1] - 1
-	} else {
-		s.source.len
-	}
-	// Handle \r\n
-	mut real_end := end
-	if real_end > start && s.source[real_end - 1] == `\r` {
-		real_end--
-	}
-	return s.source[start..real_end]
-}
-
-fn (s MarkdownScanner) len() int {
-	return s.offsets.len
-}
-
-struct MarkdownParser {
-	style         MarkdownStyle
+struct MdParser {
+	opts          ParseOptions
 	link_defs     map[string]string
 	abbr_defs     map[string]string
 	footnote_defs map[string]string
-	scanner       MarkdownScanner
+	scanner       MdScanner
 mut:
-	blocks             []MarkdownBlock
-	runs               []RichTextRun
+	blocks             []MdBlock
+	runs               []MdRun
 	i                  int
 	in_code_block      bool
 	code_fence_char    u8
@@ -80,12 +45,11 @@ mut:
 	code_block_content []string
 }
 
-fn (mut p MarkdownParser) parse() []MarkdownBlock {
+fn (mut p MdParser) parse() []MdBlock {
 	for p.i < p.scanner.len() {
 		line := p.scanner.get_line(p.i)
 		trimmed := line.trim_space()
 
-		// Handle code block content
 		if p.in_code_block {
 			if fence := parse_code_fence(line) {
 				if fence.char == p.code_fence_char && fence.count >= p.code_fence_count {
@@ -104,14 +68,12 @@ fn (mut p MarkdownParser) parse() []MarkdownBlock {
 			continue
 		}
 
-		// Skip metadata definitions
 		if p.is_metadata_line(line) {
 			p.skip_metadata_continuation()
 			p.i++
 			continue
 		}
 
-		// Try parsing various block types
 		if p.try_code_fence(line) {
 			continue
 		}
@@ -152,7 +114,6 @@ fn (mut p MarkdownParser) parse() []MarkdownBlock {
 			continue
 		}
 
-		// Regular paragraph
 		p.handle_paragraph(line)
 	}
 
@@ -160,12 +121,12 @@ fn (mut p MarkdownParser) parse() []MarkdownBlock {
 	return p.blocks
 }
 
-fn (p MarkdownParser) is_metadata_line(line string) bool {
+fn (p MdParser) is_metadata_line(line string) bool {
 	return is_footnote_definition(line) || is_link_definition(line)
 		|| (line.starts_with('*[') && line.contains(']:'))
 }
 
-fn (mut p MarkdownParser) skip_metadata_continuation() {
+fn (mut p MdParser) skip_metadata_continuation() {
 	if is_footnote_definition(p.scanner.get_line(p.i)) {
 		p.i++
 		mut fn_cont := 0
@@ -187,11 +148,11 @@ fn (mut p MarkdownParser) skip_metadata_continuation() {
 			fn_cont++
 			p.i++
 		}
-		p.i-- // Adjust for outer loop increment
+		p.i--
 	}
 }
 
-fn (mut p MarkdownParser) try_code_fence(line string) bool {
+fn (mut p MdParser) try_code_fence(line string) bool {
 	if fence := parse_code_fence(line) {
 		p.flush_runs()
 		p.in_code_block = true
@@ -204,8 +165,8 @@ fn (mut p MarkdownParser) try_code_fence(line string) bool {
 	return false
 }
 
-fn (mut p MarkdownParser) flush_code_block() {
-	lang_hint := normalize_markdown_code_language_hint(p.code_fence_lang)
+fn (mut p MdParser) flush_code_block() {
+	lang_hint := normalize_language_hint(p.code_fence_lang)
 	mut cap := 0
 	for line in p.code_block_content {
 		cap += line.len + 1
@@ -221,17 +182,33 @@ fn (mut p MarkdownParser) flush_code_block() {
 	p.flush_runs()
 	if p.code_block_content.len > 0 {
 		if lang_hint == 'math' {
-			p.blocks << MarkdownBlock{
+			p.blocks << MdBlock{
 				is_math:    true
 				math_latex: code_text
 			}
 		} else {
-			p.blocks << MarkdownBlock{
+			lang := language_from_hint(lang_hint)
+			tokens := tokenize_code(code_text, lang, max_code_block_highlight_bytes)
+			mut code_runs := []MdRun{cap: tokens.len + 1}
+			if tokens.len == 0 {
+				// Oversized or empty — single plain code run
+				code_runs << MdRun{
+					text:   code_text
+					format: .code
+				}
+			} else {
+				for token in tokens {
+					code_runs << MdRun{
+						text:       code_text[token.start..token.end]
+						format:     .code
+						code_token: token.kind
+					}
+				}
+			}
+			p.blocks << MdBlock{
 				is_code:       true
 				code_language: lang_hint
-				content:       RichText{
-					runs: highlight_fenced_code(code_text, lang_hint, p.style)
-				}
+				runs:          code_runs
 			}
 		}
 	}
@@ -240,13 +217,13 @@ fn (mut p MarkdownParser) flush_code_block() {
 	p.code_fence_char = 0
 	p.code_fence_count = 0
 	p.code_fence_lang = ''
-	p.runs << rich_br()
+	p.runs << md_br()
 }
 
-fn (mut p MarkdownParser) try_horizontal_rule(trimmed string) bool {
+fn (mut p MdParser) try_horizontal_rule(trimmed string) bool {
 	if is_horizontal_rule(trimmed) {
 		p.flush_runs()
-		p.blocks << MarkdownBlock{
+		p.blocks << MdBlock{
 			is_hr: true
 		}
 		p.i++
@@ -255,13 +232,13 @@ fn (mut p MarkdownParser) try_horizontal_rule(trimmed string) bool {
 	return false
 }
 
-fn (mut p MarkdownParser) try_blank_line(trimmed string) bool {
+fn (mut p MdParser) try_blank_line(trimmed string) bool {
 	if trimmed == '' {
 		if p.runs.len > 0 {
 			last_is_br := p.runs.last().text == '\n'
-			p.runs << rich_br()
+			p.runs << md_br()
 			if !last_is_br {
-				p.runs << rich_br()
+				p.runs << md_br()
 			}
 		}
 		p.i++
@@ -270,7 +247,7 @@ fn (mut p MarkdownParser) try_blank_line(trimmed string) bool {
 	return false
 }
 
-fn (mut p MarkdownParser) try_table() bool {
+fn (mut p MdParser) try_table() bool {
 	line := p.scanner.get_line(p.i)
 	trimmed := line.trim_space()
 	is_table_start := trimmed.starts_with('|') || is_table_separator(trimmed)
@@ -280,35 +257,31 @@ fn (mut p MarkdownParser) try_table() bool {
 		return false
 	}
 	mut start_i := p.i
-	// Collect consecutive table lines (bounded)
 	mut table_lines := []string{cap: 10}
 	for start_i < p.scanner.len() && table_lines.len < max_table_lines {
 		tl := p.scanner.get_line(start_i).trim_space()
-		// Collect lines with pipes or separators (entry already validated table start)
 		if tl.starts_with('|') || is_table_separator(tl) || tl.contains('|') {
 			table_lines << p.scanner.get_line(start_i)
 			start_i++
 		} else if tl == '' && table_lines.len > 0 {
-			// Blank line ends table
 			break
 		} else {
 			break
 		}
 	}
 	if table_lines.len > 0 {
-		parsed_table := parse_markdown_table(table_lines, p.style, p.link_defs, p.footnote_defs)
+		parsed_table := parse_md_table(table_lines, p.link_defs, p.footnote_defs)
 		p.flush_runs()
-		p.blocks << MarkdownBlock{
+		// Fallback plain-text content for the block
+		mut fallback_runs := []MdRun{cap: 1}
+		fallback_runs << MdRun{
+			text:   table_lines.join('\n')
+			format: .code
+		}
+		p.blocks << MdBlock{
 			is_table:   true
 			table_data: parsed_table
-			content:    RichText{
-				runs: [
-					RichTextRun{
-						text:  table_lines.join('\n')
-						style: p.style.code
-					},
-				]
-			}
+			runs:       fallback_runs
 		}
 		p.i = start_i
 		return true
@@ -316,19 +289,16 @@ fn (mut p MarkdownParser) try_table() bool {
 	return false
 }
 
-fn (mut p MarkdownParser) try_definition_line(line string, trimmed string) bool {
+fn (mut p MdParser) try_definition_line(line string, trimmed string) bool {
 	if is_definition_line(line) {
 		p.flush_runs()
 		first_content := trimmed[2..].trim_left(' \t')
 		content, consumed := collect_definition_content(first_content, p.scanner, p.i + 1)
-		mut def_runs := []RichTextRun{cap: 10}
-		parse_inline(content, p.style.text, p.style, mut def_runs, p.link_defs, p.footnote_defs,
-			0)
-		p.blocks << MarkdownBlock{
+		mut def_runs := []MdRun{cap: 10}
+		parse_inline(content, .plain, mut def_runs, p.link_defs, p.footnote_defs, 0)
+		p.blocks << MdBlock{
 			is_def_value: true
-			content:      RichText{
-				runs: def_runs
-			}
+			runs:         def_runs
 		}
 		p.i += 1 + consumed
 		return true
@@ -336,7 +306,7 @@ fn (mut p MarkdownParser) try_definition_line(line string, trimmed string) bool 
 	return false
 }
 
-fn (mut p MarkdownParser) try_image(line string) bool {
+fn (mut p MdParser) try_image(line string) bool {
 	if line.starts_with('![') {
 		bracket_end := find_closing(line, 2, `]`)
 		if bracket_end > 2 && bracket_end + 1 < line.len && line[bracket_end + 1] == `(` {
@@ -345,7 +315,7 @@ fn (mut p MarkdownParser) try_image(line string) bool {
 				p.flush_runs()
 				raw := line[bracket_end + 2..paren_end]
 				src, w, h := parse_image_src(raw)
-				p.blocks << MarkdownBlock{
+				p.blocks << MdBlock{
 					is_image:     true
 					image_alt:    line[2..bracket_end]
 					image_src:    if is_safe_image_path(src) { src } else { '' }
@@ -360,14 +330,12 @@ fn (mut p MarkdownParser) try_image(line string) bool {
 	return false
 }
 
-fn (mut p MarkdownParser) try_setext_header(trimmed string) bool {
+fn (mut p MdParser) try_setext_header(trimmed string) bool {
 	if trimmed.len > 0 && p.i + 1 < p.scanner.len() && !is_block_start(trimmed) {
 		level := is_setext_underline(p.scanner.get_line(p.i + 1))
 		if level > 0 {
 			p.flush_runs()
-			header_style := if level == 1 { p.style.h1 } else { p.style.h2 }
-			p.blocks << parse_header_block(trimmed, level, header_style, p.style, p.link_defs,
-				p.footnote_defs)
+			p.blocks << parse_header_block(trimmed, level, p.link_defs, p.footnote_defs)
 			p.i += 2
 			return true
 		}
@@ -375,19 +343,17 @@ fn (mut p MarkdownParser) try_setext_header(trimmed string) bool {
 	return false
 }
 
-fn (mut p MarkdownParser) try_blockquote() bool {
+fn (mut p MdParser) try_blockquote() bool {
 	line := p.scanner.get_line(p.i)
 	if !line.starts_with('>') {
 		return false
 	}
 	mut start_i := p.i
-	// Use first line's depth as block nesting level
 	block_depth := count_blockquote_depth(line)
 	mut quote_lines := []string{cap: 10}
 	for start_i < p.scanner.len() && quote_lines.len < max_blockquote_lines {
 		q := p.scanner.get_line(start_i)
 		if q.starts_with('>') {
-			// Strip all > and spaces at start
 			content := strip_blockquote_prefix(q)
 			quote_lines << content
 			start_i++
@@ -395,45 +361,37 @@ fn (mut p MarkdownParser) try_blockquote() bool {
 			break
 		}
 	}
-	mut quote_runs := []RichTextRun{cap: 20}
+	mut quote_runs := []MdRun{cap: 20}
 	for qi, ql in quote_lines {
-		// Skip blank lines but keep them as line breaks
 		if ql.trim_space() == '' {
-			quote_runs << rich_br()
+			quote_runs << md_br()
 		} else {
-			parse_inline(ql, p.style.text, p.style, mut quote_runs, p.link_defs, p.footnote_defs,
-				0)
+			parse_inline(ql, .plain, mut quote_runs, p.link_defs, p.footnote_defs, 0)
 			if qi < quote_lines.len - 1 {
 				next_ql := quote_lines[qi + 1]
 				if next_ql.trim_space() == '' {
-					// Next line is blank - paragraph break coming
-					quote_runs << rich_br()
-				} else if p.style.hard_line_breaks && has_hard_break(ql) {
-					// Hard line break
-					quote_runs << rich_br()
+					quote_runs << md_br()
+				} else if p.opts.hard_line_breaks && has_hard_break(ql) {
+					quote_runs << md_br()
 				} else {
-					// Continuation of paragraph - add space
-					quote_runs << RichTextRun{
-						text:  ' '
-						style: p.style.text
+					quote_runs << MdRun{
+						text: ' '
 					}
 				}
 			}
 		}
 	}
 	p.flush_runs()
-	p.blocks << MarkdownBlock{
+	p.blocks << MdBlock{
 		is_blockquote:    true
 		blockquote_depth: block_depth
-		content:          RichText{
-			runs: quote_runs
-		}
+		runs:             quote_runs
 	}
 	p.i = start_i
 	return true
 }
 
-fn (mut p MarkdownParser) try_atx_header(line string) bool {
+fn (mut p MdParser) try_atx_header(line string) bool {
 	if !line.starts_with('#') {
 		return false
 	}
@@ -442,73 +400,53 @@ fn (mut p MarkdownParser) try_atx_header(line string) bool {
 		level++
 	}
 	if level > 0 && (level == line.len || line[level] == ` ` || line[level] == `\t`) {
-		header_style := match level {
-			1 { p.style.h1 }
-			2 { p.style.h2 }
-			3 { p.style.h3 }
-			4 { p.style.h4 }
-			5 { p.style.h5 }
-			else { p.style.h6 }
-		}
 		text := line[level..].trim_left(' \t')
 		p.flush_runs()
-		p.blocks << parse_header_block(text, level, header_style, p.style, p.link_defs,
-			p.footnote_defs)
+		p.blocks << parse_header_block(text, level, p.link_defs, p.footnote_defs)
 		p.i++
 		return true
 	}
 	return false
 }
 
-fn (mut p MarkdownParser) try_list_item() bool {
+fn (mut p MdParser) try_list_item() bool {
 	line := p.scanner.get_line(p.i)
 	left_trimmed := line.trim_left(' \t')
 	indent := get_indent_level(line)
 
-	// Task list (checked or unchecked)
 	if task_prefix := get_task_prefix(left_trimmed) {
-		// Source prefix length: "- [ ] " or "- [x] " = 6 bytes.
-		// Not the Unicode replacement length.
 		task_prefix_len := 6
 		content, consumed := collect_list_item_content(left_trimmed[task_prefix_len..],
 			p.scanner, p.i + 1)
-		mut item_runs := []RichTextRun{cap: 10}
-		parse_inline(content, p.style.text, p.style, mut item_runs, p.link_defs, p.footnote_defs,
-			0)
+		mut item_runs := []MdRun{cap: 10}
+		parse_inline(content, .plain, mut item_runs, p.link_defs, p.footnote_defs, 0)
 		p.flush_runs()
-		p.blocks << MarkdownBlock{
+		p.blocks << MdBlock{
 			is_list:     true
 			list_prefix: task_prefix
 			list_indent: indent
-			content:     RichText{
-				runs: item_runs
-			}
+			runs:        item_runs
 		}
 		p.i += 1 + consumed
 		return true
 	}
 
-	// Unordered list (with nesting support)
 	if left_trimmed.starts_with('- ') || left_trimmed.starts_with('* ')
 		|| left_trimmed.starts_with('+ ') {
 		content, consumed := collect_list_item_content(left_trimmed[2..], p.scanner, p.i + 1)
-		mut item_runs := []RichTextRun{cap: 10}
-		parse_inline(content, p.style.text, p.style, mut item_runs, p.link_defs, p.footnote_defs,
-			0)
+		mut item_runs := []MdRun{cap: 10}
+		parse_inline(content, .plain, mut item_runs, p.link_defs, p.footnote_defs, 0)
 		p.flush_runs()
-		p.blocks << MarkdownBlock{
+		p.blocks << MdBlock{
 			is_list:     true
 			list_prefix: '• '
 			list_indent: indent
-			content:     RichText{
-				runs: item_runs
-			}
+			runs:        item_runs
 		}
 		p.i += 1 + consumed
 		return true
 	}
 
-	// Ordered list (with nesting support)
 	if is_ordered_list(left_trimmed) {
 		mut sep_pos := left_trimmed.index('.') or { -1 }
 		if sep_pos == -1 {
@@ -521,17 +459,14 @@ fn (mut p MarkdownParser) try_list_item() bool {
 		sep := left_trimmed[sep_pos..sep_pos + 1]
 		rest := left_trimmed[sep_pos + 1..].trim_left(' ')
 		content, consumed := collect_list_item_content(rest, p.scanner, p.i + 1)
-		mut item_runs := []RichTextRun{cap: 10}
-		parse_inline(content, p.style.text, p.style, mut item_runs, p.link_defs, p.footnote_defs,
-			0)
+		mut item_runs := []MdRun{cap: 10}
+		parse_inline(content, .plain, mut item_runs, p.link_defs, p.footnote_defs, 0)
 		p.flush_runs()
-		p.blocks << MarkdownBlock{
+		p.blocks << MdBlock{
 			is_list:     true
 			list_prefix: '${num}${sep} '
 			list_indent: indent
-			content:     RichText{
-				runs: item_runs
-			}
+			runs:        item_runs
 		}
 		p.i += 1 + consumed
 		return true
@@ -540,12 +475,10 @@ fn (mut p MarkdownParser) try_list_item() bool {
 	return false
 }
 
-fn (mut p MarkdownParser) try_indented_code_block(line string) bool {
+fn (mut p MdParser) try_indented_code_block(line string) bool {
 	if !has_code_indent(line) {
 		return false
 	}
-	// Collect consecutive indented lines (blank lines included
-	// if followed by more indented content)
 	mut code_lines := []string{cap: 20}
 	mut idx := p.i
 	for idx < p.scanner.len() && code_lines.len < max_code_block_lines {
@@ -554,7 +487,6 @@ fn (mut p MarkdownParser) try_indented_code_block(line string) bool {
 			code_lines << strip_code_indent(l)
 			idx++
 		} else if l.trim_space() == '' {
-			// Blank line: include only if followed by indented line
 			if idx + 1 < p.scanner.len() && has_code_indent(p.scanner.get_line(idx + 1)) {
 				code_lines << ''
 				idx++
@@ -570,23 +502,38 @@ fn (mut p MarkdownParser) try_indented_code_block(line string) bool {
 	}
 	p.flush_runs()
 	code_text := code_lines.join('\n')
-	p.blocks << MarkdownBlock{
-		is_code: true
-		content: RichText{
-			runs: highlight_fenced_code(code_text, '', p.style)
+	lang := language_from_hint('')
+	tokens := tokenize_code(code_text, lang, max_code_block_highlight_bytes)
+	mut code_runs := []MdRun{cap: tokens.len + 1}
+	if tokens.len == 0 {
+		code_runs << MdRun{
+			text:   code_text
+			format: .code
 		}
+	} else {
+		for token in tokens {
+			code_runs << MdRun{
+				text:       code_text[token.start..token.end]
+				format:     .code
+				code_token: token.kind
+			}
+		}
+	}
+	p.blocks << MdBlock{
+		is_code: true
+		runs:    code_runs
 	}
 	p.i = idx
 	return true
 }
 
-fn (mut p MarkdownParser) try_math_block(trimmed string) bool {
+fn (mut p MdParser) try_math_block(trimmed string) bool {
 	if trimmed.starts_with('$$') {
 		p.flush_runs()
 		if trimmed.len > 4 && trimmed.ends_with('$$') {
 			latex := trimmed[2..trimmed.len - 2].trim_space()
 			if latex.len > 0 {
-				p.blocks << MarkdownBlock{
+				p.blocks << MdBlock{
 					is_math:    true
 					math_latex: latex
 				}
@@ -605,7 +552,7 @@ fn (mut p MarkdownParser) try_math_block(trimmed string) bool {
 			p.i++
 		}
 		if math_lines.len > 0 {
-			p.blocks << MarkdownBlock{
+			p.blocks << MdBlock{
 				is_math:    true
 				math_latex: math_lines.join('\n')
 			}
@@ -616,17 +563,14 @@ fn (mut p MarkdownParser) try_math_block(trimmed string) bool {
 	return false
 }
 
-fn (mut p MarkdownParser) try_definition_term(trimmed string) bool {
+fn (mut p MdParser) try_definition_term(trimmed string) bool {
 	if peek_for_definition(p.scanner, p.i + 1) {
 		p.flush_runs()
-		mut term_runs := []RichTextRun{cap: 10}
-		parse_inline(trimmed, p.style.bold, p.style, mut term_runs, p.link_defs, p.footnote_defs,
-			0)
-		p.blocks << MarkdownBlock{
+		mut term_runs := []MdRun{cap: 10}
+		parse_inline(trimmed, .bold, mut term_runs, p.link_defs, p.footnote_defs, 0)
+		p.blocks << MdBlock{
 			is_def_term: true
-			content:     RichText{
-				runs: term_runs
-			}
+			runs:        term_runs
 		}
 		p.i++
 		return true
@@ -634,22 +578,21 @@ fn (mut p MarkdownParser) try_definition_term(trimmed string) bool {
 	return false
 }
 
-fn (mut p MarkdownParser) handle_paragraph(line string) {
-	content, consumed := collect_paragraph_content(line, p.scanner, p.i + 1, p.style.hard_line_breaks)
-	parse_inline(content, p.style.text, p.style, mut p.runs, p.link_defs, p.footnote_defs,
-		0)
+fn (mut p MdParser) handle_paragraph(line string) {
+	content, consumed := collect_paragraph_content(line, p.scanner, p.i + 1, p.opts.hard_line_breaks)
+	parse_inline(content, .plain, mut p.runs, p.link_defs, p.footnote_defs, 0)
 	p.i += 1 + consumed
 
 	if p.i < p.scanner.len() {
 		next := p.scanner.get_line(p.i)
 		next_trimmed := next.trim_space()
 		if next_trimmed != '' && is_block_start(next) {
-			p.runs << rich_br()
+			p.runs << md_br()
 		}
 	}
 }
 
-fn (mut p MarkdownParser) finalize() {
+fn (mut p MdParser) finalize() {
 	if p.in_code_block && p.code_block_content.len > 0 {
 		p.flush_code_block()
 	}
@@ -657,44 +600,23 @@ fn (mut p MarkdownParser) finalize() {
 
 	if p.abbr_defs.len > 0 {
 		for mut block in p.blocks {
-			block.content.runs = replace_abbreviations(block.content.runs, p.abbr_defs,
-				p.style)
+			block.runs = replace_abbreviations(block.runs, p.abbr_defs)
 		}
 	}
 }
 
-fn (mut p MarkdownParser) flush_runs() {
+fn (mut p MdParser) flush_runs() {
 	trim_trailing_breaks(mut p.runs)
 	if p.runs.len > 0 {
-		p.blocks << MarkdownBlock{
-			content: RichText{
-				runs: p.runs
-			}
+		p.blocks << MdBlock{
+			runs: p.runs
 		}
-		p.runs = []RichTextRun{cap: 20}
+		p.runs = []MdRun{cap: 20}
 	}
 }
 
-// markdown_to_rich_text parses markdown and returns a single RichText object.
-// Useful for small snippets where block-level layout is not needed.
-pub fn markdown_to_rich_text(source string, style MarkdownStyle) RichText {
-	blocks := markdown_to_blocks(source, style)
-	mut all_runs := []RichTextRun{}
-	for i, block in blocks {
-		all_runs << block.content.runs
-		// Add block spacing between blocks
-		if i < blocks.len - 1 {
-			all_runs << rich_br()
-		}
-	}
-	return RichText{
-		runs: all_runs
-	}
-}
-
-// parse_code_fence checks if line is a code fence (``` or ~~~).
-// Returns fence info or none. Extracts language hint after fence chars.
-fn parse_code_fence(line string) ?CodeFence {
+// parse_code_fence checks if line is a code fence.
+pub fn parse_code_fence(line string) ?CodeFence {
 	trimmed := line.trim_left(' \t')
 	if trimmed.len < 3 {
 		return none
@@ -712,7 +634,6 @@ fn parse_code_fence(line string) ?CodeFence {
 		}
 	}
 	if count >= 3 {
-		// Extract language hint after fence chars
 		lang := trimmed[count..].trim_space()
 		return CodeFence{
 			char:     c
@@ -723,8 +644,8 @@ fn parse_code_fence(line string) ?CodeFence {
 	return none
 }
 
-// detect_code_block_state scans from start to idx to determine code block state.
-fn detect_code_block_state(scanner MarkdownScanner, idx int) CodeBlockState {
+// detect_code_block_state scans from start to idx.
+pub fn detect_code_block_state(scanner MdScanner, idx int) CodeBlockState {
 	mut in_block := false
 	mut fence_char := u8(0)
 	mut fence_count := 0
@@ -732,17 +653,14 @@ fn detect_code_block_state(scanner MarkdownScanner, idx int) CodeBlockState {
 	for i := 0; i < idx && i < scanner.len(); i++ {
 		if fence := parse_code_fence(scanner.get_line(i)) {
 			if !in_block {
-				// Opening fence
 				in_block = true
 				fence_char = fence.char
 				fence_count = fence.count
 			} else if fence.char == fence_char && fence.count >= fence_count {
-				// Matching closing fence
 				in_block = false
 				fence_char = 0
 				fence_count = 0
 			}
-			// Non-matching fence inside block: ignored
 		}
 	}
 	return CodeBlockState{

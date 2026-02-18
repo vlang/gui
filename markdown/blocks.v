@@ -1,46 +1,39 @@
-module gui
+module markdown
 
-// markdown_blocks.v handles parsing of markdown block-level elements (headers, lists, blockquotes, etc.)
+// blocks.v handles parsing of markdown block-level elements.
 
-// parse_header_block parses a header line into a MarkdownBlock.
-fn parse_header_block(text string, level int, header_style TextStyle, md_style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) MarkdownBlock {
-	mut header_runs := []RichTextRun{cap: 10}
-	parse_inline(text, header_style, md_style, mut header_runs, link_defs, footnote_defs,
-		0)
-	return MarkdownBlock{
+// parse_header_block parses a header line into an MdBlock.
+pub fn parse_header_block(text string, level int, link_defs map[string]string, footnote_defs map[string]string) MdBlock {
+	mut header_runs := []MdRun{cap: 10}
+	parse_inline(text, .plain, mut header_runs, link_defs, footnote_defs, 0)
+	return MdBlock{
 		header_level: level
 		anchor_slug:  heading_slug(text)
-		content:      RichText{
-			runs: header_runs
-		}
+		runs:         header_runs
 	}
 }
 
 // heading_slug converts heading text to a URL-safe anchor slug.
-// Lowercase, spaces to hyphens, strip non-alphanumeric except hyphens.
-fn heading_slug(text string) string {
+pub fn heading_slug(text string) string {
 	mut buf := []u8{cap: text.len}
 	for ch in text.to_lower() {
 		if (ch >= `a` && ch <= `z`) || (ch >= `0` && ch <= `9`) {
 			buf << ch
 		} else if ch == ` ` || ch == `-` || ch == `_` {
-			// Collapse multiple hyphens
 			if buf.len > 0 && buf.last() != `-` {
 				buf << `-`
 			}
 		}
-		// Strip all other chars (formatting markers, etc.)
 	}
-	// Trim trailing hyphen
 	for buf.len > 0 && buf.last() == `-` {
 		buf.pop()
 	}
 	return buf.bytestr()
 }
 
-// is_setext_underline checks if a line is a setext-style header underline.
-// Returns 1 for h1 (===), 2 for h2 (---), 0 for neither.
-fn is_setext_underline(line string) int {
+// is_setext_underline checks if a line is a setext-style header
+// underline. Returns 1 for h1, 2 for h2, 0 for neither.
+pub fn is_setext_underline(line string) int {
 	trimmed := line.trim_space()
 	if trimmed.len == 0 {
 		return 0
@@ -54,7 +47,6 @@ fn is_setext_underline(line string) int {
 	return 0
 }
 
-// is_all_char returns true if every byte in s equals c.
 fn is_all_char(s string, c u8) bool {
 	for ch in s {
 		if ch != c {
@@ -64,9 +56,8 @@ fn is_all_char(s string, c u8) bool {
 	return true
 }
 
-// is_horizontal_rule checks if a line is a horizontal rule (3+ of -, *, or _).
-// Allows spaces between characters but no other characters.
-fn is_horizontal_rule(line string) bool {
+// is_horizontal_rule checks if a line is a horizontal rule.
+pub fn is_horizontal_rule(line string) bool {
 	trimmed := line.trim_space()
 	if trimmed.len < 3 {
 		return false
@@ -88,8 +79,8 @@ fn is_horizontal_rule(line string) bool {
 	return count >= 3
 }
 
-// is_ordered_list checks if a line is an ordered list item (e.g., "1. item" or "1) item").
-fn is_ordered_list(line string) bool {
+// is_ordered_list checks if a line is an ordered list item.
+pub fn is_ordered_list(line string) bool {
 	mut dot_pos := line.index('.') or { -1 }
 	if dot_pos == -1 {
 		dot_pos = line.index(')') or { -1 }
@@ -106,8 +97,9 @@ fn is_ordered_list(line string) bool {
 	return line[dot_pos + 1] == ` `
 }
 
-// get_indent_level counts leading whitespace and returns indent level (2 spaces or 1 tab = 1 level).
-fn get_indent_level(line string) int {
+// get_indent_level counts leading whitespace and returns indent
+// level (2 spaces or 1 tab = 1 level).
+pub fn get_indent_level(line string) int {
 	mut spaces := 0
 	for c in line {
 		if c == ` ` {
@@ -121,12 +113,11 @@ fn get_indent_level(line string) int {
 	return spaces / 2
 }
 
-// collect_paragraph_content joins continuation lines for paragraphs.
-fn collect_paragraph_content(first_line string, scanner MarkdownScanner, start_idx int, hard_line_breaks bool) (string, int) {
+// collect_paragraph_content joins continuation lines.
+pub fn collect_paragraph_content(first_line string, scanner MdScanner, start_idx int, hard_line_breaks bool) (string, int) {
 	mut consumed := 0
 	mut idx := start_idx
 
-	// Count continuation lines (non-blank, non-block-start, bounded)
 	for idx < scanner.len() && consumed < max_paragraph_continuation_lines {
 		next := scanner.get_line(idx)
 		next_trimmed := next.trim_space()
@@ -137,7 +128,6 @@ fn collect_paragraph_content(first_line string, scanner MarkdownScanner, start_i
 		idx++
 	}
 
-	// Fast path: no continuation
 	if consumed == 0 {
 		if hard_line_breaks {
 			return strip_hard_break_trail(first_line), 0
@@ -145,7 +135,6 @@ fn collect_paragraph_content(first_line string, scanner MarkdownScanner, start_i
 		return first_line, 0
 	}
 
-	// Build combined content
 	mut buf := []u8{cap: first_line.len + consumed * 80}
 	if hard_line_breaks {
 		stripped := strip_hard_break_trail(first_line)
@@ -183,21 +172,19 @@ fn collect_paragraph_content(first_line string, scanner MarkdownScanner, start_i
 }
 
 // has_hard_break checks if a line ends with trailing \ or 2+ spaces.
-fn has_hard_break(line string) bool {
+pub fn has_hard_break(line string) bool {
 	if line.len == 0 {
 		return false
 	}
 	if line[line.len - 1] == `\\` {
 		return true
 	}
-	// 2+ trailing spaces
 	if line.len >= 2 && line[line.len - 1] == ` ` && line[line.len - 2] == ` ` {
 		return true
 	}
 	return false
 }
 
-// strip_hard_break_trail removes trailing \ or trailing spaces from line.
 fn strip_hard_break_trail(line string) string {
 	if line.len == 0 {
 		return line
@@ -208,13 +195,12 @@ fn strip_hard_break_trail(line string) string {
 	return line.trim_right(' ')
 }
 
-// collect_list_item_content collects the full content of a list item including continuation lines.
-// Returns the combined content and the number of lines consumed (excluding the first).
-fn collect_list_item_content(first_content string, scanner MarkdownScanner, start_idx int) (string, int) {
+// collect_list_item_content collects continuation lines for a
+// list item.
+pub fn collect_list_item_content(first_content string, scanner MdScanner, start_idx int) (string, int) {
 	mut consumed := 0
 	mut idx := start_idx
 
-	// Check if any continuation lines exist (bounded)
 	for idx < scanner.len() && consumed < max_list_continuation_lines {
 		next := scanner.get_line(idx)
 		if next.len == 0 || (next[0] != ` ` && next[0] != `\x09`) {
@@ -228,12 +214,10 @@ fn collect_list_item_content(first_content string, scanner MarkdownScanner, star
 		idx++
 	}
 
-	// Fast path: no continuation lines
 	if consumed == 0 {
 		return first_content, 0
 	}
 
-	// Build combined content with buffer
 	mut buf := []u8{cap: first_content.len + consumed * 40}
 	buf << first_content.bytes()
 	idx = start_idx
@@ -246,12 +230,11 @@ fn collect_list_item_content(first_content string, scanner MarkdownScanner, star
 }
 
 // is_block_start checks if a line starts a new block element.
-fn is_block_start(line string) bool {
+pub fn is_block_start(line string) bool {
 	trimmed := line.trim_space()
 	if trimmed.len == 0 {
 		return false
 	}
-	// Fast path: check first char against known block starters
 	fc := trimmed[0]
 	if fc != `#` && fc != `>` && fc != `\`` && fc != `~` && fc != `!` && fc != `-` && fc != `*`
 		&& fc != `+` && fc != `|` && fc != `:` && fc != `$` && fc != `_` && (fc < `0` || fc > `9`) {
@@ -296,15 +279,14 @@ fn is_block_start(line string) bool {
 	return false
 }
 
-// count_blockquote_depth counts the number of > at the start of a line.
-fn count_blockquote_depth(line string) int {
+// count_blockquote_depth counts leading > characters.
+pub fn count_blockquote_depth(line string) int {
 	mut depth := 0
 	mut pos := 0
 	for pos < line.len {
 		if line[pos] == `>` {
 			depth++
 			pos++
-			// Skip optional space after >
 			if pos < line.len && line[pos] == ` ` {
 				pos++
 			}
@@ -317,13 +299,12 @@ fn count_blockquote_depth(line string) int {
 	return depth
 }
 
-// strip_blockquote_prefix removes all > and leading spaces from a line.
-fn strip_blockquote_prefix(line string) string {
+// strip_blockquote_prefix removes all > and leading spaces.
+pub fn strip_blockquote_prefix(line string) string {
 	mut pos := 0
 	for pos < line.len {
 		if line[pos] == `>` {
 			pos++
-			// Skip optional space after >
 			if pos < line.len && line[pos] == ` ` {
 				pos++
 			}
@@ -336,8 +317,8 @@ fn strip_blockquote_prefix(line string) string {
 	return if pos < line.len { line[pos..] } else { '' }
 }
 
-// get_task_prefix returns task list prefix if line is a task item, none otherwise.
-fn get_task_prefix(trimmed string) ?string {
+// get_task_prefix returns task list prefix if line is a task item.
+pub fn get_task_prefix(trimmed string) ?string {
 	if trimmed.starts_with('- [ ] ') || trimmed.starts_with('* [ ] ') {
 		return '☐ '
 	}
@@ -348,14 +329,14 @@ fn get_task_prefix(trimmed string) ?string {
 	return none
 }
 
-// is_definition_line checks if a line is a definition list value (starts with ": ").
-fn is_definition_line(line string) bool {
+// is_definition_line checks if a line starts with ": ".
+pub fn is_definition_line(line string) bool {
 	trimmed := line.trim_space()
 	return trimmed.len > 1 && trimmed[0] == `:` && trimmed[1] == ` `
 }
 
-// peek_for_definition checks if the next non-blank line is a definition.
-fn peek_for_definition(scanner MarkdownScanner, start_idx int) bool {
+// peek_for_definition checks if next non-blank line is a definition.
+pub fn peek_for_definition(scanner MdScanner, start_idx int) bool {
 	for i := start_idx; i < scanner.len(); i++ {
 		trimmed := scanner.get_line(i).trim_space()
 		if trimmed == '' {
@@ -369,19 +350,17 @@ fn peek_for_definition(scanner MarkdownScanner, start_idx int) bool {
 	return false
 }
 
-// collect_definition_content collects continuation lines for a definition value.
-// Continuation lines must be indented. Returns content and lines consumed.
-fn collect_definition_content(first_content string, scanner MarkdownScanner, start_idx int) (string, int) {
+// collect_definition_content collects continuation lines for a
+// definition value.
+pub fn collect_definition_content(first_content string, scanner MdScanner, start_idx int) (string, int) {
 	mut consumed := 0
 	mut idx := start_idx
 
-	// Check if any continuation lines exist (must be indented, bounded)
 	for idx < scanner.len() && consumed < max_list_continuation_lines {
 		next := scanner.get_line(idx)
 		if next.len == 0 {
 			break
 		}
-		// Continuation must start with whitespace but not be a new definition
 		if next[0] != ` ` && next[0] != `\x09` {
 			break
 		}
@@ -393,12 +372,10 @@ fn collect_definition_content(first_content string, scanner MarkdownScanner, sta
 		idx++
 	}
 
-	// Fast path: no continuation
 	if consumed == 0 {
 		return first_content, 0
 	}
 
-	// Build combined content with buffer
 	mut buf := []u8{cap: first_content.len + consumed * 40}
 	buf << first_content.bytes()
 	idx = start_idx
@@ -410,8 +387,8 @@ fn collect_definition_content(first_content string, scanner MarkdownScanner, sta
 	return buf.bytestr(), consumed
 }
 
-// has_code_indent returns true if line starts with 4+ spaces or 1+ tab.
-fn has_code_indent(line string) bool {
+// has_code_indent returns true if line starts with 4+ spaces or tab.
+pub fn has_code_indent(line string) bool {
 	if line.len == 0 {
 		return false
 	}
@@ -424,8 +401,8 @@ fn has_code_indent(line string) bool {
 	return false
 }
 
-// strip_code_indent removes one level of code indent (4 spaces or 1 tab).
-fn strip_code_indent(line string) string {
+// strip_code_indent removes one level of code indent.
+pub fn strip_code_indent(line string) string {
 	if line.len == 0 {
 		return ''
 	}

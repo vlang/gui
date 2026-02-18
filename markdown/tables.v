@@ -1,64 +1,54 @@
-module gui
+module markdown
 
-// markdown_tables.v handles parsing of markdown tables.
+// tables.v handles parsing of markdown tables.
 
-// parse_markdown_table parses raw table lines into structured data.
-fn parse_markdown_table(lines []string, style MarkdownStyle, link_defs map[string]string, footnote_defs map[string]string) ?ParsedTable {
+// parse_md_table parses raw table lines into structured data.
+pub fn parse_md_table(lines []string, link_defs map[string]string, footnote_defs map[string]string) ?MdTable {
 	if lines.len < 2 {
 		return none
 	}
-	// Line 0 = headers
 	line0 := lines[0]
 	headers := parse_table_row(line0)
 	if headers.len == 0 || headers.len > max_table_columns {
 		return none
 	}
-	// Line 1 must be a valid separator row
 	line1 := lines[1]
 	if !is_table_separator(line1.trim_space()) {
 		return none
 	}
-	// Line 1 = separator with alignments (validates each cell has dash)
 	alignments := parse_table_alignments(line1, headers.len) or { return none }
-	// Parse headers with inline formatting
-	mut header_rich := []RichText{cap: headers.len}
+
+	mut header_runs := [][]MdRun{cap: headers.len}
 	for h in headers {
-		mut runs := []RichTextRun{cap: 4}
-		parse_inline(h, style.text, style, mut runs, link_defs, footnote_defs, 0)
-		header_rich << RichText{
-			runs: runs
-		}
+		mut runs := []MdRun{cap: 4}
+		parse_inline(h, .plain, mut runs, link_defs, footnote_defs, 0)
+		header_runs << runs
 	}
-	// Lines 2+ = data rows
-	mut rows := [][]RichText{cap: lines.len - 2}
+
+	mut rows := [][][]MdRun{cap: lines.len - 2}
 	for i := 2; i < lines.len; i++ {
 		row := parse_table_row(lines[i])
-		// Pad or trim to match header count
-		mut normalized := []RichText{len: headers.len, init: RichText{}}
+		mut normalized := [][]MdRun{len: headers.len, init: []MdRun{}}
 		for j, cell in row {
 			if j < headers.len {
-				mut runs := []RichTextRun{cap: 4}
-				parse_inline(cell, style.text, style, mut runs, link_defs, footnote_defs,
-					0)
-				normalized[j] = RichText{
-					runs: runs
-				}
+				mut runs := []MdRun{cap: 4}
+				parse_inline(cell, .plain, mut runs, link_defs, footnote_defs, 0)
+				normalized[j] = runs
 			}
 		}
 		rows << normalized
 	}
-	return ParsedTable{
-		headers:    header_rich
+	return MdTable{
+		headers:    header_runs
 		alignments: alignments
 		rows:       rows
+		col_count:  headers.len
 	}
 }
 
 // parse_table_row splits a table row by | and trims cells.
-// Escaped pipes (\|) are treated as literal | within cells.
-fn parse_table_row(line string) []string {
+pub fn parse_table_row(line string) []string {
 	trimmed := line.trim_space()
-	// Remove outer pipes if present
 	mut inner := trimmed
 	if inner.starts_with('|') {
 		inner = inner[1..]
@@ -66,17 +56,14 @@ fn parse_table_row(line string) []string {
 	if inner.ends_with('|') && !inner.ends_with('\\|') {
 		inner = inner[..inner.len - 1]
 	}
-	// Split on unescaped | characters
 	mut cells := []string{cap: 8}
 	mut current := []u8{cap: inner.len}
 	mut i := 0
 	for i < inner.len {
 		if inner[i] == `\\` && i + 1 < inner.len && inner[i + 1] == `|` {
-			// Escaped pipe: emit literal |
 			current << `|`
 			i += 2
 		} else if inner[i] == `|` {
-			// Cell boundary
 			cells << current.bytestr().trim_space()
 			current.clear()
 			i++
@@ -88,7 +75,6 @@ fn parse_table_row(line string) []string {
 			i++
 		}
 	}
-	// Final cell (only if under limit)
 	if cells.len < max_table_columns {
 		cells << current.bytestr().trim_space()
 	}
@@ -96,16 +82,14 @@ fn parse_table_row(line string) []string {
 }
 
 // parse_table_alignments parses separator row for column alignments.
-// Returns none if any cell is invalid (missing dash).
-fn parse_table_alignments(line string, cols int) ?[]HorizontalAlign {
+fn parse_table_alignments(line string, cols int) ?[]MdAlign {
 	parts := parse_table_row(line)
-	mut aligns := []HorizontalAlign{len: cols, init: HorizontalAlign.start}
+	mut aligns := []MdAlign{len: cols, init: MdAlign.start}
 	for i, p in parts {
 		if i >= cols {
 			break
 		}
 		trimmed := p.trim_space()
-		// Each separator cell must contain at least one dash
 		if !trimmed.contains('-') {
 			return none
 		}
@@ -114,20 +98,17 @@ fn parse_table_alignments(line string, cols int) ?[]HorizontalAlign {
 		if left_colon && right_colon {
 			aligns[i] = .center
 		} else if right_colon {
-			aligns[i] = .end
+			aligns[i] = .end_
 		}
-		// default is .start (left)
 	}
 	return aligns
 }
 
-// is_table_separator checks if a line is a markdown table separator (e.g., |---|---|).
-// Expects pre-trimmed input.
-fn is_table_separator(s string) bool {
+// is_table_separator checks if a line is a markdown table separator.
+pub fn is_table_separator(s string) bool {
 	if s.len < 3 {
 		return false
 	}
-	// Must contain at least --- or | and -
 	mut has_dash := false
 	mut has_pipe := false
 	for c in s {
