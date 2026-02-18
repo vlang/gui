@@ -1,7 +1,5 @@
 module gui
 
-import arrays
-
 // find_shape walks the layout in depth first until predicate is satisfied.
 pub fn (layout &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
 	for child in layout.children {
@@ -55,65 +53,114 @@ pub fn find_layout_by_id_scroll(layout &Layout, id_scroll u32) ?Layout {
 // previous_focusable gets the previous non-skippable focusable of the current focus.
 // Returns the first non-skippable focusable if focus is not set.
 pub fn (layout &Layout) previous_focusable(mut w Window) ?Shape {
-	ids := layout.get_focus_ids().reverse()
-	return layout.find_next_focusable(ids, mut w)
+	mut candidates := []FocusCandidate{}
+	collect_focus_candidates(layout, mut candidates, 0)
+	if candidates.len == 0 {
+		return none
+	}
+	focus_sort_and_dedupe(mut candidates)
+	return focus_find_previous(candidates, w.view_state.id_focus)
 }
 
 // next_focusable gets the next non-skippable focusable of the current focus.
 // Returns the first non-skippable focusable if focus is not set.
 pub fn (layout &Layout) next_focusable(mut w Window) ?Shape {
-	ids := layout.get_focus_ids()
-	return layout.find_next_focusable(ids, mut w)
+	mut candidates := []FocusCandidate{}
+	collect_focus_candidates(layout, mut candidates, 0)
+	if candidates.len == 0 {
+		return none
+	}
+	focus_sort_and_dedupe(mut candidates)
+	return focus_find_next(candidates, w.view_state.id_focus)
 }
 
-// find_next_focusable finds the next focusable that is not disabled.
-// If none are found it tries to find the first focusable that
-// is not disabled.
-fn (layout &Layout) find_next_focusable(ids []u32, mut w Window) ?Shape {
-	// ids are sorted either ascending or descending.
-	if w.view_state.id_focus > 0 {
-		mut found := false
-		for id in ids {
-			if id == w.view_state.id_focus {
-				found = true
-				continue
-			}
-			if !found {
-				continue
-			}
-			shape := layout.find_shape(fn [id] (n Layout) bool {
-				return n.shape.id_focus == id && !n.shape.disabled
-			}) or { continue }
-			return shape
-		}
-	}
-	// did not find anything. Try to return the first non disabled.
-	mut first := ?Shape(none)
-	for id in ids {
-		first = layout.find_shape(fn [id] (n Layout) bool {
-			return n.shape.id_focus == id && !n.shape.disabled
-		}) or { continue }
-		break
-	}
-	return first
+struct FocusCandidate {
+	id    u32
+	order int
+	shape &Shape = unsafe { nil }
 }
 
-// get_focus_ids returns an ordered list of focus ids
-fn (layout &Layout) get_focus_ids() []u32 {
-	mut focus_ids := []u32{}
+fn collect_focus_candidates(layout &Layout, mut candidates []FocusCandidate, order int) int {
+	mut next_order := order
 	if layout.shape.id_focus > 0 && !layout.shape.focus_skip {
-		focus_ids << layout.shape.id_focus
+		if !layout.shape.disabled {
+			candidates << FocusCandidate{
+				id:    layout.shape.id_focus
+				order: next_order
+				shape: layout.shape
+			}
+		}
+		next_order++
 	}
 	for child in layout.children {
-		focus_ids << child.get_focus_ids()
+		next_order = collect_focus_candidates(child, mut candidates, next_order)
 	}
-	return arrays.distinct(focus_ids).sorted()
+	return next_order
+}
+
+fn focus_sort_and_dedupe(mut candidates []FocusCandidate) {
+	candidates.sort_with_compare(fn (a &FocusCandidate, b &FocusCandidate) int {
+		if a.id < b.id {
+			return -1
+		}
+		if a.id > b.id {
+			return 1
+		}
+		if a.order < b.order {
+			return -1
+		}
+		if a.order > b.order {
+			return 1
+		}
+		return 0
+	})
+	mut keep_idx := 0
+	mut last_id := u32(0)
+	for i, candidate in candidates {
+		if i > 0 && candidate.id == last_id {
+			continue
+		}
+		if keep_idx != i {
+			candidates[keep_idx] = candidate
+		}
+		keep_idx++
+		last_id = candidate.id
+	}
+	candidates.trim(keep_idx)
+}
+
+fn focus_find_next(candidates []FocusCandidate, id_focus u32) ?Shape {
+	if id_focus > 0 {
+		for candidate in candidates {
+			if candidate.id > id_focus {
+				return *candidate.shape
+			}
+		}
+	}
+	return *candidates[0].shape
+}
+
+fn focus_find_previous(candidates []FocusCandidate, id_focus u32) ?Shape {
+	if id_focus > 0 {
+		for i := candidates.len - 1; i >= 0; i-- {
+			candidate := candidates[i]
+			if candidate.id < id_focus {
+				return *candidate.shape
+			}
+		}
+	}
+	return *candidates[candidates.len - 1].shape
 }
 
 // spacing does the fence-post calculation for spacings
 fn (layout &Layout) spacing() f32 {
-	count := layout.children.count(!it.shape.float && it.shape.shape_type != .none
-		&& !it.shape.over_draw)
+	mut count := 0
+	for child in layout.children {
+		if child.shape.float || child.shape.shape_type == .none || child.shape.over_draw {
+			continue
+		}
+		count++
+	}
 	return int_max(0, (count - 1)) * layout.shape.spacing
 }
 

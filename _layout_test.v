@@ -352,3 +352,190 @@ fn test_layout_set_shape_clips() {
 	c3_clip := root.children[2].shape.shape_clip
 	assert f32_are_close(c3_clip.width, 0.0)
 }
+
+fn test_layout_remove_floating_layouts_distinct_placeholders() {
+	mut root := Layout{
+		shape:    &Shape{
+			axis: .left_to_right
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					float:      true
+				}
+			},
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					float:      true
+				}
+			},
+		]
+	}
+	mut floating := []&Layout{}
+	layout_remove_floating_layouts(mut root, mut floating)
+	assert floating.len == 2
+	assert root.children[0].shape.shape_type == .none
+	assert root.children[1].shape.shape_type == .none
+	assert unsafe { root.children[0].shape != root.children[1].shape }
+}
+
+fn test_layout_scroll_containers_nearest_scroll_parent() {
+	mut root := Layout{
+		shape:    &Shape{
+			shape_type: .rectangle
+		}
+		children: [
+			Layout{
+				shape:    &Shape{
+					shape_type: .rectangle
+					id_scroll:  10
+				}
+				children: [
+					Layout{
+						shape: &Shape{
+							shape_type: .text
+						}
+					},
+					Layout{
+						shape:    &Shape{
+							shape_type: .rectangle
+							id_scroll:  20
+						}
+						children: [
+							Layout{
+								shape: &Shape{
+									shape_type: .text
+								}
+							},
+						]
+					},
+				]
+			},
+		]
+	}
+	layout_scroll_containers(mut root, 0)
+	assert root.children[0].children[0].shape.id_scroll_container == 10
+	assert root.children[0].children[1].children[0].shape.id_scroll_container == 20
+}
+
+fn test_layout_fill_widths_root_scroll_fill_no_parent() {
+	mut root := Layout{
+		shape: &Shape{
+			shape_type:  .rectangle
+			axis:        .top_to_bottom
+			id_scroll:   1
+			sizing:      fill_fill
+			width:       120
+			height:      40
+			size_border: 0
+		}
+	}
+	layout_fill_widths(mut root)
+	assert f32_are_close(root.shape.width, 120.0)
+}
+
+fn test_layout_fill_heights_root_scroll_fill_no_parent() {
+	mut root := Layout{
+		shape: &Shape{
+			shape_type:  .rectangle
+			axis:        .left_to_right
+			id_scroll:   1
+			sizing:      fill_fill
+			width:       40
+			height:      120
+			size_border: 0
+		}
+	}
+	layout_fill_heights(mut root)
+	assert f32_are_close(root.shape.height, 120.0)
+}
+
+fn test_layout_fill_widths_scroll_child_no_roundoff_bias() {
+	mut root := Layout{
+		shape:    &Shape{
+			shape_type:  .rectangle
+			axis:        .left_to_right
+			sizing:      fixed_fixed
+			width:       100
+			height:      50
+			padding:     Padding{
+				left:   4
+				right:  6
+				top:    0
+				bottom: 0
+			}
+			spacing:     8
+			size_border: 0
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					axis:       .none
+					sizing:     fixed_fill
+					width:      30
+					height:     20
+				}
+			},
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					axis:       .top_to_bottom
+					sizing:     fill_fill
+					id_scroll:  11
+					width:      0
+					height:     20
+				}
+			},
+		]
+	}
+	layout_parents(mut root, unsafe { nil })
+	layout_fill_widths(mut root)
+	assert f32_are_close(root.children[1].shape.width, 52.0)
+}
+
+fn test_layout_fill_heights_scroll_child_no_roundoff_bias() {
+	mut root := Layout{
+		shape:    &Shape{
+			shape_type:  .rectangle
+			axis:        .top_to_bottom
+			sizing:      fixed_fixed
+			width:       50
+			height:      100
+			padding:     Padding{
+				left:   0
+				right:  0
+				top:    4
+				bottom: 6
+			}
+			spacing:     8
+			size_border: 0
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					axis:       .none
+					sizing:     fill_fixed
+					width:      20
+					height:     30
+				}
+			},
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					axis:       .left_to_right
+					sizing:     fill_fill
+					id_scroll:  12
+					width:      20
+					height:     0
+				}
+			},
+		]
+	}
+	layout_parents(mut root, unsafe { nil })
+	layout_fill_heights(mut root)
+	assert f32_are_close(root.children[1].shape.height, 52.0)
+}

@@ -12,6 +12,26 @@ enum DistributeAxis as u8 {
 	vertical
 }
 
+struct DistributeScratch {
+mut:
+	candidates    []int
+	fixed_indices []int
+}
+
+@[inline]
+fn (mut scratch DistributeScratch) ensure_cap(size int) {
+	if scratch.candidates.cap < size {
+		scratch.candidates = []int{cap: size}
+	} else {
+		scratch.candidates.clear()
+	}
+	if scratch.fixed_indices.cap < size {
+		scratch.fixed_indices = []int{cap: size}
+	} else {
+		scratch.fixed_indices.clear()
+	}
+}
+
 // Dimension accessor functions abstract over the horizontal/vertical axis
 // to enable a single unified algorithm for both directions.
 
@@ -338,11 +358,14 @@ fn layout_heights(mut layout Layout) {
 // - The previous_remaining check guards against infinite loops when rounding
 //   prevents progress
 fn layout_fill_widths(mut layout Layout) {
+	mut scratch := DistributeScratch{}
+	layout_fill_widths_with_scratch(mut layout, mut scratch)
+}
+
+fn layout_fill_widths_with_scratch(mut layout Layout, mut scratch DistributeScratch) {
 	mut remaining_width := layout.shape.width - layout.shape.padding_width()
 
-	// Pre-allocate work arrays to avoid allocations in hot loops
-	mut candidates := []int{cap: layout.children.len}
-	mut fixed_indices := []int{cap: layout.children.len}
+	scratch.ensure_cap(layout.children.len)
 
 	if layout.shape.axis == .left_to_right {
 		for mut child in layout.children {
@@ -354,17 +377,17 @@ fn layout_fill_widths(mut layout Layout) {
 		// Grow if needed
 		if remaining_width > f32_tolerance {
 			remaining_width = distribute_space(mut layout, remaining_width, .grow, .horizontal, mut
-				candidates, mut fixed_indices)
+				scratch.candidates, mut scratch.fixed_indices)
 		}
 
 		// Shrink if needed
 		if remaining_width < -f32_tolerance {
 			remaining_width = distribute_space(mut layout, remaining_width, .shrink, .horizontal, mut
-				candidates, mut fixed_indices)
+				scratch.candidates, mut scratch.fixed_indices)
 		}
 	} else if layout.shape.axis == .top_to_bottom {
 		if layout.shape.id_scroll > 0 && layout.shape.sizing.width == .fill
-			&& layout.shape.scroll_mode != .vertical_only
+			&& layout.shape.scroll_mode != .vertical_only && layout.parent != unsafe { nil }
 			&& layout.parent.shape.axis == .left_to_right {
 			mut sibling_width_sum := f32(0)
 			for sibling in layout.parent.children {
@@ -372,10 +395,11 @@ fn layout_fill_widths(mut layout Layout) {
 					sibling_width_sum += sibling.shape.width
 				}
 			}
-			layout.shape.width = layout.parent.shape.width - sibling_width_sum
-			layout.shape.width -= layout.parent.spacing()
-			layout.shape.width -= layout.parent.shape.padding_width()
-			layout.shape.width += 1 // round-off?
+			target_width := layout.parent.shape.width - sibling_width_sum - layout.parent.spacing() - layout.parent.shape.padding_width()
+			layout.shape.width = f32_max(0, target_width)
+		}
+		if layout.shape.min_width > 0 && layout.shape.width < layout.shape.min_width {
+			layout.shape.width = layout.shape.min_width
 		}
 		if layout.shape.max_width > 0 && layout.shape.width > layout.shape.max_width {
 			layout.shape.width = layout.shape.max_width
@@ -394,18 +418,21 @@ fn layout_fill_widths(mut layout Layout) {
 	}
 
 	for mut child in layout.children {
-		layout_fill_widths(mut child)
+		layout_fill_widths_with_scratch(mut child, mut scratch)
 	}
 }
 
 // layout_fill_heights manages vertical growth/shrinkage to satisfy constraints.
 // See layout_fill_widths for algorithm invariants (same logic, vertical axis).
 fn layout_fill_heights(mut layout Layout) {
+	mut scratch := DistributeScratch{}
+	layout_fill_heights_with_scratch(mut layout, mut scratch)
+}
+
+fn layout_fill_heights_with_scratch(mut layout Layout, mut scratch DistributeScratch) {
 	mut remaining_height := layout.shape.height - layout.shape.padding_height()
 
-	// Pre-allocate work arrays to avoid allocations in hot loops
-	mut candidates := []int{cap: layout.children.len}
-	mut fixed_indices := []int{cap: layout.children.len}
+	scratch.ensure_cap(layout.children.len)
 
 	if layout.shape.axis == .top_to_bottom {
 		for mut child in layout.children {
@@ -417,17 +444,17 @@ fn layout_fill_heights(mut layout Layout) {
 		// Grow if needed
 		if remaining_height > f32_tolerance {
 			remaining_height = distribute_space(mut layout, remaining_height, .grow, .vertical, mut
-				candidates, mut fixed_indices)
+				scratch.candidates, mut scratch.fixed_indices)
 		}
 
 		// Shrink if needed
 		if remaining_height < -f32_tolerance {
 			remaining_height = distribute_space(mut layout, remaining_height, .shrink,
-				.vertical, mut candidates, mut fixed_indices)
+				.vertical, mut scratch.candidates, mut scratch.fixed_indices)
 		}
 	} else if layout.shape.axis == .left_to_right {
 		if layout.shape.id_scroll > 0 && layout.shape.sizing.height == .fill
-			&& layout.shape.scroll_mode != .horizontal_only
+			&& layout.shape.scroll_mode != .horizontal_only && layout.parent != unsafe { nil }
 			&& layout.parent.shape.axis == .top_to_bottom {
 			mut sibling_height_sum := f32(0)
 			for sibling in layout.parent.children {
@@ -435,10 +462,11 @@ fn layout_fill_heights(mut layout Layout) {
 					sibling_height_sum += sibling.shape.height
 				}
 			}
-			layout.shape.height = layout.parent.shape.height - sibling_height_sum
-			layout.shape.height -= layout.parent.spacing()
-			layout.shape.height -= layout.parent.shape.padding_height()
-			layout.shape.height += 1 // round-off?
+			target_height := layout.parent.shape.height - sibling_height_sum - layout.parent.spacing() - layout.parent.shape.padding_height()
+			layout.shape.height = f32_max(0, target_height)
+		}
+		if layout.shape.min_height > 0 && layout.shape.height < layout.shape.min_height {
+			layout.shape.height = layout.shape.min_height
 		}
 		if layout.shape.max_height > 0 && layout.shape.height > layout.shape.max_height {
 			layout.shape.height = layout.shape.max_height
@@ -457,6 +485,6 @@ fn layout_fill_heights(mut layout Layout) {
 	}
 
 	for mut child in layout.children {
-		layout_fill_heights(mut child)
+		layout_fill_heights_with_scratch(mut child, mut scratch)
 	}
 }

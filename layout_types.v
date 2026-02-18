@@ -9,10 +9,6 @@ pub mut:
 	children []Layout
 }
 
-const empty_layout = Layout{
-	shape: &Shape{}
-}
-
 fn layout_clear(mut layout Layout) {
 	for i in 0 .. layout.children.len {
 		layout_clear(mut layout.children[i])

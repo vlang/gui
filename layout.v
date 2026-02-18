@@ -23,7 +23,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	layout_parents(mut layout, unsafe { nil })
 
 	// Floating layouts do not affect parent or sibling elements.
-	mut floating_layouts := []&Layout{}
+	mut floating_layouts := []&Layout{cap: layout.children.len + 1}
 	layout_remove_floating_layouts(mut layout, mut floating_layouts)
 
 	// Dialog is a pop-up dialog.
@@ -46,7 +46,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	// the layout array, they get rendered after the main layout.
 	for mut floating_layout in floating_layouts {
 		shape_clip := floating_layout.parent.shape.shape_clip
-		if shape_clip.width == 0 && shape_clip.height == 0 {
+		if shape_clip.width <= 0 || shape_clip.height <= 0 {
 			continue
 		}
 		layout_pipeline(mut floating_layout, mut window)
@@ -124,9 +124,17 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []&Layout) {
 			layout_remove_floating_layouts(mut *heap_layout, mut layouts)
 
 			// Replace in original tree with empty placeholder
-			layout.children[i] = empty_layout
+			layout.children[i] = layout_placeholder()
 		} else {
 			layout_remove_floating_layouts(mut layout.children[i], mut layouts)
+		}
+	}
+}
+
+fn layout_placeholder() Layout {
+	return Layout{
+		shape: &Shape{
+			shape_type: .none
 		}
 	}
 }

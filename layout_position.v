@@ -141,18 +141,19 @@ fn layout_disables(mut layout Layout, disabled bool) {
 // layout_scroll_containers identifies which text views are in a
 // scrollable container (row, column).
 fn layout_scroll_containers(mut layout Layout, id_scroll_container u32) {
-	for mut ly in layout.children {
-		id := match ly.shape.id_scroll > 0 {
-			true { ly.shape.id_scroll }
-			else { id_scroll_container }
-		}
-		layout_scroll_containers(mut ly, id)
-		// Motivation: `text` views are not directly scrollable but must live inside
-		// a scrollable container. Selecting text can push selection outside the
-		// visible region. Use `id_scroll_container` to track the parent.
-		if ly.shape.shape_type == .text {
-			ly.shape.id_scroll_container = id_scroll_container
-		}
+	active_id := if layout.shape.id_scroll > 0 {
+		layout.shape.id_scroll
+	} else {
+		id_scroll_container
+	}
+	// Motivation: `text` views are not directly scrollable but must live inside
+	// a scrollable container. Selecting text can push selection outside the
+	// visible region. Use the nearest active container.
+	if layout.shape.shape_type == .text {
+		layout.shape.id_scroll_container = active_id
+	}
+	for mut child in layout.children {
+		layout_scroll_containers(mut child, active_id)
 	}
 }
 
