@@ -573,7 +573,7 @@ fn test_renderer_guard_draw_layout_placed_requires_non_nil_layout() {
 	}))
 }
 
-fn test_collect_filter_bracket_content_matched_begin_end() {
+fn test_find_filter_bracket_range_matched_begin_end() {
 	renderers := [
 		Renderer(DrawNone{}),
 		Renderer(DrawSvg{
@@ -586,29 +586,25 @@ fn test_collect_filter_bracket_content_matched_begin_end() {
 		Renderer(DrawFilterEnd{}),
 		Renderer(DrawNone{}),
 	]
-	collected := collect_filter_bracket_content(renderers, 0)
+	bracket := find_filter_bracket_range(renderers, 0)
 
-	assert collected.found_end
-	assert collected.content.len == 2
-	assert collected.next_idx == 3
-	match collected.content[1] {
-		DrawSvg {}
-		else {
-			assert false, 'expected DrawSvg in collected content'
-		}
-	}
+	assert bracket.found_end
+	assert bracket.start_idx == 0
+	assert bracket.end_idx == 2
+	assert bracket.next_idx == 3
 }
 
-fn test_collect_filter_bracket_content_unmatched_begin_end() {
+fn test_find_filter_bracket_range_unmatched_begin_end() {
 	renderers := [
 		Renderer(DrawNone{}),
 		Renderer(DrawNone{}),
 	]
-	collected := collect_filter_bracket_content(renderers, 0)
+	bracket := find_filter_bracket_range(renderers, 0)
 
-	assert !collected.found_end
-	assert collected.content.len == 2
-	assert collected.next_idx == 2
+	assert !bracket.found_end
+	assert bracket.start_idx == 0
+	assert bracket.end_idx == 2
+	assert bracket.next_idx == 2
 }
 
 fn test_renderer_guard_valid_draw_clip_zero_size() {

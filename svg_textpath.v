@@ -6,7 +6,7 @@ import vglyph
 
 // render_svg_text_path places text along a referenced path
 // and emits a DrawLayoutPlaced renderer.
-fn render_svg_text_path(tp svg.SvgTextPath, defs_paths map[string]string, shape_x f32, shape_y f32, scale f32, gradients map[string]svg.SvgGradientDef, mut window Window) {
+fn render_svg_text_path(tp svg.SvgTextPath, defs_paths map[string]string, shape_x f32, shape_y f32, scale f32, mut window Window) {
 	d := defs_paths[tp.path_id] or { return }
 	polyline := svg.flatten_defs_path(d, scale)
 	if polyline.len < 4 {
@@ -97,9 +97,9 @@ fn render_svg_text_path(tp svg.SvgTextPath, defs_paths map[string]string, shape_
 		}
 		cur_advance += advance
 	}
-	cloned := clone_layout_for_draw(&layout)
-	window.renderers << DrawLayoutPlaced{
-		layout:     cloned
+	// `layout` is local. Emit cloned layout, never `&layout`.
+	emit_renderer(DrawLayoutPlaced{
+		layout:     clone_layout_for_draw(&layout)
 		placements: placements
-	}
+	}, mut window)
 }

@@ -43,6 +43,7 @@ mut:
 	quad_vbuf        gfx.Buffer   // static unit quad (blur passes)
 	content_vbuf     gfx.Buffer   // dynamic buffer for SVG content
 	content_vbuf_sz  int          // current content buffer capacity
+	scratch_vertices []FilterVertex
 	initialized      bool
 }
 

@@ -4,8 +4,9 @@ import sokol.gfx
 import sokol.sgl
 import math
 
-struct FilterBracketCollectResult {
-	content   []Renderer
+struct FilterBracketRange {
+	start_idx int
+	end_idx   int
 	found_end bool
 	next_idx  int
 }
@@ -38,33 +39,46 @@ fn filter_texture_dims_from_bbox(bbox_w f32, bbox_h f32, max_tex_size int) Filte
 	}
 }
 
-fn collect_filter_bracket_content(renderers []Renderer, start_idx int) FilterBracketCollectResult {
+fn find_filter_bracket_range(renderers []Renderer, start_idx int) FilterBracketRange {
 	if start_idx >= renderers.len {
-		return FilterBracketCollectResult{
-			content:   []Renderer{}
+		return FilterBracketRange{
+			start_idx: start_idx
+			end_idx:   start_idx
 			found_end: false
 			next_idx:  start_idx
 		}
 	}
 	mut idx := start_idx
-	mut content := []Renderer{cap: renderers.len - start_idx}
 	for idx < renderers.len {
 		current := renderers[idx]
 		if current is DrawFilterEnd {
-			return FilterBracketCollectResult{
-				content:   content
+			return FilterBracketRange{
+				start_idx: start_idx
+				end_idx:   idx
 				found_end: true
 				next_idx:  idx + 1
 			}
 		}
-		content << current
 		idx++
 	}
-	return FilterBracketCollectResult{
-		content:   content
+	return FilterBracketRange{
+		start_idx: start_idx
+		end_idx:   idx
 		found_end: false
 		next_idx:  idx
 	}
+}
+
+@[inline]
+fn append_renderer_range(mut dst []Renderer, src []Renderer, start_idx int, end_idx int) {
+	if src.len == 0 || start_idx < 0 || start_idx >= src.len || end_idx <= start_idx {
+		return
+	}
+	end := if end_idx > src.len { src.len } else { end_idx }
+	if end <= start_idx {
+		return
+	}
+	dst << src[start_idx..end]
 }
 
 // process_svg_filters scans renderers for DrawFilterBegin..End brackets,
@@ -88,17 +102,19 @@ fn process_svg_filters(mut window Window) {
 			fg := cached.filtered_groups[begin.group_idx]
 			filter := fg.filter
 
-			// Collect content renderers between Begin and End
-			collected := collect_filter_bracket_content(renderers, i + 1)
-			i = collected.next_idx
-			if !collected.found_end {
+			// Collect content range between Begin and End
+			bracket := find_filter_bracket_range(renderers, i + 1)
+			i = bracket.next_idx
+			if !bracket.found_end {
 				$if !prod {
 					assert false, 'DrawFilterBegin without DrawFilterEnd'
 				}
-				new_renderers << collected.content
+				append_renderer_range(mut new_renderers, renderers, bracket.start_idx,
+					bracket.end_idx)
 				continue
 			}
-			content := collected.content
+			content_start := bracket.start_idx
+			content_end := bracket.end_idx
 
 			// Compute screen-space bbox with blur padding
 			scale := begin.scale
@@ -111,19 +127,19 @@ fn process_svg_filters(mut window Window) {
 
 			tex_dims := filter_texture_dims_from_bbox(bbox_w, bbox_h, max_tex_size)
 			if !tex_dims.valid {
-				new_renderers << content
+				append_renderer_range(mut new_renderers, renderers, content_start, content_end)
 				continue
 			}
 
 			ensure_filter_state(mut window)
 			if !ensure_filter_textures(mut window, tex_dims.width, tex_dims.height) {
-				new_renderers << content
+				append_renderer_range(mut new_renderers, renderers, content_start, content_end)
 				continue
 			}
 
 			// Render content to tex_a via raw gfx offscreen pass
-			render_filter_content(content, bbox_x, bbox_y, bbox_w, bbox_h, ui_scale, mut
-				window)
+			render_filter_content(renderers, content_start, content_end, bbox_x, bbox_y,
+				bbox_w, bbox_h, ui_scale, mut window)
 
 			// Blur: H (tex_a → tex_b), V (tex_b → tex_a)
 			blur_filter_pass(filter.std_dev, mut window)
@@ -140,7 +156,7 @@ fn process_svg_filters(mut window Window) {
 			})
 
 			if filter.keep_source {
-				new_renderers << content
+				append_renderer_range(mut new_renderers, renderers, content_start, content_end)
 			}
 		} else {
 			new_renderers << r
@@ -153,12 +169,13 @@ fn process_svg_filters(mut window Window) {
 
 // render_filter_content renders SVG content to offscreen tex_a
 // using raw gfx calls (no SGL, avoids vertex buffer conflicts).
-fn render_filter_content(content []Renderer, bbox_x f32, bbox_y f32, bbox_w f32, bbox_h f32, ui_scale f32, mut window Window) {
+fn render_filter_content(renderers []Renderer, start_idx int, end_idx int, bbox_x f32, bbox_y f32, bbox_w f32, bbox_h f32, ui_scale f32, mut window Window) {
 	// Count triangle vertices needed
 	mut n_verts := 0
-	for r in content {
-		if r is DrawSvg {
-			n_verts += r.triangles.len / 2 // x,y pairs → vertices
+	for i in start_idx .. end_idx {
+		r := renderers[i]
+		if r is DrawSvg && !r.is_clip_mask {
+			n_verts += r.triangles.len / 2
 		}
 	}
 
@@ -177,28 +194,48 @@ fn render_filter_content(content []Renderer, bbox_x f32, bbox_y f32, bbox_w f32,
 		return
 	}
 
-	// Build vertex buffer from SVG content
-	mut verts := []FilterVertex{cap: n_verts}
-	for r in content {
-		if r is DrawSvg {
+	// Build vertex buffer from SVG content.
+	window.filter_state.scratch_vertices.clear()
+	if window.filter_state.scratch_vertices.cap < n_verts {
+		window.filter_state.scratch_vertices = []FilterVertex{cap: n_verts}
+	}
+	for i in start_idx .. end_idx {
+		r := renderers[i]
+		if r is DrawSvg && !r.is_clip_mask {
 			c := r.color
 			has_vcols := r.vertex_colors.len > 0
 			mut vi := 0
-			mut i := 0
-			for i < r.triangles.len - 1 {
-				x0 := (r.x + r.triangles[i] * r.scale) * ui_scale
-				y0 := (r.y + r.triangles[i + 1] * r.scale) * ui_scale
+			mut tri_i := 0
+			for tri_i < r.triangles.len - 1 {
+				x0 := (r.x + r.triangles[tri_i] * r.scale) * ui_scale
+				y0 := (r.y + r.triangles[tri_i + 1] * r.scale) * ui_scale
 				if has_vcols && vi < r.vertex_colors.len {
 					vc := r.vertex_colors[vi]
-					verts << FilterVertex{x0, y0, 0, 0, 0, vc.r, vc.g, vc.b, vc.a}
+					window.filter_state.scratch_vertices << FilterVertex{
+						x: x0
+						y: y0
+						r: vc.r
+						g: vc.g
+						b: vc.b
+						a: vc.a
+					}
 				} else {
-					verts << FilterVertex{x0, y0, 0, 0, 0, c.r, c.g, c.b, c.a}
+					window.filter_state.scratch_vertices << FilterVertex{
+						x: x0
+						y: y0
+						r: c.r
+						g: c.g
+						b: c.b
+						a: c.a
+					}
 				}
 				vi++
-				i += 2
+				tri_i += 2
 			}
 		}
 	}
+
+	verts := window.filter_state.scratch_vertices
 
 	// Create or resize dynamic vertex buffer
 	buf_size := int(sizeof(FilterVertex)) * verts.len

@@ -112,7 +112,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 	fx := shape.fx
 	has_fx := fx != unsafe { nil }
 	if has_fx && fx.shadow != unsafe { nil } && fx.shadow.color.a > 0 && fx.shadow.blur_radius > 0 {
-		window.renderers << DrawShadow{
+		emit_renderer(DrawShadow{
 			x:           shape.x + fx.shadow.offset_x
 			y:           shape.y + fx.shadow.offset_y
 			width:       shape.width
@@ -122,12 +122,12 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			color:       fx.shadow.color.to_gx_color()
 			offset_x:    fx.shadow.offset_x
 			offset_y:    fx.shadow.offset_y
-		}
+		}, mut window)
 	}
 	// Here is where the mighty container is drawn. Yeah, it really is just a rectangle.
 	if has_fx && fx.shader != unsafe { nil } {
 		color := if shape.disabled { dim_alpha(shape.color) } else { shape.color }
-		window.renderers << DrawCustomShader{
+		emit_renderer(DrawCustomShader{
 			x:      shape.x
 			y:      shape.y
 			w:      shape.width
@@ -135,7 +135,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			radius: shape.radius
 			color:  color.to_gx_color()
 			shader: fx.shader
-		}
+		}, mut window)
 		// Draw border separately if present
 		if shape.size_border > 0 && shape.color_border != color_transparent {
 			c_border := if shape.disabled {
@@ -144,7 +144,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 				shape.color_border
 			}
 			if c_border.a > 0 {
-				window.renderers << DrawStrokeRect{
+				emit_renderer(DrawStrokeRect{
 					x:         shape.x
 					y:         shape.y
 					w:         shape.width
@@ -152,21 +152,21 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 					color:     c_border.to_gx_color()
 					radius:    shape.radius
 					thickness: shape.size_border
-				}
+				}, mut window)
 			}
 		}
 		return
 	} else if has_fx && fx.gradient != unsafe { nil } {
-		window.renderers << DrawGradient{
+		emit_renderer(DrawGradient{
 			x:        shape.x
 			y:        shape.y
 			w:        shape.width
 			h:        shape.height
 			radius:   shape.radius
 			gradient: fx.gradient
-		}
+		}, mut window)
 	} else if has_fx && fx.blur_radius > 0 && shape.color.a > 0 {
-		window.renderers << DrawBlur{
+		emit_renderer(DrawBlur{
 			x:           shape.x
 			y:           shape.y
 			width:       shape.width
@@ -174,11 +174,11 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 			radius:      shape.radius
 			blur_radius: fx.blur_radius
 			color:       shape.color.to_gx_color()
-		}
+		}, mut window)
 	} else {
 		// Check for Border Gradient
 		if has_fx && fx.border_gradient != unsafe { nil } {
-			window.renderers << DrawGradientBorder{
+			emit_renderer(DrawGradientBorder{
 				x:         shape.x
 				y:         shape.y
 				w:         shape.width
@@ -186,7 +186,7 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 				radius:    shape.radius
 				thickness: shape.size_border
 				gradient:  fx.border_gradient
-			}
+			}, mut window)
 		} else {
 			render_rectangle(mut shape, clip, mut window)
 		}
@@ -212,19 +212,19 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 
 		// Fill
 		if color.a > 0 {
-			window.renderers << DrawCircle{
+			emit_renderer(DrawCircle{
 				x:      x
 				y:      y
 				radius: radius
 				fill:   true
 				color:  gx_color
-			}
+			}, mut window)
 		}
 
 		// Border
 		fx := shape.fx
 		if fx != unsafe { nil } && fx.border_gradient != unsafe { nil } && shape.size_border > 0 {
-			window.renderers << DrawGradientBorder{
+			emit_renderer(DrawGradientBorder{
 				x:         draw_rect.x
 				y:         draw_rect.y
 				w:         draw_rect.width
@@ -232,7 +232,7 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 				radius:    radius
 				thickness: shape.size_border
 				gradient:  fx.border_gradient
-			}
+			}, mut window)
 		} else if shape.size_border > 0 {
 			c_border := if shape.disabled {
 				dim_alpha(shape.color_border)
@@ -240,7 +240,7 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 				shape.color_border
 			}
 			if c_border.a > 0 {
-				window.renderers << DrawStrokeRect{
+				emit_renderer(DrawStrokeRect{
 					x:         draw_rect.x
 					y:         draw_rect.y
 					w:         draw_rect.width
@@ -248,7 +248,7 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 					color:     c_border.to_gx_color()
 					radius:    radius
 					thickness: shape.size_border
-				}
+				}, mut window)
 			}
 		}
 	} else {
@@ -271,7 +271,7 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 	if rects_overlap(draw_rect, clip) {
 		// Fill
 		if color.a > 0 {
-			window.renderers << DrawRect{
+			emit_renderer(DrawRect{
 				x:          draw_rect.x
 				y:          draw_rect.y
 				w:          draw_rect.width
@@ -280,7 +280,7 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 				style:      .fill
 				is_rounded: shape.radius > 0
 				radius:     shape.radius
-			}
+			}, mut window)
 		}
 
 		// Border
@@ -292,7 +292,7 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 			}
 
 			if c_border.a > 0 {
-				window.renderers << DrawStrokeRect{
+				emit_renderer(DrawStrokeRect{
 					x:         draw_rect.x
 					y:         draw_rect.y
 					w:         draw_rect.width
@@ -300,7 +300,7 @@ fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
 					color:     c_border.to_gx_color()
 					radius:    shape.radius
 					thickness: shape.size_border
-				}
+				}, mut window)
 			}
 		}
 	} else {
@@ -324,13 +324,13 @@ fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 		draw_error_placeholder(shape.x, shape.y, shape.width, shape.height, mut window)
 		return
 	}
-	window.renderers << DrawImage{
+	emit_renderer(DrawImage{
 		x:   shape.x
 		y:   shape.y
 		w:   shape.width
 		h:   shape.height
 		img: image
-	}
+	}, mut window)
 }
 
 fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
@@ -368,7 +368,7 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 			}
 			if has_transform {
 				emit_renderer(DrawLayoutTransformed{
-					layout:    clone_layout_for_draw(shape.tc.vglyph_layout)
+					layout:    shape.tc.vglyph_layout
 					x:         shape.x
 					y:         shape.y
 					transform: transform
@@ -387,13 +387,13 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 					if entry := window.view_state.diagram_cache.get(ihash) {
 						if entry.state == .ready && entry.png_path.len > 0 {
 							img := window.load_image(entry.png_path) or { continue }
-							window.renderers << DrawImage{
+							emit_renderer(DrawImage{
 								x:   shape.x + f32(item.x)
 								y:   shape.y + f32(item.y) - f32(item.ascent)
 								w:   f32(item.width)
 								h:   f32(item.ascent + item.descent)
 								img: img
-							}
+							}, mut window)
 						}
 					}
 				}

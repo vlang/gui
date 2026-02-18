@@ -21,7 +21,7 @@ fn renderers_draw(mut window Window) {
 		if renderer is DrawSvg {
 			// Handle stencil clip groups
 			if renderer.clip_group > 0 {
-				draw_clipped_svg_group(renderers, mut i, mut window)
+				i = draw_clipped_svg_group(renderers, i, mut window)
 				continue
 			}
 			// Per-vertex colored SVGs cannot batch
@@ -31,12 +31,11 @@ fn renderers_draw(mut window Window) {
 				i++
 				continue
 			}
-			mut batch := []f32{}
 			color := renderer.color
 			x := renderer.x
 			y := renderer.y
 			scale := renderer.scale
-			batch << renderer.triangles
+			start := i
 			i++
 			// Collect consecutive matching DrawSvg (non-clipped, non-gradient)
 			for i < renderers.len {
@@ -49,14 +48,13 @@ fn renderers_draw(mut window Window) {
 					svg := candidate
 					if svg.clip_group == 0 && svg.vertex_colors.len == 0 && svg.color == color
 						&& svg.x == x && svg.y == y && svg.scale == scale {
-						batch << svg.triangles
 						i++
 						continue
 					}
 				}
 				break
 			}
-			draw_triangles(batch, color, x, y, scale, mut window)
+			draw_svg_batch(renderers, start, i, color, x, y, scale, mut window)
 		} else {
 			renderer_draw(renderer, mut window)
 			i++
@@ -65,76 +63,146 @@ fn renderers_draw(mut window Window) {
 	window.text_system.commit()
 }
 
+// draw_svg_batch draws consecutive flat-color DrawSvg renderers in one SGL batch.
+fn draw_svg_batch(renderers []Renderer, start int, end int, c gg.Color, x f32, y f32, tri_scale f32, mut window Window) {
+	if start < 0 || end <= start || end > renderers.len {
+		return
+	}
+
+	scale := window.ui.scale
+	sgl.load_pipeline(window.ui.pipeline.alpha)
+	sgl.begin_triangles()
+	sgl.c4b(c.r, c.g, c.b, c.a)
+
+	for idx in start .. end {
+		renderer := renderers[idx]
+		if !guard_renderer_or_skip(renderer, mut window) {
+			continue
+		}
+		if renderer is DrawSvg {
+			mut i := 0
+			for i < renderer.triangles.len - 5 {
+				x0 := (x + renderer.triangles[i] * tri_scale) * scale
+				y0 := (y + renderer.triangles[i + 1] * tri_scale) * scale
+				x1 := (x + renderer.triangles[i + 2] * tri_scale) * scale
+				y1 := (y + renderer.triangles[i + 3] * tri_scale) * scale
+				x2 := (x + renderer.triangles[i + 4] * tri_scale) * scale
+				y2 := (y + renderer.triangles[i + 5] * tri_scale) * scale
+				sgl.v2f(x0, y0)
+				sgl.v2f(x1, y1)
+				sgl.v2f(x2, y2)
+				i += 6
+			}
+		}
+	}
+
+	sgl.end()
+}
+
 // draw_clipped_svg_group renders a stencil-clipped SVG group.
 // Collects all DrawSvg renderers sharing the same clip_group,
 // draws mask geometry to stencil, then draws content with
 // stencil test.
-fn draw_clipped_svg_group(renderers []Renderer, mut idx &int, mut window Window) {
-	if *idx >= renderers.len {
-		return
+fn draw_clipped_svg_group(renderers []Renderer, idx int, mut window Window) int {
+	if idx >= renderers.len {
+		return idx
 	}
-	if !guard_renderer_or_skip(renderers[*idx], mut window) {
-		(*idx)++
-		return
+	if !guard_renderer_or_skip(renderers[idx], mut window) {
+		return idx + 1
 	}
-	first := renderers[*idx] as DrawSvg
+	first := renderers[idx] as DrawSvg
 	group := first.clip_group
 
-	mut masks := []DrawSvg{}
-	mut content := []DrawSvg{}
+	group_start := idx
+	mut group_end := group_start
+	mut has_mask := false
+	mut has_content := false
 
 	// Collect all renderers in this clip group
-	for *idx < renderers.len {
-		candidate := renderers[*idx]
+	for group_end < renderers.len {
+		candidate := renderers[group_end]
 		if !guard_renderer_or_skip(candidate, mut window) {
-			(*idx)++
+			group_end++
 			continue
 		}
 		if candidate is DrawSvg {
 			svg := candidate
 			if svg.clip_group == group {
 				if svg.is_clip_mask {
-					masks << svg
+					has_mask = true
 				} else {
-					content << svg
+					has_content = true
 				}
-				(*idx)++
+				group_end++
 				continue
 			}
 		}
 		break
 	}
 
-	if masks.len == 0 || content.len == 0 {
-		// No mask or no content — draw content unclipped
-		for c in content {
-			draw_triangles(c.triangles, c.color, c.x, c.y, c.scale, mut window)
+	if !has_content {
+		return group_end
+	}
+
+	if !has_mask {
+		// No mask — draw content unclipped
+		for i in group_start .. group_end {
+			candidate := renderers[i]
+			if !guard_renderer_or_skip(candidate, mut window) {
+				continue
+			}
+			if candidate is DrawSvg && !candidate.is_clip_mask {
+				draw_triangles(candidate.triangles, candidate.color, candidate.x, candidate.y,
+					candidate.scale, mut window)
+			}
 		}
-		return
+		return group_end
 	}
 
 	init_stencil_pipelines(mut window)
 
 	// Step 1: Write clip mask to stencil buffer (ref=1)
 	sgl.load_pipeline(window.pip.stencil_write)
-	for m in masks {
-		draw_triangles_raw(m.triangles, m.x, m.y, m.scale, mut window)
+	for i in group_start .. group_end {
+		candidate := renderers[i]
+		if !guard_renderer_or_skip(candidate, mut window) {
+			continue
+		}
+		if candidate is DrawSvg && candidate.is_clip_mask {
+			draw_triangles_raw(candidate.triangles, candidate.x, candidate.y, candidate.scale, mut
+				window)
+		}
 	}
 
 	// Step 2: Draw content where stencil == 1
 	sgl.load_pipeline(window.pip.stencil_test)
-	for c in content {
-		sgl.c4b(c.color.r, c.color.g, c.color.b, c.color.a)
-		draw_triangles_raw(c.triangles, c.x, c.y, c.scale, mut window)
+	for i in group_start .. group_end {
+		candidate := renderers[i]
+		if !guard_renderer_or_skip(candidate, mut window) {
+			continue
+		}
+		if candidate is DrawSvg && !candidate.is_clip_mask {
+			sgl.c4b(candidate.color.r, candidate.color.g, candidate.color.b, candidate.color.a)
+			draw_triangles_raw(candidate.triangles, candidate.x, candidate.y, candidate.scale, mut
+				window)
+		}
 	}
 
 	// Step 3: Clear stencil by re-drawing mask with ref=0
 	sgl.load_pipeline(window.pip.stencil_clear)
-	for m in masks {
-		draw_triangles_raw(m.triangles, m.x, m.y, m.scale, mut window)
+	for i in group_start .. group_end {
+		candidate := renderers[i]
+		if !guard_renderer_or_skip(candidate, mut window) {
+			continue
+		}
+		if candidate is DrawSvg && candidate.is_clip_mask {
+			draw_triangles_raw(candidate.triangles, candidate.x, candidate.y, candidate.scale, mut
+				window)
+		}
 	}
 
 	sgl.load_default_pipeline()
+	return group_end
 }
 
 // draw_triangles_raw emits triangle vertices without setting
@@ -192,7 +260,6 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, renderer.cfg) or {
 				// Log error with context for debugging
 				log.error('Text render failed at (${renderer.x}, ${renderer.y}): ${err.msg()}')
-				log.debug('Failed text content: "${renderer.text}"')
 
 				// Fallback: draw small magenta indicator
 				draw_error_placeholder(renderer.x, renderer.y, 10, 10, mut window)

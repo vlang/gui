@@ -35,14 +35,17 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 		height: shape.height
 	}, mut window)
 
-	for tpath in cached.triangles {
+	for tpath in cached.render_paths {
 		has_vcols := tpath.vertex_colors.len > 0
-		c := if color.a > 0 && !has_vcols { color } else { svg_to_color(tpath.color) }
+		c := if color.a > 0 && !has_vcols {
+			color
+		} else {
+			rgba(tpath.color.r, tpath.color.g, tpath.color.b, tpath.color.a)
+		}
 		mut gx_vcols := []gg.Color{}
 		if has_vcols && color.a == 0 {
-			gx_vcols = []gg.Color{cap: tpath.vertex_colors.len}
-			for vc in tpath.vertex_colors {
-				gx_vcols << gg.Color{vc.r, vc.g, vc.b, vc.a}
+			unsafe {
+				gx_vcols = tpath.vertex_colors
 			}
 		}
 		emit_renderer(DrawSvg{
@@ -64,7 +67,7 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 	// Emit textPath elements
 	for tp in cached.text_paths {
-		render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale, cached.gradients, mut
+		render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale, mut
 			window)
 	}
 
@@ -77,14 +80,17 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 			scale:     cached.scale
 			cached:    cached
 		}, mut window)
-		for tpath in fg.triangles {
+		for tpath in fg.render_paths {
 			has_vcols := tpath.vertex_colors.len > 0
-			c := if color.a > 0 && !has_vcols { color } else { svg_to_color(tpath.color) }
+			c := if color.a > 0 && !has_vcols {
+				color
+			} else {
+				rgba(tpath.color.r, tpath.color.g, tpath.color.b, tpath.color.a)
+			}
 			mut gx_vcols := []gg.Color{}
 			if has_vcols && color.a == 0 {
-				gx_vcols = []gg.Color{cap: tpath.vertex_colors.len}
-				for vc in tpath.vertex_colors {
-					gx_vcols << gg.Color{vc.r, vc.g, vc.b, vc.a}
+				unsafe {
+					gx_vcols = tpath.vertex_colors
 				}
 			}
 			emit_renderer(DrawSvg{
@@ -103,8 +109,8 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 				window)
 		}
 		for tp in fg.text_paths {
-			render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale,
-				fg.gradients, mut window)
+			render_svg_text_path(tp, cached.defs_paths, shape.x, shape.y, cached.scale, mut
+				window)
 		}
 		emit_renderer(DrawFilterEnd{}, mut window)
 	}
@@ -188,12 +194,12 @@ fn render_svg_text(t svg.SvgText, shape_x f32, shape_y f32, scale f32, gradients
 		x -= tw
 	}
 
-	window.renderers << DrawText{
+	emit_renderer(DrawText{
 		text: t.text
 		cfg:  cfg
 		x:    x
 		y:    y
-	}
+	}, mut window)
 }
 
 // draw_error_placeholder draws a magenta box with a white cross.

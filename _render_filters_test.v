@@ -22,3 +22,41 @@ fn test_filter_texture_dims_from_bbox_rejects_oversize() {
 	over := filter_texture_dims_from_bbox(2048.0, 16.0, 1024)
 	assert !over.valid
 }
+
+fn test_find_filter_bracket_range_finds_end() {
+	renderers := [
+		Renderer(DrawFilterBegin{}),
+		Renderer(DrawRect{
+			x:     1
+			y:     2
+			w:     3
+			h:     4
+			style: .fill
+		}),
+		Renderer(DrawFilterEnd{}),
+		Renderer(DrawNone{}),
+	]
+	bracket := find_filter_bracket_range(renderers, 1)
+	assert bracket.start_idx == 1
+	assert bracket.end_idx == 2
+	assert bracket.next_idx == 3
+	assert bracket.found_end
+}
+
+fn test_find_filter_bracket_range_handles_missing_end() {
+	renderers := [
+		Renderer(DrawRect{
+			x:     1
+			y:     2
+			w:     3
+			h:     4
+			style: .fill
+		}),
+		Renderer(DrawNone{}),
+	]
+	bracket := find_filter_bracket_range(renderers, 0)
+	assert bracket.start_idx == 0
+	assert bracket.end_idx == 2
+	assert bracket.next_idx == 2
+	assert !bracket.found_end
+}

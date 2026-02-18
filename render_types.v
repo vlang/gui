@@ -156,6 +156,8 @@ struct DrawLayoutTransformed {
 }
 
 struct DrawLayoutPlaced {
+	// `layout` must outlive render dispatch.
+	// Do not store pointers to stack-local layouts here.
 	layout     &vglyph.Layout
 	placements []vglyph.GlyphPlacement
 }

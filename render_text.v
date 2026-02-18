@@ -15,6 +15,10 @@ fn text_shape_draw_transform(shape &Shape) ?vglyph.AffineTransform {
 }
 
 fn clone_layout_for_draw(src &vglyph.Layout) &vglyph.Layout {
+	// Required lifetime guard:
+	// renderers are consumed after this function returns.
+	// Never pass `&layout` for a stack-local vglyph.Layout.
+	// Keep this deep clone for any non-persistent/local layout.
 	if src == unsafe { nil } {
 		return &vglyph.Layout{}
 	}
@@ -73,7 +77,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	has_stroke := shape.tc.text_style.stroke_width > 0
 	if shape.has_text_layout() && (color != color_transparent || has_stroke) {
 		if transform := text_shape_draw_transform(shape) {
-			mut layout_to_draw := clone_layout_for_draw(shape.tc.vglyph_layout)
+			mut layout_to_draw := shape.tc.vglyph_layout
 			if window.text_system != unsafe { nil } {
 				mut cfg := text_cfg
 				cfg.block.width = shape.tc.last_constraint_width
@@ -89,6 +93,8 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 					return
 				}
 				if transformed_layout.lines.len > 0 || text_to_layout.len == 0 {
+					// `transformed_layout` is local; draw renderer needs
+					// a heap-owned copy that outlives this function.
 					layout_to_draw = clone_layout_for_draw(&transformed_layout)
 				}
 			}
@@ -116,9 +122,8 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	if shape.has_text_layout() {
 		// Gradient text: emit single DrawLayout for full layout
 		if has_gradient && (color != color_transparent || has_stroke) {
-			layout_to_draw := clone_layout_for_draw(shape.tc.vglyph_layout)
 			emit_renderer(DrawLayout{
-				layout:   layout_to_draw
+				layout:   shape.tc.vglyph_layout
 				x:        shape.x + shape.padding_left()
 				y:        shape.y + shape.padding_top()
 				gradient: shape.tc.text_style.gradient
@@ -161,12 +166,12 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 					}
 
 					if render_str.len > 0 {
-						window.renderers << DrawText{
+						emit_renderer(DrawText{
 							x:    draw_x
 							y:    draw_y
 							text: render_str
 							cfg:  text_cfg
-						}
+						}, mut window)
 					}
 				}
 
@@ -215,7 +220,7 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 			pw_sel := password_char.repeat(utf8_str_visible_length(sel_text))
 			sel_width := window.text_system.text_width(pw_sel, text_cfg) or { 0 }
 
-			window.renderers << DrawRect{
+			emit_renderer(DrawRect{
 				x:     draw_x + start_x_offset
 				y:     draw_y
 				w:     sel_width
@@ -224,7 +229,7 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 					...text_cfg.style.color
 					a: 60
 				}
-			}
+			}, mut window)
 		} else {
 			// Optimization: Use cached layout geometry
 			// Get rect for start char
@@ -245,7 +250,7 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 
 			sel_width := x_end - r_start.x
 
-			window.renderers << DrawRect{
+			emit_renderer(DrawRect{
 				x:     draw_x + r_start.x
 				y:     draw_y
 				w:     sel_width
@@ -254,7 +259,7 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 					...text_cfg.style.color
 					a: 60
 				}
-			}
+			}, mut window)
 		}
 	}
 }
@@ -301,14 +306,14 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 			ch := rect.height
 
 			// Draw cursor line
-			window.renderers << DrawRect{
+			emit_renderer(DrawRect{
 				x:     cx
 				y:     cy
 				w:     1.5 // slightly thicker
 				h:     ch
 				color: shape.tc.text_style.color.to_gx_color()
 				style: .fill
-			}
+			}, mut window)
 		}
 	}
 
@@ -344,14 +349,14 @@ fn render_composition(shape &Shape, mut window Window) {
 			f32(1.0)
 		}
 		for rect in cr.rects {
-			window.renderers << DrawRect{
+			emit_renderer(DrawRect{
 				x:     ox + rect.x
 				y:     oy + rect.y + rect.height - thickness
 				w:     rect.width
 				h:     thickness
 				color: underline_color
 				style: .fill
-			}
+			}, mut window)
 		}
 	}
 }

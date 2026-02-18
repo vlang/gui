@@ -54,6 +54,14 @@ guidance for building performant applications.
 - **Shader switches**: Minimize different shader types per frame
 - **Texture binds**: Image-heavy UIs should cache images
 
+### Heap Allocation Rules (Render Hot Path)
+
+- Avoid per-frame temporary arrays in `render_*` paths.
+- Batch SVG draws by index ranges; do not concatenate triangles.
+- Reuse filter vertex scratch buffers; grow only when needed.
+- Cache converted SVG vertex colors with the SVG cache entry.
+- Emit renderers via `emit_renderer(...)` for one validation path.
+
 ## Memory Usage
 
 ### Per-Widget Memory
