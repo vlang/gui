@@ -1,6 +1,7 @@
 module gui
 
 import gg
+import hash.fnv1a
 import log
 import svg
 import time
@@ -142,16 +143,29 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 
 // render_svg_animated emits paths with per-group animation transforms.
 fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, sy f32, mut window Window) {
-	start_ns := if v := window.view_state.svg_anim_start.get(res_key) {
+	anim_key := fnv1a.sum64_string(res_key).hex()
+	now_ns := time.now().unix_nano()
+	// Update staleness tracker so animation loop knows SVG is alive.
+	window.view_state.svg_anim_seen.set(anim_key, now_ns)
+	start_ns := if v := window.view_state.svg_anim_start.get(anim_key) {
 		v
 	} else {
-		now_ns := time.now().unix_nano()
-		window.view_state.svg_anim_start.set(res_key, now_ns)
+		window.view_state.svg_anim_start.set(anim_key, now_ns)
 		now_ns
 	}
-	elapsed_s := f32(time.now().unix_nano() - start_ns) / 1_000_000_000.0
+	elapsed_s := f32(now_ns - start_ns) / 1_000_000_000.0
 
-	// Evaluate animations: build transform matrix and opacity per group_id
+	// Evaluate animations: build transform matrix and opacity
+	// per group_id. Currently last-wins if a group has multiple
+	// animateTransform elements. Composing via matrix multiply
+	// would be correct but V has a compiler bug with
+	// map[string][6]f32: passing the map to a helper function
+	// while assigning to it, or using `in`/optional access on
+	// fixed-array-valued maps, silently produces wrong results
+	// (zero matrix instead of identity → geometry collapses).
+	// Do NOT extract a compose helper or use `if gid in
+	// group_matrices { matrix_multiply(...) }` until the V
+	// compiler issue is resolved.
 	mut group_matrices := map[string][6]f32{}
 	mut group_opacities := map[string]f32{}
 	for anim in cached.animations {

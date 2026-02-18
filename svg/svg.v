@@ -13,6 +13,7 @@ const max_path_segments = 100000 // Prevents DoS from path complexity. Typical p
 const max_viewbox_dim = 10000 // Prevents extreme allocations from huge viewBox dimensions.
 const max_attr_len = 1048576 // 1MB attribute limit prevents excessive string allocations.
 const max_coordinate = 1000000.0 // Prevents overflow in polygon operations and OOM from extreme coordinate values.
+const max_animations = 100 // Prevents DoS from crafted SVGs with many <animateTransform>/<animate> elements.
 
 // ParseState tracks mutable state during SVG parsing.
 struct ParseState {

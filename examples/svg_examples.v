@@ -33,7 +33,7 @@ fn main() {
 		state:   &SvgViewerApp{}
 		width:   600
 		height:  400
-		title:   'SVG Viewer'
+		title:   'SVG Examples'
 		on_init: fn (mut w gui.Window) {
 			w.update_view(main_view)
 		}

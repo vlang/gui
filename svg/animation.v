@@ -1,5 +1,6 @@
 module svg
 
+import log
 import math
 
 // parse_group_animations scans <g> content for <animateTransform>
@@ -11,6 +12,9 @@ pub fn parse_group_animations(content string, group_id string) []SvgAnimation {
 	mut anims := []SvgAnimation{}
 	mut pos := 0
 	for pos < content.len {
+		if anims.len >= max_animations {
+			break
+		}
 		start := find_index(content, '<', pos) or { break }
 		tag_end := find_tag_name_end(content, start + 1)
 		if tag_end <= start + 1 {
@@ -38,10 +42,19 @@ pub fn parse_group_animations(content string, group_id string) []SvgAnimation {
 fn parse_animate_transform(elem string, gid string) ?SvgAnimation {
 	type_attr := find_attr(elem, 'type') or { return none }
 	anim_type := match type_attr {
-		'rotate' { SvgAnimationType.rotate }
-		'scale' { SvgAnimationType.scale }
-		'translate' { SvgAnimationType.translate }
-		else { return none }
+		'rotate' {
+			SvgAnimationType.rotate
+		}
+		'scale' {
+			SvgAnimationType.scale
+		}
+		'translate' {
+			SvgAnimationType.translate
+		}
+		else {
+			log.warn('svg: skipping unsupported animateTransform type="${type_attr}"')
+			return none
+		}
 	}
 	dur := if d := find_attr(elem, 'dur') {
 		parse_smil_duration(d)
@@ -85,10 +98,13 @@ fn parse_animate_transform(elem string, gid string) ?SvgAnimation {
 	}
 }
 
-// parse_animate extracts a SMIL <animate> element (opacity only).
+// parse_animate extracts a SMIL <animate> element.
+// Currently only attributeName="opacity" is supported; other
+// attributes (fill, stroke, visibility, etc.) are skipped.
 fn parse_animate(elem string, gid string) ?SvgAnimation {
 	attr_name := find_attr(elem, 'attributeName') or { return none }
 	if attr_name != 'opacity' {
+		log.warn('svg: skipping unsupported animate attributeName="${attr_name}"')
 		return none
 	}
 	dur := if d := find_attr(elem, 'dur') {

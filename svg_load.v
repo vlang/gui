@@ -140,6 +140,10 @@ fn cached_svg_text_draws(texts []svg.SvgText, scale f32, gradients map[string]sv
 	return draws
 }
 
+// validate_svg_source rejects file paths containing '..'. This is a
+// basic traversal guard; it does not catch URL-encoded sequences or
+// symlinks. OS file permissions and max_svg_source_bytes (4MB) are
+// the primary defenses.
 fn validate_svg_source(svg_src string) ! {
 	if svg_src.starts_with('<') {
 		return
@@ -276,25 +280,6 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		}
 	}
 	max_cached_verts := 1250000
-	has_anims := vg.animations.len > 0
-	if total_verts > max_cached_verts {
-		return &CachedSvg{
-			render_paths:    render_paths
-			triangles:       triangles
-			texts:           vg.texts
-			text_draws:      text_draws
-			text_paths:      vg.text_paths
-			defs_paths:      vg.defs_paths
-			filtered_groups: cached_fg
-			gradients:       vg.gradients
-			animations:      vg.animations
-			has_animations:  has_anims
-			width:           vg.width
-			height:          vg.height
-			scale:           scale
-		}
-	}
-
 	cached := &CachedSvg{
 		render_paths:    render_paths
 		triangles:       triangles
@@ -305,13 +290,15 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		filtered_groups: cached_fg
 		gradients:       vg.gradients
 		animations:      vg.animations
-		has_animations:  has_anims
+		has_animations:  vg.animations.len > 0
 		width:           vg.width
 		height:          vg.height
 		scale:           scale
 	}
 
-	window.view_state.svg_cache.set(cache_key, cached)
+	if total_verts <= max_cached_verts {
+		window.view_state.svg_cache.set(cache_key, cached)
+	}
 	return cached
 }
 
