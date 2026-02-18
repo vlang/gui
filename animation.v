@@ -4,11 +4,20 @@ import time
 
 const animation_cycle = 16 * time.millisecond
 const animation_delay = 500 * time.millisecond
+const blink_cursor_animation_id = '___blinky_cursor_animation___'
+const blink_cursor_animation_delay = 600 * time.millisecond
+
+enum AnimationRefreshKind as u8 {
+	none
+	render_only
+	layout
+}
 
 type AnimationCallback = fn (mut Window)
 
 interface Animation {
 	id string
+	refresh_kind() AnimationRefreshKind
 mut:
 	delay   time.Duration
 	start   time.Time
@@ -25,6 +34,23 @@ mut:
 	start   time.Time
 	stopped bool
 	repeat  bool
+}
+
+fn (_ Animate) refresh_kind() AnimationRefreshKind {
+	return .layout
+}
+
+struct BlinkCursorAnimation implements Animation {
+pub:
+	id string = blink_cursor_animation_id
+mut:
+	delay   time.Duration = blink_cursor_animation_delay
+	start   time.Time
+	stopped bool
+}
+
+fn (_ BlinkCursorAnimation) refresh_kind() AnimationRefreshKind {
+	return .render_only
 }
 
 // animation_add registers a new animation to the window's animation queue.
@@ -58,7 +84,7 @@ fn (mut window Window) animation_loop() {
 
 	for {
 		time.sleep(animation_cycle)
-		mut refresh := false
+		mut refresh_kind := AnimationRefreshKind.none
 		mut deferred := []AnimationCallback{}
 		mut stopped_ids := []string{}
 		//--------------------------------------------
@@ -66,24 +92,39 @@ fn (mut window Window) animation_loop() {
 		for _, mut animation in window.animations {
 			match mut animation {
 				Animate {
-					refresh = update_animate(mut animation, mut window, mut deferred) || refresh
+					if update_animate(mut animation, mut window, mut deferred) {
+						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+					}
+				}
+				BlinkCursorAnimation {
+					if update_blink_cursor(mut animation, mut window) {
+						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+					}
 				}
 				TweenAnimation {
-					refresh = update_tween(mut animation, mut window, mut deferred) || refresh
+					if update_tween(mut animation, mut window, mut deferred) {
+						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+					}
 				}
 				SpringAnimation {
-					refresh = update_spring(mut animation, mut window, dt, mut deferred) || refresh
+					if update_spring(mut animation, mut window, dt, mut deferred) {
+						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+					}
 				}
 				LayoutTransition {
-					refresh = update_layout_transition(mut animation, mut window, mut deferred)
-						|| refresh
+					if update_layout_transition(mut animation, mut window, mut deferred) {
+						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+					}
 				}
 				HeroTransition {
-					refresh = update_hero_transition(mut animation, mut window, mut deferred)
-						|| refresh
+					if update_hero_transition(mut animation, mut window, mut deferred) {
+						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+					}
 				}
 				KeyframeAnimation {
-					refresh = update_keyframe(mut animation, mut window, mut deferred) || refresh
+					if update_keyframe(mut animation, mut window, mut deferred) {
+						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+					}
 				}
 				else {}
 			}
@@ -100,10 +141,26 @@ fn (mut window Window) animation_loop() {
 		for cb in deferred {
 			window.queue_command(cb)
 		}
-		if refresh {
-			window.update_window()
+		match refresh_kind {
+			.render_only {
+				window.request_render_only()
+			}
+			.layout {
+				window.update_window()
+			}
+			.none {}
 		}
 	}
+}
+
+fn max_animation_refresh_kind(current AnimationRefreshKind, incoming AnimationRefreshKind) AnimationRefreshKind {
+	if current == .layout || incoming == .layout {
+		return .layout
+	}
+	if current == .render_only || incoming == .render_only {
+		return .render_only
+	}
+	return .none
 }
 
 fn update_animate(mut an Animate, mut w Window, mut deferred []AnimationCallback) bool {
@@ -120,6 +177,23 @@ fn update_animate(mut an Animate, mut w Window, mut deferred []AnimationCallback
 			}
 			return true
 		}
+	}
+	return false
+}
+
+fn update_blink_cursor(mut b BlinkCursorAnimation, mut w Window) bool {
+	if b.stopped {
+		return false
+	}
+	if time.since(b.start) > b.delay {
+		if w.view_state.cursor_on_sticky {
+			w.view_state.input_cursor_on = true
+			w.view_state.cursor_on_sticky = false
+		} else {
+			w.view_state.input_cursor_on = !w.view_state.input_cursor_on
+		}
+		b.start = time.now()
+		return true
 	}
 	return false
 }

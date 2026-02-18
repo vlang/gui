@@ -490,6 +490,8 @@ fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_p
 		undo:          undo
 		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
 	})
+	w.view_state.input_cursor_on = true
+	w.view_state.cursor_on_sticky = true
 	return next_text
 }
 

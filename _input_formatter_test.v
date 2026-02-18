@@ -83,7 +83,7 @@ fn test_input_single_line_enter_runs_post_commit_normalize_and_commit_callback()
 			s.commit_reason = reason
 		}
 	}
-	handler := make_input_on_char(input_runtime_cfg(cfg))
+	handler := make_input_on_char(cfg)
 	layout := Layout{}
 	mut e := Event{
 		char_code: cr_char

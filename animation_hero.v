@@ -34,6 +34,10 @@ mut:
 	progress f32
 }
 
+fn (_ HeroTransition) refresh_kind() AnimationRefreshKind {
+	return .layout
+}
+
 // transition_to_view switches to a new view with animated hero element transitions.
 //
 // Hero transitions create smooth visual continuity when navigating between views by

@@ -124,6 +124,10 @@ mut:
 	progress  f32
 }
 
+fn (_ LayoutTransition) refresh_kind() AnimationRefreshKind {
+	return .layout
+}
+
 // animate_layout triggers layout transition animation
 // Call before making layout changes - captures current state
 pub fn (mut w Window) animate_layout(cfg LayoutTransitionCfg) {

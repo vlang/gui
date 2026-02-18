@@ -186,6 +186,10 @@ mut:
 	state   SpringState
 }
 
+fn (_ SpringAnimation) refresh_kind() AnimationRefreshKind {
+	return .layout
+}
+
 // spring_to sets spring target, starting from current position or `from` value
 pub fn (mut s SpringAnimation) spring_to(from f32, to f32) {
 	s.state.position = from
