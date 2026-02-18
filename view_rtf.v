@@ -69,7 +69,7 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 			on_click:      rtf_on_click
 			on_mouse_move: rtf_mouse_move
 		}
-		tc:         &TextConfig{
+		tc:         &ShapeTextConfig{
 			text_mode:      rtf.mode
 			hanging_indent: rtf.hanging_indent
 			vglyph_layout:  &layout

@@ -485,7 +485,7 @@ fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []Layout) 
 			width:      text_width
 			height:     metrics.ascender + metrics.descender // Logical height
 			float:      true
-			tc:         &TextConfig{
+			tc:         &ShapeTextConfig{
 				text:       cv.title
 				text_style: text_style
 			}

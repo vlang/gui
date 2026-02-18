@@ -237,7 +237,7 @@ fn test_render_text_transformed_non_focusable_uses_draw_layout_transformed() {
 		y:          20
 		width:      120
 		height:     24
-		tc:         &TextConfig{
+		tc:         &ShapeTextConfig{
 			text:               'abc'
 			cached_line_height: 12
 			text_style:         TextStyle{
@@ -283,7 +283,7 @@ fn test_render_text_transformed_focusable_falls_back_to_draw_text() {
 		y:          20
 		width:      120
 		height:     24
-		tc:         &TextConfig{
+		tc:         &ShapeTextConfig{
 			text:               'abc'
 			cached_line_height: 12
 			text_style:         TextStyle{
@@ -325,7 +325,7 @@ fn test_render_rtf_uniform_transform_uses_draw_layout_transformed() {
 		y:          7
 		width:      140
 		height:     40
-		tc:         &TextConfig{
+		tc:         &ShapeTextConfig{
 			rich_text:     &RichText{
 				runs: [
 					RichTextRun{
@@ -368,7 +368,7 @@ fn test_render_rtf_mixed_transform_falls_back_to_draw_layout() {
 		y:          7
 		width:      140
 		height:     40
-		tc:         &TextConfig{
+		tc:         &ShapeTextConfig{
 			rich_text:     &RichText{
 				runs: [
 					RichTextRun{
@@ -410,7 +410,7 @@ fn test_render_rtf_transform_with_inline_object_falls_back_to_draw_layout() {
 		y:          7
 		width:      140
 		height:     40
-		tc:         &TextConfig{
+		tc:         &ShapeTextConfig{
 			rich_text:     &RichText{
 				runs: [
 					RichTextRun{

@@ -14,9 +14,9 @@ pub mut:
 	resource string // Image path or SVG source (discriminated by shape_type)
 
 	// Optional sub-structs (nil when unused)
-	events &EventHandlers = unsafe { nil } // Event handlers
-	tc     &TextConfig    = unsafe { nil } // Text/RTF fields
-	fx     &ShapeEffects  = unsafe { nil } // Visual effects
+	events &EventHandlers   = unsafe { nil } // Event handlers
+	tc     &ShapeTextConfig = unsafe { nil } // Text/RTF fields
+	fx     &ShapeEffects    = unsafe { nil } // Visual effects
 
 	// Structs (Large/Aligned)
 	shape_clip DrawClip // Calculated clipping rectangle for rendering and hit-testing
@@ -61,12 +61,12 @@ pub mut:
 	opacity               f32 = 1.0 // Opacity multiplier (0.0 = transparent, 1.0 = opaque)
 }
 
-// TextConfig holds text/RTF-specific fields for a Shape.
+// ShapeTextConfig holds text/RTF-specific fields for a Shape.
 // Allocated only for shapes with shape_type .text or .rtf.
 // Internal cache fields below are runtime-only implementation details.
 // They are not user-facing config semantics and may change anytime.
 @[heap]
-pub struct TextConfig {
+pub struct ShapeTextConfig {
 pub mut:
 	text                  string
 	vglyph_layout         &vglyph.Layout = unsafe { nil }

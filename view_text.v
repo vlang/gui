@@ -70,7 +70,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			events:     events
 			hero:       tv.hero
 			opacity:    tv.opacity
-			tc:         &TextConfig{
+			tc:         &ShapeTextConfig{
 				text:                tv.text
 				text_is_password:    tv.is_password
 				text_is_placeholder: tv.placeholder_active

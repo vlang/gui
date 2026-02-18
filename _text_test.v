@@ -45,7 +45,7 @@ fn create_mock_shape() Shape {
 
 	mut shape := Shape{
 		shape_type: .text
-		tc:         &TextConfig{
+		tc:         &ShapeTextConfig{
 			text: text_content
 		}
 	}
