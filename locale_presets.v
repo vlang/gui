@@ -66,3 +66,72 @@ pub const locale_de_de = Locale{
 	months_full:  ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August',
 		'September', 'Oktober', 'November', 'Dezember']!
 }
+
+pub const locale_ar_sa = Locale{
+	id:       'ar-SA'
+	text_dir: .rtl
+
+	number: NumberFormat{
+		decimal_sep: `.`
+		group_sep:   `,`
+		group_sizes: [3]
+		minus_sign:  `-`
+		plus_sign:   `+`
+	}
+
+	date: DateFormat{
+		short_date:        'D/M/YYYY'
+		long_date:         'D MMMM YYYY'
+		month_year:        'MMMM YYYY'
+		first_day_of_week: 6 // Saturday
+	}
+
+	currency: CurrencyFormat{
+		symbol:   'ر.س'
+		code:     'SAR'
+		position: .suffix
+		spacing:  true
+		decimals: 2
+	}
+
+	str_ok:     'موافق'
+	str_yes:    'نعم'
+	str_no:     'لا'
+	str_cancel: 'إلغاء'
+
+	str_save:   'حفظ'
+	str_delete: 'حذف'
+	str_add:    'إضافة'
+	str_clear:  'مسح'
+	str_search: 'بحث'
+	str_filter: 'تصفية'
+	str_jump:   'انتقال'
+
+	str_loading:         'جارٍ التحميل...'
+	str_loading_diagram: 'جارٍ تحميل المخطط...'
+	str_saving:          'جارٍ الحفظ...'
+	str_save_failed:     'فشل الحفظ'
+	str_load_error:      'خطأ في التحميل'
+	str_error:           'خطأ'
+	str_clean:           'نظيف'
+
+	str_columns:  'الأعمدة'
+	str_selected: 'محدد'
+	str_draft:    'مسودة'
+	str_dirty:    'معدّل'
+	str_matches:  'تطابق'
+	str_page:     'صفحة'
+	str_rows:     'صفوف'
+
+	// Weekday names (0=Sun..6=Sat)
+	weekdays_short: ['ح', 'ن', 'ث', 'ر', 'خ', 'ج', 'س']!
+	weekdays_med:   ['أحد', 'اثن', 'ثلا', 'أرب', 'خمي', 'جمع', 'سبت']!
+	weekdays_full:  ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء',
+		'الخميس', 'الجمعة', 'السبت']!
+
+	// Month names (Gregorian, 0=Jan..11=Dec)
+	months_short: ['ينا', 'فبر', 'مار', 'أبر', 'ماي', 'يون', 'يول', 'أغس',
+		'سبت', 'أكت', 'نوف', 'ديس']!
+	months_full:  ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+		'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر']!
+}

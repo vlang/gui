@@ -109,7 +109,11 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 			),
 			row(
 				float:          true
-				float_anchor:   .bottom_left
+				float_anchor:   if gui_locale.text_dir == .rtl {
+					FloatAttach.bottom_right
+				} else {
+					FloatAttach.bottom_left
+				}
 				float_offset_y: -cfg.size_border
 
 				invisible: !picker_visible

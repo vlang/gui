@@ -107,7 +107,19 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 					color_border: cfg.color_border
 
 					float:          true
-					float_anchor:   if level == 0 { .bottom_left } else { .top_right }
+					float_anchor:   if level == 0 {
+						if gui_locale.text_dir == .rtl {
+							FloatAttach.bottom_right
+						} else {
+							FloatAttach.bottom_left
+						}
+					} else {
+						if gui_locale.text_dir == .rtl {
+							FloatAttach.top_left
+						} else {
+							FloatAttach.top_right
+						}
+					}
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }
 					on_hover:       make_submenu_on_hover(cfg)
 					on_click:       fn [id_focus] (_ &Layout, mut e Event, mut w Window) {

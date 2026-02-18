@@ -161,6 +161,8 @@ fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
 	on_column_order_change := cfg.on_column_order_change
 	base_order := data_grid_normalized_column_order(cfg.columns, cfg.column_order)
 	col_id := col.id
+	left_arrow := if gui_locale.text_dir == .rtl { '▶' } else { '◀' }
+	right_arrow := if gui_locale.text_dir == .rtl { '◀' } else { '▶' }
 	return row(
 		name:    'data_grid reorder controls'
 		padding: padding_none
@@ -168,7 +170,7 @@ fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
 		width:   data_grid_header_controls_width(true, false, false)
 		sizing:  fixed_fill
 		content: [
-			data_grid_order_button('◀', cfg.text_style_header, cfg.color_header_hover,
+			data_grid_order_button(left_arrow, cfg.text_style_header, cfg.color_header_hover,
 				fn [on_column_order_change, base_order, col_id] (mut e Event, mut w Window) {
 				if on_column_order_change == unsafe { nil } {
 					e.is_handled = true
@@ -182,7 +184,7 @@ fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
 				on_column_order_change(next_order, mut e, mut w)
 				e.is_handled = true
 			}),
-			data_grid_order_button('▶', cfg.text_style_header, cfg.color_header_hover,
+			data_grid_order_button(right_arrow, cfg.text_style_header, cfg.color_header_hover,
 				fn [on_column_order_change, base_order, col_id] (mut e Event, mut w Window) {
 				if on_column_order_change == unsafe { nil } {
 					e.is_handled = true

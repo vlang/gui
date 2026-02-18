@@ -70,6 +70,7 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			padding:               cv.padding
 			h_align:               cv.h_align
 			v_align:               cv.v_align
+			text_dir:              cv.text_dir
 			radius:                cv.radius
 			color:                 cv.color
 			fx:                    cv.make_effects()
@@ -192,6 +193,7 @@ pub:
 	scroll_mode     ScrollMode
 	h_align         HorizontalAlign
 	v_align         VerticalAlign
+	text_dir        TextDirection
 	float_anchor    FloatAttach
 	float_tie_off   FloatAttach
 	disabled        bool
@@ -265,6 +267,7 @@ fn container(cfg ContainerCfg) View {
 		color:                 cfg.color
 		h_align:               cfg.h_align
 		v_align:               cfg.v_align
+		text_dir:              cfg.text_dir
 		padding:               cfg.padding
 		radius:                cfg.radius
 		blur_radius:           cfg.blur_radius

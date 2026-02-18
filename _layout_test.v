@@ -539,3 +539,146 @@ fn test_layout_fill_heights_scroll_child_no_roundoff_bias() {
 	layout_fill_heights(mut root)
 	assert f32_are_close(root.children[1].shape.height, 52.0)
 }
+
+// Test: RTL row positions children right-to-left
+fn test_layout_positions_rtl_row() {
+	mut root := Layout{
+		shape:    &Shape{
+			x:           0
+			y:           0
+			width:       200
+			height:      50
+			axis:        .left_to_right
+			text_dir:    .rtl
+			padding:     Padding{
+				left:   10
+				right:  10
+				top:    0
+				bottom: 0
+			}
+			size_border: 0
+			spacing:     5
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					width:      40
+					height:     50
+				}
+			},
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					width:      60
+					height:     50
+				}
+			},
+		]
+	}
+
+	mut mock_window := Window{}
+	layout_parents(mut root, unsafe { nil })
+	layout_positions(mut root, 0, 0, &mock_window)
+
+	// RTL: first child at right edge minus padding
+	// x starts at 0 + 200 - 10 (padding_right) = 190
+	// Child 0: x = 190 - 40 = 150
+	assert f32_are_close(root.children[0].shape.x, 150.0)
+	// Child 1: x = 150 - 5 (spacing) - 60 = 85
+	assert f32_are_close(root.children[1].shape.x, 85.0)
+}
+
+// Test: .start resolves to .right under RTL
+fn test_layout_positions_rtl_start_align() {
+	// RTL column with h_align .start → resolves to .right
+	// Single child 40px wide in 200px container
+	mut root := Layout{
+		shape:    &Shape{
+			x:           0
+			y:           0
+			width:       200
+			height:      100
+			axis:        .top_to_bottom
+			text_dir:    .rtl
+			h_align:     .start
+			size_border: 0
+			spacing:     0
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					width:      40
+					height:     30
+				}
+			},
+		]
+	}
+
+	mut mock_window := Window{}
+	layout_parents(mut root, unsafe { nil })
+	layout_positions(mut root, 0, 0, &mock_window)
+
+	// .start in RTL resolves to .right → child pushed to right edge
+	// x_align = 200 - 40 - 0 (padding) = 160
+	assert f32_are_close(root.children[0].shape.x, 160.0)
+}
+
+// Test: per-container .ltr override in RTL global
+fn test_layout_positions_rtl_override_ltr() {
+	// Global is RTL but container overrides to LTR
+	old_locale := gui_locale
+	gui_locale = Locale{
+		text_dir: .rtl
+	}
+	defer {
+		gui_locale = old_locale
+	}
+
+	mut root := Layout{
+		shape:    &Shape{
+			x:           0
+			y:           0
+			width:       200
+			height:      50
+			axis:        .left_to_right
+			text_dir:    .ltr // explicit override
+			padding:     Padding{
+				left:   10
+				right:  10
+				top:    0
+				bottom: 0
+			}
+			size_border: 0
+			spacing:     5
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					width:      40
+					height:     50
+				}
+			},
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					width:      60
+					height:     50
+				}
+			},
+		]
+	}
+
+	mut mock_window := Window{}
+	layout_parents(mut root, unsafe { nil })
+	layout_positions(mut root, 0, 0, &mock_window)
+
+	// Despite global RTL, container is LTR
+	// x starts at 0 + 10 (padding_left) = 10
+	// Child 0: x = 10
+	assert f32_are_close(root.children[0].shape.x, 10.0)
+	// Child 1: x = 10 + 40 + 5 = 55
+	assert f32_are_close(root.children[1].shape.x, 55.0)
+}

@@ -153,10 +153,11 @@ fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
 
 fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
 	id := cfg.id
+	icon := if gui_locale.text_dir == .rtl { icon_arrow_right } else { icon_arrow_left }
 	return button(
 		disabled:     state.show_year_month_picker
 		color_border: color_transparent
-		content:      [text(text: icon_arrow_left, text_style: gui_theme.icon3)]
+		content:      [text(text: icon, text_style: gui_theme.icon3)]
 		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
 			mut dps := w.view_state.date_picker_state.get(id) or { DatePickerState{} }
 			dps.view_month = dps.view_month - 1
@@ -171,10 +172,11 @@ fn (cfg DatePickerCfg) prev_month(state DatePickerState) View {
 
 fn (cfg DatePickerCfg) next_month(state DatePickerState) View {
 	id := cfg.id
+	icon := if gui_locale.text_dir == .rtl { icon_arrow_left } else { icon_arrow_right }
 	return button(
 		disabled:     state.show_year_month_picker
 		color_border: color_transparent
-		content:      [text(text: icon_arrow_right, text_style: gui_theme.icon3)]
+		content:      [text(text: icon, text_style: gui_theme.icon3)]
 		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
 			mut dps := w.view_state.date_picker_state.get(id) or { DatePickerState{} }
 			dps.view_month = dps.view_month + 1

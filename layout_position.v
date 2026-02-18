@@ -40,7 +40,13 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 		layout.shape.clip = true
 	}
 
-	mut x := layout.shape.x + layout.shape.padding_left()
+	is_rtl := effective_text_dir(layout.shape) == .rtl
+
+	mut x := if is_rtl && axis == .left_to_right {
+		layout.shape.x + layout.shape.width - layout.shape.padding.right - layout.shape.size_border
+	} else {
+		layout.shape.x + layout.shape.padding_left()
+	}
 	mut y := layout.shape.y + layout.shape.padding_top()
 
 	if layout.shape.id_scroll > 0 {
@@ -48,28 +54,52 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 		y += w.view_state.scroll_y.get(layout.shape.id_scroll) or { f32(0) }
 	}
 
-	// Eventually start/end will be culture dependent
+	// Resolve start/end based on text direction
 	h_align := match layout.shape.h_align {
-		.start { HorizontalAlign.left }
-		.left { HorizontalAlign.left }
-		.center { HorizontalAlign.center }
-		.end { HorizontalAlign.right }
-		.right { HorizontalAlign.right }
+		.start {
+			if is_rtl { HorizontalAlign.right } else { HorizontalAlign.left }
+		}
+		.end {
+			if is_rtl { HorizontalAlign.left } else { HorizontalAlign.right }
+		}
+		.left {
+			HorizontalAlign.left
+		}
+		.right {
+			HorizontalAlign.right
+		}
+		.center {
+			HorizontalAlign.center
+		}
 	}
 
 	// alignment along the axis
 	match axis {
 		.left_to_right {
-			if h_align != .left {
-				mut remaining := layout.shape.width - layout.shape.padding_width()
-				remaining -= layout.spacing()
-				for child in layout.children {
-					remaining -= child.shape.width
+			if is_rtl {
+				if h_align != .right {
+					mut remaining := layout.shape.width - layout.shape.padding_width()
+					remaining -= layout.spacing()
+					for child in layout.children {
+						remaining -= child.shape.width
+					}
+					if h_align == .center {
+						remaining /= 2
+					}
+					x -= remaining
 				}
-				if h_align == .center {
-					remaining /= 2
+			} else {
+				if h_align != .left {
+					mut remaining := layout.shape.width - layout.shape.padding_width()
+					remaining -= layout.spacing()
+					for child in layout.children {
+						remaining -= child.shape.width
+					}
+					if h_align == .center {
+						remaining /= 2
+					}
+					x += remaining
 				}
-				x += remaining
 			}
 		}
 		.top_to_bottom {
@@ -116,12 +146,25 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 			.none {}
 		}
 
-		layout_positions(mut child, x + x_align, y + y_align, w)
+		if is_rtl && axis == .left_to_right {
+			layout_positions(mut child, x - child.shape.width + x_align, y + y_align,
+				w)
+		} else {
+			layout_positions(mut child, x + x_align, y + y_align, w)
+		}
 
 		if child.shape.shape_type != .none {
 			match axis {
-				.left_to_right { x += child.shape.width + spacing }
-				.top_to_bottom { y += child.shape.height + spacing }
+				.left_to_right {
+					if is_rtl {
+						x -= child.shape.width + spacing
+					} else {
+						x += child.shape.width + spacing
+					}
+				}
+				.top_to_bottom {
+					y += child.shape.height + spacing
+				}
 				.none {}
 			}
 		}

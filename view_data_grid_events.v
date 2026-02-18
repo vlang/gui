@@ -259,8 +259,10 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 	}
 	jump_input_id := '${grid_id}:jump'
 	jump_focus_id := fnv1a.sum32_string(jump_input_id)
+	prev_arrow := if gui_locale.text_dir == .rtl { '▶' } else { '◀' }
+	next_arrow := if gui_locale.text_dir == .rtl { '◀' } else { '▶' }
 	mut content := []View{cap: 9}
-	content << data_grid_indicator_button('◀', cfg.text_style_header, cfg.color_header_hover,
+	content << data_grid_indicator_button(prev_arrow, cfg.text_style_header, cfg.color_header_hover,
 		!has_callback || is_first, data_grid_header_control_width + 10, fn [on_page_change, page_index, focus_id] (_ &Layout, mut e Event, mut w Window) {
 		if on_page_change == unsafe { nil } {
 			return
@@ -277,7 +279,7 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 		mode:       .single_line
 		text_style: cfg.text_style_filter
 	)
-	content << data_grid_indicator_button('▶', cfg.text_style_header, cfg.color_header_hover,
+	content << data_grid_indicator_button(next_arrow, cfg.text_style_header, cfg.color_header_hover,
 		!has_callback || is_last, data_grid_header_control_width + 10, fn [on_page_change, page_index, page_count, focus_id] (_ &Layout, mut e Event, mut w Window) {
 		if on_page_change == unsafe { nil } {
 			return

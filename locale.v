@@ -1,8 +1,19 @@
 module gui
 
 pub enum TextDirection as u8 {
+	auto // inherit from parent/global (zero value)
 	ltr
 	rtl
+}
+
+// effective_text_dir resolves the text direction for a shape,
+// falling back to the global locale when set to .auto.
+@[inline]
+fn effective_text_dir(shape &Shape) TextDirection {
+	if shape.text_dir != .auto {
+		return shape.text_dir
+	}
+	return gui_locale.text_dir
 }
 
 pub struct NumberFormat {

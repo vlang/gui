@@ -41,6 +41,7 @@ const bc_full_path = [
 struct ShowcaseApp {
 pub mut:
 	light_theme        bool
+	locale_index       int
 	nav_query          string
 	selected_group     string = 'all'
 	selected_component string = 'welcome'
@@ -762,7 +763,16 @@ fn catalog_panel(mut w gui.Window) gui.View {
 				}
 				content:         catalog_rows(entries, app)
 			),
-			toggle_theme(app),
+			gui.row(
+				padding: gui.padding_none
+				spacing: 8
+				sizing:  gui.fill_fit
+				h_align: .end
+				content: [
+					toggle_locale(app),
+					toggle_theme(app),
+				]
+			),
 		]
 	)
 }
@@ -1199,6 +1209,36 @@ fn line() gui.View {
 				color:   gui.theme().color_active
 			),
 		]
+	)
+}
+
+const showcase_locale_labels = ['EN', 'DE', 'AR']!
+const showcase_locale_count = 3
+
+fn showcase_locale(idx int) gui.Locale {
+	return match idx {
+		1 { gui.locale_de_de }
+		2 { gui.locale_ar_sa }
+		else { gui.locale_en_us }
+	}
+}
+
+fn toggle_locale(app &ShowcaseApp) gui.View {
+	idx := app.locale_index
+	return gui.button(
+		content:      [
+			gui.text(
+				text:       showcase_locale_labels[idx]
+				text_style: gui.theme().b5
+			),
+		]
+		padding:      gui.padding_two_five
+		color_border: gui.color_transparent
+		on_click:     fn [idx] (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			mut a := w.state[ShowcaseApp]()
+			a.locale_index = (idx + 1) % showcase_locale_count
+			w.set_locale(showcase_locale(a.locale_index))
+		}
 	)
 }
 

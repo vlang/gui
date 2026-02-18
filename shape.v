@@ -50,6 +50,7 @@ pub mut:
 	v_align               VerticalAlign        // Vertical alignment of children/content
 	scroll_mode           ScrollMode           // Scrolling behavior (e.g. auto, always, never)
 	scrollbar_orientation ScrollbarOrientation // Scrollbar type (.none for non-scrollbar shapes)
+	text_dir              TextDirection        // Text/layout direction (.auto = inherit)
 	float_anchor          FloatAttach          // Anchor point on the parent for floating shapes
 	float_tie_off         FloatAttach          // Anchor point on the floating shape itself
 	clip                  bool                 // Whether to clip children/content to bounds

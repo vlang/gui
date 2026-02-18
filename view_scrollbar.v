@@ -254,7 +254,11 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 			}
 		}
 		else {
-			layout.shape.x = parent.shape.x + parent.shape.width - cfg.size
+			if effective_text_dir(parent.shape) == .rtl {
+				layout.shape.x = parent.shape.x + cfg.gap_edge
+			} else {
+				layout.shape.x = parent.shape.x + parent.shape.width - cfg.size
+			}
 			layout.shape.y = parent.shape.y + parent.shape.padding_top()
 			layout.shape.width = cfg.size
 			layout.shape.height = parent.shape.height - parent.shape.padding_height()
@@ -269,7 +273,9 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 			available_height := layout.shape.height - thumb_height
 			scroll_offset := -(w.view_state.scroll_y.get(cfg.id_scroll) or { f32(0) })
 
-			layout.shape.x -= cfg.gap_edge
+			if effective_text_dir(parent.shape) != .rtl {
+				layout.shape.x -= cfg.gap_edge
+			}
 			layout.shape.y += cfg.gap_end
 			layout.shape.height -= cfg.gap_end + cfg.gap_end
 			layout.children[thumb_index].shape.x = layout.shape.x
