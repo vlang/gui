@@ -82,9 +82,9 @@ fn pack_shader_params(radius f32, thickness f32) f32 {
 	return thickness + (f32(math.floor(radius)) * f32(packing_stride))
 }
 
-fn init_rounded_rect_pipeline(mut window Window) {
+fn init_rounded_rect_pipeline(mut window Window) bool {
 	if window.pip.rounded_rect.id != 0 {
-		return
+		return true
 	}
 	// Why a custom pipeline?
 	// A specific shader program (Vertex & Fragment) is required to implement the SDF logic.
@@ -252,6 +252,7 @@ fn init_rounded_rect_pipeline(mut window Window) {
 	}
 
 	window.pip.rounded_rect = sgl.make_pipeline(&desc)
+	return window.pip.rounded_rect.id != 0
 }
 
 // Metal Shader Source (MSL) for Shadows
@@ -821,7 +822,9 @@ pub fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Col
 		r = 0
 	}
 
-	init_rounded_rect_pipeline(mut window)
+	if !init_rounded_rect_pipeline(mut window) {
+		return
+	}
 
 	sgl.load_pipeline(window.pip.rounded_rect)
 	sgl.c4b(c.r, c.g, c.b, c.a)
@@ -855,7 +858,9 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, thickness
 		r = 0
 	}
 
-	init_rounded_rect_pipeline(mut window)
+	if !init_rounded_rect_pipeline(mut window) {
+		return
+	}
 
 	sgl.load_pipeline(window.pip.rounded_rect)
 	sgl.c4b(c.r, c.g, c.b, c.a)

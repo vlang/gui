@@ -250,7 +250,9 @@ fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, thickness f32, g
 		r = 0
 	}
 
-	init_rounded_rect_pipeline(mut window)
+	if !init_rounded_rect_pipeline(mut window) {
+		return
+	}
 	sgl.load_pipeline(window.pip.rounded_rect)
 
 	// Determine colors based on gradient stops (simplification for 2 stops)
