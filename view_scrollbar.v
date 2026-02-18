@@ -220,7 +220,11 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 
 	match cfg.orientation == .horizontal {
 		true {
-			layout.shape.x = parent.shape.x + parent.shape.padding_left()
+			layout.shape.x = if effective_text_dir(parent.shape) == .rtl {
+				parent.shape.x + parent.shape.padding.right + parent.shape.size_border
+			} else {
+				parent.shape.x + parent.shape.padding_left()
+			}
 			layout.shape.y = parent.shape.y + parent.shape.height - cfg.size
 			layout.shape.width = parent.shape.width - parent.shape.padding_width()
 			layout.shape.height = cfg.size

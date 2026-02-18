@@ -682,3 +682,44 @@ fn test_layout_positions_rtl_override_ltr() {
 	// Child 1: x = 10 + 40 + 5 = 55
 	assert f32_are_close(root.children[1].shape.x, 55.0)
 }
+
+// Test: RTL swaps left/right padding
+fn test_layout_positions_rtl_padding_swap() {
+	// Asymmetric padding: left=20 (start), right=5 (end)
+	// In RTL, start is physical right, so right padding = 20, left padding = 5
+	mut root := Layout{
+		shape:    &Shape{
+			x:           0
+			y:           0
+			width:       200
+			height:      50
+			axis:        .left_to_right
+			text_dir:    .rtl
+			padding:     Padding{
+				left:   20
+				right:  5
+				top:    0
+				bottom: 0
+			}
+			size_border: 0
+			spacing:     0
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					width:      30
+					height:     50
+				}
+			},
+		]
+	}
+
+	mut mock_window := Window{}
+	layout_parents(mut root, unsafe { nil })
+	layout_positions(mut root, 0, 0, &mock_window)
+
+	// RTL: start x = 0 + 200 - padding.left(20) = 180
+	// Child 0: x = 180 - 30 = 150
+	assert f32_are_close(root.children[0].shape.x, 150.0)
+}
