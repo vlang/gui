@@ -114,6 +114,134 @@ pub:
 	is_password           bool // mask input characters with '*'s
 }
 
+@[minify]
+struct InputRuntimeCfg {
+	text                  string
+	mode                  InputMode
+	mask                  string
+	mask_preset           InputMaskPreset
+	mask_tokens           []MaskTokenDef
+	pre_commit_transform  fn (string, string) ?string                         = unsafe { nil }
+	post_commit_normalize fn (string, InputCommitReason) string               = unsafe { nil }
+	on_text_changed       fn (&Layout, string, mut Window)                    = unsafe { nil }
+	on_text_commit        fn (&Layout, string, InputCommitReason, mut Window) = unsafe { nil }
+	on_enter              fn (&Layout, mut Event, mut Window)                 = unsafe { nil }
+	on_blur               fn (&Layout, mut Window) = unsafe { nil }
+	field_id              string
+	form_sync_validators  []FormSyncValidator
+	form_async_validators []FormAsyncValidator
+	form_validate_on      FormValidateOn = .inherit
+	form_initial_value    ?string
+	text_style            TextStyle
+	width                 f32
+	id_focus              u32
+	padding               Padding
+	size_border           f32
+	sizing                Sizing
+	is_password           bool
+}
+
+fn input_runtime_cfg(cfg InputCfg) InputRuntimeCfg {
+	return InputRuntimeCfg{
+		text:                  cfg.text
+		mode:                  cfg.mode
+		mask:                  cfg.mask
+		mask_preset:           cfg.mask_preset
+		mask_tokens:           cfg.mask_tokens
+		pre_commit_transform:  cfg.pre_commit_transform
+		post_commit_normalize: cfg.post_commit_normalize
+		on_text_changed:       cfg.on_text_changed
+		on_text_commit:        cfg.on_text_commit
+		on_enter:              cfg.on_enter
+		on_blur:               cfg.on_blur
+		field_id:              cfg.field_id
+		form_sync_validators:  cfg.form_sync_validators
+		form_async_validators: cfg.form_async_validators
+		form_validate_on:      cfg.form_validate_on
+		form_initial_value:    cfg.form_initial_value
+		text_style:            cfg.text_style
+		width:                 cfg.width
+		id_focus:              cfg.id_focus
+		padding:               cfg.padding
+		size_border:           cfg.size_border
+		sizing:                cfg.sizing
+		is_password:           cfg.is_password
+	}
+}
+
+fn (cfg &InputRuntimeCfg) to_input_cfg() InputCfg {
+	return InputCfg{
+		text:                  cfg.text
+		mask:                  cfg.mask
+		mask_preset:           cfg.mask_preset
+		mask_tokens:           cfg.mask_tokens
+		pre_commit_transform:  cfg.pre_commit_transform
+		post_commit_normalize: cfg.post_commit_normalize
+		on_text_changed:       cfg.on_text_changed
+		on_text_commit:        cfg.on_text_commit
+		on_enter:              cfg.on_enter
+		on_blur:               cfg.on_blur
+		field_id:              cfg.field_id
+		form_sync_validators:  cfg.form_sync_validators
+		form_async_validators: cfg.form_async_validators
+		form_validate_on:      cfg.form_validate_on
+		form_initial_value:    cfg.form_initial_value
+		sizing:                cfg.sizing
+		text_style:            cfg.text_style
+		width:                 cfg.width
+		id_focus:              cfg.id_focus
+		padding:               cfg.padding
+		size_border:           cfg.size_border
+		mode:                  cfg.mode
+		is_password:           cfg.is_password
+	}
+}
+
+fn (cfg &InputRuntimeCfg) form_register(layout &Layout, mut w Window) {
+	input_cfg := cfg.to_input_cfg()
+	input_cfg.form_register(layout, mut w)
+}
+
+fn (cfg &InputRuntimeCfg) form_notify(layout &Layout, value string, trigger FormValidationTrigger, mut w Window) {
+	input_cfg := cfg.to_input_cfg()
+	input_cfg.form_notify(layout, value, trigger, mut w)
+}
+
+fn (cfg &InputRuntimeCfg) commit_text(layout &Layout, reason InputCommitReason, mut w Window) {
+	input_cfg := cfg.to_input_cfg()
+	input_cfg.commit_text(layout, reason, mut w)
+}
+
+fn (cfg &InputRuntimeCfg) delete(mut w Window, is_delete bool) ?string {
+	input_cfg := cfg.to_input_cfg()
+	return input_cfg.delete(mut w, is_delete)
+}
+
+fn (cfg &InputRuntimeCfg) insert(s string, mut w Window) !string {
+	input_cfg := cfg.to_input_cfg()
+	return input_cfg.insert(s, mut w)
+}
+
+fn (cfg &InputRuntimeCfg) cut(mut w Window) ?string {
+	input_cfg := cfg.to_input_cfg()
+	return input_cfg.cut(mut w)
+}
+
+fn (cfg &InputRuntimeCfg) paste(s string, mut w Window) !string {
+	input_cfg := cfg.to_input_cfg()
+	return input_cfg.paste(s, mut w)
+}
+
+fn (cfg &InputRuntimeCfg) undo(mut w Window) string {
+	input_cfg := cfg.to_input_cfg()
+	return input_cfg.undo(mut w)
+}
+
+fn (cfg &InputRuntimeCfg) redo(mut w Window) string {
+	input_cfg := cfg.to_input_cfg()
+	return input_cfg.redo(mut w)
+}
+
 // input
 //
 // Example:
@@ -172,6 +300,7 @@ pub fn input(cfg InputCfg) View {
 	color_hover := cfg.color_hover
 	id_focus := cfg.id_focus
 	on_click_icon := cfg.on_click_icon
+	runtime_cfg := input_runtime_cfg(cfg)
 
 	mut txt_content := [
 		text(
@@ -233,8 +362,8 @@ pub fn input(cfg InputCfg) View {
 		padding:         cfg.padding
 		radius:          cfg.radius
 		sizing:          cfg.sizing
-		on_char:         make_input_on_char(cfg)
-		on_ime_commit:   make_input_on_ime_commit(cfg)
+		on_char:         make_input_on_char(runtime_cfg)
+		on_ime_commit:   make_input_on_ime_commit(runtime_cfg)
 		on_hover:        fn [color_hover, id_focus] (mut layout Layout, mut e Event, mut w Window) {
 			if w.is_focus(id_focus) {
 				w.set_mouse_cursor_ibeam()
@@ -242,17 +371,17 @@ pub fn input(cfg InputCfg) View {
 				layout.shape.color = color_hover
 			}
 		}
-		amend_layout:    fn [color_border_focus, cfg] (mut layout Layout, mut w Window) {
-			cfg.form_register(layout, mut w)
+		amend_layout:    fn [color_border_focus, runtime_cfg] (mut layout Layout, mut w Window) {
+			runtime_cfg.form_register(layout, mut w)
 			if layout.shape.id_focus == 0 {
 				return
 			}
 			focused := !layout.shape.disabled && layout.shape.id_focus == w.id_focus()
 			was_focused := w.view_state.input_focus_state.get(layout.shape.id_focus) or { false }
 			if was_focused && !focused {
-				cfg.commit_text(layout, .blur, mut w)
-				if cfg.on_blur != unsafe { nil } {
-					cfg.on_blur(layout, mut w)
+				runtime_cfg.commit_text(layout, .blur, mut w)
+				if runtime_cfg.on_blur != unsafe { nil } {
+					runtime_cfg.on_blur(layout, mut w)
 				}
 			}
 			w.view_state.input_focus_state.set(layout.shape.id_focus, focused)
@@ -598,8 +727,8 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 }
 
 // make_input_on_char creates an on_char handler that captures
-// the InputCfg by value.
-fn make_input_on_char(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
+// a compact runtime cfg.
+fn make_input_on_char(cfg InputRuntimeCfg) fn (&Layout, mut Event, mut Window) {
 	return fn [cfg] (layout &Layout, mut event Event, mut w Window) {
 		if w.mouse_is_locked() {
 			return
@@ -691,7 +820,7 @@ fn make_input_on_char(cfg InputCfg) fn (&Layout, mut Event, mut Window) {
 // make_input_on_ime_commit creates a callback that inserts
 // IME-committed text into the input field and fires
 // on_text_changed.
-fn make_input_on_ime_commit(cfg InputCfg) fn (&Layout, string, mut Window) {
+fn make_input_on_ime_commit(cfg InputRuntimeCfg) fn (&Layout, string, mut Window) {
 	return fn [cfg] (layout &Layout, text string, mut w Window) {
 		if cfg.on_text_changed == unsafe { nil } {
 			return

@@ -3,6 +3,7 @@ module gui
 import log
 
 const form_layout_id_prefix = '__gui_form__:'
+const form_async_issue_msg = 'validation failed'
 
 pub enum FormValidateOn as u8 {
 	inherit
@@ -90,6 +91,10 @@ pub:
 pub type FormSyncValidator = fn (FormFieldSnapshot, FormSnapshot) []FormIssue
 
 pub type FormAsyncValidator = fn (FormFieldSnapshot, FormSnapshot, &GridAbortSignal) ![]FormIssue
+
+type FormSubmitHandler = fn (FormSubmitEvent, mut Window)
+
+type FormResetHandler = fn (FormResetEvent, mut Window)
 
 @[minify]
 struct FormFieldRuntimeState {
@@ -192,6 +197,8 @@ pub fn form(cfg FormCfg) View {
 fn (mut fv FormView) generate_layout(mut w Window) Layout {
 	cfg := fv.cfg
 	form_id := cfg.id
+	on_submit := cfg.on_submit
+	on_reset := cfg.on_reset
 	w.form_apply_cfg(form_id, cfg)
 
 	summary := w.form_summary(form_id)
@@ -231,10 +238,10 @@ fn (mut fv FormView) generate_layout(mut w Window) Layout {
 		radius:       cfg.radius
 		disabled:     cfg.disabled
 		invisible:    cfg.invisible
-		amend_layout: fn [form_id, cfg] (mut _ Layout, mut win Window) {
+		amend_layout: fn [form_id, on_submit, on_reset] (mut _ Layout, mut win Window) {
 			frame := u64(win.context().frame)
 			win.form_cleanup_stale(form_id, frame)
-			win.form_process_requests(form_id, cfg)
+			win.form_process_requests_with_handlers(form_id, on_submit, on_reset)
 		}
 		content:      children
 	})
@@ -331,7 +338,24 @@ fn form_state_peek(w &Window, form_id string) FormRuntimeState {
 }
 
 fn form_state_set(mut w Window, form_id string, state FormRuntimeState) {
-	w.view_state.form_state.set(form_id, state)
+	mut states := &w.view_state.form_state
+	should_abort_evicted := form_id !in states.data && states.max_size > 0
+		&& states.data.len >= states.max_size && states.order.len > 0
+	if should_abort_evicted {
+		evicted_form_id := states.order[0]
+		mut evicted := states.data[evicted_form_id] or { FormRuntimeState{} }
+		form_abort_runtime_state(mut evicted)
+	}
+	states.set(form_id, state)
+}
+
+fn form_abort_runtime_state(mut state FormRuntimeState) {
+	for _, mut field in state.fields {
+		if field.pending && !isnil(field.active_abort) {
+			mut active := field.active_abort
+			active.abort()
+		}
+	}
 }
 
 fn form_snapshot_from_state(form_id string, state FormRuntimeState) FormSnapshot {
@@ -501,8 +525,8 @@ fn (mut w Window) form_register_field(layout &Layout, cfg FormFieldAdapterCfg) {
 	}
 	field.value = cfg.value
 	field.dirty = field.value != field.initial_value
-	field.sync_validators = cfg.sync_validators.clone()
-	field.async_validators = cfg.async_validators.clone()
+	field.sync_validators = cfg.sync_validators
+	field.async_validators = cfg.async_validators
 	field.validate_on = form_resolve_validate_on(cfg.validate_on_override, state.validate_on)
 	field.seen_frame = u64(w.context().frame)
 	state.fields[cfg.field_id] = field
@@ -530,8 +554,8 @@ fn (mut w Window) form_on_field_event_for_form(form_id string, cfg FormFieldAdap
 	}
 	field.value = cfg.value
 	field.dirty = field.value != field.initial_value
-	field.sync_validators = cfg.sync_validators.clone()
-	field.async_validators = cfg.async_validators.clone()
+	field.sync_validators = cfg.sync_validators
+	field.async_validators = cfg.async_validators
 	field.validate_on = form_resolve_validate_on(cfg.validate_on_override, state.validate_on)
 	field.seen_frame = u64(w.context().frame)
 	if trigger in [.blur, .submit] {
@@ -586,9 +610,10 @@ fn (mut w Window) form_on_field_event_for_form(form_id string, cfg FormFieldAdap
 					return
 				}
 				result := validator(field_snapshot, snapshot, signal) or {
+					log.error('form async validator failed for form_id=${form_id} field_id=${field_id}: ${err.msg()}')
 					issues << FormIssue{
 						code: 'async_error'
-						msg:  err.msg()
+						msg:  form_async_issue_msg
 						kind: .error
 					}
 					continue
@@ -628,6 +653,10 @@ fn (mut w Window) form_apply_async_result(form_id string, field_id string, reque
 }
 
 fn (mut w Window) form_process_requests(form_id string, cfg FormCfg) {
+	w.form_process_requests_with_handlers(form_id, cfg.on_submit, cfg.on_reset)
+}
+
+fn (mut w Window) form_process_requests_with_handlers(form_id string, on_submit FormSubmitHandler, on_reset FormResetHandler) {
 	mut state := form_state_get(mut w, form_id)
 	mut state_changed := false
 	if state.disabled {
@@ -657,8 +686,8 @@ fn (mut w Window) form_process_requests(form_id string, cfg FormCfg) {
 		state.reset_requested = false
 		state_changed = true
 		form_state_set(mut w, form_id, state)
-		if cfg.on_reset != unsafe { nil } {
-			cfg.on_reset(FormResetEvent{
+		if on_reset != unsafe { nil } {
+			on_reset(FormResetEvent{
 				form_id: form_id
 				values:  values
 			}, mut w)
@@ -690,8 +719,8 @@ fn (mut w Window) form_process_requests(form_id string, cfg FormCfg) {
 	summary := form_compute_summary_from_state(state)
 	blocked_invalid := state.block_submit_when_invalid && summary.invalid_count > 0
 	blocked_pending := state.block_submit_when_pending && summary.pending
-	if !blocked_invalid && !blocked_pending && cfg.on_submit != unsafe { nil } {
-		cfg.on_submit(FormSubmitEvent{
+	if !blocked_invalid && !blocked_pending && on_submit != unsafe { nil } {
+		on_submit(FormSubmitEvent{
 			form_id: form_id
 			values:  form_snapshot_from_state(form_id, state).values
 			valid:   summary.valid
