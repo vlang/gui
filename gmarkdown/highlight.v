@@ -1,4 +1,4 @@
-module markdown
+module gmarkdown
 
 // highlight.v provides syntax tokenization for code blocks.
 // Returns token spans only — palette application is done by

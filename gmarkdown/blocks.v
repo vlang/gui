@@ -1,4 +1,4 @@
-module markdown
+module gmarkdown
 
 // blocks.v handles parsing of markdown block-level elements.
 

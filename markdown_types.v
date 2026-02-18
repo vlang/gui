@@ -1,11 +1,11 @@
 module gui
 
-import markdown
+import gmarkdown
 
 // Source length caps for external API submissions (used by
 // markdown_math.v and markdown_mermaid.v).
-const max_latex_source_len = markdown.max_latex_source_len
-const max_mermaid_source_len = markdown.max_mermaid_source_len
+const max_latex_source_len = gmarkdown.max_latex_source_len
+const max_mermaid_source_len = gmarkdown.max_mermaid_source_len
 
 // MarkdownBlock represents a parsed, styled block of markdown.
 struct MarkdownBlock {

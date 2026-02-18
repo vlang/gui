@@ -1,6 +1,6 @@
 module gui
 
-import markdown
+import gmarkdown as markdown
 
 // Tests for markdown parser
 

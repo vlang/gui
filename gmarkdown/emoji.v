@@ -1,4 +1,4 @@
-module markdown
+module gmarkdown
 
 // emoji.v provides emoji shortcode lookup for markdown.
 // Supports GitHub-standard shortcodes: :name: -> Unicode emoji.

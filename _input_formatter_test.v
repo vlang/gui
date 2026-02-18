@@ -67,7 +67,7 @@ fn test_input_single_line_enter_runs_post_commit_normalize_and_commit_callback()
 	mut w := Window{
 		state: state
 	}
-	cfg := InputCfg{
+	cfg := InputRuntimeCfg{
 		id_focus:              9101
 		text:                  '  abc  '
 		post_commit_normalize: fn (text string, _ InputCommitReason) string {

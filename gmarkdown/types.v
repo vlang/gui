@@ -1,4 +1,4 @@
-module markdown
+module gmarkdown
 
 // Bounds for multi-line constructs (self-synchronization limits)
 pub const max_blockquote_lines = 100

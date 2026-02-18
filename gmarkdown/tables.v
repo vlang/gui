@@ -1,4 +1,4 @@
-module markdown
+module gmarkdown
 
 // tables.v handles parsing of markdown tables.
 

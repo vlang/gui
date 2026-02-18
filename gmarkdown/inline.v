@@ -1,4 +1,4 @@
-module markdown
+module gmarkdown
 
 // inline.v handles parsing of inline markdown elements
 // (bold, italic, links, etc.) into style-free MdRun sequences.

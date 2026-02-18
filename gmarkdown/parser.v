@@ -1,4 +1,4 @@
-module markdown
+module gmarkdown
 
 import strings
 

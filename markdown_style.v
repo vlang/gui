@@ -1,6 +1,6 @@
 module gui
 
-import markdown
+import gmarkdown as markdown
 import vglyph
 
 // markdown_style.v bridges the style-free markdown AST to

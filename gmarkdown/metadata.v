@@ -1,4 +1,4 @@
-module markdown
+module gmarkdown
 
 // metadata.v handles parsing of markdown metadata
 // (links, footnotes, abbreviations).
