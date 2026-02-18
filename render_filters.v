@@ -85,13 +85,21 @@ fn append_renderer_range(mut dst []Renderer, src []Renderer, start_idx int, end_
 // renders the content to offscreen textures, applies Gaussian blur,
 // and replaces the bracket with DrawFilterComposite + original content.
 fn process_svg_filters(mut window Window) {
+	source_renderers := window.renderers
+	if source_renderers.len == 0 {
+		return
+	}
+
 	mut i := 0
-	mut new_renderers := []Renderer{cap: window.renderers.len}
-	renderers := window.renderers
+	mut new_renderers := unsafe { window.filter_renderers_scratch }
+	new_renderers.clear()
+	if new_renderers.cap < source_renderers.len {
+		new_renderers = []Renderer{cap: source_renderers.len}
+	}
 	max_tex_size := filter_max_image_size()
 
-	for i < renderers.len {
-		r := renderers[i]
+	for i < source_renderers.len {
+		r := source_renderers[i]
 		if r is DrawFilterBegin {
 			begin := r
 			cached := begin.cached
@@ -103,13 +111,13 @@ fn process_svg_filters(mut window Window) {
 			filter := fg.filter
 
 			// Collect content range between Begin and End
-			bracket := find_filter_bracket_range(renderers, i + 1)
+			bracket := find_filter_bracket_range(source_renderers, i + 1)
 			i = bracket.next_idx
 			if !bracket.found_end {
 				$if !prod {
 					assert false, 'DrawFilterBegin without DrawFilterEnd'
 				}
-				append_renderer_range(mut new_renderers, renderers, bracket.start_idx,
+				append_renderer_range(mut new_renderers, source_renderers, bracket.start_idx,
 					bracket.end_idx)
 				continue
 			}
@@ -127,19 +135,21 @@ fn process_svg_filters(mut window Window) {
 
 			tex_dims := filter_texture_dims_from_bbox(bbox_w, bbox_h, max_tex_size)
 			if !tex_dims.valid {
-				append_renderer_range(mut new_renderers, renderers, content_start, content_end)
+				append_renderer_range(mut new_renderers, source_renderers, content_start,
+					content_end)
 				continue
 			}
 
 			ensure_filter_state(mut window)
 			if !ensure_filter_textures(mut window, tex_dims.width, tex_dims.height) {
-				append_renderer_range(mut new_renderers, renderers, content_start, content_end)
+				append_renderer_range(mut new_renderers, source_renderers, content_start,
+					content_end)
 				continue
 			}
 
 			// Render content to tex_a via raw gfx offscreen pass
-			render_filter_content(renderers, content_start, content_end, bbox_x, bbox_y,
-				bbox_w, bbox_h, ui_scale, mut window)
+			render_filter_content(source_renderers, content_start, content_end, bbox_x,
+				bbox_y, bbox_w, bbox_h, ui_scale, mut window)
 
 			// Blur: H (tex_a → tex_b), V (tex_b → tex_a)
 			blur_filter_pass(filter.std_dev, mut window)
@@ -156,7 +166,8 @@ fn process_svg_filters(mut window Window) {
 			})
 
 			if filter.keep_source {
-				append_renderer_range(mut new_renderers, renderers, content_start, content_end)
+				append_renderer_range(mut new_renderers, source_renderers, content_start,
+					content_end)
 			}
 		} else {
 			new_renderers << r
@@ -164,6 +175,7 @@ fn process_svg_filters(mut window Window) {
 		}
 	}
 
+	window.filter_renderers_scratch = source_renderers
 	window.renderers = new_renderers
 }
 

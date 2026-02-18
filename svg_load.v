@@ -3,9 +3,12 @@ module gui
 import svg
 import gg
 import hash.fnv1a
+import math
 import os
+import vglyph
 
 const max_svg_source_bytes = i64(4 * 1024 * 1024)
+const valid_svg_extensions = ['.svg']
 
 // svg_to_color converts an svg.SvgColor to gui.Color.
 @[inline]
@@ -21,10 +24,17 @@ struct CachedSvgPath {
 	clip_group    int
 }
 
+struct CachedSvgTextDraw {
+	text string
+	cfg  vglyph.TextConfig
+	x    f32
+	y    f32
+}
+
 fn cached_svg_paths(paths []svg.TessellatedPath) []CachedSvgPath {
 	mut out := []CachedSvgPath{cap: paths.len}
 	for path in paths {
-		mut vcols := []gg.Color{}
+		mut vcols := []gg.Color{len: 0}
 		if path.vertex_colors.len > 0 {
 			vcols = []gg.Color{cap: path.vertex_colors.len}
 			for vc in path.vertex_colors {
@@ -40,6 +50,105 @@ fn cached_svg_paths(paths []svg.TessellatedPath) []CachedSvgPath {
 		}
 	}
 	return out
+}
+
+fn cached_svg_text_gradient(fill_gradient_id string, gradients map[string]svg.SvgGradientDef) &vglyph.GradientConfig {
+	if fill_gradient_id.len == 0 {
+		return unsafe { nil }
+	}
+	gdef := gradients[fill_gradient_id] or { return unsafe { nil } }
+	mut stops := []vglyph.GradientStop{cap: gdef.stops.len}
+	for s in gdef.stops {
+		stops << vglyph.GradientStop{
+			color:    gg.Color{s.color.r, s.color.g, s.color.b, s.color.a}
+			position: s.offset
+		}
+	}
+	dx := gdef.x2 - gdef.x1
+	dy := gdef.y2 - gdef.y1
+	dir := if math.abs(dx) >= math.abs(dy) {
+		vglyph.GradientDirection.horizontal
+	} else {
+		vglyph.GradientDirection.vertical
+	}
+	return &vglyph.GradientConfig{
+		stops:     stops
+		direction: dir
+	}
+}
+
+fn cached_svg_text_draws(texts []svg.SvgText, scale f32, gradients map[string]svg.SvgGradientDef, mut window Window) []CachedSvgTextDraw {
+	mut draws := []CachedSvgTextDraw{cap: texts.len}
+	for t in texts {
+		if t.text.len == 0 {
+			continue
+		}
+		typeface := match true {
+			t.bold && t.italic { vglyph.Typeface.bold_italic }
+			t.bold { vglyph.Typeface.bold }
+			t.italic { vglyph.Typeface.italic }
+			else { vglyph.Typeface.regular }
+		}
+		text_style := TextStyle{
+			family:         t.font_family
+			size:           t.font_size * scale
+			typeface:       typeface
+			color:          if t.opacity < 1.0 {
+				Color{t.color.r, t.color.g, t.color.b, u8(f32(t.color.a) * t.opacity)}
+			} else {
+				svg_to_color(t.color)
+			}
+			underline:      t.underline
+			strikethrough:  t.strikethrough
+			letter_spacing: t.letter_spacing * scale
+			gradient:       cached_svg_text_gradient(t.fill_gradient_id, gradients)
+			stroke_width:   t.stroke_width * scale
+			stroke_color:   if t.opacity < 1.0 {
+				Color{t.stroke_color.r, t.stroke_color.g, t.stroke_color.b, u8(f32(t.stroke_color.a) * t.opacity)}
+			} else {
+				svg_to_color(t.stroke_color)
+			}
+		}
+		cfg := text_style.to_vglyph_cfg()
+		tw := if window.text_system == unsafe { nil } {
+			f32(0)
+		} else {
+			window.text_system.text_width(t.text, cfg) or { 0 }
+		}
+		fh := if window.text_system == unsafe { nil } {
+			t.font_size * scale
+		} else {
+			window.text_system.font_height(cfg) or { t.font_size * scale }
+		}
+		ascent := fh * 0.8
+		mut x := t.x * scale
+		y := t.y * scale - ascent
+		if t.anchor == 1 {
+			x -= tw / 2
+		} else if t.anchor == 2 {
+			x -= tw
+		}
+		draws << CachedSvgTextDraw{
+			text: t.text
+			cfg:  cfg
+			x:    x
+			y:    y
+		}
+	}
+	return draws
+}
+
+fn validate_svg_source(svg_src string) ! {
+	if svg_src.starts_with('<') {
+		return
+	}
+	if svg_src.contains('..') {
+		return error('invalid svg path: contains ..')
+	}
+	ext := os.file_ext(svg_src).to_lower()
+	if ext !in valid_svg_extensions {
+		return error('unsupported svg format: ${ext}')
+	}
 }
 
 fn check_svg_source_size(svg_src string) ! {
@@ -65,6 +174,7 @@ pub:
 	render_paths []CachedSvgPath
 	triangles    []svg.TessellatedPath
 	texts        []svg.SvgText
+	text_draws   []CachedSvgTextDraw
 	text_paths   []svg.SvgTextPath
 	gradients    map[string]svg.SvgGradientDef
 	bbox         [4]f32 // x, y, width, height in viewBox coords
@@ -76,6 +186,7 @@ pub:
 	render_paths    []CachedSvgPath
 	triangles       []svg.TessellatedPath // Tessellated paths
 	texts           []svg.SvgText         // Text elements for DrawText rendering
+	text_draws      []CachedSvgTextDraw
 	text_paths      []svg.SvgTextPath
 	defs_paths      map[string]string // id -> raw d attribute
 	filtered_groups []CachedFilteredGroup
@@ -97,6 +208,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		return cached
 	}
 
+	validate_svg_source(svg_src)!
 	check_svg_source_size(svg_src)!
 
 	vg := if svg_src.starts_with('<') {
@@ -123,6 +235,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 
 	triangles := vg.get_triangles(scale)
 	render_paths := cached_svg_paths(triangles)
+	text_draws := cached_svg_text_draws(vg.texts, scale, vg.gradients, mut window)
 
 	mut cached_fg := []CachedFilteredGroup{cap: vg.filtered_groups.len}
 	for fg in vg.filtered_groups {
@@ -142,6 +255,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 			render_paths: fg_render_paths
 			triangles:    fg_tris
 			texts:        fg.texts
+			text_draws:   cached_svg_text_draws(fg.texts, scale, vg.gradients, mut window)
 			text_paths:   fg.text_paths
 			gradients:    vg.gradients
 			bbox:         bbox
@@ -163,6 +277,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 			render_paths:    render_paths
 			triangles:       triangles
 			texts:           vg.texts
+			text_draws:      text_draws
 			text_paths:      vg.text_paths
 			defs_paths:      vg.defs_paths
 			filtered_groups: cached_fg
@@ -177,6 +292,7 @@ pub fn (mut window Window) load_svg(svg_src string, width f32, height f32) !&Cac
 		render_paths:    render_paths
 		triangles:       triangles
 		texts:           vg.texts
+		text_draws:      text_draws
 		text_paths:      vg.text_paths
 		defs_paths:      vg.defs_paths
 		filtered_groups: cached_fg
@@ -197,6 +313,7 @@ pub fn (mut window Window) get_svg_dimensions(svg_src string) !(f32, f32) {
 	if dims := window.view_state.svg_dim_cache[src_hash] {
 		return dims[0], dims[1]
 	}
+	validate_svg_source(svg_src)!
 	check_svg_source_size(svg_src)!
 	content := if svg_src.starts_with('<') {
 		svg_src

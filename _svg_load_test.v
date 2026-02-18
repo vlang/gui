@@ -2,6 +2,30 @@ module gui
 
 import os
 
+fn test_validate_svg_source_accepts_inline_svg() {
+	validate_svg_source('<svg></svg>') or { assert false, err.msg() }
+}
+
+fn test_validate_svg_source_accepts_svg_file_path() {
+	validate_svg_source('/tmp/example.svg') or { assert false, err.msg() }
+}
+
+fn test_validate_svg_source_rejects_parent_dir_path() {
+	if _ := validate_svg_source('../unsafe.svg') {
+		assert false, 'expected path validation error'
+	} else {
+		assert err.msg().contains('contains ..')
+	}
+}
+
+fn test_validate_svg_source_rejects_non_svg_extension() {
+	if _ := validate_svg_source('/tmp/icon.png') {
+		assert false, 'expected extension validation error'
+	} else {
+		assert err.msg().contains('unsupported svg format')
+	}
+}
+
 fn test_check_svg_source_size_accepts_small_inline_svg() {
 	check_svg_source_size('<svg></svg>') or { assert false, err.msg() }
 }

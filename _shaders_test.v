@@ -86,3 +86,13 @@ fn test_normalize_gradient_stops_for_shader_resamples_extra_stops() {
 	assert normalized[gradient_shader_stop_limit - 1].color.b == 255
 	assert normalized[gradient_shader_stop_limit - 1].color.r == 0
 }
+
+fn test_build_glsl_fragment_uses_packed_radius_decode() {
+	src := build_glsl_fragment('frag_color = vec4(1.0);')
+	assert src.contains('float radius = floor(params / 4096.0) / 4.0;')
+}
+
+fn test_build_metal_fragment_uses_packed_radius_decode() {
+	src := build_metal_fragment('float4 frag_color = float4(1.0);')
+	assert src.contains('float radius = floor(in.params / 4096.0) / 4.0;')
+}

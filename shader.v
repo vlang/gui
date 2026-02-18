@@ -33,7 +33,7 @@ struct VertexOut {
 };
 
 fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
-    float radius = floor(in.params / 1000.0);
+    float radius = floor(in.params / 4096.0) / 4.0;
 
     float2 width_inv = float2(fwidth(in.uv.x), fwidth(in.uv.y));
     float2 half_size = 1.0 / (width_inv + 1e-6);
@@ -78,7 +78,7 @@ fn build_glsl_fragment(body string) string {
     out vec4 frag_color;
 
     void main() {
-        float radius = floor(params / 1000.0);
+        float radius = floor(params / 4096.0) / 4.0;
 
         vec2 uv_to_px = 1.0 / (vec2(fwidth(uv.x), fwidth(uv.y)) + 1e-6);
         vec2 half_size = uv_to_px;

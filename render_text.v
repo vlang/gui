@@ -4,6 +4,34 @@ import gg
 import log
 import vglyph
 
+@[inline]
+fn hash_combine_u64(seed u64, value u64) u64 {
+	return (seed ^ value) * u64(1099511628211)
+}
+
+fn transformed_layout_cache_key(shape &Shape, text_hash int, cfg vglyph.TextConfig) u64 {
+	ts := shape.tc.text_style
+	mut key := u64(1469598103934665603)
+	key = hash_combine_u64(key, u64(text_hash))
+	key = hash_combine_u64(key, u64(int(cfg.block.width * 1000)))
+	key = hash_combine_u64(key, u64(int(ts.size * 1000)))
+	key = hash_combine_u64(key, u64(int(ts.letter_spacing * 1000)))
+	key = hash_combine_u64(key, u64(ts.typeface))
+	key = hash_combine_u64(key, u64(ts.family.hash()))
+	key = hash_combine_u64(key, u64(int(ts.rotation_radians * 1000000)))
+	if at := ts.affine_transform {
+		key = hash_combine_u64(key, u64(int(at.xx * 1000000)))
+		key = hash_combine_u64(key, u64(int(at.xy * 1000000)))
+		key = hash_combine_u64(key, u64(int(at.yx * 1000000)))
+		key = hash_combine_u64(key, u64(int(at.yy * 1000000)))
+		key = hash_combine_u64(key, u64(int(at.x0 * 1000000)))
+		key = hash_combine_u64(key, u64(int(at.y0 * 1000000)))
+	}
+	key = hash_combine_u64(key, if shape.tc.text_is_password { u64(1) } else { u64(0) })
+	key = hash_combine_u64(key, if shape.tc.text_is_placeholder { u64(1) } else { u64(0) })
+	return key
+}
+
 fn text_shape_draw_transform(shape &Shape) ?vglyph.AffineTransform {
 	if shape.id_focus > 0 {
 		return none
@@ -64,17 +92,27 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		shape.disabled = true
 		return
 	}
-	color := if shape.disabled {
+	mut color := if shape.disabled {
 		dim_alpha(shape.tc.text_style.color)
 	} else {
 		shape.tc.text_style.color
 	}
+	mut stroke_color := if shape.disabled {
+		dim_alpha(shape.tc.text_style.stroke_color)
+	} else {
+		shape.tc.text_style.stroke_color
+	}
+	if shape.opacity < 1.0 {
+		color = color.with_opacity(shape.opacity)
+		stroke_color = stroke_color.with_opacity(shape.opacity)
+	}
 	text_cfg := TextStyle{
 		...shape.tc.text_style
-		color: color
+		color:        color
+		stroke_color: stroke_color
 	}.to_vglyph_cfg()
 
-	has_stroke := shape.tc.text_style.stroke_width > 0
+	has_stroke := shape.tc.text_style.stroke_width > 0 && stroke_color.a > 0
 	if shape.has_text_layout() && (color != color_transparent || has_stroke) {
 		if transform := text_shape_draw_transform(shape) {
 			mut layout_to_draw := shape.tc.vglyph_layout
@@ -87,15 +125,24 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				} else {
 					shape.tc.text
 				}
-				mut transformed_layout := window.text_system.layout_text(text_to_layout,
-					cfg) or {
-					log.error('Transformed text layout failed at (${shape.x}, ${shape.y}): ${err.msg()}')
-					return
-				}
-				if transformed_layout.lines.len > 0 || text_to_layout.len == 0 {
-					// `transformed_layout` is local; draw renderer needs
-					// a heap-owned copy that outlives this function.
-					layout_to_draw = clone_layout_for_draw(&transformed_layout)
+				cache_key := transformed_layout_cache_key(shape, text_to_layout.hash(),
+					cfg)
+				if shape.tc.cached_transform_layout != unsafe { nil }
+					&& shape.tc.cached_transform_key == cache_key {
+					layout_to_draw = shape.tc.cached_transform_layout
+				} else {
+					mut transformed_layout := window.text_system.layout_text(text_to_layout,
+						cfg) or {
+						log.error('Transformed text layout failed at (${shape.x}, ${shape.y}): ${err.msg()}')
+						return
+					}
+					if transformed_layout.lines.len > 0 || text_to_layout.len == 0 {
+						// `transformed_layout` is local; draw renderer needs
+						// a heap-owned copy that outlives this function.
+						shape.tc.cached_transform_layout = clone_layout_for_draw(&transformed_layout)
+						shape.tc.cached_transform_key = cache_key
+						layout_to_draw = shape.tc.cached_transform_layout
+					}
 				}
 			}
 			emit_renderer(DrawLayoutTransformed{
@@ -272,7 +319,7 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 		cursor_pos := if shape.tc.text_is_placeholder {
 			0
 		} else {
-			int_min(input_state.cursor_pos, shape.tc.text.runes().len)
+			int_min(input_state.cursor_pos, utf8_str_visible_length(shape.tc.text))
 		}
 
 		if cursor_pos >= 0 {
@@ -311,7 +358,7 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 				y:     cy
 				w:     1.5 // slightly thicker
 				h:     ch
-				color: shape.tc.text_style.color.to_gx_color()
+				color: color_with_opacity(shape.tc.text_style.color, shape.opacity).to_gx_color()
 				style: .fill
 			}, mut window)
 		}
@@ -323,6 +370,14 @@ fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 		&& !shape.tc.text_is_password {
 		render_composition(shape, mut window)
 	}
+}
+
+@[inline]
+fn color_with_opacity(c Color, opacity f32) Color {
+	if opacity < 1.0 {
+		return c.with_opacity(opacity)
+	}
+	return c
 }
 
 // render_composition draws clause underlines for active IME

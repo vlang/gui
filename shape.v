@@ -63,6 +63,8 @@ pub mut:
 
 // TextConfig holds text/RTF-specific fields for a Shape.
 // Allocated only for shapes with shape_type .text or .rtf.
+// Internal cache fields below are runtime-only implementation details.
+// They are not user-facing config semantics and may change anytime.
 @[heap]
 pub struct TextConfig {
 pub mut:
@@ -80,6 +82,10 @@ pub mut:
 	last_constraint_width f32
 	last_text_hash        int
 	cached_line_height    f32
+	// Internal transformed-layout cache entry for DrawLayoutTransformed.
+	cached_transform_layout &vglyph.Layout = unsafe { nil }
+	// Internal transformed-layout cache key.
+	cached_transform_key u64
 }
 
 // EventHandlers holds optional event callback fields for a Shape.

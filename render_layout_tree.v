@@ -57,48 +57,44 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 		return
 	}
 
-	// Apply opacity to colors
-	if shape.opacity < 1.0 {
-		shape.color = shape.color.with_opacity(shape.opacity)
-		shape.color_border = shape.color_border.with_opacity(shape.opacity)
-		if shape.tc != unsafe { nil } {
-			shape.tc.text_style = TextStyle{
-				...shape.tc.text_style
-				color: shape.tc.text_style.color.with_opacity(shape.opacity)
-			}
-		}
+	// Render with a local shape copy to avoid mutating persistent shape state.
+	mut draw_shape := shape
+	if draw_shape.opacity < 1.0 {
+		draw_shape.color = draw_shape.color.with_opacity(draw_shape.opacity)
+		draw_shape.color_border = draw_shape.color_border.with_opacity(draw_shape.opacity)
 	}
 
-	has_visible_border := shape.size_border > 0 && shape.color_border != color_transparent
-	has_visible_text := shape.shape_type == .text && shape.tc != unsafe { nil }
-		&& (shape.tc.text_style.color != color_transparent || shape.tc.text_style.stroke_width > 0)
+	has_visible_border := draw_shape.size_border > 0 && draw_shape.color_border != color_transparent
+	has_visible_text := draw_shape.shape_type == .text && draw_shape.tc != unsafe { nil }
+		&& (draw_shape.tc.text_style.color != color_transparent
+		|| draw_shape.tc.text_style.stroke_width > 0)
 	// SVG shapes have their own internal colors, so don't skip them
-	is_svg := shape.shape_type == .svg
-	has_effects := shape.fx != unsafe { nil } && (shape.fx.gradient != unsafe { nil }
-		|| shape.fx.shader != unsafe { nil }
-		|| shape.fx.border_gradient != unsafe { nil })
-	if shape.color == color_transparent && !has_effects && !has_visible_border && !has_visible_text
-		&& !is_svg {
+	is_svg := draw_shape.shape_type == .svg
+	has_effects := draw_shape.fx != unsafe { nil } && (draw_shape.fx.gradient != unsafe { nil }
+		|| draw_shape.fx.shader != unsafe { nil }
+		|| draw_shape.fx.border_gradient != unsafe { nil })
+	if draw_shape.color == color_transparent && !has_effects && !has_visible_border
+		&& !has_visible_text && !is_svg {
 		return
 	}
-	match shape.shape_type {
+	match draw_shape.shape_type {
 		.rectangle {
-			render_container(mut shape, parent_color, clip, mut window)
+			render_container(mut draw_shape, parent_color, clip, mut window)
 		}
 		.text {
-			render_text(mut shape, clip, mut window)
+			render_text(mut draw_shape, clip, mut window)
 		}
 		.image {
-			render_image(mut shape, clip, mut window)
+			render_image(mut draw_shape, clip, mut window)
 		}
 		.circle {
-			render_circle(mut shape, clip, mut window)
+			render_circle(mut draw_shape, clip, mut window)
 		}
 		.rtf {
-			render_rtf(mut shape, clip, mut window)
+			render_rtf(mut draw_shape, clip, mut window)
 		}
 		.svg {
-			render_svg(mut shape, clip, mut window)
+			render_svg(mut draw_shape, clip, mut window)
 		}
 		.none {}
 	}
@@ -321,7 +317,7 @@ fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 	}
 	image := window.load_image(shape.resource) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
-		draw_error_placeholder(shape.x, shape.y, shape.width, shape.height, mut window)
+		emit_error_placeholder(shape.x, shape.y, shape.width, shape.height, mut window)
 		return
 	}
 	emit_renderer(DrawImage{
