@@ -47,10 +47,9 @@ struct VertexOut {
 };
 
 fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
-    // Unpack radius and thickness.
-    // See shaders.v for packing logic.
-    float radius = floor(in.params / 1000.0);
-    float thickness = fmod(in.params, 1000.0);
+    // Unpack 12-bit fixed-point radius/thickness (quarter-pixel precision).
+    float radius = floor(in.params / 4096.0) / 4.0;
+    float thickness = fmod(in.params, 4096.0) / 4.0;
     
     // Pixel-independent coordinate system:
     // fwidth gives the change in texture coordinates per pixel.
@@ -134,8 +133,8 @@ struct VertexOut {
 };
 
 fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
-    float radius = floor(in.params / 1000.0);
-    float blur = fmod(in.params, 1000.0);
+    float radius = floor(in.params / 4096.0) / 4.0;
+    float blur = fmod(in.params, 4096.0) / 4.0;
 
     float2 width_inv = float2(fwidth(in.uv.x), fwidth(in.uv.y));
     float2 half_size = 1.0 / (width_inv + 1e-6);
@@ -181,8 +180,8 @@ struct VertexOut {
 };
 
 fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
-    float radius = floor(in.params / 1000.0);
-    float blur = fmod(in.params, 1000.0);
+    float radius = floor(in.params / 4096.0) / 4.0;
+    float blur = fmod(in.params, 4096.0) / 4.0;
 
     float2 width_inv = float2(fwidth(in.uv.x), fwidth(in.uv.y));
     float2 half_size = 1.0 / (width_inv + 1e-6);
@@ -276,7 +275,7 @@ void unpack_gradient_data(float val1, float val2, thread float4& c, thread float
 }
 
 fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
-    float radius = floor(in.params / 1000.0);
+    float radius = floor(in.params / 4096.0) / 4.0;
 
     // Metadata extraction
     float hw = in.meta.x;

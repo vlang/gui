@@ -61,25 +61,31 @@ mut:
 	gradient_stop_warned bool
 }
 
-const packing_stride = 1000.0
+const packed_param_stride = 4096
+const packed_param_scale = 4
+const packed_param_mask = packed_param_stride - 1
+const fallback_max_filter_image_size = 4096
 
-// pack_shader_params packs radius and thickness into a single f32 for the shader.
-// The value is stored in the z-coordinate of the vertex position.
-//
-// Why pack parameters?
-// The Z-coordinate of the position vector is used to transport per-instance data (radius, thickness)
-// to the shader without requiring additional vertex attributes or breaking the batch
-// by updating uniforms. This allows drawing many rounded rects with different properties
-// in a single draw call.
-//
-// Packing Strategy:
-// radius: Stored in the thousands place (e.g., 5.0 -> 5000.0).
-// thickness: Stored in the units place (e.g., 2.0 -> 2.0).
-// Result: 5002.0.
-// Limit: Thickness must be less than 1000.0 pixels.
+// pack_shader_params packs radius and thickness into one f32.
+// Both values are clamped, quantized to quarter-pixel precision,
+// and packed as two 12-bit integers.
 @[inline]
 fn pack_shader_params(radius f32, thickness f32) f32 {
-	return thickness + (f32(math.floor(radius)) * f32(packing_stride))
+	max_value := f32(packed_param_mask) / f32(packed_param_scale)
+	safe_radius := math.max(0.0, math.min(radius, max_value))
+	safe_thickness := math.max(0.0, math.min(thickness, max_value))
+	radius_q := int(math.round(f64(safe_radius * f32(packed_param_scale))))
+	thickness_q := int(math.round(f64(safe_thickness * f32(packed_param_scale))))
+	return f32(radius_q * packed_param_stride + thickness_q)
+}
+
+@[inline]
+fn filter_max_image_size() int {
+	limits := gfx.query_limits()
+	if limits.max_image_size_2d > 0 {
+		return limits.max_image_size_2d
+	}
+	return fallback_max_filter_image_size
 }
 
 fn init_rounded_rect_pipeline(mut window Window) bool {
@@ -785,9 +791,7 @@ pub fn draw_shadow_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.C
 	sgl.load_pipeline(window.pip.shadow)
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
-	// Pack radius and blur. Blur is stored in fractional part or just use packing logic.
-	// pack_shader_params: return thickness + (radius * 1000)
-	// Here blur corresponds to thickness in the packing: blur + (radius * 1000)
+	// Pack radius and blur using the fixed-point packer.
 	z_val := pack_shader_params(r, b)
 
 	draw_quad(sx, sy, sw, sh, z_val)
@@ -865,7 +869,7 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, thickness
 	sgl.load_pipeline(window.pip.rounded_rect)
 	sgl.c4b(c.r, c.g, c.b, c.a)
 
-	// Pack parameters: r + thickness * 10000
+	// Pack radius and stroke thickness.
 	z_val := pack_shader_params(r, thickness * scale)
 
 	draw_quad(sx, sy, sw, sh, z_val)
@@ -1626,12 +1630,16 @@ fn ensure_filter_state(mut window Window) {
 
 // ensure_filter_textures creates or resizes offscreen render targets.
 // Uses swapchain pixel format so SGL default pipeline works unchanged.
-fn ensure_filter_textures(mut window Window, width int, height int) {
+fn ensure_filter_textures(mut window Window, width int, height int) bool {
+	max_size := filter_max_image_size()
 	w := if width < 1 { 1 } else { width }
 	h := if height < 1 { 1 } else { height }
+	if w > max_size || h > max_size {
+		return false
+	}
 
 	if window.filter_state.tex_width == w && window.filter_state.tex_height == h {
-		return
+		return true
 	}
 
 	// Destroy old resources if resizing
@@ -1653,44 +1661,79 @@ fn ensure_filter_textures(mut window Window, width int, height int) {
 		pixel_format:  color_fmt
 		label:         c'filter_tex'
 	}
-	window.filter_state.tex_a = gfx.make_image(&img_desc)
-	window.filter_state.tex_b = gfx.make_image(&img_desc)
+	tex_a := gfx.make_image(&img_desc)
+	tex_b := gfx.make_image(&img_desc)
 
 	// Shared depth buffer (required by default SGL pipeline)
-	window.filter_state.depth = gfx.make_image(gfx.ImageDesc{
+	depth := gfx.make_image(gfx.ImageDesc{
 		render_target: true
 		width:         w
 		height:        h
 		pixel_format:  depth_fmt
 		label:         c'filter_depth'
 	})
+	if tex_a.id == 0 || tex_b.id == 0 || depth.id == 0 {
+		if tex_a.id != 0 {
+			gfx.destroy_image(tex_a)
+		}
+		if tex_b.id != 0 {
+			gfx.destroy_image(tex_b)
+		}
+		if depth.id != 0 {
+			gfx.destroy_image(depth)
+		}
+		window.filter_state.tex_width = 0
+		window.filter_state.tex_height = 0
+		return false
+	}
 
 	mut att_colors_a := [4]gfx.AttachmentDesc{}
 	att_colors_a[0] = gfx.AttachmentDesc{
-		image: window.filter_state.tex_a
+		image: tex_a
 	}
-	window.filter_state.att_a = gfx.make_attachments(gfx.AttachmentsDesc{
+	att_a := gfx.make_attachments(gfx.AttachmentsDesc{
 		colors:        att_colors_a
 		depth_stencil: gfx.AttachmentDesc{
-			image: window.filter_state.depth
+			image: depth
 		}
 		label:         c'filter_att_a'
 	})
 
 	mut att_colors_b := [4]gfx.AttachmentDesc{}
 	att_colors_b[0] = gfx.AttachmentDesc{
-		image: window.filter_state.tex_b
+		image: tex_b
 	}
-	window.filter_state.att_b = gfx.make_attachments(gfx.AttachmentsDesc{
+	att_b := gfx.make_attachments(gfx.AttachmentsDesc{
 		colors:        att_colors_b
 		depth_stencil: gfx.AttachmentDesc{
-			image: window.filter_state.depth
+			image: depth
 		}
 		label:         c'filter_att_b'
 	})
+	if att_a.id == 0 || att_b.id == 0 {
+		if att_a.id != 0 {
+			gfx.destroy_attachments(att_a)
+		}
+		if att_b.id != 0 {
+			gfx.destroy_attachments(att_b)
+		}
+		gfx.destroy_image(tex_a)
+		gfx.destroy_image(tex_b)
+		gfx.destroy_image(depth)
+		window.filter_state.tex_width = 0
+		window.filter_state.tex_height = 0
+		return false
+	}
+
+	window.filter_state.tex_a = tex_a
+	window.filter_state.tex_b = tex_b
+	window.filter_state.depth = depth
+	window.filter_state.att_a = att_a
+	window.filter_state.att_b = att_b
 
 	window.filter_state.tex_width = w
 	window.filter_state.tex_height = h
+	return true
 }
 
 // draw_filter_quad draws a textured quad with UVs from 0..1.

@@ -10,6 +10,34 @@ struct FilterBracketCollectResult {
 	next_idx  int
 }
 
+struct FilterTextureDims {
+	width  int
+	height int
+	valid  bool
+}
+
+fn filter_texture_dims_from_bbox(bbox_w f32, bbox_h f32, max_tex_size int) FilterTextureDims {
+	if max_tex_size < 1 {
+		return FilterTextureDims{}
+	}
+	if !f32_is_finite(bbox_w) || !f32_is_finite(bbox_h) || bbox_w <= 0 || bbox_h <= 0 {
+		return FilterTextureDims{}
+	}
+	if bbox_w > f32(max_tex_size) || bbox_h > f32(max_tex_size) {
+		return FilterTextureDims{}
+	}
+	tex_w := int(math.ceil(bbox_w))
+	tex_h := int(math.ceil(bbox_h))
+	if tex_w <= 0 || tex_h <= 0 || tex_w > max_tex_size || tex_h > max_tex_size {
+		return FilterTextureDims{}
+	}
+	return FilterTextureDims{
+		width:  tex_w
+		height: tex_h
+		valid:  true
+	}
+}
+
 fn collect_filter_bracket_content(renderers []Renderer, start_idx int) FilterBracketCollectResult {
 	if start_idx >= renderers.len {
 		return FilterBracketCollectResult{
@@ -46,6 +74,7 @@ fn process_svg_filters(mut window Window) {
 	mut i := 0
 	mut new_renderers := []Renderer{cap: window.renderers.len}
 	renderers := window.renderers
+	max_tex_size := filter_max_image_size()
 
 	for i < renderers.len {
 		r := renderers[i]
@@ -80,16 +109,17 @@ fn process_svg_filters(mut window Window) {
 			bbox_w := (fg.bbox[2] * scale + padding * 2) * ui_scale
 			bbox_h := (fg.bbox[3] * scale + padding * 2) * ui_scale
 
-			tex_w := int(math.ceil(bbox_w))
-			tex_h := int(math.ceil(bbox_h))
-
-			if tex_w <= 0 || tex_h <= 0 {
+			tex_dims := filter_texture_dims_from_bbox(bbox_w, bbox_h, max_tex_size)
+			if !tex_dims.valid {
 				new_renderers << content
 				continue
 			}
 
 			ensure_filter_state(mut window)
-			ensure_filter_textures(mut window, tex_w, tex_h)
+			if !ensure_filter_textures(mut window, tex_dims.width, tex_dims.height) {
+				new_renderers << content
+				continue
+			}
 
 			// Render content to tex_a via raw gfx offscreen pass
 			render_filter_content(content, bbox_x, bbox_y, bbox_w, bbox_h, ui_scale, mut

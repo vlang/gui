@@ -35,10 +35,9 @@ const fs_glsl = '
     out vec4 frag_color;
 
     void main() {
-        // Unpack radius and thickness from the float parameter.
-        // Example: params = 5002.0 -> Radius=5.0, Thickness=2.0.
-        float radius = floor(params / 1000.0);
-        float thickness = mod(params, 1000.0);
+        // Unpack 12-bit fixed-point radius/thickness (quarter-pixel precision).
+        float radius = floor(params / 4096.0) / 4.0;
+        float thickness = mod(params, 4096.0) / 4.0;
 
         // UV and Pixel Conversion
         // fwidth() calculates the rate of change of the UV coordinates relative to screen pixels.
@@ -114,8 +113,8 @@ const fs_shadow_glsl = '
     out vec4 frag_color;
 
     void main() {
-        float radius = floor(params / 1000.0);
-        float blur = mod(params, 1000.0);
+        float radius = floor(params / 4096.0) / 4.0;
+        float blur = mod(params, 4096.0) / 4.0;
 
         vec2 uv_to_px = 1.0 / (vec2(fwidth(uv.x), fwidth(uv.y)) + 1e-6);
         vec2 half_size = uv_to_px;
@@ -160,8 +159,8 @@ const fs_blur_glsl = '
     out vec4 frag_color;
 
     void main() {
-        float radius = floor(params / 1000.0);
-        float blur = mod(params, 1000.0);
+        float radius = floor(params / 4096.0) / 4.0;
+        float blur = mod(params, 4096.0) / 4.0;
 
         vec2 uv_to_px = 1.0 / (vec2(fwidth(uv.x), fwidth(uv.y)) + 1e-6);
         vec2 half_size = uv_to_px;
@@ -238,7 +237,7 @@ const fs_gradient_glsl = '
     }
 
     void main() {
-        float radius = floor(params / 1000.0);
+        float radius = floor(params / 4096.0) / 4.0;
 
         // Metadata extraction
         float hw = meta.x;

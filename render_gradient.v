@@ -4,6 +4,8 @@ import gg
 import sokol.sgl
 import math
 
+const gradient_shader_stop_limit = 5
+
 // dim_alpha is used for visually indicating disabled.
 fn dim_alpha(color Color) Color {
 	return Color{
@@ -99,6 +101,100 @@ fn pack_alpha_pos(c Color, pos f32) f32 {
 	return f32(c.a) + f32(math.floor(pos * 10000.0)) * 256.0
 }
 
+@[inline]
+fn clamp_unit(value f32) f32 {
+	if value < 0 {
+		return 0
+	}
+	if value > 1 {
+		return 1
+	}
+	return value
+}
+
+@[inline]
+fn f32_to_u8_saturated(value f32) u8 {
+	clamped := math.max(0.0, math.min(value, 255.0))
+	return u8(int(math.round(f64(clamped))))
+}
+
+fn lerp_color_premultiplied(a Color, b Color, t f32) Color {
+	clamped_t := clamp_unit(t)
+	a_alpha := f32(a.a) / 255.0
+	b_alpha := f32(b.a) / 255.0
+	a_r := (f32(a.r) / 255.0) * a_alpha
+	a_g := (f32(a.g) / 255.0) * a_alpha
+	a_b := (f32(a.b) / 255.0) * a_alpha
+	b_r := (f32(b.r) / 255.0) * b_alpha
+	b_g := (f32(b.g) / 255.0) * b_alpha
+	b_b := (f32(b.b) / 255.0) * b_alpha
+	alpha := a_alpha + (b_alpha - a_alpha) * clamped_t
+	p_r := a_r + (b_r - a_r) * clamped_t
+	p_g := a_g + (b_g - a_g) * clamped_t
+	p_b := a_b + (b_b - a_b) * clamped_t
+	if alpha <= 0.0001 {
+		return Color{0, 0, 0, 0}
+	}
+	r := (p_r / alpha) * 255.0
+	g := (p_g / alpha) * 255.0
+	bl := (p_b / alpha) * 255.0
+	return Color{
+		r: f32_to_u8_saturated(r)
+		g: f32_to_u8_saturated(g)
+		b: f32_to_u8_saturated(bl)
+		a: f32_to_u8_saturated(alpha * 255.0)
+	}
+}
+
+fn sample_gradient_stop_color(stops []GradientStop, pos f32) Color {
+	if stops.len == 0 {
+		return Color{0, 0, 0, 0}
+	}
+	if pos <= stops[0].pos {
+		return stops[0].color
+	}
+	for i in 1 .. stops.len {
+		left := stops[i - 1]
+		right := stops[i]
+		if pos > right.pos {
+			continue
+		}
+		span := right.pos - left.pos
+		if span <= 0.0001 {
+			return right.color
+		}
+		local_t := (pos - left.pos) / span
+		return lerp_color_premultiplied(left.color, right.color, local_t)
+	}
+	return stops[stops.len - 1].color
+}
+
+fn normalize_gradient_stops_for_shader(stops []GradientStop) []GradientStop {
+	if stops.len == 0 {
+		return []GradientStop{}
+	}
+	mut normalized := []GradientStop{cap: stops.len}
+	for stop in stops {
+		normalized << GradientStop{
+			color: stop.color
+			pos:   clamp_unit(stop.pos)
+		}
+	}
+	normalized.sort(a.pos < b.pos)
+	if normalized.len <= gradient_shader_stop_limit {
+		return normalized
+	}
+	mut sampled := []GradientStop{cap: gradient_shader_stop_limit}
+	for i in 0 .. gradient_shader_stop_limit {
+		sample_pos := f32(i) / f32(gradient_shader_stop_limit - 1)
+		sampled << GradientStop{
+			color: sample_gradient_stop_color(normalized, sample_pos)
+			pos:   sample_pos
+		}
+	}
+	return sampled
+}
+
 fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient, mut window Window) {
 	if w <= 0 || h <= 0 || gradient.stops.len == 0 {
 		return
@@ -120,26 +216,26 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 	}
 
 	init_gradient_pipeline(mut window)
+	stops := normalize_gradient_stops_for_shader(gradient.stops)
+	if stops.len == 0 {
+		return
+	}
+	if gradient.stops.len > gradient_shader_stop_limit && !window.pip.gradient_stop_warned {
+		window.pip.gradient_stop_warned = true
+		eprintln('warning: gradient has ${gradient.stops.len} stops; resampled to ' +
+			'${gradient_shader_stop_limit}')
+	}
 
 	// Pack gradient stops into tm matrix via sgl
 	sgl.matrix_mode_texture()
 	sgl.push_matrix()
 
-	// Pack up to 5 stops into tm matrix (indices 10-11 reserved
+	// Pack stops into tm matrix (indices 10-11 reserved
 	// for direction/radius metadata)
 	mut tm_data := [16]f32{}
-	stop_count := if gradient.stops.len > 5 {
-		if !window.pip.gradient_stop_warned {
-			window.pip.gradient_stop_warned = true
-			eprintln('warning: gradient has ${gradient.stops.len} stops,' +
-				' max 5 supported; extra stops ignored')
-		}
-		5
-	} else {
-		gradient.stops.len
-	}
+	stop_count := stops.len
 	for i in 0 .. stop_count {
-		stop := gradient.stops[i]
+		stop := stops[i]
 		// Each stop takes 2 floats: [packed_rgb, packed_alpha_pos]
 		midx := i * 2
 		tm_data[midx] = pack_rgb(stop.color)

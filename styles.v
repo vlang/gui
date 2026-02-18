@@ -43,7 +43,7 @@ pub:
 
 pub struct Gradient {
 pub:
-	stops     []GradientStop // max 5 stops; shader uniform limit
+	stops     []GradientStop // packed to 5 stops for shader upload
 	type      GradientType      = .linear
 	direction GradientDirection = .to_bottom // CSS default
 	angle     ?f32 // Optional explicit angle (degrees), overrides direction
