@@ -90,7 +90,7 @@ pub fn button(cfg ButtonCfg) View {
 				delay:    alt_dur
 				callback: fn (mut _ Animate, mut _ Window) {}
 			})
-			w.update_window()
+			e.is_handled = true
 		}
 	}
 

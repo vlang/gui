@@ -789,7 +789,7 @@ fn group_picker_item(label string, key string, app &ShowcaseApp) gui.View {
 		}
 		radius:   3
 		content:  [gui.text(text: label, text_style: gui.theme().n5)]
-		on_click: fn [key] (_ voidptr, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn [key] (_ voidptr, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.selected_group = key
 			app.show_docs = false
@@ -797,7 +797,7 @@ fn group_picker_item(label string, key string, app &ShowcaseApp) gui.View {
 			entries := filtered_entries(app)
 			app.selected_component = preferred_component_for_group(key, entries)
 			w.scroll_vertical_to(id_scroll_catalog, 0)
-			w.update_window()
+			e.is_handled = true
 		}
 		on_hover: fn (mut _ gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.set_mouse_cursor_pointing_hand()
@@ -883,12 +883,12 @@ fn catalog_row(entry DemoEntry, app &ShowcaseApp) gui.View {
 			gui.text(text: entry.label, text_style: gui.theme().n4),
 			gui.row(sizing: gui.fill_fit, padding: gui.padding_none),
 		]
-		on_click: fn [entry] (_ voidptr, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn [entry] (_ voidptr, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.selected_component = entry.id
 			app.show_docs = false
 			w.scroll_vertical_to(id_scroll_gallery, 0)
-			w.update_window()
+			e.is_handled = true
 		}
 		on_hover: fn [is_selected] (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.set_mouse_cursor_pointing_hand()
@@ -1119,10 +1119,10 @@ fn doc_button(show_docs bool) gui.View {
 				text_style: gui.theme().icon4
 			),
 		]
-		on_click: fn (_ voidptr, mut _ gui.Event, mut w gui.Window) {
+		on_click: fn (_ voidptr, mut e gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.show_docs = !app.show_docs
-			w.update_window()
+			e.is_handled = true
 		}
 		on_hover: fn (mut _ gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			w.set_mouse_cursor_pointing_hand()
@@ -1806,8 +1806,8 @@ gui.button(
     content:      [gui.text(text: "Submit")],
     alt_content:  [gui.text(text: "Sent!")],
     alt_duration: time.second,
-    on_click:     fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-        w.update_window()
+    on_click:     fn (_ &gui.Layout, mut e gui.Event, mut _ gui.Window) {
+        e.is_handled = true
     },
 )
 ```'
