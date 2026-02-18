@@ -94,7 +94,7 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 				mode:       .single_line
 				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
 			),
-			data_grid_indicator_button('Clear', cfg.text_style_filter, cfg.color_header_hover,
+			data_grid_indicator_button(gui_locale.str_clear, cfg.text_style_filter, cfg.color_header_hover,
 				clear_disabled, 0, fn [query_callback, query, input_id, input_focus_id] (_ &Layout, mut e Event, mut w Window) {
 				if query_callback == unsafe { nil } {
 					return
@@ -117,18 +117,22 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 
 fn data_grid_quick_filter_matches_text(cfg DataGridCfg) string {
 	if total := cfg.row_count {
-		return 'Matches ${cfg.rows.len}/${total}'
+		return locale_matches_fmt(cfg.rows.len, total.str())
 	}
 	if data_grid_has_source(cfg) {
-		return 'Matches ${cfg.rows.len}/?'
+		return locale_matches_fmt(cfg.rows.len, '?')
 	}
-	return 'Matches ${cfg.rows.len}'
+	return '${gui_locale.str_matches} ${cfg.rows.len}'
 }
 
 fn data_grid_column_chooser_row(cfg DataGridCfg, is_open bool, focus_id u32) View {
 	on_hidden_columns_change := cfg.on_hidden_columns_change
 	has_visibility_callback := on_hidden_columns_change != unsafe { nil }
-	chooser_label := if is_open { 'Columns ▼' } else { 'Columns ▶' }
+	chooser_label := if is_open {
+		'${gui_locale.str_columns} ▼'
+	} else {
+		'${gui_locale.str_columns} ▶'
+	}
 	row_h := if cfg.row_height > 0 {
 		cfg.row_height
 	} else {
@@ -230,11 +234,11 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 	has_callback := on_page_change != unsafe { nil }
 	is_first := page_index <= 0
 	is_last := page_index >= page_count - 1
-	page_text := 'Page ${page_index + 1}/${page_count}'
+	page_text := locale_page_fmt(page_index + 1, page_count)
 	rows_text := if total_rows == 0 || page_end <= page_start {
-		'Rows 0/0'
+		'${gui_locale.str_rows} 0/0'
 	} else {
-		'Rows ${page_start + 1}-${page_end}/${total_rows}'
+		locale_rows_fmt(page_start + 1, page_end, total_rows)
 	}
 	grid_id := cfg.id
 	jump_enabled := data_grid_jump_enabled_local(cfg.rows.len, on_selection_change, on_page_change,
@@ -305,7 +309,7 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 		]
 	)
 	content << text(
-		text:       'Jump'
+		text:       gui_locale.str_jump
 		mode:       .single_line
 		text_style: data_grid_indicator_text_style(cfg.text_style_filter)
 	)

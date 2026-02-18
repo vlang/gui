@@ -384,6 +384,12 @@ fn (mut window Window) render_rtf_tooltip(clip DrawClip) {
 	render_layout(mut layout, color_transparent, clip, mut window)
 }
 
+// set_locale sets the current locale and triggers a full rebuild.
+pub fn (mut window Window) set_locale(locale Locale) {
+	gui_locale = locale
+	window.update_window()
+}
+
 // set_theme sets the current theme to the given theme.
 // GUI has two builtin themes. theme_dark, theme_light
 pub fn (mut window Window) set_theme(theme Theme) {

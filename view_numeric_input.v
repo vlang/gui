@@ -59,7 +59,7 @@ pub:
 	text                  string
 	value                 ?f64
 	placeholder           string
-	locale                NumericLocaleCfg       = NumericLocaleCfg{}
+	locale                NumericLocaleCfg       = gui_locale.to_numeric_locale()
 	step_cfg              NumericStepCfg         = NumericStepCfg{}
 	mode                  NumericInputMode       = .number
 	currency_mode         NumericCurrencyModeCfg = NumericCurrencyModeCfg{}

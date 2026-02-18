@@ -37,13 +37,6 @@ pub enum DatePickerWeekdayLen as u8 {
 	full
 }
 
-const date_picker_weekdays_one = ['S', 'M', 'T', 'W', 'T', 'F', 'S']!
-const date_picker_weekdays_three = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']!
-const date_picker_weekdays_full = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
-	'Saturday']!
-
-const date_picker_format_month_year = 'MMMM YYYY'
-
 @[minify]
 struct DatePickerState {
 pub mut:
@@ -144,7 +137,7 @@ fn (cfg DatePickerCfg) month_picker(state DatePickerState) View {
 	return button(
 		color_border: color_transparent
 		content:      [
-			text(text: view_time(state).custom_format(date_picker_format_month_year)),
+			text(text: locale_format_date(view_time(state), gui_locale.date.month_year)),
 		]
 		on_click:     fn [id] (_ &Layout, mut e Event, mut w Window) {
 			mut state := w.view_state.date_picker_state.get(id) or { DatePickerState{} }
@@ -224,15 +217,20 @@ fn (cfg DatePickerCfg) calendar(state DatePickerState) View {
 fn (cfg DatePickerCfg) weekdays(state DatePickerState) View {
 	mut weekdays := []View{cap: 7}
 	weekdays_names := match cfg.weekdays_len {
-		.one_letter { date_picker_weekdays_one }
-		.three_letter { date_picker_weekdays_three }
-		.full { date_picker_weekdays_full }
+		.one_letter { gui_locale.weekdays_short }
+		.three_letter { gui_locale.weekdays_med }
+		.full { gui_locale.weekdays_full }
 	}
 
-	// Shift days based on Monday start preference
+	// Shift days based on first-day-of-week (locale or per-widget)
 	// Standard array is Sun..Sat (0..6)
+	first_day := if cfg.monday_first_day_of_week {
+		1
+	} else {
+		int(gui_locale.date.first_day_of_week)
+	}
 	for i in 0 .. 7 {
-		day_idx := if cfg.monday_first_day_of_week { (i + 1) % 7 } else { i }
+		day_idx := (i + first_day) % 7
 
 		is_disabled := if cfg.allowed_weekdays.len > 0 {
 			// day_idx: 0=Sun, 1=Mon, ..., 6=Sat
@@ -276,11 +274,14 @@ fn (cfg DatePickerCfg) month(state DatePickerState) View {
 	// day_of_week returns 1 (Mon) to 7 (Sun)
 	first_dow := time.day_of_week(vt.year, vt.month, 1)
 
-	// Determine starting offset
-	// If Monday First: Mon(1)->0, Tue(2)->1 ... Sun(7)->6
-	// If Sunday First: Sun(7)->0, Mon(1)->1 ... Sat(6)->6
-
-	start_offset := if cfg.monday_first_day_of_week {
+	// Determine starting offset using locale first day of week.
+	// first_dow: 1=Mon..7=Sun. first_day: 0=Sun,1=Mon.
+	month_first_day := if cfg.monday_first_day_of_week {
+		1
+	} else {
+		int(gui_locale.date.first_day_of_week)
+	}
+	start_offset := if month_first_day == 1 {
 		first_dow - 1
 	} else {
 		if first_dow == 7 { 0 } else { first_dow }

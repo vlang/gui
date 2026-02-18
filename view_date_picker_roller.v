@@ -146,14 +146,11 @@ fn day_format(v int) string {
 }
 
 fn month_format_short(v int) string {
-	months := ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']!
-	return months[v - 1]
+	return gui_locale.months_short[v - 1]
 }
 
 fn month_format_long(v int) string {
-	months := ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
-		'October', 'November', 'December']!
-	return months[v - 1]
+	return gui_locale.months_full[v - 1]
 }
 
 fn year_format(v int) string {

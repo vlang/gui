@@ -152,5 +152,5 @@ pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 }
 
 fn (cfg InputDateCfg) date_format() string {
-	return cfg.date.custom_format('M/D/YYYY')
+	return locale_format_date(cfg.date, gui_locale.date.short_date)
 }

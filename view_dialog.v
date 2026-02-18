@@ -112,7 +112,9 @@ fn message_view(cfg DialogCfg) []View {
 			content: [
 				button(
 					id_focus: cfg.id_focus
-					content:  [text(text: 'OK', text_style: cfg.text_style)]
+					content:  [
+						text(text: gui_locale.str_ok, text_style: cfg.text_style),
+					]
 					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_ok_yes := w.dialog_cfg.on_ok_yes
@@ -136,7 +138,9 @@ fn confirm_view(cfg DialogCfg) []View {
 			content: [
 				button(
 					id_focus: cfg.id_focus + 1
-					content:  [text(text: 'Yes', text_style: cfg.text_style)]
+					content:  [
+						text(text: gui_locale.str_yes, text_style: cfg.text_style),
+					]
 					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_ok_yes := w.dialog_cfg.on_ok_yes
@@ -147,7 +151,9 @@ fn confirm_view(cfg DialogCfg) []View {
 				),
 				button(
 					id_focus: cfg.id_focus
-					content:  [text(text: 'No', text_style: cfg.text_style)]
+					content:  [
+						text(text: gui_locale.str_no, text_style: cfg.text_style),
+					]
 					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_cancel_no := w.dialog_cfg.on_cancel_no
@@ -192,7 +198,9 @@ fn prompt_view(cfg DialogCfg) []View {
 				button(
 					id_focus: cfg.id_focus + 1
 					disabled: cfg.reply.len == 0
-					content:  [text(text: 'OK', text_style: cfg.text_style)]
+					content:  [
+						text(text: gui_locale.str_ok, text_style: cfg.text_style),
+					]
 					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_reply := w.dialog_cfg.on_reply
@@ -204,7 +212,9 @@ fn prompt_view(cfg DialogCfg) []View {
 				),
 				button(
 					id_focus: cfg.id_focus + 2
-					content:  [text(text: 'Cancel', text_style: cfg.text_style)]
+					content:  [
+						text(text: gui_locale.str_cancel, text_style: cfg.text_style),
+					]
 					on_click: fn (_ &Layout, mut e Event, mut w Window) {
 						w.set_id_focus(w.dialog_cfg.old_id_focus)
 						on_cancel_no := w.dialog_cfg.on_cancel_no

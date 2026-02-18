@@ -134,10 +134,10 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	mut list := []View{cap: (last_visible - first_visible + 1) + 2}
 
 	if cfg.loading && cfg.data.len == 0 {
-		list << list_box_source_status_row(cfg, 'Loading...')
+		list << list_box_source_status_row(cfg, gui_locale.str_loading)
 	}
 	if cfg.load_error.len > 0 && cfg.data.len == 0 {
-		list << list_box_source_status_row(cfg, 'Load error: ${cfg.load_error}')
+		list << list_box_source_status_row(cfg, '${gui_locale.str_load_error}: ${cfg.load_error}')
 	}
 
 	if virtualize && first_visible > 0 {

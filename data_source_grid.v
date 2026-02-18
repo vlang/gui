@@ -363,19 +363,19 @@ fn data_grid_source_rows_text(kind GridPaginationKind, state DataGridSourceState
 		return data_grid_source_format_rows(start, state.received_count, state.row_count)
 	}
 	total_text := if total := state.row_count { '${total}' } else { '?' }
-	return 'Rows ${state.received_count}/${total_text}'
+	return '${gui_locale.str_rows} ${state.received_count}/${total_text}'
 }
 
 fn data_grid_source_format_rows(start int, count int, total ?int) string {
 	total_text := if t := total { '${t}' } else { '?' }
 	if count <= 0 {
-		return 'Rows 0/${total_text}'
+		return '${gui_locale.str_rows} 0/${total_text}'
 	}
 	mut end := start + count
 	if t := total {
 		end = int_min(end, t)
 	}
-	return 'Rows ${start + 1}-${end}/${total_text}'
+	return '${gui_locale.str_rows} ${start + 1}-${end}/${total_text}'
 }
 
 fn data_grid_source_can_prev(kind GridPaginationKind, state DataGridSourceState, page_limit int) bool {
@@ -537,9 +537,9 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 		load_error, kind, page_limit)
 	mode_text := if kind == .cursor { 'Cursor' } else { 'Offset' }
 	status := if state.loading {
-		'Loading...'
+		gui_locale.str_loading
 	} else if state.load_error.len > 0 {
-		'Error'
+		gui_locale.str_error
 	} else {
 		mode_text
 	}
@@ -615,7 +615,7 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 	)
 	if kind == .offset {
 		content << text(
-			text:       'Jump'
+			text:       gui_locale.str_jump
 			mode:       .single_line
 			text_style: data_grid_indicator_text_style(cfg.text_style_filter)
 		)

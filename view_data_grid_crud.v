@@ -148,13 +148,13 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 	draft_count := state.draft_row_ids.len
 	delete_count := state.deleted_row_ids.len
 	status := if state.saving {
-		'Saving...'
+		gui_locale.str_saving
 	} else if state.save_error.len > 0 {
-		'Save failed'
+		gui_locale.str_save_failed
 	} else if has_unsaved {
-		'Draft ${draft_count} Dirty ${dirty_count} Delete ${delete_count}'
+		'${gui_locale.str_draft} ${draft_count} ${gui_locale.str_dirty} ${dirty_count} ${gui_locale.str_delete} ${delete_count}'
 	} else {
-		'Clean'
+		gui_locale.str_clean
 	}
 	return row(
 		name:         'data_grid crud toolbar'
@@ -167,17 +167,17 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 		spacing:      6
 		v_align:      .middle
 		content:      [
-			data_grid_indicator_button('Add', cfg.text_style_filter, cfg.color_header_hover,
+			data_grid_indicator_button(gui_locale.str_add, cfg.text_style_filter, cfg.color_header_hover,
 				!can_create || state.saving, 0, fn [grid_id, columns, on_selection_change, focus_id, scroll_id, page_size, page_index, on_page_change] (_ &Layout, mut e Event, mut w Window) {
 				data_grid_crud_add_row(grid_id, columns, on_selection_change, focus_id,
 					scroll_id, page_size, page_index, on_page_change, mut e, mut w)
 			}),
-			data_grid_indicator_button('Delete', cfg.text_style_filter, cfg.color_header_hover,
+			data_grid_indicator_button(gui_locale.str_delete, cfg.text_style_filter, cfg.color_header_hover,
 				!can_delete || selected_count == 0 || state.saving, 0, fn [grid_id, selection, on_selection_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
 				data_grid_crud_delete_selected(grid_id, selection, on_selection_change,
 					focus_id, mut e, mut w)
 			}),
-			data_grid_indicator_button('Save', cfg.text_style_filter, cfg.color_header_hover,
+			data_grid_indicator_button(gui_locale.str_save, cfg.text_style_filter, cfg.color_header_hover,
 				!has_unsaved || state.saving, 0, fn [grid_id, data_source, query, on_crud_error, on_rows_change, selection, on_selection_change, focus_id, has_source, caps] (_ &Layout, mut e Event, mut w Window) {
 				data_grid_crud_save(DataGridCrudSaveContext{
 					grid_id:             grid_id
@@ -192,7 +192,7 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 					focus_id:            focus_id
 				}, mut e, mut w)
 			}),
-			data_grid_indicator_button('Cancel', cfg.text_style_filter, cfg.color_header_hover,
+			data_grid_indicator_button(gui_locale.str_cancel, cfg.text_style_filter, cfg.color_header_hover,
 				(!has_unsaved && state.save_error.len == 0) || state.saving, 0, fn [grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
 				data_grid_crud_cancel(grid_id, focus_id, mut e, mut w)
 			}),
@@ -203,7 +203,7 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 				content: []
 			),
 			text(
-				text:       'Selected ${selected_count}'
+				text:       '${gui_locale.str_selected} ${selected_count}'
 				mode:       .single_line
 				text_style: data_grid_indicator_text_style(cfg.text_style_filter)
 			),

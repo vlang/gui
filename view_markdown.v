@@ -263,7 +263,7 @@ fn render_md_mermaid(block MarkdownBlock, cfg MarkdownCfg, window &Window) View 
 		size_border: 0
 		sizing:      fill_fit
 		h_align:     .center
-		content:     [text(text: 'Loading diagram...')]
+		content:     [text(text: gui_locale.str_loading_diagram)]
 	)
 	if entry := w.view_state.diagram_cache.get(diagram_hash) {
 		return match entry.state {

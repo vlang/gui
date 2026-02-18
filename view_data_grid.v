@@ -217,7 +217,7 @@ pub:
 	hidden_column_ids         map[string]bool
 	frozen_top_row_ids        []string
 	detail_expanded_row_ids   map[string]bool
-	quick_filter_placeholder  string            = 'Search'
+	quick_filter_placeholder  string            = gui_locale.str_search
 	quick_filter_debounce     time.Duration     = 200 * time.millisecond
 	row_height                f32               = 30
 	header_height             f32               = 34
@@ -454,10 +454,10 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		rows << data_grid_filter_row(resolved_cfg, columns, column_widths)
 	}
 	if has_source && resolved_cfg.loading && presentation.rows.len == 0 {
-		rows << data_grid_source_status_row(resolved_cfg, 'Loading...')
+		rows << data_grid_source_status_row(resolved_cfg, gui_locale.str_loading)
 	}
 	if has_source && resolved_cfg.load_error.len > 0 && presentation.rows.len == 0 {
-		rows << data_grid_source_status_row(resolved_cfg, 'Load error: ${resolved_cfg.load_error}')
+		rows << data_grid_source_status_row(resolved_cfg, '${gui_locale.str_load_error}: ${resolved_cfg.load_error}')
 	}
 
 	if virtualize && first_visible > 0 {

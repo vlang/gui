@@ -266,7 +266,7 @@ fn data_grid_filter_cell(cfg DataGridCfg, col GridColumnCfg, width f32) View {
 				id:              input_id
 				id_focus:        fnv1a.sum32_string(input_id)
 				text:            value
-				placeholder:     if col.filterable { 'Filter' } else { '' }
+				placeholder:     if col.filterable { gui_locale.str_filter } else { '' }
 				disabled:        !col.filterable || on_query_change == unsafe { nil }
 				sizing:          fill_fill
 				padding:         padding_none
