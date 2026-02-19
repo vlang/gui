@@ -316,11 +316,14 @@ fn render_md_mermaid(block MarkdownBlock, cfg MarkdownCfg, window &Window) View 
 }
 
 // render_md_code renders a fenced code block with copy button.
+// The copy button is only visible when the mouse hovers the code block.
 fn render_md_code(block MarkdownBlock, i int, cfg MarkdownCfg, window &Window) View {
 	code_text := rich_text_plain(block.content)
 	cp_id := 'md_cp_${i}_${code_text.hash()}'
 	icon_color := cfg.style.code.color
 	cp_alt := window.has_animation('btn_alt_${cp_id}')
+	bg := rgba(255, 255, 255, 15)
+	bg_hover := rgba(255, 255, 255, 40)
 	return column(
 		color:       cfg.style.code_block_bg
 		padding:     cfg.style.code_block_padding
@@ -334,8 +337,75 @@ fn render_md_code(block MarkdownBlock, i int, cfg MarkdownCfg, window &Window) V
 				rich_text: block.content
 				mode:      .single_line
 			),
-			md_copy_button(cp_id, cp_alt, icon_color, code_text, rgba(255, 255, 255, 15),
-				rgba(255, 255, 255, 40)),
+			// Floating wrapper: amend_layout shows/hides button
+			// based on mouse position in parent code block.
+			column(
+				float:          true
+				float_anchor:   .top_right
+				float_tie_off:  .top_right
+				float_offset_x: -4
+				float_offset_y: 4
+				amend_layout:   fn [bg, icon_color] (mut layout Layout, mut w Window) {
+					parent := layout.parent
+					if parent == unsafe { nil } || layout.children.len == 0 {
+						return
+					}
+					ctx := w.context()
+					show := parent.shape.point_in_shape(ctx.mouse_pos_x, ctx.mouse_pos_y)
+					mut btn := &layout.children[0]
+					if show {
+						btn.shape.color = bg
+						btn.shape.color_border = icon_color
+					} else {
+						btn.shape.color = color_transparent
+						btn.shape.color_border = color_transparent
+					}
+					for mut child in btn.children {
+						if child.shape.tc != unsafe { nil } {
+							child.shape.tc.text_style = TextStyle{
+								...child.shape.tc.text_style
+								color: if show { icon_color } else { color_transparent }
+							}
+						}
+					}
+				}
+				content:        [
+					button(
+						id:           cp_id
+						show_alt:     cp_alt
+						size_border:  if cp_alt { f32(1) } else { 0 }
+						color_border: icon_color
+						padding:      pad_all(4)
+						radius:       4
+						color:        bg
+						color_hover:  bg_hover
+						on_click:     fn [code_text] (_ &Layout, mut e Event, mut _ Window) {
+							to_clipboard(code_text)
+							e.is_handled = true
+						}
+						content:      [
+							text(
+								text:       icon_document
+								text_style: TextStyle{
+									family: icon_font_name
+									size:   12
+									color:  icon_color
+								}
+							),
+						]
+						alt_content:  [
+							text(
+								text:       'Copied ✓'
+								text_style: TextStyle{
+									size:  11
+									color: icon_color
+								}
+							),
+						]
+						alt_duration: 2 * time.second
+					),
+				]
+			),
 		]
 	)
 }
