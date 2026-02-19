@@ -49,7 +49,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 - [x] `tab_control` advanced features (reorder, close button, overflow menu)
 - [x] `splitter` / pane divider widget (drag, collapse, min/max pane size)
-- [ ] `breadcrumb_bar` widget
+- [x] `breadcrumb_bar` widget
 - [ ] `command_palette` widget (search + ranking + keyboard-first UX)
 - [ ] `toast` / non-blocking notification system
 - [ ] `combobox` with typeahead filter and async options provider
@@ -82,8 +82,8 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 ###     Performance
 
-- [ ] Dirty-region rendering
-- [ ] Layout cache with strict invalidation rules
+- [?] Dirty-region rendering
+- [?] Layout cache with strict invalidation rules
 - [ ] Renderer batching + draw-call reduction instrumentation
 - [ ] GPU text atlas / glyph cache tuning and diagnostics
 - [ ] Built-in frame timeline overlay (layout ms, render ms, event ms)
@@ -106,7 +106,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Parser fuzzing for markdown/svg/url handlers
 - [ ] Memory + resource leak CI checks
 - [ ] API stability policy (versioning, deprecation windows, migration notes)
-- [ ] Public benchmark suite (widgets count tiers, text-heavy, svg-heavy scenarios)
+- [x] Public benchmark suite (widgets count tiers, text-heavy, svg-heavy scenarios)
 
 ## Suggested First 10 Tickets
 
