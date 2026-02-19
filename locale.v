@@ -66,6 +66,8 @@ pub:
 	str_search string = 'Search'
 	str_filter string = 'Filter'
 	str_jump   string = 'Jump'
+	str_reset  string = 'Reset'
+	str_submit string = 'Submit'
 
 	// Status
 	str_loading         string = 'Loading...'

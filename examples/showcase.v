@@ -754,9 +754,16 @@ fn catalog_panel(mut w gui.Window) gui.View {
 				id_scroll:       id_scroll_catalog
 				sizing:          gui.fill_fill
 				spacing:         2
-				padding:         gui.Padding{
-					...gui.padding_none
-					right: gui.theme().scrollbar_style.size + 4
+				padding:         if gui_locale.text_dir == .rtl {
+					gui.Padding{
+						...gui.padding_none
+						left: gui.theme().scrollbar_style.size + 4
+					}
+				} else {
+					gui.Padding{
+						...gui.padding_none
+						right: gui.theme().scrollbar_style.size + 4
+					}
 				}
 				scrollbar_cfg_y: &gui.ScrollbarCfg{
 					gap_edge: 3
@@ -5353,7 +5360,7 @@ fn demo_breadcrumb(mut w gui.Window) gui.View {
 					),
 					gui.button(
 						id_focus: 9170
-						content:  [gui.text(text: 'Reset')]
+						content:  [gui.text(text: gui_locale.str_reset)]
 						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut ww gui.Window) {
 							mut a := ww.state[ShowcaseApp]()
 							a.bc_path = bc_full_path
@@ -5992,7 +5999,7 @@ fn demo_forms(w &gui.Window) gui.View {
 				content: [
 					gui.button(
 						content:  [
-							gui.text(text: 'Submit'),
+							gui.text(text: gui_locale.str_submit),
 						]
 						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 							w.form_submit(showcase_form_id)
@@ -6000,7 +6007,7 @@ fn demo_forms(w &gui.Window) gui.View {
 					),
 					gui.button(
 						content:  [
-							gui.text(text: 'Reset'),
+							gui.text(text: gui_locale.str_reset),
 						]
 						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 							w.form_reset(showcase_form_id)

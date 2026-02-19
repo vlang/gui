@@ -328,51 +328,57 @@ fn render_md_code(block MarkdownBlock, i int, cfg MarkdownCfg, window &Window) V
 		size_border: 0
 		sizing:      fill_fit
 		clip:        true
+		text_dir:    .ltr
 		content:     [
 			rtf(
 				rich_text: block.content
 				mode:      .single_line
 			),
-			button(
-				id:             cp_id
-				show_alt:       cp_alt
-				size_border:    if cp_alt { f32(1) } else { 0 }
-				color_border:   icon_color
-				float:          true
-				float_anchor:   .top_right
-				float_tie_off:  .top_right
-				float_offset_x: -4
-				float_offset_y: 4
-				padding:        pad_all(4)
-				radius:         4
-				color:          rgba(255, 255, 255, 15)
-				color_hover:    rgba(255, 255, 255, 40)
-				on_click:       fn [code_text] (_ &Layout, mut e Event, mut _ Window) {
-					to_clipboard(code_text)
-					e.is_handled = true
+			md_copy_button(cp_id, cp_alt, icon_color, code_text, false, rgba(255, 255,
+				255, 15), rgba(255, 255, 255, 40)),
+		]
+	)
+}
+
+fn md_copy_button(cp_id string, cp_alt bool, icon_color Color, code_text string, rtl bool, bg Color, bg_hover Color) View {
+	return button(
+		id:             cp_id
+		show_alt:       cp_alt
+		size_border:    if cp_alt { f32(1) } else { 0 }
+		color_border:   icon_color
+		float:          true
+		float_anchor:   if rtl { FloatAttach.top_left } else { FloatAttach.top_right }
+		float_tie_off:  if rtl { FloatAttach.top_left } else { FloatAttach.top_right }
+		float_offset_x: if rtl { f32(4) } else { -4 }
+		float_offset_y: 4
+		padding:        pad_all(4)
+		radius:         4
+		color:          bg
+		color_hover:    bg_hover
+		on_click:       fn [code_text] (_ &Layout, mut e Event, mut _ Window) {
+			to_clipboard(code_text)
+			e.is_handled = true
+		}
+		content:        [
+			text(
+				text:       icon_document
+				text_style: TextStyle{
+					family: icon_font_name
+					size:   12
+					color:  icon_color
 				}
-				content:        [
-					text(
-						text:       icon_document
-						text_style: TextStyle{
-							family: icon_font_name
-							size:   12
-							color:  icon_color
-						}
-					),
-				]
-				alt_content:    [
-					text(
-						text:       'Copied ✓'
-						text_style: TextStyle{
-							size:  11
-							color: icon_color
-						}
-					),
-				]
-				alt_duration:   2 * time.second
 			),
 		]
+		alt_content:    [
+			text(
+				text:       'Copied ✓'
+				text_style: TextStyle{
+					size:  11
+					color: icon_color
+				}
+			),
+		]
+		alt_duration:   2 * time.second
 	)
 }
 
@@ -638,45 +644,9 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 	cp_doc_id := 'md_cp_doc_${hash}'
 	doc_icon_color := cfg.style.text.color
 	doc_alt := window.has_animation('btn_alt_${cp_doc_id}')
-	content << button(
-		id:             cp_doc_id
-		show_alt:       doc_alt
-		size_border:    if doc_alt { f32(1) } else { 0 }
-		color_border:   doc_icon_color
-		float:          true
-		float_anchor:   .top_right
-		float_tie_off:  .top_right
-		float_offset_x: -4
-		float_offset_y: 4
-		padding:        pad_all(4)
-		radius:         4
-		color:          rgba(128, 128, 128, 20)
-		color_hover:    rgba(128, 128, 128, 50)
-		on_click:       fn [source] (_ &Layout, mut e Event, mut _ Window) {
-			to_clipboard(source)
-			e.is_handled = true
-		}
-		content:        [
-			text(
-				text:       icon_document
-				text_style: TextStyle{
-					family: icon_font_name
-					size:   12
-					color:  doc_icon_color
-				}
-			),
-		]
-		alt_content:    [
-			text(
-				text:       'Copied ✓'
-				text_style: TextStyle{
-					size:  11
-					color: doc_icon_color
-				}
-			),
-		]
-		alt_duration:   2 * time.second
-	)
+	doc_rtl := gui_locale.text_dir == .rtl
+	content << md_copy_button(cp_doc_id, doc_alt, doc_icon_color, source, doc_rtl, rgba(128,
+		128, 128, 20), rgba(128, 128, 128, 50))
 
 	return column(
 		color:        cfg.color

@@ -40,6 +40,8 @@ pub const locale_de_de = Locale{
 	str_search: 'Suche'
 	str_filter: 'Filter'
 	str_jump:   'Springen'
+	str_reset:  'Zurücksetzen'
+	str_submit: 'Absenden'
 
 	str_loading:         'Laden...'
 	str_loading_diagram: 'Diagramm laden...'
@@ -106,6 +108,8 @@ pub const locale_ar_sa = Locale{
 	str_search: 'بحث'
 	str_filter: 'تصفية'
 	str_jump:   'انتقال'
+	str_reset:  'إعادة تعيين'
+	str_submit: 'إرسال'
 
 	str_loading:         'جارٍ التحميل...'
 	str_loading_diagram: 'جارٍ تحميل المخطط...'

@@ -73,9 +73,15 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, tree_map map[string]bool, mut w
 	id := if node.id.len == 0 { node.text } else { node.id }
 	is_open := tree_map[id]
 	arrow := match true {
-		node.nodes.len == 0 { ' ' }
-		is_open { icon_drop_down }
-		else { icon_drop_right }
+		node.nodes.len == 0 {
+			' '
+		}
+		is_open {
+			icon_drop_down
+		}
+		else {
+			if gui_locale.text_dir == .rtl { icon_drop_left } else { icon_drop_right }
+		}
 	}
 	min_width_icon := text_width('${icon_bar} ', node.text_style_icon, mut window)
 
@@ -136,8 +142,14 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, tree_map map[string]bool, mut w
 	if is_open {
 		content << column(
 			spacing: cfg.spacing
-			padding: Padding{
-				left: cfg.indent
+			padding: if gui_locale.text_dir == .rtl {
+				Padding{
+					right: cfg.indent
+				}
+			} else {
+				Padding{
+					left: cfg.indent
+				}
 			}
 			content: cfg.build_nodes(node.nodes, tree_map, mut window)
 		)
