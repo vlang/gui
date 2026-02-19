@@ -16,7 +16,7 @@ fn cursor_left(pos int) int {
 // the cursor from moving beyond the end of the text. Returns the new cursor
 // position.
 fn cursor_right(shape Shape, pos int) int {
-	return int_min(shape.tc.text.len, pos + 1)
+	return int_min(shape.tc.text.runes().len, pos + 1)
 }
 
 // cursor_up moves the cursor position up one line using vglyph geometry.
@@ -87,7 +87,7 @@ fn cursor_home() int {
 // character count across all wrapped text lines. This is equivalent to the
 // "End" key behavior, placing the cursor at the end of the entire text content.
 fn cursor_end(shape Shape) int {
-	return shape.tc.text.len
+	return shape.tc.text.runes().len
 }
 
 const bytes_blanks = [u8(` `), `\t`, `\f`, `\v`]!
@@ -177,7 +177,7 @@ fn cursor_end_of_line(shape Shape, pos int) int {
 	byte_idx := rune_to_byte_index(shape.tc.text, pos)
 
 	if !shape.has_text_layout() {
-		return shape.tc.text.len
+		return shape.tc.text.runes().len
 	}
 
 	for i, line in shape.tc.vglyph_layout.lines {
@@ -195,7 +195,7 @@ fn cursor_end_of_line(shape Shape, pos int) int {
 			return byte_to_rune_index(shape.tc.text, limit)
 		}
 	}
-	return shape.tc.text.len // default to end
+	return shape.tc.text.runes().len // default to end
 }
 
 // cursor_start_of_paragraph finds the start of the current paragraph in wrapped text

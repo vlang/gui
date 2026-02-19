@@ -77,7 +77,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 - [x] Locale service (number/date/time/currency formatting)
 - [x] BiDi-aware UI mirroring for RTL layouts (not only text shaping)
-- [ ] Translation bundle loading + runtime language switch
+- [x] Translation bundle loading + runtime language switch
 - [ ] Input method edge-case suite (dead keys, surrogate pairs, mixed scripts)
 
 ### Performance
