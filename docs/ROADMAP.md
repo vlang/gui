@@ -5,6 +5,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 ## Legend
 
 - `[ ]` not started
+- `[-]` do not implement
 - `[?]` unsure
 - `[x]` shipped
 
@@ -85,7 +86,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [?] Dirty-region rendering
 - [?] Layout cache with strict invalidation rules
 - [ ] Renderer batching + draw-call reduction instrumentation
-- [ ] GPU text atlas / glyph cache tuning and diagnostics
+- [-] GPU text atlas / glyph cache tuning and diagnostics
 - [ ] Built-in frame timeline overlay (layout ms, render ms, event ms)
 
 ## 2027+: Platform Expansion (P1/P2)
