@@ -92,6 +92,7 @@ pub:
 	}
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
 	log_level           log.Level                   = default_log_level()
+	debug_layout        bool
 }
 
 fn default_log_level() log.Level {
@@ -106,8 +107,9 @@ pub fn window(cfg &WindowCfg) &Window {
 	log.set_always_flush(true)
 
 	mut window := &Window{
-		state:    cfg.state
-		on_event: cfg.on_event
+		state:        cfg.state
+		on_event:     cfg.on_event
+		debug_layout: cfg.debug_layout
 	}
 	on_init := cfg.on_init
 	cursor_blink := cfg.cursor_blink

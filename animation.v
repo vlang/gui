@@ -29,11 +29,12 @@ pub struct Animate implements Animation {
 pub:
 	id       string                       @[required]
 	callback fn (mut Animate, mut Window) @[required]
+pub mut:
+	delay  time.Duration = animation_delay
+	repeat bool
 mut:
-	delay   time.Duration = animation_delay
 	start   time.Time
 	stopped bool
-	repeat  bool
 }
 
 fn (_ Animate) refresh_kind() AnimationRefreshKind {

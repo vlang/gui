@@ -412,6 +412,17 @@ pub fn (window &Window) state[T]() &T {
 	return unsafe { &T(window.state) }
 }
 
+// get_layout_stats returns layout performance statistics.
+// Populated when debug_layout is true.
+pub fn (window &Window) get_layout_stats() LayoutStats {
+	return window.layout_stats
+}
+
+// renderers_count returns the number of active renderers.
+pub fn (window &Window) renderers_count() int {
+	return window.renderers.len
+}
+
 // window_size gets the cached size of the window in logical units.
 pub fn (window &Window) window_size() (int, int) {
 	return window.window_size.width, window.window_size.height
