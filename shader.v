@@ -75,7 +75,7 @@ fn build_glsl_fragment(body string) string {
     in vec4 p2;
     in vec4 p3;
 
-    out vec4 frag_color;
+    out vec4 _frag_out;
 
     void main() {
         float radius = floor(params / 4096.0) / 4.0;
@@ -95,10 +95,10 @@ fn build_glsl_fragment(body string) string {
         ${body}
         // --- end user body ---
 
-        frag_color = vec4(frag_color.rgb, frag_color.a * sdf_alpha);
+        _frag_out = vec4(frag_color.rgb, frag_color.a * sdf_alpha);
 
-        if (frag_color.a < 0.0) {
-            frag_color += texture(tex, uv);
+        if (_frag_out.a < 0.0) {
+            _frag_out += texture(tex, uv);
         }
     }
 '
