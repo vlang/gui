@@ -8,6 +8,8 @@ module nativebridge
 #flag darwin @VMODROOT/nativebridge/print_macos.m
 #flag darwin @VMODROOT/nativebridge/readback_macos.m
 #flag darwin -framework Metal
+#flag linux @VMODROOT/nativebridge/readback_linux.c
+#flag linux -lGL
 #include "@VMODROOT/nativebridge/dialog_bridge.h"
 #include "@VMODROOT/nativebridge/print_bridge.h"
 #include "@VMODROOT/nativebridge/readback_bridge.h"
@@ -113,6 +115,7 @@ fn C.gui_native_print_pdf_dialog(voidptr, &char, &char, &char, f64, f64, f64, f6
 fn C.gui_native_print_result_free(C.GuiNativePrintResult)
 
 fn C.gui_readback_metal_texture(mtl_texture voidptr, mtl_device voidptr, width int, height int) &u8
+fn C.gui_readback_gl_framebuffer(framebuffer u32, width int, height int) &u8
 
 fn bridge_dialog_unsupported_result() BridgeDialogResult {
 	return BridgeDialogResult{
@@ -279,5 +282,26 @@ pub fn readback_metal_texture(mtl_texture voidptr, mtl_device voidptr, width int
 		return pixels
 	} $else {
 		return error('Metal readback not available on this platform')
+	}
+}
+
+// readback_gl_framebuffer reads RGBA pixels from an OpenGL
+// framebuffer via glReadPixels. Rows are flipped to top-down
+// order. Caller must gfx.commit() before calling. Linux only.
+pub fn readback_gl_framebuffer(framebuffer u32, width int, height int) ![]u8 {
+	$if linux {
+		ptr := C.gui_readback_gl_framebuffer(framebuffer, width, height)
+		if ptr == unsafe { nil } {
+			return error('GL framebuffer readback failed')
+		}
+		size := width * height * 4
+		mut pixels := []u8{len: size}
+		unsafe {
+			vmemcpy(pixels.data, ptr, size)
+			free(ptr)
+		}
+		return pixels
+	} $else {
+		return error('GL readback not available on this platform')
 	}
 }

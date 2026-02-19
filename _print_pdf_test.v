@@ -238,7 +238,7 @@ fn test_pdf_render_document_svg_gradient_malformed_vertex_colors_falls_back_flat
 fn test_jpeg_encode_rgba_produces_valid_output() {
 	// 2x2 white image (BGRA format: B=255 G=255 R=255 A=255)
 	pixels := []u8{len: 16, init: 255}
-	result := jpeg_encode_rgba(pixels, 2, 2, 85) or {
+	result := jpeg_encode_rgba(pixels, 2, 2, 85, true) or {
 		assert false, 'encode failed: ${err.msg()}'
 		return
 	}
@@ -250,7 +250,7 @@ fn test_jpeg_encode_rgba_produces_valid_output() {
 
 fn test_raster_pdf_header_footer_respects_margins() {
 	pixels := []u8{len: 100 * 100 * 4, init: 128}
-	jpeg := jpeg_encode_rgba(pixels, 100, 100, 85) or {
+	jpeg := jpeg_encode_rgba(pixels, 100, 100, 85, true) or {
 		assert false, 'JPEG encode failed: ${err.msg()}'
 		return
 	}

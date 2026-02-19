@@ -19,6 +19,15 @@ uint8_t* gui_readback_metal_texture(
     int height
 );
 
+// Read RGBA pixels from an OpenGL framebuffer via
+// glReadPixels. Rows are flipped to top-down order.
+// Caller must free returned buffer. Returns NULL on failure.
+uint8_t* gui_readback_gl_framebuffer(
+    uint32_t framebuffer,
+    int width,
+    int height
+);
+
 #ifdef __cplusplus
 }
 #endif
