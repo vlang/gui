@@ -778,6 +778,7 @@ fn catalog_panel(mut w gui.Window) gui.View {
 				spacing: 8
 				sizing:  gui.fill_fit
 				h_align: .end
+				v_align: .middle
 				content: [
 					toggle_locale(app),
 					toggle_theme(app),
@@ -4508,10 +4509,23 @@ fn demo_gradient() gui.View {
 			},
 		]
 	}
-	return gui.row(
+	border_grad := &gui.Gradient{
+		direction: .to_bottom_right
+		stops:     [
+			gui.GradientStop{
+				color: gui.red
+				pos:   0.0
+			},
+			gui.GradientStop{
+				color: gui.blue
+				pos:   1.0
+			},
+		]
+	}
+	return gui.column(
 		spacing: gui.theme().spacing_large
 		content: [
-			gui.column(
+			gui.row(
 				spacing: gui.theme().spacing_small
 				content: [
 					gui.text(text: 'Linear', text_style: gui.theme().b5),
@@ -4526,7 +4540,7 @@ fn demo_gradient() gui.View {
 					),
 				]
 			),
-			gui.column(
+			gui.row(
 				spacing: gui.theme().spacing_small
 				content: [
 					gui.text(text: 'Radial', text_style: gui.theme().b5),
@@ -4538,6 +4552,20 @@ fn demo_gradient() gui.View {
 						gradient:     radial
 						color_border: gui.theme().color_border
 						size_border:  1
+					),
+				]
+			),
+			gui.row(
+				spacing: gui.theme().spacing_small
+				content: [
+					gui.text(text: 'Border', text_style: gui.theme().b5),
+					gui.rectangle(
+						width:           220
+						height:          120
+						sizing:          gui.fixed_fixed
+						radius:          10
+						border_gradient: border_grad
+						size_border:     3
 					),
 				]
 			),
