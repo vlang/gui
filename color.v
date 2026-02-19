@@ -322,8 +322,7 @@ const string_colors = {
 // or black Color if string is not found in lookup table, or a hex color if starting with #
 pub fn color_from_string(s string) Color {
 	if s.starts_with('#') {
-		mut hex_str := '0x' + s[1..]
-		return hex(hex_str.int())
+		return color_from_hex_string(s) or { Color{} }
 	} else {
 		return string_colors[s]
 	}

@@ -6,6 +6,13 @@ fn init() {
 	locale_register(locale_en_us)
 	locale_register(locale_de_de)
 	locale_register(locale_ar_sa)
+	theme_register(theme_dark)
+	theme_register(theme_dark_no_padding)
+	theme_register(theme_dark_bordered)
+	theme_register(theme_light)
+	theme_register(theme_light_no_padding)
+	theme_register(theme_light_bordered)
+	theme_register(theme_blue_bordered)
 }
 
 // locale_register adds a locale to the global registry

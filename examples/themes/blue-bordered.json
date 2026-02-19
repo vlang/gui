@@ -1,0 +1,66 @@
+{
+  "name": "blue-dark-bordered",
+  "colors": {
+    "background": "#0c1d3a",
+    "panel": "#122c58",
+    "interior": "#193b75",
+    "hover": "#1f4992",
+    "focus": "#2c67cd",
+    "active": "#2558b0",
+    "border": "#467bd7",
+    "border_focus": "#81a5e3",
+    "select": "#427bdd"
+  },
+  "titlebar_dark": 1,
+  "fill": 1,
+  "fill_border": 1,
+  "text": {
+    "color": "#e1e1e1",
+    "size": 16,
+    "family": ""
+  },
+  "padding": { "top": 10, "right": 10, "bottom": 10, "left": 10 },
+  "padding_small": { "top": 5, "right": 5, "bottom": 5, "left": 5 },
+  "padding_medium": { "top": 10, "right": 10, "bottom": 10, "left": 10 },
+  "padding_large": { "top": 15, "right": 15, "bottom": 15, "left": 15 },
+  "size_border": 1.5,
+  "radius": 5.5,
+  "radius_border": 7.5,
+  "radius_small": 3.5,
+  "radius_medium": 5.5,
+  "radius_large": 7.5,
+  "spacing": {
+    "small": 5,
+    "medium": 10,
+    "large": 15,
+    "text": 0
+  },
+  "sizes": {
+    "text_tiny": 10,
+    "text_x_small": 12,
+    "text_small": 14,
+    "text_medium": 16,
+    "text_large": 20,
+    "text_x_large": 24
+  },
+  "scroll": {
+    "multiplier": 20,
+    "delta_line": 1,
+    "delta_page": 10,
+    "gap_edge": 3,
+    "gap_end": 2
+  },
+  "widgets": {
+    "switch_width": 36,
+    "switch_height": 22,
+    "radio": 16,
+    "scrollbar": 7,
+    "scrollbar_min_thumb": 20,
+    "progress_bar": 10,
+    "range_slider": 7,
+    "range_slider_thumb": 15,
+    "splitter_handle": 9,
+    "submenu_min": 50,
+    "submenu_max": 200
+  }
+}
