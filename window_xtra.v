@@ -401,6 +401,8 @@ pub fn (mut window Window) set_locale_id(id string) ! {
 pub fn (mut window Window) set_theme(theme Theme) {
 	gui_theme = theme
 	titlebar_dark(theme.titlebar_dark)
+	window.view_state.markdown_cache.clear()
+	window.view_state.diagram_cache.clear()
 	window.set_color_background(theme.color_background)
 }
 
