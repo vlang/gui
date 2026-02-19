@@ -158,6 +158,9 @@ fn main() {
 		height:       700
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
+			for data in showcase_locale_data {
+				gui.locale_register(gui.locale_parse(data.to_string()) or { continue })
+			}
 			w.update_view(main_view)
 		}
 	)
@@ -283,6 +286,13 @@ fn demo_entries() []DemoEntry {
 			group:   'welcome'
 			summary: 'How the layout engine measures and arranges views.'
 			tags:    ['doc', 'layout', 'sizing', 'algorithm']
+		},
+		DemoEntry{
+			id:      'doc_locales'
+			label:   'Locales'
+			group:   'welcome'
+			summary: 'Locale bundles, translation, and runtime language switching.'
+			tags:    ['doc', 'locale', 'i18n', 'translation', 'rtl']
 		},
 		DemoEntry{
 			id:      'doc_markdown'
@@ -1047,6 +1057,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'doc_forms' { demo_doc(mut w, 'doc_forms', doc_forms_source) }
 		'doc_gradients' { demo_doc(mut w, 'doc_gradients', doc_gradients_source) }
 		'doc_layout_algorithm' { demo_doc(mut w, 'doc_layout_algorithm', doc_layout_algorithm_source) }
+		'doc_locales' { demo_doc(mut w, 'doc_locales', doc_locales_source) }
 		'doc_markdown' { demo_doc(mut w, 'doc_markdown', doc_markdown_source) }
 		'doc_native_dialogs' { demo_doc(mut w, 'doc_native_dialogs', doc_native_dialogs_source) }
 		'doc_performance' { demo_doc(mut w, 'doc_performance', doc_performance_source) }
@@ -1212,15 +1223,17 @@ fn line() gui.View {
 	)
 }
 
-const showcase_locale_labels = ['EN', 'DE', 'AR']!
-const showcase_locale_count = 3
+const showcase_locale_data = [
+	$embed_file('locales/de-DE.json'),
+	$embed_file('locales/ar-SA.json'),
+	$embed_file('locales/ja-JP.json'),
+]!
+const showcase_locale_ids = ['en-US', 'de-DE', 'ar-SA', 'ja-JP']!
+const showcase_locale_labels = ['EN', 'DE', 'AR', 'JA']!
+const showcase_locale_count = 4
 
 fn showcase_locale(idx int) gui.Locale {
-	return match idx {
-		1 { gui.locale_de_de }
-		2 { gui.locale_ar_sa }
-		else { gui.locale_en_us }
-	}
+	return gui.locale_get(showcase_locale_ids[idx]) or { gui.locale_en_us }
 }
 
 fn toggle_locale(app &ShowcaseApp) gui.View {
@@ -1737,6 +1750,7 @@ const doc_data_grid_source = $embed_file('../docs/DATA_GRID.md').to_string()
 const doc_forms_source = $embed_file('../docs/FORMS.md').to_string()
 const doc_gradients_source = $embed_file('../docs/GRADIENTS.md').to_string()
 const doc_layout_algorithm_source = $embed_file('../docs/LAYOUT_ALGORITHM.md').to_string()
+const doc_locales_source = $embed_file('../docs/LOCALES.md').to_string()
 const doc_markdown_source = $embed_file('../docs/MARKDOWN.md').to_string()
 const doc_native_dialogs_source = $embed_file('../docs/NATIVE_DIALOGS.md').to_string()
 const doc_performance_source = $embed_file('../docs/PERFORMANCE.md').to_string()

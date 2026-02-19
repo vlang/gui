@@ -54,3 +54,9 @@ fn locale_page_fmt(page int, total int) string {
 fn locale_matches_fmt(count int, total string) string {
 	return '${gui_locale.str_matches} ${count}/${total}'
 }
+
+// locale_t looks up a translation key in the current
+// locale. Returns the key itself when not found.
+pub fn locale_t(key string) string {
+	return gui_locale.translations[key] or { key }
+}

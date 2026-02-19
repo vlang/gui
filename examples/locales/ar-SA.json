@@ -1,0 +1,59 @@
+{
+  "id": "ar-SA",
+  "text_dir": "rtl",
+  "number": {
+    "decimal_sep": ".",
+    "group_sep": ",",
+    "group_sizes": [3],
+    "minus_sign": "-",
+    "plus_sign": "+"
+  },
+  "date": {
+    "short_date": "D/M/YYYY",
+    "long_date": "D MMMM YYYY",
+    "month_year": "MMMM YYYY",
+    "first_day_of_week": 6,
+    "use_24h": false
+  },
+  "currency": {
+    "symbol": "ر.س",
+    "code": "SAR",
+    "position": "suffix",
+    "spacing": true,
+    "decimals": 2
+  },
+  "strings": {
+    "ok": "موافق",
+    "yes": "نعم",
+    "no": "لا",
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "delete": "حذف",
+    "add": "إضافة",
+    "clear": "مسح",
+    "search": "بحث",
+    "filter": "تصفية",
+    "jump": "انتقال",
+    "reset": "إعادة تعيين",
+    "submit": "إرسال",
+    "loading": "جارٍ التحميل...",
+    "loading_diagram": "جارٍ تحميل المخطط...",
+    "saving": "جارٍ الحفظ...",
+    "save_failed": "فشل الحفظ",
+    "load_error": "خطأ في التحميل",
+    "error": "خطأ",
+    "clean": "نظيف",
+    "columns": "الأعمدة",
+    "selected": "محدد",
+    "draft": "مسودة",
+    "dirty": "معدّل",
+    "matches": "تطابق",
+    "page": "صفحة",
+    "rows": "صفوف"
+  },
+  "weekdays_short": ["ح", "ن", "ث", "ر", "خ", "ج", "س"],
+  "weekdays_med":   ["أحد", "اثن", "ثلا", "أرب", "خمي", "جمع", "سبت"],
+  "weekdays_full":  ["الأحد", "الاثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"],
+  "months_short": ["ينا", "فبر", "مار", "أبر", "ماي", "يون", "يول", "أغس", "سبت", "أكت", "نوف", "ديس"],
+  "months_full":  ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]
+}

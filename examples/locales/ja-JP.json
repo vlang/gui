@@ -1,0 +1,62 @@
+{
+  "id": "ja-JP",
+  "text_dir": "ltr",
+  "number": {
+    "decimal_sep": ".",
+    "group_sep": ",",
+    "group_sizes": [3],
+    "minus_sign": "-",
+    "plus_sign": "+"
+  },
+  "date": {
+    "short_date": "YYYY/M/D",
+    "long_date": "YYYY年M月D日",
+    "month_year": "YYYY年M月",
+    "first_day_of_week": 0,
+    "use_24h": true
+  },
+  "currency": {
+    "symbol": "¥",
+    "code": "JPY",
+    "position": "prefix",
+    "decimals": 0
+  },
+  "strings": {
+    "ok": "OK",
+    "yes": "はい",
+    "no": "いいえ",
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "add": "追加",
+    "clear": "クリア",
+    "search": "検索",
+    "filter": "フィルター",
+    "jump": "ジャンプ",
+    "reset": "リセット",
+    "submit": "送信",
+    "loading": "読み込み中...",
+    "loading_diagram": "図を読み込み中...",
+    "saving": "保存中...",
+    "save_failed": "保存失敗",
+    "load_error": "読み込みエラー",
+    "error": "エラー",
+    "clean": "クリーン",
+    "columns": "列",
+    "selected": "選択済み",
+    "draft": "下書き",
+    "dirty": "変更あり",
+    "matches": "一致",
+    "page": "ページ",
+    "rows": "行"
+  },
+  "weekdays_short": ["日", "月", "火", "水", "木", "金", "土"],
+  "weekdays_med":   ["日曜", "月曜", "火曜", "水曜", "木曜", "金曜", "土曜"],
+  "weekdays_full":  ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"],
+  "months_short": ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+  "months_full":  ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
+  "translations": {
+    "greeting": "こんにちは",
+    "cart": "カート"
+  }
+}

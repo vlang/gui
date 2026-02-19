@@ -87,6 +87,9 @@ pub:
 	str_page     string = 'Page'
 	str_rows     string = 'Rows'
 
+	// App-level translation keys
+	translations map[string]string
+
 	// Weekday names (0=Sun..6=Sat)
 	weekdays_short [7]string = ['S', 'M', 'T', 'W', 'T', 'F', 'S']!
 	weekdays_med   [7]string = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']!

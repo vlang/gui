@@ -1,0 +1,59 @@
+{
+  "id": "de-DE",
+  "text_dir": "ltr",
+  "number": {
+    "decimal_sep": ",",
+    "group_sep": ".",
+    "group_sizes": [3],
+    "minus_sign": "-",
+    "plus_sign": "+"
+  },
+  "date": {
+    "short_date": "D.M.YYYY",
+    "long_date": "D. MMMM YYYY",
+    "month_year": "MMMM YYYY",
+    "first_day_of_week": 1,
+    "use_24h": false
+  },
+  "currency": {
+    "symbol": "€",
+    "code": "EUR",
+    "position": "suffix",
+    "spacing": true,
+    "decimals": 2
+  },
+  "strings": {
+    "ok": "OK",
+    "yes": "Ja",
+    "no": "Nein",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "add": "Hinzufügen",
+    "clear": "Löschen",
+    "search": "Suche",
+    "filter": "Filter",
+    "jump": "Springen",
+    "reset": "Zurücksetzen",
+    "submit": "Absenden",
+    "loading": "Laden...",
+    "loading_diagram": "Diagramm laden...",
+    "saving": "Speichern...",
+    "save_failed": "Speichern fehlgeschlagen",
+    "load_error": "Ladefehler",
+    "error": "Fehler",
+    "clean": "Sauber",
+    "columns": "Spalten",
+    "selected": "Ausgewählt",
+    "draft": "Entwurf",
+    "dirty": "Geändert",
+    "matches": "Treffer",
+    "page": "Seite",
+    "rows": "Zeilen"
+  },
+  "weekdays_short": ["S", "M", "D", "M", "D", "F", "S"],
+  "weekdays_med":   ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"],
+  "weekdays_full":  ["Sonntag", "Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag"],
+  "months_short": ["Jan", "Feb", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"],
+  "months_full":  ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]
+}

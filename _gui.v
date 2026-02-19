@@ -7,6 +7,7 @@ module gui
 
 __global gui_theme = theme_dark_no_padding
 __global gui_locale = Locale{}
+__global gui_locale_registry = map[string]Locale{}
 
 pub const version = '0.1.0'
 pub const app_title = 'v-gui'

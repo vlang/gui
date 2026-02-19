@@ -390,6 +390,12 @@ pub fn (mut window Window) set_locale(locale Locale) {
 	window.update_window()
 }
 
+// set_locale_id switches to a registered locale by id.
+pub fn (mut window Window) set_locale_id(id string) ! {
+	locale := locale_get(id)!
+	window.set_locale(locale)
+}
+
 // set_theme sets the current theme to the given theme.
 // GUI has two builtin themes. theme_dark, theme_light
 pub fn (mut window Window) set_theme(theme Theme) {
