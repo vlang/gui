@@ -41,9 +41,9 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 - [x] Markdown fenced code syntax highlighting (language-tag driven)
 - [?] Theme-aware code highlight palettes (dark/light + custom themes)
-- [?] Incremental markdown re-render (avoid full rebuild for small edits)
-- [?] Offline mode for mermaid/math renderers (local backend option)
-- [?] Link context menu support (copy/open/inspect target)
+- [-] Incremental markdown re-render (avoid full rebuild for small edits)
+- [-] Offline mode for mermaid/math renderers (local backend option)
+- [ ] Link context menu support (copy/open/inspect target)
 - [x] Copy code block enhancement
 
 ### Missing Core Components
@@ -67,12 +67,49 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 ### Accessibility (A11y)
 
-- [ ] Accessibility tree mapping for macOS NSAccessibility
-- [ ] Accessibility tree mapping for Windows UI Automation
-- [ ] Accessibility tree mapping for Linux AT-SPI
-- [ ] Screen-reader labels/roles/states for every core widget
-- [ ] Keyboard parity matrix (tab, arrows, home/end, page up/down, escape)
-- [ ] High-contrast theme preset + visible focus ring system
+#### Phase 1 — Metadata Model (cross-platform)
+
+- [ ] `AccessRole` enum on Shape (button, text_field,
+      static_text, group, slider, checkbox, tab, menu_item, …)
+- [ ] `a11y_label` / `a11y_description` string fields on Shape
+- [ ] `AccessState` flags (expanded, selected, checked,
+      disabled, required, invalid)
+- [ ] `a11y_value` representation (text for inputs, f32 for
+      sliders/progress, index for tabs)
+- [ ] Cfg-level `label` / `description` fields that propagate
+      to Shape for every core widget
+
+#### Phase 2 — macOS NSAccessibility Backend
+
+- [ ] Objective-C bridge (`a11y_macos.m`) implementing
+      NSAccessibility protocol on a custom
+      NSAccessibilityElement tree
+- [ ] Layout-tree → a11y-tree sync each frame (diff-based or
+      full rebuild)
+- [ ] Focus-change notifications via
+      NSAccessibilityFocusedUIElementChangedNotification
+- [ ] Value-change / layout-change notifications
+- [ ] Action dispatch (press, increment/decrement, confirm,
+      cancel) routed back to Shape event handlers
+- [ ] VoiceOver smoke tests for showcase app
+
+#### Phase 3 — Widget Compliance
+
+- [ ] Screen-reader roles/labels/states for every shipped
+      widget (button, input, select, table, tree, tab_control,
+      slider, checkbox, dialog, menu, breadcrumb, splitter,
+      progress_bar)
+- [ ] Keyboard parity matrix: tab, arrows, home/end,
+      page up/down, escape, space/enter for activation
+- [ ] Live-region announcements for dynamic content (toasts,
+      progress updates, validation errors)
+
+#### Phase 4 — Visual Accessibility
+
+- [ ] High-contrast theme preset
+- [ ] Visible focus ring system (themeable width, color, offset)
+- [ ] `prefers-reduced-motion` detection → disable animations
+- [ ] Minimum-contrast validation helper for custom themes
 
 ### Internationalization (i18n/l10n)
 
@@ -85,9 +122,9 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 - [?] Dirty-region rendering
 - [?] Layout cache with strict invalidation rules
-- [ ] Renderer batching + draw-call reduction instrumentation
+- [-] Renderer batching + draw-call reduction instrumentation
 - [-] GPU text atlas / glyph cache tuning and diagnostics
-- [ ] Built-in frame timeline overlay (layout ms, render ms, event ms)
+- [-] Built-in frame timeline overlay (layout ms, render ms, event ms)
 
 ## 2027+: Platform Expansion (P1/P2)
 
@@ -103,7 +140,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 - [ ] Runtime inspector overlay (view tree, bounds, style, event trace)
 - [x] Component gallery app with state permutations and edge-case fixtures
-- [ ] Snapshot/golden rendering tests per widget/state
+- [-] Snapshot/golden rendering tests per widget/state
 - [x] Parser fuzzing for markdown/svg/url handlers
 - [ ] Memory + resource leak CI checks
 - [ ] API stability policy (versioning, deprecation windows, migration notes)
