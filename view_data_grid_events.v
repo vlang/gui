@@ -451,14 +451,18 @@ fn data_grid_header_on_keydown(hk DataGridHeaderKeydownContext, mut e Event, mut
 			return
 		}
 		.left, .right {
+			is_rtl := gui_locale.text_dir == .rtl
+			// RTL negates nav/reorder delta (columns flow right-to-left)
+			raw_dir := if e.key_code == .left { -1 } else { 1 }
+			dir := if is_rtl { -raw_dir } else { raw_dir }
 			if is_ctrl_or_super {
-				delta := if e.key_code == .left { -1 } else { 1 }
 				data_grid_header_reorder_by_key(hk.columns, hk.column_order, hk.hidden_column_ids,
 					hk.on_column_order_change, hk.header_focus_base, hk.col, hk.col_count,
-					delta, mut e, mut w)
+					dir, mut e, mut w)
 				return
 			}
 			if is_alt {
+				// Resize is physical — not negated for RTL
 				step := if is_shift {
 					data_grid_resize_key_step_large
 				} else {
@@ -470,8 +474,7 @@ fn data_grid_header_on_keydown(hk DataGridHeaderKeydownContext, mut e Event, mut
 				return
 			}
 			if e.modifiers == .none {
-				next_idx := int_clamp(hk.col_idx + if e.key_code == .left { -1 } else { 1 },
-					0, hk.col_count - 1)
+				next_idx := int_clamp(hk.col_idx + dir, 0, hk.col_count - 1)
 				if next_idx != hk.col_idx {
 					next_focus_id := data_grid_header_focus_id_from_base(hk.header_focus_base,
 						hk.col_count, next_idx)

@@ -12,6 +12,19 @@ pub enum FloatAttach as u8 {
 	bottom_right
 }
 
+// mirror_float_attach swaps left/right anchors for RTL mirroring.
+fn mirror_float_attach(a FloatAttach) FloatAttach {
+	return match a {
+		.top_left { .top_right }
+		.top_right { .top_left }
+		.middle_left { .middle_right }
+		.middle_right { .middle_left }
+		.bottom_left { .bottom_right }
+		.bottom_right { .bottom_left }
+		else { a }
+	}
+}
+
 // float_attach_layout computes the position of the float layouts relative
 // to their parent.
 fn float_attach_layout(layout &Layout) (f32, f32) {
@@ -19,8 +32,22 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 		return f32(0), f32(0)
 	}
 	parent := layout.parent.shape
+	is_rtl := effective_text_dir(parent) == .rtl
+
+	anchor := if is_rtl {
+		mirror_float_attach(layout.shape.float_anchor)
+	} else {
+		layout.shape.float_anchor
+	}
+	tie_off := if is_rtl {
+		mirror_float_attach(layout.shape.float_tie_off)
+	} else {
+		layout.shape.float_tie_off
+	}
+	offset_x := if is_rtl { -layout.shape.float_offset_x } else { layout.shape.float_offset_x }
+
 	mut x, mut y := layout.parent.shape.x, layout.parent.shape.y
-	x, y = match layout.shape.float_anchor {
+	x, y = match anchor {
 		.top_left { x, y }
 		.top_center { x + parent.width / 2, y }
 		.top_right { x + parent.width, y }
@@ -32,7 +59,7 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 		.bottom_right { x + parent.width, y + parent.height }
 	}
 	shape := layout.shape
-	x, y = match layout.shape.float_tie_off {
+	x, y = match tie_off {
 		.top_left { x, y }
 		.top_center { x - shape.width / 2, y }
 		.top_right { x - shape.width, y }
@@ -43,7 +70,7 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 		.bottom_center { x - shape.width / 2, y - shape.height }
 		.bottom_right { x - shape.width, y - shape.height }
 	}
-	x += layout.shape.float_offset_x
+	x += offset_x
 	y += layout.shape.float_offset_y
 	return x, y
 }

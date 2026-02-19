@@ -754,16 +754,9 @@ fn catalog_panel(mut w gui.Window) gui.View {
 				id_scroll:       id_scroll_catalog
 				sizing:          gui.fill_fill
 				spacing:         2
-				padding:         if gui_locale.text_dir == .rtl {
-					gui.Padding{
-						...gui.padding_none
-						left: gui.theme().scrollbar_style.size + 4
-					}
-				} else {
-					gui.Padding{
-						...gui.padding_none
-						right: gui.theme().scrollbar_style.size + 4
-					}
+				padding:         gui.Padding{
+					...gui.padding_none
+					right: gui.theme().scrollbar_style.size + 4
 				}
 				scrollbar_cfg_y: &gui.ScrollbarCfg{
 					gap_edge: 3

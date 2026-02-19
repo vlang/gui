@@ -108,17 +108,9 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 
 					float:          true
 					float_anchor:   if level == 0 {
-						if gui_locale.text_dir == .rtl {
-							FloatAttach.bottom_right
-						} else {
-							FloatAttach.bottom_left
-						}
+						FloatAttach.bottom_left
 					} else {
-						if gui_locale.text_dir == .rtl {
-							FloatAttach.top_left
-						} else {
-							FloatAttach.top_right
-						}
+						FloatAttach.top_right
 					}
 					float_offset_y: if level == 0 { cfg.padding.bottom } else { 0 }
 					on_hover:       make_submenu_on_hover(cfg)

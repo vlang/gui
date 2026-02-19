@@ -44,6 +44,9 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 
 	mut x := if is_rtl && axis == .left_to_right {
 		layout.shape.x + layout.shape.width - layout.shape.padding.left - layout.shape.size_border
+	} else if is_rtl {
+		// Column/none RTL: physical left = end side
+		layout.shape.x + layout.shape.padding.right + layout.shape.size_border
 	} else {
 		layout.shape.x + layout.shape.padding_left()
 	}

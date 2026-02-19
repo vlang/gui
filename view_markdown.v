@@ -334,22 +334,22 @@ fn render_md_code(block MarkdownBlock, i int, cfg MarkdownCfg, window &Window) V
 				rich_text: block.content
 				mode:      .single_line
 			),
-			md_copy_button(cp_id, cp_alt, icon_color, code_text, false, rgba(255, 255,
-				255, 15), rgba(255, 255, 255, 40)),
+			md_copy_button(cp_id, cp_alt, icon_color, code_text, rgba(255, 255, 255, 15),
+				rgba(255, 255, 255, 40)),
 		]
 	)
 }
 
-fn md_copy_button(cp_id string, cp_alt bool, icon_color Color, code_text string, rtl bool, bg Color, bg_hover Color) View {
+fn md_copy_button(cp_id string, cp_alt bool, icon_color Color, code_text string, bg Color, bg_hover Color) View {
 	return button(
 		id:             cp_id
 		show_alt:       cp_alt
 		size_border:    if cp_alt { f32(1) } else { 0 }
 		color_border:   icon_color
 		float:          true
-		float_anchor:   if rtl { FloatAttach.top_left } else { FloatAttach.top_right }
-		float_tie_off:  if rtl { FloatAttach.top_left } else { FloatAttach.top_right }
-		float_offset_x: if rtl { f32(4) } else { -4 }
+		float_anchor:   .top_right
+		float_tie_off:  .top_right
+		float_offset_x: -4
 		float_offset_y: 4
 		padding:        pad_all(4)
 		radius:         4
@@ -644,9 +644,8 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 	cp_doc_id := 'md_cp_doc_${hash}'
 	doc_icon_color := cfg.style.text.color
 	doc_alt := window.has_animation('btn_alt_${cp_doc_id}')
-	doc_rtl := gui_locale.text_dir == .rtl
-	content << md_copy_button(cp_doc_id, doc_alt, doc_icon_color, source, doc_rtl, rgba(128,
-		128, 128, 20), rgba(128, 128, 128, 50))
+	content << md_copy_button(cp_doc_id, doc_alt, doc_icon_color, source, rgba(128, 128,
+		128, 20), rgba(128, 128, 128, 50))
 
 	return column(
 		color:        cfg.color

@@ -723,3 +723,149 @@ fn test_layout_positions_rtl_padding_swap() {
 	// Child 0: x = 180 - 30 = 150
 	assert f32_are_close(root.children[0].shape.x, 150.0)
 }
+
+// Test: RTL column swaps left/right padding (column/none axis)
+fn test_layout_positions_rtl_column_padding() {
+	// Column with padding.left=20 (start), padding.right=5 (end)
+	// In RTL column: physical left = end side → x starts at padding.right
+	// Use h_align=.left to isolate padding behavior from alignment
+	mut root := Layout{
+		shape:    &Shape{
+			x:           0
+			y:           0
+			width:       200
+			height:      100
+			axis:        .top_to_bottom
+			h_align:     .left
+			text_dir:    .rtl
+			padding:     Padding{
+				left:   20
+				right:  5
+				top:    0
+				bottom: 0
+			}
+			size_border: 0
+			spacing:     0
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					width:      30
+					height:     50
+				}
+			},
+		]
+	}
+
+	mut mock_window := Window{}
+	layout_parents(mut root, unsafe { nil })
+	layout_positions(mut root, 0, 0, &mock_window)
+
+	// RTL column: x = 0 + padding.right(5) = 5
+	assert f32_are_close(root.children[0].shape.x, 5.0)
+}
+
+// Test: RTL float anchor auto-mirror (bottom_left → bottom_right)
+fn test_float_attach_rtl_mirror() {
+	mut parent := Layout{
+		shape: &Shape{
+			x:        0
+			y:        0
+			width:    200
+			height:   100
+			text_dir: .rtl
+		}
+	}
+	mut float_child := Layout{
+		shape: &Shape{
+			shape_type:    .rectangle
+			width:         50
+			height:        30
+			float:         true
+			float_anchor:  .bottom_left
+			float_tie_off: .top_left
+		}
+	}
+	parent.children = [float_child]
+	layout_parents(mut parent, unsafe { nil })
+
+	// Auto-mirror: bottom_left → bottom_right, top_left → top_right
+	// anchor bottom_right: x = 0 + 200 = 200, y = 100
+	// tie_off top_right: x = 200 - 50 = 150, y = 100
+	x, y := float_attach_layout(&parent.children[0])
+	assert f32_are_close(x, 150.0)
+	assert f32_are_close(y, 100.0)
+}
+
+// Test: RTL column with symmetric padding and center align = same as LTR
+fn test_layout_positions_rtl_column_symmetric() {
+	// Center alignment is direction-independent. With symmetric padding,
+	// the padding swap is a no-op, so RTL and LTR produce identical x.
+	mut rtl_root := Layout{
+		shape:    &Shape{
+			x:           0
+			y:           0
+			width:       200
+			height:      100
+			axis:        .top_to_bottom
+			h_align:     .center
+			text_dir:    .rtl
+			padding:     Padding{
+				left:   10
+				right:  10
+				top:    0
+				bottom: 0
+			}
+			size_border: 0
+			spacing:     0
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					width:      30
+					height:     50
+				}
+			},
+		]
+	}
+
+	mut ltr_root := Layout{
+		shape:    &Shape{
+			x:           0
+			y:           0
+			width:       200
+			height:      100
+			axis:        .top_to_bottom
+			h_align:     .center
+			text_dir:    .ltr
+			padding:     Padding{
+				left:   10
+				right:  10
+				top:    0
+				bottom: 0
+			}
+			size_border: 0
+			spacing:     0
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					shape_type: .rectangle
+					width:      30
+					height:     50
+				}
+			},
+		]
+	}
+
+	mut mock_window := Window{}
+	layout_parents(mut rtl_root, unsafe { nil })
+	layout_positions(mut rtl_root, 0, 0, &mock_window)
+	layout_parents(mut ltr_root, unsafe { nil })
+	layout_positions(mut ltr_root, 0, 0, &mock_window)
+
+	// Symmetric padding + center align: RTL and LTR produce same x
+	assert f32_are_close(rtl_root.children[0].shape.x, ltr_root.children[0].shape.x)
+}

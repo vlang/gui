@@ -95,16 +95,8 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 
 			// Float props
 			float:          true
-			float_anchor:   if gui_locale.text_dir == .rtl {
-				FloatAttach.bottom_right
-			} else {
-				FloatAttach.bottom_left
-			}
-			float_tie_off:  if gui_locale.text_dir == .rtl {
-				FloatAttach.top_right
-			} else {
-				FloatAttach.top_left
-			}
+			float_anchor:   .bottom_left
+			float_tie_off:  .top_left
 			float_offset_y: -cfg.size_border
 
 			// List/Scroll Props merged

@@ -31,8 +31,16 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 		emit_renderer(shape_clip, mut window)
 	} else if layout.shape.clip {
 		sc := layout.shape.shape_clip
+		is_rtl := effective_text_dir(layout.shape) == .rtl
+		// In RTL, padding.left = start (physical right), padding.right = end
+		// (physical left). Clip origin must use physical left padding.
+		pad_x := if is_rtl {
+			layout.shape.padding.right + layout.shape.size_border
+		} else {
+			layout.shape.padding_left()
+		}
 		shape_clip = DrawClip{
-			x:      sc.x + layout.shape.padding_left()
+			x:      sc.x + pad_x
 			y:      sc.y + layout.shape.padding_top()
 			width:  f32_max(0, sc.width - layout.shape.padding_width())
 			height: f32_max(0, sc.height - layout.shape.padding_height())

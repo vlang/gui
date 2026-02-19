@@ -142,14 +142,8 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, tree_map map[string]bool, mut w
 	if is_open {
 		content << column(
 			spacing: cfg.spacing
-			padding: if gui_locale.text_dir == .rtl {
-				Padding{
-					right: cfg.indent
-				}
-			} else {
-				Padding{
-					left: cfg.indent
-				}
+			padding: Padding{
+				left: cfg.indent
 			}
 			content: cfg.build_nodes(node.nodes, tree_map, mut window)
 		)
