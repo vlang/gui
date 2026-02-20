@@ -7,7 +7,7 @@
 
 **An immediate-mode UI framework for V that stays out of your way.**
 
-Note: I don't own a Windows computer and cannot help with Windows issues.
+> Note: I don't own a Windows computer and cannot help with Windows issues.
 Windows may be supported in the future, it is not supported now. Some
 users have successfully made this framework run on Windows. If you choose
 to go down that path, I suggest joining the V community on Discord where
