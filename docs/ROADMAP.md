@@ -5,7 +5,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 ## Legend
 
 - `[ ]` not started
-- `[-]` do not implement
+- `[-]` will not do
 - `[?]` unsure
 - `[x]` shipped
 
@@ -16,6 +16,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] SVG + shaders + gradients + blur + shadows
 - [x] IME, clipboard text, async image loading, drag/drop inbound files
 - [x] Desktop targets: macOS, Windows, Linux
+- [x] Print: native OS print dialog, PDF export, raster export
 
 ## 2026 H1: Professional Desktop Baseline (P0)
 
@@ -54,6 +55,11 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [ ] `command_palette` widget (search + ranking + keyboard-first UX)
 - [ ] `toast` / non-blocking notification system
 - [ ] `combobox` with typeahead filter and async options provider
+- [ ] `badge` numeric and colored label
+- [ ] `toolbar` widget (button groups, separators, overflow menu)
+- [ ] `status_bar` widget (icon + text sections, embedded progress indicator)
+- [ ] `skeleton` shimmer placeholder for async-loading content
+- [ ] `sidebar` widget with animated show/hide (spring/tween, overlay or push mode)
 
 ### Data-Heavy UI
 
@@ -61,15 +67,21 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Data grid v2: virtual rows, sort, filter, resize/reorder/pin columns
 - [ ] Tree virtualization + lazy node loading
 - [x] Cell editors for grid/list (text, select, date, checkbox)
-- [ ] Charting/Graphs/Plottong package (external lib)
+- [ ] Charting/graphs/plotting package (external lib)
+
+### Interaction
+
+- [ ] In-app drag-to-reorder (list rows, tree nodes, tab strip)
+- [ ] App-level hotkey registration (configurable shortcut map, conflict detection)
+- [ ] System color-scheme detection → automatic dark/light theme switch
 
 ## 2026 H2: Accessibility + Globalization + Scale (P0/P1)
 
 ### Accessibility (A11y)
 
 #### Phase 1 — Metadata Model (cross-platform)
-- [x] Add initial structs
 
+- [x] Add initial structs
 
 #### Phase 2 — macOS NSAccessibility Backend
 
@@ -110,7 +122,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Translation bundle loading + runtime language switch
 - [x] Input method edge-case suite (dead keys, surrogate pairs, mixed scripts)
 
-###     Performance
+### Performance
 
 - [?] Dirty-region rendering
 - [?] Layout cache with strict invalidation rules
@@ -125,6 +137,8 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [ ] System tray integration on all desktop targets
 - [ ] Native notifications API
 - [ ] Outbound OS drag/drop (text/files/custom payloads)
+- [ ] Carousel / pager widget (touch-friendly slide view, snap points)
+- [ ] Multi-touch / trackpad gesture API (pinch, swipe, rotate)
 - [ ] Mobile target spike (gesture model, safe area, virtual keyboard insets)
 - [ ] Web target spike (Wasm renderer + browser clipboard/input backends)
 
@@ -147,6 +161,5 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Splitter component
 - [x] Virtualized list view
 - [x] Data grid v2 foundations
-- [ ] Accessibility role model + macOS backend
+- [x] Accessibility role model + macOS backend
 - [ ] Inspector overlay MVP
-- [ ] Snapshot test harness
