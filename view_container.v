@@ -87,6 +87,7 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			scroll_mode:           cv.scroll_mode
 			events:                cv.make_events()
 			hero:                  cv.hero
+			wrap:                  cv.wrap
 			opacity:               cv.opacity
 			a11y_role:             cv.derive_a11y_role()
 			a11y_state:            cv.a11y_state
@@ -153,6 +154,7 @@ mut:
 	name                  string // internally set (unused by Shape)
 	scrollbar_orientation ScrollbarOrientation
 	axis                  Axis
+	wrap                  bool // children wrap to next line when exceeding width
 pub:
 	id              string
 	title           string
@@ -308,6 +310,7 @@ fn container(cfg ContainerCfg) View {
 		on_scroll:             cfg.on_scroll
 		amend_layout:          cfg.amend_layout
 		hero:                  cfg.hero
+		wrap:                  cfg.wrap
 		opacity:               cfg.opacity
 		a11y_role:             cfg.a11y_role
 		a11y_state:            cfg.a11y_state
@@ -337,6 +340,18 @@ pub fn row(cfg ContainerCfg) View {
 	unsafe { // avoid allocating struct
 		cfg.axis = .left_to_right
 		cfg.name = if cfg.name.is_blank() { 'row' } else { cfg.name }
+	}
+	return container(cfg)
+}
+
+// wrap arranges its content left to right, flowing to the next line when the
+// container width is exceeded. Sugar for row(wrap: true, ...).
+// See [ContainerCfg](#ContainerCfg)
+pub fn wrap(cfg ContainerCfg) View {
+	unsafe {
+		cfg.axis = .left_to_right
+		cfg.wrap = true
+		cfg.name = if cfg.name.is_blank() { 'wrap' } else { cfg.name }
 	}
 	return container(cfg)
 }
