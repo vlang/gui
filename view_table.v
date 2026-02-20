@@ -116,6 +116,12 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 
 	mut rows := []View{cap: (last_visible - first_visible + 1) * 2 + 2}
 
+	// Hoist loop-invariant values to avoid per-row/per-cell copies
+	on_select := cfg.on_select
+	selected := cfg.selected.clone()
+	multi_select := cfg.multi_select
+	color_hover := cfg.color_hover
+
 	// Add top spacer for virtualized rows
 	if virtualize && first_visible > 0 {
 		rows << rectangle(
@@ -158,6 +164,7 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 			} else {
 				[text(text: cell.value, text_style: cell_text_style)]
 			}
+			cell_on_click_fn := cell.on_click
 			cells << column(
 				name:         'table cell'
 				color:        color_transparent
@@ -169,12 +176,12 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 				h_align:      h_align
 				sizing:       fixed_fill
 				width:        column_width + cfg.cell_padding.width()
-				on_click:     cell.on_click
+				on_click:     cell_on_click_fn
 				content:      cell_content
-				on_hover:     fn [cell, cfg] (mut layout Layout, mut e Event, mut w Window) {
-					if cell.on_click != unsafe { nil } {
+				on_hover:     fn [cell_on_click_fn, color_hover] (mut layout Layout, mut e Event, mut w Window) {
+					if cell_on_click_fn != unsafe { nil } {
 						w.set_mouse_cursor_pointing_hand()
-						layout.shape.color = cfg.color_hover
+						layout.shape.color = color_hover
 					}
 				}
 			)
@@ -192,9 +199,6 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 
 		// Row click handler - selection or custom
 		row_on_click := r.on_click
-		on_select := cfg.on_select
-		selected := cfg.selected.clone()
-		multi_select := cfg.multi_select
 
 		rows << row(
 			name:        'table row'
@@ -222,11 +226,11 @@ pub fn (mut window Window) table(cfg TableCfg) View {
 					on_select(new_selected, row_idx, mut e, mut w)
 				}
 			}
-			on_hover:    fn [cfg, is_selected] (mut layout Layout, mut e Event, mut w Window) {
-				if cfg.on_select != unsafe { nil } {
+			on_hover:    fn [on_select, color_hover, is_selected] (mut layout Layout, mut e Event, mut w Window) {
+				if on_select != unsafe { nil } {
 					w.set_mouse_cursor_pointing_hand()
 					if !is_selected {
-						layout.shape.color = cfg.color_hover
+						layout.shape.color = color_hover
 					}
 				}
 			}

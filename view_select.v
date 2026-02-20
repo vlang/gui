@@ -113,7 +113,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	color_border_focus := cfg.color_border_focus
 
 	select_a11y_lbl := a11y_label(cfg.a11y_label, cfg.placeholder)
-	select_value := cfg.select.join(', ')
+	select_value := if empty { '' } else { txt }
 	mut select_a11y := &AccessInfo(unsafe { nil })
 	if select_a11y_lbl.len > 0 || cfg.a11y_description.len > 0 || select_value.len > 0 {
 		select_a11y = &AccessInfo{

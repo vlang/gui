@@ -246,7 +246,8 @@ fn container(cfg ContainerCfg) View {
 				id_scroll:   cfg.id_scroll
 			})
 		}
-		content = cfg.content.clone()
+		content = []View{cap: cfg.content.len + extra_content.len}
+		content << cfg.content
 		content << extra_content
 	}
 
