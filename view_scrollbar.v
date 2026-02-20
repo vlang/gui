@@ -69,7 +69,8 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 			scrollbar_orientation: .horizontal
 			id:                    cfg.id
 			a11y_role:             .scroll_bar
-			a11y:                  make_a11y_info('Horizontal scrollbar', '')
+			a11y:                  make_a11y_info(gui_locale.str_horizontal_scrollbar,
+				'')
 			color:                 cfg.color_background
 			over_draw:             true
 			spacing:               0
@@ -86,7 +87,7 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 			scrollbar_orientation: .vertical
 			id:                    cfg.id
 			a11y_role:             .scroll_bar
-			a11y:                  make_a11y_info('Vertical scrollbar', '')
+			a11y:                  make_a11y_info(gui_locale.str_vertical_scrollbar, '')
 			color:                 cfg.color_background
 			over_draw:             true
 			spacing:               0

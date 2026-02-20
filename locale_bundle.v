@@ -90,6 +90,9 @@ fn (b LocaleBundle) to_locale() Locale {
 		str_load_error:      str_or(b.strings, 'load_error', d.str_load_error)
 		str_error:           str_or(b.strings, 'error', d.str_error)
 		str_clean:           str_or(b.strings, 'clean', d.str_clean)
+		// Scrollbar
+		str_horizontal_scrollbar: str_or(b.strings, 'horizontal_scrollbar', d.str_horizontal_scrollbar)
+		str_vertical_scrollbar:   str_or(b.strings, 'vertical_scrollbar', d.str_vertical_scrollbar)
 		// Data grid
 		str_columns:  str_or(b.strings, 'columns', d.str_columns)
 		str_selected: str_or(b.strings, 'selected', d.str_selected)

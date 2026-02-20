@@ -51,6 +51,9 @@ pub const locale_de_de = Locale{
 	str_error:           'Fehler'
 	str_clean:           'Sauber'
 
+	str_horizontal_scrollbar: 'Horizontale Bildlaufleiste'
+	str_vertical_scrollbar:   'Vertikale Bildlaufleiste'
+
 	str_columns:  'Spalten'
 	str_selected: 'Ausgewählt'
 	str_draft:    'Entwurf'
@@ -118,6 +121,9 @@ pub const locale_ar_sa = Locale{
 	str_load_error:      'خطأ في التحميل'
 	str_error:           'خطأ'
 	str_clean:           'نظيف'
+
+	str_horizontal_scrollbar: 'شريط التمرير الأفقي'
+	str_vertical_scrollbar:   'شريط التمرير العمودي'
 
 	str_columns:  'الأعمدة'
 	str_selected: 'محدد'

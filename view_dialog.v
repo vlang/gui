@@ -30,6 +30,7 @@ const reserved_dialog_id = '__dialog_reserved_do_not_use__'
 // elements**. Invoke dialogs by calling [(Window) dialog](#Window.dialog)
 @[minify]
 pub struct DialogCfg {
+	A11yCfg
 mut:
 	visible      bool
 	old_id_focus u32
@@ -79,20 +80,21 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		.custom { cfg.custom_content }
 	}
 	return column(
-		name:          'dialog: ${cfg.dialog_type}'
-		id:            reserved_dialog_id
-		a11y_role:     .dialog
-		a11y_state:    .modal
-		a11y_label:    cfg.title
-		float:         true
-		float_anchor:  .middle_center
-		float_tie_off: .middle_center
-		color:         cfg.color
-		color_border:  cfg.color_border
-		size_border:   cfg.size_border
-		radius:        cfg.radius
-		padding:       cfg.padding
-		h_align:       .center
+		name:             'dialog: ${cfg.dialog_type}'
+		id:               reserved_dialog_id
+		a11y_role:        .dialog
+		a11y_state:       .modal
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.title)
+		a11y_description: cfg.a11y_description
+		float:            true
+		float_anchor:     .middle_center
+		float_tie_off:    .middle_center
+		color:            cfg.color
+		color_border:     cfg.color_border
+		size_border:      cfg.size_border
+		radius:           cfg.radius
+		padding:          cfg.padding
+		h_align:          .center
 
 		width:      cfg.width
 		height:     cfg.height

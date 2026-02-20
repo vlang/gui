@@ -27,12 +27,13 @@ mut:
 	text_system              &vglyph.TextSystem          = unsafe { nil }    // Text rendering system
 	ui                       &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
 	view_generator           fn (&Window) View           = empty_view        // Function to generate the UI view
+	a11y                     A11y                 // Accessibility backend state (lazily initialized)
 	animations               map[string]Animation // Active animations (keyed by id)
 	commands                 []WindowCommand      // Atomic command queue for UI state updates
 	debug_layout             bool                 // enable layout performance stats
 	dialog_cfg               DialogCfg            // Configuration for the active dialog (if any)
+	filter_renderers_scratch []Renderer           // Reused by filter post-process pass
 	filter_state             SvgFilterState       // Offscreen state for SVG filters
-	a11y                     A11y                 // Accessibility backend state (lazily initialized)
 	ime                      IME                  // Input Method Editor state (lazily initialized)
 	init_error               string               // error during initialization (e.g. text system fail)
 	layout                   Layout               // The current calculated layout tree
@@ -40,9 +41,8 @@ mut:
 	pip                      Pipelines            // GPU rendering pipelines (lazily initialized)
 	refresh_layout           bool                 // Trigger full view/layout/renderer rebuild next frame
 	refresh_render_only      bool                 // Trigger renderer-only rebuild from existing layout
-	renderers                []Renderer           // Flat list of drawing instructions for the current frame
-	filter_renderers_scratch []Renderer           // Reused by filter post-process pass
 	render_guard_warned      map[string]bool      // Renderer kinds warned by render guard (prod only)
+	renderers                []Renderer           // Flat list of drawing instructions for the current frame
 	stats                    Stats                // Rendering statistics
 	view_state               ViewState            // Manages state for widgets (scroll, selection, etc.)
 	window_size              gg.Size              // cached, gg.window_size() relatively slow
@@ -124,6 +124,7 @@ pub fn window(cfg &WindowCfg) &Window {
 		max_dropped_files:            int(cfg.dragndrop_files_max)
 		max_dropped_file_path_length: int(cfg.dragndrop_path_max)
 		frame_fn:                     frame_fn
+		cleanup_fn:                   a11y_cleanup
 		ui_mode:                      true // only draw on events
 		user_data:                    window
 		init_fn:                      fn [on_init, cursor_blink] (mut w Window) {

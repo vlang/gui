@@ -78,6 +78,10 @@ pub:
 	str_error           string = 'Error'
 	str_clean           string = 'Clean'
 
+	// Scrollbar
+	str_horizontal_scrollbar string = 'Horizontal scrollbar'
+	str_vertical_scrollbar   string = 'Vertical scrollbar'
+
 	// Data grid
 	str_columns  string = 'Columns'
 	str_selected string = 'Selected'

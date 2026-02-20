@@ -42,6 +42,8 @@
     "load_error": "読み込みエラー",
     "error": "エラー",
     "clean": "クリーン",
+    "horizontal_scrollbar": "水平スクロールバー",
+    "vertical_scrollbar": "垂直スクロールバー",
     "columns": "列",
     "selected": "選択済み",
     "draft": "下書き",

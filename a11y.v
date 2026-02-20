@@ -106,6 +106,13 @@ fn make_a11y_info(label string, description string) &AccessInfo {
 	return unsafe { nil }
 }
 
+// LiveNode captures V strings from shapes with .live state
+// during a11y_collect, avoiding cstring_to_vstring round-trips.
+struct LiveNode {
+	label      string
+	value_text string
+}
+
 // a11y_label returns the effective label: explicit a11y_label
 // if set, otherwise the fallback.
 fn a11y_label(a11y_label string, fallback string) string {

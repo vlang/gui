@@ -6,12 +6,21 @@ import nativebridge
 import sokol.sapp
 import log
 
+// Action constants matching GUI_A11Y_ACTION_* in a11y_bridge.h.
+const a11y_action_press = 0
+const a11y_action_increment = 1
+const a11y_action_decrement = 2
+const a11y_action_confirm = 3
+const a11y_action_cancel = 4
+
 // A11y holds per-window accessibility backend state.
 struct A11y {
 mut:
 	initialized      bool
 	prev_id_focus    u32               // track focus changes between syncs
 	prev_live_values map[string]string // label→value_text for live nodes
+	nodes            []C.GuiA11yNode   // reused across frames
+	live_nodes       []LiveNode        // reused across frames
 }
 
 // init_a11y lazily creates the native accessibility container.
@@ -44,42 +53,56 @@ fn (mut w Window) sync_a11y() {
 		return
 	}
 
-	mut nodes := []C.GuiA11yNode{cap: 64}
-	focused_idx := a11y_collect(&w.layout, -1, mut nodes, w.view_state.id_focus)
+	// Reuse nodes array across frames (same pattern as
+	// window.renderers). vmemset zeros backing memory to
+	// prevent GC false retention from stale pointers.
+	if w.a11y.nodes.cap == 0 {
+		w.a11y.nodes = []C.GuiA11yNode{cap: 64}
+	} else {
+		unsafe {
+			vmemset(w.a11y.nodes.data, 0, w.a11y.nodes.cap * int(sizeof(C.GuiA11yNode)))
+			w.a11y.nodes.len = 0
+		}
+	}
+	if w.a11y.live_nodes.cap == 0 {
+		w.a11y.live_nodes = []LiveNode{cap: 8}
+	} else {
+		unsafe {
+			vmemset(w.a11y.live_nodes.data, 0, w.a11y.live_nodes.cap * int(sizeof(LiveNode)))
+			w.a11y.live_nodes.len = 0
+		}
+	}
 
-	if nodes.len == 0 {
+	focused_idx := a11y_collect(&w.layout, -1, mut w.a11y.nodes, w.view_state.id_focus, mut
+		w.a11y.live_nodes)
+
+	if w.a11y.nodes.len == 0 {
 		return
 	}
 
-	nativebridge.a11y_sync(unsafe { &nodes[0] }, nodes.len, focused_idx)
+	nativebridge.a11y_sync(unsafe { &w.a11y.nodes[0] }, w.a11y.nodes.len, focused_idx)
 	w.a11y.prev_id_focus = w.view_state.id_focus
 
-	// Live region change detection: announce value changes
-	mut new_live := map[string]string{}
-	for n in nodes {
-		if n.state & int(AccessState.live) != 0 {
-			label := if n.label != unsafe { nil } {
-				unsafe { cstring_to_vstring(n.label) }
-			} else {
-				''
-			}
-			if label.len == 0 {
+	// Live region change detection: announce value changes.
+	// Uses LiveNode V strings collected during a11y_collect
+	// — no cstring_to_vstring round-trip needed.
+	if w.a11y.live_nodes.len > 0 {
+		mut new_live := map[string]string{}
+		for ln in w.a11y.live_nodes {
+			if ln.label.len == 0 {
 				continue
 			}
-			val := if n.value_text != unsafe { nil } {
-				unsafe { cstring_to_vstring(n.value_text) }
-			} else {
-				''
-			}
-			new_live[label] = val
-			if prev := w.a11y.prev_live_values[label] {
-				if prev != val && val.len > 0 {
-					nativebridge.a11y_announce(val)
+			new_live[ln.label] = ln.value_text
+			if prev := w.a11y.prev_live_values[ln.label] {
+				if prev != ln.value_text && ln.value_text.len > 0 {
+					nativebridge.a11y_announce(ln.value_text)
 				}
 			}
 		}
+		w.a11y.prev_live_values = new_live.move()
+	} else if w.a11y.prev_live_values.len > 0 {
+		w.a11y.prev_live_values = map[string]string{}
 	}
-	w.a11y.prev_live_values = new_live.move()
 }
 
 // a11y_collect recursively walks the layout tree, appending
@@ -87,7 +110,7 @@ fn (mut w Window) sync_a11y() {
 // Shapes with .none role are transparent — children inherit
 // parent_idx. Returns the index of the focused element (-1
 // if none found).
-fn a11y_collect(layout &Layout, parent_idx int, mut nodes []C.GuiA11yNode, id_focus u32) int {
+fn a11y_collect(layout &Layout, parent_idx int, mut nodes []C.GuiA11yNode, id_focus u32, mut live_nodes []LiveNode) int {
 	if layout.shape == unsafe { nil } {
 		return -1
 	}
@@ -95,13 +118,16 @@ fn a11y_collect(layout &Layout, parent_idx int, mut nodes []C.GuiA11yNode, id_fo
 	mut focused_idx := -1
 	shape := layout.shape
 
-	// Determine whether this shape emits an a11y node
-	if shape.a11y_role != .none {
-		idx := nodes.len
+	// Determine parent index for children: this node's
+	// index if it emits an a11y node, else inherited.
+	mut my_idx := parent_idx
 
-		label_ptr := a11y_cstr(if shape.has_a11y() { shape.a11y.label } else { '' })
-		desc_ptr := a11y_cstr(if shape.has_a11y() { shape.a11y.description } else { '' })
-		val_ptr := a11y_cstr(if shape.has_a11y() { shape.a11y.value_text } else { '' })
+	if shape.a11y_role != .none {
+		my_idx = nodes.len
+
+		label_str := if shape.has_a11y() { shape.a11y.label } else { '' }
+		desc_str := if shape.has_a11y() { shape.a11y.description } else { '' }
+		val_str := if shape.has_a11y() { shape.a11y.value_text } else { '' }
 
 		nodes << C.GuiA11yNode{
 			parent_idx:    parent_idx
@@ -111,9 +137,9 @@ fn a11y_collect(layout &Layout, parent_idx int, mut nodes []C.GuiA11yNode, id_fo
 			y:             shape.y
 			w:             shape.width
 			h:             shape.height
-			label:         label_ptr
-			description:   desc_ptr
-			value_text:    val_ptr
+			label:         a11y_cstr(label_str)
+			description:   a11y_cstr(desc_str)
+			value_text:    a11y_cstr(val_str)
 			value_num:     if shape.has_a11y() { shape.a11y.value_num } else { f32(0) }
 			value_min:     if shape.has_a11y() { shape.a11y.value_min } else { f32(0) }
 			value_max:     if shape.has_a11y() { shape.a11y.value_max } else { f32(0) }
@@ -122,23 +148,23 @@ fn a11y_collect(layout &Layout, parent_idx int, mut nodes []C.GuiA11yNode, id_fo
 		}
 
 		if id_focus > 0 && shape.id_focus == id_focus {
-			focused_idx = idx
+			focused_idx = my_idx
 		}
 
-		// Recurse children with this node as parent
-		for child in layout.children {
-			fi := a11y_collect(&child, idx, mut nodes, id_focus)
-			if fi >= 0 {
-				focused_idx = fi
+		// Collect live node V strings for change detection
+		// — avoids cstring_to_vstring in sync_a11y.
+		if shape.a11y_state.has(.live) {
+			live_nodes << LiveNode{
+				label:      label_str
+				value_text: val_str
 			}
 		}
-	} else {
-		// Skip this shape but walk children with inherited parent
-		for child in layout.children {
-			fi := a11y_collect(&child, parent_idx, mut nodes, id_focus)
-			if fi >= 0 {
-				focused_idx = fi
-			}
+	}
+
+	for child in layout.children {
+		fi := a11y_collect(&child, my_idx, mut nodes, id_focus, mut live_nodes)
+		if fi >= 0 {
+			focused_idx = fi
 		}
 	}
 
@@ -173,8 +199,7 @@ fn a11y_action_callback(action int, focus_id int, user_data voidptr) {
 	}
 
 	match action {
-		0 {
-			// Press → on_click
+		a11y_action_press {
 			if ly.shape.events.on_click != unsafe { nil } {
 				mut e := Event{
 					typ: .mouse_down
@@ -182,8 +207,7 @@ fn a11y_action_callback(action int, focus_id int, user_data voidptr) {
 				ly.shape.events.on_click(&ly, mut e, mut w)
 			}
 		}
-		1 {
-			// Increment → on_mouse_scroll (positive)
+		a11y_action_increment {
 			if ly.shape.events.on_mouse_scroll != unsafe { nil } {
 				mut e := Event{
 					typ:      .mouse_scroll
@@ -192,8 +216,7 @@ fn a11y_action_callback(action int, focus_id int, user_data voidptr) {
 				ly.shape.events.on_mouse_scroll(&ly, mut e, mut w)
 			}
 		}
-		2 {
-			// Decrement → on_mouse_scroll (negative)
+		a11y_action_decrement {
 			if ly.shape.events.on_mouse_scroll != unsafe { nil } {
 				mut e := Event{
 					typ:      .mouse_scroll
@@ -202,8 +225,7 @@ fn a11y_action_callback(action int, focus_id int, user_data voidptr) {
 				ly.shape.events.on_mouse_scroll(&ly, mut e, mut w)
 			}
 		}
-		3 {
-			// Confirm → on_keydown with enter
+		a11y_action_confirm {
 			if ly.shape.events.on_keydown != unsafe { nil } {
 				mut e := Event{
 					typ:      .key_down
@@ -212,8 +234,7 @@ fn a11y_action_callback(action int, focus_id int, user_data voidptr) {
 				ly.shape.events.on_keydown(&ly, mut e, mut w)
 			}
 		}
-		4 {
-			// Cancel → on_keydown with escape
+		a11y_action_cancel {
 			if ly.shape.events.on_keydown != unsafe { nil } {
 				mut e := Event{
 					typ:      .key_down
@@ -224,4 +245,10 @@ fn a11y_action_callback(action int, focus_id int, user_data voidptr) {
 		}
 		else {}
 	}
+}
+
+// a11y_cleanup releases the native accessibility container.
+// Used as gg cleanup_fn in window.v.
+fn a11y_cleanup(_ voidptr) {
+	nativebridge.a11y_destroy()
 }

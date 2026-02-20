@@ -310,6 +310,10 @@ void gui_a11y_init(
     }
 }
 
+// gui_a11y_sync rebuilds the full NSAccessibilityElement tree
+// from the flat node array. A full rebuild is acceptable here
+// because sync is only called on layout rebuild (update path),
+// not on every render frame (rerender path).
 void gui_a11y_sync(
         GuiA11yNode *nodes,
         int count,

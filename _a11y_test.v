@@ -34,6 +34,7 @@ fn test_access_state_all_flags_distinct() {
 		AccessState.busy,
 		AccessState.read_only,
 		AccessState.modal,
+		AccessState.live,
 	]
 	for i, a in flags {
 		for j, b in flags {
