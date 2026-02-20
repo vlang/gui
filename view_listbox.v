@@ -6,6 +6,7 @@ const list_box_virtual_buffer_rows = 2
 // `selected_ids` is a list of selected item ids.
 @[minify]
 pub struct ListBoxCfg {
+	A11yCfg
 pub:
 	id               string
 	sizing           Sizing
@@ -34,8 +35,7 @@ pub:
 	id_scroll        u32
 	multiple         bool // allow multiple selections
 	size_border      f32 = gui_theme.list_box_style.size_border
-	a11y_label       string // override label for screen readers
-	a11y_description string // extended help text
+	id_focus         u32
 }
 
 // ListBoxOption is the data for a row in a [list_box](#list_box).
@@ -169,26 +169,57 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 		)
 	}
 
+	// Build value_text from selected item names
+	mut selected_names := []string{cap: cfg.selected_ids.len}
+	for dat in cfg.data {
+		if dat.id in selected {
+			selected_names << dat.name
+		}
+	}
+	list_value_text := selected_names.join(', ')
+	mut list_a11y := make_a11y_info(a11y_label(cfg.a11y_label, cfg.id), cfg.a11y_description)
+	if list_value_text.len > 0 {
+		list_a11y = &AccessInfo{
+			label:       a11y_label(cfg.a11y_label, cfg.id)
+			description: cfg.a11y_description
+			value_text:  list_value_text
+		}
+	}
+	// Build selectable item IDs for keyboard nav
+	mut item_ids := []string{cap: cfg.data.len}
+	for dat in cfg.data {
+		if !dat.is_subheading {
+			item_ids << dat.id
+		}
+	}
+	list_box_id := cfg.id
+	is_multiple := cfg.multiple
+	on_select := cfg.on_select
+	selected_ids := cfg.selected_ids
 	return column(
-		name:             'list_box'
-		a11y_role:        .list
-		a11y_label:       a11y_label(cfg.a11y_label, cfg.id)
-		a11y_description: cfg.a11y_description
-		id_scroll:        cfg.id_scroll
-		width:            cfg.max_width
-		height:           cfg.height
-		min_width:        cfg.min_width
-		max_width:        cfg.max_width
-		min_height:       cfg.min_height
-		max_height:       cfg.max_height
-		color:            cfg.color
-		color_border:     cfg.color_border
-		size_border:      cfg.size_border
-		radius:           cfg.radius
-		padding:          cfg.padding
-		sizing:           cfg.sizing
-		spacing:          0
-		content:          list
+		name:         'list_box'
+		a11y_role:    .list
+		a11y:         list_a11y
+		id_focus:     cfg.id_focus
+		id_scroll:    cfg.id_scroll
+		on_keydown:   fn [list_box_id, item_ids, is_multiple, on_select, selected_ids] (_ &Layout, mut e Event, mut w Window) {
+			list_box_on_keydown(list_box_id, item_ids, is_multiple, on_select, selected_ids, mut
+				e, mut w)
+		}
+		width:        cfg.max_width
+		height:       cfg.height
+		min_width:    cfg.min_width
+		max_width:    cfg.max_width
+		min_height:   cfg.min_height
+		max_height:   cfg.max_height
+		color:        cfg.color
+		color_border: cfg.color_border
+		size_border:  cfg.size_border
+		radius:       cfg.radius
+		padding:      cfg.padding
+		sizing:       cfg.sizing
+		spacing:      0
+		content:      list
 	)
 }
 
@@ -240,13 +271,21 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, selected map[string]boo
 	selected_ids := cfg.selected_ids
 	color_hover := cfg.color_hover
 
+	item_a11y_state := if dat.id in selected {
+		AccessState.selected
+	} else {
+		AccessState.none
+	}
 	return row(
-		name:     'list_box option'
-		color:    color
-		padding:  padding_two_five
-		sizing:   fill_fit
-		content:  content
-		on_click: fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ voidptr, mut e Event, mut w Window) {
+		name:       'list_box option'
+		a11y_role:  .list_item
+		a11y_label: dat.name
+		a11y_state: item_a11y_state
+		color:      color
+		padding:    padding_two_five
+		sizing:     fill_fit
+		content:    content
+		on_click:   fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ voidptr, mut e Event, mut w Window) {
 			if has_on_select && !is_sub {
 				mut ids := selected_ids.clone()
 				if !is_multiple {
@@ -260,7 +299,7 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, selected map[string]boo
 				on_select(ids, mut e, mut w)
 			}
 		}
-		on_hover: fn [has_on_select, color_hover, is_sub] (mut layout Layout, mut e Event, mut w Window) {
+		on_hover:   fn [has_on_select, color_hover, is_sub] (mut layout Layout, mut e Event, mut w Window) {
 			if has_on_select && !is_sub {
 				w.set_mouse_cursor_pointing_hand()
 				if layout.shape.color == color_transparent {
@@ -515,5 +554,59 @@ pub fn list_box_subheading(id string, title string) ListBoxOption {
 		id:            id
 		name:          title
 		is_subheading: true
+	}
+}
+
+// list_box_on_keydown handles keyboard navigation for list box.
+fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, on_select fn ([]string, mut Event, mut Window), selected_ids []string, mut e Event, mut w Window) {
+	if item_ids.len == 0 || on_select == unsafe { nil } {
+		return
+	}
+	cur_idx := w.view_state.list_box_focus.get(list_box_id) or { -1 }
+
+	match e.key_code {
+		.up {
+			next := if cur_idx > 0 { cur_idx - 1 } else { 0 }
+			w.view_state.list_box_focus.set(list_box_id, next)
+			w.update_window()
+			e.is_handled = true
+		}
+		.down {
+			next := if cur_idx < item_ids.len - 1 {
+				cur_idx + 1
+			} else {
+				item_ids.len - 1
+			}
+			w.view_state.list_box_focus.set(list_box_id, next)
+			w.update_window()
+			e.is_handled = true
+		}
+		.enter, .space {
+			if cur_idx >= 0 && cur_idx < item_ids.len {
+				dat_id := item_ids[cur_idx]
+				mut ids := selected_ids.clone()
+				if !is_multiple {
+					ids.clear()
+				}
+				if dat_id in selected_ids {
+					ids = ids.filter(it != dat_id)
+				} else {
+					ids << dat_id
+				}
+				on_select(ids, mut e, mut w)
+			}
+			e.is_handled = true
+		}
+		.home {
+			w.view_state.list_box_focus.set(list_box_id, 0)
+			w.update_window()
+			e.is_handled = true
+		}
+		.end {
+			w.view_state.list_box_focus.set(list_box_id, item_ids.len - 1)
+			w.update_window()
+			e.is_handled = true
+		}
+		else {}
 	}
 }

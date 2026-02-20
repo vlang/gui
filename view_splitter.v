@@ -54,6 +54,7 @@ struct SplitterPaneCore {
 // SplitterCfg configures a splitter component.
 @[minify]
 pub struct SplitterCfg {
+	A11yCfg
 pub:
 	id                    string @[required]
 	id_focus              u32
@@ -83,8 +84,6 @@ pub:
 	radius_border         f32   = gui_theme.splitter_style.radius_border
 	disabled              bool
 	invisible             bool
-	a11y_label            string // override label for screen readers
-	a11y_description      string // extended help text
 }
 
 // SplitterCore holds callback-relevant fields without content
@@ -160,6 +159,11 @@ pub fn splitter(cfg SplitterCfg) View {
 		a11y_role:        .splitter
 		a11y_label:       a11y_label(c.a11y_label, c.id)
 		a11y_description: c.a11y_description
+		a11y:             &AccessInfo{
+			value_num: c.ratio
+			value_min: 0
+			value_max: 1
+		}
 		sizing:           c.sizing
 		padding:          padding_none
 		spacing:          0

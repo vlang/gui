@@ -5,6 +5,7 @@ import hash.fnv1a
 // SelectCfg configures a [select](#select) (a.k.a drop-down) view.
 @[minify]
 pub struct SelectCfg {
+	A11yCfg
 pub:
 	id                 string @[required] // unique only to other select views
 	placeholder        string
@@ -30,8 +31,6 @@ pub:
 	select_multiple   bool
 	no_wrap           bool
 	sizing            Sizing
-	a11y_label        string // override label for screen readers
-	a11y_description  string // extended help text
 }
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)

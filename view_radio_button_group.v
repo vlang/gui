@@ -23,21 +23,20 @@ module gui
 // ```
 @[minify]
 pub struct RadioButtonGroupCfg {
+	A11yCfg
 pub:
-	title            string
-	title_bg         Color = gui_theme.color_background
-	padding          ?Padding
-	value            string
-	sizing           Sizing
-	on_select        fn (string, mut Window) @[required]
-	options          []RadioOption
-	min_width        f32
-	min_height       f32
-	id_focus         u32
-	color_border     Color = gui_theme.color_border
-	size_border      f32   = gui_theme.size_border
-	a11y_label       string // override label for screen readers
-	a11y_description string // extended help text
+	title        string
+	title_bg     Color = gui_theme.color_background
+	padding      ?Padding
+	value        string
+	sizing       Sizing
+	on_select    fn (string, mut Window) @[required]
+	options      []RadioOption
+	min_width    f32
+	min_height   f32
+	id_focus     u32
+	color_border Color = gui_theme.color_border
+	size_border  f32   = gui_theme.size_border
 }
 
 // RadioOption defines a radio button for a [RadioButtonGroupCfg](#RadioButtonGroupCfg)

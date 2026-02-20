@@ -182,6 +182,7 @@ struct DataGridPresentation {
 
 @[minify]
 pub struct DataGridCfg {
+	A11yCfg
 pub:
 	id                        string @[required]
 	id_focus                  u32
@@ -262,8 +263,6 @@ pub:
 	on_detail_row_view        fn (GridRow, mut Window) View                 = unsafe { nil }
 	on_copy_rows              fn ([]GridRow, mut Event, mut Window) ?string = unsafe { nil }
 	on_row_activate           fn (GridRow, mut Event, mut Window)           = unsafe { nil }
-	a11y_label                string // override label for screen readers
-	a11y_description          string // extended help text
 }
 
 fn data_grid_indicator_text_style(base TextStyle) TextStyle {

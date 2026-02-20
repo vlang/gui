@@ -3,6 +3,7 @@ module gui
 // SwitchCfg displays pill shaped box with a sliding toggle. [Switch](#toggle)
 @[minify]
 pub struct SwitchCfg {
+	A11yCfg
 pub:
 	id                 string
 	label              string
@@ -26,8 +27,6 @@ pub:
 	disabled           bool
 	invisible          bool
 	select             bool
-	a11y_label         string // override label for screen readers
-	a11y_description   string // extended help text
 }
 
 // switch creates a pill shaped box with a sliding toggle from the given [SwitchCfg](#SwitchCfg)

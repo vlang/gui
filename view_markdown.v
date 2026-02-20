@@ -619,19 +619,29 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			}
 		} else if block.header_level > 0 {
 			// Header block with anchor slug as ID
-			content << rtf(
-				id:        block.anchor_slug
-				rich_text: block.content
-				mode:      cfg.mode
-			)
+			mut heading_content := [
+				View(rtf(
+					id:        block.anchor_slug
+					rich_text: block.content
+					mode:      cfg.mode
+				)),
+			]
 			if (block.header_level == 1 && cfg.style.h1_separator)
 				|| (block.header_level == 2 && cfg.style.h2_separator) {
-				content << rectangle(
+				heading_content << rectangle(
 					sizing: fill_fixed
 					height: 1
 					color:  cfg.style.hr_color
 				)
 			}
+			content << column(
+				sizing:    fill_fit
+				a11y_role: .heading
+				a11y:      &AccessInfo{
+					heading_level: u8(block.header_level)
+				}
+				content:   heading_content
+			)
 		} else if block.is_def_term {
 			// Definition term - rendered bold
 			content << rtf(rich_text: block.content, mode: cfg.mode)

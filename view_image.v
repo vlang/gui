@@ -15,6 +15,7 @@ mut:
 
 @[minify]
 pub struct ImageCfg {
+	A11yCfg
 pub:
 	id         string
 	src        string
@@ -104,7 +105,7 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 			shape_type: .image
 			id:         iv.id
 			a11y_role:  .image
-			a11y:       make_a11y_info(iv.id, '')
+			a11y:       make_a11y_info(a11y_label(iv.a11y_label, iv.id), iv.a11y_description)
 			resource:   image_path
 			width:      width
 			min_width:  iv.min_width

@@ -7,18 +7,17 @@ module gui
 // ColorPickerCfg configures the color picker component.
 @[minify]
 pub struct ColorPickerCfg {
+	A11yCfg
 pub:
-	id               string @[required]
-	color            Color = red
-	on_color_change  fn (Color, mut Event, mut Window) @[required]
-	style            ColorPickerStyle = gui_theme.color_picker_style
-	id_focus         u32
-	show_hsv         bool
-	sizing           Sizing
-	width            f32
-	height           f32
-	a11y_label       string // override label for screen readers
-	a11y_description string // extended help text
+	id              string @[required]
+	color           Color = red
+	on_color_change fn (Color, mut Event, mut Window) @[required]
+	style           ColorPickerStyle = gui_theme.color_picker_style
+	id_focus        u32
+	show_hsv        bool
+	sizing          Sizing
+	width           f32
+	height          f32
 }
 
 // color_picker creates a color picker View.
@@ -52,6 +51,9 @@ pub fn color_picker(cfg ColorPickerCfg) View {
 		a11y_role:        .color_well
 		a11y_label:       a11y_label(cfg.a11y_label, cfg.id)
 		a11y_description: cfg.a11y_description
+		a11y:             &AccessInfo{
+			value_text: cfg.color.to_hex_string()
+		}
 		padding:          cfg.style.padding
 		spacing:          cfg.style.padding.top
 		color:            cfg.style.color

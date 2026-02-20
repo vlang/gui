@@ -15,6 +15,7 @@ mut:
 // SvgCfg configures an SVG view component.
 @[minify]
 pub struct SvgCfg {
+	A11yCfg
 pub:
 	id        string // Unique identifier
 	file_name string // SVG file path
@@ -117,7 +118,7 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 			shape_type: .svg
 			id:         sv.id
 			a11y_role:  .image
-			a11y:       make_a11y_info(sv.id, '')
+			a11y:       make_a11y_info(a11y_label(sv.a11y_label, sv.id), sv.a11y_description)
 			resource:   svg_src
 			width:      width
 			height:     height

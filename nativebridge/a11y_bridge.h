@@ -40,6 +40,8 @@ void gui_a11y_sync(
 
 void gui_a11y_destroy(void);
 
+void gui_a11y_announce(const char* msg);
+
 #ifdef __cplusplus
 }
 #endif

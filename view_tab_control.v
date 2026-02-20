@@ -26,6 +26,7 @@ pub fn tab_item(id string, label string, content []View) TabItemCfg {
 // through `on_select`.
 @[minify]
 pub struct TabControlCfg {
+	A11yCfg
 pub:
 	id                     string       @[required]
 	items                  []TabItemCfg @[required]
@@ -67,8 +68,6 @@ pub:
 	id_focus               u32
 	disabled               bool
 	invisible              bool
-	a11y_label             string // override label for screen readers
-	a11y_description       string // extended help text
 }
 
 // tabs is an alias for [tab_control](#tab_control).
@@ -132,9 +131,15 @@ pub fn tab_control(cfg TabControlCfg) View {
 		} else {
 			cfg.text_style
 		}
+		tab_a11y_state := if is_selected {
+			AccessState.selected
+		} else {
+			AccessState.none
+		}
 		header_items << button(
 			id:                 tab_button_id(cfg.id, item.id)
 			a11y_role:          .tab_item
+			a11y_state:         tab_a11y_state
 			a11y_label:         item.label
 			color:              tab_color
 			color_hover:        hover_color

@@ -21,6 +21,7 @@ import log
 //
 @[minify]
 pub struct MenubarCfg {
+	A11yCfg
 pub mut:
 	id                  string
 	text_style          TextStyle = gui_theme.menubar_style.text_style
@@ -65,11 +66,9 @@ pub mut:
 	float_tie_off FloatAttach
 
 	// Visibility and interactivity flags.
-	disabled         bool
-	invisible        bool
-	float            bool
-	a11y_label       string // override label for screen readers
-	a11y_description string // extended help text
+	disabled  bool
+	invisible bool
+	float     bool
 }
 
 // menubar creates a menubar and all nested menus from a MenubarCfg definition

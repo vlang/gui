@@ -147,71 +147,70 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 // box. Set the `text` property to enable this feature.
 @[minify]
 pub struct ContainerCfg {
+	A11yCfg
 mut:
 	name                  string // internally set (unused by Shape)
 	scrollbar_orientation ScrollbarOrientation
 	axis                  Axis
 pub:
-	id               string
-	title            string
-	title_bg         Color         = gui_theme.color_background
-	scrollbar_cfg_x  &ScrollbarCfg = unsafe { nil }
-	scrollbar_cfg_y  &ScrollbarCfg = unsafe { nil }
-	tooltip          &TooltipCfg   = unsafe { nil }
-	color            Color         = gui_theme.container_style.color
-	color_border     Color         = gui_theme.container_style.color_border
-	shadow           &BoxShadow    = gui_theme.container_style.shadow
-	gradient         &Gradient     = gui_theme.container_style.gradient
-	border_gradient  &Gradient     = gui_theme.container_style.border_gradient
-	shader           &Shader       = unsafe { nil }
-	size_border      f32           = gui_theme.container_style.size_border
-	padding          Padding       = gui_theme.container_style.padding
-	sizing           Sizing
-	content          []View
-	on_char          fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_click         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_any_click     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_keydown       fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_move    fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_mouse_up      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_scroll        fn (&Layout, mut Window)               = unsafe { nil }
-	amend_layout     fn (mut Layout, mut Window)            = unsafe { nil }
-	on_hover         fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	on_ime_commit    fn (&Layout, string, mut Window)       = unsafe { nil }
-	width            f32
-	height           f32
-	min_width        f32
-	min_height       f32
-	max_width        f32
-	max_height       f32
-	x                f32
-	y                f32
-	spacing          f32 = gui_theme.container_style.spacing
-	radius           f32 = gui_theme.container_style.radius
-	blur_radius      f32 = gui_theme.container_style.blur_radius
-	float_offset_x   f32
-	float_offset_y   f32
-	id_focus         u32
-	id_scroll        u32
-	scroll_mode      ScrollMode
-	h_align          HorizontalAlign
-	v_align          VerticalAlign
-	text_dir         TextDirection
-	float_anchor     FloatAttach
-	float_tie_off    FloatAttach
-	disabled         bool
-	invisible        bool
-	clip             bool
-	focus_skip       bool
-	over_draw        bool
-	float            bool
-	hero             bool // Participates in hero transitions
-	opacity          f32 = 1.0 // Opacity (0.0 = transparent, 1.0 = opaque)
-	a11y_role        AccessRole  // Semantic role for assistive technology
-	a11y_state       AccessState // Dynamic accessibility state flags
-	a11y_label       string      // Primary screen-reader label
-	a11y_description string      // Extended help text
-	a11y             &AccessInfo = unsafe { nil } // Full a11y info; overrides label/description
+	id              string
+	title           string
+	title_bg        Color         = gui_theme.color_background
+	scrollbar_cfg_x &ScrollbarCfg = unsafe { nil }
+	scrollbar_cfg_y &ScrollbarCfg = unsafe { nil }
+	tooltip         &TooltipCfg   = unsafe { nil }
+	color           Color         = gui_theme.container_style.color
+	color_border    Color         = gui_theme.container_style.color_border
+	shadow          &BoxShadow    = gui_theme.container_style.shadow
+	gradient        &Gradient     = gui_theme.container_style.gradient
+	border_gradient &Gradient     = gui_theme.container_style.border_gradient
+	shader          &Shader       = unsafe { nil }
+	size_border     f32           = gui_theme.container_style.size_border
+	padding         Padding       = gui_theme.container_style.padding
+	sizing          Sizing
+	content         []View
+	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_any_click    fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_keydown      fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_move   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_mouse_up     fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_scroll       fn (&Layout, mut Window)               = unsafe { nil }
+	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
+	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	on_ime_commit   fn (&Layout, string, mut Window)       = unsafe { nil }
+	width           f32
+	height          f32
+	min_width       f32
+	min_height      f32
+	max_width       f32
+	max_height      f32
+	x               f32
+	y               f32
+	spacing         f32 = gui_theme.container_style.spacing
+	radius          f32 = gui_theme.container_style.radius
+	blur_radius     f32 = gui_theme.container_style.blur_radius
+	float_offset_x  f32
+	float_offset_y  f32
+	id_focus        u32
+	id_scroll       u32
+	scroll_mode     ScrollMode
+	h_align         HorizontalAlign
+	v_align         VerticalAlign
+	text_dir        TextDirection
+	float_anchor    FloatAttach
+	float_tie_off   FloatAttach
+	disabled        bool
+	invisible       bool
+	clip            bool
+	focus_skip      bool
+	over_draw       bool
+	float           bool
+	hero            bool // Participates in hero transitions
+	opacity         f32 = 1.0 // Opacity (0.0 = transparent, 1.0 = opaque)
+	a11y_role       AccessRole  // Semantic role for assistive technology
+	a11y_state      AccessState // Dynamic accessibility state flags
+	a11y            &AccessInfo = unsafe { nil } // Full a11y info; overrides label/description
 }
 
 // container is the fundamental layout container in gui. It is used to layout

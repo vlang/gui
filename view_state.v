@@ -131,6 +131,12 @@ mut:
 	form_state                    BoundedMap[string, FormRuntimeState] = BoundedMap[string, FormRuntimeState]{
 		max_size: 50
 	}
+	tree_focus                    BoundedMap[string, string] = BoundedMap[string, string]{
+		max_size: 30
+	}
+	list_box_focus                BoundedMap[string, int] = BoundedMap[string, int]{
+		max_size: 50
+	}
 }
 
 // ColorPickerState stores persistent HSV values for ColorPickers.

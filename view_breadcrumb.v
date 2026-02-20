@@ -27,6 +27,7 @@ pub fn breadcrumb_item(id string, label string, content []View) BreadcrumbItemCf
 // through `on_select`.
 @[minify]
 pub struct BreadcrumbCfg {
+	A11yCfg
 pub:
 	id                   string              @[required]
 	items                []BreadcrumbItemCfg @[required]
@@ -63,8 +64,6 @@ pub:
 	id_focus             u32
 	disabled             bool
 	invisible            bool
-	a11y_label           string // override label for screen readers
-	a11y_description     string // extended help text
 }
 
 // breadcrumb creates a breadcrumb navigation control.

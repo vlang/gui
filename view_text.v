@@ -63,6 +63,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 			id:         tv.id
 			id_focus:   tv.id_focus
 			a11y_role:  .static_text
+			a11y:       make_a11y_info(a11y_label(tv.a11y_label, tv.text), tv.a11y_description)
 			clip:       tv.clip
 			focus_skip: tv.focus_skip
 			disabled:   tv.disabled
@@ -110,6 +111,7 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 // how text is wrapped and displayed (single line, multiline, or wrapped).
 @[minify]
 pub struct TextCfg {
+	A11yCfg
 	sizing Sizing
 pub:
 	id                   string

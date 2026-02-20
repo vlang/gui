@@ -53,6 +53,7 @@ pub:
 
 @[minify]
 pub struct NumericInputCfg {
+	A11yCfg
 pub:
 	id                    string
 	id_focus              u32
@@ -94,8 +95,6 @@ pub:
 	form_async_validators []FormAsyncValidator
 	form_validate_on      FormValidateOn = .inherit
 	form_initial_value    ?string
-	a11y_label            string // override label for screen readers
-	a11y_description      string // extended help text
 }
 
 // numeric_input creates a locale-aware numeric input with optional step controls.

@@ -9,8 +9,9 @@ import log
 // A11y holds per-window accessibility backend state.
 struct A11y {
 mut:
-	initialized   bool
-	prev_id_focus u32 // track focus changes between syncs
+	initialized      bool
+	prev_id_focus    u32               // track focus changes between syncs
+	prev_live_values map[string]string // label→value_text for live nodes
 }
 
 // init_a11y lazily creates the native accessibility container.
@@ -52,6 +53,33 @@ fn (mut w Window) sync_a11y() {
 
 	nativebridge.a11y_sync(unsafe { &nodes[0] }, nodes.len, focused_idx)
 	w.a11y.prev_id_focus = w.view_state.id_focus
+
+	// Live region change detection: announce value changes
+	mut new_live := map[string]string{}
+	for n in nodes {
+		if n.state & int(AccessState.live) != 0 {
+			label := if n.label != unsafe { nil } {
+				unsafe { cstring_to_vstring(n.label) }
+			} else {
+				''
+			}
+			if label.len == 0 {
+				continue
+			}
+			val := if n.value_text != unsafe { nil } {
+				unsafe { cstring_to_vstring(n.value_text) }
+			} else {
+				''
+			}
+			new_live[label] = val
+			if prev := w.a11y.prev_live_values[label] {
+				if prev != val && val.len > 0 {
+					nativebridge.a11y_announce(val)
+				}
+			}
+		}
+	}
+	w.a11y.prev_live_values = new_live.move()
 }
 
 // a11y_collect recursively walks the layout tree, appending

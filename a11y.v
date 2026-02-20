@@ -1,5 +1,14 @@
 module gui
 
+// A11yCfg is embedded in widget Cfg structs to provide
+// accessible label and description. V promotes the fields,
+// so call sites are unchanged.
+pub struct A11yCfg {
+pub:
+	a11y_label       string // override label for screen readers
+	a11y_description string // extended help text
+}
+
 // AccessRole identifies a shape's semantic role for assistive
 // technology. Maps 1:1 to NSAccessibilityRole (macOS) and
 // UIA Control Type (Windows). Zero value .none means the shape
@@ -56,6 +65,7 @@ pub enum AccessState as u16 {
 	busy      = 32  // async loading / progress
 	read_only = 64  // non-editable text field
 	modal     = 128 // dialog
+	live      = 256 // value changes announced to screen reader
 }
 
 // has checks if the state bitmask contains the given flag.

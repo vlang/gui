@@ -62,6 +62,7 @@ pub enum InputCommitReason as u8 {
 // an `on_enter` callback. Placeholder text is shown when the field is empty.
 @[minify]
 pub struct InputCfg {
+	A11yCfg
 pub:
 	id                    string
 	text                  string // text to display/edit
@@ -111,9 +112,7 @@ pub:
 	mode                  InputMode // enable multiline
 	disabled              bool
 	invisible             bool
-	is_password           bool   // mask input characters with '*'s
-	a11y_label            string // override label for screen readers
-	a11y_description      string // extended help text
+	is_password           bool // mask input characters with '*'s
 }
 
 @[minify]

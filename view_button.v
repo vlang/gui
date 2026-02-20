@@ -7,6 +7,7 @@ import time
 // it functions as bubble text.
 @[minify]
 pub struct ButtonCfg {
+	A11yCfg
 pub:
 	id                 string
 	tooltip            &TooltipCfg = unsafe { nil }
@@ -45,9 +46,8 @@ pub:
 	v_align            VerticalAlign   = .middle
 	disabled           bool
 	invisible          bool
-	a11y_role          AccessRole // default .button; override for tab_item etc.
-	a11y_label         string     // explicit label for screen readers
-	a11y_description   string     // extended help text
+	a11y_role          AccessRole  // default .button; override for tab_item etc.
+	a11y_state         AccessState // e.g. .selected for active tab
 }
 
 // button creates a clickable button. Buttons can contain content other than text.
@@ -102,6 +102,7 @@ pub fn button(cfg ButtonCfg) View {
 		id:               cfg.id
 		id_focus:         cfg.id_focus
 		a11y_role:        if cfg.a11y_role != .none { cfg.a11y_role } else { AccessRole.button }
+		a11y_state:       cfg.a11y_state
 		a11y_label:       cfg.a11y_label
 		a11y_description: cfg.a11y_description
 		color:            cfg.color

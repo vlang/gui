@@ -27,6 +27,7 @@ pub mut:
 fn C.gui_a11y_init(voidptr, voidptr, voidptr)
 fn C.gui_a11y_sync(&C.GuiA11yNode, int, int)
 fn C.gui_a11y_destroy()
+fn C.gui_a11y_announce(&char)
 
 pub fn a11y_init(ns_window voidptr, cb voidptr, user_data voidptr) {
 	$if macos {
@@ -43,5 +44,11 @@ pub fn a11y_sync(nodes &C.GuiA11yNode, count int, focused_idx int) {
 pub fn a11y_destroy() {
 	$if macos {
 		C.gui_a11y_destroy()
+	}
+}
+
+pub fn a11y_announce(msg string) {
+	$if macos {
+		C.gui_a11y_announce(msg.str)
 	}
 }

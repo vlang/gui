@@ -72,11 +72,17 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 			}
 			// Extract id_focus for optimized closure capture
 			id_focus := menubar_cfg.id_focus
+			menu_a11y_state := if item_cfg.selected {
+				AccessState.selected
+			} else {
+				AccessState.none
+			}
 			column(
 				name:         'menu_item'
 				id:           item_cfg.id
 				a11y_role:    .menu_item
 				a11y_label:   item_cfg.text
+				a11y_state:   menu_a11y_state
 				disabled:     item_cfg.disabled
 				color:        color
 				color_border: color

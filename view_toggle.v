@@ -4,6 +4,7 @@ module gui
 // However, there is an option of overriding the `text_select` and `text_unselect` properties.
 @[minify]
 pub struct ToggleCfg {
+	A11yCfg
 pub:
 	id                 string
 	label              string
@@ -28,8 +29,6 @@ pub:
 	disabled           bool
 	invisible          bool
 	select             bool
-	a11y_label         string // override label for screen readers
-	a11y_description   string // extended help text
 }
 
 // checkbox is an alias for [toggle](#toggle).

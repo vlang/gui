@@ -4,6 +4,7 @@ module gui
 // It consists of a header (always visible) and content (visible when expanded).
 @[minify]
 pub struct ExpandPanelCfg {
+	A11yCfg
 pub:
 	on_toggle    fn (mut w Window) = unsafe { nil }
 	id           string
@@ -17,15 +18,13 @@ pub:
 	padding      Padding = gui_theme.expand_panel_style.padding
 	size_border  f32     = gui_theme.expand_panel_style.size_border
 
-	radius           f32 = gui_theme.expand_panel_style.radius
-	radius_border    f32 = gui_theme.expand_panel_style.radius_border
-	min_width        f32
-	max_width        f32
-	min_height       f32
-	max_height       f32
-	open             bool
-	a11y_label       string // override label for screen readers
-	a11y_description string // extended help text
+	radius        f32 = gui_theme.expand_panel_style.radius
+	radius_border f32 = gui_theme.expand_panel_style.radius_border
+	min_width     f32
+	max_width     f32
+	min_height    f32
+	max_height    f32
+	open          bool
 }
 
 // expand_panel creates an expandable panel view.
@@ -76,6 +75,12 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 				]
 				on_click: fn [on_toggle] (_ voidptr, mut e Event, mut w Window) {
 					if on_toggle != unsafe { nil } {
+						on_toggle(mut w)
+						e.is_handled = true
+					}
+				}
+				on_char:  fn [on_toggle] (_ &Layout, mut e Event, mut w Window) {
+					if e.char_code == ` ` && on_toggle != unsafe { nil } {
 						on_toggle(mut w)
 						e.is_handled = true
 					}

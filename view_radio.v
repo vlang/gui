@@ -3,6 +3,7 @@ module gui
 // RadioCfg configures a [radio](#radio) button.
 @[minify]
 pub struct RadioCfg {
+	A11yCfg
 pub:
 	id                 string
 	label              string
@@ -23,8 +24,6 @@ pub:
 	select             bool
 	invisible          bool
 	size_border        f32 = gui_theme.radio_style.size_border
-	a11y_label         string // override label for screen readers
-	a11y_description   string // extended help text
 }
 
 // radio creates a radio button UI component that allows users to select a

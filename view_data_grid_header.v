@@ -81,9 +81,19 @@ fn data_grid_header_cell(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_co
 	col_sortable := col.sortable
 	col_id := col.id
 	color_header_hover := cfg.color_header_hover
+	// Header cell: sorted columns get .selected state
+	header_sorted := query.sorts.any(it.col_id == col_id)
+	header_a11y_state := if header_sorted {
+		AccessState.selected
+	} else {
+		AccessState.none
+	}
 	return row(
 		name:         'data_grid header cell'
 		id:           '${cfg.id}:header:${col.id}'
+		a11y_role:    .grid_cell
+		a11y_label:   col.title
+		a11y_state:   header_a11y_state
 		width:        width
 		sizing:       fixed_fill
 		padding:      cfg.padding_header

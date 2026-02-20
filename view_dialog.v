@@ -232,6 +232,13 @@ fn prompt_view(cfg DialogCfg) []View {
 }
 
 fn dialog_key_down(_ voidptr, mut e Event, mut w Window) {
+	if e.key_code == .escape {
+		on_cancel_no := w.dialog_cfg.on_cancel_no
+		w.dialog_dismiss()
+		on_cancel_no(mut w)
+		e.is_handled = true
+		return
+	}
 	if e.key_code == KeyCode.c && e.modifiers.has_any(.ctrl, .super) {
 		mut cpy := w.dialog_cfg.title
 		if cpy.len > 0 && w.dialog_cfg.body.len > 0 {

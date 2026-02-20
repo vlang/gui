@@ -4,6 +4,7 @@ import time
 
 @[minify]
 pub struct InputDateCfg {
+	A11yCfg
 pub:
 	id                       string @[required] // unique only to other date_pickers
 	date                     time.Time = time.now()
@@ -43,8 +44,6 @@ pub:
 	hide_today_indicator     bool = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week bool = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months     bool = gui_theme.date_picker_style.show_adjacent_months
-	a11y_label               string // override label for screen readers
-	a11y_description         string // extended help text
 }
 
 // input_date creates an input field with an integrated date picker that allows

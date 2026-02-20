@@ -420,3 +420,21 @@ void gui_a11y_destroy(void) {
         g_prev_focused_id = -1;
     }
 }
+
+void gui_a11y_announce(const char *msg) {
+    if (msg == NULL || msg[0] == '\0') {
+        return;
+    }
+    @autoreleasepool {
+        NSString *text = [NSString stringWithUTF8String:msg];
+        NSDictionary *info = @{
+            NSAccessibilityAnnouncementKey: text,
+            NSAccessibilityPriorityKey:
+                @(NSAccessibilityPriorityHigh)
+        };
+        NSAccessibilityPostNotificationWithUserInfo(
+            NSApp,
+            NSAccessibilityAnnouncementRequestedNotification,
+            info);
+    }
+}

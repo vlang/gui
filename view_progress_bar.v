@@ -6,30 +6,29 @@ import time
 // ProgressBarCfg configures a [progress_bar](#progress_bar)
 @[minify]
 pub struct ProgressBarCfg {
+	A11yCfg
 pub:
-	id               string
-	text             string
-	sizing           Sizing
-	text_style       TextStyle = gui_theme.text_style
-	color            Color     = gui_theme.progress_bar_style.color
-	color_bar        Color     = gui_theme.progress_bar_style.color_bar
-	text_background  Color     = gui_theme.progress_bar_style.text_background
-	text_padding     Padding   = gui_theme.progress_bar_style.text_padding
-	width            f32
-	height           f32
-	min_width        f32
-	min_height       f32
-	max_width        f32
-	max_height       f32
-	percent          f32 // 0.0 <= percent <= 1.0
-	radius           f32  = gui_theme.progress_bar_style.radius
-	text_show        bool = gui_theme.progress_bar_style.text_show
-	disabled         bool
-	invisible        bool
-	indefinite       bool   // indicates indeterminate progress state
-	vertical         bool   // orientation
-	a11y_label       string // override label for screen readers
-	a11y_description string // extended help text
+	id              string
+	text            string
+	sizing          Sizing
+	text_style      TextStyle = gui_theme.text_style
+	color           Color     = gui_theme.progress_bar_style.color
+	color_bar       Color     = gui_theme.progress_bar_style.color_bar
+	text_background Color     = gui_theme.progress_bar_style.text_background
+	text_padding    Padding   = gui_theme.progress_bar_style.text_padding
+	width           f32
+	height          f32
+	min_width       f32
+	min_height      f32
+	max_width       f32
+	max_height      f32
+	percent         f32 // 0.0 <= percent <= 1.0
+	radius          f32  = gui_theme.progress_bar_style.radius
+	text_show       bool = gui_theme.progress_bar_style.text_show
+	disabled        bool
+	invisible       bool
+	indefinite      bool // indicates indeterminate progress state
+	vertical        bool // orientation
 }
 
 // progress_bar creates a progress bar from the given [ProgressBarCfg](#ProgressBarCfg)
@@ -64,7 +63,11 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 		name:         'progress_bar'
 		id:           cfg.id
 		a11y_role:    .progress_bar
-		a11y_state:   if cfg.indefinite { AccessState.busy } else { AccessState.none }
+		a11y_state:   if cfg.indefinite {
+			unsafe { AccessState(int(AccessState.busy) | int(AccessState.live)) }
+		} else {
+			AccessState.live
+		}
 		a11y:         &AccessInfo{
 			label:       a11y_label(cfg.a11y_label, cfg.text)
 			description: cfg.a11y_description

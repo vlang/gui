@@ -13,36 +13,35 @@ import log
 // settings like value range and step size, and callbacks for handling user input.
 @[minify]
 pub struct RangeSliderCfg {
+	A11yCfg
 pub mut:
-	id               string @[required]
-	sizing           Sizing
-	color            Color   = gui_theme.range_slider_style.color
-	color_border     Color   = gui_theme.range_slider_style.color_border
-	color_thumb      Color   = gui_theme.range_slider_style.color_thumb
-	color_focus      Color   = gui_theme.range_slider_style.color_focus
-	color_hover      Color   = gui_theme.range_slider_style.color_hover
-	color_left       Color   = gui_theme.range_slider_style.color_left
-	color_click      Color   = gui_theme.range_slider_style.color_click
-	padding          Padding = gui_theme.range_slider_style.padding
-	size_border      f32     = gui_theme.range_slider_style.size_border
-	on_change        fn (f32, mut Event, mut Window) @[required]
-	value            f32
-	min              f32
-	max              f32 = 100
-	step             f32 = 1
-	width            f32
-	height           f32
-	size             f32 = gui_theme.range_slider_style.size
-	thumb_size       f32 = gui_theme.range_slider_style.thumb_size
-	radius           f32 = gui_theme.range_slider_style.radius
-	radius_border    f32 = gui_theme.range_slider_style.radius_border
-	id_focus         u32
-	round_value      bool // round value to nearest int
-	vertical         bool
-	disabled         bool
-	invisible        bool
-	a11y_label       string // override label for screen readers
-	a11y_description string // extended help text
+	id            string @[required]
+	sizing        Sizing
+	color         Color   = gui_theme.range_slider_style.color
+	color_border  Color   = gui_theme.range_slider_style.color_border
+	color_thumb   Color   = gui_theme.range_slider_style.color_thumb
+	color_focus   Color   = gui_theme.range_slider_style.color_focus
+	color_hover   Color   = gui_theme.range_slider_style.color_hover
+	color_left    Color   = gui_theme.range_slider_style.color_left
+	color_click   Color   = gui_theme.range_slider_style.color_click
+	padding       Padding = gui_theme.range_slider_style.padding
+	size_border   f32     = gui_theme.range_slider_style.size_border
+	on_change     fn (f32, mut Event, mut Window) @[required]
+	value         f32
+	min           f32
+	max           f32 = 100
+	step          f32 = 1
+	width         f32
+	height        f32
+	size          f32 = gui_theme.range_slider_style.size
+	thumb_size    f32 = gui_theme.range_slider_style.thumb_size
+	radius        f32 = gui_theme.range_slider_style.radius
+	radius_border f32 = gui_theme.range_slider_style.radius_border
+	id_focus      u32
+	round_value   bool // round value to nearest int
+	vertical      bool
+	disabled      bool
+	invisible     bool
 }
 
 // range_slider creates and returns a range slider View component based on
