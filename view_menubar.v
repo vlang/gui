@@ -125,6 +125,8 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 }
 
 // Wrapper functions to capture MenubarCfg by value to avoid dangling reference issues.
+// reason: closure capture — prevents GC false retention from @[heap] cfg ptr.
+// See CLAUDE.md §GC / Boehm False-Retention Rules.
 fn make_menubar_on_keydown(cfg MenubarCfg) fn (&Layout, mut Event, mut Window) {
 	return fn [cfg] (layout &Layout, mut e Event, mut w Window) {
 		cfg.on_keydown(layout, mut e, mut w)

@@ -72,20 +72,20 @@ pub:
 	mask                  string // explicit pattern; e.g. '(999) 999-9999'
 	mask_preset           InputMaskPreset = .none // preset pattern when `mask` is empty
 	mask_tokens           []MaskTokenDef // custom token defs; merged with built-ins
-	pre_commit_transform  fn (string, string) ?string                         = unsafe { nil }
-	post_commit_normalize fn (string, InputCommitReason) string               = unsafe { nil }
-	on_text_changed       fn (&Layout, string, mut Window)                    = unsafe { nil }
-	on_text_commit        fn (&Layout, string, InputCommitReason, mut Window) = unsafe { nil }
-	on_enter              fn (&Layout, mut Event, mut Window)                 = unsafe { nil }
+	pre_commit_transform  fn (string, string) ?string                         = unsafe { nil } // called before commit; return none to reject
+	post_commit_normalize fn (string, InputCommitReason) string               = unsafe { nil } // canonicalise committed text (e.g. trim)
+	on_text_changed       fn (&Layout, string, mut Window)                    = unsafe { nil } // fires on every keystroke (live)
+	on_text_commit        fn (&Layout, string, InputCommitReason, mut Window) = unsafe { nil } // fires on enter or blur
+	on_enter              fn (&Layout, mut Event, mut Window)                 = unsafe { nil } // enter key; fires before on_text_commit
 	on_key_down           fn (&Layout, mut Event, mut Window)                 = unsafe { nil }
 	on_mouse_scroll       fn (&Layout, mut Event, mut Window)                 = unsafe { nil }
 	on_blur               fn (&Layout, mut Window)            = unsafe { nil }
 	on_click_icon         fn (&Layout, mut Event, mut Window) = unsafe { nil }
-	field_id              string
+	field_id              string // form field name; links input to form validation
 	form_sync_validators  []FormSyncValidator
 	form_async_validators []FormAsyncValidator
-	form_validate_on      FormValidateOn = .inherit
-	form_initial_value    ?string
+	form_validate_on      FormValidateOn = .inherit // override when validation fires
+	form_initial_value    ?string // used for dirty-state detection
 	scrollbar_cfg_x       &ScrollbarCfg = unsafe { nil }
 	scrollbar_cfg_y       &ScrollbarCfg = unsafe { nil }
 	tooltip               &TooltipCfg   = unsafe { nil }
@@ -94,8 +94,8 @@ pub:
 	icon_style            TextStyle     = gui_theme.input_style.icon_style
 	radius                f32           = gui_theme.input_style.radius
 	radius_border         f32           = gui_theme.input_style.radius_border
-	id_focus              u32 // 0 = readonly, >0 = focusable and tabbing order
-	id_scroll             u32
+	id_focus              u32 // 0 = readonly; >0 = focusable, also sets tab order
+	id_scroll             u32 // non-zero enables scrolling; must be unique per window
 	scroll_mode           ScrollMode
 	padding               Padding = gui_theme.input_style.padding
 	size_border           f32     = gui_theme.input_style.size_border
@@ -742,6 +742,9 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 
 // make_input_on_char creates an on_char handler that captures
 // a compact runtime cfg.
+// reason: closure capture — InputCfg is @[heap]; capturing it directly would
+// cause GC false retention. InputRuntimeCfg holds only the needed fields.
+// See CLAUDE.md §GC / Boehm False-Retention Rules.
 fn make_input_on_char(cfg InputRuntimeCfg) fn (&Layout, mut Event, mut Window) {
 	return fn [cfg] (layout &Layout, mut event Event, mut w Window) {
 		if w.mouse_is_locked() {
@@ -834,6 +837,7 @@ fn make_input_on_char(cfg InputRuntimeCfg) fn (&Layout, mut Event, mut Window) {
 // make_input_on_ime_commit creates a callback that inserts
 // IME-committed text into the input field and fires
 // on_text_changed.
+// reason: closure capture — same pattern as make_input_on_char.
 fn make_input_on_ime_commit(cfg InputRuntimeCfg) fn (&Layout, string, mut Window) {
 	return fn [cfg] (layout &Layout, text string, mut w Window) {
 		if cfg.on_text_changed == unsafe { nil } {

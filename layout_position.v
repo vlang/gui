@@ -1,5 +1,11 @@
 module gui
 
+// layout_position.v implements the position and scroll-clamping passes of the
+// layout pipeline. layout_positions() assigns x/y to every node, handles RTL
+// axis reversal, applies scroll offsets, and resolves h_align/v_align.
+// layout_adjust_scroll_offsets() clamps stored offsets when window is resized.
+// layout_wrap_text() runs the text-wrap pass after widths are finalized.
+
 // layout_wrap_text runs after widths are set. Wrapping changes min-height,
 // so this runs before height calculation.
 fn layout_wrap_text(mut layout Layout, mut w Window) {

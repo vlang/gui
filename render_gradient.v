@@ -1,5 +1,10 @@
 module gui
 
+// render_gradient.v handles gradient and blur rendering. Gradients are packed
+// as stop arrays (max gradient_shader_stop_limit=5 stops) passed to the GPU
+// shader as uniforms — packing is per-draw-call, not cached. dim_alpha() halves
+// alpha for disabled states. draw_blur_rect() and draw_shadow_rect() use the
+// blur shader pipeline (lazily initialized). rects_overlap() guards draw calls.
 import gg
 import sokol.sgl
 import math

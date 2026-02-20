@@ -1,5 +1,9 @@
 module gui
 
+// event.v defines the Event struct and key constants used throughout the
+// framework. Events are translated from sokol/gg events via from_gg_event()
+// and dispatched to focused shapes by the event routing logic in window.v.
+// event_relative_to() adjusts mouse coordinates to be relative to a shape.
 import gg
 
 const bsp_char = 0x08

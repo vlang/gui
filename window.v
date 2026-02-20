@@ -79,21 +79,21 @@ mut:
 // ```
 pub struct WindowCfg {
 pub:
-	state               voidptr = unsafe { nil }
+	state               voidptr = unsafe { nil } // passed through as w.state; cast to app struct pointer
 	title               string  = app_title
 	width               int
 	height              int
-	cursor_blink        bool
+	cursor_blink        bool // enable blinking text cursor (blink animation)
 	bg_color            Color           = gui_theme.color_background
 	dragndrop           bool            = true
 	dragndrop_files_max u32             = 10
 	dragndrop_path_max  u32             = 2048
 	on_init             fn (mut Window) = fn (mut w Window) {
 		w.update_view(empty_view)
-	}
-	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}
+	} // called once after GPU init; set the initial view here via w.update_view()
+	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {} // global event hook; fires for all events
 	log_level           log.Level                   = default_log_level()
-	debug_layout        bool
+	debug_layout        bool // print layout timing stats to stdout each frame
 }
 
 fn default_log_level() log.Level {
@@ -163,6 +163,7 @@ pub fn window(cfg &WindowCfg) &Window {
 }
 
 // frame_fn is the only place where the window is rendered.
+// see: CLAUDE.md §Render Pipeline for the full flow diagram.
 fn frame_fn(mut window Window) {
 	window.flush_commands()
 	window.init_ime()
@@ -356,6 +357,8 @@ fn (mut window Window) compose_layout(mut view View) Layout {
 	timer := if window.debug_layout { layout_stats_timer_start() } else { LayoutStatsTimer{} }
 
 	mut layout := generate_layout(mut view, mut window)
+	// amend_layout callbacks fire inside layout_arrange (during size/position
+	// passes), NOT during render_layout. See CLAUDE.md §Layout Pipeline.
 	layouts := layout_arrange(mut layout, mut window)
 	result := Layout{
 		shape:    &Shape{

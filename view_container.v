@@ -184,22 +184,22 @@ pub:
 	spacing         f32 = gui_theme.container_style.spacing
 	radius          f32 = gui_theme.container_style.radius
 	blur_radius     f32 = gui_theme.container_style.blur_radius
-	float_offset_x  f32
-	float_offset_y  f32
-	id_focus        u32
-	id_scroll       u32
+	float_offset_x  f32 // pixel offset applied after float_anchor/float_tie_off placement
+	float_offset_y  f32 // pixel offset applied after float_anchor/float_tie_off placement
+	id_focus        u32 // 0 = not focusable; >0 = focusable, sets tab order
+	id_scroll       u32 // non-zero enables scrolling; must be unique per window
 	scroll_mode     ScrollMode
 	h_align         HorizontalAlign
 	v_align         VerticalAlign
 	text_dir        TextDirection
-	float_anchor    FloatAttach
-	float_tie_off   FloatAttach
+	float_anchor    FloatAttach // which point on the parent to attach to
+	float_tie_off   FloatAttach // which point on this container aligns to float_anchor
 	disabled        bool
 	invisible       bool
 	clip            bool
-	focus_skip      bool
+	focus_skip      bool // excluded from tab navigation (but still focusable by click)
 	over_draw       bool
-	float           bool
+	float           bool // draw over sibling content; used for menus/tooltips/dropdowns
 	hero            bool // Participates in hero transitions
 	opacity         f32 = 1.0 // Opacity (0.0 = transparent, 1.0 = opaque)
 	a11y_role       AccessRole  // Semantic role for assistive technology

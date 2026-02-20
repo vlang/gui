@@ -1,5 +1,11 @@
 module gui
 
+// layout_sizing.v implements the size-distribution pass of the layout pipeline.
+// DistributeMode/DistributeAxis enums control grow vs shrink and horizontal vs
+// vertical axes. The single distribute_space() algorithm handles both axes,
+// using get_size/set_size/get_min_size accessor helpers to stay generic.
+// Called from layout_arrange (layout_position.v) before position assignment.
+
 // DistributeMode controls whether space distribution grows or shrinks children.
 enum DistributeMode as u8 {
 	grow

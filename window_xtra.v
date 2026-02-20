@@ -254,6 +254,9 @@ pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
 }
 
 // set_id_focus sets the window's focus id.
+// Side-effect: triggers update_ime_focus(), which routes the IME overlay to
+// the focused field. Always use set_id_focus for tab navigation — do NOT
+// assign w.view_state.id_focus directly. See CLAUDE.md §IME Integration.
 pub fn (mut window Window) set_id_focus(id u32) {
 	window.view_state.clear_input_selections()
 	if id != window.view_state.id_focus {

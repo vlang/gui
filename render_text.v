@@ -1,5 +1,10 @@
 module gui
 
+// render_text.v handles text shape rendering. It manages the vglyph layout
+// cache (keyed by a hash of text, style, and size), password masking,
+// placeholder text, cursor rendering (render_cursor reads input_cursor_on
+// live — never captured in a closure), and text-transform affine matrices.
+// clone_layout_for_draw deep-clones vglyph layouts for renderer lifetime.
 import gg
 import log
 import vglyph
@@ -322,6 +327,9 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 }
 
 // render_cursor figures out where the darn cursor goes using vglyph.
+// input_cursor_on is read live here — never captured in a closure — so the
+// blink animation (render-only path) toggles it and triggers a re-render
+// without rebuilding the layout tree.
 fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 	if window.is_focus(shape.id_focus) && shape.shape_type == .text
 		&& window.view_state.input_cursor_on {

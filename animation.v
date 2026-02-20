@@ -1,5 +1,10 @@
 module gui
 
+// animation.v defines the Animation interface and concrete types: Animate
+// (one-shot or repeating callback) and BlinkCursorAnimation (cursor blink).
+// The animation loop runs in a goroutine and fires refresh_layout or
+// refresh_render_only depending on each animation's refresh_kind(). The
+// blink cursor uses render_only; Animate (which changes app state) uses layout.
 import time
 
 const animation_cycle = 16 * time.millisecond

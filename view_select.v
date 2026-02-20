@@ -166,6 +166,8 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 
 // make_select_on_keydown creates an on_keydown handler that captures the SelectCfg
 // by value to avoid dangling reference issues.
+// reason: closure capture — prevents GC false retention from @[heap] cfg ptr.
+// See CLAUDE.md §GC / Boehm False-Retention Rules.
 fn make_select_on_keydown(cfg SelectCfg) fn (mut Layout, mut Event, mut Window) {
 	return fn [cfg] (mut _ Layout, mut e Event, mut w Window) {
 		cfg.select_on_keydown(mut e, mut w)

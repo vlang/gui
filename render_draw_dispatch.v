@@ -1,5 +1,10 @@
 module gui
 
+// render_draw_dispatch.v is the entry point for all draw calls. renderers_draw()
+// iterates the flat []Renderer list built by render_layout and calls
+// renderer_draw() per item. Special case: consecutive DrawSvg renderers with
+// the same position/color/scale are batched into a single GPU draw call.
+// Stencil clip groups and per-vertex gradient SVGs are handled separately.
 import gg
 import sokol.sgl
 import log
