@@ -54,6 +54,7 @@ pub:
 @[minify]
 pub struct NumericInputCfg {
 	A11yCfg
+	SizeCfg
 pub:
 	id                    string
 	id_focus              u32
@@ -68,13 +69,6 @@ pub:
 	decimals              int                    = 2
 	min                   ?f64
 	max                   ?f64
-	width                 f32
-	height                f32
-	min_width             f32
-	min_height            f32
-	max_width             f32
-	max_height            f32
-	sizing                Sizing
 	padding               Padding   = padding_two_four
 	radius                f32       = gui_theme.input_style.radius
 	radius_border         f32       = gui_theme.input_style.radius_border

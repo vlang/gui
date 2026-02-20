@@ -7,21 +7,15 @@ import time
 @[minify]
 pub struct ProgressBarCfg {
 	A11yCfg
+	SizeCfg
 pub:
 	id              string
 	text            string
-	sizing          Sizing
 	text_style      TextStyle = gui_theme.text_style
 	color           Color     = gui_theme.progress_bar_style.color
 	color_bar       Color     = gui_theme.progress_bar_style.color_bar
 	text_background Color     = gui_theme.progress_bar_style.text_background
 	text_padding    Padding   = gui_theme.progress_bar_style.text_padding
-	width           f32
-	height          f32
-	min_width       f32
-	min_height      f32
-	max_width       f32
-	max_height      f32
 	percent         f32 // 0.0 <= percent <= 1.0
 	radius          f32  = gui_theme.progress_bar_style.radius
 	text_show       bool = gui_theme.progress_bar_style.text_show

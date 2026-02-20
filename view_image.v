@@ -16,18 +16,13 @@ mut:
 @[minify]
 pub struct ImageCfg {
 	A11yCfg
+	SizeCfg
 pub:
-	id         string
-	src        string
-	on_click   fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_hover   fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	width      f32
-	height     f32
-	min_width  f32
-	min_height f32
-	max_width  f32
-	max_height f32
-	invisible  bool
+	id        string
+	src       string
+	on_click  fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_hover  fn (mut Layout, mut Event, mut Window) = unsafe { nil }
+	invisible bool
 }
 
 fn (mut iv ImageView) generate_layout(mut window Window) Layout {

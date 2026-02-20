@@ -26,6 +26,18 @@ pub const fill_fit = Sizing{.fill, .fit}
 pub const fill_fill = Sizing{.fill, .fill}
 pub const fill_fixed = Sizing{.fill, .fixed}
 
+// SizeCfg is an embeddable struct for widget sizing fields.
+pub struct SizeCfg {
+pub:
+	sizing     Sizing
+	width      f32
+	height     f32
+	min_width  f32
+	min_height f32
+	max_width  f32
+	max_height f32
+}
+
 // apply_fixed_sizing_constraints sets min = max = size when sizing is .fixed.
 // Call this on Shape after initial field assignment.
 @[inline]

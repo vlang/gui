@@ -5,6 +5,7 @@ import time
 @[minify]
 pub struct InputDateCfg {
 	A11yCfg
+	SizeCfg
 pub:
 	id                       string @[required] // unique only to other date_pickers
 	date                     time.Time = time.now()
@@ -27,16 +28,9 @@ pub:
 	color_select             Color     = gui_theme.date_picker_style.color_select
 	padding                  Padding   = gui_theme.date_picker_style.padding
 	size_border              f32       = gui_theme.date_picker_style.size_border
-	sizing                   Sizing
-	width                    f32
-	height                   f32
-	min_width                f32
-	min_height               f32
-	max_width                f32
-	max_height               f32
-	cell_spacing             f32 = gui_theme.date_picker_style.cell_spacing
-	radius                   f32 = gui_theme.date_picker_style.radius
-	radius_border            f32 = gui_theme.date_picker_style.radius_border
+	cell_spacing             f32       = gui_theme.date_picker_style.cell_spacing
+	radius                   f32       = gui_theme.date_picker_style.radius
+	radius_border            f32       = gui_theme.date_picker_style.radius_border
 	id_focus                 u32
 	disabled                 bool
 	invisible                bool

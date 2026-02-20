@@ -38,6 +38,7 @@ pub enum TableBorderStyle {
 // ```
 @[minify]
 pub struct TableCfg {
+	SizeCfg
 pub:
 	id                   string
 	color_border         Color = gui_theme.color_border
@@ -54,13 +55,6 @@ pub:
 	size_border          f32
 	size_border_header   f32 // optional header separator override
 	border_style         TableBorderStyle = .all
-	width                f32
-	height               f32
-	min_width            f32
-	max_width            f32
-	min_height           f32
-	max_height           f32
-	sizing               Sizing
 	id_scroll            u32
 	scrollbar            ScrollbarOverflow // default .auto shows scrollbar; use .hidden to hide
 	multi_select         bool

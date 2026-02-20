@@ -63,6 +63,7 @@ pub enum InputCommitReason as u8 {
 @[minify]
 pub struct InputCfg {
 	A11yCfg
+	SizeCfg
 pub:
 	id                    string
 	text                  string // text to display/edit
@@ -88,18 +89,11 @@ pub:
 	scrollbar_cfg_x       &ScrollbarCfg = unsafe { nil }
 	scrollbar_cfg_y       &ScrollbarCfg = unsafe { nil }
 	tooltip               &TooltipCfg   = unsafe { nil }
-	sizing                Sizing
-	text_style            TextStyle = gui_theme.input_style.text_style
-	placeholder_style     TextStyle = gui_theme.input_style.placeholder_style
-	icon_style            TextStyle = gui_theme.input_style.icon_style
-	width                 f32
-	height                f32
-	min_width             f32
-	min_height            f32
-	max_width             f32
-	max_height            f32
-	radius                f32 = gui_theme.input_style.radius
-	radius_border         f32 = gui_theme.input_style.radius_border
+	text_style            TextStyle     = gui_theme.input_style.text_style
+	placeholder_style     TextStyle     = gui_theme.input_style.placeholder_style
+	icon_style            TextStyle     = gui_theme.input_style.icon_style
+	radius                f32           = gui_theme.input_style.radius
+	radius_border         f32           = gui_theme.input_style.radius_border
 	id_focus              u32 // 0 = readonly, >0 = focusable and tabbing order
 	id_scroll             u32
 	scroll_mode           ScrollMode

@@ -148,6 +148,7 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 @[minify]
 pub struct ContainerCfg {
 	A11yCfg
+	SizeCfg
 mut:
 	name                  string // internally set (unused by Shape)
 	scrollbar_orientation ScrollbarOrientation
@@ -167,7 +168,6 @@ pub:
 	shader          &Shader       = unsafe { nil }
 	size_border     f32           = gui_theme.container_style.size_border
 	padding         Padding       = gui_theme.container_style.padding
-	sizing          Sizing
 	content         []View
 	on_char         fn (&Layout, mut Event, mut Window)    = unsafe { nil }
 	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
@@ -179,12 +179,6 @@ pub:
 	amend_layout    fn (mut Layout, mut Window)            = unsafe { nil }
 	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
 	on_ime_commit   fn (&Layout, string, mut Window)       = unsafe { nil }
-	width           f32
-	height          f32
-	min_width       f32
-	min_height      f32
-	max_width       f32
-	max_height      f32
 	x               f32
 	y               f32
 	spacing         f32 = gui_theme.container_style.spacing

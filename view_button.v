@@ -8,6 +8,7 @@ import time
 @[minify]
 pub struct ButtonCfg {
 	A11yCfg
+	SizeCfg
 pub:
 	id                 string
 	tooltip            &TooltipCfg = unsafe { nil }
@@ -22,7 +23,6 @@ pub:
 	blur_radius        f32         = gui_theme.button_style.blur_radius
 	shadow             &BoxShadow  = gui_theme.button_style.shadow
 	gradient           &Gradient   = gui_theme.button_style.gradient
-	sizing             Sizing
 	content            []View
 	alt_content        []View
 	alt_duration       time.Duration
@@ -34,12 +34,6 @@ pub:
 	float_tie_off      FloatAttach
 	float_offset_x     f32
 	float_offset_y     f32
-	width              f32
-	height             f32
-	min_width          f32
-	min_height         f32
-	max_width          f32
-	max_height         f32
 	radius             f32 = gui_theme.button_style.radius
 	id_focus           u32
 	h_align            HorizontalAlign = .center
