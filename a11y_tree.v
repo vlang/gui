@@ -53,24 +53,17 @@ fn (mut w Window) sync_a11y() {
 		return
 	}
 
-	// Reuse nodes array across frames (same pattern as
-	// window.renderers). vmemset zeros backing memory to
-	// prevent GC false retention from stale pointers.
+	// Reuse nodes array across frames. gc_clear zeros backing
+	// memory to prevent GC false retention from stale pointers.
 	if w.a11y.nodes.cap == 0 {
 		w.a11y.nodes = []C.GuiA11yNode{cap: 64}
 	} else {
-		unsafe {
-			vmemset(w.a11y.nodes.data, 0, w.a11y.nodes.cap * int(sizeof(C.GuiA11yNode)))
-			w.a11y.nodes.len = 0
-		}
+		gc_clear(mut w.a11y.nodes)
 	}
 	if w.a11y.live_nodes.cap == 0 {
 		w.a11y.live_nodes = []LiveNode{cap: 8}
 	} else {
-		unsafe {
-			vmemset(w.a11y.live_nodes.data, 0, w.a11y.live_nodes.cap * int(sizeof(LiveNode)))
-			w.a11y.live_nodes.len = 0
-		}
+		gc_clear(mut w.a11y.live_nodes)
 	}
 
 	focused_idx := a11y_collect(&w.layout, -1, mut w.a11y.nodes, w.view_state.id_focus, mut

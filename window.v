@@ -204,12 +204,12 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	// layout -> [main layout, floating layouts..., dialog layout]
 	// Dialogs are modal if present. Events process bottom-up (leaf nodes) then
 	// top-down (layers). Processing stops when `event.is_handled` is true.
-	w.lock()
-
-	// Layout is immutable here. Unlock immediately to allow handlers to lock
-	// window for state updates.
-	layout := if w.dialog_cfg.visible { w.layout.children.last() } else { w.layout }
-	w.unlock()
+	// No lock needed: layout is immutable on the main thread between frames.
+	layout := if w.dialog_cfg.visible && w.layout.children.len > 0 {
+		w.layout.children[w.layout.children.len - 1]
+	} else {
+		w.layout
+	}
 
 	match e.typ {
 		.char {

@@ -396,7 +396,7 @@ fn text_auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut an Animate
 	cursor_pos := (w.view_state.input_state.get(id_focus) or { InputState{} }).cursor_pos
 	start_cursor_pos := w.view_state.mouse_lock.cursor_pos
 
-	raw_ev := &Event{
+	raw_ev := Event{
 		mouse_x: w.ui.mouse_pos_x
 		mouse_y: w.ui.mouse_pos_y
 	}

@@ -19,8 +19,8 @@ const ctrl_v = 0x16
 const ctrl_x = 0x18
 const ctrl_z = 0x1A
 
-fn from_gg_event(e &gg.Event) &Event {
-	return &Event{
+fn from_gg_event(e &gg.Event) Event {
+	return Event{
 		frame_count:        e.frame_count
 		typ:                EventType(e.typ)
 		key_code:           KeyCode(e.key_code)
@@ -45,8 +45,8 @@ fn from_gg_event(e &gg.Event) &Event {
 	}
 }
 
-fn event_relative_to(shape &Shape, e &Event) &Event {
-	return &Event{
+fn event_relative_to(shape &Shape, e &Event) Event {
+	return Event{
 		...e
 		touches: e.touches // runtime mem error otherwise
 		mouse_x: e.mouse_x - shape.x

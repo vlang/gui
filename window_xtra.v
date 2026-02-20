@@ -13,18 +13,12 @@ pub fn (_ &Window) color_background() Color {
 	return gui_theme.color_background
 }
 
-// clear_view_states clears all cached view_states. Gui keeps a number of items
-// like scroll positions, cursor positions, etc.
-pub fn (mut window Window) clear_view_states() {
-	window.clear_view_state()
-}
-
 // context gets the windows gg.Context
 pub fn (window &Window) context() &gg.Context {
 	return window.ui
 }
 
-// dialog creates an dialog dialog centered on the window.
+// dialog creates a dialog centered on the window.
 // Dialog presents a dialog with a message and buttons.
 // Predefined types include: **message**, **confirm**
 // **prompt** and others. See [DialogType](#DialogType)
@@ -166,20 +160,15 @@ fn (mut window Window) flush_commands() {
 		window.commands_mutex.unlock()
 		return
 	}
-	to_run := window.commands.clone()
-	window.commands.clear()
+	// Swap instead of clone+clear: avoids heap allocation and
+	// prevents GC false retention from stale pointers.
+	to_run := window.commands
+	window.commands = []WindowCommand{}
 	window.commands_mutex.unlock()
 
 	for cb in to_run {
 		cb(mut window)
 	}
-}
-
-// resize_to_content is currently not working. Need to implement gg.resize()
-pub fn (mut window Window) resize_to_content() {
-	window.lock()
-	defer { window.unlock() }
-	window.ui.resize(window.window_size.width, window.window_size.height)
 }
 
 // run starts the UI and handles events

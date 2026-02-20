@@ -82,12 +82,15 @@ pub fn (mut window Window) remove_animation(id string) {
 fn (mut window Window) animation_loop() {
 	// dt in seconds for spring physics
 	dt := f32(animation_cycle) / f32(time.second)
+	// Pre-allocate and reuse across ticks to avoid per-tick allocs.
+	mut deferred := []AnimationCallback{cap: 4}
+	mut stopped_ids := []string{cap: 4}
 
 	for {
 		time.sleep(animation_cycle)
 		mut refresh_kind := AnimationRefreshKind.none
-		mut deferred := []AnimationCallback{}
-		mut stopped_ids := []string{}
+		deferred.clear()
+		stopped_ids.clear()
 		//--------------------------------------------
 		window.lock()
 		for _, mut animation in window.animations {
