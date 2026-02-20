@@ -138,6 +138,12 @@ pub mut:
 	anim_spring_x        f32
 	anim_keyframe_x      f32
 	anim_layout_expanded bool
+	// wrap panel
+	wrap_check_a  bool
+	wrap_check_b  bool
+	wrap_switch_a bool
+	wrap_switch_b bool
+	wrap_radio    int
 	// docs panel
 	show_docs bool
 }
@@ -603,6 +609,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['hover', 'hint', 'floating']
 		},
 		DemoEntry{
+			id:      'wrap_panel'
+			label:   'Wrap Panel'
+			group:   'navigation'
+			summary: 'Flow layout that wraps children to the next line'
+			tags:    ['wrap', 'flow', 'reflow', 'layout']
+		},
+		DemoEntry{
 			id:      'animations'
 			label:   'Animations'
 			group:   'graphics'
@@ -1051,6 +1064,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'rectangle' { demo_rectangle() }
 		'scrollbar' { demo_scrollbar() }
 		'splitter' { demo_splitter(w) }
+		'wrap_panel' { demo_wrap_panel(w) }
 		'doc_get_started' { demo_doc(mut w, 'doc_get_started', doc_get_started_source) }
 		'doc_animations' { demo_doc(mut w, 'doc_animations', doc_animations_source) }
 		'doc_architecture' { demo_doc(mut w, 'doc_architecture', doc_architecture_source) }
@@ -1112,6 +1126,7 @@ fn related_examples(id string) string {
 		'rectangle' { 'examples/border_demo.v, examples/gradient_border_demo.v' }
 		'scrollbar' { 'examples/scroll_demo.v, examples/column_scroll.v' }
 		'splitter' { 'examples/split_panel.v' }
+		'wrap_panel' { 'examples/wrap_panel.v' }
 		else { 'examples/showcase.v' }
 	}
 }
@@ -1159,6 +1174,7 @@ fn component_doc(id string) string {
 		'rectangle' { rectangle_doc }
 		'scrollbar' { scrollbar_doc }
 		'splitter' { splitter_doc }
+		'wrap_panel' { wrap_panel_doc }
 		else { '*Documentation coming soon.*' }
 	}
 }
@@ -4376,6 +4392,139 @@ gui.expand_panel(
 
 fn demo_expand_panel(w &gui.Window) gui.View {
 	return expand_panel_sample(w)
+}
+
+const wrap_panel_doc = '# Wrap Panel
+
+Flow layout that arranges children left-to-right, wrapping to the
+next line when the container width is exceeded.
+
+## Usage
+
+```v
+gui.wrap(
+    width:   300,
+    sizing:  gui.fixed_fit,
+    spacing: 8,
+    content: [
+        gui.button(content: [gui.text(text: "One")]),
+        gui.button(content: [gui.text(text: "Two")]),
+        gui.button(content: [gui.text(text: "Three")]),
+    ],
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| width | f32 | Container width for line-break calculation |
+| sizing | SizeCfg | Size behavior (typically fixed_fit) |
+| spacing | f32 | Gap between items and between rows |
+| padding | Padding | Inner margin |
+| content | []View | Child views to flow |
+
+Sugar for `gui.row(wrap: true, ...)`.'
+
+fn demo_wrap_panel(w &gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		sizing:  gui.fill_fit
+		spacing: gui.spacing_large
+		content: [
+			gui.text(text: 'Resize the window to see items reflow.'),
+			gui.wrap(
+				sizing:  gui.fill_fit
+				spacing: 8
+				content: [
+					wrap_tag('Checks'),
+					gui.checkbox(
+						label:    'Alpha'
+						select:   app.wrap_check_a
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							a.wrap_check_a = !a.wrap_check_a
+						}
+					),
+					gui.checkbox(
+						label:    'Beta'
+						select:   app.wrap_check_b
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							a.wrap_check_b = !a.wrap_check_b
+						}
+					),
+					wrap_tag('Switches'),
+					gui.switch(
+						label:    'Dark mode'
+						select:   app.wrap_switch_a
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							a.wrap_switch_a = !a.wrap_switch_a
+						}
+					),
+					gui.switch(
+						label:    'Auto-save'
+						select:   app.wrap_switch_b
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							a.wrap_switch_b = !a.wrap_switch_b
+						}
+					),
+					wrap_tag('Size'),
+					gui.radio(
+						label:    'Small'
+						select:   app.wrap_radio == 0
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							a.wrap_radio = 0
+						}
+					),
+					gui.radio(
+						label:    'Medium'
+						select:   app.wrap_radio == 1
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							a.wrap_radio = 1
+						}
+					),
+					gui.radio(
+						label:    'Large'
+						select:   app.wrap_radio == 2
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							a.wrap_radio = 2
+						}
+					),
+					gui.progress_bar(
+						width:   120
+						sizing:  gui.fixed_fit
+						percent: 0.65
+					),
+					gui.button(
+						content:  [gui.text(text: 'Reset')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							a.wrap_check_a = false
+							a.wrap_check_b = false
+							a.wrap_switch_a = false
+							a.wrap_switch_b = false
+							a.wrap_radio = 0
+						}
+					),
+				]
+			),
+		]
+	)
+}
+
+fn wrap_tag(label string) gui.View {
+	return gui.row(
+		padding: gui.padding(4, 12, 4, 12)
+		radius:  12
+		color:   gui.theme().color_active
+		content: [gui.text(text: label)]
+	)
 }
 
 const icons_doc = '# Icons

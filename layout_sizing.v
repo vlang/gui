@@ -268,10 +268,21 @@ fn layout_widths(mut layout Layout) {
 			for mut child in layout.children {
 				layout_widths(mut child)
 				layout.shape.width += child.shape.width
-				min_widths += child.shape.min_width
+				if layout.shape.wrap {
+					// Wrap containers only need room for the widest
+					// single child; overflow triggers line-breaking.
+					min_widths = f32_max(min_widths, child.shape.width + padding)
+				} else {
+					min_widths += child.shape.min_width
+				}
 			}
 
-			layout.shape.min_width = f32_max(min_widths, layout.shape.min_width + padding + spacing)
+			if !layout.shape.wrap {
+				layout.shape.min_width = f32_max(min_widths, layout.shape.min_width + padding +
+					spacing)
+			} else {
+				layout.shape.min_width = f32_max(min_widths, layout.shape.min_width)
+			}
 			layout.shape.width += padding + spacing
 
 			if layout.shape.max_width > 0 {
@@ -384,8 +395,9 @@ fn layout_fill_widths_with_scratch(mut layout Layout, mut scratch DistributeScra
 				scratch.candidates, mut scratch.fixed_indices)
 		}
 
-		// Shrink if needed
-		if remaining_width < -f32_tolerance {
+		// Shrink if needed — skip for wrap containers; layout_wrap
+		// handles overflow by breaking children into rows.
+		if remaining_width < -f32_tolerance && !layout.shape.wrap {
 			remaining_width = distribute_space(mut layout, remaining_width, .shrink, .horizontal, mut
 				scratch.candidates, mut scratch.fixed_indices)
 		}

@@ -46,8 +46,7 @@ fn main_view(mut window gui.Window) gui.View {
 			gui.text(text: 'Wrap Panel — Mixed Widgets', text_style: gui.theme().b1),
 			gui.text(text: 'Resize the window to see items reflow.'),
 			gui.wrap(
-				width:   w - 40
-				sizing:  gui.fixed_fit
+				sizing:  gui.fill_fit
 				spacing: 8
 				content: [
 					tag('Checks'),

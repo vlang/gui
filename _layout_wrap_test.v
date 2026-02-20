@@ -230,7 +230,92 @@ fn test_wrap_non_flow() {
 	assert root.children[1].children.len == 1
 }
 
-// Test 6: wrap() convenience function sets axis and wrap flag.
+// Test 6: fill-width wrap inside a column — simulates showcase embed.
+// The wrap container has fill sizing (width resolved by parent column).
+fn test_wrap_fill_in_column() {
+	mut root := Layout{
+		shape:    &Shape{
+			axis:       .top_to_bottom
+			width:      400
+			height:     300
+			sizing:     fixed_fixed
+			shape_type: .rectangle
+		}
+		children: [
+			Layout{
+				shape:    &Shape{
+					axis:       .left_to_right
+					wrap:       true
+					sizing:     fill_fit
+					spacing:    5
+					shape_type: .rectangle
+				}
+				children: [
+					Layout{
+						shape: &Shape{
+							width:      80
+							height:     20
+							shape_type: .rectangle
+						}
+					},
+					Layout{
+						shape: &Shape{
+							width:      80
+							height:     20
+							shape_type: .rectangle
+						}
+					},
+					Layout{
+						shape: &Shape{
+							width:      80
+							height:     20
+							shape_type: .rectangle
+						}
+					},
+					Layout{
+						shape: &Shape{
+							width:      80
+							height:     20
+							shape_type: .rectangle
+						}
+					},
+					Layout{
+						shape: &Shape{
+							width:      80
+							height:     20
+							shape_type: .rectangle
+						}
+					},
+					Layout{
+						shape: &Shape{
+							width:      80
+							height:     20
+							shape_type: .rectangle
+						}
+					},
+				]
+			},
+		]
+	}
+
+	// Run the same pipeline steps as layout_pipeline:
+	// 1-2: widths + fill_widths → resolve the wrap's width from parent
+	layout_widths(mut root)
+	layout_fill_widths(mut root)
+
+	// Wrap should now have parent width (400)
+	wrap_layout := root.children[0]
+	assert f32_are_close(wrap_layout.shape.width, 400), 'wrap width should be 400, got ${wrap_layout.shape.width}'
+
+	// 2.5: wrap pass
+	layout_wrap(mut root)
+
+	// 6 items × 80 + 5 spacing = 500 > 400 available, must produce 2+ rows
+	assert root.children[0].shape.axis == .top_to_bottom, 'wrap axis should flip to TTB'
+	assert root.children[0].children.len >= 2, 'expected 2+ rows, got ${root.children[0].children.len}'
+}
+
+// Test 7: wrap() convenience function sets axis and wrap flag.
 fn test_wrap_convenience() {
 	v := wrap(ContainerCfg{})
 	mut cv := v as ContainerView
