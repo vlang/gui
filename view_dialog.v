@@ -81,6 +81,9 @@ fn dialog_view_generator(cfg DialogCfg) View {
 	return column(
 		name:          'dialog: ${cfg.dialog_type}'
 		id:            reserved_dialog_id
+		a11y_role:     .dialog
+		a11y_state:    .modal
+		a11y_label:    cfg.title
 		float:         true
 		float_anchor:  .middle_center
 		float_tie_off: .middle_center

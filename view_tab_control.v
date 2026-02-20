@@ -67,6 +67,8 @@ pub:
 	id_focus               u32
 	disabled               bool
 	invisible              bool
+	a11y_label             string // override label for screen readers
+	a11y_description       string // extended help text
 }
 
 // tabs is an alias for [tab_control](#tab_control).
@@ -132,6 +134,8 @@ pub fn tab_control(cfg TabControlCfg) View {
 		}
 		header_items << button(
 			id:                 tab_button_id(cfg.id, item.id)
+			a11y_role:          .tab_item
+			a11y_label:         item.label
 			color:              tab_color
 			color_hover:        hover_color
 			color_focus:        focus_color
@@ -167,23 +171,26 @@ pub fn tab_control(cfg TabControlCfg) View {
 	id_focus := cfg.id_focus
 
 	return column(
-		name:         'tab_control'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		sizing:       cfg.sizing
-		color:        cfg.color
-		color_border: cfg.color_border
-		size_border:  cfg.size_border
-		radius:       cfg.radius
-		padding:      cfg.padding
-		spacing:      cfg.spacing
-		disabled:     cfg.disabled
-		invisible:    cfg.invisible
-		on_keydown:   fn [disabled, items, selected, on_select, id_focus] (_ &Layout, mut e Event, mut w Window) {
+		name:             'tab_control'
+		id:               cfg.id
+		id_focus:         cfg.id_focus
+		a11y_role:        .tab
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.id)
+		a11y_description: cfg.a11y_description
+		sizing:           cfg.sizing
+		color:            cfg.color
+		color_border:     cfg.color_border
+		size_border:      cfg.size_border
+		radius:           cfg.radius
+		padding:          cfg.padding
+		spacing:          cfg.spacing
+		disabled:         cfg.disabled
+		invisible:        cfg.invisible
+		on_keydown:       fn [disabled, items, selected, on_select, id_focus] (_ &Layout, mut e Event, mut w Window) {
 			tab_control_on_keydown(disabled, items, selected, on_select, id_focus, mut
 				e, mut w)
 		}
-		content:      [
+		content:          [
 			row(
 				name:         'tab_control_header'
 				color:        cfg.color_header

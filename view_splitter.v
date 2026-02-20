@@ -83,6 +83,8 @@ pub:
 	radius_border         f32   = gui_theme.splitter_style.radius_border
 	disabled              bool
 	invisible             bool
+	a11y_label            string // override label for screen readers
+	a11y_description      string // extended help text
 }
 
 // SplitterCore holds callback-relevant fields without content
@@ -152,22 +154,25 @@ pub fn splitter(cfg SplitterCfg) View {
 	core := splitter_core(&c)
 
 	return canvas(
-		name:         'splitter'
-		id:           c.id
-		id_focus:     c.id_focus
-		sizing:       c.sizing
-		padding:      padding_none
-		spacing:      0
-		clip:         true
-		disabled:     c.disabled
-		invisible:    c.invisible
-		on_keydown:   fn [core] (_ &Layout, mut e Event, mut w Window) {
+		name:             'splitter'
+		id:               c.id
+		id_focus:         c.id_focus
+		a11y_role:        .splitter
+		a11y_label:       a11y_label(c.a11y_label, c.id)
+		a11y_description: c.a11y_description
+		sizing:           c.sizing
+		padding:          padding_none
+		spacing:          0
+		clip:             true
+		disabled:         c.disabled
+		invisible:        c.invisible
+		on_keydown:       fn [core] (_ &Layout, mut e Event, mut w Window) {
 			splitter_on_keydown(core, mut e, mut w)
 		}
-		amend_layout: fn [core] (mut layout Layout, mut w Window) {
+		amend_layout:     fn [core] (mut layout Layout, mut w Window) {
 			splitter_amend_layout(core, mut layout, mut w)
 		}
-		content:      [
+		content:          [
 			splitter_pane('${c.id}:pane:first', unsafe { c.first.content }),
 			splitter_handle_view(c, core),
 			splitter_pane('${c.id}:pane:second', unsafe { c.second.content }),

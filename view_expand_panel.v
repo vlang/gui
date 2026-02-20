@@ -17,13 +17,15 @@ pub:
 	padding      Padding = gui_theme.expand_panel_style.padding
 	size_border  f32     = gui_theme.expand_panel_style.size_border
 
-	radius        f32 = gui_theme.expand_panel_style.radius
-	radius_border f32 = gui_theme.expand_panel_style.radius_border
-	min_width     f32
-	max_width     f32
-	min_height    f32
-	max_height    f32
-	open          bool
+	radius           f32 = gui_theme.expand_panel_style.radius
+	radius_border    f32 = gui_theme.expand_panel_style.radius_border
+	min_width        f32
+	max_width        f32
+	min_height       f32
+	max_height       f32
+	open             bool
+	a11y_label       string // override label for screen readers
+	a11y_description string // extended help text
 }
 
 // expand_panel creates an expandable panel view.
@@ -32,20 +34,24 @@ pub fn expand_panel(cfg ExpandPanelCfg) View {
 	color_hover := cfg.color_hover
 	color_click := cfg.color_click
 	return column(
-		name:         'expand_panel'
-		id:           cfg.id
-		color:        cfg.color
-		color_border: cfg.color_border
-		size_border:  cfg.size_border
-		padding:      cfg.padding
-		radius:       cfg.radius
-		sizing:       cfg.sizing
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
-		min_height:   cfg.min_height
-		max_height:   cfg.max_height
-		spacing:      0
-		content:      [
+		name:             'expand_panel'
+		id:               cfg.id
+		a11y_role:        .disclosure
+		a11y_state:       if cfg.open { AccessState.expanded } else { AccessState.none }
+		a11y_label:       cfg.a11y_label
+		a11y_description: cfg.a11y_description
+		color:            cfg.color
+		color_border:     cfg.color_border
+		size_border:      cfg.size_border
+		padding:          cfg.padding
+		radius:           cfg.radius
+		sizing:           cfg.sizing
+		min_width:        cfg.min_width
+		max_width:        cfg.max_width
+		min_height:       cfg.min_height
+		max_height:       cfg.max_height
+		spacing:          0
+		content:          [
 			row(
 				name:     'expand_panel head'
 				padding:  padding_none

@@ -94,6 +94,8 @@ pub:
 	form_async_validators []FormAsyncValidator
 	form_validate_on      FormValidateOn = .inherit
 	form_initial_value    ?string
+	a11y_label            string // override label for screen readers
+	a11y_description      string // extended help text
 }
 
 // numeric_input creates a locale-aware numeric input with optional step controls.
@@ -107,9 +109,19 @@ pub fn numeric_input(cfg NumericInputCfg) View {
 	color_hover := cfg.color_hover
 	color_border_focus := cfg.color_border_focus
 	id_focus := cfg.id_focus
+	ni_val := cfg.value or { 0.0 }
 	return row(
 		name:         'numeric_input'
 		id:           cfg.id
+		a11y_role:    .text_field
+		a11y:         &AccessInfo{
+			label:       a11y_label(cfg.a11y_label, cfg.placeholder)
+			description: cfg.a11y_description
+			value_text:  cfg.text
+			value_num:   f32(ni_val)
+			value_min:   f32(cfg.min or { 0.0 })
+			value_max:   f32(cfg.max or { 0.0 })
+		}
 		tooltip:      cfg.tooltip
 		width:        cfg.width
 		height:       cfg.height

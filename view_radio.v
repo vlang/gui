@@ -23,6 +23,8 @@ pub:
 	select             bool
 	invisible          bool
 	size_border        f32 = gui_theme.radio_style.size_border
+	a11y_label         string // override label for screen readers
+	a11y_description   string // extended help text
 }
 
 // radio creates a radio button UI component that allows users to select a
@@ -69,14 +71,18 @@ pub fn radio(cfg RadioCfg) View {
 	}
 
 	return row(
-		name:         'radio'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		padding:      cfg.padding
-		v_align:      .middle
-		on_click:     left_click_only(cfg.on_click)
-		on_char:      spacebar_to_click(cfg.on_click)
-		amend_layout: fn [color_border_focus] (mut layout Layout, mut w Window) {
+		name:             'radio'
+		id:               cfg.id
+		id_focus:         cfg.id_focus
+		padding:          cfg.padding
+		v_align:          .middle
+		a11y_role:        .radio_button
+		a11y_state:       if cfg.select { AccessState.selected } else { AccessState.none }
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.label)
+		a11y_description: cfg.a11y_description
+		on_click:         left_click_only(cfg.on_click)
+		on_char:          spacebar_to_click(cfg.on_click)
+		amend_layout:     fn [color_border_focus] (mut layout Layout, mut w Window) {
 			if layout.shape.disabled || !layout.shape.has_events()
 				|| layout.shape.events.on_click == unsafe { nil } {
 				return
@@ -88,9 +94,9 @@ pub fn radio(cfg RadioCfg) View {
 				layout.children[0].shape.color_border = color_border_focus
 			}
 		}
-		on_hover:     fn (mut _ Layout, mut _ Event, mut w Window) {
+		on_hover:         fn (mut _ Layout, mut _ Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
 		}
-		content:      content
+		content:          content
 	)
 }

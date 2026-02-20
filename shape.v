@@ -17,6 +17,7 @@ pub mut:
 	events &EventHandlers   = unsafe { nil } // Event handlers
 	tc     &ShapeTextConfig = unsafe { nil } // Text/RTF fields
 	fx     &ShapeEffects    = unsafe { nil } // Visual effects
+	a11y   &AccessInfo      = unsafe { nil } // Accessibility metadata
 
 	// Structs (Large/Aligned)
 	shape_clip DrawClip // Calculated clipping rectangle for rendering and hit-testing
@@ -42,6 +43,10 @@ pub mut:
 	color               Color // Background or foreground color
 	color_border        Color // Border color (if different from color)
 	size_border         f32   // Thickness of the border
+
+	// 2 bytes (Accessibility)
+	a11y_role  AccessRole  // Semantic role for assistive technology
+	a11y_state AccessState // Dynamic accessibility state flags
 
 	// 1 byte (Enums/Bools)
 	axis                  Axis                 // Layout direction (row/column)

@@ -28,6 +28,8 @@ pub:
 	disabled           bool
 	invisible          bool
 	select             bool
+	a11y_label         string // override label for screen readers
+	a11y_description   string // extended help text
 }
 
 // checkbox is an alias for [toggle](#toggle).
@@ -81,14 +83,18 @@ pub fn toggle(cfg ToggleCfg) View {
 	}
 
 	return row(
-		name:         'toggle'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		padding:      padding_none
-		v_align:      .middle
-		on_char:      spacebar_to_click(cfg.on_click)
-		on_click:     left_click_only(cfg.on_click)
-		on_hover:     fn [color_hover, color_click] (mut layout Layout, mut e Event, mut w Window) {
+		name:             'toggle'
+		id:               cfg.id
+		id_focus:         cfg.id_focus
+		padding:          padding_none
+		v_align:          .middle
+		a11y_role:        .checkbox
+		a11y_state:       if cfg.select { AccessState.checked } else { AccessState.none }
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.label)
+		a11y_description: cfg.a11y_description
+		on_char:          spacebar_to_click(cfg.on_click)
+		on_click:         left_click_only(cfg.on_click)
+		on_hover:         fn [color_hover, color_click] (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
 			if layout.children.len == 0 {
 				return
@@ -98,8 +104,8 @@ pub fn toggle(cfg ToggleCfg) View {
 				layout.children[0].shape.color = color_click
 			}
 		}
-		min_width:    cfg.min_width
-		amend_layout: fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
+		min_width:        cfg.min_width
+		amend_layout:     fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
 			if layout.shape.disabled || !layout.shape.has_events()
 				|| layout.shape.events.on_click == unsafe { nil } {
 				return
@@ -112,6 +118,6 @@ pub fn toggle(cfg ToggleCfg) View {
 				layout.children[0].shape.color_border = color_border_focus
 			}
 		}
-		content:      content
+		content:          content
 	)
 }

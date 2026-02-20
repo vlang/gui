@@ -63,6 +63,8 @@ pub:
 	id_focus             u32
 	disabled             bool
 	invisible            bool
+	a11y_label           string // override label for screen readers
+	a11y_description     string // extended help text
 }
 
 // breadcrumb creates a breadcrumb navigation control.
@@ -193,22 +195,25 @@ pub fn breadcrumb(cfg BreadcrumbCfg) View {
 	id_focus := cfg.id_focus
 
 	return column(
-		name:         'breadcrumb'
-		id:           cfg.id
-		id_focus:     cfg.id_focus
-		sizing:       cfg.sizing
-		color:        cfg.color
-		color_border: cfg.color_border
-		size_border:  cfg.size_border
-		radius:       cfg.radius
-		padding:      cfg.padding
-		spacing:      cfg.spacing
-		disabled:     cfg.disabled
-		invisible:    cfg.invisible
-		on_keydown:   fn [disabled, items, selected, on_select, id_focus] (_ &Layout, mut e Event, mut w Window) {
+		name:             'breadcrumb'
+		id:               cfg.id
+		id_focus:         cfg.id_focus
+		a11y_role:        .toolbar
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.id)
+		a11y_description: cfg.a11y_description
+		sizing:           cfg.sizing
+		color:            cfg.color
+		color_border:     cfg.color_border
+		size_border:      cfg.size_border
+		radius:           cfg.radius
+		padding:          cfg.padding
+		spacing:          cfg.spacing
+		disabled:         cfg.disabled
+		invisible:        cfg.invisible
+		on_keydown:       fn [disabled, items, selected, on_select, id_focus] (_ &Layout, mut e Event, mut w Window) {
 			bc_on_keydown(disabled, items, selected, on_select, id_focus, mut e, mut w)
 		}
-		content:      outer_content
+		content:          outer_content
 	)
 }
 

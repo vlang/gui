@@ -111,7 +111,9 @@ pub:
 	mode                  InputMode // enable multiline
 	disabled              bool
 	invisible             bool
-	is_password           bool // mask input characters with '*'s
+	is_password           bool   // mask input characters with '*'s
+	a11y_label            string // override label for screen readers
+	a11y_description      string // extended help text
 }
 
 @[minify]
@@ -342,10 +344,27 @@ pub fn input(cfg InputCfg) View {
 		]
 	}
 
+	input_a11y_lbl := a11y_label(cfg.a11y_label, cfg.placeholder)
+	mut input_a11y := &AccessInfo(unsafe { nil })
+	if input_a11y_lbl.len > 0 || cfg.a11y_description.len > 0 || cfg.text.len > 0 {
+		input_a11y = &AccessInfo{
+			label:       input_a11y_lbl
+			description: cfg.a11y_description
+			value_text:  cfg.text
+		}
+	}
+
 	return column(
 		name:            'input'
 		id:              cfg.id
 		id_focus:        cfg.id_focus
+		a11y_role:       if cfg.mode == .multiline {
+			AccessRole.text_area
+		} else {
+			AccessRole.text_field
+		}
+		a11y_state:      if cfg.id_focus == 0 { AccessState.read_only } else { AccessState.none }
+		a11y:            input_a11y
 		tooltip:         cfg.tooltip
 		width:           cfg.width
 		height:          cfg.height

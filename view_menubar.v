@@ -65,9 +65,11 @@ pub mut:
 	float_tie_off FloatAttach
 
 	// Visibility and interactivity flags.
-	disabled  bool
-	invisible bool
-	float     bool
+	disabled         bool
+	invisible        bool
+	float            bool
+	a11y_label       string // override label for screen readers
+	a11y_description string // extended help text
 }
 
 // menubar creates a menubar and all nested menus from a MenubarCfg definition
@@ -99,22 +101,25 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 
 	// Construct the menubar UI tree.
 	return row(
-		name:          'menubar'
-		id:            c.id
-		id_focus:      c.id_focus
-		color:         c.color
-		color_border:  c.color_border
-		float:         c.float
-		float_anchor:  c.float_anchor
-		float_tie_off: c.float_tie_off
-		disabled:      c.disabled
-		invisible:     c.invisible
-		size_border:   c.size_border
-		sizing:        c.sizing
-		on_keydown:    make_menubar_on_keydown(c)
-		amend_layout:  make_menubar_amend_layout(c.id_focus)
-		padding:       c.padding
-		radius:        c.radius
+		name:             'menubar'
+		id:               c.id
+		id_focus:         c.id_focus
+		a11y_role:        .menu_bar
+		a11y_label:       a11y_label(c.a11y_label, c.id)
+		a11y_description: c.a11y_description
+		color:            c.color
+		color_border:     c.color_border
+		float:            c.float
+		float_anchor:     c.float_anchor
+		float_tie_off:    c.float_tie_off
+		disabled:         c.disabled
+		invisible:        c.invisible
+		size_border:      c.size_border
+		sizing:           c.sizing
+		on_keydown:       make_menubar_on_keydown(c)
+		amend_layout:     make_menubar_amend_layout(c.id_focus)
+		padding:          c.padding
+		radius:           c.radius
 		// menu_build handles constructing root items and their submenus.
 		content: menu_build(c, 0, c.items, window)
 	)

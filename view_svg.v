@@ -116,6 +116,8 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 		shape: &Shape{
 			shape_type: .svg
 			id:         sv.id
+			a11y_role:  .image
+			a11y:       make_a11y_info(sv.id, '')
 			resource:   svg_src
 			width:      width
 			height:     height

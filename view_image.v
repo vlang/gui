@@ -103,6 +103,8 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 		shape: &Shape{
 			shape_type: .image
 			id:         iv.id
+			a11y_role:  .image
+			a11y:       make_a11y_info(iv.id, '')
 			resource:   image_path
 			width:      width
 			min_width:  iv.min_width

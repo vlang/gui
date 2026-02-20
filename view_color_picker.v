@@ -8,15 +8,17 @@ module gui
 @[minify]
 pub struct ColorPickerCfg {
 pub:
-	id              string @[required]
-	color           Color = red
-	on_color_change fn (Color, mut Event, mut Window) @[required]
-	style           ColorPickerStyle = gui_theme.color_picker_style
-	id_focus        u32
-	show_hsv        bool
-	sizing          Sizing
-	width           f32
-	height          f32
+	id               string @[required]
+	color            Color = red
+	on_color_change  fn (Color, mut Event, mut Window) @[required]
+	style            ColorPickerStyle = gui_theme.color_picker_style
+	id_focus         u32
+	show_hsv         bool
+	sizing           Sizing
+	width            f32
+	height           f32
+	a11y_label       string // override label for screen readers
+	a11y_description string // extended help text
 }
 
 // color_picker creates a color picker View.
@@ -45,14 +47,17 @@ pub fn color_picker(cfg ColorPickerCfg) View {
 	id := cfg.id
 	color := cfg.color
 	return column(
-		name:         'color_picker'
-		id:           cfg.id
-		padding:      cfg.style.padding
-		spacing:      cfg.style.padding.top
-		color:        cfg.style.color
-		radius:       cfg.style.radius
-		content:      content
-		amend_layout: fn [id, color] (mut layout Layout, mut w Window) {
+		name:             'color_picker'
+		id:               cfg.id
+		a11y_role:        .color_well
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.id)
+		a11y_description: cfg.a11y_description
+		padding:          cfg.style.padding
+		spacing:          cfg.style.padding.top
+		color:            cfg.style.color
+		radius:           cfg.style.radius
+		content:          content
+		amend_layout:     fn [id, color] (mut layout Layout, mut w Window) {
 			// Initialize state from color if not already present
 			if !w.view_state.color_picker_state.contains(id) {
 				h, s, v := color.to_hsv()

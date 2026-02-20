@@ -45,6 +45,9 @@ pub:
 	v_align            VerticalAlign   = .middle
 	disabled           bool
 	invisible          bool
+	a11y_role          AccessRole // default .button; override for tab_item etc.
+	a11y_label         string     // explicit label for screen readers
+	a11y_description   string     // extended help text
 }
 
 // button creates a clickable button. Buttons can contain content other than text.
@@ -95,37 +98,40 @@ pub fn button(cfg ButtonCfg) View {
 	}
 
 	return row(
-		name:           'button'
-		id:             cfg.id
-		id_focus:       cfg.id_focus
-		color:          cfg.color
-		color_border:   cfg.color_border
-		size_border:    cfg.size_border
-		blur_radius:    cfg.blur_radius
-		shadow:         cfg.shadow
-		gradient:       cfg.gradient
-		padding:        cfg.padding
-		radius:         cfg.radius
-		width:          cfg.width
-		height:         cfg.height
-		min_width:      cfg.min_width
-		max_width:      cfg.max_width
-		min_height:     cfg.min_height
-		max_height:     cfg.max_height
-		sizing:         cfg.sizing
-		disabled:       cfg.disabled
-		invisible:      cfg.invisible
-		h_align:        cfg.h_align
-		v_align:        cfg.v_align
-		tooltip:        cfg.tooltip
-		float:          cfg.float
-		float_anchor:   cfg.float_anchor
-		float_tie_off:  cfg.float_tie_off
-		float_offset_x: cfg.float_offset_x
-		float_offset_y: cfg.float_offset_y
-		on_click:       resolved_on_click
-		on_char:        spacebar_to_click(resolved_on_click)
-		amend_layout:   fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
+		name:             'button'
+		id:               cfg.id
+		id_focus:         cfg.id_focus
+		a11y_role:        if cfg.a11y_role != .none { cfg.a11y_role } else { AccessRole.button }
+		a11y_label:       cfg.a11y_label
+		a11y_description: cfg.a11y_description
+		color:            cfg.color
+		color_border:     cfg.color_border
+		size_border:      cfg.size_border
+		blur_radius:      cfg.blur_radius
+		shadow:           cfg.shadow
+		gradient:         cfg.gradient
+		padding:          cfg.padding
+		radius:           cfg.radius
+		width:            cfg.width
+		height:           cfg.height
+		min_width:        cfg.min_width
+		max_width:        cfg.max_width
+		min_height:       cfg.min_height
+		max_height:       cfg.max_height
+		sizing:           cfg.sizing
+		disabled:         cfg.disabled
+		invisible:        cfg.invisible
+		h_align:          cfg.h_align
+		v_align:          cfg.v_align
+		tooltip:          cfg.tooltip
+		float:            cfg.float
+		float_anchor:     cfg.float_anchor
+		float_tie_off:    cfg.float_tie_off
+		float_offset_x:   cfg.float_offset_x
+		float_offset_y:   cfg.float_offset_y
+		on_click:         resolved_on_click
+		on_char:          spacebar_to_click(resolved_on_click)
+		amend_layout:     fn [color_focus, color_border_focus] (mut layout Layout, mut w Window) {
 			if layout.shape.disabled || !layout.shape.has_events()
 				|| layout.shape.events.on_click == unsafe { nil } {
 				return
@@ -135,7 +141,7 @@ pub fn button(cfg ButtonCfg) View {
 				layout.shape.color_border = color_border_focus
 			}
 		}
-		on_hover:       fn [color_hover, color_click, user_on_hover] (mut layout Layout, mut e Event, mut w Window) {
+		on_hover:         fn [color_hover, color_click, user_on_hover] (mut layout Layout, mut e Event, mut w Window) {
 			if !layout.shape.has_events() || layout.shape.events.on_click == unsafe { nil } {
 				return
 			}
@@ -150,6 +156,6 @@ pub fn button(cfg ButtonCfg) View {
 				user_on_hover(layout, mut e, mut w)
 			}
 		}
-		content:        resolved_content
+		content:          resolved_content
 	)
 }

@@ -69,15 +69,224 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 #### Phase 1 — Metadata Model (cross-platform)
 
-- [ ] `AccessRole` enum on Shape (button, text_field,
-      static_text, group, slider, checkbox, tab, menu_item, …)
-- [ ] `a11y_label` / `a11y_description` string fields on Shape
-- [ ] `AccessState` flags (expanded, selected, checked,
-      disabled, required, invalid)
-- [ ] `a11y_value` representation (text for inputs, f32 for
-      sliders/progress, index for tabs)
-- [ ] Cfg-level `label` / `description` fields that propagate
-      to Shape for every core widget
+##### 1. `AccessRole` enum (new file `a11y.v`)
+
+35-value `u8` enum on Shape. Zero value `.none` = invisible to
+a11y tree. Maps 1:1 to NSAccessibilityRole (macOS) / UIA Control
+Type (Windows).
+
+```v ignore
+pub enum AccessRole as u8 {
+    none
+    button
+    checkbox
+    color_well
+    combo_box
+    date_field
+    dialog
+    disclosure
+    grid
+    grid_cell
+    group
+    heading
+    image
+    link
+    list
+    list_item
+    menu
+    menu_bar
+    menu_item
+    progress_bar
+    radio_button
+    radio_group
+    scroll_area
+    scroll_bar
+    slider
+    splitter
+    static_text
+    switch_toggle
+    tab
+    tab_item
+    text_field
+    text_area
+    toolbar
+    tree
+    tree_item
+}
+```
+
+##### 2. `AccessState` bitfield
+
+`u16` on Shape, follows `Modifier` pattern from `event.v`.
+`disabled` excluded — `Shape.disabled` already exists.
+
+```v ignore
+pub enum AccessState as u16 {
+    none      = 0
+    expanded  = 1    // disclosure/expand_panel open
+    selected  = 2    // tab, list item, menu item
+    checked   = 4    // toggle, checkbox
+    required  = 8    // form validation
+    invalid   = 16   // form validation error
+    busy      = 32   // async loading / progress
+    read_only = 64   // non-editable text field
+    modal     = 128  // dialog
+}
+
+pub fn (s AccessState) has(flag AccessState) bool {
+    return u16(s) & u16(flag) > 0 || s == flag
+}
+```
+
+##### 3. `AccessInfo` sub-struct
+
+Heap-allocated, nil when unused. Same lazy-alloc pattern as
+`EventHandlers` / `TextConfig` / `ShapeEffects`.
+
+```v ignore
+@[heap]
+pub struct AccessInfo {
+pub mut:
+    label         string  // primary screen-reader label
+    description   string  // extended help text
+    value_text    string  // current value (live buffer)
+    value_num     f32     // numeric value (slider, progress)
+    value_min     f32     // range minimum
+    value_max     f32     // range maximum
+    heading_level u8      // 1-6 for headings, 0 otherwise
+}
+```
+
+Only allocated when at least one field is meaningful. Helper:
+
+```v ignore
+@[inline]
+pub fn (shape &Shape) has_a11y() bool {
+    return shape.a11y != unsafe { nil }
+}
+```
+
+##### 4. Shape struct changes (+11 bytes)
+
+| Field | Type | Bytes | Placement |
+|-------|------|-------|-----------|
+| `a11y_role` | `AccessRole` | 1 | with 1-byte enums |
+| `a11y_state` | `AccessState` | 2 | after `a11y_role` |
+| `a11y` | `&AccessInfo` | 8 | with `events`/`tc`/`fx` |
+
+Role and state are value types — zero cost when `.none`.
+Pointer stays nil for shapes without string/numeric metadata.
+
+##### 5. Widget Cfg changes
+
+Every interactive Cfg gains two `pub:` fields (empty-string
+defaults, zero cost when unused):
+
+```v ignore
+a11y_label       string  // override auto-derived label
+a11y_description string  // extended help text
+```
+
+Roles, states, and values auto-set in each widget's
+`generate_layout()`. Button requires explicit `a11y_label`
+(no auto-derive from `content []View`).
+
+##### 6. Widget mapping table
+
+**Roles and label sources:**
+
+| Widget | `AccessRole` | Label source |
+|--------|--------------|--------------|
+| `button` | `.button` | `a11y_label` (explicit) |
+| `toggle` / `checkbox` | `.checkbox` | `cfg.label` |
+| `radio` | `.radio_button` | `cfg.label` |
+| `radio_button_group` | `.radio_group` | `cfg.title` |
+| `switch` | `.switch_toggle` | `cfg.label` |
+| `input` | `.text_field` | `cfg.placeholder` |
+| `input` (multiline) | `.text_area` | `cfg.placeholder` |
+| `numeric_input` | `.text_field` | `cfg.placeholder` |
+| `input_date` | `.date_field` | `cfg.placeholder` |
+| `select` | `.combo_box` | `cfg.placeholder` |
+| `range_slider` | `.slider` | `cfg.id` (fallback) |
+| `progress_bar` | `.progress_bar` | `cfg.text` |
+| `tab_control` | `.tab` | `cfg.id` |
+| `tab_item` | `.tab_item` | `cfg.label` |
+| `expand_panel` | `.disclosure` | — |
+| `tree` | `.tree` | `cfg.id` |
+| `tree_node` | `.tree_item` | `cfg.text` |
+| `dialog` | `.dialog` | `cfg.title` |
+| `menu` / `menubar` | `.menu_bar` | `cfg.id` |
+| `menu_item` | `.menu_item` | `cfg.text` |
+| `breadcrumb` | `.toolbar` | `cfg.id` |
+| `breadcrumb_item` | `.link` | `cfg.label` |
+| `splitter` | `.splitter` | `cfg.id` |
+| `data_grid` | `.grid` | — |
+| `listbox` | `.list` | `cfg.id` |
+| `color_picker` | `.color_well` | `cfg.id` |
+| `image` | `.image` | `cfg.id` / `cfg.src` |
+| `svg` | `.image` | `cfg.id` |
+| `markdown` | `.group` | — |
+| `text` | `.static_text` | auto |
+| `container` (titled) | `.group` | `cfg.title` |
+| `container` (scroll) | `.scroll_area` | — |
+| `container` (plain) | `.none` | — |
+| `scrollbar` | `.scroll_bar` | — |
+
+All `a11y_label` overrides take priority over auto-derived
+labels.
+
+**State auto-derivation:**
+
+| Widget | Flags | Source |
+|--------|-------|--------|
+| `toggle` / `checkbox` | `.checked` | `cfg.select` |
+| `radio` | `.selected` | `cfg.select` |
+| `switch` | `.checked` | `cfg.select` |
+| `expand_panel` | `.expanded` | `cfg.open` |
+| `tab_item` (active) | `.selected` | active index |
+| `menu_item` (active) | `.selected` | focus state |
+| `progress_bar` (indef.) | `.busy` | indefinite flag |
+| `dialog` | `.modal` | always |
+| `input` (readonly) | `.read_only` | focus/editable |
+| form field (errors) | `.invalid` | validation |
+| form field (required) | `.required` | validator |
+
+**Value auto-derivation:**
+
+| Widget | `value_text` | `value_num` | min/max |
+|--------|-------------|-------------|---------|
+| `input` | live buffer | — | — |
+| `numeric_input` | formatted | `cfg.value` | cfg |
+| `range_slider` | — | `cfg.value` | cfg |
+| `progress_bar` | percent | `cfg.percent` | 0–1 |
+| `select` | joined sel. | — | — |
+
+Internally generated shapes (data_grid column headers,
+listbox items, markdown headings with `heading_level`) also
+receive appropriate roles.
+
+##### 7. New files
+
+- [ ] `a11y.v` — `AccessRole`, `AccessState` + `.has()`,
+      `AccessInfo`, `has_a11y()` helper
+- [ ] `_a11y_test.v` — unit tests (bitfield logic, nil guard,
+      enum boundaries) + integration tests (Cfg → layout →
+      verify roles/labels/states on Shape tree)
+
+##### 8. Verification checklist
+
+- [ ] `v build .` compiles clean
+- [ ] `v test .` passes (existing + new `_a11y_test.v`)
+- [ ] `v fmt -w a11y.v shape.v` formatted
+- [ ] Every widget with `id_focus > 0` emits
+      `a11y_role != .none`
+- [ ] `AccessState.has()` works for single + combined flags
+- [ ] `has_a11y()` returns false when no a11y data set
+- [ ] `a11y_label` override beats auto-derived label
+- [ ] No heap allocation for shapes without a11y strings
+      (role/state are value types; `&AccessInfo` stays nil)
+- [ ] Shape struct size increase is exactly 11 bytes
+- [ ] Showcase app runs without visual regression
 
 #### Phase 2 — macOS NSAccessibility Backend
 

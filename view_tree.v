@@ -7,11 +7,13 @@ module gui
 @[minify]
 pub struct TreeCfg {
 pub:
-	id        string @[required]
-	on_select fn (string, mut Window) = unsafe { nil }
-	nodes     []TreeNodeCfg
-	indent    f32 = gui_theme.tree_style.indent
-	spacing   f32 = gui_theme.tree_style.spacing
+	id               string @[required]
+	on_select        fn (string, mut Window) = unsafe { nil }
+	nodes            []TreeNodeCfg
+	indent           f32 = gui_theme.tree_style.indent
+	spacing          f32 = gui_theme.tree_style.spacing
+	a11y_label       string // override label for screen readers
+	a11y_description string // extended help text
 }
 
 // tree creates a tree view from the given [TreeCfg](#TreeCfg)
@@ -27,10 +29,13 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		content << cfg.node_content(node, tree_map, mut window)
 	}
 	return column(
-		name:    'tree'
-		padding: padding_none
-		spacing: cfg.spacing
-		content: content
+		name:             'tree'
+		a11y_role:        .tree
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.id)
+		a11y_description: cfg.a11y_description
+		padding:          padding_none
+		spacing:          cfg.spacing
+		content:          content
 	)
 }
 
@@ -93,10 +98,12 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, tree_map map[string]bool, mut w
 	has_children := node.nodes.len > 0
 
 	content << row(
-		name:     'tree node content'
-		spacing:  0
-		padding:  padding_none
-		content:  [
+		name:       'tree node content'
+		a11y_role:  .tree_item
+		a11y_label: node.text
+		spacing:    0
+		padding:    padding_none
+		content:    [
 			// arrow
 			text(
 				text:       '${arrow} '
@@ -118,7 +125,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, tree_map map[string]bool, mut w
 				]
 			),
 		]
-		on_click: fn [cfg_id, on_select, is_open, has_children, id] (_ &Layout, mut e Event, mut w Window) {
+		on_click:   fn [cfg_id, on_select, is_open, has_children, id] (_ &Layout, mut e Event, mut w Window) {
 			if has_children {
 				mut tree_map := w.view_state.tree_state.get(cfg_id) or {
 					map[string]bool{}
@@ -131,7 +138,7 @@ fn (cfg &TreeCfg) node_content(node TreeNodeCfg, tree_map map[string]bool, mut w
 				e.is_handled = true
 			}
 		}
-		on_hover: fn (mut layout Layout, mut e Event, mut w Window) {
+		on_hover:   fn (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
 			for mut child in layout.children {
 				child.shape.color = gui_theme.color_hover

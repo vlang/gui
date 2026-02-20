@@ -34,6 +34,8 @@ pub:
 	id_scroll        u32
 	multiple         bool // allow multiple selections
 	size_border      f32 = gui_theme.list_box_style.size_border
+	a11y_label       string // override label for screen readers
+	a11y_description string // extended help text
 }
 
 // ListBoxOption is the data for a row in a [list_box](#list_box).
@@ -168,22 +170,25 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	}
 
 	return column(
-		name:         'list_box'
-		id_scroll:    cfg.id_scroll
-		width:        cfg.max_width
-		height:       cfg.height
-		min_width:    cfg.min_width
-		max_width:    cfg.max_width
-		min_height:   cfg.min_height
-		max_height:   cfg.max_height
-		color:        cfg.color
-		color_border: cfg.color_border
-		size_border:  cfg.size_border
-		radius:       cfg.radius
-		padding:      cfg.padding
-		sizing:       cfg.sizing
-		spacing:      0
-		content:      list
+		name:             'list_box'
+		a11y_role:        .list
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.id)
+		a11y_description: cfg.a11y_description
+		id_scroll:        cfg.id_scroll
+		width:            cfg.max_width
+		height:           cfg.height
+		min_width:        cfg.min_width
+		max_width:        cfg.max_width
+		min_height:       cfg.min_height
+		max_height:       cfg.max_height
+		color:            cfg.color
+		color_border:     cfg.color_border
+		size_border:      cfg.size_border
+		radius:           cfg.radius
+		padding:          cfg.padding
+		sizing:           cfg.sizing
+		spacing:          0
+		content:          list
 	)
 }
 

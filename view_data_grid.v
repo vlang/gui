@@ -262,6 +262,8 @@ pub:
 	on_detail_row_view        fn (GridRow, mut Window) View                 = unsafe { nil }
 	on_copy_rows              fn ([]GridRow, mut Event, mut Window) ?string = unsafe { nil }
 	on_row_activate           fn (GridRow, mut Event, mut Window)           = unsafe { nil }
+	a11y_label                string // override label for screen readers
+	a11y_description          string // extended help text
 }
 
 fn data_grid_indicator_text_style(base TextStyle) TextStyle {
@@ -566,27 +568,30 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	// Final assembly: outer column with keyboard/mouse
 	// handlers wrapping all frozen zones and scroll body.
 	return column(
-		name:          'data_grid'
-		id:            resolved_cfg.id
-		id_focus:      focus_id
-		on_keydown:    make_data_grid_on_keydown(resolved_cfg, columns, row_height, static_top,
-			scroll_id, page_indices, frozen_top_ids, presentation.data_to_display)
-		on_char:       make_data_grid_on_char(resolved_cfg, columns)
-		on_mouse_move: make_data_grid_on_mouse_move(resolved_cfg.id)
-		color:         resolved_cfg.color_background
-		color_border:  resolved_cfg.color_border
-		size_border:   resolved_cfg.size_border
-		radius:        resolved_cfg.radius
-		padding:       padding_none
-		spacing:       0
-		sizing:        resolved_cfg.sizing
-		width:         resolved_cfg.width
-		height:        resolved_cfg.height
-		min_width:     resolved_cfg.min_width
-		max_width:     resolved_cfg.max_width
-		min_height:    resolved_cfg.min_height
-		max_height:    resolved_cfg.max_height
-		content:       content
+		name:             'data_grid'
+		id:               resolved_cfg.id
+		id_focus:         focus_id
+		a11y_role:        .grid
+		a11y_label:       resolved_cfg.a11y_label
+		a11y_description: resolved_cfg.a11y_description
+		on_keydown:       make_data_grid_on_keydown(resolved_cfg, columns, row_height,
+			static_top, scroll_id, page_indices, frozen_top_ids, presentation.data_to_display)
+		on_char:          make_data_grid_on_char(resolved_cfg, columns)
+		on_mouse_move:    make_data_grid_on_mouse_move(resolved_cfg.id)
+		color:            resolved_cfg.color_background
+		color_border:     resolved_cfg.color_border
+		size_border:      resolved_cfg.size_border
+		radius:           resolved_cfg.radius
+		padding:          padding_none
+		spacing:          0
+		sizing:           resolved_cfg.sizing
+		width:            resolved_cfg.width
+		height:           resolved_cfg.height
+		min_width:        resolved_cfg.min_width
+		max_width:        resolved_cfg.max_width
+		min_height:       resolved_cfg.min_height
+		max_height:       resolved_cfg.max_height
+		content:          content
 	)
 }
 

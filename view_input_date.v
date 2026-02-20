@@ -43,6 +43,8 @@ pub:
 	hide_today_indicator     bool = gui_theme.date_picker_style.hide_today_indicator
 	monday_first_day_of_week bool = gui_theme.date_picker_style.monday_first_day_of_week
 	show_adjacent_months     bool = gui_theme.date_picker_style.show_adjacent_months
+	a11y_label               string // override label for screen readers
+	a11y_description         string // extended help text
 }
 
 // input_date creates an input field with an integrated date picker that allows
@@ -70,13 +72,16 @@ pub:
 pub fn (mut window Window) input_date(cfg InputDateCfg) View {
 	picker_visible := window.view_state.input_date_state.get(cfg.id) or { false }
 	return column(
-		padding: padding_none
-		content: [
+		a11y_role: .date_field
+		padding:   padding_none
+		content:   [
 			input(
-				id:          cfg.id
-				text:        cfg.date_format()
-				icon:        icon_calendar
-				placeholder: cfg.placeholder
+				id:               cfg.id
+				text:             cfg.date_format()
+				icon:             icon_calendar
+				placeholder:      cfg.placeholder
+				a11y_label:       cfg.a11y_label
+				a11y_description: cfg.a11y_description
 				// on_text_changed:    cfg.on_text_changed
 				on_enter:          cfg.on_enter
 				on_click_icon:     fn [cfg] (_ &Layout, mut e Event, mut w Window) {

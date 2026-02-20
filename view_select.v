@@ -30,6 +30,8 @@ pub:
 	select_multiple   bool
 	no_wrap           bool
 	sizing            Sizing
+	a11y_label        string // override label for screen readers
+	a11y_description  string // extended help text
 }
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
@@ -111,11 +113,24 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	color_focus := cfg.color_focus
 	color_border_focus := cfg.color_border_focus
 
+	select_a11y_lbl := a11y_label(cfg.a11y_label, cfg.placeholder)
+	select_value := cfg.select.join(', ')
+	mut select_a11y := &AccessInfo(unsafe { nil })
+	if select_a11y_lbl.len > 0 || cfg.a11y_description.len > 0 || select_value.len > 0 {
+		select_a11y = &AccessInfo{
+			label:       select_a11y_lbl
+			description: cfg.a11y_description
+			value_text:  select_value
+		}
+	}
+
 	return row(
-		name:     'select'
-		id:       cfg.id
-		id_focus: cfg.id_focus
-		clip:     clip
+		name:      'select'
+		id:        cfg.id
+		id_focus:  cfg.id_focus
+		a11y_role: .combo_box
+		a11y:      select_a11y
+		clip:      clip
 
 		// Container props
 		color:        cfg.color

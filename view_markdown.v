@@ -718,6 +718,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 		128, 20), rgba(128, 128, 128, 50))
 
 	return column(
+		a11y_role:    .group
 		color:        cfg.color
 		color_border: cfg.color_border
 		size_border:  cfg.size_border

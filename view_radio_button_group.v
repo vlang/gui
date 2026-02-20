@@ -24,18 +24,20 @@ module gui
 @[minify]
 pub struct RadioButtonGroupCfg {
 pub:
-	title        string
-	title_bg     Color = gui_theme.color_background
-	padding      ?Padding
-	value        string
-	sizing       Sizing
-	on_select    fn (string, mut Window) @[required]
-	options      []RadioOption
-	min_width    f32
-	min_height   f32
-	id_focus     u32
-	color_border Color = gui_theme.color_border
-	size_border  f32   = gui_theme.size_border
+	title            string
+	title_bg         Color = gui_theme.color_background
+	padding          ?Padding
+	value            string
+	sizing           Sizing
+	on_select        fn (string, mut Window) @[required]
+	options          []RadioOption
+	min_width        f32
+	min_height       f32
+	id_focus         u32
+	color_border     Color = gui_theme.color_border
+	size_border      f32   = gui_theme.size_border
+	a11y_label       string // override label for screen readers
+	a11y_description string // extended help text
 }
 
 // RadioOption defines a radio button for a [RadioButtonGroupCfg](#RadioButtonGroupCfg)
@@ -58,16 +60,19 @@ pub fn radio_option(label string, value string) RadioOption {
 pub fn radio_button_group_column(cfg RadioButtonGroupCfg) View {
 	default_padding := if cfg.title.len == 0 { padding_none } else { gui_theme.padding_large }
 	return column(
-		name:         'radio_button_group_column'
-		title:        cfg.title
-		title_bg:     cfg.title_bg
-		color_border: cfg.color_border
-		size_border:  cfg.size_border
-		padding:      cfg.padding or { default_padding }
-		min_width:    cfg.min_width
-		min_height:   cfg.min_height
-		sizing:       cfg.sizing
-		content:      build_options(cfg)
+		name:             'radio_button_group_column'
+		title:            cfg.title
+		title_bg:         cfg.title_bg
+		a11y_role:        .radio_group
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.title)
+		a11y_description: cfg.a11y_description
+		color_border:     cfg.color_border
+		size_border:      cfg.size_border
+		padding:          cfg.padding or { default_padding }
+		min_width:        cfg.min_width
+		min_height:       cfg.min_height
+		sizing:           cfg.sizing
+		content:          build_options(cfg)
 	)
 }
 
@@ -80,16 +85,19 @@ pub fn radio_button_group_row(cfg RadioButtonGroupCfg) View {
 		gui_theme.padding_large
 	}
 	return row(
-		name:         'radio_button_group_row'
-		title:        cfg.title
-		title_bg:     cfg.title_bg
-		color_border: cfg.color_border
-		size_border:  cfg.size_border
-		padding:      cfg.padding or { default_padding }
-		min_width:    cfg.min_width
-		min_height:   cfg.min_height
-		sizing:       cfg.sizing
-		content:      build_options(cfg)
+		name:             'radio_button_group_row'
+		title:            cfg.title
+		title_bg:         cfg.title_bg
+		a11y_role:        .radio_group
+		a11y_label:       a11y_label(cfg.a11y_label, cfg.title)
+		a11y_description: cfg.a11y_description
+		color_border:     cfg.color_border
+		size_border:      cfg.size_border
+		padding:          cfg.padding or { default_padding }
+		min_width:        cfg.min_width
+		min_height:       cfg.min_height
+		sizing:           cfg.sizing
+		content:          build_options(cfg)
 	)
 }
 
