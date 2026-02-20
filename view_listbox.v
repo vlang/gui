@@ -151,12 +151,11 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 		)
 	}
 
-	selected := list_box_selection_map(cfg.selected_ids)
 	for idx in first_visible .. last_visible + 1 {
 		if idx < 0 || idx >= cfg.data.len {
 			continue
 		}
-		list << list_box_item_view(cfg.data[idx], cfg, selected)
+		list << list_box_item_view(cfg.data[idx], cfg)
 	}
 
 	if virtualize && last_visible < last_row_idx {
@@ -172,7 +171,7 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	// Build value_text from selected item names
 	mut selected_names := []string{cap: cfg.selected_ids.len}
 	for dat in cfg.data {
-		if dat.id in selected {
+		if dat.id in cfg.selected_ids {
 			selected_names << dat.name
 		}
 	}
@@ -223,8 +222,8 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	)
 }
 
-fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, selected map[string]bool) View {
-	color := if dat.id in selected {
+fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
+	color := if dat.id in cfg.selected_ids {
 		cfg.color_select
 	} else {
 		color_transparent
@@ -271,7 +270,7 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, selected map[string]boo
 	selected_ids := cfg.selected_ids
 	color_hover := cfg.color_hover
 
-	item_a11y_state := if dat.id in selected {
+	item_a11y_state := if dat.id in cfg.selected_ids {
 		AccessState.selected
 	} else {
 		AccessState.none
@@ -287,14 +286,15 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, selected map[string]boo
 		content:    content
 		on_click:   fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ voidptr, mut e Event, mut w Window) {
 			if has_on_select && !is_sub {
-				mut ids := selected_ids.clone()
-				if !is_multiple {
-					ids.clear()
-				}
-				if dat_id in selected_ids {
-					ids = ids.filter(it != dat_id)
+				mut ids := if !is_multiple {
+					[dat_id]
+				} else if dat_id in selected_ids {
+					selected_ids.filter(it != dat_id)
 				} else {
-					ids << dat_id
+					mut a := []string{cap: selected_ids.len + 1}
+					a << selected_ids
+					a << dat_id
+					a
 				}
 				on_select(ids, mut e, mut w)
 			}
@@ -308,14 +308,6 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, selected map[string]boo
 			}
 		}
 	)
-}
-
-fn list_box_selection_map(ids []string) map[string]bool {
-	mut m := map[string]bool{}
-	for id in ids {
-		m[id] = true
-	}
-	return m
 }
 
 fn list_box_height(cfg ListBoxCfg) f32 {
@@ -584,14 +576,15 @@ fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, 
 		.enter, .space {
 			if cur_idx >= 0 && cur_idx < item_ids.len {
 				dat_id := item_ids[cur_idx]
-				mut ids := selected_ids.clone()
-				if !is_multiple {
-					ids.clear()
-				}
-				if dat_id in selected_ids {
-					ids = ids.filter(it != dat_id)
+				mut ids := if !is_multiple {
+					[dat_id]
+				} else if dat_id in selected_ids {
+					selected_ids.filter(it != dat_id)
 				} else {
-					ids << dat_id
+					mut a := []string{cap: selected_ids.len + 1}
+					a << selected_ids
+					a << dat_id
+					a
 				}
 				on_select(ids, mut e, mut w)
 			}

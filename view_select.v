@@ -36,9 +36,9 @@ pub:
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
 pub fn (window &Window) select(cfg SelectCfg) View {
 	is_open := window.view_state.select_state.get(cfg.id) or { false }
+	id_scroll := fnv1a.sum32_string(cfg.id + 'dropdown')
 	mut options := []View{}
 	if is_open {
-		id_scroll := fnv1a.sum32_string(cfg.id + 'dropdown')
 		highlighted_idx := window.view_state.select_highlight.get(cfg.id) or { 0 }
 		options.ensure_cap(cfg.options.len)
 		for i, option in cfg.options {
@@ -101,7 +101,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 			float_offset_y: -cfg.size_border
 
 			// List/Scroll Props merged
-			id_scroll: fnv1a.sum32_string(cfg.id + 'dropdown')
+			id_scroll: id_scroll
 			padding:   padding(pad_small, pad_medium, pad_small, pad_small)
 			spacing:   0
 			content:   options
@@ -223,9 +223,11 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 						s = if option in cfg.select {
 							cfg.select.filter(it != option)
 						} else {
-							mut a := cfg.select.clone()
+							mut a := []string{cap: cfg.select.len + 1}
+							a << cfg.select
 							a << option
-							a.sorted()
+							a.sort()
+							a
 						}
 					} else {
 						w.view_state.select_state.clear()
@@ -330,9 +332,11 @@ fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_sc
 					s = if option in select_array {
 						select_array.filter(it != option)
 					} else {
-						mut a := select_array.clone()
+						mut a := []string{cap: select_array.len + 1}
+						a << select_array
 						a << option
-						a.sorted()
+						a.sort()
+						a
 					}
 				} else {
 					w.view_state.select_state.clear()

@@ -92,6 +92,9 @@ pub mut:
 	cached_transform_layout &vglyph.Layout = unsafe { nil }
 	// Internal transformed-layout cache key.
 	cached_transform_key u64
+	// Cached password mask text and its source hash.
+	cached_pw_mask string
+	cached_pw_hash int
 }
 
 // EventHandlers holds optional event callback fields for a Shape.

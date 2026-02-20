@@ -66,6 +66,16 @@ fn clone_layout_for_draw(src &vglyph.Layout) &vglyph.Layout {
 	}
 }
 
+fn get_password_mask(mut tc ShapeTextConfig) string {
+	h := tc.text.hash()
+	if tc.cached_pw_hash == h && tc.cached_pw_mask.len > 0 {
+		return tc.cached_pw_mask
+	}
+	tc.cached_pw_mask = password_mask_text_keep_newlines(tc.text)
+	tc.cached_pw_hash = h
+	return tc.cached_pw_mask
+}
+
 fn password_mask_text_keep_newlines(text string) string {
 	mut out := []rune{cap: utf8_str_visible_length(text)}
 	for r in text.runes_iterator() {
@@ -121,7 +131,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				cfg.block.width = shape.tc.last_constraint_width
 				cfg.no_hit_testing = true
 				text_to_layout := if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
-					password_mask_text_keep_newlines(shape.tc.text)
+					get_password_mask(mut shape.tc)
 				} else {
 					shape.tc.text
 				}

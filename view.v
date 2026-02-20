@@ -31,5 +31,4 @@ fn view_clear(mut view View) {
 		view_clear(mut view.content[i])
 	}
 	view.content.clear()
-	view.content = []
 }

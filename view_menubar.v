@@ -192,11 +192,12 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 	}
 
 	// Determine new ID based on directional key.
+	mm := menu_mapper(cfg.items)
 	new_menu_id := match e.key_code {
-		.left { menu_mapper(cfg.items)[menu_id].left }
-		.right { menu_mapper(cfg.items)[menu_id].right }
-		.up { menu_mapper(cfg.items)[menu_id].up }
-		.down { menu_mapper(cfg.items)[menu_id].down }
+		.left { mm[menu_id].left }
+		.right { mm[menu_id].right }
+		.up { mm[menu_id].up }
+		.down { mm[menu_id].down }
 		else { menu_id }
 	}
 

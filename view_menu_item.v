@@ -177,7 +177,7 @@ fn (cfg MenubarCfg) menu_item_click(item_cfg MenuItemCfg) fn (&Layout, mut Event
 	item_action := item_cfg.action
 	menubar_action := cfg.action
 	has_submenu := item_cfg.submenu.len > 0
-	is_top_level := item_cfg.id in cfg.items.map(it.id)
+	is_top_level := cfg.items.any(it.id == item_cfg.id)
 
 	// Note: item_cfg is still captured because item_action callback expects &MenuItemCfg parameter
 	return fn [id_focus, item_id, item_action, menubar_action, has_submenu, is_top_level, item_cfg] (_ &Layout, mut e Event, mut w Window) {

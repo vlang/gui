@@ -2,6 +2,20 @@ module gui
 
 import gg
 
+// utf8_rune_count returns the number of Unicode code points in s
+// without allocating a []rune array.
+@[inline]
+fn utf8_rune_count(s string) int {
+	mut count := 0
+	mut i := 0
+	for i < s.len {
+		b := unsafe { s.str[i] }
+		i += ((0xe5000000 >> ((b >> 3) & 0x1e)) & 3) + 1
+		count++
+	}
+	return count
+}
+
 // cursor_left moves the cursor position one character to the left in the text.
 // It decrements the position by one, but ensures the result never goes below
 // zero, effectively preventing the cursor from moving before the start of the
@@ -16,7 +30,7 @@ fn cursor_left(pos int) int {
 // the cursor from moving beyond the end of the text. Returns the new cursor
 // position.
 fn cursor_right(shape Shape, pos int) int {
-	return int_min(shape.tc.text.runes().len, pos + 1)
+	return int_min(utf8_rune_count(shape.tc.text), pos + 1)
 }
 
 // cursor_up moves the cursor position up one line using vglyph geometry.
@@ -87,7 +101,7 @@ fn cursor_home() int {
 // character count across all wrapped text lines. This is equivalent to the
 // "End" key behavior, placing the cursor at the end of the entire text content.
 fn cursor_end(shape Shape) int {
-	return shape.tc.text.runes().len
+	return utf8_rune_count(shape.tc.text)
 }
 
 const bytes_blanks = [u8(` `), `\t`, `\f`, `\v`]!
@@ -177,7 +191,7 @@ fn cursor_end_of_line(shape Shape, pos int) int {
 	byte_idx := rune_to_byte_index(shape.tc.text, pos)
 
 	if !shape.has_text_layout() {
-		return shape.tc.text.runes().len
+		return utf8_rune_count(shape.tc.text)
 	}
 
 	for i, line in shape.tc.vglyph_layout.lines {
@@ -195,7 +209,7 @@ fn cursor_end_of_line(shape Shape, pos int) int {
 			return byte_to_rune_index(shape.tc.text, limit)
 		}
 	}
-	return shape.tc.text.runes().len // default to end
+	return utf8_rune_count(shape.tc.text) // default to end
 }
 
 // cursor_start_of_paragraph finds the start of the current paragraph in wrapped text
