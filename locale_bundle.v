@@ -60,7 +60,7 @@ pub fn locale_load(path string) !Locale {
 }
 
 fn (b LocaleBundle) to_locale() Locale {
-	d := Locale{}
+	d := locale_en_us
 	return Locale{
 		id:       if b.id.len > 0 { b.id } else { d.id }
 		text_dir: parse_text_dir(b.text_dir)
@@ -108,7 +108,7 @@ fn (b LocaleBundle) to_locale() Locale {
 		months_short:   to_fixed_12(b.months_short, d.months_short)
 		months_full:    to_fixed_12(b.months_full, d.months_full)
 		// App translations
-		translations: b.translations.clone()
+		translations: b.translations
 	}
 }
 
@@ -207,9 +207,27 @@ fn parse_affix_position(s string, fallback NumericAffixPosition) NumericAffixPos
 	}
 }
 
+// first_rune decodes the first UTF-8 codepoint from s
+// without allocating a []rune array. Returns fallback
+// when s is empty.
 fn first_rune(s string, fallback rune) rune {
 	if s.len == 0 {
 		return fallback
 	}
-	return s.runes()[0]
+	b0 := s[0]
+	// ASCII fast path (covers . , - + and digits).
+	if b0 < 0x80 {
+		return rune(b0)
+	}
+	// Multi-byte: determine sequence length from lead byte.
+	if b0 >> 5 == 0x06 && s.len >= 2 {
+		return rune(u32(b0 & 0x1F) << 6 | u32(s[1] & 0x3F))
+	}
+	if b0 >> 4 == 0x0E && s.len >= 3 {
+		return rune(u32(b0 & 0x0F) << 12 | u32(s[1] & 0x3F) << 6 | u32(s[2] & 0x3F))
+	}
+	if b0 >> 3 == 0x1E && s.len >= 4 {
+		return rune(u32(b0 & 0x07) << 18 | u32(s[1] & 0x3F) << 12 | u32(s[2] & 0x3F) << 6 | u32(s[3] & 0x3F))
+	}
+	return fallback
 }

@@ -2,15 +2,6 @@ module gui
 
 import time
 
-// locale_fmt replaces {key} placeholders in a template string.
-pub fn locale_fmt(template string, params map[string]string) string {
-	mut result := template
-	for key, val in params {
-		result = result.replace('{${key}}', val)
-	}
-	return result
-}
-
 // locale_format_date formats a date using locale-aware month
 // substitution. MMMM → full month, MMM → short month.
 // Other tokens delegated to time.Time.custom_format().
