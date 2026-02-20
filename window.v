@@ -32,6 +32,7 @@ mut:
 	debug_layout             bool                 // enable layout performance stats
 	dialog_cfg               DialogCfg            // Configuration for the active dialog (if any)
 	filter_state             SvgFilterState       // Offscreen state for SVG filters
+	a11y                     A11y                 // Accessibility backend state (lazily initialized)
 	ime                      IME                  // Input Method Editor state (lazily initialized)
 	init_error               string               // error during initialization (e.g. text system fail)
 	layout                   Layout               // The current calculated layout tree
@@ -164,9 +165,11 @@ pub fn window(cfg &WindowCfg) &Window {
 fn frame_fn(mut window Window) {
 	window.flush_commands()
 	window.init_ime()
+	window.init_a11y()
 
 	if window.refresh_layout {
 		window.update()
+		window.sync_a11y()
 		window.refresh_layout = false
 		window.refresh_render_only = false
 	} else if window.refresh_render_only {
