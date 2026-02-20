@@ -10,7 +10,7 @@ pub fn (layout &Layout) find_shape(predicate fn (n Layout) bool) ?Shape {
 	return if predicate(layout) { layout.shape } else { none }
 }
 
-// find_layout walks the layout in dept first until predicate is satisfied.
+// find_layout walks the layout in depth first until predicate is satisfied.
 pub fn (layout &Layout) find_layout(predicate fn (n Layout) bool) ?Layout {
 	for child in layout.children {
 		if found := child.find_layout(predicate) {
@@ -167,7 +167,7 @@ fn (layout &Layout) spacing() f32 {
 fn content_width(layout &Layout) f32 {
 	mut width := f32(0)
 	if layout.shape.axis == .left_to_right {
-		// along the axis add up all children heights plus spacing
+		// along the axis add up all children widths plus spacing
 		width += layout.spacing()
 		for child in layout.children {
 			if child.shape.over_draw {

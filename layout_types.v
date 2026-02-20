@@ -15,6 +15,5 @@ fn layout_clear(mut layout Layout) {
 	}
 	layout.shape = unsafe { nil }
 	layout.parent = unsafe { nil }
-	layout.children.clear()
 	layout.children = []Layout{}
 }

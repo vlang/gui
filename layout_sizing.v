@@ -269,7 +269,6 @@ fn layout_widths(mut layout Layout) {
 			layout.shape.width += padding + spacing
 
 			if layout.shape.max_width > 0 {
-				layout.shape.max_width = layout.shape.max_width
 				layout.shape.width = f32_min(layout.shape.max_width, layout.shape.width)
 				layout.shape.min_width = f32_min(layout.shape.max_width, layout.shape.min_width)
 			}
@@ -318,7 +317,6 @@ fn layout_heights(mut layout Layout) {
 			layout.shape.height += padding + spacing
 
 			if layout.shape.max_height > 0 {
-				layout.shape.max_height = layout.shape.max_height
 				layout.shape.height = f32_min(layout.shape.max_height, layout.shape.height)
 				layout.shape.min_height = f32_min(layout.shape.max_height, layout.shape.min_height)
 			}

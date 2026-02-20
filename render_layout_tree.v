@@ -200,7 +200,6 @@ fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut wind
 // render_circle draws a shape as a circle in the middle of the shape's
 // rectangular region. Radius is half of the shortest side.
 fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
-	assert shape.shape_type == .circle
 	draw_rect := gg.Rect{
 		x:      shape.x
 		y:      shape.y
@@ -262,7 +261,6 @@ fn render_circle(mut shape Shape, clip DrawClip, mut window Window) {
 
 // render_rectangle draws a shape as a rectangle.
 fn render_rectangle(mut shape Shape, clip DrawClip, mut window Window) {
-	assert shape.shape_type == .rectangle
 	draw_rect := gg.Rect{
 		x:      shape.x
 		y:      shape.y
