@@ -6,8 +6,8 @@ import vglyph
 
 // render_layout walks the layout and generates renderers. If a shape is clipped,
 // then a clip rectangle is added to the context. Clip rectangles are added to the
-// draw context and the later, 'removed' by setting the clip rectangle to the
-// previous rectangle of if not present, infinity.
+// draw context and later 'removed' by setting the clip rectangle to the
+// previous rectangle or, if not present, infinity.
 fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Window) {
 	render_shape(mut layout.shape, bg_color, clip, mut window)
 
@@ -65,44 +65,50 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 		return
 	}
 
-	// Render with a local shape copy to avoid mutating persistent shape state.
-	mut draw_shape := shape
-	if draw_shape.opacity < 1.0 {
+	if shape.opacity < 1.0 {
+		// Copy to avoid mutating persistent colors on the rerender path.
+		mut draw_shape := shape
 		draw_shape.color = draw_shape.color.with_opacity(draw_shape.opacity)
 		draw_shape.color_border = draw_shape.color_border.with_opacity(draw_shape.opacity)
+		render_shape_inner(mut draw_shape, parent_color, clip, mut window)
+	} else {
+		render_shape_inner(mut shape, parent_color, clip, mut window)
 	}
+}
 
-	has_visible_border := draw_shape.size_border > 0 && draw_shape.color_border != color_transparent
-	has_visible_text := draw_shape.shape_type == .text && draw_shape.tc != unsafe { nil }
-		&& (draw_shape.tc.text_style.color != color_transparent
-		|| draw_shape.tc.text_style.stroke_width > 0)
+// render_shape_inner dispatches to the type-specific renderer after
+// visibility checks.
+fn render_shape_inner(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
+	has_visible_border := shape.size_border > 0 && shape.color_border != color_transparent
+	has_visible_text := shape.shape_type == .text && shape.tc != unsafe { nil }
+		&& (shape.tc.text_style.color != color_transparent || shape.tc.text_style.stroke_width > 0)
 	// SVG shapes have their own internal colors, so don't skip them
-	is_svg := draw_shape.shape_type == .svg
-	has_effects := draw_shape.fx != unsafe { nil } && (draw_shape.fx.gradient != unsafe { nil }
-		|| draw_shape.fx.shader != unsafe { nil }
-		|| draw_shape.fx.border_gradient != unsafe { nil })
-	if draw_shape.color == color_transparent && !has_effects && !has_visible_border
-		&& !has_visible_text && !is_svg {
+	is_svg := shape.shape_type == .svg
+	has_effects := shape.fx != unsafe { nil } && (shape.fx.gradient != unsafe { nil }
+		|| shape.fx.shader != unsafe { nil }
+		|| shape.fx.border_gradient != unsafe { nil })
+	if shape.color == color_transparent && !has_effects && !has_visible_border && !has_visible_text
+		&& !is_svg {
 		return
 	}
-	match draw_shape.shape_type {
+	match shape.shape_type {
 		.rectangle {
-			render_container(mut draw_shape, parent_color, clip, mut window)
+			render_container(mut shape, parent_color, clip, mut window)
 		}
 		.text {
-			render_text(mut draw_shape, clip, mut window)
+			render_text(mut shape, clip, mut window)
 		}
 		.image {
-			render_image(mut draw_shape, clip, mut window)
+			render_image(mut shape, clip, mut window)
 		}
 		.circle {
-			render_circle(mut draw_shape, clip, mut window)
+			render_circle(mut shape, clip, mut window)
 		}
 		.rtf {
-			render_rtf(mut draw_shape, clip, mut window)
+			render_rtf(mut shape, clip, mut window)
 		}
 		.svg {
-			render_svg(mut draw_shape, clip, mut window)
+			render_svg(mut shape, clip, mut window)
 		}
 		.none {}
 	}

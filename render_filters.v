@@ -390,8 +390,3 @@ fn draw_filter_composite(c DrawFilterComposite, mut window Window) {
 	sgl.disable_texture()
 	sgl.load_default_pipeline()
 }
-
-// render_layout walks the layout and generates renderers. If a shape is clipped,
-// then a clip rectangle is added to the context. Clip rectangles are added to the
-// draw context and the later, 'removed' by setting the clip rectangle to the
-// previous rectangle of if not present, infinity.

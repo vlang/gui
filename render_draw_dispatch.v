@@ -5,7 +5,7 @@ import sokol.sgl
 import log
 
 // renderers_draw walks the array of renderers and draws them.
-// This function and renderer_draw constitute then entire
+// This function and renderer_draw constitute the entire
 // draw logic of GUI
 fn renderers_draw(mut window Window) {
 	renderers := window.renderers

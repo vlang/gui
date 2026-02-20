@@ -1,7 +1,6 @@
 module gui
 
 import gg
-import hash.fnv1a
 import log
 import svg
 import time
@@ -143,14 +142,13 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 
 // render_svg_animated emits paths with per-group animation transforms.
 fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, sy f32, mut window Window) {
-	anim_key := fnv1a.sum64_string(res_key).hex()
 	now_ns := time.now().unix_nano()
 	// Update staleness tracker so animation loop knows SVG is alive.
-	window.view_state.svg_anim_seen.set(anim_key, now_ns)
-	start_ns := if v := window.view_state.svg_anim_start.get(anim_key) {
+	window.view_state.svg_anim_seen.set(res_key, now_ns)
+	start_ns := if v := window.view_state.svg_anim_start.get(res_key) {
 		v
 	} else {
-		window.view_state.svg_anim_start.set(anim_key, now_ns)
+		window.view_state.svg_anim_start.set(res_key, now_ns)
 		now_ns
 	}
 	elapsed_s := f32(now_ns - start_ns) / 1_000_000_000.0
@@ -204,22 +202,22 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 		has_matrix := gid in group_matrices
 		has_opacity := gid in group_opacities
 		if gid.len > 0 && (has_matrix || has_opacity) {
-			mut anim_path := tpath
-			if has_matrix {
-				anim_path = CachedSvgPath{
-					...tpath
-					triangles: apply_transform_to_triangles(tpath.triangles, group_matrices[gid])
-				}
+			tris := if has_matrix {
+				apply_transform_to_triangles(tpath.triangles, group_matrices[gid])
+			} else {
+				tpath.triangles
 			}
-			if has_opacity {
+			c := if has_opacity {
 				opacity := group_opacities[gid]
-				c := anim_path.color
-				anim_path = CachedSvgPath{
-					...anim_path
-					color: gg.Color{c.r, c.g, c.b, u8(f32(c.a) * opacity)}
-				}
+				gg.Color{tpath.color.r, tpath.color.g, tpath.color.b, u8(f32(tpath.color.a) * opacity)}
+			} else {
+				tpath.color
 			}
-			emit_svg_path_renderer(anim_path, color, sx, sy, cached.scale, mut window)
+			emit_svg_path_renderer(CachedSvgPath{
+				...tpath
+				triangles: tris
+				color:     c
+			}, color, sx, sy, cached.scale, mut window)
 		} else {
 			emit_svg_path_renderer(tpath, color, sx, sy, cached.scale, mut window)
 		}
