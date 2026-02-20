@@ -94,11 +94,11 @@ V uses the Boehm conservative GC. Key hazards:
 the entire allocated block, so stale pointers in cleared arrays cause false
 retention (objects never collected).
 
-**Rule**: use `gc_clear(mut arr)` (defined in `gc.v`) for any array containing
+**Rule**: use `array_clear(mut arr)` (defined in `gc.v`) for any array containing
 pointers or pointer-containing types. It calls `vmemset` before zeroing `len`.
 
 ```v ignore
-gc_clear(mut window.renderers) // NOT window.renderers.clear()
+array_clear(mut window.renderers) // NOT window.renderers.clear()
 ```
 
 ### 2. Closure capture — full struct pointer

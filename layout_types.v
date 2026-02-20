@@ -8,12 +8,3 @@ pub mut:
 	parent   &Layout = unsafe { nil }
 	children []Layout
 }
-
-fn layout_clear(mut layout Layout) {
-	for i in 0 .. layout.children.len {
-		layout_clear(mut layout.children[i])
-	}
-	layout.shape = unsafe { nil }
-	layout.parent = unsafe { nil }
-	layout.children.clear()
-}
