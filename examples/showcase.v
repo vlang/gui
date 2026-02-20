@@ -213,6 +213,10 @@ fn demo_groups() []DemoGroup {
 			label: 'Data Display'
 		},
 		DemoGroup{
+			key:   'layout'
+			label: 'Layout'
+		},
+		DemoGroup{
 			key:   'navigation'
 			label: 'Navigation'
 		},
@@ -609,9 +613,23 @@ fn demo_entries() []DemoEntry {
 			tags:    ['hover', 'hint', 'floating']
 		},
 		DemoEntry{
+			id:      'row'
+			label:   'Row'
+			group:   'layout'
+			summary: 'Horizontal container arranging children left-to-right'
+			tags:    ['row', 'horizontal', 'container', 'layout']
+		},
+		DemoEntry{
+			id:      'column_demo'
+			label:   'Column'
+			group:   'layout'
+			summary: 'Vertical container arranging children top-to-bottom'
+			tags:    ['column', 'vertical', 'container', 'layout']
+		},
+		DemoEntry{
 			id:      'wrap_panel'
 			label:   'Wrap Panel'
-			group:   'navigation'
+			group:   'layout'
 			summary: 'Flow layout that wraps children to the next line'
 			tags:    ['wrap', 'flow', 'reflow', 'layout']
 		},
@@ -802,38 +820,21 @@ fn catalog_panel(mut w gui.Window) gui.View {
 }
 
 fn group_picker(app &ShowcaseApp) gui.View {
-	return gui.column(
+	return gui.wrap(
+		sizing:  gui.fill_fit
 		spacing: 3
-		padding: gui.padding_none
 		content: [
-			gui.row(
-				spacing: 3
-				padding: gui.padding_none
-				content: [
-					group_picker_item('Welcome', 'welcome', app),
-					group_picker_item('All', 'all', app),
-					group_picker_item('Text', 'text', app),
-					group_picker_item('Input', 'input', app),
-				]
-			),
-			gui.row(
-				spacing: 3
-				padding: gui.padding_none
-				content: [
-					group_picker_item('Selection', 'selection', app),
-					group_picker_item('Data', 'data', app),
-					group_picker_item('Graphics', 'graphics', app),
-					group_picker_item('Nav', 'navigation', app),
-				]
-			),
-			gui.row(
-				spacing: 3
-				padding: gui.padding_none
-				content: [
-					group_picker_item('Feedback', 'feedback', app),
-					group_picker_item('Overlays', 'overlays', app),
-				]
-			),
+			group_picker_item('Welcome', 'welcome', app),
+			group_picker_item('All', 'all', app),
+			group_picker_item('Text', 'text', app),
+			group_picker_item('Input', 'input', app),
+			group_picker_item('Selection', 'selection', app),
+			group_picker_item('Data', 'data', app),
+			group_picker_item('Graphics', 'graphics', app),
+			group_picker_item('Nav', 'navigation', app),
+			group_picker_item('Layout', 'layout', app),
+			group_picker_item('Feedback', 'feedback', app),
+			group_picker_item('Overlays', 'overlays', app),
 		]
 	)
 }
@@ -841,11 +842,7 @@ fn group_picker(app &ShowcaseApp) gui.View {
 fn group_picker_item(label string, key string, app &ShowcaseApp) gui.View {
 	is_selected := app.selected_group == key
 	return gui.row(
-		padding:  if is_selected {
-			gui.padding(3, 6, 3, 6)
-		} else {
-			gui.padding(2, 5, 2, 5)
-		}
+		padding:  gui.padding(3, 6, 3, 6)
 		color:    if is_selected {
 			gui.theme().color_active
 		} else {
@@ -1064,6 +1061,8 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'rectangle' { demo_rectangle() }
 		'scrollbar' { demo_scrollbar() }
 		'splitter' { demo_splitter(w) }
+		'row' { demo_row() }
+		'column_demo' { demo_column() }
 		'wrap_panel' { demo_wrap_panel(w) }
 		'doc_get_started' { demo_doc(mut w, 'doc_get_started', doc_get_started_source) }
 		'doc_animations' { demo_doc(mut w, 'doc_animations', doc_animations_source) }
@@ -1126,6 +1125,8 @@ fn related_examples(id string) string {
 		'rectangle' { 'examples/border_demo.v, examples/gradient_border_demo.v' }
 		'scrollbar' { 'examples/scroll_demo.v, examples/column_scroll.v' }
 		'splitter' { 'examples/split_panel.v' }
+		'row' { 'examples/showcase.v' }
+		'column_demo' { 'examples/column_scroll.v' }
 		'wrap_panel' { 'examples/wrap_panel.v' }
 		else { 'examples/showcase.v' }
 	}
@@ -1174,6 +1175,8 @@ fn component_doc(id string) string {
 		'rectangle' { rectangle_doc }
 		'scrollbar' { scrollbar_doc }
 		'splitter' { splitter_doc }
+		'row' { row_doc }
+		'column_demo' { column_doc }
 		'wrap_panel' { wrap_panel_doc }
 		else { '*Documentation coming soon.*' }
 	}
@@ -4392,6 +4395,184 @@ gui.expand_panel(
 
 fn demo_expand_panel(w &gui.Window) gui.View {
 	return expand_panel_sample(w)
+}
+
+const row_doc = '# Row
+
+Horizontal container that arranges children left-to-right.
+
+## Usage
+
+```v
+gui.row(
+    spacing: 8,
+    content: [
+        gui.text(text: "Left"),
+        gui.text(text: "Right"),
+    ],
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| spacing | f32 | Gap between children |
+| sizing | SizeCfg | Size behavior (fill, fit, fixed) |
+| h_align | HorizontalAlign | Horizontal alignment |
+| v_align | VerticalAlign | Vertical alignment |
+| padding | Padding | Inner margin |
+| content | []View | Child views |
+| color | Color | Background (transparent default) |
+| radius | f32 | Corner radius |
+
+Sugar for `container(axis: .left_to_right, ...)`.'
+
+const column_doc = '# Column
+
+Vertical container that arranges children top-to-bottom.
+
+## Usage
+
+```v
+gui.column(
+    spacing: 8,
+    content: [
+        gui.text(text: "Top"),
+        gui.text(text: "Bottom"),
+    ],
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| spacing | f32 | Gap between children |
+| sizing | SizeCfg | Size behavior (fill, fit, fixed) |
+| h_align | HorizontalAlign | Horizontal alignment |
+| v_align | VerticalAlign | Vertical alignment |
+| padding | Padding | Inner margin |
+| content | []View | Child views |
+| color | Color | Background (transparent default) |
+| radius | f32 | Corner radius |
+
+Sugar for `container(axis: .top_to_bottom, ...)`.'
+
+fn demo_row() gui.View {
+	return gui.column(
+		spacing: gui.spacing_large
+		content: [
+			gui.text(text: 'Children flow left-to-right.'),
+			// basic row
+			gui.row(
+				spacing: 8
+				content: [
+					demo_box('A', gui.cornflower_blue),
+					demo_box('B', gui.orange),
+					demo_box('C', gui.dark_green),
+				]
+			),
+			// row with alignment
+			gui.text(text: 'Vertical alignment: middle'),
+			gui.row(
+				spacing: 8
+				v_align: .middle
+				content: [
+					demo_box_sized('Tall', gui.cornflower_blue, 60, 80),
+					demo_box('Mid', gui.orange),
+					demo_box_sized('Short', gui.dark_green, 60, 30),
+				]
+			),
+			// fill-width children
+			gui.text(text: 'Fill-width children share space equally'),
+			gui.row(
+				sizing:  gui.fill_fit
+				spacing: 8
+				content: [
+					gui.row(
+						sizing:  gui.fill_fit
+						height:  40
+						padding: gui.padding(8, 8, 8, 8)
+						radius:  6
+						color:   gui.cornflower_blue
+						content: [gui.text(text: '1/3')]
+					),
+					gui.row(
+						sizing:  gui.fill_fit
+						height:  40
+						padding: gui.padding(8, 8, 8, 8)
+						radius:  6
+						color:   gui.orange
+						content: [gui.text(text: '1/3')]
+					),
+					gui.row(
+						sizing:  gui.fill_fit
+						height:  40
+						padding: gui.padding(8, 8, 8, 8)
+						radius:  6
+						color:   gui.dark_green
+						content: [gui.text(text: '1/3')]
+					),
+				]
+			),
+		]
+	)
+}
+
+fn demo_column() gui.View {
+	return gui.column(
+		spacing: gui.spacing_large
+		content: [
+			gui.text(text: 'Children flow top-to-bottom.'),
+			gui.row(
+				spacing: gui.spacing_large
+				content: [
+					// basic column
+					gui.column(
+						spacing: 8
+						content: [
+							demo_box('1', gui.cornflower_blue),
+							demo_box('2', gui.orange),
+							demo_box('3', gui.dark_green),
+						]
+					),
+					// column with h_align center
+					gui.column(
+						width:   120
+						sizing:  gui.fixed_fit
+						spacing: 8
+						h_align: .center
+						color:   gui.theme().color_panel
+						radius:  6
+						padding: gui.padding(8, 8, 8, 8)
+						content: [
+							demo_box('A', gui.cornflower_blue),
+							demo_box_sized('Wide', gui.orange, 100, 40),
+							demo_box('B', gui.dark_green),
+						]
+					),
+				]
+			),
+		]
+	)
+}
+
+fn demo_box(label string, color gui.Color) gui.View {
+	return demo_box_sized(label, color, 60, 40)
+}
+
+fn demo_box_sized(label string, color gui.Color, w f32, h f32) gui.View {
+	return gui.row(
+		width:   w
+		height:  h
+		sizing:  gui.fixed_fixed
+		radius:  6
+		color:   color
+		h_align: .center
+		v_align: .middle
+		content: [gui.text(text: label)]
+	)
 }
 
 const wrap_panel_doc = '# Wrap Panel
