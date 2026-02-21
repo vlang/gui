@@ -21,6 +21,7 @@ const lorem_long = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
 
 const svg_icons = [icon_star, icon_heart, icon_face, icon_bolt]
 const svg_sizes = [f32(16), 24, 32, 48, 64]
+const rolling_avg_window = 120
 const palette = [
 	gui.rgb(231, 76, 60),
 	gui.rgb(46, 204, 113),
@@ -29,6 +30,41 @@ const palette = [
 	gui.rgb(155, 89, 182),
 	gui.rgb(26, 188, 156),
 ]
+
+struct RollingAvg {
+mut:
+	samples  [rolling_avg_window]f64
+	next_idx int
+	count    int
+	sum      f64
+}
+
+fn (mut avg RollingAvg) push(value f64) {
+	if avg.count < rolling_avg_window {
+		avg.samples[avg.next_idx] = value
+		avg.sum += value
+		avg.count++
+		avg.next_idx = (avg.next_idx + 1) % rolling_avg_window
+		return
+	}
+	old := avg.samples[avg.next_idx]
+	avg.samples[avg.next_idx] = value
+	avg.sum += value - old
+	avg.next_idx = (avg.next_idx + 1) % rolling_avg_window
+}
+
+fn (avg &RollingAvg) value() f64 {
+	if avg.count == 0 {
+		return 0.0
+	}
+	return avg.sum / f64(avg.count)
+}
+
+fn (mut avg RollingAvg) reset() {
+	avg.next_idx = 0
+	avg.count = 0
+	avg.sum = 0.0
+}
 
 enum Scenario {
 	widgets_100
@@ -48,7 +84,12 @@ mut:
 	fps              f32
 	last_fps_time    time.Time
 	last_fps_count   u64
-	last_view_gen_us i64
+	fps_roll         RollingAvg
+	nodes_roll       RollingAvg
+	layout_us_roll   RollingAvg
+	view_gen_us_roll RollingAvg
+	renderers_roll   RollingAvg
+	mem_mb_roll      RollingAvg
 	paused           bool
 }
 
@@ -102,6 +143,18 @@ fn toggle_pause(mut w gui.Window) {
 	}
 }
 
+fn (mut s State) reset_rolling_stats() {
+	s.fps = 0
+	s.fps_roll.reset()
+	s.nodes_roll.reset()
+	s.layout_us_roll.reset()
+	s.view_gen_us_roll.reset()
+	s.renderers_roll.reset()
+	s.mem_mb_roll.reset()
+	s.last_fps_time = time.now()
+	s.last_fps_count = s.rebuild_count
+}
+
 fn main_view(window &gui.Window) gui.View {
 	vg_start := time.now()
 	mut state := window.state[State]()
@@ -114,14 +167,22 @@ fn main_view(window &gui.Window) gui.View {
 	elapsed := time.since(state.last_fps_time)
 	if elapsed >= 1 * time.second {
 		delta := state.rebuild_count - state.last_fps_count
-		state.fps = f32(delta) / (f32(elapsed.microseconds()) / 1_000_000.0)
+		fps_sample := f64(delta) / (f64(elapsed.microseconds()) / 1_000_000.0)
+		state.fps_roll.push(fps_sample)
+		state.fps = f32(state.fps_roll.value())
 		state.last_fps_count = state.rebuild_count
 		state.last_fps_time = now
 	}
 
 	content := gen_scenario(state.scenario)
-
-	state.last_view_gen_us = time.since(vg_start).microseconds()
+	view_gen_us := time.since(vg_start).microseconds()
+	renderers := window.renderers_count()
+	mem_mb := f64(gc_memory_use()) / 1_048_576.0
+	state.nodes_roll.push(f64(stats.node_count))
+	state.layout_us_roll.push(f64(stats.total_time_us))
+	state.view_gen_us_roll.push(f64(view_gen_us))
+	state.renderers_roll.push(f64(renderers))
+	state.mem_mb_roll.push(mem_mb)
 
 	return gui.column(
 		width:   w
@@ -134,10 +195,20 @@ fn main_view(window &gui.Window) gui.View {
 				spacing: 16
 				v_align: .middle
 				content: [
-					gui.text(
-						text:       'FPS: ${state.fps:.1f}'
-						text_style: gui.theme().b1
-						min_width:  140
+					gui.row(
+						min_width: 140
+						spacing:   6
+						v_align:   .middle
+						content:   [
+							gui.text(
+								text:       'FPS:'
+								text_style: gui.theme().b1
+							),
+							gui.text(
+								text:       '${state.fps:.1f}'
+								text_style: gui.theme().m3
+							),
+						]
 					),
 					gui.button(
 						content:  [
@@ -169,15 +240,15 @@ fn main_view(window &gui.Window) gui.View {
 				v_align: .middle
 				color:   gui.rgb(35, 35, 35)
 				content: [
-					gui.text(text: 'Nodes: ${stats.node_count}', min_width: 110),
-					gui.text(text: 'Layout (μs): ${stats.total_time_us}', min_width: 140),
-					gui.text(text: 'ViewGen (μs): ${state.last_view_gen_us}', min_width: 140),
-					gui.text(text: 'Renderers: ${window.renderers_count()}', min_width: 120),
-					gui.text(
-						text:      'Mem (MB): ${f32(gc_memory_use()) / 1_048_576.0:.1f}'
-						min_width: 120
-					),
-					gui.text(text: 'Rebuilds: ${state.rebuild_count}', min_width: 130),
+					stat_cell('Nodes (avg)', '${state.nodes_roll.value():.1f}', 140),
+					stat_cell('Layout avg (μs)', '${state.layout_us_roll.value():.1f}',
+						170),
+					stat_cell('ViewGen avg (μs)', '${state.view_gen_us_roll.value():.1f}',
+						180),
+					stat_cell('Renderers (avg)', '${state.renderers_roll.value():.1f}',
+						160),
+					stat_cell('Mem avg (MB)', '${state.mem_mb_roll.value():.1f}', 150),
+					stat_cell('Rebuilds', '${state.rebuild_count}', 130),
 				]
 			),
 			// Scenario selector
@@ -194,6 +265,21 @@ fn main_view(window &gui.Window) gui.View {
 				id_scroll:   1
 				scroll_mode: .vertical_only
 				content:     content
+			),
+		]
+	)
+}
+
+fn stat_cell(label string, value string, width f32) gui.View {
+	return gui.row(
+		min_width: width
+		spacing:   4
+		v_align:   .middle
+		content:   [
+			gui.text(text: '${label}:'),
+			gui.text(
+				text:       value
+				text_style: gui.theme().m4
 			),
 		]
 	)
@@ -219,7 +305,10 @@ fn scenario_buttons(current Scenario) []gui.View {
 			color:    if is_active { gui.rgb(80, 120, 200) } else { gui.rgb(60, 60, 60) }
 			on_click: fn [sc] (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 				mut s := w.state[State]()
-				s.scenario = sc
+				if s.scenario != sc {
+					s.scenario = sc
+					s.reset_rolling_stats()
+				}
 			}
 			content:  [gui.text(text: label)]
 		)
