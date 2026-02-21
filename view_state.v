@@ -140,6 +140,9 @@ mut:
 	list_box_focus                BoundedMap[string, int] = BoundedMap[string, int]{
 		max_size: 50
 	}
+	overflow_state                BoundedMap[string, int] = BoundedMap[string, int]{
+		max_size: 50
+	}
 }
 
 // ColorPickerState stores persistent HSV values for ColorPickers.

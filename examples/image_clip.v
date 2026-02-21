@@ -84,12 +84,11 @@ fn main_view(window &gui.Window) gui.View {
 						]
 					)),
 					// Circle clip
-					label_group('circle', gui.circle(
+					label_group('circle\nborder\npadding', gui.circle(
 						clip:    true
 						width:   120
 						height:  120
 						sizing:  gui.fixed_fixed
-						padding: gui.padding_none
 						color_border: gui.green
 						size_border: 2
 						content: [
@@ -129,7 +128,7 @@ fn label_group(label string, content gui.View) gui.View {
 		spacing: 8
 		content: [
 			content,
-			gui.text(text: label, text_style: gui.theme().b2),
+			gui.text(text: label, text_style: gui.theme().b2, mode: .multiline),
 		]
 	)
 }

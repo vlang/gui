@@ -1,0 +1,139 @@
+module gui
+
+// view_overflow_panel.v implements a layout-aware overflow panel.
+// Children are shown in a row; those that don't fit are hidden and
+// revealed in a floating dropdown menu when the trigger button is
+// clicked. A dedicated layout pass (layout_overflow) determines
+// which children fit, storing visible_count in ViewState so the
+// view generator can build the dropdown with overflow items.
+
+// OverflowItem pairs a toolbar View with a menu label for the
+// dropdown fallback.
+pub struct OverflowItem {
+pub:
+	id     string @[required]
+	view   View   @[required] // toolbar representation
+	text   string // menu label when overflowed
+	action fn (&MenuItemCfg, mut Event, mut Window) = unsafe { nil }
+}
+
+// OverflowPanelCfg configures an [overflow_panel](#overflow_panel).
+@[minify]
+pub struct OverflowPanelCfg {
+	A11yCfg
+pub:
+	id       string @[required]
+	id_focus u32    @[required]
+	items    []OverflowItem
+
+	// Custom trigger button content; default: ellipsis icon.
+	trigger []View
+
+	// Trigger button styling
+	color        Color   = gui_theme.button_style.color
+	color_hover  Color   = gui_theme.button_style.color_hover
+	color_focus  Color   = gui_theme.button_style.color_focus
+	color_click  Color   = gui_theme.button_style.color_click
+	color_open   Color   = gui_theme.button_style.color_focus
+	color_border Color   = gui_theme.button_style.color_border
+	padding      Padding = gui_theme.button_style.padding
+	size_border  f32     = gui_theme.button_style.size_border
+	radius       f32     = gui_theme.button_style.radius
+
+	// Dropdown positioning
+	float_anchor   FloatAttach = .bottom_right
+	float_tie_off  FloatAttach = .top_right
+	float_offset_x f32
+	float_offset_y f32
+
+	spacing  f32 = gui_theme.spacing_small
+	disabled bool
+}
+
+// overflow_panel creates a row that hides children that don't fit
+// and shows them in a floating dropdown menu when the trigger is
+// clicked. See [OverflowPanelCfg](#OverflowPanelCfg).
+pub fn (window &Window) overflow_panel(cfg OverflowPanelCfg) View {
+	visible_count := window.view_state.overflow_state.get(cfg.id) or { cfg.items.len }
+	is_open := window.view_state.select_state.get(cfg.id) or { false }
+
+	// Build content: all item views + trigger button (always last).
+	// All items are emitted so the layout pass can measure real widths;
+	// layout_overflow hides those that don't fit.
+	mut content := []View{cap: cfg.items.len + 2}
+	for item in cfg.items {
+		content << item.view
+	}
+
+	// Trigger button
+	trigger_content := if cfg.trigger.len > 0 {
+		cfg.trigger
+	} else {
+		[
+			View(text(
+				text:       icon_elipsis_h
+				text_style: TextStyle{
+					family: icon_font_name
+				}
+			)),
+		]
+	}
+
+	trigger_color := if is_open { cfg.color_open } else { cfg.color }
+
+	// Extract captures for closure
+	id := cfg.id
+	id_focus := cfg.id_focus
+	color_hover := cfg.color_hover
+	color_click := cfg.color_click
+	color_focus := cfg.color_focus
+
+	content << button(
+		id:           cfg.id + '_trigger'
+		id_focus:     cfg.id_focus
+		color:        trigger_color
+		color_hover:  color_hover
+		color_click:  color_click
+		color_focus:  color_focus
+		color_border: cfg.color_border
+		padding:      cfg.padding
+		size_border:  cfg.size_border
+		radius:       cfg.radius
+		disabled:     cfg.disabled
+		content:      trigger_content
+		on_click:     fn [id, id_focus, is_open] (_ &Layout, mut e Event, mut w Window) {
+			w.view_state.select_state.clear()
+			w.view_state.select_state.set(id, !is_open)
+			w.set_id_focus(id_focus)
+			e.is_handled = true
+		}
+	)
+
+	// Floating dropdown with overflow items as menu items
+	if is_open && visible_count < cfg.items.len {
+		mut menu_items := []MenuItemCfg{cap: cfg.items.len - visible_count}
+		for item in cfg.items[visible_count..] {
+			menu_items << MenuItemCfg{
+				id:     item.id
+				text:   if item.text.len > 0 { item.text } else { item.id }
+				action: item.action
+			}
+		}
+		content << window.menu(MenubarCfg{
+			id:            cfg.id + '_menu'
+			id_focus:      cfg.id_focus
+			items:         menu_items
+			float:         true
+			float_anchor:  cfg.float_anchor
+			float_tie_off: cfg.float_tie_off
+		})
+	}
+
+	return row(
+		id:       cfg.id
+		overflow: true
+		sizing:   fill_fit
+		spacing:  cfg.spacing
+		content:  content
+	)
+}

@@ -65,6 +65,7 @@ pub mut:
 	over_draw             bool                 // If true, allows drawing into padding and ignores spacing impact
 	hero                  bool                 // If true, element participates in hero transitions
 	wrap                  bool                 // If true, children wrap to next line when exceeding width
+	overflow              bool                 // If true, overflow panel hides non-fitting children
 	opacity               f32 = 1.0 // Opacity multiplier (0.0 = transparent, 1.0 = opaque)
 }
 

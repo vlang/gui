@@ -67,6 +67,8 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_fill_widths_with_scratch(mut layout, mut window.scratch.distribute)
 	// 2.5. Restructure wrap containers into column-of-rows
 	layout_wrap_with_scratch(mut layout, mut window.scratch)
+	// 2.6. Hide overflow children that don't fit
+	layout_overflow(mut layout, mut window)
 	// 3. Wrap text based on valid widths, which may affect height
 	layout_wrap_text(mut layout, mut window)
 	// 4. Calculate intrinsic heights based on content

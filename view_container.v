@@ -88,6 +88,7 @@ fn (mut cv ContainerView) generate_layout(mut w Window) Layout {
 			events:                cv.make_events()
 			hero:                  cv.hero
 			wrap:                  cv.wrap
+			overflow:              cv.overflow
 			opacity:               cv.opacity
 			a11y_role:             cv.derive_a11y_role()
 			a11y_state:            cv.a11y_state
@@ -155,6 +156,7 @@ mut:
 	scrollbar_orientation ScrollbarOrientation
 	axis                  Axis
 	wrap                  bool // children wrap to next line when exceeding width
+	overflow              bool // overflow panel hides non-fitting children
 pub:
 	id              string
 	title           string
@@ -311,6 +313,7 @@ fn container(cfg ContainerCfg) View {
 		amend_layout:          cfg.amend_layout
 		hero:                  cfg.hero
 		wrap:                  cfg.wrap
+		overflow:              cfg.overflow
 		opacity:               cfg.opacity
 		a11y_role:             cfg.a11y_role
 		a11y_state:            cfg.a11y_state
