@@ -26,6 +26,7 @@ struct WrapRowRange {
 
 struct ScratchPools {
 mut:
+	distribute            DistributeScratch
 	filter_renderers      []Renderer
 	floating_layouts      []&Layout
 	floating_layout_pool  []&Layout

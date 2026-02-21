@@ -64,7 +64,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	// 1. Calculate intrinsic widths based on content constraints
 	layout_widths(mut layout)
 	// 2. Expand widths to fill available space where applicable
-	layout_fill_widths(mut layout)
+	layout_fill_widths_with_scratch(mut layout, mut window.scratch.distribute)
 	// 2.5. Restructure wrap containers into column-of-rows
 	layout_wrap_with_scratch(mut layout, mut window.scratch)
 	// 3. Wrap text based on valid widths, which may affect height
@@ -72,7 +72,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	// 4. Calculate intrinsic heights based on content
 	layout_heights(mut layout)
 	// 5. Expand heights to fill available space
-	layout_fill_heights(mut layout)
+	layout_fill_heights_with_scratch(mut layout, mut window.scratch.distribute)
 	// 6. Adjust scroll offsets for containers
 	layout_adjust_scroll_offsets(mut layout, mut window)
 	// 7. Calculate final X, Y positions for all elements

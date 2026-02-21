@@ -517,10 +517,10 @@ fn splitter_layout_child(mut child Layout, x f32, y f32, width f32, height f32, 
 	child.shape.y = 0
 
 	layout_widths(mut child)
-	layout_fill_widths(mut child)
+	layout_fill_widths_with_scratch(mut child, mut w.scratch.distribute)
 	layout_wrap_text(mut child, mut w)
 	layout_heights(mut child)
-	layout_fill_heights(mut child)
+	layout_fill_heights_with_scratch(mut child, mut w.scratch.distribute)
 	layout_adjust_scroll_offsets(mut child, mut w)
 	layout_positions(mut child, x, y, &w)
 	layout_amend(mut child, mut w)

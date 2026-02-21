@@ -358,10 +358,10 @@ fn (mut window Window) render_rtf_tooltip(clip DrawClip) {
 
 	// Calculate sizes (without position)
 	layout_widths(mut layout)
-	layout_fill_widths(mut layout)
+	layout_fill_widths_with_scratch(mut layout, mut window.scratch.distribute)
 	layout_wrap_text(mut layout, mut window)
 	layout_heights(mut layout)
-	layout_fill_heights(mut layout)
+	layout_fill_heights_with_scratch(mut layout, mut window.scratch.distribute)
 
 	// Calculate position below abbreviation, clamped to stay on screen
 	mut x := rect.x + rect.width / 2 - layout.shape.width / 2
