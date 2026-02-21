@@ -12,8 +12,17 @@ const scratch_gradient_norm_retain_max = 64
 const scratch_gradient_norm_shrink_to = 8
 const scratch_svg_anim_vals_retain_max = 32
 const scratch_svg_anim_vals_shrink_to = 8
+const scratch_svg_group_matrices_retain_max = 256
+const scratch_svg_group_opacities_retain_max = 256
 const scratch_svg_tris_retain_max = 65_536
 const scratch_svg_tris_shrink_to = 4096
+const scratch_wrap_rows_retain_max = 4096
+const scratch_wrap_rows_shrink_to = 256
+
+struct WrapRowRange {
+	start int
+	end   int
+}
 
 struct ScratchPools {
 mut:
@@ -25,7 +34,10 @@ mut:
 	gradient_norm_stops   []GradientStop
 	gradient_sample_stops []GradientStop
 	svg_anim_vals         []f32
+	svg_group_matrices    map[string][6]f32
+	svg_group_opacities   map[string]f32
 	svg_transform_tris    []f32
+	wrap_rows             []WrapRowRange
 }
 
 @[inline]
@@ -153,6 +165,16 @@ fn (mut pools ScratchPools) put_svg_anim_vals(mut scratch []f32) {
 }
 
 @[inline]
+fn (mut pools ScratchPools) trim_svg_group_maps() {
+	if pools.svg_group_matrices.len > scratch_svg_group_matrices_retain_max {
+		pools.svg_group_matrices = map[string][6]f32{}
+	}
+	if pools.svg_group_opacities.len > scratch_svg_group_opacities_retain_max {
+		pools.svg_group_opacities = map[string]f32{}
+	}
+}
+
+@[inline]
 fn (mut pools ScratchPools) take_svg_transform_tris() []f32 {
 	mut scratch := unsafe { pools.svg_transform_tris }
 	scratch.clear()
@@ -165,4 +187,22 @@ fn (mut pools ScratchPools) put_svg_transform_tris(mut scratch []f32) {
 		scratch = []f32{cap: scratch_svg_tris_shrink_to}
 	}
 	pools.svg_transform_tris = scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) take_wrap_rows(required_cap int) []WrapRowRange {
+	mut scratch := unsafe { pools.wrap_rows }
+	array_clear(mut scratch)
+	if scratch.cap < required_cap {
+		scratch = []WrapRowRange{cap: required_cap}
+	}
+	return scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) put_wrap_rows(mut scratch []WrapRowRange) {
+	if scratch.cap > scratch_wrap_rows_retain_max {
+		scratch = []WrapRowRange{cap: scratch_wrap_rows_shrink_to}
+	}
+	pools.wrap_rows = scratch
 }

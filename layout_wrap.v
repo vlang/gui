@@ -7,11 +7,16 @@ module gui
 // top_to_bottom so downstream passes handle multi-row height
 // and positioning naturally.
 fn layout_wrap(mut layout Layout) {
+	mut scratch := ScratchPools{}
+	layout_wrap_with_scratch(mut layout, mut scratch)
+}
+
+fn layout_wrap_with_scratch(mut layout Layout, mut scratch ScratchPools) {
 	for mut child in layout.children {
-		layout_wrap(mut child)
+		layout_wrap_with_scratch(mut child, mut scratch)
 	}
 
-	if !layout.shape.wrap || layout.shape.axis != .left_to_right {
+	if !layout.shape.wrap || layout.shape.axis != .left_to_right || layout.children.len == 0 {
 		return
 	}
 
@@ -22,30 +27,37 @@ fn layout_wrap(mut layout Layout) {
 
 	spacing := layout.shape.spacing
 
-	mut rows := [][]Layout{cap: 4}
-	mut current_row := []Layout{cap: layout.children.len}
+	mut rows := scratch.take_wrap_rows(layout.children.len)
+	defer {
+		scratch.put_wrap_rows(mut rows)
+	}
+	mut row_start := 0
 	mut row_width := f32(0)
 
-	for child in layout.children {
+	for idx, child in layout.children {
 		if child.shape.float || child.shape.shape_type == .none || child.shape.over_draw {
-			current_row << child
 			continue
 		}
 
 		child_w := child.shape.width
 		gap := if row_width > 0 { spacing } else { f32(0) }
 
-		if row_width + gap + child_w > available && current_row.len > 0 {
-			rows << current_row
-			current_row = []Layout{cap: 4}
+		if row_width + gap + child_w > available && idx > row_start {
+			rows << WrapRowRange{
+				start: row_start
+				end:   idx
+			}
+			row_start = idx
 			row_width = 0
 		}
 
-		current_row << child
 		row_width += (if row_width > 0 { spacing } else { f32(0) }) + child_w
 	}
-	if current_row.len > 0 {
-		rows << current_row
+	if row_start < layout.children.len {
+		rows << WrapRowRange{
+			start: row_start
+			end:   layout.children.len
+		}
 	}
 
 	if rows.len <= 1 {
@@ -55,7 +67,11 @@ fn layout_wrap(mut layout Layout) {
 	layout.shape.axis = .top_to_bottom
 
 	mut new_children := []Layout{cap: rows.len}
-	for row_children in rows {
+	for row in rows {
+		mut row_children := []Layout{cap: row.end - row.start}
+		for i in row.start .. row.end {
+			row_children << layout.children[i]
+		}
 		new_children << Layout{
 			shape:    &Shape{
 				shape_type: .rectangle

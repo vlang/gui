@@ -153,8 +153,13 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 	}
 	elapsed_s := f32(now_ns - start_ns) / 1_000_000_000.0
 	mut anim_vals := window.scratch.take_svg_anim_vals()
+	mut transform_tris := window.scratch.take_svg_transform_tris()
+	window.scratch.svg_group_matrices.clear()
+	window.scratch.svg_group_opacities.clear()
 	defer {
 		window.scratch.put_svg_anim_vals(mut anim_vals)
+		window.scratch.put_svg_transform_tris(mut transform_tris)
+		window.scratch.trim_svg_group_maps()
 	}
 
 	// Evaluate animations: build transform matrix and opacity
@@ -168,8 +173,6 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 	// Do NOT extract a compose helper or use `if gid in
 	// group_matrices { matrix_multiply(...) }` until the V
 	// compiler issue is resolved.
-	mut group_matrices := map[string][6]f32{}
-	mut group_opacities := map[string]f32{}
 	for anim in cached.animations {
 		vals_len := svg.evaluate_animation_into(anim, elapsed_s, mut anim_vals)
 		if vals_len == 0 {
@@ -181,40 +184,41 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 				cx := if vals_len >= 2 { anim_vals[1] } else { f32(0) }
 				cy := if vals_len >= 3 { anim_vals[2] } else { f32(0) }
 				m := svg.build_rotation_matrix(angle, cx, cy)
-				group_matrices[anim.target_id] = m
+				window.scratch.svg_group_matrices[anim.target_id] = m
 			}
 			.scale {
 				asx := anim_vals[0]
 				asy := if vals_len >= 2 { anim_vals[1] } else { asx }
 				m := svg.build_scale_matrix(asx, asy)
-				group_matrices[anim.target_id] = m
+				window.scratch.svg_group_matrices[anim.target_id] = m
 			}
 			.translate {
 				tx := anim_vals[0]
 				ty := if vals_len >= 2 { anim_vals[1] } else { f32(0) }
 				m := svg.build_translate_matrix(tx, ty)
-				group_matrices[anim.target_id] = m
+				window.scratch.svg_group_matrices[anim.target_id] = m
 			}
 			.opacity {
-				group_opacities[anim.target_id] = anim_vals[0]
+				window.scratch.svg_group_opacities[anim.target_id] = anim_vals[0]
 			}
 		}
 	}
 
 	for tpath in cached.render_paths {
 		gid := tpath.group_id
-		has_matrix := gid in group_matrices
-		has_opacity := gid in group_opacities
+		has_matrix := gid in window.scratch.svg_group_matrices
+		has_opacity := gid in window.scratch.svg_group_opacities
 		if gid.len > 0 && (has_matrix || has_opacity) {
 			tris := if has_matrix {
-				// Renderer triangles must stay stable after this loop iteration.
-				// Do not reuse a shared scratch buffer here.
-				apply_transform_to_triangles(tpath.triangles, group_matrices[gid])
+				// Build in scratch then clone so renderer data stays stable.
+				transform_tris = apply_transform_to_triangles_into(tpath.triangles, window.scratch.svg_group_matrices[gid], mut
+					transform_tris)
+				transform_tris.clone()
 			} else {
 				tpath.triangles
 			}
 			c := if has_opacity {
-				opacity := group_opacities[gid]
+				opacity := window.scratch.svg_group_opacities[gid]
 				gg.Color{tpath.color.r, tpath.color.g, tpath.color.b, u8(f32(tpath.color.a) * opacity)}
 			} else {
 				tpath.color

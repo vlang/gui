@@ -392,7 +392,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	// pending jump-to-row scroll from a prior page change.
 	columns := data_grid_effective_columns(resolved_cfg.columns, resolved_cfg.column_order,
 		resolved_cfg.hidden_column_ids)
-	presentation := data_grid_presentation_rows(resolved_cfg, columns, body_page_indices)
+	presentation := data_grid_cached_presentation(resolved_cfg, columns, body_page_indices, mut
+		window)
 	if !has_source {
 		data_grid_apply_pending_local_jump_scroll(resolved_cfg, grid_height, row_height,
 			static_top, scroll_id, presentation.data_to_display, mut window)
@@ -599,6 +600,111 @@ fn data_grid_presentation(cfg DataGridCfg, columns []GridColumnCfg) DataGridPres
 		[]int{}))
 }
 
+fn data_grid_cached_presentation(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int, mut window Window) DataGridPresentation {
+	group_cols := data_grid_group_columns(cfg.group_by, columns)
+	value_cols := data_grid_presentation_value_cols(group_cols, cfg.aggregates)
+	signature := data_grid_presentation_signature(cfg, columns, row_indices, group_cols,
+		value_cols)
+	if cached := window.view_state.data_grid_presentation_cache.get(cfg.id) {
+		if cached.signature == signature {
+			return DataGridPresentation{
+				rows:            cached.rows
+				data_to_display: cached.data_to_display
+			}
+		}
+	}
+
+	visible_indices := data_grid_visible_row_indices(cfg.rows.len, row_indices)
+	group_ranges := if group_cols.len > 0 && visible_indices.len > 0 {
+		data_grid_group_ranges(cfg.rows, visible_indices, group_cols)
+	} else {
+		map[string]int{}
+	}
+	presentation := data_grid_presentation_rows_with_group_ranges(cfg, columns, visible_indices,
+		group_cols, group_ranges)
+	window.view_state.data_grid_presentation_cache.set(cfg.id, DataGridPresentationCache{
+		signature:       signature
+		rows:            presentation.rows
+		data_to_display: presentation.data_to_display
+		group_ranges:    group_ranges
+		group_cols:      group_cols
+	})
+	return presentation
+}
+
+fn data_grid_presentation_signature(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int, group_cols []string, value_cols []string) u64 {
+	mut hash := data_grid_fnv64_offset
+	visible_indices := data_grid_visible_row_indices(cfg.rows.len, row_indices)
+	group_titles := data_grid_group_titles(columns)
+	hash = data_grid_fnv64_str(hash, cfg.id)
+	hash = data_grid_fnv64_byte(hash, 0x1e)
+	for idx in row_indices {
+		hash = data_grid_fnv64_str(hash, idx.str())
+		hash = data_grid_fnv64_byte(hash, 0x1f)
+	}
+	hash = data_grid_fnv64_byte(hash, 0x1e)
+	for col_id in group_cols {
+		hash = data_grid_fnv64_str(hash, col_id)
+		hash = data_grid_fnv64_byte(hash, 0x1f)
+		hash = data_grid_fnv64_str(hash, group_titles[col_id] or { '' })
+		hash = data_grid_fnv64_byte(hash, 0x1f)
+	}
+	hash = data_grid_fnv64_byte(hash, 0x1e)
+	for agg in cfg.aggregates {
+		hash = data_grid_fnv64_str(hash, agg.col_id)
+		hash = data_grid_fnv64_byte(hash, 0x1f)
+		hash = data_grid_fnv64_str(hash, agg.op.str())
+		hash = data_grid_fnv64_byte(hash, 0x1f)
+		hash = data_grid_fnv64_str(hash, agg.label)
+		hash = data_grid_fnv64_byte(hash, 0x1f)
+	}
+
+	detail_enabled := cfg.on_detail_row_view != unsafe { nil }
+	hash = data_grid_fnv64_byte(hash, if detail_enabled { `1` } else { `0` })
+	for row_idx in visible_indices {
+		row := cfg.rows[row_idx]
+		row_id := data_grid_row_id(row, row_idx)
+		hash = data_grid_fnv64_byte(hash, 0x1e)
+		hash = data_grid_fnv64_str(hash, row_idx.str())
+		hash = data_grid_fnv64_byte(hash, 0x1f)
+		hash = data_grid_fnv64_str(hash, row_id)
+		hash = data_grid_fnv64_byte(hash, 0x1f)
+		if detail_enabled && data_grid_detail_row_expanded(cfg, row_id) {
+			hash = data_grid_fnv64_byte(hash, `1`)
+		} else {
+			hash = data_grid_fnv64_byte(hash, `0`)
+		}
+		for col_id in value_cols {
+			hash = data_grid_fnv64_byte(hash, 0x1f)
+			hash = data_grid_fnv64_str(hash, col_id)
+			hash = data_grid_fnv64_byte(hash, `=`)
+			hash = data_grid_fnv64_str(hash, row.cells[col_id] or { '' })
+		}
+	}
+	return hash
+}
+
+fn data_grid_presentation_value_cols(group_cols []string, aggregates []GridAggregateCfg) []string {
+	mut cols := []string{cap: group_cols.len + aggregates.len}
+	mut seen := map[string]bool{}
+	for col_id in group_cols {
+		if col_id.len == 0 || seen[col_id] {
+			continue
+		}
+		seen[col_id] = true
+		cols << col_id
+	}
+	for agg in aggregates {
+		if agg.op == .count || agg.col_id.len == 0 || seen[agg.col_id] {
+			continue
+		}
+		seen[agg.col_id] = true
+		cols << agg.col_id
+	}
+	cols.sort()
+	return cols
+}
+
 // Builds the flat display list from data rows, inserting
 // group headers when grouped column values change. Group
 // headers carry depth, count, and aggregate text. Detail
@@ -606,10 +712,20 @@ fn data_grid_presentation(cfg DataGridCfg, columns []GridColumnCfg) DataGridPres
 // row. data_to_display maps data row index → display index
 // for scroll-into-view.
 fn data_grid_presentation_rows(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int) DataGridPresentation {
-	mut rows := []DataGridDisplayRow{cap: cfg.rows.len + 8}
-	mut data_to_display := map[int]int{}
 	visible_indices := data_grid_visible_row_indices(cfg.rows.len, row_indices)
 	group_cols := data_grid_group_columns(cfg.group_by, columns)
+	group_ranges := if group_cols.len > 0 && visible_indices.len > 0 {
+		data_grid_group_ranges(cfg.rows, visible_indices, group_cols)
+	} else {
+		map[string]int{}
+	}
+	return data_grid_presentation_rows_with_group_ranges(cfg, columns, visible_indices,
+		group_cols, group_ranges)
+}
+
+fn data_grid_presentation_rows_with_group_ranges(cfg DataGridCfg, columns []GridColumnCfg, visible_indices []int, group_cols []string, group_ranges map[string]int) DataGridPresentation {
+	mut rows := []DataGridDisplayRow{cap: cfg.rows.len + 8}
+	mut data_to_display := map[int]int{}
 	if group_cols.len == 0 || visible_indices.len == 0 {
 		for row_idx in visible_indices {
 			row := cfg.rows[row_idx]
@@ -633,7 +749,6 @@ fn data_grid_presentation_rows(cfg DataGridCfg, columns []GridColumnCfg, row_ind
 	}
 
 	group_titles := data_grid_group_titles(columns)
-	group_ranges := data_grid_group_ranges(cfg.rows, visible_indices, group_cols)
 	mut prev_values := []string{len: group_cols.len}
 	mut has_prev := false
 

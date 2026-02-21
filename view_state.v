@@ -95,6 +95,9 @@ mut:
 	data_grid_col_widths          BoundedMap[string, &DataGridColWidths] = BoundedMap[string, &DataGridColWidths]{
 		max_size: 50
 	}
+	data_grid_presentation_cache  BoundedMap[string, DataGridPresentationCache] = BoundedMap[string, DataGridPresentationCache]{
+		max_size: 50
+	}
 	data_grid_resize_state        BoundedMap[string, DataGridResizeState] = BoundedMap[string, DataGridResizeState]{
 		max_size: 50
 	}
@@ -168,6 +171,15 @@ mut:
 // DataGridColWidths stores per-column runtime widths for a grid id.
 struct DataGridColWidths {
 	widths map[string]f32
+}
+
+// DataGridPresentationCache stores cached display rows for a grid id.
+struct DataGridPresentationCache {
+	signature       u64
+	rows            []DataGridDisplayRow
+	data_to_display map[int]int
+	group_ranges    map[string]int
+	group_cols      []string
 }
 
 // DataGridRangeState stores transient range-selection anchor state.

@@ -1277,6 +1277,130 @@ fn test_data_grid_presentation_rows_paginates() {
 	assert p.data_to_display[0] == 0
 }
 
+fn test_data_grid_cached_presentation_reuses_matching_signature() {
+	mut w := Window{}
+	cfg := DataGridCfg{
+		id:      'cache-hit'
+		columns: [
+			GridColumnCfg{
+				id:    'name'
+				title: 'Name'
+			},
+		]
+		rows:    [
+			GridRow{
+				id:    '1'
+				cells: {
+					'name': 'A'
+				}
+			},
+			GridRow{
+				id:    '2'
+				cells: {
+					'name': 'B'
+				}
+			},
+		]
+	}
+
+	_ := data_grid_cached_presentation(cfg, cfg.columns, [0, 1], mut w)
+	cached := w.view_state.data_grid_presentation_cache.get(cfg.id) or {
+		assert false
+		return
+	}
+	seeded := DataGridPresentationCache{
+		...cached
+		rows:            [
+			DataGridDisplayRow{
+				kind:            .group_header
+				group_col_id:    'seed'
+				group_col_title: 'seed'
+			},
+		]
+		data_to_display: {
+			0: 0
+		}
+	}
+	w.view_state.data_grid_presentation_cache.set(cfg.id, seeded)
+
+	reused := data_grid_cached_presentation(cfg, cfg.columns, [0, 1], mut w)
+	assert reused.rows.len == 1
+	assert reused.rows[0].kind == .group_header
+	assert reused.rows[0].group_col_id == 'seed'
+}
+
+fn test_data_grid_cached_presentation_invalidates_on_group_value_change() {
+	mut w := Window{}
+	cfg := DataGridCfg{
+		id:       'cache-invalidate-group'
+		group_by: ['team']
+		columns:  [
+			GridColumnCfg{
+				id:    'team'
+				title: 'Team'
+			},
+		]
+		rows:     [
+			GridRow{
+				id:    '1'
+				cells: {
+					'team': 'A'
+				}
+			},
+			GridRow{
+				id:    '2'
+				cells: {
+					'team': 'A'
+				}
+			},
+			GridRow{
+				id:    '3'
+				cells: {
+					'team': 'B'
+				}
+			},
+		]
+	}
+
+	first := data_grid_cached_presentation(cfg, cfg.columns, []int{}, mut w)
+	first_cache := w.view_state.data_grid_presentation_cache.get(cfg.id) or {
+		assert false
+		return
+	}
+	assert first.rows.len == 5
+
+	cfg2 := DataGridCfg{
+		...cfg
+		rows: [
+			GridRow{
+				id:    '1'
+				cells: {
+					'team': 'A'
+				}
+			},
+			GridRow{
+				id:    '2'
+				cells: {
+					'team': 'A'
+				}
+			},
+			GridRow{
+				id:    '3'
+				cells: {
+					'team': 'A'
+				}
+			},
+		]
+	}
+	second := data_grid_cached_presentation(cfg2, cfg2.columns, []int{}, mut w)
+	second_cache := w.view_state.data_grid_presentation_cache.get(cfg.id) or {
+		assert false
+		return
+	}
+	assert second.rows.len == 4
+	assert second_cache.signature != first_cache.signature
+}
+
 fn test_data_grid_next_page_index_for_key_ctrl_page() {
 	mut e := Event{
 		modifiers: .ctrl

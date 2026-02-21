@@ -66,7 +66,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	// 2. Expand widths to fill available space where applicable
 	layout_fill_widths(mut layout)
 	// 2.5. Restructure wrap containers into column-of-rows
-	layout_wrap(mut layout)
+	layout_wrap_with_scratch(mut layout, mut window.scratch)
 	// 3. Wrap text based on valid widths, which may affect height
 	layout_wrap_text(mut layout, mut window)
 	// 4. Calculate intrinsic heights based on content

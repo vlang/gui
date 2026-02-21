@@ -96,6 +96,9 @@ fn distribute_space(mut layout Layout,
 	mut candidates []int,
 	mut fixed_indices []int) f32 {
 	mut remaining := remaining_in
+	if !f32_is_finite(remaining) {
+		return f32(0)
+	}
 	mut prev_remaining := f32(0)
 
 	// Build candidate list
@@ -114,6 +117,9 @@ fn distribute_space(mut layout Layout,
 
 	// Iterate until space is distributed or no candidates remain
 	for {
+		if !f32_is_finite(remaining) {
+			break
+		}
 		// Check termination conditions based on mode
 		should_continue := match mode {
 			.grow { remaining > f32_tolerance && candidates.len > 0 }
@@ -170,6 +176,9 @@ fn distribute_space(mut layout Layout,
 				}
 			}
 		}
+		if !f32_is_finite(extremum) || !f32_is_finite(second) {
+			break
+		}
 
 		// Calculate delta to add/remove
 		mut delta := match mode {
@@ -192,6 +201,9 @@ fn distribute_space(mut layout Layout,
 				}
 			}
 		}
+		if !f32_is_finite(delta) {
+			break
+		}
 
 		// Clamp delta based on mode and candidate count
 		match mode {
@@ -205,9 +217,19 @@ fn distribute_space(mut layout Layout,
 				}
 			}
 		}
+		if !f32_is_finite(delta) {
+			break
+		}
+		mut sane_delta_limit := f32_max(f32_abs(get_size(layout.shape, axis)), f32_abs(remaining))
+		sane_delta_limit = f32_max(sane_delta_limit * 4, 1_000_000)
+		if !f32_is_finite(sane_delta_limit) || sane_delta_limit <= 0 {
+			break
+		}
+		delta = f32_clamp(delta, -sane_delta_limit, sane_delta_limit)
 
 		// Apply delta to candidates at extremum
 		mut keep_idx := 0
+		mut invalid_math := false
 		for i in 0 .. candidates.len {
 			idx := candidates[i]
 			mut child := &layout.children[idx]
@@ -217,6 +239,10 @@ fn distribute_space(mut layout Layout,
 			if child_size == extremum {
 				prev_size := child_size
 				new_size := child_size + delta
+				if !f32_is_finite(new_size) {
+					invalid_math = true
+					break
+				}
 				set_size(mut child.shape, axis, new_size)
 
 				// Apply constraints
@@ -234,6 +260,10 @@ fn distribute_space(mut layout Layout,
 				}
 
 				remaining -= (get_size(child.shape, axis) - prev_size)
+				if !f32_is_finite(remaining) {
+					invalid_math = true
+					break
+				}
 
 				if constrained {
 					kept = false
@@ -246,6 +276,9 @@ fn distribute_space(mut layout Layout,
 				}
 				keep_idx++
 			}
+		}
+		if invalid_math {
+			break
 		}
 		candidates.trim(keep_idx)
 	}

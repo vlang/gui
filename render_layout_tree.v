@@ -66,11 +66,14 @@ fn render_shape(mut shape Shape, parent_color Color, clip DrawClip, mut window W
 	}
 
 	if shape.opacity < 1.0 {
-		// Copy to avoid mutating persistent colors on the rerender path.
-		mut draw_shape := shape
-		draw_shape.color = draw_shape.color.with_opacity(draw_shape.opacity)
-		draw_shape.color_border = draw_shape.color_border.with_opacity(draw_shape.opacity)
-		render_shape_inner(mut draw_shape, parent_color, clip, mut window)
+		// Temporarily apply opacity to avoid copying full Shape.
+		orig_color := shape.color
+		orig_border := shape.color_border
+		shape.color = shape.color.with_opacity(shape.opacity)
+		shape.color_border = shape.color_border.with_opacity(shape.opacity)
+		render_shape_inner(mut shape, parent_color, clip, mut window)
+		shape.color = orig_color
+		shape.color_border = orig_border
 	} else {
 		render_shape_inner(mut shape, parent_color, clip, mut window)
 	}
