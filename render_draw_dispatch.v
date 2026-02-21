@@ -9,16 +9,113 @@ import gg
 import sokol.sgl
 import log
 
+struct RoundedImageClip {
+	x  f32
+	y  f32
+	w  f32
+	h  f32
+	u0 f32
+	v0 f32
+	u1 f32
+	v1 f32
+}
+
+@[inline]
+fn rounded_image_clip_params(img DrawImage, clip DrawClip) ?RoundedImageClip {
+	if img.w <= 0 || img.h <= 0 || clip.width <= 0 || clip.height <= 0 {
+		return none
+	}
+	img_right := img.x + img.w
+	img_bottom := img.y + img.h
+	clip_right := clip.x + clip.width
+	clip_bottom := clip.y + clip.height
+	x := f32_max(img.x, clip.x)
+	y := f32_max(img.y, clip.y)
+	right := f32_min(img_right, clip_right)
+	bottom := f32_min(img_bottom, clip_bottom)
+	w := right - x
+	h := bottom - y
+	if w <= 0 || h <= 0 {
+		return none
+	}
+	// Rounded container content clipping should shrink the image into the
+	// available content box instead of cropping edge pixels.
+	is_inside := x >= img.x && y >= img.y && right <= img_right && bottom <= img_bottom
+	clips_size := w < img.w || h < img.h
+	anchor_top_left := x == img.x && y == img.y
+	if is_inside && clips_size && anchor_top_left {
+		return RoundedImageClip{
+			x:  x
+			y:  y
+			w:  w
+			h:  h
+			u0: -1
+			v0: -1
+			u1: 1
+			v1: 1
+		}
+	}
+	inv_w := f32(2.0 / img.w)
+	inv_h := f32(2.0 / img.h)
+	return RoundedImageClip{
+		x:  x
+		y:  y
+		w:  w
+		h:  h
+		u0: -1 + (x - img.x) * inv_w
+		v0: -1 + (y - img.y) * inv_h
+		u1: -1 + (right - img.x) * inv_w
+		v1: -1 + (bottom - img.y) * inv_h
+	}
+}
+
+@[inline]
+fn quantized_scissor_clip(clip DrawClip, scale f32) DrawClip {
+	if scale <= 0 {
+		return clip
+	}
+	sx := int(clip.x * scale)
+	sy := int(clip.y * scale)
+	sw := int(clip.width * scale)
+	sh := int(clip.height * scale)
+	return DrawClip{
+		x:      f32(sx) / scale
+		y:      f32(sy) / scale
+		width:  f32(sw) / scale
+		height: f32(sh) / scale
+	}
+}
+
+fn draw_quad_uv(x f32, y f32, w f32, h f32, z f32, u0 f32, v0 f32, u1 f32, v1 f32) {
+	sgl.begin_quads()
+	sgl.t2f(u0, v0)
+	sgl.v3f(x, y, z)
+	sgl.t2f(u1, v0)
+	sgl.v3f(x + w, y, z)
+	sgl.t2f(u1, v1)
+	sgl.v3f(x + w, y + h, z)
+	sgl.t2f(u0, v1)
+	sgl.v3f(x, y + h, z)
+	sgl.end()
+}
+
 // renderers_draw walks the array of renderers and draws them.
 // This function and renderer_draw constitute the entire
 // draw logic of GUI
 fn renderers_draw(mut window Window) {
 	renderers := window.renderers
+	mut active_clip := window.window_rect()
 
 	mut i := 0
 	for i < renderers.len {
 		renderer := renderers[i]
 		if !guard_renderer_or_skip(renderer, mut window) {
+			i++
+			continue
+		}
+		if renderer is DrawClip {
+			active_clip = renderer
+			renderer_draw(renderer, mut window)
 			i++
 			continue
 		}
@@ -38,7 +135,7 @@ fn renderers_draw(mut window Window) {
 				}
 				break
 			}
-			draw_rounded_image_batch(renderers, start, i, mut window)
+			draw_rounded_image_batch(renderers, start, i, active_clip, mut window)
 		} else if renderer is DrawSvg {
 			// Batch consecutive DrawSvg with same color, position, scale
 			// Handle stencil clip groups
@@ -123,7 +220,7 @@ fn draw_svg_batch(renderers []Renderer, start int, end int, c gg.Color, x f32, y
 
 // draw_rounded_image_batch draws consecutive rounded DrawImage
 // renderers with one image_clip pipeline setup.
-fn draw_rounded_image_batch(renderers []Renderer, start int, end int, mut window Window) {
+fn draw_rounded_image_batch(renderers []Renderer, start int, end int, active_clip DrawClip, mut window Window) {
 	if start < 0 || end <= start || end > renderers.len {
 		return
 	}
@@ -144,6 +241,7 @@ fn draw_rounded_image_batch(renderers []Renderer, start int, end int, mut window
 	}
 
 	scale := ctx.scale
+	effective_clip := quantized_scissor_clip(active_clip, scale)
 	sgl.load_pipeline(window.pip.image_clip)
 	sgl.enable_texture()
 	sgl.c4b(255, 255, 255, 255)
@@ -153,11 +251,12 @@ fn draw_rounded_image_batch(renderers []Renderer, start int, end int, mut window
 			continue
 		}
 		if renderer is DrawImage {
-			x0, y0, w0, h0, r := rounded_image_scaled_params(renderer.x, renderer.y, renderer.w,
-				renderer.h, renderer.clip_radius, scale)
+			clip := rounded_image_clip_params(renderer, effective_clip) or { continue }
+			x0, y0, w0, h0, r := rounded_image_scaled_params(clip.x, clip.y, clip.w, clip.h,
+				renderer.clip_radius, scale)
 			z := pack_shader_params(r, 0)
 			sgl.texture(renderer.img.simg, renderer.img.ssmp)
-			draw_quad(x0, y0, w0, h0, z)
+			draw_quad_uv(x0, y0, w0, h0, z, clip.u0, clip.v0, clip.u1, clip.v1)
 		}
 	}
 	sgl.disable_texture()

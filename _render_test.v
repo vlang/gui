@@ -35,6 +35,82 @@ fn test_rects_overlap() {
 	assert !rects_overlap(a, c) // touching edge is not overlapping (strict <)
 }
 
+fn test_rounded_image_clip_params_intersects_and_maps_uv() {
+	img := DrawImage{
+		img: unsafe { nil }
+		x:   2
+		y:   2
+		w:   120
+		h:   120
+	}
+	clip := make_clip(4, 2, 116, 116)
+	params := rounded_image_clip_params(img, clip) or {
+		assert false, 'expected rounded image clip params'
+		return
+	}
+	assert f32_are_close(params.x, 4)
+	assert f32_are_close(params.y, 2)
+	assert f32_are_close(params.w, 116)
+	assert f32_are_close(params.h, 116)
+	assert f32_are_close(params.u0, -1 + f32(2.0 * 2.0 / 120.0))
+	assert f32_are_close(params.v0, -1)
+	assert f32_are_close(params.u1, -1 + f32(2.0 * 118.0 / 120.0))
+	assert f32_are_close(params.v1, -1 + f32(2.0 * 116.0 / 120.0))
+}
+
+fn test_rounded_image_clip_params_returns_none_when_no_overlap() {
+	img := DrawImage{
+		img: unsafe { nil }
+		x:   10
+		y:   10
+		w:   20
+		h:   20
+	}
+	assert rounded_image_clip_params(img, make_clip(0, 0, 5, 5)) == none
+}
+
+fn test_rounded_image_clip_params_shrinks_when_top_left_anchored_inner_clip() {
+	img := DrawImage{
+		img: unsafe { nil }
+		x:   2
+		y:   2
+		w:   120
+		h:   120
+	}
+	clip := make_clip(2, 2, 116, 116)
+	params := rounded_image_clip_params(img, clip) or {
+		assert false, 'expected rounded image clip params'
+		return
+	}
+	assert f32_are_close(params.x, 2)
+	assert f32_are_close(params.y, 2)
+	assert f32_are_close(params.w, 116)
+	assert f32_are_close(params.h, 116)
+	assert f32_are_close(params.u0, -1)
+	assert f32_are_close(params.v0, -1)
+	assert f32_are_close(params.u1, 1)
+	assert f32_are_close(params.v1, 1)
+}
+
+fn test_quantized_scissor_clip_matches_sokol_int_truncation() {
+	clip := make_clip(10.9, 20.9, 30.9, 40.9)
+	q := quantized_scissor_clip(clip, 1.0)
+	assert f32_are_close(q.x, 10)
+	assert f32_are_close(q.y, 20)
+	assert f32_are_close(q.width, 30)
+	assert f32_are_close(q.height, 40)
+}
+
+fn test_quantized_scissor_clip_respects_scale() {
+	clip := make_clip(1.26, 2.26, 3.26, 4.26)
+	q := quantized_scissor_clip(clip, 2.0)
+	// int(clip * 2.0) then /2.0
+	assert f32_are_close(q.x, 1.0)
+	assert f32_are_close(q.y, 2.0)
+	assert f32_are_close(q.width, 3.0)
+	assert f32_are_close(q.height, 4.0)
+}
+
 // -----------------------------
 // dim_alpha halves the alpha
 // -----------------------------
@@ -213,6 +289,59 @@ fn test_resolve_clip_radius_uses_min_for_nested_rounded() {
 		radius: 8
 	}
 	assert f32_are_close(resolve_clip_radius(12, shape), 8)
+}
+
+fn test_resolve_clip_radius_subtracts_border_and_padding() {
+	shape := &Shape{
+		clip:        true
+		width:       80
+		height:      60
+		radius:      12
+		size_border: 1
+		padding:     Padding{
+			left:   2
+			right:  2
+			top:    2
+			bottom: 2
+		}
+	}
+	// inset = 3 => 12 - 3 = 9
+	assert f32_are_close(resolve_clip_radius(0, shape), 9)
+}
+
+fn test_resolve_clip_radius_uses_max_inset_for_asymmetric_padding() {
+	shape := &Shape{
+		clip:        true
+		width:       80
+		height:      60
+		radius:      20
+		size_border: 2
+		padding:     Padding{
+			left:   1
+			right:  7
+			top:    3
+			bottom: 0
+		}
+	}
+	// max inset = 9 => 20 - 9 = 11
+	assert f32_are_close(resolve_clip_radius(0, shape), 11)
+}
+
+fn test_resolve_clip_radius_returns_parent_when_inset_consumes_radius() {
+	shape := &Shape{
+		clip:        true
+		width:       60
+		height:      40
+		radius:      6
+		size_border: 2
+		padding:     Padding{
+			left:   4
+			right:  4
+			top:    4
+			bottom: 4
+		}
+	}
+	assert f32_are_close(resolve_clip_radius(10, shape), 10)
 }
 
 fn test_resolve_clip_radius_ignores_non_finite_child_radius() {

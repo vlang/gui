@@ -72,6 +72,8 @@ fn main_view(window &gui.Window) gui.View {
 						height:  120
 						sizing:  gui.fixed_fixed
 						padding: gui.padding_none
+						color_border: gui.green
+						size_border: 2
 						content: [
 							gui.image(
 								src:    image_url
@@ -88,6 +90,8 @@ fn main_view(window &gui.Window) gui.View {
 						height:  120
 						sizing:  gui.fixed_fixed
 						padding: gui.padding_none
+						color_border: gui.green
+						size_border: 2
 						content: [
 							gui.image(
 								src:    image_url

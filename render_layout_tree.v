@@ -9,12 +9,30 @@ fn resolve_clip_radius(parent_radius f32, shape &Shape) f32 {
 	if !shape.clip {
 		return parent_radius
 	}
-	local_radius := if shape.shape_type == .circle {
+	base_radius := if shape.shape_type == .circle {
 		f32_min(shape.width, shape.height) / 2
 	} else {
 		shape.radius
 	}
-	if !f32_is_finite(local_radius) || local_radius <= 0 {
+	if !f32_is_finite(base_radius) || base_radius <= 0 {
+		return parent_radius
+	}
+	left_inset := shape.padding.left + shape.size_border
+	right_inset := shape.padding.right + shape.size_border
+	top_inset := shape.padding.top + shape.size_border
+	bottom_inset := shape.padding.bottom + shape.size_border
+	mut inset := left_inset
+	if right_inset > inset {
+		inset = right_inset
+	}
+	if top_inset > inset {
+		inset = top_inset
+	}
+	if bottom_inset > inset {
+		inset = bottom_inset
+	}
+	local_radius := f32_max(0, base_radius - inset)
+	if local_radius <= 0 {
 		return parent_radius
 	}
 	if !f32_is_finite(parent_radius) || parent_radius <= 0 {
