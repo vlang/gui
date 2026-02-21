@@ -22,8 +22,25 @@ fn renderers_draw(mut window Window) {
 			i++
 			continue
 		}
-		// Batch consecutive DrawSvg with same color, position, scale
-		if renderer is DrawSvg {
+		// Batch consecutive rounded images.
+		if renderer is DrawImage && renderer.clip_radius > 0 {
+			start := i
+			i++
+			for i < renderers.len {
+				candidate := renderers[i]
+				if !guard_renderer_or_skip(candidate, mut window) {
+					i++
+					continue
+				}
+				if candidate is DrawImage && candidate.clip_radius > 0 {
+					i++
+					continue
+				}
+				break
+			}
+			draw_rounded_image_batch(renderers, start, i, mut window)
+		} else if renderer is DrawSvg {
+			// Batch consecutive DrawSvg with same color, position, scale
 			// Handle stencil clip groups
 			if renderer.clip_group > 0 {
 				i = draw_clipped_svg_group(renderers, i, mut window)
@@ -102,6 +119,49 @@ fn draw_svg_batch(renderers []Renderer, start int, end int, c gg.Color, x f32, y
 	}
 
 	sgl.end()
+}
+
+// draw_rounded_image_batch draws consecutive rounded DrawImage
+// renderers with one image_clip pipeline setup.
+fn draw_rounded_image_batch(renderers []Renderer, start int, end int, mut window Window) {
+	if start < 0 || end <= start || end > renderers.len {
+		return
+	}
+
+	mut ctx := window.ui
+	if !init_image_clip_pipeline(mut window) {
+		warn_image_clip_fallback_once(mut window)
+		for idx in start .. end {
+			renderer := renderers[idx]
+			if !guard_renderer_or_skip(renderer, mut window) {
+				continue
+			}
+			if renderer is DrawImage {
+				ctx.draw_image(renderer.x, renderer.y, renderer.w, renderer.h, renderer.img)
+			}
+		}
+		return
+	}
+
+	scale := ctx.scale
+	sgl.load_pipeline(window.pip.image_clip)
+	sgl.enable_texture()
+	sgl.c4b(255, 255, 255, 255)
+	for idx in start .. end {
+		renderer := renderers[idx]
+		if !guard_renderer_or_skip(renderer, mut window) {
+			continue
+		}
+		if renderer is DrawImage {
+			x0, y0, w0, h0, r := rounded_image_scaled_params(renderer.x, renderer.y, renderer.w,
+				renderer.h, renderer.clip_radius, scale)
+			z := pack_shader_params(r, 0)
+			sgl.texture(renderer.img.simg, renderer.img.ssmp)
+			draw_quad(x0, y0, w0, h0, z)
+		}
+	}
+	sgl.disable_texture()
+	sgl.load_default_pipeline()
 }
 
 // draw_clipped_svg_group renders a stencil-clipped SVG group.

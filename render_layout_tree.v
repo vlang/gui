@@ -4,6 +4,25 @@ import gg
 import log
 import vglyph
 
+@[inline]
+fn resolve_clip_radius(parent_radius f32, shape &Shape) f32 {
+	if !shape.clip {
+		return parent_radius
+	}
+	local_radius := if shape.shape_type == .circle {
+		f32_min(shape.width, shape.height) / 2
+	} else {
+		shape.radius
+	}
+	if !f32_is_finite(local_radius) || local_radius <= 0 {
+		return parent_radius
+	}
+	if !f32_is_finite(parent_radius) || parent_radius <= 0 {
+		return local_radius
+	}
+	return f32_min(parent_radius, local_radius)
+}
+
 // render_layout walks the layout and generates renderers. If a shape is clipped,
 // then a clip rectangle is added to the context. Clip rectangles are added to the
 // draw context and later 'removed' by setting the clip rectangle to the
@@ -50,14 +69,7 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 
 	// Propagate rounded clip radius to child images.
 	saved_clip_radius := window.clip_radius
-	if layout.shape.clip {
-		new_radius := if layout.shape.shape_type == .circle {
-			f32_min(layout.shape.width, layout.shape.height) / 2
-		} else {
-			layout.shape.radius
-		}
-		window.clip_radius = new_radius
-	}
+	window.clip_radius = resolve_clip_radius(saved_clip_radius, layout.shape)
 
 	color := if layout.shape.color != color_transparent { layout.shape.color } else { bg_color }
 	for mut child in layout.children {
@@ -412,11 +424,12 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 						if entry.state == .ready && entry.png_path.len > 0 {
 							img := window.load_image(entry.png_path) or { continue }
 							emit_renderer(DrawImage{
-								x:   shape.x + f32(item.x)
-								y:   shape.y + f32(item.y) - f32(item.ascent)
-								w:   f32(item.width)
-								h:   f32(item.ascent + item.descent)
-								img: img
+								x:           shape.x + f32(item.x)
+								y:           shape.y + f32(item.y) - f32(item.ascent)
+								w:           f32(item.width)
+								h:           f32(item.ascent + item.descent)
+								img:         img
+								clip_radius: window.clip_radius
 							}, mut window)
 						}
 					}

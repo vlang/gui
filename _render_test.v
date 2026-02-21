@@ -1,6 +1,7 @@
 module gui
 
 import gg
+import math
 import svg
 import vglyph
 
@@ -192,6 +193,42 @@ fn test_render_layout_clip_push_pop() {
 			assert false, 'expected second renderer to be DrawClip (pop)'
 		}
 	}
+}
+
+fn test_resolve_clip_radius_keeps_parent_when_child_not_rounded() {
+	shape := &Shape{
+		clip:   true
+		width:  60
+		height: 40
+		radius: 0
+	}
+	assert f32_are_close(resolve_clip_radius(12, shape), 12)
+}
+
+fn test_resolve_clip_radius_uses_min_for_nested_rounded() {
+	shape := &Shape{
+		clip:   true
+		width:  60
+		height: 40
+		radius: 8
+	}
+	assert f32_are_close(resolve_clip_radius(12, shape), 8)
+}
+
+fn test_resolve_clip_radius_ignores_non_finite_child_radius() {
+	shape := &Shape{
+		clip:   true
+		width:  60
+		height: 40
+		radius: f32(math.inf(1))
+	}
+	assert f32_are_close(resolve_clip_radius(12, shape), 12)
+}
+
+fn test_pipelines_image_clip_state_defaults() {
+	p := Pipelines{}
+	assert !p.image_clip_init_failed
+	assert !p.image_clip_fallback_warned
 }
 
 fn test_render_shape_opacity_no_text_config_non_text_is_safe() {

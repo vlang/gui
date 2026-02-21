@@ -52,16 +52,18 @@ mut:
 // Each pipeline is considered initialized when its `.id != 0`.
 struct Pipelines {
 mut:
-	rounded_rect         sgl.Pipeline
-	shadow               sgl.Pipeline
-	blur                 sgl.Pipeline
-	gradient             sgl.Pipeline
-	image_clip           sgl.Pipeline
-	stencil_write        sgl.Pipeline
-	stencil_test         sgl.Pipeline
-	stencil_clear        sgl.Pipeline
-	custom               map[u64]sgl.Pipeline
-	gradient_stop_warned bool
+	rounded_rect               sgl.Pipeline
+	shadow                     sgl.Pipeline
+	blur                       sgl.Pipeline
+	gradient                   sgl.Pipeline
+	image_clip                 sgl.Pipeline
+	image_clip_init_failed     bool
+	image_clip_fallback_warned bool
+	stencil_write              sgl.Pipeline
+	stencil_test               sgl.Pipeline
+	stencil_clear              sgl.Pipeline
+	custom                     map[u64]sgl.Pipeline
+	gradient_stop_warned       bool
 }
 
 const packed_param_stride = 4096
@@ -1762,6 +1764,9 @@ fn init_image_clip_pipeline(mut window Window) bool {
 	if window.pip.image_clip.id != 0 {
 		return true
 	}
+	if window.pip.image_clip_init_failed {
+		return false
+	}
 
 	mut attrs := [16]gfx.VertexAttrDesc{}
 	attrs[0] = gfx.VertexAttrDesc{
@@ -1894,7 +1899,42 @@ fn init_image_clip_pipeline(mut window Window) bool {
 	}
 
 	window.pip.image_clip = sgl.make_pipeline(&desc)
-	return window.pip.image_clip.id != 0
+	if window.pip.image_clip.id == 0 {
+		window.pip.image_clip_init_failed = true
+		return false
+	}
+	window.pip.image_clip_init_failed = false
+	window.pip.image_clip_fallback_warned = false
+	return true
+}
+
+@[inline]
+fn warn_image_clip_fallback_once(mut window Window) {
+	if window.pip.image_clip_fallback_warned {
+		return
+	}
+	window.pip.image_clip_fallback_warned = true
+	log.warn('image_clip pipeline unavailable; fallback to unclipped')
+}
+
+@[inline]
+fn rounded_image_scaled_params(x f32, y f32, w f32, h f32, radius f32, scale f32) (f32, f32, f32, f32, f32) {
+	x0 := x * scale
+	y0 := y * scale
+	w0 := w * scale
+	h0 := h * scale
+	mut r := radius * scale
+	if math.is_nan(r) || math.is_inf(r, 0) {
+		r = 0
+	}
+	min_dim := if w0 < h0 { w0 } else { h0 }
+	if r > min_dim / 2.0 {
+		r = min_dim / 2.0
+	}
+	if r < 0 {
+		r = 0
+	}
+	return x0, y0, w0, h0, r
 }
 
 // draw_image_rounded draws a textured quad with SDF rounded-rect
@@ -1906,34 +1946,20 @@ fn draw_image_rounded(x f32, y f32, w f32, h f32, radius f32, img &gg.Image, mut
 		return
 	}
 
-	scale := window.ui.scale
-	x0 := x * scale
-	y0 := y * scale
-	x1 := (x + w) * scale
-	y1 := (y + h) * scale
-	mut r := radius * scale
-
-	min_dim := if (x1 - x0) < (y1 - y0) { x1 - x0 } else { y1 - y0 }
-	if r > min_dim / 2.0 {
-		r = min_dim / 2.0
-	}
-	if r < 0 {
-		r = 0
-	}
-
 	if !init_image_clip_pipeline(mut window) {
-		log.warn('image_clip pipeline init failed; fallback to unclipped')
+		warn_image_clip_fallback_once(mut window)
 		window.ui.draw_image(x, y, w, h, img)
 		return
 	}
 
+	x0, y0, w0, h0, r := rounded_image_scaled_params(x, y, w, h, radius, window.ui.scale)
 	z := pack_shader_params(r, 0)
 
 	sgl.load_pipeline(window.pip.image_clip)
 	sgl.enable_texture()
 	sgl.texture(img.simg, img.ssmp)
 	sgl.c4b(255, 255, 255, 255)
-	draw_quad(x0, y0, x1 - x0, y1 - y0, z)
+	draw_quad(x0, y0, w0, h0, z)
 
 	sgl.disable_texture()
 	sgl.load_default_pipeline()

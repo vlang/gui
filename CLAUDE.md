@@ -161,11 +161,16 @@ shapes — the old `name string` field was removed.
 Containers with `clip: true` and `radius > 0` (or `circle()`) clip
 child images to the rounded boundary via an SDF alpha-mask shader.
 
-- `window.clip_radius` propagates during `render_layout` recursion;
-  saved/restored per clip scope.
+- `window.clip_radius` propagates during `render_layout` recursion and is composed
+  per clip scope. Child clips reduce radius with `min(parent, child)`;
+  non-rounded child clips inherit parent.
 - `DrawImage.clip_radius > 0` triggers `draw_image_rounded()` in the
   dispatch — a custom SGL pipeline (`image_clip`) that samples the
   texture and applies SDF rounded-rect masking in the fragment shader.
+- Inline RTF object images use the same `DrawImage` clip-radius path, so rounded
+  clipping is consistent.
+- `image_clip` init failure is latched and fallback warning is emitted once;
+  fallback draws unclipped.
 - Non-clipped images (`clip_radius == 0`) use the standard
   `ctx.draw_image` path unchanged.
 
