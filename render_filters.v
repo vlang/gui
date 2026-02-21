@@ -92,7 +92,7 @@ fn process_svg_filters(mut window Window) {
 
 	mut i := 0
 	mut new_renderers := unsafe { window.filter_renderers_scratch }
-	new_renderers.clear()
+	array_clear(mut new_renderers)
 	if new_renderers.cap < source_renderers.len {
 		new_renderers = []Renderer{cap: source_renderers.len}
 	}

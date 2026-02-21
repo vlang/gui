@@ -900,24 +900,24 @@ fn data_grid_row_id(row GridRow, idx int) string {
 
 // Generates deterministic row ID from cell content when no
 // explicit ID is provided. Sorts cell keys for stability,
-// joins as "key=value" pairs, hashes with FNV-1a. Prefixed
-// with `__auto_` to avoid collisions with user IDs.
+// feeds "key=value" pairs into FNV-1a. Prefixed with
+// `__auto_` to avoid collisions with user IDs.
 fn data_grid_row_auto_id(row GridRow) string {
 	if row.cells.len == 0 {
 		return ''
 	}
 	mut keys := row.cells.keys()
 	keys.sort()
-	mut parts := []string{cap: keys.len}
-	for key in keys {
+	mut hash := data_grid_fnv64_offset
+	for idx, key in keys {
+		if idx > 0 {
+			hash = data_grid_fnv64_byte(hash, data_grid_unit_sep[0])
+		}
+		hash = data_grid_fnv64_str(hash, key)
+		hash = data_grid_fnv64_byte(hash, `=`)
 		value := row.cells[key] or { '' }
-		parts << '${key}=${value}'
+		hash = data_grid_fnv64_str(hash, value)
 	}
-	serialized := parts.join(data_grid_unit_sep)
-	if serialized.len == 0 {
-		return ''
-	}
-	hash := fnv1a.sum64_string(serialized)
 	return '__auto_${hash:016x}'
 }
 

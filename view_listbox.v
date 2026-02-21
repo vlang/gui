@@ -1,5 +1,7 @@
 module gui
 
+import strings
+
 const list_box_virtual_buffer_rows = 2
 
 // ListBoxCfg configures a [list_box](#list_box) view.
@@ -168,27 +170,29 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 		)
 	}
 
-	// Build value_text from selected item names
-	mut selected_names := []string{cap: cfg.selected_ids.len}
-	for dat in cfg.data {
-		if dat.id in cfg.selected_ids {
-			selected_names << dat.name
-		}
-	}
-	list_value_text := selected_names.join(', ')
-	mut list_a11y := make_a11y_info(a11y_label(cfg.a11y_label, cfg.id), cfg.a11y_description)
-	if list_value_text.len > 0 {
-		list_a11y = &AccessInfo{
-			label:       a11y_label(cfg.a11y_label, cfg.id)
-			description: cfg.a11y_description
-			value_text:  list_value_text
-		}
-	}
-	// Build selectable item IDs for keyboard nav
+	// Build value_text and selectable item IDs in one pass.
 	mut item_ids := []string{cap: cfg.data.len}
+	mut value_builder := strings.new_builder(0)
 	for dat in cfg.data {
 		if !dat.is_subheading {
 			item_ids << dat.id
+		}
+		if dat.id !in cfg.selected_ids {
+			continue
+		}
+		if value_builder.len > 0 {
+			value_builder.write_string(', ')
+		}
+		value_builder.write_string(dat.name)
+	}
+	list_label := a11y_label(cfg.a11y_label, cfg.id)
+	list_value_text := value_builder.str()
+	mut list_a11y := make_a11y_info(list_label, cfg.a11y_description)
+	if list_value_text.len > 0 {
+		list_a11y = &AccessInfo{
+			label:       list_label
+			description: cfg.a11y_description
+			value_text:  list_value_text
 		}
 	}
 	list_box_id := cfg.id

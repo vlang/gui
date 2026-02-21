@@ -72,6 +72,22 @@ fn test_list_box_selection_uses_id_not_value() {
 	assert cfg.data[0].id !in cfg.selected_ids
 }
 
+fn test_list_box_sets_a11y_value_text_from_selected_items() {
+	cfg := ListBoxCfg{
+		id:           'lb-a11y'
+		selected_ids: ['id_b', 'id_a']
+		data:         [
+			list_box_option('id_a', 'Alpha', 'A'),
+			list_box_subheading('hdr', 'Group'),
+			list_box_option('id_b', 'Beta', 'B'),
+		]
+	}
+	mut v := list_box(cfg)
+	mut cv := v as ContainerView
+	assert cv.a11y != unsafe { nil }
+	assert cv.a11y.value_text == 'Alpha, Beta'
+}
+
 fn test_list_box_source_request_key_uses_query_and_source_key() {
 	cfg := ListBoxCfg{
 		id:         'list_a'

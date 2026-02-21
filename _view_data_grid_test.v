@@ -552,9 +552,12 @@ fn test_data_grid_next_hidden_columns_keeps_one_visible() {
 	next_a := data_grid_next_hidden_columns(base, 'a', columns)
 	assert next_a['a'] == false
 	assert next_a['b'] == true
+	assert base['a'] == false
+	assert base['b'] == true
 
 	next_b := data_grid_next_hidden_columns(base, 'b', columns)
 	assert next_b['b'] == false
+	assert base['b'] == true
 }
 
 fn test_data_grid_effective_columns_keeps_one_when_all_hidden() {
@@ -819,10 +822,12 @@ fn test_data_grid_next_detail_expanded_map_toggle() {
 	}
 	next1 := data_grid_next_detail_expanded_map(base, '2')
 	assert next1['2'] == false
+	assert base['2'] == true
 
 	next2 := data_grid_next_detail_expanded_map(base, '3')
 	assert next2['2'] == true
 	assert next2['3'] == true
+	assert base['3'] == false
 }
 
 fn test_data_grid_presentation_with_master_detail_rows() {
@@ -982,6 +987,26 @@ fn test_data_grid_row_id_fallback_is_stable_for_same_cells() {
 	id2 := data_grid_row_id(row, 27)
 	assert id1 == id2
 	assert id1.starts_with('__auto_')
+}
+
+fn test_data_grid_row_id_fallback_is_stable_across_cell_key_order() {
+	row_a := GridRow{
+		id:    ''
+		cells: {
+			'name':  'Ada'
+			'team':  'Core'
+			'score': '95'
+		}
+	}
+	row_b := GridRow{
+		id:    ''
+		cells: {
+			'score': '95'
+			'name':  'Ada'
+			'team':  'Core'
+		}
+	}
+	assert data_grid_row_id(row_a, 0) == data_grid_row_id(row_b, 88)
 }
 
 fn test_data_grid_row_id_fallback_differs_for_diff_cells() {

@@ -619,7 +619,6 @@ fn data_grid_detail_toggle_control(cfg DataGridCfg, row_id string, expanded bool
 	label := if expanded { '▼' } else { '▶' }
 	style := data_grid_indicator_text_style(cfg.text_style)
 	on_detail_expanded_change := cfg.on_detail_expanded_change
-	detail_expanded_row_ids := cfg.detail_expanded_row_ids.clone()
 	if !enabled {
 		return row(
 			name:    'data_grid detail toggle'
@@ -647,17 +646,8 @@ fn data_grid_detail_toggle_control(cfg DataGridCfg, row_id string, expanded bool
 		color_focus:  color_transparent
 		color_click:  cfg.color_row_hover
 		color_border: color_transparent
-		on_click:     fn [on_detail_expanded_change, detail_expanded_row_ids, row_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
-			if row_id.len == 0 || on_detail_expanded_change == unsafe { nil } {
-				return
-			}
-			next := data_grid_next_detail_expanded_map(detail_expanded_row_ids, row_id)
-			on_detail_expanded_change(next, mut e, mut w)
-			if focus_id > 0 {
-				w.set_id_focus(focus_id)
-			}
-			e.is_handled = true
-		}
+		on_click:     data_grid_make_detail_toggle_on_click(on_detail_expanded_change,
+			cfg.detail_expanded_row_ids, row_id, focus_id)
 		content:      [
 			text(
 				text:       label
@@ -666,6 +656,20 @@ fn data_grid_detail_toggle_control(cfg DataGridCfg, row_id string, expanded bool
 			),
 		]
 	)
+}
+
+fn data_grid_make_detail_toggle_on_click(on_detail_expanded_change fn (next map[string]bool, mut e Event, mut w Window), detail_expanded_row_ids map[string]bool, row_id string, focus_id u32) fn (&Layout, mut Event, mut Window) {
+	return fn [on_detail_expanded_change, detail_expanded_row_ids, row_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
+		if row_id.len == 0 || on_detail_expanded_change == unsafe { nil } {
+			return
+		}
+		next := data_grid_next_detail_expanded_map(detail_expanded_row_ids, row_id)
+		on_detail_expanded_change(next, mut e, mut w)
+		if focus_id > 0 {
+			w.set_id_focus(focus_id)
+		}
+		e.is_handled = true
+	}
 }
 
 fn data_grid_detail_row_expanded(cfg DataGridCfg, row_id string) bool {

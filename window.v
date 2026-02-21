@@ -336,10 +336,10 @@ fn (mut window Window) update_render_only() {
 }
 
 fn (mut window Window) rebuild_renderers(background_color Color, clip_rect DrawClip) {
-	// process_svg_filters swaps renderer buffers. Detach scratch before
-	// freeing renderers to avoid stale aliasing to freed storage.
-	window.filter_renderers_scratch = []Renderer{}
-	unsafe { window.renderers.free() }
+	// process_svg_filters swaps renderer buffers. Reset both
+	// arrays before render so buffers are reused safely.
+	array_clear(mut window.filter_renderers_scratch)
+	array_clear(mut window.renderers)
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
 
 	// Render RTF tooltip if active

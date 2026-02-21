@@ -139,7 +139,6 @@ fn data_grid_column_chooser_row(cfg DataGridCfg, is_open bool, focus_id u32) Vie
 		data_grid_header_height(cfg)
 	}
 	grid_id := cfg.id
-	hidden_column_ids := cfg.hidden_column_ids.clone()
 	columns := cfg.columns
 	mut content := []View{cap: 2}
 	content << row(
@@ -166,25 +165,15 @@ fn data_grid_column_chooser_row(cfg DataGridCfg, is_open bool, focus_id u32) Vie
 			if col.id.len == 0 {
 				continue
 			}
-			hidden := hidden_column_ids[col.id]
+			hidden := cfg.hidden_column_ids[col.id]
 			col_id := col.id
 			options << toggle(
 				id:       '${grid_id}:col-chooser:${col.id}'
 				label:    col.title
 				select:   !hidden
 				disabled: !has_visibility_callback
-				on_click: fn [on_hidden_columns_change, hidden_column_ids, columns, col_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
-					if on_hidden_columns_change == unsafe { nil } {
-						return
-					}
-					next_hidden := data_grid_next_hidden_columns(hidden_column_ids, col_id,
-						columns)
-					on_hidden_columns_change(next_hidden, mut e, mut w)
-					if focus_id > 0 {
-						w.set_id_focus(focus_id)
-					}
-					e.is_handled = true
-				}
+				on_click: data_grid_make_column_chooser_on_click(on_hidden_columns_change,
+					cfg.hidden_column_ids, columns, col_id, focus_id)
 			)
 		}
 		content << row(
@@ -210,6 +199,20 @@ fn data_grid_column_chooser_row(cfg DataGridCfg, is_open bool, focus_id u32) Vie
 		spacing:      0
 		content:      content
 	)
+}
+
+fn data_grid_make_column_chooser_on_click(on_hidden_columns_change fn (hidden map[string]bool, mut e Event, mut w Window), hidden_column_ids map[string]bool, columns []GridColumnCfg, col_id string, focus_id u32) fn (&Layout, mut Event, mut Window) {
+	return fn [on_hidden_columns_change, hidden_column_ids, columns, col_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
+		if on_hidden_columns_change == unsafe { nil } {
+			return
+		}
+		next_hidden := data_grid_next_hidden_columns(hidden_column_ids, col_id, columns)
+		on_hidden_columns_change(next_hidden, mut e, mut w)
+		if focus_id > 0 {
+			w.set_id_focus(focus_id)
+		}
+		e.is_handled = true
+	}
 }
 
 fn data_grid_toggle_column_chooser_open(grid_id string, mut w Window) {
@@ -420,7 +423,7 @@ fn make_data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx 
 		grid_id:                cfg.id
 		columns:                cfg.columns
 		column_order:           cfg.column_order
-		hidden_column_ids:      cfg.hidden_column_ids.clone()
+		hidden_column_ids:      cfg.hidden_column_ids
 		query:                  cfg.query
 		multi_sort:             cfg.multi_sort
 		on_query_change:        cfg.on_query_change
