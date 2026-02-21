@@ -110,6 +110,7 @@ fn renderer_valid_for_draw(r Renderer) bool {
 		}
 		DrawImage {
 			f32_all_finite4(r.x, r.y, r.w, r.h) && r.w > 0 && r.h > 0 && r.img != unsafe { nil }
+				&& f32_is_finite(r.clip_radius)
 		}
 		DrawSvg {
 			if !f32_all_finite3(r.x, r.y, r.scale) {

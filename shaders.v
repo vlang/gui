@@ -17,6 +17,7 @@ module gui
 // 4. Flexibility: A single quad can represent a filled rect, a bordered rect, or
 //    a complex shadow, just by changing the SDF math in the shader.
 import gg
+import log
 import sokol.sapp
 import sokol.sgl
 import sokol.gfx
@@ -1921,6 +1922,8 @@ fn draw_image_rounded(x f32, y f32, w f32, h f32, radius f32, img &gg.Image, mut
 	}
 
 	if !init_image_clip_pipeline(mut window) {
+		log.warn('image_clip pipeline init failed; fallback to unclipped')
+		window.ui.draw_image(x, y, w, h, img)
 		return
 	}
 

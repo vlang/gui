@@ -56,9 +56,7 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 		} else {
 			layout.shape.radius
 		}
-		if new_radius > 0 {
-			window.clip_radius = new_radius
-		}
+		window.clip_radius = new_radius
 	}
 
 	color := if layout.shape.color != color_transparent { layout.shape.color } else { bg_color }
