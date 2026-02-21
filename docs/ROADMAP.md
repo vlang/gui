@@ -75,45 +75,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [ ] App-level hotkey registration (configurable shortcut map, conflict detection)
 - [ ] System color-scheme detection → automatic dark/light theme switch
 
-## 2026 H2: Accessibility + Globalization + Scale (P0/P1)
-
-### Accessibility (A11y)
-
-#### Phase 1 — Metadata Model (cross-platform)
-
-- [x] Add initial structs
-
-#### Phase 2 — macOS NSAccessibility Backend
-
-- [x] Objective-C bridge (`a11y_macos.m`) implementing
-      NSAccessibility protocol on a custom
-      NSAccessibilityElement tree
-- [x] Layout-tree → a11y-tree sync each frame (diff-based or
-      full rebuild)
-- [x] Focus-change notifications via
-      NSAccessibilityFocusedUIElementChangedNotification
-- [x] Value-change / layout-change notifications
-- [x] Action dispatch (press, increment/decrement, confirm,
-      cancel) routed back to Shape event handlers
-- [x] VoiceOver smoke tests for showcase app
-
-#### Phase 3 — Widget Compliance
-
-- [x] Screen-reader roles/labels/states for every shipped
-      widget (button, input, select, table, tree, tab_control,
-      slider, checkbox, dialog, menu, breadcrumb, splitter,
-      progress_bar)
-- [x] Keyboard parity matrix: tab, arrows, home/end,
-      page up/down, escape, space/enter for activation
-- [x] Live-region announcements for dynamic content (toasts,
-      progress updates, validation errors)
-
-#### Phase 4 — Visual Accessibility
-
-- [ ] High-contrast theme preset
-- [ ] Visible focus ring system (themeable width, color, offset)
-- [ ] `prefers-reduced-motion` detection → disable animations
-- [ ] Minimum-contrast validation helper for custom themes
+## 2026 H2: Globalization
 
 ### Internationalization (i18n/l10n)
 
@@ -151,15 +113,3 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [ ] Memory + resource leak CI checks
 - [ ] API stability policy (versioning, deprecation windows, migration notes)
 - [x] Public benchmark suite (widgets count tiers, text-heavy, svg-heavy scenarios)
-
-## Suggested First 10 Tickets
-
-- [x] Input mask core + tests
-- [x] Native open/save/folder dialogs (macOS first)
-- [x] Markdown code highlighting (inline + fenced)
-- [x] Tab control component
-- [x] Splitter component
-- [x] Virtualized list view
-- [x] Data grid v2 foundations
-- [x] Accessibility role model + macOS backend
-- [ ] Inspector overlay MVP
