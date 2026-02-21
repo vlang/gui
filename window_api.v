@@ -1,5 +1,12 @@
 module gui
 
+// AI-DOC: window_api.v
+// - Scope: Window public API helpers not tied to init/event/render loop.
+// - Exposes: dialog, focus, lock, queue, cursor, scroll, theme, locale, stats.
+// - Thread model: queue_command() for cross-thread UI mutation; lock/unlock guard
+//   direct state writes when needed.
+// - Update model: methods that mutate visible state call update_window() when
+//   not guaranteed to run inside event handlers.
 import gg
 import sokol.sapp
 import log
