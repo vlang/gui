@@ -47,7 +47,9 @@ fn item(id string, label string) gui.OverflowItem {
 		id:     id
 		text:   label
 		view:   gui.button(
-			content: [gui.text(text: label)]
+			content: [
+				gui.text(text: label),
+			]
 		)
 		action: fn (_ &gui.MenuItemCfg, mut e gui.Event, mut _ gui.Window) {
 			e.is_handled = true

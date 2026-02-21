@@ -29,16 +29,7 @@ pub:
 	// Custom trigger button content; default: ellipsis icon.
 	trigger []View
 
-	// Trigger button styling
-	color        Color   = gui_theme.button_style.color
-	color_hover  Color   = gui_theme.button_style.color_hover
-	color_focus  Color   = gui_theme.button_style.color_focus
-	color_click  Color   = gui_theme.button_style.color_click
-	color_open   Color   = gui_theme.button_style.color_focus
-	color_border Color   = gui_theme.button_style.color_border
-	padding      Padding = gui_theme.button_style.padding
-	size_border  f32     = gui_theme.button_style.size_border
-	radius       f32     = gui_theme.button_style.radius
+	padding Padding = gui_theme.button_style.padding
 
 	// Dropdown positioning
 	float_anchor   FloatAttach = .bottom_right
@@ -71,34 +62,28 @@ pub fn (window &Window) overflow_panel(cfg OverflowPanelCfg) View {
 	} else {
 		[
 			View(text(
-				text:       icon_elipsis_h
+				text:       icon_elipsis_v
 				text_style: TextStyle{
+					...theme().text_style
 					family: icon_font_name
 				}
 			)),
 		]
 	}
 
-	trigger_color := if is_open { cfg.color_open } else { cfg.color }
-
 	// Extract captures for closure
 	id := cfg.id
 	id_focus := cfg.id_focus
-	color_hover := cfg.color_hover
-	color_click := cfg.color_click
-	color_focus := cfg.color_focus
 
 	content << button(
 		id:           cfg.id + '_trigger'
 		id_focus:     cfg.id_focus
-		color:        trigger_color
-		color_hover:  color_hover
-		color_click:  color_click
-		color_focus:  color_focus
-		color_border: cfg.color_border
+		color:        color_transparent
+		color_hover:  color_transparent
+		color_click:  color_transparent
+		color_focus:  color_transparent
+		color_border: color_transparent
 		padding:      cfg.padding
-		size_border:  cfg.size_border
-		radius:       cfg.radius
 		disabled:     cfg.disabled
 		content:      trigger_content
 		on_click:     fn [id, id_focus, is_open] (_ &Layout, mut e Event, mut w Window) {
@@ -113,10 +98,16 @@ pub fn (window &Window) overflow_panel(cfg OverflowPanelCfg) View {
 	if is_open && visible_count < cfg.items.len {
 		mut menu_items := []MenuItemCfg{cap: cfg.items.len - visible_count}
 		for item in cfg.items[visible_count..] {
+			user_action := item.action
 			menu_items << MenuItemCfg{
 				id:     item.id
 				text:   if item.text.len > 0 { item.text } else { item.id }
-				action: item.action
+				action: fn [id, user_action] (mi &MenuItemCfg, mut e Event, mut w Window) {
+					if user_action != unsafe { nil } {
+						user_action(mi, mut e, mut w)
+					}
+					w.view_state.select_state.delete(id)
+				}
 			}
 		}
 		content << window.menu(MenubarCfg{

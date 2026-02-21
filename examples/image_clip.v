@@ -66,15 +66,15 @@ fn main_view(window &gui.Window) gui.View {
 					)),
 					// Large radius clip
 					label_group('radius: 40', gui.column(
-						clip:    true
-						radius:  40
-						width:   120
-						height:  120
-						sizing:  gui.fixed_fixed
-						padding: gui.padding_none
+						clip:         true
+						radius:       40
+						width:        120
+						height:       120
+						sizing:       gui.fixed_fixed
+						padding:      gui.padding_none
 						color_border: gui.green
-						size_border: 2
-						content: [
+						size_border:  2
+						content:      [
 							gui.image(
 								src:    image_url
 								width:  120
@@ -85,13 +85,13 @@ fn main_view(window &gui.Window) gui.View {
 					)),
 					// Circle clip
 					label_group('circle\nborder\npadding', gui.circle(
-						clip:    true
-						width:   120
-						height:  120
-						sizing:  gui.fixed_fixed
+						clip:         true
+						width:        120
+						height:       120
+						sizing:       gui.fixed_fixed
 						color_border: gui.green
-						size_border: 2
-						content: [
+						size_border:  2
+						content:      [
 							gui.image(
 								src:    image_url
 								width:  120
