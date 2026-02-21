@@ -164,6 +164,7 @@ fn main() {
 		height:       700
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
+			ensure_showcase_embedded_image()
 			for data in showcase_locale_data {
 				gui.locale_register(gui.locale_parse(data.to_string()) or { continue })
 			}
@@ -468,7 +469,7 @@ fn demo_entries() []DemoEntry {
 		DemoEntry{
 			id:      'image'
 			label:   'Image'
-			group:   'data'
+			group:   'graphics'
 			summary: 'Render local or remote image assets'
 			tags:    ['photo', 'asset', 'media']
 		},
@@ -981,6 +982,7 @@ fn detail_panel(mut w gui.Window) gui.View {
 	if entries.len == 0 {
 		return gui.column(
 			id_scroll:       id_scroll_gallery
+			radius:          0
 			scrollbar_cfg_y: &gui.ScrollbarCfg{
 				gap_edge: 4
 			}
@@ -1014,6 +1016,7 @@ fn detail_panel(mut w gui.Window) gui.View {
 	)
 	return gui.column(
 		id_scroll:       id_scroll_gallery
+		radius:          0
 		scrollbar_cfg_y: &gui.ScrollbarCfg{
 			gap_edge: 4
 		}
@@ -1558,8 +1561,25 @@ const svg_transform_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0
 const svg_inherit_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 90"><g fill="#7fd1ff" stroke="#11314a" stroke-width="3"><rect x="10" y="14" width="34" height="24" rx="5"/><circle cx="74" cy="26" r="12"/><rect x="96" y="14" width="34" height="24" rx="5" fill="#ff8c96"/></g><g transform="translate(0,40)" fill="#7fd1ff" stroke="#11314a" stroke-width="3"><circle cx="26" cy="20" r="12" fill="#90e87a"/><rect x="56" y="8" width="30" height="24" rx="5"/><rect x="96" y="8" width="34" height="24" rx="5"/></g></svg>'
 const tiger_svg_data = $embed_file('../assets/svgs/tiger.svg').to_string()
 const missing_svg_path = os.join_path(os.dir(@FILE), 'missing-icon.svg')
+const image_clip_asset_data = $embed_file('../assets/image_clip_face.jpg')
+const image_clip_asset_fallback_path = os.join_path(os.dir(@FILE), '..', 'assets', 'image_clip_face.jpg')
+const image_clip_asset_embedded_path = os.join_path(os.temp_dir(), 'gui_showcase_image_clip_face.jpg')
 
-const sample_image_path = os.join_path(os.dir(@FILE), 'sample.jpeg')
+fn ensure_showcase_embedded_image() {
+	if os.exists(image_clip_asset_embedded_path) {
+		return
+	}
+	os.write_file_array(image_clip_asset_embedded_path, image_clip_asset_data.to_bytes()) or {
+		eprintln('showcase image embed write failed: ${err.msg()}')
+	}
+}
+
+fn showcase_image_path() string {
+	if os.exists(image_clip_asset_embedded_path) {
+		return image_clip_asset_embedded_path
+	}
+	return image_clip_asset_fallback_path
+}
 
 fn on_select(id string, mut w gui.Window) {
 	mut app := w.state[ShowcaseApp]()
@@ -4360,11 +4380,80 @@ gui.image(src: "https://example.com/photo.jpg")
 | on_hover | fn (mut Layout, mut Event, mut Window) | Pointer enters image |'
 
 fn demo_image() gui.View {
+	image_path := showcase_image_path()
 	return gui.column(
 		padding: gui.padding_none
+		spacing: 12
 		content: [
-			gui.image(src: sample_image_path),
-			gui.text(text: 'Pinard Falls, Oregon', text_style: gui.theme().n4),
+			gui.row(
+				spacing: 24
+				content: [
+					gui.column(
+						spacing:     8
+						padding:     gui.padding_none
+						size_border: 0
+						content:     [
+							gui.text(text: 'Default', text_style: gui.theme().b4),
+							gui.image(
+								src:    image_path
+								width:  120
+								height: 120
+								sizing: gui.fixed_fixed
+							),
+						]
+					),
+					gui.column(
+						spacing:     8
+						padding:     gui.padding_none
+						size_border: 0
+						content:     [
+							gui.text(text: 'Rounded (radius: 10)', text_style: gui.theme().b4),
+							gui.column(
+								clip:        true
+								radius:      10
+								width:       120
+								height:      120
+								sizing:      gui.fixed_fixed
+								padding:     gui.padding_none
+								size_border: 0
+								content:     [
+									gui.image(
+										src:    image_path
+										width:  120
+										height: 120
+										sizing: gui.fixed_fixed
+									),
+								]
+							),
+						]
+					),
+					gui.column(
+						spacing:     8
+						padding:     gui.padding_none
+						size_border: 0
+						content:     [
+							gui.text(text: 'Circle', text_style: gui.theme().b4),
+							gui.circle(
+								clip:        true
+								width:       120
+								height:      120
+								sizing:      gui.fixed_fixed
+								padding:     gui.padding_none
+								size_border: 0
+								content:     [
+									gui.image(
+										src:    image_path
+										width:  120
+										height: 120
+										sizing: gui.fixed_fixed
+									),
+								]
+							),
+						]
+					),
+				]
+			),
+			gui.text(text: 'Embedded: assets/image_clip_face.jpg', text_style: gui.theme().n4),
 		]
 	)
 }
