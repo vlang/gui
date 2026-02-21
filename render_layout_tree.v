@@ -48,11 +48,25 @@ fn render_layout(mut layout Layout, bg_color Color, clip DrawClip, mut window Wi
 		emit_renderer(shape_clip, mut window)
 	}
 
+	// Propagate rounded clip radius to child images.
+	saved_clip_radius := window.clip_radius
+	if layout.shape.clip {
+		new_radius := if layout.shape.shape_type == .circle {
+			f32_min(layout.shape.width, layout.shape.height) / 2
+		} else {
+			layout.shape.radius
+		}
+		if new_radius > 0 {
+			window.clip_radius = new_radius
+		}
+	}
+
 	color := if layout.shape.color != color_transparent { layout.shape.color } else { bg_color }
 	for mut child in layout.children {
 		render_layout(mut child, color, shape_clip, mut window)
 	}
 
+	window.clip_radius = saved_clip_radius
 	if layout.shape.clip || layout.shape.over_draw {
 		emit_renderer(clip, mut window)
 	}
@@ -336,11 +350,12 @@ fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 		return
 	}
 	emit_renderer(DrawImage{
-		x:   shape.x
-		y:   shape.y
-		w:   shape.width
-		h:   shape.height
-		img: image
+		x:           shape.x
+		y:           shape.y
+		w:           shape.width
+		h:           shape.height
+		img:         image
+		clip_radius: window.clip_radius
 	}, mut window)
 }
 

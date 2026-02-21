@@ -514,6 +514,43 @@ fragment float4 fs_main(VertexOut in [[stage_in]]) {
 }
 '
 
+// Image clip fragment shader (Metal): samples texture and applies
+// SDF rounded-rect alpha mask. UV is -1..1 (from draw_quad),
+// same as rounded_rect. Texture sampled at remapped 0..1 coords.
+const fs_image_clip_metal = '
+#include <metal_stdlib>
+using namespace metal;
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 uv;
+    float4 color;
+    float params;
+};
+
+fragment float4 fs_main(VertexOut in [[stage_in]], texture2d<float> tex [[texture(0)]], sampler smp [[sampler(0)]]) {
+    float radius = floor(in.params / 4096.0) / 4.0;
+
+    // SDF rounded rect — identical to rounded_rect shader
+    // (UVs are -1..1 from draw_quad)
+    float2 width_inv = float2(fwidth(in.uv.x), fwidth(in.uv.y));
+    float2 half_size = 1.0 / (width_inv + 1e-6);
+    float2 pos = in.uv * half_size;
+
+    float2 q = abs(pos) - half_size + float2(radius);
+    float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+
+    float grad_len = length(float2(dfdx(d), dfdy(d)));
+    d = d / max(grad_len, 0.001);
+    float alpha = 1.0 - smoothstep(-0.59, 0.59, d);
+
+    // Remap -1..1 to 0..1 for texture sampling
+    float2 tex_uv = in.uv * 0.5 + 0.5;
+    float4 tex_color = tex.sample(smp, tex_uv);
+    return float4(tex_color.rgb, tex_color.a * alpha);
+}
+'
+
 // Simple texture sampling shader for compositing blurred result.
 const fs_filter_texture_metal = '
 #include <metal_stdlib>

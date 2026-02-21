@@ -302,7 +302,12 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			}
 		}
 		DrawImage {
-			ctx.draw_image(renderer.x, renderer.y, renderer.w, renderer.h, renderer.img)
+			if renderer.clip_radius > 0 {
+				draw_image_rounded(renderer.x, renderer.y, renderer.w, renderer.h, renderer.clip_radius,
+					renderer.img, mut window)
+			} else {
+				ctx.draw_image(renderer.x, renderer.y, renderer.w, renderer.h, renderer.img)
+			}
 		}
 		DrawLine {
 			ctx.draw_line_with_config(renderer.x, renderer.y, renderer.x1, renderer.y1,

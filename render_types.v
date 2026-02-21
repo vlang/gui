@@ -19,11 +19,12 @@ struct DrawCircle {
 }
 
 struct DrawImage {
-	img &gg.Image
-	x   f32
-	y   f32
-	w   f32
-	h   f32
+	img         &gg.Image
+	x           f32
+	y           f32
+	w           f32
+	h           f32
+	clip_radius f32 // >0 enables SDF rounded clipping
 }
 
 struct DrawLine {

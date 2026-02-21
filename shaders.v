@@ -55,6 +55,7 @@ mut:
 	shadow               sgl.Pipeline
 	blur                 sgl.Pipeline
 	gradient             sgl.Pipeline
+	image_clip           sgl.Pipeline
 	stencil_write        sgl.Pipeline
 	stencil_test         sgl.Pipeline
 	stencil_clear        sgl.Pipeline
@@ -1754,6 +1755,185 @@ fn draw_filter_quad(x f32, y f32, w f32, h f32) {
 	sgl.v3f(x, y + h, 0.0)
 
 	sgl.end()
+}
+
+fn init_image_clip_pipeline(mut window Window) bool {
+	if window.pip.image_clip.id != 0 {
+		return true
+	}
+
+	mut attrs := [16]gfx.VertexAttrDesc{}
+	attrs[0] = gfx.VertexAttrDesc{
+		format:       .float3
+		offset:       0
+		buffer_index: 0
+	}
+	attrs[1] = gfx.VertexAttrDesc{
+		format:       .float2
+		offset:       12
+		buffer_index: 0
+	}
+	attrs[2] = gfx.VertexAttrDesc{
+		format:       .ubyte4n
+		offset:       20
+		buffer_index: 0
+	}
+
+	mut buffers := [8]gfx.VertexBufferLayoutState{}
+	buffers[0] = gfx.VertexBufferLayoutState{
+		stride: 24
+	}
+
+	mut shader_attrs := [16]gfx.ShaderAttrDesc{}
+	shader_attrs[0] = gfx.ShaderAttrDesc{
+		name:      c'position'
+		sem_name:  c'POSITION'
+		sem_index: 0
+	}
+	shader_attrs[1] = gfx.ShaderAttrDesc{
+		name:      c'texcoord0'
+		sem_name:  c'TEXCOORD'
+		sem_index: 0
+	}
+	shader_attrs[2] = gfx.ShaderAttrDesc{
+		name:      c'color0'
+		sem_name:  c'COLOR'
+		sem_index: 0
+	}
+
+	mut ub_uniforms := [16]gfx.ShaderUniformDesc{}
+	ub_uniforms[0] = gfx.ShaderUniformDesc{
+		name:        c'mvp'
+		@type:       .mat4
+		array_count: 1
+	}
+	ub_uniforms[1] = gfx.ShaderUniformDesc{
+		name:        c'tm'
+		@type:       .mat4
+		array_count: 1
+	}
+
+	mut ub := [4]gfx.ShaderUniformBlockDesc{}
+	ub[0] = gfx.ShaderUniformBlockDesc{
+		size:     128
+		uniforms: ub_uniforms
+	}
+
+	mut colors := [4]gfx.ColorTargetState{}
+	colors[0] = gfx.ColorTargetState{
+		blend:      gfx.BlendState{
+			enabled:          true
+			src_factor_rgb:   .src_alpha
+			dst_factor_rgb:   .one_minus_src_alpha
+			src_factor_alpha: .one
+			dst_factor_alpha: .one_minus_src_alpha
+		}
+		write_mask: .rgba
+	}
+
+	mut shader_images := [12]gfx.ShaderImageDesc{}
+	shader_images[0] = gfx.ShaderImageDesc{
+		used:        true
+		image_type:  ._2d
+		sample_type: .float
+	}
+
+	mut shader_samplers := [8]gfx.ShaderSamplerDesc{}
+	shader_samplers[0] = gfx.ShaderSamplerDesc{
+		used:         true
+		sampler_type: .filtering
+	}
+
+	mut shader_image_sampler_pairs := [12]gfx.ShaderImageSamplerPairDesc{}
+	shader_image_sampler_pairs[0] = gfx.ShaderImageSamplerPairDesc{
+		used:         true
+		image_slot:   0
+		sampler_slot: 0
+		glsl_name:    c'tex'
+	}
+
+	mut shader_desc := gfx.ShaderDesc{
+		attrs: shader_attrs
+	}
+
+	$if macos {
+		shader_desc.vs = gfx.ShaderStageDesc{
+			source:         vs_metal.str
+			entry:          c'vs_main'
+			uniform_blocks: ub
+		}
+		shader_desc.fs = gfx.ShaderStageDesc{
+			source:              fs_image_clip_metal.str
+			entry:               c'fs_main'
+			images:              shader_images
+			samplers:            shader_samplers
+			image_sampler_pairs: shader_image_sampler_pairs
+		}
+	} $else {
+		shader_desc.vs = gfx.ShaderStageDesc{
+			source:         vs_glsl.str
+			uniform_blocks: ub
+		}
+		shader_desc.fs = gfx.ShaderStageDesc{
+			source:              fs_image_clip_glsl.str
+			images:              shader_images
+			samplers:            shader_samplers
+			image_sampler_pairs: shader_image_sampler_pairs
+		}
+	}
+
+	desc := gfx.PipelineDesc{
+		label:  c'image_clip_pip'
+		colors: colors
+		layout: gfx.VertexLayoutState{
+			attrs:   attrs
+			buffers: buffers
+		}
+		shader: gfx.make_shader(&shader_desc)
+	}
+
+	window.pip.image_clip = sgl.make_pipeline(&desc)
+	return window.pip.image_clip.id != 0
+}
+
+// draw_image_rounded draws a textured quad with SDF rounded-rect
+// alpha masking. Uses draw_quad (UVs -1..1) with the image_clip
+// pipeline; the fragment shader remaps to 0..1 for texture
+// sampling.
+fn draw_image_rounded(x f32, y f32, w f32, h f32, radius f32, img &gg.Image, mut window Window) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	scale := window.ui.scale
+	x0 := x * scale
+	y0 := y * scale
+	x1 := (x + w) * scale
+	y1 := (y + h) * scale
+	mut r := radius * scale
+
+	min_dim := if (x1 - x0) < (y1 - y0) { x1 - x0 } else { y1 - y0 }
+	if r > min_dim / 2.0 {
+		r = min_dim / 2.0
+	}
+	if r < 0 {
+		r = 0
+	}
+
+	if !init_image_clip_pipeline(mut window) {
+		return
+	}
+
+	z := pack_shader_params(r, 0)
+
+	sgl.load_pipeline(window.pip.image_clip)
+	sgl.enable_texture()
+	sgl.texture(img.simg, img.ssmp)
+	sgl.c4b(255, 255, 255, 255)
+	draw_quad(x0, y0, x1 - x0, y1 - y0, z)
+
+	sgl.disable_texture()
+	sgl.load_default_pipeline()
 }
 
 fn draw_quad(x f32, y f32, w f32, h f32, z f32) {

@@ -156,6 +156,26 @@ shapes — the old `name string` field was removed.
 `resource string` holds either `image_name` or `svg_name`, discriminated by
 `shape_type`.
 
+## Image Clipping to Rounded Containers
+
+Containers with `clip: true` and `radius > 0` (or `circle()`) clip
+child images to the rounded boundary via an SDF alpha-mask shader.
+
+- `window.clip_radius` propagates during `render_layout` recursion;
+  saved/restored per clip scope.
+- `DrawImage.clip_radius > 0` triggers `draw_image_rounded()` in the
+  dispatch — a custom SGL pipeline (`image_clip`) that samples the
+  texture and applies SDF rounded-rect masking in the fragment shader.
+- Non-clipped images (`clip_radius == 0`) use the standard
+  `ctx.draw_image` path unchanged.
+
+```v ignore
+gui.column(clip: true, radius: 40, width: 80, height: 80,
+    content: [gui.image(src: "avatar.jpg", sizing: gui.fill_fill)])
+gui.circle(clip: true, width: 80, height: 80,
+    content: [gui.image(src: "avatar.jpg", sizing: gui.fill_fill)])
+```
+
 ## V Language Gotchas
 
 ### Submodule import

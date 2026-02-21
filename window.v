@@ -44,6 +44,7 @@ mut:
 	renderers           []Renderer           // Flat list of drawing instructions for the current frame
 	scratch             ScratchPools         // Bounded scratch arrays reused in hot paths
 	stats               Stats                // Rendering statistics
+	clip_radius         f32                  // rounded clip radius, render-time only
 	view_state          ViewState            // Manages state for widgets (scroll, selection, etc.)
 	window_size         gg.Size              // cached, gg.window_size() relatively slow
 }

@@ -438,6 +438,41 @@ const fs_filter_color_glsl = '
     }
 '
 
+// Image clip fragment shader: samples texture and applies SDF
+// rounded-rect alpha mask. UV is -1..1 (from draw_quad), same
+// as rounded_rect. Texture sampled at remapped 0..1 coords.
+const fs_image_clip_glsl = '
+    #version 330
+    uniform sampler2D tex;
+    in vec2 uv;
+    in vec4 color;
+    in float params;
+
+    out vec4 frag_color;
+
+    void main() {
+        float radius = floor(params / 4096.0) / 4.0;
+
+        // SDF rounded rect — identical to rounded_rect shader
+        // (UVs are -1..1 from draw_quad)
+        vec2 uv_to_px = 1.0 / (vec2(fwidth(uv.x), fwidth(uv.y)) + 1e-6);
+        vec2 half_size = uv_to_px;
+        vec2 pos = uv * half_size;
+
+        vec2 q = abs(pos) - half_size + vec2(radius);
+        float d = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
+
+        float grad_len = length(vec2(dFdx(d), dFdy(d)));
+        d = d / max(grad_len, 0.001);
+        float alpha = 1.0 - smoothstep(-0.59, 0.59, d);
+
+        // Remap -1..1 to 0..1 for texture sampling
+        vec2 tex_uv = uv * 0.5 + 0.5;
+        vec4 tex_color = texture(tex, tex_uv);
+        frag_color = vec4(tex_color.rgb, tex_color.a * alpha);
+    }
+'
+
 const fs_filter_texture_glsl = '
     #version 330
     uniform sampler2D tex_smp;
