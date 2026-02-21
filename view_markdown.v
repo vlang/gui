@@ -22,10 +22,10 @@ pub:
 	italic              TextStyle = gui_theme.i3
 	bold_italic         TextStyle = gui_theme.bi3
 	code                TextStyle = gui_theme.m5
-	code_block_bg       Color     = rgba(128, 128, 128, 15)
+	code_block_bg       Color     = rgba(0, 0, 0, 50)
 	code_keyword_color  Color     = gui_theme.color_select
-	code_string_color   Color     = rgb(152, 195, 121)
-	code_number_color   Color     = rgb(209, 154, 102)
+	code_string_color   Color     = rgb(75, 125, 75)
+	code_number_color   Color     = rgb(169, 114, 62)
 	code_comment_color  Color     = gui_theme.color_border
 	code_operator_color Color     = gui_theme.n3.color
 	hr_color            Color     = gui_theme.color_border
