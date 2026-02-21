@@ -93,6 +93,9 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 	detail_toggle_enabled := cfg.on_detail_expanded_change != unsafe { nil }
 	detail_expanded := data_grid_detail_row_expanded(cfg, row_id)
 	is_editing_row := editing_row_id == row_id && edit_enabled
+	row_view_id := '${cfg.id}:row:${row_id}'
+	cell_id_prefix := '${cfg.id}:cell:${row_id}:'
+	delete_action_id := '${cfg.id}:row-delete:${row_id}'
 	mut cells := []View{cap: columns.len}
 	for col_idx, col in columns {
 		value := row_data.cells[col.id] or { '' }
@@ -126,7 +129,7 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 		}
 		cells << row(
 			name:         'data_grid cell'
-			id:           '${cfg.id}:cell:${row_id}:${col.id}'
+			id:           '${cell_id_prefix}${col.id}'
 			width:        data_grid_column_width_for(col, column_widths)
 			sizing:       fixed_fill
 			padding:      if is_editing_cell { padding_none } else { cfg.padding_cell }
@@ -149,7 +152,7 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 	}
 	if show_delete_action {
 		cells << button(
-			id:           '${cfg.id}:row-delete:${row_id}'
+			id:           delete_action_id
 			width:        data_grid_header_control_width + 10
 			sizing:       fixed_fill
 			padding:      padding_none
@@ -186,7 +189,7 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 
 	return row(
 		name:         'data_grid row'
-		id:           '${cfg.id}:row:${row_id}'
+		id:           row_view_id
 		height:       row_height
 		sizing:       fill_fixed
 		color:        row_color
@@ -246,6 +249,30 @@ fn data_grid_row_click(rows []GridRow, selection GridSelection, grid_id string, 
 // - Ctrl/Cmd+click: toggle individual row in selection
 // - Plain click: single select, replaces entire selection
 // Anchor is persisted in view_state to survive re-renders.
+fn data_grid_toggle_selected_row_ids(selected_row_ids map[string]bool, row_id string) map[string]bool {
+	mut next := map[string]bool{}
+	if selected_row_ids[row_id] {
+		for selected_id, enabled in selected_row_ids {
+			if selected_id != row_id && enabled {
+				next[selected_id] = true
+			}
+		}
+		return next
+	}
+	for selected_id, enabled in selected_row_ids {
+		if enabled {
+			next[selected_id] = true
+		}
+	}
+	next[row_id] = true
+	return next
+}
+
+@[inline]
+fn data_grid_selection_is_single_row(selected_row_ids map[string]bool, row_id string) bool {
+	return row_id.len > 0 && selected_row_ids.len == 1 && selected_row_ids[row_id]
+}
+
 fn data_grid_compute_row_selection(rows []GridRow, selection GridSelection, grid_id string, multi_select bool, range_select bool, row_id string, mut e Event, mut w Window) GridSelection {
 	is_shift := e.modifiers.has(.shift)
 	is_toggle := e.modifiers.has(.ctrl) || e.modifiers.has(.super)
@@ -268,12 +295,7 @@ fn data_grid_compute_row_selection(rows []GridRow, selection GridSelection, grid
 			selected_row_ids: selected
 		}
 	} else if multi_select && is_toggle {
-		mut selected := selection.selected_row_ids.clone()
-		if selected[row_id] {
-			selected.delete(row_id)
-		} else {
-			selected[row_id] = true
-		}
+		selected := data_grid_toggle_selected_row_ids(selection.selected_row_ids, row_id)
 		data_grid_set_anchor(grid_id, row_id, mut w)
 		return GridSelection{
 			anchor_row_id:    row_id
@@ -282,6 +304,13 @@ fn data_grid_compute_row_selection(rows []GridRow, selection GridSelection, grid
 		}
 	}
 	data_grid_set_anchor(grid_id, row_id, mut w)
+	if data_grid_selection_is_single_row(selection.selected_row_ids, row_id) {
+		return GridSelection{
+			anchor_row_id:    row_id
+			active_row_id:    row_id
+			selected_row_ids: selection.selected_row_ids
+		}
+	}
 	return GridSelection{
 		anchor_row_id:    row_id
 		active_row_id:    row_id
@@ -619,6 +648,7 @@ fn data_grid_detail_toggle_control(cfg DataGridCfg, row_id string, expanded bool
 	label := if expanded { '▼' } else { '▶' }
 	style := data_grid_indicator_text_style(cfg.text_style)
 	on_detail_expanded_change := cfg.on_detail_expanded_change
+	detail_toggle_id := '${cfg.id}:detail_toggle:${row_id}'
 	if !enabled {
 		return row(
 			name:    'data_grid detail toggle'
@@ -635,7 +665,7 @@ fn data_grid_detail_toggle_control(cfg DataGridCfg, row_id string, expanded bool
 		)
 	}
 	return button(
-		id:           '${cfg.id}:detail_toggle:${row_id}'
+		id:           detail_toggle_id
 		width:        data_grid_header_control_width
 		sizing:       fixed_fill
 		padding:      padding_none

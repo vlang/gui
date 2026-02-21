@@ -253,6 +253,76 @@ fn test_data_grid_range_indices() {
 	assert end2 == 3
 }
 
+fn test_data_grid_toggle_selected_row_ids_add_remove() {
+	added := data_grid_toggle_selected_row_ids({
+		'a': true
+	}, 'b')
+	assert added.len == 2
+	assert added['a']
+	assert added['b']
+	removed := data_grid_toggle_selected_row_ids(added, 'a')
+	assert removed.len == 1
+	assert removed['b']
+	assert !removed['a']
+}
+
+fn test_data_grid_compute_row_selection_ctrl_toggle_add_remove() {
+	rows := [
+		GridRow{
+			id: 'a'
+		},
+		GridRow{
+			id: 'b'
+		},
+	]
+	selection := GridSelection{
+		anchor_row_id:    'a'
+		active_row_id:    'a'
+		selected_row_ids: {
+			'a': true
+		}
+	}
+	mut e := Event{
+		modifiers: .ctrl
+	}
+	mut w := Window{}
+	added := data_grid_compute_row_selection(rows, selection, 'grid-toggle', true, false,
+		'b', mut e, mut w)
+	assert added.anchor_row_id == 'b'
+	assert added.active_row_id == 'b'
+	assert added.selected_row_ids.len == 2
+	assert added.selected_row_ids['a']
+	assert added.selected_row_ids['b']
+	removed := data_grid_compute_row_selection(rows, added, 'grid-toggle', true, false,
+		'a', mut e, mut w)
+	assert removed.anchor_row_id == 'a'
+	assert removed.active_row_id == 'a'
+	assert removed.selected_row_ids.len == 1
+	assert removed.selected_row_ids['b']
+	assert !removed.selected_row_ids['a']
+}
+
+fn test_data_grid_compute_row_selection_plain_click_preserves_single_row() {
+	rows := [
+		GridRow{
+			id: 'a'
+		},
+	]
+	selection := GridSelection{
+		selected_row_ids: {
+			'a': true
+		}
+	}
+	mut e := Event{}
+	mut w := Window{}
+	next := data_grid_compute_row_selection(rows, selection, 'grid-plain', true, false,
+		'a', mut e, mut w)
+	assert next.anchor_row_id == 'a'
+	assert next.active_row_id == 'a'
+	assert next.selected_row_ids.len == 1
+	assert next.selected_row_ids['a']
+}
+
 fn test_data_grid_defaults_hide_optional_filter_rows() {
 	cfg := DataGridCfg{
 		id:      'defaults'

@@ -152,6 +152,10 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 		now_ns
 	}
 	elapsed_s := f32(now_ns - start_ns) / 1_000_000_000.0
+	mut anim_vals := window.scratch.take_svg_anim_vals()
+	defer {
+		window.scratch.put_svg_anim_vals(mut anim_vals)
+	}
 
 	// Evaluate animations: build transform matrix and opacity
 	// per group_id. Currently last-wins if a group has multiple
@@ -167,32 +171,32 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 	mut group_matrices := map[string][6]f32{}
 	mut group_opacities := map[string]f32{}
 	for anim in cached.animations {
-		vals := svg.evaluate_animation(anim, elapsed_s)
-		if vals.len == 0 {
+		vals_len := svg.evaluate_animation_into(anim, elapsed_s, mut anim_vals)
+		if vals_len == 0 {
 			continue
 		}
 		match anim.anim_type {
 			.rotate {
-				angle := vals[0]
-				cx := if vals.len >= 2 { vals[1] } else { f32(0) }
-				cy := if vals.len >= 3 { vals[2] } else { f32(0) }
+				angle := anim_vals[0]
+				cx := if vals_len >= 2 { anim_vals[1] } else { f32(0) }
+				cy := if vals_len >= 3 { anim_vals[2] } else { f32(0) }
 				m := svg.build_rotation_matrix(angle, cx, cy)
 				group_matrices[anim.target_id] = m
 			}
 			.scale {
-				asx := vals[0]
-				asy := if vals.len >= 2 { vals[1] } else { asx }
+				asx := anim_vals[0]
+				asy := if vals_len >= 2 { anim_vals[1] } else { asx }
 				m := svg.build_scale_matrix(asx, asy)
 				group_matrices[anim.target_id] = m
 			}
 			.translate {
-				tx := vals[0]
-				ty := if vals.len >= 2 { vals[1] } else { f32(0) }
+				tx := anim_vals[0]
+				ty := if vals_len >= 2 { anim_vals[1] } else { f32(0) }
 				m := svg.build_translate_matrix(tx, ty)
 				group_matrices[anim.target_id] = m
 			}
 			.opacity {
-				group_opacities[anim.target_id] = vals[0]
+				group_opacities[anim.target_id] = anim_vals[0]
 			}
 		}
 	}
@@ -203,6 +207,8 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 		has_opacity := gid in group_opacities
 		if gid.len > 0 && (has_matrix || has_opacity) {
 			tris := if has_matrix {
+				// Renderer triangles must stay stable after this loop iteration.
+				// Do not reuse a shared scratch buffer here.
 				apply_transform_to_triangles(tpath.triangles, group_matrices[gid])
 			} else {
 				tpath.triangles
@@ -228,13 +234,24 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 // vertices. Triangles are in viewBox space; matrix operates in
 // viewBox space (e.g. rotation center from SVG attributes).
 fn apply_transform_to_triangles(tris []f32, m [6]f32) []f32 {
-	mut out := []f32{len: tris.len}
+	mut out := []f32{}
+	return apply_transform_to_triangles_into(tris, m, mut out)
+}
+
+fn apply_transform_to_triangles_into(tris []f32, m [6]f32, mut out []f32) []f32 {
+	out.clear()
+	if tris.len == 0 {
+		return out
+	}
+	if out.cap < tris.len {
+		out = []f32{cap: tris.len}
+	}
 	mut i := 0
 	for i < tris.len - 1 {
 		x := tris[i]
 		y := tris[i + 1]
-		out[i] = m[0] * x + m[2] * y + m[4]
-		out[i + 1] = m[1] * x + m[3] * y + m[5]
+		out << m[0] * x + m[2] * y + m[4]
+		out << m[1] * x + m[3] * y + m[5]
 		i += 2
 	}
 	return out

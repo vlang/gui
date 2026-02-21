@@ -13,39 +13,206 @@ import sync
 import log
 import vglyph
 
+const scratch_filter_renderers_retain_max = 131_072
+const scratch_filter_renderers_shrink_to = 8192
+const scratch_floating_layouts_retain_max = 4096
+const scratch_floating_layouts_shrink_to = 256
+const scratch_floating_pool_retain_max = 512
+const scratch_floating_pool_shrink_to = 64
+const scratch_focus_candidates_retain_max = 4096
+const scratch_focus_candidates_shrink_to = 512
+const scratch_gradient_norm_retain_max = 64
+const scratch_gradient_norm_shrink_to = 8
+const scratch_svg_anim_vals_retain_max = 32
+const scratch_svg_anim_vals_shrink_to = 8
+const scratch_svg_tris_retain_max = 65_536
+const scratch_svg_tris_shrink_to = 4096
+
+struct ScratchPools {
+mut:
+	filter_renderers      []Renderer
+	floating_layouts      []&Layout
+	floating_layout_pool  []&Layout
+	floating_pool_used    int
+	focus_candidates      []FocusCandidate
+	gradient_norm_stops   []GradientStop
+	gradient_sample_stops []GradientStop
+	svg_anim_vals         []f32
+	svg_transform_tris    []f32
+}
+
+@[inline]
+fn (mut pools ScratchPools) take_filter_renderers(required_cap int) []Renderer {
+	mut scratch := unsafe { pools.filter_renderers }
+	array_clear(mut scratch)
+	if scratch.cap < required_cap {
+		scratch = []Renderer{cap: required_cap}
+	}
+	return scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) put_filter_renderers(mut scratch []Renderer) {
+	if scratch.cap > scratch_filter_renderers_retain_max {
+		scratch = []Renderer{cap: scratch_filter_renderers_shrink_to}
+	}
+	pools.filter_renderers = scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) take_floating_layouts(required_cap int) []&Layout {
+	mut scratch := unsafe { pools.floating_layouts }
+	array_clear(mut scratch)
+	if scratch.cap < required_cap {
+		scratch = []&Layout{cap: required_cap}
+	}
+	pools.floating_pool_used = 0
+	return scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) alloc_floating_layout(src Layout) &Layout {
+	idx := pools.floating_pool_used
+	pools.floating_pool_used++
+	if idx < pools.floating_layout_pool.len {
+		mut reused := pools.floating_layout_pool[idx]
+		unsafe {
+			*reused = src
+		}
+		return reused
+	}
+	mut allocated := &Layout{
+		...src
+	}
+	pools.floating_layout_pool << allocated
+	return allocated
+}
+
+@[inline]
+fn (mut pools ScratchPools) put_floating_layouts(mut scratch []&Layout) {
+	if scratch.cap > scratch_floating_layouts_retain_max {
+		scratch = []&Layout{cap: scratch_floating_layouts_shrink_to}
+	}
+	pools.floating_layouts = scratch
+	if pools.floating_layout_pool.len > scratch_floating_pool_retain_max {
+		pools.floating_layout_pool = pools.floating_layout_pool[..scratch_floating_pool_shrink_to].clone()
+	}
+}
+
+@[inline]
+fn (mut pools ScratchPools) take_focus_candidates() []FocusCandidate {
+	mut scratch := unsafe { pools.focus_candidates }
+	array_clear(mut scratch)
+	return scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) put_focus_candidates(mut scratch []FocusCandidate) {
+	if scratch.cap > scratch_focus_candidates_retain_max {
+		scratch = []FocusCandidate{cap: scratch_focus_candidates_shrink_to}
+	}
+	pools.focus_candidates = scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) take_gradient_norm_stops(required_cap int) []GradientStop {
+	mut scratch := unsafe { pools.gradient_norm_stops }
+	scratch.clear()
+	if scratch.cap < required_cap {
+		scratch = []GradientStop{cap: required_cap}
+	}
+	return scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) put_gradient_norm_stops(mut scratch []GradientStop) {
+	if scratch.cap > scratch_gradient_norm_retain_max {
+		scratch = []GradientStop{cap: scratch_gradient_norm_shrink_to}
+	}
+	pools.gradient_norm_stops = scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) take_gradient_sample_stops(required_cap int) []GradientStop {
+	mut scratch := unsafe { pools.gradient_sample_stops }
+	scratch.clear()
+	if scratch.cap < required_cap {
+		scratch = []GradientStop{cap: required_cap}
+	}
+	return scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) put_gradient_sample_stops(mut scratch []GradientStop) {
+	if scratch.cap > gradient_shader_stop_limit {
+		scratch = []GradientStop{cap: gradient_shader_stop_limit}
+	}
+	pools.gradient_sample_stops = scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) take_svg_anim_vals() []f32 {
+	mut scratch := unsafe { pools.svg_anim_vals }
+	scratch.clear()
+	return scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) put_svg_anim_vals(mut scratch []f32) {
+	if scratch.cap > scratch_svg_anim_vals_retain_max {
+		scratch = []f32{cap: scratch_svg_anim_vals_shrink_to}
+	}
+	pools.svg_anim_vals = scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) take_svg_transform_tris() []f32 {
+	mut scratch := unsafe { pools.svg_transform_tris }
+	scratch.clear()
+	return scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) put_svg_transform_tris(mut scratch []f32) {
+	if scratch.cap > scratch_svg_tris_retain_max {
+		scratch = []f32{cap: scratch_svg_tris_shrink_to}
+	}
+	pools.svg_transform_tris = scratch
+}
+
 // WindowCommand is a callback function that executes on the main thread
 // to update the window state. Used for thread-safe state mutations.
 pub type WindowCommand = fn (mut Window)
 
 pub struct Window {
 mut:
-	commands_mutex           &sync.Mutex                 = sync.new_mutex() // Mutex for command queue
-	focused                  bool                        = true // Window focus state
-	mutex                    &sync.Mutex                 = sync.new_mutex() // Mutex for thread-safety
-	on_event                 fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}           // Global event handler
-	state                    voidptr                     = unsafe { nil }    // User state passed to the window
-	text_system              &vglyph.TextSystem          = unsafe { nil }    // Text rendering system
-	ui                       &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
-	view_generator           fn (&Window) View           = empty_view        // Function to generate the UI view
-	a11y                     A11y                 // Accessibility backend state (lazily initialized)
-	animations               map[string]Animation // Active animations (keyed by id)
-	commands                 []WindowCommand      // Atomic command queue for UI state updates
-	debug_layout             bool                 // enable layout performance stats
-	dialog_cfg               DialogCfg            // Configuration for the active dialog (if any)
-	filter_renderers_scratch []Renderer           // Reused by filter post-process pass
-	filter_state             SvgFilterState       // Offscreen state for SVG filters
-	ime                      IME                  // Input Method Editor state (lazily initialized)
-	init_error               string               // error during initialization (e.g. text system fail)
-	layout                   Layout               // The current calculated layout tree
-	layout_stats             LayoutStats          // populated when debug_layout is true
-	pip                      Pipelines            // GPU rendering pipelines (lazily initialized)
-	refresh_layout           bool                 // Trigger full view/layout/renderer rebuild next frame
-	refresh_render_only      bool                 // Trigger renderer-only rebuild from existing layout
-	render_guard_warned      map[string]bool      // Renderer kinds warned by render guard (prod only)
-	renderers                []Renderer           // Flat list of drawing instructions for the current frame
-	stats                    Stats                // Rendering statistics
-	view_state               ViewState            // Manages state for widgets (scroll, selection, etc.)
-	window_size              gg.Size              // cached, gg.window_size() relatively slow
+	commands_mutex      &sync.Mutex                 = sync.new_mutex() // Mutex for command queue
+	focused             bool                        = true // Window focus state
+	mutex               &sync.Mutex                 = sync.new_mutex() // Mutex for thread-safety
+	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}           // Global event handler
+	state               voidptr                     = unsafe { nil }    // User state passed to the window
+	text_system         &vglyph.TextSystem          = unsafe { nil }    // Text rendering system
+	ui                  &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
+	view_generator      fn (&Window) View           = empty_view        // Function to generate the UI view
+	a11y                A11y                 // Accessibility backend state (lazily initialized)
+	animations          map[string]Animation // Active animations (keyed by id)
+	commands            []WindowCommand      // Atomic command queue for UI state updates
+	debug_layout        bool                 // enable layout performance stats
+	dialog_cfg          DialogCfg            // Configuration for the active dialog (if any)
+	filter_state        SvgFilterState       // Offscreen state for SVG filters
+	ime                 IME                  // Input Method Editor state (lazily initialized)
+	init_error          string               // error during initialization (e.g. text system fail)
+	layout              Layout               // The current calculated layout tree
+	layout_stats        LayoutStats          // populated when debug_layout is true
+	pip                 Pipelines            // GPU rendering pipelines (lazily initialized)
+	refresh_layout      bool                 // Trigger full view/layout/renderer rebuild next frame
+	refresh_render_only bool                 // Trigger renderer-only rebuild from existing layout
+	render_guard_warned map[string]bool      // Renderer kinds warned by render guard (prod only)
+	renderers           []Renderer           // Flat list of drawing instructions for the current frame
+	scratch             ScratchPools         // Bounded scratch arrays reused in hot paths
+	stats               Stats                // Rendering statistics
+	view_state          ViewState            // Manages state for widgets (scroll, selection, etc.)
+	window_size         gg.Size              // cached, gg.window_size() relatively slow
 }
 
 // Window is the main application window. `state` holds app state.
@@ -338,7 +505,8 @@ fn (mut window Window) update_render_only() {
 fn (mut window Window) rebuild_renderers(background_color Color, clip_rect DrawClip) {
 	// process_svg_filters swaps renderer buffers. Reset both
 	// arrays before render so buffers are reused safely.
-	array_clear(mut window.filter_renderers_scratch)
+	mut filter_renderers := window.scratch.take_filter_renderers(0)
+	window.scratch.put_filter_renderers(mut filter_renderers)
 	array_clear(mut window.renderers)
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
 

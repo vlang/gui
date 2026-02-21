@@ -72,6 +72,22 @@ fn test_list_box_selection_uses_id_not_value() {
 	assert cfg.data[0].id !in cfg.selected_ids
 }
 
+fn test_list_box_next_selected_ids_single_select_replaces() {
+	next := list_box_next_selected_ids(['id_a', 'id_b'], 'id_c', false)
+	assert next.len == 1
+	assert next[0] == 'id_c'
+}
+
+fn test_list_box_next_selected_ids_multi_toggle_add_remove() {
+	added := list_box_next_selected_ids(['id_a'], 'id_b', true)
+	assert added.len == 2
+	assert added[0] == 'id_a'
+	assert added[1] == 'id_b'
+	removed := list_box_next_selected_ids(added, 'id_a', true)
+	assert removed.len == 1
+	assert removed[0] == 'id_b'
+}
+
 fn test_list_box_sets_a11y_value_text_from_selected_items() {
 	cfg := ListBoxCfg{
 		id:           'lb-a11y'

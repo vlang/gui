@@ -290,16 +290,7 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
 		content:    content
 		on_click:   fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ voidptr, mut e Event, mut w Window) {
 			if has_on_select && !is_sub {
-				mut ids := if !is_multiple {
-					[dat_id]
-				} else if dat_id in selected_ids {
-					selected_ids.filter(it != dat_id)
-				} else {
-					mut a := []string{cap: selected_ids.len + 1}
-					a << selected_ids
-					a << dat_id
-					a
-				}
+				ids := list_box_next_selected_ids(selected_ids, dat_id, is_multiple)
 				on_select(ids, mut e, mut w)
 			}
 		}
@@ -312,6 +303,25 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
 			}
 		}
 	)
+}
+
+fn list_box_next_selected_ids(selected_ids []string, dat_id string, is_multiple bool) []string {
+	if !is_multiple {
+		return [dat_id]
+	}
+	if dat_id in selected_ids {
+		mut next := []string{cap: int_max(0, selected_ids.len - 1)}
+		for id in selected_ids {
+			if id != dat_id {
+				next << id
+			}
+		}
+		return next
+	}
+	mut next := []string{cap: selected_ids.len + 1}
+	next << selected_ids
+	next << dat_id
+	return next
 }
 
 fn list_box_height(cfg ListBoxCfg) f32 {
@@ -580,16 +590,7 @@ fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, 
 		.enter, .space {
 			if cur_idx >= 0 && cur_idx < item_ids.len {
 				dat_id := item_ids[cur_idx]
-				mut ids := if !is_multiple {
-					[dat_id]
-				} else if dat_id in selected_ids {
-					selected_ids.filter(it != dat_id)
-				} else {
-					mut a := []string{cap: selected_ids.len + 1}
-					a << selected_ids
-					a << dat_id
-					a
-				}
+				ids := list_box_next_selected_ids(selected_ids, dat_id, is_multiple)
 				on_select(ids, mut e, mut w)
 			}
 			e.is_handled = true

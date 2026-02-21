@@ -200,9 +200,50 @@ fn normalize_gradient_stops_for_shader(stops []GradientStop) []GradientStop {
 	return sampled
 }
 
+fn normalize_gradient_stops_for_shader_into(stops []GradientStop, mut normalized []GradientStop, mut sampled []GradientStop) []GradientStop {
+	if stops.len == 0 {
+		normalized.clear()
+		sampled.clear()
+		return []GradientStop{}
+	}
+	normalized.clear()
+	if normalized.cap < stops.len {
+		normalized = []GradientStop{cap: stops.len}
+	}
+	for stop in stops {
+		normalized << GradientStop{
+			color: stop.color
+			pos:   clamp_unit(stop.pos)
+		}
+	}
+	normalized.sort(a.pos < b.pos)
+	if normalized.len <= gradient_shader_stop_limit {
+		sampled.clear()
+		return normalized
+	}
+	sampled.clear()
+	if sampled.cap < gradient_shader_stop_limit {
+		sampled = []GradientStop{cap: gradient_shader_stop_limit}
+	}
+	for i in 0 .. gradient_shader_stop_limit {
+		sample_pos := f32(i) / f32(gradient_shader_stop_limit - 1)
+		sampled << GradientStop{
+			color: sample_gradient_stop_color(normalized, sample_pos)
+			pos:   sample_pos
+		}
+	}
+	return sampled
+}
+
 fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient, mut window Window) {
 	if w <= 0 || h <= 0 || gradient.stops.len == 0 {
 		return
+	}
+	mut normalized_stops := window.scratch.take_gradient_norm_stops(gradient.stops.len)
+	mut sampled_stops := window.scratch.take_gradient_sample_stops(gradient_shader_stop_limit)
+	defer {
+		window.scratch.put_gradient_norm_stops(mut normalized_stops)
+		window.scratch.put_gradient_sample_stops(mut sampled_stops)
 	}
 
 	scale := window.ui.scale
@@ -221,7 +262,8 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 	}
 
 	init_gradient_pipeline(mut window)
-	stops := normalize_gradient_stops_for_shader(gradient.stops)
+	stops := normalize_gradient_stops_for_shader_into(gradient.stops, mut normalized_stops, mut
+		sampled_stops)
 	if stops.len == 0 {
 		return
 	}

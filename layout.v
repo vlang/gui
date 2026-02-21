@@ -23,8 +23,12 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	layout_parents(mut layout, unsafe { nil })
 
 	// Floating layouts do not affect parent or sibling elements.
-	mut floating_layouts := []&Layout{cap: layout.children.len + 1}
-	layout_remove_floating_layouts(mut layout, mut floating_layouts)
+	mut floating_layouts := window.scratch.take_floating_layouts(layout.children.len + 1)
+	defer {
+		window.scratch.put_floating_layouts(mut floating_layouts)
+	}
+	layout_remove_floating_layouts_with_scratch(mut layout, mut floating_layouts, mut
+		window.scratch)
 
 	// Dialog is a pop-up dialog.
 	// Add last to ensure it is always on top.
@@ -33,9 +37,7 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 		mut dialog_view := dialog_view_generator(window.dialog_cfg)
 		mut dialog_layout := generate_layout(mut dialog_view, mut window)
 		layout_parents(mut dialog_layout, &layout)
-		floating_layouts << &Layout{
-			...dialog_layout
-		}
+		floating_layouts << window.scratch.alloc_floating_layout(dialog_layout)
 	}
 
 	// Compute the layout without the floating elements.
@@ -108,12 +110,15 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 // while removing them from standard flow layout calculations. The extracted layouts
 // are collected into the `layouts` array to be processed as separate layers.
 fn layout_remove_floating_layouts(mut layout Layout, mut layouts []&Layout) {
+	mut scratch := ScratchPools{}
+	layout_remove_floating_layouts_with_scratch(mut layout, mut layouts, mut scratch)
+}
+
+fn layout_remove_floating_layouts_with_scratch(mut layout Layout, mut layouts []&Layout, mut scratch ScratchPools) {
 	for i in 0 .. layout.children.len {
 		if layout.children[i].shape.float {
-			// Move floating layout to heap to ensure stable parent pointers for its children
-			mut heap_layout := &Layout{
-				...layout.children[i]
-			}
+			// Move floating layout to reusable heap node to keep parent pointers stable.
+			mut heap_layout := scratch.alloc_floating_layout(layout.children[i])
 
 			// Update direct children to point to the new heap-allocated parent
 			for mut child in heap_layout.children {
@@ -123,12 +128,14 @@ fn layout_remove_floating_layouts(mut layout Layout, mut layouts []&Layout) {
 			layouts << heap_layout
 
 			// Recurse into the floating layout to find nested floats
-			layout_remove_floating_layouts(mut *heap_layout, mut layouts)
+			layout_remove_floating_layouts_with_scratch(mut *heap_layout, mut layouts, mut
+				scratch)
 
 			// Replace in original tree with empty placeholder
 			layout.children[i] = layout_placeholder()
 		} else {
-			layout_remove_floating_layouts(mut layout.children[i], mut layouts)
+			layout_remove_floating_layouts_with_scratch(mut layout.children[i], mut layouts, mut
+				scratch)
 		}
 	}
 }

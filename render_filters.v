@@ -85,17 +85,13 @@ fn append_renderer_range(mut dst []Renderer, src []Renderer, start_idx int, end_
 // renders the content to offscreen textures, applies Gaussian blur,
 // and replaces the bracket with DrawFilterComposite + original content.
 fn process_svg_filters(mut window Window) {
-	source_renderers := window.renderers
+	mut source_renderers := unsafe { window.renderers }
 	if source_renderers.len == 0 {
 		return
 	}
 
 	mut i := 0
-	mut new_renderers := unsafe { window.filter_renderers_scratch }
-	array_clear(mut new_renderers)
-	if new_renderers.cap < source_renderers.len {
-		new_renderers = []Renderer{cap: source_renderers.len}
-	}
+	mut new_renderers := window.scratch.take_filter_renderers(source_renderers.len)
 	max_tex_size := filter_max_image_size()
 
 	for i < source_renderers.len {
@@ -175,7 +171,7 @@ fn process_svg_filters(mut window Window) {
 		}
 	}
 
-	window.filter_renderers_scratch = source_renderers
+	window.scratch.put_filter_renderers(mut source_renderers)
 	window.renderers = new_renderers
 }
 

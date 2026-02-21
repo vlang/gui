@@ -241,6 +241,30 @@ pub fn evaluate_animation(anim SvgAnimation, elapsed_s f32) []f32 {
 	return anim.interpolate(frac)
 }
 
+// evaluate_animation_into computes current animation value and writes
+// components into `out`, reusing the provided scratch slice.
+// Returns the number of written components.
+pub fn evaluate_animation_into(anim SvgAnimation, elapsed_s f32, mut out []f32) int {
+	t := elapsed_s - anim.begin_time
+	if t < 0 {
+		return copy_animation_values_into(anim.default_value(), mut out)
+	}
+	mut cycle_t := t
+	if anim.dur > 0 {
+		if anim.repeat_count < 0 {
+			cycle_t = f32(math.fmod(t, anim.dur))
+		} else {
+			total := anim.dur * anim.repeat_count
+			if t >= total {
+				return copy_animation_values_into(anim.final_value(), mut out)
+			}
+			cycle_t = f32(math.fmod(t, anim.dur))
+		}
+	}
+	frac := if anim.dur > 0 { cycle_t / anim.dur } else { f32(0) }
+	return interpolate_animation_into(anim, frac, mut out)
+}
+
 // default_value returns the starting value of the animation.
 fn (anim &SvgAnimation) default_value() []f32 {
 	if anim.values.len > 0 {
@@ -290,6 +314,49 @@ fn lerp_floats(a []f32, b []f32, t f32) []f32 {
 		out[i] = a[i] + (b[i] - a[i]) * t
 	}
 	return out
+}
+
+fn copy_animation_values_into(src []f32, mut out []f32) int {
+	out.clear()
+	if src.len == 0 {
+		return 0
+	}
+	if out.cap < src.len {
+		out = []f32{cap: src.len}
+	}
+	out << src
+	return src.len
+}
+
+fn interpolate_animation_into(anim SvgAnimation, frac f32, mut out []f32) int {
+	if anim.values.len >= 2 {
+		n := anim.values.len - 1
+		scaled := frac * f32(n)
+		idx := int(scaled)
+		seg_frac := scaled - f32(idx)
+		i0 := if idx < n { idx } else { n }
+		i1 := if idx + 1 <= n { idx + 1 } else { n }
+		return lerp_floats_into(anim.values[i0], anim.values[i1], seg_frac, mut out)
+	}
+	if anim.from.len > 0 && anim.to.len > 0 {
+		return lerp_floats_into(anim.from, anim.to, frac, mut out)
+	}
+	return copy_animation_values_into(anim.default_value(), mut out)
+}
+
+fn lerp_floats_into(a []f32, b []f32, t f32, mut out []f32) int {
+	n := if a.len < b.len { a.len } else { b.len }
+	out.clear()
+	if n == 0 {
+		return 0
+	}
+	if out.cap < n {
+		out = []f32{cap: n}
+	}
+	for i := 0; i < n; i++ {
+		out << a[i] + (b[i] - a[i]) * t
+	}
+	return n
 }
 
 // build_rotation_matrix builds an affine rotation matrix around (cx,cy).

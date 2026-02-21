@@ -53,25 +53,31 @@ pub fn find_layout_by_id_scroll(layout &Layout, id_scroll u32) ?Layout {
 // previous_focusable gets the previous non-skippable focusable of the current focus.
 // Returns the first non-skippable focusable if focus is not set.
 pub fn (layout &Layout) previous_focusable(mut w Window) ?Shape {
-	mut candidates := []FocusCandidate{}
+	mut candidates := w.scratch.take_focus_candidates()
 	collect_focus_candidates(layout, mut candidates, 0)
 	if candidates.len == 0 {
+		w.scratch.put_focus_candidates(mut candidates)
 		return none
 	}
 	focus_sort_and_dedupe(mut candidates)
-	return focus_find_previous(candidates, w.view_state.id_focus)
+	result := focus_find_previous(candidates, w.view_state.id_focus)
+	w.scratch.put_focus_candidates(mut candidates)
+	return result
 }
 
 // next_focusable gets the next non-skippable focusable of the current focus.
 // Returns the first non-skippable focusable if focus is not set.
 pub fn (layout &Layout) next_focusable(mut w Window) ?Shape {
-	mut candidates := []FocusCandidate{}
+	mut candidates := w.scratch.take_focus_candidates()
 	collect_focus_candidates(layout, mut candidates, 0)
 	if candidates.len == 0 {
+		w.scratch.put_focus_candidates(mut candidates)
 		return none
 	}
 	focus_sort_and_dedupe(mut candidates)
-	return focus_find_next(candidates, w.view_state.id_focus)
+	result := focus_find_next(candidates, w.view_state.id_focus)
+	w.scratch.put_focus_candidates(mut candidates)
+	return result
 }
 
 struct FocusCandidate {

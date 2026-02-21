@@ -1,6 +1,7 @@
 module gui
 
 import gg
+import svg
 import vglyph
 
 // Helpers
@@ -605,6 +606,45 @@ fn test_find_filter_bracket_range_unmatched_begin_end() {
 	assert bracket.start_idx == 0
 	assert bracket.end_idx == 2
 	assert bracket.next_idx == 2
+}
+
+fn test_render_svg_animated_transformed_paths_do_not_alias_triangle_buffer() {
+	mut w := make_window()
+	cached := &CachedSvg{
+		render_paths:   [
+			CachedSvgPath{
+				triangles: [f32(0), 0, 10, 0, 0, 10]
+				color:     gg.Color{255, 0, 0, 255}
+				group_id:  'ring'
+			},
+			CachedSvgPath{
+				triangles: [f32(20), 0, 30, 0, 20, 10]
+				color:     gg.Color{0, 255, 0, 255}
+				group_id:  'ring'
+			},
+		]
+		animations:     [
+			svg.SvgAnimation{
+				anim_type: .rotate
+				target_id: 'ring'
+				from:      [f32(0), 0, 0]
+				to:        [f32(0), 0, 0]
+				dur:       1
+			},
+		]
+		has_animations: true
+		scale:          1
+	}
+
+	render_svg_animated(cached, color_transparent, 'anim-buffer-alias', 0, 0, mut w)
+
+	assert w.renderers.len == 2
+	r0 := w.renderers[0] as DrawSvg
+	r1 := w.renderers[1] as DrawSvg
+	assert r0.triangles.len == 6
+	assert r1.triangles.len == 6
+	assert r0.triangles[0] == 0
+	assert r1.triangles[0] == 20
 }
 
 fn test_renderer_guard_valid_draw_clip_zero_size() {

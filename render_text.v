@@ -93,6 +93,28 @@ fn password_mask_text_keep_newlines(text string) string {
 	return out.string()
 }
 
+@[inline]
+fn password_mask_slice(mask string, text string, start_byte int, end_byte int) string {
+	if mask.len == 0 || end_byte <= start_byte {
+		return ''
+	}
+	mut start := byte_to_rune_index(text, start_byte)
+	mut end := byte_to_rune_index(text, end_byte)
+	if start < 0 {
+		start = 0
+	}
+	if start > mask.len {
+		start = mask.len
+	}
+	if end < start {
+		end = start
+	}
+	if end > mask.len {
+		end = mask.len
+	}
+	return mask[start..end]
+}
+
 // render_text renders text including multiline text using vglyph layout.
 // If cursor coordinates are present, it draws the input cursor.
 // The highlighting of selected text happens here also.
@@ -178,6 +200,11 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 	// Convert selection range to byte indices because vglyph uses bytes
 	byte_beg := rune_to_byte_index(shape.tc.text, beg)
 	byte_end := rune_to_byte_index(shape.tc.text, end)
+	password_mask := if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
+		get_password_mask(mut shape.tc)
+	} else {
+		''
+	}
 
 	has_gradient := shape.tc.text_style.gradient != unsafe { nil }
 
@@ -221,10 +248,11 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 					if slice_end > line.start_index && shape.tc.text[slice_end - 1] == `\n` {
 						slice_end--
 					}
-					mut render_str := shape.tc.text[line.start_index..slice_end]
-
-					if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
-						render_str = password_char.repeat(utf8_str_visible_length(render_str))
+					render_str := if password_mask.len > 0 {
+						password_mask_slice(password_mask, shape.tc.text, line.start_index,
+							slice_end)
+					} else {
+						shape.tc.text[line.start_index..slice_end]
 					}
 
 					if render_str.len > 0 {
@@ -240,13 +268,14 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				// Draw text selection
 				if byte_beg < line_end && byte_end > line.start_index {
 					draw_text_selection(mut window, DrawTextSelectionParams{
-						shape:    shape
-						line:     line
-						draw_x:   draw_x
-						draw_y:   draw_y
-						byte_beg: byte_beg
-						byte_end: byte_end
-						text_cfg: text_cfg
+						shape:         shape
+						line:          line
+						draw_x:        draw_x
+						draw_y:        draw_y
+						byte_beg:      byte_beg
+						byte_end:      byte_end
+						password_mask: password_mask
+						text_cfg:      text_cfg
 					})
 				}
 			}
@@ -263,6 +292,7 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 	draw_y := params.draw_y
 	byte_beg := params.byte_beg
 	byte_end := params.byte_end
+	password_mask := params.password_mask
 	text_cfg := params.text_cfg
 
 	// Intersection
@@ -270,16 +300,14 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 	i_end := int_min(byte_end, line.start_index + line.length)
 
 	if i_start < i_end {
-		if shape.tc.text_is_password {
+		if shape.tc.text_is_password && password_mask.len > 0 {
 			// Password fields still need measurement because the rendered text (*)
 			// is different from the logical text.
-			pre_text := shape.tc.text[line.start_index..i_start]
-			sel_text := shape.tc.text[i_start..i_end]
-
-			pw_pre := password_char.repeat(utf8_str_visible_length(pre_text))
+			pw_pre := password_mask_slice(password_mask, shape.tc.text, line.start_index,
+				i_start)
 			start_x_offset := window.text_system.text_width(pw_pre, text_cfg) or { 0 }
 
-			pw_sel := password_char.repeat(utf8_str_visible_length(sel_text))
+			pw_sel := password_mask_slice(password_mask, shape.tc.text, i_start, i_end)
 			sel_width := window.text_system.text_width(pw_sel, text_cfg) or { 0 }
 
 			emit_renderer(DrawRect{

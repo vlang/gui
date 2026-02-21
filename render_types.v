@@ -186,11 +186,12 @@ type Renderer = DrawCircle
 	| DrawFilterComposite
 
 struct DrawTextSelectionParams {
-	shape    &Shape
-	line     vglyph.Line
-	draw_x   f32
-	draw_y   f32
-	byte_beg int
-	byte_end int
-	text_cfg vglyph.TextConfig
+	shape         &Shape
+	line          vglyph.Line
+	draw_x        f32
+	draw_y        f32
+	byte_beg      int
+	byte_end      int
+	password_mask string
+	text_cfg      vglyph.TextConfig
 }
