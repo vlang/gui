@@ -457,6 +457,133 @@ fn text_auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut an Animate
 	}
 }
 
+// text_double_click_drag handles mouse-move events during a word-level drag
+// initiated by a double-click. Selection extends word-by-word, anchored to
+// the initially-selected word [anchor_beg, anchor_end).
+fn text_double_click_drag(layout &Layout, mut e Event, mut w Window, placeholder_active bool, anchor_beg int, anchor_end int) {
+	if w.ui.mouse_buttons != .left || placeholder_active {
+		return
+	}
+	id_focus := layout.shape.id_focus
+	id_scroll_container := layout.shape.id_scroll_container
+	ev := event_relative_to(layout.shape, e)
+	mouse_cursor_pos := text_mouse_cursor_pos(layout.shape, ev, mut w, placeholder_active)
+
+	scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
+	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
+
+	if scroll_y != current_scroll_y {
+		if !w.has_animation(id_auto_scroll_animation) {
+			w.animation_add(mut Animate{
+				id:       id_auto_scroll_animation
+				callback: fn [placeholder_active, id_focus, id_scroll_container, anchor_beg, anchor_end] (mut an Animate, mut w Window) {
+					text_double_click_auto_scroll_cursor(id_focus, id_scroll_container,
+						anchor_beg, anchor_end, mut an, mut w, placeholder_active)
+				}
+				delay:    auto_scroll_slow
+				repeat:   true
+			})
+		}
+		return
+	} else {
+		w.remove_animation(id_auto_scroll_animation)
+	}
+
+	mut sel_beg := u32(0)
+	mut sel_end := u32(0)
+	mut new_cursor_pos := 0
+	if mouse_cursor_pos < anchor_beg {
+		sel_beg = u32(cursor_start_of_word(layout.shape, mouse_cursor_pos))
+		sel_end = u32(anchor_end)
+		new_cursor_pos = int(sel_beg)
+	} else {
+		sel_beg = u32(anchor_beg)
+		sel_end = u32(cursor_end_of_word(layout.shape, mouse_cursor_pos))
+		new_cursor_pos = int(sel_end)
+	}
+	w.view_state.input_state.set(id_focus, InputState{
+		...w.view_state.input_state.get(id_focus) or { InputState{} }
+		cursor_pos:    new_cursor_pos
+		cursor_offset: -1
+		select_beg:    sel_beg
+		select_end:    sel_end
+	})
+	scroll_cursor_into_view(new_cursor_pos, layout, mut w)
+	e.is_handled = true
+}
+
+// text_double_click_auto_scroll_cursor is the animation callback for auto-scroll
+// during a word-level drag. Mirrors text_auto_scroll_cursor but applies word
+// boundaries instead of raw cursor positions.
+fn text_double_click_auto_scroll_cursor(id_focus u32, id_scroll_container u32, anchor_beg int, anchor_end int, mut an Animate, mut w Window, placeholder_active bool) {
+	mut layout := w.layout.find_layout(fn [id_focus] (ly Layout) bool {
+		return ly.shape.id_scroll == id_focus
+	}) or { return }
+	for {
+		if layout.shape.shape_type == .text {
+			break
+		}
+		if layout.children.len == 0 {
+			return
+		}
+		layout = layout.children[0]
+	}
+	cursor_pos := (w.view_state.input_state.get(id_focus) or { InputState{} }).cursor_pos
+	raw_ev := Event{
+		mouse_x: w.ui.mouse_pos_x
+		mouse_y: w.ui.mouse_pos_y
+	}
+	ev := event_relative_to(layout.shape, raw_ev)
+	mut mouse_cursor_pos := text_mouse_cursor_pos(layout.shape, ev, mut w, placeholder_active)
+
+	scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
+	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
+	if scroll_y > current_scroll_y {
+		mouse_cursor_pos = cursor_up(layout.shape, cursor_pos, -1, 1, mut w)
+	} else if scroll_y < current_scroll_y {
+		mouse_cursor_pos = cursor_down(layout.shape, cursor_pos, -1, 1, mut w)
+	} else {
+		return
+	}
+
+	mut sel_beg := u32(0)
+	mut sel_end := u32(0)
+	mut new_cursor_pos := 0
+	if mouse_cursor_pos < anchor_beg {
+		sel_beg = u32(cursor_start_of_word(layout.shape, mouse_cursor_pos))
+		sel_end = u32(anchor_end)
+		new_cursor_pos = int(sel_beg)
+	} else {
+		sel_beg = u32(anchor_beg)
+		sel_end = u32(cursor_end_of_word(layout.shape, mouse_cursor_pos))
+		new_cursor_pos = int(sel_end)
+	}
+	w.view_state.input_state.set(id_focus, InputState{
+		...w.view_state.input_state.get(id_focus) or { InputState{} }
+		cursor_pos:    new_cursor_pos
+		cursor_offset: -1
+		select_beg:    sel_beg
+		select_end:    sel_end
+	})
+	scroll_cursor_into_view(new_cursor_pos, layout, mut w)
+
+	scroll_container := find_layout_by_id_scroll(w.layout, id_scroll_container) or { return }
+	evs := event_relative_to(scroll_container.shape, raw_ev)
+	distance := if evs.mouse_y < 0 {
+		-evs.mouse_y
+	} else {
+		evs.mouse_y - scroll_container.shape.height
+	}
+	lh := line_height(layout.shape, mut w)
+	if distance > 2 * lh {
+		an.delay = auto_scroll_fast
+	} else if distance > lh {
+		an.delay = auto_scroll_medium
+	} else {
+		an.delay = auto_scroll_slow
+	}
+}
+
 // text_mouse_move_locked is a standalone version of mouse_move_locked
 // that avoids capturing tv in mouse lock closures.
 fn text_mouse_move_locked(layout &Layout, mut e Event, mut w Window, placeholder_active bool) {

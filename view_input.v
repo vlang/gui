@@ -31,6 +31,9 @@ pub:
 	// when traversing vertically through text. It is reset when a non-vertical
 	// navigation operation occurs.
 	cursor_offset f32
+	// last_click_frame records the frame of the last click for double-click
+	// detection.
+	last_click_frame u64
 }
 
 // InputMemento stores a snapshot of the input state for undo/redo

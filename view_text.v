@@ -10,6 +10,7 @@ import math
 import time
 
 const id_auto_scroll_animation = 'auto_scroll_animation'
+const text_double_click_frames = u64(24) // ~400ms at 60 fps
 
 // selection_range returns (select_beg, select_end) for drag selection
 @[inline]
@@ -166,14 +167,50 @@ pub fn text(cfg TextCfg) View {
 
 // on_click handles mouse click events for the TextView.
 // It sets up mouse locking for drag selection updates and positions the text cursor
-// based on the click coordinates.
+// based on the click coordinates. A double-click selects the word under the pointer.
 fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 	if e.mouse_button == .left && layout.shape.id_focus > 0 {
 		id_focus := layout.shape.id_focus
 		placeholder_active := tv.placeholder_active
 		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
-		// Init mouse lock to handle dragging selection (mouse move)
-		// and finishing selection (mouse up)
+		input_state := w.view_state.input_state.get(id_focus) or { InputState{} }
+
+		is_double_click := !placeholder_active && input_state.last_click_frame > 0
+			&& e.frame_count - input_state.last_click_frame <= text_double_click_frames
+
+		if is_double_click {
+			word_beg := cursor_start_of_word(layout.shape, cursor_pos)
+			word_end := cursor_end_of_word(layout.shape, cursor_pos)
+			w.mouse_lock(
+				cursor_pos: word_beg
+				mouse_move: fn [placeholder_active, id_focus, word_beg, word_end] (layout &Layout, mut e Event, mut w Window) {
+					if ly := layout.find_layout(fn [id_focus] (ly Layout) bool {
+						return ly.shape.id_focus == id_focus
+					})
+					{
+						text_double_click_drag(ly, mut e, mut w, placeholder_active, word_beg,
+							word_end)
+					}
+				}
+				mouse_up:   fn (layout &Layout, mut e Event, mut w Window) {
+					w.mouse_unlock()
+					w.remove_animation(id_auto_scroll_animation)
+					e.is_handled = true
+				}
+			)
+			w.view_state.input_state.set(id_focus, InputState{
+				...input_state
+				cursor_pos:       word_end
+				select_beg:       u32(word_beg)
+				select_end:       u32(word_end)
+				cursor_offset:    -1
+				last_click_frame: 0
+			})
+			e.is_handled = true
+			return
+		}
+
+		// single-click: set up drag selection and record frame
 		w.mouse_lock(
 			cursor_pos: cursor_pos
 			mouse_move: fn [placeholder_active, id_focus] (layout &Layout, mut e Event, mut w Window) {
@@ -191,15 +228,14 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 				e.is_handled = true
 			}
 		)
-		// Set cursor position and reset text selection
 		cursor_offset := offset_from_cursor_position(layout.shape, cursor_pos, mut w)
-		input_state := w.view_state.input_state.get(layout.shape.id_focus) or { InputState{} }
-		w.view_state.input_state.set(layout.shape.id_focus, InputState{
+		w.view_state.input_state.set(id_focus, InputState{
 			...input_state
-			cursor_pos:    cursor_pos
-			select_beg:    0
-			select_end:    0
-			cursor_offset: cursor_offset
+			cursor_pos:       cursor_pos
+			select_beg:       0
+			select_end:       0
+			cursor_offset:    cursor_offset
+			last_click_frame: e.frame_count
 		})
 		e.is_handled = true
 	}
