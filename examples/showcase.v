@@ -642,6 +642,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['wrap', 'flow', 'reflow', 'layout']
 		},
 		DemoEntry{
+			id:      'overflow_panel'
+			label:   'Overflow Panel'
+			group:   'layout'
+			summary: 'Row that hides non-fitting children in a dropdown'
+			tags:    ['overflow', 'toolbar', 'responsive', 'layout']
+		},
+		DemoEntry{
 			id:      'animations'
 			label:   'Animations'
 			group:   'graphics'
@@ -1081,6 +1088,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'row' { demo_row() }
 		'column_demo' { demo_column() }
 		'wrap_panel' { demo_wrap_panel(w) }
+		'overflow_panel' { demo_overflow_panel(w) }
 		'doc_get_started' { demo_doc(mut w, 'doc_get_started', doc_get_started_source) }
 		'doc_animations' { demo_doc(mut w, 'doc_animations', doc_animations_source) }
 		'doc_architecture' { demo_doc(mut w, 'doc_architecture', doc_architecture_source) }
@@ -1146,6 +1154,7 @@ fn related_examples(id string) string {
 		'row' { 'examples/showcase.v' }
 		'column_demo' { 'examples/column_scroll.v' }
 		'wrap_panel' { 'examples/wrap_panel.v' }
+		'overflow_panel' { 'examples/overflow_panel_demo.v' }
 		else { 'examples/showcase.v' }
 	}
 }
@@ -1196,6 +1205,7 @@ fn component_doc(id string) string {
 		'row' { row_doc }
 		'column_demo' { column_doc }
 		'wrap_panel' { wrap_panel_doc }
+		'overflow_panel' { overflow_panel_doc }
 		else { '*Documentation coming soon.*' }
 	}
 }
@@ -4810,6 +4820,91 @@ fn wrap_tag(label string) gui.View {
 		color:   gui.theme().color_active
 		content: [gui.text(text: label)]
 	)
+}
+
+const overflow_panel_doc = '# Overflow Panel
+
+Row that shows children left-to-right; items that don\'t fit are hidden
+and revealed in a floating dropdown menu via a trigger button.
+
+## Usage
+
+```v
+window.overflow_panel(gui.OverflowPanelCfg{
+    id:       "toolbar",
+    id_focus: 1,
+    items:    [
+        gui.OverflowItem{
+            id:   "home",
+            text: "Home",
+            view: gui.button(content: [gui.text(text: "Home")]),
+        },
+        gui.OverflowItem{
+            id:   "edit",
+            text: "Edit",
+            view: gui.button(content: [gui.text(text: "Edit")]),
+        },
+    ],
+})
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| id_focus | u32 | Focus index for the trigger button (required) |
+| items | []OverflowItem | Toolbar items with view + menu fallback |
+| trigger | []View | Custom trigger content; default: ellipsis icon |
+| spacing | f32 | Gap between items |
+| float_anchor | FloatAttach | Dropdown anchor point (default: bottom_right) |
+| float_tie_off | FloatAttach | Dropdown tie-off (default: top_right) |
+
+## OverflowItem
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Item identifier |
+| view | View | Toolbar representation |
+| text | string | Menu label when overflowed |
+| action | fn | Callback when selected from dropdown |
+
+Resize the container to see items collapse into the dropdown.'
+
+fn demo_overflow_panel(w &gui.Window) gui.View {
+	return gui.column(
+		sizing:  gui.fill_fit
+		spacing: gui.spacing_large
+		content: [
+			gui.text(
+				text: 'Resize the window narrower to see items overflow into the dropdown.'
+				mode: .wrap
+			),
+			w.overflow_panel(gui.OverflowPanelCfg{
+				id:       'showcase_overflow'
+				id_focus: 200
+				items:    [
+					overflow_demo_item('home', 'Home'),
+					overflow_demo_item('edit', 'Edit'),
+					overflow_demo_item('view', 'View'),
+					overflow_demo_item('tools', 'Tools'),
+					overflow_demo_item('help', 'Help'),
+					overflow_demo_item('settings', 'Settings'),
+					overflow_demo_item('about', 'About'),
+				]
+			}),
+		]
+	)
+}
+
+fn overflow_demo_item(id string, label string) gui.OverflowItem {
+	return gui.OverflowItem{
+		id:   id
+		text: label
+		view: gui.button(
+			content: [gui.text(text: label)]
+		)
+	}
 }
 
 const icons_doc = '# Icons
