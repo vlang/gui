@@ -2424,7 +2424,6 @@ fn demo_select(w &gui.Window) gui.View {
 								select:          app.selected_1
 								placeholder:     'Pick one or more states'
 								select_multiple: true
-								no_wrap:         true
 								options:         [
 									'Alabama',
 									'Alaska',
