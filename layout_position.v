@@ -20,13 +20,15 @@ fn layout_wrap_text(mut layout Layout, mut w Window) {
 fn layout_adjust_scroll_offsets(mut layout Layout, mut w Window) {
 	id_scroll := layout.shape.id_scroll
 	if id_scroll > 0 {
+		mut sx := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll)
+		mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
 		max_offset_x := f32_min(0, layout.shape.width - layout.shape.padding_width() - content_width(layout))
-		offset_x := w.view_state.scroll_x.get(id_scroll) or { f32(0) }
-		w.view_state.scroll_x.set(id_scroll, f32_clamp(offset_x, max_offset_x, 0))
+		offset_x := sx.get(id_scroll) or { f32(0) }
+		sx.set(id_scroll, f32_clamp(offset_x, max_offset_x, 0))
 
 		max_offset_y := f32_min(0, layout.shape.height - layout.shape.padding_height() - content_height(layout))
-		offset_y := w.view_state.scroll_y.get(id_scroll) or { f32(0) }
-		w.view_state.scroll_y.set(id_scroll, f32_clamp(offset_y, max_offset_y, 0))
+		offset_y := sy.get(id_scroll) or { f32(0) }
+		sy.set(id_scroll, f32_clamp(offset_y, max_offset_y, 0))
 	}
 	for mut child in layout.children {
 		layout_adjust_scroll_offsets(mut child, mut w)
@@ -35,7 +37,7 @@ fn layout_adjust_scroll_offsets(mut layout Layout, mut w Window) {
 
 // layout_positions sets positions and handles alignment. Alignment only
 // affects x/y positions, not sizes.
-fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
+fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, mut w Window) {
 	layout.shape.x += offset_x
 	layout.shape.y += offset_y
 
@@ -59,8 +61,10 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 	mut y := layout.shape.y + layout.shape.padding_top()
 
 	if layout.shape.id_scroll > 0 {
-		x += w.view_state.scroll_x.get(layout.shape.id_scroll) or { f32(0) }
-		y += w.view_state.scroll_y.get(layout.shape.id_scroll) or { f32(0) }
+		mut sx := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll)
+		mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+		x += sx.get(layout.shape.id_scroll) or { f32(0) }
+		y += sy.get(layout.shape.id_scroll) or { f32(0) }
 	}
 
 	// Resolve start/end based on text direction
@@ -156,10 +160,10 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, w &Window) {
 		}
 
 		if is_rtl && axis == .left_to_right {
-			layout_positions(mut child, x - child.shape.width + x_align, y + y_align,
+			layout_positions(mut child, x - child.shape.width + x_align, y + y_align, mut
 				w)
 		} else {
-			layout_positions(mut child, x + x_align, y + y_align, w)
+			layout_positions(mut child, x + x_align, y + y_align, mut w)
 		}
 
 		if child.shape.shape_type != .none {

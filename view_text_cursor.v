@@ -295,7 +295,9 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 
 	rect := shape.tc.vglyph_layout.get_char_rect(byte_idx) or { gg.Rect{} }
 
-	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
+	current_scroll_y := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(id_scroll_container) or {
+		f32(0)
+	}
 
 	// rect.y is in text-local coords. Convert to scroll container content coords
 	// by adding shape's original position (before scroll was applied).
@@ -407,7 +409,8 @@ fn text_auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut an Animate
 		layout = layout.children[0]
 	}
 
-	cursor_pos := (w.view_state.input_state.get(id_focus) or { InputState{} }).cursor_pos
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	cursor_pos := (imap.get(id_focus) or { InputState{} }).cursor_pos
 	start_cursor_pos := w.view_state.mouse_lock.cursor_pos
 
 	raw_ev := Event{
@@ -418,7 +421,9 @@ fn text_auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut an Animate
 	mut mouse_cursor_pos := text_mouse_cursor_pos(layout.shape, ev, mut w, placeholder_active)
 
 	scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
-	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
+	current_scroll_y := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(id_scroll_container) or {
+		f32(0)
+	}
 
 	if scroll_y > current_scroll_y {
 		mouse_cursor_pos = cursor_up(layout.shape, cursor_pos, -1, 1, mut w)
@@ -429,8 +434,8 @@ fn text_auto_scroll_cursor(id_focus u32, id_scroll_container u32, mut an Animate
 	}
 
 	sel_beg, sel_end := selection_range(start_cursor_pos, mouse_cursor_pos)
-	w.view_state.input_state.set(id_focus, InputState{
-		...w.view_state.input_state.get(id_focus) or { InputState{} }
+	imap.set(id_focus, InputState{
+		...imap.get(id_focus) or { InputState{} }
 		cursor_pos:    mouse_cursor_pos
 		cursor_offset: -1
 		select_beg:    sel_beg
@@ -470,7 +475,9 @@ fn text_double_click_drag(layout &Layout, mut e Event, mut w Window, placeholder
 	mouse_cursor_pos := text_mouse_cursor_pos(layout.shape, ev, mut w, placeholder_active)
 
 	scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
-	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
+	current_scroll_y := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(id_scroll_container) or {
+		f32(0)
+	}
 
 	if scroll_y != current_scroll_y {
 		if !w.has_animation(id_auto_scroll_animation) {
@@ -501,8 +508,9 @@ fn text_double_click_drag(layout &Layout, mut e Event, mut w Window, placeholder
 		sel_end = u32(cursor_end_of_word(layout.shape, mouse_cursor_pos))
 		new_cursor_pos = int(sel_end)
 	}
-	w.view_state.input_state.set(id_focus, InputState{
-		...w.view_state.input_state.get(id_focus) or { InputState{} }
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
+		...imap.get(id_focus) or { InputState{} }
 		cursor_pos:    new_cursor_pos
 		cursor_offset: -1
 		select_beg:    sel_beg
@@ -528,7 +536,8 @@ fn text_double_click_auto_scroll_cursor(id_focus u32, id_scroll_container u32, a
 		}
 		layout = layout.children[0]
 	}
-	cursor_pos := (w.view_state.input_state.get(id_focus) or { InputState{} }).cursor_pos
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	cursor_pos := (imap.get(id_focus) or { InputState{} }).cursor_pos
 	raw_ev := Event{
 		mouse_x: w.ui.mouse_pos_x
 		mouse_y: w.ui.mouse_pos_y
@@ -537,7 +546,9 @@ fn text_double_click_auto_scroll_cursor(id_focus u32, id_scroll_container u32, a
 	mut mouse_cursor_pos := text_mouse_cursor_pos(layout.shape, ev, mut w, placeholder_active)
 
 	scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
-	current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
+	current_scroll_y := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(id_scroll_container) or {
+		f32(0)
+	}
 	if scroll_y > current_scroll_y {
 		mouse_cursor_pos = cursor_up(layout.shape, cursor_pos, -1, 1, mut w)
 	} else if scroll_y < current_scroll_y {
@@ -558,8 +569,8 @@ fn text_double_click_auto_scroll_cursor(id_focus u32, id_scroll_container u32, a
 		sel_end = u32(cursor_end_of_word(layout.shape, mouse_cursor_pos))
 		new_cursor_pos = int(sel_end)
 	}
-	w.view_state.input_state.set(id_focus, InputState{
-		...w.view_state.input_state.get(id_focus) or { InputState{} }
+	imap.set(id_focus, InputState{
+		...imap.get(id_focus) or { InputState{} }
 		cursor_pos:    new_cursor_pos
 		cursor_offset: -1
 		select_beg:    sel_beg
@@ -600,7 +611,9 @@ fn text_mouse_move_locked(layout &Layout, mut e Event, mut w Window, placeholder
 		mut mouse_cursor_pos := text_mouse_cursor_pos(layout.shape, ev, mut w, placeholder_active)
 
 		scroll_y := cursor_pos_to_scroll_y(mouse_cursor_pos, layout.shape, mut w)
-		current_scroll_y := w.view_state.scroll_y.get(id_scroll_container) or { f32(0) }
+		current_scroll_y := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(id_scroll_container) or {
+			f32(0)
+		}
 
 		if scroll_y != current_scroll_y {
 			if !w.has_animation(id_auto_scroll_animation) {
@@ -620,8 +633,9 @@ fn text_mouse_move_locked(layout &Layout, mut e Event, mut w Window, placeholder
 		}
 
 		sel_beg, sel_end := selection_range(start_cursor_pos, mouse_cursor_pos)
-		w.view_state.input_state.set(id_focus, InputState{
-			...w.view_state.input_state.get(id_focus) or { InputState{} }
+		mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+		imap.set(id_focus, InputState{
+			...imap.get(id_focus) or { InputState{} }
 			cursor_pos:    mouse_cursor_pos
 			cursor_offset: -1
 			select_beg:    sel_beg

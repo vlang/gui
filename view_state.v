@@ -5,144 +5,40 @@ import sokol.sapp
 
 // ViewState stores the transient state of the GUI views.
 // Since views are regenerated every frame in immediate mode, this struct
-// persists state like focus, scroll positions, and input selections across frames.
-//
-// Key type rationale:
-// - u32: widget IDs (hash-based) - input_state, scroll, menu_state, id_focus
-// - string: user-provided identifiers - tree_state, date_picker_state, select_state
-// - int: content hashes - markdown_cache
-// - u64: data hashes - table_warned_no_id
+// persists state like focus, scroll positions, and input selections across
+// frames. Per-widget state lives in StateRegistry (see state_registry.v);
+// specialized caches (images, SVG, markdown, trees, diagrams) remain as
+// dedicated fields for type safety.
 struct ViewState {
 mut:
-	cursor_on_sticky              bool // keeps the cursor visible during cursor movement
-	id_focus                      u32  // current view that has focus
-	input_cursor_on               bool = true // used by cursor blink animation
-	menu_key_nav                  bool             // true, menu navigated by keyboard
-	mouse_cursor                  sapp.MouseCursor // arrow, finger, ibeam, etc.
-	mouse_lock                    MouseLockCfg     // mouse down/move/up/scroll/sliders, etc. use this
-	rtf_tooltip_rect              gg.Rect          // RTF abbreviation tooltip anchor rect
-	rtf_tooltip_text              string           // RTF abbreviation tooltip text
-	tooltip                       TooltipState     // State for the active tooltip
-	input_state                   BoundedMap[u32, InputState] = BoundedMap[u32, InputState]{
+	cursor_on_sticky            bool // keeps the cursor visible during cursor movement
+	id_focus                    u32  // current view that has focus
+	input_cursor_on             bool = true // used by cursor blink animation
+	menu_key_nav                bool             // true, menu navigated by keyboard
+	mouse_cursor                sapp.MouseCursor // arrow, finger, ibeam, etc.
+	mouse_lock                  MouseLockCfg     // mouse down/move/up/scroll/sliders, etc. use this
+	rtf_tooltip_rect            gg.Rect          // RTF abbreviation tooltip anchor rect
+	rtf_tooltip_text            string           // RTF abbreviation tooltip text
+	tooltip                     TooltipState     // State for the active tooltip
+	registry                    StateRegistry    // generic per-widget state maps
+	image_map                   BoundedImageMap = BoundedImageMap{
 		max_size: 100
 	}
-	input_focus_state             BoundedMap[u32, bool] = BoundedMap[u32, bool]{
+	svg_cache                   BoundedSvgCache = BoundedSvgCache{
 		max_size: 100
 	}
-	input_date_state              BoundedMap[string, bool] = BoundedMap[string, bool]{
+	svg_dim_cache               map[string][2]f32
+	markdown_cache              BoundedMarkdownCache = BoundedMarkdownCache{
 		max_size: 50
 	}
-	scroll_x                      BoundedMap[u32, f32] = BoundedMap[u32, f32]{
-		max_size: 200
-	}
-	scroll_y                      BoundedMap[u32, f32] = BoundedMap[u32, f32]{
-		max_size: 200
-	}
-	menu_state                    BoundedMap[u32, string] = BoundedMap[u32, string]{
-		max_size: 20
-	}
-	image_map                     BoundedImageMap = BoundedImageMap{
-		max_size: 100
-	}
-	active_downloads              BoundedMap[string, i64] = BoundedMap[string, i64]{
-		max_size: 50
-	}
-	svg_cache                     BoundedSvgCache = BoundedSvgCache{
-		max_size: 100
-	}
-	svg_dim_cache                 map[string][2]f32
-	svg_anim_start                BoundedMap[string, i64] = BoundedMap[string, i64]{
-		max_size: 50
-	}
-	svg_anim_seen                 BoundedMap[string, i64] = BoundedMap[string, i64]{
-		max_size: 50
-	}
-	markdown_cache                BoundedMarkdownCache = BoundedMarkdownCache{
-		max_size: 50
-	}
-	select_state                  BoundedMap[string, bool] = BoundedMap[string, bool]{
-		max_size: 50
-	}
-	select_highlight              BoundedMap[string, int] = BoundedMap[string, int]{
-		max_size: 50
-	}
-	tree_state                    BoundedTreeState = BoundedTreeState{
+	tree_state                  BoundedTreeState = BoundedTreeState{
 		max_size: 30
 	}
-	date_picker_state             BoundedMap[string, DatePickerState] = BoundedMap[string, DatePickerState]{
-		max_size: 20
-	}
-	date_picker_roller_state      BoundedMap[string, DatePickerRollerState] = BoundedMap[string, DatePickerRollerState]{
-		max_size: 20
-	}
-	table_col_widths              BoundedMap[string, TableColCache] = BoundedMap[string, TableColCache]{
-		max_size: 50
-	}
-	table_warned_no_id            BoundedMap[u64, bool] = BoundedMap[u64, bool]{
-		max_size: 100
-	}
-	external_api_warning_logged   bool
-	diagram_cache                 BoundedDiagramCache = BoundedDiagramCache{
+	external_api_warning_logged bool
+	diagram_cache               BoundedDiagramCache = BoundedDiagramCache{
 		max_size: 200
 	}
-	diagram_request_seq           u64
-	progress_state                BoundedMap[string, f32] = BoundedMap[string, f32]{
-		max_size: 50
-	}
-	color_picker_state            BoundedMap[string, ColorPickerState] = BoundedMap[string, ColorPickerState]{
-		max_size: 20
-	}
-	data_grid_col_widths          BoundedMap[string, &DataGridColWidths] = BoundedMap[string, &DataGridColWidths]{
-		max_size: 50
-	}
-	data_grid_presentation_cache  BoundedMap[string, DataGridPresentationCache] = BoundedMap[string, DataGridPresentationCache]{
-		max_size: 50
-	}
-	data_grid_resize_state        BoundedMap[string, DataGridResizeState] = BoundedMap[string, DataGridResizeState]{
-		max_size: 50
-	}
-	data_grid_header_hover_col    BoundedMap[string, string] = BoundedMap[string, string]{
-		max_size: 50
-	}
-	data_grid_range_state         BoundedMap[string, DataGridRangeState] = BoundedMap[string, DataGridRangeState]{
-		max_size: 50
-	}
-	data_grid_column_chooser_open BoundedMap[string, bool] = BoundedMap[string, bool]{
-		max_size: 50
-	}
-	data_grid_edit_state          BoundedMap[string, DataGridEditState] = BoundedMap[string, DataGridEditState]{
-		max_size: 50
-	}
-	data_grid_crud_state          BoundedMap[string, DataGridCrudState] = BoundedMap[string, DataGridCrudState]{
-		max_size: 50
-	}
-	data_grid_jump_input          BoundedMap[string, string] = BoundedMap[string, string]{
-		max_size: 50
-	}
-	data_grid_pending_jump_row    BoundedMap[string, int] = BoundedMap[string, int]{
-		max_size: 50
-	}
-	data_grid_source_state        BoundedMap[string, DataGridSourceState] = BoundedMap[string, DataGridSourceState]{
-		max_size: 50
-	}
-	list_box_source_state         BoundedMap[string, ListBoxSourceState] = BoundedMap[string, ListBoxSourceState]{
-		max_size: 50
-	}
-	splitter_runtime_state        BoundedMap[string, SplitterRuntimeState] = BoundedMap[string, SplitterRuntimeState]{
-		max_size: 20
-	}
-	form_state                    BoundedMap[string, FormRuntimeState] = BoundedMap[string, FormRuntimeState]{
-		max_size: 50
-	}
-	tree_focus                    BoundedMap[string, string] = BoundedMap[string, string]{
-		max_size: 30
-	}
-	list_box_focus                BoundedMap[string, int] = BoundedMap[string, int]{
-		max_size: 50
-	}
-	overflow_state                BoundedMap[string, int] = BoundedMap[string, int]{
-		max_size: 50
-	}
+	diagram_request_seq         u64
 }
 
 // ColorPickerState stores persistent HSV values for ColorPickers.
@@ -288,13 +184,15 @@ fn (mut w Window) clear_view_state() {
 	w.view_state.diagram_cache.clear()
 	w.view_state.svg_cache.clear()
 	w.view_state.markdown_cache.clear()
+	w.view_state.registry.clear()
 	w.view_state = ViewState{}
 }
 
-fn (mut vs ViewState) clear_input_selections() {
-	for key in vs.input_state.keys() {
-		if value := vs.input_state.get(key) {
-			vs.input_state.set(key, InputState{
+fn (mut w Window) clear_input_selections() {
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	for key in imap.keys() {
+		if value := imap.get(key) {
+			imap.set(key, InputState{
 				...value
 				select_beg: 0
 				select_end: 0

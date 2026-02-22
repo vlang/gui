@@ -19,7 +19,10 @@ pub:
 
 // data_grid_source_stats returns runtime async stats for a data-source grid.
 pub fn (window &Window) data_grid_source_stats(grid_id string) DataGridSourceStats {
-	if state := window.view_state.data_grid_source_state.get(grid_id) {
+	dg_src := state_map_read[string, DataGridSourceState](window, ns_dg_source) or {
+		return DataGridSourceStats{}
+	}
+	if state := dg_src.get(grid_id) {
 		return DataGridSourceStats{
 			loading:          state.loading
 			load_error:       state.load_error
@@ -35,7 +38,8 @@ pub fn (window &Window) data_grid_source_stats(grid_id string) DataGridSourceSta
 }
 
 fn data_grid_source_apply_local_mutation(grid_id string, rows []GridRow, row_count ?int, mut window Window) {
-	mut state := window.view_state.data_grid_source_state.get(grid_id) or { DataGridSourceState{} }
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut state := dg_src.get(grid_id) or { DataGridSourceState{} }
 	data_grid_source_cancel_active(mut state)
 	state.request_id++
 	state.rows = rows
@@ -51,7 +55,7 @@ fn data_grid_source_apply_local_mutation(grid_id string, rows []GridRow, row_cou
 	} else {
 		state.row_count = none
 	}
-	window.view_state.data_grid_source_state.set(grid_id, state)
+	dg_src.set(grid_id, state)
 }
 
 fn data_grid_source_cancel_active(mut state DataGridSourceState) {
@@ -64,14 +68,15 @@ fn data_grid_source_cancel_active(mut state DataGridSourceState) {
 }
 
 fn data_grid_source_force_refetch(grid_id string, mut window Window) {
-	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut state := dg_src.get(grid_id) or { return }
 	data_grid_source_cancel_active(mut state)
 	state.loading = false
 	state.request_key = ''
 	state.load_error = ''
 	state.caps_cached = false
 	state.active_abort = unsafe { nil }
-	window.view_state.data_grid_source_state.set(grid_id, state)
+	dg_src.set(grid_id, state)
 	window.update_window()
 }
 
@@ -86,7 +91,9 @@ fn data_grid_resolve_source_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg
 
 	// Use cached capabilities when available; invalidated
 	// on force_refetch.
-	existing := window.view_state.data_grid_source_state.get(cfg.id) or { DataGridSourceState{} }
+	existing := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate).get(cfg.id) or {
+		DataGridSourceState{}
+	}
 	caps := if existing.caps_cached {
 		existing.cached_caps
 	} else {
@@ -114,7 +121,8 @@ fn data_grid_resolve_source_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg
 }
 
 fn data_grid_source_resolve_state(cfg DataGridCfg, caps GridDataCapabilities, mut window Window) DataGridSourceState {
-	mut state := window.view_state.data_grid_source_state.get(cfg.id) or {
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut state := dg_src.get(cfg.id) or {
 		DataGridSourceState{
 			current_cursor:  cfg.cursor
 			offset_start:    int_max(0, cfg.page_index * data_grid_page_limit(cfg))
@@ -151,7 +159,7 @@ fn data_grid_source_resolve_state(cfg DataGridCfg, caps GridDataCapabilities, mu
 		data_grid_source_start_request(cfg, caps, kind, request_key, mut state, mut window)
 	}
 	state.rows_dirty = false
-	window.view_state.data_grid_source_state.set(cfg.id, state)
+	dg_src.set(cfg.id, state)
 	return state
 }
 
@@ -177,9 +185,10 @@ fn data_grid_source_apply_pending_jump_selection(cfg DataGridCfg, state DataGrid
 	mut e := Event{}
 	cfg.on_selection_change(next, mut e, mut window)
 	data_grid_set_anchor(cfg.id, row_id, mut window)
-	mut next_state := window.view_state.data_grid_source_state.get(cfg.id) or { return }
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut next_state := dg_src.get(cfg.id) or { return }
 	next_state.pending_jump_row = -1
-	window.view_state.data_grid_source_state.set(cfg.id, next_state)
+	dg_src.set(cfg.id, next_state)
 }
 
 fn data_grid_source_apply_query_reset(mut state DataGridSourceState, cfg DataGridCfg, query_sig u64) {
@@ -307,14 +316,17 @@ fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, ki
 fn data_grid_source_drop_if_stale(request_id u64, mut state DataGridSourceState, mut window Window, grid_id string) bool {
 	if request_id != state.request_id {
 		state.stale_drop_count++
-		window.view_state.data_grid_source_state.set(grid_id, state)
+		mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source,
+			cap_moderate)
+		dg_src.set(grid_id, state)
 		return true
 	}
 	return false
 }
 
 fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDataResult, caps GridDataCapabilities, mut window Window) {
-	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut state := dg_src.get(grid_id) or { return }
 	if data_grid_source_drop_if_stale(request_id, mut state, mut window, grid_id) {
 		return
 	}
@@ -338,19 +350,20 @@ fn data_grid_source_apply_success(grid_id string, request_id u64, result GridDat
 		state.row_count = none
 	}
 	state.active_abort = unsafe { nil }
-	window.view_state.data_grid_source_state.set(grid_id, state)
+	dg_src.set(grid_id, state)
 	window.update_window()
 }
 
 fn data_grid_source_apply_error(grid_id string, request_id u64, err_msg string, mut window Window) {
-	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut state := dg_src.get(grid_id) or { return }
 	if data_grid_source_drop_if_stale(request_id, mut state, mut window, grid_id) {
 		return
 	}
 	state.loading = false
 	state.load_error = err_msg
 	state.active_abort = unsafe { nil }
-	window.view_state.data_grid_source_state.set(grid_id, state)
+	dg_src.set(grid_id, state)
 	window.update_window()
 }
 
@@ -399,7 +412,8 @@ fn data_grid_source_can_next(kind GridPaginationKind, state DataGridSourceState,
 }
 
 fn data_grid_source_prev_page(grid_id string, kind GridPaginationKind, page_limit int, mut window Window) {
-	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut state := dg_src.get(grid_id) or { return }
 	if state.loading {
 		return
 	}
@@ -416,12 +430,13 @@ fn data_grid_source_prev_page(grid_id string, kind GridPaginationKind, page_limi
 	}
 	state.request_key = ''
 	state.load_error = ''
-	window.view_state.data_grid_source_state.set(grid_id, state)
+	dg_src.set(grid_id, state)
 	window.update_window()
 }
 
 fn data_grid_source_next_page(grid_id string, kind GridPaginationKind, page_limit int, mut window Window) {
-	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut state := dg_src.get(grid_id) or { return }
 	if state.loading {
 		return
 	}
@@ -438,7 +453,7 @@ fn data_grid_source_next_page(grid_id string, kind GridPaginationKind, page_limi
 	}
 	state.request_key = ''
 	state.load_error = ''
-	window.view_state.data_grid_source_state.set(grid_id, state)
+	dg_src.set(grid_id, state)
 	window.update_window()
 }
 
@@ -446,7 +461,8 @@ fn data_grid_source_jump_to_row(grid_id string, target_idx int, page_limit int, 
 	if page_limit <= 0 || target_idx < 0 {
 		return
 	}
-	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut state := dg_src.get(grid_id) or { return }
 	if state.loading {
 		return
 	}
@@ -457,7 +473,7 @@ fn data_grid_source_jump_to_row(grid_id string, target_idx int, page_limit int, 
 		state.request_key = ''
 		state.load_error = ''
 	}
-	window.view_state.data_grid_source_state.set(grid_id, state)
+	dg_src.set(grid_id, state)
 	window.update_window()
 }
 
@@ -505,9 +521,10 @@ fn data_grid_source_submit_jump(on_selection_change fn (GridSelection, mut Event
 		return
 	}
 	total := row_count or { return }
-	jump_text := window.view_state.data_grid_jump_input.get(grid_id) or { '' }
+	mut dg_ji := state_map[string, string](mut window, ns_dg_jump, cap_moderate)
+	jump_text := dg_ji.get(grid_id) or { '' }
 	target_idx := data_grid_parse_jump_target(jump_text, total) or { return }
-	window.view_state.data_grid_jump_input.set(grid_id, '${target_idx + 1}')
+	dg_ji.set(grid_id, '${target_idx + 1}')
 	data_grid_source_jump_to_row(grid_id, target_idx, page_limit, mut window)
 	if focus_id > 0 {
 		window.set_id_focus(focus_id)
@@ -516,10 +533,11 @@ fn data_grid_source_submit_jump(on_selection_change fn (GridSelection, mut Event
 }
 
 fn data_grid_source_retry(grid_id string, mut window Window) {
-	mut state := window.view_state.data_grid_source_state.get(grid_id) or { return }
+	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
+	mut state := dg_src.get(grid_id) or { return }
 	state.request_key = ''
 	state.load_error = ''
-	window.view_state.data_grid_source_state.set(grid_id, state)
+	dg_src.set(grid_id, state)
 	window.update_window()
 }
 
@@ -636,7 +654,8 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 			text_style:      cfg.text_style_filter
 			on_text_changed: fn [on_selection_change, row_count, loading, load_error, kind, page_limit, grid_id] (_ &Layout, text string, mut w Window) {
 				digits := data_grid_jump_digits(text)
-				w.view_state.data_grid_jump_input.set(grid_id, digits)
+				mut dg_ji := state_map[string, string](mut w, ns_dg_jump, cap_moderate)
+				dg_ji.set(grid_id, digits)
 				mut e := Event{}
 				data_grid_source_submit_jump(on_selection_change, row_count, loading,
 					load_error, kind, page_limit, grid_id, 0, mut e, mut w)

@@ -61,9 +61,10 @@ pub fn color_picker(cfg ColorPickerCfg) View {
 		content:          content
 		amend_layout:     fn [id, color] (mut layout Layout, mut w Window) {
 			// Initialize state from color if not already present
-			if !w.view_state.color_picker_state.contains(id) {
+			mut cps := state_map[string, ColorPickerState](mut w, ns_color_picker, cap_few)
+			if !cps.contains(id) {
 				h, s, v := color.to_hsv()
-				w.view_state.color_picker_state.set(id, ColorPickerState{h, s, v})
+				cps.set(id, ColorPickerState{h, s, v})
 			}
 		}
 	)
@@ -86,7 +87,7 @@ fn cp_sv_area(cfg ColorPickerCfg, size f32) View {
 		radius:       radius
 		clip:         true
 		amend_layout: fn [id, color] (mut layout Layout, mut w Window) {
-			state := w.view_state.color_picker_state.get(id) or {
+			state := state_map[string, ColorPickerState](mut w, ns_color_picker, cap_few).get(id) or {
 				h, s, v := color.to_hsv()
 				ColorPickerState{h, s, v}
 			}
@@ -266,7 +267,9 @@ fn cp_alpha_slider(cfg ColorPickerCfg) View {
 					on_color_change(c, mut e, mut w)
 					// Update persistent HSV state
 					al_h, al_s, al_v := c.to_hsv()
-					w.view_state.color_picker_state.set(id, ColorPickerState{al_h, al_s, al_v})
+					mut cps := state_map[string, ColorPickerState](mut w, ns_color_picker,
+						cap_few)
+					cps.set(id, ColorPickerState{al_h, al_s, al_v})
 				}
 			),
 		]
@@ -309,7 +312,9 @@ fn cp_preview_row(cfg ColorPickerCfg) View {
 						on_color_change(c, mut ev, mut w)
 						// Update persistent HSV state
 						h, hs, hv := c.to_hsv()
-						w.view_state.color_picker_state.set(id, ColorPickerState{h, hs, hv})
+						mut cps := state_map[string, ColorPickerState](mut w, ns_color_picker,
+							cap_few)
+						cps.set(id, ColorPickerState{h, hs, hv})
 					}
 				}
 			),
@@ -441,7 +446,8 @@ fn cp_channel_input(cfg ColorPickerCfg, ch string, val u8, id_focus u32) View {
 			on_color_change(clr, mut ev, mut w)
 			// Update persistent HSV state
 			ch_h, ch_s, ch_v := clr.to_hsv()
-			w.view_state.color_picker_state.set(id, ColorPickerState{ch_h, ch_s, ch_v})
+			mut cps := state_map[string, ColorPickerState](mut w, ns_color_picker, cap_few)
+			cps.set(id, ColorPickerState{ch_h, ch_s, ch_v})
 		}
 	)
 }
@@ -522,14 +528,15 @@ fn cp_hsv_channel_input(cfg ColorPickerCfg, ch string, val int, max_val int, id_
 					}
 				}
 			}
-			state := w.view_state.color_picker_state.get(id) or {
+			mut cps := state_map[string, ColorPickerState](mut w, ns_color_picker, cap_few)
+			state := cps.get(id) or {
 				h, sv_s, sv_v := color.to_hsv()
 				ColorPickerState{h, sv_s, sv_v}
 			}
 			new_h := if ch == 'h' { f32(n) } else { state.h }
 			new_s := if ch == 's' { f32(n) / 100.0 } else { state.s }
 			new_v := if ch == 'v' { f32(n) / 100.0 } else { state.v }
-			w.view_state.color_picker_state.set(id, ColorPickerState{new_h, new_s, new_v})
+			cps.set(id, ColorPickerState{new_h, new_s, new_v})
 			clr := color_from_hsva(new_h, new_s, new_v, color.a)
 			mut ev := Event{}
 			on_color_change(clr, mut ev, mut w)
@@ -553,11 +560,12 @@ fn cp_sv_mouse_move(id string, color Color, on_color_change fn (Color, mut Event
 	shape := layout.shape
 	s := f32_clamp((e.mouse_x - shape.x) / shape.width, 0, 1.0)
 	v := 1.0 - f32_clamp((e.mouse_y - shape.y) / shape.height, 0, 1.0)
-	state := w.view_state.color_picker_state.get(id) or {
+	mut cps := state_map[string, ColorPickerState](mut w, ns_color_picker, cap_few)
+	state := cps.get(id) or {
 		h, _, _ := color.to_hsv()
 		ColorPickerState{h, s, v}
 	}
-	w.view_state.color_picker_state.set(id, ColorPickerState{state.h, s, v})
+	cps.set(id, ColorPickerState{state.h, s, v})
 	c := color_from_hsva(state.h, s, v, color.a)
 	on_color_change(c, mut e, mut w)
 }
@@ -567,11 +575,12 @@ fn cp_hue_mouse_move(id string, color Color, on_color_change fn (Color, mut Even
 	shape := layout.shape
 	percent := f32_clamp((e.mouse_y - shape.y) / shape.height, 0, 0.999)
 	h := percent * 360.0
-	state := w.view_state.color_picker_state.get(id) or {
+	mut cps := state_map[string, ColorPickerState](mut w, ns_color_picker, cap_few)
+	state := cps.get(id) or {
 		_, s, v := color.to_hsv()
 		ColorPickerState{h, s, v}
 	}
-	w.view_state.color_picker_state.set(id, ColorPickerState{h, state.s, state.v})
+	cps.set(id, ColorPickerState{h, state.s, state.v})
 	c := color_from_hsva(h, state.s, state.v, color.a)
 	on_color_change(c, mut e, mut w)
 }
@@ -589,7 +598,7 @@ fn cp_amend_sv_indicator(id string, color Color, indicator_size f32, mut layout 
 	if gp == unsafe { nil } {
 		return
 	}
-	state := w.view_state.color_picker_state.get(id) or {
+	state := state_map[string, ColorPickerState](mut w, ns_color_picker, cap_few).get(id) or {
 		h, s, v := color.to_hsv()
 		ColorPickerState{h, s, v}
 	}
@@ -605,7 +614,7 @@ fn cp_amend_hue_indicator(id string, color Color, indicator_size f32, mut layout
 	if parent == unsafe { nil } {
 		return
 	}
-	state := w.view_state.color_picker_state.get(id) or {
+	state := state_map[string, ColorPickerState](mut w, ns_color_picker, cap_few).get(id) or {
 		h, s, v := color.to_hsv()
 		ColorPickerState{h, s, v}
 	}

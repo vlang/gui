@@ -59,7 +59,7 @@ fn (m &BoundedMap[K, V]) len() int {
 // clear removes all entries from map.
 fn (mut m BoundedMap[K, V]) clear() {
 	m.data.clear()
-	m.order.clear()
+	array_clear(mut m.order)
 }
 
 // keys returns all keys in insertion order.
@@ -113,7 +113,7 @@ fn (m &BoundedTreeState) len() int {
 // clear removes all entries.
 fn (mut m BoundedTreeState) clear() {
 	m.data.clear()
-	m.order.clear()
+	array_clear(mut m.order)
 }
 
 // BoundedSvgCache is an LRU cache for SVG data.
@@ -250,5 +250,5 @@ fn (m &BoundedMarkdownCache) len() int {
 // clear removes all entries.
 fn (mut m BoundedMarkdownCache) clear() {
 	m.data.clear()
-	m.order.clear()
+	array_clear(mut m.order)
 }

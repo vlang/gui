@@ -171,7 +171,7 @@ fn test_wrap_positions() {
 	layout_heights(mut root)
 	layout_fill_heights(mut root)
 	mut mock_window := Window{}
-	layout_positions(mut root, 0, 0, &mock_window)
+	layout_positions(mut root, 0, 0, mut mock_window)
 
 	// Row 1 at y=0, row 2 at y=20+5=25
 	assert f32_are_close(root.children[0].shape.y, 0)

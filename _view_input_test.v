@@ -10,7 +10,8 @@ module gui
 fn test_input_delete_key_at_end_is_noop() {
 	id_focus := u32(9001)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		cursor_pos: 2
 	})
 	cfg := InputCfg{
@@ -27,7 +28,8 @@ fn test_input_delete_key_at_end_is_noop() {
 fn test_input_delete_negative_cursor_uses_rune_len() {
 	id_focus := u32(9002)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		cursor_pos: -1
 	})
 	cfg := InputCfg{
@@ -44,7 +46,8 @@ fn test_input_delete_negative_cursor_uses_rune_len() {
 fn test_input_copy_accepts_selection_ending_at_text_len() {
 	id_focus := u32(9003)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		select_beg: 1
 		select_end: 3
 	})
@@ -62,7 +65,8 @@ fn test_input_copy_accepts_selection_ending_at_text_len() {
 fn test_input_insert_truncates_oversized_payload() {
 	id_focus := u32(9004)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		cursor_pos: 0
 	})
 	cfg := InputCfg{

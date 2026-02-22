@@ -27,12 +27,13 @@ fn test_list_box_visible_range_bounds() {
 	assert first_a == 0
 	assert last_a > first_a
 
-	w.view_state.scroll_y.set(1, -(row_h * 40))
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	sy.set(1, -(row_h * 40))
 	first_b, last_b := list_box_visible_range(100, row_h, cfg, mut w)
 	assert first_b >= 38
 	assert last_b > first_b
 
-	w.view_state.scroll_y.set(1, -(row_h * 1000))
+	sy.set(1, -(row_h * 1000))
 	first_c, last_c := list_box_visible_range(100, row_h, cfg, mut w)
 	assert first_c >= 0
 	assert last_c == cfg.data.len - 1
@@ -145,7 +146,7 @@ fn test_window_list_box_source_sets_loading_state_and_stats() {
 	assert has_source
 	assert resolved.loading
 	assert resolved.data.len == 0
-	state := w.view_state.list_box_source_state.get('list_loading') or {
+	state := state_map[string, ListBoxSourceState](mut w, ns_list_box_source, cap_moderate).get('list_loading') or {
 		panic('expected list box source state')
 	}
 	assert state.loading
@@ -165,12 +166,12 @@ fn test_list_box_source_force_refetch_clears_request_key() {
 		id:          'list_refetch'
 		data_source: source
 	}, mut w)
-	state_before := w.view_state.list_box_source_state.get('list_refetch') or {
+	state_before := state_map[string, ListBoxSourceState](mut w, ns_list_box_source, cap_moderate).get('list_refetch') or {
 		panic('expected source state before refetch')
 	}
 	assert state_before.request_key.len > 0
 	list_box_source_force_refetch('list_refetch', mut w)
-	state_after := w.view_state.list_box_source_state.get('list_refetch') or {
+	state_after := state_map[string, ListBoxSourceState](mut w, ns_list_box_source, cap_moderate).get('list_refetch') or {
 		panic('expected source state after refetch')
 	}
 	assert state_after.request_key == ''

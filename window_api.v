@@ -49,7 +49,8 @@ pub fn (mut window Window) dialog(cfg DialogCfg) {
 // dialog_dismiss closes an dialog box without invoking callbacks.
 // Useful for custom dialog types.
 pub fn (mut window Window) dialog_dismiss() {
-	window.view_state.input_state.set(window.dialog_cfg.id_focus, InputState{})
+	mut imap := state_map[u32, InputState](mut window, ns_input, cap_many)
+	imap.set(window.dialog_cfg.id_focus, InputState{})
 	window.dialog_cfg = DialogCfg{}
 }
 
@@ -224,10 +225,11 @@ pub fn (mut w Window) scroll_to_view(id string) {
 		p = p.parent
 		if p.shape.id_scroll > 0 {
 			scroll_id := p.shape.id_scroll
-			current_scroll := w.view_state.scroll_y.get(scroll_id) or { f32(0) }
+			mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+			current_scroll := sy.get(scroll_id) or { f32(0) }
 			base_y := p.shape.y + p.shape.padding.top
 			new_scroll := base_y - target.shape.y + current_scroll
-			w.view_state.scroll_y.set(scroll_id, new_scroll)
+			sy.set(scroll_id, new_scroll)
 			w.update_window()
 			return
 		}
@@ -237,27 +239,31 @@ pub fn (mut w Window) scroll_to_view(id string) {
 // scroll_horizontal_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_horizontal_by(id_scroll u32, delta f32) {
-	current := window.view_state.scroll_x.get(id_scroll) or { f32(0) }
-	window.view_state.scroll_x.set(id_scroll, current + delta)
+	mut sx := state_map[u32, f32](mut window, ns_scroll_x, cap_scroll)
+	current := sx.get(id_scroll) or { f32(0) }
+	sx.set(id_scroll, current + delta)
 }
 
 // scroll_horizontal_to scrolls the given scrollable to the offset. offset is negative.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_horizontal_to(id_scroll u32, offset f32) {
-	window.view_state.scroll_x.set(id_scroll, offset)
+	mut sx := state_map[u32, f32](mut window, ns_scroll_x, cap_scroll)
+	sx.set(id_scroll, offset)
 }
 
 // scroll_vertical_by scrolls the given scrollable by delta.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_by(id_scroll u32, delta f32) {
-	current := window.view_state.scroll_y.get(id_scroll) or { f32(0) }
-	window.view_state.scroll_y.set(id_scroll, current + delta)
+	mut sy := state_map[u32, f32](mut window, ns_scroll_y, cap_scroll)
+	current := sy.get(id_scroll) or { f32(0) }
+	sy.set(id_scroll, current + delta)
 }
 
 // scroll_vertical_to scrolls the given scrollable to the offset. offset is negative.
 // Use update_window() if not called from event handler
 pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
-	window.view_state.scroll_y.set(id_scroll, offset)
+	mut sy := state_map[u32, f32](mut window, ns_scroll_y, cap_scroll)
+	sy.set(id_scroll, offset)
 }
 
 // set_id_focus sets the window's focus id.
@@ -265,7 +271,7 @@ pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
 // the focused field. Always use set_id_focus for tab navigation — do NOT
 // assign w.view_state.id_focus directly. See CLAUDE.md §IME Integration.
 pub fn (mut window Window) set_id_focus(id u32) {
-	window.view_state.clear_input_selections()
+	window.clear_input_selections()
 	if id != window.view_state.id_focus {
 		log.debug('set_id_focus: ${id}')
 		// Cancel active IME composition on focus change
@@ -371,7 +377,7 @@ fn (mut window Window) render_rtf_tooltip(clip DrawClip) {
 	y := rect.y + rect.height + 3
 
 	// Now compute positions with the offset
-	layout_positions(mut layout, x, y, window)
+	layout_positions(mut layout, x, y, mut window)
 
 	layout.shape.shape_clip = DrawClip{
 		x:      layout.shape.x

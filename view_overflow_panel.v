@@ -45,8 +45,13 @@ pub:
 // and shows them in a floating dropdown menu when the trigger is
 // clicked. See [OverflowPanelCfg](#OverflowPanelCfg).
 pub fn (window &Window) overflow_panel(cfg OverflowPanelCfg) View {
-	visible_count := window.view_state.overflow_state.get(cfg.id) or { cfg.items.len }
-	is_open := window.view_state.select_state.get(cfg.id) or { false }
+	// mut cast needed for state_map lazy-init; overflow_panel is
+	// called during view generation where Window is conceptually mutable.
+	mut w_mut := unsafe { &Window(window) }
+	mut om := state_map[string, int](mut *w_mut, ns_overflow, cap_moderate)
+	visible_count := om.get(cfg.id) or { cfg.items.len }
+	mut ss := state_map[string, bool](mut *w_mut, ns_select, cap_moderate)
+	is_open := ss.get(cfg.id) or { false }
 
 	// Build content: all item views + trigger button (always last).
 	// All items are emitted so the layout pass can measure real widths;
@@ -87,8 +92,9 @@ pub fn (window &Window) overflow_panel(cfg OverflowPanelCfg) View {
 		disabled:     cfg.disabled
 		content:      trigger_content
 		on_click:     fn [id, id_focus, is_open] (_ &Layout, mut e Event, mut w Window) {
-			w.view_state.select_state.clear()
-			w.view_state.select_state.set(id, !is_open)
+			mut ss := state_map[string, bool](mut w, ns_select, cap_moderate)
+			ss.clear()
+			ss.set(id, !is_open)
 			w.set_id_focus(id_focus)
 			e.is_handled = true
 		}
@@ -106,7 +112,8 @@ pub fn (window &Window) overflow_panel(cfg OverflowPanelCfg) View {
 					if user_action != unsafe { nil } {
 						user_action(mi, mut e, mut w)
 					}
-					w.view_state.select_state.delete(id)
+					mut ss := state_map[string, bool](mut w, ns_select, cap_moderate)
+					ss.delete(id)
 				}
 			}
 		}

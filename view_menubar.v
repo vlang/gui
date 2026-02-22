@@ -88,11 +88,12 @@ pub fn (mut window Window) menubar(cfg MenubarCfg) View {
 
 	// If the menubar already has focus but no selected menu yet,
 	// choose the first selectable menu item.
-	current_menu := window.view_state.menu_state.get(c.id_focus) or { '' }
+	mut ms := state_map[u32, string](mut window, ns_menu, cap_few)
+	current_menu := ms.get(c.id_focus) or { '' }
 	if window.is_focus(c.id_focus) && current_menu == '' {
 		for item in c.items {
 			if is_selectable_menu_id(item.id) {
-				window.view_state.menu_state.set(c.id_focus, item.id)
+				ms.set(c.id_focus, item.id)
 				break
 			}
 		}
@@ -137,7 +138,8 @@ fn make_menubar_on_keydown(cfg MenubarCfg) fn (&Layout, mut Event, mut Window) {
 fn make_menubar_amend_layout(id_focus u32) fn (mut Layout, mut Window) {
 	return fn [id_focus] (mut layout Layout, mut w Window) {
 		if !w.is_focus(id_focus) {
-			w.view_state.menu_state.set(id_focus, '')
+			mut ms := state_map[u32, string](mut w, ns_menu, cap_few)
+			ms.set(id_focus, '')
 		}
 	}
 }
@@ -158,12 +160,13 @@ struct MenuIdNode {
 // space/enter activate the focused menu-item (item action first, then menubar action)
 // left/right/up/down use the precomputed menu_mapper graph to relocate focus
 fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
-	menu_id := w.view_state.menu_state.get(cfg.id_focus) or { '' }
+	mut ms := state_map[u32, string](mut w, ns_menu, cap_few)
+	menu_id := ms.get(cfg.id_focus) or { '' }
 
 	if e.key_code == .escape {
 		// Close menus and drop focus.
 		w.set_id_focus(0)
-		w.view_state.menu_state.set(cfg.id_focus, '')
+		ms.set(cfg.id_focus, '')
 		e.is_handled = true
 		return
 	}
@@ -188,7 +191,7 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 		}
 		// Close after activation.
 		w.set_id_focus(0)
-		w.view_state.menu_state.set(cfg.id_focus, '')
+		ms.set(cfg.id_focus, '')
 		e.is_handled = true
 		return
 	}
@@ -206,7 +209,7 @@ fn (cfg &MenubarCfg) on_keydown(_ &Layout, mut e Event, mut w Window) {
 	// Apply navigation if valid and selectable.
 	if menu_id != new_menu_id && is_selectable_menu_id(new_menu_id) {
 		w.view_state.menu_key_nav = true
-		w.view_state.menu_state.set(cfg.id_focus, new_menu_id)
+		ms.set(cfg.id_focus, new_menu_id)
 		e.is_handled = true
 	}
 }

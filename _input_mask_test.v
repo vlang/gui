@@ -95,7 +95,8 @@ fn test_input_mask_custom_token_transform() {
 fn test_input_cfg_masked_insert_delete() {
 	id_focus := u32(1001)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		cursor_pos: 0
 	})
 

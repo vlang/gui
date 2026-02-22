@@ -145,7 +145,7 @@ fn test_form_submit_request_processed_once() {
 
 fn test_form_state_set_eviction_aborts_pending_requests() {
 	mut w := Window{}
-	w.view_state.form_state.max_size = 1
+	_ = state_map[string, FormRuntimeState](mut w, ns_form, 1)
 	mut controller := new_grid_abort_controller()
 	form_state_set(mut w, 'first', FormRuntimeState{
 		fields: {

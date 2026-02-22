@@ -55,8 +55,9 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 			image_path = cache_path
 		} else {
 			// Check if already downloading
-			if !window.view_state.active_downloads.contains(iv.src) {
-				window.view_state.active_downloads.set(iv.src, time.now().unix())
+			mut downloads := state_map[string, i64](mut window, ns_active_downloads, cap_moderate)
+			if !downloads.contains(iv.src) {
+				downloads.set(iv.src, time.now().unix())
 				spawn download_image(iv.src, base_path, mut window)
 			}
 			mut layout := Layout{
@@ -194,14 +195,16 @@ fn download_image(url string, base_path string, mut w Window) {
 		if fetch_res.is_err {
 			log.error(fetch_res.err_msg)
 			w.queue_command(fn [url] (mut w Window) {
-				w.view_state.active_downloads.delete(url)
+				mut dl := state_map[string, i64](mut w, ns_active_downloads, cap_moderate)
+				dl.delete(url)
 			})
 			return
 		}
 
 		// Remove from active downloads (thread-safe)
 		w.queue_command(fn [url] (mut w Window) {
-			w.view_state.active_downloads.delete(url)
+			mut dl := state_map[string, i64](mut w, ns_active_downloads, cap_moderate)
+			dl.delete(url)
 			w.update_window()
 		})
 	}()

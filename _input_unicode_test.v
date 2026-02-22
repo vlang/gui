@@ -98,7 +98,8 @@ fn test_cursor_end_of_line_no_layout_4byte() {
 fn test_insert_emoji_at_start() {
 	id_focus := u32(10001)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 0 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 0 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     'abc'
@@ -113,7 +114,8 @@ fn test_insert_emoji_at_start() {
 fn test_insert_emoji_at_middle() {
 	id_focus := u32(10002)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 1 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 1 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     'ab'
@@ -128,7 +130,8 @@ fn test_insert_emoji_at_middle() {
 fn test_insert_cjk_string() {
 	id_focus := u32(10003)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 0 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 0 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     ''
@@ -138,7 +141,7 @@ fn test_insert_cjk_string() {
 		return
 	}
 	assert got == '日本語'
-	state := w.view_state.input_state.get(id_focus) or { InputState{} }
+	state := imap.get(id_focus) or { InputState{} }
 	assert state.cursor_pos == 3
 }
 
@@ -146,7 +149,8 @@ fn test_insert_combining_char() {
 	// Insert combining acute after 'e'
 	id_focus := u32(10004)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 1 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 1 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     'e'
@@ -161,8 +165,9 @@ fn test_insert_combining_char() {
 fn test_insert_ascii_into_multibyte() {
 	id_focus := u32(10005)
 	mut w := Window{}
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
 	// Cursor at rune pos 1 in '日本' (between 日 and 本)
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 1 })
+	imap.set(id_focus, InputState{ cursor_pos: 1 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     '日本'
@@ -181,8 +186,9 @@ fn test_insert_ascii_into_multibyte() {
 fn test_backspace_after_emoji() {
 	id_focus := u32(10010)
 	mut w := Window{}
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
 	// Cursor after the emoji (rune pos 1)
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 1 })
+	imap.set(id_focus, InputState{ cursor_pos: 1 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     '😀x'
@@ -197,7 +203,8 @@ fn test_backspace_after_emoji() {
 fn test_backspace_after_3byte() {
 	id_focus := u32(10011)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 1 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 1 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     '€x'
@@ -212,8 +219,9 @@ fn test_backspace_after_3byte() {
 fn test_forward_delete_on_emoji() {
 	id_focus := u32(10012)
 	mut w := Window{}
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
 	// Cursor before the emoji (rune pos 0), forward delete
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 0 })
+	imap.set(id_focus, InputState{ cursor_pos: 0 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     '😀x'
@@ -228,9 +236,10 @@ fn test_forward_delete_on_emoji() {
 fn test_backspace_combining_char() {
 	id_focus := u32(10013)
 	mut w := Window{}
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
 	// 'e' + combining acute = 2 runes; cursor at 2, backspace removes
 	// the combining char
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 2 })
+	imap.set(id_focus, InputState{ cursor_pos: 2 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     'e\u0301'
@@ -249,7 +258,8 @@ fn test_backspace_combining_char() {
 fn test_copy_single_multibyte_char() {
 	id_focus := u32(10020)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		select_beg: 0
 		select_end: 1
 	})
@@ -267,8 +277,9 @@ fn test_copy_single_multibyte_char() {
 fn test_copy_span_across_multibyte() {
 	id_focus := u32(10021)
 	mut w := Window{}
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
 	// Select runes 1..3 in 'a€bé' → '€b'
-	w.view_state.input_state.set(id_focus, InputState{
+	imap.set(id_focus, InputState{
 		select_beg: 1
 		select_end: 3
 	})
@@ -286,7 +297,8 @@ fn test_copy_span_across_multibyte() {
 fn test_copy_emoji() {
 	id_focus := u32(10022)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		select_beg: 1
 		select_end: 2
 	})
@@ -308,8 +320,9 @@ fn test_copy_emoji() {
 fn test_replace_multibyte_selection_with_ascii() {
 	id_focus := u32(10030)
 	mut w := Window{}
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
 	// Select the emoji at rune 1..2 in 'a😀b'
-	w.view_state.input_state.set(id_focus, InputState{
+	imap.set(id_focus, InputState{
 		cursor_pos: 1
 		select_beg: 1
 		select_end: 2
@@ -328,8 +341,9 @@ fn test_replace_multibyte_selection_with_ascii() {
 fn test_replace_ascii_selection_with_emoji() {
 	id_focus := u32(10031)
 	mut w := Window{}
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
 	// Select 'bc' (runes 1..3) in 'abcd'
-	w.view_state.input_state.set(id_focus, InputState{
+	imap.set(id_focus, InputState{
 		cursor_pos: 1
 		select_beg: 1
 		select_end: 3
@@ -372,7 +386,8 @@ fn test_cursor_start_of_word_cjk_mixed() {
 fn test_ime_commit_cjk_into_empty() {
 	id_focus := u32(10040)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 0 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 0 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     ''
@@ -382,14 +397,15 @@ fn test_ime_commit_cjk_into_empty() {
 		return
 	}
 	assert got == '中文'
-	state := w.view_state.input_state.get(id_focus) or { InputState{} }
+	state := imap.get(id_focus) or { InputState{} }
 	assert state.cursor_pos == 2
 }
 
 fn test_ime_commit_cjk_at_cursor() {
 	id_focus := u32(10041)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 2 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 2 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     'abcd'
@@ -399,14 +415,15 @@ fn test_ime_commit_cjk_at_cursor() {
 		return
 	}
 	assert got == 'ab漢字cd'
-	state := w.view_state.input_state.get(id_focus) or { InputState{} }
+	state := imap.get(id_focus) or { InputState{} }
 	assert state.cursor_pos == 4
 }
 
 fn test_ime_commit_replacing_selection() {
 	id_focus := u32(10042)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		cursor_pos: 1
 		select_beg: 1
 		select_end: 3
@@ -420,7 +437,7 @@ fn test_ime_commit_replacing_selection() {
 		return
 	}
 	assert got == 'a日d'
-	state := w.view_state.input_state.get(id_focus) or { InputState{} }
+	state := imap.get(id_focus) or { InputState{} }
 	assert state.cursor_pos == 2
 }
 
@@ -441,7 +458,8 @@ fn test_cursor_end_single_4byte() {
 fn test_insert_empty_string() {
 	id_focus := u32(10050)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 1 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 1 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     '日本'
@@ -456,7 +474,8 @@ fn test_insert_empty_string() {
 fn test_delete_empty_text() {
 	id_focus := u32(10051)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 0 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 0 })
 	cfg := InputCfg{
 		id_focus: id_focus
 		text:     ''
@@ -471,7 +490,8 @@ fn test_delete_empty_text() {
 fn test_mixed_script_sequential_insert() {
 	id_focus := u32(10052)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{ cursor_pos: 0 })
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{ cursor_pos: 0 })
 	cfg1 := InputCfg{
 		id_focus: id_focus
 		text:     ''

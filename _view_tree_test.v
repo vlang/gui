@@ -24,3 +24,15 @@ fn test_tree_compilation() {
 	v := w.tree(cfg)
 	assert v.content.len > 0
 }
+
+fn test_tree_focus_cache_uses_tree_cap() {
+	mut w := Window{}
+	mut tf := state_map[string, string](mut w, ns_tree_focus, cap_tree_focus)
+	assert tf.max_size == cap_tree_focus
+
+	for i in 0 .. cap_tree_focus + 5 {
+		tf.set('tree_${i}', 'node_${i}')
+	}
+	assert tf.len() == cap_tree_focus
+	assert tf.get('tree_0') == none
+}

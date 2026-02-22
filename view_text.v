@@ -44,7 +44,9 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	window.stats.increment_layouts()
 	window.stats.increment_text_views()
 
-	input_state := window.view_state.input_state.get(tv.id_focus) or { InputState{} }
+	input_state := state_map[u32, InputState](mut window, ns_input, cap_many).get(tv.id_focus) or {
+		InputState{}
+	}
 	mut events := unsafe { &EventHandlers(nil) }
 	if tv.on_char != unsafe { nil } || tv.on_key_down != unsafe { nil }
 		|| tv.on_click != unsafe { nil } || tv.on_mouse_scroll_hook != unsafe { nil } {
@@ -173,7 +175,8 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 		id_focus := layout.shape.id_focus
 		placeholder_active := tv.placeholder_active
 		cursor_pos := tv.mouse_cursor_pos(layout.shape, e, mut w)
-		input_state := w.view_state.input_state.get(id_focus) or { InputState{} }
+		mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+		input_state := imap.get(id_focus) or { InputState{} }
 
 		is_double_click := !placeholder_active && input_state.last_click_frame > 0
 			&& e.frame_count - input_state.last_click_frame <= text_double_click_frames
@@ -198,7 +201,7 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 					e.is_handled = true
 				}
 			)
-			w.view_state.input_state.set(id_focus, InputState{
+			imap.set(id_focus, InputState{
 				...input_state
 				cursor_pos:       word_end
 				select_beg:       u32(word_beg)
@@ -229,7 +232,7 @@ fn (tv &TextView) on_click(layout &Layout, mut e Event, mut w Window) {
 			}
 		)
 		cursor_offset := offset_from_cursor_position(layout.shape, cursor_pos, mut w)
-		w.view_state.input_state.set(id_focus, InputState{
+		imap.set(id_focus, InputState{
 			...input_state
 			cursor_pos:       cursor_pos
 			select_beg:       0
@@ -259,9 +262,8 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		if window.text_system != unsafe { nil } && window.text_system.is_composing() {
 			return
 		}
-		mut input_state := window.view_state.input_state.get(layout.shape.id_focus) or {
-			InputState{}
-		}
+		mut imap := state_map[u32, InputState](mut window, ns_input, cap_many)
+		mut input_state := imap.get(layout.shape.id_focus) or { InputState{} }
 		mut pos := input_state.cursor_pos
 		mut offset := input_state.cursor_offset
 
@@ -360,7 +362,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		}
 
 		// Update input state with new cursor position and selection
-		window.view_state.input_state.set(layout.shape.id_focus, InputState{
+		imap.set(layout.shape.id_focus, InputState{
 			...input_state
 			cursor_pos:    pos
 			select_beg:    select_beg
@@ -429,7 +431,11 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 	if cfg.placeholder_active || cfg.is_password {
 		return none
 	}
-	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	// mut cast: view generation is single-threaded inside frame_fn.
+	mut w_mut := unsafe { &Window(w) }
+	input_state := state_map[u32, InputState](mut *w_mut, ns_input, cap_many).get(cfg.id_focus) or {
+		InputState{}
+	}
 
 	// Only copy if there is an active selection
 	if input_state.select_beg != input_state.select_end {
@@ -452,9 +458,10 @@ pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
 	if tv.placeholder_active {
 		return
 	}
-	input_state := w.view_state.input_state.get(tv.id_focus) or { InputState{} }
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	input_state := imap.get(tv.id_focus) or { InputState{} }
 	len := utf8_str_visible_length(tv.text)
-	w.view_state.input_state.set(tv.id_focus, InputState{
+	imap.set(tv.id_focus, InputState{
 		...input_state
 		cursor_pos:    len
 		select_beg:    0
@@ -467,8 +474,9 @@ pub fn (tv &TextView) select_all(shape &Shape, mut w Window) {
 // position to the beginning of the text. This collapses the selection range
 // to zero.
 pub fn (tv &TextView) unselect_all(mut w Window) {
-	input_state := w.view_state.input_state.get(tv.id_focus) or { InputState{} }
-	w.view_state.input_state.set(tv.id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	input_state := imap.get(tv.id_focus) or { InputState{} }
+	imap.set(tv.id_focus, InputState{
 		...input_state
 		select_beg: 0
 		select_end: 0

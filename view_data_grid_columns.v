@@ -317,7 +317,8 @@ fn data_grid_query_filter_value(query GridQueryState, col_id string) string {
 // [min_width, max_width]. Prunes stale entries for removed
 // columns. Writes back to cache only if changed.
 fn data_grid_column_widths(grid_id string, columns []GridColumnCfg, mut w Window) map[string]f32 {
-	cached_ptr := w.view_state.data_grid_col_widths.get(grid_id) or { &DataGridColWidths{} }
+	mut dg_cw := state_map[string, &DataGridColWidths](mut w, ns_dg_col_widths, cap_moderate)
+	cached_ptr := dg_cw.get(grid_id) or { &DataGridColWidths{} }
 	mut widths := cached_ptr.widths.clone()
 	mut changed := false
 	mut col_ids := map[string]bool{}
@@ -339,8 +340,8 @@ fn data_grid_column_widths(grid_id string, columns []GridColumnCfg, mut w Window
 			changed = true
 		}
 	}
-	if changed || !w.view_state.data_grid_col_widths.contains(grid_id) {
-		w.view_state.data_grid_col_widths.set(grid_id, &DataGridColWidths{
+	if changed || !dg_cw.contains(grid_id) {
+		dg_cw.set(grid_id, &DataGridColWidths{
 			widths: widths
 		})
 		return widths
@@ -359,13 +360,14 @@ fn data_grid_column_width_for(col GridColumnCfg, widths map[string]f32) f32 {
 }
 
 fn data_grid_set_column_width(grid_id string, col GridColumnCfg, width f32, mut w Window) {
-	mut widths := if cached := w.view_state.data_grid_col_widths.get(grid_id) {
+	mut dg_cw := state_map[string, &DataGridColWidths](mut w, ns_dg_col_widths, cap_moderate)
+	mut widths := if cached := dg_cw.get(grid_id) {
 		cached.widths.clone()
 	} else {
 		map[string]f32{}
 	}
 	widths[col.id] = data_grid_clamp_width(col, width)
-	w.view_state.data_grid_col_widths.set(grid_id, &DataGridColWidths{
+	dg_cw.set(grid_id, &DataGridColWidths{
 		widths: widths
 	})
 }

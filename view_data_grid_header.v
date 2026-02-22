@@ -305,7 +305,8 @@ fn data_grid_start_resize(grid_id string, columns []GridColumnCfg, rows []GridRo
 	if focus_id > 0 {
 		w.set_id_focus(focus_id)
 	}
-	mut runtime := w.view_state.data_grid_resize_state.get(grid_id) or { DataGridResizeState{} }
+	mut dg_rs := state_map[string, DataGridResizeState](mut w, ns_dg_resize, cap_moderate)
+	mut runtime := dg_rs.get(grid_id) or { DataGridResizeState{} }
 	if runtime.last_click_col_id == col.id && runtime.last_click_frame > 0
 		&& e.frame_count - runtime.last_click_frame <= data_grid_resize_double_click_frames {
 		fit_width := data_grid_auto_fit_width(rows, text_style_header, text_style, padding_cell,
@@ -314,7 +315,7 @@ fn data_grid_start_resize(grid_id string, columns []GridColumnCfg, rows []GridRo
 		runtime.active = false
 		runtime.last_click_frame = 0
 		runtime.last_click_col_id = ''
-		w.view_state.data_grid_resize_state.set(grid_id, runtime)
+		dg_rs.set(grid_id, runtime)
 		e.is_handled = true
 		return
 	}
@@ -325,7 +326,7 @@ fn data_grid_start_resize(grid_id string, columns []GridColumnCfg, rows []GridRo
 	runtime.start_width = data_grid_column_width(grid_id, columns, col, mut w)
 	runtime.last_click_frame = e.frame_count
 	runtime.last_click_col_id = col.id
-	w.view_state.data_grid_resize_state.set(grid_id, runtime)
+	dg_rs.set(grid_id, runtime)
 
 	w.mouse_lock(MouseLockCfg{
 		mouse_move: fn [grid_id, col] (_ &Layout, mut e Event, mut w Window) {
@@ -343,7 +344,9 @@ fn data_grid_start_resize(grid_id string, columns []GridColumnCfg, rows []GridRo
 }
 
 fn data_grid_resize_drag(grid_id string, col GridColumnCfg, mut e Event, mut w Window) {
-	mut runtime := w.view_state.data_grid_resize_state.get(grid_id) or { return }
+	mut runtime := state_map[string, DataGridResizeState](mut w, ns_dg_resize, cap_moderate).get(grid_id) or {
+		return
+	}
 	if !runtime.active || runtime.col_id != col.id {
 		return
 	}
@@ -355,9 +358,10 @@ fn data_grid_resize_drag(grid_id string, col GridColumnCfg, mut e Event, mut w W
 }
 
 fn data_grid_end_resize(grid_id string, mut w Window) {
-	mut runtime := w.view_state.data_grid_resize_state.get(grid_id) or { return }
+	mut dg_rs := state_map[string, DataGridResizeState](mut w, ns_dg_resize, cap_moderate)
+	mut runtime := dg_rs.get(grid_id) or { return }
 	runtime.active = false
-	w.view_state.data_grid_resize_state.set(grid_id, runtime)
+	dg_rs.set(grid_id, runtime)
 }
 
 fn data_grid_auto_fit_width(rows []GridRow, text_style_header TextStyle, text_style TextStyle, padding_cell Padding, col GridColumnCfg, mut w Window) f32 {
@@ -391,8 +395,8 @@ fn data_grid_header_indicator(query GridQueryState, col_id string) string {
 	return dir
 }
 
-fn data_grid_active_resize_col_id(grid_id string, window &Window) string {
-	if runtime := window.view_state.data_grid_resize_state.get(grid_id) {
+fn data_grid_active_resize_col_id(grid_id string, mut window Window) string {
+	if runtime := state_map[string, DataGridResizeState](mut window, ns_dg_resize, cap_moderate).get(grid_id) {
 		if runtime.active {
 			return runtime.col_id
 		}

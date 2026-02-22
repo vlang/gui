@@ -440,10 +440,11 @@ fn test_data_grid_apply_pending_local_jump_scroll_clears_missing_mapping() {
 			},
 		]
 	}
-	w.view_state.data_grid_pending_jump_row.set(cfg.id, 0)
+	mut dg_pj := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate)
+	dg_pj.set(cfg.id, 0)
 	data_grid_apply_pending_local_jump_scroll(cfg, 120, 20, 0, 11, map[int]int{}, mut
 		w)
-	pending := w.view_state.data_grid_pending_jump_row.get(cfg.id) or { -1 }
+	pending := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate).get(cfg.id) or { -1 }
 	assert pending == -1
 }
 
@@ -1304,7 +1305,8 @@ fn test_data_grid_cached_presentation_reuses_matching_signature() {
 	}
 
 	_ := data_grid_cached_presentation(cfg, cfg.columns, [0, 1], mut w)
-	cached := w.view_state.data_grid_presentation_cache.get(cfg.id) or {
+	cached := state_map[string, DataGridPresentationCache](mut w, ns_dg_presentation,
+		cap_moderate).get(cfg.id) or {
 		assert false
 		return
 	}
@@ -1321,7 +1323,9 @@ fn test_data_grid_cached_presentation_reuses_matching_signature() {
 			0: 0
 		}
 	}
-	w.view_state.data_grid_presentation_cache.set(cfg.id, seeded)
+	mut dg_pres := state_map[string, DataGridPresentationCache](mut w, ns_dg_presentation,
+		cap_moderate)
+	dg_pres.set(cfg.id, seeded)
 
 	reused := data_grid_cached_presentation(cfg, cfg.columns, [0, 1], mut w)
 	assert reused.rows.len == 1
@@ -1363,7 +1367,8 @@ fn test_data_grid_cached_presentation_invalidates_on_group_value_change() {
 	}
 
 	first := data_grid_cached_presentation(cfg, cfg.columns, []int{}, mut w)
-	first_cache := w.view_state.data_grid_presentation_cache.get(cfg.id) or {
+	first_cache := state_map[string, DataGridPresentationCache](mut w, ns_dg_presentation,
+		cap_moderate).get(cfg.id) or {
 		assert false
 		return
 	}
@@ -1393,7 +1398,8 @@ fn test_data_grid_cached_presentation_invalidates_on_group_value_change() {
 		]
 	}
 	second := data_grid_cached_presentation(cfg2, cfg2.columns, []int{}, mut w)
-	second_cache := w.view_state.data_grid_presentation_cache.get(cfg.id) or {
+	second_cache := state_map[string, DataGridPresentationCache](mut w, ns_dg_presentation,
+		cap_moderate).get(cfg.id) or {
 		assert false
 		return
 	}
@@ -1700,7 +1706,8 @@ fn test_data_grid_crud_add_row_scrolls_to_top() {
 	mut e := Event{}
 	grid_id := 'crud-add-scroll'
 	scroll_id := u32(77)
-	w.view_state.scroll_y.set(scroll_id, -180)
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	sy.set(scroll_id, -180)
 	selection_key := '${grid_id}:selected'
 	data_grid_crud_add_row(grid_id, [
 		GridColumnCfg{
@@ -1708,14 +1715,17 @@ fn test_data_grid_crud_add_row_scrolls_to_top() {
 			title: 'Name'
 		},
 	], fn [selection_key] (sel GridSelection, mut _ Event, mut w Window) {
-		w.view_state.data_grid_jump_input.set(selection_key, sel.active_row_id)
+		mut dg_ji := state_map[string, string](mut w, ns_dg_jump, cap_moderate)
+		dg_ji.set(selection_key, sel.active_row_id)
 	}, 0, scroll_id, 0, 0, unsafe { nil }, mut e, mut w)
-	state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
+		DataGridCrudState{}
+	}
 	draft_id := '__draft_${grid_id}_1'
 	assert state.working_rows.len == 1
 	assert state.working_rows[0].id == draft_id
-	assert (w.view_state.scroll_y.get(scroll_id) or { f32(1) }) == 0
-	assert (w.view_state.data_grid_jump_input.get(selection_key) or { '' }) == draft_id
+	assert (state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(scroll_id) or { f32(1) }) == 0
+	assert (state_map[string, string](mut w, ns_dg_jump, cap_moderate).get(selection_key) or { '' }) == draft_id
 	assert e.is_handled
 }
 
@@ -1724,7 +1734,8 @@ fn test_data_grid_crud_add_row_paged_requests_first_page() {
 	mut e := Event{}
 	grid_id := 'crud-add-paged'
 	scroll_id := u32(99)
-	w.view_state.scroll_y.set(scroll_id, -240)
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	sy.set(scroll_id, -240)
 	page_key := '${grid_id}:requested'
 	data_grid_crud_add_row(grid_id, [
 		GridColumnCfg{
@@ -1732,11 +1743,12 @@ fn test_data_grid_crud_add_row_paged_requests_first_page() {
 			title: 'Name'
 		},
 	], fn (_ GridSelection, mut _ Event, mut _ Window) {}, 0, scroll_id, 20, 2, fn [page_key] (page int, mut _ Event, mut w Window) {
-		w.view_state.data_grid_pending_jump_row.set(page_key, page)
+		mut dg_pj := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate)
+		dg_pj.set(page_key, page)
 	}, mut e, mut w)
-	assert (w.view_state.data_grid_pending_jump_row.get(page_key) or { -1 }) == 0
-	assert (w.view_state.data_grid_pending_jump_row.get(grid_id) or { -1 }) == 0
-	assert (w.view_state.scroll_y.get(scroll_id) or { f32(1) }) == 0
+	assert (state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate).get(page_key) or { -1 }) == 0
+	assert (state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate).get(grid_id) or { -1 }) == 0
+	assert (state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(scroll_id) or { f32(1) }) == 0
 	assert e.is_handled
 }
 
@@ -1745,7 +1757,8 @@ fn test_data_grid_crud_add_row_paged_first_page_no_jump_request() {
 	mut e := Event{}
 	grid_id := 'crud-add-page-zero'
 	scroll_id := u32(101)
-	w.view_state.scroll_y.set(scroll_id, -240)
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	sy.set(scroll_id, -240)
 	page_key := '${grid_id}:requested'
 	data_grid_crud_add_row(grid_id, [
 		GridColumnCfg{
@@ -1753,11 +1766,12 @@ fn test_data_grid_crud_add_row_paged_first_page_no_jump_request() {
 			title: 'Name'
 		},
 	], fn (_ GridSelection, mut _ Event, mut _ Window) {}, 0, scroll_id, 20, 0, fn [page_key] (page int, mut _ Event, mut w Window) {
-		w.view_state.data_grid_pending_jump_row.set(page_key, page)
+		mut dg_pj := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate)
+		dg_pj.set(page_key, page)
 	}, mut e, mut w)
-	assert (w.view_state.data_grid_pending_jump_row.get(page_key) or { -1 }) == -1
-	assert (w.view_state.data_grid_pending_jump_row.get(grid_id) or { -1 }) == -1
-	assert (w.view_state.scroll_y.get(scroll_id) or { f32(1) }) == 0
+	assert (state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate).get(page_key) or { -1 }) == -1
+	assert (state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate).get(grid_id) or { -1 }) == -1
+	assert (state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(scroll_id) or { f32(1) }) == 0
 	assert e.is_handled
 }
 
@@ -1779,6 +1793,48 @@ fn test_data_grid_selection_remove_ids() {
 	assert next.active_row_id == ''
 	assert next.selected_row_ids.len == 1
 	assert next.selected_row_ids['1']
+}
+
+fn test_data_grid_source_stats_empty_when_namespace_missing() {
+	w := Window{}
+	stats := w.data_grid_source_stats('missing-grid')
+	assert !stats.loading
+	assert stats.load_error == ''
+	assert stats.request_count == 0
+	assert stats.cancelled_count == 0
+	assert stats.stale_drop_count == 0
+	assert !stats.has_more
+	assert stats.received_count == 0
+	assert stats.row_count == none
+}
+
+fn test_data_grid_source_stats_reads_state_map() {
+	mut w := Window{}
+	mut dg_src := state_map[string, DataGridSourceState](mut w, ns_dg_source, cap_moderate)
+	dg_src.set('stats-grid', DataGridSourceState{
+		loading:          true
+		load_error:       'load failed'
+		request_count:    7
+		cancelled_count:  2
+		stale_drop_count: 3
+		has_more:         true
+		received_count:   19
+		row_count:        ?int(123)
+	})
+
+	stats := w.data_grid_source_stats('stats-grid')
+	assert stats.loading
+	assert stats.load_error == 'load failed'
+	assert stats.request_count == 7
+	assert stats.cancelled_count == 2
+	assert stats.stale_drop_count == 3
+	assert stats.has_more
+	assert stats.received_count == 19
+	if count := stats.row_count {
+		assert count == 123
+	} else {
+		assert false
+	}
 }
 
 fn zip_entry_text(path string, entry_name string) !string {

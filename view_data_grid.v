@@ -335,7 +335,9 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		resolved_cfg = next_cfg
 		crud_state = next_crud_state
 		if has_source {
-			if latest_state := window.view_state.data_grid_source_state.get(resolved_cfg.id) {
+			if latest_state := state_map[string, DataGridSourceState](mut window, ns_dg_source,
+				cap_moderate).get(resolved_cfg.id)
+			{
 				source_state = latest_state
 			}
 		}
@@ -347,9 +349,11 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		source_caps)
 	focus_id := data_grid_focus_id(resolved_cfg)
 	scroll_id := data_grid_scroll_id(resolved_cfg)
-	hovered_col_id := window.view_state.data_grid_header_hover_col.get(resolved_cfg.id) or { '' }
-	resizing_col_id := data_grid_active_resize_col_id(resolved_cfg.id, window)
-	chooser_open := window.view_state.data_grid_column_chooser_open.get(resolved_cfg.id) or {
+	hovered_col_id := state_map[string, string](mut window, ns_dg_header_hover, cap_moderate).get(resolved_cfg.id) or {
+		''
+	}
+	resizing_col_id := data_grid_active_resize_col_id(resolved_cfg.id, mut window)
+	chooser_open := state_map[string, bool](mut window, ns_dg_chooser_open, cap_moderate).get(resolved_cfg.id) or {
 		false
 	}
 
@@ -381,8 +385,9 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		}
 	}
 	virtualize := grid_height > 0 && resolved_cfg.rows.len > 0
+	mut sy := state_map[u32, f32](mut window, ns_scroll_y, cap_scroll)
 	scroll_y := if virtualize {
-		-(window.view_state.scroll_y.get(scroll_id) or { f32(0) })
+		-(sy.get(scroll_id) or { f32(0) })
 	} else {
 		f32(0)
 	}
@@ -401,7 +406,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 
 	// Build row ID set for O(1) membership checks and
 	// clear stale editing state in the same pass.
-	mut editing_row_id := data_grid_editing_row_id(resolved_cfg.id, window)
+	mut editing_row_id := data_grid_editing_row_id(resolved_cfg.id, mut window)
 	mut row_id_set := map[string]bool{}
 	mut editing_row_found := editing_row_id.len == 0
 	for ri, r in resolved_cfg.rows {
@@ -428,7 +433,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	frozen_top_views, frozen_top_display_rows := data_grid_frozen_top_views(resolved_cfg,
 		frozen_top_indices, columns, column_widths, row_height, focus_id, editing_row_id,
 		row_delete_enabled, mut window)
-	scroll_x := window.view_state.scroll_x.get(scroll_id) or { f32(0) }
+	mut sxx := state_map[u32, f32](mut window, ns_scroll_x, cap_scroll)
+	scroll_x := sxx.get(scroll_id) or { f32(0) }
 	last_row_idx := presentation.rows.len - 1
 
 	// Virtual windowing: only rows in [first_visible,
@@ -554,13 +560,17 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	content << scroll_body
 	if pager_enabled {
 		total_rows := if count := resolved_cfg.row_count { count } else { resolved_cfg.rows.len }
-		jump_text := window.view_state.data_grid_jump_input.get(resolved_cfg.id) or { '' }
+		jump_text := state_map[string, string](mut window, ns_dg_jump, cap_moderate).get(resolved_cfg.id) or {
+			''
+		}
 		content << data_grid_pager_row(resolved_cfg, focus_id, page_index, page_count,
 			page_start, page_end, total_rows, grid_height, row_height, static_top, scroll_id,
 			presentation.data_to_display, jump_text)
 	}
 	if source_pager_enabled {
-		jump_text := window.view_state.data_grid_jump_input.get(resolved_cfg.id) or { '' }
+		jump_text := state_map[string, string](mut window, ns_dg_jump, cap_moderate).get(resolved_cfg.id) or {
+			''
+		}
 		content << data_grid_source_pager_row(resolved_cfg, focus_id, source_state, source_caps,
 			jump_text)
 	}
@@ -605,7 +615,9 @@ fn data_grid_cached_presentation(cfg DataGridCfg, columns []GridColumnCfg, row_i
 	value_cols := data_grid_presentation_value_cols(group_cols, cfg.aggregates)
 	signature := data_grid_presentation_signature(cfg, columns, row_indices, group_cols,
 		value_cols)
-	if cached := window.view_state.data_grid_presentation_cache.get(cfg.id) {
+	mut dg_pc := state_map[string, DataGridPresentationCache](mut window, ns_dg_presentation,
+		cap_moderate)
+	if cached := dg_pc.get(cfg.id) {
 		if cached.signature == signature {
 			return DataGridPresentation{
 				rows:            cached.rows
@@ -622,7 +634,7 @@ fn data_grid_cached_presentation(cfg DataGridCfg, columns []GridColumnCfg, row_i
 	}
 	presentation := data_grid_presentation_rows_with_group_ranges(cfg, columns, visible_indices,
 		group_cols, group_ranges)
-	window.view_state.data_grid_presentation_cache.set(cfg.id, DataGridPresentationCache{
+	dg_pc.set(cfg.id, DataGridPresentationCache{
 		signature:       signature
 		rows:            presentation.rows
 		data_to_display: presentation.data_to_display

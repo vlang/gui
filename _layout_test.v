@@ -264,7 +264,7 @@ fn test_layout_positions_center() {
 	layout_parents(mut root, unsafe { nil })
 
 	// Run positioning
-	layout_positions(mut root, 0, 0, &mock_window)
+	layout_positions(mut root, 0, 0, mut mock_window)
 
 	// Root Position (Should be 0, 0 as offsets are 0)
 	assert f32_are_close(root.shape.x, 0.0)
@@ -579,7 +579,7 @@ fn test_layout_positions_rtl_row() {
 
 	mut mock_window := Window{}
 	layout_parents(mut root, unsafe { nil })
-	layout_positions(mut root, 0, 0, &mock_window)
+	layout_positions(mut root, 0, 0, mut mock_window)
 
 	// RTL: first child at right edge minus padding
 	// x starts at 0 + 200 - 10 (padding_right) = 190
@@ -618,7 +618,7 @@ fn test_layout_positions_rtl_start_align() {
 
 	mut mock_window := Window{}
 	layout_parents(mut root, unsafe { nil })
-	layout_positions(mut root, 0, 0, &mock_window)
+	layout_positions(mut root, 0, 0, mut mock_window)
 
 	// .start in RTL resolves to .right → child pushed to right edge
 	// x_align = 200 - 40 - 0 (padding) = 160
@@ -673,7 +673,7 @@ fn test_layout_positions_rtl_override_ltr() {
 
 	mut mock_window := Window{}
 	layout_parents(mut root, unsafe { nil })
-	layout_positions(mut root, 0, 0, &mock_window)
+	layout_positions(mut root, 0, 0, mut mock_window)
 
 	// Despite global RTL, container is LTR
 	// x starts at 0 + 10 (padding_left) = 10
@@ -717,7 +717,7 @@ fn test_layout_positions_rtl_padding_swap() {
 
 	mut mock_window := Window{}
 	layout_parents(mut root, unsafe { nil })
-	layout_positions(mut root, 0, 0, &mock_window)
+	layout_positions(mut root, 0, 0, mut mock_window)
 
 	// RTL: start x = 0 + 200 - padding.left(20) = 180
 	// Child 0: x = 180 - 30 = 150
@@ -760,7 +760,7 @@ fn test_layout_positions_rtl_column_padding() {
 
 	mut mock_window := Window{}
 	layout_parents(mut root, unsafe { nil })
-	layout_positions(mut root, 0, 0, &mock_window)
+	layout_positions(mut root, 0, 0, mut mock_window)
 
 	// RTL column: x = 0 + padding.right(5) = 5
 	assert f32_are_close(root.children[0].shape.x, 5.0)
@@ -862,9 +862,9 @@ fn test_layout_positions_rtl_column_symmetric() {
 
 	mut mock_window := Window{}
 	layout_parents(mut rtl_root, unsafe { nil })
-	layout_positions(mut rtl_root, 0, 0, &mock_window)
+	layout_positions(mut rtl_root, 0, 0, mut mock_window)
 	layout_parents(mut ltr_root, unsafe { nil })
-	layout_positions(mut ltr_root, 0, 0, &mock_window)
+	layout_positions(mut ltr_root, 0, 0, mut mock_window)
 
 	// Symmetric padding + center align: RTL and LTR produce same x
 	assert f32_are_close(rtl_root.children[0].shape.x, ltr_root.children[0].shape.x)

@@ -5,7 +5,8 @@ fn test_input_insert_forces_cursor_visible() {
 	mut w := Window{}
 	w.view_state.input_cursor_on = false
 	w.view_state.cursor_on_sticky = false
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		cursor_pos: 0
 	})
 	cfg := InputCfg{
@@ -26,7 +27,8 @@ fn test_input_delete_forces_cursor_visible() {
 	mut w := Window{}
 	w.view_state.input_cursor_on = false
 	w.view_state.cursor_on_sticky = false
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		cursor_pos: 2
 	})
 	cfg := InputCfg{

@@ -476,14 +476,15 @@ fn data_grid_track_row_edit_click(grid_id string, edit_enabled bool, editor_focu
 	if first_col_idx < 0 {
 		return
 	}
-	mut state := w.view_state.data_grid_edit_state.get(grid_id) or { DataGridEditState{} }
+	mut dg_es := state_map[string, DataGridEditState](mut w, ns_dg_edit, cap_moderate)
+	mut state := dg_es.get(grid_id) or { DataGridEditState{} }
 	is_double_click := state.last_click_row_id == row_id && state.last_click_frame > 0
 		&& e.frame_count - state.last_click_frame <= data_grid_edit_double_click_frames
 	if is_double_click {
 		state.editing_row_id = row_id
 		state.last_click_row_id = ''
 		state.last_click_frame = 0
-		w.view_state.data_grid_edit_state.set(grid_id, state)
+		dg_es.set(grid_id, state)
 		editor_focus_id := data_grid_editor_focus_id_from_base(editor_focus_base, col_count,
 			first_col_idx)
 		if editor_focus_id > 0 {
@@ -498,7 +499,7 @@ fn data_grid_track_row_edit_click(grid_id string, edit_enabled bool, editor_focu
 	}
 	state.last_click_row_id = row_id
 	state.last_click_frame = e.frame_count
-	w.view_state.data_grid_edit_state.set(grid_id, state)
+	dg_es.set(grid_id, state)
 }
 
 fn data_grid_has_keyboard_modifiers(e &Event) bool {
@@ -589,23 +590,25 @@ fn data_grid_editor_focus_id_from_base(base u32, col_count int, col_idx int) u32
 	return base + u32(cell_offset)
 }
 
-fn data_grid_editing_row_id(grid_id string, w &Window) string {
-	if state := w.view_state.data_grid_edit_state.get(grid_id) {
+fn data_grid_editing_row_id(grid_id string, mut w Window) string {
+	if state := state_map[string, DataGridEditState](mut w, ns_dg_edit, cap_moderate).get(grid_id) {
 		return state.editing_row_id
 	}
 	return ''
 }
 
 fn data_grid_set_editing_row(grid_id string, row_id string, mut w Window) {
-	mut state := w.view_state.data_grid_edit_state.get(grid_id) or { DataGridEditState{} }
+	mut dg_es := state_map[string, DataGridEditState](mut w, ns_dg_edit, cap_moderate)
+	mut state := dg_es.get(grid_id) or { DataGridEditState{} }
 	state.editing_row_id = row_id
-	w.view_state.data_grid_edit_state.set(grid_id, state)
+	dg_es.set(grid_id, state)
 }
 
 fn data_grid_clear_editing_row(grid_id string, mut w Window) {
-	mut state := w.view_state.data_grid_edit_state.get(grid_id) or { DataGridEditState{} }
+	mut dg_es := state_map[string, DataGridEditState](mut w, ns_dg_edit, cap_moderate)
+	mut state := dg_es.get(grid_id) or { DataGridEditState{} }
 	state.editing_row_id = ''
-	w.view_state.data_grid_edit_state.set(grid_id, state)
+	dg_es.set(grid_id, state)
 }
 
 fn data_grid_has_row_id(rows []GridRow, row_id string) bool {

@@ -162,12 +162,14 @@ fn ime_get_cursor_index(data voidptr) int {
 	if data == unsafe { nil } {
 		return 0
 	}
-	w := unsafe { &Window(data) }
+	mut w := unsafe { &Window(data) }
 	id_focus := w.view_state.id_focus
 	if id_focus == 0 {
 		return 0
 	}
-	input_state := w.view_state.input_state.get(id_focus) or { InputState{} }
+	input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(id_focus) or {
+		InputState{}
+	}
 	shape := ime_focused_text_shape(w) or { return 0 }
 	return rune_to_byte_index(shape.tc.text, input_state.cursor_pos)
 }

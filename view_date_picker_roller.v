@@ -10,14 +10,6 @@ pub enum DatePickerRollerDisplayMode as u8 {
 	year_only      // YYYY
 }
 
-// DatePickerRollerState persists scroll animation offsets across frames.
-pub struct DatePickerRollerState {
-pub mut:
-	scroll_offset_day   f32
-	scroll_offset_month f32
-	scroll_offset_year  f32
-}
-
 // DatePickerRollerCfg configures a [date_picker_roller](#date_picker_roller)
 @[minify]
 pub struct DatePickerRollerCfg {

@@ -224,13 +224,14 @@ fn tree_on_keydown(cfg_id string, on_select fn (string, mut Window), visible_ids
 	if visible_ids.len == 0 {
 		return
 	}
-	focused := w.view_state.tree_focus.get(cfg_id) or { '' }
+	mut tf := state_map[string, string](mut w, ns_tree_focus, cap_tree_focus)
+	focused := tf.get(cfg_id) or { '' }
 	cur_idx := visible_ids.index(focused)
 
 	match e.key_code {
 		.up {
 			next := if cur_idx > 0 { cur_idx - 1 } else { 0 }
-			w.view_state.tree_focus.set(cfg_id, visible_ids[next])
+			tf.set(cfg_id, visible_ids[next])
 			w.update_window()
 			e.is_handled = true
 		}
@@ -240,7 +241,7 @@ fn tree_on_keydown(cfg_id string, on_select fn (string, mut Window), visible_ids
 			} else {
 				visible_ids.len - 1
 			}
-			w.view_state.tree_focus.set(cfg_id, visible_ids[next])
+			tf.set(cfg_id, visible_ids[next])
 			w.update_window()
 			e.is_handled = true
 		}
@@ -279,12 +280,12 @@ fn tree_on_keydown(cfg_id string, on_select fn (string, mut Window), visible_ids
 			e.is_handled = true
 		}
 		.home {
-			w.view_state.tree_focus.set(cfg_id, visible_ids[0])
+			tf.set(cfg_id, visible_ids[0])
 			w.update_window()
 			e.is_handled = true
 		}
 		.end {
-			w.view_state.tree_focus.set(cfg_id, visible_ids.last())
+			tf.set(cfg_id, visible_ids.last())
 			w.update_window()
 			e.is_handled = true
 		}

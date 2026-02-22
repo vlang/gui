@@ -216,8 +216,9 @@ fn data_grid_make_column_chooser_on_click(on_hidden_columns_change fn (hidden ma
 }
 
 fn data_grid_toggle_column_chooser_open(grid_id string, mut w Window) {
-	is_open := w.view_state.data_grid_column_chooser_open.get(grid_id) or { false }
-	w.view_state.data_grid_column_chooser_open.set(grid_id, !is_open)
+	mut dg_co := state_map[string, bool](mut w, ns_dg_chooser_open, cap_moderate)
+	is_open := dg_co.get(grid_id) or { false }
+	dg_co.set(grid_id, !is_open)
 }
 
 fn data_grid_column_chooser_height(cfg DataGridCfg, is_open bool) f32 {
@@ -335,7 +336,8 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 		text_style:      cfg.text_style_filter
 		on_text_changed: fn [jump_ctx] (_ &Layout, text string, mut w Window) {
 			digits := data_grid_jump_digits(text)
-			w.view_state.data_grid_jump_input.set(jump_ctx.grid_id, digits)
+			mut dg_ji := state_map[string, string](mut w, ns_dg_jump, cap_moderate)
+			dg_ji.set(jump_ctx.grid_id, digits)
 			mut e := Event{}
 			data_grid_submit_local_jump(jump_ctx, mut e, mut w)
 		}
@@ -393,11 +395,12 @@ fn make_data_grid_on_mouse_move(grid_id string) fn (&Layout, mut Event, mut Wind
 		mouse_x := layout.shape.x + e.mouse_x
 		mouse_y := layout.shape.y + e.mouse_y
 		col_id := data_grid_header_col_under_cursor(layout, grid_id, mouse_x, mouse_y)
+		mut dg_hh := state_map[string, string](mut w, ns_dg_header_hover, cap_moderate)
 		if col_id.len == 0 {
-			w.view_state.data_grid_header_hover_col.delete(grid_id)
+			dg_hh.delete(grid_id)
 			return
 		}
-		w.view_state.data_grid_header_hover_col.set(grid_id, col_id)
+		dg_hh.set(grid_id, col_id)
 	}
 }
 
@@ -637,7 +640,7 @@ fn make_data_grid_on_keydown(cfg DataGridCfg, columns []GridColumnCfg, row_heigh
 
 fn data_grid_on_keydown(kd DataGridKeydownContext, mut e Event, mut w Window) {
 	if e.modifiers == .none && e.key_code == .escape {
-		if data_grid_editing_row_id(kd.grid_id, w).len > 0 {
+		if data_grid_editing_row_id(kd.grid_id, mut w).len > 0 {
 			data_grid_clear_editing_row(kd.grid_id, mut w)
 			e.is_handled = true
 			return
@@ -712,7 +715,7 @@ fn data_grid_on_keydown(kd DataGridKeydownContext, mut e Event, mut w Window) {
 	}
 
 	if e.key_code == .enter {
-		if data_grid_editing_row_id(kd.grid_id, w).len > 0 {
+		if data_grid_editing_row_id(kd.grid_id, mut w).len > 0 {
 			data_grid_clear_editing_row(kd.grid_id, mut w)
 			e.is_handled = true
 			return
@@ -826,7 +829,8 @@ fn data_grid_scroll_row_into_view_ex(viewport_h f32, row_idx int, row_height f32
 	if viewport_h <= 0 || row_height <= 0 {
 		return
 	}
-	current := -(w.view_state.scroll_y.get(scroll_id) or { f32(0) })
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	current := -(sy.get(scroll_id) or { f32(0) })
 	row_top := static_top + f32(row_idx) * row_height
 	row_bottom := row_top + row_height
 	mut next := current
@@ -1001,9 +1005,10 @@ fn data_grid_submit_local_jump(ctx DataGridJumpContext, mut e Event, mut w Windo
 		ctx.page_size, ctx.total_rows) {
 		return
 	}
-	jump_text := w.view_state.data_grid_jump_input.get(ctx.grid_id) or { '' }
+	mut dg_ji := state_map[string, string](mut w, ns_dg_jump, cap_moderate)
+	jump_text := dg_ji.get(ctx.grid_id) or { '' }
 	target_idx := data_grid_parse_jump_target(jump_text, ctx.total_rows) or { return }
-	w.view_state.data_grid_jump_input.set(ctx.grid_id, '${target_idx + 1}')
+	dg_ji.set(ctx.grid_id, '${target_idx + 1}')
 	data_grid_jump_to_local_row(ctx, target_idx, mut e, mut w)
 	if ctx.focus_id > 0 {
 		w.set_id_focus(ctx.focus_id)
@@ -1038,12 +1043,14 @@ fn data_grid_jump_to_local_row(ctx DataGridJumpContext, target_idx int, mut e Ev
 		}
 		target_page := target_idx / ctx.page_size
 		if target_page != ctx.page_index {
-			w.view_state.data_grid_pending_jump_row.set(ctx.grid_id, target_idx)
+			mut dg_pj := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate)
+			dg_pj.set(ctx.grid_id, target_idx)
 			ctx.on_page_change(target_page, mut e, mut w)
 			return
 		}
 	}
-	w.view_state.data_grid_pending_jump_row.delete(ctx.grid_id)
+	mut dg_pj := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate)
+	dg_pj.delete(ctx.grid_id)
 	display_idx := ctx.data_to_display[target_idx] or { -1 }
 	if display_idx < 0 {
 		return
@@ -1053,22 +1060,23 @@ fn data_grid_jump_to_local_row(ctx DataGridJumpContext, target_idx int, mut e Ev
 }
 
 fn data_grid_apply_pending_local_jump_scroll(cfg DataGridCfg, viewport_h f32, row_height f32, static_top f32, scroll_id u32, data_to_display map[int]int, mut w Window) {
-	target_idx := w.view_state.data_grid_pending_jump_row.get(cfg.id) or { return }
+	mut dg_pj := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate)
+	target_idx := dg_pj.get(cfg.id) or { return }
 	if target_idx < 0 || target_idx >= cfg.rows.len {
-		w.view_state.data_grid_pending_jump_row.delete(cfg.id)
+		dg_pj.delete(cfg.id)
 		return
 	}
 	display_idx := data_to_display[target_idx] or {
-		w.view_state.data_grid_pending_jump_row.delete(cfg.id)
+		dg_pj.delete(cfg.id)
 		return
 	}
 	if display_idx < 0 {
-		w.view_state.data_grid_pending_jump_row.delete(cfg.id)
+		dg_pj.delete(cfg.id)
 		return
 	}
 	data_grid_scroll_row_into_view_ex(viewport_h, display_idx, row_height, static_top,
 		scroll_id, mut w)
-	w.view_state.data_grid_pending_jump_row.delete(cfg.id)
+	dg_pj.delete(cfg.id)
 }
 
 fn data_grid_anchor_row_id(cfg DataGridCfg, mut w Window, fallback string) string {
@@ -1079,7 +1087,7 @@ fn data_grid_anchor_row_id_ex(selection GridSelection, grid_id string, rows []Gr
 	if selection.anchor_row_id.len > 0 {
 		return selection.anchor_row_id
 	}
-	if state := w.view_state.data_grid_range_state.get(grid_id) {
+	if state := state_map[string, DataGridRangeState](mut w, ns_dg_range, cap_moderate).get(grid_id) {
 		if state.anchor_row_id.len > 0 {
 			return state.anchor_row_id
 		}
@@ -1099,7 +1107,8 @@ fn data_grid_anchor_row_id_ex(selection GridSelection, grid_id string, rows []Gr
 }
 
 fn data_grid_set_anchor(grid_id string, anchor string, mut w Window) {
-	w.view_state.data_grid_range_state.set(grid_id, DataGridRangeState{
+	mut dg_range := state_map[string, DataGridRangeState](mut w, ns_dg_range, cap_moderate)
+	dg_range.set(grid_id, DataGridRangeState{
 		anchor_row_id: anchor
 	})
 }

@@ -392,14 +392,17 @@ pub fn input(cfg InputCfg) View {
 				return
 			}
 			focused := !layout.shape.disabled && layout.shape.id_focus == w.id_focus()
-			was_focused := w.view_state.input_focus_state.get(layout.shape.id_focus) or { false }
+			was_focused := state_map[u32, bool](mut w, ns_input_focus, cap_many).get(layout.shape.id_focus) or {
+				false
+			}
 			if was_focused && !focused {
 				runtime_cfg.commit_text(layout, .blur, mut w)
 				if runtime_cfg.on_blur != unsafe { nil } {
 					runtime_cfg.on_blur(layout, mut w)
 				}
 			}
-			w.view_state.input_focus_state.set(layout.shape.id_focus, focused)
+			mut ifs := state_map[u32, bool](mut w, ns_input_focus, cap_many)
+			ifs.set(layout.shape.id_focus, focused)
 			if focused {
 				layout.shape.color_border = color_border_focus
 			}
@@ -498,7 +501,8 @@ fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_p
 		select_end:    input_state.select_end
 		cursor_offset: input_state.cursor_offset
 	})
-	w.view_state.input_state.set(cfg.id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(cfg.id_focus, InputState{
 		cursor_pos:    next_cursor_pos
 		select_beg:    0
 		select_end:    0
@@ -533,7 +537,9 @@ fn (cfg &InputCfg) commit_text(layout &Layout, reason InputCommitReason, mut w W
 }
 
 fn (cfg &InputCfg) masked_insert(s string, mut w Window, compiled CompiledInputMask) !string {
-	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(cfg.id_focus) or {
+		InputState{}
+	}
 	res := input_mask_insert(cfg.text, input_state.cursor_pos, input_state.select_beg,
 		input_state.select_end, s, &compiled)
 	if !res.changed {
@@ -552,7 +558,9 @@ fn (cfg &InputCfg) masked_insert(s string, mut w Window, compiled CompiledInputM
 }
 
 fn (cfg &InputCfg) masked_delete(mut w Window, is_delete bool, compiled CompiledInputMask) ?string {
-	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(cfg.id_focus) or {
+		InputState{}
+	}
 	res := if is_delete {
 		input_mask_delete(cfg.text, input_state.cursor_pos, input_state.select_beg, input_state.select_end,
 			&compiled)
@@ -575,7 +583,9 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 		return cfg.masked_delete(mut w, is_delete, compiled)
 	}
 	mut text := cfg.text.runes()
-	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(cfg.id_focus) or {
+		InputState{}
+	}
 	mut cursor_pos := int_min(input_state.cursor_pos, text.len)
 	if cursor_pos < 0 {
 		cursor_pos = text.len
@@ -633,7 +643,9 @@ fn (cfg &InputCfg) insert(s string, mut w Window) !string {
 		}
 	}
 	mut text := cfg.text.runes()
-	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(cfg.id_focus) or {
+		InputState{}
+	}
 	mut cursor_pos := int_min(input_state.cursor_pos, text.len)
 	if cursor_pos < 0 {
 		text = arrays.append(cfg.text.runes(), insert_runes)
@@ -668,7 +680,11 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	if cfg.is_password {
 		return none
 	}
-	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	// mut cast: view generation is single-threaded inside frame_fn.
+	mut w_mut := unsafe { &Window(w) }
+	input_state := state_map[u32, InputState](mut *w_mut, ns_input, cap_many).get(cfg.id_focus) or {
+		InputState{}
+	}
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 		text_len := utf8_str_visible_length(cfg.text)
@@ -696,7 +712,8 @@ pub fn (cfg &InputCfg) paste(s string, mut w Window) !string {
 // undo reverts to previous state from undo stack and pushes current state
 // to redo stack. Returns restored text or current text if stack empty.
 pub fn (cfg &InputCfg) undo(mut w Window) string {
-	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	input_state := imap.get(cfg.id_focus) or { InputState{} }
 	mut undo := input_state.undo
 	memento := undo.pop() or { return cfg.text }
 	mut redo := input_state.redo
@@ -707,7 +724,7 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 		select_end:    input_state.select_end
 		cursor_offset: input_state.cursor_offset
 	})
-	w.view_state.input_state.set(cfg.id_focus, InputState{
+	imap.set(cfg.id_focus, InputState{
 		cursor_pos:    memento.cursor_pos
 		select_beg:    memento.select_beg
 		select_end:    memento.select_end
@@ -721,7 +738,8 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 // redo reapplies a previously undone operation. Returns restored text or
 // current text if stack empty.
 pub fn (cfg &InputCfg) redo(mut w Window) string {
-	input_state := w.view_state.input_state.get(cfg.id_focus) or { InputState{} }
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	input_state := imap.get(cfg.id_focus) or { InputState{} }
 	mut redo := input_state.redo
 	memento := redo.pop() or { return cfg.text }
 	mut undo := input_state.undo
@@ -732,7 +750,7 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 		select_end:    input_state.select_end
 		cursor_offset: input_state.cursor_offset
 	})
-	w.view_state.input_state.set(cfg.id_focus, InputState{
+	imap.set(cfg.id_focus, InputState{
 		cursor_pos:    memento.cursor_pos
 		select_beg:    memento.select_beg
 		select_end:    memento.select_end

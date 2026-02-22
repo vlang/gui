@@ -35,11 +35,15 @@ pub:
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
 pub fn (window &Window) select(cfg SelectCfg) View {
-	is_open := window.view_state.select_state.get(cfg.id) or { false }
+	// mut cast: view generation is single-threaded inside frame_fn.
+	mut w_mut := unsafe { &Window(window) }
+	mut ss := state_map[string, bool](mut *w_mut, ns_select, cap_moderate)
+	mut sh := state_map[string, int](mut *w_mut, ns_select_highlight, cap_moderate)
+	is_open := ss.get(cfg.id) or { false }
 	id_scroll := fnv1a.sum32_string(cfg.id + 'dropdown')
 	mut options := []View{}
 	if is_open {
-		highlighted_idx := window.view_state.select_highlight.get(cfg.id) or { 0 }
+		highlighted_idx := sh.get(cfg.id) or { 0 }
 		options.ensure_cap(cfg.options.len)
 		for i, option in cfg.options {
 			options << match option.starts_with('---') {
@@ -155,8 +159,9 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 
 		// Event Handling (moved from inner)
 		on_click: fn [id, is_open] (_ &Layout, mut e Event, mut w Window) {
-			w.view_state.select_state.clear() // close all select drop-downs.
-			w.view_state.select_state.set(id, !is_open)
+			mut ss := state_map[string, bool](mut w, ns_select, cap_moderate)
+			ss.clear()
+			ss.set(id, !is_open)
 			e.is_handled = true
 		}
 
@@ -179,11 +184,13 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 		return
 	}
 
-	is_open := w.view_state.select_state.get(cfg.id) or { false }
+	mut ss := state_map[string, bool](mut w, ns_select, cap_moderate)
+	mut sh := state_map[string, int](mut w, ns_select_highlight, cap_moderate)
+	is_open := ss.get(cfg.id) or { false }
 
 	// Open/Close
 	if e.key_code in [.space, .enter] && !is_open {
-		w.view_state.select_state.set(cfg.id, true)
+		ss.set(cfg.id, true)
 
 		// Set highlight to currently selected item
 		mut initial_idx := 0
@@ -195,20 +202,20 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 				}
 			}
 		}
-		w.view_state.select_highlight.set(cfg.id, initial_idx)
+		sh.set(cfg.id, initial_idx)
 
 		e.is_handled = true
 		return
 	}
 
 	if e.key_code == .escape && is_open {
-		w.view_state.select_state.clear()
+		ss.clear()
 		e.is_handled = true
 		return
 	}
 
 	if is_open {
-		mut current_idx := w.view_state.select_highlight.get(cfg.id) or { 0 }
+		mut current_idx := sh.get(cfg.id) or { 0 }
 		id_scroll := fnv1a.sum32_string(cfg.id + 'dropdown')
 
 		if e.key_code == .enter {
@@ -218,7 +225,7 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 				if !option.starts_with('---') {
 					// Trigger selection logic (duplicated from option_view click)
 					if !cfg.select_multiple {
-						w.view_state.select_state.clear()
+						ss.clear()
 					}
 					mut s := []string{}
 					if cfg.select_multiple {
@@ -232,7 +239,7 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 							a
 						}
 					} else {
-						w.view_state.select_state.clear()
+						ss.clear()
 						s = [option]
 					}
 					cfg.on_select(s, mut e, mut w)
@@ -271,16 +278,11 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 
 			if next_idx >= 0 && next_idx < cfg.options.len
 				&& !cfg.options[next_idx].starts_with('---') {
-				w.view_state.select_highlight.set(cfg.id, next_idx)
+				sh.set(cfg.id, next_idx)
 				// Scroll to view
-				// Estimate row height: text size + padding (4)
 				row_h := cfg.text_style.size + 4
-				// Simple scroll to top of item
-				// Better: ensure visible. But view_state.scroll_y is just offset.
-				// We can set it to center the item or just show it.
-				// Let's just set it to `next_idx * row_h` to keep it simple for now,
-				// which puts the item at top.
-				w.view_state.scroll_y.set(id_scroll, next_idx * row_h)
+				mut scroll_sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+				scroll_sy.set(id_scroll, next_idx * row_h)
 			}
 			e.is_handled = true
 		}
@@ -325,8 +327,9 @@ fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_sc
 		]
 		on_click: fn [on_select, select_multiple, select_array, option] (_ &Layout, mut e Event, mut w Window) {
 			if on_select != unsafe { nil } {
+				mut ss := state_map[string, bool](mut w, ns_select, cap_moderate)
 				if !select_multiple {
-					w.view_state.select_state.clear()
+					ss.clear()
 				}
 
 				mut s := []string{}
@@ -341,7 +344,7 @@ fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_sc
 						a
 					}
 				} else {
-					w.view_state.select_state.clear()
+					ss.clear()
 					s = [option]
 				}
 				on_select(s, mut e, mut w)
@@ -351,8 +354,9 @@ fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_sc
 		on_hover: fn [color_select, cfg_id, index] (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
 			layout.shape.color = color_select
-			if (w.view_state.select_highlight.get(cfg_id) or { 0 }) != index {
-				w.view_state.select_highlight.set(cfg_id, index)
+			mut sh := state_map[string, int](mut w, ns_select_highlight, cap_moderate)
+			if (sh.get(cfg_id) or { 0 }) != index {
+				sh.set(cfg_id, index)
 			}
 		}
 	)

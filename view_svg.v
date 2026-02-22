@@ -77,9 +77,11 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 	if cached.has_animations && sv.animated {
 		anim_hash := fnv1a.sum64_string(svg_src).hex()
 		now_ns := time.now().unix_nano()
-		window.view_state.svg_anim_seen.set(anim_hash, now_ns)
-		if !window.view_state.svg_anim_start.contains(anim_hash) {
-			window.view_state.svg_anim_start.set(anim_hash, now_ns)
+		mut anim_seen := state_map[string, i64](mut window, ns_svg_anim_seen, cap_moderate)
+		mut anim_start := state_map[string, i64](mut window, ns_svg_anim_start, cap_moderate)
+		anim_seen.set(anim_hash, now_ns)
+		if !anim_start.contains(anim_hash) {
+			anim_start.set(anim_hash, now_ns)
 		}
 		anim_id := 'svg_anim:${anim_hash}'
 		if !window.has_animation(anim_id) {
@@ -89,7 +91,8 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 				repeat:   true
 				callback: fn [anim_hash] (mut an Animate, mut w Window) {
 					// Check staleness: if SVG left the layout tree, stop
-					if seen := w.view_state.svg_anim_seen.get(anim_hash) {
+					mut seen_map := state_map[string, i64](mut w, ns_svg_anim_seen, cap_moderate)
+					if seen := seen_map.get(anim_hash) {
 						elapsed := time.now().unix_nano() - seen
 						if elapsed > 200_000_000 {
 							// >200ms since last seen → SVG removed

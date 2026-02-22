@@ -384,12 +384,14 @@ pub fn td(value string) TableCellCfg {
 
 // clear_table_cache clears cached column widths for a specific table
 pub fn (mut w Window) clear_table_cache(id string) {
-	w.view_state.table_col_widths.delete(id)
+	mut tc := state_map[string, TableColCache](mut w, ns_table_col_widths, cap_moderate)
+	tc.delete(id)
 }
 
 // clear_all_table_caches clears all cached table column widths
 pub fn (mut w Window) clear_all_table_caches() {
-	w.view_state.table_col_widths.clear()
+	mut tc := state_map[string, TableColCache](mut w, ns_table_col_widths, cap_moderate)
+	tc.clear()
 }
 
 // table_column_widths calculates max width per column (cached)
@@ -401,14 +403,15 @@ fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 	data_hash := table_data_hash(cfg)
 
 	// Check cache if table has id
+	mut tc := state_map[string, TableColCache](mut window, ns_table_col_widths, cap_moderate)
 	if cfg.id.len > 0 {
-		if cached := window.view_state.table_col_widths.get(cfg.id) {
+		if cached := tc.get(cfg.id) {
 			if cached.hash == data_hash {
 				return cached.widths
 			}
 		}
 		widths := table_compute_column_widths(cfg, mut window)
-		window.view_state.table_col_widths.set(cfg.id, TableColCache{
+		tc.set(cfg.id, TableColCache{
 			hash:   data_hash
 			widths: widths
 		})
@@ -416,8 +419,9 @@ fn (mut window Window) table_column_widths(cfg &TableCfg) []f32 {
 	}
 
 	// Warn once for tables without id that have many rows
-	if cfg.data.len > 20 && !(window.view_state.table_warned_no_id.get(data_hash) or { false }) {
-		window.view_state.table_warned_no_id.set(data_hash, true)
+	mut tw := state_map[u64, bool](mut window, ns_table_warned_no_id, cap_many)
+	if cfg.data.len > 20 && !(tw.get(data_hash) or { false }) {
+		tw.set(data_hash, true)
 		log.warn('table with ${cfg.data.len} rows has no id; column widths not cached')
 	}
 
@@ -482,7 +486,8 @@ fn table_estimate_row_height(cfg &TableCfg, mut window Window) f32 {
 
 // table_visible_range calculates first/last visible row indices for virtualization
 fn table_visible_range(table_height f32, row_height f32, cfg &TableCfg, mut window Window) (int, int) {
-	scroll_y := -(window.view_state.scroll_y.get(cfg.id_scroll) or { f32(0) }) // scroll_y is negative
+	mut sy := state_map[u32, f32](mut window, ns_scroll_y, cap_scroll)
+	scroll_y := -(sy.get(cfg.id_scroll) or { f32(0) }) // scroll_y is negative
 	first := int(scroll_y / row_height)
 	visible_rows := int(table_height / row_height) + 1
 	buffer := 2

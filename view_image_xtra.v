@@ -67,6 +67,7 @@ pub fn (mut window Window) remove_image_from_cache_by_file_name(file_name string
 struct BoundedImageMap {
 mut:
 	data     map[string]int
+	order    []string
 	max_size int = 100
 }
 
@@ -75,22 +76,19 @@ fn (mut m BoundedImageMap) set(key string, value int, mut ctx gg.Context) {
 	if m.max_size < 1 {
 		return
 	}
-	if key !in m.data {
-		if m.data.len >= m.max_size {
-			// Find oldest entry (first in insertion order)
-			mut oldest_key := ''
-			mut oldest_id := -1
-			for k, v in m.data {
-				oldest_key = k
-				oldest_id = v
-				break
-			}
-			if oldest_key != '' {
-				ctx.remove_cached_image_by_idx(oldest_id)
-				m.data.delete(oldest_key)
-			}
-		}
+	if key in m.data {
+		m.data[key] = value
+		return
 	}
+	if m.data.len >= m.max_size && m.order.len > 0 {
+		oldest_key := m.order[0]
+		if oldest_id := m.data[oldest_key] {
+			ctx.remove_cached_image_by_idx(oldest_id)
+		}
+		m.data.delete(oldest_key)
+		m.order.delete(0)
+	}
+	m.order << key
 	m.data[key] = value
 }
 
@@ -106,12 +104,21 @@ fn (m &BoundedImageMap) contains(key string) bool {
 
 // delete removes image from cache tracking (does not remove from graphics context).
 fn (mut m BoundedImageMap) delete(key string) {
+	if key !in m.data {
+		return
+	}
 	m.data.delete(key)
+	for i, item in m.order {
+		if item == key {
+			m.order.delete(i)
+			break
+		}
+	}
 }
 
 // keys returns all cached image paths in insertion order.
 fn (m &BoundedImageMap) keys() []string {
-	return m.data.keys()
+	return m.order.clone()
 }
 
 // len returns number of cached images.
@@ -125,4 +132,5 @@ fn (mut m BoundedImageMap) clear(mut ctx gg.Context) {
 		ctx.remove_cached_image_by_idx(id)
 	}
 	m.data.clear()
+	array_clear(mut m.order)
 }

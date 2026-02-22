@@ -97,7 +97,7 @@ fn test_layout_position_with_border() {
 	mut mock_window := Window{}
 	layout_parents(mut root, unsafe { nil })
 
-	layout_positions(mut root, 0, 0, &mock_window)
+	layout_positions(mut root, 0, 0, mut mock_window)
 
 	// Child Expected Position:
 	// X: Root.x (0) + Pad.left (10) + Border (5) = 15

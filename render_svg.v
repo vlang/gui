@@ -144,11 +144,13 @@ fn render_svg(mut shape Shape, clip DrawClip, mut window Window) {
 fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, sy f32, mut window Window) {
 	now_ns := time.now().unix_nano()
 	// Update staleness tracker so animation loop knows SVG is alive.
-	window.view_state.svg_anim_seen.set(res_key, now_ns)
-	start_ns := if v := window.view_state.svg_anim_start.get(res_key) {
+	mut anim_seen := state_map[string, i64](mut window, ns_svg_anim_seen, cap_moderate)
+	mut anim_start := state_map[string, i64](mut window, ns_svg_anim_start, cap_moderate)
+	anim_seen.set(res_key, now_ns)
+	start_ns := if v := anim_start.get(res_key) {
 		v
 	} else {
-		window.view_state.svg_anim_start.set(res_key, now_ns)
+		anim_start.set(res_key, now_ns)
 		now_ns
 	}
 	elapsed_s := f32(now_ns - start_ns) / 1_000_000_000.0

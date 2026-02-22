@@ -10,7 +10,8 @@ mut:
 fn test_input_pre_commit_rejects_delta_without_state_mutation() {
 	id_focus := u32(9005)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		cursor_pos: 1
 	})
 	cfg := InputCfg{
@@ -28,7 +29,7 @@ fn test_input_pre_commit_rejects_delta_without_state_mutation() {
 		return
 	}
 	assert got == 'ab'
-	state := w.view_state.input_state.get(id_focus) or {
+	state := state_map[u32, InputState](mut w, ns_input, cap_many).get(id_focus) or {
 		assert false
 		return
 	}
@@ -39,7 +40,8 @@ fn test_input_pre_commit_rejects_delta_without_state_mutation() {
 fn test_input_pre_commit_transforms_text_before_state_write() {
 	id_focus := u32(9006)
 	mut w := Window{}
-	w.view_state.input_state.set(id_focus, InputState{
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
 		cursor_pos: 2
 	})
 	cfg := InputCfg{
@@ -54,7 +56,7 @@ fn test_input_pre_commit_transforms_text_before_state_write() {
 		return
 	}
 	assert got == 'ABC'
-	state := w.view_state.input_state.get(id_focus) or {
+	state := state_map[u32, InputState](mut w, ns_input, cap_many).get(id_focus) or {
 		assert false
 		return
 	}

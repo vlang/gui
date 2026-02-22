@@ -57,7 +57,8 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			w.set_mouse_cursor_arrow()
 			mouse_down_handler(layout, false, mut e, mut w)
 			if !e.is_handled {
-				w.view_state.select_state.clear()
+				mut ss := state_map[string, bool](mut w, ns_select, cap_moderate)
+				ss.clear()
 			}
 		}
 		.mouse_move {

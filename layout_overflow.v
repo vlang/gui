@@ -58,11 +58,13 @@ fn layout_overflow(mut layout Layout, mut window Window) {
 
 	// Persist for dropdown content generation (visible_count used by
 	// view generator to build the dropdown with overflow items).
-	old := window.view_state.overflow_state.get(layout.shape.id) or { -1 }
+	mut om := state_map[string, int](mut window, ns_overflow, cap_moderate)
+	old := om.get(layout.shape.id) or { -1 }
 	if old != visible_count {
-		window.view_state.overflow_state.set(layout.shape.id, visible_count)
+		om.set(layout.shape.id, visible_count)
 		// Close dropdown — overflow items changed
-		window.view_state.select_state.delete(layout.shape.id)
+		mut ss := state_map[string, bool](mut window, ns_select, cap_moderate)
+		ss.delete(layout.shape.id)
 		window.refresh_layout = true
 	}
 }

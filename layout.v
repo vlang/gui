@@ -79,7 +79,7 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	layout_adjust_scroll_offsets(mut layout, mut window)
 	// 7. Calculate final X, Y positions for all elements
 	x, y := float_attach_layout(layout)
-	layout_positions(mut layout, x, y, window)
+	layout_positions(mut layout, x, y, mut window)
 	// 8. Handle disabled states
 	layout_disables(mut layout, false)
 	// 9. Handle scroll container logic

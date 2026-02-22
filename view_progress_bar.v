@@ -116,12 +116,8 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 								},
 							]
 							on_value:  fn [id] (v f32, mut w Window) {
-								if w.view_state.progress_state.contains(id) {
-									w.view_state.progress_state.set(id, v)
-								} else {
-									// ensure entry exists
-									w.view_state.progress_state.set(id, v)
-								}
+								mut pm := state_map[string, f32](mut w, ns_progress, cap_moderate)
+								pm.set(id, v)
 							}
 						}
 						anim.start = time.now()
@@ -129,7 +125,8 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 					}
 
 					// Read current animation progress
-					if progress := w.view_state.progress_state.get(id) {
+					mut pm := state_map[string, f32](mut w, ns_progress, cap_moderate)
+					if progress := pm.get(id) {
 						// Calculate offset based on available space (1.0 - bar_width_percent) * progress
 						offset = (1.0 - percent) * progress
 					}

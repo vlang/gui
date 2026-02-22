@@ -361,7 +361,9 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
 	if window.is_focus(shape.id_focus) && shape.shape_type == .text
 		&& window.view_state.input_cursor_on {
-		input_state := window.view_state.input_state.get(shape.id_focus) or { InputState{} }
+		input_state := state_map[u32, InputState](mut window, ns_input, cap_many).get(shape.id_focus) or {
+			InputState{}
+		}
 		cursor_pos := if shape.tc.text_is_placeholder {
 			0
 		} else {

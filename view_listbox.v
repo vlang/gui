@@ -351,7 +351,8 @@ fn list_box_visible_range(list_height f32, row_height f32, cfg ListBoxCfg, mut w
 		return 0, -1
 	}
 	max_idx := cfg.data.len - 1
-	scroll_y := -(window.view_state.scroll_y.get(cfg.id_scroll) or { f32(0) })
+	mut sy := state_map[u32, f32](mut window, ns_scroll_y, cap_scroll)
+	scroll_y := -(sy.get(cfg.id_scroll) or { f32(0) })
 	first := int_clamp(int(scroll_y / row_height), 0, max_idx)
 	visible_rows := int(list_height / row_height) + 1
 	mut first_visible := int_max(0, first - list_box_virtual_buffer_rows)
@@ -363,7 +364,10 @@ fn list_box_visible_range(list_height f32, row_height f32, cfg ListBoxCfg, mut w
 }
 
 pub fn (window &Window) list_box_source_stats(list_box_id string) ListBoxSourceStats {
-	if state := window.view_state.list_box_source_state.get(list_box_id) {
+	sm := state_map_read[string, ListBoxSourceState](window, ns_list_box_source) or {
+		return ListBoxSourceStats{}
+	}
+	if state := sm.get(list_box_id) {
 		return ListBoxSourceStats{
 			loading:          state.loading
 			load_error:       state.load_error
@@ -381,7 +385,8 @@ pub fn (mut window Window) list_box_source_force_refetch(list_box_id string) {
 }
 
 fn list_box_source_force_refetch(list_box_id string, mut window Window) {
-	mut state := window.view_state.list_box_source_state.get(list_box_id) or { return }
+	mut sm := state_map[string, ListBoxSourceState](mut window, ns_list_box_source, cap_moderate)
+	mut state := sm.get(list_box_id) or { return }
 	if state.loading && !isnil(state.active_abort) {
 		mut active := state.active_abort
 		active.abort()
@@ -390,7 +395,7 @@ fn list_box_source_force_refetch(list_box_id string, mut window Window) {
 	}
 	state.request_key = ''
 	state.load_error = ''
-	window.view_state.list_box_source_state.set(list_box_id, state)
+	sm.set(list_box_id, state)
 	window.update_window()
 }
 
@@ -442,13 +447,14 @@ fn list_box_resolve_source_cfg(cfg ListBoxCfg, mut window Window) (ListBoxCfg, b
 }
 
 fn list_box_source_resolve_state(cfg ListBoxCfg, mut window Window) ListBoxSourceState {
-	mut state := window.view_state.list_box_source_state.get(cfg.id) or { ListBoxSourceState{} }
+	mut sm := state_map[string, ListBoxSourceState](mut window, ns_list_box_source, cap_moderate)
+	mut state := sm.get(cfg.id) or { ListBoxSourceState{} }
 	request_key := list_box_source_request_key(cfg)
 	if request_key != state.request_key {
 		list_box_source_start_request(cfg, request_key, mut state, mut window)
 	}
 	state.data_dirty = false
-	window.view_state.list_box_source_state.set(cfg.id, state)
+	sm.set(cfg.id, state)
 	return state
 }
 
@@ -500,10 +506,11 @@ fn list_box_source_start_request(cfg ListBoxCfg, request_key string, mut state L
 }
 
 fn list_box_source_apply_success(list_box_id string, request_id u64, result ListBoxDataResult, mut window Window) {
-	mut state := window.view_state.list_box_source_state.get(list_box_id) or { return }
+	mut sm := state_map[string, ListBoxSourceState](mut window, ns_list_box_source, cap_moderate)
+	mut state := sm.get(list_box_id) or { return }
 	if request_id != state.request_id {
 		state.stale_drop_count++
-		window.view_state.list_box_source_state.set(list_box_id, state)
+		sm.set(list_box_id, state)
 		return
 	}
 	state.loading = false
@@ -513,21 +520,22 @@ fn list_box_source_apply_success(list_box_id string, request_id u64, result List
 	state.received_count += result.data.len
 	state.data_dirty = true
 	state.active_abort = unsafe { nil }
-	window.view_state.list_box_source_state.set(list_box_id, state)
+	sm.set(list_box_id, state)
 	window.update_window()
 }
 
 fn list_box_source_apply_error(list_box_id string, request_id u64, err_msg string, mut window Window) {
-	mut state := window.view_state.list_box_source_state.get(list_box_id) or { return }
+	mut sm := state_map[string, ListBoxSourceState](mut window, ns_list_box_source, cap_moderate)
+	mut state := sm.get(list_box_id) or { return }
 	if request_id != state.request_id {
 		state.stale_drop_count++
-		window.view_state.list_box_source_state.set(list_box_id, state)
+		sm.set(list_box_id, state)
 		return
 	}
 	state.loading = false
 	state.load_error = err_msg
 	state.active_abort = unsafe { nil }
-	window.view_state.list_box_source_state.set(list_box_id, state)
+	sm.set(list_box_id, state)
 	window.update_window()
 }
 
@@ -568,12 +576,13 @@ fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, 
 	if item_ids.len == 0 || on_select == unsafe { nil } {
 		return
 	}
-	cur_idx := w.view_state.list_box_focus.get(list_box_id) or { -1 }
+	mut lbf := state_map[string, int](mut w, ns_list_box_focus, cap_moderate)
+	cur_idx := lbf.get(list_box_id) or { -1 }
 
 	match e.key_code {
 		.up {
 			next := if cur_idx > 0 { cur_idx - 1 } else { 0 }
-			w.view_state.list_box_focus.set(list_box_id, next)
+			lbf.set(list_box_id, next)
 			w.update_window()
 			e.is_handled = true
 		}
@@ -583,7 +592,7 @@ fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, 
 			} else {
 				item_ids.len - 1
 			}
-			w.view_state.list_box_focus.set(list_box_id, next)
+			lbf.set(list_box_id, next)
 			w.update_window()
 			e.is_handled = true
 		}
@@ -596,12 +605,12 @@ fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, 
 			e.is_handled = true
 		}
 		.home {
-			w.view_state.list_box_focus.set(list_box_id, 0)
+			lbf.set(list_box_id, 0)
 			w.update_window()
 			e.is_handled = true
 		}
 		.end {
-			w.view_state.list_box_focus.set(list_box_id, item_ids.len - 1)
+			lbf.set(list_box_id, item_ids.len - 1)
 			w.update_window()
 			e.is_handled = true
 		}

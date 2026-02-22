@@ -41,7 +41,8 @@ pub fn (window &Window) menu(cfg MenubarCfg) View {
 fn make_menu_amend_layout(id_focus u32) fn (mut Layout, mut Window) {
 	return fn [id_focus] (mut layout Layout, mut w Window) {
 		if !w.is_focus(id_focus) {
-			w.view_state.menu_state.set(id_focus, '')
+			mut ms := state_map[u32, string](mut w, ns_menu, cap_few)
+			ms.set(id_focus, '')
 		}
 	}
 }
@@ -52,8 +53,9 @@ fn make_menu_amend_layout(id_focus u32) fn (mut Layout, mut Window) {
 // and which side submenus are anchored to.
 fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
 	mut content := []View{cap: items.len}
-
-	id_selected := window.view_state.menu_state.get(cfg.id_focus) or { '' }
+	// mut cast: view generation is single-threaded inside frame_fn.
+	mut w_mut := unsafe { &Window(window) }
+	id_selected := state_map[u32, string](mut *w_mut, ns_menu, cap_few).get(cfg.id_focus) or { '' }
 	sizing := if level == 0 { fit_fit } else { fill_fit }
 
 	for item in items {
@@ -140,7 +142,8 @@ fn make_submenu_on_hover(cfg MenubarCfg) fn (mut Layout, mut Event, mut Window) 
 	id_focus := cfg.id_focus
 	items := cfg.items
 	return fn [id_focus, items] (mut layout Layout, mut _ Event, mut w Window) {
-		id_selected := w.view_state.menu_state.get(id_focus) or { '' }
+		mut ms := state_map[u32, string](mut w, ns_menu, cap_few)
+		id_selected := ms.get(id_focus) or { '' }
 		has_selected := descendant_has_menu_id(layout, id_selected)
 
 		if has_selected {
@@ -151,7 +154,7 @@ fn make_submenu_on_hover(cfg MenubarCfg) fn (mut Layout, mut Event, mut Window) 
 				// then highlight the parent menu item (id = layout.shape.id).
 				if mi_cfg := find_menu_item_cfg(items, id_selected) {
 					if mi_cfg.submenu.len == 0 {
-						w.view_state.menu_state.set(id_focus, layout.shape.id)
+						ms.set(id_focus, layout.shape.id)
 					}
 				}
 			}

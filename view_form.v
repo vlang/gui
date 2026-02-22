@@ -330,15 +330,17 @@ fn form_to_public_field_state(field FormFieldRuntimeState) FormFieldState {
 }
 
 fn form_state_get(mut w Window, form_id string) FormRuntimeState {
-	return w.view_state.form_state.get(form_id) or { FormRuntimeState{} }
+	mut sm := state_map[string, FormRuntimeState](mut w, ns_form, cap_moderate)
+	return sm.get(form_id) or { FormRuntimeState{} }
 }
 
 fn form_state_peek(w &Window, form_id string) FormRuntimeState {
-	return w.view_state.form_state.get(form_id) or { FormRuntimeState{} }
+	sm := state_map_read[string, FormRuntimeState](w, ns_form) or { return FormRuntimeState{} }
+	return sm.get(form_id) or { FormRuntimeState{} }
 }
 
 fn form_state_set(mut w Window, form_id string, state FormRuntimeState) {
-	mut states := &w.view_state.form_state
+	mut states := state_map[string, FormRuntimeState](mut w, ns_form, cap_moderate)
 	should_abort_evicted := form_id !in states.data && states.max_size > 0
 		&& states.data.len >= states.max_size && states.order.len > 0
 	if should_abort_evicted {

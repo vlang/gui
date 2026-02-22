@@ -142,6 +142,8 @@ fn struct_sizes() string {
 	tx << 'TextCfg                  ${sizeof(TextCfg):8}'
 	tx << 'TextStyle                ${sizeof(TextStyle):8}'
 	tx << '[]View                   ${sizeof([]View):8}'
+	tx << 'ViewState                ${sizeof(ViewState):8}'
+	tx << 'StateRegistry            ${sizeof(StateRegistry):8}'
 	return tx.join('\n')
 }
 
@@ -150,16 +152,15 @@ fn (vs ViewState) view_state_stats() string {
 	tx << ''
 	tx << 'View State'
 	tx << stat_sub_div
-	tx << 'input_state length       ${cm(usize(vs.input_state.len())):8}'
-	tx << 'scroll_x length          ${cm(usize(vs.scroll_x.len())):8}'
-	tx << 'scroll_y length          ${cm(usize(vs.scroll_y.len())):8}'
-	tx << 'menu_state length        ${cm(usize(vs.menu_state.len())):8}'
 	tx << 'image_map length         ${cm(usize(vs.image_map.len())):8}'
 	tx << 'svg_cache length         ${cm(usize(vs.svg_cache.len())):8}'
 	tx << 'markdown_cache length    ${cm(usize(vs.markdown_cache.len())):8}'
-	tx << 'select_state length      ${cm(usize(vs.select_state.len())):8}'
 	tx << 'tree_state length        ${cm(usize(vs.tree_state.len())):8}'
-	tx << 'date_picker_state length ${cm(usize(vs.date_picker_state.len())):8}'
+	tx << 'registry namespaces      ${cm(usize(vs.registry.maps.len)):8}'
+	for ns, m in vs.registry.meta {
+		count := vs.registry.entry_count(ns)
+		tx << '  ${ns:-25} ${cm(usize(count)):8} [${m.type_tag}]'
+	}
 	return tx.join('\n')
 }
 

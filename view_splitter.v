@@ -396,7 +396,8 @@ fn splitter_on_handle_click(core &SplitterCore, _ &Layout, mut e Event, mut w Wi
 	splitter_set_cursor(core.orientation, mut w)
 	splitter_focus(core, mut w)
 
-	mut runtime := w.view_state.splitter_runtime_state.get(core.id) or { SplitterRuntimeState{} }
+	mut srs := state_map[string, SplitterRuntimeState](mut w, ns_splitter_runtime, cap_few)
+	mut runtime := srs.get(core.id) or { SplitterRuntimeState{} }
 	current := splitter_effective_collapsed(core, core.collapsed)
 	target := splitter_toggle_target(core, current)
 	if core.double_click_collapse && target != .none && runtime.last_handle_click_frame > 0
@@ -404,13 +405,13 @@ fn splitter_on_handle_click(core &SplitterCore, _ &Layout, mut e Event, mut w Wi
 		ratio := splitter_current_ratio(core, w)
 		next := if current == target { SplitterCollapsed.none } else { target }
 		runtime.last_handle_click_frame = 0
-		w.view_state.splitter_runtime_state.set(core.id, runtime)
+		srs.set(core.id, runtime)
 		splitter_emit_change(core, ratio, next, mut e, mut w)
 		return
 	}
 
 	runtime.last_handle_click_frame = e.frame_count
-	w.view_state.splitter_runtime_state.set(core.id, runtime)
+	srs.set(core.id, runtime)
 
 	id_focus := core.id_focus
 	w.mouse_lock(MouseLockCfg{
@@ -522,7 +523,7 @@ fn splitter_layout_child(mut child Layout, x f32, y f32, width f32, height f32, 
 	layout_heights(mut child)
 	layout_fill_heights_with_scratch(mut child, mut w.scratch.distribute)
 	layout_adjust_scroll_offsets(mut child, mut w)
-	layout_positions(mut child, x, y, &w)
+	layout_positions(mut child, x, y, mut w)
 	layout_amend(mut child, mut w)
 }
 

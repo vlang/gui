@@ -79,13 +79,15 @@ fn data_grid_rows_id_signature(rows []GridRow) u64 {
 // resets to match the new source data. Signature is an
 // FNV-1a hash of all row ids + cell values.
 fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, DataGridCrudState) {
-	mut state := window.view_state.data_grid_crud_state.get(cfg.id) or { DataGridCrudState{} }
+	mut state := state_map[string, DataGridCrudState](mut window, ns_dg_crud, cap_moderate).get(cfg.id) or {
+		DataGridCrudState{}
+	}
 	// Use precomputed signature from source state when
 	// available. In local-rows mode, skip full signature
 	// recompute when row count and row-id signature are
 	// unchanged.
 	mut signature := u64(0)
-	if src_state := window.view_state.data_grid_source_state.get(cfg.id) {
+	if src_state := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate).get(cfg.id) {
 		signature = src_state.rows_signature
 		state.local_rows_signature_valid = false
 		state.local_rows_len = -1
@@ -114,7 +116,8 @@ fn data_grid_crud_resolve_cfg(cfg DataGridCfg, mut window Window) (DataGridCfg, 
 		state.draft_row_ids = map[string]bool{}
 		state.deleted_row_ids = map[string]bool{}
 	}
-	window.view_state.data_grid_crud_state.set(cfg.id, state)
+	mut dg_crud := state_map[string, DataGridCrudState](mut window, ns_dg_crud, cap_moderate)
+	dg_crud.set(cfg.id, state)
 	mut load_error := cfg.load_error
 	if state.save_error.len > 0 {
 		load_error = state.save_error
@@ -232,7 +235,9 @@ fn data_grid_crud_default_cells(columns []GridColumnCfg) map[string]string {
 }
 
 fn data_grid_crud_add_row(grid_id string, columns []GridColumnCfg, on_selection_change fn (sel GridSelection, mut e Event, mut w Window), focus_id u32, scroll_id u32, page_size int, page_index int, on_page_change fn (page int, mut e Event, mut w Window), mut e Event, mut w Window) {
-	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
+		DataGridCrudState{}
+	}
 	state.next_draft_seq++
 	draft_id := '__draft_${grid_id}_${state.next_draft_seq}'
 	row := GridRow{
@@ -243,7 +248,8 @@ fn data_grid_crud_add_row(grid_id string, columns []GridColumnCfg, on_selection_
 	state.draft_row_ids[draft_id] = true
 	state.dirty_row_ids[draft_id] = true
 	state.save_error = ''
-	w.view_state.data_grid_crud_state.set(grid_id, state)
+	mut dg_crud := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
+	dg_crud.set(grid_id, state)
 	data_grid_set_editing_row(grid_id, draft_id, mut w)
 	if on_selection_change != unsafe { nil } {
 		next := GridSelection{
@@ -256,7 +262,8 @@ fn data_grid_crud_add_row(grid_id string, columns []GridColumnCfg, on_selection_
 		on_selection_change(next, mut e, mut w)
 	}
 	if page_size > 0 && page_index > 0 && on_page_change != unsafe { nil } {
-		w.view_state.data_grid_pending_jump_row.set(grid_id, 0)
+		mut dg_pj := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate)
+		dg_pj.set(grid_id, 0)
 		on_page_change(0, mut e, mut w)
 	}
 	w.scroll_vertical_to(scroll_id, 0)
@@ -294,7 +301,9 @@ fn data_grid_crud_delete_rows(grid_id string, selection GridSelection, on_select
 	if delete_ids.len == 0 {
 		return
 	}
-	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
+		DataGridCrudState{}
+	}
 	mut kept := []GridRow{cap: state.working_rows.len}
 	for idx, row in state.working_rows {
 		row_id := data_grid_row_id(row, idx)
@@ -311,8 +320,9 @@ fn data_grid_crud_delete_rows(grid_id string, selection GridSelection, on_select
 	}
 	state.working_rows = kept
 	state.save_error = ''
-	w.view_state.data_grid_crud_state.set(grid_id, state)
-	editing_row := data_grid_editing_row_id(grid_id, w)
+	mut dg_crud := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
+	dg_crud.set(grid_id, state)
+	editing_row := data_grid_editing_row_id(grid_id, mut w)
 	if editing_row.len > 0 && delete_ids[editing_row] {
 		data_grid_clear_editing_row(grid_id, mut w)
 	}
@@ -464,7 +474,9 @@ fn data_grid_crud_apply_cell_edit(grid_id string, crud_enabled bool, on_cell_edi
 		return
 	}
 	if crud_enabled {
-		mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+		mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
+			DataGridCrudState{}
+		}
 		for idx, row in state.working_rows {
 			if data_grid_row_id(row, idx) != edit.row_id {
 				continue
@@ -479,7 +491,8 @@ fn data_grid_crud_apply_cell_edit(grid_id string, crud_enabled bool, on_cell_edi
 			state.save_error = ''
 			break
 		}
-		w.view_state.data_grid_crud_state.set(grid_id, state)
+		mut dg_crud := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
+		dg_crud.set(grid_id, state)
 	}
 	if on_cell_edit != unsafe { nil } {
 		on_cell_edit(edit, mut e, mut w)
@@ -487,14 +500,17 @@ fn data_grid_crud_apply_cell_edit(grid_id string, crud_enabled bool, on_cell_edi
 }
 
 fn data_grid_crud_cancel(grid_id string, focus_id u32, mut e Event, mut w Window) {
-	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
+		DataGridCrudState{}
+	}
 	state.working_rows = state.committed_rows.clone()
 	state.dirty_row_ids = map[string]bool{}
 	state.draft_row_ids = map[string]bool{}
 	state.deleted_row_ids = map[string]bool{}
 	state.save_error = ''
 	state.saving = false
-	w.view_state.data_grid_crud_state.set(grid_id, state)
+	mut dg_crud := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
+	dg_crud.set(grid_id, state)
 	data_grid_clear_editing_row(grid_id, mut w)
 	if focus_id > 0 {
 		w.set_id_focus(focus_id)
@@ -526,7 +542,9 @@ struct DataGridCrudSaveContext {
 
 fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 	grid_id := ctx.grid_id
-	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
+		DataGridCrudState{}
+	}
 	if state.saving || !data_grid_crud_has_unsaved(state) {
 		return
 	}
@@ -534,12 +552,14 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 	snapshot_rows := state.committed_rows.clone()
 	state.saving = true
 	state.save_error = ''
-	w.view_state.data_grid_crud_state.set(grid_id, state)
+	mut dg_crud := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
+	dg_crud.set(grid_id, state)
 	if ctx.has_source {
 		mut source := ctx.data_source or {
 			state.saving = false
 			state.save_error = 'grid: data source unavailable'
-			w.view_state.data_grid_crud_state.set(grid_id, state)
+			mut dg_crud2 := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
+			dg_crud2.set(grid_id, state)
 			return
 		}
 
@@ -658,7 +678,9 @@ fn data_grid_crud_apply_save_result(grid_id string, result DataGridCrudMutationR
 			e, mut w, snapshot_rows, result.err_msg)
 		return
 	}
-	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
+		DataGridCrudState{}
+	}
 	replace_ids, create_warn := data_grid_crud_replace_created_rows(mut state.working_rows,
 		result.create_rows, result.created)
 	if create_warn.len > 0 {
@@ -666,7 +688,8 @@ fn data_grid_crud_apply_save_result(grid_id string, result DataGridCrudMutationR
 			snapshot_rows, create_warn)
 		return
 	}
-	w.view_state.data_grid_crud_state.set(grid_id, state)
+	mut dg_crud := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
+	dg_crud.set(grid_id, state)
 	data_grid_crud_remap_selection(selection, on_selection_change, replace_ids, mut e, mut
 		w)
 	data_grid_crud_finish_save(grid_id, replace_ids, result.row_count, on_rows_change,
@@ -676,7 +699,9 @@ fn data_grid_crud_apply_save_result(grid_id string, result DataGridCrudMutationR
 // Finalizes a successful save: clears dirty state, updates
 // signatures, triggers on_rows_change callback and refetch.
 fn data_grid_crud_finish_save(grid_id string, replace_ids map[string]string, row_count ?int, on_rows_change fn (rows_ []GridRow, mut e Event, mut w Window), has_source bool, focus_id u32, mut e Event, mut w Window) {
-	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
+		DataGridCrudState{}
+	}
 	state.committed_rows = state.working_rows.clone()
 	state.dirty_row_ids = map[string]bool{}
 	state.draft_row_ids = map[string]bool{}
@@ -684,7 +709,8 @@ fn data_grid_crud_finish_save(grid_id string, replace_ids map[string]string, row
 	state.saving = false
 	state.save_error = ''
 	state.source_signature = data_grid_rows_signature(state.committed_rows, []string{})
-	w.view_state.data_grid_crud_state.set(grid_id, state)
+	mut dg_crud := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
+	dg_crud.set(grid_id, state)
 	data_grid_clear_editing_row(grid_id, mut w)
 	rows_copy := state.working_rows.clone()
 	if on_rows_change != unsafe { nil } {
@@ -707,7 +733,9 @@ fn data_grid_crud_finish_save(grid_id string, replace_ids map[string]string, row
 fn data_grid_crud_restore_on_error(grid_id string, phase string, on_crud_error fn (msg string, mut e Event, mut w Window), mut e Event, mut w Window, snapshot_rows []GridRow, err_msg string) {
 	// Re-fetch authoritative state from view_state to avoid
 	// overwriting edits made between snapshot and error.
-	mut state := w.view_state.data_grid_crud_state.get(grid_id) or { DataGridCrudState{} }
+	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
+		DataGridCrudState{}
+	}
 	// snapshot_rows is already a clone; assign directly for
 	// committed, clone once for working to avoid sharing.
 	state.committed_rows = snapshot_rows
@@ -718,7 +746,8 @@ fn data_grid_crud_restore_on_error(grid_id string, phase string, on_crud_error f
 	state.saving = false
 	state.save_error = if phase.len > 0 { '${phase}: ${err_msg}' } else { err_msg }
 	state.source_signature = data_grid_rows_signature(state.committed_rows, []string{})
-	w.view_state.data_grid_crud_state.set(grid_id, state)
+	mut dg_crud := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
+	dg_crud.set(grid_id, state)
 	data_grid_clear_editing_row(grid_id, mut w)
 	// Refetch source data to stay in sync after partial
 	// mutation failure (create may have succeeded before
