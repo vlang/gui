@@ -306,7 +306,7 @@ fn layout_widths(mut layout Layout) {
 					// the widest single child; the respective layout
 					// pass handles the rest.
 					min_widths = f32_max(min_widths, child.shape.width + padding)
-				} else {
+				} else if !layout.shape.clip {
 					min_widths += child.shape.min_width
 				}
 			}
@@ -332,8 +332,12 @@ fn layout_widths(mut layout Layout) {
 			layout_widths(mut child)
 			if layout.shape.sizing.width != .fixed {
 				layout.shape.width = f32_max(layout.shape.width, child.shape.width + padding)
-				layout.shape.min_width = f32_max(layout.shape.min_width, child.shape.min_width +
-					padding)
+				// Clip containers hide overflow — children's min_width
+				// must not force the container wider.
+				if !layout.shape.clip {
+					layout.shape.min_width = f32_max(layout.shape.min_width,
+						child.shape.min_width + padding)
+				}
 			}
 		}
 		if layout.shape.min_width > 0 {
