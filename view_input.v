@@ -483,6 +483,50 @@ fn (cfg &InputCfg) form_notify(layout &Layout, value string, trigger FormValidat
 	w.form_on_field_event(layout, cfg.form_adapter_cfg(value), trigger)
 }
 
+@[inline]
+fn input_state_or_default(id_focus u32, mut w Window) InputState {
+	return state_map[u32, InputState](mut w, ns_input, cap_many).get(id_focus) or { InputState{} }
+}
+
+@[inline]
+fn input_memento_from_state(text string, input_state InputState) InputMemento {
+	return InputMemento{
+		text:          text
+		cursor_pos:    input_state.cursor_pos
+		select_beg:    input_state.select_beg
+		select_end:    input_state.select_end
+		cursor_offset: input_state.cursor_offset
+	}
+}
+
+@[inline]
+fn input_push_memento(mut stack BoundedStack[InputMemento], text string, input_state InputState) BoundedStack[InputMemento] {
+	stack.push(input_memento_from_state(text, input_state))
+	return stack
+}
+
+@[inline]
+fn input_state_from_memento(memento InputMemento, undo BoundedStack[InputMemento], redo BoundedStack[InputMemento]) InputState {
+	return InputState{
+		cursor_pos:    memento.cursor_pos
+		select_beg:    memento.select_beg
+		select_end:    memento.select_end
+		cursor_offset: memento.cursor_offset
+		undo:          undo
+		redo:          redo
+	}
+}
+
+fn (cfg &InputCfg) exceeds_single_line_fixed_width(next_text string, mut w Window) bool {
+	if cfg.mode != .single_line || cfg.sizing.width != .fixed {
+		return false
+	}
+	ctx := w.ui
+	ctx.set_text_cfg(cfg.text_style.to_text_cfg())
+	width := ctx.text_width(next_text)
+	return width > cfg.width - cfg.padding.width() - (cfg.size_border * 2)
+}
+
 fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_pos int, mut w Window) string {
 	next_text := cfg.apply_pre_commit_transform(cfg.text, text) or { return cfg.text }
 	if next_text == cfg.text {
@@ -494,13 +538,7 @@ fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_p
 		int_clamp(cursor_pos, 0, next_text.runes().len)
 	}
 	mut undo := input_state.undo
-	undo.push(InputMemento{
-		text:          cfg.text
-		cursor_pos:    input_state.cursor_pos
-		select_beg:    input_state.select_beg
-		select_end:    input_state.select_end
-		cursor_offset: input_state.cursor_offset
-	})
+	undo = input_push_memento(mut undo, cfg.text, input_state)
 	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
 	imap.set(cfg.id_focus, InputState{
 		cursor_pos:    next_cursor_pos
@@ -537,31 +575,21 @@ fn (cfg &InputCfg) commit_text(layout &Layout, reason InputCommitReason, mut w W
 }
 
 fn (cfg &InputCfg) masked_insert(s string, mut w Window, compiled CompiledInputMask) !string {
-	input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(cfg.id_focus) or {
-		InputState{}
-	}
+	input_state := input_state_or_default(cfg.id_focus, mut w)
 	res := input_mask_insert(cfg.text, input_state.cursor_pos, input_state.select_beg,
 		input_state.select_end, s, &compiled)
 	if !res.changed {
 		return cfg.text
 	}
-	// Clamp max chars to width for single line fixed inputs.
-	if cfg.mode == .single_line && cfg.sizing.width == .fixed {
-		ctx := w.ui
-		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
-		width := ctx.text_width(res.text)
-		if width > cfg.width - cfg.padding.width() - (cfg.size_border * 2) {
-			return cfg.text
-		}
+	if cfg.exceeds_single_line_fixed_width(res.text, mut w) {
+		return cfg.text
 	}
 	return cfg.apply_text_edit(input_state, res.text, res.cursor_pos, mut w)
 }
 
-fn (cfg &InputCfg) masked_delete(mut w Window, is_delete bool, compiled CompiledInputMask) ?string {
-	input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(cfg.id_focus) or {
-		InputState{}
-	}
-	res := if is_delete {
+fn (cfg &InputCfg) masked_delete(mut w Window, forward_delete bool, compiled CompiledInputMask) ?string {
+	input_state := input_state_or_default(cfg.id_focus, mut w)
+	res := if forward_delete {
 		input_mask_delete(cfg.text, input_state.cursor_pos, input_state.select_beg, input_state.select_end,
 			&compiled)
 	} else {
@@ -578,14 +606,12 @@ fn (cfg &InputCfg) masked_delete(mut w Window, is_delete bool, compiled Compiled
 // selected, the entire selection is deleted. Otherwise, it deletes the
 // character before (backspace) or after (delete) the cursor. Saves state to
 // undo stack before modification. Returns modified text or none if invalid.
-fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
+fn (cfg &InputCfg) delete(mut w Window, forward_delete bool) ?string {
 	if compiled := cfg.active_compiled_mask() {
-		return cfg.masked_delete(mut w, is_delete, compiled)
+		return cfg.masked_delete(mut w, forward_delete, compiled)
 	}
 	mut text := cfg.text.runes()
-	input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(cfg.id_focus) or {
-		InputState{}
-	}
+	input_state := input_state_or_default(cfg.id_focus, mut w)
 	mut cursor_pos := int_min(input_state.cursor_pos, text.len)
 	if cursor_pos < 0 {
 		cursor_pos = text.len
@@ -599,18 +625,18 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 		text = arrays.append(text[..beg], text[end..])
 		cursor_pos = int_min(int(beg), text.len)
 	} else {
-		if cursor_pos == 0 && !is_delete {
+		if cursor_pos == 0 && !forward_delete {
 			return text.string()
 		}
-		if cursor_pos == text.len && is_delete {
+		if cursor_pos == text.len && forward_delete {
 			return text.string()
 		}
-		delete_pos := if is_delete { cursor_pos } else { cursor_pos - 1 }
+		delete_pos := if forward_delete { cursor_pos } else { cursor_pos - 1 }
 		if delete_pos < 0 || delete_pos >= text.len {
 			return none
 		}
 		text = arrays.append(text[..delete_pos], text[delete_pos + 1..])
-		if !is_delete {
+		if !forward_delete {
 			cursor_pos--
 		}
 	}
@@ -620,32 +646,24 @@ fn (cfg &InputCfg) delete(mut w Window, is_delete bool) ?string {
 // insert adds text at the cursor or replaces selection. For single-line
 // fixed-width inputs, it validates width constraints. Saves state to undo
 // stack before modification. Returns modified text or error.
-fn (cfg &InputCfg) insert(s string, mut w Window) !string {
-	if s.len == 0 {
+fn (cfg &InputCfg) insert(insert_text string, mut w Window) !string {
+	if insert_text.len == 0 {
 		return cfg.text
 	}
 	if compiled := cfg.active_compiled_mask() {
-		return cfg.masked_insert(s, mut w, compiled)
+		return cfg.masked_insert(insert_text, mut w, compiled)
 	}
-	mut insert_runes := s.runes()
+	mut insert_runes := insert_text.runes()
 	if insert_runes.len > input_max_insert_runes {
 		log.warn('input insert exceeds ${input_max_insert_runes} runes; truncating')
 		insert_runes = insert_runes[..input_max_insert_runes].clone()
 	}
-	insert_text := insert_runes.string()
-	// clamp max chars to width of box when single line fixed.
-	if cfg.mode == .single_line && cfg.sizing.width == .fixed {
-		ctx := w.ui
-		ctx.set_text_cfg(cfg.text_style.to_text_cfg())
-		width := ctx.text_width(cfg.text + insert_text)
-		if width > cfg.width - cfg.padding.width() - (cfg.size_border * 2) {
-			return cfg.text
-		}
+	insert_value := insert_runes.string()
+	if cfg.exceeds_single_line_fixed_width(cfg.text + insert_value, mut w) {
+		return cfg.text
 	}
 	mut text := cfg.text.runes()
-	input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(cfg.id_focus) or {
-		InputState{}
-	}
+	input_state := input_state_or_default(cfg.id_focus, mut w)
 	mut cursor_pos := int_min(input_state.cursor_pos, text.len)
 	if cursor_pos < 0 {
 		text = arrays.append(cfg.text.runes(), insert_runes)
@@ -713,21 +731,8 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 	mut undo := input_state.undo
 	memento := undo.pop() or { return cfg.text }
 	mut redo := input_state.redo
-	redo.push(InputMemento{
-		text:          cfg.text
-		cursor_pos:    input_state.cursor_pos
-		select_beg:    input_state.select_beg
-		select_end:    input_state.select_end
-		cursor_offset: input_state.cursor_offset
-	})
-	imap.set(cfg.id_focus, InputState{
-		cursor_pos:    memento.cursor_pos
-		select_beg:    memento.select_beg
-		select_end:    memento.select_end
-		undo:          undo
-		redo:          redo
-		cursor_offset: memento.cursor_offset
-	})
+	redo = input_push_memento(mut redo, cfg.text, input_state)
+	imap.set(cfg.id_focus, input_state_from_memento(memento, undo, redo))
 	return memento.text
 }
 
@@ -739,21 +744,8 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 	mut redo := input_state.redo
 	memento := redo.pop() or { return cfg.text }
 	mut undo := input_state.undo
-	undo.push(InputMemento{
-		text:          cfg.text
-		cursor_pos:    input_state.cursor_pos
-		select_beg:    input_state.select_beg
-		select_end:    input_state.select_end
-		cursor_offset: input_state.cursor_offset
-	})
-	imap.set(cfg.id_focus, InputState{
-		cursor_pos:    memento.cursor_pos
-		select_beg:    memento.select_beg
-		select_end:    memento.select_end
-		cursor_offset: memento.cursor_offset
-		undo:          undo
-		redo:          redo
-	})
+	undo = input_push_memento(mut undo, cfg.text, input_state)
+	imap.set(cfg.id_focus, input_state_from_memento(memento, undo, redo))
 	return memento.text
 }
 

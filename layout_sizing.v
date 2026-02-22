@@ -91,201 +91,230 @@ fn get_sizing(shape &Shape, axis DistributeAxis) SizingType {
 // which prevents fill children from shrinking below their fixed siblings.
 //
 // Returns the remaining space after distribution (for verification).
+struct DistributionState {
+mut:
+	remaining      f32
+	prev_remaining f32
+	mode           DistributeMode
+	axis           DistributeAxis
+}
+
+// DistributionExtrema stores one iteration's resize boundary pair.
+// extremum is the active group size in the current mode:
+// - grow: smallest fill child size
+// - shrink: largest child size
+// next_extrema is the nearest neighboring size used to cap delta.
+// Sentinel values represent "no neighbor found":
+// - grow: max_u32
+// - shrink: 0
+struct DistributionExtrema {
+	extremum     f32
+	next_extrema f32
+}
+
+fn collect_distribution_candidates(layout &Layout, axis DistributeAxis, mode DistributeMode, mut fill_indices []int, mut fixed_indices []int) {
+	fill_indices.clear()
+	if mode == .shrink {
+		fixed_indices.clear()
+	}
+	for i, child in layout.children {
+		if get_sizing(child.shape, axis) == .fill {
+			fill_indices << i
+		} else if mode == .shrink {
+			fixed_indices << i
+		}
+	}
+}
+
+fn should_continue_distribution(state DistributionState, fill_count int) bool {
+	if !f32_is_finite(state.remaining) {
+		return false
+	}
+	if fill_count == 0 {
+		return false
+	}
+	return match state.mode {
+		.grow { state.remaining > f32_tolerance }
+		.shrink { state.remaining < -f32_tolerance }
+	}
+}
+
+fn find_distribution_extrema(layout &Layout, axis DistributeAxis, mode DistributeMode, fill_indices []int, fixed_indices []int) ?DistributionExtrema {
+	if fill_indices.len == 0 {
+		return none
+	}
+	mut extrema := get_size(layout.children[fill_indices[0]].shape, axis)
+	mut next_extrema := match mode {
+		.grow { f32(max_u32) } // sentinel: larger than any real value
+		.shrink { f32(0) } // sentinel: smaller than any real value
+	}
+	for idx in fill_indices {
+		child_size := get_size(layout.children[idx].shape, axis)
+		match mode {
+			.grow {
+				if child_size < extrema {
+					next_extrema = extrema
+					extrema = child_size
+				} else if child_size > extrema {
+					next_extrema = f32_min(next_extrema, child_size)
+				}
+			}
+			.shrink {
+				if child_size > extrema {
+					next_extrema = extrema
+					extrema = child_size
+				} else if child_size < extrema {
+					next_extrema = f32_max(next_extrema, child_size)
+				}
+			}
+		}
+	}
+	if mode == .shrink {
+		for idx in fixed_indices {
+			child_size := get_size(layout.children[idx].shape, axis)
+			if child_size > extrema {
+				next_extrema = extrema
+				extrema = child_size
+			} else if child_size < extrema {
+				next_extrema = f32_max(next_extrema, child_size)
+			}
+		}
+	}
+	if !f32_is_finite(extrema) || !f32_is_finite(next_extrema) {
+		return none
+	}
+	return DistributionExtrema{
+		extremum:     extrema
+		next_extrema: next_extrema
+	}
+}
+
+fn compute_distribution_delta(layout &Layout, state DistributionState, extrema DistributionExtrema, fill_count int, fixed_count int) ?f32 {
+	mut size_delta := match state.mode {
+		.grow {
+			if extrema.next_extrema == max_u32 {
+				state.remaining
+			} else {
+				extrema.next_extrema - extrema.extremum
+			}
+		}
+		.shrink {
+			if extrema.extremum > 0 {
+				if extrema.next_extrema == 0 {
+					state.remaining
+				} else {
+					extrema.next_extrema - extrema.extremum
+				}
+			} else {
+				state.remaining
+			}
+		}
+	}
+	if !f32_is_finite(size_delta) {
+		return none
+	}
+	match state.mode {
+		.grow {
+			size_delta = f32_min(size_delta, state.remaining / fill_count)
+		}
+		.shrink {
+			total_count := fill_count + fixed_count
+			if total_count > 0 {
+				size_delta = f32_max(size_delta, state.remaining / f32(total_count))
+			}
+		}
+	}
+	if !f32_is_finite(size_delta) {
+		return none
+	}
+	mut sane_delta_limit := f32_max(f32_abs(get_size(layout.shape, state.axis)), f32_abs(state.remaining))
+	sane_delta_limit = f32_max(sane_delta_limit * 4, 1_000_000)
+	if !f32_is_finite(sane_delta_limit) || sane_delta_limit <= 0 {
+		return none
+	}
+	return f32_clamp(size_delta, -sane_delta_limit, sane_delta_limit)
+}
+
+fn apply_distribution_delta(mut layout Layout, axis DistributeAxis, extremum f32, size_delta f32, remaining_in f32, mut fill_indices []int) ?f32 {
+	mut remaining := remaining_in
+	mut keep_idx := 0
+	for i in 0 .. fill_indices.len {
+		idx := fill_indices[i]
+		mut child := &layout.children[idx]
+		mut keep_child := true
+		child_size := get_size(child.shape, axis)
+		if child_size == extremum {
+			prev_size := child_size
+			new_size := child_size + size_delta
+			if !f32_is_finite(new_size) {
+				return none
+			}
+			set_size(mut child.shape, axis, new_size)
+
+			mut constrained := false
+			min_size := get_min_size(child.shape, axis)
+			max_size := get_max_size(child.shape, axis)
+			current_size := get_size(child.shape, axis)
+			if current_size <= min_size {
+				set_size(mut child.shape, axis, min_size)
+				constrained = true
+			} else if max_size > 0 && current_size >= max_size {
+				set_size(mut child.shape, axis, max_size)
+				constrained = true
+			}
+			remaining -= get_size(child.shape, axis) - prev_size
+			if !f32_is_finite(remaining) {
+				return none
+			}
+			if constrained {
+				keep_child = false
+			}
+		}
+		if keep_child {
+			if keep_idx != i {
+				fill_indices[keep_idx] = idx
+			}
+			keep_idx++
+		}
+	}
+	fill_indices.trim(keep_idx)
+	return remaining
+}
+
 fn distribute_space(mut layout Layout,
 	remaining_in f32,
 	mode DistributeMode,
 	axis DistributeAxis,
 	mut candidates []int,
 	mut fixed_indices []int) f32 {
-	mut remaining := remaining_in
-	if !f32_is_finite(remaining) {
+	if !f32_is_finite(remaining_in) {
 		return f32(0)
 	}
-	mut prev_remaining := f32(0)
-
-	// Build candidate list
-	candidates.clear()
-	if mode == .shrink {
-		fixed_indices.clear()
+	mut state := DistributionState{
+		remaining:      remaining_in
+		prev_remaining: f32(0)
+		mode:           mode
+		axis:           axis
 	}
+	collect_distribution_candidates(layout, axis, mode, mut candidates, mut fixed_indices)
 
-	for i, child in layout.children {
-		if get_sizing(child.shape, axis) == .fill {
-			candidates << i
-		} else if mode == .shrink {
-			fixed_indices << i
-		}
-	}
-
-	// Iterate until space is distributed or no candidates remain
 	for {
-		if !f32_is_finite(remaining) {
+		if !should_continue_distribution(state, candidates.len) {
 			break
 		}
-		// Check termination conditions based on mode
-		should_continue := match mode {
-			.grow { remaining > f32_tolerance && candidates.len > 0 }
-			.shrink { remaining < -f32_tolerance && candidates.len > 0 }
-		}
-		if !should_continue {
+		if f32_are_close(state.remaining, state.prev_remaining) {
 			break
 		}
-
-		// Guard against infinite loops when rounding prevents progress
-		if f32_are_close(remaining, prev_remaining) {
+		state.prev_remaining = state.remaining
+		extrema := find_distribution_extrema(layout, axis, mode, candidates, fixed_indices) or {
 			break
 		}
-		prev_remaining = remaining
-
-		// Find extremum based on mode
-		mut extremum := get_size(layout.children[candidates[0]].shape, axis)
-		mut second := match mode {
-			.grow { f32(max_u32) } // sentinel: larger than any real value
-			.shrink { f32(0) } // sentinel: smaller than any real value
-		}
-
-		for idx in candidates {
-			child_size := get_size(layout.children[idx].shape, axis)
-			match mode {
-				.grow {
-					if child_size < extremum {
-						second = extremum
-						extremum = child_size
-					} else if child_size > extremum {
-						second = f32_min(second, child_size)
-					}
-				}
-				.shrink {
-					if child_size > extremum {
-						second = extremum
-						extremum = child_size
-					} else if child_size < extremum {
-						second = f32_max(second, child_size)
-					}
-				}
-			}
-		}
-
-		// For shrink mode, also consider fixed children when finding largest
-		if mode == .shrink {
-			for idx in fixed_indices {
-				child_size := get_size(layout.children[idx].shape, axis)
-				if child_size > extremum {
-					second = extremum
-					extremum = child_size
-				} else if child_size < extremum {
-					second = f32_max(second, child_size)
-				}
-			}
-		}
-		if !f32_is_finite(extremum) || !f32_is_finite(second) {
-			break
-		}
-
-		// Calculate delta to add/remove
-		mut delta := match mode {
-			.grow {
-				if second == max_u32 {
-					remaining
-				} else {
-					second - extremum
-				}
-			}
-			.shrink {
-				if extremum > 0 {
-					if second == 0 {
-						remaining
-					} else {
-						second - extremum
-					}
-				} else {
-					remaining
-				}
-			}
-		}
-		if !f32_is_finite(delta) {
-			break
-		}
-
-		// Clamp delta based on mode and candidate count
-		match mode {
-			.grow {
-				delta = f32_min(delta, remaining / candidates.len)
-			}
-			.shrink {
-				total_len := candidates.len + fixed_indices.len
-				if total_len > 0 {
-					delta = f32_max(delta, remaining / f32(total_len))
-				}
-			}
-		}
-		if !f32_is_finite(delta) {
-			break
-		}
-		mut sane_delta_limit := f32_max(f32_abs(get_size(layout.shape, axis)), f32_abs(remaining))
-		sane_delta_limit = f32_max(sane_delta_limit * 4, 1_000_000)
-		if !f32_is_finite(sane_delta_limit) || sane_delta_limit <= 0 {
-			break
-		}
-		delta = f32_clamp(delta, -sane_delta_limit, sane_delta_limit)
-
-		// Apply delta to candidates at extremum
-		mut keep_idx := 0
-		mut invalid_math := false
-		for i in 0 .. candidates.len {
-			idx := candidates[i]
-			mut child := &layout.children[idx]
-			mut kept := true
-
-			child_size := get_size(child.shape, axis)
-			if child_size == extremum {
-				prev_size := child_size
-				new_size := child_size + delta
-				if !f32_is_finite(new_size) {
-					invalid_math = true
-					break
-				}
-				set_size(mut child.shape, axis, new_size)
-
-				// Apply constraints
-				mut constrained := false
-				min_size := get_min_size(child.shape, axis)
-				max_size := get_max_size(child.shape, axis)
-				current := get_size(child.shape, axis)
-
-				if current <= min_size {
-					set_size(mut child.shape, axis, min_size)
-					constrained = true
-				} else if max_size > 0 && current >= max_size {
-					set_size(mut child.shape, axis, max_size)
-					constrained = true
-				}
-
-				remaining -= (get_size(child.shape, axis) - prev_size)
-				if !f32_is_finite(remaining) {
-					invalid_math = true
-					break
-				}
-
-				if constrained {
-					kept = false
-				}
-			}
-
-			if kept {
-				if keep_idx != i {
-					candidates[keep_idx] = idx
-				}
-				keep_idx++
-			}
-		}
-		if invalid_math {
-			break
-		}
-		candidates.trim(keep_idx)
+		size_delta := compute_distribution_delta(layout, state, extrema, candidates.len,
+			fixed_indices.len) or { break }
+		state.remaining = apply_distribution_delta(mut layout, axis, extrema.extremum,
+			size_delta, state.remaining, mut candidates) or { break }
 	}
-
-	return remaining
+	return state.remaining
 }
 
 // layout_widths arranges children horizontally. Only containers with an axis

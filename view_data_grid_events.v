@@ -230,43 +230,104 @@ fn data_grid_column_chooser_height(cfg DataGridCfg, is_open bool) f32 {
 	return if is_open { base * 2 } else { base }
 }
 
+struct DataGridPagerContext {
+	cfg             DataGridCfg
+	focus_id        u32
+	page_index      int
+	page_count      int
+	page_start      int
+	page_end        int
+	total_rows      int
+	viewport_h      f32
+	row_height      f32
+	static_top      f32
+	scroll_id       u32
+	data_to_display map[int]int
+	jump_text       string
+}
+
 fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count int, page_start int, page_end int, total_rows int, viewport_h f32, row_height f32, static_top f32, scroll_id u32, data_to_display map[int]int, jump_text string) View {
+	return data_grid_build_pager_row(DataGridPagerContext{
+		cfg:             cfg
+		focus_id:        focus_id
+		page_index:      page_index
+		page_count:      page_count
+		page_start:      page_start
+		page_end:        page_end
+		total_rows:      total_rows
+		viewport_h:      viewport_h
+		row_height:      row_height
+		static_top:      static_top
+		scroll_id:       scroll_id
+		data_to_display: data_to_display
+		jump_text:       jump_text
+	})
+}
+
+fn data_grid_build_pager_row(pager_ctx DataGridPagerContext) View {
+	cfg := pager_ctx.cfg
+	content := data_grid_pager_content(pager_ctx)
+	return row(
+		name:         'data_grid pager row'
+		height:       data_grid_pager_height(cfg)
+		sizing:       fill_fixed
+		color:        cfg.color_filter
+		color_border: cfg.color_border
+		size_border:  0
+		padding:      data_grid_pager_padding(cfg)
+		spacing:      6
+		v_align:      .middle
+		content:      content
+	)
+}
+
+fn data_grid_pager_content(pager_ctx DataGridPagerContext) []View {
+	cfg := pager_ctx.cfg
 	on_page_change := cfg.on_page_change
-	on_selection_change := cfg.on_selection_change
-	rows := cfg.rows
-	page_size := cfg.page_size
-	has_callback := on_page_change != unsafe { nil }
-	is_first := page_index <= 0
-	is_last := page_index >= page_count - 1
-	page_text := locale_page_fmt(page_index + 1, page_count)
-	rows_text := if total_rows == 0 || page_end <= page_start {
-		'${gui_locale.str_rows} 0/0'
-	} else {
-		locale_rows_fmt(page_start + 1, page_end, total_rows)
-	}
-	grid_id := cfg.id
-	jump_enabled := data_grid_jump_enabled_local(cfg.rows.len, on_selection_change, on_page_change,
-		page_size, total_rows)
-	jump_ctx := DataGridJumpContext{
-		rows:                rows
-		on_selection_change: on_selection_change
-		on_page_change:      on_page_change
-		page_size:           page_size
-		total_rows:          total_rows
-		page_index:          page_index
-		viewport_h:          viewport_h
-		row_height:          row_height
-		static_top:          static_top
-		scroll_id:           scroll_id
-		data_to_display:     data_to_display
-		grid_id:             grid_id
-	}
-	jump_input_id := '${grid_id}:jump'
+	is_first := pager_ctx.page_index <= 0
+	is_last := pager_ctx.page_index >= pager_ctx.page_count - 1
+	page_text := locale_page_fmt(pager_ctx.page_index + 1, pager_ctx.page_count)
+	rows_text := data_grid_pager_rows_text(pager_ctx.page_start, pager_ctx.page_end, pager_ctx.total_rows)
+	jump_ctx := data_grid_jump_context_from_pager(pager_ctx)
+	jump_enabled := data_grid_jump_enabled_local(cfg.rows.len, cfg.on_selection_change,
+		cfg.on_page_change, cfg.page_size, pager_ctx.total_rows)
+	jump_input_id := '${cfg.id}:jump'
 	jump_focus_id := fnv1a.sum32_string(jump_input_id)
+	prev_arrow, next_arrow := data_grid_pager_arrows()
+	mut content := []View{cap: 9}
+	content << data_grid_pager_prev_button(cfg, on_page_change, pager_ctx.page_index,
+		pager_ctx.focus_id, is_first, prev_arrow)
+	content << text(
+		text:       page_text
+		mode:       .single_line
+		text_style: cfg.text_style_filter
+	)
+	content << data_grid_pager_next_button(cfg, on_page_change, pager_ctx.page_index,
+		pager_ctx.page_count, pager_ctx.focus_id, is_last, next_arrow)
+	content << data_grid_pager_spacer()
+	content << data_grid_pager_rows_status(cfg, rows_text)
+	content << data_grid_pager_jump_label(cfg)
+	content << data_grid_pager_jump_input(cfg, jump_input_id, jump_focus_id, pager_ctx.jump_text,
+		jump_enabled, jump_ctx, pager_ctx.focus_id)
+	return content
+}
+
+fn data_grid_pager_rows_text(page_start int, page_end int, total_rows int) string {
+	if total_rows == 0 || page_end <= page_start {
+		return '${gui_locale.str_rows} 0/0'
+	}
+	return locale_rows_fmt(page_start + 1, page_end, total_rows)
+}
+
+fn data_grid_pager_arrows() (string, string) {
 	prev_arrow := if gui_locale.text_dir == .rtl { '▶' } else { '◀' }
 	next_arrow := if gui_locale.text_dir == .rtl { '◀' } else { '▶' }
-	mut content := []View{cap: 9}
-	content << data_grid_indicator_button(prev_arrow, cfg.text_style_header, cfg.color_header_hover,
+	return prev_arrow, next_arrow
+}
+
+fn data_grid_pager_prev_button(cfg DataGridCfg, on_page_change fn (page int, mut e Event, mut w Window), page_index int, focus_id u32, is_first bool, prev_arrow string) View {
+	has_callback := on_page_change != unsafe { nil }
+	return data_grid_indicator_button(prev_arrow, cfg.text_style_header, cfg.color_header_hover,
 		!has_callback || is_first, data_grid_header_control_width + 10, fn [on_page_change, page_index, focus_id] (_ &Layout, mut e Event, mut w Window) {
 		if on_page_change == unsafe { nil } {
 			return
@@ -278,12 +339,11 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 		}
 		e.is_handled = true
 	})
-	content << text(
-		text:       page_text
-		mode:       .single_line
-		text_style: cfg.text_style_filter
-	)
-	content << data_grid_indicator_button(next_arrow, cfg.text_style_header, cfg.color_header_hover,
+}
+
+fn data_grid_pager_next_button(cfg DataGridCfg, on_page_change fn (page int, mut e Event, mut w Window), page_index int, page_count int, focus_id u32, is_last bool, next_arrow string) View {
+	has_callback := on_page_change != unsafe { nil }
+	return data_grid_indicator_button(next_arrow, cfg.text_style_header, cfg.color_header_hover,
 		!has_callback || is_last, data_grid_header_control_width + 10, fn [on_page_change, page_index, page_count, focus_id] (_ &Layout, mut e Event, mut w Window) {
 		if on_page_change == unsafe { nil } {
 			return
@@ -295,13 +355,19 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 		}
 		e.is_handled = true
 	})
-	content << row(
+}
+
+fn data_grid_pager_spacer() View {
+	return row(
 		name:    'data_grid pager spacer'
 		sizing:  fill_fill
 		padding: padding_none
 		content: []
 	)
-	content << row(
+}
+
+fn data_grid_pager_rows_status(cfg DataGridCfg, rows_text string) View {
+	return row(
 		name:    'data_grid pager rows status'
 		sizing:  fit_fill
 		padding: padding(0, 6, 0, 0)
@@ -314,14 +380,38 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 			),
 		]
 	)
-	content << text(
+}
+
+fn data_grid_pager_jump_label(cfg DataGridCfg) View {
+	return text(
 		text:       gui_locale.str_jump
 		mode:       .single_line
 		text_style: data_grid_indicator_text_style(cfg.text_style_filter)
 	)
-	content << input(
-		id:              jump_input_id
-		id_focus:        jump_focus_id
+}
+
+fn data_grid_jump_context_from_pager(pager_ctx DataGridPagerContext) DataGridJumpContext {
+	cfg := pager_ctx.cfg
+	return DataGridJumpContext{
+		rows:                cfg.rows
+		on_selection_change: cfg.on_selection_change
+		on_page_change:      cfg.on_page_change
+		page_size:           cfg.page_size
+		total_rows:          pager_ctx.total_rows
+		page_index:          pager_ctx.page_index
+		viewport_h:          pager_ctx.viewport_h
+		row_height:          pager_ctx.row_height
+		static_top:          pager_ctx.static_top
+		scroll_id:           pager_ctx.scroll_id
+		data_to_display:     pager_ctx.data_to_display
+		grid_id:             cfg.id
+	}
+}
+
+fn data_grid_pager_jump_input(cfg DataGridCfg, input_id string, focus_id u32, jump_text string, jump_enabled bool, jump_ctx DataGridJumpContext, grid_focus_id u32) View {
+	return input(
+		id:              input_id
+		id_focus:        focus_id
 		text:            jump_text
 		placeholder:     '#'
 		disabled:        !jump_enabled
@@ -334,31 +424,19 @@ fn data_grid_pager_row(cfg DataGridCfg, focus_id u32, page_index int, page_count
 		color_hover:     cfg.color_filter
 		color_border:    cfg.color_border
 		text_style:      cfg.text_style_filter
-		on_text_changed: fn [jump_ctx] (_ &Layout, text string, mut w Window) {
-			digits := data_grid_jump_digits(text)
+		on_text_changed: fn [jump_ctx] (_ &Layout, input_text string, mut w Window) {
+			digits := data_grid_jump_digits(input_text)
 			mut dg_ji := state_map[string, string](mut w, ns_dg_jump, cap_moderate)
 			dg_ji.set(jump_ctx.grid_id, digits)
 			mut e := Event{}
 			data_grid_submit_local_jump(jump_ctx, mut e, mut w)
 		}
-		on_enter:        fn [jump_ctx, focus_id] (_ &Layout, mut e Event, mut w Window) {
+		on_enter:        fn [jump_ctx, grid_focus_id] (_ &Layout, mut e Event, mut w Window) {
 			data_grid_submit_local_jump(DataGridJumpContext{
 				...jump_ctx
-				focus_id: focus_id
+				focus_id: grid_focus_id
 			}, mut e, mut w)
 		}
-	)
-	return row(
-		name:         'data_grid pager row'
-		height:       data_grid_pager_height(cfg)
-		sizing:       fill_fixed
-		color:        cfg.color_filter
-		color_border: cfg.color_border
-		size_border:  0
-		padding:      data_grid_pager_padding(cfg)
-		spacing:      6
-		v_align:      .middle
-		content:      content
 	)
 }
 
@@ -422,7 +500,7 @@ struct DataGridHeaderKeydownContext {
 }
 
 fn make_data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx int, col_count int, grid_focus_id u32) fn (&Layout, mut Event, mut Window) {
-	hk := DataGridHeaderKeydownContext{
+	header_key_ctx := DataGridHeaderKeydownContext{
 		grid_id:                cfg.id
 		columns:                cfg.columns
 		column_order:           cfg.column_order
@@ -438,12 +516,12 @@ fn make_data_grid_header_on_keydown(cfg DataGridCfg, col GridColumnCfg, col_idx 
 		col_count:              col_count
 		grid_focus_id:          grid_focus_id
 	}
-	return fn [hk] (_ &Layout, mut e Event, mut w Window) {
-		data_grid_header_on_keydown(hk, mut e, mut w)
+	return fn [header_key_ctx] (_ &Layout, mut e Event, mut w Window) {
+		data_grid_header_on_keydown(header_key_ctx, mut e, mut w)
 	}
 }
 
-fn data_grid_header_on_keydown(hk DataGridHeaderKeydownContext, mut e Event, mut w Window) {
+fn data_grid_header_on_keydown(key_ctx DataGridHeaderKeydownContext, mut e Event, mut w Window) {
 	is_ctrl_or_super := e.modifiers.has(.ctrl) || e.modifiers.has(.super)
 	is_alt := e.modifiers.has(.alt)
 	is_shift := e.modifiers.has(.shift)
@@ -451,8 +529,8 @@ fn data_grid_header_on_keydown(hk DataGridHeaderKeydownContext, mut e Event, mut
 	match e.key_code {
 		.enter, .space {
 			if e.modifiers == .none || e.modifiers == .shift {
-				data_grid_header_toggle_sort(hk.query, hk.multi_sort, hk.on_query_change,
-					hk.col, mut e, mut w)
+				data_grid_header_toggle_sort(key_ctx.query, key_ctx.multi_sort, key_ctx.on_query_change,
+					key_ctx.col, mut e, mut w)
 			}
 			return
 		}
@@ -462,9 +540,9 @@ fn data_grid_header_on_keydown(hk DataGridHeaderKeydownContext, mut e Event, mut
 			raw_dir := if e.key_code == .left { -1 } else { 1 }
 			dir := if is_rtl { -raw_dir } else { raw_dir }
 			if is_ctrl_or_super {
-				data_grid_header_reorder_by_key(hk.columns, hk.column_order, hk.hidden_column_ids,
-					hk.on_column_order_change, hk.header_focus_base, hk.col, hk.col_count,
-					dir, mut e, mut w)
+				data_grid_header_reorder_by_key(key_ctx.columns, key_ctx.column_order,
+					key_ctx.hidden_column_ids, key_ctx.on_column_order_change, key_ctx.header_focus_base,
+					key_ctx.col, key_ctx.col_count, dir, mut e, mut w)
 				return
 			}
 			if is_alt {
@@ -475,15 +553,15 @@ fn data_grid_header_on_keydown(hk DataGridHeaderKeydownContext, mut e Event, mut
 					data_grid_resize_key_step
 				}
 				delta := if e.key_code == .left { -step } else { step }
-				data_grid_header_resize_by_key(hk.grid_id, hk.columns, hk.col, delta, mut
-					e, mut w)
+				data_grid_header_resize_by_key(key_ctx.grid_id, key_ctx.columns, key_ctx.col,
+					delta, mut e, mut w)
 				return
 			}
 			if e.modifiers == .none {
-				next_idx := int_clamp(hk.col_idx + dir, 0, hk.col_count - 1)
-				if next_idx != hk.col_idx {
-					next_focus_id := data_grid_header_focus_id_from_base(hk.header_focus_base,
-						hk.col_count, next_idx)
+				next_idx := int_clamp(key_ctx.col_idx + dir, 0, key_ctx.col_count - 1)
+				if next_idx != key_ctx.col_idx {
+					next_focus_id := data_grid_header_focus_id_from_base(key_ctx.header_focus_base,
+						key_ctx.col_count, next_idx)
 					if next_focus_id > 0 {
 						w.set_id_focus(next_focus_id)
 					}
@@ -494,16 +572,16 @@ fn data_grid_header_on_keydown(hk DataGridHeaderKeydownContext, mut e Event, mut
 		}
 		.p {
 			if e.modifiers == .none {
-				data_grid_header_pin_by_key(hk.columns, hk.column_order, hk.hidden_column_ids,
-					hk.on_column_pin_change, hk.header_focus_base, hk.col, hk.col_count, mut
-					e, mut w)
+				data_grid_header_pin_by_key(key_ctx.columns, key_ctx.column_order, key_ctx.hidden_column_ids,
+					key_ctx.on_column_pin_change, key_ctx.header_focus_base, key_ctx.col,
+					key_ctx.col_count, mut e, mut w)
 			}
 			return
 		}
 		.escape {
 			if e.modifiers == .none {
-				if hk.grid_focus_id > 0 {
-					w.set_id_focus(hk.grid_focus_id)
+				if key_ctx.grid_focus_id > 0 {
+					w.set_id_focus(key_ctx.grid_focus_id)
 				}
 				e.is_handled = true
 			}
@@ -607,7 +685,7 @@ struct DataGridKeydownContext {
 // row navigation with optional Shift for range extend.
 // Enter: activate row or commit edit.
 fn make_data_grid_on_keydown(cfg DataGridCfg, columns []GridColumnCfg, row_height f32, static_top f32, scroll_id u32, page_indices []int, frozen_top_ids map[string]bool, data_to_display map[int]int) fn (&Layout, mut Event, mut Window) {
-	kd := DataGridKeydownContext{
+	key_ctx := DataGridKeydownContext{
 		grid_id:             cfg.id
 		rows:                cfg.rows
 		columns:             columns
@@ -633,113 +711,165 @@ fn make_data_grid_on_keydown(cfg DataGridCfg, columns []GridColumnCfg, row_heigh
 		frozen_top_ids:      frozen_top_ids
 		data_to_display:     data_to_display
 	}
-	return fn [kd] (_ &Layout, mut e Event, mut w Window) {
-		data_grid_on_keydown(kd, mut e, mut w)
+	return fn [key_ctx] (_ &Layout, mut e Event, mut w Window) {
+		data_grid_on_keydown(key_ctx, mut e, mut w)
 	}
 }
 
-fn data_grid_on_keydown(kd DataGridKeydownContext, mut e Event, mut w Window) {
-	if e.modifiers == .none && e.key_code == .escape {
-		if data_grid_editing_row_id(kd.grid_id, mut w).len > 0 {
-			data_grid_clear_editing_row(kd.grid_id, mut w)
-			e.is_handled = true
-			return
-		}
-		if kd.crud_enabled {
-			data_grid_crud_cancel(kd.grid_id, 0, mut e, mut w)
-		}
+fn data_grid_on_keydown(key_ctx DataGridKeydownContext, mut e Event, mut w Window) {
+	if data_grid_handle_escape_key(key_ctx, mut e, mut w) {
 		return
 	}
-	if kd.crud_enabled && e.modifiers == .none && e.key_code == .insert {
-		data_grid_crud_add_row(kd.grid_id, kd.columns, kd.on_selection_change, 0, kd.scroll_id,
-			kd.page_size, kd.page_index, kd.on_page_change, mut e, mut w)
+	if data_grid_handle_crud_keys(key_ctx, mut e, mut w) {
 		return
 	}
-	if kd.crud_enabled && e.modifiers == .none && e.key_code == .delete {
-		data_grid_crud_delete_selected(kd.grid_id, kd.selection, kd.on_selection_change,
-			0, mut e, mut w)
+	if data_grid_handle_edit_start_key(key_ctx, mut e, mut w) {
 		return
 	}
-	if e.modifiers == .none && e.key_code == .f2 {
-		if kd.edit_enabled && kd.rows.len > 0 && kd.first_edit_col_idx >= 0 {
-			row_idx := data_grid_active_row_index(kd.rows, kd.selection)
-			if row_idx >= 0 && row_idx < kd.rows.len {
-				r_id := data_grid_row_id(kd.rows[row_idx], row_idx)
-				data_grid_set_editing_row(kd.grid_id, r_id, mut w)
-				efid := data_grid_editor_focus_id_from_base(kd.editor_focus_base, kd.col_count,
-					kd.first_edit_col_idx)
-				if efid > 0 {
-					w.set_id_focus(efid)
-				}
-				e.is_handled = true
-			}
-		}
+	if data_grid_handle_page_shortcut(key_ctx, mut e, mut w) {
 		return
 	}
-	if kd.on_page_change != unsafe { nil } && kd.page_size > 0 {
-		_, _, pi, pc := data_grid_page_bounds(kd.rows.len, kd.page_size, kd.page_index)
-		if pc > 1 {
-			if next_pi := data_grid_next_page_index_for_key(pi, pc, &e) {
-				if next_pi != pi {
-					kd.on_page_change(next_pi, mut e, mut w)
-				}
-				e.is_handled = true
-				return
-			}
-		}
-	}
-	if kd.rows.len == 0 {
+	if key_ctx.rows.len == 0 {
 		return
 	}
-	visible_indices := data_grid_visible_row_indices(kd.rows.len, kd.page_indices)
+	visible_indices := data_grid_visible_row_indices(key_ctx.rows.len, key_ctx.page_indices)
 	if visible_indices.len == 0 {
 		return
 	}
+	if data_grid_handle_select_all_shortcut(key_ctx, mut e, mut w) {
+		return
+	}
+	if data_grid_handle_enter_key(key_ctx, mut e, mut w) {
+		return
+	}
+	data_grid_handle_row_navigation_keys(key_ctx, visible_indices, mut e, mut w)
+}
 
-	if data_grid_is_select_all_shortcut(&e) && kd.multi_select {
-		mut selected := map[string]bool{}
-		for idx, row_data in kd.rows {
-			selected[data_grid_row_id(row_data, idx)] = true
+fn data_grid_handle_escape_key(key_ctx DataGridKeydownContext, mut e Event, mut w Window) bool {
+	if e.modifiers != .none || e.key_code != .escape {
+		return false
+	}
+	if data_grid_editing_row_id(key_ctx.grid_id, mut w).len > 0 {
+		data_grid_clear_editing_row(key_ctx.grid_id, mut w)
+		e.is_handled = true
+		return true
+	}
+	if key_ctx.crud_enabled {
+		data_grid_crud_cancel(key_ctx.grid_id, 0, mut e, mut w)
+	}
+	return true
+}
+
+fn data_grid_handle_crud_keys(key_ctx DataGridKeydownContext, mut e Event, mut w Window) bool {
+	if !key_ctx.crud_enabled || e.modifiers != .none {
+		return false
+	}
+	match e.key_code {
+		.insert {
+			data_grid_crud_add_row(key_ctx.grid_id, key_ctx.columns, key_ctx.on_selection_change,
+				0, key_ctx.scroll_id, key_ctx.page_size, key_ctx.page_index, key_ctx.on_page_change, mut
+				e, mut w)
+			return true
 		}
-		next := GridSelection{
-			anchor_row_id:    data_grid_row_id(kd.rows[0], 0)
-			active_row_id:    data_grid_row_id(kd.rows[kd.rows.len - 1], kd.rows.len - 1)
-			selected_row_ids: selected
+		.delete {
+			data_grid_crud_delete_selected(key_ctx.grid_id, key_ctx.selection, key_ctx.on_selection_change,
+				0, mut e, mut w)
+			return true
 		}
-		data_grid_set_anchor(kd.grid_id, next.anchor_row_id, mut w)
-		if kd.on_selection_change != unsafe { nil } {
-			kd.on_selection_change(next, mut e, mut w)
+		else {}
+	}
+	return false
+}
+
+fn data_grid_handle_edit_start_key(key_ctx DataGridKeydownContext, mut e Event, mut w Window) bool {
+	if e.modifiers != .none || e.key_code != .f2 {
+		return false
+	}
+	if key_ctx.edit_enabled && key_ctx.rows.len > 0 && key_ctx.first_edit_col_idx >= 0 {
+		row_idx := data_grid_active_row_index(key_ctx.rows, key_ctx.selection)
+		if row_idx >= 0 && row_idx < key_ctx.rows.len {
+			row_id := data_grid_row_id(key_ctx.rows[row_idx], row_idx)
+			data_grid_set_editing_row(key_ctx.grid_id, row_id, mut w)
+			editor_focus_id := data_grid_editor_focus_id_from_base(key_ctx.editor_focus_base,
+				key_ctx.col_count, key_ctx.first_edit_col_idx)
+			if editor_focus_id > 0 {
+				w.set_id_focus(editor_focus_id)
+			}
+			e.is_handled = true
+		}
+	}
+	return true
+}
+
+fn data_grid_handle_page_shortcut(key_ctx DataGridKeydownContext, mut e Event, mut w Window) bool {
+	if key_ctx.on_page_change == unsafe { nil } || key_ctx.page_size <= 0 {
+		return false
+	}
+	_, _, page_idx, page_count := data_grid_page_bounds(key_ctx.rows.len, key_ctx.page_size,
+		key_ctx.page_index)
+	if page_count <= 1 {
+		return false
+	}
+	if next_page_idx := data_grid_next_page_index_for_key(page_idx, page_count, &e) {
+		if next_page_idx != page_idx {
+			key_ctx.on_page_change(next_page_idx, mut e, mut w)
 		}
 		e.is_handled = true
-		return
+		return true
 	}
+	return false
+}
 
-	if e.key_code == .enter {
-		if data_grid_editing_row_id(kd.grid_id, mut w).len > 0 {
-			data_grid_clear_editing_row(kd.grid_id, mut w)
-			e.is_handled = true
-			return
-		}
-		if kd.on_row_activate == unsafe { nil } {
-			return
-		}
-		idx := data_grid_active_row_index(kd.rows, kd.selection)
-		if idx >= 0 && idx < kd.rows.len {
-			kd.on_row_activate(kd.rows[idx], mut e, mut w)
-			e.is_handled = true
-		}
-		return
+fn data_grid_handle_select_all_shortcut(key_ctx DataGridKeydownContext, mut e Event, mut w Window) bool {
+	if !data_grid_is_select_all_shortcut(&e) || !key_ctx.multi_select {
+		return false
 	}
+	mut selected := map[string]bool{}
+	for row_idx, row_data in key_ctx.rows {
+		selected[data_grid_row_id(row_data, row_idx)] = true
+	}
+	next_selection := GridSelection{
+		anchor_row_id:    data_grid_row_id(key_ctx.rows[0], 0)
+		active_row_id:    data_grid_row_id(key_ctx.rows[key_ctx.rows.len - 1], key_ctx.rows.len - 1)
+		selected_row_ids: selected
+	}
+	data_grid_set_anchor(key_ctx.grid_id, next_selection.anchor_row_id, mut w)
+	if key_ctx.on_selection_change != unsafe { nil } {
+		key_ctx.on_selection_change(next_selection, mut e, mut w)
+	}
+	e.is_handled = true
+	return true
+}
 
+fn data_grid_handle_enter_key(key_ctx DataGridKeydownContext, mut e Event, mut w Window) bool {
+	if e.key_code != .enter {
+		return false
+	}
+	if data_grid_editing_row_id(key_ctx.grid_id, mut w).len > 0 {
+		data_grid_clear_editing_row(key_ctx.grid_id, mut w)
+		e.is_handled = true
+		return true
+	}
+	if key_ctx.on_row_activate == unsafe { nil } {
+		return true
+	}
+	row_idx := data_grid_active_row_index(key_ctx.rows, key_ctx.selection)
+	if row_idx >= 0 && row_idx < key_ctx.rows.len {
+		key_ctx.on_row_activate(key_ctx.rows[row_idx], mut e, mut w)
+		e.is_handled = true
+	}
+	return true
+}
+
+fn data_grid_handle_row_navigation_keys(key_ctx DataGridKeydownContext, visible_indices []int, mut e Event, mut w Window) {
 	is_shift := e.modifiers.has(.shift)
 	if e.modifiers != .none && !is_shift {
 		return
 	}
 
-	current := data_grid_active_row_index(kd.rows, kd.selection)
-	current_pos := data_grid_index_in_list(visible_indices, current)
-	mut visible_pos := if current_pos >= 0 { current_pos } else { 0 }
-	mut target_pos := visible_pos
+	current_idx := data_grid_active_row_index(key_ctx.rows, key_ctx.selection)
+	current_pos := data_grid_index_in_list(visible_indices, current_idx)
+	mut target_pos := if current_pos >= 0 { current_pos } else { 0 }
 
 	match e.key_code {
 		.up {
@@ -755,65 +885,71 @@ fn data_grid_on_keydown(kd DataGridKeydownContext, mut e Event, mut w Window) {
 			target_pos = visible_indices.len - 1
 		}
 		.page_up {
-			target_pos -= kd.page_rows
+			target_pos -= key_ctx.page_rows
 		}
 		.page_down {
-			target_pos += kd.page_rows
+			target_pos += key_ctx.page_rows
 		}
 		else {
 			return
 		}
 	}
-	target_pos = int_clamp(target_pos, 0, visible_indices.len - 1)
-	target := visible_indices[target_pos]
-	if kd.on_selection_change == unsafe { nil } {
+	if key_ctx.on_selection_change == unsafe { nil } {
 		return
 	}
-
-	target_id := data_grid_row_id(kd.rows[target], target)
-	mut next := GridSelection{}
-	if is_shift && kd.multi_select && kd.range_select {
-		anchor := data_grid_anchor_row_id_ex(kd.selection, kd.grid_id, kd.rows, mut w,
-			target_id)
-		start, end := data_grid_range_indices(kd.rows, anchor, target_id)
-		mut selected := map[string]bool{}
-		if start >= 0 && end >= start {
-			for idx in start .. end + 1 {
-				selected[data_grid_row_id(kd.rows[idx], idx)] = true
-			}
-		} else {
-			selected[target_id] = true
-		}
-		next = GridSelection{
-			anchor_row_id:    anchor
-			active_row_id:    target_id
-			selected_row_ids: selected
-		}
-		data_grid_set_anchor(kd.grid_id, anchor, mut w)
-	} else {
-		next = GridSelection{
-			anchor_row_id:    target_id
-			active_row_id:    target_id
-			selected_row_ids: {
-				target_id: true
-			}
-		}
-		data_grid_set_anchor(kd.grid_id, target_id, mut w)
-	}
-
-	kd.on_selection_change(next, mut e, mut w)
-	if kd.frozen_top_ids[target_id] {
+	target_pos = int_clamp(target_pos, 0, visible_indices.len - 1)
+	target_idx := visible_indices[target_pos]
+	target_row_id := data_grid_row_id(key_ctx.rows[target_idx], target_idx)
+	next_selection := data_grid_selection_for_target_row(key_ctx, target_row_id, is_shift, mut
+		w)
+	key_ctx.on_selection_change(next_selection, mut e, mut w)
+	if key_ctx.frozen_top_ids[target_row_id] {
 		e.is_handled = true
 		return
 	}
-	display_idx := kd.data_to_display[target] or { -1 }
+	display_idx := key_ctx.data_to_display[target_idx] or { -1 }
 	if display_idx < 0 {
 		e.is_handled = true
 		return
 	}
-	data_grid_scroll_row_into_view_ex(kd.viewport_h, display_idx, kd.row_height, kd.static_top,
-		kd.scroll_id, mut w)
+	data_grid_scroll_row_into_view_ex(key_ctx.viewport_h, display_idx, key_ctx.row_height,
+		key_ctx.static_top, key_ctx.scroll_id, mut w)
 	e.is_handled = true
+}
+
+fn data_grid_selection_for_target_row(key_ctx DataGridKeydownContext, target_row_id string, is_shift bool, mut w Window) GridSelection {
+	if is_shift && key_ctx.multi_select && key_ctx.range_select {
+		anchor_row_id := data_grid_anchor_row_id_ex(key_ctx.selection, key_ctx.grid_id,
+			key_ctx.rows, mut w, target_row_id)
+		start, end := data_grid_range_indices(key_ctx.rows, anchor_row_id, target_row_id)
+		selected_rows := data_grid_range_selected_rows(key_ctx.rows, start, end, target_row_id)
+		data_grid_set_anchor(key_ctx.grid_id, anchor_row_id, mut w)
+		return GridSelection{
+			anchor_row_id:    anchor_row_id
+			active_row_id:    target_row_id
+			selected_row_ids: selected_rows
+		}
+	}
+	data_grid_set_anchor(key_ctx.grid_id, target_row_id, mut w)
+	return GridSelection{
+		anchor_row_id:    target_row_id
+		active_row_id:    target_row_id
+		selected_row_ids: {
+			target_row_id: true
+		}
+	}
+}
+
+fn data_grid_range_selected_rows(rows []GridRow, start int, end int, target_row_id string) map[string]bool {
+	mut selected := map[string]bool{}
+	if start >= 0 && end >= start {
+		for row_idx in start .. end + 1 {
+			selected[data_grid_row_id(rows[row_idx], row_idx)] = true
+		}
+		return selected
+	}
+	selected[target_row_id] = true
+	return selected
 }
 
 fn data_grid_scroll_row_into_view(cfg DataGridCfg, row_idx int, row_height f32, static_top f32, scroll_id u32, mut w Window) {
