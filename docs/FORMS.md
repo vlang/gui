@@ -120,6 +120,42 @@ Available on `input` and `numeric_input`:
 - `window.form_field_errors(form_id, field_id)`
 - `window.form_pending_state(form_id)`
 
+## Select
+
+`select` is a dropdown picker for single-select or multi-select
+workflows.
+It is not a built-in `form` field adapter yet.
+
+```v ignore
+window.select(gui.SelectCfg{
+    id:              'city'
+    id_focus:        10
+    select:          ['New York']
+    options:         ['New York', 'Chicago', 'Denver']
+    placeholder:     'Pick a city'
+    select_multiple: false
+    on_select:       fn (values []string, mut e gui.Event, mut w gui.Window) {
+        if values.len > 0 {
+            w.state[App]().city = values[0]
+        }
+        e.is_handled = true
+    }
+})
+```
+
+Key `SelectCfg` fields:
+- `id string`: required unique ID for this select.
+- `id_focus u32`: keyboard focus ID.
+- `select []string`: current selected values.
+- `options []string`: available options.
+- `placeholder string`: shown when `select` is empty.
+- `select_multiple bool`: allow selecting more than one option.
+- `no_wrap bool`: keep selected text on one line.
+- `on_select fn ([]string, mut Event, mut Window)`: required callback.
+
+Option grouping:
+- Prefix an option with `---` to render a non-selectable group subheader.
+
 ## Notes
 
 - Fields register automatically when rendered inside a `form` subtree.

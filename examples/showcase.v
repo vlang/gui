@@ -773,9 +773,13 @@ fn catalog_panel(mut w gui.Window) gui.View {
 	if entries.len == 0 {
 		app.selected_component = ''
 		app.show_docs = false
+		w.scroll_vertical_to(id_scroll_gallery, 0)
+		w.scroll_horizontal_to(id_scroll_gallery, 0)
 	} else if !has_entry(entries, app.selected_component) {
 		app.selected_component = preferred_component_for_group(app.selected_group, entries)
 		app.show_docs = false
+		w.scroll_vertical_to(id_scroll_gallery, 0)
+		w.scroll_horizontal_to(id_scroll_gallery, 0)
 	}
 	return gui.column(
 		width:   300
@@ -866,6 +870,8 @@ fn group_picker_item(label string, key string, app &ShowcaseApp) gui.View {
 			entries := filtered_entries(app)
 			app.selected_component = preferred_component_for_group(key, entries)
 			w.scroll_vertical_to(id_scroll_catalog, 0)
+			w.scroll_vertical_to(id_scroll_gallery, 0)
+			w.scroll_horizontal_to(id_scroll_gallery, 0)
 			e.is_handled = true
 		}
 		on_hover: fn (mut _ gui.Layout, mut _ gui.Event, mut w gui.Window) {
@@ -957,6 +963,7 @@ fn catalog_row(entry DemoEntry, app &ShowcaseApp) gui.View {
 			app.selected_component = entry.id
 			app.show_docs = false
 			w.scroll_vertical_to(id_scroll_gallery, 0)
+			w.scroll_horizontal_to(id_scroll_gallery, 0)
 			e.is_handled = true
 		}
 		on_hover: fn [is_selected] (mut layout gui.Layout, mut _ gui.Event, mut w gui.Window) {
@@ -998,7 +1005,7 @@ fn detail_panel(mut w gui.Window) gui.View {
 	}
 	entry := selected_entry(entries, app.selected_component)
 	mut content := []gui.View{}
-	content << view_title_bar(entry.label, app.show_docs, entry.group)
+	content << view_title_bar(entry.id, entry.label, app.show_docs)
 	content << gui.text(text: entry.summary, text_style: gui.theme().n3)
 	if app.show_docs && entry.group != 'welcome' {
 		content << w.markdown(
@@ -1102,7 +1109,7 @@ fn related_examples(id string) string {
 		'input' { 'examples/inputs.v, examples/multiline_input.v' }
 		'toggle', 'switch' { 'examples/toggles.v' }
 		'radio', 'radio_group' { 'examples/radio_button_group.v' }
-		'select' { 'examples/select_demo.v' }
+		'select' { 'examples/select_demo.v, docs/FORMS.md' }
 		'listbox' { 'examples/listbox.v' }
 		'range_slider' { 'examples/range_sliders.v' }
 		'progress_bar' { 'examples/progress_bars.v' }
@@ -1215,11 +1222,11 @@ fn doc_button(show_docs bool) gui.View {
 	)
 }
 
-fn view_title_bar(label string, show_docs bool, group string) gui.View {
+fn view_title_bar(id string, label string, show_docs bool) gui.View {
 	mut title_content := [
 		gui.text(text: label, text_style: gui.theme().b1),
 	]
-	if group != 'welcome' {
+	if id != 'welcome' && !id.starts_with('doc_') {
 		title_content << gui.row(sizing: gui.fill_fit, padding: gui.padding_none)
 		title_content << doc_button(show_docs)
 	}
@@ -2449,8 +2456,8 @@ fn demo_select(w &gui.Window) gui.View {
 							w.select(
 								id:          'catalog_select_single'
 								id_focus:    9121
-								min_width:   280
-								max_width:   280
+								min_width:   200
+								max_width:   200
 								select:      app.selected_2
 								placeholder: 'Pick one city'
 								options:     [
