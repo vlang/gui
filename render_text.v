@@ -115,20 +115,22 @@ fn password_mask_slice(mask string, text string, start_byte int, end_byte int) s
 	return mask[start..end]
 }
 
-// render_text renders text including multiline text using vglyph layout.
-// If cursor coordinates are present, it draws the input cursor.
-// The highlighting of selected text happens here also.
-fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
-	dr := gg.Rect{
-		x:      shape.x
-		y:      shape.y
-		width:  shape.width
-		height: shape.height
-	}
-	if !rects_overlap(dr, clip) {
-		shape.disabled = true
-		return
-	}
+struct RenderTextStyleState {
+	color        Color
+	stroke_color Color
+	text_cfg     vglyph.TextConfig
+	has_stroke   bool
+	has_gradient bool
+}
+
+struct RenderTextSelectionState {
+	line_height   f32
+	byte_beg      int
+	byte_end      int
+	password_mask string
+}
+
+fn render_text_style_state(shape &Shape) RenderTextStyleState {
 	mut color := if shape.disabled {
 		dim_alpha(shape.tc.text_style.color)
 	} else {
@@ -148,69 +150,167 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 		color:        color
 		stroke_color: stroke_color
 	}.to_vglyph_cfg()
-
-	has_stroke := shape.tc.text_style.stroke_width > 0 && stroke_color.a > 0
-	if shape.has_text_layout() && (color != color_transparent || has_stroke) {
-		if transform := text_shape_draw_transform(shape) {
-			mut layout_to_draw := shape.tc.vglyph_layout
-			if window.text_system != unsafe { nil } {
-				mut cfg := text_cfg
-				cfg.block.width = shape.tc.last_constraint_width
-				cfg.no_hit_testing = true
-				text_to_layout := if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
-					get_password_mask(mut shape.tc)
-				} else {
-					shape.tc.text
-				}
-				cache_key := transformed_layout_cache_key(shape, text_to_layout.hash(),
-					cfg)
-				if shape.tc.cached_transform_layout != unsafe { nil }
-					&& shape.tc.cached_transform_key == cache_key {
-					layout_to_draw = shape.tc.cached_transform_layout
-				} else {
-					mut transformed_layout := window.text_system.layout_text(text_to_layout,
-						cfg) or {
-						log.error('Transformed text layout failed at (${shape.x}, ${shape.y}): ${err.msg()}')
-						return
-					}
-					if transformed_layout.lines.len > 0 || text_to_layout.len == 0 {
-						// `transformed_layout` is local; draw renderer needs
-						// a heap-owned copy that outlives this function.
-						shape.tc.cached_transform_layout = clone_layout_for_draw(&transformed_layout)
-						shape.tc.cached_transform_key = cache_key
-						layout_to_draw = shape.tc.cached_transform_layout
-					}
-				}
-			}
-			emit_renderer(DrawLayoutTransformed{
-				layout:    layout_to_draw
-				x:         shape.x + shape.padding_left()
-				y:         shape.y + shape.padding_top()
-				transform: transform
-				gradient:  shape.tc.text_style.gradient
-			}, mut window)
-			return
-		}
+	return RenderTextStyleState{
+		color:        color
+		stroke_color: stroke_color
+		text_cfg:     text_cfg
+		has_stroke:   shape.tc.text_style.stroke_width > 0 && stroke_color.a > 0
+		has_gradient: shape.tc.text_style.gradient != unsafe { nil }
 	}
+}
 
-	lh := line_height(shape, mut window)
+fn render_text_selection_state(mut shape Shape, mut window Window) RenderTextSelectionState {
 	beg := int(shape.tc.text_sel_beg)
 	end := int(shape.tc.text_sel_end)
+	return RenderTextSelectionState{
+		line_height:   line_height(shape, mut window)
+		byte_beg:      rune_to_byte_index(shape.tc.text, beg)
+		byte_end:      rune_to_byte_index(shape.tc.text, end)
+		password_mask: if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
+			get_password_mask(mut shape.tc)
+		} else {
+			''
+		}
+	}
+}
 
-	// Convert selection range to byte indices because vglyph uses bytes
-	byte_beg := rune_to_byte_index(shape.tc.text, beg)
-	byte_end := rune_to_byte_index(shape.tc.text, end)
-	password_mask := if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
-		get_password_mask(mut shape.tc)
-	} else {
-		''
+fn render_text_try_transformed(mut shape Shape, style_state RenderTextStyleState, mut window Window) bool {
+	if !shape.has_text_layout()
+		|| (style_state.color == color_transparent && !style_state.has_stroke) {
+		return false
+	}
+	if transform := text_shape_draw_transform(shape) {
+		mut layout_to_draw := shape.tc.vglyph_layout
+		if window.text_system != unsafe { nil } {
+			mut cfg := style_state.text_cfg
+			cfg.block.width = shape.tc.last_constraint_width
+			cfg.no_hit_testing = true
+			text_to_layout := if shape.tc.text_is_password && !shape.tc.text_is_placeholder {
+				get_password_mask(mut shape.tc)
+			} else {
+				shape.tc.text
+			}
+			cache_key := transformed_layout_cache_key(shape, text_to_layout.hash(), cfg)
+			if shape.tc.cached_transform_layout != unsafe { nil }
+				&& shape.tc.cached_transform_key == cache_key {
+				layout_to_draw = shape.tc.cached_transform_layout
+			} else {
+				mut transformed_layout := window.text_system.layout_text(text_to_layout,
+					cfg) or {
+					log.error('Transformed text layout failed at (${shape.x}, ${shape.y}): ${err.msg()}')
+					return true
+				}
+				if transformed_layout.lines.len > 0 || text_to_layout.len == 0 {
+					// `transformed_layout` is local; draw renderer needs
+					// a heap-owned copy that outlives this function.
+					shape.tc.cached_transform_layout = clone_layout_for_draw(&transformed_layout)
+					shape.tc.cached_transform_key = cache_key
+					layout_to_draw = shape.tc.cached_transform_layout
+				}
+			}
+		}
+		emit_renderer(DrawLayoutTransformed{
+			layout:    layout_to_draw
+			x:         shape.x + shape.padding_left()
+			y:         shape.y + shape.padding_top()
+			transform: transform
+			gradient:  shape.tc.text_style.gradient
+		}, mut window)
+		return true
+	}
+	return false
+}
+
+fn render_text_layout_lines(mut shape Shape, clip DrawClip, style_state RenderTextStyleState, selection_state RenderTextSelectionState, mut window Window) {
+	for line in shape.tc.vglyph_layout.lines {
+		draw_x := shape.x + shape.padding_left() + line.rect.x
+		draw_y := shape.y + shape.padding_top() + line.rect.y
+
+		// Extract text for this line
+		if line.start_index >= shape.tc.text.len {
+			continue
+		}
+		mut line_end := line.start_index + line.length
+		if line_end > shape.tc.text.len {
+			line_end = shape.tc.text.len
+		}
+
+		// Drawing
+		draw_rect := gg.Rect{
+			x:      draw_x
+			y:      draw_y
+			width:  shape.width // approximate, or use line.rect.width
+			height: selection_state.line_height
+		}
+
+		// Cull
+		if rects_overlap(clip, draw_rect)
+			&& (style_state.color != color_transparent || style_state.has_stroke) {
+			if !style_state.has_gradient {
+				// Remove newlines for rendering
+				mut slice_end := line_end
+				if slice_end > line.start_index && shape.tc.text[slice_end - 1] == `\n` {
+					slice_end--
+				}
+				render_str := if selection_state.password_mask.len > 0 {
+					password_mask_slice(selection_state.password_mask, shape.tc.text,
+						line.start_index, slice_end)
+				} else {
+					shape.tc.text[line.start_index..slice_end]
+				}
+
+				if render_str.len > 0 {
+					emit_renderer(DrawText{
+						x:    draw_x
+						y:    draw_y
+						text: render_str
+						cfg:  style_state.text_cfg
+					}, mut window)
+				}
+			}
+
+			// Draw text selection
+			if selection_state.byte_beg < line_end && selection_state.byte_end > line.start_index {
+				draw_text_selection(mut window, DrawTextSelectionParams{
+					shape:         shape
+					line:          line
+					draw_x:        draw_x
+					draw_y:        draw_y
+					byte_beg:      selection_state.byte_beg
+					byte_end:      selection_state.byte_end
+					password_mask: selection_state.password_mask
+					text_cfg:      style_state.text_cfg
+				})
+			}
+		}
+	}
+}
+
+// render_text renders text including multiline text using vglyph layout.
+// If cursor coordinates are present, it draws the input cursor.
+// The highlighting of selected text happens here also.
+fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
+	dr := gg.Rect{
+		x:      shape.x
+		y:      shape.y
+		width:  shape.width
+		height: shape.height
+	}
+	if !rects_overlap(dr, clip) {
+		shape.disabled = true
+		return
+	}
+	style_state := render_text_style_state(&shape)
+	if render_text_try_transformed(mut shape, style_state, mut window) {
+		return
 	}
 
-	has_gradient := shape.tc.text_style.gradient != unsafe { nil }
+	selection_state := render_text_selection_state(mut shape, mut window)
 
 	if shape.has_text_layout() {
 		// Gradient text: emit single DrawLayout for full layout
-		if has_gradient && (color != color_transparent || has_stroke) {
+		if style_state.has_gradient
+			&& (style_state.color != color_transparent || style_state.has_stroke) {
 			emit_renderer(DrawLayout{
 				layout:   shape.tc.vglyph_layout
 				x:        shape.x + shape.padding_left()
@@ -218,68 +318,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 				gradient: shape.tc.text_style.gradient
 			}, mut window)
 		}
-
-		for line in shape.tc.vglyph_layout.lines {
-			draw_x := shape.x + shape.padding_left() + line.rect.x
-			draw_y := shape.y + shape.padding_top() + line.rect.y
-
-			// Extract text for this line
-			if line.start_index >= shape.tc.text.len {
-				continue
-			}
-			mut line_end := line.start_index + line.length
-			if line_end > shape.tc.text.len {
-				line_end = shape.tc.text.len
-			}
-
-			// Drawing
-			draw_rect := gg.Rect{
-				x:      draw_x
-				y:      draw_y
-				width:  shape.width // approximate, or use line.rect.width
-				height: lh
-			}
-
-			// Cull
-			if rects_overlap(clip, draw_rect) && (color != color_transparent || has_stroke) {
-				if !has_gradient {
-					// Remove newlines for rendering
-					mut slice_end := line_end
-					if slice_end > line.start_index && shape.tc.text[slice_end - 1] == `\n` {
-						slice_end--
-					}
-					render_str := if password_mask.len > 0 {
-						password_mask_slice(password_mask, shape.tc.text, line.start_index,
-							slice_end)
-					} else {
-						shape.tc.text[line.start_index..slice_end]
-					}
-
-					if render_str.len > 0 {
-						emit_renderer(DrawText{
-							x:    draw_x
-							y:    draw_y
-							text: render_str
-							cfg:  text_cfg
-						}, mut window)
-					}
-				}
-
-				// Draw text selection
-				if byte_beg < line_end && byte_end > line.start_index {
-					draw_text_selection(mut window, DrawTextSelectionParams{
-						shape:         shape
-						line:          line
-						draw_x:        draw_x
-						draw_y:        draw_y
-						byte_beg:      byte_beg
-						byte_end:      byte_end
-						password_mask: password_mask
-						text_cfg:      text_cfg
-					})
-				}
-			}
-		}
+		render_text_layout_lines(mut shape, clip, style_state, selection_state, mut window)
 	}
 
 	render_cursor(shape, clip, mut window)
