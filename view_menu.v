@@ -53,9 +53,7 @@ fn make_menu_amend_layout(id_focus u32) fn (mut Layout, mut Window) {
 // and which side submenus are anchored to.
 fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []View {
 	mut content := []View{cap: items.len}
-	// mut cast: view generation is single-threaded inside frame_fn.
-	mut w_mut := unsafe { &Window(window) }
-	id_selected := state_map[u32, string](mut *w_mut, ns_menu, cap_few).get(cfg.id_focus) or { '' }
+	id_selected := state_read_or[u32, string](window, ns_menu, cfg.id_focus, '')
 	sizing := if level == 0 { fit_fit } else { fill_fit }
 
 	for item in items {

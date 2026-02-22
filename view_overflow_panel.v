@@ -45,13 +45,8 @@ pub:
 // and shows them in a floating dropdown menu when the trigger is
 // clicked. See [OverflowPanelCfg](#OverflowPanelCfg).
 pub fn (window &Window) overflow_panel(cfg OverflowPanelCfg) View {
-	// mut cast needed for state_map lazy-init; overflow_panel is
-	// called during view generation where Window is conceptually mutable.
-	mut w_mut := unsafe { &Window(window) }
-	mut om := state_map[string, int](mut *w_mut, ns_overflow, cap_moderate)
-	visible_count := om.get(cfg.id) or { cfg.items.len }
-	mut ss := state_map[string, bool](mut *w_mut, ns_select, cap_moderate)
-	is_open := ss.get(cfg.id) or { false }
+	visible_count := state_read_or[string, int](window, ns_overflow, cfg.id, cfg.items.len)
+	is_open := state_read_or[string, bool](window, ns_select, cfg.id, false)
 
 	// Build content: all item views + trigger button (always last).
 	// All items are emitted so the layout pass can measure real widths;

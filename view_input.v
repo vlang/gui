@@ -680,11 +680,7 @@ pub fn (cfg &InputCfg) copy(w &Window) ?string {
 	if cfg.is_password {
 		return none
 	}
-	// mut cast: view generation is single-threaded inside frame_fn.
-	mut w_mut := unsafe { &Window(w) }
-	input_state := state_map[u32, InputState](mut *w_mut, ns_input, cap_many).get(cfg.id_focus) or {
-		InputState{}
-	}
+	input_state := state_read_or[u32, InputState](w, ns_input, cfg.id_focus, InputState{})
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
 		text_len := utf8_str_visible_length(cfg.text)

@@ -431,11 +431,7 @@ fn (cfg &TextCfg) copy(shape &Shape, w &Window) ?string {
 	if cfg.placeholder_active || cfg.is_password {
 		return none
 	}
-	// mut cast: view generation is single-threaded inside frame_fn.
-	mut w_mut := unsafe { &Window(w) }
-	input_state := state_map[u32, InputState](mut *w_mut, ns_input, cap_many).get(cfg.id_focus) or {
-		InputState{}
-	}
+	input_state := state_read_or[u32, InputState](w, ns_input, cfg.id_focus, InputState{})
 
 	// Only copy if there is an active selection
 	if input_state.select_beg != input_state.select_end {

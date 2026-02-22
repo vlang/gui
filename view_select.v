@@ -35,15 +35,12 @@ pub:
 
 // select creates a select (a.k.a. drop-down) view from the given [SelectCfg](#SelectCfg)
 pub fn (window &Window) select(cfg SelectCfg) View {
-	// mut cast: view generation is single-threaded inside frame_fn.
-	mut w_mut := unsafe { &Window(window) }
-	mut ss := state_map[string, bool](mut *w_mut, ns_select, cap_moderate)
-	mut sh := state_map[string, int](mut *w_mut, ns_select_highlight, cap_moderate)
-	is_open := ss.get(cfg.id) or { false }
+	is_open := state_read_or[string, bool](window, ns_select, cfg.id, false)
 	id_scroll := fnv1a.sum32_string(cfg.id + 'dropdown')
 	mut options := []View{}
 	if is_open {
-		highlighted_idx := sh.get(cfg.id) or { 0 }
+		highlighted_idx := state_read_or[string, int](window, ns_select_highlight, cfg.id,
+			0)
 		options.ensure_cap(cfg.options.len)
 		for i, option in cfg.options {
 			options << match option.starts_with('---') {

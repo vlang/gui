@@ -78,6 +78,14 @@ fn state_map_read[K, V](w &Window, ns string) ?&BoundedMap[K, V] {
 	return none
 }
 
+// state_read_or returns the value for key in namespace ns, or
+// default if the namespace or key does not exist. Read-only;
+// does not require mut Window.
+fn state_read_or[K, V](w &Window, ns string, key K, default V) V {
+	sm := state_map_read[K, V](w, ns) or { return default }
+	return sm.get(key) or { default }
+}
+
 // clear zeros each BoundedMap's order-array backing memory to
 // prevent Boehm GC false retention of stale key pointers, then
 // drops the registry references.
