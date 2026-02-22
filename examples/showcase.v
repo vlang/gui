@@ -280,6 +280,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['doc', 'container', 'row', 'column', 'wrap', 'layout']
 		},
 		DemoEntry{
+			id:      'doc_custom_widgets'
+			label:   'Custom Widgets'
+			group:   'welcome'
+			summary: 'Build third-party widgets via composition or View implementation.'
+			tags:    ['doc', 'widget', 'custom', 'extend']
+		},
+		DemoEntry{
 			id:      'doc_data_grid'
 			label:   'Data Grid'
 			group:   'welcome'
@@ -1095,6 +1102,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'doc_animations' { demo_doc(mut w, 'doc_animations', doc_animations_source) }
 		'doc_architecture' { demo_doc(mut w, 'doc_architecture', doc_architecture_source) }
 		'doc_containers' { demo_doc(mut w, 'doc_containers', doc_containers_source) }
+		'doc_custom_widgets' { demo_doc(mut w, 'doc_custom_widgets', doc_custom_widgets_source) }
 		'doc_data_grid' { demo_doc(mut w, 'doc_data_grid', doc_data_grid_source) }
 		'doc_forms' { demo_doc(mut w, 'doc_forms', doc_forms_source) }
 		'doc_gradients' { demo_doc(mut w, 'doc_gradients', doc_gradients_source) }
@@ -1886,6 +1894,7 @@ const doc_get_started_source = $embed_file('../docs/GET_STARTED.md').to_string()
 const doc_animations_source = $embed_file('../docs/ANIMATIONS.md').to_string()
 const doc_architecture_source = $embed_file('../docs/ARCHITECTURE.md').to_string()
 const doc_containers_source = $embed_file('../docs/CONTAINERS.md').to_string()
+const doc_custom_widgets_source = $embed_file('../docs/CUSTOM_WIDGETS.md').to_string()
 const doc_data_grid_source = $embed_file('../docs/DATA_GRID.md').to_string()
 const doc_forms_source = $embed_file('../docs/FORMS.md').to_string()
 const doc_gradients_source = $embed_file('../docs/GRADIENTS.md').to_string()

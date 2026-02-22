@@ -25,6 +25,7 @@ fn doc_entries() []DocEntry {
 		DocEntry{'ANIMATIONS.md', $embed_file('../docs/ANIMATIONS.md').to_string()},
 		DocEntry{'ARCHITECTURE.md', $embed_file('../docs/ARCHITECTURE.md').to_string()},
 		DocEntry{'CONTAINERS.md', $embed_file('../docs/CONTAINERS.md').to_string()},
+		DocEntry{'CUSTOM_WIDGETS.md', $embed_file('../docs/CUSTOM_WIDGETS.md').to_string()},
 		DocEntry{'DATA_GRID.md', $embed_file('../docs/DATA_GRID.md').to_string()},
 		DocEntry{'GET_STARTED.md', $embed_file('../docs/GET_STARTED.md').to_string()},
 		DocEntry{'GRADIENTS.md', $embed_file('../docs/GRADIENTS.md').to_string()},

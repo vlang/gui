@@ -70,7 +70,7 @@ pub fn state_map[K, V](mut w Window, ns string, max_size int) &BoundedMap[K, V] 
 // state_map_read returns a &BoundedMap[K, V] for the given namespace
 // without requiring mut Window. Returns none if the namespace has not
 // been initialised yet. Use for read-only access from &Window methods.
-fn state_map_read[K, V](w &Window, ns string) ?&BoundedMap[K, V] {
+pub fn state_map_read[K, V](w &Window, ns string) ?&BoundedMap[K, V] {
 	state_map_type_check[K, V](&w.view_state.registry, ns) or { panic(err.msg()) }
 	if ptr := w.view_state.registry.maps[ns] {
 		return unsafe { &BoundedMap[K, V](ptr) }
@@ -81,7 +81,7 @@ fn state_map_read[K, V](w &Window, ns string) ?&BoundedMap[K, V] {
 // state_read_or returns the value for key in namespace ns, or
 // default if the namespace or key does not exist. Read-only;
 // does not require mut Window.
-fn state_read_or[K, V](w &Window, ns string, key K, default V) V {
+pub fn state_read_or[K, V](w &Window, ns string, key K, default V) V {
 	sm := state_map_read[K, V](w, ns) or { return default }
 	return sm.get(key) or { default }
 }
