@@ -56,8 +56,8 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [ ] `toast` / non-blocking notification system
 - [ ] `combobox` with typeahead filter and async options provider
 - [ ] `badge` numeric and colored label
-- [ ] `toolbar` widget (button groups, separators, overflow menu)
-- [ ] `status_bar` widget (icon + text sections, embedded progress indicator)
+- [-] `toolbar` widget (button groups, separators, overflow menu)
+- [-] `status_bar` widget (icon + text sections, embedded progress indicator)
 - [ ] `skeleton` shimmer placeholder for async-loading content
 - [ ] `sidebar` widget with animated show/hide (spring/tween, overlay or push mode)
 
@@ -65,7 +65,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 - [x] Virtualized list view (windowed rows, stable item identity)
 - [x] Data grid v2: virtual rows, sort, filter, resize/reorder/pin columns
-- [ ] Tree virtualization + lazy node loading
+- [x] Tree virtualization + lazy node loading
 - [x] Cell editors for grid/list (text, select, date, checkbox)
 - [ ] Charting/graphs/plotting package (external lib)
 
