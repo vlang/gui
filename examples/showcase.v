@@ -13,6 +13,7 @@ const id_scroll_gallery = 1
 const id_scroll_list_box = 2
 const id_scroll_catalog = 3
 const id_scroll_sync_demo = 4
+const id_scroll_tree = 5
 const id_focus_showcase_splitter_main = u32(9160)
 const id_focus_showcase_splitter_detail = u32(9161)
 const showcase_form_id = 'showcase_forms'
@@ -87,7 +88,8 @@ pub mut:
 	selected_1 []string
 	selected_2 []string
 	// tree view
-	tree_id string
+	tree_id    string
+	lazy_nodes map[string][]gui.TreeNodeCfg
 	// list Box
 	list_box_multiple_select bool
 	list_box_selected_ids    []string
@@ -1603,13 +1605,64 @@ fn on_select(id string, mut w gui.Window) {
 	app.tree_id = id
 }
 
+fn on_lazy_load(tree_id string, node_id string, mut w gui.Window) {
+	spawn fn [tree_id, node_id] (mut w gui.Window) {
+		time.sleep(800 * time.millisecond)
+		children := match node_id {
+			'remote_a' {
+				[
+					gui.tree_node(text: 'alpha.txt'),
+					gui.tree_node(text: 'beta.txt'),
+					gui.tree_node(text: 'gamma.txt'),
+				]
+			}
+			'remote_b' {
+				[
+					gui.tree_node(text: 'one.rs'),
+					gui.tree_node(text: 'two.rs'),
+				]
+			}
+			else {
+				[gui.tree_node(text: '(empty)')]
+			}
+		}
+		w.queue_command(fn [node_id, children] (mut w gui.Window) {
+			mut app := w.state[ShowcaseApp]()
+			app.lazy_nodes[node_id] = children
+			w.update_window()
+		})
+	}(mut w)
+}
+
+fn make_big_tree() []gui.TreeNodeCfg {
+	mut nodes := []gui.TreeNodeCfg{cap: 20}
+	for i in 0 .. 20 {
+		mut children := []gui.TreeNodeCfg{cap: 10}
+		for j in 0 .. 10 {
+			children << gui.tree_node(text: 'Item ${i}-${j}')
+		}
+		nodes << gui.TreeNodeCfg{
+			text:  'Group ${i}'
+			icon:  gui.icon_folder
+			nodes: children
+		}
+	}
+	return nodes
+}
+
 fn tree_view_sample(mut w gui.Window) gui.View {
-	mut app := w.state[ShowcaseApp]()
+	app := w.state[ShowcaseApp]()
+
+	// Build lazy subtree nodes from loaded data.
+	remote_a_nodes := app.lazy_nodes['remote_a'] or { []gui.TreeNodeCfg{} }
+	remote_b_nodes := app.lazy_nodes['remote_b'] or { []gui.TreeNodeCfg{} }
+
 	return gui.column(
 		sizing:  gui.fill_fit
 		padding: gui.padding_none
 		content: [
-			gui.text(text: '[ ${app.tree_id} ]'),
+			gui.text(text: 'selected: ${app.tree_id}'),
+			gui.text(text: 'Basic tree'),
 			w.tree(
 				id:        'animals'
 				on_select: on_select
@@ -1640,16 +1693,37 @@ fn tree_view_sample(mut w gui.Window) gui.View {
 							gui.tree_node(text: 'Robin'),
 						]
 					),
-					gui.tree_node(
-						text:  'Insects'
-						icon:  gui.icon_bug
-						nodes: [
-							gui.tree_node(text: 'Butterfly'),
-							gui.tree_node(text: 'House Fly'),
-							gui.tree_node(text: 'Locust'),
-							gui.tree_node(text: 'Moth'),
-						]
-					),
+				]
+			),
+			gui.text(text: 'Virtualized tree (scroll)'),
+			w.tree(
+				id:         'big_tree'
+				on_select:  on_select
+				id_scroll:  id_scroll_tree
+				max_height: 200
+				nodes:      make_big_tree()
+			),
+			gui.text(text: 'Lazy-loading tree'),
+			w.tree(
+				id:           'lazy_tree'
+				on_select:    on_select
+				on_lazy_load: on_lazy_load
+				nodes:        [
+					gui.TreeNodeCfg{
+						id:    'remote_a'
+						text:  'Remote folder A'
+						icon:  gui.icon_folder
+						lazy:  true
+						nodes: remote_a_nodes
+					},
+					gui.TreeNodeCfg{
+						id:    'remote_b'
+						text:  'Remote folder B'
+						icon:  gui.icon_folder
+						lazy:  true
+						nodes: remote_b_nodes
+					},
+					gui.tree_node(text: 'Local item'),
 				]
 			),
 		]
@@ -3030,25 +3104,63 @@ fn demo_dialog_show_native_result(kind string, result gui.NativeDialogResult, mu
 
 const tree_doc = '# Tree View
 
-Hierarchical expandable node display.
+Hierarchical expandable node display with virtualization and
+lazy-loading support.
 
-## Usage
+## Basic Usage
 
 ```v
-gui.tree(
-    id:    "file_tree",
-    nodes: [
-        gui.TreeNodeCfg{
-            text: "Root",
+w.tree(
+    id:        "animals",
+    on_select: on_select,
+    nodes:     [
+        gui.tree_node(text: "Mammals", icon: gui.icon_github_alt,
             nodes: [
-                gui.TreeNodeCfg{text: "Child 1"},
-                gui.TreeNodeCfg{text: "Child 2"},
-            ],
+                gui.tree_node(text: "Lion"),
+                gui.tree_node(text: "Cat"),
+            ]),
+        gui.tree_node(text: "Birds", icon: gui.icon_twitter,
+            nodes: [
+                gui.tree_node(text: "Condor"),
+                gui.tree_node(text: "Eagle"),
+            ]),
+    ],
+)
+```
+
+## Virtualized Tree
+
+Large trees are virtualized with flat-row rendering. Set `id_scroll`
+and `max_height` to enable scrollable viewport.
+
+```v
+w.tree(
+    id:         "big_tree",
+    on_select:  on_select,
+    id_scroll:  1,
+    max_height: 200,
+    nodes:      make_big_tree(),
+)
+```
+
+## Lazy Loading
+
+Nodes with `lazy: true` fire `on_lazy_load` when expanded and
+`nodes.len == 0`. Deliver children asynchronously via
+`queue_command`.
+
+```v
+w.tree(
+    id:           "lazy_tree",
+    on_select:    on_select,
+    on_lazy_load: on_lazy_load,
+    nodes:        [
+        gui.TreeNodeCfg{
+            id: "remote_a", text: "Remote folder A",
+            icon: gui.icon_folder, lazy: true,
+            nodes: remote_a_nodes,
         },
     ],
-    on_select: fn (id string, mut w gui.Window) {
-        // handle selection
-    },
 )
 ```
 
@@ -3060,12 +3172,26 @@ gui.tree(
 | nodes | []TreeNodeCfg | Root-level tree nodes |
 | indent | f32 | Indentation per nesting level |
 | spacing | f32 | Vertical spacing between nodes |
+| id_scroll | u32 | Scroll container ID (enables virtualization) |
+| max_height | f32 | Max height before scrolling |
+| height | f32 | Fixed height |
 
 ## Events
 
 | Callback | Signature | Fired when |
 |----------|-----------|------------|
-| on_select | fn (string, mut Window) | Node selected |'
+| on_select | fn (string, mut Window) | Node selected |
+| on_lazy_load | fn (string, string, mut Window) | Lazy node expanded (tree_id, node_id) |
+
+## TreeNodeCfg
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Node identifier (defaults to text) |
+| text | string | Display text |
+| icon | string | Icon name (gui.icon_xxx) |
+| nodes | []TreeNodeCfg | Child nodes |
+| lazy | bool | Load children on demand |'
 
 fn demo_tree(mut w gui.Window) gui.View {
 	return tree_view_sample(mut w)

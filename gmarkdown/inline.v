@@ -270,9 +270,13 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 		}
 
 		// Check for bold+italic (___text___)
-		if pos + 2 < text.len && text[pos] == `_` && text[pos + 1] == `_` && text[pos + 2] == `_` {
+		// Per CommonMark, underscore emphasis requires that the
+		// opening _ is not preceded by alnum and the closing _
+		// is not followed by alnum (intraword rule).
+		if pos + 2 < text.len && text[pos] == `_` && text[pos + 1] == `_` && text[pos + 2] == `_`
+			&& !is_alnum_at(text, pos - 1) {
 			end := find_triple_closing(text, pos + 3, `_`)
-			if end > pos + 3 {
+			if end > pos + 3 && !is_alnum_at(text, end + 3) {
 				if current.len > 0 {
 					runs << MdRun{
 						text:   current.bytestr()
@@ -288,9 +292,10 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 		}
 
 		// Check for bold (__text__)
-		if pos + 1 < text.len && text[pos] == `_` && text[pos + 1] == `_` {
+		if pos + 1 < text.len && text[pos] == `_` && text[pos + 1] == `_`
+			&& !is_alnum_at(text, pos - 1) {
 			end := find_double_closing(text, pos + 2, `_`)
-			if end > pos + 2 {
+			if end > pos + 2 && !is_alnum_at(text, end + 2) {
 				if current.len > 0 {
 					runs << MdRun{
 						text:   current.bytestr()
@@ -306,9 +311,9 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 		}
 
 		// Check for italic (_text_)
-		if text[pos] == `_` {
+		if text[pos] == `_` && !is_alnum_at(text, pos - 1) {
 			end := find_closing(text, pos + 1, `_`)
-			if end > pos + 1 {
+			if end > pos + 1 && !is_alnum_at(text, end + 1) {
 				if current.len > 0 {
 					runs << MdRun{
 						text:   current.bytestr()
@@ -496,6 +501,16 @@ fn tokenize_inline_code(code string, mut runs []MdRun) {
 			code_token: token.kind
 		}
 	}
+}
+
+// is_alnum_at returns true if text[idx] is ASCII
+// alphanumeric. Out-of-bounds indices return false.
+fn is_alnum_at(text string, idx int) bool {
+	if idx < 0 || idx >= text.len {
+		return false
+	}
+	c := text[idx]
+	return (c >= `a` && c <= `z`) || (c >= `A` && c <= `Z`) || (c >= `0` && c <= `9`)
 }
 
 // find_closing finds the position of a closing character.
