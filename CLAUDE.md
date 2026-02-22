@@ -21,6 +21,9 @@ Key types:
 - **`Renderer`** / `renderers_draw` — flat list of draw commands emitted by
   `render_layout`. Consumed once per frame by `renderers_draw`.
 
+Example program convention: the first container must be `gui.fixed_fixed`
+with width and height matching the window dimensions.
+
 Entry point pattern:
 
 ```v ignore
