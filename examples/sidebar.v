@@ -33,7 +33,7 @@ fn main_view(mut window gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		spacing: 0
 		content: [
-			gui.sidebar(mut window,
+			window.sidebar(
 				id:      'nav'
 				open:    state.sidebar_open
 				width:   260

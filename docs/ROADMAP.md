@@ -59,7 +59,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [-] `toolbar` widget (button groups, separators, overflow menu)
 - [-] `status_bar` widget (icon + text sections, embedded progress indicator)
 - [ ] `skeleton` shimmer placeholder for async-loading content
-- [ ] `sidebar` widget with animated show/hide (spring/tween, overlay or push mode)
+- [x] `sidebar` widget with animated show/hide (spring/tween, overlay or push mode)
 
 ### Data-Heavy UI
 

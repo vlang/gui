@@ -146,6 +146,8 @@ pub mut:
 	wrap_switch_a bool
 	wrap_switch_b bool
 	wrap_radio    int
+	// sidebar
+	sidebar_open bool = true
 	// docs panel
 	show_docs bool
 }
@@ -658,6 +660,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['overflow', 'toolbar', 'responsive', 'layout']
 		},
 		DemoEntry{
+			id:      'sidebar'
+			label:   'Sidebar'
+			group:   'layout'
+			summary: 'Animated panel that slides in/out'
+			tags:    ['sidebar', 'panel', 'slide', 'layout']
+		},
+		DemoEntry{
 			id:      'animations'
 			label:   'Animations'
 			group:   'graphics'
@@ -1098,6 +1107,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'column_demo' { demo_column() }
 		'wrap_panel' { demo_wrap_panel(w) }
 		'overflow_panel' { demo_overflow_panel(w) }
+		'sidebar' { demo_sidebar(mut w) }
 		'doc_get_started' { demo_doc(mut w, 'doc_get_started', doc_get_started_source) }
 		'doc_animations' { demo_doc(mut w, 'doc_animations', doc_animations_source) }
 		'doc_architecture' { demo_doc(mut w, 'doc_architecture', doc_architecture_source) }
@@ -1165,6 +1175,7 @@ fn related_examples(id string) string {
 		'column_demo' { 'examples/column_scroll.v' }
 		'wrap_panel' { 'examples/wrap_panel.v' }
 		'overflow_panel' { 'examples/overflow_panel_demo.v' }
+		'sidebar' { 'examples/sidebar.v' }
 		else { 'examples/showcase.v' }
 	}
 }
@@ -1216,6 +1227,7 @@ fn component_doc(id string) string {
 		'column_demo' { column_doc }
 		'wrap_panel' { wrap_panel_doc }
 		'overflow_panel' { overflow_panel_doc }
+		'sidebar' { sidebar_doc }
 		else { '*Documentation coming soon.*' }
 	}
 }
@@ -5040,6 +5052,96 @@ fn overflow_demo_item(id string, label string) gui.OverflowItem {
 			content: [gui.text(text: label)]
 		)
 	}
+}
+
+const sidebar_doc = '# Sidebar
+
+Animated panel that slides in/out. Width animates between 0 and the
+configured width so a parent row redistributes space naturally.
+
+## Usage
+
+```v
+window.sidebar(
+    id:    "nav",
+    open:  state.sidebar_open,
+    width: 250,
+    content: [gui.text(text: "Nav")],
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| open | bool | Whether the panel is expanded |
+| width | f32 | Expanded width (default 250) |
+| content | []View | Child views |
+| spring | SpringCfg | Spring config (used when tween_duration is 0) |
+| tween_duration | Duration | Tween length; 0 to use spring instead |
+| tween_easing | EasingFn | Easing curve for tween |
+| color | Color | Background color |
+| radius | f32 | Corner radius |
+| clip | bool | Clip children (default true) |
+
+Tween and spring are mutually exclusive — tween wins when
+`tween_duration > 0`.'
+
+fn demo_sidebar(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		sizing:  gui.fill_fit
+		spacing: gui.spacing_large
+		content: [
+			gui.text(
+				text: 'Toggle the sidebar open/closed. Width animates so siblings redistribute.'
+				mode: .wrap
+			),
+			gui.button(
+				content:  [
+					gui.text(
+						text: if app.sidebar_open { 'Close Sidebar' } else { 'Open Sidebar' }
+					),
+				]
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					mut a := w.state[ShowcaseApp]()
+					a.sidebar_open = !a.sidebar_open
+				}
+			),
+			gui.row(
+				sizing:  gui.fill_fixed
+				height:  200
+				spacing: 0
+				content: [
+					w.sidebar(
+						id:      'showcase_sidebar'
+						open:    app.sidebar_open
+						width:   180
+						color:   gui.Color{50, 55, 65, 255}
+						radius:  6
+						content: [
+							gui.text(
+								text:       'Sidebar'
+								text_style: gui.TextStyle{
+									...gui.theme().b2
+									color: gui.white
+								}
+							),
+						]
+					),
+					gui.column(
+						sizing:  gui.fill_fill
+						padding: gui.padding(8, 12, 8, 12)
+						color:   gui.theme().color_panel
+						content: [
+							gui.text(text: 'Main content area', mode: .wrap),
+						]
+					),
+				]
+			),
+		]
+	)
 }
 
 const icons_doc = '# Icons
