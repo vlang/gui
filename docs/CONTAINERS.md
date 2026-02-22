@@ -44,22 +44,8 @@ gui.row(
 ### `wrap`
 
 Arranges children left to right and **flows to the next line** when the
-container width is exceeded. Resize the window to see items reflow.
-Sugar for `row(wrap: true, ...)`.
-
-```v ignore
-gui.wrap(
-    sizing:  gui.fill_fit
-    spacing: 8
-    content: [
-        gui.checkbox(label: 'Alpha', ...),
-        gui.checkbox(label: 'Beta', ...),
-        gui.button(content: [gui.text(text: 'Reset')], ...),
-    ]
-)
-```
-
-See `examples/wrap_panel.v` for a runnable demo.
+container width is exceeded. Sugar for `row(wrap: true, ...)`.
+See [Specialized Containers](#specialized-containers).
 
 ### `canvas`
 
@@ -221,6 +207,82 @@ gui.column(
 overflows), `.hidden` (never show), `.visible` (always show),
 `.on_hover` (show when mouse is over the scrollbar region).
 
+## Specialized Containers
+
+### WrapPanel
+
+Use `gui.wrap(...)` to build responsive rows that reflow into new lines
+as available width shrinks.
+
+```v ignore
+gui.wrap(
+    sizing:  gui.fill_fit
+    spacing: 8
+    content: [
+        gui.checkbox(label: 'Alpha', ...),
+        gui.checkbox(label: 'Beta', ...),
+        gui.button(content: [gui.text(text: 'Reset')], ...),
+    ]
+)
+```
+
+Behavior:
+
+- Same config surface as other containers (`ContainerCfg`).
+- Greedy line breaking by available inner width.
+- Preserves child order across wrapped rows.
+
+See `examples/wrap_panel.v` for a runnable demo.
+
+### Overflow Panel
+
+Use `window.overflow_panel(...)` for responsive horizontal action bars.
+Items that do not fit are hidden and exposed through a trigger menu.
+
+```v ignore
+window.overflow_panel(gui.OverflowPanelCfg{
+    id:       'toolbar'
+    id_focus: 1
+    items: [
+        gui.OverflowItem{
+            id:   'save'
+            text: 'Save'
+            view: gui.button(content: [gui.text(text: 'Save')])
+            action: fn (_ &gui.MenuItemCfg, mut e gui.Event, mut _ gui.Window) {
+                e.is_handled = true
+            }
+        },
+        gui.OverflowItem{
+            id:   'export'
+            text: 'Export'
+            view: gui.button(content: [gui.text(text: 'Export')])
+        },
+    ]
+})
+```
+
+Behavior:
+
+- Keeps visible items inline in original order.
+- Hides the trigger when every item fits.
+- Uses `OverflowItem.text` for the dropdown label, falls back to
+  `OverflowItem.id` when `text` is empty.
+- Invokes `OverflowItem.action` when a dropdown item is selected.
+
+`OverflowPanelCfg` key fields:
+
+| Field           | Type             | Notes                                            |
+|-----------------|------------------|--------------------------------------------------|
+| `id`            | `string`         | Required; unique panel ID                        |
+| `id_focus`      | `u32`            | Required; focus group for trigger/menu           |
+| `items`         | `[]OverflowItem` | Required; toolbar items                          |
+| `trigger`       | `[]View`         | Optional trigger content (default ellipsis icon) |
+| `padding`       | `Padding`        | Trigger padding                                  |
+| `spacing`       | `f32`            | Gap between inline items                         |
+| `float_anchor`  | `FloatAttach`    | Dropdown anchor point                            |
+| `float_tie_off` | `FloatAttach`    | Dropdown tie-off point                           |
+| `disabled`      | `bool`           | Disables trigger interaction                     |
+
 ## Floating
 
 Floating containers draw **over** sibling content. Used for menus,
@@ -278,8 +340,26 @@ gui.column(
 Set `clip: true` to hide children that overflow the container bounds.
 Scroll containers enable clipping automatically.
 
+Images inherit container clipping. Use a rounded container for rounded
+rectangle image clips, or use `gui.circle(...)` for circular image clips.
+
 ```v ignore
-gui.row(clip: true, width: 200, content: [...])
+gui.row(
+    clip:    true
+    radius:  16
+    width:   200
+    height:  120
+    sizing:  gui.fixed_fixed
+    content: [gui.image(src: 'photo.jpg', sizing: gui.fill_fill)]
+)
+
+gui.circle(
+    clip:    true
+    width:   96
+    height:  96
+    sizing:  gui.fixed_fixed
+    content: [gui.image(src: 'avatar.jpg', sizing: gui.fill_fill)]
+)
 ```
 
 ## Visibility and State
@@ -359,6 +439,9 @@ gui.column(id: 'panel', hero: true, content: [...])
 - `padding.v` — `Padding`, `padding()`, `pad_all()`, `pad_tblr()`
 - `layout_wrap.v` — wrap line-breaking algorithm
 - `layout_float.v` — `FloatAttach`, floating layout positioning
+- `view_overflow_panel.v` — `overflow_panel`, `OverflowPanelCfg`,
+  `OverflowItem`
+- `layout_overflow.v` — overflow visibility pass for horizontal panels
 - `view_scrollbar.v` — `ScrollbarCfg`, `ScrollMode`
 - `docs/LAYOUT_ALGORITHM.md` — full layout pipeline reference
 
@@ -366,3 +449,5 @@ gui.column(id: 'panel', hero: true, content: [...])
 
 - `examples/wrap_panel.v` — wrap container with mixed widget types
 - `examples/column_scroll.v` — scrollable column with 10,000-item list
+- `examples/overflow_panel_demo.v` — responsive toolbar with overflow
+  trigger menu
