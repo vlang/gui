@@ -636,6 +636,7 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			}
 			content << column(
 				sizing:    fill_fit
+				padding:   padding_none
 				a11y_role: .heading
 				a11y:      &AccessInfo{
 					heading_level: u8(block.header_level)
