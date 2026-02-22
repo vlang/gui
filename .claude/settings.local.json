@@ -26,7 +26,8 @@
       "WebFetch(domain:alexharri.com)",
       "Bash(git show:*)",
       "Bash(git stash:*)",
-      "Bash(v test:*)"
+      "Bash(v test:*)",
+      "Bash(git:*)"
     ]
   }
 }
