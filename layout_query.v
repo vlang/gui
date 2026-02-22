@@ -54,12 +54,12 @@ pub fn find_layout_by_id_scroll(layout &Layout, id_scroll u32) ?Layout {
 // Returns the first non-skippable focusable if focus is not set.
 pub fn (layout &Layout) previous_focusable(mut w Window) ?Shape {
 	mut candidates := w.scratch.take_focus_candidates()
-	collect_focus_candidates(layout, mut candidates, 0)
+	w.scratch.focus_seen.clear()
+	collect_focus_candidates(layout, mut candidates, mut w.scratch.focus_seen)
 	if candidates.len == 0 {
 		w.scratch.put_focus_candidates(mut candidates)
 		return none
 	}
-	focus_sort_and_dedupe(mut candidates)
 	result := focus_find_previous(candidates, w.view_state.id_focus)
 	w.scratch.put_focus_candidates(mut candidates)
 	return result
@@ -69,12 +69,12 @@ pub fn (layout &Layout) previous_focusable(mut w Window) ?Shape {
 // Returns the first non-skippable focusable if focus is not set.
 pub fn (layout &Layout) next_focusable(mut w Window) ?Shape {
 	mut candidates := w.scratch.take_focus_candidates()
-	collect_focus_candidates(layout, mut candidates, 0)
+	w.scratch.focus_seen.clear()
+	collect_focus_candidates(layout, mut candidates, mut w.scratch.focus_seen)
 	if candidates.len == 0 {
 		w.scratch.put_focus_candidates(mut candidates)
 		return none
 	}
-	focus_sort_and_dedupe(mut candidates)
 	result := focus_find_next(candidates, w.view_state.id_focus)
 	w.scratch.put_focus_candidates(mut candidates)
 	return result
@@ -82,80 +82,65 @@ pub fn (layout &Layout) next_focusable(mut w Window) ?Shape {
 
 struct FocusCandidate {
 	id    u32
-	order int
 	shape &Shape = unsafe { nil }
 }
 
-fn collect_focus_candidates(layout &Layout, mut candidates []FocusCandidate, order int) int {
-	mut next_order := order
+fn collect_focus_candidates(layout &Layout, mut candidates []FocusCandidate, mut seen map[u32]bool) {
 	if layout.shape.id_focus > 0 && !layout.shape.focus_skip {
-		if !layout.shape.disabled {
+		if !layout.shape.disabled && !seen[layout.shape.id_focus] {
+			seen[layout.shape.id_focus] = true
 			candidates << FocusCandidate{
 				id:    layout.shape.id_focus
-				order: next_order
 				shape: layout.shape
 			}
 		}
-		next_order++
 	}
 	for child in layout.children {
-		next_order = collect_focus_candidates(child, mut candidates, next_order)
+		collect_focus_candidates(child, mut candidates, mut seen)
 	}
-	return next_order
-}
-
-fn focus_sort_and_dedupe(mut candidates []FocusCandidate) {
-	candidates.sort_with_compare(fn (a &FocusCandidate, b &FocusCandidate) int {
-		if a.id < b.id {
-			return -1
-		}
-		if a.id > b.id {
-			return 1
-		}
-		if a.order < b.order {
-			return -1
-		}
-		if a.order > b.order {
-			return 1
-		}
-		return 0
-	})
-	mut keep_idx := 0
-	mut last_id := u32(0)
-	for i, candidate in candidates {
-		if i > 0 && candidate.id == last_id {
-			continue
-		}
-		if keep_idx != i {
-			candidates[keep_idx] = candidate
-		}
-		keep_idx++
-		last_id = candidate.id
-	}
-	candidates.trim(keep_idx)
 }
 
 fn focus_find_next(candidates []FocusCandidate, id_focus u32) ?Shape {
-	if id_focus > 0 {
-		for candidate in candidates {
-			if candidate.id > id_focus {
-				return *candidate.shape
-			}
+	mut min_id := u32(0xffffffff)
+	mut min_shape := &Shape(unsafe { nil })
+	mut next_id := u32(0xffffffff)
+	mut next_shape := &Shape(unsafe { nil })
+	for candidate in candidates {
+		if candidate.id < min_id {
+			min_id = candidate.id
+			min_shape = candidate.shape
+		}
+		if id_focus > 0 && candidate.id > id_focus && candidate.id < next_id {
+			next_id = candidate.id
+			next_shape = candidate.shape
 		}
 	}
-	return *candidates[0].shape
+	if next_shape != unsafe { nil } {
+		return *next_shape
+	}
+	return *min_shape
 }
 
 fn focus_find_previous(candidates []FocusCandidate, id_focus u32) ?Shape {
-	if id_focus > 0 {
-		for i := candidates.len - 1; i >= 0; i-- {
-			candidate := candidates[i]
-			if candidate.id < id_focus {
-				return *candidate.shape
-			}
+	mut max_id := u32(0)
+	mut max_shape := &Shape(unsafe { nil })
+	mut prev_id := u32(0)
+	mut prev_shape := &Shape(unsafe { nil })
+	for candidate in candidates {
+		if max_shape == unsafe { nil } || candidate.id > max_id {
+			max_id = candidate.id
+			max_shape = candidate.shape
+		}
+		if id_focus > 0 && candidate.id < id_focus
+			&& (prev_shape == unsafe { nil } || candidate.id > prev_id) {
+			prev_id = candidate.id
+			prev_shape = candidate.shape
 		}
 	}
-	return *candidates[candidates.len - 1].shape
+	if prev_shape != unsafe { nil } {
+		return *prev_shape
+	}
+	return *max_shape
 }
 
 // spacing does the fence-post calculation for spacings

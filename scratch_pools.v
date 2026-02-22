@@ -16,6 +16,8 @@ const scratch_svg_group_matrices_retain_max = 256
 const scratch_svg_group_opacities_retain_max = 256
 const scratch_svg_tris_retain_max = 65_536
 const scratch_svg_tris_shrink_to = 4096
+const scratch_svg_transform_batches_retain_max = 1024
+const scratch_svg_transform_batches_shrink_to = 128
 const scratch_wrap_rows_retain_max = 4096
 const scratch_wrap_rows_shrink_to = 256
 
@@ -26,19 +28,22 @@ struct WrapRowRange {
 
 struct ScratchPools {
 mut:
-	distribute            DistributeScratch
-	filter_renderers      []Renderer
-	floating_layouts      []&Layout
-	floating_layout_pool  []&Layout
-	floating_pool_used    int
-	focus_candidates      []FocusCandidate
-	gradient_norm_stops   []GradientStop
-	gradient_sample_stops []GradientStop
-	svg_anim_vals         []f32
-	svg_group_matrices    map[string][6]f32
-	svg_group_opacities   map[string]f32
-	svg_transform_tris    []f32
-	wrap_rows             []WrapRowRange
+	distribute                 DistributeScratch
+	filter_renderers           []Renderer
+	floating_layouts           []&Layout
+	floating_layout_pool       []&Layout
+	floating_pool_used         int
+	focus_candidates           []FocusCandidate
+	focus_seen                 map[u32]bool
+	gradient_norm_stops        []GradientStop
+	gradient_sample_stops      []GradientStop
+	svg_anim_vals              []f32
+	svg_group_matrices         map[string][6]f32
+	svg_group_opacities        map[string]f32
+	svg_transform_tris         []f32
+	svg_transform_batches      [][]f32
+	svg_transform_batches_used int
+	wrap_rows                  []WrapRowRange
 }
 
 @[inline]
@@ -188,6 +193,41 @@ fn (mut pools ScratchPools) put_svg_transform_tris(mut scratch []f32) {
 		scratch = []f32{cap: scratch_svg_tris_shrink_to}
 	}
 	pools.svg_transform_tris = scratch
+}
+
+@[inline]
+fn (mut pools ScratchPools) begin_svg_transform_batches() {
+	pools.svg_transform_batches_used = 0
+}
+
+@[inline]
+fn (mut pools ScratchPools) transform_svg_triangles(tris []f32, m [6]f32) []f32 {
+	idx := pools.svg_transform_batches_used
+	pools.svg_transform_batches_used++
+	if idx >= pools.svg_transform_batches.len {
+		pools.svg_transform_batches << []f32{cap: tris.len}
+	}
+	mut out := unsafe { pools.svg_transform_batches[idx] }
+	if out.cap < tris.len {
+		out = []f32{cap: tris.len}
+	} else {
+		out.clear()
+	}
+	out = apply_transform_to_triangles_into(tris, m, mut out)
+	pools.svg_transform_batches[idx] = out
+	return out
+}
+
+@[inline]
+fn (mut pools ScratchPools) trim_svg_transform_batches() {
+	for i in 0 .. pools.svg_transform_batches.len {
+		if pools.svg_transform_batches[i].cap > scratch_svg_tris_retain_max {
+			pools.svg_transform_batches[i] = []f32{cap: scratch_svg_tris_shrink_to}
+		}
+	}
+	if pools.svg_transform_batches.len > scratch_svg_transform_batches_retain_max {
+		pools.svg_transform_batches = pools.svg_transform_batches[..scratch_svg_transform_batches_shrink_to].clone()
+	}
 }
 
 @[inline]

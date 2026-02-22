@@ -109,8 +109,10 @@ fn (mut window Window) build_renderers(background_color Color, clip_rect DrawCli
 	// arrays before render so buffers are reused safely.
 	mut filter_renderers := window.scratch.take_filter_renderers(0)
 	window.scratch.put_filter_renderers(mut filter_renderers)
+	window.scratch.begin_svg_transform_batches()
 	array_clear(mut window.renderers)
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
+	window.scratch.trim_svg_transform_batches()
 
 	// Render RTF tooltip if active
 	if window.view_state.rtf_tooltip_text != '' {

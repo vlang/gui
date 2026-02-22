@@ -399,7 +399,7 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 			mut has_transform := false
 			mut transform := vglyph.AffineTransform{}
 			mut mixed_transform := false
-			mut has_inline_objects := false
+			mut inline_item_indices := []int{}
 			if shape.tc.rich_text != unsafe { nil } {
 				if draw_transform := shape.tc.rich_text.uniform_text_transform() {
 					has_transform = true
@@ -407,12 +407,12 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 				}
 				mixed_transform = shape.tc.rich_text.has_mixed_text_transform()
 			}
-			for item in shape.tc.vglyph_layout.items {
+			for idx, item in shape.tc.vglyph_layout.items {
 				if item.is_object {
-					has_inline_objects = true
-					break
+					inline_item_indices << idx
 				}
 			}
+			has_inline_objects := inline_item_indices.len > 0
 			if mixed_transform {
 				log.warn('RTF transform ignored for shape "${shape.id}": mixed run transforms')
 			}
@@ -435,21 +435,23 @@ fn render_rtf(mut shape Shape, clip DrawClip, mut window Window) {
 				}, mut window)
 			}
 			// Draw inline math images at InlineObject positions
-			for item in shape.tc.vglyph_layout.items {
-				if item.is_object && item.object_id != '' {
-					ihash := math_cache_hash(item.object_id)
-					if entry := window.view_state.diagram_cache.get(ihash) {
-						if entry.state == .ready && entry.png_path.len > 0 {
-							img := window.load_image(entry.png_path) or { continue }
-							emit_renderer(DrawImage{
-								x:           shape.x + f32(item.x)
-								y:           shape.y + f32(item.y) - f32(item.ascent)
-								w:           f32(item.width)
-								h:           f32(item.ascent + item.descent)
-								img:         img
-								clip_radius: window.clip_radius
-							}, mut window)
-						}
+			for idx in inline_item_indices {
+				item := shape.tc.vglyph_layout.items[idx]
+				if item.object_id == '' {
+					continue
+				}
+				ihash := math_cache_hash(item.object_id)
+				if entry := window.view_state.diagram_cache.get(ihash) {
+					if entry.state == .ready && entry.png_path.len > 0 {
+						img := window.load_image(entry.png_path) or { continue }
+						emit_renderer(DrawImage{
+							x:           shape.x + f32(item.x)
+							y:           shape.y + f32(item.y) - f32(item.ascent)
+							w:           f32(item.width)
+							h:           f32(item.ascent + item.descent)
+							img:         img
+							clip_radius: window.clip_radius
+						}, mut window)
 					}
 				}
 			}

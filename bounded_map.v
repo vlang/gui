@@ -6,8 +6,11 @@ struct BoundedMap[K, V] {
 mut:
 	data     map[K]V
 	order    []K
+	head     int
 	max_size int = 100
 }
+
+const bounded_order_compact_min = 64
 
 // set adds or updates key-value pair. Evicts oldest if at capacity.
 fn (mut m BoundedMap[K, V]) set(key K, value V) {
@@ -18,13 +21,19 @@ fn (mut m BoundedMap[K, V]) set(key K, value V) {
 		m.data[key] = value
 		return
 	}
-	if m.data.len >= m.max_size && m.order.len > 0 {
-		oldest_key := m.order[0]
-		m.order.delete(0)
-		m.data.delete(oldest_key)
+	if m.data.len >= m.max_size && m.order.len > m.head {
+		for m.head < m.order.len {
+			oldest_key := m.order[m.head]
+			m.head++
+			if oldest_key in m.data {
+				m.data.delete(oldest_key)
+				break
+			}
+		}
 	}
 	m.order << key
 	m.data[key] = value
+	m.compact_order()
 }
 
 // get returns value for key, or none if not found.
@@ -38,12 +47,12 @@ fn (mut m BoundedMap[K, V]) delete(key K) {
 		return
 	}
 	m.data.delete(key)
-	for i, item in m.order {
-		if item == key {
-			m.order.delete(i)
-			break
-		}
+	if m.data.len == 0 {
+		array_clear(mut m.order)
+		m.head = 0
+		return
 	}
+	m.compact_order()
 }
 
 // contains returns true if key exists in map.
@@ -60,11 +69,40 @@ fn (m &BoundedMap[K, V]) len() int {
 fn (mut m BoundedMap[K, V]) clear() {
 	m.data.clear()
 	array_clear(mut m.order)
+	m.head = 0
 }
 
 // keys returns all keys in insertion order.
 fn (m &BoundedMap[K, V]) keys() []K {
-	return m.order.clone()
+	if m.data.len == 0 || m.head >= m.order.len {
+		return []K{}
+	}
+	mut out := []K{cap: m.data.len}
+	for i in m.head .. m.order.len {
+		k := m.order[i]
+		if k in m.data {
+			out << k
+		}
+	}
+	return out
+}
+
+fn (mut m BoundedMap[K, V]) compact_order() {
+	if m.head <= 0 {
+		return
+	}
+	if m.head < bounded_order_compact_min && m.head * 2 < m.order.len {
+		return
+	}
+	mut compact := []K{cap: m.data.len}
+	for i in m.head .. m.order.len {
+		k := m.order[i]
+		if k in m.data {
+			compact << k
+		}
+	}
+	m.order = compact
+	m.head = 0
 }
 
 // BoundedTreeState is a specialized bounded map for tree state
@@ -74,6 +112,7 @@ struct BoundedTreeState {
 mut:
 	data     map[string]map[string]bool
 	order    []string
+	head     int
 	max_size int = 30
 }
 
@@ -86,13 +125,19 @@ fn (mut m BoundedTreeState) set(key string, value map[string]bool) {
 		m.data[key] = value.clone()
 		return
 	}
-	if m.data.len >= m.max_size && m.order.len > 0 {
-		oldest_key := m.order[0]
-		m.order.delete(0)
-		m.data.delete(oldest_key)
+	if m.data.len >= m.max_size && m.order.len > m.head {
+		for m.head < m.order.len {
+			oldest_key := m.order[m.head]
+			m.head++
+			if oldest_key in m.data {
+				m.data.delete(oldest_key)
+				break
+			}
+		}
 	}
 	m.order << key
 	m.data[key] = value.clone()
+	m.compact_order()
 }
 
 // get returns tree state for key, or none if not found.
@@ -114,6 +159,25 @@ fn (m &BoundedTreeState) len() int {
 fn (mut m BoundedTreeState) clear() {
 	m.data.clear()
 	array_clear(mut m.order)
+	m.head = 0
+}
+
+fn (mut m BoundedTreeState) compact_order() {
+	if m.head <= 0 {
+		return
+	}
+	if m.head < bounded_order_compact_min && m.head * 2 < m.order.len {
+		return
+	}
+	mut compact := []string{cap: m.data.len}
+	for i in m.head .. m.order.len {
+		key := m.order[i]
+		if key in m.data {
+			compact << key
+		}
+	}
+	m.order = compact
+	m.head = 0
 }
 
 // BoundedSvgCache is an LRU cache for SVG data.
@@ -216,6 +280,7 @@ struct BoundedMarkdownCache {
 mut:
 	data     map[int][]MarkdownBlock
 	order    []int
+	head     int
 	max_size int = 50
 }
 
@@ -233,13 +298,19 @@ fn (mut m BoundedMarkdownCache) set(key int, value []MarkdownBlock) {
 		m.data[key] = value.clone()
 		return
 	}
-	if m.data.len >= m.max_size && m.order.len > 0 {
-		oldest_key := m.order[0]
-		m.order.delete(0)
-		m.data.delete(oldest_key)
+	if m.data.len >= m.max_size && m.order.len > m.head {
+		for m.head < m.order.len {
+			oldest_key := m.order[m.head]
+			m.head++
+			if oldest_key in m.data {
+				m.data.delete(oldest_key)
+				break
+			}
+		}
 	}
 	m.order << key
 	m.data[key] = value.clone()
+	m.compact_order()
 }
 
 // len returns number of entries.
@@ -251,4 +322,23 @@ fn (m &BoundedMarkdownCache) len() int {
 fn (mut m BoundedMarkdownCache) clear() {
 	m.data.clear()
 	array_clear(mut m.order)
+	m.head = 0
+}
+
+fn (mut m BoundedMarkdownCache) compact_order() {
+	if m.head <= 0 {
+		return
+	}
+	if m.head < bounded_order_compact_min && m.head * 2 < m.order.len {
+		return
+	}
+	mut compact := []int{cap: m.data.len}
+	for i in m.head .. m.order.len {
+		key := m.order[i]
+		if key in m.data {
+			compact << key
+		}
+	}
+	m.order = compact
+	m.head = 0
 }

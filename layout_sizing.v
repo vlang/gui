@@ -20,8 +20,10 @@ enum DistributeAxis as u8 {
 
 struct DistributeScratch {
 mut:
-	candidates    []int
-	fixed_indices []int
+	candidates                 []int
+	fixed_indices              []int
+	parent_total_child_widths  map[u64]f32
+	parent_total_child_heights map[u64]f32
 }
 
 @[inline]
@@ -416,6 +418,9 @@ fn layout_fill_widths(mut layout Layout) {
 }
 
 fn layout_fill_widths_with_scratch(mut layout Layout, mut scratch DistributeScratch) {
+	if layout.parent == unsafe { nil } {
+		scratch.parent_total_child_widths.clear()
+	}
 	mut remaining_width := layout.shape.width - layout.shape.padding_width()
 
 	scratch.ensure_cap(layout.children.len)
@@ -443,12 +448,16 @@ fn layout_fill_widths_with_scratch(mut layout Layout, mut scratch DistributeScra
 		if layout.shape.id_scroll > 0 && layout.shape.sizing.width == .fill
 			&& layout.shape.scroll_mode != .vertical_only && layout.parent != unsafe { nil }
 			&& layout.parent.shape.axis == .left_to_right {
-			mut sibling_width_sum := f32(0)
-			for sibling in layout.parent.children {
-				if sibling.shape.uid != layout.shape.uid {
-					sibling_width_sum += sibling.shape.width
+			parent_uid := layout.parent.shape.uid
+			total_child_width := scratch.parent_total_child_widths[parent_uid] or {
+				mut total := f32(0)
+				for sibling in layout.parent.children {
+					total += sibling.shape.width
 				}
+				scratch.parent_total_child_widths[parent_uid] = total
+				total
 			}
+			sibling_width_sum := total_child_width - layout.shape.width
 			target_width := layout.parent.shape.width - sibling_width_sum - layout.parent.spacing() - layout.parent.shape.padding_width()
 			layout.shape.width = f32_max(0, target_width)
 		}
@@ -484,6 +493,9 @@ fn layout_fill_heights(mut layout Layout) {
 }
 
 fn layout_fill_heights_with_scratch(mut layout Layout, mut scratch DistributeScratch) {
+	if layout.parent == unsafe { nil } {
+		scratch.parent_total_child_heights.clear()
+	}
 	mut remaining_height := layout.shape.height - layout.shape.padding_height()
 
 	scratch.ensure_cap(layout.children.len)
@@ -510,12 +522,16 @@ fn layout_fill_heights_with_scratch(mut layout Layout, mut scratch DistributeScr
 		if layout.shape.id_scroll > 0 && layout.shape.sizing.height == .fill
 			&& layout.shape.scroll_mode != .horizontal_only && layout.parent != unsafe { nil }
 			&& layout.parent.shape.axis == .top_to_bottom {
-			mut sibling_height_sum := f32(0)
-			for sibling in layout.parent.children {
-				if sibling.shape.uid != layout.shape.uid {
-					sibling_height_sum += sibling.shape.height
+			parent_uid := layout.parent.shape.uid
+			total_child_height := scratch.parent_total_child_heights[parent_uid] or {
+				mut total := f32(0)
+				for sibling in layout.parent.children {
+					total += sibling.shape.height
 				}
+				scratch.parent_total_child_heights[parent_uid] = total
+				total
 			}
+			sibling_height_sum := total_child_height - layout.shape.height
 			target_height := layout.parent.shape.height - sibling_height_sum - layout.parent.spacing() - layout.parent.shape.padding_height()
 			layout.shape.height = f32_max(0, target_height)
 		}

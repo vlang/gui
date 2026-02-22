@@ -60,3 +60,24 @@ fn test_find_filter_bracket_range_handles_missing_end() {
 	assert bracket.next_idx == 2
 	assert !bracket.found_end
 }
+
+fn test_index_filter_bracket_ends_nested() {
+	renderers := [
+		Renderer(DrawFilterBegin{}), // 0
+		Renderer(DrawRect{
+			x:     1
+			y:     1
+			w:     1
+			h:     1
+			style: .fill
+		}),
+		Renderer(DrawFilterBegin{}), // 2
+		Renderer(DrawFilterEnd{}), // 3
+		Renderer(DrawFilterEnd{}), // 4
+	]
+	end_by_begin := index_filter_bracket_ends(renderers)
+	end0 := end_by_begin[0] or { -1 }
+	end2 := end_by_begin[2] or { -1 }
+	assert end0 == 4
+	assert end2 == 3
+}

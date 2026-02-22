@@ -69,6 +69,22 @@ fn find_filter_bracket_range(renderers []Renderer, start_idx int) FilterBracketR
 	}
 }
 
+fn index_filter_bracket_ends(renderers []Renderer) map[int]int {
+	mut end_by_begin := map[int]int{}
+	mut stack := []int{}
+	for idx, r in renderers {
+		if r is DrawFilterBegin {
+			stack << idx
+			continue
+		}
+		if r is DrawFilterEnd && stack.len > 0 {
+			begin_idx := stack.pop()
+			end_by_begin[begin_idx] = idx
+		}
+	}
+	return end_by_begin
+}
+
 @[inline]
 fn append_renderer_range(mut dst []Renderer, src []Renderer, start_idx int, end_idx int) {
 	if src.len == 0 || start_idx < 0 || start_idx >= src.len || end_idx <= start_idx {
@@ -93,6 +109,7 @@ fn process_svg_filters(mut window Window) {
 	mut i := 0
 	mut new_renderers := window.scratch.take_filter_renderers(source_renderers.len)
 	max_tex_size := filter_max_image_size()
+	end_by_begin := index_filter_bracket_ends(source_renderers)
 
 	for i < source_renderers.len {
 		r := source_renderers[i]
@@ -106,19 +123,17 @@ fn process_svg_filters(mut window Window) {
 			fg := cached.filtered_groups[begin.group_idx]
 			filter := fg.filter
 
-			// Collect content range between Begin and End
-			bracket := find_filter_bracket_range(source_renderers, i + 1)
-			i = bracket.next_idx
-			if !bracket.found_end {
+			end_idx := end_by_begin[i] or {
 				$if !prod {
 					assert false, 'DrawFilterBegin without DrawFilterEnd'
 				}
-				append_renderer_range(mut new_renderers, source_renderers, bracket.start_idx,
-					bracket.end_idx)
+				append_renderer_range(mut new_renderers, source_renderers, i + 1, source_renderers.len)
+				i = source_renderers.len
 				continue
 			}
-			content_start := bracket.start_idx
-			content_end := bracket.end_idx
+			content_start := i + 1
+			content_end := end_idx
+			i = end_idx + 1
 
 			// Compute screen-space bbox with blur padding
 			scale := begin.scale

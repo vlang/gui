@@ -155,12 +155,10 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 	}
 	elapsed_s := f32(now_ns - start_ns) / 1_000_000_000.0
 	mut anim_vals := window.scratch.take_svg_anim_vals()
-	mut transform_tris := window.scratch.take_svg_transform_tris()
 	window.scratch.svg_group_matrices.clear()
 	window.scratch.svg_group_opacities.clear()
 	defer {
 		window.scratch.put_svg_anim_vals(mut anim_vals)
-		window.scratch.put_svg_transform_tris(mut transform_tris)
 		window.scratch.trim_svg_group_maps()
 	}
 
@@ -212,10 +210,7 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 		has_opacity := gid in window.scratch.svg_group_opacities
 		if gid.len > 0 && (has_matrix || has_opacity) {
 			tris := if has_matrix {
-				// Build in scratch then clone so renderer data stays stable.
-				transform_tris = apply_transform_to_triangles_into(tpath.triangles, window.scratch.svg_group_matrices[gid], mut
-					transform_tris)
-				transform_tris.clone()
+				window.scratch.transform_svg_triangles(tpath.triangles, window.scratch.svg_group_matrices[gid])
 			} else {
 				tpath.triangles
 			}
