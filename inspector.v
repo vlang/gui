@@ -7,7 +7,7 @@ module gui
 
 const ns_inspector = 'gui.inspector'
 const ns_inspector_width = 'gui.inspector.w'
-const cap_inspector = 5
+const cap_inspector = 8
 const inspector_id_focus = u32(0xFFF00000)
 const inspector_id_scroll_panel = u32(0xFFF00001)
 const inspector_tree_id = '__inspector_tree__'
@@ -22,6 +22,13 @@ const inspector_icon_style = TextStyle{
 	family: icon_font_name
 	size:   12
 	color:  Color{220, 220, 220, 255}
+}
+
+// InspectorStackFrame is a stack entry for iterative tree walk.
+struct InspectorStackFrame {
+	nodes []TreeNodeCfg
+mut:
+	pos int
 }
 
 // InspectorNodeProps snapshots shape properties as values
@@ -182,8 +189,11 @@ fn inspector_select(path string, mut w Window) {
 		// Expand selected node and all ancestors.
 		tree_map[path] = true
 		parts := path.split('.')
+		mut prefix := parts[0]
+		tree_map[prefix] = true
 		for i in 1 .. parts.len {
-			tree_map[parts[..i].join('.')] = true
+			prefix += '.${parts[i]}'
+			tree_map[prefix] = true
 		}
 		w.view_state.tree_state.set(inspector_tree_id, tree_map)
 	}
@@ -202,7 +212,7 @@ fn inspector_pick_path(layout &Layout, x f32, y f32) string {
 }
 
 // inspector_pick_recurse depth-first reverse-child walk.
-fn inspector_pick_recurse(layout Layout, path string, x f32, y f32) string {
+fn inspector_pick_recurse(layout &Layout, path string, x f32, y f32) string {
 	if layout.shape == unsafe { nil } {
 		return ''
 	}
@@ -242,7 +252,7 @@ fn inspector_build_tree_nodes(layout &Layout, selected string, mut props map[str
 // subtree into tree nodes, caching props for each node.
 // When path matches selected, property leaf nodes are
 // appended as children.
-fn inspector_layout_to_tree(layout Layout, path string, selected string, mut props map[string]InspectorNodeProps) []TreeNodeCfg {
+fn inspector_layout_to_tree(layout &Layout, path string, selected string, mut props map[string]InspectorNodeProps) []TreeNodeCfg {
 	label := inspector_node_label(layout.shape)
 	p := inspector_snapshot_props(layout)
 	props[path] = p
@@ -412,7 +422,7 @@ fn inspector_props_nodes(p InspectorNodeProps) []TreeNodeCfg {
 
 // inspector_snapshot_props captures shape properties as
 // plain values for the properties panel.
-fn inspector_snapshot_props(layout Layout) InspectorNodeProps {
+fn inspector_snapshot_props(layout &Layout) InspectorNodeProps {
 	shape := layout.shape
 	if shape == unsafe { nil } {
 		return InspectorNodeProps{}
@@ -541,8 +551,8 @@ fn inspector_inject_wireframe(mut w Window) {
 		w.renderers << Renderer(DrawStrokeRect{
 			x:         shape.x + shape.padding.left
 			y:         shape.y + shape.padding.top
-			w:         shape.width - shape.padding.left - shape.padding.right
-			h:         shape.height - shape.padding.top - shape.padding.bottom
+			w:         f32_max(0, shape.width - shape.padding.left - shape.padding.right)
+			h:         f32_max(0, shape.height - shape.padding.top - shape.padding.bottom)
 			radius:    0
 			color:     rgba(0, 200, 0, 150).to_gx_color()
 			thickness: 1
@@ -619,22 +629,33 @@ fn inspector_apply_scroll_to(panel_h f32, mut w Window) {
 }
 
 // inspector_flat_row_index returns the flat row index of
-// target in the tree, respecting expanded state. Returns -1
-// if not found.
+// target in the visible tree. Returns -1 if not found.
+// Walks depth-first, counting visible rows until target
+// is found, avoiding array allocation.
 fn inspector_flat_row_index(nodes []TreeNodeCfg, tree_map map[string]bool, target string) int {
-	mut ids := []string{cap: 64}
-	inspector_collect_flat_ids(nodes, tree_map, mut ids)
-	return ids.index(target)
-}
-
-// inspector_collect_flat_ids walks tree nodes depth-first,
-// collecting visible node IDs in display order.
-fn inspector_collect_flat_ids(nodes []TreeNodeCfg, tree_map map[string]bool, mut ids []string) {
-	for node in nodes {
+	mut stack := []InspectorStackFrame{cap: 16}
+	stack << InspectorStackFrame{
+		nodes: nodes
+	}
+	mut idx := 0
+	for stack.len > 0 {
+		si := stack.len - 1
+		if stack[si].pos >= stack[si].nodes.len {
+			stack.delete_last()
+			continue
+		}
+		node := stack[si].nodes[stack[si].pos]
+		stack[si].pos++
 		id := if node.id.len == 0 { node.text } else { node.id }
-		ids << id
+		if id == target {
+			return idx
+		}
+		idx++
 		if tree_map[id] && node.nodes.len > 0 {
-			inspector_collect_flat_ids(node.nodes, tree_map, mut ids)
+			stack << InspectorStackFrame{
+				nodes: node.nodes
+			}
 		}
 	}
+	return -1
 }
