@@ -81,6 +81,14 @@ fn (mut window Window) update() {
 	background_color := window.color_background()
 
 	mut view := window.view_generator(window)
+	$if !prod {
+		if window.inspector_enabled {
+			window.inspector_props_cache = map[string]InspectorNodeProps{}
+			selected := inspector_selected_path(window)
+			window.inspector_tree_cache = inspector_build_tree_nodes(&window.layout, selected, mut
+				window.inspector_props_cache)
+		}
+	}
 	layout_clear(mut window.layout)
 	window.layout = window.compose_layout(mut view)
 	window.build_renderers(background_color, clip_rect)
@@ -113,6 +121,11 @@ fn (mut window Window) build_renderers(background_color Color, clip_rect DrawCli
 	array_clear(mut window.renderers)
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
 	window.scratch.trim_svg_transform_batches()
+	$if !prod {
+		if window.inspector_enabled {
+			inspector_inject_wireframe(mut window)
+		}
+	}
 
 	// Render RTF tooltip if active
 	if window.view_state.rtf_tooltip_text != '' {

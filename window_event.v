@@ -20,6 +20,25 @@ fn event_fn(ev &gg.Event, mut w Window) {
 		return
 	}
 
+	$if !prod {
+		if e.typ == .key_down && e.key_code == .f12 {
+			inspector_toggle(mut w)
+			e.is_handled = true
+			return
+		}
+		if w.inspector_enabled && e.typ == .key_down && e.modifiers == .ctrl {
+			if e.key_code == .left {
+				inspector_resize(inspector_resize_step, mut w)
+				e.is_handled = true
+				return
+			} else if e.key_code == .right {
+				inspector_resize(-inspector_resize_step, mut w)
+				e.is_handled = true
+				return
+			}
+		}
+	}
+
 	// Top-level layout children represent z-axis layers:
 	// layout -> [main layout, floating layouts..., dialog layout]
 	// Dialogs are modal if present. Events process bottom-up (leaf nodes) then

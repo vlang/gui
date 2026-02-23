@@ -39,6 +39,16 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 	layout_remove_floating_layouts_with_scratch(mut layout, mut floating_layouts, mut
 		window.scratch)
 
+	// Inspector overlay — injected as floating layout like dialogs.
+	$if !prod {
+		if window.inspector_enabled {
+			mut inspector_view := inspector_floating_panel(mut window)
+			mut inspector_layout := generate_layout(mut inspector_view, mut window)
+			layout_parents(mut inspector_layout, &layout)
+			floating_layouts << window.scratch.alloc_floating_layout(inspector_layout)
+		}
+	}
+
 	// Dialog is a pop-up dialog.
 	// Add last to ensure it is always on top.
 	// Dialogs do not support additional floating layouts.
