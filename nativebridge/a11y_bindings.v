@@ -1,9 +1,6 @@
 module nativebridge
 
-// a11y_bindings.v — V-side FFI for the macOS accessibility backend.
-
-#flag darwin @VMODROOT/nativebridge/a11y_macos.m
-#include "@VMODROOT/nativebridge/a11y_bridge.h"
+// a11y_bindings.v — V-side FFI for the platform accessibility backends.
 
 pub struct C.GuiA11yNode {
 pub mut:
@@ -32,11 +29,15 @@ fn C.gui_a11y_announce(&char)
 pub fn a11y_init(ns_window voidptr, cb voidptr, user_data voidptr) {
 	$if macos {
 		C.gui_a11y_init(ns_window, cb, user_data)
+	} $else $if linux {
+		C.gui_a11y_init(ns_window, cb, user_data)
 	}
 }
 
 pub fn a11y_sync(nodes &C.GuiA11yNode, count int, focused_idx int) {
 	$if macos {
+		C.gui_a11y_sync(nodes, count, focused_idx)
+	} $else $if linux {
 		C.gui_a11y_sync(nodes, count, focused_idx)
 	}
 }
@@ -44,11 +45,15 @@ pub fn a11y_sync(nodes &C.GuiA11yNode, count int, focused_idx int) {
 pub fn a11y_destroy() {
 	$if macos {
 		C.gui_a11y_destroy()
+	} $else $if linux {
+		C.gui_a11y_destroy()
 	}
 }
 
 pub fn a11y_announce(msg string) {
 	$if macos {
+		C.gui_a11y_announce(msg.str)
+	} $else $if linux {
 		C.gui_a11y_announce(msg.str)
 	}
 }

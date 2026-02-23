@@ -8,8 +8,14 @@ module nativebridge
 #flag darwin @VMODROOT/nativebridge/print_macos.m
 #flag darwin @VMODROOT/nativebridge/readback_macos.m
 #flag darwin -framework Metal
+#flag darwin @VMODROOT/nativebridge/a11y_macos.m
+#flag linux @VMODROOT/nativebridge/a11y_linux.c
+#flag linux -ldbus-1
+#flag linux -I/usr/include/dbus-1.0
+#flag linux -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include
 #flag linux @VMODROOT/nativebridge/readback_linux.c
 #flag linux -lGL
+#include "@VMODROOT/nativebridge/a11y_bridge.h"
 #include "@VMODROOT/nativebridge/dialog_bridge.h"
 #include "@VMODROOT/nativebridge/print_bridge.h"
 #include "@VMODROOT/nativebridge/readback_bridge.h"

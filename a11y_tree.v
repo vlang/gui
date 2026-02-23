@@ -37,13 +37,17 @@ fn (mut w Window) init_a11y() {
 			return
 		}
 		nativebridge.a11y_init(ns_window, voidptr(&a11y_action_callback), w)
+	} $else $if linux {
+		nativebridge.a11y_init(unsafe { nil }, voidptr(&a11y_action_callback), w)
 	}
 }
 
 // sync_a11y walks the layout tree, builds a flat node array,
 // and pushes it to the native accessibility backend.
 fn (mut w Window) sync_a11y() {
-	$if !macos {
+	$if macos {
+	} $else $if linux {
+	} $else {
 		return
 	}
 	if !w.a11y.initialized {
