@@ -52,12 +52,12 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] `tab_control` advanced features (reorder, close button, overflow menu)
 - [x] `splitter` / pane divider widget (drag, collapse, min/max pane size)
 - [x] `breadcrumb_bar` widget
-- [ ] `command_palette` widget (search + ranking + keyboard-first UX)
+- [x] `command_palette` widget (search + ranking + keyboard-first UX)
 - [ ] `toast` / non-blocking notification system
-- [ ] `combobox` with typeahead filter and async options provider
+- [x] `combobox` with typeahead filter and async options provider
 - [ ] `badge` numeric and colored label
-- [-] `toolbar` widget (button groups, separators, overflow menu)
-- [-] `status_bar` widget (icon + text sections, embedded progress indicator)
+- [?] `toolbar` widget (button groups, separators, overflow menu)
+- [?] `status bar` widget (icon + text sections, embedded progress indicator)
 - [ ] `skeleton` shimmer placeholder for async-loading content
 - [x] `sidebar` widget with animated show/hide (spring/tween, overlay or push mode)
 

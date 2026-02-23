@@ -148,6 +148,10 @@ pub mut:
 	wrap_radio    int
 	// sidebar
 	sidebar_open bool = true
+	// combobox
+	combobox_selected string
+	// command palette
+	last_palette_action string
 	// docs panel
 	show_docs bool
 }
@@ -457,6 +461,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['slider', 'value', 'range']
 		},
 		DemoEntry{
+			id:      'combobox'
+			label:   'Combobox'
+			group:   'selection'
+			summary: 'Single-select with typeahead filtering'
+			tags:    ['dropdown', 'filter', 'typeahead', 'autocomplete']
+		},
+		DemoEntry{
 			id:      'select'
 			label:   'Select'
 			group:   'selection'
@@ -623,6 +634,13 @@ fn demo_entries() []DemoEntry {
 			group:   'overlays'
 			summary: 'Collapsible region with custom header and content'
 			tags:    ['accordion', 'collapse', 'panel']
+		},
+		DemoEntry{
+			id:      'command_palette'
+			label:   'Command Palette'
+			group:   'overlays'
+			summary: 'Keyboard-first searchable action list'
+			tags:    ['command', 'search', 'palette', 'keyboard']
 		},
 		DemoEntry{
 			id:      'tooltip'
@@ -1068,6 +1086,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'switch' { demo_switch(w) }
 		'radio' { demo_radio(w) }
 		'radio_group' { demo_radio_group(w) }
+		'combobox' { demo_combobox(mut w) }
 		'select' { demo_select(w) }
 		'listbox' { demo_list_box(mut w) }
 		'range_slider' { demo_range_slider(w) }
@@ -1099,6 +1118,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'color_picker' { demo_color_picker(w) }
 		'markdown' { demo_markdown(mut w) }
 		'tab_control' { demo_tab_control(w) }
+		'command_palette' { demo_command_palette(mut w) }
 		'tooltip' { demo_tooltip() }
 		'rectangle' { demo_rectangle() }
 		'scrollbar' { demo_scrollbar() }
@@ -1137,6 +1157,7 @@ fn related_examples(id string) string {
 		'input' { 'examples/inputs.v, examples/multiline_input.v' }
 		'toggle', 'switch' { 'examples/toggles.v' }
 		'radio', 'radio_group' { 'examples/radio_button_group.v' }
+		'combobox' { 'examples/combobox.v' }
 		'select' { 'examples/select_demo.v, docs/FORMS.md' }
 		'listbox' { 'examples/listbox.v' }
 		'range_slider' { 'examples/range_sliders.v' }
@@ -1167,6 +1188,7 @@ fn related_examples(id string) string {
 		'color_picker' { 'examples/color_picker.v' }
 		'markdown' { 'examples/markdown.v, examples/doc_viewer.v' }
 		'tab_control' { 'examples/tab_view.v' }
+		'command_palette' { 'examples/command_palette.v' }
 		'tooltip' { 'examples/tooltips.v' }
 		'rectangle' { 'examples/border_demo.v, examples/gradient_border_demo.v' }
 		'scrollbar' { 'examples/scroll_demo.v, examples/column_scroll.v' }
@@ -1188,6 +1210,7 @@ fn component_doc(id string) string {
 		'switch' { switch_doc }
 		'radio' { radio_doc }
 		'radio_group' { radio_group_doc }
+		'combobox' { combobox_doc }
 		'select' { select_doc }
 		'listbox' { listbox_doc }
 		'range_slider' { range_slider_doc }
@@ -1219,6 +1242,7 @@ fn component_doc(id string) string {
 		'color_picker' { color_picker_doc }
 		'markdown' { markdown_doc }
 		'tab_control' { tab_control_doc }
+		'command_palette' { command_palette_doc }
 		'tooltip' { tooltip_doc }
 		'rectangle' { rectangle_doc }
 		'scrollbar' { scrollbar_doc }
@@ -5053,6 +5077,259 @@ fn overflow_demo_item(id string, label string) gui.OverflowItem {
 			content: [gui.text(text: label)]
 		)
 	}
+}
+
+const combobox_doc = '# Combobox
+
+Single-select dropdown with typeahead filtering. Accepts static options
+or an async `ListBoxDataSource`.
+
+## Usage
+
+```v
+w.combobox(
+    id:          "fruit",
+    id_focus:    1,
+    id_scroll:   2,
+    value:       state.selected,
+    placeholder: "Pick a fruit...",
+    options:     ["Apple", "Banana", "Cherry"],
+    on_select:   fn (val string, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.selected = val
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| id | string | Unique identifier (required) |
+| value | string | Current selection |
+| options | []string | Static choices |
+| data_source | ?ListBoxDataSource | Async data provider |
+| placeholder | string | Text when empty |
+| min_width | f32 | Minimum dropdown width |
+| max_width | f32 | Maximum dropdown width |
+| max_dropdown_height | f32 | Max dropdown height (default 200) |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_select | fn (string, mut Event, mut Window) | Selection changed (required) |'
+
+fn demo_combobox(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'Type to filter. Arrow keys to navigate, Enter to select, Escape to close.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.row(
+				v_align: .top
+				spacing: gui.theme().spacing_large
+				content: [
+					gui.column(
+						spacing: gui.theme().spacing_small
+						content: [
+							gui.text(text: 'Fruit picker', text_style: gui.theme().b5),
+							w.combobox(
+								id:          'showcase_combobox'
+								id_focus:    9190
+								id_scroll:   6
+								value:       app.combobox_selected
+								placeholder: 'Pick a fruit...'
+								options:     [
+									'Apple',
+									'Banana',
+									'Cherry',
+									'Date',
+									'Elderberry',
+									'Fig',
+									'Grape',
+									'Honeydew',
+									'Kiwi',
+									'Lemon',
+									'Mango',
+									'Nectarine',
+									'Orange',
+									'Papaya',
+									'Quince',
+									'Raspberry',
+									'Strawberry',
+									'Tangerine',
+									'Watermelon',
+								]
+								on_select:   fn (val string, mut _ gui.Event, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									a.combobox_selected = val
+								}
+							),
+							gui.text(
+								text:       'Selected: ${app.combobox_selected}'
+								text_style: gui.theme().n5
+							),
+						]
+					),
+				]
+			),
+		]
+	)
+}
+
+const command_palette_doc = '# Command Palette
+
+Keyboard-first searchable command list with fuzzy matching.
+Activated by a caller-defined hotkey. Full-screen backdrop with
+centered floating card.
+
+## Usage
+
+```v
+w.command_palette(
+    id_focus:  5,
+    id_scroll: 6,
+    items:     my_items,
+    on_action: fn (id string, mut _ gui.Event, mut w gui.Window) {
+        mut s := w.state[MyApp]()
+        s.last_action = id
+    },
+)
+
+// Toggle in on_event:
+gui.command_palette_toggle("__cmd_palette__", 5, mut w)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| items | []CommandPaletteItem | Available commands |
+| placeholder | string | Input placeholder text |
+| width | f32 | Card width |
+| max_height | f32 | Max card height |
+| backdrop_color | Color | Backdrop overlay color |
+
+## Events
+
+| Callback | Signature | Fired when |
+|----------|-----------|------------|
+| on_action | fn (string, mut Event, mut Window) | Command selected (required) |
+| on_dismiss | fn (mut Window) | Palette closed without action |'
+
+fn demo_command_palette(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'Click the button below to open. Type to filter, arrows to navigate, Enter to run.'
+				text_style: gui.theme().n5
+				mode:       .wrap
+			),
+			gui.button(
+				content:  [gui.text(text: 'Open Command Palette')]
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					gui.command_palette_show('__cmd_palette__', 9191, mut w)
+				}
+			),
+			gui.text(
+				text:       'Last action: ${app.last_palette_action}'
+				text_style: gui.theme().n5
+			),
+			w.command_palette(
+				id_focus:  9191
+				id_scroll: 7
+				items:     showcase_palette_items()
+				on_action: fn (id string, mut _ gui.Event, mut w gui.Window) {
+					mut a := w.state[ShowcaseApp]()
+					a.last_palette_action = id
+				}
+			),
+		]
+	)
+}
+
+fn showcase_palette_items() []gui.CommandPaletteItem {
+	return [
+		gui.CommandPaletteItem{
+			id:     'file.new'
+			label:  'New File'
+			detail: 'Ctrl+N'
+		},
+		gui.CommandPaletteItem{
+			id:     'file.open'
+			label:  'Open File'
+			detail: 'Ctrl+O'
+		},
+		gui.CommandPaletteItem{
+			id:     'file.save'
+			label:  'Save'
+			detail: 'Ctrl+S'
+		},
+		gui.CommandPaletteItem{
+			id:     'file.save_as'
+			label:  'Save As...'
+			detail: 'Ctrl+Shift+S'
+		},
+		gui.CommandPaletteItem{
+			id:     'edit.undo'
+			label:  'Undo'
+			detail: 'Ctrl+Z'
+		},
+		gui.CommandPaletteItem{
+			id:     'edit.redo'
+			label:  'Redo'
+			detail: 'Ctrl+Shift+Z'
+		},
+		gui.CommandPaletteItem{
+			id:     'edit.find'
+			label:  'Find'
+			detail: 'Ctrl+F'
+		},
+		gui.CommandPaletteItem{
+			id:     'edit.replace'
+			label:  'Find and Replace'
+			detail: 'Ctrl+H'
+		},
+		gui.CommandPaletteItem{
+			id:     'view.zoom_in'
+			label:  'Zoom In'
+			detail: 'Ctrl+='
+		},
+		gui.CommandPaletteItem{
+			id:     'view.zoom_out'
+			label:  'Zoom Out'
+			detail: 'Ctrl+-'
+		},
+		gui.CommandPaletteItem{
+			id:     'view.fullscreen'
+			label:  'Toggle Fullscreen'
+			detail: 'F11'
+		},
+		gui.CommandPaletteItem{
+			id:     'term.new'
+			label:  'New Terminal'
+			detail: 'Ctrl+`'
+		},
+		gui.CommandPaletteItem{
+			id:    'git.commit'
+			label: 'Git: Commit'
+		},
+		gui.CommandPaletteItem{
+			id:    'git.push'
+			label: 'Git: Push'
+		},
+		gui.CommandPaletteItem{
+			id:    'git.pull'
+			label: 'Git: Pull'
+		},
+	]
 }
 
 const sidebar_doc = '# Sidebar
