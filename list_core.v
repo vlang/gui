@@ -3,6 +3,8 @@ module gui
 // list_core.v provides pure functions shared by list_box, select,
 // combobox, and command_palette. No state, no Window dependency.
 
+const list_core_virtual_buffer_rows = 2
+
 // ListCoreItem is the normalized item for the shared list engine.
 // Widgets map their domain types to this before calling core fns.
 @[minify]
@@ -194,7 +196,7 @@ fn list_core_visible_range(item_count int, row_height f32, list_height f32, scro
 	abs_scroll := if scroll_y < 0 { -scroll_y } else { scroll_y }
 	first := int_clamp(int(abs_scroll / row_height), 0, max_idx)
 	visible_rows := int(list_height / row_height) + 1
-	buf := list_box_virtual_buffer_rows
+	buf := list_core_virtual_buffer_rows
 	first_visible := int_max(0, first - buf)
 	mut last_visible := int_min(max_idx, first + visible_rows + buf)
 	if first_visible > last_visible {
@@ -221,7 +223,10 @@ fn list_core_navigate(key KeyCode, item_count int, current int) ListCoreAction {
 
 // list_core_fuzzy_score scores a candidate against a query.
 // Returns -1 (no match) or 0+ (lower = better). Zero-alloc,
-// raw byte walking.
+// raw byte walking. Byte-level comparison; ASCII
+// case-insensitive. Multi-byte UTF-8 sequences (accented
+// chars, CJK, emoji) are compared byte-by-byte without
+// case folding.
 fn list_core_fuzzy_score(candidate string, query string) int {
 	if query.len == 0 {
 		return 0
@@ -296,6 +301,75 @@ fn list_core_filter(items []ListCoreItem, query string) []int {
 struct ListCoreScored {
 	index int
 	score int
+}
+
+// list_core_apply_nav applies a navigation action to a
+// highlight index. Returns new index and whether it changed.
+fn list_core_apply_nav(action ListCoreAction, cur int, item_count int) (int, bool) {
+	match action {
+		.move_up {
+			next := if cur > 0 { cur - 1 } else { 0 }
+			return next, next != cur
+		}
+		.move_down {
+			next := if cur < item_count - 1 {
+				cur + 1
+			} else {
+				item_count - 1
+			}
+			return next, next != cur
+		}
+		.first {
+			return 0, cur != 0
+		}
+		.last {
+			last := if item_count > 0 {
+				item_count - 1
+			} else {
+				0
+			}
+			return last, cur != last
+		}
+		else {
+			return cur, false
+		}
+	}
+}
+
+// ListCorePrepared holds pre-computed filter results for a
+// frame.
+struct ListCorePrepared {
+	items []ListCoreItem
+	ids   []string
+	hl    int
+}
+
+// list_core_prepare filters items by query, clamps highlight,
+// and collects selectable IDs. Skips subheadings from IDs.
+fn list_core_prepare(items []ListCoreItem, query string, raw_highlight int) ListCorePrepared {
+	filtered_indices := list_core_filter(items, query)
+	mut filtered := []ListCoreItem{cap: filtered_indices.len}
+	for idx in filtered_indices {
+		if idx >= 0 && idx < items.len {
+			filtered << items[idx]
+		}
+	}
+	hl := if filtered.len > 0 {
+		int_clamp(raw_highlight, 0, filtered.len - 1)
+	} else {
+		0
+	}
+	mut ids := []string{cap: filtered.len}
+	for item in filtered {
+		if !item.is_subheading {
+			ids << item.id
+		}
+	}
+	return ListCorePrepared{
+		items: filtered
+		ids:   ids
+		hl:    hl
+	}
 }
 
 // list_core_row_height_estimate estimates row height from text

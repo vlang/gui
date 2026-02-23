@@ -56,20 +56,10 @@ pub fn (mut window Window) command_palette(cfg CommandPaletteCfg) View {
 	}
 
 	// Filter + rank.
-	filtered_indices := list_core_filter(core_items, query)
-	mut filtered := []ListCoreItem{cap: filtered_indices.len}
-	for idx in filtered_indices {
-		if idx >= 0 && idx < core_items.len {
-			filtered << core_items[idx]
-		}
-	}
-
-	// Clamp highlight.
-	hl := if filtered.len > 0 {
-		int_clamp(highlighted, 0, filtered.len - 1)
-	} else {
-		0
-	}
+	prepared := list_core_prepare(core_items, query, highlighted)
+	filtered := prepared.items
+	filtered_ids := prepared.ids
+	hl := prepared.hl
 
 	// Virtualization.
 	row_h := list_core_row_height_estimate(cfg.text_style, padding_two_five)
@@ -79,12 +69,6 @@ pub fn (mut window Window) command_palette(cfg CommandPaletteCfg) View {
 		f32(0)
 	}
 	first, last := list_core_visible_range(filtered.len, row_h, cfg.max_height, scroll_y)
-
-	// Collect filtered IDs for keyboard selection.
-	mut filtered_ids := []string{cap: filtered.len}
-	for item in filtered {
-		filtered_ids << item.id
-	}
 
 	on_action := cfg.on_action
 	palette_id := cfg.id
@@ -195,6 +179,10 @@ pub fn command_palette_show(id string, id_focus u32, mut w Window) {
 pub fn command_palette_dismiss(id string, mut w Window) {
 	mut ss := state_map[string, bool](mut w, ns_cmd_palette, cap_moderate)
 	ss.set(id, false)
+	mut sq := state_map[string, string](mut w, ns_cmd_palette_query, cap_moderate)
+	sq.set(id, '')
+	mut sh := state_map[string, int](mut w, ns_cmd_palette_highlight, cap_moderate)
+	sh.set(id, 0)
 	w.update_window()
 }
 
@@ -256,41 +244,21 @@ fn palette_on_keydown(palette_id string, on_action fn (string, mut Event, mut Wi
 	cur := sh.get(palette_id) or { 0 }
 	action := list_core_navigate(e.key_code, item_count, cur)
 
-	match action {
-		.move_up {
-			next := if cur > 0 { cur - 1 } else { 0 }
-			sh.set(palette_id, next)
-			w.update_window()
-			e.is_handled = true
-		}
-		.move_down {
-			next := if cur < item_count - 1 { cur + 1 } else { item_count - 1 }
-			sh.set(palette_id, next)
-			w.update_window()
-			e.is_handled = true
-		}
-		.select_item {
-			if cur >= 0 && cur < item_count {
-				on_action(filtered_ids[cur], mut e, mut w)
-				command_palette_dismiss(palette_id, mut w)
-				if on_dismiss != unsafe { nil } {
-					on_dismiss(mut w)
-				}
+	if action == .select_item {
+		if cur >= 0 && cur < item_count {
+			on_action(filtered_ids[cur], mut e, mut w)
+			command_palette_dismiss(palette_id, mut w)
+			if on_dismiss != unsafe { nil } {
+				on_dismiss(mut w)
 			}
-			e.is_handled = true
 		}
-		.first {
-			sh.set(palette_id, 0)
-			w.update_window()
-			e.is_handled = true
-		}
-		.last {
-			if item_count > 0 {
-				sh.set(palette_id, item_count - 1)
-			}
-			w.update_window()
-			e.is_handled = true
-		}
-		else {}
+		e.is_handled = true
+		return
+	}
+	next, changed := list_core_apply_nav(action, cur, item_count)
+	if changed {
+		sh.set(palette_id, next)
+		w.update_window()
+		e.is_handled = true
 	}
 }

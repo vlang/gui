@@ -2,8 +2,6 @@ module gui
 
 import strings
 
-const list_box_virtual_buffer_rows = 2
-
 // ListBoxCfg configures a [list_box](#list_box) view.
 // `selected_ids` is a list of selected item ids.
 @[minify]
@@ -589,37 +587,19 @@ fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, 
 	mut lbf := state_map[string, int](mut w, ns_list_box_focus, cap_moderate)
 	cur_idx := lbf.get(list_box_id) or { -1 }
 
-	match action {
-		.move_up {
-			next := if cur_idx > 0 { cur_idx - 1 } else { 0 }
-			lbf.set(list_box_id, next)
-			w.update_window()
+	if action == .select_item {
+		if cur_idx >= 0 && cur_idx < item_ids.len {
+			dat_id := item_ids[cur_idx]
+			ids := list_box_next_selected_ids(selected_ids, dat_id, is_multiple)
+			on_select(ids, mut e, mut w)
 		}
-		.move_down {
-			next := if cur_idx < item_ids.len - 1 {
-				cur_idx + 1
-			} else {
-				item_ids.len - 1
-			}
-			lbf.set(list_box_id, next)
-			w.update_window()
-		}
-		.select_item {
-			if cur_idx >= 0 && cur_idx < item_ids.len {
-				dat_id := item_ids[cur_idx]
-				ids := list_box_next_selected_ids(selected_ids, dat_id, is_multiple)
-				on_select(ids, mut e, mut w)
-			}
-		}
-		.first {
-			lbf.set(list_box_id, 0)
-			w.update_window()
-		}
-		.last {
-			lbf.set(list_box_id, item_ids.len - 1)
-			w.update_window()
-		}
-		else {}
+		e.is_handled = true
+		return
+	}
+	next, changed := list_core_apply_nav(action, cur_idx, item_ids.len)
+	if changed {
+		lbf.set(list_box_id, next)
+		w.update_window()
 	}
 	e.is_handled = true
 }

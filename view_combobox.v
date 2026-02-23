@@ -47,31 +47,11 @@ pub fn (mut window Window) combobox(cfg ComboboxCfg) View {
 	items, loading, load_error := combobox_resolve_items(cfg, query, mut window)
 
 	// Filter static items when query is present and no async source.
-	filtered_indices := if cfg.data_source == none && query.len > 0 {
-		list_core_filter(items, query)
-	} else {
-		// Async source handles filtering; show all results.
-		mut all := []int{cap: items.len}
-		for i in 0 .. items.len {
-			all << i
-		}
-		all
-	}
-
-	// Build filtered item list for rendering.
-	mut filtered := []ListCoreItem{cap: filtered_indices.len}
-	for idx in filtered_indices {
-		if idx >= 0 && idx < items.len {
-			filtered << items[idx]
-		}
-	}
-
-	// Clamp highlight.
-	hl := if filtered.len > 0 {
-		int_clamp(highlighted, 0, filtered.len - 1)
-	} else {
-		0
-	}
+	filter_query := if cfg.data_source == none { query } else { '' }
+	prepared := list_core_prepare(items, filter_query, highlighted)
+	filtered := prepared.items
+	filtered_ids := prepared.ids
+	hl := prepared.hl
 
 	// Virtualization.
 	row_h := list_core_row_height_estimate(cfg.text_style, cfg.padding)
@@ -82,12 +62,6 @@ pub fn (mut window Window) combobox(cfg ComboboxCfg) View {
 		f32(0)
 	}
 	first, last := list_core_visible_range(filtered.len, row_h, list_h, scroll_y)
-
-	// Collect filtered IDs for keyboard selection.
-	mut filtered_ids := []string{cap: filtered.len}
-	for item in filtered {
-		filtered_ids << item.id
-	}
 
 	// Build dropdown content.
 	on_select := cfg.on_select
@@ -230,6 +204,8 @@ fn combobox_close(id string, mut w Window) {
 	ss.set(id, false)
 	mut sq := state_map[string, string](mut w, ns_combobox_query, cap_moderate)
 	sq.set(id, '')
+	mut sh := state_map[string, int](mut w, ns_combobox_highlight, cap_moderate)
+	sh.set(id, 0)
 	w.update_window()
 }
 
@@ -272,39 +248,19 @@ fn combobox_on_keydown(cfg_id string, on_select fn (string, mut Event, mut Windo
 	cur := sh.get(cfg_id) or { 0 }
 	action := list_core_navigate(e.key_code, item_count, cur)
 
-	match action {
-		.move_up {
-			next := if cur > 0 { cur - 1 } else { 0 }
-			sh.set(cfg_id, next)
-			w.update_window()
-			e.is_handled = true
+	if action == .select_item {
+		if cur >= 0 && cur < item_count {
+			on_select(filtered_ids[cur], mut e, mut w)
+			combobox_close(cfg_id, mut w)
 		}
-		.move_down {
-			next := if cur < item_count - 1 { cur + 1 } else { item_count - 1 }
-			sh.set(cfg_id, next)
-			w.update_window()
-			e.is_handled = true
-		}
-		.select_item {
-			if cur >= 0 && cur < item_count {
-				on_select(filtered_ids[cur], mut e, mut w)
-				combobox_close(cfg_id, mut w)
-			}
-			e.is_handled = true
-		}
-		.first {
-			sh.set(cfg_id, 0)
-			w.update_window()
-			e.is_handled = true
-		}
-		.last {
-			if item_count > 0 {
-				sh.set(cfg_id, item_count - 1)
-			}
-			w.update_window()
-			e.is_handled = true
-		}
-		else {}
+		e.is_handled = true
+		return
+	}
+	next, changed := list_core_apply_nav(action, cur, item_count)
+	if changed {
+		sh.set(cfg_id, next)
+		w.update_window()
+		e.is_handled = true
 	}
 }
 
