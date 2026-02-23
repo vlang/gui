@@ -214,13 +214,12 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 	if is_open {
 		mut current_idx := sh.get(cfg.id) or { 0 }
 		id_scroll := fnv1a.sum32_string(cfg.id + 'dropdown')
+		action := list_core_navigate(e.key_code, cfg.options.len, current_idx)
 
-		if e.key_code == .enter {
-			// Select currently highlighted
+		if action == .select_item {
 			if current_idx >= 0 && current_idx < cfg.options.len {
 				option := cfg.options[current_idx]
 				if !option.starts_with('---') {
-					// Trigger selection logic (duplicated from option_view click)
 					if !cfg.select_multiple {
 						ss.clear()
 					}
@@ -246,8 +245,8 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 			return
 		}
 
-		if e.key_code in [.up, .down] {
-			dir := if e.key_code == .up { -1 } else { 1 }
+		if action in [.move_up, .move_down] {
+			dir := if action == .move_up { -1 } else { 1 }
 			mut next_idx := current_idx + dir
 
 			// Skip subheaders and bounds check
@@ -260,13 +259,11 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 
 			// Clamp
 			if next_idx < 0 {
-				// Find first non-header
 				next_idx = 0
 				for next_idx < cfg.options.len && cfg.options[next_idx].starts_with('---') {
 					next_idx++
 				}
 			} else if next_idx >= cfg.options.len {
-				// Find last non-header
 				next_idx = cfg.options.len - 1
 				for next_idx >= 0 && cfg.options[next_idx].starts_with('---') {
 					next_idx--
@@ -276,7 +273,6 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 			if next_idx >= 0 && next_idx < cfg.options.len
 				&& !cfg.options[next_idx].starts_with('---') {
 				sh.set(cfg.id, next_idx)
-				// Scroll to view
 				row_h := cfg.text_style.size + 4
 				mut scroll_sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
 				scroll_sy.set(id_scroll, next_idx * row_h)

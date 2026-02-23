@@ -30,7 +30,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		color_select:     cfg.color_select
 		titlebar_dark:    cfg.titlebar_dark
 
-		color_picker_style: ColorPickerStyle{
+		color_picker_style:    ColorPickerStyle{
 			color:              cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_border:       cfg.color_border
@@ -40,7 +40,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:             cfg.radius
 			text_style:         cfg.text_style
 		}
-		breadcrumb_style:   BreadcrumbStyle{
+		breadcrumb_style:      BreadcrumbStyle{
 			color_crumb_hover:    cfg.color_hover
 			color_crumb_click:    cfg.color_active
 			color_content:        cfg.color_panel
@@ -82,7 +82,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				size:   cfg.size_text_medium
 			}
 		}
-		button_style:       ButtonStyle{
+		button_style:          ButtonStyle{
 			color:              cfg.color_interior
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
@@ -93,14 +93,14 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:             cfg.radius
 			radius_border:      cfg.radius_border
 		}
-		container_style:    ContainerStyle{
+		container_style:       ContainerStyle{
 			color:       color_transparent
 			padding:     cfg.padding
 			radius:      cfg.radius
 			spacing:     cfg.spacing_medium
 			size_border: cfg.size_border
 		}
-		date_picker_style:  DatePickerStyle{
+		date_picker_style:     DatePickerStyle{
 			color:              cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_focus:        cfg.color_focus
@@ -114,7 +114,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border:      cfg.radius_border
 			text_style:         cfg.text_style
 		}
-		data_grid_style:    DataGridStyle{
+		data_grid_style:       DataGridStyle{
 			color_background:    cfg.color_interior
 			color_header:        cfg.color_panel
 			color_header_hover:  cfg.color_hover
@@ -138,7 +138,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 			text_style_filter:   cfg.text_style
 		}
-		dialog_style:       DialogStyle{
+		dialog_style:          DialogStyle{
 			color:              cfg.color_panel
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
@@ -153,7 +153,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 			text_style:       cfg.text_style
 		}
-		expand_panel_style: ExpandPanelStyle{
+		expand_panel_style:    ExpandPanelStyle{
 			color:              cfg.color_panel
 			color_hover:        cfg.color_hover
 			color_focus:        cfg.color_focus
@@ -165,7 +165,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:        cfg.radius
 			radius_border: cfg.radius_border
 		}
-		input_style:        InputStyle{
+		input_style:           InputStyle{
 			color:              cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_focus:        cfg.color_interior
@@ -192,7 +192,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				size:   cfg.size_text_medium
 			}
 		}
-		list_box_style:     ListBoxStyle{
+		list_box_style:        ListBoxStyle{
 			color:              cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_focus:        cfg.color_focus
@@ -207,7 +207,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:       cfg.text_style
 			subheading_style: cfg.text_style
 		}
-		menubar_style:      MenubarStyle{
+		menubar_style:         MenubarStyle{
 			width_submenu_min:  cfg.width_submenu_min
 			width_submenu_max:  cfg.width_submenu_max
 			color:              cfg.color_interior
@@ -232,7 +232,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				size: cfg.size_text_small
 			}
 		}
-		progress_bar_style: ProgressBarStyle{
+		progress_bar_style:    ProgressBarStyle{
 			size:         cfg.size_progress_bar
 			color:        cfg.color_interior
 			color_bar:    cfg.color_active
@@ -242,7 +242,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:       cfg.radius
 			text_style:   cfg.text_style
 		}
-		radio_style:        RadioStyle{
+		radio_style:           RadioStyle{
 			size:               cfg.size_radio
 			color:              cfg.color_panel
 			color_hover:        cfg.color_hover
@@ -254,7 +254,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:         cfg.text_style
 			size_border:        cfg.size_border
 		}
-		range_slider_style: RangeSliderStyle{
+		range_slider_style:    RangeSliderStyle{
 			size:               cfg.size_range_slider
 			thumb_size:         cfg.size_range_slider_thumb
 			color:              cfg.color_interior
@@ -271,12 +271,12 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:        cfg.radius_small
 			radius_border: cfg.radius_small
 		}
-		rectangle_style:    RectangleStyle{
+		rectangle_style:       RectangleStyle{
 			color_border: cfg.color_border
 			radius:       cfg.radius
 			size_border:  cfg.size_border
 		}
-		scrollbar_style:    ScrollbarStyle{
+		scrollbar_style:       ScrollbarStyle{
 			size:           cfg.size_scrollbar
 			min_thumb_size: cfg.size_scrollbar_min_thumb
 			color_thumb:    cfg.color_active
@@ -285,7 +285,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			gap_edge:       cfg.scroll_gap_edge
 			gap_end:        cfg.scroll_gap_end
 		}
-		select_style:       SelectStyle{
+		select_style:          SelectStyle{
 			color:              cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_focus:        cfg.color_focus
@@ -309,7 +309,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				}
 			}
 		}
-		splitter_style:     SplitterStyle{
+		splitter_style:        SplitterStyle{
 			handle_size:         cfg.size_splitter_handle
 			drag_step:           0.02
 			drag_step_large:     0.10
@@ -326,7 +326,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius:              cfg.radius_small
 			radius_border:       cfg.radius_small
 		}
-		switch_style:       SwitchStyle{
+		switch_style:          SwitchStyle{
 			size_width:         cfg.size_switch_width
 			size_height:        cfg.size_switch_height
 			color:              cfg.color_panel
@@ -343,7 +343,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border:      radius_large * 2
 			text_style:         cfg.text_style
 		}
-		tab_style:          TabStyle{
+		tab_style:             TabStyle{
 			color:                  cfg.color_panel
 			color_border:           cfg.color_border
 			color_header:           color_transparent
@@ -388,8 +388,8 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				}
 			}
 		}
-		text_style:         cfg.text_style
-		toggle_style:       ToggleStyle{
+		text_style:            cfg.text_style
+		toggle_style:          ToggleStyle{
 			color:              cfg.color_panel
 			color_border:       cfg.color_border
 			color_border_focus: cfg.color_border_focus
@@ -404,7 +404,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style:         cfg.text_style
 			text_style_label:   cfg.text_style
 		}
-		tooltip_style:      TooltipStyle{
+		tooltip_style:         TooltipStyle{
 			color:              cfg.color_interior
 			color_hover:        cfg.color_hover
 			color_focus:        cfg.color_focus
@@ -417,7 +417,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			radius_border:      cfg.radius_small
 			text_style:         cfg.text_style
 		}
-		tree_style:         TreeStyle{
+		tree_style:            TreeStyle{
 			color:              color_transparent
 			color_hover:        cfg.color_hover
 			color_focus:        cfg.color_focus
@@ -431,6 +431,44 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				...cfg.text_style
 				family: icon_font_name
 				size:   cfg.size_text_small
+			}
+		}
+		combobox_style:        ComboboxStyle{
+			color:              cfg.color_interior
+			color_hover:        cfg.color_hover
+			color_focus:        cfg.color_interior
+			color_border:       cfg.color_border
+			color_border_focus: cfg.color_border_focus
+			color_highlight:    cfg.color_select
+			padding:            cfg.padding_small
+			size_border:        cfg.size_border
+			radius:             cfg.radius
+			text_style:         cfg.text_style
+			placeholder_style:  TextStyle{
+				...cfg.text_style
+				color: Color{
+					r: cfg.text_style.color.r
+					g: cfg.text_style.color.g
+					b: cfg.text_style.color.b
+					a: 100
+				}
+			}
+		}
+		command_palette_style: CommandPaletteStyle{
+			color:           cfg.color_panel
+			color_border:    cfg.color_border
+			color_highlight: cfg.color_select
+			size_border:     cfg.size_border
+			radius:          cfg.radius
+			text_style:      cfg.text_style
+			detail_style:    TextStyle{
+				...cfg.text_style
+				color: Color{
+					r: cfg.text_style.color.r
+					g: cfg.text_style.color.g
+					b: cfg.text_style.color.b
+					a: 140
+				}
 			}
 		}
 
@@ -877,6 +915,22 @@ pub fn (t Theme) with_markdown_style(style MarkdownStyle) Theme {
 	}
 }
 
+// with_combobox_style returns a new Theme with the combobox style replaced.
+pub fn (t Theme) with_combobox_style(style ComboboxStyle) Theme {
+	return Theme{
+		...t
+		combobox_style: style
+	}
+}
+
+// with_command_palette_style returns a new Theme with the command palette style replaced.
+pub fn (t Theme) with_command_palette_style(style CommandPaletteStyle) Theme {
+	return Theme{
+		...t
+		command_palette_style: style
+	}
+}
+
 // -----------------------------------------------------------------------------
 // Bulk color updates
 // -----------------------------------------------------------------------------
@@ -1089,7 +1143,7 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_tab_border_focus: border_focus
 		}
 
-		switch_style:  SwitchStyle{
+		switch_style:          SwitchStyle{
 			...t.switch_style
 			color:              panel
 			color_click:        interior
@@ -1100,7 +1154,7 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_select:       sel
 			color_unselect:     active
 		}
-		toggle_style:  ToggleStyle{
+		toggle_style:          ToggleStyle{
 			...t.toggle_style
 			color:              panel
 			color_border:       border
@@ -1110,7 +1164,7 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_hover:        hover
 			color_select:       interior
 		}
-		tooltip_style: TooltipStyle{
+		tooltip_style:         TooltipStyle{
 			...t.tooltip_style
 			color:              interior
 			color_hover:        hover
@@ -1119,11 +1173,26 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color_border:       border
 			color_border_focus: border_focus
 		}
-		tree_style:    TreeStyle{
+		tree_style:            TreeStyle{
 			...t.tree_style
 			color_hover:        hover
 			color_focus:        focus
 			color_border_focus: border_focus
+		}
+		combobox_style:        ComboboxStyle{
+			...t.combobox_style
+			color:              interior
+			color_hover:        hover
+			color_focus:        interior
+			color_border:       border
+			color_border_focus: border_focus
+			color_highlight:    sel
+		}
+		command_palette_style: CommandPaletteStyle{
+			...t.command_palette_style
+			color:           panel
+			color_border:    border
+			color_highlight: sel
 		}
 	}
 }

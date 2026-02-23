@@ -335,7 +335,9 @@ fn list_box_estimate_row_height(cfg ListBoxCfg, mut window Window) f32 {
 }
 
 fn list_box_estimate_row_height_no_window(cfg ListBoxCfg) f32 {
-	return f32_max(cfg.text_style.size, cfg.subheading_style.size) + padding_two_five.height()
+	h1 := list_core_row_height_estimate(cfg.text_style, padding_two_five)
+	h2 := list_core_row_height_estimate(cfg.subheading_style, padding_two_five)
+	return f32_max(h1, h2)
 }
 
 fn list_box_font_height(style TextStyle, mut window Window) f32 {
@@ -347,20 +349,9 @@ fn list_box_font_height(style TextStyle, mut window Window) f32 {
 }
 
 fn list_box_visible_range(list_height f32, row_height f32, cfg ListBoxCfg, mut window Window) (int, int) {
-	if cfg.data.len == 0 || row_height <= 0 || list_height <= 0 {
-		return 0, -1
-	}
-	max_idx := cfg.data.len - 1
 	mut sy := state_map[u32, f32](mut window, ns_scroll_y, cap_scroll)
-	scroll_y := -(sy.get(cfg.id_scroll) or { f32(0) })
-	first := int_clamp(int(scroll_y / row_height), 0, max_idx)
-	visible_rows := int(list_height / row_height) + 1
-	mut first_visible := int_max(0, first - list_box_virtual_buffer_rows)
-	last_visible := int_min(max_idx, first + visible_rows + list_box_virtual_buffer_rows)
-	if first_visible > last_visible {
-		first_visible = last_visible
-	}
-	return first_visible, last_visible
+	scroll_y := sy.get(cfg.id_scroll) or { f32(0) }
+	return list_core_visible_range(cfg.data.len, row_height, list_height, scroll_y)
 }
 
 pub fn (window &Window) list_box_source_stats(list_box_id string) ListBoxSourceStats {
@@ -571,22 +562,40 @@ pub fn list_box_subheading(id string, title string) ListBoxOption {
 	}
 }
 
+// list_box_option_to_core converts a ListBoxOption to ListCoreItem.
+fn list_box_option_to_core(opt ListBoxOption) ListCoreItem {
+	return ListCoreItem{
+		id:            opt.id
+		label:         opt.name
+		detail:        opt.value
+		is_subheading: opt.is_subheading
+	}
+}
+
 // list_box_on_keydown handles keyboard navigation for list box.
 fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, on_select fn ([]string, mut Event, mut Window), selected_ids []string, mut e Event, mut w Window) {
 	if item_ids.len == 0 || on_select == unsafe { nil } {
 		return
 	}
+	// Space also selects in listbox context.
+	action := if e.key_code == .space {
+		ListCoreAction.select_item
+	} else {
+		list_core_navigate(e.key_code, item_ids.len, 0)
+	}
+	if action == .none {
+		return
+	}
 	mut lbf := state_map[string, int](mut w, ns_list_box_focus, cap_moderate)
 	cur_idx := lbf.get(list_box_id) or { -1 }
 
-	match e.key_code {
-		.up {
+	match action {
+		.move_up {
 			next := if cur_idx > 0 { cur_idx - 1 } else { 0 }
 			lbf.set(list_box_id, next)
 			w.update_window()
-			e.is_handled = true
 		}
-		.down {
+		.move_down {
 			next := if cur_idx < item_ids.len - 1 {
 				cur_idx + 1
 			} else {
@@ -594,26 +603,23 @@ fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, 
 			}
 			lbf.set(list_box_id, next)
 			w.update_window()
-			e.is_handled = true
 		}
-		.enter, .space {
+		.select_item {
 			if cur_idx >= 0 && cur_idx < item_ids.len {
 				dat_id := item_ids[cur_idx]
 				ids := list_box_next_selected_ids(selected_ids, dat_id, is_multiple)
 				on_select(ids, mut e, mut w)
 			}
-			e.is_handled = true
 		}
-		.home {
+		.first {
 			lbf.set(list_box_id, 0)
 			w.update_window()
-			e.is_handled = true
 		}
-		.end {
+		.last {
 			lbf.set(list_box_id, item_ids.len - 1)
 			w.update_window()
-			e.is_handled = true
 		}
 		else {}
 	}
+	e.is_handled = true
 }

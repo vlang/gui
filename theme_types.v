@@ -18,32 +18,34 @@ pub:
 	color_select     Color    = color_select_dark     // links and selected
 	titlebar_dark    bool
 
-	breadcrumb_style   BreadcrumbStyle
-	button_style       ButtonStyle
-	color_picker_style ColorPickerStyle
-	container_style    ContainerStyle
-	date_picker_style  DatePickerStyle
-	data_grid_style    DataGridStyle
-	dialog_style       DialogStyle
-	expand_panel_style ExpandPanelStyle
-	input_style        InputStyle
-	list_box_style     ListBoxStyle
-	menubar_style      MenubarStyle
-	progress_bar_style ProgressBarStyle
-	radio_style        RadioStyle
-	range_slider_style RangeSliderStyle
-	rectangle_style    RectangleStyle
-	scrollbar_style    ScrollbarStyle
-	select_style       SelectStyle
-	splitter_style     SplitterStyle
-	switch_style       SwitchStyle
-	tab_style          TabStyle
-	text_style         TextStyle
-	text_style_bold    TextStyle
-	toggle_style       ToggleStyle
-	tooltip_style      TooltipStyle
-	tree_style         TreeStyle
-	markdown_style     MarkdownStyle
+	breadcrumb_style      BreadcrumbStyle
+	button_style          ButtonStyle
+	color_picker_style    ColorPickerStyle
+	container_style       ContainerStyle
+	date_picker_style     DatePickerStyle
+	data_grid_style       DataGridStyle
+	dialog_style          DialogStyle
+	expand_panel_style    ExpandPanelStyle
+	input_style           InputStyle
+	list_box_style        ListBoxStyle
+	menubar_style         MenubarStyle
+	progress_bar_style    ProgressBarStyle
+	radio_style           RadioStyle
+	range_slider_style    RangeSliderStyle
+	rectangle_style       RectangleStyle
+	scrollbar_style       ScrollbarStyle
+	select_style          SelectStyle
+	splitter_style        SplitterStyle
+	switch_style          SwitchStyle
+	tab_style             TabStyle
+	text_style            TextStyle
+	text_style_bold       TextStyle
+	toggle_style          ToggleStyle
+	tooltip_style         TooltipStyle
+	tree_style            TreeStyle
+	combobox_style        ComboboxStyle
+	command_palette_style CommandPaletteStyle
+	markdown_style        MarkdownStyle
 
 	// n's and b's are convenience configs for sizing
 	// similar to H1-H6 in html markup. n3 is the

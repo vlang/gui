@@ -611,6 +611,58 @@ pub:
 	text_style         TextStyle     = text_style_dark
 }
 
+pub struct ComboboxStyle {
+pub:
+	color              Color     = color_interior_dark
+	color_hover        Color     = color_hover_dark
+	color_focus        Color     = color_interior_dark
+	color_border       Color     = color_border_dark
+	color_border_focus Color     = color_select_dark
+	color_highlight    Color     = color_select_dark
+	padding            Padding   = padding_small
+	size_border        f32       = size_border
+	radius             f32       = radius_medium
+	min_width          f32       = 75
+	max_width          f32       = 200
+	text_style         TextStyle = text_style_dark
+	placeholder_style  TextStyle = TextStyle{
+		...text_style_dark
+		color: Color{
+			r: 128
+			g: 128
+			b: 128
+			a: 200
+		}
+	}
+}
+
+pub struct CommandPaletteStyle {
+pub:
+	color           Color     = color_panel_dark
+	color_border    Color     = color_border_dark
+	color_highlight Color     = color_select_dark
+	size_border     f32       = size_border
+	radius          f32       = radius_medium
+	width           f32       = 500
+	max_height      f32       = 400
+	text_style      TextStyle = text_style_dark
+	detail_style    TextStyle = TextStyle{
+		...text_style_dark
+		color: Color{
+			r: 128
+			g: 128
+			b: 128
+			a: 200
+		}
+	}
+	backdrop_color  Color = Color{
+		r: 0
+		g: 0
+		b: 0
+		a: 120
+	}
+}
+
 pub struct TreeStyle {
 pub:
 	indent             f32 = 25

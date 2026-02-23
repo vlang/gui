@@ -59,6 +59,8 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			if !e.is_handled {
 				mut ss := state_map[string, bool](mut w, ns_select, cap_moderate)
 				ss.clear()
+				mut cs := state_map[string, bool](mut w, ns_combobox, cap_moderate)
+				cs.clear()
 			}
 		}
 		.mouse_move {
