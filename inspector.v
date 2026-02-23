@@ -74,45 +74,35 @@ fn inspector_floating_panel(mut w Window) View {
 	panel_w := inspector_panel_width(w)
 
 	mut content := []View{cap: 2}
-	// Header
-	content << row(
-		sizing:  fill_fixed
-		color:   rgba(30, 30, 30, 240)
-		padding: pad_tblr(4, 8)
-		content: [
-			text(
-				text:       'Inspector'
-				text_style: TextStyle{
-					size:     14
-					color:    white
-					typeface: .bold
-				}
-			),
-		]
-	)
-	// Tree with inline properties as child nodes
 	content << inspector_tree_view(mut w)
+	inspector_apply_scroll_to(panel_h, mut w)
 
+	sb_cfg := &ScrollbarCfg{
+		color_thumb: rgba(255, 255, 255, 80)
+	}
 	return column(
-		float:          true
-		float_anchor:   .top_right
-		float_tie_off:  .top_right
-		float_offset_x: -inspector_margin
-		float_offset_y: inspector_margin
-		width:          panel_w
-		height:         panel_h
-		sizing:         fixed_fixed
-		color:          rgba(20, 20, 20, 230)
-		radius:         8
-		clip:           true
-		id_scroll:      inspector_id_scroll_panel
-		scroll_mode:    .vertical_only
-		padding:        padding_none
-		spacing:        0
-		on_click:       fn (_ &Layout, mut e Event, mut _ Window) {
+		float:           true
+		float_anchor:    .top_right
+		float_tie_off:   .top_right
+		float_offset_x:  -inspector_margin
+		float_offset_y:  inspector_margin
+		width:           panel_w
+		height:          panel_h
+		sizing:          fixed_fixed
+		color:           rgba(20, 20, 20, 230)
+		radius:          8
+		clip:            true
+		id_scroll:       inspector_id_scroll_panel
+		scrollbar_cfg_x: sb_cfg
+		scrollbar_cfg_y: sb_cfg
+		padding:         Padding{
+			right: gui_theme.scrollbar_style.size + gui_theme.scrollbar_style.gap_edge * 2
+		}
+		spacing:         0
+		on_click:        fn (_ &Layout, mut e Event, mut _ Window) {
 			e.is_handled = true
 		}
-		content:        content
+		content:         content
 	)
 }
 
@@ -121,33 +111,74 @@ fn inspector_floating_panel(mut w Window) View {
 // tree grows to content, panel scroll handles overflow.
 fn inspector_tree_view(mut w Window) View {
 	nodes := w.inspector_tree_cache
-	ns := ns_inspector
-	cap := cap_inspector
 	return w.tree(TreeCfg{
 		id:        inspector_tree_id
 		id_focus:  inspector_id_focus
 		indent:    16
 		spacing:   1
 		nodes:     nodes
-		on_select: fn [ns, cap] (id string, mut w Window) {
-			mut sm := state_map[string, string](mut w, ns, cap)
-			old := sm.get('selected') or { '' }
-			// Toggle: deselect if already selected
-			if old == id {
-				sm.set('selected', '')
-			} else {
-				sm.set('selected', id)
-				// Expand the node so property children show
-				tree_id := inspector_tree_id
-				mut tree_map := w.view_state.tree_state.get(tree_id) or {
-					map[string]bool{}
-				}
-				tree_map[id] = true
-				w.view_state.tree_state.set(tree_id, tree_map)
-			}
-			w.update_window()
+		on_select: fn (id string, mut w Window) {
+			inspector_select(id, mut w)
 		}
 	})
+}
+
+// inspector_select sets the selected node path in inspector
+// state and expands it in the tree. Shared by tree click
+// and pick-to-select.
+fn inspector_select(path string, mut w Window) {
+	if path.starts_with('__prop_') {
+		return
+	}
+	mut sm := state_map[string, string](mut w, ns_inspector, cap_inspector)
+	old := sm.get('selected') or { '' }
+	if old == path {
+		sm.set('selected', '')
+	} else {
+		sm.set('selected', path)
+		sm.set('scroll_to', path)
+		mut tree_map := w.view_state.tree_state.get(inspector_tree_id) or {
+			map[string]bool{}
+		}
+		// Expand selected node and all ancestors.
+		tree_map[path] = true
+		parts := path.split('.')
+		for i in 1 .. parts.len {
+			tree_map[parts[..i].join('.')] = true
+		}
+		w.view_state.tree_state.set(inspector_tree_id, tree_map)
+	}
+	w.update_window()
+}
+
+// inspector_pick_path walks app content layout depth-first
+// in reverse child order (matching z-order) and returns
+// the dot-path of the deepest node containing (x, y).
+// Called inside $if !prod; no attribute needed.
+fn inspector_pick_path(layout &Layout, x f32, y f32) string {
+	if layout.children.len == 0 {
+		return ''
+	}
+	return inspector_pick_recurse(layout.children[0], '0', x, y)
+}
+
+// inspector_pick_recurse depth-first reverse-child walk.
+fn inspector_pick_recurse(layout Layout, path string, x f32, y f32) string {
+	if layout.shape == unsafe { nil } {
+		return ''
+	}
+	if !layout.shape.point_in_shape(x, y) {
+		return ''
+	}
+	// Reverse order: later children are on top (higher z).
+	for i := layout.children.len - 1; i >= 0; i-- {
+		child_path := '${path}.${i}'
+		result := inspector_pick_recurse(layout.children[i], child_path, x, y)
+		if result.len > 0 {
+			return result
+		}
+	}
+	return path
 }
 
 // inspector_selected_path returns the currently selected
@@ -199,113 +230,134 @@ fn inspector_props_nodes(p InspectorNodeProps) []TreeNodeCfg {
 		size:  11
 		color: rgba(140, 180, 220, 255)
 	}
+	prop_icon_style := TextStyle{
+		size:   11
+		family: icon_font_name
+		color:  rgba(140, 180, 220, 255)
+	}
 	mut nodes := []TreeNodeCfg{cap: 16}
 	if p.text_preview.len > 0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_text'
-			text:       'text: "${p.text_preview}"'
-			text_style: prop_style
+			id:              '__prop_text'
+			text:            'text: "${p.text_preview}"'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.id.len > 0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_id'
-			text:       'id: ${p.id}'
-			text_style: prop_style
+			id:              '__prop_id'
+			text:            'id: ${p.id}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	nodes << TreeNodeCfg{
-		id:         '__prop_pos'
-		text:       'pos: ${int(p.x)}, ${int(p.y)}'
-		text_style: prop_style
+		id:              '__prop_pos'
+		text:            'pos: ${int(p.x)}, ${int(p.y)}'
+		text_style:      prop_style
+		text_style_icon: prop_icon_style
 	}
 	nodes << TreeNodeCfg{
-		id:         '__prop_size'
-		text:       'size: ${int(p.width)} x ${int(p.height)}'
-		text_style: prop_style
+		id:              '__prop_size'
+		text:            'size: ${int(p.width)} x ${int(p.height)}'
+		text_style:      prop_style
+		text_style_icon: prop_icon_style
 	}
 	if p.sizing.width != .fit || p.sizing.height != .fit {
 		nodes << TreeNodeCfg{
-			id:         '__prop_sizing'
-			text:       'sizing: ${p.sizing.width}, ${p.sizing.height}'
-			text_style: prop_style
+			id:              '__prop_sizing'
+			text:            'sizing: ${p.sizing.width}, ${p.sizing.height}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if !p.padding.is_none() {
 		nodes << TreeNodeCfg{
-			id:         '__prop_pad'
-			text:       'pad: ${int(p.padding.top)} ${int(p.padding.right)} ${int(p.padding.bottom)} ${int(p.padding.left)}'
-			text_style: prop_style
+			id:              '__prop_pad'
+			text:            'pad: ${int(p.padding.top)} ${int(p.padding.right)} ${int(p.padding.bottom)} ${int(p.padding.left)}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.spacing > 0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_spacing'
-			text:       'spacing: ${int(p.spacing)}'
-			text_style: prop_style
+			id:              '__prop_spacing'
+			text:            'spacing: ${int(p.spacing)}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.color.a > 0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_color'
-			text:       'color: ${inspector_color_str(p.color)}'
-			text_style: prop_style
+			id:              '__prop_color'
+			text:            'color: ${inspector_color_str(p.color)}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.radius > 0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_radius'
-			text:       'radius: ${int(p.radius)}'
-			text_style: prop_style
+			id:              '__prop_radius'
+			text:            'radius: ${int(p.radius)}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.id_focus > 0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_focus'
-			text:       'id_focus: ${p.id_focus}'
-			text_style: prop_style
+			id:              '__prop_focus'
+			text:            'id_focus: ${p.id_focus}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.id_scroll > 0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_scroll'
-			text:       'id_scroll: ${p.id_scroll}'
-			text_style: prop_style
+			id:              '__prop_scroll'
+			text:            'id_scroll: ${p.id_scroll}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.is_float {
 		nodes << TreeNodeCfg{
-			id:         '__prop_float'
-			text:       'float: true'
-			text_style: prop_style
+			id:              '__prop_float'
+			text:            'float: true'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.clip {
 		nodes << TreeNodeCfg{
-			id:         '__prop_clip'
-			text:       'clip: true'
-			text_style: prop_style
+			id:              '__prop_clip'
+			text:            'clip: true'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.opacity < 1.0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_opacity'
-			text:       'opacity: ${p.opacity:.2f}'
-			text_style: prop_style
+			id:              '__prop_opacity'
+			text:            'opacity: ${p.opacity:.2f}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.events.len > 0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_events'
-			text:       'events: ${p.events}'
-			text_style: prop_style
+			id:              '__prop_events'
+			text:            'events: ${p.events}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	if p.children > 0 {
 		nodes << TreeNodeCfg{
-			id:         '__prop_children'
-			text:       'children: ${p.children}'
-			text_style: prop_style
+			id:              '__prop_children'
+			text:            'children: ${p.children}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
 		}
 	}
 	return nodes
@@ -493,4 +545,49 @@ fn inspector_color_str(c Color) string {
 		return '#${c.r:02x}${c.g:02x}${c.b:02x}'
 	}
 	return '#${c.r:02x}${c.g:02x}${c.b:02x}${c.a:02x}'
+}
+
+// inspector_apply_scroll_to scrolls the inspector panel to
+// reveal the pending scroll target, then clears it.
+fn inspector_apply_scroll_to(panel_h f32, mut w Window) {
+	mut sm := state_map[string, string](mut w, ns_inspector, cap_inspector)
+	target := sm.get('scroll_to') or { return }
+	if target.len == 0 {
+		return
+	}
+	sm.set('scroll_to', '')
+	tree_map := w.view_state.tree_state.get(inspector_tree_id) or { return }
+	row_idx := inspector_flat_row_index(w.inspector_tree_cache, tree_map, target)
+	if row_idx < 0 {
+		return
+	}
+	row_h := tree_font_height(gui_theme.tree_style.text_style, mut w) + 1
+	target_y := f32(row_idx) * row_h
+	mut new_scroll := -(target_y - row_h * 2)
+	if new_scroll > 0 {
+		new_scroll = 0
+	}
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	sy.set(inspector_id_scroll_panel, new_scroll)
+}
+
+// inspector_flat_row_index returns the flat row index of
+// target in the tree, respecting expanded state. Returns -1
+// if not found.
+fn inspector_flat_row_index(nodes []TreeNodeCfg, tree_map map[string]bool, target string) int {
+	mut ids := []string{cap: 64}
+	inspector_collect_flat_ids(nodes, tree_map, mut ids)
+	return ids.index(target)
+}
+
+// inspector_collect_flat_ids walks tree nodes depth-first,
+// collecting visible node IDs in display order.
+fn inspector_collect_flat_ids(nodes []TreeNodeCfg, tree_map map[string]bool, mut ids []string) {
+	for node in nodes {
+		id := if node.id.len == 0 { node.text } else { node.id }
+		ids << id
+		if tree_map[id] && node.nodes.len > 0 {
+			inspector_collect_flat_ids(node.nodes, tree_map, mut ids)
+		}
+	}
 }
