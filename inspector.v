@@ -14,6 +14,15 @@ const inspector_tree_id = '__inspector_tree__'
 const inspector_panel_min_width = f32(300)
 const inspector_resize_step = f32(50)
 const inspector_margin = f32(10)
+const inspector_text_style = TextStyle{
+	size:  12
+	color: Color{220, 220, 220, 255}
+}
+const inspector_icon_style = TextStyle{
+	family: icon_font_name
+	size:   12
+	color:  Color{220, 220, 220, 255}
+}
 
 // InspectorNodeProps snapshots shape properties as values
 // so the properties panel can display them after layout_clear.
@@ -46,6 +55,22 @@ fn inspector_toggle(mut w Window) {
 	w.update_window()
 }
 
+// inspector_is_left returns true when the panel is
+// docked to the left side. Default is right.
+fn inspector_is_left(w &Window) bool {
+	sm := state_map_read[string, string](w, ns_inspector) or { return false }
+	return (sm.get('side') or { '' }) == 'left'
+}
+
+// inspector_toggle_side flips the panel between left
+// and right docking.
+fn inspector_toggle_side(mut w Window) {
+	mut sm := state_map[string, string](mut w, ns_inspector, cap_inspector)
+	cur := sm.get('side') or { '' }
+	sm.set('side', if cur == 'left' { '' } else { 'left' })
+	w.update_window()
+}
+
 // inspector_panel_width reads the stored width or returns
 // the default minimum.
 fn inspector_panel_width(w &Window) f32 {
@@ -73,18 +98,20 @@ fn inspector_floating_panel(mut w Window) View {
 	panel_h := f32(wh) - inspector_margin * 2
 	panel_w := inspector_panel_width(w)
 
-	mut content := []View{cap: 2}
+	mut content := []View{cap: 3}
+	content << inspector_help_bar()
 	content << inspector_tree_view(mut w)
 	inspector_apply_scroll_to(panel_h, mut w)
 
 	sb_cfg := &ScrollbarCfg{
 		color_thumb: rgba(255, 255, 255, 80)
 	}
+	left := inspector_is_left(w)
 	return column(
 		float:           true
-		float_anchor:    .top_right
-		float_tie_off:   .top_right
-		float_offset_x:  -inspector_margin
+		float_anchor:    if left { .top_left } else { .top_right }
+		float_tie_off:   if left { .top_left } else { .top_right }
+		float_offset_x:  if left { inspector_margin } else { -inspector_margin }
 		float_offset_y:  inspector_margin
 		width:           panel_w
 		height:          panel_h
@@ -103,6 +130,18 @@ fn inspector_floating_panel(mut w Window) View {
 			e.is_handled = true
 		}
 		content:         content
+	)
+}
+
+// inspector_help_bar returns a small text line showing
+// keyboard shortcuts for the inspector.
+fn inspector_help_bar() View {
+	return text(
+		text:       '  F12 toggle  Ctrl+\u2190\u2192 resize  Ctrl+\u2191 side'
+		text_style: TextStyle{
+			size:  10
+			color: rgba(130, 130, 130, 200)
+		}
 	)
 }
 
@@ -216,11 +255,15 @@ fn inspector_layout_to_tree(layout Layout, path string, selected string, mut pro
 		child_path := '${path}.${i}'
 		child_nodes << inspector_layout_to_tree(child, child_path, selected, mut props)
 	}
-	return [TreeNodeCfg{
-		id:    path
-		text:  label
-		nodes: child_nodes
-	}]
+	return [
+		TreeNodeCfg{
+			id:              path
+			text:            label
+			text_style:      inspector_text_style
+			text_style_icon: inspector_icon_style
+			nodes:           child_nodes
+		},
+	]
 }
 
 // inspector_props_nodes builds leaf TreeNodeCfg entries
@@ -292,8 +335,12 @@ fn inspector_props_nodes(p InspectorNodeProps) []TreeNodeCfg {
 		nodes << TreeNodeCfg{
 			id:              '__prop_color'
 			text:            'color: ${inspector_color_str(p.color)}'
+			icon:            '\u2588'
 			text_style:      prop_style
-			text_style_icon: prop_icon_style
+			text_style_icon: TextStyle{
+				size:  11
+				color: p.color
+			}
 		}
 	}
 	if p.radius > 0 {

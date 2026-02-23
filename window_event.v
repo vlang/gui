@@ -35,6 +35,10 @@ fn event_fn(ev &gg.Event, mut w Window) {
 				inspector_resize(-inspector_resize_step, mut w)
 				e.is_handled = true
 				return
+			} else if e.key_code == .up {
+				inspector_toggle_side(mut w)
+				e.is_handled = true
+				return
 			}
 		}
 	}
@@ -78,8 +82,14 @@ fn event_fn(ev &gg.Event, mut w Window) {
 				if w.inspector_enabled {
 					ww, _ := w.window_size()
 					panel_w := inspector_panel_width(w)
+					left := inspector_is_left(w)
 					// Click outside inspector panel — pick app node
-					if e.mouse_x < f32(ww) - panel_w - inspector_margin {
+					in_app := if left {
+						e.mouse_x > panel_w + inspector_margin
+					} else {
+						e.mouse_x < f32(ww) - panel_w - inspector_margin
+					}
+					if in_app {
 						picked := inspector_pick_path(&w.layout, e.mouse_x, e.mouse_y)
 						if picked.len > 0 {
 							inspector_select(picked, mut w)
