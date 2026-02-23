@@ -6,15 +6,6 @@ module gui
 // layout_adjust_scroll_offsets() clamps stored offsets when window is resized.
 // layout_wrap_text() runs the text-wrap pass after widths are finalized.
 
-// layout_wrap_text runs after widths are set. Wrapping changes min-height,
-// so this runs before height calculation.
-fn layout_wrap_text(mut layout Layout, mut w Window) {
-	text_wrap(mut layout.shape, mut w)
-	for mut child in layout.children {
-		layout_wrap_text(mut child, mut w)
-	}
-}
-
 // layout_adjust_scroll_offsets ensures scroll offsets are in range.
 // Scroll offsets can go out of range during window resizing.
 fn layout_adjust_scroll_offsets(mut layout Layout, mut w Window) {
@@ -184,16 +175,6 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, mut w Window)
 	}
 }
 
-// layout_disables walks the Layout and disables any children
-// that have a disabled ancestor.
-fn layout_disables(mut layout Layout, disabled bool) {
-	mut is_disabled := disabled || layout.shape.disabled
-	layout.shape.disabled = is_disabled
-	for mut child in layout.children {
-		layout_disables(mut child, is_disabled)
-	}
-}
-
 // layout_scroll_containers identifies which text views are in a
 // scrollable container (row, column).
 fn layout_scroll_containers(mut layout Layout, id_scroll_container u32) {
@@ -227,63 +208,4 @@ fn layout_set_shape_clips(mut layout Layout, clip DrawClip) {
 	for mut child in layout.children {
 		layout_set_shape_clips(mut child, layout.shape.shape_clip)
 	}
-}
-
-// layout_amend handles layout problems resolvable only after sizing/positioning,
-// such as mouse-over events affecting appearance. Avoid altering sizes here.
-fn layout_amend(mut layout Layout, mut w Window) {
-	for mut child in layout.children {
-		layout_amend(mut child, mut w)
-	}
-	if layout.shape.has_events() && layout.shape.events.amend_layout != unsafe { nil } {
-		layout.shape.events.amend_layout(mut layout, mut w)
-	}
-}
-
-// layout_hover encapsulates hover handling logic.
-fn layout_hover(mut layout Layout, mut w Window) bool {
-	if w.mouse_is_locked() {
-		return false
-	}
-	for mut child in layout.children {
-		is_handled := layout_hover(mut child, mut w)
-		if is_handled {
-			return true
-		}
-	}
-	if layout.shape.has_events() && layout.shape.events.on_hover != unsafe { nil } {
-		if layout.shape.disabled {
-			return false
-		}
-		if w.dialog_cfg.visible && !layout_in_dialog_layout(layout) {
-			return false
-		}
-		ctx := w.context()
-		if layout.shape.point_in_shape(ctx.mouse_pos_x, ctx.mouse_pos_y) {
-			// fake an event to get mouse button states.
-			mouse_button := match true {
-				ctx.mbtn_mask & 0x01 > 0 { MouseButton.left }
-				ctx.mbtn_mask & 0x02 > 0 { MouseButton.right }
-				ctx.mbtn_mask & 0x04 > 0 { MouseButton.middle }
-				else { MouseButton.invalid }
-			}
-			mut ev := Event{
-				frame_count:   ctx.frame
-				typ:           .invalid
-				modifiers:     unsafe { Modifier(ctx.key_modifiers) }
-				mouse_button:  mouse_button
-				mouse_x:       ctx.mouse_pos_x
-				mouse_y:       ctx.mouse_pos_y
-				mouse_dx:      ctx.mouse_dx
-				mouse_dy:      ctx.mouse_dy
-				scroll_x:      ctx.scroll_x
-				scroll_y:      ctx.scroll_y
-				window_width:  ctx.width
-				window_height: ctx.height
-			}
-			layout.shape.events.on_hover(mut layout, mut ev, mut w)
-			return ev.is_handled
-		}
-	}
-	return false
 }

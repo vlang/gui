@@ -319,35 +319,55 @@ fn data_grid_query_filter_value(query GridQueryState, col_id string) string {
 fn data_grid_column_widths(grid_id string, columns []GridColumnCfg, mut w Window) map[string]f32 {
 	mut dg_cw := state_map[string, &DataGridColWidths](mut w, ns_dg_col_widths, cap_moderate)
 	cached_ptr := dg_cw.get(grid_id) or { &DataGridColWidths{} }
-	mut widths := cached_ptr.widths.clone()
-	mut changed := false
-	mut col_ids := map[string]bool{}
+
+	// Detect if any column needs a width refresh
+	mut changed := !dg_cw.contains(grid_id)
+	mut active_ids := map[string]bool{}
+	if !changed {
+		for col in columns {
+			if col.id.len == 0 {
+				continue
+			}
+			active_ids[col.id] = true
+			cached := cached_ptr.widths[col.id] or { f32(-1) }
+			if cached == f32(-1) {
+				changed = true
+				break
+			}
+			clamped := data_grid_clamp_width(col, cached)
+			if cached != clamped {
+				changed = true
+				break
+			}
+		}
+		if !changed {
+			for key in cached_ptr.widths.keys() {
+				if !active_ids[key] {
+					changed = true
+					break
+				}
+			}
+		}
+	}
+
+	if !changed {
+		return cached_ptr.widths
+	}
+
+	// Rebuild the map only when changes are detected
+	mut widths := map[string]f32{}
 	for col in columns {
 		if col.id.len == 0 {
 			continue
 		}
-		col_ids[col.id] = true
-		base := widths[col.id] or { data_grid_initial_width(col) }
-		clamped := data_grid_clamp_width(col, base)
-		if widths[col.id] or { f32(-1) } != clamped {
-			widths[col.id] = clamped
-			changed = true
-		}
+		base := cached_ptr.widths[col.id] or { data_grid_initial_width(col) }
+		widths[col.id] = data_grid_clamp_width(col, base)
 	}
-	for key in widths.keys() {
-		if !col_ids[key] {
-			widths.delete(key)
-			changed = true
-		}
-	}
-	if changed || !dg_cw.contains(grid_id) {
-		dg_cw.set(grid_id, &DataGridColWidths{
-			widths: widths
-		})
-		return widths
-	}
-	// No changes — return cached map without clone.
-	return cached_ptr.widths
+
+	dg_cw.set(grid_id, &DataGridColWidths{
+		widths: widths
+	})
+	return widths
 }
 
 fn data_grid_column_width(grid_id string, columns []GridColumnCfg, col GridColumnCfg, mut w Window) f32 {

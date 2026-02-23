@@ -32,7 +32,7 @@ fn test_wrap_basic() {
 		]
 	}
 
-	layout_wrap(mut root)
+	layout_wrap_containers(mut root)
 
 	// Container axis flipped to TTB
 	assert root.shape.axis == .top_to_bottom
@@ -78,7 +78,7 @@ fn test_wrap_single_row() {
 		]
 	}
 
-	layout_wrap(mut root)
+	layout_wrap_containers(mut root)
 
 	// No restructuring — axis stays LTR, children not nested
 	assert root.shape.axis == .left_to_right
@@ -119,7 +119,7 @@ fn test_wrap_heights() {
 		]
 	}
 
-	layout_wrap(mut root)
+	layout_wrap_containers(mut root)
 	layout_heights(mut root)
 
 	// Row 1 height: max(20, 20) = 20
@@ -167,7 +167,7 @@ fn test_wrap_positions() {
 		]
 	}
 
-	layout_wrap(mut root)
+	layout_wrap_containers(mut root)
 	layout_heights(mut root)
 	layout_fill_heights(mut root)
 	mut mock_window := Window{}
@@ -219,7 +219,7 @@ fn test_wrap_non_flow() {
 		]
 	}
 
-	layout_wrap(mut root)
+	layout_wrap_containers(mut root)
 
 	// Float child doesn't consume width, so items 1+3 fit (30+5+30=65)
 	// Item 4 wraps. Float child stays in row 1.
@@ -308,7 +308,7 @@ fn test_wrap_fill_in_column() {
 	assert f32_are_close(wrap_layout.shape.width, 400), 'wrap width should be 400, got ${wrap_layout.shape.width}'
 
 	// 2.5: wrap pass
-	layout_wrap(mut root)
+	layout_wrap_containers(mut root)
 
 	// 6 items × 80 + 5 spacing = 500 > 400 available, must produce 2+ rows
 	assert root.children[0].shape.axis == .top_to_bottom, 'wrap axis should flip to TTB'

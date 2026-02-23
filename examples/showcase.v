@@ -4103,6 +4103,7 @@ fn demo_data_grid(mut w gui.Window) gui.View {
 				rows:                rows
 				query:               app.data_grid_query
 				selection:           app.data_grid_selection
+				scrollbar:           .hidden
 				max_height:          260
 				on_query_change:     fn (query gui.GridQueryState, mut _ gui.Event, mut w gui.Window) {
 					mut app := w.state[ShowcaseApp]()

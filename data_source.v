@@ -581,6 +581,19 @@ fn data_grid_fnv64_byte(h u64, b u8) u64 {
 	return (h ^ u64(b)) * data_grid_fnv64_prime
 }
 
+@[inline]
+fn data_grid_fnv64_u64(h u64, val u64) u64 {
+	mut hash := (h ^ (val & 0xff)) * data_grid_fnv64_prime
+	hash = (hash ^ ((val >> 8) & 0xff)) * data_grid_fnv64_prime
+	hash = (hash ^ ((val >> 16) & 0xff)) * data_grid_fnv64_prime
+	hash = (hash ^ ((val >> 24) & 0xff)) * data_grid_fnv64_prime
+	hash = (hash ^ ((val >> 32) & 0xff)) * data_grid_fnv64_prime
+	hash = (hash ^ ((val >> 40) & 0xff)) * data_grid_fnv64_prime
+	hash = (hash ^ ((val >> 48) & 0xff)) * data_grid_fnv64_prime
+	hash = (hash ^ ((val >> 56) & 0xff)) * data_grid_fnv64_prime
+	return hash
+}
+
 // grid_hash_filter hashes a single filter into a running
 // FNV-1a hash. Used by grid_query_signature.
 fn grid_hash_filter(h u64, f GridFilter) u64 {

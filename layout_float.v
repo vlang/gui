@@ -74,3 +74,38 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 	y += layout.shape.float_offset_y
 	return x, y
 }
+
+// layout_remove_floating_layouts extracts floating elements from the main layout tree.
+// It replaces them with empty placeholder nodes to preserve the tree structure indices
+// while removing them from standard flow layout calculations. The extracted layouts
+// are collected into the `layouts` array to be processed as separate layers.
+fn layout_remove_floating_layouts(mut layout Layout, mut layouts []&Layout) {
+	mut scratch := ScratchPools{}
+	layout_remove_floating_layouts_with_scratch(mut layout, mut layouts, mut scratch)
+}
+
+fn layout_remove_floating_layouts_with_scratch(mut layout Layout, mut layouts []&Layout, mut scratch ScratchPools) {
+	for i in 0 .. layout.children.len {
+		if layout.children[i].shape.float {
+			// Move floating layout to reusable heap node to keep parent pointers stable.
+			mut heap_layout := scratch.alloc_floating_layout(layout.children[i])
+
+			// Update direct children to point to the new heap-allocated parent
+			for mut child in heap_layout.children {
+				child.parent = heap_layout
+			}
+
+			layouts << heap_layout
+
+			// Recurse into the floating layout to find nested floats
+			layout_remove_floating_layouts_with_scratch(mut *heap_layout, mut layouts, mut
+				scratch)
+
+			// Replace in original tree with empty placeholder
+			layout.children[i] = layout_placeholder()
+		} else {
+			layout_remove_floating_layouts_with_scratch(mut layout.children[i], mut layouts, mut
+				scratch)
+		}
+	}
+}

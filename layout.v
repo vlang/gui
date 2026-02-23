@@ -1,5 +1,14 @@
 module gui
 
+// Layout defines a tree of Layouts. Views generate Layouts
+@[heap]
+pub struct Layout {
+pub mut:
+	shape    &Shape  = unsafe { nil }
+	parent   &Layout = unsafe { nil }
+	children []Layout
+}
+
 // The layout module implements a tree-based UI layout system. It handles
 // arranging and positioning UI elements in horizontal and vertical layouts,
 // supporting nested containers, scrolling, floating elements, alignment,
@@ -61,38 +70,85 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 // Handling one axis of expansion/contraction at a time simplifies the complex constraint solving.
 // The logic follows the approach described in the Clay UI layout algorithm.
 fn layout_pipeline(mut layout Layout, mut window Window) {
-	// 1. Calculate intrinsic widths based on content constraints
 	layout_widths(mut layout)
-	// 2. Expand widths to fill available space where applicable
 	layout_fill_widths_with_scratch(mut layout, mut window.scratch.distribute)
-	// 2.5. Restructure wrap containers into column-of-rows
-	layout_wrap_with_scratch(mut layout, mut window.scratch)
-	// 2.6. Hide overflow children that don't fit
+	layout_wrap_containers_with_scratch(mut layout, mut window.scratch)
 	layout_overflow(mut layout, mut window)
-	// 3. Wrap text based on valid widths, which may affect height
 	layout_wrap_text(mut layout, mut window)
-	// 4. Calculate intrinsic heights based on content
+
 	layout_heights(mut layout)
-	// 5. Expand heights to fill available space
 	layout_fill_heights_with_scratch(mut layout, mut window.scratch.distribute)
-	// 6. Adjust scroll offsets for containers
+
 	layout_adjust_scroll_offsets(mut layout, mut window)
-	// 7. Calculate final X, Y positions for all elements
 	x, y := float_attach_layout(layout)
 	layout_positions(mut layout, x, y, mut window)
-	// 8. Handle disabled states
 	layout_disables(mut layout, false)
-	// 9. Handle scroll container logic
 	layout_scroll_containers(mut layout, 0)
-	// 10. Final layout adjustments/amendments
+
 	layout_amend(mut layout, mut window)
-	// 11. Apply animation transitions (layout/hero)
 	apply_layout_transition(mut layout, window)
 	apply_hero_transition(mut layout, window)
-	// 12. Calculate clipping rectangles for rendering
 	layout_set_shape_clips(mut layout, window.window_rect())
-	// 13. Update hover states
 	layout_hover(mut layout, mut window)
+}
+
+// layout_amend handles layout problems resolvable only after sizing/positioning,
+// such as mouse-over events affecting appearance. Avoid altering sizes here.
+fn layout_amend(mut layout Layout, mut w Window) {
+	for mut child in layout.children {
+		layout_amend(mut child, mut w)
+	}
+	if layout.shape.has_events() && layout.shape.events.amend_layout != unsafe { nil } {
+		layout.shape.events.amend_layout(mut layout, mut w)
+	}
+}
+
+// layout_hover encapsulates hover handling logic.
+fn layout_hover(mut layout Layout, mut w Window) bool {
+	if w.mouse_is_locked() {
+		return false
+	}
+	for mut child in layout.children {
+		is_handled := layout_hover(mut child, mut w)
+		if is_handled {
+			return true
+		}
+	}
+	if layout.shape.has_events() && layout.shape.events.on_hover != unsafe { nil } {
+		if layout.shape.disabled {
+			return false
+		}
+		if w.dialog_cfg.visible && !layout_in_dialog_layout(layout) {
+			return false
+		}
+		ctx := w.context()
+		if layout.shape.point_in_shape(ctx.mouse_pos_x, ctx.mouse_pos_y) {
+			// fake an event to get mouse button states.
+			mouse_button := match true {
+				ctx.mbtn_mask & 0x01 > 0 { MouseButton.left }
+				ctx.mbtn_mask & 0x02 > 0 { MouseButton.right }
+				ctx.mbtn_mask & 0x04 > 0 { MouseButton.middle }
+				else { MouseButton.invalid }
+			}
+			mut ev := Event{
+				frame_count:   ctx.frame
+				typ:           .invalid
+				modifiers:     unsafe { Modifier(ctx.key_modifiers) }
+				mouse_button:  mouse_button
+				mouse_x:       ctx.mouse_pos_x
+				mouse_y:       ctx.mouse_pos_y
+				mouse_dx:      ctx.mouse_dx
+				mouse_dy:      ctx.mouse_dy
+				scroll_x:      ctx.scroll_x
+				scroll_y:      ctx.scroll_y
+				window_width:  ctx.width
+				window_height: ctx.height
+			}
+			layout.shape.events.on_hover(mut layout, mut ev, mut w)
+			return ev.is_handled
+		}
+	}
+	return false
 }
 
 // layout_parents sets the parent property of layout
@@ -107,38 +163,13 @@ fn layout_parents(mut layout Layout, parent &Layout) {
 	}
 }
 
-// layout_remove_floating_layouts extracts floating elements from the main layout tree.
-// It replaces them with empty placeholder nodes to preserve the tree structure indices
-// while removing them from standard flow layout calculations. The extracted layouts
-// are collected into the `layouts` array to be processed as separate layers.
-fn layout_remove_floating_layouts(mut layout Layout, mut layouts []&Layout) {
-	mut scratch := ScratchPools{}
-	layout_remove_floating_layouts_with_scratch(mut layout, mut layouts, mut scratch)
-}
-
-fn layout_remove_floating_layouts_with_scratch(mut layout Layout, mut layouts []&Layout, mut scratch ScratchPools) {
-	for i in 0 .. layout.children.len {
-		if layout.children[i].shape.float {
-			// Move floating layout to reusable heap node to keep parent pointers stable.
-			mut heap_layout := scratch.alloc_floating_layout(layout.children[i])
-
-			// Update direct children to point to the new heap-allocated parent
-			for mut child in heap_layout.children {
-				child.parent = heap_layout
-			}
-
-			layouts << heap_layout
-
-			// Recurse into the floating layout to find nested floats
-			layout_remove_floating_layouts_with_scratch(mut *heap_layout, mut layouts, mut
-				scratch)
-
-			// Replace in original tree with empty placeholder
-			layout.children[i] = layout_placeholder()
-		} else {
-			layout_remove_floating_layouts_with_scratch(mut layout.children[i], mut layouts, mut
-				scratch)
-		}
+// layout_disables walks the Layout and disables any children
+// that have a disabled ancestor.
+fn layout_disables(mut layout Layout, disabled bool) {
+	mut is_disabled := disabled || layout.shape.disabled
+	layout.shape.disabled = is_disabled
+	for mut child in layout.children {
+		layout_disables(mut child, is_disabled)
 	}
 }
 

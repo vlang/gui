@@ -137,17 +137,9 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 			color_border: cfg.color_border
 			size_border:  cfg.size_border
 			h_align:      if col_idx == 0 && detail_enabled { .start } else { col.align }
-			content:      [
-				row(
-					name:    'data_grid cell content'
-					sizing:  fill_fill
-					padding: padding_none
-					h_align: if col_idx == 0 && detail_enabled { .start } else { col.align }
-					v_align: .middle
-					spacing: if is_editing_cell { 0 } else { 4 }
-					content: cell_content
-				),
-			]
+			v_align:      .middle
+			spacing:      if is_editing_cell { 0 } else { 4 }
+			content:      cell_content
 		)
 	}
 	if show_delete_action {

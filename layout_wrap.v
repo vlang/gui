@@ -1,19 +1,28 @@
 module gui
 
-// layout_wrap restructures wrap containers into column-of-rows.
+// layout_wrap_text runs after widths are set. Wrapping changes min-height,
+// so this runs before height calculation.
+fn layout_wrap_text(mut layout Layout, mut w Window) {
+	text_wrap(mut layout.shape, mut w)
+	for mut child in layout.children {
+		layout_wrap_text(mut child, mut w)
+	}
+}
+
+// layout_wrap_containers restructures wrap containers into column-of-rows.
 // Called after layout_fill_widths (widths resolved) and before
 // layout_wrap_text. Greedy line-breaking groups children into
 // implicit row layouts, then changes the container axis to
 // top_to_bottom so downstream passes handle multi-row height
 // and positioning naturally.
-fn layout_wrap(mut layout Layout) {
+fn layout_wrap_containers(mut layout Layout) {
 	mut scratch := ScratchPools{}
-	layout_wrap_with_scratch(mut layout, mut scratch)
+	layout_wrap_containers_with_scratch(mut layout, mut scratch)
 }
 
-fn layout_wrap_with_scratch(mut layout Layout, mut scratch ScratchPools) {
+fn layout_wrap_containers_with_scratch(mut layout Layout, mut scratch ScratchPools) {
 	for mut child in layout.children {
-		layout_wrap_with_scratch(mut child, mut scratch)
+		layout_wrap_containers_with_scratch(mut child, mut scratch)
 	}
 
 	if !layout.shape.wrap || layout.shape.axis != .left_to_right || layout.children.len == 0 {

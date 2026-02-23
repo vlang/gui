@@ -404,19 +404,9 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 			static_top, scroll_id, presentation.data_to_display, mut window)
 	}
 
-	// Build row ID set for O(1) membership checks and
-	// clear stale editing state in the same pass.
+	// Clear stale editing state if the row is no longer present.
 	mut editing_row_id := data_grid_editing_row_id(resolved_cfg.id, mut window)
-	mut row_id_set := map[string]bool{}
-	mut editing_row_found := editing_row_id.len == 0
-	for ri, r in resolved_cfg.rows {
-		rid := data_grid_row_id(r, ri)
-		row_id_set[rid] = true
-		if !editing_row_found && rid == editing_row_id {
-			editing_row_found = true
-		}
-	}
-	if !editing_row_found {
+	if editing_row_id.len > 0 && !data_grid_has_row_id(resolved_cfg.rows, editing_row_id) {
 		data_grid_clear_editing_row(resolved_cfg.id, mut window)
 		editing_row_id = ''
 	}
@@ -651,7 +641,7 @@ fn data_grid_presentation_signature(cfg DataGridCfg, columns []GridColumnCfg, ro
 	hash = data_grid_fnv64_str(hash, cfg.id)
 	hash = data_grid_fnv64_byte(hash, 0x1e)
 	for idx in row_indices {
-		hash = data_grid_fnv64_str(hash, idx.str())
+		hash = data_grid_fnv64_u64(hash, u64(idx))
 		hash = data_grid_fnv64_byte(hash, 0x1f)
 	}
 	hash = data_grid_fnv64_byte(hash, 0x1e)
@@ -665,7 +655,7 @@ fn data_grid_presentation_signature(cfg DataGridCfg, columns []GridColumnCfg, ro
 	for agg in cfg.aggregates {
 		hash = data_grid_fnv64_str(hash, agg.col_id)
 		hash = data_grid_fnv64_byte(hash, 0x1f)
-		hash = data_grid_fnv64_str(hash, agg.op.str())
+		hash = data_grid_fnv64_byte(hash, u8(agg.op))
 		hash = data_grid_fnv64_byte(hash, 0x1f)
 		hash = data_grid_fnv64_str(hash, agg.label)
 		hash = data_grid_fnv64_byte(hash, 0x1f)
@@ -677,7 +667,7 @@ fn data_grid_presentation_signature(cfg DataGridCfg, columns []GridColumnCfg, ro
 		row := cfg.rows[row_idx]
 		row_id := data_grid_row_id(row, row_idx)
 		hash = data_grid_fnv64_byte(hash, 0x1e)
-		hash = data_grid_fnv64_str(hash, row_idx.str())
+		hash = data_grid_fnv64_u64(hash, u64(row_idx))
 		hash = data_grid_fnv64_byte(hash, 0x1f)
 		hash = data_grid_fnv64_str(hash, row_id)
 		hash = data_grid_fnv64_byte(hash, 0x1f)
