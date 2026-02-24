@@ -137,16 +137,58 @@ pub const theme_light_bordered_cfg = ThemeCfg{
 pub const theme_light_bordered = theme_maker(theme_light_bordered_cfg)
 
 pub const theme_blue_bordered_cfg = ThemeCfg{
-	...theme_dark_bordered_cfg
-	name:               'blue-dark-bordered'
-	color_background:   color_from_string('#0c1d3a')
-	color_panel:        color_from_string('#122c58')
-	color_interior:     color_from_string('#193b75')
-	color_hover:        color_from_string('#1f4992')
-	color_active:       color_from_string('#2558b0')
-	color_focus:        color_from_string('#2c67cd')
-	color_border:       color_from_string('#467bd7')
-	color_select:       color_from_string('#427BDD')
-	color_border_focus: color_from_string('#81a5e3')
+	name:                     'blue-dark-bordered'
+	color_background:         color_from_string('#151C30')
+	color_panel:              color_from_string('#1C243F')
+	color_interior:           color_from_string('#202A49')
+	color_hover:              color_from_string('#243054')
+	color_focus:              color_from_string('#29365E')
+	color_active:             color_from_string('#2D3C68')
+	color_border:             color_from_string('#364263')
+	color_border_focus:       color_from_string('#617AC3')
+	color_select:             color_from_string('#3E65D8')
+	titlebar_dark:            true
+	fill:                     true
+	fill_border:              true
+	text_style:               TextStyle{
+		color: color_from_string('#E1E1E1')
+		size:  16.0
+	}
+	padding:                  Padding{10.0, 10.0, 10.0, 10.0}
+	padding_small:            Padding{5.0, 5.0, 5.0, 5.0}
+	padding_medium:           Padding{10.0, 10.0, 10.0, 10.0}
+	padding_large:            Padding{15.0, 15.0, 15.0, 15.0}
+	size_border:              1.5
+	radius:                   5.5
+	radius_border:            7.5
+	radius_small:             3.52
+	radius_medium:            5.5
+	radius_large:             7.48
+	spacing_small:            5.0
+	spacing_medium:           10.0
+	spacing_large:            15.0
+	spacing_text:             0.0
+	size_text_tiny:           10.0
+	size_text_x_small:        12.0
+	size_text_small:          14.0
+	size_text_medium:         16.0
+	size_text_large:          20.0
+	size_text_x_large:        24.0
+	scroll_multiplier:        20.0
+	scroll_delta_line:        1.0
+	scroll_delta_page:        10.0
+	scroll_gap_edge:          3.0
+	scroll_gap_end:           2.0
+	size_switch_width:        36.0
+	size_switch_height:       22.0
+	size_radio:               16.0
+	size_scrollbar:           7.0
+	size_scrollbar_min_thumb: 20.0
+	size_progress_bar:        10.0
+	size_range_slider:        7.0
+	size_range_slider_thumb:  15.0
+	size_splitter_handle:     9.0
+	width_submenu_min:        50.0
+	width_submenu_max:        200.0
 }
 pub const theme_blue_bordered = theme_maker(theme_blue_bordered_cfg)

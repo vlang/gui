@@ -6285,7 +6285,7 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 				v_align: .top
 				content: [
 					gui.column(
-						spacing: t.spacing_small
+						spacing: t.spacing_medium
 						content: [
 							gui.color_picker(
 								id:              'theme_gen_cp'
@@ -6312,64 +6312,82 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 									apply_gen_theme(mut w)
 								}
 							),
-							gui.text(text: 'Radius'),
-							gui.numeric_input(
-								id:              'theme_gen_radius'
-								id_focus:        9180
-								text:            app.theme_gen_radius_text
-								value:           ?f64(app.theme_gen_radius)
-								decimals:        1
-								min:             0.0
-								max:             30.0
-								step_cfg:        gui.NumericStepCfg{
-									step: 0.5
-								}
-								width:           80
-								sizing:          gui.fixed_fit
-								on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
-									mut a := w.state[ShowcaseApp]()
-									a.theme_gen_radius_text = text
-								}
-								on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
-									mut a := w.state[ShowcaseApp]()
-									a.theme_gen_radius_text = text
-									if v := value {
-										a.theme_gen_radius = f32(v)
-										apply_gen_theme(mut w)
-									}
-								}
-							),
-							gui.text(text: 'Border'),
-							gui.numeric_input(
-								id:              'theme_gen_border'
-								id_focus:        9188
-								text:            app.theme_gen_border_text
-								value:           ?f64(app.theme_gen_border)
-								decimals:        1
-								min:             0.0
-								max:             10.0
-								step_cfg:        gui.NumericStepCfg{
-									step: 0.5
-								}
-								width:           80
-								sizing:          gui.fixed_fit
-								on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
-									mut a := w.state[ShowcaseApp]()
-									a.theme_gen_border_text = text
-								}
-								on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
-									mut a := w.state[ShowcaseApp]()
-									a.theme_gen_border_text = text
-									if v := value {
-										a.theme_gen_border = f32(v)
-										apply_gen_theme(mut w)
-									}
-								}
+							gui.row(
+								spacing: t.spacing_medium
+								padding: gui.padding_none
+								content: [
+									gui.column(
+										spacing: t.spacing_small
+										padding: gui.padding_none
+										content: [
+											gui.text(text: 'Radius'),
+											gui.numeric_input(
+												id:              'theme_gen_radius'
+												id_focus:        9180
+												text:            app.theme_gen_radius_text
+												value:           ?f64(app.theme_gen_radius)
+												decimals:        1
+												min:             0.0
+												max:             30.0
+												step_cfg:        gui.NumericStepCfg{
+													step: 0.5
+												}
+												width:           80
+												sizing:          gui.fixed_fit
+												on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+													mut a := w.state[ShowcaseApp]()
+													a.theme_gen_radius_text = text
+												}
+												on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+													mut a := w.state[ShowcaseApp]()
+													a.theme_gen_radius_text = text
+													if v := value {
+														a.theme_gen_radius = f32(v)
+														apply_gen_theme(mut w)
+													}
+												}
+											),
+										]
+									),
+									gui.column(
+										spacing: t.spacing_small
+										padding: gui.padding_none
+										content: [
+											gui.text(text: 'Border'),
+											gui.numeric_input(
+												id:              'theme_gen_border'
+												id_focus:        9188
+												text:            app.theme_gen_border_text
+												value:           ?f64(app.theme_gen_border)
+												decimals:        1
+												min:             0.0
+												max:             10.0
+												step_cfg:        gui.NumericStepCfg{
+													step: 0.5
+												}
+												width:           80
+												sizing:          gui.fixed_fit
+												on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+													mut a := w.state[ShowcaseApp]()
+													a.theme_gen_border_text = text
+												}
+												on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+													mut a := w.state[ShowcaseApp]()
+													a.theme_gen_border_text = text
+													if v := value {
+														a.theme_gen_border = f32(v)
+														apply_gen_theme(mut w)
+													}
+												}
+											),
+										]
+									),
+								]
 							),
 						]
 					),
 					gui.column(
-						spacing: t.spacing_small
+						spacing: t.spacing_medium
 						content: [
 							gui.radio_button_group_column(
 								title:     'Palette'
@@ -6409,7 +6427,9 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 										filters:           [
 											gui.NativeFileFilter{
 												name:       'JSON'
-												extensions: ['json']
+												extensions: [
+													'json',
+												]
 											},
 										]
 										on_done:           fn (result gui.NativeDialogResult, mut w gui.Window) {
@@ -6424,6 +6444,34 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 											theme := gui.theme_maker(&cfg)
 											gui.theme_save(result.paths[0], theme) or {}
 											a.theme_gen_name = os.file_name(result.paths[0]).all_before_last('.')
+										}
+									})
+								}
+							),
+							gui.button(
+								content:  [
+									gui.text(text: 'Load Theme'),
+								]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									w.native_open_dialog(gui.NativeOpenDialogCfg{
+										title:   'Load Theme'
+										filters: [
+											gui.NativeFileFilter{
+												name:       'JSON'
+												extensions: [
+													'json',
+												]
+											},
+										]
+										on_done: fn (result gui.NativeDialogResult, mut w gui.Window) {
+											if result.status != .ok || result.paths.len == 0 {
+												return
+											}
+											theme := gui.theme_load(result.paths[0]) or { return }
+											mut a := w.state[ShowcaseApp]()
+											sync_theme_gen_from_cfg(mut a, theme.cfg)
+											a.theme_gen_name = os.file_name(result.paths[0]).all_before_last('.')
+											w.set_theme(theme)
 										}
 									})
 								}
