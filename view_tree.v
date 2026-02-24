@@ -132,29 +132,41 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		)
 	}
 
+	// Top-level (depth-0) node IDs and count for reorder indices.
+	mut top_level_ids := []string{cap: cfg.nodes.len}
+	for n in cfg.nodes {
+		top_level_ids << n.id
+	}
+	top_level_count := top_level_ids.len
 	mut ghost_content := View(rectangle(RectangleCfg{}))
+	mut top_idx := 0
 	for idx in first_visible .. last_visible + 1 {
 		if idx < 0 || idx >= flat_rows.len {
 			continue
 		}
 		fr := flat_rows[idx]
-		is_draggable := reorderable && !fr.is_loading
+		is_draggable := reorderable && !fr.is_loading && fr.depth == 0
+		reorder_idx := top_idx
 
 		// Insert gap spacer at current drop target.
-		if dragging && is_draggable && idx == drag.current_index
+		if dragging && is_draggable && reorder_idx == drag.current_index
 			&& drag.current_index != drag.source_index {
 			content << drag_reorder_gap_view(drag, .vertical)
 		}
 
-		if dragging && is_draggable && idx == drag.source_index {
+		if dragging && is_draggable && reorder_idx == drag.source_index {
 			ghost_content = tree_flat_row_content(fr, indent, min_width_icon)
 		} else {
 			content << tree_flat_row_view(cfg_id, on_select, on_lazy_load, fr, indent,
-				min_width_icon, reorderable, on_reorder, idx, visible_ids.len)
+				min_width_icon, is_draggable, on_reorder, reorder_idx, top_level_count)
+		}
+
+		if fr.depth == 0 {
+			top_idx += 1
 		}
 	}
 	// Gap at end.
-	if dragging && drag.current_index >= flat_rows.len {
+	if dragging && drag.current_index >= top_level_count {
 		content << drag_reorder_gap_view(drag, .vertical)
 	}
 
@@ -184,9 +196,9 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		spacing:          cfg.spacing
 		height:           cfg.height
 		max_height:       cfg.max_height
-		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids, reorderable, on_reorder] (_ &Layout, mut e Event, mut w Window) {
+		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids, reorderable, on_reorder, top_level_ids] (_ &Layout, mut e Event, mut w Window) {
 			tree_on_keydown(cfg_id, on_select, on_lazy_load, visible_ids, reorderable,
-				on_reorder, mut e, mut w)
+				on_reorder, top_level_ids, mut e, mut w)
 		}
 		content:          content
 	)
@@ -299,9 +311,7 @@ fn tree_flat_row_content(flat_row TreeFlatRow, indent f32, min_width_icon f32) V
 	return row(
 		name:    'tree node content'
 		spacing: 0
-		padding: Padding{
-			left: f32(flat_row.depth) * indent
-		}
+		padding: padding_none
 		content: [
 			text(
 				text:       '${arrow} '
@@ -483,23 +493,23 @@ fn tree_clear_loading(cfg_id string, node_id string, mut w Window) {
 }
 
 // tree_on_keydown handles keyboard navigation for the tree.
-fn tree_on_keydown(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), visible_ids []string, reorderable bool, on_reorder fn (int, int, mut Window), mut e Event, mut w Window) {
+fn tree_on_keydown(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), visible_ids []string, reorderable bool, on_reorder fn (int, int, mut Window), top_level_ids []string, mut e Event, mut w Window) {
 	// Escape cancels active drag.
 	if reorderable && drag_reorder_escape(cfg_id, e.key_code, mut w) {
 		e.is_handled = true
 		return
 	}
-	// Alt+Up/Down keyboard reorder.
+	// Alt+Up/Down keyboard reorder (top-level nodes only).
 	if reorderable && on_reorder != unsafe { nil } {
 		mut tf := state_map[string, string](mut w, ns_tree_focus, cap_tree_focus)
 		focused := tf.get(cfg_id) or { '' }
-		cur := visible_ids.index(focused)
+		cur := top_level_ids.index(focused)
 		if cur >= 0
-			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .vertical, cur, visible_ids.len, on_reorder, mut w) {
+			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .vertical, cur, top_level_ids.len, on_reorder, mut w) {
 			// Update focus to follow the moved item.
 			new_idx := if e.key_code == .up { cur - 1 } else { cur + 1 }
-			if new_idx >= 0 && new_idx < visible_ids.len {
-				tf.set(cfg_id, visible_ids[new_idx])
+			if new_idx >= 0 && new_idx < top_level_ids.len {
+				tf.set(cfg_id, top_level_ids[new_idx])
 			}
 			e.is_handled = true
 			return
