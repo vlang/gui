@@ -135,6 +135,15 @@ pub mut:
 		a: 255
 	}
 	color_picker_hsv   bool
+	// theme generator
+	theme_gen_seed     gui.Color = gui.Color{
+		r: 65
+		g: 105
+		b: 225
+	}
+	theme_gen_strategy string = 'mono'
+	theme_gen_tint     f32    = 50
+	theme_gen_active   bool
 	// Animations
 	anim_tween_x         f32
 	anim_spring_x        f32
@@ -713,6 +722,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['shader', 'glsl', 'metal']
 		},
 		DemoEntry{
+			id:      'theme_gen'
+			label:   'Theme'
+			group:   'graphics'
+			summary: 'Generate a full color theme from one seed color'
+			tags:    ['theme', 'color', 'palette', 'generator']
+		},
+		DemoEntry{
 			id:      'icons'
 			label:   'Icons'
 			group:   'text'
@@ -1116,6 +1132,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'shader' { demo_shader() }
 		'animations' { demo_animations(mut w) }
 		'color_picker' { demo_color_picker(w) }
+		'theme_gen' { demo_theme_gen(mut w) }
 		'markdown' { demo_markdown(mut w) }
 		'tab_control' { demo_tab_control(w) }
 		'command_palette' { demo_command_palette(mut w) }
@@ -1186,6 +1203,7 @@ fn related_examples(id string) string {
 		'shader' { 'examples/custom_shader.v' }
 		'animations' { 'examples/animations.v, examples/animation_stress.v' }
 		'color_picker' { 'examples/color_picker.v' }
+		'theme_gen' { 'examples/theme_designer.v' }
 		'markdown' { 'examples/markdown.v, examples/doc_viewer.v' }
 		'tab_control' { 'examples/tab_view.v' }
 		'command_palette' { 'examples/command_palette.v' }
@@ -1360,12 +1378,16 @@ fn toggle_theme(app &ShowcaseApp) gui.View {
 		on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.light_theme = !app.light_theme
-			theme := if app.light_theme {
-				gui.theme_light_bordered
+			if app.theme_gen_active {
+				apply_gen_theme(mut w)
 			} else {
-				gui.theme_dark_bordered
+				theme := if app.light_theme {
+					gui.theme_light_bordered
+				} else {
+					gui.theme_dark_bordered
+				}
+				w.set_theme(theme)
 			}
-			w.set_theme(theme)
 		}
 	)
 }
@@ -6130,6 +6152,158 @@ fn demo_color_picker(w &gui.Window) gui.View {
 					mut app := w.state[ShowcaseApp]()
 					app.color_picker_color = c
 				}
+			),
+		]
+	)
+}
+
+// ==============================================================
+// Theme Generator
+// ==============================================================
+
+fn wrap_hue(h f32) f32 {
+	m := f32(math.fmod(f64(h), 360))
+	return if m < 0 { m + 360 } else { m }
+}
+
+fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32) gui.ThemeCfg {
+	h, s, _ := seed.to_hsv()
+	tint_factor := tint / 100.0
+
+	mut ph := h
+	mut ah := h
+	accent_s := gui.f32_clamp(s, 0.5, 1.0)
+	accent_v := if is_dark { f32(0.85) } else { f32(0.65) }
+
+	match strategy {
+		'complement' {
+			ah = wrap_hue(h + 180)
+		}
+		'analogous' {
+			ah = wrap_hue(h + 30)
+		}
+		'triadic' {
+			ah = wrap_hue(h + 120)
+		}
+		'warm' {
+			ph = f32(math.fmod(f64(h), 60))
+			ah = ph + 15
+		}
+		'cool' {
+			ph = 180 + f32(math.fmod(f64(h), 90))
+			ah = ph + 20
+		}
+		else {} // mono: ph=h, ah=h
+	}
+
+	if is_dark {
+		s_tint := gui.f32_clamp(s, 0.3, 1.0) * tint_factor
+		return gui.ThemeCfg{
+			name:               'generated'
+			color_background:   gui.color_from_hsv(ph, s_tint, 0.19)
+			color_panel:        gui.color_from_hsv(ph, s_tint, 0.25)
+			color_interior:     gui.color_from_hsv(ph, s_tint, 0.29)
+			color_hover:        gui.color_from_hsv(ph, s_tint, 0.33)
+			color_focus:        gui.color_from_hsv(ah, s_tint, 0.37)
+			color_active:       gui.color_from_hsv(ah, s_tint, 0.41)
+			color_border:       gui.color_from_hsv(ah, s_tint * 0.8, 0.39)
+			color_select:       gui.color_from_hsv(ah, accent_s, accent_v)
+			color_border_focus: gui.color_from_hsv(ah, accent_s * 0.7, accent_v * 0.9)
+			text_style:         gui.TextStyle{
+				...gui.theme_dark_cfg.text_style
+				color: gui.color_from_hsv(ph, s_tint * 0.3, 0.88)
+			}
+			titlebar_dark:      true
+			size_border:        gui.theme_dark_bordered_cfg.size_border
+		}
+	}
+	s_tint := gui.f32_clamp(s, 0.3, 1.0) * tint_factor * 0.5
+	return gui.ThemeCfg{
+		name:               'generated'
+		color_background:   gui.color_from_hsv(ph, s_tint * 0.6, 0.96)
+		color_panel:        gui.color_from_hsv(ph, s_tint, 0.90)
+		color_interior:     gui.color_from_hsv(ph, s_tint, 0.86)
+		color_hover:        gui.color_from_hsv(ph, s_tint, 0.82)
+		color_focus:        gui.color_from_hsv(ah, s_tint, 0.78)
+		color_active:       gui.color_from_hsv(ah, s_tint, 0.74)
+		color_border:       gui.color_from_hsv(ah, s_tint * 1.5, 0.55)
+		color_select:       gui.color_from_hsv(ah, accent_s, accent_v * 0.75)
+		color_border_focus: gui.color_from_hsv(ah, accent_s * 0.8, accent_v * 0.6)
+		text_style:         gui.TextStyle{
+			...gui.theme_light_cfg.text_style
+			color: gui.color_from_hsv(ph, s_tint * 0.5, 0.15)
+		}
+		titlebar_dark:      false
+		size_border:        gui.theme_dark_bordered_cfg.size_border
+	}
+}
+
+fn apply_gen_theme(mut w gui.Window) {
+	mut app := w.state[ShowcaseApp]()
+	cfg := generate_theme_cfg(app.theme_gen_seed, app.theme_gen_strategy, !app.light_theme,
+		app.theme_gen_tint)
+	w.set_theme(gui.theme_maker(&cfg))
+	app.theme_gen_active = true
+}
+
+fn demo_theme_gen(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	t := gui.theme()
+	return gui.column(
+		spacing: t.spacing_small
+		padding: gui.padding_none
+		content: [
+			gui.text(text: 'Pick a seed color to generate a full theme.'),
+			gui.row(
+				spacing: t.spacing_medium
+				v_align: .top
+				content: [
+					gui.color_picker(
+						id:              'theme_gen_cp'
+						color:           app.theme_gen_seed
+						id_focus:        9170
+						on_color_change: fn (c gui.Color, mut _ gui.Event, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							a.theme_gen_seed = c
+							apply_gen_theme(mut w)
+						}
+					),
+					gui.column(
+						spacing: t.spacing_small
+						content: [
+							gui.radio_button_group_column(
+								title:     'Palette'
+								id_focus:  9171
+								value:     app.theme_gen_strategy
+								options:   [
+									gui.radio_option('Mono', 'mono'),
+									gui.radio_option('Complement', 'complement'),
+									gui.radio_option('Analogous', 'analogous'),
+									gui.radio_option('Triadic', 'triadic'),
+									gui.radio_option('Warm', 'warm'),
+									gui.radio_option('Cool', 'cool'),
+								]
+								on_select: fn (value string, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									a.theme_gen_strategy = value
+									apply_gen_theme(mut w)
+								}
+							),
+							gui.rectangle(height: 1)
+							gui.text(text: 'Tint: ${int(app.theme_gen_tint)}%'),
+							gui.range_slider(
+								id:        'theme_gen_tint'
+								value:     app.theme_gen_tint
+								width:     140
+								on_change: fn (value f32, mut _ gui.Event, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									a.theme_gen_tint = value
+									apply_gen_theme(mut w)
+								}
+							),
+						]
+					),
+				]
 			),
 		]
 	)
