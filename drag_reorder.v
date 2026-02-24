@@ -242,7 +242,7 @@ fn drag_reorder_ghost_view(state DragReorderState, content View) View {
 	ghost_y := state.mouse_y - (state.start_mouse_y - state.item_y)
 
 	return column(
-		id:             'drag_reorder_ghost'
+		name:           'drag_reorder_ghost'
 		float:          true
 		float_offset_x: ghost_x - state.parent_x
 		float_offset_y: ghost_y - state.parent_y
@@ -250,6 +250,9 @@ fn drag_reorder_ghost_view(state DragReorderState, content View) View {
 		height:         state.item_height
 		opacity:        0.85
 		sizing:         fixed_fixed
+		clip:           true
+		padding:        padding_none
+		size_border:    0
 		v_align:        .middle
 		color:          gui_theme.color_background
 		shadow:         &BoxShadow{
