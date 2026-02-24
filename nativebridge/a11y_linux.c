@@ -1254,7 +1254,8 @@ void gui_a11y_destroy(void) {
 
     dbus_connection_remove_filter(g_a11y_bus, a11y_filter,
         NULL);
-    dbus_connection_close(g_a11y_bus);
+    // dbus_bus_register makes the connection shared;
+    // shared connections must not be closed, only unref'd.
     dbus_connection_unref(g_a11y_bus);
 
     g_a11y_bus = NULL;

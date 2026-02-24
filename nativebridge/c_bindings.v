@@ -17,6 +17,7 @@ module nativebridge
 #flag linux -I/usr/lib/x86_64-linux-gnu/dbus-1.0/include
 #flag linux @VMODROOT/nativebridge/readback_linux.c
 #flag linux @VMODROOT/nativebridge/bookmark_stub.c
+#flag linux @VMODROOT/nativebridge/dialog_linux.c
 #flag linux @VMODROOT/nativebridge/portal_linux.c
 #flag linux -lGL
 #include "@VMODROOT/nativebridge/a11y_bridge.h"
