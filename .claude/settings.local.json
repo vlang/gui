@@ -29,5 +29,6 @@
       "Bash(v test:*)",
       "Bash(git:*)"
     ]
-  }
+  },
+  "prefersReducedMotion": false
 }
