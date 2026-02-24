@@ -15,11 +15,11 @@ enum {
     gui_native_status_error = 2,
 };
 
-static GuiNativeDialogResult gui_dialog_result_empty(void) {
-    GuiNativeDialogResult result;
+static GuiNativeDialogResultEx gui_dialog_result_ex_empty(void) {
+    GuiNativeDialogResultEx result;
     result.status = gui_native_status_error;
     result.path_count = 0;
-    result.paths = NULL;
+    result.entries = NULL;
     result.error_code = NULL;
     result.error_message = NULL;
     return result;
@@ -109,23 +109,40 @@ static void gui_apply_panel_start_dir(id panel, const char* start_dir_value) {
     }
 }
 
-static GuiNativeDialogResult gui_dialog_result_error(const char* code, const char* message) {
-    GuiNativeDialogResult result = gui_dialog_result_empty();
+static GuiNativeDialogResultEx gui_dialog_result_ex_error(const char* code, const char* message) {
+    GuiNativeDialogResultEx result = gui_dialog_result_ex_empty();
     result.status = gui_native_status_error;
     result.error_code = gui_strdup_c(code != NULL ? code : "internal");
     result.error_message = gui_strdup_c(message != NULL ? message : "native dialog error");
     return result;
 }
 
-static GuiNativeDialogResult gui_dialog_result_cancel(void) {
-    GuiNativeDialogResult result = gui_dialog_result_empty();
+static GuiNativeDialogResultEx gui_dialog_result_ex_cancel(void) {
+    GuiNativeDialogResultEx result = gui_dialog_result_ex_empty();
     result.status = gui_native_status_cancel;
     return result;
 }
 
-static GuiNativeDialogResult gui_dialog_result_ok_paths(NSArray<NSString*>* paths) {
-    GuiNativeDialogResult result = gui_dialog_result_empty();
-    NSInteger count = paths.count;
+// Create a security-scoped bookmark for a URL.
+// Returns NSData* or nil on failure.
+static NSData* gui_create_bookmark(NSURL* url) {
+    NSError* error = nil;
+    NSData* data = [url bookmarkDataWithOptions:
+        NSURLBookmarkCreationWithSecurityScope
+        includingResourceValuesForKeys:nil
+        relativeToURL:nil
+        error:&error];
+    if (error != nil || data == nil) {
+        return nil;
+    }
+    return data;
+}
+
+// Build a GuiNativeDialogResultEx from an array of URLs,
+// creating security-scoped bookmarks for each.
+static GuiNativeDialogResultEx gui_dialog_result_ex_ok_urls(NSArray<NSURL*>* urls) {
+    GuiNativeDialogResultEx result = gui_dialog_result_ex_empty();
+    NSInteger count = urls.count;
     if (count <= 0) {
         result.status = gui_native_status_cancel;
         return result;
@@ -133,33 +150,50 @@ static GuiNativeDialogResult gui_dialog_result_ok_paths(NSArray<NSString*>* path
 
     result.status = gui_native_status_ok;
     result.path_count = (int)count;
-    result.paths = (char**)calloc((size_t)count, sizeof(char*));
-    if (result.paths == NULL) {
-        return gui_dialog_result_error("internal", "native dialog allocation failed");
+    result.entries = (GuiBookmarkEntry*)calloc(
+        (size_t)count, sizeof(GuiBookmarkEntry));
+    if (result.entries == NULL) {
+        return gui_dialog_result_ex_error(
+            "internal", "native dialog allocation failed");
     }
 
     for (NSInteger i = 0; i < count; i++) {
-        result.paths[i] = gui_strdup_ns(paths[i]);
-        if (result.paths[i] == NULL) {
-            gui_native_dialog_result_free(result);
-            return gui_dialog_result_error("internal", "native dialog path allocation failed");
+        NSURL* url = urls[i];
+        result.entries[i].path = gui_strdup_ns(url.path);
+        if (result.entries[i].path == NULL) {
+            gui_native_dialog_result_ex_free(result);
+            return gui_dialog_result_ex_error(
+                "internal",
+                "native dialog path allocation failed");
+        }
+        NSData* bm = gui_create_bookmark(url);
+        if (bm != nil && bm.length > 0) {
+            result.entries[i].data_len = (int)bm.length;
+            result.entries[i].data =
+                (unsigned char*)malloc(bm.length);
+            if (result.entries[i].data != NULL) {
+                memcpy(result.entries[i].data,
+                    bm.bytes, bm.length);
+            } else {
+                result.entries[i].data_len = 0;
+            }
         }
     }
 
     return result;
 }
 
-static GuiNativeDialogResult gui_dialog_result_ok_urls(NSArray<NSURL*>* urls) {
-    NSMutableArray<NSString*>* paths = [NSMutableArray arrayWithCapacity:urls.count];
-    for (NSURL* url in urls) {
-        if (url.path.length > 0) {
-            [paths addObject:url.path];
-        }
+// Build a result ex from a single path string (save dialog).
+static GuiNativeDialogResultEx gui_dialog_result_ex_ok_path(NSString* path) {
+    NSURL* url = [NSURL fileURLWithPath:path];
+    if (url == nil) {
+        return gui_dialog_result_ex_error(
+            "internal", "could not create URL from path");
     }
-    return gui_dialog_result_ok_paths(paths);
+    return gui_dialog_result_ex_ok_urls(@[url]);
 }
 
-GuiNativeDialogResult gui_native_open_dialog(
+GuiNativeDialogResultEx gui_native_open_dialog_ex(
     void* ns_window,
     const char* title,
     const char* start_dir,
@@ -177,24 +211,26 @@ GuiNativeDialogResult gui_native_open_dialog(
         gui_apply_panel_title(panel, title);
         gui_apply_panel_start_dir(panel, start_dir);
 
-        NSArray<NSString*>* extensions = gui_extensions_from_csv(extensions_csv);
+        NSArray<NSString*>* extensions =
+            gui_extensions_from_csv(extensions_csv);
         if (extensions.count > 0) {
             panel.allowedFileTypes = extensions;
         }
 
         NSInteger response = [panel runModal];
         if (response == NSModalResponseCancel) {
-            return gui_dialog_result_cancel();
+            return gui_dialog_result_ex_cancel();
         }
         if (response != NSModalResponseOK) {
-            return gui_dialog_result_error("internal", "native open dialog failed");
+            return gui_dialog_result_ex_error(
+                "internal", "native open dialog failed");
         }
 
-        return gui_dialog_result_ok_urls(panel.URLs);
+        return gui_dialog_result_ex_ok_urls(panel.URLs);
     }
 }
 
-GuiNativeDialogResult gui_native_save_dialog(
+GuiNativeDialogResultEx gui_native_save_dialog_ex(
     void* ns_window,
     const char* title,
     const char* start_dir,
@@ -220,9 +256,12 @@ GuiNativeDialogResult gui_native_save_dialog(
             [gui_extensions_from_csv(extensions_csv) mutableCopy];
         NSString* normalized_default_extension =
             gui_normalize_extension(gui_nsstring(default_extension));
-        if (normalized_default_extension != nil && normalized_default_extension.length > 0) {
-            if (![extensions containsObject:normalized_default_extension]) {
-                [extensions addObject:normalized_default_extension];
+        if (normalized_default_extension != nil
+            && normalized_default_extension.length > 0) {
+            if (![extensions
+                    containsObject:normalized_default_extension]) {
+                [extensions
+                    addObject:normalized_default_extension];
             }
         }
         if (extensions.count > 0) {
@@ -231,34 +270,41 @@ GuiNativeDialogResult gui_native_save_dialog(
 
         NSInteger response = [panel runModal];
         if (response == NSModalResponseCancel) {
-            return gui_dialog_result_cancel();
+            return gui_dialog_result_ex_cancel();
         }
         if (response != NSModalResponseOK) {
-            return gui_dialog_result_error("internal", "native save dialog failed");
+            return gui_dialog_result_ex_error(
+                "internal", "native save dialog failed");
         }
 
         NSURL* url = panel.URL;
         if (url == nil || url.path.length == 0) {
-            return gui_dialog_result_error("internal", "native save dialog returned empty path");
+            return gui_dialog_result_ex_error(
+                "internal",
+                "native save dialog returned empty path");
         }
 
         NSString* path = url.path;
-        if (normalized_default_extension != nil && normalized_default_extension.length > 0) {
+        if (normalized_default_extension != nil
+            && normalized_default_extension.length > 0) {
             if (url.pathExtension.length == 0) {
-                path = [path stringByAppendingPathExtension:normalized_default_extension];
+                path = [path stringByAppendingPathExtension:
+                    normalized_default_extension];
             }
         }
 
-        if (confirm_overwrite == 0 &&
-            [[NSFileManager defaultManager] fileExistsAtPath:path]) {
-            return gui_dialog_result_error("overwrite_disallowed", "file already exists");
+        if (confirm_overwrite == 0
+            && [[NSFileManager defaultManager]
+                   fileExistsAtPath:path]) {
+            return gui_dialog_result_ex_error(
+                "overwrite_disallowed", "file already exists");
         }
 
-        return gui_dialog_result_ok_paths(@[path]);
+        return gui_dialog_result_ex_ok_path(path);
     }
 }
 
-GuiNativeDialogResult gui_native_folder_dialog(
+GuiNativeDialogResultEx gui_native_folder_dialog_ex(
     void* ns_window,
     const char* title,
     const char* start_dir,
@@ -277,27 +323,33 @@ GuiNativeDialogResult gui_native_folder_dialog(
 
         NSInteger response = [panel runModal];
         if (response == NSModalResponseCancel) {
-            return gui_dialog_result_cancel();
+            return gui_dialog_result_ex_cancel();
         }
         if (response != NSModalResponseOK) {
-            return gui_dialog_result_error("internal", "native folder dialog failed");
+            return gui_dialog_result_ex_error(
+                "internal", "native folder dialog failed");
         }
 
         NSURL* url = panel.URL;
         if (url == nil || url.path.length == 0) {
-            return gui_dialog_result_error("internal", "native folder dialog returned empty path");
+            return gui_dialog_result_ex_error(
+                "internal",
+                "native folder dialog returned empty path");
         }
 
-        return gui_dialog_result_ok_paths(@[url.path]);
+        return gui_dialog_result_ex_ok_urls(@[url]);
     }
 }
 
-void gui_native_dialog_result_free(GuiNativeDialogResult result) {
-    if (result.paths != NULL) {
+void gui_native_dialog_result_ex_free(
+    GuiNativeDialogResultEx result
+) {
+    if (result.entries != NULL) {
         for (int i = 0; i < result.path_count; i++) {
-            free(result.paths[i]);
+            free(result.entries[i].path);
+            free(result.entries[i].data);
         }
-        free(result.paths);
+        free(result.entries);
     }
     if (result.error_code != NULL) {
         free(result.error_code);

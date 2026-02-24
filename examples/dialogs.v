@@ -218,7 +218,7 @@ fn show_native_result(kind string, result gui.NativeDialogResult, mut w gui.Wind
 			if result.paths.len == 0 {
 				'No paths returned.'
 			} else {
-				result.paths.join('\n')
+				result.path_strings().join('\n')
 			}
 		}
 		.cancel {

@@ -971,7 +971,7 @@ fn load_button() gui.View {
 					if result.status != .ok || result.paths.len == 0 {
 						return
 					}
-					theme := gui.theme_load(result.paths[0]) or { return }
+					theme := gui.theme_load(result.paths[0].path) or { return }
 					mut app := w.state[ThemeDesignerState]()
 					apply_theme_to_state(theme, mut app)
 					app.json_text = gui.theme_to_json(theme.cfg)
@@ -1009,7 +1009,7 @@ fn save_button() gui.View {
 					app := w.state[ThemeDesignerState]()
 					cfg := build_theme_cfg(app)
 					theme := gui.theme_maker(&cfg)
-					gui.theme_save(result.paths[0], theme) or {}
+					gui.theme_save(result.paths[0].path, theme) or {}
 				}
 			})
 		}

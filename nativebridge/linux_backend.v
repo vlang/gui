@@ -15,6 +15,24 @@ struct LinuxCommandResult {
 	stderr    string
 }
 
+// bridge_result_ex_from_legacy wraps a legacy BridgeDialogResult
+// into BridgeDialogResultEx with empty bookmark data. Used when
+// falling back to zenity/kdialog on Linux.
+fn bridge_result_ex_from_legacy(r BridgeDialogResult) BridgeDialogResultEx {
+	mut entries := []BridgeBookmarkEntry{cap: r.paths.len}
+	for p in r.paths {
+		entries << BridgeBookmarkEntry{
+			path: p
+		}
+	}
+	return BridgeDialogResultEx{
+		status:        r.status
+		entries:       entries
+		error_code:    r.error_code
+		error_message: r.error_message
+	}
+}
+
 fn linux_open_dialog(cfg BridgeOpenCfg) BridgeDialogResult {
 	tool := linux_pick_dialog_tool() or { return linux_dialog_tool_error_result() }
 	return match tool {

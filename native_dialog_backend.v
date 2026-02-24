@@ -12,14 +12,15 @@ fn native_open_dialog_impl(mut w Window, cfg NativeOpenDialogCfg) {
 		return
 	}
 
-	bridge_result := nativebridge.open_dialog(nativebridge.BridgeOpenCfg{
+	bridge_result_ex := nativebridge.open_dialog_ex(nativebridge.BridgeOpenCfg{
 		ns_window:      native_dialog_ns_window()
 		title:          cfg.title
 		start_dir:      cfg.start_dir
 		extensions:     extensions
 		allow_multiple: cfg.allow_multiple
 	})
-	native_dispatch_dialog_done(mut w, cfg.on_done, native_result_from_bridge(bridge_result))
+	native_dispatch_dialog_done(mut w, cfg.on_done, native_result_from_bridge_ex(bridge_result_ex, mut
+		w))
 }
 
 fn native_save_dialog_impl(mut w Window, cfg NativeSaveDialogCfg) {
@@ -34,7 +35,7 @@ fn native_save_dialog_impl(mut w Window, cfg NativeSaveDialogCfg) {
 		return
 	}
 
-	bridge_result := nativebridge.save_dialog(nativebridge.BridgeSaveCfg{
+	bridge_result_ex := nativebridge.save_dialog_ex(nativebridge.BridgeSaveCfg{
 		ns_window:         native_dialog_ns_window()
 		title:             cfg.title
 		start_dir:         cfg.start_dir
@@ -43,17 +44,19 @@ fn native_save_dialog_impl(mut w Window, cfg NativeSaveDialogCfg) {
 		extensions:        extensions
 		confirm_overwrite: cfg.confirm_overwrite
 	})
-	native_dispatch_dialog_done(mut w, cfg.on_done, native_result_from_bridge(bridge_result))
+	native_dispatch_dialog_done(mut w, cfg.on_done, native_result_from_bridge_ex(bridge_result_ex, mut
+		w))
 }
 
 fn native_folder_dialog_impl(mut w Window, cfg NativeFolderDialogCfg) {
-	bridge_result := nativebridge.folder_dialog(nativebridge.BridgeFolderCfg{
+	bridge_result_ex := nativebridge.folder_dialog_ex(nativebridge.BridgeFolderCfg{
 		ns_window:              native_dialog_ns_window()
 		title:                  cfg.title
 		start_dir:              cfg.start_dir
 		can_create_directories: cfg.can_create_directories
 	})
-	native_dispatch_dialog_done(mut w, cfg.on_done, native_result_from_bridge(bridge_result))
+	native_dispatch_dialog_done(mut w, cfg.on_done, native_result_from_bridge_ex(bridge_result_ex, mut
+		w))
 }
 
 fn native_dialog_ns_window() voidptr {
@@ -63,15 +66,23 @@ fn native_dialog_ns_window() voidptr {
 	return unsafe { nil }
 }
 
-fn native_result_from_bridge(bridge_result nativebridge.BridgeDialogResult) NativeDialogResult {
+fn native_result_from_bridge_ex(bridge_result nativebridge.BridgeDialogResultEx, mut w Window) NativeDialogResult {
 	status := match bridge_result.status {
 		.ok { NativeDialogStatus.ok }
 		.cancel { NativeDialogStatus.cancel }
 		.error { NativeDialogStatus.error }
 	}
+	mut paths := []AccessiblePath{cap: bridge_result.entries.len}
+	for entry in bridge_result.entries {
+		grant := w.store_bookmark(entry.path, entry.data)
+		paths << AccessiblePath{
+			path:  entry.path
+			grant: grant
+		}
+	}
 	return NativeDialogResult{
 		status:        status
-		paths:         bridge_result.paths.clone()
+		paths:         paths
 		error_code:    bridge_result.error_code
 		error_message: bridge_result.error_message
 	}

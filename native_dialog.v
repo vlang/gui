@@ -8,12 +8,25 @@ pub enum NativeDialogStatus as u8 {
 }
 
 // NativeDialogResult contains native dialog completion data.
+// paths contains AccessiblePath entries with optional
+// security-scoped grants for sandbox persistence.
 pub struct NativeDialogResult {
 pub:
 	status        NativeDialogStatus
-	paths         []string
+	paths         []AccessiblePath
 	error_code    string
 	error_message string
+}
+
+// path_strings returns just the path strings, discarding
+// grants. Convenience for code that does not need sandbox
+// persistence.
+pub fn (r NativeDialogResult) path_strings() []string {
+	mut out := []string{cap: r.paths.len}
+	for p in r.paths {
+		out << p.path
+	}
+	return out
 }
 
 // NativeFileFilter groups file extensions for native dialogs.

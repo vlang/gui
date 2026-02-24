@@ -50,6 +50,7 @@ mut:
 	clip_radius           f32             // rounded clip radius, render-time only
 	view_state            ViewState       // Manages state for widgets (scroll, selection, etc.)
 	window_size           gg.Size         // cached, gg.window_size() relatively slow
+	file_access           FileAccessState // security-scoped bookmark state
 }
 
 // Window is the main application window. `state` holds app state.
@@ -84,7 +85,8 @@ mut:
 pub struct WindowCfg {
 pub:
 	state               voidptr = unsafe { nil } // passed through as w.state; cast to app struct pointer
-	title               string  = app_title
+	app_id              string // bundle/app identifier for bookmark persistence (e.g. "com.example.myapp")
+	title               string = app_title
 	width               int
 	height              int
 	cursor_blink        bool // enable blinking text cursor (blink animation)
@@ -115,6 +117,9 @@ pub fn window(cfg &WindowCfg) &Window {
 		state:        cfg.state
 		on_event:     cfg.on_event
 		debug_layout: cfg.debug_layout
+		file_access:  FileAccessState{
+			app_id: cfg.app_id
+		}
 	}
 	on_init := cfg.on_init
 	cursor_blink := cfg.cursor_blink
@@ -128,7 +133,7 @@ pub fn window(cfg &WindowCfg) &Window {
 		max_dropped_files:            int(cfg.dragndrop_files_max)
 		max_dropped_file_path_length: int(cfg.dragndrop_path_max)
 		frame_fn:                     frame_fn
-		cleanup_fn:                   a11y_cleanup
+		cleanup_fn:                   window_cleanup
 		ui_mode:                      true // only draw on events
 		user_data:                    window
 		init_fn:                      fn [on_init, cursor_blink] (mut w Window) {

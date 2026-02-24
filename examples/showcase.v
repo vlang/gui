@@ -3149,7 +3149,7 @@ fn demo_dialog_show_native_result(kind string, result gui.NativeDialogResult, mu
 			if result.paths.len == 0 {
 				'No paths returned.'
 			} else {
-				result.paths.join('\n')
+				result.path_strings().join('\n')
 			}
 		}
 		.cancel {
@@ -6442,8 +6442,8 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 												a.theme_gen_tint, a.theme_gen_text, a.theme_gen_radius,
 												a.theme_gen_border)
 											theme := gui.theme_maker(&cfg)
-											gui.theme_save(result.paths[0], theme) or {}
-											a.theme_gen_name = os.file_name(result.paths[0]).all_before_last('.')
+											gui.theme_save(result.paths[0].path, theme) or {}
+											a.theme_gen_name = os.file_name(result.paths[0].path).all_before_last('.')
 										}
 									})
 								}
@@ -6467,10 +6467,12 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 											if result.status != .ok || result.paths.len == 0 {
 												return
 											}
-											theme := gui.theme_load(result.paths[0]) or { return }
+											theme := gui.theme_load(result.paths[0].path) or {
+												return
+											}
 											mut a := w.state[ShowcaseApp]()
 											sync_theme_gen_from_cfg(mut a, theme.cfg)
-											a.theme_gen_name = os.file_name(result.paths[0]).all_before_last('.')
+											a.theme_gen_name = os.file_name(result.paths[0].path).all_before_last('.')
 											w.set_theme(theme)
 										}
 									})

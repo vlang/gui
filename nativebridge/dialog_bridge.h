@@ -5,15 +5,21 @@
 extern "C" {
 #endif
 
-typedef struct GuiNativeDialogResult {
+typedef struct GuiBookmarkEntry {
+    char* path;
+    unsigned char* data;
+    int data_len;
+} GuiBookmarkEntry;
+
+typedef struct GuiNativeDialogResultEx {
     int status;
     int path_count;
-    char** paths;
+    GuiBookmarkEntry* entries;
     char* error_code;
     char* error_message;
-} GuiNativeDialogResult;
+} GuiNativeDialogResultEx;
 
-GuiNativeDialogResult gui_native_open_dialog(
+GuiNativeDialogResultEx gui_native_open_dialog_ex(
     void* ns_window,
     const char* title,
     const char* start_dir,
@@ -21,7 +27,7 @@ GuiNativeDialogResult gui_native_open_dialog(
     int allow_multiple
 );
 
-GuiNativeDialogResult gui_native_save_dialog(
+GuiNativeDialogResultEx gui_native_save_dialog_ex(
     void* ns_window,
     const char* title,
     const char* start_dir,
@@ -31,14 +37,44 @@ GuiNativeDialogResult gui_native_save_dialog(
     int confirm_overwrite
 );
 
-GuiNativeDialogResult gui_native_folder_dialog(
+GuiNativeDialogResultEx gui_native_folder_dialog_ex(
     void* ns_window,
     const char* title,
     const char* start_dir,
     int can_create_directories
 );
 
-void gui_native_dialog_result_free(GuiNativeDialogResult result);
+void gui_native_dialog_result_ex_free(GuiNativeDialogResultEx result);
+
+/* Bookmark persistence (macOS impl, stubs elsewhere) */
+int gui_bookmark_store(const char* app_id,
+    const char* path, const unsigned char* data,
+    int data_len);
+int gui_bookmark_count(const char* app_id);
+GuiBookmarkEntry* gui_bookmark_load_all(
+    const char* app_id, int* out_count);
+int gui_bookmark_remove(const char* app_id,
+    const char* path);
+void gui_bookmark_entries_free(
+    GuiBookmarkEntry* entries, int count);
+int gui_bookmark_start_access(
+    const unsigned char* data, int data_len,
+    char** out_path);
+void gui_bookmark_stop_access(
+    const unsigned char* data, int data_len);
+
+/* Portal (Linux impl, stubs elsewhere) */
+int gui_portal_available(void);
+GuiNativeDialogResultEx gui_portal_open_file(
+    const char* title, const char* start_dir,
+    const char* extensions_csv, int allow_multiple);
+GuiNativeDialogResultEx gui_portal_save_file(
+    const char* title, const char* start_dir,
+    const char* default_name,
+    const char* default_extension,
+    const char* extensions_csv);
+GuiNativeDialogResultEx gui_portal_open_directory(
+    const char* title, const char* start_dir);
 
 #ifdef __cplusplus
 }

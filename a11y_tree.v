@@ -244,8 +244,12 @@ fn a11y_action_callback(action int, focus_id int, user_data voidptr) {
 	}
 }
 
-// a11y_cleanup releases the native accessibility container.
-// Used as gg cleanup_fn in window.v.
-fn a11y_cleanup(_ voidptr) {
+// window_cleanup releases file-access grants and the native
+// accessibility container. Used as gg cleanup_fn in window.v.
+fn window_cleanup(user_data voidptr) {
+	if user_data != unsafe { nil } {
+		mut w := unsafe { &Window(user_data) }
+		w.release_all_file_access()
+	}
 	nativebridge.a11y_destroy()
 }
