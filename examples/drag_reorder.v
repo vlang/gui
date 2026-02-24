@@ -53,17 +53,22 @@ fn main_view(mut w gui.Window) gui.View {
 					gui.text(text: 'ListBox (drag or Alt+Up/Down)'),
 					w.list_box(
 						id:           'demo_lb'
-						id_scroll:    1
+						id_focus:     1
+						id_scroll:    2
 						min_width:    180
 						max_height:   400
 						selected_ids: app.selected
 						data:         app.items
 						reorderable:  true
-						on_reorder:   fn (old_idx int, new_idx int, mut w gui.Window) {
+						on_reorder:   fn (moved_id string, before_id string, mut w gui.Window) {
 							mut a := w.state[App]()
-							item := a.items[old_idx]
-							a.items.delete(old_idx)
-							a.items.insert(new_idx, item)
+							from, to := gui.reorder_indices(a.items.map(it.id), moved_id,
+								before_id)
+							if from >= 0 {
+								item := a.items[from]
+								a.items.delete(from)
+								a.items.insert(to, item)
+							}
 						}
 						on_select:    fn (ids []string, mut e gui.Event, mut w gui.Window) {
 							mut a := w.state[App]()
@@ -86,27 +91,35 @@ fn main_view(mut w gui.Window) gui.View {
 							mut a := w.state[App]()
 							a.tab_sel = id
 						}
-						on_reorder:  fn (old_idx int, new_idx int, mut w gui.Window) {
+						on_reorder:  fn (moved_id string, before_id string, mut w gui.Window) {
 							mut a := w.state[App]()
-							item := a.tabs[old_idx]
-							a.tabs.delete(old_idx)
-							a.tabs.insert(new_idx, item)
+							from, to := gui.reorder_indices(a.tabs.map(it.id), moved_id,
+								before_id)
+							if from >= 0 {
+								tab := a.tabs[from]
+								a.tabs.delete(from)
+								a.tabs.insert(to, tab)
+							}
 						}
 					),
 					gui.text(text: 'Tree (drag or Alt+Up/Down)'),
 					w.tree(
 						id:          'demo_tree'
-						id_scroll:   2
+						id_scroll:   3
 						id_focus:    10
 						max_height:  200
 						nodes:       app.nodes
 						reorderable: true
 						on_select:   fn (id string, mut w gui.Window) {}
-						on_reorder:  fn (old_idx int, new_idx int, mut w gui.Window) {
+						on_reorder:  fn (moved_id string, before_id string, mut w gui.Window) {
 							mut a := w.state[App]()
-							node := a.nodes[old_idx]
-							a.nodes.delete(old_idx)
-							a.nodes.insert(new_idx, node)
+							from, to := gui.reorder_indices(a.nodes.map(it.id), moved_id,
+								before_id)
+							if from >= 0 {
+								node := a.nodes[from]
+								a.nodes.delete(from)
+								a.nodes.insert(to, node)
+							}
 						}
 					),
 				]

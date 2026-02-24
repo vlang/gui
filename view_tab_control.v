@@ -69,7 +69,7 @@ pub:
 	disabled               bool
 	invisible              bool
 	reorderable            bool
-	on_reorder             fn (int, int, mut Window) = unsafe { nil }
+	on_reorder             fn (string, string, mut Window) = unsafe { nil }
 }
 
 // tabs is an alias for [tab_control](#tab_control).
@@ -108,15 +108,16 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 	}
 	selected_idx := tab_selected_index(cfg.items, cfg.selected)
 	dragging := cfg.reorderable && drag.active && !drag.cancelled
-	// Count draggable (non-disabled) tabs.
-	mut drag_tab_count := 0
+	// Build non-disabled tab IDs for drag index mapping.
+	mut tab_ids := []string{cap: cfg.items.len}
 	if cfg.reorderable {
 		for item in cfg.items {
 			if !item.disabled {
-				drag_tab_count++
+				tab_ids << item.id
 			}
 		}
 	}
+	on_reorder := cfg.on_reorder
 
 	mut header_items := []View{cap: cfg.items.len + 2}
 	mut ghost_view := View(rectangle(RectangleCfg{}))
@@ -179,8 +180,8 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 			AccessState.none
 		}
 		tab_on_click := if is_draggable {
-			make_tab_drag_click(cfg.id, item.id, item_drag_idx, drag_tab_count, cfg.on_reorder,
-				cfg.on_select, cfg.id_focus)
+			make_tab_drag_click(cfg.id, item.id, item_drag_idx, tab_ids, on_reorder, cfg.on_select,
+				cfg.id_focus)
 		} else {
 			make_tab_on_click(cfg.on_select, item.id, cfg.id_focus)
 		}
@@ -249,7 +250,6 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 	on_select := cfg.on_select
 	id_focus := cfg.id_focus
 	reorderable := cfg.reorderable
-	on_reorder := cfg.on_reorder
 	tab_id := cfg.id
 
 	return column(
@@ -268,9 +268,9 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 		spacing:          cfg.spacing
 		disabled:         cfg.disabled
 		invisible:        cfg.invisible
-		on_keydown:       fn [disabled, items, selected, on_select, id_focus, reorderable, on_reorder, tab_id] (_ &Layout, mut e Event, mut w Window) {
+		on_keydown:       fn [disabled, items, selected, on_select, id_focus, reorderable, on_reorder, tab_id, tab_ids] (_ &Layout, mut e Event, mut w Window) {
 			tab_control_on_keydown(disabled, items, selected, on_select, id_focus, reorderable,
-				on_reorder, tab_id, mut e, mut w)
+				on_reorder, tab_id, tab_ids, mut e, mut w)
 		}
 		content:          [
 			row(
@@ -311,13 +311,13 @@ fn make_tab_on_click(on_select fn (string, mut Event, mut Window), id string, id
 // make_tab_drag_click creates an on_click that initiates
 // drag-reorder and also fires tab selection.
 fn make_tab_drag_click(control_id string, item_id string,
-	drag_index int, drag_tab_count int,
-	on_reorder fn (int, int, mut Window),
+	drag_index int, tab_ids []string,
+	on_reorder fn (string, string, mut Window),
 	on_select fn (string, mut Event, mut Window),
 	id_focus u32) fn (&Layout, mut Event, mut Window) {
-	return fn [control_id, item_id, drag_index, drag_tab_count, on_reorder, on_select, id_focus] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(control_id, drag_index, item_id, .horizontal, drag_tab_count,
-			on_reorder, layout, e, mut w)
+	return fn [control_id, item_id, drag_index, tab_ids, on_reorder, on_select, id_focus] (layout &Layout, mut e Event, mut w Window) {
+		drag_reorder_start(control_id, drag_index, item_id, .horizontal, tab_ids, on_reorder,
+			layout, e, mut w)
 		on_select(item_id, mut e, mut w)
 		if id_focus > 0 {
 			w.set_id_focus(id_focus)
@@ -326,17 +326,17 @@ fn make_tab_drag_click(control_id string, item_id string,
 	}
 }
 
-fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on_select fn (string, mut Event, mut Window), id_focus u32, reorderable bool, on_reorder fn (int, int, mut Window), tab_id string, mut e Event, mut w Window) {
+fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on_select fn (string, mut Event, mut Window), id_focus u32, reorderable bool, on_reorder fn (string, string, mut Window), tab_id string, tab_ids []string, mut e Event, mut w Window) {
 	// Escape cancels active drag.
 	if reorderable && drag_reorder_escape(tab_id, e.key_code, mut w) {
 		e.is_handled = true
 		return
 	}
-	// Alt+Left/Right keyboard reorder.
+	// Alt+Left/Right keyboard reorder (non-disabled tabs only).
 	if reorderable && on_reorder != unsafe { nil } {
-		sel_idx := tab_selected_index(items, selected)
-		if sel_idx >= 0
-			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .horizontal, sel_idx, items.len, on_reorder, mut w) {
+		sel_tab_idx := tab_ids.index(selected)
+		if sel_tab_idx >= 0
+			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .horizontal, sel_tab_idx, tab_ids, on_reorder, mut w) {
 			e.is_handled = true
 			return
 		}

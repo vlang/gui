@@ -69,13 +69,14 @@ fn drag_reorder_read(w &Window, key string) DragReorderState {
 // animation, and drop/cancel.
 fn drag_reorder_make_lock(drag_key string,
 	axis DragReorderAxis,
-	on_reorder fn (int, int, mut Window)) MouseLockCfg {
+	item_ids []string,
+	on_reorder fn (string, string, mut Window)) MouseLockCfg {
 	return MouseLockCfg{
 		mouse_move: fn [drag_key, axis] (_ &Layout, mut e Event, mut w Window) {
 			drag_reorder_on_mouse_move(drag_key, axis, e.mouse_x, e.mouse_y, mut w)
 		}
-		mouse_up:   fn [drag_key, on_reorder] (_ &Layout, mut e Event, mut w Window) {
-			drag_reorder_on_mouse_up(drag_key, on_reorder, mut w)
+		mouse_up:   fn [drag_key, item_ids, on_reorder] (_ &Layout, mut e Event, mut w Window) {
+			drag_reorder_on_mouse_up(drag_key, item_ids, on_reorder, mut w)
 		}
 	}
 }
@@ -137,22 +138,30 @@ fn drag_reorder_on_mouse_move(drag_key string,
 }
 
 // drag_reorder_on_mouse_up finalizes the drag: fires on_reorder
-// if indices differ, then cleans up.
+// with (moved_id, before_id) if the gap index differs from the
+// source position. before_id is "" when dropping at the end.
 fn drag_reorder_on_mouse_up(drag_key string,
-	on_reorder fn (int, int, mut Window),
+	item_ids []string,
+	on_reorder fn (string, string, mut Window),
 	mut w Window) {
 	state := drag_reorder_get(mut w, drag_key)
 	was_active := state.active
 	src := state.source_index
-	dst := state.current_index
+	gap := state.current_index
 
 	drag_reorder_clear(mut w, drag_key)
 	w.mouse_unlock()
 
-	if was_active && !state.cancelled && src != dst {
-		if on_reorder != unsafe { nil } {
+	if was_active && !state.cancelled && gap != src && gap != src + 1 {
+		if on_reorder != unsafe { nil } && src >= 0 && src < item_ids.len {
+			moved_id := item_ids[src]
+			before_id := if gap < item_ids.len {
+				item_ids[gap]
+			} else {
+				''
+			}
 			w.animate_layout(LayoutTransitionCfg{})
-			on_reorder(src, dst, mut w)
+			on_reorder(moved_id, before_id, mut w)
 		}
 	}
 	w.update_window()
@@ -181,8 +190,8 @@ fn drag_reorder_start(drag_key string,
 	index int,
 	item_id string,
 	axis DragReorderAxis,
-	item_count int,
-	on_reorder fn (int, int, mut Window),
+	item_ids []string,
+	on_reorder fn (string, string, mut Window),
 	layout &Layout,
 	e &Event,
 	mut w Window) {
@@ -199,7 +208,7 @@ fn drag_reorder_start(drag_key string,
 	state := DragReorderState{
 		source_index:  index
 		current_index: index
-		item_count:    item_count
+		item_count:    item_ids.len
 		start_mouse_x: e.mouse_x + layout.shape.x
 		start_mouse_y: e.mouse_y + layout.shape.y
 		mouse_x:       e.mouse_x + layout.shape.x
@@ -213,7 +222,7 @@ fn drag_reorder_start(drag_key string,
 		item_id:       item_id
 	}
 	drag_reorder_set(mut w, drag_key, state)
-	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, on_reorder))
+	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids, on_reorder))
 }
 
 // drag_reorder_calc_index estimates the drop target index from
@@ -228,7 +237,7 @@ fn drag_reorder_calc_index(mouse_main f32, item_start f32,
 	list_start := item_start - f32(source_index) * item_size
 	rel := mouse_main - list_start
 	idx := int(rel / item_size)
-	return int_clamp(idx, 0, item_count - 1)
+	return int_clamp(idx, 0, item_count)
 }
 
 // drag_reorder_ghost_view returns a floating container at the
@@ -277,14 +286,16 @@ fn drag_reorder_gap_view(state DragReorderState, axis DragReorderAxis) View {
 }
 
 // drag_reorder_keyboard_move handles Alt+Arrow keyboard reorder.
-// Returns true if the event was handled.
+// Converts gap indices to (moved_id, before_id) and calls
+// on_reorder directly. Returns true if the event was handled.
 fn drag_reorder_keyboard_move(key_code KeyCode,
 	modifiers Modifier,
 	axis DragReorderAxis,
 	current_index int,
-	item_count int,
-	on_reorder fn (int, int, mut Window),
+	item_ids []string,
+	on_reorder fn (string, string, mut Window),
 	mut w Window) bool {
+	item_count := item_ids.len
 	if on_reorder == unsafe { nil } || item_count <= 1 {
 		return false
 	}
@@ -303,7 +314,7 @@ fn drag_reorder_keyboard_move(key_code KeyCode,
 				}
 				.down {
 					if current_index < item_count - 1 {
-						new_index = current_index + 1
+						new_index = int_min(current_index + 2, item_count)
 					}
 				}
 				else {}
@@ -318,7 +329,7 @@ fn drag_reorder_keyboard_move(key_code KeyCode,
 				}
 				.right {
 					if current_index < item_count - 1 {
-						new_index = current_index + 1
+						new_index = int_min(current_index + 2, item_count)
 					}
 				}
 				else {}
@@ -330,8 +341,14 @@ fn drag_reorder_keyboard_move(key_code KeyCode,
 		return false
 	}
 
+	moved_id := item_ids[current_index]
+	before_id := if new_index < item_count {
+		item_ids[new_index]
+	} else {
+		''
+	}
 	w.animate_layout(LayoutTransitionCfg{})
-	on_reorder(current_index, new_index, mut w)
+	on_reorder(moved_id, before_id, mut w)
 	return true
 }
 
@@ -379,4 +396,31 @@ fn drag_reorder_auto_scroll(mouse_main f32,
 			.horizontal { w.scroll_horizontal_by(id_scroll, delta) }
 		}
 	}
+}
+
+// reorder_indices computes (from, to) indices for a
+// delete(from) + insert(to, item) reorder operation.
+// moved_id is the ID of the moved item. before_id is
+// the ID of the item it should appear before, or ""
+// for end of list. Returns (-1, -1) on no-op or
+// not-found.
+pub fn reorder_indices(ids []string, moved_id string, before_id string) (int, int) {
+	mut from := -1
+	mut bi := ids.len
+	for i, id in ids {
+		if id == moved_id {
+			from = i
+		}
+		if before_id.len > 0 && id == before_id {
+			bi = i
+		}
+	}
+	if from < 0 {
+		return -1, -1
+	}
+	to := if from < bi { bi - 1 } else { bi }
+	if from == to {
+		return -1, -1
+	}
+	return from, to
 }

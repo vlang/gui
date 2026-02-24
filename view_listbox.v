@@ -35,8 +35,8 @@ pub:
 	id_scroll        u32
 	multiple         bool // allow multiple selections
 	reorderable      bool // enable drag-to-reorder
-	on_reorder       fn (int, int, mut Window) = unsafe { nil }
-	size_border      f32                       = gui_theme.list_box_style.size_border
+	on_reorder       fn (string, string, mut Window) = unsafe { nil }
+	size_border      f32 = gui_theme.list_box_style.size_border
 	id_focus         u32
 }
 
@@ -141,15 +141,14 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 		list_box_estimate_row_height_no_window(cfg)
 	}
 	dragging := cfg.reorderable && drag.active && !drag.cancelled
-	// Count draggable (non-subheading) items for reorder indexing.
-	mut drag_item_count := 0
-	if cfg.reorderable {
-		for dat in cfg.data {
-			if !dat.is_subheading {
-				drag_item_count++
-			}
+	// Build non-subheading item IDs for drag index mapping.
+	mut item_ids := []string{cap: cfg.data.len}
+	for dat in cfg.data {
+		if !dat.is_subheading {
+			item_ids << dat.id
 		}
 	}
+	on_reorder := cfg.on_reorder
 	mut list := []View{cap: (last_visible - first_visible + 1) + 4}
 
 	if cfg.loading && cfg.data.len == 0 {
@@ -188,7 +187,7 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 			// Capture content for ghost; skip from normal flow.
 			ghost_content = list_box_item_content(dat, cfg)
 		} else {
-			list << list_box_item_view(dat, cfg, item_drag_idx, drag_item_count)
+			list << list_box_item_view(dat, cfg, item_drag_idx, item_ids, on_reorder)
 		}
 
 		if is_draggable {
@@ -215,13 +214,9 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 		list << drag_reorder_ghost_view(drag, ghost_content)
 	}
 
-	// Build value_text and selectable item IDs in one pass.
-	mut item_ids := []string{cap: cfg.data.len}
+	// Build value_text for a11y.
 	mut value_builder := strings.new_builder(0)
 	for dat in cfg.data {
-		if !dat.is_subheading {
-			item_ids << dat.id
-		}
 		if dat.id !in cfg.selected_ids {
 			continue
 		}
@@ -245,7 +240,6 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	on_select := cfg.on_select
 	selected_ids := cfg.selected_ids
 	reorderable := cfg.reorderable
-	on_reorder := cfg.on_reorder
 	return column(
 		name:         'list_box'
 		a11y_role:    .list
@@ -273,7 +267,7 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	)
 }
 
-fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, drag_item_count int) View {
+fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, item_ids []string, on_reorder fn (string, string, mut Window)) View {
 	color := if dat.id in cfg.selected_ids {
 		cfg.color_select
 	} else {
@@ -289,7 +283,6 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, drag_it
 	selected_ids := cfg.selected_ids
 	color_hover := cfg.color_hover
 	reorderable := cfg.reorderable && !is_sub
-	on_reorder := cfg.on_reorder
 	list_box_id := cfg.id
 
 	item_a11y_state := if dat.id in cfg.selected_ids {
@@ -298,7 +291,7 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, drag_it
 		AccessState.none
 	}
 	on_click_fn := if reorderable {
-		make_list_box_drag_click(list_box_id, dat_id, drag_index, drag_item_count, on_reorder,
+		make_list_box_drag_click(list_box_id, dat_id, drag_index, item_ids, on_reorder,
 			is_multiple, on_select, has_on_select, selected_ids)
 	} else {
 		fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ voidptr, mut e Event, mut w Window) {
@@ -368,16 +361,19 @@ fn list_box_item_content(dat ListBoxOption, cfg ListBoxCfg) View {
 // make_list_box_drag_click creates an on_click handler that
 // initiates drag-reorder or falls back to selection.
 fn make_list_box_drag_click(list_box_id string, dat_id string,
-	drag_index int, drag_item_count int,
-	on_reorder fn (int, int, mut Window),
+	drag_index int, item_ids []string,
+	on_reorder fn (string, string, mut Window),
 	is_multiple bool,
 	on_select fn ([]string, mut Event, mut Window),
 	has_on_select bool,
 	selected_ids []string) fn (voidptr, mut Event, mut Window) {
-	return fn [list_box_id, dat_id, drag_index, drag_item_count, on_reorder, is_multiple, on_select, has_on_select, selected_ids] (layout voidptr, mut e Event, mut w Window) {
+	return fn [list_box_id, dat_id, drag_index, item_ids, on_reorder, is_multiple, on_select, has_on_select, selected_ids] (layout voidptr, mut e Event, mut w Window) {
 		l := unsafe { &Layout(layout) }
-		drag_reorder_start(list_box_id, drag_index, dat_id, .vertical, drag_item_count,
-			on_reorder, l, e, mut w)
+		drag_reorder_start(list_box_id, drag_index, dat_id, .vertical, item_ids, on_reorder,
+			l, e, mut w)
+		// Set keyboard focus index so Alt+Arrow works after click.
+		mut lbf := state_map[string, int](mut w, ns_list_box_focus, cap_moderate)
+		lbf.set(list_box_id, drag_index)
 		// Also fire selection.
 		if has_on_select {
 			ids := list_box_next_selected_ids(selected_ids, dat_id, is_multiple)
@@ -654,7 +650,7 @@ fn list_box_option_to_core(opt ListBoxOption) ListCoreItem {
 }
 
 // list_box_on_keydown handles keyboard navigation for list box.
-fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, on_select fn ([]string, mut Event, mut Window), selected_ids []string, reorderable bool, on_reorder fn (int, int, mut Window), mut e Event, mut w Window) {
+fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, on_select fn ([]string, mut Event, mut Window), selected_ids []string, reorderable bool, on_reorder fn (string, string, mut Window), mut e Event, mut w Window) {
 	// Escape cancels active drag.
 	if reorderable && drag_reorder_escape(list_box_id, e.key_code, mut w) {
 		e.is_handled = true
@@ -665,7 +661,7 @@ fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, 
 		mut lbf := state_map[string, int](mut w, ns_list_box_focus, cap_moderate)
 		cur := lbf.get(list_box_id) or { -1 }
 		if cur >= 0
-			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .vertical, cur, item_ids.len, on_reorder, mut w) {
+			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .vertical, cur, item_ids, on_reorder, mut w) {
 			// Update focus index to follow the moved item.
 			new_idx := if e.key_code == .up { cur - 1 } else { cur + 1 }
 			lbf.set(list_box_id, new_idx)
