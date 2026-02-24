@@ -47,6 +47,8 @@ struct InspectorNodeProps {
 	radius       f32
 	id_focus     u32
 	id_scroll    u32
+	h_align      HorizontalAlign
+	v_align      VerticalAlign
 	is_float     bool
 	clip         bool
 	opacity      f32
@@ -377,6 +379,14 @@ fn inspector_props_nodes(p InspectorNodeProps) []TreeNodeCfg {
 			text_style_icon: prop_icon_style
 		}
 	}
+	if p.h_align != .start || p.v_align != .top {
+		nodes << TreeNodeCfg{
+			id:              '__prop_align'
+			text:            'align: ${p.h_align}, ${p.v_align}'
+			text_style:      prop_style
+			text_style_icon: prop_icon_style
+		}
+	}
 	if p.is_float {
 		nodes << TreeNodeCfg{
 			id:              '__prop_float'
@@ -449,6 +459,8 @@ fn inspector_snapshot_props(layout &Layout) InspectorNodeProps {
 		radius:       shape.radius
 		id_focus:     shape.id_focus
 		id_scroll:    shape.id_scroll
+		h_align:      shape.h_align
+		v_align:      shape.v_align
 		is_float:     shape.float
 		clip:         shape.clip
 		opacity:      shape.opacity
