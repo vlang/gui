@@ -86,6 +86,19 @@ fn assert_color_eq(actual Color, expected Color) bool {
 	return true
 }
 
+// build_deep_layout creates a Layout tree of given depth and fanout
+// for memory/GC tests. Leaf nodes are 10x10, interior nodes 100x100.
+fn build_deep_layout(depth int, fanout int) Layout {
+	if depth == 0 {
+		return make_test_layout(10, 10)
+	}
+	mut children := []Layout{cap: fanout}
+	for _ in 0 .. fanout {
+		children << build_deep_layout(depth - 1, fanout)
+	}
+	return make_test_layout_with_children(100, 100, children)
+}
+
 // assert_layout_dimensions checks if a layout has expected dimensions.
 fn assert_layout_dimensions(layout &Layout, expected_w f32, expected_h f32) bool {
 	return f32_are_close(layout.shape.width, expected_w)

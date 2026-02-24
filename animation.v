@@ -94,8 +94,8 @@ fn (mut window Window) animation_loop() {
 	for {
 		time.sleep(animation_cycle)
 		mut refresh_kind := AnimationRefreshKind.none
-		deferred.clear()
-		stopped_ids.clear()
+		array_clear(mut deferred)
+		array_clear(mut stopped_ids)
 		//--------------------------------------------
 		window.lock()
 		for _, mut animation in window.animations {

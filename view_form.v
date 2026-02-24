@@ -247,7 +247,7 @@ fn (mut fv FormView) generate_layout(mut w Window) Layout {
 	})
 
 	mut layout := inner.generate_layout(mut w)
-	fv.content.clear()
+	array_clear(mut fv.content)
 	fv.content = []View{}
 	for mut child in children {
 		layout.children << generate_layout(mut child, mut w)

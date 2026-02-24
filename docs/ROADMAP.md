@@ -106,10 +106,10 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 ## Quality + DevEx Track (Always On)
 
-- [ ] Runtime inspector overlay (view tree, bounds, style, event trace)
+- [x] Runtime inspector overlay (view tree, bounds, style, event trace)
 - [x] Component gallery app with state permutations and edge-case fixtures
 - [-] Snapshot/golden rendering tests per widget/state
 - [x] Parser fuzzing for markdown/svg/url handlers
-- [ ] Memory + resource leak CI checks
+- [x] Memory + resource leak CI checks
 - [ ] API stability policy (versioning, deprecation windows, migration notes)
 - [x] Public benchmark suite (widgets count tiers, text-heavy, svg-heavy scenarios)
