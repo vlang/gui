@@ -145,6 +145,7 @@ pub mut:
 	theme_gen_border_text string = '${gui.theme_dark_bordered_cfg.size_border:.1}'
 	theme_gen_pick_text   bool
 	theme_gen_text        gui.Color = gui.theme_dark_bordered_cfg.text_style.color
+	theme_gen_name        string
 	// Animations
 	anim_tween_x         f32
 	anim_spring_x        f32
@@ -6272,7 +6273,13 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 		spacing: t.spacing_small
 		padding: gui.padding_none
 		content: [
-			gui.text(text: 'Pick a seed color to generate a full theme.'),
+			gui.text(
+				text: if app.theme_gen_name.len > 0 {
+					app.theme_gen_name
+				} else {
+					'Pick a seed color to generate a full theme.'
+				}
+			),
 			gui.row(
 				spacing: t.spacing_medium
 				v_align: .top
@@ -6409,13 +6416,14 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 											if result.status != .ok || result.paths.len == 0 {
 												return
 											}
-											a := w.state[ShowcaseApp]()
+											mut a := w.state[ShowcaseApp]()
 											cfg := generate_theme_cfg(a.theme_gen_seed,
 												a.theme_gen_strategy, !a.light_theme,
 												a.theme_gen_tint, a.theme_gen_text, a.theme_gen_radius,
 												a.theme_gen_border)
 											theme := gui.theme_maker(&cfg)
 											gui.theme_save(result.paths[0], theme) or {}
+											a.theme_gen_name = os.file_name(result.paths[0]).all_before_last('.')
 										}
 									})
 								}
