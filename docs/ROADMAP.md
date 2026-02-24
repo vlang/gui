@@ -36,7 +36,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Native folder-picker dialog
 - [?] Native color picker dialog
 - [ ] Native message/alert fallback adapter (opt-in over custom GUI dialog)
-- [ ] Permission + sandbox-safe path handling on macOS/Windows/Linux portals
+- [x] Permission + sandbox-safe path handling on macOS/Windows/Linux portals
 
 ### Markdown + Rich Text
 
@@ -56,8 +56,8 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [ ] `toast` / non-blocking notification system
 - [x] `combobox` with typeahead filter and async options provider
 - [ ] `badge` numeric and colored label
-- [?] `toolbar` widget (button groups, separators, overflow menu)
-- [?] `status bar` widget (icon + text sections, embedded progress indicator)
+- [-] `toolbar` widget (button groups, separators, overflow menu)
+- [-] `status bar` widget (icon + text sections, embedded progress indicator)
 - [ ] `skeleton` shimmer placeholder for async-loading content
 - [x] `sidebar` widget with animated show/hide (spring/tween, overlay or push mode)
 
