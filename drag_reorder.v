@@ -19,22 +19,25 @@ pub enum DragReorderAxis as u8 {
 // DragReorderState tracks an in-progress drag-reorder operation.
 struct DragReorderState {
 mut:
-	active        bool
-	cancelled     bool
-	source_index  int
-	current_index int
-	item_count    int
-	start_mouse_x f32
-	start_mouse_y f32
-	mouse_x       f32
-	mouse_y       f32
-	item_x        f32
-	item_y        f32
-	item_width    f32
-	item_height   f32
-	parent_x      f32
-	parent_y      f32
-	item_id       string
+	active          bool
+	cancelled       bool
+	source_index    int
+	current_index   int
+	item_count      int
+	start_mouse_x   f32
+	start_mouse_y   f32
+	mouse_x         f32
+	mouse_y         f32
+	item_x          f32
+	item_y          f32
+	item_width      f32
+	item_height     f32
+	parent_x        f32
+	parent_y        f32
+	item_id         string
+	id_scroll       u32
+	container_start f32
+	container_end   f32
 }
 
 // drag_reorder_get returns the current drag state for the given
@@ -128,6 +131,9 @@ fn drag_reorder_on_mouse_move(drag_key string,
 	new_index := drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
 		state.item_count)
 
+	drag_reorder_auto_scroll(mouse_main, state.container_start, state.container_end, state.id_scroll,
+		axis, mut w)
+
 	if new_index != state.current_index {
 		w.animate_layout(LayoutTransitionCfg{})
 		state.current_index = new_index
@@ -192,6 +198,7 @@ fn drag_reorder_start(drag_key string,
 	axis DragReorderAxis,
 	item_ids []string,
 	on_reorder fn (string, string, mut Window),
+	id_scroll u32,
 	layout &Layout,
 	e &Event,
 	mut w Window) {
@@ -205,21 +212,38 @@ fn drag_reorder_start(drag_key string,
 	} else {
 		f32(0)
 	}
+	mut container_start := f32(0)
+	mut container_end := f32(0)
+	if id_scroll > 0 && layout.parent != unsafe { nil } {
+		match axis {
+			.vertical {
+				container_start = layout.parent.shape.y
+				container_end = layout.parent.shape.y + layout.parent.shape.height
+			}
+			.horizontal {
+				container_start = layout.parent.shape.x
+				container_end = layout.parent.shape.x + layout.parent.shape.width
+			}
+		}
+	}
 	state := DragReorderState{
-		source_index:  index
-		current_index: index
-		item_count:    item_ids.len
-		start_mouse_x: e.mouse_x + layout.shape.x
-		start_mouse_y: e.mouse_y + layout.shape.y
-		mouse_x:       e.mouse_x + layout.shape.x
-		mouse_y:       e.mouse_y + layout.shape.y
-		item_x:        layout.shape.x
-		item_y:        layout.shape.y
-		item_width:    layout.shape.width
-		item_height:   layout.shape.height
-		parent_x:      parent_x
-		parent_y:      parent_y
-		item_id:       item_id
+		source_index:    index
+		current_index:   index
+		item_count:      item_ids.len
+		start_mouse_x:   e.mouse_x + layout.shape.x
+		start_mouse_y:   e.mouse_y + layout.shape.y
+		mouse_x:         e.mouse_x + layout.shape.x
+		mouse_y:         e.mouse_y + layout.shape.y
+		item_x:          layout.shape.x
+		item_y:          layout.shape.y
+		item_width:      layout.shape.width
+		item_height:     layout.shape.height
+		parent_x:        parent_x
+		parent_y:        parent_y
+		item_id:         item_id
+		id_scroll:       id_scroll
+		container_start: container_start
+		container_end:   container_end
 	}
 	drag_reorder_set(mut w, drag_key, state)
 	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids, on_reorder))

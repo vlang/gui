@@ -290,9 +290,10 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, item_id
 	} else {
 		AccessState.none
 	}
+	id_scroll := cfg.id_scroll
 	on_click_fn := if reorderable {
 		make_list_box_drag_click(list_box_id, dat_id, drag_index, item_ids, on_reorder,
-			is_multiple, on_select, has_on_select, selected_ids)
+			id_scroll, is_multiple, on_select, has_on_select, selected_ids)
 	} else {
 		fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ voidptr, mut e Event, mut w Window) {
 			if has_on_select && !is_sub {
@@ -363,14 +364,15 @@ fn list_box_item_content(dat ListBoxOption, cfg ListBoxCfg) View {
 fn make_list_box_drag_click(list_box_id string, dat_id string,
 	drag_index int, item_ids []string,
 	on_reorder fn (string, string, mut Window),
+	id_scroll u32,
 	is_multiple bool,
 	on_select fn ([]string, mut Event, mut Window),
 	has_on_select bool,
 	selected_ids []string) fn (voidptr, mut Event, mut Window) {
-	return fn [list_box_id, dat_id, drag_index, item_ids, on_reorder, is_multiple, on_select, has_on_select, selected_ids] (layout voidptr, mut e Event, mut w Window) {
+	return fn [list_box_id, dat_id, drag_index, item_ids, on_reorder, id_scroll, is_multiple, on_select, has_on_select, selected_ids] (layout voidptr, mut e Event, mut w Window) {
 		l := unsafe { &Layout(layout) }
 		drag_reorder_start(list_box_id, drag_index, dat_id, .vertical, item_ids, on_reorder,
-			l, e, mut w)
+			id_scroll, l, e, mut w)
 		// Set keyboard focus index so Alt+Arrow works after click.
 		mut lbf := state_map[string, int](mut w, ns_list_box_focus, cap_moderate)
 		lbf.set(list_box_id, drag_index)
