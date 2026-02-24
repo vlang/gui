@@ -68,11 +68,28 @@ pub:
 	id_focus               u32
 	disabled               bool
 	invisible              bool
+	reorderable            bool
+	on_reorder             fn (int, int, mut Window) = unsafe { nil }
 }
 
 // tabs is an alias for [tab_control](#tab_control).
 pub fn tabs(cfg TabControlCfg) View {
 	return tab_control(cfg)
+}
+
+// tabs builds a tab control with drag-reorder support.
+pub fn (mut w Window) tabs(cfg TabControlCfg) View {
+	return w.tab_control(cfg)
+}
+
+// tab_control builds a tab control with drag-reorder support.
+pub fn (mut w Window) tab_control(cfg TabControlCfg) View {
+	drag := if cfg.reorderable {
+		drag_reorder_get(mut w, cfg.id)
+	} else {
+		DragReorderState{}
+	}
+	return tab_control_build(cfg, drag)
 }
 
 // tab_control creates a tab control with a header row and active content area.
@@ -82,15 +99,40 @@ pub fn tabs(cfg TabControlCfg) View {
 // - Right/Down: next enabled tab
 // - Home/End: first/last enabled tab
 pub fn tab_control(cfg TabControlCfg) View {
+	return tab_control_build(cfg, DragReorderState{})
+}
+
+fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 	$if !prod {
 		tab_warn_duplicate_ids(cfg.id, cfg.items)
 	}
 	selected_idx := tab_selected_index(cfg.items, cfg.selected)
+	dragging := cfg.reorderable && drag.active && !drag.cancelled
+	// Count draggable (non-disabled) tabs.
+	mut drag_tab_count := 0
+	if cfg.reorderable {
+		for item in cfg.items {
+			if !item.disabled {
+				drag_tab_count++
+			}
+		}
+	}
 
-	mut header_items := []View{cap: cfg.items.len}
+	mut header_items := []View{cap: cfg.items.len + 2}
+	mut ghost_view := View(rectangle(RectangleCfg{}))
+	mut drag_idx := 0
 	for i, item in cfg.items {
 		is_selected := i == selected_idx
 		is_disabled := cfg.disabled || item.disabled
+		is_draggable := cfg.reorderable && !is_disabled
+		item_drag_idx := if is_draggable { drag_idx } else { -1 }
+
+		// Insert gap at current drop target.
+		if dragging && is_draggable && drag_idx == drag.current_index
+			&& drag.current_index != drag.source_index {
+			header_items << drag_reorder_gap_view(drag, .horizontal)
+		}
+
 		tab_color := if is_disabled {
 			cfg.color_tab_disabled
 		} else if is_selected {
@@ -136,29 +178,61 @@ pub fn tab_control(cfg TabControlCfg) View {
 		} else {
 			AccessState.none
 		}
-		header_items << button(
-			id:                 tab_button_id(cfg.id, item.id)
-			a11y_role:          .tab_item
-			a11y_state:         tab_a11y_state
-			a11y_label:         item.label
-			color:              tab_color
-			color_hover:        hover_color
-			color_focus:        focus_color
-			color_click:        click_color
-			color_border:       border_color
-			color_border_focus: cfg.color_tab_border_focus
-			padding:            cfg.padding_tab
-			size_border:        cfg.size_tab_border
-			radius:             cfg.radius_tab
-			disabled:           is_disabled
-			on_click:           make_tab_on_click(cfg.on_select, item.id, cfg.id_focus)
-			content:            [
-				text(
-					text:       item.label
-					text_style: ts
-				),
-			]
-		)
+		tab_on_click := if is_draggable {
+			make_tab_drag_click(cfg.id, item.id, item_drag_idx, drag_tab_count, cfg.on_reorder,
+				cfg.on_select, cfg.id_focus)
+		} else {
+			make_tab_on_click(cfg.on_select, item.id, cfg.id_focus)
+		}
+
+		if dragging && is_draggable && drag_idx == drag.source_index {
+			// Capture for ghost; skip from normal flow.
+			ghost_view = button(
+				id:                 tab_button_id(cfg.id, item.id)
+				color:              tab_color
+				color_border:       border_color
+				color_border_focus: cfg.color_tab_border_focus
+				padding:            cfg.padding_tab
+				size_border:        cfg.size_tab_border
+				radius:             cfg.radius_tab
+				content:            [
+					text(text: item.label, text_style: ts),
+				]
+			)
+		} else {
+			header_items << button(
+				id:                 tab_button_id(cfg.id, item.id)
+				a11y_role:          .tab_item
+				a11y_state:         tab_a11y_state
+				a11y_label:         item.label
+				color:              tab_color
+				color_hover:        hover_color
+				color_focus:        focus_color
+				color_click:        click_color
+				color_border:       border_color
+				color_border_focus: cfg.color_tab_border_focus
+				padding:            cfg.padding_tab
+				size_border:        cfg.size_tab_border
+				radius:             cfg.radius_tab
+				disabled:           is_disabled
+				on_click:           tab_on_click
+				content:            [
+					text(text: item.label, text_style: ts),
+				]
+			)
+		}
+
+		if is_draggable {
+			drag_idx++
+		}
+	}
+	// Gap at end if dropping past last tab.
+	if dragging && drag.current_index >= drag_idx {
+		header_items << drag_reorder_gap_view(drag, .horizontal)
+	}
+	// Append floating ghost during active drag.
+	if dragging {
+		header_items << drag_reorder_ghost_view(drag, ghost_view)
 	}
 
 	mut active_content := []View{}
@@ -174,6 +248,9 @@ pub fn tab_control(cfg TabControlCfg) View {
 	selected := cfg.selected
 	on_select := cfg.on_select
 	id_focus := cfg.id_focus
+	reorderable := cfg.reorderable
+	on_reorder := cfg.on_reorder
+	tab_id := cfg.id
 
 	return column(
 		name:             'tab_control'
@@ -191,9 +268,9 @@ pub fn tab_control(cfg TabControlCfg) View {
 		spacing:          cfg.spacing
 		disabled:         cfg.disabled
 		invisible:        cfg.invisible
-		on_keydown:       fn [disabled, items, selected, on_select, id_focus] (_ &Layout, mut e Event, mut w Window) {
-			tab_control_on_keydown(disabled, items, selected, on_select, id_focus, mut
-				e, mut w)
+		on_keydown:       fn [disabled, items, selected, on_select, id_focus, reorderable, on_reorder, tab_id] (_ &Layout, mut e Event, mut w Window) {
+			tab_control_on_keydown(disabled, items, selected, on_select, id_focus, reorderable,
+				on_reorder, tab_id, mut e, mut w)
 		}
 		content:          [
 			row(
@@ -231,7 +308,40 @@ fn make_tab_on_click(on_select fn (string, mut Event, mut Window), id string, id
 	}
 }
 
-fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on_select fn (string, mut Event, mut Window), id_focus u32, mut e Event, mut w Window) {
+// make_tab_drag_click creates an on_click that initiates
+// drag-reorder and also fires tab selection.
+fn make_tab_drag_click(control_id string, item_id string,
+	drag_index int, drag_tab_count int,
+	on_reorder fn (int, int, mut Window),
+	on_select fn (string, mut Event, mut Window),
+	id_focus u32) fn (&Layout, mut Event, mut Window) {
+	return fn [control_id, item_id, drag_index, drag_tab_count, on_reorder, on_select, id_focus] (layout &Layout, mut e Event, mut w Window) {
+		drag_reorder_start(control_id, drag_index, item_id, .horizontal, drag_tab_count,
+			on_reorder, layout, e, mut w)
+		on_select(item_id, mut e, mut w)
+		if id_focus > 0 {
+			w.set_id_focus(id_focus)
+		}
+		e.is_handled = true
+	}
+}
+
+fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on_select fn (string, mut Event, mut Window), id_focus u32, reorderable bool, on_reorder fn (int, int, mut Window), tab_id string, mut e Event, mut w Window) {
+	// Escape cancels active drag.
+	if reorderable && drag_reorder_escape(tab_id, e.key_code, mut w) {
+		e.is_handled = true
+		return
+	}
+	// Alt+Left/Right keyboard reorder.
+	if reorderable && on_reorder != unsafe { nil } {
+		sel_idx := tab_selected_index(items, selected)
+		if sel_idx >= 0
+			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .horizontal, sel_idx, items.len, on_reorder, mut w) {
+			e.is_handled = true
+			return
+		}
+	}
+
 	if disabled || items.len == 0 || e.modifiers != .none {
 		return
 	}

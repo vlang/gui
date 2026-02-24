@@ -26,6 +26,8 @@ pub:
 	id_scroll    u32
 	height       f32
 	max_height   f32
+	reorderable  bool
+	on_reorder   fn (int, int, mut Window) = unsafe { nil }
 }
 
 // TreeNodeCfg configures a [tree_node](#tree_node). Use gui.icon_xxx
@@ -109,8 +111,17 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 	on_lazy_load := cfg.on_lazy_load
 	text_style_icon := tree_icon_style(cfg.nodes)
 	min_width_icon := text_width('${icon_bar} ', text_style_icon, mut window)
+	reorderable := cfg.reorderable
+	on_reorder := cfg.on_reorder
 
-	mut content := []View{cap: (last_visible - first_visible + 1) + 2}
+	drag := if reorderable {
+		drag_reorder_get(mut window, cfg_id)
+	} else {
+		DragReorderState{}
+	}
+	dragging := reorderable && drag.active && !drag.cancelled
+
+	mut content := []View{cap: (last_visible - first_visible + 1) + 4}
 
 	if virtualize && first_visible > 0 {
 		content << rectangle(
@@ -121,12 +132,30 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		)
 	}
 
+	mut ghost_content := View(rectangle(RectangleCfg{}))
 	for idx in first_visible .. last_visible + 1 {
 		if idx < 0 || idx >= flat_rows.len {
 			continue
 		}
-		content << tree_flat_row_view(cfg_id, on_select, on_lazy_load, flat_rows[idx],
-			indent, min_width_icon)
+		fr := flat_rows[idx]
+		is_draggable := reorderable && !fr.is_loading
+
+		// Insert gap spacer at current drop target.
+		if dragging && is_draggable && idx == drag.current_index
+			&& drag.current_index != drag.source_index {
+			content << drag_reorder_gap_view(drag, .vertical)
+		}
+
+		if dragging && is_draggable && idx == drag.source_index {
+			ghost_content = tree_flat_row_content(fr, indent, min_width_icon)
+		} else {
+			content << tree_flat_row_view(cfg_id, on_select, on_lazy_load, fr, indent,
+				min_width_icon, reorderable, on_reorder, idx, visible_ids.len)
+		}
+	}
+	// Gap at end.
+	if dragging && drag.current_index >= flat_rows.len {
+		content << drag_reorder_gap_view(drag, .vertical)
 	}
 
 	if virtualize && last_visible < flat_rows.len - 1 {
@@ -137,6 +166,11 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 			height: f32(remaining) * row_height
 			sizing: fill_fixed
 		)
+	}
+
+	// Append floating ghost.
+	if dragging {
+		content << drag_reorder_ghost_view(drag, ghost_content)
 	}
 
 	return column(
@@ -150,8 +184,9 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		spacing:          cfg.spacing
 		height:           cfg.height
 		max_height:       cfg.max_height
-		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids] (_ &Layout, mut e Event, mut w Window) {
-			tree_on_keydown(cfg_id, on_select, on_lazy_load, visible_ids, mut e, mut w)
+		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids, reorderable, on_reorder] (_ &Layout, mut e Event, mut w Window) {
+			tree_on_keydown(cfg_id, on_select, on_lazy_load, visible_ids, reorderable,
+				on_reorder, mut e, mut w)
 		}
 		content:          content
 	)
@@ -258,8 +293,58 @@ fn tree_visible_range(tree_height f32, row_height f32, total_rows int, id_scroll
 	return first_visible, last_visible
 }
 
+// tree_flat_row_content builds the inner content view for ghost.
+fn tree_flat_row_content(flat_row TreeFlatRow, indent f32, min_width_icon f32) View {
+	arrow := tree_arrow_icon(flat_row)
+	return row(
+		name:    'tree node content'
+		spacing: 0
+		padding: Padding{
+			left: f32(flat_row.depth) * indent
+		}
+		content: [
+			text(
+				text:       '${arrow} '
+				min_width:  min_width_icon
+				text_style: flat_row.text_style_icon
+			),
+			row(
+				name:    'tree node text'
+				spacing: 0
+				padding: pad_tblr(1, 5)
+				content: [
+					text(
+						text:       '${flat_row.icon} '
+						min_width:  min_width_icon
+						text_style: flat_row.text_style_icon
+					),
+					text(text: flat_row.text, text_style: flat_row.text_style),
+				]
+			),
+		]
+	)
+}
+
+fn tree_arrow_icon(fr TreeFlatRow) string {
+	return match true {
+		!fr.has_children {
+			' '
+		}
+		fr.is_expanded {
+			icon_drop_down
+		}
+		else {
+			if gui_locale.text_dir == .rtl {
+				icon_drop_left
+			} else {
+				icon_drop_right
+			}
+		}
+	}
+}
+
 // tree_flat_row_view produces a single View for one flat row.
-fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), flat_row TreeFlatRow, indent f32, min_width_icon f32) View {
+fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), flat_row TreeFlatRow, indent f32, min_width_icon f32, reorderable bool, on_reorder fn (int, int, mut Window), flat_index int, flat_count int) View {
 	if flat_row.is_loading {
 		return row(
 			name:    'tree loading'
@@ -288,21 +373,7 @@ fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_
 	node_text_style_icon := flat_row.text_style_icon
 	node_has_real_children := flat_row.has_real_children
 
-	arrow := match true {
-		!has_children {
-			' '
-		}
-		is_expanded {
-			icon_drop_down
-		}
-		else {
-			if gui_locale.text_dir == .rtl {
-				icon_drop_left
-			} else {
-				icon_drop_right
-			}
-		}
-	}
+	arrow := tree_arrow_icon(flat_row)
 
 	node_a11y_state := if is_expanded && has_children {
 		AccessState.expanded
@@ -310,8 +381,19 @@ fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_
 		AccessState.none
 	}
 
+	on_click_fn := if reorderable {
+		make_tree_drag_click(cfg_id, id, flat_index, flat_count, on_reorder, on_select,
+			on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children)
+	} else {
+		fn [cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children, id] (_ &Layout, mut e Event, mut w Window) {
+			tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children,
+				is_lazy, node_has_real_children, id, mut e, mut w)
+		}
+	}
+
 	return row(
 		name:       'tree node content'
+		id:         if reorderable { 'tr_${cfg_id}_${id}' } else { '' }
 		a11y_role:  .tree_item
 		a11y_label: node_text
 		a11y_state: node_a11y_state
@@ -339,27 +421,7 @@ fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_
 				]
 			),
 		]
-		on_click:   fn [cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children, id] (_ &Layout, mut e Event, mut w Window) {
-			if has_children {
-				mut tree_map := w.view_state.tree_state.get(cfg_id) or {
-					map[string]bool{}
-				}
-				tree_map[id] = !is_expanded
-				w.view_state.tree_state.set(cfg_id, tree_map)
-
-				// Trigger lazy load on expand when no children loaded.
-				if !is_expanded && is_lazy && !node_has_real_children {
-					tree_set_loading(cfg_id, id, mut w)
-					if on_lazy_load != unsafe { nil } {
-						on_lazy_load(cfg_id, id, mut w)
-					}
-				}
-			}
-			if on_select != unsafe { nil } {
-				on_select(id, mut w)
-				e.is_handled = true
-			}
-		}
+		on_click:   on_click_fn
 		on_hover:   fn (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
 			for mut child in layout.children {
@@ -367,6 +429,45 @@ fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_
 			}
 		}
 	)
+}
+
+// tree_row_click handles the normal tree row click behavior.
+fn tree_row_click(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), is_expanded bool, has_children bool, is_lazy bool, node_has_real_children bool, id string, mut e Event, mut w Window) {
+	if has_children {
+		mut tree_map := w.view_state.tree_state.get(cfg_id) or {
+			map[string]bool{}
+		}
+		tree_map[id] = !is_expanded
+		w.view_state.tree_state.set(cfg_id, tree_map)
+
+		if !is_expanded && is_lazy && !node_has_real_children {
+			tree_set_loading(cfg_id, id, mut w)
+			if on_lazy_load != unsafe { nil } {
+				on_lazy_load(cfg_id, id, mut w)
+			}
+		}
+	}
+	if on_select != unsafe { nil } {
+		on_select(id, mut w)
+		e.is_handled = true
+	}
+}
+
+// make_tree_drag_click creates an on_click that initiates
+// drag-reorder and also fires normal tree click behavior.
+fn make_tree_drag_click(cfg_id string, id string,
+	flat_index int, flat_count int,
+	on_reorder fn (int, int, mut Window),
+	on_select fn (string, mut Window),
+	on_lazy_load fn (string, string, mut Window),
+	is_expanded bool, has_children bool,
+	is_lazy bool, node_has_real_children bool) fn (&Layout, mut Event, mut Window) {
+	return fn [cfg_id, id, flat_index, flat_count, on_reorder, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children] (layout &Layout, mut e Event, mut w Window) {
+		drag_reorder_start(cfg_id, flat_index, id, .vertical, flat_count, on_reorder,
+			layout, e, mut w)
+		tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy,
+			node_has_real_children, id, mut e, mut w)
+	}
 }
 
 // tree_set_loading marks a node as loading in the lazy state map.
@@ -382,7 +483,29 @@ fn tree_clear_loading(cfg_id string, node_id string, mut w Window) {
 }
 
 // tree_on_keydown handles keyboard navigation for the tree.
-fn tree_on_keydown(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), visible_ids []string, mut e Event, mut w Window) {
+fn tree_on_keydown(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), visible_ids []string, reorderable bool, on_reorder fn (int, int, mut Window), mut e Event, mut w Window) {
+	// Escape cancels active drag.
+	if reorderable && drag_reorder_escape(cfg_id, e.key_code, mut w) {
+		e.is_handled = true
+		return
+	}
+	// Alt+Up/Down keyboard reorder.
+	if reorderable && on_reorder != unsafe { nil } {
+		mut tf := state_map[string, string](mut w, ns_tree_focus, cap_tree_focus)
+		focused := tf.get(cfg_id) or { '' }
+		cur := visible_ids.index(focused)
+		if cur >= 0
+			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .vertical, cur, visible_ids.len, on_reorder, mut w) {
+			// Update focus to follow the moved item.
+			new_idx := if e.key_code == .up { cur - 1 } else { cur + 1 }
+			if new_idx >= 0 && new_idx < visible_ids.len {
+				tf.set(cfg_id, visible_ids[new_idx])
+			}
+			e.is_handled = true
+			return
+		}
+	}
+
 	if visible_ids.len == 0 {
 		return
 	}

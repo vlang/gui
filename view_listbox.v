@@ -34,7 +34,9 @@ pub:
 	radius_border    f32 = gui_theme.list_box_style.radius_border
 	id_scroll        u32
 	multiple         bool // allow multiple selections
-	size_border      f32 = gui_theme.list_box_style.size_border
+	reorderable      bool // enable drag-to-reorder
+	on_reorder       fn (int, int, mut Window) = unsafe { nil }
+	size_border      f32                       = gui_theme.list_box_style.size_border
 	id_focus         u32
 }
 
@@ -101,7 +103,7 @@ pub:
 // Use [Window.list_box](#list_box) for virtualization support.
 pub fn list_box(cfg ListBoxCfg) View {
 	last := if cfg.data.len > 0 { cfg.data.len - 1 } else { -1 }
-	return list_box_from_range(0, last, cfg, false, f32(0))
+	return list_box_from_range(0, last, cfg, false, f32(0), DragReorderState{})
 }
 
 // list_box is a convenience view for simple cases. See [ListBoxCfg](#ListBoxCfg).
@@ -122,18 +124,33 @@ pub fn (mut window Window) list_box(cfg ListBoxCfg) View {
 		0, last_row_idx
 	}
 
+	drag_state := if resolved_cfg.reorderable {
+		drag_reorder_get(mut window, resolved_cfg.id)
+	} else {
+		DragReorderState{}
+	}
 	return list_box_from_range(first_visible, last_visible, resolved_cfg, virtualize,
-		row_height)
+		row_height, drag_state)
 }
 
-fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virtualize bool, row_height f32) View {
+fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virtualize bool, row_height f32, drag DragReorderState) View {
 	last_row_idx := cfg.data.len - 1
 	spacer_row_height := if row_height > 0 {
 		row_height
 	} else {
 		list_box_estimate_row_height_no_window(cfg)
 	}
-	mut list := []View{cap: (last_visible - first_visible + 1) + 2}
+	dragging := cfg.reorderable && drag.active && !drag.cancelled
+	// Count draggable (non-subheading) items for reorder indexing.
+	mut drag_item_count := 0
+	if cfg.reorderable {
+		for dat in cfg.data {
+			if !dat.is_subheading {
+				drag_item_count++
+			}
+		}
+	}
+	mut list := []View{cap: (last_visible - first_visible + 1) + 4}
 
 	if cfg.loading && cfg.data.len == 0 {
 		list << list_box_source_status_row(cfg, gui_locale.str_loading)
@@ -151,11 +168,36 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 		)
 	}
 
+	mut ghost_content := View(rectangle(RectangleCfg{}))
+	mut drag_idx := 0 // draggable-item counter
 	for idx in first_visible .. last_visible + 1 {
 		if idx < 0 || idx >= cfg.data.len {
 			continue
 		}
-		list << list_box_item_view(cfg.data[idx], cfg)
+		dat := cfg.data[idx]
+		is_draggable := cfg.reorderable && !dat.is_subheading
+		item_drag_idx := if is_draggable { drag_idx } else { -1 }
+
+		// Insert gap spacer at the current drop target.
+		if dragging && is_draggable && drag_idx == drag.current_index
+			&& drag.current_index != drag.source_index {
+			list << drag_reorder_gap_view(drag, .vertical)
+		}
+
+		if dragging && is_draggable && drag_idx == drag.source_index {
+			// Capture content for ghost; skip from normal flow.
+			ghost_content = list_box_item_content(dat, cfg)
+		} else {
+			list << list_box_item_view(dat, cfg, item_drag_idx, drag_item_count)
+		}
+
+		if is_draggable {
+			drag_idx++
+		}
+	}
+	// Gap at end if dropping past last item.
+	if dragging && drag.current_index >= drag_idx {
+		list << drag_reorder_gap_view(drag, .vertical)
 	}
 
 	if virtualize && last_visible < last_row_idx {
@@ -166,6 +208,11 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 			height: f32(remaining) * spacer_row_height
 			sizing: fill_fixed
 		)
+	}
+
+	// Append floating ghost during active drag.
+	if dragging {
+		list << drag_reorder_ghost_view(drag, ghost_content)
 	}
 
 	// Build value_text and selectable item IDs in one pass.
@@ -197,15 +244,17 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	is_multiple := cfg.multiple
 	on_select := cfg.on_select
 	selected_ids := cfg.selected_ids
+	reorderable := cfg.reorderable
+	on_reorder := cfg.on_reorder
 	return column(
 		name:         'list_box'
 		a11y_role:    .list
 		a11y:         list_a11y
 		id_focus:     cfg.id_focus
 		id_scroll:    cfg.id_scroll
-		on_keydown:   fn [list_box_id, item_ids, is_multiple, on_select, selected_ids] (_ &Layout, mut e Event, mut w Window) {
-			list_box_on_keydown(list_box_id, item_ids, is_multiple, on_select, selected_ids, mut
-				e, mut w)
+		on_keydown:   fn [list_box_id, item_ids, is_multiple, on_select, selected_ids, reorderable, on_reorder] (_ &Layout, mut e Event, mut w Window) {
+			list_box_on_keydown(list_box_id, item_ids, is_multiple, on_select, selected_ids,
+				reorderable, on_reorder, mut e, mut w)
 		}
 		width:        cfg.max_width
 		height:       cfg.height
@@ -224,17 +273,68 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	)
 }
 
-fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
+fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, drag_item_count int) View {
 	color := if dat.id in cfg.selected_ids {
 		cfg.color_select
 	} else {
 		color_transparent
 	}
 	is_sub := dat.is_subheading
-	mut content := []View{cap: 1}
+	content := list_box_item_content(dat, cfg)
 
-	if is_sub {
-		content << column(
+	dat_id := dat.id
+	is_multiple := cfg.multiple
+	on_select := cfg.on_select
+	has_on_select := on_select != unsafe { nil }
+	selected_ids := cfg.selected_ids
+	color_hover := cfg.color_hover
+	reorderable := cfg.reorderable && !is_sub
+	on_reorder := cfg.on_reorder
+	list_box_id := cfg.id
+
+	item_a11y_state := if dat.id in cfg.selected_ids {
+		AccessState.selected
+	} else {
+		AccessState.none
+	}
+	on_click_fn := if reorderable {
+		make_list_box_drag_click(list_box_id, dat_id, drag_index, drag_item_count, on_reorder,
+			is_multiple, on_select, has_on_select, selected_ids)
+	} else {
+		fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ voidptr, mut e Event, mut w Window) {
+			if has_on_select && !is_sub {
+				ids := list_box_next_selected_ids(selected_ids, dat_id, is_multiple)
+				on_select(ids, mut e, mut w)
+			}
+		}
+	}
+	return row(
+		name:       'list_box option'
+		id:         if reorderable { 'lb_${list_box_id}_${dat_id}' } else { '' }
+		a11y_role:  .list_item
+		a11y_label: dat.name
+		a11y_state: item_a11y_state
+		color:      color
+		padding:    padding_two_five
+		sizing:     fill_fit
+		content:    [content]
+		on_click:   on_click_fn
+		on_hover:   fn [has_on_select, color_hover, is_sub] (mut layout Layout, mut e Event, mut w Window) {
+			if has_on_select && !is_sub {
+				w.set_mouse_cursor_pointing_hand()
+				if layout.shape.color == color_transparent {
+					layout.shape.color = color_hover
+				}
+			}
+		}
+	)
+}
+
+// list_box_item_content builds the inner content view for a
+// listbox item (text or subheading).
+fn list_box_item_content(dat ListBoxOption, cfg ListBoxCfg) View {
+	if dat.is_subheading {
+		return column(
 			spacing: 1
 			padding: padding_none
 			sizing:  fill_fit
@@ -257,50 +357,33 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg) View {
 				),
 			]
 		)
-	} else {
-		content << text(
-			text:       dat.name
-			mode:       .multiline
-			text_style: cfg.text_style
-		)
 	}
-
-	dat_id := dat.id
-	is_multiple := cfg.multiple
-	on_select := cfg.on_select
-	has_on_select := on_select != unsafe { nil }
-	selected_ids := cfg.selected_ids
-	color_hover := cfg.color_hover
-
-	item_a11y_state := if dat.id in cfg.selected_ids {
-		AccessState.selected
-	} else {
-		AccessState.none
-	}
-	return row(
-		name:       'list_box option'
-		a11y_role:  .list_item
-		a11y_label: dat.name
-		a11y_state: item_a11y_state
-		color:      color
-		padding:    padding_two_five
-		sizing:     fill_fit
-		content:    content
-		on_click:   fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ voidptr, mut e Event, mut w Window) {
-			if has_on_select && !is_sub {
-				ids := list_box_next_selected_ids(selected_ids, dat_id, is_multiple)
-				on_select(ids, mut e, mut w)
-			}
-		}
-		on_hover:   fn [has_on_select, color_hover, is_sub] (mut layout Layout, mut e Event, mut w Window) {
-			if has_on_select && !is_sub {
-				w.set_mouse_cursor_pointing_hand()
-				if layout.shape.color == color_transparent {
-					layout.shape.color = color_hover
-				}
-			}
-		}
+	return text(
+		text:       dat.name
+		mode:       .multiline
+		text_style: cfg.text_style
 	)
+}
+
+// make_list_box_drag_click creates an on_click handler that
+// initiates drag-reorder or falls back to selection.
+fn make_list_box_drag_click(list_box_id string, dat_id string,
+	drag_index int, drag_item_count int,
+	on_reorder fn (int, int, mut Window),
+	is_multiple bool,
+	on_select fn ([]string, mut Event, mut Window),
+	has_on_select bool,
+	selected_ids []string) fn (voidptr, mut Event, mut Window) {
+	return fn [list_box_id, dat_id, drag_index, drag_item_count, on_reorder, is_multiple, on_select, has_on_select, selected_ids] (layout voidptr, mut e Event, mut w Window) {
+		l := unsafe { &Layout(layout) }
+		drag_reorder_start(list_box_id, drag_index, dat_id, .vertical, drag_item_count,
+			on_reorder, l, e, mut w)
+		// Also fire selection.
+		if has_on_select {
+			ids := list_box_next_selected_ids(selected_ids, dat_id, is_multiple)
+			on_select(ids, mut e, mut w)
+		}
+	}
 }
 
 fn list_box_next_selected_ids(selected_ids []string, dat_id string, is_multiple bool) []string {
@@ -571,7 +654,25 @@ fn list_box_option_to_core(opt ListBoxOption) ListCoreItem {
 }
 
 // list_box_on_keydown handles keyboard navigation for list box.
-fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, on_select fn ([]string, mut Event, mut Window), selected_ids []string, mut e Event, mut w Window) {
+fn list_box_on_keydown(list_box_id string, item_ids []string, is_multiple bool, on_select fn ([]string, mut Event, mut Window), selected_ids []string, reorderable bool, on_reorder fn (int, int, mut Window), mut e Event, mut w Window) {
+	// Escape cancels active drag.
+	if reorderable && drag_reorder_escape(list_box_id, e.key_code, mut w) {
+		e.is_handled = true
+		return
+	}
+	// Alt+Up/Down keyboard reorder.
+	if reorderable && on_reorder != unsafe { nil } {
+		mut lbf := state_map[string, int](mut w, ns_list_box_focus, cap_moderate)
+		cur := lbf.get(list_box_id) or { -1 }
+		if cur >= 0
+			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .vertical, cur, item_ids.len, on_reorder, mut w) {
+			// Update focus index to follow the moved item.
+			new_idx := if e.key_code == .up { cur - 1 } else { cur + 1 }
+			lbf.set(list_box_id, new_idx)
+			e.is_handled = true
+			return
+		}
+	}
 	if item_ids.len == 0 || on_select == unsafe { nil } {
 		return
 	}
