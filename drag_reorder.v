@@ -24,6 +24,7 @@ mut:
 	source_index    int
 	current_index   int
 	item_count      int
+	item_layout_ids []string
 	start_mouse_x   f32
 	start_mouse_y   f32
 	mouse_x         f32
@@ -73,10 +74,12 @@ fn drag_reorder_read(w &Window, key string) DragReorderState {
 fn drag_reorder_make_lock(drag_key string,
 	axis DragReorderAxis,
 	item_ids []string,
+	item_layout_ids []string,
 	on_reorder fn (string, string, mut Window)) MouseLockCfg {
 	return MouseLockCfg{
-		mouse_move: fn [drag_key, axis] (_ &Layout, mut e Event, mut w Window) {
-			drag_reorder_on_mouse_move(drag_key, axis, e.mouse_x, e.mouse_y, mut w)
+		mouse_move: fn [drag_key, axis, item_layout_ids] (_ &Layout, mut e Event, mut w Window) {
+			drag_reorder_on_mouse_move(drag_key, axis, item_layout_ids, e.mouse_x, e.mouse_y, mut
+				w)
 		}
 		mouse_up:   fn [drag_key, item_ids, on_reorder] (_ &Layout, mut e Event, mut w Window) {
 			drag_reorder_on_mouse_up(drag_key, item_ids, on_reorder, mut w)
@@ -88,6 +91,7 @@ fn drag_reorder_make_lock(drag_key string,
 // index tracking during a drag.
 fn drag_reorder_on_mouse_move(drag_key string,
 	axis DragReorderAxis,
+	item_layout_ids []string,
 	mouse_x f32,
 	mouse_y f32,
 	mut w Window) {
@@ -96,8 +100,10 @@ fn drag_reorder_on_mouse_move(drag_key string,
 		return
 	}
 
+	mouse_changed := mouse_x != state.mouse_x || mouse_y != state.mouse_y
 	state.mouse_x = mouse_x
 	state.mouse_y = mouse_y
+	mut activated := false
 
 	if !state.active {
 		dx := mouse_x - state.start_mouse_x
@@ -112,6 +118,7 @@ fn drag_reorder_on_mouse_move(drag_key string,
 		}
 		// Threshold crossed — activate drag.
 		state.active = true
+		activated = true
 		w.animate_layout(LayoutTransitionCfg{})
 	}
 
@@ -128,19 +135,31 @@ fn drag_reorder_on_mouse_move(drag_key string,
 		.vertical { state.item_height }
 		.horizontal { state.item_width }
 	}
-	new_index := drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
+	mut new_index := drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
 		state.item_count)
+	layout_ids := if item_layout_ids.len > 0 {
+		item_layout_ids
+	} else {
+		state.item_layout_ids
+	}
+	if idx := drag_reorder_calc_index_from_layouts(mouse_main, axis, layout_ids, w) {
+		new_index = idx
+	}
 
-	drag_reorder_auto_scroll(mouse_main, state.container_start, state.container_end, state.id_scroll,
-		axis, mut w)
+	did_scroll := drag_reorder_auto_scroll(mouse_main, state.container_start, state.container_end,
+		state.id_scroll, axis, mut w)
 
+	mut index_changed := false
 	if new_index != state.current_index {
 		w.animate_layout(LayoutTransitionCfg{})
 		state.current_index = new_index
+		index_changed = true
 	}
 
 	drag_reorder_set(mut w, drag_key, state)
-	w.update_window()
+	if activated || index_changed || did_scroll || (state.active && mouse_changed) {
+		w.update_window()
+	}
 }
 
 // drag_reorder_on_mouse_up finalizes the drag: fires on_reorder
@@ -198,6 +217,7 @@ fn drag_reorder_start(drag_key string,
 	axis DragReorderAxis,
 	item_ids []string,
 	on_reorder fn (string, string, mut Window),
+	item_layout_ids []string,
 	id_scroll u32,
 	layout &Layout,
 	e &Event,
@@ -230,6 +250,7 @@ fn drag_reorder_start(drag_key string,
 		source_index:    index
 		current_index:   index
 		item_count:      item_ids.len
+		item_layout_ids: item_layout_ids.clone()
 		start_mouse_x:   e.mouse_x + layout.shape.x
 		start_mouse_y:   e.mouse_y + layout.shape.y
 		mouse_x:         e.mouse_x + layout.shape.x
@@ -246,7 +267,7 @@ fn drag_reorder_start(drag_key string,
 		container_end:   container_end
 	}
 	drag_reorder_set(mut w, drag_key, state)
-	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids, on_reorder))
+	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids, item_layout_ids, on_reorder))
 }
 
 // drag_reorder_calc_index estimates the drop target index from
@@ -262,6 +283,32 @@ fn drag_reorder_calc_index(mouse_main f32, item_start f32,
 	rel := mouse_main - list_start
 	idx := int(rel / item_size)
 	return int_clamp(idx, 0, item_count)
+}
+
+// drag_reorder_calc_index_from_layouts estimates the drop target
+// index from live layout geometry. Returns none when all expected
+// draggable layouts are not present.
+fn drag_reorder_calc_index_from_layouts(mouse_main f32,
+	axis DragReorderAxis,
+	item_layout_ids []string,
+	w &Window) ?int {
+	if item_layout_ids.len == 0 {
+		return none
+	}
+	for id in item_layout_ids {
+		_ := w.layout.find_by_id(id) or { return none }
+	}
+	for idx, id in item_layout_ids {
+		ly := w.layout.find_by_id(id) or { return none }
+		mid := match axis {
+			.vertical { ly.shape.y + (ly.shape.height / 2) }
+			.horizontal { ly.shape.x + (ly.shape.width / 2) }
+		}
+		if mouse_main < mid {
+			return idx
+		}
+	}
+	return item_layout_ids.len
 }
 
 // drag_reorder_ghost_view returns a floating container at the
@@ -398,9 +445,9 @@ fn drag_reorder_auto_scroll(mouse_main f32,
 	container_end f32,
 	id_scroll u32,
 	axis DragReorderAxis,
-	mut w Window) {
+	mut w Window) bool {
 	if id_scroll == 0 {
-		return
+		return false
 	}
 	near_start := mouse_main - container_start
 	near_end := container_end - mouse_main
@@ -412,6 +459,7 @@ fn drag_reorder_auto_scroll(mouse_main f32,
 			.vertical { w.scroll_vertical_by(id_scroll, delta) }
 			.horizontal { w.scroll_horizontal_by(id_scroll, delta) }
 		}
+		return true
 	} else if near_end < drag_reorder_scroll_zone && near_end >= 0 {
 		ratio := 1.0 - (near_end / drag_reorder_scroll_zone)
 		delta := -drag_reorder_scroll_speed * ratio
@@ -419,7 +467,9 @@ fn drag_reorder_auto_scroll(mouse_main f32,
 			.vertical { w.scroll_vertical_by(id_scroll, delta) }
 			.horizontal { w.scroll_horizontal_by(id_scroll, delta) }
 		}
+		return true
 	}
+	return false
 }
 
 // reorder_indices computes (from, to) indices for a

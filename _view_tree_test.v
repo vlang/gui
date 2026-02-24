@@ -1,5 +1,12 @@
 module gui
 
+struct TreeReorderCapture {
+mut:
+	called bool
+	moved  string
+	before string
+}
+
 fn test_tree_compilation() {
 	mut w := Window{}
 	cfg := TreeCfg{
@@ -199,4 +206,37 @@ fn test_tree_flat_rows_all_rendered_without_scroll() {
 fn test_tree_lazy_key_format() {
 	k := tree_lazy_key('my_tree', 'node_42')
 	assert k == 'my_tree\tnode_42'
+}
+
+fn test_tree_keyboard_reorder_keeps_focus_on_moved_id() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape: &Shape{
+			id: 'root'
+		}
+	}
+	mut tf := state_map[string, string](mut w, ns_tree_focus, cap_tree_focus)
+	tf.set('tree', 'b')
+	mut cap := &TreeReorderCapture{}
+	mut e := Event{
+		key_code:  .up
+		modifiers: .alt
+	}
+	tree_on_keydown('tree', fn (_ string, mut _ Window) {}, fn (_ string, _ string, mut _ Window) {},
+		[
+		'a',
+		'b',
+		'c',
+	], true, fn [mut cap] (m string, b string, mut _ Window) {
+		cap.called = true
+		cap.moved = m
+		cap.before = b
+	}, ['a', 'b', 'c'], mut e, mut w)
+	assert cap.called
+	assert cap.moved == 'b'
+	assert cap.before == 'a'
+	assert e.is_handled
+	mut tf2 := state_map[string, string](mut w, ns_tree_focus, cap_tree_focus)
+	focused := tf2.get('tree') or { '' }
+	assert focused == 'b'
 }

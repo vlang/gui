@@ -110,10 +110,12 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 	dragging := cfg.reorderable && drag.active && !drag.cancelled
 	// Build non-disabled tab IDs for drag index mapping.
 	mut tab_ids := []string{cap: cfg.items.len}
+	mut tab_layout_ids := []string{cap: cfg.items.len}
 	if cfg.reorderable {
 		for item in cfg.items {
 			if !item.disabled {
 				tab_ids << item.id
+				tab_layout_ids << tab_button_id(cfg.id, item.id)
 			}
 		}
 	}
@@ -180,8 +182,8 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 			AccessState.none
 		}
 		tab_on_click := if is_draggable {
-			make_tab_drag_click(cfg.id, item.id, item_drag_idx, tab_ids, on_reorder, cfg.on_select,
-				cfg.id_focus)
+			make_tab_drag_click(cfg.id, item.id, item_drag_idx, tab_ids, tab_layout_ids,
+				on_reorder, cfg.on_select, cfg.id_focus)
 		} else {
 			make_tab_on_click(cfg.on_select, item.id, cfg.id_focus)
 		}
@@ -312,12 +314,13 @@ fn make_tab_on_click(on_select fn (string, mut Event, mut Window), id string, id
 // drag-reorder and also fires tab selection.
 fn make_tab_drag_click(control_id string, item_id string,
 	drag_index int, tab_ids []string,
+	tab_layout_ids []string,
 	on_reorder fn (string, string, mut Window),
 	on_select fn (string, mut Event, mut Window),
 	id_focus u32) fn (&Layout, mut Event, mut Window) {
-	return fn [control_id, item_id, drag_index, tab_ids, on_reorder, on_select, id_focus] (layout &Layout, mut e Event, mut w Window) {
+	return fn [control_id, item_id, drag_index, tab_ids, tab_layout_ids, on_reorder, on_select, id_focus] (layout &Layout, mut e Event, mut w Window) {
 		drag_reorder_start(control_id, drag_index, item_id, .horizontal, tab_ids, on_reorder,
-			u32(0), layout, e, mut w)
+			tab_layout_ids, u32(0), layout, e, mut w)
 		on_select(item_id, mut e, mut w)
 		if id_focus > 0 {
 			w.set_id_focus(id_focus)
@@ -333,7 +336,7 @@ fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on
 		return
 	}
 	// Alt+Left/Right keyboard reorder (non-disabled tabs only).
-	if reorderable && on_reorder != unsafe { nil } {
+	if !disabled && reorderable && on_reorder != unsafe { nil } {
 		sel_tab_idx := tab_ids.index(selected)
 		if sel_tab_idx >= 0
 			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .horizontal, sel_tab_idx, tab_ids, on_reorder, mut w) {

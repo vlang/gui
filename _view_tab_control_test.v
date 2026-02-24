@@ -1,5 +1,10 @@
 module gui
 
+struct TabReorderCapture {
+mut:
+	called bool
+}
+
 fn test_tab_item_helper() {
 	item := tab_item('one', 'One', [])
 	assert item.id == 'one'
@@ -93,4 +98,27 @@ fn test_tab_control_builds_view() {
 		]
 		on_select: fn (_ string, mut _e Event, mut _w Window) {}
 	)
+}
+
+fn test_tab_control_keydown_disabled_blocks_reorder() {
+	mut w := Window{}
+	mut cap := &TabReorderCapture{}
+	mut e := Event{
+		key_code:  .right
+		modifiers: .alt
+	}
+	tab_control_on_keydown(true, [
+		TabItemCfg{
+			id:    'one'
+			label: 'One'
+		},
+		TabItemCfg{
+			id:    'two'
+			label: 'Two'
+		},
+	], 'one', fn (_ string, mut _ Event, mut _ Window) {}, 0, true, fn [mut cap] (_ string, _ string, mut _ Window) {
+		cap.called = true
+	}, 'tabs', ['one', 'two'], mut e, mut w)
+	assert !cap.called
+	assert !e.is_handled
 }
