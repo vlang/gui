@@ -241,6 +241,24 @@ Showcase embeds locale JSON via `$embed_file`; no disk I/O at runtime.
 Relevant files: `ime.v`, `window.v`, `view_input.v`, `view_container.v`,
 `render_layout_tree.v`, `shape.v`, `xtra_window.v`, `view_text.v`.
 
+## id_focus Allocation
+
+`id_focus` is a `u32` that identifies focusable widgets. Composite
+widgets consume multiple consecutive IDs from their base:
+
+| Widget | IDs used |
+|--------|----------|
+| `color_picker` | base .. base+7 (SV area, RGBA, HSV channels) |
+| `radio_button_group` | base .. base+N-1 (one per option) |
+| `numeric_input` | 1 |
+| `input` | 1 |
+| `select` | 1 |
+
+When placing multiple focusable widgets in the same view, space
+`id_focus` values to avoid collisions. Overlapping IDs cause
+unintended focus jumps (e.g. selecting a radio button activates a
+color picker channel).
+
 ## Module Structure
 
 ```

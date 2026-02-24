@@ -378,13 +378,14 @@ fn cp_channel_input(cfg ColorPickerCfg, ch string, val u8, id_focus u32) View {
 	id := cfg.id
 	color := cfg.color
 	on_color_change := cfg.on_color_change
+	w := f32(45) + cfg.style.size_border * 2
 
 	return input(
 		id:              '${id}_${ch}'
 		id_focus:        id_focus
 		text:            val.str()
-		min_width:       45
-		max_width:       45
+		min_width:       w
+		max_width:       w
 		padding:         padding_small
 		text_style:      cfg.style.text_style
 		on_text_changed: fn [id, color, on_color_change, ch, val] (_ &Layout, s string, mut w Window) {
@@ -502,13 +503,14 @@ fn cp_hsv_channel_input(cfg ColorPickerCfg, ch string, val int, max_val int, id_
 	id := cfg.id
 	on_color_change := cfg.on_color_change
 	color := cfg.color
+	w := f32(45) + cfg.style.size_border * 2
 
 	return input(
 		id:              '${id}_hsv_${ch}'
 		id_focus:        id_focus
 		text:            val.str()
-		min_width:       45
-		max_width:       45
+		min_width:       w
+		max_width:       w
 		padding:         padding_small
 		text_style:      cfg.style.text_style
 		on_text_changed: fn [id, ch, max_val, on_color_change, color] (_ &Layout, s string, mut w Window) {

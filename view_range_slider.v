@@ -190,7 +190,7 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 						height:       c.thumb_size
 						color:        c.color_thumb
 						color_border: c.color_border
-						size_border:  c.size_border
+						size_border:  1.5
 						padding:      padding_none
 						amend_layout: fn [value, min, max, thumb_size, vertical] (mut layout Layout, mut w Window) {
 							range_slider_amend_layout_thumb(mut layout, mut w, value,

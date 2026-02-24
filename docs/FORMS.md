@@ -156,6 +156,34 @@ Key `SelectCfg` fields:
 Option grouping:
 - Prefix an option with `---` to render a non-selectable group subheader.
 
+## id_focus Allocation
+
+`id_focus` is a `u32` that identifies focusable widgets for
+keyboard navigation. Simple widgets consume one ID; composite
+widgets consume consecutive IDs starting from their base.
+
+| Widget | IDs consumed |
+|--------|--------------|
+| `color_picker` | base .. base+7 (SV area, RGBA, HSV) |
+| `radio_button_group` | base .. base+N-1 (one per option) |
+| `numeric_input` | 1 |
+| `input` | 1 |
+| `select` | 1 |
+
+Space `id_focus` values so ranges do not overlap. Overlapping
+IDs cause unintended focus jumps — e.g. clicking a radio button
+activates a color picker channel input.
+
+```v ignore
+// Bad — radio at 9171 collides with color_picker 9170..9177:
+gui.color_picker(id: 'cp', id_focus: 9170, ...)
+gui.radio_button_group_column(id_focus: 9171, ...)
+
+// Good — leave gap for color_picker's 8 IDs:
+gui.color_picker(id: 'cp', id_focus: 9170, ...)
+gui.radio_button_group_column(id_focus: 9181, ...)
+```
+
 ## Notes
 
 - Fields register automatically when rendered inside a `form` subtree.

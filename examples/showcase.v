@@ -136,14 +136,15 @@ pub mut:
 	}
 	color_picker_hsv   bool
 	// theme generator
-	theme_gen_seed     gui.Color = gui.Color{
-		r: 65
-		g: 105
-		b: 225
-	}
-	theme_gen_strategy string = 'mono'
-	theme_gen_tint     f32    = 50
-	theme_gen_active   bool
+	theme_gen_seed        gui.Color = gui.theme_dark_bordered_cfg.color_select
+	theme_gen_strategy    string    = 'mono'
+	theme_gen_tint        f32
+	theme_gen_radius      f32    = gui.theme_dark_bordered_cfg.radius
+	theme_gen_radius_text string = '${gui.theme_dark_bordered_cfg.radius:.1}'
+	theme_gen_border      f32    = gui.theme_dark_bordered_cfg.size_border
+	theme_gen_border_text string = '${gui.theme_dark_bordered_cfg.size_border:.1}'
+	theme_gen_pick_text   bool
+	theme_gen_text        gui.Color = gui.theme_dark_bordered_cfg.text_style.color
 	// Animations
 	anim_tween_x         f32
 	anim_spring_x        f32
@@ -1378,16 +1379,13 @@ fn toggle_theme(app &ShowcaseApp) gui.View {
 		on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.light_theme = !app.light_theme
-			if app.theme_gen_active {
-				apply_gen_theme(mut w)
+			cfg := if app.light_theme {
+				gui.theme_light_bordered_cfg
 			} else {
-				theme := if app.light_theme {
-					gui.theme_light_bordered
-				} else {
-					gui.theme_dark_bordered
-				}
-				w.set_theme(theme)
+				gui.theme_dark_bordered_cfg
 			}
+			sync_theme_gen_from_cfg(mut app, cfg)
+			w.set_theme(gui.theme_maker(&cfg))
 		}
 	)
 }
@@ -6166,7 +6164,7 @@ fn wrap_hue(h f32) f32 {
 	return if m < 0 { m + 360 } else { m }
 }
 
-fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32) gui.ThemeCfg {
+fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32, text_color gui.Color, radius f32, border f32) gui.ThemeCfg {
 	h, s, _ := seed.to_hsv()
 	tint_factor := tint / 100.0
 
@@ -6211,10 +6209,15 @@ fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32) g
 			color_border_focus: gui.color_from_hsv(ah, accent_s * 0.7, accent_v * 0.9)
 			text_style:         gui.TextStyle{
 				...gui.theme_dark_cfg.text_style
-				color: gui.color_from_hsv(ph, s_tint * 0.3, 0.88)
+				color: text_color
 			}
 			titlebar_dark:      true
-			size_border:        gui.theme_dark_bordered_cfg.size_border
+			size_border:        border
+			radius:             radius
+			radius_small:       radius * 0.64
+			radius_medium:      radius
+			radius_large:       radius * 1.36
+			radius_border:      radius + 2
 		}
 	}
 	s_tint := gui.f32_clamp(s, 0.3, 1.0) * tint_factor * 0.5
@@ -6231,24 +6234,40 @@ fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32) g
 		color_border_focus: gui.color_from_hsv(ah, accent_s * 0.8, accent_v * 0.6)
 		text_style:         gui.TextStyle{
 			...gui.theme_light_cfg.text_style
-			color: gui.color_from_hsv(ph, s_tint * 0.5, 0.15)
+			color: text_color
 		}
 		titlebar_dark:      false
-		size_border:        gui.theme_dark_bordered_cfg.size_border
+		size_border:        border
+		radius:             radius
+		radius_small:       radius * 0.64
+		radius_medium:      radius
+		radius_large:       radius * 1.36
+		radius_border:      radius + 2
 	}
 }
 
 fn apply_gen_theme(mut w gui.Window) {
 	mut app := w.state[ShowcaseApp]()
 	cfg := generate_theme_cfg(app.theme_gen_seed, app.theme_gen_strategy, !app.light_theme,
-		app.theme_gen_tint)
+		app.theme_gen_tint, app.theme_gen_text, app.theme_gen_radius, app.theme_gen_border)
 	w.set_theme(gui.theme_maker(&cfg))
-	app.theme_gen_active = true
+}
+
+fn sync_theme_gen_from_cfg(mut app ShowcaseApp, cfg gui.ThemeCfg) {
+	app.theme_gen_seed = cfg.color_select
+	app.theme_gen_tint = 0
+	app.theme_gen_radius = cfg.radius
+	app.theme_gen_radius_text = '${cfg.radius:.1}'
+	app.theme_gen_border = cfg.size_border
+	app.theme_gen_border_text = '${cfg.size_border:.1}'
+	app.theme_gen_text = cfg.text_style.color
+	app.theme_gen_pick_text = false
 }
 
 fn demo_theme_gen(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
 	t := gui.theme()
+	cp_color := if app.theme_gen_pick_text { app.theme_gen_text } else { app.theme_gen_seed }
 	return gui.column(
 		spacing: t.spacing_small
 		padding: gui.padding_none
@@ -6258,22 +6277,96 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 				spacing: t.spacing_medium
 				v_align: .top
 				content: [
-					gui.color_picker(
-						id:              'theme_gen_cp'
-						color:           app.theme_gen_seed
-						id_focus:        9170
-						on_color_change: fn (c gui.Color, mut _ gui.Event, mut w gui.Window) {
-							mut a := w.state[ShowcaseApp]()
-							a.theme_gen_seed = c
-							apply_gen_theme(mut w)
-						}
+					gui.column(
+						spacing: t.spacing_small
+						content: [
+							gui.color_picker(
+								id:              'theme_gen_cp'
+								color:           cp_color
+								id_focus:        9170
+								on_color_change: fn (c gui.Color, mut _ gui.Event, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									if a.theme_gen_pick_text {
+										a.theme_gen_text = c
+									} else {
+										a.theme_gen_seed = c
+									}
+									apply_gen_theme(mut w)
+								}
+							),
+							gui.text(text: 'Tint: ${int(app.theme_gen_tint)}%'),
+							gui.range_slider(
+								id:        'theme_gen_tint'
+								value:     app.theme_gen_tint
+								width:     140
+								on_change: fn (value f32, mut _ gui.Event, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									a.theme_gen_tint = value
+									apply_gen_theme(mut w)
+								}
+							),
+							gui.text(text: 'Radius'),
+							gui.numeric_input(
+								id:              'theme_gen_radius'
+								id_focus:        9180
+								text:            app.theme_gen_radius_text
+								value:           ?f64(app.theme_gen_radius)
+								decimals:        1
+								min:             0.0
+								max:             30.0
+								step_cfg:        gui.NumericStepCfg{
+									step: 0.5
+								}
+								width:           80
+								sizing:          gui.fixed_fit
+								on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									a.theme_gen_radius_text = text
+								}
+								on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									a.theme_gen_radius_text = text
+									if v := value {
+										a.theme_gen_radius = f32(v)
+										apply_gen_theme(mut w)
+									}
+								}
+							),
+							gui.text(text: 'Border'),
+							gui.numeric_input(
+								id:              'theme_gen_border'
+								id_focus:        9188
+								text:            app.theme_gen_border_text
+								value:           ?f64(app.theme_gen_border)
+								decimals:        1
+								min:             0.0
+								max:             10.0
+								step_cfg:        gui.NumericStepCfg{
+									step: 0.5
+								}
+								width:           80
+								sizing:          gui.fixed_fit
+								on_text_changed: fn (_ &gui.Layout, text string, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									a.theme_gen_border_text = text
+								}
+								on_value_commit: fn (_ &gui.Layout, value ?f64, text string, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									a.theme_gen_border_text = text
+									if v := value {
+										a.theme_gen_border = f32(v)
+										apply_gen_theme(mut w)
+									}
+								}
+							),
+						]
 					),
 					gui.column(
 						spacing: t.spacing_small
 						content: [
 							gui.radio_button_group_column(
 								title:     'Palette'
-								id_focus:  9171
+								id_focus:  9181
 								value:     app.theme_gen_strategy
 								options:   [
 									gui.radio_option('Mono', 'mono'),
@@ -6289,16 +6382,42 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 									apply_gen_theme(mut w)
 								}
 							),
-							gui.rectangle(height: 1)
-							gui.text(text: 'Tint: ${int(app.theme_gen_tint)}%'),
-							gui.range_slider(
-								id:        'theme_gen_tint'
-								value:     app.theme_gen_tint
-								width:     140
-								on_change: fn (value f32, mut _ gui.Event, mut w gui.Window) {
+							gui.checkbox(
+								label:    'Edit text color'
+								select:   app.theme_gen_pick_text
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
 									mut a := w.state[ShowcaseApp]()
-									a.theme_gen_tint = value
-									apply_gen_theme(mut w)
+									a.theme_gen_pick_text = !a.theme_gen_pick_text
+								}
+							),
+							gui.button(
+								content:  [
+									gui.text(text: 'Save Theme'),
+								]
+								on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+									w.native_save_dialog(gui.NativeSaveDialogCfg{
+										title:             'Save Theme'
+										default_name:      'theme.json'
+										default_extension: 'json'
+										filters:           [
+											gui.NativeFileFilter{
+												name:       'JSON'
+												extensions: ['json']
+											},
+										]
+										on_done:           fn (result gui.NativeDialogResult, mut w gui.Window) {
+											if result.status != .ok || result.paths.len == 0 {
+												return
+											}
+											a := w.state[ShowcaseApp]()
+											cfg := generate_theme_cfg(a.theme_gen_seed,
+												a.theme_gen_strategy, !a.light_theme,
+												a.theme_gen_tint, a.theme_gen_text, a.theme_gen_radius,
+												a.theme_gen_border)
+											theme := gui.theme_maker(&cfg)
+											gui.theme_save(result.paths[0], theme) or {}
+										}
+									})
 								}
 							),
 						]

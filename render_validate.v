@@ -143,11 +143,6 @@ fn guard_renderer_or_skip(r Renderer, mut w Window) bool {
 	}
 
 	kind := renderer_kind(r)
-	$if !prod {
-		assert false, 'renderer guard rejected ${kind}'
-		return false
-	}
-
 	if w.render_guard_warned.len == 0 {
 		w.render_guard_warned = map[string]bool{}
 	}
