@@ -74,111 +74,6 @@ fn test_drag_reorder_keyboard_move_payload_and_boundary() {
 	assert !boundary_cap.called
 }
 
-fn test_drag_reorder_calc_index_from_layouts_uses_live_geometry() {
-	mut w := Window{}
-	w.layout = Layout{
-		shape:    &Shape{
-			id: 'root'
-		}
-		children: [
-			Layout{
-				shape: &Shape{
-					id:     'a'
-					x:      0
-					y:      0
-					width:  100
-					height: 10
-				}
-			},
-			Layout{
-				shape: &Shape{
-					id:     'b'
-					x:      0
-					y:      10
-					width:  100
-					height: 30
-				}
-			},
-			Layout{
-				shape: &Shape{
-					id:     'c'
-					x:      0
-					y:      40
-					width:  100
-					height: 10
-				}
-			},
-		]
-	}
-	idx_a := drag_reorder_calc_index_from_layouts(6, .vertical, ['a', 'b', 'c'], &w) or {
-		panic('expected live index for a')
-	}
-	assert idx_a == 1
-	idx_b := drag_reorder_calc_index_from_layouts(26, .vertical, ['a', 'b', 'c'], &w) or {
-		panic('expected live index for b')
-	}
-	assert idx_b == 2
-	idx_c := drag_reorder_calc_index_from_layouts(90, .vertical, ['a', 'b', 'c'], &w) or {
-		panic('expected live index for c')
-	}
-	assert idx_c == 3
-}
-
-fn test_drag_reorder_calc_index_from_layouts_missing_layout_returns_none() {
-	mut w := Window{}
-	w.layout = Layout{
-		shape:    &Shape{
-			id: 'root'
-		}
-		children: [
-			Layout{
-				shape: &Shape{
-					id:     'a'
-					width:  10
-					height: 10
-				}
-			},
-		]
-	}
-	if _ := drag_reorder_calc_index_from_layouts(1, .vertical, ['a', 'missing'], &w) {
-		assert false
-	}
-}
-
-fn test_drag_reorder_calc_index_from_layouts_past_end() {
-	mut w := Window{}
-	w.layout = Layout{
-		shape:    &Shape{
-			id: 'root'
-		}
-		children: [
-			Layout{
-				shape: &Shape{
-					id:     'a'
-					x:      0
-					y:      0
-					width:  100
-					height: 10
-				}
-			},
-			Layout{
-				shape: &Shape{
-					id:     'b'
-					x:      0
-					y:      10
-					width:  100
-					height: 10
-				}
-			},
-		]
-	}
-	// mouse at y=50 is past 'a' (0..10) and 'b' (10..20)
-	idx := drag_reorder_calc_index_from_layouts(50, .vertical, ['a', 'b'], &w) or {
-		panic('expected index at end')
-	}
-	assert idx == 2
-}
-
 fn test_drag_reorder_calc_index_from_mids() {
 	mids := [f32(5), 25, 45]
 	idx_a := drag_reorder_calc_index_from_mids(6, mids) or {
@@ -342,4 +237,43 @@ fn test_drag_reorder_start_sets_layout_validity() {
 	state_missing := drag_reorder_get(mut w, drag_key_missing)
 	assert state_missing.started
 	assert !state_missing.layouts_valid
+}
+
+fn test_drag_reorder_calc_index_with_scroll_delta() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape: &Shape{
+			id: 'root'
+		}
+	}
+	drag_key := 'drag_scroll'
+	id_scroll := u32(100)
+
+	// Start scroll at -10
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	sy.set(id_scroll, -10.0)
+
+	state := DragReorderState{
+		active:         true
+		item_y:         100.0
+		item_height:    20.0
+		source_index:   0
+		item_count:     5
+		id_scroll:      id_scroll
+		start_scroll_y: -10.0
+	}
+	drag_reorder_set(mut w, drag_key, state)
+
+	// Container scrolls down to -20 (delta = -10, items move UP 10px)
+	sy.set(id_scroll, -20.0)
+
+	// Cursor is at 115. Relative to original list, it should be at 125.
+	// item 0: 100..120 (original)
+	// item 1: 120..140 (original)
+	// Midpoint 0: 110. Midpoint 1: 130.
+	// Adjusted mouse_main should be 125, which is > Midpoint 0 and < Midpoint 1, so index 1.
+	drag_reorder_on_mouse_move(drag_key, .vertical, 0, 115, mut w)
+
+	new_state := drag_reorder_get(mut w, drag_key)
+	assert new_state.current_index == 1
 }

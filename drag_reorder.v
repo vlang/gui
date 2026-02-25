@@ -41,6 +41,8 @@ mut:
 	id_scroll       u32
 	container_start f32
 	container_end   f32
+	start_scroll_x  f32
+	start_scroll_y  f32
 	layouts_valid   bool
 }
 
@@ -124,20 +126,28 @@ fn drag_reorder_on_mouse_move(drag_key string,
 
 	// Determine drop target from cursor vs item geometry.
 	// Prefer precomputed midpoints (fastest hit testing).
-	mouse_main := match axis {
+	// Adjust mouse coordinate by scroll delta so lookups remain relative
+	// to the item list as the container auto-scrolls.
+	mouse_orig := match axis {
 		.vertical { mouse_y }
 		.horizontal { mouse_x }
 	}
+	mut mouse_main := mouse_orig
+	if state.id_scroll > 0 {
+		scroll_val := if axis == .vertical {
+			state_read_or[u32, f32](w, ns_scroll_y, state.id_scroll, 0)
+		} else {
+			state_read_or[u32, f32](w, ns_scroll_x, state.id_scroll, 0)
+		}
+		start_scroll := if axis == .vertical { state.start_scroll_y } else { state.start_scroll_x }
+		mouse_main -= (scroll_val - start_scroll)
+	}
+
 	mut new_index := -1
 	if idx := drag_reorder_calc_index_from_mids(mouse_main, state.item_mids) {
 		new_index = idx
-	} else if state.layouts_valid {
-		if idx := drag_reorder_calc_index_from_layouts(mouse_main, axis, state.item_layout_ids,
-			w)
-		{
-			new_index = idx
-		}
 	}
+
 	if new_index < 0 {
 		// Fallback to uniform estimation if geometry is unavailable.
 		item_start := match axis {
@@ -152,7 +162,8 @@ fn drag_reorder_on_mouse_move(drag_key string,
 			state.item_count)
 	}
 
-	did_scroll := drag_reorder_auto_scroll(mouse_main, state.container_start, state.container_end,
+	// Scroll check uses original mouse coordinate.
+	did_scroll := drag_reorder_auto_scroll(mouse_orig, state.container_start, state.container_end,
 		state.id_scroll, axis, mut w)
 
 	mut index_changed := false
@@ -255,6 +266,16 @@ fn drag_reorder_start(drag_key string,
 			}
 		}
 	}
+	mut start_scroll_x := f32(0)
+	mut start_scroll_y := f32(0)
+	if id_scroll > 0 {
+		if smx := state_map_read[u32, f32](w, ns_scroll_x) {
+			start_scroll_x = smx.get(id_scroll) or { 0 }
+		}
+		if smy := state_map_read[u32, f32](w, ns_scroll_y) {
+			start_scroll_y = smy.get(id_scroll) or { 0 }
+		}
+	}
 	item_mids := drag_reorder_item_mids_from_layouts(axis, item_layout_ids, w) or { []f32{} }
 	layouts_valid := item_mids.len > 0 && item_mids.len == item_layout_ids.len
 	state := DragReorderState{
@@ -278,6 +299,8 @@ fn drag_reorder_start(drag_key string,
 		id_scroll:       id_scroll
 		container_start: container_start
 		container_end:   container_end
+		start_scroll_x:  start_scroll_x
+		start_scroll_y:  start_scroll_y
 		layouts_valid:   layouts_valid
 	}
 	drag_reorder_set(mut w, drag_key, state)
@@ -328,35 +351,6 @@ fn drag_reorder_item_mids_from_layouts(axis DragReorderAxis, item_layout_ids []s
 		}
 	}
 	return mids
-}
-
-// drag_reorder_calc_index_from_layouts estimates the drop target
-// index from live layout geometry. Returns none when any expected
-// draggable layout is missing (ensures consistent global indexing).
-fn drag_reorder_calc_index_from_layouts(mouse_main f32,
-	axis DragReorderAxis,
-	item_layout_ids []string,
-	w &Window) ?int {
-	if item_layout_ids.len == 0 {
-		return none
-	}
-	mut target_idx := -1
-	for idx, id in item_layout_ids {
-		ly := w.layout.find_by_id(id) or { return none }
-		if target_idx == -1 {
-			mid := match axis {
-				.vertical { ly.shape.y + (ly.shape.height / 2) }
-				.horizontal { ly.shape.x + (ly.shape.width / 2) }
-			}
-			if mouse_main < mid {
-				target_idx = idx
-			}
-		}
-	}
-	if target_idx != -1 {
-		return target_idx
-	}
-	return item_layout_ids.len
 }
 
 // drag_reorder_ghost_view returns a floating container at the
