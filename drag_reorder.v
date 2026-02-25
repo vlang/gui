@@ -6,6 +6,91 @@ import time
 // for ListBox, TabControl, and Tree widgets. One active drag at
 // a time (mouse_lock exclusivity). Uses existing FLIP animation
 // (animate_layout), floating layers, and mouse_lock.
+//
+// ## Lifecycle
+//
+// The drag has three phases: start, track, drop, managed through
+// DragReorderState stored in a keyed state map (one per widget).
+//
+// ### 1. Start (drag_reorder_start)
+//
+// Triggered from a row's on_click handler. Captures a snapshot:
+//   - Mouse position and item geometry (x, y, width, height)
+//   - Parent position (for float offset math later)
+//   - Source index within the sibling list
+//   - Item midpoints: resolves each sibling's layout ID from the
+//     current layout tree and records axis midpoints for fast
+//     binary search during tracking
+//   - Scroll position at start (for compensating auto-scroll drift)
+//   - ID signature: FNV-1a hash of the sibling IDs, used to detect
+//     if the backing list mutates mid-drag
+//
+// Then calls mouse_lock which captures all subsequent mouse events
+// until release.
+//
+// ### 2. Track (drag_reorder_on_mouse_move)
+//
+// Called on every mouse move while locked. Two-stage process:
+//
+// Threshold gate: Until the cursor moves 5px along the drag axis,
+// nothing activates. This prevents accidental drags from clicks.
+//
+// Index calculation (dual strategy):
+//   1. Midpoint binary search (preferred): Uses the precomputed
+//      midpoints array. Binary search finds which gap the cursor
+//      falls in. O(log n). Only used when scroll hasn't changed
+//      since start (midpoints are absolute coordinates).
+//   2. Uniform fallback: If midpoints are invalid (scrolled, or
+//      layouts unavailable), estimates the index from
+//      (cursor - list_start) / item_size, assuming uniform heights.
+//
+// Auto-scroll: If the cursor is within 40px of the scroll
+// container's edge, scrolls proportionally (closer = faster).
+// A repeating 16ms animation timer keeps scrolling even when the
+// mouse is stationary.
+//
+// Mutation detection: Each move checks the ID signature against
+// the latest ids_meta. If the backing list changed (items
+// added/removed externally), the drag is cancelled.
+//
+// When current_index changes, a FLIP layout animation is triggered
+// so siblings animate into their new positions.
+//
+// ### 3. Drop (drag_reorder_on_mouse_up)
+//
+// On mouse release:
+//   1. Checks ID signature one more time; cancels if list mutated
+//   2. Computes (moved_id, before_id) from source and gap indices.
+//      before_id is "" when dropping at the end.
+//   3. Skips the callback if the gap is at source_index or
+//      source_index + 1 (no-op: item didn't move)
+//   4. Fires on_reorder(moved_id, before_id, ...) and triggers
+//      a FLIP animation
+//
+// ## Visual rendering (per frame)
+//
+// During tree() / list_box() / tab_control() rebuild:
+//   - The source item is excluded from normal content and its view
+//     is captured as ghost_content
+//   - A transparent gap spacer (same size as the item) is inserted
+//     at current_index
+//   - A floating ghost follows the cursor, offset from the parent
+//     by the delta between current and start mouse positions.
+//     It has 85% opacity and a drop shadow.
+//
+// ## Keyboard path (drag_reorder_keyboard_move)
+//
+// Alt+Arrow directly computes (moved_id, before_id) from the
+// current focus index and fires on_reorder immediately. No drag
+// state, no ghost, just a FLIP animation. Moving down uses
+// current_index + 2 as the before-target because the gap model
+// counts slots between items.
+//
+// ## Cancel
+//
+// Escape key sets cancelled = true, unlocks the mouse, triggers a
+// rebuild (which sees cancelled and hides ghost/gap), then clears
+// state.
 
 const ns_drag_reorder = 'gui.drag_reorder'
 const ns_drag_reorder_ids_meta = 'gui.drag_reorder.ids_meta'
