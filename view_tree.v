@@ -156,7 +156,7 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 			top_index_by_id[id] = i
 		}
 	}
-	if can_reorder {
+	if can_reorder && (drag.started || drag.active) {
 		drag_reorder_ids_meta_set(mut window, cfg_id, top_level_ids)
 	}
 	top_level_count := top_level_ids.len
