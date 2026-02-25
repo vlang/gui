@@ -103,13 +103,15 @@ pub:
 // Use [Window.list_box](#list_box) for virtualization support.
 pub fn list_box(cfg ListBoxCfg) View {
 	last := if cfg.data.len > 0 { cfg.data.len - 1 } else { -1 }
-	return list_box_from_range(0, last, cfg, false, f32(0), DragReorderState{})
+	can_reorder := cfg.reorderable && cfg.on_reorder != unsafe { nil }
+	return list_box_from_range(0, last, cfg, false, f32(0), DragReorderState{}, can_reorder)
 }
 
 // list_box is a convenience view for simple cases. See [ListBoxCfg](#ListBoxCfg).
 // Virtualization is enabled only when `id_scroll > 0` and bounded height exists.
 pub fn (mut window Window) list_box(cfg ListBoxCfg) View {
 	resolved_cfg, _ := list_box_resolve_source_cfg(cfg, mut window)
+	can_reorder := resolved_cfg.reorderable && resolved_cfg.on_reorder != unsafe { nil }
 	last_row_idx := resolved_cfg.data.len - 1
 	list_height := list_box_height(resolved_cfg)
 	virtualize := resolved_cfg.id_scroll > 0 && list_height > 0 && resolved_cfg.data.len > 0
@@ -124,30 +126,34 @@ pub fn (mut window Window) list_box(cfg ListBoxCfg) View {
 		0, last_row_idx
 	}
 
-	drag_state := if resolved_cfg.reorderable {
+	drag_state := if can_reorder {
 		drag_reorder_get(mut window, resolved_cfg.id)
 	} else {
 		DragReorderState{}
 	}
 	return list_box_from_range(first_visible, last_visible, resolved_cfg, virtualize,
-		row_height, drag_state)
+		row_height, drag_state, can_reorder)
 }
 
-fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virtualize bool, row_height f32, drag DragReorderState) View {
+fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virtualize bool, row_height f32, drag DragReorderState, can_reorder bool) View {
 	last_row_idx := cfg.data.len - 1
 	spacer_row_height := if row_height > 0 {
 		row_height
 	} else {
 		list_box_estimate_row_height_no_window(cfg)
 	}
-	dragging := cfg.reorderable && drag.active && !drag.cancelled
+	dragging := can_reorder && drag.active && !drag.cancelled
 	// Build non-subheading item IDs for drag index mapping.
 	mut item_ids := []string{cap: cfg.data.len}
 	mut item_layout_ids := []string{cap: cfg.data.len}
-	for dat in cfg.data {
+	mut global_drag_idx_by_row := []int{len: cfg.data.len, init: -1}
+	mut draggable_count := 0
+	for idx, dat in cfg.data {
 		if !dat.is_subheading {
 			item_ids << dat.id
 			item_layout_ids << 'lb_${cfg.id}_${dat.id}'
+			global_drag_idx_by_row[idx] = draggable_count
+			draggable_count++
 		}
 	}
 	on_reorder := cfg.on_reorder
@@ -170,35 +176,30 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	}
 
 	mut ghost_content := View(rectangle(RectangleCfg{}))
-	mut drag_idx := 0 // draggable-item counter
 	for idx in first_visible .. last_visible + 1 {
 		if idx < 0 || idx >= cfg.data.len {
 			continue
 		}
 		dat := cfg.data[idx]
-		is_draggable := cfg.reorderable && !dat.is_subheading
-		item_drag_idx := if is_draggable { drag_idx } else { -1 }
+		item_drag_idx := global_drag_idx_by_row[idx]
+		is_draggable := can_reorder && item_drag_idx >= 0
 
 		// Insert gap spacer at the current drop target.
-		if dragging && is_draggable && drag_idx == drag.current_index
+		if dragging && is_draggable && item_drag_idx == drag.current_index
 			&& drag.current_index != drag.source_index {
 			list << drag_reorder_gap_view(drag, .vertical)
 		}
 
-		if dragging && is_draggable && drag_idx == drag.source_index {
+		if dragging && is_draggable && item_drag_idx == drag.source_index {
 			// Capture content for ghost; skip from normal flow.
 			ghost_content = list_box_item_content(dat, cfg)
 		} else {
 			list << list_box_item_view(dat, cfg, item_drag_idx, item_ids, item_layout_ids,
-				on_reorder)
-		}
-
-		if is_draggable {
-			drag_idx++
+				on_reorder, can_reorder)
 		}
 	}
 	// Gap at end if dropping past last item.
-	if dragging && drag.current_index >= drag_idx {
+	if dragging && drag.current_index >= draggable_count {
 		list << drag_reorder_gap_view(drag, .vertical)
 	}
 
@@ -242,7 +243,7 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	is_multiple := cfg.multiple
 	on_select := cfg.on_select
 	selected_ids := cfg.selected_ids
-	reorderable := cfg.reorderable
+	reorderable := can_reorder
 	return column(
 		name:         'list_box'
 		a11y_role:    .list
@@ -270,7 +271,7 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	)
 }
 
-fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, item_ids []string, item_layout_ids []string, on_reorder fn (string, string, mut Window)) View {
+fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, item_ids []string, item_layout_ids []string, on_reorder fn (string, string, mut Window), can_reorder bool) View {
 	color := if dat.id in cfg.selected_ids {
 		cfg.color_select
 	} else {
@@ -285,7 +286,7 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, item_id
 	has_on_select := on_select != unsafe { nil }
 	selected_ids := cfg.selected_ids
 	color_hover := cfg.color_hover
-	reorderable := cfg.reorderable && !is_sub
+	reorderable := can_reorder && !is_sub
 	list_box_id := cfg.id
 
 	item_a11y_state := if dat.id in cfg.selected_ids {

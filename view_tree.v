@@ -111,14 +111,14 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 	on_lazy_load := cfg.on_lazy_load
 	text_style_icon := tree_icon_style(cfg.nodes)
 	min_width_icon := text_width('${icon_bar} ', text_style_icon, mut window)
-	reorderable := cfg.reorderable
+	can_reorder := cfg.reorderable && cfg.on_reorder != unsafe { nil }
 
-	drag := if reorderable {
+	drag := if can_reorder {
 		drag_reorder_get(mut window, cfg_id)
 	} else {
 		DragReorderState{}
 	}
-	dragging := reorderable && drag.active && !drag.cancelled
+	dragging := can_reorder && drag.active && !drag.cancelled
 
 	mut content := []View{cap: (last_visible - first_visible + 1) + 4}
 
@@ -134,21 +134,23 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 	// Top-level (depth-0) node IDs and count for reorder indices.
 	mut top_level_ids := []string{cap: cfg.nodes.len}
 	mut top_level_layout_ids := []string{cap: cfg.nodes.len}
-	for n in cfg.nodes {
-		top_level_ids << n.id
-		top_level_layout_ids << 'tr_${cfg_id}_${n.id}'
+	mut top_index_by_id := map[string]int{}
+	for i, n in cfg.nodes {
+		id := if n.id.len == 0 { n.text } else { n.id }
+		top_level_ids << id
+		top_level_layout_ids << 'tr_${cfg_id}_${id}'
+		top_index_by_id[id] = i
 	}
 	top_level_count := top_level_ids.len
 	on_reorder := cfg.on_reorder
 	mut ghost_content := View(rectangle(RectangleCfg{}))
-	mut top_idx := 0
 	for idx in first_visible .. last_visible + 1 {
 		if idx < 0 || idx >= flat_rows.len {
 			continue
 		}
 		fr := flat_rows[idx]
-		is_draggable := reorderable && !fr.is_loading && fr.depth == 0
-		reorder_idx := top_idx
+		reorder_idx := top_index_by_id[fr.id] or { -1 }
+		is_draggable := can_reorder && !fr.is_loading && fr.depth == 0 && reorder_idx >= 0
 
 		// Insert gap spacer at current drop target.
 		if dragging && is_draggable && reorder_idx == drag.current_index
@@ -162,10 +164,6 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 			content << tree_flat_row_view(cfg_id, on_select, on_lazy_load, fr, indent,
 				min_width_icon, is_draggable, on_reorder, cfg.id_scroll, reorder_idx,
 				top_level_count, top_level_ids, top_level_layout_ids)
-		}
-
-		if fr.depth == 0 {
-			top_idx += 1
 		}
 	}
 	// Gap at end.
@@ -199,8 +197,8 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		spacing:          cfg.spacing
 		height:           cfg.height
 		max_height:       cfg.max_height
-		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids, reorderable, on_reorder, top_level_ids] (_ &Layout, mut e Event, mut w Window) {
-			tree_on_keydown(cfg_id, on_select, on_lazy_load, visible_ids, reorderable,
+		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids, can_reorder, on_reorder, top_level_ids] (_ &Layout, mut e Event, mut w Window) {
+			tree_on_keydown(cfg_id, on_select, on_lazy_load, visible_ids, can_reorder,
 				on_reorder, top_level_ids, mut e, mut w)
 		}
 		content:          content

@@ -226,6 +226,77 @@ fn test_list_box_renders_source_error_status_row() {
 	assert v.content.len == 1
 }
 
+fn test_list_box_virtualized_drag_uses_global_draggable_index() {
+	cfg := ListBoxCfg{
+		id:          'lb_virtual_drag'
+		reorderable: true
+		on_reorder:  fn (_ string, _ string, mut _ Window) {}
+		data:        [
+			list_box_subheading('h1', 'Header'),
+			list_box_option('a', 'A', 'A'),
+			list_box_option('b', 'B', 'B'),
+			list_box_option('c', 'C', 'C'),
+			list_box_option('d', 'D', 'D'),
+			list_box_option('e', 'E', 'E'),
+		]
+	}
+	drag := DragReorderState{
+		active:        true
+		source_index:  3
+		current_index: 4
+		item_width:    120
+		item_height:   20
+	}
+	mut v := list_box_from_range(3, 5, cfg, true, 20, drag, true)
+	ids := list_box_child_ids(v)
+	if 'lb_lb_virtual_drag_d' in ids {
+		assert false
+	}
+	if 'lb_lb_virtual_drag_c' in ids {
+		assert true
+	} else {
+		assert false
+	}
+	if 'lb_lb_virtual_drag_e' in ids {
+		assert true
+	} else {
+		assert false
+	}
+}
+
+fn test_window_list_box_nil_on_reorder_disables_reorder_ids() {
+	mut w := Window{}
+	cfg := ListBoxCfg{
+		id:          'lb_nil_reorder'
+		reorderable: true
+		data:        [
+			list_box_option('a', 'A', 'A'),
+			list_box_option('b', 'B', 'B'),
+		]
+	}
+	mut v := w.list_box(cfg)
+	ids := list_box_child_ids(v)
+	if 'lb_lb_nil_reorder_a' in ids {
+		assert false
+	}
+	if 'lb_lb_nil_reorder_b' in ids {
+		assert false
+	}
+}
+
+fn list_box_child_ids(v View) []string {
+	mut root := v as ContainerView
+	mut ids := []string{}
+	for child in root.content {
+		if child is ContainerView {
+			if child.id.len > 0 {
+				ids << child.id
+			}
+		}
+	}
+	return ids
+}
+
 fn list_box_test_data(count int) []ListBoxOption {
 	mut out := []ListBoxOption{cap: count}
 	for i in 0 .. count {

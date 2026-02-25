@@ -240,3 +240,79 @@ fn test_tree_keyboard_reorder_keeps_focus_on_moved_id() {
 	focused := tf2.get('tree') or { '' }
 	assert focused == 'b'
 }
+
+fn test_tree_virtualized_drag_uses_global_top_level_index() {
+	mut w := Window{}
+	cfg := TreeCfg{
+		id:          'tree_virtual_drag'
+		id_scroll:   77
+		height:      20
+		reorderable: true
+		on_reorder:  fn (_ string, _ string, mut _ Window) {}
+		nodes:       [
+			tree_node(id: 'a', text: 'A'),
+			tree_node(id: 'b', text: 'B'),
+			tree_node(id: 'c', text: 'C'),
+			tree_node(id: 'd', text: 'D'),
+			tree_node(id: 'e', text: 'E'),
+		]
+	}
+	row_height := tree_estimate_row_height(cfg, mut w)
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	sy.set(cfg.id_scroll, -(row_height * 4))
+	drag_reorder_set(mut w, cfg.id, DragReorderState{
+		active:        true
+		source_index:  3
+		current_index: 4
+		item_width:    120
+		item_height:   20
+	})
+	mut v := w.tree(cfg)
+	ids := tree_child_ids(v)
+	if 'tr_tree_virtual_drag_d' in ids {
+		assert false
+	}
+	if 'tr_tree_virtual_drag_c' in ids {
+		assert true
+	} else {
+		assert false
+	}
+	if 'tr_tree_virtual_drag_e' in ids {
+		assert true
+	} else {
+		assert false
+	}
+}
+
+fn test_tree_nil_on_reorder_disables_reorder_ids() {
+	mut w := Window{}
+	cfg := TreeCfg{
+		id:          'tree_nil_reorder'
+		reorderable: true
+		nodes:       [
+			tree_node(id: 'a', text: 'A'),
+			tree_node(id: 'b', text: 'B'),
+		]
+	}
+	mut v := w.tree(cfg)
+	ids := tree_child_ids(v)
+	if 'tr_tree_nil_reorder_a' in ids {
+		assert false
+	}
+	if 'tr_tree_nil_reorder_b' in ids {
+		assert false
+	}
+}
+
+fn tree_child_ids(v View) []string {
+	mut root := v as ContainerView
+	mut ids := []string{}
+	for child in root.content {
+		if child is ContainerView {
+			if child.id.len > 0 {
+				ids << child.id
+			}
+		}
+	}
+	return ids
+}

@@ -122,3 +122,28 @@ fn test_tab_control_keydown_disabled_blocks_reorder() {
 	assert !cap.called
 	assert !e.is_handled
 }
+
+fn test_tab_control_nil_on_reorder_disables_drag_views() {
+	cfg := TabControlCfg{
+		id:          'tabs_nil_reorder'
+		selected:    'one'
+		reorderable: true
+		items:       [
+			tab_item('one', 'One', [text(text: 'A')]),
+			tab_item('two', 'Two', [text(text: 'B')]),
+			tab_item('three', 'Three', [text(text: 'C')]),
+		]
+		on_select:   fn (_ string, mut _e Event, mut _w Window) {}
+	}
+	drag := DragReorderState{
+		active:        true
+		source_index:  1
+		current_index: 2
+		item_width:    120
+		item_height:   24
+	}
+	mut v := tab_control_build(cfg, drag)
+	mut cv := v as ContainerView
+	mut header := cv.content[0] as ContainerView
+	assert header.content.len == 3
+}

@@ -178,3 +178,85 @@ fn test_drag_reorder_calc_index_from_layouts_past_end() {
 	}
 	assert idx == 2
 }
+
+fn test_drag_reorder_calc_index_from_mids() {
+	mids := [f32(5), 25, 45]
+	idx_a := drag_reorder_calc_index_from_mids(6, mids) or {
+		panic('expected index for first midpoint set')
+	}
+	assert idx_a == 1
+	idx_b := drag_reorder_calc_index_from_mids(26, mids) or {
+		panic('expected index for second midpoint set')
+	}
+	assert idx_b == 2
+	idx_c := drag_reorder_calc_index_from_mids(90, mids) or {
+		panic('expected index at end for midpoint set')
+	}
+	assert idx_c == 3
+}
+
+fn test_drag_reorder_item_mids_from_layouts() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape:    &Shape{
+			id: 'root'
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					id:     'a'
+					x:      0
+					y:      0
+					width:  100
+					height: 10
+				}
+			},
+			Layout{
+				shape: &Shape{
+					id:     'b'
+					x:      0
+					y:      10
+					width:  100
+					height: 30
+				}
+			},
+			Layout{
+				shape: &Shape{
+					id:     'c'
+					x:      0
+					y:      40
+					width:  100
+					height: 10
+				}
+			},
+		]
+	}
+	mids := drag_reorder_item_mids_from_layouts(.vertical, ['a', 'b', 'c'], &w) or {
+		panic('expected item mids from layout ids')
+	}
+	assert mids.len == 3
+	assert mids[0] == f32(5)
+	assert mids[1] == f32(25)
+	assert mids[2] == f32(45)
+}
+
+fn test_drag_reorder_item_mids_from_layouts_missing_layout_returns_none() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape:    &Shape{
+			id: 'root'
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					id:     'a'
+					width:  10
+					height: 10
+				}
+			},
+		]
+	}
+	if _ := drag_reorder_item_mids_from_layouts(.vertical, ['a', 'missing'], &w) {
+		assert false
+	}
+}

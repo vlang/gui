@@ -84,7 +84,8 @@ pub fn (mut w Window) tabs(cfg TabControlCfg) View {
 
 // tab_control builds a tab control with drag-reorder support.
 pub fn (mut w Window) tab_control(cfg TabControlCfg) View {
-	drag := if cfg.reorderable {
+	can_reorder := cfg.reorderable && cfg.on_reorder != unsafe { nil }
+	drag := if can_reorder {
 		drag_reorder_get(mut w, cfg.id)
 	} else {
 		DragReorderState{}
@@ -106,12 +107,13 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 	$if !prod {
 		tab_warn_duplicate_ids(cfg.id, cfg.items)
 	}
+	can_reorder := cfg.reorderable && cfg.on_reorder != unsafe { nil }
 	selected_idx := tab_selected_index(cfg.items, cfg.selected)
-	dragging := cfg.reorderable && drag.active && !drag.cancelled
+	dragging := can_reorder && drag.active && !drag.cancelled
 	// Build non-disabled tab IDs for drag index mapping.
 	mut tab_ids := []string{cap: cfg.items.len}
 	mut tab_layout_ids := []string{cap: cfg.items.len}
-	if cfg.reorderable {
+	if can_reorder {
 		for item in cfg.items {
 			if !item.disabled {
 				tab_ids << item.id
@@ -127,7 +129,7 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 	for i, item in cfg.items {
 		is_selected := i == selected_idx
 		is_disabled := cfg.disabled || item.disabled
-		is_draggable := cfg.reorderable && !is_disabled
+		is_draggable := can_reorder && !is_disabled
 		item_drag_idx := if is_draggable { drag_idx } else { -1 }
 
 		// Insert gap at current drop target.
@@ -251,7 +253,7 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 	selected := cfg.selected
 	on_select := cfg.on_select
 	id_focus := cfg.id_focus
-	reorderable := cfg.reorderable
+	reorderable := can_reorder
 	tab_id := cfg.id
 
 	return column(

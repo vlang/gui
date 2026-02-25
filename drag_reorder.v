@@ -25,6 +25,7 @@ mut:
 	current_index   int
 	item_count      int
 	item_layout_ids []string
+	item_mids       []f32
 	start_mouse_x   f32
 	start_mouse_y   f32
 	mouse_x         f32
@@ -135,7 +136,9 @@ fn drag_reorder_on_mouse_move(drag_key string,
 	mut new_index := drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
 		state.item_count)
 
-	if idx := drag_reorder_calc_index_from_layouts(mouse_main, axis, state.item_layout_ids,
+	if idx := drag_reorder_calc_index_from_mids(mouse_main, state.item_mids) {
+		new_index = idx
+	} else if idx := drag_reorder_calc_index_from_layouts(mouse_main, axis, state.item_layout_ids,
 		w)
 	{
 		new_index = idx
@@ -241,11 +244,13 @@ fn drag_reorder_start(drag_key string,
 			}
 		}
 	}
+	item_mids := drag_reorder_item_mids_from_layouts(axis, item_layout_ids, w) or { []f32{} }
 	state := DragReorderState{
 		source_index:    index
 		current_index:   index
 		item_count:      item_ids.len
 		item_layout_ids: item_layout_ids.clone()
+		item_mids:       item_mids
 		start_mouse_x:   e.mouse_x + layout.shape.x
 		start_mouse_y:   e.mouse_y + layout.shape.y
 		mouse_x:         e.mouse_x + layout.shape.x
@@ -278,6 +283,37 @@ fn drag_reorder_calc_index(mouse_main f32, item_start f32,
 	rel := mouse_main - list_start
 	idx := int(rel / item_size)
 	return int_clamp(idx, 0, item_count)
+}
+
+// drag_reorder_calc_index_from_mids estimates the drop target index
+// from precomputed item midpoint coordinates.
+fn drag_reorder_calc_index_from_mids(mouse_main f32, item_mids []f32) ?int {
+	if item_mids.len == 0 {
+		return none
+	}
+	for idx, mid in item_mids {
+		if mouse_main < mid {
+			return idx
+		}
+	}
+	return item_mids.len
+}
+
+// drag_reorder_item_mids_from_layouts resolves draggable layout IDs once
+// at drag start and stores axis midpoints for fast per-move hit testing.
+fn drag_reorder_item_mids_from_layouts(axis DragReorderAxis, item_layout_ids []string, w &Window) ?[]f32 {
+	if item_layout_ids.len == 0 {
+		return none
+	}
+	mut mids := []f32{cap: item_layout_ids.len}
+	for id in item_layout_ids {
+		ly := w.layout.find_by_id(id) or { return none }
+		mids << match axis {
+			.vertical { ly.shape.y + (ly.shape.height / 2) }
+			.horizontal { ly.shape.x + (ly.shape.width / 2) }
+		}
+	}
+	return mids
 }
 
 // drag_reorder_calc_index_from_layouts estimates the drop target
