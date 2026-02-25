@@ -77,10 +77,10 @@ struct TreeFlatRow {
 // TreeDragContext groups the drag-reorder parameters passed to
 // tree_flat_row_view and make_tree_drag_click.
 struct TreeDragContext {
-	cfg_id     string
-	on_reorder fn (string, string, string, mut Window) = unsafe { nil }
-	parent_id  string
-	id_scroll  u32
+	cfg_id        string
+	on_reorder    fn (string, string, string, mut Window) = unsafe { nil }
+	parent_id     string
+	id_scroll     u32
 	sibling_index int
 	sibling_ids   []string
 }
@@ -524,11 +524,10 @@ fn make_tree_drag_click(drag_ctx TreeDragContext, id string,
 		sibling_layout_ids << 'tr_${cfg_id}_${sid}'
 	}
 	return fn [cfg_id, sibling_index, sibling_ids, sibling_layout_ids, id_scroll, id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children, reorder_wrapped] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(cfg_id, sibling_index, id, .vertical, sibling_ids,
-			reorder_wrapped, sibling_layout_ids, 0, id_scroll, layout,
-			e, mut w)
-		tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children,
-			is_lazy, node_has_real_children, id, mut e, mut w)
+		drag_reorder_start(cfg_id, sibling_index, id, .vertical, sibling_ids, reorder_wrapped,
+			sibling_layout_ids, 0, id_scroll, layout, e, mut w)
+		tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy,
+			node_has_real_children, id, mut e, mut w)
 	}
 }
 
