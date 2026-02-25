@@ -1,5 +1,7 @@
 module gui
 
+import time
+
 // drag_reorder.v provides shared drag-to-reorder infrastructure
 // for ListBox, TabControl, and Tree widgets. One active drag at
 // a time (mouse_lock exclusivity). Uses existing FLIP animation
@@ -9,6 +11,11 @@ const ns_drag_reorder = 'gui.drag_reorder'
 const drag_reorder_threshold = f32(5.0)
 const drag_reorder_scroll_zone = f32(40.0)
 const drag_reorder_scroll_speed = f32(4.0)
+const drag_reorder_scroll_animation_id = 'gui.drag_reorder.scroll'
+const drag_reorder_ghost_opacity = 0.85
+const drag_reorder_ghost_shadow_color = Color{0, 0, 0, 60}
+const drag_reorder_ghost_shadow_blur = f32(8.0)
+const drag_reorder_ghost_shadow_offset_y = f32(2.0)
 
 // DragReorderAxis selects the primary drag axis.
 pub enum DragReorderAxis as u8 {
@@ -19,31 +26,33 @@ pub enum DragReorderAxis as u8 {
 // DragReorderState tracks an in-progress drag-reorder operation.
 struct DragReorderState {
 mut:
-	started         bool
-	active          bool
-	cancelled       bool
-	source_index    int
-	current_index   int
-	item_count      int
-	item_layout_ids []string
-	item_mids       []f32
-	start_mouse_x   f32
-	start_mouse_y   f32
-	mouse_x         f32
-	mouse_y         f32
-	item_x          f32
-	item_y          f32
-	item_width      f32
-	item_height     f32
-	parent_x        f32
-	parent_y        f32
-	item_id         string
-	id_scroll       u32
-	container_start f32
-	container_end   f32
-	start_scroll_x  f32
-	start_scroll_y  f32
-	layouts_valid   bool
+	started             bool
+	active              bool
+	cancelled           bool
+	source_index        int
+	current_index       int
+	item_count          int
+	item_layout_ids     []string
+	item_mids           []f32
+	start_mouse_x       f32
+	start_mouse_y       f32
+	mouse_x             f32
+	mouse_y             f32
+	item_x              f32
+	item_y              f32
+	item_width          f32
+	item_height         f32
+	parent_x            f32
+	parent_y            f32
+	item_id             string
+	id_scroll           u32
+	container_start     f32
+	container_end       f32
+	start_scroll_x      f32
+	start_scroll_y      f32
+	layouts_valid       bool
+	mids_offset         int // draggable count before first midpoint entry
+	scroll_timer_active bool
 }
 
 // drag_reorder_get returns the current drag state for the given
@@ -63,14 +72,6 @@ fn drag_reorder_set(mut w Window, key string, state DragReorderState) {
 fn drag_reorder_clear(mut w Window, key string) {
 	mut sm := state_map[string, DragReorderState](mut w, ns_drag_reorder, cap_few)
 	sm.delete(key)
-}
-
-// drag_reorder_read returns drag state without requiring mut Window.
-fn drag_reorder_read(w &Window, key string) DragReorderState {
-	sm := state_map_read[string, DragReorderState](w, ns_drag_reorder) or {
-		return DragReorderState{}
-	}
-	return sm.get(key) or { DragReorderState{} }
 }
 
 // drag_reorder_make_lock builds a MouseLockCfg that implements the
@@ -145,7 +146,7 @@ fn drag_reorder_on_mouse_move(drag_key string,
 
 	mut new_index := -1
 	if idx := drag_reorder_calc_index_from_mids(mouse_main, state.item_mids) {
-		new_index = idx
+		new_index = idx + state.mids_offset
 	}
 
 	if new_index < 0 {
@@ -165,6 +166,29 @@ fn drag_reorder_on_mouse_move(drag_key string,
 	// Scroll check uses original mouse coordinate.
 	did_scroll := drag_reorder_auto_scroll(mouse_orig, state.container_start, state.container_end,
 		state.id_scroll, axis, mut w)
+
+	// If scrolling happened, we want to continue scrolling even if mouse doesn't move.
+	if did_scroll && !state.scroll_timer_active {
+		state.scroll_timer_active = true
+		w.animation_add(mut Animate{
+			id:       drag_reorder_scroll_animation_id
+			repeat:   true
+			delay:    16 * time.millisecond
+			callback: fn [drag_key, axis] (mut an Animate, mut w Window) {
+				mut st := drag_reorder_get(mut w, drag_key)
+				if !st.active || st.cancelled {
+					an.stopped = true
+					return
+				}
+				// Call mouse_move with current (captured) mouse position to trigger next scroll step.
+				drag_reorder_on_mouse_move(drag_key, axis, st.mouse_x, st.mouse_y, mut
+					w)
+			}
+		})
+	} else if !did_scroll && state.scroll_timer_active {
+		state.scroll_timer_active = false
+		w.remove_animation(drag_reorder_scroll_animation_id)
+	}
 
 	mut index_changed := false
 	if new_index != state.current_index {
@@ -193,6 +217,7 @@ fn drag_reorder_on_mouse_up(drag_key string,
 
 	drag_reorder_clear(mut w, drag_key)
 	w.mouse_unlock()
+	w.remove_animation(drag_reorder_scroll_animation_id)
 
 	// drop at gap index (src) or the gap immediately following it (src+1)
 	// is a no-op since the item is already between those positions.
@@ -221,9 +246,14 @@ fn drag_reorder_cancel(drag_key string, mut w Window) {
 		w.mouse_unlock()
 		return
 	}
+	// Set cancelled so the frame rebuild (update_window) sees it and hides
+	// ghost/gap. mouse_unlock releases the lock without firing mouse_up,
+	// so drag_reorder_on_mouse_up is not re-entered. Clear state last so
+	// the rebuild can still read the cancelled flag.
 	state.cancelled = true
 	drag_reorder_set(mut w, drag_key, state)
 	w.mouse_unlock()
+	w.remove_animation(drag_reorder_scroll_animation_id)
 	w.update_window()
 	drag_reorder_clear(mut w, drag_key)
 }
@@ -238,6 +268,7 @@ fn drag_reorder_start(drag_key string,
 	item_ids []string,
 	on_reorder fn (string, string, mut Window),
 	item_layout_ids []string,
+	mids_offset int,
 	id_scroll u32,
 	layout &Layout,
 	e &Event,
@@ -302,6 +333,7 @@ fn drag_reorder_start(drag_key string,
 		start_scroll_x:  start_scroll_x
 		start_scroll_y:  start_scroll_y
 		layouts_valid:   layouts_valid
+		mids_offset:     mids_offset
 	}
 	drag_reorder_set(mut w, drag_key, state)
 	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids, on_reorder))
@@ -328,12 +360,17 @@ fn drag_reorder_calc_index_from_mids(mouse_main f32, item_mids []f32) ?int {
 	if item_mids.len == 0 {
 		return none
 	}
-	for idx, mid in item_mids {
-		if mouse_main < mid {
-			return idx
+	mut lo := 0
+	mut hi := item_mids.len
+	for lo < hi {
+		mid_idx := (lo + hi) / 2
+		if item_mids[mid_idx] <= mouse_main {
+			lo = mid_idx + 1
+		} else {
+			hi = mid_idx
 		}
 	}
-	return item_mids.len
+	return lo
 }
 
 // drag_reorder_item_mids_from_layouts resolves draggable layout IDs once
@@ -370,7 +407,7 @@ fn drag_reorder_ghost_view(state DragReorderState, content View) View {
 		float_offset_y: ghost_y - state.parent_y
 		width:          state.item_width
 		height:         state.item_height
-		opacity:        0.85
+		opacity:        drag_reorder_ghost_opacity
 		sizing:         fixed_fixed
 		clip:           true
 		padding:        padding_none
@@ -378,9 +415,9 @@ fn drag_reorder_ghost_view(state DragReorderState, content View) View {
 		v_align:        .middle
 		color:          gui_theme.color_background
 		shadow:         &BoxShadow{
-			color:       Color{0, 0, 0, 60}
-			offset_y:    2
-			blur_radius: 8
+			color:       drag_reorder_ghost_shadow_color
+			offset_y:    drag_reorder_ghost_shadow_offset_y
+			blur_radius: drag_reorder_ghost_shadow_blur
 		}
 		content:        [content]
 	)

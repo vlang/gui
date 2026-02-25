@@ -482,7 +482,7 @@ fn make_tree_drag_click(cfg_id string, id string,
 	is_lazy bool, node_has_real_children bool) fn (&Layout, mut Event, mut Window) {
 	return fn [cfg_id, id, flat_index, top_level_ids, on_reorder, id_scroll, top_level_layout_ids, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children] (layout &Layout, mut e Event, mut w Window) {
 		drag_reorder_start(cfg_id, flat_index, id, .vertical, top_level_ids, on_reorder,
-			top_level_layout_ids, id_scroll, layout, e, mut w)
+			top_level_layout_ids, 0, id_scroll, layout, e, mut w)
 		tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy,
 			node_has_real_children, id, mut e, mut w)
 	}

@@ -226,14 +226,14 @@ fn test_drag_reorder_start_sets_layout_validity() {
 
 	drag_key_ok := 'drag_layout_ok'
 	drag_reorder_start(drag_key_ok, 0, 'a', .vertical, ['a', 'b'], fn (_ string, _ string, mut _ Window) {},
-		['a', 'b'], 0, &item, &e, mut w)
+		['a', 'b'], 0, 0, &item, &e, mut w)
 	state_ok := drag_reorder_get(mut w, drag_key_ok)
 	assert state_ok.started
 	assert state_ok.layouts_valid
 
 	drag_key_missing := 'drag_layout_missing'
 	drag_reorder_start(drag_key_missing, 0, 'a', .vertical, ['a', 'b'], fn (_ string, _ string, mut _ Window) {},
-		['a', 'missing'], 0, &item, &e, mut w)
+		['a', 'missing'], 0, 0, &item, &e, mut w)
 	state_missing := drag_reorder_get(mut w, drag_key_missing)
 	assert state_missing.started
 	assert !state_missing.layouts_valid
@@ -276,4 +276,41 @@ fn test_drag_reorder_calc_index_with_scroll_delta() {
 
 	new_state := drag_reorder_get(mut w, drag_key)
 	assert new_state.current_index == 1
+}
+
+fn test_drag_reorder_auto_scroll_timer_activation() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape: &Shape{
+			id: 'root'
+		}
+	}
+	drag_key := 'drag_timer'
+	id_scroll := u32(100)
+
+	state := DragReorderState{
+		active:          true
+		item_y:          0.0
+		item_height:     20.0
+		source_index:    0
+		item_count:      5
+		id_scroll:       id_scroll
+		container_start: 0.0
+		container_end:   100.0
+	}
+	drag_reorder_set(mut w, drag_key, state)
+
+	// Mouse is near start (scroll_zone is 40.0)
+	// mouse_main - container_start = 5 - 0 = 5 < 40.0
+	drag_reorder_on_mouse_move(drag_key, .vertical, 0, 5, mut w)
+
+	new_state := drag_reorder_get(mut w, drag_key)
+	assert new_state.scroll_timer_active
+	assert w.has_animation(drag_reorder_scroll_animation_id)
+
+	// Mouse moves away from scroll zone
+	drag_reorder_on_mouse_move(drag_key, .vertical, 0, 50, mut w)
+	state_after := drag_reorder_get(mut w, drag_key)
+	assert !state_after.scroll_timer_active
+	assert !w.has_animation(drag_reorder_scroll_animation_id)
 }

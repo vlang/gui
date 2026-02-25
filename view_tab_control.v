@@ -324,7 +324,7 @@ fn make_tab_drag_click(control_id string, item_id string,
 	id_focus u32) fn (&Layout, mut Event, mut Window) {
 	return fn [control_id, item_id, drag_index, tab_ids, tab_layout_ids, on_reorder, on_select, id_focus] (layout &Layout, mut e Event, mut w Window) {
 		drag_reorder_start(control_id, drag_index, item_id, .horizontal, tab_ids, on_reorder,
-			tab_layout_ids, u32(0), layout, e, mut w)
+			tab_layout_ids, 0, u32(0), layout, e, mut w)
 		on_select(item_id, mut e, mut w)
 		if id_focus > 0 {
 			w.set_id_focus(id_focus)
