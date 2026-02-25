@@ -51,6 +51,7 @@ mut:
 	view_state            ViewState       // Manages state for widgets (scroll, selection, etc.)
 	window_size           gg.Size         // cached, gg.window_size() relatively slow
 	file_access           FileAccessState // security-scoped bookmark state
+	file_access_mutex     &sync.Mutex = sync.new_mutex() // guards file access state
 }
 
 // Window is the main application window. `state` holds app state.

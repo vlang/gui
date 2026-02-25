@@ -52,41 +52,56 @@ pub fn (mut w Window) release_file_access(g Grant) {
 	if g.id == 0 {
 		return
 	}
-	bm := w.file_access.grants[g.id] or { return }
-	if bm.data.len > 0 {
-		$if macos {
-			nativebridge.bookmark_stop_access(bm.data)
-		}
+	w.file_access_mutex.lock()
+	bm := w.file_access.grants[g.id] or {
+		w.file_access_mutex.unlock()
+		return
 	}
 	w.file_access.grants.delete(g.id)
+	data := bm.data
+	w.file_access_mutex.unlock()
+	if data.len > 0 {
+		$if macos {
+			nativebridge.bookmark_stop_access(data)
+		}
+	}
 }
 
 // release_all_file_access releases every active grant.
 // Called automatically during window cleanup.
 pub fn (mut w Window) release_all_file_access() {
+	w.file_access_mutex.lock()
+	mut grants := []BookmarkGrant{cap: w.file_access.grants.len}
 	for _, bm in w.file_access.grants {
+		grants << bm
+	}
+	w.file_access.grants = map[u64]BookmarkGrant{}
+	w.file_access_mutex.unlock()
+	for bm in grants {
 		if bm.data.len > 0 {
 			$if macos {
 				nativebridge.bookmark_stop_access(bm.data)
 			}
 		}
 	}
-	w.file_access.grants = map[u64]BookmarkGrant{}
 }
 
 // store_bookmark records a bookmark grant internally and
 // persists via nativebridge if app_id is set and data is
 // non-empty.
 fn (mut w Window) store_bookmark(path string, data []u8) Grant {
+	w.file_access_mutex.lock()
+	app_id := w.file_access.app_id
 	id := w.file_access.next_id
 	w.file_access.next_id++
 	w.file_access.grants[id] = BookmarkGrant{
 		path: path
 		data: data
 	}
-	if w.file_access.app_id.len > 0 && data.len > 0 {
+	w.file_access_mutex.unlock()
+	if app_id.len > 0 && data.len > 0 {
 		$if macos {
-			nativebridge.bookmark_store(w.file_access.app_id, path, data)
+			nativebridge.bookmark_store(app_id, path, data)
 		}
 	}
 	return Grant{
