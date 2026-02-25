@@ -14,6 +14,7 @@ const id_scroll_list_box = 2
 const id_scroll_catalog = 3
 const id_scroll_sync_demo = 4
 const id_scroll_tree = 5
+const id_scroll_drag_reorder_tree = 6
 const id_focus_showcase_splitter_main = u32(9160)
 const id_focus_showcase_splitter_detail = u32(9161)
 const showcase_form_id = 'showcase_forms'
@@ -163,6 +164,12 @@ pub mut:
 	combobox_selected string
 	// command palette
 	last_palette_action string
+	// drag reorder
+	drag_reorder_items    []gui.ListBoxOption = drag_reorder_demo_items()
+	drag_reorder_selected []string
+	drag_reorder_tabs     []gui.TabItemCfg  = drag_reorder_demo_tabs()
+	drag_reorder_tab_sel  string            = 'alpha'
+	drag_reorder_nodes    []gui.TreeNodeCfg = drag_reorder_demo_nodes()
 	// docs panel
 	show_docs bool
 }
@@ -470,6 +477,13 @@ fn demo_entries() []DemoEntry {
 			group:   'selection'
 			summary: 'Drag horizontal or vertical value controls'
 			tags:    ['slider', 'value', 'range']
+		},
+		DemoEntry{
+			id:      'drag_reorder'
+			label:   'Drag Reorder'
+			group:   'selection'
+			summary: 'Drag-to-reorder items in lists, tabs, and trees'
+			tags:    ['drag', 'reorder', 'list', 'tabs', 'tree', 'keyboard']
 		},
 		DemoEntry{
 			id:      'combobox'
@@ -1114,6 +1128,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'menus' { demo_menu(mut w) }
 		'dialog' { demo_dialog() }
 		'tree' { demo_tree(mut w) }
+		'drag_reorder' { demo_drag_reorder(mut w) }
 		'printing' { demo_printing(w) }
 		'text' { demo_text() }
 		'rtf' { demo_rtf() }
@@ -1186,6 +1201,7 @@ fn related_examples(id string) string {
 		'menus' { 'examples/menu_demo.v, examples/context_menu_demo.v' }
 		'dialog' { 'examples/dialogs.v' }
 		'tree' { 'examples/tree_view.v' }
+		'drag_reorder' { 'examples/drag_reorder.v' }
 		'printing' { 'examples/printing.v' }
 		'text' { 'examples/fonts.v, examples/gradient_text.v, examples/text_transform.v' }
 		'rtf' { 'examples/rtf.v' }
@@ -1240,6 +1256,7 @@ fn component_doc(id string) string {
 		'menus' { menus_doc }
 		'dialog' { dialog_doc }
 		'tree' { tree_doc }
+		'drag_reorder' { drag_reorder_doc }
 		'printing' { printing_doc }
 		'text' { text_doc }
 		'rtf' { rtf_doc }
@@ -2664,12 +2681,14 @@ gui.listbox(
 | query | string | Filter/search text |
 | multiple | bool | Allow multiple selections |
 | loading | bool | Show loading indicator |
+| reorderable | bool | Enable drag-to-reorder |
 
 ## Events
 
 | Callback | Signature | Fired when |
 |----------|-----------|------------|
-| on_select | fn ([]string, mut Event, mut Window) | Selection changed |'
+| on_select | fn ([]string, mut Event, mut Window) | Selection changed |
+| on_reorder | fn (string, string, mut Window) | Item reordered (moved_id, before_id) |'
 
 fn demo_list_box(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
@@ -3241,6 +3260,7 @@ w.tree(
 | id_scroll | u32 | Scroll container ID (enables virtualization) |
 | max_height | f32 | Max height before scrolling |
 | height | f32 | Fixed height |
+| reorderable | bool | Enable drag-to-reorder siblings |
 
 ## Events
 
@@ -3248,6 +3268,7 @@ w.tree(
 |----------|-----------|------------|
 | on_select | fn (string, mut Window) | Node selected |
 | on_lazy_load | fn (string, string, mut Window) | Lazy node expanded (tree_id, node_id) |
+| on_reorder | fn (string, string, string, mut Window) | Node reordered (moved_id, before_id, parent_id) |
 
 ## TreeNodeCfg
 
@@ -3261,6 +3282,279 @@ w.tree(
 
 fn demo_tree(mut w gui.Window) gui.View {
 	return tree_view_sample(mut w)
+}
+
+const drag_reorder_doc = '# Drag Reorder
+
+Drag items to reorder within lists, tabs, and tree views. Keyboard shortcuts
+provide an accessible alternative to mouse dragging.
+
+## List Box
+
+```v
+w.list_box(
+    id:          "items",
+    reorderable: true,
+    data:        app.items,
+    on_reorder:  fn (moved_id string, before_id string, mut w gui.Window) {
+        mut app := w.state[MyApp]()
+        from, to := gui.reorder_indices(app.items.map(it.id), moved_id, before_id)
+        if from >= 0 {
+            item := app.items[from]
+            app.items.delete(from)
+            app.items.insert(to, item)
+        }
+    },
+)
+```
+
+## Tab Control
+
+```v
+w.tab_control(
+    id:          "tabs",
+    reorderable: true,
+    items:       app.tabs,
+    on_reorder:  fn (moved_id string, before_id string, mut w gui.Window) {
+        mut app := w.state[MyApp]()
+        from, to := gui.reorder_indices(app.tabs.map(it.id), moved_id, before_id)
+        if from >= 0 {
+            tab := app.tabs[from]
+            app.tabs.delete(from)
+            app.tabs.insert(to, tab)
+        }
+    },
+)
+```
+
+## Tree View
+
+Tree reorder is scoped to siblings under the same parent. The callback
+receives `parent_id` so you can locate the correct child list.
+
+```v
+w.tree(
+    id:          "tree",
+    reorderable: true,
+    nodes:       app.nodes,
+    on_reorder:  fn (moved_id string, before_id string, parent_id string, mut w gui.Window) {
+        // Recursively find parent and reorder children
+    },
+)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| reorderable | bool | Enable drag-to-reorder |
+| on_reorder | fn | Callback fired after drop (see signatures below) |
+
+## Callback Signatures
+
+| Widget | Signature |
+|--------|-----------|
+| ListBox | fn (moved_id string, before_id string, mut Window) |
+| TabControl | fn (moved_id string, before_id string, mut Window) |
+| Tree | fn (moved_id string, before_id string, parent_id string, mut Window) |
+
+## Helper
+
+`gui.reorder_indices(ids, moved_id, before_id)` returns `(from, to)` indices
+for the array splice. Returns `(-1, -1)` if no move is needed.
+
+## Keyboard
+
+- **ListBox / Tree**: Alt+Up / Alt+Down
+- **TabControl**: Alt+Left / Alt+Right
+- **Escape**: Cancel active drag'
+
+fn demo_drag_reorder(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.text(
+				text:       'Drag items to reorder, or use Alt+Arrow keys. Escape cancels.'
+				text_style: gui.theme().n5
+			),
+			gui.row(
+				sizing:  gui.fill_fit
+				spacing: gui.theme().spacing_large
+				content: [
+					gui.column(
+						sizing:  gui.fill_fit
+						spacing: 4
+						content: [
+							gui.text(text: 'List Box', text_style: gui.theme().b3),
+							w.list_box(
+								id:           'dr_lb'
+								id_focus:     9170
+								min_width:    160
+								max_height:   200
+								selected_ids: app.drag_reorder_selected
+								data:         app.drag_reorder_items
+								reorderable:  true
+								on_reorder:   fn (moved_id string, before_id string, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									from, to := gui.reorder_indices(a.drag_reorder_items.map(it.id),
+										moved_id, before_id)
+									if from >= 0 {
+										item := a.drag_reorder_items[from]
+										a.drag_reorder_items.delete(from)
+										a.drag_reorder_items.insert(to, item)
+									}
+								}
+								on_select:    fn (ids []string, mut e gui.Event, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									a.drag_reorder_selected = ids
+								}
+							),
+						]
+					),
+					gui.column(
+						sizing:  gui.fill_fit
+						spacing: 4
+						content: [
+							gui.text(text: 'Tab Control', text_style: gui.theme().b3),
+							w.tab_control(
+								id:          'dr_tc'
+								id_focus:    9171
+								sizing:      gui.fill_fit
+								items:       app.drag_reorder_tabs
+								selected:    app.drag_reorder_tab_sel
+								reorderable: true
+								on_select:   fn (id string, mut _e gui.Event, mut w gui.Window) {
+									w.state[ShowcaseApp]().drag_reorder_tab_sel = id
+								}
+								on_reorder:  fn (moved_id string, before_id string, mut w gui.Window) {
+									mut a := w.state[ShowcaseApp]()
+									from, to := gui.reorder_indices(a.drag_reorder_tabs.map(it.id),
+										moved_id, before_id)
+									if from >= 0 {
+										tab := a.drag_reorder_tabs[from]
+										a.drag_reorder_tabs.delete(from)
+										a.drag_reorder_tabs.insert(to, tab)
+									}
+								}
+							),
+						]
+					),
+				]
+			),
+			gui.column(
+				sizing:  gui.fill_fit
+				spacing: 4
+				content: [
+					gui.text(text: 'Tree View', text_style: gui.theme().b3),
+					w.tree(
+						id:          'dr_tree'
+						id_scroll:   id_scroll_drag_reorder_tree
+						id_focus:    9175
+						max_height:  200
+						nodes:       app.drag_reorder_nodes
+						reorderable: true
+						on_select:   fn (_ string, mut _ gui.Window) {}
+						on_reorder:  fn (moved_id string, before_id string, parent_id string, mut w gui.Window) {
+							mut a := w.state[ShowcaseApp]()
+							showcase_reorder_tree_nodes(mut a.drag_reorder_nodes, moved_id,
+								before_id, parent_id)
+						}
+					),
+				]
+			),
+		]
+	)
+}
+
+fn showcase_reorder_tree_nodes(mut nodes []gui.TreeNodeCfg, moved_id string, before_id string, parent_id string) {
+	if parent_id.len == 0 {
+		from, to := gui.reorder_indices(nodes.map(it.id), moved_id, before_id)
+		if from >= 0 {
+			node := nodes[from]
+			nodes.delete(from)
+			nodes.insert(to, node)
+		}
+		return
+	}
+	for mut node in nodes {
+		id := if node.id.len == 0 { node.text } else { node.id }
+		if id == parent_id {
+			from, to := gui.reorder_indices(node.nodes.map(it.id), moved_id, before_id)
+			if from >= 0 {
+				child := node.nodes[from]
+				node.nodes.delete(from)
+				node.nodes.insert(to, child)
+			}
+			return
+		}
+		showcase_reorder_tree_nodes(mut node.nodes, moved_id, before_id, parent_id)
+	}
+}
+
+fn drag_reorder_demo_items() []gui.ListBoxOption {
+	return [
+		gui.list_box_option('apple', 'Apple', ''),
+		gui.list_box_option('banana', 'Banana', ''),
+		gui.list_box_option('cherry', 'Cherry', ''),
+		gui.list_box_option('date', 'Date', ''),
+		gui.list_box_option('elderberry', 'Elderberry', ''),
+		gui.list_box_option('fig', 'Fig', ''),
+	]
+}
+
+fn drag_reorder_demo_tabs() []gui.TabItemCfg {
+	return [
+		gui.tab_item('alpha', 'Alpha', [gui.text(text: 'Alpha content')]),
+		gui.tab_item('beta', 'Beta', [gui.text(text: 'Beta content')]),
+		gui.tab_item('gamma', 'Gamma', [gui.text(text: 'Gamma content')]),
+		gui.tab_item('delta', 'Delta', [gui.text(text: 'Delta content')]),
+	]
+}
+
+fn drag_reorder_demo_nodes() []gui.TreeNodeCfg {
+	return [
+		gui.TreeNodeCfg{
+			id:    'src'
+			text:  'src'
+			nodes: [
+				gui.TreeNodeCfg{
+					id:   'main.v'
+					text: 'main.v'
+				},
+				gui.TreeNodeCfg{
+					id:   'util.v'
+					text: 'util.v'
+				},
+				gui.TreeNodeCfg{
+					id:   'app.v'
+					text: 'app.v'
+				},
+			]
+		},
+		gui.TreeNodeCfg{
+			id:    'docs'
+			text:  'docs'
+			nodes: [
+				gui.TreeNodeCfg{
+					id:   'readme'
+					text: 'README.md'
+				},
+				gui.TreeNodeCfg{
+					id:   'guide'
+					text: 'GUIDE.md'
+				},
+			]
+		},
+		gui.TreeNodeCfg{
+			id:   'tests'
+			text: 'tests'
+		},
+		gui.TreeNodeCfg{
+			id:   'build'
+			text: 'build'
+		},
+	]
 }
 
 const printing_doc = '# Printing
@@ -6849,12 +7143,14 @@ gui.tab_control(
 | id | string | Unique identifier (required) |
 | items | []TabItemCfg | Tab definitions (required) |
 | selected | string | Active tab ID |
+| reorderable | bool | Enable drag-to-reorder tabs |
 
 ## Events
 
 | Callback | Signature | Fired when |
 |----------|-----------|------------|
-| on_select | fn (string, mut Event, mut Window) | Tab changed (required) |'
+| on_select | fn (string, mut Event, mut Window) | Tab changed (required) |
+| on_reorder | fn (string, string, mut Window) | Tab reordered (moved_id, before_id) |'
 
 fn demo_tab_control(w &gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
