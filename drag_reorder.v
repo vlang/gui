@@ -19,6 +19,7 @@ pub enum DragReorderAxis as u8 {
 // DragReorderState tracks an in-progress drag-reorder operation.
 struct DragReorderState {
 mut:
+	started         bool
 	active          bool
 	cancelled       bool
 	source_index    int
@@ -40,6 +41,7 @@ mut:
 	id_scroll       u32
 	container_start f32
 	container_end   f32
+	layouts_valid   bool
 }
 
 // drag_reorder_get returns the current drag state for the given
@@ -126,13 +128,17 @@ fn drag_reorder_on_mouse_move(drag_key string,
 		.vertical { mouse_y }
 		.horizontal { mouse_x }
 	}
-	mut new_index := if idx := drag_reorder_calc_index_from_mids(mouse_main, state.item_mids) {
-		idx
-	} else if idx := drag_reorder_calc_index_from_layouts(mouse_main, axis, state.item_layout_ids,
-		w)
-	{
-		idx
-	} else {
+	mut new_index := -1
+	if idx := drag_reorder_calc_index_from_mids(mouse_main, state.item_mids) {
+		new_index = idx
+	} else if state.layouts_valid {
+		if idx := drag_reorder_calc_index_from_layouts(mouse_main, axis, state.item_layout_ids,
+			w)
+		{
+			new_index = idx
+		}
+	}
+	if new_index < 0 {
 		// Fallback to uniform estimation if geometry is unavailable.
 		item_start := match axis {
 			.vertical { state.item_y }
@@ -142,7 +148,7 @@ fn drag_reorder_on_mouse_move(drag_key string,
 			.vertical { state.item_height }
 			.horizontal { state.item_width }
 		}
-		drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
+		new_index = drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
 			state.item_count)
 	}
 
@@ -208,6 +214,7 @@ fn drag_reorder_cancel(drag_key string, mut w Window) {
 	drag_reorder_set(mut w, drag_key, state)
 	w.mouse_unlock()
 	w.update_window()
+	drag_reorder_clear(mut w, drag_key)
 }
 
 // drag_reorder_start initiates a drag-reorder from an on_click
@@ -249,7 +256,9 @@ fn drag_reorder_start(drag_key string,
 		}
 	}
 	item_mids := drag_reorder_item_mids_from_layouts(axis, item_layout_ids, w) or { []f32{} }
+	layouts_valid := item_mids.len > 0 && item_mids.len == item_layout_ids.len
 	state := DragReorderState{
+		started:         true
 		source_index:    index
 		current_index:   index
 		item_count:      item_ids.len
@@ -269,6 +278,7 @@ fn drag_reorder_start(drag_key string,
 		id_scroll:       id_scroll
 		container_start: container_start
 		container_end:   container_end
+		layouts_valid:   layouts_valid
 	}
 	drag_reorder_set(mut w, drag_key, state)
 	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids, on_reorder))
@@ -472,7 +482,7 @@ fn drag_reorder_escape(drag_key string, key_code KeyCode, mut w Window) bool {
 		return false
 	}
 	state := drag_reorder_get(mut w, drag_key)
-	if !state.active && state.source_index == 0 && state.item_id.len == 0 {
+	if !state.started && !state.active {
 		return false
 	}
 	drag_reorder_cancel(drag_key, mut w)

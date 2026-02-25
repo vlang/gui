@@ -260,3 +260,86 @@ fn test_drag_reorder_item_mids_from_layouts_missing_layout_returns_none() {
 		assert false
 	}
 }
+
+fn test_drag_reorder_escape_cancels_started_drag() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape: &Shape{
+			id: 'root'
+		}
+	}
+	drag_key := 'drag_escape'
+	drag_reorder_set(mut w, drag_key, DragReorderState{
+		started: true
+	})
+	handled := drag_reorder_escape(drag_key, .escape, mut w)
+	assert handled
+	state := drag_reorder_get(mut w, drag_key)
+	assert !state.started
+}
+
+fn test_drag_reorder_start_sets_layout_validity() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape:    &Shape{
+			id: 'root'
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					id:     'a'
+					x:      0
+					y:      0
+					width:  10
+					height: 10
+				}
+			},
+			Layout{
+				shape: &Shape{
+					id:     'b'
+					x:      0
+					y:      10
+					width:  10
+					height: 10
+				}
+			},
+		]
+	}
+	mut parent := Layout{
+		shape: &Shape{
+			id:     'parent'
+			x:      0
+			y:      0
+			width:  100
+			height: 100
+		}
+	}
+	mut item := Layout{
+		shape:  &Shape{
+			id:     'a'
+			x:      0
+			y:      0
+			width:  10
+			height: 10
+		}
+		parent: &parent
+	}
+	mut e := Event{
+		mouse_x: 1
+		mouse_y: 1
+	}
+
+	drag_key_ok := 'drag_layout_ok'
+	drag_reorder_start(drag_key_ok, 0, 'a', .vertical, ['a', 'b'], fn (_ string, _ string, mut _ Window) {},
+		['a', 'b'], 0, &item, &e, mut w)
+	state_ok := drag_reorder_get(mut w, drag_key_ok)
+	assert state_ok.started
+	assert state_ok.layouts_valid
+
+	drag_key_missing := 'drag_layout_missing'
+	drag_reorder_start(drag_key_missing, 0, 'a', .vertical, ['a', 'b'], fn (_ string, _ string, mut _ Window) {},
+		['a', 'missing'], 0, &item, &e, mut w)
+	state_missing := drag_reorder_get(mut w, drag_key_missing)
+	assert state_missing.started
+	assert !state_missing.layouts_valid
+}
