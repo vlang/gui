@@ -135,8 +135,7 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 		item_drag_idx := if is_draggable { drag_idx } else { -1 }
 
 		// Insert gap at current drop target.
-		if dragging && is_draggable && drag_idx == drag.current_index
-			&& drag.current_index != drag.source_index {
+		if dragging && is_draggable && drag_idx == drag.current_index {
 			header_items << drag_reorder_gap_view(drag, .horizontal)
 		}
 

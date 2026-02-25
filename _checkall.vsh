@@ -8,7 +8,7 @@ fn sh(cmd string) {
 unbuffer_stdout()
 chdir(@DIR)!
 
-sh('v fmt -c .')
+sh('v fmt -w .')
 sh('v run examples/_check.vsh')
 sh('v test .')
 sh('v check-md -w .')

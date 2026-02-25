@@ -207,8 +207,7 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 		is_draggable := can_reorder && item_drag_idx >= 0
 
 		// Insert gap spacer at the current drop target.
-		if dragging && is_draggable && item_drag_idx == drag.current_index
-			&& drag.current_index != drag.source_index {
+		if dragging && is_draggable && item_drag_idx == drag.current_index {
 			list << drag_reorder_gap_view(drag, .vertical)
 		}
 

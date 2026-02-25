@@ -32,6 +32,8 @@ mut:
 	source_index        int
 	current_index       int
 	item_count          int
+	ids_len             int
+	ids_hash            u64
 	item_layout_ids     []string
 	item_mids           []f32
 	start_mouse_x       f32
@@ -134,6 +136,7 @@ fn drag_reorder_on_mouse_move(drag_key string,
 		.horizontal { mouse_x }
 	}
 	mut mouse_main := mouse_orig
+	mut scrolled_since_start := false
 	if state.id_scroll > 0 {
 		scroll_val := if axis == .vertical {
 			state_read_or[u32, f32](w, ns_scroll_y, state.id_scroll, 0)
@@ -141,12 +144,15 @@ fn drag_reorder_on_mouse_move(drag_key string,
 			state_read_or[u32, f32](w, ns_scroll_x, state.id_scroll, 0)
 		}
 		start_scroll := if axis == .vertical { state.start_scroll_y } else { state.start_scroll_x }
+		scrolled_since_start = scroll_val != start_scroll
 		mouse_main -= (scroll_val - start_scroll)
 	}
 
 	mut new_index := -1
-	if idx := drag_reorder_calc_index_from_mids(mouse_main, state.item_mids) {
-		new_index = idx + state.mids_offset
+	if !scrolled_since_start && state.layouts_valid {
+		if idx := drag_reorder_calc_index_from_mids(mouse_main, state.item_mids) {
+			new_index = idx + state.mids_offset
+		}
 	}
 
 	if new_index < 0 {
@@ -214,6 +220,15 @@ fn drag_reorder_on_mouse_up(drag_key string,
 	was_active := state.active
 	src := state.source_index
 	gap := state.current_index
+
+	// If the backing list changed during the drag, cancel without reorder.
+	if state.ids_len != item_ids.len || state.ids_hash != drag_reorder_ids_signature(item_ids) {
+		drag_reorder_clear(mut w, drag_key)
+		w.mouse_unlock()
+		w.remove_animation(drag_reorder_scroll_animation_id)
+		w.update_window()
+		return
+	}
 
 	drag_reorder_clear(mut w, drag_key)
 	w.mouse_unlock()
@@ -314,6 +329,8 @@ fn drag_reorder_start(drag_key string,
 		source_index:    index
 		current_index:   index
 		item_count:      item_ids.len
+		ids_len:         item_ids.len
+		ids_hash:        drag_reorder_ids_signature(item_ids)
 		item_layout_ids: item_layout_ids.clone()
 		item_mids:       item_mids
 		start_mouse_x:   e.mouse_x + layout.shape.x
@@ -564,19 +581,24 @@ fn drag_reorder_auto_scroll(mouse_main f32,
 // moved_id is the ID of the moved item. before_id is
 // the ID of the item it should appear before, or ""
 // for end of list. Returns (-1, -1) on no-op or
-// not-found.
+// not-found (including missing before_id).
 pub fn reorder_indices(ids []string, moved_id string, before_id string) (int, int) {
 	mut from := -1
 	mut bi := ids.len
+	mut before_found := false
 	for i, id in ids {
 		if id == moved_id {
 			from = i
 		}
 		if before_id.len > 0 && id == before_id {
 			bi = i
+			before_found = true
 		}
 	}
 	if from < 0 {
+		return -1, -1
+	}
+	if before_id.len > 0 && !before_found {
 		return -1, -1
 	}
 	to := if from < bi { bi - 1 } else { bi }
@@ -584,4 +606,15 @@ pub fn reorder_indices(ids []string, moved_id string, before_id string) (int, in
 		return -1, -1
 	}
 	return from, to
+}
+
+// drag_reorder_ids_signature computes a stable FNV-1a signature
+// of the item IDs to detect mid-drag list mutations.
+fn drag_reorder_ids_signature(ids []string) u64 {
+	mut h := data_grid_fnv64_offset
+	for id in ids {
+		h = data_grid_fnv64_str(h, id)
+		h = data_grid_fnv64_byte(h, 0x1f)
+	}
+	return h
 }

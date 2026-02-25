@@ -28,6 +28,10 @@ fn test_reorder_indices_cases() {
 	from_e, to_e := reorder_indices(ids, 'z', 'a')
 	assert from_e == -1
 	assert to_e == -1
+
+	from_f, to_f := reorder_indices(ids, 'b', 'missing')
+	assert from_f == -1
+	assert to_f == -1
 }
 
 fn test_drag_reorder_keyboard_move_requires_alt() {
@@ -313,4 +317,87 @@ fn test_drag_reorder_auto_scroll_timer_activation() {
 	state_after := drag_reorder_get(mut w, drag_key)
 	assert !state_after.scroll_timer_active
 	assert !w.has_animation(drag_reorder_scroll_animation_id)
+}
+
+fn test_drag_reorder_cancels_on_mid_drag_mutation() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape: &Shape{
+			id: 'root'
+		}
+	}
+	mut parent := Layout{
+		shape: &Shape{
+			id:     'parent'
+			x:      0
+			y:      0
+			width:  100
+			height: 100
+		}
+	}
+	mut item := Layout{
+		shape:  &Shape{
+			id:     'a'
+			x:      0
+			y:      0
+			width:  10
+			height: 10
+		}
+		parent: &parent
+	}
+	mut e := Event{
+		mouse_x: 1
+		mouse_y: 1
+	}
+
+	drag_key := 'drag_mutation'
+	mut cap := &DragKeyboardCapture{}
+	drag_reorder_start(drag_key, 0, 'a', .vertical, ['a', 'b', 'c'], fn [mut cap] (m string, b string, mut _ Window) {
+		cap.called = true
+		cap.moved = m
+		cap.before = b
+	}, ['a', 'b', 'c'], 0, 0, &item, &e, mut w)
+
+	// Simulate list mutation before mouse-up.
+	drag_reorder_on_mouse_up(drag_key, ['a', 'c'], fn [mut cap] (_ string, _ string, mut _ Window) {
+		cap.called = true
+	}, mut w)
+	assert !cap.called
+	state := drag_reorder_get(mut w, drag_key)
+	assert !state.started
+	assert !state.active
+}
+
+fn test_drag_reorder_scroll_change_uses_uniform_estimate() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape: &Shape{
+			id: 'root'
+		}
+	}
+	drag_key := 'drag_scroll_uniform'
+	id_scroll := u32(200)
+
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	sy.set(id_scroll, 10.0)
+
+	state := DragReorderState{
+		active:         true
+		item_y:         0.0
+		item_height:    10.0
+		source_index:   0
+		item_count:     5
+		id_scroll:      id_scroll
+		start_scroll_y: 0.0
+		item_mids:      [f32(25), 35]
+		mids_offset:    2
+		layouts_valid:  true
+	}
+	drag_reorder_set(mut w, drag_key, state)
+
+	// With scroll change, mids would yield index 2; uniform should yield 0.
+	drag_reorder_on_mouse_move(drag_key, .vertical, 0, 15, mut w)
+
+	new_state := drag_reorder_get(mut w, drag_key)
+	assert new_state.current_index == 0
 }

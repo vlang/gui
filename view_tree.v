@@ -157,8 +157,7 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		is_draggable := can_reorder && !fr.is_loading && fr.depth == 0 && reorder_idx >= 0
 
 		// Insert gap spacer at current drop target.
-		if dragging && is_draggable && reorder_idx == drag.current_index
-			&& drag.current_index != drag.source_index {
+		if dragging && is_draggable && reorder_idx == drag.current_index {
 			content << drag_reorder_gap_view(drag, .vertical)
 		}
 
