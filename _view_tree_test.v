@@ -2,9 +2,10 @@ module gui
 
 struct TreeReorderCapture {
 mut:
-	called bool
-	moved  string
-	before string
+	called    bool
+	moved     string
+	before    string
+	parent_id string
 }
 
 fn test_tree_compilation() {
@@ -61,7 +62,7 @@ fn test_tree_collect_flat_rows() {
 	}
 	mut lazy_sm := state_map[string, bool](mut w, ns_tree_lazy, cap_tree_lazy)
 	mut out := []TreeFlatRow{}
-	tree_collect_flat_rows(nodes, tree_map, 'test', mut lazy_sm, mut out, 0)
+	tree_collect_flat_rows(nodes, tree_map, 'test', mut lazy_sm, mut out, 0, '')
 
 	assert out.len == 4
 	// Root level
@@ -96,7 +97,7 @@ fn test_tree_collect_flat_rows_collapsed() {
 	tree_map := map[string]bool{}
 	mut lazy_sm := state_map[string, bool](mut w, ns_tree_lazy, cap_tree_lazy)
 	mut out := []TreeFlatRow{}
-	tree_collect_flat_rows(nodes, tree_map, 'test', mut lazy_sm, mut out, 0)
+	tree_collect_flat_rows(nodes, tree_map, 'test', mut lazy_sm, mut out, 0, '')
 
 	assert out.len == 1
 	assert out[0].id == 'Animals'
@@ -119,7 +120,7 @@ fn test_tree_collect_flat_rows_with_lazy() {
 	lazy_sm.set(tree_lazy_key('test', 'Server'), true)
 
 	mut out := []TreeFlatRow{}
-	tree_collect_flat_rows(nodes, tree_map, 'test', mut lazy_sm, mut out, 0)
+	tree_collect_flat_rows(nodes, tree_map, 'test', mut lazy_sm, mut out, 0, '')
 
 	// Should have node + loading sentinel.
 	assert out.len == 2
@@ -153,7 +154,7 @@ fn test_tree_lazy_auto_clear() {
 	lazy_sm.set(lk, true)
 
 	mut out := []TreeFlatRow{}
-	tree_collect_flat_rows(nodes, tree_map, 'test', mut lazy_sm, mut out, 0)
+	tree_collect_flat_rows(nodes, tree_map, 'test', mut lazy_sm, mut out, 0, '')
 
 	// Loading should be auto-cleared.
 	assert lazy_sm.get(lk) == none
@@ -227,11 +228,21 @@ fn test_tree_keyboard_reorder_keeps_focus_on_moved_id() {
 		'a',
 		'b',
 		'c',
-	], true, fn [mut cap] (m string, b string, mut _ Window) {
+	], true, fn [mut cap] (m string, b string, _ string, mut _ Window) {
 		cap.called = true
 		cap.moved = m
 		cap.before = b
-	}, ['a', 'b', 'c'], mut e, mut w)
+	}, {
+		'': ['a', 'b', 'c']
+	}, {
+		'a': 0
+		'b': 1
+		'c': 2
+	}, {
+		'a': ''
+		'b': ''
+		'c': ''
+	}, mut e, mut w)
 	assert cap.called
 	assert cap.moved == 'b'
 	assert cap.before == 'a'
@@ -248,7 +259,7 @@ fn test_tree_virtualized_drag_uses_global_top_level_index() {
 		id_scroll:   77
 		height:      20
 		reorderable: true
-		on_reorder:  fn (_ string, _ string, mut _ Window) {}
+		on_reorder:  fn (_ string, _ string, _ string, mut _ Window) {}
 		nodes:       [
 			tree_node(id: 'a', text: 'A'),
 			tree_node(id: 'b', text: 'B'),
@@ -262,6 +273,7 @@ fn test_tree_virtualized_drag_uses_global_top_level_index() {
 	sy.set(cfg.id_scroll, -(row_height * 4))
 	drag_reorder_set(mut w, cfg.id, DragReorderState{
 		active:        true
+		item_id:       'd'
 		source_index:  3
 		current_index: 4
 		item_width:    120
@@ -302,6 +314,197 @@ fn test_tree_nil_on_reorder_disables_reorder_ids() {
 	if 'tr_tree_nil_reorder_b' in ids {
 		assert false
 	}
+}
+
+fn test_tree_leaf_node_drag_produces_ghost_and_gap() {
+	mut w := Window{}
+	// Mimic the example: parent nodes with children + leaf nodes.
+	cfg := TreeCfg{
+		id:          'tree_leaf'
+		reorderable: true
+		on_reorder:  fn (_ string, _ string, _ string, mut _ Window) {}
+		nodes:       [
+			tree_node(
+				id:    'src'
+				text:  'src'
+				nodes: [tree_node(id: 'main.v', text: 'main.v')]
+			),
+			tree_node(id: 'tests', text: 'tests'),
+			tree_node(id: 'build', text: 'build'),
+		]
+	}
+	// Expand src so the flat list is: src, main.v, tests, build.
+	w.view_state.tree_state.set('tree_leaf', {
+		'src': true
+	})
+	// Drag leaf node "tests" (root sibling index 1) towards "build" (index 2).
+	drag_reorder_set(mut w, cfg.id, DragReorderState{
+		active:        true
+		item_id:       'tests'
+		source_index:  1
+		current_index: 2
+		item_width:    200
+		item_height:   20
+	})
+	mut v := w.tree(cfg)
+	ids := tree_child_ids(v)
+	// "tests" is the drag source — should NOT be in normal content.
+	assert 'tr_tree_leaf_tests' !in ids
+	// "src" and "build" must be present.
+	assert 'tr_tree_leaf_src' in ids
+	assert 'tr_tree_leaf_build' in ids
+}
+
+fn test_tree_leaf_node_gets_drag_layout_id() {
+	mut w := Window{}
+	cfg := TreeCfg{
+		id:          'tree_id'
+		reorderable: true
+		on_reorder:  fn (_ string, _ string, _ string, mut _ Window) {}
+		nodes:       [
+			tree_node(
+				id:    'parent'
+				text:  'Parent'
+				nodes: [tree_node(id: 'child', text: 'Child')]
+			),
+			tree_node(id: 'leaf', text: 'Leaf'),
+		]
+	}
+	// Expand parent so child is visible.
+	w.view_state.tree_state.set('tree_id', {
+		'parent': true
+	})
+	mut v := w.tree(cfg)
+	ids := tree_child_ids(v)
+	// All non-loading nodes get drag layout IDs.
+	assert 'tr_tree_id_parent' in ids
+	assert 'tr_tree_id_child' in ids
+	assert 'tr_tree_id_leaf' in ids
+}
+
+fn test_tree_collect_flat_rows_sets_parent_id() {
+	mut w := Window{}
+	nodes := [
+		TreeNodeCfg{
+			id:    'src'
+			text:  'src'
+			nodes: [
+				TreeNodeCfg{
+					id:   'main.v'
+					text: 'main.v'
+				},
+				TreeNodeCfg{
+					id:   'util.v'
+					text: 'util.v'
+				},
+			]
+		},
+		TreeNodeCfg{
+			id:   'tests'
+			text: 'tests'
+		},
+	]
+	tree_map := {
+		'src': true
+	}
+	mut lazy_sm := state_map[string, bool](mut w, ns_tree_lazy, cap_tree_lazy)
+	mut out := []TreeFlatRow{}
+	tree_collect_flat_rows(nodes, tree_map, 'test', mut lazy_sm, mut out, 0, '')
+
+	assert out.len == 4
+	// Root nodes have empty parent_id.
+	assert out[0].id == 'src'
+	assert out[0].parent_id == ''
+	assert out[3].id == 'tests'
+	assert out[3].parent_id == ''
+	// Children have parent's id.
+	assert out[1].id == 'main.v'
+	assert out[1].parent_id == 'src'
+	assert out[2].id == 'util.v'
+	assert out[2].parent_id == 'src'
+}
+
+fn test_tree_sibling_drag_produces_ghost_among_siblings() {
+	mut w := Window{}
+	cfg := TreeCfg{
+		id:          'tree_sib'
+		reorderable: true
+		on_reorder:  fn (_ string, _ string, _ string, mut _ Window) {}
+		nodes:       [
+			tree_node(
+				id:    'src'
+				text:  'src'
+				nodes: [
+					tree_node(id: 'main.v', text: 'main.v'),
+					tree_node(id: 'util.v', text: 'util.v'),
+				]
+			),
+			tree_node(id: 'tests', text: 'tests'),
+		]
+	}
+	w.view_state.tree_state.set('tree_sib', {
+		'src': true
+	})
+	// Drag child "main.v" (sibling index 0 within src) to index 1.
+	drag_reorder_set(mut w, cfg.id, DragReorderState{
+		active:        true
+		item_id:       'main.v'
+		source_index:  0
+		current_index: 1
+		item_width:    200
+		item_height:   20
+	})
+	mut v := w.tree(cfg)
+	ids := tree_child_ids(v)
+	// "main.v" is the drag source — ghosted, not in normal content.
+	assert 'tr_tree_sib_main.v' !in ids
+	// "util.v" (sibling) should be present.
+	assert 'tr_tree_sib_util.v' in ids
+	// Parent "src" and root sibling "tests" unaffected.
+	assert 'tr_tree_sib_src' in ids
+	assert 'tr_tree_sib_tests' in ids
+}
+
+fn test_tree_keyboard_reorder_nested_siblings() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape: &Shape{
+			id: 'root'
+		}
+	}
+	// Focus on 'util.v' which is a child of 'src'.
+	mut tf := state_map[string, string](mut w, ns_tree_focus, cap_tree_focus)
+	tf.set('tree', 'util.v')
+	mut cap := &TreeReorderCapture{}
+	mut e := Event{
+		key_code:  .up
+		modifiers: .alt
+	}
+	tree_on_keydown('tree', fn (_ string, mut _ Window) {}, fn (_ string, _ string, mut _ Window) {},
+		['src', 'main.v', 'util.v', 'tests'], true, fn [mut cap] (m string, b string, p string, mut _ Window) {
+		cap.called = true
+		cap.moved = m
+		cap.before = b
+		cap.parent_id = p
+	}, {
+		'':    ['src', 'tests']
+		'src': ['main.v', 'util.v']
+	}, {
+		'src':    0
+		'tests':  1
+		'main.v': 0
+		'util.v': 1
+	}, {
+		'src':    ''
+		'tests':  ''
+		'main.v': 'src'
+		'util.v': 'src'
+	}, mut e, mut w)
+	assert cap.called
+	assert cap.moved == 'util.v'
+	assert cap.before == 'main.v'
+	assert cap.parent_id == 'src'
+	assert e.is_handled
 }
 
 fn tree_child_ids(v View) []string {

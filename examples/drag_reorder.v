@@ -111,21 +111,40 @@ fn main_view(mut w gui.Window) gui.View {
 						nodes:       app.nodes
 						reorderable: true
 						on_select:   fn (id string, mut w gui.Window) {}
-						on_reorder:  fn (moved_id string, before_id string, mut w gui.Window) {
+						on_reorder:  fn (moved_id string, before_id string, parent_id string, mut w gui.Window) {
 							mut a := w.state[App]()
-							from, to := gui.reorder_indices(a.nodes.map(it.id), moved_id,
-								before_id)
-							if from >= 0 {
-								node := a.nodes[from]
-								a.nodes.delete(from)
-								a.nodes.insert(to, node)
-							}
+							reorder_tree_nodes(mut a.nodes, moved_id, before_id, parent_id)
 						}
 					),
 				]
 			),
 		]
 	)
+}
+
+fn reorder_tree_nodes(mut nodes []gui.TreeNodeCfg, moved_id string, before_id string, parent_id string) {
+	if parent_id.len == 0 {
+		from, to := gui.reorder_indices(nodes.map(it.id), moved_id, before_id)
+		if from >= 0 {
+			node := nodes[from]
+			nodes.delete(from)
+			nodes.insert(to, node)
+		}
+		return
+	}
+	for mut node in nodes {
+		id := if node.id.len == 0 { node.text } else { node.id }
+		if id == parent_id {
+			from, to := gui.reorder_indices(node.nodes.map(it.id), moved_id, before_id)
+			if from >= 0 {
+				child := node.nodes[from]
+				node.nodes.delete(from)
+				node.nodes.insert(to, child)
+			}
+			return
+		}
+		reorder_tree_nodes(mut node.nodes, moved_id, before_id, parent_id)
+	}
 }
 
 fn demo_items() []gui.ListBoxOption {

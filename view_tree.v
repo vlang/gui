@@ -27,7 +27,7 @@ pub:
 	height       f32
 	max_height   f32
 	reorderable  bool
-	on_reorder   fn (string, string, mut Window) = unsafe { nil }
+	on_reorder   fn (string, string, string, mut Window) = unsafe { nil }
 }
 
 // TreeNodeCfg configures a [tree_node](#tree_node). Use gui.icon_xxx
@@ -44,8 +44,9 @@ pub:
 	icon            string
 	text_style      TextStyle = gui_theme.tree_style.text_style
 	text_style_icon TextStyle = gui_theme.tree_style.text_style_icon
-	nodes           []TreeNodeCfg
 	lazy            bool
+pub mut:
+	nodes []TreeNodeCfg
 }
 
 // tree_node is a helper to define a [TreeNodeCfg](#TreeNodeCfg).
@@ -60,6 +61,7 @@ pub fn tree_node(cfg TreeNodeCfg) TreeNodeCfg {
 // and to comply with GC closure-capture rules.
 struct TreeFlatRow {
 	id                string
+	parent_id         string
 	depth             int
 	text              string
 	icon              string
@@ -75,12 +77,13 @@ struct TreeFlatRow {
 // TreeDragContext groups the drag-reorder parameters passed to
 // tree_flat_row_view and make_tree_drag_click.
 struct TreeDragContext {
-	cfg_id               string
-	on_reorder           fn (string, string, mut Window) = unsafe { nil }
-	id_scroll            u32
-	flat_index           int
-	top_level_ids        []string
-	top_level_layout_ids []string
+	cfg_id             string
+	on_reorder         fn (string, string, string, mut Window) = unsafe { nil }
+	parent_id          string
+	id_scroll          u32
+	sibling_index      int
+	sibling_ids        []string
+	sibling_layout_ids []string
 }
 
 // tree creates a tree view from the given [TreeCfg](#TreeCfg).
@@ -93,7 +96,8 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 	mut lazy_sm := state_map[string, bool](mut window, ns_tree_lazy, cap_tree_lazy)
 
 	mut flat_rows := []TreeFlatRow{cap: cfg.nodes.len * 4}
-	tree_collect_flat_rows(cfg.nodes, tree_map, cfg_id, mut lazy_sm, mut flat_rows, 0)
+	tree_collect_flat_rows(cfg.nodes, tree_map, cfg_id, mut lazy_sm, mut flat_rows, 0,
+		'')
 
 	// Build visible-node IDs for keyboard nav (skip loading sentinels).
 	mut visible_ids := []string{cap: flat_rows.len}
@@ -142,56 +146,68 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		)
 	}
 
-	// Top-level (depth-0) node IDs and count for reorder indices.
-	mut top_level_ids := []string{}
-	mut top_level_layout_ids := []string{}
-	mut top_index_by_id := map[string]int{}
+	// Build per-parent sibling data for reorder indices.
+	mut sibling_ids_by_parent := map[string][]string{}
+	mut sibling_layout_ids_by_parent := map[string][]string{}
+	mut sibling_index_of := map[string]int{}
+	mut parent_of := map[string]string{}
 	if can_reorder {
-		top_level_ids = []string{cap: cfg.nodes.len}
-		top_level_layout_ids = []string{cap: cfg.nodes.len}
-		for i, n in cfg.nodes {
-			id := if n.id.len == 0 { n.text } else { n.id }
-			top_level_ids << id
-			top_level_layout_ids << 'tr_${cfg_id}_${id}'
-			top_index_by_id[id] = i
+		for fr in flat_rows {
+			if !fr.is_loading {
+				pid := fr.parent_id
+				sibling_index_of[fr.id] = sibling_ids_by_parent[pid].len
+				sibling_ids_by_parent[pid] << fr.id
+				sibling_layout_ids_by_parent[pid] << 'tr_${cfg_id}_${fr.id}'
+				parent_of[fr.id] = pid
+			}
 		}
 	}
 	if can_reorder && (drag.started || drag.active) {
-		drag_reorder_ids_meta_set(mut window, cfg_id, top_level_ids)
+		drag_pid := parent_of[drag.item_id] or { '' }
+		drag_reorder_ids_meta_set(mut window, cfg_id, sibling_ids_by_parent[drag_pid])
 	}
-	top_level_count := top_level_ids.len
 	on_reorder := cfg.on_reorder
+	// Determine drag scope parent for active drags.
+	drag_parent := if dragging || drag.started {
+		parent_of[drag.item_id] or { '' }
+	} else {
+		''
+	}
 	mut ghost_content := View(rectangle(RectangleCfg{}))
 	for idx in first_visible .. last_visible + 1 {
 		if idx < 0 || idx >= flat_rows.len {
 			continue
 		}
 		fr := flat_rows[idx]
-		reorder_idx := top_index_by_id[fr.id] or { -1 }
-		is_draggable := can_reorder && !fr.is_loading && fr.depth == 0 && reorder_idx >= 0
+		sibling_idx := sibling_index_of[fr.id] or { -1 }
+		is_draggable := can_reorder && !fr.is_loading && sibling_idx >= 0
 
-		// Insert gap spacer at current drop target.
-		if dragging && is_draggable && reorder_idx == drag.current_index {
+		// Insert gap spacer at current drop target (scoped to drag parent).
+		if dragging && is_draggable && fr.parent_id == drag_parent
+			&& sibling_idx == drag.current_index {
 			content << drag_reorder_gap_view(drag, .vertical)
 		}
 
-		if dragging && is_draggable && reorder_idx == drag.source_index {
+		if dragging && is_draggable && fr.parent_id == drag_parent
+			&& sibling_idx == drag.source_index {
 			ghost_content = tree_flat_row_content(fr, indent, min_width_icon)
 		} else {
+			pid := fr.parent_id
 			drag_ctx := TreeDragContext{
-				cfg_id:               cfg_id
-				on_reorder:           on_reorder
-				id_scroll:            cfg.id_scroll
-				flat_index:           reorder_idx
-				top_level_ids:        top_level_ids
-				top_level_layout_ids: top_level_layout_ids
+				cfg_id:             cfg_id
+				on_reorder:         on_reorder
+				parent_id:          pid
+				id_scroll:          cfg.id_scroll
+				sibling_index:      sibling_idx
+				sibling_ids:        sibling_ids_by_parent[pid]
+				sibling_layout_ids: sibling_layout_ids_by_parent[pid]
 			}
 			content << tree_flat_row_view(cfg_id, on_select, on_lazy_load, fr, indent,
 				min_width_icon, is_draggable, drag_ctx)
 		}
 	}
-	// Gap at end.
-	if dragging && drag.current_index >= top_level_count {
+	// Gap at end (scoped to drag parent's sibling count).
+	if dragging && drag.current_index >= sibling_ids_by_parent[drag_parent].len {
 		content << drag_reorder_gap_view(drag, .vertical)
 	}
 
@@ -221,9 +237,10 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		spacing:          cfg.spacing
 		height:           cfg.height
 		max_height:       cfg.max_height
-		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids, can_reorder, on_reorder, top_level_ids] (_ &Layout, mut e Event, mut w Window) {
+		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids, can_reorder, on_reorder, sibling_ids_by_parent, sibling_index_of, parent_of] (_ &Layout, mut e Event, mut w Window) {
 			tree_on_keydown(cfg_id, on_select, on_lazy_load, visible_ids, can_reorder,
-				on_reorder, top_level_ids, mut e, mut w)
+				on_reorder, sibling_ids_by_parent, sibling_index_of, parent_of, mut e, mut
+				w)
 		}
 		content:          content
 	)
@@ -246,7 +263,7 @@ fn tree_lazy_key(cfg_id string, node_id string) string {
 // tree_collect_flat_rows recursively walks the tree producing flat
 // rows. Loading sentinels are emitted for expanded lazy nodes with
 // no children. Completed lazy loads (nodes arrived) are auto-cleared.
-fn tree_collect_flat_rows(nodes []TreeNodeCfg, tree_map map[string]bool, cfg_id string, mut lazy_sm BoundedMap[string, bool], mut out []TreeFlatRow, depth int) {
+fn tree_collect_flat_rows(nodes []TreeNodeCfg, tree_map map[string]bool, cfg_id string, mut lazy_sm BoundedMap[string, bool], mut out []TreeFlatRow, depth int, parent_id string) {
 	for node in nodes {
 		id := if node.id.len == 0 { node.text } else { node.id }
 		is_expanded := tree_map[id]
@@ -261,6 +278,7 @@ fn tree_collect_flat_rows(nodes []TreeNodeCfg, tree_map map[string]bool, cfg_id 
 
 		out << TreeFlatRow{
 			id:                id
+			parent_id:         parent_id
 			depth:             depth
 			text:              node.text
 			icon:              node.icon
@@ -276,11 +294,12 @@ fn tree_collect_flat_rows(nodes []TreeNodeCfg, tree_map map[string]bool, cfg_id 
 		if is_expanded {
 			if node.nodes.len > 0 {
 				tree_collect_flat_rows(node.nodes, tree_map, cfg_id, mut lazy_sm, mut
-					out, depth + 1)
+					out, depth + 1, id)
 			} else if node.lazy && is_loading {
 				// Loading sentinel row.
 				out << TreeFlatRow{
 					id:         '${id}.__loading__'
+					parent_id:  id
 					depth:      depth + 1
 					text:       gui_locale.str_loading
 					is_loading: true
@@ -495,10 +514,15 @@ fn make_tree_drag_click(drag_ctx TreeDragContext, id string,
 	on_lazy_load fn (string, string, mut Window),
 	is_expanded bool, has_children bool,
 	is_lazy bool, node_has_real_children bool) fn (&Layout, mut Event, mut Window) {
-	return fn [drag_ctx, id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(drag_ctx.cfg_id, drag_ctx.flat_index, id, .vertical, drag_ctx.top_level_ids,
-			drag_ctx.on_reorder, drag_ctx.top_level_layout_ids, 0, drag_ctx.id_scroll,
-			layout, e, mut w)
+	on_reorder := drag_ctx.on_reorder
+	parent_id := drag_ctx.parent_id
+	reorder_wrapped := fn [on_reorder, parent_id] (moved string, before string, mut w Window) {
+		on_reorder(moved, before, parent_id, mut w)
+	}
+	return fn [drag_ctx, id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children, reorder_wrapped] (layout &Layout, mut e Event, mut w Window) {
+		drag_reorder_start(drag_ctx.cfg_id, drag_ctx.sibling_index, id, .vertical, drag_ctx.sibling_ids,
+			reorder_wrapped, drag_ctx.sibling_layout_ids, 0, drag_ctx.id_scroll, layout,
+			e, mut w)
 		tree_row_click(drag_ctx.cfg_id, on_select, on_lazy_load, is_expanded, has_children,
 			is_lazy, node_has_real_children, id, mut e, mut w)
 	}
@@ -517,19 +541,24 @@ fn tree_clear_loading(cfg_id string, node_id string, mut w Window) {
 }
 
 // tree_on_keydown handles keyboard navigation for the tree.
-fn tree_on_keydown(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), visible_ids []string, reorderable bool, on_reorder fn (string, string, mut Window), top_level_ids []string, mut e Event, mut w Window) {
+fn tree_on_keydown(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), visible_ids []string, reorderable bool, on_reorder fn (string, string, string, mut Window), sibling_ids_by_parent map[string][]string, sibling_index_of map[string]int, parent_of map[string]string, mut e Event, mut w Window) {
 	// Escape cancels active drag.
 	if reorderable && drag_reorder_escape(cfg_id, e.key_code, mut w) {
 		e.is_handled = true
 		return
 	}
-	// Alt+Up/Down keyboard reorder (top-level nodes only).
+	// Alt+Up/Down keyboard reorder (same-parent siblings).
 	if reorderable && on_reorder != unsafe { nil } {
 		mut tf := state_map[string, string](mut w, ns_tree_focus, cap_tree_focus)
 		focused := tf.get(cfg_id) or { '' }
-		cur := top_level_ids.index(focused)
+		pid := parent_of[focused] or { '' }
+		siblings := sibling_ids_by_parent[pid]
+		cur := sibling_index_of[focused] or { -1 }
+		reorder_wrapped := fn [on_reorder, pid] (moved string, before string, mut w Window) {
+			on_reorder(moved, before, pid, mut w)
+		}
 		if cur >= 0
-			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .vertical, cur, top_level_ids, on_reorder, mut w) {
+			&& drag_reorder_keyboard_move(e.key_code, e.modifiers, .vertical, cur, siblings, reorder_wrapped, mut w) {
 			// Keep focus on moved item ID after reorder.
 			if focused.len > 0 {
 				tf.set(cfg_id, focused)
