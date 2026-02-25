@@ -111,9 +111,11 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 	selected_idx := tab_selected_index(cfg.items, cfg.selected)
 	dragging := can_reorder && drag.active && !drag.cancelled
 	// Build non-disabled tab IDs for drag index mapping.
-	mut tab_ids := []string{cap: cfg.items.len}
-	mut tab_layout_ids := []string{cap: cfg.items.len}
+	mut tab_ids := []string{}
+	mut tab_layout_ids := []string{}
 	if can_reorder {
+		tab_ids = []string{cap: cfg.items.len}
+		tab_layout_ids = []string{cap: cfg.items.len}
 		for item in cfg.items {
 			if !item.disabled {
 				tab_ids << item.id

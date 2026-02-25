@@ -132,14 +132,18 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 	}
 
 	// Top-level (depth-0) node IDs and count for reorder indices.
-	mut top_level_ids := []string{cap: cfg.nodes.len}
-	mut top_level_layout_ids := []string{cap: cfg.nodes.len}
+	mut top_level_ids := []string{}
+	mut top_level_layout_ids := []string{}
 	mut top_index_by_id := map[string]int{}
-	for i, n in cfg.nodes {
-		id := if n.id.len == 0 { n.text } else { n.id }
-		top_level_ids << id
-		top_level_layout_ids << 'tr_${cfg_id}_${id}'
-		top_index_by_id[id] = i
+	if can_reorder {
+		top_level_ids = []string{cap: cfg.nodes.len}
+		top_level_layout_ids = []string{cap: cfg.nodes.len}
+		for i, n in cfg.nodes {
+			id := if n.id.len == 0 { n.text } else { n.id }
+			top_level_ids << id
+			top_level_layout_ids << 'tr_${cfg_id}_${id}'
+			top_index_by_id[id] = i
+		}
 	}
 	top_level_count := top_level_ids.len
 	on_reorder := cfg.on_reorder

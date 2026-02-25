@@ -120,28 +120,30 @@ fn drag_reorder_on_mouse_move(drag_key string,
 		w.animate_layout(LayoutTransitionCfg{})
 	}
 
-	// Estimate drop target from cursor vs item geometry.
+	// Determine drop target from cursor vs item geometry.
+	// Prefer precomputed midpoints (fastest hit testing).
 	mouse_main := match axis {
 		.vertical { mouse_y }
 		.horizontal { mouse_x }
 	}
-	item_start := match axis {
-		.vertical { state.item_y }
-		.horizontal { state.item_x }
-	}
-	item_size := match axis {
-		.vertical { state.item_height }
-		.horizontal { state.item_width }
-	}
-	mut new_index := drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
-		state.item_count)
-
-	if idx := drag_reorder_calc_index_from_mids(mouse_main, state.item_mids) {
-		new_index = idx
+	mut new_index := if idx := drag_reorder_calc_index_from_mids(mouse_main, state.item_mids) {
+		idx
 	} else if idx := drag_reorder_calc_index_from_layouts(mouse_main, axis, state.item_layout_ids,
 		w)
 	{
-		new_index = idx
+		idx
+	} else {
+		// Fallback to uniform estimation if geometry is unavailable.
+		item_start := match axis {
+			.vertical { state.item_y }
+			.horizontal { state.item_x }
+		}
+		item_size := match axis {
+			.vertical { state.item_height }
+			.horizontal { state.item_width }
+		}
+		drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
+			state.item_count)
 	}
 
 	did_scroll := drag_reorder_auto_scroll(mouse_main, state.container_start, state.container_end,
@@ -175,6 +177,8 @@ fn drag_reorder_on_mouse_up(drag_key string,
 	drag_reorder_clear(mut w, drag_key)
 	w.mouse_unlock()
 
+	// drop at gap index (src) or the gap immediately following it (src+1)
+	// is a no-op since the item is already between those positions.
 	if was_active && !state.cancelled && gap != src && gap != src + 1 {
 		if on_reorder != unsafe { nil } && src >= 0 && src < item_ids.len {
 			moved_id := item_ids[src]
@@ -419,6 +423,8 @@ fn drag_reorder_keyboard_move(key_code KeyCode,
 				}
 				.down {
 					if current_index < item_count - 1 {
+						// Moving down one slot means dropping before the item
+						// at current_index + 2.
 						new_index = int_min(current_index + 2, item_count)
 					}
 				}
@@ -434,6 +440,8 @@ fn drag_reorder_keyboard_move(key_code KeyCode,
 				}
 				.right {
 					if current_index < item_count - 1 {
+						// Moving right one slot means dropping before the item
+						// at current_index + 2.
 						new_index = int_min(current_index + 2, item_count)
 					}
 				}
@@ -489,19 +497,23 @@ fn drag_reorder_auto_scroll(mouse_main f32,
 	if near_start < drag_reorder_scroll_zone && near_start >= 0 {
 		ratio := 1.0 - (near_start / drag_reorder_scroll_zone)
 		delta := drag_reorder_scroll_speed * ratio
-		match axis {
-			.vertical { w.scroll_vertical_by(id_scroll, delta) }
-			.horizontal { w.scroll_horizontal_by(id_scroll, delta) }
+		if delta != 0 {
+			match axis {
+				.vertical { w.scroll_vertical_by(id_scroll, delta) }
+				.horizontal { w.scroll_horizontal_by(id_scroll, delta) }
+			}
+			return true
 		}
-		return true
 	} else if near_end < drag_reorder_scroll_zone && near_end >= 0 {
 		ratio := 1.0 - (near_end / drag_reorder_scroll_zone)
 		delta := -drag_reorder_scroll_speed * ratio
-		match axis {
-			.vertical { w.scroll_vertical_by(id_scroll, delta) }
-			.horizontal { w.scroll_horizontal_by(id_scroll, delta) }
+		if delta != 0 {
+			match axis {
+				.vertical { w.scroll_vertical_by(id_scroll, delta) }
+				.horizontal { w.scroll_horizontal_by(id_scroll, delta) }
+			}
+			return true
 		}
-		return true
 	}
 	return false
 }

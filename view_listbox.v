@@ -144,16 +144,21 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	}
 	dragging := can_reorder && drag.active && !drag.cancelled
 	// Build non-subheading item IDs for drag index mapping.
-	mut item_ids := []string{cap: cfg.data.len}
-	mut item_layout_ids := []string{cap: cfg.data.len}
-	mut global_drag_idx_by_row := []int{len: cfg.data.len, init: -1}
+	mut item_ids := []string{}
+	mut item_layout_ids := []string{}
+	mut global_drag_idx_by_row := []int{}
 	mut draggable_count := 0
-	for idx, dat in cfg.data {
-		if !dat.is_subheading {
-			item_ids << dat.id
-			item_layout_ids << 'lb_${cfg.id}_${dat.id}'
-			global_drag_idx_by_row[idx] = draggable_count
-			draggable_count++
+	if can_reorder {
+		item_ids = []string{cap: cfg.data.len}
+		item_layout_ids = []string{cap: cfg.data.len}
+		global_drag_idx_by_row = []int{len: cfg.data.len, init: -1}
+		for idx, dat in cfg.data {
+			if !dat.is_subheading {
+				item_ids << dat.id
+				item_layout_ids << 'lb_${cfg.id}_${dat.id}'
+				global_drag_idx_by_row[idx] = draggable_count
+				draggable_count++
+			}
 		}
 	}
 	on_reorder := cfg.on_reorder
@@ -181,7 +186,11 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 			continue
 		}
 		dat := cfg.data[idx]
-		item_drag_idx := global_drag_idx_by_row[idx]
+		item_drag_idx := if global_drag_idx_by_row.len > 0 {
+			global_drag_idx_by_row[idx]
+		} else {
+			-1
+		}
 		is_draggable := can_reorder && item_drag_idx >= 0
 
 		// Insert gap spacer at the current drop target.
