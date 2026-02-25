@@ -72,6 +72,17 @@ struct TreeFlatRow {
 	is_loading        bool // sentinel for loading indicator rows
 }
 
+// TreeDragContext groups the drag-reorder parameters passed to
+// tree_flat_row_view and make_tree_drag_click.
+struct TreeDragContext {
+	cfg_id               string
+	on_reorder           fn (string, string, mut Window) = unsafe { nil }
+	id_scroll            u32
+	flat_index           int
+	top_level_ids        []string
+	top_level_layout_ids []string
+}
+
 // tree creates a tree view from the given [TreeCfg](#TreeCfg).
 // Uses flat-row rendering with optional spacer-based virtualization.
 pub fn (mut window Window) tree(cfg TreeCfg) View {
@@ -164,9 +175,16 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		if dragging && is_draggable && reorder_idx == drag.source_index {
 			ghost_content = tree_flat_row_content(fr, indent, min_width_icon)
 		} else {
+			drag_ctx := TreeDragContext{
+				cfg_id:               cfg_id
+				on_reorder:           on_reorder
+				id_scroll:            cfg.id_scroll
+				flat_index:           reorder_idx
+				top_level_ids:        top_level_ids
+				top_level_layout_ids: top_level_layout_ids
+			}
 			content << tree_flat_row_view(cfg_id, on_select, on_lazy_load, fr, indent,
-				min_width_icon, is_draggable, on_reorder, cfg.id_scroll, reorder_idx,
-				top_level_count, top_level_ids, top_level_layout_ids)
+				min_width_icon, is_draggable, drag_ctx)
 		}
 	}
 	// Gap at end.
@@ -358,7 +376,7 @@ fn tree_arrow_icon(fr TreeFlatRow) string {
 }
 
 // tree_flat_row_view produces a single View for one flat row.
-fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), flat_row TreeFlatRow, indent f32, min_width_icon f32, reorderable bool, on_reorder fn (string, string, mut Window), id_scroll u32, flat_index int, flat_count int, top_level_ids []string, top_level_layout_ids []string) View {
+fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), flat_row TreeFlatRow, indent f32, min_width_icon f32, reorderable bool, drag_ctx TreeDragContext) View {
 	if flat_row.is_loading {
 		return row(
 			name:    'tree loading'
@@ -396,8 +414,7 @@ fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_
 	}
 
 	on_click_fn := if reorderable {
-		make_tree_drag_click(cfg_id, id, flat_index, top_level_ids, on_reorder, id_scroll,
-			top_level_layout_ids, on_select, on_lazy_load, is_expanded, has_children,
+		make_tree_drag_click(drag_ctx, id, on_select, on_lazy_load, is_expanded, has_children,
 			is_lazy, node_has_real_children)
 	} else {
 		fn [cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children, id] (_ &Layout, mut e Event, mut w Window) {
@@ -470,20 +487,17 @@ fn tree_row_click(cfg_id string, on_select fn (string, mut Window), on_lazy_load
 
 // make_tree_drag_click creates an on_click that initiates
 // drag-reorder and also fires normal tree click behavior.
-fn make_tree_drag_click(cfg_id string, id string,
-	flat_index int, top_level_ids []string,
-	on_reorder fn (string, string, mut Window),
-	id_scroll u32,
-	top_level_layout_ids []string,
+fn make_tree_drag_click(drag_ctx TreeDragContext, id string,
 	on_select fn (string, mut Window),
 	on_lazy_load fn (string, string, mut Window),
 	is_expanded bool, has_children bool,
 	is_lazy bool, node_has_real_children bool) fn (&Layout, mut Event, mut Window) {
-	return fn [cfg_id, id, flat_index, top_level_ids, on_reorder, id_scroll, top_level_layout_ids, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(cfg_id, flat_index, id, .vertical, top_level_ids, on_reorder,
-			top_level_layout_ids, 0, id_scroll, layout, e, mut w)
-		tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy,
-			node_has_real_children, id, mut e, mut w)
+	return fn [drag_ctx, id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children] (layout &Layout, mut e Event, mut w Window) {
+		drag_reorder_start(drag_ctx.cfg_id, drag_ctx.flat_index, id, .vertical, drag_ctx.top_level_ids,
+			drag_ctx.on_reorder, drag_ctx.top_level_layout_ids, 0, drag_ctx.id_scroll,
+			layout, e, mut w)
+		tree_row_click(drag_ctx.cfg_id, on_select, on_lazy_load, is_expanded, has_children,
+			is_lazy, node_has_real_children, id, mut e, mut w)
 	}
 }
 

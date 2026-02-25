@@ -108,7 +108,9 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 		tab_warn_duplicate_ids(cfg.id, cfg.items)
 	}
 	can_reorder := cfg.reorderable && cfg.on_reorder != unsafe { nil }
-	selected_idx := tab_selected_index(cfg.items, cfg.selected)
+	tab_nav_ids := cfg.items.map(it.id)
+	tab_nav_disabled := cfg.items.map(it.disabled)
+	selected_idx := tab_selected_index(tab_nav_ids, tab_nav_disabled, cfg.selected)
 	dragging := can_reorder && drag.active && !drag.cancelled
 	// Build non-disabled tab IDs for drag index mapping.
 	mut tab_ids := []string{}
@@ -250,7 +252,6 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 	// to avoid capturing the entire TabControlCfg struct
 	// (conservative GC false retention).
 	disabled := cfg.disabled
-	items := cfg.items
 	selected := cfg.selected
 	on_select := cfg.on_select
 	id_focus := cfg.id_focus
@@ -273,9 +274,10 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 		spacing:          cfg.spacing
 		disabled:         cfg.disabled
 		invisible:        cfg.invisible
-		on_keydown:       fn [disabled, items, selected, on_select, id_focus, reorderable, on_reorder, tab_id, tab_ids] (_ &Layout, mut e Event, mut w Window) {
-			tab_control_on_keydown(disabled, items, selected, on_select, id_focus, reorderable,
-				on_reorder, tab_id, tab_ids, mut e, mut w)
+		on_keydown:       fn [disabled, tab_nav_ids, tab_nav_disabled, selected, on_select, id_focus, reorderable, on_reorder, tab_id, tab_ids] (_ &Layout, mut e Event, mut w Window) {
+			tab_control_on_keydown(disabled, tab_nav_ids, tab_nav_disabled, selected,
+				on_select, id_focus, reorderable, on_reorder, tab_id, tab_ids, mut e, mut
+				w)
 		}
 		content:          [
 			row(
@@ -332,7 +334,7 @@ fn make_tab_drag_click(control_id string, item_id string,
 	}
 }
 
-fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on_select fn (string, mut Event, mut Window), id_focus u32, reorderable bool, on_reorder fn (string, string, mut Window), tab_id string, tab_ids []string, mut e Event, mut w Window) {
+fn tab_control_on_keydown(disabled bool, tab_nav_ids []string, tab_nav_disabled []bool, selected string, on_select fn (string, mut Event, mut Window), id_focus u32, reorderable bool, on_reorder fn (string, string, mut Window), tab_id string, tab_ids []string, mut e Event, mut w Window) {
 	// Escape cancels active drag.
 	if reorderable && drag_reorder_escape(tab_id, e.key_code, mut w) {
 		e.is_handled = true
@@ -348,38 +350,38 @@ fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on
 		}
 	}
 
-	if disabled || items.len == 0 || e.modifiers != .none {
+	if disabled || tab_nav_ids.len == 0 || e.modifiers != .none {
 		return
 	}
 
-	selected_idx := tab_selected_index(items, selected)
+	selected_idx := tab_selected_index(tab_nav_ids, tab_nav_disabled, selected)
 	mut target_idx := -1
 	match e.key_code {
 		.left, .up {
 			target_idx = if selected_idx >= 0 {
-				tab_prev_enabled_index(items, selected_idx)
+				tab_prev_enabled_index(tab_nav_disabled, selected_idx)
 			} else {
-				tab_last_enabled_index(items)
+				tab_last_enabled_index(tab_nav_disabled)
 			}
 		}
 		.right, .down {
 			target_idx = if selected_idx >= 0 {
-				tab_next_enabled_index(items, selected_idx)
+				tab_next_enabled_index(tab_nav_disabled, selected_idx)
 			} else {
-				tab_first_enabled_index(items)
+				tab_first_enabled_index(tab_nav_disabled)
 			}
 		}
 		.home {
-			target_idx = tab_first_enabled_index(items)
+			target_idx = tab_first_enabled_index(tab_nav_disabled)
 		}
 		.end {
-			target_idx = tab_last_enabled_index(items)
+			target_idx = tab_last_enabled_index(tab_nav_disabled)
 		}
 		.enter, .space {
 			target_idx = if selected_idx >= 0 {
 				selected_idx
 			} else {
-				tab_first_enabled_index(items)
+				tab_first_enabled_index(tab_nav_disabled)
 			}
 		}
 		else {
@@ -387,11 +389,11 @@ fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on
 		}
 	}
 
-	if target_idx < 0 || target_idx >= items.len {
+	if target_idx < 0 || target_idx >= tab_nav_ids.len {
 		return
 	}
 
-	target_id := items[target_idx].id
+	target_id := tab_nav_ids[target_idx]
 	if target_id.len == 0 {
 		return
 	}
@@ -406,65 +408,65 @@ fn tab_control_on_keydown(disabled bool, items []TabItemCfg, selected string, on
 	e.is_handled = true
 }
 
-fn tab_selected_index(items []TabItemCfg, selected string) int {
+fn tab_selected_index(ids []string, disabled []bool, selected string) int {
 	if selected.len > 0 {
-		for idx, item in items {
-			if item.id == selected && !item.disabled {
+		for idx, id in ids {
+			if id == selected && !disabled[idx] {
 				return idx
 			}
 		}
 	}
-	return tab_first_enabled_index(items)
+	return tab_first_enabled_index(disabled)
 }
 
-fn tab_first_enabled_index(items []TabItemCfg) int {
-	for idx, item in items {
-		if !item.disabled {
+fn tab_first_enabled_index(disabled []bool) int {
+	for idx, d in disabled {
+		if !d {
 			return idx
 		}
 	}
 	return -1
 }
 
-fn tab_last_enabled_index(items []TabItemCfg) int {
-	for i := items.len - 1; i >= 0; i-- {
-		if !items[i].disabled {
+fn tab_last_enabled_index(disabled []bool) int {
+	for i := disabled.len - 1; i >= 0; i-- {
+		if !disabled[i] {
 			return i
 		}
 	}
 	return -1
 }
 
-fn tab_next_enabled_index(items []TabItemCfg, selected_idx int) int {
-	if items.len == 0 {
+fn tab_next_enabled_index(disabled []bool, selected_idx int) int {
+	if disabled.len == 0 {
 		return -1
 	}
-	mut idx := if selected_idx < 0 || selected_idx >= items.len {
+	mut idx := if selected_idx < 0 || selected_idx >= disabled.len {
 		-1
 	} else {
 		selected_idx
 	}
-	for _ in 0 .. items.len {
-		idx = (idx + 1 + items.len) % items.len
-		if !items[idx].disabled {
+	for _ in 0 .. disabled.len {
+		idx = (idx + 1 + disabled.len) % disabled.len
+		if !disabled[idx] {
 			return idx
 		}
 	}
 	return -1
 }
 
-fn tab_prev_enabled_index(items []TabItemCfg, selected_idx int) int {
-	if items.len == 0 {
+fn tab_prev_enabled_index(disabled []bool, selected_idx int) int {
+	if disabled.len == 0 {
 		return -1
 	}
-	mut idx := if selected_idx < 0 || selected_idx >= items.len {
+	mut idx := if selected_idx < 0 || selected_idx >= disabled.len {
 		0
 	} else {
 		selected_idx
 	}
-	for _ in 0 .. items.len {
-		idx = (idx - 1 + items.len) % items.len
-		if !items[idx].disabled {
+	for _ in 0 .. disabled.len {
+		idx = (idx - 1 + disabled.len) % disabled.len
+		if !disabled[idx] {
 			return idx
 		}
 	}

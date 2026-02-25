@@ -14,78 +14,32 @@ fn test_tab_item_helper() {
 }
 
 fn test_tab_selected_index_prefers_selected() {
-	items := [
-		TabItemCfg{
-			id:    'one'
-			label: 'One'
-		},
-		TabItemCfg{
-			id:    'two'
-			label: 'Two'
-		},
-	]
-	assert tab_selected_index(items, 'two') == 1
+	ids := ['one', 'two']
+	disabled := [false, false]
+	assert tab_selected_index(ids, disabled, 'two') == 1
 }
 
 fn test_tab_selected_index_falls_back_to_first_enabled() {
-	items := [
-		TabItemCfg{
-			id:       'one'
-			label:    'One'
-			disabled: true
-		},
-		TabItemCfg{
-			id:    'two'
-			label: 'Two'
-		},
-		TabItemCfg{
-			id:    'three'
-			label: 'Three'
-		},
-	]
-	assert tab_selected_index(items, 'missing') == 1
-	assert tab_selected_index(items, 'one') == 1
+	ids := ['one', 'two', 'three']
+	disabled := [true, false, false]
+	assert tab_selected_index(ids, disabled, 'missing') == 1
+	assert tab_selected_index(ids, disabled, 'one') == 1
 }
 
 fn test_tab_next_prev_enabled_index() {
-	items := [
-		TabItemCfg{
-			id:    'one'
-			label: 'One'
-		},
-		TabItemCfg{
-			id:       'two'
-			label:    'Two'
-			disabled: true
-		},
-		TabItemCfg{
-			id:    'three'
-			label: 'Three'
-		},
-	]
-	assert tab_next_enabled_index(items, 0) == 2
-	assert tab_next_enabled_index(items, 2) == 0
-	assert tab_prev_enabled_index(items, 2) == 0
-	assert tab_prev_enabled_index(items, 0) == 2
+	disabled := [false, true, false]
+	assert tab_next_enabled_index(disabled, 0) == 2
+	assert tab_next_enabled_index(disabled, 2) == 0
+	assert tab_prev_enabled_index(disabled, 2) == 0
+	assert tab_prev_enabled_index(disabled, 0) == 2
 }
 
 fn test_tab_enabled_index_all_disabled() {
-	items := [
-		TabItemCfg{
-			id:       'one'
-			label:    'One'
-			disabled: true
-		},
-		TabItemCfg{
-			id:       'two'
-			label:    'Two'
-			disabled: true
-		},
-	]
-	assert tab_first_enabled_index(items) == -1
-	assert tab_last_enabled_index(items) == -1
-	assert tab_next_enabled_index(items, 0) == -1
-	assert tab_prev_enabled_index(items, 1) == -1
+	disabled := [true, true]
+	assert tab_first_enabled_index(disabled) == -1
+	assert tab_last_enabled_index(disabled) == -1
+	assert tab_next_enabled_index(disabled, 0) == -1
+	assert tab_prev_enabled_index(disabled, 1) == -1
 }
 
 fn test_tab_control_builds_view() {
@@ -107,16 +61,8 @@ fn test_tab_control_keydown_disabled_blocks_reorder() {
 		key_code:  .right
 		modifiers: .alt
 	}
-	tab_control_on_keydown(true, [
-		TabItemCfg{
-			id:    'one'
-			label: 'One'
-		},
-		TabItemCfg{
-			id:    'two'
-			label: 'Two'
-		},
-	], 'one', fn (_ string, mut _ Event, mut _ Window) {}, 0, true, fn [mut cap] (_ string, _ string, mut _ Window) {
+	tab_control_on_keydown(true, ['one', 'two'], [false, false], 'one', fn (_ string, mut _ Event, mut _ Window) {},
+		0, true, fn [mut cap] (_ string, _ string, mut _ Window) {
 		cap.called = true
 	}, 'tabs', ['one', 'two'], mut e, mut w)
 	assert !cap.called
