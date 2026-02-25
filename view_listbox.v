@@ -103,8 +103,7 @@ pub:
 // Use [Window.list_box](#list_box) for virtualization support.
 pub fn list_box(cfg ListBoxCfg) View {
 	last := if cfg.data.len > 0 { cfg.data.len - 1 } else { -1 }
-	can_reorder := cfg.reorderable && cfg.on_reorder != unsafe { nil }
-	return list_box_from_range(0, last, cfg, false, f32(0), DragReorderState{}, can_reorder)
+	return list_box_from_range(0, last, cfg, false, f32(0), DragReorderState{}, false)
 }
 
 // list_box is a convenience view for simple cases. See [ListBoxCfg](#ListBoxCfg).

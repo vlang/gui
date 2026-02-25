@@ -485,7 +485,7 @@ fn tab_prev_enabled_index(disabled []bool, selected_idx int) int {
 }
 
 fn tab_button_id(control_id string, tab_id string) string {
-	return '${control_id}:tab:${tab_id}'
+	return 'tc_${control_id}_${tab_id}'
 }
 
 fn tab_warn_duplicate_ids(control_id string, items []TabItemCfg) {

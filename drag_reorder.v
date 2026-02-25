@@ -262,14 +262,6 @@ fn drag_reorder_on_mouse_up(drag_key string,
 			return
 		}
 	}
-	if state.ids_len != item_ids.len || state.ids_hash != drag_reorder_ids_signature(item_ids) {
-		drag_reorder_clear(mut w, drag_key)
-		w.mouse_unlock()
-		w.remove_animation(drag_reorder_scroll_animation_id)
-		w.update_window()
-		return
-	}
-
 	drag_reorder_clear(mut w, drag_key)
 	w.mouse_unlock()
 	w.remove_animation(drag_reorder_scroll_animation_id)
