@@ -74,12 +74,10 @@ fn drag_reorder_read(w &Window, key string) DragReorderState {
 fn drag_reorder_make_lock(drag_key string,
 	axis DragReorderAxis,
 	item_ids []string,
-	item_layout_ids []string,
 	on_reorder fn (string, string, mut Window)) MouseLockCfg {
 	return MouseLockCfg{
-		mouse_move: fn [drag_key, axis, item_layout_ids] (_ &Layout, mut e Event, mut w Window) {
-			drag_reorder_on_mouse_move(drag_key, axis, item_layout_ids, e.mouse_x, e.mouse_y, mut
-				w)
+		mouse_move: fn [drag_key, axis] (_ &Layout, mut e Event, mut w Window) {
+			drag_reorder_on_mouse_move(drag_key, axis, e.mouse_x, e.mouse_y, mut w)
 		}
 		mouse_up:   fn [drag_key, item_ids, on_reorder] (_ &Layout, mut e Event, mut w Window) {
 			drag_reorder_on_mouse_up(drag_key, item_ids, on_reorder, mut w)
@@ -91,7 +89,6 @@ fn drag_reorder_make_lock(drag_key string,
 // index tracking during a drag.
 fn drag_reorder_on_mouse_move(drag_key string,
 	axis DragReorderAxis,
-	item_layout_ids []string,
 	mouse_x f32,
 	mouse_y f32,
 	mut w Window) {
@@ -137,12 +134,10 @@ fn drag_reorder_on_mouse_move(drag_key string,
 	}
 	mut new_index := drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
 		state.item_count)
-	layout_ids := if item_layout_ids.len > 0 {
-		item_layout_ids
-	} else {
-		state.item_layout_ids
-	}
-	if idx := drag_reorder_calc_index_from_layouts(mouse_main, axis, layout_ids, w) {
+
+	if idx := drag_reorder_calc_index_from_layouts(mouse_main, axis, state.item_layout_ids,
+		w)
+	{
 		new_index = idx
 	}
 
@@ -267,7 +262,7 @@ fn drag_reorder_start(drag_key string,
 		container_end:   container_end
 	}
 	drag_reorder_set(mut w, drag_key, state)
-	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids, item_layout_ids, on_reorder))
+	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids, on_reorder))
 }
 
 // drag_reorder_calc_index estimates the drop target index from
@@ -286,8 +281,8 @@ fn drag_reorder_calc_index(mouse_main f32, item_start f32,
 }
 
 // drag_reorder_calc_index_from_layouts estimates the drop target
-// index from live layout geometry. Returns none when all expected
-// draggable layouts are not present.
+// index from live layout geometry. Returns none when any expected
+// draggable layout is missing (ensures consistent global indexing).
 fn drag_reorder_calc_index_from_layouts(mouse_main f32,
 	axis DragReorderAxis,
 	item_layout_ids []string,
@@ -295,18 +290,21 @@ fn drag_reorder_calc_index_from_layouts(mouse_main f32,
 	if item_layout_ids.len == 0 {
 		return none
 	}
-	for id in item_layout_ids {
-		_ := w.layout.find_by_id(id) or { return none }
-	}
+	mut target_idx := -1
 	for idx, id in item_layout_ids {
 		ly := w.layout.find_by_id(id) or { return none }
-		mid := match axis {
-			.vertical { ly.shape.y + (ly.shape.height / 2) }
-			.horizontal { ly.shape.x + (ly.shape.width / 2) }
+		if target_idx == -1 {
+			mid := match axis {
+				.vertical { ly.shape.y + (ly.shape.height / 2) }
+				.horizontal { ly.shape.x + (ly.shape.width / 2) }
+			}
+			if mouse_main < mid {
+				target_idx = idx
+			}
 		}
-		if mouse_main < mid {
-			return idx
-		}
+	}
+	if target_idx != -1 {
+		return target_idx
 	}
 	return item_layout_ids.len
 }

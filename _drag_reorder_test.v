@@ -144,3 +144,37 @@ fn test_drag_reorder_calc_index_from_layouts_missing_layout_returns_none() {
 		assert false
 	}
 }
+
+fn test_drag_reorder_calc_index_from_layouts_past_end() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape:    &Shape{
+			id: 'root'
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					id:     'a'
+					x:      0
+					y:      0
+					width:  100
+					height: 10
+				}
+			},
+			Layout{
+				shape: &Shape{
+					id:     'b'
+					x:      0
+					y:      10
+					width:  100
+					height: 10
+				}
+			},
+		]
+	}
+	// mouse at y=50 is past 'a' (0..10) and 'b' (10..20)
+	idx := drag_reorder_calc_index_from_layouts(50, .vertical, ['a', 'b'], &w) or {
+		panic('expected index at end')
+	}
+	assert idx == 2
+}
