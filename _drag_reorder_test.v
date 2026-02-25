@@ -357,8 +357,10 @@ fn test_drag_reorder_cancels_on_mid_drag_mutation() {
 		cap.moved = m
 		cap.before = b
 	}, ['a', 'b', 'c'], 0, 0, &item, &e, mut w)
+	drag_reorder_ids_meta_set(mut w, drag_key, ['a', 'b', 'c'])
 
 	// Simulate list mutation before mouse-up.
+	drag_reorder_ids_meta_set(mut w, drag_key, ['a', 'c'])
 	drag_reorder_on_mouse_up(drag_key, ['a', 'c'], fn [mut cap] (_ string, _ string, mut _ Window) {
 		cap.called = true
 	}, mut w)
@@ -366,6 +368,36 @@ fn test_drag_reorder_cancels_on_mid_drag_mutation() {
 	state := drag_reorder_get(mut w, drag_key)
 	assert !state.started
 	assert !state.active
+}
+
+fn test_drag_reorder_cancels_on_mid_drag_move_mutation() {
+	mut w := Window{}
+	w.layout = Layout{
+		shape: &Shape{
+			id: 'root'
+		}
+	}
+	drag_key := 'drag_move_mutation'
+
+	state := DragReorderState{
+		active:        true
+		source_index:  0
+		current_index: 0
+		item_count:    3
+		ids_len:       3
+		ids_hash:      drag_reorder_ids_signature(['a', 'b', 'c'])
+	}
+	drag_reorder_set(mut w, drag_key, state)
+	drag_reorder_ids_meta_set(mut w, drag_key, ['a', 'b', 'c'])
+
+	// Mutate IDs before move.
+	drag_reorder_ids_meta_set(mut w, drag_key, ['a', 'c'])
+	drag_reorder_on_mouse_move(drag_key, .vertical, 0, 0, mut w)
+
+	new_state := drag_reorder_get(mut w, drag_key)
+	assert !new_state.started
+	assert !new_state.active
+	assert new_state.item_count == 0
 }
 
 fn test_drag_reorder_scroll_change_uses_uniform_estimate() {

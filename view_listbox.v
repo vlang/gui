@@ -112,6 +112,15 @@ pub fn list_box(cfg ListBoxCfg) View {
 pub fn (mut window Window) list_box(cfg ListBoxCfg) View {
 	resolved_cfg, _ := list_box_resolve_source_cfg(cfg, mut window)
 	can_reorder := resolved_cfg.reorderable && resolved_cfg.on_reorder != unsafe { nil }
+	if can_reorder {
+		mut item_ids := []string{cap: resolved_cfg.data.len}
+		for dat in resolved_cfg.data {
+			if !dat.is_subheading {
+				item_ids << dat.id
+			}
+		}
+		drag_reorder_ids_meta_set(mut window, resolved_cfg.id, item_ids)
+	}
 	last_row_idx := resolved_cfg.data.len - 1
 	list_height := list_box_height(resolved_cfg)
 	virtualize := resolved_cfg.id_scroll > 0 && list_height > 0 && resolved_cfg.data.len > 0

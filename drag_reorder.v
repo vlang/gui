@@ -8,6 +8,7 @@ import time
 // (animate_layout), floating layers, and mouse_lock.
 
 const ns_drag_reorder = 'gui.drag_reorder'
+const ns_drag_reorder_ids_meta = 'gui.drag_reorder.ids_meta'
 const drag_reorder_threshold = f32(5.0)
 const drag_reorder_scroll_zone = f32(40.0)
 const drag_reorder_scroll_speed = f32(4.0)
@@ -57,6 +58,11 @@ mut:
 	scroll_timer_active bool
 }
 
+struct DragReorderIdsMeta {
+	ids_len  int
+	ids_hash u64
+}
+
 // drag_reorder_get returns the current drag state for the given
 // widget namespace key, or a default if none exists.
 fn drag_reorder_get(mut w Window, key string) DragReorderState {
@@ -74,6 +80,25 @@ fn drag_reorder_set(mut w Window, key string, state DragReorderState) {
 fn drag_reorder_clear(mut w Window, key string) {
 	mut sm := state_map[string, DragReorderState](mut w, ns_drag_reorder, cap_few)
 	sm.delete(key)
+}
+
+fn drag_reorder_ids_meta_set(mut w Window, key string, ids []string) {
+	mut sm := state_map[string, DragReorderIdsMeta](mut w, ns_drag_reorder_ids_meta, cap_few)
+	sm.set(key, DragReorderIdsMeta{
+		ids_len:  ids.len
+		ids_hash: drag_reorder_ids_signature(ids)
+	})
+}
+
+fn drag_reorder_ids_meta_get(w &Window, key string) ?DragReorderIdsMeta {
+	if sm := state_map_read[string, DragReorderIdsMeta](w, ns_drag_reorder_ids_meta) {
+		return sm.get(key)
+	}
+	return none
+}
+
+fn drag_reorder_ids_changed(state DragReorderState, meta DragReorderIdsMeta) bool {
+	return state.ids_len != meta.ids_len || state.ids_hash != meta.ids_hash
 }
 
 // drag_reorder_make_lock builds a MouseLockCfg that implements the
@@ -103,6 +128,12 @@ fn drag_reorder_on_mouse_move(drag_key string,
 	mut state := drag_reorder_get(mut w, drag_key)
 	if state.cancelled {
 		return
+	}
+	if meta := drag_reorder_ids_meta_get(w, drag_key) {
+		if drag_reorder_ids_changed(state, meta) {
+			drag_reorder_cancel(drag_key, mut w)
+			return
+		}
 	}
 
 	mouse_changed := mouse_x != state.mouse_x || mouse_y != state.mouse_y
@@ -222,6 +253,15 @@ fn drag_reorder_on_mouse_up(drag_key string,
 	gap := state.current_index
 
 	// If the backing list changed during the drag, cancel without reorder.
+	if meta := drag_reorder_ids_meta_get(w, drag_key) {
+		if drag_reorder_ids_changed(state, meta) {
+			drag_reorder_clear(mut w, drag_key)
+			w.mouse_unlock()
+			w.remove_animation(drag_reorder_scroll_animation_id)
+			w.update_window()
+			return
+		}
+	}
 	if state.ids_len != item_ids.len || state.ids_hash != drag_reorder_ids_signature(item_ids) {
 		drag_reorder_clear(mut w, drag_key)
 		w.mouse_unlock()

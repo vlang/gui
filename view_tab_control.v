@@ -85,6 +85,15 @@ pub fn (mut w Window) tabs(cfg TabControlCfg) View {
 // tab_control builds a tab control with drag-reorder support.
 pub fn (mut w Window) tab_control(cfg TabControlCfg) View {
 	can_reorder := cfg.reorderable && cfg.on_reorder != unsafe { nil }
+	if can_reorder {
+		mut tab_ids := []string{cap: cfg.items.len}
+		for item in cfg.items {
+			if !item.disabled {
+				tab_ids << item.id
+			}
+		}
+		drag_reorder_ids_meta_set(mut w, cfg.id, tab_ids)
+	}
 	drag := if can_reorder {
 		drag_reorder_get(mut w, cfg.id)
 	} else {
