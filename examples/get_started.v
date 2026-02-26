@@ -79,6 +79,7 @@ fn main() {
 fn main_view(window &gui.Window) gui.View {
 	// Get current window dimensions for responsive layouts
 	w, h := window.window_size()
+	emoji_sample := 'Emoji: 😀🚀🎉👍🏽👩\u200D💻🧑\u200D🚀'
 
 	// Retrieve your state. The generic parameter specifies which state type to get.
 	// This returns an immutable reference - use `window.state_mut[]()` for mutations
@@ -114,7 +115,7 @@ fn main_view(window &gui.Window) gui.View {
 			// - b1, b2, b3: Body text (decreasing size)
 			// - label: Small labels
 			gui.text(
-				text:       'Welcome to GUI'
+				text:       emoji_sample
 				text_style: gui.theme().b1
 			),
 			// ## Button Widget
