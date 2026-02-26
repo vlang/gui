@@ -2016,6 +2016,7 @@ Examples include **bold**, *italic*, ~~strikethrough~~, and `inline code`.
 - [x] Inline code
 - [x] Links
 - [x] Inline math (`$...$`)
+- [x] Emoji shortcodes (`:smile:` → GitHub-standard names)
 
 ### Extended Elements
 
@@ -6800,7 +6801,8 @@ w.markdown(source: "# Heading", mode: .wrap)
 | mermaid_width | int | Width for mermaid diagrams |
 
 Supports headings, bold, italic, strikethrough, code blocks,
-tables, task lists, blockquotes, images, links, and mermaid diagrams.
+tables, task lists, blockquotes, images, links, mermaid diagrams,
+and GitHub-standard shortcode names for emoji (`:smile:` syntax).
 
 See also: docs/MARKDOWN.md'
 
