@@ -54,6 +54,7 @@ pub const locale_de_de = Locale{
 	str_open_link:    'Link öffnen'
 	str_go_to_target: 'Zum Ziel'
 	str_copy_link:    'Link kopieren'
+	str_copied:       'Kopiert ✓'
 
 	str_horizontal_scrollbar: 'Horizontale Bildlaufleiste'
 	str_vertical_scrollbar:   'Vertikale Bildlaufleiste'
@@ -129,6 +130,7 @@ pub const locale_ar_sa = Locale{
 	str_open_link:    'فتح الرابط'
 	str_go_to_target: 'الذهاب إلى الهدف'
 	str_copy_link:    'نسخ الرابط'
+	str_copied:       'تم النسخ ✓'
 
 	str_horizontal_scrollbar: 'شريط التمرير الأفقي'
 	str_vertical_scrollbar:   'شريط التمرير العمودي'

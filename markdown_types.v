@@ -29,6 +29,7 @@ struct MarkdownBlock {
 	code_language    string
 	math_latex       string
 	anchor_slug      string
+	base_style       TextStyle
 pub mut:
 	content    RichText
 	table_data ?ParsedTable

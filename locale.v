@@ -82,6 +82,7 @@ pub:
 	str_open_link    string = 'Open Link'
 	str_go_to_target string = 'Go to Target'
 	str_copy_link    string = 'Copy Link'
+	str_copied       string = 'Copied ✓'
 
 	// Scrollbar
 	str_horizontal_scrollbar string = 'Horizontal scrollbar'

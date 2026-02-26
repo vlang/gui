@@ -83,6 +83,7 @@ fn style_md_block(block markdown.MdBlock, style MarkdownStyle) MarkdownBlock {
 		code_language:    block.code_language
 		math_latex:       block.math_latex
 		anchor_slug:      block.anchor_slug
+		base_style:       base_style
 		content:          style_md_runs(block.runs, base_style, style)
 	}
 
@@ -213,7 +214,10 @@ fn md_format_to_style(fmt markdown.MdFormat, base TextStyle, style MarkdownStyle
 			}
 		}
 		.code {
-			style.code
+			TextStyle{
+				...style.code
+				typeface: .bold
+			}
 		}
 		.plain {
 			base

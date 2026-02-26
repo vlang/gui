@@ -87,6 +87,7 @@ pub mut:
 	text_is_password      bool
 	text_is_placeholder   bool
 	hanging_indent        f32
+	rtf_base_style        vglyph.TextStyle
 	last_constraint_width f32
 	last_text_hash        int
 	cached_line_height    f32

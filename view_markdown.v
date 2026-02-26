@@ -343,8 +343,8 @@ fn render_md_code(block MarkdownBlock, i int, cfg MarkdownCfg, window &Window) V
 				float:          true
 				float_anchor:   .top_right
 				float_tie_off:  .top_right
-				float_offset_x: -4
-				float_offset_y: 4
+				float_offset_x: 6
+				float_offset_y: -6
 				amend_layout:   fn [bg, icon_color] (mut layout Layout, mut w Window) {
 					parent := layout.parent
 					if parent == unsafe { nil } || layout.children.len == 0 {
@@ -395,7 +395,7 @@ fn render_md_code(block MarkdownBlock, i int, cfg MarkdownCfg, window &Window) V
 						]
 						alt_content:  [
 							text(
-								text:       'Copied ✓'
+								text:       gui_locale.str_copied
 								text_style: TextStyle{
 									size:  11
 									color: icon_color
@@ -441,7 +441,7 @@ fn md_copy_button(cp_id string, cp_alt bool, icon_color Color, code_text string,
 		]
 		alt_content:    [
 			text(
-				text:       'Copied ✓'
+				text:       gui_locale.str_copied
 				text_style: TextStyle{
 					size:  11
 					color: icon_color
@@ -601,8 +601,9 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 						sizing:      fill_fit
 						content:     [
 							rtf(
-								rich_text: block.content
-								mode:      cfg.mode
+								rich_text:       block.content
+								mode:            cfg.mode
+								base_text_style: block.base_style
 							),
 						]
 					),
@@ -627,9 +628,10 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			// Header block with anchor slug as ID
 			mut heading_content := [
 				View(rtf(
-					id:        block.anchor_slug
-					rich_text: block.content
-					mode:      cfg.mode
+					id:              block.anchor_slug
+					rich_text:       block.content
+					mode:            cfg.mode
+					base_text_style: block.base_style
 				)),
 			]
 			if (block.header_level == 1 && cfg.style.h1_separator)
@@ -651,13 +653,19 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			)
 		} else if block.is_def_term {
 			// Definition term - rendered bold
-			content << rtf(rich_text: block.content, mode: cfg.mode)
+			content << rtf(
+				rich_text:       block.content
+				mode:            cfg.mode
+				base_text_style: block.base_style
+			)
 		} else if block.is_def_value {
 			// Definition value - indented
 			content << row(
 				sizing:  fill_fit
 				padding: padding(0, 0, 0, cfg.style.nest_indent)
-				content: [rtf(rich_text: block.content, mode: cfg.mode)]
+				content: [
+					rtf(rich_text: block.content, mode: cfg.mode, base_text_style: block.base_style),
+				]
 			)
 		} else if block.is_list {
 			// List item as two-column row: fixed bullet column + fill content column
@@ -694,8 +702,9 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 						size_border: 0
 						content:     [
 							rtf(
-								rich_text: block.content
-								mode:      cfg.mode
+								rich_text:       block.content
+								mode:            cfg.mode
+								base_text_style: block.base_style
 							),
 						]
 					),
@@ -715,14 +724,15 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 			continue
 		} else {
 			content << rtf(
-				id:         cfg.id
-				id_focus:   cfg.id_focus
-				clip:       cfg.clip
-				focus_skip: cfg.focus_skip
-				disabled:   cfg.disabled
-				min_width:  cfg.min_width
-				mode:       cfg.mode
-				rich_text:  block.content
+				id:              cfg.id
+				id_focus:        cfg.id_focus
+				clip:            cfg.clip
+				focus_skip:      cfg.focus_skip
+				disabled:        cfg.disabled
+				min_width:       cfg.min_width
+				mode:            cfg.mode
+				rich_text:       block.content
+				base_text_style: block.base_style
 			)
 		}
 	}

@@ -45,6 +45,7 @@
     "open_link": "リンクを開く",
     "go_to_target": "ターゲットへ移動",
     "copy_link": "リンクをコピー",
+    "copied": "コピー済み ✓",
     "horizontal_scrollbar": "水平スクロールバー",
     "vertical_scrollbar": "垂直スクロールバー",
     "columns": "列",

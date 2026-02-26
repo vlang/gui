@@ -22,16 +22,17 @@ pub mut:
 @[minify]
 pub struct RtfCfg {
 pub:
-	id             string
-	rich_text      RichText
-	min_width      f32
-	id_focus       u32
-	mode           TextMode
-	invisible      bool
-	clip           bool
-	focus_skip     bool
-	disabled       bool
-	hanging_indent f32 // negative indent for wrapped lines (for lists)
+	id              string
+	rich_text       RichText
+	min_width       f32
+	id_focus        u32
+	mode            TextMode
+	invisible       bool
+	clip            bool
+	focus_skip      bool
+	disabled        bool
+	hanging_indent  f32 // negative indent for wrapped lines (for lists)
+	base_text_style ?TextStyle
 }
 
 fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
@@ -41,9 +42,11 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	// Convert RichText to vglyph.RichText (with math inline objects)
 	vg_rich_text := rtf.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache)
 
-	// Use first run's style as base so PangoLayout gets a proper
-	// font description (needed for correct emoji vertical centering).
-	base_style := if vg_rich_text.runs.len > 0 {
+	// Use explicit base style when set (from markdown block style),
+	// else fall back to first run's style for emoji vertical centering.
+	base_style := if bts := rtf.base_text_style {
+		bts.to_vglyph_style()
+	} else if vg_rich_text.runs.len > 0 {
 		vg_rich_text.runs[0].style
 	} else {
 		vglyph.TextStyle{}
@@ -78,6 +81,7 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 		tc:         &ShapeTextConfig{
 			text_mode:      rtf.mode
 			hanging_indent: rtf.hanging_indent
+			rtf_base_style: base_style
 			vglyph_layout:  &layout
 			rich_text:      &rtf.rich_text
 		}
@@ -95,17 +99,18 @@ pub fn rtf(cfg RtfCfg) View {
 	}
 
 	return RtfView{
-		id:             cfg.id
-		id_focus:       cfg.id_focus
-		invisible:      cfg.invisible
-		clip:           cfg.clip
-		focus_skip:     cfg.focus_skip
-		disabled:       cfg.disabled
-		min_width:      cfg.min_width
-		mode:           cfg.mode
-		rich_text:      cfg.rich_text
-		hanging_indent: cfg.hanging_indent
-		sizing:         if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
+		id:              cfg.id
+		id_focus:        cfg.id_focus
+		invisible:       cfg.invisible
+		clip:            cfg.clip
+		focus_skip:      cfg.focus_skip
+		disabled:        cfg.disabled
+		min_width:       cfg.min_width
+		mode:            cfg.mode
+		rich_text:       cfg.rich_text
+		hanging_indent:  cfg.hanging_indent
+		base_text_style: cfg.base_text_style
+		sizing:          if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
 	}
 }
 

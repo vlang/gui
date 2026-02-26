@@ -94,6 +94,7 @@ fn (b LocaleBundle) to_locale() Locale {
 		str_open_link:    str_or(b.strings, 'open_link', d.str_open_link)
 		str_go_to_target: str_or(b.strings, 'go_to_target', d.str_go_to_target)
 		str_copy_link:    str_or(b.strings, 'copy_link', d.str_copy_link)
+		str_copied:       str_or(b.strings, 'copied', d.str_copied)
 		// Scrollbar
 		str_horizontal_scrollbar: str_or(b.strings, 'horizontal_scrollbar', d.str_horizontal_scrollbar)
 		str_vertical_scrollbar:   str_or(b.strings, 'vertical_scrollbar', d.str_vertical_scrollbar)

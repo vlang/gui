@@ -197,7 +197,9 @@ fn text_wrap(mut shape Shape, mut window Window) {
 				if width > 0 && width != shape.tc.last_constraint_width {
 					// Re-layout with new width constraint, preserving hanging indent
 					vg_rt := shape.tc.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache)
-					base_style := if vg_rt.runs.len > 0 {
+					base_style := if shape.tc.rtf_base_style.size > 0 {
+						shape.tc.rtf_base_style
+					} else if vg_rt.runs.len > 0 {
 						vg_rt.runs[0].style
 					} else {
 						vglyph.TextStyle{}
