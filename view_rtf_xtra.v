@@ -94,7 +94,7 @@ fn (rt RichText) to_vglyph_rich_text_with_math(cache &BoundedDiagramCache) vglyp
 					// Scale pixel dims to points, then match
 					// surrounding text size
 					edpi := if entry.dpi > 0 { entry.dpi } else { f32(200.0) }
-					scale := (f32(72.0) / edpi) * (run.style.size / f32(6.0))
+					scale := (f32(72.0) / edpi) * (run.style.size / f32(12.0))
 					vg_runs << vglyph.StyleRun{
 						text:  run.text
 						style: vglyph.TextStyle{
