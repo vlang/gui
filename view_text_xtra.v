@@ -196,16 +196,21 @@ fn text_wrap(mut shape Shape, mut window Window) {
 				// Optimization: Check if width changed significantly or if we haven't constrained yet
 				if width > 0 && width != shape.tc.last_constraint_width {
 					// Re-layout with new width constraint, preserving hanging indent
-					mut cfg := vglyph.TextConfig{
+					vg_rt := shape.tc.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache)
+					base_style := if vg_rt.runs.len > 0 {
+						vg_rt.runs[0].style
+					} else {
+						vglyph.TextStyle{}
+					}
+					cfg := vglyph.TextConfig{
+						style: base_style
 						block: vglyph.BlockStyle{
 							wrap:   .word
 							width:  width
 							indent: -shape.tc.hanging_indent
 						}
 					}
-					// Use stored source text
-					layout := window.text_system.layout_rich_text(shape.tc.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache),
-						cfg) or { vglyph.Layout{} }
+					layout := window.text_system.layout_rich_text(vg_rt, cfg) or { vglyph.Layout{} }
 					shape.tc.vglyph_layout = &layout
 					shape.tc.last_constraint_width = width
 					shape.width = layout.width + shape.padding.width()
