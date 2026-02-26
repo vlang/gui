@@ -301,6 +301,7 @@ fn dock_tab_button(core &DockLayoutCore, group &DockNode, panel DockPanelDef, is
 	return button(
 		id:          'dock_tab:${group_id}:${panel_id}'
 		sizing:      fill_fit
+		h_align:     .left
 		padding:     padding(4, 8, 4, 8)
 		radius:      0
 		size_border: 0
