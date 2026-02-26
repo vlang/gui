@@ -258,7 +258,7 @@ highlight**== and ==*italic highlight*== both work.
 ## Emoji Shortcodes
 
 Emoji shortcodes use the `:name:` syntax: :smile: :heart: :rocket:
-:thumbsup: :wave: :star: :fire: :check_mark:
+:thumbsup: :wave: :star: :fire: :white_check_mark:
 
 Some common ones: :warning: for caution, :bulb: for ideas, and :+1:
 for approval.
