@@ -41,9 +41,15 @@ fn (mut rtf RtfView) generate_layout(mut window Window) Layout {
 	// Convert RichText to vglyph.RichText (with math inline objects)
 	vg_rich_text := rtf.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache)
 
-	// Create vglyph text config
-	// Negative indent creates hanging indent (wrapped lines indented)
+	// Use first run's style as base so PangoLayout gets a proper
+	// font description (needed for correct emoji vertical centering).
+	base_style := if vg_rich_text.runs.len > 0 {
+		vg_rich_text.runs[0].style
+	} else {
+		vglyph.TextStyle{}
+	}
 	cfg := vglyph.TextConfig{
+		style: base_style
 		block: vglyph.BlockStyle{
 			wrap:   .word
 			width:  -1.0
