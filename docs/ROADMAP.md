@@ -71,7 +71,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 
 ### Interaction
 
-- [ ] In-app drag-to-reorder (list rows, tree nodes, tab strip)
+- [x] In-app drag-to-reorder (list rows, tree nodes, tab strip)
 - [ ] App-level hotkey registration (configurable shortcut map, conflict detection)
 - [ ] System color-scheme detection → automatic dark/light theme switch
 
@@ -95,7 +95,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 ## 2027+: Platform Expansion (P1/P2)
 
 - [ ] Multi-window API (owned windows, modal ownership, shared resources)
-- [ ] Docking layout system (IDE-style panels, drag docking targets)
+- [x] Docking layout system (IDE-style panels, drag docking targets)
 - [ ] System tray integration on all desktop targets
 - [ ] Native notifications API
 - [ ] Outbound OS drag/drop (text/files/custom payloads)
