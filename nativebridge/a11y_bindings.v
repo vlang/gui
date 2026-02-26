@@ -31,6 +31,8 @@ pub fn a11y_init(ns_window voidptr, cb voidptr, user_data voidptr) {
 		C.gui_a11y_init(ns_window, cb, user_data)
 	} $else $if linux {
 		C.gui_a11y_init(ns_window, cb, user_data)
+	} $else $if windows {
+		C.gui_a11y_init(ns_window, cb, user_data)
 	}
 }
 
@@ -38,6 +40,8 @@ pub fn a11y_sync(nodes &C.GuiA11yNode, count int, focused_idx int) {
 	$if macos {
 		C.gui_a11y_sync(nodes, count, focused_idx)
 	} $else $if linux {
+		C.gui_a11y_sync(nodes, count, focused_idx)
+	} $else $if windows {
 		C.gui_a11y_sync(nodes, count, focused_idx)
 	}
 }
@@ -47,6 +51,8 @@ pub fn a11y_destroy() {
 		C.gui_a11y_destroy()
 	} $else $if linux {
 		C.gui_a11y_destroy()
+	} $else $if windows {
+		C.gui_a11y_destroy()
 	}
 }
 
@@ -54,6 +60,8 @@ pub fn a11y_announce(msg string) {
 	$if macos {
 		C.gui_a11y_announce(msg.str)
 	} $else $if linux {
+		C.gui_a11y_announce(msg.str)
+	} $else $if windows {
 		C.gui_a11y_announce(msg.str)
 	}
 }

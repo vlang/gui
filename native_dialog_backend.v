@@ -62,6 +62,8 @@ fn native_folder_dialog_impl(mut w Window, cfg NativeFolderDialogCfg) {
 fn native_dialog_ns_window() voidptr {
 	$if macos {
 		return sapp.macos_get_window()
+	} $else $if windows {
+		return sapp.win32_get_hwnd()
 	}
 	return unsafe { nil }
 }

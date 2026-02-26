@@ -41,7 +41,7 @@ fn run_print_job_impl(mut w Window, job PrintJob) PrintRunResult {
 }
 
 fn print_job_supported() bool {
-	$if macos || linux {
+	$if macos || linux || windows {
 		return true
 	} $else {
 		return false

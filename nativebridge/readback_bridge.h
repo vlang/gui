@@ -28,6 +28,17 @@ uint8_t* gui_readback_gl_framebuffer(
     int height
 );
 
+// Read BGRA pixels from a D3D11 render-target texture via
+// staging texture copy. Caller must free returned buffer.
+// Returns NULL on failure. Windows only.
+uint8_t* gui_readback_d3d11_texture(
+    void* d3d11_texture,
+    void* d3d11_device,
+    void* d3d11_context,
+    int width,
+    int height
+);
+
 #ifdef __cplusplus
 }
 #endif

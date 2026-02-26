@@ -20,6 +20,15 @@ module nativebridge
 #flag linux @VMODROOT/nativebridge/dialog_linux.c
 #flag linux @VMODROOT/nativebridge/portal_linux.c
 #flag linux -lGL
+#flag windows @VMODROOT/nativebridge/dialog_windows.c
+#flag windows @VMODROOT/nativebridge/readback_windows.c
+#flag windows @VMODROOT/nativebridge/print_windows.c
+#flag windows @VMODROOT/nativebridge/a11y_windows.c
+#flag windows @VMODROOT/nativebridge/bookmark_stub.c
+#flag windows @VMODROOT/nativebridge/portal_stub.c
+#flag windows -lole32
+#flag windows -lshell32
+#flag windows -luuid
 #include "@VMODROOT/nativebridge/a11y_bridge.h"
 #include "@VMODROOT/nativebridge/dialog_bridge.h"
 #include "@VMODROOT/nativebridge/print_bridge.h"
@@ -161,6 +170,7 @@ fn C.gui_native_print_result_free(C.GuiNativePrintResult)
 
 fn C.gui_readback_metal_texture(mtl_texture voidptr, mtl_device voidptr, width int, height int) &u8
 fn C.gui_readback_gl_framebuffer(framebuffer u32, width int, height int) &u8
+fn C.gui_readback_d3d11_texture(d3d11_texture voidptr, d3d11_device voidptr, d3d11_context voidptr, width int, height int) &u8
 
 fn bridge_print_unsupported_result() BridgePrintResult {
 	return BridgePrintResult{
@@ -278,6 +288,12 @@ pub fn print_pdf_dialog(cfg BridgePrintCfg) BridgePrintResult {
 		return bridge_print_result_from_c(c_result)
 	} $else $if linux {
 		return linux_print_pdf_dialog(cfg)
+	} $else $if windows {
+		c_result := C.gui_native_print_pdf_dialog(cfg.ns_window, cfg.title.str, cfg.job_name.str,
+			cfg.pdf_path.str, f64(cfg.paper_width), f64(cfg.paper_height), f64(cfg.margin_top),
+			f64(cfg.margin_right), f64(cfg.margin_bottom), f64(cfg.margin_left), cfg.orientation,
+			cfg.copies, cfg.page_ranges.str, cfg.duplex_mode, cfg.color_mode, cfg.scale_mode)
+		return bridge_print_result_from_c(c_result)
 	} $else {
 		return bridge_print_unsupported_result()
 	}
@@ -334,6 +350,11 @@ pub fn open_dialog_ex(cfg BridgeOpenCfg) BridgeDialogResultEx {
 			return bridge_dialog_result_ex_from_c(c_result)
 		}
 		return bridge_result_ex_from_legacy(linux_open_dialog(cfg))
+	} $else $if windows {
+		extensions := cfg.extensions.join(',')
+		c_result := C.gui_native_open_dialog_ex(cfg.ns_window, cfg.title.str, cfg.start_dir.str,
+			extensions.str, bool_to_int(cfg.allow_multiple))
+		return bridge_dialog_result_ex_from_c(c_result)
 	} $else {
 		return bridge_dialog_unsupported_result_ex()
 	}
@@ -362,6 +383,11 @@ pub fn save_dialog_ex(cfg BridgeSaveCfg) BridgeDialogResultEx {
 			return bridge_dialog_result_ex_from_c(c_result)
 		}
 		return bridge_result_ex_from_legacy(linux_save_dialog(cfg))
+	} $else $if windows {
+		extensions := cfg.extensions.join(',')
+		c_result := C.gui_native_save_dialog_ex(cfg.ns_window, cfg.title.str, cfg.start_dir.str,
+			cfg.default_name.str, cfg.default_extension.str, extensions.str, bool_to_int(cfg.confirm_overwrite))
+		return bridge_dialog_result_ex_from_c(c_result)
 	} $else {
 		return bridge_dialog_unsupported_result_ex()
 	}
@@ -387,6 +413,10 @@ pub fn folder_dialog_ex(cfg BridgeFolderCfg) BridgeDialogResultEx {
 			return bridge_dialog_result_ex_from_c(c_result)
 		}
 		return bridge_result_ex_from_legacy(linux_folder_dialog(cfg))
+	} $else $if windows {
+		c_result := C.gui_native_folder_dialog_ex(cfg.ns_window, cfg.title.str, cfg.start_dir.str,
+			bool_to_int(cfg.can_create_directories))
+		return bridge_dialog_result_ex_from_c(c_result)
 	} $else {
 		return bridge_dialog_unsupported_result_ex()
 	}
@@ -479,5 +509,27 @@ pub fn readback_gl_framebuffer(framebuffer u32, width int, height int) ![]u8 {
 		return pixels
 	} $else {
 		return error('GL readback not available on this platform')
+	}
+}
+
+// readback_d3d11_texture reads BGRA pixels from a D3D11
+// render-target texture via staging texture copy. Caller
+// must gfx.commit() before calling. Windows only.
+pub fn readback_d3d11_texture(d3d11_texture voidptr, d3d11_device voidptr, d3d11_context voidptr, width int, height int) ![]u8 {
+	$if windows {
+		ptr := C.gui_readback_d3d11_texture(d3d11_texture, d3d11_device, d3d11_context,
+			width, height)
+		if ptr == unsafe { nil } {
+			return error('D3D11 texture readback failed')
+		}
+		size := width * height * 4
+		mut pixels := []u8{len: size}
+		unsafe {
+			vmemcpy(pixels.data, ptr, size)
+			free(ptr)
+		}
+		return pixels
+	} $else {
+		return error('D3D11 readback not available on this platform')
 	}
 }

@@ -24,6 +24,17 @@ struct C.sg_gl_attachments_info {
 
 fn C.sg_gl_query_attachments_info(gfx.Attachments) C.sg_gl_attachments_info
 
+struct C.sg_d3d11_image_info {
+	tex2d voidptr
+	tex3d voidptr
+	res   voidptr
+	srv   voidptr
+}
+
+fn C.sg_d3d11_query_image_info(img gfx.Image) C.sg_d3d11_image_info
+fn C.sg_d3d11_device() voidptr
+fn C.sg_d3d11_device_context() voidptr
+
 struct PrintPageRaster {
 	tex   gfx.Image
 	depth gfx.Image
@@ -135,6 +146,12 @@ fn render_page_to_pixels(mut window Window, raster PrintPageRaster, source_width
 	} $else $if linux {
 		info := C.sg_gl_query_attachments_info(raster.att)
 		return nativebridge.readback_gl_framebuffer(info.framebuffer, raster.w, raster.h)
+	} $else $if windows {
+		info := C.sg_d3d11_query_image_info(raster.tex)
+		d3d_dev := C.sg_d3d11_device()
+		d3d_ctx := C.sg_d3d11_device_context()
+		return nativebridge.readback_d3d11_texture(info.tex2d, d3d_dev, d3d_ctx, raster.w,
+			raster.h)
 	} $else {
 		return error('raster PDF export not yet supported on this platform')
 	}
@@ -293,7 +310,13 @@ fn pdf_render_document_raster(mut window Window, source_width f32, source_height
 		}
 		pixels := render_page_to_pixels(mut window, raster, source_width, page_source_height,
 			offset_y) or { return error('page ${idx + 1} render failed: ${err}') }
-		is_bgra := $if macos { true } $else { false }
+		is_bgra := $if macos {
+			true
+		} $else $if windows {
+			true
+		} $else {
+			false
+		}
 		jpeg := jpeg_encode_rgba(pixels, raster_w, raster_h, quality, is_bgra) or {
 			return error('page ${idx + 1} JPEG encode failed: ${err}')
 		}
