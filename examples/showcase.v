@@ -4090,6 +4090,7 @@ fn demo_text() gui.View {
 const rtf_doc = '# Rich Text Format
 
 Mixed styles, links, and inline rich text runs.
+Right-click a link to open a context menu (copy, open, inspect URL).
 
 ## Usage
 
@@ -6803,6 +6804,7 @@ w.markdown(source: "# Heading", mode: .wrap)
 Supports headings, bold, italic, strikethrough, code blocks,
 tables, task lists, blockquotes, images, links, mermaid diagrams,
 and GitHub-standard shortcode names for emoji (`:smile:` syntax).
+Links support right-click context menus (copy, open, inspect URL).
 
 See also: docs/MARKDOWN.md'
 

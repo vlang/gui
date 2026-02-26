@@ -90,6 +90,10 @@ fn (b LocaleBundle) to_locale() Locale {
 		str_load_error:      str_or(b.strings, 'load_error', d.str_load_error)
 		str_error:           str_or(b.strings, 'error', d.str_error)
 		str_clean:           str_or(b.strings, 'clean', d.str_clean)
+		// Link context menu
+		str_open_link:    str_or(b.strings, 'open_link', d.str_open_link)
+		str_go_to_target: str_or(b.strings, 'go_to_target', d.str_go_to_target)
+		str_copy_link:    str_or(b.strings, 'copy_link', d.str_copy_link)
 		// Scrollbar
 		str_horizontal_scrollbar: str_or(b.strings, 'horizontal_scrollbar', d.str_horizontal_scrollbar)
 		str_vertical_scrollbar:   str_or(b.strings, 'vertical_scrollbar', d.str_vertical_scrollbar)

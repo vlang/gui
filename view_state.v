@@ -34,6 +34,11 @@ mut:
 	tree_state                  BoundedTreeState = BoundedTreeState{
 		max_size: 30
 	}
+	link_context_menu_visible   bool
+	link_context_menu_url       string
+	link_context_menu_text      string
+	link_context_menu_x         f32
+	link_context_menu_y         f32
 	external_api_warning_logged bool
 	diagram_cache               BoundedDiagramCache = BoundedDiagramCache{
 		max_size: 200

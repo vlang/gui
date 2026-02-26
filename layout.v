@@ -49,6 +49,14 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 		}
 	}
 
+	// Link context menu — injected as floating layout.
+	if window.view_state.link_context_menu_visible {
+		mut ctx_view := link_context_menu_view(window)
+		mut ctx_layout := generate_layout(mut ctx_view, mut window)
+		layout_parents(mut ctx_layout, &layout)
+		floating_layouts << window.scratch.alloc_floating_layout(ctx_layout)
+	}
+
 	// Dialog is a pop-up dialog.
 	// Add last to ensure it is always on top.
 	// Dialogs do not support additional floating layouts.

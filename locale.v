@@ -78,6 +78,11 @@ pub:
 	str_error           string = 'Error'
 	str_clean           string = 'Clean'
 
+	// Link context menu
+	str_open_link    string = 'Open Link'
+	str_go_to_target string = 'Go to Target'
+	str_copy_link    string = 'Copy Link'
+
 	// Scrollbar
 	str_horizontal_scrollbar string = 'Horizontal scrollbar'
 	str_vertical_scrollbar   string = 'Vertical scrollbar'

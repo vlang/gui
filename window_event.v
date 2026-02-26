@@ -50,6 +50,8 @@ fn event_fn(ev &gg.Event, mut w Window) {
 	// No lock needed: layout is immutable on the main thread between frames.
 	layout := if w.dialog_cfg.visible && w.layout.children.len > 0 {
 		w.layout.children[w.layout.children.len - 1]
+	} else if w.view_state.link_context_menu_visible && w.layout.children.len > 0 {
+		w.layout.children[w.layout.children.len - 1]
 	} else {
 		w.layout
 	}
@@ -100,6 +102,10 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			}
 			if !e.is_handled {
 				mouse_down_handler(layout, false, mut e, mut w)
+			}
+			if !e.is_handled && w.view_state.link_context_menu_visible {
+				w.dismiss_link_context_menu()
+				e.is_handled = true
 			}
 			if !e.is_handled {
 				mut ss := state_map[string, bool](mut w, ns_select, cap_moderate)

@@ -44,7 +44,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [?] Theme-aware code highlight palettes (dark/light + custom themes)
 - [-] Incremental markdown re-render (avoid full rebuild for small edits)
 - [-] Offline mode for mermaid/math renderers (local backend option)
-- [ ] Link context menu support (copy/open/inspect target)
+- [x] Link context menu support (copy/open/inspect target)
 - [x] Copy code block enhancement
 
 ### Missing Core Components

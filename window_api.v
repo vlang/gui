@@ -335,6 +335,22 @@ pub fn (mut window Window) set_mouse_cursor_resize_nwse() {
 	window.view_state.mouse_cursor = .resize_nwse
 }
 
+// show_link_context_menu opens a context menu for a link at click
+// coordinates. Used by RTF right-click on links.
+pub fn (mut window Window) show_link_context_menu(url string, text string, x f32, y f32) {
+	window.view_state.link_context_menu_url = url
+	window.view_state.link_context_menu_text = text
+	window.view_state.link_context_menu_x = x
+	window.view_state.link_context_menu_y = y
+	window.view_state.link_context_menu_visible = true
+	window.set_id_focus(link_context_menu_id_focus)
+}
+
+// dismiss_link_context_menu closes the link context menu.
+pub fn (mut window Window) dismiss_link_context_menu() {
+	window.view_state.link_context_menu_visible = false
+}
+
 // set_rtf_tooltip shows a tooltip with the given text at the specified rect.
 // Used for abbreviation tooltips in RTF views.
 pub fn (mut window Window) set_rtf_tooltip(text string, rect gg.Rect) {
