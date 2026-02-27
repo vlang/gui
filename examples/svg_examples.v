@@ -19,6 +19,7 @@ fn svg_entries() []SvgEntry {
 		SvgEntry{'Transparent Icon', $embed_file('../assets/svgs/transparent_icon.svg').to_string()},
 		SvgEntry{'Sample Transparent', $embed_file('../assets/svgs/sample_transparent.svg').to_string()},
 		SvgEntry{'Sample with BG', $embed_file('../assets/svgs/sample_with_bg.svg').to_string()},
+		SvgEntry{'Tiger', $embed_file('../assets/svgs/tiger.svg').to_string()},
 	]
 }
 
