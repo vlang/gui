@@ -471,7 +471,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				}
 			}
 		}
-		toast_style:          ToastStyle{
+		toast_style:           ToastStyle{
 			color:        cfg.color_panel
 			color_border: cfg.color_border
 			color_info:   cfg.color_select
@@ -969,6 +969,9 @@ pub:
 	color_border       ?Color
 	color_border_focus ?Color
 	color_select       ?Color
+	color_success      ?Color
+	color_warning      ?Color
+	color_error        ?Color
 }
 
 // with_colors returns a new Theme with the specified colors updated across
@@ -990,6 +993,9 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 	border := overrides.color_border or { t.color_border }
 	border_focus := overrides.color_border_focus or { t.button_style.color_border_focus }
 	sel := overrides.color_select or { t.color_select }
+	success := overrides.color_success or { t.toast_style.color_success }
+	warning := overrides.color_warning or { t.toast_style.color_warning }
+	cerror := overrides.color_error or { t.toast_style.color_error }
 
 	return Theme{
 		...t
@@ -1217,9 +1223,12 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 		}
 		toast_style:           ToastStyle{
 			...t.toast_style
-			color:        panel
-			color_border: border
-			color_info:   sel
+			color:         panel
+			color_border:  border
+			color_info:    sel
+			color_success: success
+			color_warning: warning
+			color_error:   cerror
 		}
 	}
 }
