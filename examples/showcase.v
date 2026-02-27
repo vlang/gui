@@ -653,6 +653,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['pulse', 'loading', 'indicator']
 		},
 		DemoEntry{
+			id:      'toast'
+			label:   'Toast'
+			group:   'feedback'
+			summary: 'Non-blocking notifications with auto-dismiss and actions'
+			tags:    ['notification', 'alert', 'severity', 'stack']
+		},
+		DemoEntry{
 			id:      'dialog'
 			label:   'Dialog'
 			group:   'overlays'
@@ -1140,6 +1147,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'range_slider' { demo_range_slider(w) }
 		'progress_bar' { demo_progress_bar(w) }
 		'pulsar' { demo_pulsar(mut w) }
+		'toast' { demo_toast(mut w) }
 		'breadcrumb' { demo_breadcrumb(mut w) }
 		'menus' { demo_menu(mut w) }
 		'dialog' { demo_dialog() }
@@ -1214,6 +1222,7 @@ fn related_examples(id string) string {
 		'range_slider' { 'examples/range_sliders.v' }
 		'progress_bar' { 'examples/progress_bars.v' }
 		'pulsar' { 'examples/pulsars.v' }
+		'toast' { 'examples/toast.v' }
 		'breadcrumb' { 'examples/breadcrumb.v' }
 		'menus' { 'examples/menu_demo.v, examples/context_menu_demo.v' }
 		'dialog' { 'examples/dialogs.v' }
@@ -1269,6 +1278,7 @@ fn component_doc(id string) string {
 		'range_slider' { range_slider_doc }
 		'progress_bar' { progress_bar_doc }
 		'pulsar' { pulsar_doc }
+		'toast' { toast_doc }
 		'breadcrumb' { breadcrumb_doc }
 		'menus' { menus_doc }
 		'dialog' { dialog_doc }
@@ -2899,6 +2909,133 @@ fn demo_pulsar(mut w gui.Window) gui.View {
 			w.pulsar(),
 			w.pulsar(size: 20),
 			w.pulsar(size: 28, color: gui.orange),
+		]
+	)
+}
+
+const toast_doc = '# Toast
+
+Non-blocking notifications with severity, auto-dismiss, and action buttons.
+
+## Usage
+
+```v
+w.toast(gui.ToastCfg{
+    title:    "Saved",
+    body:     "Document saved.",
+    severity: .success,
+})
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| title | string | Bold heading (optional) |
+| body | string | Message text |
+| severity | ToastSeverity | info, success, warning, error |
+| duration | time.Duration | Auto-dismiss delay (0 = manual) |
+| action_label | string | Optional action button text |
+| on_action | fn (mut Window) | Action button callback |
+
+## API
+
+| Method | Description |
+|--------|-------------|
+| w.toast(cfg) | Show toast, returns id |
+| w.toast_dismiss(id) | Dismiss specific toast |
+| w.toast_dismiss_all() | Dismiss all toasts |'
+
+fn demo_toast(mut w gui.Window) gui.View {
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.row(
+				color:       gui.color_transparent
+				size_border: 0
+				spacing:     gui.theme().spacing_small
+				content:     [
+					gui.button(
+						content:  [gui.text(text: 'Info')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.toast(gui.ToastCfg{
+								title:    'Info'
+								body:     'Informational message.'
+								severity: .info
+							})
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Success')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.toast(gui.ToastCfg{
+								title:    'Saved'
+								body:     'Document saved.'
+								severity: .success
+							})
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Warning')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.toast(gui.ToastCfg{
+								title:    'Warning'
+								body:     'Disk space running low.'
+								severity: .warning
+							})
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Error')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.toast(gui.ToastCfg{
+								title:    'Error'
+								body:     'Connection failed.'
+								severity: .error
+								duration: 5 * time.second
+							})
+						}
+					),
+				]
+			),
+			gui.row(
+				color:       gui.color_transparent
+				size_border: 0
+				spacing:     gui.theme().spacing_small
+				content:     [
+					gui.button(
+						content:  [gui.text(text: 'With Action')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.toast(gui.ToastCfg{
+								title:        'Deleted'
+								body:         'Item removed.'
+								severity:     .info
+								action_label: 'Undo'
+								on_action:    fn (mut w gui.Window) {
+									w.toast(gui.ToastCfg{
+										title:    'Undone'
+										body:     'Item restored.'
+										severity: .success
+									})
+								}
+							})
+						}
+					),
+					gui.button(
+						content:  [gui.text(text: 'Dismiss All')]
+						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+							w.toast_dismiss_all()
+						}
+					),
+				]
+			),
+			gui.text(
+				text:       'Hover a toast to pause auto-dismiss.'
+				text_style: gui.TextStyle{
+					...gui.theme().n4
+					color: gui.theme().color_active
+				}
+			),
 		]
 	)
 }
