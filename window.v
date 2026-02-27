@@ -48,6 +48,8 @@ mut:
 	scratch               ScratchPools    // Bounded scratch arrays reused in hot paths
 	stats                 Stats           // Rendering statistics
 	clip_radius           f32             // rounded clip radius, render-time only
+	toasts                []ToastNotification // active toast queue
+	toast_counter         u64                // monotonic toast id
 	view_state            ViewState       // Manages state for widgets (scroll, selection, etc.)
 	window_size           gg.Size         // cached, gg.window_size() relatively slow
 	file_access           FileAccessState // security-scoped bookmark state

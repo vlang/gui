@@ -471,6 +471,19 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				}
 			}
 		}
+		toast_style:          ToastStyle{
+			color:        cfg.color_panel
+			color_border: cfg.color_border
+			color_info:   cfg.color_select
+			padding:      cfg.padding
+			radius:       cfg.radius
+			size_border:  cfg.size_border
+			text_style:   cfg.text_style
+			title_style:  TextStyle{
+				...cfg.text_style
+				typeface: .bold
+			}
+		}
 
 		// Usually don't change
 		padding_small:  cfg.padding_small
@@ -931,6 +944,14 @@ pub fn (t Theme) with_command_palette_style(style CommandPaletteStyle) Theme {
 	}
 }
 
+// with_toast_style returns a new Theme with the toast style replaced.
+pub fn (t Theme) with_toast_style(style ToastStyle) Theme {
+	return Theme{
+		...t
+		toast_style: style
+	}
+}
+
 // -----------------------------------------------------------------------------
 // Bulk color updates
 // -----------------------------------------------------------------------------
@@ -1193,6 +1214,12 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			color:           panel
 			color_border:    border
 			color_highlight: sel
+		}
+		toast_style:           ToastStyle{
+			...t.toast_style
+			color:        panel
+			color_border: border
+			color_info:   sel
 		}
 	}
 }

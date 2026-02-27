@@ -53,7 +53,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] `splitter` / pane divider widget (drag, collapse, min/max pane size)
 - [x] `breadcrumb_bar` widget
 - [x] `command_palette` widget (search + ranking + keyboard-first UX)
-- [ ] `toast` / non-blocking notification system
+- [x] `toast` / non-blocking notification system
 - [x] `combobox` with typeahead filter and async options provider
 - [ ] `badge` numeric and colored label
 - [-] `toolbar` widget (button groups, separators, overflow menu)

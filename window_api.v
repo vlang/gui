@@ -59,6 +59,34 @@ pub fn (mut window Window) dialog_is_visible() bool {
 	return window.dialog_cfg.visible
 }
 
+// toast shows a non-blocking notification. The toast auto-dismisses
+// after cfg.duration. Returns the toast id for manual dismiss.
+pub fn (mut window Window) toast(cfg ToastCfg) u64 {
+	window.toast_counter++
+	id := window.toast_counter
+	window.toasts << ToastNotification{
+		id:    id
+		cfg:   cfg
+		phase: .entering
+	}
+	toast_start_enter(mut window, id)
+	toast_enforce_max_visible(mut window)
+	window.update_window()
+	return id
+}
+
+// toast_dismiss starts the exit animation for a toast by id.
+pub fn (mut window Window) toast_dismiss(id u64) {
+	toast_start_exit(mut window, id)
+}
+
+// toast_dismiss_all dismisses every active toast.
+pub fn (mut window Window) toast_dismiss_all() {
+	for t in window.toasts {
+		toast_start_exit(mut window, t.id)
+	}
+}
+
 // empty_view - default_view creates an empty view
 fn empty_view(window &Window) View {
 	w, h := window.window_size()

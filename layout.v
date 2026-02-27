@@ -57,6 +57,14 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 		floating_layouts << window.scratch.alloc_floating_layout(ctx_layout)
 	}
 
+	// Toast notifications — above content/menus, below dialog.
+	if window.toasts.len > 0 {
+		mut toast_view := toast_container_view(window)
+		mut toast_layout := generate_layout(mut toast_view, mut window)
+		layout_parents(mut toast_layout, &layout)
+		floating_layouts << window.scratch.alloc_floating_layout(toast_layout)
+	}
+
 	// Dialog is a pop-up dialog.
 	// Add last to ensure it is always on top.
 	// Dialogs do not support additional floating layouts.

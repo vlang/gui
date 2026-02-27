@@ -684,3 +684,35 @@ pub:
 		size:   size_text_small
 	}
 }
+
+pub enum ToastAnchor as u8 {
+	top_left
+	top_right
+	bottom_left
+	bottom_right
+}
+
+pub struct ToastStyle {
+pub:
+	max_visible   int         = 5
+	anchor        ToastAnchor = .bottom_right
+	width         f32         = 260
+	margin        f32         = 16 // gap from window edge
+	spacing       f32         = 8  // gap between toasts
+	accent_width  f32         = 4  // left accent bar width
+	padding       Padding     = padding_medium
+	radius        f32         = radius_medium
+	size_border   f32         = size_border
+	color         Color       = color_panel_dark
+	color_border  Color       = color_border_dark
+	color_info    Color       = color_select_dark
+	color_success Color       = Color{46, 160, 67, 255}
+	color_warning Color       = Color{210, 153, 34, 255}
+	color_error   Color       = Color{218, 54, 51, 255}
+	text_style    TextStyle   = text_style_dark
+	title_style   TextStyle   = TextStyle{
+		...text_style_dark
+		typeface: .bold
+	}
+	shadow        &BoxShadow = unsafe { nil }
+}
