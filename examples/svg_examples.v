@@ -17,8 +17,9 @@ fn svg_entries() []SvgEntry {
 		SvgEntry{'Loading Spinner', $embed_file('../assets/svgs/loading_spinner.svg').to_string()},
 		SvgEntry{'Text with Fonts', $embed_file('../assets/svgs/text_with_fonts.svg').to_string()},
 		SvgEntry{'Transparent Icon', $embed_file('../assets/svgs/transparent_icon.svg').to_string()},
-		SvgEntry{'Sample Transparent', $embed_file('../assets/svgs/sample_transparent.svg').to_string()},
-		SvgEntry{'Sample with BG', $embed_file('../assets/svgs/sample_with_bg.svg').to_string()},
+		SvgEntry{'Flower Transparent', $embed_file('../assets/svgs/sample_transparent.svg').to_string()},
+		SvgEntry{'Flower with BG', $embed_file('../assets/svgs/sample_with_bg.svg').to_string()},
+		SvgEntry{'Landscape no BG', $embed_file('../assets/svgs/sample_landscape.svg').to_string()},
 		SvgEntry{'Tiger', $embed_file('../assets/svgs/tiger.svg').to_string()},
 	]
 }
