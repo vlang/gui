@@ -151,7 +151,7 @@ fn main_view(window &gui.Window) gui.View {
 // - `buttons.v`: Button variants and styling
 // - `inputs.v`: Text input fields
 // - `animations.v`: Animation system with tweens and springs
-// - `theme_designer.v`: Interactive theme customization
+// - `showcase.v`: Theme Generator for interactive theme customization
 //
 // See also:
 // - `src/widgets/` for all available widgets

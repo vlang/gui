@@ -401,6 +401,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['doc', 'table', 'columns', 'data']
 		},
 		DemoEntry{
+			id:      'doc_themes'
+			label:   'Themes'
+			group:   'welcome'
+			summary: 'Theme system: presets, custom themes, JSON, runtime switching.'
+			tags:    ['doc', 'theme', 'color', 'style']
+		},
+		DemoEntry{
 			id:      'color_picker'
 			label:   'Color Picker'
 			group:   'input'
@@ -1189,6 +1196,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'doc_splitter' { demo_doc(mut w, 'doc_splitter', doc_splitter_source) }
 		'doc_svg' { demo_doc(mut w, 'doc_svg', doc_svg_source) }
 		'doc_tables' { demo_doc(mut w, 'doc_tables', doc_tables_source) }
+		'doc_themes' { demo_doc(mut w, 'doc_themes', doc_themes_source) }
 		else { gui.text(text: 'No demo configured') }
 	}
 }
@@ -1226,11 +1234,11 @@ fn related_examples(id string) string {
 		'expand_panel' { 'examples/expand_panel.v' }
 		'icons' { 'examples/icon_font_demo.v' }
 		'gradient' { 'examples/gradient_demo.v, examples/gradient_border_demo.v' }
-		'box_shadows' { 'examples/shadow_demo.v, examples/theme_designer.v' }
+		'box_shadows' { 'examples/shadow_demo.v' }
 		'shader' { 'examples/custom_shader.v' }
 		'animations' { 'examples/animations.v, examples/animation_stress.v' }
 		'color_picker' { 'examples/color_picker.v' }
-		'theme_gen' { 'examples/theme_designer.v' }
+		'theme_gen' { 'examples/showcase.v' }
 		'markdown' { 'examples/markdown.v, examples/doc_viewer.v' }
 		'tab_control' { 'examples/tab_view.v' }
 		'command_palette' { 'examples/command_palette.v' }
@@ -1970,6 +1978,7 @@ const doc_shaders_source = $embed_file('../docs/SHADERS.md').to_string()
 const doc_splitter_source = $embed_file('../docs/SPLITTER.md').to_string()
 const doc_svg_source = $embed_file('../docs/SVG.md').to_string()
 const doc_tables_source = $embed_file('../docs/TABLES.md').to_string()
+const doc_themes_source = $embed_file('../docs/THEMES.md').to_string()
 
 const showcase_markdown_source = '# Markdown Demo
 
@@ -6499,7 +6508,9 @@ Themes can be saved and loaded as JSON:
 gui.theme_save("my_theme.json", theme)!
 loaded := gui.theme_load("my_theme.json")!
 w.set_theme(loaded)
-```'
+```
+
+See also: docs/THEMES.md'
 
 // ==============================================================
 // Theme Generator

@@ -163,7 +163,7 @@ window.set_theme(gui.theme_gruvbox_dark)   // Retro vibes
 window.set_theme(gui.theme_ocean_light)    // Calm blues
 ```
 
-Or build your own with the theme designer (`examples/theme_designer.v`).
+Or build your own with the Theme Generator in the showcase.
 
 ## Widgets at a Glance
 
@@ -218,7 +218,6 @@ v run examples/numeric_input.v  # Locale-aware numeric input + stepping
 v run examples/dialogs.v        # Custom + native dialogs
 v run examples/text_transform.v # Rotated and affine text
 v run examples/table_demo.v     # Table widget demo
-v run examples/theme_designer.v
 v run examples/snake.v          # Yes, it's a game
 ```
 

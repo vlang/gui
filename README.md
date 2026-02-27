@@ -167,7 +167,6 @@ The `examples/` folder contains working apps for every feature:
 v run examples/get_started.v    # Start here
 v run examples/buttons.v        # Button variants
 v run examples/animations.v     # Tweens and springs
-v run examples/theme_designer.v # Build custom themes
 v run examples/tiger.v          # SVG rendering demo
 v run examples/markdown.v       # Markdown rendering
 v run examples/dialogs.v        # Custom + native dialogs
