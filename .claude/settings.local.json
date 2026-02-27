@@ -27,7 +27,12 @@
       "Bash(git show:*)",
       "Bash(git stash:*)",
       "Bash(v test:*)",
-      "Bash(git:*)"
+      "Bash(git:*)",
+      "Bash(find:*)",
+      "Bash(do ls:*)",
+      "Bash(v list:*)",
+      "Bash(v:*)",
+      "Bash(xargs basename:*)"
     ]
   },
   "prefersReducedMotion": false
