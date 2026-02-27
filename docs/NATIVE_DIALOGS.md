@@ -1,9 +1,11 @@
 # Native Dialogs
 
-This guide covers native path dialogs:
-- `native_open_dialog`
-- `native_save_dialog`
-- `native_folder_dialog`
+This guide covers native dialogs:
+- `native_open_dialog` — file picker
+- `native_save_dialog` — save-as picker
+- `native_folder_dialog` — folder picker
+- `native_message_dialog` — OS alert/message box
+- `native_confirm_dialog` — OS yes/no confirmation
 
 ## Platform Behavior
 
@@ -211,6 +213,56 @@ Filter extensions are normalized before native call:
 Invalid extension chars return `.error` with
 `error_code == 'invalid_cfg'`.
 Valid chars: `a-z`, `0-9`, `_`, `-`, `+`.
+
+## Message Dialog
+
+`native_message_dialog` shows a native OS alert with an OK
+button. The `level` controls the severity icon.
+
+```v ignore
+w.native_message_dialog(
+    title:   'Operation Complete'
+    body:    'All files have been saved.'
+    level:   .info
+    on_done: fn (result gui.NativeAlertResult, mut w gui.Window) {
+        // result.status is always .ok for message dialogs
+    }
+)
+```
+
+## Confirm Dialog
+
+`native_confirm_dialog` shows a native OS dialog with Yes/No
+buttons.
+
+```v ignore
+w.native_confirm_dialog(
+    title:   'Delete File?'
+    body:    'This action cannot be undone.'
+    level:   .warning
+    on_done: fn (result gui.NativeAlertResult, mut w gui.Window) {
+        if result.status == .ok {
+            // user clicked Yes
+        }
+    }
+)
+```
+
+## NativeAlertLevel
+
+| Value | macOS | Windows | Linux |
+|---|---|---|---|
+| `.info` | informational icon | `MB_ICONINFORMATION` | `--info` |
+| `.warning` | warning icon | `MB_ICONWARNING` | `--warning` |
+| `.critical` | critical icon | `MB_ICONERROR` | `--error` |
+
+## NativeAlertResult
+
+| Field | Meaning |
+|---|---|
+| `status` | `.ok` (Yes/OK), `.cancel` (No), `.error` |
+| `error_code` | machine code on error |
+| `error_message` | human readable detail on error |
 
 ## Full Working Demo
 

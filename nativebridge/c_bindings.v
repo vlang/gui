@@ -153,6 +153,17 @@ fn C.gui_bookmark_entries_free(&C.GuiBookmarkEntry, int)
 fn C.gui_bookmark_start_access(&u8, int, &&char) int
 fn C.gui_bookmark_stop_access(&u8, int)
 
+struct C.GuiNativeAlertResult {
+pub:
+	status        int
+	error_code    &char
+	error_message &char
+}
+
+fn C.gui_native_message_dialog(voidptr, &char, &char, int) C.GuiNativeAlertResult
+fn C.gui_native_confirm_dialog(voidptr, &char, &char, int) C.GuiNativeAlertResult
+fn C.gui_native_alert_result_free(C.GuiNativeAlertResult)
+
 fn C.gui_portal_available() int
 fn C.gui_portal_open_file(&char, &char, &char, int) C.GuiNativeDialogResultEx
 fn C.gui_portal_save_file(&char, &char, &char, &char, &char) C.GuiNativeDialogResultEx
@@ -531,5 +542,90 @@ pub fn readback_d3d11_texture(d3d11_texture voidptr, d3d11_device voidptr, d3d11
 		return pixels
 	} $else {
 		return error('D3D11 readback not available on this platform')
+	}
+}
+
+// --- Alert/confirm dialog bridge ---
+
+pub struct BridgeAlertResult {
+pub:
+	status        BridgeDialogStatus
+	error_code    string
+	error_message string
+}
+
+pub struct BridgeMessageCfg {
+pub:
+	ns_window voidptr
+	title     string
+	body      string
+	level     int
+}
+
+pub struct BridgeConfirmCfg {
+pub:
+	ns_window voidptr
+	title     string
+	body      string
+	level     int
+}
+
+fn bridge_alert_result_from_c(c_result C.GuiNativeAlertResult) BridgeAlertResult {
+	status := bridge_status_from_int(c_result.status)
+	error_code := if c_result.error_code != unsafe { nil } {
+		unsafe { cstring_to_vstring(c_result.error_code) }
+	} else {
+		''
+	}
+	error_message := if c_result.error_message != unsafe { nil } {
+		unsafe { cstring_to_vstring(c_result.error_message) }
+	} else {
+		''
+	}
+	C.gui_native_alert_result_free(c_result)
+	return BridgeAlertResult{
+		status:        status
+		error_code:    error_code
+		error_message: error_message
+	}
+}
+
+fn bridge_alert_unsupported_result() BridgeAlertResult {
+	return BridgeAlertResult{
+		status:        .error
+		error_code:    'unsupported'
+		error_message: 'native alert dialogs are not implemented on this platform'
+	}
+}
+
+pub fn message_dialog(cfg BridgeMessageCfg) BridgeAlertResult {
+	$if macos {
+		c_result := C.gui_native_message_dialog(cfg.ns_window, cfg.title.str, cfg.body.str,
+			cfg.level)
+		return bridge_alert_result_from_c(c_result)
+	} $else $if linux {
+		return linux_message_dialog(cfg)
+	} $else $if windows {
+		c_result := C.gui_native_message_dialog(cfg.ns_window, cfg.title.str, cfg.body.str,
+			cfg.level)
+		return bridge_alert_result_from_c(c_result)
+	} $else {
+		return bridge_alert_unsupported_result()
+	}
+}
+
+pub fn confirm_dialog(cfg BridgeConfirmCfg) BridgeAlertResult {
+	$if macos {
+		c_result := C.gui_native_confirm_dialog(cfg.ns_window, cfg.title.str, cfg.body.str,
+			cfg.level)
+		return bridge_alert_result_from_c(c_result)
+	} $else $if linux {
+		return linux_confirm_dialog(cfg)
+	} $else $if windows {
+		c_result := C.gui_native_confirm_dialog(cfg.ns_window, cfg.title.str, cfg.body.str,
+			cfg.level)
+		return bridge_alert_result_from_c(c_result)
+	} $else {
+		return bridge_alert_unsupported_result()
 	}
 }

@@ -601,3 +601,142 @@ fn linux_abs_diff(a f32, b f32) f32 {
 	diff := a - b
 	return if diff < 0 { -diff } else { diff }
 }
+
+// --- Alert/confirm dialog (zenity/kdialog) ---
+
+fn linux_alert_tool_error_result() BridgeAlertResult {
+	return BridgeAlertResult{
+		status:        .error
+		error_code:    'unsupported'
+		error_message: 'native alert dialogs on Linux require zenity or kdialog'
+	}
+}
+
+fn linux_alert_result_from_command(result LinuxCommandResult) BridgeAlertResult {
+	if result.exit_code == 0 {
+		return BridgeAlertResult{
+			status: .ok
+		}
+	}
+	// zenity: 1=No/Cancel, 5=timeout; kdialog: 1=No/Cancel
+	if result.exit_code in [1, 5] && result.stderr.trim_space().len == 0 {
+		return BridgeAlertResult{
+			status: .cancel
+		}
+	}
+	return BridgeAlertResult{
+		status:        .error
+		error_code:    'internal'
+		error_message: linux_error_message(result)
+	}
+}
+
+// level: 0=info, 1=warning, 2=critical
+fn linux_zenity_message_flag(level int) string {
+	return match level {
+		2 { '--error' }
+		1 { '--warning' }
+		else { '--info' }
+	}
+}
+
+fn linux_kdialog_message_args(level int, title string, body string) []string {
+	mut args := []string{}
+	if title.trim_space().len > 0 {
+		args << '--title'
+		args << title
+	}
+	match level {
+		2 { args << '--error' }
+		1 { args << '--sorry' }
+		else { args << '--msgbox' }
+	}
+	args << body
+	return args
+}
+
+fn linux_message_dialog(cfg BridgeMessageCfg) BridgeAlertResult {
+	tool := linux_pick_dialog_tool() or { return linux_alert_tool_error_result() }
+	return match tool {
+		.zenity {
+			linux_message_dialog_zenity(cfg)
+		}
+		.kdialog {
+			linux_message_dialog_kdialog(cfg)
+		}
+	}
+}
+
+fn linux_confirm_dialog(cfg BridgeConfirmCfg) BridgeAlertResult {
+	tool := linux_pick_dialog_tool() or { return linux_alert_tool_error_result() }
+	return match tool {
+		.zenity {
+			linux_confirm_dialog_zenity(cfg)
+		}
+		.kdialog {
+			linux_confirm_dialog_kdialog(cfg)
+		}
+	}
+}
+
+fn linux_message_dialog_zenity(cfg BridgeMessageCfg) BridgeAlertResult {
+	mut args := [linux_zenity_message_flag(cfg.level)]
+	if cfg.title.trim_space().len > 0 {
+		args << '--title=${cfg.title}'
+	}
+	args << '--text=${cfg.body}'
+	result := linux_run_command('zenity', args) or {
+		return BridgeAlertResult{
+			status:        .error
+			error_code:    'internal'
+			error_message: err.msg()
+		}
+	}
+	return linux_alert_result_from_command(result)
+}
+
+fn linux_message_dialog_kdialog(cfg BridgeMessageCfg) BridgeAlertResult {
+	args := linux_kdialog_message_args(cfg.level, cfg.title, cfg.body)
+	result := linux_run_command('kdialog', args) or {
+		return BridgeAlertResult{
+			status:        .error
+			error_code:    'internal'
+			error_message: err.msg()
+		}
+	}
+	return linux_alert_result_from_command(result)
+}
+
+fn linux_confirm_dialog_zenity(cfg BridgeConfirmCfg) BridgeAlertResult {
+	mut args := ['--question']
+	if cfg.title.trim_space().len > 0 {
+		args << '--title=${cfg.title}'
+	}
+	args << '--text=${cfg.body}'
+	result := linux_run_command('zenity', args) or {
+		return BridgeAlertResult{
+			status:        .error
+			error_code:    'internal'
+			error_message: err.msg()
+		}
+	}
+	return linux_alert_result_from_command(result)
+}
+
+fn linux_confirm_dialog_kdialog(cfg BridgeConfirmCfg) BridgeAlertResult {
+	mut args := []string{}
+	if cfg.title.trim_space().len > 0 {
+		args << '--title'
+		args << cfg.title
+	}
+	args << '--yesno'
+	args << cfg.body
+	result := linux_run_command('kdialog', args) or {
+		return BridgeAlertResult{
+			status:        .error
+			error_code:    'internal'
+			error_message: err.msg()
+		}
+	}
+	return linux_alert_result_from_command(result)
+}

@@ -341,6 +341,79 @@ GuiNativeDialogResultEx gui_native_folder_dialog_ex(
     }
 }
 
+// Alert level: 0=info, 1=warning, 2=critical.
+static NSAlertStyle gui_alert_style_from_level(int level) {
+    switch (level) {
+    case 2:  return NSAlertStyleCritical;
+    case 1:  return NSAlertStyleWarning;
+    default: return NSAlertStyleInformational;
+    }
+}
+
+static GuiNativeAlertResult gui_alert_result_ok(void) {
+    GuiNativeAlertResult r;
+    r.status = gui_native_status_ok;
+    r.error_code = NULL;
+    r.error_message = NULL;
+    return r;
+}
+
+static GuiNativeAlertResult gui_alert_result_cancel(void) {
+    GuiNativeAlertResult r;
+    r.status = gui_native_status_cancel;
+    r.error_code = NULL;
+    r.error_message = NULL;
+    return r;
+}
+
+GuiNativeAlertResult gui_native_message_dialog(
+    void* ns_window,
+    const char* title,
+    const char* body,
+    int level
+) {
+    (void)ns_window;
+    @autoreleasepool {
+        NSAlert* alert = [[NSAlert alloc] init];
+        alert.alertStyle = gui_alert_style_from_level(level);
+        NSString* t = gui_nsstring(title);
+        if (t != nil) alert.messageText = t;
+        NSString* b = gui_nsstring(body);
+        if (b != nil) alert.informativeText = b;
+        [alert runModal];
+        return gui_alert_result_ok();
+    }
+}
+
+GuiNativeAlertResult gui_native_confirm_dialog(
+    void* ns_window,
+    const char* title,
+    const char* body,
+    int level
+) {
+    (void)ns_window;
+    @autoreleasepool {
+        NSAlert* alert = [[NSAlert alloc] init];
+        alert.alertStyle = gui_alert_style_from_level(level);
+        NSString* t = gui_nsstring(title);
+        if (t != nil) alert.messageText = t;
+        NSString* b = gui_nsstring(body);
+        if (b != nil) alert.informativeText = b;
+        [alert addButtonWithTitle:@"Yes"];
+        [alert addButtonWithTitle:@"No"];
+        NSModalResponse response = [alert runModal];
+        if (response == NSAlertFirstButtonReturn) {
+            return gui_alert_result_ok();
+        }
+        return gui_alert_result_cancel();
+    }
+}
+
+void gui_native_alert_result_free(GuiNativeAlertResult result) {
+    if (result.error_code != NULL) free(result.error_code);
+    if (result.error_message != NULL) free(result.error_message);
+}
+
 void gui_native_dialog_result_ex_free(
     GuiNativeDialogResultEx result
 ) {

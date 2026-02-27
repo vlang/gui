@@ -63,6 +63,29 @@ int gui_bookmark_start_access(
 void gui_bookmark_stop_access(
     const unsigned char* data, int data_len);
 
+/* Alert/confirm dialogs (native message boxes) */
+typedef struct GuiNativeAlertResult {
+    int status;
+    char* error_code;
+    char* error_message;
+} GuiNativeAlertResult;
+
+GuiNativeAlertResult gui_native_message_dialog(
+    void* ns_window,
+    const char* title,
+    const char* body,
+    int level
+);
+
+GuiNativeAlertResult gui_native_confirm_dialog(
+    void* ns_window,
+    const char* title,
+    const char* body,
+    int level
+);
+
+void gui_native_alert_result_free(GuiNativeAlertResult result);
+
 /* Portal (Linux impl, stubs elsewhere) */
 int gui_portal_available(void);
 GuiNativeDialogResultEx gui_portal_open_file(

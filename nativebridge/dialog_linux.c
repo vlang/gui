@@ -52,6 +52,39 @@ GuiNativeDialogResultEx gui_native_folder_dialog_ex(
     return dialog_stub_error();
 }
 
+static GuiNativeAlertResult alert_stub_error(void) {
+    GuiNativeAlertResult result;
+    result.status = 2;
+    result.error_code = NULL;
+    result.error_message = NULL;
+    return result;
+}
+
+GuiNativeAlertResult gui_native_message_dialog(
+    void* ns_window,
+    const char* title,
+    const char* body,
+    int level
+) {
+    (void)ns_window; (void)title; (void)body; (void)level;
+    return alert_stub_error();
+}
+
+GuiNativeAlertResult gui_native_confirm_dialog(
+    void* ns_window,
+    const char* title,
+    const char* body,
+    int level
+) {
+    (void)ns_window; (void)title; (void)body; (void)level;
+    return alert_stub_error();
+}
+
+void gui_native_alert_result_free(GuiNativeAlertResult result) {
+    if (result.error_code != NULL) free(result.error_code);
+    if (result.error_message != NULL) free(result.error_message);
+}
+
 void gui_native_dialog_result_ex_free(
     GuiNativeDialogResultEx result
 ) {

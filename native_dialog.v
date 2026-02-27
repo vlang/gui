@@ -90,3 +90,53 @@ pub fn (mut w Window) native_folder_dialog(cfg NativeFolderDialogCfg) {
 		native_folder_dialog_impl(mut w, cfg_cpy)
 	})
 }
+
+// NativeAlertLevel controls the severity icon of a native
+// message or confirm dialog.
+pub enum NativeAlertLevel as u8 {
+	info
+	warning
+	critical
+}
+
+// NativeAlertResult contains native alert dialog outcome.
+pub struct NativeAlertResult {
+pub:
+	status        NativeDialogStatus
+	error_code    string
+	error_message string
+}
+
+// NativeMessageDialogCfg configures a native message dialog.
+pub struct NativeMessageDialogCfg {
+pub:
+	title   string
+	body    string
+	level   NativeAlertLevel
+	on_done fn (NativeAlertResult, mut Window) = fn (_ NativeAlertResult, mut _ Window) {}
+}
+
+// NativeConfirmDialogCfg configures a native confirm dialog.
+pub struct NativeConfirmDialogCfg {
+pub:
+	title   string
+	body    string
+	level   NativeAlertLevel
+	on_done fn (NativeAlertResult, mut Window) = fn (_ NativeAlertResult, mut _ Window) {}
+}
+
+// native_message_dialog opens a native OS message box.
+pub fn (mut w Window) native_message_dialog(cfg NativeMessageDialogCfg) {
+	cfg_cpy := cfg
+	w.queue_command(fn [cfg_cpy] (mut w Window) {
+		native_message_dialog_impl(mut w, cfg_cpy)
+	})
+}
+
+// native_confirm_dialog opens a native OS Yes/No dialog.
+pub fn (mut w Window) native_confirm_dialog(cfg NativeConfirmDialogCfg) {
+	cfg_cpy := cfg
+	w.queue_command(fn [cfg_cpy] (mut w Window) {
+		native_confirm_dialog_impl(mut w, cfg_cpy)
+	})
+}

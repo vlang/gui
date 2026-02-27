@@ -35,7 +35,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Native save-file dialog (default extension, overwrite handling)
 - [x] Native folder-picker dialog
 - [?] Native color picker dialog
-- [ ] Native message/alert fallback adapter (opt-in over custom GUI dialog)
+- [x] Native message/alert fallback adapter (opt-in over custom GUI dialog)
 - [x] Permission + sandbox-safe path handling on macOS/Windows/Linux portals
 
 ### Markdown + Rich Text

@@ -564,6 +564,75 @@ GuiNativeDialogResultEx gui_native_folder_dialog_ex(
     return result;
 }
 
+// Alert level: 0=info, 1=warning, 2=critical.
+static UINT gui_win_alert_icon(int level) {
+    switch (level) {
+    case 2:  return MB_ICONERROR;
+    case 1:  return MB_ICONWARNING;
+    default: return MB_ICONINFORMATION;
+    }
+}
+
+static GuiNativeAlertResult gui_win_alert_ok(void) {
+    GuiNativeAlertResult r;
+    r.status = gui_win_status_ok;
+    r.error_code = NULL;
+    r.error_message = NULL;
+    return r;
+}
+
+static GuiNativeAlertResult gui_win_alert_cancel(void) {
+    GuiNativeAlertResult r;
+    r.status = gui_win_status_cancel;
+    r.error_code = NULL;
+    r.error_message = NULL;
+    return r;
+}
+
+GuiNativeAlertResult gui_native_message_dialog(
+    void* hwnd_ptr,
+    const char* title,
+    const char* body,
+    int level
+) {
+    wchar_t* wtitle = gui_utf8_to_wide(title);
+    wchar_t* wbody = gui_utf8_to_wide(body);
+    MessageBoxW(
+        (HWND)hwnd_ptr,
+        wbody ? wbody : L"",
+        wtitle ? wtitle : L"",
+        MB_OK | gui_win_alert_icon(level));
+    free(wtitle);
+    free(wbody);
+    return gui_win_alert_ok();
+}
+
+GuiNativeAlertResult gui_native_confirm_dialog(
+    void* hwnd_ptr,
+    const char* title,
+    const char* body,
+    int level
+) {
+    wchar_t* wtitle = gui_utf8_to_wide(title);
+    wchar_t* wbody = gui_utf8_to_wide(body);
+    int result = MessageBoxW(
+        (HWND)hwnd_ptr,
+        wbody ? wbody : L"",
+        wtitle ? wtitle : L"",
+        MB_YESNO | gui_win_alert_icon(level));
+    free(wtitle);
+    free(wbody);
+    if (result == IDYES) {
+        return gui_win_alert_ok();
+    }
+    return gui_win_alert_cancel();
+}
+
+void gui_native_alert_result_free(GuiNativeAlertResult result) {
+    free(result.error_code);
+    free(result.error_message);
+}
+
 void gui_native_dialog_result_ex_free(
     GuiNativeDialogResultEx result
 ) {

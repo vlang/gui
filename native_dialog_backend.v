@@ -156,6 +156,48 @@ fn native_normalize_extension(raw_extension string) !string {
 	return extension
 }
 
+fn native_message_dialog_impl(mut w Window, cfg NativeMessageDialogCfg) {
+	bridge_result := nativebridge.message_dialog(nativebridge.BridgeMessageCfg{
+		ns_window: native_dialog_ns_window()
+		title:     cfg.title
+		body:      cfg.body
+		level:     int(cfg.level)
+	})
+	native_dispatch_alert_done(mut w, cfg.on_done, native_alert_result_from_bridge(bridge_result))
+}
+
+fn native_confirm_dialog_impl(mut w Window, cfg NativeConfirmDialogCfg) {
+	bridge_result := nativebridge.confirm_dialog(nativebridge.BridgeConfirmCfg{
+		ns_window: native_dialog_ns_window()
+		title:     cfg.title
+		body:      cfg.body
+		level:     int(cfg.level)
+	})
+	native_dispatch_alert_done(mut w, cfg.on_done, native_alert_result_from_bridge(bridge_result))
+}
+
+fn native_alert_result_from_bridge(bridge_result nativebridge.BridgeAlertResult) NativeAlertResult {
+	status := match bridge_result.status {
+		.ok { NativeDialogStatus.ok }
+		.cancel { NativeDialogStatus.cancel }
+		.error { NativeDialogStatus.error }
+	}
+	return NativeAlertResult{
+		status:        status
+		error_code:    bridge_result.error_code
+		error_message: bridge_result.error_message
+	}
+}
+
+fn native_dispatch_alert_done(mut w Window,
+	on_done fn (NativeAlertResult, mut Window),
+	result NativeAlertResult) {
+	result_cpy := result
+	w.queue_command(fn [on_done, result_cpy] (mut w Window) {
+		on_done(result_cpy, mut w)
+	})
+}
+
 fn native_is_valid_extension(extension string) bool {
 	for char_code in extension {
 		if char_code >= `a` && char_code <= `z` {

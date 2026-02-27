@@ -13,7 +13,7 @@ fn main() {
 	mut window := gui.window(
 		state:        &DialogsApp{}
 		width:        640
-		height:       420
+		height:       550
 		cursor_blink: true
 		on_init:      fn (mut w gui.Window) {
 			w.update_view(main_view)
@@ -42,9 +42,17 @@ fn main_view(window &gui.Window) gui.View {
 					confirm_type(),
 					prompt_type(),
 					custom_type(),
+				]
+			),
+			gui.column(
+				color_border: gui.theme().color_active
+				padding:      gui.theme().padding_large
+				content:      [
 					native_open_type(),
 					native_save_type(),
 					native_folder_type(),
+					native_message_type(),
+					native_confirm_type(),
 				]
 			),
 		]
@@ -210,6 +218,63 @@ fn native_folder_type() gui.View {
 			)
 		}
 	)
+}
+
+fn native_message_type() gui.View {
+	return gui.button(
+		id_focus: 8
+		sizing:   gui.fill_fit
+		content:  [gui.text(text: 'native_message_dialog()')]
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			w.native_message_dialog(
+				title:   'Native Message'
+				body:    'This is a native OS message dialog.'
+				level:   .info
+				on_done: fn (result gui.NativeAlertResult, mut w gui.Window) {
+					show_alert_result('native_message_dialog()', result, mut w)
+				}
+			)
+		}
+	)
+}
+
+fn native_confirm_type() gui.View {
+	return gui.button(
+		id_focus: 9
+		sizing:   gui.fill_fit
+		content:  [gui.text(text: 'native_confirm_dialog()')]
+		on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			w.native_confirm_dialog(
+				title:   'Native Confirm'
+				body:    'Do you want to proceed?'
+				level:   .warning
+				on_done: fn (result gui.NativeAlertResult, mut w gui.Window) {
+					show_alert_result('native_confirm_dialog()', result, mut w)
+				}
+			)
+		}
+	)
+}
+
+fn show_alert_result(kind string, result gui.NativeAlertResult, mut w gui.Window) {
+	body := match result.status {
+		.ok {
+			'OK / Yes'
+		}
+		.cancel {
+			'Canceled / No'
+		}
+		.error {
+			if result.error_code.len > 0 && result.error_message.len > 0 {
+				'${result.error_code}: ${result.error_message}'
+			} else if result.error_message.len > 0 {
+				result.error_message
+			} else {
+				'Unknown error.'
+			}
+		}
+	}
+	w.dialog(title: kind, body: body)
 }
 
 fn show_native_result(kind string, result gui.NativeDialogResult, mut w gui.Window) {
