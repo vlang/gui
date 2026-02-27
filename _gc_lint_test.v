@@ -58,6 +58,7 @@ const clear_allowlist = [
 	ClearAllowEntry{'window_event.v', 'ss.clear()'},
 	ClearAllowEntry{'window_event.v', 'cs.clear()'},
 	ClearAllowEntry{'view_select.v', 'ss.clear()'},
+	ClearAllowEntry{'view_theme_toggle.v', 'ss.clear()'},
 	ClearAllowEntry{'view_overflow_panel.v', 'ss.clear()'},
 	ClearAllowEntry{'view_input_date.v', 'ids.clear()'},
 	ClearAllowEntry{'view_table.v', 'tc.clear()'},

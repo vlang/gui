@@ -81,6 +81,19 @@ fn layout_arrange(mut layout Layout, mut window Window) []Layout {
 		layout_pipeline(mut floating_layout, mut window)
 		layouts << *floating_layout
 	}
+
+	// Process hover in reverse layer order (topmost first).
+	// If cursor is inside a floating layout, skip hover for layers underneath.
+	ctx := window.context()
+	mx, my := ctx.mouse_pos_x, ctx.mouse_pos_y
+	for i := layouts.len - 1; i >= 0; i-- {
+		layout_hover(mut layouts[i], mut window)
+		// Floating layouts block hover on layers underneath
+		// when the cursor is within their bounds.
+		if i > 0 && layouts[i].shape.point_in_shape(mx, my) {
+			break
+		}
+	}
 	return layouts
 }
 
@@ -107,7 +120,6 @@ fn layout_pipeline(mut layout Layout, mut window Window) {
 	apply_layout_transition(mut layout, window)
 	apply_hero_transition(mut layout, window)
 	layout_set_shape_clips(mut layout, window.window_rect())
-	layout_hover(mut layout, mut window)
 }
 
 // layout_amend handles layout problems resolvable only after sizing/positioning,
