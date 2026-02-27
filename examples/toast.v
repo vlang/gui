@@ -8,8 +8,6 @@ import time
 
 @[heap]
 struct ToastApp {
-pub mut:
-	counter int
 }
 
 fn main() {
@@ -34,7 +32,7 @@ fn main_view(window &gui.Window) gui.View {
 		height:  h
 		sizing:  gui.fixed_fixed
 		h_align: .center
-		v_align: .middle
+		v_align: .top
 		spacing: gui.theme().spacing_medium
 		content: [
 			gui.text(text: 'Toast Notifications', text_style: gui.theme().b2),
@@ -94,8 +92,6 @@ fn main_view(window &gui.Window) gui.View {
 					gui.button(
 						content:  [gui.text(text: 'With Action')]
 						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-							mut s := w.state[ToastApp]()
-							s.counter++
 							w.toast(gui.ToastCfg{
 								title:        'Deleted'
 								body:         'Item removed.'

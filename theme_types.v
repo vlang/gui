@@ -135,6 +135,9 @@ pub:
 	color_border       Color = color_border_dark
 	color_border_focus Color = color_select_dark
 	color_select       Color = color_select_dark
+	color_success      Color = Color{46, 160, 67, 255}
+	color_warning      Color = Color{210, 153, 34, 255}
+	color_error        Color = Color{218, 54, 51, 255}
 	titlebar_dark      bool
 	fill               bool    = true
 	fill_border        bool    = true

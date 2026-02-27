@@ -17,7 +17,7 @@ pub:
 	title        string
 	body         string
 	severity     ToastSeverity
-	duration     time.Duration = 3 * time.second
+	duration     time.Duration = 3 * time.second // 0 = no auto-dismiss
 	action_label string
 	on_action    fn (mut Window) = unsafe { nil }
 }
@@ -183,6 +183,9 @@ fn toast_item_view(toast ToastNotification, style ToastStyle) View {
 		padding:      padding_none
 		clip:         true
 		opacity:      frac
+		on_click:     fn (_ &Layout, mut e Event, mut _ Window) {
+			e.is_handled = true // consume click to prevent pass-through
+		}
 		on_hover:     fn [toast_id] (mut _ Layout, mut e Event, mut w Window) {
 			toast_set_hovered(mut w, toast_id, true)
 			e.is_handled = true

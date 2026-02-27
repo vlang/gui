@@ -472,14 +472,17 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		toast_style:           ToastStyle{
-			color:        cfg.color_panel
-			color_border: cfg.color_border
-			color_info:   cfg.color_select
-			padding:      cfg.padding
-			radius:       cfg.radius
-			size_border:  cfg.size_border
-			text_style:   cfg.text_style
-			title_style:  TextStyle{
+			color:         cfg.color_panel
+			color_border:  cfg.color_border
+			color_info:    cfg.color_select
+			color_success: cfg.color_success
+			color_warning: cfg.color_warning
+			color_error:   cfg.color_error
+			padding:       cfg.padding
+			radius:        cfg.radius
+			size_border:   cfg.size_border
+			text_style:    cfg.text_style
+			title_style:   TextStyle{
 				...cfg.text_style
 				typeface: .bold
 			}
