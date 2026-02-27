@@ -32,7 +32,8 @@
       "Bash(do ls:*)",
       "Bash(v list:*)",
       "Bash(v:*)",
-      "Bash(xargs basename:*)"
+      "Bash(xargs basename:*)",
+      "Bash(gh issue:*)"
     ]
   },
   "prefersReducedMotion": false
