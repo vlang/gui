@@ -42,7 +42,6 @@ const bc_full_path = [
 @[heap]
 struct ShowcaseApp {
 pub mut:
-	light_theme        bool
 	locale_index       int
 	nav_query          string
 	selected_group     string = 'all'
@@ -899,7 +898,17 @@ fn catalog_panel(mut w gui.Window) gui.View {
 				v_align: .middle
 				content: [
 					toggle_locale(app),
-					toggle_theme(app),
+					w.theme_toggle(gui.ThemeToggleCfg{
+						id:            'showcase_theme'
+						id_focus:      9190
+						float_anchor:  .top_right
+						float_tie_off: .bottom_right
+						on_select:     fn (name string, mut _ gui.Event, mut w gui.Window) {
+							t := gui.theme_get(name) or { return }
+							mut app := w.state[ShowcaseApp]()
+							sync_theme_gen_from_cfg(mut app, t.cfg)
+						}
+					}),
 				]
 			),
 		]
@@ -1382,28 +1391,6 @@ fn toggle_locale(app &ShowcaseApp) gui.View {
 			mut a := w.state[ShowcaseApp]()
 			a.locale_index = (idx + 1) % showcase_locale_count
 			w.set_locale(showcase_locale(a.locale_index))
-		}
-	)
-}
-
-fn toggle_theme(app &ShowcaseApp) gui.View {
-	return gui.toggle(
-		text_select:   gui.icon_moon
-		text_unselect: gui.icon_sunny_o
-		text_style:    gui.theme().icon3
-		padding:       gui.padding_small
-		min_width:     16
-		select:        app.light_theme
-		on_click:      fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-			mut app := w.state[ShowcaseApp]()
-			app.light_theme = !app.light_theme
-			cfg := if app.light_theme {
-				gui.theme_light_bordered_cfg
-			} else {
-				gui.theme_dark_bordered_cfg
-			}
-			sync_theme_gen_from_cfg(mut app, cfg)
-			w.set_theme(gui.theme_maker(&cfg))
 		}
 	)
 }
@@ -6222,7 +6209,7 @@ See also: docs/ANIMATIONS.md'
 
 fn demo_animations(mut w gui.Window) gui.View {
 	app := w.state[ShowcaseApp]()
-	box_color := if app.light_theme { gui.dark_blue } else { gui.cornflower_blue }
+	box_color := if gui.theme().titlebar_dark { gui.cornflower_blue } else { gui.dark_blue }
 	return gui.column(
 		sizing:  gui.fill_fit
 		spacing: gui.theme().spacing_medium
@@ -6545,7 +6532,7 @@ fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32, t
 
 fn apply_gen_theme(mut w gui.Window) {
 	mut app := w.state[ShowcaseApp]()
-	cfg := generate_theme_cfg(app.theme_gen_seed, app.theme_gen_strategy, !app.light_theme,
+	cfg := generate_theme_cfg(app.theme_gen_seed, app.theme_gen_strategy, gui.theme().titlebar_dark,
 		app.theme_gen_tint, app.theme_gen_text, app.theme_gen_radius, app.theme_gen_border)
 	w.set_theme(gui.theme_maker(&cfg))
 }
@@ -6734,7 +6721,7 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 											}
 											mut a := w.state[ShowcaseApp]()
 											cfg := generate_theme_cfg(a.theme_gen_seed,
-												a.theme_gen_strategy, !a.light_theme,
+												a.theme_gen_strategy, gui.theme().titlebar_dark,
 												a.theme_gen_tint, a.theme_gen_text, a.theme_gen_radius,
 												a.theme_gen_border)
 											theme := gui.theme_maker(&cfg)

@@ -54,21 +54,25 @@ fn keydown_handler(layout &Layout, mut e Event, mut w Window) {
 	if !w.is_focus(layout.shape.id_focus) && layout.shape.id != reserved_dialog_id {
 		return
 	}
-	// Handle scroll keys if this is a scroll container
-	if layout.shape.id_scroll > 0 {
-		key_down_scroll_handler(layout, mut e, mut w)
-		if e.is_handled {
-			log.debug('keydown_handler scrolled by ${layout.shape.id}')
-			return
-		}
-	}
-	// Execute keydown callback
+	// Execute keydown callback before scroll fallback.
+	// Custom handlers (e.g. listbox) manage their own scrolling;
+	// generic scroll is only for containers without key handling.
 	on_keydown := if layout.shape.has_events() {
 		layout.shape.events.on_keydown
 	} else {
 		unsafe { nil }
 	}
 	execute_focus_callback(layout, mut e, mut w, on_keydown, 'keydown_handler')
+	if e.is_handled {
+		return
+	}
+	// Fallback: scroll keys for focusable scroll containers
+	if layout.shape.id_scroll > 0 {
+		key_down_scroll_handler(layout, mut e, mut w)
+		if e.is_handled {
+			log.debug('keydown_handler scrolled by ${layout.shape.id}')
+		}
+	}
 }
 
 // key_down_scroll_handler handles keyboard-based scrolling.
