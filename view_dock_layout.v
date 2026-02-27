@@ -132,10 +132,8 @@ fn dock_layout_amend(dock_id string, color_zone Color, mut layout Layout, mut w 
 	// First child is the tree view — fill the entire dock area.
 	splitter_layout_child(mut layout.children[0], layout.shape.x, layout.shape.y, layout.shape.width,
 		layout.shape.height, mut w)
-	// Second child (zone overlay) is positioned by dock_drag_amend_overlay.
-	if layout.children.len >= 2 {
-		dock_drag_amend_overlay(dock_id, color_zone, mut layout, mut w)
-	}
+	// Zone overlay is positioned by dock_drag_amend_overlay (found by id).
+	dock_drag_amend_overlay(dock_id, color_zone, mut layout, mut w)
 }
 
 // dock_node_view recursively generates views for the dock tree.

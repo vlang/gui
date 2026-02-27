@@ -41,6 +41,7 @@ mut:
 	parent_y       f32
 	hover_zone     DockDropZone
 	hover_group_id string
+	panel_nodes    []&DockNode // cached at drag activation
 }
 
 // dock_drag_get retrieves the current drag state.
@@ -105,11 +106,12 @@ fn dock_drag_on_mouse_move(dock_id string, root &DockNode,
 			return
 		}
 		state.active = true
+		state.panel_nodes = dock_tree_collect_panel_nodes(root)
 	}
 
-	// Zone detection.
-	zone, group_id := dock_drag_detect_zone(dock_id, root, mouse_x, mouse_y, state.source_group,
-		state.panel_id, w)
+	// Zone detection (uses cached panel_nodes).
+	zone, group_id := dock_drag_detect_zone(dock_id, state.panel_nodes, mouse_x, mouse_y,
+		state.source_group, state.panel_id, w)
 	state.hover_zone = zone
 	state.hover_group_id = group_id
 	dock_drag_set(mut w, dock_id, state)
@@ -139,7 +141,9 @@ fn dock_drag_cancel(dock_id string, mut w Window) {
 }
 
 // dock_drag_detect_zone determines which drop zone the cursor is over.
-fn dock_drag_detect_zone(dock_id string, root &DockNode,
+// panel_nodes is pre-collected at drag activation to avoid per-move
+// allocations.
+fn dock_drag_detect_zone(dock_id string, panel_nodes []&DockNode,
 	mouse_x f32, mouse_y f32, source_group string, panel_id string,
 	w &Window) (DockDropZone, string) {
 	// 1. Check window-edge zones first.
@@ -168,8 +172,7 @@ fn dock_drag_detect_zone(dock_id string, root &DockNode,
 	}
 
 	// 2. Check each panel group's zone.
-	groups := dock_tree_collect_panel_nodes(root)
-	for group in groups {
+	for group in panel_nodes {
 		group_layout := w.find_layout_by_id(group.id) or { continue }
 		gc := group_layout.shape.shape_clip
 		if gc.width <= 0 || gc.height <= 0 {
@@ -264,8 +267,15 @@ fn dock_drag_amend_overlay(dock_id string, color_zone Color, mut layout Layout, 
 		return
 	}
 
-	// The overlay is the second child of the dock canvas (index 1).
-	if layout.children.len < 2 {
+	// Find the overlay child by id (decoupled from child order).
+	mut overlay_idx := -1
+	for i in 0 .. layout.children.len {
+		if layout.children[i].shape.id == 'dock_zone_overlay' {
+			overlay_idx = i
+			break
+		}
+	}
+	if overlay_idx < 0 {
 		return
 	}
 
@@ -308,10 +318,9 @@ fn dock_drag_amend_overlay(dock_id string, color_zone Color, mut layout Layout, 
 		.none {}
 	}
 
-	// children[1] is the drop-zone overlay; index coupled to child order in view_dock_layout.v
-	layout.children[1].shape.x = tx
-	layout.children[1].shape.y = ty
-	layout.children[1].shape.width = tw
-	layout.children[1].shape.height = th
-	layout.children[1].shape.color = color_zone
+	layout.children[overlay_idx].shape.x = tx
+	layout.children[overlay_idx].shape.y = ty
+	layout.children[overlay_idx].shape.width = tw
+	layout.children[overlay_idx].shape.height = th
+	layout.children[overlay_idx].shape.color = color_zone
 }
