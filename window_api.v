@@ -294,6 +294,62 @@ pub fn (mut window Window) scroll_vertical_to(id_scroll u32, offset f32) {
 	sy.set(id_scroll, offset)
 }
 
+// scroll_vertical_to_pct scrolls to a vertical percentage.
+// pct: 0.0 = top, 1.0 = bottom. Clamped to [0, 1].
+// No-op if id_scroll not found or content fits viewport.
+// Use update_window() if not called from event handler.
+pub fn (mut window Window) scroll_vertical_to_pct(id_scroll u32, pct f32) {
+	ly := find_layout_by_id_scroll(window.layout, id_scroll) or { return }
+	max_offset := f32_min(0, ly.shape.height - ly.shape.padding_height() - content_height(ly))
+	if max_offset == 0 {
+		return
+	}
+	mut sy := state_map[u32, f32](mut window, ns_scroll_y, cap_scroll)
+	sy.set(id_scroll, max_offset * f32_clamp(pct, 0, 1))
+}
+
+// scroll_horizontal_to_pct scrolls to a horizontal percentage.
+// pct: 0.0 = left, 1.0 = right. Clamped to [0, 1].
+// No-op if id_scroll not found or content fits viewport.
+// Use update_window() if not called from event handler.
+pub fn (mut window Window) scroll_horizontal_to_pct(id_scroll u32, pct f32) {
+	ly := find_layout_by_id_scroll(window.layout, id_scroll) or { return }
+	max_offset := f32_min(0, ly.shape.width - ly.shape.padding_width() - content_width(ly))
+	if max_offset == 0 {
+		return
+	}
+	mut sx := state_map[u32, f32](mut window, ns_scroll_x, cap_scroll)
+	sx.set(id_scroll, max_offset * f32_clamp(pct, 0, 1))
+}
+
+// scroll_vertical_pct returns the current vertical scroll position
+// as a percentage (0.0 = top, 1.0 = bottom).
+// Returns 0 if id_scroll not found or content fits viewport.
+pub fn (mut window Window) scroll_vertical_pct(id_scroll u32) f32 {
+	ly := find_layout_by_id_scroll(window.layout, id_scroll) or { return 0 }
+	max_offset := f32_min(0, ly.shape.height - ly.shape.padding_height() - content_height(ly))
+	if max_offset == 0 {
+		return 0
+	}
+	mut sy := state_map[u32, f32](mut window, ns_scroll_y, cap_scroll)
+	current := sy.get(id_scroll) or { f32(0) }
+	return f32_clamp(current / max_offset, 0, 1)
+}
+
+// scroll_horizontal_pct returns the current horizontal scroll position
+// as a percentage (0.0 = left, 1.0 = right).
+// Returns 0 if id_scroll not found or content fits viewport.
+pub fn (mut window Window) scroll_horizontal_pct(id_scroll u32) f32 {
+	ly := find_layout_by_id_scroll(window.layout, id_scroll) or { return 0 }
+	max_offset := f32_min(0, ly.shape.width - ly.shape.padding_width() - content_width(ly))
+	if max_offset == 0 {
+		return 0
+	}
+	mut sx := state_map[u32, f32](mut window, ns_scroll_x, cap_scroll)
+	current := sx.get(id_scroll) or { f32(0) }
+	return f32_clamp(current / max_offset, 0, 1)
+}
+
 // set_id_focus sets the window's focus id.
 // Side-effect: triggers update_ime_focus(), which routes the IME overlay to
 // the focused field. Always use set_id_focus for tab navigation — do NOT

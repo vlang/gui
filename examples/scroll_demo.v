@@ -11,7 +11,9 @@ import gui
 @[heap]
 struct ScrollApp {
 pub mut:
-	light bool
+	light     bool
+	pct_left  f32
+	pct_right f32
 }
 
 fn main() {
@@ -38,6 +40,8 @@ fn main_view(window &gui.Window) gui.View {
 		sizing:  gui.fixed_fixed
 		content: [
 			top_row(app),
+			gui.rectangle(height: 0.5, sizing: gui.fill_fixed),
+			pct_row(app),
 			gui.rectangle(height: 0.5, sizing: gui.fill_fixed),
 			gui.row(
 				padding: gui.padding_none
@@ -74,6 +78,48 @@ fn scroll_column(id u32, text string, window &gui.Window) gui.View {
 				mode: .wrap
 			),
 		]
+	)
+}
+
+fn pct_row(app &ScrollApp) gui.View {
+	return gui.row(
+		sizing:  gui.fill_fit
+		padding: gui.padding_none
+		h_align: .center
+		v_align: .middle
+		spacing: 4
+		content: [
+			gui.text(text: 'L: ${app.pct_left * 100:.0f}%', text_style: gui.theme().b3),
+			pct_button(1, 0),
+			pct_button(1, 25),
+			pct_button(1, 50),
+			pct_button(1, 75),
+			pct_button(1, 100),
+			gui.rectangle(width: 12, sizing: gui.fixed_fit),
+			gui.text(text: 'R: ${app.pct_right * 100:.0f}%', text_style: gui.theme().b3),
+			pct_button(2, 0),
+			pct_button(2, 25),
+			pct_button(2, 50),
+			pct_button(2, 75),
+			pct_button(2, 100),
+		]
+	)
+}
+
+fn pct_button(id_scroll u32, pct int) gui.View {
+	pct_f := f32(pct) / 100
+	return gui.button(
+		content:  [gui.text(text: '${pct}%')]
+		on_click: fn [id_scroll, pct_f] (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+			w.scroll_vertical_to_pct(id_scroll, pct_f)
+			mut app := w.state[ScrollApp]()
+			if id_scroll == 1 {
+				app.pct_left = w.scroll_vertical_pct(id_scroll)
+			} else {
+				app.pct_right = w.scroll_vertical_pct(id_scroll)
+			}
+			w.update_window()
+		}
 	)
 }
 
