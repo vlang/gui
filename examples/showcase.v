@@ -740,7 +740,7 @@ fn demo_entries() []DemoEntry {
 			id:      'theme_gen'
 			label:   'Theme'
 			group:   'graphics'
-			summary: 'Generate a full color theme from one seed color'
+			summary: 'Generate a theme from a seed color, tint level, and palette strategy'
 			tags:    ['theme', 'color', 'palette', 'generator']
 		},
 		DemoEntry{
@@ -1286,6 +1286,7 @@ fn component_doc(id string) string {
 		'shader' { shader_doc }
 		'animations' { animations_doc }
 		'color_picker' { color_picker_doc }
+		'theme_gen' { theme_gen_doc }
 		'markdown' { markdown_doc }
 		'tab_control' { tab_control_doc }
 		'command_palette' { command_palette_doc }
@@ -6439,8 +6440,105 @@ fn demo_color_picker(w &gui.Window) gui.View {
 	)
 }
 
+const theme_gen_doc = '# Theme Generator
+
+Generate a complete color theme from a single seed color.
+
+The generator works in HSV color space. It extracts the hue and
+saturation from the seed color, then builds a full `ThemeCfg` with
+nine semantic palette colors, each at a different brightness step.
+
+## Tint
+
+**Tint** (0–100%) controls how much of the seed color bleeds into
+UI surfaces (background, panel, interior, hover). At 0% every
+surface is pure gray. At 100% surfaces carry the full seed
+saturation. Accent colors (`color_select`, `color_border_focus`)
+always use full saturation so interactive highlights stay vivid
+regardless of tint.
+
+## Palette Strategies
+
+Each strategy determines how the **primary hue** (surfaces) and
+**accent hue** (focus, active, borders, selection) relate:
+
+| Strategy | Relationship | Character |
+|----------|-------------|-----------|
+| Mono | Same hue for both | Single-hue; variation from brightness only |
+| Complement | Accent is 180° opposite | Strong surface/accent contrast |
+| Analogous | Accent is 30° from seed | Subtle warm/cool shift |
+| Triadic | Accent is 120° from seed | Balanced without full clash |
+| Warm | Forces primary into 0–60° | Red-yellow palette regardless of seed |
+| Cool | Forces primary into 180–270° | Cyan-blue palette regardless of seed |
+
+## Other Controls
+
+| Control | Description |
+|---------|-------------|
+| Radius | Corner rounding for all widgets |
+| Border | Border thickness for all widgets |
+| Edit text color | Switches the color picker to edit text color instead of seed |
+
+## Programmatic Usage
+
+```v
+cfg := gui.ThemeCfg{
+    color_select:    seed_color,
+    color_background: gui.color_from_hsv(hue, saturation, 0.19),
+    // ... remaining palette colors
+    radius:          5.5,
+    size_border:     1.5,
+}
+theme := gui.theme_maker(&cfg)
+w.set_theme(theme)
+```
+
+Themes can be saved and loaded as JSON:
+
+```v
+gui.theme_save("my_theme.json", theme)!
+loaded := gui.theme_load("my_theme.json")!
+w.set_theme(loaded)
+```'
+
 // ==============================================================
 // Theme Generator
+//
+// Generates a complete ThemeCfg from a single seed color
+// using HSV color-space manipulation. The seed's hue drives
+// all palette colors; its saturation is modulated by the
+// tint slider.
+//
+// Two hue variables control the output:
+//   ph — "primary hue": used for backgrounds, panels, hover
+//   ah — "accent hue":  used for focus, active, borders,
+//                        select highlight
+//
+// The palette strategy determines how ph and ah relate to
+// the seed hue (see match block below).
+//
+// Tint (0–100%) controls how much of the seed's saturation
+// bleeds into the neutral UI surfaces (backgrounds, panels,
+// inputs, hover states). At 0% every surface is pure gray;
+// at 100% surfaces carry the full seed saturation. Accent
+// colors (select, border_focus) always use full saturation
+// regardless of tint, so interactive highlights stay vivid.
+//
+// Palette strategies:
+//   mono       — ph and ah equal the seed hue. Single-hue
+//                theme; variation comes only from value steps.
+//   complement — ah is 180° opposite the seed. Strong
+//                contrast between surfaces and accents.
+//   analogous  — ah is 30° from the seed. Subtle warm/cool
+//                shift between surfaces and accents.
+//   triadic    — ah is 120° from the seed. Balanced contrast
+//                without the clash of a full complement.
+//   warm       — forces ph into the 0–60° (red-yellow) range
+//                and ah 15° ahead. Cozy palette regardless
+//                of seed hue.
+//   cool       — forces ph into the 180–270° (cyan-blue)
+//                range and ah 20° ahead. Cool palette
+//                regardless of seed hue.
 // ==============================================================
 
 fn wrap_hue(h f32) f32 {
@@ -6452,8 +6550,8 @@ fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32, t
 	h, s, _ := seed.to_hsv()
 	tint_factor := tint / 100.0
 
-	mut ph := h
-	mut ah := h
+	mut ph := h // primary hue (surfaces)
+	mut ah := h // accent hue (interactive states)
 	accent_s := gui.f32_clamp(s, 0.5, 1.0)
 	accent_v := if is_dark { f32(0.85) } else { f32(0.65) }
 
@@ -6478,8 +6576,14 @@ fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32, t
 		else {} // mono: ph=h, ah=h
 	}
 
+	// s_tint scales the seed saturation by the tint slider.
+	// Dark themes use the full tint; light themes halve it
+	// so surfaces don't look washed out.
 	if is_dark {
 		s_tint := gui.f32_clamp(s, 0.3, 1.0) * tint_factor
+		// Value steps ascend from background (darkest) to
+		// active (lightest). Accent colors (select,
+		// border_focus) ignore s_tint and stay vivid.
 		return gui.ThemeCfg{
 			name:               'generated'
 			color_background:   gui.color_from_hsv(ph, s_tint, 0.19)
@@ -6504,6 +6608,8 @@ fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32, t
 			radius_border:      radius + 2
 		}
 	}
+	// Light theme: value steps descend from background
+	// (lightest) to active (darkest).
 	s_tint := gui.f32_clamp(s, 0.3, 1.0) * tint_factor * 0.5
 	return gui.ThemeCfg{
 		name:               'generated'
