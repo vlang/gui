@@ -267,6 +267,23 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		mut pos := input_state.cursor_pos
 		mut offset := input_state.cursor_offset
 
+		// Pre-collapse selection for vertical navigation.
+		// Up/down must collapse to boundary first, then navigate
+		// from there (unlike left/right which just collapse).
+		if input_state.select_beg != input_state.select_end && e.modifiers == .none {
+			match e.key_code {
+				.up {
+					pos = int(input_state.select_beg)
+					offset = offset_from_cursor_position(layout.shape, pos, mut window)
+				}
+				.down {
+					pos = int(input_state.select_end)
+					offset = offset_from_cursor_position(layout.shape, pos, mut window)
+				}
+				else {}
+			}
+		}
+
 		// Handle navigation with modifiers
 		if e.modifiers == .alt || e.modifiers == .alt_shift {
 			// Alt: Jump by word or paragraph
@@ -274,6 +291,7 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 				.left { pos = cursor_start_of_word(layout.shape, pos) }
 				.right { pos = cursor_end_of_word(layout.shape, pos) }
 				.up { pos = cursor_start_of_paragraph(layout.shape, pos) }
+				.down { pos = cursor_end_of_paragraph(layout.shape, pos) }
 				else { return }
 			}
 		} else if e.modifiers == .ctrl || e.modifiers == .ctrl_shift {

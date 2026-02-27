@@ -233,6 +233,18 @@ fn cursor_start_of_paragraph(shape Shape, pos int) int {
 	return 0
 }
 
+fn cursor_end_of_paragraph(shape Shape, pos int) int {
+	byte_idx := rune_to_byte_index(shape.tc.text, pos)
+	mut i := byte_idx
+	for i < shape.tc.text.len {
+		if shape.tc.text[i] == `\n` {
+			return byte_to_rune_index(shape.tc.text, i)
+		}
+		i++
+	}
+	return utf8_rune_count(shape.tc.text)
+}
+
 // get_cursor_column returns the zero-based column index of `cursor_pos` within
 // the current line of wrapped text.
 fn get_cursor_column(shape Shape, cursor_pos int) int {
@@ -299,15 +311,16 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 		f32(0)
 	}
 
-	// rect.y is in text-local coords. Convert to scroll container content coords
-	// by adding shape's original position (before scroll was applied).
-	// shape.y = original_y + scroll_y, so original_y = shape.y - scroll_y
+	// rect.y is in text-local coords. Convert to content-relative coords
+	// (where 0 = top of scrollable content, after container padding).
+	// shape.y includes scroll offset; undo it to get the original position,
+	// then subtract the container origin and its padding.
 	shape_y_in_content := shape.y - current_scroll_y - scroll_container.shape.y
-	cursor_top := shape_y_in_content + rect.y
+	padding_top := scroll_container.shape.padding_top()
+	cursor_top := shape_y_in_content - padding_top + rect.y
 	cursor_bottom := cursor_top + rect.height
 
-	// View spans from 0 to scroll_view_height in content coords when scroll=0
-	// With scroll, visible region is from -scroll_y to -scroll_y + height
+	// Visible region in content coords: -scroll_y to -scroll_y + height
 	view_top := -current_scroll_y
 	view_bottom := view_top + scroll_view_height
 

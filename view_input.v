@@ -273,7 +273,8 @@ fn (cfg &InputRuntimeCfg) redo(mut w Window) string {
 // - ctrl+left: moves to start of line; if at start, moves up one line
 // - ctrl+right: moves to end of line; if at end, moves down one line
 // - alt+left: moves to end of previous word (option+left on Mac)
-// - alt+right: moves to start of word (option+left on Mac)
+// - alt+right: moves to start of word (option+right on Mac)
+// - alt+down: moves to end of paragraph (option+down on Mac)
 // - home: move cursor to start of text
 // - end: move cursor to end of text
 // - Add shift to above shortcuts to select text
