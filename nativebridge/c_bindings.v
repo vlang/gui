@@ -9,6 +9,8 @@ module nativebridge
 #flag darwin @VMODROOT/nativebridge/print_macos.m
 #flag darwin @VMODROOT/nativebridge/readback_macos.m
 #flag darwin -framework Metal
+#flag darwin -framework UserNotifications
+#flag darwin @VMODROOT/nativebridge/notification_macos.m
 #flag darwin @VMODROOT/nativebridge/portal_stub.c
 #flag darwin @VMODROOT/nativebridge/a11y_macos.m
 #flag linux @VMODROOT/nativebridge/a11y_linux.c
@@ -19,6 +21,7 @@ module nativebridge
 #flag linux @VMODROOT/nativebridge/bookmark_stub.c
 #flag linux @VMODROOT/nativebridge/dialog_linux.c
 #flag linux @VMODROOT/nativebridge/portal_linux.c
+#flag linux @VMODROOT/nativebridge/notification_linux.c
 #flag linux -lGL
 #flag windows @VMODROOT/nativebridge/dialog_windows.c
 #flag windows @VMODROOT/nativebridge/readback_windows.c
@@ -26,6 +29,7 @@ module nativebridge
 #flag windows @VMODROOT/nativebridge/a11y_windows.c
 #flag windows @VMODROOT/nativebridge/bookmark_stub.c
 #flag windows @VMODROOT/nativebridge/portal_stub.c
+#flag windows @VMODROOT/nativebridge/notification_windows.c
 #flag windows -lole32
 #flag windows -lshell32
 #flag windows -luuid
@@ -33,6 +37,7 @@ module nativebridge
 #include "@VMODROOT/nativebridge/dialog_bridge.h"
 #include "@VMODROOT/nativebridge/print_bridge.h"
 #include "@VMODROOT/nativebridge/readback_bridge.h"
+#include "@VMODROOT/nativebridge/notification_bridge.h"
 
 pub enum BridgeDialogStatus {
 	ok
@@ -611,6 +616,92 @@ pub fn message_dialog(cfg BridgeMessageCfg) BridgeAlertResult {
 		return bridge_alert_result_from_c(c_result)
 	} $else {
 		return bridge_alert_unsupported_result()
+	}
+}
+
+// --- Notification bridge ---
+
+struct C.GuiNativeNotificationResult {
+pub:
+	status        int
+	error_code    &char
+	error_message &char
+}
+
+fn C.gui_native_send_notification(&char, &char) C.GuiNativeNotificationResult
+fn C.gui_native_notification_result_free(C.GuiNativeNotificationResult)
+
+pub enum BridgeNotificationStatus {
+	ok
+	denied
+	error
+}
+
+pub struct BridgeNotificationCfg {
+pub:
+	title string
+	body  string
+}
+
+pub struct BridgeNotificationResult {
+pub:
+	status        BridgeNotificationStatus
+	error_code    string
+	error_message string
+}
+
+fn bridge_notification_status_from_int(value int) BridgeNotificationStatus {
+	return match value {
+		0 { .ok }
+		1 { .denied }
+		else { .error }
+	}
+}
+
+fn bridge_notification_result_from_c(c_result C.GuiNativeNotificationResult) BridgeNotificationResult {
+	status := bridge_notification_status_from_int(c_result.status)
+	error_code := if c_result.error_code != unsafe { nil } {
+		unsafe { cstring_to_vstring(c_result.error_code) }
+	} else {
+		''
+	}
+	error_message := if c_result.error_message != unsafe { nil } {
+		unsafe { cstring_to_vstring(c_result.error_message) }
+	} else {
+		''
+	}
+	C.gui_native_notification_result_free(c_result)
+	return BridgeNotificationResult{
+		status:        status
+		error_code:    error_code
+		error_message: error_message
+	}
+}
+
+fn bridge_notification_unsupported_result() BridgeNotificationResult {
+	return BridgeNotificationResult{
+		status:        .error
+		error_code:    'unsupported'
+		error_message: 'native notifications are not implemented on this platform'
+	}
+}
+
+// send_notification posts an OS-level notification.
+// macOS: UNUserNotificationCenter (requests permission
+// lazily). Windows: Shell_NotifyIconW balloon. Linux:
+// D-Bus org.freedesktop.Notifications.
+pub fn send_notification(cfg BridgeNotificationCfg) BridgeNotificationResult {
+	$if macos {
+		c_result := C.gui_native_send_notification(cfg.title.str, cfg.body.str)
+		return bridge_notification_result_from_c(c_result)
+	} $else $if linux {
+		c_result := C.gui_native_send_notification(cfg.title.str, cfg.body.str)
+		return bridge_notification_result_from_c(c_result)
+	} $else $if windows {
+		c_result := C.gui_native_send_notification(cfg.title.str, cfg.body.str)
+		return bridge_notification_result_from_c(c_result)
+	} $else {
+		return bridge_notification_unsupported_result()
 	}
 }
 

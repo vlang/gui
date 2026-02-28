@@ -97,7 +97,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [ ] Multi-window API (owned windows, modal ownership, shared resources)
 - [x] Docking layout system (IDE-style panels, drag docking targets)
 - [ ] System tray integration on all desktop targets
-- [ ] Native notifications API
+- [x] Native notifications API
 - [ ] Outbound OS drag/drop (text/files/custom payloads)
 - [ ] Carousel / pager widget (touch-friendly slide view, snap points)
 - [ ] Multi-touch / trackpad gesture API (pinch, swipe, rotate)
