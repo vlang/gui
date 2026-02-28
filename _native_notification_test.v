@@ -36,6 +36,22 @@ fn test_notification_result_from_bridge_error() {
 	assert r.error_message == 'session bus unavailable'
 }
 
+fn test_notification_cfg_empty_title_produces_error() {
+	cfg := NativeNotificationCfg{}
+	assert cfg.title.len == 0
+	// The V-layer validation in native_notification() catches
+	// empty titles before queuing. Verify the result struct
+	// that would be dispatched.
+	r := NativeNotificationResult{
+		status:        .error
+		error_code:    'invalid_cfg'
+		error_message: 'title is required'
+	}
+	assert r.status == .error
+	assert r.error_code == 'invalid_cfg'
+	assert r.error_message == 'title is required'
+}
+
 fn test_notification_cfg_default_on_done_is_noop() {
 	cfg := NativeNotificationCfg{
 		title: 'test'

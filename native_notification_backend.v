@@ -3,12 +3,17 @@ module gui
 import nativebridge
 
 fn native_notification_impl(mut w Window, cfg NativeNotificationCfg) {
-	bridge_result := nativebridge.send_notification(nativebridge.BridgeNotificationCfg{
-		title: cfg.title
-		body:  cfg.body
-	})
-	result := native_notification_result_from_bridge(bridge_result)
-	native_dispatch_notification_done(mut w, cfg.on_done, result)
+	// Spawn background thread — send_notification blocks
+	// (semaphores, Sleep, D-Bus) and must not stall the
+	// render thread.
+	spawn fn [cfg] (mut w Window) {
+		bridge_result := nativebridge.send_notification(nativebridge.BridgeNotificationCfg{
+			title: cfg.title
+			body:  cfg.body
+		})
+		result := native_notification_result_from_bridge(bridge_result)
+		native_dispatch_notification_done(mut w, cfg.on_done, result)
+	}(mut w)
 }
 
 fn native_notification_result_from_bridge(br nativebridge.BridgeNotificationResult) NativeNotificationResult {

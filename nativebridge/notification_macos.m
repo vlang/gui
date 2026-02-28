@@ -43,7 +43,7 @@ static GuiNativeNotificationResult gui_notif_send_un(
         [UNUserNotificationCenter
             currentNotificationCenter];
 
-    // Request permission (cached after first grant).
+    // Request permission (cached after first response).
     if (!gui_notif_auth_cached) {
         __block BOOL granted = NO;
         __block NSError* authError = nil;
@@ -71,6 +71,9 @@ static GuiNativeNotificationResult gui_notif_send_un(
                 "authorization request timed out");
         }
 
+        gui_notif_auth_cached = YES;
+        gui_notif_auth_granted = granted;
+
         if (!granted) {
             if (authError != nil) {
                 const char* desc =
@@ -81,8 +84,10 @@ static GuiNativeNotificationResult gui_notif_send_un(
             }
             return gui_notif_result_denied();
         }
-        gui_notif_auth_cached = YES;
-        gui_notif_auth_granted = YES;
+    }
+
+    if (!gui_notif_auth_granted) {
+        return gui_notif_result_denied();
     }
 
     // Build notification content.
@@ -173,6 +178,16 @@ static GuiNativeNotificationResult gui_notif_send_osascript(
     }
     task.environment = env;
 
+    // Timeout guard — consistent with the UN path's 30s limit.
+    // Set terminationHandler before launch to avoid a race
+    // where the task finishes before the handler is installed.
+    dispatch_semaphore_t sem =
+        dispatch_semaphore_create(0);
+    task.terminationHandler =
+        ^(NSTask* __unused t) {
+            dispatch_semaphore_signal(sem);
+        };
+
     NSError* launchErr = nil;
     [task launchAndReturnError:&launchErr];
     if (launchErr != nil) {
@@ -181,7 +196,17 @@ static GuiNativeNotificationResult gui_notif_send_osascript(
         return gui_notif_result_error(
             "osascript_launch", desc);
     }
-    [task waitUntilExit];
+
+    long wait_result = dispatch_semaphore_wait(
+        sem,
+        dispatch_time(DISPATCH_TIME_NOW,
+            GUI_NOTIF_SEM_TIMEOUT_NS));
+    if (wait_result != 0) {
+        [task terminate];
+        return gui_notif_result_error(
+            "osascript_timeout",
+            "osascript timed out");
+    }
 
     if (task.terminationStatus != 0) {
         return gui_notif_result_error(

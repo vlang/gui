@@ -28,6 +28,14 @@ pub:
 // lazily on first call). Windows: Shell_NotifyIcon balloon.
 // Linux: D-Bus org.freedesktop.Notifications.
 pub fn (mut w Window) native_notification(cfg NativeNotificationCfg) {
+	if cfg.title.len == 0 {
+		native_dispatch_notification_done(mut w, cfg.on_done, NativeNotificationResult{
+			status:        .error
+			error_code:    'invalid_cfg'
+			error_message: 'title is required'
+		})
+		return
+	}
 	cfg_cpy := cfg
 	w.queue_command(fn [cfg_cpy] (mut w Window) {
 		native_notification_impl(mut w, cfg_cpy)
