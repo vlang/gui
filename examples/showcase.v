@@ -169,6 +169,8 @@ pub mut:
 	drag_reorder_tabs     []gui.TabItemCfg  = drag_reorder_demo_tabs()
 	drag_reorder_tab_sel  string            = 'alpha'
 	drag_reorder_nodes    []gui.TreeNodeCfg = drag_reorder_demo_nodes()
+	// native notification
+	notif_status string = 'idle'
 	// docs panel
 	show_docs bool
 }
@@ -667,6 +669,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['badge', 'count', 'status', 'pill', 'label']
 		},
 		DemoEntry{
+			id:      'native_notification'
+			label:   'Native Notification'
+			group:   'feedback'
+			summary: 'OS-level notifications on macOS, Windows, and Linux'
+			tags:    ['notification', 'native', 'os', 'alert', 'push']
+		},
+		DemoEntry{
 			id:      'dialog'
 			label:   'Dialog'
 			group:   'overlays'
@@ -1156,6 +1165,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'pulsar' { demo_pulsar(mut w) }
 		'toast' { demo_toast(mut w) }
 		'badge' { demo_badge() }
+		'native_notification' { demo_native_notification(mut w) }
 		'breadcrumb' { demo_breadcrumb(mut w) }
 		'menus' { demo_menu(mut w) }
 		'dialog' { demo_dialog() }
@@ -1231,6 +1241,7 @@ fn related_examples(id string) string {
 		'progress_bar' { 'examples/progress_bars.v' }
 		'pulsar' { 'examples/pulsars.v' }
 		'toast' { 'examples/toast.v' }
+		'native_notification' { 'examples/native_notification.v' }
 		'badge' { 'examples/badge.v' }
 		'breadcrumb' { 'examples/breadcrumb.v' }
 		'menus' { 'examples/menu_demo.v, examples/context_menu_demo.v' }
@@ -1288,6 +1299,7 @@ fn component_doc(id string) string {
 		'progress_bar' { progress_bar_doc }
 		'pulsar' { pulsar_doc }
 		'toast' { toast_doc }
+		'native_notification' { native_notification_doc }
 		'badge' { badge_doc }
 		'breadcrumb' { breadcrumb_doc }
 		'menus' { menus_doc }
@@ -3046,6 +3058,71 @@ fn demo_toast(mut w gui.Window) gui.View {
 					color: gui.theme().color_active
 				}
 			),
+		]
+	)
+}
+
+const native_notification_doc = '# Native Notification
+
+OS-level notifications via UNUserNotificationCenter (macOS),
+Shell_NotifyIcon (Windows), or D-Bus (Linux).
+
+## Usage
+
+```v
+w.native_notification(gui.NativeNotificationCfg{
+    title: "Hello",
+    body:  "World",
+    on_done: fn (r gui.NativeNotificationResult, mut w gui.Window) {
+        // r.status: .ok, .denied, .error
+    },
+})
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| title | string | Heading (required) |
+| body | string | Message text |
+| on_done | fn (NativeNotificationResult, mut Window) | Completion callback |
+
+## NativeNotificationResult
+
+| Field | Type | Description |
+|-------|------|-------------|
+| status | NativeNotificationStatus | ok, denied, error |
+| error_code | string | Platform error code |
+| error_message | string | Human-readable detail |'
+
+fn demo_native_notification(mut w gui.Window) gui.View {
+	app := w.state[ShowcaseApp]()
+
+	return gui.column(
+		spacing: gui.theme().spacing_small
+		content: [
+			gui.button(
+				content:  [gui.text(text: 'Send Notification')]
+				on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
+					mut s := w.state[ShowcaseApp]()
+					s.notif_status = 'sending...'
+					w.update_window()
+					w.native_notification(gui.NativeNotificationCfg{
+						title:   'Hello from v-gui'
+						body:    'Native notifications are working.'
+						on_done: fn (r gui.NativeNotificationResult, mut w gui.Window) {
+							mut s2 := w.state[ShowcaseApp]()
+							s2.notif_status = match r.status {
+								.ok { 'delivered' }
+								.denied { 'denied: ${r.error_message}' }
+								.error { 'error: ${r.error_message}' }
+							}
+							w.update_window()
+						}
+					})
+				}
+			),
+			gui.text(text: 'Status: ${app.notif_status}'),
 		]
 	)
 }
