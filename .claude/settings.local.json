@@ -33,7 +33,9 @@
       "Bash(v list:*)",
       "Bash(v:*)",
       "Bash(xargs basename:*)",
-      "Bash(gh issue:*)"
+      "Bash(gh issue:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:docs.docker.com)"
     ]
   },
   "prefersReducedMotion": false

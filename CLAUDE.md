@@ -206,6 +206,16 @@ Workaround: direct assignment `m[key] = value` works. Do **not** extract a
 helper that takes the map as a parameter. See `render_svg.v` `group_matrices`
 for the inline comment.
 
+### Pointer-based sumtype dangling pointers
+
+`&SumType(Variant{...})` generates `to_sumtype(..., is_mut=true)` which
+skips `memdup`. The variant lives as a stack temporary (compound literal).
+After the enclosing function returns, the sumtype's pointer dangles.
+
+**Workaround**: use a tagged struct with an enum discriminator instead of
+a V sumtype for types needing heap persistence. See `DockNode` in
+`dock_layout_tree.v`.
+
 ### Inline `if` returning `&T` vs `voidptr`
 
 V cannot return `&T` from an inline `if` expression when the other branch
@@ -275,3 +285,266 @@ Files that need Window/View/Renderer stay in `gui/`: `svg_load.v`,
 
 Test files in `module svg` must not use `svg` as a local variable name
 (shadows the module name).
+
+## Draw Canvas
+
+`DrawCanvasView` (`view_draw_canvas.v`) provides a retained-mode
+drawing surface. The user supplies an `on_draw: fn (mut DrawContext)`
+callback; `DrawContext` (`canvas_draw.v`) offers:
+
+- `polyline`, `line` — stroked paths
+- `filled_polygon`, `filled_rect`, `rect` — filled/stroked geometry
+- `filled_circle`, `circle`, `arc`, `filled_arc` — circular primitives
+
+All primitives tessellate to flat triangle batches emitted as `DrawSvg`
+renderers. `StrokeCap` / `StrokeJoin` are re-exported from `svg` so
+callers need not import it.
+
+Tessellation is **cached** by widget `id + version` in a `state_map`.
+Bump `version` to invalidate; unchanged canvases skip `on_draw`
+entirely. If the canvas needs to redraw every frame, set `version`
+to an incrementing counter.
+
+```v ignore
+gui.draw_canvas(
+    id: 'chart'
+    version: data_version
+    width: 400
+    height: 300
+    on_draw: fn (mut dc gui.DrawContext) {
+        dc.filled_rect(0, 0, dc.width, dc.height, bg_color)
+        dc.polyline(pts, line_color, 2.0, .butt, .miter)
+    }
+)
+```
+
+## Animation System
+
+Files: `animation.v`, `animation_tween.v`, `animation_spring.v`,
+`animation_keyframe.v`, `animation_hero.v`, `animation_easing.v`,
+`animation_loop.v`.
+
+### Types
+
+| Type | Duration | Key trait |
+|------|----------|-----------|
+| `TweenAnimation` | fixed (default 300ms) | easing curve, `from`/`to` |
+| `SpringAnimation` | physics-based, settles | `SpringCfg` (stiffness, damping, mass) |
+| `KeyframeAnimation` | fixed | multi-waypoint `[]Keyframe` |
+| `HeroTransition` | fixed (default 300ms) | morphs `hero: true` elements |
+
+### Spring presets
+
+`spring_default` (100/10), `spring_gentle` (50/8),
+`spring_bouncy` (300/15), `spring_stiff` (500/30).
+
+### Loop
+
+Animations run in a goroutine at 16 ms cycle. Each animation's
+`refresh_kind()` determines the refresh path:
+
+- `.layout` — full rebuild (state-mutating tweens, springs)
+- `.render_only` — renderer rebuild only (cursor blink)
+
+### Hero
+
+Only one `HeroTransition` active at a time (fixed ID
+`'__hero_transition__'`). Mark shapes with `hero: true` + matching
+`id` across views. Hero snapshots the outgoing layout; the incoming
+layout lerps position/size from the snapshot.
+
+### API
+
+```v ignore
+w.animation_add(mut TweenAnimation{ id: 'x', from: 0, to: 1,
+    on_value: fn [mut state] (v f32, mut w Window) { ... } })
+w.has_animation('x')     // check active
+w.remove_animation('x')  // cancel
+```
+
+## State Management (state_registry)
+
+`state_registry.v` provides per-widget typed state maps keyed by
+namespace string. Replaces dedicated fields on `ViewState`.
+
+```v ignore
+mut sm := gui.state_map[string, MyState](mut w, 'mylib.wgt', 20)
+st := sm.get(id) or { MyState{} }
+sm.set(id, new_st)
+```
+
+- `state_map[K, V](mut w, ns, max_size)` — get or create
+- `state_map_read[K, V](w, ns)` — read-only, no `mut Window`
+- Type-checked: same namespace must use matching `[K, V]` types
+- Backed by `BoundedMap` with LRU eviction at `max_size`
+
+### Capacity constants
+
+`cap_few` (20), `cap_moderate` (50), `cap_many` (100),
+`cap_scroll` (200), `cap_tree_focus` (30).
+
+### Reserved namespaces
+
+Internal namespaces start with `gui.` — e.g. `gui.input`,
+`gui.scroll.x`, `gui.scroll.y`, `gui.select`, `gui.dock.drag`,
+`gui.draw_canvas`. Third-party modules should use their own prefix.
+
+## Event Handling & Command Queue
+
+### EventHandlers
+
+Allocated lazily on `Shape` via optional `&EventHandlers` pointer.
+Check existence with `shape.has_events()`.
+
+Key callbacks (all take `(&Layout, mut Event, mut Window)` unless
+noted):
+
+`on_click`, `on_hover`, `on_keydown`, `on_char`, `on_mouse_move`,
+`on_mouse_up`, `on_mouse_scroll`.
+
+Special: `on_scroll(&Layout, mut Window)` (no Event),
+`on_ime_commit(&Layout, string, mut Window)`.
+
+`amend_layout` runs during `layout_arrange`, not during rendering.
+
+### Command queue
+
+`queue_command(fn (mut Window))` — thread-safe callback for
+cross-thread UI mutations. Executed by `flush_commands()` at frame
+start. Preferred over direct `lock()`/`unlock()`.
+
+### Mouse lock
+
+`w.mouse_lock(MouseLockCfg{...})` redirects all mouse events to
+specified handlers until `w.mouse_unlock()`. Used by splitter,
+dock drag, range slider.
+
+## Toast Notifications
+
+`view_toast.v`. Non-blocking notifications with animated
+enter/exit.
+
+```v ignore
+id := w.toast(gui.ToastCfg{
+    title:    'Saved'
+    severity: .success
+    duration: 3 * time.second  // 0 = no auto-dismiss
+})
+w.toast_dismiss(id)       // manual dismiss
+w.toast_dismiss_all()
+```
+
+Severity: `.info`, `.success`, `.warning`, `.error`.
+Optional `action_label` + `on_action` callback.
+Floating container anchored via `ToastStyle.anchor` in theme.
+Max visible toasts enforced; excess are auto-dismissed.
+
+## Scroll API
+
+```v ignore
+w.scroll_vertical_to_pct(id_scroll, 0.5)   // 50% down
+w.scroll_horizontal_to_pct(id_scroll, 0.0)  // left edge
+pct := w.scroll_vertical_pct(id_scroll)     // query position
+w.scroll_to_view('my_element_id')           // reveal element
+```
+
+`pct` range: 0.0 (start) to 1.0 (end). Clamped. No-op if content
+fits viewport. Scroll offsets are stored as negative values
+internally (top-anchored layout).
+
+## Floating Elements
+
+`layout_float.v`. Any shape with `float: true` is removed from
+normal layout flow and positioned relative to its parent via
+anchor points.
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `float` | `bool` | enable floating |
+| `float_anchor` | `FloatAttach` | anchor on parent |
+| `float_tie_off` | `FloatAttach` | anchor on self |
+| `float_offset_x/y` | `f32` | pixel offset from anchor |
+
+`FloatAttach` enum: `top_left`, `top_center`, `top_right`,
+`middle_left`, `middle_center`, `middle_right`, `bottom_left`,
+`bottom_center`, `bottom_right`.
+
+RTL mirroring swaps left/right via `mirror_float_attach`.
+
+## Dock Layout System
+
+Files: `dock_layout_tree.v`, `view_dock_layout.v`,
+`dock_layout_drag.v`.
+
+IDE-style docking panels. Binary tree of splits; leaves are
+panel groups (tabs).
+
+### DockNode
+
+Tagged struct (not sumtype — avoids V dangling pointer bug).
+`kind: .split | .panel_group`. Constructors:
+
+```v ignore
+dock_split(id, dir, ratio, first, second)  // -> &DockNode
+dock_panel_group(id, panel_ids, selected)  // -> &DockNode
+```
+
+Tree is **immutable** — mutations return new trees via pure
+functions (`dock_insert`, `dock_remove`, `dock_move`, etc.).
+
+### View integration
+
+`DockLayoutView implements View` — provides `mut Window` access in
+`generate_layout`. `DockLayoutCore` is the GC-safe closure capture
+struct (like `SplitterCore`). Drag state stored under
+`ns_dock_drag` in `state_registry`.
+
+## Testing Conventions
+
+- Test files named `_*_test.v` (underscore prefix per CLAUDE.md
+  global instructions).
+- Guard-clause tests: verify early returns for invalid input
+  (e.g. `test_polyline_rejects_too_few_points`).
+- Tests organized by feature file: `_draw_canvas_test.v`,
+  `_bounded_map_test.v`, `_view_splitter_test.v`,
+  `_view_table_test.v`, etc.
+- Run: `v test .` from the `gui/` directory.
+
+## Component Index
+
+### Layout containers
+
+`view_container.v` (row/column), `view_splitter.v`,
+`view_dock_layout.v`, `view_sidebar.v`, `view_tab_control.v`,
+`view_expand_panel.v`, `view_overflow_panel.v`.
+
+### Input widgets
+
+`view_input.v`, `view_numeric_input.v`, `view_input_date.v`,
+`view_select.v`, `view_combobox.v`, `view_command_palette.v`,
+`view_date_picker.v`, `view_date_picker_roller.v`,
+`view_color_picker.v`, `view_range_slider.v`.
+
+### Display widgets
+
+`view_text.v`, `view_rtf.v`, `view_markdown.v`, `view_image.v`,
+`view_svg.v`, `view_badge.v`, `view_progress_bar.v`,
+`view_pulsar.v`, `view_rectangle.v`, `view_draw_canvas.v`.
+
+### Interactive controls
+
+`view_button.v`, `view_toggle.v`, `view_switch.v`, `view_radio.v`,
+`view_radio_button_group.v`, `view_breadcrumb.v`, `view_link_context_menu.v`,
+`view_theme_toggle.v`.
+
+### Data views
+
+`view_table.v`, `view_data_grid.v` (+ `_columns`, `_crud`,
+`_events`, `_export`, `_header`, `_rows`), `view_tree.v`,
+`view_listbox.v`.
+
+### Overlay / feedback
+
+`view_dialog.v`, `view_toast.v`, `view_tooltip.v`, `view_menu.v`,
+`view_menu_item.v`, `view_menubar.v`, `view_scrollbar.v`,
+`view_form.v`.

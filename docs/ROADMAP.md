@@ -112,9 +112,9 @@ access to the GPU drawing primitives within a clipped layout region.
 
 ### Framework Prerequisites
 
-- [ ] Canvas View: layout node with `on_draw` callback providing
+- [x] Canvas View: layout node with `on_draw` callback providing
       polyline, filled-polygon, and arc primitives
-- [ ] Retained geometry buffer in canvas (avoid re-tessellation when
+- [x] Retained geometry buffer in canvas (avoid re-tessellation when
       only transform/pan/zoom changes)
 - [x] Text measurement API (`get_text_width`, `line_height`)
 - [x] Text rotation (`TextStyle.rotation_radians`)
