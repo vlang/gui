@@ -55,7 +55,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] `command_palette` widget (search + ranking + keyboard-first UX)
 - [x] `toast` / non-blocking notification system
 - [x] `combobox` with typeahead filter and async options provider
-- [ ] `badge` numeric and colored label
+- [x] `badge` numeric and colored label
 - [-] `toolbar` widget (button groups, separators, overflow menu)
 - [-] `status bar` widget (icon + text sections, embedded progress indicator)
 - [ ] `skeleton` shimmer placeholder for async-loading content

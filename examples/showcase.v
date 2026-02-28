@@ -660,6 +660,13 @@ fn demo_entries() []DemoEntry {
 			tags:    ['notification', 'alert', 'severity', 'stack']
 		},
 		DemoEntry{
+			id:      'badge'
+			label:   'Badge'
+			group:   'feedback'
+			summary: 'Numeric and colored pill labels for counts and status'
+			tags:    ['badge', 'count', 'status', 'pill', 'label']
+		},
+		DemoEntry{
 			id:      'dialog'
 			label:   'Dialog'
 			group:   'overlays'
@@ -1148,6 +1155,7 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'progress_bar' { demo_progress_bar(w) }
 		'pulsar' { demo_pulsar(mut w) }
 		'toast' { demo_toast(mut w) }
+		'badge' { demo_badge() }
 		'breadcrumb' { demo_breadcrumb(mut w) }
 		'menus' { demo_menu(mut w) }
 		'dialog' { demo_dialog() }
@@ -1223,6 +1231,7 @@ fn related_examples(id string) string {
 		'progress_bar' { 'examples/progress_bars.v' }
 		'pulsar' { 'examples/pulsars.v' }
 		'toast' { 'examples/toast.v' }
+		'badge' { 'examples/badge.v' }
 		'breadcrumb' { 'examples/breadcrumb.v' }
 		'menus' { 'examples/menu_demo.v, examples/context_menu_demo.v' }
 		'dialog' { 'examples/dialogs.v' }
@@ -1279,6 +1288,7 @@ fn component_doc(id string) string {
 		'progress_bar' { progress_bar_doc }
 		'pulsar' { pulsar_doc }
 		'toast' { toast_doc }
+		'badge' { badge_doc }
 		'breadcrumb' { breadcrumb_doc }
 		'menus' { menus_doc }
 		'dialog' { dialog_doc }
@@ -3035,6 +3045,86 @@ fn demo_toast(mut w gui.Window) gui.View {
 					...gui.theme().n4
 					color: gui.theme().color_active
 				}
+			),
+		]
+	)
+}
+
+const badge_doc = '# Badge
+
+Numeric and colored pill labels for notification counts and status indicators.
+
+## Usage
+
+```v
+gui.badge(label: "3", variant: .info)
+gui.badge(label: "99+", variant: .error)
+gui.badge(dot: true, variant: .success)
+```
+
+## Key Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| label | string | Text to display |
+| variant | BadgeVariant | default\\_, info, success, warning, error |
+| max | int | Cap value; shows "max+" when exceeded (0=no cap) |
+| dot | bool | Dot-only mode, no label |
+| color | Color | Background color (default variant only) |
+
+## Variants
+
+| Variant | Use case |
+|---------|----------|
+| default\\_ | Custom color via `color` field |
+| info | Informational counts |
+| success | Positive status |
+| warning | Needs attention |
+| error | Critical counts |'
+
+fn demo_badge() gui.View {
+	return gui.column(
+		spacing: gui.theme().spacing_medium
+		content: [
+			gui.text(text: 'Variants', text_style: gui.theme().b4),
+			gui.row(
+				color:       gui.color_transparent
+				size_border: 0
+				spacing:     gui.theme().spacing_small
+				v_align:     .middle
+				content:     [
+					gui.badge(label: '5'),
+					gui.badge(label: '3', variant: .info),
+					gui.badge(label: '12', variant: .success),
+					gui.badge(label: '7', variant: .warning),
+					gui.badge(label: '99', variant: .error),
+				]
+			),
+			gui.text(text: 'Max cap', text_style: gui.theme().b4),
+			gui.row(
+				color:       gui.color_transparent
+				size_border: 0
+				spacing:     gui.theme().spacing_small
+				v_align:     .middle
+				content:     [
+					gui.badge(label: '5', max: 99),
+					gui.badge(label: '150', max: 99, variant: .error),
+					gui.badge(label: '1000', max: 999, variant: .info),
+				]
+			),
+			gui.text(text: 'Dot mode', text_style: gui.theme().b4),
+			gui.row(
+				color:       gui.color_transparent
+				size_border: 0
+				spacing:     gui.theme().spacing_small
+				v_align:     .middle
+				content:     [
+					gui.badge(dot: true),
+					gui.badge(dot: true, variant: .info),
+					gui.badge(dot: true, variant: .success),
+					gui.badge(dot: true, variant: .warning),
+					gui.badge(dot: true, variant: .error),
+				]
 			),
 		]
 	)

@@ -692,6 +692,24 @@ pub enum ToastAnchor as u8 {
 	bottom_right
 }
 
+pub struct BadgeStyle {
+pub:
+	color         Color     = color_select_dark
+	color_info    Color     = color_select_dark
+	color_success Color     = Color{46, 160, 67, 255}
+	color_warning Color     = Color{210, 153, 34, 255}
+	color_error   Color     = Color{218, 54, 51, 255}
+	padding       Padding   = padding(2, 6, 2, 6)
+	radius        f32       = radius_large * 2
+	text_style    TextStyle = TextStyle{
+		...text_style_dark
+		color:    white
+		size:     size_text_x_small
+		typeface: .bold
+	}
+	dot_size      f32 = 8
+}
+
 pub struct ToastStyle {
 pub:
 	max_visible   int         = 5

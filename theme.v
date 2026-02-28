@@ -487,6 +487,19 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 				typeface: .bold
 			}
 		}
+		badge_style:           BadgeStyle{
+			color:         cfg.color_select
+			color_info:    cfg.color_select
+			color_success: cfg.color_success
+			color_warning: cfg.color_warning
+			color_error:   cfg.color_error
+			text_style:    TextStyle{
+				...cfg.text_style
+				color:    white
+				size:     cfg.size_text_x_small
+				typeface: .bold
+			}
+		}
 
 		// Usually don't change
 		padding_small:  cfg.padding_small
@@ -955,6 +968,14 @@ pub fn (t Theme) with_toast_style(style ToastStyle) Theme {
 	}
 }
 
+// with_badge_style returns a new Theme with the badge style replaced.
+pub fn (t Theme) with_badge_style(style BadgeStyle) Theme {
+	return Theme{
+		...t
+		badge_style: style
+	}
+}
+
 // -----------------------------------------------------------------------------
 // Bulk color updates
 // -----------------------------------------------------------------------------
@@ -1228,6 +1249,14 @@ pub fn (t Theme) with_colors(overrides ColorOverrides) Theme {
 			...t.toast_style
 			color:         panel
 			color_border:  border
+			color_info:    sel
+			color_success: success
+			color_warning: warning
+			color_error:   cerror
+		}
+		badge_style:           BadgeStyle{
+			...t.badge_style
+			color:         sel
 			color_info:    sel
 			color_success: success
 			color_warning: warning

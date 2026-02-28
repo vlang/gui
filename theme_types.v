@@ -47,6 +47,7 @@ pub:
 	command_palette_style CommandPaletteStyle
 	markdown_style        MarkdownStyle
 	toast_style           ToastStyle
+	badge_style           BadgeStyle
 
 	// n's and b's are convenience configs for sizing
 	// similar to H1-H6 in html markup. n3 is the
