@@ -3,7 +3,7 @@ module svg
 import math
 
 // tessellate_polylines converts polylines to triangles using ear clipping with hole support.
-fn tessellate_polylines(polylines [][]f32) []f32 {
+pub fn tessellate_polylines(polylines [][]f32) []f32 {
 	if polylines.len == 0 {
 		return []f32{}
 	}

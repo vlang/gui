@@ -127,13 +127,14 @@ fn render_shape_inner(mut shape Shape, parent_color Color, clip DrawClip, mut wi
 	has_visible_border := shape.size_border > 0 && shape.color_border != color_transparent
 	has_visible_text := shape.shape_type == .text && shape.tc != unsafe { nil }
 		&& (shape.tc.text_style.color != color_transparent || shape.tc.text_style.stroke_width > 0)
-	// SVG shapes have their own internal colors, so don't skip them
+	// SVG/canvas shapes have their own internal colors, so don't skip them
 	is_svg := shape.shape_type == .svg
+	is_draw_canvas := shape.shape_type == .draw_canvas
 	has_effects := shape.fx != unsafe { nil } && (shape.fx.gradient != unsafe { nil }
 		|| shape.fx.shader != unsafe { nil }
 		|| shape.fx.border_gradient != unsafe { nil })
 	if shape.color == color_transparent && !has_effects && !has_visible_border && !has_visible_text
-		&& !is_svg {
+		&& !is_svg && !is_draw_canvas {
 		return
 	}
 	match shape.shape_type {
@@ -154,6 +155,9 @@ fn render_shape_inner(mut shape Shape, parent_color Color, clip DrawClip, mut wi
 		}
 		.svg {
 			render_svg(mut shape, clip, mut window)
+		}
+		.draw_canvas {
+			render_draw_canvas(mut shape, clip, mut window)
 		}
 		.none {}
 	}

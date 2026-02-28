@@ -144,6 +144,7 @@ pub enum ShapeType as u8 {
 	circle
 	rtf
 	svg
+	draw_canvas
 }
 
 // point_in_shape determines if the given point is within the shape's shape_clip

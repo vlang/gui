@@ -508,6 +508,9 @@ fn inspector_type_name(shape &Shape) string {
 		.svg {
 			'svg'
 		}
+		.draw_canvas {
+			'draw_canvas'
+		}
 		.none, .rectangle {
 			match shape.axis {
 				.top_to_bottom { 'column' }

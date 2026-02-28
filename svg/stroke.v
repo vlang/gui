@@ -3,7 +3,7 @@ module svg
 import math
 
 // tessellate_stroke converts polylines to stroke triangles.
-fn tessellate_stroke(polylines [][]f32, width f32, cap StrokeCap, join StrokeJoin) []f32 {
+pub fn tessellate_stroke(polylines [][]f32, width f32, cap StrokeCap, join StrokeJoin) []f32 {
 	mut result := []f32{}
 	half_w := width / 2
 
