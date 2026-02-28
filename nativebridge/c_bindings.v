@@ -691,13 +691,7 @@ fn bridge_notification_unsupported_result() BridgeNotificationResult {
 // lazily). Windows: Shell_NotifyIconW balloon. Linux:
 // D-Bus org.freedesktop.Notifications.
 pub fn send_notification(cfg BridgeNotificationCfg) BridgeNotificationResult {
-	$if macos {
-		c_result := C.gui_native_send_notification(cfg.title.str, cfg.body.str)
-		return bridge_notification_result_from_c(c_result)
-	} $else $if linux {
-		c_result := C.gui_native_send_notification(cfg.title.str, cfg.body.str)
-		return bridge_notification_result_from_c(c_result)
-	} $else $if windows {
+	$if macos || linux || windows {
 		c_result := C.gui_native_send_notification(cfg.title.str, cfg.body.str)
 		return bridge_notification_result_from_c(c_result)
 	} $else {

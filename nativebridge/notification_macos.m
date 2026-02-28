@@ -1,64 +1,16 @@
 // notification_macos.m — macOS native notifications.
 // Uses UNUserNotificationCenter when a bundle ID is present
-// (packaged apps). Falls back to the deprecated
-// NSUserNotificationCenter for unbundled executables (e.g.
+// (packaged apps). Falls back to osascript
+// `display notification` for unbundled executables (e.g.
 // v run during development).
 // Compiled via #flag darwin ... notification_macos.m in
 // c_bindings.v.
 
 #import <UserNotifications/UserNotifications.h>
 #import <Foundation/Foundation.h>
-#include <stdlib.h>
-#include <string.h>
 #include <dispatch/dispatch.h>
 
 #include "notification_bridge.h"
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-
-enum {
-    gui_notif_status_ok     = 0,
-    gui_notif_status_denied = 1,
-    gui_notif_status_error  = 2,
-};
-
-static char* gui_notif_strdup(const char* s) {
-    if (s == NULL) return NULL;
-    size_t len = strlen(s);
-    char* out = (char*)malloc(len + 1);
-    if (out) memcpy(out, s, len + 1);
-    return out;
-}
-
-static GuiNativeNotificationResult gui_notif_result_ok(void) {
-    GuiNativeNotificationResult r;
-    r.status = gui_notif_status_ok;
-    r.error_code = NULL;
-    r.error_message = NULL;
-    return r;
-}
-
-static GuiNativeNotificationResult gui_notif_result_denied(void) {
-    GuiNativeNotificationResult r;
-    r.status = gui_notif_status_denied;
-    r.error_code = gui_notif_strdup("denied");
-    r.error_message = gui_notif_strdup(
-        "notification permission denied");
-    return r;
-}
-
-static GuiNativeNotificationResult gui_notif_result_error(
-    const char* code, const char* msg
-) {
-    GuiNativeNotificationResult r;
-    r.status = gui_notif_status_error;
-    r.error_code = gui_notif_strdup(
-        code ? code : "internal");
-    r.error_message = gui_notif_strdup(
-        msg ? msg : "notification error");
-    return r;
-}
 
 // Returns YES when the process has a real bundle identifier
 // (i.e. a packaged .app). Unbundled executables get a
@@ -71,6 +23,17 @@ static BOOL gui_notif_has_bundle(void) {
     return (bid != nil && bid.length > 0);
 }
 
+// Cached authorization state. After the first grant the OS
+// returns immediately, but we skip the semaphore round-trip
+// entirely on subsequent calls.
+static BOOL gui_notif_auth_cached = NO;
+static BOOL gui_notif_auth_granted = NO;
+
+// 30-second timeout for authorization / delivery semaphores.
+// Prevents indefinite render-thread hang if the permission
+// dialog is dismissed without a choice.
+#define GUI_NOTIF_SEM_TIMEOUT_NS (30LL * NSEC_PER_SEC)
+
 // Modern path: UNUserNotificationCenter (macOS 10.14+).
 // Requires a bundled app with Info.plist.
 static GuiNativeNotificationResult gui_notif_send_un(
@@ -80,32 +43,46 @@ static GuiNativeNotificationResult gui_notif_send_un(
         [UNUserNotificationCenter
             currentNotificationCenter];
 
-    // Request permission synchronously via semaphore.
-    __block BOOL granted = NO;
-    __block NSError* authError = nil;
-    dispatch_semaphore_t sem =
-        dispatch_semaphore_create(0);
+    // Request permission (cached after first grant).
+    if (!gui_notif_auth_cached) {
+        __block BOOL granted = NO;
+        __block NSError* authError = nil;
+        dispatch_semaphore_t sem =
+            dispatch_semaphore_create(0);
 
-    [center requestAuthorizationWithOptions:
-        (UNAuthorizationOptionAlert |
-         UNAuthorizationOptionSound)
-        completionHandler:
-            ^(BOOL g, NSError* _Nullable err) {
-                granted = g;
-                authError = err;
-                dispatch_semaphore_signal(sem);
-            }];
-    dispatch_semaphore_wait(sem, DISPATCH_TIME_FOREVER);
+        [center requestAuthorizationWithOptions:
+            (UNAuthorizationOptionAlert |
+             UNAuthorizationOptionSound)
+            completionHandler:
+                ^(BOOL g, NSError* _Nullable err) {
+                    granted = g;
+                    authError = err;
+                    dispatch_semaphore_signal(sem);
+                }];
+        long wait_result = dispatch_semaphore_wait(
+            sem,
+            dispatch_time(DISPATCH_TIME_NOW,
+                GUI_NOTIF_SEM_TIMEOUT_NS));
+        // ARC manages GCD objects; no dispatch_release needed.
 
-    if (!granted) {
-        if (authError != nil) {
-            const char* desc =
-                [[authError localizedDescription]
-                    UTF8String];
+        if (wait_result != 0) {
             return gui_notif_result_error(
-                "auth_error", desc);
+                "auth_timeout",
+                "authorization request timed out");
         }
-        return gui_notif_result_denied();
+
+        if (!granted) {
+            if (authError != nil) {
+                const char* desc =
+                    [[authError localizedDescription]
+                        UTF8String];
+                return gui_notif_result_error(
+                    "auth_error", desc);
+            }
+            return gui_notif_result_denied();
+        }
+        gui_notif_auth_cached = YES;
+        gui_notif_auth_granted = YES;
     }
 
     // Build notification content.
@@ -135,7 +112,17 @@ static GuiNativeNotificationResult gui_notif_send_un(
                 addError = err;
                 dispatch_semaphore_signal(sem2);
             }];
-    dispatch_semaphore_wait(sem2, DISPATCH_TIME_FOREVER);
+    long add_result = dispatch_semaphore_wait(
+        sem2,
+        dispatch_time(DISPATCH_TIME_NOW,
+            GUI_NOTIF_SEM_TIMEOUT_NS));
+    // ARC manages GCD objects; no dispatch_release needed.
+
+    if (add_result != 0) {
+        return gui_notif_result_error(
+            "delivery_timeout",
+            "notification delivery timed out");
+    }
 
     if (addError != nil) {
         const char* desc =
@@ -147,41 +134,25 @@ static GuiNativeNotificationResult gui_notif_send_un(
     return gui_notif_result_ok();
 }
 
-// Escape a C string for embedding in an AppleScript
-// single-quoted literal. Backslashes and single quotes
-// need escaping.
-static NSString* gui_notif_escape_applescript(
-    const char* s
-) {
-    if (s == NULL || s[0] == '\0') return @"";
-    NSString* ns = [NSString stringWithUTF8String:s];
-    ns = [ns stringByReplacingOccurrencesOfString:@"\\"
-        withString:@"\\\\"];
-    ns = [ns stringByReplacingOccurrencesOfString:@"\""
-        withString:@"\\\""];
-    return ns;
-}
-
 // Fallback path: osascript `display notification`.
 // Works for unbundled executables on all macOS versions.
+// Title and body are passed via environment variables to
+// avoid AppleScript injection — no string escaping needed.
 static GuiNativeNotificationResult gui_notif_send_osascript(
     const char* title, const char* body
 ) {
-    NSString* esc_title =
-        gui_notif_escape_applescript(title);
-    NSString* esc_body =
-        gui_notif_escape_applescript(body);
-
+    // AppleScript reads title/body from env vars, so
+    // arbitrary user content cannot break the script.
     NSString* script;
     if (body != NULL && body[0] != '\0') {
-        script = [NSString stringWithFormat:
-            @"display notification \"%@\""
-             " with title \"%@\"",
-            esc_body, esc_title];
+        script = @"display notification"
+            " (system attribute \"GUI_NOTIF_BODY\")"
+            " with title"
+            " (system attribute \"GUI_NOTIF_TITLE\")";
     } else {
-        script = [NSString stringWithFormat:
-            @"display notification \"\" with title \"%@\"",
-            esc_title];
+        script = @"display notification"
+            " \"\" with title"
+            " (system attribute \"GUI_NOTIF_TITLE\")";
     }
 
     NSTask* task = [[NSTask alloc] init];
@@ -190,6 +161,17 @@ static GuiNativeNotificationResult gui_notif_send_osascript(
     task.arguments = @[@"-e", script];
     task.standardOutput = [NSPipe pipe];
     task.standardError  = [NSPipe pipe];
+
+    // Inherit current environment, add notification vars.
+    NSMutableDictionary* env = [[[NSProcessInfo
+        processInfo] environment] mutableCopy];
+    env[@"GUI_NOTIF_TITLE"] =
+        [NSString stringWithUTF8String:title];
+    if (body != NULL && body[0] != '\0') {
+        env[@"GUI_NOTIF_BODY"] =
+            [NSString stringWithUTF8String:body];
+    }
+    task.environment = env;
 
     NSError* launchErr = nil;
     [task launchAndReturnError:&launchErr];
@@ -229,9 +211,5 @@ GuiNativeNotificationResult gui_native_send_notification(
 void gui_native_notification_result_free(
     GuiNativeNotificationResult result
 ) {
-    if (result.error_code != NULL) free(result.error_code);
-    if (result.error_message != NULL)
-        free(result.error_message);
+    gui_notif_result_free(result);
 }
-
-#pragma clang diagnostic pop
