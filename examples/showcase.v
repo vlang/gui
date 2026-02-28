@@ -3058,7 +3058,7 @@ Numeric and colored pill labels for notification counts and status indicators.
 
 ```v
 gui.badge(label: "3", variant: .info)
-gui.badge(label: "99+", variant: .error)
+gui.badge(label: "150", max: 99, variant: .error)
 gui.badge(dot: true, variant: .success)
 ```
 

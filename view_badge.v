@@ -36,6 +36,7 @@ pub fn badge(cfg BadgeCfg) View {
 	if cfg.dot {
 		sz := cfg.dot_size
 		return row(
+			name:       'badge'
 			a11y_label: a11y_label(cfg.a11y_label, 'status')
 			color:      bg
 			radius:     sz / 2
@@ -48,6 +49,7 @@ pub fn badge(cfg BadgeCfg) View {
 
 	label := badge_label(cfg.label, cfg.max)
 	return row(
+		name:       'badge'
 		a11y_label: a11y_label(cfg.a11y_label, label)
 		color:      bg
 		radius:     cfg.radius
