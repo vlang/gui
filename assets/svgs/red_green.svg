@@ -1,0 +1,5 @@
+<svg height="200" width="300" xmlns="http://www.w3.org/2000/svg">
+  <polyline points="20,20 50,150 100,75 150,50 200,140 250,140"
+  style="fill:none;stroke:green;stroke-width:20;stroke-linecap:round"/>
+  <line x1="40" y1="10" x2="260" y2="190" style="stroke:red;stroke-width:15;stroke-linecap:round"/>
+</svg>

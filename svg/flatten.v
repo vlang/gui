@@ -116,7 +116,7 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 		}
 	}
 
-	if current.len >= 6 {
+	if current.len >= 4 {
 		polylines << current
 	}
 
