@@ -9,6 +9,7 @@ module gui
 //
 import clipboard
 import encoding.utf8
+import os
 import vglyph
 
 // text_width calculates the width of a given text based on its style and window configuration,
@@ -418,21 +419,38 @@ fn collapse_spaces(text string) string {
 
 // from_clipboard retrieves text content from the system clipboard and returns
 // it as a string. Creates a temporary clipboard instance that is automatically
-// freed after the paste operation completes.
+// freed after the paste operation completes. Returns empty string if clipboard
+// is unavailable.
 pub fn from_clipboard() string {
+	$if !android && !ios {
+		if os.getenv('DISPLAY') == '' && os.getenv('WAYLAND_DISPLAY') == '' {
+			return ''
+		}
+	}
 	mut cb := clipboard.new()
 	defer { cb.free() }
+	if !cb.is_available() {
+		return ''
+	}
 	return cb.paste()
 }
 
 // to_clipboard copies the provided string to the system clipboard if a value
 // is present. Creates a temporary clipboard instance that is automatically
 // freed after the copy operation completes. Returns true if the copy operation
-// was successful, false if the input was none.
+// was successful, false if the input was none or clipboard unavailable.
 pub fn to_clipboard(s ?string) bool {
 	if s != none {
+		$if !android && !ios {
+			if os.getenv('DISPLAY') == '' && os.getenv('WAYLAND_DISPLAY') == '' {
+				return false
+			}
+		}
 		mut cb := clipboard.new()
 		defer { cb.free() }
+		if !cb.is_available() {
+			return false
+		}
 		return cb.copy(s)
 	}
 	return false
