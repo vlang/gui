@@ -11,16 +11,22 @@ import sokol.sapp
 // dedicated fields for type safety.
 struct ViewState {
 mut:
-	cursor_on_sticky            bool // keeps the cursor visible during cursor movement
-	id_focus                    u32  // current view that has focus
-	input_cursor_on             bool = true // used by cursor blink animation
-	menu_key_nav                bool             // true, menu navigated by keyboard
-	mouse_cursor                sapp.MouseCursor // arrow, finger, ibeam, etc.
-	mouse_lock                  MouseLockCfg     // mouse down/move/up/scroll/sliders, etc. use this
-	rtf_tooltip_rect            gg.Rect          // RTF abbreviation tooltip anchor rect
-	rtf_tooltip_text            string           // RTF abbreviation tooltip text
-	tooltip                     TooltipState     // State for the active tooltip
-	registry                    StateRegistry    // generic per-widget state maps
+	cursor_on_sticky bool // keeps the cursor visible during cursor movement
+	id_focus         u32  // current view that has focus
+	input_cursor_on  bool = true // used by cursor blink animation
+	menu_key_nav     bool             // true, menu navigated by keyboard
+	mouse_cursor     sapp.MouseCursor // arrow, finger, ibeam, etc.
+	mouse_lock       MouseLockCfg     // mouse down/move/up/scroll/sliders, etc. use this
+	rtf_tooltip_rect gg.Rect          // RTF abbreviation tooltip anchor rect
+	rtf_tooltip_text string           // RTF abbreviation tooltip text
+	tooltip          TooltipState     // State for the active tooltip
+	registry         StateRegistry    // generic per-widget state maps
+	// link_handler, when set, is called before opening a link in the OS browser.
+	// If the handler sets e.is_handled = true the default os.open_uri is skipped.
+	link_handler ?fn (url string, mut e Event, mut w Window)
+	// image_auth_header_fn, when set, is called for every remote image URL to
+	// obtain an "Authorization" header value.  Return an empty string to skip.
+	image_auth_header_fn        ?fn (url string) string
 	image_map                   BoundedImageMap = BoundedImageMap{
 		max_size: 100
 	}

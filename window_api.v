@@ -435,6 +435,22 @@ pub fn (mut window Window) dismiss_link_context_menu() {
 	window.view_state.link_context_menu_visible = false
 }
 
+// set_link_handler registers a global link-click interceptor.
+// The handler is called before the default os.open_uri behavior.
+// Set e.is_handled = true inside the handler to suppress the default action.
+// Pass `none` to remove any previously registered handler.
+pub fn (mut window Window) set_link_handler(handler ?fn (url string, mut e Event, mut w Window)) {
+	window.view_state.link_handler = handler
+}
+
+// set_image_auth_header_fn registers a callback that returns the value of
+// an "Authorization" HTTP header to be sent when downloading remote images.
+// Return an empty string from the callback to skip auth for a given URL.
+// Pass `none` to remove any previously registered callback.
+pub fn (mut window Window) set_image_auth_header_fn(f ?fn (url string) string) {
+	window.view_state.image_auth_header_fn = f
+}
+
 // set_rtf_tooltip shows a tooltip with the given text at the specified rect.
 // Used for abbreviation tooltips in RTF views.
 pub fn (mut window Window) set_rtf_tooltip(text string, rect gg.Rect) {

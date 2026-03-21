@@ -280,7 +280,13 @@ fn rtf_on_click(layout &Layout, mut e Event, mut w Window) {
 				} else if found_run.link.starts_with('#') {
 					w.scroll_to_view(found_run.link[1..])
 				} else {
-					os.open_uri(found_run.link) or {}
+					// Give app-level handler first refusal
+					if handler := w.view_state.link_handler {
+						handler(found_run.link, mut e, mut w)
+					}
+					if !e.is_handled {
+						os.open_uri(found_run.link) or {}
+					}
 				}
 				e.is_handled = true
 			}

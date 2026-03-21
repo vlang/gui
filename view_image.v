@@ -58,7 +58,13 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 			mut downloads := state_map[string, i64](mut window, ns_active_downloads, cap_moderate)
 			if !downloads.contains(iv.src) {
 				downloads.set(iv.src, time.now().unix())
-				spawn download_image(iv.src, base_path, mut window)
+				// Resolve optional auth header at dispatch time (main thread)
+				auth_header := if f := window.view_state.image_auth_header_fn {
+					f(iv.src)
+				} else {
+					''
+				}
+				spawn download_image(iv.src, base_path, auth_header, mut window)
 			}
 			mut layout := Layout{
 				shape: &Shape{
@@ -125,14 +131,24 @@ struct ImageFetchResult {
 // download_image downloads a remote image to a local cache path.
 // base_path has no extension; extension is determined from
 // Content-Type header. Validates size (<50MB) and type (image/*).
-fn download_image(url string, base_path string, mut w Window) {
-	spawn fn [url, base_path, mut w] () {
+// auth_header, when non-empty, is sent as the Authorization header.
+fn download_image(url string, base_path string, auth_header string, mut w Window) {
+	spawn fn [url, base_path, auth_header, mut w] () {
 		ch := chan ImageFetchResult{}
 
-		spawn fn [url, base_path, ch] () {
+		spawn fn [url, base_path, auth_header, ch] () {
 			max_size := i64(50 * 1024 * 1024)
 
-			head := http.head(url) or {
+			// Use a request with optional auth so restricted images (e.g.
+			// Zulip /user_uploads/) are accessible.
+			mut head_req := http.Request{
+				method: .head
+				url:    url
+			}
+			if auth_header.len > 0 {
+				head_req.add_header(.authorization, auth_header)
+			}
+			head := head_req.do() or {
 				ch <- ImageFetchResult{
 					err_msg: 'Failed to fetch image headers for ${url}: ${err}'
 					is_err:  true
@@ -150,9 +166,10 @@ fn download_image(url string, base_path string, mut w Window) {
 				return
 			}
 
-			// Validate content type
-			ct := head.header.get(.content_type) or { '' }
-			if !ct.starts_with('image/') {
+			// Validate content type — some servers omit Content-Type on HEAD;
+			// allow an empty type and rely on the GET response below.
+			ct_head := head.header.get(.content_type) or { '' }
+			if ct_head.len > 0 && !ct_head.starts_with('image/') {
 				ch <- ImageFetchResult{
 					err_msg: 'Invalid content type for image (expected image/*): ${url}'
 					is_err:  true
@@ -160,13 +177,43 @@ fn download_image(url string, base_path string, mut w Window) {
 				return
 			}
 
-			// Determine extension from Content-Type
-			path := base_path + content_type_to_ext(ct)
-
-			// Download file
-			http.download_file(url, path) or {
+			// Download file using a GET request with optional auth
+			mut get_req := http.Request{
+				method: .get
+				url:    url
+			}
+			if auth_header.len > 0 {
+				get_req.add_header(.authorization, auth_header)
+			}
+			resp := get_req.do() or {
 				ch <- ImageFetchResult{
 					err_msg: 'Failed to download image ${url}: ${err}'
+					is_err:  true
+				}
+				return
+			}
+			if resp.status_code != 200 {
+				ch <- ImageFetchResult{
+					err_msg: 'Image download returned HTTP ${resp.status_code}: ${url}'
+					is_err:  true
+				}
+				return
+			}
+
+			// Determine extension from Content-Type (prefer GET response)
+			ct := resp.header.get(.content_type) or { ct_head }
+			if ct.len > 0 && !ct.starts_with('image/') {
+				ch <- ImageFetchResult{
+					err_msg: 'Invalid content type for image (expected image/*): ${url}'
+					is_err:  true
+				}
+				return
+			}
+
+			path := base_path + content_type_to_ext(if ct.len > 0 { ct } else { 'image/png' })
+			os.write_file(path, resp.body) or {
+				ch <- ImageFetchResult{
+					err_msg: 'Failed to write cached image ${path}: ${err}'
 					is_err:  true
 				}
 				return
