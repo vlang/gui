@@ -34,7 +34,7 @@ jobs:
         run: v install vglyph
       - name: Install C development dependencies (headers and libs)
         if: runner.os == 'Linux'
-        run: v retry -- sudo apt -qq update && v retry -- sudo apt install libpango1.0-dev libfontconfig1-dev libfribidi-dev libharfbuzz-dev libfreetype-dev libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
+        run: v retry -- sudo apt -qq update && v retry -- sudo apt install libpango1.0-dev libfontconfig1-dev libfribidi-dev libharfbuzz-dev libfreetype-dev libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev dbus libdbus-1-dev libdbus-glib-1-2 libdbus-glib-1-dev
       - name: Install development dependencies on macos (headers and libs)
         if: runner.os == 'macOS'
         run: v retry -- brew install pango harfbuzz freetype2
@@ -68,7 +68,7 @@ jobs:
         run: v install vglyph
       - name: Install X11/GL development dependencies (headers and libs)
         if: runner.os == 'Linux'
-        run: v retry -- sudo apt -qq update && v retry -- sudo apt install libpango1.0-dev libfontconfig1-dev libfribidi-dev libharfbuzz-dev libfreetype-dev libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev
+        run: v retry -- sudo apt -qq update && v retry -- sudo apt install libpango1.0-dev libfontconfig1-dev libfribidi-dev libharfbuzz-dev libfreetype-dev libgl1-mesa-dri xvfb libxcursor-dev libxi-dev libxrandr-dev freeglut3-dev dbus libdbus-1-dev libdbus-glib-1-2 libdbus-glib-1-dev
       - name: Install development dependencies on macos (headers and libs)
         if: runner.os == 'macOS'
         run: v retry -- brew install pango harfbuzz freetype2
