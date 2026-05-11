@@ -64,13 +64,14 @@ const thumb_index = 0
 // It adapts its layout (row or column) depending on the `orientation`
 // specified in `cfg`.
 pub fn scrollbar(cfg ScrollbarCfg) View {
-	return if cfg.orientation == .horizontal {
-		row(
+	thumb_id := '__thumb__${cfg.id_scroll}'
+	if cfg.orientation == .horizontal {
+		thumb_view := thumb(cfg, thumb_id)
+		return row(
 			scrollbar_orientation: .horizontal
 			id:                    cfg.id
 			a11y_role:             .scroll_bar
-			a11y:                  make_a11y_info(gui_locale.str_horizontal_scrollbar,
-				'')
+			a11y:                  make_a11y_info(gui_locale.str_horizontal_scrollbar, '')
 			color:                 cfg.color_background
 			over_draw:             true
 			spacing:               0
@@ -78,28 +79,24 @@ pub fn scrollbar(cfg ScrollbarCfg) View {
 			amend_layout:          make_scrollbar_amend_layout(cfg)
 			on_hover:              make_scrollbar_on_hover(cfg)
 			on_click:              make_scrollbar_gutter_click(cfg)
-			content:               [
-				thumb(cfg, '__thumb__${cfg.id_scroll}'),
-			]
-		)
-	} else {
-		column(
-			scrollbar_orientation: .vertical
-			id:                    cfg.id
-			a11y_role:             .scroll_bar
-			a11y:                  make_a11y_info(gui_locale.str_vertical_scrollbar, '')
-			color:                 cfg.color_background
-			over_draw:             true
-			spacing:               0
-			padding:               padding_none
-			amend_layout:          make_scrollbar_amend_layout(cfg)
-			on_hover:              make_scrollbar_on_hover(cfg)
-			on_click:              make_scrollbar_gutter_click(cfg)
-			content:               [
-				thumb(cfg, '__thumb__${cfg.id_scroll}'),
-			]
+			content:               [thumb_view]
 		)
 	}
+	thumb_view := thumb(cfg, thumb_id)
+	return column(
+		scrollbar_orientation: .vertical
+		id:                    cfg.id
+		a11y_role:             .scroll_bar
+		a11y:                  make_a11y_info(gui_locale.str_vertical_scrollbar, '')
+		color:                 cfg.color_background
+		over_draw:             true
+		spacing:               0
+		padding:               padding_none
+		amend_layout:          make_scrollbar_amend_layout(cfg)
+		on_hover:              make_scrollbar_on_hover(cfg)
+		on_click:              make_scrollbar_gutter_click(cfg)
+		content:               [thumb_view]
+	)
 }
 
 fn thumb(cfg ScrollbarCfg, id string) View {
@@ -253,8 +250,8 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 			offset := if available_width == 0 {
 				0
 			} else {
-				f32_clamp((scroll_offset / (c_width - layout.shape.width)) * available_width,
-					0, available_width)
+				f32_clamp((scroll_offset / (c_width - layout.shape.width)) * available_width, 0,
+					available_width)
 			}
 			layout.children[thumb_index].shape.x = layout.shape.x + offset
 			layout.children[thumb_index].shape.y = layout.shape.y
@@ -295,8 +292,8 @@ fn (cfg &ScrollbarCfg) amend_layout(mut layout Layout, mut w Window) {
 			offset := if available_height == 0 {
 				0
 			} else {
-				f32_clamp((scroll_offset / (c_height - layout.shape.height)) * available_height,
-					0, available_height)
+				f32_clamp((scroll_offset / (c_height - layout.shape.height)) * available_height, 0,
+					available_height)
 			}
 			layout.children[thumb_index].shape.y = layout.shape.y + offset
 			layout.children[thumb_index].shape.height = thumb_height - cfg.gap_end - cfg.gap_end
@@ -429,7 +426,8 @@ fn scroll_horizontal(layout &Layout, delta f32, mut w Window) bool {
 	v_id := layout.shape.id_scroll
 	if v_id > 0 {
 		// scrollable region does not including padding
-		max_offset := f32_min(0, layout.shape.width - layout.shape.padding_width() - content_width(layout))
+		max_offset := f32_min(0, layout.shape.width - layout.shape.padding_width() -
+			content_width(layout))
 		mut sx := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll)
 		offset_x := (sx.get(v_id) or { f32(0) }) + delta * gui_theme.scroll_multiplier
 		sx.set(v_id, f32_clamp(offset_x, max_offset, 0))
@@ -454,7 +452,8 @@ fn scroll_vertical(layout &Layout, delta f32, mut w Window) bool {
 	v_id := layout.shape.id_scroll
 	if v_id > 0 {
 		// scrollable region does not including padding
-		max_offset := f32_min(0, layout.shape.height - layout.shape.padding_height() - content_height(layout))
+		max_offset := f32_min(0, layout.shape.height - layout.shape.padding_height() -
+			content_height(layout))
 		mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
 		offset_y := (sy.get(v_id) or { f32(0) }) + delta * gui_theme.scroll_multiplier
 		sy.set(v_id, f32_clamp(offset_y, max_offset, 0))

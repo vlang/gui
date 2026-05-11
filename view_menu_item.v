@@ -56,10 +56,9 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 		else {
 			// Normal menu item with either a custom view or text.
 			mut content := []View{cap: 1}
-			color := if item_cfg.selected {
-				item_cfg.color_select
-			} else {
-				color_transparent
+			mut color := color_transparent
+			if item_cfg.selected {
+				color = item_cfg.color_select
 			}
 			if item_cfg.custom_view != none {
 				content << item_cfg.custom_view
@@ -72,10 +71,9 @@ fn menu_item(menubar_cfg MenubarCfg, item_cfg MenuItemCfg) View {
 			}
 			// Extract id_focus for optimized closure capture
 			id_focus := menubar_cfg.id_focus
-			menu_a11y_state := if item_cfg.selected {
-				AccessState.selected
-			} else {
-				AccessState.none
+			mut menu_a11y_state := AccessState.none
+			if item_cfg.selected {
+				menu_a11y_state = AccessState.selected
 			}
 			column(
 				name:         'menu_item'

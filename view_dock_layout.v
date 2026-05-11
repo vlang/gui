@@ -130,8 +130,8 @@ fn dock_layout_amend(dock_id string, color_zone Color, mut layout Layout, mut w 
 		return
 	}
 	// First child is the tree view — fill the entire dock area.
-	splitter_layout_child(mut layout.children[0], layout.shape.x, layout.shape.y, layout.shape.width,
-		layout.shape.height, mut w)
+	splitter_layout_child(mut layout.children[0], layout.shape.x, layout.shape.y,
+		layout.shape.width, layout.shape.height, mut w)
 	// Zone overlay is positioned by dock_drag_amend_overlay (found by id).
 	dock_drag_amend_overlay(dock_id, color_zone, mut layout, mut w)
 }
@@ -149,6 +149,14 @@ fn dock_split_view(core &DockLayoutCore, node &DockNode, cfg DockLayoutCfg, drag
 	split_id := node.id
 	root := core.root
 	on_layout_change := core.on_layout_change
+	mut first_content := []View{}
+	if node.first != unsafe { nil } {
+		first_content << dock_node_view(core, node.first, cfg, drag)
+	}
+	mut second_content := []View{}
+	if node.second != unsafe { nil } {
+		second_content << dock_node_view(core, node.second, cfg, drag)
+	}
 
 	return splitter(
 		id:          'dock_split:${node.id}'
@@ -164,18 +172,10 @@ fn dock_split_view(core &DockLayoutCore, node &DockNode, cfg DockLayoutCfg, drag
 			on_layout_change(new_root, mut w)
 		}
 		first:       SplitterPaneCfg{
-			content: if node.first != unsafe { nil } {
-				[dock_node_view(core, node.first, cfg, drag)]
-			} else {
-				[]View{}
-			}
+			content: first_content
 		}
 		second:      SplitterPaneCfg{
-			content: if node.second != unsafe { nil } {
-				[dock_node_view(core, node.second, cfg, drag)]
-			} else {
-				[]View{}
-			}
+			content: second_content
 		}
 	)
 }
@@ -306,8 +306,7 @@ fn dock_tab_button(core &DockLayoutCore, group &DockNode, panel DockPanelDef, is
 		color:       color_tab
 		color_hover: color_hover
 		on_click:    fn [dock_id, panel_id, group_id, root, on_layout_change, on_panel_select] (layout &Layout, mut e Event, mut w Window) {
-			dock_drag_start(dock_id, panel_id, group_id, root, on_layout_change, layout,
-				e, mut w)
+			dock_drag_start(dock_id, panel_id, group_id, root, on_layout_change, layout, e, mut w)
 			if on_panel_select != unsafe { nil } {
 				on_panel_select(group_id, panel_id, mut w)
 			}

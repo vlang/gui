@@ -23,6 +23,10 @@ pub enum DialogType as u8 {
 pub const dialog_base_id_focus = 7568971
 const reserved_dialog_id = '__dialog_reserved_do_not_use__'
 
+fn dialog_noop_window(mut _ Window) {}
+
+fn dialog_noop_reply(_ string, mut _ Window) {}
+
 // DialogCfg configures GUI's dialog dialog. [DialogType](#DialogType)
 // determines the type of dialog. dialogType.message is the default.
 // dialogs are asynchronous. Keyboard/Mouse input is restricted
@@ -47,9 +51,9 @@ pub:
 	title_text_style TextStyle = gui_theme.dialog_style.title_text_style
 	text_style       TextStyle = gui_theme.dialog_style.text_style
 	custom_content   []View // custom content
-	on_ok_yes        fn (mut w Window)       = fn (mut _ Window) {}
-	on_cancel_no     fn (mut w Window)       = fn (mut _ Window) {}
-	on_reply         fn (string, mut Window) = fn (_ string, mut _ Window) {}
+	on_ok_yes        fn (mut w Window)       = dialog_noop_window
+	on_cancel_no     fn (mut w Window)       = dialog_noop_window
+	on_reply         fn (string, mut Window) = dialog_noop_reply
 	width            f32
 	height           f32
 	min_width        f32 = 200
@@ -79,6 +83,7 @@ fn dialog_view_generator(cfg DialogCfg) View {
 		.prompt { prompt_view(cfg) }
 		.custom { cfg.custom_content }
 	}
+
 	return column(
 		name:             'dialog: ${cfg.dialog_type}'
 		id:               reserved_dialog_id

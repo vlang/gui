@@ -7,10 +7,7 @@ import gg
 @[inline]
 fn utf8_rune_count(s string) int {
 	mut count := 0
-	mut i := 0
-	for i < s.len {
-		b := unsafe { s.str[i] }
-		i += ((0xe5000000 >> ((b >> 3) & 0x1e)) & 3) + 1
+	for _ in s.runes_iterator() {
 		count++
 	}
 	return count
@@ -59,7 +56,8 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut w
 	target_x := if cursor_offset >= 0 { cursor_offset } else { current_x }
 	target_y := current_y - (rect.height * lines_up) - (shape.tc.text_style.line_spacing * lines_up)
 
-	new_byte_idx := shape.tc.vglyph_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
+	new_byte_idx := shape.tc.vglyph_layout.get_closest_offset(target_x,
+		target_y + (rect.height / 2))
 
 	return byte_to_rune_index(shape.tc.text, new_byte_idx)
 }
@@ -85,7 +83,8 @@ fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, m
 	target_y := current_y + (rect.height * lines_down) +
 		(shape.tc.text_style.line_spacing * lines_down)
 
-	new_byte_idx := shape.tc.vglyph_layout.get_closest_offset(target_x, target_y + (rect.height / 2))
+	new_byte_idx := shape.tc.vglyph_layout.get_closest_offset(target_x,
+		target_y + (rect.height / 2))
 
 	return byte_to_rune_index(shape.tc.text, new_byte_idx)
 }
@@ -497,8 +496,8 @@ fn text_double_click_drag(layout &Layout, mut e Event, mut w Window, placeholder
 			w.animation_add(mut Animate{
 				id:       id_auto_scroll_animation
 				callback: fn [placeholder_active, id_focus, id_scroll_container, anchor_beg, anchor_end] (mut an Animate, mut w Window) {
-					text_double_click_auto_scroll_cursor(id_focus, id_scroll_container,
-						anchor_beg, anchor_end, mut an, mut w, placeholder_active)
+					text_double_click_auto_scroll_cursor(id_focus, id_scroll_container, anchor_beg,
+						anchor_end, mut an, mut w, placeholder_active)
 				}
 				delay:    auto_scroll_slow
 				repeat:   true
@@ -633,8 +632,8 @@ fn text_mouse_move_locked(layout &Layout, mut e Event, mut w Window, placeholder
 				w.animation_add(mut Animate{
 					id:       id_auto_scroll_animation
 					callback: fn [placeholder_active, id_focus, id_scroll_container] (mut an Animate, mut w Window) {
-						text_auto_scroll_cursor(id_focus, id_scroll_container, mut an, mut
-							w, placeholder_active)
+						text_auto_scroll_cursor(id_focus, id_scroll_container, mut an, mut w,
+							placeholder_active)
 					}
 					delay:    auto_scroll_slow
 					repeat:   true

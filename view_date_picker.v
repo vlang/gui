@@ -434,7 +434,22 @@ fn date(day int, month int, year int) time.Time {
 	if day < 1 {
 		return time.unix(time.absolute_zero_year)
 	}
-	return time.new(day: day, month: month, year: year)
+	mut d := day
+	mut m := month
+	mut y := year
+	for {
+		days_in_month := time.days_in_month(m, y) or { return time.unix(time.absolute_zero_year) }
+		if d <= days_in_month {
+			break
+		}
+		d -= days_in_month
+		m++
+		if m > 12 {
+			m = 1
+			y++
+		}
+	}
+	return time.new(day: d, month: m, year: y)
 }
 
 fn dates(times []time.Time) []time.Time {
@@ -451,6 +466,7 @@ fn (cfg DatePickerCfg) cell_size(mut w Window) f32 {
 		.three_letter { text_width('Wed', cfg.text_style, mut w) }
 		.full { text_width('Wednesday', cfg.text_style, mut w) }
 	}
+
 	d_size := text_width('00', cfg.text_style, mut w)
 	return f32_max(w_size, d_size) + gui_theme.button_style.padding.width() + padding_two.width()
 }
@@ -525,8 +541,7 @@ fn (cfg DatePickerCfg) year_month_picker(state DatePickerState) View {
 					year:  state.view_year
 				)
 				on_change:     fn [id] (t time.Time, mut w Window) {
-					mut dpm := state_map[string, DatePickerState](mut w, ns_date_picker,
-						cap_few)
+					mut dpm := state_map[string, DatePickerState](mut w, ns_date_picker, cap_few)
 					mut state := dpm.get(id) or { DatePickerState{} }
 					state.view_month = t.month
 					state.view_year = t.year

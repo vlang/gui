@@ -9,14 +9,15 @@ import sokol.sapp
 import strings
 import stbi as _
 
+@[typedef]
 struct C.sg_mtl_image_info {
 	tex         [2]voidptr
 	active_slot int
 }
 
 fn C.sg_mtl_query_image_info(img gfx.Image) C.sg_mtl_image_info
-fn C.sg_mtl_device() voidptr
 
+@[typedef]
 struct C.sg_gl_attachments_info {
 	framebuffer              u32
 	msaa_resolve_framebuffer [4]u32
@@ -24,6 +25,7 @@ struct C.sg_gl_attachments_info {
 
 fn C.sg_gl_query_attachments_info(gfx.Attachments) C.sg_gl_attachments_info
 
+@[typedef]
 struct C.sg_d3d11_image_info {
 	tex2d voidptr
 	tex3d voidptr
@@ -32,8 +34,6 @@ struct C.sg_d3d11_image_info {
 }
 
 fn C.sg_d3d11_query_image_info(img gfx.Image) C.sg_d3d11_image_info
-fn C.sg_d3d11_device() voidptr
-fn C.sg_d3d11_device_context() voidptr
 
 struct PrintPageRaster {
 	tex   gfx.Image
@@ -141,23 +141,22 @@ fn render_page_to_pixels(mut window Window, raster PrintPageRaster, source_width
 	$if macos {
 		info := C.sg_mtl_query_image_info(raster.tex)
 		mtl_tex := info.tex[info.active_slot]
-		mtl_dev := C.sg_mtl_device()
-		return nativebridge.readback_metal_texture(mtl_tex, mtl_dev, raster.w, raster.h)
+		env := sapp.glue_environment()
+		return nativebridge.readback_metal_texture(mtl_tex, env.metal.device, raster.w, raster.h)
 	} $else $if linux {
 		info := C.sg_gl_query_attachments_info(raster.att)
 		return nativebridge.readback_gl_framebuffer(info.framebuffer, raster.w, raster.h)
 	} $else $if windows {
 		info := C.sg_d3d11_query_image_info(raster.tex)
-		d3d_dev := C.sg_d3d11_device()
-		d3d_ctx := C.sg_d3d11_device_context()
-		return nativebridge.readback_d3d11_texture(info.tex2d, d3d_dev, d3d_ctx, raster.w,
-			raster.h)
+		env := sapp.glue_environment()
+		return nativebridge.readback_d3d11_texture(info.tex2d, env.d3d11.device,
+			env.d3d11.device_context, raster.w, raster.h)
 	} $else {
 		return error('raster PDF export not yet supported on this platform')
 	}
 }
 
-fn C.stbi_write_jpg_to_func(func fn (ctx voidptr, data voidptr, size int), ctx voidptr, x int, y int, comp int, data voidptr, quality int) int
+fn C.stbi_write_jpg_to_func(func fn (ctx voidptr, data voidptr, size int), ctx voidptr, x int, y int, comp int, const_data voidptr, quality int) int
 
 struct JpegWriteContext {
 mut:
@@ -195,8 +194,8 @@ fn jpeg_encode_rgba(pixels []u8, width int, height int, quality int, bgra bool) 
 		}
 	}
 	mut wctx := JpegWriteContext{}
-	result := C.stbi_write_jpg_to_func(jpeg_write_callback, voidptr(&wctx), width, height,
-		3, rgb.data, quality)
+	result := C.stbi_write_jpg_to_func(jpeg_write_callback, voidptr(&wctx), width, height, 3,
+		rgb.data, quality)
 	if result == 0 {
 		return error('JPEG encoding failed')
 	}

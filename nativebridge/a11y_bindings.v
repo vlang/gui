@@ -2,6 +2,7 @@ module nativebridge
 
 // a11y_bindings.v — V-side FFI for the platform accessibility backends.
 
+@[typedef]
 pub struct C.GuiA11yNode {
 pub mut:
 	parent_idx    int

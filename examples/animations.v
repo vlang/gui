@@ -378,7 +378,7 @@ fn layout_anim(mut w gui.Window) {
 
 	// Step 2: Modify state - this triggers new layout calculation
 	mut s := w.state[State]()
-	s.sidebar_width = if s.sidebar_width > 100 { 60 } else { 200 }
+	s.sidebar_width = if s.sidebar_width > 100 { f32(60) } else { f32(200) }
 	// Framework automatically animates sidebar from old to new width
 }
 
