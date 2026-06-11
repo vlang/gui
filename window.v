@@ -144,7 +144,11 @@ pub fn window(cfg &WindowCfg) &Window {
 
 			// Initialize text rendering system
 			w.text_system = vglyph.new_text_system(mut w.ui) or {
-				w.init_error = 'Failed to initialize text rendering system: ${err.str()}\n\nThis is typically caused by OpenGL compatibility issues.'
+				$if windows {
+					w.init_error = windows_text_system_setup_message(err.str())
+				} $else {
+					w.init_error = 'Failed to initialize text rendering system: ${err.str()}\n\nThis is typically caused by OpenGL compatibility issues.'
+				}
 				log.error(w.init_error)
 				sapp.quit()
 				return

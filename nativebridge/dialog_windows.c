@@ -12,8 +12,10 @@
 #include <windows.h>
 #include <shobjidl.h>
 #include <shlwapi.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <wchar.h>
 
 #include "dialog_bridge.h"
 
@@ -23,11 +25,23 @@ enum {
     gui_win_status_error  = 2,
 };
 
+#define GUI_WIN_FILTER_SPEC_PREFIX "gfd1;"
+#define GUI_WIN_FILTER_SPEC_PREFIX_LEN 5
+
 static char* gui_win_strdup(const char* s) {
     if (s == NULL) return NULL;
     size_t len = strlen(s);
     char* out = (char*)malloc(len + 1);
     if (out) memcpy(out, s, len + 1);
+    return out;
+}
+
+static char* gui_win_strndup(const char* s, size_t len) {
+    if (s == NULL) return NULL;
+    char* out = (char*)malloc(len + 1);
+    if (out == NULL) return NULL;
+    memcpy(out, s, len);
+    out[len] = '\0';
     return out;
 }
 
@@ -78,7 +92,233 @@ static char* gui_wide_to_utf8(const wchar_t* w) {
     return s;
 }
 
-// Parse "jpg,png,gif" CSV into COMDLG_FILTERSPEC array.
+typedef struct GuiWinComScope {
+    HRESULT hr;
+    int must_uninit;
+} GuiWinComScope;
+
+static GuiWinComScope gui_win_com_scope_init(void) {
+    GuiWinComScope scope;
+    scope.hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    scope.must_uninit = SUCCEEDED(scope.hr) ? 1 : 0;
+    return scope;
+}
+
+static void gui_win_com_scope_uninit(GuiWinComScope scope) {
+    if (scope.must_uninit) CoUninitialize();
+}
+
+static void gui_win_swprintf(
+    wchar_t* dst,
+    size_t dst_count,
+    const wchar_t* fmt,
+    const wchar_t* a,
+    const wchar_t* b
+) {
+    if (dst == NULL || dst_count == 0) return;
+#ifdef _MSC_VER
+    swprintf_s(dst, dst_count, fmt, a, b);
+#else
+    swprintf(dst, dst_count, fmt, a, b);
+#endif
+    dst[dst_count - 1] = L'\0';
+}
+
+static void gui_free_filter_specs(
+    COMDLG_FILTERSPEC* specs, int count
+);
+
+static int gui_parse_len_token(
+    const char** cursor, const char* end, size_t* out
+) {
+    if (cursor == NULL || *cursor == NULL || out == NULL) return 0;
+    const char* p = *cursor;
+    if (p >= end || *p < '0' || *p > '9') return 0;
+
+    size_t value = 0;
+    while (p < end && *p >= '0' && *p <= '9') {
+        size_t digit = (size_t)(*p - '0');
+        if (value > (((size_t)-1) - digit) / 10) return 0;
+        value = value * 10 + digit;
+        p++;
+    }
+    if (p >= end || *p != ':') return 0;
+
+    *cursor = p + 1;
+    *out = value;
+    return 1;
+}
+
+static wchar_t* gui_filter_pattern_from_csv(const char* csv) {
+    if (csv == NULL || csv[0] == '\0') return NULL;
+
+    size_t csv_len = strlen(csv);
+    size_t buf_cap = csv_len * 4 + 16;
+    wchar_t* pattern = (wchar_t*)calloc(buf_cap, sizeof(wchar_t));
+    if (pattern == NULL) return NULL;
+
+    char* dup = gui_win_strdup(csv);
+    if (dup == NULL) {
+        free(pattern);
+        return NULL;
+    }
+
+    wchar_t* cp = pattern;
+    char* token = strtok(dup, ",");
+    while (token != NULL) {
+        while (*token == ' ' || *token == '.') token++;
+        char* token_end = token + strlen(token);
+        while (token_end > token
+            && (token_end[-1] == ' ' || token_end[-1] == '.')) {
+            token_end--;
+        }
+        *token_end = '\0';
+        if (*token != '\0') {
+            if (cp != pattern) *cp++ = L';';
+            *cp++ = L'*';
+            *cp++ = L'.';
+            MultiByteToWideChar(
+                CP_UTF8, 0, token, -1, cp,
+                (int)(buf_cap - (cp - pattern)));
+            cp += wcslen(cp);
+        }
+        token = strtok(NULL, ",");
+    }
+    free(dup);
+
+    if (cp == pattern) {
+        free(pattern);
+        return NULL;
+    }
+    *cp = L'\0';
+    return pattern;
+}
+
+static wchar_t* gui_filter_name_from_pattern(const wchar_t* pattern) {
+    if (pattern == NULL || pattern[0] == L'\0') return NULL;
+    size_t nlen = wcslen(pattern) + 16;
+    wchar_t* name = (wchar_t*)calloc(nlen, sizeof(wchar_t));
+    if (name == NULL) return NULL;
+#ifdef _MSC_VER
+    swprintf_s(name, nlen, L"Files (%ls)", pattern);
+#else
+    swprintf(name, nlen, L"Files (%ls)", pattern);
+#endif
+    name[nlen - 1] = L'\0';
+    return name;
+}
+
+static int gui_win_path_exists(const char* path) {
+    wchar_t* wpath = gui_utf8_to_wide(path);
+    if (wpath == NULL) return 0;
+    DWORD attrs = GetFileAttributesW(wpath);
+    free(wpath);
+    return attrs != INVALID_FILE_ATTRIBUTES;
+}
+
+static int gui_parse_named_filter_specs(
+    const char* spec, COMDLG_FILTERSPEC** out
+) {
+    *out = NULL;
+    if (spec == NULL
+        || strncmp(spec, GUI_WIN_FILTER_SPEC_PREFIX,
+            GUI_WIN_FILTER_SPEC_PREFIX_LEN) != 0) {
+        return 0;
+    }
+
+    const char* p = spec + GUI_WIN_FILTER_SPEC_PREFIX_LEN;
+    const char* end = spec + strlen(spec);
+    int capacity = 4;
+    int count = 0;
+    COMDLG_FILTERSPEC* specs = (COMDLG_FILTERSPEC*)calloc(
+        capacity, sizeof(COMDLG_FILTERSPEC));
+    if (specs == NULL) return 0;
+
+    while (p < end) {
+        size_t name_len = 0;
+        size_t csv_len = 0;
+        char* name_utf8 = NULL;
+        char* csv = NULL;
+        wchar_t* pattern = NULL;
+        wchar_t* name = NULL;
+
+        if (!gui_parse_len_token(&p, end, &name_len)
+            || name_len > (size_t)(end - p)) {
+            goto fail;
+        }
+        name_utf8 = gui_win_strndup(p, name_len);
+        if (name_utf8 == NULL) goto fail;
+        p += name_len;
+
+        if (!gui_parse_len_token(&p, end, &csv_len)
+            || csv_len > (size_t)(end - p)) {
+            free(name_utf8);
+            goto fail;
+        }
+        csv = gui_win_strndup(p, csv_len);
+        if (csv == NULL) {
+            free(name_utf8);
+            goto fail;
+        }
+        p += csv_len;
+
+        pattern = gui_filter_pattern_from_csv(csv);
+        if (pattern != NULL) {
+            if (name_utf8[0] != '\0') {
+                name = gui_utf8_to_wide(name_utf8);
+            }
+            if (name == NULL) {
+                name = gui_filter_name_from_pattern(pattern);
+            }
+            if (name == NULL) {
+                free(pattern);
+                free(name_utf8);
+                free(csv);
+                goto fail;
+            }
+
+            if (count == capacity) {
+                int new_capacity = capacity * 2;
+                COMDLG_FILTERSPEC* grown =
+                    (COMDLG_FILTERSPEC*)realloc(
+                        specs,
+                        new_capacity * sizeof(COMDLG_FILTERSPEC));
+                if (grown == NULL) {
+                    free((void*)name);
+                    free((void*)pattern);
+                    free(name_utf8);
+                    free(csv);
+                    goto fail;
+                }
+                memset(grown + capacity, 0,
+                    (new_capacity - capacity)
+                        * sizeof(COMDLG_FILTERSPEC));
+                specs = grown;
+                capacity = new_capacity;
+            }
+
+            specs[count].pszName = name;
+            specs[count].pszSpec = pattern;
+            count++;
+        }
+        free(name_utf8);
+        free(csv);
+    }
+
+    if (count == 0) {
+        free(specs);
+        return 0;
+    }
+    *out = specs;
+    return count;
+
+fail:
+    gui_free_filter_specs(specs, count);
+    return 0;
+}
+
+// Parse named "gfd1;" filter specs or legacy "jpg,png,gif" CSV
+// into COMDLG_FILTERSPEC array.
 // Returns count; *out receives malloc'd array. Caller frees
 // each spec's pszName and pszSpec, then the array itself.
 static int gui_parse_filter_specs(
@@ -86,6 +326,10 @@ static int gui_parse_filter_specs(
 ) {
     *out = NULL;
     if (csv == NULL || csv[0] == '\0') return 0;
+    if (strncmp(csv, GUI_WIN_FILTER_SPEC_PREFIX,
+        GUI_WIN_FILTER_SPEC_PREFIX_LEN) == 0) {
+        return gui_parse_named_filter_specs(csv, out);
+    }
 
     // Count extensions.
     int count = 1;
@@ -131,7 +375,7 @@ static int gui_parse_filter_specs(
         }
 
         // Build display name (uppercase ext).
-        size_t nlen = elen + 16;
+        size_t nlen = elen * 2 + 16;
         wchar_t* name = (wchar_t*)calloc(nlen, sizeof(wchar_t));
         if (name && pattern) {
             // e.g. "JPG Files (*.jpg)"
@@ -139,8 +383,9 @@ static int gui_parse_filter_specs(
             MultiByteToWideChar(
                 CP_UTF8, 0, token, -1, ext_upper, 63);
             CharUpperW(ext_upper);
-            _snwprintf(name, nlen - 1,
-                L"%s Files (%s)", ext_upper, pattern);
+            gui_win_swprintf(
+                name, nlen, L"%ls Files (%ls)",
+                ext_upper, pattern);
         }
 
         specs[idx].pszName = name;
@@ -256,9 +501,9 @@ GuiNativeDialogResultEx gui_native_open_dialog_ex(
     int allow_multiple
 ) {
     HRESULT hr;
-    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-    if (FAILED(hr) && hr != RPC_E_CHANGED_MODE
-        && hr != S_FALSE) {
+    GuiWinComScope com = gui_win_com_scope_init();
+    hr = com.hr;
+    if (FAILED(hr)) {
         return gui_win_result_error(
             "com_init", "CoInitializeEx failed");
     }
@@ -268,7 +513,7 @@ GuiNativeDialogResultEx gui_native_open_dialog_ex(
         &CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
         &IID_IFileOpenDialog, (void**)&dlg);
     if (FAILED(hr) || dlg == NULL) {
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_error(
             "com_create", "IFileOpenDialog create failed");
     }
@@ -305,13 +550,13 @@ GuiNativeDialogResultEx gui_native_open_dialog_ex(
     if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED)) {
         IFileOpenDialog_Release(dlg);
         gui_free_filter_specs(specs, spec_count);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_cancel();
     }
     if (FAILED(hr)) {
         IFileOpenDialog_Release(dlg);
         gui_free_filter_specs(specs, spec_count);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_error(
             "show", "dialog Show failed");
     }
@@ -322,22 +567,38 @@ GuiNativeDialogResultEx gui_native_open_dialog_ex(
     if (FAILED(hr) || items == NULL) {
         IFileOpenDialog_Release(dlg);
         gui_free_filter_specs(specs, spec_count);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_error(
             "results", "GetResults failed");
     }
 
     DWORD item_count = 0;
-    IShellItemArray_GetCount(items, &item_count);
+    hr = IShellItemArray_GetCount(items, &item_count);
+    if (FAILED(hr)) {
+        IShellItemArray_Release(items);
+        IFileOpenDialog_Release(dlg);
+        gui_free_filter_specs(specs, spec_count);
+        gui_win_com_scope_uninit(com);
+        return gui_win_result_error(
+            "results", "GetCount failed");
+    }
     if (item_count == 0) {
         IShellItemArray_Release(items);
         IFileOpenDialog_Release(dlg);
         gui_free_filter_specs(specs, spec_count);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_cancel();
     }
 
     char** paths = (char**)calloc(item_count, sizeof(char*));
+    if (paths == NULL) {
+        IShellItemArray_Release(items);
+        IFileOpenDialog_Release(dlg);
+        gui_free_filter_specs(specs, spec_count);
+        gui_win_com_scope_uninit(com);
+        return gui_win_result_error(
+            "allocation", "allocation failed");
+    }
     int valid = 0;
     for (DWORD i = 0; i < item_count; i++) {
         IShellItem* item = NULL;
@@ -361,7 +622,7 @@ GuiNativeDialogResultEx gui_native_open_dialog_ex(
             "internal", "no valid paths");
     }
     free(paths);
-    CoUninitialize();
+    gui_win_com_scope_uninit(com);
     return result;
 }
 
@@ -375,9 +636,9 @@ GuiNativeDialogResultEx gui_native_save_dialog_ex(
     int confirm_overwrite
 ) {
     HRESULT hr;
-    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-    if (FAILED(hr) && hr != RPC_E_CHANGED_MODE
-        && hr != S_FALSE) {
+    GuiWinComScope com = gui_win_com_scope_init();
+    hr = com.hr;
+    if (FAILED(hr)) {
         return gui_win_result_error(
             "com_init", "CoInitializeEx failed");
     }
@@ -387,7 +648,7 @@ GuiNativeDialogResultEx gui_native_save_dialog_ex(
         &CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
         &IID_IFileSaveDialog, (void**)&dlg);
     if (FAILED(hr) || dlg == NULL) {
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_error(
             "com_create", "IFileSaveDialog create failed");
     }
@@ -445,13 +706,13 @@ GuiNativeDialogResultEx gui_native_save_dialog_ex(
     if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED)) {
         IFileSaveDialog_Release(dlg);
         gui_free_filter_specs(specs, spec_count);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_cancel();
     }
     if (FAILED(hr)) {
         IFileSaveDialog_Release(dlg);
         gui_free_filter_specs(specs, spec_count);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_error(
             "show", "dialog Show failed");
     }
@@ -462,7 +723,7 @@ GuiNativeDialogResultEx gui_native_save_dialog_ex(
     if (FAILED(hr) || item == NULL) {
         IFileSaveDialog_Release(dlg);
         gui_free_filter_specs(specs, spec_count);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_error(
             "result", "GetResult failed");
     }
@@ -474,12 +735,18 @@ GuiNativeDialogResultEx gui_native_save_dialog_ex(
 
     GuiNativeDialogResultEx result;
     if (path != NULL) {
-        result = gui_win_result_paths(&path, 1);
+        if (confirm_overwrite == 0 && gui_win_path_exists(path)) {
+            free(path);
+            result = gui_win_result_error(
+                "overwrite_disallowed", "file already exists");
+        } else {
+            result = gui_win_result_paths(&path, 1);
+        }
     } else {
         result = gui_win_result_error(
             "internal", "empty path from save dialog");
     }
-    CoUninitialize();
+    gui_win_com_scope_uninit(com);
     return result;
 }
 
@@ -490,9 +757,9 @@ GuiNativeDialogResultEx gui_native_folder_dialog_ex(
     int can_create_directories
 ) {
     HRESULT hr;
-    hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
-    if (FAILED(hr) && hr != RPC_E_CHANGED_MODE
-        && hr != S_FALSE) {
+    GuiWinComScope com = gui_win_com_scope_init();
+    hr = com.hr;
+    if (FAILED(hr)) {
         return gui_win_result_error(
             "com_init", "CoInitializeEx failed");
     }
@@ -502,7 +769,7 @@ GuiNativeDialogResultEx gui_native_folder_dialog_ex(
         &CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
         &IID_IFileOpenDialog, (void**)&dlg);
     if (FAILED(hr) || dlg == NULL) {
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_error(
             "com_create", "IFileOpenDialog create failed");
     }
@@ -529,12 +796,12 @@ GuiNativeDialogResultEx gui_native_folder_dialog_ex(
     hr = IFileDialog_Show((IFileDialog*)dlg, owner);
     if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED)) {
         IFileOpenDialog_Release(dlg);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_cancel();
     }
     if (FAILED(hr)) {
         IFileOpenDialog_Release(dlg);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_error(
             "show", "dialog Show failed");
     }
@@ -544,7 +811,7 @@ GuiNativeDialogResultEx gui_native_folder_dialog_ex(
     hr = IFileDialog_GetResult((IFileDialog*)dlg, &item);
     if (FAILED(hr) || item == NULL) {
         IFileOpenDialog_Release(dlg);
-        CoUninitialize();
+        gui_win_com_scope_uninit(com);
         return gui_win_result_error(
             "result", "GetResult failed");
     }
@@ -560,7 +827,7 @@ GuiNativeDialogResultEx gui_native_folder_dialog_ex(
         result = gui_win_result_error(
             "internal", "empty path from folder dialog");
     }
-    CoUninitialize();
+    gui_win_com_scope_uninit(com);
     return result;
 }
 

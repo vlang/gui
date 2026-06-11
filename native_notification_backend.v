@@ -22,6 +22,7 @@ fn native_notification_result_from_bridge(br nativebridge.BridgeNotificationResu
 		.denied { NativeNotificationStatus.denied }
 		.error { NativeNotificationStatus.error }
 	}
+
 	return NativeNotificationResult{
 		status:        status
 		error_code:    br.error_code

@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include "readback_bridge.h"
 
+void gui_readback_buffer_free(uint8_t* buffer) {
+    free(buffer);
+}
+
 uint8_t* gui_readback_metal_texture(
     void* mtl_texture,
     void* mtl_device,

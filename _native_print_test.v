@@ -9,7 +9,7 @@ fn test_nativebridge_print_module_loads() {
 }
 
 fn test_print_supported_matches_platform() {
-	$if macos || linux {
+	$if macos || linux || windows {
 		assert print_job_supported()
 	} $else {
 		assert !print_job_supported()
@@ -82,7 +82,126 @@ fn test_print_page_ranges_normalize_merges_overlaps() {
 	assert ranges[1].to == 8
 }
 
-$if !(macos || linux) {
+fn test_windows_shell_execute_warnings_keep_current_view_export_options_quiet() {
+	warnings := print_windows_shell_execute_warnings(PrintJob{
+		paper:       .letter
+		orientation: .landscape
+		margins:     PrintMargins{
+			top:    12
+			right:  13
+			bottom: 14
+			left:   15
+		}
+		scale_mode:  .actual_size
+	})
+	assert warnings.len == 0
+}
+
+fn test_windows_shell_execute_warnings_include_pdf_path_shape_options() {
+	warnings := print_windows_shell_execute_warnings(PrintJob{
+		paper:       .letter
+		orientation: .landscape
+		margins:     PrintMargins{
+			top:    12
+			right:  13
+			bottom: 14
+			left:   15
+		}
+		scale_mode:  .actual_size
+		source:      PrintJobSource{
+			kind:     .pdf_path
+			pdf_path: 'existing.pdf'
+		}
+	})
+	joined := warnings.join('\n')
+	assert joined.contains('paper size')
+	assert joined.contains('orientation')
+	assert joined.contains('margins')
+	assert joined.contains('scale mode')
+}
+
+fn test_windows_shell_execute_warnings_include_pdf_path_title() {
+	warnings := print_windows_shell_execute_warnings(PrintJob{
+		title:  'Quarterly Report'
+		source: PrintJobSource{
+			kind:     .pdf_path
+			pdf_path: 'existing.pdf'
+		}
+	})
+	assert warnings.join('\n').contains('title')
+}
+
+fn test_windows_shell_execute_warnings_include_job_name_for_current_view() {
+	warnings := print_windows_shell_execute_warnings(PrintJob{
+		job_name: 'Native Job Name'
+	})
+	assert warnings.join('\n').contains('job name')
+}
+
+fn test_windows_shell_execute_warnings_include_print_options() {
+	warnings := print_windows_shell_execute_warnings(PrintJob{
+		copies:      2
+		page_ranges: [PrintPageRange{ from: 1, to: 2 }]
+		duplex:      .long_edge
+		color_mode:  .grayscale
+	})
+	joined := warnings.join('\n')
+	assert joined.contains('copies')
+	assert joined.contains('page ranges')
+	assert joined.contains('duplex mode')
+	assert joined.contains('color mode')
+}
+
+fn test_print_bridge_conversion_keeps_extra_warnings() {
+	result := print_run_result_from_bridge_with_warnings(nativebridge.BridgePrintResult{
+		status:   .ok
+		warnings: ['bridge warning']
+	}, 'out.pdf', ['windows warning'])
+	assert result.status == .ok
+	assert result.warnings.len == 2
+	assert result.warnings[0].code == 'unsupported_option'
+	assert result.warnings[0].message == 'bridge warning'
+	assert result.warnings[1].message == 'windows warning'
+}
+
+fn test_print_bridge_conversion_filters_empty_warnings() {
+	result := print_run_result_from_bridge_with_warnings(nativebridge.BridgePrintResult{
+		status:   .ok
+		warnings: ['', ' bridge warning ']
+	}, 'out.pdf', ['   ', 'windows warning'])
+	assert result.status == .ok
+	assert result.warnings.len == 2
+	assert result.warnings[0].message == ' bridge warning '
+	assert result.warnings[1].message == 'windows warning'
+}
+
+fn test_print_bridge_conversion_keeps_cancel_warnings() {
+	result := print_run_result_from_bridge_with_warnings(nativebridge.BridgePrintResult{
+		status:   .cancel
+		warnings: ['bridge warning']
+	}, 'out.pdf', ['windows warning'])
+	assert result.status == .cancel
+	assert result.warnings.len == 2
+	assert result.warnings[0].message == 'bridge warning'
+	assert result.warnings[1].message == 'windows warning'
+}
+
+fn test_print_bridge_conversion_keeps_error_warnings() {
+	result := print_run_result_from_bridge_with_warnings(nativebridge.BridgePrintResult{
+		status:        .error
+		error_code:    'print_failed'
+		error_message: 'handler unavailable'
+		warnings:      ['bridge warning']
+	}, 'out.pdf', ['windows warning'])
+	assert result.status == .error
+	assert result.error_code == 'print_failed'
+	assert result.error_message == 'handler unavailable'
+	assert result.warnings.len == 2
+	assert result.warnings[0].message == 'bridge warning'
+	assert result.warnings[1].message == 'windows warning'
+}
+
+$if !(macos || linux || windows) {
 	fn test_nativebridge_print_stub_returns_unsupported() {
 		result := nativebridge.print_pdf_dialog(nativebridge.BridgePrintCfg{})
 		assert result.status == .error

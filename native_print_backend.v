@@ -9,7 +9,8 @@ fn run_print_job_impl(mut w Window, job PrintJob) PrintRunResult {
 		return print_run_error_result(native_print_error_code_invalid_cfg, err.msg())
 	}
 	if !print_job_supported() {
-		return print_run_error_result('unsupported', 'native print is not implemented on this platform')
+		return print_run_error_result('unsupported',
+			'native print is not implemented on this platform')
 	}
 
 	pdf_path := print_job_resolve_pdf_path(mut w, job) or {
@@ -37,7 +38,11 @@ fn run_print_job_impl(mut w Window, job PrintJob) PrintRunResult {
 		color_mode:    int(job.color_mode)
 		scale_mode:    int(job.scale_mode)
 	})
-	return print_run_result_from_bridge(bridge_result, pdf_path)
+	mut extra_warnings := []string{}
+	$if windows {
+		extra_warnings = print_windows_shell_execute_warnings(job)
+	}
+	return print_run_result_from_bridge_with_warnings(bridge_result, pdf_path, extra_warnings)
 }
 
 fn print_job_supported() bool {
@@ -103,7 +108,18 @@ fn print_orientation_to_int(orientation PrintOrientation) int {
 }
 
 fn print_run_result_from_bridge(bridge_result nativebridge.BridgePrintResult, pdf_path string) PrintRunResult {
-	warnings := bridge_warnings_to_print_warnings(bridge_result.warnings)
+	return print_run_result_from_bridge_with_warnings(bridge_result, pdf_path, []string{})
+}
+
+fn print_run_result_from_bridge_with_warnings(bridge_result nativebridge.BridgePrintResult, pdf_path string, extra_warnings []string) PrintRunResult {
+	mut raw_warnings := []string{cap: bridge_result.warnings.len + extra_warnings.len}
+	for warning in bridge_result.warnings {
+		raw_warnings << warning
+	}
+	for warning in extra_warnings {
+		raw_warnings << warning
+	}
+	warnings := bridge_warnings_to_print_warnings(raw_warnings)
 	return match bridge_result.status {
 		.ok {
 			print_run_ok_result(pdf_path, warnings)
@@ -123,6 +139,49 @@ fn print_run_result_from_bridge(bridge_result nativebridge.BridgePrintResult, pd
 			}
 		}
 	}
+}
+
+fn print_windows_shell_execute_warnings(job PrintJob) []string {
+	mut warnings := []string{}
+	if job.copies > 1 {
+		warnings << 'copies may be ignored by Windows ShellExecute print'
+	}
+	if job.page_ranges.len > 0 {
+		warnings << 'page ranges may be ignored by Windows ShellExecute print'
+	}
+	if job.duplex != .default_mode {
+		warnings << 'duplex mode may be ignored by Windows ShellExecute print'
+	}
+	if job.color_mode != .default_mode {
+		warnings << 'color mode may be ignored by Windows ShellExecute print'
+	}
+	if job.job_name.trim_space().len > 0 {
+		warnings << 'job name may be ignored by Windows ShellExecute print'
+	}
+	if job.source.kind == .pdf_path {
+		if job.title.trim_space().len > 0 {
+			warnings << 'title may be ignored by Windows ShellExecute print'
+		}
+		if job.paper != .a4 {
+			warnings << 'paper size cannot be applied to an existing PDF by Windows ShellExecute print'
+		}
+		if job.orientation != .portrait {
+			warnings << 'orientation cannot be applied to an existing PDF by Windows ShellExecute print'
+		}
+		if !print_margins_are_default(job.margins) {
+			warnings << 'margins cannot be applied to an existing PDF by Windows ShellExecute print'
+		}
+		if job.scale_mode != .fit_to_page {
+			warnings << 'scale mode cannot be applied to an existing PDF by Windows ShellExecute print'
+		}
+	}
+	return warnings
+}
+
+fn print_margins_are_default(margins PrintMargins) bool {
+	defaults := default_print_margins()
+	return margins.top == defaults.top && margins.right == defaults.right
+		&& margins.bottom == defaults.bottom && margins.left == defaults.left
 }
 
 fn bridge_warnings_to_print_warnings(items []string) []PrintWarning {

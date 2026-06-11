@@ -13,8 +13,9 @@ This guide covers native dialogs:
   support for sandboxed apps.
 - Linux: XDG Desktop Portal via D-Bus (preferred), falling
   back to `zenity` or `kdialog`.
-- Windows: returns `.error` with
-  `error_code == 'unsupported'`. Not yet implemented.
+- Windows: native Win32 file/folder dialogs and message/confirm
+  boxes. CI covers non-interactive result mapping; live modal
+  behavior is still pending Windows smoke/manual validation.
 
 Linux notes:
 - portal mode requires `org.freedesktop.portal.Desktop` on
@@ -22,6 +23,17 @@ Linux notes:
 - if portal is unavailable, falls back to `zenity`/`kdialog`.
 - if all are missing, callback returns `.error` with
   `error_code == 'unsupported'`.
+
+Windows notes:
+- file/folder dialogs use native Win32 Common Item Dialog COM APIs; message and
+  confirm dialogs use native Win32 message boxes.
+- dependency failures from `vglyph`, Pango or Freetype are setup/build
+  preflight failures. They happen before native dialog callbacks can report a
+  `NativeDialogResult`.
+- WSL and Wine are not validation gates for real Windows COM dialogs.
+- Windows setup/preflight is documented in [`WINDOWS.md`](WINDOWS.md). Manual
+  modal-dialog validation is tracked in
+  [`WINDOWS_MANUAL_SMOKE.md`](WINDOWS_MANUAL_SMOKE.md).
 
 ## Result Model
 

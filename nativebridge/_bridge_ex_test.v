@@ -41,3 +41,29 @@ fn test_bridge_dialog_unsupported_result_ex() {
 	assert ex.status == .error
 	assert ex.error_code == 'unsupported'
 }
+
+fn test_bridge_print_unsupported_result() {
+	result := bridge_print_unsupported_result()
+	assert result.status == .error
+	assert result.error_code == 'unsupported'
+	assert result.warnings.len == 0
+}
+
+fn test_bridge_alert_unsupported_result() {
+	result := bridge_alert_unsupported_result()
+	assert result.status == .error
+	assert result.error_code == 'unsupported'
+}
+
+fn test_bridge_notification_status_from_int() {
+	assert bridge_notification_status_from_int(0) == .ok
+	assert bridge_notification_status_from_int(1) == .denied
+	assert bridge_notification_status_from_int(2) == .error
+	assert bridge_notification_status_from_int(999) == .error
+}
+
+fn test_bridge_notification_unsupported_result() {
+	result := bridge_notification_unsupported_result()
+	assert result.status == .error
+	assert result.error_code == 'unsupported'
+}

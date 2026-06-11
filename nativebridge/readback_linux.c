@@ -5,6 +5,10 @@
 #include <string.h>
 #include "readback_bridge.h"
 
+void gui_readback_buffer_free(uint8_t* buffer) {
+    free(buffer);
+}
+
 uint8_t* gui_readback_gl_framebuffer(
     uint32_t framebuffer, int width, int height
 ) {

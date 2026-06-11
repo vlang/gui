@@ -5,14 +5,22 @@ on:
     paths:
       - "**.v"
       - "**.vsh"
+      - "**.c"
+      - "**.h"
+      - "**.m"
       - "**.md"
       - "**/ci.yml"
+      - ".github/workflows/*.yml"
   pull_request:
     paths:
       - "**.v"
       - "**.vsh"
+      - "**.c"
+      - "**.h"
+      - "**.m"
       - "**.md"
       - "**/ci.yml"
+      - ".github/workflows/*.yml"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
@@ -57,7 +65,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 25
     env:
-      VFLAGS: -no-parallel -cc clang
+      VFLAGS: -no-parallel
     steps:
       - name: Install V
         id: install-v
@@ -77,34 +85,141 @@ jobs:
         with:
           path: gui
       - name: Run tests
+        env:
+          VFLAGS: -no-parallel -cc clang
         run: v test gui/
       - name: Check compilation of examples
+        env:
+          VFLAGS: -no-parallel -cc clang
         run: v should-compile-all gui/examples/
       - name: Check compilation of examples with -W
+        env:
+          VFLAGS: -no-parallel -cc clang
         run: v gui/examples/_build.vsh
 
   compiling-on-windows:
     runs-on: windows-latest
     timeout-minutes: 25
     env:
-      VFLAGS: -no-parallel -cc msvc
+      VFLAGS: -no-parallel
+      VCPKG_BINARY_CACHE: ${{ github.workspace }}\vcpkg-binary-cache
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}\vcpkg-binary-cache,readwrite
     steps:
       - name: Install V
         id: install-v
         uses: vlang/setup-v@v1.4
         with:
           check-latest: true
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_BINARY_CACHE }}
+          key: windows-vcpkg-x64-windows-pango-freetype-v1
+          restore-keys: |
+            windows-vcpkg-x64-windows-pango-freetype-
+      - name: Restore V module cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.vmodules/vglyph
+          key: windows-vmodules-vglyph-v1
+          restore-keys: |
+            windows-vmodules-vglyph-
       - name: Install pango and freetype
-        run: vcpkg install pango freetype
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_BINARY_CACHE" | Out-Null
+          vcpkg install pango freetype
+      - name: Expose vcpkg pkg-config paths
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $triplet = 'x64-windows'
+          $vcpkgExe = (Get-Command vcpkg -ErrorAction Stop).Source
+          $roots = @()
+          if ($vcpkgExe) {
+            $roots += Split-Path -Parent $vcpkgExe
+          }
+          if ($env:VCPKG_ROOT) {
+            $roots += $env:VCPKG_ROOT
+          }
+          $vcpkgRoot = $null
+          foreach ($root in ($roots | Select-Object -Unique)) {
+            if (Test-Path (Join-Path $root "installed\$triplet")) {
+              $vcpkgRoot = $root
+              break
+            }
+          }
+          if (-not $vcpkgRoot) {
+            throw "Could not find vcpkg installed\$triplet from vcpkg.exe or VCPKG_ROOT"
+          }
+          $tripletRoot = Join-Path $vcpkgRoot "installed\$triplet"
+          $pkgConfigDirs = @(
+            (Join-Path $tripletRoot 'lib\pkgconfig'),
+            (Join-Path $tripletRoot 'share\pkgconfig')
+          ) | Where-Object { Test-Path $_ }
+          if ($pkgConfigDirs.Count -eq 0) {
+            throw "No pkgconfig directories found under $tripletRoot"
+          }
+          $pkgConfigPath = $pkgConfigDirs -join ';'
+          "PKG_CONFIG_PATH=$pkgConfigPath" | Add-Content -Path $env:GITHUB_ENV
+          $env:PKG_CONFIG_PATH = $pkgConfigPath
+
+          $pathEntries = @()
+          $binDir = Join-Path $tripletRoot 'bin'
+          if (Test-Path $binDir) {
+            $pathEntries += $binDir
+          }
+          $pkgconfDir = Join-Path $tripletRoot 'tools\pkgconf'
+          if (Test-Path $pkgconfDir) {
+            $pathEntries += $pkgconfDir
+          }
+          foreach ($entry in $pathEntries) {
+            $entry | Add-Content -Path $env:GITHUB_PATH
+          }
+          if ($pathEntries.Count -gt 0) {
+            $env:PATH = ($pathEntries + $env:PATH) -join ';'
+          }
+
+          if (-not (Get-Command pkg-config -ErrorAction SilentlyContinue)) {
+            $pkgconf = Get-Command pkgconf -ErrorAction SilentlyContinue
+            if ($pkgconf) {
+              $shimDir = Join-Path $env:RUNNER_TEMP 'pkg-config-shim'
+              New-Item -ItemType Directory -Force -Path $shimDir | Out-Null
+              Set-Content -Path (Join-Path $shimDir 'pkg-config.cmd') -Encoding ascii -Value @(
+                '@echo off',
+                '"' + $pkgconf.Source + '" %*'
+              )
+              $shimDir | Add-Content -Path $env:GITHUB_PATH
+              $env:PATH = "$shimDir;$env:PATH"
+            }
+          }
+
+          $pkgConfig = Get-Command pkg-config -ErrorAction Stop
+          & $pkgConfig.Source --exists freetype2 pango pangoft2
+          if ($LASTEXITCODE -ne 0) {
+            throw "pkg-config could not resolve freetype2 pango pangoft2"
+          }
       - name: Install vglyph
         run: v install vglyph
       - name: Checkout the gui module
         uses: actions/checkout@v4
         with:
           path: gui
+      - name: Configure MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Run Windows setup preflight
+        env:
+          GUI_WINDOWS_PREFLIGHT_CC: msvc
+        run: v -cc msvc run gui/_windows_preflight.vsh
       - name: Run tests
+        env:
+          VFLAGS: -no-parallel -cc msvc
         run: v test gui/
       - name: Check compilation of examples
+        env:
+          VFLAGS: -no-parallel -cc msvc
         run: v should-compile-all gui/examples/
       - name: Check compilation of examples with -W
+        env:
+          VFLAGS: -no-parallel -cc msvc
         run: v gui/examples/_build.vsh

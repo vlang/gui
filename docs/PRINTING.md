@@ -8,11 +8,32 @@ This guide covers:
 
 - macOS: uses native print panel.
 - Linux: prefers opener (`xdg-open` / `gio open`), falls back to `lp` direct dispatch.
+- Windows: delegates generated or existing PDFs to the native `ShellExecute`
+  `print` verb. This is PDF-handler delegation, not `PrintDlgEx` or printer-DC
+  option parity, so warnings are returned for options the backend cannot
+  guarantee.
 - other platforms: returns `.error` with `error_code == 'unsupported'`.
 
 Linux notes:
 - opener path cannot guarantee copies/ranges/duplex/color; warnings are returned.
 - direct `lp` path applies supported options (`copies`, `page_ranges`, `duplex`, `color`).
+
+Windows notes:
+- CI covers non-interactive result mapping and validation; live PDF handler
+  behavior is still pending Windows smoke/manual validation.
+- `source: .current_view` first exports a PDF through the rendering/text stack.
+  Missing `vglyph`, Pango or Freetype dependencies are setup/build preflight
+  failures, not print-dialog results.
+- `source: .pdf_path` delegates an existing PDF to the default Windows PDF
+  handler through `ShellExecute`.
+- copies, ranges, duplex, color, job names, and shape/export options for an
+  existing PDF may be ignored by the PDF handler.
+- Windows does not currently implement a `PrintDlgExW` or printer DC flow.
+  Treat full printer-option parity as an advanced limitation until that path is
+  implemented and smoke-tested.
+- Windows setup/preflight is documented in [`WINDOWS.md`](WINDOWS.md). Manual
+  print-handler validation is tracked in
+  [`WINDOWS_MANUAL_SMOKE.md`](WINDOWS_MANUAL_SMOKE.md).
 
 ## Export PDF
 
@@ -88,9 +109,11 @@ result := w.export_print_job(gui.PrintJob{
 })
 ```
 
-## Native print dialog
+## Native Print Flow
 
-`run_print_job` opens native print flow and returns `PrintRunResult`.
+`run_print_job` opens the platform print flow and returns `PrintRunResult`.
+On Windows this dispatches a PDF through the default handler via `ShellExecute`;
+it does not expose a native printer-options dialog yet.
 
 ```v ignore
 result := w.run_print_job(gui.PrintJob{

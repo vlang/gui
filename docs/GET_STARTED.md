@@ -182,6 +182,18 @@ v-gui comes with everything you need:
 
 All follow the same pattern: call the function, set some options, done.
 
+## Windows Setup Status
+
+Windows native support is being validated. Treat it as a native smoke-tested
+path, not a final support claim yet.
+
+- Use the MSVC/vcpkg path in [`WINDOWS.md`](WINDOWS.md) for `vglyph`, Pango and
+  Freetype setup/preflight.
+- Use [`WINDOWS_MANUAL_SMOKE.md`](WINDOWS_MANUAL_SMOKE.md) for manual native
+  Windows validation of dialogs, notifications, printing and D3D11 readback.
+- MSYS2/GCC, WSL and Wine are diagnostic aids only until native Windows smoke
+  proves them as supported user paths.
+
 ## Why v-gui Feels Different
 
 **No widget objects to manage.** Traditional frameworks make you create button objects, store

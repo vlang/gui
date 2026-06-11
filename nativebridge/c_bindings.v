@@ -32,6 +32,7 @@ module nativebridge
 #flag windows @VMODROOT/nativebridge/notification_windows.c
 #flag windows -lole32
 #flag windows -lshell32
+#flag windows -luser32
 #flag windows -luuid
 #include "@VMODROOT/nativebridge/a11y_bridge.h"
 #include "@VMODROOT/nativebridge/dialog_bridge.h"
@@ -73,6 +74,7 @@ pub:
 	title          string
 	start_dir      string
 	extensions     []string
+	filter_specs   string
 	allow_multiple bool
 }
 
@@ -84,6 +86,7 @@ pub:
 	default_name      string
 	default_extension string
 	extensions        []string
+	filter_specs      string
 	confirm_overwrite bool
 }
 
@@ -187,6 +190,7 @@ fn C.gui_native_print_result_free(C.GuiNativePrintResult)
 fn C.gui_readback_metal_texture(mtl_texture voidptr, mtl_device voidptr, width int, height int) &u8
 fn C.gui_readback_gl_framebuffer(framebuffer u32, width int, height int) &u8
 fn C.gui_readback_d3d11_texture(d3d11_texture voidptr, d3d11_device voidptr, d3d11_context voidptr, width int, height int) &u8
+fn C.gui_readback_buffer_free(buffer &u8)
 
 fn bridge_print_unsupported_result() BridgePrintResult {
 	return BridgePrintResult{
@@ -349,9 +353,9 @@ pub fn folder_dialog(cfg BridgeFolderCfg) BridgeDialogResult {
 // retain file access across app relaunches in sandboxed
 // apps. On Linux the grant data is empty; paths are usable
 // directly. Prefers XDG Desktop Portal when available,
-// falling back to zenity/kdialog. On Windows returns
-// .error with error_code 'unsupported'; grants are not
-// yet implemented.
+// falling back to zenity/kdialog. On Windows the native
+// Win32 file picker is used; grant data is empty and paths
+// are usable directly.
 pub fn open_dialog_ex(cfg BridgeOpenCfg) BridgeDialogResultEx {
 	$if macos {
 		extensions := cfg.extensions.join(',')
@@ -368,8 +372,9 @@ pub fn open_dialog_ex(cfg BridgeOpenCfg) BridgeDialogResultEx {
 		return bridge_result_ex_from_legacy(linux_open_dialog(cfg))
 	} $else $if windows {
 		extensions := cfg.extensions.join(',')
+		filter_arg := if cfg.filter_specs.len > 0 { cfg.filter_specs } else { extensions }
 		c_result := C.gui_native_open_dialog_ex(cfg.ns_window, cfg.title.str, cfg.start_dir.str,
-			extensions.str, bool_to_int(cfg.allow_multiple))
+			filter_arg.str, bool_to_int(cfg.allow_multiple))
 		return bridge_dialog_result_ex_from_c(c_result)
 	} $else {
 		return bridge_dialog_unsupported_result_ex()
@@ -382,27 +387,30 @@ pub fn open_dialog_ex(cfg BridgeOpenCfg) BridgeDialogResultEx {
 // write access across relaunches in sandboxed apps. On
 // Linux the grant data is empty; the path is usable
 // directly. Prefers XDG Desktop Portal when available,
-// falling back to zenity/kdialog. On Windows returns
-// .error with error_code 'unsupported'; grants are not
-// yet implemented.
+// falling back to zenity/kdialog. On Windows the native
+// Win32 save dialog is used; grant data is empty and the
+// path is usable directly.
 pub fn save_dialog_ex(cfg BridgeSaveCfg) BridgeDialogResultEx {
 	$if macos {
 		extensions := cfg.extensions.join(',')
 		c_result := C.gui_native_save_dialog_ex(cfg.ns_window, cfg.title.str, cfg.start_dir.str,
-			cfg.default_name.str, cfg.default_extension.str, extensions.str, bool_to_int(cfg.confirm_overwrite))
+			cfg.default_name.str, cfg.default_extension.str, extensions.str,
+			bool_to_int(cfg.confirm_overwrite))
 		return bridge_dialog_result_ex_from_c(c_result)
 	} $else $if linux {
 		if C.gui_portal_available() != 0 {
 			extensions := cfg.extensions.join(',')
-			c_result := C.gui_portal_save_file(cfg.title.str, cfg.start_dir.str, cfg.default_name.str,
-				cfg.default_extension.str, extensions.str)
+			c_result := C.gui_portal_save_file(cfg.title.str, cfg.start_dir.str,
+				cfg.default_name.str, cfg.default_extension.str, extensions.str)
 			return bridge_dialog_result_ex_from_c(c_result)
 		}
 		return bridge_result_ex_from_legacy(linux_save_dialog(cfg))
 	} $else $if windows {
 		extensions := cfg.extensions.join(',')
+		filter_arg := if cfg.filter_specs.len > 0 { cfg.filter_specs } else { extensions }
 		c_result := C.gui_native_save_dialog_ex(cfg.ns_window, cfg.title.str, cfg.start_dir.str,
-			cfg.default_name.str, cfg.default_extension.str, extensions.str, bool_to_int(cfg.confirm_overwrite))
+			cfg.default_name.str, cfg.default_extension.str, filter_arg.str,
+			bool_to_int(cfg.confirm_overwrite))
 		return bridge_dialog_result_ex_from_c(c_result)
 	} $else {
 		return bridge_dialog_unsupported_result_ex()
@@ -415,9 +423,9 @@ pub fn save_dialog_ex(cfg BridgeSaveCfg) BridgeDialogResultEx {
 // persisting access across relaunches in sandboxed apps. On
 // Linux the grant data is empty; the path is usable
 // directly. Prefers XDG Desktop Portal when available,
-// falling back to zenity/kdialog. On Windows returns
-// .error with error_code 'unsupported'; grants are not
-// yet implemented.
+// falling back to zenity/kdialog. On Windows the native
+// Win32 folder picker is used; grant data is empty and the
+// path is usable directly.
 pub fn folder_dialog_ex(cfg BridgeFolderCfg) BridgeDialogResultEx {
 	$if macos {
 		c_result := C.gui_native_folder_dialog_ex(cfg.ns_window, cfg.title.str, cfg.start_dir.str,
@@ -491,6 +499,12 @@ pub fn bookmark_stop_access(data []u8) {
 // Caller must gfx.commit() before calling. macOS only.
 pub fn readback_metal_texture(mtl_texture voidptr, mtl_device voidptr, width int, height int) ![]u8 {
 	$if macos {
+		if width <= 0 || height <= 0 {
+			return error('readback dimensions must be positive')
+		}
+		if mtl_texture == unsafe { nil } || mtl_device == unsafe { nil } {
+			return error('Metal texture and device are required')
+		}
 		ptr := C.gui_readback_metal_texture(mtl_texture, mtl_device, width, height)
 		if ptr == unsafe { nil } {
 			return error('Metal texture readback failed')
@@ -499,7 +513,7 @@ pub fn readback_metal_texture(mtl_texture voidptr, mtl_device voidptr, width int
 		mut pixels := []u8{len: size}
 		unsafe {
 			vmemcpy(pixels.data, ptr, size)
-			free(ptr)
+			C.gui_readback_buffer_free(ptr)
 		}
 		return pixels
 	} $else {
@@ -512,6 +526,9 @@ pub fn readback_metal_texture(mtl_texture voidptr, mtl_device voidptr, width int
 // order. Caller must gfx.commit() before calling. Linux only.
 pub fn readback_gl_framebuffer(framebuffer u32, width int, height int) ![]u8 {
 	$if linux {
+		if width <= 0 || height <= 0 {
+			return error('readback dimensions must be positive')
+		}
 		ptr := C.gui_readback_gl_framebuffer(framebuffer, width, height)
 		if ptr == unsafe { nil } {
 			return error('GL framebuffer readback failed')
@@ -520,7 +537,7 @@ pub fn readback_gl_framebuffer(framebuffer u32, width int, height int) ![]u8 {
 		mut pixels := []u8{len: size}
 		unsafe {
 			vmemcpy(pixels.data, ptr, size)
-			free(ptr)
+			C.gui_readback_buffer_free(ptr)
 		}
 		return pixels
 	} $else {
@@ -533,8 +550,15 @@ pub fn readback_gl_framebuffer(framebuffer u32, width int, height int) ![]u8 {
 // must gfx.commit() before calling. Windows only.
 pub fn readback_d3d11_texture(d3d11_texture voidptr, d3d11_device voidptr, d3d11_context voidptr, width int, height int) ![]u8 {
 	$if windows {
-		ptr := C.gui_readback_d3d11_texture(d3d11_texture, d3d11_device, d3d11_context,
-			width, height)
+		if width <= 0 || height <= 0 {
+			return error('readback dimensions must be positive')
+		}
+		if d3d11_texture == unsafe { nil } || d3d11_device == unsafe { nil }
+			|| d3d11_context == unsafe { nil } {
+			return error('D3D11 texture, device, and context are required')
+		}
+		ptr := C.gui_readback_d3d11_texture(d3d11_texture, d3d11_device, d3d11_context, width,
+			height)
 		if ptr == unsafe { nil } {
 			return error('D3D11 texture readback failed')
 		}
@@ -542,7 +566,7 @@ pub fn readback_d3d11_texture(d3d11_texture voidptr, d3d11_device voidptr, d3d11
 		mut pixels := []u8{len: size}
 		unsafe {
 			vmemcpy(pixels.data, ptr, size)
-			free(ptr)
+			C.gui_readback_buffer_free(ptr)
 		}
 		return pixels
 	} $else {
