@@ -50,11 +50,48 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: gui
+          fetch-depth: 0
+      - name: Verify formatting of changed V files
+        if: github.event_name == 'pull_request'
+        working-directory: gui
+        run: |
+          base_ref="${{ github.base_ref }}"
+          git fetch --no-tags origin "$base_ref:refs/remotes/origin/$base_ref"
+          git diff --name-only -z --diff-filter=ACMRT "origin/${base_ref}...HEAD" -- '*.v' '*.vsh' > /tmp/vfmt-files
+          if [ ! -s /tmp/vfmt-files ]; then
+            echo "No changed V/VSH files to format-check."
+            exit 0
+          fi
+          xargs -0 v fmt -verify -inprocess < /tmp/vfmt-files
       - name: Verify formatting
+        if: github.event_name != 'pull_request'
         run: v fmt -verify -inprocess gui/
       - name: Check formatting of MD files
         run: v check-md gui/
+      - name: Check syntax of changed examples
+        if: github.event_name == 'pull_request'
+        working-directory: gui
+        run: |
+          base_ref="${{ github.base_ref }}"
+          files_list="${RUNNER_TEMP}/gui-example-syntax-files"
+          git fetch --no-tags origin "$base_ref:refs/remotes/origin/$base_ref"
+          git diff --name-only -z --diff-filter=ACMRT "origin/${base_ref}...HEAD" -- 'examples/*.v' 'examples/*.vsh' > "$files_list"
+          if [ ! -s "$files_list" ]; then
+            echo "No changed example V/VSH files to syntax-check."
+            exit 0
+          fi
+          while IFS= read -r -d '' file; do
+            case "$file" in
+              *.v)
+                v -check -N -W "$file"
+                ;;
+              *.vsh)
+                v -check -W "$file"
+                ;;
+            esac
+          done < "$files_list"
       - name: Check syntax of examples
+        if: github.event_name != 'pull_request'
         run: v gui/examples/_check.vsh
 
   compiling:
@@ -84,6 +121,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: gui
+          fetch-depth: 0
       - name: Run tests
         env:
           VFLAGS: -no-parallel -cc clang
@@ -92,7 +130,27 @@ jobs:
         env:
           VFLAGS: -no-parallel -cc clang
         run: v should-compile-all gui/examples/
+      - name: Check compilation of changed examples with -W
+        if: github.event_name == 'pull_request'
+        env:
+          VFLAGS: -no-parallel -cc clang
+        working-directory: gui
+        run: |
+          base_ref="${{ github.base_ref }}"
+          files_list="${RUNNER_TEMP}/gui-example-compile-files"
+          git fetch --no-tags origin "$base_ref:refs/remotes/origin/$base_ref"
+          git diff --name-only -z --diff-filter=ACMRT "origin/${base_ref}...HEAD" -- 'examples/*.v' > "$files_list"
+          if [ ! -s "$files_list" ]; then
+            echo "No changed example .v files to compile with -W."
+            exit 0
+          fi
+          mkdir -p examples/bin
+          while IFS= read -r -d '' file; do
+            output_file="examples/bin/$(basename "${file%.v}")"
+            v -no-parallel -W -o "$output_file" "$file"
+          done < "$files_list"
       - name: Check compilation of examples with -W
+        if: github.event_name != 'pull_request'
         env:
           VFLAGS: -no-parallel -cc clang
         run: v gui/examples/_build.vsh
@@ -101,15 +159,29 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 25
     env:
+      V_VERSION: 0.5.1
       VFLAGS: -no-parallel
       VCPKG_BINARY_CACHE: ${{ github.workspace }}\vcpkg-binary-cache
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}\vcpkg-binary-cache,readwrite
     steps:
       - name: Install V
-        id: install-v
-        uses: vlang/setup-v@v1.4
-        with:
-          check-latest: true
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          $asset = 'v_windows.zip'
+          $url = "https://github.com/vlang/v/releases/download/$env:V_VERSION/$asset"
+          Invoke-WebRequest -Uri $url -OutFile $asset
+          Expand-Archive -Path $asset -DestinationPath . -Force
+          $vPath = (Resolve-Path .\v).Path
+          Add-Content -Path $env:GITHUB_PATH -Value $vPath
+      - name: Verify V version
+        shell: pwsh
+        run: |
+          $vVersion = v version
+          Write-Host $vVersion
+          if ($vVersion -notlike "*$env:V_VERSION*") {
+            throw "Expected V version $env:V_VERSION"
+          }
       - name: Restore vcpkg binary cache
         uses: actions/cache@v4
         with:
@@ -205,6 +277,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: gui
+          fetch-depth: 0
       - name: Configure MSVC developer environment
         uses: ilammy/msvc-dev-cmd@v1
       - name: Run Windows setup preflight
@@ -219,7 +292,37 @@ jobs:
         env:
           VFLAGS: -no-parallel -cc msvc
         run: v should-compile-all gui/examples/
+      - name: Check compilation of changed examples with -W
+        if: github.event_name == 'pull_request'
+        env:
+          VFLAGS: -no-parallel -cc msvc
+        shell: pwsh
+        working-directory: gui
+        run: |
+          $baseRef = '${{ github.base_ref }}'
+          git fetch --no-tags origin "${baseRef}:refs/remotes/origin/${baseRef}"
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+          $files = @(git diff --name-only --diff-filter=ACMRT "origin/${baseRef}...HEAD" -- 'examples/*.v')
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
+          }
+          if ($files.Count -eq 0) {
+            Write-Host 'No changed example .v files to compile with -W.'
+            exit 0
+          }
+          New-Item -ItemType Directory -Force -Path 'examples/bin' | Out-Null
+          foreach ($file in $files) {
+            $name = [System.IO.Path]::GetFileNameWithoutExtension($file)
+            $outputFile = "examples/bin/$name"
+            v -no-parallel -W -o $outputFile $file
+            if ($LASTEXITCODE -ne 0) {
+              exit $LASTEXITCODE
+            }
+          }
       - name: Check compilation of examples with -W
+        if: github.event_name != 'pull_request'
         env:
           VFLAGS: -no-parallel -cc msvc
         run: v gui/examples/_build.vsh

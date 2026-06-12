@@ -18,7 +18,8 @@ fn test_windows_text_system_wrapper_keeps_msvc_actionable_message() {
 }
 
 fn test_windows_preflight_script_imports_winsetup_source_of_truth() {
-	script := os.read_file('_windows_preflight.vsh') or { panic(err) }
+	script_path := os.join_path(os.dir(@FILE), '_windows_preflight.vsh')
+	script := os.read_file(script_path) or { panic(err) }
 
 	assert script.contains('import winsetup')
 	assert script.contains('winsetup.script_message')
