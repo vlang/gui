@@ -47,7 +47,7 @@ jobs:
         if: runner.os == 'macOS'
         run: v retry -- brew install pango harfbuzz freetype2
       - name: Checkout the gui module
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: gui
           fetch-depth: 0
@@ -157,7 +157,7 @@ jobs:
 
   compiling-on-windows:
     runs-on: windows-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       V_VERSION: 0.5.1
       VFLAGS: -no-parallel
@@ -274,7 +274,7 @@ jobs:
       - name: Install vglyph
         run: v install vglyph
       - name: Checkout the gui module
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: gui
           fetch-depth: 0
