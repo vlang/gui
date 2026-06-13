@@ -118,7 +118,7 @@ jobs:
         if: runner.os == 'macOS'
         run: v retry -- brew install pango harfbuzz freetype2
       - name: Checkout the gui module
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           path: gui
           fetch-depth: 0
