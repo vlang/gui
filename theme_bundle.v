@@ -31,10 +31,10 @@ struct SizesBundle {
 }
 
 struct SpacingBundle {
-	small  f32 = -1
-	medium f32 = -1
-	large  f32 = -1
-	text   f32 = -1
+	spacing_small f32 = -1 @[json: 'small']
+	medium        f32 = -1
+	large         f32 = -1
+	text          f32 = -1
 }
 
 struct ScrollBundle {
@@ -85,7 +85,11 @@ struct ThemeBundle {
 // theme_parse decodes a JSON string into a Theme.
 // Missing keys fall back to ThemeCfg{} defaults (dark theme).
 pub fn theme_parse(content string) !Theme {
-	bundle := json.decode(ThemeBundle, content) or { return error('invalid JSON: ${err}') }
+	trimmed := content.trim_space()
+	if trimmed.len == 0 || !trimmed.starts_with('{') || !trimmed.ends_with('}') {
+		return error('invalid JSON: expected object')
+	}
+	bundle := json.decode(ThemeBundle, trimmed) or { return error('invalid JSON: ${err}') }
 	cfg := bundle.to_theme_cfg()
 	return theme_maker(cfg)
 }
@@ -247,11 +251,14 @@ fn (b ThemeBundle) to_theme_cfg() ThemeCfg {
 		size_switch_height:       widgets_f32_or(b.widgets, 'switch_height', d.size_switch_height)
 		size_radio:               widgets_f32_or(b.widgets, 'radio', d.size_radio)
 		size_scrollbar:           widgets_f32_or(b.widgets, 'scrollbar', d.size_scrollbar)
-		size_scrollbar_min_thumb: widgets_f32_or(b.widgets, 'scrollbar_min_thumb', d.size_scrollbar_min_thumb)
+		size_scrollbar_min_thumb: widgets_f32_or(b.widgets, 'scrollbar_min_thumb',
+			d.size_scrollbar_min_thumb)
 		size_progress_bar:        widgets_f32_or(b.widgets, 'progress_bar', d.size_progress_bar)
 		size_range_slider:        widgets_f32_or(b.widgets, 'range_slider', d.size_range_slider)
-		size_range_slider_thumb:  widgets_f32_or(b.widgets, 'range_slider_thumb', d.size_range_slider_thumb)
-		size_splitter_handle:     widgets_f32_or(b.widgets, 'splitter_handle', d.size_splitter_handle)
+		size_range_slider_thumb:  widgets_f32_or(b.widgets, 'range_slider_thumb',
+			d.size_range_slider_thumb)
+		size_splitter_handle:     widgets_f32_or(b.widgets, 'splitter_handle',
+			d.size_splitter_handle)
 		width_submenu_min:        widgets_f32_or(b.widgets, 'submenu_min', d.width_submenu_min)
 		width_submenu_max:        widgets_f32_or(b.widgets, 'submenu_max', d.width_submenu_max)
 	}
@@ -299,12 +306,13 @@ fn text_or(t ?TextBundle, fallback TextStyle) TextStyle {
 fn spacing_f32_or(sp ?SpacingBundle, field string, fallback f32) f32 {
 	sb := sp or { return fallback }
 	v := match field {
-		'small' { sb.small }
+		'small' { sb.spacing_small }
 		'medium' { sb.medium }
 		'large' { sb.large }
 		'text' { sb.text }
 		else { f32(-1) }
 	}
+
 	return if v >= 0 { v } else { fallback }
 }
 
@@ -319,6 +327,7 @@ fn sizes_f32_or(sz ?SizesBundle, field string, fallback f32) f32 {
 		'text_x_large' { sb.text_x_large }
 		else { f32(-1) }
 	}
+
 	return if v >= 0 { v } else { fallback }
 }
 
@@ -332,6 +341,7 @@ fn scroll_f32_or(sc ?ScrollBundle, field string, fallback f32) f32 {
 		'gap_end' { sb.gap_end }
 		else { f32(-1) }
 	}
+
 	return if v >= 0 { v } else { fallback }
 }
 
@@ -351,5 +361,6 @@ fn widgets_f32_or(w ?WidgetsBundle, field string, fallback f32) f32 {
 		'submenu_max' { wb.submenu_max }
 		else { f32(-1) }
 	}
+
 	return if v >= 0 { v } else { fallback }
 }

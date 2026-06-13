@@ -1,0 +1,426 @@
+name: Windows Native Smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      prewarm_deps_only:
+        description: "Install/cache MSVC vcpkg/vglyph dependencies only; skip tests and examples"
+        type: boolean
+        default: false
+      run_clang:
+        description: "Also run exploratory Clang smoke; may rebuild non-MSVC vcpkg ABI"
+        type: boolean
+        default: false
+      run_mingw:
+        description: "Also run exploratory MinGW/MSYS2 smoke"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  V_VERSION: 0.5.1
+  VCPKG_BINARY_CACHE: ${{ github.workspace }}\vcpkg-binary-cache
+  VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}\vcpkg-binary-cache,readwrite
+
+jobs:
+  prewarm-msvc-deps:
+    name: Prewarm MSVC/vcpkg deps
+    runs-on: windows-latest
+    timeout-minutes: 45
+    if: ${{ inputs.prewarm_deps_only }}
+    steps:
+      - name: Install V
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          $asset = 'v_windows.zip'
+          $url = "https://github.com/vlang/v/releases/download/$env:V_VERSION/$asset"
+          Invoke-WebRequest -Uri $url -OutFile $asset
+          Expand-Archive -Path $asset -DestinationPath . -Force
+          $vPath = (Resolve-Path .\v).Path
+          Add-Content -Path $env:GITHUB_PATH -Value $vPath
+      - name: Verify V version
+        shell: pwsh
+        run: |
+          $vVersion = v version
+          Write-Host $vVersion
+          if ($vVersion -notlike "*$env:V_VERSION*") {
+            throw "Expected V version $env:V_VERSION"
+          }
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_BINARY_CACHE }}
+          key: windows-vcpkg-x64-windows-pango-freetype-${{ env.V_VERSION }}-v1
+          restore-keys: |
+            windows-vcpkg-x64-windows-pango-freetype-
+      - name: Restore V module cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.vmodules/vglyph
+          key: windows-vmodules-vglyph-${{ env.V_VERSION }}-v1
+          restore-keys: |
+            windows-vmodules-vglyph-
+      - name: Install pango and freetype
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_BINARY_CACHE" | Out-Null
+          vcpkg install pango freetype
+      - name: Expose vcpkg pkg-config paths
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $triplet = 'x64-windows'
+          $vcpkgExe = (Get-Command vcpkg -ErrorAction Stop).Source
+          $roots = @()
+          if ($vcpkgExe) {
+            $roots += Split-Path -Parent $vcpkgExe
+          }
+          if ($env:VCPKG_ROOT) {
+            $roots += $env:VCPKG_ROOT
+          }
+          $vcpkgRoot = $null
+          foreach ($root in ($roots | Select-Object -Unique)) {
+            if (Test-Path (Join-Path $root "installed\$triplet")) {
+              $vcpkgRoot = $root
+              break
+            }
+          }
+          if (-not $vcpkgRoot) {
+            throw "Could not find vcpkg installed\$triplet from vcpkg.exe or VCPKG_ROOT"
+          }
+          $tripletRoot = Join-Path $vcpkgRoot "installed\$triplet"
+          $pkgConfigDirs = @(
+            (Join-Path $tripletRoot 'lib\pkgconfig'),
+            (Join-Path $tripletRoot 'share\pkgconfig')
+          ) | Where-Object { Test-Path $_ }
+          if ($pkgConfigDirs.Count -eq 0) {
+            throw "No pkgconfig directories found under $tripletRoot"
+          }
+          $pkgConfigPath = $pkgConfigDirs -join ';'
+          "PKG_CONFIG_PATH=$pkgConfigPath" | Add-Content -Path $env:GITHUB_ENV
+          $env:PKG_CONFIG_PATH = $pkgConfigPath
+
+          $pathEntries = @()
+          $binDir = Join-Path $tripletRoot 'bin'
+          if (Test-Path $binDir) {
+            $pathEntries += $binDir
+          }
+          $pkgconfDir = Join-Path $tripletRoot 'tools\pkgconf'
+          if (Test-Path $pkgconfDir) {
+            $pathEntries += $pkgconfDir
+          }
+          foreach ($entry in $pathEntries) {
+            $entry | Add-Content -Path $env:GITHUB_PATH
+          }
+          if ($pathEntries.Count -gt 0) {
+            $env:PATH = ($pathEntries + $env:PATH) -join ';'
+          }
+
+          if (-not (Get-Command pkg-config -ErrorAction SilentlyContinue)) {
+            $pkgconf = Get-Command pkgconf -ErrorAction SilentlyContinue
+            if ($pkgconf) {
+              $shimDir = Join-Path $env:RUNNER_TEMP 'pkg-config-shim'
+              New-Item -ItemType Directory -Force -Path $shimDir | Out-Null
+              Set-Content -Path (Join-Path $shimDir 'pkg-config.cmd') -Encoding ascii -Value @(
+                '@echo off',
+                '"' + $pkgconf.Source + '" %*'
+              )
+              $shimDir | Add-Content -Path $env:GITHUB_PATH
+              $env:PATH = "$shimDir;$env:PATH"
+            }
+          }
+
+          $pkgConfig = Get-Command pkg-config -ErrorAction Stop
+          & $pkgConfig.Source --exists freetype2 pango pangoft2
+          if ($LASTEXITCODE -ne 0) {
+            throw "pkg-config could not resolve freetype2 pango pangoft2"
+          }
+      - name: Install vglyph
+        run: v install vglyph
+
+  msvc:
+    name: MSVC native smoke
+    runs-on: windows-latest
+    timeout-minutes: 25
+    if: ${{ !inputs.prewarm_deps_only }}
+    steps:
+      - name: Install V
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          $asset = 'v_windows.zip'
+          $url = "https://github.com/vlang/v/releases/download/$env:V_VERSION/$asset"
+          Invoke-WebRequest -Uri $url -OutFile $asset
+          Expand-Archive -Path $asset -DestinationPath . -Force
+          $vPath = (Resolve-Path .\v).Path
+          Add-Content -Path $env:GITHUB_PATH -Value $vPath
+      - name: Verify V version
+        shell: pwsh
+        run: |
+          $vVersion = v version
+          Write-Host $vVersion
+          if ($vVersion -notlike "*$env:V_VERSION*") {
+            throw "Expected V version $env:V_VERSION"
+          }
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_BINARY_CACHE }}
+          key: windows-vcpkg-x64-windows-pango-freetype-${{ env.V_VERSION }}-v1
+          restore-keys: |
+            windows-vcpkg-x64-windows-pango-freetype-
+      - name: Restore V module cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.vmodules/vglyph
+          key: windows-vmodules-vglyph-${{ env.V_VERSION }}-v1
+          restore-keys: |
+            windows-vmodules-vglyph-
+      - name: Install pango and freetype
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_BINARY_CACHE" | Out-Null
+          vcpkg install pango freetype
+      - name: Expose vcpkg pkg-config paths
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $triplet = 'x64-windows'
+          $vcpkgExe = (Get-Command vcpkg -ErrorAction Stop).Source
+          $roots = @()
+          if ($vcpkgExe) {
+            $roots += Split-Path -Parent $vcpkgExe
+          }
+          if ($env:VCPKG_ROOT) {
+            $roots += $env:VCPKG_ROOT
+          }
+          $vcpkgRoot = $null
+          foreach ($root in ($roots | Select-Object -Unique)) {
+            if (Test-Path (Join-Path $root "installed\$triplet")) {
+              $vcpkgRoot = $root
+              break
+            }
+          }
+          if (-not $vcpkgRoot) {
+            throw "Could not find vcpkg installed\$triplet from vcpkg.exe or VCPKG_ROOT"
+          }
+          $tripletRoot = Join-Path $vcpkgRoot "installed\$triplet"
+          $pkgConfigDirs = @(
+            (Join-Path $tripletRoot 'lib\pkgconfig'),
+            (Join-Path $tripletRoot 'share\pkgconfig')
+          ) | Where-Object { Test-Path $_ }
+          if ($pkgConfigDirs.Count -eq 0) {
+            throw "No pkgconfig directories found under $tripletRoot"
+          }
+          $pkgConfigPath = $pkgConfigDirs -join ';'
+          "PKG_CONFIG_PATH=$pkgConfigPath" | Add-Content -Path $env:GITHUB_ENV
+          $env:PKG_CONFIG_PATH = $pkgConfigPath
+
+          $pathEntries = @()
+          $binDir = Join-Path $tripletRoot 'bin'
+          if (Test-Path $binDir) {
+            $pathEntries += $binDir
+          }
+          $pkgconfDir = Join-Path $tripletRoot 'tools\pkgconf'
+          if (Test-Path $pkgconfDir) {
+            $pathEntries += $pkgconfDir
+          }
+          foreach ($entry in $pathEntries) {
+            $entry | Add-Content -Path $env:GITHUB_PATH
+          }
+          if ($pathEntries.Count -gt 0) {
+            $env:PATH = ($pathEntries + $env:PATH) -join ';'
+          }
+
+          if (-not (Get-Command pkg-config -ErrorAction SilentlyContinue)) {
+            $pkgconf = Get-Command pkgconf -ErrorAction SilentlyContinue
+            if ($pkgconf) {
+              $shimDir = Join-Path $env:RUNNER_TEMP 'pkg-config-shim'
+              New-Item -ItemType Directory -Force -Path $shimDir | Out-Null
+              Set-Content -Path (Join-Path $shimDir 'pkg-config.cmd') -Encoding ascii -Value @(
+                '@echo off',
+                '"' + $pkgconf.Source + '" %*'
+              )
+              $shimDir | Add-Content -Path $env:GITHUB_PATH
+              $env:PATH = "$shimDir;$env:PATH"
+            }
+          }
+
+          $pkgConfig = Get-Command pkg-config -ErrorAction Stop
+          & $pkgConfig.Source --exists freetype2 pango pangoft2
+          if ($LASTEXITCODE -ne 0) {
+            throw "pkg-config could not resolve freetype2 pango pangoft2"
+          }
+      - name: Install vglyph
+        run: v install vglyph
+      - name: Checkout gui
+        uses: actions/checkout@v4
+        with:
+          path: gui
+      - name: Configure MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+      - name: Run Windows setup preflight
+        env:
+          GUI_WINDOWS_PREFLIGHT_CC: msvc
+        run: v run gui/_windows_preflight.vsh
+      - name: Run noninteractive native tests
+        run: >
+          v -no-parallel -cc msvc test
+          gui/_native_dialog_test.v
+          gui/_native_print_test.v
+          gui/_native_notification_test.v
+          gui/nativebridge/_bridge_ex_test.v
+          gui/nativebridge/_readback_abi_test.v
+      - name: Compile native smoke examples
+        run: |
+          v -no-parallel -cc msvc -W -o dialogs_smoke.exe gui/examples/dialogs.v
+          v -no-parallel -cc msvc -W -o printing_smoke.exe gui/examples/printing.v
+          v -no-parallel -cc msvc -W -o notification_smoke.exe gui/examples/native_notification.v
+
+  clang:
+    name: Clang native smoke (exploratory)
+    runs-on: windows-latest
+    timeout-minutes: 25
+    continue-on-error: true
+    if: ${{ !inputs.prewarm_deps_only && inputs.run_clang }}
+    steps:
+      - name: Install V
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          $asset = 'v_windows.zip'
+          $url = "https://github.com/vlang/v/releases/download/$env:V_VERSION/$asset"
+          Invoke-WebRequest -Uri $url -OutFile $asset
+          Expand-Archive -Path $asset -DestinationPath . -Force
+          $vPath = (Resolve-Path .\v).Path
+          Add-Content -Path $env:GITHUB_PATH -Value $vPath
+      - name: Verify V version
+        shell: pwsh
+        run: |
+          $vVersion = v version
+          Write-Host $vVersion
+          if ($vVersion -notlike "*$env:V_VERSION*") {
+            throw "Expected V version $env:V_VERSION"
+          }
+      - name: Restore vcpkg binary cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.VCPKG_BINARY_CACHE }}
+          key: windows-vcpkg-x64-windows-pango-freetype-${{ env.V_VERSION }}-v1
+          restore-keys: |
+            windows-vcpkg-x64-windows-pango-freetype-
+      - name: Restore V module cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.vmodules/vglyph
+          key: windows-vmodules-vglyph-${{ env.V_VERSION }}-v1
+          restore-keys: |
+            windows-vmodules-vglyph-
+      - name: Install pango and freetype
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:VCPKG_BINARY_CACHE" | Out-Null
+          vcpkg install pango freetype
+      - name: Install vglyph
+        run: v install vglyph
+      - name: Checkout gui
+        uses: actions/checkout@v4
+        with:
+          path: gui
+      - name: Run Windows setup preflight
+        env:
+          GUI_WINDOWS_PREFLIGHT_CC: clang
+        run: v run gui/_windows_preflight.vsh
+      - name: Run noninteractive native tests
+        run: >
+          v -no-parallel -cc clang test
+          gui/_native_dialog_test.v
+          gui/_native_print_test.v
+          gui/_native_notification_test.v
+          gui/nativebridge/_bridge_ex_test.v
+          gui/nativebridge/_readback_abi_test.v
+      - name: Compile native smoke examples
+        run: |
+          v -no-parallel -cc clang -W -o dialogs_smoke.exe gui/examples/dialogs.v
+          v -no-parallel -cc clang -W -o printing_smoke.exe gui/examples/printing.v
+          v -no-parallel -cc clang -W -o notification_smoke.exe gui/examples/native_notification.v
+
+  mingw:
+    name: MinGW native smoke (exploratory)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    continue-on-error: true
+    if: ${{ !inputs.prewarm_deps_only && inputs.run_mingw }}
+    steps:
+      - name: Install V
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          $asset = 'v_windows.zip'
+          $url = "https://github.com/vlang/v/releases/download/$env:V_VERSION/$asset"
+          Invoke-WebRequest -Uri $url -OutFile $asset
+          Expand-Archive -Path $asset -DestinationPath . -Force
+          $vPath = (Resolve-Path .\v).Path
+          Add-Content -Path $env:GITHUB_PATH -Value $vPath
+      - name: Verify V version
+        shell: pwsh
+        run: |
+          $vVersion = v version
+          Write-Host $vVersion
+          if ($vVersion -notlike "*$env:V_VERSION*") {
+            throw "Expected V version $env:V_VERSION"
+          }
+      - name: Install MSYS2 MinGW dependencies
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          path-type: inherit
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-pkgconf
+            mingw-w64-x86_64-pango
+            mingw-w64-x86_64-freetype
+      - name: Verify V version in MSYS2
+        shell: msys2 {0}
+        run: |
+          v_version="$(v version)"
+          echo "$v_version"
+          case "$v_version" in
+            *"$V_VERSION"*) ;;
+            *)
+              echo "Expected V version $V_VERSION"
+              exit 1
+              ;;
+          esac
+      - name: Install vglyph
+        shell: msys2 {0}
+        run: v install vglyph
+      - name: Checkout gui
+        uses: actions/checkout@v4
+        with:
+          path: gui
+      - name: Run Windows setup preflight
+        shell: msys2 {0}
+        env:
+          GUI_WINDOWS_PREFLIGHT_CC: gcc
+        run: v run gui/_windows_preflight.vsh
+      - name: Run noninteractive native tests
+        shell: msys2 {0}
+        run: >
+          v -no-parallel -cc gcc test
+          gui/_native_dialog_test.v
+          gui/_native_print_test.v
+          gui/_native_notification_test.v
+          gui/nativebridge/_bridge_ex_test.v
+          gui/nativebridge/_readback_abi_test.v
+      - name: Compile native smoke examples
+        shell: msys2 {0}
+        run: |
+          v -no-parallel -cc gcc -W -o dialogs_smoke.exe gui/examples/dialogs.v
+          v -no-parallel -cc gcc -W -o printing_smoke.exe gui/examples/printing.v
+          v -no-parallel -cc gcc -W -o notification_smoke.exe gui/examples/native_notification.v

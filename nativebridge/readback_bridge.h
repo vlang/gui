@@ -11,7 +11,8 @@ extern "C" {
 // Uses a blit to a shared staging texture for reliable
 // readback from private-storage render targets.
 // mtl_device is used to create a transient command queue.
-// Caller must free returned buffer. Returns NULL on failure.
+// Returned buffer must be released with gui_readback_buffer_free.
+// Returns NULL on failure.
 uint8_t* gui_readback_metal_texture(
     void* mtl_texture,
     void* mtl_device,
@@ -21,7 +22,8 @@ uint8_t* gui_readback_metal_texture(
 
 // Read RGBA pixels from an OpenGL framebuffer via
 // glReadPixels. Rows are flipped to top-down order.
-// Caller must free returned buffer. Returns NULL on failure.
+// Returned buffer must be released with gui_readback_buffer_free.
+// Returns NULL on failure.
 uint8_t* gui_readback_gl_framebuffer(
     uint32_t framebuffer,
     int width,
@@ -29,8 +31,12 @@ uint8_t* gui_readback_gl_framebuffer(
 );
 
 // Read BGRA pixels from a D3D11 render-target texture via
-// staging texture copy. Caller must free returned buffer.
-// Returns NULL on failure. Windows only.
+// staging texture copy. Supports single-sample BGRA8 textures
+// (DXGI_FORMAT_B8G8R8A8_UNORM or _SRGB), one mip and one array
+// slice. Dimensions must match the source texture. Unsupported
+// formats, MSAA textures and unsafe row/size layouts fail by
+// returning NULL. Returned buffer must be released with
+// gui_readback_buffer_free. Windows only.
 uint8_t* gui_readback_d3d11_texture(
     void* d3d11_texture,
     void* d3d11_device,
@@ -38,6 +44,9 @@ uint8_t* gui_readback_d3d11_texture(
     int width,
     int height
 );
+
+// Releases buffers returned by readback functions using the backend C allocator.
+void gui_readback_buffer_free(uint8_t* buffer);
 
 #ifdef __cplusplus
 }

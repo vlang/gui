@@ -10,9 +10,10 @@ pub:
 }
 
 // AccessRole identifies a shape's semantic role for assistive
-// technology. Maps 1:1 to NSAccessibilityRole (macOS) and
-// UIA Control Type (Windows). Zero value .none means the shape
-// is invisible to the accessibility tree.
+// technology. Maps 1:1 to NSAccessibilityRole on macOS.
+// Windows UIA control types are the intended future mapping;
+// the current Windows backend does not expose UIA yet. Zero
+// value .none means the shape is invisible to the accessibility tree.
 pub enum AccessRole as u8 {
 	none
 	button

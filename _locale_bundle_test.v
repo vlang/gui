@@ -116,6 +116,22 @@ fn test_locale_parse_bad_json() {
 	assert false, 'expected error for bad JSON'
 }
 
+fn test_locale_parse_empty_json() {
+	for content in ['', '   ', '\n\t '] {
+		if _ := locale_parse(content) {
+			assert false, 'expected error for empty JSON'
+		}
+	}
+}
+
+fn test_locale_parse_non_object_json() {
+	for content in ['[]', 'null', '"x"', '42'] {
+		if _ := locale_parse(content) {
+			assert false, 'expected error for non-object JSON'
+		}
+	}
+}
+
 fn test_locale_parse_wrong_array_length() {
 	content := '{
 		"id": "bad-arrays",
@@ -133,6 +149,11 @@ fn test_locale_parse_wrong_array_length() {
 }
 
 fn test_locale_registry() {
+	old_registry := locale_registry_snapshot()
+	defer {
+		locale_registry_restore(old_registry)
+	}
+
 	// Built-in locales registered by init()
 	en := locale_get('en-US') or {
 		assert false, 'en-US not found'
@@ -192,8 +213,16 @@ fn test_locale_t() {
 }
 
 fn test_locale_load_dir() {
-	tmp := os.join_path(os.temp_dir(), 'gui_test_locales')
-	os.mkdir_all(tmp) or {}
+	old_registry := locale_registry_snapshot()
+	defer {
+		locale_registry_restore(old_registry)
+	}
+	tmp := os.join_path(os.temp_dir(), 'gui_test_locales_${os.getpid()}')
+	os.rmdir_all(tmp) or {}
+	os.mkdir_all(tmp) or {
+		assert false, err.str()
+		return
+	}
 	defer {
 		os.rmdir_all(tmp) or {}
 	}

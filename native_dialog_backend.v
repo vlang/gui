@@ -4,9 +4,15 @@ import nativebridge
 import sokol.sapp
 
 const native_dialog_error_code_invalid_cfg = 'invalid_cfg'
+const native_dialog_filter_spec_prefix = 'gfd1;'
 
 fn native_open_dialog_impl(mut w Window, cfg NativeOpenDialogCfg) {
 	extensions := native_extensions_from_filters(cfg.filters) or {
+		native_dispatch_dialog_done(mut w, cfg.on_done, native_dialog_error_result(native_dialog_error_code_invalid_cfg,
+			err.msg()))
+		return
+	}
+	filter_specs := native_filter_specs_from_filters(cfg.filters, '') or {
 		native_dispatch_dialog_done(mut w, cfg.on_done, native_dialog_error_result(native_dialog_error_code_invalid_cfg,
 			err.msg()))
 		return
@@ -17,6 +23,7 @@ fn native_open_dialog_impl(mut w Window, cfg NativeOpenDialogCfg) {
 		title:          cfg.title
 		start_dir:      cfg.start_dir
 		extensions:     extensions
+		filter_specs:   filter_specs
 		allow_multiple: cfg.allow_multiple
 	})
 	native_dispatch_dialog_done(mut w, cfg.on_done, native_result_from_bridge_ex(bridge_result_ex, mut
@@ -34,6 +41,11 @@ fn native_save_dialog_impl(mut w Window, cfg NativeSaveDialogCfg) {
 			err.msg()))
 		return
 	}
+	filter_specs := native_filter_specs_from_filters(cfg.filters, default_extension) or {
+		native_dispatch_dialog_done(mut w, cfg.on_done, native_dialog_error_result(native_dialog_error_code_invalid_cfg,
+			err.msg()))
+		return
+	}
 
 	bridge_result_ex := nativebridge.save_dialog_ex(nativebridge.BridgeSaveCfg{
 		ns_window:         native_dialog_ns_window()
@@ -42,6 +54,7 @@ fn native_save_dialog_impl(mut w Window, cfg NativeSaveDialogCfg) {
 		default_name:      cfg.default_name
 		default_extension: default_extension
 		extensions:        extensions
+		filter_specs:      filter_specs
 		confirm_overwrite: cfg.confirm_overwrite
 	})
 	native_dispatch_dialog_done(mut w, cfg.on_done, native_result_from_bridge_ex(bridge_result_ex, mut
@@ -74,6 +87,7 @@ fn native_result_from_bridge_ex(bridge_result nativebridge.BridgeDialogResultEx,
 		.cancel { NativeDialogStatus.cancel }
 		.error { NativeDialogStatus.error }
 	}
+
 	mut paths := []AccessiblePath{cap: bridge_result.entries.len}
 	for entry in bridge_result.entries {
 		grant := w.store_bookmark(entry.path, entry.data)
@@ -121,6 +135,51 @@ fn native_save_extensions(filters []NativeFileFilter, default_extension string) 
 	}
 	extensions << def_ext
 	return extensions
+}
+
+fn native_filter_specs_from_filters(filters []NativeFileFilter, default_extension string) !string {
+	def_ext := native_normalize_extension(default_extension) or { return err }
+	mut has_named_filter := false
+	mut has_default := def_ext.len == 0
+	mut groups := []string{}
+	for filter in filters {
+		name := filter.name.trim_space()
+		if name.len > 0 {
+			has_named_filter = true
+		}
+		mut extensions := []string{}
+		mut seen := map[string]bool{}
+		for raw_extension in filter.extensions {
+			extension := native_normalize_extension(raw_extension) or { return err }
+			if extension.len == 0 || seen[extension] {
+				continue
+			}
+			if extension == def_ext {
+				has_default = true
+			}
+			seen[extension] = true
+			extensions << extension
+		}
+		if extensions.len == 0 {
+			continue
+		}
+		groups << native_filter_spec_group(name, extensions)
+	}
+	if !has_named_filter {
+		return ''
+	}
+	if !has_default {
+		groups << native_filter_spec_group('', [def_ext])
+	}
+	if groups.len == 0 {
+		return ''
+	}
+	return native_dialog_filter_spec_prefix + groups.join('')
+}
+
+fn native_filter_spec_group(name string, extensions []string) string {
+	extension_csv := extensions.join(',')
+	return '${name.len}:${name}${extension_csv.len}:${extension_csv}'
 }
 
 fn native_extensions_from_filters(filters []NativeFileFilter) ![]string {
@@ -182,6 +241,7 @@ fn native_alert_result_from_bridge(bridge_result nativebridge.BridgeAlertResult)
 		.cancel { NativeDialogStatus.cancel }
 		.error { NativeDialogStatus.error }
 	}
+
 	return NativeAlertResult{
 		status:        status
 		error_code:    bridge_result.error_code

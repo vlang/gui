@@ -14,6 +14,14 @@ pub fn theme_get(name string) !Theme {
 	return gui_theme_registry[name] or { return error('theme not found: ${name}') }
 }
 
+fn theme_registry_snapshot() map[string]Theme {
+	return gui_theme_registry.clone()
+}
+
+fn theme_registry_restore(snapshot map[string]Theme) {
+	gui_theme_registry = snapshot.clone()
+}
+
 // theme_load_dir loads all *.json files from a directory
 // and registers each as a theme.
 pub fn theme_load_dir(dir string) ! {

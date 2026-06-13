@@ -15,8 +15,8 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Core widgets: input, button family, table, tree, markdown, dialogs, menus
 - [x] SVG + shaders + gradients + blur + shadows
 - [x] IME, clipboard text, async image loading, drag/drop inbound files
-- [x] Desktop targets: macOS, Windows, Linux
-- [x] Print: native OS print dialog, PDF export, raster export
+- [x] Desktop targets: macOS, Linux; Windows native target under validation
+- [x] Print: PDF export, raster export, platform print flow
 
 ## 2026 H1: Professional Desktop Baseline (P0)
 
@@ -36,7 +36,7 @@ This file is a forward-only todo list for professional-grade `v-gui`.
 - [x] Native folder-picker dialog
 - [?] Native color picker dialog
 - [x] Native message/alert fallback adapter (opt-in over custom GUI dialog)
-- [x] Permission + sandbox-safe path handling on macOS/Windows/Linux portals
+- [x] macOS sandbox-safe grants; Linux/Windows no-op grants/native paths
 
 ### Markdown + Rich Text
 

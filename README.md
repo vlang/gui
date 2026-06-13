@@ -7,11 +7,10 @@
 
 **An immediate-mode UI framework for V that stays out of your way.**
 
-> Note: I don't own a Windows computer and cannot help with Windows issues.
-Windows may be supported in the future, it is not supported now. Some
-users have successfully made this framework run on Windows. If you choose
-to go down that path, I suggest joining the V community on Discord where
-people way more smarter than me can help you. - mrw
+> Windows native support is under active validation. The current documented path
+uses native Windows with MSVC/vcpkg and is tracked in
+[`docs/WINDOWS.md`](docs/WINDOWS.md); this is not yet a claim of full Windows
+parity.
 
 ![showcase](assets/showcase.png)
 
@@ -54,7 +53,7 @@ V is a simple language. It deserves a simple UI framework.
 - Dropdowns, listboxes, tables, data grids, trees, markdown
 - Menus, menubars, tabs, splitters, dialogs
 - Progress bars, tooltips, date pickers
-- Native open/save/folder dialogs (macOS + Linux)
+- Native open/save/folder dialogs (macOS + Linux; Windows under validation)
 
 **Rendering**
 - SDF-based drop shadows
@@ -151,7 +150,9 @@ v install gui
 | [FORMS.md](docs/FORMS.md) | Form runtime, validation model, and field adapters |
 | [GRADIENTS.md](docs/GRADIENTS.md) | Linear and radial gradients |
 | [SHADERS.md](docs/SHADERS.md) | Custom fragment shaders |
-| [PRINTING.md](docs/PRINTING.md) | PDF export and native print dialog |
+| [PRINTING.md](docs/PRINTING.md) | PDF export and platform print flow |
+| [WINDOWS.md](docs/WINDOWS.md) | Windows setup and validation notes, not a final support claim |
+| [WINDOWS_MANUAL_SMOKE.md](docs/WINDOWS_MANUAL_SMOKE.md) | Manual Windows smoke checklist |
 | [SPLITTER.md](docs/SPLITTER.md) | Splitter component (drag, collapse, keyboard) |
 
 Generate API docs with:
@@ -171,7 +172,7 @@ v run examples/tiger.v          # SVG rendering demo
 v run examples/markdown.v       # Markdown rendering
 v run examples/dialogs.v        # Custom + native dialogs
 v run examples/split_panel.v    # Splitter + nested splitter
-v run examples/printing.v       # PDF export + native print
+v run examples/printing.v       # PDF export + platform print flow
 v run examples/input_masks.v    # Input mask presets and custom tokens
 v run examples/numeric_input.v  # Locale-aware numeric input + step controls
 v run examples/form_validation.v # Form validation with sync+async validators

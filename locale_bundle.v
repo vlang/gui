@@ -49,7 +49,11 @@ struct LocaleBundle {
 // locale_parse decodes a JSON string into a Locale struct.
 // Missing keys fall back to en-US defaults.
 pub fn locale_parse(content string) !Locale {
-	bundle := json.decode(LocaleBundle, content) or { return error('invalid JSON: ${err}') }
+	trimmed := content.trim_space()
+	if trimmed.len == 0 || !trimmed.starts_with('{') || !trimmed.ends_with('}') {
+		return error('invalid JSON: expected object')
+	}
+	bundle := json.decode(LocaleBundle, trimmed) or { return error('invalid JSON: ${err}') }
 	return bundle.to_locale()
 }
 
@@ -96,7 +100,8 @@ fn (b LocaleBundle) to_locale() Locale {
 		str_copy_link:    str_or(b.strings, 'copy_link', d.str_copy_link)
 		str_copied:       str_or(b.strings, 'copied', d.str_copied)
 		// Scrollbar
-		str_horizontal_scrollbar: str_or(b.strings, 'horizontal_scrollbar', d.str_horizontal_scrollbar)
+		str_horizontal_scrollbar: str_or(b.strings, 'horizontal_scrollbar',
+			d.str_horizontal_scrollbar)
 		str_vertical_scrollbar:   str_or(b.strings, 'vertical_scrollbar', d.str_vertical_scrollbar)
 		// Data grid
 		str_columns:  str_or(b.strings, 'columns', d.str_columns)
