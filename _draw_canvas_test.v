@@ -202,10 +202,10 @@ fn test_arc_to_polyline_min_segments() {
 }
 
 fn test_arc_to_polyline_segment_count_scales_with_radius() {
-	small := arc_to_polyline(0, 0, 5, 5, 0, 2 * math.pi)
-	large := arc_to_polyline(0, 0, 200, 200, 0, 2 * math.pi)
+	small_pts := arc_to_polyline(0, 0, 5, 5, 0, 2 * math.pi)
+	large_pts := arc_to_polyline(0, 0, 200, 200, 0, 2 * math.pi)
 	// Larger radius should produce more segments.
-	assert large.len > small.len
+	assert large_pts.len > small_pts.len
 }
 
 // ---------------------

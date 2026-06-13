@@ -157,7 +157,7 @@ jobs:
 
   compiling-on-windows:
     runs-on: windows-latest
-    timeout-minutes: 50
+    timeout-minutes: 60
     env:
       V_VERSION: 0.5.1
       VFLAGS: -no-parallel
@@ -183,17 +183,19 @@ jobs:
             throw "Expected V version $env:V_VERSION"
           }
       - name: Restore vcpkg binary cache
-        uses: actions/cache@v4
+        id: restore-vcpkg-cache
+        uses: actions/cache/restore@v4
         with:
           path: ${{ env.VCPKG_BINARY_CACHE }}
-          key: windows-vcpkg-x64-windows-pango-freetype-v1
+          key: windows-vcpkg-x64-windows-pango-freetype-${{ env.V_VERSION }}-v1
           restore-keys: |
             windows-vcpkg-x64-windows-pango-freetype-
       - name: Restore V module cache
-        uses: actions/cache@v4
+        id: restore-vglyph-cache
+        uses: actions/cache/restore@v4
         with:
           path: ~/.vmodules/vglyph
-          key: windows-vmodules-vglyph-v1
+          key: windows-vmodules-vglyph-${{ env.V_VERSION }}-v1
           restore-keys: |
             windows-vmodules-vglyph-
       - name: Install pango and freetype
@@ -201,6 +203,12 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force -Path "$env:VCPKG_BINARY_CACHE" | Out-Null
           vcpkg install pango freetype
+      - name: Save vcpkg binary cache
+        if: ${{ steps.restore-vcpkg-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.VCPKG_BINARY_CACHE }}
+          key: ${{ steps.restore-vcpkg-cache.outputs.cache-primary-key }}
       - name: Expose vcpkg pkg-config paths
         shell: pwsh
         run: |
@@ -273,6 +281,12 @@ jobs:
           }
       - name: Install vglyph
         run: v install vglyph
+      - name: Save V module cache
+        if: ${{ steps.restore-vglyph-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.vmodules/vglyph
+          key: ${{ steps.restore-vglyph-cache.outputs.cache-primary-key }}
       - name: Checkout the gui module
         uses: actions/checkout@v6
         with:
@@ -287,6 +301,8 @@ jobs:
       - name: Run tests
         env:
           VFLAGS: -no-parallel -cc msvc
+          VJOBS: 1
+          VTEST_ONLY_FN: test_*
         run: v test gui/
       - name: Check compilation of examples
         env:

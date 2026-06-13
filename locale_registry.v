@@ -26,6 +26,14 @@ pub fn locale_get(id string) !Locale {
 	return gui_locale_registry[id] or { return error('locale not found: ${id}') }
 }
 
+fn locale_registry_snapshot() map[string]Locale {
+	return gui_locale_registry.clone()
+}
+
+fn locale_registry_restore(snapshot map[string]Locale) {
+	gui_locale_registry = snapshot.clone()
+}
+
 // locale_load_dir loads all *.json files from a directory
 // and registers each as a locale.
 pub fn locale_load_dir(dir string) ! {
