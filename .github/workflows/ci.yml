@@ -85,7 +85,7 @@ jobs:
 
   compiling-on-windows:
     runs-on: windows-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     env:
       VFLAGS: -no-parallel -cc msvc
     steps:
