@@ -307,7 +307,7 @@ jobs:
       - name: Check compilation of examples
         env:
           VFLAGS: -no-parallel -cc msvc
-        run: v should-compile-all gui/examples/
+        run: v gui/examples/_build.vsh --no-warnings --skip-missing-sqlite
       - name: Check compilation of changed examples with -W
         if: github.event_name == 'pull_request'
         env:
@@ -328,17 +328,12 @@ jobs:
             Write-Host 'No changed example .v files to compile with -W.'
             exit 0
           }
-          New-Item -ItemType Directory -Force -Path 'examples/bin' | Out-Null
-          foreach ($file in $files) {
-            $name = [System.IO.Path]::GetFileNameWithoutExtension($file)
-            $outputFile = "examples/bin/$name"
-            v -no-parallel -W -o $outputFile $file
-            if ($LASTEXITCODE -ne 0) {
-              exit $LASTEXITCODE
-            }
+          v examples/_build.vsh --skip-missing-sqlite @files
+          if ($LASTEXITCODE -ne 0) {
+            exit $LASTEXITCODE
           }
       - name: Check compilation of examples with -W
         if: github.event_name != 'pull_request'
         env:
           VFLAGS: -no-parallel -cc msvc
-        run: v gui/examples/_build.vsh
+        run: v gui/examples/_build.vsh --skip-missing-sqlite
