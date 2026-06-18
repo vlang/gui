@@ -101,14 +101,37 @@ fn key_down_scroll_handler(layout &Layout, mut e Event, mut w Window) {
 	}
 }
 
+fn dispatch_mouse_lock_down(layout &Layout, mut e Event, mut w Window) bool {
+	callback := w.view_state.mouse_lock.mouse_down or { return false }
+	w.mouse_lock_dispatch_begin()
+	callback(layout, mut e, mut w)
+	w.mouse_lock_dispatch_end()
+	return true
+}
+
+fn dispatch_mouse_lock_move(layout &Layout, mut e Event, mut w Window) bool {
+	callback := w.view_state.mouse_lock.mouse_move or { return false }
+	w.mouse_lock_dispatch_begin()
+	callback(layout, mut e, mut w)
+	w.mouse_lock_dispatch_end()
+	return true
+}
+
+fn dispatch_mouse_lock_up(layout &Layout, mut e Event, mut w Window) bool {
+	callback := w.view_state.mouse_lock.mouse_up or { return false }
+	w.mouse_lock_dispatch_begin()
+	callback(layout, mut e, mut w)
+	w.mouse_lock_dispatch_end()
+	return true
+}
+
 // mouse_down_handler handles mouse button press events.
 // Traverses reverse (topmost first) and delivers to element under cursor.
 // Also handles focus changes on click.
 fn mouse_down_handler(layout &Layout, in_handler bool, mut e Event, mut w Window) {
 	// Check mouse lock (only at top level to avoid repeated checks)
 	if !in_handler {
-		if w.view_state.mouse_lock.mouse_down != none {
-			w.view_state.mouse_lock.mouse_down(layout, mut e, mut w)
+		if dispatch_mouse_lock_down(layout, mut e, mut w) {
 			return
 		}
 	}
@@ -142,8 +165,7 @@ fn mouse_down_handler(layout &Layout, in_handler bool, mut e Event, mut w Window
 // Traverses reverse (topmost first) and delivers to element under cursor.
 fn mouse_move_handler(layout &Layout, mut e Event, mut w Window) {
 	// Check mouse lock
-	if w.view_state.mouse_lock.mouse_move != none {
-		w.view_state.mouse_lock.mouse_move(layout, mut e, mut w)
+	if dispatch_mouse_lock_move(layout, mut e, mut w) {
 		return
 	}
 	// Skip if mouse is outside application window
@@ -173,8 +195,7 @@ fn mouse_move_handler(layout &Layout, mut e Event, mut w Window) {
 // Traverses reverse (topmost first) and delivers to element under cursor.
 fn mouse_up_handler(layout &Layout, mut e Event, mut w Window) {
 	// Check mouse lock
-	if w.view_state.mouse_lock.mouse_up != none {
-		w.view_state.mouse_lock.mouse_up(layout, mut e, mut w)
+	if dispatch_mouse_lock_up(layout, mut e, mut w) {
 		return
 	}
 	// Traverse children in reverse (topmost/last child first)

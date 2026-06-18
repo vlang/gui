@@ -605,32 +605,41 @@ fn (mut w Window) form_on_field_event_for_form(form_id string, cfg FormFieldAdap
 		validators := field.async_validators.clone()
 		signal := controller.signal
 		field_id := cfg.field_id
-		spawn fn [validators, field_snapshot, snapshot, signal, form_id, field_id, request_id] (mut win Window) {
-			mut issues := []FormIssue{}
-			for validator in validators {
+		w.pin_layout_callback_reclaim() or { panic(err) }
+		w.suspend_layout_callback_tracking(fn [validators, field_snapshot, snapshot, signal, form_id, field_id, request_id, mut w] () {
+			spawn fn [validators, field_snapshot, snapshot, signal, form_id, field_id, request_id] (mut win Window) {
+				mut issues := []FormIssue{}
+				for validator in validators {
+					if signal.is_aborted() {
+						win.form_queue_async_validation_pin_release()
+						return
+					}
+					result := validator(field_snapshot, snapshot, signal) or {
+						log.error('form async validator failed for form_id=${form_id} field_id=${field_id}: ${err.msg()}')
+						issues << FormIssue{
+							code: 'async_error'
+							msg:  form_async_issue_msg
+							kind: .error
+						}
+						continue
+					}
+					if result.len > 0 {
+						issues << result
+					}
+				}
 				if signal.is_aborted() {
+					win.form_queue_async_validation_pin_release()
 					return
 				}
-				result := validator(field_snapshot, snapshot, signal) or {
-					log.error('form async validator failed for form_id=${form_id} field_id=${field_id}: ${err.msg()}')
-					issues << FormIssue{
-						code: 'async_error'
-						msg:  form_async_issue_msg
-						kind: .error
-					}
-					continue
-				}
-				if result.len > 0 {
-					issues << result
-				}
-			}
-			if signal.is_aborted() {
-				return
-			}
-			win.queue_command(fn [form_id, field_id, request_id, issues] (mut win Window) {
-				win.form_apply_async_result(form_id, field_id, request_id, issues)
-			})
-		}(mut w)
+				win.queue_command(fn [form_id, field_id, request_id, issues] (mut win Window) {
+					win.form_apply_async_result(form_id, field_id, request_id, issues)
+					win.release_layout_callback_reclaim_pin()
+				})
+			}(mut w)
+		}) or {
+			w.release_layout_callback_reclaim_pin()
+			panic(err)
+		}
 	} else {
 		field.pending = false
 		field.active_abort = unsafe { nil }
@@ -638,6 +647,12 @@ fn (mut w Window) form_on_field_event_for_form(form_id string, cfg FormFieldAdap
 	}
 
 	form_state_set(mut w, form_id, state)
+}
+
+fn (mut w Window) form_queue_async_validation_pin_release() {
+	w.queue_command(fn (mut win Window) {
+		win.release_layout_callback_reclaim_pin()
+	})
 }
 
 fn (mut w Window) form_apply_async_result(form_id string, field_id string, request_id u64, issues []FormIssue) {

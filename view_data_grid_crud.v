@@ -586,14 +586,23 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 		selection := ctx.selection
 		on_selection_change := ctx.on_selection_change
 		focus_id := ctx.focus_id
-		spawn fn [mut source, grid_id, query, create_rows, update_rows, update_edits, delete_ids, snapshot_rows, on_crud_error, on_rows_change, selection, on_selection_change, focus_id] (mut w Window) {
-			result := data_grid_crud_exec_mutations(mut source, grid_id, query, create_rows,
-				update_rows, update_edits, delete_ids)
-			w.queue_command(fn [grid_id, result, snapshot_rows, on_crud_error, on_rows_change, selection, on_selection_change, focus_id] (mut w Window) {
-				data_grid_crud_apply_save_result(grid_id, result, snapshot_rows, on_crud_error,
-					on_rows_change, selection, on_selection_change, focus_id, mut w)
-			})
-		}(mut w)
+		w.pin_layout_callback_reclaim() or { panic(err) }
+		w.suspend_layout_callback_tracking(fn [mut source, grid_id, query, create_rows, update_rows, update_edits, delete_ids, snapshot_rows, on_crud_error, on_rows_change, selection, on_selection_change, focus_id, mut w] () {
+			spawn fn [mut source, grid_id, query, create_rows, update_rows, update_edits, delete_ids, snapshot_rows, on_crud_error, on_rows_change, selection, on_selection_change, focus_id] (mut w Window) {
+				result := data_grid_crud_exec_mutations(mut source, grid_id, query, create_rows,
+					update_rows, update_edits, delete_ids)
+				w.queue_command(fn [grid_id, result, snapshot_rows, on_crud_error, on_rows_change, selection, on_selection_change, focus_id] (mut w Window) {
+					defer {
+						w.release_layout_callback_reclaim_pin()
+					}
+					data_grid_crud_apply_save_result(grid_id, result, snapshot_rows, on_crud_error,
+						on_rows_change, selection, on_selection_change, focus_id, mut w)
+				})
+			}(mut w)
+		}) or {
+			w.release_layout_callback_reclaim_pin()
+			panic(err)
+		}
 	} else {
 		// Local-rows mode: no I/O, apply immediately.
 		data_grid_crud_finish_save(grid_id, map[string]string{}, none, ctx.on_rows_change,

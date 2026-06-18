@@ -78,7 +78,6 @@ struct TreeFlatRow {
 // tree_flat_row_view and make_tree_drag_click.
 struct TreeDragContext {
 	cfg_id        string
-	on_reorder    fn (string, string, string, mut Window) = unsafe { nil }
 	parent_id     string
 	id_scroll     u32
 	sibling_index int
@@ -192,7 +191,6 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 			pid := fr.parent_id
 			drag_ctx := TreeDragContext{
 				cfg_id:        cfg_id
-				on_reorder:    on_reorder
 				parent_id:     pid
 				id_scroll:     cfg.id_scroll
 				sibling_index: sibling_idx
@@ -224,6 +222,7 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 
 	return column(
 		name:             'tree'
+		id:               if can_reorder { drag_reorder_drop_handler_id(cfg_id) } else { '' }
 		a11y_role:        .tree
 		a11y_label:       a11y_label(cfg.a11y_label, cfg.id)
 		a11y_description: cfg.a11y_description
@@ -233,6 +232,9 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		spacing:          cfg.spacing
 		height:           cfg.height
 		max_height:       cfg.max_height
+		on_scroll:        fn [cfg_id, on_reorder] (_ &Layout, mut w Window) {
+			drag_reorder_apply_tree_drop(cfg_id, on_reorder, mut w)
+		}
 		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids, can_reorder, on_reorder, sibling_ids_by_parent, sibling_index_of, parent_of] (_ &Layout, mut e Event, mut w Window) {
 			tree_on_keydown(cfg_id, on_select, on_lazy_load, visible_ids, can_reorder,
 				on_reorder, sibling_ids_by_parent, sibling_index_of, parent_of, mut e, mut
@@ -511,21 +513,17 @@ fn make_tree_drag_click(drag_ctx TreeDragContext, id string,
 	is_expanded bool, has_children bool,
 	is_lazy bool, node_has_real_children bool) fn (&Layout, mut Event, mut Window) {
 	cfg_id := drag_ctx.cfg_id
-	on_reorder := drag_ctx.on_reorder
 	parent_id := drag_ctx.parent_id
 	id_scroll := drag_ctx.id_scroll
 	sibling_index := drag_ctx.sibling_index
 	sibling_ids := drag_ctx.sibling_ids
-	reorder_wrapped := fn [on_reorder, parent_id] (moved string, before string, mut w Window) {
-		on_reorder(moved, before, parent_id, mut w)
-	}
 	mut sibling_layout_ids := []string{cap: sibling_ids.len}
 	for sid in sibling_ids {
 		sibling_layout_ids << 'tr_${cfg_id}_${sid}'
 	}
-	return fn [cfg_id, sibling_index, sibling_ids, sibling_layout_ids, id_scroll, id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children, reorder_wrapped] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(cfg_id, sibling_index, id, .vertical, sibling_ids, reorder_wrapped,
-			sibling_layout_ids, 0, id_scroll, layout, e, mut w)
+	return fn [cfg_id, parent_id, sibling_index, sibling_ids, sibling_layout_ids, id_scroll, id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children] (layout &Layout, mut e Event, mut w Window) {
+		drag_reorder_start(cfg_id, sibling_index, id, .vertical, sibling_ids,
+			sibling_layout_ids, 0, id_scroll, parent_id, layout, e, mut w)
 		tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy,
 			node_has_real_children, id, mut e, mut w)
 	}

@@ -141,8 +141,8 @@ pub fn (mut window Window) list_box(cfg ListBoxCfg) View {
 		0, last_row_idx
 	}
 
-	return list_box_from_range(first_visible, last_visible, resolved_cfg, virtualize,
-		row_height, drag_state, can_reorder)
+	return list_box_from_range(first_visible, last_visible, resolved_cfg, virtualize, row_height,
+		drag_state, can_reorder)
 }
 
 fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virtualize bool, row_height f32, drag DragReorderState, can_reorder bool) View {
@@ -226,7 +226,7 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 			ghost_content = list_box_item_content(dat, cfg)
 		} else {
 			list << list_box_item_view(dat, cfg, item_drag_idx, item_ids, item_layout_ids,
-				mids_offset, on_reorder, can_reorder)
+				mids_offset, can_reorder)
 		}
 	}
 	// Gap at end if dropping past last item.
@@ -277,10 +277,14 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	reorderable := can_reorder
 	return column(
 		name:         'list_box'
+		id:           if reorderable { drag_reorder_drop_handler_id(list_box_id) } else { '' }
 		a11y_role:    .list
 		a11y:         list_a11y
 		id_focus:     cfg.id_focus
 		id_scroll:    cfg.id_scroll
+		on_scroll:    fn [list_box_id, on_reorder] (_ &Layout, mut w Window) {
+			drag_reorder_apply_drop(list_box_id, on_reorder, mut w)
+		}
 		on_keydown:   fn [list_box_id, item_ids, is_multiple, on_select, selected_ids, reorderable, on_reorder] (_ &Layout, mut e Event, mut w Window) {
 			list_box_on_keydown(list_box_id, item_ids, is_multiple, on_select, selected_ids,
 				reorderable, on_reorder, mut e, mut w)
@@ -302,7 +306,7 @@ fn list_box_from_range(first_visible int, last_visible int, cfg ListBoxCfg, virt
 	)
 }
 
-fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, item_ids []string, item_layout_ids []string, mids_offset int, on_reorder fn (string, string, mut Window), can_reorder bool) View {
+fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, item_ids []string, item_layout_ids []string, mids_offset int, can_reorder bool) View {
 	color := if dat.id in cfg.selected_ids {
 		cfg.color_select
 	} else {
@@ -327,9 +331,8 @@ fn list_box_item_view(dat ListBoxOption, cfg ListBoxCfg, drag_index int, item_id
 	}
 	id_scroll := cfg.id_scroll
 	on_click_fn := if reorderable {
-		make_list_box_drag_click(list_box_id, dat_id, drag_index, item_ids, on_reorder,
-			item_layout_ids, mids_offset, id_scroll, is_multiple, on_select, has_on_select,
-			selected_ids)
+		make_list_box_drag_click(list_box_id, dat_id, drag_index, item_ids, item_layout_ids,
+			mids_offset, id_scroll, is_multiple, on_select, has_on_select, selected_ids)
 	} else {
 		fn [is_multiple, on_select, has_on_select, selected_ids, dat_id, is_sub] (_ &Layout, mut e Event, mut w Window) {
 			if has_on_select && !is_sub {
@@ -399,7 +402,6 @@ fn list_box_item_content(dat ListBoxOption, cfg ListBoxCfg) View {
 // initiates drag-reorder or falls back to selection.
 fn make_list_box_drag_click(list_box_id string, dat_id string,
 	drag_index int, item_ids []string,
-	on_reorder fn (string, string, mut Window),
 	item_layout_ids []string,
 	mids_offset int,
 	id_scroll u32,
@@ -407,9 +409,9 @@ fn make_list_box_drag_click(list_box_id string, dat_id string,
 	on_select fn ([]string, mut Event, mut Window),
 	has_on_select bool,
 	selected_ids []string) fn (&Layout, mut Event, mut Window) {
-	return fn [list_box_id, dat_id, drag_index, item_ids, on_reorder, item_layout_ids, mids_offset, id_scroll, is_multiple, on_select, has_on_select, selected_ids] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(list_box_id, drag_index, dat_id, .vertical, item_ids, on_reorder,
-			item_layout_ids, mids_offset, id_scroll, layout, e, mut w)
+	return fn [list_box_id, dat_id, drag_index, item_ids, item_layout_ids, mids_offset, id_scroll, is_multiple, on_select, has_on_select, selected_ids] (layout &Layout, mut e Event, mut w Window) {
+		drag_reorder_start(list_box_id, drag_index, dat_id, .vertical, item_ids,
+			item_layout_ids, mids_offset, id_scroll, '', layout, e, mut w)
 		// Set keyboard focus index so Alt+Arrow works after click.
 		mut lbf := state_map[string, int](mut w, ns_list_box_focus, cap_moderate)
 		lbf.set(list_box_id, drag_index)
@@ -569,6 +571,12 @@ fn list_box_source_request_key(cfg ListBoxCfg) string {
 	return 'k:${cfg.id}|q:${cfg.query}|s:${cfg.source_key}'
 }
 
+fn (mut window Window) list_box_source_queue_reclaim_pin_release() {
+	window.queue_command(fn (mut window Window) {
+		window.release_layout_callback_reclaim_pin()
+	})
+}
+
 fn list_box_source_start_request(cfg ListBoxCfg, request_key string, mut state ListBoxSourceState, mut window Window) {
 	source := cfg.data_source or { return }
 	if state.loading && !isnil(state.active_abort) {
@@ -591,25 +599,38 @@ fn list_box_source_start_request(cfg ListBoxCfg, request_key string, mut state L
 	state.active_abort = controller
 	state.request_count++
 	list_box_id := cfg.id
-	spawn fn [source, req, list_box_id, next_request_id] (mut w Window) {
-		result := source.fetch_data(req) or {
+	window.pin_layout_callback_reclaim() or { panic(err) }
+	window.suspend_layout_callback_tracking(fn [source, req, list_box_id, next_request_id, mut window] () {
+		spawn fn [source, req, list_box_id, next_request_id] (mut w Window) {
 			if req.signal.is_aborted() {
+				w.list_box_source_queue_reclaim_pin_release()
 				return
 			}
-			err_msg := err.msg()
-			w.queue_command(fn [list_box_id, next_request_id, err_msg] (mut w Window) {
-				list_box_source_apply_error(list_box_id, next_request_id, err_msg, mut
-					w)
+			result := source.fetch_data(req) or {
+				if req.signal.is_aborted() {
+					w.list_box_source_queue_reclaim_pin_release()
+					return
+				}
+				err_msg := err.msg()
+				w.queue_command(fn [list_box_id, next_request_id, err_msg] (mut w Window) {
+					list_box_source_apply_error(list_box_id, next_request_id, err_msg, mut w)
+					w.release_layout_callback_reclaim_pin()
+				})
+				return
+			}
+			if req.signal.is_aborted() {
+				w.list_box_source_queue_reclaim_pin_release()
+				return
+			}
+			w.queue_command(fn [list_box_id, next_request_id, result] (mut w Window) {
+				list_box_source_apply_success(list_box_id, next_request_id, result, mut w)
+				w.release_layout_callback_reclaim_pin()
 			})
-			return
-		}
-		if req.signal.is_aborted() {
-			return
-		}
-		w.queue_command(fn [list_box_id, next_request_id, result] (mut w Window) {
-			list_box_source_apply_success(list_box_id, next_request_id, result, mut w)
-		})
-	}(mut window)
+		}(mut window)
+	}) or {
+		window.release_layout_callback_reclaim_pin()
+		panic(err)
+	}
 }
 
 fn list_box_source_apply_success(list_box_id string, request_id u64, result ListBoxDataResult, mut window Window) {

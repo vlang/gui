@@ -40,6 +40,11 @@ w.animation_add(mut gui.TweenAnimation{
 })
 ```
 
+If a persistent animation is constructed or registered from `generate_layout` or
+`amend_layout`, wrap construction and registration in
+`window.animation_add_from_layout(...)`. `animation_add(...)` only registers an
+already-created animation.
+
 ### State Updates
 
 Animations modify your application state, which triggers view regeneration:

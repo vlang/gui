@@ -11,16 +11,19 @@ import sokol.sapp
 // dedicated fields for type safety.
 struct ViewState {
 mut:
-	cursor_on_sticky bool // keeps the cursor visible during cursor movement
-	id_focus         u32  // current view that has focus
-	input_cursor_on  bool = true // used by cursor blink animation
-	menu_key_nav     bool             // true, menu navigated by keyboard
-	mouse_cursor     sapp.MouseCursor // arrow, finger, ibeam, etc.
-	mouse_lock       MouseLockCfg     // mouse down/move/up/scroll/sliders, etc. use this
-	rtf_tooltip_rect gg.Rect          // RTF abbreviation tooltip anchor rect
-	rtf_tooltip_text string           // RTF abbreviation tooltip text
-	tooltip          TooltipState     // State for the active tooltip
-	registry         StateRegistry    // generic per-widget state maps
+	cursor_on_sticky           bool // keeps the cursor visible during cursor movement
+	id_focus                   u32  // current view that has focus
+	input_cursor_on            bool = true // used by cursor blink animation
+	menu_key_nav               bool             // true, menu navigated by keyboard
+	mouse_cursor               sapp.MouseCursor // arrow, finger, ibeam, etc.
+	mouse_lock                 MouseLockCfg     // mouse down/move/up/scroll/sliders, etc. use this
+	mouse_lock_pinned          bool             // mouse_lock holds layout callbacks alive while installed
+	mouse_lock_dispatch_depth  int              // nested mouse_lock callback dispatch depth
+	mouse_lock_release_pending int              // pins to release after the active dispatch returns
+	rtf_tooltip_rect           gg.Rect          // RTF abbreviation tooltip anchor rect
+	rtf_tooltip_text           string           // RTF abbreviation tooltip text
+	tooltip                    TooltipState     // State for the active tooltip
+	registry                   StateRegistry    // generic per-widget state maps
 	// link_handler, when set, is called before opening a link in the OS browser.
 	// If the handler sets e.is_handled = true the default os.open_uri is skipped.
 	link_handler ?fn (url string, mut e Event, mut w Window)
@@ -190,13 +193,19 @@ pub:
 // clear_view_state resets all GUI state for this window.
 // Call when window destroyed or needs full GUI state reinitialization.
 fn (mut w Window) clear_view_state() {
+	w.release_mouse_lock_pin()
+	mouse_lock_dispatch_depth := w.view_state.mouse_lock_dispatch_depth
+	mouse_lock_release_pending := w.view_state.mouse_lock_release_pending
 	mut ctx := w.context()
 	w.view_state.image_map.clear(mut ctx)
 	w.view_state.diagram_cache.clear()
 	w.view_state.svg_cache.clear()
 	w.view_state.markdown_cache.clear()
 	w.view_state.registry.clear()
-	w.view_state = ViewState{}
+	w.view_state = ViewState{
+		mouse_lock_dispatch_depth:  mouse_lock_dispatch_depth
+		mouse_lock_release_pending: mouse_lock_release_pending
+	}
 }
 
 fn (mut w Window) clear_input_selections() {

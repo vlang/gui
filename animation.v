@@ -71,6 +71,12 @@ pub fn (mut window Window) animation_add(mut animation Animation) {
 	window.animations[animation.id] = animation
 }
 
+// animation_add_from_layout runs animation construction outside transient layout
+// callback tracking before the animation is stored for later frames.
+pub fn (mut window Window) animation_add_from_layout(work fn ()) ! {
+	window.suspend_layout_callback_tracking(work)!
+}
+
 // has_animation returns true if an animation with the given id is
 // currently active. Safe to call during view generation (no lock).
 pub fn (window &Window) has_animation(id string) bool {
@@ -102,41 +108,49 @@ fn (mut window Window) animation_loop() {
 			match mut animation {
 				Animate {
 					if update_animate(mut animation, mut window, mut deferred) {
-						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+						refresh_kind = max_animation_refresh_kind(refresh_kind,
+							animation.refresh_kind())
 					}
 				}
 				BlinkCursorAnimation {
 					if update_blink_cursor(mut animation, mut window) {
-						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+						refresh_kind = max_animation_refresh_kind(refresh_kind,
+							animation.refresh_kind())
 					}
 				}
 				TweenAnimation {
 					if update_tween(mut animation, mut window, mut deferred) {
-						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+						refresh_kind = max_animation_refresh_kind(refresh_kind,
+							animation.refresh_kind())
 					}
 				}
 				SpringAnimation {
 					if update_spring(mut animation, mut window, dt, mut deferred) {
-						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+						refresh_kind = max_animation_refresh_kind(refresh_kind,
+							animation.refresh_kind())
 					}
 				}
 				LayoutTransition {
 					if update_layout_transition(mut animation, mut window, mut deferred) {
-						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+						refresh_kind = max_animation_refresh_kind(refresh_kind,
+							animation.refresh_kind())
 					}
 				}
 				HeroTransition {
 					if update_hero_transition(mut animation, mut window, mut deferred) {
-						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+						refresh_kind = max_animation_refresh_kind(refresh_kind,
+							animation.refresh_kind())
 					}
 				}
 				KeyframeAnimation {
 					if update_keyframe(mut animation, mut window, mut deferred) {
-						refresh_kind = max_animation_refresh_kind(refresh_kind, animation.refresh_kind())
+						refresh_kind = max_animation_refresh_kind(refresh_kind,
+							animation.refresh_kind())
 					}
 				}
 				else {}
 			}
+
 			if animation.stopped {
 				stopped_ids << animation.id
 			}
@@ -184,6 +198,7 @@ fn update_animate(mut an Animate, mut w Window, mut deferred []AnimationCallback
 				true { an.start = time.now() }
 				else { an.stopped = true }
 			}
+
 			return true
 		}
 	}

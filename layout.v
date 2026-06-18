@@ -168,6 +168,7 @@ fn layout_hover(mut layout Layout, mut w Window) bool {
 				ctx.mbtn_mask & 0x04 > 0 { MouseButton.middle }
 				else { MouseButton.invalid }
 			}
+
 			mut ev := Event{
 				frame_count:   ctx.frame
 				typ:           .invalid
@@ -182,7 +183,10 @@ fn layout_hover(mut layout Layout, mut w Window) bool {
 				window_width:  ctx.width
 				window_height: ctx.height
 			}
-			layout.shape.events.on_hover(mut layout, mut ev, mut w)
+			on_hover := layout.shape.events.on_hover
+			w.layout_callback_lifetime.lifetime.suspend(fn [on_hover, mut layout, mut ev, mut w] () {
+				on_hover(mut layout, mut ev, mut w)
+			}) or { panic(err) }
 			return ev.is_handled
 		}
 	}

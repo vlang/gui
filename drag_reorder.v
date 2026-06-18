@@ -94,6 +94,7 @@ import time
 
 const ns_drag_reorder = 'gui.drag_reorder'
 const ns_drag_reorder_ids_meta = 'gui.drag_reorder.ids_meta'
+const ns_drag_reorder_drop = 'gui.drag_reorder.drop'
 const drag_reorder_threshold = f32(5.0)
 const drag_reorder_scroll_zone = f32(40.0)
 const drag_reorder_scroll_speed = f32(4.0)
@@ -133,6 +134,7 @@ mut:
 	parent_x            f32
 	parent_y            f32
 	item_id             string
+	parent_id           string
 	id_scroll           u32
 	container_start     f32
 	container_end       f32
@@ -146,6 +148,16 @@ mut:
 struct DragReorderIdsMeta {
 	ids_len  int
 	ids_hash u64
+}
+
+struct DragReorderDrop {
+	moved_id  string
+	before_id string
+	parent_id string
+}
+
+fn drag_reorder_drop_handler_id(drag_key string) string {
+	return '${drag_key}:drag_reorder_drop'
 }
 
 // drag_reorder_get returns the current drag state for the given
@@ -186,19 +198,69 @@ fn drag_reorder_ids_changed(state DragReorderState, meta DragReorderIdsMeta) boo
 	return state.ids_len != meta.ids_len || state.ids_hash != meta.ids_hash
 }
 
+fn drag_reorder_drop_set(mut w Window, drag_key string, drop DragReorderDrop) {
+	mut sm := state_map[string, DragReorderDrop](mut w, ns_drag_reorder_drop, cap_few)
+	sm.set(drag_key, drop)
+}
+
+fn drag_reorder_drop_take(mut w Window, drag_key string) ?DragReorderDrop {
+	mut sm := state_map[string, DragReorderDrop](mut w, ns_drag_reorder_drop, cap_few)
+	drop := sm.get(drag_key) or { return none }
+	sm.delete(drag_key)
+	return drop
+}
+
+fn drag_reorder_drop_clear(mut w Window, drag_key string) {
+	mut sm := state_map[string, DragReorderDrop](mut w, ns_drag_reorder_drop, cap_few)
+	sm.delete(drag_key)
+}
+
+fn drag_reorder_dispatch_drop(drag_key string, mut w Window) bool {
+	mut layout := w.find_layout_by_id(drag_reorder_drop_handler_id(drag_key)) or {
+		w.find_layout_by_id(drag_key) or {
+			drag_reorder_drop_clear(mut w, drag_key)
+			return false
+		}
+	}
+	if !layout.shape.has_events() || layout.shape.events.on_scroll == unsafe { nil } {
+		drag_reorder_drop_clear(mut w, drag_key)
+		return false
+	}
+	w.animate_layout(LayoutTransitionCfg{})
+	layout.shape.events.on_scroll(layout, mut w)
+	return true
+}
+
+fn drag_reorder_apply_drop(drag_key string, on_reorder fn (string, string, mut Window), mut w Window) bool {
+	drop := drag_reorder_drop_take(mut w, drag_key) or { return false }
+	if on_reorder == unsafe { nil } {
+		return false
+	}
+	on_reorder(drop.moved_id, drop.before_id, mut w)
+	return true
+}
+
+fn drag_reorder_apply_tree_drop(drag_key string, on_reorder fn (string, string, string, mut Window), mut w Window) bool {
+	drop := drag_reorder_drop_take(mut w, drag_key) or { return false }
+	if on_reorder == unsafe { nil } {
+		return false
+	}
+	on_reorder(drop.moved_id, drop.before_id, drop.parent_id, mut w)
+	return true
+}
+
 // drag_reorder_make_lock builds a MouseLockCfg that implements the
 // full drag lifecycle: threshold detection, tracking with FLIP
 // animation, and drop/cancel.
 fn drag_reorder_make_lock(drag_key string,
 	axis DragReorderAxis,
-	item_ids []string,
-	on_reorder fn (string, string, mut Window)) MouseLockCfg {
+	item_ids []string) MouseLockCfg {
 	return MouseLockCfg{
 		mouse_move: fn [drag_key, axis] (_ &Layout, mut e Event, mut w Window) {
 			drag_reorder_on_mouse_move(drag_key, axis, e.mouse_x, e.mouse_y, mut w)
 		}
-		mouse_up:   fn [drag_key, item_ids, on_reorder] (_ &Layout, mut e Event, mut w Window) {
-			drag_reorder_on_mouse_up(drag_key, item_ids, on_reorder, mut w)
+		mouse_up:   fn [drag_key, item_ids] (_ &Layout, mut e Event, mut w Window) {
+			drag_reorder_on_mouse_up(drag_key, item_ids, mut w)
 		}
 	}
 }
@@ -330,7 +392,6 @@ fn drag_reorder_on_mouse_move(drag_key string,
 // source position. before_id is "" when dropping at the end.
 fn drag_reorder_on_mouse_up(drag_key string,
 	item_ids []string,
-	on_reorder fn (string, string, mut Window),
 	mut w Window) {
 	state := drag_reorder_get(mut w, drag_key)
 	was_active := state.active
@@ -354,15 +415,19 @@ fn drag_reorder_on_mouse_up(drag_key string,
 	// drop at gap index (src) or the gap immediately following it (src+1)
 	// is a no-op since the item is already between those positions.
 	if was_active && !state.cancelled && gap != src && gap != src + 1 {
-		if on_reorder != unsafe { nil } && src >= 0 && src < item_ids.len {
+		if src >= 0 && src < item_ids.len {
 			moved_id := item_ids[src]
 			before_id := if gap < item_ids.len {
 				item_ids[gap]
 			} else {
 				''
 			}
-			w.animate_layout(LayoutTransitionCfg{})
-			on_reorder(moved_id, before_id, mut w)
+			drag_reorder_drop_set(mut w, drag_key, DragReorderDrop{
+				moved_id:  moved_id
+				before_id: before_id
+				parent_id: state.parent_id
+			})
+			drag_reorder_dispatch_drop(drag_key, mut w)
 		}
 	}
 	w.update_window()
@@ -398,10 +463,10 @@ fn drag_reorder_start(drag_key string,
 	item_id string,
 	axis DragReorderAxis,
 	item_ids []string,
-	on_reorder fn (string, string, mut Window),
 	item_layout_ids []string,
 	mids_offset int,
 	id_scroll u32,
+	parent_id string,
 	layout &Layout,
 	e &Event,
 	mut w Window) {
@@ -461,6 +526,7 @@ fn drag_reorder_start(drag_key string,
 		parent_x:        parent_x
 		parent_y:        parent_y
 		item_id:         item_id
+		parent_id:       parent_id
 		id_scroll:       id_scroll
 		container_start: container_start
 		container_end:   container_end
@@ -470,7 +536,7 @@ fn drag_reorder_start(drag_key string,
 		mids_offset:     mids_offset
 	}
 	drag_reorder_set(mut w, drag_key, state)
-	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids, on_reorder))
+	w.mouse_lock(drag_reorder_make_lock(drag_key, axis, item_ids))
 }
 
 // drag_reorder_calc_index estimates the drop target index from

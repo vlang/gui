@@ -1,10 +1,73 @@
 module gui
 
+const drag_reorder_lifetime_payload_len = 64
+
 struct DragKeyboardCapture {
 mut:
 	called bool
 	moved  string
 	before string
+	value  int
+}
+
+fn drag_reorder_lifetime_item_layout(id string, y f32) Layout {
+	return Layout{
+		shape: &Shape{
+			id:     id
+			x:      0
+			y:      y
+			width:  100
+			height: 10
+		}
+	}
+}
+
+fn drag_reorder_lifetime_layout(drag_key string, seed int) Layout {
+	payload := []int{len: drag_reorder_lifetime_payload_len, init: seed + index}
+	return Layout{
+		shape:    &Shape{
+			id: 'root'
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					id:     drag_reorder_drop_handler_id(drag_key)
+					events: &EventHandlers{
+						on_scroll: fn [drag_key, payload] (_ &Layout, mut w Window) {
+							drop := drag_reorder_drop_take(mut w, drag_key) or { return }
+							mut cap := unsafe { &DragKeyboardCapture(w.state) }
+							cap.called = true
+							cap.moved = drop.moved_id
+							cap.before = drop.before_id
+							cap.value = payload[0] + payload[payload.len - 1]
+						}
+					}
+				}
+			},
+			drag_reorder_lifetime_item_layout('a', 0),
+			drag_reorder_lifetime_item_layout('b', 10),
+			drag_reorder_lifetime_item_layout('c', 20),
+		]
+	}
+}
+
+fn drag_reorder_rebuild_lifetime_layout(mut w Window, drag_key string, seed int) {
+	w.layout_callback_lifetime.lifetime.frame(fn [mut w, drag_key, seed] () {
+		layout_clear(mut w.layout)
+		w.layout = drag_reorder_lifetime_layout(drag_key, seed)
+	}) or { panic(err) }
+	w.reclaim_old_layout_callbacks()
+}
+
+fn drag_reorder_collect_and_churn_test() {
+	gc_collect()
+	for _ in 0 .. 1024 {
+		unsafe {
+			p := malloc(32)
+			vmemset(p, 0x55, 32)
+		}
+	}
+	gc_collect()
 }
 
 fn test_reorder_indices_cases() {
@@ -229,15 +292,15 @@ fn test_drag_reorder_start_sets_layout_validity() {
 	}
 
 	drag_key_ok := 'drag_layout_ok'
-	drag_reorder_start(drag_key_ok, 0, 'a', .vertical, ['a', 'b'], fn (_ string, _ string, mut _ Window) {},
-		['a', 'b'], 0, 0, &item, &e, mut w)
+	drag_reorder_start(drag_key_ok, 0, 'a', .vertical, ['a', 'b'], ['a', 'b'], 0, 0,
+		'', &item, &e, mut w)
 	state_ok := drag_reorder_get(mut w, drag_key_ok)
 	assert state_ok.started
 	assert state_ok.layouts_valid
 
 	drag_key_missing := 'drag_layout_missing'
-	drag_reorder_start(drag_key_missing, 0, 'a', .vertical, ['a', 'b'], fn (_ string, _ string, mut _ Window) {},
-		['a', 'missing'], 0, 0, &item, &e, mut w)
+	drag_reorder_start(drag_key_missing, 0, 'a', .vertical, ['a', 'b'], ['a', 'missing'],
+		0, 0, '', &item, &e, mut w)
 	state_missing := drag_reorder_get(mut w, drag_key_missing)
 	assert state_missing.started
 	assert !state_missing.layouts_valid
@@ -351,23 +414,116 @@ fn test_drag_reorder_cancels_on_mid_drag_mutation() {
 	}
 
 	drag_key := 'drag_mutation'
-	mut cap := &DragKeyboardCapture{}
-	drag_reorder_start(drag_key, 0, 'a', .vertical, ['a', 'b', 'c'], fn [mut cap] (m string, b string, mut _ Window) {
-		cap.called = true
-		cap.moved = m
-		cap.before = b
-	}, ['a', 'b', 'c'], 0, 0, &item, &e, mut w)
+	drag_reorder_start(drag_key, 0, 'a', .vertical, ['a', 'b', 'c'], ['a', 'b', 'c'],
+		0, 0, '', &item, &e, mut w)
 	drag_reorder_ids_meta_set(mut w, drag_key, ['a', 'b', 'c'])
 
 	// Simulate list mutation before mouse-up.
 	drag_reorder_ids_meta_set(mut w, drag_key, ['a', 'c'])
-	drag_reorder_on_mouse_up(drag_key, ['a', 'c'], fn [mut cap] (_ string, _ string, mut _ Window) {
-		cap.called = true
-	}, mut w)
-	assert !cap.called
+	drag_reorder_on_mouse_up(drag_key, ['a', 'c'], mut w)
 	state := drag_reorder_get(mut w, drag_key)
 	assert !state.started
 	assert !state.active
+}
+
+fn test_drag_reorder_mouse_up_uses_current_callback_after_reclaim() {
+	mut cap := &DragKeyboardCapture{}
+	mut w := Window{
+		state:                    cap
+		layout_callback_lifetime: new_layout_callback_lifetime()
+	}
+	drag_key := 'drag_lifetime_drop'
+	drag_reorder_rebuild_lifetime_layout(mut w, drag_key, 11)
+
+	mut parent := Layout{
+		shape: &Shape{
+			id:     'parent'
+			x:      0
+			y:      0
+			width:  100
+			height: 100
+		}
+	}
+	mut item := Layout{
+		shape:  &Shape{
+			id:     'a'
+			x:      0
+			y:      0
+			width:  10
+			height: 10
+		}
+		parent: &parent
+	}
+	mut e := Event{
+		mouse_x: 1
+		mouse_y: 1
+	}
+
+	drag_reorder_start(drag_key, 0, 'a', .vertical, ['a', 'b', 'c'], ['a', 'b', 'c'],
+		0, 0, '', &item, &e, mut w)
+	mut state := drag_reorder_get(mut w, drag_key)
+	state.active = true
+	state.current_index = 2
+	drag_reorder_set(mut w, drag_key, state)
+
+	drag_reorder_rebuild_lifetime_layout(mut w, drag_key, 29)
+	drag_reorder_rebuild_lifetime_layout(mut w, drag_key, 29)
+	drag_reorder_collect_and_churn_test()
+
+	mouse_up := w.view_state.mouse_lock.mouse_up or {
+		assert false, 'expected mouse lock up callback'
+		return
+	}
+	mut up := Event{}
+	mouse_up(&w.layout, mut up, mut w)
+
+	assert cap.called
+	assert cap.moved == 'a'
+	assert cap.before == 'c'
+	assert cap.value == 29 + 29 + drag_reorder_lifetime_payload_len - 1
+
+	layout_clear(mut w.layout)
+	w.dispose_layout_callbacks()
+}
+
+fn test_drag_reorder_dispatch_snapshots_before_user_drop_handler() {
+	drag_key := 'drag_snapshot_order'
+	mut w := Window{}
+	w.layout = Layout{
+		shape:    &Shape{
+			id: 'root'
+		}
+		children: [
+			Layout{
+				shape: &Shape{
+					id:     drag_reorder_drop_handler_id(drag_key)
+					events: &EventHandlers{
+						on_scroll: fn [drag_key] (_ &Layout, mut w Window) {
+							_ := drag_reorder_drop_take(mut w, drag_key) or { return }
+							w.layout.children[1].shape.x = 99
+						}
+					}
+				}
+			},
+			drag_reorder_lifetime_item_layout('a', 1),
+		]
+	}
+	drag_reorder_drop_set(mut w, drag_key, DragReorderDrop{
+		moved_id:  'a'
+		before_id: ''
+	})
+
+	assert drag_reorder_dispatch_drop(drag_key, mut w)
+	transition := w.get_layout_transition() or {
+		assert false, 'expected layout transition'
+		return
+	}
+	snapshot := transition.snapshots['a'] or {
+		assert false, 'expected snapshot for item a'
+		return
+	}
+	assert snapshot.x == 0
+	assert w.layout.children[1].shape.x == 99
 }
 
 fn test_drag_reorder_cancels_on_mid_drag_move_mutation() {

@@ -135,15 +135,54 @@ pub fn (window &Window) mouse_is_locked() bool {
 		|| window.view_state.mouse_lock.mouse_up != none
 }
 
+fn (mut window Window) release_mouse_lock_pin() {
+	if !window.view_state.mouse_lock_pinned {
+		return
+	}
+	window.view_state.mouse_lock_pinned = false
+	if window.view_state.mouse_lock_dispatch_depth > 0 {
+		window.view_state.mouse_lock_release_pending++
+		return
+	}
+	window.release_layout_callback_reclaim_pin()
+}
+
+fn (mut window Window) mouse_lock_dispatch_begin() {
+	window.view_state.mouse_lock_dispatch_depth++
+}
+
+fn (mut window Window) mouse_lock_dispatch_end() {
+	if window.view_state.mouse_lock_dispatch_depth > 0 {
+		window.view_state.mouse_lock_dispatch_depth--
+	}
+	if window.view_state.mouse_lock_dispatch_depth > 0 {
+		return
+	}
+	for window.view_state.mouse_lock_release_pending > 0 {
+		window.view_state.mouse_lock_release_pending--
+		window.release_layout_callback_reclaim_pin()
+	}
+}
+
 // mouse_lock locks the mouse so all mouse events go to the
 // handlers in MouseLockCfg
 pub fn (mut window Window) mouse_lock(cfg MouseLockCfg) {
+	window.release_mouse_lock_pin()
 	window.view_state.mouse_lock = cfg
+	if !window.mouse_is_locked() {
+		return
+	}
+	window.pin_layout_callback_reclaim() or {
+		window.view_state.mouse_lock = MouseLockCfg{}
+		return
+	}
+	window.view_state.mouse_lock_pinned = true
 }
 
 // mouse_unlock returns mouse handling events to normal behavior
 pub fn (mut window Window) mouse_unlock() {
 	window.view_state.mouse_lock = MouseLockCfg{}
+	window.release_mouse_lock_pin()
 	sapp.lock_mouse(false)
 }
 

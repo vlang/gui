@@ -80,7 +80,6 @@ fn (mut window Window) update() {
 	clip_rect := window.window_rect()
 	background_color := window.color_background()
 
-	mut view := window.view_generator(window)
 	$if !prod {
 		if window.inspector_enabled {
 			window.inspector_props_cache = map[string]InspectorNodeProps{}
@@ -89,13 +88,17 @@ fn (mut window Window) update() {
 				window.inspector_props_cache)
 		}
 	}
-	layout_clear(mut window.layout)
-	window.layout = window.compose_layout(mut view)
+	window.layout_callback_frame(fn [mut window] () {
+		mut view := window.view_generator(window)
+		layout_clear(mut window.layout)
+		window.layout = window.compose_layout(mut view)
+		view_clear(mut view)
+	}) or { panic(err) }
+	window.reclaim_old_layout_callbacks()
 	window.build_renderers(background_color, clip_rect)
 	window.unlock()
 	//--------------------------------------------
 
-	view_clear(mut view)
 	window.stats.update_max_renderers(usize(window.renderers.len))
 }
 
