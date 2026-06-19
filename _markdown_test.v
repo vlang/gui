@@ -118,8 +118,8 @@ fn test_markdown_paragraph_continuation() {
 
 fn test_markdown_multiline_link() {
 	// Links spanning multiple lines should be parsed correctly
-	rt := markdown_to_rich_text('[CommonMark\nSpecification](https://commonmark.org/)',
-		MarkdownStyle{})
+	rt :=
+		markdown_to_rich_text('[CommonMark\nSpecification](https://commonmark.org/)', MarkdownStyle{})
 	links := rt.runs.filter(it.link != '')
 	assert links.len == 1
 	assert links[0].text == 'CommonMark Specification'
@@ -275,8 +275,8 @@ fn md_runs_to_string(runs []markdown.MdRun) string {
 }
 
 fn test_markdown_table_parsing() {
-	parsed := markdown.parse_md_table('| A | B |\n|---|---|\n| 1 | 2 |'.split('\n'), map[string]string{},
-		map[string]string{}) or { panic('parse failed') }
+	parsed := markdown.parse_md_table('| A | B |\n|---|---|\n| 1 | 2 |'.split('\n'),
+		map[string]string{}, map[string]string{}) or { panic('parse failed') }
 	assert md_runs_to_string(parsed.headers[0]) == 'A'
 	assert md_runs_to_string(parsed.headers[1]) == 'B'
 	assert parsed.rows.len == 1
@@ -327,8 +327,8 @@ fn test_markdown_table_inline_formatting() {
 
 fn test_markdown_table_invalid_separator() {
 	// Separator without dashes should fail
-	result := markdown.parse_md_table('| A | B |\n|:::|:::|\n| 1 | 2 |'.split('\n'), map[string]string{},
-		map[string]string{})
+	result := markdown.parse_md_table('| A | B |\n|:::|:::|\n| 1 | 2 |'.split('\n'),
+		map[string]string{}, map[string]string{})
 	assert result == none
 }
 
@@ -534,7 +534,8 @@ fn test_markdown_blocks_javascript_url() {
 
 fn test_markdown_blocks_data_url() {
 	// data: URLs should be rejected
-	rt := markdown_to_rich_text('[click](data:text/html,<script>alert(1)</script>)', MarkdownStyle{})
+	rt :=
+		markdown_to_rich_text('[click](data:text/html,<script>alert(1)</script>)', MarkdownStyle{})
 	links := rt.runs.filter(it.link != '')
 	assert links.len == 0
 }

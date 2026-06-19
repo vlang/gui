@@ -410,8 +410,8 @@ fn make_list_box_drag_click(list_box_id string, dat_id string,
 	has_on_select bool,
 	selected_ids []string) fn (&Layout, mut Event, mut Window) {
 	return fn [list_box_id, dat_id, drag_index, item_ids, item_layout_ids, mids_offset, id_scroll, is_multiple, on_select, has_on_select, selected_ids] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(list_box_id, drag_index, dat_id, .vertical, item_ids,
-			item_layout_ids, mids_offset, id_scroll, '', layout, e, mut w)
+		drag_reorder_start(list_box_id, drag_index, dat_id, .vertical, item_ids, item_layout_ids,
+			mids_offset, id_scroll, '', layout, e, mut w)
 		// Set keyboard focus index so Alt+Arrow works after click.
 		mut lbf := state_map[string, int](mut w, ns_list_box_focus, cap_moderate)
 		lbf.set(list_box_id, drag_index)

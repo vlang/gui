@@ -216,8 +216,8 @@ fn render_md_math(block MarkdownBlock, cfg MarkdownCfg, window &Window) View {
 			state:      .loading
 			request_id: request_id
 		})
-		fetch_math_async(mut w, block.math_latex, diagram_hash, request_id, cfg.style.math_dpi_display,
-			cfg.style.text.color)
+		fetch_math_async(mut w, block.math_latex, diagram_hash, request_id,
+			cfg.style.math_dpi_display, cfg.style.text.color)
 	}
 	return column(
 		color:       cfg.style.code_block_bg
@@ -489,8 +489,8 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 							state:      .loading
 							request_id: request_id
 						})
-						fetch_math_async(mut w, run.math_latex, mhash, request_id, cfg.style.math_dpi_inline,
-							cfg.style.text.color)
+						fetch_math_async(mut w, run.math_latex, mhash, request_id,
+							cfg.style.math_dpi_inline, cfg.style.text.color)
 					}
 				}
 			}
@@ -741,8 +741,8 @@ pub fn (window &Window) markdown(cfg MarkdownCfg) View {
 	cp_doc_id := 'md_cp_doc_${hash}'
 	doc_icon_color := cfg.style.text.color
 	doc_alt := window.has_animation('btn_alt_${cp_doc_id}')
-	content << md_copy_button(cp_doc_id, doc_alt, doc_icon_color, source, rgba(128, 128,
-		128, 20), rgba(128, 128, 128, 50))
+	content << md_copy_button(cp_doc_id, doc_alt, doc_icon_color, source, rgba(128, 128, 128, 20), rgba(128,
+		128, 128, 50))
 
 	return column(
 		a11y_role:    .group

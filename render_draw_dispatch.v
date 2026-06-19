@@ -417,8 +417,8 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			if renderer.w <= 0 || renderer.h <= 0 {
 				return
 			}
-			draw_rounded_rect_empty(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
-				renderer.thickness, renderer.color, mut window)
+			draw_rounded_rect_empty(renderer.x, renderer.y, renderer.w, renderer.h,
+				renderer.radius, renderer.thickness, renderer.color, mut window)
 		}
 		DrawText {
 			window.text_system.draw_text(renderer.x, renderer.y, renderer.text, renderer.cfg) or {
@@ -442,16 +442,16 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 				window.text_system.draw_layout_transformed_with_gradient(renderer.layout,
 					renderer.x, renderer.y, renderer.transform, renderer.gradient)
 			} else {
-				window.text_system.draw_layout_transformed(renderer.layout, renderer.x,
-					renderer.y, renderer.transform)
+				window.text_system.draw_layout_transformed(renderer.layout, renderer.x, renderer.y,
+					renderer.transform)
 			}
 		}
 		DrawLayoutPlaced {
 			window.text_system.draw_layout_placed(renderer.layout, renderer.placements)
 		}
 		DrawClip {
-			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y, ctx.scale * renderer.width,
-				ctx.scale * renderer.height, true)
+			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y,
+				ctx.scale * renderer.width, ctx.scale * renderer.height, true)
 		}
 		DrawCircle {
 			if renderer.fill {
@@ -462,8 +462,8 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 		}
 		DrawImage {
 			if renderer.clip_radius > 0 {
-				draw_image_rounded(renderer.x, renderer.y, renderer.w, renderer.h, renderer.clip_radius,
-					renderer.img, mut window)
+				draw_image_rounded(renderer.x, renderer.y, renderer.w, renderer.h,
+					renderer.clip_radius, renderer.img, mut window)
 			} else {
 				ctx.draw_image(renderer.x, renderer.y, renderer.w, renderer.h, renderer.img)
 			}
@@ -478,8 +478,8 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 				renderer.offset_y, mut window)
 		}
 		DrawBlur {
-			draw_blur_rect(renderer.x, renderer.y, renderer.width, renderer.height, renderer.radius,
-				renderer.blur_radius, renderer.color, mut window)
+			draw_blur_rect(renderer.x, renderer.y, renderer.width, renderer.height,
+				renderer.radius, renderer.blur_radius, renderer.color, mut window)
 		}
 		DrawGradient {
 			draw_gradient_rect(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
@@ -490,8 +490,8 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 				renderer.thickness, renderer.gradient, mut window)
 		}
 		DrawCustomShader {
-			draw_custom_shader_rect(renderer.x, renderer.y, renderer.w, renderer.h, renderer.radius,
-				renderer.color, renderer.shader, mut window)
+			draw_custom_shader_rect(renderer.x, renderer.y, renderer.w, renderer.h,
+				renderer.radius, renderer.color, renderer.shader, mut window)
 		}
 		DrawSvg {
 			if renderer.vertex_colors.len > 0 {

@@ -225,6 +225,7 @@ fn (app &ShadowDemoApp) toggle_theme() gui.View {
 						true { gui.theme_dark_no_padding }
 						else { gui.theme_light_no_padding }
 					}
+
 					a.light_theme = !a.light_theme
 					w.set_theme(theme)
 				}

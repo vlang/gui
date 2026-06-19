@@ -172,6 +172,7 @@ fn main_view(mut w gui.Window) gui.View {
 						'to_top_left' { .to_top_left }
 						else { .to_bottom }
 					}
+
 					a.init_gradients()
 				}
 			),

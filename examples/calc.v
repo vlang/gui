@@ -20,12 +20,12 @@ mut:
 	operands   []f64
 	operations []string
 	row_ops    [][]string = [
-	['C', '%', '^', '÷'],
-	['7', '8', '9', '*'],
-	['4', '5', '6', '-'],
-	['1', '2', '3', '+'],
-	['0', '.', '±', '='],
-]
+		['C', '%', '^', '÷'],
+		['7', '8', '9', '*'],
+		['4', '5', '6', '-'],
+		['1', '2', '3', '+'],
+		['0', '.', '±', '='],
+	]
 }
 
 fn main() {
@@ -253,6 +253,7 @@ fn (mut app CalcApp) calculate() {
 				break
 			}
 		}
+
 		operands << result
 		// eprintln('i: ${i:4d} | res: ${result} | op: $op | operands: $operands | operations: $operations')
 	}

@@ -44,7 +44,8 @@ fn test_linux_parse_lpstat_default_rejects_no_default_line() {
 }
 
 fn test_linux_parse_lpstat_available_extracts_first_queue() {
-	name := linux_parse_lpstat_available('Office_Printer accepting requests since Thu 01 Jan 1970\nTest_Printer accepting requests\n')
+	name :=
+		linux_parse_lpstat_available('Office_Printer accepting requests since Thu 01 Jan 1970\nTest_Printer accepting requests\n')
 	assert name == 'Office_Printer'
 }
 

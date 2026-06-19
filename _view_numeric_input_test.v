@@ -86,8 +86,8 @@ fn test_numeric_commit_result_invalid_without_value() {
 }
 
 fn test_numeric_step_result_uses_min_seed() {
-	value, text := numeric_input_step_result('', none, 10.0, none, 2, NumericStepCfg{},
-		NumericLocaleCfg{}, 1.0, .none)
+	value, text := numeric_input_step_result('', none, 10.0, none, 2, NumericStepCfg{}, NumericLocaleCfg{},
+		1.0, .none)
 	assert text == '11.00'
 	if parsed := value {
 		assert math.abs(parsed - 11.0) < 0.000001
@@ -102,8 +102,8 @@ fn test_numeric_step_result_modifiers() {
 		shift_multiplier: 10.0
 		alt_multiplier:   0.1
 	}
-	value_shift, text_shift := numeric_input_step_result('5', none, none, none, 2, cfg,
-		NumericLocaleCfg{}, 1.0, .shift)
+	value_shift, text_shift := numeric_input_step_result('5', none, none, none, 2, cfg, NumericLocaleCfg{},
+		1.0, .shift)
 	assert text_shift == '15.00'
 	if parsed := value_shift {
 		assert math.abs(parsed - 15.0) < 0.000001
@@ -128,8 +128,8 @@ fn test_numeric_currency_commit_result_prefix_symbol() {
 		affix_position:     .prefix
 		display_multiplier: 1.0
 	}
-	value, text := numeric_input_commit_result_mode('-$1,234.5', none, none, none, 2,
-		NumericLocaleCfg{}, mode_cfg)
+	value, text := numeric_input_commit_result_mode('-$1,234.5', none, none, none, 2, NumericLocaleCfg{},
+		mode_cfg)
 	assert text == '-$1,234.50'
 	if parsed := value {
 		assert math.abs(parsed - (-1234.5)) < 0.000001
@@ -150,8 +150,8 @@ fn test_numeric_currency_commit_result_suffix_symbol() {
 		affix_spacing:      true
 		display_multiplier: 1.0
 	}
-	value, text := numeric_input_commit_result_mode('1.234,5 EUR', none, none, none, 2,
-		locale, mode_cfg)
+	value, text := numeric_input_commit_result_mode('1.234,5 EUR', none, none, none, 2, locale,
+		mode_cfg)
 	assert text == '1.234,50 EUR'
 	if parsed := value {
 		assert math.abs(parsed - 1234.5) < 0.000001
@@ -184,8 +184,8 @@ fn test_numeric_percent_step_result_uses_display_units() {
 		affix_position:     .suffix
 		display_multiplier: 100.0
 	}
-	value, text := numeric_input_step_result_mode('12.50%', none, none, none, 2, NumericStepCfg{},
-		NumericLocaleCfg{}, 1.0, .none, mode_cfg)
+	value, text := numeric_input_step_result_mode('12.50%', none, none, none, 2, NumericStepCfg{}, NumericLocaleCfg{},
+		1.0, .none, mode_cfg)
 	assert text == '13.50%'
 	if parsed := value {
 		assert math.abs(parsed - 0.135) < 0.000001
@@ -213,20 +213,17 @@ fn test_numeric_percent_round_trip_is_canonical() {
 
 fn test_numeric_pre_commit_transform_rejects_invalid_delta() {
 	mode_cfg := NumericModeCfg{}
-	assert numeric_input_pre_commit_transform_mode('12', '12a', 2, NumericLocaleCfg{},
-		mode_cfg) == none
+	assert numeric_input_pre_commit_transform_mode('12', '12a', 2, NumericLocaleCfg{}, mode_cfg) == none
 }
 
 fn test_numeric_pre_commit_transform_accepts_transient_number_forms() {
 	mode_cfg := NumericModeCfg{}
-	mut got := numeric_input_pre_commit_transform_mode('', '-', 2, NumericLocaleCfg{},
-		mode_cfg) or {
+	mut got := numeric_input_pre_commit_transform_mode('', '-', 2, NumericLocaleCfg{}, mode_cfg) or {
 		assert false
 		return
 	}
 	assert got == '-'
-	got = numeric_input_pre_commit_transform_mode('12', '12.', 2, NumericLocaleCfg{},
-		mode_cfg) or {
+	got = numeric_input_pre_commit_transform_mode('12', '12.', 2, NumericLocaleCfg{}, mode_cfg) or {
 		assert false
 		return
 	}
@@ -239,8 +236,7 @@ fn test_numeric_pre_commit_transform_accepts_transient_currency_affix() {
 		affix:          '$'
 		affix_position: .prefix
 	}
-	mut got := numeric_input_pre_commit_transform_mode('', '$', 2, NumericLocaleCfg{},
-		mode_cfg) or {
+	mut got := numeric_input_pre_commit_transform_mode('', '$', 2, NumericLocaleCfg{}, mode_cfg) or {
 		assert false
 		return
 	}
@@ -259,14 +255,12 @@ fn test_numeric_pre_commit_transform_accepts_transient_percent_affix() {
 		affix_position:     .suffix
 		display_multiplier: 100.0
 	}
-	mut got := numeric_input_pre_commit_transform_mode('', '%', 2, NumericLocaleCfg{},
-		mode_cfg) or {
+	mut got := numeric_input_pre_commit_transform_mode('', '%', 2, NumericLocaleCfg{}, mode_cfg) or {
 		assert false
 		return
 	}
 	assert got == '%'
-	got = numeric_input_pre_commit_transform_mode('12', '12.%', 2, NumericLocaleCfg{},
-		mode_cfg) or {
+	got = numeric_input_pre_commit_transform_mode('12', '12.%', 2, NumericLocaleCfg{}, mode_cfg) or {
 		assert false
 		return
 	}

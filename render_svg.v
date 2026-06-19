@@ -210,7 +210,8 @@ fn render_svg_animated(cached &CachedSvg, color Color, res_key string, sx f32, s
 		has_opacity := gid in window.scratch.svg_group_opacities
 		if gid.len > 0 && (has_matrix || has_opacity) {
 			tris := if has_matrix {
-				window.scratch.transform_svg_triangles(tpath.triangles, window.scratch.svg_group_matrices[gid])
+				window.scratch.transform_svg_triangles(tpath.triangles,
+					window.scratch.svg_group_matrices[gid])
 			} else {
 				tpath.triangles
 			}

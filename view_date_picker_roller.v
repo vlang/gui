@@ -64,6 +64,7 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 			year_drum_width + padding * 2
 		}
 	}
+
 	min_width := if cfg.min_width > 0 { cfg.min_width } else { calculated_min_width }
 	month_format := if cfg.long_months { month_format_long } else { month_format_short }
 
@@ -73,8 +74,8 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 				cfg.selected_date.year) or { 31 }, day_format, day_drum_width)
 			drums << cfg.make_drum('month_drum', cfg.selected_date.month, 1, 12, month_format,
 				month_drum_width)
-			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year,
-				cfg.max_year, year_format, year_drum_width)
+			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year, cfg.max_year,
+				year_format, year_drum_width)
 			drum_order = ['day_drum', 'month_drum', 'year_drum']
 		}
 		.month_day_year {
@@ -82,20 +83,20 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 				month_drum_width)
 			drums << cfg.make_drum('day_drum', cfg.selected_date.day, 1, time.days_in_month(cfg.selected_date.month,
 				cfg.selected_date.year) or { 31 }, day_format, day_drum_width)
-			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year,
-				cfg.max_year, year_format, year_drum_width)
+			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year, cfg.max_year,
+				year_format, year_drum_width)
 			drum_order = ['month_drum', 'day_drum', 'year_drum']
 		}
 		.month_year {
 			drums << cfg.make_drum('month_drum', cfg.selected_date.month, 1, 12, month_format,
 				month_drum_width)
-			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year,
-				cfg.max_year, year_format, year_drum_width)
+			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year, cfg.max_year,
+				year_format, year_drum_width)
 			drum_order = ['month_drum', 'year_drum']
 		}
 		.year_only {
-			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year,
-				cfg.max_year, year_format, year_drum_width)
+			drums << cfg.make_drum('year_drum', cfg.selected_date.year, cfg.min_year, cfg.max_year,
+				year_format, year_drum_width)
 			drum_order = ['year_drum']
 		}
 	}
@@ -117,8 +118,7 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 		h_align:      .center
 		v_align:      .middle
 		on_keydown:   fn [on_change, selected_date, min_year, max_year] (_ &Layout, mut e Event, mut w Window) {
-			date_picker_on_keydown(on_change, selected_date, min_year, max_year, mut e, mut
-				w)
+			date_picker_on_keydown(on_change, selected_date, min_year, max_year, mut e, mut w)
 		}
 		content:      drums
 		amend_layout: fn [on_change, selected_date, min_year, max_year, drum_order] (mut layout Layout, mut w Window) {
@@ -126,8 +126,8 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 				layout.shape.events = &EventHandlers{}
 			}
 			layout.shape.events.on_mouse_scroll = fn [on_change, selected_date, min_year, max_year, drum_order] (ly &Layout, mut e Event, mut w Window) {
-				date_picker_on_scroll(ly, drum_order, on_change, selected_date, min_year,
-					max_year, mut e, mut w)
+				date_picker_on_scroll(ly, drum_order, on_change, selected_date, min_year, max_year, mut
+					e, mut w)
 			}
 		}
 	)
@@ -166,8 +166,7 @@ fn date_picker_on_scroll(layout &Layout, drum_order []string, on_change fn (time
 						date_picker_adjust_day(delta, selected_date, on_change, mut w)
 					}
 					'month_drum' {
-						date_picker_adjust_month(delta, selected_date, on_change, mut
-							w)
+						date_picker_adjust_month(delta, selected_date, on_change, mut w)
 					}
 					'year_drum' {
 						date_picker_adjust_year(delta, selected_date, min_year, max_year,
@@ -175,6 +174,7 @@ fn date_picker_on_scroll(layout &Layout, drum_order []string, on_change fn (time
 					}
 					else {}
 				}
+
 				e.is_handled = true
 				return
 			}
@@ -269,8 +269,7 @@ fn date_picker_on_keydown(on_change fn (time.Time, mut Window), selected_date ti
 			e.is_handled = true
 		}
 		e.modifiers == .none {
-			date_picker_adjust_year(delta, selected_date, min_year, max_year, on_change, mut
-				w)
+			date_picker_adjust_year(delta, selected_date, min_year, max_year, on_change, mut w)
 			e.is_handled = true
 		}
 		else {}

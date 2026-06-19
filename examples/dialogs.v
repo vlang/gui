@@ -274,6 +274,7 @@ fn show_alert_result(kind string, result gui.NativeAlertResult, mut w gui.Window
 			}
 		}
 	}
+
 	w.dialog(title: kind, body: body)
 }
 
@@ -299,6 +300,7 @@ fn show_native_result(kind string, result gui.NativeDialogResult, mut w gui.Wind
 			}
 		}
 	}
+
 	w.dialog(title: kind, body: body)
 }
 

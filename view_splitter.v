@@ -232,8 +232,7 @@ fn splitter_handle_view(cfg SplitterCfg, core &SplitterCore) View {
 			splitter_on_handle_click(core, layout, mut e, mut w)
 		}
 		on_hover:     fn [orientation, color_hover, color_active] (mut layout Layout, mut e Event, mut w Window) {
-			splitter_on_handle_hover(orientation, color_hover, color_active, mut layout, mut
-				e, mut w)
+			splitter_on_handle_hover(orientation, color_hover, color_active, mut layout, mut e, mut w)
 		}
 		content:      content
 	}
@@ -485,24 +484,22 @@ fn splitter_amend_layout(core &SplitterCore, mut layout Layout, mut w Window) {
 		x := layout.shape.x
 		y := layout.shape.y
 		h := layout.shape.height
-		splitter_layout_child(mut layout.children[0], x, y, computed.first_main, h, mut
-			w)
-		splitter_layout_child(mut layout.children[1], x + computed.first_main, y, computed.handle_main,
-			h, mut w)
-		splitter_layout_child(mut layout.children[2], x + computed.first_main + computed.handle_main,
-			y, computed.second_main, h, mut w)
+		splitter_layout_child(mut layout.children[0], x, y, computed.first_main, h, mut w)
+		splitter_layout_child(mut layout.children[1], x + computed.first_main, y,
+			computed.handle_main, h, mut w)
+		splitter_layout_child(mut layout.children[2],
+			x + computed.first_main + computed.handle_main, y, computed.second_main, h, mut w)
 		return
 	}
 
 	x := layout.shape.x
 	y := layout.shape.y
 	wid := layout.shape.width
-	splitter_layout_child(mut layout.children[0], x, y, wid, computed.first_main, mut
-		w)
-	splitter_layout_child(mut layout.children[1], x, y + computed.first_main, wid, computed.handle_main, mut
-		w)
-	splitter_layout_child(mut layout.children[2], x, y + computed.first_main + computed.handle_main,
-		wid, computed.second_main, mut w)
+	splitter_layout_child(mut layout.children[0], x, y, wid, computed.first_main, mut w)
+	splitter_layout_child(mut layout.children[1], x, y + computed.first_main, wid,
+		computed.handle_main, mut w)
+	splitter_layout_child(mut layout.children[2], x,
+		y + computed.first_main + computed.handle_main, wid, computed.second_main, mut w)
 }
 
 fn splitter_layout_child(mut child Layout, x f32, y f32, width f32, height f32, mut w Window) {
@@ -589,6 +586,7 @@ fn splitter_compute(core &SplitterCore, main_size f32) SplitterComputed {
 			ratio = if available > 0 { first / available } else { splitter_default_ratio }
 		}
 	}
+
 	return SplitterComputed{
 		first_main:  first
 		second_main: second

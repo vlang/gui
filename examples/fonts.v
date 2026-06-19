@@ -47,6 +47,7 @@ fn side_panel(mut window gui.Window) gui.View {
 		'Mono' { 'm' }
 		else { 'n' }
 	}
+
 	return gui.column(
 		sizing:  gui.fit_fill
 		spacing: gui.theme().spacing_large * 2

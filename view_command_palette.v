@@ -46,8 +46,7 @@ pub fn (mut window Window) command_palette(cfg CommandPaletteCfg) View {
 	}
 
 	query := state_read_or[string, string](&window, ns_cmd_palette_query, cfg.id, '')
-	highlighted := state_read_or[string, int](&window, ns_cmd_palette_highlight, cfg.id,
-		0)
+	highlighted := state_read_or[string, int](&window, ns_cmd_palette_highlight, cfg.id, 0)
 
 	// Convert to core items.
 	mut core_items := []ListCoreItem{cap: cfg.items.len}
@@ -224,8 +223,7 @@ fn make_palette_on_text_changed(palette_id string) fn (&Layout, string, mut Wind
 
 fn make_palette_on_keydown(palette_id string, on_action fn (string, mut Event, mut Window), on_dismiss fn (mut Window), filtered_ids []string) fn (mut Layout, mut Event, mut Window) {
 	return fn [palette_id, on_action, on_dismiss, filtered_ids] (mut _ Layout, mut e Event, mut w Window) {
-		palette_on_keydown(palette_id, on_action, on_dismiss, filtered_ids, mut e, mut
-			w)
+		palette_on_keydown(palette_id, on_action, on_dismiss, filtered_ids, mut e, mut w)
 	}
 }
 

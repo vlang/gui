@@ -13,11 +13,13 @@ fn layout_adjust_scroll_offsets(mut layout Layout, mut w Window) {
 	if id_scroll > 0 {
 		mut sx := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll)
 		mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
-		max_offset_x := f32_min(0, layout.shape.width - layout.shape.padding_width() - content_width(layout))
+		max_offset_x := f32_min(0, layout.shape.width - layout.shape.padding_width() -
+			content_width(layout))
 		offset_x := sx.get(id_scroll) or { f32(0) }
 		sx.set(id_scroll, f32_clamp(offset_x, max_offset_x, 0))
 
-		max_offset_y := f32_min(0, layout.shape.height - layout.shape.padding_height() - content_height(layout))
+		max_offset_y := f32_min(0, layout.shape.height - layout.shape.padding_height() -
+			content_height(layout))
 		offset_y := sy.get(id_scroll) or { f32(0) }
 		sy.set(id_scroll, f32_clamp(offset_y, max_offset_y, 0))
 	}
@@ -128,7 +130,8 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, mut w Window)
 		mut y_align := f32(0)
 		match axis {
 			.left_to_right {
-				remaining := layout.shape.height - child.shape.height - layout.shape.padding_height()
+				remaining := layout.shape.height - child.shape.height -
+					layout.shape.padding_height()
 				if remaining > 0 {
 					match layout.shape.v_align {
 						.top {}
@@ -151,8 +154,7 @@ fn layout_positions(mut layout Layout, offset_x f32, offset_y f32, mut w Window)
 		}
 
 		if is_rtl && axis == .left_to_right {
-			layout_positions(mut child, x - child.shape.width + x_align, y + y_align, mut
-				w)
+			layout_positions(mut child, x - child.shape.width + x_align, y + y_align, mut w)
 		} else {
 			layout_positions(mut child, x + x_align, y + y_align, mut w)
 		}

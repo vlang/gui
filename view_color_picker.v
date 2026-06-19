@@ -156,8 +156,7 @@ fn cp_sv_area(cfg ColorPickerCfg, size f32) View {
 						size_border:  3
 						padding:      padding_none
 						amend_layout: fn [id, color, indicator_size] (mut layout Layout, mut w Window) {
-							cp_amend_sv_indicator(id, color, indicator_size, mut layout, mut
-								w)
+							cp_amend_sv_indicator(id, color, indicator_size, mut layout, mut w)
 						}
 					),
 				]
@@ -212,8 +211,7 @@ fn cp_hue_slider(cfg ColorPickerCfg, w f32, h f32) View {
 						return n.shape.id == '${id}_hue'
 					})
 					if hue != none {
-						cp_hue_mouse_move(id, color, on_color_change, &hue, mut e, mut
-							w)
+						cp_hue_mouse_move(id, color, on_color_change, &hue, mut e, mut w)
 					}
 				}
 				mouse_up:   fn (_ &Layout, mut _ Event, mut w Window) {
@@ -233,8 +231,7 @@ fn cp_hue_slider(cfg ColorPickerCfg, w f32, h f32) View {
 				size_border:  3
 				padding:      padding_none
 				amend_layout: fn [id, color, indicator_size] (mut layout Layout, mut w Window) {
-					cp_amend_hue_indicator(id, color, indicator_size, mut layout, mut
-						w)
+					cp_amend_hue_indicator(id, color, indicator_size, mut layout, mut w)
 				}
 			),
 		]
@@ -267,8 +264,7 @@ fn cp_alpha_slider(cfg ColorPickerCfg) View {
 					on_color_change(c, mut e, mut w)
 					// Update persistent HSV state
 					al_h, al_s, al_v := c.to_hsv()
-					mut cps := state_map[string, ColorPickerState](mut w, ns_color_picker,
-						cap_few)
+					mut cps := state_map[string, ColorPickerState](mut w, ns_color_picker, cap_few)
 					cps.set(id, ColorPickerState{al_h, al_s, al_v})
 				}
 			),
@@ -443,6 +439,7 @@ fn cp_channel_input(cfg ColorPickerCfg, ch string, val u8, id_focus u32) View {
 					color
 				}
 			}
+
 			mut ev := Event{}
 			on_color_change(clr, mut ev, mut w)
 			// Update persistent HSV state

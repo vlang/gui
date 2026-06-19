@@ -25,10 +25,10 @@ pub:
 	clip            bool  = true
 	color           Color = color_transparent
 	radius          f32
-	on_draw         fn (mut DrawContext)                   = unsafe { nil }
-	on_click        fn (&Layout, mut Event, mut Window)    = unsafe { nil }
-	on_hover        fn (mut Layout, mut Event, mut Window) = unsafe { nil }
-	on_mouse_scroll fn (&Layout, mut Event, mut Window)    = unsafe { nil }
+	on_draw         fn (mut gui.DrawContext)                           = unsafe { nil }
+	on_click        fn (&gui.Layout, mut gui.Event, mut gui.Window)    = unsafe { nil }
+	on_hover        fn (mut gui.Layout, mut gui.Event, mut gui.Window) = unsafe { nil }
+	on_mouse_scroll fn (&gui.Layout, mut gui.Event, mut gui.Window)    = unsafe { nil }
 }
 
 fn (mut cv DrawCanvasView) generate_layout(mut window Window) Layout {

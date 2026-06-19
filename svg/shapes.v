@@ -147,8 +147,7 @@ fn parse_rect_element(elem string) ?VectorPath {
 		segments << PathSegment{.line_to, [x + w - rx, y]}
 		segments << arc_to_cubic(x + w - rx, y, rx, ry, 0, false, true, x + w, y + ry)
 		segments << PathSegment{.line_to, [x + w, y + h - ry]}
-		segments << arc_to_cubic(x + w, y + h - ry, rx, ry, 0, false, true, x + w - rx,
-			y + h)
+		segments << arc_to_cubic(x + w, y + h - ry, rx, ry, 0, false, true, x + w - rx, y + h)
 		segments << PathSegment{.line_to, [x + rx, y + h]}
 		segments << arc_to_cubic(x + rx, y + h, rx, ry, 0, false, true, x, y + h - ry)
 		segments << PathSegment{.line_to, [x, y + ry]}

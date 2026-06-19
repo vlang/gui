@@ -65,6 +65,7 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 		'end' { u8(2) }
 		else { u8(0) }
 	}
+
 	// Opacity
 	elem_opacity := parse_opacity_attr(elem, 'opacity', 1.0)
 	opacity := style.opacity * elem_opacity
@@ -79,8 +80,8 @@ fn parse_text_element(elem string, body string, inherited GroupStyle, mut state 
 
 	// Check for textPath children
 	if body.contains('<textPath') {
-		parse_textpath_element(body, font_family, scaled_size, bold, italic, color, fill_gradient_id,
-			opacity, letter_spacing, stroke_color, stroke_width, style, mut state)
+		parse_textpath_element(body, font_family, scaled_size, bold, italic, color,
+			fill_gradient_id, opacity, letter_spacing, stroke_color, stroke_width, style, mut state)
 		return
 	}
 
@@ -288,6 +289,7 @@ fn parse_textpath_element(body string, parent_family string, parent_size f32, pa
 		'end' { u8(2) }
 		else { u8(0) }
 	}
+
 	// Extended attributes
 	spacing_str := find_attr(tp_elem, 'spacing') or { 'auto' }
 	spacing := if spacing_str == 'exact' { u8(1) } else { u8(0) }

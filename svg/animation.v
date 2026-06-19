@@ -56,6 +56,7 @@ fn parse_animate_transform(elem string, gid string) ?SvgAnimation {
 			return none
 		}
 	}
+
 	dur := if d := find_attr(elem, 'dur') {
 		parse_smil_duration(d)
 	} else {

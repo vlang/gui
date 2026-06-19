@@ -481,6 +481,7 @@ fn table_estimate_row_height(cfg &TableCfg, mut window Window) f32 {
 		.all { cfg.size_border }
 		else { f32(0) }
 	}
+
 	return font_h + cfg.cell_padding.height() + border
 }
 

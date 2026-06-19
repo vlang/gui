@@ -24,6 +24,7 @@ pub fn (mut window Window) pulsar(cfg PulsarCfg) View {
 		true { cfg.width }
 		else { text_width(cfg.icon1, text_style, mut window) }
 	}
+
 	txt := if window.view_state.input_cursor_on { cfg.icon1 } else { cfg.icon2 }
 
 	return column(

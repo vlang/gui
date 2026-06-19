@@ -268,8 +268,8 @@ fn parse_path_d(d string) []PathSegment {
 					if rx <= 0 || ry <= 0 {
 						segments << PathSegment{.line_to, [ex, ey]}
 					} else {
-						arc_segs := arc_to_cubic(cur_x, cur_y, rx, ry, phi, large_arc,
-							sweep, ex, ey)
+						arc_segs :=
+							arc_to_cubic(cur_x, cur_y, rx, ry, phi, large_arc, sweep, ex, ey)
 						segments << arc_segs
 					}
 
@@ -286,6 +286,7 @@ fn parse_path_d(d string) []PathSegment {
 				i++
 			}
 		}
+
 		last_cmd = cmd
 	}
 

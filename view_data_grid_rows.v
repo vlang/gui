@@ -21,8 +21,8 @@ fn data_grid_group_header_row_view(cfg DataGridCfg, entry DataGridDisplayRow, ro
 		color:        cfg.color_filter
 		color_border: cfg.color_border
 		size_border:  0
-		padding:      padding(cfg.padding_cell.top, cfg.padding_cell.right, cfg.padding_cell.bottom,
-			cfg.padding_cell.left + depth_pad)
+		padding:      padding(cfg.padding_cell.top, cfg.padding_cell.right,
+			cfg.padding_cell.bottom, cfg.padding_cell.left + depth_pad)
 		spacing:      -cfg.size_border
 		content:      [
 			text(
@@ -53,8 +53,8 @@ fn data_grid_detail_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, col
 		color:        cfg.color_background
 		color_border: cfg.color_border
 		size_border:  0
-		padding:      padding(cfg.padding_cell.top, cfg.padding_cell.right, cfg.padding_cell.bottom,
-			cfg.padding_cell.left + data_grid_detail_indent())
+		padding:      padding(cfg.padding_cell.top, cfg.padding_cell.right,
+			cfg.padding_cell.bottom, cfg.padding_cell.left + data_grid_detail_indent())
 		spacing:      -cfg.size_border
 		content:      [
 			row(
@@ -116,8 +116,7 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 				detail_toggle_enabled, focus_id)
 		}
 		if is_editing_cell {
-			editor_focus_id := data_grid_cell_editor_focus_id(cfg, columns.len, row_idx,
-				col_idx)
+			editor_focus_id := data_grid_cell_editor_focus_id(cfg, columns.len, row_idx, col_idx)
 			cell_content << data_grid_cell_editor_view(cfg, row_id, row_idx, col, value,
 				editor_focus_id, focus_id, mut window)
 		} else {
@@ -191,8 +190,8 @@ fn data_grid_row_view(cfg DataGridCfg, row_data GridRow, row_idx int, columns []
 		spacing:      -cfg.size_border
 		on_click:     fn [rows, selection, grid_id, multi_select, range_select, on_selection_change, edit_enabled, editor_focus_base, col_count, row_idx, row_id, focus_id, columns] (_ &Layout, mut e Event, mut w Window) {
 			data_grid_row_click(rows, selection, grid_id, multi_select, range_select,
-				on_selection_change, edit_enabled, editor_focus_base, col_count, row_idx,
-				row_id, focus_id, columns, mut e, mut w)
+				on_selection_change, edit_enabled, editor_focus_base, col_count, row_idx, row_id,
+				focus_id, columns, mut e, mut w)
 		}
 		on_hover:     fn [color_row_hover, is_selected] (mut layout Layout, mut _ Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
@@ -231,8 +230,8 @@ fn data_grid_row_click(rows []GridRow, selection GridSelection, grid_id string, 
 			range_select, row_id, mut e, mut w)
 		on_selection_change(next, mut e, mut w)
 	}
-	data_grid_track_row_edit_click(grid_id, edit_enabled, editor_focus_base, col_count,
-		columns, row_idx, row_id, focus_id, mut e, mut w)
+	data_grid_track_row_edit_click(grid_id, edit_enabled, editor_focus_base, col_count, columns,
+		row_idx, row_id, focus_id, mut e, mut w)
 	e.is_handled = true
 }
 
@@ -337,8 +336,7 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 				on_select:   fn [grid_id, crud_enabled, on_cell_edit, row_id, row_idx, col_id] (selected []string, mut e Event, mut w Window) {
 					next_value := if selected.len > 0 { selected[0] } else { '' }
 					if row_id.len > 0 && col_id.len > 0 {
-						data_grid_crud_apply_cell_edit(grid_id, crud_enabled, on_cell_edit,
-							GridCellEdit{
+						data_grid_crud_apply_cell_edit(grid_id, crud_enabled, on_cell_edit, GridCellEdit{
 							row_id:  row_id
 							row_idx: row_idx
 							col_id:  col_id
@@ -364,8 +362,7 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 					}
 					next_value := dates[0].custom_format('M/D/YYYY')
 					if row_id.len > 0 && col_id.len > 0 {
-						data_grid_crud_apply_cell_edit(grid_id, crud_enabled, on_cell_edit,
-							GridCellEdit{
+						data_grid_crud_apply_cell_edit(grid_id, crud_enabled, on_cell_edit, GridCellEdit{
 							row_id:  row_id
 							row_idx: row_idx
 							col_id:  col_id
@@ -391,8 +388,7 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 						editor_false_value
 					}
 					if row_id.len > 0 && col_id.len > 0 {
-						data_grid_crud_apply_cell_edit(grid_id, crud_enabled, on_cell_edit,
-							GridCellEdit{
+						data_grid_crud_apply_cell_edit(grid_id, crud_enabled, on_cell_edit, GridCellEdit{
 							row_id:  row_id
 							row_idx: row_idx
 							col_id:  col_id
@@ -415,8 +411,7 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 				on_text_changed: fn [grid_id, crud_enabled, on_cell_edit, row_id, row_idx, col_id] (_ &Layout, text string, mut w Window) {
 					if row_id.len > 0 && col_id.len > 0 {
 						mut e := Event{}
-						data_grid_crud_apply_cell_edit(grid_id, crud_enabled, on_cell_edit,
-							GridCellEdit{
+						data_grid_crud_apply_cell_edit(grid_id, crud_enabled, on_cell_edit, GridCellEdit{
 							row_id:  row_id
 							row_idx: row_idx
 							col_id:  col_id
@@ -434,6 +429,7 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 			)
 		}
 	}
+
 	return row(
 		name:       'data_grid cell editor'
 		id:         '${editor_id}:wrap'

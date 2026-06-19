@@ -604,8 +604,8 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext, shading_refs ma
 				}
 			}
 			DrawText {
-				pdf_draw_text(mut out, ctx, renderer.text, renderer.x, renderer.y, renderer.cfg.style.size,
-					renderer.cfg.style.color)
+				pdf_draw_text(mut out, ctx, renderer.text, renderer.x, renderer.y,
+					renderer.cfg.style.size, renderer.cfg.style.color)
 			}
 			DrawLayout {
 				for item in renderer.layout.items {
@@ -614,6 +614,7 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext, shading_refs ma
 					}
 					size := f32(item.ascent + item.descent)
 					pdf_draw_text(mut out, ctx, item.run_text, renderer.x + f32(item.x),
+
 						renderer.y + f32(item.y - item.ascent), size, item.color)
 				}
 			}
@@ -637,6 +638,7 @@ fn pdf_render_stream(renderers []Renderer, ctx PdfRenderContext, shading_refs ma
 			DrawShadow, DrawBlur, DrawGradient, DrawGradientBorder, DrawCustomShader,
 			DrawFilterBegin, DrawFilterEnd, DrawFilterComposite, DrawNone {}
 		}
+
 		if advance {
 			i++
 		}
@@ -711,23 +713,23 @@ fn pdf_append_header_footer(mut out strings.Builder, job PrintJob, page_width f3
 		// margin top and content area). 9pt font needs ~12pt
 		// from top of reserved space for readable placement.
 		base_y := page_height - job.margins.top - header_h + 12
-		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.header.left, job,
-			page_num, page_count), left_x, base_y)
-		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.header.center, job,
-			page_num, page_count), center_x, base_y)
-		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.header.right, job,
-			page_num, page_count), right_x, base_y)
+		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.header.left, job, page_num,
+			page_count), left_x, base_y)
+		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.header.center, job, page_num,
+			page_count), center_x, base_y)
+		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.header.right, job, page_num,
+			page_count), right_x, base_y)
 	}
 	if job.footer.enabled {
 		// Place baseline in reserved footer space (between
 		// content area and margin bottom).
 		base_y := job.margins.bottom + footer_h - 12
-		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.footer.left, job,
-			page_num, page_count), left_x, base_y)
-		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.footer.center, job,
-			page_num, page_count), center_x, base_y)
-		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.footer.right, job,
-			page_num, page_count), right_x, base_y)
+		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.footer.left, job, page_num,
+			page_count), left_x, base_y)
+		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.footer.center, job, page_num,
+			page_count), center_x, base_y)
+		pdf_draw_header_footer_line(mut out, print_expand_tokens(job.footer.right, job, page_num,
+			page_count), right_x, base_y)
 	}
 }
 
@@ -738,8 +740,7 @@ fn pdf_page_stream(renderers []Renderer, ctx PdfRenderContext, shading_refs map[
 	out.writeln('${pdf_num(clip_x)} ${pdf_num(clip_y)} ${pdf_num(clip_w)} ${pdf_num(clip_h)} re W n')
 	out.write_string(body_stream)
 	out.writeln('Q')
-	pdf_append_header_footer(mut out, job, ctx.page_width, ctx.page_height, page_num,
-		page_count)
+	pdf_append_header_footer(mut out, job, ctx.page_width, ctx.page_height, page_num, page_count)
 	return out.bytestr()
 }
 

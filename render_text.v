@@ -195,8 +195,7 @@ fn render_text_try_transformed(mut shape Shape, style_state RenderTextStyleState
 				&& shape.tc.cached_transform_key == cache_key {
 				layout_to_draw = shape.tc.cached_transform_layout
 			} else {
-				mut transformed_layout := window.text_system.layout_text(text_to_layout,
-					cfg) or {
+				mut transformed_layout := window.text_system.layout_text(text_to_layout, cfg) or {
 					log.error('Transformed text layout failed at (${shape.x}, ${shape.y}): ${err.msg()}')
 					return true
 				}
@@ -342,8 +341,7 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 		if shape.tc.text_is_password && password_mask.len > 0 {
 			// Password fields still need measurement because the rendered text (*)
 			// is different from the logical text.
-			pw_pre := password_mask_slice(password_mask, shape.tc.text, line.start_index,
-				i_start)
+			pw_pre := password_mask_slice(password_mask, shape.tc.text, line.start_index, i_start)
 			start_x_offset := window.text_system.text_width(pw_pre, text_cfg) or { 0 }
 
 			pw_sel := password_mask_slice(password_mask, shape.tc.text, i_start, i_end)

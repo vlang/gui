@@ -92,6 +92,7 @@ fn gradient_direction(gradient &Gradient, width f32, height f32) (f32, f32) {
 		.to_bottom_left { 270.0 - f32(math.atan2(height, width)) * 180.0 / math.pi }
 		.to_top_left { 270.0 + f32(math.atan2(height, width)) * 180.0 / math.pi }
 	}
+
 	return angle_to_direction(css_angle)
 }
 

@@ -567,6 +567,7 @@ fn (cfg &InputCfg) commit_text(layout &Layout, reason InputCommitReason, mut w W
 			w.form_request_submit_for_layout(layout)
 		}
 	}
+
 	if cfg.on_text_changed != unsafe { nil } && text != cfg.text {
 		cfg.on_text_changed(layout, text, mut w)
 	}
@@ -591,8 +592,8 @@ fn (cfg &InputCfg) masked_insert(s string, mut w Window, compiled CompiledInputM
 fn (cfg &InputCfg) masked_delete(mut w Window, forward_delete bool, compiled CompiledInputMask) ?string {
 	input_state := input_state_or_default(cfg.id_focus, mut w)
 	res := if forward_delete {
-		input_mask_delete(cfg.text, input_state.cursor_pos, input_state.select_beg, input_state.select_end,
-			&compiled)
+		input_mask_delete(cfg.text, input_state.cursor_pos, input_state.select_beg,
+			input_state.select_end, &compiled)
 	} else {
 		input_mask_backspace(cfg.text, input_state.cursor_pos, input_state.select_beg,
 			input_state.select_end, &compiled)

@@ -58,6 +58,7 @@ fn main_view(window &gui.Window) gui.View {
 								.denied { 'denied: ${r.error_message}' }
 								.error { 'error: ${r.error_message}' }
 							}
+
 							w.update_window()
 						}
 					})

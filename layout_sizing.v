@@ -148,6 +148,7 @@ fn find_distribution_extrema(layout &Layout, axis DistributeAxis, mode Distribut
 		.grow { f32(max_u32) } // sentinel: larger than any real value
 		.shrink { f32(0) } // sentinel: smaller than any real value
 	}
+
 	for idx in fill_indices {
 		child_size := get_size(layout.children[idx].shape, axis)
 		match mode {
@@ -210,6 +211,7 @@ fn compute_distribution_delta(layout &Layout, state DistributionState, extrema D
 			}
 		}
 	}
+
 	if !f32_is_finite(size_delta) {
 		return none
 	}
@@ -224,10 +226,12 @@ fn compute_distribution_delta(layout &Layout, state DistributionState, extrema D
 			}
 		}
 	}
+
 	if !f32_is_finite(size_delta) {
 		return none
 	}
-	mut sane_delta_limit := f32_max(f32_abs(get_size(layout.shape, state.axis)), f32_abs(state.remaining))
+	mut sane_delta_limit := f32_max(f32_abs(get_size(layout.shape, state.axis)),
+		f32_abs(state.remaining))
 	sane_delta_limit = f32_max(sane_delta_limit * 4, 1_000_000)
 	if !f32_is_finite(sane_delta_limit) || sane_delta_limit <= 0 {
 		return none
@@ -311,8 +315,8 @@ fn distribute_space(mut layout Layout,
 		}
 		size_delta := compute_distribution_delta(layout, state, extrema, candidates.len,
 			fixed_indices.len) or { break }
-		state.remaining = apply_distribution_delta(mut layout, axis, extrema.extremum,
-			size_delta, state.remaining, mut candidates) or { break }
+		state.remaining = apply_distribution_delta(mut layout, axis, extrema.extremum, size_delta,
+			state.remaining, mut candidates) or { break }
 	}
 	return state.remaining
 }
@@ -367,6 +371,7 @@ fn layout_widths(mut layout Layout) {
 				// must not force the container wider.
 				if !layout.shape.clip {
 					layout.shape.min_width = f32_max(layout.shape.min_width,
+
 						child.shape.min_width + padding)
 				}
 			}
@@ -487,7 +492,8 @@ fn layout_fill_widths_with_scratch(mut layout Layout, mut scratch DistributeScra
 				total
 			}
 			sibling_width_sum := total_child_width - layout.shape.width
-			target_width := layout.parent.shape.width - sibling_width_sum - layout.parent.spacing() - layout.parent.shape.padding_width()
+			target_width := layout.parent.shape.width - sibling_width_sum -
+				layout.parent.spacing() - layout.parent.shape.padding_width()
 			layout.shape.width = f32_max(0, target_width)
 		}
 		if layout.shape.min_width > 0 && layout.shape.width < layout.shape.min_width {
@@ -544,8 +550,8 @@ fn layout_fill_heights_with_scratch(mut layout Layout, mut scratch DistributeScr
 
 		// Shrink if needed
 		if remaining_height < -f32_tolerance {
-			remaining_height = distribute_space(mut layout, remaining_height, .shrink,
-				.vertical, mut scratch.candidates, mut scratch.fixed_indices)
+			remaining_height = distribute_space(mut layout, remaining_height, .shrink, .vertical, mut
+				scratch.candidates, mut scratch.fixed_indices)
 		}
 	} else if layout.shape.axis == .left_to_right {
 		if layout.shape.id_scroll > 0 && layout.shape.sizing.height == .fill
@@ -561,7 +567,8 @@ fn layout_fill_heights_with_scratch(mut layout Layout, mut scratch DistributeScr
 				total
 			}
 			sibling_height_sum := total_child_height - layout.shape.height
-			target_height := layout.parent.shape.height - sibling_height_sum - layout.parent.spacing() - layout.parent.shape.padding_height()
+			target_height := layout.parent.shape.height - sibling_height_sum -
+				layout.parent.spacing() - layout.parent.shape.padding_height()
 			layout.shape.height = f32_max(0, target_height)
 		}
 		if layout.shape.min_height > 0 && layout.shape.height < layout.shape.min_height {

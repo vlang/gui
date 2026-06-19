@@ -492,15 +492,19 @@ fn (mut fetcher SqliteGridOrmFetcher) update_rows(rows []gui.GridRow, edits []gu
 		}
 		if edit.col_id == 'team' {
 			team_id := fetcher.team_id_for_name(edit.value)!
-			_ = fetcher.db.exec_param_many('update members set team_id = ? where id = ?',
-				[team_id.str(), id])!
+			_ = fetcher.db.exec_param_many('update members set team_id = ? where id = ?', [
+				team_id.str(),
+				id,
+			])!
 			updated_ids[id] = true
 			continue
 		}
 		if edit.col_id == 'active' {
 			value := if orm_demo_parse_bool(edit.value) { '1' } else { '0' }
-			_ = fetcher.db.exec_param_many('update members set active = ? where id = ?',
-				[value, id])!
+			_ = fetcher.db.exec_param_many('update members set active = ? where id = ?', [
+				value,
+				id,
+			])!
 			updated_ids[id] = true
 			continue
 		}
@@ -508,8 +512,10 @@ fn (mut fetcher SqliteGridOrmFetcher) update_rows(rows []gui.GridRow, edits []gu
 		if field.len == 0 {
 			continue
 		}
-		_ = fetcher.db.exec_param_many('update members set ${field} = ? where id = ?',
-			[edit.value, id])!
+		_ = fetcher.db.exec_param_many('update members set ${field} = ? where id = ?', [
+			edit.value,
+			id,
+		])!
 		updated_ids[id] = true
 	}
 	mut ids := updated_ids.keys()
@@ -566,8 +572,9 @@ fn (mut fetcher SqliteGridOrmFetcher) row_by_id(row_id string) !gui.GridRow {
 
 fn (mut fetcher SqliteGridOrmFetcher) team_id_for_name(name string) !int {
 	team_name := if name.trim_space().len > 0 { name.trim_space() } else { 'Core' }
-	rows := fetcher.db.exec_param_many('select id from teams where name = ? limit 1',
-		[team_name])!
+	rows := fetcher.db.exec_param_many('select id from teams where name = ? limit 1', [
+		team_name,
+	])!
 	if rows.len > 0 && rows[0].vals.len > 0 {
 		return rows[0].vals[0].int()
 	}

@@ -58,6 +58,7 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 		.bottom_center { x + parent.width / 2, y + parent.height }
 		.bottom_right { x + parent.width, y + parent.height }
 	}
+
 	shape := layout.shape
 	x, y = match tie_off {
 		.top_left { x, y }
@@ -70,6 +71,7 @@ fn float_attach_layout(layout &Layout) (f32, f32) {
 		.bottom_center { x - shape.width / 2, y - shape.height }
 		.bottom_right { x - shape.width, y - shape.height }
 	}
+
 	x += offset_x
 	y += layout.shape.float_offset_y
 	return x, y
@@ -98,8 +100,7 @@ fn layout_remove_floating_layouts_with_scratch(mut layout Layout, mut layouts []
 			layouts << heap_layout
 
 			// Recurse into the floating layout to find nested floats
-			layout_remove_floating_layouts_with_scratch(mut *heap_layout, mut layouts, mut
-				scratch)
+			layout_remove_floating_layouts_with_scratch(mut *heap_layout, mut layouts, mut scratch)
 
 			// Replace in original tree with empty placeholder
 			layout.children[i] = layout_placeholder()

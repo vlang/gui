@@ -105,8 +105,7 @@ fn test_drag_reorder_keyboard_move_requires_alt() {
 		}
 	}
 	mut cap := &DragKeyboardCapture{}
-	handled := drag_reorder_keyboard_move(.down, .none, .vertical, 1, ['a', 'b', 'c'],
-		fn [mut cap] (_ string, _ string, mut _ Window) {
+	handled := drag_reorder_keyboard_move(.down, .none, .vertical, 1, ['a', 'b', 'c'], fn [mut cap] (_ string, _ string, mut _ Window) {
 		cap.called = true
 	}, mut w)
 	assert !handled
@@ -121,8 +120,7 @@ fn test_drag_reorder_keyboard_move_payload_and_boundary() {
 		}
 	}
 	mut cap := &DragKeyboardCapture{}
-	handled := drag_reorder_keyboard_move(.right, .alt, .horizontal, 1, ['a', 'b', 'c', 'd'],
-		fn [mut cap] (m string, b string, mut _ Window) {
+	handled := drag_reorder_keyboard_move(.right, .alt, .horizontal, 1, ['a', 'b', 'c', 'd'], fn [mut cap] (m string, b string, mut _ Window) {
 		cap.called = true
 		cap.moved = m
 		cap.before = b
@@ -133,8 +131,7 @@ fn test_drag_reorder_keyboard_move_payload_and_boundary() {
 	assert cap.before == 'd'
 
 	mut boundary_cap := &DragKeyboardCapture{}
-	handled_boundary := drag_reorder_keyboard_move(.left, .alt, .horizontal, 0, ['a', 'b', 'c'],
-		fn [mut boundary_cap] (_ string, _ string, mut _ Window) {
+	handled_boundary := drag_reorder_keyboard_move(.left, .alt, .horizontal, 0, ['a', 'b', 'c'], fn [mut boundary_cap] (_ string, _ string, mut _ Window) {
 		boundary_cap.called = true
 	}, mut w)
 	assert !handled_boundary
@@ -292,15 +289,15 @@ fn test_drag_reorder_start_sets_layout_validity() {
 	}
 
 	drag_key_ok := 'drag_layout_ok'
-	drag_reorder_start(drag_key_ok, 0, 'a', .vertical, ['a', 'b'], ['a', 'b'], 0, 0,
-		'', &item, &e, mut w)
+	drag_reorder_start(drag_key_ok, 0, 'a', .vertical, ['a', 'b'], ['a', 'b'], 0, 0, '', &item, &e, mut
+		w)
 	state_ok := drag_reorder_get(mut w, drag_key_ok)
 	assert state_ok.started
 	assert state_ok.layouts_valid
 
 	drag_key_missing := 'drag_layout_missing'
-	drag_reorder_start(drag_key_missing, 0, 'a', .vertical, ['a', 'b'], ['a', 'missing'],
-		0, 0, '', &item, &e, mut w)
+	drag_reorder_start(drag_key_missing, 0, 'a', .vertical, ['a', 'b'], ['a', 'missing'], 0, 0, '',
+		&item, &e, mut w)
 	state_missing := drag_reorder_get(mut w, drag_key_missing)
 	assert state_missing.started
 	assert !state_missing.layouts_valid
@@ -414,8 +411,8 @@ fn test_drag_reorder_cancels_on_mid_drag_mutation() {
 	}
 
 	drag_key := 'drag_mutation'
-	drag_reorder_start(drag_key, 0, 'a', .vertical, ['a', 'b', 'c'], ['a', 'b', 'c'],
-		0, 0, '', &item, &e, mut w)
+	drag_reorder_start(drag_key, 0, 'a', .vertical, ['a', 'b', 'c'], ['a', 'b', 'c'], 0, 0, '',
+		&item, &e, mut w)
 	drag_reorder_ids_meta_set(mut w, drag_key, ['a', 'b', 'c'])
 
 	// Simulate list mutation before mouse-up.
@@ -459,8 +456,8 @@ fn test_drag_reorder_mouse_up_uses_current_callback_after_reclaim() {
 		mouse_y: 1
 	}
 
-	drag_reorder_start(drag_key, 0, 'a', .vertical, ['a', 'b', 'c'], ['a', 'b', 'c'],
-		0, 0, '', &item, &e, mut w)
+	drag_reorder_start(drag_key, 0, 'a', .vertical, ['a', 'b', 'c'], ['a', 'b', 'c'], 0, 0, '',
+		&item, &e, mut w)
 	mut state := drag_reorder_get(mut w, drag_key)
 	state.active = true
 	state.current_index = 2
@@ -474,6 +471,7 @@ fn test_drag_reorder_mouse_up_uses_current_callback_after_reclaim() {
 		assert false, 'expected mouse lock up callback'
 		return
 	}
+
 	mut up := Event{}
 	mouse_up(&w.layout, mut up, mut w)
 

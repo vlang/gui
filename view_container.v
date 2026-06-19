@@ -487,7 +487,7 @@ fn invisible_container_view() ContainerView {
 	}
 }
 
-fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
+fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []gui.Layout) {
 	if cv.title.len == 0 {
 		return
 	}

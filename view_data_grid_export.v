@@ -175,7 +175,8 @@ pub fn grid_rows_to_xlsx_file_with_cfg(path string, columns []GridColumnCfg, row
 	data_grid_xlsx_write_entry(mut zip, '[Content_Types].xml', data_grid_xlsx_content_types_xml())!
 	data_grid_xlsx_write_entry(mut zip, '_rels/.rels', data_grid_xlsx_root_rels_xml())!
 	data_grid_xlsx_write_entry(mut zip, 'xl/workbook.xml', data_grid_xlsx_workbook_xml())!
-	data_grid_xlsx_write_entry(mut zip, 'xl/_rels/workbook.xml.rels', data_grid_xlsx_workbook_rels_xml())!
+	data_grid_xlsx_write_entry(mut zip, 'xl/_rels/workbook.xml.rels',
+		data_grid_xlsx_workbook_rels_xml())!
 	data_grid_xlsx_write_entry(mut zip, 'xl/worksheets/sheet1.xml', data_grid_xlsx_sheet_xml(columns,
 		rows, export_cfg))!
 }

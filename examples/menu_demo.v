@@ -99,7 +99,8 @@ fn menu(mut window gui.Window) gui.View {
 					gui.menu_item_text('paste', 'Paste'),
 					gui.menu_separator(),
 					gui.menu_item_text('emoji', 'Emoji & Symbols'),
-					gui.menu_item_text('too-long', 'Long menu text item to test line wrappping in menu'),
+					gui.menu_item_text('too-long',
+						'Long menu text item to test line wrappping in menu'),
 				]
 			},
 			gui.MenuItemCfg{

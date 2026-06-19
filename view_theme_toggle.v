@@ -153,6 +153,7 @@ pub fn (window &Window) theme_toggle(cfg ThemeToggleCfg) View {
 					-1
 				}
 			}
+
 			if next_idx >= 0 && next_idx < count {
 				lbf.set(lb_id, next_idx)
 				name := names[next_idx]

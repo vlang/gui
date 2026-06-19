@@ -322,8 +322,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	mut resolved_cfg := resolved_cfg0
 	mut source_state := source_state0
 	if has_source {
-		data_grid_source_apply_pending_jump_selection(resolved_cfg, source_state, mut
-			window)
+		data_grid_source_apply_pending_jump_selection(resolved_cfg, source_state, mut window)
 	}
 
 	// If CRUD is enabled, overlay working copy of rows onto
@@ -345,8 +344,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 
 	// Interaction state: focus/scroll IDs, hovered/resizing
 	// column, and column chooser visibility.
-	row_delete_enabled := data_grid_crud_row_delete_enabled(resolved_cfg, has_source,
-		source_caps)
+	row_delete_enabled := data_grid_crud_row_delete_enabled(resolved_cfg, has_source, source_caps)
 	focus_id := data_grid_focus_id(resolved_cfg)
 	scroll_id := data_grid_scroll_id(resolved_cfg)
 	hovered_col_id := state_map[string, string](mut window, ns_dg_header_hover, cap_moderate).get(resolved_cfg.id) or {
@@ -414,8 +412,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 
 	// Pre-build header, frozen top rows, and column widths
 	// before entering the row assembly loop.
-	mut column_widths := data_grid_column_widths(resolved_cfg.id, resolved_cfg.columns, mut
-		window)
+	mut column_widths := data_grid_column_widths(resolved_cfg.id, resolved_cfg.columns, mut window)
 	total_width := data_grid_columns_total_width(columns, column_widths)
 	header_view := data_grid_header_row(resolved_cfg, columns, column_widths, focus_id,
 		hovered_col_id, resizing_col_id, focused_col_id)
@@ -432,8 +429,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	// rectangles above and below fill the remaining height
 	// so the scrollbar reflects total content size.
 	first_visible, last_visible := if virtualize {
-		data_grid_visible_range_for_scroll(scroll_y, grid_height, row_height, presentation.rows.len,
-			static_top, data_grid_virtual_buffer_rows)
+		data_grid_visible_range_for_scroll(scroll_y, grid_height, row_height,
+			presentation.rows.len, static_top, data_grid_virtual_buffer_rows)
 	} else {
 		0, last_row_idx
 	}
@@ -455,7 +452,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		rows << data_grid_source_status_row(resolved_cfg, gui_locale.str_loading)
 	}
 	if has_source && resolved_cfg.load_error.len > 0 && presentation.rows.len == 0 {
-		rows << data_grid_source_status_row(resolved_cfg, '${gui_locale.str_load_error}: ${resolved_cfg.load_error}')
+		rows << data_grid_source_status_row(resolved_cfg,
+			'${gui_locale.str_load_error}: ${resolved_cfg.load_error}')
 	}
 
 	if virtualize && first_visible > 0 {
@@ -483,8 +481,7 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 				continue
 			}
 			rows << data_grid_detail_row_view(resolved_cfg, resolved_cfg.rows[entry.data_row_idx],
-				entry.data_row_idx, columns, column_widths, row_height, focus_id, mut
-				window)
+				entry.data_row_idx, columns, column_widths, row_height, focus_id, mut window)
 			continue
 		}
 		if entry.data_row_idx < 0 || entry.data_row_idx >= resolved_cfg.rows.len {
@@ -553,8 +550,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		jump_text := state_map[string, string](mut window, ns_dg_jump, cap_moderate).get(resolved_cfg.id) or {
 			''
 		}
-		content << data_grid_pager_row(resolved_cfg, focus_id, page_index, page_count,
-			page_start, page_end, total_rows, grid_height, row_height, static_top, scroll_id,
+		content << data_grid_pager_row(resolved_cfg, focus_id, page_index, page_count, page_start,
+			page_end, total_rows, grid_height, row_height, static_top, scroll_id,
 			presentation.data_to_display, jump_text)
 	}
 	if source_pager_enabled {
@@ -574,8 +571,8 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 		a11y_role:        .grid
 		a11y_label:       resolved_cfg.a11y_label
 		a11y_description: resolved_cfg.a11y_description
-		on_keydown:       make_data_grid_on_keydown(resolved_cfg, columns, row_height,
-			static_top, scroll_id, page_indices, frozen_top_ids, presentation.data_to_display)
+		on_keydown:       make_data_grid_on_keydown(resolved_cfg, columns, row_height, static_top,
+			scroll_id, page_indices, frozen_top_ids, presentation.data_to_display)
 		on_char:          make_data_grid_on_char(resolved_cfg, columns)
 		on_mouse_move:    make_data_grid_on_mouse_move(resolved_cfg.id)
 		color:            resolved_cfg.color_background
@@ -595,16 +592,15 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	)
 }
 
-fn data_grid_presentation(cfg DataGridCfg, columns []GridColumnCfg) DataGridPresentation {
+fn data_grid_presentation(cfg DataGridCfg, columns []gui.GridColumnCfg) DataGridPresentation {
 	return data_grid_presentation_rows(cfg, columns, data_grid_visible_row_indices(cfg.rows.len,
 		[]int{}))
 }
 
-fn data_grid_cached_presentation(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int, mut window Window) DataGridPresentation {
+fn data_grid_cached_presentation(cfg DataGridCfg, columns []gui.GridColumnCfg, row_indices []int, mut window Window) DataGridPresentation {
 	group_cols := data_grid_group_columns(cfg.group_by, columns)
 	value_cols := data_grid_presentation_value_cols(group_cols, cfg.aggregates)
-	signature := data_grid_presentation_signature(cfg, columns, row_indices, group_cols,
-		value_cols)
+	signature := data_grid_presentation_signature(cfg, columns, row_indices, group_cols, value_cols)
 	mut dg_pc := state_map[string, DataGridPresentationCache](mut window, ns_dg_presentation,
 		cap_moderate)
 	if cached := dg_pc.get(cfg.id) {
@@ -634,7 +630,7 @@ fn data_grid_cached_presentation(cfg DataGridCfg, columns []GridColumnCfg, row_i
 	return presentation
 }
 
-fn data_grid_presentation_signature(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int, group_cols []string, value_cols []string) u64 {
+fn data_grid_presentation_signature(cfg DataGridCfg, columns []gui.GridColumnCfg, row_indices []int, group_cols []string, value_cols []string) u64 {
 	mut hash := data_grid_fnv64_offset
 	visible_indices := data_grid_visible_row_indices(cfg.rows.len, row_indices)
 	group_titles := data_grid_group_titles(columns)
@@ -713,7 +709,7 @@ fn data_grid_presentation_value_cols(group_cols []string, aggregates []GridAggre
 // expansion rows are interleaved after their parent data
 // row. data_to_display maps data row index → display index
 // for scroll-into-view.
-fn data_grid_presentation_rows(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int) DataGridPresentation {
+fn data_grid_presentation_rows(cfg DataGridCfg, columns []gui.GridColumnCfg, row_indices []int) DataGridPresentation {
 	visible_indices := data_grid_visible_row_indices(cfg.rows.len, row_indices)
 	group_cols := data_grid_group_columns(cfg.group_by, columns)
 	group_ranges := if group_cols.len > 0 && visible_indices.len > 0 {
@@ -721,11 +717,11 @@ fn data_grid_presentation_rows(cfg DataGridCfg, columns []GridColumnCfg, row_ind
 	} else {
 		map[string]int{}
 	}
-	return data_grid_presentation_rows_with_group_ranges(cfg, columns, visible_indices,
-		group_cols, group_ranges)
+	return data_grid_presentation_rows_with_group_ranges(cfg, columns, visible_indices, group_cols,
+		group_ranges)
 }
 
-fn data_grid_presentation_rows_with_group_ranges(cfg DataGridCfg, columns []GridColumnCfg, visible_indices []int, group_cols []string, group_ranges map[string]int) DataGridPresentation {
+fn data_grid_presentation_rows_with_group_ranges(cfg DataGridCfg, columns []gui.GridColumnCfg, visible_indices []int, group_cols []string, group_ranges map[string]int) DataGridPresentation {
 	mut rows := []DataGridDisplayRow{cap: cfg.rows.len + 8}
 	mut data_to_display := map[int]int{}
 	if group_cols.len == 0 || visible_indices.len == 0 {
@@ -812,7 +808,7 @@ fn data_grid_presentation_rows_with_group_ranges(cfg DataGridCfg, columns []Grid
 	}
 }
 
-fn data_grid_group_columns(group_by []string, columns []GridColumnCfg) []string {
+fn data_grid_group_columns(group_by []string, columns []gui.GridColumnCfg) []string {
 	if group_by.len == 0 {
 		return []
 	}
@@ -834,7 +830,7 @@ fn data_grid_group_columns(group_by []string, columns []GridColumnCfg) []string 
 	return cols
 }
 
-fn data_grid_group_titles(columns []GridColumnCfg) map[string]string {
+fn data_grid_group_titles(columns []gui.GridColumnCfg) map[string]string {
 	mut titles := map[string]string{}
 	for col in columns {
 		if col.id.len == 0 {
@@ -855,7 +851,7 @@ fn data_grid_group_range_key(depth int, start_idx int) string {
 // depths D..max, then opens new ranges. Key format is
 // "depth:start_idx". Accepts full rows array + indices to
 // avoid copying row structs.
-fn data_grid_group_ranges(rows []GridRow, indices []int, group_cols []string) map[string]int {
+fn data_grid_group_ranges(rows []gui.GridRow, indices []int, group_cols []string) map[string]int {
 	mut ranges := map[string]int{}
 	if indices.len == 0 || group_cols.len == 0 {
 		return ranges
@@ -934,7 +930,7 @@ fn data_grid_aggregate_label(agg GridAggregateCfg) string {
 	return '${agg.op.str()} ${agg.col_id}'
 }
 
-fn data_grid_aggregate_value(rows []GridRow, start_idx int, end_idx int, agg GridAggregateCfg) ?string {
+fn data_grid_aggregate_value(rows []gui.GridRow, start_idx int, end_idx int, agg GridAggregateCfg) ?string {
 	if agg.op == .count {
 		return (end_idx - start_idx + 1).str()
 	}

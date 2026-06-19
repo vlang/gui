@@ -26,7 +26,7 @@ fn data_grid_crud_row_delete_enabled(cfg DataGridCfg, has_source bool, caps Grid
 
 // col_ids: pre-sorted column ID list. When non-empty,
 // avoids per-row .keys() + .sort() allocations.
-fn data_grid_rows_signature(rows []GridRow, col_ids []string) u64 {
+fn data_grid_rows_signature(rows []gui.GridRow, col_ids []string) u64 {
 	if rows.len == 0 {
 		return u64(0)
 	}
@@ -60,7 +60,7 @@ fn data_grid_rows_signature(rows []GridRow, col_ids []string) u64 {
 	return h
 }
 
-fn data_grid_rows_id_signature(rows []GridRow) u64 {
+fn data_grid_rows_id_signature(rows []gui.GridRow) u64 {
 	if rows.len == 0 {
 		return u64(0)
 	}
@@ -170,18 +170,18 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 		spacing:      6
 		v_align:      .middle
 		content:      [
-			data_grid_indicator_button(gui_locale.str_add, cfg.text_style_filter, cfg.color_header_hover,
-				!can_create || state.saving, 0, fn [grid_id, columns, on_selection_change, focus_id, scroll_id, page_size, page_index, on_page_change] (_ &Layout, mut e Event, mut w Window) {
-				data_grid_crud_add_row(grid_id, columns, on_selection_change, focus_id,
-					scroll_id, page_size, page_index, on_page_change, mut e, mut w)
+			data_grid_indicator_button(gui_locale.str_add, cfg.text_style_filter,
+				cfg.color_header_hover, !can_create || state.saving, 0, fn [grid_id, columns, on_selection_change, focus_id, scroll_id, page_size, page_index, on_page_change] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_crud_add_row(grid_id, columns, on_selection_change, focus_id, scroll_id,
+					page_size, page_index, on_page_change, mut e, mut w)
 			}),
-			data_grid_indicator_button(gui_locale.str_delete, cfg.text_style_filter, cfg.color_header_hover,
-				!can_delete || selected_count == 0 || state.saving, 0, fn [grid_id, selection, on_selection_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
-				data_grid_crud_delete_selected(grid_id, selection, on_selection_change,
-					focus_id, mut e, mut w)
+			data_grid_indicator_button(gui_locale.str_delete, cfg.text_style_filter,
+				cfg.color_header_hover, !can_delete || selected_count == 0 || state.saving, 0, fn [grid_id, selection, on_selection_change, focus_id] (_ &Layout, mut e Event, mut w Window) {
+				data_grid_crud_delete_selected(grid_id, selection, on_selection_change, focus_id, mut
+					e, mut w)
 			}),
-			data_grid_indicator_button(gui_locale.str_save, cfg.text_style_filter, cfg.color_header_hover,
-				!has_unsaved || state.saving, 0, fn [grid_id, data_source, query, on_crud_error, on_rows_change, selection, on_selection_change, focus_id, has_source, caps] (_ &Layout, mut e Event, mut w Window) {
+			data_grid_indicator_button(gui_locale.str_save, cfg.text_style_filter,
+				cfg.color_header_hover, !has_unsaved || state.saving, 0, fn [grid_id, data_source, query, on_crud_error, on_rows_change, selection, on_selection_change, focus_id, has_source, caps] (_ &Layout, mut e Event, mut w Window) {
 				data_grid_crud_save(DataGridCrudSaveContext{
 					grid_id:             grid_id
 					data_source:         data_source
@@ -195,7 +195,8 @@ fn data_grid_crud_toolbar_row(cfg DataGridCfg, state DataGridCrudState, caps Gri
 					focus_id:            focus_id
 				}, mut e, mut w)
 			}),
-			data_grid_indicator_button(gui_locale.str_cancel, cfg.text_style_filter, cfg.color_header_hover,
+			data_grid_indicator_button(gui_locale.str_cancel, cfg.text_style_filter,
+				cfg.color_header_hover,
 				(!has_unsaved && state.save_error.len == 0) || state.saving, 0, fn [grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
 				data_grid_crud_cancel(grid_id, focus_id, mut e, mut w)
 			}),
@@ -283,8 +284,7 @@ fn data_grid_crud_delete_selected(grid_id string, selection GridSelection, on_se
 			ids << row_id
 		}
 	}
-	data_grid_crud_delete_rows(grid_id, selection, on_selection_change, ids, focus_id, mut
-		e, mut w)
+	data_grid_crud_delete_rows(grid_id, selection, on_selection_change, ids, focus_id, mut e, mut w)
 }
 
 fn data_grid_crud_delete_rows(grid_id string, selection GridSelection, on_selection_change fn (sel GridSelection, mut e Event, mut w Window), row_ids []string, focus_id u32, mut e Event, mut w Window) {
@@ -362,7 +362,7 @@ fn data_grid_selection_remove_ids(selection GridSelection, remove_ids map[string
 // mutation lists: new draft rows (create), dirty non-draft rows
 // with per-cell deltas (update), and deleted row IDs.
 // committed_map enables O(1) lookup of previous cell values.
-fn data_grid_crud_build_payload(state DataGridCrudState) ([]GridRow, []GridRow, []GridCellEdit, []string) {
+fn data_grid_crud_build_payload(state DataGridCrudState) ([]gui.GridRow, []gui.GridRow, []gui.GridCellEdit, []string) {
 	mut create_rows := []GridRow{}
 	mut update_rows := []GridRow{}
 	mut update_edits := []GridCellEdit{}
@@ -417,7 +417,7 @@ fn data_grid_crud_build_payload(state DataGridCrudState) ([]GridRow, []GridRow, 
 // server-assigned rows. The source MUST return `created` in the
 // same order as the input `create_rows`; mismatched order causes
 // draft IDs to persist silently. Returns (id_map, error_msg).
-fn data_grid_crud_replace_created_rows(mut rows []GridRow, create_rows []GridRow, created []GridRow) (map[string]string, string) {
+fn data_grid_crud_replace_created_rows(mut rows []gui.GridRow, create_rows []gui.GridRow, created []gui.GridRow) (map[string]string, string) {
 	mut replace := map[string]string{}
 	if create_rows.len == 0 || created.len == 0 {
 		if create_rows.len > 0 && created.len == 0 {
@@ -566,18 +566,18 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 		// Pre-validate capabilities synchronously before
 		// spawning — avoids async round-trip for known errors.
 		if create_rows.len > 0 && !ctx.caps.supports_create {
-			data_grid_crud_restore_on_error(grid_id, 'create', ctx.on_crud_error, mut
-				e, mut w, snapshot_rows, 'grid: create not supported')
+			data_grid_crud_restore_on_error(grid_id, 'create', ctx.on_crud_error, mut e, mut w,
+				snapshot_rows, 'grid: create not supported')
 			return
 		}
 		if update_edits.len > 0 && !ctx.caps.supports_update {
-			data_grid_crud_restore_on_error(grid_id, 'update', ctx.on_crud_error, mut
-				e, mut w, snapshot_rows, 'grid: update not supported')
+			data_grid_crud_restore_on_error(grid_id, 'update', ctx.on_crud_error, mut e, mut w,
+				snapshot_rows, 'grid: update not supported')
 			return
 		}
 		if delete_ids.len > 0 && !ctx.caps.supports_delete {
-			data_grid_crud_restore_on_error(grid_id, 'delete', ctx.on_crud_error, mut
-				e, mut w, snapshot_rows, 'grid: delete not supported')
+			data_grid_crud_restore_on_error(grid_id, 'delete', ctx.on_crud_error, mut e, mut w,
+				snapshot_rows, 'grid: delete not supported')
 			return
 		}
 		query := ctx.query
@@ -605,8 +605,8 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 		}
 	} else {
 		// Local-rows mode: no I/O, apply immediately.
-		data_grid_crud_finish_save(grid_id, map[string]string{}, none, ctx.on_rows_change,
-			false, ctx.focus_id, mut e, mut w)
+		data_grid_crud_finish_save(grid_id, map[string]string{}, none, ctx.on_rows_change, false,
+			ctx.focus_id, mut e, mut w)
 	}
 	e.is_handled = true
 }
@@ -614,7 +614,7 @@ fn data_grid_crud_save(ctx DataGridCrudSaveContext, mut e Event, mut w Window) {
 // Executes create/update/delete mutations sequentially on a
 // spawned thread. Returns a result struct for main-thread
 // application via queue_command.
-fn data_grid_crud_exec_mutations(mut source DataGridDataSource, grid_id string, query GridQueryState, create_rows []GridRow, update_rows []GridRow, update_edits []GridCellEdit, delete_ids []string) DataGridCrudMutationResult {
+fn data_grid_crud_exec_mutations(mut source DataGridDataSource, grid_id string, query GridQueryState, create_rows []gui.GridRow, update_rows []gui.GridRow, update_edits []gui.GridCellEdit, delete_ids []string) DataGridCrudMutationResult {
 	mut row_count := ?int(none)
 	mut created := []GridRow{}
 	if create_rows.len > 0 {
@@ -680,11 +680,11 @@ fn data_grid_crud_exec_mutations(mut source DataGridDataSource, grid_id string, 
 
 // Applied on main thread via queue_command after async
 // mutations complete (success or failure).
-fn data_grid_crud_apply_save_result(grid_id string, result DataGridCrudMutationResult, snapshot_rows []GridRow, on_crud_error fn (msg string, mut e Event, mut w Window), on_rows_change fn (rows_ []GridRow, mut e Event, mut w Window), selection GridSelection, on_selection_change fn (sel GridSelection, mut e Event, mut w Window), focus_id u32, mut w Window) {
+fn data_grid_crud_apply_save_result(grid_id string, result DataGridCrudMutationResult, snapshot_rows []gui.GridRow, on_crud_error fn (msg string, mut e Event, mut w Window), on_rows_change fn (rows_ []gui.GridRow, mut e Event, mut w Window), selection GridSelection, on_selection_change fn (sel GridSelection, mut e Event, mut w Window), focus_id u32, mut w Window) {
 	mut e := Event{}
 	if result.err_msg.len > 0 {
-		data_grid_crud_restore_on_error(grid_id, result.err_phase, on_crud_error, mut
-			e, mut w, snapshot_rows, result.err_msg)
+		data_grid_crud_restore_on_error(grid_id, result.err_phase, on_crud_error, mut e, mut w,
+			snapshot_rows, result.err_msg)
 		return
 	}
 	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
@@ -699,15 +699,14 @@ fn data_grid_crud_apply_save_result(grid_id string, result DataGridCrudMutationR
 	}
 	mut dg_crud := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate)
 	dg_crud.set(grid_id, state)
-	data_grid_crud_remap_selection(selection, on_selection_change, replace_ids, mut e, mut
-		w)
-	data_grid_crud_finish_save(grid_id, replace_ids, result.row_count, on_rows_change,
-		true, focus_id, mut e, mut w)
+	data_grid_crud_remap_selection(selection, on_selection_change, replace_ids, mut e, mut w)
+	data_grid_crud_finish_save(grid_id, replace_ids, result.row_count, on_rows_change, true,
+		focus_id, mut e, mut w)
 }
 
 // Finalizes a successful save: clears dirty state, updates
 // signatures, triggers on_rows_change callback and refetch.
-fn data_grid_crud_finish_save(grid_id string, replace_ids map[string]string, row_count ?int, on_rows_change fn (rows_ []GridRow, mut e Event, mut w Window), has_source bool, focus_id u32, mut e Event, mut w Window) {
+fn data_grid_crud_finish_save(grid_id string, replace_ids map[string]string, row_count ?int, on_rows_change fn (rows_ []gui.GridRow, mut e Event, mut w Window), has_source bool, focus_id u32, mut e Event, mut w Window) {
 	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {
 		DataGridCrudState{}
 	}
@@ -727,8 +726,7 @@ fn data_grid_crud_finish_save(grid_id string, replace_ids map[string]string, row
 	}
 	if has_source {
 		if count := row_count {
-			data_grid_source_apply_local_mutation(grid_id, rows_copy, ?int(count), mut
-				w)
+			data_grid_source_apply_local_mutation(grid_id, rows_copy, ?int(count), mut w)
 		} else {
 			data_grid_source_apply_local_mutation(grid_id, rows_copy, none, mut w)
 		}
@@ -739,7 +737,7 @@ fn data_grid_crud_finish_save(grid_id string, replace_ids map[string]string, row
 	}
 }
 
-fn data_grid_crud_restore_on_error(grid_id string, phase string, on_crud_error fn (msg string, mut e Event, mut w Window), mut e Event, mut w Window, snapshot_rows []GridRow, err_msg string) {
+fn data_grid_crud_restore_on_error(grid_id string, phase string, on_crud_error fn (msg string, mut e Event, mut w Window), mut e Event, mut w Window, snapshot_rows []gui.GridRow, err_msg string) {
 	// Re-fetch authoritative state from view_state to avoid
 	// overwriting edits made between snapshot and error.
 	mut state := state_map[string, DataGridCrudState](mut w, ns_dg_crud, cap_moderate).get(grid_id) or {

@@ -177,19 +177,20 @@ pub fn (source InMemoryDataSource) fetch_data(req GridDataRequest) !GridDataResu
 }
 
 pub fn (mut source InMemoryDataSource) mutate_data(req GridMutationRequest) !GridMutationResult {
-	return data_grid_source_inmemory_mutate(mut source.rows, source.latency_ms, source.row_count_known,
-		req)
+	return data_grid_source_inmemory_mutate(mut source.rows, source.latency_ms,
+		source.row_count_known, req)
 }
 
 fn data_grid_source_inmemory_fetch(rows []GridRow, default_limit int, latency_ms int, row_count_known bool, req GridDataRequest) !GridDataResult {
 	data_grid_source_sleep_with_abort(req.signal, latency_ms)!
 	filtered := data_grid_source_apply_query(rows, req.query)
-	limit := int_clamp(if default_limit > 0 { default_limit } else { 100 }, 1, data_grid_source_max_page_limit)
+	limit := int_clamp(if default_limit > 0 { default_limit } else { 100 }, 1,
+		data_grid_source_max_page_limit)
 	start, end := match req.page {
 		GridCursorPageReq {
 			s := int_clamp(data_grid_source_cursor_to_index(req.page.cursor), 0, filtered.len)
-			chunk := int_clamp(if req.page.limit > 0 { req.page.limit } else { limit },
-				1, data_grid_source_max_page_limit)
+			chunk := int_clamp(if req.page.limit > 0 { req.page.limit } else { limit }, 1,
+				data_grid_source_max_page_limit)
 			s, int_min(filtered.len, s + chunk)
 		}
 		GridOffsetPageReq {
@@ -197,6 +198,7 @@ fn data_grid_source_inmemory_fetch(rows []GridRow, default_limit int, latency_ms
 				limit)
 		}
 	}
+
 	page := filtered[start..end].clone()
 	grid_abort_check(req.signal)!
 	is_cursor := req.page is GridCursorPageReq
@@ -221,8 +223,7 @@ fn data_grid_source_inmemory_fetch(rows []GridRow, default_limit int, latency_ms
 fn data_grid_source_inmemory_mutate(mut rows []GridRow, latency_ms int, row_count_known bool, req GridMutationRequest) !GridMutationResult {
 	data_grid_source_sleep_with_abort(req.signal, latency_ms)!
 	mut work := rows.clone()
-	result := data_grid_source_apply_mutation(mut work, req.kind, req.rows, req.row_ids,
-		req.edits)!
+	result := data_grid_source_apply_mutation(mut work, req.kind, req.rows, req.row_ids, req.edits)!
 	grid_abort_check(req.signal)!
 	// V requires `unsafe` to fully reassign a `mut` array param.
 	rows = unsafe { work }
@@ -421,6 +422,7 @@ fn data_grid_source_row_matches_query(row GridRow, needle string, filters []Grid
 			'ends_with' { grid_ends_with_lower(cell, filter.value) }
 			else { grid_contains_lower(cell, filter.value) }
 		}
+
 		if !matched {
 			return false
 		}

@@ -62,8 +62,7 @@ fn main_view(mut w gui.Window) gui.View {
 						reorderable:  true
 						on_reorder:   fn (moved_id string, before_id string, mut w gui.Window) {
 							mut a := w.state[App]()
-							from, to := gui.reorder_indices(a.items.map(it.id), moved_id,
-								before_id)
+							from, to := gui.reorder_indices(a.items.map(it.id), moved_id, before_id)
 							if from >= 0 {
 								item := a.items[from]
 								a.items.delete(from)
@@ -93,8 +92,7 @@ fn main_view(mut w gui.Window) gui.View {
 						}
 						on_reorder:  fn (moved_id string, before_id string, mut w gui.Window) {
 							mut a := w.state[App]()
-							from, to := gui.reorder_indices(a.tabs.map(it.id), moved_id,
-								before_id)
+							from, to := gui.reorder_indices(a.tabs.map(it.id), moved_id, before_id)
 							if from >= 0 {
 								tab := a.tabs[from]
 								a.tabs.delete(from)

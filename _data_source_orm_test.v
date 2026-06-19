@@ -257,7 +257,7 @@ fn test_grid_orm_data_source_mutate_create_update_delete() {
 	mut source := GridOrmDataSource{
 		columns:        orm_test_columns()
 		fetch_fn:       orm_test_fetch_ok
-		create_fn:      fn (rows []GridRow, _ &GridAbortSignal) ![]GridRow {
+		create_fn:      fn (rows []gui.GridRow, _ &GridAbortSignal) ![]gui.GridRow {
 			assert rows.len == 1
 			return [
 				GridRow{
@@ -266,7 +266,7 @@ fn test_grid_orm_data_source_mutate_create_update_delete() {
 				},
 			]
 		}
-		update_fn:      fn (_ []GridRow, edits []GridCellEdit, _ &GridAbortSignal) ![]GridRow {
+		update_fn:      fn (_ []gui.GridRow, edits []gui.GridCellEdit, _ &GridAbortSignal) ![]gui.GridRow {
 			assert edits.len == 1
 			return [
 				GridRow{
@@ -414,10 +414,10 @@ fn test_grid_orm_capabilities_with_mutation_fns() {
 	mut source := GridOrmDataSource{
 		columns:        orm_test_columns()
 		fetch_fn:       orm_test_fetch_ok
-		create_fn:      fn (_ []GridRow, _ &GridAbortSignal) ![]GridRow {
+		create_fn:      fn (_ []gui.GridRow, _ &GridAbortSignal) ![]gui.GridRow {
 			return []GridRow{}
 		}
-		update_fn:      fn (_ []GridRow, _ []GridCellEdit, _ &GridAbortSignal) ![]GridRow {
+		update_fn:      fn (_ []gui.GridRow, _ []gui.GridCellEdit, _ &GridAbortSignal) ![]gui.GridRow {
 			return []GridRow{}
 		}
 		delete_many_fn: fn (_ []string, _ &GridAbortSignal) ![]string {
@@ -474,7 +474,7 @@ fn test_grid_orm_data_source_mutate_honors_abort() {
 	mut source := GridOrmDataSource{
 		columns:   orm_test_columns()
 		fetch_fn:  orm_test_fetch_ok
-		create_fn: fn (_ []GridRow, _ &GridAbortSignal) ![]GridRow {
+		create_fn: fn (_ []gui.GridRow, _ &GridAbortSignal) ![]gui.GridRow {
 			return []GridRow{}
 		}
 	}
@@ -1018,7 +1018,7 @@ fn orm_test_columns() []GridOrmColumnSpec {
 	]
 }
 
-fn orm_test_rows(ids []string) []GridRow {
+fn orm_test_rows(ids []string) []gui.GridRow {
 	mut rows := []GridRow{cap: ids.len}
 	for id in ids {
 		rows << GridRow{

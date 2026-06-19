@@ -55,6 +55,7 @@ fn toast_container_view(window &Window) View {
 		.top_left, .bottom_left { style.margin }
 		.top_right, .bottom_right { -style.margin }
 	}
+
 	offset_y := match anchor {
 		.top_left, .top_right { style.margin }
 		.bottom_left, .bottom_right { -style.margin }

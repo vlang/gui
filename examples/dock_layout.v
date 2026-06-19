@@ -23,10 +23,13 @@ fn main() {
 
 fn default_layout() &gui.DockNode {
 	// IDE-style: explorer left | (editor top / terminal bottom)
-	return gui.dock_split('root', .horizontal, 0.22, gui.dock_panel_group('left_group',
-		['explorer', 'search'], 'explorer'), gui.dock_split('right_split', .vertical,
-		0.65, gui.dock_panel_group('editor_group', ['main_v', 'readme'], 'main_v'), gui.dock_panel_group('bottom_group',
-		['terminal', 'output'], 'terminal')))
+	return gui.dock_split('root', .horizontal, 0.22, gui.dock_panel_group('left_group', [
+		'explorer',
+		'search',
+	], 'explorer'), gui.dock_split('right_split', .vertical, 0.65, gui.dock_panel_group('editor_group', [
+		'main_v',
+		'readme',
+	], 'main_v'), gui.dock_panel_group('bottom_group', ['terminal', 'output'], 'terminal')))
 }
 
 fn main_view(window &gui.Window) gui.View {
@@ -81,8 +84,7 @@ fn main_view(window &gui.Window) gui.View {
 				}
 				on_panel_select:  fn (group_id string, panel_id string, mut w gui.Window) {
 					mut app := w.state[DockApp]()
-					app.dock_root = gui.dock_tree_select_panel(app.dock_root, group_id,
-						panel_id)
+					app.dock_root = gui.dock_tree_select_panel(app.dock_root, group_id, panel_id)
 				}
 				on_panel_close:   fn (panel_id string, mut w gui.Window) {
 					mut app := w.state[DockApp]()

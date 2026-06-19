@@ -252,8 +252,11 @@ pub fn dock_tree_wrap_root(root &DockNode, panel_id string, zone DockDropZone) &
 	dir := dock_zone_to_split_dir(zone)
 	first_is_new := zone == .window_left || zone == .window_top
 	ratio := if first_is_new { f32(0.2) } else { f32(0.8) }
-	return dock_split('dock_root_split', dir, ratio, if first_is_new { new_group } else { root },
-		if first_is_new { root } else { new_group })
+	return dock_split('dock_root_split', dir, ratio, if first_is_new { new_group } else { root }, if first_is_new {
+		root
+	} else {
+		new_group
+	})
 }
 
 // dock_tree_move_panel removes a panel from its source group and

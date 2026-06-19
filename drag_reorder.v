@@ -295,6 +295,7 @@ fn drag_reorder_on_mouse_move(drag_key string,
 			.vertical { f32_abs(dy) }
 			.horizontal { f32_abs(dx) }
 		}
+
 		if dist < drag_reorder_threshold {
 			drag_reorder_set(mut w, drag_key, state)
 			return
@@ -313,6 +314,7 @@ fn drag_reorder_on_mouse_move(drag_key string,
 		.vertical { mouse_y }
 		.horizontal { mouse_x }
 	}
+
 	mut mouse_main := mouse_orig
 	mut scrolled_since_start := false
 	if state.id_scroll > 0 {
@@ -339,10 +341,12 @@ fn drag_reorder_on_mouse_move(drag_key string,
 			.vertical { state.item_y }
 			.horizontal { state.item_x }
 		}
+
 		item_size := match axis {
 			.vertical { state.item_height }
 			.horizontal { state.item_width }
 		}
+
 		new_index = drag_reorder_calc_index(mouse_main, item_start, item_size, state.source_index,
 			state.item_count)
 	}
@@ -365,8 +369,7 @@ fn drag_reorder_on_mouse_move(drag_key string,
 					return
 				}
 				// Call mouse_move with current (captured) mouse position to trigger next scroll step.
-				drag_reorder_on_mouse_move(drag_key, axis, st.mouse_x, st.mouse_y, mut
-					w)
+				drag_reorder_on_mouse_move(drag_key, axis, st.mouse_x, st.mouse_y, mut w)
 			}
 		})
 	} else if !did_scroll && state.scroll_timer_active {
@@ -743,6 +746,7 @@ fn drag_reorder_auto_scroll(mouse_main f32,
 				.vertical { w.scroll_vertical_by(id_scroll, delta) }
 				.horizontal { w.scroll_horizontal_by(id_scroll, delta) }
 			}
+
 			return true
 		}
 	} else if near_end < drag_reorder_scroll_zone && near_end >= 0 {
@@ -753,6 +757,7 @@ fn drag_reorder_auto_scroll(mouse_main f32,
 				.vertical { w.scroll_vertical_by(id_scroll, delta) }
 				.horizontal { w.scroll_horizontal_by(id_scroll, delta) }
 			}
+
 			return true
 		}
 	}

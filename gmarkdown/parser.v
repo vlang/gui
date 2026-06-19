@@ -416,8 +416,9 @@ fn (mut p MdParser) try_list_item() bool {
 
 	if task_prefix := get_task_prefix(left_trimmed) {
 		task_prefix_len := 6
-		content, consumed := collect_list_item_content(left_trimmed[task_prefix_len..],
-			p.scanner, p.i + 1)
+		content, consumed := collect_list_item_content(left_trimmed[task_prefix_len..], p.scanner,
+
+			p.i + 1)
 		mut item_runs := []MdRun{cap: 10}
 		parse_inline(content, .plain, mut item_runs, p.link_defs, p.footnote_defs, 0)
 		p.flush_runs()
@@ -579,7 +580,8 @@ fn (mut p MdParser) try_definition_term(trimmed string) bool {
 }
 
 fn (mut p MdParser) handle_paragraph(line string) {
-	content, consumed := collect_paragraph_content(line, p.scanner, p.i + 1, p.opts.hard_line_breaks)
+	content, consumed := collect_paragraph_content(line, p.scanner, p.i + 1,
+		p.opts.hard_line_breaks)
 	parse_inline(content, .plain, mut p.runs, p.link_defs, p.footnote_defs, 0)
 	p.i += 1 + consumed
 

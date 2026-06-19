@@ -286,12 +286,12 @@ fn grid_orm_validate_query_with_map(query GridQueryState, column_map map[string]
 }
 
 fn grid_orm_resolve_page(page GridPageRequest, configured_limit int) (int, int, string) {
-	default_limit := int_clamp(if configured_limit > 0 { configured_limit } else { 100 },
-		1, data_grid_source_max_page_limit)
+	default_limit := int_clamp(if configured_limit > 0 { configured_limit } else { 100 }, 1,
+		data_grid_source_max_page_limit)
 	return match page {
 		GridCursorPageReq {
-			limit := int_clamp(if page.limit > 0 { page.limit } else { default_limit },
-				1, data_grid_source_max_page_limit)
+			limit := int_clamp(if page.limit > 0 { page.limit } else { default_limit }, 1,
+				data_grid_source_max_page_limit)
 			offset := int_max(0, data_grid_source_cursor_to_index(page.cursor))
 			limit, offset, data_grid_source_cursor_from_index(offset)
 		}
@@ -498,6 +498,7 @@ fn grid_orm_build_filter_clause(db_field string, op string, value string, case_i
 			'${target_field} like ? escape \'\\\'', '%${grid_orm_escape_like(target_value)}%'
 		}
 	}
+
 	params << param
 	return clause
 }

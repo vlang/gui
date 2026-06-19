@@ -223,8 +223,8 @@ fn test_tree_keyboard_reorder_keeps_focus_on_moved_id() {
 		key_code:  .up
 		modifiers: .alt
 	}
-	tree_on_keydown('tree', fn (_ string, mut _ Window) {}, fn (_ string, _ string, mut _ Window) {},
-		[
+	tree_on_keydown('tree', fn (_ string, mut _ Window) {},
+		fn (_ string, _ string, mut _ Window) {}, [
 		'a',
 		'b',
 		'c',
@@ -480,8 +480,8 @@ fn test_tree_keyboard_reorder_nested_siblings() {
 		key_code:  .up
 		modifiers: .alt
 	}
-	tree_on_keydown('tree', fn (_ string, mut _ Window) {}, fn (_ string, _ string, mut _ Window) {},
-		['src', 'main.v', 'util.v', 'tests'], true, fn [mut cap] (m string, b string, p string, mut _ Window) {
+	tree_on_keydown('tree', fn (_ string, mut _ Window) {},
+		fn (_ string, _ string, mut _ Window) {}, ['src', 'main.v', 'util.v', 'tests'], true, fn [mut cap] (m string, b string, p string, mut _ Window) {
 		cap.called = true
 		cap.moved = m
 		cap.before = b

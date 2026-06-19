@@ -91,6 +91,7 @@ fn cached_svg_text_draws(texts []svg.SvgText, scale f32, gradients map[string]sv
 			t.italic { vglyph.Typeface.italic }
 			else { vglyph.Typeface.regular }
 		}
+
 		text_style := TextStyle{
 			family:         t.font_family
 			size:           t.font_size * scale

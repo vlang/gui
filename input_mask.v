@@ -331,8 +331,8 @@ fn input_mask_remove(formatted string, cursor_pos int, select_beg u32, select_en
 
 	formatted_runes := formatted.runes()
 	raw := compiled.raw_from_formatted_runes(formatted_runes)
-	mut start, mut end := compiled.selection_raw_range(formatted_runes.len, cursor_pos,
-		select_beg, select_end, raw.len)
+	mut start, mut end := compiled.selection_raw_range(formatted_runes.len, cursor_pos, select_beg,
+		select_end, raw.len)
 
 	if start == end {
 		if remove_backward {

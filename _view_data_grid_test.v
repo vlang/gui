@@ -286,15 +286,15 @@ fn test_data_grid_compute_row_selection_ctrl_toggle_add_remove() {
 		modifiers: .ctrl
 	}
 	mut w := Window{}
-	added := data_grid_compute_row_selection(rows, selection, 'grid-toggle', true, false,
-		'b', mut e, mut w)
+	added := data_grid_compute_row_selection(rows, selection, 'grid-toggle', true, false, 'b', mut
+		e, mut w)
 	assert added.anchor_row_id == 'b'
 	assert added.active_row_id == 'b'
 	assert added.selected_row_ids.len == 2
 	assert added.selected_row_ids['a']
 	assert added.selected_row_ids['b']
-	removed := data_grid_compute_row_selection(rows, added, 'grid-toggle', true, false,
-		'a', mut e, mut w)
+	removed :=
+		data_grid_compute_row_selection(rows, added, 'grid-toggle', true, false, 'a', mut e, mut w)
 	assert removed.anchor_row_id == 'a'
 	assert removed.active_row_id == 'a'
 	assert removed.selected_row_ids.len == 1
@@ -315,8 +315,8 @@ fn test_data_grid_compute_row_selection_plain_click_preserves_single_row() {
 	}
 	mut e := Event{}
 	mut w := Window{}
-	next := data_grid_compute_row_selection(rows, selection, 'grid-plain', true, false,
-		'a', mut e, mut w)
+	next :=
+		data_grid_compute_row_selection(rows, selection, 'grid-plain', true, false, 'a', mut e, mut w)
 	assert next.anchor_row_id == 'a'
 	assert next.active_row_id == 'a'
 	assert next.selected_row_ids.len == 1
@@ -442,8 +442,7 @@ fn test_data_grid_apply_pending_local_jump_scroll_clears_missing_mapping() {
 	}
 	mut dg_pj := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate)
 	dg_pj.set(cfg.id, 0)
-	data_grid_apply_pending_local_jump_scroll(cfg, 120, 20, 0, 11, map[int]int{}, mut
-		w)
+	data_grid_apply_pending_local_jump_scroll(cfg, 120, 20, 0, 11, map[int]int{}, mut w)
 	pending := state_map[string, int](mut w, ns_dg_pending_jump, cap_moderate).get(cfg.id) or { -1 }
 	assert pending == -1
 }
@@ -1305,8 +1304,7 @@ fn test_data_grid_cached_presentation_reuses_matching_signature() {
 	}
 
 	_ := data_grid_cached_presentation(cfg, cfg.columns, [0, 1], mut w)
-	cached := state_map[string, DataGridPresentationCache](mut w, ns_dg_presentation,
-		cap_moderate).get(cfg.id) or {
+	cached := state_map[string, DataGridPresentationCache](mut w, ns_dg_presentation, cap_moderate).get(cfg.id) or {
 		assert false
 		return
 	}

@@ -133,6 +133,7 @@ fn event_fn(ev &gg.Event, mut w Window) {
 			// dump(e)
 		}
 	}
+
 	if !e.is_handled {
 		w.on_event(e, mut w)
 	}

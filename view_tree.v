@@ -94,8 +94,7 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 	mut lazy_sm := state_map[string, bool](mut window, ns_tree_lazy, cap_tree_lazy)
 
 	mut flat_rows := []TreeFlatRow{cap: cfg.nodes.len * 4}
-	tree_collect_flat_rows(cfg.nodes, tree_map, cfg_id, mut lazy_sm, mut flat_rows, 0,
-		'')
+	tree_collect_flat_rows(cfg.nodes, tree_map, cfg_id, mut lazy_sm, mut flat_rows, 0, '')
 
 	// Build visible-node IDs for keyboard nav (skip loading sentinels).
 	mut visible_ids := []string{cap: flat_rows.len}
@@ -113,8 +112,7 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 		f32(0)
 	}
 	first_visible, last_visible := if virtualize {
-		tree_visible_range(tree_height, row_height, flat_rows.len, cfg.id_scroll, mut
-			window)
+		tree_visible_range(tree_height, row_height, flat_rows.len, cfg.id_scroll, mut window)
 	} else {
 		0, flat_rows.len - 1
 	}
@@ -236,9 +234,8 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 			drag_reorder_apply_tree_drop(cfg_id, on_reorder, mut w)
 		}
 		on_keydown:       fn [cfg_id, on_select, on_lazy_load, visible_ids, can_reorder, on_reorder, sibling_ids_by_parent, sibling_index_of, parent_of] (_ &Layout, mut e Event, mut w Window) {
-			tree_on_keydown(cfg_id, on_select, on_lazy_load, visible_ids, can_reorder,
-				on_reorder, sibling_ids_by_parent, sibling_index_of, parent_of, mut e, mut
-				w)
+			tree_on_keydown(cfg_id, on_select, on_lazy_load, visible_ids, can_reorder, on_reorder,
+				sibling_ids_by_parent, sibling_index_of, parent_of, mut e, mut w)
 		}
 		content:          content
 	)
@@ -291,8 +288,8 @@ fn tree_collect_flat_rows(nodes []TreeNodeCfg, tree_map map[string]bool, cfg_id 
 
 		if is_expanded {
 			if node.nodes.len > 0 {
-				tree_collect_flat_rows(node.nodes, tree_map, cfg_id, mut lazy_sm, mut
-					out, depth + 1, id)
+				tree_collect_flat_rows(node.nodes, tree_map, cfg_id, mut lazy_sm, mut out,
+					depth + 1, id)
 			} else if node.lazy && is_loading {
 				// Loading sentinel row.
 				out << TreeFlatRow{
@@ -438,8 +435,8 @@ fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_
 			is_lazy, node_has_real_children)
 	} else {
 		fn [cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children, id] (_ &Layout, mut e Event, mut w Window) {
-			tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children,
-				is_lazy, node_has_real_children, id, mut e, mut w)
+			tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy,
+				node_has_real_children, id, mut e, mut w)
 		}
 	}
 
@@ -522,8 +519,8 @@ fn make_tree_drag_click(drag_ctx TreeDragContext, id string,
 		sibling_layout_ids << 'tr_${cfg_id}_${sid}'
 	}
 	return fn [cfg_id, parent_id, sibling_index, sibling_ids, sibling_layout_ids, id_scroll, id, on_select, on_lazy_load, is_expanded, has_children, is_lazy, node_has_real_children] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(cfg_id, sibling_index, id, .vertical, sibling_ids,
-			sibling_layout_ids, 0, id_scroll, parent_id, layout, e, mut w)
+		drag_reorder_start(cfg_id, sibling_index, id, .vertical, sibling_ids, sibling_layout_ids,
+			0, id_scroll, parent_id, layout, e, mut w)
 		tree_row_click(cfg_id, on_select, on_lazy_load, is_expanded, has_children, is_lazy,
 			node_has_real_children, id, mut e, mut w)
 	}

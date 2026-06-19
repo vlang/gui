@@ -289,9 +289,8 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 			drag_reorder_apply_drop(tab_id, on_reorder, mut w)
 		}
 		on_keydown:       fn [disabled, tab_nav_ids, tab_nav_disabled, selected, on_select, id_focus, reorderable, on_reorder, tab_id, tab_ids] (_ &Layout, mut e Event, mut w Window) {
-			tab_control_on_keydown(disabled, tab_nav_ids, tab_nav_disabled, selected,
-				on_select, id_focus, reorderable, on_reorder, tab_id, tab_ids, mut e, mut
-				w)
+			tab_control_on_keydown(disabled, tab_nav_ids, tab_nav_disabled, selected, on_select,
+				id_focus, reorderable, on_reorder, tab_id, tab_ids, mut e, mut w)
 		}
 		content:          [
 			row(
@@ -337,8 +336,8 @@ fn make_tab_drag_click(control_id string, item_id string,
 	on_select fn (string, mut Event, mut Window),
 	id_focus u32) fn (&Layout, mut Event, mut Window) {
 	return fn [control_id, item_id, drag_index, tab_ids, tab_layout_ids, on_select, id_focus] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(control_id, drag_index, item_id, .horizontal, tab_ids,
-			tab_layout_ids, 0, u32(0), '', layout, e, mut w)
+		drag_reorder_start(control_id, drag_index, item_id, .horizontal, tab_ids, tab_layout_ids,
+			0, u32(0), '', layout, e, mut w)
 		on_select(item_id, mut e, mut w)
 		if id_focus > 0 {
 			w.set_id_focus(id_focus)

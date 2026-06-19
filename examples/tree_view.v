@@ -51,6 +51,7 @@ fn on_lazy_load(tree_id string, node_id string, mut w gui.Window) {
 				[gui.tree_node(text: '(empty)')]
 			}
 		}
+
 		w.queue_command(fn [node_id, children] (mut w gui.Window) {
 			mut app := w.state[TreeViewApp]()
 			app.lazy_nodes[node_id] = children

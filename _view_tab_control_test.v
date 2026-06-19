@@ -61,8 +61,8 @@ fn test_tab_control_keydown_disabled_blocks_reorder() {
 		key_code:  .right
 		modifiers: .alt
 	}
-	tab_control_on_keydown(true, ['one', 'two'], [false, false], 'one', fn (_ string, mut _ Event, mut _ Window) {},
-		0, true, fn [mut cap] (_ string, _ string, mut _ Window) {
+	tab_control_on_keydown(true, ['one', 'two'], [false, false], 'one',
+		fn (_ string, mut _ Event, mut _ Window) {}, 0, true, fn [mut cap] (_ string, _ string, mut _ Window) {
 		cap.called = true
 	}, 'tabs', ['one', 'two'], mut e, mut w)
 	assert !cap.called

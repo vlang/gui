@@ -84,8 +84,7 @@ fn flatten_path(path VectorPath, tolerance f32) [][]f32 {
 					tc1x, tc1y := apply_transform(c1x, c1y, path.transform)
 					tc2x, tc2y := apply_transform(c2x, c2y, path.transform)
 					tex, tey := apply_transform(ex, ey, path.transform)
-					flatten_cubic(tx, ty, tc1x, tc1y, tc2x, tc2y, tex, tey, tolerance, mut
-						current)
+					flatten_cubic(tx, ty, tc1x, tc1y, tc2x, tc2y, tex, tey, tolerance, mut current)
 				} else {
 					flatten_cubic(x, y, c1x, c1y, c2x, c2y, ex, ey, tolerance, mut current)
 				}
@@ -198,9 +197,7 @@ fn flatten_cubic_recursive(x0 f32, y0 f32, c1x f32, c1y f32, c2x f32, c2y f32, x
 		mx := (abx + bcx) / 2
 		my := (aby + bcy) / 2
 
-		flatten_cubic_recursive(x0, y0, ax, ay, abx, aby, mx, my, tolerance, depth + 1, mut
-			points)
-		flatten_cubic_recursive(mx, my, bcx, bcy, cx, cy, x1, y1, tolerance, depth + 1, mut
-			points)
+		flatten_cubic_recursive(x0, y0, ax, ay, abx, aby, mx, my, tolerance, depth + 1, mut points)
+		flatten_cubic_recursive(mx, my, bcx, bcy, cx, cy, x1, y1, tolerance, depth + 1, mut points)
 	}
 }

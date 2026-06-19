@@ -198,20 +198,20 @@ fn numeric_input_field(cfg NumericInputCfg, locale NumericLocaleCfg, step_cfg Nu
 		invisible:             cfg.invisible
 		pre_commit_transform:  fn [cfg, locale] (current string, proposed string) ?string {
 			mode_cfg := numeric_mode_cfg(cfg)
-			return numeric_input_pre_commit_transform_mode(current, proposed, cfg.decimals,
-				locale, mode_cfg)
+			return numeric_input_pre_commit_transform_mode(current, proposed, cfg.decimals, locale,
+				mode_cfg)
 		}
 		post_commit_normalize: fn [cfg, locale] (text string, _ InputCommitReason) string {
 			mode_cfg := numeric_mode_cfg(cfg)
-			_, committed := numeric_input_commit_result_mode(text, cfg.value, cfg.min,
-				cfg.max, cfg.decimals, locale, mode_cfg)
+			_, committed := numeric_input_commit_result_mode(text, cfg.value, cfg.min, cfg.max,
+				cfg.decimals, locale, mode_cfg)
 			return committed
 		}
 		on_text_changed:       cfg.on_text_changed
 		on_text_commit:        fn [cfg, locale] (layout &Layout, text string, _ InputCommitReason, mut w Window) {
 			mode_cfg := numeric_mode_cfg(cfg)
-			value, committed := numeric_input_commit_result_mode(text, cfg.value, cfg.min,
-				cfg.max, cfg.decimals, locale, mode_cfg)
+			value, committed := numeric_input_commit_result_mode(text, cfg.value, cfg.min, cfg.max,
+				cfg.decimals, locale, mode_cfg)
 			numeric_input_emit_commit(layout, cfg, value, committed, false, mut w)
 		}
 		on_key_down:           fn [cfg, locale, step_cfg] (layout &Layout, mut e Event, mut w Window) {
@@ -305,8 +305,8 @@ fn numeric_input_on_key_down(layout &Layout, mut e Event, mut w Window, cfg Nume
 		.down { f64(-1.0) }
 		else { return }
 	}
-	numeric_input_apply_step(layout, cfg, locale, step_cfg, direction, e.modifiers, mut
-		e, mut w)
+
+	numeric_input_apply_step(layout, cfg, locale, step_cfg, direction, e.modifiers, mut e, mut w)
 }
 
 fn numeric_input_on_mouse_scroll(layout &Layout, mut e Event, mut w Window, cfg NumericInputCfg, locale NumericLocaleCfg, step_cfg NumericStepCfg) {
@@ -320,14 +320,13 @@ fn numeric_input_on_mouse_scroll(layout &Layout, mut e Event, mut w Window, cfg 
 		return
 	}
 	direction := if e.scroll_y > 0 { f64(1.0) } else { f64(-1.0) }
-	numeric_input_apply_step(layout, cfg, locale, step_cfg, direction, e.modifiers, mut
-		e, mut w)
+	numeric_input_apply_step(layout, cfg, locale, step_cfg, direction, e.modifiers, mut e, mut w)
 }
 
 fn numeric_input_apply_step(layout &Layout, cfg NumericInputCfg, locale NumericLocaleCfg, step_cfg NumericStepCfg, direction f64, modifiers Modifier, mut e Event, mut w Window) {
 	mode_cfg := numeric_mode_cfg(cfg)
-	next_value, next_text := numeric_input_step_result_mode(cfg.text, cfg.value, cfg.min,
-		cfg.max, cfg.decimals, step_cfg, locale, direction, modifiers, mode_cfg)
+	next_value, next_text := numeric_input_step_result_mode(cfg.text, cfg.value, cfg.min, cfg.max,
+		cfg.decimals, step_cfg, locale, direction, modifiers, mode_cfg)
 	numeric_input_emit_commit(layout, cfg, next_value, next_text, true, mut w)
 	e.is_handled = true
 }
@@ -385,8 +384,7 @@ fn numeric_input_step_result(text string, value ?f64, min ?f64, max ?f64, decima
 
 fn numeric_input_step_result_mode(text string, value ?f64, min ?f64, max ?f64, decimals int, step_cfg NumericStepCfg, locale NumericLocaleCfg, direction f64, modifiers Modifier, mode_cfg NumericModeCfg) (?f64, string) {
 	if direction == 0 {
-		return numeric_input_commit_result_mode(text, value, min, max, decimals, locale,
-			mode_cfg)
+		return numeric_input_commit_result_mode(text, value, min, max, decimals, locale, mode_cfg)
 	}
 	step_display := numeric_step_delta(step_cfg, modifiers)
 	delta := numeric_mode_step_delta(step_display, mode_cfg)

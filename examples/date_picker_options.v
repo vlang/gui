@@ -360,6 +360,7 @@ fn click_allow_weekday_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Wi
 		'sun' { app.allow_sunday = !app.allow_sunday }
 		else {}
 	}
+
 	e.is_handled = true
 }
 
@@ -463,6 +464,7 @@ fn click_allow_month_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Wind
 		'dec' { app.allow_december = !app.allow_december }
 		else {}
 	}
+
 	e.is_handled = true
 }
 
@@ -569,6 +571,7 @@ fn click_allow_years_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Wind
 		'year_next' { app.allow_year_next = !app.allow_year_next }
 		else {}
 	}
+
 	e.is_handled = true
 }
 
@@ -610,6 +613,7 @@ fn click_allow_dates_toggles(layout &gui.Layout, mut e gui.Event, mut w gui.Wind
 		'fdy' { app.allow_first_of_month = !app.allow_first_of_month }
 		else {}
 	}
+
 	e.is_handled = true
 }
 
@@ -642,13 +646,15 @@ fn set_theme(mut window gui.Window) {
 	app := window.state[DatePickerApp]()
 	theme := if app.light_theme {
 		if app.use_system_font {
-			create_system_font_theme(gui.theme_light_bordered_cfg, gui.theme_light_bordered_cfg.text_style)
+			create_system_font_theme(gui.theme_light_bordered_cfg,
+				gui.theme_light_bordered_cfg.text_style)
 		} else {
 			gui.theme_light_bordered
 		}
 	} else {
 		if app.use_system_font {
-			create_system_font_theme(gui.theme_dark_bordered_cfg, gui.theme_dark_bordered_cfg.text_style)
+			create_system_font_theme(gui.theme_dark_bordered_cfg,
+				gui.theme_dark_bordered_cfg.text_style)
 		} else {
 			gui.theme_dark_bordered
 		}

@@ -54,6 +54,7 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 			true { password_char.repeat(utf8_str_visible_length(shape.tc.text)) }
 			else { shape.tc.text }
 		}
+
 		return window.text_system.text_width(effective, cfg) or { 0 }
 	}
 
@@ -111,6 +112,7 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 			true { password_char.repeat(utf8_str_visible_length(sub)) }
 			else { sub }
 		}
+
 		width := window.text_system.text_width(effective, cfg) or { 0 }
 		max_width = f32_max(width, max_width)
 	}
@@ -186,6 +188,7 @@ fn text_wrap(mut shape Shape, mut window Window) {
 			true { line_height(shape, mut window) + shape.padding.height() }
 			else { shape.tc.vglyph_layout.height + shape.padding.height() }
 		}
+
 		shape.max_height = shape.height
 		shape.min_height = shape.height
 	} else if shape.shape_type == .rtf {
@@ -197,7 +200,8 @@ fn text_wrap(mut shape Shape, mut window Window) {
 				// Optimization: Check if width changed significantly or if we haven't constrained yet
 				if width > 0 && width != shape.tc.last_constraint_width {
 					// Re-layout with new width constraint, preserving hanging indent
-					vg_rt := shape.tc.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache)
+					vg_rt :=
+						shape.tc.rich_text.to_vglyph_rich_text_with_math(&window.view_state.diagram_cache)
 					base_style := if shape.tc.rtf_base_style.size > 0 {
 						shape.tc.rtf_base_style
 					} else if vg_rt.runs.len > 0 {

@@ -154,6 +154,7 @@ fn table_with_sortable_columns(mut table_data TableData, mut window gui.Window) 
 					table_data.sort_by == -(idx + 1) { 0 }
 					else { idx + 1 }
 				}
+
 				sort(mut table_data)
 				e.is_handled = true
 			}

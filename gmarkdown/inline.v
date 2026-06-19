@@ -126,6 +126,7 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 					current.clear()
 				}
 				parse_inline(text[pos + 3..end], .bold_italic, mut runs, link_defs, footnote_defs,
+
 					depth + 1)
 				pos = end + 3
 				continue
@@ -143,8 +144,8 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 					}
 					current.clear()
 				}
-				parse_inline(text[pos + 2..end], .bold, mut runs, link_defs, footnote_defs,
-					depth + 1)
+				parse_inline(text[pos + 2..end], .bold, mut runs, link_defs, footnote_defs, depth +
+					1)
 				pos = end + 2
 				continue
 			}
@@ -164,6 +165,7 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 				// Recurse with strikethrough — inner runs get it
 				mut inner := []MdRun{cap: 4}
 				parse_inline(text[pos + 2..end], format, mut inner, link_defs, footnote_defs,
+
 					depth + 1)
 				for r in inner {
 					runs << MdRun{
@@ -189,6 +191,7 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 				}
 				mut inner := []MdRun{cap: 4}
 				parse_inline(text[pos + 2..end], format, mut inner, link_defs, footnote_defs,
+
 					depth + 1)
 				for r in inner {
 					runs << MdRun{
@@ -214,6 +217,7 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 				}
 				mut inner := []MdRun{cap: 4}
 				parse_inline(text[pos + 1..end], format, mut inner, link_defs, footnote_defs,
+
 					depth + 1)
 				for r in inner {
 					runs << MdRun{
@@ -239,6 +243,7 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 				}
 				mut inner := []MdRun{cap: 4}
 				parse_inline(text[pos + 1..end], format, mut inner, link_defs, footnote_defs,
+
 					depth + 1)
 				for r in inner {
 					runs << MdRun{
@@ -263,6 +268,7 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 					current.clear()
 				}
 				parse_inline(text[pos + 1..end], .italic, mut runs, link_defs, footnote_defs,
+
 					depth + 1)
 				pos = end + 1
 				continue
@@ -285,6 +291,7 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 					current.clear()
 				}
 				parse_inline(text[pos + 3..end], .bold_italic, mut runs, link_defs, footnote_defs,
+
 					depth + 1)
 				pos = end + 3
 				continue
@@ -303,8 +310,8 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 					}
 					current.clear()
 				}
-				parse_inline(text[pos + 2..end], .bold, mut runs, link_defs, footnote_defs,
-					depth + 1)
+				parse_inline(text[pos + 2..end], .bold, mut runs, link_defs, footnote_defs, depth +
+					1)
 				pos = end + 2
 				continue
 			}
@@ -322,6 +329,7 @@ pub fn parse_inline(text string, format MdFormat, mut runs []MdRun, link_defs ma
 					current.clear()
 				}
 				parse_inline(text[pos + 1..end], .italic, mut runs, link_defs, footnote_defs,
+
 					depth + 1)
 				pos = end + 1
 				continue

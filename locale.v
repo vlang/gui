@@ -104,13 +104,13 @@ pub:
 	weekdays_short [7]string = ['S', 'M', 'T', 'W', 'T', 'F', 'S']!
 	weekdays_med   [7]string = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']!
 	weekdays_full  [7]string = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
-	'Saturday']!
+		'Saturday']!
 
 	// Month names (0=Jan..11=Dec)
 	months_short [12]string = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct',
-	'Nov', 'Dec']!
+		'Nov', 'Dec']!
 	months_full  [12]string = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August',
-	'September', 'October', 'November', 'December']!
+		'September', 'October', 'November', 'December']!
 }
 
 pub fn (l Locale) to_numeric_locale() NumericLocaleCfg {

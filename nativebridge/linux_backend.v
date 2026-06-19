@@ -47,6 +47,7 @@ fn linux_save_dialog(cfg BridgeSaveCfg) BridgeDialogResult {
 		.zenity { linux_save_dialog_zenity(cfg) }
 		.kdialog { linux_save_dialog_kdialog(cfg) }
 	}
+
 	if dialog_result.status != .ok || dialog_result.paths.len == 0 {
 		return dialog_result
 	}
@@ -332,6 +333,7 @@ fn linux_print_pdf_direct(cfg BridgePrintCfg, pdf_path string, warnings []string
 		}
 		else {}
 	}
+
 	match cfg.color_mode {
 		2 {
 			args << '-o'
@@ -343,6 +345,7 @@ fn linux_print_pdf_direct(cfg BridgePrintCfg, pdf_path string, warnings []string
 		}
 		else {}
 	}
+
 	media := linux_media_from_size(cfg.paper_width, cfg.paper_height)
 	if media.len > 0 {
 		args << '-o'
@@ -651,6 +654,7 @@ fn linux_kdialog_message_args(level int, title string, body string) []string {
 		1 { args << '--sorry' }
 		else { args << '--msgbox' }
 	}
+
 	args << body
 	return args
 }

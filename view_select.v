@@ -39,8 +39,7 @@ pub fn (window &Window) select(cfg SelectCfg) View {
 	id_scroll := fnv1a.sum32_string(cfg.id + 'dropdown')
 	mut options := []View{}
 	if is_open {
-		highlighted_idx := state_read_or[string, int](window, ns_select_highlight, cfg.id,
-			0)
+		highlighted_idx := state_read_or[string, int](window, ns_select_highlight, cfg.id, 0)
 		options.ensure_cap(cfg.options.len)
 		for i, option in cfg.options {
 			options << match option.starts_with('---') {

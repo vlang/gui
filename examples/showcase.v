@@ -1212,7 +1212,8 @@ fn component_demo(mut w gui.Window, id string) gui.View {
 		'doc_data_grid' { demo_doc(mut w, 'doc_data_grid', doc_data_grid_source) }
 		'doc_forms' { demo_doc(mut w, 'doc_forms', doc_forms_source) }
 		'doc_gradients' { demo_doc(mut w, 'doc_gradients', doc_gradients_source) }
-		'doc_layout_algorithm' { demo_doc(mut w, 'doc_layout_algorithm', doc_layout_algorithm_source) }
+		'doc_layout_algorithm' { demo_doc(mut w, 'doc_layout_algorithm',
+				doc_layout_algorithm_source) }
 		'doc_locales' { demo_doc(mut w, 'doc_locales', doc_locales_source) }
 		'doc_markdown' { demo_doc(mut w, 'doc_markdown', doc_markdown_source) }
 		'doc_native_dialogs' { demo_doc(mut w, 'doc_native_dialogs', doc_native_dialogs_source) }
@@ -1584,7 +1585,8 @@ fn menu(mut window gui.Window) gui.View {
 					gui.menu_item_text('paste', 'Paste'),
 					gui.menu_separator(),
 					gui.menu_item_text('emoji', 'Emoji & Symbols'),
-					gui.menu_item_text('too-long', 'Long menu text item to test line wrappping in menu'),
+					gui.menu_item_text('too-long',
+						'Long menu text item to test line wrappping in menu'),
 				]
 			},
 			gui.MenuItemCfg{
@@ -1691,8 +1693,10 @@ const svg_inherit_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1
 const tiger_svg_data = $embed_file('../assets/svgs/tiger.svg').to_string()
 const missing_svg_path = os.join_path(os.dir(@FILE), 'missing-icon.svg')
 const image_clip_asset_data = $embed_file('../assets/image_clip_face.jpg')
-const image_clip_asset_fallback_path = os.join_path(os.dir(@FILE), '..', 'assets', 'image_clip_face.jpg')
-const image_clip_asset_embedded_path = os.join_path(os.temp_dir(), 'gui_showcase_image_clip_face.jpg')
+const image_clip_asset_fallback_path = os.join_path(os.dir(@FILE), '..', 'assets',
+	'image_clip_face.jpg')
+const image_clip_asset_embedded_path = os.join_path(os.temp_dir(),
+	'gui_showcase_image_clip_face.jpg')
 
 fn ensure_showcase_embedded_image() {
 	if os.exists(image_clip_asset_embedded_path) {
@@ -1736,6 +1740,7 @@ fn on_lazy_load(tree_id string, node_id string, mut w gui.Window) {
 				[gui.tree_node(text: '(empty)')]
 			}
 		}
+
 		w.queue_command(fn [node_id, children] (mut w gui.Window) {
 			mut app := w.state[ShowcaseApp]()
 			app.lazy_nodes[node_id] = children
@@ -3117,6 +3122,7 @@ fn demo_native_notification(mut w gui.Window) gui.View {
 								.denied { 'denied: ${r.error_message}' }
 								.error { 'error: ${r.error_message}' }
 							}
+
 							w.update_window()
 						}
 					})
@@ -3413,8 +3419,8 @@ Buttons can be left/center/right aligned.'.trim_indent()
 									},
 								]
 								on_done:        fn (result gui.NativeDialogResult, mut w gui.Window) {
-									demo_dialog_show_native_result('native_open_dialog()',
-										result, mut w)
+									demo_dialog_show_native_result('native_open_dialog()', result, mut
+										w)
 								}
 							)
 						}
@@ -3437,8 +3443,8 @@ Buttons can be left/center/right aligned.'.trim_indent()
 									},
 								]
 								on_done:           fn (result gui.NativeDialogResult, mut w gui.Window) {
-									demo_dialog_show_native_result('native_save_dialog()',
-										result, mut w)
+									demo_dialog_show_native_result('native_save_dialog()', result, mut
+										w)
 								}
 							)
 						}
@@ -3486,6 +3492,7 @@ fn demo_dialog_show_native_result(kind string, result gui.NativeDialogResult, mu
 			}
 		}
 	}
+
 	w.dialog(title: kind, body: body)
 }
 
@@ -3921,7 +3928,8 @@ fn demo_printing(w &gui.Window) gui.View {
 					gui.button(
 						content:  [gui.text(text: 'Export PDF')]
 						on_click: fn (_ &gui.Layout, mut _ gui.Event, mut w gui.Window) {
-							path := os.join_path(os.temp_dir(), 'v_gui_showcase_print_${time.now().unix_micro()}.pdf')
+							path := os.join_path(os.temp_dir(),
+								'v_gui_showcase_print_${time.now().unix_micro()}.pdf')
 							result := w.export_print_job(gui.PrintJob{
 								output_path: path
 								source:      gui.PrintJobSource{
@@ -4657,6 +4665,7 @@ fn demo_table(mut w gui.Window) gui.View {
 					app.table_sort_by == -col { 0 }
 					else { col }
 				}
+
 				e.is_handled = true
 			}
 		}
@@ -6320,10 +6329,10 @@ fn demo_box_shadows() gui.View {
 			gui.row(
 				spacing: 40
 				content: [
-					showcase_shadow_card('Directional', 'Blur 10, X 8, Y 8', card_color,
-						gui.Color{0, 0, 0, 65}, 8, 8, 10, 0),
-					showcase_shadow_card('Blue glow', 'Blur 24, no offset', card_color,
-						gui.Color{80, 120, 255, 85}, 0, 0, 24, 0),
+					showcase_shadow_card('Directional', 'Blur 10, X 8, Y 8', card_color, gui.Color{0, 0, 0, 65},
+						8, 8, 10, 0),
+					showcase_shadow_card('Blue glow', 'Blur 24, no offset', card_color, gui.Color{80, 120, 255, 85},
+						0, 0, 24, 0),
 				]
 			),
 			gui.text(
@@ -6336,8 +6345,8 @@ fn demo_box_shadows() gui.View {
 				content: [
 					showcase_shadow_card('Spread 0', 'spread_radius: 0', card_color, gui.Color{0, 0, 0, 70},
 						4, 6, 14, 0),
-					showcase_shadow_card('Spread 16', 'spread_radius: 16', card_color,
-						gui.Color{0, 0, 0, 70}, 4, 6, 14, 16),
+					showcase_shadow_card('Spread 16', 'spread_radius: 16', card_color, gui.Color{0, 0, 0, 70},
+						4, 6, 14, 16),
 				]
 			),
 		]
@@ -6953,8 +6962,9 @@ fn generate_theme_cfg(seed gui.Color, strategy string, is_dark bool, tint f32, t
 
 fn apply_gen_theme(mut w gui.Window) {
 	mut app := w.state[ShowcaseApp]()
-	cfg := generate_theme_cfg(app.theme_gen_seed, app.theme_gen_strategy, gui.theme().titlebar_dark,
-		app.theme_gen_tint, app.theme_gen_text, app.theme_gen_radius, app.theme_gen_border)
+	cfg := generate_theme_cfg(app.theme_gen_seed, app.theme_gen_strategy,
+		gui.theme().titlebar_dark, app.theme_gen_tint, app.theme_gen_text, app.theme_gen_radius,
+		app.theme_gen_border)
 	w.set_theme(gui.theme_maker(&cfg))
 }
 
@@ -7143,11 +7153,12 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 											mut a := w.state[ShowcaseApp]()
 											cfg := generate_theme_cfg(a.theme_gen_seed,
 												a.theme_gen_strategy, gui.theme().titlebar_dark,
-												a.theme_gen_tint, a.theme_gen_text, a.theme_gen_radius,
-												a.theme_gen_border)
+												a.theme_gen_tint, a.theme_gen_text,
+												a.theme_gen_radius, a.theme_gen_border)
 											theme := gui.theme_maker(&cfg)
 											gui.theme_save(result.paths[0].path, theme) or {}
-											a.theme_gen_name = os.file_name(result.paths[0].path).all_before_last('.')
+											a.theme_gen_name =
+												os.file_name(result.paths[0].path).all_before_last('.')
 										}
 									})
 								}
@@ -7176,7 +7187,8 @@ fn demo_theme_gen(mut w gui.Window) gui.View {
 											}
 											mut a := w.state[ShowcaseApp]()
 											sync_theme_gen_from_cfg(mut a, theme.cfg)
-											a.theme_gen_name = os.file_name(result.paths[0].path).all_before_last('.')
+											a.theme_gen_name =
+												os.file_name(result.paths[0].path).all_before_last('.')
 											w.set_theme(theme)
 										}
 									})
@@ -7381,15 +7393,13 @@ fn showcase_splitter_detail(w &gui.Window) gui.View {
 		first:                 gui.SplitterPaneCfg{
 			min_size: 110
 			content:  [
-				showcase_splitter_pane('Editor', 'Top pane. Home/End collapses pane.',
-					gui.green),
+				showcase_splitter_pane('Editor', 'Top pane. Home/End collapses pane.', gui.green),
 			]
 		}
 		second:                gui.SplitterPaneCfg{
 			min_size: 90
 			content:  [
-				showcase_splitter_pane('Preview', 'Bottom pane. Drag or use keyboard.',
-					gui.orange),
+				showcase_splitter_pane('Preview', 'Bottom pane. Drag or use keyboard.', gui.orange),
 			]
 		}
 	)

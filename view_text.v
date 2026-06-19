@@ -304,7 +304,8 @@ fn (tv &TextView) on_key_down(layout &Layout, mut e Event, mut window Window) {
 		} else if e.modifiers.has_any(.none, .shift) {
 			// Standard navigation: char by char, prev/next line, home/end of text
 			mut lpp := 0 // lines per page
-			layout_scroll := find_layout_by_id_scroll(window.layout, layout.shape.id_scroll_container)
+			layout_scroll := find_layout_by_id_scroll(window.layout,
+				layout.shape.id_scroll_container)
 			if layout_scroll != none {
 				layout_scroll_height := layout_scroll.shape.height - layout_scroll.shape.padding.height()
 				lpp = int(layout_scroll_height / line_height(layout.shape, mut window))

@@ -243,8 +243,7 @@ fn parse_svg_content(content string, inherited GroupStyle, depth int, mut state 
 				if group_style.group_id.len > 0 {
 					state.animations << parse_group_animations(group_content, group_style.group_id)
 				}
-				paths << parse_svg_content(group_content, group_style, depth + 1, mut
-					state)
+				paths << parse_svg_content(group_content, group_style, depth + 1, mut state)
 			}
 			close_end := find_index(content, '>', group_end) or { break }
 			pos = close_end + 1

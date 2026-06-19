@@ -180,8 +180,7 @@ fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
 		width:   data_grid_header_controls_width(true, false, false)
 		sizing:  fixed_fill
 		content: [
-			data_grid_order_button(left_arrow, cfg.text_style_header, cfg.color_header_hover,
-				fn [on_column_order_change, base_order, col_id] (mut e Event, mut w Window) {
+			data_grid_order_button(left_arrow, cfg.text_style_header, cfg.color_header_hover, fn [on_column_order_change, base_order, col_id] (mut e Event, mut w Window) {
 				if on_column_order_change == unsafe { nil } {
 					e.is_handled = true
 					return
@@ -194,8 +193,7 @@ fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
 				on_column_order_change(next_order, mut e, mut w)
 				e.is_handled = true
 			}),
-			data_grid_order_button(right_arrow, cfg.text_style_header, cfg.color_header_hover,
-				fn [on_column_order_change, base_order, col_id] (mut e Event, mut w Window) {
+			data_grid_order_button(right_arrow, cfg.text_style_header, cfg.color_header_hover, fn [on_column_order_change, base_order, col_id] (mut e Event, mut w Window) {
 				if on_column_order_change == unsafe { nil } {
 					e.is_handled = true
 					return
@@ -213,8 +211,8 @@ fn data_grid_reorder_controls(cfg DataGridCfg, col GridColumnCfg) View {
 }
 
 fn data_grid_order_button(label string, base_style TextStyle, hover_color Color, cb fn (mut Event, mut Window)) View {
-	return data_grid_indicator_button(label, base_style, hover_color, false, data_grid_header_control_width,
-		fn [cb] (_ &Layout, mut e Event, mut w Window) {
+	return data_grid_indicator_button(label, base_style, hover_color, false,
+		data_grid_header_control_width, fn [cb] (_ &Layout, mut e Event, mut w Window) {
 		cb(mut e, mut w)
 	})
 }
@@ -225,11 +223,12 @@ fn data_grid_pin_control(cfg DataGridCfg, col GridColumnCfg) View {
 		.left { '↤' }
 		.right { '↦' }
 	}
+
 	on_column_pin_change := cfg.on_column_pin_change
 	col_id := col.id
 	col_pin := col.pin
-	return data_grid_indicator_button(label, cfg.text_style_header, cfg.color_header_hover,
-		false, data_grid_header_control_width, fn [on_column_pin_change, col_id, col_pin] (_ &Layout, mut e Event, mut w Window) {
+	return data_grid_indicator_button(label, cfg.text_style_header, cfg.color_header_hover, false,
+		data_grid_header_control_width, fn [on_column_pin_change, col_id, col_pin] (_ &Layout, mut e Event, mut w Window) {
 		if on_column_pin_change == unsafe { nil } {
 			return
 		}

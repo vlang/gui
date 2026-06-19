@@ -67,6 +67,7 @@ fn toggle_theme(app &DateTimeApp) gui.View {
 						true { gui.theme_dark_bordered }
 						else { gui.theme_light_bordered }
 					}
+
 					app.light_theme = !app.light_theme
 					w.set_theme(theme)
 				}

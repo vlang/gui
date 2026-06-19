@@ -127,7 +127,8 @@ fn process_svg_filters(mut window Window) {
 				$if !prod {
 					assert false, 'DrawFilterBegin without DrawFilterEnd'
 				}
-				append_renderer_range(mut new_renderers, source_renderers, i + 1, source_renderers.len)
+				append_renderer_range(mut new_renderers, source_renderers, i + 1,
+					source_renderers.len)
 				i = source_renderers.len
 				continue
 			}
@@ -159,8 +160,8 @@ fn process_svg_filters(mut window Window) {
 			}
 
 			// Render content to tex_a via raw gfx offscreen pass
-			render_filter_content(source_renderers, content_start, content_end, bbox_x,
-				bbox_y, bbox_w, bbox_h, ui_scale, mut window)
+			render_filter_content(source_renderers, content_start, content_end, bbox_x, bbox_y,
+				bbox_w, bbox_h, ui_scale, mut window)
 
 			// Blur: H (tex_a → tex_b), V (tex_b → tex_a)
 			blur_filter_pass(filter.std_dev, mut window)
@@ -279,8 +280,7 @@ fn render_filter_content(renderers []Renderer, start_idx int, end_idx int, bbox_
 	})
 
 	// Ortho projection mapping bbox to clip space
-	mvp := ortho_column_major(bbox_x, bbox_x + bbox_w, bbox_y + bbox_h, bbox_y, -1.0,
-		1.0)
+	mvp := ortho_column_major(bbox_x, bbox_x + bbox_w, bbox_y + bbox_h, bbox_y, -1.0, 1.0)
 	mut tm := [16]f32{}
 	tm[5] = 1.0
 	tm[10] = 1.0

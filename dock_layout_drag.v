@@ -125,7 +125,8 @@ fn dock_drag_on_mouse_up(dock_id string, root &DockNode,
 	w.mouse_unlock()
 
 	if state.active && state.hover_zone != .none {
-		new_root := dock_tree_move_panel(root, state.panel_id, state.hover_group_id, state.hover_zone)
+		new_root := dock_tree_move_panel(root, state.panel_id, state.hover_group_id,
+			state.hover_zone)
 		on_layout_change(new_root, mut w)
 	}
 

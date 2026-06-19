@@ -50,14 +50,12 @@ pub fn (mut w Window) export_print_job(job PrintJob) PrintExportResult {
 	dir := os.dir(job.output_path)
 	if dir.len > 0 && dir != '.' {
 		os.mkdir_all(dir) or {
-			return print_export_error_result(job.output_path, native_print_error_code_io,
-				err.msg())
+			return print_export_error_result(job.output_path, native_print_error_code_io, err.msg())
 		}
 	}
 
 	os.write_file(job.output_path, content) or {
-		return print_export_error_result(job.output_path, native_print_error_code_io,
-			err.msg())
+		return print_export_error_result(job.output_path, native_print_error_code_io, err.msg())
 	}
 
 	return print_export_ok_result(job.output_path)

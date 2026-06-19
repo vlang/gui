@@ -40,8 +40,7 @@ pub:
 pub fn (mut window Window) combobox(cfg ComboboxCfg) View {
 	is_open := state_read_or[string, bool](&window, ns_combobox, cfg.id, false)
 	query := state_read_or[string, string](&window, ns_combobox_query, cfg.id, '')
-	highlighted := state_read_or[string, int](&window, ns_combobox_highlight, cfg.id,
-		0)
+	highlighted := state_read_or[string, int](&window, ns_combobox_highlight, cfg.id, 0)
 
 	// Resolve items: async or static.
 	items, loading, load_error := combobox_resolve_items(cfg, query, mut window)
@@ -123,8 +122,7 @@ pub fn (mut window Window) combobox(cfg ComboboxCfg) View {
 				text_style: cfg.text_style
 			)
 		} else {
-			dropdown_content = list_core_views(filtered, core_cfg, first, last, hl, [],
-				row_h)
+			dropdown_content = list_core_views(filtered, core_cfg, first, last, hl, [], row_h)
 		}
 		content << column(
 			name:           'combobox dropdown'

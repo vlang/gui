@@ -241,12 +241,9 @@ fn main_view(window &gui.Window) gui.View {
 				color:   gui.rgb(35, 35, 35)
 				content: [
 					stat_cell('Nodes (avg)', '${state.nodes_roll.value():.1f}', 140),
-					stat_cell('Layout avg (μs)', '${state.layout_us_roll.value():.1f}',
-						170),
-					stat_cell('ViewGen avg (μs)', '${state.view_gen_us_roll.value():.1f}',
-						180),
-					stat_cell('Renderers (avg)', '${state.renderers_roll.value():.1f}',
-						160),
+					stat_cell('Layout avg (μs)', '${state.layout_us_roll.value():.1f}', 170),
+					stat_cell('ViewGen avg (μs)', '${state.view_gen_us_roll.value():.1f}', 180),
+					stat_cell('Renderers (avg)', '${state.renderers_roll.value():.1f}', 160),
 					stat_cell('Mem avg (MB)', '${state.mem_mb_roll.value():.1f}', 150),
 					stat_cell('Rebuilds', '${state.rebuild_count}', 130),
 				]

@@ -87,18 +87,18 @@ pub fn tessellate_stroke(polylines [][]f32, width f32, cap StrokeCap, join Strok
 				prev_norm := if i == 0 { num_normals - 1 } else { i - 1 }
 				next_norm := i
 				if next_norm < num_normals && prev_norm < num_normals {
-					add_line_join(poly[i * 2], poly[i * 2 + 1], normals[prev_norm * 2],
-						normals[prev_norm * 2 + 1], normals[next_norm * 2], normals[next_norm * 2 +
-						1], half_w, join, mut result)
+					add_line_join(poly[i * 2], poly[i * 2 + 1], normals[prev_norm * 2], normals[
+						prev_norm * 2 + 1], normals[next_norm * 2], normals[next_norm * 2 + 1],
+						half_w, join, mut result)
 				}
 			}
 		} else {
 			// For open paths, join at interior vertices only (skip first and last)
 			for i := 1; i < point_count - 1; i++ {
 				if i < num_normals {
-					add_line_join(poly[i * 2], poly[i * 2 + 1], normals[(i - 1) * 2],
-						normals[(i - 1) * 2 + 1], normals[i * 2], normals[i * 2 + 1],
-						half_w, join, mut result)
+					add_line_join(poly[i * 2], poly[i * 2 + 1], normals[(i - 1) * 2], normals[
+						(i - 1) * 2 + 1], normals[i * 2], normals[i * 2 + 1], half_w, join, mut
+						result)
 				}
 			}
 		}
@@ -112,8 +112,8 @@ pub fn tessellate_stroke(polylines [][]f32, width f32, cap StrokeCap, join Strok
 			last_idx := (point_count - 1) * 2
 			last_norm_idx := (normals.len / 2 - 1) * 2
 			add_line_cap(poly[last_idx], poly[last_idx + 1], normals[last_norm_idx], normals[
-				last_norm_idx + 1], -normals[last_norm_idx], -normals[last_norm_idx + 1],
-				half_w, cap, mut result)
+				last_norm_idx + 1], -normals[last_norm_idx], -normals[last_norm_idx + 1], half_w,
+				cap, mut result)
 		}
 	}
 

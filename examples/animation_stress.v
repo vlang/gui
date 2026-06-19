@@ -167,12 +167,12 @@ fn add_items(mut w gui.Window, count int) {
 			else { ItemKind.svg }
 		}
 
-		icon := match rand.int_in_range(0, 4) or { 0 } {
+		icon := match rand.int_in_range(0, 4) {
 			0 { icon_star }
 			1 { icon_heart }
 			2 { icon_face }
 			else { icon_bolt }
-		}
+		} or { 0 }
 
 		// Bright, fun colors
 		r := u8(rand.int_in_range(100, 255) or { 200 })
@@ -238,13 +238,13 @@ fn start_wander(mut w gui.Window, id string) {
 	duration_ms := rand.int_in_range(1000, 3000) or { 2000 }
 
 	// Random easing for variety
-	easing := match rand.int_in_range(0, 5) or { 0 } {
+	easing := match rand.int_in_range(0, 5) {
 		0 { gui.ease_in_out_quad }
 		1 { gui.ease_out_cubic }
 		2 { gui.ease_out_bounce } // occasional bounce is fun
 		3 { gui.ease_out_elastic }
 		else { gui.ease_linear }
-	}
+	} or { 0 }
 
 	// Animate X
 	w.animation_add(mut gui.TweenAnimation{

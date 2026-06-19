@@ -24,6 +24,7 @@ fn render_svg_text_path(tp svg.SvgTextPath, defs_paths map[string]string, shape_
 		tp.italic { vglyph.Typeface.italic }
 		else { vglyph.Typeface.regular }
 	}
+
 	text_style := TextStyle{
 		family:         tp.font_family
 		size:           tp.font_size * scale

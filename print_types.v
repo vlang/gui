@@ -192,6 +192,7 @@ fn print_page_size(paper PaperSize, orientation PrintOrientation) (f32, f32) {
 			height = 1191.0
 		}
 	}
+
 	return if orientation == .landscape {
 		height, width
 	} else {
@@ -225,6 +226,7 @@ fn validate_print_job(job PrintJob) ! {
 			}
 		}
 	}
+
 	for range in job.page_ranges {
 		if range.from < 1 || range.to < range.from {
 			return error('invalid page range ${range.from}-${range.to}')

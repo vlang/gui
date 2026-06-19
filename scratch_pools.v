@@ -100,7 +100,8 @@ fn (mut pools ScratchPools) put_floating_layouts(mut scratch []&Layout) {
 	}
 	pools.floating_layouts = scratch
 	if pools.floating_layout_pool.len > scratch_floating_pool_retain_max {
-		pools.floating_layout_pool = pools.floating_layout_pool[..scratch_floating_pool_shrink_to].clone()
+		pools.floating_layout_pool =
+			pools.floating_layout_pool[..scratch_floating_pool_shrink_to].clone()
 	}
 }
 
@@ -226,7 +227,8 @@ fn (mut pools ScratchPools) trim_svg_transform_batches() {
 		}
 	}
 	if pools.svg_transform_batches.len > scratch_svg_transform_batches_retain_max {
-		pools.svg_transform_batches = pools.svg_transform_batches[..scratch_svg_transform_batches_shrink_to].clone()
+		pools.svg_transform_batches =
+			pools.svg_transform_batches[..scratch_svg_transform_batches_shrink_to].clone()
 	}
 }
 

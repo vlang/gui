@@ -258,6 +258,7 @@ fn test_render_layout_clip_push_pop() {
 			assert false, 'expected first renderer to be DrawClip (push)'
 		}
 	}
+
 	match sc_pop {
 		DrawClip {
 			assert f32_are_close(sc_pop.x, initial_clip.x)

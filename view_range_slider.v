@@ -127,13 +127,13 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 				mouse_x: e.mouse_x + layout.shape.x
 				mouse_y: e.mouse_y + layout.shape.y
 			}
-			range_slider_mouse_move(layout, mut ev, mut w, slider_id, on_change, value,
-				min, max, vertical, round_value)
+			range_slider_mouse_move(layout, mut ev, mut w, slider_id, on_change, value, min, max,
+				vertical, round_value)
 
 			w.mouse_lock(MouseLockCfg{
 				mouse_move: fn [slider_id, on_change, value, min, max, vertical, round_value] (layout &Layout, mut e Event, mut w Window) {
-					range_slider_mouse_move(layout, mut e, mut w, slider_id, on_change,
-						value, min, max, vertical, round_value)
+					range_slider_mouse_move(layout, mut e, mut w, slider_id, on_change, value, min,
+						max, vertical, round_value)
 				}
 				mouse_up:   fn (_ &Layout, mut _ Event, mut w Window) {
 					w.mouse_unlock()
@@ -142,8 +142,8 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 			e.is_handled = true
 		}
 		amend_layout: fn [on_change, value, min, max, size, sz_border, vertical, color_focus, disabled, id_focus, round_value] (mut layout Layout, mut w Window) {
-			range_slider_amend_layout_slide(mut layout, mut w, on_change, value, min,
-				max, size, sz_border, vertical, color_focus, disabled, id_focus, round_value)
+			range_slider_amend_layout_slide(mut layout, mut w, on_change, value, min, max, size,
+				sz_border, vertical, color_focus, disabled, id_focus, round_value)
 		}
 		on_hover:     fn [color_hover, color_click] (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
@@ -155,8 +155,8 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 			}
 		}
 		on_keydown:   fn [on_change, value, min, max, step, round_value] (layout &Layout, mut e Event, mut w Window) {
-			range_slider_on_keydown(layout, mut e, mut w, on_change, value, min, max,
-				step, round_value)
+			range_slider_on_keydown(layout, mut e, mut w, on_change, value, min, max, step,
+				round_value)
 		}
 		content:      [
 			// The Track
@@ -193,8 +193,8 @@ pub fn range_slider(cfg RangeSliderCfg) View {
 						size_border:  1.5
 						padding:      padding_none
 						amend_layout: fn [value, min, max, thumb_size, vertical] (mut layout Layout, mut w Window) {
-							range_slider_amend_layout_thumb(mut layout, mut w, value,
-								min, max, thumb_size, vertical)
+							range_slider_amend_layout_thumb(mut layout, mut w, value, min, max,
+								thumb_size, vertical)
 						}
 					),
 				]
@@ -311,6 +311,7 @@ fn range_slider_on_keydown(_ &Layout, mut e Event, mut w Window, on_change fn (f
 			.right, .down { value = f32_clamp(value + step, min, max) }
 			else { return }
 		}
+
 		if round_value {
 			value = f32(math.round(f64(value)))
 		}
