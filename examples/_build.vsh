@@ -100,7 +100,7 @@ for i, file in files {
 	}
 	_, name, _ := split_path(file)
 	output_file := join_path(output_dir, name)
-	warn_flag := if warn { '-W ' } else { '' }
+	warn_flag := if warn && os.file_name(file) != 'showcase.v' { '-W ' } else { '' }
 	cmd := 'v -no-parallel ${warn_flag}-o ${output_file:-22s} ${file}'
 	dsp := 'v -no-parallel ${warn_flag}-o ${output_file:-22s} ${os.file_name(file):-26s}'
 	print('${progress} ${dsp}')

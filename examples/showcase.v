@@ -1150,81 +1150,228 @@ fn detail_panel(mut w gui.Window) gui.View {
 
 fn component_demo(mut w gui.Window, id string) gui.View {
 	return match id {
-		'welcome' { demo_welcome(mut w) }
-		'button' { demo_button(mut w) }
-		'input' { demo_input(w) }
-		'toggle' { demo_toggle(w) }
-		'switch' { demo_switch(w) }
-		'radio' { demo_radio(w) }
-		'radio_group' { demo_radio_group(w) }
-		'combobox' { demo_combobox(mut w) }
-		'select' { demo_select(w) }
-		'listbox' { demo_list_box(mut w) }
-		'range_slider' { demo_range_slider(w) }
-		'progress_bar' { demo_progress_bar(w) }
-		'pulsar' { demo_pulsar(mut w) }
-		'toast' { demo_toast(mut w) }
-		'badge' { demo_badge() }
-		'native_notification' { demo_native_notification(mut w) }
-		'breadcrumb' { demo_breadcrumb(mut w) }
-		'menus' { demo_menu(mut w) }
-		'dialog' { demo_dialog() }
-		'tree' { demo_tree(mut w) }
-		'drag_reorder' { demo_drag_reorder(mut w) }
-		'printing' { demo_printing(w) }
-		'text' { demo_text() }
-		'rtf' { demo_rtf() }
-		'table' { demo_table(mut w) }
-		'data_grid' { demo_data_grid(mut w) }
-		'data_source' { demo_data_source(mut w) }
-		'date_picker' { demo_date_picker(mut w) }
-		'input_date' { demo_input_date(mut w) }
-		'numeric_input' { demo_numeric_input(w) }
-		'forms' { demo_forms(w) }
-		'date_picker_roller' { demo_date_picker_roller(mut w) }
-		'svg' { demo_svg() }
-		'image' { demo_image() }
-		'expand_panel' { demo_expand_panel(w) }
-		'icons' { demo_icons() }
-		'gradient' { demo_gradient() }
-		'box_shadows' { demo_box_shadows() }
-		'shader' { demo_shader() }
-		'animations' { demo_animations(mut w) }
-		'color_picker' { demo_color_picker(w) }
-		'theme_gen' { demo_theme_gen(mut w) }
-		'markdown' { demo_markdown(mut w) }
-		'tab_control' { demo_tab_control(w) }
-		'command_palette' { demo_command_palette(mut w) }
-		'tooltip' { demo_tooltip() }
-		'rectangle' { demo_rectangle() }
-		'scrollbar' { demo_scrollbar() }
-		'splitter' { demo_splitter(w) }
-		'row' { demo_row() }
-		'column_demo' { demo_column() }
-		'wrap_panel' { demo_wrap_panel(w) }
-		'overflow_panel' { demo_overflow_panel(w) }
-		'sidebar' { demo_sidebar(mut w) }
-		'doc_get_started' { demo_doc(mut w, 'doc_get_started', doc_get_started_source) }
-		'doc_animations' { demo_doc(mut w, 'doc_animations', doc_animations_source) }
-		'doc_architecture' { demo_doc(mut w, 'doc_architecture', doc_architecture_source) }
-		'doc_containers' { demo_doc(mut w, 'doc_containers', doc_containers_source) }
-		'doc_custom_widgets' { demo_doc(mut w, 'doc_custom_widgets', doc_custom_widgets_source) }
-		'doc_data_grid' { demo_doc(mut w, 'doc_data_grid', doc_data_grid_source) }
-		'doc_forms' { demo_doc(mut w, 'doc_forms', doc_forms_source) }
-		'doc_gradients' { demo_doc(mut w, 'doc_gradients', doc_gradients_source) }
-		'doc_layout_algorithm' { demo_doc(mut w, 'doc_layout_algorithm',
-				doc_layout_algorithm_source) }
-		'doc_locales' { demo_doc(mut w, 'doc_locales', doc_locales_source) }
-		'doc_markdown' { demo_doc(mut w, 'doc_markdown', doc_markdown_source) }
-		'doc_native_dialogs' { demo_doc(mut w, 'doc_native_dialogs', doc_native_dialogs_source) }
-		'doc_performance' { demo_doc(mut w, 'doc_performance', doc_performance_source) }
-		'doc_printing' { demo_doc(mut w, 'doc_printing', doc_printing_source) }
-		'doc_shaders' { demo_doc(mut w, 'doc_shaders', doc_shaders_source) }
-		'doc_splitter' { demo_doc(mut w, 'doc_splitter', doc_splitter_source) }
-		'doc_svg' { demo_doc(mut w, 'doc_svg', doc_svg_source) }
-		'doc_tables' { demo_doc(mut w, 'doc_tables', doc_tables_source) }
-		'doc_themes' { demo_doc(mut w, 'doc_themes', doc_themes_source) }
-		else { gui.text(text: 'No demo configured') }
+		'welcome' {
+			demo_welcome(mut w)
+		}
+		'button' {
+			demo_button(mut w)
+		}
+		'input' {
+			demo_input(w)
+		}
+		'toggle' {
+			demo_toggle(w)
+		}
+		'switch' {
+			demo_switch(w)
+		}
+		'radio' {
+			demo_radio(w)
+		}
+		'radio_group' {
+			demo_radio_group(w)
+		}
+		'combobox' {
+			demo_combobox(mut w)
+		}
+		'select' {
+			demo_select(w)
+		}
+		'listbox' {
+			demo_list_box(mut w)
+		}
+		'range_slider' {
+			demo_range_slider(w)
+		}
+		'progress_bar' {
+			demo_progress_bar(w)
+		}
+		'pulsar' {
+			demo_pulsar(mut w)
+		}
+		'toast' {
+			demo_toast(mut w)
+		}
+		'badge' {
+			demo_badge()
+		}
+		'native_notification' {
+			demo_native_notification(mut w)
+		}
+		'breadcrumb' {
+			demo_breadcrumb(mut w)
+		}
+		'menus' {
+			demo_menu(mut w)
+		}
+		'dialog' {
+			demo_dialog()
+		}
+		'tree' {
+			demo_tree(mut w)
+		}
+		'drag_reorder' {
+			demo_drag_reorder(mut w)
+		}
+		'printing' {
+			demo_printing(w)
+		}
+		'text' {
+			demo_text()
+		}
+		'rtf' {
+			demo_rtf()
+		}
+		'table' {
+			demo_table(mut w)
+		}
+		'data_grid' {
+			demo_data_grid(mut w)
+		}
+		'data_source' {
+			demo_data_source(mut w)
+		}
+		'date_picker' {
+			demo_date_picker(mut w)
+		}
+		'input_date' {
+			demo_input_date(mut w)
+		}
+		'numeric_input' {
+			demo_numeric_input(w)
+		}
+		'forms' {
+			demo_forms(w)
+		}
+		'date_picker_roller' {
+			demo_date_picker_roller(mut w)
+		}
+		'svg' {
+			demo_svg()
+		}
+		'image' {
+			demo_image()
+		}
+		'expand_panel' {
+			demo_expand_panel(w)
+		}
+		'icons' {
+			demo_icons()
+		}
+		'gradient' {
+			demo_gradient()
+		}
+		'box_shadows' {
+			demo_box_shadows()
+		}
+		'shader' {
+			demo_shader()
+		}
+		'animations' {
+			demo_animations(mut w)
+		}
+		'color_picker' {
+			demo_color_picker(w)
+		}
+		'theme_gen' {
+			demo_theme_gen(mut w)
+		}
+		'markdown' {
+			demo_markdown(mut w)
+		}
+		'tab_control' {
+			demo_tab_control(w)
+		}
+		'command_palette' {
+			demo_command_palette(mut w)
+		}
+		'tooltip' {
+			demo_tooltip()
+		}
+		'rectangle' {
+			demo_rectangle()
+		}
+		'scrollbar' {
+			demo_scrollbar()
+		}
+		'splitter' {
+			demo_splitter(w)
+		}
+		'row' {
+			demo_row()
+		}
+		'column_demo' {
+			demo_column()
+		}
+		'wrap_panel' {
+			demo_wrap_panel(w)
+		}
+		'overflow_panel' {
+			demo_overflow_panel(w)
+		}
+		'sidebar' {
+			demo_sidebar(mut w)
+		}
+		'doc_get_started' {
+			demo_doc(mut w, 'doc_get_started', doc_get_started_source)
+		}
+		'doc_animations' {
+			demo_doc(mut w, 'doc_animations', doc_animations_source)
+		}
+		'doc_architecture' {
+			demo_doc(mut w, 'doc_architecture', doc_architecture_source)
+		}
+		'doc_containers' {
+			demo_doc(mut w, 'doc_containers', doc_containers_source)
+		}
+		'doc_custom_widgets' {
+			demo_doc(mut w, 'doc_custom_widgets', doc_custom_widgets_source)
+		}
+		'doc_data_grid' {
+			demo_doc(mut w, 'doc_data_grid', doc_data_grid_source)
+		}
+		'doc_forms' {
+			demo_doc(mut w, 'doc_forms', doc_forms_source)
+		}
+		'doc_gradients' {
+			demo_doc(mut w, 'doc_gradients', doc_gradients_source)
+		}
+		'doc_layout_algorithm' {
+			demo_doc(mut w, 'doc_layout_algorithm', doc_layout_algorithm_source)
+		}
+		'doc_locales' {
+			demo_doc(mut w, 'doc_locales', doc_locales_source)
+		}
+		'doc_markdown' {
+			demo_doc(mut w, 'doc_markdown', doc_markdown_source)
+		}
+		'doc_native_dialogs' {
+			demo_doc(mut w, 'doc_native_dialogs', doc_native_dialogs_source)
+		}
+		'doc_performance' {
+			demo_doc(mut w, 'doc_performance', doc_performance_source)
+		}
+		'doc_printing' {
+			demo_doc(mut w, 'doc_printing', doc_printing_source)
+		}
+		'doc_shaders' {
+			demo_doc(mut w, 'doc_shaders', doc_shaders_source)
+		}
+		'doc_splitter' {
+			demo_doc(mut w, 'doc_splitter', doc_splitter_source)
+		}
+		'doc_svg' {
+			demo_doc(mut w, 'doc_svg', doc_svg_source)
+		}
+		'doc_tables' {
+			demo_doc(mut w, 'doc_tables', doc_tables_source)
+		}
+		'doc_themes' {
+			demo_doc(mut w, 'doc_themes', doc_themes_source)
+		}
+		else {
+			gui.text(text: 'No demo configured')
+		}
 	}
 }
 

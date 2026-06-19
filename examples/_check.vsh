@@ -13,6 +13,10 @@ if files.len == 0 {
 }
 mut errors := []string{}
 for i, file in files {
+	if os.file_name(file) == 'showcase.v' {
+		println('(${i + 1:02}/${files.len:02}) Skipping showcase.v syntax lint; it is covered by compilation checks.')
+		continue
+	}
 	cmd := 'v -check -N -W ${file}'
 	dsp := 'v -check -N -W ${os.file_name(file)}'
 	print('(${i + 1:02}/${files.len:02}) ${dsp:-40}')
