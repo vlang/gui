@@ -64,7 +64,10 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 				} else {
 					''
 				}
-				spawn download_image(iv.src, base_path, auth_header, mut window)
+				image_url := iv.src
+				window.suspend_layout_callback_tracking(fn [image_url, base_path, auth_header, mut window] () {
+					spawn download_image(image_url, base_path, auth_header, mut window)
+				}) or { panic(err) }
 			}
 			mut layout := Layout{
 				shape: &Shape{

@@ -84,29 +84,32 @@ fn (mut sv SvgView) generate_layout(mut window Window) Layout {
 			anim_start.set(anim_hash, now_ns)
 		}
 		anim_id := 'svg_anim:${anim_hash}'
-		if !window.has_animation(anim_id) {
-			window.animation_add(mut &Animate{
-				id:       anim_id
-				delay:    animation_cycle
-				repeat:   true
-				callback: fn [anim_hash] (mut an Animate, mut w Window) {
-					// Check staleness: if SVG left the layout tree, stop
-					mut seen_map := state_map[string, i64](mut w, ns_svg_anim_seen, cap_moderate)
-					if seen := seen_map.get(anim_hash) {
-						elapsed := time.now().unix_nano() - seen
-						if elapsed > 200_000_000 {
-							// >200ms since last seen → SVG removed
+		window.animation_add_from_layout(fn [mut window, anim_id, anim_hash] () {
+			if !window.has_animation(anim_id) {
+				window.animation_add(mut &Animate{
+					id:       anim_id
+					delay:    animation_cycle
+					repeat:   true
+					callback: fn [anim_hash] (mut an Animate, mut w Window) {
+						// Check staleness: if SVG left the layout tree, stop
+						mut seen_map := state_map[string, i64](mut w, ns_svg_anim_seen,
+							cap_moderate)
+						if seen := seen_map.get(anim_hash) {
+							elapsed := time.now().unix_nano() - seen
+							if elapsed > 200_000_000 {
+								// >200ms since last seen → SVG removed
+								an.stopped = true
+								return
+							}
+						} else {
 							an.stopped = true
 							return
 						}
-					} else {
-						an.stopped = true
-						return
+						w.update_window()
 					}
-					w.update_window()
-				}
-			})
-		}
+				})
+			}
+		}) or { panic(err) }
 	}
 
 	mut events := unsafe { &EventHandlers(nil) }

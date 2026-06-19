@@ -199,7 +199,7 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 		}
 		tab_on_click := if is_draggable {
 			make_tab_drag_click(cfg.id, item.id, item_drag_idx, tab_ids, tab_layout_ids,
-				on_reorder, cfg.on_select, cfg.id_focus)
+				cfg.on_select, cfg.id_focus)
 		} else {
 			make_tab_on_click(cfg.on_select, item.id, cfg.id_focus)
 		}
@@ -285,6 +285,9 @@ fn tab_control_build(cfg TabControlCfg, drag DragReorderState) View {
 		spacing:          cfg.spacing
 		disabled:         cfg.disabled
 		invisible:        cfg.invisible
+		on_scroll:        fn [tab_id, on_reorder] (_ &Layout, mut w Window) {
+			drag_reorder_apply_drop(tab_id, on_reorder, mut w)
+		}
 		on_keydown:       fn [disabled, tab_nav_ids, tab_nav_disabled, selected, on_select, id_focus, reorderable, on_reorder, tab_id, tab_ids] (_ &Layout, mut e Event, mut w Window) {
 			tab_control_on_keydown(disabled, tab_nav_ids, tab_nav_disabled, selected,
 				on_select, id_focus, reorderable, on_reorder, tab_id, tab_ids, mut e, mut
@@ -331,12 +334,11 @@ fn make_tab_on_click(on_select fn (string, mut Event, mut Window), id string, id
 fn make_tab_drag_click(control_id string, item_id string,
 	drag_index int, tab_ids []string,
 	tab_layout_ids []string,
-	on_reorder fn (string, string, mut Window),
 	on_select fn (string, mut Event, mut Window),
 	id_focus u32) fn (&Layout, mut Event, mut Window) {
-	return fn [control_id, item_id, drag_index, tab_ids, tab_layout_ids, on_reorder, on_select, id_focus] (layout &Layout, mut e Event, mut w Window) {
-		drag_reorder_start(control_id, drag_index, item_id, .horizontal, tab_ids, on_reorder,
-			tab_layout_ids, 0, u32(0), layout, e, mut w)
+	return fn [control_id, item_id, drag_index, tab_ids, tab_layout_ids, on_select, id_focus] (layout &Layout, mut e Event, mut w Window) {
+		drag_reorder_start(control_id, drag_index, item_id, .horizontal, tab_ids,
+			tab_layout_ids, 0, u32(0), '', layout, e, mut w)
 		on_select(item_id, mut e, mut w)
 		if id_focus > 0 {
 			w.set_id_focus(id_focus)

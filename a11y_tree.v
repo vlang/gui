@@ -249,7 +249,10 @@ fn a11y_action_callback(action int, focus_id int, user_data voidptr) {
 fn window_cleanup(user_data voidptr) {
 	if user_data != unsafe { nil } {
 		mut w := unsafe { &Window(user_data) }
+		layout_clear(mut w.layout)
+		array_clear(mut w.renderers)
 		w.release_all_file_access()
+		w.dispose_layout_callbacks()
 	}
 	nativebridge.a11y_destroy()
 }

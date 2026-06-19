@@ -95,33 +95,36 @@ pub fn progress_bar(cfg ProgressBarCfg) View {
 					// Register animation if missing
 					anim_id := '${id}_indefinite'
 					if anim_id !in w.animations {
-						mut anim := KeyframeAnimation{
-							id:        anim_id
-							repeat:    true
-							duration:  1500 * time.millisecond
-							keyframes: [
-								Keyframe{
-									at:    0.0
-									value: 0.0
-								},
-								Keyframe{
-									at:     0.5
-									value:  1.0
-									easing: ease_in_out_quad
-								},
-								Keyframe{
-									at:     1.0
-									value:  0.0
-									easing: ease_in_out_quad
-								},
-							]
-							on_value:  fn [id] (v f32, mut w Window) {
-								mut pm := state_map[string, f32](mut w, ns_progress, cap_moderate)
-								pm.set(id, v)
+						w.animation_add_from_layout(fn [mut w, id, anim_id] () {
+							mut anim := KeyframeAnimation{
+								id:        anim_id
+								repeat:    true
+								duration:  1500 * time.millisecond
+								keyframes: [
+									Keyframe{
+										at:    0.0
+										value: 0.0
+									},
+									Keyframe{
+										at:     0.5
+										value:  1.0
+										easing: ease_in_out_quad
+									},
+									Keyframe{
+										at:     1.0
+										value:  0.0
+										easing: ease_in_out_quad
+									},
+								]
+								on_value:  fn [id] (v f32, mut w Window) {
+									mut pm := state_map[string, f32](mut w, ns_progress,
+										cap_moderate)
+									pm.set(id, v)
+								}
 							}
-						}
-						anim.start = time.now()
-						w.animation_add(mut anim)
+							anim.start = time.now()
+							w.animation_add(mut anim)
+						}) or { panic(err) }
 					}
 
 					// Read current animation progress

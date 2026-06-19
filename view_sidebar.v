@@ -4,9 +4,13 @@ import time
 
 struct SidebarRuntimeState {
 mut:
-	prev_open   bool
-	anim_frac   f32
-	initialized bool
+	prev_open      bool
+	current_frac   f32
+	tween_from     f32
+	tween_to       f32
+	tween_progress f32
+	tween_active   bool
+	initialized    bool
 }
 
 @[minify]
@@ -72,51 +76,88 @@ fn sidebar_animated_width(mut w Window, cfg SidebarCfg) f32 {
 	target := if cfg.open { f32(1) } else { f32(0) }
 
 	if !rt.initialized {
-		rt.anim_frac = target
+		rt.current_frac = target
+		rt.tween_from = target
+		rt.tween_to = target
+		rt.tween_progress = 1
+		rt.tween_active = false
 		rt.prev_open = cfg.open
 		rt.initialized = true
 		sm.set(cfg.id, rt)
 		return cfg.width * target
 	}
 
+	current_frac := sidebar_resolve_fraction(rt, cfg.tween_easing)
 	if cfg.open != rt.prev_open {
 		rt.prev_open = cfg.open
+		rt.current_frac = current_frac
 		sm.set(cfg.id, rt)
-		sidebar_start_animation(cfg.id, rt.anim_frac, target, cfg.spring, cfg.tween_duration,
-			cfg.tween_easing, mut w)
+		sidebar_start_animation(cfg.id, current_frac, target, cfg.spring, cfg.tween_duration, mut w)
 	}
 
-	return cfg.width * f32_max(0, rt.anim_frac)
+	rt = sm.get(cfg.id) or { rt }
+	return cfg.width * f32_max(0, sidebar_resolve_fraction(rt, cfg.tween_easing))
 }
 
-fn sidebar_on_anim_value(id string) fn (f32, mut Window) {
+fn sidebar_resolve_fraction(rt SidebarRuntimeState, easing EasingFn) f32 {
+	if rt.tween_active {
+		progress := f32_clamp(rt.tween_progress, 0, 1)
+		return lerp(rt.tween_from, rt.tween_to, easing(progress))
+	}
+	return rt.current_frac
+}
+
+fn sidebar_on_spring_value(id string) fn (f32, mut Window) {
 	return fn [id] (v f32, mut w Window) {
 		mut sm := state_map[string, SidebarRuntimeState](mut w, ns_sidebar, cap_few)
 		mut rt := sm.get(id) or { SidebarRuntimeState{} }
-		rt.anim_frac = v
+		rt.current_frac = v
+		rt.tween_active = false
 		sm.set(id, rt)
 	}
 }
 
-fn sidebar_start_animation(sidebar_id string, from f32, to f32, spring_cfg SpringCfg, tween_dur time.Duration, tween_easing EasingFn, mut w Window) {
-	anim_id := 'sidebar:${sidebar_id}'
-	on_value := sidebar_on_anim_value(sidebar_id)
-	if tween_dur > 0 {
-		w.animation_add(mut TweenAnimation{
-			id:       anim_id
-			from:     from
-			to:       to
-			duration: tween_dur
-			easing:   tween_easing
-			on_value: on_value
-		})
-	} else {
-		mut spring := SpringAnimation{
-			id:       anim_id
-			config:   spring_cfg
-			on_value: on_value
+fn sidebar_on_tween_progress(id string) fn (f32, mut Window) {
+	return fn [id] (progress f32, mut w Window) {
+		mut sm := state_map[string, SidebarRuntimeState](mut w, ns_sidebar, cap_few)
+		mut rt := sm.get(id) or { SidebarRuntimeState{} }
+		rt.tween_progress = f32_clamp(progress, 0, 1)
+		rt.tween_active = rt.tween_progress < 1
+		if !rt.tween_active {
+			rt.current_frac = rt.tween_to
 		}
-		spring.spring_to(from, to)
-		w.animation_add(mut spring)
+		sm.set(id, rt)
 	}
+}
+
+fn sidebar_start_animation(sidebar_id string, from f32, to f32, spring_cfg SpringCfg, tween_dur time.Duration, mut w Window) {
+	w.animation_add_from_layout(fn [mut w, sidebar_id, from, to, spring_cfg, tween_dur] () {
+		anim_id := 'sidebar:${sidebar_id}'
+		if tween_dur > 0 {
+			mut sm := state_map[string, SidebarRuntimeState](mut w, ns_sidebar, cap_few)
+			mut rt := sm.get(sidebar_id) or { SidebarRuntimeState{} }
+			rt.current_frac = from
+			rt.tween_from = from
+			rt.tween_to = to
+			rt.tween_progress = 0
+			rt.tween_active = true
+			sm.set(sidebar_id, rt)
+			w.animation_add(mut TweenAnimation{
+				id:       anim_id
+				from:     0
+				to:       1
+				duration: tween_dur
+				easing:   ease_linear
+				on_value: sidebar_on_tween_progress(sidebar_id)
+			})
+		} else {
+			mut spring := SpringAnimation{
+				id:       anim_id
+				config:   spring_cfg
+				on_value: sidebar_on_spring_value(sidebar_id)
+			}
+			spring.spring_to(from, to)
+			w.animation_add(mut spring)
+		}
+	}) or { panic(err) }
 }

@@ -32,7 +32,8 @@ struct DiagramCacheEntry {
 fn write_stbi_temp(prefix string, hash i64, img stbi.Image) !string {
 	rand_suffix := rand.intn(1000000) or { 0 }
 	tmp_path := os.join_path(os.temp_dir(), '${prefix}_${hash}_${rand_suffix}.png')
-	stbi.stbi_write_png(tmp_path, img.width, img.height, img.nr_channels, img.data, img.width * img.nr_channels)!
+	stbi.stbi_write_png(tmp_path, img.width, img.height, img.nr_channels, img.data,
+		img.width * img.nr_channels)!
 	return tmp_path
 }
 
@@ -106,168 +107,170 @@ fn mermaid_http_fetch(source string) !http.Response {
 // to the service provider.
 // Use MarkdownCfg.disable_external_apis to disable this.
 fn fetch_mermaid_async(mut window Window, source string, hash i64, request_id u64, max_width int, bg_r u8, bg_g u8, bg_b u8) {
-	spawn fn [mut window, source, hash, request_id, max_width, bg_r, bg_g, bg_b] () {
-		if source.len > max_mermaid_source_len {
-			window.queue_command(fn [hash, request_id] (mut w Window) {
-				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
-					request_id) {
-					return
-				}
-				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state:      .error
-					error:      'Mermaid source too large'
-					request_id: request_id
-				})
-				w.update_window()
-			})
-			return
-		}
-
-		result := mermaid_http_fetch(source) or {
-			err_msg := err.msg()
-			window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
-				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
-					request_id) {
-					return
-				}
-				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state:      .error
-					error:      err_msg
-					request_id: request_id
-				})
-				w.update_window()
-			})
-			return
-		}
-		if result.status_code == 200 {
-			// Reject oversized responses (>10MB)
-			if result.body.len > 10 * 1024 * 1024 {
-				body_len := result.body.len
-				window.queue_command(fn [hash, request_id, body_len] (mut w Window) {
-					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
-						hash, request_id) {
+	window.suspend_layout_callback_tracking(fn [mut window, source, hash, request_id, max_width, bg_r, bg_g, bg_b] () {
+		spawn fn [mut window, source, hash, request_id, max_width, bg_r, bg_g, bg_b] () {
+			if source.len > max_mermaid_source_len {
+				window.queue_command(fn [hash, request_id] (mut w Window) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+						request_id) {
 						return
 					}
 					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
 						state:      .error
-						error:      'Response too large (>${body_len / 1024 / 1024}MB)'
+						error:      'Mermaid source too large'
 						request_id: request_id
 					})
 					w.update_window()
 				})
 				return
 			}
-			// Load PNG from memory and resize if needed
-			png_bytes := result.body.bytes()
-			img := stbi.load_from_memory(png_bytes.data, png_bytes.len) or {
+
+			result := mermaid_http_fetch(source) or {
 				err_msg := err.msg()
 				window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
-					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
-						hash, request_id) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+						request_id) {
 						return
 					}
 					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
 						state:      .error
-						error:      'Failed to decode PNG: ${err_msg}'
+						error:      err_msg
 						request_id: request_id
 					})
 					w.update_window()
 				})
 				return
 			}
-
-			// Scale down if wider than max_width
-			mut final_img := img
-			resized := img.width > max_width
-			if resized {
-				scale := f64(max_width) / f64(img.width)
-				new_h := int(f64(img.height) * scale)
-				final_img = stbi.resize_uint8(&img, max_width, new_h) or {
-					img.free()
-					err_msg := err.msg()
-					window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
-						if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
-							hash, request_id) {
+			if result.status_code == 200 {
+				// Reject oversized responses (>10MB)
+				if result.body.len > 10 * 1024 * 1024 {
+					body_len := result.body.len
+					window.queue_command(fn [hash, request_id, body_len] (mut w Window) {
+						if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+							request_id) {
 							return
 						}
 						w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
 							state:      .error
-							error:      'Failed to resize: ${err_msg}'
+							error:      'Response too large (>${body_len / 1024 / 1024}MB)'
 							request_id: request_id
 						})
 						w.update_window()
 					})
 					return
 				}
-			}
+				// Load PNG from memory and resize if needed
+				png_bytes := result.body.bytes()
+				img := stbi.load_from_memory(png_bytes.data, png_bytes.len) or {
+					err_msg := err.msg()
+					window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
+						if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+							request_id) {
+							return
+						}
+						w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+							state:      .error
+							error:      'Failed to decode PNG: ${err_msg}'
+							request_id: request_id
+						})
+						w.update_window()
+					})
+					return
+				}
 
-			// Fill transparent pixels with background color
-			fill_transparent_with_bg(final_img.data, final_img.width, final_img.height,
-				final_img.nr_channels, bg_r, bg_g, bg_b)
+				// Scale down if wider than max_width
+				mut final_img := img
+				resized := img.width > max_width
+				if resized {
+					scale := f64(max_width) / f64(img.width)
+					new_h := int(f64(img.height) * scale)
+					final_img = stbi.resize_uint8(&img, max_width, new_h) or {
+						img.free()
+						err_msg := err.msg()
+						window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
+							if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
+								hash, request_id) {
+								return
+							}
+							w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+								state:      .error
+								error:      'Failed to resize: ${err_msg}'
+								request_id: request_id
+							})
+							w.update_window()
+						})
+						return
+					}
+				}
 
-			tmp_path := write_stbi_temp('mermaid', hash, final_img) or {
+				// Fill transparent pixels with background color
+				fill_transparent_with_bg(final_img.data, final_img.width, final_img.height,
+					final_img.nr_channels, bg_r, bg_g, bg_b)
+
+				tmp_path := write_stbi_temp('mermaid', hash, final_img) or {
+					img.free()
+					if resized {
+						final_img.free()
+					}
+					err_msg := err.msg()
+					window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
+						if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+							request_id) {
+							return
+						}
+						w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+							state:      .error
+							error:      'Failed to write temp file: ${err_msg}'
+							request_id: request_id
+						})
+						w.update_window()
+					})
+					return
+				}
+				// Free stbi memory after writing PNG
 				img.free()
 				if resized {
 					final_img.free()
 				}
-				err_msg := err.msg()
-				window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
-					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
-						hash, request_id) {
+				final_w := f32(final_img.width)
+				final_h := f32(final_img.height)
+				window.queue_command(fn [hash, request_id, tmp_path, final_w, final_h] (mut w Window) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+						request_id) {
+						os.rm(tmp_path) or {}
 						return
 					}
 					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-						state:      .error
-						error:      'Failed to write temp file: ${err_msg}'
+						state:      .ready
+						png_path:   tmp_path
+						width:      final_w
+						height:     final_h
 						request_id: request_id
 					})
 					w.update_window()
 				})
-				return
-			}
-			// Free stbi memory after writing PNG
-			img.free()
-			if resized {
-				final_img.free()
-			}
-			final_w := f32(final_img.width)
-			final_h := f32(final_img.height)
-			window.queue_command(fn [hash, request_id, tmp_path, final_w, final_h] (mut w Window) {
-				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
-					request_id) {
-					os.rm(tmp_path) or {}
-					return
-				}
-				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state:      .ready
-					png_path:   tmp_path
-					width:      final_w
-					height:     final_h
-					request_id: request_id
-				})
-				w.update_window()
-			})
-		} else {
-			body_preview := if result.body.len > 200 {
-				result.body[..200] + '...'
 			} else {
-				result.body
-			}
-			status_code := result.status_code
-			window.queue_command(fn [hash, request_id, status_code, body_preview] (mut w Window) {
-				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
-					request_id) {
-					return
+				body_preview := if result.body.len > 200 {
+					result.body[..200] + '...'
+				} else {
+					result.body
 				}
-				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state:      .error
-					error:      'HTTP ${status_code}: ${body_preview}'
-					request_id: request_id
+				status_code := result.status_code
+				window.queue_command(fn [hash, request_id, status_code, body_preview] (mut w Window) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+						request_id) {
+						return
+					}
+					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+						state:      .error
+						error:      'HTTP ${status_code}: ${body_preview}'
+						request_id: request_id
+					})
+					w.update_window()
 				})
-				w.update_window()
-			})
-		}
-	}()
+			}
+		}()
+	}) or { panic(err) }
 }
 
 // BoundedDiagramCache is a FIFO cache for diagram entries.

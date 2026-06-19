@@ -67,6 +67,12 @@ fn data_grid_source_cancel_active(mut state DataGridSourceState) {
 	state.cancelled_count++
 }
 
+fn (mut window Window) data_grid_source_queue_reclaim_pin_release() {
+	window.queue_command(fn (mut window Window) {
+		window.release_layout_callback_reclaim_pin()
+	})
+}
+
 fn data_grid_source_force_refetch(grid_id string, mut window Window) {
 	mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
 	mut state := dg_src.get(grid_id) or { return }
@@ -274,6 +280,7 @@ fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, ki
 			})
 		}
 	}
+
 	req := GridDataRequest{
 		grid_id:    cfg.id
 		query:      cfg.query
@@ -289,35 +296,44 @@ fn data_grid_source_start_request(cfg DataGridCfg, caps GridDataCapabilities, ki
 	state.request_count++
 	state.pagination_kind = kind
 	grid_id := cfg.id
-	spawn fn [source, req, grid_id, next_request_id, caps] (mut w Window) {
-		if req.signal.is_aborted() {
-			return
-		}
-		result := source.fetch_data(req) or {
+	window.pin_layout_callback_reclaim() or { panic(err) }
+	window.suspend_layout_callback_tracking(fn [source, req, grid_id, next_request_id, caps, mut window] () {
+		spawn fn [source, req, grid_id, next_request_id, caps] (mut w Window) {
 			if req.signal.is_aborted() {
+				w.data_grid_source_queue_reclaim_pin_release()
 				return
 			}
-			err_msg := err.msg()
-			w.queue_command(fn [grid_id, next_request_id, err_msg] (mut w Window) {
-				data_grid_source_apply_error(grid_id, next_request_id, err_msg, mut w)
+			result := source.fetch_data(req) or {
+				if req.signal.is_aborted() {
+					w.data_grid_source_queue_reclaim_pin_release()
+					return
+				}
+				err_msg := err.msg()
+				w.queue_command(fn [grid_id, next_request_id, err_msg] (mut w Window) {
+					data_grid_source_apply_error(grid_id, next_request_id, err_msg, mut w)
+					w.release_layout_callback_reclaim_pin()
+				})
+				return
+			}
+			if req.signal.is_aborted() {
+				w.data_grid_source_queue_reclaim_pin_release()
+				return
+			}
+			w.queue_command(fn [grid_id, next_request_id, result, caps] (mut w Window) {
+				data_grid_source_apply_success(grid_id, next_request_id, result, caps, mut w)
+				w.release_layout_callback_reclaim_pin()
 			})
-			return
-		}
-		if req.signal.is_aborted() {
-			return
-		}
-		w.queue_command(fn [grid_id, next_request_id, result, caps] (mut w Window) {
-			data_grid_source_apply_success(grid_id, next_request_id, result, caps, mut
-				w)
-		})
-	}(mut window)
+		}(mut window)
+	}) or {
+		window.release_layout_callback_reclaim_pin()
+		panic(err)
+	}
 }
 
 fn data_grid_source_drop_if_stale(request_id u64, mut state DataGridSourceState, mut window Window, grid_id string) bool {
 	if request_id != state.request_id {
 		state.stale_drop_count++
-		mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source,
-			cap_moderate)
+		mut dg_src := state_map[string, DataGridSourceState](mut window, ns_dg_source, cap_moderate)
 		dg_src.set(grid_id, state)
 		return true
 	}
@@ -516,8 +532,8 @@ fn data_grid_source_jump_enabled(on_selection_change fn (GridSelection, mut Even
 }
 
 fn data_grid_source_submit_jump(on_selection_change fn (GridSelection, mut Event, mut Window), row_count ?int, loading bool, load_error string, kind GridPaginationKind, page_limit int, grid_id string, focus_id u32, mut e Event, mut window Window) {
-	if !data_grid_source_jump_enabled(on_selection_change, row_count, loading, load_error,
-		kind, page_limit) {
+	if !data_grid_source_jump_enabled(on_selection_change, row_count, loading, load_error, kind,
+		page_limit) {
 		return
 	}
 	total := row_count or { return }
@@ -565,6 +581,7 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 	jump_input_id := '${grid_id}:jump'
 	mut content := []View{cap: 10}
 	content << data_grid_indicator_button('◀', cfg.text_style_header, cfg.color_header_hover,
+
 		state.loading || !has_prev, data_grid_header_control_width + 10, fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
 		data_grid_source_prev_page(grid_id, kind, page_limit, mut w)
 		if focus_id > 0 {
@@ -578,6 +595,7 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 		text_style: cfg.text_style_filter
 	)
 	content << data_grid_indicator_button('▶', cfg.text_style_header, cfg.color_header_hover,
+
 		state.loading || !has_next, data_grid_header_control_width + 10, fn [grid_id, kind, page_limit, focus_id] (_ &Layout, mut e Event, mut w Window) {
 		data_grid_source_next_page(grid_id, kind, page_limit, mut w)
 		if focus_id > 0 {
@@ -657,12 +675,12 @@ fn data_grid_source_pager_row(cfg DataGridCfg, focus_id u32, state DataGridSourc
 				mut dg_ji := state_map[string, string](mut w, ns_dg_jump, cap_moderate)
 				dg_ji.set(grid_id, digits)
 				mut e := Event{}
-				data_grid_source_submit_jump(on_selection_change, row_count, loading,
-					load_error, kind, page_limit, grid_id, 0, mut e, mut w)
+				data_grid_source_submit_jump(on_selection_change, row_count, loading, load_error,
+					kind, page_limit, grid_id, 0, mut e, mut w)
 			}
 			on_enter:        fn [on_selection_change, row_count, loading, load_error, kind, page_limit, grid_id, focus_id] (_ &Layout, mut e Event, mut w Window) {
-				data_grid_source_submit_jump(on_selection_change, row_count, loading,
-					load_error, kind, page_limit, grid_id, focus_id, mut e, mut w)
+				data_grid_source_submit_jump(on_selection_change, row_count, loading, load_error,
+					kind, page_limit, grid_id, focus_id, mut e, mut w)
 			}
 		)
 	}

@@ -5,6 +5,104 @@ module gui
 import hash.fnv1a
 import time
 
+const ns_dg_quick_filter_debounce = 'gui.dg.quick_filter.debounce'
+const ns_dg_quick_filter_debounce_seq = 'gui.dg.quick_filter.debounce_seq'
+
+struct DataGridQuickFilterDebounce {
+	token   u64
+	sorts   []GridSort
+	filters []GridFilter
+	text    string
+}
+
+fn data_grid_quick_filter_debounce_handler_id(input_id string) string {
+	return '${input_id}:debounce_handler'
+}
+
+fn data_grid_quick_filter_next_debounce_token(input_id string, mut w Window) u64 {
+	mut seqs := state_map[string, u64](mut w, ns_dg_quick_filter_debounce_seq, cap_moderate)
+	next := (seqs.get(input_id) or { u64(0) }) + 1
+	seqs.set(input_id, next)
+	return next
+}
+
+fn data_grid_quick_filter_set_debounce(input_id string, payload DataGridQuickFilterDebounce, mut w Window) u64 {
+	token := data_grid_quick_filter_next_debounce_token(input_id, mut w)
+	mut pending := state_map[string, DataGridQuickFilterDebounce](mut w,
+		ns_dg_quick_filter_debounce, cap_moderate)
+	pending.set(input_id, DataGridQuickFilterDebounce{
+		token:   token
+		sorts:   payload.sorts
+		filters: payload.filters
+		text:    payload.text
+	})
+	return token
+}
+
+fn data_grid_quick_filter_debounce_matches(input_id string, token u64, w &Window) bool {
+	pending := state_map_read[string, DataGridQuickFilterDebounce](w,
+		ns_dg_quick_filter_debounce) or {
+		return false
+	}
+	payload := pending.get(input_id) or { return false }
+	return payload.token == token
+}
+
+fn data_grid_quick_filter_take_debounce(input_id string, token u64, mut w Window) ?DataGridQuickFilterDebounce {
+	mut pending := state_map[string, DataGridQuickFilterDebounce](mut w,
+		ns_dg_quick_filter_debounce, cap_moderate)
+	payload := pending.get(input_id) or { return none }
+	if payload.token != token {
+		return none
+	}
+	pending.delete(input_id)
+	return payload
+}
+
+fn data_grid_quick_filter_clear_debounce(input_id string, mut w Window) {
+	mut pending := state_map[string, DataGridQuickFilterDebounce](mut w,
+		ns_dg_quick_filter_debounce, cap_moderate)
+	pending.delete(input_id)
+}
+
+fn data_grid_quick_filter_dispatch_debounce(input_id string, token u64, mut w Window) {
+	if !data_grid_quick_filter_debounce_matches(input_id, token, &w) {
+		return
+	}
+	handler_id := data_grid_quick_filter_debounce_handler_id(input_id)
+	layout := w.find_layout_by_id(handler_id) or {
+		data_grid_quick_filter_clear_debounce(input_id, mut w)
+		return
+	}
+	if !layout.shape.has_events() || layout.shape.events.on_scroll == unsafe { nil } {
+		data_grid_quick_filter_clear_debounce(input_id, mut w)
+		return
+	}
+	layout.shape.events.on_scroll(layout, mut w)
+}
+
+fn data_grid_quick_filter_apply_debounce(input_id string, query_callback fn (qs GridQueryState, mut e Event, mut w Window), mut w Window) {
+	if query_callback == unsafe { nil } {
+		data_grid_quick_filter_clear_debounce(input_id, mut w)
+		return
+	}
+	pending := state_map_read[string, DataGridQuickFilterDebounce](w,
+		ns_dg_quick_filter_debounce) or {
+		return
+	}
+	current := pending.get(input_id) or { return }
+	payload := data_grid_quick_filter_take_debounce(input_id, current.token, mut w) or {
+		return
+	}
+	next := GridQueryState{
+		sorts:        payload.sorts
+		filters:      payload.filters
+		quick_filter: payload.text
+	}
+	mut e := Event{}
+	query_callback(next, mut e, mut w)
+}
+
 fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 	h := data_grid_quick_filter_height(cfg)
 	query_callback := cfg.on_query_change
@@ -15,8 +113,10 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 	matches_text := data_grid_quick_filter_matches_text(cfg)
 	clear_disabled := value.len == 0 || query_callback == unsafe { nil }
 	debounce := cfg.quick_filter_debounce
+	debounce_handler_id := data_grid_quick_filter_debounce_handler_id(input_id)
 	return row(
 		name:         'data_grid quick filter row'
+		id:           debounce_handler_id
 		height:       h
 		sizing:       fill_fixed
 		color:        cfg.color_quick_filter
@@ -25,6 +125,9 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 		padding:      padding(0, cfg.padding_cell.right, 0, cfg.padding_cell.left)
 		spacing:      6
 		v_align:      .middle
+		on_scroll:    fn [input_id, query_callback] (_ &Layout, mut w Window) {
+			data_grid_quick_filter_apply_debounce(input_id, query_callback, mut w)
+		}
 		on_click:     fn [input_focus_id] (_ &Layout, mut e Event, mut w Window) {
 			if input_focus_id > 0 {
 				w.set_id_focus(input_focus_id)
@@ -74,17 +177,16 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 					// the latest keystroke fires.
 					sorts := query.sorts.clone()
 					filters := query.filters.clone()
+					token := data_grid_quick_filter_set_debounce(input_id, DataGridQuickFilterDebounce{
+						sorts:   sorts
+						filters: filters
+						text:    text
+					}, mut w)
 					w.animation_add(mut &Animate{
 						id:       '${input_id}:debounce'
 						delay:    debounce
-						callback: fn [sorts, filters, text, query_callback] (mut an Animate, mut w Window) {
-							next := GridQueryState{
-								sorts:        sorts
-								filters:      filters
-								quick_filter: text
-							}
-							mut e := Event{}
-							query_callback(next, mut e, mut w)
+						callback: fn [input_id, token] (mut an Animate, mut w Window) {
+							data_grid_quick_filter_dispatch_debounce(input_id, token, mut w)
 						}
 					})
 				}
@@ -100,6 +202,7 @@ fn data_grid_quick_filter_row(cfg DataGridCfg) View {
 					return
 				}
 				w.remove_animation('${input_id}:debounce')
+				data_grid_quick_filter_clear_debounce(input_id, mut w)
 				next := GridQueryState{
 					sorts:        query.sorts.clone()
 					filters:      query.filters.clone()

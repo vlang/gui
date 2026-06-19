@@ -145,139 +145,156 @@ fn fetch_math_http(url string) !http.Response {
 }
 
 fn fetch_math_async(mut window Window, latex string, hash i64, request_id u64, dpi int, fg_color Color) {
-	spawn fn [mut window, latex, hash, request_id, dpi, fg_color] () {
-		safe_latex := sanitize_latex(latex)
-
-		// Build codecogs URL with DPI and optional color prefix.
-		// Use named color to avoid bracket syntax that breaks
-		// when percent-encoded.
-		dpi_str := '${dpi}'
-		lum := 0.299 * f64(fg_color.r) + 0.587 * f64(fg_color.g) + 0.114 * f64(fg_color.b)
-		color_cmd := if lum > 128.0 { '\\color{white}' } else { '' }
-		prefix := '\\dpi{${dpi_str}}${color_cmd}'
-		// Replace spaces with {} (empty group) — acts as
-		// command terminator without visible output. V's
-		// http library re-encodes %20 as + which codecogs
-		// renders as literal plus signs.
-		encoded := (prefix + safe_latex).replace(' ', '{}').replace('#', '%23').replace('&',
-			'%26')
-		url := 'https://latex.codecogs.com/png.image?${encoded}'
-		result := fetch_math_http(url) or {
-			err_msg := err.msg()
-			window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
-				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
-					request_id) {
-					return
-				}
-				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state:      .error
-					error:      err_msg
-					request_id: request_id
-				})
-				w.update_window()
-			})
-			return
-		}
-		if result.status_code == 200 {
-			// Reject oversized responses (>10MB)
-			if result.body.len > 10 * 1024 * 1024 {
-				body_len := result.body.len
-				window.queue_command(fn [hash, request_id, body_len] (mut w Window) {
-					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
-						hash, request_id) {
+	window.suspend_layout_callback_tracking(fn [mut window, latex, hash, request_id, dpi, fg_color] () {
+		spawn fn [mut window, latex, hash, request_id, dpi, fg_color] () {
+			if latex.len > max_latex_source_len {
+				window.queue_command(fn [hash, request_id] (mut w Window) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+						request_id) {
 						return
 					}
 					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
 						state:      .error
-						error:      'Response too large (>${body_len / 1024 / 1024}MB)'
+						error:      'LaTeX source too large'
 						request_id: request_id
 					})
 					w.update_window()
 				})
 				return
 			}
-			png_bytes := result.body.bytes()
-			img := stbi.load_from_memory(png_bytes.data, png_bytes.len) or {
+			safe_latex := sanitize_latex(latex)
+
+			// Build codecogs URL with DPI and optional color prefix.
+			// Use named color to avoid bracket syntax that breaks
+			// when percent-encoded.
+			dpi_str := '${dpi}'
+			lum := 0.299 * f64(fg_color.r) + 0.587 * f64(fg_color.g) + 0.114 * f64(fg_color.b)
+			color_cmd := if lum > 128.0 { '\\color{white}' } else { '' }
+			prefix := '\\dpi{${dpi_str}}${color_cmd}'
+			// Replace spaces with {} (empty group) — acts as
+			// command terminator without visible output. V's
+			// http library re-encodes %20 as + which codecogs
+			// renders as literal plus signs.
+			encoded := (prefix + safe_latex).replace(' ', '{}').replace('#', '%23').replace('&',
+				'%26')
+			url := 'https://latex.codecogs.com/png.image?${encoded}'
+			result := fetch_math_http(url) or {
 				err_msg := err.msg()
 				window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
-					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
-						hash, request_id) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+						request_id) {
 						return
 					}
 					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
 						state:      .error
-						error:      'Failed to decode PNG: ${err_msg}'
+						error:      err_msg
 						request_id: request_id
 					})
 					w.update_window()
 				})
 				return
 			}
+			if result.status_code == 200 {
+				// Reject oversized responses (>10MB)
+				if result.body.len > 10 * 1024 * 1024 {
+					body_len := result.body.len
+					window.queue_command(fn [hash, request_id, body_len] (mut w Window) {
+						if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+							request_id) {
+							return
+						}
+						w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+							state:      .error
+							error:      'Response too large (>${body_len / 1024 / 1024}MB)'
+							request_id: request_id
+						})
+						w.update_window()
+					})
+					return
+				}
+				png_bytes := result.body.bytes()
+				img := stbi.load_from_memory(png_bytes.data, png_bytes.len) or {
+					err_msg := err.msg()
+					window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
+						if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+							request_id) {
+							return
+						}
+						w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+							state:      .error
+							error:      'Failed to decode PNG: ${err_msg}'
+							request_id: request_id
+						})
+						w.update_window()
+					})
+					return
+				}
 
-			// No transparent fill — keep PNG alpha for blending
-			// with any background color
+				// No transparent fill — keep PNG alpha for blending
+				// with any background color
 
-			tmp_path := write_stbi_temp('math', hash, img) or {
+				tmp_path := write_stbi_temp('math', hash, img) or {
+					img.free()
+					err_msg := err.msg()
+					window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
+						if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+							request_id) {
+							return
+						}
+						w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+							state:      .error
+							error:      'Failed to write temp file: ${err_msg}'
+							request_id: request_id
+						})
+						w.update_window()
+					})
+					return
+				}
+				img_w := f32(img.width)
+				img_h := f32(img.height)
+				img_dpi := f32(dpi)
 				img.free()
-				err_msg := err.msg()
-				window.queue_command(fn [hash, request_id, err_msg] (mut w Window) {
-					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache,
-						hash, request_id) {
+				window.queue_command(fn [hash, request_id, tmp_path, img_w, img_h, img_dpi] (mut w Window) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+						request_id) {
+						os.rm(tmp_path) or {}
+						return
+					}
+					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
+						state:      .ready
+						png_path:   tmp_path
+						width:      img_w
+						height:     img_h
+						dpi:        img_dpi
+						request_id: request_id
+					})
+					// No markdown_cache clear needed: parsed blocks
+					// don't change; RTF reads math dims from
+					// diagram_cache at render time. update_window
+					// triggers view rebuild picking up new
+					// dimensions via to_vglyph_rich_text_with_math.
+					w.update_window()
+				})
+			} else {
+				body_preview := if result.body.len > 200 {
+					result.body[..200] + '...'
+				} else {
+					result.body
+				}
+				status_code := result.status_code
+				window.queue_command(fn [hash, request_id, status_code, body_preview] (mut w Window) {
+					if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
+						request_id) {
 						return
 					}
 					w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
 						state:      .error
-						error:      'Failed to write temp file: ${err_msg}'
+						error:      'HTTP ${status_code}: ${body_preview}'
 						request_id: request_id
 					})
 					w.update_window()
 				})
-				return
 			}
-			img_w := f32(img.width)
-			img_h := f32(img.height)
-			img_dpi := f32(dpi)
-			img.free()
-			window.queue_command(fn [hash, request_id, tmp_path, img_w, img_h, img_dpi] (mut w Window) {
-				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
-					request_id) {
-					os.rm(tmp_path) or {}
-					return
-				}
-				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state:      .ready
-					png_path:   tmp_path
-					width:      img_w
-					height:     img_h
-					dpi:        img_dpi
-					request_id: request_id
-				})
-				// No markdown_cache clear needed: parsed blocks
-				// don't change; RTF reads math dims from
-				// diagram_cache at render time. update_window
-				// triggers view rebuild picking up new
-				// dimensions via to_vglyph_rich_text_with_math.
-				w.update_window()
-			})
-		} else {
-			body_preview := if result.body.len > 200 {
-				result.body[..200] + '...'
-			} else {
-				result.body
-			}
-			status_code := result.status_code
-			window.queue_command(fn [hash, request_id, status_code, body_preview] (mut w Window) {
-				if !diagram_cache_should_apply_result(&w.view_state.diagram_cache, hash,
-					request_id) {
-					return
-				}
-				w.view_state.diagram_cache.set(hash, DiagramCacheEntry{
-					state:      .error
-					error:      'HTTP ${status_code}: ${body_preview}'
-					request_id: request_id
-				})
-				w.update_window()
-			})
-		}
-	}()
+		}()
+	}) or { panic(err) }
 }
