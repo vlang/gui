@@ -3,6 +3,30 @@ module gui
 import log
 import math
 
+// max_frame_triangle_vertices caps the triangle geometry emitted in a single frame.
+// gg sets up sokol-gl with the default descriptor, so every triangle drawn in a frame
+// is batched into ONE fixed-capacity vertex buffer (sokol's 64k-vertex default).
+// Overflowing that buffer makes sokol-gl silently drop the WHOLE frame's geometry — a
+// blank window — with no error surfaced to the application. Triangle geometry (DrawSvg,
+// e.g. draw_canvas polylines/polygons) is the only unbounded contributor; text, rects
+// and images are bounded by the widget count. We reserve ~16k vertices of the 64k
+// buffer for that bounded chrome and cap the unbounded triangle stream at the rest, so
+// a runaway batch (e.g. a plot fed far more points than the canvas has pixels) skips
+// itself with a one-time warning instead of blanking everything. DrawSvg.triangles are
+// x,y pairs, so the vertex count is triangles.len / 2.
+const max_frame_triangle_vertices = 49152 // 64k sokol-gl buffer − 16k chrome headroom
+
+// render_guard_warn_once logs a render-guard warning at most once per key per window.
+fn render_guard_warn_once(mut w Window, key string, msg string) {
+	if w.render_guard_warned.len == 0 {
+		w.render_guard_warned = map[string]bool{}
+	}
+	if !w.render_guard_warned[key] {
+		log.warn(msg)
+		w.render_guard_warned[key] = true
+	}
+}
+
 fn f32_is_finite(value f32) bool {
 	return !math.is_nan(value) && !math.is_inf(value, 0)
 }
@@ -143,19 +167,25 @@ fn guard_renderer_or_skip(r Renderer, mut w Window) bool {
 	}
 
 	kind := renderer_kind(r)
-	if w.render_guard_warned.len == 0 {
-		w.render_guard_warned = map[string]bool{}
-	}
-	if !w.render_guard_warned[kind] {
-		log.warn('renderer guard skipped invalid renderer: ${kind}')
-		w.render_guard_warned[kind] = true
-	}
+	render_guard_warn_once(mut w, kind, 'renderer guard skipped invalid renderer: ${kind}')
 	return false
 }
 
 fn emit_renderer_if_valid(r Renderer, mut window Window) bool {
 	if !renderer_valid_for_draw(r) {
 		return false
+	}
+	// Capacity guard: keep the cumulative triangle vertices for this frame under the
+	// shared sokol-gl buffer so one oversized batch skips itself instead of overflowing
+	// the buffer and blanking the entire frame (see max_frame_triangle_vertices).
+	if r is DrawSvg {
+		vertices := r.triangles.len / 2 // triangles are x,y pairs
+		if window.frame_triangle_vertices + vertices > max_frame_triangle_vertices {
+			render_guard_warn_once(mut window, 'triangle_vertex_budget',
+				'renderer guard skipped DrawSvg: per-frame triangle-vertex budget (${max_frame_triangle_vertices}) exceeded — sokol-gl buffer would overflow')
+			return false
+		}
+		window.frame_triangle_vertices += vertices
 	}
 	window.renderers << r
 	return true

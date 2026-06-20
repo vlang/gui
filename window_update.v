@@ -122,6 +122,7 @@ fn (mut window Window) build_renderers(background_color Color, clip_rect DrawCli
 	window.scratch.put_filter_renderers(mut filter_renderers)
 	window.scratch.begin_svg_transform_batches()
 	array_clear(mut window.renderers)
+	window.frame_triangle_vertices = 0 // reset the per-frame sokol-gl vertex budget
 	render_layout(mut window.layout, background_color, clip_rect, mut window)
 	window.scratch.trim_svg_transform_batches()
 	$if !prod {

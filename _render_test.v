@@ -840,3 +840,59 @@ fn test_invalid_clip_is_skipped_and_next_draw_kept() {
 		}
 	}
 }
+
+// svg_triangles_with_vertices builds a geometrically-valid DrawSvg with exactly
+// `vertices` vertices (triangles are x,y pairs, so len = vertices * 2). `vertices`
+// must be a multiple of 3 so the float count is a multiple of 6. All-zero coords are
+// finite, so the renderer passes renderer_valid_for_draw and only the capacity guard
+// can skip it.
+fn svg_triangles_with_vertices(vertices int) Renderer {
+	return Renderer(DrawSvg{
+		triangles: []f32{len: vertices * 2}
+		color:     gg.Color{255, 255, 255, 255}
+		x:         0
+		y:         0
+		scale:     1
+	})
+}
+
+// A single oversized triangle batch — more vertices than the whole sokol-gl buffer —
+// is skipped (and warned once) rather than emitted, since on its own it would overflow
+// the buffer and blank the entire frame.
+fn test_triangle_vertex_budget_skips_single_oversized_batch() {
+	mut w := make_window()
+	huge := max_frame_triangle_vertices + 3 // multiple of 3, just over the budget
+	assert !emit_renderer_if_valid(svg_triangles_with_vertices(huge), mut w)
+	assert w.renderers.len == 0
+	assert w.frame_triangle_vertices == 0
+	assert w.render_guard_warned['triangle_vertex_budget']
+}
+
+// Triangle batches accumulate across a frame; the batch that would push the cumulative
+// count past the shared sokol-gl buffer is skipped while everything that fit stays.
+// This is exactly the case that previously overflowed the buffer (many medium polyline
+// batches summing past 64k) and blanked the whole window.
+fn test_triangle_vertex_budget_is_cumulative_per_frame() {
+	mut w := make_window()
+	half := 30000 // multiple of 3; two of these exceed max_frame_triangle_vertices
+	// First batch fits.
+	assert emit_renderer_if_valid(svg_triangles_with_vertices(half), mut w)
+	assert w.renderers.len == 1
+	assert w.frame_triangle_vertices == half
+	// Second batch would overflow the buffer -> skipped, count unchanged, warned once.
+	assert !emit_renderer_if_valid(svg_triangles_with_vertices(half), mut w)
+	assert w.renderers.len == 1
+	assert w.frame_triangle_vertices == half
+	assert w.render_guard_warned['triangle_vertex_budget']
+	// A small non-triangle renderer is unaffected by the triangle budget.
+	small_rect := Renderer(DrawRect{
+		x:     0
+		y:     0
+		w:     5
+		h:     5
+		color: gg.Color{255, 255, 255, 255}
+		style: .fill
+	})
+	assert emit_renderer_if_valid(small_rect, mut w)
+	assert w.renderers.len == 2
+}
