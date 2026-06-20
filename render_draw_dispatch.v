@@ -304,6 +304,13 @@ fn draw_clipped_svg_group(renderers []Renderer, idx int, mut window Window) int 
 		break
 	}
 
+	// If this clip group was poisoned by the vertex-budget guard (a part exceeded the
+	// per-frame budget), drop the WHOLE group — drawing its content without the mask
+	// would render it unclipped, and re-adding the mask would overflow the SGL buffer.
+	if window.frame_poisoned_clip_groups[group] {
+		return group_end
+	}
+
 	if !has_content {
 		return group_end
 	}

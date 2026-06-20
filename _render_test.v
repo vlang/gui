@@ -935,3 +935,42 @@ fn test_clip_mask_consumes_double_budget_when_it_fits() {
 	assert w.renderers.len == 1
 	assert w.frame_triangle_vertices == 2 * k
 }
+
+fn svg_content_in_group(vertices int, group int) Renderer {
+	return Renderer(DrawSvg{
+		triangles:  []f32{len: vertices * 2}
+		color:      gg.Color{255, 255, 255, 255}
+		clip_group: group
+		x:          0
+		y:          0
+		scale:      1
+	})
+}
+
+// When a clip group's mask is budget-skipped, the WHOLE group is poisoned so its content
+// can't render unclipped: content queued before the over-budget mask sets the poison flag
+// (the draw path drops the group), and any group geometry emitted after is skipped here.
+fn test_over_budget_clip_mask_poisons_whole_group() {
+	mut w := make_window()
+	grp := 7
+	// Content of the group fits first and is queued.
+	assert emit_renderer_if_valid(svg_content_in_group(9000, grp), mut w)
+	assert w.renderers.len == 1
+	// An over-budget mask for the same group poisons it (2*32766 > budget).
+	big_mask := Renderer(DrawSvg{
+		triangles:    []f32{len: 32766 * 2}
+		color:        gg.Color{255, 255, 255, 255}
+		is_clip_mask: true
+		clip_group:   grp
+		x:            0
+		y:            0
+		scale:        1
+	})
+	assert !emit_renderer_if_valid(big_mask, mut w)
+	assert w.frame_poisoned_clip_groups[grp] // draw path drops the whole group on this flag
+	// Further geometry of the poisoned group is dropped (not queued, not counted).
+	before := w.frame_triangle_vertices
+	assert !emit_renderer_if_valid(svg_content_in_group(3, grp), mut w)
+	assert w.frame_triangle_vertices == before
+	assert w.renderers.len == 1
+}
