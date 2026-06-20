@@ -896,3 +896,42 @@ fn test_triangle_vertex_budget_is_cumulative_per_frame() {
 	assert emit_renderer_if_valid(small_rect, mut w)
 	assert w.renderers.len == 2
 }
+
+// clip_mask_with_vertices builds a valid stencil clip-mask DrawSvg with `vertices`
+// vertices (multiple of 3). A clip mask is drawn twice per frame (stencil write +
+// clear), so the budget must count its geometry at 2x.
+fn clip_mask_with_vertices(vertices int) Renderer {
+	return Renderer(DrawSvg{
+		triangles:    []f32{len: vertices * 2}
+		color:        gg.Color{255, 255, 255, 255}
+		is_clip_mask: true
+		clip_group:   1
+		x:            0
+		y:            0
+		scale:        1
+	})
+}
+
+// A clip mask that fits the buffer once but NOT when doubled is skipped — without the
+// 2x accounting it would pass the cap yet emit ~2x its vertices (stencil write + clear)
+// and overflow the buffer, the original blank-window failure on the clipped path.
+fn test_triangle_vertex_budget_counts_clip_mask_twice() {
+	mut w := make_window()
+	v := 32766 // multiple of 3; v <= budget but 2*v > budget
+	assert v <= max_frame_triangle_vertices
+	assert 2 * v > max_frame_triangle_vertices
+	assert !emit_renderer_if_valid(clip_mask_with_vertices(v), mut w)
+	assert w.renderers.len == 0
+	assert w.frame_triangle_vertices == 0
+	assert w.render_guard_warned['triangle_vertex_budget']
+}
+
+// A clip mask that fits even when doubled is accepted and consumes 2x its vertices,
+// so subsequent geometry is budgeted against the mask's true (doubled) cost.
+fn test_clip_mask_consumes_double_budget_when_it_fits() {
+	mut w := make_window()
+	k := 9000 // multiple of 3; 2*k well under the budget
+	assert emit_renderer_if_valid(clip_mask_with_vertices(k), mut w)
+	assert w.renderers.len == 1
+	assert w.frame_triangle_vertices == 2 * k
+}
