@@ -104,6 +104,7 @@ fn draw_quad_uv(x f32, y f32, w f32, h f32, z f32, u0 f32, v0 f32, u1 f32, v1 f3
 // draw logic of GUI
 fn renderers_draw(mut window Window) {
 	renderers := window.renderers
+	window.frame_triangle_vertices = 0 // reset the sokol-gl triangle budget for this draw pass
 	mut active_clip := window.window_rect()
 
 	mut i := 0
@@ -199,6 +200,9 @@ fn draw_svg_batch(renderers []Renderer, start int, end int, c gg.Color, x f32, y
 			continue
 		}
 		if renderer is DrawSvg {
+			if !window.admit_triangle_vertices(renderer.triangles.len / 2) {
+				continue // over the frame's triangle budget — skip this batch member
+			}
 			mut i := 0
 			for i < renderer.triangles.len - 5 {
 				x0 := (x + renderer.triangles[i] * tri_scale) * scale
@@ -304,14 +308,16 @@ fn draw_clipped_svg_group(renderers []Renderer, idx int, mut window Window) int 
 		break
 	}
 
-	// If this clip group was poisoned by the vertex-budget guard (a part exceeded the
-	// per-frame budget), drop the WHOLE group — drawing its content without the mask
-	// would render it unclipped, and re-adding the mask would overflow the SGL buffer.
-	if window.frame_poisoned_clip_groups[group] {
+	if !has_content {
 		return group_end
 	}
 
-	if !has_content {
+	// Budget the clipped group atomically against this frame's sokol-gl triangle buffer:
+	// a mask is drawn twice (stencil write + clear), content once. If the group would
+	// overflow, drop the WHOLE group — drawing content without its mask renders it
+	// unclipped — with a one-time warning. Per consecutive run, so clip-group ids that
+	// repeat across different SVGs never interfere.
+	if !window.admit_triangle_vertices(group_triangle_vertices(renderers, group_start, group_end)) {
 		return group_end
 	}
 
@@ -553,6 +559,9 @@ fn draw_triangles(triangles []f32, c gg.Color, x f32, y f32, tri_scale f32, mut 
 // draw_triangles_gradient renders triangles with per-vertex colors.
 fn draw_triangles_gradient(triangles []f32, vertex_colors []gg.Color, x f32, y f32, tri_scale f32, mut window Window) {
 	if triangles.len < 6 || vertex_colors.len < 3 {
+		return
+	}
+	if !window.admit_triangle_vertices(triangles.len / 2) {
 		return
 	}
 

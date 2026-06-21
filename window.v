@@ -19,44 +19,43 @@ pub type WindowCommand = fn (mut Window)
 
 pub struct Window {
 mut:
-	commands_mutex             &sync.Mutex                 = sync.new_mutex() // Mutex for command queue
-	focused                    bool                        = true // Window focus state
-	mutex                      &sync.Mutex                 = sync.new_mutex() // Mutex for thread-safety
-	on_event                   fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}           // Global event handler
-	state                      voidptr                     = unsafe { nil }    // User state passed to the window
-	text_system                &vglyph.TextSystem          = unsafe { nil }    // Text rendering system
-	ui                         &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
-	view_generator             fn (&Window) View           = empty_view        // Function to generate the UI view
-	a11y                       A11y                          // Accessibility backend state (lazily initialized)
-	animations                 map[string]Animation          // Active animations (keyed by id)
-	commands                   []WindowCommand               // Atomic command queue for UI state updates
-	debug_layout               bool                          // enable layout performance stats
-	inspector_enabled          bool                          // dev-only inspector overlay (F12)
-	inspector_tree_cache       []TreeNodeCfg                 // previous-frame tree for inspector
-	inspector_props_cache      map[string]InspectorNodeProps // previous-frame node properties
-	dialog_cfg                 DialogCfg                     // Configuration for the active dialog (if any)
-	filter_state               SvgFilterState                // Offscreen state for SVG filters
-	ime                        IME                    // Input Method Editor state (lazily initialized)
-	init_error                 string                 // error during initialization (e.g. text system fail)
-	layout                     Layout                 // The current calculated layout tree
-	layout_callback_lifetime   LayoutCallbackLifetime // Owns callbacks created while rebuilding layout epochs
-	layout_stats               LayoutStats            // populated when debug_layout is true
-	pip                        Pipelines              // GPU rendering pipelines (lazily initialized)
-	refresh_layout             bool                   // Trigger full view/layout/renderer rebuild next frame
-	refresh_render_only        bool                   // Trigger renderer-only rebuild from existing layout
-	render_guard_warned        map[string]bool        // Renderer kinds warned by render guard (prod only)
-	frame_triangle_vertices    int                    // Cumulative triangle vertices emitted this frame (sokol-gl buffer guard)
-	frame_poisoned_clip_groups map[int]bool           // Clip groups dropped this frame (a part exceeded the vertex budget; drawing content without its mask renders unclipped)
-	renderers                  []Renderer             // Flat list of drawing instructions for the current frame
-	scratch                    ScratchPools           // Bounded scratch arrays reused in hot paths
-	stats                      Stats                  // Rendering statistics
-	clip_radius                f32                    // rounded clip radius, render-time only
-	toasts                     []ToastNotification    // active toast queue
-	toast_counter              u64                    // monotonic toast id
-	view_state                 ViewState              // Manages state for widgets (scroll, selection, etc.)
-	window_size                gg.Size                // cached, gg.window_size() relatively slow
-	file_access                FileAccessState        // security-scoped bookmark state
-	file_access_mutex          &sync.Mutex = sync.new_mutex() // guards file access state
+	commands_mutex           &sync.Mutex                 = sync.new_mutex() // Mutex for command queue
+	focused                  bool                        = true // Window focus state
+	mutex                    &sync.Mutex                 = sync.new_mutex() // Mutex for thread-safety
+	on_event                 fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}           // Global event handler
+	state                    voidptr                     = unsafe { nil }    // User state passed to the window
+	text_system              &vglyph.TextSystem          = unsafe { nil }    // Text rendering system
+	ui                       &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
+	view_generator           fn (&Window) View           = empty_view        // Function to generate the UI view
+	a11y                     A11y                          // Accessibility backend state (lazily initialized)
+	animations               map[string]Animation          // Active animations (keyed by id)
+	commands                 []WindowCommand               // Atomic command queue for UI state updates
+	debug_layout             bool                          // enable layout performance stats
+	inspector_enabled        bool                          // dev-only inspector overlay (F12)
+	inspector_tree_cache     []TreeNodeCfg                 // previous-frame tree for inspector
+	inspector_props_cache    map[string]InspectorNodeProps // previous-frame node properties
+	dialog_cfg               DialogCfg                     // Configuration for the active dialog (if any)
+	filter_state             SvgFilterState                // Offscreen state for SVG filters
+	ime                      IME                    // Input Method Editor state (lazily initialized)
+	init_error               string                 // error during initialization (e.g. text system fail)
+	layout                   Layout                 // The current calculated layout tree
+	layout_callback_lifetime LayoutCallbackLifetime // Owns callbacks created while rebuilding layout epochs
+	layout_stats             LayoutStats            // populated when debug_layout is true
+	pip                      Pipelines              // GPU rendering pipelines (lazily initialized)
+	refresh_layout           bool                   // Trigger full view/layout/renderer rebuild next frame
+	refresh_render_only      bool                   // Trigger renderer-only rebuild from existing layout
+	render_guard_warned      map[string]bool        // Renderer kinds warned by render guard (prod only)
+	frame_triangle_vertices  int                    // Running sokol-gl triangle-vertex count for the current draw pass (reset in renderers_draw)
+	renderers                []Renderer             // Flat list of drawing instructions for the current frame
+	scratch                  ScratchPools           // Bounded scratch arrays reused in hot paths
+	stats                    Stats                  // Rendering statistics
+	clip_radius              f32                    // rounded clip radius, render-time only
+	toasts                   []ToastNotification    // active toast queue
+	toast_counter            u64                    // monotonic toast id
+	view_state               ViewState              // Manages state for widgets (scroll, selection, etc.)
+	window_size              gg.Size                // cached, gg.window_size() relatively slow
+	file_access              FileAccessState        // security-scoped bookmark state
+	file_access_mutex        &sync.Mutex = sync.new_mutex() // guards file access state
 }
 
 // Window is the main application window. `state` holds app state.

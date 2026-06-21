@@ -7,14 +7,18 @@ import math
 // gg sets up sokol-gl with the default descriptor, so every triangle drawn in a frame
 // is batched into ONE fixed-capacity vertex buffer (sokol's 64k-vertex default).
 // Overflowing that buffer makes sokol-gl silently drop the WHOLE frame's geometry — a
-// blank window — with no error surfaced to the application. Triangle geometry (DrawSvg,
-// e.g. draw_canvas polylines/polygons) is the only unbounded contributor; text, rects
-// and images are bounded by the widget count. We reserve ~16k vertices of the 64k
-// buffer for that bounded chrome and cap the unbounded triangle stream at the rest, so
-// a runaway batch (e.g. a plot fed far more points than the canvas has pixels) skips
-// itself with a one-time warning instead of blanking everything. DrawSvg.triangles are
-// x,y pairs, so the vertex count is triangles.len / 2.
-const max_frame_triangle_vertices = 49152 // 64k sokol-gl buffer − 16k chrome headroom
+// blank window — with no error surfaced to the application.
+//
+// The budget is metered in the DRAW pass (render_draw_dispatch.v) at the points where
+// triangle geometry is actually emitted to sokol-gl, via admit_triangle_vertices(). It
+// covers the only UNBOUNDED contributor — DrawSvg triangle geometry (draw_canvas
+// polylines/polygons, SVG paths). Vector chrome (rounded rects, circles, images) shares
+// the same buffer but is bounded by the widget count, so it is covered by a fixed
+// reserve (the 16k below) rather than metered per-draw. A runaway DrawSvg batch (e.g. a
+// plot fed far more points than the canvas has pixels) is skipped — for a clipped group,
+// the whole group is skipped atomically — with a one-time warning, instead of blanking.
+// DrawSvg.triangles are x,y pairs, so a renderer's vertex count is triangles.len / 2.
+const max_frame_triangle_vertices = 49152 // 64k sokol-gl buffer − 16k chrome reserve
 
 // render_guard_warn_once logs a render-guard warning at most once per key per window.
 fn render_guard_warn_once(mut w Window, key string, msg string) {
@@ -25,6 +29,41 @@ fn render_guard_warn_once(mut w Window, key string, msg string) {
 		log.warn(msg)
 		w.render_guard_warned[key] = true
 	}
+}
+
+// admit_triangle_vertices reserves `vertices` from this frame's sokol-gl triangle
+// budget. Returns true (and accumulates) if it fits, or false (warning once) if drawing
+// it would overflow the shared vertex buffer and blank the frame. Called from the draw
+// pass at each triangle-emission site; frame_triangle_vertices is reset per draw pass in
+// renderers_draw().
+fn (mut window Window) admit_triangle_vertices(vertices int) bool {
+	if window.frame_triangle_vertices + vertices > max_frame_triangle_vertices {
+		render_guard_warn_once(mut window, 'triangle_vertex_budget',
+			'renderer guard skipped triangle geometry: per-frame budget (${max_frame_triangle_vertices}) exceeded — sokol-gl buffer would overflow')
+		return false
+	}
+	window.frame_triangle_vertices += vertices
+	return true
+}
+
+// group_triangle_vertices sums the sokol-gl vertices a stencil-clipped DrawSvg group
+// emits in renderers[start..end]: a clip mask is drawn TWICE (stencil write + clear, so
+// triangles.len = 2 × triangles.len/2), content once (triangles.len/2). Used to budget a
+// clipped group atomically — drawing content without its mask renders it unclipped, so it
+// is all-or-nothing.
+fn group_triangle_vertices(renderers []Renderer, start int, end int) int {
+	mut total := 0
+	for idx in start .. end {
+		r := renderers[idx]
+		if r is DrawSvg {
+			if r.is_clip_mask {
+				total += r.triangles.len // drawn twice: len/2 vertices × 2: len/2 vertices × 2
+			} else {
+				total += r.triangles.len / 2
+			}
+		}
+	}
+	return total
 }
 
 fn f32_is_finite(value f32) bool {
@@ -175,38 +214,9 @@ fn emit_renderer_if_valid(r Renderer, mut window Window) bool {
 	if !renderer_valid_for_draw(r) {
 		return false
 	}
-	// Capacity guard: keep the cumulative triangle vertices for this frame under the
-	// shared sokol-gl buffer so one oversized batch skips itself instead of overflowing
-	// the buffer and blanking the entire frame (see max_frame_triangle_vertices).
-	if r is DrawSvg {
-		group := r.clip_group
-		// A stencil-clipped group is all-or-nothing: drawing its content WITHOUT its mask
-		// renders the content unclipped. So once any part of a clip group is budget-skipped
-		// the whole group is "poisoned" — drop every later renderer of it here (and the
-		// draw path drops any content already queued before the poison).
-		if group > 0 && window.frame_poisoned_clip_groups[group] {
-			return false
-		}
-		mut vertices := r.triangles.len / 2 // triangles are x,y pairs
-		// A clip mask is emitted TWICE per frame — written to the stencil buffer and
-		// then re-drawn to clear it (render_draw_dispatch.v draw_clipped_svg_group steps
-		// 1 and 3) — so budget it at 2x its geometry, matching the real SGL emissions.
-		if r.is_clip_mask {
-			vertices *= 2
-		}
-		if window.frame_triangle_vertices + vertices > max_frame_triangle_vertices {
-			if group > 0 {
-				if window.frame_poisoned_clip_groups.len == 0 {
-					window.frame_poisoned_clip_groups = map[int]bool{}
-				}
-				window.frame_poisoned_clip_groups[group] = true
-			}
-			render_guard_warn_once(mut window, 'triangle_vertex_budget',
-				'renderer guard skipped DrawSvg: per-frame triangle-vertex budget (${max_frame_triangle_vertices}) exceeded — sokol-gl buffer would overflow')
-			return false
-		}
-		window.frame_triangle_vertices += vertices
-	}
+	// Triangle-vertex budgeting happens in the DRAW pass (render_draw_dispatch.v), at
+	// the actual sokol-gl emission sites — not here — so it meters real emissions and
+	// budgets clipped groups atomically. See max_frame_triangle_vertices.
 	window.renderers << r
 	return true
 }
