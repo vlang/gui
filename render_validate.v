@@ -22,9 +22,6 @@ const max_frame_triangle_vertices = 49152 // 64k sokol-gl buffer − 16k chrome 
 
 // render_guard_warn_once logs a render-guard warning at most once per key per window.
 fn render_guard_warn_once(mut w Window, key string, msg string) {
-	if w.render_guard_warned.len == 0 {
-		w.render_guard_warned = map[string]bool{}
-	}
 	if !w.render_guard_warned[key] {
 		log.warn(msg)
 		w.render_guard_warned[key] = true

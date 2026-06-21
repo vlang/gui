@@ -861,14 +861,18 @@ fn svg_with_triangle_floats(float_len int, is_mask bool, group int) Renderer {
 fn test_admit_triangle_vertices_accumulates_and_caps() {
 	mut w := make_window()
 	assert w.frame_triangle_vertices == 0
-	assert w.admit_triangle_vertices(30000)
-	assert w.frame_triangle_vertices == 30000
-	// 30000 + 30000 > 49152 -> rejected, total unchanged, warned once.
-	assert !w.admit_triangle_vertices(30000)
-	assert w.frame_triangle_vertices == 30000
+	// More than half the budget, so a second identical batch must overflow. Derived from
+	// the const so the boundary stays valid if max_frame_triangle_vertices is retuned.
+	half := max_frame_triangle_vertices / 2 + 1
+	assert 2 * half > max_frame_triangle_vertices
+	assert w.admit_triangle_vertices(half)
+	assert w.frame_triangle_vertices == half
+	// half + half > budget -> rejected, total unchanged, warned once.
+	assert !w.admit_triangle_vertices(half)
+	assert w.frame_triangle_vertices == half
 	assert w.render_guard_warned['triangle_vertex_budget']
-	// A batch that still fits the remaining budget is admitted (exact-boundary fit).
-	assert w.admit_triangle_vertices(max_frame_triangle_vertices - 30000)
+	// A batch that exactly fills the remaining budget is admitted (boundary fit).
+	assert w.admit_triangle_vertices(max_frame_triangle_vertices - half)
 	assert w.frame_triangle_vertices == max_frame_triangle_vertices
 }
 
