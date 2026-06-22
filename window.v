@@ -104,6 +104,7 @@ pub:
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {} // global event hook; fires for all events
 	log_level           log.Level                   = default_log_level()
 	debug_layout        bool // print layout timing stats to stdout each frame
+	sample_count        int = 1 // MSAA sample count (1 = off; 4 antialiases draw_canvas lines/polygons)
 }
 
 fn default_log_level() log.Level {
@@ -133,6 +134,7 @@ pub fn window(cfg &WindowCfg) &Window {
 		width:                        cfg.width
 		height:                       cfg.height
 		window_title:                 cfg.title
+		sample_count:                 cfg.sample_count
 		event_fn:                     event_fn
 		enable_dragndrop:             cfg.dragndrop
 		max_dropped_files:            int(cfg.dragndrop_files_max)
