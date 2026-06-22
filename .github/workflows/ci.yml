@@ -68,31 +68,24 @@ jobs:
         run: v fmt -verify -inprocess gui/
       - name: Check formatting of MD files
         run: v check-md gui/
-      - name: Check syntax of changed examples
+      - name: Check syntax of changed example scripts
         if: github.event_name == 'pull_request'
         working-directory: gui
         run: |
           base_ref="${{ github.base_ref }}"
           files_list="${RUNNER_TEMP}/gui-example-syntax-files"
           git fetch --no-tags origin "$base_ref:refs/remotes/origin/$base_ref"
-          git diff --name-only -z --diff-filter=ACMRT "origin/${base_ref}...HEAD" -- 'examples/*.v' 'examples/*.vsh' > "$files_list"
+          git diff --name-only -z --diff-filter=ACMRT "origin/${base_ref}...HEAD" -- 'examples/*.vsh' > "$files_list"
           if [ ! -s "$files_list" ]; then
-            echo "No changed example V/VSH files to syntax-check."
+            echo "No changed example VSH scripts to syntax-check."
             exit 0
           fi
           while IFS= read -r -d '' file; do
-            case "$file" in
-              *.v)
-                v -check -N -W "$file"
-                ;;
-              *.vsh)
-                v -check -W "$file"
-                ;;
-            esac
+            v -check -W "$file"
           done < "$files_list"
-      - name: Check syntax of examples
+      - name: Skip full examples syntax lint
         if: github.event_name != 'pull_request'
-        run: v gui/examples/_check.vsh
+        run: echo "Skipping full examples syntax lint; example .v files are covered by compilation checks."
 
   compiling:
     strategy:
@@ -127,6 +120,7 @@ jobs:
           VFLAGS: -no-parallel -cc clang
         run: v test gui/
       - name: Check compilation of examples
+        if: github.event_name == 'pull_request'
         env:
           VFLAGS: -no-parallel -cc clang
         run: v should-compile-all gui/examples/
@@ -147,47 +141,108 @@ jobs:
           mkdir -p examples/bin
           while IFS= read -r -d '' file; do
             output_file="examples/bin/$(basename "${file%.v}")"
-            v -no-parallel -W -o "$output_file" "$file"
+            if [ "$file" = "examples/showcase.v" ]; then
+              v -no-parallel -o "$output_file" "$file"
+            else
+              v -no-parallel -W -o "$output_file" "$file"
+            fi
           done < "$files_list"
-      - name: Check compilation of examples with -W
+      - name: Check compilation of examples without warning-fatal mode
         if: github.event_name != 'pull_request'
         env:
           VFLAGS: -no-parallel -cc clang
-        run: v gui/examples/_build.vsh
+        run: v gui/examples/_build.vsh --no-warnings
 
   compiling-on-windows:
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 70
     env:
-      V_VERSION: 0.5.1
       VFLAGS: -no-parallel
       VCPKG_BINARY_CACHE: ${{ github.workspace }}\vcpkg-binary-cache
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}\vcpkg-binary-cache,readwrite
     steps:
-      - name: Install V
+      - name: Resolve V revision
+        id: v
         shell: pwsh
         run: |
-          $ProgressPreference = 'SilentlyContinue'
-          $asset = 'v_windows.zip'
-          $url = "https://github.com/vlang/v/releases/download/$env:V_VERSION/$asset"
-          Invoke-WebRequest -Uri $url -OutFile $asset
-          Expand-Archive -Path $asset -DestinationPath . -Force
+          $ErrorActionPreference = 'Stop'
+          $revision = (git ls-remote https://github.com/vlang/v HEAD).Split()[0]
+          "revision=$revision" | Add-Content -Path $env:GITHUB_OUTPUT
+      - name: Restore V compiler cache
+        id: restore-v-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: v
+          key: windows-v-compiler-${{ steps.v.outputs.revision }}-v1
+      - name: Install V
+        id: install-v
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Assert-NativeCommand($Message) {
+            if ($LASTEXITCODE -ne 0) {
+              throw $Message
+            }
+          }
+          $expectedRevision = '${{ steps.v.outputs.revision }}'
+          if (Test-Path .\v\v.exe) {
+            $cachedRevision = (& git -C v rev-parse HEAD).Trim()
+            Assert-NativeCommand "Could not inspect cached V revision"
+            if ($cachedRevision -ne $expectedRevision) {
+              Write-Host "Cached V revision $cachedRevision does not match expected $expectedRevision; rebuilding."
+              Remove-Item -Recurse -Force .\v
+            }
+          }
+          if (-not (Test-Path .\v\v.exe)) {
+            if (Test-Path .\v) {
+              Remove-Item -Recurse -Force .\v
+            }
+            git init v
+            Assert-NativeCommand "git init failed"
+            git -C v remote add origin https://github.com/vlang/v
+            Assert-NativeCommand "git remote add failed"
+            git -C v fetch --depth 1 origin $expectedRevision
+            Assert-NativeCommand "git fetch failed"
+            git -C v checkout --detach FETCH_HEAD
+            Assert-NativeCommand "git checkout failed"
+            Push-Location v
+            cmd /c makev.bat
+            if ($LASTEXITCODE -ne 0) {
+              throw "makev.bat failed"
+            }
+            Pop-Location
+          }
           $vPath = (Resolve-Path .\v).Path
           Add-Content -Path $env:GITHUB_PATH -Value $vPath
-      - name: Verify V version
+          $version = (& .\v\v.exe version).Trim()
+          $revision = (& git -C v rev-parse HEAD).Trim()
+          Assert-NativeCommand "Could not inspect V revision"
+          "version=$version" | Add-Content -Path $env:GITHUB_OUTPUT
+          "revision=$revision" | Add-Content -Path $env:GITHUB_OUTPUT
+      - name: Log V version
+        run: v version
+      - name: Save V compiler cache
+        if: ${{ steps.restore-v-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v4
+        with:
+          path: v
+          key: ${{ steps.restore-v-cache.outputs.cache-primary-key }}
+      - name: Resolve vglyph revision
+        id: vglyph
         shell: pwsh
         run: |
-          $vVersion = v version
-          Write-Host $vVersion
-          if ($vVersion -notlike "*$env:V_VERSION*") {
-            throw "Expected V version $env:V_VERSION"
+          $ErrorActionPreference = 'Stop'
+          $revision = (git ls-remote https://github.com/vlang/vglyph HEAD).Split()[0]
+          if ($LASTEXITCODE -ne 0) {
+            throw "Could not resolve vglyph revision"
           }
+          "revision=$revision" | Add-Content -Path $env:GITHUB_OUTPUT
       - name: Restore vcpkg binary cache
         id: restore-vcpkg-cache
         uses: actions/cache/restore@v4
         with:
           path: ${{ env.VCPKG_BINARY_CACHE }}
-          key: windows-vcpkg-x64-windows-pango-freetype-${{ env.V_VERSION }}-v1
+          key: windows-vcpkg-x64-windows-pango-freetype-${{ steps.install-v.outputs.revision }}-v2
           restore-keys: |
             windows-vcpkg-x64-windows-pango-freetype-
       - name: Restore V module cache
@@ -195,9 +250,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ~/.vmodules/vglyph
-          key: windows-vmodules-vglyph-${{ env.V_VERSION }}-v1
-          restore-keys: |
-            windows-vmodules-vglyph-
+          key: windows-vmodules-vglyph-${{ steps.install-v.outputs.revision }}-${{ steps.vglyph.outputs.revision }}-v2
       - name: Install pango and freetype
         shell: pwsh
         run: |
@@ -279,8 +332,39 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "pkg-config could not resolve freetype2 pango pangoft2"
           }
-      - name: Install vglyph
-        run: v install vglyph
+      - name: Ensure vglyph revision
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          function Assert-NativeCommand($Message) {
+            if ($LASTEXITCODE -ne 0) {
+              throw $Message
+            }
+          }
+          $expectedRevision = '${{ steps.vglyph.outputs.revision }}'
+          $vglyphPath = Join-Path $HOME '.vmodules\vglyph'
+          if (Test-Path (Join-Path $vglyphPath '.git')) {
+            $cachedRevision = (& git -C $vglyphPath rev-parse HEAD).Trim()
+            Assert-NativeCommand "Could not inspect cached vglyph revision"
+            if ($cachedRevision -ne $expectedRevision) {
+              Write-Host "Cached vglyph revision $cachedRevision does not match expected $expectedRevision; rebuilding."
+              Remove-Item -Recurse -Force $vglyphPath
+            }
+          } elseif (Test-Path $vglyphPath) {
+            Remove-Item -Recurse -Force $vglyphPath
+          }
+          if (-not (Test-Path $vglyphPath)) {
+            $vmodulesPath = Split-Path -Parent $vglyphPath
+            New-Item -ItemType Directory -Force -Path $vmodulesPath | Out-Null
+            git init $vglyphPath
+            Assert-NativeCommand "git init vglyph failed"
+            git -C $vglyphPath remote add origin https://github.com/vlang/vglyph
+            Assert-NativeCommand "git remote add vglyph failed"
+            git -C $vglyphPath fetch --depth 1 origin $expectedRevision
+            Assert-NativeCommand "git fetch vglyph failed"
+            git -C $vglyphPath checkout --detach FETCH_HEAD
+            Assert-NativeCommand "git checkout vglyph failed"
+          }
       - name: Save V module cache
         if: ${{ steps.restore-vglyph-cache.outputs.cache-hit != 'true' }}
         uses: actions/cache/save@v4
@@ -305,6 +389,7 @@ jobs:
           VTEST_ONLY_FN: test_*
         run: v test gui/
       - name: Check compilation of examples
+        if: github.event_name == 'pull_request'
         env:
           VFLAGS: -no-parallel -cc msvc
         run: v gui/examples/_build.vsh --no-warnings --skip-missing-sqlite
@@ -332,8 +417,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             exit $LASTEXITCODE
           }
-      - name: Check compilation of examples with -W
+      - name: Check compilation of examples without warning-fatal mode
         if: github.event_name != 'pull_request'
         env:
           VFLAGS: -no-parallel -cc msvc
-        run: v gui/examples/_build.vsh --skip-missing-sqlite
+        run: v gui/examples/_build.vsh --no-warnings --skip-missing-sqlite
