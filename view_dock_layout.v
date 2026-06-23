@@ -203,7 +203,10 @@ fn dock_group_view(core &DockLayoutCore, group &DockNode, cfg DockLayoutCfg, dra
 		}
 
 		if tab_buttons.len > 0 {
-			tab_buttons << column(width: 1, sizing: fixed_fill, color: color_sep)
+			// Use a definite height, not fixed_fill: a height-fill child inside the
+			// fit-height tab-bar row makes the row expand to fill the group, leaving a
+			// large blank gap above the panel content whenever a group has 2+ tabs.
+			tab_buttons << column(width: 1, height: 20, sizing: fixed_fixed, color: color_sep)
 		}
 		tab_buttons << dock_tab_button(core, group, panel_def, is_selected, cfg)
 	}
