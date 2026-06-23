@@ -45,6 +45,7 @@ mut:
 	refresh_layout           bool                   // Trigger full view/layout/renderer rebuild next frame
 	refresh_render_only      bool                   // Trigger renderer-only rebuild from existing layout
 	render_guard_warned      map[string]bool        // Renderer kinds warned by render guard (prod only)
+	frame_triangle_vertices  int                    // Running sokol-gl triangle-vertex count for the current draw pass (reset in renderers_draw)
 	renderers                []Renderer             // Flat list of drawing instructions for the current frame
 	scratch                  ScratchPools           // Bounded scratch arrays reused in hot paths
 	stats                    Stats                  // Rendering statistics

@@ -840,3 +840,84 @@ fn test_invalid_clip_is_skipped_and_next_draw_kept() {
 		}
 	}
 }
+
+// svg_with_triangle_floats builds a DrawSvg with a triangle float array of the given
+// length (x,y pairs). Used to exercise the budget helpers (group_triangle_vertices does
+// not validate geometry; it only sums lengths).
+fn svg_with_triangle_floats(float_len int, is_mask bool, group int) Renderer {
+	return Renderer(DrawSvg{
+		triangles:    []f32{len: float_len}
+		color:        gg.Color{255, 255, 255, 255}
+		is_clip_mask: is_mask
+		clip_group:   group
+		x:            0
+		y:            0
+		scale:        1
+	})
+}
+
+// admit_triangle_vertices accumulates within the budget and rejects (warning once) the
+// batch that would overflow the shared sokol-gl buffer, leaving the running total intact.
+fn test_admit_triangle_vertices_accumulates_and_caps() {
+	mut w := make_window()
+	assert w.frame_triangle_vertices == 0
+	// More than half the budget, so a second identical batch must overflow. Derived from
+	// the const so the boundary stays valid if max_frame_triangle_vertices is retuned.
+	half := max_frame_triangle_vertices / 2 + 1
+	assert 2 * half > max_frame_triangle_vertices
+	assert w.admit_triangle_vertices(half)
+	assert w.frame_triangle_vertices == half
+	// half + half > budget -> rejected, total unchanged, warned once.
+	assert !w.admit_triangle_vertices(half)
+	assert w.frame_triangle_vertices == half
+	assert w.render_guard_warned['triangle_vertex_budget']
+	// A batch that exactly fills the remaining budget is admitted (boundary fit).
+	assert w.admit_triangle_vertices(max_frame_triangle_vertices - half)
+	assert w.frame_triangle_vertices == max_frame_triangle_vertices
+}
+
+// A single batch larger than the whole buffer is rejected outright.
+fn test_admit_triangle_vertices_rejects_single_oversized() {
+	mut w := make_window()
+	assert !w.admit_triangle_vertices(max_frame_triangle_vertices + 1)
+	assert w.frame_triangle_vertices == 0
+	assert w.render_guard_warned['triangle_vertex_budget']
+}
+
+// group_triangle_vertices counts a clip mask's geometry TWICE (stencil write + clear)
+// and content once, matching the real sokol-gl emissions of draw_clipped_svg_group.
+fn test_group_triangle_vertices_counts_mask_twice() {
+	// mask: 90 vertices (len 180) drawn twice -> 180; content: 30 vertices (len 60) -> 30.
+	renderers := [
+		svg_with_triangle_floats(180, true, 1),
+		svg_with_triangle_floats(60, false, 1),
+	]
+	assert group_triangle_vertices(renderers, 0, renderers.len) == 180 + 30
+}
+
+// A clip group with no mask (unclipped fallback) is budgeted as content-only.
+fn test_group_triangle_vertices_content_only() {
+	renderers := [
+		svg_with_triangle_floats(60, false, 1),
+		svg_with_triangle_floats(120, false, 1),
+	]
+	assert group_triangle_vertices(renderers, 0, renderers.len) == 30 + 60
+}
+
+// The clipped-group draw path decision: a group whose doubled-mask + content total would
+// overflow is rejected atomically (admit returns false, nothing accumulated) — even
+// though the mask and content each fit individually. This is the all-or-nothing skip
+// that prevents both the unclipped-content fallback and the buffer overflow.
+fn test_clip_group_over_budget_rejected_atomically() {
+	// mask 32766 vertices (len 65532) -> counted 65532 (2x); already over budget alone.
+	renderers := [
+		svg_with_triangle_floats(65532, true, 1),
+		svg_with_triangle_floats(60, false, 1),
+	]
+	total := group_triangle_vertices(renderers, 0, renderers.len)
+	assert total > max_frame_triangle_vertices
+	mut w := make_window()
+	assert !w.admit_triangle_vertices(total)
+	assert w.frame_triangle_vertices == 0
+	assert w.render_guard_warned['triangle_vertex_budget']
+}
