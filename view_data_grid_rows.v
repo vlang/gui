@@ -347,11 +347,11 @@ fn data_grid_cell_editor_view(cfg DataGridCfg, row_id string, row_idx int, col G
 			)
 		}
 		.date {
-			date := data_grid_parse_editor_date(value)
+			editor_date := data_grid_parse_editor_date(value)
 			editor = window.input_date(
 				id:          editor_id
 				id_focus:    editor_focus_id
-				date:        date
+				date:        editor_date
 				sizing:      fill_fill
 				padding:     padding_none
 				size_border: 0
@@ -456,7 +456,7 @@ fn make_data_grid_editor_on_keydown(grid_id string, grid_focus_id u32) fn (&Layo
 	}
 }
 
-fn data_grid_track_row_edit_click(grid_id string, edit_enabled bool, editor_focus_base u32, col_count int, columns []GridColumnCfg, row_idx int, row_id string, grid_focus_id u32, mut e Event, mut w Window) {
+fn data_grid_track_row_edit_click(grid_id string, edit_enabled bool, editor_focus_base u32, col_count int, columns []GridColumnCfg, _ int, row_id string, grid_focus_id u32, mut e Event, mut w Window) {
 	if !edit_enabled || data_grid_has_keyboard_modifiers(&e) {
 		return
 	}

@@ -164,7 +164,7 @@ fn (_ TweenAnimation) refresh_kind() AnimationRefreshKind {
 	return .layout
 }
 
-fn update_tween(mut tw TweenAnimation, mut w Window, mut deferred []AnimationCallback) bool {
+fn update_tween(mut tw TweenAnimation, mut _ Window, mut deferred []AnimationCallback) bool {
 	if tw.stopped {
 		return false
 	}

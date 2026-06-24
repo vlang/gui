@@ -34,12 +34,12 @@ pub fn draw_blur_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.Col
 	}
 
 	scale := window.ui.scale
-	padding := blur * 1.5
+	blur_pad := blur * 1.5
 
-	sx := (x - padding) * scale
-	sy := (y - padding) * scale
-	sw := (w + padding * 2) * scale
-	sh := (h + padding * 2) * scale
+	sx := (x - blur_pad) * scale
+	sy := (y - blur_pad) * scale
+	sw := (w + blur_pad * 2) * scale
+	sh := (h + blur_pad * 2) * scale
 
 	r := radius * scale
 	b := blur * scale

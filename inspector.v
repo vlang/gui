@@ -621,7 +621,7 @@ fn inspector_color_str(c Color) string {
 
 // inspector_apply_scroll_to scrolls the inspector panel to
 // reveal the pending scroll target, then clears it.
-fn inspector_apply_scroll_to(panel_h f32, mut w Window) {
+fn inspector_apply_scroll_to(_ f32, mut w Window) {
 	mut sm := state_map[string, string](mut w, ns_inspector, cap_inspector)
 	target := sm.get('scroll_to') or { return }
 	if target.len == 0 {

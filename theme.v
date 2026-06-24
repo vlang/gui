@@ -17,7 +17,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		}
 	}
 
-	theme := Theme{
+	built_theme := Theme{
 		cfg:              *cfg
 		name:             cfg.name
 		color_background: cfg.color_background
@@ -528,105 +528,105 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 		scroll_delta_page: cfg.scroll_delta_page
 	}
 
-	variants := font_variants(theme.text_style)
+	variants := font_variants(built_theme.text_style)
 	normal := TextStyle{
-		...theme.text_style
+		...built_theme.text_style
 		family: variants.normal
 	}
 	bold := TextStyle{
-		...theme.text_style
+		...built_theme.text_style
 		family: variants.bold
 	}
 	italic := TextStyle{
-		...theme.text_style
+		...built_theme.text_style
 		family: variants.italic
 	}
 	bold_italic := TextStyle{
-		...theme.text_style
+		...built_theme.text_style
 		typeface: .bold_italic
 	}
 	mono := TextStyle{
-		...theme.text_style
+		...built_theme.text_style
 		family: variants.mono
 	}
 	icon := TextStyle{
-		...theme.text_style
+		...built_theme.text_style
 		family: icon_font_name
 	}
 
 	return Theme{
-		...theme
-		n1: make_style(normal, theme.size_text_x_large)
-		n2: make_style(normal, theme.size_text_large)
-		n3: theme.text_style
-		n4: make_style(normal, theme.size_text_small)
-		n5: make_style(normal, theme.size_text_x_small)
-		n6: make_style(normal, theme.size_text_tiny)
+		...built_theme
+		n1: make_style(normal, built_theme.size_text_x_large)
+		n2: make_style(normal, built_theme.size_text_large)
+		n3: built_theme.text_style
+		n4: make_style(normal, built_theme.size_text_small)
+		n5: make_style(normal, built_theme.size_text_x_small)
+		n6: make_style(normal, built_theme.size_text_tiny)
 		// Bold
-		b1: make_style(bold, theme.size_text_x_large)
-		b2: make_style(bold, theme.size_text_large)
-		b3: make_style(bold, theme.size_text_medium)
-		b4: make_style(bold, theme.size_text_small)
-		b5: make_style(bold, theme.size_text_x_small)
-		b6: make_style(bold, theme.size_text_tiny)
+		b1: make_style(bold, built_theme.size_text_x_large)
+		b2: make_style(bold, built_theme.size_text_large)
+		b3: make_style(bold, built_theme.size_text_medium)
+		b4: make_style(bold, built_theme.size_text_small)
+		b5: make_style(bold, built_theme.size_text_x_small)
+		b6: make_style(bold, built_theme.size_text_tiny)
 		// Italic
-		i1: make_style(italic, theme.size_text_x_large)
-		i2: make_style(italic, theme.size_text_large)
-		i3: make_style(italic, theme.size_text_medium)
-		i4: make_style(italic, theme.size_text_small)
-		i5: make_style(italic, theme.size_text_x_small)
-		i6: make_style(italic, theme.size_text_tiny)
+		i1: make_style(italic, built_theme.size_text_x_large)
+		i2: make_style(italic, built_theme.size_text_large)
+		i3: make_style(italic, built_theme.size_text_medium)
+		i4: make_style(italic, built_theme.size_text_small)
+		i5: make_style(italic, built_theme.size_text_x_small)
+		i6: make_style(italic, built_theme.size_text_tiny)
 		// Bold+Italic
-		bi1: make_style(bold_italic, theme.size_text_x_large)
-		bi2: make_style(bold_italic, theme.size_text_large)
-		bi3: make_style(bold_italic, theme.size_text_medium)
-		bi4: make_style(bold_italic, theme.size_text_small)
-		bi5: make_style(bold_italic, theme.size_text_x_small)
-		bi6: make_style(bold_italic, theme.size_text_tiny)
+		bi1: make_style(bold_italic, built_theme.size_text_x_large)
+		bi2: make_style(bold_italic, built_theme.size_text_large)
+		bi3: make_style(bold_italic, built_theme.size_text_medium)
+		bi4: make_style(bold_italic, built_theme.size_text_small)
+		bi5: make_style(bold_italic, built_theme.size_text_x_small)
+		bi6: make_style(bold_italic, built_theme.size_text_tiny)
 		// Mono
-		m1: make_style(mono, theme.size_text_x_large + 1)
-		m2: make_style(mono, theme.size_text_large + 1)
-		m3: make_style(mono, theme.size_text_medium + 1)
-		m4: make_style(mono, theme.size_text_small + 1)
-		m5: make_style(mono, theme.size_text_x_small + 1)
-		m6: make_style(mono, theme.size_text_tiny + 1)
+		m1: make_style(mono, built_theme.size_text_x_large + 1)
+		m2: make_style(mono, built_theme.size_text_large + 1)
+		m3: make_style(mono, built_theme.size_text_medium + 1)
+		m4: make_style(mono, built_theme.size_text_small + 1)
+		m5: make_style(mono, built_theme.size_text_x_small + 1)
+		m6: make_style(mono, built_theme.size_text_tiny + 1)
 		// Icon Font
-		icon1: make_style(icon, theme.size_text_x_large)
-		icon2: make_style(icon, theme.size_text_large)
-		icon3: make_style(icon, theme.size_text_medium)
-		icon4: make_style(icon, theme.size_text_small)
-		icon5: make_style(icon, theme.size_text_x_small)
-		icon6: make_style(icon, theme.size_text_tiny)
+		icon1: make_style(icon, built_theme.size_text_x_large)
+		icon2: make_style(icon, built_theme.size_text_large)
+		icon3: make_style(icon, built_theme.size_text_medium)
+		icon4: make_style(icon, built_theme.size_text_small)
+		icon5: make_style(icon, built_theme.size_text_x_small)
+		icon6: make_style(icon, built_theme.size_text_tiny)
 
 		menubar_style: MenubarStyle{
-			...theme.menubar_style
+			...built_theme.menubar_style
 			text_style_subtitle: TextStyle{
 				...bold
-				size: theme.size_text_small
+				size: built_theme.size_text_small
 			}
 		}
 		// sel
 		select_style: SelectStyle{
-			...theme.select_style
+			...built_theme.select_style
 			subheading_style: TextStyle{
 				...bold
 			}
 		}
 		// listbox
 		list_box_style:   ListBoxStyle{
-			...theme.list_box_style
+			...built_theme.list_box_style
 			subheading_style: TextStyle{
 				...bold
 			}
 		}
 		data_grid_style:  DataGridStyle{
-			...theme.data_grid_style
+			...built_theme.data_grid_style
 			text_style:        normal
 			text_style_header: bold
 			text_style_filter: normal
 		}
 		tab_style:        TabStyle{
-			...theme.tab_style
+			...built_theme.tab_style
 			text_style:          normal
 			text_style_selected: bold
 			text_style_disabled: TextStyle{
@@ -640,7 +640,7 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			}
 		}
 		breadcrumb_style: BreadcrumbStyle{
-			...theme.breadcrumb_style
+			...built_theme.breadcrumb_style
 			text_style:           normal
 			text_style_selected:  bold
 			text_style_disabled:  TextStyle{
@@ -664,29 +664,29 @@ pub fn theme_maker(cfg &ThemeCfg) Theme {
 			text_style_icon:      TextStyle{
 				...normal
 				family: icon_font_name
-				size:   theme.size_text_medium
+				size:   built_theme.size_text_medium
 			}
 		}
 		// markdown
 		markdown_style: MarkdownStyle{
 			text:                normal
-			h1:                  make_style(bold, theme.size_text_x_large)
-			h2:                  make_style(bold, theme.size_text_large)
-			h3:                  make_style(bold, theme.size_text_medium)
-			h4:                  make_style(bold, theme.size_text_small)
-			h5:                  make_style(bold, theme.size_text_x_small)
-			h6:                  make_style(bold, theme.size_text_tiny)
-			bold:                make_style(bold, theme.size_text_medium)
-			italic:              make_style(italic, theme.size_text_medium)
-			code:                make_style(mono, theme.size_text_medium + 1)
+			h1:                  make_style(bold, built_theme.size_text_x_large)
+			h2:                  make_style(bold, built_theme.size_text_large)
+			h3:                  make_style(bold, built_theme.size_text_medium)
+			h4:                  make_style(bold, built_theme.size_text_small)
+			h5:                  make_style(bold, built_theme.size_text_x_small)
+			h6:                  make_style(bold, built_theme.size_text_tiny)
+			bold:                make_style(bold, built_theme.size_text_medium)
+			italic:              make_style(italic, built_theme.size_text_medium)
+			code:                make_style(mono, built_theme.size_text_medium + 1)
 			code_block_bg:       rgb(40, 44, 52)
-			code_keyword_color:  theme.color_select
+			code_keyword_color:  built_theme.color_select
 			code_string_color:   rgb(152, 195, 121)
 			code_number_color:   rgb(209, 154, 102)
-			code_comment_color:  theme.color_border
+			code_comment_color:  built_theme.color_border
 			code_operator_color: normal.color
-			hr_color:            theme.color_border
-			link_color:          theme.color_select
+			hr_color:            built_theme.color_border
+			link_color:          built_theme.color_select
 		}
 	}
 }

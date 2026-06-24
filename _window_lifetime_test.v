@@ -274,7 +274,7 @@ fn lifetime_grid_columns() []GridColumnCfg {
 	]
 }
 
-fn lifetime_grid_rows() []gui.GridRow {
+fn lifetime_grid_rows() []GridRow {
 	return [
 		GridRow{
 			id:    'row-1'
@@ -827,7 +827,7 @@ fn start_lifetime_capturing_crud_save(mut w Window, mut harness &LifetimeCrudSav
 			on_crud_error:       fn [payload, mut harness] (_ string, mut _ Event, mut _ Window) {
 				harness.error_sum = payload[0] + payload[payload.len - 1]
 			}
-			on_rows_change:      fn [payload, mut harness] (_ []gui.GridRow, mut _ Event, mut _ Window) {
+			on_rows_change:      fn [payload, mut harness] (_ []GridRow, mut _ Event, mut _ Window) {
 				harness.rows_change_sum = payload[0] + payload[payload.len - 1]
 			}
 			selection:           GridSelection{

@@ -377,9 +377,9 @@ pub fn circle(cfg ContainerCfg) View {
 		cfg.axis = .top_to_bottom
 		cfg.name = if cfg.name.is_blank() { 'circle' } else { cfg.name }
 	}
-	mut circle := container(cfg) as ContainerView
-	circle.shape_type = .circle
-	return circle
+	mut circle_view := container(cfg) as ContainerView
+	circle_view.shape_type = .circle
+	return circle_view
 }
 
 // make_a11y returns the direct AccessInfo if set, otherwise
@@ -487,7 +487,7 @@ fn invisible_container_view() ContainerView {
 	}
 }
 
-fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []gui.Layout) {
+fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []Layout) {
 	if cv.title.len == 0 {
 		return
 	}
@@ -506,11 +506,11 @@ fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []gui.Layo
 	}
 
 	cfg := text_style.to_vglyph_cfg()
-	text_width := w.text_system.text_width(cv.title, cfg) or { 0 }
+	title_text_width := w.text_system.text_width(cv.title, cfg) or { 0 }
 	metrics := w.text_system.font_metrics(cfg) or { vglyph.TextMetrics{} }
 
 	offset := metrics.ascender - metrics.descender
-	padding := f32(5)
+	title_pad := f32(5)
 
 	// 1. Eraser Node (hides the border)
 	parent_bg := cv.title_bg
@@ -518,7 +518,7 @@ fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []gui.Layo
 	children << Layout{
 		shape: &Shape{
 			shape_type:   .rectangle
-			width:        text_width + padding + padding - 1
+			width:        title_text_width + title_pad + title_pad - 1
 			height:       metrics.ascender + metrics.descender
 			x:            20
 			y:            -offset
@@ -532,10 +532,10 @@ fn (cv &ContainerView) add_group_box_title(mut w Window, mut children []gui.Layo
 	children << Layout{
 		shape: &Shape{
 			shape_type: .text
-			x:          20 + padding
+			x:          20 + title_pad
 			y:          -offset
 			color:      text_color
-			width:      text_width
+			width:      title_text_width
 			height:     metrics.ascender + metrics.descender // Logical height
 			float:      true
 			tc:         &ShapeTextConfig{

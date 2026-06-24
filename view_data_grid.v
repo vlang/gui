@@ -592,12 +592,12 @@ pub fn (mut window Window) data_grid(cfg DataGridCfg) View {
 	)
 }
 
-fn data_grid_presentation(cfg DataGridCfg, columns []gui.GridColumnCfg) DataGridPresentation {
+fn data_grid_presentation(cfg DataGridCfg, columns []GridColumnCfg) DataGridPresentation {
 	return data_grid_presentation_rows(cfg, columns, data_grid_visible_row_indices(cfg.rows.len,
 		[]int{}))
 }
 
-fn data_grid_cached_presentation(cfg DataGridCfg, columns []gui.GridColumnCfg, row_indices []int, mut window Window) DataGridPresentation {
+fn data_grid_cached_presentation(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int, mut window Window) DataGridPresentation {
 	group_cols := data_grid_group_columns(cfg.group_by, columns)
 	value_cols := data_grid_presentation_value_cols(group_cols, cfg.aggregates)
 	signature := data_grid_presentation_signature(cfg, columns, row_indices, group_cols, value_cols)
@@ -630,7 +630,7 @@ fn data_grid_cached_presentation(cfg DataGridCfg, columns []gui.GridColumnCfg, r
 	return presentation
 }
 
-fn data_grid_presentation_signature(cfg DataGridCfg, columns []gui.GridColumnCfg, row_indices []int, group_cols []string, value_cols []string) u64 {
+fn data_grid_presentation_signature(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int, group_cols []string, value_cols []string) u64 {
 	mut hash := data_grid_fnv64_offset
 	visible_indices := data_grid_visible_row_indices(cfg.rows.len, row_indices)
 	group_titles := data_grid_group_titles(columns)
@@ -660,8 +660,8 @@ fn data_grid_presentation_signature(cfg DataGridCfg, columns []gui.GridColumnCfg
 	detail_enabled := cfg.on_detail_row_view != unsafe { nil }
 	hash = data_grid_fnv64_byte(hash, if detail_enabled { `1` } else { `0` })
 	for row_idx in visible_indices {
-		row := cfg.rows[row_idx]
-		row_id := data_grid_row_id(row, row_idx)
+		data_row := cfg.rows[row_idx]
+		row_id := data_grid_row_id(data_row, row_idx)
 		hash = data_grid_fnv64_byte(hash, 0x1e)
 		hash = data_grid_fnv64_u64(hash, u64(row_idx))
 		hash = data_grid_fnv64_byte(hash, 0x1f)
@@ -676,7 +676,7 @@ fn data_grid_presentation_signature(cfg DataGridCfg, columns []gui.GridColumnCfg
 			hash = data_grid_fnv64_byte(hash, 0x1f)
 			hash = data_grid_fnv64_str(hash, col_id)
 			hash = data_grid_fnv64_byte(hash, `=`)
-			hash = data_grid_fnv64_str(hash, row.cells[col_id] or { '' })
+			hash = data_grid_fnv64_str(hash, data_row.cells[col_id] or { '' })
 		}
 	}
 	return hash
@@ -709,7 +709,7 @@ fn data_grid_presentation_value_cols(group_cols []string, aggregates []GridAggre
 // expansion rows are interleaved after their parent data
 // row. data_to_display maps data row index → display index
 // for scroll-into-view.
-fn data_grid_presentation_rows(cfg DataGridCfg, columns []gui.GridColumnCfg, row_indices []int) DataGridPresentation {
+fn data_grid_presentation_rows(cfg DataGridCfg, columns []GridColumnCfg, row_indices []int) DataGridPresentation {
 	visible_indices := data_grid_visible_row_indices(cfg.rows.len, row_indices)
 	group_cols := data_grid_group_columns(cfg.group_by, columns)
 	group_ranges := if group_cols.len > 0 && visible_indices.len > 0 {
@@ -721,19 +721,19 @@ fn data_grid_presentation_rows(cfg DataGridCfg, columns []gui.GridColumnCfg, row
 		group_ranges)
 }
 
-fn data_grid_presentation_rows_with_group_ranges(cfg DataGridCfg, columns []gui.GridColumnCfg, visible_indices []int, group_cols []string, group_ranges map[string]int) DataGridPresentation {
+fn data_grid_presentation_rows_with_group_ranges(cfg DataGridCfg, columns []GridColumnCfg, visible_indices []int, group_cols []string, group_ranges map[string]int) DataGridPresentation {
 	mut rows := []DataGridDisplayRow{cap: cfg.rows.len + 8}
 	mut data_to_display := map[int]int{}
 	if group_cols.len == 0 || visible_indices.len == 0 {
 		for row_idx in visible_indices {
-			row := cfg.rows[row_idx]
+			data_row := cfg.rows[row_idx]
 			data_to_display[row_idx] = rows.len
 			rows << DataGridDisplayRow{
 				kind:         .data
 				data_row_idx: row_idx
 			}
 			if cfg.on_detail_row_view != unsafe { nil }
-				&& data_grid_detail_row_expanded(cfg, data_grid_row_id(row, row_idx)) {
+				&& data_grid_detail_row_expanded(cfg, data_grid_row_id(data_row, row_idx)) {
 				rows << DataGridDisplayRow{
 					kind:         .detail
 					data_row_idx: row_idx
@@ -751,10 +751,10 @@ fn data_grid_presentation_rows_with_group_ranges(cfg DataGridCfg, columns []gui.
 	mut has_prev := false
 
 	for local_idx, row_idx in visible_indices {
-		row := cfg.rows[row_idx]
+		data_row := cfg.rows[row_idx]
 		mut values := []string{cap: group_cols.len}
 		for col_id in group_cols {
-			values << row.cells[col_id] or { '' }
+			values << data_row.cells[col_id] or { '' }
 		}
 		mut change_depth := -1
 		if !has_prev {
@@ -792,7 +792,7 @@ fn data_grid_presentation_rows_with_group_ranges(cfg DataGridCfg, columns []gui.
 			data_row_idx: row_idx
 		}
 		if cfg.on_detail_row_view != unsafe { nil }
-			&& data_grid_detail_row_expanded(cfg, data_grid_row_id(row, row_idx)) {
+			&& data_grid_detail_row_expanded(cfg, data_grid_row_id(data_row, row_idx)) {
 			rows << DataGridDisplayRow{
 				kind:         .detail
 				data_row_idx: row_idx
@@ -808,7 +808,7 @@ fn data_grid_presentation_rows_with_group_ranges(cfg DataGridCfg, columns []gui.
 	}
 }
 
-fn data_grid_group_columns(group_by []string, columns []gui.GridColumnCfg) []string {
+fn data_grid_group_columns(group_by []string, columns []GridColumnCfg) []string {
 	if group_by.len == 0 {
 		return []
 	}
@@ -830,7 +830,7 @@ fn data_grid_group_columns(group_by []string, columns []gui.GridColumnCfg) []str
 	return cols
 }
 
-fn data_grid_group_titles(columns []gui.GridColumnCfg) map[string]string {
+fn data_grid_group_titles(columns []GridColumnCfg) map[string]string {
 	mut titles := map[string]string{}
 	for col in columns {
 		if col.id.len == 0 {
@@ -851,7 +851,7 @@ fn data_grid_group_range_key(depth int, start_idx int) string {
 // depths D..max, then opens new ranges. Key format is
 // "depth:start_idx". Accepts full rows array + indices to
 // avoid copying row structs.
-fn data_grid_group_ranges(rows []gui.GridRow, indices []int, group_cols []string) map[string]int {
+fn data_grid_group_ranges(rows []GridRow, indices []int, group_cols []string) map[string]int {
 	mut ranges := map[string]int{}
 	if indices.len == 0 || group_cols.len == 0 {
 		return ranges
@@ -864,10 +864,10 @@ fn data_grid_group_ranges(rows []gui.GridRow, indices []int, group_cols []string
 	}
 
 	for i in 1 .. indices.len {
-		row := rows[indices[i]]
+		data_row := rows[indices[i]]
 		mut change_depth := -1
 		for depth, col_id in group_cols {
-			value := row.cells[col_id] or { '' }
+			value := data_row.cells[col_id] or { '' }
 			if value != values[depth] {
 				change_depth = depth
 				break
@@ -889,7 +889,7 @@ fn data_grid_group_ranges(rows []gui.GridRow, indices []int, group_cols []string
 		for dep in change_depth .. group_cols.len {
 			col_id := group_cols[dep]
 			starts[dep] = i
-			values[dep] = row.cells[col_id] or { '' }
+			values[dep] = data_row.cells[col_id] or { '' }
 		}
 	}
 
@@ -930,7 +930,7 @@ fn data_grid_aggregate_label(agg GridAggregateCfg) string {
 	return '${agg.op.str()} ${agg.col_id}'
 }
 
-fn data_grid_aggregate_value(rows []gui.GridRow, start_idx int, end_idx int, agg GridAggregateCfg) ?string {
+fn data_grid_aggregate_value(rows []GridRow, start_idx int, end_idx int, agg GridAggregateCfg) ?string {
 	if agg.op == .count {
 		return (end_idx - start_idx + 1).str()
 	}
@@ -990,14 +990,14 @@ fn data_grid_parse_number(value string) ?f64 {
 }
 
 fn data_grid_format_number(value f64) string {
-	mut text := '${value:.4f}'
-	for text.contains('.') && text.ends_with('0') {
-		text = text[..text.len - 1]
+	mut formatted := '${value:.4f}'
+	for formatted.contains('.') && formatted.ends_with('0') {
+		formatted = formatted[..formatted.len - 1]
 	}
-	if text.ends_with('.') {
-		text = text[..text.len - 1]
+	if formatted.ends_with('.') {
+		formatted = formatted[..formatted.len - 1]
 	}
-	return text
+	return formatted
 }
 
 fn data_grid_row_id(row GridRow, idx int) string {
@@ -1086,7 +1086,7 @@ fn data_grid_row_height(cfg DataGridCfg, mut window Window) f32 {
 	return font_h + cfg.padding_cell.height() + cfg.size_border
 }
 
-fn data_grid_static_top_height(cfg DataGridCfg, row_height f32, chooser_open bool, include_header bool) f32 {
+fn data_grid_static_top_height(cfg DataGridCfg, _ f32, chooser_open bool, include_header bool) f32 {
 	mut top := f32(0)
 	if cfg.show_column_chooser {
 		top += data_grid_column_chooser_height(cfg, chooser_open)

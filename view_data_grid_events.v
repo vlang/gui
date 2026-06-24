@@ -1041,7 +1041,7 @@ fn data_grid_selection_for_target_row(key_ctx DataGridKeydownContext, target_row
 	}
 }
 
-fn data_grid_range_selected_rows(rows []gui.GridRow, start int, end int, target_row_id string) map[string]bool {
+fn data_grid_range_selected_rows(rows []GridRow, start int, end int, target_row_id string) map[string]bool {
 	mut selected := map[string]bool{}
 	if start >= 0 && end >= start {
 		for row_idx in start .. end + 1 {
@@ -1103,7 +1103,7 @@ fn data_grid_next_page_index_for_key(page_index int, page_count int, e &Event) ?
 	}
 }
 
-fn data_grid_selected_rows(rows []gui.GridRow, selection GridSelection) []gui.GridRow {
+fn data_grid_selected_rows(rows []GridRow, selection GridSelection) []GridRow {
 	if selection.selected_row_ids.len == 0 {
 		return []
 	}
@@ -1133,7 +1133,7 @@ fn data_grid_page_rows(cfg DataGridCfg, row_height f32) int {
 	return if page < 1 { 1 } else { page }
 }
 
-fn data_grid_active_row_index(rows []gui.GridRow, selection GridSelection) int {
+fn data_grid_active_row_index(rows []GridRow, selection GridSelection) int {
 	res := data_grid_active_row_index_strict(rows, selection)
 	if res >= 0 {
 		return res
@@ -1146,7 +1146,7 @@ fn data_grid_active_row_index(rows []gui.GridRow, selection GridSelection) int {
 
 // Single-pass scan: checks active_row_id and falls back
 // to first selected row in one loop instead of two.
-fn data_grid_active_row_index_strict(rows []gui.GridRow, selection GridSelection) int {
+fn data_grid_active_row_index_strict(rows []GridRow, selection GridSelection) int {
 	if rows.len == 0 {
 		return -1
 	}
@@ -1320,7 +1320,7 @@ fn data_grid_anchor_row_id(cfg DataGridCfg, mut w Window, fallback string) strin
 	return data_grid_anchor_row_id_ex(cfg.selection, cfg.id, cfg.rows, mut w, fallback)
 }
 
-fn data_grid_anchor_row_id_ex(selection GridSelection, grid_id string, rows []gui.GridRow, mut w Window, fallback string) string {
+fn data_grid_anchor_row_id_ex(selection GridSelection, grid_id string, rows []GridRow, mut w Window, fallback string) string {
 	if selection.anchor_row_id.len > 0 {
 		return selection.anchor_row_id
 	}
@@ -1350,7 +1350,7 @@ fn data_grid_set_anchor(grid_id string, anchor string, mut w Window) {
 	})
 }
 
-fn data_grid_range_indices(rows []gui.GridRow, a string, b string) (int, int) {
+fn data_grid_range_indices(rows []GridRow, a string, b string) (int, int) {
 	mut a_idx := -1
 	mut b_idx := -1
 	for idx, row in rows {

@@ -311,7 +311,7 @@ fn form_resolve_validate_on(override FormValidateOn, fallback FormValidateOn) Fo
 	return override
 }
 
-fn form_merge_errors(field FormFieldRuntimeState) []gui.FormIssue {
+fn form_merge_errors(field FormFieldRuntimeState) []FormIssue {
 	mut merged := []FormIssue{cap: field.sync_errors.len + field.async_errors.len}
 	merged << field.sync_errors
 	merged << field.async_errors
@@ -434,7 +434,7 @@ pub fn (window &Window) form_field_state(form_id string, field_id string) ?FormF
 	return form_to_public_field_state(field)
 }
 
-pub fn (window &Window) form_field_errors(form_id string, field_id string) []gui.FormIssue {
+pub fn (window &Window) form_field_errors(form_id string, field_id string) []FormIssue {
 	if field := window.form_field_state(form_id, field_id) {
 		return field.errors
 	}
@@ -655,7 +655,7 @@ fn (mut w Window) form_queue_async_validation_pin_release() {
 	})
 }
 
-fn (mut w Window) form_apply_async_result(form_id string, field_id string, request_id u64, issues []gui.FormIssue) {
+fn (mut w Window) form_apply_async_result(form_id string, field_id string, request_id u64, issues []FormIssue) {
 	mut state := form_state_get(mut w, form_id)
 	mut field := state.fields[field_id] or { return }
 	if request_id != field.request_seq {

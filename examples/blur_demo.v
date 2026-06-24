@@ -13,7 +13,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(mut w gui.Window) gui.View {
+fn main_view(mut _w gui.Window) gui.View {
 	return gui.column(
 		sizing:  gui.fit_fit
 		spacing: 60

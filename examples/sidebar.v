@@ -118,7 +118,7 @@ fn nav_item(icon string, label string) gui.View {
 				]
 			),
 		]
-		on_click:    fn [label] (_ &gui.Layout, mut _ gui.Event, mut _ gui.Window) {
+		on_click:    fn (_ &gui.Layout, mut _ gui.Event, mut _ gui.Window) {
 		}
 	)
 }

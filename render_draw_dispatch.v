@@ -165,9 +165,10 @@ fn renderers_draw(mut window Window) {
 					continue
 				}
 				if candidate is DrawSvg {
-					svg := candidate
-					if svg.clip_group == 0 && svg.vertex_colors.len == 0 && svg.color == color
-						&& svg.x == x && svg.y == y && svg.scale == scale {
+					draw_svg := candidate
+					if draw_svg.clip_group == 0 && draw_svg.vertex_colors.len == 0
+						&& draw_svg.color == color && draw_svg.x == x && draw_svg.y == y
+						&& draw_svg.scale == scale {
 						i++
 						continue
 					}
@@ -294,9 +295,9 @@ fn draw_clipped_svg_group(renderers []Renderer, idx int, mut window Window) int 
 			continue
 		}
 		if candidate is DrawSvg {
-			svg := candidate
-			if svg.clip_group == group {
-				if svg.is_clip_mask {
+			draw_svg := candidate
+			if draw_svg.clip_group == group {
+				if draw_svg.is_clip_mask {
 					has_mask = true
 				} else {
 					has_content = true

@@ -31,7 +31,7 @@ fn cursor_right(shape Shape, pos int) int {
 }
 
 // cursor_up moves the cursor position up one line using vglyph geometry.
-fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut window Window) int {
+fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut _ Window) int {
 	if lines_up <= 0 {
 		return cursor_pos
 	}
@@ -63,7 +63,7 @@ fn cursor_up(shape Shape, cursor_pos int, cursor_offset f32, lines_up int, mut w
 }
 
 // cursor_down moves the cursor position down one line using vglyph geometry.
-fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, mut window Window) int {
+fn cursor_down(shape Shape, cursor_pos int, cursor_offset f32, lines_down int, mut _ Window) int {
 	if lines_down <= 0 {
 		return cursor_pos
 	}
@@ -270,7 +270,7 @@ fn cursor_position_from_offset(str string, offset f32, style TextStyle, mut wind
 
 // offset_from_cursor_position returns the horizontal pixel offset of the cursor
 // position using vglyph geometry.
-fn offset_from_cursor_position(shape Shape, cursor_position int, mut window Window) f32 {
+fn offset_from_cursor_position(shape Shape, cursor_position int, mut _ Window) f32 {
 	byte_idx := rune_to_byte_index(shape.tc.text, cursor_position)
 	if !shape.has_text_layout() {
 		return 0
@@ -334,7 +334,7 @@ fn cursor_pos_to_scroll_y(cursor_pos int, shape &Shape, mut w Window) f32 {
 	return target_scroll
 }
 
-fn cursor_pos_to_scroll_x(cursor_pos int, shape &Shape, mut w Window) f32 {
+fn cursor_pos_to_scroll_x(_cursor_pos int, _shape &Shape, mut _w Window) f32 {
 	return 0
 }
 
@@ -364,7 +364,7 @@ fn cursor_pos_to_scroll_x(cursor_pos int, shape &Shape, mut w Window) f32 {
 
 // mouse_cursor_pos determines the character index (cursor position) within
 // the entire text based on the mouse coordinates using vglyph geometry.
-fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut w Window) int {
+fn (tv &TextView) mouse_cursor_pos(shape &Shape, e &Event, mut _ Window) int {
 	if tv.placeholder_active {
 		return 0
 	}
@@ -391,7 +391,7 @@ fn scroll_cursor_into_view(cursor_pos int, layout &Layout, mut w Window) {
 
 // text_mouse_cursor_pos is a standalone version of mouse_cursor_pos that
 // takes placeholder_active as a parameter instead of capturing tv.
-fn text_mouse_cursor_pos(shape &Shape, e &Event, mut w Window, placeholder_active bool) int {
+fn text_mouse_cursor_pos(shape &Shape, e &Event, mut _ Window, placeholder_active bool) int {
 	if placeholder_active {
 		return 0
 	}

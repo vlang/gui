@@ -108,7 +108,7 @@ fn markdown_warn_external_api_once(mut w Window) {
 }
 
 // build_markdown_table_data converts parsed table to TableRowCfg array.
-fn build_markdown_table_data(parsed ParsedTable, style MarkdownStyle) []TableRowCfg {
+fn build_markdown_table_data(parsed ParsedTable, _ MarkdownStyle) []TableRowCfg {
 	mut rows := []TableRowCfg{cap: parsed.rows.len + 1}
 	// Header row
 	mut header_cells := []TableCellCfg{cap: parsed.headers.len}

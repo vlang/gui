@@ -345,7 +345,7 @@ fn tree_visible_range(tree_height f32, row_height f32, total_rows int, id_scroll
 }
 
 // tree_flat_row_content builds the inner content view for ghost.
-fn tree_flat_row_content(flat_row TreeFlatRow, indent f32, min_width_icon f32) View {
+fn tree_flat_row_content(flat_row TreeFlatRow, _indent f32, min_width_icon f32) View {
 	arrow := tree_arrow_icon(flat_row)
 	return row(
 		name:    'tree node content'

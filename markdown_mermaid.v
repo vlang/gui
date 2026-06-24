@@ -78,8 +78,8 @@ fn mermaid_http_fetch(source string) !http.Response {
 	mut buf := []u8{cap: escaped.len}
 	for ech in escaped {
 		if ech < 0x20 || ech == 0x7f {
-			hex := '0000${ech:X}'
-			buf << '\\u${hex[hex.len - 4..]}'.bytes()
+			escaped_hex := '0000${ech:X}'
+			buf << '\\u${escaped_hex[escaped_hex.len - 4..]}'.bytes()
 		} else {
 			buf << ech
 		}

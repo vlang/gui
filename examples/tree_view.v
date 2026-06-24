@@ -28,10 +28,10 @@ fn on_select(id string, mut w gui.Window) {
 	app.selected_id = id
 }
 
-fn on_lazy_load(tree_id string, node_id string, mut w gui.Window) {
+fn on_lazy_load(_tree_id string, node_id string, mut w gui.Window) {
 	// Simulate async fetch: spawn a thread that sleeps then
 	// delivers children via queue_command.
-	spawn fn [tree_id, node_id] (mut w gui.Window) {
+	spawn fn [node_id] (mut w gui.Window) {
 		time.sleep(800 * time.millisecond)
 		children := match node_id {
 			'remote_a' {

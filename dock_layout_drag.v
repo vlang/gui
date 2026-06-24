@@ -145,11 +145,11 @@ fn dock_drag_cancel(dock_id string, mut w Window) {
 // panel_nodes is pre-collected at drag activation to avoid per-move
 // allocations.
 fn dock_drag_detect_zone(dock_id string, panel_nodes []&DockNode,
-	mouse_x f32, mouse_y f32, source_group string, panel_id string,
+	mouse_x f32, mouse_y f32, source_group string, _ string,
 	w &Window) (DockDropZone, string) {
 	// 1. Check window-edge zones first.
-	dock_layout := w.find_layout_by_id(dock_id) or { return DockDropZone.none, '' }
-	clip := dock_layout.shape.shape_clip
+	dock_layout_node := w.find_layout_by_id(dock_id) or { return DockDropZone.none, '' }
+	clip := dock_layout_node.shape.shape_clip
 	if clip.width <= 0 || clip.height <= 0 {
 		return DockDropZone.none, ''
 	}
@@ -281,20 +281,20 @@ fn dock_drag_amend_overlay(dock_id string, color_zone Color, mut layout Layout, 
 	}
 
 	// Determine target rect.
-	mut tx, mut ty, mut tw, mut th := f32(0), f32(0), f32(0), f32(0)
+	mut tx, mut ty, mut tw, mut target_h := f32(0), f32(0), f32(0), f32(0)
 
 	if state.hover_zone == .window_top || state.hover_zone == .window_bottom
 		|| state.hover_zone == .window_left || state.hover_zone == .window_right {
 		tx = layout.shape.x
 		ty = layout.shape.y
 		tw = layout.shape.width
-		th = layout.shape.height
+		target_h = layout.shape.height
 	} else if state.hover_group_id.len > 0 {
 		group_layout := layout.find_by_id(state.hover_group_id) or { return }
 		tx = group_layout.shape.x
 		ty = group_layout.shape.y
 		tw = group_layout.shape.width
-		th = group_layout.shape.height
+		target_h = group_layout.shape.height
 	} else {
 		return
 	}
@@ -302,11 +302,11 @@ fn dock_drag_amend_overlay(dock_id string, color_zone Color, mut layout Layout, 
 	// Subdivide based on zone.
 	match state.hover_zone {
 		.top, .window_top {
-			th = th * 0.5
+			target_h = target_h * 0.5
 		}
 		.bottom, .window_bottom {
-			ty = ty + th * 0.5
-			th = th * 0.5
+			ty = ty + target_h * 0.5
+			target_h = target_h * 0.5
 		}
 		.left, .window_left {
 			tw = tw * 0.5
@@ -322,6 +322,6 @@ fn dock_drag_amend_overlay(dock_id string, color_zone Color, mut layout Layout, 
 	layout.children[overlay_idx].shape.x = tx
 	layout.children[overlay_idx].shape.y = ty
 	layout.children[overlay_idx].shape.width = tw
-	layout.children[overlay_idx].shape.height = th
+	layout.children[overlay_idx].shape.height = target_h
 	layout.children[overlay_idx].shape.color = color_zone
 }

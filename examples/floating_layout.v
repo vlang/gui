@@ -97,7 +97,7 @@ fn main_view(window &gui.Window) gui.View {
 	)
 }
 
-fn faux_edit_menu(app &FloatingLayoutApp) gui.View {
+fn faux_edit_menu(_app &FloatingLayoutApp) gui.View {
 	return gui.column(
 		spacing: 0
 		padding: gui.padding_none

@@ -119,7 +119,7 @@ pub fn window(cfg &WindowCfg) &Window {
 	log.set_level(cfg.log_level)
 	log.set_always_flush(true)
 
-	mut window := &Window{
+	mut app_window := &Window{
 		state:                    cfg.state
 		on_event:                 cfg.on_event
 		debug_layout:             cfg.debug_layout
@@ -130,7 +130,7 @@ pub fn window(cfg &WindowCfg) &Window {
 	}
 	on_init := cfg.on_init
 	cursor_blink := cfg.cursor_blink
-	window.ui = gg.new_context(
+	app_window.ui = gg.new_context(
 		bg_color:                     cfg.bg_color.to_gx_color()
 		width:                        cfg.width
 		height:                       cfg.height
@@ -143,7 +143,7 @@ pub fn window(cfg &WindowCfg) &Window {
 		frame_fn:                     frame_fn
 		cleanup_fn:                   window_cleanup
 		ui_mode:                      true // only draw on events
-		user_data:                    window
+		user_data:                    app_window
 		init_fn:                      fn [on_init, cursor_blink] (mut w Window) {
 			w.update_window_size()
 
@@ -175,10 +175,10 @@ pub fn window(cfg &WindowCfg) &Window {
 	)
 
 	$if !prod {
-		at_exit(fn [window] () {
-			println(window.stats())
+		at_exit(fn [app_window] () {
+			println(app_window.stats())
 		}) or {}
 	}
 
-	return window
+	return app_window
 }

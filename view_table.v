@@ -340,8 +340,10 @@ pub fn table_cfg_from_csv_string(data string) !TableCfg {
 	// Parse rows with error context
 	mut rows := [][]string{cap: int(row_count)}
 	for y in 0 .. int(row_count) {
-		row := parser.get_row(y) or { return error('failed to parse CSV row ${y}: ${err.msg()}') }
-		rows << row
+		csv_row := parser.get_row(y) or {
+			return error('failed to parse CSV row ${y}: ${err.msg()}')
+		}
+		rows << csv_row
 	}
 	return table_cfg_from_data(rows)
 }
@@ -436,8 +438,8 @@ fn table_data_hash(cfg &TableCfg) u64 {
 	sample_indices := [0, cfg.data.len / 2, cfg.data.len - 1]
 	for idx in sample_indices {
 		if idx >= 0 && idx < cfg.data.len {
-			row := cfg.data[idx]
-			for cell in row.cells {
+			sample_row := cfg.data[idx]
+			for cell in sample_row.cells {
 				for c in cell.value {
 					h = h * 31 + u64(c)
 				}

@@ -206,7 +206,7 @@ pub fn (mut s SpringAnimation) retarget(to f32) {
 	s.stopped = false
 }
 
-fn update_spring(mut sp SpringAnimation, mut w Window, dt f32, mut deferred []AnimationCallback) bool {
+fn update_spring(mut sp SpringAnimation, mut _ Window, dt f32, mut deferred []AnimationCallback) bool {
 	if sp.stopped || sp.state.at_rest {
 		return false
 	}

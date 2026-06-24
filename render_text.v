@@ -395,7 +395,7 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 // input_cursor_on is read live here — never captured in a closure — so the
 // blink animation (render-only path) toggles it and triggers a re-render
 // without rebuilding the layout tree.
-fn render_cursor(shape &Shape, clip DrawClip, mut window Window) {
+fn render_cursor(shape &Shape, _ DrawClip, mut window Window) {
 	if window.is_focus(shape.id_focus) && shape.shape_type == .text
 		&& window.view_state.input_cursor_on {
 		input_state := state_map[u32, InputState](mut window, ns_input, cap_many).get(shape.id_focus) or {

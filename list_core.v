@@ -206,7 +206,7 @@ fn list_core_visible_range(item_count int, row_height f32, list_height f32, scro
 }
 
 // list_core_navigate maps a key code to a list navigation action.
-fn list_core_navigate(key KeyCode, item_count int, current int) ListCoreAction {
+fn list_core_navigate(key KeyCode, item_count int, _ int) ListCoreAction {
 	if item_count == 0 {
 		return .none
 	}

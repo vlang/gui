@@ -158,7 +158,7 @@ fn capture_heroes_recursive(layout Layout, mut snapshots map[string]HeroSnapshot
 	}
 }
 
-fn update_hero_transition(mut ht HeroTransition, mut w Window, mut deferred []AnimationCallback) bool {
+fn update_hero_transition(mut ht HeroTransition, mut _ Window, mut deferred []AnimationCallback) bool {
 	if ht.stopped {
 		return false
 	}

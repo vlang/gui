@@ -118,7 +118,17 @@ jobs:
       - name: Run tests
         env:
           VFLAGS: -no-parallel -cc clang
-        run: v test gui/
+        run: |
+          test_manifest="${RUNNER_TEMP}/gui-test-files"
+          git -C gui ls-files '*_test.v' | LC_ALL=C sort > "$test_manifest"
+          test_count="$(wc -l < "$test_manifest" | tr -d ' ')"
+          echo "Test files: $test_count"
+          i=0
+          while IFS= read -r file; do
+            i=$((i + 1))
+            echo "[$i/$test_count] gui/$file"
+          done < "$test_manifest"
+          v test gui/
       - name: Check compilation of examples
         if: github.event_name == 'pull_request'
         env:
@@ -387,7 +397,13 @@ jobs:
           VFLAGS: -no-parallel -cc msvc
           VJOBS: 1
           VTEST_ONLY_FN: test_*
-        run: v test gui/
+        run: |
+          $testFiles = @(git -C gui ls-files '*_test.v' | Sort-Object)
+          Write-Host "Test files: $($testFiles.Count)"
+          for ($i = 0; $i -lt $testFiles.Count; $i++) {
+            Write-Host ("[{0}/{1}] gui/{2}" -f ($i + 1), $testFiles.Count, $testFiles[$i])
+          }
+          v test gui/
       - name: Check compilation of examples
         if: github.event_name == 'pull_request'
         env:

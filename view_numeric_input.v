@@ -163,7 +163,7 @@ pub fn numeric_input(cfg NumericInputCfg) View {
 fn numeric_input_field(cfg NumericInputCfg, locale NumericLocaleCfg, step_cfg NumericStepCfg, fill_parent bool) View {
 	sizing := if fill_parent { fill_fill } else { cfg.sizing }
 	input_id := if fill_parent && cfg.id.len > 0 { '${cfg.id}_field' } else { cfg.id }
-	tooltip := if fill_parent { unsafe { nil } } else { cfg.tooltip }
+	field_tooltip := if fill_parent { unsafe { nil } } else { cfg.tooltip }
 	color := if fill_parent { color_transparent } else { cfg.color }
 	color_hover := if fill_parent { color_transparent } else { cfg.color_hover }
 	color_border := if fill_parent { color_transparent } else { cfg.color_border }
@@ -176,7 +176,7 @@ fn numeric_input_field(cfg NumericInputCfg, locale NumericLocaleCfg, step_cfg Nu
 		id_focus:              cfg.id_focus
 		text:                  cfg.text
 		placeholder:           cfg.placeholder
-		tooltip:               tooltip
+		tooltip:               field_tooltip
 		sizing:                sizing
 		width:                 if fill_parent { 0 } else { cfg.width }
 		height:                if fill_parent { 0 } else { cfg.height }
@@ -485,48 +485,48 @@ fn numeric_mode_parse_value(raw string, decimals int, locale NumericLocaleCfg, m
 
 fn numeric_mode_is_transient_input(raw string, locale NumericLocaleCfg, mode_cfg NumericModeCfg) bool {
 	loc := numeric_locale_normalize(locale)
-	mut text := raw.trim_space()
-	if text.len == 0 {
+	mut normalized_text := raw.trim_space()
+	if normalized_text.len == 0 {
 		return true
 	}
 	minus := loc.minus_sign.str()
 	plus := loc.plus_sign.str()
-	if minus.len > 0 && text == minus {
+	if minus.len > 0 && normalized_text == minus {
 		return true
 	}
-	if plus.len > 0 && text == plus {
+	if plus.len > 0 && normalized_text == plus {
 		return true
 	}
-	if minus.len > 0 && text.starts_with(minus) {
-		text = text[minus.len..].trim_left(' \t')
-	} else if plus.len > 0 && text.starts_with(plus) {
-		text = text[plus.len..].trim_left(' \t')
+	if minus.len > 0 && normalized_text.starts_with(minus) {
+		normalized_text = normalized_text[minus.len..].trim_left(' \t')
+	} else if plus.len > 0 && normalized_text.starts_with(plus) {
+		normalized_text = normalized_text[plus.len..].trim_left(' \t')
 	}
-	if text.len == 0 {
+	if normalized_text.len == 0 {
 		return true
 	}
 	if mode_cfg.affix.len > 0 {
 		match mode_cfg.affix_position {
 			.prefix {
-				if text == mode_cfg.affix {
+				if normalized_text == mode_cfg.affix {
 					return true
 				}
-				if text.starts_with(mode_cfg.affix) {
-					text = text[mode_cfg.affix.len..].trim_left(' \t')
-					if text.len == 0 {
+				if normalized_text.starts_with(mode_cfg.affix) {
+					normalized_text = normalized_text[mode_cfg.affix.len..].trim_left(' \t')
+					if normalized_text.len == 0 {
 						return true
 					}
 				}
 			}
 			.suffix {
-				if text == mode_cfg.affix {
+				if normalized_text == mode_cfg.affix {
 					return true
 				}
-				mut right := text.trim_right(' \t')
+				mut right := normalized_text.trim_right(' \t')
 				if right.ends_with(mode_cfg.affix) {
 					right = right[..right.len - mode_cfg.affix.len].trim_right(' \t')
-					text = right
-					if text.len == 0 {
+					normalized_text = right
+					if normalized_text.len == 0 {
 						return true
 					}
 				}
@@ -537,13 +537,13 @@ fn numeric_mode_is_transient_input(raw string, locale NumericLocaleCfg, mode_cfg
 	if decimal_sep.len == 0 {
 		return false
 	}
-	if text == decimal_sep {
+	if normalized_text == decimal_sep {
 		return true
 	}
-	if !text.ends_with(decimal_sep) {
+	if !normalized_text.ends_with(decimal_sep) {
 		return false
 	}
-	prefix := text[..text.len - decimal_sep.len]
+	prefix := normalized_text[..normalized_text.len - decimal_sep.len]
 	if prefix.len == 0 {
 		return true
 	}
@@ -561,41 +561,41 @@ fn numeric_mode_format_value(value f64, decimals int, locale NumericLocaleCfg, m
 }
 
 fn numeric_strip_affix(raw string, locale NumericLocaleCfg, mode_cfg NumericModeCfg) ?string {
-	mut text := raw.trim_space()
-	if text.len == 0 {
+	mut stripped_text := raw.trim_space()
+	if stripped_text.len == 0 {
 		return none
 	}
 	mut sign := ''
 	minus := locale.minus_sign.str()
 	plus := locale.plus_sign.str()
-	if minus.len > 0 && text.starts_with(minus) {
+	if minus.len > 0 && stripped_text.starts_with(minus) {
 		sign = minus
-		text = text[minus.len..].trim_left(' \t')
-	} else if plus.len > 0 && text.starts_with(plus) {
+		stripped_text = stripped_text[minus.len..].trim_left(' \t')
+	} else if plus.len > 0 && stripped_text.starts_with(plus) {
 		sign = plus
-		text = text[plus.len..].trim_left(' \t')
+		stripped_text = stripped_text[plus.len..].trim_left(' \t')
 	}
 	if mode_cfg.affix.len > 0 {
 		match mode_cfg.affix_position {
 			.prefix {
-				if text.starts_with(mode_cfg.affix) {
-					text = text[mode_cfg.affix.len..].trim_left(' \t')
+				if stripped_text.starts_with(mode_cfg.affix) {
+					stripped_text = stripped_text[mode_cfg.affix.len..].trim_left(' \t')
 				}
 			}
 			.suffix {
-				mut right := text.trim_right(' \t')
+				mut right := stripped_text.trim_right(' \t')
 				if right.ends_with(mode_cfg.affix) {
 					right = right[..right.len - mode_cfg.affix.len].trim_right(' \t')
 				}
-				text = right
+				stripped_text = right
 			}
 		}
 	}
-	text = text.trim_space()
-	if text.len == 0 {
+	stripped_text = stripped_text.trim_space()
+	if stripped_text.len == 0 {
 		return none
 	}
-	return sign + text
+	return sign + stripped_text
 }
 
 fn numeric_apply_affix(formatted string, locale NumericLocaleCfg, mode_cfg NumericModeCfg) string {
