@@ -167,7 +167,7 @@ fn render_shape_inner(mut shape Shape, parent_color Color, clip DrawClip, mut wi
 // One complication is the title text that is drawn in the upper left corner of the rectangle.
 // At some point, it should be moved to the container logic, along with some layout amend logic.
 // Honestly, it was more expedient to put it here.
-fn render_container(mut shape Shape, parent_color Color, clip DrawClip, mut window Window) {
+fn render_container(mut shape Shape, _ Color, clip DrawClip, mut window Window) {
 	fx := shape.fx
 	has_fx := fx != unsafe { nil }
 	if has_fx && fx.shadow != unsafe { nil } && fx.shadow.color.a > 0 && fx.shadow.blur_radius > 0 {
@@ -376,7 +376,7 @@ fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 		shape.disabled = true
 		return
 	}
-	image := window.load_image(shape.resource) or {
+	loaded_image := window.load_image(shape.resource) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
 		emit_error_placeholder(shape.x, shape.y, shape.width, shape.height, mut window)
 		return
@@ -386,7 +386,7 @@ fn render_image(mut shape Shape, clip DrawClip, mut window Window) {
 		y:           shape.y
 		w:           shape.width
 		h:           shape.height
-		img:         image
+		img:         loaded_image
 		clip_radius: window.clip_radius
 	}, mut window)
 }

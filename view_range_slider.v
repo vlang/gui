@@ -221,7 +221,7 @@ fn range_slider_amend_layout_slide(mut layout Layout, mut w Window, on_change fn
 		return
 	}
 	mut left_bar := unsafe { &track.children[0] }
-	mut thumb := unsafe { &track.children[1] }
+	mut thumb_layout := unsafe { &track.children[1] }
 
 	clamped := f32_clamp(value, min, max)
 	percent := math.abs(clamped / (max - min))
@@ -243,8 +243,8 @@ fn range_slider_amend_layout_slide(mut layout Layout, mut w Window, on_change fn
 	}
 
 	if w.is_focus(id_focus) {
-		thumb.shape.color = color_focus
-		thumb.shape.color_border = color_focus
+		thumb_layout.shape.color = color_focus
+		thumb_layout.shape.color_border = color_focus
 	}
 }
 
@@ -270,12 +270,12 @@ fn range_slider_amend_layout_thumb(mut layout Layout, mut _ Window, value f32, m
 // range_slider_mouse_move handles mouse move during drag.
 fn range_slider_mouse_move(layout &Layout, mut e Event, mut w Window, slider_id string, on_change fn (f32, mut Event, mut Window), cur_value f32, min f32, max f32, vertical bool, round_value bool) {
 	if on_change != unsafe { nil } {
-		range_slider := layout.find_layout(fn [slider_id] (n Layout) bool {
+		slider_layout := layout.find_layout(fn [slider_id] (n Layout) bool {
 			return n.shape.id == slider_id
 		})
-		if range_slider != none {
+		if slider_layout != none {
 			w.set_mouse_cursor_pointing_hand()
-			shape := range_slider.shape
+			shape := slider_layout.shape
 			if vertical {
 				height := shape.height
 				percent := f32_clamp((e.mouse_y - shape.y) / height, 0, 1)

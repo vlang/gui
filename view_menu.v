@@ -61,7 +61,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 
 		// Choose padding depending on whether item has a custom view,
 		// is a subtitle, or is a normal item.
-		padding := match item.custom_view != none {
+		item_padding := match item.custom_view != none {
 			true {
 				item.padding
 			}
@@ -82,7 +82,7 @@ fn menu_build(cfg MenubarCfg, level int, items []MenuItemCfg, window &Window) []
 		item_cfg := MenuItemCfg{
 			...item
 			color_select: cfg.color_select
-			padding:      padding
+			padding:      item_padding
 			selected:     item.id == id_selected || selected_in_tree
 			sizing:       sizing
 			radius:       cfg.radius_menu_item

@@ -12,7 +12,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(_window &gui.Window) gui.View {
 	sizes := [f32(10.0), 10.5, 11.0, 11.2, 11.5, 11.8, 12.0, 12.25, 12.5, 12.75, 13.0, 14.0]
 	mut texts := []gui.View{}
 

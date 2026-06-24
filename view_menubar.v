@@ -245,7 +245,7 @@ fn menu_mapper(menu []MenuItemCfg) MenuIdMap {
 // right enters submenu if present, otherwise uses the root-level right
 // up/down move vertically within the submenu, with wraparound to last/first selectable items
 // Recursively processes nested submenu levels to complete the graph.
-fn submenu_mapper(menu []MenuItemCfg, left_id string, node MenuIdNode, root_node MenuIdNode, mut menu_map MenuIdMap) {
+fn submenu_mapper(menu []MenuItemCfg, left_id string, _ MenuIdNode, root_node MenuIdNode, mut menu_map MenuIdMap) {
 	for idx, item in menu {
 		if !is_selectable_menu_id(item.id) {
 			continue

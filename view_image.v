@@ -83,7 +83,7 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 		}
 	}
 
-	image := window.load_image(image_path) or {
+	loaded_image := window.load_image(image_path) or {
 		log.error('${@FILE_LINE} > ${err.msg()}')
 		mut error_text := text(
 			text:       '[missing: ${iv.src}]'
@@ -95,8 +95,8 @@ fn (mut iv ImageView) generate_layout(mut window Window) Layout {
 		return error_text.generate_layout(mut window)
 	}
 
-	width := if iv.width > 0 { iv.width } else { image.width }
-	height := if iv.height > 0 { iv.height } else { image.height }
+	width := if iv.width > 0 { iv.width } else { loaded_image.width }
+	height := if iv.height > 0 { iv.height } else { loaded_image.height }
 
 	mut events := unsafe { &EventHandlers(nil) }
 	if iv.on_click != unsafe { nil } || iv.on_hover != unsafe { nil } {

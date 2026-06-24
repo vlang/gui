@@ -202,7 +202,7 @@ fn menu(mut window gui.Window) gui.View {
 	)
 }
 
-fn body(mut app MenuApp, window &gui.Window) gui.View {
+fn body(mut app MenuApp, _window &gui.Window) gui.View {
 	return gui.column(
 		h_align: .center
 		padding: gui.padding_none

@@ -162,7 +162,7 @@ fn capture_recursive(layout Layout, mut snapshots map[string]LayoutSnapshot) {
 	}
 }
 
-fn update_layout_transition(mut lt LayoutTransition, mut w Window, mut deferred []AnimationCallback) bool {
+fn update_layout_transition(mut lt LayoutTransition, mut _ Window, mut deferred []AnimationCallback) bool {
 	if lt.stopped {
 		return false
 	}

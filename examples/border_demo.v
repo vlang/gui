@@ -18,7 +18,7 @@ fn main() {
 	window.run()
 }
 
-fn main_view(window &gui.Window) gui.View {
+fn main_view(_window &gui.Window) gui.View {
 	return gui.column(gui.ContainerCfg{
 		width:   win_width
 		height:  win_height

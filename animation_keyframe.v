@@ -107,7 +107,7 @@ fn (_ KeyframeAnimation) refresh_kind() AnimationRefreshKind {
 	return .layout
 }
 
-fn update_keyframe(mut kf KeyframeAnimation, mut w Window, mut deferred []AnimationCallback) bool {
+fn update_keyframe(mut kf KeyframeAnimation, mut _ Window, mut deferred []AnimationCallback) bool {
 	if kf.stopped {
 		return false
 	}

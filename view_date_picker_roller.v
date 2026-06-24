@@ -52,16 +52,16 @@ pub fn date_picker_roller(cfg DatePickerRollerCfg) View {
 
 	// Calculate total min_width if not specified
 	spacing := f32(4)
-	padding := f32(10) // padding_small
+	drum_padding := f32(10) // padding_small
 	calculated_min_width := match cfg.display_mode {
 		.day_month_year, .month_day_year {
-			day_drum_width + month_drum_width + year_drum_width + spacing * 2 + padding * 2
+			day_drum_width + month_drum_width + year_drum_width + spacing * 2 + drum_padding * 2
 		}
 		.month_year {
-			month_drum_width + year_drum_width + spacing + padding * 2
+			month_drum_width + year_drum_width + spacing + drum_padding * 2
 		}
 		.year_only {
-			year_drum_width + padding * 2
+			year_drum_width + drum_padding * 2
 		}
 	}
 

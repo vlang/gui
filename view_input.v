@@ -554,25 +554,25 @@ fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_p
 }
 
 fn (cfg &InputCfg) commit_text(layout &Layout, reason InputCommitReason, mut w Window) {
-	mut text := cfg.text
+	mut edited_text := cfg.text
 	if cfg.post_commit_normalize != unsafe { nil } {
-		text = cfg.post_commit_normalize(cfg.text, reason)
+		edited_text = cfg.post_commit_normalize(cfg.text, reason)
 	}
 	match reason {
 		.blur {
-			cfg.form_notify(layout, text, .blur, mut w)
+			cfg.form_notify(layout, edited_text, .blur, mut w)
 		}
 		.enter {
-			cfg.form_notify(layout, text, .submit, mut w)
+			cfg.form_notify(layout, edited_text, .submit, mut w)
 			w.form_request_submit_for_layout(layout)
 		}
 	}
 
-	if cfg.on_text_changed != unsafe { nil } && text != cfg.text {
-		cfg.on_text_changed(layout, text, mut w)
+	if cfg.on_text_changed != unsafe { nil } && edited_text != cfg.text {
+		cfg.on_text_changed(layout, edited_text, mut w)
 	}
 	if cfg.on_text_commit != unsafe { nil } {
-		cfg.on_text_commit(layout, text, reason, mut w)
+		cfg.on_text_commit(layout, edited_text, reason, mut w)
 	}
 }
 
@@ -612,37 +612,37 @@ fn (cfg &InputCfg) delete(mut w Window, forward_delete bool) ?string {
 	if compiled := cfg.active_compiled_mask() {
 		return cfg.masked_delete(mut w, forward_delete, compiled)
 	}
-	mut text := cfg.text.runes()
+	mut runes := cfg.text.runes()
 	input_state := input_state_or_default(cfg.id_focus, mut w)
-	mut cursor_pos := int_min(input_state.cursor_pos, text.len)
+	mut cursor_pos := int_min(input_state.cursor_pos, runes.len)
 	if cursor_pos < 0 {
-		cursor_pos = text.len
+		cursor_pos = runes.len
 	}
 	if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
-		if beg >= text.len || end > text.len {
+		if beg >= runes.len || end > runes.len {
 			log.error('beg or end out of range (delete)')
 			return none
 		}
-		text = arrays.append(text[..beg], text[end..])
-		cursor_pos = int_min(int(beg), text.len)
+		runes = arrays.append(runes[..beg], runes[end..])
+		cursor_pos = int_min(int(beg), runes.len)
 	} else {
 		if cursor_pos == 0 && !forward_delete {
-			return text.string()
+			return runes.string()
 		}
-		if cursor_pos == text.len && forward_delete {
-			return text.string()
+		if cursor_pos == runes.len && forward_delete {
+			return runes.string()
 		}
 		delete_pos := if forward_delete { cursor_pos } else { cursor_pos - 1 }
-		if delete_pos < 0 || delete_pos >= text.len {
+		if delete_pos < 0 || delete_pos >= runes.len {
 			return none
 		}
-		text = arrays.append(text[..delete_pos], text[delete_pos + 1..])
+		runes = arrays.append(runes[..delete_pos], runes[delete_pos + 1..])
 		if !forward_delete {
 			cursor_pos--
 		}
 	}
-	return cfg.apply_text_edit(input_state, text.string(), cursor_pos, mut w)
+	return cfg.apply_text_edit(input_state, runes.string(), cursor_pos, mut w)
 }
 
 // insert adds text at the cursor or replaces selection. For single-line
@@ -664,24 +664,24 @@ fn (cfg &InputCfg) insert(insert_text string, mut w Window) !string {
 	if cfg.exceeds_single_line_fixed_width(cfg.text + insert_value, mut w) {
 		return cfg.text
 	}
-	mut text := cfg.text.runes()
+	mut runes := cfg.text.runes()
 	input_state := input_state_or_default(cfg.id_focus, mut w)
-	mut cursor_pos := int_min(input_state.cursor_pos, text.len)
+	mut cursor_pos := int_min(input_state.cursor_pos, runes.len)
 	if cursor_pos < 0 {
-		text = arrays.append(cfg.text.runes(), insert_runes)
-		cursor_pos = text.len
+		runes = arrays.append(cfg.text.runes(), insert_runes)
+		cursor_pos = runes.len
 	} else if input_state.select_beg != input_state.select_end {
 		beg, end := u32_sort(input_state.select_beg, input_state.select_end)
-		if beg >= text.len || end > text.len {
+		if beg >= runes.len || end > runes.len {
 			return error('beg or end out of range (insert)')
 		}
-		text = arrays.append(arrays.append(text[..beg], insert_runes), text[end..])
-		cursor_pos = int_min(int(beg) + insert_runes.len, text.len)
+		runes = arrays.append(arrays.append(runes[..beg], insert_runes), runes[end..])
+		cursor_pos = int_min(int(beg) + insert_runes.len, runes.len)
 	} else {
-		text = arrays.append(arrays.append(text[..cursor_pos], insert_runes), text[cursor_pos..])
-		cursor_pos = int_min(cursor_pos + insert_runes.len, text.len)
+		runes = arrays.append(arrays.append(runes[..cursor_pos], insert_runes), runes[cursor_pos..])
+		cursor_pos = int_min(cursor_pos + insert_runes.len, runes.len)
 	}
-	return cfg.apply_text_edit(input_state, text.string(), cursor_pos, mut w)
+	return cfg.apply_text_edit(input_state, runes.string(), cursor_pos, mut w)
 }
 
 // cut copies selected text to clipboard then deletes it. Returns modified
@@ -771,41 +771,41 @@ fn make_input_on_char(cfg InputRuntimeCfg) fn (&Layout, mut Event, mut Window) {
 		if cfg.on_text_changed == unsafe { nil } {
 			return
 		}
-		mut text := cfg.text
+		mut edited_text := cfg.text
 		if event.modifiers == .ctrl_shift {
 			match c {
-				ctrl_z { text = cfg.redo(mut w) }
+				ctrl_z { edited_text = cfg.redo(mut w) }
 				else {}
 			}
 		} else if event.modifiers == .super_shift {
 			match c {
-				cmd_z { text = cfg.redo(mut w) }
+				cmd_z { edited_text = cfg.redo(mut w) }
 				else {}
 			}
 		} else if event.modifiers == .ctrl {
 			match c {
-				ctrl_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
-				ctrl_x { text = cfg.cut(mut w) or { return } }
-				ctrl_z { text = cfg.undo(mut w) }
+				ctrl_v { edited_text = cfg.paste(from_clipboard(), mut w) or { return } }
+				ctrl_x { edited_text = cfg.cut(mut w) or { return } }
+				ctrl_z { edited_text = cfg.undo(mut w) }
 				else {}
 			}
 		} else if event.modifiers == .super {
 			match c {
-				cmd_v { text = cfg.paste(from_clipboard(), mut w) or { return } }
-				cmd_x { text = cfg.cut(mut w) or { return } }
-				cmd_z { text = cfg.undo(mut w) }
+				cmd_v { edited_text = cfg.paste(from_clipboard(), mut w) or { return } }
+				cmd_x { edited_text = cfg.cut(mut w) or { return } }
+				cmd_z { edited_text = cfg.undo(mut w) }
 				else {}
 			}
 		} else {
 			match c {
 				bsp_char {
-					text = cfg.delete(mut w, false) or { return }
+					edited_text = cfg.delete(mut w, false) or { return }
 				}
 				del_char {
 					$if macos {
-						text = cfg.delete(mut w, false) or { return }
+						edited_text = cfg.delete(mut w, false) or { return }
 					} $else {
-						text = cfg.delete(mut w, true) or { return }
+						edited_text = cfg.delete(mut w, true) or { return }
 					}
 				}
 				cr_char, lf_char {
@@ -821,7 +821,7 @@ fn make_input_on_char(cfg InputRuntimeCfg) fn (&Layout, mut Event, mut Window) {
 						event.is_handled = true
 						return
 					}
-					text = cfg.insert('\n', mut w) or {
+					edited_text = cfg.insert('\n', mut w) or {
 						log.error(err.msg())
 						return
 					}
@@ -830,7 +830,7 @@ fn make_input_on_char(cfg InputRuntimeCfg) fn (&Layout, mut Event, mut Window) {
 					return
 				}
 				else {
-					text = cfg.insert(rune(c).str(), mut w) or {
+					edited_text = cfg.insert(rune(c).str(), mut w) or {
 						log.error(err.msg())
 						return
 					}
@@ -838,9 +838,9 @@ fn make_input_on_char(cfg InputRuntimeCfg) fn (&Layout, mut Event, mut Window) {
 			}
 		}
 		event.is_handled = true
-		if text != cfg.text {
-			cfg.form_notify(layout, text, .change, mut w)
-			cfg.on_text_changed(layout, text, mut w)
+		if edited_text != cfg.text {
+			cfg.form_notify(layout, edited_text, .change, mut w)
+			cfg.on_text_changed(layout, edited_text, mut w)
 		}
 	}
 }

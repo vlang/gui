@@ -139,11 +139,11 @@ fn process_svg_filters(mut window Window) {
 			// Compute screen-space bbox with blur padding
 			scale := begin.scale
 			ui_scale := window.ui.scale
-			padding := filter.std_dev * 3.0 * scale
-			bbox_x := (begin.x + fg.bbox[0] * scale - padding) * ui_scale
-			bbox_y := (begin.y + fg.bbox[1] * scale - padding) * ui_scale
-			bbox_w := (fg.bbox[2] * scale + padding * 2) * ui_scale
-			bbox_h := (fg.bbox[3] * scale + padding * 2) * ui_scale
+			blur_pad := filter.std_dev * 3.0 * scale
+			bbox_x := (begin.x + fg.bbox[0] * scale - blur_pad) * ui_scale
+			bbox_y := (begin.y + fg.bbox[1] * scale - blur_pad) * ui_scale
+			bbox_w := (fg.bbox[2] * scale + blur_pad * 2) * ui_scale
+			bbox_h := (fg.bbox[3] * scale + blur_pad * 2) * ui_scale
 
 			tex_dims := filter_texture_dims_from_bbox(bbox_w, bbox_h, max_tex_size)
 			if !tex_dims.valid {

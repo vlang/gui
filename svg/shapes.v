@@ -197,7 +197,7 @@ fn parse_ellipse_element(elem string) ?VectorPath {
 }
 
 // ellipse_to_path converts an ellipse to a path using 4 cubic beziers
-fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, elem string, fill string, s ElementStyle) VectorPath {
+fn ellipse_to_path(cx f32, cy f32, rx f32, ry f32, _ string, fill string, s ElementStyle) VectorPath {
 	// Approximate circle with 4 cubic beziers (kappa = 4*(sqrt(2)-1)/3)
 	k := f32(0.5522847498)
 	kx := rx * k

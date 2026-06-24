@@ -324,7 +324,7 @@ fn distribute_space(mut layout Layout,
 // layout_widths arranges children horizontally. Only containers with an axis
 // are processed.
 fn layout_widths(mut layout Layout) {
-	padding := layout.shape.padding_width()
+	pad_w := layout.shape.padding_width()
 	if layout.shape.axis == .left_to_right { // along the axis
 		spacing := layout.spacing()
 		if layout.shape.sizing.width == .fixed {
@@ -332,7 +332,7 @@ fn layout_widths(mut layout Layout) {
 				layout_widths(mut child)
 			}
 		} else {
-			mut min_widths := padding + spacing
+			mut min_widths := pad_w + spacing
 			for mut child in layout.children {
 				layout_widths(mut child)
 				layout.shape.width += child.shape.width
@@ -340,19 +340,19 @@ fn layout_widths(mut layout Layout) {
 					// Wrap/overflow containers only need room for
 					// the widest single child; the respective layout
 					// pass handles the rest.
-					min_widths = f32_max(min_widths, child.shape.width + padding)
+					min_widths = f32_max(min_widths, child.shape.width + pad_w)
 				} else if !layout.shape.clip {
 					min_widths += child.shape.min_width
 				}
 			}
 
 			if !layout.shape.wrap && !layout.shape.overflow {
-				layout.shape.min_width = f32_max(min_widths, layout.shape.min_width + padding +
+				layout.shape.min_width = f32_max(min_widths, layout.shape.min_width + pad_w +
 					spacing)
 			} else {
 				layout.shape.min_width = f32_max(min_widths, layout.shape.min_width)
 			}
-			layout.shape.width += padding + spacing
+			layout.shape.width += pad_w + spacing
 
 			if layout.shape.max_width > 0 {
 				layout.shape.width = f32_min(layout.shape.max_width, layout.shape.width)
@@ -366,13 +366,13 @@ fn layout_widths(mut layout Layout) {
 		for mut child in layout.children {
 			layout_widths(mut child)
 			if layout.shape.sizing.width != .fixed {
-				layout.shape.width = f32_max(layout.shape.width, child.shape.width + padding)
+				layout.shape.width = f32_max(layout.shape.width, child.shape.width + pad_w)
 				// Clip containers hide overflow — children's min_width
 				// must not force the container wider.
 				if !layout.shape.clip {
 					layout.shape.min_width = f32_max(layout.shape.min_width,
 
-						child.shape.min_width + padding)
+						child.shape.min_width + pad_w)
 				}
 			}
 		}
@@ -388,7 +388,7 @@ fn layout_widths(mut layout Layout) {
 // layout_heights arranges children vertically. Only containers with an axis
 // are processed.
 fn layout_heights(mut layout Layout) {
-	padding := layout.shape.padding_height()
+	pad_h := layout.shape.padding_height()
 	if layout.shape.axis == .top_to_bottom { // along the axis
 		spacing := layout.spacing()
 		if layout.shape.sizing.height == .fixed {
@@ -396,16 +396,16 @@ fn layout_heights(mut layout Layout) {
 				layout_heights(mut child)
 			}
 		} else {
-			mut min_heights := padding + spacing
+			mut min_heights := pad_h + spacing
 			for mut child in layout.children {
 				layout_heights(mut child)
 				layout.shape.height += child.shape.height
 				min_heights += child.shape.min_height
 			}
 
-			layout.shape.min_height = f32_max(min_heights, layout.shape.min_height + padding +
-				spacing)
-			layout.shape.height += padding + spacing
+			layout.shape.min_height = f32_max(min_heights,
+				layout.shape.min_height + pad_h + spacing)
+			layout.shape.height += pad_h + spacing
 
 			if layout.shape.max_height > 0 {
 				layout.shape.height = f32_min(layout.shape.max_height, layout.shape.height)
@@ -422,9 +422,9 @@ fn layout_heights(mut layout Layout) {
 		for mut child in layout.children {
 			layout_heights(mut child)
 			if layout.shape.sizing.height != .fixed {
-				layout.shape.height = f32_max(layout.shape.height, child.shape.height + padding)
+				layout.shape.height = f32_max(layout.shape.height, child.shape.height + pad_h)
 				layout.shape.min_height = f32_max(layout.shape.min_height, child.shape.min_height +
-					padding)
+					pad_h)
 			}
 		}
 		if layout.shape.min_height > 0 {

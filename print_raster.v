@@ -92,7 +92,7 @@ fn (pr PrintPageRaster) destroy() {
 // render_page_to_pixels renders a page slice of the view
 // into a pixel buffer using the GPU pipeline. Must be
 // called within frame_fn, outside any active gfx pass.
-fn render_page_to_pixels(mut window Window, raster PrintPageRaster, source_width f32, page_source_height f32, page_offset_y f32) ![]u8 {
+fn render_page_to_pixels(mut window Window, raster PrintPageRaster, source_width f32, _ f32, page_offset_y f32) ![]u8 {
 	// Scale factor: logical source coords → raster pixels.
 	// Mirrors how normal rendering uses ui.scale to map
 	// logical coords to framebuffer pixels. All draw fns
@@ -179,23 +179,23 @@ fn jpeg_encode_rgba(pixels []u8, width int, height int, quality int, bgra bool) 
 	if pixels.len < width * height * 4 {
 		return error('pixel buffer too small')
 	}
-	mut rgb := []u8{len: width * height * 3}
+	mut rgb_pixels := []u8{len: width * height * 3}
 	for i := 0; i < width * height; i++ {
 		si := i * 4
 		di := i * 3
 		if bgra {
-			rgb[di] = pixels[si + 2] // R from BGRA
-			rgb[di + 1] = pixels[si + 1] // G
-			rgb[di + 2] = pixels[si] // B from BGRA
+			rgb_pixels[di] = pixels[si + 2] // R from BGRA
+			rgb_pixels[di + 1] = pixels[si + 1] // G
+			rgb_pixels[di + 2] = pixels[si] // B from BGRA
 		} else {
-			rgb[di] = pixels[si] // R from RGBA
-			rgb[di + 1] = pixels[si + 1] // G
-			rgb[di + 2] = pixels[si + 2] // B from RGBA
+			rgb_pixels[di] = pixels[si] // R from RGBA
+			rgb_pixels[di + 1] = pixels[si + 1] // G
+			rgb_pixels[di + 2] = pixels[si + 2] // B from RGBA
 		}
 	}
 	mut wctx := JpegWriteContext{}
 	result := C.stbi_write_jpg_to_func(jpeg_write_callback, voidptr(&wctx), width, height, 3,
-		rgb.data, quality)
+		rgb_pixels.data, quality)
 	if result == 0 {
 		return error('JPEG encoding failed')
 	}
@@ -209,24 +209,24 @@ fn pdf_render_document_raster(mut window Window, source_width f32, source_height
 	page_width, page_height := print_page_size(job.paper, job.orientation)
 	header_h := print_header_footer_reserved_height(job.header)
 	footer_h := print_header_footer_reserved_height(job.footer)
-	content_width := page_width - job.margins.left - job.margins.right
-	content_height := page_height - job.margins.top - job.margins.bottom - header_h - footer_h
+	page_content_width := page_width - job.margins.left - job.margins.right
+	page_content_height := page_height - job.margins.top - job.margins.bottom - header_h - footer_h
 
-	if content_width <= 0 || content_height <= 0 {
+	if page_content_width <= 0 || page_content_height <= 0 {
 		return error('invalid page/margin configuration')
 	}
 
 	// Source-space page height via scale.
 	mut scale := f32(1.0)
 	if job.scale_mode == .fit_to_page {
-		scale_x := content_width / source_width
-		scale_y := content_height / source_height
+		scale_x := page_content_width / source_width
+		scale_y := page_content_height / source_height
 		scale = f32_min(scale_x, scale_y)
 	}
 	if scale <= 0 {
 		return error('computed invalid scale')
 	}
-	page_source_height := content_height / scale
+	page_source_height := page_content_height / scale
 
 	mut page_count := 1
 	if job.paginate {
@@ -249,8 +249,8 @@ fn pdf_render_document_raster(mut window Window, source_width f32, source_height
 	// PDF image placement dimensions. For fit_to_page the
 	// image is scaled to fit within the content area. For
 	// actual_size the image fills the content area.
-	mut place_w := content_width
-	mut place_h := content_height
+	mut place_w := page_content_width
+	mut place_h := page_content_height
 	if job.scale_mode == .fit_to_page {
 		place_w = source_width * scale
 		place_h = page_source_height * scale

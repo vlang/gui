@@ -31,9 +31,9 @@ pub fn (mut window Window) load_image_no_validate(file_name string) !&Image {
 	real_path := os.real_path(file_name)
 	mut ctx := window.context()
 	return ctx.get_cached_image_by_idx(window.view_state.image_map.get(real_path) or {
-		image := ctx.create_image(file_name)! // ctx.create_image caches images
-		window.view_state.image_map.set(real_path, image.id, mut ctx)
-		return &image
+		cached_image := ctx.create_image(file_name)! // ctx.create_image caches images
+		window.view_state.image_map.set(real_path, cached_image.id, mut ctx)
+		return &cached_image
 	})
 }
 

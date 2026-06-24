@@ -186,7 +186,7 @@ fn max_animation_refresh_kind(current AnimationRefreshKind, incoming AnimationRe
 	return .none
 }
 
-fn update_animate(mut an Animate, mut w Window, mut deferred []AnimationCallback) bool {
+fn update_animate(mut an Animate, mut _ Window, mut deferred []AnimationCallback) bool {
 	if !an.stopped {
 		if time.since(an.start) > an.delay {
 			// Capture callback to call after lock release

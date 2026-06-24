@@ -129,30 +129,26 @@ pub fn dock_tree_find_group_by_id(node &DockNode, group_id string) ?&DockNode {
 // group becomes empty, collapses the parent split (replaces it
 // with the remaining sibling). Returns the new root.
 pub fn dock_tree_remove_panel(root &DockNode, panel_id string) &DockNode {
-	return dock_tree_remove_panel_rec(root, panel_id)
-}
-
-fn dock_tree_remove_panel_rec(nd &DockNode, panel_id string) &DockNode {
-	orig := unsafe { nd }
-	if nd.kind == .split {
-		if nd.first == unsafe { nil } || nd.second == unsafe { nil } {
+	orig := unsafe { root }
+	if root.kind == .split {
+		if root.first == unsafe { nil } || root.second == unsafe { nil } {
 			return orig
 		}
-		new_first := dock_tree_remove_panel_rec(nd.first, panel_id)
-		new_second := dock_tree_remove_panel_rec(nd.second, panel_id)
+		new_first := dock_tree_remove_panel(root.first, panel_id)
+		new_second := dock_tree_remove_panel(root.second, panel_id)
 		if dock_tree_is_empty(new_first) {
 			return new_second
 		}
 		if dock_tree_is_empty(new_second) {
 			return new_first
 		}
-		if new_first != nd.first || new_second != nd.second {
-			return dock_split(nd.id, nd.dir, nd.ratio, new_first, new_second)
+		if new_first != root.first || new_second != root.second {
+			return dock_split(root.id, root.dir, root.ratio, new_first, new_second)
 		}
 		return orig
 	} else {
 		mut found := false
-		for id in nd.panel_ids {
+		for id in root.panel_ids {
 			if id == panel_id {
 				found = true
 				break
@@ -161,8 +157,8 @@ fn dock_tree_remove_panel_rec(nd &DockNode, panel_id string) &DockNode {
 		if !found {
 			return orig
 		}
-		mut new_ids := []string{cap: if nd.panel_ids.len > 0 { nd.panel_ids.len - 1 } else { 0 }}
-		for id in nd.panel_ids {
+		mut new_ids := []string{cap: if root.panel_ids.len > 0 { root.panel_ids.len - 1 } else { 0 }}
+		for id in root.panel_ids {
 			if id != panel_id {
 				new_ids << id
 			}
@@ -170,11 +166,11 @@ fn dock_tree_remove_panel_rec(nd &DockNode, panel_id string) &DockNode {
 		if new_ids.len == 0 {
 			return dock_panel_group('__dock_empty__', []string{}, '')
 		}
-		mut new_selected := nd.selected_id
+		mut new_selected := root.selected_id
 		if new_selected == panel_id {
 			new_selected = new_ids[0]
 		}
-		return dock_panel_group(nd.id, new_ids, new_selected)
+		return dock_panel_group(root.id, new_ids, new_selected)
 	}
 }
 
@@ -185,28 +181,24 @@ fn dock_tree_is_empty(node &DockNode) bool {
 // dock_tree_add_tab adds a panel to an existing group (by group_id).
 // Returns the new root.
 pub fn dock_tree_add_tab(root &DockNode, group_id string, panel_id string) &DockNode {
-	return dock_tree_add_tab_rec(root, group_id, panel_id)
-}
-
-fn dock_tree_add_tab_rec(nd &DockNode, group_id string, panel_id string) &DockNode {
-	orig := unsafe { nd }
-	if nd.kind == .split {
-		if nd.first == unsafe { nil } || nd.second == unsafe { nil } {
+	orig := unsafe { root }
+	if root.kind == .split {
+		if root.first == unsafe { nil } || root.second == unsafe { nil } {
 			return orig
 		}
-		new_first := dock_tree_add_tab_rec(nd.first, group_id, panel_id)
-		new_second := dock_tree_add_tab_rec(nd.second, group_id, panel_id)
-		if new_first != nd.first || new_second != nd.second {
-			return dock_split(nd.id, nd.dir, nd.ratio, new_first, new_second)
+		new_first := dock_tree_add_tab(root.first, group_id, panel_id)
+		new_second := dock_tree_add_tab(root.second, group_id, panel_id)
+		if new_first != root.first || new_second != root.second {
+			return dock_split(root.id, root.dir, root.ratio, new_first, new_second)
 		}
 		return orig
 	} else {
-		if nd.id != group_id {
+		if root.id != group_id {
 			return orig
 		}
-		mut new_ids := nd.panel_ids.clone()
+		mut new_ids := root.panel_ids.clone()
 		new_ids << panel_id
-		return dock_panel_group(nd.id, new_ids, panel_id)
+		return dock_panel_group(root.id, new_ids, panel_id)
 	}
 }
 
@@ -214,27 +206,23 @@ fn dock_tree_add_tab_rec(nd &DockNode, group_id string, panel_id string) &DockNo
 // split containing the original group and a new single-panel group.
 // The new panel goes into the position indicated by zone.
 pub fn dock_tree_split_at(root &DockNode, group_id string, panel_id string, zone DockDropZone) &DockNode {
-	return dock_tree_split_at_rec(root, group_id, panel_id, zone)
-}
-
-fn dock_tree_split_at_rec(nd &DockNode, group_id string, panel_id string, zone DockDropZone) &DockNode {
-	orig := unsafe { nd }
-	if nd.kind == .split {
-		if nd.first == unsafe { nil } || nd.second == unsafe { nil } {
+	orig := unsafe { root }
+	if root.kind == .split {
+		if root.first == unsafe { nil } || root.second == unsafe { nil } {
 			return orig
 		}
-		new_first := dock_tree_split_at_rec(nd.first, group_id, panel_id, zone)
-		new_second := dock_tree_split_at_rec(nd.second, group_id, panel_id, zone)
-		if new_first != nd.first || new_second != nd.second {
-			return dock_split(nd.id, nd.dir, nd.ratio, new_first, new_second)
+		new_first := dock_tree_split_at(root.first, group_id, panel_id, zone)
+		new_second := dock_tree_split_at(root.second, group_id, panel_id, zone)
+		if new_first != root.first || new_second != root.second {
+			return dock_split(root.id, root.dir, root.ratio, new_first, new_second)
 		}
 		return orig
 	} else {
-		if nd.id != group_id {
+		if root.id != group_id {
 			return orig
 		}
 		new_group := dock_panel_group('${group_id}_new_${panel_id}', [panel_id], panel_id)
-		existing := dock_panel_group(nd.id, nd.panel_ids, nd.selected_id)
+		existing := dock_panel_group(root.id, root.panel_ids, root.selected_id)
 		dir := dock_zone_to_split_dir(zone)
 		first_is_new := zone == .left || zone == .top
 		return dock_split('${group_id}_split', dir, 0.5, if first_is_new {
@@ -263,16 +251,14 @@ pub fn dock_tree_wrap_root(root &DockNode, panel_id string, zone DockDropZone) &
 // inserts it at the target: either as a tab (center zone) or as a
 // new split (edge zones). Returns the new root.
 pub fn dock_tree_move_panel(root &DockNode, panel_id string, target_group_id string, zone DockDropZone) &DockNode {
-	mut new_root := dock_tree_remove_panel(root, panel_id)
+	removed_root := dock_tree_remove_panel(root, panel_id)
 	if zone == .center {
-		new_root = dock_tree_add_tab(new_root, target_group_id, panel_id)
+		return dock_tree_add_tab(removed_root, target_group_id, panel_id)
 	} else if zone == .window_top || zone == .window_bottom || zone == .window_left
 		|| zone == .window_right {
-		new_root = dock_tree_wrap_root(new_root, panel_id, zone)
-	} else {
-		new_root = dock_tree_split_at(new_root, target_group_id, panel_id, zone)
+		return dock_tree_wrap_root(removed_root, panel_id, zone)
 	}
-	return new_root
+	return dock_tree_split_at(removed_root, target_group_id, panel_id, zone)
 }
 
 // dock_tree_select_panel sets the selected panel in the group with

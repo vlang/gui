@@ -832,7 +832,7 @@ fn selected_entry(entries []DemoEntry, selected string) DemoEntry {
 	return entries[0]
 }
 
-fn preferred_component_for_group(group string, entries []DemoEntry) string {
+fn preferred_component_for_group(_group string, entries []DemoEntry) string {
 	if entries.len == 0 {
 		return ''
 	}
@@ -1830,9 +1830,7 @@ fn menu(mut window gui.Window) gui.View {
 
 const svg_home = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>'
 const svg_settings = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></svg>'
-const svg_star = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>'
 const svg_heart = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'
-const svg_check = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>'
 const svg_clip_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80"><defs><clipPath id="c"><circle cx="40" cy="40" r="28"/></clipPath></defs><rect x="4" y="4" width="112" height="72" fill="#3f80ff" clip-path="url(#c)"/><circle cx="80" cy="40" r="28" fill="#ff8c00"/></svg>'
 const svg_stroke_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 80"><line x1="12" y1="16" x2="118" y2="16" stroke="#56b6ff" stroke-width="10" stroke-linecap="butt"/><line x1="12" y1="40" x2="118" y2="40" stroke="#9be564" stroke-width="10" stroke-linecap="round"/><polyline points="12,68 45,52 78,68 111,52" fill="none" stroke="#ff8c66" stroke-width="8" stroke-linejoin="round"/></svg>'
 const svg_transform_demo = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 90"><rect x="8" y="10" width="24" height="24" fill="#7aa2ff"/><g transform="translate(48,22) rotate(20)"><rect x="-12" y="-12" width="24" height="24" fill="#57d39b"/></g><g transform="translate(94,26) rotate(-30) scale(1.3,0.8)"><rect x="-12" y="-12" width="24" height="24" fill="#ffb04d"/></g><g transform="translate(120,62) skewX(25)"><rect x="-12" y="-10" width="24" height="20" fill="#ff7d9c"/></g></svg>'
@@ -1866,8 +1864,8 @@ fn on_select(id string, mut w gui.Window) {
 	app.tree_id = id
 }
 
-fn on_lazy_load(tree_id string, node_id string, mut w gui.Window) {
-	spawn fn [tree_id, node_id] (mut w gui.Window) {
+fn on_lazy_load(_tree_id string, node_id string, mut w gui.Window) {
+	spawn fn [node_id] (mut w gui.Window) {
 		time.sleep(800 * time.millisecond)
 		children := match node_id {
 			'remote_a' {
@@ -3120,7 +3118,7 @@ w.toast(gui.ToastCfg{
 | w.toast_dismiss(id) | Dismiss specific toast |
 | w.toast_dismiss_all() | Dismiss all toasts |'
 
-fn demo_toast(mut w gui.Window) gui.View {
+fn demo_toast(mut _w gui.Window) gui.View {
 	return gui.column(
 		spacing: gui.theme().spacing_small
 		content: [

@@ -390,14 +390,14 @@ fn pdf_draw_svg_clip_group(renderers []Renderer, idx int, mut out strings.Builde
 
 	for next_idx < renderers.len {
 		if renderers[next_idx] is DrawSvg {
-			svg := renderers[next_idx] as DrawSvg
-			if svg.clip_group == group {
-				if svg.is_clip_mask {
-					masks << svg
+			draw_svg := renderers[next_idx] as DrawSvg
+			if draw_svg.clip_group == group {
+				if draw_svg.is_clip_mask {
+					masks << draw_svg
 				} else {
 					content << PdfSvgIndexed{
 						idx: next_idx
-						svg: svg
+						svg: draw_svg
 					}
 				}
 				next_idx++
@@ -748,9 +748,9 @@ fn pdf_render_document(renderers []Renderer, source_width f32, source_height f32
 	page_width, page_height := print_page_size(job.paper, job.orientation)
 	header_h := print_header_footer_reserved_height(job.header)
 	footer_h := print_header_footer_reserved_height(job.footer)
-	content_width := page_width - job.margins.left - job.margins.right
-	content_height := page_height - job.margins.top - job.margins.bottom - header_h - footer_h
-	if content_width <= 0 || content_height <= 0 {
+	page_content_width := page_width - job.margins.left - job.margins.right
+	page_content_height := page_height - job.margins.top - job.margins.bottom - header_h - footer_h
+	if page_content_width <= 0 || page_content_height <= 0 {
 		return error('invalid page/margin configuration')
 	}
 	if source_width <= 0 || source_height <= 0 {
@@ -759,15 +759,15 @@ fn pdf_render_document(renderers []Renderer, source_width f32, source_height f32
 
 	mut scale := f32(1.0)
 	if job.scale_mode == .fit_to_page {
-		scale_x := content_width / source_width
-		scale_y := content_height / source_height
+		scale_x := page_content_width / source_width
+		scale_y := page_content_height / source_height
 		scale = f32_min(scale_x, scale_y)
 	}
 	if scale <= 0 {
 		return error('computed invalid scale')
 	}
 
-	page_source_height := content_height / scale
+	page_source_height := page_content_height / scale
 	mut page_count := 1
 	if job.paginate {
 		page_count = int(math.ceil(source_height / page_source_height))
@@ -823,9 +823,9 @@ fn pdf_render_document(renderers []Renderer, source_width f32, source_height f32
 			page_offset_y: if job.paginate { f32(idx) * page_source_height } else { f32(0.0) }
 		}
 		clip_x := job.margins.left
-		clip_y := page_height - (job.margins.top + header_h) - content_height
-		stream := pdf_page_stream(renderers, ctx, shading_refs, clip_x, clip_y, content_width,
-			content_height, job, idx + 1, page_count)
+		clip_y := page_height - (job.margins.top + header_h) - page_content_height
+		stream := pdf_page_stream(renderers, ctx, shading_refs, clip_x, clip_y, page_content_width,
+			page_content_height, job, idx + 1, page_count)
 		page_obj_idx := 3 + idx * 2
 		content_obj_idx := page_obj_idx + 1
 		page_obj :=

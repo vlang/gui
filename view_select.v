@@ -281,7 +281,7 @@ fn (cfg &SelectCfg) select_on_keydown(mut e Event, mut w Window) {
 	}
 }
 
-fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, id_scroll u32) View {
+fn option_view(cfg &SelectCfg, option string, index int, highlighted bool, _ u32) View {
 	select_multiple := cfg.select_multiple
 	on_select := cfg.on_select
 	select_array := cfg.select
