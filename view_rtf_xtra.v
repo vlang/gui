@@ -134,6 +134,7 @@ pub fn (ts TextStyle) to_vglyph_style() vglyph.TextStyle {
 		color:         ts.color.to_gx_color()
 		bg_color:      ts.bg_color.to_gx_color()
 		size:          ts.size
+		rise:          ts.rise
 		features:      ts.features
 		underline:     ts.underline
 		strikethrough: ts.strikethrough

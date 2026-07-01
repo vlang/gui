@@ -19,6 +19,44 @@ fn test_rtf_cfg_validation() {
 	assert cfg.rich_text.runs.len == 1
 }
 
+fn test_text_style_to_vglyph_style_forwards_rise() {
+	style := TextStyle{
+		family: 'Sans'
+		size:   16
+		rise:   5
+	}
+	vg_style := style.to_vglyph_style()
+	assert vg_style.rise == 5
+}
+
+fn test_markdown_superscript_survives_vglyph_bridge_with_rise() {
+	style := MarkdownStyle{}
+	vg_rt := markdown_to_rich_text('E=mc^2^', style).to_vglyph_rich_text()
+	sup_runs := vg_rt.runs.filter(it.text == '2')
+	assert sup_runs.len == 1
+
+	sup_style := sup_runs[0].style
+	assert sup_style.size < style.text.size
+	assert sup_style.rise > 0
+	assert sup_style.features != unsafe { nil }
+	assert sup_style.features.opentype_features.len == 1
+	assert sup_style.features.opentype_features[0].tag == 'sups'
+}
+
+fn test_markdown_subscript_survives_vglyph_bridge_with_rise() {
+	style := MarkdownStyle{}
+	vg_rt := markdown_to_rich_text('H~2~O', style).to_vglyph_rich_text()
+	sub_runs := vg_rt.runs.filter(it.text == '2')
+	assert sub_runs.len == 1
+
+	sub_style := sub_runs[0].style
+	assert sub_style.size < style.text.size
+	assert sub_style.rise < 0
+	assert sub_style.features != unsafe { nil }
+	assert sub_style.features.opentype_features.len == 1
+	assert sub_style.features.opentype_features[0].tag == 'subs'
+}
+
 fn test_is_safe_url() {
 	// Valid URLs
 	assert is_safe_url('https://google.com')

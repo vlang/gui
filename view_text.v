@@ -84,6 +84,8 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 				text_sel_beg:        input_state.select_beg
 				text_sel_end:        input_state.select_end
 				text_tab_size:       tv.tab_size
+				text_scroll_x:       tv.text_scroll_x_for_window(mut window)
+				text_scroll_key:     tv.text_scroll_key
 			}
 		}
 	}
@@ -92,7 +94,8 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 	// This provides the "intrinsic width" (single line) which is essential for .fit containers (like Menus).
 	// The main layout pipeline will handle wrapping constraints later if needed.
 	// We use `text_width` which enables `no_hit_testing`, ensuring this is fast.
-	layout.shape.width = text_width(tv.text, tv.text_style, mut window)
+	layout.shape.width = text_width(text_display_text(tv.text, tv.is_password,
+		tv.placeholder_active), tv.text_style, mut window)
 	layout.shape.height = line_height(layout.shape, mut window)
 
 	if tv.mode == .single_line || layout.shape.sizing.width == .fixed {
@@ -115,11 +118,13 @@ fn (mut tv TextView) generate_layout(mut window Window) Layout {
 @[minify]
 pub struct TextCfg {
 	A11yCfg
-	sizing Sizing
+	sizing          Sizing
+	text_scroll_key string
 pub:
 	id                   string
 	text                 string
 	text_style           TextStyle = gui_theme.text_style
+	text_scroll_x        f32
 	id_focus             u32
 	tab_size             u32 = 4
 	min_width            f32
@@ -144,10 +149,13 @@ pub fn text(cfg TextCfg) View {
 	if cfg.invisible {
 		return invisible_container_view()
 	}
+	sizing := text_cfg_sizing(cfg)
 	return TextView{
 		id:                   cfg.id
 		text:                 cfg.text
 		text_style:           cfg.text_style
+		text_scroll_x:        cfg.text_scroll_x
+		text_scroll_key:      cfg.text_scroll_key
 		id_focus:             cfg.id_focus
 		tab_size:             cfg.tab_size
 		min_width:            cfg.min_width
@@ -163,7 +171,23 @@ pub fn text(cfg TextCfg) View {
 		on_char_hook:         cfg.on_char_hook
 		on_key_down_hook:     cfg.on_key_down_hook
 		on_mouse_scroll_hook: cfg.on_mouse_scroll_hook
-		sizing:               if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
+		sizing:               sizing
+	}
+}
+
+fn text_cfg_sizing(cfg TextCfg) Sizing {
+	if cfg.sizing.width != .fit || cfg.sizing.height != .fit {
+		return cfg.sizing
+	}
+	return if cfg.mode in [.wrap, .wrap_keep_spaces] { fill_fit } else { fit_fit }
+}
+
+fn (tv &TextView) text_scroll_x_for_window(mut window Window) f32 {
+	if tv.text_scroll_key.len == 0 {
+		return tv.text_scroll_x
+	}
+	return state_map[string, f32](mut window, ns_input_private_scroll_x, cap_scroll).get(tv.text_scroll_key) or {
+		tv.text_scroll_x
 	}
 }
 

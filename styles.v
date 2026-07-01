@@ -508,6 +508,7 @@ pub:
 	typeface         vglyph.Typeface // .regular, .bold, .italic, .bold_italic
 	line_spacing     f32
 	letter_spacing   f32
+	rise             f32
 	align            TextAlignment = .left
 	underline        bool
 	strikethrough    bool
@@ -539,6 +540,7 @@ pub fn (ts TextStyle) to_vglyph_cfg() vglyph.TextConfig {
 			strikethrough:  ts.strikethrough
 			typeface:       ts.typeface
 			letter_spacing: ts.letter_spacing
+			rise:           ts.rise
 			stroke_width:   ts.stroke_width
 			stroke_color:   ts.stroke_color.to_gx_color()
 		}

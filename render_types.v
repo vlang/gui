@@ -189,7 +189,7 @@ type Renderer = DrawCircle
 struct DrawTextSelectionParams {
 	shape         &Shape
 	line          vglyph.Line
-	draw_x        f32
+	layout_x      f32
 	draw_y        f32
 	byte_beg      int
 	byte_end      int

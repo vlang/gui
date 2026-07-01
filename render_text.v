@@ -210,7 +210,8 @@ fn render_text_try_transformed(mut shape Shape, style_state RenderTextStyleState
 		}
 		emit_renderer(DrawLayoutTransformed{
 			layout:    layout_to_draw
-			x:         shape.x + shape.padding_left()
+			x:         shape.x + shape.padding_left() +
+				text_layout_render_offset_x(&shape, mut window)
 			y:         shape.y + shape.padding_top()
 			transform: transform
 			gradient:  shape.tc.text_style.gradient
@@ -222,7 +223,9 @@ fn render_text_try_transformed(mut shape Shape, style_state RenderTextStyleState
 
 fn render_text_layout_lines(mut shape Shape, clip DrawClip, style_state RenderTextStyleState, selection_state RenderTextSelectionState, mut window Window) {
 	for line in shape.tc.vglyph_layout.lines {
-		draw_x := shape.x + shape.padding_left() + line.rect.x
+		layout_x := shape.x + shape.padding_left() +
+			text_line_render_offset_x(&shape, line, mut window)
+		draw_x := layout_x + line.rect.x
 		draw_y := shape.y + shape.padding_top() + line.rect.y
 
 		// Extract text for this line
@@ -273,7 +276,7 @@ fn render_text_layout_lines(mut shape Shape, clip DrawClip, style_state RenderTe
 				draw_text_selection(mut window, DrawTextSelectionParams{
 					shape:         shape
 					line:          line
-					draw_x:        draw_x
+					layout_x:      layout_x
 					draw_y:        draw_y
 					byte_beg:      selection_state.byte_beg
 					byte_end:      selection_state.byte_end
@@ -312,7 +315,8 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 			&& (style_state.color != color_transparent || style_state.has_stroke) {
 			emit_renderer(DrawLayout{
 				layout:   shape.tc.vglyph_layout
-				x:        shape.x + shape.padding_left()
+				x:        shape.x + shape.padding_left() +
+					text_layout_render_offset_x(&shape, mut window)
 				y:        shape.y + shape.padding_top()
 				gradient: shape.tc.text_style.gradient
 			}, mut window)
@@ -326,7 +330,7 @@ fn render_text(mut shape Shape, clip DrawClip, mut window Window) {
 fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 	shape := params.shape
 	line := params.line
-	draw_x := params.draw_x
+	layout_x := params.layout_x
 	draw_y := params.draw_y
 	byte_beg := params.byte_beg
 	byte_end := params.byte_end
@@ -339,16 +343,57 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 
 	if i_start < i_end {
 		if shape.tc.text_is_password && password_mask.len > 0 {
-			// Password fields still need measurement because the rendered text (*)
-			// is different from the logical text.
-			pw_pre := password_mask_slice(password_mask, shape.tc.text, line.start_index, i_start)
-			start_x_offset := window.text_system.text_width(pw_pre, text_cfg) or { 0 }
-
-			pw_sel := password_mask_slice(password_mask, shape.tc.text, i_start, i_end)
-			sel_width := window.text_system.text_width(pw_sel, text_cfg) or { 0 }
+			mut selection_x := layout_x
+			mut sel_width := f32(0)
+			if shape.tc.text_mode == .single_line {
+				// Single-line password fields use cursor helpers so alignment,
+				// masking, and nonzero line origins match caret geometry.
+				start_cursor := byte_to_rune_index(shape.tc.text, i_start)
+				end_cursor := byte_to_rune_index(shape.tc.text, i_end)
+				selection_x += text_password_cursor_x(shape, start_cursor, mut window)
+				sel_width = text_password_range_width(shape, start_cursor, end_cursor, mut window)
+			} else {
+				prefix_mask := password_mask_slice(password_mask, shape.tc.text, line.start_index,
+					i_start)
+				selected_mask := password_mask_slice(password_mask, shape.tc.text, i_start, i_end)
+				mut prefix_width := text_width(prefix_mask, shape.tc.text_style, mut window)
+				mut selected_width := text_width(selected_mask, shape.tc.text_style, mut window)
+				r_start := shape.tc.vglyph_layout.get_char_rect(i_start) or {
+					gg.Rect{
+						x: line.rect.x
+					}
+				}
+				mut start_x := r_start.x
+				if start_x >= line.rect.x {
+					start_x -= line.rect.x
+				}
+				if prefix_width <= 0 {
+					prefix_width = start_x
+				}
+				if selected_width <= 0 {
+					x_end := if i_end < (line.start_index + line.length)
+						&& shape.tc.text[i_end] != `\n` {
+						r_end := shape.tc.vglyph_layout.get_char_rect(i_end) or {
+							gg.Rect{
+								x: line.rect.x + line.rect.width
+							}
+						}
+						mut end_x := r_end.x
+						if end_x >= line.rect.x {
+							end_x -= line.rect.x
+						}
+						end_x
+					} else {
+						line.rect.width
+					}
+					selected_width = f32_max(0, x_end - start_x)
+				}
+				selection_x += line.rect.x + prefix_width
+				sel_width = selected_width
+			}
 
 			emit_renderer(DrawRect{
-				x:     draw_x + start_x_offset
+				x:     selection_x
 				y:     draw_y
 				w:     sel_width
 				h:     line.rect.height
@@ -366,19 +411,19 @@ fn draw_text_selection(mut window Window, params DrawTextSelectionParams) {
 			x_end := if i_end < (line.start_index + line.length) && shape.tc.text[i_end] != `\n` {
 				r_end := shape.tc.vglyph_layout.get_char_rect(i_end) or {
 					gg.Rect{
-						x: line.rect.width
+						x: line.rect.x + line.rect.width
 					}
 				}
 				r_end.x
 			} else {
 				// End of selection is end of line (or newline)
-				line.rect.width
+				line.rect.x + line.rect.width
 			}
 
 			sel_width := x_end - r_start.x
 
 			emit_renderer(DrawRect{
-				x:     draw_x + r_start.x
+				x:     layout_x + r_start.x
 				y:     draw_y
 				w:     sel_width
 				h:     line.rect.height
@@ -408,32 +453,9 @@ fn render_cursor(shape &Shape, _ DrawClip, mut window Window) {
 		}
 
 		if cursor_pos >= 0 {
-			byte_idx := rune_to_byte_index(shape.tc.text, cursor_pos)
-
-			// Use vglyph to get the rect
-			rect := if shape.has_text_layout() {
-				shape.tc.vglyph_layout.get_char_rect(byte_idx) or {
-					// If not found, check if it's at the very end
-					if byte_idx >= shape.tc.text.len && shape.tc.vglyph_layout.lines.len > 0 {
-						last_line := shape.tc.vglyph_layout.lines.last()
-						// Correction: use layout logic relative to shape
-						gg.Rect{
-							x:      last_line.rect.x + last_line.rect.width
-							y:      last_line.rect.y
-							height: last_line.rect.height
-						}
-					} else {
-						gg.Rect{
-							height: line_height(shape, mut window)
-						} // Fallback
-					}
-				}
-			} else {
-				gg.Rect{
-					height: line_height(shape, mut window)
-				}
-			}
-			cx := shape.x + shape.padding_left() + rect.x
+			rect := text_cursor_rect_for_position(shape, cursor_pos, mut window)
+			cx := shape.x + shape.padding_left() + text_layout_render_offset_x(shape, mut window) +
+				rect.x
 			cy := shape.y + shape.padding_top() + rect.y
 			ch := rect.height
 
@@ -479,7 +501,7 @@ fn render_composition(shape &Shape, mut window Window) {
 		a: 178 // ~70% opacity
 	}
 
-	ox := shape.x + shape.padding_left()
+	ox := shape.x + shape.padding_left() + text_layout_render_offset_x(shape, mut window)
 	oy := shape.y + shape.padding_top()
 
 	for cr in clause_rects {

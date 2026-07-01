@@ -35,15 +35,147 @@ fn rich_text_width(rt RichText, mut window Window) f32 {
 	return layout.width
 }
 
+fn text_display_text(text string, is_password bool, placeholder_active bool) string {
+	if is_password && !placeholder_active {
+		return password_mask_text_keep_newlines(text)
+	}
+	return text
+}
+
+fn text_shape_display_text(shape &Shape) string {
+	return text_display_text(shape.tc.text, shape.tc.text_is_password, shape.tc.text_is_placeholder)
+}
+
+fn text_shape_uses_password_display(shape &Shape) bool {
+	return shape.tc != unsafe { nil } && shape.tc.text_is_password && !shape.tc.text_is_placeholder
+}
+
+fn text_align_available_width(shape &Shape) f32 {
+	return f32_max(0, shape.width - shape.padding_width())
+}
+
+fn text_align_offset_for_width(shape &Shape, visual_width f32) f32 {
+	if shape.tc == unsafe { nil } || shape.tc.text_mode != .single_line {
+		return 0
+	}
+	available := text_align_available_width(shape)
+	if available <= 0 || visual_width > available {
+		return 0
+	}
+	match shape.tc.text_style.align {
+		.center { return (available - visual_width) / 2 }
+		.right { return available - visual_width }
+		else { return 0 }
+	}
+}
+
+fn text_line_visual_width(shape &Shape, line vglyph.Line, mut window Window) f32 {
+	if text_shape_uses_password_display(shape) && shape.tc.text_mode == .single_line {
+		width := text_width(text_shape_display_text(shape), shape.tc.text_style, mut window)
+		return if width > 0 { width } else { line.rect.width }
+	}
+	return line.rect.width
+}
+
+fn text_line_align_offset_x(shape &Shape, line vglyph.Line, mut window Window) f32 {
+	return text_align_offset_for_width(shape, text_line_visual_width(shape, line, mut window))
+}
+
+fn text_layout_align_offset_x(shape &Shape, mut window Window) f32 {
+	if shape.has_text_layout() && shape.tc.vglyph_layout.lines.len > 0 {
+		return text_line_align_offset_x(shape, shape.tc.vglyph_layout.lines[0], mut window)
+	}
+	return text_align_offset_for_width(shape, 0)
+}
+
+fn text_scroll_offset_x(shape &Shape) f32 {
+	if shape.tc == unsafe { nil } || shape.tc.text_mode != .single_line {
+		return 0
+	}
+	return shape.tc.text_scroll_x
+}
+
+fn text_line_render_offset_x(shape &Shape, line vglyph.Line, mut window Window) f32 {
+	return text_line_align_offset_x(shape, line, mut window) + text_scroll_offset_x(shape)
+}
+
+fn text_layout_render_offset_x(shape &Shape, mut window Window) f32 {
+	return text_layout_align_offset_x(shape, mut window) + text_scroll_offset_x(shape)
+}
+
+fn text_password_mask_prefix(shape &Shape, cursor_position int) string {
+	count := int_clamp(cursor_position, 0, utf8_str_visible_length(shape.tc.text))
+	if count <= 0 {
+		return ''
+	}
+	return password_char.repeat(count)
+}
+
+fn text_first_line_x(shape &Shape) f32 {
+	if shape.has_text_layout() && shape.tc.vglyph_layout.lines.len > 0 {
+		return shape.tc.vglyph_layout.lines[0].rect.x
+	}
+	return 0
+}
+
+fn text_password_cursor_x_from_mask_width(shape &Shape, mask_width f32) f32 {
+	return text_first_line_x(shape) + mask_width
+}
+
+fn text_password_mask_offset_x(shape &Shape, offset f32) f32 {
+	return offset - text_first_line_x(shape)
+}
+
+fn text_password_cursor_x(shape &Shape, cursor_position int, mut window Window) f32 {
+	width := text_width(text_password_mask_prefix(shape, cursor_position), shape.tc.text_style, mut
+		window)
+	if width > 0 {
+		return text_password_cursor_x_from_mask_width(shape, width)
+	}
+	if !shape.has_text_layout() || shape.tc.vglyph_layout.lines.len == 0 {
+		return 0
+	}
+	count := int_clamp(cursor_position, 0, utf8_str_visible_length(shape.tc.text))
+	byte_idx := rune_to_byte_index(shape.tc.text, count)
+	if rect := shape.tc.vglyph_layout.get_char_rect(byte_idx) {
+		return rect.x
+	}
+	for line in shape.tc.vglyph_layout.lines {
+		line_end := line.start_index + line.length
+		if byte_idx == line.start_index {
+			return line.rect.x
+		}
+		if byte_idx == line_end {
+			return line.rect.x + line.rect.width
+		}
+	}
+	return 0
+}
+
+fn text_password_range_width(shape &Shape, start_cursor int, end_cursor int, mut window Window) f32 {
+	if end_cursor <= start_cursor {
+		return 0
+	}
+	width := text_width(password_char.repeat(end_cursor - start_cursor), shape.tc.text_style, mut
+		window)
+	if width > 0 {
+		return width
+	}
+	start_x := text_password_cursor_x(shape, start_cursor, mut window)
+	end_x := text_password_cursor_x(shape, end_cursor, mut window)
+	return f32_max(0, end_x - start_x)
+}
+
 // text_width_shape measures the visual width of the shape's lines, mirroring render rules:
 // - when in password mode (and not placeholder), measure '*' repeated for visible rune count
 fn text_width_shape(shape &Shape, mut window Window) f32 {
-	cfg := shape.tc.text_style.to_vglyph_cfg()
+	if text_shape_uses_password_display(shape) && shape.tc.text_mode == .single_line {
+		width := text_width(text_shape_display_text(shape), shape.tc.text_style, mut window)
+		if width > 0 {
+			return width
+		}
+	}
 
-	// Fallback: If layout is not generated yet (e.g. during initial generate_layout),
-	// measure the raw text. This ensures containers don't collapse to 0 width.
-	// We measure "unwrapped" width here, essentially treating it as a single line.
-	// The layout engine will later constrain this width if wrapping is enabled.
 	// Fallback: If layout is not generated yet (e.g. during initial generate_layout),
 	// measure the raw text. This ensures containers don't collapse to 0 width.
 	// We measure "unwrapped" width here, essentially treating it as a single line.
@@ -55,42 +187,18 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 			else { shape.tc.text }
 		}
 
-		return window.text_system.text_width(effective, cfg) or { 0 }
+		return text_width(effective, shape.tc.text_style, mut window)
 	}
 
 	// Optimization: If layout is present, use its cached dimensions.
-	// vglyph layout provides both logical width (width) and ink width (visual_width).
-	// For wrapping containers, logical width is usually constrained.
-	// For "fit content", we often want the max line width.
-	// vglyph.Layout.width is the width of the layout box (or max line width if not wrapping).
-	// Let's trust vglyph's calculation.
 	if shape.has_text_layout() && shape.tc.vglyph_layout.lines.len > 0 {
-		// Use visual width (ink) to match previous behavior of measuring visible pixels.
-		// OR use logical width if visual width is too tight?
-		// Usually visual_width matches the bounding box of the ink.
-		// check if password mode needs special verification?
-		// Password mode is handled by masking text BEFORE layout if we did it right,
-		// but current logic masks lazily.
-		// Wait, text_wrap uses shape.tc.text (unmasked).
-		// If we want accurate width for password, we must rely on the previous fallback
-		// or layout the masked text.
-		// Current compromise: If password, use the old measurement loop (it's rare).
-		// If normal text, use cached layout width.
 		if !shape.tc.text_is_password {
-			// In vglyph, `width` is the logical width (often the wrap width).
-			// `visual_width` is the actual ink width.
-			// We want the content width.
-			// If we wrapped, `width` might be the constraint (e.g. 300px), but text might be only 50px wide.
-			// We want the max line width.
-			// Iterate lines is fast if we rely on line.rect?
-			// vglyph.Line.rect is relative to layout.
 			mut max_w := f32(0)
 			for line in shape.tc.vglyph_layout.lines {
 				max_w = f32_max(max_w, line.rect.width)
 			}
 			return max_w
 		}
-		// Fallthrough for password mode (measure '*'s)
 	}
 
 	mut max_width := f32(0)
@@ -113,7 +221,10 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 			else { sub }
 		}
 
-		width := window.text_system.text_width(effective, cfg) or { 0 }
+		mut width := text_width(effective, shape.tc.text_style, mut window)
+		if width <= 0 {
+			width = line.rect.width
+		}
 		max_width = f32_max(width, max_width)
 	}
 	return max_width
@@ -122,6 +233,9 @@ fn text_width_shape(shape &Shape, mut window Window) f32 {
 @[inline]
 fn text_height(shape &Shape, mut window Window) f32 {
 	if (!shape.has_text_layout() || shape.tc.vglyph_layout.lines.len == 0) && shape.tc.text.len > 0 {
+		if window.text_system == unsafe { nil } {
+			return 0
+		}
 		cfg := shape.tc.text_style.to_vglyph_cfg()
 		return window.text_system.font_height(cfg) or { 0 }
 	}
@@ -135,6 +249,13 @@ fn text_height(shape &Shape, mut window Window) f32 {
 fn line_height(shape &Shape, mut window Window) f32 {
 	if shape.tc.cached_line_height > 0 {
 		return shape.tc.cached_line_height
+	}
+	if shape.has_text_layout() && shape.tc.vglyph_layout.lines.len > 0
+		&& shape.tc.vglyph_layout.lines[0].rect.height > 0 {
+		return shape.tc.vglyph_layout.lines[0].rect.height
+	}
+	if window.text_system == unsafe { nil } {
+		return 0
 	}
 	cfg := shape.tc.text_style.to_vglyph_cfg()
 	height := window.text_system.font_height(cfg) or { 0 }
@@ -174,6 +295,9 @@ fn text_wrap(mut shape Shape, mut window Window) {
 		cfg.block.width = width
 		cfg.no_hit_testing = shape.id_focus == 0
 
+		if window.text_system == unsafe { nil } {
+			return
+		}
 		layout := window.text_system.layout_text(shape.tc.text, cfg) or { vglyph.Layout{} }
 		shape.tc.vglyph_layout = &layout
 		shape.tc.last_constraint_width = width

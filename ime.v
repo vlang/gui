@@ -151,9 +151,10 @@ fn ime_get_offset(data voidptr) (f32, f32) {
 	if data == unsafe { nil } {
 		return 0, 0
 	}
-	w := unsafe { &Window(data) }
+	mut w := unsafe { &Window(data) }
 	shape := ime_focused_text_shape(w) or { return 0, 0 }
-	return shape.x + shape.padding_left(), shape.y + shape.padding_top()
+	return shape.x + shape.padding_left() + text_layout_render_offset_x(&shape, mut w), shape.y +
+		shape.padding_top()
 }
 
 // ime_get_cursor_index returns the byte index of the cursor

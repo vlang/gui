@@ -1,6 +1,718 @@
 module gui
 
+import gg
 import vglyph
+
+fn aligned_single_line_shape(align TextAlignment, shape_width f32, line_x f32, char_width f32, text string) &Shape {
+	mut char_rects := []vglyph.CharRect{cap: text.len}
+	mut char_rect_by_index := map[int]int{}
+	for idx in 0 .. text.len {
+		char_rect_by_index[idx] = idx
+		char_rects << vglyph.CharRect{
+			index: idx
+			rect:  gg.Rect{
+				x:      line_x + (char_width * f32(idx))
+				y:      0
+				width:  char_width
+				height: 10
+			}
+		}
+	}
+	mut log_attrs := []vglyph.LogAttr{cap: text.len + 1}
+	mut log_attr_by_index := map[int]int{}
+	for idx in 0 .. text.len + 1 {
+		log_attr_by_index[idx] = idx
+		log_attrs << vglyph.LogAttr{
+			is_cursor_position: true
+		}
+	}
+	return &Shape{
+		shape_type: .text
+		width:      shape_width
+		height:     10
+		tc:         &ShapeTextConfig{
+			text:          text
+			text_mode:     .single_line
+			text_style:    TextStyle{
+				align: align
+			}
+			vglyph_layout: &vglyph.Layout{
+				lines:              [
+					vglyph.Line{
+						start_index: 0
+						length:      text.len
+						rect:        gg.Rect{
+							x:      line_x
+							y:      0
+							width:  char_width * f32(text.len)
+							height: 10
+						}
+					},
+				]
+				char_rects:         char_rects
+				char_rect_by_index: char_rect_by_index
+				log_attrs:          log_attrs
+				log_attr_by_index:  log_attr_by_index
+			}
+		}
+	}
+}
+
+fn password_aligned_single_line_shape(align TextAlignment, shape_width f32, line_x f32, char_width f32, text string) &Shape {
+	mut shape := aligned_single_line_shape(align, shape_width, line_x, char_width, text)
+	shape.tc.text_is_password = true
+	return shape
+}
+
+fn password_multiline_shape_with_second_line_origin() &Shape {
+	text := 'aa\nbb'
+	return &Shape{
+		shape_type: .text
+		width:      100
+		height:     24
+		tc:         &ShapeTextConfig{
+			text:             text
+			text_is_password: true
+			text_mode:        .multiline
+			text_style:       TextStyle{}
+			vglyph_layout:    &vglyph.Layout{
+				lines:              [
+					vglyph.Line{
+						start_index: 0
+						length:      2
+						rect:        gg.Rect{
+							x:      0
+							y:      0
+							width:  20
+							height: 10
+						}
+					},
+					vglyph.Line{
+						start_index: 3
+						length:      2
+						rect:        gg.Rect{
+							x:      40
+							y:      12
+							width:  20
+							height: 10
+						}
+					},
+				]
+				char_rects:         [
+					vglyph.CharRect{
+						index: 0
+						rect:  gg.Rect{
+							x:      0
+							y:      0
+							width:  10
+							height: 10
+						}
+					},
+					vglyph.CharRect{
+						index: 1
+						rect:  gg.Rect{
+							x:      10
+							y:      0
+							width:  10
+							height: 10
+						}
+					},
+					vglyph.CharRect{
+						index: 3
+						rect:  gg.Rect{
+							x:      0
+							y:      12
+							width:  10
+							height: 10
+						}
+					},
+					vglyph.CharRect{
+						index: 4
+						rect:  gg.Rect{
+							x:      10
+							y:      12
+							width:  10
+							height: 10
+						}
+					},
+				]
+				char_rect_by_index: {
+					0: 0
+					1: 1
+					3: 2
+					4: 3
+				}
+				log_attrs:          []vglyph.LogAttr{}
+				log_attr_by_index:  map[int]int{}
+			}
+		}
+	}
+}
+
+fn test_single_line_text_alignment_offset_uses_shape_width_without_wrapping() {
+	mut w := Window{}
+	left_shape := aligned_single_line_shape(.left, 100, 0, 10, 'abcd')
+	center_shape := aligned_single_line_shape(.center, 100, 0, 10, 'abcd')
+	right_shape := aligned_single_line_shape(.right, 100, 0, 10, 'abcd')
+	overflow_shape := aligned_single_line_shape(.right, 30, 0, 10, 'abcd')
+
+	assert f32_are_close(text_layout_align_offset_x(left_shape, mut w), 0)
+	assert f32_are_close(text_layout_align_offset_x(center_shape, mut w), 30)
+	assert f32_are_close(text_layout_align_offset_x(right_shape, mut w), 60)
+	assert f32_are_close(text_layout_align_offset_x(overflow_shape, mut w), 0)
+}
+
+fn test_right_aligned_single_line_hit_test_subtracts_alignment_offset() {
+	mut w := Window{}
+	shape := aligned_single_line_shape(.right, 100, 0, 10, 'ab')
+
+	start_event := Event{
+		mouse_x: 81
+		mouse_y: 5
+	}
+	assert text_mouse_cursor_pos(shape, &start_event, mut w, false) == 0
+
+	end_event := Event{
+		mouse_x: 101
+		mouse_y: 5
+	}
+	assert text_mouse_cursor_pos(shape, &end_event, mut w, false) == 2
+}
+
+fn test_right_aligned_single_line_caret_uses_alignment_offset() {
+	mut w := Window{}
+	shape := aligned_single_line_shape(.right, 100, 0, 10, 'ab')
+	rect := text_cursor_rect_for_position(shape, 2, mut w)
+	caret_x := text_layout_align_offset_x(shape, mut w) + rect.x
+	assert f32_are_close(caret_x, 100)
+}
+
+fn test_single_line_text_scroll_offset_participates_in_render_geometry() {
+	mut w := Window{}
+	mut shape := aligned_single_line_shape(.left, 20, 0, 10, 'abcdef')
+	shape.tc.text_scroll_x = -40
+	rect := text_cursor_rect_for_position(shape, 6, mut w)
+	caret_x := text_layout_render_offset_x(shape, mut w) + rect.x
+	assert f32_are_close(text_layout_align_offset_x(shape, mut w), 0)
+	assert f32_are_close(caret_x, 20)
+}
+
+fn test_single_line_text_scroll_offset_participates_in_hit_testing() {
+	mut w := Window{}
+	mut shape := aligned_single_line_shape(.left, 20, 0, 10, 'abcdef')
+	shape.tc.text_scroll_x = -40
+	event := Event{
+		mouse_x: 20
+		mouse_y: 5
+	}
+	assert text_mouse_cursor_pos(shape, &event, mut w, false) == 6
+}
+
+fn test_selection_rect_uses_layout_origin_once_for_aligned_line_geometry() {
+	mut w := Window{}
+	shape := aligned_single_line_shape(.left, 100, 60, 10, 'ab')
+	line := shape.tc.vglyph_layout.lines[0]
+
+	draw_text_selection(mut w, DrawTextSelectionParams{
+		shape:    shape
+		line:     line
+		layout_x: 10
+		draw_y:   5
+		byte_beg: 0
+		byte_end: 1
+		text_cfg: TextStyle{
+			color: black
+			size:  16
+		}.to_vglyph_cfg()
+	})
+
+	assert w.renderers.len == 1
+	r := w.renderers[0]
+	if r is DrawRect {
+		assert f32_are_close(r.x, 70)
+		assert f32_are_close(r.w, 10)
+	} else {
+		assert false, 'expected selection to emit DrawRect'
+	}
+}
+
+fn test_single_line_cursor_scroll_x_keeps_end_visible() {
+	mut text_shape := aligned_single_line_shape(.left, 200, 0, 100, 'ab')
+	text_shape.id_scroll_container = 77
+	scroll_container := Layout{
+		shape:    &Shape{
+			id_scroll: 77
+			width:     100
+			height:    20
+		}
+		children: [
+			Layout{
+				shape: text_shape
+			},
+		]
+	}
+	mut w := Window{
+		layout: Layout{
+			shape:    &Shape{}
+			children: [scroll_container]
+		}
+	}
+
+	assert f32_are_close(cursor_pos_to_scroll_x(2, text_shape, mut w), -100)
+
+	mut sx := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll)
+	sx.set(77, -100)
+	text_shape.x = -100
+	assert f32_are_close(cursor_pos_to_scroll_x(0, text_shape, mut w), 0)
+}
+
+fn test_horizontal_drag_selection_auto_scroll_is_scheduled() {
+	id_focus := u32(9301)
+	mut text_shape := aligned_single_line_shape(.left, 200, 0, 100, 'ab')
+	text_shape.id_focus = id_focus
+	text_shape.id_scroll_container = 77
+	text_layout := Layout{
+		shape: text_shape
+	}
+	scroll_container := Layout{
+		shape:    &Shape{
+			id_scroll: 77
+			width:     100
+			height:    20
+		}
+		children: [text_layout]
+	}
+	mut w := Window{
+		ui:     &gg.Context{
+			mouse_buttons: .left
+		}
+		layout: Layout{
+			shape:    &Shape{}
+			children: [scroll_container]
+		}
+	}
+	w.view_state.mouse_lock = MouseLockCfg{
+		cursor_pos: 0
+	}
+	mut e := Event{
+		mouse_x: 250
+		mouse_y: 5
+	}
+
+	text_mouse_move_locked(&text_layout, mut e, mut w, false)
+	assert w.has_animation(id_auto_scroll_animation)
+}
+
+fn test_horizontal_drag_selection_auto_scroll_timer_advances_cursor() {
+	id_focus := u32(9302)
+	mut text_shape := aligned_single_line_shape(.left, 200, 0, 100, 'ab')
+	text_shape.id_focus = id_focus
+	text_shape.id_scroll_container = 77
+	text_layout := Layout{
+		shape: text_shape
+	}
+	scroll_container := Layout{
+		shape:    &Shape{
+			id_scroll: 77
+			width:     100
+			height:    20
+		}
+		children: [text_layout]
+	}
+	mut w := Window{
+		ui:     &gg.Context{
+			mouse_pos_x: 250
+			mouse_pos_y: 5
+		}
+		layout: Layout{
+			shape:    &Shape{}
+			children: [scroll_container]
+		}
+	}
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
+		cursor_pos: 0
+	})
+	w.view_state.mouse_lock = MouseLockCfg{
+		cursor_pos: 0
+	}
+	mut an := Animate{
+		id:       id_auto_scroll_animation
+		callback: fn (mut _ Animate, mut _ Window) {}
+	}
+
+	assert isnil(w.text_system)
+	text_auto_scroll_cursor(id_focus, 77, mut an, mut w, false)
+
+	state := input_state_or_default(id_focus, mut w)
+	assert state.cursor_pos == 1
+	assert state.select_beg == 0
+	assert state.select_end == 1
+	scroll_x := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll).get(77) or { f32(0) }
+	assert f32_are_close(scroll_x, -100)
+}
+
+fn test_horizontal_drag_selection_auto_scroll_left_uses_pointer_edge() {
+	id_focus := u32(9305)
+	mut text_shape := aligned_single_line_shape(.left, 200, 0, 50, 'abcd')
+	text_shape.id_focus = id_focus
+	text_shape.id_scroll_container = 77
+	text_shape.x = -100
+	text_layout := Layout{
+		shape: text_shape
+	}
+	scroll_container := Layout{
+		shape:    &Shape{
+			id_scroll: 77
+			width:     100
+			height:    20
+		}
+		children: [text_layout]
+	}
+	mut w := Window{
+		ui:     &gg.Context{
+			mouse_buttons: .left
+			mouse_pos_x:   -10
+			mouse_pos_y:   5
+		}
+		layout: Layout{
+			shape:    &Shape{}
+			children: [scroll_container]
+		}
+	}
+	mut sx := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll)
+	sx.set(77, -100)
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
+		cursor_pos: 2
+	})
+	w.view_state.mouse_lock = MouseLockCfg{
+		cursor_pos: 2
+	}
+	mut e := Event{
+		mouse_x: -10
+		mouse_y: 5
+	}
+
+	text_mouse_move_locked(&text_layout, mut e, mut w, false)
+	assert w.has_animation(id_auto_scroll_animation)
+
+	mut an := Animate{
+		id:       id_auto_scroll_animation
+		callback: fn (mut _ Animate, mut _ Window) {}
+	}
+	text_auto_scroll_cursor(id_focus, 77, mut an, mut w, false)
+
+	state := input_state_or_default(id_focus, mut w)
+	scroll_x := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll).get(77) or { f32(0) }
+	assert state.cursor_pos == 1
+	assert state.select_beg == 1
+	assert state.select_end == 2
+	assert f32_are_close(scroll_x, -50)
+}
+
+fn test_private_leftward_drag_selection_auto_scroll_uses_pointer_edge() {
+	id_focus := u32(9303)
+	scroll_key := 'private-leftward-drag'
+	mut text_shape := aligned_single_line_shape(.left, 200, 0, 50, 'abcd')
+	text_shape.id_focus = id_focus
+	text_shape.tc.text_scroll_key = scroll_key
+	text_shape.tc.text_scroll_x = -100
+	mut root := Layout{
+		shape:    &Shape{}
+		children: [
+			Layout{
+				shape:    &Shape{
+					width:  100
+					height: 20
+				}
+				children: [
+					Layout{
+						shape: text_shape
+					},
+				]
+			},
+		]
+	}
+	layout_parents(mut root, unsafe { nil })
+	mut w := Window{
+		ui:     &gg.Context{
+			mouse_buttons: .left
+		}
+		layout: root
+	}
+	mut sx := state_map[string, f32](mut w, ns_input_private_scroll_x, cap_scroll)
+	sx.set(scroll_key, -100)
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	imap.set(id_focus, InputState{
+		cursor_pos: 2
+	})
+	w.view_state.mouse_lock = MouseLockCfg{
+		cursor_pos: 2
+	}
+	text_layout := w.layout.find_layout(fn [id_focus] (ly Layout) bool {
+		return ly.shape.id_focus == id_focus
+	}) or { panic('missing private text layout') }
+	mut e := Event{
+		mouse_x: -10
+		mouse_y: 5
+	}
+
+	text_mouse_move_locked(&text_layout, mut e, mut w, false)
+	assert w.has_animation(id_auto_scroll_animation)
+
+	w.ui.mouse_pos_x = -10
+	w.ui.mouse_pos_y = 5
+	mut an := Animate{
+		id:       id_auto_scroll_animation
+		callback: fn (mut _ Animate, mut _ Window) {}
+	}
+	text_auto_scroll_cursor(id_focus, 0, mut an, mut w, false)
+
+	state := input_state_or_default(id_focus, mut w)
+	private_x := state_map[string, f32](mut w, ns_input_private_scroll_x, cap_scroll).get(scroll_key) or {
+		f32(0)
+	}
+	public_zero_x := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll).get(0) or { f32(9999) }
+	assert state.cursor_pos == 1
+	assert state.select_beg == 1
+	assert state.select_end == 2
+	assert f32_are_close(private_x, -50)
+	assert public_zero_x == 9999
+}
+
+fn test_private_scroll_cursor_reveal_preserves_outer_vertical_scroll_only() {
+	id_focus := u32(9304)
+	outer_scroll_id := u32(8811)
+	scroll_key := 'private-vertical-reveal'
+	mut text_shape := aligned_single_line_shape(.left, 100, 0, 10, 'abcd')
+	text_shape.id_focus = id_focus
+	text_shape.id_scroll_container = outer_scroll_id
+	text_shape.y = 40
+	text_shape.tc.text_scroll_key = scroll_key
+	mut root := Layout{
+		shape:    &Shape{}
+		children: [
+			Layout{
+				shape:    &Shape{
+					id_scroll: outer_scroll_id
+					width:     100
+					height:    20
+				}
+				children: [
+					Layout{
+						shape: text_shape
+					},
+				]
+			},
+		]
+	}
+	layout_parents(mut root, unsafe { nil })
+	mut w := Window{
+		layout: root
+	}
+	text_layout := w.layout.find_layout(fn [id_focus] (ly Layout) bool {
+		return ly.shape.id_focus == id_focus
+	}) or { panic('missing private text layout') }
+
+	scroll_cursor_into_view(0, &text_layout, mut w)
+
+	outer_y := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(outer_scroll_id) or {
+		f32(0)
+	}
+	outer_x := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll).get(outer_scroll_id) or {
+		f32(9999)
+	}
+	assert f32_are_close(outer_y, -30)
+	assert outer_x == 9999
+}
+
+fn test_password_right_aligned_geometry_uses_mask_for_caret_and_hit_test() {
+	mut w := Window{}
+	shape := password_aligned_single_line_shape(.right, 100, 0, 10, 'ab')
+
+	rect := text_cursor_rect_for_position(shape, 2, mut w)
+	caret_x := text_layout_align_offset_x(shape, mut w) + rect.x
+	assert f32_are_close(caret_x, 100)
+
+	start_event := Event{
+		mouse_x: 81
+		mouse_y: 5
+	}
+	assert text_mouse_cursor_pos(shape, &start_event, mut w, false) == 0
+
+	end_event := Event{
+		mouse_x: 101
+		mouse_y: 5
+	}
+	assert text_mouse_cursor_pos(shape, &end_event, mut w, false) == 2
+}
+
+fn test_password_mask_width_path_keeps_nonzero_line_origin() {
+	shape := password_aligned_single_line_shape(.left, 100, 30, 10, 'ab')
+
+	assert f32_are_close(text_password_cursor_x_from_mask_width(shape, 20), 50)
+	assert f32_are_close(text_password_mask_offset_x(shape, 35), 5)
+}
+
+fn test_password_right_aligned_geometry_keeps_nonzero_line_origin() {
+	mut w := Window{}
+	shape := password_aligned_single_line_shape(.right, 100, 30, 10, 'ab')
+
+	rect := text_cursor_rect_for_position(shape, 2, mut w)
+	assert f32_are_close(rect.x, 50)
+	caret_x := text_layout_align_offset_x(shape, mut w) + rect.x
+	assert f32_are_close(caret_x, 130)
+
+	start_event := Event{
+		mouse_x: 111
+		mouse_y: 5
+	}
+	assert text_mouse_cursor_pos(shape, &start_event, mut w, false) == 0
+
+	end_event := Event{
+		mouse_x: 131
+		mouse_y: 5
+	}
+	assert text_mouse_cursor_pos(shape, &end_event, mut w, false) == 2
+}
+
+fn test_password_selection_uses_mask_geometry_with_alignment() {
+	mut w := Window{}
+	shape := password_aligned_single_line_shape(.right, 100, 0, 10, 'ab')
+	line := shape.tc.vglyph_layout.lines[0]
+
+	draw_text_selection(mut w, DrawTextSelectionParams{
+		shape:         shape
+		line:          line
+		layout_x:      80
+		draw_y:        5
+		byte_beg:      0
+		byte_end:      1
+		password_mask: '**'
+		text_cfg:      TextStyle{
+			color: black
+			size:  16
+		}.to_vglyph_cfg()
+	})
+
+	assert w.renderers.len == 1
+	r := w.renderers[0]
+	if r is DrawRect {
+		assert f32_are_close(r.x, 80)
+		assert f32_are_close(r.w, 10)
+	} else {
+		assert false, 'expected password selection to emit DrawRect'
+	}
+}
+
+fn test_password_selection_uses_nonzero_line_origin_once() {
+	mut w := Window{}
+	shape := password_aligned_single_line_shape(.right, 100, 30, 10, 'ab')
+	line := shape.tc.vglyph_layout.lines[0]
+
+	draw_text_selection(mut w, DrawTextSelectionParams{
+		shape:         shape
+		line:          line
+		layout_x:      80
+		draw_y:        5
+		byte_beg:      0
+		byte_end:      1
+		password_mask: '**'
+		text_cfg:      TextStyle{
+			color: black
+			size:  16
+		}.to_vglyph_cfg()
+	})
+
+	assert w.renderers.len == 1
+	r := w.renderers[0]
+	if r is DrawRect {
+		assert f32_are_close(r.x, 110)
+		assert f32_are_close(r.w, 10)
+	} else {
+		assert false, 'expected password selection to emit DrawRect'
+	}
+}
+
+fn test_multiline_password_selection_uses_line_relative_mask_geometry() {
+	mut w := Window{}
+	shape := password_multiline_shape_with_second_line_origin()
+	line := shape.tc.vglyph_layout.lines[1]
+
+	draw_text_selection(mut w, DrawTextSelectionParams{
+		shape:         shape
+		line:          line
+		layout_x:      80
+		draw_y:        12
+		byte_beg:      4
+		byte_end:      5
+		password_mask: '**\n**'
+		text_cfg:      TextStyle{
+			color: black
+			size:  16
+		}.to_vglyph_cfg()
+	})
+
+	assert w.renderers.len == 1
+	r := w.renderers[0]
+	if r is DrawRect {
+		assert f32_are_close(r.x, 130)
+		assert f32_are_close(r.w, 10)
+	} else {
+		assert false, 'expected password selection to emit DrawRect'
+	}
+}
+
+fn test_password_cursor_scroll_x_keeps_end_visible() {
+	mut text_shape := password_aligned_single_line_shape(.left, 200, 0, 100, 'ab')
+	text_shape.id_scroll_container = 77
+	scroll_container := Layout{
+		shape:    &Shape{
+			id_scroll: 77
+			width:     100
+			height:    20
+		}
+		children: [
+			Layout{
+				shape: text_shape
+			},
+		]
+	}
+	mut w := Window{
+		layout: Layout{
+			shape:    &Shape{}
+			children: [scroll_container]
+		}
+	}
+
+	assert f32_are_close(cursor_pos_to_scroll_x(2, text_shape, mut w), -100)
+}
+
+fn test_password_cursor_scroll_x_includes_nonzero_line_origin() {
+	mut text_shape := password_aligned_single_line_shape(.left, 230, 30, 100, 'ab')
+	text_shape.id_scroll_container = 77
+	scroll_container := Layout{
+		shape:    &Shape{
+			id_scroll: 77
+			width:     100
+			height:    20
+		}
+		children: [
+			Layout{
+				shape: text_shape
+			},
+		]
+	}
+	mut w := Window{
+		layout: Layout{
+			shape:    &Shape{}
+			children: [scroll_container]
+		}
+	}
+
+	assert f32_are_close(cursor_pos_to_scroll_x(2, text_shape, mut w), -130)
+}
 
 // ------------------------------------
 // ## 1. Test split_text (Core Utility)

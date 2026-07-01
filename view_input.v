@@ -14,6 +14,7 @@ import arrays
 import vglyph
 
 const input_max_insert_runes = 65_536
+const ns_input_private_scroll_x = 'gui.input.private_scroll.x'
 
 // InputState manages focus and input states. The window maintains this state
 // in a map keyed by w.view_state.id_focus. This state map is cleared when a
@@ -34,6 +35,8 @@ pub:
 	// last_click_frame records the frame of the last click for double-click
 	// detection.
 	last_click_frame u64
+	// reveal_cursor defers caret scrolling until a fresh post-edit layout exists.
+	reveal_cursor bool
 }
 
 // InputMemento stores a snapshot of the input state for undo/redo
@@ -131,6 +134,8 @@ struct InputRuntimeCfg {
 	form_validate_on      FormValidateOn = .inherit
 	form_initial_value    ?string
 	text_style            TextStyle
+	private_scroll_key    string
+	text_scroll_id        u32
 	width                 f32
 	id_focus              u32
 	padding               Padding
@@ -158,6 +163,8 @@ fn input_runtime_cfg(cfg InputCfg) InputRuntimeCfg {
 		form_validate_on:      cfg.form_validate_on
 		form_initial_value:    cfg.form_initial_value
 		text_style:            cfg.text_style
+		private_scroll_key:    input_private_scroll_key(cfg)
+		text_scroll_id:        input_text_scroll_id(cfg)
 		width:                 cfg.width
 		id_focus:              cfg.id_focus
 		padding:               cfg.padding
@@ -293,6 +300,7 @@ pub fn input(cfg InputCfg) View {
 	txt := if placeholder_active { cfg.placeholder } else { cfg.text }
 	txt_style := if placeholder_active { cfg.placeholder_style } else { cfg.text_style }
 	mode := if cfg.mode == .single_line { TextMode.single_line } else { TextMode.wrap_keep_spaces }
+	text_scroll_id := input_text_scroll_id(cfg)
 
 	// Capture values needed for callbacks by copy to avoid dangling reference to cfg
 	color_border_focus := cfg.color_border_focus
@@ -300,28 +308,54 @@ pub fn input(cfg InputCfg) View {
 	id_focus := cfg.id_focus
 	on_click_icon := cfg.on_click_icon
 	runtime_cfg := input_runtime_cfg(cfg)
+	mut root_scrollbar_cfg_x := &ScrollbarCfg(unsafe { nil })
+	mut root_scrollbar_cfg_y := &ScrollbarCfg(unsafe { nil })
+	if cfg.mode == .multiline {
+		root_scrollbar_cfg_x = cfg.scrollbar_cfg_x
+		root_scrollbar_cfg_y = cfg.scrollbar_cfg_y
+	}
+	mut text_scrollbar_cfg_x := input_hidden_scrollbar_cfg()
+	mut text_scrollbar_cfg_y := input_hidden_scrollbar_cfg()
+	if text_scroll_id > 0 {
+		text_scrollbar_cfg_x = cfg.scrollbar_cfg_x
+		text_scrollbar_cfg_y = cfg.scrollbar_cfg_y
+	}
 
-	mut txt_content := [
-		text(
-			id_focus:             cfg.id_focus
-			sizing:               fill_fill
-			text:                 txt
-			text_style:           txt_style
-			mode:                 mode
-			is_password:          cfg.is_password
-			placeholder_active:   placeholder_active
-			on_key_down_hook:     cfg.on_key_down
-			on_mouse_scroll_hook: cfg.on_mouse_scroll
-		),
-	]
+	txt_view := text(
+		id_focus:             cfg.id_focus
+		sizing:               fill_fill
+		text:                 txt
+		text_style:           txt_style
+		text_scroll_key:      if cfg.mode == .single_line && text_scroll_id == 0 {
+			runtime_cfg.private_scroll_key
+		} else {
+			''
+		}
+		mode:                 mode
+		is_password:          cfg.is_password
+		placeholder_active:   placeholder_active
+		on_key_down_hook:     cfg.on_key_down
+		on_mouse_scroll_hook: cfg.on_mouse_scroll
+	)
+	mut txt_content := []View{cap: 2}
+	if cfg.mode == .single_line {
+		txt_content << row(
+			name:            'input text viewport'
+			id_scroll:       text_scroll_id
+			scroll_mode:     .horizontal_only
+			scrollbar_cfg_x: text_scrollbar_cfg_x
+			scrollbar_cfg_y: text_scrollbar_cfg_y
+			padding:         padding_none
+			clip:            true
+			sizing:          fill_fill
+			content:         [txt_view]
+		)
+	} else {
+		txt_content << txt_view
+	}
 
 	if cfg.icon.len > 0 {
 		txt_content << [
-			rectangle(
-				color:        color_transparent
-				color_border: color_transparent
-				sizing:       fill_fill
-			),
 			row(
 				name:     'input icon'
 				padding:  padding_none
@@ -389,28 +423,32 @@ pub fn input(cfg InputCfg) View {
 		}
 		amend_layout:    fn [color_border_focus, runtime_cfg] (mut layout Layout, mut w Window) {
 			runtime_cfg.form_register(layout, mut w)
-			if layout.shape.id_focus == 0 {
-				return
-			}
-			focused := !layout.shape.disabled && layout.shape.id_focus == w.id_focus()
-			was_focused := state_map[u32, bool](mut w, ns_input_focus, cap_many).get(layout.shape.id_focus) or {
-				false
-			}
-			if was_focused && !focused {
-				runtime_cfg.commit_text(layout, .blur, mut w)
-				if runtime_cfg.on_blur != unsafe { nil } {
-					runtime_cfg.on_blur(layout, mut w)
+			mut focused := false
+			if layout.shape.id_focus > 0 {
+				focused = !layout.shape.disabled && layout.shape.id_focus == w.id_focus()
+				was_focused := state_map[u32, bool](mut w, ns_input_focus, cap_many).get(layout.shape.id_focus) or {
+					false
+				}
+				if was_focused && !focused {
+					runtime_cfg.commit_text(layout, .blur, mut w)
+					if runtime_cfg.on_blur != unsafe { nil } {
+						runtime_cfg.on_blur(layout, mut w)
+					}
+				}
+				if focused && !was_focused {
+					input_mark_cursor_reveal(layout.shape.id_focus, mut w)
+				}
+				mut ifs := state_map[u32, bool](mut w, ns_input_focus, cap_many)
+				ifs.set(layout.shape.id_focus, focused)
+				if focused {
+					layout.shape.color_border = color_border_focus
 				}
 			}
-			mut ifs := state_map[u32, bool](mut w, ns_input_focus, cap_many)
-			ifs.set(layout.shape.id_focus, focused)
-			if focused {
-				layout.shape.color_border = color_border_focus
-			}
+			input_apply_post_layout_scroll(mut layout, mut w, runtime_cfg, focused)
 		}
-		id_scroll:       cfg.id_scroll
-		scrollbar_cfg_x: cfg.scrollbar_cfg_x
-		scrollbar_cfg_y: cfg.scrollbar_cfg_y
+		id_scroll:       if cfg.mode == .multiline { cfg.id_scroll } else { u32(0) }
+		scrollbar_cfg_x: root_scrollbar_cfg_x
+		scrollbar_cfg_y: root_scrollbar_cfg_y
 		spacing:         0
 		content:         [
 			row(
@@ -419,11 +457,10 @@ pub fn input(cfg InputCfg) View {
 				sizing:   fill_fill
 				v_align:  if cfg.mode == .single_line { .middle } else { .top }
 				on_click: fn (layout &Layout, mut e Event, mut w Window) {
-					if layout.children.len < 1 {
-						return
-					}
-					ly := layout.children[0]
-					if ly.shape.id_focus > 0 {
+					if ly := layout.find_layout(fn (ly Layout) bool {
+						return ly.shape.id_focus > 0 && ly.shape.shape_type == .text
+					})
+					{
 						w.set_id_focus(ly.shape.id_focus)
 					}
 				}
@@ -431,6 +468,32 @@ pub fn input(cfg InputCfg) View {
 			),
 		]
 	)
+}
+
+fn input_hidden_scrollbar_cfg() &ScrollbarCfg {
+	return &ScrollbarCfg{
+		overflow: .hidden
+	}
+}
+
+fn input_text_scroll_id(cfg InputCfg) u32 {
+	if cfg.mode == .single_line && cfg.id_scroll > 0 {
+		return cfg.id_scroll
+	}
+	return 0
+}
+
+fn input_private_scroll_key(cfg InputCfg) string {
+	if cfg.id.len > 0 {
+		return 'id:${cfg.id}'
+	}
+	if cfg.field_id.len > 0 {
+		return 'field:${cfg.field_id}'
+	}
+	if cfg.id_focus > 0 {
+		return 'focus:${cfg.id_focus}'
+	}
+	return ''
 }
 
 fn (cfg &InputCfg) active_mask_pattern() string {
@@ -518,14 +581,343 @@ fn input_state_from_memento(memento InputMemento, undo BoundedStack[InputMemento
 	}
 }
 
-fn (cfg &InputCfg) exceeds_single_line_fixed_width(next_text string, mut w Window) bool {
-	if cfg.mode != .single_line || cfg.sizing.width != .fixed {
+fn input_state_with_reveal(input_state InputState, reveal bool) InputState {
+	return InputState{
+		...input_state
+		reveal_cursor: reveal
+	}
+}
+
+fn input_mark_cursor_reveal(id_focus u32, mut w Window) {
+	if id_focus == 0 {
+		return
+	}
+	mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+	input_state := imap.get(id_focus) or { InputState{} }
+	imap.set(id_focus, input_state_with_reveal(input_state, true))
+}
+
+fn input_apply_post_layout_scroll(mut layout Layout, mut w Window, cfg InputRuntimeCfg, focused bool) {
+	id_focus := layout.shape.id_focus
+	text_layout := input_find_text_layout(layout, id_focus) or { return }
+	if cfg.mode == .single_line && cfg.text_scroll_id == 0 {
+		mut reveal_cursor := false
+		mut reveal_cursor_pos := 0
+		if id_focus > 0 {
+			input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(id_focus) or {
+				InputState{}
+			}
+			reveal_cursor = input_state.reveal_cursor
+			reveal_cursor_pos = input_state.cursor_pos
+		}
+		mut changed := false
+		if private_changed := input_apply_private_text_scroll_after_layout(text_layout, mut layout, mut
+			w, cfg.private_scroll_key, focused)
+		{
+			changed = private_changed
+		}
+		if reveal_cursor {
+			if vertical_changed := input_scroll_cursor_vertical_into_view_in_layout(reveal_cursor_pos,
+				text_layout, mut layout, mut w)
+			{
+				changed = changed || vertical_changed
+			}
+		}
+		if changed {
+			w.update_window()
+		}
+		return
+	}
+	if id_focus > 0 {
+		input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(id_focus) or {
+			InputState{}
+		}
+		if input_state.reveal_cursor {
+			changed := input_scroll_cursor_into_view_in_layout(input_state.cursor_pos, text_layout, mut
+				layout, mut w, cfg.mode) or { return }
+			mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+			imap.set(id_focus, input_state_with_reveal(input_state, false))
+			if changed {
+				w.update_window()
+			}
+			return
+		}
+	}
+	if cfg.mode == .single_line && !focused
+		&& input_apply_rest_alignment_scroll(text_layout, mut layout, mut w) {
+		w.update_window()
+	}
+}
+
+fn input_find_text_layout(layout &Layout, id_focus u32) ?Layout {
+	if id_focus > 0 {
+		return layout.find_layout(fn [id_focus] (ly Layout) bool {
+			return ly.shape.id_focus == id_focus && ly.shape.shape_type == .text
+		})
+	}
+	return layout.find_layout(fn (ly Layout) bool {
+		return ly.shape.shape_type == .text && ly.shape.tc != unsafe { nil }
+	})
+}
+
+fn input_apply_private_text_scroll_after_layout(text_layout Layout, mut root Layout, mut w Window, scroll_key string, focused bool) ?bool {
+	shape := text_layout.shape
+	if shape.tc == unsafe { nil } || shape.tc.text_mode != .single_line {
+		return none
+	}
+	mut current_x := shape.tc.text_scroll_x
+	if scroll_key.len > 0 {
+		current_x = state_map[string, f32](mut w, ns_input_private_scroll_x, cap_scroll).get(scroll_key) or {
+			shape.tc.text_scroll_x
+		}
+	}
+	mut target_x := current_x
+	mut clear_reveal := false
+	if root.shape.id_focus > 0 {
+		input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(root.shape.id_focus) or {
+			InputState{}
+		}
+		if input_state.reveal_cursor {
+			target_x = text_private_cursor_scroll_x(input_state.cursor_pos, &text_layout,
+				current_x, mut w) or { return none }
+			clear_reveal = true
+		} else if !focused {
+			target_x = input_private_rest_scroll_x(text_layout, current_x, mut w)
+		}
+	} else {
+		target_x = input_private_rest_scroll_x(text_layout, current_x, mut w)
+	}
+	viewport := text_private_scroll_viewport(&text_layout) or { return none }
+	target_x = text_private_clamp_scroll_x(target_x, &text_layout, viewport, mut w)
+
+	mut changed := false
+	if !f32_are_close(target_x, current_x) {
+		if scroll_key.len > 0 {
+			mut sx := state_map[string, f32](mut w, ns_input_private_scroll_x, cap_scroll)
+			sx.set(scroll_key, target_x)
+			changed = true
+		}
+	}
+	if clear_reveal {
+		input_state := state_map[u32, InputState](mut w, ns_input, cap_many).get(root.shape.id_focus) or {
+			InputState{}
+		}
+		mut imap := state_map[u32, InputState](mut w, ns_input, cap_many)
+		imap.set(root.shape.id_focus, input_state_with_reveal(input_state, false))
+	}
+	input_set_text_scroll_x(mut root, root.shape.id_focus, target_x)
+	return changed
+}
+
+fn input_private_rest_scroll_x(text_layout Layout, current_x f32, mut w Window) f32 {
+	shape := text_layout.shape
+	if shape.tc.text_style.align == .left {
+		return 0
+	}
+	viewport := text_private_scroll_viewport(&text_layout) or { return current_x }
+	max_offset := text_private_scroll_max_x(&text_layout, viewport, mut w)
+	if f32_are_close(max_offset, 0) {
+		return 0
+	}
+	if shape.tc.text_style.align == .right {
+		return max_offset
+	}
+	return 0
+}
+
+fn input_scroll_cursor_into_view_in_layout(cursor_pos int, text_layout Layout, mut root Layout, mut w Window, mode InputMode) ?bool {
+	shape := text_layout.shape
+	id_scroll_container := shape.id_scroll_container
+	if id_scroll_container == 0 {
+		return none
+	}
+	mut changed := false
+	current_x := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll).get(id_scroll_container) or {
+		f32(0)
+	}
+	target_x := cursor_pos_to_scroll_x_in_layout(cursor_pos, shape, root, mut w)
+	if target_x == -1 {
+		return none
+	}
+	if target_x != -1 && !f32_are_close(target_x, current_x) {
+		mut sx := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll)
+		sx.set(id_scroll_container, target_x)
+		if mode == .single_line {
+			input_shift_explicit_scroll_contents(mut root, id_scroll_container,
+				target_x - current_x, 0)
+		}
+		changed = true
+	}
+	if mode == .single_line {
+		return changed
+	}
+	current_y := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(id_scroll_container) or {
+		f32(0)
+	}
+	target_y := cursor_pos_to_scroll_y_in_layout(cursor_pos, shape, root, mut w)
+	if target_y == -1 {
+		return none
+	}
+	if target_y != -1 && !f32_are_close(target_y, current_y) {
+		mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+		sy.set(id_scroll_container, target_y)
+		changed = true
+	}
+	return changed
+}
+
+fn input_scroll_cursor_vertical_into_view_in_layout(cursor_pos int, text_layout Layout, mut root Layout, mut w Window) ?bool {
+	shape := text_layout.shape
+	id_scroll_container := shape.id_scroll_container
+	if id_scroll_container == 0 {
+		return none
+	}
+	current_y := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(id_scroll_container) or {
+		f32(0)
+	}
+	scroll_container := input_scroll_container_for_text(text_layout, root, id_scroll_container) or {
+		return none
+	}
+	target_y := input_cursor_pos_to_scroll_y_in_container(cursor_pos, shape, scroll_container,
+		id_scroll_container, mut w)
+	if target_y == -1 {
+		return none
+	}
+	if f32_are_close(target_y, current_y) {
 		return false
 	}
-	ctx := w.ui
-	ctx.set_text_cfg(cfg.text_style.to_text_cfg())
-	width := ctx.text_width(next_text)
-	return width > cfg.width - cfg.padding.width() - (cfg.size_border * 2)
+	mut sy := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll)
+	sy.set(id_scroll_container, target_y)
+	return true
+}
+
+fn input_scroll_container_for_text(text_layout Layout, root &Layout, id_scroll_container u32) ?Layout {
+	if scroll_container := find_layout_by_id_scroll(root, id_scroll_container) {
+		return scroll_container
+	}
+	mut parent := text_layout.parent
+	for parent != unsafe { nil } {
+		if parent.shape.id_scroll == id_scroll_container {
+			return *parent
+		}
+		parent = parent.parent
+	}
+	parent = root.parent
+	for parent != unsafe { nil } {
+		if parent.shape.id_scroll == id_scroll_container {
+			return *parent
+		}
+		parent = parent.parent
+	}
+	return none
+}
+
+fn input_cursor_pos_to_scroll_y_in_container(cursor_pos int, shape &Shape, scroll_container Layout, id_scroll_container u32, mut w Window) f32 {
+	scroll_view_height := scroll_container.shape.height - scroll_container.shape.padding_height()
+	byte_idx := rune_to_byte_index(shape.tc.text, cursor_pos)
+	if !shape.has_text_layout() {
+		return -1
+	}
+	rect := shape.tc.vglyph_layout.get_char_rect(byte_idx) or {
+		if byte_idx <= 0 {
+			return -1
+		}
+		shape.tc.vglyph_layout.get_char_rect(byte_idx - 1) or { return -1 }
+	}
+
+	current_scroll_y := state_map[u32, f32](mut w, ns_scroll_y, cap_scroll).get(id_scroll_container) or {
+		f32(0)
+	}
+
+	shape_y_in_content := shape.y - current_scroll_y - scroll_container.shape.y
+	padding_top := scroll_container.shape.padding_top()
+	cursor_top := shape_y_in_content - padding_top + rect.y
+	cursor_bottom := cursor_top + rect.height
+
+	view_top := -current_scroll_y
+	view_bottom := view_top + scroll_view_height
+
+	mut target_scroll := current_scroll_y
+	if cursor_top < view_top {
+		target_scroll = -cursor_top
+	} else if cursor_bottom > view_bottom {
+		target_scroll = -(cursor_bottom - scroll_view_height)
+	}
+	return target_scroll
+}
+
+fn input_apply_rest_alignment_scroll(text_layout Layout, mut root Layout, mut w Window) bool {
+	shape := text_layout.shape
+	if shape.tc.text_style.align == .left || shape.id_scroll_container == 0 {
+		return false
+	}
+	scroll_container := find_layout_by_id_scroll(root, shape.id_scroll_container) or {
+		return false
+	}
+	max_offset := f32_min(0, scroll_container.shape.width - scroll_container.shape.padding_width() -
+		content_width(scroll_container))
+	if f32_are_close(max_offset, 0) {
+		return false
+	}
+	target_x := match shape.tc.text_style.align {
+		.right { max_offset }
+		else { f32(0) }
+	}
+
+	current_x := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll).get(shape.id_scroll_container) or {
+		f32(0)
+	}
+	if f32_are_close(target_x, current_x) {
+		return false
+	}
+	mut sx := state_map[u32, f32](mut w, ns_scroll_x, cap_scroll)
+	sx.set(shape.id_scroll_container, target_x)
+	input_shift_explicit_scroll_contents(mut root, shape.id_scroll_container, target_x - current_x,
+		0)
+	return true
+}
+
+fn input_shift_explicit_scroll_contents(mut layout Layout, id_scroll u32, dx f32, dy f32) bool {
+	if layout.shape.id_scroll == id_scroll {
+		for mut child in layout.children {
+			if child.shape.over_draw || child.shape.scrollbar_orientation != .none {
+				continue
+			}
+			input_shift_layout_tree(mut child, dx, dy)
+		}
+		return true
+	}
+	for mut child in layout.children {
+		if input_shift_explicit_scroll_contents(mut child, id_scroll, dx, dy) {
+			return true
+		}
+	}
+	return false
+}
+
+fn input_set_text_scroll_x(mut layout Layout, id_focus u32, scroll_x f32) bool {
+	if layout.shape.shape_type == .text && (id_focus == 0 || layout.shape.id_focus == id_focus) {
+		if layout.shape.tc != unsafe { nil } {
+			layout.shape.tc.text_scroll_x = scroll_x
+		}
+		return true
+	}
+	for mut child in layout.children {
+		if input_set_text_scroll_x(mut child, id_focus, scroll_x) {
+			return true
+		}
+	}
+	return false
+}
+
+fn input_shift_layout_tree(mut layout Layout, dx f32, dy f32) {
+	layout.shape.x += dx
+	layout.shape.y += dy
+	layout.shape.shape_clip.x += dx
+	layout.shape.shape_clip.y += dy
+	for mut child in layout.children {
+		input_shift_layout_tree(mut child, dx, dy)
+	}
 }
 
 fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_pos int, mut w Window) string {
@@ -547,6 +939,7 @@ fn (cfg &InputCfg) apply_text_edit(input_state InputState, text string, cursor_p
 		select_end:    0
 		undo:          undo
 		cursor_offset: -1 // view_text.v-on_key_down-up/down handler tests for < 0
+		reveal_cursor: true
 	})
 	w.view_state.input_cursor_on = true
 	w.view_state.cursor_on_sticky = true
@@ -581,9 +974,6 @@ fn (cfg &InputCfg) masked_insert(s string, mut w Window, compiled CompiledInputM
 	res := input_mask_insert(cfg.text, input_state.cursor_pos, input_state.select_beg,
 		input_state.select_end, s, &compiled)
 	if !res.changed {
-		return cfg.text
-	}
-	if cfg.exceeds_single_line_fixed_width(res.text, mut w) {
 		return cfg.text
 	}
 	return cfg.apply_text_edit(input_state, res.text, res.cursor_pos, mut w)
@@ -645,8 +1035,7 @@ fn (cfg &InputCfg) delete(mut w Window, forward_delete bool) ?string {
 	return cfg.apply_text_edit(input_state, runes.string(), cursor_pos, mut w)
 }
 
-// insert adds text at the cursor or replaces selection. For single-line
-// fixed-width inputs, it validates width constraints. Saves state to undo
+// insert adds text at the cursor or replaces selection. Saves state to undo
 // stack before modification. Returns modified text or error.
 fn (cfg &InputCfg) insert(insert_text string, mut w Window) !string {
 	if insert_text.len == 0 {
@@ -659,10 +1048,6 @@ fn (cfg &InputCfg) insert(insert_text string, mut w Window) !string {
 	if insert_runes.len > input_max_insert_runes {
 		log.warn('input insert exceeds ${input_max_insert_runes} runes; truncating')
 		insert_runes = insert_runes[..input_max_insert_runes].clone()
-	}
-	insert_value := insert_runes.string()
-	if cfg.exceeds_single_line_fixed_width(cfg.text + insert_value, mut w) {
-		return cfg.text
 	}
 	mut runes := cfg.text.runes()
 	input_state := input_state_or_default(cfg.id_focus, mut w)
@@ -734,7 +1119,8 @@ pub fn (cfg &InputCfg) undo(mut w Window) string {
 	memento := undo.pop() or { return cfg.text }
 	mut redo := input_state.redo
 	redo = input_push_memento(mut redo, cfg.text, input_state)
-	imap.set(cfg.id_focus, input_state_from_memento(memento, undo, redo))
+	imap.set(cfg.id_focus, input_state_with_reveal(input_state_from_memento(memento, undo, redo),
+		true))
 	return memento.text
 }
 
@@ -747,7 +1133,8 @@ pub fn (cfg &InputCfg) redo(mut w Window) string {
 	memento := redo.pop() or { return cfg.text }
 	mut undo := input_state.undo
 	undo = input_push_memento(mut undo, cfg.text, input_state)
-	imap.set(cfg.id_focus, input_state_from_memento(memento, undo, redo))
+	imap.set(cfg.id_focus, input_state_with_reveal(input_state_from_memento(memento, undo, redo),
+		true))
 	return memento.text
 }
 
