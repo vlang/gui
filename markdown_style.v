@@ -14,6 +14,10 @@ const md_subscript_features = &vglyph.FontFeatures{
 	opentype_features: [vglyph.FontFeature{'subs', 1}]
 }
 
+const md_script_size_scale = f32(0.7)
+const md_superscript_rise_em = f32(0.35)
+const md_subscript_rise_em = f32(-0.2)
+
 // markdown_to_blocks parses markdown source and returns styled blocks.
 fn markdown_to_blocks(source string, style MarkdownStyle) []MarkdownBlock {
 	ast := markdown.parse_with_options(source, markdown.ParseOptions{
@@ -130,18 +134,22 @@ fn style_md_run(run markdown.MdRun, base_style TextStyle, style MarkdownStyle) R
 
 	// Apply superscript
 	if run.superscript {
+		base_size := s.size
 		s = TextStyle{
 			...s
-			size:     s.size * 1.2
+			size:     base_size * md_script_size_scale
+			rise:     s.rise + base_size * md_superscript_rise_em
 			features: md_superscript_features
 		}
 	}
 
 	// Apply subscript
 	if run.subscript {
+		base_size := s.size
 		s = TextStyle{
 			...s
-			size:     s.size * 1.2
+			size:     base_size * md_script_size_scale
+			rise:     s.rise + base_size * md_subscript_rise_em
 			features: md_subscript_features
 		}
 	}

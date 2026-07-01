@@ -1109,19 +1109,27 @@ fn test_markdown_heading_anchor_set() {
 // Superscript/subscript tests
 
 fn test_markdown_superscript() {
-	rt := markdown_to_rich_text('E=mc^2^', MarkdownStyle{})
+	style := MarkdownStyle{}
+	rt := markdown_to_rich_text('E=mc^2^', style)
 	sup_runs := rt.runs.filter(it.text == '2')
 	assert sup_runs.len >= 1
-	// OpenType 'sups' feature handles sizing
+	assert sup_runs[0].style.size < style.text.size
+	assert sup_runs[0].style.rise > 0
 	assert sup_runs[0].style.features != unsafe { nil }
+	assert sup_runs[0].style.features.opentype_features.len == 1
+	assert sup_runs[0].style.features.opentype_features[0].tag == 'sups'
 }
 
 fn test_markdown_subscript() {
-	rt := markdown_to_rich_text('H~2~O', MarkdownStyle{})
+	style := MarkdownStyle{}
+	rt := markdown_to_rich_text('H~2~O', style)
 	sub_runs := rt.runs.filter(it.text == '2')
 	assert sub_runs.len >= 1
-	// OpenType 'subs' feature handles sizing
+	assert sub_runs[0].style.size < style.text.size
+	assert sub_runs[0].style.rise < 0
 	assert sub_runs[0].style.features != unsafe { nil }
+	assert sub_runs[0].style.features.opentype_features.len == 1
+	assert sub_runs[0].style.features.opentype_features[0].tag == 'subs'
 }
 
 fn test_markdown_subscript_vs_strikethrough() {

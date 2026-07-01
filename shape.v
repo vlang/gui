@@ -84,6 +84,8 @@ pub mut:
 	text_sel_beg          u32
 	text_sel_end          u32
 	text_tab_size         u32 = 4
+	text_scroll_x         f32
+	text_scroll_key       string
 	text_is_password      bool
 	text_is_placeholder   bool
 	hanging_indent        f32
