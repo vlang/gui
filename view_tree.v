@@ -20,6 +20,8 @@ pub:
 	on_select    fn (string, mut Window)         = unsafe { nil }
 	on_lazy_load fn (string, string, mut Window) = unsafe { nil }
 	nodes        []TreeNodeCfg
+	selected     string   // id of the highlighted node
+	reveal       []string // ids to expand when `selected` changes
 	indent       f32 = gui_theme.tree_style.indent
 	spacing      f32 = gui_theme.tree_style.spacing
 	id_focus     u32
@@ -87,10 +89,8 @@ struct TreeDragContext {
 // tree creates a tree view from the given [TreeCfg](#TreeCfg).
 // Uses flat-row rendering with optional spacer-based virtualization.
 pub fn (mut window Window) tree(cfg TreeCfg) View {
-	tree_map := window.view_state.tree_state.get(cfg.id) or {
-		map[string]bool{}
-	}
 	cfg_id := cfg.id
+	tree_map := tree_apply_reveal(cfg, mut window)
 	mut lazy_sm := state_map[string, bool](mut window, ns_tree_lazy, cap_tree_lazy)
 
 	mut flat_rows := []TreeFlatRow{cap: cfg.nodes.len * 4}
@@ -118,6 +118,7 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 	}
 
 	indent := cfg.indent
+	selected := cfg.selected
 	on_select := cfg.on_select
 	on_lazy_load := cfg.on_lazy_load
 	text_style_icon := tree_icon_style(cfg.nodes)
@@ -194,7 +195,7 @@ pub fn (mut window Window) tree(cfg TreeCfg) View {
 				sibling_index: sibling_idx
 				sibling_ids:   sibling_ids_by_parent[pid]
 			}
-			content << tree_flat_row_view(cfg_id, on_select, on_lazy_load, fr, indent,
+			content << tree_flat_row_view(cfg_id, selected, on_select, on_lazy_load, fr, indent,
 				min_width_icon, is_draggable, drag_ctx)
 		}
 	}
@@ -374,6 +375,28 @@ fn tree_flat_row_content(flat_row TreeFlatRow, _indent f32, min_width_icon f32) 
 	)
 }
 
+// tree_apply_reveal expands the ids in `cfg.reveal` when `cfg.selected`
+// changes. A node the user collapses later stays collapsed, because the
+// reveal runs again only after `selected` moves to another node.
+fn tree_apply_reveal(cfg TreeCfg, mut window Window) map[string]bool {
+	mut tree_map := window.view_state.tree_state.get(cfg.id) or {
+		map[string]bool{}
+	}
+	if cfg.reveal.len == 0 {
+		return tree_map
+	}
+	mut revealed := state_map[string, string](mut window, ns_tree_reveal, cap_tree_reveal)
+	if revealed.get(cfg.id) or { '' } == cfg.selected {
+		return tree_map
+	}
+	revealed.set(cfg.id, cfg.selected)
+	for id in cfg.reveal {
+		tree_map[id] = true
+	}
+	window.view_state.tree_state.set(cfg.id, tree_map)
+	return tree_map
+}
+
 fn tree_arrow_icon(fr TreeFlatRow) string {
 	return match true {
 		!fr.has_children {
@@ -393,7 +416,7 @@ fn tree_arrow_icon(fr TreeFlatRow) string {
 }
 
 // tree_flat_row_view produces a single View for one flat row.
-fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), flat_row TreeFlatRow, indent f32, min_width_icon f32, reorderable bool, drag_ctx TreeDragContext) View {
+fn tree_flat_row_view(cfg_id string, selected string, on_select fn (string, mut Window), on_lazy_load fn (string, string, mut Window), flat_row TreeFlatRow, indent f32, min_width_icon f32, reorderable bool, drag_ctx TreeDragContext) View {
 	if flat_row.is_loading {
 		return row(
 			name:    'tree loading'
@@ -440,6 +463,8 @@ fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_
 		}
 	}
 
+	is_selected := selected.len > 0 && selected == id
+
 	return row(
 		name:       'tree node content'
 		id:         if reorderable { 'tr_${cfg_id}_${id}' } else { '' }
@@ -447,6 +472,8 @@ fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_
 		a11y_label: node_text
 		a11y_state: node_a11y_state
 		spacing:    0
+		color:      if is_selected { gui_theme.color_select } else { color_transparent }
+		radius:     gui_theme.radius_small
 		padding:    Padding{
 			left: f32(depth) * indent
 		}
@@ -471,8 +498,11 @@ fn tree_flat_row_view(cfg_id string, on_select fn (string, mut Window), on_lazy_
 			),
 		]
 		on_click:   on_click_fn
-		on_hover:   fn (mut layout Layout, mut e Event, mut w Window) {
+		on_hover:   fn [is_selected] (mut layout Layout, mut e Event, mut w Window) {
 			w.set_mouse_cursor_pointing_hand()
+			if is_selected {
+				return
+			}
 			for mut child in layout.children {
 				child.shape.color = gui_theme.color_hover
 			}
