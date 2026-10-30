@@ -6,7 +6,7 @@ module gui
 // the same position/color/scale are batched into a single GPU draw call.
 // Stencil clip groups and per-vertex gradient SVGs are handled separately.
 import gg
-import sokol.sgl
+import gg.render
 import log
 
 struct RoundedImageClip {
@@ -86,17 +86,17 @@ fn quantized_scissor_clip(clip DrawClip, scale f32) DrawClip {
 	}
 }
 
-fn draw_quad_uv(x f32, y f32, w f32, h f32, z f32, u0 f32, v0 f32, u1 f32, v1 f32) {
-	sgl.begin_quads()
-	sgl.t2f(u0, v0)
-	sgl.v3f(x, y, z)
-	sgl.t2f(u1, v0)
-	sgl.v3f(x + w, y, z)
-	sgl.t2f(u1, v1)
-	sgl.v3f(x + w, y + h, z)
-	sgl.t2f(u0, v1)
-	sgl.v3f(x, y + h, z)
-	sgl.end()
+fn draw_quad_uv(r &render.Context, x f32, y f32, w f32, h f32, z f32, u0 f32, v0 f32, u1 f32, v1 f32) {
+	r.begin_quads()
+	r.t2f(u0, v0)
+	r.v3f(x, y, z)
+	r.t2f(u1, v0)
+	r.v3f(x + w, y, z)
+	r.t2f(u1, v1)
+	r.v3f(x + w, y + h, z)
+	r.t2f(u0, v1)
+	r.v3f(x, y + h, z)
+	r.end()
 }
 
 // renderers_draw walks the array of renderers and draws them.
@@ -191,9 +191,9 @@ fn draw_svg_batch(renderers []Renderer, start int, end int, c gg.Color, x f32, y
 	}
 
 	scale := window.ui.scale
-	sgl.load_pipeline(window.ui.pipeline.alpha)
-	sgl.begin_triangles()
-	sgl.c4b(c.r, c.g, c.b, c.a)
+	window.ui.r.load_pipeline(window.ui.pipeline.alpha)
+	window.ui.r.begin_triangles()
+	window.ui.r.c4b(c.r, c.g, c.b, c.a)
 
 	for idx in start .. end {
 		renderer := renderers[idx]
@@ -212,15 +212,15 @@ fn draw_svg_batch(renderers []Renderer, start int, end int, c gg.Color, x f32, y
 				y1 := (y + renderer.triangles[i + 3] * tri_scale) * scale
 				x2 := (x + renderer.triangles[i + 4] * tri_scale) * scale
 				y2 := (y + renderer.triangles[i + 5] * tri_scale) * scale
-				sgl.v2f(x0, y0)
-				sgl.v2f(x1, y1)
-				sgl.v2f(x2, y2)
+				window.ui.r.v2f(x0, y0)
+				window.ui.r.v2f(x1, y1)
+				window.ui.r.v2f(x2, y2)
 				i += 6
 			}
 		}
 	}
 
-	sgl.end()
+	window.ui.r.end()
 }
 
 // draw_rounded_image_batch draws consecutive rounded DrawImage
@@ -247,9 +247,9 @@ fn draw_rounded_image_batch(renderers []Renderer, start int, end int, active_cli
 
 	scale := ctx.scale
 	effective_clip := quantized_scissor_clip(active_clip, scale)
-	sgl.load_pipeline(window.pip.image_clip)
-	sgl.enable_texture()
-	sgl.c4b(255, 255, 255, 255)
+	window.ui.r.load_pipeline(window.pip.image_clip)
+	window.ui.r.enable_texture()
+	window.ui.r.c4b(255, 255, 255, 255)
 	for idx in start .. end {
 		renderer := renderers[idx]
 		if !guard_renderer_or_skip(renderer, mut window) {
@@ -260,12 +260,12 @@ fn draw_rounded_image_batch(renderers []Renderer, start int, end int, active_cli
 			x0, y0, w0, h0, r := rounded_image_scaled_params(clip.x, clip.y, clip.w, clip.h,
 				renderer.clip_radius, scale)
 			z := pack_shader_params(r, 0)
-			sgl.texture(renderer.img.simg, renderer.img.ssmp)
-			draw_quad_uv(x0, y0, w0, h0, z, clip.u0, clip.v0, clip.u1, clip.v1)
+			window.ui.r.texture(renderer.img.simg, renderer.img.ssmp)
+			draw_quad_uv(window.ui.r, x0, y0, w0, h0, z, clip.u0, clip.v0, clip.u1, clip.v1)
 		}
 	}
-	sgl.disable_texture()
-	sgl.load_default_pipeline()
+	window.ui.r.disable_texture()
+	window.ui.r.load_default_pipeline()
 }
 
 // draw_clipped_svg_group renders a stencil-clipped SVG group.
@@ -340,7 +340,7 @@ fn draw_clipped_svg_group(renderers []Renderer, idx int, mut window Window) int 
 	init_stencil_pipelines(mut window)
 
 	// Step 1: Write clip mask to stencil buffer (ref=1)
-	sgl.load_pipeline(window.pip.stencil_write)
+	window.ui.r.load_pipeline(window.pip.stencil_write)
 	for i in group_start .. group_end {
 		candidate := renderers[i]
 		if !guard_renderer_or_skip(candidate, mut window) {
@@ -353,21 +353,21 @@ fn draw_clipped_svg_group(renderers []Renderer, idx int, mut window Window) int 
 	}
 
 	// Step 2: Draw content where stencil == 1
-	sgl.load_pipeline(window.pip.stencil_test)
+	window.ui.r.load_pipeline(window.pip.stencil_test)
 	for i in group_start .. group_end {
 		candidate := renderers[i]
 		if !guard_renderer_or_skip(candidate, mut window) {
 			continue
 		}
 		if candidate is DrawSvg && !candidate.is_clip_mask {
-			sgl.c4b(candidate.color.r, candidate.color.g, candidate.color.b, candidate.color.a)
+			window.ui.r.c4b(candidate.color.r, candidate.color.g, candidate.color.b, candidate.color.a)
 			draw_triangles_raw(candidate.triangles, candidate.x, candidate.y, candidate.scale, mut
 				window)
 		}
 	}
 
 	// Step 3: Clear stencil by re-drawing mask with ref=0
-	sgl.load_pipeline(window.pip.stencil_clear)
+	window.ui.r.load_pipeline(window.pip.stencil_clear)
 	for i in group_start .. group_end {
 		candidate := renderers[i]
 		if !guard_renderer_or_skip(candidate, mut window) {
@@ -379,7 +379,7 @@ fn draw_clipped_svg_group(renderers []Renderer, idx int, mut window Window) int 
 		}
 	}
 
-	sgl.load_default_pipeline()
+	window.ui.r.load_default_pipeline()
 	return group_end
 }
 
@@ -390,7 +390,7 @@ fn draw_triangles_raw(triangles []f32, x f32, y f32, tri_scale f32, mut window W
 		return
 	}
 	scale := window.ui.scale
-	sgl.begin_triangles()
+	window.ui.r.begin_triangles()
 	mut i := 0
 	for i < triangles.len - 5 {
 		x0 := (x + triangles[i] * tri_scale) * scale
@@ -399,12 +399,12 @@ fn draw_triangles_raw(triangles []f32, x f32, y f32, tri_scale f32, mut window W
 		y1 := (y + triangles[i + 3] * tri_scale) * scale
 		x2 := (x + triangles[i + 4] * tri_scale) * scale
 		y2 := (y + triangles[i + 5] * tri_scale) * scale
-		sgl.v2f(x0, y0)
-		sgl.v2f(x1, y1)
-		sgl.v2f(x2, y2)
+		window.ui.r.v2f(x0, y0)
+		window.ui.r.v2f(x1, y1)
+		window.ui.r.v2f(x2, y2)
 		i += 6
 	}
-	sgl.end()
+	window.ui.r.end()
 }
 
 // renderer_draw draws a single renderer
@@ -464,7 +464,7 @@ fn renderer_draw(renderer Renderer, mut window Window) {
 			window.text_system.draw_layout_placed(renderer.layout, renderer.placements)
 		}
 		DrawClip {
-			sgl.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y,
+			window.ui.r.scissor_rectf(ctx.scale * renderer.x, ctx.scale * renderer.y,
 				ctx.scale * renderer.width, ctx.scale * renderer.height, true)
 		}
 		DrawCircle {
@@ -533,9 +533,9 @@ fn draw_triangles(triangles []f32, c gg.Color, x f32, y f32, tri_scale f32, mut 
 
 	scale := window.ui.scale
 
-	sgl.load_pipeline(window.ui.pipeline.alpha)
-	sgl.begin_triangles()
-	sgl.c4b(c.r, c.g, c.b, c.a)
+	window.ui.r.load_pipeline(window.ui.pipeline.alpha)
+	window.ui.r.begin_triangles()
+	window.ui.r.c4b(c.r, c.g, c.b, c.a)
 
 	mut i := 0
 	for i < triangles.len - 5 {
@@ -547,14 +547,14 @@ fn draw_triangles(triangles []f32, c gg.Color, x f32, y f32, tri_scale f32, mut 
 		x2 := (x + triangles[i + 4] * tri_scale) * scale
 		y2 := (y + triangles[i + 5] * tri_scale) * scale
 
-		sgl.v2f(x0, y0)
-		sgl.v2f(x1, y1)
-		sgl.v2f(x2, y2)
+		window.ui.r.v2f(x0, y0)
+		window.ui.r.v2f(x1, y1)
+		window.ui.r.v2f(x2, y2)
 
 		i += 6
 	}
 
-	sgl.end()
+	window.ui.r.end()
 }
 
 // draw_triangles_gradient renders triangles with per-vertex colors.
@@ -568,8 +568,8 @@ fn draw_triangles_gradient(triangles []f32, vertex_colors []gg.Color, x f32, y f
 
 	scale := window.ui.scale
 
-	sgl.load_pipeline(window.ui.pipeline.alpha)
-	sgl.begin_triangles()
+	window.ui.r.load_pipeline(window.ui.pipeline.alpha)
+	window.ui.r.begin_triangles()
 
 	mut vi := 0 // vertex index into vertex_colors
 	mut i := 0
@@ -586,17 +586,17 @@ fn draw_triangles_gradient(triangles []f32, vertex_colors []gg.Color, x f32, y f
 			x2 := (x + triangles[i + 4] * tri_scale) * scale
 			y2 := (y + triangles[i + 5] * tri_scale) * scale
 
-			sgl.c4b(c0.r, c0.g, c0.b, c0.a)
-			sgl.v2f(x0, y0)
-			sgl.c4b(c1.r, c1.g, c1.b, c1.a)
-			sgl.v2f(x1, y1)
-			sgl.c4b(c2.r, c2.g, c2.b, c2.a)
-			sgl.v2f(x2, y2)
+			window.ui.r.c4b(c0.r, c0.g, c0.b, c0.a)
+			window.ui.r.v2f(x0, y0)
+			window.ui.r.c4b(c1.r, c1.g, c1.b, c1.a)
+			window.ui.r.v2f(x1, y1)
+			window.ui.r.c4b(c2.r, c2.g, c2.b, c2.a)
+			window.ui.r.v2f(x2, y2)
 		}
 
 		i += 6
 		vi += 3
 	}
 
-	sgl.end()
+	window.ui.r.end()
 }

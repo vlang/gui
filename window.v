@@ -19,14 +19,14 @@ pub type WindowCommand = fn (mut Window)
 
 pub struct Window {
 mut:
-	commands_mutex           &sync.Mutex                 = sync.new_mutex() // Mutex for command queue
-	focused                  bool                        = true // Window focus state
-	mutex                    &sync.Mutex                 = sync.new_mutex() // Mutex for thread-safety
-	on_event                 fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {}           // Global event handler
-	state                    voidptr                     = unsafe { nil }    // User state passed to the window
-	text_system              &vglyph.TextSystem          = unsafe { nil }    // Text rendering system
-	ui                       &gg.Context                 = &gg.Context{} // Main sokol/gg graphics context
-	view_generator           fn (&Window) View           = empty_view        // Function to generate the UI view
+	commands_mutex           &sync.Mutex                 = sync.new_mutex()               // Mutex for command queue
+	focused                  bool                        = true                           // Window focus state
+	mutex                    &sync.Mutex                 = sync.new_mutex()               // Mutex for thread-safety
+	on_event                 fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {} // Global event handler
+	state                    voidptr                     = unsafe { nil }                   // User state passed to the window
+	text_system              &vglyph.TextSystem          = unsafe { nil }                   // Text rendering system
+	ui                       &gg.Context                 = &gg.Context{}                  // Main sokol/gg graphics context
+	view_generator           fn (&Window) View           = empty_view                     // Function to generate the UI view
 	a11y                     A11y                          // Accessibility backend state (lazily initialized)
 	animations               map[string]Animation          // Active animations (keyed by id)
 	commands                 []WindowCommand               // Atomic command queue for UI state updates
@@ -103,10 +103,12 @@ pub:
 		w.update_view(empty_view)
 	} // called once after GPU init; set the initial view here via w.update_view()
 	on_event            fn (e &Event, mut w Window) = fn (_ &Event, mut _ Window) {} // global event hook; fires for all events
-	log_level           log.Level                   = default_log_level()
+	log_level           log.Level                   = window_default_log_level
 	debug_layout        bool // print layout timing stats to stdout each frame
 	sample_count        int = 1 // MSAA sample count (1 = off; 4 antialiases draw_canvas lines/polygons)
 }
+
+const window_default_log_level = default_log_level()
 
 fn default_log_level() log.Level {
 	tag := $d('gui_window_log_level', 'disabled')

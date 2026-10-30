@@ -4,7 +4,6 @@ import gg
 import math
 import nativebridge
 import sokol.gfx
-import sokol.sgl
 import sokol.sapp
 import strings
 import stbi as _
@@ -103,15 +102,15 @@ fn render_page_to_pixels(mut window Window, raster PrintPageRaster, source_width
 	rw := f32(raster.w)
 	rh := f32(raster.h)
 
-	sgl.defaults()
-	sgl.viewport(0, 0, raster.w, raster.h, true)
-	sgl.scissor_rect(0, 0, raster.w, raster.h, true)
-	sgl.matrix_mode_projection()
-	sgl.ortho(0.0, rw, rh, 0.0, -1.0, 1.0)
+	window.ui.r.defaults()
+	window.ui.r.viewport(0, 0, raster.w, raster.h, true)
+	window.ui.r.scissor_rect(0, 0, raster.w, raster.h, true)
+	window.ui.r.matrix_mode_projection()
+	window.ui.r.ortho(0.0, rw, rh, 0.0, -1.0, 1.0)
 	// Translate to show the correct page slice.
-	sgl.matrix_mode_modelview()
-	sgl.load_identity()
-	sgl.translate(0.0, -page_offset_y * print_scale, 0.0)
+	window.ui.r.matrix_mode_modelview()
+	window.ui.r.load_identity()
+	window.ui.r.translate(0.0, -page_offset_y * print_scale, 0.0)
 
 	// Record renderer drawing commands via SGL.
 	// Set ui.scale to print_scale so draw functions and
@@ -132,7 +131,7 @@ fn render_page_to_pixels(mut window Window, raster PrintPageRaster, source_width
 		action:      pass_action
 		attachments: raster.att
 	})
-	sgl.draw()
+	window.ui.r.draw()
 	gfx.end_pass()
 	// Submit the command buffer so the GPU starts rendering.
 	gfx.commit()
@@ -354,7 +353,7 @@ fn pdf_build_raster_document(page_jpegs [][]u8, page_width f32, page_height f32,
 		// Image XObject (JPEG via DCTDecode)
 		image_obj :=
 			'<< /Type /XObject /Subtype /Image /Width ${raster_w} /Height ${raster_h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg_data.len} >>\nstream\n' +
-			jpeg_data.bytestr() + '\nendstream'
+				jpeg_data.bytestr() + '\nendstream'
 
 		// Content stream: place image + header/footer
 		img_x := job.margins.left

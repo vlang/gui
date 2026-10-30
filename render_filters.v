@@ -1,7 +1,6 @@
 module gui
 
 import sokol.gfx
-import sokol.sgl
 import math
 
 struct FilterBracketRange {
@@ -388,16 +387,16 @@ fn draw_filter_composite(c DrawFilterComposite, mut window Window) {
 	sw := c.width * scale
 	sh := c.height * scale
 
-	sgl.load_pipeline(window.filter_state.texture_quad_pip)
-	sgl.enable_texture()
-	sgl.texture(c.texture, c.sampler)
+	window.ui.r.load_pipeline(window.filter_state.texture_quad_pip)
+	window.ui.r.enable_texture()
+	window.ui.r.texture(c.texture, c.sampler)
 
 	// Draw multiple times for glow intensity
 	for _ in 0 .. c.layers {
-		sgl.c4b(255, 255, 255, 255)
-		draw_filter_quad(sx, sy, sw, sh)
+		window.ui.r.c4b(255, 255, 255, 255)
+		draw_filter_quad(window.ui.r, sx, sy, sw, sh)
 	}
 
-	sgl.disable_texture()
-	sgl.load_default_pipeline()
+	window.ui.r.disable_texture()
+	window.ui.r.load_default_pipeline()
 }

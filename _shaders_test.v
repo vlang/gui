@@ -172,13 +172,17 @@ fn test_generated_builtin_shader_header_keeps_raw_filter_binding_contract() {
 fn test_d3d11_custom_shader_guard_returns_before_runtime_source_pipeline() {
 	source := read_gui_source('shaders.v')
 	guard_index := source.index('custom GLSL/Metal shaders are not supported with -d sokol_d3d11') or {
-		panic(err)
+		panic('missing D3D11 custom shader guard')
 	}
 	glsl_build_index := source.index('fs_source := build_glsl_fragment(shader.glsl)') or {
-		panic(err)
+		panic('missing custom GLSL fragment builder')
 	}
-	make_shader_index := source.index('shader: gfx.make_shader(&shader_desc)') or { panic(err) }
-	guard_return_index := source.index_after('return pip', guard_index) or { panic(err) }
+	make_shader_index := source.index('shader: gfx.make_shader(&shader_desc)') or {
+		panic('missing custom shader creation')
+	}
+	guard_return_index := source.index_after('return pip', guard_index) or {
+		panic('missing D3D11 fallback return')
+	}
 	assert guard_index < glsl_build_index
 	assert guard_index < make_shader_index
 	assert guard_return_index < glsl_build_index

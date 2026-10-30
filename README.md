@@ -84,6 +84,14 @@ V is a simple language. It deserves a simple UI framework.
 
 ## Quick Start
 
+Use the latest V and vglyph together: GUI drawing and text share the
+`gg.Context.r` renderer. Update both modules after updating V:
+
+```sh
+v update vglyph gui
+v -new-compiler run ~/.vmodules/gui/examples/showcase.v
+```
+
 ```v ignore
 import gui
 

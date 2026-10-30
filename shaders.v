@@ -2,7 +2,7 @@ module gui
 
 // The `shaders.v` module provides high-performance rendering primitives for
 
-// rounded rectangles, using signed distance field (SDF) shaders via sokol.sgl.
+// rounded rectangles, using signed distance field (SDF) shaders via gg.render.
 // This replaces the previous discrete triangle implementation.
 //
 // Motivation for Signed Distance Fields (SDF):
@@ -17,8 +17,8 @@ module gui
 // 4. Flexibility: A single quad can represent a filled rect, a bordered rect, or
 //    a complex shadow, just by changing the SDF math in the shader.
 import gg
+import gg.render
 import log
-import sokol.sgl
 import sokol.gfx
 import math
 
@@ -36,13 +36,13 @@ mut:
 	sampler          gfx.Sampler
 	tex_width        int
 	tex_height       int
-	blur_h_pip       gfx.Pipeline // raw gfx: horizontal blur
-	blur_v_pip       gfx.Pipeline // raw gfx: vertical blur
-	content_pip      gfx.Pipeline // raw gfx: colored triangles
-	texture_quad_pip sgl.Pipeline // SGL: composite to swapchain
-	quad_vbuf        gfx.Buffer   // static unit quad (blur passes)
-	content_vbuf     gfx.Buffer   // dynamic buffer for SVG content
-	content_vbuf_sz  int          // current content buffer capacity
+	blur_h_pip       gfx.Pipeline    // raw gfx: horizontal blur
+	blur_v_pip       gfx.Pipeline    // raw gfx: vertical blur
+	content_pip      gfx.Pipeline    // raw gfx: colored triangles
+	texture_quad_pip render.Pipeline // gg.render: composite to swapchain
+	quad_vbuf        gfx.Buffer      // static unit quad (blur passes)
+	content_vbuf     gfx.Buffer      // dynamic buffer for SVG content
+	content_vbuf_sz  int             // current content buffer capacity
 	scratch_vertices []FilterVertex
 	initialized      bool
 }
@@ -51,17 +51,17 @@ mut:
 // Each pipeline is considered initialized when its `.id != 0`.
 struct Pipelines {
 mut:
-	rounded_rect               sgl.Pipeline
-	shadow                     sgl.Pipeline
-	blur                       sgl.Pipeline
-	gradient                   sgl.Pipeline
-	image_clip                 sgl.Pipeline
+	rounded_rect               render.Pipeline
+	shadow                     render.Pipeline
+	blur                       render.Pipeline
+	gradient                   render.Pipeline
+	image_clip                 render.Pipeline
 	image_clip_init_failed     bool
 	image_clip_fallback_warned bool
-	stencil_write              sgl.Pipeline
-	stencil_test               sgl.Pipeline
-	stencil_clear              sgl.Pipeline
-	custom                     map[u64]sgl.Pipeline
+	stencil_write              render.Pipeline
+	stencil_test               render.Pipeline
+	stencil_clear              render.Pipeline
+	custom                     map[u64]render.Pipeline
 	gradient_stop_warned       bool
 }
 
@@ -134,24 +134,12 @@ fn gui_builtin_alpha_colors() [4]gfx.ColorTargetState {
 	return colors
 }
 
-fn make_gui_builtin_sgl_pipeline(label &char, shader gfx.Shader) sgl.Pipeline {
+fn make_gui_builtin_render_pipeline(r &render.Context, label &char, shader gfx.Shader) render.Pipeline {
 	desc := gfx.PipelineDesc{
 		label:  unsafe { label }
 		colors: gui_builtin_alpha_colors()
-		layout: gui_builtin_vertex_layout()
-		shader: shader
 	}
-	return sgl.make_pipeline(&desc)
-}
-
-fn make_gui_builtin_sgl_context_pipeline(ctx sgl.Context, label &char, shader gfx.Shader) sgl.Pipeline {
-	desc := gfx.PipelineDesc{
-		label:  unsafe { label }
-		colors: gui_builtin_alpha_colors()
-		layout: gui_builtin_vertex_layout()
-		shader: shader
-	}
-	return sgl.context_make_pipeline(ctx, &desc)
+	return r.make_pipeline_with_shader(desc, shader)
 }
 
 fn make_gui_builtin_gfx_pipeline(label &char, shader gfx.Shader) gfx.Pipeline {
@@ -167,7 +155,7 @@ fn init_rounded_rect_pipeline(mut window Window) bool {
 	if window.pip.rounded_rect.id != 0 {
 		return true
 	}
-	window.pip.rounded_rect = make_gui_builtin_sgl_pipeline(c'rounded_rect_pip',
+	window.pip.rounded_rect = make_gui_builtin_render_pipeline(window.ui.r, c'rounded_rect_pip',
 		gfx.make_shader(voidptr(C.gui_rounded_rect_shader_desc(gfx.query_backend()))))
 	return window.pip.rounded_rect.id != 0
 }
@@ -178,7 +166,7 @@ fn init_shadow_pipeline(mut window Window) {
 	if window.pip.shadow.id != 0 {
 		return
 	}
-	window.pip.shadow = make_gui_builtin_sgl_pipeline(c'shadow_pip',
+	window.pip.shadow = make_gui_builtin_render_pipeline(window.ui.r, c'shadow_pip',
 		gfx.make_shader(voidptr(C.gui_shadow_shader_desc(gfx.query_backend()))))
 }
 
@@ -189,7 +177,7 @@ fn init_blur_pipeline(mut window Window) {
 	if window.pip.blur.id != 0 {
 		return
 	}
-	window.pip.blur = make_gui_builtin_sgl_pipeline(c'blur_pip',
+	window.pip.blur = make_gui_builtin_render_pipeline(window.ui.r, c'blur_pip',
 		gfx.make_shader(voidptr(C.gui_blur_shader_desc(gfx.query_backend()))))
 }
 
@@ -199,7 +187,7 @@ fn init_gradient_pipeline(mut window Window) {
 	if window.pip.gradient.id != 0 {
 		return
 	}
-	window.pip.gradient = make_gui_builtin_sgl_pipeline(c'gradient_pip',
+	window.pip.gradient = make_gui_builtin_render_pipeline(window.ui.r, c'gradient_pip',
 		gfx.make_shader(voidptr(C.gui_gradient_shader_desc(gfx.query_backend()))))
 }
 
@@ -239,9 +227,9 @@ pub fn draw_shadow_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.C
 	init_shadow_pipeline(mut window)
 
 	// Pass offset via Texture Matrix
-	sgl.matrix_mode_texture()
-	sgl.push_matrix()
-	sgl.load_identity()
+	window.ui.r.matrix_mode_texture()
+	window.ui.r.push_matrix()
+	window.ui.r.load_identity()
 	// Translate by the NEGATIVE offset because the "clip box" needs to be shifted
 	// relative to the shadow.
 	// The shadow is drawn at (x,y) which INCLUDES the offset.
@@ -250,20 +238,20 @@ pub fn draw_shadow_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.C
 	// sgl doesn't have a generic "set uniform" for custom uniforms easily accessible here without breaking abstraction.
 	// The Translation part of the matrix is used to pass this data.
 
-	sgl.translate(ox, oy, 0.0)
+	window.ui.r.translate(ox, oy, 0.0)
 
-	sgl.load_pipeline(window.pip.shadow)
-	sgl.c4b(c.r, c.g, c.b, c.a)
+	window.ui.r.load_pipeline(window.pip.shadow)
+	window.ui.r.c4b(c.r, c.g, c.b, c.a)
 
 	// Pack radius and blur using the fixed-point packer.
 	z_val := pack_shader_params(r, b)
 
-	draw_quad(sx, sy, sw, sh, z_val)
-	sgl.load_default_pipeline()
-	sgl.c4b(255, 255, 255, 255) // Reset color state
+	draw_quad(window.ui.r, sx, sy, sw, sh, z_val)
+	window.ui.r.load_default_pipeline()
+	window.ui.r.c4b(255, 255, 255, 255) // Reset color state
 
-	sgl.pop_matrix()
-	sgl.matrix_mode_modelview()
+	window.ui.r.pop_matrix()
+	window.ui.r.matrix_mode_modelview()
 }
 
 // draw_rounded_rect_filled draws a solid rounded rectangle using SDF shading.
@@ -294,13 +282,13 @@ pub fn draw_rounded_rect_filled(x f32, y f32, w f32, h f32, radius f32, c gg.Col
 		return
 	}
 
-	sgl.load_pipeline(window.pip.rounded_rect)
-	sgl.c4b(c.r, c.g, c.b, c.a)
+	window.ui.r.load_pipeline(window.pip.rounded_rect)
+	window.ui.r.c4b(c.r, c.g, c.b, c.a)
 
 	z_val := pack_shader_params(r, 0)
 
-	draw_quad(sx, sy, sw, sh, z_val)
-	sgl.load_default_pipeline()
+	draw_quad(window.ui.r, sx, sy, sw, sh, z_val)
+	window.ui.r.load_default_pipeline()
 }
 
 // draw_rounded_rect_empty draws a bordered (stroked) rounded rectangle.
@@ -330,17 +318,17 @@ pub fn draw_rounded_rect_empty(x f32, y f32, w f32, h f32, radius f32, thickness
 		return
 	}
 
-	sgl.load_pipeline(window.pip.rounded_rect)
-	sgl.c4b(c.r, c.g, c.b, c.a)
+	window.ui.r.load_pipeline(window.pip.rounded_rect)
+	window.ui.r.c4b(c.r, c.g, c.b, c.a)
 
 	// Pack radius and stroke thickness.
 	z_val := pack_shader_params(r, thickness * scale)
 
-	draw_quad(sx, sy, sw, sh, z_val)
-	sgl.load_default_pipeline()
+	draw_quad(window.ui.r, sx, sy, sw, sh, z_val)
+	window.ui.r.load_default_pipeline()
 }
 
-// init_stencil_pipelines creates two sgl pipelines for clipPath
+// init_stencil_pipelines creates renderer pipelines for clipPath
 // stencil clipping:
 //   stencil_write_pip: writes 1 to stencil, no color output
 //   stencil_test_pip:  draws only where stencil == 1
@@ -374,7 +362,7 @@ fn init_stencil_pipelines(mut window Window) {
 				ref:        1
 			}
 		}
-		window.pip.stencil_write = sgl.make_pipeline(&desc_w)
+		window.pip.stencil_write = window.ui.r.make_pipeline(desc_w)
 	}
 
 	if window.pip.stencil_test.id == 0 {
@@ -413,7 +401,7 @@ fn init_stencil_pipelines(mut window Window) {
 				ref:        1
 			}
 		}
-		window.pip.stencil_test = sgl.make_pipeline(&desc_t)
+		window.pip.stencil_test = window.ui.r.make_pipeline(desc_t)
 	}
 
 	if window.pip.stencil_clear.id == 0 {
@@ -445,21 +433,21 @@ fn init_stencil_pipelines(mut window Window) {
 				ref:        0
 			}
 		}
-		window.pip.stencil_clear = sgl.make_pipeline(&desc_c)
+		window.pip.stencil_clear = window.ui.r.make_pipeline(desc_c)
 	}
 }
 
 // init_custom_pipeline creates and caches a pipeline for a custom
 // fragment shader. Pipelines are keyed by source hash so identical
 // shader bodies share a single compiled pipeline.
-fn init_custom_pipeline(shader &Shader, mut window Window) sgl.Pipeline {
+fn init_custom_pipeline(shader &Shader, mut window Window) render.Pipeline {
 	key := shader_hash(shader)
 	if pip := window.pip.custom[key] {
 		return pip
 	}
 	$if windows && sokol_d3d11 ? {
 		log.warn('custom GLSL/Metal shaders are not supported with -d sokol_d3d11; using rounded-rect fallback')
-		pip := sgl.Pipeline{}
+		pip := render.Pipeline{}
 		window.pip.custom[key] = pip
 		return pip
 	}
@@ -596,7 +584,7 @@ fn init_custom_pipeline(shader &Shader, mut window Window) sgl.Pipeline {
 		shader: gfx.make_shader(&shader_desc)
 	}
 
-	pip := sgl.make_pipeline(&desc)
+	pip := window.ui.r.make_pipeline_with_shader(desc, desc.shader)
 	window.pip.custom[key] = pip
 	return pip
 }
@@ -632,26 +620,26 @@ pub fn draw_custom_shader_rect(x f32, y f32, w f32, h f32, radius f32, c gg.Colo
 	}
 
 	// Load user params into tm matrix
-	sgl.matrix_mode_texture()
-	sgl.push_matrix()
+	window.ui.r.matrix_mode_texture()
+	window.ui.r.push_matrix()
 
 	mut tm_data := [16]f32{}
 	max_params := if shader.params.len > 16 { 16 } else { shader.params.len }
 	for i in 0 .. max_params {
 		tm_data[i] = shader.params[i]
 	}
-	sgl.load_matrix(tm_data[0..])
+	window.ui.r.load_matrix(tm_data[0..])
 
-	sgl.load_pipeline(pip)
-	sgl.c4b(c.r, c.g, c.b, c.a)
+	window.ui.r.load_pipeline(pip)
+	window.ui.r.c4b(c.r, c.g, c.b, c.a)
 
 	z_val := pack_shader_params(r, 0)
-	draw_quad(sx, sy, sw, sh, z_val)
+	draw_quad(window.ui.r, sx, sy, sw, sh, z_val)
 
-	sgl.load_default_pipeline()
-	sgl.c4b(255, 255, 255, 255)
-	sgl.pop_matrix()
-	sgl.matrix_mode_modelview()
+	window.ui.r.load_default_pipeline()
+	window.ui.r.c4b(255, 255, 255, 255)
+	window.ui.r.pop_matrix()
+	window.ui.r.matrix_mode_modelview()
 }
 
 // FilterVertex matches the SGL vertex layout (24 bytes):
@@ -688,12 +676,6 @@ fn make_filter_gfx_pipeline(label &char, shader gfx.Shader) gfx.Pipeline {
 	return make_gui_builtin_gfx_pipeline(label, shader)
 }
 
-// make_filter_sgl_pipeline creates an SGL pipeline for compositing
-// the blurred result onto the swapchain.
-fn make_filter_sgl_pipeline(ctx sgl.Context, label &char, shader gfx.Shader) sgl.Pipeline {
-	return make_gui_builtin_sgl_context_pipeline(ctx, label, shader)
-}
-
 // ensure_filter_state lazily initializes offscreen filter resources.
 fn ensure_filter_state(mut window Window) {
 	if window.filter_state.initialized {
@@ -717,8 +699,7 @@ fn ensure_filter_state(mut window Window) {
 		gfx.make_shader(voidptr(C.gui_filter_color_shader_desc(gfx.query_backend()))))
 
 	// Composite pipeline: SGL (swapchain pass)
-	ctx := sgl.default_context()
-	window.filter_state.texture_quad_pip = make_filter_sgl_pipeline(ctx, c'filter_texture_pip',
+	window.filter_state.texture_quad_pip = make_gui_builtin_render_pipeline(window.ui.r, c'filter_texture_pip',
 		gfx.make_shader(voidptr(C.gui_filter_texture_shader_desc(gfx.query_backend()))))
 
 	// Static unit quad for blur fullscreen passes (6 vertices)
@@ -849,22 +830,22 @@ fn ensure_filter_textures(mut window Window, width int, height int) bool {
 }
 
 // draw_filter_quad draws a textured quad with UVs from 0..1.
-fn draw_filter_quad(x f32, y f32, w f32, h f32) {
-	sgl.begin_quads()
+fn draw_filter_quad(r &render.Context, x f32, y f32, w f32, h f32) {
+	r.begin_quads()
 
-	sgl.t2f(0.0, 0.0)
-	sgl.v3f(x, y, 0.0)
+	r.t2f(0.0, 0.0)
+	r.v3f(x, y, 0.0)
 
-	sgl.t2f(1.0, 0.0)
-	sgl.v3f(x + w, y, 0.0)
+	r.t2f(1.0, 0.0)
+	r.v3f(x + w, y, 0.0)
 
-	sgl.t2f(1.0, 1.0)
-	sgl.v3f(x + w, y + h, 0.0)
+	r.t2f(1.0, 1.0)
+	r.v3f(x + w, y + h, 0.0)
 
-	sgl.t2f(0.0, 1.0)
-	sgl.v3f(x, y + h, 0.0)
+	r.t2f(0.0, 1.0)
+	r.v3f(x, y + h, 0.0)
 
-	sgl.end()
+	r.end()
 }
 
 fn init_image_clip_pipeline(mut window Window) bool {
@@ -874,7 +855,7 @@ fn init_image_clip_pipeline(mut window Window) bool {
 	if window.pip.image_clip_init_failed {
 		return false
 	}
-	window.pip.image_clip = make_gui_builtin_sgl_pipeline(c'image_clip_pip',
+	window.pip.image_clip = make_gui_builtin_render_pipeline(window.ui.r, c'image_clip_pip',
 		gfx.make_shader(voidptr(C.gui_image_clip_shader_desc(gfx.query_backend()))))
 	if window.pip.image_clip.id == 0 {
 		window.pip.image_clip_init_failed = true
@@ -932,18 +913,18 @@ fn draw_image_rounded(x f32, y f32, w f32, h f32, radius f32, img &gg.Image, mut
 	x0, y0, w0, h0, r := rounded_image_scaled_params(x, y, w, h, radius, window.ui.scale)
 	z := pack_shader_params(r, 0)
 
-	sgl.load_pipeline(window.pip.image_clip)
-	sgl.enable_texture()
-	sgl.texture(img.simg, img.ssmp)
-	sgl.c4b(255, 255, 255, 255)
-	draw_quad(x0, y0, w0, h0, z)
+	window.ui.r.load_pipeline(window.pip.image_clip)
+	window.ui.r.enable_texture()
+	window.ui.r.texture(img.simg, img.ssmp)
+	window.ui.r.c4b(255, 255, 255, 255)
+	draw_quad(window.ui.r, x0, y0, w0, h0, z)
 
-	sgl.disable_texture()
-	sgl.load_default_pipeline()
+	window.ui.r.disable_texture()
+	window.ui.r.load_default_pipeline()
 }
 
-fn draw_quad(x f32, y f32, w f32, h f32, z f32) {
-	sgl.begin_quads()
+fn draw_quad(r &render.Context, x f32, y f32, w f32, h f32, z f32) {
+	r.begin_quads()
 
 	// Why UVs from -1.0 to 1.0?
 	// Standard textures use 0.0 to 1.0. However, for procedural shapes based on math (SDFs),
@@ -952,20 +933,20 @@ fn draw_quad(x f32, y f32, w f32, h f32, z f32) {
 	// to provide a centered coordinate system automatically.
 
 	// Top Left
-	sgl.t2f(-1.0, -1.0)
-	sgl.v3f(x, y, z)
+	r.t2f(-1.0, -1.0)
+	r.v3f(x, y, z)
 
 	// Top Right
-	sgl.t2f(1.0, -1.0)
-	sgl.v3f(x + w, y, z)
+	r.t2f(1.0, -1.0)
+	r.v3f(x + w, y, z)
 
 	// Bottom Right
-	sgl.t2f(1.0, 1.0)
-	sgl.v3f(x + w, y + h, z)
+	r.t2f(1.0, 1.0)
+	r.v3f(x + w, y + h, z)
 
 	// Bottom Left
-	sgl.t2f(-1.0, 1.0)
-	sgl.v3f(x, y + h, z)
+	r.t2f(-1.0, 1.0)
+	r.v3f(x, y + h, z)
 
-	sgl.end()
+	r.end()
 }
