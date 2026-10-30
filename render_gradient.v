@@ -6,7 +6,7 @@ module gui
 // alpha for disabled states. draw_blur_rect() and draw_shadow_rect() use the
 // blur shader pipeline (lazily initialized). rects_overlap() guards draw calls.
 import gg
-import sokol.sgl
+import gg.render
 import math
 
 const gradient_shader_stop_limit = 5
@@ -47,23 +47,23 @@ pub fn draw_blur_rect(x f32, y f32, w f32, h f32, radius f32, blur f32, c gg.Col
 	init_blur_pipeline(mut window)
 
 	// Since we used vs_shadow which expects 'tm' uniform (offset), we must provide it even if 0.
-	sgl.matrix_mode_texture()
-	sgl.push_matrix()
-	sgl.load_identity()
+	window.ui.r.matrix_mode_texture()
+	window.ui.r.push_matrix()
+	window.ui.r.load_identity()
 	// No offset for generic blur
-	sgl.translate(0, 0, 0)
+	window.ui.r.translate(0, 0, 0)
 
-	sgl.load_pipeline(window.pip.blur)
-	sgl.c4b(c.r, c.g, c.b, c.a)
+	window.ui.r.load_pipeline(window.pip.blur)
+	window.ui.r.c4b(c.r, c.g, c.b, c.a)
 
 	z_val := pack_shader_params(r, b)
 
-	draw_quad(sx, sy, sw, sh, z_val)
-	sgl.load_default_pipeline()
-	sgl.c4b(255, 255, 255, 255) // Reset color state
+	draw_quad(window.ui.r, sx, sy, sw, sh, z_val)
+	window.ui.r.load_default_pipeline()
+	window.ui.r.c4b(255, 255, 255, 255) // Reset color state
 
-	sgl.pop_matrix()
-	sgl.matrix_mode_modelview()
+	window.ui.r.pop_matrix()
+	window.ui.r.matrix_mode_modelview()
 }
 
 // angle_to_direction converts CSS angle (degrees) to unit direction vector
@@ -275,8 +275,8 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 	}
 
 	// Pack gradient stops into tm matrix via sgl
-	sgl.matrix_mode_texture()
-	sgl.push_matrix()
+	window.ui.r.matrix_mode_texture()
+	window.ui.r.push_matrix()
 
 	// Pack stops into tm matrix (indices 10-11 reserved
 	// for direction/radius metadata)
@@ -316,53 +316,53 @@ fn draw_gradient_rect(x f32, y f32, w f32, h f32, radius f32, gradient &Gradient
 
 	// Load the gradient data matrix
 
-	sgl.load_matrix(tm_data[0..])
+	window.ui.r.load_matrix(tm_data[0..])
 
-	sgl.load_pipeline(window.pip.gradient)
-	sgl.c4b(255, 255, 255, 255) // White base color (shader computes actual color)
+	window.ui.r.load_pipeline(window.pip.gradient)
+	window.ui.r.c4b(255, 255, 255, 255) // White base color (shader computes actual color)
 
 	z_val := pack_shader_params(r, 0)
 
-	draw_quad(sx, sy, sw, sh, z_val)
+	draw_quad(window.ui.r, sx, sy, sw, sh, z_val)
 
-	sgl.load_default_pipeline()
-	sgl.c4b(255, 255, 255, 255) // Reset color state
-	sgl.pop_matrix()
-	sgl.matrix_mode_modelview()
+	window.ui.r.load_default_pipeline()
+	window.ui.r.c4b(255, 255, 255, 255) // Reset color state
+	window.ui.r.pop_matrix()
+	window.ui.r.matrix_mode_modelview()
 }
 
-fn draw_quad_gradient(x f32, y f32, w f32, h f32, z f32, c1 Color, c2 Color, g_type GradientType) {
-	sgl.begin_quads()
+fn draw_quad_gradient(r &render.Context, x f32, y f32, w f32, h f32, z f32, c1 Color, c2 Color, g_type GradientType) {
+	r.begin_quads()
 
 	// Top Left
-	sgl.t2f(-1.0, -1.0)
-	sgl.c4b(c1.r, c1.g, c1.b, c1.a)
-	sgl.v3f(x, y, z)
+	r.t2f(-1.0, -1.0)
+	r.c4b(c1.r, c1.g, c1.b, c1.a)
+	r.v3f(x, y, z)
 
 	// Top Right
-	sgl.t2f(1.0, -1.0)
+	r.t2f(1.0, -1.0)
 	if g_type == .linear {
-		sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+		r.c4b(c2.r, c2.g, c2.b, c2.a)
 	} else {
-		sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+		r.c4b(c1.r, c1.g, c1.b, c1.a)
 	}
-	sgl.v3f(x + w, y, z)
+	r.v3f(x + w, y, z)
 
 	// Bottom Right
-	sgl.t2f(1.0, 1.0)
-	sgl.c4b(c2.r, c2.g, c2.b, c2.a)
-	sgl.v3f(x + w, y + h, z)
+	r.t2f(1.0, 1.0)
+	r.c4b(c2.r, c2.g, c2.b, c2.a)
+	r.v3f(x + w, y + h, z)
 
 	// Bottom Left
-	sgl.t2f(-1.0, 1.0)
+	r.t2f(-1.0, 1.0)
 	if g_type == .linear {
-		sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+		r.c4b(c1.r, c1.g, c1.b, c1.a)
 	} else {
-		sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+		r.c4b(c2.r, c2.g, c2.b, c2.a)
 	}
-	sgl.v3f(x, y + h, z)
+	r.v3f(x, y + h, z)
 
-	sgl.end()
+	r.end()
 }
 
 fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, thickness f32, gradient &Gradient, mut window Window) {
@@ -397,7 +397,7 @@ fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, thickness f32, g
 	if !init_rounded_rect_pipeline(mut window) {
 		return
 	}
-	sgl.load_pipeline(window.pip.rounded_rect)
+	window.ui.r.load_pipeline(window.pip.rounded_rect)
 
 	// Determine colors based on gradient stops (simplification for 2 stops)
 	c1 := if gradient.stops.len > 0 {
@@ -411,36 +411,36 @@ fn draw_gradient_border(x f32, y f32, w f32, h f32, radius f32, thickness f32, g
 	z_val := pack_shader_params(r, thickness * scale)
 
 	// Draw Quad with Per-Vertex Colors
-	sgl.begin_quads()
+	window.ui.r.begin_quads()
 
 	// Top Left
-	sgl.t2f(-1.0, -1.0)
-	sgl.c4b(c1.r, c1.g, c1.b, c1.a)
-	sgl.v3f(sx, sy, z_val)
+	window.ui.r.t2f(-1.0, -1.0)
+	window.ui.r.c4b(c1.r, c1.g, c1.b, c1.a)
+	window.ui.r.v3f(sx, sy, z_val)
 
 	// Top Right
-	sgl.t2f(1.0, -1.0)
+	window.ui.r.t2f(1.0, -1.0)
 	if gradient.type == .linear {
-		sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+		window.ui.r.c4b(c2.r, c2.g, c2.b, c2.a)
 	} else {
-		sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+		window.ui.r.c4b(c1.r, c1.g, c1.b, c1.a)
 	}
-	sgl.v3f(sx + sw, sy, z_val)
+	window.ui.r.v3f(sx + sw, sy, z_val)
 
 	// Bottom Right
-	sgl.t2f(1.0, 1.0)
-	sgl.c4b(c2.r, c2.g, c2.b, c2.a)
-	sgl.v3f(sx + sw, sy + sh, z_val)
+	window.ui.r.t2f(1.0, 1.0)
+	window.ui.r.c4b(c2.r, c2.g, c2.b, c2.a)
+	window.ui.r.v3f(sx + sw, sy + sh, z_val)
 
 	// Bottom Left
-	sgl.t2f(-1.0, 1.0)
+	window.ui.r.t2f(-1.0, 1.0)
 	if gradient.type == .linear {
-		sgl.c4b(c1.r, c1.g, c1.b, c1.a)
+		window.ui.r.c4b(c1.r, c1.g, c1.b, c1.a)
 	} else {
-		sgl.c4b(c2.r, c2.g, c2.b, c2.a)
+		window.ui.r.c4b(c2.r, c2.g, c2.b, c2.a)
 	}
-	sgl.v3f(sx, sy + sh, z_val)
+	window.ui.r.v3f(sx, sy + sh, z_val)
 
-	sgl.end()
-	sgl.load_default_pipeline()
+	window.ui.r.end()
+	window.ui.r.load_default_pipeline()
 }
