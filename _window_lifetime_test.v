@@ -298,33 +298,31 @@ fn lifetime_list_options() []ListBoxOption {
 	]
 }
 
-type LifetimeFormIssueList = []FormIssue
-
-fn lifetime_form_async_validator(_ FormFieldSnapshot, _ FormSnapshot, signal &GridAbortSignal) !LifetimeFormIssueList {
+fn lifetime_form_async_validator(_ FormFieldSnapshot, _ FormSnapshot, signal &GridAbortSignal) ![]FormIssue {
 	time.sleep(40 * time.millisecond)
 	if signal.is_aborted() {
-		return LifetimeFormIssueList([]FormIssue{})
+		return []FormIssue{}
 	}
-	return LifetimeFormIssueList([
+	return [
 		FormIssue{
 			code: 'async'
 			msg:  'async complete'
 		},
-	])
+	]
 }
 
 fn lifetime_capturing_form_async_validator(payload []int) FormAsyncValidator {
-	return fn [payload] (_ FormFieldSnapshot, _ FormSnapshot, signal &GridAbortSignal) !LifetimeFormIssueList {
+	return fn [payload] (_ FormFieldSnapshot, _ FormSnapshot, signal &GridAbortSignal) ![]FormIssue {
 		time.sleep(40 * time.millisecond)
 		if signal.is_aborted() {
-			return LifetimeFormIssueList([]FormIssue{})
+			return []FormIssue{}
 		}
-		return LifetimeFormIssueList([
+		return [
 			FormIssue{
 				code: 'captured_async'
 				msg:  '${payload[0] + payload[payload.len - 1]}'
 			},
-		])
+		]
 	}
 }
 
