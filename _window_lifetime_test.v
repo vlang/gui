@@ -846,6 +846,10 @@ fn start_lifetime_capturing_crud_save(mut w Window, mut harness &LifetimeCrudSav
 	return expected_sum
 }
 
+fn lifetime_form_async_validator_adapter(field FormFieldSnapshot, form FormSnapshot, signal &GridAbortSignal) ![]FormIssue {
+	return lifetime_form_async_validator(field, form, signal)!
+}
+
 fn start_lifetime_form_async_validation(mut w Window) {
 	layout := make_lifetime_form_field_layout(lifetime_async_form_id, lifetime_async_form_field_id)
 	form_cfg := FormCfg{
@@ -855,7 +859,7 @@ fn start_lifetime_form_async_validation(mut w Window) {
 	field_cfg := FormFieldAdapterCfg{
 		field_id:             lifetime_async_form_field_id
 		value:                'user@example.com'
-		async_validators:     [FormAsyncValidator(lifetime_form_async_validator)]
+		async_validators:     [FormAsyncValidator(lifetime_form_async_validator_adapter)]
 		validate_on_override: .change
 	}
 	w.layout_callback_lifetime.lifetime.frame(fn [mut w, layout, form_cfg, field_cfg] () {
