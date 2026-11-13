@@ -519,3 +519,43 @@ fn tree_child_ids(v View) []string {
 	}
 	return ids
 }
+
+fn test_tree_reveal_expands_once_per_selection() {
+	mut w := Window{}
+	cfg := TreeCfg{
+		id:       'reveal_tree'
+		selected: 'root/child'
+		reveal:   ['root']
+		nodes:    [
+			tree_node(
+				id:    'root'
+				text:  'Root'
+				nodes: [
+					tree_node(id: 'root/child', text: 'Child'),
+				]
+			),
+		]
+	}
+	w.tree(cfg)
+	assert w.view_state.tree_state.get('reveal_tree') or {
+		map[string]bool{}
+	}['root'] == true
+
+	// A collapse by the user survives, because `selected` did not move.
+	w.view_state.tree_state.set('reveal_tree', {
+		'root': false
+	})
+	w.tree(cfg)
+	assert w.view_state.tree_state.get('reveal_tree') or {
+		map[string]bool{}
+	}['root'] == false
+
+	// Moving `selected` reveals again.
+	w.tree(TreeCfg{
+		...cfg
+		selected: 'root'
+	})
+	assert w.view_state.tree_state.get('reveal_tree') or {
+		map[string]bool{}
+	}['root'] == true
+}
